@@ -29,21 +29,60 @@ const wchar_t* g_prompt_tags[]       = { g_prompt_tag_hidden, g_prompt_tag };
 
 
 //------------------------------------------------------------------------------
+static bool are_extensions_enabled()
+{
+    static bool s_extensions = false;//true;
+    static bool s_initialized = true;//false;
+
+    if (!s_initialized)
+    {
+        s_initialized = true;
+        DWORD type;
+        WCHAR value[MAX_PATH];
+        DWORD len = sizeof(value);
+        HKEY hives[] = { HKEY_LOCAL_MACHINE, HKEY_CURRENT_USER };
+        for (HKEY hive : hives)
+        {
+            HKEY hkey = 0;
+            if (RegOpenKeyEx(hive, "Software\\Microsoft\\Command Processor", 0, MAXIMUM_ALLOWED, &hkey))
+                continue;
+            len = sizeof(value);
+            if (!RegQueryValueEx(hkey, "EnableExtensions", NULL, &type, LPBYTE(&value), &len))
+            {
+                switch (type)
+                {
+                case REG_DWORD: s_extensions = !!*(reinterpret_cast<const DWORD*>(&value)); break;
+                case REG_SZ: s_extensions = _wtoi(value) == 1; break;
+                }
+            }
+            RegCloseKey(hkey);
+        }
+    }
+
+    return s_extensions;
+}
+
+
+
+//------------------------------------------------------------------------------
 class locale_info
 {
 public:
     void                init();
-    void                format_time(bool extensions, const SYSTEMTIME& systime, str_base& out);
-    void                format_date(bool extensions, const SYSTEMTIME& systime, str_base& out);
+    void                format_time(const SYSTEMTIME& systime, str_base& out);
+    void                format_date(const SYSTEMTIME& systime, str_base& out);
 private:
     void                init(LCTYPE type, str_base& out, const char* def);
 private:
     bool                m_initialized = false;
+    char                m_date_order = 0;
+    bool                m_add_weekday = true;
     LCID                m_lcid;
-    str<16>             m_time_sep;
-    str<16>             m_date_sep;
-    str<16>             m_decimal;
-    str<32>             m_weekdays[7];
+    str<4>              m_time_sep;
+    str<4>              m_date_sep;
+    str<4>              m_decimal;
+    str<8>              m_weekdays[7];
+    wstr<16>            m_short_date;
 };
 
 //------------------------------------------------------------------------------
@@ -66,13 +105,63 @@ void locale_info::init()
         init(LOCALE_SABBREVDAYNAME4, m_weekdays[4], "Thu");
         init(LOCALE_SABBREVDAYNAME5, m_weekdays[5], "Fri");
         init(LOCALE_SABBREVDAYNAME6, m_weekdays[6], "Sat");
+
+        str<> tmp;
+        init(LOCALE_IDATE, tmp, "0");
+        switch (atoi(tmp.c_str()))
+        {
+        default:    m_date_order = 0; break;
+        case 1:     m_date_order = 1; break;
+        case 2:     m_date_order = 2; break;
+        }
+
+        if (are_extensions_enabled())
+        {
+            init(LOCALE_SSHORTDATE, tmp, "");
+
+            // Adjust the short date picture to include leading zeros for day
+            // and month numbers, and to abbreviate day and month names.
+            str<> fmt;
+            bool in_quote = false;
+            for (const char* p = tmp.c_str(); *p;)
+            {
+                if (*p == '"')
+                {
+                    in_quote = !in_quote;
+                }
+                else if (!in_quote && (*p == 'd' || *p == 'M'))
+                {
+                    const char ch = *p;
+                    const char* const start = p;
+                    int c = 0;
+                    while (*p == ch)
+                        c++, p++;
+                    if (c == 1)
+                        fmt.concat(start, 1);   // Insert an extra => 'dd' or 'MM'.
+                    else if (c == 4)
+                        c--;                    // Remove one => 'ddd' or 'MMM'.
+                    fmt.concat(start, c);
+                    // CMD only adds the weekday name if the picture does NOT
+                    // include 'dd', 'ddd', or 'dddd'.  It seems like it would
+                    // treat 'd' and 'dd' the same, but in practice it doesn't.
+                    if (c > 1)
+                        m_add_weekday = false;
+                    continue;
+                }
+                fmt.concat(p, 1);
+                p++;
+            }
+
+            m_short_date = fmt.c_str();
+        }
     }
 }
 
 //------------------------------------------------------------------------------
-void locale_info::format_time(bool extensions, const SYSTEMTIME& systime, str_base& out)
+void locale_info::format_time(const SYSTEMTIME& systime, str_base& out)
 {
     init();
+
     out.format("%2d%s%02d%s%02d%s%02d",
                systime.wHour, m_time_sep.c_str(),
                systime.wMinute, m_time_sep.c_str(),
@@ -81,14 +170,65 @@ void locale_info::format_time(bool extensions, const SYSTEMTIME& systime, str_ba
 }
 
 //------------------------------------------------------------------------------
-void locale_info::format_date(bool extensions, const SYSTEMTIME& systime, str_base& out)
+void locale_info::format_date(const SYSTEMTIME& systime, str_base& out)
 {
     init();
-    out.format("%s %02d%s%02d%s%4d",
-               m_weekdays[systime.wDayOfWeek].c_str(),
-               systime.wMonth, m_date_sep.c_str(),
-               systime.wDay, m_date_sep.c_str(),
-               systime.wYear);
+
+    bool add_weekday = true;
+    str<> tmp;
+
+    if (are_extensions_enabled() && m_short_date.length())
+    {
+        WCHAR buffer[128];
+        if (!GetDateFormatW(m_lcid, 0, &systime, m_short_date.c_str(), buffer, sizeof_array(buffer)))
+            goto fallback;
+
+        add_weekday = m_add_weekday;
+        tmp = buffer;
+    }
+    else
+    {
+fallback:
+        int a, b, c;
+        switch (m_date_order)
+        {
+        default:    // month, day, year
+            a = systime.wMonth;
+            b = systime.wDay;
+            c = systime.wYear;
+            break;
+        case 1:     // day, month, year
+            a = systime.wDay;
+            b = systime.wMonth;
+            c = systime.wYear;
+            break;
+        case 2:     // year, month, day
+            a = systime.wYear;
+            b = systime.wMonth;
+            c = systime.wDay;
+            break;
+        }
+
+        tmp.format("%02d%s%02d%s%02d",
+                   a, m_date_sep.c_str(),
+                   b, m_date_sep.c_str(),
+                   c );
+    }
+
+    if (m_add_weekday)
+    {
+        out.clear();
+        // East Asian multibyte code pages put the weekday last.
+        const UINT cp = GetConsoleOutputCP();
+        if (cp == 932 || cp == 936 || cp == 949 || cp == 950)
+            out << tmp.c_str() << " " << m_weekdays[systime.wDayOfWeek].c_str();
+        else
+            out << m_weekdays[systime.wDayOfWeek].c_str() << " " << tmp.c_str();
+    }
+    else
+    {
+        out = tmp.c_str();
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -369,8 +509,6 @@ void prompt_utils::expand_prompt_codes(const char* in, str_base& out, bool singl
 
     str<> tmp;
     locale_info loc;
-    static bool s_extensions = true;
-    static bool s_initialized = false;
 
     str_iter iter(in);
     while (iter.more())
@@ -385,33 +523,6 @@ void prompt_utils::expand_prompt_codes(const char* in, str_base& out, bool singl
         {
             out.concat(ptr, int(iter.get_pointer() - ptr));
             continue;
-        }
-
-        if (!s_initialized)
-        {
-            // Defer the cost of checking for extensions until a $ code is
-            // encountered.
-            s_initialized = true;
-            DWORD type;
-            WCHAR value[MAX_PATH];
-            DWORD len = sizeof(value);
-            HKEY hives[] = { HKEY_LOCAL_MACHINE, HKEY_CURRENT_USER };
-            for (HKEY hive : hives)
-            {
-                HKEY hkey = 0;
-                if (RegOpenKeyEx(hive, "Software\\Microsoft\\Command Processor", 0, MAXIMUM_ALLOWED, &hkey))
-                    continue;
-                len = sizeof(value);
-                if (!RegQueryValueEx(hkey, "EnableExtensions", NULL, &type, LPBYTE(&value), &len))
-                {
-                    switch (type)
-                    {
-                    case REG_DWORD: s_extensions = !!*(reinterpret_cast<const DWORD*>(&value)); break;
-                    case REG_SZ: s_extensions = _wtoi(value) == 1; break;
-                    }
-                }
-                RegCloseKey(hkey);
-            }
         }
 
         c = iter.next();
@@ -436,7 +547,7 @@ void prompt_utils::expand_prompt_codes(const char* in, str_base& out, bool singl
             {
                 SYSTEMTIME systime;
                 GetLocalTime(&systime);
-                loc.format_date(s_extensions, systime, tmp);
+                loc.format_date(systime, tmp);
                 out << tmp;
             }
             break;
@@ -463,7 +574,7 @@ void prompt_utils::expand_prompt_codes(const char* in, str_base& out, bool singl
             }
             break;
         case 'M':   case 'm':
-            if (s_extensions && s_mpr.init())
+            if (are_extensions_enabled() && s_mpr.init())
             {
                 os::get_current_dir(tmp);
                 if (!tmp.length())
@@ -512,7 +623,7 @@ void prompt_utils::expand_prompt_codes(const char* in, str_base& out, bool singl
             {
                 SYSTEMTIME systime;
                 GetLocalTime(&systime);
-                loc.format_time(s_extensions, systime, tmp);
+                loc.format_time(systime, tmp);
                 out << tmp;
             }
             break;
