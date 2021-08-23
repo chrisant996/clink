@@ -25,13 +25,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - Make it owner draw and add text like "dir", "alias", etc?
   - Add stat chars when so configured?
 
-**Marking**
-- Marking mode in-app similar to my other shell project?  It's a kludge, but it copies with HTML formatting (and even uses the color scheme).
-- Is there some way to show selection markup?  Maybe have a way to have floating windows mark corners of a selection region, or overlay or or more windows to draw an outline around the selected region?
-
-**Lua**
-- Provide API to copy text to clipboard (plain text or HTML)?
-
 **Installer**
 - Why does it install to a versioned path?  The .nsi file says `; Install to a versioned folder to reduce interference between versions.` so use caution when making any change there.
 
@@ -98,6 +91,12 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Corrupted clink_history -- not sure how, when, or why -- but after having made changes to history, debugging through issues, and aborting some debugging sessions my clink_history file had a big chunk of contiguous NUL bytes. _[UPDATE: the good news is it isn't a Clink issue; the bad news is the SSD drives in my new Alienware m15 R4 keep periodically hitting a BSOD for KERNEL DATA INPAGE ERROR, which zeroes out recently written sectors.]_
 
 ## Punt
+- Marking mode in-app is not realistic:
+  - Windows Terminal is essentially dropping support for console APIs that read/write the screen buffer, particularly the scrollback buffer.
+  - Different terminal hosts have different capabilities and limitations, so building a marking mode that behaves reasonably across all/most terminal hosts isn't feasible.
+  - One of the big opportunities for terminal hosts is to provide enhancements to marking and copy/paste.
+  - So it seems best to leave marking and copy/paste as something for terminal hosts to provide.
+- Lua API to copy text to clipboard (plain text or HTML) is not realistic, for the same technical reasons as for marking mode.
 - Would be nice to complete "%ENVVAR%\*" by internally expanding ENVVAR for collecting matches, but not expanding it in the editing line.  However, it's difficult to make that work reasonably in conjunction with path normalization.
 - [ConsoleZ](https://github.com/cbucher/console) sometimes draws the prompt in the wrong color:  scroll up, then type => the prompt is drawn in the input color instead of in the default color.  It doesn't happen in conhost or ConEmu or Windows Terminal.  Debugging indicates Clink is _not_ redrawing the prompt, so it's entirely an internal issue inside ConsoleZ.
 - Max input line length:
