@@ -117,6 +117,10 @@ void win_screen_buffer::begin()
     if (!m_handle)
         open();
 
+    m_ready++;
+    if (m_ready > 1)
+        return;
+
     static bool detect_native_ansi_handler = true;
     if (detect_native_ansi_handler)
     {
@@ -229,18 +233,19 @@ void win_screen_buffer::begin()
 
     if (m_native_vt)
         SetConsoleMode(m_handle, m_prev_mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
-
-    m_ready = true;
 }
 
 //------------------------------------------------------------------------------
 void win_screen_buffer::end()
 {
-    if (m_ready)
+    if (m_ready > 0)
     {
-        SetConsoleTextAttribute(m_handle, m_default_attr);
-        SetConsoleMode(m_handle, m_prev_mode);
-        m_ready = false;
+        m_ready--;
+        if (!m_ready)
+        {
+            SetConsoleTextAttribute(m_handle, m_default_attr);
+            SetConsoleMode(m_handle, m_prev_mode);
+        }
     }
 }
 

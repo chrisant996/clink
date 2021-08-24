@@ -55,7 +55,7 @@ private:
     void*           m_handle = nullptr;
     unsigned long   m_prev_mode = 0;
     unsigned short  m_default_attr = 0x07;
-    bool            m_ready = false;
+    unsigned short  m_ready = 0;
     bool            m_bold = false;
     bool            m_native_vt = false;
 
