@@ -65,7 +65,10 @@ static int scroll(lua_State* state)
     else if (stricmp(mode, "end") == 0)
         scrmode = SCR_TOEND;
     else if (stricmp(mode, "absolute") == 0)
+    {
         scrmode = SCR_ABSOLUTE;
+        amount--;
+    }
 
     HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
     int scrolled = ScrollConsoleRelative(h, amount, scrmode);
