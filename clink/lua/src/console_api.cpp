@@ -449,7 +449,7 @@ static int find_line(lua_State* state, int direction)
         num_attrs = 1;
         arg++;
     }
-    else
+    else if (lua_istable(state, arg))
     {
         for (int i = 1; num_attrs <= sizeof_array(attrs); i++)
         {
