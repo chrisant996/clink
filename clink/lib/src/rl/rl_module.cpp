@@ -521,7 +521,7 @@ bool is_showing_argmatchers()
 // the prompt again after it's already been displayed, it's necessary to draw
 // the prefix again.  To do that, it's necessary to know how many lines to move
 // up to reach the beginning of the prompt prefix.
-static int count_prompt_lines(const char* prompt_prefix, int len)
+int count_prompt_lines(const char* prompt_prefix, int len)
 {
     if (len <= 0 || !prompt_prefix)
         return 0;

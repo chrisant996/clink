@@ -765,6 +765,12 @@ rl_expand_prompt (char *prompt)
 
 /* begin_clink_change */
 const char *
+rl_get_local_prompt (void)
+{
+  return local_prompt;
+}
+
+const char *
 rl_get_local_prompt_prefix (void)
 {
   return local_prompt_prefix;

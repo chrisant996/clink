@@ -11,6 +11,7 @@
 #include <core/str.h>
 #include <core/str_compare.h>
 #include <core/str_iter.h>
+#include <terminal/ecma48_iter.h>
 #include "lib/matches.h"
 #include "match_builder_lua.h"
 
@@ -23,11 +24,14 @@ extern "C" {
 #include <readline/rlprivate.h>
 extern int              _rl_completion_case_map;
 extern const char*      rl_readline_name;
+extern int              _rl_last_v_pos;
 }
 
 extern matches* get_mutable_matches(bool nosort=false);
 extern const char* get_last_luafunc();
 extern void override_rl_last_func(rl_command_func_t* func);
+
+extern int count_prompt_lines(const char* prompt_prefix, int len);
 
 
 
@@ -468,6 +472,82 @@ int get_key_bindings(lua_State* state)
     return 1;
 }
 
+//------------------------------------------------------------------------------
+/// -name:  rl.getpromptinfo
+/// -ret:   table
+/// Returns information about the current prompt and input line.
+///
+/// Note: the <span class="arg">promptline</span> and
+/// <span class="arg">inputline</span> fields may be skewed if any additional
+/// terminal output has occurred (for example if any <code>print()</code> calls
+/// have happened, or if <code>rl.getpromptinfo()</code> is used inside a
+/// <a href="#clink_onendedit">clink.onendedit()</a> event handler, or any other
+/// output that the Readline library wouldn't know about).
+///
+/// The returned table has the following scheme:
+/// -show:  {
+/// -show:  &nbsp; promptprefix,            -- [string] the prompt string, minus the last line of the prompt string
+/// -show:  &nbsp; promptprefixlinecount,   -- [integer] number of lines in the promptprefix string
+/// -show:  &nbsp; prompt,                  -- [string] the last line of the prompt string
+/// -show:  &nbsp; rprompt,                 -- [string or nil] the right side prompt (or nil if none)
+/// -show:  &nbsp; promptline,              -- [integer] console line on which the prompt starts
+/// -show:  &nbsp; inputline,               -- [integer] console line on which the input text starts
+/// -show:  &nbsp; inputlinecount,          -- [integer] number of lines in the input text
+/// -show:  }
+static int get_prompt_info(lua_State* state)
+{
+    lua_createtable(state, 0, 7);
+
+    str_moveable bracketed_prefix;
+    const char* prefix = rl_get_local_prompt_prefix();
+    if (prefix)
+    {
+        ecma48_processor_flags flags = ecma48_processor_flags::bracket;
+        ecma48_processor(prefix, &bracketed_prefix, nullptr/*cell_count*/, flags);
+    }
+
+    int prefix_lines = count_prompt_lines(bracketed_prefix.c_str(), bracketed_prefix.length());
+
+    lua_pushliteral(state, "promptprefix");
+    lua_pushstring(state, prefix);
+    lua_rawset(state, -3);
+
+    lua_pushliteral(state, "promptprefixlinecount");
+    lua_pushinteger(state, prefix_lines);
+    lua_rawset(state, -3);
+
+    lua_pushliteral(state, "prompt");
+    lua_pushstring(state, rl_get_local_prompt());
+    lua_rawset(state, -3);
+
+    if (rl_rprompt)
+    {
+        lua_pushliteral(state, "rprompt");
+        lua_pushstring(state, rl_rprompt);
+        lua_rawset(state, -3);
+    }
+
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi))
+    {
+        int input_line = csbi.dwCursorPosition.Y - _rl_last_v_pos;
+
+        lua_pushliteral(state, "promptline");
+        lua_pushinteger(state, 1 + input_line - prefix_lines);
+        lua_rawset(state, -3);
+
+        lua_pushliteral(state, "inputline");
+        lua_pushinteger(state, 1 + input_line);
+        lua_rawset(state, -3);
+
+        lua_pushliteral(state, "inputlinecount");
+        lua_pushinteger(state, 1 + _rl_vis_botlin);
+        lua_rawset(state, -3);
+    }
+
+    return 1;
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -486,6 +566,7 @@ void rl_lua_initialise(lua_state& lua)
         { "getlastcommand",         &get_last_command },
         { "setmatches",             &set_matches },
         { "getkeybindings",         &get_key_bindings },
+        { "getpromptinfo",          &get_prompt_info },
     };
 
     lua_State* state = lua.get_state();
