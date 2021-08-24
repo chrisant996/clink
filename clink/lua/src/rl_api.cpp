@@ -442,7 +442,7 @@ int get_key_bindings(lua_State* state)
     int i = 1;
     for (auto const& info : bindings)
     {
-        lua_createtable(state, 0, 2);
+        lua_createtable(state, 0, 4);
 
         lua_pushliteral(state, "key");
         lua_pushlstring(state, info.name.c_str(), info.name.length());

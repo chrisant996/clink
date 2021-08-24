@@ -53,7 +53,7 @@ bool lua_match_generator::generate(const line_state& line, match_builder& builde
     if (true)
     {
         // Expose some of the readline state to lua.
-        lua_createtable(state, 2, 0);
+        lua_createtable(state, 0, 2);
 
         lua_pushliteral(state, "line_buffer");
         lua_pushstring(state, rl_line_buffer);
@@ -252,7 +252,7 @@ done:
                 match++;
             }
 
-            lua_createtable(state, 2, 0);
+            lua_createtable(state, 0, 2);
 
             lua_pushliteral(state, "match");
             lua_pushstring(state, match);
@@ -537,7 +537,7 @@ void lua_match_generator::filter_matches(char** matches, char completion_type, b
             match++;
         }
 
-        lua_createtable(state, 2, 0);
+        lua_createtable(state, 0, 2);
 
         lua_pushliteral(state, "match");
         lua_pushstring(state, match);

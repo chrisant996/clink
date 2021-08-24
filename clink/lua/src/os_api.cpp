@@ -297,6 +297,7 @@ int glob_impl(lua_State* state, bool dirs_only, bool back_compat=false)
                 add_type_tag(type, "hidden");
             if (attr & FILE_ATTRIBUTE_READONLY)
                 add_type_tag(type, "readonly");
+
             lua_pushliteral(state, "type");
             lua_pushlstring(state, type.c_str(), type.length());
             lua_rawset(state, -3);

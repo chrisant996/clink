@@ -66,7 +66,7 @@ void lua_word_classifier::classify(const std::vector<line_state>& commands, word
     lua_createtable(state, int(linestates.size()), 0);
     for (size_t ii = 0; ii < linestates.size();)
     {
-        lua_createtable(state, 2, 0);
+        lua_createtable(state, 0, 2);
 
         lua_pushliteral(state, "line_state");
         linestates[ii].push(state);

@@ -123,7 +123,7 @@ int line_state_lua::get_word_info(lua_State* state)
 
     const word& word = words[index];
 
-    lua_createtable(state, 0, 4);
+    lua_createtable(state, 0, 6);
 
     lua_pushliteral(state, "offset");
     lua_pushinteger(state, word.offset + 1);
