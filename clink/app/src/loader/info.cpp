@@ -65,13 +65,14 @@ int clink_info(int argc, char** argv)
     };
 
     bool labeled = false;
+    bool first = true;
     for (const char* env_var : env_vars)
     {
         bool use_state_dir = !*env_var;
         const char* label = labeled ? "" : "inputrc";
         labeled = true;
         if (use_state_dir)
-            printf("%-*s : %s\n", spacing, label, "state directory (see above)");
+            printf("%-*s : %s\n", spacing, label, "state directory");
         else
             printf("%-*s : %%%s%%\n", spacing, label, env_var);
 
@@ -95,8 +96,19 @@ int clink_info(int argc, char** argv)
 
             bool exists = os::get_path_type(out.c_str()) == os::path_type_file;
 
+            const char* status;
+            if (!exists)
+                status = "";
+            else if (first)
+                status = "   (LOAD)";
+            else
+                status = "   (exists)";
+
             if (exists || i < 2)
-                printf("%-*s     %s%s\n", spacing, "", out.c_str(), exists ? "   (exists)" : "");
+                printf("%-*s     %s%s\n", spacing, "", out.c_str(), status);
+
+            if (exists)
+                first = false;
         }
     }
 

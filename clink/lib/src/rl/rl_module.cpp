@@ -395,7 +395,7 @@ static void load_user_inputrc(const char* state_dir)
             if (!rl_read_init_file(path.c_str()))
             {
                 LOG("Found Readline inputrc at '%s'", path.c_str());
-                break;
+                return;
             }
         }
     }
