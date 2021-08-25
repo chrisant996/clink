@@ -650,6 +650,8 @@ append_not_dup:
         if (is_match_type(m_matches.get_match_type(m_index), match_type::dir))
         {
             m_buffer->set_cursor(m_point + m_len); // Inside quotes, if any.
+            if (m_point + m_len > 0 && m_buffer->get_buffer()[m_point + m_len - 1] != '\\')
+                m_buffer->insert("\\");
             cancel(result);
             m_inserted = false; // A subsequent activation should not resume.
             break;
@@ -1231,6 +1233,22 @@ void selectcomplete_impl::insert_match(int final)
     m_buffer->set_cursor(m_anchor);
     m_buffer->insert(qs);
     m_buffer->insert(match);
+
+    bool removed_dir_mark = false;
+    if (is_match_type(type, match_type::dir) && !_rl_complete_mark_directories)
+    {
+        int cursor = m_buffer->get_cursor();
+        if (cursor >= 2 &&
+            m_buffer->get_buffer()[cursor - 1] == '\\' &&
+            m_buffer->get_buffer()[cursor - 2] != ':')
+        {
+            m_buffer->remove(cursor - 1, cursor);
+            cursor--;
+            m_buffer->set_cursor(cursor);
+            removed_dir_mark = true;
+        }
+    }
+
     if (final)
     {
         int nontrivial_lcd = compare_match(const_cast<char*>(m_needle.c_str()), match);
@@ -1277,12 +1295,21 @@ void selectcomplete_impl::insert_match(int final)
                 // So `program "c:\dir\" file` is interpreted as having one
                 // argument which is `c:\dir" file`.  Be nice and avoid
                 // inserting such things on behalf of users.
-                if (cursor >= 2 &&
+                //
+                // "What's up with the strange treatment of quotation marks and
+                // backslashes by CommandLineToArgvW"
+                // https://devblogs.microsoft.com/oldnewthing/20100917-00/?p=12833
+                //
+                // "Everyone quotes command line arguments the wrong way"
+                // https://docs.microsoft.com/en-us/archive/blogs/twistylittlepassagesallalike/everyone-quotes-command-line-arguments-the-wrong-way
+                if (!removed_dir_mark &&
+                    cursor >= 2 &&
                     m_buffer->get_buffer()[cursor - 1] == '\\' &&
                     m_buffer->get_buffer()[cursor - 2] != ':')
                 {
                     m_buffer->remove(cursor - 1, cursor);
                     cursor--;
+                    removed_dir_mark = true;
                 }
 
                 qs[0] = rl_completion_quote_character;
@@ -1303,6 +1330,7 @@ void selectcomplete_impl::insert_match(int final)
         m_buffer->insert(qs);
         m_point = m_anchor + strlen(qs) + m_needle.length();
     }
+
     m_buffer->set_cursor(m_point);
     m_buffer->end_undo_group();
 
