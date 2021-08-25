@@ -5,6 +5,8 @@
 #### v1.2.28
 
 - Added `rl.getpromptinfo()` function.
+- Fixed loading .inputrc so that only one is loaded (regression introduced in v1.0.0a0 by the fix for [mridgers #258](https://github.com/mridgers/clink/issues/258)).
+- Fixed `clink-select-complete` to respect when `mark-directories` in .inputrc file if `off`.
 - Fixed crash in `console.findline()` when no attributes are passed.  Callers using v1.2.27 and earlier can work around the crash by passing `{}` for attributes.
 - Fixed an off-by-1 bug in `console.scroll("absolute", top)`.  This will fix edge case malfunctions in some callers, but some callers could experience this as a breaking change.
 
