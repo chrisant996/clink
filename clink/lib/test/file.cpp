@@ -68,6 +68,21 @@ TEST_CASE("File match generator")
             tester.run();
         }
 
+        SECTION(dyn_section("Single dir complete", mode))
+        {
+            tester.set_input("dir1" DO_COMPLETE);
+            if (v == 0)
+            {
+                tester.set_expected_output("dir1\\");
+                tester.set_expected_matches("dir1\\only", "dir1\\file1", "dir1\\file2");
+            }
+            else
+            {
+                tester.set_expected_output("dir1");
+                tester.set_expected_matches("dir1\\");
+            }
+            tester.run();
+        }
         SECTION(dyn_section("Dir slash flip", mode))
         {
             tester.set_input("dir1/" DO_COMPLETE);
