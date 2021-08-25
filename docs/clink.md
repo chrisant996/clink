@@ -312,7 +312,7 @@ call "%~dp0clink.bat" inject --profile "%TEMP%\clink_portable" %1 %2 %3 %4 %5 %6
 
 Readline itself can also be configured to add custom keybindings and macros by creating a Readline init file. There is excellent documentation for all the options and commands available to configure Readline in Readline's [manual](https://tiswww.cwru.edu/php/chet/readline/rltop.html#Documentation).
 
-Clink searches in the directories referenced by the following environment variables and loads any `.inputrc` or `_inputrc` files present, in the order listed here:
+Clink searches in the directories referenced by the following environment variables and loads the first `.inputrc` or `_inputrc` file found, in the order listed here:
 - `%CLINK_INPUTRC%`
 - The Clink profile directory (see the "state" line from `clink info`).
 - `%USERPROFILE%`
@@ -320,15 +320,14 @@ Clink searches in the directories referenced by the following environment variab
 - `%APPDATA%`
 - `%HOME%`
 
-Configuration in files loaded earlier can be overridden by files loaded later.
-
 Other software that also uses Readline will also look for the `.inputrc` file (and possibly the `_inputrc` file too). To set macros and keybindings intended only for Clink one can use the Readline init file conditional construct like this; `$if clink [...] $endif`.
 
-You can use `clink info` to find the directories and configuration files for the current Clink session.
+You can use `clink info` to find the directories and configuration file for the current Clink session.
 
 > **Compatibility Notes:**
 > - The `clink_inputrc_base` file from v0.4.8 is no longer used.
 > - For backward compatibility, `clink_inputrc` is also loaded from the above locations, but it has been deprecated and may be removed in the future.
+> - Clink v1.0.0a0 through Clink v1.2.27 accidentally loaded up to one Readline init file from each of the searched directories. That was incorrect behavior for loading Readline init files and has been fixed. If similar behavior is still desired, consider using the `$include` directive in the Readline init file, to load additional files.
 
 ### Basic Format
 
