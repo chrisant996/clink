@@ -4,6 +4,7 @@
 #include "pch.h"
 #include "seh_scope.h"
 #include "utils/app_context.h"
+#include "version.h"
 
 #include <core/str.h>
 
@@ -23,6 +24,11 @@ static LONG WINAPI exception_filter(EXCEPTION_POINTERS* info)
     buffer << "\\clink.dmp";
 
     fputs("\n!!! CLINK'S CRASHED!", stderr);
+#ifdef _WIN64
+    fputs("\n!!! v" CLINK_VERSION_STR " (x64)", stderr);
+#else
+    fputs("\n!!! v" CLINK_VERSION_STR " (x86)", stderr);
+#endif
     fputs("\n!!!", stderr);
     fputs("\n!!! Writing core dump", stderr);
     fputs("\n!!! ", stderr);
