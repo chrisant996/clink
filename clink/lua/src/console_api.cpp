@@ -530,70 +530,8 @@ static int find_line(lua_State* state, int direction)
 /// <strong>Note:</strong> Although most of the arguments are optional, the
 /// order of provided arguments is important.
 ///
-/// The following example provides a pair of <code>find_prev_colored_line</code>
-/// and <code>find_next_colored_line</code> functions.  The functions can be
-/// bound to keys via the <a href="#luakeybindings">luafunc: macro syntax</a>
-/// in a .inputrc file.  They scroll the screen buffer to the previous or next
-/// line that contains "warn" or "error" colored red or yellow.
-/// -show:  -- Searches upwards for a line containing "warn" or "error"
-/// -show:  -- colored red or yellow.
-/// -show:  function find_prev_colored_line(rl_buffer)
-/// -show:  &nbsp; local height = console.getheight()
-/// -show:  &nbsp; local cur_top = console.gettop()
-/// -show:  &nbsp; local offset = math.modf((height - 1) / 2) -- For vertically centering the found line.
-/// -show:  &nbsp; local start = cur_top + offset
-/// -show:  &nbsp; local found_index
-/// -show:
-/// -show:  &nbsp; -- Only search if there's still room to scroll up.
-/// -show:  &nbsp; if start - offset > 1 then
-/// -show:  &nbsp;   local match = console.findprevline(start - 1, "warn|error", "regex", {4,12,14}, "fore")
-/// -show:  &nbsp;   if match ~= nil and match > 0 then
-/// -show:  &nbsp;     found_index = match
-/// -show:  &nbsp;   end
-/// -show:  &nbsp; end
-/// -show:
-/// -show:  &nbsp; -- If scrolled up but no more matches, maintain the scroll position.
-/// -show:  &nbsp; if found_index == nil and cur_top <= console.getnumlines() - height then
-/// -show:  &nbsp;   found_index = start
-/// -show:  &nbsp; end
-/// -show:
-/// -show:  &nbsp; if found_index ~= nil then
-/// -show:  &nbsp;   console.scroll("absolute", found_index - offset)
-/// -show:  &nbsp; else
-/// -show:  &nbsp;   rl_buffer:ding()
-/// -show:  &nbsp; end
-/// -show:  end
-/// -show:
-/// -show:  -- Searches downwards for a line containing "warn" or "error"
-/// -show:  -- colored red or yellow.
-/// -show:  function find_next_colored_line(rl_buffer)
-/// -show:  &nbsp; local height = console.getheight()
-/// -show:  &nbsp; local cur_top = console.gettop()
-/// -show:  &nbsp; local bottom = console.getnumlines()
-/// -show:  &nbsp; local offset = math.modf((height - 1) / 2) -- For vertically centering the found line.
-/// -show:  &nbsp; local start = cur_top + offset
-/// -show:  &nbsp; local found_index
-/// -show:
-/// -show:  &nbsp; if cur_top > bottom - height then
-/// -show:  &nbsp;   rl_buffer:ding()
-/// -show:  &nbsp;   return
-/// -show:  &nbsp; end
-/// -show:
-/// -show:  &nbsp; -- Only search if there's still room to scroll down.
-/// -show:  &nbsp; if start - offset + height - 1 < bottom then
-/// -show:  &nbsp;   local match = console.findnextline(start + 1, "warn|error", "regex", {4,12,14}, "fore")
-/// -show:  &nbsp;   if match ~= nil and match > 0 then
-/// -show:  &nbsp;     found_index = match
-/// -show:  &nbsp;   end
-/// -show:  &nbsp; end
-/// -show:
-/// -show:  &nbsp; if found_index ~= nil then
-/// -show:  &nbsp;   console.scroll("absolute", found_index - offset)
-/// -show:  &nbsp;   was_top = console.gettop()
-/// -show:  &nbsp; else
-/// -show:  &nbsp;   rl_buffer:ding()
-/// -show:  &nbsp; end
-/// -show:  end
+/// For more information, see <a href="#findlineexample">this example</a> of
+/// using this in some <a href="#luakeybindings">luafunc: macros</a>.
 static int find_prev_line(lua_State* state)
 {
     return find_line(state, -1);

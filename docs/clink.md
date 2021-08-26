@@ -965,7 +965,7 @@ Here is the quick version:
 
 You can use `clink info` to find the directories and configuration files for the current Clink session.
 
-Here is an example `.inputrc` file with the key bindings that I use myself:
+Here is an example `.inputrc` file with key bindings that I use myself:
 
 <pre><code class="plaintext"><span class="hljs-meta">$if clink</span>           <span class="hljs-comment"># begin clink-only section</span>
 
@@ -975,8 +975,8 @@ Here is an example `.inputrc` file with the key bindings that I use myself:
 <span class="hljs-comment"># Completion key bindings.</span>
 <span class="hljs-string">"\t"</span>:               old-menu-complete               <span class="hljs-comment"># Tab</span>
 <span class="hljs-string">"\e[Z"</span>:             old-menu-complete-backward      <span class="hljs-comment"># Shift+Tab</span>
-<span class="hljs-string">"\e[27;5;9~"</span>:       clink-popup-complete            <span class="hljs-comment"># Ctrl+Tab (ConEmu needs additional configuration to allow Ctrl+Tab)</span>
-<span class="hljs-string">"\x1b[27;5;32~"</span>:    complete                        <span class="hljs-comment"># Ctrl+Space</span>
+<span class="hljs-string">"\e[27;5;9~"</span>:       clink-popup-complete            <span class="hljs-comment"># Ctrl+Tab</span>
+<span class="hljs-string">"\x1b[27;5;32~"</span>:    clink-select-complete           <span class="hljs-comment"># Ctrl+Space</span>
 
 <span class="hljs-comment"># Some key bindings I got used to from 4Dos/4NT/Take Command.</span>
 C-b:                                                <span class="hljs-comment"># Ctrl+B (cleared because I redefined Ctrl+F)</span>
@@ -1077,10 +1077,12 @@ The Lua function receives a <a href="#rl_buffer">rl_buffer</a> argument that giv
 
 Lua functions can print output, but should first call <a href="#rl_buffer:beginoutput">rl_buffer:beginoutput</a> so that the output doesn't overwrite the displayed input line.
 
+#### Basic example
+
 Example of a Lua function key binding in a .inputrc file:
 
-<pre><code class="plaintext"><span class="hljs-string">M-C-y</span>:      <span class="hljs-string">"luafunc:insert_date"</span>
-<span class="hljs-string">M-C-z</span>:      <span class="hljs-string">"luafunc:print_date"</span>
+<pre><code class="plaintext">M-C-y:          <span class="hljs-string">"luafunc:insert_date"</span>
+M-C-z:          <span class="hljs-string">"luafunc:print_date"</span>
 </code></pre>
 
 Example functions to go with that:
@@ -1094,6 +1096,30 @@ function print_date(rl_buffer)
     rl_buffer:beginoutput()
     print(os.date("%A %B %d, %Y   %I:%M %p"))
 end
+```
+
+#### Advanced example
+
+<a name="findlineexample"></a>
+
+Here is an example that makes <kbd>F7</kbd>/<kbd>F8</kbd> jump to the previous/next screen line containing "error" or "warn" colored red or yellow, and makes <kbd>Shift</kbd>+<kbd>F7</kbd>/<kbd>Shift</kbd>+<kbd>F8</kbd> jump to the previous/next prompt line.
+
+One way to use these is when reviewing compiler errors after building a project at the command line.  Press <kbd>Shift</kbd>+<kbd>F7</kbd> to jump to the previous prompt line, and then use <kbd>F8</kbd> repeatedly to jump to each next compiler warning or error listed on the screen.
+
+Example key bindings for the .inputrc file:
+
+<pre><code class="plaintext"><span class="hljs-string">"\e[18~"</span>:       <span class="hljs-string">"luafunc:find_prev_colored_line"</span>
+<span class="hljs-string">"\e[19~"</span>:       <span class="hljs-string">"luafunc:find_next_colored_line"</span>
+<span class="hljs-string">"\e[18;2~"</span>:     <span class="hljs-string">"luafunc:find_prev_prompt"</span>
+<span class="hljs-string">"\e[19;2~"</span>:     <span class="hljs-string">"luafunc:find_next_prompt"</span>
+</code></pre>
+
+Example functions to go in a Lua script file:
+
+```lua
+#INCLUDE [examples\ex_findprompt.lua]
+
+#INCLUDE [examples\ex_findline.lua]
 ```
 
 ## Saved Command History
