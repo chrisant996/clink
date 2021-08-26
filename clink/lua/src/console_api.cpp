@@ -491,6 +491,8 @@ static int find_line(lua_State* state, int direction)
 }
 
 //------------------------------------------------------------------------------
+//--   NOTE: The example script below corresponds to examples\findline.lua.   --
+//------------------------------------------------------------------------------
 /// -name:  console.findprevline
 /// -arg:   starting_line:integer
 /// -arg:   [text:string]
@@ -533,32 +535,14 @@ static int find_line(lua_State* state, int direction)
 /// bound to keys via the <a href="#luakeybindings">luafunc: macro syntax</a>
 /// in a .inputrc file.  They scroll the screen buffer to the previous or next
 /// line that contains "warn" or "error" colored red or yellow.
-/// -show:  local was_top
-/// -show:  local found_index
-/// -show:
-/// -show:  local function reset_found()
-/// -show:  &nbsp; was_top = nil
-/// -show:  &nbsp; found_index = nil
-/// -show:  end
-/// -show:
-/// -show:  -- Register for the onbeginedit event, to reset the found
-/// -show:  -- line number each time a new editing prompt begins.
-/// -show:  clink.onbeginedit(reset_found)
-/// -show:
 /// -show:  -- Searches upwards for a line containing "warn" or "error"
 /// -show:  -- colored red or yellow.
 /// -show:  function find_prev_colored_line(rl_buffer)
 /// -show:  &nbsp; local height = console.getheight()
 /// -show:  &nbsp; local cur_top = console.gettop()
 /// -show:  &nbsp; local offset = math.modf((height - 1) / 2) -- For vertically centering the found line.
-/// -show:
-/// -show:  &nbsp; local start
-/// -show:  &nbsp; if found_index == nil or cur_top ~= was_top then
-/// -show:  &nbsp;   start = cur_top
-/// -show:  &nbsp;   was_top = start
-/// -show:  &nbsp; else
-/// -show:  &nbsp;   start = found_index
-/// -show:  &nbsp; end
+/// -show:  &nbsp; local start = cur_top + offset
+/// -show:  &nbsp; local found_index
 /// -show:
 /// -show:  &nbsp; -- Only search if there's still room to scroll up.
 /// -show:  &nbsp; if start - offset > 1 then
@@ -568,9 +552,13 @@ static int find_line(lua_State* state, int direction)
 /// -show:  &nbsp;   end
 /// -show:  &nbsp; end
 /// -show:
+/// -show:  &nbsp; -- If scrolled up but no more matches, maintain the scroll position.
+/// -show:  &nbsp; if found_index == nil and cur_top <= console.getnumlines() - height then
+/// -show:  &nbsp;   found_index = start
+/// -show:  &nbsp; end
+/// -show:
 /// -show:  &nbsp; if found_index ~= nil then
 /// -show:  &nbsp;   console.scroll("absolute", found_index - offset)
-/// -show:  &nbsp;   was_top = console.gettop()
 /// -show:  &nbsp; else
 /// -show:  &nbsp;   rl_buffer:ding()
 /// -show:  &nbsp; end
@@ -579,25 +567,19 @@ static int find_line(lua_State* state, int direction)
 /// -show:  -- Searches downwards for a line containing "warn" or "error"
 /// -show:  -- colored red or yellow.
 /// -show:  function find_next_colored_line(rl_buffer)
-/// -show:  &nbsp; if found_index == nil then
+/// -show:  &nbsp; local height = console.getheight()
+/// -show:  &nbsp; local cur_top = console.gettop()
+/// -show:  &nbsp; local bottom = console.getnumlines()
+/// -show:  &nbsp; local offset = math.modf((height - 1) / 2) -- For vertically centering the found line.
+/// -show:  &nbsp; local start = cur_top + offset
+/// -show:  &nbsp; local found_index
+/// -show:
+/// -show:  &nbsp; if cur_top > bottom - height then
 /// -show:  &nbsp;   rl_buffer:ding()
 /// -show:  &nbsp;   return
 /// -show:  &nbsp; end
 /// -show:
-/// -show:  &nbsp; local height = console.getheight()
-/// -show:  &nbsp; local cur_top = console.gettop()
-/// -show:  &nbsp; local offset = math.modf((height - 1) / 2)
-/// -show:
-/// -show:  &nbsp; local start
-/// -show:  &nbsp; if cur_top ~= was_top then
-/// -show:  &nbsp;     start = cur_top + height - 1
-/// -show:  &nbsp;     was_top = cur_top
-/// -show:  &nbsp; else
-/// -show:  &nbsp;     start = found_index
-/// -show:  &nbsp; end
-/// -show:
 /// -show:  &nbsp; -- Only search if there's still room to scroll down.
-/// -show:  &nbsp; local bottom = console.getnumlines()
 /// -show:  &nbsp; if start - offset + height - 1 < bottom then
 /// -show:  &nbsp;   local match = console.findnextline(start + 1, "warn|error", "regex", {4,12,14}, "fore")
 /// -show:  &nbsp;   if match ~= nil and match > 0 then
