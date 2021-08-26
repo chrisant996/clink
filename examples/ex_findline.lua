@@ -52,7 +52,6 @@ function find_next_colored_line(rl_buffer)
 
     if found_index ~= nil then
         console.scroll("absolute", found_index - offset)
-        was_top = console.gettop()
     else
         rl_buffer:ding()
     end
