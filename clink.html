@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.2.27</title>
+<title>Clink v1.2.28</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -747,7 +747,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.2.27</div>
+                <div id="title">Clink v1.2.28</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -1301,7 +1301,7 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 <p><a name="configreadline"></a></p>
 <h1 id="configuring-readline">Configuring Readline</h1>
 <p>Readline itself can also be configured to add custom keybindings and macros by creating a Readline init file. There is excellent documentation for all the options and commands available to configure Readline in Readline&#39;s <a href="https://tiswww.cwru.edu/php/chet/readline/rltop.html#Documentation">manual</a>.</p>
-<p>Clink searches in the directories referenced by the following environment variables and loads any <code>.inputrc</code> or <code>_inputrc</code> files present, in the order listed here:</p>
+<p>Clink searches in the directories referenced by the following environment variables and loads the first <code>.inputrc</code> or <code>_inputrc</code> file found, in the order listed here:</p>
 <ul>
 <li><code>%CLINK_INPUTRC%</code></li>
 <li>The Clink profile directory (see the &quot;state&quot; line from <code>clink info</code>).</li>
@@ -1310,14 +1310,14 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 <li><code>%APPDATA%</code></li>
 <li><code>%HOME%</code></li>
 </ul>
-<p>Configuration in files loaded earlier can be overridden by files loaded later.</p>
 <p>Other software that also uses Readline will also look for the <code>.inputrc</code> file (and possibly the <code>_inputrc</code> file too). To set macros and keybindings intended only for Clink one can use the Readline init file conditional construct like this; <code>$if clink [...] $endif</code>.</p>
-<p>You can use <code>clink info</code> to find the directories and configuration files for the current Clink session.</p>
+<p>You can use <code>clink info</code> to find the directories and configuration file for the current Clink session.</p>
 <blockquote>
 <p><strong>Compatibility Notes:</strong></p>
 <ul>
 <li>The <code>clink_inputrc_base</code> file from v0.4.8 is no longer used.</li>
 <li>For backward compatibility, <code>clink_inputrc</code> is also loaded from the above locations, but it has been deprecated and may be removed in the future.</li>
+<li>Clink v1.0.0a0 through Clink v1.2.27 accidentally loaded up to one Readline init file from each of the searched directories. That was incorrect behavior for loading Readline init files and has been fixed. If similar behavior is still desired, consider using the <code>$include</code> directive in the Readline init file, to load additional files.</li>
 </ul>
 </blockquote>
 <h3 id="basic-format">Basic Format</h3>
@@ -2467,7 +2467,7 @@ end
 </li>
 </ul>
 <p>You can use <code>clink info</code> to find the directories and configuration files for the current Clink session.</p>
-<p>Here is an example <code>.inputrc</code> file with the key bindings that I use myself:</p>
+<p>Here is an example <code>.inputrc</code> file with key bindings that I use myself:</p>
 <pre><code class="plaintext"><span class="hljs-meta">$if clink</span>           <span class="hljs-comment"># begin clink-only section</span>
 
 <span class="hljs-comment"># The following key bindings are for emacs mode.</span>
@@ -2476,8 +2476,8 @@ end
 <span class="hljs-comment"># Completion key bindings.</span>
 <span class="hljs-string">"\t"</span>:               old-menu-complete               <span class="hljs-comment"># Tab</span>
 <span class="hljs-string">"\e[Z"</span>:             old-menu-complete-backward      <span class="hljs-comment"># Shift+Tab</span>
-<span class="hljs-string">"\e[27;5;9~"</span>:       clink-popup-complete            <span class="hljs-comment"># Ctrl+Tab (ConEmu needs additional configuration to allow Ctrl+Tab)</span>
-<span class="hljs-string">"\x1b[27;5;32~"</span>:    complete                        <span class="hljs-comment"># Ctrl+Space</span>
+<span class="hljs-string">"\e[27;5;9~"</span>:       clink-popup-complete            <span class="hljs-comment"># Ctrl+Tab</span>
+<span class="hljs-string">"\x1b[27;5;32~"</span>:    clink-select-complete           <span class="hljs-comment"># Ctrl+Space</span>
 
 <span class="hljs-comment"># Some key bindings I got used to from 4Dos/4NT/Take Command.</span>
 C-b:                                                <span class="hljs-comment"># Ctrl+B (cleared because I redefined Ctrl+F)</span>
@@ -2880,9 +2880,10 @@ C-_:                kill-line                       <span class="hljs-comment">#
 <p>You can bind a key to a <a href="#extending-clink">Lua</a> function by <a href="#keybindings">binding</a> it to a macro that begins with &quot;luafunc:&quot;.  Clink will invoke the named Lua function when the key binding is input.  Function names can include periods (such as <code>foo.bar</code>) but cannot include any other punctuation.</p>
 <p>The Lua function receives a <a href="#rl_buffer">rl_buffer</a> argument that gives it access to the input buffer.</p>
 <p>Lua functions can print output, but should first call <a href="#rl_buffer:beginoutput">rl_buffer:beginoutput</a> so that the output doesn&#39;t overwrite the displayed input line.</p>
+<h4 id="basic-example">Basic example</h4>
 <p>Example of a Lua function key binding in a .inputrc file:</p>
-<pre><code class="plaintext"><span class="hljs-string">M-C-y</span>:      <span class="hljs-string">"luafunc:insert_date"</span>
-<span class="hljs-string">M-C-z</span>:      <span class="hljs-string">"luafunc:print_date"</span>
+<pre><code class="plaintext">M-C-y:          <span class="hljs-string">"luafunc:insert_date"</span>
+M-C-z:          <span class="hljs-string">"luafunc:print_date"</span>
 </code></pre>
 
 <p>Example functions to go with that:</p>
@@ -2893,6 +2894,221 @@ end
 function print_date(rl_buffer)
     rl_buffer:beginoutput()
     print(os.date(&quot;%A %B %d, %Y   %I:%M %p&quot;))
+end
+</code></pre>
+<h4 id="advanced-example">Advanced example</h4>
+<p><a name="findlineexample"></a></p>
+<p>Here is an example that makes <kbd>F7</kbd>/<kbd>F8</kbd> jump to the previous/next screen line containing &quot;error&quot; or &quot;warn&quot; colored red or yellow, and makes <kbd>Shift</kbd>+<kbd>F7</kbd>/<kbd>Shift</kbd>+<kbd>F8</kbd> jump to the previous/next prompt line.</p>
+<p>One way to use these is when reviewing compiler errors after building a project at the command line.  Press <kbd>Shift</kbd>+<kbd>F7</kbd> to jump to the previous prompt line, and then use <kbd>F8</kbd> repeatedly to jump to each next compiler warning or error listed on the screen.</p>
+<p>Example key bindings for the .inputrc file:</p>
+<pre><code class="plaintext"><span class="hljs-string">"\e[18~"</span>:       <span class="hljs-string">"luafunc:find_prev_colored_line"</span>
+<span class="hljs-string">"\e[19~"</span>:       <span class="hljs-string">"luafunc:find_next_colored_line"</span>
+<span class="hljs-string">"\e[18;2~"</span>:     <span class="hljs-string">"luafunc:find_prev_prompt"</span>
+<span class="hljs-string">"\e[19;2~"</span>:     <span class="hljs-string">"luafunc:find_next_prompt"</span>
+</code></pre>
+
+<p>Example functions to go in a Lua script file:</p>
+<pre><code class="language-lua">local max_recent_prompts = 10   -- Keep track of up to this many recent prompts.
+local min_match_text = 10       -- Minimum length of text to count as a match.
+
+local recent_prompts = {}       -- Queue of recent prompt match strings.
+local scroll_stack = {}         -- Stack of found scroll positions.
+
+-- Remember our most recent scroll position, so that if something else scrolls
+-- the screen we can reset the find_prev_prompt/find_next_prompt stack.
+local was_top
+
+local function add_recent_prompt(text)
+    -- Escape characters that have special meaning in regular expressions.
+    text = &quot;^&quot;..text:gsub(&quot;([!-/:-@[-`{-~])&quot;, &quot;\\%1&quot;)
+
+    -- Add new entry at the beginning of the queue.
+    table.insert(recent_prompts, 1, text)
+
+    -- Discard excess entries from the end of the queue.
+    while #recent_prompts &gt; max_recent_prompts do
+        table.remove(recent_prompts)
+    end
+end
+
+local function reset_prompt_scroll_stack()
+    was_top = nil
+    scroll_stack = {}
+end
+
+local function update_recent_prompt_queue()
+    -- Offset minus one because onendedit happens after the cursor moves down
+    -- past the end of the input area, which skews the info returned from
+    -- rl.getpromptinfo().
+    local offset = -1
+    local info = rl.getpromptinfo()
+    local line = info.promptline + offset
+    local last_line = console.getnumlines()
+
+    -- Find a long enough string to be considered part of the prompt.
+    while line &lt;= last_line do
+        local text = console.getlinetext(line)
+        text = text:gsub(&quot;%s+$&quot;, &quot;&quot;)
+        if #text &gt;= min_match_text then
+            add_recent_prompt(text)
+            break
+        end
+        line = line + 1
+    end
+end
+
+-- Register for events to maintain the scroll stack and recent prompt queue.
+clink.onbeginedit(reset_prompt_scroll_stack)
+clink.onendedit(update_recent_prompt_queue)
+
+-- Jumps to the previous prompt on the screen (i.e. move upward, searching for
+-- preceding recent prompts).
+function find_prev_prompt(rl_buffer)
+    local height = console.getheight()
+    local offset = math.modf((height - 1) / 2)
+
+    local top = console.gettop()
+    if was_top and was_top ~= top then
+        reset_prompt_scroll_stack()
+    end
+    if not was_top then
+        was_top = top
+    end
+
+    if top &lt;= 1 then
+        console.scroll(&quot;absolute&quot;, 1)
+        return
+    end
+
+    -- Init the stack if it&#39;s empty.
+    if #scroll_stack == 0 then
+        local info = rl.getpromptinfo()
+        scroll_stack[1] = info.promptline
+    end
+
+    local count = #scroll_stack
+    local start = scroll_stack[count] - 1
+    local text = recent_prompts[count]
+
+    if not text then
+        if count == 1 then
+            -- Only ding if there are none; otherwise visual bell will
+            -- scroll back to the bottom.
+            rl_buffer:ding()
+        else
+            -- No more recent prompts?  Maintain the scroll position.
+            console.scroll(&quot;absolute&quot;, scroll_stack[count] - offset)
+            was_top = console.gettop()
+        end
+        return
+    end
+
+    -- Search upwards for the next most recent prompt.
+    local match
+    repeat
+        match = console.findprevline(start, text, &quot;regex&quot;, {})
+        if match &lt;= 0 then
+            -- Can&#39;t find it?  Maintain the scroll position.
+            console.scroll(&quot;absolute&quot;, scroll_stack[count] - offset)
+            was_top = console.gettop()
+            return
+        end
+        start = match - 1
+    until match - offset &lt; was_top
+
+    -- Add the found prompt to the stack.
+    table.insert(scroll_stack, match)
+
+    -- Scroll to the prompt position
+    console.scroll(&quot;absolute&quot;, match - offset)
+    was_top = console.gettop()
+end
+
+-- Jump to the next prompt on the screen (i.e. move downward, backtracking over
+-- the prompts already visited by find_prev_prompt).
+function find_next_prompt(rl_buffer)
+    local height = console.getheight()
+    local offset = math.modf((height - 1) / 2)
+
+    -- Pop the last found prompt.  If the stack is empty, ding.
+    if #scroll_stack &gt; 0 then
+        table.remove(scroll_stack)
+    end
+    if #scroll_stack == 0 then
+        rl_buffer:ding()
+        return
+    end
+
+    -- Get the scroll position of the next to last found prompt.
+    local top = scroll_stack[#scroll_stack] - offset
+    if #scroll_stack == 1 then
+        -- If it&#39;s the last prompt, pop it to reset the stack.
+        top = console.getnumlines()
+        table.remove(scroll_stack, #scroll_stack)
+    end
+
+    -- Scroll to the prompt position.
+    console.scroll(&quot;absolute&quot;, top)
+    was_top = console.gettop()
+end
+
+-- Searches upwards for a line containing &quot;warn&quot; or &quot;error&quot;
+-- colored red or yellow.
+function find_prev_colored_line(rl_buffer)
+    local height = console.getheight()
+    local cur_top = console.gettop()
+    local offset = math.modf((height - 1) / 2) -- For vertically centering the found line.
+    local start = cur_top + offset
+    local found_index
+
+    -- Only search if there&#39;s still room to scroll up.
+    if start - offset &gt; 1 then
+        local match = console.findprevline(start - 1, &quot;warn|error&quot;, &quot;regex&quot;, {4,12,14}, &quot;fore&quot;)
+        if match ~= nil and match &gt; 0 then
+            found_index = match
+        end
+    end
+
+    -- If scrolled up but no more matches, maintain the scroll position.
+    if found_index == nil and cur_top &lt;= console.getnumlines() - height then
+        found_index = start
+    end
+
+    if found_index ~= nil then
+        console.scroll(&quot;absolute&quot;, found_index - offset)
+    else
+        rl_buffer:ding()
+    end
+end
+
+-- Searches downwards for a line containing &quot;warn&quot; or &quot;error&quot;
+-- colored red or yellow.
+function find_next_colored_line(rl_buffer)
+    local height = console.getheight()
+    local cur_top = console.gettop()
+    local bottom = console.getnumlines()
+    local offset = math.modf((height - 1) / 2) -- For vertically centering the found line.
+    local start = cur_top + offset
+    local found_index
+
+    if cur_top &gt; bottom - height then
+        rl_buffer:ding()
+        return
+    end
+
+    -- Only search if there&#39;s still room to scroll down.
+    if start - offset + height - 1 &lt; bottom then
+        local match = console.findnextline(start + 1, &quot;warn|error&quot;, &quot;regex&quot;, {4,12,14}, &quot;fore&quot;)
+        if match ~= nil and match &gt; 0 then
+            found_index = match
+        end
+    end
+
+    if found_index ~= nil then
+        console.scroll(&quot;absolute&quot;, found_index - offset)
+    else
+        rl_buffer:ding()
+    end
 end
 </code></pre>
 <h2 id="saved-command-history">Saved Command History</h2>
@@ -3091,85 +3307,7 @@ end</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.version_patch">clink.version_patch</a></div> <div class="signature">integer variable</div></div><div class="body"><p class="desc">The patch part of the Clink version number. For v1.2.<strong>3</strong>.a0f14d the patch version is 3.</p></div></div><hr/>
 </div><div class="group"><h5 class="group_name"><a name="console">console</a></h5><div class="function"><div class="header"> <div class="name"><a name="console.cellcount">console.cellcount</a></div> <div class="signature">( <span class="arg_name">text</span>:string ) : integer</div></div><div class="body"><p class="desc">Returns the count of visible character cells that would be consumed if the <span class="arg">text</span> string were output to the console, accounting for any ANSI escape codes that may be present in the text.</p><p class="desc"> Note: backspace characters and line endings are counted as visible character cells and will skew the resulting count.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="console.findnextline">console.findnextline</a></div> <div class="signature">( <span class="arg_name">starting_line</span>:integer, [<span class="arg_name">text</span>:string], [<span class="arg_name">mode</span>:string], [<span class="arg_name">attr</span>:integer], [<span class="arg_name">attrs</span>:table of integers], [<span class="arg_name">mask</span>:string] ) : integer</div></div><div class="body"><p class="desc">Searches downwards (forwards) for a line containing the specified text and/or attributes, starting at line <span class="arg">starting_line</span>. The matching line number is returned, or 0 if no matching line is found.</p><p class="desc"> This behaves the same as <a href="#console.findprevline">console.findprevline()</a> except that it searches in the opposite direction.</p></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="console.findprevline">console.findprevline</a></div> <div class="signature">( <span class="arg_name">starting_line</span>:integer, [<span class="arg_name">text</span>:string], [<span class="arg_name">mode</span>:string], [<span class="arg_name">attr</span>:integer], [<span class="arg_name">attrs</span>:table of integers], [<span class="arg_name">mask</span>:string] ) : integer</div></div><div class="body"><p class="desc">Searches upwards (backwards) for a line containing the specified text and/or attributes, starting at line <span class="arg">starting_line</span>.  The matching line number is returned, or 0 if no matching line is found, or -1 if an invalid regular expression is provided.</p><p class="desc"> You can search for text, attributes, or both.  Include the <span class="arg">text</span> argument to search for text, and include either the <span class="arg">attr</span> or <span class="arg">attrs</span> argument to search for attributes.  If both text and attribute(s) are passed, then the attribute(s) must be found within the found text.  If only attribute(s) are passed, then they must be found anywhere in the line.  See <a href="#console.linehascolor">console.linehascolor()</a> for more information about the color codes.</p><p class="desc"> The <span class="arg">mode</span> argument selects how the search behaves. To use a regular expression, pass "regex".  To use a case insensitive search, pass "icase".  These can be combined by separating them with a comma.  The regular expression syntax is the ECMAScript syntax described <a href="https://docs.microsoft.com/en-us/cpp/standard-library/regular-expressions-cpp">here</a>.</p><p class="desc"> Any trailing whitespace is ignored when searching.  This especially affects the <code>$</code> (end of line) regex operator.</p><p class="desc"> <span class="arg">mask</span> is optional and can be "fore" or "back" to only match foreground or background colors, respectively.</p><p class="desc"> <strong>Note:</strong> Although most of the arguments are optional, the order of provided arguments is important.</p><p class="desc"> The following example provides a pair of <code>find_prev_colored_line</code> and <code>find_next_colored_line</code> functions.  The functions can be bound to keys via the <a href="#luakeybindings">luafunc: macro syntax</a> in a .inputrc file.  They scroll the screen buffer to the previous or next line that contains "warn" or "error" colored red or yellow.</p><pre class="language-lua"><code>local was_top
-local found_index
-
-local function reset_found()
-&nbsp; was_top = nil
-&nbsp; found_index = nil
-end
-
--- Register for the onbeginedit event, to reset the found
--- line number each time a new editing prompt begins.
-clink.onbeginedit(reset_found)
-
--- Searches upwards for a line containing "warn" or "error"
--- colored red or yellow.
-function find_prev_colored_line(rl_buffer)
-&nbsp; local height = console.getheight()
-&nbsp; local cur_top = console.gettop()
-&nbsp; local offset = math.modf((height - 1) / 2) -- For vertically centering the found line.
-
-&nbsp; local start
-&nbsp; if found_index == nil or cur_top ~= was_top then
-&nbsp;   start = cur_top
-&nbsp;   was_top = start
-&nbsp; else
-&nbsp;   start = found_index
-&nbsp; end
-
-&nbsp; -- Only search if there's still room to scroll up.
-&nbsp; if start - offset > 1 then
-&nbsp;   local match = console.findprevline(start - 1, "warn|error", "regex", {4,12,14}, "fore")
-&nbsp;   if match ~= nil and match > 0 then
-&nbsp;     found_index = match
-&nbsp;   end
-&nbsp; end
-
-&nbsp; if found_index ~= nil then
-&nbsp;   console.scroll("absolute", found_index - offset)
-&nbsp;   was_top = console.gettop()
-&nbsp; else
-&nbsp;   rl_buffer:ding()
-&nbsp; end
-end
-
--- Searches downwards for a line containing "warn" or "error"
--- colored red or yellow.
-function find_next_colored_line(rl_buffer)
-&nbsp; if found_index == nil then
-&nbsp;   rl_buffer:ding()
-&nbsp;   return
-&nbsp; end
-
-&nbsp; local height = console.getheight()
-&nbsp; local cur_top = console.gettop()
-&nbsp; local offset = math.modf((height - 1) / 2)
-
-&nbsp; local start
-&nbsp; if cur_top ~= was_top then
-&nbsp;     start = cur_top + height - 1
-&nbsp;     was_top = cur_top
-&nbsp; else
-&nbsp;     start = found_index
-&nbsp; end
-
-&nbsp; -- Only search if there's still room to scroll down.
-&nbsp; local bottom = console.getnumlines()
-&nbsp; if start - offset + height - 1 < bottom then
-&nbsp;   local match = console.findnextline(start + 1, "warn|error", "regex", {4,12,14}, "fore")
-&nbsp;   if match ~= nil and match > 0 then
-&nbsp;     found_index = match
-&nbsp;   end
-&nbsp; end
-
-&nbsp; if found_index ~= nil then
-&nbsp;   console.scroll("absolute", found_index - offset)
-&nbsp;   was_top = console.gettop()
-&nbsp; else
-&nbsp;   rl_buffer:ding()
-&nbsp; end
-end</code></pre></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="console.findprevline">console.findprevline</a></div> <div class="signature">( <span class="arg_name">starting_line</span>:integer, [<span class="arg_name">text</span>:string], [<span class="arg_name">mode</span>:string], [<span class="arg_name">attr</span>:integer], [<span class="arg_name">attrs</span>:table of integers], [<span class="arg_name">mask</span>:string] ) : integer</div></div><div class="body"><p class="desc">Searches upwards (backwards) for a line containing the specified text and/or attributes, starting at line <span class="arg">starting_line</span>.  The matching line number is returned, or 0 if no matching line is found, or -1 if an invalid regular expression is provided.</p><p class="desc"> You can search for text, attributes, or both.  Include the <span class="arg">text</span> argument to search for text, and include either the <span class="arg">attr</span> or <span class="arg">attrs</span> argument to search for attributes.  If both text and attribute(s) are passed, then the attribute(s) must be found within the found text.  If only attribute(s) are passed, then they must be found anywhere in the line.  See <a href="#console.linehascolor">console.linehascolor()</a> for more information about the color codes.</p><p class="desc"> The <span class="arg">mode</span> argument selects how the search behaves. To use a regular expression, pass "regex".  To use a case insensitive search, pass "icase".  These can be combined by separating them with a comma.  The regular expression syntax is the ECMAScript syntax described <a href="https://docs.microsoft.com/en-us/cpp/standard-library/regular-expressions-cpp">here</a>.</p><p class="desc"> Any trailing whitespace is ignored when searching.  This especially affects the <code>$</code> (end of line) regex operator.</p><p class="desc"> <span class="arg">mask</span> is optional and can be "fore" or "back" to only match foreground or background colors, respectively.</p><p class="desc"> <strong>Note:</strong> Although most of the arguments are optional, the order of provided arguments is important.</p><p class="desc"> For more information, see <a href="#findlineexample">this example</a> of using this in some <a href="#luakeybindings">luafunc: macros</a>.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="console.getheight">console.getheight</a></div> <div class="signature">() : integer</div></div><div class="body"><p class="desc">Returns the number of visible lines of the console screen buffer.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="console.getlinetext">console.getlinetext</a></div> <div class="signature">( <span class="arg_name">line</span>:integer ) : string</div></div><div class="body"><p class="desc">Returns the text from line number <span class="arg">line</span>, from 1 to <a href="#console.getnumlines">console.getnumlines()</a>.</p><p class="desc"> Any trailing whitespace is stripped before returning the text.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="console.getnumlines">console.getnumlines</a></div> <div class="signature">() : integer</div></div><div class="body"><p class="desc">Returns the total number of lines in the console screen buffer.</p></div></div><hr/>
@@ -3376,6 +3514,15 @@ rl.invokecommand(binding)
 end
 end</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="rl.getlastcommand">rl.getlastcommand</a></div> <div class="signature">() : string, function</div></div><div class="body"><p class="desc">Returns two values: <ul> <li>The name of the last Readline command invoked by a key binding. <li>The name of the last Lua function invoked by a key binding. </ul></p><p class="desc"> If the last key binding invoked a Lua function, then the first return value is an empty string unless the Lua function used <a href="#rl.invokecommand">rl.invokecommand()</a> to also internally invoke a Readline command. If the last key binding did not invoke a Lua function, then the second return value is an empty string.</p><pre class="language-lua"><code>local last_rl_func, last_lua_func = rl.getlastcommand()</code></pre></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="rl.getpromptinfo">rl.getpromptinfo</a></div> <div class="signature">() : table</div></div><div class="body"><p class="desc">Returns information about the current prompt and input line.</p><p class="desc"> Note: the <span class="arg">promptline</span> and <span class="arg">inputline</span> fields may be skewed if any additional terminal output has occurred (for example if any <code>print()</code> calls have happened, or if <code>rl.getpromptinfo()</code> is used inside a <a href="#clink_onendedit">clink.onendedit()</a> event handler, or any other output that the Readline library wouldn't know about).</p><p class="desc"> The returned table has the following scheme:</p><pre class="language-lua"><code>{
+&nbsp; promptprefix,            -- [string] the prompt string, minus the last line of the prompt string
+&nbsp; promptprefixlinecount,   -- [integer] number of lines in the promptprefix string
+&nbsp; prompt,                  -- [string] the last line of the prompt string
+&nbsp; rprompt,                 -- [string or nil] the right side prompt (or nil if none)
+&nbsp; promptline,              -- [integer] console line on which the prompt starts
+&nbsp; inputline,               -- [integer] console line on which the input text starts
+&nbsp; inputlinecount,          -- [integer] number of lines in the input text
+}</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="rl.getvariable">rl.getvariable</a></div> <div class="signature">( <span class="arg_name">name</span>:string ) : string | nil</div></div><div class="body"><p class="desc">Returns the value of the named Readline configuration variable as a string, or nil if the variable name is not recognized.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="rl.invokecommand">rl.invokecommand</a></div> <div class="signature">( <span class="arg_name">command</span>:string, [<span class="arg_name">count</span>:integer] ) : boolean | nil</div></div><div class="body"><p class="desc">Invokes a Readline command named <span class="arg">command</span>.  May only be used within a <a href="#luakeybindings">luafunc: key binding</a>.</p><p class="desc"> <span class="arg">count</span> is optional and defaults to 1 if omitted.</p><p class="desc"> Returns true if the named command succeeds, false if the named command fails, or nil if the named command doesn't exist.</p><p class="desc"> Warning:  Invoking more than one Readline command in a luafunc: key binding could have unexpected results, depending on which commands are invoked.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="rl.isvariabletrue">rl.isvariabletrue</a></div> <div class="signature">( <span class="arg_name">name</span>:string ) : boolean | nil</div></div><div class="body"><p class="desc">Returns a boolean value indicating whether the named Readline configuration variable is set to true (on), or nil if the variable name is not recognized.</p></div></div><hr/>
@@ -3495,6 +3642,14 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1228">v1.2.28</h4>
+<ul>
+<li>Added <code>rl.getpromptinfo()</code> function.</li>
+<li>Fixed loading .inputrc so that only one is loaded (regression introduced in v1.0.0a0 by the fix for <a href="https://github.com/mridgers/clink/issues/258">mridgers #258</a>).  If similar behavior is still desired, consider using the <code>$include</code> directive in the Readline init file, to load additional files.</li>
+<li>Fixed <code>clink-select-complete</code> to respect when <code>mark-directories</code> in .inputrc file if <code>off</code>.</li>
+<li>Fixed crash in <code>console.findline()</code> when no attributes are passed.  Callers using v1.2.27 and earlier can work around the crash by passing <code>{}</code> for attributes.</li>
+<li>Fixed an off-by-1 bug in <code>console.scroll(&quot;absolute&quot;, top)</code>.  This will fix edge case malfunctions in some callers, but some callers could experience this as a breaking change.</li>
+</ul>
 <h4 id="v1227">v1.2.27</h4>
 <ul>
 <li>The <code>cmd.get_errorlevel</code> Clink setting is now enabled by default.</li>
