@@ -596,7 +596,7 @@ public:
                 str_moveable() : str_base(m_empty, 1)               { clear(); set_growable(); }
     explicit    str_moveable(const char* value) : str_moveable()    { copy(value); }
     explicit    str_moveable(const wchar_t* value) : str_moveable() { from_utf16(value); }
-                str_moveable(const str_moveable&) = delete;
+                str_moveable(const str_moveable&) = delete; // (Did you forget const& in a for range loop?)
                 str_moveable(str_moveable&& s) : str_moveable()     { *this = std::move(s); }
     using       str_base::operator =;
     str_moveable& operator = (str_moveable&&);
@@ -614,7 +614,7 @@ public:
                 wstr_moveable() : wstr_base(m_empty, 1)             { clear(); set_growable(); }
     explicit    wstr_moveable(const wchar_t* value) : wstr_moveable() { copy(value); }
     explicit    wstr_moveable(const char* value) : wstr_moveable()  { from_utf8(value); }
-                wstr_moveable(const wstr_moveable&) = delete;
+                wstr_moveable(const wstr_moveable&) = delete; // (Did you forget const& in a for range loop?)
                 wstr_moveable(wstr_moveable&& s) : wstr_moveable()  { *this = std::move(s); }
     using       wstr_base::operator =;
     wstr_moveable& operator = (wstr_moveable&&);

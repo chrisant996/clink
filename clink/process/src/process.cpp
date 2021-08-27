@@ -6,12 +6,24 @@
 #include "vm.h"
 #include "pe.h"
 
+#include <core/log.h>
 #include <core/path.h>
 #include <core/str.h>
 
 #include <PsApi.h>
 #include <TlHelp32.h>
 #include <stddef.h>
+
+//------------------------------------------------------------------------------
+static const char* get_arch_name(process::arch arch)
+{
+    switch (arch)
+    {
+    case process::arch_x86:     return "32 bit";
+    case process::arch_x64:     return "64 bit";
+    default:                    return "unknown architecture";
+    }
+}
 
 //------------------------------------------------------------------------------
 process::process(int pid)
@@ -133,11 +145,17 @@ void process::pause(bool suspend)
 }
 
 //------------------------------------------------------------------------------
-void* process::inject_module(const char* dll_path, process_wait_callback* callback)
+remote_result process::inject_module(const char* dll_path, process_wait_callback* callback)
 {
     // Check we can inject into the target.
-    if (process().get_arch() != get_arch())
-        return nullptr;
+    process::arch process_arch = process().get_arch();
+    process::arch this_arch = get_arch();
+    if (process_arch != this_arch)
+    {
+        LOG("Architecture mismatch; unable to inject %s module into %s host process.",
+            get_arch_name(this_arch), get_arch_name(process_arch));
+        return {};
+    }
 
     // Get the address to LoadLibrary. Note that we get LoadLibrary address
     // directly from kernel32.dll's export table. If our import table has had
@@ -173,24 +191,30 @@ static DWORD WINAPI stdcall_thunk(thunk_data& data)
 }
 
 //------------------------------------------------------------------------------
-void* process::remote_call_internal(pe_info::funcptr_t function, process_wait_callback* callback, const void* param, int param_size)
+remote_result process::remote_call_internal(pe_info::funcptr_t function, process_wait_callback* callback, const void* param, int param_size)
 {
     // Open the process so we can operate on it.
     handle process_handle = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_CREATE_THREAD,
         FALSE, m_pid);
     if (!process_handle)
-        return nullptr;
+    {
+        ERR("Unable to open process %d.", m_pid);
+        return {};
+    }
 
     // Scanning for 0xc3 works on 64 bit, but not on 32 bit.  I gave up and just
     // imposed a max size of 64 bytes, since the emited code is around 40 bytes.
-    static int thunk_size;
+    static int thunk_size = 0;
     if (!thunk_size)
         for (const auto* c = (unsigned char*)stdcall_thunk; thunk_size < 64 && ++thunk_size, *c++ != 0xc3;);
 
     vm vm(m_pid);
     vm::region region = vm.alloc(1, vm::access_write);
     if (region.base == nullptr)
-        return nullptr;
+    {
+        ERR("Unable to allocate virtual memory in process %d.", m_pid);
+        return {};
+    }
 
     int write_offset = 0;
     const auto& vm_write = [&] (const void* data, int size) {
@@ -218,18 +242,22 @@ void* process::remote_call_internal(pe_info::funcptr_t function, process_wait_ca
         (LPTHREAD_START_ROUTINE)region.base, remote_thunk_data, 0, &thread_id);
     if (!remote_thread)
     {
+        ERR("Unable to create remote thread in process %d.", m_pid);
         unpause();
-        return 0;
+        return {};
     }
 
     DWORD wait_result = wait(callback, remote_thread);
     unpause();
 
     void* call_ret = nullptr;
-    vm.read(&call_ret, remote_thunk_data + offsetof(thunk_data, out), sizeof(call_ret));
-    vm.free(region);
+    if (wait_result == WAIT_OBJECT_0)
+    {
+        vm.read(&call_ret, remote_thunk_data + offsetof(thunk_data, out), sizeof(call_ret));
+        vm.free(region);
+    }
 
-    return call_ret;
+    return { true, call_ret };
 }
 
 
@@ -259,13 +287,16 @@ static DWORD WINAPI stdcall_thunk2(thunk2_data& data)
 }
 
 //------------------------------------------------------------------------------
-void* process::remote_call_internal(pe_info::funcptr_t function, process_wait_callback* callback, const void* param1, int param1_size, const void* param2, int param2_size)
+remote_result process::remote_call_internal(pe_info::funcptr_t function, process_wait_callback* callback, const void* param1, int param1_size, const void* param2, int param2_size)
 {
     // Open the process so we can operate on it.
     handle process_handle = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_CREATE_THREAD,
         FALSE, m_pid);
     if (!process_handle)
-        return nullptr;
+    {
+        ERR("Unable to open process %d.", m_pid);
+        return {};
+    }
 
     // Scanning for 0xc3 works on 64 bit, but not on 32 bit.  I gave up and just
     // imposed a max size of 64 bytes, since the emited code is around 40 bytes.
@@ -276,7 +307,10 @@ void* process::remote_call_internal(pe_info::funcptr_t function, process_wait_ca
     vm vm(m_pid);
     vm::region region = vm.alloc(1, vm::access_write);
     if (region.base == nullptr)
-        return nullptr;
+    {
+        ERR("Unable to allocate virtual memory in process %d.", m_pid);
+        return {};
+    }
 
     int write_offset = 0;
     const auto& vm_write = [&] (const void* data, int size) {
@@ -313,8 +347,9 @@ void* process::remote_call_internal(pe_info::funcptr_t function, process_wait_ca
         (LPTHREAD_START_ROUTINE)region.base, remote_thunk_data, 0, &thread_id);
     if (!remote_thread)
     {
+        ERR("Unable to create remote thread in process %d.", m_pid);
         unpause();
-        return 0;
+        return {};
     }
 
     DWORD wait_result = wait(callback, remote_thread);
@@ -327,7 +362,7 @@ void* process::remote_call_internal(pe_info::funcptr_t function, process_wait_ca
         vm.free(region);
     }
 
-    return call_ret;
+    return { true, call_ret };
 }
 
 //------------------------------------------------------------------------------

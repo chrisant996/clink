@@ -213,7 +213,7 @@ private:
 };
 
 //------------------------------------------------------------------------------
-static void* inject_dll(DWORD target_pid)
+static remote_result inject_dll(DWORD target_pid)
 {
     // Get path to clink's DLL that we'll inject.
     str<280> dll_path;
@@ -257,7 +257,7 @@ static void* inject_dll(DWORD target_pid)
     {
         LOG("EXE version: %08x %08x", MAKELONG(CLINK_VERSION_MINOR, CLINK_VERSION_MAJOR), MAKELONG(CLINK_VERSION_PATCH, 0));
         fprintf(stderr, "DLL version mismatch.\n");
-        return nullptr;
+        return {};
     }
 
     // Check for supported host (keep in sync with initialise_clink in dll.cpp).
@@ -267,14 +267,14 @@ static void* inject_dll(DWORD target_pid)
         if (!cmd_process.get_file_name(host))
         {
             ERR("Unable to get host name.");
-            return nullptr;
+            return {};
         }
 
         const char* host_name = path::get_name(host.c_str());
         if (!host_name || stricmp(host_name, "cmd.exe"))
         {
             LOG("Unknown host '%s'.", host_name ? host_name : "<no name>");
-            return nullptr;
+            return {};
         }
     }
 
@@ -571,24 +571,32 @@ int inject(int argc, char** argv)
     }
 
     // Inject Clink's DLL
-    void* remote_dll_base = inject_dll(target_pid);
-    if (remote_dll_base == nullptr)
+    remote_result remote_dll_base = inject_dll(target_pid);
+    if (!remote_dll_base.ok)
         return ret;
+
+    if (remote_dll_base.result == nullptr)
+    {
+        LOG("Process %d was unable to load the Clink DLL.\n", target_pid);
+        return ret;
+    }
 
     // Detach from log file so the DLL can take over.
     delete file_logger::get();
 
     // Remotely call Clink's initialisation function.
     void* our_dll_base = vm().get_alloc_base((void*)"");
-    uintptr_t init_func = uintptr_t(remote_dll_base);
+    uintptr_t init_func = uintptr_t(remote_dll_base.result);
     init_func += uintptr_t(initialise_clink) - uintptr_t(our_dll_base);
-    INT_PTR remote_result = INT_PTR(process(target_pid).remote_call((process::funcptr_t)init_func, app_desc));
+    remote_result rr = process(target_pid).remote_call((process::funcptr_t)init_func, app_desc);
+    if (!rr.ok)
+        return ret;
 
     // If host validation fails when autorun, then don't report that as a
     // failure since it's an expected and common case.
-    if (remote_result > 0)          // Success.
+    if (rr.result > 0)              // Success.
         ret = 0;
-    else if (remote_result < 0)     // Ignorable failure; don't report error.
+    else if (rr.result < 0)         // Ignorable failure; don't report error.
         ret = 0;
     else                            // Failure.
         ret = 1;
