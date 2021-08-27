@@ -5,7 +5,10 @@
 #include "pe.h"
 
 #include <core/log.h>
+#include <core/str.h>
 #include <Windows.h>
+
+#include <vector>
 
 //------------------------------------------------------------------------------
 pe_info::pe_info(void* base)
@@ -142,6 +145,7 @@ pe_info::funcptr_t* pe_info::iterate_imports(
         return 0;
     }
 
+    std::vector<str_moveable> checked_imports;
     while (iid->Name)
     {
         char* name;
@@ -151,13 +155,19 @@ pe_info::funcptr_t* pe_info::iterate_imports(
         name = (char*)rva_to_addr(iid->Name);
         if (dll == nullptr || _strnicmp(name, dll, len) == 0)
         {
-            LOG("Checking imports in '%s'", name);
             if (funcptr_t* ret = (this->*iter_func)(iid, param))
+            {
+                LOG("Found import in '%s'", name);
                 return ret;
+            }
+            checked_imports.emplace_back(name);
         }
 
         ++iid;
     }
+
+    for (auto const& name : checked_imports)
+        LOG("Not found in '%s'", name.c_str());
 
     return nullptr;
 }
