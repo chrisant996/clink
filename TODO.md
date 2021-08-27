@@ -7,6 +7,17 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Medium Priority
+- Transient prompt:  ability to collapse a prompt after it's inactive; [#151](https://github.com/chrisant996/clink/151).
+  - Modes:  "off", "always", or "same-dir"
+  - Usage?
+    - `:transientfilter()` and `:transientrightfilter()`?
+    - `clink.promptfilter()` and `clink.transientpromptfilter()`?
+    - `clink.promptfilter(priority, transient)`?
+  - Triggers:
+    - Input line is accepted.
+    - `rl_buffer:beginoutput()`.
+    - Before any command or `luafunc:` macro prints output.
+  - Somehow address that Readline sometimes skips printing the prompt prefix (e.g. after `dump-functions`).
 
 ## Low Priority
 
@@ -16,6 +27,12 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 <br/>
 
 # INVESTIGATE
+
+**Additional ANSI escape codes?**
+- `ESC[?47h` save screen.
+- `ESC[?47l` restore screen.
+- `ESC[?1049h` enable alternative buffer.
+- `ESC[?1049l` disable alternative buffer.
 
 **Popup Lists**
 - Ability to delete, rearrange, and edit popup list items?  _[Can't realistically rearrange or edit history, due to how the history file format works.]_
