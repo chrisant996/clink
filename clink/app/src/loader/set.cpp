@@ -198,7 +198,7 @@ static bool set_value(const char* key, char** argv=nullptr, int argc=0)
 //------------------------------------------------------------------------------
 static void print_help()
 {
-    extern const char* g_clink_header;
+    extern void puts_clink_header();
 
     static const char* const help[] = {
         "setting_name", "Name of the setting whose value is to be set.",
@@ -206,7 +206,7 @@ static void print_help()
         nullptr
     };
 
-    puts(g_clink_header);
+    puts_clink_header();
     puts("Usage: set [<setting_name> [clear|<value>]]\n");
 
     puts_help(help);

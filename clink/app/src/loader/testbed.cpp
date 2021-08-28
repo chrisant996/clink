@@ -93,7 +93,7 @@ int testbed(int argc, char** argv)
         nullptr
     };
 
-    extern const char* g_clink_header;
+    extern void puts_clink_header();
 
     // Parse arguments
     bool hook = false;
@@ -133,7 +133,7 @@ int testbed(int argc, char** argv)
             ret = 0;
             // fall through
         default:
-            puts(g_clink_header);
+            puts_clink_header();
             puts(help_usage);
             puts("Options:");
             puts_help(help);

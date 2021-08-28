@@ -254,7 +254,7 @@ static int print_expansion(const char* line)
 //------------------------------------------------------------------------------
 static int print_help()
 {
-    extern const char* g_clink_header;
+    extern void puts_clink_header();
 
     static const char* const help_verbs[] = {
         "[n]",          "Print history items (only the last N items if specified).",
@@ -273,7 +273,7 @@ static int print_help()
         nullptr
     };
 
-    puts(g_clink_header);
+    puts_clink_header();
     puts("Usage: history <verb> [option]\n");
 
     puts("Verbs:");

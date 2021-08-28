@@ -101,11 +101,11 @@ static bool change_value(bool install, char** argv=nullptr, int argc=0)
 //------------------------------------------------------------------------------
 static void print_help(bool install)
 {
-    extern const char* g_clink_header;
+    extern void puts_clink_header();
     const char* uni = install ? "i" : "uni";
     const char* Uni = install ? "I" : "Uni";
 
-    puts(g_clink_header);
+    puts_clink_header();
     printf(
         "Usage: %snstallscripts <script_path>\n"
         "\n"

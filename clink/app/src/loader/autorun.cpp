@@ -391,9 +391,9 @@ static void print_help()
         nullptr
     };
 
-    extern const char* g_clink_header;
+    extern void puts_clink_header();
 
-    puts(g_clink_header);
+    puts_clink_header();
 
     puts("Usage: autorun [options] <verb> [<string>] [-- <clink_args>]\n");
 

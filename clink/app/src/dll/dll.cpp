@@ -17,12 +17,30 @@
 #include <core/str_tokeniser.h>
 
 //------------------------------------------------------------------------------
-const char* g_clink_header =
+static constexpr const char* const c_clink_header =
     "Clink v" CLINK_VERSION_STR "\n"
     "Copyright (c) 2012-2018 Martin Ridgers\n"
     "Portions Copyright (c) 2020-2021 Christopher Antos\n"
     "https://github.com/chrisant996/clink\n"
     ;
+
+static constexpr const char* const c_clink_header_abbr =
+    "Clink v" CLINK_VERSION_STR " (https://github.com/chrisant996/clink)\n"
+    ;
+
+static setting_enum s_clink_logo(
+    "clink.logo",
+    "Controls what startup logo to show",
+    "The default is 'full' which shows the full copyright logo when Clink is\n"
+    "injected.  A value of 'short' shows an abbreviated startup logo with version\n"
+    "information.  A value of 'none' omits the startup logo entirely.",
+    "none,full,short",
+    1);
+
+void puts_clink_header()
+{
+    puts(c_clink_header);
+}
 
 
 
@@ -34,33 +52,45 @@ static host* g_host = nullptr;
 //------------------------------------------------------------------------------
 static void success()
 {
-    if (!app_context::get()->is_quiet())
-    {
-        // Add a blank line if our logo follows anything else (the goal is to
-        // put a blank line after CMD's "Microsoft Windows ..." logo), but don't
-        // add a blank line if our logo is at the very top of the window.
-        CONSOLE_SCREEN_BUFFER_INFO csbi = { sizeof(csbi) };
-        if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi))
-        {
-            if (csbi.dwCursorPosition.Y > 0)
-                puts("");
-        }
+    auto app = app_context::get();
 
-        // Using printf instead of puts ensures there's only one blank line
-        // between the header and the subsequent prompt.
-        printf("%s", g_clink_header);
+    if (app->is_quiet())
+        return;
+
+    // Load settings to check if the logo should be abbreviated or omitted.
+    str<288> settings_file;
+    app->get_settings_path(settings_file);
+    settings::load(settings_file.c_str());
+    const int logo = s_clink_logo.get();
+    if (!logo)
+        return;
+
+    // Add a blank line if our logo follows anything else (the goal is to
+    // put a blank line after CMD's "Microsoft Windows ..." logo), but don't
+    // add a blank line if our logo is at the very top of the window.
+    CONSOLE_SCREEN_BUFFER_INFO csbi = { sizeof(csbi) };
+    if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi))
+    {
+        if (csbi.dwCursorPosition.Y > 0)
+            puts("");
     }
+
+    // Using printf instead of puts ensures there's only one blank line
+    // between the header and the subsequent prompt.
+    printf("%s", (logo == 2) ? c_clink_header_abbr : c_clink_header);
 }
 
 //------------------------------------------------------------------------------
 static void failed()
 {
+    auto app = app_context::get();
+
     str<280> buffer;
-    app_context::get()->get_state_dir(buffer);
+    app->get_state_dir(buffer);
     fprintf(stderr, "Failed to load Clink.\n");
-    if (app_context::get()->is_logging_enabled())
+    if (app->is_logging_enabled())
     {
-        app_context::get()->get_log_path(buffer);
+        app->get_log_path(buffer);
         fprintf(stderr, "See log file for details (%s).\n", buffer.c_str());
     }
     else

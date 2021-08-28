@@ -20,8 +20,8 @@ int input_echo(int argc, char** argv)
         const char* arg = argv[i];
         if (_stricmp(arg, "--help") == 0 || _stricmp(arg, "-h") == 0 || _stricmp(arg, "-?") == 0)
         {
-            extern const char* g_clink_header;
-            puts(g_clink_header);
+            extern void puts_clink_header();
+            puts_clink_header();
             printf("Usage: %s\n\n", argv[0]);
             puts("Echos the sequence of characters for each key pressed.\n");
             return 0;
