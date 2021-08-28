@@ -75,18 +75,26 @@ static void list_options(const char* key)
 }
 
 //------------------------------------------------------------------------------
-static bool print_keys()
+static bool print_keys(const char* prefix=nullptr)
 {
+    size_t prefix_len = prefix ? strlen(prefix) : 0;
+
     int longest = 0;
     for (auto iter = settings::first(); auto* next = iter.next();)
-        longest = max(longest, int(strlen(next->get_name())));
+    {
+        if (!prefix || !_strnicmp(next->get_name(), prefix, prefix_len))
+            longest = max(longest, int(strlen(next->get_name())));
+    }
 
     for (auto iter = settings::first(); auto* next = iter.next();)
     {
-        str<> value;
-        next->get_descriptive(value);
-        const char* name = next->get_name();
-        printf("%-*s  %s\n", longest, name, value.c_str());
+        if (!prefix || !_strnicmp(next->get_name(), prefix, prefix_len))
+        {
+            str<> value;
+            next->get_descriptive(value);
+            const char* name = next->get_name();
+            printf("%-*s  %s\n", longest, name, value.c_str());
+        }
     }
 
     return true;
@@ -95,6 +103,14 @@ static bool print_keys()
 //------------------------------------------------------------------------------
 static bool print_value(const char* key)
 {
+    size_t key_len = strlen(key);
+    if (key_len && key[key_len - 1] == '*')
+    {
+        str<> prefix(key);
+        prefix.truncate(prefix.length() - 1);
+        return print_keys(prefix.c_str());
+    }
+
     const setting* setting = settings::find(key);
     if (setting == nullptr)
     {
@@ -211,9 +227,12 @@ static void print_help()
 
     puts_help(help);
 
-    puts("If 'settings_name' is omitted then all settings are listed. Omit 'value'\n"
+    puts("If 'settings_name' is omitted then all settings are listed.  Omit 'value'\n"
         "for more detailed info about a setting and use a value of 'clear' to reset\n"
-        "the setting to its default value.");
+        "the setting to its default value.\n"
+        "\n"
+        "If 'setting_name' ends with '*' then it is a prefix, and all settings\n"
+        "matching the prefix are listed.");
 }
 
 //------------------------------------------------------------------------------
