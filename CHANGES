@@ -2,6 +2,12 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.2.29
+
+- Added `clink.logo` Clink setting to globally control what startup logo is shown (full copyright logo by default, or a short version logo, or no startup logo).
+- Added logging for more possible failure points while injecting Clink into the host process.
+- Now `clink set cl*` lists all settings that begin with `cl` (the star wildcard is only supported at the end of the string).
+
 #### v1.2.28
 
 - Added `rl.getpromptinfo()` function.
