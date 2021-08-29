@@ -2827,7 +2827,10 @@ rl_dump_functions (int count, int key)
   if (rl_dispatching)
     fprintf (rl_outstream, "\r\n");
   rl_function_dumper (rl_explicit_arg);
-  rl_on_new_line ();
+/* begin_clink_change */
+  //rl_on_new_line ();
+  rl_reset_line_state ();
+/* end_clink_change */
   return (0);
 }
 
@@ -2902,7 +2905,10 @@ rl_dump_macros (int count, int key)
   if (rl_dispatching)
     fprintf (rl_outstream, "\r\n");
   rl_macro_dumper (rl_explicit_arg);
-  rl_on_new_line ();
+/* begin_clink_change */
+  //rl_on_new_line ();
+  rl_reset_line_state ();
+/* end_clink_change */
   return (0);
 }
 
@@ -3023,7 +3029,10 @@ rl_dump_variables (int count, int key)
   if (rl_dispatching)
     fprintf (rl_outstream, "\r\n");
   rl_variable_dumper (rl_explicit_arg);
-  rl_on_new_line ();
+/* begin_clink_change */
+  //rl_on_new_line ();
+  rl_reset_line_state ();
+/* end_clink_change */
   return (0);
 }
 
