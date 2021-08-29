@@ -17,7 +17,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
     - Input line is accepted.
     - `rl_buffer:beginoutput()`.
     - Before any command or `luafunc:` macro prints output.
-  - Somehow address that Readline sometimes skips printing the prompt prefix (e.g. after `dump-functions`).
+      - Intercept output and run transient filter?  Beware of reentrancy...!
 
 ## Low Priority
 
