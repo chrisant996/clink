@@ -82,6 +82,25 @@ Clink uses [Premake](http://premake.github.io) to generate Visual Studio solutio
    - `rl_complete` or `rl_menu_complete` or `rl_old_menu_complete` are the Readline completion commands.
    - `alternative_matches` builds a Readline match array from the results collected by the match pipeline.
 
+#### Debugging Clink startup
+
+The easiest way to debug Clink startup is to use simulated injection rather than real injection:  set a breakpoint on `initialise_clink` and start `clink testbed --hook` under the debugger.  All of the usual Clink startup code is executed, but the cross-process injection is only simulated, so the resulting prompts of course are not actually executed by CMD.exe.
+
+To debug Clink startup during real injection, you must attach the debugger to the target CMD.exe _before_ injection, set a breakpoint on `initialise_clink` (it will be an unresolved breakpoint at first), and then use `clink inject -p process_id`.  The debugger should resolve the breakpoint as soon as the Clink DLL is loaded, and should hit the breakpoint soon after.
+
+#### Debugging Clink DLL injection
+
+To debug the actual DLL injection procedure, you must debug both the `clink_x64.exe` (or `clink_x86.exe`) process and the target CMD.exe process.
+- Set a breakpoint on `process::remote_call_internal` in the Clink process.
+  - The first time it's reached should be for injecting a `LoadLibrary` call into the target CMD.exe process.
+  - The second time it's reached should be for injecting an `initialise_clink` call into the target CMD.exe process.
+- Set a breakpoint on `initialise_clink` in the target CMD.exe process.
+- Step through the `remote_call_internal` function to inspect the local side of the operation.
+  - The `stdcall_thunk` function is the instruction payload that will be copied into the target CMD.exe process.
+  - Observe the value of `region.base` before the `CreateRemoteThread` call executes -- this is the address of the instruction payload that has been copied into the target CMD.exe process.
+  - Set a breakpoint in the target CMD.exe process for that address -- when `CreateRemoteThread` executes, it will transfer execution to that address in the target CMD.exe process, and you can debug through the execution of the instruction payload itself.
+  - Note:  If the instruction payload references any functions or variables from the Clink process, it will crash during execution inside the target CMD.exe process.
+
 ### Debugging Lua Scripts
 
 1. Use `clink set lua.debug true` to enable using the Lua debugger.
