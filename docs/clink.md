@@ -947,7 +947,29 @@ The following example illustrates running `git status` in the background.  It al
 
 #### Transient Prompt
 
-... TBD ...
+Clink can replace a past prompt with a differently formatted "transient" prompt.  For example, if your normal prompt contains many bits of information that don't need to be seen later, then it may be desirable to replace past prompts with a simpler prompt.  Or it may be useful to update the timestamp in a prompt to indicate when the prompt was completed, rather than when it was first shown.
+
+The `%CLINK_TRANSIENT_PROMPT%` environment variable provides the initial prompt string for the transient prompt.
+
+Turn on the transient prompt with `clink set prompt.transient always`.  Or use `same_dir` instead of `always` to only use a transient prompt when the current directory is the same as the previous prompt.
+
+The transient prompt can be customised by a prompt filter:
+1. Create a new prompt filter by calling `clink.promptfilter()` along with a priority id which dictates the order in which filters are called. Lower priority ids are called first.
+2. Define a `:transientfilter()` function on the returned prompt filter.
+
+The transient filter function takes a string argument that contains the filtered prompt so far.  If the filter function returns nil, it has no effect.  If the filter function returns a string, that string is used as the new filtered prompt (and may be further modified by other prompt filters with higher priority ids).  If the filter function returns a string and a boolean, then if the boolean is false the prompt filtering is done and no further filter functions are called.
+
+A transient right side prompt is also possible (similar to the usual [right side prompt](#rightprompt)).  The `%CLINK_TRANSIENT_RPROMPT%` environment variable (note the `R` in `_RPROMPT`) provides the initial prompt string for the transient right side prompt, which can be customised by a `:transientrightfilter()` function on a prompt filter.
+
+A prompt filter must have a `:filter()` function defined on it, and may in addition have any combination of `:rightfilter()`, `:transientfilter()`, and `:transientrightfilter()` functions defined on it.
+
+The next example shows how to make a prompt that shows:
+1. The current directory and ` > ` on the left, and the date and time on the right.
+2. Just `> ` on the left.
+
+```lua
+#INCLUDE [examples\ex_transient_prompt.lua]
+```
 
 # Miscellaneous
 
