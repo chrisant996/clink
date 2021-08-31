@@ -8,8 +8,8 @@
 #include <core/str.h>
 #include <core/str_iter.h>
 #include <core/os.h>
-#include <lua/lua_script_loader.h>
-#include <lua/lua_state.h>
+#include "lua_script_loader.h"
+#include "lua_state.h"
 
 extern "C" {
 #include <lua.h>
@@ -365,6 +365,9 @@ int tagged_prompt::is_tagged(const wchar_t* chars, int char_count)
 
 
 //------------------------------------------------------------------------------
+bool prompt_filter::s_filtering = false;
+
+//------------------------------------------------------------------------------
 prompt_filter::prompt_filter(lua_state& lua)
 : m_lua(lua)
 {
@@ -372,6 +375,7 @@ prompt_filter::prompt_filter(lua_state& lua)
 }
 
 //------------------------------------------------------------------------------
+// For unit tests.
 void prompt_filter::filter(const char* in, str_base& out)
 {
     str<16> dummy;
@@ -379,7 +383,7 @@ void prompt_filter::filter(const char* in, str_base& out)
 }
 
 //------------------------------------------------------------------------------
-void prompt_filter::filter(const char* in, const char* rin, str_base& out, str_base& rout)
+void prompt_filter::filter(const char* in, const char* rin, str_base& out, str_base& rout, bool transient)
 {
     lua_State* state = m_lua.get_state();
 
@@ -387,15 +391,20 @@ void prompt_filter::filter(const char* in, const char* rin, str_base& out, str_b
 
     // Call Lua to filter prompt
     lua_getglobal(state, "clink");
-    lua_pushliteral(state, "_filter_prompt");
+    if (transient)
+        lua_pushliteral(state, "_filter_transient_prompt");
+    else
+        lua_pushliteral(state, "_filter_prompt");
     lua_rawget(state, -2);
 
     lua_pushstring(state, in);
     lua_pushstring(state, rin);
 
+    rollback<bool> rb(s_filtering, true);
     if (m_lua.pcall(state, 2, 2) != 0)
     {
-        puts(lua_tostring(state, -1));
+        if (const char* error = lua_tostring(state, -1))
+            m_lua.print_error(error);
         lua_pop(state, 2);
         return;
     }
@@ -447,6 +456,24 @@ void prompt_utils::get_rprompt(str_base& rout)
 {
     str<> env;
     os::get_env("clink_rprompt", env);
+    expand_prompt_codes(env.c_str(), rout, true/*single_line*/);
+}
+
+//------------------------------------------------------------------------------
+void prompt_utils::get_transient_prompt(str_base& out)
+{
+    str<> env;
+    os::get_env("clink_transient_prompt", env);
+    if (env.empty())
+        env = "$g";
+    expand_prompt_codes(env.c_str(), out, false/*single_line*/);
+}
+
+//------------------------------------------------------------------------------
+void prompt_utils::get_transient_rprompt(str_base& rout)
+{
+    str<> env;
+    os::get_env("clink_transient_rprompt", env);
     expand_prompt_codes(env.c_str(), rout, true/*single_line*/);
 }
 

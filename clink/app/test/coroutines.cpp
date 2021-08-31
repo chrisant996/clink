@@ -2,7 +2,6 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
-#include "../src/host/prompt.h"
 
 #include <core/base.h>
 #include <core/str.h>
@@ -10,6 +9,7 @@
 #include <core/settings.h>
 #include <lua/lua_script_loader.h>
 #include <lua/lua_state.h>
+#include <lua/prompt.h>
 
 extern "C" {
 #include <lua.h>

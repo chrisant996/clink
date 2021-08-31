@@ -4,12 +4,12 @@
 #pragma once
 
 #include "host.h"
-#include "prompt.h"
 
 #include <core/singleton.h>
 #include <lib/doskey.h>
 #include <lib/cmd_tokenisers.h>
 #include <lib/word_collector.h>
+#include <lua/prompt.h>
 
 class lua_state;
 

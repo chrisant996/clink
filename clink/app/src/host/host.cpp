@@ -4,7 +4,6 @@
 #include "pch.h"
 #include "host.h"
 #include "host_lua.h"
-#include "prompt.h"
 #include "version.h"
 
 #include <core/globber.h>
@@ -21,6 +20,7 @@
 #include <lua/lua_script_loader.h>
 #include <lua/lua_state.h>
 #include <lua/lua_match_generator.h>
+#include <lua/prompt.h>
 #include <terminal/printer.h>
 #include <terminal/terminal_out.h>
 #include <utils/app_context.h>
@@ -95,6 +95,7 @@ extern bool has_sticky_search_position();
 extern bool get_sticky_search_add_history(const char* line);
 extern void clear_sticky_search_position();
 extern void reset_keyseq_to_name_map();
+extern void set_prompt(const char* prompt, const char* rprompt, bool redisplay);
 
 
 
@@ -505,10 +506,8 @@ void host::filter_prompt()
         return;
 
     const char* rprompt = nullptr;
-    const char* prompt = filter_prompt(&rprompt);
-
-    void set_prompt(const char* prompt, const char* rprompt);
-    set_prompt(prompt, rprompt);
+    const char* prompt = filter_prompt(&rprompt, false/*transient*/);
+    set_prompt(prompt, rprompt, true/*redisplay*/);
 }
 
 //------------------------------------------------------------------------------

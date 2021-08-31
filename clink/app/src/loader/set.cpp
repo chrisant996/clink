@@ -3,7 +3,6 @@
 
 #include "pch.h"
 #include "host/host_lua.h"
-#include "host/prompt.h"
 #include "utils/app_context.h"
 
 #include <core/base.h>
@@ -12,6 +11,7 @@
 #include <core/str.h>
 #include <core/str_tokeniser.h>
 #include <lua/lua_script_loader.h>
+#include <lua/prompt.h>
 
 #include <getopt.h>
 

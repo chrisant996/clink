@@ -43,10 +43,14 @@ class prompt_filter
 public:
                     prompt_filter(lua_state& lua);
     void            filter(const char* in, str_base& out); // For unit tests.
-    void            filter(const char* in, const char* rin, str_base& out, str_base& rout);
+    void            filter(const char* in, const char* rin, str_base& out, str_base& rout, bool transient=false);
+
+    static bool     is_filtering() { return s_filtering; }
 
 private:
     lua_state&      m_lua;
+
+    static bool s_filtering;
 };
 
 //------------------------------------------------------------------------------
@@ -55,5 +59,7 @@ class prompt_utils
 public:
     static prompt   extract_from_console();
     static void     get_rprompt(str_base& rout);
+    static void     get_transient_prompt(str_base& out);
+    static void     get_transient_rprompt(str_base& rout);
     static void     expand_prompt_codes(const char* in, str_base& out, bool single_line);
 };
