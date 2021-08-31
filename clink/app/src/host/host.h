@@ -27,7 +27,7 @@ public:
     virtual bool    initialise() = 0;
     virtual void    shutdown() = 0;
 
-    const char*     filter_prompt(const char** rprompt);
+    const char*     filter_prompt(const char** rprompt, bool transient=false);
     void            enqueue_lines(std::list<str_moveable>& lines);
     bool            dequeue_line(wstr_base& out);
 
@@ -35,6 +35,7 @@ public:
     void            add_history(const char* line) override;
     void            remove_history(int rl_history_index, const char* line) override;
     void            filter_prompt() override;
+    void            filter_transient_prompt(bool final) override;
     void            filter_matches(char** matches) override;
     bool            call_lua_rl_global_function(const char* func_name) override;
     const char**    copy_dir_history(int* total) override;
@@ -47,6 +48,7 @@ protected:
 
 private:
     void            purge_old_files();
+    void            update_last_cwd();
 
 private:
     const char*     m_name;
@@ -62,4 +64,6 @@ private:
     str<256>        m_filtered_prompt;
     str<256>        m_filtered_rprompt;
     std::list<str_moveable> m_queued_lines;
+    wstr_moveable   m_last_cwd;
+    bool            m_can_transient = false;
 };

@@ -421,12 +421,12 @@ end
 --- mode is not supported, so it cannot contain "w".
 ---
 --- <strong>Note:</strong> if the <code>prompt.async</code> setting is disabled
---- then this turns into a call to
+--- or if a transient prompt filtering is executing, then this behaves like
 --- <code><span class="hljs-built_in">io</span>.<span class="hljs-built_in">popen</span>(<span class="arg">command</span>, <span class="arg">mode</span>)</code>
 --- instead.
 function io.popenyield(command, mode)
     -- This outer wrapper is implemented in Lua so that it can yield.
-    if settings.get("prompt.async") then
+    if settings.get("prompt.async") and not clink.istransientpromptfilter() then
         -- Yield to ensure only one popenyield active at a time.
         if _coroutine_yieldguard then
             set_coroutine_queued(true)

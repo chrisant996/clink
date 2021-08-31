@@ -160,12 +160,12 @@ void update_matches()
 }
 
 //------------------------------------------------------------------------------
-void set_prompt(const char* prompt, const char* rprompt)
+void set_prompt(const char* prompt, const char* rprompt, bool redisplay)
 {
     if (!s_editor)
         return;
 
-    s_editor->set_prompt(prompt, rprompt);
+    s_editor->set_prompt(prompt, rprompt, redisplay);
 }
 
 
@@ -195,6 +195,15 @@ void host_filter_prompt()
         return;
 
     s_callbacks->filter_prompt();
+}
+
+//------------------------------------------------------------------------------
+extern "C" void host_filter_transient_prompt(int crlf)
+{
+    if (!s_callbacks)
+        return;
+
+    s_callbacks->filter_transient_prompt(crlf < 0/*final*/);
 }
 
 //------------------------------------------------------------------------------
@@ -401,10 +410,10 @@ void line_editor_impl::set_input_idle(input_idle* idle)
 }
 
 //------------------------------------------------------------------------------
-void line_editor_impl::set_prompt(const char* prompt, const char* rprompt)
+void line_editor_impl::set_prompt(const char* prompt, const char* rprompt, bool redisplay)
 {
     m_desc.prompt = prompt;
-    m_module.set_prompt(prompt, rprompt);
+    m_module.set_prompt(prompt, rprompt, redisplay);
 }
 
 //------------------------------------------------------------------------------

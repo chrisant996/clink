@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "lua_state.h"
+#include "prompt.h"
 #include "../../app/src/version.h" // Ugh.
 
 #include <core/base.h>
@@ -640,6 +641,14 @@ static int get_refilter_redisplay_count(lua_State* state)
     return 2;
 }
 
+//------------------------------------------------------------------------------
+// UNDOCUMENTED; internal use only.
+static int is_transient_prompt_filter(lua_State* state)
+{
+    lua_pushboolean(state, prompt_filter::is_filtering());
+    return 1;
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -687,6 +696,7 @@ void clink_lua_initialise(lua_state& lua)
         { "slash_translation",      &slash_translation },
         // UNDOCUMENTED; internal use only.
         { "refilterprompt",         &refilter_prompt },
+        { "istransientpromptfilter", &is_transient_prompt_filter },
         { "get_refilter_redisplay_count", &get_refilter_redisplay_count },
     };
 

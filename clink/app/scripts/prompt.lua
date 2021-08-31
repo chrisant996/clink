@@ -21,7 +21,7 @@ end
 
 
 --------------------------------------------------------------------------------
-function clink._filter_prompt(prompt, rprompt)
+local function _do_filter_prompt(type, prompt, rprompt)
     -- Sort by priority if required.
     if prompt_filters_unsorted then
         local lambda = function(a, b) return a._priority < b._priority end
@@ -29,6 +29,9 @@ function clink._filter_prompt(prompt, rprompt)
 
         prompt_filters_unsorted = false
     end
+
+    local filter_func_name = type.."filter"
+    local right_filter_func_name = type.."rightfilter"
 
     -- Protected call to prompt filters.
     local impl = function(prompt, rprompt)
@@ -40,14 +43,19 @@ function clink._filter_prompt(prompt, rprompt)
             -- prompt filters.  Otherwise it's too easy to write Lua code that
             -- works on "new" Clink versions but throws a Lua exception on Clink
             -- versions that don't support RPROMPT.
-            filtered, onwards = filter:filter(prompt)
-            if filtered ~= nil then
-                prompt = filtered
-                if onwards == false then return prompt, rprompt end
+            local func
+            func = filter[filter_func_name]
+            if func or #type == 0 then
+                filtered, onwards = func(filter, prompt)
+                if filtered ~= nil then
+                    prompt = filtered
+                    if onwards == false then return prompt, rprompt end
+                end
             end
 
-            if filter.rightfilter then
-                filtered, onwards = filter:rightfilter(rprompt)
+            func = filter[right_filter_func_name]
+            if func then
+                filtered, onwards = func(filter, rprompt)
                 if filtered ~= nil then
                     rprompt = filtered
                     if onwards == false then return prompt, rprompt end
@@ -69,6 +77,16 @@ function clink._filter_prompt(prompt, rprompt)
     end
 
     return ret, rret
+end
+
+--------------------------------------------------------------------------------
+function clink._filter_prompt(prompt, rprompt)
+    return _do_filter_prompt("", prompt, rprompt)
+end
+
+--------------------------------------------------------------------------------
+function clink._filter_transient_prompt(prompt, rprompt)
+    return _do_filter_prompt("transient", prompt, rprompt)
 end
 
 --------------------------------------------------------------------------------

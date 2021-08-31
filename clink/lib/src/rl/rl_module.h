@@ -24,7 +24,7 @@ public:
                     ~rl_module();
 
     void            set_keyseq_len(int len);
-    void            set_prompt(const char* prompt, const char* rprompt);
+    void            set_prompt(const char* prompt, const char* rprompt, bool redisplay);
 
 private:
     virtual void    bind_input(binder& binder) override;

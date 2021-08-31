@@ -13,6 +13,7 @@
 #include <core/str.h>
 #include <core/str_compare.h>
 #include <core/str_tokeniser.h>
+#include <core/str_transform.h>
 #include <lib/doskey.h>
 #include <lib/match_generator.h>
 #include <lib/line_editor.h>
@@ -52,6 +53,15 @@ static setting_bool g_filter_prompt(
     "clink.promptfilter",
     "Enable prompt filtering by Lua scripts",
     true);
+
+static setting_enum s_prompt_transient(
+    "prompt.transient",
+    "Controls when past prompts are collapsed",
+    "The default is 'off' which never collapses past prompts.  Set to 'always' to\n"
+    "always collapse past prompts.  Set to 'same_dir' to only collapse past prompts\n"
+    "when the current working directory hasn't changed since the last prompt.",
+    "off,always,same_dir",
+    0);
 
 setting_bool g_save_history(
     "history.save",
@@ -95,7 +105,7 @@ extern bool has_sticky_search_position();
 extern bool get_sticky_search_add_history(const char* line);
 extern void clear_sticky_search_position();
 extern void reset_keyseq_to_name_map();
-extern void set_prompt(const char* prompt, const char* rprompt);
+extern void set_prompt(const char* prompt, const char* rprompt, bool redisplay);
 
 
 
@@ -506,8 +516,33 @@ void host::filter_prompt()
         return;
 
     const char* rprompt = nullptr;
-    const char* prompt = filter_prompt(&rprompt);
-    set_prompt(prompt, rprompt);
+    const char* prompt = filter_prompt(&rprompt, false/*transient*/);
+    set_prompt(prompt, rprompt, true/*redisplay*/);
+}
+
+//------------------------------------------------------------------------------
+void host::filter_transient_prompt(bool final)
+{
+    if (!m_can_transient)
+        return;
+
+    const char* rprompt;
+    const char* prompt;
+
+    // Replace old prompt with transient prompt.
+    rprompt = nullptr;
+    prompt = filter_prompt(&rprompt, true/*transient*/);
+    set_prompt(prompt, rprompt, true/*redisplay*/);
+
+    if (final)
+        return;
+
+    // Refilter new prompt, but don't redisplay (which would replace the prompt
+    // again; not what is needed here).  Instead let the prompt get displayed
+    // again naturally in due time.
+    rprompt = nullptr;
+    prompt = filter_prompt(&rprompt, false/*transient*/);
+    set_prompt(prompt, rprompt, false/*redisplay*/);
 }
 
 //------------------------------------------------------------------------------
@@ -640,6 +675,10 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out)
     bool init_prompt = interactive;
     bool init_editor = interactive;
     bool init_history = reset || (interactive && !rl_has_saved_history());
+
+    // Update last cwd and whether transient prompt can be applied later.
+    if (init_editor)
+        update_last_cwd();
 
     // Set up Lua.
     bool local_lua = g_reload_scripts.get();
@@ -935,16 +974,33 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out)
 }
 
 //------------------------------------------------------------------------------
-const char* host::filter_prompt(const char** rprompt)
+const char* host::filter_prompt(const char** rprompt, bool transient)
 {
     m_filtered_prompt.clear();
     m_filtered_rprompt.clear();
     if (g_filter_prompt.get() && m_prompt_filter)
     {
-        m_prompt_filter->filter(m_prompt ? m_prompt : "",
-                                m_rprompt ? m_rprompt : "",
+        str_moveable tmp;
+        str_moveable rtmp;
+        const char* p;
+        const char* rp;
+        if (transient)
+        {
+            prompt_utils::get_transient_prompt(tmp);
+            prompt_utils::get_transient_rprompt(rtmp);
+            p = tmp.c_str();
+            rp = rtmp.c_str();
+        }
+        else
+        {
+            p = m_prompt ? m_prompt : "";
+            rp = m_rprompt ? m_rprompt : "";
+        }
+        m_prompt_filter->filter(p,
+                                rp,
                                 m_filtered_prompt,
-                                m_filtered_rprompt);
+                                m_filtered_rprompt,
+                                transient);
     }
     else
     {
@@ -969,4 +1025,24 @@ void host::purge_old_files()
     i.older_than(seconds);
     while (i.next(tmp))
         _unlink(tmp.c_str());
+}
+
+//------------------------------------------------------------------------------
+void host::update_last_cwd()
+{
+    int when = s_prompt_transient.get();
+
+    str<> cwd;
+    os::get_current_dir(cwd);
+
+    wstr_moveable wcwd(cwd.c_str());
+    if (wcwd.iequals(m_last_cwd.c_str()))
+    {
+        m_can_transient = (when != 0);  // Same dir collapses if not 'off'.
+    }
+    else
+    {
+        m_can_transient = (when == 1);  // Otherwise only collapse if 'always'.
+        m_last_cwd = std::move(wcwd);
+    }
 }

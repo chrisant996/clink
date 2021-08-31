@@ -1623,9 +1623,9 @@ void rl_module::set_keyseq_len(int len)
 }
 
 //------------------------------------------------------------------------------
-void rl_module::set_prompt(const char* prompt, const char* rprompt)
+void rl_module::set_prompt(const char* prompt, const char* rprompt, bool redisplay)
 {
-    bool redisplay = (g_rl_buffer && g_printer);
+    redisplay = redisplay && (g_rl_buffer && g_printer);
 
     // Readline needs to be told about parts of the prompt that aren't visible
     // by enclosing them in a pair of 0x01/0x02 chars.
@@ -1670,8 +1670,12 @@ void rl_module::set_prompt(const char* prompt, const char* rprompt)
     g_last_prompt.clear();
     g_last_prompt.concat(m_rl_prompt.c_str(), m_rl_prompt.length());
 
-    if (redisplay && (!m_rl_prompt.equals(prev_prompt.c_str()) ||
-                      !m_rl_rprompt.equals(prev_rprompt.c_str())))
+    if (m_rl_prompt.equals(prev_prompt.c_str()) &&
+        m_rl_rprompt.equals(prev_rprompt.c_str()))
+        return;
+
+    // Erase the existing prompt.
+    if (redisplay)
     {
         g_prompt_redisplay++;
 
@@ -1688,24 +1692,23 @@ void rl_module::set_prompt(const char* prompt, const char* rprompt)
         rl_clear_visible_line();
         while (lines-- > 0)
         {
-TODO("PROMPTFILTER: this can't walk up past the top of the visible area of the terminal display.");
             // BUGBUG: This can't walk up past the top of the visible area of
             // the terminal display, so short windows will effectively corrupt
             // the scrollback history.
-            // INVESTIGATE: Maybe it can check if the cursor line is outside the
-            // visible area, and scroll the screen in chunks to make the ANSI
-            // codes work?
             // REVIEW: What if the visible area is only one line tall?  Are ANSI
             // codes able to manipulate it adequately?
             g_printer->print("\x1b[A\x1b[2K");
         }
-
-        // Update the prompt and display.
-        rl_set_prompt(m_rl_prompt.c_str());
-        if (rprompt)
-            rl_set_rprompt(m_rl_rprompt.c_str());
-        rl_forced_update_display();
     }
+
+    // Update the prompt.
+    rl_set_prompt(m_rl_prompt.c_str());
+    if (rprompt)
+        rl_set_rprompt(m_rl_rprompt.c_str());
+
+    // Display the prompt.
+    if (redisplay)
+        rl_forced_update_display();
 }
 
 //------------------------------------------------------------------------------
@@ -1752,7 +1755,7 @@ void rl_module::on_begin_line(const context& context)
     // output with ANSI escape code support.
     assert(!g_rl_buffer);
     g_pager = &context.pager;
-    set_prompt(context.prompt, context.rprompt);
+    set_prompt(context.prompt, context.rprompt, false/*redisplay*/);
     g_rl_buffer = &context.buffer;
     if (g_classify_words.get())
         s_classifications = &context.classifications;
