@@ -3552,6 +3552,10 @@ _rl_update_final (void)
   if (line_structures_initialized == 0)
     return;
 
+/* begin_clink_change */
+  end_prompt (-1/*crlf*/);
+/* end_clink_change */
+
   full_lines = 0;
   /* If the cursor is the only thing on an otherwise-blank last line,
      compensate so we don't print an extra CRLF. */

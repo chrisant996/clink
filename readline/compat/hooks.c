@@ -10,7 +10,10 @@
 #include <assert.h>
 
 #include "hooks.h"
-#include "readline/posixstat.h"
+#include <compat/config.h>
+#include <readline/readline.h>
+#include <readline/rlprivate.h>
+#include <readline/posixstat.h>
 
 #define sizeof_array(x) (sizeof(x) / sizeof(x[0]))
 
@@ -255,4 +258,12 @@ int hooked_fstat(int fid, struct hooked_stat* out)
     out->st_nlink = s.st_nlink;
 
     return ret;
+}
+
+//------------------------------------------------------------------------------
+void end_prompt(int crlf)
+{
+    _rl_move_vert(_rl_vis_botlin);
+    if (crlf > 0)
+        rl_crlf();
 }

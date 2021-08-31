@@ -947,7 +947,7 @@ static int display_match_list_internal(char **matches, int len, int max, bool on
     // just do the inner printing loop.
     //     0 < len <= limit  implies  count = 1.
 
-    rl_crlf();
+    end_prompt(1/*crlf*/);
 
     if (_rl_print_completions_horizontally == 0)
     {
@@ -1186,7 +1186,8 @@ void free_filtered_matches(match_display_filter_entry** filtered_matches)
 //------------------------------------------------------------------------------
 static int prompt_display_matches(int len)
 {
-    rl_crlf();
+    end_prompt(1/*crlf*/);
+
     if (_rl_pager_color)
         _rl_print_pager_color();
     fprintf(rl_outstream, "Display all %d possibilities? (y or n)", len);
@@ -1222,9 +1223,6 @@ void display_matches(char** matches)
                 return;
             }
 
-            // Move to the last visible line of a possibly-multiple-line command.
-            _rl_move_vert(_rl_vis_botlin);
-
             len = 0;
             max_display = 0;
             max_description = 0;
@@ -1256,14 +1254,11 @@ done_filtered:
         }
     }
 
-    // Move to the last visible line of a possibly-multiple-line command.
-    _rl_move_vert(_rl_vis_botlin);
-
     // Handle simple case first.  What if there is only one answer?
     if (matches[1] == 0)
     {
         temp = printable_part(matches[0]);
-        rl_crlf();
+        end_prompt(1/*crlf*/);
         reset_tmpbuf();
         append_filename(temp, matches[0], 0, 0, 0);
         fwrite(tmpbuf_allocated, tmpbuf_length, 1, rl_outstream);

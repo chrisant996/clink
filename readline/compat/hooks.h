@@ -37,3 +37,5 @@ struct hooked_stat
     short st_gid;
     short st_nlink;                     /* Always 1 in MSVC */
 };
+
+void end_prompt(int crlf);

@@ -846,10 +846,7 @@ void show_key_bindings(bool friendly, int mode, std::vector<key_binding_info>* o
 
     // Move cursor past the input line.
     if (!out)
-    {
-        _rl_move_vert(_rl_vis_botlin);
-        g_printer->print("\n");
-    }
+        end_prompt(true/*crlf*/);
 
     // Display any warnings.
     if (!out)
@@ -1040,8 +1037,7 @@ int clink_what_is(int, int)
     ensure_keydesc_map();
 
     // Move cursor past the input line.
-    _rl_move_vert(_rl_vis_botlin);
-    g_printer->print("\n");
+    end_prompt(true/*crlf*/);
 
     int type;
     rl_command_func_t* func = nullptr;

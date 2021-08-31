@@ -1152,8 +1152,7 @@ LUnlinkFile:
 //------------------------------------------------------------------------------
 int clink_diagnostics(int count, int invoking_key)
 {
-    _rl_move_vert(_rl_vis_botlin);
-    puts("");
+    end_prompt(true/*crlf*/);
 
     static char bold[] = "\x1b[1m";
     static char norm[] = "\x1b[m";

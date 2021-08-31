@@ -183,8 +183,7 @@ int rl_buffer_lua::begin_output(lua_State* state)
 {
     if (!m_began_output)
     {
-        _rl_move_vert(_rl_vis_botlin);
-        puts("");
+        end_prompt(true/*crlf*/);
         m_began_output = true;
     }
     return 0;
