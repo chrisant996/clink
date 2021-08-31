@@ -14,6 +14,7 @@
 #include <terminal/ecma48_iter.h>
 #include "lib/matches.h"
 #include "match_builder_lua.h"
+#include "prompt.h"
 
 #include <vector>
 
@@ -496,6 +497,9 @@ int get_key_bindings(lua_State* state)
 /// -show:  }
 static int get_prompt_info(lua_State* state)
 {
+    if (prompt_filter::is_filtering())
+        return luaL_error(state, "rl.getpromptinfo cannot be used during prompt filtering");
+
     lua_createtable(state, 0, 7);
 
     str_moveable bracketed_prefix;
