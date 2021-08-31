@@ -507,7 +507,7 @@ void host::filter_prompt()
 
     const char* rprompt = nullptr;
     const char* prompt = filter_prompt(&rprompt);
-    set_prompt(prompt, rprompt, true/*redisplay*/);
+    set_prompt(prompt, rprompt);
 }
 
 //------------------------------------------------------------------------------
