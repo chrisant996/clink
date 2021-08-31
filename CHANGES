@@ -4,6 +4,7 @@
 
 #### v1.2.29
 
+- Added `prompt.transient` Clink setting which can collapse prior prompts to a condensed form.  The new `%CLINK_TRANSIENT_PROMPT%` and `%CLINK_TRANSIENT_RPROMPT%` environment variables supply the initial prompt strings, and prompt filters can define `:transientfilter()` and `:transientrightfilter()` functions to filter the transient prompt.
 - Added `clink.logo` Clink setting to globally control what startup logo is shown (full copyright logo by default, or a short version logo, or no startup logo).
 - Added logging for more possible failure points while injecting Clink into the host process.
 - Now `clink set cl*` lists all settings that begin with `cl` (the star wildcard is only supported at the end of the string).
