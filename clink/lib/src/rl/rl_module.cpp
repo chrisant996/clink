@@ -67,8 +67,6 @@ extern char*        _rl_comment_begin;
 extern int          _rl_convert_meta_chars_to_ascii;
 extern int          _rl_output_meta_chars;
 #if defined(PLATFORM_WINDOWS)
-extern int          _rl_vis_botlin;
-extern int          _rl_last_c_pos;
 extern int          _rl_last_v_pos;
 #endif
 } // extern "C"
