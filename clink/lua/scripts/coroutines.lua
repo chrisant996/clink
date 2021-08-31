@@ -420,8 +420,9 @@ end
 --- "t" for text mode (the default if omitted) or "b" for binary mode.  Write
 --- mode is not supported, so it cannot contain "w".
 ---
---- <strong>Note:</strong> if the <code>prompt.async</code> setting is disabled
---- or if a transient prompt filtering is executing, then this behaves like
+--- <strong>Note:</strong> if the <code>prompt.async</code> setting is disabled,
+--- or while a <a href="transientprompts">transient prompt filter</a> is
+--- executing, then this behaves like
 --- <code><span class="hljs-built_in">io</span>.<span class="hljs-built_in">popen</span>(<span class="arg">command</span>, <span class="arg">mode</span>)</code>
 --- instead.
 function io.popenyield(command, mode)

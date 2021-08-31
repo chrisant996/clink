@@ -90,11 +90,11 @@ The following table describes the available Clink settings:
 Name                         | Default | Description
 :--:                         | :-:     | -----------
 `clink.autostart`            |         | This command is automatically run when the first CMD prompt is shown after Clink is injected.  If this is blank (the default), then Clink instead looks for clink_start.cmd in the binaries directory and profile directory and runs them.  Set it to "nul" to not run any autostart command.
-`clink.colorize_input`       | True    | Enables context sensitive coloring for the input text (see <a href="#classifywords">Coloring The Input Text</a>).
-`clink.logo`                 | `full`  | Controls what startup logo to show when Clink is injected.  `full` = show full copyright logo (the default), `short` = show abbreviated version info, `none` = omit the logo.
+`clink.colorize_input`       | True    | Enables context sensitive coloring for the input text (see [Coloring The Input Text](#classifywords)).
+`clink.logo`                 | `full`  | Controls what startup logo to show when Clink is injected.  `full` = show full copyright logo, `short` = show abbreviated version info, `none` = omit the logo.
 `clink.paste_crlf`           | `crlf`  | What to do with CR and LF characters on paste. Setting this to `delete` deletes them, `space` replaces them with spaces, `ampersand` replaces them with ampersands, and `crlf` pastes them as-is (executing commands that end with a newline).
-`clink.path`                 |         | A list of paths to load Lua scripts. Multiple paths can be delimited semicolons.
-`clink.promptfilter`         | True    | Enable prompt filtering by Lua scripts.
+`clink.path`                 |         | A list of paths from which to load Lua scripts. Multiple paths can be delimited semicolons.
+`clink.promptfilter`         | True    | Enable [prompt filtering](#customising-the-prompt) by Lua scripts.
 `cmd.auto_answer`            | `off`   | Automatically answers cmd.exe's "Terminate batch job (Y/N)?" prompts. `off` = disabled, `answer_yes` = answer Y, `answer_no` = answer N.
 `cmd.ctrld_exits`            | True    | <kbd>Ctrl</kbd>+<kbd>D</kbd> exits the process when it is pressed on an empty line.
 `cmd.get_errorlevel`         | True    | When this is enabled, Clink runs a hidden `echo %errorlevel%` command before each interactive input prompt to retrieve the last exit code for use by Lua scripts.  If you experience problems, try turning this off.  This is on by default.
@@ -102,7 +102,7 @@ Name                         | Default | Description
 `color.argmatcher`           |         | The color for the command name in the input line when `clink.colorize_input` is enabled, if the command name has an argmatcher available.
 <a name="color_cmd"></a>`color.cmd` | `bold` | Used when Clink displays shell (CMD.EXE) command completions, and in the input line when `clink.colorize_input` is enabled.
 <a name="color_doskey"></a>`color.doskey` | `bright cyan` | Used when Clink displays doskey alias completions, and in the input line when `clink.colorize_input` is enabled.
-<a name="color_filtered"></a>`color.filtered` | `bold` | The default color for filtered completions (see <a href="#filteringthematchdisplay">Filtering the Match Display</a>).
+<a name="color_filtered"></a>`color.filtered` | `bold` | The default color for filtered completions (see [Filtering the Match Display](#filteringthematchdisplay)).
 `color.flag`                 | `default` | The color for flags in the input line when `clink.colorize_input` is enabled.
 <a name="color_hidden"></a>`color.hidden` | | Used when Clink displays file completions with the "hidden" attribute.
 `color.horizscroll`          |         | Used when Clink displays the `<` or `>` horizontal scroll indicators when Readline's `horizontal-scroll-mode` variable is set.
@@ -136,7 +136,7 @@ Name                         | Default | Description
 `lua.break_on_traceback`     | False   | Breaks into Lua debugger on `traceback()`.
 `lua.debug`                  | False   | Loads a simple embedded command line debugger when enabled. Breakpoints can be added by calling `pause()`.
 `lua.path`                   |         | Value to append to `package.path`. Used to search for Lua scripts specified in `require()` statements.
-<a name="lua_reload_scripts"></a>`lua.reload_scripts` | False | When false, Lua scripts are loaded once and are only reloaded if forced (see <a href="#lua-scripts-location">The Location of Lua Scripts</a> for details).  When true, Lua scripts are loaded each time the edit prompt is activated.
+<a name="lua_reload_scripts"></a>`lua.reload_scripts` | False | When false, Lua scripts are loaded once and are only reloaded if forced (see [The Location of Lua Scripts](#lua-scripts-location) for details).  When true, Lua scripts are loaded each time the edit prompt is activated.
 `lua.strict`                 | True    | When enabled, argument errors cause Lua scripts to fail.  This may expose bugs in some older scripts, causing them to fail where they used to succeed. In that case you can try turning this off, but please alert the script owner about the issue so they can fix the script.
 `lua.traceback_on_error`     | False   | Prints stack trace on Lua errors.
 `match.expand_envvars`       | False   | Expands environment variables in a word before performing completion.
@@ -145,7 +145,8 @@ Name                         | Default | Description
 `match.sort_dirs`            | `with`  | How to sort matching directory names. `before` = before files, `with` = with files, `after` = after files.
 `match.translate_slashes`    | `system` | File and directory completions can be translated to use consistent slashes.  The default is `system` to use the appropriate path separator for the OS host (backslashes on Windows).  Use `slash` to use forward slashes, or `backslash` to use backslashes.  Use `off` to turn off translating slashes from custom match generators.
 `match.wild`                 | True    | Matches `?` and `*` wildcards when using any of the completion commands.  Turn this off to behave how bash does, and not match wildcards (but `glob-complete-word` always matches wildcards).
-`prompt.async`               | True    | Enables asynchronous prompt refresh.  Turn this off if prompt filter refreshes are annoying or cause problems.
+`prompt.async`               | True    | Enables [asynchronous prompt refresh](#asyncpromptfiltering).  Turn this off if prompt filter refreshes are annoying or cause problems.
+<a name="prompt-transient"></a>`prompt.transient` | `off` | Controls when past prompts are collapsed ([transient prompts](#transientprompts)).  `off` = never collapse past prompts, `always` = always collapse past prompts, `same_dir` = only collapse past prompts when the current working directory hasn't changed since the last prompt.
 `readline.hide_stderr`       | False   | Suppresses stderr from the Readline library.  Enable this if Readline error messages are getting in the way.
 `terminal.adjust_cursor_style`| True   | When enabled, Clink adjusts the cursor shape and visibility to show Insert Mode, produce the visible bell effect, avoid disorienting cursor flicker, and to support ANSI escape codes that adjust the cursor shape and visibility. But it interferes with the Windows 10 Cursor Shape console setting. You can make the Cursor Shape setting work by disabling this Clink setting (and the features this provides).
 `terminal.differentiate_keys`| False   | When enabled, pressing <kbd>Ctrl</kbd> + <kbd>H</kbd> or <kbd>I</kbd> or <kbd>M</kbd> or <kbd>[</kbd> generate special key sequences to enable binding them separately from <kbd>Backspace</kbd> or <kbd>Tab</kbd> or <kbd>Enter</kbd> or <kbd>Esc</kbd>.
@@ -941,6 +942,12 @@ The following example illustrates running `git status` in the background.  It al
 ```lua
 #INCLUDE [examples\ex_async_prompt.lua]
 ```
+
+<a name="transientprompts"></a>
+
+#### Transient Prompt
+
+... TBD ...
 
 # Miscellaneous
 
