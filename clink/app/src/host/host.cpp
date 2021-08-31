@@ -95,7 +95,7 @@ extern bool has_sticky_search_position();
 extern bool get_sticky_search_add_history(const char* line);
 extern void clear_sticky_search_position();
 extern void reset_keyseq_to_name_map();
-extern void set_prompt(const char* prompt, const char* rprompt, bool redisplay);
+extern void set_prompt(const char* prompt, const char* rprompt);
 
 
 
