@@ -475,7 +475,7 @@ Typing|Typing does an incremental search.
 
 # Extending Clink With Lua
 
-Clink can be extended with <a href="https://www.lua.org/docs.html">Lua</a> scripts to customize startup actions, create completion matches, customize the prompt, and more.  The following sections describe these in more detail and show some examples.
+Clink can be extended with <a href="https://www.lua.org/docs.html">Lua</a> scripts to customise startup actions, create completion matches, customise the prompt, and more.  The following sections describe these in more detail and show some examples.
 
 <a name="lua-scripts-location"></a>
 
@@ -495,10 +495,10 @@ Run `clink info` to see the script paths for the current session.
 
 - Loading a Lua script executes it; so when Clink loads Lua scripts from the locations above, it executes the scripts.
 - Code not inside a function is executed immediately when the script is loaded.
-- Usually scripts will register functions to customize various behaviors:
+- Usually scripts will register functions to customise various behaviors:
   - Generate completion matches.
   - Apply color to input text.
-  - Customize the prompt.
+  - Customise the prompt.
   - Perform actions before or after the user gets to edit each input line.
   - Provide new custom commands that can be bound to keys via the <a href="#luakeybindings">luafunc: key macro syntax</a>.
 - Often scripts will also define some functions and variables for use by itself and/or other scripts.
