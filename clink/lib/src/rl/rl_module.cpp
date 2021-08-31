@@ -1703,8 +1703,7 @@ void rl_module::set_prompt(const char* prompt, const char* rprompt, bool redispl
 
     // Update the prompt.
     rl_set_prompt(m_rl_prompt.c_str());
-    if (rprompt)
-        rl_set_rprompt(m_rl_rprompt.c_str());
+    rl_set_rprompt(m_rl_rprompt.c_str());
 
     // Display the prompt.
     if (redisplay)
