@@ -1493,6 +1493,29 @@ end
 -- Starts/resumes a debug session
 --
 
+--- -name:  pause
+--- -arg:   [message:string]
+--- -arg:   [lines:integer]
+--- -arg:   [force:boolean]
+--- Breaks into the Lua debugger, if the <a href="#lua_debug">lua.debug</a>
+--- setting is enabled.
+---
+--- If <code>pause()</code> is used by itself, the debugger breaks on the line
+--- after the pause call.
+---
+--- The <span class="arg">message</span> argument can be a message the debugger
+--- will display, for example to differentiate between multiple pause calls.
+---
+--- The <span class="arg">lines</span> argument indicates how many lines to step
+--- further before breaking into the debugger.  The default is nil, which breaks
+--- on the line immediately following the pause call.  Passing an integer value
+--- will step some number of lines before breaking (this will produce confusing
+--- results and is discouraged).
+---
+--- When the <span class="arg">force</span> argument is <code>true</code> then
+--- it will break into the debugger even if the <code>poff</code> debugger
+--- command has been used to turn off the pause command.
+
 function pause(x,l,f)
   if not f and pause_off then return end       --being told to ignore pauses
   pausemsg = x or 'pause'
