@@ -51,6 +51,15 @@
 
 local IsWindows = string.find(string.lower(os.getenv('OS') or ''),'^windows')
 
+-- pause() must step over a different number of lines depending on whether the
+-- debugger is started yet, and whether debugger.lua is embedded (precompiled).
+local step_adjust_start = 0
+local step_adjust_started = 1
+if ((debug.getinfo(IsWindows, 'S') or {}).short_src or '') == '?' then
+  step_adjust_start = -1
+  step_adjust_started = -1
+end
+
 local coro_debugger
 local events = { BREAK = 1, WATCH = 2, STEP = 3, SET = 4 }
 local breakpoints = {}
@@ -1499,7 +1508,7 @@ function pause(x,l,f)
   show_stack = true                          --make debugger_loop show stack trace
   if started then
     --we'll stop now 'cos the existing debug hook will grab us
-    step_lines = lines + 1                   --plus 1 to break when we get out of pause(), rather than inside pause()
+    step_lines = lines + step_adjust_started
     step_into  = true
     debug.sethook(debug_hook, "crl")         --reset it in case some external agent fiddled with it
   else
@@ -1507,7 +1516,7 @@ function pause(x,l,f)
     trace_level[current_thread] = 0
     step_level [current_thread] = 0
     stack_level[current_thread] = 1
-    step_lines = lines
+    step_lines = lines + step_adjust_start
     step_into  = true
     started    = true
     debug.sethook(debug_hook, "crl")         --NB: this will cause an immediate entry to the debugger_loop
