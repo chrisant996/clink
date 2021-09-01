@@ -1035,7 +1035,7 @@ local function debugger_loop(ev, vars, file, line, idx_watch)
       --{{{  set watch expression
 
       if args and args ~= '' then
-        local func = loadstring("return(" .. args .. ")")
+        local func = load("return(" .. args .. ")")
         local newidx = #watches + 1
         watches[newidx] = {func = func, exp = args}
         io.write("Set watch exp no. " .. newidx..'\n')
@@ -1300,7 +1300,7 @@ local function debugger_loop(ev, vars, file, line, idx_watch)
       --map line starting with "=..." to "return ..."
       if string.sub(line,1,1) == '=' then line = string.gsub(line,'=','return ',1) end
 
-      local ok, func = pcall(loadstring,line)
+      local ok, func = pcall(load,line)
       if func == nil then                             --Michael.Bringmann@lsi.com
         io.write("Compile error: "..line..'\n')
       elseif not ok then
