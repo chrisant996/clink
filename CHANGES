@@ -8,6 +8,7 @@
 - Added `clink.logo` Clink setting to globally control what startup logo is shown (full copyright logo by default, or a short version logo, or no startup logo).
 - Added logging for more possible failure points while injecting Clink into the host process.
 - Now `clink set cl*` lists all settings that begin with `cl` (the star wildcard is only supported at the end of the string).
+- Fixed [#152](https://github.com/chrisant996/clink/issues/152); LUA debugger breaks on the wrong line, and fails to execute expressions.
 
 #### v1.2.28
 
