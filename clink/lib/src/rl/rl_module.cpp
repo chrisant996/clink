@@ -1677,8 +1677,6 @@ void rl_module::set_prompt(const char* prompt, const char* rprompt, bool redispl
     // Erase the existing prompt.
     if (redisplay)
     {
-        g_prompt_redisplay++;
-
         // Count the number of lines the prefix takes to display.
         str_moveable bracketed_prefix;
         if (rl_get_local_prompt_prefix())
@@ -1707,7 +1705,10 @@ void rl_module::set_prompt(const char* prompt, const char* rprompt, bool redispl
 
     // Display the prompt.
     if (redisplay)
+    {
+        g_prompt_redisplay++;
         rl_forced_update_display();
+    }
 }
 
 //------------------------------------------------------------------------------
