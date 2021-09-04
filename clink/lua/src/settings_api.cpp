@@ -75,6 +75,11 @@ static int get(lua_State* state)
 /// -ret:   boolean
 /// Sets the <span class="arg">name</span> Clink setting to
 /// <span class="arg">value</span> and returns whether it was successful.
+///
+/// Note: the setting is changed in memory, but is not written to the settings
+/// file.  Execute <code>clink set</code> if the setting needs to be written to
+/// the settings file (e.g.
+/// <code>os.execute(os.getalias("clink").." set <em>name</em> <em>value</em>")</code>).
 static int set(lua_State* state)
 {
     const char* key = checkstring(state, 1);
@@ -85,7 +90,14 @@ static int set(lua_State* state)
     if (setting == nullptr)
         return 0;
 
-    const char* value = lua_tostring(state, 2);
+    const char* value;
+    if (lua_isboolean(state, 2))
+        value = lua_toboolean(state, 2) ? "true" : "false";
+    else
+        value = checkstring(state, 2);
+    if (!value)
+        return 0;
+
     bool ok = setting->set(value);
 
     lua_pushboolean(state, ok == true);
