@@ -51,6 +51,17 @@
 
 local IsWindows = string.find(string.lower(os.getenv('OS') or ''),'^windows')
 
+-- Redirect printing through Clink's terminal layer.  This enables UTF8 support
+-- and emulated terminal support.
+local function io_write(...)
+  for _,s in ipairs({...}) do
+    clink.print(s, NONL)
+  end
+end
+
+local bold = "\x1b[1m"
+local normal = "\x1b[m"
+
 -- pause() must step over a different number of lines depending on whether the
 -- debugger is started yet, and whether debugger.lua is embedded (precompiled).
 local step_adjust_start = 0
@@ -448,7 +459,7 @@ end
 --{{{  local function indented( level, ... )
 
 local function indented( level, ... )
-  io.write( string.rep('  ',level), table.concat({...}), '\n' )
+  io_write( string.rep('  ',level), table.concat({...}), '\n' )
 end
 
 --}}}
@@ -467,7 +478,7 @@ local function dumpval( level, name, value, limit )
   elseif type(name) == 'string' and string.find(name,'^[_%a][_.%w]*$') then
     index = name ..' = '
   else
-    index = string.format('[%q] = ',tostring(name))
+    index = string.format('[%q] = ',escape(tostring(name)))
   end
   if type(value) == 'table' then
     if dumpvisited[value] then
@@ -487,7 +498,7 @@ local function dumpval( level, name, value, limit )
   else
     if type(value) == 'string' then
       if string.len(value) > 40 then
-        indented( level, index, '[[', value, ']];' )
+        indented( level, index, '[[', string.format('%q', value), ']];' )
       else
         indented( level, index, string.format('%q',value), ';' )
       end
@@ -536,7 +547,7 @@ local function show(file,line,before,after)
 
     --}}}
     if not f then
-      io.write('Cannot find '..file..'\n')
+      io_write('Cannot find '..file..'\n')
       return
     end
   end
@@ -547,9 +558,9 @@ local function show(file,line,before,after)
     if i >= (line-before) then
       if i > (line+after) then break end
       if i == line then
-        io.write(i..'***\t'..l..'\n')
+        io_write(i..'***\t'..l..'\n')
       else
-        io.write(i..'\t'..l..'\n')
+        io_write(i..'\t'..l..'\n')
       end
     end
   end
@@ -623,7 +634,7 @@ local function trace(set)
     else
       mark = ''
     end
-    io.write('['..level..']'..mark..'\t'..(ar.name or ar.what)..' in '..ar.short_src..':'..ar.currentline..'\n')
+    io_write('['..level..']'..mark..'\t'..(ar.name or ar.what)..' in '..ar.short_src..':'..ar.currentline..'\n')
   end
 end
 
@@ -839,7 +850,7 @@ local function print_trace(level,depth,event,file,line,name)
   local prefix = ''
   if current_thread ~= 'main' then prefix = '['..tostring(current_thread)..'] ' end
 
-  io.write(prefix..
+  io_write(prefix..
            string.format('%08.2f:%02i.',os.clock(),depth)..
            string.rep('.',depth%32)..
            (file or '')..' ('..(line or '')..') '..
@@ -898,21 +909,21 @@ local function report(ev, vars, file, line, idx_watch)
   local prefix = ''
   if current_thread ~= 'main' then prefix = '['..tostring(current_thread)..'] ' end
   if ev == events.STEP then
-    io.write(prefix.."Paused at file "..file.." line "..line..' ('..stack_level[current_thread]..')\n')
+    io_write(prefix.."Paused at file "..file.." line "..line..' ('..stack_level[current_thread]..')\n')
     show_source()
   elseif ev == events.BREAK then
-    io.write(prefix.."Paused at file "..file.." line "..line..' ('..stack_level[current_thread]..') (breakpoint)\n')
+    io_write(prefix.."Paused at file "..file.." line "..line..' ('..stack_level[current_thread]..') (breakpoint)\n')
     show_source()
   elseif ev == events.WATCH then
-    io.write(prefix.."Paused at file "..file.." line "..line..' ('..stack_level[current_thread]..')'.." (watch expression "..idx_watch.. ": ["..watches[idx_watch].exp.."])\n")
+    io_write(prefix.."Paused at file "..file.." line "..line..' ('..stack_level[current_thread]..')'.." (watch expression "..idx_watch.. ": ["..watches[idx_watch].exp.."])\n")
     show_source()
   elseif ev == events.SET then
     --do nothing
   else
-    io.write(prefix.."Error in application: "..file.." line "..line.."\n")
+    io_write(prefix.."Error in application: "..file.." line "..line.."\n")
   end
   if ev ~= events.SET then
-    if pausemsg and pausemsg ~= '' then io.write('\nMessage: '..pausemsg..'\n') end
+    if pausemsg and pausemsg ~= '' then io_write('\nMessage: '..pausemsg..'\n') end
     pausemsg = ''
   end
   return vars, file, line
@@ -979,16 +990,16 @@ local function debugger_loop(ev, vars, file, line, idx_watch)
   --}}}
 
   while true do
-    io.write("[DEBUG]> ")
+    io_write(bold .. "[DEBUG]>" .. normal .. " ")
     local line = io.read("*line")
-    if line == nil then io.write('\n'); line = 'exit' end
+    if line == nil then io_write('\n'); line = 'exit' end
 
     if line == "" then
         line = last_line
     else
         last_line = line
     end
-    io.write("'" .. last_line .. "'\n")
+    io_write("'" .. last_line .. "'\n")
 
     if string.find(line, "^[a-z]+") then
       command = string.sub(line, string.find(line, "^[a-z]+"))
@@ -1005,9 +1016,9 @@ local function debugger_loop(ev, vars, file, line, idx_watch)
       local line, filename  = getargs('LF')
       if filename ~= '' and line ~= '' then
         set_breakpoint(filename,line)
-        io.write("Breakpoint set in file "..filename..' line '..line..'\n')
+        io_write("Breakpoint set in file "..filename..' line '..line..'\n')
       else
-        io.write("Bad request\n")
+        io_write("Bad request\n")
       end
 
       --}}}
@@ -1018,9 +1029,9 @@ local function debugger_loop(ev, vars, file, line, idx_watch)
       local line, filename = getargs('LF')
       if filename ~= '' and line ~= '' then
         remove_breakpoint(filename, line)
-        io.write("Breakpoint deleted from file "..filename..' line '..line.."\n")
+        io_write("Breakpoint deleted from file "..filename..' line '..line.."\n")
       else
-        io.write("Bad request\n")
+        io_write("Bad request\n")
       end
 
       --}}}
@@ -1028,14 +1039,14 @@ local function debugger_loop(ev, vars, file, line, idx_watch)
     elseif command == "delallb" then
       --{{{  delete all breakpoints
       breakpoints = {}
-      io.write('All breakpoints deleted\n')
+      io_write('All breakpoints deleted\n')
       --}}}
 
     elseif command == "listb" then
       --{{{  list breakpoints
       for i, v in pairs(breakpoints) do
         for ii, vv in pairs(v) do
-          io.write("Break at: "..i..' in '..ii..'\n')
+          io_write("Break at: "..i..' in '..ii..'\n')
         end
       end
       --}}}
@@ -1047,9 +1058,9 @@ local function debugger_loop(ev, vars, file, line, idx_watch)
         local func = load("return(" .. args .. ")")
         local newidx = #watches + 1
         watches[newidx] = {func = func, exp = args}
-        io.write("Set watch exp no. " .. newidx..'\n')
+        io_write("Set watch exp no. " .. newidx..'\n')
       else
-        io.write("Bad request\n")
+        io_write("Bad request\n")
       end
 
       --}}}
@@ -1060,9 +1071,9 @@ local function debugger_loop(ev, vars, file, line, idx_watch)
       local index = tonumber(args)
       if index then
         watches[index] = nil
-        io.write("Watch expression deleted\n")
+        io_write("Watch expression deleted\n")
       else
-        io.write("Bad request\n")
+        io_write("Bad request\n")
       end
 
       --}}}
@@ -1070,13 +1081,13 @@ local function debugger_loop(ev, vars, file, line, idx_watch)
     elseif command == "delallw" then
       --{{{  delete all watch expressions
       watches = {}
-      io.write('All watch expressions deleted\n')
+      io_write('All watch expressions deleted\n')
       --}}}
 
     elseif command == "listw" then
       --{{{  list watch expressions
       for i, v in pairs(watches) do
-        io.write("Watch exp. " .. i .. ": " .. v.exp..'\n')
+        io_write("Watch exp. " .. i .. ": " .. v.exp..'\n')
       end
       --}}}
 
@@ -1129,7 +1140,7 @@ local function debugger_loop(ev, vars, file, line, idx_watch)
           return 'cont'
         end
       else
-        io.write("Bad request\n")
+        io_write("Bad request\n")
       end
       --}}}
 
@@ -1188,15 +1199,15 @@ local function debugger_loop(ev, vars, file, line, idx_watch)
         if type(v) == 'function' then
           local def = debug.getinfo(v,'S')
           if def then
-            io.write(def.what..' in '..def.short_src..' '..def.linedefined..'..'..def.lastlinedefined..'\n')
+            io_write(def.what..' in '..def.short_src..' '..def.linedefined..'..'..def.lastlinedefined..'\n')
           else
-            io.write('Cannot get info for '..v..'\n')
+            io_write('Cannot get info for '..v..'\n')
           end
         else
-          io.write(v..' is not a function\n')
+          io_write(v..' is not a function\n')
         end
       else
-        io.write("Bad request\n")
+        io_write("Bad request\n")
       end
       --}}}
 
@@ -1219,7 +1230,7 @@ local function debugger_loop(ev, vars, file, line, idx_watch)
         end
         dumpvar(v,depth+1,n)
       else
-        io.write("Bad request\n")
+        io_write("Bad request\n")
       end
       --}}}
 
@@ -1233,7 +1244,7 @@ local function debugger_loop(ev, vars, file, line, idx_watch)
       if file ~= '' and file ~= "=stdin" then
         show(file,line,before,after)
       else
-        io.write('Nothing to show\n')
+        io_write('Nothing to show\n')
       end
 
       --}}}
@@ -1271,7 +1282,7 @@ local function debugger_loop(ev, vars, file, line, idx_watch)
 
     elseif command == "pause" then
       --{{{  not allowed in here
-      io.write('pause() should only be used in the script you are debugging\n')
+      io_write('pause() should only be used in the script you are debugging\n')
       --}}}
 
     elseif command == "help" then
@@ -1282,7 +1293,7 @@ local function debugger_loop(ev, vars, file, line, idx_watch)
       end
       if command ~= '' and hints[command] then
         local _, _, h, t = hints[command]:find("^(.*)|(.*)$")
-        io.write('\n'..h..t..'\n')
+        io_write('\n'..h..t..'\n')
       else
         local t = {}
         for k,v in pairs(hints) do
@@ -1293,7 +1304,7 @@ local function debugger_loop(ev, vars, file, line, idx_watch)
         end
         for _,v in spairs(t) do
           local _,_,h = string.find(v,"(.+)|")
-          io.write(h..'\n')
+          io_write(h..'\n')
         end
       end
       --}}}
@@ -1311,9 +1322,9 @@ local function debugger_loop(ev, vars, file, line, idx_watch)
 
       local ok, func = pcall(load,line)
       if func == nil then                             --Michael.Bringmann@lsi.com
-        io.write("Compile error: "..line..'\n')
+        io_write("Compile error: "..line..'\n')
       elseif not ok then
-        io.write("Compile error: "..func..'\n')
+        io_write("Compile error: "..func..'\n')
       else
         setfenv(func, eval_env)
         local res = {pcall(func)}
@@ -1321,15 +1332,15 @@ local function debugger_loop(ev, vars, file, line, idx_watch)
           if res[2] then
             table.remove(res,1)
             for _,v in ipairs(res) do
-              io.write(tostring(v))
-              io.write('\t')
+              io_write(tostring(v))
+              io_write('\t')
             end
-            io.write('\n')
+            io_write('\n')
           end
           --update in the context
           return 0
         else
-          io.write("Run error: "..res[2]..'\n')
+          io_write("Run error: "..res[2]..'\n')
         end
       end
 
@@ -1382,17 +1393,17 @@ local function debug_hook(event, line, level, thread)
     end
     tracestack(level)
     if not coro_debugger then
-      io.write("\nLua Debugger\n")
+      io_write("\nLua Debugger\n")
     end
     if not coro_debugger or show_stack then
-      io.write("\nStacktrace:\n")
+      io_write("\nStacktrace:\n")
       trace(vars.__VARSLEVEL__)
-      io.write("\n")
+      io_write("\n")
       show_stack = false
     end
     vars, file, line = report(ev, vars, file, line, idx)
     if not coro_debugger then
-      io.write("\nType 'help' for commands\n")
+      io_write("\nType 'help' for commands\n")
       coro_debugger = true
     end
     local last_next = 1
@@ -1416,16 +1427,16 @@ local function debug_hook(event, line, level, thread)
         vars, file, line = capture_vars(level,next)
         if not silent then
           if vars and vars.__VARSLEVEL__ then
-            io.write('Level: '..vars.__VARSLEVEL__..'\n')
+            io_write('Level: '..vars.__VARSLEVEL__..'\n')
           else
-            io.write('No level set\n')
+            io_write('No level set\n')
           end
         end
         ev = events.SET
         next = 'ask'
       else
-        io.write('Unknown command from debugger_loop: '..tostring(next)..'\n')
-        io.write('Stopping debugger\n')
+        io_write('Unknown command from debugger_loop: '..tostring(next)..'\n')
+        io_write('Stopping debugger\n')
         next = 'stop'
       end
     end
