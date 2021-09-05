@@ -9,6 +9,7 @@
 - Added logging for more possible failure points while injecting Clink into the host process.
 - Added default key bindings for <kbd>Ctrl</kbd>+<kbd>Up</kbd> and <kbd>Ctrl</kbd>+<kbd>Down</kbd> to scroll the screen one line, like conhost normally does.
 - Now `clink set cl*` lists all settings that begin with `cl` (the star wildcard is only supported at the end of the string).
+- Fixed the Lua debugger to support printing UTF8 text, and to escape string variable contents to avoid escape code side effects.
 - Fixed [#154](https://github.com/chrisant996/clink/issues/154); crash when `settings.set("some_setting", false) is used.
 - Fixed [#152](https://github.com/chrisant996/clink/issues/152); LUA debugger breaks on the wrong line, and fails to execute expressions.
 
