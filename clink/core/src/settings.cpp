@@ -163,7 +163,7 @@ bool migrate_setting(const char* name, const char* value, std::vector<setting_na
     else if (stricmp(name, "esc_clears_line") == 0)
     {
         name = "terminal.raw_esc";
-        value = (!value || !atoi(value)) ? "0" : "1";
+        value = (!value || !atoi(value)) ? "1" : "0";
     }
     else if (stricmp(name, "history_file_lines") == 0)
     {
