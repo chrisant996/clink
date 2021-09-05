@@ -1552,6 +1552,8 @@ rl_module::rl_module(const char* shell_name, terminal_in* input, const char* sta
         { "\\e[6;3~",       "clink-scroll-page-down" },  // alt-pgdn
         { "\\e[1;3A",       "clink-scroll-line-up" },    // alt-up
         { "\\e[1;3B",       "clink-scroll-line-down" },  // alt-down
+        { "\\e[1;5A",       "clink-scroll-line-up" },    // ctrl-up
+        { "\\e[1;5B",       "clink-scroll-line-down" },  // ctrl-down
         { "\\e?",           "clink-what-is" },           // alt-?
         { "\\e^",           "clink-expand-history" },    // alt-^
         {}
