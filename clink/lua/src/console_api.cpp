@@ -9,6 +9,8 @@
 #include "terminal/printer.h"
 #include "terminal/find_line.h"
 #include "terminal/ecma48_iter.h"
+#include "terminal/terminal.h"
+#include "terminal/terminal_in.h"
 
 #include <core/base.h>
 #include <core/str.h>
@@ -559,6 +561,63 @@ static int find_next_line(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  console.readinput
+/// -ret:   string | nil
+/// Reads one key sequence from the console input.  If no input is available, it
+/// waits until input becomes available.
+///
+/// This returns the full key sequence string for the pressed key.
+/// For example, <kbd>A</kbd> is <code>"A"</code> and <kbd>Home</kbd> is
+/// <code>"\027[A"</code>, etc.
+///
+/// See <a href="#discoverkeysequences">Discovering Key Sequences</a> for
+/// information on how to find the key sequence for a key.
+static int read_input(lua_State* state)
+{
+    bool select = true;
+    str<> key;
+
+    terminal term = terminal_create();
+    term.in->begin();
+
+    // Get one full input key sequence.
+    while (true)
+    {
+        int k = term.in->read();
+        if (k == terminal_in::input_none)
+        {
+            if (!select)
+                break;
+            term.in->select();
+            select = false;
+            continue;
+        }
+
+        if (k == terminal_in::input_abort)
+            break;
+
+        if (k == terminal_in::input_terminal_resize ||
+            k == terminal_in::input_timeout)
+            continue;
+
+        char c = static_cast<char>(k);
+        key.concat_no_truncate(&c, 1);
+    }
+
+    term.in->end();
+    terminal_destroy(term);
+
+    if (key.empty())
+        return 0;
+
+    // Nul bytes are lost in Lua.  But only Ctrl+@ should produce a string with
+    // a nul byte.  And since Ctrl+@ is "\0", an empty string means Ctrl+@ was
+    // the input.
+    lua_pushlstring(state, key.c_str(), key.length());
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 void console_lua_initialise(lua_state& lua)
 {
     struct {
@@ -579,6 +638,7 @@ void console_lua_initialise(lua_state& lua)
         { "linehascolor",           &line_has_color },
         { "findprevline",           &find_prev_line },
         { "findnextline",           &find_next_line },
+        { "readinput",              &read_input },
     };
 
     lua_State* state = lua.get_state();

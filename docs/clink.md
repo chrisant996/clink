@@ -1041,6 +1041,8 @@ The `clink-show-help` command is bound to <kbd>Alt</kbd>+<kbd>H</kbd> and lists 
 
 > **Note:** Third party console hosts such as ConEmu may have their own key bindings that supersede Clink.  They usually have documentation for how to change or disable their key bindings to allow console programs to handle the keys instead.
 
+<a name="discoverkeysequences"></a>
+
 ### Discovering Clink key sequences
 
 Clink provides an easy way to find the key sequence for any key combination that Clink supports. Run `clink echo` and then press key combinations; the associated key binding sequence is printed to the console output and can be used for a key binding in the inputrc file.

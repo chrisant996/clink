@@ -9,9 +9,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - Recent history entries can get lost.
   - Probably concurrent sessions?
   - Maybe reaping doesn't read the full history file before appending?
-- Some way to read console input.
-  - The intended scenario is a configuration wizard for a Lua script.
-  - What about <kbd>Ctrl</kbd>+<kbd>Break</kbd>?
 
 ## Medium Priority
 
