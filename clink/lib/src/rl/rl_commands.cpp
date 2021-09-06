@@ -267,10 +267,7 @@ static void cua_delete()
 int clink_reload(int count, int invoking_key)
 {
     assert(g_result);
-    s_force_reload_scripts = true;
-    if (g_result)
-        g_result->done(true); // Force a new edit line so scripts can be reloaded.
-    return rl_re_read_init_file(0, 0);
+    return force_reload_scripts();
 }
 
 //------------------------------------------------------------------------------
@@ -1249,4 +1246,13 @@ bool is_force_reload_scripts()
 void clear_force_reload_scripts()
 {
     s_force_reload_scripts = false;
+}
+
+//------------------------------------------------------------------------------
+int force_reload_scripts()
+{
+    s_force_reload_scripts = true;
+    if (g_result)
+        g_result->done(true); // Force a new edit line so scripts can be reloaded.
+    return rl_re_read_init_file(0, 0);
 }

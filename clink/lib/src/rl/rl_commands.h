@@ -32,6 +32,7 @@ int     macro_hook_func(const char* macro);
 void    reset_command_states();
 bool    is_force_reload_scripts();
 void    clear_force_reload_scripts();
+int     force_reload_scripts();
 
 //------------------------------------------------------------------------------
 int     show_rl_help(int, int);

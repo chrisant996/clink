@@ -29,6 +29,11 @@ extern "C" {
 
 
 //------------------------------------------------------------------------------
+extern int force_reload_scripts();
+
+
+
+//------------------------------------------------------------------------------
 /// -name:  clink.print
 /// -arg:   ...
 /// -show:  clink.print("\x1b[32mgreen\x1b[m \x1b[35mmagenta\x1b[m")
@@ -621,6 +626,15 @@ static int slash_translation(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  clink.reload
+/// Reloads Lua scripts and Readline config file at the next prompt.
+static int reload(lua_State* state)
+{
+    force_reload_scripts();
+    return 0;
+}
+
+//------------------------------------------------------------------------------
 // UNDOCUMENTED; internal use only.
 int g_prompt_refilter = 0;
 static int refilter_prompt(lua_State* state)
@@ -675,6 +689,7 @@ void clink_lua_initialise(lua_state& lua)
         { "getsession",             &get_session },
         { "getansihost",            &get_ansi_host },
         { "translateslashes",       &translate_slashes },
+        { "reload",                 &reload },
         // Backward compatibility with the Clink 0.4.8 API.  Clink 1.0.0a1 had
         // moved these APIs away from "clink.", but backward compatibility
         // requires them here as well.
