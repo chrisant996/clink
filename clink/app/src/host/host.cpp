@@ -110,7 +110,6 @@ extern void set_prompt(const char* prompt, const char* rprompt, bool redisplay);
 
 
 //------------------------------------------------------------------------------
-static host_lua* s_host_lua = nullptr;
 extern str<> g_last_prompt;
 
 
@@ -700,8 +699,6 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out)
         m_prompt_filter = new prompt_filter(*m_lua);
     host_lua& lua = *m_lua;
     prompt_filter& prompt_filter = *m_prompt_filter;
-
-    rollback<host_lua*> rb_lua(s_host_lua, &lua);
 
     // Load scripts.
     if (init_scripts)
