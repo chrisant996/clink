@@ -478,7 +478,7 @@ local function dumpval( level, name, value, limit )
   elseif type(name) == 'string' and string.find(name,'^[_%a][_.%w]*$') then
     index = name ..' = '
   else
-    index = string.format('[%q] = ',escape(tostring(name)))
+    index = string.format('[%q] = ',tostring(name))
   end
   if type(value) == 'table' then
     if dumpvisited[value] then
@@ -498,7 +498,8 @@ local function dumpval( level, name, value, limit )
   else
     if type(value) == 'string' then
       if string.len(value) > 40 then
-        indented( level, index, '[[', string.format('%q', value), ']];' )
+        local tmp = string.format('%q', value)
+        indented( level, index, '[[', string.sub(tmp, 2, #tmp - 2), ']];' )
       else
         indented( level, index, string.format('%q',value), ';' )
       end
