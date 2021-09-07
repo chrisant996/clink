@@ -49,6 +49,9 @@ By default Clink binds <kbd>Alt</kbd>+<kbd>H</kbd> to display the current key bi
 <tr><td><kbd>Alt</kbd>+<kbd>H</kbd></td><td>This is <code>clink-show-help</code>, which lists the key bindings and commands.  Learn more by visiting <a href="#keybindings">Key Bindings</a>.</td></tr>
 </table>
 </p>
+<p>
+If you want a customizable prompt with a bunch of styles and an easy-to-use configuration wizard, check out <a href="https://github.com/chrisant996/clink-flex-prompt">clink-flex-prompt</a>.
+</p>
 </blockquote>
 
 # Usage
@@ -1200,9 +1203,9 @@ Here are a few samples of what can be done with Clink.
 
 The [clink-completions](https://github.com/vladimir-kotikov/clink-completions) collection of scripts has a bunch of argument matchers and completion generators for things like git, mercurial, npm, and more.
 
-### cmder-powerline-prompt
+### clink-flex-prompt
 
-The [cmder-powerline-prompt](https://github.com/chrisant996/cmder-powerline-prompt) collection of scripts provides a Powerline-like prompt for Clink.  It's extensible so you can add your own segments, and some configuration of built-in segments is also available.
+The [clink-flex-prompt](https://github.com/chrisant996/clink-flex-prompt) script is similar to the zsh powerlevel10k theme.  It gives Clink a very customizable prompt, with many style options.  It's also extensible so you can add your own segments.
 
 ### oh-my-posh
 
