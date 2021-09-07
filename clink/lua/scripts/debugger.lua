@@ -499,7 +499,7 @@ local function dumpval( level, name, value, limit )
     if type(value) == 'string' then
       if string.len(value) > 40 then
         local tmp = string.format('%q', value)
-        indented( level, index, '[[', string.sub(tmp, 2, #tmp - 2), ']];' )
+        indented( level, index, '[[', string.sub(tmp, 2, #tmp - 1), ']];' )
       else
         indented( level, index, string.format('%q',value), ';' )
       end
