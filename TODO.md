@@ -5,14 +5,16 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
+- Prompt coroutine is running more frequently than it should.
+
+## Medium Priority
 - Something is wrong with history:
   - Recent history entries can get lost.
   - Probably concurrent sessions?
   - Maybe reaping doesn't read the full history file before appending?
 
-## Medium Priority
-
 ## Low Priority
+- [#158](https://github.com/chrisant996/clink/issues/158); crash when key macro includes "\015".
 
 ## Tests
 
