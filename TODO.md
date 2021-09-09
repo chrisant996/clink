@@ -5,7 +5,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- Prompt coroutine is running more frequently than it should.
 
 ## Medium Priority
 - Something is wrong with history:

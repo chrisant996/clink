@@ -118,16 +118,16 @@ local function next_entry_target(entry, now)
     if not entry.lastclock then
         return 0
     else
-        -- Multiple kinds of throttling for coroutines:
-        --      - Throttle if running for 5 or more seconds and wants to run
-        --        more frequently than every 5 seconds.  But reset the elapsed
-        --        time every time io.popenyield() finishes.
-        --      - Throttle if running for more than 30 seconds total.
+        -- Multiple kinds of throttling for coroutines that want to run more
+        -- frequently than every 5 seconds:
+        --  1.  Throttle if running for 5 or more seconds, but reset the elapsed
+        --      timer every time io.popenyield() finishes.
+        --  2.  Throttle if running for more than 30 seconds total.
         -- Throttled coroutines can only run once every 5 seconds.
         local interval = entry.interval
         local throttleclock = entry.throttleclock or entry.firstclock
-        if now then
-            if interval < 5 and throttleclock and now - throttleclock > 5 then
+        if now and interval < 5 then
+            if throttleclock and now - throttleclock > 5 then
                 interval = 5
             elseif entry.firstclock and now - entry.firstclock > 30 then
                 interval = 5
