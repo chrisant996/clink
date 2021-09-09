@@ -4,6 +4,7 @@
 
 #### v1.2.30
 
+- Replaced the built-in Lua implementation of `os.clock()` so it doesn't stop working after the program has been running for more than 24 days (which caused asychronous prompt filtering to stop working).  As a side effect, the new `os.clock()` has microsecond precision instead of millisecond precision.
 - Fixed coroutine throttling.  It was meant to prevent running more than once per 5 seconds, but accidentally forced running every 5 seconds, even if the coroutine was registered to run less often.
 
 #### v1.2.29

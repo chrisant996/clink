@@ -880,6 +880,29 @@ static int debug_print(lua_State *state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  os.clock
+/// -ret:   number
+/// This returns the number of seconds since the program started.
+///
+/// Normally, Lua's os.clock() has millisecond precision until the program has
+/// been running for almost 25 days, and then it suddenly breaks and starts
+/// always returning -0.001 seconds.
+///
+/// Clink's version of os.clock() has microsecond precision until the program
+/// has been running for many weeks.  It maintains at least millisecond
+/// precision until the program has been running for many years.
+///
+/// It was necessary to replace os.clock() in order for
+/// <a href="#asyncpromptfiltering">asynchronous prompt filtering</a> to
+/// continue working when CMD has been running for more than 25 days.
+static int double_clock(lua_State *state)
+{
+    lua_Number elapsed = os::clock();
+    lua_pushnumber(state, elapsed);
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 void os_lua_initialise(lua_state& lua)
 {
     struct {
@@ -915,6 +938,7 @@ void os_lua_initialise(lua_state& lua)
         { "getfullpathname", &get_full_path_name },
         { "getnetconnectionname", &get_net_connection_name },
         { "debugprint",  &debug_print },
+        { "clock",       &double_clock },
     };
 
     lua_State* state = lua.get_state();

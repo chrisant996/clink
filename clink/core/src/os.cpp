@@ -87,6 +87,50 @@ DWORD delay_load_mpr::WNetGetConnectionW(LPCWSTR lpLocalName, LPWSTR lpRemoteNam
 
 
 
+//------------------------------------------------------------------------------
+static const struct high_resolution_clock
+{
+    high_resolution_clock()
+    {
+        LARGE_INTEGER freq;
+        LARGE_INTEGER start;
+        if (QueryPerformanceFrequency(&freq) &&
+            QueryPerformanceCounter(&start) &&
+            freq.QuadPart)
+        {
+            m_freq = double(freq.QuadPart);
+            m_start = start.QuadPart;
+        }
+        else
+        {
+            m_freq = 0;
+            m_start = 0;
+        }
+    }
+
+    double elapsed() const
+    {
+        if (!m_freq)
+            return -1;
+
+        LARGE_INTEGER current;
+        if (!QueryPerformanceCounter(&current))
+            return -1;
+
+        const long long delta = current.QuadPart - m_start;
+        if (delta < 0)
+            return -1;
+
+        const double result = double(delta) / m_freq;
+        return result;
+    }
+
+    double m_freq;
+    long long m_start;
+} s_clock;
+
+
+
 namespace os
 {
 
@@ -658,6 +702,12 @@ bool get_net_connection_name(const char* path, str_base& out)
 
     map_errno();
     return false;
+}
+
+//------------------------------------------------------------------------------
+double clock()
+{
+    return s_clock.elapsed();
 }
 
 }; // namespace os
