@@ -2,6 +2,10 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.2.30
+
+- Fixed coroutine throttling.  It was meant to prevent running more than once per 5 seconds, but accidentally forced running every 5 seconds, even if the coroutine was registered to run less often.
+
 #### v1.2.29
 
 - Added `prompt.transient` Clink setting which can collapse prior prompts to a condensed form.  The new `%CLINK_TRANSIENT_PROMPT%` and `%CLINK_TRANSIENT_RPROMPT%` environment variables supply the initial prompt strings, and prompt filters can define `:transientfilter()` and `:transientrightfilter()` functions to filter the transient prompt.
@@ -12,7 +16,6 @@
 - Added default key bindings for <kbd>Ctrl</kbd>+<kbd>Up</kbd> and <kbd>Ctrl</kbd>+<kbd>Down</kbd> to scroll the screen one line, like conhost normally does.
 - Now `clink set cl*` lists all settings that begin with `cl` (the star wildcard is only supported at the end of the string).
 - Documentation includes a link to the new [clink-flex-prompt](https://github.com/chrisant996/clink-flex-prompt).
-- Fixed coroutine throttling.  It was meant to prevent running more than once per 5 seconds, but accidentally forced running every 5 seconds, even if the coroutine was registered to run less often.
 - Fixed the Lua debugger to support printing UTF8 text, and to escape string variable contents to avoid escape code side effects.
 - Fixed [#154](https://github.com/chrisant996/clink/issues/154); crash when `settings.set("some_setting", false) is used.
 - Fixed [#153](https://github.com/chrisant996/clink/issues/153); ESC key problem.  Clink migrated the old `esc_clears_line` setting backwards, causing <kbd>Esc</kbd> to behave opposite from what was expected.
