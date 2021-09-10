@@ -990,6 +990,7 @@ static char** alternative_matches(const char* text, int start, int end)
         str.concat(match, match_len);
 
 #ifdef DEBUG
+        // Set DEBUG_MATCHES=-5 to print the first 5 matches.
         if (debug_matches > 0 || (debug_matches < 0 && count - 1 < 0 - debug_matches))
             printf("%u: %s, %02.2x => %s\n", count - 1, match, type, matches[count] + past_flag);
 #endif
