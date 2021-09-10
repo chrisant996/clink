@@ -57,8 +57,6 @@ static class : public match_generator
 
         root << "*";
 
-        int st_mode = 0;
-        int attr = 0;
         globber globber(root.c_str());
         globber.hidden(g_glob_hidden.get());
         globber.system(g_glob_system.get());
@@ -75,11 +73,12 @@ static class : public match_generator
         }
 
         str<288> buffer;
-        while (globber.next(buffer, false, &st_mode, &attr))
+        globber::extrainfo info;
+        while (globber.next(buffer, false, &info))
         {
             root.truncate(root_len);
             path::append(root, buffer.c_str());
-            builder.add_match(root.c_str(), to_match_type(st_mode, attr, root.c_str()), true/*already_normalised*/);
+            builder.add_match(root.c_str(), to_match_type(info.st_mode, info.attr, root.c_str()), true/*already_normalised*/);
         }
 
         return true;

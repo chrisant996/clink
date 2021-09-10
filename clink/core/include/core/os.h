@@ -53,6 +53,8 @@ bool    get_full_path_name(const char* path, str_base& out);
 bool    get_net_connection_name(const char* path, str_base& out);
 double  clock();
 
+time_t  filetime_to_time_t(const FILETIME& ft);
+
 void    map_errno();
 void    map_errno(unsigned long const oserrno);
 

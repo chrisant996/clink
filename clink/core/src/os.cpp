@@ -710,6 +710,26 @@ double clock()
     return s_clock.elapsed();
 }
 
+//------------------------------------------------------------------------------
+time_t filetime_to_time_t(const FILETIME& ft)
+{
+    ULARGE_INTEGER uli;
+
+    uli.LowPart = ft.dwLowDateTime;
+    uli.HighPart = ft.dwHighDateTime;
+
+    // Convert to time_t.
+    uli.QuadPart -= 116444736000000000;
+    uli.QuadPart /= 10000000;
+
+    // Make sure it's between the Unix epoch and armageddon.
+    if (uli.QuadPart > INT_MAX)
+        return -1;
+
+    // Return the converted time.
+    return time_t(uli.QuadPart);
+}
+
 }; // namespace os
 
 //------------------------------------------------------------------------------

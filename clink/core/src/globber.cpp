@@ -105,13 +105,17 @@ bool globber::older_than(int seconds)
 }
 
 //------------------------------------------------------------------------------
-bool globber::next(str_base& out, bool rooted, int* st_mode, int* pattr)
+bool globber::next(str_base& out, bool rooted, extrainfo* extrainfo)
 {
     if (m_handle == nullptr)
         return false;
 
     str<280> file_name;
     int attr;
+    ULARGE_INTEGER size;
+    FILETIME accessed;
+    FILETIME modified;
+    FILETIME created;
 
     while (true)
     {
@@ -120,6 +124,15 @@ bool globber::next(str_base& out, bool rooted, int* st_mode, int* pattr)
 
         file_name = m_data.cFileName;
         attr = m_data.dwFileAttributes;
+
+        if (extrainfo)
+        {
+            size.LowPart = m_data.nFileSizeLow;
+            size.HighPart = m_data.nFileSizeHigh;
+            accessed = m_data.ftLastAccessTime;
+            modified = m_data.ftLastWriteTime;
+            created = m_data.ftCreationTime;
+        }
 
         bool again = false;
 
@@ -149,22 +162,24 @@ bool globber::next(str_base& out, bool rooted, int* st_mode, int* pattr)
     if (attr & FILE_ATTRIBUTE_DIRECTORY && m_dir_suffix)
         out << PATH_SEP;
 
-    if (st_mode)
+    if (extrainfo)
     {
         int mode = 0;
-        if (attr & FILE_ATTRIBUTE_DIRECTORY)
-            mode |= _S_IFDIR;
 #ifdef S_ISLNK
-        if (attr & FILE_ATTRIBUTE_REPARSE_POINT)
-            mode |= _S_IFLNK;
+        if (attr & FILE_ATTRIBUTE_REPARSE_POINT)    mode |= _S_IFLNK;
 #endif
-        if (!mode)
-            mode |= _S_IFREG;
-        *st_mode = mode;
-    }
+        if (attr & FILE_ATTRIBUTE_DIRECTORY)        mode |= _S_IFDIR;
+        if (!mode)                                  mode |= _S_IFREG;
+        extrainfo->st_mode = mode;
 
-    if (pattr)
-        *pattr = attr;
+        extrainfo->attr = attr;
+
+        extrainfo->size = size.QuadPart;
+
+        extrainfo->accessed = accessed;
+        extrainfo->modified = modified;
+        extrainfo->created = created;
+    }
 
     return true;
 }

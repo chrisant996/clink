@@ -11,6 +11,16 @@
 class globber
 {
 public:
+    struct extrainfo
+    {
+        int                 st_mode;
+        int                 attr;
+        unsigned long long  size;
+        FILETIME            accessed;
+        FILETIME            modified;
+        FILETIME            created;
+    };
+
                         globber(const char* pattern);
                         ~globber();
     void                files(bool state)       { m_files = state; }
@@ -20,7 +30,7 @@ public:
     void                system(bool state)      { m_system = state; }
     void                dots(bool state)        { m_dots = state; }
     bool                older_than(int seconds);
-    bool                next(str_base& out, bool rooted=true, int* st_mode=nullptr, int* pattr=nullptr);
+    bool                next(str_base& out, bool rooted=true, extrainfo* extrainfo=nullptr);
 
 private:
                         globber(const globber&) = delete;

@@ -114,6 +114,35 @@ int optinteger(lua_State* state, int index, int default_value, bool* pisnum)
 }
 
 //------------------------------------------------------------------------------
+lua_Number checknumber(lua_State* state, int index, bool* pisnum)
+{
+    int isnum;
+    lua_Number d = lua_tonumberx(state, index, &isnum);
+    if (pisnum)
+        *pisnum = !!isnum;
+    if (isnum)
+        return d;
+
+    if (g_lua_strict.get())
+        return luaL_checknumber(state, index);
+
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+lua_Number optnumber(lua_State* state, int index, lua_Number default_value, bool* pisnum)
+{
+    if (lua_isnoneornil(state, index))
+    {
+        if (pisnum)
+            *pisnum = true;
+        return default_value;
+    }
+
+    return checknumber(state, index, pisnum);
+}
+
+//------------------------------------------------------------------------------
 const char* checkstring(lua_State* state, int index)
 {
     if (g_lua_strict.get())

@@ -12,10 +12,13 @@ extern "C" {
 
 struct lua_State;
 class str_base;
+typedef double lua_Number;
 
 //------------------------------------------------------------------------------
 int checkinteger(lua_State* state, int index, bool* isnum=nullptr);
 int optinteger(lua_State* state, int index, int default_value, bool* isnum=nullptr);
+lua_Number checknumber(lua_State* state, int index, bool* isnum=nullptr);
+lua_Number optnumber(lua_State* state, int index, lua_Number default_value, bool* isnum=nullptr);
 const char* checkstring(lua_State* state, int index);
 const char* optstring(lua_State* state, int index, const char* default_value);
 

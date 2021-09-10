@@ -255,7 +255,14 @@ int glob_impl(lua_State* state, bool dirs_only, bool back_compat=false)
     if (!mask)
         return 0;
 
-    bool extrainfo = back_compat ? false : lua_toboolean(state, 2);
+    int extrainfo = 0;
+    if (!back_compat)
+    {
+        bool isnum = false;
+        extrainfo = optinteger(state, 2, 0, &isnum);
+        if (!isnum)
+            extrainfo = lua_toboolean(state, 2);
+    }
 
     lua_createtable(state, 0, 0);
 
@@ -269,10 +276,11 @@ int glob_impl(lua_State* state, bool dirs_only, bool back_compat=false)
     int i = 1;
     str<288> file;
     str<16> type;
-    int attr;
-    while (globber.next(file, false, nullptr, &attr))
+    globber::extrainfo info;
+    globber::extrainfo* info_ptr = extrainfo ? &info : nullptr;
+    while (globber.next(file, false, info_ptr))
     {
-        if (back_compat)
+        if (!extrainfo)
         {
             lua_pushlstring(state, file.c_str(), file.length());
         }
@@ -285,8 +293,8 @@ int glob_impl(lua_State* state, bool dirs_only, bool back_compat=false)
             lua_rawset(state, -3);
 
             type.clear();
-            add_type_tag(type, (attr & FILE_ATTRIBUTE_DIRECTORY) ? "dir" : "file");
-            if (attr & FILE_ATTRIBUTE_REPARSE_POINT)
+            add_type_tag(type, (info.attr & FILE_ATTRIBUTE_DIRECTORY) ? "dir" : "file");
+            if (info.attr & FILE_ATTRIBUTE_REPARSE_POINT)
             {
                 add_type_tag(type, "link");
                 wstr<288> wfile(file.c_str());
@@ -294,14 +302,33 @@ int glob_impl(lua_State* state, bool dirs_only, bool back_compat=false)
                 if (_wstat64(wfile.c_str(), &st) < 0)
                     add_type_tag(type, "orphaned");
             }
-            if (attr & FILE_ATTRIBUTE_HIDDEN)
+            if (info.attr & FILE_ATTRIBUTE_HIDDEN)
                 add_type_tag(type, "hidden");
-            if (attr & FILE_ATTRIBUTE_READONLY)
+            if (info.attr & FILE_ATTRIBUTE_READONLY)
                 add_type_tag(type, "readonly");
 
             lua_pushliteral(state, "type");
             lua_pushlstring(state, type.c_str(), type.length());
             lua_rawset(state, -3);
+
+            if (extrainfo >= 2)
+            {
+                lua_pushliteral(state, "atime");
+                lua_pushinteger(state, os::filetime_to_time_t(info.accessed));
+                lua_rawset(state, -3);
+
+                lua_pushliteral(state, "mtime");
+                lua_pushinteger(state, os::filetime_to_time_t(info.modified));
+                lua_rawset(state, -3);
+
+                lua_pushliteral(state, "ctime");
+                lua_pushinteger(state, os::filetime_to_time_t(info.created));
+                lua_rawset(state, -3);
+
+                lua_pushliteral(state, "size");
+                lua_pushnumber(state, lua_Number(info.size));
+                lua_rawset(state, -3);
+            }
         }
 
         lua_rawseti(state, -2, i++);
@@ -313,15 +340,25 @@ int glob_impl(lua_State* state, bool dirs_only, bool back_compat=false)
 //------------------------------------------------------------------------------
 /// -name:  os.globdirs
 /// -arg:   globpattern:string
-/// -arg:   [extrainfo:boolean]
+/// -arg:   [extrainfo:integer|boolean]
 /// -ret:   table
 /// Collects directories matching <span class="arg">globpattern</span> and
 /// returns them in a table of strings.
 ///
-/// When <span class="arg">extrainfo</span> is true, then the returned table has
+/// The optional <span class="arg">extrainfo</span> argument can return a table
+/// of tables instead, where each sub-table corresponds to one directory and has
 /// the following scheme:
-/// <span class="tablescheme">{ {name:string, type:string}, ... }</span>.
-///
+/// -show:  {
+/// -show:  &nbsp; -- Included when extrainfo is true or is >= 1:
+/// -show:  &nbsp; name,         -- [string] The directory name.
+/// -show:  &nbsp; type,         -- [string] The match type (see below).
+/// -show:
+/// -show:  &nbsp; -- Included when extrainfo is 2:
+/// -show:  &nbsp; size,         -- [integer] The file size, in bytes.
+/// -show:  &nbsp; atime,        -- [integer] The access time, compatible with os.time().
+/// -show:  &nbsp; mtime,        -- [integer] The modified time, compatible with os.time().
+/// -show:  &nbsp; ctime,        -- [integer] The creation time, compatible with os.time().
+/// -show:  }
 /// The <span class="tablescheme">type</span> string can be "file" or "dir", and
 /// may also contain ",hidden", ",readonly", ",link", and ",orphaned" depending
 /// on the attributes (making it usable as a match type for
@@ -337,15 +374,25 @@ int glob_dirs(lua_State* state)
 //------------------------------------------------------------------------------
 /// -name:  os.globfiles
 /// -arg:   globpattern:string
-/// -arg:   [extrainfo:boolean]
+/// -arg:   [extrainfo:integer|boolean]
 /// -ret:   table
 /// Collects files and/or directories matching
 /// <span class="arg">globpattern</span> and returns them in a table of strings.
 ///
-/// When <span class="arg">extrainfo</span> is true, then the returned table has
-/// the following scheme:
-/// <span class="tablescheme">{ {name:string, type:string}, ... }</span>.
-///
+/// The optional <span class="arg">extrainfo</span> argument can return a table
+/// of tables instead, where each sub-table corresponds to one file or directory
+/// and has the following scheme:
+/// -show:  {
+/// -show:  &nbsp; -- Included when extrainfo is true or >= 1:
+/// -show:  &nbsp; name,         -- [string] The directory name.
+/// -show:  &nbsp; type,         -- [string] The match type (see below).
+/// -show:
+/// -show:  &nbsp; -- Included when extrainfo is 2:
+/// -show:  &nbsp; size,         -- [integer] The file size, in bytes.
+/// -show:  &nbsp; atime,        -- [integer] The access time, compatible with os.time().
+/// -show:  &nbsp; mtime,        -- [integer] The modified time, compatible with os.time().
+/// -show:  &nbsp; ctime,        -- [integer] The creation time, compatible with os.time().
+/// -show:  }
 /// The <span class="tablescheme">type</span> string can be "file" or "dir", and
 /// may also contain ",hidden", ",readonly", ",link", and ",orphaned" depending
 /// on the attributes (making it usable as a match type for
@@ -391,8 +438,8 @@ int touch(lua_State* state)
     }
     else
     {
-        utb.actime = static_cast<time_t>(optinteger(state, 2, 0));
-        utb.modtime = static_cast<time_t>(optinteger(state, 3, utb.actime));
+        utb.actime = static_cast<time_t>(optnumber(state, 2, 0));
+        utb.modtime = static_cast<time_t>(optnumber(state, 3, lua_Number(utb.actime)));
         ptr = &utb;
     }
 
