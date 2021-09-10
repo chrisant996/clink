@@ -7,6 +7,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Medium Priority
+- Inputing `clink set color.whatever 38;5;214` and `clink set color.whatever sgr 38;5;214` apply input line coloring incorrectly.
 - Something is wrong with history:
   - Recent history entries can get lost.
   - Probably concurrent sessions?
