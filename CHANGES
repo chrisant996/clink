@@ -2,9 +2,18 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.2.31
+
+- Added `os.touch()` function to set the access and modified times for a file.
+- Added more fields in `os.globdir()` and `os.globfiles()` when `extrainfo` is requested.
+- **Potential Breaking Change:** Fixed `os.globdir()` and `os.globfiles()` to only return extra info when actually requested (regression introduced in v1.1.8).
+    - This unfortunately changes the scheme and may break some scripts if they requested no extra info, but used the extra info anyway.
+- Fixed crash in `clink-select-complete` when a match display filter returns nil.
+- Fixed `ondisplaymatches()` which was receiving one fewer matches than it should (related to [#124](https://github.com/chrisant996/clink/issues/124)).
+
 #### v1.2.30
 
-- Replaced the built-in Lua implementation of `os.clock()` so it doesn't stop working after the program has been running for more than 24 days (which caused asychronous prompt filtering to stop working).  As a side effect, the new `os.clock()` has microsecond precision instead of millisecond precision.
+- Replaced the built-in Lua implementation of `os.clock()` so it doesn't stop working after the program has been running for more than 24 days (which caused asynchronous prompt filtering to stop working).  As a side effect, the new `os.clock()` has microsecond precision instead of millisecond precision.
 - Fixed coroutine throttling.  It was meant to prevent running more than once per 5 seconds, but accidentally forced running every 5 seconds, even if the coroutine was registered to run less often.
 
 #### v1.2.29
