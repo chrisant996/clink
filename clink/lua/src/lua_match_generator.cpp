@@ -242,7 +242,7 @@ done:
     {
         str<> tmp;
 
-        for (i = 1; i < match_count; ++i)
+        for (i = 1; i <= match_count; ++i)
         {
             const char* match = matches[i];
             match_type type = match_type::none;
