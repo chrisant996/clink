@@ -12,6 +12,7 @@
 #include <core/str.h>
 #include <core/str_iter.h>
 #include <process/process.h>
+#include <sys/utime.h>
 #include <ntverp.h> // for VER_PRODUCTMAJORVERSION to deduce SDK version
 #include <assert.h>
 
@@ -355,6 +356,48 @@ int glob_dirs(lua_State* state)
 int glob_files(lua_State* state)
 {
     return glob_impl(state, false);
+}
+
+//------------------------------------------------------------------------------
+/// -name:  os.touch
+/// -arg:   path:string
+/// -arg:   [atime:number]
+/// -arg:   [mtime:number]
+/// Sets the access and modified times for <span class="arg">path</span>.
+///
+/// The second argument is <span class="arg">atime</span> and is a time to set
+/// as the file's access time.  If omitted, the current time is used.  If
+/// present, the value must use the same format as <code>os.time()</code>.
+///
+/// The third argument is <span class="arg">mtime</span> and is a time to set as
+/// the file's modified time.  If omitted, the <span class="arg">atime</a> value
+/// is used (or the current time).  If present, the value must use the same
+/// format as <code>os.time()</code>.  In order to pass
+/// <span class="arg">mtime</span> it is necessary to also pass
+/// <span class="arg">atime</span>.
+int touch(lua_State* state)
+{
+    const char* path = checkstring(state, 1);
+    if (!path)
+        return 0;
+
+    struct utimbuf utb;
+    struct utimbuf* ptr;
+
+    if (lua_gettop(state) == 1)
+    {
+        // Passing nullptr uses the current time.
+        ptr = nullptr;
+    }
+    else
+    {
+        utb.actime = static_cast<time_t>(optinteger(state, 2, 0));
+        utb.modtime = static_cast<time_t>(optinteger(state, 3, utb.actime));
+        ptr = &utb;
+    }
+
+    int result = utime(path, ptr);
+    return lua_osboolresult(state, result >= 0, path);
 }
 
 //------------------------------------------------------------------------------
@@ -921,6 +964,7 @@ void os_lua_initialise(lua_state& lua)
         { "copy",        &copy },
         { "globdirs",    &glob_dirs },
         { "globfiles",   &glob_files },
+        { "touch",       &touch },
         { "getenv",      &get_env },
         { "setenv",      &set_env },
         { "expandenv",   &expand_env },
