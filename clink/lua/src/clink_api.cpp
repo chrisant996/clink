@@ -36,17 +36,6 @@ extern int force_reload_scripts();
 //------------------------------------------------------------------------------
 /// -name:  clink.print
 /// -arg:   ...
-/// -show:  clink.print("\x1b[32mgreen\x1b[m \x1b[35mmagenta\x1b[m")
-/// -show:  -- Outputs <code>green</code> in green, a space, and <code>magenta</code> in magenta.
-/// -show:
-/// -show:  local a = "hello"
-/// -show:  local world = 73
-/// -show:  clink.print("a", a, "world", world)
-/// -show:  -- Outputs <code>a       hello   world   73</code>.
-/// -show:
-/// -show:  clink.print("hello", NONL)
-/// -show:  clink.print("world")
-/// -show:  -- Outputs <code>helloworld</code>.
 /// This works like <code>print()</code>, but this supports ANSI escape codes.
 ///
 /// If the special value <code>NONL</code> is included anywhere in the argument
@@ -60,6 +49,17 @@ extern int force_reload_scripts();
 /// the argument is not a string, then first checking the Clink version (e.g.
 /// <a href="#clink.version_encoded">clink.version_encoded</a>) can avoid
 /// runtime errors.
+/// -show:  clink.print("\x1b[32mgreen\x1b[m \x1b[35mmagenta\x1b[m")
+/// -show:  -- Outputs <code>green</code> in green, a space, and <code>magenta</code> in magenta.
+/// -show:
+/// -show:  local a = "hello"
+/// -show:  local world = 73
+/// -show:  clink.print("a", a, "world", world)
+/// -show:  -- Outputs <code>a       hello   world   73</code>.
+/// -show:
+/// -show:  clink.print("hello", NONL)
+/// -show:  clink.print("world")
+/// -show:  -- Outputs <code>helloworld</code>.
 static int clink_print(lua_State* state)
 {
     str<> out;
@@ -255,11 +255,11 @@ static int get_host_process(lua_State* state)
 /// -name:  clink.match_display_filter
 /// -var:   function
 /// -deprecated: builder:addmatch
+/// This is no longer used.
 /// -show:  clink.match_display_filter = function(matches)
 /// -show:  &nbsp; -- Transform matches.
 /// -show:  &nbsp; return matches
 /// -show:  end
-/// This is no longer used.
 
 //------------------------------------------------------------------------------
 static int map_string(lua_State* state, transform_mode mode)
@@ -307,9 +307,9 @@ static int map_string(lua_State* state, transform_mode mode)
 /// -name:  clink.lower
 /// -arg:   text:string
 /// -ret:   string
-/// -show:  clink.lower("Hello World") -- returns "hello world"
 /// This API correctly converts UTF8 strings to lowercase, with international
 /// linguistic awareness.
+/// -show:  clink.lower("Hello World") -- returns "hello world"
 static int to_lowercase(lua_State* state)
 {
     return map_string(state, transform_mode::lower);
@@ -319,9 +319,9 @@ static int to_lowercase(lua_State* state)
 /// -name:  clink.upper
 /// -arg:   text:string
 /// -ret:   string
-/// -show:  clink.upper("Hello World") -- returns "HELLO WORLD"
 /// This API correctly converts UTF8 strings to uppercase, with international
 /// linguistic awareness.
+/// -show:  clink.upper("Hello World") -- returns "HELLO WORLD"
 static int to_uppercase(lua_State* state)
 {
     return map_string(state, transform_mode::upper);
@@ -471,8 +471,6 @@ static int popup_list(lua_State* state)
 //------------------------------------------------------------------------------
 /// -name:  clink.getsession
 /// -ret:   string
-/// -show:  local c = os.getalias("clink")
-/// -show:  local r = io.popen(c.." --session "..clink.getsession().." history")
 /// Returns the current Clink session id.
 ///
 /// This is needed when using
@@ -482,6 +480,8 @@ static int popup_list(lua_State* state)
 /// new CMD.exe, which gets a new Clink instance injected, so the history or
 /// info command will use the new session unless explicitly directed to use the
 /// calling session.
+/// -show:  local c = os.getalias("clink")
+/// -show:  local r = io.popen(c.." --session "..clink.getsession().." history")
 static int get_session(lua_State* state)
 {
     str<32> session;
@@ -541,15 +541,6 @@ static int get_ansi_host(lua_State* state)
 /// -name:  clink.translateslashes
 /// -arg:   [mode:integer]
 /// -ret:   integer
-/// -show:  -- This example affects all match generators, by using priority -1 to
-/// -show:  -- run first and returning false to let generators continue.
-/// -show:  -- To instead affect only one generator, call clink.translateslashes()
-/// -show:  -- in its :generate() function and return true.
-/// -show:  local force_slashes = clink.generator(-1)
-/// -show:  function force_slashes:generate()
-/// -show:  &nbsp; clink.translateslashes(2)    -- Convert to slashes.
-/// -show:  &nbsp; return false                 -- Allow generators to continue.
-/// -show:  end
 /// This overrides how Clink translates slashes in completion matches, which is
 /// normally determined by the <code>match.translate_slashes</code> setting.
 ///
@@ -574,6 +565,15 @@ static int get_ansi_host(lua_State* state)
 /// as input.  Setting this to <code>0</code> does not disable normalizing typed
 /// input paths when invoking completion; it only disables translating slashes
 /// in custom generators.
+/// -show:  -- This example affects all match generators, by using priority -1 to
+/// -show:  -- run first and returning false to let generators continue.
+/// -show:  -- To instead affect only one generator, call clink.translateslashes()
+/// -show:  -- in its :generate() function and return true.
+/// -show:  local force_slashes = clink.generator(-1)
+/// -show:  function force_slashes:generate()
+/// -show:  &nbsp; clink.translateslashes(2)    -- Convert to slashes.
+/// -show:  &nbsp; return false                 -- Allow generators to continue.
+/// -show:  end
 static int translate_slashes(lua_State* state)
 {
     extern void set_slash_translation(int mode);

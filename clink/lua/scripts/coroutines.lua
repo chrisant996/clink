@@ -397,16 +397,6 @@ end
 --- -arg:   command:string
 --- -arg:   [mode:string]
 --- -ret:   file
---- -show:  local file = io.popenyield("git status")
---- -show:
---- -show:  while (true) do
---- -show:  &nbsp; local line = file:read("*line")
---- -show:  &nbsp; if not line then
---- -show:  &nbsp;   break
---- -show:  &nbsp; end
---- -show:  &nbsp; do_things_with(line)
---- -show:  end
---- -show:  file:close()
 --- This is the same as
 --- <code><span class="hljs-built_in">io</span>.<span class="hljs-built_in">popen</span>(<span class="arg">command</span>, <span class="arg">mode</span>)</code>
 --- except that it only supports read mode and it yields until the command has
@@ -425,6 +415,16 @@ end
 --- executing, then this behaves like
 --- <code><span class="hljs-built_in">io</span>.<span class="hljs-built_in">popen</span>(<span class="arg">command</span>, <span class="arg">mode</span>)</code>
 --- instead.
+--- -show:  local file = io.popenyield("git status")
+--- -show:
+--- -show:  while (true) do
+--- -show:  &nbsp; local line = file:read("*line")
+--- -show:  &nbsp; if not line then
+--- -show:  &nbsp;   break
+--- -show:  &nbsp; end
+--- -show:  &nbsp; do_things_with(line)
+--- -show:  end
+--- -show:  file:close()
 function io.popenyield(command, mode)
     -- This outer wrapper is implemented in Lua so that it can yield.
     if settings.get("prompt.async") and not clink.istransientpromptfilter() then

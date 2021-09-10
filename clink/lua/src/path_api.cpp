@@ -14,13 +14,13 @@
 /// -arg:   path:string
 /// -arg:   [separator:string]
 /// -ret:   string
-/// -show:  path.normalise("a////b/\\/c/")  -- returns "a\b\c\"
-/// -show:  path.normalise("")              -- returns ""
-/// -show:  path.normalise(nil)             -- returns nil
 /// Cleans <span class="arg">path</span> by normalising separators and removing
 /// "." and ".." elements.  If <span class="arg">separator</span> is provided it
 /// is used to delimit path elements, otherwise a system-specific delimiter is
 /// used.
+/// -show:  path.normalise("a////b/\\/c/")  -- returns "a\b\c\"
+/// -show:  path.normalise("")              -- returns ""
+/// -show:  path.normalise(nil)             -- returns nil
 static int normalise(lua_State* state)
 {
     const char* path = checkstring(state, 1);
@@ -188,13 +188,13 @@ static int join(lua_State* state)
 /// -name:  path.isexecext
 /// -arg:   path:string
 /// -ret:   boolean
+/// Examines the extension of the path name.  Returns true if the extension is
+/// listed in %PATHEXT%.  This caches the extensions in a map so that it's more
+/// efficient than getting and parsing %PATHEXT% each time.
 /// -show:  path.isexecext("program.exe")   -- returns true
 /// -show:  path.isexecext("file.doc")      -- returns false
 /// -show:  path.isexecext("")              -- returns false
 /// -show:  path.isexecext(nil)             -- returns nil
-/// Examines the extension of the path name.  Returns true if the extension is
-/// listed in %PATHEXT%.  This caches the extensions in a map so that it's more
-/// efficient than getting and parsing %PATHEXT% each time.
 static int is_exec_ext(lua_State* state)
 {
     const char* path = checkstring(state, 1);

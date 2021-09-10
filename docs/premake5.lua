@@ -64,6 +64,9 @@ local function parse_doc_tags_impl(out, file)
 
     local line_reader = io.lines(file)
     local prefix = "///"
+    local desc_num = 1
+    local show_num = 1
+    local seen_show
 
     -- Reads a tagged line, extracting its key and value; '/// key: value'
     local function read_tagged()
@@ -84,12 +87,20 @@ local function parse_doc_tags_impl(out, file)
         line = line:sub(right + 1)
         local _, right, tag, value = line:find("^-([a-z]+):")
         if tag then
+            if tag == "show" then
+                tag = tag..show_num
+                seen_show = true
+            end
             _, right, value = line:sub(right + 1):find("^%s*(.+)")
             if value == nil then
                 value = ""
             end
         else
-            tag = "desc"
+            if seen_show then
+                desc_num = desc_num + 1
+                seen_show = nil
+            end
+            tag = "desc"..desc_num
             _, _, value = line:find("^%s*(.+)")
             if not value then
                 value = ""
@@ -119,6 +130,10 @@ local function parse_doc_tags_impl(out, file)
             name = line
         end
 
+        desc_num = 1
+        show_num = 1
+        seen_show = nil
+
         return group, name
     end
 
@@ -129,7 +144,7 @@ local function parse_doc_tags_impl(out, file)
         if name then
             for tag, value in read_tagged do
                 local desc_tag = desc[tag] or {}
-                if value == "" and tag == "desc" then
+                if value == "" and tag:sub(1, 4) == "desc" then
                     desc_tag[#desc_tag] = desc_tag[#desc_tag]..'</p><p class="desc">'
                 else
                     if tag == "deprecated" then
@@ -141,6 +156,7 @@ local function parse_doc_tags_impl(out, file)
             end
 
             desc.name = { name }
+            desc.desc_num = desc_num
 
             out[group] = out[group] or {}
             table.insert(out[group], desc)
@@ -236,8 +252,6 @@ local function do_docs()
             local arg = table.concat(bold_name(doc_tag.arg), ", ")
             local ret = (doc_tag.ret or { "nil" })[1]
             local var = (doc_tag.var or { nil })[1]
-            local desc = table.concat(doc_tag.desc or {}, " ")
-            local show = table.concat(doc_tag.show or {}, "\n")
             local deprecated = (doc_tag.deprecated or { nil })[1]
 
             api_html:write('<div class="header">')
@@ -256,9 +270,13 @@ local function do_docs()
                 if deprecated then
                     api_html:write('<p class="desc"><strong>Deprecated; don\'t use this.</strong>  See <a href="#'..deprecated..'">'..deprecated..'</a> for more information.</p>')
                 end
-                api_html:write('<p class="desc">'..desc..'</p>')
-                if #show > 0 then
-                    api_html:write('<pre class="language-lua"><code>'..show..'</code></pre>')
+                for n = 1, doc_tag.desc_num, 1 do
+                    local desc = table.concat(doc_tag["desc"..n] or {}, " ")
+                    local show = table.concat(doc_tag["show"..n] or {}, "\n")
+                    api_html:write('<p class="desc">'..desc..'</p>')
+                    if #show > 0 then
+                        api_html:write('<pre class="language-lua"><code>'..show..'</code></pre>')
+                    end
                 end
             api_html:write("</div>") -- body
 

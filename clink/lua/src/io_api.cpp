@@ -613,20 +613,6 @@ int luaL_YieldGuard::__tostring(lua_State* state)
 /// -arg:   command:string
 /// -arg:   [mode:string]
 /// -ret:   file, file
-/// -show:  local r,w = io.popenrw("fzf.exe --height 40%")
-/// -show:
-/// -show:  w:write("hello\n")
-/// -show:  w:write("world\n")
-/// -show:  w:close()
-/// -show:
-/// -show:  while (true) do
-/// -show:  &nbsp; local line = r:read("*line")
-/// -show:  &nbsp; if not line then
-/// -show:  &nbsp;   break
-/// -show:  &nbsp; end
-/// -show:  &nbsp; print(line)
-/// -show:  end
-/// -show:  r:close()
 /// Runs <code>command</code> and returns two file handles:  a file handle for
 /// reading output from the command, and a file handle for writing input to the
 /// command.
@@ -646,6 +632,20 @@ int luaL_YieldGuard::__tostring(lua_State* state)
 /// process 1 is blocked from writing more until process 2 reads, but process 2
 /// can't read because it is blocked from writing until process 1 reads.
 /// </fieldset>
+/// -show:  local r,w = io.popenrw("fzf.exe --height 40%")
+/// -show:
+/// -show:  w:write("hello\n")
+/// -show:  w:write("world\n")
+/// -show:  w:close()
+/// -show:
+/// -show:  while (true) do
+/// -show:  &nbsp; local line = r:read("*line")
+/// -show:  &nbsp; if not line then
+/// -show:  &nbsp;   break
+/// -show:  &nbsp; end
+/// -show:  &nbsp; print(line)
+/// -show:  end
+/// -show:  r:close()
 /*static*/ int io_popenrw(lua_State* state) // gcc can't handle 'friend' and 'static'.
 {
     const char* command = checkstring(state, 1);

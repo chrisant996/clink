@@ -208,6 +208,12 @@ end
 --- -name:  clink.register_match_generator
 --- -arg:   func:function
 --- -arg:   priority:integer
+--- -deprecated: clink.generator
+--- Registers a generator function for producing matches.  This behaves
+--- similarly to v0.4.8, but not identically.  The Clink schema has changed
+--- significantly enough that there is no direct 1:1 translation; generators are
+--- called at a different time than before and have access to more information
+--- than before.
 --- -show:  -- Deprecated form:
 --- -show:  local function match_generator_func(text, first, last)
 --- -show:  &nbsp; -- `text` is the word text.
@@ -225,12 +231,6 @@ end
 --- -show:  &nbsp; -- `match_builder:<a href="#builder:addmatch">addmatch</a>()` is used to add matches.
 --- -show:  &nbsp; -- return true if handled, or false to let another generator try.
 --- -show:  end
---- -deprecated: clink.generator
---- Registers a generator function for producing matches.  This behaves
---- similarly to v0.4.8, but not identically.  The Clink schema has changed
---- significantly enough that there is no direct 1:1 translation; generators are
---- called at a different time than before and have access to more information
---- than before.
 function clink.register_match_generator(func, priority)
     local g = clink.generator(priority)
     function g:generate(line_state, match_builder)

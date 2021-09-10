@@ -103,11 +103,6 @@ end
 --- -name:  clink.promptfilter
 --- -arg:   [priority:integer]
 --- -ret:   table
---- -show:  local foo_prompt = clink.promptfilter(80)
---- -show:  function foo_prompt:filter(prompt)
---- -show:  &nbsp; -- Insert the date at the beginning of the prompt.
---- -show:  &nbsp; return os.date("%a %H:%M").." "..prompt
---- -show:  end
 --- Creates and returns a new promptfilter object that is applied in increasing
 --- <span class="arg">priority</span> order (low values to high values).  Define
 --- on the object a <code>:filter()</code> function that takes a string argument
@@ -116,6 +111,11 @@ end
 --- further prompt filtering by also returning false.  See
 --- <a href="#customisingtheprompt">Customising The Prompt</a> for more
 --- information.
+--- -show:  local foo_prompt = clink.promptfilter(80)
+--- -show:  function foo_prompt:filter(prompt)
+--- -show:  &nbsp; -- Insert the date at the beginning of the prompt.
+--- -show:  &nbsp; return os.date("%a %H:%M").." "..prompt
+--- -show:  end
 function clink.promptfilter(priority)
     if priority == nil then priority = 999 end
 
@@ -131,6 +131,9 @@ end
 --- -arg:   filter_func:function
 --- -arg:   [priority:integer]
 --- -ret:   table
+--- -deprecated: clink.promptfilter
+--- Registers a prompt filter function.  The capabilities are the same as before
+--- but the syntax is changed.
 --- -show:  -- Deprecated form:
 --- -show:  function foo_prompt()
 --- -show:  &nbsp; clink.prompt.value = "FOO "..clink.prompt.value.." >>"
@@ -143,9 +146,6 @@ end
 --- -show:  function foo_prompt:filter(prompt)
 --- -show:  &nbsp; return "FOO "..prompt.." >>" --,false  -- Adding ,false stops further filtering.
 --- -show:  end
---- -deprecated: clink.promptfilter
---- Registers a prompt filter function.  The capabilities are the same as before
---- but the syntax is changed.
 clink.prompt = clink.prompt or {}
 function clink.prompt.register_filter(filter, priority)
     local o = clink.promptfilter(priority)

@@ -52,12 +52,12 @@ int line_state_lua::get_cursor(lua_State* state)
 //------------------------------------------------------------------------------
 /// -name:  line:getcommandoffset
 /// -ret:   integer
-/// -show:  -- Given the following line; abc& 123
-/// -show:  -- where commands are separated by & symbols.
-/// -show:  line:getcommandoffset() == 4
 /// Returns the offset to the start of the delimited command in the line that's
 /// being effectively edited. Note that this may not be the offset of the first
 /// command of the line unquoted as whitespace isn't considered for words.
+/// -show:  -- Given the following line; abc& 123
+/// -show:  -- where commands are separated by & symbols.
+/// -show:  line:getcommandoffset() == 4
 int line_state_lua::get_command_offset(lua_State* state)
 {
     lua_pushinteger(state, m_line.get_command_offset() + 1);
@@ -67,13 +67,13 @@ int line_state_lua::get_command_offset(lua_State* state)
 //------------------------------------------------------------------------------
 /// -name:  line:getcommandwordindex
 /// -ret:   integer
+/// Returns the index of the command word. Usually the index is 1, but if a
+/// redirection symbol occurs before the command name then the index can be
+/// greater than 1.
 /// -show:  -- Given the following line; >x abc
 /// -show:  -- the first word is "x" and is an argument to the redirection symbol,
 /// -show:  -- and the second word is "abc" and is the command word.
 /// -show:  line:getcommandwordindex() == 2
-/// Returns the index of the command word. Usually the index is 1, but if a
-/// redirection symbol occurs before the command name then the index can be
-/// greater than 1.
 int line_state_lua::get_command_word_index(lua_State* state)
 {
     lua_pushinteger(state, m_line.get_command_word_index() + 1);
@@ -186,7 +186,6 @@ int line_state_lua::get_word(lua_State* state)
 //------------------------------------------------------------------------------
 /// -name:  line:getendword
 /// -ret:   string
-/// -show:  line:getword(line:getwordcount()) == line:getendword()
 /// Returns the last word of the line. This is the word that matches are being
 /// generated for.
 ///
@@ -196,6 +195,7 @@ int line_state_lua::get_word(lua_State* state)
 /// <code>length</code> fields from
 /// <a href="#line:getwordinfo">line:getwordinfo()</a> to extract a substring
 /// from the line returned by <a href="#line:getline">line:getline()</a>.
+/// -show:  line:getword(line:getwordcount()) == line:getendword()
 int line_state_lua::get_end_word(lua_State* state)
 {
     str<32> word;

@@ -40,13 +40,6 @@ match_builder_lua::~match_builder_lua()
 /// -arg:   match:string|table
 /// -arg:   [type:string]
 /// -ret:   boolean
-/// -show:  builder:addmatch("hello") -- type is "none"
-/// -show:  builder:addmatch("some_word", "word")
-/// -show:  builder:addmatch("/flag", "arg")
-/// -show:  builder:addmatch("abbrev", "alias")
-/// -show:  builder:addmatch({ match="foo.cpp", type="file" })
-/// -show:  builder:addmatch({ match="bar", type="dir" })
-/// -show:  builder:addmatch({ match=".git", type="dir hidden" })
 /// Adds a match.  If <span class="arg">match</span> is a string, it's added as
 /// a match and <span class="arg">type</span> is the optional match type.
 ///
@@ -81,6 +74,13 @@ match_builder_lua::~match_builder_lua()
 /// See <a href="#completioncolors">Completion Colors</a> and
 /// <a href="#colorsettings">Color Settings</a> for more information about
 /// colors.
+/// -show:  builder:addmatch("hello") -- type is "none"
+/// -show:  builder:addmatch("some_word", "word")
+/// -show:  builder:addmatch("/flag", "arg")
+/// -show:  builder:addmatch("abbrev", "alias")
+/// -show:  builder:addmatch({ match="foo.cpp", type="file" })
+/// -show:  builder:addmatch({ match="bar", type="dir" })
+/// -show:  builder:addmatch({ match=".git", type="dir hidden" })
 int match_builder_lua::add_match(lua_State* state)
 {
     int ret = 0;
@@ -173,13 +173,6 @@ int match_builder_lua::set_matches_are_files(lua_State* state)
 /// -arg:   matches:table
 /// -arg:   [type:string]
 /// -ret:   integer, boolean
-/// -show:  builder:addmatches({"abc", "def"}) -- Adds two matches of type "none"
-/// -show:  builder:addmatches({"abc", "def"}, "file") -- Adds two matches of type "file"
-/// -show:  builder:addmatches({
-/// -show:  &nbsp;&nbsp;-- Same table scheme per entry here as in builder:addmatch()
-/// -show:  &nbsp;&nbsp;{ match="remote/origin/master", type="word" },
-/// -show:  &nbsp;&nbsp;{ match="remote/origin/topic", type="word" }
-/// -show:  })
 /// This is the equivalent of calling <a href="#builder:addmatch">builder:addmatch()</a>
 /// in a for-loop. Returns the number of matches added and a boolean indicating
 /// if all matches were added successfully.
@@ -188,6 +181,13 @@ int match_builder_lua::set_matches_are_files(lua_State* state)
 /// of tables describing the matches.<br/>
 /// <span class="arg">type</span> is used as the type when a match doesn't
 /// explicitly include a type, and is "none" if omitted.
+/// -show:  builder:addmatches({"abc", "def"}) -- Adds two matches of type "none"
+/// -show:  builder:addmatches({"abc", "def"}, "file") -- Adds two matches of type "file"
+/// -show:  builder:addmatches({
+/// -show:  &nbsp;&nbsp;-- Same table scheme per entry here as in builder:addmatch()
+/// -show:  &nbsp;&nbsp;{ match="remote/origin/master", type="word" },
+/// -show:  &nbsp;&nbsp;{ match="remote/origin/topic", type="word" }
+/// -show:  })
 int match_builder_lua::add_matches(lua_State* state)
 {
     if (lua_gettop(state) <= 0 || !lua_istable(state, 1))

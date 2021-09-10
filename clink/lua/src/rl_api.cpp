@@ -66,6 +66,8 @@ bool collapse_tilde(const char* in, str_base& out, bool force)
 /// -arg:   path:string
 /// -arg:   [force:boolean]
 /// -ret:   string
+/// Undoes Readline tilde expansion.  See <a href="#rl.expandtilde">rl.expandtilde</a>
+/// for more information.
 /// -show:  rl.collapsetilde("C:\Users\yourusername\Documents")
 /// -show:  &nbsp;
 /// -show:  -- The return value depends on the expand-tilde configuration variable:
@@ -73,8 +75,6 @@ bool collapse_tilde(const char* in, str_base& out, bool force)
 /// -show:  -- When "off", the function returns "~\Documents".
 /// -show:  &nbsp;
 /// -show:  -- Or when <span class="arg">force</span> is true, the function returns "~\Documents".
-/// Undoes Readline tilde expansion.  See <a href="#rl.expandtilde">rl.expandtilde</a>
-/// for more information.
 static int collapse_tilde(lua_State* state)
 {
     const char* path = checkstring(state, 1);
@@ -98,6 +98,18 @@ static int collapse_tilde(lua_State* state)
 /// -name:  rl.expandtilde
 /// -arg:   path:string
 /// -ret:   string, boolean
+/// Performs Readline tilde expansion.
+///
+/// When generating filename matches for a word, use the
+/// <a href="#rl.expandtilde">rl.expandtilde</a> and
+/// <a href="#rl.collapsetilde">rl.collapsetilde</a> helper functions to perform
+/// tilde completion expansion according to Readline's configuration.
+///
+/// Use <a href="#rl.expandtilde">rl.expandtilde</a> to do tilde expansion
+/// before collecting file matches (e.g. via
+/// <a href="#os.globfiles">os.globfiles</a>).  If it indicates that it expanded
+/// the string, then use <a href="#rl.collapsetilde">rl.collapsetilde</a> to put
+/// back the tilde before returning a match.
 /// -show:  local result, expanded = rl.expandtilde("~\Documents")
 /// -show:  -- result is "C:\Users\yourusername\Documents"
 /// -show:  -- expanded is true
@@ -125,18 +137,6 @@ static int collapse_tilde(lua_State* state)
 /// -show:  &nbsp; end
 /// -show:  &nbsp; return matches
 /// -show:  end
-/// Performs Readline tilde expansion.
-///
-/// When generating filename matches for a word, use the
-/// <a href="#rl.expandtilde">rl.expandtilde</a> and
-/// <a href="#rl.collapsetilde">rl.collapsetilde</a> helper functions to perform
-/// tilde completion expansion according to Readline's configuration.
-///
-/// Use <a href="#rl.expandtilde">rl.expandtilde</a> to do tilde expansion
-/// before collecting file matches (e.g. via
-/// <a href="#os.globfiles">os.globfiles</a>).  If it indicates that it expanded
-/// the string, then use <a href="#rl.collapsetilde">rl.collapsetilde</a> to put
-/// back the tilde before returning a match.
 static int expand_tilde(lua_State* state)
 {
     const char* path = checkstring(state, 1);
@@ -284,7 +284,6 @@ static int invoke_command(lua_State* state)
 //------------------------------------------------------------------------------
 /// -name:  rl.getlastcommand
 /// -ret:   string, function
-/// -show:  local last_rl_func, last_lua_func = rl.getlastcommand()
 /// Returns two values:
 /// <ul>
 /// <li>The name of the last Readline command invoked by a key binding.
@@ -297,6 +296,7 @@ static int invoke_command(lua_State* state)
 /// a Readline command.
 /// If the last key binding did not invoke a Lua function, then the second
 /// return value is an empty string.
+/// -show:  local last_rl_func, last_lua_func = rl.getlastcommand()
 static int get_last_command(lua_State* state)
 {
     const char* last_rl_func_name = "";
@@ -405,6 +405,13 @@ static int set_matches(lua_State* state)
 /// -name:  rl.getkeybindings
 /// -arg:   raw:boolean
 /// -ret:   table
+/// Returns key bindings in a table with the following scheme:
+/// <span class="tablescheme">{ {key:string, binding:string, desc:string, category:string}, ... }</span>.
+///
+/// The following example demonstrates using this function in a
+/// <a href="#luakeybindings">luafunc: key binding</a> to invoke
+/// <a href="#clink.popuplist">clink.popuplist()</a> to show a searchable list
+/// of key bindings, and then invoke whichever key binding is selected.
 /// -show:  function luafunc_showkeybindings(rl_buffer)
 /// -show:      local bindings = rl.getkeybindings()
 /// -show:      if #bindings <= 0 then
@@ -423,13 +430,6 @@ static int set_matches(lua_State* state)
 /// -show:          rl.invokecommand(binding)
 /// -show:      end
 /// -show:  end
-/// Returns key bindings in a table with the following scheme:
-/// <span class="tablescheme">{ {key:string, binding:string, desc:string, category:string}, ... }</span>.
-///
-/// The following example demonstrates using this function in a
-/// <a href="#luakeybindings">luafunc: key binding</a> to invoke
-/// <a href="#clink.popuplist">clink.popuplist()</a> to show a searchable list
-/// of key bindings, and then invoke whichever key binding is selected.
 struct key_binding_info { str_moveable name; str_moveable binding; const char* desc; const char* cat; };
 int get_key_bindings(lua_State* state)
 {

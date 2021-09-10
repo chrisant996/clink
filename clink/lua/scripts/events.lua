@@ -134,6 +134,9 @@ end
 --------------------------------------------------------------------------------
 --- -name:  clink.ondisplaymatches
 --- -arg:   func:function
+--- Registers <span class="arg">func</span> to be called when Clink is about to
+--- display matches.  See <a href="#filteringthematchdisplay">Filtering the
+--- Match Display</a> for more information.
 --- -show:  local function my_filter(matches, popup)
 --- -show:  &nbsp; local new_matches = {}
 --- -show:  &nbsp; for _,m in ipairs(matches) do
@@ -154,9 +157,6 @@ end
 --- -show:  &nbsp; ...
 --- -show:  &nbsp; clink.ondisplaymatches(my_filter)
 --- -show:  end
---- Registers <span class="arg">func</span> to be called when Clink is about to
---- display matches.  See <a href="#filteringthematchdisplay">Filtering the
---- Match Display</a> for more information.
 function clink.ondisplaymatches(func)
     -- For now, only one handler at a time.  I wanted it to be a chain of
     -- handlers, but that implies the output from one handler will be input to

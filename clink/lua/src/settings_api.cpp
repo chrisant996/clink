@@ -139,11 +139,6 @@ template <typename S, typename... V> void add_impl(lua_State* state, V... value)
 /// -arg:   [short_desc:string]
 /// -arg:   [long_desc:string]
 /// -ret:   boolean
-/// -show:  settings.add("myscript.myabc", true, "Boolean setting")
-/// -show:  settings.add("myscript.mydef", 100, "Number setting")
-/// -show:  settings.add("myscript.myghi", "abc", "String setting")
-/// -show:  settings.add("myscript.myjkl", {"x","y","z"}, "Enum setting")
-/// -show:  settings.add("color.mymno", "bright magenta", "Color setting")
 /// Adds a setting to the list of Clink settings and includes it in
 /// <code>clink set</code>.  The new setting is named
 /// <span class="arg">name</span> and has a default value
@@ -160,6 +155,11 @@ template <typename S, typename... V> void add_impl(lua_State* state, V... value)
 /// <span class="arg">short_desc</span> is an optional quick summary description
 /// and can't be more than 48 characters.<br/>
 /// <span class="arg">long_desc</span> is an optional long description.
+/// -show:  settings.add("myscript.myabc", true, "Boolean setting")
+/// -show:  settings.add("myscript.mydef", 100, "Number setting")
+/// -show:  settings.add("myscript.myghi", "abc", "String setting")
+/// -show:  settings.add("myscript.myjkl", {"x","y","z"}, "Enum setting")
+/// -show:  settings.add("color.mymno", "bright magenta", "Color setting")
 static int add(lua_State* state)
 {
     const char* name = checkstring(state, 1);

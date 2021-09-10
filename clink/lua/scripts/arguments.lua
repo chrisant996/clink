@@ -218,12 +218,12 @@ end
 --- -name:  _argmatcher:addarg
 --- -arg:   choices...:string|table
 --- -ret:   self
---- -show:  local my_parser = clink.argmatcher("git")
---- -show:  :addarg("add", "status", "commit", "checkout")
 --- This adds argument matches.  Arguments can be a string, a string linked to
 --- another parser by the concatenation operator, a table of arguments, or a
 --- function that returns a table of arguments.  See
 --- <a href="#argumentcompletion">Argument Completion</a> for more information.
+--- -show:  local my_parser = clink.argmatcher("git")
+--- -show:  :addarg("add", "status", "commit", "checkout")
 function _argmatcher:addarg(...)
     local list = self._args[self._nextargindex]
     if not list then
@@ -241,14 +241,14 @@ end
 --- -name:  _argmatcher:addflags
 --- -arg:   flags...:string
 --- -ret:   self
---- -show:  local my_parser = clink.argmatcher("git")
---- -show:  :addarg({ "add", "status", "commit", "checkout" })
---- -show:  :addflags("-a", "-g", "-p", "--help")
 --- This adds flag matches.  Flags are separate from arguments:  When listing
 --- possible completions for an empty word, only arguments are listed.  But when
 --- the word being completed starts with the first character of any of the
 --- flags, then only flags are listed.  See
 --- <a href="#argumentcompletion">Argument Completion</a> for more information.
+--- -show:  local my_parser = clink.argmatcher("git")
+--- -show:  :addarg({ "add", "status", "commit", "checkout" })
+--- -show:  :addflags("-a", "-g", "-p", "--help")
 function _argmatcher:addflags(...)
     local flag_matcher = self._flags or _argmatcher()
     local list = flag_matcher._args[1] or { _links = {} }
@@ -269,15 +269,15 @@ end
 --- -name:  _argmatcher:loop
 --- -arg:   [index:integer]
 --- -ret:   self
+--- This makes the parser loop back to argument position
+--- <span class="arg">index</span> when it runs out of positional sets of
+--- arguments (if <span class="arg">index</span> is omitted it loops back to
+--- argument position 1).
 --- -show:  clink.argmatcher("xyzzy")
 --- -show:  :addarg("zero", "cero")     -- first arg can be zero or cero
 --- -show:  :addarg("one", "uno")       -- second arg can be one or uno
 --- -show:  :addarg("two", "dos")       -- third arg can be two or dos
 --- -show:  :loop(2)    -- fourth arg loops back to position 2, for one or uno, and so on
---- This makes the parser loop back to argument position
---- <span class="arg">index</span> when it runs out of positional sets of
---- arguments (if <span class="arg">index</span> is omitted it loops back to
---- argument position 1).
 function _argmatcher:loop(index)
     self._loop = index or -1
     return self
@@ -287,9 +287,6 @@ end
 --- -name:  _argmatcher:setflagprefix
 --- -arg:   [prefixes...:string]
 --- -ret:   self
---- -show:  local my_parser = clink.argmatcher()
---- -show:  :setflagprefix("-", "/", "+")
---- -show:  :addflags("--help", "/?", "+mode")
 --- -deprecated: _argmatcher:addflags
 --- This overrides the default flag prefix (<code>-</code>).  The flag prefixes are used to
 --- switch between matching arguments versus matching flags.  When listing
@@ -300,6 +297,9 @@ end
 ---
 --- This is no longer needed because <code>:addflags()</code> does it
 --- automatically.
+--- -show:  local my_parser = clink.argmatcher()
+--- -show:  :setflagprefix("-", "/", "+")
+--- -show:  :addflags("--help", "/?", "+mode")
 function _argmatcher:setflagprefix(...)
     if self._deprecated then
         local old = self._flagprefix
@@ -703,12 +703,12 @@ end
 --- -name:  clink.dirmatches
 --- -arg:   word:string
 --- -ret:   table
+--- You can use this function in an argmatcher to supply directory matches.
+--- This automatically handles Readline tilde completion.
 --- -show:  -- Make "cd" generate directory matches (no files).
 --- -show:  clink.argmatcher("cd")
 --- -show:  :addflags("/d")
 --- -show:  :addarg({ clink.dirmatches })
---- You can use this function in an argmatcher to supply directory matches.
---- This automatically handles Readline tilde completion.
 function clink.dirmatches(match_word)
     local word, expanded = rl.expandtilde(match_word)
 
@@ -729,6 +729,13 @@ end
 --- -name:  clink.filematches
 --- -arg:   word:string
 --- -ret:   table
+--- You can use this function in an argmatcher to supply file matches.  This
+--- automatically handles Readline tilde completion.
+---
+--- Argmatchers default to matching files, so it's unusual to need this
+--- function.  However, some exceptions are when a flag needs to accept file
+--- matches but other flags and arguments don't, or when matches need to include
+--- more than files.
 --- -show:  -- Make "foo --file" generate file matches, but other flags and args don't.
 --- -show:  -- And the third argument can be a file or $stdin or $stdout.
 --- -show:  clink.argmatcher("foo")
@@ -739,13 +746,6 @@ end
 --- -show:  :addarg({ "one", "won" })
 --- -show:  :addarg({ "two", "too" })
 --- -show:  :addarg({ clink.filematches, "$stdin", "$stdout" })
---- You can use this function in an argmatcher to supply file matches.  This
---- automatically handles Readline tilde completion.
----
---- Argmatchers default to matching files, so it's unusual to need this
---- function.  However, some exceptions are when a flag needs to accept file
---- matches but other flags and arguments don't, or when matches need to include
---- more than files.
 function clink.filematches(match_word)
     local word, expanded = rl.expandtilde(match_word)
 
@@ -975,6 +975,8 @@ end
 --- -name:  clink.arg.new_parser
 --- -arg:   ...
 --- -ret:   table
+--- -deprecated: clink.argmatcher
+--- Creates a new parser and adds <span class="arg">...</span> to it.
 --- -show:  -- Deprecated form:
 --- -show:  local parser = clink.arg.new_parser(
 --- -show:  &nbsp; { "abc", "def" },       -- arg position 1
@@ -987,8 +989,6 @@ end
 --- -show:  :addarg("abc", "def")               -- arg position 1
 --- -show:  :addarg("ghi", "jkl")               -- arg position 2
 --- -show:  :addflags("--flag1", "--flag2")     -- flags
---- -deprecated: clink.argmatcher
---- Creates a new parser and adds <span class="arg">...</span> to it.
 function clink.arg.new_parser(...)
     local parser = clink.argmatcher()
     parser._deprecated = true
@@ -1008,6 +1008,13 @@ end
 --- -arg:   cmd:string
 --- -arg:   parser:table
 --- -ret:   table
+--- -deprecated: clink.argmatcher
+--- Adds <span class="arg">parser</span> to the first argmatcher for
+--- <span class="arg">cmd</span>.  This behaves similarly to v0.4.8, but not
+--- identically.  The Clink schema has changed significantly enough that there
+--- is no direct 1:1 translation.  Calling
+--- <code>clink.arg.register_parser</code> repeatedly with the same command to
+--- merge parsers is not supported anymore.
 --- -show:  -- Deprecated form:
 --- -show:  local parser1 = clink.arg.new_parser("abc", "def")
 --- -show:  local parser2 = clink.arg.new_parser("ghi", "jkl")
@@ -1023,13 +1030,6 @@ end
 --- -show:  clink.argmatcher("foo"):addarg(parser2)
 --- -show:  -- This uses only parser2 if/when parser1 finishes parsing args:
 --- -show:  clink.argmatcher("foo"):addarg(parser1):addarg(parser2)
---- -deprecated: clink.argmatcher
---- Adds <span class="arg">parser</span> to the first argmatcher for
---- <span class="arg">cmd</span>.  This behaves similarly to v0.4.8, but not
---- identically.  The Clink schema has changed significantly enough that there
---- is no direct 1:1 translation.  Calling
---- <code>clink.arg.register_parser</code> repeatedly with the same command to
---- merge parsers is not supported anymore.
 function clink.arg.register_parser(cmd, parser)
     cmd = clink.lower(cmd)
 

@@ -828,11 +828,11 @@ static int get_net_connection_name(lua_State *state)
 //------------------------------------------------------------------------------
 /// -name:  os.debugprint
 /// -arg:   ...
-/// -show:  clink.debugprint("my variable = "..myvar)
 /// This works like <code>print()</code> but writes the output via the OS
 /// `OutputDebugString()` API.
 ///
 /// This function has no effect if the `lua.debug` Clink setting is off.
+/// -show:  clink.debugprint("my variable = "..myvar)
 static int debug_print(lua_State *state)
 {
     str<> out;
