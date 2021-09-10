@@ -255,14 +255,13 @@ int glob_impl(lua_State* state, bool dirs_only, bool back_compat=false)
     if (!mask)
         return 0;
 
-    int extrainfo = 0;
-    if (!back_compat)
-    {
-        bool isnum = false;
-        extrainfo = optinteger(state, 2, 0, &isnum);
-        if (!isnum)
-            extrainfo = lua_toboolean(state, 2);
-    }
+    int extrainfo;
+    if (back_compat)
+        extrainfo = 0;
+    else if (lua_isboolean(state, 2))
+        extrainfo = lua_toboolean(state, 2);
+    else
+        extrainfo = optinteger(state, 2, 0);
 
     lua_createtable(state, 0, 0);
 
