@@ -313,15 +313,15 @@ int glob_impl(lua_State* state, bool dirs_only, bool back_compat=false)
             if (extrainfo >= 2)
             {
                 lua_pushliteral(state, "atime");
-                lua_pushinteger(state, os::filetime_to_time_t(info.accessed));
+                lua_pushnumber(state, lua_Number(os::filetime_to_time_t(info.accessed)));
                 lua_rawset(state, -3);
 
                 lua_pushliteral(state, "mtime");
-                lua_pushinteger(state, os::filetime_to_time_t(info.modified));
+                lua_pushnumber(state, lua_Number(os::filetime_to_time_t(info.modified)));
                 lua_rawset(state, -3);
 
                 lua_pushliteral(state, "ctime");
-                lua_pushinteger(state, os::filetime_to_time_t(info.created));
+                lua_pushnumber(state, lua_Number(os::filetime_to_time_t(info.created)));
                 lua_rawset(state, -3);
 
                 lua_pushliteral(state, "size");
@@ -353,10 +353,10 @@ int glob_impl(lua_State* state, bool dirs_only, bool back_compat=false)
 /// -show:  &nbsp; type,         -- [string] The match type (see below).
 /// -show:
 /// -show:  &nbsp; -- Included when extrainfo is 2:
-/// -show:  &nbsp; size,         -- [integer] The file size, in bytes.
-/// -show:  &nbsp; atime,        -- [integer] The access time, compatible with os.time().
-/// -show:  &nbsp; mtime,        -- [integer] The modified time, compatible with os.time().
-/// -show:  &nbsp; ctime,        -- [integer] The creation time, compatible with os.time().
+/// -show:  &nbsp; size,         -- [number] The file size, in bytes.
+/// -show:  &nbsp; atime,        -- [number] The access time, compatible with os.time().
+/// -show:  &nbsp; mtime,        -- [number] The modified time, compatible with os.time().
+/// -show:  &nbsp; ctime,        -- [number] The creation time, compatible with os.time().
 /// -show:  }
 /// The <span class="tablescheme">type</span> string can be "file" or "dir", and
 /// may also contain ",hidden", ",readonly", ",link", and ",orphaned" depending
@@ -387,10 +387,10 @@ int glob_dirs(lua_State* state)
 /// -show:  &nbsp; type,         -- [string] The match type (see below).
 /// -show:
 /// -show:  &nbsp; -- Included when extrainfo is 2:
-/// -show:  &nbsp; size,         -- [integer] The file size, in bytes.
-/// -show:  &nbsp; atime,        -- [integer] The access time, compatible with os.time().
-/// -show:  &nbsp; mtime,        -- [integer] The modified time, compatible with os.time().
-/// -show:  &nbsp; ctime,        -- [integer] The creation time, compatible with os.time().
+/// -show:  &nbsp; size,         -- [number] The file size, in bytes.
+/// -show:  &nbsp; atime,        -- [number] The access time, compatible with os.time().
+/// -show:  &nbsp; mtime,        -- [number] The modified time, compatible with os.time().
+/// -show:  &nbsp; ctime,        -- [number] The creation time, compatible with os.time().
 /// -show:  }
 /// The <span class="tablescheme">type</span> string can be "file" or "dir", and
 /// may also contain ",hidden", ",readonly", ",link", and ",orphaned" depending
