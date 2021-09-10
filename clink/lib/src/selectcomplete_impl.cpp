@@ -821,6 +821,7 @@ void selectcomplete_impl::update_matches(bool restrict, bool sort)
             m_matches.get_matches()->match_display_filter(&*matches.begin(), &filtered_matches, popup);
 
             // Filter the, uh, filtered matches.
+            if (filtered_matches)
             {
                 // Need to use printable_part() and etc, but types are separate
                 // from matches here.
