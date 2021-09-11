@@ -5,6 +5,9 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
+- Fix `settings.set()`.
+- Fix Clink using Readline's callback mode incorrectly.
+- Add a quick start / beginner section to the Clink docs.
 
 ## Medium Priority
 - Inputing `clink set color.whatever 38;5;214` and `clink set color.whatever sgr 38;5;214` apply input line coloring incorrectly.
