@@ -15,6 +15,7 @@
 - Fixed `word_classifications:applycolor()`; the input line didn't necessarily refresh correctly after a custom classifier applied custom colors.
 - Fixed potential stray inaccurate colorations when coloring the input for `clink set color.something some_value`.
 - Fixed [#161](https://github.com/chrisant996/clink/issues/161); `clink installscripts` garbles previously-installed script paths when installing a new one.
+- Fixed [#155](https://github.com/chrisant996/clink/issues/155); `settings.set()` doesn't update the settings file.
 
 #### v1.2.30
 
