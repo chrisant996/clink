@@ -29,6 +29,12 @@ enum temp_file_mode {
     delete_on_close     = 0x0002,   // delete on close (requires FILE_SHARE_DELETE)
 };
 
+enum argv_quote_mode {
+    for_createprocess   = 0x0000,   // quote for CreateProcess, if arg requires quoting
+    for_cmd             = 0x0001,   // quote for cmd.exe, if arg requires quoting
+    force               = 0x0002,   // force arg to be quoted
+};
+
 DEFINE_ENUM_FLAG_OPERATORS(temp_file_mode);
 
 int     get_path_type(const char* path);
@@ -51,9 +57,13 @@ bool    get_short_path_name(const char* path, str_base& out);
 bool    get_long_path_name(const char* path, str_base& out);
 bool    get_full_path_name(const char* path, str_base& out);
 bool    get_net_connection_name(const char* path, str_base& out);
-double  clock();
 
+double  clock();
 time_t  filetime_to_time_t(const FILETIME& ft);
+
+#if 0
+void    append_argv(str_base& out, const char* arg, argv_quote_mode mode);
+#endif
 
 void    map_errno();
 void    map_errno(unsigned long const oserrno);

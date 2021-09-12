@@ -730,6 +730,63 @@ time_t filetime_to_time_t(const FILETIME& ft)
     return time_t(uli.QuadPart);
 }
 
+//------------------------------------------------------------------------------
+#if 0
+void append_argv(str_base& out, const char* arg, argv_quote_mode mode)
+{
+    if (!(mode & argv_quote_mode::force) && *arg && !strpbrk(arg, " \t\r\n\v\""))
+    {
+        out.concat(arg);
+        return;
+    }
+
+    if (mode & argv_quote_mode::for_cmd)
+        out.concat("^", 1);
+    out.concat("\"", 1);
+
+    while (*arg)
+    {
+        unsigned num_backslash = 0;
+
+        while (*arg == '\\')
+        {
+            num_backslash++;
+            arg++;
+        }
+
+        if (!*arg)
+        {
+            while (num_backslash--)
+                out.concat("\\\\", 2);
+            break;
+        }
+        else if (*arg == '\"')
+        {
+            while (num_backslash--)
+                out.concat("\\\\", 2);
+            out.concat("\\", 1);
+            if (mode & argv_quote_mode::for_cmd)
+                out.concat("^", 1);
+            out.concat("\"", 1);
+        }
+        else
+        {
+            while (num_backslash--)
+                out.concat("\\", 1);
+            if ((mode & argv_quote_mode::for_cmd) && strchr("()%!^\"<>&|", *arg))
+                out.concat("^", 1);
+            out.concat(arg, 1);
+        }
+
+        arg++;
+    }
+
+    if (mode & argv_quote_mode::for_cmd)
+        out.concat("^", 1);
+    out.concat("\"", 1);
+}
+#endif
+
 }; // namespace os
 
 //------------------------------------------------------------------------------
