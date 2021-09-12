@@ -11,6 +11,10 @@
 #include <assert.h>
 
 //------------------------------------------------------------------------------
+const size_t face_base = 128;
+const size_t face_max = 100;
+
+//------------------------------------------------------------------------------
 word_classifications::~word_classifications()
 {
     free(m_faces);
@@ -42,9 +46,19 @@ void word_classifications::clear()
 }
 
 //------------------------------------------------------------------------------
-void word_classifications::init(size_t line_length)
+void word_classifications::init(size_t line_length, const word_classifications* face_defs)
 {
     clear();
+
+    if (face_defs)
+    {
+        for (auto const& def : face_defs->m_face_definitions)
+        {
+            char face = char(face_base + m_face_definitions.size());
+            m_face_definitions.emplace_back(def.c_str());
+            m_face_map.emplace(m_face_definitions.back().c_str(), face);
+        }
+    }
 
     if (line_length)
     {
@@ -167,11 +181,14 @@ char word_classifications::ensure_face(const char* sgr)
     if (entry != m_face_map.end())
         return entry->second;
 
-    char face = char(128 + m_face_definitions.size());
-    if (static_cast<unsigned char>(face) < 128)
+    static_assert(face_base >= 128, "face base must be >= 128");
+    static_assert(face_base + face_max <= 256, "the max number of faces must fit in a char");
+    if (m_face_definitions.size() >= face_max)
         return '\0';
 
+    char face = char(face_base + m_face_definitions.size());
     m_face_definitions.emplace_back(sgr);
+    m_face_map.emplace(m_face_definitions.back().c_str(), face);
     return face;
 }
 

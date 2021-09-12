@@ -962,7 +962,7 @@ void line_editor_impl::classify()
 
     // Hang on to the old classifications so it's possible to detect changes.
     word_classifications old_classifications(std::move(m_classifications));
-    m_classifications.init(strlen(line.get_line()));
+    m_classifications.init(strlen(line.get_line()), &old_classifications);
 
     // Count number of commands so we can pre-allocate words_storage so that
     // emplace_back() doesn't invalidate pointers (references) stored in

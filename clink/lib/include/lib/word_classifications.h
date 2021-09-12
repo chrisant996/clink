@@ -47,7 +47,7 @@ public:
                     word_classifications(word_classifications&& other);
 
     void            clear();
-    void            init(size_t line_length);
+    void            init(size_t line_length, const word_classifications* face_defs);
     unsigned int    add_command(const line_state& line);
     void            set_word_has_argmatcher(unsigned int index);
     void            finish(bool show_argmatchers);

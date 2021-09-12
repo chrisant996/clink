@@ -123,6 +123,10 @@ int lua_word_classifications::classify_word(lua_State* state)
 ///
 /// See <a href="#classifywords">Coloring The Input Text</a> for more
 /// information.
+///
+/// Note: an input line can have up to 100 different unique color strings
+/// applied, and then this stops applying new colors.  The counter gets reset
+/// when the onbeginedit event is sent.
 int lua_word_classifications::apply_color(lua_State* state)
 {
     if (!lua_isnumber(state, 1) || !lua_isnumber(state, 2) || !lua_isstring(state, 3))
