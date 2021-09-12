@@ -56,11 +56,31 @@ local function is_prefix3(s, ...)
 end
 
 --------------------------------------------------------------------------------
-local function classify_to_end(idx, line_state, classify, wc)
-    while idx <= line_state:getwordcount() do
-        classify:classifyword(idx, wc)
-        idx = idx + 1
+local function color_for_word_class(wc)
+    local c
+    if wc == "a" then
+        c = settings.get("color.arg")
+        if not c or #c == 0 then c = settings.get("color.input") end
+    elseif wc == "c" then
+        c = settings.get("color.cmd")
+    elseif wc == "d" then
+        c = settings.get("color.doskey")
+    elseif wc == "f" then
+        c = settings.get("color.flag")
+    elseif wc == "o" then
+        c = settings.get("color.input")
+    elseif wc == "n" then
+        c = settings.get("color.unexpected")
+    elseif wc == "m" then
+        c = settings.get("color.argmatcher")
     end
+    return c or ""
+end
+
+--------------------------------------------------------------------------------
+local function classify_to_end(idx, line_state, classify, wc)
+    local info = line_state:getwordinfo(idx)
+    classify:applycolor(info.offset, #line_state:getline() - info.offset + 1, color_for_word_class(wc))
 end
 
 --------------------------------------------------------------------------------
@@ -127,11 +147,8 @@ local function color_handler(word_index, line_state, classify)
                 break
             end
             if classify then
-                while i <= line_state:getwordcount() do
-                    classify:classifyword(i, "a") --arg
-                    i = i + 1
-                end
-                return true -- classify has been handled
+                classify_to_end(i, line_state, classify, "a") --arg
+                return {} -- classify has been handled
             end
             return {}
         elseif word ~= "" then

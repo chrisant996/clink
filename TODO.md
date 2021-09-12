@@ -7,7 +7,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 - Fix `settings.set()`.
 - [#161](https://github.com/chrisant996/clink/issues/161); issues with `clink installscripts` and `clink info`.
-- Inputing `clink set color.whatever 38;5;214` and `clink set color.whatever sgr 38;5;214` apply input line coloring incorrectly.
 
 ## Medium Priority
 - Add a quick start / beginner section to the Clink docs.
