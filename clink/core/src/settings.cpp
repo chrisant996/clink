@@ -21,9 +21,12 @@ struct loaded_setting
     bool            saved;
 };
 
+typedef std::map<std::string, loaded_setting> loaded_settings_map;
+
 //------------------------------------------------------------------------------
 static setting_map* g_setting_map = nullptr;
-static std::map<std::string, loaded_setting> g_loaded_settings;
+static loaded_settings_map* g_loaded_settings = nullptr;
+static str_moveable* g_last_file = nullptr;
 
 #ifdef DEBUG
 static bool s_ever_loaded = false;
@@ -35,6 +38,13 @@ static auto& get_map()
     if (!g_setting_map)
         g_setting_map = new setting_map;
     return *g_setting_map;
+}
+
+static auto& get_loaded_map()
+{
+    if (!g_loaded_settings)
+        g_loaded_settings = new loaded_settings_map;
+    return *g_loaded_settings;
 }
 
 
@@ -94,14 +104,26 @@ static bool set_setting(const char* name, const char* value, const char* comment
 
     // Remember the original text from the file, so that saving won't lose
     // them in case the scripts that declared them aren't loaded.
-    loaded_setting loaded;
-    if (comment)
-        loaded.comment = comment;
-    loaded.value = value;
-    g_loaded_settings.emplace(name, std::move(loaded));
+    if (!s)
+    {
+        loaded_setting loaded;
+        if (comment)
+        {
+            loaded.comment = comment;
+        }
+        else
+        {
+            const auto& l = get_loaded_map().find(name);
+            if (l != get_loaded_map().end())
+                loaded.comment = l->second.comment.c_str();
+        }
+        loaded.value = value;
+        get_loaded_map().emplace(name, std::move(loaded));
+        return true;
+    }
 
     // Set its value.
-    return s && s->set(value);
+    return s->set(value);
 }
 
 //------------------------------------------------------------------------------
@@ -229,7 +251,12 @@ bool load(const char* file)
     s_ever_loaded = true;
 #endif
 
-    g_loaded_settings.clear();
+    if (!g_last_file)
+        g_last_file = new str_moveable;
+    if (file != g_last_file->c_str())
+        *g_last_file = file;
+
+    get_loaded_map().clear();
 
     // Maybe migrate settings.
     str<> old_file;
@@ -351,15 +378,15 @@ static bool save_internal(const char* file, bool migrating)
         return false;
 
     // Clear the saved flag so we can track which ones have been saved so far.
-    for (auto iter : g_loaded_settings)
+    for (auto iter : get_loaded_map())
         iter.second.saved = false;
 
     // Iterate over each setting and write it out to the file.
     for (auto i : get_map())
     {
         setting* iter = i.second;
-        auto loaded = g_loaded_settings.find(iter->get_name());
-        if (loaded != g_loaded_settings.end())
+        auto loaded = get_loaded_map().find(iter->get_name());
+        if (loaded != get_loaded_map().end())
             loaded->second.saved = true;
 
         // Don't write out settings that aren't modified from their defaults.
@@ -399,7 +426,7 @@ static bool save_internal(const char* file, bool migrating)
     // This prevents losing user settings when some scripts aren't loaded, e.g.
     // by changing the script path.
     bool first_extra = true;
-    for (const auto iter : g_loaded_settings)
+    for (const auto& iter : get_loaded_map())
         if (!iter.second.saved)
         {
             if (first_extra)
@@ -431,6 +458,23 @@ void TEST_set_ever_loaded()
     s_ever_loaded = true;
 }
 #endif
+
+//------------------------------------------------------------------------------
+bool sandboxed_set_setting(const char* name, const char* value)
+{
+    if (!g_last_file)
+        return false;
+    const char* file = g_last_file->c_str();
+
+    // Swap real settings data structures with new temporary versions.
+    rollback<setting_map*> rb_map(g_setting_map, new setting_map);
+    rollback<loaded_settings_map*> rb_loaded(g_loaded_settings, new loaded_settings_map);
+
+    // Load settings.
+    return (load(file) &&
+            set_setting(name, value) &&
+            save(file));
+}
 
 } // namespace settings
 
@@ -490,8 +534,8 @@ const char* setting::get_long_desc() const
 //------------------------------------------------------------------------------
 const char* setting::get_loaded_value(const char* name)
 {
-    auto const loaded = g_loaded_settings.find(name);
-    if (loaded == g_loaded_settings.end())
+    const auto loaded = get_loaded_map().find(name);
+    if (loaded == get_loaded_map().end())
         return nullptr;
     return loaded->second.value.c_str();
 }

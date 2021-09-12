@@ -5,7 +5,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- Fix `settings.set()`.
 
 ## Medium Priority
 - Add a quick start / beginner section to the Clink docs.

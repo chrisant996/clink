@@ -76,10 +76,9 @@ static int get(lua_State* state)
 /// Sets the <span class="arg">name</span> Clink setting to
 /// <span class="arg">value</span> and returns whether it was successful.
 ///
-/// Note: the setting is changed in memory, but is not written to the settings
-/// file.  Execute <code>clink set</code> if the setting needs to be written to
-/// the settings file (e.g.
-/// <code>os.execute(os.getalias("clink").." set <em>name</em> <em>value</em>")</code>).
+/// Note: Beginning in Clink v1.2.31 this updates the settings file.  Prior to
+/// that, it was necessary to separately use <code>clink set</code> to update
+/// the settings file.
 static int set(lua_State* state)
 {
     const char* key = checkstring(state, 1);
@@ -98,7 +97,10 @@ static int set(lua_State* state)
     if (!value)
         return 0;
 
+    // Update the settings file and the in-memory setting.
     bool ok = setting->set(value);
+    if (ok)
+        ok = settings::sandboxed_set_setting(key, value);
 
     lua_pushboolean(state, ok == true);
     return 1;
