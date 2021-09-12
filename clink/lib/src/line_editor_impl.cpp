@@ -848,7 +848,8 @@ unsigned int line_editor_impl::collect_words(words& words, matches_impl* matches
     // breaks. This is a little clunky but works well enough.
     line_state line { m_buffer.get_buffer(), m_buffer.get_cursor(), command_offset, words };
     word* end_word = &words.back();
-    if (end_word->length && mode == collect_words_mode::stop_at_cursor)
+    if (end_word->length && (mode == collect_words_mode::stop_at_cursor ||
+                             mode == collect_words_mode::display_filter))
     {
         word_break_info break_info = {};
         const char *word_start = m_buffer.get_buffer() + end_word->offset;

@@ -228,8 +228,9 @@ void match_pipeline::generate(
 #ifdef DEBUG
     if (dbg_get_env_int("DEBUG_PIPELINE"))
     {
-        printf("GENERATE, %u matches, file_comp %u %s --%s",
+        printf("GENERATE, %u matches, word break %u, file_comp %u %s --%s",
                m_matches.get_match_count(),
+               m_matches.get_word_break_position(),
                m_matches.is_filename_completion_desired().get(),
                m_matches.is_filename_completion_desired().is_explicit() ? "(exp)" : "(imp)",
                m_matches.get_match_count() ? "" : " <none>");
