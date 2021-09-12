@@ -4,12 +4,17 @@
 
 #### v1.2.31
 
+- Added `clink uninstallscripts --all` to clear all script paths installed by `clink installscripts`.
 - Added `os.touch()` function to set the access and modified times for a file.
 - Added more fields in `os.globdir()` and `os.globfiles()` when `extrainfo` is requested.
 - **Potential Breaking Change:** Fixed `os.globdir()` and `os.globfiles()` to only return extra info when actually requested (regression introduced in v1.1.8).
     - This unfortunately changes the scheme and may break some scripts if they requested no extra info, but used the extra info anyway.
 - Fixed crash in `clink-select-complete` when a match display filter returns nil.
 - Fixed `ondisplaymatches()` which was receiving one fewer matches than it should (related to [#124](https://github.com/chrisant996/clink/issues/124)).
+- Fixed `ondisplaymatches()` which was not using the word break info correctly (from generators' `:getwordbreakinfo()` functions).
+- Fixed `word_classifications:applycolor()`; the input line didn't necessarily refresh correctly after a custom classifier applied custom colors.
+- Fixed potential stray inaccurate colorations when coloring the input for `clink set color.something some_value`.
+- Fixed [#161](https://github.com/chrisant996/clink/issues/161); `clink installscripts` garbles previously-installed script paths when installing a new one.
 
 #### v1.2.30
 
