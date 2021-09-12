@@ -6,7 +6,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## High Priority
 - Fix `settings.set()`.
-- [#161](https://github.com/chrisant996/clink/issues/161); issues with `clink installscripts` and `clink info`.
 
 ## Medium Priority
 - Add a quick start / beginner section to the Clink docs.
@@ -17,7 +16,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## Low Priority
 - [#158](https://github.com/chrisant996/clink/issues/158); crash when key macro includes "\015".  Clink uses Readline's callback mode incorrectly.
-
 
 ## Tests
 
