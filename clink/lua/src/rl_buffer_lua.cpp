@@ -80,6 +80,10 @@ int rl_buffer_lua::get_length(lua_State* state)
 /// -name:  rl_buffer:getcursor
 /// -ret:   integer
 /// Returns the cursor position in the input line.
+///
+/// <strong>Note:</strong> This accidentally returns 1 less than the actual
+/// cursor position.  To avoid breaking scripts, this behavior will not be
+/// changed (and it actually comes in handy often).
 int rl_buffer_lua::get_cursor(lua_State* state)
 {
     lua_pushinteger(state, m_rl_buffer.get_cursor());
