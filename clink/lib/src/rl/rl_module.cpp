@@ -340,6 +340,12 @@ const char* get_last_luafunc()
 //------------------------------------------------------------------------------
 static void last_func_hook_func()
 {
+    if (s_has_override_rl_last_func)
+    {
+        rl_last_func = s_override_rl_last_func;
+        s_has_override_rl_last_func = false;
+    }
+
     cua_after_command();
     s_last_luafunc.clear();
 }
@@ -347,9 +353,11 @@ static void last_func_hook_func()
 //------------------------------------------------------------------------------
 void override_rl_last_func(rl_command_func_t* func)
 {
-    cua_after_command();
+    if (func && rl_last_func)
+        cua_after_command();
     s_has_override_rl_last_func = true;
     s_override_rl_last_func = func;
+    rl_last_func = func;
 }
 
 

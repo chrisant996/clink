@@ -1224,7 +1224,7 @@ int macro_hook_func(const char* macro)
             SetConsoleMode(std_handles[i], prev_mode[i]);
     }
 
-    cua_after_command(true/*force_clear*/);
+    cua_after_command(!is_luafunc/*force_clear*/);
 
     return is_luafunc;
 }
