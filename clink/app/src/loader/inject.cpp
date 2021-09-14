@@ -303,7 +303,6 @@ static bool is_clink_present(DWORD target_pid)
 
     bool ret = false;
 
-#if 0
     MODULEENTRY32 module_entry = { sizeof(module_entry) };
     BOOL ok = Module32First(th32, &module_entry);
     while (ok != FALSE)
@@ -317,7 +316,6 @@ static bool is_clink_present(DWORD target_pid)
 
         ok = Module32Next(th32, &module_entry);
     }
-#endif
 
     CloseHandle(th32);
     return ret;
