@@ -5,6 +5,7 @@
 #### v1.2.32
 
 - Fixed cooperation between "luafunc:" macros and CUA selection commands (e.g. <kbd>Shift</kbd>+<kbd>End</kbd>).
+- Fixed [#162](https://github.com/chrisant996/clink/issues/162); clink completion shows script error (regression introduced in v1.2.31).
 
 #### v1.2.31
 

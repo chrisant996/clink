@@ -79,8 +79,23 @@ end
 
 --------------------------------------------------------------------------------
 local function classify_to_end(idx, line_state, classify, wc)
-    local info = line_state:getwordinfo(idx)
-    classify:applycolor(info.offset, #line_state:getline() - info.offset + 1, color_for_word_class(wc))
+    local offset
+    if true then
+        -- Make info scoped so that the applycolor call cannot accidentally use
+        -- info, and must use offset instead.
+        local info = line_state:getwordinfo(idx)
+        if info then
+            offset = info.offset
+        else
+            info = line_state:getwordinfo(idx - 1)
+            if info then
+                offset = info.offset + info.length
+            end
+        end
+    end
+    if offset then
+        classify:applycolor(offset, #line_state:getline() - offset + 1, color_for_word_class(wc))
+    end
 end
 
 --------------------------------------------------------------------------------
