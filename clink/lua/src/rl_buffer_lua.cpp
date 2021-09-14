@@ -79,14 +79,16 @@ int rl_buffer_lua::get_length(lua_State* state)
 //------------------------------------------------------------------------------
 /// -name:  rl_buffer:getcursor
 /// -ret:   integer
-/// Returns the cursor position in the input line.
+/// Returns the cursor position in the input line.  The value can be from 1 to
+/// rl_buffer:getlength() + 1.  It can exceed the length of the input line
+/// because the cursor can be positioned just past the end of the input line.
 ///
-/// <strong>Note:</strong> This accidentally returns 1 less than the actual
-/// cursor position.  To avoid breaking scripts, this behavior will not be
-/// changed (and it actually comes in handy often).
+/// <strong>Note:</strong> In v1.1.20 through v1.2.31 this accidentally returned
+/// 1 less than the actual cursor position.  In v1.2.32 and higher it returns
+/// the correct cursor position.
 int rl_buffer_lua::get_cursor(lua_State* state)
 {
-    lua_pushinteger(state, m_rl_buffer.get_cursor());
+    lua_pushinteger(state, m_rl_buffer.get_cursor() + 1);
     return 1;
 }
 
@@ -96,14 +98,19 @@ int rl_buffer_lua::get_cursor(lua_State* state)
 /// -ret:   integer
 /// Sets the cursor position in the input line and returns the previous cursor
 /// position.  <span class="arg">cursor</span> can be from 1 to
-/// rl_buffer:getlength().
+/// rl_buffer:getlength() + 1.  It can exceed the length of the input line
+/// because the cursor can be positioned just past the end of the input line.
 ///
 /// Note:  the input line is UTF8, and setting the cursor position inside a
 /// multi-byte Unicode character may have undesirable results.
+///
+/// <strong>Note:</strong> In v1.1.20 through v1.2.31 this accidentally returned
+/// 1 less than the actual cursor position.  In v1.2.32 and higher it returns
+/// the correct cursor position.
 int rl_buffer_lua::set_cursor(lua_State* state)
 {
     bool isnum;
-    unsigned int old = m_rl_buffer.get_cursor();
+    unsigned int old = m_rl_buffer.get_cursor() + 1;
     unsigned int set = checkinteger(state, 1, &isnum) - 1;
     if (!isnum)
         return 0;
