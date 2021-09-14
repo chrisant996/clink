@@ -30,6 +30,7 @@ static rl_buffer_lua::method g_methods[] = {
     { "beginoutput",    &rl_buffer_lua::begin_output },
     { "refreshline",    &rl_buffer_lua::refresh_line },
     { "getargument",    &rl_buffer_lua::get_argument },
+    { "setargument",    &rl_buffer_lua::set_argument },
     { "ding",           &rl_buffer_lua::ding },
     {}
 };
@@ -223,6 +224,30 @@ int rl_buffer_lua::get_argument(lua_State* state)
     }
     return 0;
 }
+
+//------------------------------------------------------------------------------
+/// -name:  rl_buffer:setargument
+/// -arg:   argument:integer | nil
+/// When <span class="arg">argument</span> is a number, it is set as the numeric
+/// argument for use by Readline commands (as entered using
+/// <kbd>Alt</kbd>+Digits, etc).  When <span class="arg">argument</span> is nil,
+/// the numeric argument is cleared (having no numeric argument is different
+/// from having 0 as the numeric argument).
+int rl_buffer_lua::set_argument(lua_State* state)
+{
+    bool isnum;
+    int arg = optinteger(state, 1, 0, &isnum);
+
+    _rl_reset_argument();
+    if (isnum)
+    {
+        rl_arg_sign = (arg < 0) ? -1 : 1;
+        rl_explicit_arg = 1;
+        rl_numeric_arg = arg;
+    }
+    return 0;
+}
+
 //------------------------------------------------------------------------------
 /// -name:  rl_buffer:ding
 /// Dings the bell.  If the <code>bell-style</code> Readline variable is

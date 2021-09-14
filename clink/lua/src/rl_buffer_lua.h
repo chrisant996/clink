@@ -29,6 +29,7 @@ public:
     int                     begin_output(lua_State* state);
     int                     refresh_line(lua_State* state);
     int                     get_argument(lua_State* state);
+    int                     set_argument(lua_State* state);
     int                     ding(lua_State* state);
 
 private:
