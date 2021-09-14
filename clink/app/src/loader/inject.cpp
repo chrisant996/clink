@@ -80,9 +80,9 @@ static void copy_dll(str_base& dll_path)
 #if !defined(CLINK_FINAL)
     // The DLL id only changes on a commit-premake cycle. During development this
     // doesn't work so well so we'll force it through. TODO: check timestamps
-    const bool always = true;
+    bool always = true;
 #else
-    const bool always = false;
+    bool always = false;
 #endif
 
     // Write out origin path to a file so we can backtrack from the cached DLL.
@@ -95,13 +95,18 @@ static void copy_dll(str_base& dll_path)
             CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
         if (out == INVALID_HANDLE_VALUE)
         {
+            bool sharing_violation = (GetLastError() == ERROR_SHARING_VIOLATION);
             ERR("Failed to create origin file at '%s'", target_path.c_str());
-            return;
+            if (!always || !sharing_violation)
+                return;
+            always = false;
         }
-
-        DWORD written;
-        WriteFile(out, dll_path.c_str(), dll_path.length(), &written, nullptr);
-        CloseHandle(out);
+        else
+        {
+            DWORD written;
+            WriteFile(out, dll_path.c_str(), dll_path.length(), &written, nullptr);
+            CloseHandle(out);
+        }
     }
 
     target_path.truncate(target_length);
@@ -113,8 +118,11 @@ static void copy_dll(str_base& dll_path)
     {
         if (!os::copy(dll_path.c_str(), target_path.c_str()))
         {
+            bool sharing_violation = (GetLastError() == ERROR_SHARING_VIOLATION);
             ERR("Failed to copy DLL to '%s'", target_path.c_str());
-            return;
+            if (!always || !sharing_violation)
+                return;
+            always = false;
         }
     }
 
@@ -295,6 +303,7 @@ static bool is_clink_present(DWORD target_pid)
 
     bool ret = false;
 
+#if 0
     MODULEENTRY32 module_entry = { sizeof(module_entry) };
     BOOL ok = Module32First(th32, &module_entry);
     while (ok != FALSE)
@@ -308,6 +317,7 @@ static bool is_clink_present(DWORD target_pid)
 
         ok = Module32Next(th32, &module_entry);
     }
+#endif
 
     CloseHandle(th32);
     return ret;

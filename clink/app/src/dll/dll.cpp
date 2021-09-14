@@ -190,6 +190,16 @@ void start_logger()
 //------------------------------------------------------------------------------
 INT_PTR WINAPI initialise_clink(const app_context::desc& app_desc)
 {
+    {
+        static bool s_initialized = false;
+        if (s_initialized)
+        {
+            LOG("Clink is already installed in the target process.  An antivirus tool might be blocking Clink from inspecting the target process.");
+            return false;
+        }
+        s_initialized = true;
+    }
+
     seh_scope seh;
 
     auto* app_ctx = new app_context(app_desc);
