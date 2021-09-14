@@ -731,6 +731,60 @@ time_t filetime_to_time_t(const FILETIME& ft)
 }
 
 //------------------------------------------------------------------------------
+bool get_clipboard_text(str_base& out)
+{
+    bool got = false;
+    if (OpenClipboard(nullptr))
+    {
+        str<1024> utf8;
+        HANDLE clip_data = GetClipboardData(CF_UNICODETEXT);
+        if (clip_data)
+        {
+            to_utf8(out, (wchar_t*)clip_data);
+            got = true;
+        }
+
+        CloseClipboard();
+    }
+    return got;
+}
+
+//------------------------------------------------------------------------------
+bool set_clipboard_text(const char* text, int length)
+{
+    int size = 0;
+    if (length)
+    {
+        size = MultiByteToWideChar(CP_UTF8, 0, text, length, nullptr, 0) * sizeof(wchar_t);
+        if (!size)
+            return false;
+    }
+    size += sizeof(wchar_t);
+
+    HGLOBAL mem = GlobalAlloc(GMEM_MOVEABLE|GMEM_ZEROINIT, size);
+    if (mem == nullptr)
+        return false;
+
+    if (length)
+    {
+        wchar_t* data = (wchar_t*)GlobalLock(mem);
+        MultiByteToWideChar(CP_UTF8, 0, text, length, data, size);
+        GlobalUnlock(mem);
+    }
+
+    if (OpenClipboard(nullptr) == FALSE)
+    {
+        GlobalFree(mem);
+        return false;
+    }
+
+    EmptyClipboard();
+    SetClipboardData(CF_UNICODETEXT, mem); // Windows automatically dynamically converts to CF_TEXT as needed.
+    CloseClipboard();
+    return true;
+}
+
+//------------------------------------------------------------------------------
 #if 0
 void append_argv(str_base& out, const char* arg, argv_quote_mode mode)
 {

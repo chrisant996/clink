@@ -57,9 +57,10 @@ bool    get_short_path_name(const char* path, str_base& out);
 bool    get_long_path_name(const char* path, str_base& out);
 bool    get_full_path_name(const char* path, str_base& out);
 bool    get_net_connection_name(const char* path, str_base& out);
-
 double  clock();
 time_t  filetime_to_time_t(const FILETIME& ft);
+bool    get_clipboard_text(str_base& out);
+bool    set_clipboard_text(const char* text, int length);
 
 #if 0
 void    append_argv(str_base& out, const char* arg, argv_quote_mode mode);

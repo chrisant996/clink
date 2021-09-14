@@ -311,15 +311,9 @@ int clink_ctrl_c(int count, int invoking_key)
 //------------------------------------------------------------------------------
 int clink_paste(int count, int invoking_key)
 {
-    if (OpenClipboard(nullptr) == FALSE)
-        return 0;
-
     str<1024> utf8;
-    HANDLE clip_data = GetClipboardData(CF_UNICODETEXT);
-    if (clip_data != nullptr)
-        to_utf8(utf8, (wchar_t*)clip_data);
-
-    CloseClipboard();
+    if (!os::get_clipboard_text(utf8))
+        return 0;
 
     bool done = false;
     bool sel = (s_cua_anchor >= 0);
@@ -344,40 +338,9 @@ int clink_paste(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
-static void copy_impl(const char* value, int length)
-{
-    int size = 0;
-    if (length)
-    {
-        size = MultiByteToWideChar(CP_UTF8, 0, value, length, nullptr, 0) * sizeof(wchar_t);
-        if (!size)
-            return;
-    }
-    size += sizeof(wchar_t);
-
-    HGLOBAL mem = GlobalAlloc(GMEM_MOVEABLE|GMEM_ZEROINIT, size);
-    if (mem == nullptr)
-        return;
-
-    if (length)
-    {
-        wchar_t* data = (wchar_t*)GlobalLock(mem);
-        MultiByteToWideChar(CP_UTF8, 0, value, length, data, size);
-        GlobalUnlock(mem);
-    }
-
-    if (OpenClipboard(nullptr) == FALSE)
-        return;
-
-    EmptyClipboard();
-    SetClipboardData(CF_UNICODETEXT, mem); // Windows automatically dynamically converts to CF_TEXT as needed.
-    CloseClipboard();
-}
-
-//------------------------------------------------------------------------------
 int clink_copy_line(int count, int invoking_key)
 {
-    copy_impl(g_rl_buffer->get_buffer(), g_rl_buffer->get_length());
+    os::set_clipboard_text(g_rl_buffer->get_buffer(), g_rl_buffer->get_length());
 
     return 0;
 }
@@ -406,7 +369,7 @@ Nope:
             if (line_cursor >= word.offset &&
                 line_cursor <= word.offset + word.length)
             {
-                copy_impl(g_rl_buffer->get_buffer() + word.offset, word.length);
+                os::set_clipboard_text(g_rl_buffer->get_buffer() + word.offset, word.length);
                 return 0;
             }
         }
@@ -417,7 +380,7 @@ Nope:
         {
             if (count-- == 0)
             {
-                copy_impl(g_rl_buffer->get_buffer() + word.offset, word.length);
+                os::set_clipboard_text(g_rl_buffer->get_buffer() + word.offset, word.length);
                 return 0;
             }
         }
@@ -437,7 +400,7 @@ int clink_copy_cwd(int count, int invoking_key)
         to_utf8(tmp, cwd.c_str());
         tmp << PATH_SEP;
         path::normalise(tmp);
-        copy_impl(tmp.c_str(), tmp.length());
+        os::set_clipboard_text(tmp.c_str(), tmp.length());
     }
 
     return 0;
@@ -975,7 +938,7 @@ int cua_copy(int count, int invoking_key)
         if (beg > end)
             SWAP(beg, end);
         if (beg < end)
-            copy_impl(g_rl_buffer->get_buffer() + beg, end - beg);
+            os::set_clipboard_text(g_rl_buffer->get_buffer() + beg, end - beg);
     }
     return 0;
 }

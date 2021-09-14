@@ -992,6 +992,37 @@ static int double_clock(lua_State *state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  os.getclipboardtext
+/// -ret:   string | nil
+/// This returns the text from the system clipboard, or nil if there is no text
+/// on the system clipboard.
+static int get_clipboard_text(lua_State *state)
+{
+    str<1024> utf8;
+    if (!os::get_clipboard_text(utf8))
+        return 0;
+
+    lua_pushlstring(state, utf8.c_str(), utf8.length());
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+/// -name:  os.setclipboardtext
+/// -ret:   boolean
+/// This sets the text onto the system clipboard, and returns whether it was
+/// successful.
+static int set_clipboard_text(lua_State *state)
+{
+    const char* text = checkstring(state, 1);
+    if (!text)
+        return 0;
+
+    bool ok = os::set_clipboard_text(text, int(strlen(text)));
+    lua_pushboolean(state, ok);
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 void os_lua_initialise(lua_state& lua)
 {
     struct {
@@ -1029,6 +1060,8 @@ void os_lua_initialise(lua_state& lua)
         { "getnetconnectionname", &get_net_connection_name },
         { "debugprint",  &debug_print },
         { "clock",       &double_clock },
+        { "getclipboardtext", &get_clipboard_text },
+        { "setclipboardtext", &set_clipboard_text },
     };
 
     lua_State* state = lua.get_state();
