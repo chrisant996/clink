@@ -4,8 +4,11 @@
 
 #### v1.2.32
 
+- Added `rl_buffer:setargument()` function for a "luafunc:" macro to be able to set Readline's numeric argument.
+- Added `os.getclipboardtext()` and `os.setclipboardtext()` functions.
 - Added extra defense against antivirus interference (if it interferes when Clink inspects the target process, but permits Clink to inject into the target process).
 - Fixed cooperation between "luafunc:" macros and CUA selection commands (e.g. <kbd>Shift</kbd>+<kbd>End</kbd>).
+- Fixed `rl_buffer:getcursor()` and the return value from `rl_buffer:setcursor()`; both returned one less than the actual cursor position.
 - Fixed [#162](https://github.com/chrisant996/clink/issues/162); clink completion shows script error (regression introduced in v1.2.31).
 
 #### v1.2.31
