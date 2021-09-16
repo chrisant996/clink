@@ -21,9 +21,20 @@ extern "C" {
 
 //------------------------------------------------------------------------------
 #define MR(x)                        L##x L"\x08"
-const wchar_t* g_prompt_tag          = L"@CLINK_PROMPT";
-const wchar_t* g_prompt_tag_hidden   = MR("C") MR("L") MR("I") MR("N") MR("K") MR(" ");
-const wchar_t* g_prompt_tags[]       = { g_prompt_tag_hidden, g_prompt_tag };
+static const wchar_t g_prompt_tag[]         = L"@CLINK_PROMPT";
+static const wchar_t g_prompt_tag_hidden[]  = MR("C") MR("L") MR("I") MR("N") MR("K") MR(" ");
+struct prompt_tag
+{
+    const wchar_t*  tag;
+    int             len;
+};
+static const prompt_tag g_prompt_tags[] =
+{
+    { g_prompt_tag_hidden, sizeof_array(g_prompt_tag_hidden) - 1 },
+    { g_prompt_tag, sizeof_array(g_prompt_tag) - 1 },
+};
+static_assert(sizeof_array(g_prompt_tag) == 14, "unexpected size of g_prompt_tag"); // Should be number of characters plus 1 for terminator.
+static_assert(sizeof_array(g_prompt_tag_hidden) == 13, "unexpected size of g_prompt_tag_hidden"); // Should be number of characters plus 1 for terminator.
 #undef MR
 
 
@@ -348,15 +359,13 @@ int tagged_prompt::is_tagged(const wchar_t* chars, int char_count)
     // For each accepted tag...
     for (int i = 0; i < sizeof_array(g_prompt_tags); ++i)
     {
-        const wchar_t* tag = g_prompt_tags[i];
-        int tag_length = (int)wcslen(tag);
-
-        if (tag_length > char_count)
+        const prompt_tag& tag = g_prompt_tags[i];
+        if (tag.len > char_count)
             continue;
 
         // Found a match? Store it the prompt, minus the tag.
-        if (wcsncmp(chars, tag, tag_length) == 0)
-            return tag_length;
+        if (wcsncmp(chars, tag.tag, tag.len) == 0)
+            return tag.len;
     }
 
     return 0;
