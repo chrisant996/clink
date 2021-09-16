@@ -538,12 +538,11 @@ bool set_env(const char* name, const char* value)
     if (value != nullptr)
         wvalue = value;
 
+    // Update C/C++ runtime so that Lua/etc are affected.
+    _wputenv_s(wname.c_str(), wvalue.c_str());
+
+    // Update the host's environment string table (CMD.EXE).
     const wchar_t* value_arg = (value != nullptr) ? wvalue.c_str() : nullptr;
-    // REVIEW: Setting the C runtime cached environment is not necessary in
-    // general.  But does Lua use the C runtime cached environment when spawning
-    // child processes...?  If so then none of the other environment variable
-    // changes in the CMD.EXE host process will show up either...
-    //_wputenv_s(wname.c_str(), wvalue.c_str());
     if (SetEnvironmentVariableW(wname.c_str(), value_arg) != 0)
         return true;
 
