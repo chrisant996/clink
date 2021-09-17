@@ -13,6 +13,9 @@ environment system variable.  (See exec.enable)]])
 settings.add("exec.aliases", true, "Include aliases",
 [[Include doskey aliases as matches.  (See exec.enable)]])
 
+settings.add("exec.commands", true, "Include CMD commands",
+[[Include CMD commands.  (See exec.enable)]])
+
 settings.add("exec.cwd", true, "Match executables in current directory",
 [[Include executables in the current directory.  This is implicit if the word
 being completed is a relative path.  (See exec.enable)]])

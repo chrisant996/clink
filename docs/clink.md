@@ -121,9 +121,10 @@ Name                         | Default | Description
 `debug.log_terminal`         | False   | Logs all terminal input and output to the clink.log file.  This is intended for diagnostic purposes only, and can make the log file grow significantly.
 `doskey.enhanced`            | True    | Enhanced Doskey adds the expansion of macros that follow `\|` and `&` command separators and respects quotes around words when parsing `$1`..`$9` tags. Note that these features do not apply to Doskey use in Batch files.
 `exec.aliases`               | True    | When matching executables as the first word (`exec.enable`), include doskey aliases.
+`exec.commands`              | True    | When matching executables as the first word (`exec.enable`), include CMD commands (such as `cd`, `copy`, `exit`, `for`, `if`, etc).
 `exec.cwd`                   | True    | When matching executables as the first word (`exec.enable`), include executables in the current directory. (This is implicit if the word being completed is a relative path, or if `exec.files` is true.)
 `exec.dirs`                  | True    | When matching executables as the first word (`exec.enable`), also include directories relative to the current working directory as matches.
-`exec.enable`                | True    | Match executables when completing the first word of a line.
+`exec.enable`                | True    | Match executables when completing the first word of a line.  Executables are determined by the extensions listed in the `%PATHEXT%` environment variable.
 `exec.files`                 | False   | When matching executables as the first word (`exec.enable`), include files in the current directory.
 `exec.path`                  | True    | When matching executables as the first word (`exec.enable`), include executables found in the directories specified in the `%PATH%` environment variable.
 `exec.space_prefix`          | True    | If the line begins with whitespace then Clink bypasses executable matching (`exec.path`) and will do normal files matching instead.

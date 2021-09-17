@@ -35,7 +35,7 @@ function cmd_generator:generate(line_state, match_builder)
     end
 
     -- If executable matching is disabled do nothing
-    if not settings.get("exec.enable") then
+    if not settings.get("exec.enable") or not settings.get("exec.commands") then
         return false
     end
 
