@@ -2,6 +2,8 @@
 
 Clink combines the native Windows shell cmd.exe with the powerful command line editing features of the GNU Readline library, which provides rich completion, history, and line-editing capabilities. Readline is best known for its use in the well-known Unix shell Bash, the standard shell for Mac OS X and many Linux distributions.
 
+For details, refer to the [Clink documentation](https://chrisant996.github.io/clink/clink.html).
+
 ### Download
 
 Downloads are available from the [releases](https://github.com/chrisant996/clink/releases) page.
@@ -49,11 +51,11 @@ There are several ways to start Clink.
 
 ### Upgrading from Clink v0.4.9
 
-The new Clink tries to be as backward compatible with Clink v0.4.9 as possible. However, in some cases upgrading may require a little bit of configuration work. More details can be found in Clink's documentation [here](https://chrisant996.github.io/clink/clink.html).
+The new Clink tries to be as backward compatible with Clink v0.4.9 as possible. However, in some cases upgrading may require a little bit of configuration work. More details can be found in the [Clink documentation](https://chrisant996.github.io/clink/clink.html).
 
 ### Extending Clink
 
-Clink can be extended through its Lua API which allows easy creation of context sensitive match generators, prompt filtering, and more. More details can be found in Clink's documentation [here](https://chrisant996.github.io/clink/clink.html).
+Clink can be extended through its Lua API which allows easy creation of context sensitive match generators, prompt filtering, and more. More details can be found in the [Clink documentation](https://chrisant996.github.io/clink/clink.html).
 
 ### Building Clink
 
