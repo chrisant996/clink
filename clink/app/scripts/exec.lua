@@ -8,18 +8,27 @@ when completing the first word of a line.]])
 
 settings.add("exec.path", true, "Match executables in PATH",
 [[Completes executables found in the directories specified in the PATH
-environment system variable.]])
+environment system variable.  (See exec.enable)]])
+
+settings.add("exec.aliases", true, "Include aliases",
+[[Include doskey aliases as matches.  (See exec.enable)]])
 
 settings.add("exec.cwd", true, "Match executables in current directory",
-[[Include executables in the current directory. This is implicit if the word
-being completed is a relative path.]])
+[[Include executables in the current directory.  This is implicit if the word
+being completed is a relative path.  (See exec.enable)]])
 
 settings.add("exec.dirs", true, "Include directories",
-"Include directories relative to the current working directory as matches.")
+[[Include directories relative to the current working directory as matches.
+(See exec.enable)]])
+
+settings.add("exec.files", false, "Include files",
+[[Include files in the current working directory as matches.  This includes
+executables in the current directory even when exec.cwd is off.  (See
+exec.enable, and exec.cwd)]])
 
 settings.add("exec.space_prefix", true, "Whitespace prefix matches files",
-[[If the line begins with whitespace then Clink bypasses executable
-matching and will do normal files matching instead.]])
+[[If the line begins with whitespace then Clink bypasses executable matching
+and will do normal files matching instead.  (See exec.enable)]])
 
 --------------------------------------------------------------------------------
 local function get_environment_paths()
@@ -87,8 +96,10 @@ function exec_generator:generate(line_state, match_builder)
     local text_dir = (path.getdirectory(text) or ""):gsub("/", "\\")
     if #text_dir == 0 then
         -- Add console aliases as matches.
-        local aliases = os.getaliases()
-        match_builder:addmatches(aliases, "alias")
+        if settings.get("exec.aliases") then
+            local aliases = os.getaliases()
+            match_builder:addmatches(aliases, "alias")
+        end
 
         -- Add environment's PATH variable as paths to search.
         if settings.get("exec.path") then
@@ -121,7 +132,13 @@ function exec_generator:generate(line_state, match_builder)
         return any_added
     end
 
-    -- Search 'paths' for files ending in 'suffices' and look for matches
+    -- Include files.
+    if settings.get("exec.files") then
+        match_cwd = false
+        added = add_files("*", true) or added
+    end
+
+    -- Search 'paths' for files ending in 'suffices' and look for matches.
     local added = false
     local suffices = (os.getenv("pathext") or ""):explode(";")
     for _, suffix in ipairs(suffices) do
