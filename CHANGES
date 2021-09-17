@@ -5,7 +5,10 @@
 #### v1.2.33
 
 - Rewrote how Clink hooks APIs in CMD.EXE; it no longer uses any IAT hooking, and exclusively uses Detours.
+- Added `exec.aliases` and `exec.files` Clink settings to further customize how matches are generated for the first word when the `exec.enable` Clink setting is enabled.
 - Small performance optimization in the hooked `WriteConsoleW()` system API.
+- Added logging for rare error case during inject.
+- Fixed script error when `%PATH%` is not set and `exec.enable` and `exec.path` are both enabled.
 
 #### v1.2.32
 
