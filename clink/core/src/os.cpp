@@ -542,6 +542,8 @@ bool set_env(const char* name, const char* value)
     _wputenv_s(wname.c_str(), wvalue.c_str());
 
     // Update the host's environment string table (CMD.EXE).
+    // NOTE:  This intentionally calls the hooked version, so that it can
+    // appropriately intercept setting PROMPT.
     const wchar_t* value_arg = (value != nullptr) ? wvalue.c_str() : nullptr;
     if (SetEnvironmentVariableW(wname.c_str(), value_arg) != 0)
         return true;

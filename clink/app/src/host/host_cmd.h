@@ -25,9 +25,10 @@ public:
     virtual void        shutdown() override;
 
 private:
-    static BOOL WINAPI  read_console(HANDLE input, wchar_t* buffer, DWORD buffer_count, LPDWORD read_in, CONSOLE_READCONSOLE_CONTROL* control);
-    static BOOL WINAPI  write_console(HANDLE handle, const wchar_t* chars, DWORD to_write, LPDWORD written, LPVOID);
+    static BOOL WINAPI  read_console(HANDLE input, void* buffer, DWORD buffer_count, LPDWORD read_in, CONSOLE_READCONSOLE_CONTROL* control);
+    static BOOL WINAPI  write_console(HANDLE handle, const void* chars, DWORD to_write, LPDWORD written, LPVOID);
     static BOOL WINAPI  set_env_var(const wchar_t* name, const wchar_t* value);
+    static DWORD WINAPI get_env_var(LPCWSTR lpName, LPWSTR lpBuffer, DWORD nSize);
 #if 0
     static DWORD WINAPI format_message(DWORD flags, LPCVOID source, DWORD messageId, DWORD languageId, wchar_t* buffer, DWORD size, va_list* arguments);
 #endif

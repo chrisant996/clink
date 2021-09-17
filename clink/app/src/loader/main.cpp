@@ -40,8 +40,6 @@ inline bool __streq(const WCHAR* a, const WCHAR* b)
 
 //------------------------------------------------------------------------------
 // This is exported so that `clink testbed --hook` can simulate injection.
-// This MUST import all APIs that Clink hooks, so that the EXE has IAT entries
-// for them.
 extern "C" {
 __declspec(dllexport) void __stdcall testbed_hook_loop()
 {
