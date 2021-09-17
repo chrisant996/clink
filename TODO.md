@@ -16,6 +16,25 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Low Priority
 - [#158](https://github.com/chrisant996/clink/issues/158); crash when key macro includes "\015".  Clink uses Readline's callback mode incorrectly.
 
+## Windows Key Bindings
+### Always
+- <kbd>F1</kbd> => Move the cursor one character, until end of line.  If at end of line, use current cursor position as index into previous command and append that character to current line.
+- <kbd>F2</kbd> => Enter character to copy up to from the previous command.  Overwrites existing characters if not at end of line.
+- <kbd>F3</kbd> => Replace input with previous command.
+- <kbd>F4</kbd> => Enter character to delete up to in current input line; place cursor at end of line.
+- <kbd>F5</kbd> => Previous command in history (like <kbd>Up</kbd>).
+- <kbd>F6</kbd> => Insert `^Z` at cursor position.
+- <kbd>F7</kbd> => Show text-mode interactive list of previous commands.
+- <kbd>Alt</kbd>+<kbd>F7</kbd> => Clear history.
+- <kbd>F8</kbd> => Cycle through previous commands matching what was typed so far.
+- <kbd>F9</kbd> => Enter command number in history; replace input with the command, place cursor at end of line.
+- <kbd>Ctrl</kbd>+<kbd>Up</kbd> and <kbd>Ctrl</kbd>+<kbd>Down</kbd> => Scroll one line.
+### Conditional
+- <kbd>Right</kbd> => Move the cursor one character, until end of line.  If at end of line, use current cursor position as index into previous command and append that character to current line.
+- <kbd>Ctrl</kbd>+<kbd>F</kbd> => Conhost Find.
+- <kbd>Ctrl</kbd>+<kbd>M</kbd> => Conhost Mark.
+- <kbd>Ctrl</kbd>+<kbd>A</kbd> => If text selected, Conhost Select All (selects the entire console buffer).  Otherwise select all text in the input line.
+
 ## Tests
 
 <br/>
