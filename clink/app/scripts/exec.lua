@@ -23,7 +23,7 @@ matching and will do normal files matching instead.]])
 
 --------------------------------------------------------------------------------
 local function get_environment_paths()
-    local paths = os.getenv("path"):explode(";")
+    local paths = (os.getenv("path") or ""):explode(";")
 
     -- Append slashes.
     for i = 1, #paths, 1 do
