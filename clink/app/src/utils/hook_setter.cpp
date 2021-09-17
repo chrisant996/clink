@@ -79,6 +79,7 @@ hook_setter::~hook_setter()
 bool hook_setter::commit()
 {
     m_pending = false;
+    m_desc_count = 0;
 
     // TODO: suspend threads?  Currently this relies on CMD being essentially
     // single threaded.
@@ -100,6 +101,34 @@ bool hook_setter::commit()
 
 //------------------------------------------------------------------------------
 bool hook_setter::attach_internal(const char* module, const char* name, hookptr_t hook, hookptrptr_t original)
+{
+    assert(m_desc_count < sizeof_array(m_descs));
+    if (m_desc_count >= sizeof_array(m_descs))
+    {
+        LOG("Too many hooks in transaction.");
+        assert(false);
+        return false;
+    }
+
+    return attach_detour(module, name, hook, original);
+}
+
+//------------------------------------------------------------------------------
+bool hook_setter::detach_internal(hookptrptr_t original, hookptr_t hook)
+{
+    assert(m_desc_count < sizeof_array(m_descs));
+    if (m_desc_count >= sizeof_array(m_descs))
+    {
+        LOG("Too many hooks in transaction.");
+        assert(false);
+        return false;
+    }
+
+    return detach_detour(original, hook);
+}
+
+//------------------------------------------------------------------------------
+bool hook_setter::attach_detour(const char* module, const char* name, hookptr_t hook, hookptrptr_t original)
 {
     LOG("Attempting to hook %s in %s with %p.", name, module, hook);
     HMODULE hModule = GetModuleHandleA(module);
@@ -124,12 +153,16 @@ bool hook_setter::attach_internal(const char* module, const char* name, hookptr_
         return false;
     }
 
+    hook_desc& desc = m_descs[m_desc_count++];
+    desc.replace = replace;
+
     // Hook the target pointer.
     PDETOUR_TRAMPOLINE trampoline;
     LONG err = DetourAttachEx(&replace, (PVOID)hook, &trampoline, nullptr, nullptr);
     if (err != NOERROR)
     {
         LOG("Unable to hook %s (error %u).", name, err);
+        m_desc_count--;
         return false;
     }
 
@@ -141,7 +174,7 @@ bool hook_setter::attach_internal(const char* module, const char* name, hookptr_
 }
 
 //------------------------------------------------------------------------------
-bool hook_setter::detach_internal(hookptrptr_t original, hookptr_t hook)
+bool hook_setter::detach_detour(hookptrptr_t original, hookptr_t hook)
 {
     LOG("Attempting to unhook %p.", hook);
 

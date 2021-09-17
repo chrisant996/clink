@@ -10,6 +10,11 @@ typedef hookptr_t* hookptrptr_t;
 //------------------------------------------------------------------------------
 class hook_setter
 {
+    struct hook_desc
+    {
+        void*                   replace;
+    };
+
 public:
                                 hook_setter();
                                 ~hook_setter();
@@ -28,7 +33,12 @@ private:
     bool                        attach_internal(const char* module, const char* name, hookptr_t hook, hookptrptr_t original);
     bool                        detach_internal(hookptrptr_t original, hookptr_t hook);
 
+    bool                        attach_detour(const char* module, const char* name, hookptr_t hook, hookptrptr_t original);
+    bool                        detach_detour(hookptrptr_t original, hookptr_t hook);
+
 private:
+    hook_desc                   m_descs[5];
+    int                         m_desc_count = 0;
     bool                        m_pending = false;
 };
 
