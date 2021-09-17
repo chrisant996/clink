@@ -149,11 +149,17 @@ static int check_dll_version(const char* clink_dll)
 {
     char buffer[1024];
     if (GetFileVersionInfo(clink_dll, 0, sizeof(buffer), buffer) != TRUE)
+    {
+        ERR("Unable to get DLL version for '%s'", clink_dll);
         return 0;
+    }
 
     VS_FIXEDFILEINFO* file_info;
     if (VerQueryValue(buffer, "\\", (void**)&file_info, nullptr) != TRUE)
+    {
+        ERR("Unable to query DLL version info for '%s'", clink_dll);
         return 0;
+    }
 
     LOG("DLL version: %08x %08x",
         file_info->dwFileVersionMS,
