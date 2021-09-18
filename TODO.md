@@ -7,7 +7,12 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 - Callback input:
   - Need to eat unhandled chars from split key sequence in callbacks.  E.g. I'm not decided on what F2 Alt+M should do, but it shouldn't insert 'm' at the end!
-  - Need to continue quoted insert for unhandled chars from split key sequence, when using quoted insert.  E.g. ^Q Esc should do quoted insert for the full key sequence for Esc, instead of dispatching additional keys as though they were pressed.
+  - Need to continue quoted insert for unhandled chars from split key sequence, when using quoted insert.  E.g. ^Q Esc should do quoted insert for the full key sequence for Esc, instead of dispatching additional keys as though they were pressed.  A better example might be Alt+Backspace.
+  - Strategy options:
+    - ~~Match incoming chars against known key sequences?  So that eating works in recorded keyboard macros as well?~~
+    - Just ignore recorded keyboard macros?
+    - Have a mode that doesn't allow them into the input stream when trying to accept input for F2 and F4?
+    - If quoted insert ends on Esc, consume one more character.  Because there are no instances where two characters following an Esc are unprintable.
 
 ## Medium Priority
 - Add a quick start / beginner section to the Clink docs.

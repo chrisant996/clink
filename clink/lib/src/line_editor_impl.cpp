@@ -23,15 +23,9 @@ extern "C" {
 #include <compat/config.h>
 #include <readline/readline.h>
 #include <readline/rlprivate.h>
-#include <readline/rldefs.h>
-extern Keymap _rl_dispatching_keymap;
 }
 
 //------------------------------------------------------------------------------
-const int simple_input_states = (RL_STATE_MOREINPUT |
-                                 RL_STATE_NSEARCH |
-                                 RL_STATE_CHARSEARCH);
-
 extern setting_bool g_classify_words;
 
 extern bool is_showing_argmatchers();
@@ -40,60 +34,9 @@ extern bool win_fn_callback_pending();
 
 
 //------------------------------------------------------------------------------
-bool rl_wants_all_input()
-{
-    return (rl_is_insert_next_callback_pending() ||
-            win_fn_callback_pending());
-}
-
-//------------------------------------------------------------------------------
 inline char get_closing_quote(const char* quote_pair)
 {
     return quote_pair[1] ? quote_pair[1] : quote_pair[0];
-}
-
-//------------------------------------------------------------------------------
-static bool find_func_in_keymap(str_base& out, rl_command_func_t *func, Keymap map)
-{
-    for (int key = 0; key < KEYMAP_SIZE; key++)
-    {
-        switch (map[key].type)
-        {
-        case ISMACR:
-            break;
-        case ISFUNC:
-            if (map[key].function == func)
-            {
-                char ch = char((unsigned char)key);
-                out.concat_no_truncate(&ch, 1);
-                return true;
-            }
-            break;
-        case ISKMAP:
-            {
-                unsigned int old_len = out.length();
-                char ch = char((unsigned char)key);
-                out.concat_no_truncate(&ch, 1);
-                if (find_func_in_keymap(out, func, FUNCTION_TO_KEYMAP(map, key)))
-                    return true;
-                out.truncate(old_len);
-            }
-            break;
-        }
-    }
-
-    return false;
-}
-
-//------------------------------------------------------------------------------
-static bool find_abort_in_keymap(str_base& out)
-{
-    rl_command_func_t *func = rl_named_function("abort");
-    if (!func)
-        return false;
-
-    Keymap map = rl_get_keymap();
-    return find_func_in_keymap(out, func, map);
 }
 
 
@@ -605,116 +548,20 @@ void line_editor_impl::dispatch(int bind_group)
 }
 
 //------------------------------------------------------------------------------
-// Readline is designed for raw terminal input, and Windows is capable of richer
-// input analysis where we can avoid generating terminal input if there's no
-// binding that can handle it.
-//
-// WARNING:  Violates abstraction and encapsulation; neither rl_ding nor
-// _rl_keyseq_chain_dispose make sense in an "is bound" method.  But really this
-// is more like "accept_input_key" with the ability to reject an input key, and
-// rl_ding or _rl_keyseq_chain_dispose only happen on rejection.  So it's
-// functionally reasonable.  Really rl_module should be making the accept/reject
-// decision, not line_editor_impl.  But line_editor_impl always has an
-// rl_module, and rl_module is the only module that needs to accept/reject keys,
-// so it's just wasteful routing the question through other modules.
-//
-// The trouble is, Readline doesn't natively have a way to reset the dispatching
-// state other than rl_abort() or actually dispatching an invalid key sequence.
-// So we have to reverse engineer how Readline responds when a key sequence is
-// terminated by invalid input, and that seems to consist of clearing the
-// RL_STATE_MULTIKEY state and disposing of the key sequence chain.
 bool line_editor_impl::is_bound(const char* seq, int len)
 {
-    if (!len)
-    {
-LNope:
-        if (RL_ISSTATE (RL_STATE_MULTIKEY))
-        {
-            RL_UNSETSTATE(RL_STATE_MULTIKEY);
-            _rl_keyseq_chain_dispose();
-        }
-        rl_ding();
-        return false;
-    }
-
-    // `quoted-insert` must accept all input (that's its whole purpose).
-    if (rl_wants_all_input())
-        return true;
-
-    // Various states should only accept "simple" input, i.e. not CSI sequences,
-    // so that unrecognized portions of key sequences don't bleed in as textual
-    // input.
-    if (RL_ISSTATE(simple_input_states))
-    {
-        if (seq[0] == '\x1b')
-            goto LNope;
-        return true;
-    }
-
-    // Eventually this will go away, but for now check if clink has a binding.
+    // Check if clink has a binding; these override Readline.
     if (m_bind_resolver.is_bound(seq, len))
         return true;
 
-    // The intent here is to accept all UTF8 input (not sure why readline
-    // reports them as not bound, but this seems good enough for now).
-    if (len > 1 && (unsigned char)seq[0] >= ' ')
-        return true;
-
-    // NOTE:  Checking readline's keymap is incorrect when a special bind group
-    // is active that should block on_input from reaching readline.  But the way
-    // that blocking is achieved is by adding a "" binding that matches
-    // everything not explicitly bound in the keymap.  So it works out
-    // naturally, without additional effort.  But it would probably be cleaner
-    // for this to be implemented on rl_module rather than line_editor_impl.
-
-    // Using nullptr for the keymap starts from the root of the current keymap,
-    // but in a multi key sequence this needs to use the current dispatching
-    // node of the current keymap.
-    Keymap keymap = RL_ISSTATE (RL_STATE_MULTIKEY) ? _rl_dispatching_keymap : nullptr;
-    if (rl_function_of_keyseq_len(seq, len, keymap, nullptr))
-        return true;
-
-    goto LNope;
+    // Check if Readline has a binding.
+    return m_module.is_bound(seq, len);
 }
 
 //------------------------------------------------------------------------------
 bool line_editor_impl::translate(const char* seq, int len, str_base& out)
 {
-    const char* bindableEsc = get_bindable_esc();
-    if (!bindableEsc)
-        return false;
-
-    if (RL_ISSTATE(RL_STATE_NUMERICARG))
-    {
-        if (strcmp(seq, bindableEsc) == 0)
-        {
-            // Let ESC terminate numeric arg mode (digit mode) by redirecting it
-            // to 'abort'.
-            if (find_abort_in_keymap(out))
-                return true;
-        }
-    }
-    else if (RL_ISSTATE(RL_STATE_ISEARCH|RL_STATE_NSEARCH))
-    {
-        if (strcmp(seq, bindableEsc) == 0)
-        {
-            // These modes have hard-coded handlers that abort on Ctrl+G, so
-            // redirect ESC to Ctrl+G.
-            char tmp[2] = { ABORT_CHAR };
-            out = tmp;
-            return true;
-        }
-    }
-    else if (RL_ISSTATE(simple_input_states) || rl_wants_all_input())
-    {
-        if (strcmp(seq, bindableEsc) == 0)
-        {
-            out = "\x1b";
-            return true;
-        }
-    }
-
-    return false;
+    return m_module.translate(seq, len, out);
 }
 
 //------------------------------------------------------------------------------
