@@ -5,11 +5,13 @@
 #### v1.2.33
 
 - Rewrote how Clink hooks APIs in CMD.EXE; it no longer uses any IAT hooking, and exclusively uses Detours.
+- Added `clink.default_bindings` Clink setting to choose between `bash` or `windows` default key bindings.  `bash` key bindings are still the default, for compatibility with existing Clink installations.
 - Added `exec.aliases`, `exec.commands`, and `exec.files` Clink settings to further customize how matches are generated for the first word when the `exec.enable` Clink setting is enabled.
 - Small performance optimization in the hooked `WriteConsoleW()` system API.
 - Added logging for rare error case during inject.
 - Added default key bindings for <kbd>F1</kbd> through <kbd>F9</kbd> that mimic the default Windows console function key inputs.
 - Added `clink-selectall-conhost` command that mimics the default Windows console Select All command.
+- Fixed `clink-select-complete` to remove duplicate matches if generators try to add duplicate matches.
 - Fixed script error when `%PATH%` is not set and `exec.enable` and `exec.path` are both enabled.
 - Fixed some quirks when using the `quoted-insert` command.
 
