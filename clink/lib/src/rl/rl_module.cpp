@@ -42,6 +42,7 @@ extern "C" {
 #include <readline/posixdir.h>
 #include <readline/history.h>
 extern void rl_replace_from_history(HIST_ENTRY *entry, int flags);
+extern int _rl_get_inserted_char(void);
 extern Keymap _rl_dispatching_keymap;
 #define HIDDEN_FILE(fn) ((fn)[0] == '.')
 #if defined (COLOR_SUPPORT)
@@ -76,7 +77,6 @@ extern int          _rl_last_v_pos;
 
 extern int clink_diagnostics(int, int);
 
-extern bool rl_wants_all_input();
 extern void host_add_history(int rl_history_index, const char* line);
 extern void host_remove_history(int rl_history_index, const char* line);
 extern void sort_match_list(char** matches, int len);
@@ -263,6 +263,8 @@ static setting_bool g_debug_log_terminal(
     "the log file.",
     false);
 #endif
+
+extern setting_bool g_terminal_raw_esc;
 
 
 
@@ -511,13 +513,6 @@ int read_key_direct(bool wait)
 
     s_direct_input->set_key_tester(old);
     return key;
-}
-
-//------------------------------------------------------------------------------
-static bool rl_wants_all_input()
-{
-    return (rl_is_insert_next_callback_pending() ||
-            win_fn_callback_pending());
 }
 
 //------------------------------------------------------------------------------
@@ -1737,8 +1732,21 @@ LNope:
     }
 
     // `quoted-insert` must accept all input (that's its whole purpose).
-    if (rl_wants_all_input())
+    if (rl_is_insert_next_callback_pending())
         return true;
+
+    // The F2, F4, and F9 console compatibility implementations can accept
+    // input, but extended keys are meaningless so don't accept them.  The
+    // intent is to allow printable textual input, control characters, and ESC.
+    if (win_fn_callback_pending())
+    {
+        const char* bindableEsc = get_bindable_esc();
+        if (bindableEsc && strcmp(seq, bindableEsc) == 0)
+            return true;
+        if (len > 1 && seq[0] == '\x1b')
+            goto LNope;
+        return true;
+    }
 
     // Various states should only accept "simple" input, i.e. not CSI sequences,
     // so that unrecognized portions of key sequences don't bleed in as textual
@@ -1800,7 +1808,9 @@ bool rl_module::translate(const char* seq, int len, str_base& out)
             return true;
         }
     }
-    else if (RL_ISSTATE(RL_SIMPLE_INPUT_STATES) || rl_wants_all_input())
+    else if (RL_ISSTATE(RL_SIMPLE_INPUT_STATES) ||
+             rl_is_insert_next_callback_pending() ||
+             win_fn_callback_pending())
     {
         if (strcmp(seq, bindableEsc) == 0)
         {
@@ -1815,12 +1825,7 @@ bool rl_module::translate(const char* seq, int len, str_base& out)
 //------------------------------------------------------------------------------
 void rl_module::set_keyseq_len(int len)
 {
-// TODO:  This may be dead code, and may be removable.
-#if 0
-    assert(m_insert_next_len == 0);
-    if (rl_is_insert_next_callback_pending())
-        m_insert_next_len = len;
-#endif
+    // TODO:  This may be dead code, and may be removable.
 }
 
 //------------------------------------------------------------------------------
@@ -2172,16 +2177,14 @@ void rl_module::on_input(const input& input, result& result, const context& cont
             is_inc_searching = 0;
         }
 
-// TODO:  This may be dead code, and may be removable.
-#if 0
-        if (m_insert_next_len > 0)
+        // Don't end quoted insert on an ESC unless terminal.raw_esc is enabled.
+        if (is_quoted_insert &&
+            !rl_is_insert_next_callback_pending() &&
+            _rl_get_inserted_char() == '\x1b' &&
+            !g_terminal_raw_esc.get())
         {
-            if (is_quoted_insert && --m_insert_next_len)
-                rl_quoted_insert(1, 0);
-            else
-                m_insert_next_len = 0;
+            rl_quoted_insert(1, 0);
         }
-#endif
     }
 
     g_result = nullptr;

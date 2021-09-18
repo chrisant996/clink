@@ -1023,11 +1023,24 @@ rl_insert (int count, int c)
   return r;
 }
 
+/* begin_clink_change */
+static int s_inserted_char = -1;
+int
+_rl_get_inserted_char (void)
+{
+  return s_inserted_char;
+}
+/* end_clink_change */
+
 /* Insert the next typed character verbatim. */
 static int
 _rl_insert_next (int count)
 {
   int c;
+
+/* begin_clink_change */
+  s_inserted_char = -1;
+/* end_clink_change */
 
   RL_SETSTATE(RL_STATE_MOREINPUT);
   c = rl_read_key ();
@@ -1044,6 +1057,10 @@ _rl_insert_next (int count)
     _rl_restore_tty_signals ();
 #endif
 
+/* begin_clink_change */
+  s_inserted_char = c;
+/* end_clink_change */
+
   return (_rl_insert_char (count, c));  
 }
 
@@ -1052,6 +1069,10 @@ static int
 _rl_insert_next_callback (_rl_callback_generic_arg *data)
 {
   int count, r;
+
+/* begin_clink_change */
+  s_inserted_char = -1;
+/* end_clink_change */
 
   count = data->count;
   r = 0;
@@ -1094,6 +1115,10 @@ rl_quoted_insert (int count, int key)
   if (RL_ISSTATE (RL_STATE_CALLBACK) == 0)
     _rl_disable_tty_signals ();
 #endif
+
+/* begin_clink_change */
+  s_inserted_char = -1;
+/* end_clink_change */
 
 #if defined (READLINE_CALLBACKS)
   if (RL_ISSTATE (RL_STATE_CALLBACK))

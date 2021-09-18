@@ -17,7 +17,7 @@
 #include <map>
 
 //------------------------------------------------------------------------------
-static setting_bool g_terminal_raw_esc(
+setting_bool g_terminal_raw_esc(
     "terminal.raw_esc",
     "Esc sends a literal escape character",
     "When enabled, pressing Esc sends a literal escape character like in Unix/etc\n"
