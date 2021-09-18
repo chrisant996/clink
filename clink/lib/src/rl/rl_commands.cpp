@@ -638,6 +638,33 @@ int clink_mark_conhost(int count, int invoking_key)
     return 0;
 }
 
+//------------------------------------------------------------------------------
+int clink_selectall_conhost(int count, int invoking_key)
+{
+    bool has_begin = (s_cua_anchor == 0 || rl_point == 0);
+    bool has_end = (s_cua_anchor == rl_end || rl_point == rl_end);
+    if (!has_begin || !has_end)
+        return cua_select_all(0, invoking_key);
+
+    HWND hwndConsole = GetConsoleWindow();
+    if (!hwndConsole)
+    {
+        rl_ding();
+        return 0;
+    }
+
+    if (rl_point == 0 && s_cua_anchor == rl_end)
+    {
+        s_cua_anchor = 0;
+        rl_point = rl_end;
+        rl_redisplay();
+    }
+
+    // Invoke conhost's Select All command via the system menu.
+    SendMessage(hwndConsole, WM_SYSCOMMAND, ID_CONSOLE_SELECTALL, 0);
+    return 0;
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -856,6 +883,7 @@ void cua_after_command(bool force_clear)
         s_map.emplace(cua_select_all);
         s_map.emplace(cua_copy);
         s_map.emplace(cua_cut);
+        s_map.emplace(clink_selectall_conhost);
 
         // No action after scroll commands.
         s_map.emplace(clink_scroll_line_up);
