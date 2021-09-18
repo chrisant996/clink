@@ -11,6 +11,7 @@
 - Added default key bindings for <kbd>F1</kbd> through <kbd>F9</kbd> that mimic the default Windows console function key inputs.
 - Added `clink-selectall-conhost` command that mimics the default Windows console Select All command.
 - Fixed script error when `%PATH%` is not set and `exec.enable` and `exec.path` are both enabled.
+- Fixed some quirks when using the `quoted-insert` command.
 
 #### v1.2.32
 
