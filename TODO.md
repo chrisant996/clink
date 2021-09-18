@@ -5,37 +5,20 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
+- Add a quick start / beginner section to the Clink docs.
 
 ## Medium Priority
-- Add a quick start / beginner section to the Clink docs.
-- Something is wrong with history:
-  - Recent history entries can get lost.
-  - Probably concurrent sessions?
-  - Maybe reaping doesn't read the full history file before appending?
+- <kbd>F7</kbd> => Show text-mode interactive list of previous commands.
 
 ## Low Priority
 - [#158](https://github.com/chrisant996/clink/issues/158); crash when key macro includes "\015".  Clink uses Readline's callback mode incorrectly.
-- Auto-update option, with configurable polling interval?
+- Support this quirk, or not?  <kbd>Esc</kbd> in conhost clears the line but does not reset the history index, but in Clink it resets the history index.  Affects F1, F2, F3, F5, F8.
+- Auto-update option, with configurable polling interval?  (Though package managers like scoop can handle updates, if Clink was installed through one.)
 
-## Windows Key Bindings
-- Better names for the `win-fN` commands.
-### Always
-- [ ] <kbd>F7</kbd> => Show text-mode interactive list of previous commands.
-- [ ] QUIRK:  <kbd>Esc</kbd> in conhost clears the line but does not reset the history index.
-  - Affects F1, F2, F3, F5, F8.
-### Conditional
-- Default key bindings modes:  `windows` and `bash`.
-  - In `windows` mode:
-    - Ctrl+A => `clink-selectall-conhost`.
-    - Ctrl+B => Nothing (was paired with Ctrl+F).
-    - Ctrl+E => `clink-expand-line`.
-    - Ctrl+F => `clink-find-conhost`.
-    - Ctrl+M => `clink-mark-conhost` and differentiate that key.
-    - Right => `win-f1`.
-    - Tab => `old-menu-complete`, or maybe `menu-complete`.
-    - Shift+Tab => `old-menu-complete-backward`, or maybe `menu-complete-backward`.
-    - Ctrl+Space => `clink-select-complete`.
-    - ??? (for Windows Terminal) => `clink-select-complete`.
+## Mystery (am I only imagining it?)
+- Something may be wrong with history:  Recent history entries seem like they can get lost.
+  - Probably concurrent sessions?
+  - Maybe reaping doesn't read the full history file before appending?
 
 ## Tests
 
@@ -43,12 +26,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 <br/>
 
 # INVESTIGATE
-
-**Additional ANSI escape codes?**
-- `ESC[?47h` save screen.
-- `ESC[?47l` restore screen.
-- `ESC[?1049h` enable alternative buffer.
-- `ESC[?1049l` disable alternative buffer.
 
 **Popup Lists**
 - Ability to delete, rearrange, and edit popup list items?  _[Can't realistically rearrange or edit history, due to how the history file format works.]_
@@ -121,9 +98,12 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - AutoRun, `cmd.exe`, `cmd echo hello`, `exit` => the `cmd echo hello` is not in the history. _[NOT REPRO.]_
 - Windows 10.0.19042.630 seems to have problems when using WriteConsoleW with ANSI escape codes in a powerline prompt in a git repo.  But Windows 10.0.19041.630 doesn't.
 - Windows Terminal crashes on exit after `clink inject`.  The current release version was crashing (1.6.10571.0).  Older versions don't crash, and a locally built version from the terminal repo's HEAD doesn't crash.  I think the crash is probably a bug in Windows Terminal, not related to Clink.  And after I built it locally, then it stopped crashing with 1.6.10571.0 as well.  Mysterious...
-- Corrupted clink_history -- not sure how, when, or why -- but after having made changes to history, debugging through issues, and aborting some debugging sessions my clink_history file had a big chunk of contiguous NUL bytes. _[UPDATE: the good news is it isn't a Clink issue; the bad news is the SSD drives in my new Alienware m15 R4 keep periodically hitting a BSOD for KERNEL DATA INPAGE ERROR, which zeroes out recently written sectors.]_
+- Corrupted clink_history -- not sure how, when, or why -- but after having made changes to history, debugging through issues, and aborting some debugging sessions my clink_history file had a big chunk of contiguous NUL bytes. _[UPDATE: the good news is it isn't a Clink issue; the bad news is the SSD drives in my new Alienware m15 R4 keep periodically hitting a BSOD for KERNEL DATA INPAGE ERROR, which zeroes out recently written sectors.  UPDATE #2: the BSOD were actually from the Nvidia drivers.]_
 
 ## Punt
+- Additional ANSI escape codes.
+  - `ESC[?47h` and `ESC[?47l` (save and restore screen) -- not widely supported, so I can't use it, and it's not worth emulating.  Which makes me very sad; no save + show popup + restore. 😭
+  - `ESC[?1049h` and `ESC[?1049l` (enable and disable alternative buffer) -- not worth using or emulating; there's no way to copying between screens, so it can't help for save/popup/restore.
 - Marking mode in-app is not realistic:
   - Windows Terminal is essentially dropping support for console APIs that read/write the screen buffer, particularly the scrollback buffer.
   - Different terminal hosts have different capabilities and limitations, so building a marking mode that behaves reasonably across all/most terminal hosts isn't feasible.

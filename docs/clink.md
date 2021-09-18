@@ -94,6 +94,7 @@ Name                         | Default | Description
 :--:                         | :-:     | -----------
 `clink.autostart`            |         | This command is automatically run when the first CMD prompt is shown after Clink is injected.  If this is blank (the default), then Clink instead looks for clink_start.cmd in the binaries directory and profile directory and runs them.  Set it to "nul" to not run any autostart command.
 `clink.colorize_input`       | True    | Enables context sensitive coloring for the input text (see [Coloring The Input Text](#classifywords)).
+`clink.default_bindings`     | `bash`  | Clink uses bash key bindings when this is set to `bash` (the default).  When this is set to `windows` Clink overrides some of the bash defaults with familiar Windows key bindings for <kbd>Tab</kbd>, <kbd>Ctrl</kbd>+<kbd>A</kbd>, <kbd>Ctrl</kbd>+<kbd>F</kbd>, <kbd>Ctrl</kbd>+<kbd>M</kbd>, and <kbd>Right</kbd>.
 `clink.logo`                 | `full`  | Controls what startup logo to show when Clink is injected.  `full` = show full copyright logo, `short` = show abbreviated version info, `none` = omit the logo.
 `clink.paste_crlf`           | `crlf`  | What to do with CR and LF characters on paste. Setting this to `delete` deletes them, `space` replaces them with spaces, `ampersand` replaces them with ampersands, and `crlf` pastes them as-is (executing commands that end with a newline).
 `clink.path`                 |         | A list of paths from which to load Lua scripts. Multiple paths can be delimited semicolons.
@@ -425,14 +426,12 @@ Name | Description
 `old-menu-complete-backward`|Like `old-menu-complete`, but in reverse.
 `remove-history`|While searching history, removes the current line from the history.
 `shell-expand-line`|A synonym for `clink-expand-line`.
-`win-f1`|Move cursor forward, or at end of line copy character from previous command.
-`win-f2`|Enter a character and copy up to it from the previous command.
-`win-f3`|Copy the rest of the previous command.
-`win-f4`|Enter a character and delete up to it in the input line.
-`win-f5`|Move 'back' through the history list, fetching the previous command.
-`win-f6`|Insert ^Z.
-`win-f8`|Search backward through the history for the string of characters between the start of the current line and the cursor point.  The search string must match at the beginning of a history line.  This is a non-incremental search.
-`win-f9`|Enter a history number and replace the input line with the history line.
+`win-copy-history-number`|Enter a history number and replace the input line with the history line (mimics Windows console <kbd>F9</kbd>).
+`win-copy-up-to-char`|Enter a character and copy up to it from the previous command (mimics Windows console <kbd>F2</kbd>).
+`win-copy-up-to-end`|Copy the rest of the previous command (mimics Windows console <kbd>F3</kbd>).
+`win-cursor-forward`|Move cursor forward, or at end of line copy character from previous command (mimics Windows console <kbd>F1</kbd> and <kbd>Right</kbd>).
+`win-delete-up-to-char`|Enter a character and delete up to it in the input line (mimics Windows console <kbd>F4</kbd>).
+`win-insert-eof`|Insert ^Z (mimics Windows console <kbd>F6</kbd>).
 
 <a name="completioncolors"></a>
 

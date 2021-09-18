@@ -43,6 +43,7 @@ static setting_bool g_use_altgr_substitute(
     false);
 
 extern setting_bool g_adjust_cursor_style;
+extern setting_enum g_default_bindings;
 
 //------------------------------------------------------------------------------
 extern "C" void reset_wcwidths();
@@ -272,6 +273,7 @@ struct map_cmp_str
 };
 static std::map<keyseq_key, keyseq_name, map_cmp_str> map_keyseq_to_name;
 static char map_keyseq_differentiate = -1;
+static int map_default_bindings = -1;
 
 //------------------------------------------------------------------------------
 static void add_keyseq_to_name(const char* keyseq, const char* name, str<32>& builder, short int modifier)
@@ -307,7 +309,9 @@ static void remove_keyseq_from_name(const char* keyseq)
 //------------------------------------------------------------------------------
 static void ensure_keyseqs_to_names()
 {
-    if (!map_keyseq_to_name.empty() && map_keyseq_differentiate == !!g_differentiate_keys.get())
+    if (!map_keyseq_to_name.empty() &&
+        map_keyseq_differentiate == !!g_differentiate_keys.get() &&
+        map_default_bindings == g_default_bindings.get())
         return;
 
     static const char* const mods[] = { "", "S-", "C-", "C-S-", "A-", "A-S-", "A-C-", "A-C-S-" };
@@ -316,6 +320,7 @@ static void ensure_keyseqs_to_names()
     str<32> builder;
 
     map_keyseq_differentiate = !!g_differentiate_keys.get();
+    map_default_bindings = g_default_bindings.get();
 
     const char* bindableEsc = get_bindable_esc();
     if (bindableEsc)
@@ -339,7 +344,7 @@ static void ensure_keyseqs_to_names()
         add_keyseq_to_name(terminfo::kbks[m], "Bkspc", builder, m);
     }
 
-    if (g_differentiate_keys.get())
+    if (g_differentiate_keys.get() || g_default_bindings.get() == 1/*windows*/)
     {
         builder = mods[0];
         add_keyseq_to_name("\x0d", "Enter", builder, 0);
@@ -807,7 +812,7 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
         if (key_vk == 'H' || key_vk == 'I')
             simple_char = !(key_flags & CTRL_PRESSED) || !g_differentiate_keys.get();
         else if (key_vk == 'M')
-            simple_char = !((key_flags & CTRL_PRESSED)) || !g_differentiate_keys.get();
+            simple_char = !((key_flags & CTRL_PRESSED)) || (!g_differentiate_keys.get() && g_default_bindings.get() != 1/*windows*/);
         else if (key_char == 0x1b && key_vk != VK_ESCAPE)
             simple_char = terminfo::keymod_index(key_flags) < 2; // Modifiers were resulting in incomplete escape codes.
         else if (key_vk == VK_RETURN || key_vk == VK_BACK)
@@ -893,7 +898,9 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
             case 'Q':   case 'R':   case 'S':   case 'T':
             case 'U':   case 'V':   case 'W':   case 'X':
             case 'Y':   case 'Z':
-                if ((key_vk == 'H' || key_vk == 'I' || key_vk == 'M') && g_differentiate_keys.get())
+                if ((key_vk == 'H' || key_vk == 'I') && g_differentiate_keys.get())
+                    goto not_ctrl;
+                if ((key_vk == 'M') && (g_differentiate_keys.get() || g_default_bindings.get() == 1/*windows*/))
                     goto not_ctrl;
                 key_vk -= 'A' - 1;
                 ctrl_code = true;

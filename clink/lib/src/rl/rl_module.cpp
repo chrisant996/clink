@@ -264,6 +264,15 @@ static setting_bool g_debug_log_terminal(
     false);
 #endif
 
+setting_enum g_default_bindings(
+    "clink.default_bindings",
+    "Selects default key bindings",
+    "Clink uses bash key bindings when this is set to 'bash' (the default).\n"
+    "When this is set to 'windows' Clink overrides some of the bash defaults with\n"
+    "familiar Windows key bindings for Tab, Ctrl+F, Ctrl+M, and some others.",
+    "bash,windows",
+    0);
+
 extern setting_bool g_terminal_raw_esc;
 
 
@@ -1614,6 +1623,32 @@ rl_module::rl_module(const char* shell_name, terminal_in* input, const char* sta
         {}
     };
 
+    static constexpr const char* const windows_emacs_key_binds[][2] = {
+        { "\\C-a",          "clink-selectall-conhost" }, // ctrl-a
+        { "\\C-b",          "" },                        // ctrl-b
+        { "\\C-e",          "clink-expand-line" },       // ctrl-e
+        { "\\C-f",          "clink-find-conhost" },      // ctrl-f
+        { "\\e[27;5;77~",   "clink-mark-conhost" },      // ctrl-m (differentiated)
+        { "\\e[C",          "clink-cursor-forward" },    // right
+        { "\t",             "old-menu-complete" },       // tab
+        { "\\e[Z",          "old-menu-complete-backward" }, // shift-tab
+        { "\\e[27;5;32~",   "clink-select-complete" },   // ctrl-space
+        {}
+    };
+
+    static constexpr const char* const bash_emacs_key_binds[][2] = {
+        { "\\C-a",          "beginning-of-line" },       // ctrl-a
+        { "\\C-b",          "backward-char" },           // ctrl-b
+        { "\\C-e",          "end-of-line" },             // ctrl-e
+        { "\\C-f",          "forward-char" },            // ctrl-f
+        { "\\e[27;5;77~",   "" },                        // ctrl-m (differentiated)
+        { "\\e[C",          "forward-char" },            // right
+        { "\t",             "complete" },                // tab
+        { "\\e[Z",          "" },                        // shift-tab
+        { "\\e[27;5;32~",   "old-menu-complete" },       // ctrl-space
+        {}
+    };
+
     static constexpr const char* const general_key_binds[][2] = {
         { "\\M-a",          "clink-insert-dot-dot" },    // alt-a
         { "\\M-c",          "clink-copy-cwd" },          // alt-c
@@ -1680,6 +1715,9 @@ rl_module::rl_module(const char* shell_name, terminal_in* input, const char* sta
     rl_unbind_key_in_map(' ', emacs_meta_keymap);
     bind_keyseq_list(general_key_binds, emacs_standard_keymap);
     bind_keyseq_list(emacs_key_binds, emacs_standard_keymap);
+    bind_keyseq_list(bash_emacs_key_binds, emacs_standard_keymap);
+    if (g_default_bindings.get() == 1)
+        bind_keyseq_list(windows_emacs_key_binds, emacs_standard_keymap);
 
     rl_unbind_key_in_map(27, vi_insertion_keymap);
     bind_keyseq_list(general_key_binds, vi_insertion_keymap);
