@@ -1404,22 +1404,10 @@ int win_f4(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
-int win_f5(int count, int invoking_key)
-{
-    return rl_get_previous_history(count, invoking_key);
-}
-
-//------------------------------------------------------------------------------
 int win_f6(int count, int invoking_key)
 {
     rl_insert_text("\x1a");
     return 0;
-}
-
-//------------------------------------------------------------------------------
-int win_f8(int count, int invoking_key)
-{
-    return rl_history_search_backward(count, invoking_key);
 }
 
 //------------------------------------------------------------------------------

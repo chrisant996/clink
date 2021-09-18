@@ -1545,14 +1545,12 @@ rl_module::rl_module(const char* shell_name, terminal_in* input, const char* sta
         clink_add_funmap_entry("cua-copy", cua_copy, keycat_select, "Copy the selected text to the clipboard");
         clink_add_funmap_entry("cua-cut", cua_cut, keycat_select, "Cut the selected text to the clipboard");
 
-        clink_add_funmap_entry("win-f1", win_f1, keycat_history, "Move cursor forward, or at end of line copy character from previous command");
-        clink_add_funmap_entry("win-f2", win_f2, keycat_history, "Enter a character and copy up to it from the previous command");
-        clink_add_funmap_entry("win-f3", win_f3, keycat_history, "Copy the rest of the previous command");
-        clink_add_funmap_entry("win-f4", win_f4, keycat_misc, "Enter a character and delete up to it in the input line");
-        clink_add_funmap_entry("win-f5", win_f5, keycat_history, "Move 'back' through the history list, fetching the previous command");
-        clink_add_funmap_entry("win-f6", win_f6, keycat_misc, "Insert ^Z");
-        clink_add_funmap_entry("win-f8", win_f8, keycat_history, "Search backward through the history for the string of characters between the start of the current line and the cursor point.  The search string must match at the beginning of a history line.  This is a non-incremental search");
-        clink_add_funmap_entry("win-f9", win_f9, keycat_history, "Enter a history number and replace the input line with the history line");
+        clink_add_funmap_entry("win-cursor-forward", win_f1, keycat_history, "Move cursor forward, or at end of line copy character from previous command");
+        clink_add_funmap_entry("win-copy-up-to-char", win_f2, keycat_history, "Enter a character and copy up to it from the previous command");
+        clink_add_funmap_entry("win-copy-up-to-end", win_f3, keycat_history, "Copy the rest of the previous command");
+        clink_add_funmap_entry("win-delete-up-to-char", win_f4, keycat_misc, "Enter a character and delete up to it in the input line");
+        clink_add_funmap_entry("win-insert-eof", win_f6, keycat_misc, "Insert ^Z");
+        clink_add_funmap_entry("win-copy-history-number", win_f9, keycat_history, "Enter a history number and replace the input line with the history line");
 
         clink_add_funmap_entry("edit-and-execute-command", edit_and_execute_command, keycat_misc, "Invoke an editor on the current input line, and execute the result.  This attempts to invoke '%VISUAL%', '%EDITOR%', or 'notepad.exe' as the editor, in that order");
         clink_add_funmap_entry("glob-complete-word", glob_complete_word, keycat_completion, "Perform wildcard completion on the text before the cursor point, with a '*' implicitly appended");
@@ -1605,14 +1603,14 @@ rl_module::rl_module(const char* shell_name, terminal_in* input, const char* sta
         { "\\e[1;2F",       "cua-end-of-line" },         // shift-end
         { "\\e[2;2~",       "cua-copy" },                // shift-ins
         { "\\e[3;2~",       "cua-cut" },                 // shift-del
-        { "\\eOP",          "win-f1" },                  // F1
-        { "\\eOQ",          "win-f2" },                  // F2
-        { "\\eOR",          "win-f3" },                  // F3
-        { "\\eOS",          "win-f4" },                  // F4
-        { "\\e[15~",        "win-f5" },                  // F5
-        { "\\e[17~",        "win-f6" },                  // F6
-        { "\\e[19~",        "win-f8" },                  // F8
-        { "\\e[20~",        "win-f9" },                  // F9
+        { "\\eOP",          "win-cursor-forward" },      // F1
+        { "\\eOQ",          "win-copy-up-to-char" },     // F2
+        { "\\eOR",          "win-copy-up-to-end" },      // F3
+        { "\\eOS",          "win-delete-up-to-char" },   // F4
+        { "\\e[15~",        "previous-history" },        // F5
+        { "\\e[17~",        "win-insert-eof" },          // F6
+        { "\\e[19~",        "history-search-backward" }, // F8
+        { "\\e[20~",        "win-copy-history-number" }, // F9
         {}
     };
 
