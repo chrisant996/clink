@@ -805,9 +805,16 @@ int clink_popup_show_help(int count, int invoking_key)
 //------------------------------------------------------------------------------
 int clink_select_complete(int count, int invoking_key)
 {
+    if (RL_ISSTATE(RL_STATE_MACRODEF) != 0)
+    {
+ding:
+        rl_ding();
+        return 0;
+    }
+
     extern bool activate_select_complete(editor_module::result& result, bool reactivate);
     if (!g_result || !activate_select_complete(*g_result, rl_last_func == clink_select_complete))
-        rl_ding();
+        goto ding;
     return 0;
 }
 
