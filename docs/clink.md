@@ -425,6 +425,14 @@ Name | Description
 `old-menu-complete-backward`|Like `old-menu-complete`, but in reverse.
 `remove-history`|While searching history, removes the current line from the history.
 `shell-expand-line`|A synonym for `clink-expand-line`.
+`win-f1`|Move cursor forward, or at end of line copy character from previous command.
+`win-f2`|Enter a character and copy up to it from the previous command.
+`win-f3`|Copy the rest of the previous command.
+`win-f4`|Enter a character and delete up to it in the input line.
+`win-f5`|Move 'back' through the history list, fetching the previous command.
+`win-f6`|Insert ^Z.
+`win-f8`|Search backward through the history for the string of characters between the start of the current line and the cursor point.  The search string must match at the beginning of a history line.  This is a non-incremental search.
+`win-f9`|Enter a history number and replace the input line with the history line.
 
 <a name="completioncolors"></a>
 
