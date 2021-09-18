@@ -5,14 +5,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- Callback input:
-  - Need to eat unhandled chars from split key sequence in callbacks.  E.g. I'm not decided on what F2 Alt+M should do, but it shouldn't insert 'm' at the end!
-  - Need to continue quoted insert for unhandled chars from split key sequence, when using quoted insert.  E.g. ^Q Esc should do quoted insert for the full key sequence for Esc, instead of dispatching additional keys as though they were pressed.  A better example might be Alt+Backspace.
-  - Strategy options:
-    - ~~Match incoming chars against known key sequences?  So that eating works in recorded keyboard macros as well?~~
-    - Just ignore recorded keyboard macros?
-    - Have a mode that doesn't allow them into the input stream when trying to accept input for F2 and F4?
-    - If quoted insert ends on Esc, consume one more character.  Because there are no instances where two characters following an Esc are unprintable.
 
 ## Medium Priority
 - Add a quick start / beginner section to the Clink docs.
@@ -26,26 +18,24 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Auto-update option, with configurable polling interval?
 
 ## Windows Key Bindings
+- Better names for the `win-fN` commands.
 ### Always
-- [x] <kbd>F1</kbd> `win-f1` => Move the cursor forward one character, until end of line.  If at end of line, use current cursor position as index into previous command and append that character to current line.
-- [x] <kbd>F2</kbd> => Enter character to copy up to from the previous command.  Overwrites existing characters if not at end of line.
-- [x] <kbd>F3</kbd> `win-f3` => Replace input with previous command.
-- [x] <kbd>F4</kbd> => Enter character to delete up to in current input line; place cursor at end of line.
-- [x] <kbd>F5</kbd> `previous-history` => Previous command in history (like <kbd>Up</kbd>).
-- [x] <kbd>F6</kbd> `win-f6` => Insert `^Z` at cursor position.
 - [ ] <kbd>F7</kbd> => Show text-mode interactive list of previous commands.
-- ~~<kbd>Alt</kbd>+<kbd>F7</kbd> => Clear history.~~
-- [x] <kbd>F8</kbd> `history-search-backward` => Cycle through previous commands matching what was typed so far.
-- [x] <kbd>F9</kbd> => Enter command number in history; replace input with the command, place cursor at end of line.
 - [ ] QUIRK:  <kbd>Esc</kbd> in conhost clears the line but does not reset the history index.
   - Affects F1, F2, F3, F5, F8.
-- [ ] UTF8 input special treatment for F2 and F4.
 ### Conditional
-- Some way to conditionally bind these by default?  Or just provide a sample key binding file in the Beginner section of the documentation?
-  - <kbd>Right</kbd> => `win-f1` (or maybe this should be the default?)
-  - <kbd>Ctrl</kbd>+<kbd>F</kbd> => `clink-find-conhost` (or maybe the Alt+F is enough?)
-  - <kbd>Ctrl</kbd>+<kbd>M</kbd> => `clink-mark-conhost` (or maybe the Alt+M is enough?)
-  - <kbd>Ctrl</kbd>+<kbd>A</kbd> => `clink-selectall-conhost` (Alt+A is already taken)
+- Default key bindings modes:  `windows` and `bash`.
+  - In `windows` mode:
+    - Ctrl+A => `clink-selectall-conhost`.
+    - Ctrl+B => Nothing (was paired with Ctrl+F).
+    - Ctrl+E => `clink-expand-line`.
+    - Ctrl+F => `clink-find-conhost`.
+    - Ctrl+M => `clink-mark-conhost` and differentiate that key.
+    - Right => `win-f1`.
+    - Tab => `old-menu-complete`, or maybe `menu-complete`.
+    - Shift+Tab => `old-menu-complete-backward`, or maybe `menu-complete-backward`.
+    - Ctrl+Space => `clink-select-complete`.
+    - ??? (for Windows Terminal) => `clink-select-complete`.
 
 ## Tests
 
