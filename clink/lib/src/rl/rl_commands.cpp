@@ -1093,9 +1093,9 @@ static int adjust_point_point(int& point, int target, char* buffer)
 }
 
 //------------------------------------------------------------------------------
-static int adjust_point_key(int& point, int c, char* buffer)
+static int adjust_point_keyseq(int& point, const char* keyseq, char* buffer)
 {
-    if (c <= 0)
+    if (!keyseq || !*keyseq)
         return 0;
 
     const int length = int(strlen(buffer));
@@ -1115,17 +1115,16 @@ static int adjust_point_key(int& point, int c, char* buffer)
     if (MB_CUR_MAX == 1 || rl_byte_oriented)
 #endif
     {
-        while (buffer[tmp] && buffer[tmp] != char(c))
-        {
-            tmp++;
-            count++;
-        }
+        const char* found = strstr(buffer + tmp, keyseq);
+        int delta = found ? int(found - (buffer + tmp)) : length - tmp;
+        tmp += delta;
+        count += delta;
     }
 #if defined (HANDLE_MULTIBYTE)
     else
     {
-        // TODO:  Should match UTF8 string, not a single char.
-        while (buffer[tmp] && buffer[tmp] != char(c))
+        int keyseq_len = int(strlen(keyseq));
+        while (buffer[tmp] && strncmp(buffer + tmp, keyseq, keyseq_len) != 0)
         {
             tmp = _rl_find_next_mbchar(buffer, tmp, 1, MB_FIND_NONZERO);
             count++;
@@ -1138,6 +1137,47 @@ static int adjust_point_key(int& point, int c, char* buffer)
 
     point = tmp;
     return count;
+}
+
+//------------------------------------------------------------------------------
+static str<16, false> s_win_fn_input_buffer;
+static bool read_win_fn_input_char()
+{
+    int c;
+
+    RL_SETSTATE(RL_STATE_MOREINPUT);
+    c = rl_read_key();
+    RL_UNSETSTATE(RL_STATE_MOREINPUT);
+
+    if (c < 0)
+        return false;
+
+    if (RL_ISSTATE(RL_STATE_MACRODEF))
+        _rl_add_macro_char(c);
+
+#if defined (HANDLE_SIGNALS)
+    if (RL_ISSTATE(RL_STATE_CALLBACK) == 0)
+        _rl_restore_tty_signals ();
+#endif
+
+    if (c == 27/*Esc*/ || c == 7/*^G*/)
+    {
+nope:
+        s_win_fn_input_buffer.clear();
+        return true;
+    }
+
+    s_win_fn_input_buffer.concat(reinterpret_cast<const char*>(&c), 1);
+
+    WCHAR_T wc;
+    mbstate_t mbs = {};
+    size_t validate = MBRTOWC(&wc, s_win_fn_input_buffer.c_str(), s_win_fn_input_buffer.length(), &mbs);
+
+    if (MB_NULLWCH(validate))
+        goto nope;
+
+    // Once there's a valid UTF8 character, the input is complete.
+    return !MB_INVALIDCH(validate);
 }
 
 //------------------------------------------------------------------------------
@@ -1204,13 +1244,6 @@ int win_f1(int count, int invoking_key)
 //------------------------------------------------------------------------------
 static int finish_win_f2()
 {
-    int c;
-    RL_SETSTATE(RL_STATE_MOREINPUT);
-    c = rl_read_key();
-    RL_UNSETSTATE(RL_STATE_MOREINPUT);
-    if (c < 0)
-        return 1;
-
 #if defined (HANDLE_SIGNALS)
     if (RL_ISSTATE(RL_STATE_CALLBACK) == 0)
         _rl_restore_tty_signals();
@@ -1225,7 +1258,7 @@ static int finish_win_f2()
         return 0;
     }
 
-    if (c == 27/*Esc*/ || c == 7/*^G*/)
+    if (s_win_fn_input_buffer.empty())
         return 0;
 
     int old_point = 0;
@@ -1233,7 +1266,7 @@ static int finish_win_f2()
     if (prev_buffer[old_point])
     {
         int end_point = old_point;
-        int count = adjust_point_key(end_point, c, prev_buffer);
+        int count = adjust_point_keyseq(end_point, s_win_fn_input_buffer.c_str(), prev_buffer);
         if (end_point > old_point)
         {
             // How much to delete.
@@ -1258,6 +1291,9 @@ static int finish_win_f2()
 #if defined (READLINE_CALLBACKS)
 int _win_f2_callback(_rl_callback_generic_arg *data)
 {
+    if (!read_win_fn_input_char())
+        return 0;
+
     /* Deregister function, let rl_callback_read_char deallocate data */
     _rl_callback_func = 0;
     _rl_want_redisplay = 1;
@@ -1269,6 +1305,7 @@ int _win_f2_callback(_rl_callback_generic_arg *data)
 //------------------------------------------------------------------------------
 int win_f2(int count, int invoking_key)
 {
+    s_win_fn_input_buffer.clear();
     rl_message("%s(enter char to copy up to: )%s ", get_popup_colors(), c_normal);
 
 #if defined (HANDLE_SIGNALS)
@@ -1285,6 +1322,9 @@ int win_f2(int count, int invoking_key)
     }
 #endif
 
+    while (!read_win_fn_input_char())
+        ;
+
     return finish_win_f2();
 }
 
@@ -1297,13 +1337,6 @@ int win_f3(int count, int invoking_key)
 //------------------------------------------------------------------------------
 static int finish_win_f4()
 {
-    int c;
-    RL_SETSTATE(RL_STATE_MOREINPUT);
-    c = rl_read_key();
-    RL_UNSETSTATE(RL_STATE_MOREINPUT);
-    if (c < 0)
-        return 1;
-
 #if defined (HANDLE_SIGNALS)
     if (RL_ISSTATE(RL_STATE_CALLBACK) == 0)
         _rl_restore_tty_signals();
@@ -1311,11 +1344,11 @@ static int finish_win_f4()
 
     rl_clear_message();
 
-    if (c == 27/*Esc*/ || c == 7/*^G*/)
+    if (s_win_fn_input_buffer.empty())
         return 0;
 
     int end_point = rl_point;
-    adjust_point_key(end_point, c, rl_line_buffer);
+    adjust_point_keyseq(end_point, s_win_fn_input_buffer.c_str(), rl_line_buffer);
     if (end_point > rl_point)
         rl_delete_text(rl_point, end_point);
 
@@ -1326,6 +1359,9 @@ static int finish_win_f4()
 #if defined (READLINE_CALLBACKS)
 int _win_f4_callback(_rl_callback_generic_arg *data)
 {
+    if (!read_win_fn_input_char())
+        return 0;
+
     /* Deregister function, let rl_callback_read_char deallocate data */
     _rl_callback_func = 0;
     _rl_want_redisplay = 1;
@@ -1337,6 +1373,7 @@ int _win_f4_callback(_rl_callback_generic_arg *data)
 //------------------------------------------------------------------------------
 int win_f4(int count, int invoking_key)
 {
+    s_win_fn_input_buffer.clear();
     rl_message("%s(enter char to delete up to: )%s ", get_popup_colors(), c_normal);
 
 #if defined (HANDLE_SIGNALS)
@@ -1352,6 +1389,9 @@ int win_f4(int count, int invoking_key)
         return 0;
     }
 #endif
+
+    while (!read_win_fn_input_char())
+        ;
 
     return finish_win_f4();
 }
