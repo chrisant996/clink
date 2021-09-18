@@ -35,8 +35,16 @@ const int simple_input_states = (RL_STATE_MOREINPUT |
 extern setting_bool g_classify_words;
 
 extern bool is_showing_argmatchers();
+extern bool win_fn_callback_pending();
 
 
+
+//------------------------------------------------------------------------------
+bool rl_wants_all_input()
+{
+    return (rl_is_insert_next_callback_pending() ||
+            win_fn_callback_pending());
+}
 
 //------------------------------------------------------------------------------
 inline char get_closing_quote(const char* quote_pair)
@@ -630,7 +638,7 @@ LNope:
     }
 
     // `quoted-insert` must accept all input (that's its whole purpose).
-    if (rl_is_insert_next_callback_pending())
+    if (rl_wants_all_input())
         return true;
 
     // Various states should only accept "simple" input, i.e. not CSI sequences,
@@ -697,7 +705,7 @@ bool line_editor_impl::translate(const char* seq, int len, str_base& out)
             return true;
         }
     }
-    else if (RL_ISSTATE(simple_input_states) || rl_is_insert_next_callback_pending())
+    else if (RL_ISSTATE(simple_input_states) || rl_wants_all_input())
     {
         if (strcmp(seq, bindableEsc) == 0)
         {

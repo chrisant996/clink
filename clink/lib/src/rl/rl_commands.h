@@ -101,6 +101,17 @@ int     cua_copy(int count, int invoking_key);
 int     cua_cut(int count, int invoking_key);
 
 //------------------------------------------------------------------------------
+int     win_f1(int count, int invoking_key);
+int     win_f2(int count, int invoking_key);
+int     win_f3(int count, int invoking_key);
+int     win_f4(int count, int invoking_key);
+int     win_f5(int count, int invoking_key);
+int     win_f6(int count, int invoking_key);
+int     win_f8(int count, int invoking_key);
+int     win_f9(int count, int invoking_key);
+bool    win_fn_callback_pending();
+
+//------------------------------------------------------------------------------
 bool    is_globbing_wild();     // Expand wildcards in alternative_matches()?
 bool    is_literal_wild();      // Avoid appending star in alternative_matches()?
 int     glob_complete_word(int count, int invoking_key);

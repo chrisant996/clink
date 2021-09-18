@@ -982,6 +982,538 @@ int cua_cut(int count, int invoking_key)
 
 
 //------------------------------------------------------------------------------
+static const char c_reverse[] = "\001\x1b[7m\002";
+static const char c_normal[] = "\001\x1b[m\002";
+static const char* get_popup_colors()
+{
+    CONSOLE_SCREEN_BUFFER_INFOEX csbiex = { sizeof(csbiex) };
+    if (!GetConsoleScreenBufferInfoEx(GetStdHandle(STD_OUTPUT_HANDLE), &csbiex))
+        return c_reverse;
+
+    static const unsigned char c_colors[] = { 30, 34, 32, 36, 31, 35, 33, 37, 90, 94, 92, 96, 91, 95, 93, 97 };
+
+    static char s_popup[32];
+    sprintf(s_popup, "\x1b[%u;%um", c_colors[csbiex.wPopupAttributes & 0x0f], c_colors[(csbiex.wPopupAttributes & 0xf0) >> 4] + 10);
+    return s_popup;
+}
+
+//------------------------------------------------------------------------------
+static int adjust_point_delta(int& point, int delta, char* buffer)
+{
+    if (delta <= 0)
+        return 0;
+
+    const int length = int(strlen(buffer));
+    if (point == length)
+        return 0;
+
+    if (point > length)
+    {
+        point = length;
+        return 0;
+    }
+
+    if (delta > length - point)
+        delta = length - point;
+
+    int tmp = point;
+    int count = 0;
+
+#if defined (HANDLE_MULTIBYTE)
+    if (MB_CUR_MAX == 1 || rl_byte_oriented)
+#endif
+    {
+        tmp += delta;
+        count += delta;
+    }
+#if defined (HANDLE_MULTIBYTE)
+    else
+    {
+        while (delta)
+        {
+            int was = tmp;
+            tmp = _rl_find_next_mbchar(buffer, tmp, 1, MB_FIND_NONZERO);
+            if (tmp <= was)
+                break;
+            count++;
+            delta--;
+        }
+    }
+#endif
+
+    point = tmp;
+    return count;
+}
+
+//------------------------------------------------------------------------------
+static int adjust_point_point(int& point, int target, char* buffer)
+{
+    if (target <= point)
+        return 0;
+
+    const int length = int(strlen(buffer));
+    if (point == length)
+        return 0;
+
+    if (point > length)
+    {
+        point = length;
+        return 0;
+    }
+
+    if (target > length)
+        target = length;
+
+    int tmp = point;
+    int count = 0;
+
+#if defined (HANDLE_MULTIBYTE)
+    if (MB_CUR_MAX == 1 || rl_byte_oriented)
+#endif
+    {
+        count = target - tmp;
+        tmp = target;
+    }
+#if defined (HANDLE_MULTIBYTE)
+    else
+    {
+        while (tmp < target)
+        {
+            int was = tmp;
+            tmp = _rl_find_next_mbchar(buffer, tmp, 1, MB_FIND_NONZERO);
+            if (tmp <= was)
+                break;
+            count++;
+        }
+    }
+#endif
+
+    point = tmp;
+    return true;
+}
+
+//------------------------------------------------------------------------------
+static int adjust_point_key(int& point, int c, char* buffer)
+{
+    if (c <= 0)
+        return 0;
+
+    const int length = int(strlen(buffer));
+    if (point == length)
+        return 0;
+
+    if (point > length)
+    {
+        point = length;
+        return 0;
+    }
+
+    int tmp = point;
+    int count = 0;
+
+#if defined (HANDLE_MULTIBYTE)
+    if (MB_CUR_MAX == 1 || rl_byte_oriented)
+#endif
+    {
+        while (buffer[tmp] && buffer[tmp] != char(c))
+        {
+            tmp++;
+            count++;
+        }
+    }
+#if defined (HANDLE_MULTIBYTE)
+    else
+    {
+        // TODO:  Should match UTF8 string, not a single char.
+        while (buffer[tmp] && buffer[tmp] != char(c))
+        {
+            tmp = _rl_find_next_mbchar(buffer, tmp, 1, MB_FIND_NONZERO);
+            count++;
+        }
+    }
+#endif
+
+    if (tmp > length)
+        tmp = length;
+
+    point = tmp;
+    return count;
+}
+
+//------------------------------------------------------------------------------
+static char* get_history(int item)
+{
+    HIST_ENTRY** list = history_list();
+    if (!list || !history_length)
+        return nullptr;
+
+    if (item >= history_length)
+        item = history_length - 1;
+    if (item < 0)
+        return nullptr;
+
+    return list[item]->line;
+}
+
+//------------------------------------------------------------------------------
+static char* get_previous_command()
+{
+    int previous = where_history();
+    return get_history(previous);
+}
+
+//------------------------------------------------------------------------------
+int win_f1(int count, int invoking_key)
+{
+    if (count <= 0)
+        count = 1;
+
+    while (count && rl_point < rl_end)
+    {
+        rl_forward_char(1, invoking_key);
+        count--;
+    }
+
+    if (!count)
+        return 0;
+
+    char* prev_buffer = get_previous_command();
+    if (!prev_buffer)
+    {
+        rl_ding();
+        return 0;
+    }
+
+    int old_point = 0;
+    adjust_point_point(old_point, rl_point, prev_buffer);
+    if (prev_buffer[old_point])
+    {
+        int end_point = old_point;
+        adjust_point_delta(end_point, count, prev_buffer);
+        if (end_point > old_point)
+        {
+            str<> more;
+            more.concat(prev_buffer + old_point, end_point - old_point);
+            rl_insert_text(more.c_str());
+        }
+    }
+
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+static int finish_win_f2()
+{
+    int c;
+    RL_SETSTATE(RL_STATE_MOREINPUT);
+    c = rl_read_key();
+    RL_UNSETSTATE(RL_STATE_MOREINPUT);
+    if (c < 0)
+        return 1;
+
+#if defined (HANDLE_SIGNALS)
+    if (RL_ISSTATE(RL_STATE_CALLBACK) == 0)
+        _rl_restore_tty_signals();
+#endif
+
+    rl_clear_message();
+
+    char* prev_buffer = get_previous_command();
+    if (!prev_buffer)
+    {
+        rl_ding();
+        return 0;
+    }
+
+    if (c == 27/*Esc*/ || c == 7/*^G*/)
+        return 0;
+
+    int old_point = 0;
+    adjust_point_point(old_point, rl_point, prev_buffer);
+    if (prev_buffer[old_point])
+    {
+        int end_point = old_point;
+        int count = adjust_point_key(end_point, c, prev_buffer);
+        if (end_point > old_point)
+        {
+            // How much to delete.
+            int del_point = rl_point;
+            adjust_point_delta(del_point, count, rl_line_buffer);
+
+            // What to insert.
+            str<> more;
+            more.concat(prev_buffer + old_point, end_point - old_point);
+
+            rl_begin_undo_group();
+            rl_delete_text(rl_point, del_point);
+            rl_insert_text(more.c_str());
+            rl_end_undo_group();
+        }
+    }
+
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+#if defined (READLINE_CALLBACKS)
+int _win_f2_callback(_rl_callback_generic_arg *data)
+{
+    /* Deregister function, let rl_callback_read_char deallocate data */
+    _rl_callback_func = 0;
+    _rl_want_redisplay = 1;
+
+    return finish_win_f2();
+}
+#endif
+
+//------------------------------------------------------------------------------
+int win_f2(int count, int invoking_key)
+{
+    rl_message("%s(enter char to copy up to: )%s ", get_popup_colors(), c_normal);
+
+#if defined (HANDLE_SIGNALS)
+    if (RL_ISSTATE(RL_STATE_CALLBACK) == 0)
+        _rl_disable_tty_signals ();
+#endif
+
+#if defined (READLINE_CALLBACKS)
+    if (RL_ISSTATE(RL_STATE_CALLBACK))
+    {
+        _rl_callback_data = _rl_callback_data_alloc(count);
+        _rl_callback_func = _win_f2_callback;
+        return 0;
+    }
+#endif
+
+    return finish_win_f2();
+}
+
+//------------------------------------------------------------------------------
+int win_f3(int count, int invoking_key)
+{
+    return win_f1(999999, invoking_key);
+}
+
+//------------------------------------------------------------------------------
+static int finish_win_f4()
+{
+    int c;
+    RL_SETSTATE(RL_STATE_MOREINPUT);
+    c = rl_read_key();
+    RL_UNSETSTATE(RL_STATE_MOREINPUT);
+    if (c < 0)
+        return 1;
+
+#if defined (HANDLE_SIGNALS)
+    if (RL_ISSTATE(RL_STATE_CALLBACK) == 0)
+        _rl_restore_tty_signals();
+#endif
+
+    rl_clear_message();
+
+    if (c == 27/*Esc*/ || c == 7/*^G*/)
+        return 0;
+
+    int end_point = rl_point;
+    adjust_point_key(end_point, c, rl_line_buffer);
+    if (end_point > rl_point)
+        rl_delete_text(rl_point, end_point);
+
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+#if defined (READLINE_CALLBACKS)
+int _win_f4_callback(_rl_callback_generic_arg *data)
+{
+    /* Deregister function, let rl_callback_read_char deallocate data */
+    _rl_callback_func = 0;
+    _rl_want_redisplay = 1;
+
+    return finish_win_f4();
+}
+#endif
+
+//------------------------------------------------------------------------------
+int win_f4(int count, int invoking_key)
+{
+    rl_message("%s(enter char to delete up to: )%s ", get_popup_colors(), c_normal);
+
+#if defined (HANDLE_SIGNALS)
+    if (RL_ISSTATE(RL_STATE_CALLBACK) == 0)
+        _rl_disable_tty_signals ();
+#endif
+
+#if defined (READLINE_CALLBACKS)
+    if (RL_ISSTATE(RL_STATE_CALLBACK))
+    {
+        _rl_callback_data = _rl_callback_data_alloc(count);
+        _rl_callback_func = _win_f4_callback;
+        return 0;
+    }
+#endif
+
+    return finish_win_f4();
+}
+
+//------------------------------------------------------------------------------
+int win_f5(int count, int invoking_key)
+{
+    return rl_get_previous_history(count, invoking_key);
+}
+
+//------------------------------------------------------------------------------
+int win_f6(int count, int invoking_key)
+{
+    rl_insert_text("\x1a");
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+int win_f8(int count, int invoking_key)
+{
+    return rl_history_search_backward(count, invoking_key);
+}
+
+//------------------------------------------------------------------------------
+static int s_history_number = -1;
+static int finish_win_f9()
+{
+#if defined (HANDLE_SIGNALS)
+    if (RL_ISSTATE(RL_STATE_CALLBACK) == 0)
+        _rl_restore_tty_signals();
+#endif
+
+    rl_clear_message();
+
+    if (s_history_number >= 0)
+    {
+        if (s_history_number >= history_length)
+            s_history_number = history_length - 1;
+        if (history_length > 0)
+        {
+            rl_begin_undo_group();
+            rl_delete_text(0, rl_end);
+            rl_point = 0;
+            rl_insert_text(get_history(s_history_number));
+            rl_end_undo_group();
+        }
+    }
+
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+static void set_f9_message()
+{
+    if (s_history_number >= 0)
+        rl_message("%s(enter history number: %d)%s ", get_popup_colors(), s_history_number, c_normal);
+    else
+        rl_message("%s(enter history number: )%s ", get_popup_colors(), c_normal);
+}
+
+//------------------------------------------------------------------------------
+static bool read_history_digit()
+{
+    int c;
+
+    RL_SETSTATE(RL_STATE_MOREINPUT);
+    c = rl_read_key();
+    RL_UNSETSTATE(RL_STATE_MOREINPUT);
+
+    if (c < 0)
+        return false;
+
+    if (RL_ISSTATE(RL_STATE_MACRODEF))
+        _rl_add_macro_char(c);
+
+#if defined (HANDLE_SIGNALS)
+    if (RL_ISSTATE(RL_STATE_CALLBACK) == 0)
+        _rl_restore_tty_signals ();
+#endif
+
+    if (c >= '0' && c <= '9')
+    {
+        if (s_history_number < 0)
+            s_history_number = 0;
+        if (s_history_number <= 99999)
+        {
+            s_history_number *= 10;
+            s_history_number += c - '0';
+        }
+    }
+    else if (c == 27/*Esc*/ || c == 7/*^G*/)
+    {
+        s_history_number = -1;
+        return true;
+    }
+    else if (c == 13/*Enter*/)
+    {
+        return true;
+    }
+    else if (c == 8/*Backspace*/)
+    {
+        s_history_number /= 10;
+        if (s_history_number == 0)
+            s_history_number = -1;
+    }
+
+    set_f9_message();
+    return false;
+}
+
+//------------------------------------------------------------------------------
+#if defined (READLINE_CALLBACKS)
+int _win_f9_callback(_rl_callback_generic_arg *data)
+{
+    if (!read_history_digit())
+        return 0;
+
+    /* Deregister function, let rl_callback_read_char deallocate data */
+    _rl_callback_func = 0;
+    _rl_want_redisplay = 1;
+
+    return finish_win_f9();
+}
+#endif
+
+//------------------------------------------------------------------------------
+int win_f9(int count, int invoking_key)
+{
+    s_history_number = -1;
+    set_f9_message();
+
+#if defined (HANDLE_SIGNALS)
+    if (RL_ISSTATE(RL_STATE_CALLBACK) == 0)
+        _rl_disable_tty_signals ();
+#endif
+
+#if defined (READLINE_CALLBACKS)
+    if (RL_ISSTATE(RL_STATE_CALLBACK))
+    {
+        _rl_callback_data = _rl_callback_data_alloc(count);
+        _rl_callback_func = _win_f9_callback;
+        return 0;
+    }
+#endif
+
+    while (!read_history_digit())
+        ;
+
+    return finish_win_f9();
+}
+
+//------------------------------------------------------------------------------
+bool win_fn_callback_pending()
+{
+    return (_rl_callback_func == _win_f2_callback ||
+            _rl_callback_func == _win_f4_callback ||
+            _rl_callback_func == _win_f9_callback);
+}
+
+
+
+//------------------------------------------------------------------------------
 static bool s_globbing_wild = false;
 static bool s_literal_wild = false;
 bool is_globbing_wild() { return s_globbing_wild; }

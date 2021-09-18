@@ -73,6 +73,7 @@ extern int          _rl_last_v_pos;
 
 extern int clink_diagnostics(int, int);
 
+extern bool rl_wants_all_input();
 extern void host_add_history(int rl_history_index, const char* line);
 extern void host_remove_history(int rl_history_index, const char* line);
 extern void sort_match_list(char** matches, int len);
@@ -275,13 +276,20 @@ int length_history()
     // The only way to get the history length is to reset the history position
     // by calling using_history(), then get the history position by calling
     // where_history(), then restore the original state.
+    // REVIEW:  But this seems to effectively return history_length, which is
+    // public and accessible...?
+#if 1
     int prev_use_curr = history_prev_use_curr;
     int history_pos = where_history();
     using_history();
     int history_len = where_history();
+    assert(history_len == history_length);
     history_set_pos(history_pos);
     history_prev_use_curr = prev_use_curr;
     return history_len;
+#else
+    return history_length;
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -1488,6 +1496,15 @@ rl_module::rl_module(const char* shell_name, terminal_in* input, const char* sta
         clink_add_funmap_entry("cua-copy", cua_copy, keycat_select, "Copy the selected text to the clipboard");
         clink_add_funmap_entry("cua-cut", cua_cut, keycat_select, "Cut the selected text to the clipboard");
 
+        clink_add_funmap_entry("win-f1", win_f1, keycat_history, "Move cursor forward, or at end of line copy character from previous command");
+        clink_add_funmap_entry("win-f2", win_f2, keycat_history, "Enter a character and copy up to it from the previous command");
+        clink_add_funmap_entry("win-f3", win_f3, keycat_history, "Copy the rest of the previous command");
+        clink_add_funmap_entry("win-f4", win_f4, keycat_misc, "Enter a character and delete up to it in the input line");
+        clink_add_funmap_entry("win-f5", win_f5, keycat_history, "Move 'back' through the history list, fetching the previous command");
+        clink_add_funmap_entry("win-f6", win_f6, keycat_misc, "Insert ^Z");
+        clink_add_funmap_entry("win-f8", win_f8, keycat_history, "Search backward through the history for the string of characters between the start of the current line and the cursor point.  The search string must match at the beginning of a history line.  This is a non-incremental search");
+        clink_add_funmap_entry("win-f9", win_f9, keycat_history, "Enter a history number and replace the input line with the history line");
+
         clink_add_funmap_entry("edit-and-execute-command", edit_and_execute_command, keycat_misc, "Invoke an editor on the current input line, and execute the result.  This attempts to invoke '%VISUAL%', '%EDITOR%', or 'notepad.exe' as the editor, in that order");
         clink_add_funmap_entry("glob-complete-word", glob_complete_word, keycat_completion, "Perform wildcard completion on the text before the cursor point, with a '*' implicitly appended");
         clink_add_funmap_entry("glob-expand-word", glob_expand_word, keycat_completion, "Insert all the wildcard completions that 'glob-list-expansions' would list.  If a numeric argument is supplied, a '*' is implicitly appended before completion");
@@ -1539,6 +1556,14 @@ rl_module::rl_module(const char* shell_name, terminal_in* input, const char* sta
         { "\\e[1;2F",       "cua-end-of-line" },         // shift-end
         { "\\e[2;2~",       "cua-copy" },                // shift-ins
         { "\\e[3;2~",       "cua-cut" },                 // shift-del
+        { "\\eOP",          "win-f1" },                  // F1
+        { "\\eOQ",          "win-f2" },                  // F2
+        { "\\eOR",          "win-f3" },                  // F3
+        { "\\eOS",          "win-f4" },                  // F4
+        { "\\e[15~",        "win-f5" },                  // F5
+        { "\\e[17~",        "win-f6" },                  // F6
+        { "\\e[19~",        "win-f8" },                  // F8
+        { "\\e[20~",        "win-f9" },                  // F9
         {}
     };
 
@@ -1630,9 +1655,12 @@ rl_module::~rl_module()
 //------------------------------------------------------------------------------
 void rl_module::set_keyseq_len(int len)
 {
+// TODO:  This may be dead code, and may be removable.
+#if 0
     assert(m_insert_next_len == 0);
     if (rl_is_insert_next_callback_pending())
         m_insert_next_len = len;
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -1984,6 +2012,8 @@ void rl_module::on_input(const input& input, result& result, const context& cont
             is_inc_searching = 0;
         }
 
+// TODO:  This may be dead code, and may be removable.
+#if 0
         if (m_insert_next_len > 0)
         {
             if (is_quoted_insert && --m_insert_next_len)
@@ -1991,6 +2021,7 @@ void rl_module::on_input(const input& input, result& result, const context& cont
             else
                 m_insert_next_len = 0;
         }
+#endif
     }
 
     g_result = nullptr;
