@@ -9,6 +9,7 @@
 #include <core/settings.h>
 #include <core/str.h>
 #include <core/str_compare.h>
+#include <core/str_hash.h>
 #include <core/str_tokeniser.h>
 #include <core/match_wild.h>
 #include <core/path.h>
@@ -39,6 +40,26 @@ static setting_enum g_translate_slashes(
     "off,system,slash,backslash",
     1
 );
+
+
+
+//------------------------------------------------------------------------------
+struct matches_impl::match_info_hasher
+{
+    size_t operator()(const match_info& info) const
+    {
+        return str_hash(info.match);
+    }
+};
+
+//------------------------------------------------------------------------------
+struct matches_impl::match_info_comparator
+{
+    bool operator()(const match_info& i1, const match_info& i2) const
+    {
+        return (i1.type == i2.type && strcmp(i1.match, i2.match) == 0);
+    }
+};
 
 
 
@@ -669,13 +690,30 @@ bool matches_impl::add_match(const match_desc& desc, bool already_normalized)
         match = tmp.c_str();
     }
 
+    if (!m_dedup)
+        m_dedup = new match_info_unordered_set;
+
+    if (m_dedup->find({ match, type }) != m_dedup->end())
+        return false;
+
     const char* store_match = m_store.store_front(match);
     if (!store_match)
         return false;
 
-    m_infos.push_back({ store_match, type, false });
+    match_info info = { store_match, type, false };
+    m_dedup->emplace(info); // Copies info; not a reference.
+
+    m_infos.emplace_back(std::move(info));
     ++m_count;
+
     return true;
+}
+
+//------------------------------------------------------------------------------
+void matches_impl::done_building()
+{
+    delete m_dedup;
+    m_dedup = nullptr;
 }
 
 //------------------------------------------------------------------------------

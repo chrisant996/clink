@@ -69,7 +69,7 @@ private:
 
     // Internal methods.
     void            cancel(editor_module::result& result);
-    void            update_matches(bool restrict=false, bool sort=false);
+    void            update_matches(bool restrict=false);
     void            update_len();
     void            update_layout();
     void            update_top();

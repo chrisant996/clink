@@ -69,7 +69,7 @@ public:
     virtual void        set_keyseq_len(int len) override;
 
     void                reset_generate_matches();
-    void                force_update_internal(bool restrict=false, bool sort=false);
+    void                force_update_internal(bool restrict=false);
 
 private:
     typedef editor_module                       module;
@@ -78,7 +78,7 @@ private:
     typedef std::vector<word>                   words;
     friend void update_matches();
     friend matches* get_mutable_matches(bool nosort);
-    friend matches* maybe_regenerate_matches(const char* needle, bool popup, bool sort);
+    friend matches* maybe_regenerate_matches(const char* needle, bool popup);
 
     enum flags : unsigned char
     {
@@ -87,9 +87,8 @@ private:
         flag_generate   = 1 << 2,
         flag_restrict   = 1 << 3,
         flag_select     = 1 << 4,
-        flag_sort       = 1 << 5,
-        flag_done       = 1 << 6,
-        flag_eof        = 1 << 7,
+        flag_done       = 1 << 5,
+        flag_eof        = 1 << 6,
     };
 
     struct key_t

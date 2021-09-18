@@ -93,12 +93,12 @@ void reset_generate_matches()
 }
 
 //------------------------------------------------------------------------------
-void force_update_internal(bool restrict, bool sort)
+void force_update_internal(bool restrict)
 {
     if (!s_editor)
         return;
 
-    s_editor->force_update_internal(restrict, sort);
+    s_editor->force_update_internal(restrict);
 }
 
 //------------------------------------------------------------------------------
@@ -439,11 +439,11 @@ void line_editor_impl::reset_generate_matches()
 }
 
 //------------------------------------------------------------------------------
-void line_editor_impl::force_update_internal(bool restrict, bool sort)
+void line_editor_impl::force_update_internal(bool restrict)
 {
     update_internal();
     if (restrict) set_flag(flag_restrict);
-    if (sort) set_flag(flag_sort);
+    set_flag(flag_select);
 }
 
 //------------------------------------------------------------------------------
@@ -453,14 +453,12 @@ void line_editor_impl::update_matches()
     bool generate = check_flag(flag_generate);
     bool restrict = check_flag(flag_restrict);
     bool select = check_flag(flag_select);
-    bool sort = check_flag(flag_sort);
 
     // Clear flag states before running generators, so that generators can use
     // reset_generate_matches().
     clear_flag(flag_generate);
     clear_flag(flag_restrict);
     clear_flag(flag_select);
-    clear_flag(flag_sort);
 
     if (generate)
     {
@@ -497,16 +495,15 @@ void line_editor_impl::update_matches()
         pipeline.restrict(m_needle);
     }
 
-    if (select || sort)
+    if (select)
     {
         match_pipeline pipeline(m_matches);
         pipeline.select(m_needle.c_str());
-        if (sort)
-            pipeline.sort();
+        pipeline.sort();
     }
 
     // Tell all the modules that the matches changed.
-    if (generate || restrict || select || sort)
+    if (generate || restrict || select)
     {
         line_state line = get_linestate();
         editor_module::context context = get_context();
@@ -1115,7 +1112,7 @@ void line_editor_impl::before_display()
 }
 
 //------------------------------------------------------------------------------
-matches* maybe_regenerate_matches(const char* needle, bool popup, bool sort)
+matches* maybe_regenerate_matches(const char* needle, bool popup)
 {
     if (!s_editor || s_editor->m_matches.is_regen_blocked())
         return nullptr;
@@ -1154,8 +1151,7 @@ matches* maybe_regenerate_matches(const char* needle, bool popup, bool sort)
 #endif
 
     pipeline.select(needle);
-    if (sort)
-        pipeline.sort();
+    pipeline.sort();
 
 #ifdef DEBUG
     if (debug_filter)

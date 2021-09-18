@@ -6,6 +6,7 @@
 #include "matches.h"
 
 #include "core/array.h"
+#include <unordered_set>
 #include <vector>
 
 //------------------------------------------------------------------------------
@@ -35,8 +36,12 @@ class match_generator;
 class matches_impl
     : public matches
 {
+    struct match_info_hasher;
+    struct match_info_comparator;
+
 public:
     typedef fixed_array<match_generator*, 32> generators;
+    typedef std::unordered_set<match_info, match_info_hasher, match_info_comparator> match_info_unordered_set;
 
                             matches_impl(generators* generators=nullptr, unsigned int store_size=0x10000);
     matches_iter            get_iter() const;
@@ -56,6 +61,8 @@ public:
     void                    set_word_break_position(int position);
     void                    set_regen_blocked();
     bool                    is_regen_blocked() const { return m_regen_blocked; }
+
+    void                    done_building();
 
 private:
     virtual const char*     get_unfiltered_match(unsigned int index) const override;
@@ -108,4 +115,6 @@ private:
     int                     m_word_break_position = -1;
     shadow_bool             m_filename_completion_desired;
     shadow_bool             m_filename_display_desired;
+
+    match_info_unordered_set* m_dedup = nullptr;
 };

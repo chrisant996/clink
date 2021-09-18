@@ -225,6 +225,8 @@ void match_pipeline::generate(
         if (generator->generate(state, builder))
             break;
 
+    m_matches.done_building(); // Free the temporary de-duplication data.
+
 #ifdef DEBUG
     if (dbg_get_env_int("DEBUG_PIPELINE"))
     {
@@ -317,10 +319,9 @@ void match_pipeline::select(const char* needle) const
 //------------------------------------------------------------------------------
 void match_pipeline::sort() const
 {
-    // When Readline completion is used, there's no point in sorting here
-    // because Readline re-sorts whatever we do here anyway.  But when Clink
-    // completion is used (e.g. clink-select-complete), Readline isn't involved
-    // and Clink must sort here.
+    // Clink takes over responsibility for sorting, and disables Readline's
+    // internal sorting.  However, Clink's Lua API allows generators to disable
+    // sorting.
 
     if (s_nosort)
         return;

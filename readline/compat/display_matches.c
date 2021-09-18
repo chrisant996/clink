@@ -940,8 +940,10 @@ static int display_match_list_internal(char **matches, int len, int max, bool on
         return count;
 
     // Sort the items if they are not already sorted.
+#if 0
     if (rl_ignore_completion_duplicates == 0 && rl_sort_completion_matches)
         qsort_match_list(matches + 1, len);
+#endif
 
     // Watch out for special case.  If LEN is less than LIMIT, then
     // just do the inner printing loop.

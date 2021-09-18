@@ -84,8 +84,8 @@ extern int macro_hook_func(const char* macro);
 extern int host_filter_matches(char** matches);
 extern void update_matches();
 extern void reset_generate_matches();
-extern void force_update_internal(bool restrict, bool sort);
-extern matches* maybe_regenerate_matches(const char* needle, bool popup, bool sort=false);
+extern void force_update_internal(bool restrict);
+extern matches* maybe_regenerate_matches(const char* needle, bool popup);
 extern setting_color g_color_interact;
 extern int g_prompt_refilter;
 extern int g_prompt_redisplay;
@@ -818,7 +818,7 @@ static void adjust_completion_defaults()
             g_rl_buffer->insert(qs);
         g_rl_buffer->end_undo_group();
 
-        force_update_internal(false, false); // Update needle since line changed.
+        force_update_internal(false); // Update needle since line changed.
         reset_generate_matches();
     }
 }
@@ -1495,6 +1495,8 @@ rl_module::rl_module(const char* shell_name, terminal_in* input, const char* sta
     rl_puts_face_func = puts_face_func;
     rl_macro_hook_func = macro_hook_func;
     rl_last_func_hook_func = last_func_hook_func;
+    rl_ignore_completion_duplicates = 0; // We'll handle de-duplication.
+    rl_sort_completion_matches = 0; // We'll handle sorting.
 
     _rl_comment_begin = savestring("::");   // this will do...
 

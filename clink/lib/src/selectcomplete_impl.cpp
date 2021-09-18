@@ -34,8 +34,8 @@ extern int _rl_last_v_pos;
 };
 
 extern void reset_generate_matches();
-extern matches* maybe_regenerate_matches(const char* needle, bool popup, bool sort=false);
-extern void force_update_internal(bool restrict=false, bool sort=false);
+extern matches* maybe_regenerate_matches(const char* needle, bool popup);
+extern void force_update_internal(bool restrict=false);
 extern void update_matches();
 extern void update_rl_modes_from_matches(const matches* matches, const matches_iter& iter, int count);
 
@@ -306,7 +306,7 @@ bool selectcomplete_impl::activate(editor_module::result& result, bool reactivat
     m_delimiter = 0;
     reset_generate_matches();
 
-    update_matches(true/*restrict*/, true/*sort*/);
+    update_matches(true/*restrict*/);
     assert(m_anchor >= 0);
     if (m_anchor < 0)
         return false;
@@ -456,7 +456,6 @@ void selectcomplete_impl::on_input(const input& _input, result& result, const co
 {
     assert(is_active());
 
-    bool sort = false;
     input input = _input;
 
     // Convert double Backspace into Escape.
@@ -606,7 +605,6 @@ prev:
         {
             int point = _rl_find_prev_mbchar(const_cast<char*>(m_needle.c_str()), m_needle.length(), MB_FIND_NONZERO);
             m_needle.truncate(point);
-            sort = true;
             goto update_needle;
         }
         break;
@@ -693,7 +691,7 @@ update_needle:
             m_index = 0;
             m_prev_displayed = -1;
             insert_needle();
-            update_matches(false/*restrict*/, sort);
+            update_matches(false/*restrict*/);
             if (m_matches.get_match_count())
                 insert_match();
             else
@@ -751,9 +749,9 @@ void selectcomplete_impl::cancel(editor_module::result& result)
 }
 
 //------------------------------------------------------------------------------
-void selectcomplete_impl::update_matches(bool restrict, bool sort)
+void selectcomplete_impl::update_matches(bool restrict)
 {
-    ::force_update_internal(restrict, sort);
+    ::force_update_internal(restrict);
     m_matches.set_regen_matches(nullptr);
 
     // Initialize when starting a new interactive completion.
