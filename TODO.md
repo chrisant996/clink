@@ -5,6 +5,9 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
+- Callback input:
+  - Need to eat unhandled chars from split key sequence in callbacks.  E.g. I'm not decided on what F2 Alt+M should do, but it shouldn't insert 'm' at the end!
+  - Need to continue quoted insert for unhandled chars from split key sequence, when using quoted insert.  E.g. ^Q Esc should do quoted insert for the full key sequence for Esc, instead of dispatching additional keys as though they were pressed.
 
 ## Medium Priority
 - Add a quick start / beginner section to the Clink docs.
@@ -15,25 +18,29 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## Low Priority
 - [#158](https://github.com/chrisant996/clink/issues/158); crash when key macro includes "\015".  Clink uses Readline's callback mode incorrectly.
+- Auto-update option, with configurable polling interval?
 
 ## Windows Key Bindings
 ### Always
-- <kbd>F1</kbd> => Move the cursor one character, until end of line.  If at end of line, use current cursor position as index into previous command and append that character to current line.
-- <kbd>F2</kbd> => Enter character to copy up to from the previous command.  Overwrites existing characters if not at end of line.
-- <kbd>F3</kbd> => Replace input with previous command.
-- <kbd>F4</kbd> => Enter character to delete up to in current input line; place cursor at end of line.
-- <kbd>F5</kbd> => Previous command in history (like <kbd>Up</kbd>).
-- <kbd>F6</kbd> => Insert `^Z` at cursor position.
-- <kbd>F7</kbd> => Show text-mode interactive list of previous commands.
-- <kbd>Alt</kbd>+<kbd>F7</kbd> => Clear history.
-- <kbd>F8</kbd> => Cycle through previous commands matching what was typed so far.
-- <kbd>F9</kbd> => Enter command number in history; replace input with the command, place cursor at end of line.
-- <kbd>Ctrl</kbd>+<kbd>Up</kbd> and <kbd>Ctrl</kbd>+<kbd>Down</kbd> => Scroll one line.
+- [x] <kbd>F1</kbd> `win-f1` => Move the cursor forward one character, until end of line.  If at end of line, use current cursor position as index into previous command and append that character to current line.
+- [x] <kbd>F2</kbd> => Enter character to copy up to from the previous command.  Overwrites existing characters if not at end of line.
+- [x] <kbd>F3</kbd> `win-f3` => Replace input with previous command.
+- [x] <kbd>F4</kbd> => Enter character to delete up to in current input line; place cursor at end of line.
+- [x] <kbd>F5</kbd> `previous-history` => Previous command in history (like <kbd>Up</kbd>).
+- [x] <kbd>F6</kbd> `win-f6` => Insert `^Z` at cursor position.
+- [ ] <kbd>F7</kbd> => Show text-mode interactive list of previous commands.
+- ~~<kbd>Alt</kbd>+<kbd>F7</kbd> => Clear history.~~
+- [x] <kbd>F8</kbd> `history-search-backward` => Cycle through previous commands matching what was typed so far.
+- [x] <kbd>F9</kbd> => Enter command number in history; replace input with the command, place cursor at end of line.
+- [ ] QUIRK:  <kbd>Esc</kbd> in conhost clears the line but does not reset the history index.
+  - Affects F1, F2, F3, F5, F8.
+- [ ] UTF8 input special treatment for F2 and F4.
 ### Conditional
-- <kbd>Right</kbd> => Move the cursor one character, until end of line.  If at end of line, use current cursor position as index into previous command and append that character to current line.
-- <kbd>Ctrl</kbd>+<kbd>F</kbd> => Conhost Find.
-- <kbd>Ctrl</kbd>+<kbd>M</kbd> => Conhost Mark.
-- <kbd>Ctrl</kbd>+<kbd>A</kbd> => If text selected, Conhost Select All (selects the entire console buffer).  Otherwise select all text in the input line.
+- Some way to conditionally bind these by default?  Or just provide a sample key binding file in the Beginner section of the documentation?
+  - <kbd>Right</kbd> => `win-f1` (or maybe this should be the default?)
+  - <kbd>Ctrl</kbd>+<kbd>F</kbd> => `clink-find-conhost` (or maybe the Alt+F is enough?)
+  - <kbd>Ctrl</kbd>+<kbd>M</kbd> => `clink-mark-conhost` (or maybe the Alt+M is enough?)
+  - <kbd>Ctrl</kbd>+<kbd>A</kbd> => `clink-selectall-conhost` (Alt+A is already taken)
 
 ## Tests
 
