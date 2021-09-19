@@ -158,7 +158,7 @@ bool hook_setter::attach_detour(const char* module, const char* name, hookptr_t 
 
     // Hook the target pointer.
     PDETOUR_TRAMPOLINE trampoline;
-    LONG err = DetourAttachEx(&replace, (PVOID)hook, &trampoline, nullptr, nullptr);
+    LONG err = DetourAttachEx(&desc.replace, (PVOID)hook, &trampoline, nullptr, nullptr);
     if (err != NOERROR)
     {
         LOG("Unable to hook %s (error %u).", name, err);
