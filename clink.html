@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.2.32</title>
+<title>Clink v1.2.33</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -747,7 +747,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.2.32</div>
+                <div id="title">Clink v1.2.33</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -861,6 +861,11 @@ If you want a customizable prompt with a bunch of styles and an easy-to-use conf
 <td align="center"><code>clink.colorize_input</code></td>
 <td align="center">True</td>
 <td>Enables context sensitive coloring for the input text (see <a href="#classifywords">Coloring The Input Text</a>).</td>
+</tr>
+<tr>
+<td align="center"><code>clink.default_bindings</code></td>
+<td align="center"><code>bash</code></td>
+<td>Clink uses bash key bindings when this is set to <code>bash</code> (the default).  When this is set to <code>windows</code> Clink overrides some of the bash defaults with familiar Windows key bindings for <kbd>Tab</kbd>, <kbd>Ctrl</kbd>+<kbd>A</kbd>, <kbd>Ctrl</kbd>+<kbd>F</kbd>, <kbd>Ctrl</kbd>+<kbd>M</kbd>, and <kbd>Right</kbd>.</td>
 </tr>
 <tr>
 <td align="center"><code>clink.logo</code></td>
@@ -993,9 +998,19 @@ If you want a customizable prompt with a bunch of styles and an easy-to-use conf
 <td>Enhanced Doskey adds the expansion of macros that follow <code>|</code> and <code>&amp;</code> command separators and respects quotes around words when parsing <code>$1</code>..<code>$9</code> tags. Note that these features do not apply to Doskey use in Batch files.</td>
 </tr>
 <tr>
+<td align="center"><code>exec.aliases</code></td>
+<td align="center">True</td>
+<td>When matching executables as the first word (<code>exec.enable</code>), include doskey aliases.</td>
+</tr>
+<tr>
+<td align="center"><code>exec.commands</code></td>
+<td align="center">True</td>
+<td>When matching executables as the first word (<code>exec.enable</code>), include CMD commands (such as <code>cd</code>, <code>copy</code>, <code>exit</code>, <code>for</code>, <code>if</code>, etc).</td>
+</tr>
+<tr>
 <td align="center"><code>exec.cwd</code></td>
 <td align="center">True</td>
-<td>When matching executables as the first word (<code>exec.enable</code>), include executables in the current directory. (This is implicit if the word being completed is a relative path).</td>
+<td>When matching executables as the first word (<code>exec.enable</code>), include executables in the current directory. (This is implicit if the word being completed is a relative path, or if <code>exec.files</code> is true.)</td>
 </tr>
 <tr>
 <td align="center"><code>exec.dirs</code></td>
@@ -1005,7 +1020,12 @@ If you want a customizable prompt with a bunch of styles and an easy-to-use conf
 <tr>
 <td align="center"><code>exec.enable</code></td>
 <td align="center">True</td>
-<td>Match executables when completing the first word of a line.</td>
+<td>Match executables when completing the first word of a line.  Executables are determined by the extensions listed in the <code>%PATHEXT%</code> environment variable.</td>
+</tr>
+<tr>
+<td align="center"><code>exec.files</code></td>
+<td align="center">False</td>
+<td>When matching executables as the first word (<code>exec.enable</code>), include files in the current directory.</td>
 </tr>
 <tr>
 <td align="center"><code>exec.path</code></td>
@@ -1529,6 +1549,10 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 <td>Like <code>complete</code>, but shows interactive menu of matches and responds to arrow keys and typing to filter the matches.</td>
 </tr>
 <tr>
+<td align="center"><code>clink-selectall-conhost</code></td>
+<td>Mimics the &quot;Select All&quot; command when running in a standard console window (hosted by the OS conhots).  Selects the input line text.  If already selected, then it invokes the &quot;Select All&quot; command from the console window&#39;s system menu and selects the entire screen buffer&#39;s contents.</td>
+</tr>
+<tr>
 <td align="center"><code>clink-show-help</code></td>
 <td>Lists the currently active key bindings using friendly key names.  A numeric argument affects showing categories and descriptions:  0 for neither, 1 for categories, 2 for descriptions, 3 for categories and descriptions (the default).</td>
 </tr>
@@ -1607,6 +1631,30 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 <tr>
 <td align="center"><code>shell-expand-line</code></td>
 <td>A synonym for <code>clink-expand-line</code>.</td>
+</tr>
+<tr>
+<td align="center"><code>win-copy-history-number</code></td>
+<td>Enter a history number and replace the input line with the history line (mimics Windows console <kbd>F9</kbd>).</td>
+</tr>
+<tr>
+<td align="center"><code>win-copy-up-to-char</code></td>
+<td>Enter a character and copy up to it from the previous command (mimics Windows console <kbd>F2</kbd>).</td>
+</tr>
+<tr>
+<td align="center"><code>win-copy-up-to-end</code></td>
+<td>Copy the rest of the previous command (mimics Windows console <kbd>F3</kbd>).</td>
+</tr>
+<tr>
+<td align="center"><code>win-cursor-forward</code></td>
+<td>Move cursor forward, or at end of line copy character from previous command (mimics Windows console <kbd>F1</kbd> and <kbd>Right</kbd>).</td>
+</tr>
+<tr>
+<td align="center"><code>win-delete-up-to-char</code></td>
+<td>Enter a character and delete up to it in the input line (mimics Windows console <kbd>F4</kbd>).</td>
+</tr>
+<tr>
+<td align="center"><code>win-insert-eof</code></td>
+<td>Insert ^Z (mimics Windows console <kbd>F6</kbd>).</td>
 </tr>
 </tbody></table>
 <p><a name="completioncolors"></a></p>
@@ -3740,6 +3788,19 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1233">v1.2.33</h4>
+<ul>
+<li>Rewrote how Clink hooks APIs in CMD.EXE; it no longer uses any IAT hooking, and exclusively uses Detours.</li>
+<li>Added <code>clink.default_bindings</code> Clink setting to choose between <code>bash</code> or <code>windows</code> default key bindings.  <code>bash</code> key bindings are still the default, for compatibility with existing Clink installations.</li>
+<li>Added <code>exec.aliases</code>, <code>exec.commands</code>, and <code>exec.files</code> Clink settings to further customize how matches are generated for the first word when the <code>exec.enable</code> Clink setting is enabled.</li>
+<li>Small performance optimization in the hooked <code>WriteConsoleW()</code> system API.</li>
+<li>Added logging for rare error case during inject.</li>
+<li>Added default key bindings for <kbd>F1</kbd> through <kbd>F9</kbd> that mimic the default Windows console function key inputs.</li>
+<li>Added <code>clink-selectall-conhost</code> command that mimics the default Windows console Select All command.</li>
+<li>Fixed <code>clink-select-complete</code> to remove duplicate matches if generators try to add duplicate matches.</li>
+<li>Fixed script error when <code>%PATH%</code> is not set and <code>exec.enable</code> and <code>exec.path</code> are both enabled.</li>
+<li>Fixed some quirks when using the <code>quoted-insert</code> command.</li>
+</ul>
 <h4 id="v1232">v1.2.32</h4>
 <ul>
 <li>Added <code>rl_buffer:setargument()</code> function for a &quot;luafunc:&quot; macro to be able to set Readline&#39;s numeric argument.</li>
