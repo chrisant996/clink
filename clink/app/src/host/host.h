@@ -37,7 +37,7 @@ public:
     void            filter_prompt() override;
     void            filter_transient_prompt(bool final) override;
     void            filter_matches(char** matches) override;
-    bool            call_lua_rl_global_function(const char* func_name) override;
+    bool            call_lua_rl_global_function(const char* func_name, line_state* line) override;
     const char**    copy_dir_history(int* total) override;
     void            get_app_context(int& id, str_base& binaries, str_base& profile, str_base& scripts) override;
 

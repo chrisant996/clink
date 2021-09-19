@@ -168,7 +168,7 @@ int host_filter_matches(char** matches)
 //------------------------------------------------------------------------------
 bool host_call_lua_rl_global_function(const char* func_name)
 {
-    return s_callbacks && s_callbacks->call_lua_rl_global_function(func_name);
+    return s_editor && s_editor->call_lua_rl_global_function(func_name);
 }
 
 //------------------------------------------------------------------------------
@@ -1109,6 +1109,16 @@ void line_editor_impl::before_display()
     assert(s_editor);
     if (s_editor)
         s_editor->classify();
+}
+
+//------------------------------------------------------------------------------
+bool line_editor_impl::call_lua_rl_global_function(const char* func_name)
+{
+    if (!s_callbacks)
+        return false;
+
+    line_state line = get_linestate();
+    return s_callbacks->call_lua_rl_global_function(func_name, &line);
 }
 
 //------------------------------------------------------------------------------

@@ -70,6 +70,7 @@ public:
 
     void                reset_generate_matches();
     void                force_update_internal(bool restrict=false);
+    bool                call_lua_rl_global_function(const char* func_name);
 
 private:
     typedef editor_module                       module;

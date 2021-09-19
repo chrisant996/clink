@@ -5,12 +5,14 @@
 #include "lua_state.h"
 #include "lua_script_loader.h"
 #include "rl_buffer_lua.h"
+#include "line_state_lua.h"
 
 #include <core/settings.h>
 #include <core/str.h>
 #include <core/str_tokeniser.h>
 #include <core/os.h>
 
+#include <memory>
 #include <assert.h>
 
 extern "C" {
@@ -529,10 +531,11 @@ bool lua_state::send_event_cancelable_string_inout(const char* event_name, const
 }
 
 //------------------------------------------------------------------------------
-bool lua_state::call_lua_rl_global_function(const char* func_name)
+bool lua_state::call_lua_rl_global_function(const char* func_name, line_state* line)
 {
     lua_State* state = get_state();
     rl_buffer_lua buffer(*g_rl_buffer);
+    std::unique_ptr<line_state_lua> line_lua = std::unique_ptr<line_state_lua>(line ? new line_state_lua(*line) : nullptr);
 
     str<> msg;
     if (!push_named_function(state, func_name, &msg))
@@ -546,9 +549,13 @@ bool lua_state::call_lua_rl_global_function(const char* func_name)
     override_rl_last_func(nullptr);
 
     buffer.push(state);
+    if (line_lua)
+        line_lua->push(state);
+    else
+        lua_pushnil(state);
 
     rollback<bool> rb(s_in_luafunc, true);
-    bool success = (pcall(1, 0) == LUA_OK);
+    bool success = (pcall(2, 0) == LUA_OK);
 
     extern void set_pending_luafunc(const char *);
     set_pending_luafunc(func_name);
