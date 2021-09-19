@@ -11,7 +11,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - <kbd>F7</kbd> => Show text-mode interactive list of previous commands.
 
 ## Low Priority
-- [#158](https://github.com/chrisant996/clink/issues/158); crash when key macro includes "\015".  Clink uses Readline's callback mode incorrectly.
 - Support this quirk, or not?  <kbd>Esc</kbd> in conhost clears the line but does not reset the history index, but in Clink it resets the history index.  Affects F1, F2, F3, F5, F8.
 - Auto-update option, with configurable polling interval?  (Though package managers like scoop can handle updates, if Clink was installed through one.)
 
