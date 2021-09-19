@@ -1805,8 +1805,7 @@ LNope:
     // is active that should block on_input from reaching readline.  But the way
     // that blocking is achieved is by adding a "" binding that matches
     // everything not explicitly bound in the keymap.  So it works out
-    // naturally, without additional effort.  But it would probably be cleaner
-    // for this to be implemented on rl_module rather than line_editor_impl.
+    // naturally, without additional effort.
 
     // Using nullptr for the keymap starts from the root of the current keymap,
     // but in a multi key sequence this needs to use the current dispatching
