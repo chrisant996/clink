@@ -284,6 +284,14 @@ rl_callback_read_char (void)
 	  if (rl_line_buffer[0])
 	    _rl_init_line_state ();
 
+/* begin_clink_change, issue #158 */
+	  /* Must not continue if the handler was uninstalled, otherwise
+	     if there is macro input the loop will continue and crash
+	     when it tries to use rl_linefunc. */
+	  if (!rl_linefunc)
+	    break;
+/* end_clink_change */
+
 	  /* Redisplay the prompt if readline_handler_{install,remove}
 	     not called. */
 	  if (in_handler == 0 && rl_linefunc)

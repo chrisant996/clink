@@ -27,5 +27,6 @@ public:
     virtual bool            undo() override;
 
 private:
-    bool                    m_need_draw;
+    bool                    m_attached = false;
+    bool                    m_need_draw = false;
 };

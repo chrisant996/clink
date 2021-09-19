@@ -1434,8 +1434,7 @@ static void bind_keyseq_list(const two_strings* list, Keymap map)
 
 //------------------------------------------------------------------------------
 rl_module::rl_module(const char* shell_name, terminal_in* input, const char* state_dir)
-: m_rl_buffer(nullptr)
-, m_prev_group(-1)
+: m_prev_group(-1)
 {
     assert(!s_direct_input);
     s_direct_input = input;
@@ -1955,6 +1954,29 @@ void rl_module::set_prompt(const char* prompt, const char* rprompt, bool redispl
 }
 
 //------------------------------------------------------------------------------
+bool rl_module::is_input_pending()
+{
+    return (rl_pending_input ||
+            _rl_pushed_input_available() ||
+            RL_ISSTATE(RL_STATE_MACROINPUT) ||
+            rl_executing_macro);
+}
+
+//------------------------------------------------------------------------------
+bool rl_module::next_line(str_base& out)
+{
+    if (m_queued_lines.empty())
+    {
+        out.clear();
+        return false;
+    }
+
+    out = m_queued_lines[0].c_str();
+    m_queued_lines.erase(m_queued_lines.begin());
+    return true;
+}
+
+//------------------------------------------------------------------------------
 void rl_module::bind_input(binder& binder)
 {
     int default_group = binder.get_group();
@@ -2053,7 +2075,7 @@ void rl_module::on_begin_line(const context& context)
     if (_rl_colored_stats || _rl_colored_completion_prefix)
         _rl_parse_colors();
 
-    m_done = false;
+    m_done = !m_queued_lines.empty();
     m_eof = false;
     m_prev_group = -1;
 }
@@ -2079,12 +2101,6 @@ void rl_module::on_end_line()
     }
     else
         clear_sticky_search_position();
-
-    if (m_rl_buffer != nullptr)
-    {
-        rl_line_buffer = m_rl_buffer;
-        m_rl_buffer = nullptr;
-    }
 
     s_classifications = nullptr;
     s_input_color = nullptr;
@@ -2256,14 +2272,10 @@ void rl_module::on_matches_changed(const context& context, const line_state& lin
 //------------------------------------------------------------------------------
 void rl_module::done(const char* line)
 {
+    if (line)
+        m_queued_lines.emplace_back(line);
     m_done = true;
     m_eof = (line == nullptr);
-
-    // Readline will reset the line state on returning from this call. Here we
-    // trick it into reseting something else so we can use rl_line_buffer later.
-    static char dummy_buffer = 0;
-    m_rl_buffer = rl_line_buffer;
-    rl_line_buffer = &dummy_buffer;
 
     rl_callback_handler_remove();
 }

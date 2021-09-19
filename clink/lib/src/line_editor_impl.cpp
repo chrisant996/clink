@@ -376,8 +376,7 @@ bool line_editor_impl::get_line(str_base& out)
     if (check_flag(flag_eof))
         return false;
 
-    const char* line = m_buffer.get_buffer();
-    out.copy(line);
+    m_module.next_line(out);
     return true;
 }
 
@@ -395,7 +394,8 @@ bool line_editor_impl::edit(str_base& out)
         if (callback && !callback->is_enabled())
             callback = nullptr;
 
-        m_desc.input->select(callback);
+        if (!m_module.is_input_pending())
+            m_desc.input->select(callback);
     }
 
     return get_line(out);
@@ -572,29 +572,32 @@ void line_editor_impl::set_keyseq_len(int len)
 // to help dispatch() be able to dispatch an entire chord.
 bool line_editor_impl::update_input()
 {
-    int key = m_desc.input->read();
-
-    if (key == terminal_in::input_terminal_resize)
+    if (!m_module.is_input_pending())
     {
-        int columns = m_desc.output->get_columns();
-        int rows = m_desc.output->get_rows();
-        editor_module::context context = get_context();
-        for (auto* module : m_modules)
-            module->on_terminal_resize(columns, rows, context);
+        int key = m_desc.input->read();
+
+        if (key == terminal_in::input_terminal_resize)
+        {
+            int columns = m_desc.output->get_columns();
+            int rows = m_desc.output->get_rows();
+            editor_module::context context = get_context();
+            for (auto* module : m_modules)
+                module->on_terminal_resize(columns, rows, context);
+        }
+
+        if (key == terminal_in::input_abort)
+        {
+            m_buffer.reset();
+            end_line();
+            return true;
+        }
+
+        if (key < 0)
+            return true;
+
+        if (!m_bind_resolver.step(key))
+            return false;
     }
-
-    if (key == terminal_in::input_abort)
-    {
-        m_buffer.reset();
-        end_line();
-        return true;
-    }
-
-    if (key < 0)
-        return true;
-
-    if (!m_bind_resolver.step(key))
-        return false;
 
     struct result_impl : public editor_module::result
     {

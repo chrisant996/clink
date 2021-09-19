@@ -28,6 +28,9 @@ public:
     void            set_keyseq_len(int len);
     void            set_prompt(const char* prompt, const char* rprompt, bool redisplay);
 
+    bool            is_input_pending();
+    bool            next_line(str_base& out);
+
 private:
     virtual void    bind_input(binder& binder) override;
     virtual void    on_begin_line(const context& context) override;
@@ -36,11 +39,11 @@ private:
     virtual void    on_matches_changed(const context& context, const line_state& line, const char* needle) override;
     virtual void    on_terminal_resize(int columns, int rows, const context& context) override;
     void            done(const char* line);
-    char*           m_rl_buffer;
     int             m_prev_group;
     int             m_catch_group;
     bool            m_done;
     bool            m_eof;
+    std::vector<str_moveable> m_queued_lines;
     str_moveable    m_rl_prompt;
     str_moveable    m_rl_rprompt;
     str<16>         m_input_color;
