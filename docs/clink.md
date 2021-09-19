@@ -1119,9 +1119,21 @@ The `terminal.raw_esc` setting controls the binding sequence for the <kbd>Esc</k
 
 You can bind a key to a [Lua](#extending-clink) function by [binding](#keybindings) it to a macro that begins with "luafunc:".  Clink will invoke the named Lua function when the key binding is input.  Function names can include periods (such as `foo.bar`) but cannot include any other punctuation.
 
-The Lua function receives a <a href="#rl_buffer">rl_buffer</a> argument that gives it access to the input buffer.
+The Lua function receives two arguments:
+
+<span class="arg"><a href="#rl_buffer">rl_buffer</a></span> gives it access to the input buffer.
+
+<span class="arg"><a href="#line">line_state</a></span> gives it access to the same line state that a [match generator](#match-generators) receives.
 
 Lua functions can print output, but should first call <a href="#rl_buffer:beginoutput">rl_buffer:beginoutput</a> so that the output doesn't overwrite the displayed input line.
+
+> **Notes:**
+> - The <span class="arg">line_state</span> is nil if not using Clink v1.2.34 or higher.
+> - The end word is always empty for generators.  So to get the word at the cursor use:
+> ```lua
+> local info = line_state:getwordinfo(line_state:getwordcount())
+> local word_at_cursor = line_state:getline():sub(info.offset, line_state:getcursor())
+> ```
 
 #### Basic example
 
