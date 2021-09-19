@@ -5,6 +5,7 @@
 #### v1.2.34
 
 - Changed "luafunc:" macro functions to receive the `line_state` as a second argument.
+- Fixed [#158](https://github.com/chrisant996/clink/issues/158); crash when a keyboard macro contains `\015`.
 
 #### v1.2.33
 
