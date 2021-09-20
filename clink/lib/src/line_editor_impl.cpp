@@ -374,7 +374,10 @@ bool line_editor_impl::get_line(str_base& out)
         end_line();
 
     if (check_flag(flag_eof))
+    {
+        out.clear();
         return false;
+    }
 
     m_module.next_line(out);
     return true;

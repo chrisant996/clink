@@ -182,7 +182,7 @@ void line_editor_tester::run()
             printf(" input; %s#\n", m_input);
 
             str<> line;
-            m_editor->get_line(line);
+            get_line(line);
             printf("output; %s#\n", line.c_str());
 
             puts("\nexpected;");
@@ -252,7 +252,7 @@ void line_editor_tester::run()
     if (m_expected_output != nullptr)
     {
         str<> line;
-        REQUIRE(m_editor->get_line(line));
+        REQUIRE(get_line(line));
         REQUIRE(strcmp(m_expected_output, line.c_str()) == 0, [&] () {
             printf("       input; %s#\n", m_input);
             printf("out expected; %s#\n", m_expected_output);
@@ -265,8 +265,7 @@ void line_editor_tester::run()
     m_expected_matches.clear();
     m_expected_classifications.clear();
 
-    str<> t;
-    m_editor->get_line(t);
+    reset_lines();
 }
 
 //------------------------------------------------------------------------------
@@ -282,6 +281,28 @@ void line_editor_tester::expected_matches_impl(int dummy, ...)
 
     va_end(arg);
     m_has_matches = true;
+}
+
+//------------------------------------------------------------------------------
+bool line_editor_tester::get_line(str_base& line)
+{
+    if (!m_editor->get_line(line))
+        return false;
+
+    if (line.empty())
+        line = rl_line_buffer;
+    return true;
+}
+
+//------------------------------------------------------------------------------
+void line_editor_tester::reset_lines()
+{
+    str<> t;
+    do
+    {
+        m_editor->get_line(t);
+    }
+    while (!t.empty());
 }
 
 //------------------------------------------------------------------------------

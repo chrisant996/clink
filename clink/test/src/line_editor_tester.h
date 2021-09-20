@@ -72,6 +72,9 @@ public:
 private:
     void                        create_line_editor(const line_editor::desc* desc=nullptr);
     void                        expected_matches_impl(int dummy, ...);
+    bool                        get_line(str_base& line);
+    void                        reset_lines();
+
     test_terminal_in            m_terminal_in;
     test_terminal_out           m_terminal_out;
     printer*                    m_printer;
