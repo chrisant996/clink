@@ -215,23 +215,23 @@ TEST_CASE("Match type : lcd")
     tester.get_editor()->add_generator(lua_generator);
     tester.get_editor()->add_generator(file_match_generator());
 
-    rl_bind_keyseq_in_map("Z", rl_named_function("complete"), emacs_meta_keymap);
+    rl_bind_keyseq_in_map("\x99", rl_named_function("complete"), emacs_standard_keymap);
 
     SECTION("pathish readline")
     {
-        tester.set_input("plugh dir\\\x1bZ");
+        tester.set_input("plugh dir\\\x99");
         tester.set_expected_output("plugh dir\\b");
         tester.run();
     }
 
     SECTION("non-pathish readline")
     {
-        tester.set_input("xyzzy foo/\x1bZ");
+        tester.set_input("xyzzy foo/\x99");
         tester.set_expected_output("xyzzy foo/b");
         tester.run();
     }
 
-    rl_unbind_key_in_map('Z', emacs_meta_keymap);
+    rl_bind_keyseq_in_map("\x99", rl_insert, emacs_standard_keymap);
 }
 
 //------------------------------------------------------------------------------
