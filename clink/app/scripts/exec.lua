@@ -138,7 +138,7 @@ function exec_generator:generate(line_state, match_builder)
     -- Include files.
     if settings.get("exec.files") then
         match_cwd = false
-        added = add_files("*", true) or added
+        added = add_files(text.."*", true) or added
     end
 
     -- Search 'paths' for files ending in 'suffices' and look for matches.
