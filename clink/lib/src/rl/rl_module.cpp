@@ -1630,7 +1630,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input, const char* sta
         { "\\C-e",          "clink-expand-line" },       // ctrl-e
         { "\\C-f",          "clink-find-conhost" },      // ctrl-f
         { "\\e[27;5;77~",   "clink-mark-conhost" },      // ctrl-m (differentiated)
-        { "\\e[C",          "clink-cursor-forward" },    // right
+        { "\\e[C",          "win-cursor-forward" },      // right
         { "\t",             "old-menu-complete" },       // tab
         { "\\e[Z",          "old-menu-complete-backward" }, // shift-tab
         { "\\e[27;5;32~",   "clink-select-complete" },   // ctrl-space
