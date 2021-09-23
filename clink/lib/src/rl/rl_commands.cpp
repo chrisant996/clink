@@ -912,7 +912,7 @@ void cua_after_command(bool force_clear)
     }
 
     // If not a recognized command, clear the cua selection.
-    if (s_map.find((void*)rl_last_func) == s_map.end())
+    if (force_clear || s_map.find((void*)rl_last_func) == s_map.end())
         cua_clear_selection();
 }
 
