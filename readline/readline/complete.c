@@ -2821,9 +2821,12 @@ append_to_match (char *text, int orig_start, int delimiter, int quote_char, int 
 	 directory. */
       else if (s == 0 && S_ISLNK (finfo.st_mode) && path_isdir (filename))
 /* begin_clink_change */
-	_rl_rubout_char (0, 0)
+	//;
+	{
+	  if (rl_point && rl_is_path_separator (rl_line_buffer[rl_point - 1]))
+	    _rl_rubout_char (0, 0);
+	}
 /* end_clink_change */
-	;
 #endif
       else
 	{
