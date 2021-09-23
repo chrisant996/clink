@@ -16,6 +16,7 @@ public:
     virtual const char*     get_buffer() const override;
     virtual unsigned int    get_length() const override;
     virtual unsigned int    get_cursor() const override;
+    virtual int             get_anchor() const override;
     virtual unsigned int    set_cursor(unsigned int pos) override;
     virtual bool            insert(const char* text) override;
     virtual bool            remove(unsigned int from, unsigned int to) override;

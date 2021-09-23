@@ -87,6 +87,7 @@ int     clink_select_complete(int count, int invoking_key);
 
 //------------------------------------------------------------------------------
 void    cua_clear_selection();
+int     cua_get_anchor();
 bool    cua_point_in_selection(int in);
 int     cua_selection_event_hook(int event);
 void    cua_after_command(bool force_clear=false);

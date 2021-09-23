@@ -22,6 +22,7 @@ static rl_buffer_lua::method g_methods[] = {
     { "getbuffer",      &rl_buffer_lua::get_buffer },
     { "getlength",      &rl_buffer_lua::get_length },
     { "getcursor",      &rl_buffer_lua::get_cursor },
+    { "getanchor",      &rl_buffer_lua::get_anchor },
     { "setcursor",      &rl_buffer_lua::set_cursor },
     { "insert",         &rl_buffer_lua::insert },
     { "remove",         &rl_buffer_lua::remove },
@@ -94,9 +95,28 @@ int rl_buffer_lua::get_cursor(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  rl_buffer:getanchor
+/// -ret:   integer | nil
+/// -ver:   1.2.35
+/// Returns the anchor position of the currently selected text in the input
+/// line, or nil if there is no selection.  The value can be from 1 to
+/// rl_buffer:getlength() + 1.  It can exceed the length of the input line
+/// because the anchor can be positioned just past the end of the input line.
+int rl_buffer_lua::get_anchor(lua_State* state)
+{
+    int anchor = m_rl_buffer.get_anchor();
+    if (anchor < 0)
+        lua_pushnil(state);
+    else
+        lua_pushinteger(state, anchor + 1);
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 /// -name:  rl_buffer:setcursor
 /// -arg:   cursor:integer
 /// -ret:   integer
+/// -ver:   1.1.20
 /// Sets the cursor position in the input line and returns the previous cursor
 /// position.  <span class="arg">cursor</span> can be from 1 to
 /// rl_buffer:getlength() + 1.  It can exceed the length of the input line

@@ -21,6 +21,7 @@ public:
     int                     get_buffer(lua_State* state);
     int                     get_length(lua_State* state);
     int                     get_cursor(lua_State* state);
+    int                     get_anchor(lua_State* state);
     int                     set_cursor(lua_State* state);
     int                     insert(lua_State* state);
     int                     remove(lua_State* state);

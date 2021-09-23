@@ -827,6 +827,12 @@ void cua_clear_selection()
 }
 
 //------------------------------------------------------------------------------
+int cua_get_anchor()
+{
+    return s_cua_anchor;
+}
+
+//------------------------------------------------------------------------------
 bool cua_point_in_selection(int in)
 {
     if (s_cua_anchor < 0)

@@ -18,6 +18,7 @@ public:
     virtual const char*     get_buffer() const = 0;
     virtual unsigned int    get_length() const = 0;
     virtual unsigned int    get_cursor() const = 0;
+    virtual int             get_anchor() const = 0;
     virtual unsigned int    set_cursor(unsigned int pos) = 0;
     virtual bool            insert(const char* text) = 0;
     virtual bool            remove(unsigned int from, unsigned int to) = 0;

@@ -4,6 +4,7 @@
 #include "pch.h"
 #include "rl_buffer.h"
 #include "line_state.h"
+#include "rl_commands.h"
 
 #include <core/base.h>
 #include <core/os.h>
@@ -58,9 +59,17 @@ unsigned int rl_buffer::get_cursor() const
 }
 
 //------------------------------------------------------------------------------
+int rl_buffer::get_anchor() const
+{
+    assert(m_attached);
+    return cua_get_anchor();
+}
+
+//------------------------------------------------------------------------------
 unsigned int rl_buffer::set_cursor(unsigned int pos)
 {
     assert(m_attached);
+    cua_clear_selection();
     return rl_point = min<unsigned int>(pos, rl_end);
 }
 
