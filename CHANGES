@@ -2,6 +2,11 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.2.35
+
+- Added `rl_buffer:getanchor()` to get the text selection anchor (there is no set function; use `rl.invokecommand()` to invoke commands to set/extend the selection if needed).
+- Fixed [#170](https://github.com/chrisant996/clink/issues/170); directory symlink completion is truncated when `mark-directories` is `off` in the .inputrc file.
+
 #### v1.2.34
 
 - Changed "luafunc:" macro functions to receive the `line_state` as a second argument.
@@ -70,7 +75,7 @@
 
 - Added `rl.getpromptinfo()` function.
 - Fixed loading .inputrc so that only one is loaded (regression introduced in v1.0.0a0 by the fix for [mridgers #258](https://github.com/mridgers/clink/issues/258)).  If similar behavior is still desired, consider using the `$include` directive in the Readline init file, to load additional files.
-- Fixed `clink-select-complete` to respect when `mark-directories` in .inputrc file if `off`.
+- Fixed `clink-select-complete` to respect when `mark-directories` in .inputrc file is `off`.
 - Fixed crash in `console.findline()` when no attributes are passed.  Callers using v1.2.27 and earlier can work around the crash by passing `{}` for attributes.
 - Fixed an off-by-1 bug in `console.scroll("absolute", top)`.  This will fix edge case malfunctions in some callers, but some callers could experience this as a breaking change.
 
