@@ -34,7 +34,7 @@ func_SetEnvironmentVariableW_t __Real_SetEnvironmentVariableW = SetEnvironmentVa
 func_WriteConsoleW_t __Real_WriteConsoleW = WriteConsoleW;
 func_ReadConsoleW_t __Real_ReadConsoleW = ReadConsoleW;
 func_GetEnvironmentVariableW_t __Real_GetEnvironmentVariableW = GetEnvironmentVariableW;
-static const char* s_kernel_module = nullptr;
+static const char s_kernel_module[] = "kernel32.dll";
 
 //------------------------------------------------------------------------------
 extern bool is_force_reload_scripts();
@@ -244,19 +244,6 @@ int host_cmd::validate()
 bool host_cmd::initialise()
 {
     hook_setter hooks;
-
-    {
-        // Must hook the one in kernelbase.dll if it's present because CMD links
-        // with kernelbase.dll on Windows 10.  Otherwise hook the one in
-        // kernel32.dll because it doesn't exist in kernelbase.dll on Windows 7.
-        //
-        // NOTE:  Now that Detours is used exclusively instead of IAT hooking,
-        // this might not be relevant anymore.  In fact, probably the module
-        // name and proc name are not even needed anymore.
-        HMODULE hlib = GetModuleHandleA("kernelbase.dll");
-        bool need_kernelbase = hlib && GetProcAddress(hlib, "ReadConsoleW");
-        s_kernel_module = need_kernelbase ? "kernelbase.dll" : "kernel32.dll";
-    }
 
     // Hook the setting of the 'prompt' environment variable so we can tag
     // it and detect command entry via a write hook.
