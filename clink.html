@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.2.33</title>
+<title>Clink v1.2.34</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -747,7 +747,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.2.33</div>
+                <div id="title">Clink v1.2.34</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -2996,8 +2996,20 @@ C-_:                kill-line                       <span class="hljs-comment">#
 <p><a name="luakeybindings"></a></p>
 <h3 id="lua-key-bindings">Lua Key Bindings</h3>
 <p>You can bind a key to a <a href="#extending-clink">Lua</a> function by <a href="#keybindings">binding</a> it to a macro that begins with &quot;luafunc:&quot;.  Clink will invoke the named Lua function when the key binding is input.  Function names can include periods (such as <code>foo.bar</code>) but cannot include any other punctuation.</p>
-<p>The Lua function receives a <a href="#rl_buffer">rl_buffer</a> argument that gives it access to the input buffer.</p>
+<p>The Lua function receives two arguments:</p>
+<p><span class="arg"><a href="#rl_buffer">rl_buffer</a></span> gives it access to the input buffer.</p>
+<p><span class="arg"><a href="#line">line_state</a></span> gives it access to the same line state that a <a href="#match-generators">match generator</a> receives.</p>
 <p>Lua functions can print output, but should first call <a href="#rl_buffer:beginoutput">rl_buffer:beginoutput</a> so that the output doesn&#39;t overwrite the displayed input line.</p>
+<blockquote>
+<p><strong>Notes:</strong></p>
+<ul>
+<li>The <span class="arg">line_state</span> is nil if not using Clink v1.2.34 or higher.</li>
+<li>The end word is always empty for generators.  So to get the word at the cursor use:<pre><code class="language-lua">local info = line_state:getwordinfo(line_state:getwordcount())
+local word_at_cursor = line_state:getline():sub(info.offset, line_state:getcursor())
+</code></pre>
+</li>
+</ul>
+</blockquote>
 <h4 id="basic-example">Basic example</h4>
 <p>Example of a Lua function key binding in a .inputrc file:</p>
 <pre><code class="plaintext">M-C-y:          <span class="hljs-string">"luafunc:insert_date"</span>
@@ -3788,6 +3800,13 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1234">v1.2.34</h4>
+<ul>
+<li>Changed &quot;luafunc:&quot; macro functions to receive the <code>line_state</code> as a second argument.</li>
+<li>Fixed <kbd>Right</kbd> when <code>clink.default_bindings</code> is <code>windows</code>.</li>
+<li>Fixed <code>exec.files</code> setting so completion works when a path is specified (e.g. <code>subdir\foo</code>) (regression introduced in v1.2.33).</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/158">#158</a>; crash when a keyboard macro contains <code>\015</code> (regression introduced in v1.0.0).</li>
+</ul>
 <h4 id="v1233">v1.2.33</h4>
 <ul>
 <li>Rewrote how Clink hooks APIs in CMD.EXE; it no longer uses any IAT hooking, and exclusively uses Detours.</li>
