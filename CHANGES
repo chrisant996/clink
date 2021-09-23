@@ -7,6 +7,7 @@
 - Added `rl_buffer:getanchor()` to get the text selection anchor (there is no set function; use `rl.invokecommand()` to invoke commands to set/extend the selection if needed).
 - Fixed CUA selection commands invoked by `rl.invokecommand()`.
 - Fixed [#170](https://github.com/chrisant996/clink/issues/170); directory symlink completion is truncated when `mark-directories` is `off` in the .inputrc file.
+- Fixed [#169](https://github.com/chrisant996/clink/issues/169); incompatibility between AutoHotkey, AnsiCon, and Clink when all three are used in CMD's AutoRun regkey.
 
 #### v1.2.34
 
