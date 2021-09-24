@@ -1263,12 +1263,14 @@ The new Clink tries to be as backward compatible with Clink v0.4.9 as possible. 
 
 If something seems to malfunction, here are some things to try that often help track down what's going wrong:
 
-- Check if anti-malware software blocked Clink from injecting.  Consider adding an exclusion for Clink.
+- Check if anti-malware software blocked Clink from injecting.
+  - Consider adding an exclusion for Clink.
+  - In rare circumstances, using `clink inject --detours` might make anti-malware software happier (but it probably won't help).
 - Check `clink info`.  E.g. does the state dir look right, do the script paths look right, do the inputrc files look right?
 - Check `clink set`.  E.g. do the settings look right?
 - Check the `clink.log` file for clues (its location is reported by `clink info`).
 
-When [reporting an issue](https://github.com/chrisant996/clink/issues), please include the following which answer a bunch of commonly relevant questions and saves time:
+When [reporting an issue](https://github.com/chrisant996/clink/issues), please include the following which saves time by answering in advance the usual questions:
 
 - Please describe what was expected to happen.
 - Please describe what actually happened.
