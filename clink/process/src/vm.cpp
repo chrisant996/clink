@@ -148,14 +148,14 @@ int vm::get_access(const region& region)
 }
 
 //------------------------------------------------------------------------------
-void vm::set_access(const region& region, unsigned int access)
+bool vm::set_access(const region& region, unsigned int access)
 {
     if (m_handle == nullptr)
-        return;
+        return false;
 
     DWORD ms_flags = to_ms_flags(access);
     size_t size = region.page_count * get_page_size();
-    VirtualProtectEx(m_handle, region.base, size, ms_flags, &ms_flags);
+    return !!VirtualProtectEx(m_handle, region.base, size, ms_flags, &ms_flags);
 }
 
 //------------------------------------------------------------------------------

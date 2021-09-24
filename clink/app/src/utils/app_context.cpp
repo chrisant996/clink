@@ -160,6 +160,12 @@ bool app_context::is_quiet() const
 }
 
 //------------------------------------------------------------------------------
+bool app_context::is_detours() const
+{
+    return m_desc.detours;
+}
+
+//------------------------------------------------------------------------------
 void app_context::get_binaries_dir(str_base& out) const
 {
     out.clear();

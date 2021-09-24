@@ -413,6 +413,7 @@ int inject(int argc, char** argv)
         { "pid",         required_argument,  nullptr, 'd' },
         { "nolog",       no_argument,        nullptr, 'l' },
         { "autorun",     no_argument,        nullptr, '_' },
+        { "detours",     no_argument,        nullptr, '^' },
         { "help",        no_argument,        nullptr, 'h' },
         { nullptr, 0, nullptr, 0 }
     };
@@ -459,13 +460,11 @@ int inject(int argc, char** argv)
             }
             break;
 
-        case 'q': app_desc.quiet = true;        break;
         case 'd': target_pid = atoi(optarg);    break;
+        case 'q': app_desc.quiet = true;        break;
+        case 'l': app_desc.log = false;         break;
+        case '^': app_desc.detours = true;      break;
         case '_': ret = 0; is_autorun = true;   break;
-
-        case 'l':
-            app_desc.log = false;
-            break;
 
         case '?':
         case 'h':

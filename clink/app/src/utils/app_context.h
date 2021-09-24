@@ -20,7 +20,7 @@ public:
         bool    log = true;
         bool    inherit_id = false; // Allow auto-detecting id from environment.
         bool    force = false;      // Skip host check (for testbed).
-        char    unused = 0;
+        bool    detours = false;    // Use Detours for hooking, instead of IAT.
         char    state_dir[510];     // = {}; (this crashes cl.exe v18.00.21005.1)
         char    script_path[510];   // = {}; (this crashes cl.exe v18.00.21005.1)
     };
@@ -29,6 +29,7 @@ public:
     int         get_id() const;
     bool        is_logging_enabled() const;
     bool        is_quiet() const;
+    bool        is_detours() const;
     void        get_binaries_dir(str_base& out) const;
     void        get_state_dir(str_base& out) const;
     void        get_autostart_command(str_base& out) const;

@@ -34,7 +34,7 @@ public:
     region              alloc(unsigned int page_count, unsigned int access=access_read|access_write);
     void                free(const region& region);
     int                 get_access(const region& region);
-    void                set_access(const region& region, unsigned int access);
+    bool                set_access(const region& region, unsigned int access);
     bool                read(void* dest, const void* src, size_t size);
     bool                write(void* dest, const void* src, size_t size);
     void                flush_icache(const region& region={});

@@ -34,7 +34,6 @@ func_SetEnvironmentVariableW_t __Real_SetEnvironmentVariableW = SetEnvironmentVa
 func_WriteConsoleW_t __Real_WriteConsoleW = WriteConsoleW;
 func_ReadConsoleW_t __Real_ReadConsoleW = ReadConsoleW;
 func_GetEnvironmentVariableW_t __Real_GetEnvironmentVariableW = GetEnvironmentVariableW;
-static const char s_kernel_module[] = "kernel32.dll";
 
 //------------------------------------------------------------------------------
 extern bool is_force_reload_scripts();
@@ -57,6 +56,19 @@ static setting_str g_admin_title_prefix(
     "This replaces the console title prefix when cmd.exe is elevated.",
     "");
 #endif
+
+
+
+//------------------------------------------------------------------------------
+static hook_type get_hook_type()
+{
+    static hook_type s_hook_type = app_context::get()->is_detours() ? detour : iat;
+    return s_hook_type;
+}
+static const char* get_kernel_module()
+{
+    return (get_hook_type() == iat) ? nullptr : "kernel32.dll";
+}
 
 
 
@@ -244,20 +256,22 @@ int host_cmd::validate()
 bool host_cmd::initialise()
 {
     hook_setter hooks;
+    hook_type type = get_hook_type();
+    const char* module = get_kernel_module();
 
     // Hook the setting of the 'prompt' environment variable so we can tag
     // it and detect command entry via a write hook.
     tag_prompt();
-    if (!hooks.attach(s_kernel_module, "SetEnvironmentVariableW", &host_cmd::set_env_var, &__Real_SetEnvironmentVariableW))
+    if (!hooks.attach(type, module, "SetEnvironmentVariableW", &host_cmd::set_env_var, &__Real_SetEnvironmentVariableW))
         return false;
-    if (!hooks.attach(s_kernel_module, "WriteConsoleW", &host_cmd::write_console, &__Real_WriteConsoleW))
+    if (!hooks.attach(type, module, "WriteConsoleW", &host_cmd::write_console, &__Real_WriteConsoleW))
         return false;
 
     // Set a trap to get a callback when cmd.exe fetches PROMPT environment
     // variable.  GetEnvironmentVariableW is always called before displaying the
     // prompt string, so it's a reliable spot to hook regardless how injection
     // is initiated (AutoRun, command line, etc).
-    if (!hooks.attach(s_kernel_module, "GetEnvironmentVariableW", &host_cmd::get_env_var, &__Real_GetEnvironmentVariableW))
+    if (!hooks.attach(type, module, "GetEnvironmentVariableW", &host_cmd::get_env_var, &__Real_GetEnvironmentVariableW))
         return false;
 
     return hooks.commit();
@@ -563,7 +577,7 @@ DWORD WINAPI host_cmd::get_env_var(LPCWSTR lpName, LPWSTR lpBuffer, DWORD nSize)
         s_initialised_system = true;
 
         hook_setter unhook;
-        unhook.detach(&__Real_GetEnvironmentVariableW, get_env_var);
+        unhook.detach(get_hook_type(), get_kernel_module(), "GetEnvironmentVariableW", &__Real_GetEnvironmentVariableW, get_env_var);
         unhook.commit();
 
         host_cmd::get()->initialise_system();
@@ -606,10 +620,13 @@ DWORD WINAPI host_cmd::format_message(DWORD flags, LPCVOID source, DWORD message
 bool host_cmd::initialise_system()
 {
     {
+        hook_type type = get_hook_type();
+        const char* module = get_kernel_module();
+
         // ReadConsoleW is required.
         {
             hook_setter hooks;
-            hooks.attach(s_kernel_module, "ReadConsoleW", &host_cmd::read_console, &__Real_ReadConsoleW);
+            hooks.attach(type, module, "ReadConsoleW", &host_cmd::read_console, &__Real_ReadConsoleW);
             if (!hooks.commit())
                 return false;
         }
@@ -619,7 +636,7 @@ bool host_cmd::initialise_system()
         // prefix, but ignore failure since it's just a minor convenience.
         {
             hook_setter hooks;
-            hooks.add(s_kernel_module, "FormatMessageW", &host_cmd::format_message, &__imp_FormatMessageW);
+            hooks.add(type, module, "FormatMessageW", &host_cmd::format_message, &__imp_FormatMessageW);
             hooks.commit();
         }
 #endif
