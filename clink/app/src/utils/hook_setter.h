@@ -18,6 +18,7 @@ class hook_setter
         hook_type               type;
         void*                   replace;
         void*                   base;
+        const char*             module;
         const char*             name;
         hookptr_t               hook;
     };

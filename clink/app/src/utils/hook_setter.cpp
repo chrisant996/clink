@@ -274,7 +274,12 @@ bool hook_setter::attach_detour(const char* module, const char* name, hookptr_t 
     }
 
     hook_desc& desc = m_descs[m_desc_count++];
+    desc.type = detour;
     desc.replace = replace;
+    desc.base = nullptr;
+    desc.module = module;
+    desc.name = name;
+    desc.hook = hook;
 
     // Hook the target pointer.  For Detours desc.replace is a pointer to the
     // function to hook.
@@ -315,8 +320,9 @@ bool hook_setter::attach_iat(const char* module, const char* name, hookptr_t hoo
     desc.type = iat;
     desc.replace = replace;
     desc.base = base;
-    desc.hook = hook;
+    desc.module = module;
     desc.name = name;
+    desc.hook = hook;
     return true;
 }
 
@@ -364,8 +370,9 @@ bool hook_setter::detach_iat(const char* module, const char* name, hookptrptr_t 
     desc.type = iat;
     desc.replace = replace;
     desc.base = base;
-    desc.hook = *original;
+    desc.module = module;
     desc.name = name;
+    desc.hook = *original;
     return true;
 }
 
