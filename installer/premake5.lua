@@ -2,13 +2,18 @@
 -- License: http://opensource.org/licenses/MIT
 
 --------------------------------------------------------------------------------
+local any_warnings_or_failures = nil
+
+--------------------------------------------------------------------------------
 local function warn(msg)
     print("\x1b[0;33;1mWARNING: " .. msg.."\x1b[m")
+    any_warnings_or_failures = true
 end
 
 --------------------------------------------------------------------------------
 local function failed(msg)
     print("\x1b[0;31;1mFAILED: " .. msg.."\x1b[m")
+    any_warnings_or_failures = true
 end
 
 --------------------------------------------------------------------------------
@@ -267,6 +272,9 @@ newaction {
         if not nsis_ok then     warn("INSTALLER PACKAGE FAILED") end
         if not x86_ok then      failed("x86 BUILD FAILED") end
         if not x64_ok then      failed("x64 BUILD FAILED") end
+        if not any_warnings_or_failures then
+            print("\x1b[0;32;1mRelease "..version.." built successfully.\x1b[m")
+        end
     end
 }
 
