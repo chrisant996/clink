@@ -117,13 +117,6 @@ Section "!Application files" app_files_id
     File ${CLINK_BUILD}\clink.bat
     File ${CLINK_BUILD}\clink.html
 
-    ; Create a start-menu shortcut
-    ;
-    StrCpy $0 "$SMPROGRAMS\clink\${CLINK_VERSION}"
-    CreateDirectory $0
-    CreateShortcut "$0\Clink v${CLINK_VERSION}.lnk" "$INSTDIR\clink.bat" 'startmenu --profile ~\clink' "$SYSDIR\cmd.exe" 0 SW_SHOWMINIMIZED 
-    CreateShortcut "$0\Clink v${CLINK_VERSION} Documentation.lnk" "$INSTDIR\clink.html"
-
     ; Create an uninstaller and a shortcut to it.
     ;
     StrCpy $1 "clink_uninstall_${CLINK_VERSION}.exe"
@@ -150,6 +143,16 @@ Section "!Application files" app_files_id
     Call cleanLegacyInstall
 
     CreateDirectory $LOCALAPPDATA\clink
+SectionEnd
+
+;-------------------------------------------------------------------------------
+Section "Add shortcuts to Start menu"
+    SetShellVarContext all
+
+    StrCpy $0 "$SMPROGRAMS\clink\${CLINK_VERSION}"
+    CreateDirectory $0
+    CreateShortcut "$0\Clink v${CLINK_VERSION}.lnk" "$INSTDIR\clink.bat" 'startmenu --profile ~\clink' "$SYSDIR\cmd.exe" 0 SW_SHOWMINIMIZED
+    CreateShortcut "$0\Clink v${CLINK_VERSION} Documentation.lnk" "$INSTDIR\clink.html"
 SectionEnd
 
 ;-------------------------------------------------------------------------------
