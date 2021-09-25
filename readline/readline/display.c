@@ -628,7 +628,7 @@ rl_set_rprompt (const char *rprompt)
 {
   FREE (rl_rprompt);
 
-  if (rprompt)
+  if (rprompt && *rprompt)
     {
       rl_rprompt = expand_prompt (rprompt, 0, (int *)NULL, (int *)NULL, (int *)NULL, &rl_visible_rprompt_length);
     }
