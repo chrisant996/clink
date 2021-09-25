@@ -77,6 +77,7 @@ private:
     void            insert_needle();
     void            insert_match(int final=false);
     int             get_match_row(int index) const;
+    void            set_top(int top);
 
     // Initialization state.
     input_dispatcher& m_dispatcher;

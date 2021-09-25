@@ -490,13 +490,14 @@ revert:
         return;
     }
 
+    bool wrap = !!_rl_menu_complete_wraparound;
     switch (input.id)
     {
     case bind_id_selectcomplete_next:
 next:
         m_index++;
         if (m_index >= count)
-            m_index = _rl_menu_complete_wraparound ? 0 : count - 1;
+            m_index = wrap ? 0 : count - 1;
 navigated:
         insert_match();
         update_display();
@@ -505,40 +506,37 @@ navigated:
 prev:
         m_index--;
         if (m_index < 0)
-            m_index = _rl_menu_complete_wraparound ? count - 1 : 0;
+            m_index = wrap ? count - 1 : 0;
         goto navigated;
 
     case bind_id_selectcomplete_up:
+        if (m_index == 0)
+            break;
         if (_rl_print_completions_horizontally)
         {
-            int c = m_index % m_match_cols;
             m_index -= m_match_cols;
             if (m_index < 0)
-            {
-                m_index += (m_match_cols * m_match_rows);
-                if (m_index >= count)
-                    m_index = count - 1;
-            }
+                m_index = 0;
             goto navigated;
         }
+        wrap = false;
         goto prev;
     case bind_id_selectcomplete_down:
+        if (m_index == count - 1)
+            break;
         if (_rl_print_completions_horizontally)
         {
-            int c = m_index % m_match_cols;
             m_index += m_match_cols;
             if (m_index >= count)
-            {
-                m_index -= (m_match_cols * m_match_rows);
-                assert(m_index >= 0);
-                if (m_index < 0)
-                    m_index = 0;
-            }
+                m_index = count - 1;
             goto navigated;
         }
+        wrap = false;
         goto next;
 
     case bind_id_selectcomplete_left:
+        if (m_index == 0)
+            break;
         if (!_rl_print_completions_horizontally)
         {
             m_index -= m_match_rows;
@@ -546,8 +544,11 @@ prev:
                 m_index = 0;
             goto navigated;
         }
+        wrap = false;
         goto prev;
     case bind_id_selectcomplete_right:
+        if (m_index == count - 1)
+            break;
         if (!_rl_print_completions_horizontally)
         {
             m_index += m_match_rows;
@@ -555,6 +556,7 @@ prev:
                 m_index = count - 1;
             goto navigated;
         }
+        wrap = false;
         goto next;
 
     case bind_id_selectcomplete_pgup:
@@ -571,7 +573,8 @@ prev:
                 else
                 {
                     int new_y = max<int>(0, (y == m_top) ? y - (rows - 1) : m_top);
-                    m_index += (new_y - y);
+                    int stride = _rl_print_completions_horizontally ? m_match_cols : 1;
+                    m_index += (new_y - y) * stride;
                 }
                 goto navigated;
             }
@@ -583,13 +586,35 @@ prev:
                 }
                 else
                 {
+                    int stride = _rl_print_completions_horizontally ? m_match_cols : 1;
                     int new_y = min<int>(m_match_rows - 1, (y == m_top + rows - 1) ? y + (rows - 1) : m_top + (rows - 1));
-                    m_index += (new_y - y);
-                }
-                if (m_index > m_matches.get_match_count() - 1)
-                {
-                    m_top = max<int>(0, m_match_rows - m_visible_rows);
-                    m_index = m_matches.get_match_count() - 1;
+                    int new_index = m_index + (new_y - y) * stride;
+                    int new_top = m_top;
+                    if (new_index >= count)
+                    {
+                        if (_rl_print_completions_horizontally)
+                        {
+                            new_top = m_match_rows - rows;
+                            if (y + 1 < new_y)
+                            {
+                                new_y--;
+                                new_index -= stride;
+                            }
+                            else
+                            {
+                                new_index = count - 1;
+                            }
+                        }
+                        else
+                        {
+                            new_index = count - 1;
+                            if (get_match_row(new_index) >= m_top + rows)
+                                new_top = min<int>(get_match_row(new_index),
+                                                   m_match_rows - rows);
+                        }
+                    }
+                    m_index = new_index;
+                    set_top(max<int>(0, new_top));
                 }
                 goto navigated;
             }
@@ -963,14 +988,17 @@ void selectcomplete_impl::update_top()
     const int y = get_match_row(m_index);
     if (m_top > y)
     {
-        m_top = y;
+        set_top(y);
     }
     else
     {
         const int rows = min<int>(m_match_rows, m_visible_rows);
-        if (m_top + rows <= y)
-            m_top = y - rows + 1;
+        int top = max<int>(0, y - (rows - 1));
+        if (m_top < top)
+            set_top(top);
     }
+    assert(m_top >= 0);
+    assert(m_top <= max<int>(0, m_match_rows - m_visible_rows));
 }
 
 //------------------------------------------------------------------------------
@@ -1004,7 +1032,6 @@ void selectcomplete_impl::update_display()
         if (is_active() && count > 0)
         {
             update_top();
-m_prev_displayed = -1;
 
             const int rows = min<int>(m_match_rows, m_visible_rows);
             const int major_stride = _rl_print_completions_horizontally ? m_match_cols : 1;
@@ -1021,8 +1048,8 @@ m_prev_displayed = -1;
 
                 move_to_end = true;
                 if (m_prev_displayed < 0 ||
-                    row == get_match_row(m_index) ||
-                    row == get_match_row(m_prev_displayed))
+                    row + m_top == get_match_row(m_index) ||
+                    row + m_top == get_match_row(m_prev_displayed))
                 {
                     // Print matches on the row.
                     str<> truncated;
@@ -1359,7 +1386,19 @@ void selectcomplete_impl::insert_match(int final)
 //------------------------------------------------------------------------------
 int selectcomplete_impl::get_match_row(int index) const
 {
-    return _rl_print_completions_horizontally ? (index - m_top * m_match_cols) : (index % m_match_rows);
+    return _rl_print_completions_horizontally ? (index / m_match_cols) : (index % m_match_rows);
+}
+
+//------------------------------------------------------------------------------
+void selectcomplete_impl::set_top(int top)
+{
+    assert(top >= 0);
+    assert(top <= max<int>(0, m_match_rows - m_visible_rows));
+    if (top != m_top)
+    {
+        m_top = top;
+        m_prev_displayed = -1;
+    }
 }
 
 //------------------------------------------------------------------------------
