@@ -285,28 +285,6 @@ bool has_sticky_search_position() { return s_init_history_pos >= 0; }
 void clear_sticky_search_position() { s_init_history_pos = -1; history_prev_use_curr = 0; }
 
 //------------------------------------------------------------------------------
-int length_history()
-{
-    // The only way to get the history length is to reset the history position
-    // by calling using_history(), then get the history position by calling
-    // where_history(), then restore the original state.
-    // REVIEW:  But this seems to effectively return history_length, which is
-    // public and accessible...?
-#if 1
-    int prev_use_curr = history_prev_use_curr;
-    int history_pos = where_history();
-    using_history();
-    int history_len = where_history();
-    assert(history_len == history_length);
-    history_set_pos(history_pos);
-    history_prev_use_curr = prev_use_curr;
-    return history_len;
-#else
-    return history_length;
-#endif
-}
-
-//------------------------------------------------------------------------------
 static bool history_line_differs(int history_pos, const char* line)
 {
     const HIST_ENTRY* entry = history_get(history_pos + history_base);
@@ -323,8 +301,7 @@ bool get_sticky_search_add_history(const char* line)
 
     // Add the line to history if the input line was edited (does not match the
     // history line).
-    int history_len = length_history();
-    if (history_pos >= history_len || history_line_differs(history_pos, line))
+    if (history_pos >= history_length || history_line_differs(history_pos, line))
         return true;
 
     // Use sticky search; don't add to history.
@@ -2100,10 +2077,9 @@ void rl_module::on_end_line()
         // doesn't match the search position, then it works out ok because the
         // search position gets ignored.
         int history_pos = where_history();
-        int history_len = length_history();
-        if (history_pos >= 0 && history_pos < history_len)
+        if (history_pos >= 0 && history_pos < history_length)
             s_init_history_pos = history_pos;
-        else if (s_history_search_pos >= 0 && s_history_search_pos < history_len)
+        else if (s_history_search_pos >= 0 && s_history_search_pos < history_length)
             s_init_history_pos = s_history_search_pos;
         history_prev_use_curr = 1;
     }
