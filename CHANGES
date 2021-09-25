@@ -2,6 +2,10 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.2.36
+
+- Fixed the `clink-menu-complete-numbers` family of commands (regression introduced in v1.2.32).
+
 #### v1.2.35
 
 - Added `rl_buffer:getanchor()` to get the text selection anchor (there is no set function; use `rl.invokecommand()` to invoke commands to set/extend the selection if needed).
