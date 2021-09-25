@@ -383,9 +383,11 @@ void override_rl_last_func(rl_command_func_t* func)
 {
     s_has_override_rl_last_func = true;
     s_override_rl_last_func = func;
-    rl_last_func = func;
     if (func)
+    {
+        rl_last_func = func;
         cua_after_command();
+    }
 }
 
 
