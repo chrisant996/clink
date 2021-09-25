@@ -60,6 +60,7 @@ rl_buffer_lua::~rl_buffer_lua()
 
 //------------------------------------------------------------------------------
 /// -name:  rl_buffer:getbuffer
+/// -ver:   1.0.0
 /// -ret:   string
 /// Returns the current input line.
 int rl_buffer_lua::get_buffer(lua_State* state)
@@ -70,6 +71,7 @@ int rl_buffer_lua::get_buffer(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  rl_buffer:getlength
+/// -ver:   1.1.20
 /// -ret:   integer
 /// Returns the length of the input line.
 int rl_buffer_lua::get_length(lua_State* state)
@@ -80,6 +82,7 @@ int rl_buffer_lua::get_length(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  rl_buffer:getcursor
+/// -ver:   1.1.20
 /// -ret:   integer
 /// Returns the cursor position in the input line.  The value can be from 1 to
 /// rl_buffer:getlength() + 1.  It can exceed the length of the input line
@@ -96,8 +99,8 @@ int rl_buffer_lua::get_cursor(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  rl_buffer:getanchor
-/// -ret:   integer | nil
 /// -ver:   1.2.35
+/// -ret:   integer | nil
 /// Returns the anchor position of the currently selected text in the input
 /// line, or nil if there is no selection.  The value can be from 1 to
 /// rl_buffer:getlength() + 1.  It can exceed the length of the input line
@@ -114,9 +117,9 @@ int rl_buffer_lua::get_anchor(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  rl_buffer:setcursor
+/// -ver:   1.1.20
 /// -arg:   cursor:integer
 /// -ret:   integer
-/// -ver:   1.1.20
 /// Sets the cursor position in the input line and returns the previous cursor
 /// position.  <span class="arg">cursor</span> can be from 1 to
 /// rl_buffer:getlength() + 1.  It can exceed the length of the input line
@@ -144,6 +147,7 @@ int rl_buffer_lua::set_cursor(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  rl_buffer:insert
+/// -ver:   1.1.20
 /// -arg:   text:string
 /// Inserts <span class="arg">text</span> at the cursor position in the input
 /// line.
@@ -159,6 +163,7 @@ int rl_buffer_lua::insert(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  rl_buffer:remove
+/// -ver:   1.1.20
 /// -arg:   from:integer
 /// -arg:   to:integer
 /// Removes text from the input line starting at cursor position
@@ -180,6 +185,7 @@ int rl_buffer_lua::remove(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  rl_buffer:beginundogroup
+/// -ver:   1.1.20
 /// Starts a new undo group.  This is useful for grouping together multiple
 /// editing actions into a single undo operation.
 int rl_buffer_lua::begin_undo_group(lua_State* state)
@@ -191,6 +197,7 @@ int rl_buffer_lua::begin_undo_group(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  rl_buffer:endundogroup
+/// -ver:   1.1.20
 /// Ends an undo group.  This is useful for grouping together multiple
 /// editing actions into a single undo operation.
 ///
@@ -209,6 +216,7 @@ int rl_buffer_lua::end_undo_group(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  rl_buffer:beginoutput
+/// -ver:   1.1.20
 /// Advances the output cursor to the next line after the Readline input buffer
 /// so that subsequent output doesn't overwrite the input buffer display.
 int rl_buffer_lua::begin_output(lua_State* state)
@@ -223,6 +231,7 @@ int rl_buffer_lua::begin_output(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  rl_buffer:refreshline
+/// ver:    1.1.41
 /// Redraws the input line.
 int rl_buffer_lua::refresh_line(lua_State* state)
 {
@@ -232,6 +241,7 @@ int rl_buffer_lua::refresh_line(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  rl_buffer:getargument
+/// -ver:   1.2.22
 /// -ret:   integer | nil
 /// Returns any accumulated numeric argument (<kbd>Alt</kbd>+Digits, etc), or
 /// nil if no numeric argument has been entered.
@@ -247,6 +257,7 @@ int rl_buffer_lua::get_argument(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  rl_buffer:setargument
+/// -ver:   1.2.32
 /// -arg:   argument:integer | nil
 /// When <span class="arg">argument</span> is a number, it is set as the numeric
 /// argument for use by Readline commands (as entered using
@@ -270,6 +281,7 @@ int rl_buffer_lua::set_argument(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  rl_buffer:ding
+/// -ver:   1.1.20
 /// Dings the bell.  If the <code>bell-style</code> Readline variable is
 /// <code>visible</code> then it flashes the cursor instead.
 int rl_buffer_lua::ding(lua_State* state)

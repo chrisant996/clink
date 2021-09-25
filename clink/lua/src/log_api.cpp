@@ -10,6 +10,7 @@
 
 //------------------------------------------------------------------------------
 /// -name:  log.info
+/// -ver:   1.1.3
 /// -arg:   message:string
 /// Writes info <span class="arg">message</span> to the Clink log file.  Use
 /// this sparingly, or it could cause performance problems or disk space

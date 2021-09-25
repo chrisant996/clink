@@ -63,6 +63,7 @@ bool collapse_tilde(const char* in, str_base& out, bool force)
 
 //------------------------------------------------------------------------------
 /// -name:  rl.collapsetilde
+/// -ver:   1.1.6
 /// -arg:   path:string
 /// -arg:   [force:boolean]
 /// -ret:   string
@@ -96,6 +97,7 @@ static int collapse_tilde(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  rl.expandtilde
+/// -ver:   1.1.6
 /// -arg:   path:string
 /// -ret:   string, boolean
 /// Performs Readline tilde expansion.
@@ -153,6 +155,7 @@ static int expand_tilde(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  rl.getvariable
+/// -ver:   1.1.6
 /// -arg:   name:string
 /// -ret:   string | nil
 /// Returns the value of the named Readline configuration variable as a string,
@@ -173,6 +176,7 @@ static int get_rl_variable(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  rl.setvariable
+/// -ver:   1.1.46
 /// -arg:   name:string
 /// -arg:   value:string
 /// -ret:   boolean
@@ -202,6 +206,7 @@ static int set_rl_variable(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  rl.isvariabletrue
+/// -ver:   1.1.6
 /// -arg:   name:string
 /// -ret:   boolean | nil
 /// Returns a boolean value indicating whether the named Readline configuration
@@ -222,6 +227,7 @@ static int is_rl_variable_true(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  rl.invokecommand
+/// -ver:   1.1.26
 /// -arg:   command:string
 /// -arg:   [count:integer]
 /// -ret:   boolean | nil
@@ -283,6 +289,7 @@ static int invoke_command(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  rl.getlastcommand
+/// -ver:   1.1.40
 /// -ret:   string, function
 /// Returns two values:
 /// <ul>
@@ -319,6 +326,7 @@ static int get_last_command(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  rl.setmatches
+/// -ver:   1.1.40
 /// -arg:   matches:table
 /// -arg:   [type:string]
 /// -ret:   integer, boolean
@@ -403,6 +411,7 @@ static int set_matches(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  rl.getkeybindings
+/// -ver:   1.2.16
 /// -arg:   raw:boolean
 /// -ret:   table
 /// Returns key bindings in a table with the following scheme:
@@ -475,6 +484,7 @@ int get_key_bindings(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  rl.getpromptinfo
+/// -ver:   1.2.28
 /// -ret:   table
 /// Returns information about the current prompt and input line.
 ///

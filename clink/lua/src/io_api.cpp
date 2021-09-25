@@ -610,6 +610,7 @@ int luaL_YieldGuard::__tostring(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  io.popenrw
+/// -ver:   1.1.42
 /// -arg:   command:string
 /// -arg:   [mode:string]
 /// -ret:   file, file

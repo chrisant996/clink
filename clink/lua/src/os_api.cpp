@@ -83,6 +83,7 @@ static int close_file(lua_State *state)
 
 //------------------------------------------------------------------------------
 /// -name:  os.chdir
+/// -ver:   1.0.0
 /// -arg:   path:string
 /// -ret:   boolean
 /// Changes the current directory to <span class="arg">path</span> and returns
@@ -99,6 +100,7 @@ int set_current_dir(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  os.getcwd
+/// -ver:   1.0.0
 /// -ret:   string
 /// Returns the current directory.
 int get_current_dir(lua_State* state)
@@ -112,6 +114,7 @@ int get_current_dir(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  os.mkdir
+/// -ver:   1.0.0
 /// -arg:   path:string
 /// -ret:   boolean
 /// Creates the directory <span class="arg">path</span> and returns whether it
@@ -128,6 +131,7 @@ static int make_dir(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  os.rmdir
+/// -ver:   1.0.0
 /// -arg:   path:string
 /// -ret:   boolean
 /// Removes the directory <span class="arg">path</span> and returns whether it
@@ -144,6 +148,7 @@ static int remove_dir(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  os.isdir
+/// -ver:   1.0.0
 /// -arg:   path:string
 /// -ret:   boolean
 /// Returns whether <span class="arg">path</span> is a directory.
@@ -159,6 +164,7 @@ int is_dir(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  os.isfile
+/// -ver:   1.0.0
 /// -arg:   path:string
 /// -ret:   boolean
 /// Returns whether <span class="arg">path</span> is a file.
@@ -174,9 +180,9 @@ static int is_file(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  os.ishidden
+/// -deprecated: os.globfiles
 /// -arg:   path:string
 /// -ret:   boolean
-/// -deprecated: os.globfiles
 /// Returns whether <span class="arg">path</span> has the hidden attribute set.
 static int is_hidden(lua_State* state)
 {
@@ -190,6 +196,7 @@ static int is_hidden(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  os.unlink
+/// -ver:   1.0.0
 /// -arg:   path:string
 /// -ret:   boolean
 /// Deletes the file <span class="arg">path</span> and returns whether it was
@@ -206,6 +213,7 @@ static int unlink(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  os.move
+/// -ver:   1.0.0
 /// -arg:   src:string
 /// -arg:   dest:string
 /// -ret:   boolean
@@ -224,6 +232,7 @@ static int move(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  os.copy
+/// -ver:   1.0.0
 /// -arg:   src:string
 /// -arg:   dest:string
 /// -ret:   boolean
@@ -338,6 +347,7 @@ int glob_impl(lua_State* state, bool dirs_only, bool back_compat=false)
 
 //------------------------------------------------------------------------------
 /// -name:  os.globdirs
+/// -ver:   1.0.0
 /// -arg:   globpattern:string
 /// -arg:   [extrainfo:integer|boolean]
 /// -ret:   table
@@ -372,6 +382,7 @@ int glob_dirs(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  os.globfiles
+/// -ver:   1.0.0
 /// -arg:   globpattern:string
 /// -arg:   [extrainfo:integer|boolean]
 /// -ret:   table
@@ -406,6 +417,7 @@ int glob_files(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  os.touch
+/// -ver:   1.2.31
 /// -arg:   path:string
 /// -arg:   [atime:number]
 /// -arg:   [mtime:number]
@@ -448,6 +460,7 @@ int touch(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  os.getenv
+/// -ver:   1.0.0
 /// -arg:   name:string
 /// -ret:   string | nil
 /// Returns the value of the named environment variable, or nil if it doesn't
@@ -484,6 +497,7 @@ int get_env(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  os.setenv
+/// -ver:   1.0.0
 /// -arg:   name:string
 /// -arg:   value:string
 /// -ret:   boolean
@@ -505,6 +519,7 @@ int set_env(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  os.expandenv
+/// -ver:   1.2.5
 /// -arg:   value:string
 /// -ret:   string
 /// Returns <span class="arg">value</span> with any <code>%name%</code>
@@ -529,6 +544,7 @@ int expand_env(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  os.getenvnames
+/// -ver:   1.0.0
 /// -ret:   table
 /// Returns all environment variables in a table with the following scheme:
 /// <span class="tablescheme">{ {name:string, value:string}, ... }</span>.
@@ -572,6 +588,7 @@ int get_env_names(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  os.gethost
+/// -ver:   1.0.0
 /// -ret:   string
 /// Returns the fully qualified file name of the host process.  Currently only
 /// CMD.EXE can host Clink.
@@ -593,6 +610,7 @@ static int get_host(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  os.geterrorlevel
+/// -ver:   1.2.14
 /// -ret:   integer
 /// Returns the last command's exit code, if the <code>cmd.get_errorlevel</code>
 /// setting is enabled (it is disabled by default).  Otherwise it returns 0.
@@ -604,6 +622,7 @@ static int get_errorlevel(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  os.getalias
+/// -ver:   1.1.4
 /// -arg:   name:string
 /// -ret:   string | nil
 /// Returns command string for doskey alias <span class="arg">name</span>, or
@@ -624,6 +643,7 @@ int get_alias(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  os.getaliases
+/// -ver:   1.0.0
 /// -ret:   table
 /// Returns doskey alias names in a table of strings.
 int get_aliases(lua_State* state)
@@ -672,6 +692,7 @@ int get_aliases(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  os.getscreeninfo
+/// -ver:   1.1.2
 /// -ret:   table
 /// Returns dimensions of the terminal's buffer and visible window. The returned
 /// table has the following scheme:
@@ -721,6 +742,7 @@ int get_screen_info(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  os.getbatterystatus
+/// -ver:   1.1.17
 /// -ret:   table
 /// Returns a table containing the battery status for the device, or nil if an
 /// error occurs.  The returned table has the following scheme:
@@ -773,6 +795,7 @@ int get_battery_status(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  os.getpid
+/// -ver:   1.1.41
 /// -ret:   integer
 /// Returns the CMD.EXE process ID. This is mainly intended to help with salting
 /// unique resource names (for example named pipes).
@@ -785,6 +808,7 @@ int get_pid(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  os.createtmpfile
+/// -ver:   1.1.42
 /// -ret:   file, string
 /// -arg:   [prefix:string]
 /// -arg:   [ext:string]
@@ -850,6 +874,7 @@ static int create_tmp_file(lua_State *state)
 
 //------------------------------------------------------------------------------
 /// -name:  os.getshortpathname
+/// -ver:   1.1.42
 /// -arg:   path:string
 /// -ret:   string
 /// Returns the 8.3 short path name for <span class="arg">path</span>.  This may
@@ -867,6 +892,7 @@ static int get_short_path_name(lua_State *state)
 
 //------------------------------------------------------------------------------
 /// -name:  os.getlongpathname
+/// -ver:   1.1.42
 /// -arg:   path:string
 /// -ret:   string
 /// Returns the long path name for <span class="arg">path</span>.
@@ -883,6 +909,7 @@ static int get_long_path_name(lua_State *state)
 
 //------------------------------------------------------------------------------
 /// -name:  os.getfullpathname
+/// -ver:   1.1.42
 /// -arg:   path:string
 /// -ret:   string
 /// Returns the full path name for <span class="arg">path</span>.
@@ -899,6 +926,7 @@ static int get_full_path_name(lua_State *state)
 
 //------------------------------------------------------------------------------
 /// -name:  os.getnetconnectionname
+/// -ver:   1.2.27
 /// -arg:   path:string
 /// -ret:   string
 /// Returns the remote name associated with <span class="arg">path</span>, or an
@@ -916,6 +944,7 @@ static int get_net_connection_name(lua_State *state)
 
 //------------------------------------------------------------------------------
 /// -name:  os.debugprint
+/// -ver:   1.2.20
 /// -arg:   ...
 /// This works like <code>print()</code> but writes the output via the OS
 /// `OutputDebugString()` API.
@@ -970,6 +999,7 @@ static int debug_print(lua_State *state)
 
 //------------------------------------------------------------------------------
 /// -name:  os.clock
+/// -ver:   1.2.30
 /// -ret:   number
 /// This returns the number of seconds since the program started.
 ///
@@ -993,6 +1023,7 @@ static int double_clock(lua_State *state)
 
 //------------------------------------------------------------------------------
 /// -name:  os.getclipboardtext
+/// -ver:   1.2.32
 /// -ret:   string | nil
 /// This returns the text from the system clipboard, or nil if there is no text
 /// on the system clipboard.
@@ -1008,6 +1039,7 @@ static int get_clipboard_text(lua_State *state)
 
 //------------------------------------------------------------------------------
 /// -name:  os.setclipboardtext
+/// -ver:   1.2.32
 /// -ret:   boolean
 /// This sets the text onto the system clipboard, and returns whether it was
 /// successful.

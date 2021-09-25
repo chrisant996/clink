@@ -37,6 +37,7 @@ match_builder_lua::~match_builder_lua()
 
 //------------------------------------------------------------------------------
 /// -name:  builder:addmatch
+/// -ver:   1.0.0
 /// -arg:   match:string|table
 /// -arg:   [type:string]
 /// -ret:   boolean
@@ -100,6 +101,7 @@ int match_builder_lua::add_match(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  builder:setappendcharacter
+/// -ver:   1.1.2
 /// -arg:   [append:string]
 /// Sets character to append after matches.  For example the <code>set</code>
 /// match generator uses this to append "=" when completing matches, so that
@@ -118,6 +120,7 @@ int match_builder_lua::set_append_character(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  builder:setsuppressappend
+/// -ver:   1.1.2
 /// -arg:   [state:boolean]
 /// Sets whether to suppress appending anything after the match except a
 /// possible closing quote.  For example the env var match generator uses this.
@@ -134,6 +137,7 @@ int match_builder_lua::set_suppress_append(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  builder:setsuppressquoting
+/// -ver:   1.1.2
 /// -arg:   [state:integer]
 /// Sets whether to suppress quoting for the matches.  Set to 0 for normal
 /// quoting, or 1 to suppress quoting, or 2 to suppress end quotes.  For example
@@ -170,6 +174,7 @@ int match_builder_lua::set_matches_are_files(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  builder:addmatches
+/// -ver:   1.0.0
 /// -arg:   matches:table
 /// -arg:   [type:string]
 /// -ret:   integer, boolean

@@ -17,6 +17,7 @@ extern setting_bool g_lua_strict;
 
 //------------------------------------------------------------------------------
 /// -name:  settings.get
+/// -ver:   1.0.0
 /// -arg:   name:string
 /// -arg:   [descriptive:boolean]
 /// -ret:   boolean or string or integer
@@ -70,6 +71,7 @@ static int get(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  settings.set
+/// -ver:   1.0.0
 /// -arg:   name:string
 /// -arg:   value:string
 /// -ret:   boolean
@@ -136,6 +138,7 @@ template <typename S, typename... V> void add_impl(lua_State* state, V... value)
 
 //------------------------------------------------------------------------------
 /// -name:  settings.add
+/// -ver:   1.0.0
 /// -arg:   name:string
 /// -arg:   default:...
 /// -arg:   [short_desc:string]

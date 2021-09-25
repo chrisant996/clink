@@ -67,6 +67,7 @@ end
 
 --------------------------------------------------------------------------------
 --- -name:  clink.classifier
+--- -ver:   1.1.49
 --- -arg:   [priority:integer]
 --- -ret:   table
 --- Creates and returns a new word classifier object.  Define on the object a

@@ -3,6 +3,7 @@
 
 --------------------------------------------------------------------------------
 --- -name:  console.screengrab
+--- -ver:   1.1.40
 --- -arg:   candidate_pattern:string
 --- -arg:   accept_pattern:string
 --- -ret:   table

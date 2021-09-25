@@ -1506,6 +1506,7 @@ end
 --
 
 --- -name:  pause
+--- -ver:   1.0.0
 --- -arg:   [message:string]
 --- -arg:   [lines:integer]
 --- -arg:   [force:boolean]

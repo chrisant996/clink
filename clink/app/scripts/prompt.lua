@@ -101,6 +101,7 @@ end
 
 --------------------------------------------------------------------------------
 --- -name:  clink.promptfilter
+--- -ver:   1.0.0
 --- -arg:   [priority:integer]
 --- -ret:   table
 --- Creates and returns a new promptfilter object that is applied in increasing
@@ -128,10 +129,10 @@ end
 
 --------------------------------------------------------------------------------
 --- -name:  clink.prompt.register_filter
+--- -deprecated: clink.promptfilter
 --- -arg:   filter_func:function
 --- -arg:   [priority:integer]
 --- -ret:   table
---- -deprecated: clink.promptfilter
 --- Registers a prompt filter function.  The capabilities are the same as before
 --- but the syntax is changed.
 --- -show:  -- Deprecated form:
@@ -182,6 +183,7 @@ end
 
 --------------------------------------------------------------------------------
 --- -name:  clink.promptcoroutine
+--- -ver:   1.2.10
 --- -arg:   func:function
 --- -ret:   [return value from func]
 --- Creates a coroutine to run the <span class="arg">func</span> function in the

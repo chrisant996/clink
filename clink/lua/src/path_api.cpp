@@ -11,6 +11,7 @@
 
 //------------------------------------------------------------------------------
 /// -name:  path.normalise
+/// -ver:   1.1.0
 /// -arg:   path:string
 /// -arg:   [separator:string]
 /// -ret:   string
@@ -41,6 +42,7 @@ static int normalise(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  path.getbasename
+/// -ver:   1.1.0
 /// -arg:   path:string
 /// -ret:   string
 /// -show:  path.getbasename("/foo/bar.ext")    -- returns "bar"
@@ -60,6 +62,7 @@ static int get_base_name(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  path.getdirectory
+/// -ver:   1.1.0
 /// -arg:   path:string
 /// -ret:   nil or string
 /// This is similar to <a href="#path.toparent">path.toparent()</a> but can
@@ -99,6 +102,7 @@ static int get_directory(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  path.getdrive
+/// -ver:   1.1.0
 /// -arg:   path:string
 /// -ret:   nil or string
 /// -show:  path.getdrive("e:/foo/bar")     -- returns "e:"
@@ -124,6 +128,7 @@ static int get_drive(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  path.getextension
+/// -ver:   1.1.0
 /// -arg:   path:string
 /// -ret:   string
 /// -show:  path.getextension("bar.ext")    -- returns ".ext"
@@ -144,6 +149,7 @@ static int get_extension(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  path.getname
+/// -ver:   1.1.0
 /// -arg:   path:string
 /// -ret:   string
 /// -show:  path.getname("/foo/bar.ext")    -- returns "bar.ext"
@@ -163,6 +169,7 @@ static int get_name(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  path.join
+/// -ver:   1.1.0
 /// -arg:   left:string
 /// -arg:   right:string
 /// -ret:   string
@@ -186,6 +193,7 @@ static int join(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  path.isexecext
+/// -ver:   1.1.5
 /// -arg:   path:string
 /// -ret:   boolean
 /// Examines the extension of the path name.  Returns true if the extension is
@@ -208,6 +216,7 @@ static int is_exec_ext(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  path.toparent
+/// -ver:   1.1.20
 /// -arg:   path:string
 /// -ret:   parent:string, child:string
 /// Splits the last path component from <span class="arg">path</span>, if

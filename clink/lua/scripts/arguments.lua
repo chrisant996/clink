@@ -216,6 +216,7 @@ end
 
 --------------------------------------------------------------------------------
 --- -name:  _argmatcher:addarg
+--- -ver:   1.0.0
 --- -arg:   choices...:string|table
 --- -ret:   self
 --- This adds argument matches.  Arguments can be a string, a string linked to
@@ -239,6 +240,7 @@ end
 
 --------------------------------------------------------------------------------
 --- -name:  _argmatcher:addflags
+--- -ver:   1.0.0
 --- -arg:   flags...:string
 --- -ret:   self
 --- This adds flag matches.  Flags are separate from arguments:  When listing
@@ -267,6 +269,7 @@ end
 
 --------------------------------------------------------------------------------
 --- -name:  _argmatcher:loop
+--- -ver:   0.4.9
 --- -arg:   [index:integer]
 --- -ret:   self
 --- This makes the parser loop back to argument position
@@ -285,9 +288,9 @@ end
 
 --------------------------------------------------------------------------------
 --- -name:  _argmatcher:setflagprefix
+--- -deprecated: _argmatcher:addflags
 --- -arg:   [prefixes...:string]
 --- -ret:   self
---- -deprecated: _argmatcher:addflags
 --- This overrides the default flag prefix (<code>-</code>).  The flag prefixes are used to
 --- switch between matching arguments versus matching flags.  When listing
 --- possible completions for an empty word (e.g. <code>command _</code> where the cursor is
@@ -316,6 +319,7 @@ end
 
 --------------------------------------------------------------------------------
 --- -name:  _argmatcher:nofiles
+--- -ver:   1.0.0
 --- -ret:   self
 --- This makes the parser prevent invoking <a href="#matchgenerators">match
 --- generators</a>.  You can use it to "dead end" a parser and suggest no
@@ -327,6 +331,7 @@ end
 
 --------------------------------------------------------------------------------
 --- -name:  _argmatcher:setclassifier
+--- -ver:   1.1.18
 --- -arg:   func:function
 --- -ret:   self
 --- This registers a function that gets called for each word the argmatcher
@@ -646,6 +651,7 @@ local _argmatchers = {}
 
 --------------------------------------------------------------------------------
 --- -name:  clink.argmatcher
+--- -ver:   1.0.0
 --- -arg:   [priority:integer]
 --- -arg:   commands...:string
 --- -ret:   <a href="#_argmatcher">_argmatcher</a>
@@ -701,6 +707,7 @@ end
 
 --------------------------------------------------------------------------------
 --- -name:  clink.dirmatches
+--- -ver:   1.1.18
 --- -arg:   word:string
 --- -ret:   table
 --- You can use this function in an argmatcher to supply directory matches.
@@ -727,6 +734,7 @@ end
 
 --------------------------------------------------------------------------------
 --- -name:  clink.filematches
+--- -ver:   1.1.18
 --- -arg:   word:string
 --- -ret:   table
 --- You can use this function in an argmatcher to supply file matches.  This
@@ -973,9 +981,9 @@ end
 
 --------------------------------------------------------------------------------
 --- -name:  clink.arg.new_parser
+--- -deprecated: clink.argmatcher
 --- -arg:   ...
 --- -ret:   table
---- -deprecated: clink.argmatcher
 --- Creates a new parser and adds <span class="arg">...</span> to it.
 --- -show:  -- Deprecated form:
 --- -show:  local parser = clink.arg.new_parser(
@@ -1005,10 +1013,10 @@ end
 
 --------------------------------------------------------------------------------
 --- -name:  clink.arg.register_parser
+--- -deprecated: clink.argmatcher
 --- -arg:   cmd:string
 --- -arg:   parser:table
 --- -ret:   table
---- -deprecated: clink.argmatcher
 --- Adds <span class="arg">parser</span> to the first argmatcher for
 --- <span class="arg">cmd</span>.  This behaves similarly to v0.4.8, but not
 --- identically.  The Clink schema has changed significantly enough that there

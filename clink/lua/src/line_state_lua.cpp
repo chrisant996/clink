@@ -31,6 +31,7 @@ line_state_lua::line_state_lua(const line_state& line)
 
 //------------------------------------------------------------------------------
 /// -name:  line:getline
+/// -ver:   1.0.0
 /// -ret:   string
 /// Returns the current line in its entirety.
 int line_state_lua::get_line(lua_State* state)
@@ -41,6 +42,7 @@ int line_state_lua::get_line(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  line:getcursor
+/// -ver:   1.0.0
 /// -ret:   integer
 /// Returns the position of the cursor.
 int line_state_lua::get_cursor(lua_State* state)
@@ -51,6 +53,7 @@ int line_state_lua::get_cursor(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  line:getcommandoffset
+/// -ver:   1.0.0
 /// -ret:   integer
 /// Returns the offset to the start of the delimited command in the line that's
 /// being effectively edited. Note that this may not be the offset of the first
@@ -66,6 +69,7 @@ int line_state_lua::get_command_offset(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  line:getcommandwordindex
+/// -ver:   1.2.27
 /// -ret:   integer
 /// Returns the index of the command word. Usually the index is 1, but if a
 /// redirection symbol occurs before the command name then the index can be
@@ -82,6 +86,7 @@ int line_state_lua::get_command_word_index(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  line:getwordcount
+/// -ver:   1.0.0
 /// -ret:   integer
 /// Returns the number of words in the current line.
 int line_state_lua::get_word_count(lua_State* state)
@@ -92,6 +97,7 @@ int line_state_lua::get_word_count(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  line:getwordinfo
+/// -ver:   1.0.0
 /// -arg:   index:integer
 /// -ret:   table
 /// Returns a table of information about the Nth word in the line.
@@ -161,6 +167,7 @@ int line_state_lua::get_word_info(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  line:getword
+/// -ver:   1.0.0
 /// -arg:   index:integer
 /// -ret:   string
 /// Returns the word of the line at <span class="arg">index</span>.
@@ -185,6 +192,7 @@ int line_state_lua::get_word(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  line:getendword
+/// -ver:   1.0.0
 /// -ret:   string
 /// Returns the last word of the line. This is the word that matches are being
 /// generated for.

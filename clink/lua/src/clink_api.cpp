@@ -35,6 +35,7 @@ extern int force_reload_scripts();
 
 //------------------------------------------------------------------------------
 /// -name:  clink.print
+/// -ver:   1.2.11
 /// -arg:   ...
 /// This works like <code>print()</code>, but this supports ANSI escape codes.
 ///
@@ -129,6 +130,7 @@ static int clink_print(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  clink.version_encoded
+/// -ver:   1.1.10
 /// -var:   integer
 /// The Clink version number encoded as a single integer following the format
 /// <span class="arg">Mmmmpppp</span> where <span class="arg">M</span> is the
@@ -142,24 +144,28 @@ static int clink_print(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  clink.version_major
+/// -ver:   1.1.10
 /// -var:   integer
 /// The major part of the Clink version number.
 /// For v<strong>1</strong>.2.3.a0f14d the major version is 1.
 
 //------------------------------------------------------------------------------
 /// -name:  clink.version_minor
+/// -ver:   1.1.10
 /// -var:   integer
 /// The minor part of the Clink version number.
 /// For v1.<strong>2</strong>.3.a0f14d the minor version is 2.
 
 //------------------------------------------------------------------------------
 /// -name:  clink.version_patch
+/// -ver:   1.1.10
 /// -var:   integer
 /// The patch part of the Clink version number.
 /// For v1.2.<strong>3</strong>.a0f14d the patch version is 3.
 
 //------------------------------------------------------------------------------
 /// -name:  clink.version_commit
+/// -ver:   1.1.10
 /// -var:   string
 /// The commit part of the Clink version number.
 /// For v1.2.3.<strong>a0f14d</strong> the commit part is a0f14d.
@@ -253,8 +259,8 @@ static int get_host_process(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  clink.match_display_filter
-/// -var:   function
 /// -deprecated: builder:addmatch
+/// -var:   function
 /// This is no longer used.
 /// -show:  clink.match_display_filter = function(matches)
 /// -show:  &nbsp; -- Transform matches.
@@ -305,6 +311,7 @@ static int map_string(lua_State* state, transform_mode mode)
 
 //------------------------------------------------------------------------------
 /// -name:  clink.lower
+/// -ver:   0.4.9
 /// -arg:   text:string
 /// -ret:   string
 /// This API correctly converts UTF8 strings to lowercase, with international
@@ -317,6 +324,7 @@ static int to_lowercase(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  clink.upper
+/// -ver:   1.1.5
 /// -arg:   text:string
 /// -ret:   string
 /// This API correctly converts UTF8 strings to uppercase, with international
@@ -329,6 +337,7 @@ static int to_uppercase(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  clink.popuplist
+/// -ver:   1.2.17
 /// -arg:   title:string
 /// -arg:   items:table
 /// -arg:   [index:integer]
@@ -470,6 +479,7 @@ static int popup_list(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  clink.getsession
+/// -ver:   1.1.44
 /// -ret:   string
 /// Returns the current Clink session id.
 ///
@@ -492,6 +502,7 @@ static int get_session(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  clink.getansihost
+/// -ver:   1.1.48
 /// -ret:   string
 /// Returns a string indicating who Clink thinks will currently handle ANSI
 /// escape codes.  This can change based on the <code>terminal.emulation</code>
@@ -539,6 +550,7 @@ static int get_ansi_host(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  clink.translateslashes
+/// -ver:   1.2.7
 /// -arg:   [mode:integer]
 /// -ret:   integer
 /// This overrides how Clink translates slashes in completion matches, which is
@@ -599,8 +611,8 @@ static int translate_slashes(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  clink.slash_translation
-/// -arg:   type:integer
 /// -deprecated: clink.translateslashes
+/// -arg:   type:integer
 /// Controls how Clink will translate the path separating slashes for the
 /// current path being completed. Values for <span class="arg">type</span> are;</br>
 /// -1 - no translation</br>
@@ -627,6 +639,7 @@ static int slash_translation(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  clink.reload
+/// -ver:   1.2.29
 /// Reloads Lua scripts and Readline config file at the next prompt.
 static int reload(lua_State* state)
 {

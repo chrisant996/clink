@@ -82,6 +82,7 @@ end
 
 --------------------------------------------------------------------------------
 --- -name:  clink.oninject
+--- -ver:   1.1.21
 --- -arg:   func:function
 --- Registers <span class="arg">func</span> to be called when Clink is injected
 --- into a CMD process.  The function is called only once per session.
@@ -91,6 +92,7 @@ end
 
 --------------------------------------------------------------------------------
 --- -name:  clink.onbeginedit
+--- -ver:   1.1.11
 --- -arg:   func:function
 --- Registers <span class="arg">func</span> to be called when Clink's edit
 --- prompt is activated.  The function receives no arguments and has no return
@@ -101,6 +103,7 @@ end
 
 --------------------------------------------------------------------------------
 --- -name:  clink.onendedit
+--- -ver:   1.1.20
 --- -arg:   func:function
 --- Registers <span class="arg">func</span> to be called when Clink's edit
 --- prompt ends.  The function receives a string argument containing the input
@@ -115,6 +118,7 @@ end
 
 --------------------------------------------------------------------------------
 --- -name:  clink.onfilterinput
+--- -ver:   1.2.16
 --- -arg:   func:function
 --- Registers <span class="arg">func</span> to be called after Clink's edit
 --- prompt ends (it is called after the <a href="#clink.oneditedit">onendedit</a>
@@ -133,6 +137,7 @@ end
 
 --------------------------------------------------------------------------------
 --- -name:  clink.ondisplaymatches
+--- -ver:   1.1.12
 --- -arg:   func:function
 --- Registers <span class="arg">func</span> to be called when Clink is about to
 --- display matches.  See <a href="#filteringthematchdisplay">Filtering the
@@ -181,6 +186,7 @@ end
 
 --------------------------------------------------------------------------------
 --- -name:  clink.onfiltermatches
+--- -ver:   1.1.41
 --- -arg:   func:function
 --- Registers <span class="arg">func</span> to be called after Clink generates
 --- matches for completion.  See <a href="#filteringmatchcompletions">

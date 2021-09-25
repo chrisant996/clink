@@ -11,8 +11,8 @@ local _generators_unsorted = false
 
 --------------------------------------------------------------------------------
 --- -name:  clink.match_display_filter
---- -var:   function
 --- -deprecated: clink.ondisplaymatches
+--- -var:   function
 --- A match generator can set this varible to a filter function that is called
 --- before displaying matches.  It is reset every time match generation is
 --- invoked.  The filter function receives table argument containing the matches
@@ -130,6 +130,7 @@ end
 
 --------------------------------------------------------------------------------
 --- -name:  clink.generator
+--- -ver:   1.0.0
 --- -arg:   [priority:integer]
 --- -ret:   table
 --- Creates and returns a new match generator object.  Define on the object a
@@ -149,9 +150,9 @@ end
 
 --------------------------------------------------------------------------------
 --- -name:  clink.add_match
+--- -deprecated: builder:addmatch
 --- -arg:   match:string
 --- -ret:   nil
---- -deprecated: builder:addmatch
 --- This is a shim that lets clink.register_match_generator continue to work
 --- for now, despite being obsolete.
 function clink.add_match(match)
@@ -162,10 +163,10 @@ end
 
 --------------------------------------------------------------------------------
 --- -name:  clink.is_match
+--- -deprecated: clink.generator
 --- -arg:   needle:string
 --- -arg:   candidate:string
 --- -ret:   boolean
---- -deprecated: clink.generator
 --- This returns true if <span class="arg">needle</span> is a prefix of
 --- <span class="arg">candidate</span> with a case insensitive comparison.
 ---
@@ -185,8 +186,8 @@ end
 
 --------------------------------------------------------------------------------
 --- -name:  clink.matches_are_files
---- -arg:   [files:boolean]
 --- -deprecated: builder:addmatch
+--- -arg:   [files:boolean]
 --- This is no longer needed, because now it's inferred from the match type when
 --- adding matches.
 function clink.matches_are_files(files)
@@ -197,8 +198,8 @@ end
 
 --------------------------------------------------------------------------------
 --- -name:  rl_state
---- -var:   table
 --- -deprecated: line
+--- -var:   table
 --- This is an obsolete global variable that was set while running match
 --- generators.  It has been superseded by the <a href="#line">line</a> type
 --- parameter passed into match generator functions when using the new
@@ -206,9 +207,9 @@ end
 
 --------------------------------------------------------------------------------
 --- -name:  clink.register_match_generator
+--- -deprecated: clink.generator
 --- -arg:   func:function
 --- -arg:   priority:integer
---- -deprecated: clink.generator
 --- Registers a generator function for producing matches.  This behaves
 --- similarly to v0.4.8, but not identically.  The Clink schema has changed
 --- significantly enough that there is no direct 1:1 translation; generators are

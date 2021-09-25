@@ -10,6 +10,7 @@
 
 //------------------------------------------------------------------------------
 /// -name:  string.equalsi
+/// -ver:   1.1.20
 /// -arg:   a:string
 /// -arg:   b:string
 /// -ret:   boolean
@@ -32,6 +33,7 @@ static int equalsi(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  string.explode
+/// -ver:   1.0.0
 /// -arg:   text:string
 /// -arg:   [delims:string]
 /// -arg:   [quote_pair:string]
@@ -70,6 +72,7 @@ static int explode(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  string.hash
+/// -ver:   1.0.0
 /// -arg:   text:string
 /// -ret:   integer
 /// Returns a hash of the input <span class="arg">text</span>.
@@ -85,6 +88,7 @@ static int hash(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  string.matchlen
+/// -ver:   1.1.20
 /// -arg:   a:string
 /// -arg:   b:string
 /// -ret:   integer

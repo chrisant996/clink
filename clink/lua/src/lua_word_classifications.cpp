@@ -39,6 +39,7 @@ lua_word_classifications::lua_word_classifications(word_classifications& classif
 
 //------------------------------------------------------------------------------
 /// -name:  word_classifications:classifyword
+/// -ver:   1.1.18
 /// -arg:   word_index:integer
 /// -arg:   word_class:string
 /// -arg:   [overwrite:boolean]
@@ -104,6 +105,7 @@ int lua_word_classifications::classify_word(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  word_classifications:applycolor
+/// -ver:   1.1.49
 /// -arg:   start:integer
 /// -arg:   length:integer
 /// -arg:   color:string

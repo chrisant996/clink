@@ -394,6 +394,7 @@ end
 
 --------------------------------------------------------------------------------
 --- -name:  io.popenyield
+--- -ver:   1.2.10
 --- -arg:   command:string
 --- -arg:   [mode:string]
 --- -ret:   file

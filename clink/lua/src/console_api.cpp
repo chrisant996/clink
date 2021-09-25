@@ -35,6 +35,7 @@ static SHORT GetConsoleNumLines(const CONSOLE_SCREEN_BUFFER_INFO& csbi)
 
 //------------------------------------------------------------------------------
 /// -name:  console.scroll
+/// -ver:   1.1.20
 /// -arg:   mode:string
 /// -arg:   amount:integer
 /// -ret:   integer
@@ -80,6 +81,7 @@ static int scroll(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  console.cellcount
+/// -ver:   1.2.5
 /// -arg:   text:string
 /// -ret:   integer
 /// Returns the count of visible character cells that would be consumed if the
@@ -102,6 +104,7 @@ static int get_cell_count(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  console.plaintext
+/// -ver:   1.2.5
 /// -arg:   text:string
 /// -ret:   string, integer
 /// Returns the input <span class="arg">text</span> with ANSI escape codes
@@ -126,6 +129,7 @@ static int get_plain_text(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  console.getwidth
+/// -ver:   1.1.20
 /// -ret:   integer
 /// Returns the width of the console screen buffer in characters.
 static int get_width(lua_State* state)
@@ -141,6 +145,7 @@ static int get_width(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  console.getheight
+/// -ver:   1.1.20
 /// -ret:   integer
 /// Returns the number of visible lines of the console screen buffer.
 static int get_height(lua_State* state)
@@ -156,6 +161,7 @@ static int get_height(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  console.getnumlines
+/// -ver:   1.1.20
 /// -ret:   integer
 /// Returns the total number of lines in the console screen buffer.
 static int get_num_lines(lua_State* state)
@@ -171,6 +177,7 @@ static int get_num_lines(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  console.gettop
+/// -ver:   1.1.20
 /// -ret:   integer
 /// Returns the current top line (scroll position) in the console screen buffer.
 static int get_top(lua_State* state)
@@ -186,6 +193,7 @@ static int get_top(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  console.getlinetext
+/// -ver:   1.1.20
 /// -arg:   line:integer
 /// -ret:   string
 /// Returns the text from line number <span class="arg">line</span>, from 1 to
@@ -220,6 +228,7 @@ static int get_line_text(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  console.gettitle
+/// -ver:   1.1.32
 /// -ret:   string
 /// Returns the console title text.
 static int get_title(lua_State* state)
@@ -242,6 +251,7 @@ static int get_title(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  console.settitle
+/// -ver:   1.1.32
 /// -arg:   title:string
 /// Sets the console title text.
 static int set_title(lua_State* state)
@@ -256,6 +266,7 @@ static int set_title(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  console.islinedefaultcolor
+/// -ver:   1.1.20
 /// -arg:   line:integer
 /// -ret:   boolean
 /// Returns whether line number <span class="arg">line</span> uses only the
@@ -289,6 +300,7 @@ static int is_line_default_color(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  console.linehascolor
+/// -ver:   1.1.21
 /// -arg:   line:integer
 /// -arg:   [attr:integer]
 /// -arg:   [attrs:table of integers]
@@ -492,10 +504,8 @@ static int find_line(lua_State* state, int direction)
     return 1;
 }
 
-//------------------------------------------------------------------------------
-//--   NOTE: The example script below corresponds to examples\findline.lua.   --
-//------------------------------------------------------------------------------
 /// -name:  console.findprevline
+/// -ver:   1.1.21
 /// -arg:   starting_line:integer
 /// -arg:   [text:string]
 /// -arg:   [mode:string]
@@ -541,6 +551,7 @@ static int find_prev_line(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  console.findnextline
+/// -ver:   1.1.21
 /// -arg:   starting_line:integer
 /// -arg:   [text:string]
 /// -arg:   [mode:string]
@@ -562,6 +573,7 @@ static int find_next_line(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  console.readinput
+/// -ver:   1.2.29
 /// -ret:   string | nil
 /// Reads one key sequence from the console input.  If no input is available, it
 /// waits until input becomes available.
