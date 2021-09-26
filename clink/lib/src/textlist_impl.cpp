@@ -354,10 +354,10 @@ void textlist_impl::cancel(editor_module::result& result)
 
     update_display();
 
-    _rl_move_vert(0);
-    m_buffer->redraw();
-
     clear_items();
+
+    _rl_refresh_line();
+    rl_display_fixed = 1;
 }
 
 //------------------------------------------------------------------------------
