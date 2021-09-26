@@ -61,6 +61,7 @@ static setting_enum g_paste_crlf(
     paste_crlf_crlf);
 
 extern setting_bool g_adjust_cursor_style;
+extern setting_color g_color_popup;
 extern setting_bool g_match_wild;
 
 static bool s_force_reload_scripts = false;
@@ -995,26 +996,27 @@ int cua_cut(int count, int invoking_key)
 
 
 //------------------------------------------------------------------------------
-static const char c_reverse[] = "\001\x1b[7m\002";
-static const char c_normal[] = "\001\x1b[m\002";
-const char* get_popup_colors(bool* is_reversed=nullptr)
+const char* get_popup_colors()
 {
+    static str<32> s_popup;
+
+    str<32> tmp;
+    g_color_popup.get(tmp);
+    if (!tmp.empty())
+    {
+        s_popup.format("0;%s", tmp.c_str());
+        return s_popup.c_str();
+    }
+
     CONSOLE_SCREEN_BUFFER_INFOEX csbiex = { sizeof(csbiex) };
     if (!GetConsoleScreenBufferInfoEx(GetStdHandle(STD_OUTPUT_HANDLE), &csbiex))
-    {
-        if (is_reversed)
-            *is_reversed = true;
-        return c_reverse;
-    }
+        return "0;30;47";
 
     static const unsigned char c_colors[] = { 30, 34, 32, 36, 31, 35, 33, 37, 90, 94, 92, 96, 91, 95, 93, 97 };
 
-    static char s_popup[32];
     WORD attr = csbiex.wPopupAttributes;
-    sprintf(s_popup, "\x1b[%u;%um", c_colors[attr & 0x0f], c_colors[(attr & 0xf0) >> 4] + 10);
-    if (is_reversed)
-        *is_reversed = false;
-    return s_popup;
+    s_popup.format("0;%u;%u", c_colors[attr & 0x0f], c_colors[(attr & 0xf0) >> 4] + 10);
+    return s_popup.c_str();
 }
 
 //------------------------------------------------------------------------------
@@ -1323,10 +1325,11 @@ int _win_f2_callback(_rl_callback_generic_arg *data)
 #endif
 
 //------------------------------------------------------------------------------
+static const char c_normal[] = "\001\x1b[m\002";
 int win_f2(int count, int invoking_key)
 {
     s_win_fn_input_buffer.clear();
-    rl_message("%s(enter char to copy up to: )%s ", get_popup_colors(), c_normal);
+    rl_message("\x01\x1b[%sm\x02(enter char to copy up to: )%s ", get_popup_colors(), c_normal);
 
 #if defined (HANDLE_SIGNALS)
     if (RL_ISSTATE(RL_STATE_CALLBACK) == 0)
@@ -1394,7 +1397,7 @@ int _win_f4_callback(_rl_callback_generic_arg *data)
 int win_f4(int count, int invoking_key)
 {
     s_win_fn_input_buffer.clear();
-    rl_message("%s(enter char to delete up to: )%s ", get_popup_colors(), c_normal);
+    rl_message("\x01\x1b[%sm\x02(enter char to delete up to: )%s ", get_popup_colors(), c_normal);
 
 #if defined (HANDLE_SIGNALS)
     if (RL_ISSTATE(RL_STATE_CALLBACK) == 0)
@@ -1471,9 +1474,9 @@ static int finish_win_f9()
 static void set_f9_message()
 {
     if (s_history_number >= 0)
-        rl_message("%s(enter history number: %d)%s ", get_popup_colors(), s_history_number, c_normal);
+        rl_message("\x01\x1b[%sm\x02(enter history number: %d)%s ", get_popup_colors(), s_history_number, c_normal);
     else
-        rl_message("%s(enter history number: )%s ", get_popup_colors(), c_normal);
+        rl_message("\x01\x1b[%sm\x02(enter history number: )%s ", get_popup_colors(), c_normal);
 }
 
 //------------------------------------------------------------------------------

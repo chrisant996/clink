@@ -197,6 +197,14 @@ static setting_color g_color_modmark(
     "");
 #endif
 
+setting_color g_color_popup(
+    "color.popup",
+    "Color for popup lists and messages",
+    "Used when Clink shows a text mode popup list or message, for example when\n"
+    "using the win-history-list command bound by default to F7.  If not set, the\n"
+    "console's popup colors are used.",
+    "");
+
 setting_color g_color_prompt(
     "color.prompt",
     "Prompt color",

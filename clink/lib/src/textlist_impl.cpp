@@ -44,7 +44,7 @@ enum {
 };
 
 //------------------------------------------------------------------------------
-extern const char* get_popup_colors(bool* is_reversed=nullptr);
+extern const char* get_popup_colors();
 
 //------------------------------------------------------------------------------
 static textlist_impl* s_textlist = nullptr;
@@ -520,9 +520,11 @@ void textlist_impl::update_display()
             tmp.format("%u", m_count);
             const int max_num_len = tmp.length();
 
-            bool reversed = false;
-            const char* color = get_popup_colors(&reversed);
-            int color_len = int(strlen(color));
+            str<32> color;
+            {
+                const char* _color = get_popup_colors();
+                color.format("\x1b[%sm", _color);
+            }
 
             // Display border.
             if (draw_border)
@@ -544,7 +546,7 @@ void textlist_impl::update_display()
                 }
 
                 m_printer->print(left.c_str(), left.length());
-                m_printer->print(color, color_len);
+                m_printer->print(color.c_str(), color.length());
                 m_printer->print("\xe2\x94\x8c");                       // ┌
                 m_printer->print(topline->c_str(), topline->length());  // ─
                 m_printer->print("\xe2\x94\x90\x1b[m");                 // ┐
@@ -566,16 +568,11 @@ void textlist_impl::update_display()
                     i == m_prev_displayed)
                 {
                     m_printer->print(left.c_str(), left.length());
-                    m_printer->print(color, color_len);
+                    m_printer->print(color.c_str(), color.length());
                     m_printer->print("\xe2\x94\x82");               // │
 
                     if (i == m_index)
-                    {
-                        if (reversed)
-                            m_printer->print("\x1b[m");
-                        else
-                            m_printer->print("\x1b[7m");
-                    }
+                        m_printer->print("\x1b[7m");
 
                     int spaces = col_width - 2;
 
@@ -600,12 +597,7 @@ void textlist_impl::update_display()
                     m_printer->print(tmp.c_str(), tmp.length());    // text
 
                     if (i == m_index)
-                    {
-                        if (reversed)
-                            m_printer->print("\x1b[7");
-                        else
-                            m_printer->print("\x1b[27m");
-                    }
+                        m_printer->print("\x1b[27m");
 
                     m_printer->print("\xe2\x94\x82\x1b[m");         // │
                 }
@@ -617,7 +609,7 @@ void textlist_impl::update_display()
                 rl_crlf();
                 up++;
                 m_printer->print(left.c_str(), left.length());
-                m_printer->print(color, color_len);
+                m_printer->print(color.c_str(), color.length());
                 m_printer->print("\xe2\x94\x94");                       // └
                 m_printer->print(horzline.c_str(), horzline.length());  // ─
                 m_printer->print("\xe2\x94\x98\x1b[m");                 // ┘
