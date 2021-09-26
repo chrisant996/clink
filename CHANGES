@@ -4,6 +4,7 @@
 
 #### v1.2.36
 
+- Added `win-history-list` command bound to <kbd>F7</kbd> by default.  This shows the history list, and executes the selected history entry.
 - Fixed the `clink-menu-complete-numbers` family of commands (regression introduced in v1.2.32).
 
 #### v1.2.35
