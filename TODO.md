@@ -5,16 +5,13 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
+- Use text mode popup list everywhere instead of window based popup list.
+  - For now, have a setting to allow using the window based popup implementation instead (except for `win-history-list` which always uses the text based popup list).
 - Add a quick start / beginner section to the Clink docs.
 
 ## Medium Priority
-- <kbd>F7</kbd> => Text-mode interactive history list.
-  - Some way to enter history number while in list.
-  - Keys cycle through lines that match the first letter?  Or use incremental search?  Filter the list?
-  - Clink setting to override popup color?
 
 ## Low Priority
-- Support this quirk, or not?  <kbd>Esc</kbd> in conhost clears the line but does not reset the history index, but in Clink it resets the history index.  Affects F1, F2, F3, F5, F8.
 - Auto-update option, with configurable polling interval?  (Though package managers like scoop can handle updates, if Clink was installed through one.)
 
 ## Mystery (am I only imagining it?)
@@ -103,6 +100,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Corrupted clink_history -- not sure how, when, or why -- but after having made changes to history, debugging through issues, and aborting some debugging sessions my clink_history file had a big chunk of contiguous NUL bytes. _[UPDATE: the good news is it isn't a Clink issue; the bad news is the SSD drives in my new Alienware m15 R4 keep periodically hitting a BSOD for KERNEL DATA INPAGE ERROR, which zeroes out recently written sectors.  UPDATE #2: the BSOD were actually from the Nvidia drivers.]_
 
 ## Punt
+- Support this quirk, or not?  <kbd>Esc</kbd> in conhost clears the line but does not reset the history index, but in Clink it resets the history index.  Affects F1, F2, F3, F5, F8.  _[Defer until someone explains why it's important to them.]_
 - Additional ANSI escape codes.
   - `ESC[?47h` and `ESC[?47l` (save and restore screen) -- not widely supported, so I can't use it, and it's not worth emulating.  Which makes me very sad; no save + show popup + restore. 😭
   - `ESC[?1049h` and `ESC[?1049l` (enable and disable alternative buffer) -- not worth using or emulating; there's no way to copying between screens, so it can't help for save/popup/restore.
