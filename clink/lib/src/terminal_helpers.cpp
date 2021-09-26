@@ -8,6 +8,8 @@
 #include <terminal/printer.h>
 #include <terminal/terminal_out.h>
 
+#include <assert.h>
+
 
 
 //------------------------------------------------------------------------------
@@ -17,6 +19,22 @@ printer* g_printer = nullptr;
 
 //------------------------------------------------------------------------------
 extern setting_bool g_adjust_cursor_style;
+static bool s_locked_cursor_visibility = false;
+
+//------------------------------------------------------------------------------
+extern "C" int is_locked_cursor()
+{
+    return s_locked_cursor_visibility;
+}
+
+//------------------------------------------------------------------------------
+extern "C" int lock_cursor(int lock)
+{
+    assert(!lock || !s_locked_cursor_visibility);
+    bool was_locked = s_locked_cursor_visibility;
+    s_locked_cursor_visibility = !!lock;
+    return was_locked;
+}
 
 //------------------------------------------------------------------------------
 extern "C" int show_cursor(int visible)
@@ -30,7 +48,7 @@ extern "C" int show_cursor(int visible)
     if (!g_adjust_cursor_style.get())
         return was_visible;
 
-    if (!was_visible != !visible)
+    if (!was_visible != !visible && !s_locked_cursor_visibility)
     {
         info.bVisible = !!visible;
         SetConsoleCursorInfo(handle, &info);

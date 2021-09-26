@@ -77,15 +77,14 @@ static_assert(between_cols <= before_desc, "description separator can't be less 
 // Parse ANSI escape codes to determine the visible character length of the
 // string (which gets used for column alignment).  Truncate the string with an
 // ellipsis if it exceeds a maximum visible length.
-void ellipsify(const char* in, int limit, str_base& out, bool expand_ctrl, const char* ellipsis=nullptr)
+void ellipsify(const char* in, int limit, str_base& out, bool expand_ctrl)
 {
     int visible_len = 0;
     int truncate_visible = -1;
     int truncate_bytes = -1;
 
-    if (!ellipsis)
-        ellipsis = "...";
-    const int ellipsis_len = cell_count(ellipsis);
+    static const char ellipsis[] = "...";
+    const int ellipsis_len = 3;
 
     out.clear();
 

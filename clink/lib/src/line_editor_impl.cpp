@@ -238,10 +238,12 @@ line_editor_impl::line_editor_impl(const desc& desc)
 , m_printer(*desc.printer)
 , m_pager(*this)
 , m_selectcomplete(*this)
+, m_textlist(*this)
 {
     add_module(m_module);
     add_module(m_pager);
     add_module(m_selectcomplete);
+    add_module(m_textlist);
 
     desc.input->set_key_tester(this);
 }

@@ -997,16 +997,23 @@ int cua_cut(int count, int invoking_key)
 //------------------------------------------------------------------------------
 static const char c_reverse[] = "\001\x1b[7m\002";
 static const char c_normal[] = "\001\x1b[m\002";
-static const char* get_popup_colors()
+const char* get_popup_colors(bool* is_reversed=nullptr)
 {
     CONSOLE_SCREEN_BUFFER_INFOEX csbiex = { sizeof(csbiex) };
     if (!GetConsoleScreenBufferInfoEx(GetStdHandle(STD_OUTPUT_HANDLE), &csbiex))
+    {
+        if (is_reversed)
+            *is_reversed = true;
         return c_reverse;
+    }
 
     static const unsigned char c_colors[] = { 30, 34, 32, 36, 31, 35, 33, 37, 90, 94, 92, 96, 91, 95, 93, 97 };
 
     static char s_popup[32];
-    sprintf(s_popup, "\x1b[%u;%um", c_colors[csbiex.wPopupAttributes & 0x0f], c_colors[(csbiex.wPopupAttributes & 0xf0) >> 4] + 10);
+    WORD attr = csbiex.wPopupAttributes;
+    sprintf(s_popup, "\x1b[%u;%um", c_colors[attr & 0x0f], c_colors[(attr & 0xf0) >> 4] + 10);
+    if (is_reversed)
+        *is_reversed = false;
     return s_popup;
 }
 
@@ -1413,6 +1420,22 @@ int win_f4(int count, int invoking_key)
 int win_f6(int count, int invoking_key)
 {
     rl_insert_text("\x1a");
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+int win_f7(int count, int invoking_key)
+{
+    if (RL_ISSTATE(RL_STATE_MACRODEF) != 0)
+    {
+ding:
+        rl_ding();
+        return 0;
+    }
+
+    extern bool activate_history_text_list(editor_module::result& result);
+    if (!g_result || !activate_history_text_list(*g_result))
+        goto ding;
     return 0;
 }
 

@@ -47,6 +47,7 @@ extern setting_enum g_default_bindings;
 
 //------------------------------------------------------------------------------
 extern "C" void reset_wcwidths();
+extern "C" int is_locked_cursor();
 
 //------------------------------------------------------------------------------
 static const int CTRL_PRESSED = LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED;
@@ -487,7 +488,7 @@ static unsigned int get_dimensions()
 //------------------------------------------------------------------------------
 static void set_cursor_visibility(bool state)
 {
-    if (!g_adjust_cursor_style.get())
+    if (!g_adjust_cursor_style.get() || is_locked_cursor())
         return;
 
     HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);

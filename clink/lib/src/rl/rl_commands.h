@@ -106,9 +106,8 @@ int     win_f1(int count, int invoking_key);
 int     win_f2(int count, int invoking_key);
 int     win_f3(int count, int invoking_key);
 int     win_f4(int count, int invoking_key);
-int     win_f5(int count, int invoking_key);
 int     win_f6(int count, int invoking_key);
-int     win_f8(int count, int invoking_key);
+int     win_f7(int count, int invoking_key);
 int     win_f9(int count, int invoking_key);
 bool    win_fn_callback_pending();
 

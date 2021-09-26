@@ -11,6 +11,7 @@
 #include "terminal/key_tester.h"
 #include "pager_impl.h"
 #include "selectcomplete_impl.h"
+#include "textlist_impl.h"
 #include "line_editor.h"
 #include "line_state.h"
 #include "matches_impl.h"
@@ -137,6 +138,7 @@ private:
     printer&            m_printer;
     pager_impl          m_pager;
     selectcomplete_impl m_selectcomplete;
+    textlist_impl       m_textlist;
     key_t               m_prev_key;
     unsigned char       m_keys_size;
     unsigned char       m_flags = 0;

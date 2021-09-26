@@ -25,6 +25,7 @@ setting_bool g_adjust_cursor_style(
 
 //------------------------------------------------------------------------------
 extern "C" char *tgetstr(const char* name, char** out);
+extern "C" int is_locked_cursor();
 
 //------------------------------------------------------------------------------
 static int g_enhanced_cursor = 0;
@@ -36,7 +37,7 @@ static int cursor_style(HANDLE handle, int style, int visible)
     GetConsoleCursorInfo(handle, &ci);
     int was_visible = !!ci.bVisible;
 
-    if (!g_adjust_cursor_style.get())
+    if (!g_adjust_cursor_style.get() || is_locked_cursor())
         return was_visible;
 
     // Assume first encounter of cursor size is the default size.
