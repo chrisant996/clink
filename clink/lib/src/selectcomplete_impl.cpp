@@ -585,7 +585,7 @@ prev:
             {
                 if (y == m_match_rows - 1)
                 {
-                    m_index = m_matches.get_match_count() - 1;
+                    m_index = count - 1;
                 }
                 else
                 {
