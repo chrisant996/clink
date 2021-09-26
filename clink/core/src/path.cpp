@@ -6,7 +6,6 @@
 #include "path.h"
 #include "os.h"
 #include "str.h"
-#include "str_compare.h"
 #include "str_tokeniser.h"
 
 #include <string>
