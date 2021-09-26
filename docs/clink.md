@@ -113,7 +113,7 @@ Name                         | Default | Description
 `color.input`                |         | Used when Clink displays the input line text. Note that when `clink.colorize_input` is disabled, the entire input line is displayed using `color.input`.
 `color.interact`             | `bold`  | Used when Clink displays text or prompts such as a pager's `--More?--` prompt.
 `color.message`              | `default` | The color for the message area (e.g. the search prompt message, digit argument prompt message, etc).
-`color.modmark`              |         | Used when Clink displays the `*` mark on modified history lines when Readline's `mark-modified-lines` variable and Clink's `color.input` setting are both set. Falls back to `color.input` if not set.
+`color.popup`                |         | When set, this is used as the color for popup lists and messages.  If no color is set, then the console's popup colors are used (see the Properties dialog box for the console window).
 `color.prompt`               |         | When set, this is used as the default color for the prompt.  But it's overridden by any colors set by <a href="#customisingtheprompt">Customising The Prompt</a>.
 <a name="color_readonly"></a>`color.readonly` | | Used when Clink displays file completions with the "readonly" attribute.
 `color.selected_completion`  |         | The color for the selected completion with the clink-select-complete command.  If no color is set, then bright reverse video is used.
