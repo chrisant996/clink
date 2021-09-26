@@ -188,12 +188,14 @@ static setting_color g_color_message(
     "The color for the Readline message area (e.g. search prompt, etc).",
     "default");
 
+#ifdef INCLUDE_MODMARK
 static setting_color g_color_modmark(
     "color.modmark",
     "Modified history line mark color",
     "Used when Clink displays the * mark on modified history lines when\n"
     "mark-modified-lines is set and color.input is set.",
     "");
+#endif
 
 setting_color g_color_prompt(
     "color.prompt",
@@ -2013,7 +2015,13 @@ void rl_module::on_begin_line(const context& context)
         s_classifications = &context.classifications;
     g_prompt_refilter = g_prompt_redisplay = 0; // Used only by diagnostic output.
 
+#ifdef INCLUDE_MODMARK
     _rl_face_modmark = '*';
+    _rl_display_modmark_color = build_color_sequence(g_color_modmark, m_modmark_color, true);
+#else
+    _rl_mark_modified_lines = 0;
+#endif
+
     _rl_face_horizscroll = '<';
     s_input_color = build_color_sequence(g_color_input, m_input_color, true);
     s_selection_color = build_color_sequence(g_color_selection, m_selection_color, true);
@@ -2021,7 +2029,6 @@ void rl_module::on_begin_line(const context& context)
     s_flag_color = build_color_sequence(g_color_flag, m_flag_color, true);
     s_none_color = build_color_sequence(g_color_unexpected, m_none_color, true);
     s_argmatcher_color = build_color_sequence(g_color_argmatcher, m_argmatcher_color, true);
-    _rl_display_modmark_color = build_color_sequence(g_color_modmark, m_modmark_color, true);
     _rl_display_horizscroll_color = build_color_sequence(g_color_horizscroll, m_horizscroll_color, true);
     _rl_display_message_color = build_color_sequence(g_color_message, m_message_color, true);
     _rl_pager_color = build_color_sequence(g_color_interact, m_pager_color);
