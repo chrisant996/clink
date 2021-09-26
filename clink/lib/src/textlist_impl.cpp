@@ -97,7 +97,7 @@ textlist_impl::textlist_impl(input_dispatcher& dispatcher)
 //------------------------------------------------------------------------------
 bool textlist_impl::activate(editor_module::result& result, textlist_line_getter_t getter, int count)
 {
-    clear_items();
+    reset();
 
     assert(m_buffer);
     if (!m_buffer)
@@ -125,8 +125,6 @@ bool textlist_impl::activate(editor_module::result& result, textlist_line_getter
     m_prev_bind_group = result.set_bind_group(m_bind_group);
 
     // Initialize list.
-    m_prev_displayed = -1;
-    m_needle.clear();
     m_count = count;
     m_index = count - 1;
     m_top = max<int>(0, count - m_visible_rows);
@@ -151,7 +149,6 @@ void textlist_impl::bind_input(binder& binder)
     binder.bind(m_bind_group, "\\e[6~", bind_id_textlist_pgdn);
     binder.bind(m_bind_group, "\\e[H", bind_id_textlist_home);
     binder.bind(m_bind_group, "\\e[F", bind_id_textlist_end);
-    binder.bind(m_bind_group, "^h", bind_id_textlist_backspace);
     binder.bind(m_bind_group, "\\r", bind_id_textlist_enter);
     binder.bind(m_bind_group, "^e", bind_id_textlist_edit);
     binder.bind(m_bind_group, "^c", bind_id_textlist_copy);
@@ -256,15 +253,6 @@ navigated:
         }
         break;
 
-    case bind_id_textlist_backspace:
-        if (m_needle.length())
-        {
-            int point = _rl_find_prev_mbchar(const_cast<char*>(m_needle.c_str()), m_needle.length(), MB_FIND_NONZERO);
-            m_needle.truncate(point);
-            goto update_needle;
-        }
-        break;
-
     case bind_id_textlist_enter:
     case bind_id_textlist_edit:
         m_buffer->begin_undo_group();
@@ -293,8 +281,20 @@ navigated:
 
     case bind_id_textlist_catchall:
         {
-            // Figure out whether to add the input to the needle.
-            bool add = true;
+            bool refresh = false;
+            bool ignore = false;
+
+            if (input.len == 1 && input.keys[0] == 8)
+            {
+                if (!m_needle.length())
+                    break;
+                int point = _rl_find_prev_mbchar(const_cast<char*>(m_needle.c_str()), m_needle.length(), MB_FIND_NONZERO);
+                m_needle.truncate(point);
+                refresh = true;
+                goto update_needle;
+            }
+
+            // Figure out whether to ignore the input.
             {
                 str_iter iter(input.keys, input.len);
                 while (iter.more())
@@ -302,22 +302,102 @@ navigated:
                     unsigned int c = iter.next();
                     if (c < ' ' || c == 0x7f)
                     {
-                        add = false;
+                        ignore = true;
                         break;
                     }
                 }
             }
 
-            // Update the needle.
-            if (add)
+            if (ignore)
+                break;
+
+            // Collect the input.
             {
-                m_needle.concat(input.keys, input.len);
-update_needle:
-                m_top = 0;
-                m_index = 0;
-                m_prev_displayed = -1;
-// TODO: find needle, scroll accordingly.
+                str_iter iter(input.keys, input.len);
+                const char* seq = iter.get_pointer();
+                while (iter.more())
+                {
+                    unsigned int c = iter.next();
+                    if (c >= '0' && c <= '9')
+                    {
+                        if (!m_needle_is_number)
+                        {
+                            refresh = !m_title.empty();
+                            m_title.clear();
+                            m_needle.clear();
+                            m_needle_is_number = true;
+                        }
+                        if (m_needle.length() < 6)
+                        {
+                            char digit = char(c);
+                            m_needle.concat(&digit, 1);
+                        }
+                    }
+                    else
+                    {
+                        refresh = !m_title.empty();
+                        m_title.clear();
+                        m_needle.clear();
+                        m_needle.concat(seq, int(iter.get_pointer() - seq));
+                        m_needle_is_number = false;
+                    }
+                    seq = iter.get_pointer();
+                }
             }
+
+            // Handle the input.
+update_needle:
+            if (m_needle_is_number)
+            {
+                if (m_needle.length())
+                {
+                    refresh = true;
+                    m_title.clear();
+                    m_title.format("\xe2\x94\xa4 enter history number: %-6s \xe2\x94\x9c", m_needle.c_str());
+                    int i = atoi(m_needle.c_str()) - 1;
+                    if (i >= 0 && i < m_count)
+                    {
+                        m_index = i;
+                        if (m_index < m_top || m_index >= m_top + m_visible_rows)
+                            m_top = max<int>(0, min<int>(m_index - (m_visible_rows / 2), m_count - m_visible_rows));
+                        m_prev_displayed = -1;
+                        refresh = true;
+                    }
+                }
+                else if (m_title.length())
+                {
+                    refresh = true;
+                    m_title.clear();
+                }
+            }
+            else
+            {
+                str_compare_scope _(str_compare_scope::caseless, true/*fuzzy_accent*/);
+
+                int i = m_index;
+                while (true)
+                {
+                    i--;
+                    if (i < 0)
+                        i = m_count - 1;
+                    if (i == m_index)
+                        break;
+
+                    int result = str_compare(m_needle.c_str(), m_items[i]);
+                    if (result == -1 || result == m_needle.length())
+                    {
+                        m_index = i;
+                        if (m_index < m_top || m_index >= m_top + m_visible_rows)
+                            m_top = max<int>(0, min<int>(m_index, m_count - m_visible_rows));
+                        m_prev_displayed = -1;
+                        refresh = true;
+                        break;
+                    }
+                }
+            }
+
+            if (refresh)
+                update_display();
         }
         break;
     }
@@ -354,7 +434,7 @@ void textlist_impl::cancel(editor_module::result& result)
 
     update_display();
 
-    clear_items();
+    reset();
 
     _rl_refresh_line();
     rl_display_fixed = 1;
@@ -418,6 +498,9 @@ void textlist_impl::update_display()
         {
             update_top();
 
+            const bool draw_border = (m_prev_displayed < 0) || m_title.length() || m_has_title;
+            m_has_title = !m_title.empty();
+
             const int longest = max<int>(m_longest, 40);
             const int col_width = min<int>(longest + 2, m_screen_cols - 8);
 
@@ -442,11 +525,30 @@ void textlist_impl::update_display()
             int color_len = int(strlen(color));
 
             // Display border.
-            m_printer->print(left.c_str(), left.length());
-            m_printer->print(color, color_len);
-            m_printer->print("\xe2\x94\x8c");                       // ┌
-            m_printer->print(horzline.c_str(), horzline.length());  // ─
-            m_printer->print("\xe2\x94\x90\x1b[m");                 // ┐
+            if (draw_border)
+            {
+                const str_base* topline = &horzline;
+                if (m_title.length())
+                {
+                    int title_cells = cell_count(m_title.c_str());
+                    int x = (col_width - 2 - title_cells) / 2;
+                    tmp.clear();
+                    x--;
+                    for (int i = x; i-- > 0;)
+                        tmp.concat("\xe2\x94\x80", 3);
+                    x += title_cells;
+                    tmp.concat(m_title.c_str(), m_title.length());
+                    for (int i = col_width - 2 - x; i-- > 0;)
+                        tmp.concat("\xe2\x94\x80", 3);
+                    topline = &tmp;
+                }
+
+                m_printer->print(left.c_str(), left.length());
+                m_printer->print(color, color_len);
+                m_printer->print("\xe2\x94\x8c");                       // ┌
+                m_printer->print(topline->c_str(), topline->length());  // ─
+                m_printer->print("\xe2\x94\x90\x1b[m");                 // ┐
+            }
 
             // Display items.
             for (int row = 0; row < m_visible_rows; row++)
@@ -510,13 +612,16 @@ void textlist_impl::update_display()
             }
 
             // Display border.
-            rl_crlf();
-            up++;
-            m_printer->print(left.c_str(), left.length());
-            m_printer->print(color, color_len);
-            m_printer->print("\xe2\x94\x94");                       // └
-            m_printer->print(horzline.c_str(), horzline.length());  // ─
-            m_printer->print("\xe2\x94\x98\x1b[m");                 // ┘
+            if (draw_border)
+            {
+                rl_crlf();
+                up++;
+                m_printer->print(left.c_str(), left.length());
+                m_printer->print(color, color_len);
+                m_printer->print("\xe2\x94\x94");                       // └
+                m_printer->print(horzline.c_str(), horzline.length());  // ─
+                m_printer->print("\xe2\x94\x98\x1b[m");                 // ┘
+            }
 
             m_prev_displayed = m_index;
         }
@@ -556,13 +661,29 @@ void textlist_impl::set_top(int top)
 }
 
 //------------------------------------------------------------------------------
-void textlist_impl::clear_items()
+void textlist_impl::reset()
 {
     std::vector<const char*> zap;
-    m_items = std::move(zap);
-    m_store.clear();
-    m_longest = 0;
+
+    // Don't reset screen row and cols; they stay in sync with the terminal.
+
+    m_visible_rows = 0;
+    m_title.clear();
+    m_has_title = false;
+
     m_getter = nullptr;
+    m_items = std::move(zap);
+    m_count = 0;
+    m_longest = 0;
+
+    m_top = 0;
+    m_index = 0;
+    m_prev_displayed = -1;
+
+    m_needle.clear();
+    m_needle_is_number = false;
+
+    m_store.clear();
 }
 
 //------------------------------------------------------------------------------

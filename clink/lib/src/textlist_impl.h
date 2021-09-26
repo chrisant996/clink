@@ -40,7 +40,7 @@ private:
     void            update_top();
     void            update_display();
     void            set_top(int top);
-    void            clear_items();
+    void            reset();
 
     // Initialization state.
     input_dispatcher& m_dispatcher;
@@ -53,6 +53,8 @@ private:
     int             m_screen_cols = 0;
     int             m_screen_rows = 0;
     int             m_visible_rows = 0;
+    str<32>         m_title;
+    bool            m_has_title = false;
 
     // Entries.
     textlist_line_getter_t m_getter = nullptr;
@@ -66,7 +68,8 @@ private:
     int             m_prev_displayed = -1;
 
     // Current input.
-    str<>           m_needle;
+    str<16>         m_needle;
+    bool            m_needle_is_number = false;
 
     // Content store.
     class item_store
