@@ -8,7 +8,10 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Add a quick start / beginner section to the Clink docs.
 
 ## Medium Priority
-- <kbd>F7</kbd> => Show text-mode interactive list of previous commands.
+- <kbd>F7</kbd> => Text-mode interactive history list.
+  - Some way to enter history number while in list.
+  - Keys cycle through lines that match the first letter?  Or use incremental search?  Filter the list?
+  - Clink setting to override popup color?
 
 ## Low Priority
 - Support this quirk, or not?  <kbd>Esc</kbd> in conhost clears the line but does not reset the history index, but in Clink it resets the history index.  Affects F1, F2, F3, F5, F8.
