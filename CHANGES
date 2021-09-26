@@ -5,7 +5,10 @@
 #### v1.2.36
 
 - Added `win-history-list` command bound to <kbd>F7</kbd> by default.  This shows the history list, and executes the selected history entry.
+- Fixed the `clink-select-complete` command when `print-completions-horizontally` is on (and also minor isues when it is off).
 - Fixed the `clink-menu-complete-numbers` family of commands (regression introduced in v1.2.32).
+- Fixed a situation where the scrolling keys could stop working (regression introduced in v1.2.24).
+- Fixed [#172](https://github.com/chrisant996/clink/issues/172); add a choice in the installer to not add Start menu shortcuts.
 
 #### v1.2.35
 
