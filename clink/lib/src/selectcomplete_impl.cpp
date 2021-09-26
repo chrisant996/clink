@@ -67,8 +67,6 @@ enum {
 enum {
     between_cols = 2,
     before_desc = 4,
-
-    ellipsis_len = 3,
 };
 
 static_assert(between_cols <= before_desc, "description separator can't be less than the column separator");
@@ -79,11 +77,15 @@ static_assert(between_cols <= before_desc, "description separator can't be less 
 // Parse ANSI escape codes to determine the visible character length of the
 // string (which gets used for column alignment).  Truncate the string with an
 // ellipsis if it exceeds a maximum visible length.
-void ellipsify(const char* in, int limit, str_base& out, bool expand_ctrl)
+void ellipsify(const char* in, int limit, str_base& out, bool expand_ctrl, const char* ellipsis=nullptr)
 {
     int visible_len = 0;
     int truncate_visible = -1;
     int truncate_bytes = -1;
+
+    if (!ellipsis)
+        ellipsis = "...";
+    const int ellipsis_len = cell_count(ellipsis);
 
     out.clear();
 
@@ -109,7 +111,8 @@ void ellipsify(const char* in, int limit, str_base& out, bool expand_ctrl)
                 if (visible_len + clen > limit)
                 {
                     out.truncate(truncate_bytes);
-                    out.concat("...", min<int>(ellipsis_len, max<int>(0, limit - truncate_visible)));
+                    if (ellipsis_len)
+                        out.concat(ellipsis, min<int>(ellipsis_len, max<int>(0, limit - truncate_visible)));
                     return;
                 }
                 visible_len += clen;
