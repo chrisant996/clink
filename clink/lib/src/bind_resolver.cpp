@@ -173,7 +173,7 @@ bind_resolver::binding bind_resolver::next()
 }
 
 //------------------------------------------------------------------------------
-bool bind_resolver::is_bound(const char* seq, int len) const
+int bind_resolver::is_bound(const char* seq, int len) const
 {
     return m_binder.is_bound(m_group, seq, len);
 }

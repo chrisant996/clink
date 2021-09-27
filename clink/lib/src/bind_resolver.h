@@ -38,7 +38,7 @@ public:
     binding             next();
     void                reset();
 
-    bool                is_bound(const char* seq, int len) const;
+    int                 is_bound(const char* seq, int len) const;
 
 private:
     void                claim(binding& binding);

@@ -11,11 +11,16 @@ class editor_module;
 class binder
 {
 public:
+    // key==0 + id==0xff is special:  it tells is_bound() that control codes and
+    // extended keys not explicitly bound will be eaten (i.e. will not cancel
+    // the binding group and will not be re-dispatched).
+    static constexpr unsigned char id_catchall_only_printable = 0xff;
+
                         binder();
     int                 get_group(const char* name=nullptr);
     int                 create_group(const char* name);
     bool                bind(unsigned int group, const char* chord, editor_module& module, unsigned char id);
-    bool                is_bound(unsigned int group, const char* seq, int len) const;
+    int                 is_bound(unsigned int group, const char* seq, int len) const;
 
 private:
     static const int    link_bits = 9;

@@ -553,8 +553,9 @@ void line_editor_impl::dispatch(int bind_group)
 bool line_editor_impl::is_bound(const char* seq, int len)
 {
     // Check if clink has a binding; these override Readline.
-    if (m_bind_resolver.is_bound(seq, len))
-        return true;
+    int bound = m_bind_resolver.is_bound(seq, len);
+    if (bound != 0)
+        return (bound > 0);
 
     // Check if Readline has a binding.
     return m_module.is_bound(seq, len);

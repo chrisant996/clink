@@ -30,7 +30,7 @@ enum {
     // TODO: bind_id_pager_help,
     bind_id_pager_stop,
 
-    bind_id_catchall,
+    bind_id_catchall = binder::id_catchall_only_printable,
 };
 
 

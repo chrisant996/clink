@@ -224,15 +224,47 @@ bool binder::bind(
 }
 
 //------------------------------------------------------------------------------
-bool binder::is_bound(unsigned int group, const char* seq, int len) const
+// KLUDGE: -1 means redispatch.  And goes awry if the binding group stack is
+// deeper than 2.  Or if it's not actually a stack, etc.  It may be beneficial
+// to manage the binding group stack internally, rather than letting callers
+// manage it externally however they like.
+int binder::is_bound(unsigned int group, const char* seq, int len) const
 {
+    if (!len)
+        return false;
+
     unsigned int node_index = group;
+    const bool ctrl_or_ext = (*seq == '\x1b' || static_cast<unsigned char>(*seq) < ' ' || *seq == '\x7f');
 
     while (len--)
     {
         int next = find_child(node_index, *(seq++));
         if (!next)
+        {
+            while (node_index)
+            {
+                const binder::node& node = get_node(node_index);
+
+                // Move iteration along to the next node.
+                int was_index = node_index;
+                node_index = node.next;
+
+                // Check to see if where we're currently at a node in the tree
+                // that is a valid bind (at the point of call).
+                if (node.bound && (!node.key || node.key == *seq))
+                {
+                    if (node.key || !ctrl_or_ext)
+                        return true;
+                    if (node.id == id_catchall_only_printable)
+                        return -1;
+                    // So that win_terminal_in can reject keys that are not
+                    // bound at all.
+                    return false;
+                }
+            }
             return false;
+        }
+
         node_index = next;
         if (!len)
             return (get_node(next).child == 0);

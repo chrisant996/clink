@@ -41,7 +41,7 @@ enum {
     bind_id_textlist_enter,
     bind_id_textlist_insert,
 
-    bind_id_textlist_catchall,
+    bind_id_textlist_catchall = binder::id_catchall_only_printable,
 };
 
 //------------------------------------------------------------------------------
@@ -633,7 +633,8 @@ void textlist_impl::update_display()
             }
 
             const int longest = max<int>(m_longest + (max_num_len ? max_num_len + 2 : 0), 40); // +2 for ": ".
-            const int col_width = min<int>(longest + 2, m_screen_cols - 8); // +2 for borders.
+            const int effective_screen_cols = (m_screen_cols < 40) ? m_screen_cols : max<int>(40, m_screen_cols - 8);
+            const int col_width = min<int>(longest + 2, effective_screen_cols); // +2 for borders.
 
             str<> noescape;
             str<> left;

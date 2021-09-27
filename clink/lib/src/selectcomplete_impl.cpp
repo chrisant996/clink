@@ -488,7 +488,6 @@ revert:
     if (m_visible_rows <= 0)
     {
         cancel(result);
-        result.pass();
         return;
     }
 
