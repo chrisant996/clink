@@ -60,6 +60,14 @@ static setting_enum g_paste_crlf(
     "delete,space,ampersand,crlf",
     paste_crlf_crlf);
 
+static setting_bool g_gui_popups(
+    "clink.gui_popups",
+    "Use GUI popup windows",
+    "Enable this to use GUI popup windows for various commands in Clink.  Clink\n"
+    "defaults to using popup console text, but GUI popup windows can be used for\n"
+    "some popup commands.",
+    false);
+
 extern setting_bool g_adjust_cursor_style;
 extern setting_color g_color_popup;
 extern setting_bool g_match_wild;
@@ -670,6 +678,7 @@ int clink_selectall_conhost(int count, int invoking_key)
 
 //------------------------------------------------------------------------------
 extern const char** host_copy_dir_history(int* total);
+extern popup_results activate_directories_text_list(const char** dirs, int count);
 int clink_popup_directories(int count, int invoking_key)
 {
     // Copy the directory list (just a shallow copy of the dir pointers).
@@ -683,13 +692,25 @@ int clink_popup_directories(int count, int invoking_key)
     }
 
     // Popup list.
-    str<> choice;
-    int current = total - 1;
-    popup_result result = do_popup_list("Directories",
-        (const char **)history, total, 0, 0,
-        false/*completing*/, false/*auto_complete*/, false/*reverse_find*/,
-        current, choice);
-    switch (result)
+    popup_results results;
+    if (!g_gui_popups.get())
+    {
+        results = activate_directories_text_list(history, total);
+    }
+    else
+    {
+        str<> choice;
+        int current = total - 1;
+        results.m_result = do_popup_list("Directories",
+            (const char **)history, total, 0, 0,
+            false/*completing*/, false/*auto_complete*/, false/*reverse_find*/,
+            current, choice);
+        results.m_index = current;
+        results.m_text = choice.c_str();
+    }
+
+    // Handle results.
+    switch (results.m_result)
     {
     case popup_result::cancel:
         break;
@@ -699,22 +720,22 @@ int clink_popup_directories(int count, int invoking_key)
     case popup_result::select:
     case popup_result::use:
         {
-            bool end_sep = (history[current][0] &&
-                            path::is_separator(history[current][strlen(history[current]) - 1]));
+            bool end_sep = (results.m_text.c_str()[0] &&
+                            path::is_separator(results.m_text.c_str()[results.m_text.length() - 1]));
 
             char qs[2] = {};
             if (rl_basic_quote_characters &&
                 rl_basic_quote_characters[0] &&
                 rl_filename_quote_characters &&
-                _rl_strpbrk(history[current], rl_filename_quote_characters) != 0)
+                _rl_strpbrk(results.m_text.c_str(), rl_filename_quote_characters) != 0)
             {
                 qs[0] = rl_basic_quote_characters[0];
             }
 
             str<> dir;
-            dir.format("%s%s%s", qs, history[current], qs);
+            dir.format("%s%s%s", qs, results.m_text.c_str(), qs);
 
-            bool use = (result == popup_result::use);
+            bool use = (results.m_result == popup_result::use);
             rl_begin_undo_group();
             if (use)
             {
@@ -1436,10 +1457,49 @@ ding:
         return 0;
     }
 
-    extern bool activate_history_text_list(editor_module::result& result);
-    if (!g_result || !activate_history_text_list(*g_result))
+    HIST_ENTRY** list = history_list();
+    if (!list)
         goto ding;
+
+    const char** history = static_cast<const char**>(calloc(history_length, sizeof(const char**)));
+    if (!history)
+        goto ding;
+
+#define ding __cant_goto__must_free_local__
+
+    for (int i = 0; i < history_length; i++)
+    {
+        const char* p = list[i]->line;
+        assert(p);
+        history[i] = p ? p : "";
+    }
+
+    extern popup_results activate_history_text_list(const char** history, int count);
+    const popup_results results = activate_history_text_list(history, history_length);
+
+    switch (results.m_result)
+    {
+    case popup_result::error:
+        rl_ding();
+        break;
+
+    case popup_result::use:
+    case popup_result::select:
+        rl_begin_undo_group();
+        rl_delete_text(0, rl_line_buffer_len);
+        rl_point = 0;
+        rl_insert_text(results.m_text.c_str());
+        rl_end_undo_group();
+        if (results.m_result == popup_result::use)
+            rl_newline(1, 0);
+        break;
+    }
+
+    free(history);
+
     return 0;
+
+#undef ding
 }
 
 //------------------------------------------------------------------------------

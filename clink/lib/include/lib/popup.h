@@ -15,6 +15,17 @@ enum class popup_result
 };
 
 //------------------------------------------------------------------------------
+struct popup_results
+{
+                    popup_results(popup_result result=popup_result::cancel, int index=-1, const char* text=nullptr);
+    void            clear();
+
+    popup_result    m_result;
+    int             m_index;
+    str_moveable    m_text;
+};
+
+//------------------------------------------------------------------------------
 popup_result do_popup_list(
     const char* title,
     const char** items,

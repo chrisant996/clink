@@ -5,6 +5,7 @@
 
 #include "editor_module.h"
 #include "input_dispatcher.h"
+#include "popup.h"
 
 #include <core/str.h>
 
@@ -22,8 +23,7 @@ class textlist_impl
 public:
                     textlist_impl(input_dispatcher& dispatcher);
 
-    bool            activate(editor_module::result& result, textlist_line_getter_t getter, int count);
-    bool            is_active() const;
+    popup_results   activate(const char* title, const char** entries, int count, bool history_mode=false);
 
 private:
     // editor_module.
@@ -35,32 +35,37 @@ private:
     virtual void    on_terminal_resize(int columns, int rows, const context& context) override;
 
     // Internal methods.
-    void            cancel(editor_module::result& result);
+    void            cancel(popup_result result);
     void            update_layout();
     void            update_top();
     void            update_display();
     void            set_top(int top);
     void            reset();
 
+    // Result.
+    popup_results   m_results;
+    bool            m_active = false;
+
     // Initialization state.
     input_dispatcher& m_dispatcher;
     line_buffer*    m_buffer = nullptr;
     printer*        m_printer = nullptr;
     int             m_bind_group = -1;
-    int             m_prev_bind_group = -1;
 
     // Layout.
     int             m_screen_cols = 0;
     int             m_screen_rows = 0;
     int             m_visible_rows = 0;
-    str<32>         m_title;
-    bool            m_has_title = false;
+    str<32>         m_default_title;
+    str<32>         m_override_title;
+    bool            m_has_override_title = false;
 
     // Entries.
-    textlist_line_getter_t m_getter = nullptr;
-    std::vector<const char*> m_items;
     int             m_count = 0;
+    const char**    m_entries = nullptr;    // Original entries from caller.
+    std::vector<const char*> m_items;       // Escaped entries for display.
     int             m_longest = 0;
+    bool            m_history_mode = false;
 
     // Current entry.
     int             m_top = 0;
@@ -70,6 +75,7 @@ private:
     // Current input.
     str<16>         m_needle;
     bool            m_needle_is_number = false;
+    bool            m_input_clears_needle = false;
 
     // Content store.
     class item_store

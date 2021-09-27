@@ -35,7 +35,7 @@ extern "C" {
 }
 
 //------------------------------------------------------------------------------
-static setting_enum g_ignore_case(
+setting_enum g_ignore_case(
     "match.ignore_case",
     "Case insensitive matching",
     "Toggles whether case is ignored when selecting matches.  The 'relaxed'\n"
@@ -43,7 +43,7 @@ static setting_enum g_ignore_case(
     "off,on,relaxed",
     2);
 
-static setting_bool g_fuzzy_accent(
+setting_bool g_fuzzy_accent(
     "match.ignore_accent",
     "Accent insensitive matching",
     "Toggles whether accents on characters are ignored when selecting matches.",

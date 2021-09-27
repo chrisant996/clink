@@ -34,16 +34,19 @@ enum {
     bind_id_textlist_pgdn,
     bind_id_textlist_home,
     bind_id_textlist_end,
-    bind_id_textlist_backspace,
-    bind_id_textlist_enter,
-    bind_id_textlist_edit,
+    bind_id_textlist_findnext,
+    bind_id_textlist_findprev,
     bind_id_textlist_copy,
     bind_id_textlist_escape,
+    bind_id_textlist_enter,
+    bind_id_textlist_insert,
 
     bind_id_textlist_catchall,
 };
 
 //------------------------------------------------------------------------------
+extern setting_enum g_ignore_case;
+extern setting_bool g_fuzzy_accent;
 extern const char* get_popup_colors();
 
 //------------------------------------------------------------------------------
@@ -95,46 +98,69 @@ textlist_impl::textlist_impl(input_dispatcher& dispatcher)
 }
 
 //------------------------------------------------------------------------------
-bool textlist_impl::activate(editor_module::result& result, textlist_line_getter_t getter, int count)
+popup_results textlist_impl::activate(const char* title, const char** entries, int count, bool history_mode)
 {
     reset();
+    m_results.clear();
 
     assert(m_buffer);
     if (!m_buffer)
-        return false;
+        return popup_result::error;
 
-    if (!getter || count <= 0)
-        return false;
+    if (!entries || count <= 0)
+        return popup_result::error;
 
     // Make sure there's room.
     update_layout();
     if (m_visible_rows <= 0)
-        return false;
+        return popup_result::error;
 
     // Gather the items.
     str<> tmp;
-    m_getter = getter;
+    m_entries = entries;
+    m_count = count;
     for (int i = 0; i < count; i++)
     {
-        m_longest = max<int>(m_longest, make_item(getter(i), tmp));
+        m_longest = max<int>(m_longest, make_item(m_entries[i], tmp));
         m_items.push_back(m_store.add(tmp.c_str()));
     }
 
-    // Activate key bindings.
-    assert(m_prev_bind_group < 0);
-    m_prev_bind_group = result.set_bind_group(m_bind_group);
+    if (title && *title)
+        m_default_title.format(" %s ", title);
+    m_history_mode = history_mode;
 
-    // Initialize list.
-    m_count = count;
+    // Initialize the view.
     m_index = count - 1;
     m_top = max<int>(0, count - m_visible_rows);
 
     show_cursor(false);
     lock_cursor(true);
 
+    assert(!m_active);
+    m_active = true;
     update_display();
 
-    return true;
+    m_dispatcher.dispatch(m_bind_group);
+
+    assert(!m_active);
+    m_active = false;
+    update_display();
+
+    _rl_refresh_line();
+    rl_display_fixed = 1;
+
+    lock_cursor(false);
+    show_cursor(true);
+
+    popup_results results;
+    results.m_result = m_results.m_result;
+    results.m_index = m_results.m_index;
+    results.m_text = std::move(m_results.m_text);
+
+    reset();
+    m_results.clear();
+
+    return results;
 }
 
 //------------------------------------------------------------------------------
@@ -149,8 +175,11 @@ void textlist_impl::bind_input(binder& binder)
     binder.bind(m_bind_group, "\\e[6~", bind_id_textlist_pgdn);
     binder.bind(m_bind_group, "\\e[H", bind_id_textlist_home);
     binder.bind(m_bind_group, "\\e[F", bind_id_textlist_end);
+    binder.bind(m_bind_group, "\\eOR", bind_id_textlist_findnext);
+    binder.bind(m_bind_group, "\\e[1;2R", bind_id_textlist_findprev);
     binder.bind(m_bind_group, "\\r", bind_id_textlist_enter);
-    binder.bind(m_bind_group, "^e", bind_id_textlist_edit);
+    binder.bind(m_bind_group, "^i", bind_id_textlist_insert);
+    binder.bind(m_bind_group, "\\e[27;5;73~", bind_id_textlist_insert);
     binder.bind(m_bind_group, "^c", bind_id_textlist_copy);
 
     binder.bind(m_bind_group, "^g", bind_id_textlist_escape);
@@ -184,15 +213,16 @@ void textlist_impl::on_end_line()
 //------------------------------------------------------------------------------
 void textlist_impl::on_input(const input& _input, result& result, const context& context)
 {
-    assert(is_active());
+    assert(m_active);
 
     input input = _input;
+    bool set_input_clears_needle = true;
+    bool from_top = false;
 
     // Cancel if no room.
     if (m_visible_rows <= 0)
     {
-        cancel(result);
-        result.pass();
+        cancel(popup_result::cancel);
         return;
     }
 
@@ -253,36 +283,99 @@ navigated:
         }
         break;
 
-    case bind_id_textlist_enter:
-    case bind_id_textlist_edit:
-        m_buffer->begin_undo_group();
-        m_buffer->remove(0, m_buffer->get_length());
-        m_buffer->set_cursor(0);
-        m_buffer->insert(m_getter(m_index));
-        m_buffer->end_undo_group();
-        cancel(result);
-        if (input.id == bind_id_textlist_enter)
+    case bind_id_textlist_findnext:
+    case bind_id_textlist_findprev:
+        set_input_clears_needle = false;
+        if (m_history_mode)
+            break;
+find:
+        if (m_history_mode)
         {
-            rl_newline(1, 0);
-            result.done();
+            lock_cursor(false);
+            show_cursor(true);
+            rl_ding();
+            show_cursor(false);
+            lock_cursor(true);
+        }
+        else
+        {
+            int direction = (input.id == bind_id_textlist_findnext) ? 1 : -1;
+
+            int mode = g_ignore_case.get();
+            if (mode < 0 || mode >= str_compare_scope::num_scope_values)
+                mode = str_compare_scope::exact;
+            str_compare_scope _(mode, g_fuzzy_accent.get());
+
+            int i = m_index;
+            if (direction < 0)
+            {
+                if (from_top)
+                    i = m_count;
+                i--;
+            }
+            else
+            {
+                if (from_top)
+                    i = 0;
+            }
+
+            int original = i;
+            while (true)
+            {
+                int cmp = str_compare(m_needle.c_str(), m_items[i]);
+                if (cmp == -1 || cmp == m_needle.length())
+                {
+                    m_index = i;
+                    if (m_index < m_top || m_index >= m_top + m_visible_rows)
+                        m_top = max<int>(0, min<int>(m_index, m_count - m_visible_rows));
+                    m_prev_displayed = -1;
+                    update_display();
+                    break;
+                }
+
+                i += direction;
+                if (direction < 0)
+                {
+                    if (i < 0)
+                        i = m_count - 1;
+                }
+                else
+                {
+                    if (i >= m_count)
+                        i = 0;
+                }
+                if (i == m_index)
+                    break;
+            }
         }
         break;
 
     case bind_id_textlist_copy:
         {
-            const char* text = m_getter(m_index);
+            const char* text = m_entries[m_index];
             os::set_clipboard_text(text, int(strlen(text)));
+            set_input_clears_needle = false;
         }
         break;
 
     case bind_id_textlist_escape:
-        cancel(result);
-        break;
+        cancel(popup_result::cancel);
+        return;
+
+    case bind_id_textlist_enter:
+        cancel(popup_result::use);
+        return;
+
+    case bind_id_textlist_insert:
+        cancel(popup_result::select);
+        return;
 
     case bind_id_textlist_catchall:
         {
             bool refresh = false;
             bool ignore = false;
+
+            set_input_clears_needle = false;
 
             if (input.len == 1 && input.keys[0] == 8)
             {
@@ -290,6 +383,7 @@ navigated:
                     break;
                 int point = _rl_find_prev_mbchar(const_cast<char*>(m_needle.c_str()), m_needle.length(), MB_FIND_NONZERO);
                 m_needle.truncate(point);
+                from_top = !m_history_mode;
                 refresh = true;
                 goto update_needle;
             }
@@ -313,17 +407,31 @@ navigated:
 
             // Collect the input.
             {
+                if (m_input_clears_needle)
+                {
+                    assert(!m_history_mode);
+                    m_needle.clear();
+                    m_needle_is_number = false;
+                    m_input_clears_needle = false;
+                }
+
                 str_iter iter(input.keys, input.len);
                 const char* seq = iter.get_pointer();
                 while (iter.more())
                 {
                     unsigned int c = iter.next();
-                    if (c >= '0' && c <= '9')
+                    if (!m_history_mode)
+                    {
+                        refresh = m_has_override_title;
+                        m_override_title.clear();
+                        m_needle.concat(seq, int(iter.get_pointer() - seq));
+                    }
+                    else if (c >= '0' && c <= '9')
                     {
                         if (!m_needle_is_number)
                         {
-                            refresh = !m_title.empty();
-                            m_title.clear();
+                            refresh = m_has_override_title;
+                            m_override_title.clear();
                             m_needle.clear();
                             m_needle_is_number = true;
                         }
@@ -335,8 +443,8 @@ navigated:
                     }
                     else
                     {
-                        refresh = !m_title.empty();
-                        m_title.clear();
+                        refresh = m_has_override_title;
+                        m_override_title.clear();
                         m_needle.clear();
                         m_needle.concat(seq, int(iter.get_pointer() - seq));
                         m_needle_is_number = false;
@@ -347,13 +455,18 @@ navigated:
 
             // Handle the input.
 update_needle:
-            if (m_needle_is_number)
+            if (!m_history_mode)
+            {
+                input.id = bind_id_textlist_findnext;
+                goto find;
+            }
+            else if (m_needle_is_number)
             {
                 if (m_needle.length())
                 {
                     refresh = true;
-                    m_title.clear();
-                    m_title.format("\xe2\x94\xa4 enter history number: %-6s \xe2\x94\x9c", m_needle.c_str());
+                    m_override_title.clear();
+                    m_override_title.format("\xe2\x94\xa4 enter history number: %-6s \xe2\x94\x9c", m_needle.c_str());
                     int i = atoi(m_needle.c_str()) - 1;
                     if (i >= 0 && i < m_count)
                     {
@@ -364,13 +477,13 @@ update_needle:
                         refresh = true;
                     }
                 }
-                else if (m_title.length())
+                else if (m_override_title.length())
                 {
                     refresh = true;
-                    m_title.clear();
+                    m_override_title.clear();
                 }
             }
-            else
+            else if (m_needle.length())
             {
                 str_compare_scope _(str_compare_scope::caseless, true/*fuzzy_accent*/);
 
@@ -383,8 +496,8 @@ update_needle:
                     if (i == m_index)
                         break;
 
-                    int result = str_compare(m_needle.c_str(), m_items[i]);
-                    if (result == -1 || result == m_needle.length())
+                    int cmp = str_compare(m_needle.c_str(), m_items[i]);
+                    if (cmp == -1 || cmp == m_needle.length())
                     {
                         m_index = i;
                         if (m_index < m_top || m_index >= m_top + m_visible_rows)
@@ -401,6 +514,12 @@ update_needle:
         }
         break;
     }
+
+    if (set_input_clears_needle && !m_history_mode)
+        m_input_clears_needle = true;
+
+    // Keep dispatching input.
+    result.loop();
 }
 
 //------------------------------------------------------------------------------
@@ -414,7 +533,7 @@ void textlist_impl::on_terminal_resize(int columns, int rows, const context& con
     m_screen_cols = columns;
     m_screen_rows = rows;
 
-    if (is_active())
+    if (m_active)
     {
         update_layout();
         update_display();
@@ -422,22 +541,22 @@ void textlist_impl::on_terminal_resize(int columns, int rows, const context& con
 }
 
 //------------------------------------------------------------------------------
-void textlist_impl::cancel(editor_module::result& result)
+void textlist_impl::cancel(popup_result result)
 {
-    assert(is_active());
+    assert(m_active);
 
-    result.set_bind_group(m_prev_bind_group);
-    m_prev_bind_group = -1;
+    m_results.clear();
+    m_results.m_result = result;
+    if (result == popup_result::use || result == popup_result::select)
+    {
+        if (m_index >= 0 && m_index < m_count)
+        {
+            m_results.m_index = m_index;
+            m_results.m_text = m_entries[m_index];
+        }
+    }
 
-    lock_cursor(false);
-    show_cursor(true);
-
-    update_display();
-
-    reset();
-
-    _rl_refresh_line();
-    rl_display_fixed = 1;
+    m_active = false;
 }
 
 //------------------------------------------------------------------------------
@@ -445,9 +564,9 @@ void textlist_impl::update_layout()
 {
     int slop_rows = 2;
     int border_rows = 2;
-    int target_rows = min<int>(20, (m_screen_rows / 2) - border_rows - slop_rows);
+    int target_rows = m_history_mode ? 20 : 10;
 
-    m_visible_rows = target_rows;
+    m_visible_rows = min<int>(target_rows, (m_screen_rows / 2) - border_rows - slop_rows);
 
     if (m_screen_cols <= min_screen_cols)
         m_visible_rows = 0;
@@ -494,17 +613,24 @@ void textlist_impl::update_display()
         int up = 1;
         bool move_to_end = true;
         const int count = m_count;
-        if (is_active() && count > 0)
+        if (m_active && count > 0)
         {
             update_top();
 
-            const bool draw_border = (m_prev_displayed < 0) || m_title.length() || m_has_title;
-            m_has_title = !m_title.empty();
-
-            const int longest = max<int>(m_longest, 40);
-            const int col_width = min<int>(longest + 2, m_screen_cols - 8);
+            const bool draw_border = (m_prev_displayed < 0) || m_override_title.length() || m_has_override_title;
+            m_has_override_title = !m_override_title.empty();
 
             str<> tmp;
+            int max_num_len = 0;
+            if (m_history_mode)
+            {
+                tmp.format("%u", m_count);
+                max_num_len = tmp.length();
+            }
+
+            const int longest = max<int>(m_longest + (max_num_len ? max_num_len + 2 : 0), 40); // +2 for ": ".
+            const int col_width = min<int>(longest + 2, m_screen_cols - 8); // +2 for borders.
+
             str<> noescape;
             str<> left;
             str<> horzline;
@@ -517,9 +643,6 @@ void textlist_impl::update_display()
                     left.format("\x1b[%uG", x + 1);
             }
 
-            tmp.format("%u", m_count);
-            const int max_num_len = tmp.length();
-
             str<32> color;
             {
                 const char* _color = get_popup_colors();
@@ -530,16 +653,17 @@ void textlist_impl::update_display()
             if (draw_border)
             {
                 const str_base* topline = &horzline;
-                if (m_title.length())
+                if (m_default_title.length() || m_override_title.length())
                 {
-                    int title_cells = cell_count(m_title.c_str());
+                    str_base* title = m_has_override_title ? &m_override_title : &m_default_title;
+                    int title_cells = cell_count(title->c_str());
                     int x = (col_width - 2 - title_cells) / 2;
                     tmp.clear();
                     x--;
                     for (int i = x; i-- > 0;)
                         tmp.concat("\xe2\x94\x80", 3);
                     x += title_cells;
-                    tmp.concat(m_title.c_str(), m_title.length());
+                    tmp.concat(title->c_str(), title->length());
                     for (int i = col_width - 2 - x; i-- > 0;)
                         tmp.concat("\xe2\x94\x80", 3);
                     topline = &tmp;
@@ -576,10 +700,13 @@ void textlist_impl::update_display()
 
                     int spaces = col_width - 2;
 
-                    tmp.clear();
-                    tmp.format("%*u: ", max_num_len, i + 1);
-                    m_printer->print(tmp.c_str(), tmp.length());
-                    spaces -= tmp.length();
+                    if (m_history_mode)
+                    {
+                        tmp.clear();
+                        tmp.format("%*u: ", max_num_len, i + 1);
+                        m_printer->print(tmp.c_str(), tmp.length());
+                        spaces -= tmp.length();
+                    }
 
                     int cell_len;
                     int char_len = limit_cells(m_items[i], spaces, cell_len);
@@ -660,12 +787,13 @@ void textlist_impl::reset()
     // Don't reset screen row and cols; they stay in sync with the terminal.
 
     m_visible_rows = 0;
-    m_title.clear();
-    m_has_title = false;
+    m_default_title.clear();
+    m_override_title.clear();
+    m_has_override_title = false;
 
-    m_getter = nullptr;
-    m_items = std::move(zap);
     m_count = 0;
+    m_entries = nullptr;
+    m_items = std::move(zap);
     m_longest = 0;
 
     m_top = 0;
@@ -674,14 +802,9 @@ void textlist_impl::reset()
 
     m_needle.clear();
     m_needle_is_number = false;
+    m_input_clears_needle = false;
 
     m_store.clear();
-}
-
-//------------------------------------------------------------------------------
-bool textlist_impl::is_active() const
-{
-    return m_prev_bind_group >= 0 && m_buffer && m_printer && m_visible_rows > 0;
 }
 
 
@@ -728,24 +851,19 @@ void textlist_impl::item_store::clear()
 
 
 //------------------------------------------------------------------------------
-static const char* get_history_line(int index)
+popup_results activate_directories_text_list(const char** dirs, int count)
 {
-    if (index < 0 || index >= history_length)
-        return "";
+    if (!s_textlist)
+        return popup_result::error;
 
-    HIST_ENTRY** list = history_list();
-    if (!list)
-        return "";
-
-    const char* line = list[index]->line;
-    return line ? line : "";
+    return s_textlist->activate("Directories", dirs, count);
 }
 
 //------------------------------------------------------------------------------
-bool activate_history_text_list(editor_module::result& result)
+popup_results activate_history_text_list(const char** history, int count)
 {
     if (!s_textlist)
-        return false;
+        return popup_result::error;
 
-    return s_textlist->activate(result, get_history_line, history_length);
+    return s_textlist->activate("History", history, count, true/*history_mode*/);
 }
