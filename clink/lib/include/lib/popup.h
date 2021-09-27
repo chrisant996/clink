@@ -6,7 +6,7 @@
 #include <core/str.h>
 
 //------------------------------------------------------------------------------
-enum class popup_list_result
+enum class popup_result
 {
     error = -1,
     cancel,
@@ -15,7 +15,7 @@ enum class popup_list_result
 };
 
 //------------------------------------------------------------------------------
-popup_list_result do_popup_list(
+popup_result do_popup_list(
     const char* title,
     const char** items,
     int num_items,

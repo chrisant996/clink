@@ -685,19 +685,19 @@ int clink_popup_directories(int count, int invoking_key)
     // Popup list.
     str<> choice;
     int current = total - 1;
-    popup_list_result result = do_popup_list("Directories",
+    popup_result result = do_popup_list("Directories",
         (const char **)history, total, 0, 0,
         false/*completing*/, false/*auto_complete*/, false/*reverse_find*/,
         current, choice);
     switch (result)
     {
-    case popup_list_result::cancel:
+    case popup_result::cancel:
         break;
-    case popup_list_result::error:
+    case popup_result::error:
         rl_ding();
         break;
-    case popup_list_result::select:
-    case popup_list_result::use:
+    case popup_result::select:
+    case popup_result::use:
         {
             bool end_sep = (history[current][0] &&
                             path::is_separator(history[current][strlen(history[current]) - 1]));
@@ -714,7 +714,7 @@ int clink_popup_directories(int count, int invoking_key)
             str<> dir;
             dir.format("%s%s%s", qs, history[current], qs);
 
-            bool use = (result == popup_list_result::use);
+            bool use = (result == popup_result::use);
             rl_begin_undo_group();
             if (use)
             {

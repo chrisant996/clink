@@ -463,13 +463,13 @@ static int popup_list(lua_State* state)
     if (index > items.size()) index = items.size();
     if (index < 0) index = 0;
 
-    popup_list_result result = do_popup_list(title, &*items.begin(), items.size(), 0, 0, false, false, false, index, out, true/*display_filter*/);
+    popup_result result = do_popup_list(title, &*items.begin(), items.size(), 0, 0, false, false, false, index, out, true/*display_filter*/);
     switch (result)
     {
-    case popup_list_result::select:
-    case popup_list_result::use:
+    case popup_result::select:
+    case popup_result::use:
         lua_pushlstring(state, out.c_str(), out.length());
-        lua_pushboolean(state, (result == popup_list_result::use));
+        lua_pushboolean(state, (result == popup_result::use));
         lua_pushinteger(state, index + 1);
         return 3;
     }

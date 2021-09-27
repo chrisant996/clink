@@ -1190,13 +1190,13 @@ int clink_popup_complete(int count, int invoking_key)
                           true/*auto_complete*/, false/*reverse_find*/,
                           current, choice, display_filtered))
     {
-    case popup_list_result::cancel:
+    case popup_result::cancel:
         break;
-    case popup_list_result::error:
+    case popup_result::error:
         rl_ding();
         break;
-    case popup_list_result::select:
-    case popup_list_result::use:
+    case popup_result::select:
+    case popup_result::use:
         {
             rollback<int> rb(rl_completion_matches_include_type, past_flag);
             rl_insert_match(choice.data(), orig_text, orig_start, delimiter, quote_char);
@@ -1259,19 +1259,19 @@ int clink_popup_history(int count, int invoking_key)
 
     // Popup list.
     str<> choice;
-    popup_list_result result = do_popup_list("History",
+    popup_result result = do_popup_list("History",
         (const char **)history, total, 0, 0,
         false/*completing*/, false/*auto_complete*/, true/*reverse_find*/,
         current, choice);
     switch (result)
     {
-    case popup_list_result::cancel:
+    case popup_result::cancel:
         break;
-    case popup_list_result::error:
+    case popup_result::error:
         rl_ding();
         break;
-    case popup_list_result::select:
-    case popup_list_result::use:
+    case popup_result::select:
+    case popup_result::use:
         {
             rl_maybe_save_line();
             rl_maybe_replace_line();
@@ -1284,7 +1284,7 @@ int clink_popup_history(int count, int invoking_key)
             rl_point = point_at_end ? rl_end : search_len;
             rl_mark = point_at_end ? search_len : rl_end;
 
-            if (result == popup_list_result::use)
+            if (result == popup_result::use)
             {
                 rl_redisplay();
                 rl_newline(1, invoking_key);

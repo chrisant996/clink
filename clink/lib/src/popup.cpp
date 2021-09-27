@@ -269,7 +269,7 @@ static HINSTANCE s_hinst = 0;
 static HWND s_hwnd_popup = 0;
 static HWND s_hwnd_list = 0;
 static int s_current = 0;
-static popup_list_result s_result;
+static popup_result s_result;
 #define IDC_LISTVIEW 4000
 
 //------------------------------------------------------------------------------
@@ -394,7 +394,7 @@ static LRESULT CALLBACK PopupWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM
                         break;
                     s_current = pia->iItem;
                     s_result = ((pia->uKeyFlags & (LVKF_CONTROL | LVKF_SHIFT)) ?
-                        popup_list_result::select : popup_list_result::use);
+                        popup_result::select : popup_result::use);
                     s_modal = false;
                 }
                 break;
@@ -749,7 +749,7 @@ static HWND get_console_window()
 }
 
 //------------------------------------------------------------------------------
-popup_list_result do_popup_list(
+popup_result do_popup_list(
     const char* title,
     const char** items,
     int num_items,
@@ -763,7 +763,7 @@ popup_list_result do_popup_list(
     bool display_filter)
 {
     if (!items)
-        return popup_list_result::error;
+        return popup_result::error;
 
     s_past_flag = past_flag;
     s_display_filter = display_filter;
@@ -772,21 +772,21 @@ popup_list_result do_popup_list(
     memset(s_column_width, 0, sizeof(s_column_width));
 
     out.clear();
-    s_result = popup_list_result::cancel;
+    s_result = popup_result::cancel;
 
     if (completing)
     {
         if (num_items == 0 || !items[0])
-            return popup_list_result::error;
+            return popup_result::error;
 
         if (num_items == 1 || !items[1])
         {
             if (!auto_complete)
-                return popup_list_result::error;
+                return popup_result::error;
 
             out = items[0];
             current = 0;
-            return popup_list_result::use;
+            return popup_result::use;
         }
 
         items++;
@@ -820,13 +820,13 @@ popup_list_result do_popup_list(
 
     // Can't show an empty popup list.
     if (num_items <= 0)
-        return popup_list_result::error;
+        return popup_result::error;
 
     // It must be a console in order to pop up a GUI window.
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     if (!GetConsoleScreenBufferInfo(hConsole, &csbi))
-        return popup_list_result::error;
+        return popup_result::error;
 
     // HMODULE and HINSTANCE are interchangeable, so get the HMODULE and cast.
     // This is needed by create_popup_window().
@@ -835,7 +835,7 @@ popup_list_result do_popup_list(
     // Get the console window handle.
     HWND hwndConsole = get_console_window();
     if (!hwndConsole)
-        return popup_list_result::error;
+        return popup_result::error;
 
     // Create popup list window.
     s_items = items;
@@ -848,7 +848,7 @@ popup_list_result do_popup_list(
         s_current = 0;
     s_hwnd_popup = create_popup_window(hwndConsole, title, &csbi);
     if (!s_hwnd_popup)
-        return popup_list_result::error;
+        return popup_result::error;
 
     // Disable parent, for modality.
     HWND hwndTop = get_top_level_window(hwndConsole);
