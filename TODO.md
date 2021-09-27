@@ -5,8 +5,10 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
+- `bind_resolver::is_bound()` is wrong:  `win-history-list` then `5` is identified as not bound.  `5` a second time works.  Catch groups are ambiguous:  will they forward, or will they absorb?
 - Use text mode popup list everywhere instead of window based popup list.
-  - For now, have a setting to allow using the window based popup implementation instead (except for `win-history-list` which always uses the text based popup list).
+  - `selectcomplete_impl::activate()` resets generating matches:  that breaks `rl.setmatches()`, but seems necessary for a subsequent `clink-select-complete` to work.
+  - What happens if window is resized while popup is active?
 - Add a quick start / beginner section to the Clink docs.
 
 ## Medium Priority
