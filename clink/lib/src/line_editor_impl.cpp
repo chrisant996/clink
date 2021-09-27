@@ -616,7 +616,7 @@ bool line_editor_impl::update_input()
         };
 
         virtual void    pass() override                           { flags |= flag_pass; }
-        virtual void    invalid() override                        { flags |= flag_invalid; }
+        virtual void    loop() override                           { flags |= flag_invalid; }
         virtual void    done(bool eof) override                   { flags |= flag_done|(eof ? flag_eof : 0); }
         virtual void    redraw() override                         { flags |= flag_redraw; }
         virtual int     set_bind_group(int id) override           { int t = group; group = id; return t; }
