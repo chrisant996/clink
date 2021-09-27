@@ -142,8 +142,11 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
 
     m_dispatcher.dispatch(m_bind_group);
 
+    // Cancel if the dispatch loop is left unexpectedly (e.g. certain errors).
+    if (m_active)
+        cancel(popup_result::cancel);
+
     assert(!m_active);
-    m_active = false;
     update_display();
 
     _rl_refresh_line();
@@ -534,10 +537,7 @@ void textlist_impl::on_terminal_resize(int columns, int rows, const context& con
     m_screen_rows = rows;
 
     if (m_active)
-    {
-        update_layout();
-        update_display();
-    }
+        cancel(popup_result::cancel);
 }
 
 //------------------------------------------------------------------------------
