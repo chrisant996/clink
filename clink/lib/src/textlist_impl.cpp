@@ -110,6 +110,10 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
     if (!entries || count <= 0)
         return popup_result::error;
 
+    // Doesn't make sense to record macro with a popup list.
+    if (RL_ISSTATE(RL_STATE_MACRODEF) != 0)
+        return popup_result::error;
+
     // Make sure there's room.
     update_layout();
     if (m_visible_rows <= 0)
