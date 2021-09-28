@@ -37,6 +37,7 @@ enum {
     bind_id_textlist_findnext,
     bind_id_textlist_findprev,
     bind_id_textlist_copy,
+    bind_id_textlist_backspace,
     bind_id_textlist_escape,
     bind_id_textlist_enter,
     bind_id_textlist_insert,
@@ -98,7 +99,7 @@ textlist_impl::textlist_impl(input_dispatcher& dispatcher)
 }
 
 //------------------------------------------------------------------------------
-popup_results textlist_impl::activate(const char* title, const char** entries, int count, int index, bool history_mode)
+popup_results textlist_impl::activate(const char* title, const char** entries, int count, int index, bool history_mode, const int* indices)
 {
     reset();
     m_results.clear();
@@ -126,7 +127,9 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
     // Gather the items.
     str<> tmp;
     m_entries = entries;
+    m_indices = indices;
     m_count = count;
+// TODO: textlist_impl needs to support multiple columns.
     for (int i = 0; i < count; i++)
     {
         m_longest = max<int>(m_longest, make_item(m_entries[i], tmp));
@@ -195,10 +198,11 @@ void textlist_impl::bind_input(binder& binder)
     binder.bind(m_bind_group, "\\e[F", bind_id_textlist_end);
     binder.bind(m_bind_group, "\\eOR", bind_id_textlist_findnext);
     binder.bind(m_bind_group, "\\e[1;2R", bind_id_textlist_findprev);
+    binder.bind(m_bind_group, "^c", bind_id_textlist_copy);
+    binder.bind(m_bind_group, "^h", bind_id_textlist_backspace);
     binder.bind(m_bind_group, "\\r", bind_id_textlist_enter);
     binder.bind(m_bind_group, "^i", bind_id_textlist_insert);
     binder.bind(m_bind_group, "\\e[27;5;73~", bind_id_textlist_insert);
-    binder.bind(m_bind_group, "^c", bind_id_textlist_copy);
 
     binder.bind(m_bind_group, "^g", bind_id_textlist_escape);
     if (esc)
@@ -388,14 +392,14 @@ find:
         cancel(popup_result::select);
         return;
 
+    case bind_id_textlist_backspace:
     case bind_id_textlist_catchall:
         {
             bool refresh = false;
-            bool ignore = false;
 
             set_input_clears_needle = false;
 
-            if (input.len == 1 && input.keys[0] == 8)
+            if (input.id == bind_id_textlist_backspace)
             {
                 if (!m_needle.length())
                     break;
@@ -405,23 +409,6 @@ find:
                 refresh = true;
                 goto update_needle;
             }
-
-            // Figure out whether to ignore the input.
-            {
-                str_iter iter(input.keys, input.len);
-                while (iter.more())
-                {
-                    unsigned int c = iter.next();
-                    if (c < ' ' || c == 0x7f)
-                    {
-                        ignore = true;
-                        break;
-                    }
-                }
-            }
-
-            if (ignore)
-                break;
 
             // Collect the input.
             {
@@ -485,7 +472,32 @@ update_needle:
                     refresh = true;
                     m_override_title.clear();
                     m_override_title.format("\xe2\x94\xa4 enter history number: %-6s \xe2\x94\x9c", m_needle.c_str());
-                    int i = atoi(m_needle.c_str()) - 1;
+                    int i = atoi(m_needle.c_str());
+                    if (m_indices)
+                    {
+                        int lookup = 0;
+                        char lookupstr[16];
+                        char needlestr[16];
+                        _itoa_s(i, needlestr, 10);
+                        const int needlestr_len = int(strlen(needlestr));
+                        while (lookup < m_count)
+                        {
+                            _itoa_s(m_indices[lookup] + 1, lookupstr, 10);
+                            if (strncmp(needlestr, lookupstr, needlestr_len) == 0)
+                            {
+                                i = lookup;
+                                break;
+                            }
+                            lookup++;
+                        }
+                        // If the input history history number isn't found, i is
+                        // m_count and correctly skips updating m_index.
+                        i = lookup;
+                    }
+                    else
+                    {
+                        i--;
+                    }
                     if (i >= 0 && i < m_count)
                     {
                         m_index = i;
@@ -614,7 +626,7 @@ void textlist_impl::update_display()
         // Remember the cursor position so it can be restored later to stay
         // consistent with Readline's view of the world.
         CONSOLE_SCREEN_BUFFER_INFO csbi;
-        HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+        const HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
         GetConsoleScreenBufferInfo(h, &csbi);
         COORD restore = csbi.dwCursorPosition;
         const int vpos = _rl_last_v_pos;
@@ -639,7 +651,7 @@ void textlist_impl::update_display()
             int max_num_len = 0;
             if (m_history_mode)
             {
-                tmp.format("%u", m_count);
+                tmp.format("%u", m_indices ? m_indices[m_count - 1] + 1 : m_count);
                 max_num_len = tmp.length();
             }
 
@@ -660,10 +672,7 @@ void textlist_impl::update_display()
             }
 
             str<32> color;
-            {
-                const char* _color = get_popup_colors();
-                color.format("\x1b[%sm", _color);
-            }
+            color.format("\x1b[%sm", get_popup_colors());
 
             // Display border.
             if (draw_border)
@@ -693,9 +702,10 @@ void textlist_impl::update_display()
             }
 
             // Display items.
+// TODO: textlist_impl needs to support multiple columns.
             for (int row = 0; row < m_visible_rows; row++)
             {
-                int i = m_top + row;
+                const int i = m_top + row;
                 if (i >= count)
                     break;
 
@@ -718,14 +728,15 @@ void textlist_impl::update_display()
 
                     if (m_history_mode)
                     {
+                        const int history_index = m_indices ? m_indices[i] : i;
                         tmp.clear();
-                        tmp.format("%*u: ", max_num_len, i + 1);
+                        tmp.format("%*u: ", max_num_len, history_index + 1);
                         m_printer->print(tmp.c_str(), tmp.length());
                         spaces -= tmp.length();
                     }
 
                     int cell_len;
-                    int char_len = limit_cells(m_items[i], spaces, cell_len);
+                    const int char_len = limit_cells(m_items[i], spaces, cell_len);
                     m_printer->print(m_items[i], char_len);
                     spaces -= cell_len;
 
@@ -809,6 +820,7 @@ void textlist_impl::reset()
 
     m_count = 0;
     m_entries = nullptr;
+    m_indices = nullptr;
     m_items = std::move(zap);
     m_longest = 0;
 
@@ -867,21 +879,30 @@ void textlist_impl::item_store::clear()
 
 
 //------------------------------------------------------------------------------
+popup_results activate_text_list(const char* title, const char** entries, int count, int current)
+{
+    if (!s_textlist)
+        return popup_result::error;
+
+    return s_textlist->activate(title, entries, count, current, false/*history_mode*/, nullptr);
+}
+
+//------------------------------------------------------------------------------
 popup_results activate_directories_text_list(const char** dirs, int count)
 {
     if (!s_textlist)
         return popup_result::error;
 
-    return s_textlist->activate("Directories", dirs, count, count - 1, false/*history_mode*/);
+    return s_textlist->activate("Directories", dirs, count, count - 1, false/*history_mode*/, nullptr);
 }
 
 //------------------------------------------------------------------------------
-popup_results activate_history_text_list(const char** history, int count, int current)
+popup_results activate_history_text_list(const char** history, int count, int current, const int* indices)
 {
     if (!s_textlist)
         return popup_result::error;
 
     assert(current >= 0);
     assert(current < count);
-    return s_textlist->activate("History", history, count, current, true/*history_mode*/);
+    return s_textlist->activate("History", history, count, current, true/*history_mode*/, indices);
 }

@@ -1475,8 +1475,8 @@ ding:
         history[i] = p ? p : "";
     }
 
-    extern popup_results activate_history_text_list(const char** history, int count, int current);
-    const popup_results results = activate_history_text_list(history, history_length, min<int>(where_history(), history_length - 1));
+    extern popup_results activate_history_text_list(const char** history, int count, int current, const int* indices);
+    const popup_results results = activate_history_text_list(history, history_length, min<int>(where_history(), history_length - 1), nullptr);
 
     switch (results.m_result)
     {

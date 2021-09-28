@@ -23,7 +23,7 @@ class textlist_impl
 public:
                     textlist_impl(input_dispatcher& dispatcher);
 
-    popup_results   activate(const char* title, const char** entries, int count, int index, bool history_mode);
+    popup_results   activate(const char* title, const char** entries, int count, int index, bool history_mode, const int* indices);
 
 private:
     // editor_module.
@@ -63,6 +63,7 @@ private:
     // Entries.
     int             m_count = 0;
     const char**    m_entries = nullptr;    // Original entries from caller.
+    const int*      m_indices = nullptr;    // Original history numbers from caller.
     std::vector<const char*> m_items;       // Escaped entries for display.
     int             m_longest = 0;
     bool            m_history_mode = false;
