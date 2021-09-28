@@ -463,6 +463,8 @@ static int popup_list(lua_State* state)
     if (index > items.size()) index = items.size();
     if (index < 0) index = 0;
 
+// TODO: use textlist_impl when !g_gui_popups.get().
+// TODO: textlist_impl needs to support multiple columns.
     popup_result result = do_popup_list(title, &*items.begin(), items.size(), 0, 0, false, false, false, index, out, true/*display_filter*/);
     switch (result)
     {

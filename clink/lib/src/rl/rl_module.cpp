@@ -284,6 +284,7 @@ setting_enum g_default_bindings(
     0);
 
 extern setting_bool g_terminal_raw_esc;
+extern setting_bool g_gui_popups;
 
 
 
@@ -1118,6 +1119,9 @@ static int maybe_strlen(const char* s)
 //------------------------------------------------------------------------------
 int clink_popup_complete(int count, int invoking_key)
 {
+    if (!g_gui_popups.get())
+        return clink_select_complete(count, invoking_key);
+
     if (!s_matches)
     {
         rl_ding();
@@ -1258,11 +1262,24 @@ int clink_popup_history(int count, int invoking_key)
         current = total - 1;
 
     // Popup list.
-    str<> choice;
-    popup_result result = do_popup_list("History",
-        (const char **)history, total, 0, 0,
-        false/*completing*/, false/*auto_complete*/, true/*reverse_find*/,
-        current, choice);
+    popup_result result;
+    if (!g_gui_popups.get())
+    {
+// TODO: pass indices to activate_history_text_list.
+        extern popup_results activate_history_text_list(const char** history, int count, int index);
+        popup_results results = activate_history_text_list(const_cast<const char**>(history), total, current);
+        result = results.m_result;
+        current = results.m_index;
+    }
+    else
+    {
+        str<> choice;
+        result = do_popup_list("History",
+            const_cast<const char**>(history), total, 0, 0,
+            false/*completing*/, false/*auto_complete*/, true/*reverse_find*/,
+            current, choice);
+    }
+
     switch (result)
     {
     case popup_result::cancel:

@@ -24,6 +24,7 @@ extern "C" {
 #include <readline/rlprivate.h>
 #include <readline/history.h>
 #include <readline/xmalloc.h>
+extern void rl_replace_from_history(HIST_ENTRY *entry, int flags);
 }
 
 #include <list>
@@ -60,7 +61,7 @@ static setting_enum g_paste_crlf(
     "delete,space,ampersand,crlf",
     paste_crlf_crlf);
 
-static setting_bool g_gui_popups(
+setting_bool g_gui_popups(
     "clink.gui_popups",
     "Use GUI popup windows",
     "Enable this to use GUI popup windows for various commands in Clink.  Clink\n"
@@ -1474,8 +1475,8 @@ ding:
         history[i] = p ? p : "";
     }
 
-    extern popup_results activate_history_text_list(const char** history, int count);
-    const popup_results results = activate_history_text_list(history, history_length);
+    extern popup_results activate_history_text_list(const char** history, int count, int current);
+    const popup_results results = activate_history_text_list(history, history_length, min<int>(where_history(), history_length - 1));
 
     switch (results.m_result)
     {
@@ -1485,11 +1486,10 @@ ding:
 
     case popup_result::use:
     case popup_result::select:
-        rl_begin_undo_group();
-        rl_delete_text(0, rl_line_buffer_len);
-        rl_point = 0;
-        rl_insert_text(results.m_text.c_str());
-        rl_end_undo_group();
+        rl_maybe_save_line();
+        rl_maybe_replace_line();
+        history_set_pos(results.m_index);
+        rl_replace_from_history(current_history(), 0);
         if (results.m_result == popup_result::use)
             rl_newline(1, 0);
         break;

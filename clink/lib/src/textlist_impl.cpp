@@ -98,7 +98,7 @@ textlist_impl::textlist_impl(input_dispatcher& dispatcher)
 }
 
 //------------------------------------------------------------------------------
-popup_results textlist_impl::activate(const char* title, const char** entries, int count, bool history_mode)
+popup_results textlist_impl::activate(const char* title, const char** entries, int count, int index, bool history_mode)
 {
     reset();
     m_results.clear();
@@ -135,11 +135,18 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
 
     if (title && *title)
         m_default_title.format(" %s ", title);
-    m_history_mode = history_mode;
 
     // Initialize the view.
-    m_index = count - 1;
-    m_top = max<int>(0, count - m_visible_rows);
+    if (index < 0)
+    {
+        m_index = m_count - 1;
+        m_top = max<int>(0, m_count - m_visible_rows);
+    }
+    else
+    {
+        m_index = index;
+        m_top = max<int>(0, min<int>(m_index - (m_visible_rows / 2), m_count - m_visible_rows));
+    }
 
     show_cursor(false);
     lock_cursor(true);
@@ -865,14 +872,16 @@ popup_results activate_directories_text_list(const char** dirs, int count)
     if (!s_textlist)
         return popup_result::error;
 
-    return s_textlist->activate("Directories", dirs, count);
+    return s_textlist->activate("Directories", dirs, count, count - 1, false/*history_mode*/);
 }
 
 //------------------------------------------------------------------------------
-popup_results activate_history_text_list(const char** history, int count)
+popup_results activate_history_text_list(const char** history, int count, int current)
 {
     if (!s_textlist)
         return popup_result::error;
 
-    return s_textlist->activate("History", history, count, true/*history_mode*/);
+    assert(current >= 0);
+    assert(current < count);
+    return s_textlist->activate("History", history, count, current, true/*history_mode*/);
 }

@@ -23,7 +23,7 @@ class textlist_impl
 public:
                     textlist_impl(input_dispatcher& dispatcher);
 
-    popup_results   activate(const char* title, const char** entries, int count, bool history_mode=false);
+    popup_results   activate(const char* title, const char** entries, int count, int index, bool history_mode);
 
 private:
     // editor_module.
