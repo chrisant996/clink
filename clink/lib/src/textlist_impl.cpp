@@ -656,7 +656,7 @@ void textlist_impl::update_display()
             }
 
             const int longest = max<int>(m_longest + (max_num_len ? max_num_len + 2 : 0), 40); // +2 for ": ".
-            const int effective_screen_cols = (m_screen_cols < 40) ? m_screen_cols : max<int>(40, m_screen_cols - 8);
+            const int effective_screen_cols = (m_screen_cols < 40) ? m_screen_cols : max<int>(40, m_screen_cols - 4);
             const int col_width = min<int>(longest + 2, effective_screen_cols); // +2 for borders.
 
             str<> noescape;
@@ -666,7 +666,12 @@ void textlist_impl::update_display()
                 horzline.concat("\xe2\x94\x80", 3);
 
             {
-                int x = (m_screen_cols - col_width) / 2;
+                int x = csbi.dwCursorPosition.X - ((col_width + 1) / 2);
+                int center_x = (m_screen_cols - effective_screen_cols) / 2;
+                if (x + col_width > center_x + effective_screen_cols)
+                    x = m_screen_cols - center_x - col_width;
+                if (x < center_x)
+                    x = center_x;
                 if (x > 0)
                     left.format("\x1b[%uG", x + 1);
             }
