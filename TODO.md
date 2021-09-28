@@ -5,11 +5,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- Use text mode popup list everywhere instead of window based popup list.
-  - [ ] Pass filtered history indices to textlist_impl.
-  - [ ] Textlist_impl needs to support multiple columns.
-  - [ ] Use textlist_impl in `clink.popuplist()`.
-  - [ ] `selectcomplete_impl::activate()` resets generating matches:  that breaks `rl.setmatches()`, but seems necessary for a subsequent `clink-select-complete` to work.
+- Textlist_impl needs to support multiple columns.
+- `selectcomplete_impl::activate()` resets generating matches:  that breaks `rl.setmatches()`, but seems necessary for a subsequent `clink-select-complete` to work.
 - Add a quick start / beginner section to the Clink docs.
 
 ## Medium Priority
