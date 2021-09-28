@@ -115,9 +115,13 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
         return popup_result::error;
 
     // Make sure there's room.
+    m_history_mode = history_mode;
     update_layout();
     if (m_visible_rows <= 0)
+    {
+        m_history_mode = false;
         return popup_result::error;
+    }
 
     // Gather the items.
     str<> tmp;
