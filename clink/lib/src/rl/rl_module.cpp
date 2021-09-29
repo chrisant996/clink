@@ -205,6 +205,13 @@ setting_color g_color_popup(
     "console's popup colors are used.",
     "");
 
+setting_color g_color_popup_desc(
+    "color.popup_desc",
+    "Color for popup description column(s)",
+    "Used when Clink shows multiple columns of text in a text mode popup list.\n"
+    "If not set, a color is chosen to complement the console's popup colors.",
+    "");
+
 setting_color g_color_prompt(
     "color.prompt",
     "Prompt color",
@@ -1265,7 +1272,6 @@ int clink_popup_history(int count, int invoking_key)
     popup_result result;
     if (!g_gui_popups.get())
     {
-// TODO: pass indices to activate_history_text_list.
         extern popup_results activate_history_text_list(const char** history, int count, int index, const int* indices);
         popup_results results = activate_history_text_list(const_cast<const char**>(history), total, current, indices);
         result = results.m_result;

@@ -468,10 +468,11 @@ static int popup_list(lua_State* state)
     popup_result result;
     if (!g_gui_popups.get())
     {
-        popup_results activate_text_list(const char* title, const char** entries, int count, int current);
-        popup_results results = activate_text_list(title, &*items.begin(), int(items.size()), index);
+        popup_results activate_text_list(const char* title, const char** entries, int count, int current, bool has_columns);
+        popup_results results = activate_text_list(title, &*items.begin(), int(items.size()), index, true/*has_columns*/);
         result = results.m_result;
         index = results.m_index;
+        out = results.m_text.c_str();
     }
     else
     {

@@ -20,10 +20,32 @@ typedef const char* (*textlist_line_getter_t)(int index);
 class textlist_impl
     : public editor_module
 {
+    class item_store;
+
+    enum { max_columns = 3 };
+
+    struct column_text
+    {
+        const char* column[max_columns];    // Additional columns for display.
+    };
+
+    struct addl_columns
+    {
+                    addl_columns(item_store& store);
+        const char* get_col_text(int row, int col) const;
+        int         get_col_width(int col) const;
+        const char* add_entry(const char* entry);
+        void        clear();
+    private:
+        textlist_impl::item_store& m_store;
+        std::vector<column_text> m_rows;
+        int         m_longest[max_columns] = {};
+    };
+
 public:
                     textlist_impl(input_dispatcher& dispatcher);
 
-    popup_results   activate(const char* title, const char** entries, int count, int index, bool history_mode, const int* indices);
+    popup_results   activate(const char* title, const char** entries, int count, int index, bool history_mode, const int* indices, bool columns);
 
 private:
     // editor_module.
@@ -66,7 +88,9 @@ private:
     const int*      m_indices = nullptr;    // Original history numbers from caller.
     std::vector<const char*> m_items;       // Escaped entries for display.
     int             m_longest = 0;
+    addl_columns    m_columns;
     bool            m_history_mode = false;
+    bool            m_has_columns = false;
 
     // Current entry.
     int             m_top = 0;

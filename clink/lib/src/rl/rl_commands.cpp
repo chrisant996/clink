@@ -71,6 +71,7 @@ setting_bool g_gui_popups(
 
 extern setting_bool g_adjust_cursor_style;
 extern setting_color g_color_popup;
+extern setting_color g_color_popup_desc;
 extern setting_bool g_match_wild;
 
 static bool s_force_reload_scripts = false;
@@ -1018,6 +1019,7 @@ int cua_cut(int count, int invoking_key)
 
 
 //------------------------------------------------------------------------------
+static constexpr unsigned char c_colors[] = { 30, 34, 32, 36, 31, 35, 33, 37, 90, 94, 92, 96, 91, 95, 93, 97 };
 const char* get_popup_colors()
 {
     static str<32> s_popup;
@@ -1034,11 +1036,34 @@ const char* get_popup_colors()
     if (!GetConsoleScreenBufferInfoEx(GetStdHandle(STD_OUTPUT_HANDLE), &csbiex))
         return "0;30;47";
 
-    static const unsigned char c_colors[] = { 30, 34, 32, 36, 31, 35, 33, 37, 90, 94, 92, 96, 91, 95, 93, 97 };
-
     WORD attr = csbiex.wPopupAttributes;
     s_popup.format("0;%u;%u", c_colors[attr & 0x0f], c_colors[(attr & 0xf0) >> 4] + 10);
     return s_popup.c_str();
+}
+
+//------------------------------------------------------------------------------
+const char* get_popup_desc_colors()
+{
+    static str<32> s_popup_desc;
+
+    str<32> tmp;
+    g_color_popup_desc.get(tmp);
+    if (!tmp.empty())
+    {
+        s_popup_desc.format("0;%s", tmp.c_str());
+        return s_popup_desc.c_str();
+    }
+
+    CONSOLE_SCREEN_BUFFER_INFOEX csbiex = { sizeof(csbiex) };
+    if (!GetConsoleScreenBufferInfoEx(GetStdHandle(STD_OUTPUT_HANDLE), &csbiex))
+        return "0;90;47";
+
+    int dim = 30;
+    WORD attr = csbiex.wPopupAttributes;
+    if ((attr & 0xf0) == 0x00 || (attr & 0xf0) == 0x10 || (attr & 0xf0) == 0x90)
+        dim = 90;
+    s_popup_desc.format("0;%u;%u", dim, c_colors[(attr & 0xf0) >> 4] + 10);
+    return s_popup_desc.c_str();
 }
 
 //------------------------------------------------------------------------------

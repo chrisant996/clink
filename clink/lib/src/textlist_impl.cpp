@@ -49,6 +49,7 @@ enum {
 extern setting_enum g_ignore_case;
 extern setting_bool g_fuzzy_accent;
 extern const char* get_popup_colors();
+extern const char* get_popup_desc_colors();
 
 //------------------------------------------------------------------------------
 static textlist_impl* s_textlist = nullptr;
@@ -79,6 +80,58 @@ static int make_item(const char* in, str_base& out)
 }
 
 //------------------------------------------------------------------------------
+static int make_column(const char* in, const char* end, str_base& out)
+{
+    out.clear();
+
+    int cells = 0;
+
+    ecma48_state state;
+    ecma48_iter iter(in, state, end ? int(end - in) : -1);
+    while (const ecma48_code& code = iter.next())
+        if (code.get_type() == ecma48_code::type_chars)
+        {
+            const char* p = code.get_pointer();
+            for (str_iter inner_iter(code.get_pointer(), code.get_length());
+                 int c = inner_iter.next();
+                 p = inner_iter.get_pointer())
+            {
+                if (c == '\r' || c == '\n')
+                {
+                    out.concat(" ", 1);
+                    cells++;
+                }
+                else if (unsigned(c) < ' ')
+                {
+                    char ctrl = char(c) + '@';
+                    out.concat("^", 1);
+                    out.concat(&ctrl, 1);
+                    cells += 2;
+                }
+                else
+                {
+                    out.concat(p, int(inner_iter.get_pointer() - p));
+                    cells += clink_wcwidth(c);
+                }
+            }
+        }
+
+    return cells;
+}
+
+//------------------------------------------------------------------------------
+static void make_spaces(int num, str_base& out)
+{
+    out.clear();
+    while (num > 0)
+    {
+        int chunk = min<int>(32, num);
+        out.concat("                                ", chunk);
+        num -= chunk;
+    }
+}
+
+//------------------------------------------------------------------------------
 static int limit_cells(const char* in, int limit, int& cells)
 {
     cells = 0;
@@ -92,14 +145,79 @@ static int limit_cells(const char* in, int limit, int& cells)
     return int(iter.get_pointer() - in);
 }
 
+
+
 //------------------------------------------------------------------------------
-textlist_impl::textlist_impl(input_dispatcher& dispatcher)
-    : m_dispatcher(dispatcher)
+textlist_impl::addl_columns::addl_columns(textlist_impl::item_store& store)
+    : m_store(store)
 {
 }
 
 //------------------------------------------------------------------------------
-popup_results textlist_impl::activate(const char* title, const char** entries, int count, int index, bool history_mode, const int* indices)
+const char* textlist_impl::addl_columns::get_col_text(int row, int col) const
+{
+    return m_rows[row].column[col];
+}
+
+//------------------------------------------------------------------------------
+int textlist_impl::addl_columns::get_col_width(int col) const
+{
+    return m_longest[col];
+}
+
+//------------------------------------------------------------------------------
+const char* textlist_impl::addl_columns::add_entry(const char* ptr)
+{
+    size_t len_match = strlen(ptr);
+    ptr += len_match + 1;
+
+    const char* display = ptr;
+    size_t len_display = strlen(ptr);
+    ptr += len_display + 1;
+
+    column_text column_text = {};
+    if (*ptr)
+    {
+        str<> tmp;
+        int col = 0;
+        while (col < sizeof_array(column_text.column))
+        {
+            const char* tab = strchr(ptr, '\t');
+            const int cells = make_column(ptr, tab, tmp);
+            column_text.column[col] = m_store.add(tmp.c_str());
+            m_longest[col] = max<int>(m_longest[col], cells);
+            ptr = tab;
+            if (!ptr)
+                break;
+            col++;
+            ptr++;
+        }
+    }
+
+    m_rows.emplace_back(std::move(column_text));
+
+    return display;
+}
+
+//------------------------------------------------------------------------------
+void textlist_impl::addl_columns::clear()
+{
+    std::vector<column_text> zap;
+    m_rows = std::move(zap);
+    memset(&m_longest, 0, sizeof(m_longest));
+}
+
+
+
+//------------------------------------------------------------------------------
+textlist_impl::textlist_impl(input_dispatcher& dispatcher)
+    : m_dispatcher(dispatcher)
+    , m_columns(m_store)
+{
+}
+
+//------------------------------------------------------------------------------
+popup_results textlist_impl::activate(const char* title, const char** entries, int count, int index, bool history_mode, const int* indices, bool has_columns)
 {
     reset();
     m_results.clear();
@@ -116,7 +234,7 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
         return popup_result::error;
 
     // Make sure there's room.
-    m_history_mode = history_mode;
+    m_history_mode = history_mode;      // Is used inside update_layout().
     update_layout();
     if (m_visible_rows <= 0)
     {
@@ -129,12 +247,17 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
     m_entries = entries;
     m_indices = indices;
     m_count = count;
-// TODO: textlist_impl needs to support multiple columns.
     for (int i = 0; i < count; i++)
     {
-        m_longest = max<int>(m_longest, make_item(m_entries[i], tmp));
+        const char* text;
+        if (has_columns)
+            text = m_columns.add_entry(m_entries[i]);
+        else
+            text = m_entries[i];
+        m_longest = max<int>(m_longest, make_item(text, tmp));
         m_items.push_back(m_store.add(tmp.c_str()));
     }
+    m_has_columns = has_columns;
 
     if (title && *title)
         m_default_title.format(" %s ", title);
@@ -655,7 +778,18 @@ void textlist_impl::update_display()
                 max_num_len = tmp.length();
             }
 
-            const int longest = max<int>(m_longest + (max_num_len ? max_num_len + 2 : 0), 40); // +2 for ": ".
+            int longest = m_longest + (max_num_len ? max_num_len + 2 : 0); // +2 for ": ".
+            if (m_has_columns)
+            {
+                for (int i = 0; i < max_columns; i++)
+                {
+                    const int x = m_columns.get_col_width(i);
+                    if (x)
+                        longest += 2 + x;
+                }
+            }
+            longest = max<int>(longest, 40);
+
             const int effective_screen_cols = (m_screen_cols < 40) ? m_screen_cols : max<int>(40, m_screen_cols - 4);
             const int col_width = min<int>(longest + 2, effective_screen_cols); // +2 for borders.
 
@@ -678,6 +812,9 @@ void textlist_impl::update_display()
 
             str<32> color;
             color.format("\x1b[%sm", get_popup_colors());
+
+            str<32> desc_color;
+            desc_color.format("\x1b[%sm", get_popup_desc_colors());
 
             // Display border.
             if (draw_border)
@@ -707,7 +844,6 @@ void textlist_impl::update_display()
             }
 
             // Display items.
-// TODO: textlist_impl needs to support multiple columns.
             for (int row = 0; row < m_visible_rows; row++)
             {
                 const int i = m_top + row;
@@ -736,27 +872,47 @@ void textlist_impl::update_display()
                         const int history_index = m_indices ? m_indices[i] : i;
                         tmp.clear();
                         tmp.format("%*u: ", max_num_len, history_index + 1);
-                        m_printer->print(tmp.c_str(), tmp.length());
+                        m_printer->print(tmp.c_str(), tmp.length());// history number
                         spaces -= tmp.length();
                     }
 
                     int cell_len;
                     const int char_len = limit_cells(m_items[i], spaces, cell_len);
-                    m_printer->print(m_items[i], char_len);
+                    m_printer->print(m_items[i], char_len);         // main text
                     spaces -= cell_len;
 
-                    tmp.clear();
-                    while (spaces > 0)
+                    if (m_has_columns)
                     {
-                        int chunk = min<int>(32, spaces);
-                        tmp.concat("                                ", chunk);
-                        spaces -= chunk;
+                        if (i != m_index)
+                            m_printer->print(desc_color.c_str(), desc_color.length());
+
+                        for (int col = 0; col < max_columns && spaces > 0; col++)
+                        {
+                            tmp.clear();
+                            tmp.concat("  ", 2);
+                            tmp.concat(m_columns.get_col_text(i, col));
+                            const int col_len = limit_cells(tmp.c_str(), spaces, cell_len);
+                            m_printer->print(tmp.c_str(), col_len); // column text
+                            spaces -= cell_len;
+
+                            int pad = min<int>(spaces, m_columns.get_col_width(col) - (cell_len - 2));
+                            if (pad > 0)
+                            {
+                                make_spaces(pad, tmp);
+                                m_printer->print(tmp.c_str(), tmp.length()); // spaces
+                                spaces -= tmp.length();
+                            }
+                        }
                     }
 
-                    m_printer->print(tmp.c_str(), tmp.length());    // text
+                    make_spaces(spaces, tmp);
+                    m_printer->print(tmp.c_str(), tmp.length());    // spaces
 
                     if (i == m_index)
                         m_printer->print("\x1b[27m");
+
+                    if (m_has_columns)
+                        m_printer->print(color.c_str(), color.length());
 
                     m_printer->print("\xe2\x94\x82\x1b[m");         // │
                 }
@@ -814,7 +970,7 @@ void textlist_impl::set_top(int top)
 //------------------------------------------------------------------------------
 void textlist_impl::reset()
 {
-    std::vector<const char*> zap;
+    std::vector<const char*> zap_items;
 
     // Don't reset screen row and cols; they stay in sync with the terminal.
 
@@ -824,10 +980,13 @@ void textlist_impl::reset()
     m_has_override_title = false;
 
     m_count = 0;
-    m_entries = nullptr;
-    m_indices = nullptr;
-    m_items = std::move(zap);
+    m_entries = nullptr;    // Don't free; is only borrowed.
+    m_indices = nullptr;    // Don't free; is only borrowed.
+    m_items = std::move(zap_items);
     m_longest = 0;
+    m_columns.clear();
+    m_history_mode = false;
+    m_has_columns = false;
 
     m_top = 0;
     m_index = 0;
@@ -884,12 +1043,12 @@ void textlist_impl::item_store::clear()
 
 
 //------------------------------------------------------------------------------
-popup_results activate_text_list(const char* title, const char** entries, int count, int current)
+popup_results activate_text_list(const char* title, const char** entries, int count, int current, bool has_columns)
 {
     if (!s_textlist)
         return popup_result::error;
 
-    return s_textlist->activate(title, entries, count, current, false/*history_mode*/, nullptr);
+    return s_textlist->activate(title, entries, count, current, false/*history_mode*/, nullptr, has_columns);
 }
 
 //------------------------------------------------------------------------------
@@ -898,7 +1057,7 @@ popup_results activate_directories_text_list(const char** dirs, int count)
     if (!s_textlist)
         return popup_result::error;
 
-    return s_textlist->activate("Directories", dirs, count, count - 1, false/*history_mode*/, nullptr);
+    return s_textlist->activate("Directories", dirs, count, count - 1, false/*history_mode*/, nullptr, false);
 }
 
 //------------------------------------------------------------------------------
@@ -909,5 +1068,5 @@ popup_results activate_history_text_list(const char** history, int count, int cu
 
     assert(current >= 0);
     assert(current < count);
-    return s_textlist->activate("History", history, count, current, true/*history_mode*/, indices);
+    return s_textlist->activate("History", history, count, current, true/*history_mode*/, indices, false);
 }
