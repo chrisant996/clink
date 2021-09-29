@@ -5,7 +5,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- `selectcomplete_impl::activate()` resets generating matches:  that breaks `rl.setmatches()`, but seems necessary for a subsequent `clink-select-complete` to work.
 
 ## Medium Priority
 - Add a quick start / beginner section to the Clink docs.
