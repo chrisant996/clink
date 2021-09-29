@@ -34,6 +34,7 @@ extern int _rl_last_v_pos;
 };
 
 extern void reset_generate_matches();
+extern bool is_regen_blocked();
 extern matches* maybe_regenerate_matches(const char* needle, bool popup);
 extern void force_update_internal(bool restrict=false);
 extern void update_matches();
@@ -306,7 +307,8 @@ bool selectcomplete_impl::activate(editor_module::result& result, bool reactivat
 
     m_anchor = -1;
     m_delimiter = 0;
-    reset_generate_matches();
+    if (!is_regen_blocked())
+        reset_generate_matches();
 
     update_matches(true/*restrict*/);
     assert(m_anchor >= 0);

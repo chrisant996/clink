@@ -81,6 +81,7 @@ private:
     friend void update_matches();
     friend matches* get_mutable_matches(bool nosort);
     friend matches* maybe_regenerate_matches(const char* needle, bool popup);
+    friend bool is_regen_blocked();
 
     enum flags : unsigned char
     {

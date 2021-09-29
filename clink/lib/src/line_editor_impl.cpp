@@ -93,6 +93,12 @@ void reset_generate_matches()
 }
 
 //------------------------------------------------------------------------------
+bool is_regen_blocked()
+{
+    return (s_editor && s_editor->m_matches.is_regen_blocked());
+}
+
+//------------------------------------------------------------------------------
 void force_update_internal(bool restrict)
 {
     if (!s_editor)
