@@ -5,7 +5,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- Textlist_impl needs to support multiple columns.
 - `selectcomplete_impl::activate()` resets generating matches:  that breaks `rl.setmatches()`, but seems necessary for a subsequent `clink-select-complete` to work.
 
 ## Medium Priority
