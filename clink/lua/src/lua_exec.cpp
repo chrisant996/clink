@@ -37,7 +37,7 @@ extern "C" {
 ////////////////////////////////////////////////////////////////////////////////
 
 #if defined(__MINGW32__) && !defined(__MINGW64__)
-#   define JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE 0x2000
+#   define JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE 0x00002000
 #endif
 
 //------------------------------------------------------------------------------

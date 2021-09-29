@@ -40,6 +40,8 @@ public:
     void            press_keys(const char* keys);
 
 private:
+    static DWORD WINAPI thread_proc(void* param);
+
     terminal        m_terminal;
     printer*        m_printer;
     line_editor*    m_editor;
@@ -48,6 +50,15 @@ private:
     printer_context* m_printer_context;
     console_config* m_cc;
 };
+
+//------------------------------------------------------------------------------
+DWORD WINAPI test_editor::thread_proc(void* param)
+{
+    auto* self = (test_editor*)param;
+    str<> tmp;
+    self->m_editor->edit(tmp);
+    return 0;
+}
 
 //------------------------------------------------------------------------------
 void test_editor::start(const char* prompt)
@@ -65,14 +76,7 @@ void test_editor::start(const char* prompt)
     desc.prompt = prompt;
     m_editor = line_editor_create(desc);
 
-    auto thread = [] (void* param) -> DWORD {
-        auto* self = (test_editor*)param;
-        str<> tmp;
-        self->m_editor->edit(tmp);
-        return 0;
-    };
-
-    m_thread = CreateThread(nullptr, 0, thread, this, 0, nullptr);
+    m_thread = CreateThread(nullptr, 0, thread_proc, this, 0, nullptr);
 }
 
 //------------------------------------------------------------------------------
@@ -182,6 +186,7 @@ private:
         state_quit,
     };
 
+    static DWORD WINAPI thunk(void* param);
     void            run_input_thread();
     handle          m_input_thread;
     volatile state  m_state;
@@ -189,16 +194,18 @@ private:
 };
 
 //------------------------------------------------------------------------------
+DWORD WINAPI stepper::thunk(void* param)
+{
+    auto* self = (stepper*)param;
+    self->run_input_thread();
+    return 0;
+}
+
+//------------------------------------------------------------------------------
 stepper::stepper(int timeout_ms)
 : m_state(state_running)
 , m_timeout_ms(timeout_ms)
 {
-    auto thunk = [] (void* param) -> DWORD {
-        auto* self = (stepper*)param;
-        self->run_input_thread();
-        return 0;
-    };
-
     m_input_thread = CreateThread(nullptr, 0, thunk, this, 0, nullptr);
 }
 

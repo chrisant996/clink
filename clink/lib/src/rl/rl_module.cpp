@@ -357,7 +357,7 @@ const char* get_last_luafunc()
 //------------------------------------------------------------------------------
 void* get_effective_last_func()
 {
-    return s_has_override_rl_last_func ? s_override_rl_last_func : rl_last_func;
+    return reinterpret_cast<void*>(s_has_override_rl_last_func ? s_override_rl_last_func : rl_last_func);
 }
 
 //------------------------------------------------------------------------------

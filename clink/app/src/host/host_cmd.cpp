@@ -28,7 +28,7 @@
 //------------------------------------------------------------------------------
 using func_SetEnvironmentVariableW_t = BOOL (WINAPI*)(LPCWSTR lpName, LPCWSTR lpValue);
 using func_WriteConsoleW_t = BOOL (WINAPI*)(HANDLE hConsoleOutput, CONST VOID* lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved);
-using func_ReadConsoleW_t = BOOL (WINAPI*)(HANDLE hConsoleInput, VOID* lpBuffer, DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, PCONSOLE_READCONSOLE_CONTROL pInputControl);
+using func_ReadConsoleW_t = BOOL (WINAPI*)(HANDLE hConsoleInput, VOID* lpBuffer, DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, __CONSOLE_READCONSOLE_CONTROL* pInputControl);
 using func_GetEnvironmentVariableW_t = DWORD (WINAPI*)(LPCWSTR lpName, LPWSTR lpBuffer, DWORD nSize);
 func_SetEnvironmentVariableW_t __Real_SetEnvironmentVariableW = SetEnvironmentVariableW;
 func_WriteConsoleW_t __Real_WriteConsoleW = WriteConsoleW;
@@ -182,7 +182,7 @@ static BOOL WINAPI single_char_read(
     wchar_t* buffer,
     DWORD buffer_size,
     LPDWORD read_in,
-    CONSOLE_READCONSOLE_CONTROL* control)
+    __CONSOLE_READCONSOLE_CONTROL* control)
 {
     int reply;
 
@@ -444,7 +444,7 @@ BOOL WINAPI host_cmd::read_console(
     void* _chars,
     DWORD max_chars,
     LPDWORD read_in,
-    CONSOLE_READCONSOLE_CONTROL* control)
+    __CONSOLE_READCONSOLE_CONTROL* control)
 {
     seh_scope seh;
     wchar_t* const chars = reinterpret_cast<wchar_t*>(_chars);
