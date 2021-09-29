@@ -5,11 +5,13 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
+- The Ctrl+M family and Enter family aren't generating key sequences correctly.
+- Window Terminal accepts all combinations of modifiers on Enter, so just go ahead and support them all.
 - Textlist_impl needs to support multiple columns.
 - `selectcomplete_impl::activate()` resets generating matches:  that breaks `rl.setmatches()`, but seems necessary for a subsequent `clink-select-complete` to work.
-- Add a quick start / beginner section to the Clink docs.
 
 ## Medium Priority
+- Add a quick start / beginner section to the Clink docs.
 
 ## Low Priority
 - Auto-update option, with configurable polling interval?  (Though package managers like scoop can handle updates, if Clink was installed through one.)
