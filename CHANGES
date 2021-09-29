@@ -5,6 +5,11 @@
 #### v1.2.36
 
 - Added `win-history-list` command bound to <kbd>F7</kbd> by default.  This shows the history list, and executes the selected history entry.
+- Changed all of the popup list commands to show popups using console text rather than GUI windows.
+    - Added a `color.popup` Clink setting for the popup colors.  If not set, the console's popup colors are used.
+    - Added a `color.popup_desc` Clink setting for the popup colors for the description column(s).  If not set, a color is chosen to complement the console's popup colors.
+    - Added a `clink.gui_popups` Clink setting that can be set to use GUI popup windows as before (the `color.popup` settings have no effect on GUI popup windows).
+- Key bindings now support <kbd>Enter</kbd> plus combinations of the <kbd>Ctrl</kbd>, <kbd>Shift</kbd>, or <kbd>Alt</kbd> modifier keys.
 - Fixed the `clink-select-complete` command when `print-completions-horizontally` is on (and also minor isues when it is off).
 - Fixed the `clink-menu-complete-numbers` family of commands (regression introduced in v1.2.32).
 - Fixed a situation where the scrolling keys could stop working (regression introduced in v1.2.24).
