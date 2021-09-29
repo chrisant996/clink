@@ -1051,7 +1051,7 @@ C-_:                kill-line                       <span class="hljs-comment">#
 <span class="hljs-meta">$endif</span>              <span class="hljs-comment"># end clink-only section</span>
 </code></pre>
 
-The `clink-show-help` command is bound to <kbd>Alt</kbd>+<kbd>H</kbd> and lists all currently active key bindings.  The list displays "friendly" key names, and these names are generally not suitable for use in .inputrc files.  For example "Up" is the friendly name for `"\e[A"`, and "A-C-F2" is the friendly name for `"\e\e[1;5Q"`.  To see key sequence strings suitable for use in .inputrc files use `clink echo` or <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>H</kbd>.
+The `clink-show-help` command is bound to <kbd>Alt</kbd>+<kbd>H</kbd> and lists all currently active key bindings.  The list displays "friendly" key names, and these names are generally not suitable for use in .inputrc files.  For example "Up" is the friendly name for `"\e[A"`, and "A-C-F2" is the friendly name for `"\e\e[1;5Q"`.  To see key sequence strings suitable for use in .inputrc files use `clink echo` as described below.
 
 > **Note:** Third party console hosts such as ConEmu may have their own key bindings that supersede Clink.  They usually have documentation for how to change or disable their key bindings to allow console programs to handle the keys instead.
 
@@ -1062,6 +1062,8 @@ The `clink-show-help` command is bound to <kbd>Alt</kbd>+<kbd>H</kbd> and lists 
 Clink provides an easy way to find the key sequence for any key combination that Clink supports. Run `clink echo` and then press key combinations; the associated key binding sequence is printed to the console output and can be used for a key binding in the inputrc file.
 
 A chord can be formed by concatenating multiple key binding sequences. For example, `"\C-X"` and `"\e[H"` can be concatenated to form `"\C-X\e[H"` representing the chord <kbd>Ctrl</kbd>+<kbd>X</kbd>,<kbd>Home</kbd>.
+
+When finished, press <kbd>Ctrl</kbd>+<kbd>C</kbd> to exit from `clink info`.
 
 <a name="specialkeys"></a>
 

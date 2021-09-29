@@ -33,6 +33,8 @@ int input_echo(int argc, char** argv)
     extern void set_verbose_input(bool verbose);
     set_verbose_input(verbose_input);
 
+    puts("Type a key to see its key sequence string.\nPress Ctrl+C when finished.");
+
     // Load the settings from disk, since terminal input is affected by settings.
     str<280> settings_file;
     app_context::get()->get_settings_path(settings_file);
