@@ -95,6 +95,7 @@ Name                         | Default | Description
 `clink.autostart`            |         | This command is automatically run when the first CMD prompt is shown after Clink is injected.  If this is blank (the default), then Clink instead looks for clink_start.cmd in the binaries directory and profile directory and runs them.  Set it to "nul" to not run any autostart command.
 `clink.colorize_input`       | True    | Enables context sensitive coloring for the input text (see [Coloring The Input Text](#classifywords)).
 `clink.default_bindings`     | `bash`  | Clink uses bash key bindings when this is set to `bash` (the default).  When this is set to `windows` Clink overrides some of the bash defaults with familiar Windows key bindings for <kbd>Tab</kbd>, <kbd>Ctrl</kbd>+<kbd>A</kbd>, <kbd>Ctrl</kbd>+<kbd>F</kbd>, <kbd>Ctrl</kbd>+<kbd>M</kbd>, and <kbd>Right</kbd>.
+`clink.gui_popups`           | False   | When set, Clink uses GUI popup windows instead console text popups.  The `color.popup` settings have no effect on GUI popup windows.
 `clink.logo`                 | `full`  | Controls what startup logo to show when Clink is injected.  `full` = show full copyright logo, `short` = show abbreviated version info, `none` = omit the logo.
 `clink.paste_crlf`           | `crlf`  | What to do with CR and LF characters on paste. Setting this to `delete` deletes them, `space` replaces them with spaces, `ampersand` replaces them with ampersands, and `crlf` pastes them as-is (executing commands that end with a newline).
 `clink.path`                 |         | A list of paths from which to load Lua scripts. Multiple paths can be delimited semicolons.
@@ -114,6 +115,7 @@ Name                         | Default | Description
 `color.interact`             | `bold`  | Used when Clink displays text or prompts such as a pager's `--More?--` prompt.
 `color.message`              | `default` | The color for the message area (e.g. the search prompt message, digit argument prompt message, etc).
 `color.popup`                |         | When set, this is used as the color for popup lists and messages.  If no color is set, then the console's popup colors are used (see the Properties dialog box for the console window).
+`color.popup_desc`           |         | When set, this is used as the color for description column(s) in popup lists.  If no color is set, then a color is chosen to complement the console's popup colors (see the Properties dialog box for the console window).
 `color.prompt`               |         | When set, this is used as the default color for the prompt.  But it's overridden by any colors set by <a href="#customisingtheprompt">Customising The Prompt</a>.
 <a name="color_readonly"></a>`color.readonly` | | Used when Clink displays file completions with the "readonly" attribute.
 `color.selected_completion`  |         | The color for the selected completion with the clink-select-complete command.  If no color is set, then bright reverse video is used.
