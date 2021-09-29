@@ -66,7 +66,8 @@ setting_bool g_gui_popups(
     "Use GUI popup windows",
     "Enable this to use GUI popup windows for various commands in Clink.  Clink\n"
     "defaults to using popup console text, but GUI popup windows can be used for\n"
-    "some popup commands.",
+    "some popup commands.  The 'color.popup' settings have no effect on GUI popup\n"
+    "windows.",
     false);
 
 extern setting_bool g_adjust_cursor_style;
