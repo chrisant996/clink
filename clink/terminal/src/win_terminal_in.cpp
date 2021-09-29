@@ -58,7 +58,7 @@ static const int ALT_PRESSED = LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED;
 #define SS3(x) "\x1bO" #x
 #define ACSI(x) "\x1b\x1b[" #x
 #define ASS3(x) "\x1b\x1bO" #x
-#define MOK(x) "\x1b[27;" #x
+#define MOK(x) "\x1b[27;" #x "~"
 namespace terminfo { //                       Shf        Ctl        CtlShf     Alt        AtlShf     AltCtl     AltCtlShf
 static const char* const kcuu1[] = { CSI(A),  CSI(1;2A), CSI(1;5A), CSI(1;6A), CSI(1;3A), CSI(1;4A), CSI(1;7A), CSI(1;8A) }; // up
 static const char* const kcud1[] = { CSI(B),  CSI(1;2B), CSI(1;5B), CSI(1;6B), CSI(1;3B), CSI(1;4B), CSI(1;7B), CSI(1;8B) }; // down
@@ -70,7 +70,8 @@ static const char* const khome[] = { CSI(H),  CSI(1;2H), CSI(1;5H), CSI(1;6H), C
 static const char* const kend[]  = { CSI(F),  CSI(1;2F), CSI(1;5F), CSI(1;6F), CSI(1;3F), CSI(1;4F), CSI(1;7F), CSI(1;8F) }; // end
 static const char* const kpp[]   = { CSI(5~), CSI(5;2~), CSI(5;5~), CSI(5;6~), CSI(5;3~), CSI(5;4~), CSI(5;7~), CSI(5;8~) }; // pgup
 static const char* const knp[]   = { CSI(6~), CSI(6;2~), CSI(6;5~), CSI(6;6~), CSI(6;3~), CSI(6;4~), CSI(6;7~), CSI(6;8~) }; // pgdn
-static const char* const kbks[]  = { "\b",    MOK(2;8~), "\x7f",    MOK(6;8~), "\x1b\b",  MOK(4;8~), "\x1b\x7f",MOK(8;8~) }; // bkspc
+static const char* const kbks[]  = { "\b",    MOK(2;8),  "\x7f",    MOK(6;8),  "\x1b\b",  MOK(4;8),  "\x1b\x7f",MOK(8;8)  }; // bkspc
+static const char* const kret[]  = { "\r",    MOK(2;13), MOK(5;13), MOK(6;13), MOK(3;13), MOK(4;13), MOK(7;13), MOK(8;13) }; // enter (return)
 static const char* const kcbt    = CSI(Z);
 static const char* const kfx[]   = {
     // kf1-12 : Fx unmodified
@@ -115,8 +116,8 @@ static const char* const kfx[]   = {
 };
 
 //                                            Shf     Ctl         CtlShf      Alt   AtlShf   AltCtl      AltCtlShf
-static const char* const ktab[]  = { "\t",    CSI(Z), MOK(5;9~),  MOK(6;9~),  "",   "",      "",         ""         }; // TAB
-static const char* const kspc[]  = { " ",     " ",    MOK(5;32~), MOK(6;32~), "",   "",      MOK(7;32~), MOK(8;32~) }; // SPC
+static const char* const ktab[]  = { "\t",    CSI(Z), MOK(5;9),   MOK(6;9),   "",   "",      "",         ""         }; // TAB
+static const char* const kspc[]  = { " ",     " ",    MOK(5;32),  MOK(6;32),  "",   "",      MOK(7;32),  MOK(8;32)  }; // SPC
 
 static int xterm_modifier(int key_flags)
 {
@@ -343,14 +344,19 @@ static void ensure_keyseqs_to_names()
         add_keyseq_to_name(terminfo::ktab[m], "Tab", builder, m);
         add_keyseq_to_name(terminfo::kspc[m], "Space", builder, m);
         add_keyseq_to_name(terminfo::kbks[m], "Bkspc", builder, m);
+        add_keyseq_to_name(terminfo::kbks[m], "Bkspc", builder, m);
+
+        if (m > 0)
+            add_keyseq_to_name(terminfo::kret[m], "Enter", builder, m);
     }
 
-    if (g_differentiate_keys.get() || g_default_bindings.get() == 1/*windows*/)
+    if (map_keyseq_differentiate || map_default_bindings == 1/*windows*/)
     {
         builder = mods[0];
         add_keyseq_to_name("\x0d", "Enter", builder, 0);
     }
-    else
+
+    if (!map_keyseq_differentiate)
     {
         remove_keyseq_from_name(terminfo::kbks[4]);
     }
@@ -777,6 +783,10 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
         return push(terminfo::ktab[terminfo::keymod_index(key_flags)]);
     if (key_vk == VK_SPACE && (key_char == 0x20 || !key_char) && !m_buffer_count)
         return push(terminfo::kspc[terminfo::keymod_index(key_flags)]);
+
+    // Special treatment for enter + modifiers.
+    if (key_vk == VK_RETURN && key_flags && !m_buffer_count)
+        return push(terminfo::kret[terminfo::keymod_index(key_flags)]);
 
     // If the input was formed using AltGr or LeftAlt-LeftCtrl then things get
     // tricky. But there's always a Ctrl bit set, even if the user didn't press
