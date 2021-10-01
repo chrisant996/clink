@@ -10,6 +10,7 @@
     - Added a `color.popup_desc` Clink setting for the popup colors for the description column(s).  If not set, a color is chosen to complement the console's popup colors.
     - Added a `clink.gui_popups` Clink setting that can be set to use GUI popup windows as before (the `color.popup` settings have no effect on GUI popup windows).
 - Key bindings now support <kbd>Enter</kbd> plus combinations of the <kbd>Ctrl</kbd>, <kbd>Shift</kbd>, or <kbd>Alt</kbd> modifier keys.
+- Added more backward compatibility shims.
 - Fixed the `clink-select-complete` command when `print-completions-horizontally` is on (and also minor isues when it is off).
 - Fixed the `clink-select-complete` command when a Lua script has used `rl.setmatches()` to provide a custom list of matches.
 - Fixed the `clink-menu-complete-numbers` family of commands (regression introduced in v1.2.32).
