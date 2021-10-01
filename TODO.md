@@ -7,6 +7,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Medium Priority
+- Document more deprecated functions?  E.g. `clink.*` functions.
 - Add a quick start / beginner section to the Clink docs.
 
 ## Low Priority
