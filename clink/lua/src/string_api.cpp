@@ -45,7 +45,7 @@ static int equalsi(lua_State* state)
 /// The optional <span class="arg">quote_pair</span> can provide a beginning
 /// quote character and an ending quote character.  If only one character is
 /// provided it is used as both a beginning and ending quote character.
-static int explode(lua_State* state)
+int explode(lua_State* state)
 {
     const char* in = checkstring(state, 1);
     const char* delims = optstring(state, 2, " ");

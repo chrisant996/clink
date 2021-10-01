@@ -33,6 +33,27 @@ function _error_handler(message)
 end
 
 --------------------------------------------------------------------------------
+local remind_how_to_disable = true
+function _compat_warning(message)
+    local compat = os.getenv("CLINK_COMPAT_WARNINGS")
+    compact = compat and tonumber(compat) or 1
+    if compat == 0 then
+        return
+    end
+    if remind_how_to_disable then
+        remind_how_to_disable = false
+        print("Compatibility warnings will be hidden if %CLINK_COMPAT_WARNINGS% == 0.")
+        print("Stack traces will be included if %CLINK_COMPAT_WARNINGS% is 2 or greater.")
+        print("Consider updating the Lua scripts; otherwise functionality may be impaired.")
+    end
+    if compat > 1 then
+        print(debug.traceback(message, 2))
+    else
+        print(message)
+    end
+end
+
+--------------------------------------------------------------------------------
 -- This error handler function is for use by Lua scripts making protected calls.
 -- If lua.break_on_error is set it activates the debugger. It always returns the
 -- error message, which is then returned by pcall().  This doesn't handle
@@ -67,4 +88,18 @@ function _get_top_frame(max)
         file = t.short_src
         line = t.currentline
     end
+end
+
+
+
+--------------------------------------------------------------------------------
+--- -name:  clink.quote_split
+--- -deprecated:
+--- -arg:   str:string
+--- -arg:   ql:string
+--- -arg:   qr:string
+--- -ret:   table
+function clink.quote_split(str, ql, qr)
+    _compat_warning("clink.quote_split() is not supported.")
+    return {}
 end

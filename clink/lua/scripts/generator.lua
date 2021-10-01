@@ -162,6 +162,126 @@ function clink.add_match(match)
 end
 
 --------------------------------------------------------------------------------
+--- -name:  clink.match_count
+--- -deprecated:
+--- -ret:   integer
+--- This is no longer supported, and always returns 0.  If a script needs to
+--- know how many matches it added, the script should keep track of the count
+--- itself.
+function clink.match_count()
+    _compat_warning("clink.match_count() is no longer supported.")
+    return 0
+end
+
+--------------------------------------------------------------------------------
+--- -name:  clink.get_match
+--- -deprecated:
+--- -arg:   index:integer
+--- -ret:   string
+--- This is no longer supported, and always returns an empty string.  If a
+--- script needs to access matches it added, the script should keep track of the
+--- matches itself.
+function clink.get_match()
+    _compat_warning("clink.get_match() is no longer supported.")
+    return ""
+end
+
+--------------------------------------------------------------------------------
+--- -name:  clink.set_match
+--- -deprecated:
+--- -arg:   index:integer
+--- -arg:   value:string
+--- This is no longer supported, and does nothing.
+function clink.set_match()
+    _compat_warning("clink.set_match() is no longer supported.")
+end
+
+--------------------------------------------------------------------------------
+--- -name:  clink.match_files
+--- -deprecated: clink.filematches
+--- -arg:   pattern:string
+--- -arg:   [full_path:boolean]
+--- -arg:   [find_func:function]
+function clink.match_files(pattern, full_path, find_func)
+    -- This is ported from Clink v0.4.9 as identically as possible to minimize
+    -- behavioral differences.  However, that was NOT a good implementation of
+    -- the functionality, and it malfunctions with some inputs.
+
+    -- Fill out default values
+    if type(find_func) ~= "function" then
+        find_func = clink.find_files
+    end
+
+    if full_path == nil then
+        full_path = true
+    end
+
+    if pattern == nil then
+        pattern = "*"
+    end
+
+    -- Glob files.
+    pattern = pattern:gsub("/", "\\")
+    local glob = find_func(pattern, true)
+
+    -- Get glob's base.
+    local base = ""
+    local i = pattern:find("[\\:][^\\:]*$")
+    if i and full_path then
+        base = pattern:sub(1, i)
+    end
+
+    -- Match them.
+    local num = 0
+    for _, i in ipairs(glob) do
+        local full = base..i
+        clink.add_match(full)
+        num = num + 1
+    end
+    return num
+end
+
+--------------------------------------------------------------------------------
+--- -name:  clink.match_words
+--- -deprecated: builder:addmatches
+--- -arg:   text:string
+--- -arg:   words:table
+--- This adds words that match the text.
+function clink.match_words(text, words)
+    local num = 0
+    for _, i in ipairs(words) do
+        if clink.is_match(text, i) then
+            clink.add_match(i)
+            num = num + 1
+        end
+    end
+    return num
+end
+
+--------------------------------------------------------------------------------
+--- -name:  clink.compute_lcd
+--- -deprecated:
+--- -arg:   text:string
+--- -arg:   matches:table
+--- -ret:   string
+--- This is no longer supported, and always returns an empty string.
+function clink.compute_lcd()
+    _compat_warning("clink.compute_lcd() is no longer supported.")
+    return ""
+end
+
+--------------------------------------------------------------------------------
+--- -name:  clink.is_single_match
+--- -deprecated:
+--- -arg:   matches:table
+--- -ret:   boolean
+--- This is no longer supported, and always returns false.
+function clink.is_single_match()
+    _compat_warning("clink.is_single_match() is no longer supported.")
+    return false
+end
+
+--------------------------------------------------------------------------------
 --- -name:  clink.is_match
 --- -deprecated: clink.generator
 --- -arg:   needle:string

@@ -268,7 +268,11 @@ local function do_docs()
 
             api_html:write('<div class="body">')
                 if deprecated then
-                    api_html:write('<p class="desc"><strong>Deprecated; don\'t use this.</strong>  See <a href="#'..deprecated..'">'..deprecated..'</a> for more information.</p>')
+                    api_html:write('<p class="desc"><strong>Deprecated; don\'t use this.</strong>')
+                    if deprecated ~= "" then
+                        api_html:write(' See <a href="#'..deprecated..'">'..deprecated..'</a> for more information.')
+                    end
+                    api_html:write('</p>')
                 end
                 for n = 1, doc_tag.desc_num, 1 do
                     local desc = table.concat(doc_tag["desc"..n] or {}, " ")

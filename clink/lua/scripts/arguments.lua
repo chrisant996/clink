@@ -590,14 +590,16 @@ function _argmatcher:_generate(line_state, match_builder, extra_words)
 end
 
 --------------------------------------------------------------------------------
--- Deprecated.
+--- -name:  _argmatcher:add_arguments
+--- -deprecated: _argmatcher:addarg
 function _argmatcher:add_arguments(...)
     self:addarg(...)
     return self
 end
 
 --------------------------------------------------------------------------------
--- Deprecated.
+--- -name:  _argmatcher:add_flags
+--- -deprecated: _argmatcher:addflags
 function _argmatcher:add_flags(...)
     self:addflags(...)
     return self
@@ -628,7 +630,10 @@ function _argmatcher:flatten_argument(index)
 end
 
 --------------------------------------------------------------------------------
--- Deprecated.
+--- -name:  _argmatcher:set_arguments
+--- -deprecated: _argmatcher:addarg
+--- -arg:   choices...:string|table
+--- -ret:   self
 function _argmatcher:set_arguments(...)
     self._args = { _links = {} }
     self:addarg(...)
@@ -636,10 +641,31 @@ function _argmatcher:set_arguments(...)
 end
 
 --------------------------------------------------------------------------------
--- Deprecated.
+--- -name:  _argmatcher:set_flags
+--- -deprecated: _argmatcher:addflags
+--- -arg:   flags...:string
+--- -ret:   self
 function _argmatcher:set_flags(...)
     self._flags = nil
     self:addflags(...)
+    return self
+end
+
+--------------------------------------------------------------------------------
+--- -name:  _argmatcher:disable_file_matching
+--- -deprecated: _argmatcher:nofiles
+--- -ret:   self
+function _argmatcher:disable_file_matching()
+    self:nofiles()
+    return self
+end
+
+--------------------------------------------------------------------------------
+--- -name:  _argmatcher:be_precise
+--- -deprecated:
+--- -ret:   self
+function _argmatcher:be_precise()
+    _compat_warning("_argmatcher:be_precise() is no longer supported.")
     return self
 end
 

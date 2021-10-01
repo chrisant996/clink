@@ -253,6 +253,13 @@ static int get_host_process(lua_State* state)
     return 1;
 }
 
+//------------------------------------------------------------------------------
+/// -name:  clink.split
+/// -deprecated: string.explode
+/// -arg:   str:string
+/// -arg:   sep:string
+/// -ret:   table
+
 
 
 // END -- Clink 0.4.8 API compatibility ----------------------------------------
@@ -701,6 +708,7 @@ extern int get_env(lua_State* state);
 extern int get_env_names(lua_State* state);
 extern int get_screen_info(lua_State* state);
 extern int is_dir(lua_State* state);
+extern int explode(lua_State* state);
 
 //------------------------------------------------------------------------------
 void clink_lua_initialise(lua_state& lua)
@@ -737,6 +745,7 @@ void clink_lua_initialise(lua_state& lua)
         { "is_dir",                 &is_dir },
         { "is_rl_variable_true",    &is_rl_variable_true },
         { "slash_translation",      &slash_translation },
+        { "split",                  &explode },
         // UNDOCUMENTED; internal use only.
         { "refilterprompt",         &refilter_prompt },
         { "istransientpromptfilter", &is_transient_prompt_filter },
