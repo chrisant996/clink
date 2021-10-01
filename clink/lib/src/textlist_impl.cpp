@@ -313,23 +313,25 @@ void textlist_impl::bind_input(binder& binder)
     const char* esc = get_bindable_esc();
 
     m_bind_group = binder.create_group("textlist");
-    binder.bind(m_bind_group, "\\e[A", bind_id_textlist_up);
-    binder.bind(m_bind_group, "\\e[B", bind_id_textlist_down);
-    binder.bind(m_bind_group, "\\e[5~", bind_id_textlist_pgup);
-    binder.bind(m_bind_group, "\\e[6~", bind_id_textlist_pgdn);
-    binder.bind(m_bind_group, "\\e[H", bind_id_textlist_home);
-    binder.bind(m_bind_group, "\\e[F", bind_id_textlist_end);
-    binder.bind(m_bind_group, "\\eOR", bind_id_textlist_findnext);
-    binder.bind(m_bind_group, "\\e[1;2R", bind_id_textlist_findprev);
-    binder.bind(m_bind_group, "^c", bind_id_textlist_copy);
-    binder.bind(m_bind_group, "^h", bind_id_textlist_backspace);
-    binder.bind(m_bind_group, "\\r", bind_id_textlist_enter);
-    binder.bind(m_bind_group, "^i", bind_id_textlist_insert);
-    binder.bind(m_bind_group, "\\e[27;5;73~", bind_id_textlist_insert);
+    binder.bind(m_bind_group, "\\e[A", bind_id_textlist_up);            // Up
+    binder.bind(m_bind_group, "\\e[B", bind_id_textlist_down);          // Down
+    binder.bind(m_bind_group, "\\e[5~", bind_id_textlist_pgup);         // PgUp
+    binder.bind(m_bind_group, "\\e[6~", bind_id_textlist_pgdn);         // PgDn
+    binder.bind(m_bind_group, "\\e[H", bind_id_textlist_home);          // Home
+    binder.bind(m_bind_group, "\\e[F", bind_id_textlist_end);           // End
+    binder.bind(m_bind_group, "\\eOR", bind_id_textlist_findnext);      // F3
+    binder.bind(m_bind_group, "\\e[1;2R", bind_id_textlist_findprev);   // Shift+F3
+    binder.bind(m_bind_group, "^l", bind_id_textlist_findnext);         // Ctrl+L
+    binder.bind(m_bind_group, "\\e[27;6;76~", bind_id_textlist_findprev); // Ctrl+Shift+L
+    binder.bind(m_bind_group, "^c", bind_id_textlist_copy);             // Ctrl+C
+    binder.bind(m_bind_group, "^h", bind_id_textlist_backspace);        // Backspace
+    binder.bind(m_bind_group, "\\r", bind_id_textlist_enter);           // Enter
+    binder.bind(m_bind_group, "\\e[27;2;13~", bind_id_textlist_insert); // Shift+Enter
+    binder.bind(m_bind_group, "\\e[27;5;13~", bind_id_textlist_insert); // Ctrl+Enter
 
-    binder.bind(m_bind_group, "^g", bind_id_textlist_escape);
+    binder.bind(m_bind_group, "^g", bind_id_textlist_escape);           // Ctrl+G
     if (esc)
-        binder.bind(m_bind_group, esc, bind_id_textlist_escape);
+        binder.bind(m_bind_group, esc, bind_id_textlist_escape);        // Esc
 
     binder.bind(m_bind_group, "", bind_id_textlist_catchall);
 }
