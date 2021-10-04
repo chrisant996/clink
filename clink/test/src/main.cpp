@@ -20,6 +20,12 @@ void host_cmd_enqueue_lines(std::list<str_moveable>& lines)
 }
 
 //------------------------------------------------------------------------------
+bool host_has_deprecated_argmatcher(const char* command)
+{
+    return false;
+}
+
+//------------------------------------------------------------------------------
 void start_logger()
 {
     assert(false);

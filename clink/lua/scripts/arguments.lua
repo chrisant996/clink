@@ -1006,6 +1006,13 @@ local function parser_initialise(parser, ...)
 end
 
 --------------------------------------------------------------------------------
+function clink.arg.has_deprecated_parser(cmd)
+    cmd = clink.lower(cmd)
+    local parser = _argmatchers[cmd]
+    return parser and parser._deprecated or false
+end
+
+--------------------------------------------------------------------------------
 --- -name:  clink.arg.new_parser
 --- -deprecated: clink.argmatcher
 --- -arg:   ...

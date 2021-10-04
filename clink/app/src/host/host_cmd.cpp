@@ -226,6 +226,12 @@ static void write_line_feed()
 
 
 //------------------------------------------------------------------------------
+bool host_has_deprecated_argmatcher(const char* command)
+{
+    return host_cmd::get()->has_deprecated_argmatcher(command);
+}
+
+//------------------------------------------------------------------------------
 void host_cmd_enqueue_lines(std::list<str_moveable>& lines)
 {
     host_cmd::get()->enqueue_lines(lines);

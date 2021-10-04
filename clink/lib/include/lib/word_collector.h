@@ -33,6 +33,7 @@ class collector_tokeniser
 public:
     virtual void start(const str_iter& iter, const char* quote_pair) = 0;
     virtual word_token next(unsigned int& offset, unsigned int& length) = 0;
+    virtual bool has_deprecated_argmatcher(const char* command) { return false; }
 };
 
 //------------------------------------------------------------------------------

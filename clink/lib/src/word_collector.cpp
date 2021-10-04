@@ -130,6 +130,7 @@ unsigned int word_collector::collect_words(const char* line_buffer, unsigned int
     {
         bool first = true;
         unsigned int doskey_len = 0;
+        bool deprecated_argmatcher = false;
 
         if (line_cursor >= command.offset)
             command_offset = command.offset;
@@ -153,6 +154,8 @@ unsigned int word_collector::collect_words(const char* line_buffer, unsigned int
                     words.push_back({command.offset, doskey_len, first, true/*is_alias*/, false/*is_redir_arg*/, 0, delim});
                     first = false;
                 }
+
+                deprecated_argmatcher = m_command_tokeniser->has_deprecated_argmatcher(lookup.c_str());
             }
         }
 
@@ -186,7 +189,16 @@ unsigned int word_collector::collect_words(const char* line_buffer, unsigned int
             //  - When = immediately follows the end of the word, it is added to
             //    the word.
             //  - When : is reached, it splits the word.
-            if (!token.redir_arg && word_length > 1 && strchr("-/", *word_start))
+            //
+            // But not for deprecated argmatchers:
+            // https://github.com/chrisant996/clink/issues/174
+            // An argmatcher may have used an args function to provide flags
+            // like "-D:Aoption", "-D:Boption", etc, in which case `:` and `=`
+            // should not be word breaks.
+            if (!token.redir_arg &&
+                !deprecated_argmatcher &&
+                word_length > 1 &&
+                strchr("-/", *word_start))
             {
                 str_iter split_iter(word_start, word_length);
                 while (int c = split_iter.next())

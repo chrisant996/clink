@@ -167,6 +167,13 @@ word_token cmd_command_tokeniser::next(unsigned int& offset, unsigned int& lengt
     return word_token(m_iter.more() ? c : 0);
 }
 
+//------------------------------------------------------------------------------
+bool cmd_command_tokeniser::has_deprecated_argmatcher(const char* command)
+{
+    extern bool host_has_deprecated_argmatcher(const char* command);
+    return host_has_deprecated_argmatcher(command);
+}
+
 
 
 //------------------------------------------------------------------------------

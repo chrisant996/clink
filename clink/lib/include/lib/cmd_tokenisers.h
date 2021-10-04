@@ -25,6 +25,7 @@ class cmd_command_tokeniser : public cmd_tokeniser_impl
 {
 public:
     word_token next(unsigned int& offset, unsigned int& length) override;
+    bool has_deprecated_argmatcher(char const* command) override;
 };
 
 //------------------------------------------------------------------------------
