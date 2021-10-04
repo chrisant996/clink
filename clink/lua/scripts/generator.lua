@@ -317,6 +317,24 @@ function clink.matches_are_files(files)
 end
 
 --------------------------------------------------------------------------------
+--- -name:  clink.suppress_char_append
+--- -deprecated: builder:setsuppressappend
+function clink.suppress_char_append()
+    if _current_builder then
+        _current_builder:setsuppressappend(true)
+    end
+end
+
+--------------------------------------------------------------------------------
+--- -name:  clink.suppress_quoting
+--- -deprecated: builder:setsuppressquoting
+function clink.suppress_quoting()
+    if _current_builder then
+        _current_builder:setsuppressquoting(true)
+    end
+end
+
+--------------------------------------------------------------------------------
 --- -name:  rl_state
 --- -deprecated: line
 --- -var:   table
