@@ -405,18 +405,18 @@ TEST_CASE("Lua arg parsers")
     SECTION("Flags")
     {
         const char* script = "\
-            p = clink.argmatcher('argcmd_flags_s')\
-            :addflags('/one', '/two', '/twenty')\
+            p = clink.arg.new_parser()\
+            :add_flags('/one', '/two', '/twenty')\
+            clink.arg.register_parser('argcmd_flags_s', p)\
             \
-            clink.argmatcher('argcmd_flags_d')\
-            :addflags('-one', '-two', '-twenty')\
+            q = clink.arg.new_parser()\
+            :add_flags('-one', '-two', '-twenty')\
+            clink.arg.register_parser('argcmd_flags_d', q)\
             \
-            local parser =\
-            clink.argmatcher('argcmd_flags_x')\
-            :addflags('-oa', '-ob', '-oc')\
-            :addarg('-od', '-oe', '-of')\
-            parser._deprecated = true\
-            parser:setflagprefix()\
+            parser = clink.arg.new_parser()\
+            :add_flags('-oa', '-ob', '-oc')\
+            :add_arguments({'-od', '-oe', '-of'})\
+            clink.arg.register_parser('argcmd_flags_x', parser)\
         ";
 
         REQUIRE(lua.do_string(script));
@@ -502,6 +502,7 @@ TEST_CASE("Lua arg parsers")
 
         SECTION("No prefix 1")
         {
+            // No text causes it to list args...
             tester.set_input("argcmd_flags_x ");
             tester.set_expected_matches("-od", "-oe", "-of");
             tester.run();
@@ -509,15 +510,19 @@ TEST_CASE("Lua arg parsers")
 
         SECTION("No prefix 2")
         {
+            // ...but the first character in common for the args is the flag
+            // character, which causes it to list flags...
             tester.set_input("argcmd_flags_x -");
-            tester.set_expected_matches("-od", "-oe", "-of");
+            tester.set_expected_matches("-oa", "-ob", "-oc");
             tester.run();
         }
 
         SECTION("No prefix 3")
         {
+            // ...and this is exactly how Clink v0.4.9 behaves.  The script is
+            // at fault for the strange behavior, not Clink.
             tester.set_input("argcmd_flags_x -o");
-            tester.set_expected_matches("-od", "-oe", "-of");
+            tester.set_expected_matches("-oa", "-ob", "-oc");
             tester.run();
         }
     }

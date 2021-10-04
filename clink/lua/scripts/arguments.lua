@@ -291,32 +291,9 @@ end
 --- -deprecated: _argmatcher:addflags
 --- -arg:   [prefixes...:string]
 --- -ret:   self
---- This overrides the default flag prefix (<code>-</code>).  The flag prefixes
---- are used to switch between matching arguments versus matching flags.  When
---- listing possible completions for an empty word (e.g. <code>command _</code>
---- where the cursor is at the <code>_</code>), only arguments are listed.  And
---- only flags are listed when the word starts with one of the flag prefixes.
---- Each flag prefix must be a single character, but there can be multiple
---- prefixes.
----
---- This is no longer needed because <code>:addflags()</code> does it
---- automatically.
---- -show:  local my_parser = clink.argmatcher()
---- -show:  :setflagprefix("-", "/", "+")
---- -show:  :addflags("--help", "/?", "+mode")
+--- This is no longer needed (and does nothing) because <code>:addflags()</code>
+--- automatically identifies.
 function _argmatcher:setflagprefix(...)
-    -- This no longer discards automatically determine flag characters, but it
-    -- does add a flag character if it hasn't yet been automatically determined.
-    if self._deprecated then
-        for _, i in ipairs({...}) do
-            if type(i) ~= "string" or #i ~= 1 then
-                error("Flag prefixes must be single character strings", 2)
-            end
-            if not self._flagprefix[i] or self._flagprefix[i] == 0 then
-                self._flagprefix[i] = 1
-            end
-        end
-    end
     return self
 end
 
