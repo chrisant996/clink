@@ -291,12 +291,13 @@ end
 --- -deprecated: _argmatcher:addflags
 --- -arg:   [prefixes...:string]
 --- -ret:   self
---- This overrides the default flag prefix (<code>-</code>).  The flag prefixes are used to
---- switch between matching arguments versus matching flags.  When listing
---- possible completions for an empty word (e.g. <code>command _</code> where the cursor is
---- at the <code>_</code>), only arguments are listed.  And only flags are listed when the
---- word starts with one of the flag prefixes.  Each flag prefix must be a
---- single character, but there can be multiple prefixes.
+--- This overrides the default flag prefix (<code>-</code>).  The flag prefixes
+--- are used to switch between matching arguments versus matching flags.  When
+--- listing possible completions for an empty word (e.g. <code>command _</code>
+--- where the cursor is at the <code>_</code>), only arguments are listed.  And
+--- only flags are listed when the word starts with one of the flag prefixes.
+--- Each flag prefix must be a single character, but there can be multiple
+--- prefixes.
 ---
 --- This is no longer needed because <code>:addflags()</code> does it
 --- automatically.
@@ -304,14 +305,16 @@ end
 --- -show:  :setflagprefix("-", "/", "+")
 --- -show:  :addflags("--help", "/?", "+mode")
 function _argmatcher:setflagprefix(...)
+    -- This no longer discards automatically determine flag characters, but it
+    -- does add a flag character if it hasn't yet been automatically determined.
     if self._deprecated then
-        local old = self._flagprefix
-        self._flagprefix = {}
         for _, i in ipairs({...}) do
             if type(i) ~= "string" or #i ~= 1 then
                 error("Flag prefixes must be single character strings", 2)
             end
-            self._flagprefix[i] = old[i] or 0
+            if not self._flagprefix[i] or self._flagprefix[i] == 0 then
+                self._flagprefix[i] = 1
+            end
         end
     end
     return self
@@ -413,9 +416,9 @@ function _argmatcher:_is_flag(word)
         return false
     end
 
-    for i, _ in pairs(self._flagprefix) do
+    for i, num in pairs(self._flagprefix) do
         if first_char == i then
-            return true
+            return num > 0
         end
     end
 
@@ -983,7 +986,8 @@ local function starts_with_flag_character(parser, part)
     end
 
     local prefix = part:sub(1, 1)
-    return parser._flagprefix[prefix] and true or false
+    local num_with_prefix = parser._flagprefix[prefix]
+    return num_with_prefix and (num_with_prefix > 0) and true or false
 end
 
 --------------------------------------------------------------------------------
