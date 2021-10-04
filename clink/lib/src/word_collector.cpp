@@ -155,7 +155,8 @@ unsigned int word_collector::collect_words(const char* line_buffer, unsigned int
                     first = false;
                 }
 
-                deprecated_argmatcher = m_command_tokeniser->has_deprecated_argmatcher(lookup.c_str());
+                if (m_command_tokeniser)
+                    deprecated_argmatcher = m_command_tokeniser->has_deprecated_argmatcher(lookup.c_str());
             }
         }
 
