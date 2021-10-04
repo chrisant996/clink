@@ -5,6 +5,9 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
+- #174 states that `disable_file_matching()` and `nofiles()` don't prevent file matches.  I'm not able to reproduce that; need more information.
+- #174 states that flags are not usable after args.  I'm not able to reproduce that; need more information.
+- Explain in docs about `-x:` and `-x=` syntax and how to use linked argmatcher.
 
 ## Medium Priority
 - Document more deprecated functions?  E.g. `clink.*` functions.
