@@ -78,17 +78,30 @@ function _argreader:update(word, word_index)
         end
     end
 
-    matcher = self._matcher
+    local next_offset = 1
+
+::nextarg::
+
+    matcher = self._matcher -- Update matcher after possible _push/_pop.
     local arg_index = self._arg_index
     local arg = matcher._args[arg_index]
-    local next_arg_index = arg_index + 1
+    local next_arg_index = arg_index + next_offset
 
     -- If arg_index is out of bounds we should loop if set or return to the
     -- previous matcher if possible.
     if next_arg_index > #matcher._args then
         if matcher._loop then
             self._arg_index = math.min(math.max(matcher._loop, 1), #matcher._args)
-        elseif not self:_pop() then
+        else
+            -- If next word is a flag, don't pop.  Flags are not positional, so
+            -- a parser can only be exhausted by a word that exceeds the number
+            -- of argument slots the parser has.
+            if not matcher:_is_flag(line_state:getword(word_index + 1)) and self:_pop() then
+                -- Popping must use the _arg_index as is, without incrementing
+                -- (it was already incremented before it got pushed).
+                next_offset = 0
+                goto nextarg
+            end
             self._arg_index = next_arg_index
         end
     else
@@ -212,6 +225,16 @@ function _argmatcher._new()
     matcher._flagprefix = {}
     matcher._nextargindex = 1
     return matcher
+end
+
+--------------------------------------------------------------------------------
+function _argmatcher:setdebugname(name)
+    self._dbgname = name
+end
+
+--------------------------------------------------------------------------------
+function _argmatcher:getdebugname()
+    return self._dbgname or "<unnamed>"
 end
 
 --------------------------------------------------------------------------------
