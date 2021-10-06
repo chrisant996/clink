@@ -163,7 +163,7 @@ int match_builder_lua::set_suppress_quoting(lua_State* state)
 // backward compatibility.
 int match_builder_lua::set_matches_are_files(lua_State* state)
 {
-    if (lua_gettop(state) <= 0)
+    if (lua_gettop(state) <= 0 || lua_isnil(state, 1))
         m_builder.set_matches_are_files(true);
     else if (lua_isboolean(state, 1))
         m_builder.set_matches_are_files(lua_toboolean(state, 1) != 0);

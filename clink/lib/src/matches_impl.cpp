@@ -6,6 +6,7 @@
 #include "match_generator.h"
 
 #include <core/base.h>
+#include <core/os.h>
 #include <core/settings.h>
 #include <core/str.h>
 #include <core/str_compare.h>
@@ -586,6 +587,7 @@ void matches_impl::reset()
 {
     m_store.reset();
     m_infos.clear();
+    m_any_infer_type = false;
     m_coalesced = false;
     m_count = 0;
     m_append_character = '\0';
@@ -663,6 +665,7 @@ bool matches_impl::add_match(const match_desc& desc, bool already_normalized)
     bool translate = (mode > 0 && (mode > 1 || !already_normalized));
 
     str<280> tmp;
+    const bool is_none = is_match_type(type, match_type::none);
     if (is_match_type(type, match_type::dir) && !ends_with_sep)
     {
         // insert_match() relies on Clink always including a trailing path
@@ -671,9 +674,15 @@ bool matches_impl::add_match(const match_desc& desc, bool already_normalized)
         path::append(tmp, "");
         match = tmp.c_str();
     }
-    else if (translate)
+    else if (translate || is_none)
     {
         tmp = match;
+        if (is_none)
+        {
+            // Make room for a trailing path separator in case it's needed.
+            tmp.concat("#");
+            match = tmp.c_str();
+        }
     }
 
     if (translate)
@@ -700,11 +709,21 @@ bool matches_impl::add_match(const match_desc& desc, bool already_normalized)
     if (!store_match)
         return false;
 
-    match_info info = { store_match, type, false };
+    match_info info = { store_match, type, false/*select*/, is_none/*infer_type*/ };
     m_dedup->emplace(info); // Copies info; not a reference.
 
     m_infos.emplace_back(std::move(info));
     ++m_count;
+
+    if (is_none)
+    {
+        assert(strlen(store_match) == tmp.length());
+        assert(tmp.length() > 0);
+        // Remove the placeholder character added earlier (there is now room to
+        // add it again later, if needed).
+        const_cast<char*>(store_match)[tmp.length() - 1] = '\0';
+        m_any_infer_type = true;
+    }
 
     return true;
 }
@@ -712,6 +731,51 @@ bool matches_impl::add_match(const match_desc& desc, bool already_normalized)
 //------------------------------------------------------------------------------
 void matches_impl::done_building()
 {
+    // If there were any `none` type matches and file completion has not been
+    // explicitly disabled, then it's necessary to post-process the matches to
+    // identify which are directories, or files, or neither.
+    if (m_any_infer_type && (m_filename_completion_desired.get() ||
+                             !m_filename_completion_desired.is_explicit()))
+    {
+        char sep = rl_preferred_path_separator;
+        if (s_slash_translation == 2)
+            sep = '/';
+        else if (s_slash_translation == 3)
+            sep = '\\';
+
+        for (unsigned int i = m_count; i--;)
+        {
+            if (m_infos[i].infer_type)
+            {
+                // If matches are relative, but not relative to the current
+                // directory, then get_path_type() might yield unexpected
+                // results.  But that will interfere with many things, so no
+                // effort is invested here to compensate.
+                switch (os::get_path_type(m_infos[i].match))
+                {
+                case os::path_type_dir:
+                    {
+                        // It's a directory, so add a trailing path separator.
+                        const size_t len = strlen(m_infos[i].match);
+                        const_cast<char*>(m_infos[i].match)[len] = sep;
+                        m_infos[i].type |= match_type::dir;
+                        assert(m_infos[i].match[len + 1] == '\0');
+                    }
+                    break;
+                case os::path_type_file:
+                    m_infos[i].type |= match_type::file;
+                    break;
+                default:
+                    continue;
+                }
+
+                // Check if it has become a duplicate.
+                if (m_dedup->find({ m_infos[i].match, m_infos[i].type }) != m_dedup->end())
+                    m_infos.erase(m_infos.begin() + i);
+            }
+        }
+    }
+
     delete m_dedup;
     m_dedup = nullptr;
 }

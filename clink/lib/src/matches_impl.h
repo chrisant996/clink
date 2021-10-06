@@ -15,6 +15,7 @@ struct match_info
     const char*     match;
     match_type      type;
     bool            select;
+    bool            infer_type;
 };
 
 
@@ -107,6 +108,7 @@ private:
     generators*             m_generators;
     infos                   m_infos;
     unsigned short          m_count = 0;
+    bool                    m_any_infer_type = false;
     bool                    m_coalesced = false;
     char                    m_append_character = '\0';
     bool                    m_suppress_append = false;

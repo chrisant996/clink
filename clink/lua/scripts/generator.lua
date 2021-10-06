@@ -308,8 +308,8 @@ end
 --- -name:  clink.matches_are_files
 --- -deprecated: builder:addmatch
 --- -arg:   [files:boolean]
---- This is no longer needed, because now it's inferred from the match type when
---- adding matches.
+--- This is only needed when using deprecated APIs.  It's automatically inferred
+--- from the match type when using the current APIs.
 function clink.matches_are_files(files)
     if _current_builder then
         _current_builder:setmatchesarefiles(files)
