@@ -595,6 +595,11 @@ end
 --------------------------------------------------------------------------------
 --- -name:  _argmatcher:add_arguments
 --- -deprecated: _argmatcher:addarg
+--- <code>:add_arguments()</code> adds one argument slot per table passed to it,
+--- but <code>:addarg()</code> adds one argument slot containing everything
+--- passed to it.  Be careful when updating scripts to use the new APIs; simply
+--- renaming the call may not be enough, and it may be necessary to split it
+--- into multiple separate calls to achieve the same behavior as before.
 function _argmatcher:add_arguments(...)
     self:addarg(...)
     return self
@@ -637,6 +642,16 @@ end
 --- -deprecated: _argmatcher:addarg
 --- -arg:   choices...:string|table
 --- -ret:   self
+--- <code>:set_arguments()</code> adds one argument slot per table passed to it,
+--- but <code>:addarg()</code> adds one argument slot containing everything
+--- passed to it.  Be careful when updating scripts to use the new APIs; simply
+--- renaming the call may not be enough, and it may be necessary to split it
+--- into multiple separate calls to achieve the same behavior as before.
+---
+--- Note:  The new API has no way to remove argument slots that were previously
+--- added, so converting from <code>:set_arguments()</code> to
+--- <code>:addarg()</code> may require the calling script to reorganize how and
+--- when it adds arguments.
 function _argmatcher:set_arguments(...)
     self._args = { _links = {} }
     self:addarg(...)
@@ -648,6 +663,9 @@ end
 --- -deprecated: _argmatcher:addflags
 --- -arg:   flags...:string
 --- -ret:   self
+--- Note:  The new API has no way to remove flags that were previously added, so
+--- converting from <code>:set_flags()</code> to <code>:addflags()</code> may
+--- require the calling script to reorganize how and when it adds flags.
 function _argmatcher:set_flags(...)
     self._flags = nil
     self:addflags(...)

@@ -805,10 +805,8 @@ clink.argmatcher()
 
 -- Normal form:
 clink.argmatcher()
-:addarg(
-    { "one", "won" }                -- Arg #1
-    { "two", "too" }                -- Arg #2
-)
+:addarg({ "one", "won" })           -- Arg #1
+:addarg({ "two", "too" })           -- Arg #2
 :addflags("-a", "-b", "/?", "/h")   -- Flags
 ```
 
