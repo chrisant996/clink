@@ -76,6 +76,8 @@ typedef int rl_read_key_hook_func_t PARAMS((void));
 typedef void rl_qsort_match_list_func_t PARAMS((char**, int len));
 /* Type for adjusting completion word hook function */
 typedef char rl_adjcmpwrd_func_t PARAMS((char qc, int *fp, int *dp));
+/* Type for comparing lcd hook function */
+typedef int rl_compare_lcd_func_t PARAMS((const char *, const char *));
 /* Type for postprocessing the lcd hook function */
 typedef void rl_postprocess_lcd_func_t PARAMS((char *, const char *));
 /* Type for function to get face for char in input buffer */

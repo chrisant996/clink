@@ -115,6 +115,10 @@ rl_compdisp_func_t *rl_completion_display_matches_hook = (rl_compdisp_func_t *)N
    host application can override all of the behavior. */
 rl_vcppfunc_t *rl_completion_display_matches_func = (rl_vcppfunc_t *)NULL;
 /* If non-zero, then this is the address of a function to call that
+   compares the lcd.  It must return the length of the common prefix
+   between the two string arguments. */
+rl_compare_lcd_func_t *rl_compare_lcd_func = (rl_compare_lcd_func_t *)NULL;
+/* If non-zero, then this is the address of a function to call that
    postprocesses the lcd. */
 rl_postprocess_lcd_func_t *rl_postprocess_lcd_func = (rl_postprocess_lcd_func_t *)NULL;
 /* If non-zero, then this is the address of a function to call that determines
@@ -1973,10 +1977,13 @@ compute_lcd_of_matches (char **match_list, int matches, const char *text)
 	}
 #endif
 /* begin_clink_change */
-      //for (si = 0; (c1 = match_list[i][si]) && (c2 = match_list[i + 1][si]); si++)
-      for (si = past_flag; (c1 = match_list[i][si]) && (c2 = match_list[i + 1][si]); si++)
+      if (rl_compare_lcd_func)
+	si = past_flag + rl_compare_lcd_func (match_list[i] + past_flag, match_list[i + 1] + past_flag);
+      else
+	//for (si = 0; (c1 = match_list[i][si]) && (c2 = match_list[i + 1][si]); si++)
+	for (si = past_flag; (c1 = match_list[i][si]) && (c2 = match_list[i + 1][si]); si++)
 /* end_clink_change */
-	{
+	  {
 	    if (_rl_completion_case_fold)
 	      {
 	        c1 = _rl_to_lower (c1);
@@ -2017,7 +2024,7 @@ compute_lcd_of_matches (char **match_list, int matches, const char *text)
 	    if (pathfold (c1) != pathfold (c2))
 /* end_clink_change */
 	      break;
-	}
+	  }
 
 /* begin_clink_change */
       if (test_for_quoting)

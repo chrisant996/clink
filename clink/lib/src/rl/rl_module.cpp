@@ -16,6 +16,7 @@
 #include <core/base.h>
 #include <core/os.h>
 #include <core/path.h>
+#include <core/str_compare.h>
 #include <core/str_hash.h>
 #include <core/str_unordered_set.h>
 #include <core/settings.h>
@@ -1101,6 +1102,12 @@ static match_display_filter_entry** match_display_filter_callback(char** matches
 }
 
 //------------------------------------------------------------------------------
+static int compare_lcd(const char* a, const char* b)
+{
+    return str_compare<char, true/*compute_lcd*/>(a, b);
+}
+
+//------------------------------------------------------------------------------
 // If the input text starts with a slash and doesn't have any other slashes or
 // path separators, then preserve the original slash in the lcd.  Otherwise it
 // converts "somecommand /" to "somecommand \" and we lose the ability to try
@@ -1506,6 +1513,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input, const char* sta
     rl_qsort_match_list_func = sort_match_list;
     rl_match_display_filter_func = match_display_filter_callback;
     rl_is_exec_func = is_exec_ext;
+    rl_compare_lcd_func = compare_lcd;
     rl_postprocess_lcd_func = postprocess_lcd;
     rl_read_key_hook = read_key_hook;
     rl_get_face_func = get_face_func;
