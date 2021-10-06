@@ -5,11 +5,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- Explain in docs about `-x:` and `-x=` syntax and how to use linked argmatcher.
-- Emphasize in docs that `:addarg({}, {}, {})` adds _ONE_ argument (maybe in the `:add_arguments()` deprecated docs).
 
 ## Medium Priority
-- Document more deprecated functions?  E.g. `clink.*` functions.
 - Add a quick start / beginner section to the Clink docs.
 
 ## Low Priority
