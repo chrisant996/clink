@@ -16,6 +16,7 @@
 - Fixed the `clink-menu-complete-numbers` family of commands (regression introduced in v1.2.32).
 - Fixed a situation where the scrolling keys could stop working (regression introduced in v1.2.24).
 - Fixed [#172](https://github.com/chrisant996/clink/issues/172); add a choice in the installer to not add Start menu shortcuts.
+- Fixed [#129](https://github.com/chrisant996/clink/issues/129); Bug completing files with - or _ characters (regression introduced in v1.1.1).
 
 #### v1.2.35
 
