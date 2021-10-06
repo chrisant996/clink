@@ -20,17 +20,6 @@ end
 
 
 --------------------------------------------------------------------------------
-local function _get_maybe_fileline()
-    local file, line = _get_top_frame()
-    if file and line then
-        return " in "..file..":"..line
-    end
-    return ""
-end
-
-
-
---------------------------------------------------------------------------------
 local function make_dummy_builder()
     local dummy = {}
     function dummy:addmatch() end
@@ -460,10 +449,7 @@ function _argmatcher:_add(list, addee, prefixes)
                 if i._links then
                     for k, m in pairs(i._links) do
                         if list._links[k] then
-                            local msg = "warning: replacing arglink for '"..k.."'"
-                            local where = _get_maybe_fileline()
-                            log.info(debug.traceback(msg..where.." -- merging linked argmatchers is not supported yet"))
-                            print(msg..where.." (see log file for details).")
+                            _compat_warning("warning: replacing arglink for '"..k.."'", " -- merging linked argmatchers was unreliable and is no longer supported")
                         end
                         list._links[k] = m
                         if prefixes then add_prefix(prefixes, k) end
@@ -480,10 +466,7 @@ function _argmatcher:_add(list, addee, prefixes)
 
     if is_link then
         if list._links[addee._key] then
-            local msg = "warning: replacing arglink for '"..addee._key.."'"
-            local where = _get_maybe_fileline()
-            log.info(debug.traceback(msg..where.." -- merging linked argmatchers is not supported yet"))
-            print(msg..where.." (see log file for details).")
+            _compat_warning("warning: replacing arglink for '"..addee._key.."'", " -- merging linked argmatchers was unreliable and is no longer supported")
         end
         list._links[addee._key] = addee._matcher
         if prefixes then add_prefix(prefixes, addee._key) end
@@ -686,7 +669,7 @@ end
 --- -deprecated:
 --- -ret:   self
 function _argmatcher:be_precise()
-    _compat_warning("_argmatcher:be_precise() is no longer supported.")
+    _compat_warning("warning: ignoring _argmatcher:be_precise()", " -- this is not supported yet")
     return self
 end
 
