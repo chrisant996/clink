@@ -20,6 +20,20 @@ end
 
 
 --------------------------------------------------------------------------------
+local function dbg(...)
+    if os.getenv("DEBUG_POP") then
+        print(...)
+    end
+end
+local function dbgdumpvar(...)
+    if os.getenv("DEBUG_POP") then
+        dumpvar(...)
+    end
+end
+
+
+
+--------------------------------------------------------------------------------
 local function make_dummy_builder()
     local dummy = {}
     function dummy:addmatch() end
@@ -38,6 +52,7 @@ setmetatable(_argreader, { __call = function (x, ...) return x._new(...) end })
 
 --------------------------------------------------------------------------------
 function _argreader._new(root, line_state)
+dbg("--- new argreader ---")
     local reader = setmetatable({
         _matcher = root,
         _line_state = line_state,
@@ -51,52 +66,67 @@ end
 -- When word_index is < 0, skip classifying the word, and skip trying to figure
 -- out whether a `-foo:` word should avoid following a linked parser.  This only
 -- happens when parsing extra words from expanding a doskey alias.
+--
+-- On return, the _argreader should be primed for generating matches for the
+-- NEXT word in the line.
 function _argreader:update(word, word_index)
     local arg_match_type = "a" --arg
     local line_state = self._line_state
+dbg("\nWORD", word)
 
     -- Check for flags and switch matcher if the word is a flag.
     local matcher = self._matcher
     local is_flag = matcher:_is_flag(word)
+    local next_is_flag = matcher:_is_flag(line_state:getword(word_index + 1))
+    local pushed_flags
     if is_flag then
         if matcher._flags then
+dbg("PUSHING BECAUSE IS_FLAG")
             self:_push(matcher._flags)
             arg_match_type = "f" --flag
+            pushed_flags = true
         else
+dbg("stack depth", #self._stack, "(not matcher._flags)")
             return
         end
     end
 
-    local next_offset = 1
-
-::nextarg::
-
-    matcher = self._matcher -- Update matcher after possible _push/_pop.
+    matcher = self._matcher -- Update matcher after possible _push.
     local arg_index = self._arg_index
     local arg = matcher._args[arg_index]
-    local next_arg_index = arg_index + next_offset
+    local next_arg_index = arg_index + 1
+dbg("is_flag", is_flag, "pushed_flags", pushed_flags, "next_arg_index", next_arg_index)
 
     -- If arg_index is out of bounds we should loop if set or return to the
     -- previous matcher if possible.
     if next_arg_index > #matcher._args then
+dbg("out of bounds", next_arg_index, #matcher._args)
         if matcher._loop then
             self._arg_index = math.min(math.max(matcher._loop, 1), #matcher._args)
         else
             -- If next word is a flag, don't pop.  Flags are not positional, so
-            -- a parser can only be exhausted by a word that exceeds the number
-            -- of argument slots the parser has.
-            if not matcher:_is_flag(line_state:getword(word_index + 1)) and self:_pop() then
+            -- a matcher can only be exhausted by a word that exceeds the number
+            -- of argument slots the matcher has.
+            -- if is_flag then
+            --     self._arg_index = next_arg_index
+dbg("next_is_flag", next_is_flag)
+            if not pushed_flags and next_is_flag then
+                -- Do nothing.
+dbg("not pushed_flags and next_is_flag")
+            elseif not self:_pop(pushed_flags, next_is_flag) then
                 -- Popping must use the _arg_index as is, without incrementing
                 -- (it was already incremented before it got pushed).
-                next_offset = 0
-                goto nextarg
+                self._arg_index = next_arg_index
             end
-            self._arg_index = next_arg_index
         end
     else
+dbg("in bounds, update _arg_index", next_arg_index)
         self._arg_index = next_arg_index
     end
 
+dbg("self._arg_index", self._arg_index)
+dbg("self._matcher is '"..self._matcher:getdebugname().."'")
+dbgdumpvar(self._matcher._args[self._arg_index], "self._matcher._args[self._arg_index]")
     -- Some matchers have no args at all.  Or ran out of args.
     if not arg then
         if self._word_classifier and word_index >= 0 then
@@ -106,6 +136,7 @@ function _argreader:update(word, word_index)
                 self._word_classifier:classifyword(word_index, "o", false)  --other
             end
         end
+dbg("stack depth", #self._stack, "(not arg)")
         return
     end
 
@@ -176,27 +207,53 @@ function _argreader:update(word, word_index)
                     break
                 end
             end
+dbg("PUSHING BECAUSE LINKED", key)
             self:_push(linked)
             break
         end
     end
+dbg("stack depth", #self._stack)
 end
 
 --------------------------------------------------------------------------------
 function _argreader:_push(matcher)
+dbg("push [ "..tostring(self._matcher)..", _arg_index "..self._arg_index.." ]")
     table.insert(self._stack, { self._matcher, self._arg_index })
     self._matcher = matcher
     self._arg_index = 1
 end
 
 --------------------------------------------------------------------------------
-function _argreader:_pop()
-    if #self._stack > 0 then
-        self._matcher, self._arg_index = table.unpack(table.remove(self._stack))
-        return true
+function _argreader:_pop(is_flag, next_is_flag)
+    if #self._stack <= 0 then
+        return false
     end
 
-    return false
+    while #self._stack > 0 do
+        self._matcher, self._arg_index = table.unpack(table.remove(self._stack))
+dbg("pop", "_matcher", self._matcher:getdebugname(), "_arg_index", self._arg_index)
+
+        -- if is_flag then
+        --     -- Pop only one level if it's a flag.  This balances one push with
+        --     -- one pop, so that a flag matcher never stays on the stack.
+        --     break
+        -- end
+
+        if self._matcher._loop then
+dbg("  break: looping")
+            -- Never pop a matcher that's looping.  It's looping!
+            break
+        end
+        if self._arg_index + (next_is_flag and 0 or 1) <= #self._matcher._args then
+dbg("  break: more args")
+            -- If the matcher has arguments remaining, stop popping.
+            break
+        end
+
+        is_flag = false
+    end
+
+    return true
 end
 
 
@@ -219,6 +276,7 @@ end
 --------------------------------------------------------------------------------
 function _argmatcher:setdebugname(name)
     self._dbgname = name
+    return self
 end
 
 --------------------------------------------------------------------------------
