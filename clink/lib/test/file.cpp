@@ -98,13 +98,23 @@ TEST_CASE("File match generator")
             tester.run();
         }
 
-        SECTION(dyn_section("Case mapping matches", mode))
+        SECTION(dyn_section("Case mapping matches (caseless)", mode))
+        {
+            str_compare_scope _(str_compare_scope::caseless, false);
+
+            tester.set_input("case_m" DO_COMPLETE);
+            tester.set_expected_matches("case_map-1", "case_map_2");
+            tester.set_expected_output("case_map");
+            tester.run();
+        }
+
+        SECTION(dyn_section("Case mapping matches (relaxed)", mode))
         {
             str_compare_scope _(str_compare_scope::relaxed, false);
 
             tester.set_input("case-m" DO_COMPLETE);
             tester.set_expected_matches("case_map-1", "case_map_2");
-            tester.set_expected_output("case_map");
+            tester.set_expected_output("case_map_");
             tester.run();
         }
 
