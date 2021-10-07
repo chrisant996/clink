@@ -429,7 +429,7 @@ TEST_CASE("Lua word classification")
             // Make sure it doesn't pop, so the last word is recognized as an
             // arg by the correct argmatcher.
             tester.set_input("foo test arg1 something -h");
-            tester.set_expected_classifications("caaaf");
+            tester.set_expected_classifications("oaaaf");
             tester.run();
         }
 
@@ -438,7 +438,7 @@ TEST_CASE("Lua word classification")
             // Make sure it pops, so the last word is recognized as an arg by
             // the correct argmatcher.
             tester.set_input("foo test arg1 something qrs");
-            tester.set_expected_classifications("caaaa");
+            tester.set_expected_classifications("oaaaa");
             tester.run();
         }
     }
