@@ -20,20 +20,6 @@ end
 
 
 --------------------------------------------------------------------------------
-local function dbg(...)
-    if os.getenv("DEBUG_POP") then
-        print(...)
-    end
-end
-local function dbgdumpvar(...)
-    if os.getenv("DEBUG_POP") then
-        dumpvar(...)
-    end
-end
-
-
-
---------------------------------------------------------------------------------
 local function make_dummy_builder()
     local dummy = {}
     function dummy:addmatch() end
@@ -52,7 +38,6 @@ setmetatable(_argreader, { __call = function (x, ...) return x._new(...) end })
 
 --------------------------------------------------------------------------------
 function _argreader._new(root, line_state)
-dbg("--- new argreader ---")
     local reader = setmetatable({
         _matcher = root,
         _line_state = line_state,
@@ -72,7 +57,6 @@ end
 function _argreader:update(word, word_index)
     local arg_match_type = "a" --arg
     local line_state = self._line_state
-dbg("\nWORD", word)
 
     -- Check for flags and switch matcher if the word is a flag.
     local matcher = self._matcher
@@ -81,12 +65,10 @@ dbg("\nWORD", word)
     local pushed_flags
     if is_flag then
         if matcher._flags then
-dbg("PUSHING BECAUSE IS_FLAG")
             self:_push(matcher._flags)
             arg_match_type = "f" --flag
             pushed_flags = true
         else
-dbg("stack depth", #self._stack, "(not matcher._flags)")
             return
         end
     end
@@ -95,12 +77,10 @@ dbg("stack depth", #self._stack, "(not matcher._flags)")
     local arg_index = self._arg_index
     local arg = matcher._args[arg_index]
     local next_arg_index = arg_index + 1
-dbg("is_flag", is_flag, "pushed_flags", pushed_flags, "next_arg_index", next_arg_index)
 
     -- If arg_index is out of bounds we should loop if set or return to the
     -- previous matcher if possible.
     if next_arg_index > #matcher._args then
-dbg("out of bounds", next_arg_index, #matcher._args)
         if matcher._loop then
             self._arg_index = math.min(math.max(matcher._loop, 1), #matcher._args)
         else
@@ -109,9 +89,7 @@ dbg("out of bounds", next_arg_index, #matcher._args)
             -- of argument slots the matcher has.
             -- if is_flag then
             --     self._arg_index = next_arg_index
-dbg("next_is_flag", next_is_flag)
             if not pushed_flags and next_is_flag then
-dbg("not pushed_flags and next_is_flag")
                 self._arg_index = next_arg_index
             elseif not self:_pop(next_is_flag) then
                 -- Popping must use the _arg_index as is, without incrementing
@@ -120,13 +98,9 @@ dbg("not pushed_flags and next_is_flag")
             end
         end
     else
-dbg("in bounds, update _arg_index", next_arg_index)
         self._arg_index = next_arg_index
     end
 
-dbg("self._arg_index", self._arg_index)
-dbg("self._matcher is '"..self._matcher:getdebugname().."'")
-dbgdumpvar(self._matcher._args[self._arg_index], "self._matcher._args[self._arg_index]")
     -- Some matchers have no args at all.  Or ran out of args.
     if not arg then
         if self._word_classifier and word_index >= 0 then
@@ -136,7 +110,6 @@ dbgdumpvar(self._matcher._args[self._arg_index], "self._matcher._args[self._arg_
                 self._word_classifier:classifyword(word_index, "o", false)  --other
             end
         end
-dbg("stack depth", #self._stack, "(not arg)")
         return
     end
 
@@ -207,17 +180,14 @@ dbg("stack depth", #self._stack, "(not arg)")
                     break
                 end
             end
-dbg("PUSHING BECAUSE LINKED", key)
             self:_push(linked)
             break
         end
     end
-dbg("stack depth", #self._stack)
 end
 
 --------------------------------------------------------------------------------
 function _argreader:_push(matcher)
-dbg("push [ "..tostring(self._matcher)..", _arg_index "..self._arg_index.." ]")
     table.insert(self._stack, { self._matcher, self._arg_index })
     self._matcher = matcher
     self._arg_index = 1
@@ -231,21 +201,17 @@ function _argreader:_pop(next_is_flag)
 
     while #self._stack > 0 do
         self._matcher, self._arg_index = table.unpack(table.remove(self._stack))
-dbg("pop", "_matcher", self._matcher:getdebugname(), "_arg_index", self._arg_index, "#_args", #self._matcher._args)
 
         if self._matcher._loop then
-dbg("  break: looping")
             -- Matcher is looping; stop popping so it can handle the argument.
             break
         end
         if next_is_flag and self._matcher._flags then
-dbg("  break: has flags")
             -- Matcher has flags and next_is_flag; stop popping so it can
             -- handle the flag.
             break
         end
         if self._arg_index <= #self._matcher._args then
-dbg("  break: more args")
             -- Matcher has arguments remaining; stop popping so it can handle
             -- the argument.
             break
@@ -256,7 +222,6 @@ dbg("  break: more args")
             -- REVIEW:  Consider giving it a file argument to eliminate the
             -- special case treatments?
             if next_is_flag or self._arg_index == 1 then
-dbg("  break: flags but no args")
                 -- Stop popping so the matcher can handle the flag or argument.
                 break
             end
