@@ -113,7 +113,7 @@ dbg("next_is_flag", next_is_flag)
             if not pushed_flags and next_is_flag then
 dbg("not pushed_flags and next_is_flag")
                 self._arg_index = next_arg_index
-            elseif not self:_pop(pushed_flags, next_is_flag) then
+            elseif not self:_pop(next_is_flag) then
                 -- Popping must use the _arg_index as is, without incrementing
                 -- (it was already incremented before it got pushed).
                 self._arg_index = next_arg_index
@@ -224,33 +224,43 @@ dbg("push [ "..tostring(self._matcher)..", _arg_index "..self._arg_index.." ]")
 end
 
 --------------------------------------------------------------------------------
-function _argreader:_pop(is_flag, next_is_flag)
+function _argreader:_pop(next_is_flag)
     if #self._stack <= 0 then
         return false
     end
 
     while #self._stack > 0 do
         self._matcher, self._arg_index = table.unpack(table.remove(self._stack))
-dbg("pop", "_matcher", self._matcher:getdebugname(), "_arg_index", self._arg_index)
-
-        -- if is_flag then
-        --     -- Pop only one level if it's a flag.  This balances one push with
-        --     -- one pop, so that a flag matcher never stays on the stack.
-        --     break
-        -- end
+dbg("pop", "_matcher", self._matcher:getdebugname(), "_arg_index", self._arg_index, "#_args", #self._matcher._args)
 
         if self._matcher._loop then
 dbg("  break: looping")
-            -- Never pop a matcher that's looping.  It's looping!
+            -- Matcher is looping; stop popping so it can handle the argument.
             break
         end
-        if self._arg_index + (next_is_flag and 0 or 1) <= #self._matcher._args then
+        if next_is_flag and self._matcher._flags then
+dbg("  break: has flags")
+            -- Matcher has flags and next_is_flag; stop popping so it can
+            -- handle the flag.
+            break
+        end
+        if self._arg_index <= #self._matcher._args then
 dbg("  break: more args")
-            -- If the matcher has arguments remaining, stop popping.
+            -- Matcher has arguments remaining; stop popping so it can handle
+            -- the argument.
             break
         end
-
-        is_flag = false
+        if #self._matcher._args == 0 and self._matcher._flags then
+            -- A matcher with flags but no args is a special case that means
+            -- match one file argument.
+            -- REVIEW:  Consider giving it a file argument to eliminate the
+            -- special case treatments?
+            if next_is_flag or self._arg_index == 1 then
+dbg("  break: flags but no args")
+                -- Stop popping so the matcher can handle the flag or argument.
+                break
+            end
+        end
     end
 
     return true
