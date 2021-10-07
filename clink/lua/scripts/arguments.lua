@@ -111,8 +111,8 @@ dbg("out of bounds", next_arg_index, #matcher._args)
             --     self._arg_index = next_arg_index
 dbg("next_is_flag", next_is_flag)
             if not pushed_flags and next_is_flag then
-                -- Do nothing.
 dbg("not pushed_flags and next_is_flag")
+                self._arg_index = next_arg_index
             elseif not self:_pop(pushed_flags, next_is_flag) then
                 -- Popping must use the _arg_index as is, without incrementing
                 -- (it was already incremented before it got pushed).
