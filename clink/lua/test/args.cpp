@@ -264,6 +264,42 @@ TEST_CASE("Lua arg parsers")
         }
     }
 
+    SECTION("Linked")
+    {
+        const char* script = "\
+            local test_parser = clink.argmatcher()\
+            test_parser:addflags('-h', '--help', '-show_output', '-flag1', '-optionB')\
+            test_parser:addarg({'arg1', 'arg2'})\
+            test_parser:addarg({'something', 'else'})\
+            test_parser:nofiles()\
+            \
+            local foo_parser = clink.argmatcher('foo')\
+            foo_parser:addflags('-a', '-b', '-c')\
+            foo_parser:addarg({'test' .. test_parser})\
+            foo_parser:addarg({'qrs', 'tuv', 'wxyz'})\
+        ";
+
+        REQUIRE(lua.do_string(script));
+
+        SECTION("Flag at end")
+        {
+            // Make sure it doesn't pop, so the last word is recognized as an
+            // arg by the correct argmatcher.
+            tester.set_input("foo test arg1 something -");
+            tester.set_expected_matches("-h", "--help", "-show_output", "-flag1", "-optionB");
+            tester.run();
+        }
+
+        SECTION("Arg at end")
+        {
+            // Make sure it pops, so the last word is recognized as an arg by
+            // the correct argmatcher.
+            tester.set_input("foo test arg1 something ");
+            tester.set_expected_matches("qrs", "tuv", "wxyz");
+            tester.run();
+        }
+    }
+
     SECTION("File matching control.")
     {
         const char* script = "\
