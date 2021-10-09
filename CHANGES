@@ -2,6 +2,10 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.2.37
+
+- Fixed [#177](https://github.com/chrisant996/clink/issues/177); be silent about autorun injection into TCC.
+
 #### v1.2.36
 
 - Added `win-history-list` command bound to <kbd>F7</kbd> by default.  This shows the history list, and executes the selected history entry.
