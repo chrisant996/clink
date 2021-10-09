@@ -20,7 +20,9 @@ struct process_wait_callback
 //------------------------------------------------------------------------------
 struct remote_result
 {
-    bool        ok;
+    // Char type for 'ok' allows more than just true/false; e.g. -1 to signal an
+    // ignorable or silent error.
+    char        ok;
     void*       result;
 };
 

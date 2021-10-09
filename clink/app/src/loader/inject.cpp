@@ -227,7 +227,7 @@ private:
 };
 
 //------------------------------------------------------------------------------
-static remote_result inject_dll(DWORD target_pid)
+static remote_result inject_dll(DWORD target_pid, bool is_autorun)
 {
     // Get path to clink's DLL that we'll inject.
     str<280> dll_path;
@@ -287,6 +287,25 @@ static remote_result inject_dll(DWORD target_pid)
         const char* host_name = path::get_name(host.c_str());
         if (!host_name || stricmp(host_name, "cmd.exe"))
         {
+            if (host_name)
+            {
+                const bool is_tcc = !stricmp(host_name, "tcc.exe");
+                const bool is_4nt = !stricmp(host_name, "4nt.exe");
+                if (is_tcc || is_4nt)
+                {
+                    // Take Command (and 4NT) from JPSoft are recognized during
+                    // autorun as benignly invalid hosts.  They may invoke the
+                    // AutoRun regkey contents and try to inject Clink, which is
+                    // just a side effect of their design.  Since the scenario
+                    // is well understood, it's reasonable to be silent about it
+                    // during autorun.
+                    if (is_autorun)
+                        return {-1, nullptr};
+                    LOG("Host '%s' is not supported; Clink is not compatible with the JPSoft command shells.", host_name);
+                    return {};
+                }
+            }
+
             LOG("Unknown host '%s'.", host_name ? host_name : "<no name>");
             return {};
         }
@@ -337,6 +356,8 @@ static DWORD find_inject_target()
         process.get_file_name(buffer);
         const char* name = path::get_name(buffer.c_str());
         if (_stricmp(name, "cmd.exe") == 0)
+            return pid;
+        if (_stricmp(name, "tcc.exe") == 0 || _stricmp(name, "4nt.exe"))
             return pid;
 
         pid = process.get_parent_pid();
@@ -584,9 +605,16 @@ int inject(int argc, char** argv)
     }
 
     // Inject Clink's DLL
-    remote_result remote_dll_base = inject_dll(target_pid);
-    if (!remote_dll_base.ok)
+    remote_result remote_dll_base = inject_dll(target_pid, is_autorun);
+    if (remote_dll_base.ok <= 0)
+    {
+        if (remote_dll_base.ok < 0)
+        {
+            errrep.set_ok();
+            ret = 0;
+        }
         return ret;
+    }
 
     if (remote_dll_base.result == nullptr)
     {
