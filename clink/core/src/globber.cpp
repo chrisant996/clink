@@ -116,6 +116,7 @@ bool globber::next(str_base& out, bool rooted, extrainfo* extrainfo)
     FILETIME accessed;
     FILETIME modified;
     FILETIME created;
+    bool symlink;
 
     while (true)
     {
@@ -124,6 +125,9 @@ bool globber::next(str_base& out, bool rooted, extrainfo* extrainfo)
 
         file_name = m_data.cFileName;
         attr = m_data.dwFileAttributes;
+        symlink = ((attr & FILE_ATTRIBUTE_REPARSE_POINT) &&
+                   !(attr & FILE_ATTRIBUTE_OFFLINE) &&
+                   (m_data.dwReserved0 == IO_REPARSE_TAG_SYMLINK));
 
         if (extrainfo)
         {
@@ -166,7 +170,7 @@ bool globber::next(str_base& out, bool rooted, extrainfo* extrainfo)
     {
         int mode = 0;
 #ifdef S_ISLNK
-        if (attr & FILE_ATTRIBUTE_REPARSE_POINT)    mode |= _S_IFLNK;
+        if (symlink)                                mode |= _S_IFLNK;
 #endif
         if (attr & FILE_ATTRIBUTE_DIRECTORY)        mode |= _S_IFDIR;
         if (!mode)                                  mode |= _S_IFREG;

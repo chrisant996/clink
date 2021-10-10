@@ -233,8 +233,18 @@ error:
     mode |= (fad.dwFileAttributes & FILE_ATTRIBUTE_READONLY) ? _S_IREAD : _S_IREAD|_S_IWRITE;
     if ((!S_ISDIR(mode) || is_implied_dir(buf)) && is_exec_ext(path))
         mode |= _S_IEXEC;
-    if (fad.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)
-        mode |= _S_IFLNK;
+    if ((fad.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) &&
+        !(fad.dwFileAttributes & FILE_ATTRIBUTE_OFFLINE))
+    {
+        WIN32_FIND_DATAW fd;
+        HANDLE h = FindFirstFileW(buf, &fd);
+        if (h != INVALID_HANDLE_VALUE)
+        {
+            if (fd.dwReserved0 == IO_REPARSE_TAG_SYMLINK)
+                mode |= _S_IFLNK;
+            FindClose(h);
+        }
+    }
     mode |= (mode & 0700) >> 3;
     mode |= (mode & 0700) >> 6;
 

@@ -302,7 +302,8 @@ int glob_impl(lua_State* state, bool dirs_only, bool back_compat=false)
 
             type.clear();
             add_type_tag(type, (info.attr & FILE_ATTRIBUTE_DIRECTORY) ? "dir" : "file");
-            if (info.attr & FILE_ATTRIBUTE_REPARSE_POINT)
+#ifdef S_ISLNK
+            if (S_ISLNK(info.st_mode))
             {
                 add_type_tag(type, "link");
                 wstr<288> wfile(file.c_str());
@@ -310,6 +311,7 @@ int glob_impl(lua_State* state, bool dirs_only, bool back_compat=false)
                 if (_wstat64(wfile.c_str(), &st) < 0)
                     add_type_tag(type, "orphaned");
             }
+#endif
             if (info.attr & FILE_ATTRIBUTE_HIDDEN)
                 add_type_tag(type, "hidden");
             if (info.attr & FILE_ATTRIBUTE_READONLY)

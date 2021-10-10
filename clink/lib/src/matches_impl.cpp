@@ -95,9 +95,6 @@ match_type to_match_type(int mode, int attr, const char* path)
 #ifdef _S_IFLNK
     if (mode & _S_IFLNK)
         type |= match_type::link;
-#else
-    else if (attr & FILE_ATTRIBUTE_REPARSE_POINT)
-        type |= match_type::link;
 #endif
 
     if (int(type & match_type::link))
