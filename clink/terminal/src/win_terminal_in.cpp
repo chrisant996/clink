@@ -738,7 +738,28 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
         buf[0] = 0;
         str_base tmps(buf);
         const char* key_name = key_name_from_vk(key_vk, tmps) ? buf : "UNKNOWN";
-        printf("key event:  %c%c%c %c%c  flags=0x%08.8x  char=0x%04.4x  vk=0x%04.4x  scan=0x%04.4x  \"%s\"\n",
+
+#if defined(USE_TOUNICODE_FOR_DEADKEYS)
+        static const char* const maybe_newline = "";
+        int tu = 0;
+        WCHAR wbuf[33] = {};
+        BYTE keystate[256];
+        if (GetKeyboardState(keystate))
+        {
+            // NOT VIABLE:
+            //  - Is destructive; it alters the internal keyboard state.
+            //  - It doesn't detect dead keys anyway.
+            tu = ToUnicode(key_vk, key_sc, keystate, wbuf, sizeof_array(wbuf) - 1, 2);
+            if (tu >= 0)
+                wbuf[tu] = '\0';
+        }
+#elif defined(USE_MAPVIRTUALKEY_FOR_DEADKEYS)
+        static const char* const maybe_newline = "";
+#else
+        static const char* const maybe_newline = "\n";
+#endif
+
+        printf("key event:  %c%c%c %c%c  flags=0x%08.8x  char=0x%04.4x  vk=0x%04.4x  scan=0x%04.4x  \"%s\"%s",
                 (key_flags & SHIFT_PRESSED) ? 'S' : '_',
                 (key_flags & LEFT_CTRL_PRESSED) ? 'C' : '_',
                 (key_flags & LEFT_ALT_PRESSED) ? 'A' : '_',
@@ -748,7 +769,46 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
                 key_char,
                 key_vk,
                 key_sc,
-                key_name);
+                key_name,
+                maybe_newline);
+
+#if defined(USE_TOUNICODE_FOR_DEADKEYS)
+        if (tu == 0)
+        {
+            printf("  (unknown key)");
+        }
+        else
+        {
+            if (tu < 0)
+                printf("  dead key \"");
+            else
+                printf("  ToUnicode \"");
+
+            DWORD written;
+            WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), wbuf, int(wcslen(wbuf)), &written, nullptr);
+
+            printf("\"");
+        }
+
+        puts("");
+#elif defined(USE_MAPVIRTUALKEY_FOR_DEADKEYS)
+        // CLOSE...BUT NOT VIABLE:
+        //  - Always uses the keyboard input layout from when the process
+        //    started, even when using the Ex version of the API and using
+        //    GetKeyboardLayout(GetCurrentThreadId()) to get the current layout.
+        //  - Always reports accent/etc characters as dead keys, even when
+        //    they're not.  E.g. pressing Grave Accent twice calls both of them
+        //    dead keys, when in reality the second one is not dead and gets
+        //    translated to the actual grave accent character.
+        //
+        // The second issue could be accommodated by only checking if the input
+        // was not translatable into text.  But it doesn't use the current
+        // keyboard layout, so it's unreliable.
+        if (INT(MapVirtualKeyW(key_vk, MAPVK_VK_TO_CHAR)) < 0)
+            printf("  (dead key)");
+
+        puts("");
+#endif
     }
 
     // Special treatment for escape.
@@ -927,20 +987,32 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
                     goto not_ctrl;
                 key_vk = 0x1e;
                 break;
-            case 0xbd:
+            case VK_OEM_MINUS:          // 0xbd, - in any country.
                 key_vk = 0x1f;
                 break;
-            case 0xdb:
-                if (g_differentiate_keys.get())
-                    goto not_ctrl;
-                // fall through
-            case 0xdc:
-            case 0xdd:
-                key_vk -= 0xdb - 0x1b;
-                break;
             default:
+                // Can't use VK_OEM_4, VK_OEM_5, and VK_OEM_6 for detecting ^[,
+                // ^\, and ^] because OEM key mapping differ by keyboard/locale.
+                // However, the OS/OEM keyboard driver produces enough details
+                // to make it possible to identify what's really going on, at
+                // least for these specific keys (but not for VK_OEM_MINUS, 2,
+                // or 6).  Ctrl makes the bracket and backslash keys produce the
+                // needed control code in key_char, so we can simply use that.
+                switch (key_char)
+                {
+                case 0x1b:
+                    if (g_differentiate_keys.get())
+                        goto not_ctrl;
+                    // fall thru
+                case 0x1c:
+                case 0x1d:
+                    key_vk = key_char;
+                    break;
+                default:
 not_ctrl:
-                ctrl_code = false;
+                    ctrl_code = false;
+                    break;
+                }
                 break;
             }
         }
