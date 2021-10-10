@@ -738,7 +738,7 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
         buf[0] = 0;
         str_base tmps(buf);
         const char* key_name = key_name_from_vk(key_vk, tmps) ? buf : "UNKNOWN";
-        printf("key event:  %c%c%c %c%c  flags=0x%08.8x  char=0x%04.4x  vk=0x%04.4x  \"%s\"\n",
+        printf("key event:  %c%c%c %c%c  flags=0x%08.8x  char=0x%04.4x  vk=0x%04.4x  scan=0x%04.4x  \"%s\"\n",
                 (key_flags & SHIFT_PRESSED) ? 'S' : '_',
                 (key_flags & LEFT_CTRL_PRESSED) ? 'C' : '_',
                 (key_flags & LEFT_ALT_PRESSED) ? 'A' : '_',
@@ -747,6 +747,7 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
                 key_flags,
                 key_char,
                 key_vk,
+                key_sc,
                 key_name);
     }
 
