@@ -1063,7 +1063,9 @@ Clink provides an easy way to find the key sequence for any key combination that
 
 A chord can be formed by concatenating multiple key binding sequences. For example, `"\C-X"` and `"\e[H"` can be concatenated to form `"\C-X\e[H"` representing the chord <kbd>Ctrl</kbd>+<kbd>X</kbd>,<kbd>Home</kbd>.
 
-When finished, press <kbd>Ctrl</kbd>+<kbd>C</kbd> to exit from `clink info`.
+When finished, press <kbd>Ctrl</kbd>+<kbd>C</kbd> to exit from `clink echo`.
+
+> **Note:** With non-US keyboard layouts, `clink echo` is not able to ignore dead key input (accent keys, for example).  It print the key sequence for the dead key itself, which is not useful.  You can ignore that and press the next key, and then it prints the correct key sequence to use in key bindings.
 
 <a name="specialkeys"></a>
 
