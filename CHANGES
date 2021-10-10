@@ -4,6 +4,7 @@
 
 #### v1.2.37
 
+- Fixed [#178](https://github.com/chrisant996/clink/issues/178); OneDrive folders mistakenly show up as symlinks.
 - Fixed [#177](https://github.com/chrisant996/clink/issues/177); be silent about autorun injection into TCC.
 
 #### v1.2.36
