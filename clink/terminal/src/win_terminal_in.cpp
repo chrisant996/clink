@@ -728,8 +728,8 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
         return;
     }
 
-    // Early out of unaccompanied ctrl/shift key presses.
-    if (key_vk == VK_CONTROL || key_vk == VK_SHIFT)
+    // Early out of unaccompanied Ctrl/Shift/Windows key presses.
+    if (key_vk == VK_CONTROL || key_vk == VK_SHIFT || key_vk == VK_LWIN || key_vk == VK_RWIN)
         return;
 
     if (s_verbose_input)
