@@ -1047,7 +1047,6 @@ static char** alternative_matches(const char* text, int start, int end)
     do
     {
         match_type type = past_flag ? iter.get_match_type() : match_type::none;
-        match_type masked_type = type & match_type::mask;
 
         ++count;
         if (!ensure_matches_size(matches, count, reserved))
