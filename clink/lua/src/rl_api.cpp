@@ -53,7 +53,7 @@ bool collapse_tilde(const char* in, str_base& out, bool force)
     free(tilde);
 
     if (j >= 0 && j != tilde_len)
-        return true;
+        return false;
 
     out.format("~%s", in + tilde_len);
     return true;
@@ -84,11 +84,8 @@ static int collapse_tilde(lua_State* state)
 
     int force = lua_toboolean(state, 2);
 
-    const char* rl_cvar = rl_variable_value("expand-tilde");
-    bool expand_tilde = (rl_cvar && rl_cvar[0] == 'o' && rl_cvar[1] == 'n' && rl_cvar[2] == '\0');
-
     str<> collapsed;
-    if (collapse_tilde(path, collapsed, false))
+    if (collapse_tilde(path, collapsed, !!force))
         lua_pushlstring(state, collapsed.c_str(), collapsed.length());
     else
         lua_pushstring(state, path);
