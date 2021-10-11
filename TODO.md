@@ -26,11 +26,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 **Popup Lists**
 - Ability to delete, rearrange, and edit popup list items?  _[Can't realistically rearrange or edit history, due to how the history file format works.]_
-- Show the current incremental search string somewhere?
-- Completions:
-  - What to do about completion colors?
-  - Make it owner draw and add text like "dir", "alias", etc?
-  - Add stat chars when so configured?
 
 **Installer**
 - Why does it install to a versioned path?  The .nsi file says `; Install to a versioned folder to reduce interference between versions.` so use caution when making any change there.
@@ -45,10 +40,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # LOW LIKELIHOOD
 
 - Make scrolling key bindings work at the pager prompt.  Note that it would need to revise how the scroll routines identify the bottom line (currently they use Readline's bottom line, but the pager displays output past that point).  _[Low value; also, Windows Terminal has scrolling hotkeys that supersede Clink, and it can scroll regardless whether prompting for input.]_
-- `LOG()` certain important failure information inside Detours.  _[Low value; also, I want to avoid making any changes inside Detours.]_
 - Provide API to show an input box?  But make it fail if used from outside a "luafunc:" macro.  _[Questionable usage pattern; just make the "luafunc:" macro invoke a standalone program (or even standalone Lua script) that can accept input however it likes.]_
 - Provide API to set Readline key binding?  _[Convenient, but also makes it very easy for third party scripts to override a user's explicit configuration choices.  In addition to that being a bit overly powerful, I want to avoid support requests caused by third party macros overriding user configuration.]_
-- Classify queued input lines?  _[Low value, high cost; the module layer knows about coloring, but queued lines are handled by the host layer without ever reaching the module layer.]_
 - `magic-space` () Perform history expansion on the current line and insert a space? _[Low value, low reliability, niche audience.]_
 
 <br/>
@@ -63,12 +56,13 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Adding a new `rl_completion_display_matches_func` and `display_matches()` resolved the performance satisfactorily.
 - It's now almost possible to revert the changes to feed Readline match type information.  It's only used when displaying matches, and when inserting a match to decide whether to append a path separator.  Could just add a callback for inserting.
   - The insertion hook could avoid appending a space when inserting a flag/arg that ends in `:` or `=`.
-  - And address the sorting problem, and then the match_type stuff could be removed from Readline itself (though Chet may want its performance benefits).
-  - And THEN individual matches could have arbitrary values associated -- color, append char, or any per-match data that's desired.
-  - But the hard part is handling duplicates (especially with different match types).  Could maybe pass the index in the matches array, but that requires tighter interdependence between Readline and its host.
-- But there's a hurdle:
-  - Readline sorts the matches, making it difficult to translate the sorted index to the unsorted list held by `matches_impl`.  Could use a binary search, but using binary search inside a sort comparator makes the algorithmic complexity O(N * logN * logN).  Caching lookup results prior to searching yields O((N * logN) + (N * logN)), but it's still a big increase in total duration.
-- **SO:** The best compromise might be to embed the original array index at the start of each match, and use a callback to retrieve host data for each match.  It's still invasive to Readline, but at least Readline doesn't need to know any new implementation details such as match types.
+  - And then individual matches could have arbitrary values associated -- color, append char, or any per-match data that's desired.
+  - ~~And address the sorting problem~~, and then the match_type stuff could be removed from Readline itself (though Chet may want its performance benefits).
+- Hurdles:
+  - [ ] Duplicates.  Unclear how to allow/handle duplicate match strings with different match types or attributes (such as append char).  Could maybe pass the index in the matches array, but that still requires tunneling data in the match string and for Readline to use accessor functions, so the match type changes couldn't be removed.
+  - [x] ~~Sorting.  Readline sorts the matches, making it difficult to translate the sorted index to the unsorted list held by `matches_impl`.  Could use a binary search, but using binary search inside a sort comparator makes the algorithmic complexity O(N * logN * logN).  Caching lookup results prior to searching yields O((N * logN) + (N * logN)), but it's still a big increase in total duration.~~  _[No longer an issue since Readline now owns sorting.]_
+
+**SO:** The best compromise might be to embed the original array index at the start of each match, and use a callback to retrieve host data for each match.  It's still invasive to Readline, but at least Readline doesn't need to know any new implementation details such as match types.  But it would require sorting to be turned off in Readline.
 
 <br/>
 <br/>
@@ -98,6 +92,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Corrupted clink_history -- not sure how, when, or why -- but after having made changes to history, debugging through issues, and aborting some debugging sessions my clink_history file had a big chunk of contiguous NUL bytes. _[UPDATE: the good news is it isn't a Clink issue; the bad news is the SSD drives in my new Alienware m15 R4 keep periodically hitting a BSOD for KERNEL DATA INPAGE ERROR, which zeroes out recently written sectors.  UPDATE #2: the BSOD were actually from the Nvidia drivers.]_
 
 ## Punt
+- Classify queued input lines?  _[Low value, high cost; the module layer knows about coloring, but queued lines are handled by the host layer without ever reaching the module layer.  Also, the queued input lines ("More?") do not adhere to the current parsing assumptions; it would become necessary to carry argmatcher start across lines.]_
 - Support this quirk, or not?  <kbd>Esc</kbd> in conhost clears the line but does not reset the history index, but in Clink it resets the history index.  Affects F1, F2, F3, F5, F8.  _[Defer until someone explains why it's important to them.]_
 - Additional ANSI escape codes.
   - `ESC[?47h` and `ESC[?47l` (save and restore screen) -- not widely supported, so I can't use it, and it's not worth emulating.  Which makes me very sad; no save + show popup + restore. 😭
