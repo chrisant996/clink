@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.2.36</title>
+<title>Clink v1.2.37</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -747,7 +747,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.2.36</div>
+                <div id="title">Clink v1.2.37</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -2641,7 +2641,10 @@ C-_:                kill-line                       <span class="hljs-comment">#
 <h3 id="discovering-clink-key-sequences">Discovering Clink key sequences</h3>
 <p>Clink provides an easy way to find the key sequence for any key combination that Clink supports. Run <code>clink echo</code> and then press key combinations; the associated key binding sequence is printed to the console output and can be used for a key binding in the inputrc file.</p>
 <p>A chord can be formed by concatenating multiple key binding sequences. For example, <code>&quot;\C-X&quot;</code> and <code>&quot;\e[H&quot;</code> can be concatenated to form <code>&quot;\C-X\e[H&quot;</code> representing the chord <kbd>Ctrl</kbd>+<kbd>X</kbd>,<kbd>Home</kbd>.</p>
-<p>When finished, press <kbd>Ctrl</kbd>+<kbd>C</kbd> to exit from <code>clink info</code>.</p>
+<p>When finished, press <kbd>Ctrl</kbd>+<kbd>C</kbd> to exit from <code>clink echo</code>.</p>
+<blockquote>
+<p><strong>Note:</strong> With non-US keyboard layouts, <code>clink echo</code> is not able to ignore dead key input (accent keys, for example).  It print the key sequence for the dead key itself, which is not useful.  You can ignore that and press the next key, and then it prints the correct key sequence to use in key bindings.</p>
+</blockquote>
 <p><a name="specialkeys"></a></p>
 <h3 id="binding-special-keys">Binding special keys</h3>
 <p>Here is a table of the key binding sequences for the special keys.  Clink primarily uses VT220 emulation for keyboard input, but also uses some Xterm extended key sequences.</p>
@@ -3829,6 +3832,13 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1237">v1.2.37</h4>
+<ul>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/180">#180</a>; <code>rl.collapsetilde()</code> behaves erratically.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/179">#179</a>; incorrect handling for certain keys on some keyboard layouts.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/178">#178</a>; OneDrive folders mistakenly show up as symlinks.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/177">#177</a>; be silent about autorun injection into TCC.</li>
+</ul>
 <h4 id="v1236">v1.2.36</h4>
 <ul>
 <li>Added <code>win-history-list</code> command bound to <kbd>F7</kbd> by default.  This shows the history list, and executes the selected history entry.</li>
