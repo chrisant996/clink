@@ -422,6 +422,9 @@ Name | Description
 `cua-forward-word`|Extends the selection and moves forward a word.
 `cua-select-all`|Extends the selection to the entire current line.
 `edit-and-execute-command`|Invoke an editor on the current input line, and execute the result as commands.  This attempts to invoke %VISUAL%, %EDITOR%, or notepad.exe as the editor, in that order.
+`glob-complete-word`|Perform wildcard completion on the text before the cursor point, with a `*` implicitly appended.
+`glob-expand-word`|Insert all the wildcard completions that `glob-list-expansions` would list.  If a numeric argument is supplied, a `*` is implicitly appended before completion.
+`glob-list-expansions`|List the possible wildcard completions of the text before the cursor point.  If a numeric argument is supplied, a `*` is implicitly appended before completion.
 `history-and-alias-expand-line`|A synonym for `clink-expand-history-and-alias`.
 `history-expand-line`|A synonym for `clink-expand-history`.
 `insert-last-argument`|A synonym for `yank-last-arg`.
@@ -433,6 +436,7 @@ Name | Description
 `win-copy-up-to-end`|Copy the rest of the previous command (mimics Windows console <kbd>F3</kbd>).
 `win-cursor-forward`|Move cursor forward, or at end of line copy character from previous command (mimics Windows console <kbd>F1</kbd> and <kbd>Right</kbd>).
 `win-delete-up-to-char`|Enter a character and delete up to it in the input line (mimics Windows console <kbd>F4</kbd>).
+`win-history-list`|Executes a history entry from a list (mimics Windows console <kbd>F7</kbd>).
 `win-insert-eof`|Insert ^Z (mimics Windows console <kbd>F6</kbd>).
 
 <a name="completioncolors"></a>
