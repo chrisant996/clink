@@ -273,29 +273,66 @@ TEST_CASE("Lua arg parsers")
             test_parser:addarg({'something', 'else'})\
             test_parser:nofiles()\
             \
+            local popping_parser = clink.argmatcher()\
+            popping_parser:addflags('-z', '--zoom')\
+            popping_parser:addarg({'ABC', 'DEF'})\
+            popping_parser:addarg({'ETWAS', 'ANDERS'})\
+            \
             local foo_parser = clink.argmatcher('foo')\
             foo_parser:addflags('-a', '-b', '-c')\
-            foo_parser:addarg({'test' .. test_parser})\
+            foo_parser:addarg({'test' .. test_parser, 'popping' .. popping_parser})\
             foo_parser:addarg({'qrs', 'tuv', 'wxyz'})\
+            \
+            local oldtest_parser = clink.arg.new_parser()\
+            oldtest_parser:add_flags('-h', '--help', '-show_output', '-flag1', '-optionB')\
+            oldtest_parser:add_arguments({'arg1', 'arg2'})\
+            oldtest_parser:add_arguments({'something', 'else'})\
+            \
+            local oldfoo_parser = clink.arg.new_parser()\
+            oldfoo_parser:add_flags('-a', '-b', '-c')\
+            oldfoo_parser:add_arguments({'test' .. oldtest_parser})\
+            oldfoo_parser:add_arguments({'qrs', 'tuv', 'wxyz'})\
+            \
+            clink.arg.register_parser('oldfoo', oldfoo_parser)\
         ";
 
         REQUIRE(lua.do_string(script));
 
         SECTION("Flag at end")
         {
-            // Make sure it doesn't pop, so the last word is recognized as an
-            // arg by the correct argmatcher.
+            // Make sure it doesn't pop, so the last word is recognized as a
+            // flag by the correct argmatcher.
+
+            tester.set_input("foo popping ABC ETWAS -");
+            tester.set_expected_matches("-z", "--zoom");
+            tester.run();
+
             tester.set_input("foo test arg1 something -");
+            tester.set_expected_matches("-h", "--help", "-show_output", "-flag1", "-optionB");
+            tester.run();
+
+            tester.set_input("oldfoo test arg1 something -");
             tester.set_expected_matches("-h", "--help", "-show_output", "-flag1", "-optionB");
             tester.run();
         }
 
         SECTION("Arg at end")
         {
-            // Make sure it pops, so the last word is recognized as an arg by
+            // Make sure it can pop, so the last word is recognized as an arg by
             // the correct argmatcher.
-            tester.set_input("foo test arg1 something ");
+            tester.set_input("foo popping ABC ETWAS ");
             tester.set_expected_matches("qrs", "tuv", "wxyz");
+            tester.run();
+
+            // Make sure nofiles doesn't pop.
+            tester.set_input("foo test arg1 something ");
+            tester.set_expected_matches();
+            tester.run();
+
+            // Make sure backward compatibility mode doesn't pop, even if
+            // :disable_file_matching() is not used.
+            tester.set_input("oldfoo test arg1 something ");
+            tester.set_expected_matches("case_map_2", "case_map-1", "dir1\\", "dir2\\", "file1", "file2");
             tester.run();
         }
     }
