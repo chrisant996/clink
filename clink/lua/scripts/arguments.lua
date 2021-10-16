@@ -199,12 +199,12 @@ function _argreader:_pop(next_is_flag)
         return false
     end
 
-    if self._matcher and self._matcher._no_file_generation then
-        -- :nofiles() dead ends the parser.
-        return false
-    end
-
     while #self._stack > 0 do
+        if self._matcher and self._matcher._no_file_generation then
+            -- :nofiles() dead ends the parser.
+            return false
+        end
+
         self._matcher, self._arg_index = table.unpack(table.remove(self._stack))
 
         if self._matcher._loop then
