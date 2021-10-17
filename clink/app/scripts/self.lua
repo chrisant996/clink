@@ -8,7 +8,7 @@
 local nothing = clink.argmatcher()
 
 --------------------------------------------------------------------------------
-local dir_matcher = clink.argmatcher():addarg(clink.dir_matches)
+local dir_matcher = clink.argmatcher():addarg(clink.dirmatches)
 
 --------------------------------------------------------------------------------
 local inject = clink.argmatcher()
