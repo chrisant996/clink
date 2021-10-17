@@ -7,6 +7,9 @@
 --------------------------------------------------------------------------------
 clink.argmatcher("cd", "chdir")
 :addflags("/d")
+:addflagdescriptions({
+    ["/d"] = "Also change drive"
+})
 :addarg(clink.dirmatches)
 :nofiles()
 
@@ -18,5 +21,9 @@ clink.argmatcher("pushd", "md", "mkdir")
 --------------------------------------------------------------------------------
 clink.argmatcher("rd", "rmdir")
 :addflags("/s", "/q")
+:addflagdescriptions({
+    ["/s"] = "Remove files and directories recursively",
+    ["/q"] = "Quiet mode, do not ask if ok to remove a directory tree with /S",
+})
 :addarg(clink.dirmatches)
 :nofiles()

@@ -385,25 +385,60 @@ function _argmatcher:setflagprefix(...)
 end
 
 --------------------------------------------------------------------------------
---- -name:  _argmatcher:setflagdescsep
---- -arg:   separator:string
+--- -name:  _argmatcher:addflagdescriptions
+--- -arg:   [flag_descriptions...:table]
 --- -ret:   self
---- Set the description separator in flag strings.  Use an empty string to
---- disable flag descriptions.
+--- Adds descriptions for flags.  Flag descriptions are displayed when listing
+--- possible flag completions, e.g. with <kbd>Alt</kbd>+<kbd>=</kbd>.
 ---
---- (This is available in the unlikely event that a flag string needs to include
---- the pipe <code>|</code> character.)
---- -show:  local matcher = clink.argmatcher()
---- -show:  matcher:addflags("-n|Do nothing")
---- -show:  matcher:setflagdescsep("$$$")
---- -show:  matcher:addflags("-v$$$Verbose output")
---- -show:  matcher:setflagdescsep("#")
---- -show:  matcher:addflags("-?#Show help")
-function _argmatcher:setflagdescsep(separator)
-    if type(separator) ~= "string" then
-        error("Flag description separator must be a string", 2)
+--- Each <span class="arg">flag_descriptions</span> must be a table with one of
+--- the following schemes:
+--- <ul>
+--- <li>Key/value pairs where each key is a flag name, and its associated value
+--- is the description for the flag.
+--- <li>One or more string values that are flag names, and a
+--- <code>description</code> field that contains a description string for the
+--- flags.
+--- </ul>
+--- -show:  local matcher = clink.argmatcher("clink")
+--- -show:  matcher:addflags("-h", "--help", "--version")
+--- -show:  -- Example using first scheme and just one table:
+--- -show:  matcher:addflagdescriptions( {
+--- -show:      ["-h"]              = "Show help",
+--- -show:      ["--help"]          = "Show help",
+--- -show:      ["--version"]       = "Print version info and exit",
+--- -show:  } )
+--- -show:  -- Example using second scheme and one table per description:
+--- -show:  matcher:addflagdescriptions(
+--- -show:      { "-h", "--help",   description = "Show help" },
+--- -show:      { "--version",      description = "Print version info and exit" },
+--- -show:  )
+--- -show:  -- Example how to support backward compatibility in your scripts:
+--- -show:  if matcher.addflagdescriptions then
+--- -show:      matcher:addflagdescriptions(
+--- -show:          -- etc
+--- -show:      )
+--- -show:  end
+function _argmatcher:addflagdescriptions(...)
+    self._flags._descriptions = self._flags._descriptions or {}
+    for _,t in ipairs({...}) do
+        if type(t) ~= "table" then
+            error("bad argument #".._.." (must be a table)")
+        end
+        if t[1] then
+            local desc = t["description"]
+            if type(desc) ~= "string" then
+                error("bad argument #".._.." (string table is missing 'description' field)")
+            end
+            for _,flag in ipairs(t) do
+                self._flags._descriptions[flag] = desc
+            end
+        else
+            for flag,desc in pairs(t) do
+                self._flags._descriptions[flag] = desc
+            end
+        end
     end
-    self._flag_desc_sep = #separator > 0 and separator or nil
     return self
 end
 
@@ -537,19 +572,10 @@ end
 
 --------------------------------------------------------------------------------
 function _argmatcher:_add(list, addee, prefixes)
-    local desc
-
     -- If addee is a flag like --foo= and is not linked, then link it to a
     -- default parser so its argument doesn't get confused as an arg for its
     -- parent argmatcher.
     if prefixes and type(addee) == "string" then
-        if not self._deprecated and self._flag_desc_sep then
-            local pos = addee:find(self._flag_desc_sep)
-            if pos and pos > 1 then
-                desc = addee:sub(pos + #self._flag_desc_sep)
-                addee = addee:sub(1, pos - 1)
-            end
-        end
         if addee:match("[:=]$") then
             addee = addee..clink.argmatcher():addarg(clink.filematches)
         end
@@ -590,10 +616,6 @@ function _argmatcher:_add(list, addee, prefixes)
         if prefixes then add_prefix(prefixes, addee._key) end
     else
         table.insert(list, addee)
-        if desc then
-            self._descriptions = self._descriptions or {}
-            self._descriptions[addee] = desc
-        end
         if prefixes then add_prefix(prefixes, addee) end
     end
 end

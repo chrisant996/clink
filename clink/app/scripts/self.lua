@@ -19,6 +19,14 @@ local inject = clink.argmatcher()
     "--quiet",
     "--nolog",
     "--scripts"..dir_matcher)
+:addflagdescriptions({
+    ["--help"]      = "Show help",
+    ["--pid"]       = "Inject into the specified process ID",
+    ["--profile"]   = "Specifies an alternative path for profile data",
+    ["--quiet"]     = "Suppress copyright output",
+    ["--nolog"]     = "Disable file logging",
+    ["--scripts"]   = "Alternative path to load .lua scripts from",
+})
 
 --------------------------------------------------------------------------------
 local autorun_dashdash = clink.argmatcher()
@@ -28,6 +36,9 @@ local autorun = clink.argmatcher()
 :addflags(
     "--allusers",
     "--help")
+:addflags({
+    ["--allusers"]  = "Modifies autorun for all users (requires admin rights)",
+    ["--help"]      = "Show help"})
 :addarg(
     "install"   .. autorun_dashdash,
     "uninstall" .. nothing,
@@ -39,6 +50,9 @@ local echo = clink.argmatcher()
 :addflags(
     "--help",
     "--verbose")
+:addflags({
+    ["--help"] = "Show help",
+    ["--verbose"] = "Print verbose diagnostic information about keypresses"})
 :nofiles()
 
 --------------------------------------------------------------------------------
@@ -303,13 +317,21 @@ end
 --------------------------------------------------------------------------------
 local set = clink.argmatcher()
 :addflags("--help")
+:addflagdescriptions({["--help"] = "Show help"})
 :addarg(set_handler)
 :addarg(value_handler)
 :setclassifier(classify_handler)
 
 --------------------------------------------------------------------------------
 local history = clink.argmatcher()
-:addflags("--help", "--bare", "--unique")
+:addflags(
+    "--help",
+    "--bare",
+    "--unique")
+:addflagdescriptions({
+    ["--help"]      = "Show help",
+    ["--bare"]      = "Omit item numbers when printing history",
+    ["--unique"]    = "Remove duplicates when compacting history"})
 :addarg(
     "add",
     "clear"     .. nothing,
@@ -320,6 +342,7 @@ local history = clink.argmatcher()
 --------------------------------------------------------------------------------
 local installscripts = clink.argmatcher()
 :addflags("--help")
+:addflagdescriptions({["--help"] = "Show help"})
 :addarg(clink.dirmatches)
 :nofiles()
 
@@ -335,6 +358,7 @@ end
 --------------------------------------------------------------------------------
 local uninstallscripts = clink.argmatcher()
 :addflags("--help")
+:addflagdescriptions({["--help"] = "Show help"})
 :addarg(uninstall_handler)
 :nofiles()
 
@@ -356,6 +380,10 @@ clink.argmatcher(
     "--help",
     "--profile"..dir_matcher,
     "--version")
+:addflagdescriptions({
+    ["--help"]      = "Show help",
+    ["--profile"]   = "Override the profile directory",
+    ["--version"]   = "Print Clink's version"})
 
 --------------------------------------------------------------------------------
 local set_generator = clink.generator(clink.argmatcher_generator_priority - 1)
