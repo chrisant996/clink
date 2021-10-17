@@ -728,6 +728,19 @@ When displaying possible completions, flag matches are only shown if the flag ch
 
 If a command doesn't have an argmatcher but is a doskey macro, Clink automatically expands the doskey macro and looks for an argmatcher for the expanded command.  A macro like `gco=git checkout $*` automatically reuses a `git` argmatcher and produces completions for its `checkout` argument.  However, it only expands the doskey macro up to the first `$`, so complex aliases like `foo=app 2$gnul text $*` or `foo=$2 $1` might behave strangely.
 
+### Descriptions for Flags
+
+Flags may optionally include descriptions, which are displayed when listing possible flag completions.
+
+To include a description for a flag, append `|` and description text.
+
+```lua
+clink.argmatcher("cd")
+:addflags("/d|Also change drive")
+:addarg(clink.dirmatches)
+:nofiles()
+```
+
 ### More Advanced Stuff
 
 #### Linking Parsers
