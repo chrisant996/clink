@@ -515,7 +515,8 @@ void lua_match_generator::filter_matches(char** matches, char completion_type, b
         return;
 
     // Count matches; bail if 0.
-    int match_count = 0;
+    const bool only_lcd = !matches[1];
+    int match_count = only_lcd ? 1 : 0;
     for (int i = 1; matches[i]; ++i, ++match_count);
     if (match_count <= 0)
         return;
@@ -529,10 +530,11 @@ void lua_match_generator::filter_matches(char** matches, char completion_type, b
 
     // Convert matches to a Lua table (arg 1).
     str<> tmp;
+    int mi = only_lcd ? 0 : 1;
     lua_createtable(state, match_count, 0);
     for (int i = 1; i <= match_count; ++i)
     {
-        const char* match = matches[i];
+        const char* match = matches[mi];
         match_type type = match_type::none;
         if (rl_completion_matches_include_type)
         {
