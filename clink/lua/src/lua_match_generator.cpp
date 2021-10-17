@@ -246,7 +246,7 @@ done:
         int mi = only_lcd ? 0 : 1;
         for (i = 1; i <= match_count; ++i)
         {
-            const char* match = matches[mi];
+            const char* match = matches[mi++];
             match_type type = match_type::none;
             if (rl_completion_matches_include_type)
             {
@@ -275,7 +275,7 @@ done:
         int mi = only_lcd ? 0 : 1;
         for (i = 1; i < match_count; ++i)
         {
-            const char* match = matches[mi];
+            const char* match = matches[mi++];
             if (rl_completion_matches_include_type)
                 match++;
 
@@ -534,7 +534,7 @@ void lua_match_generator::filter_matches(char** matches, char completion_type, b
     lua_createtable(state, match_count, 0);
     for (int i = 1; i <= match_count; ++i)
     {
-        const char* match = matches[mi];
+        const char* match = matches[mi++];
         match_type type = match_type::none;
         if (rl_completion_matches_include_type)
         {
