@@ -5,6 +5,7 @@
 #### v1.2.38
 
 - Fixed `:nofiles()` to dead-end an argmatcher (regression introduced in v1.0.0).
+- Fixed `clink.ondisplaymatches()` and `clink.onfiltermatches()` when there's only 1 match.
 
 #### v1.2.37
 
