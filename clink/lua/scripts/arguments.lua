@@ -256,6 +256,7 @@ function _argmatcher._new()
     }, _argmatcher)
     matcher._flagprefix = {}
     matcher._nextargindex = 1
+    matcher._flag_desc_sep = "|"
     return matcher
 end
 
@@ -307,6 +308,34 @@ end
 --- -show:  local my_parser = clink.argmatcher("git")
 --- -show:  :addarg({ "add", "status", "commit", "checkout" })
 --- -show:  :addflags("-a", "-g", "-p", "--help")
+--- Starting in v1.2.38, flags can include description strings that are
+--- displayed when listing possible completions.
+--- -show:  local my_parser = clink.argmatcher("cd")
+--- -show:  :addflags("/d|Also change current drive")
+--- -show:  :addarg(clink.dirmatches):nofiles()
+--- To make your script compatible with older Clink versions, you can copy this
+--- code into your script and use it as described below:
+--- -show:  -- This helper function translates flag strings that include
+--- -show:  -- descriptions, to make them compatible with older Clink versions.
+--- -show:  local function maybe_flag_desc(...)
+--- -show:      if (clink.version_encoded or 0) < 10020038 then
+--- -show:          local recurse
+--- -show:          recurse = function(flags, index)
+--- -show:              local f = flags[index]:gsub("^(([^|]+)|.*)$", "%2")
+--- -show:              if index > #flags then return nil
+--- -show:              elseif index < #flags then return f, recurse(flags, index + 1)
+--- -show:              else return f
+--- -show:              end
+--- -show:          end
+--- -show:          return recurse({...}, 1)
+--- -show:      end
+--- -show:      return ...
+--- -show:  end
+--- -show:
+--- -show:  -- An example of using the helper function:
+--- -show:  local my_parser = clink.argmatcher("cd")
+--- -show:  :addflags(maybe_flag_desc("/d|Also change current drive"))
+--- -show:  :addarg(clink.dirmatches):nofiles()
 function _argmatcher:addflags(...)
     local flag_matcher = self._flags or _argmatcher()
     local list = flag_matcher._args[1] or { _links = {} }
@@ -352,6 +381,29 @@ end
 --- This is no longer needed (and does nothing) because <code>:addflags()</code>
 --- automatically identifies.
 function _argmatcher:setflagprefix(...)
+    return self
+end
+
+--------------------------------------------------------------------------------
+--- -name:  _argmatcher:setflagdescsep
+--- -arg:   separator:string
+--- -ret:   self
+--- Set the description separator in flag strings.  Use an empty string to
+--- disable flag descriptions.
+---
+--- (This is available in the unlikely event that a flag string needs to include
+--- the pipe <code>|</code> character.)
+--- -show:  local matcher = clink.argmatcher()
+--- -show:  matcher:addflags("-n|Do nothing")
+--- -show:  matcher:setflagdescsep("$$$")
+--- -show:  matcher:addflags("-v$$$Verbose output")
+--- -show:  matcher:setflagdescsep("#")
+--- -show:  matcher:addflags("-?#Show help")
+function _argmatcher:setflagdescsep(separator)
+    if type(separator) ~= "string" then
+        error("Flag description separator must be a string", 2)
+    end
+    self._flag_desc_sep = #separator > 0 and separator or nil
     return self
 end
 
@@ -466,7 +518,7 @@ local function add_prefix(prefixes, string)
         local prefix = string:sub(1, 1)
         if prefix:len() > 0 then
             if prefix:match('[A-Za-z]') then
-                error("flag string '"..string.."' is invalid because it starts with a letter and would interfere with argument matching.")
+                error("Flag string '"..string.."' is invalid because it starts with a letter and would interfere with argument matching.")
             else
                 prefixes[prefix] = (prefixes[prefix] or 0) + 1
             end
@@ -475,12 +527,32 @@ local function add_prefix(prefixes, string)
 end
 
 --------------------------------------------------------------------------------
+local flag_descriptions
+local function ondisplaymatches_flags(matches)
+    for _,m in ipairs(matches) do
+        m.description = flag_descriptions[m.match]
+    end
+    return matches
+end
+
+--------------------------------------------------------------------------------
 function _argmatcher:_add(list, addee, prefixes)
+    local desc
+
     -- If addee is a flag like --foo= and is not linked, then link it to a
     -- default parser so its argument doesn't get confused as an arg for its
     -- parent argmatcher.
-    if prefixes and type(addee) == "string" and addee:match("[:=]$") then
-        addee = addee..clink.argmatcher():addarg(clink.filematches)
+    if prefixes and type(addee) == "string" then
+        if not self._deprecated and self._flag_desc_sep then
+            local pos = addee:find(self._flag_desc_sep)
+            if pos and pos > 1 then
+                desc = addee:sub(pos + #self._flag_desc_sep)
+                addee = addee:sub(1, pos - 1)
+            end
+        end
+        if addee:match("[:=]$") then
+            addee = addee..clink.argmatcher():addarg(clink.filematches)
+        end
     end
 
     -- Flatten out tables unless the table is a link
@@ -518,6 +590,10 @@ function _argmatcher:_add(list, addee, prefixes)
         if prefixes then add_prefix(prefixes, addee._key) end
     else
         table.insert(list, addee)
+        if desc then
+            self._descriptions = self._descriptions or {}
+            self._descriptions[addee] = desc
+        end
         if prefixes then add_prefix(prefixes, addee) end
     end
 end
@@ -584,6 +660,10 @@ function _argmatcher:_generate(line_state, match_builder, extra_words)
         -- Flags are always "arg" type, which helps differentiate them from
         -- filename completions even when using _deprecated matcher mode, so
         -- that path normalization can avoid affecting flags like "/c", etc.
+        if matcher._flags._descriptions then
+            flag_descriptions = matcher._flags._descriptions
+            clink.ondisplaymatches(ondisplaymatches_flags)
+        end
         add_matches(matcher._flags._args[1], "arg")
         return true
     else
@@ -758,7 +838,7 @@ function clink.argmatcher(...)
             break
         end
         if matcher then
-            error("command '"..i.."' already has an argmatcher; clink.argmatcher() with multiple commands fails if any of the commands already has an argmatcher.")
+            error("Command '"..i.."' already has an argmatcher; clink.argmatcher() with multiple commands fails if any of the commands already has an argmatcher.")
             return
         end
     end
