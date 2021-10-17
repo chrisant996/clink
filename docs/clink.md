@@ -732,11 +732,18 @@ If a command doesn't have an argmatcher but is a doskey macro, Clink automatical
 
 Flags may optionally include descriptions, which are displayed when listing possible flag completions.
 
-To include a description for a flag, append `|` and description text.
+Use [_argmatcher:addflagdescriptions()](#_argmatcher:addflagdescriptions) to add descriptions for flags.
+
+For example, with the following matcher, typing `foo -`<kbd>Alt</kbd>+<kbd>=</kbd> will list all of the flags, plus descriptions for each.
 
 ```lua
-clink.argmatcher("cd")
-:addflags("/d|Also change drive")
+clink.argmatcher("foo")
+:addflags("-?", "-h", "-n", "-v", "--help", "--nothing", "--verbose")
+:addflagdescriptions(
+    { "-n", "--nothing",    description = "Do nothing; show what would happen without doing it" },
+    { "-v", "--verbose",    description = "Verbose output" },
+    { "-h", "--help", "-?", description = "Show help text" },
+)
 :addarg(clink.dirmatches)
 :nofiles()
 ```
