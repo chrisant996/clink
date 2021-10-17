@@ -230,7 +230,8 @@ done:
     }
 
     // Count matches.
-    int match_count = 0;
+    const bool only_lcd = !matches[1];
+    int match_count = only_lcd ? 1 : 0;
     for (i = 1; matches[i]; ++i, ++match_count);
 
     // Sort the matches.
@@ -242,9 +243,10 @@ done:
     {
         str<> tmp;
 
+        int mi = only_lcd ? 0 : 1;
         for (i = 1; i <= match_count; ++i)
         {
-            const char* match = matches[i];
+            const char* match = matches[mi];
             match_type type = match_type::none;
             if (rl_completion_matches_include_type)
             {
@@ -270,9 +272,10 @@ done:
     }
     else
     {
+        int mi = only_lcd ? 0 : 1;
         for (i = 1; i < match_count; ++i)
         {
-            const char* match = matches[i];
+            const char* match = matches[mi];
             if (rl_completion_matches_include_type)
                 match++;
 
