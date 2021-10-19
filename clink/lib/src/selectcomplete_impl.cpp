@@ -1034,6 +1034,14 @@ void selectcomplete_impl::update_display()
         static char s_chGen = '0';
 #endif
 
+        const char* description_color = "\x1b[m";
+        int description_color_len = 3;
+        if (_rl_description_color)
+        {
+            description_color = _rl_description_color;
+            description_color_len = strlen(description_color);
+        }
+
         // Display matches.
         int up = 0;
         bool move_to_end = true;
@@ -1132,6 +1140,7 @@ void selectcomplete_impl::update_display()
                                     printed_len = cell_count(desc);
                                 }
                                 pad_filename(0, before_desc - (selected ? 0 : between_cols), 0);
+                                append_tmpbuf_string(description_color, description_color_len);
                                 append_tmpbuf_string(desc, -1);
                             }
                         }

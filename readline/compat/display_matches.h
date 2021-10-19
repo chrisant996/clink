@@ -20,6 +20,7 @@ typedef struct match_display_filter_entry match_display_filter_entry;
 typedef match_display_filter_entry** rl_match_display_filter_func_t(char**);
 extern rl_match_display_filter_func_t *rl_match_display_filter_func;
 
+extern const char *_rl_description_color;
 extern const char *_rl_filtered_color;
 extern const char *_rl_selected_color;
 

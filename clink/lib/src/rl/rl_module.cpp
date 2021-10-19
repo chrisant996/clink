@@ -145,6 +145,12 @@ static setting_color g_color_cmd(
     "Used when Clink displays shell (CMD.EXE) command completions.",
     "bold");
 
+static setting_color g_color_description(
+    "color.description",
+    "Description completion color",
+    "The default color for descriptions of completions.",
+    "bright cyan");
+
 static setting_color g_color_doskey(
     "color.doskey",
     "Doskey completions",
@@ -2075,6 +2081,7 @@ void rl_module::on_begin_line(const context& context)
     _rl_readonly_color = build_color_sequence(g_color_readonly, m_readonly_color);
     _rl_command_color = build_color_sequence(g_color_cmd, m_command_color);
     _rl_alias_color = build_color_sequence(g_color_doskey, m_alias_color);
+    _rl_description_color = build_color_sequence(g_color_description, m_description_color, true);
     _rl_filtered_color = build_color_sequence(g_color_filtered, m_filtered_color, true);
     _rl_selected_color = build_color_sequence(g_color_selected, m_selected_color);
 

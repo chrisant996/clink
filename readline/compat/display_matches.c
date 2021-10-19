@@ -81,6 +81,7 @@ int ellipsify_to_callback(const char* in, int limit, int expand_ctrl, vstrlen_fu
 
 //------------------------------------------------------------------------------
 rl_match_display_filter_func_t *rl_match_display_filter_func = NULL;
+const char *_rl_description_color = NULL;
 const char *_rl_filtered_color = NULL;
 const char *_rl_selected_color = NULL;
 
@@ -1031,7 +1032,9 @@ static int display_filtered_match_list_internal(match_display_filter_entry **mat
     int major_stride, minor_stride;
     const char* t;
     const char* filtered_color = "\x1b[m";
+    const char* description_color = "\x1b[m";
     int filtered_color_len = 3;
+    int description_color_len = 3;
     int show_descriptions = 0;
 
     // How many items of MAX length can we fit in the screen window?
@@ -1118,6 +1121,12 @@ static int display_filtered_match_list_internal(match_display_filter_entry **mat
         filtered_color_len = strlen(filtered_color);
     }
 
+    if (_rl_description_color)
+    {
+        description_color = _rl_description_color;
+        description_color_len = strlen(description_color);
+    }
+
     lines = 0;
     for (i = 0; i < count; i++)
     {
@@ -1150,7 +1159,9 @@ static int display_filtered_match_list_internal(match_display_filter_entry **mat
                 {
                     pad_filename(printed_len, fixed, 0);
                     printed_len = fixed;
+                    append_tmpbuf_string(description_color, description_color_len);
                     printed_len += ellipsify_to_callback(entry->description, cols - printed_len - 1, 0/*expand_ctrl*/, append_tmpbuf_string);
+                    append_tmpbuf_string(_normal_color, _normal_color_len);
                 }
             }
 
