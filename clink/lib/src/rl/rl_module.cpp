@@ -1700,7 +1700,8 @@ rl_module::rl_module(const char* shell_name, terminal_in* input, const char* sta
         { "\\e[1;3B",       "clink-scroll-line-down" },  // alt-down
         { "\\e[1;5A",       "clink-scroll-line-up" },    // ctrl-up
         { "\\e[1;5B",       "clink-scroll-line-down" },  // ctrl-down
-        { "\\e?",           "clink-what-is" },           // alt-?
+        { "\\e?",           "clink-what-is" },           // alt-? (alt-shift-/)
+        { "\\e[27;8;191~",  "clink-show-help" },         // ctrl-alt-? (ctrl-alt-shift-/)
         { "\\e^",           "clink-expand-history" },    // alt-^
         {}
     };
