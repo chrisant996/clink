@@ -7,11 +7,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Medium Priority
-- Some ways to add descriptions for flags in argmatchers.
-  - The descriptions would go in the `desc` field of the match generator.
-  - Maybe `addflags("-f|Force blah blah", "-v|Verbose output")`, but that's not backward compatible.
-    - Maybe provide a backward compatibility shim function so `:addflags(...)` can strip the descriptions in older Clink versions.
-  - Maybe `:addflagdescriptions({"-f", "Force blah blah"}, {"-v", "Verbose output"})`, but that's clumsy.
+- Make `clink-select-compare` able to show descriptions in a separate line at the bottom.
+  - Make it possible to have descriptions for args, as well as flags?
 - Add a quick start / beginner section to the Clink docs.
 
 ## Low Priority
