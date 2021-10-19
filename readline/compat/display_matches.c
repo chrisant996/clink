@@ -74,6 +74,9 @@ extern int stat_char (const char *filename, char match_type);
 extern int _rl_internal_pager (int lines);
 extern void qsort_match_list (char** matches, int len);
 
+typedef void (*vstrlen_func_t)(const char* s, int len);
+int ellipsify_to_callback(const char* in, int limit, int expand_ctrl, vstrlen_func_t callback);
+
 
 
 //------------------------------------------------------------------------------
@@ -1143,9 +1146,12 @@ static int display_filtered_match_list_internal(match_display_filter_entry **mat
             if (show_descriptions && matches[l]->description)
             {
                 int fixed = abs(matches[0]->visible_display) + desc_sep_padding;
-                pad_filename(printed_len, fixed, 0);
-                printed_len = fixed + entry->visible_description;
-                append_tmpbuf_string(entry->description, -1);
+                if (fixed < cols - 1)
+                {
+                    pad_filename(printed_len, fixed, 0);
+                    printed_len = fixed;
+                    printed_len += ellipsify_to_callback(entry->description, cols - printed_len - 1, 0/*expand_ctrl*/, append_tmpbuf_string);
+                }
             }
 
             l += minor_stride;

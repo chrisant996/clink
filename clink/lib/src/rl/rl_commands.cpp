@@ -87,6 +87,7 @@ extern void host_cmd_enqueue_lines(std::list<str_moveable>& lines);
 extern void host_add_history(int, const char* line);
 extern void host_get_app_context(int& id, str_base& binaries, str_base& profile, str_base& scripts);
 extern "C" int show_cursor(int visible);
+extern int ellipsify(const char* in, int limit, str_base& out, bool expand_ctrl);
 
 // This is implemented in the app layer, which makes it inaccessible to lower
 // layers.  But Readline and History are siblings, so history_db and rl_module
@@ -228,6 +229,23 @@ static void get_word_bounds(const line_buffer& buffer, int* left, int* right)
     else
         *right = int(strlen(str));
 }
+
+//------------------------------------------------------------------------------
+extern "C" {
+
+typedef void (*vstrlen_func_t)(const char* s, int len);
+
+int ellipsify_to_callback(const char* in, int limit, int expand_ctrl, vstrlen_func_t callback)
+{
+    assert(g_printer);
+
+    str<> s;
+    int visible_len = ellipsify(in, limit, s, !!expand_ctrl);
+    callback(s.c_str(), s.length());
+    return visible_len;
+}
+
+} // extern "C"
 
 
 

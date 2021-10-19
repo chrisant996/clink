@@ -27,7 +27,7 @@ extern int complete_get_screenwidth(void);
 //------------------------------------------------------------------------------
 extern pager* g_pager;
 extern editor_module::result* g_result;
-extern void ellipsify(const char* in, int limit, str_base& out, bool expand_ctrl);
+extern int ellipsify(const char* in, int limit, str_base& out, bool expand_ctrl);
 extern int read_key_direct(bool wait);
 
 //------------------------------------------------------------------------------

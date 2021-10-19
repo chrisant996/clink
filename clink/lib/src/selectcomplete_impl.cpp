@@ -78,7 +78,8 @@ static_assert(between_cols <= before_desc, "description separator can't be less 
 // Parse ANSI escape codes to determine the visible character length of the
 // string (which gets used for column alignment).  Truncate the string with an
 // ellipsis if it exceeds a maximum visible length.
-void ellipsify(const char* in, int limit, str_base& out, bool expand_ctrl)
+// Returns the visible character length of the output string.
+int ellipsify(const char* in, int limit, str_base& out, bool expand_ctrl)
 {
     int visible_len = 0;
     int truncate_visible = -1;
@@ -112,8 +113,11 @@ void ellipsify(const char* in, int limit, str_base& out, bool expand_ctrl)
                 {
                     out.truncate(truncate_bytes);
                     if (ellipsis_len)
+                    {
                         out.concat(ellipsis, min<int>(ellipsis_len, max<int>(0, limit - truncate_visible)));
-                    return;
+                        visible_len += cell_count(ellipsis);
+                    }
+                    return visible_len;
                 }
                 visible_len += clen;
                 out.concat(prev, inner_iter.get_pointer() - prev);
@@ -125,6 +129,8 @@ void ellipsify(const char* in, int limit, str_base& out, bool expand_ctrl)
             out.concat(code.get_pointer(), code.get_length());
         }
     }
+
+    return visible_len;
 }
 
 
