@@ -7,8 +7,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Medium Priority
-- Make `clink-select-compare` able to show descriptions in a separate line at the bottom.
-  - Make it possible to have descriptions for args, as well as flags?
+- Make it possible to have descriptions for args, as well as flags?
 - Add a quick start / beginner section to the Clink docs.
 
 ## Low Priority
