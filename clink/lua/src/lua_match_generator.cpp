@@ -230,7 +230,7 @@ done:
     }
 
     // Count matches.
-    const bool only_lcd = !matches[1];
+    const bool only_lcd = matches[0] && !matches[1];
     int match_count = only_lcd ? 1 : 0;
     for (i = 1; matches[i]; ++i, ++match_count);
 
@@ -515,7 +515,7 @@ void lua_match_generator::filter_matches(char** matches, char completion_type, b
         return;
 
     // Count matches; bail if 0.
-    const bool only_lcd = !matches[1];
+    const bool only_lcd = matches[0] && !matches[1];
     int match_count = only_lcd ? 1 : 0;
     for (int i = 1; matches[i]; ++i, ++match_count);
     if (match_count <= 0)
