@@ -979,9 +979,14 @@ void selectcomplete_impl::update_len()
 //------------------------------------------------------------------------------
 void selectcomplete_impl::update_layout()
 {
-    int slop_rows = 2;
+    const bool desc_below = m_matches.show_descriptions_below();
+    const bool desc_inline = !desc_below && m_matches.has_descriptions();
 
-    int cols_that_fit = m_matches.has_descriptions() ? 1 : m_screen_cols / (m_match_longest + between_cols);
+    // When showing description only for selected item, reserve 2 extra rows for
+    // showing the description.
+    int slop_rows = desc_below ? 4 : 2;
+
+    int cols_that_fit = desc_inline ? 1 : m_screen_cols / (m_match_longest + between_cols);
     m_match_cols = max<int>(1, cols_that_fit);
     m_match_rows = (m_matches.get_match_count() + (m_match_cols - 1)) / m_match_cols;
 
@@ -1121,7 +1126,7 @@ void selectcomplete_impl::update_display()
 
                         const int next = i + minor_stride;
 
-                        const char* desc = m_matches.get_match_description(i);
+                        const char* desc = m_matches.show_descriptions_below() ? nullptr : m_matches.get_match_description(i);
                         const bool last_col = (col + 1 >= m_match_cols || next >= count);
                         if (selected || !last_col || desc)
                             pad_filename(printed_len, col_width + (selected ? 0 : between_cols), selected);
@@ -1183,6 +1188,24 @@ void selectcomplete_impl::update_display()
 
         // Clear to end of screen.
         m_printer->print("\x1b[m\x1b[J");
+
+        // Show match description.
+        if (is_active() && m_matches.show_descriptions_below())
+        {
+            rl_crlf();
+            rl_crlf();
+            up += 2;
+            if (const char* desc = m_matches.get_match_description(m_index))
+            {
+                if (*desc)
+                {
+                    str<> s;
+                    ellipsify(desc, m_screen_cols - 1, s, false);
+                    m_printer->print(description_color, description_color_len);
+                    m_printer->print(s.c_str(), s.length());
+                }
+            }
+        }
 
         // Restore cursor position.
         if (up > 0)

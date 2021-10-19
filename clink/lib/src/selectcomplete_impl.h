@@ -35,6 +35,7 @@ public:
 
     bool            is_display_filtered() const { return !!m_filtered_matches; }
     bool            has_descriptions() const { return m_has_descriptions; }
+    bool            show_descriptions_below() const { return m_has_descriptions && m_filtered_count > 9; }
 
 private:
     void            free_filtered();
