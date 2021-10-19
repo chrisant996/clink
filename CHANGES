@@ -5,6 +5,7 @@
 #### v1.2.38
 
 - Added ability for argmatchers to provide description strings for flags (e.g. "Verbose output" for `-v`, or "Do nothing" for `-n`, etc).  The description strings are displayed (if present) when listing possible completions.
+- Truncate descriptions when a line will wrap (or has wrapped) when listing possible completions.
 - Fixed `:nofiles()` to dead-end an argmatcher (regression introduced in v1.0.0).
 - Fixed `clink.ondisplaymatches()` and `clink.onfiltermatches()` when there's only 1 match.
 - Fixed argmatcher for `clink --profile` so it produces directory matches.
