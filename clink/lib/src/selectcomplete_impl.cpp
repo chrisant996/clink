@@ -158,6 +158,7 @@ void match_adapter::set_matches(const matches* matches)
 //------------------------------------------------------------------------------
 void match_adapter::set_regen_matches(const matches* matches)
 {
+    free_filtered();
     m_matches = matches ? matches : m_real_matches;
 }
 
