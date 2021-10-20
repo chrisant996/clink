@@ -167,8 +167,9 @@ function _argreader:update(word, word_index)
     end
 
     -- Does the word lead to another matcher?
-    for key, linked in pairs(arg._links) do
-        if key == word then
+    if arg._links then
+        local linked = arg._links[word]
+        if linked then
             if is_flag and word:match("[:=]$") and word_index >= 0 then
                 local info = line_state:getwordinfo(word_index)
                 if info and
@@ -177,11 +178,12 @@ function _argreader:update(word, word_index)
                     -- Don't follow linked parser on `--foo=` flag if there's a
                     -- space after the `:` or `=` unless the cursor is on the
                     -- space.
-                    break
+                    linked = nil
                 end
             end
-            self:_push(linked)
-            break
+            if linked then
+                self:_push(linked)
+            end
         end
     end
 end
