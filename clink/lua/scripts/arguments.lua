@@ -445,12 +445,12 @@ function _argmatcher:adddescriptions(...)
             if type(desc) ~= "string" then
                 error("bad argument #".._.." (string table is missing 'description' field)")
             end
-            for _,flag in ipairs(t) do
-                self._descriptions[flag] = desc
+            for _,key in ipairs(t) do
+                self._descriptions[key] = desc
             end
         else
-            for flag,desc in pairs(t) do
-                self._descriptions[flag] = desc
+            for key,desc in pairs(t) do
+                self._descriptions[key] = desc
             end
         end
     end
@@ -590,10 +590,8 @@ function _argmatcher:_add(list, addee, prefixes)
     -- If addee is a flag like --foo= and is not linked, then link it to a
     -- default parser so its argument doesn't get confused as an arg for its
     -- parent argmatcher.
-    if prefixes and type(addee) == "string" then
-        if addee:match("[:=]$") then
-            addee = addee..clink.argmatcher():addarg(clink.filematches)
-        end
+    if prefixes and type(addee) == "string" and addee:match("[:=]$") then
+        addee = addee..clink.argmatcher():addarg(clink.filematches)
     end
 
     -- Flatten out tables unless the table is a link
