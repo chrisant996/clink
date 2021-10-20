@@ -318,18 +318,18 @@ end
 --- -show:  -- This helper function translates flag strings that include
 --- -show:  -- descriptions, to make them compatible with older Clink versions.
 --- -show:  local function maybe_flag_desc(...)
---- -show:      if (clink.version_encoded or 0) < 10020038 then
---- -show:          local recurse
---- -show:          recurse = function(flags, index)
---- -show:              local f = flags[index]:gsub("^(([^|]+)|.*)$", "%2")
---- -show:              if index > #flags then return nil
---- -show:              elseif index < #flags then return f, recurse(flags, index + 1)
---- -show:              else return f
---- -show:              end
---- -show:          end
---- -show:          return recurse({...}, 1)
---- -show:      end
---- -show:      return ...
+--- -show:  &nbsp;   if (clink.version_encoded or 0) < 10020038 then
+--- -show:  &nbsp;       local recurse
+--- -show:  &nbsp;       recurse = function(flags, index)
+--- -show:  &nbsp;           local f = flags[index]:gsub("^(([^|]+)|.*)$", "%2")
+--- -show:  &nbsp;           if index > #flags then return nil
+--- -show:  &nbsp;           elseif index < #flags then return f, recurse(flags, index + 1)
+--- -show:  &nbsp;           else return f
+--- -show:  &nbsp;           end
+--- -show:  &nbsp;       end
+--- -show:  &nbsp;       return recurse({...}, 1)
+--- -show:  &nbsp;   end
+--- -show:  &nbsp;   return ...
 --- -show:  end
 --- -show:
 --- -show:  -- An example of using the helper function:

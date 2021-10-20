@@ -419,22 +419,22 @@ static int set_matches(lua_State* state)
 /// <a href="#clink.popuplist">clink.popuplist()</a> to show a searchable list
 /// of key bindings, and then invoke whichever key binding is selected.
 /// -show:  function luafunc_showkeybindings(rl_buffer)
-/// -show:      local bindings = rl.getkeybindings()
-/// -show:      if #bindings <= 0 then
-/// -show:          rl_buffer:refreshline()
-/// -show:          return
-/// -show:      end
+/// -show:  &nbsp;   local bindings = rl.getkeybindings()
+/// -show:  &nbsp;   if #bindings <= 0 then
+/// -show:  &nbsp;       rl_buffer:refreshline()
+/// -show:  &nbsp;       return
+/// -show:  &nbsp;   end
 /// -show:
-/// -show:      local items = {}
-/// -show:      for _,kb in ipairs(bindings) do
-/// -show:          table.insert(items, { value=kb.binding, display=kb.key, description=kb.binding.."\t"..kb.desc })
-/// -show:      end
+/// -show:  &nbsp;   local items = {}
+/// -show:  &nbsp;   for _,kb in ipairs(bindings) do
+/// -show:  &nbsp;       table.insert(items, { value=kb.binding, display=kb.key, description=kb.binding.."\t"..kb.desc })
+/// -show:  &nbsp;   end
 /// -show:
-/// -show:      local binding, _, index = clink.popuplist("Key Bindings", items)
-/// -show:      rl_buffer:refreshline()
-/// -show:      if binding then
-/// -show:          rl.invokecommand(binding)
-/// -show:      end
+/// -show:  &nbsp;   local binding, _, index = clink.popuplist("Key Bindings", items)
+/// -show:  &nbsp;   rl_buffer:refreshline()
+/// -show:  &nbsp;   if binding then
+/// -show:  &nbsp;       rl.invokecommand(binding)
+/// -show:  &nbsp;   end
 /// -show:  end
 struct key_binding_info { str_moveable name; str_moveable binding; const char* desc; const char* cat; };
 int get_key_bindings(lua_State* state)
