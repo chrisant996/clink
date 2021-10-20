@@ -6,51 +6,59 @@
 
 --------------------------------------------------------------------------------
 local nothing = clink.argmatcher()
+local file_loop = clink.argmatcher():addarg(clink.filematches):loop()
 
 --------------------------------------------------------------------------------
 local dir_matcher = clink.argmatcher():addarg(clink.dirmatches)
 
 --------------------------------------------------------------------------------
-local inject = clink.argmatcher()
-:addflags(
-    "--help",
-    "--pid",
-    "--profile"..dir_matcher,
-    "--quiet",
-    "--nolog",
-    "--scripts"..dir_matcher)
-:addflagdescriptions({
-    ["--help"]      = "Show help",
-    ["--pid"]       = "Inject into the specified process ID",
-    ["--profile"]   = "Specifies an alternative path for profile data",
-    ["--quiet"]     = "Suppress copyright output",
-    ["--nolog"]     = "Disable file logging",
-    ["--scripts"]   = "Alternative path to load .lua scripts from",
-})
+local function make_inject_parser()
+    local inject = clink.argmatcher()
+    :addflags(
+        "--help",
+        "--pid",
+        "--profile"..dir_matcher,
+        "--quiet",
+        "--nolog",
+        "--scripts"..dir_matcher)
+    :adddescriptions({
+        ["--help"]      = "Show help",
+        ["--pid"]       = "Inject into the specified process ID",
+        ["--profile"]   = "Specifies an alternative path for profile data",
+        ["--quiet"]     = "Suppress copyright output",
+        ["--nolog"]     = "Disable file logging",
+        ["--scripts"]   = "Alternative path to load .lua scripts from"})
+    return inject
+end
 
 --------------------------------------------------------------------------------
 local autorun_dashdash = clink.argmatcher()
-:addarg("--" .. inject)
+:addarg("--" .. make_inject_parser():addarg(clink.filematches):loop())
 
 local autorun = clink.argmatcher()
 :addflags(
     "--allusers",
     "--help")
-:addflags({
-    ["--allusers"]  = "Modifies autorun for all users (requires admin rights)",
-    ["--help"]      = "Show help"})
 :addarg(
     "install"   .. autorun_dashdash,
     "uninstall" .. nothing,
     "show"      .. nothing,
-    "set")
+    "set"       .. file_loop)
+:adddescriptions({
+    ["--allusers"]  = "Modifies autorun for all users (requires admin rights)",
+    ["--help"]      = "Show help",
+    ["install"]     = "Installs a command to cmd.exe's autorun to start Clink",
+    ["uninstall"]   = "Does the opposite of 'install'",
+    ["show"]        = "Displays the values of cmd.exe's autorun variables",
+    ["set"]         = "Explicitly set cmd.exe's autorun string"})
+:nofiles()
 
 --------------------------------------------------------------------------------
 local echo = clink.argmatcher()
 :addflags(
     "--help",
     "--verbose")
-:addflags({
+:adddescriptions({
     ["--help"] = "Show help",
     ["--verbose"] = "Print verbose diagnostic information about keypresses"})
 :nofiles()
@@ -317,7 +325,7 @@ end
 --------------------------------------------------------------------------------
 local set = clink.argmatcher()
 :addflags("--help")
-:addflagdescriptions({["--help"] = "Show help"})
+:adddescriptions({["--help"] = "Show help"})
 :addarg(set_handler)
 :addarg(value_handler)
 :setclassifier(classify_handler)
@@ -328,21 +336,27 @@ local history = clink.argmatcher()
     "--help",
     "--bare",
     "--unique")
-:addflagdescriptions({
+:adddescriptions({
     ["--help"]      = "Show help",
     ["--bare"]      = "Omit item numbers when printing history",
-    ["--unique"]    = "Remove duplicates when compacting history"})
+    ["--unique"]    = "Remove duplicates when compacting history",
+    ["add"]         = "Append the rest of the line to the history",
+    ["clear"]       = "Completely clears the command history",
+    ["compact"]     = "Compacts the history file",
+    ["delete"]      = "Delete the Nth history item (negative indexes backwards)",
+    ["expand"]      = "Print substitution result"})
 :addarg(
-    "add",
+    "add"       .. file_loop,
     "clear"     .. nothing,
     "compact"   .. nothing,
     "delete"    .. nothing,
-    "expand")
+    "expand"    .. file_loop)
+:nofiles()
 
 --------------------------------------------------------------------------------
 local installscripts = clink.argmatcher()
 :addflags("--help")
-:addflagdescriptions({["--help"] = "Show help"})
+:adddescriptions({["--help"] = "Show help"})
 :addarg(clink.dirmatches)
 :nofiles()
 
@@ -358,7 +372,7 @@ end
 --------------------------------------------------------------------------------
 local uninstallscripts = clink.argmatcher()
 :addflags("--help")
-:addflagdescriptions({["--help"] = "Show help"})
+:adddescriptions({["--help"] = "Show help"})
 :addarg(uninstall_handler)
 :nofiles()
 
@@ -372,7 +386,7 @@ clink.argmatcher(
     "echo"      .. echo,
     "history"   .. history,
     "info"      .. nothing,
-    "inject"    .. inject,
+    "inject"    .. make_inject_parser():nofiles(),
     "installscripts" .. installscripts,
     "uninstallscripts" .. uninstallscripts,
     "set"       .. set)
@@ -380,10 +394,19 @@ clink.argmatcher(
     "--help",
     "--profile"..dir_matcher,
     "--version")
-:addflagdescriptions({
+:adddescriptions({
     ["--help"]      = "Show help",
     ["--profile"]   = "Override the profile directory",
-    ["--version"]   = "Print Clink's version"})
+    ["--version"]   = "Print Clink's version",
+    ["autorun"]     = "Manage Clink's entry in cmd.exe's autorun",
+    ["echo"]        = "Echo key sequences for use in .inputrc files",
+    ["history"]     = "List and operate on the command history",
+    ["info"]        = "Prints information about Clink",
+    ["inject"]      = "Injects Clink into a process",
+    ["installscripts"] = "Add a path to search for scripts",
+    ["uninstallscripts"] = "Remove a path to search for scripts",
+    ["set"]         = "Adjust Clink's settings"})
+:nofiles()
 
 --------------------------------------------------------------------------------
 local set_generator = clink.generator(clink.argmatcher_generator_priority - 1)

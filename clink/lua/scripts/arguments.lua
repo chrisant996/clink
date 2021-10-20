@@ -385,42 +385,58 @@ function _argmatcher:setflagprefix(...)
 end
 
 --------------------------------------------------------------------------------
---- -name:  _argmatcher:addflagdescriptions
---- -arg:   [flag_descriptions...:table]
+--- -name:  _argmatcher:adddescriptions
+--- -arg:   [descriptions...:table]
 --- -ret:   self
---- Adds descriptions for flags.  Flag descriptions are displayed when listing
---- possible flag completions, e.g. with <kbd>Alt</kbd>+<kbd>=</kbd>.
+--- Adds descriptions for arg matches and/or flag matches.  Descriptions are
+--- displayed for their associated args or flags whenever possible completions
+--- are listed, for example by the <code>complete</code> or
+--- <code>clink-select-complete</code> or <code>possible-completions</code>
+--- commands.
 ---
---- Each <span class="arg">flag_descriptions</span> must be a table with one of
---- the following schemes:
+--- Any number of descriptions tables may be passed to the function, and each
+--- table must use one of the following schemes:
 --- <ul>
---- <li>Key/value pairs where each key is a flag name, and its associated value
---- is the description for the flag.
---- <li>One or more string values that are flag names, and a
---- <code>description</code> field that contains a description string for the
---- flags.
+--- <li>Key/value pairs where each key is an arg or flag, and its value is the
+--- associated description.
+--- <li>One or more string values that are args or flags, and a
+--- <code>description</code> field that is the associated description string.
 --- </ul>
---- -show:  local matcher = clink.argmatcher("clink")
---- -show:  matcher:addflags("-h", "--help", "--version")
+--- -show:  local foo = clink.argmatcher("foo")
+--- -show:  foo:addflags("-h", "--help", "--version")
+--- -show:  foo:addarg("info", "set")
 --- -show:  -- Example using first scheme and just one table:
---- -show:  matcher:addflagdescriptions( {
---- -show:      ["-h"]              = "Show help",
---- -show:      ["--help"]          = "Show help",
---- -show:      ["--version"]       = "Print version info and exit",
+--- -show:  foo:adddescriptions( {
+--- -show:  &nbsp;   ["-h"]              = "Show help",
+--- -show:  &nbsp;   ["--help"]          = "Show help",
+--- -show:  &nbsp;   ["--version"]       = "Print version info and exit",
+--- -show:  &nbsp;   ["info"]            = "Prints information about Foo",
+--- -show:  &nbsp;   ["set"]             = "Show or change settings for Foo",
 --- -show:  } )
 --- -show:  -- Example using second scheme and one table per description:
---- -show:  matcher:addflagdescriptions(
---- -show:      { "-h", "--help",   description = "Show help" },
---- -show:      { "--version",      description = "Print version info and exit" },
+--- -show:  foo:adddescriptions(
+--- -show:  &nbsp;   { "-h", "--help",   description = "Show help" },
+--- -show:  &nbsp;   { "--version",      description = "Print version info and exit" },
+--- -show:  &nbsp;   { "info",           description = "Prints information about Foo" },
+--- -show:  &nbsp;   { "set",            description = "Show or change settings for Foo" },
 --- -show:  )
---- -show:  -- Example how to support backward compatibility in your scripts:
---- -show:  if matcher.addflagdescriptions then
---- -show:      matcher:addflagdescriptions(
---- -show:          -- etc
---- -show:      )
+--- You can make your scripts backward compatible with older Clink versions by
+--- adding a helper function like this:
+--- -show:  -- Helper function to add descriptions, when possible.
+--- -show:  local function maybe_adddescriptions(matcher, ...)
+--- -show:  &nbsp;   if matcher and matcher.adddescriptions then
+--- -show:  &nbsp;       matcher:adddescriptions(...)
+--- -show:  &nbsp;   end
 --- -show:  end
-function _argmatcher:addflagdescriptions(...)
-    self._flags._descriptions = self._flags._descriptions or {}
+--- -show:
+--- -show:  -- This adds descriptions only if the Clink version being used
+--- -show:  -- supports them, otherwise it does nothing.
+--- -show:  maybe_adddescriptions(foo, {
+--- -show:  &nbsp;   ["-h"] = "Show help",
+--- -show:  &nbsp;   -- etc
+--- -show:  })
+function _argmatcher:adddescriptions(...)
+    self._descriptions = self._descriptions or {}
     for _,t in ipairs({...}) do
         if type(t) ~= "table" then
             error("bad argument #".._.." (must be a table)")
@@ -431,11 +447,11 @@ function _argmatcher:addflagdescriptions(...)
                 error("bad argument #".._.." (string table is missing 'description' field)")
             end
             for _,flag in ipairs(t) do
-                self._flags._descriptions[flag] = desc
+                self._descriptions[flag] = desc
             end
         else
             for flag,desc in pairs(t) do
-                self._flags._descriptions[flag] = desc
+                self._descriptions[flag] = desc
             end
         end
     end
@@ -562,10 +578,10 @@ local function add_prefix(prefixes, string)
 end
 
 --------------------------------------------------------------------------------
-local flag_descriptions
-local function ondisplaymatches_flags(matches)
+local lookup_descriptions
+local function ondisplaymatches_descriptions(matches)
     for _,m in ipairs(matches) do
-        m.description = flag_descriptions[m.match]
+        m.description = lookup_descriptions[m.match]
     end
     return matches
 end
@@ -682,9 +698,9 @@ function _argmatcher:_generate(line_state, match_builder, extra_words)
         -- Flags are always "arg" type, which helps differentiate them from
         -- filename completions even when using _deprecated matcher mode, so
         -- that path normalization can avoid affecting flags like "/c", etc.
-        if matcher._flags._descriptions then
-            flag_descriptions = matcher._flags._descriptions
-            clink.ondisplaymatches(ondisplaymatches_flags)
+        if matcher._descriptions then
+            lookup_descriptions = matcher._descriptions
+            clink.ondisplaymatches(ondisplaymatches_descriptions)
         end
         add_matches(matcher._flags._args[1], "arg")
         return true
@@ -702,6 +718,10 @@ function _argmatcher:_generate(line_state, match_builder, extra_words)
         end
         local arg = matcher._args[arg_index]
         if arg then
+            if matcher._descriptions then
+                lookup_descriptions = matcher._descriptions
+                clink.ondisplaymatches(ondisplaymatches_descriptions)
+            end
             return add_matches(arg, match_type) and true or false
         end
     end
