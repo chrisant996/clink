@@ -258,7 +258,6 @@ function _argmatcher._new()
     }, _argmatcher)
     matcher._flagprefix = {}
     matcher._nextargindex = 1
-    matcher._flag_desc_sep = "|"
     return matcher
 end
 
@@ -350,8 +349,6 @@ function _argmatcher:addflags(...)
 
     if not self._deprecated then
         self._flagprefix = prefixes
-    -- else
-    --     flag_matcher._deprecated = true
     end
     return self
 end
