@@ -105,19 +105,20 @@ Name                         | Default | Description
 `cmd.get_errorlevel`         | True    | When this is enabled, Clink runs a hidden `echo %errorlevel%` command before each interactive input prompt to retrieve the last exit code for use by Lua scripts.  If you experience problems, try turning this off.  This is on by default.
 `color.arg`                  |         | The color for arguments in the input line when `clink.colorize_input` is enabled.
 `color.argmatcher`           |         | The color for the command name in the input line when `clink.colorize_input` is enabled, if the command name has an argmatcher available.
-<a name="color_cmd"></a>`color.cmd` | `bold` | Used when Clink displays shell (CMD.EXE) command completions, and in the input line when `clink.colorize_input` is enabled.
-<a name="color_doskey"></a>`color.doskey` | `bright cyan` | Used when Clink displays doskey alias completions, and in the input line when `clink.colorize_input` is enabled.
+<a name="color_cmd"></a>`color.cmd` | `bold` | Used when displaying shell (CMD.EXE) command completions, and in the input line when `clink.colorize_input` is enabled.
+`color.description`          | `bright cyan` | Used when displaying descriptions for match completions.
+<a name="color_doskey"></a>`color.doskey` | `bright cyan` | Used when displaying doskey alias completions, and in the input line when `clink.colorize_input` is enabled.
 <a name="color_filtered"></a>`color.filtered` | `bold` | The default color for filtered completions (see [Filtering the Match Display](#filteringthematchdisplay)).
 `color.flag`                 | `default` | The color for flags in the input line when `clink.colorize_input` is enabled.
-<a name="color_hidden"></a>`color.hidden` | | Used when Clink displays file completions with the "hidden" attribute.
-`color.horizscroll`          |         | Used when Clink displays the `<` or `>` horizontal scroll indicators when Readline's `horizontal-scroll-mode` variable is set.
-`color.input`                |         | Used when Clink displays the input line text. Note that when `clink.colorize_input` is disabled, the entire input line is displayed using `color.input`.
-`color.interact`             | `bold`  | Used when Clink displays text or prompts such as a pager's `--More?--` prompt.
+<a name="color_hidden"></a>`color.hidden` | | Used when displaying file completions with the "hidden" attribute.
+`color.horizscroll`          |         | The color for the `<` or `>` horizontal scroll indicators when Readline's `horizontal-scroll-mode` variable is set.
+`color.input`                |         | The color for input line text. Note that when `clink.colorize_input` is disabled, the entire input line is displayed using `color.input`.
+`color.interact`             | `bold`  | The color for prompts such as a pager's `--More?--` prompt.
 `color.message`              | `default` | The color for the message area (e.g. the search prompt message, digit argument prompt message, etc).
 `color.popup`                |         | When set, this is used as the color for popup lists and messages.  If no color is set, then the console's popup colors are used (see the Properties dialog box for the console window).
 `color.popup_desc`           |         | When set, this is used as the color for description column(s) in popup lists.  If no color is set, then a color is chosen to complement the console's popup colors (see the Properties dialog box for the console window).
 `color.prompt`               |         | When set, this is used as the default color for the prompt.  But it's overridden by any colors set by <a href="#customisingtheprompt">Customising The Prompt</a>.
-<a name="color_readonly"></a>`color.readonly` | | Used when Clink displays file completions with the "readonly" attribute.
+<a name="color_readonly"></a>`color.readonly` | | Used when displaying file completions with the "readonly" attribute.
 `color.selected_completion`  |         | The color for the selected completion with the clink-select-complete command.  If no color is set, then bright reverse video is used.
 `color.selection`            |         | The color for selected text in the input line.  If no color is set, then reverse video is used.
 `color.unexpected`           | `default` | The color for unexpected arguments in the input line when `clink.colorize_input` is enabled.
@@ -728,24 +729,27 @@ When displaying possible completions, flag matches are only shown if the flag ch
 
 If a command doesn't have an argmatcher but is a doskey macro, Clink automatically expands the doskey macro and looks for an argmatcher for the expanded command.  A macro like `gco=git checkout $*` automatically reuses a `git` argmatcher and produces completions for its `checkout` argument.  However, it only expands the doskey macro up to the first `$`, so complex aliases like `foo=app 2$gnul text $*` or `foo=$2 $1` might behave strangely.
 
-### Descriptions for Flags
+### Descriptions for Flags and Arguments
 
-Flags may optionally include descriptions, which are displayed when listing possible flag completions.
+Flags and arguments may optionally have descriptions associated with them.  The descriptions, if any, are displayed when listing possible completions.
 
-Use [_argmatcher:addflagdescriptions()](#_argmatcher:addflagdescriptions) to add descriptions for flags.
+Use [_argmatcher:adddescriptions()](#_argmatcher:adddescriptions) to add descriptions for flags and/or arguments.
 
 For example, with the following matcher, typing `foo -`<kbd>Alt</kbd>+<kbd>=</kbd> will list all of the flags, plus descriptions for each.
 
 ```lua
 clink.argmatcher("foo")
 :addflags("-?", "-h", "-n", "-v", "--help", "--nothing", "--verbose")
-:addflagdescriptions(
+:addarg("print", "delete")
+:addarg(clink.filematches)
+:nofiles()
+:adddescriptions(
     { "-n", "--nothing",    description = "Do nothing; show what would happen without doing it" },
     { "-v", "--verbose",    description = "Verbose output" },
     { "-h", "--help", "-?", description = "Show help text" },
+    { "print",              description = "Print the specified file" },
+    { "delete",             description = "Delete the specified file" },
 )
-:addarg(clink.dirmatches)
-:nofiles()
 ```
 
 ### More Advanced Stuff
