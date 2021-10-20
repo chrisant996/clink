@@ -57,7 +57,7 @@ static void show_usage()
         "uninstallscripts","Remove a path to search for scripts",
         "history",         "List and operate on the command history",
         "info",            "Prints information about Clink",
-        "echo",            "Echo key sequences",
+        "echo",            "Echo key sequences for use in .inputrc files",
         "",                "('<verb> --help' for more details)",
         nullptr
     };
