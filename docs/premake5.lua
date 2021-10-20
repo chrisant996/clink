@@ -98,6 +98,7 @@ local function parse_doc_tags_impl(out, file)
         else
             if seen_show then
                 desc_num = desc_num + 1
+                show_num = show_num + 1
                 seen_show = nil
             end
             tag = "desc"..desc_num
@@ -145,7 +146,9 @@ local function parse_doc_tags_impl(out, file)
             for tag, value in read_tagged do
                 local desc_tag = desc[tag] or {}
                 if value == "" and tag:sub(1, 4) == "desc" then
-                    desc_tag[#desc_tag] = desc_tag[#desc_tag]..'</p><p class="desc">'
+                    if #desc_tag > 0 then
+                        desc_tag[#desc_tag] = desc_tag[#desc_tag]..'</p><p class="desc">'
+                    end
                 else
                     if tag == "deprecated" then
                         group = "Deprecated"
