@@ -35,7 +35,6 @@ public:
 
     bool            is_display_filtered() const { return !!m_filtered_matches; }
     bool            has_descriptions() const { return m_has_descriptions; }
-    bool            show_descriptions_below() const { return m_has_descriptions && m_filtered_count > 9; }
 
 private:
     void            free_filtered();
@@ -97,6 +96,7 @@ private:
     int             m_match_cols = 0;
     int             m_match_rows = 0;
     int             m_visible_rows = 0;
+    bool            m_desc_below = false;
 
     // Inserting matches.
     int             m_anchor = -1;

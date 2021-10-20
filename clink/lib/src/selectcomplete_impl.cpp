@@ -329,6 +329,9 @@ cant_activate:
         return false;
     }
 
+    if (!reactivate)
+        m_desc_below = m_matches.get_match_count() > 9;
+
     // Make sure there's room.
     update_layout();
     if (m_visible_rows <= 0)
@@ -449,6 +452,7 @@ void selectcomplete_impl::on_begin_line(const context& context)
 
     m_screen_cols = context.printer.get_columns();
     m_screen_rows = context.printer.get_rows();
+    m_desc_below = false;
     update_layout();
 }
 
@@ -460,6 +464,7 @@ void selectcomplete_impl::on_end_line()
     m_matches.set_matches(nullptr);
     m_printer = nullptr;
     m_anchor = -1;
+    m_desc_below = false;
 }
 
 //------------------------------------------------------------------------------
@@ -979,12 +984,11 @@ void selectcomplete_impl::update_len()
 //------------------------------------------------------------------------------
 void selectcomplete_impl::update_layout()
 {
-    const bool desc_below = m_matches.show_descriptions_below();
-    const bool desc_inline = !desc_below && m_matches.has_descriptions();
+    const bool desc_inline = !m_desc_below && m_matches.has_descriptions();
 
     // When showing description only for selected item, reserve 2 extra rows for
     // showing the description.
-    int slop_rows = desc_below ? 4 : 2;
+    int slop_rows = m_desc_below ? 4 : 2;
 
     int cols_that_fit = desc_inline ? 1 : m_screen_cols / (m_match_longest + between_cols);
     m_match_cols = max<int>(1, cols_that_fit);
@@ -1126,7 +1130,7 @@ void selectcomplete_impl::update_display()
 
                         const int next = i + minor_stride;
 
-                        const char* desc = m_matches.show_descriptions_below() ? nullptr : m_matches.get_match_description(i);
+                        const char* desc = m_desc_below ? nullptr : m_matches.get_match_description(i);
                         const bool last_col = (col + 1 >= m_match_cols || next >= count);
                         if (selected || !last_col || desc)
                             pad_filename(printed_len, col_width + (selected ? 0 : between_cols), selected);
@@ -1190,14 +1194,15 @@ void selectcomplete_impl::update_display()
         m_printer->print("\x1b[m\x1b[J");
 
         // Show match description.
-        if (is_active() && m_matches.show_descriptions_below())
+        if (is_active() && m_desc_below)
         {
             rl_crlf();
             rl_crlf();
             up += 2;
-            if (const char* desc = m_matches.get_match_description(m_index))
+            if (m_index >= 0 && m_index < m_matches.get_match_count())
             {
-                if (*desc)
+                const char* desc = m_matches.get_match_description(m_index);
+                if (desc && *desc)
                 {
                     str<> s;
                     ellipsify(desc, m_screen_cols - 1, s, false);
