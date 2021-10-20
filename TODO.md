@@ -7,7 +7,9 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Medium Priority
-- Make it possible to have descriptions for args, as well as flags?
+- Make `addmatch()` accept a `description` field in the first place, so that display filtering isn't even needed?
+- Maybe add descriptions for `clink set` setting names?
+- Maybe limit how many matches `possible-completions` will show with descriptions?
 - Add a quick start / beginner section to the Clink docs.
 
 ## Low Priority
