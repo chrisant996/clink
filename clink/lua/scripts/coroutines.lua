@@ -419,11 +419,11 @@ end
 --- -show:  local file = io.popenyield("git status")
 --- -show:
 --- -show:  while (true) do
---- -show:  &nbsp; local line = file:read("*line")
---- -show:  &nbsp; if not line then
---- -show:  &nbsp;   break
---- -show:  &nbsp; end
---- -show:  &nbsp; do_things_with(line)
+--- -show:  &nbsp;   local line = file:read("*line")
+--- -show:  &nbsp;   if not line then
+--- -show:  &nbsp;       break
+--- -show:  &nbsp;   end
+--- -show:  &nbsp;   do_things_with(line)
 --- -show:  end
 --- -show:  file:close()
 function io.popenyield(command, mode)

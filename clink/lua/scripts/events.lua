@@ -143,24 +143,24 @@ end
 --- display matches.  See <a href="#filteringthematchdisplay">Filtering the
 --- Match Display</a> for more information.
 --- -show:  local function my_filter(matches, popup)
---- -show:  &nbsp; local new_matches = {}
---- -show:  &nbsp; for _,m in ipairs(matches) do
---- -show:  &nbsp;   if m.match:find("[0-9]") then
---- -show:  &nbsp;     -- Ignore matches with one or more digits.
---- -show:  &nbsp;   else
---- -show:  &nbsp;     -- Keep the match, and also add * prefix to directory matches.
---- -show:  &nbsp;     if m.type:find("^dir") then
---- -show:  &nbsp;       m.display = "*"..m.match
---- -show:  &nbsp;     end
---- -show:  &nbsp;     table.insert(new_matches, m)
+--- -show:  &nbsp;   local new_matches = {}
+--- -show:  &nbsp;   for _,m in ipairs(matches) do
+--- -show:  &nbsp;       if m.match:find("[0-9]") then
+--- -show:  &nbsp;           -- Ignore matches with one or more digits.
+--- -show:  &nbsp;       else
+--- -show:  &nbsp;           -- Keep the match, and also add * prefix to directory matches.
+--- -show:  &nbsp;           if m.type:find("^dir") then
+--- -show:  &nbsp;               m.display = "*"..m.match
+--- -show:  &nbsp;           end
+--- -show:  &nbsp;           table.insert(new_matches, m)
+--- -show:  &nbsp;       end
 --- -show:  &nbsp;   end
---- -show:  &nbsp; end
---- -show:  &nbsp; return new_matches
+--- -show:  &nbsp;   return new_matches
 --- -show:  end
 --- -show:
 --- -show:  function my_match_generator:generate(line_state, match_builder)
---- -show:  &nbsp; ...
---- -show:  &nbsp; clink.ondisplaymatches(my_filter)
+--- -show:  &nbsp;   ...
+--- -show:  &nbsp;   clink.ondisplaymatches(my_filter)
 --- -show:  end
 function clink.ondisplaymatches(func)
     -- For now, only one handler at a time.  I wanted it to be a chain of

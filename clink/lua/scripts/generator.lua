@@ -336,11 +336,12 @@ end
 
 --------------------------------------------------------------------------------
 --- -name:  rl_state
---- -deprecated: line
+--- -deprecated: line_state
 --- -var:   table
 --- This is an obsolete global variable that was set while running match
---- generators.  It has been superseded by the <a href="#line">line</a> type
---- parameter passed into match generator functions when using the new
+--- generators.  It has been superseded by the
+--- <a href="#line_state">line_state</a> type parameter passed into match
+--- generator functions when using the new
 --- <a href="#clink.generator">clink.generator</a> API.
 
 --------------------------------------------------------------------------------
@@ -366,7 +367,7 @@ end
 --- -show:  -- Replace with new form:
 --- -show:  local g = clink.generator(10)
 --- -show:  function g:generate(line_state, match_builder)
---- -show:  &nbsp; -- `line_state` is a <a href="#line">line</a> object.
+--- -show:  &nbsp; -- `line_state` is a <a href="#line_state">line_state</a> object.
 --- -show:  &nbsp; -- `match_builder:<a href="#builder:addmatch">addmatch</a>()` is used to add matches.
 --- -show:  &nbsp; -- return true if handled, or false to let another generator try.
 --- -show:  end

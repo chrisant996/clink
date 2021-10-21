@@ -112,29 +112,29 @@ static int collapse_tilde(lua_State* state)
 /// -show:  local result, expanded = rl.expandtilde("~\Documents")
 /// -show:  -- result is "C:\Users\yourusername\Documents"
 /// -show:  -- expanded is true
-/// -show:  &nbsp;
+/// -show:
 /// -show:  -- This dir_matches function demonstrates efficient use of rl.expandtilde()
 /// -show:  -- and rl.collapsetilde() to generate directory matches from the file system.
 /// -show:  function dir_matches(match_word, word_index, line_state)
-/// -show:  &nbsp; -- Expand tilde before scanning file system.
-/// -show:  &nbsp; local word = line_state:getword(word_index)
-/// -show:  &nbsp; local expanded
-/// -show:  &nbsp; word, expanded = rl.expandtilde(word)
-/// -show:  &nbsp;
-/// -show:  &nbsp; -- Get the directory from 'word', and collapse tilde before generating
-/// -show:  &nbsp; -- matches.  Notice that collapsetilde() only needs to be called once!
-/// -show:  &nbsp; local root = path.getdirectory(word) or ""
-/// -show:  &nbsp; if expanded then
-/// -show:  &nbsp; &nbsp; root = rl.collapsetilde(root)
-/// -show:  &nbsp; end
-/// -show:  &nbsp;
-/// -show:  &nbsp; local matches = {}
-/// -show:  &nbsp; for _, d in ipairs(os.globdirs(word.."*", true)) do
-/// -show:  &nbsp;   -- Join the filename with the input directory (might have a tilde).
-/// -show:  &nbsp;   local dir = path.join(root, d.name)
-/// -show:  &nbsp;   table.insert(matches, { match = dir, type = d.type })
-/// -show:  &nbsp; end
-/// -show:  &nbsp; return matches
+/// -show:  &nbsp;   -- Expand tilde before scanning file system.
+/// -show:  &nbsp;   local word = line_state:getword(word_index)
+/// -show:  &nbsp;   local expanded
+/// -show:  &nbsp;   word, expanded = rl.expandtilde(word)
+/// -show:
+/// -show:  &nbsp;   -- Get the directory from 'word', and collapse tilde before generating
+/// -show:  &nbsp;   -- matches.  Notice that collapsetilde() only needs to be called once!
+/// -show:  &nbsp;   local root = path.getdirectory(word) or ""
+/// -show:  &nbsp;   if expanded then
+/// -show:  &nbsp;       root = rl.collapsetilde(root)
+/// -show:  &nbsp;   end
+/// -show:
+/// -show:  &nbsp;   local matches = {}
+/// -show:  &nbsp;   for _, d in ipairs(os.globdirs(word.."*", true)) do
+/// -show:  &nbsp;       -- Join the filename with the input directory (might have a tilde).
+/// -show:  &nbsp;       local dir = path.join(root, d.name)
+/// -show:  &nbsp;       table.insert(matches, { match = dir, type = d.type })
+/// -show:  &nbsp;   end
+/// -show:  &nbsp;   return matches
 /// -show:  end
 static int expand_tilde(lua_State* state)
 {
@@ -359,17 +359,17 @@ static int get_last_command(lua_State* state)
 ///
 /// <em>Example Lua function:</em>
 /// -show:  function completenumbers()
-/// -show:  &nbsp; local _,last_luafunc = rl.getlastcommand()
-/// -show:  &nbsp; if last_luafunc ~= "completenumbers" then
-/// -show:  &nbsp;   -- Collect numbers from the screen (minimum of three digits).
-/// -show:  &nbsp;   -- The numbers can be any base up to hexadecimal (decimal, octal, etc).
-/// -show:  &nbsp;   local matches = console.screengrab("[^%w]*(%w%w[%w]+)", "^%x+$")
-/// -show:  &nbsp;   -- They're already sorted by distance from the input line.
-/// -show:  &nbsp;   matches["nosort"] = true
-/// -show:  &nbsp;   rl.setmatches(matches)
-/// -show:  &nbsp; end
+/// -show:  &nbsp;   local _,last_luafunc = rl.getlastcommand()
+/// -show:  &nbsp;   if last_luafunc ~= "completenumbers" then
+/// -show:  &nbsp;       -- Collect numbers from the screen (minimum of three digits).
+/// -show:  &nbsp;       -- The numbers can be any base up to hexadecimal (decimal, octal, etc).
+/// -show:  &nbsp;       local matches = console.screengrab("[^%w]*(%w%w[%w]+)", "^%x+$")
+/// -show:  &nbsp;       -- They're already sorted by distance from the input line.
+/// -show:  &nbsp;       matches["nosort"] = true
+/// -show:  &nbsp;       rl.setmatches(matches)
+/// -show:  &nbsp;   end
 /// -show:
-/// -show:  &nbsp; rl.invokecommand("old-menu-complete")
+/// -show:  &nbsp;   rl.invokecommand("old-menu-complete")
 /// -show:  end
 static int set_matches(lua_State* state)
 {
@@ -412,7 +412,11 @@ static int set_matches(lua_State* state)
 /// -arg:   raw:boolean
 /// -ret:   table
 /// Returns key bindings in a table with the following scheme:
-/// <span class="tablescheme">{ {key:string, binding:string, desc:string, category:string}, ... }</span>.
+/// -show:  local t = rl.getkeybindings()
+/// -show:  -- t[index].key         [string] Key name.
+/// -show:  -- t[index].binding     [string] Command or macro bound to the key.
+/// -show:  -- t[index].desc        [string] Description of the command.
+/// -show:  -- t[index].category    [string] Category of the command.
 ///
 /// The following example demonstrates using this function in a
 /// <a href="#luakeybindings">luafunc: key binding</a> to invoke
@@ -427,12 +431,18 @@ static int set_matches(lua_State* state)
 /// -show:
 /// -show:  &nbsp;   local items = {}
 /// -show:  &nbsp;   for _,kb in ipairs(bindings) do
-/// -show:  &nbsp;       table.insert(items, { value=kb.binding, display=kb.key, description=kb.binding.."\t"..kb.desc })
+/// -show:  &nbsp;       table.insert(items, {
+/// -show:  &nbsp;           value = kb.binding,     -- Return the binding when selected, so it can be invoked.
+/// -show:  &nbsp;           display = kb.key,       -- Display the key name.
+/// -show:  &nbsp;           description = kb.binding.."\t"..kb.desc -- Also display the command and description.
+/// -show:  &nbsp;       })
 /// -show:  &nbsp;   end
 /// -show:
+/// -show:  &nbsp;   -- Show a popup that lists the items from above.
 /// -show:  &nbsp;   local binding, _, index = clink.popuplist("Key Bindings", items)
 /// -show:  &nbsp;   rl_buffer:refreshline()
 /// -show:  &nbsp;   if binding then
+/// -show:  &nbsp;       -- Invoke the selected binding (a command or macro).
 /// -show:  &nbsp;       rl.invokecommand(binding)
 /// -show:  &nbsp;   end
 /// -show:  end
@@ -493,15 +503,14 @@ int get_key_bindings(lua_State* state)
 /// output that the Readline library wouldn't know about).
 ///
 /// The returned table has the following scheme:
-/// -show:  {
-/// -show:  &nbsp; promptprefix,            -- [string] the prompt string, minus the last line of the prompt string
-/// -show:  &nbsp; promptprefixlinecount,   -- [integer] number of lines in the promptprefix string
-/// -show:  &nbsp; prompt,                  -- [string] the last line of the prompt string
-/// -show:  &nbsp; rprompt,                 -- [string or nil] the right side prompt (or nil if none)
-/// -show:  &nbsp; promptline,              -- [integer] console line on which the prompt starts
-/// -show:  &nbsp; inputline,               -- [integer] console line on which the input text starts
-/// -show:  &nbsp; inputlinecount,          -- [integer] number of lines in the input text
-/// -show:  }
+/// -show:  local info = rl.getpromptinfo()
+/// -show:  -- info.promptprefix              [string] The prompt string, minus the last line of the prompt string.
+/// -show:  -- info.promptprefixlinecount     [integer] Number of lines in the promptprefix string.
+/// -show:  -- info.prompt                    [string] The last line of the prompt string.
+/// -show:  -- info.rprompt                   [string or nil] The right side prompt (or nil if none).
+/// -show:  -- info.promptline                [integer] Console line on which the prompt starts.
+/// -show:  -- info.inputline                 [integer] Console line on which the input text starts.
+/// -show:  -- info.inputlinecount            [integer] Number of lines in the input text.
 static int get_prompt_info(lua_State* state)
 {
     if (prompt_filter::is_filtering())

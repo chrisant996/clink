@@ -356,24 +356,14 @@ static int to_uppercase(lua_State* state)
 ///
 /// <span class="arg">title</span> is required and captions the popup list.
 ///
-/// <span class="arg">items</span> is a table of strings to display, or a table
-/// of items with the following scheme:
-/// <span class="tablescheme">{ {display:string, value:string, description:string}, ... }</span>.
-/// The <code>display</code> field is displayed in the popup list (or if not
-/// present then <code>value</code> is displayed).  The <code>value</code> field
-/// is returned if the item is chosen.  The <code>description</code> is
-/// optional, and is displayed in a dimmed color in a second column.  If it
-/// contains tab characters (<code>"\t"</code>) the description string is split
-/// into multiple columns (up to 3).
+/// <span class="arg">items</span> is a table of strings to display.
 ///
 /// <span class="arg">index</span> optionally specifies the default item (or 1
 /// if omitted).
 ///
-/// If the popup is canceled or an error occurs, the function returns nil.
-///
-/// Otherwise the 3 return values are:
-///
+/// The function returns one of the following:
 /// <ul>
+/// <li>nil if the popup is canceled or an error occurs.
 /// <li>string indicating the <code>value</code> field from the selected item
 /// (or the <code>display</code> field if no value field is present).
 /// <li>boolean which is true if the item was selected with <kbd>Shift</kbd> or
@@ -381,6 +371,26 @@ static int to_uppercase(lua_State* state)
 /// <li>integer indicating the index of the selected item in the original
 /// <span class="arg">items</span> table.
 /// </ul>
+///
+/// Alternatively, the <span class="arg">items</span> argument can be a table of
+/// tables with the following scheme:
+/// -show:  {
+/// -show:  &nbsp;   {
+/// -show:  &nbsp;       value       = "...",   -- Required; this is returned if the item is chosen.
+/// -show:  &nbsp;       display     = "...",   -- Optional; displayed instead of value.
+/// -show:  &nbsp;       description = "...",   -- Optional; displayed in a dimmed color in a second column.
+/// -show:  &nbsp;   },
+/// -show:  &nbsp;   ...
+/// -show:  }
+///
+/// The <code>value</code> field is returned if the item is chosen.
+///
+/// The optional <code>display</code> field is displayed in the popup list
+/// instead of the <code>value</code> field.
+///
+/// The optional <code>description</code> field is displayed in a dimmed color
+/// in a second column.  If it contains tab characters (<code>"\t"</code>) the
+/// description string is split into multiple columns (up to 3).
 static int popup_list(lua_State* state)
 {
     if (!lua_state::is_in_luafunc())
@@ -605,8 +615,8 @@ static int get_ansi_host(lua_State* state)
 /// -show:  -- in its :generate() function and return true.
 /// -show:  local force_slashes = clink.generator(-1)
 /// -show:  function force_slashes:generate()
-/// -show:  &nbsp; clink.translateslashes(2)    -- Convert to slashes.
-/// -show:  &nbsp; return false                 -- Allow generators to continue.
+/// -show:  &nbsp;   clink.translateslashes(2)  -- Convert to slashes.
+/// -show:  &nbsp;   return false               -- Allow generators to continue.
 /// -show:  end
 static int translate_slashes(lua_State* state)
 {

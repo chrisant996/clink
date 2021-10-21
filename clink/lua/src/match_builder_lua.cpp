@@ -41,17 +41,29 @@ match_builder_lua::~match_builder_lua()
 /// -arg:   match:string|table
 /// -arg:   [type:string]
 /// -ret:   boolean
-/// Adds a match.  If <span class="arg">match</span> is a string, it's added as
-/// a match and <span class="arg">type</span> is the optional match type.
+/// Adds a match.
 ///
-/// Or <span class="arg">match</span> can be a table with the following scheme:
-/// <span class="tablescheme">{ match:string, [type:string] }</span>.  If a
-/// table element is missing the type field, then the
+/// The <span class="arg">match</span> argument is the match string to add.
+///
+/// The <span class="arg">type</span> argument is the optional match type, or
+/// "none" if omitted (see below for the possible match types).
+///
+/// Alternatively, the <span class="arg">match</span> argument can be a table
+/// with the following scheme:
+/// -show:  {
+/// -show:  &nbsp;   match       = "..."    -- [string] The match text.
+/// -show:  &nbsp;   description = "..."    -- [string] OPTIONAL; a description for the match.
+/// -show:  &nbsp;   type        = "..."    -- [string] OPTIONAL; the match type.
+/// -show:  }
+///
+/// <li>The <code>description</code> field is optional, and is displayed when
+/// listing possible completions.
+///
+/// <li>The <code>type</code> field is optional.  If omitted, then the
 /// <span class="arg">type</span> argument is used for that element.
 ///
-/// If the <span class="arg">type</span> argument is omitted, "none" is assumed.
-///
-/// The match type can affect how the match is inserted, displayed, and colored:
+/// The match type affects how the match is inserted, displayed, and colored.
+/// Some type modifiers may be combined with a match type.
 ///
 /// <table>
 /// <tr><th>Type</th><th>Description</th></tr>
@@ -81,7 +93,7 @@ match_builder_lua::~match_builder_lua()
 /// -show:  builder:addmatch("abbrev", "alias")
 /// -show:  builder:addmatch({ match="foo.cpp", type="file" })
 /// -show:  builder:addmatch({ match="bar", type="dir" })
-/// -show:  builder:addmatch({ match=".git", type="dir hidden" })
+/// -show:  builder:addmatch({ match=".git", type="dir,hidden" })
 int match_builder_lua::add_match(lua_State* state)
 {
     int ret = 0;
@@ -182,16 +194,17 @@ int match_builder_lua::set_matches_are_files(lua_State* state)
 /// in a for-loop. Returns the number of matches added and a boolean indicating
 /// if all matches were added successfully.
 ///
-/// <span class="arg">matches</span> can be a table of match strings, or a table
-/// of tables describing the matches.<br/>
-/// <span class="arg">type</span> is used as the type when a match doesn't
-/// explicitly include a type, and is "none" if omitted.
+/// The <span class="arg">matches</span> argument can be a table of match
+/// strings, or a table of tables describing the matches.
+///
+/// The <span class="arg">type</span> argument is used as the type when a match
+/// doesn't explicitly include a type, and is "none" if omitted.
 /// -show:  builder:addmatches({"abc", "def"}) -- Adds two matches of type "none"
 /// -show:  builder:addmatches({"abc", "def"}, "file") -- Adds two matches of type "file"
 /// -show:  builder:addmatches({
-/// -show:  &nbsp;&nbsp;-- Same table scheme per entry here as in builder:addmatch()
-/// -show:  &nbsp;&nbsp;{ match="remote/origin/master", type="word" },
-/// -show:  &nbsp;&nbsp;{ match="remote/origin/topic", type="word" }
+/// -show:  &nbsp;   -- Same table scheme per entry here as in builder:addmatch()
+/// -show:  &nbsp;   { match="remote/origin/master", type="word" },
+/// -show:  &nbsp;   { match="remote/origin/topic", type="word" }
 /// -show:  })
 int match_builder_lua::add_matches(lua_State* state)
 {

@@ -30,7 +30,7 @@ line_state_lua::line_state_lua(const line_state& line)
 }
 
 //------------------------------------------------------------------------------
-/// -name:  line:getline
+/// -name:  line_state:getline
 /// -ver:   1.0.0
 /// -ret:   string
 /// Returns the current line in its entirety.
@@ -41,7 +41,7 @@ int line_state_lua::get_line(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-/// -name:  line:getcursor
+/// -name:  line_state:getcursor
 /// -ver:   1.0.0
 /// -ret:   integer
 /// Returns the position of the cursor.
@@ -52,7 +52,7 @@ int line_state_lua::get_cursor(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-/// -name:  line:getcommandoffset
+/// -name:  line_state:getcommandoffset
 /// -ver:   1.0.0
 /// -ret:   integer
 /// Returns the offset to the start of the delimited command in the line that's
@@ -60,7 +60,7 @@ int line_state_lua::get_cursor(lua_State* state)
 /// command of the line unquoted as whitespace isn't considered for words.
 /// -show:  -- Given the following line; abc& 123
 /// -show:  -- where commands are separated by & symbols.
-/// -show:  line:getcommandoffset() == 4
+/// -show:  line_state:getcommandoffset() == 4
 int line_state_lua::get_command_offset(lua_State* state)
 {
     lua_pushinteger(state, m_line.get_command_offset() + 1);
@@ -68,7 +68,7 @@ int line_state_lua::get_command_offset(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-/// -name:  line:getcommandwordindex
+/// -name:  line_state:getcommandwordindex
 /// -ver:   1.2.27
 /// -ret:   integer
 /// Returns the index of the command word. Usually the index is 1, but if a
@@ -77,7 +77,7 @@ int line_state_lua::get_command_offset(lua_State* state)
 /// -show:  -- Given the following line; >x abc
 /// -show:  -- the first word is "x" and is an argument to the redirection symbol,
 /// -show:  -- and the second word is "abc" and is the command word.
-/// -show:  line:getcommandwordindex() == 2
+/// -show:  line_state:getcommandwordindex() == 2
 int line_state_lua::get_command_word_index(lua_State* state)
 {
     lua_pushinteger(state, m_line.get_command_word_index() + 1);
@@ -85,7 +85,7 @@ int line_state_lua::get_command_word_index(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-/// -name:  line:getwordcount
+/// -name:  line_state:getwordcount
 /// -ver:   1.0.0
 /// -ret:   integer
 /// Returns the number of words in the current line.
@@ -96,7 +96,7 @@ int line_state_lua::get_word_count(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-/// -name:  line:getwordinfo
+/// -name:  line_state:getwordinfo
 /// -ver:   1.0.0
 /// -arg:   index:integer
 /// -ret:   table
@@ -104,19 +104,18 @@ int line_state_lua::get_word_count(lua_State* state)
 ///
 /// Note:  The length refers to the substring in the line; it omits leading and
 /// trailing quotes, but <em><strong>includes</strong></em> embedded quotes.
-/// <a href="#line:getword">line:getword()</a> conveniently strips embedded
-/// quotes to help generators naturally complete <code>"foo\"ba</code> to
-/// <code>"foo\bar"</code>.
+/// <a href="#line_state:getword">line_state:getword()</a> conveniently strips
+/// embedded quotes to help generators naturally complete <code>"foo\"ba</code>
+/// to <code>"foo\bar"</code>.
 ///
 /// The table returned has the following scheme:
-/// -show:  {
-/// -show:  &nbsp; offset,  -- [integer] offset where the word starts in the line:getline() string.
-/// -show:  &nbsp; length,  -- [integer] length of the word (includes embedded quotes).
-/// -show:  &nbsp; quoted,  -- [boolean] indicates whether the word is quoted.
-/// -show:  &nbsp; delim,   -- [string] the delimiter character, or an empty string.
-/// -show:  &nbsp; alias,   -- [boolean | nil] true if the word is a doskey alias, otherwise nil.
-/// -show:  &nbsp; redir,   -- [boolean | nil] true if the word is a redirection arg, otherwise nil.
-/// -show:  }
+/// -show:  local t = line_state:getwordinfo(word_index)
+/// -show:  -- t.offset     [integer] Offset where the word starts in the line_state:getline() string.
+/// -show:  -- t.length     [integer] Length of the word (includes embedded quotes).
+/// -show:  -- t.quoted     [boolean] Indicates whether the word is quoted.
+/// -show:  -- t.delim      [string] The delimiter character, or an empty string.
+/// -show:  -- t.alias      [boolean | nil] true if the word is a doskey alias, otherwise nil.
+/// -show:  -- t.redir      [boolean | nil] true if the word is a redirection arg, otherwise nil.
 int line_state_lua::get_word_info(lua_State* state)
 {
     if (!lua_isnumber(state, 1))
@@ -166,7 +165,7 @@ int line_state_lua::get_word_info(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-/// -name:  line:getword
+/// -name:  line_state:getword
 /// -ver:   1.0.0
 /// -arg:   index:integer
 /// -ret:   string
@@ -176,8 +175,9 @@ int line_state_lua::get_word_info(lua_State* state)
 /// complete <code>"foo\"ba</code> to <code>"foo\bar"</code>.  The raw word
 /// including quotes can be obtained using the <code>offset</code> and
 /// <code>length</code> fields from
-/// <a href="#line:getwordinfo">line:getwordinfo()</a> to extract a substring
-/// from the line returned by <a href="#line:getline">line:getline()</a>.
+/// <a href="#line_state:getwordinfo">line_state:getwordinfo()</a> to extract a
+/// substring from the line returned by
+/// <a href="#line_state:getline">line_state:getline()</a>.
 int line_state_lua::get_word(lua_State* state)
 {
     if (!lua_isnumber(state, 1))
@@ -191,7 +191,7 @@ int line_state_lua::get_word(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-/// -name:  line:getendword
+/// -name:  line_state:getendword
 /// -ver:   1.0.0
 /// -ret:   string
 /// Returns the last word of the line. This is the word that matches are being
@@ -201,9 +201,10 @@ int line_state_lua::get_word(lua_State* state)
 /// complete <code>"foo\"ba</code> to <code>"foo\bar"</code>.  The raw word
 /// including quotes can be obtained using the <code>offset</code> and
 /// <code>length</code> fields from
-/// <a href="#line:getwordinfo">line:getwordinfo()</a> to extract a substring
-/// from the line returned by <a href="#line:getline">line:getline()</a>.
-/// -show:  line:getword(line:getwordcount()) == line:getendword()
+/// <a href="#line_state:getwordinfo">line_state:getwordinfo()</a> to extract a
+/// substring from the line returned by
+/// <a href="#line_state:getline">line_state:getline()</a>.
+/// -show:  line_state:getword(line_state:getwordcount()) == line_state:getendword()
 int line_state_lua::get_end_word(lua_State* state)
 {
     str<32> word;

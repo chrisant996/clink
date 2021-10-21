@@ -640,11 +640,11 @@ int luaL_YieldGuard::__tostring(lua_State* state)
 /// -show:  w:close()
 /// -show:
 /// -show:  while (true) do
-/// -show:  &nbsp; local line = r:read("*line")
-/// -show:  &nbsp; if not line then
-/// -show:  &nbsp;   break
-/// -show:  &nbsp; end
-/// -show:  &nbsp; print(line)
+/// -show:  &nbsp;   local line = r:read("*line")
+/// -show:  &nbsp;   if not line then
+/// -show:  &nbsp;       break
+/// -show:  &nbsp;   end
+/// -show:  &nbsp;   print(line)
 /// -show:  end
 /// -show:  r:close()
 /*static*/ int io_popenrw(lua_State* state) // gcc can't handle 'friend' and 'static'.

@@ -552,7 +552,7 @@ function my_generator:generate(line_state, match_builder)
 end
 ```
 
-<span class="arg">line_state</span> is a <a href="#line">line</a> object that has information about the current line.
+<span class="arg">line_state</span> is a <a href="#line_state">line_state</a> object that has information about the current line.
 
 <span class="arg">match_builder</span> is a <a href="#builder">builder</a> object to which matches can be added.
 
@@ -568,7 +568,7 @@ Here is an example script that supplies git branch names as matches for `git che
 
 If needed, a generator can optionally influence word breaking for the end word by defining a `:getwordbreakinfo()` function.
 
-The function takes a <span class="arg">line_state</span> <a href="#line">line</a> object that has information about the current line.  If it returns nil or 0, the end word is truncated to 0 length.  This is the normal behavior, which allows Clink to collect and cache all matches and then filter them based on typing.  Or it can return two numbers:  word break length and an optional end word length.  The end word is split at the word break length:  one word contains the first word break length characters from the end word (if 0 length then it's discarded), and the next word contains the rest of the end word truncated to the optional word length (0 if omitted).
+The function takes a <span class="arg">line_state</span> <a href="#line_state">line_state</a> object that has information about the current line.  If it returns nil or 0, the end word is truncated to 0 length.  This is the normal behavior, which allows Clink to collect and cache all matches and then filter them based on typing.  Or it can return two numbers:  word break length and an optional end word length.  The end word is split at the word break length:  one word contains the first word break length characters from the end word (if 0 length then it's discarded), and the next word contains the rest of the end word truncated to the optional word length (0 if omitted).
 
 A good example to look at is Clink's own built-in environment variable match generator.  It has a `:getwordbreakinfo()` function that understands the `%` syntax of environment variables and produces word break info accordingly.
 
@@ -880,16 +880,22 @@ Next define a classify function on the object, taking the following form:
 
 ```lua
 function my_classifier:classify(commands)
-    -- commands is a table of { line_state, classifications } objects, one per
-    -- command in the input line.  For example, "echo hello & echo world" is two
-    -- commands:  "echo hello" and "echo world".
+    -- See further below for how to use the commands argument.
+    -- Returning true stops any further classifiers from being called, or
+    -- returning false or nil continues letting other classifiers get called.
 end
 ```
 
 <span class="arg">commands</span> is a table of tables, with the following scheme:
-<span class="tablescheme">{ {line_state:<a href="#line">line</a>, classifications:<a href="#word_classifications">word_classifications</a>}, ... }</span>.
 
-If no further classifiers need to be called then the function should return true.  Returning false or nil continues letting other classifiers get called.
+```lua
+-- commands[n].line_state           [line_state] Contains the words for the Nth command.
+-- commands[n].classifications      [word_classifications] Use this to classify the words.
+```
+
+The <code>line_state</code> field is a [line_state](#line_state) object that contains the words for the associated command line.
+
+The <code>classifications</code> field is a [word_classifications](#word_classifications) object to use for classifying the words in the associated command line.
 
 ```lua
 #INCLUDE [examples\ex_cmd_sep.lua]
@@ -1155,7 +1161,7 @@ The Lua function receives two arguments:
 
 <span class="arg"><a href="#rl_buffer">rl_buffer</a></span> gives it access to the input buffer.
 
-<span class="arg"><a href="#line">line_state</a></span> gives it access to the same line state that a [match generator](#match-generators) receives.
+<span class="arg"><a href="#line_state">line_state</a></span> gives it access to the same line state that a [match generator](#match-generators) receives.
 
 Lua functions can print output, but should first call <a href="#rl_buffer:beginoutput">rl_buffer:beginoutput</a> so that the output doesn't overwrite the displayed input line.
 

@@ -359,17 +359,15 @@ int glob_impl(lua_State* state, bool dirs_only, bool back_compat=false)
 /// The optional <span class="arg">extrainfo</span> argument can return a table
 /// of tables instead, where each sub-table corresponds to one directory and has
 /// the following scheme:
-/// -show:  {
-/// -show:  &nbsp; -- Included when extrainfo is true or is >= 1:
-/// -show:  &nbsp; name,         -- [string] The directory name.
-/// -show:  &nbsp; type,         -- [string] The match type (see below).
-/// -show:
-/// -show:  &nbsp; -- Included when extrainfo is 2:
-/// -show:  &nbsp; size,         -- [number] The file size, in bytes.
-/// -show:  &nbsp; atime,        -- [number] The access time, compatible with os.time().
-/// -show:  &nbsp; mtime,        -- [number] The modified time, compatible with os.time().
-/// -show:  &nbsp; ctime,        -- [number] The creation time, compatible with os.time().
-/// -show:  }
+/// -show:  local t = os.globfiles(pattern, extrainfo)
+/// -show:  -- Included when extrainfo is true or >= 1:
+/// -show:  --   t[index].name      -- [string] The directory name.
+/// -show:  --   t[index].type      -- [string] The match type (see below).
+/// -show:  -- Included when extrainfo is 2:
+/// -show:  --   t[index].size      -- [number] The file size, in bytes.
+/// -show:  --   t[index].atime     -- [number] The access time, compatible with os.time().
+/// -show:  --   t[index].mtime     -- [number] The modified time, compatible with os.time().
+/// -show:  --   t[index].ctime     -- [number] The creation time, compatible with os.time().
 /// The <span class="tablescheme">type</span> string can be "file" or "dir", and
 /// may also contain ",hidden", ",readonly", ",link", and ",orphaned" depending
 /// on the attributes (making it usable as a match type for
@@ -394,17 +392,15 @@ int glob_dirs(lua_State* state)
 /// The optional <span class="arg">extrainfo</span> argument can return a table
 /// of tables instead, where each sub-table corresponds to one file or directory
 /// and has the following scheme:
-/// -show:  {
-/// -show:  &nbsp; -- Included when extrainfo is true or >= 1:
-/// -show:  &nbsp; name,         -- [string] The directory name.
-/// -show:  &nbsp; type,         -- [string] The match type (see below).
-/// -show:
-/// -show:  &nbsp; -- Included when extrainfo is 2:
-/// -show:  &nbsp; size,         -- [number] The file size, in bytes.
-/// -show:  &nbsp; atime,        -- [number] The access time, compatible with os.time().
-/// -show:  &nbsp; mtime,        -- [number] The modified time, compatible with os.time().
-/// -show:  &nbsp; ctime,        -- [number] The creation time, compatible with os.time().
-/// -show:  }
+/// -show:  local t = os.globfiles(pattern, extrainfo)
+/// -show:  -- Included when extrainfo is true or >= 1:
+/// -show:  --   t[index].name      -- [string] The directory name.
+/// -show:  --   t[index].type      -- [string] The match type (see below).
+/// -show:  -- Included when extrainfo is 2:
+/// -show:  --   t[index].size      -- [number] The file size, in bytes.
+/// -show:  --   t[index].atime     -- [number] The access time, compatible with os.time().
+/// -show:  --   t[index].mtime     -- [number] The modified time, compatible with os.time().
+/// -show:  --   t[index].ctime     -- [number] The creation time, compatible with os.time().
 /// The <span class="tablescheme">type</span> string can be "file" or "dir", and
 /// may also contain ",hidden", ",readonly", ",link", and ",orphaned" depending
 /// on the attributes (making it usable as a match type for
@@ -549,7 +545,9 @@ int expand_env(lua_State* state)
 /// -ver:   1.0.0
 /// -ret:   table
 /// Returns all environment variables in a table with the following scheme:
-/// <span class="tablescheme">{ {name:string, value:string}, ... }</span>.
+/// -show:  local t = os.getenvnames()
+/// -show:  -- t[index].name        [string] The environment variable's name.
+/// -show:  -- t[index].value       [string] The environment variable's value.
 int get_env_names(lua_State* state)
 {
     lua_createtable(state, 0, 0);
@@ -698,12 +696,11 @@ int get_aliases(lua_State* state)
 /// -ret:   table
 /// Returns dimensions of the terminal's buffer and visible window. The returned
 /// table has the following scheme:
-/// -show:  {
-/// -show:  &nbsp; bufwidth,     -- [integer] width of the screen buffer
-/// -show:  &nbsp; bufheight,    -- [integer] height of the screen buffer
-/// -show:  &nbsp; winwidth,     -- [integer] width of the visible window
-/// -show:  &nbsp; winheight,    -- [integer] height of the visible window
-/// -show:  }
+/// -show:  local info = os.getscreeninfo()
+/// -show:  -- info.bufwidth        [integer] Width of the screen buffer.
+/// -show:  -- info.bufheight       [integer] Height of the screen buffer.
+/// -show:  -- info.winwidth        [integer] Width of the visible window.
+/// -show:  -- info.winheight       [integer] Height of the visible window.
 int get_screen_info(lua_State* state)
 {
     int i;
@@ -748,13 +745,11 @@ int get_screen_info(lua_State* state)
 /// -ret:   table
 /// Returns a table containing the battery status for the device, or nil if an
 /// error occurs.  The returned table has the following scheme:
-/// -show:  {
-/// -show:  &nbsp; level,         -- [integer] the battery life from 0 to 100, or -1 if an
-/// -show:  &nbsp;                --            error occurred or there is no battery.
-/// -show:  &nbsp; acpower,       -- [boolean] whether the device is connected to AC power.
-/// -show:  &nbsp; charging,      -- [boolean] whether the battery is charging.
-/// -show:  &nbsp; batterysaver,  -- [boolean] whether Battery Saver mode is active.
-/// -show:  }
+/// -show:  local t = os.getbatterystatus()
+/// -show:  -- t.level              [integer] The battery life from 0 to 100, or -1 if error or no battery.
+/// -show:  -- t.acpower            [boolean] Whether the device is connected to AC power.
+/// -show:  -- t.charging           [boolean] Whether the battery is charging.
+/// -show:  -- t.batterysaver       [boolean] Whether Battery Saver mode is active.
 int get_battery_status(lua_State* state)
 {
     SYSTEM_POWER_STATUS status;

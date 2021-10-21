@@ -943,8 +943,8 @@ end
 --- -show:  -- And the third argument can be a file or $stdin or $stdout.
 --- -show:  clink.argmatcher("foo")
 --- -show:  :addflags(
---- -show:  &nbsp; "--help",
---- -show:  &nbsp; "--file"..clink.argmatcher():addarg({ clink.filematches })
+--- -show:  &nbsp;   "--help",
+--- -show:  &nbsp;   "--file"..clink.argmatcher():addarg({ clink.filematches })
 --- -show:  )
 --- -show:  :addarg({ "one", "won" })
 --- -show:  :addarg({ "two", "too" })
