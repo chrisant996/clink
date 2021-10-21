@@ -114,8 +114,8 @@ end
 --- information.
 --- -show:  local foo_prompt = clink.promptfilter(80)
 --- -show:  function foo_prompt:filter(prompt)
---- -show:  &nbsp; -- Insert the date at the beginning of the prompt.
---- -show:  &nbsp; return os.date("%a %H:%M").." "..prompt
+--- -show:  &nbsp;   -- Insert the date at the beginning of the prompt.
+--- -show:  &nbsp;   return os.date("%a %H:%M").." "..prompt
 --- -show:  end
 function clink.promptfilter(priority)
     if priority == nil then priority = 999 end
