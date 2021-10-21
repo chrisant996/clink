@@ -587,7 +587,7 @@ int matches_impl::get_word_break_position() const
 }
 
 //------------------------------------------------------------------------------
-bool matches_impl::match_display_filter(char** matches, match_display_filter_entry*** filtered_matches, bool popup) const
+bool matches_impl::match_display_filter(const char* needle, char** matches, match_display_filter_entry*** filtered_matches, bool popup) const
 {
     // TODO:  This doesn't really belong here.  But it's a convenient point to
     // cobble together Lua (via the generators) and the matches.  It's strange
@@ -600,7 +600,7 @@ bool matches_impl::match_display_filter(char** matches, match_display_filter_ent
         return false;
 
     for (auto *generator : *m_generators)
-        if (generator->match_display_filter(matches, filtered_matches, popup))
+        if (generator->match_display_filter(needle, matches, filtered_matches, popup))
             return true;
 
     return false;

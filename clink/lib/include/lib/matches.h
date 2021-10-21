@@ -129,7 +129,7 @@ public:
     virtual char            get_append_character() const = 0;
     virtual int             get_suppress_quoting() const = 0;
     virtual int             get_word_break_position() const = 0;
-    virtual bool            match_display_filter(char** matches, match_display_filter_entry*** filtered_matches, bool popup) const = 0;
+    virtual bool            match_display_filter(const char* needle, char** matches, match_display_filter_entry*** filtered_matches, bool popup) const = 0;
 
 private:
     friend class matches_iter;

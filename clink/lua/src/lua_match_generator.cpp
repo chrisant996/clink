@@ -23,6 +23,7 @@ extern "C" {
 #include <lualib.h>
 #include <readline/readline.h>
 #include <compat/display_matches.h>
+char* printable_part (char* pathname);
 }
 
 #include <unordered_set>
@@ -158,7 +159,7 @@ static int plainify(const char* s, char** strip)
 }
 
 //------------------------------------------------------------------------------
-bool lua_match_generator::match_display_filter(char** matches, match_display_filter_entry*** filtered_matches, bool popup)
+bool lua_match_generator::match_display_filter(const char* needle, char** matches, match_display_filter_entry*** filtered_matches, bool popup)
 {
     bool ret = false;
     lua_State* state = m_state.get_state();
@@ -228,6 +229,14 @@ done:
         lua_pop(state, top);
         return ret;
     }
+
+    {
+        // Need to use printable_part() and etc, but types are separate from
+        // matches here.
+        rollback<int> rb(rl_completion_matches_include_type, 0);
+        needle = printable_part(const_cast<char*>(needle));
+    }
+    const int needle_len = int(strlen(needle));
 
     // Count matches.
     const bool only_lcd = matches[0] && !matches[1];
@@ -320,6 +329,15 @@ done:
                 if (lua_isstring(state, -1))
                     match = lua_tostring(state, -1);
                 lua_pop(state, 1);
+
+                if (match)
+                {
+                    // Discard matches that don't match the needle.
+                    int cmp = str_compare(needle, match);
+                    if (cmp < 0) cmp = needle_len;
+                    if (cmp < needle_len)
+                        goto next;
+                }
 
                 lua_pushliteral(state, "type");
                 lua_rawget(state, -2);
@@ -417,6 +435,7 @@ discard:
             while (false);
         }
 
+next:
         lua_pop(state, 1);
     }
     new_matches[j] = nullptr;

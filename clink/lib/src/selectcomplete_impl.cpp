@@ -872,7 +872,7 @@ void selectcomplete_impl::update_matches(bool restrict)
     // Perform match display filtering.
     const bool popup = false;
     bool filtered = false;
-    if (m_matches.get_matches()->match_display_filter(nullptr, nullptr, popup))
+    if (m_matches.get_matches()->match_display_filter(nullptr, nullptr, nullptr, popup))
     {
         assert(rl_completion_matches_include_type);
         if (matches* regen = maybe_regenerate_matches(m_needle.c_str(), popup))
@@ -896,44 +896,7 @@ void selectcomplete_impl::update_matches(bool restrict)
 
             // Get filtered matches.
             match_display_filter_entry** filtered_matches = nullptr;
-            m_matches.get_matches()->match_display_filter(&*matches.begin(), &filtered_matches, popup);
-
-            // Filter the, uh, filtered matches.
-            if (filtered_matches)
-            {
-                // Need to use printable_part() and etc, but types are separate
-                // from matches here.
-                rollback<int> rb(rl_completion_matches_include_type, 0);
-
-                const char* needle = printable_part(const_cast<char*>(m_needle.c_str()));
-                int needle_len = strlen(needle);
-
-                match_display_filter_entry** tortoise = filtered_matches + 1;
-                for (match_display_filter_entry** hare = tortoise; *hare; ++hare)
-                {
-                    // Discard empty matches.
-                    if (!(*hare)->match[0])
-                    {
-                        free(*hare);
-                        continue;
-                    }
-
-                    // Discard matches that don't match the needle.
-                    int cmp = str_compare(needle, (*hare)->match);
-                    if (cmp < 0) cmp = needle_len;
-                    if (cmp < needle_len)
-                    {
-                        free(*hare);
-                        continue;
-                    }
-
-                    // Keep the match.
-                    if (hare != tortoise)
-                        *tortoise = *hare;
-                    tortoise++;
-                }
-                *tortoise = nullptr;
-            }
+            m_matches.get_matches()->match_display_filter(m_needle.c_str(), &*matches.begin(), &filtered_matches, popup);
 
             // Use filtered matches.
             m_matches.set_filtered_matches(filtered_matches);

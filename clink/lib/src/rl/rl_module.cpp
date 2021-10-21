@@ -106,6 +106,7 @@ static bool         s_has_override_rl_last_func = false;
 static rl_command_func_t* s_override_rl_last_func = nullptr;
 static int          s_init_history_pos = -1;    // Sticky history position from previous edit line.
 static int          s_history_search_pos = -1;  // Most recent history search position during current edit line.
+static str_moveable s_needle;
 
 //------------------------------------------------------------------------------
 setting_bool g_classify_words(
@@ -1098,13 +1099,13 @@ static char** alternative_matches(const char* text, int start, int end)
 }
 
 //------------------------------------------------------------------------------
-static match_display_filter_entry** match_display_filter(char** matches, bool popup)
+static match_display_filter_entry** match_display_filter(const char* needle, char** matches, bool popup)
 {
     if (!s_matches)
         return nullptr;
 
     match_display_filter_entry** filtered_matches = nullptr;
-    if (!s_matches->match_display_filter(matches, &filtered_matches, popup))
+    if (!s_matches->match_display_filter(needle, matches, &filtered_matches, popup))
         return nullptr;
 
     return filtered_matches;
@@ -1113,7 +1114,7 @@ static match_display_filter_entry** match_display_filter(char** matches, bool po
 //------------------------------------------------------------------------------
 static match_display_filter_entry** match_display_filter_callback(char** matches)
 {
-    return match_display_filter(matches, false/*popup*/);
+    return match_display_filter(s_needle.c_str(), matches, false/*popup*/);
 }
 
 //------------------------------------------------------------------------------
@@ -1184,7 +1185,7 @@ int clink_popup_complete(int count, int invoking_key)
 
     // Match display filter.
     bool display_filtered = false;
-    match_display_filter_entry** filtered_matches = match_display_filter(matches, true/*popup*/);
+    match_display_filter_entry** filtered_matches = match_display_filter(s_needle.c_str(), matches, true/*popup*/);
     if (filtered_matches && filtered_matches[0] && filtered_matches[1])
     {
         display_filtered = true;
@@ -2319,6 +2320,7 @@ void rl_module::on_input(const input& input, result& result, const context& cont
 //------------------------------------------------------------------------------
 void rl_module::on_matches_changed(const context& context, const line_state& line, const char* needle)
 {
+    s_needle = needle;
 }
 
 //------------------------------------------------------------------------------

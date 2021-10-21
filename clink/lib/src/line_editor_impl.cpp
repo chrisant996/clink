@@ -1144,7 +1144,7 @@ matches* maybe_regenerate_matches(const char* needle, bool popup)
 
     // Check if a match display filter is active.
     matches_impl& regen = s_editor->m_regen_matches;
-    if (!regen.match_display_filter(nullptr, nullptr, popup))
+    if (!regen.match_display_filter(nullptr, nullptr, nullptr, popup))
         return nullptr;
 
 #ifdef DEBUG
