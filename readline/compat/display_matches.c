@@ -73,6 +73,7 @@ extern char* printable_part (char* pathname);
 extern int stat_char (const char *filename, char match_type);
 extern int _rl_internal_pager (int lines);
 extern void qsort_match_list (char** matches, int len);
+extern unsigned int cell_count(const char* in);
 
 typedef void (*vstrlen_func_t)(const char* s, int len);
 int ellipsify_to_callback(const char* in, int limit, int expand_ctrl, vstrlen_func_t callback);
@@ -896,21 +897,135 @@ void pad_filename(int len, int pad_to_width, int selected)
 }
 
 //------------------------------------------------------------------------------
-static int display_match_list_internal(char **matches, int len, int max, bool only_measure)
+struct match_accessor
+{
+    unsigned char   (*get_type)(struct match_accessor* self, int i);
+    const char*     (*get_match)(struct match_accessor* self, int i);
+    const char*     (*get_display)(struct match_accessor* self, int i);
+    int             (*get_display_cells)(struct match_accessor* self, int i);
+    const char*     (*get_description)(struct match_accessor* self, int i);
+    int             (*get_description_cells)(struct match_accessor* self, int i);
+    int             (*has_descriptions)(struct match_accessor* self);
+    int             (*is_filtered_match_display)(struct match_accessor* self);
+};
+typedef struct match_accessor match_accessor;
+
+//------------------------------------------------------------------------------
+struct match_accessor_impl
+{
+    struct match_accessor impl;
+    char** matches;
+    int has_descriptions;
+};
+typedef struct match_accessor_impl match_accessor_impl;
+static unsigned char matches_get_type(struct match_accessor* self, int i) { return ((match_accessor_impl*)self)->matches[i][0]; }
+static const char* matches_get_match(struct match_accessor* self, int i) { return ((match_accessor_impl*)self)->matches[i] + 1; }
+static int matches_get_display_cells(struct match_accessor* self, int i)
+{
+    // This is only called when the display field is being used and any path
+    // in it should be displayed as-is, and therefore cell_count() is ok here.
+    const char* m = ((match_accessor_impl*)self)->matches[i] + 1;
+    return cell_count(m);
+}
+static const char* matches_get_description(struct match_accessor* self, int i)
+{
+    const char* m = ((match_accessor_impl*)self)->matches[i] + 1;
+    m += strlen(m) + 1;
+    return *m ? m : 0;
+}
+static int matches_get_description_cells(struct match_accessor* self, int i)
+{
+    const char* desc = matches_get_description(self, i);
+    return desc ? cell_count(desc) : 0;
+}
+static int matches_has_descriptions(struct match_accessor* self)
+{
+    return ((match_accessor_impl*)self)->has_descriptions;
+}
+static int matches_is_filtered_match_display(struct match_accessor* self)
+{
+    return 0;
+}
+static match_accessor* make_match_accessor(char** matches)
+{
+    match_accessor_impl* access = (match_accessor_impl*)malloc(sizeof(*access));
+    access->impl.get_type = matches_get_type;
+    access->impl.get_match = matches_get_match;
+    access->impl.get_display = matches_get_match; // Same as match.
+    access->impl.get_display_cells = matches_get_display_cells;
+    access->impl.get_description = matches_get_description;
+    access->impl.get_description_cells = matches_get_description_cells;
+    access->impl.has_descriptions = matches_has_descriptions;
+    access->impl.is_filtered_match_display = matches_is_filtered_match_display;
+    access->matches = matches;
+    access->has_descriptions = 0;
+    for (int i = 1; matches[i]; i++)
+    {
+        if (matches_get_description(&access->impl, i))
+        {
+            access->has_descriptions = 1;
+            break;
+        }
+    }
+    return &access->impl;
+}
+
+//------------------------------------------------------------------------------
+struct filtered_match_accessor_impl
+{
+    struct match_accessor impl;
+    match_display_filter_entry** matches;
+};
+typedef struct filtered_match_accessor_impl filtered_match_accessor_impl;
+static unsigned char filtered_get_type(struct match_accessor* self, int i) { return ((filtered_match_accessor_impl*)self)->matches[i]->type; }
+static const char* filtered_get_match(struct match_accessor* self, int i) { return ((filtered_match_accessor_impl*)self)->matches[i]->match; }
+static const char* filtered_get_display(struct match_accessor* self, int i) { return ((filtered_match_accessor_impl*)self)->matches[i]->display; }
+static int filtered_get_display_cells(struct match_accessor* self, int i) { return ((filtered_match_accessor_impl*)self)->matches[i]->visible_display; }
+static const char* filtered_get_description(struct match_accessor* self, int i) { return ((filtered_match_accessor_impl*)self)->matches[i]->description; }
+static int filtered_get_description_cells(struct match_accessor* self, int i) { return ((filtered_match_accessor_impl*)self)->matches[i]->visible_description; }
+static int filtered_has_descriptions(struct match_accessor* self) { return ((filtered_match_accessor_impl*)self)->matches[0]->visible_display < 0; }
+static int filtered_is_filtered_match_display(struct match_accessor* self) { return 1; }
+static match_accessor* make_filtered_match_accessor(match_display_filter_entry** matches)
+{
+    filtered_match_accessor_impl* access = (filtered_match_accessor_impl*)malloc(sizeof(*access));
+    access->impl.get_type = filtered_get_type;
+    access->impl.get_match = filtered_get_match;
+    access->impl.get_display = filtered_get_display;
+    access->impl.get_display_cells = filtered_get_display_cells;
+    access->impl.get_description = filtered_get_description;
+    access->impl.get_description_cells = filtered_get_description_cells;
+    access->impl.has_descriptions = filtered_has_descriptions;
+    access->impl.is_filtered_match_display = filtered_is_filtered_match_display;
+    access->matches = matches;
+    return &access->impl;
+}
+
+//------------------------------------------------------------------------------
+static int display_match_list_internal_impl(match_accessor* access, int len, int max, int only_measure)
 {
     int count, limit, printed_len, lines, cols;
-    int i, j, k, l;
+    int i, j, l;
     int major_stride, minor_stride;
-    char *temp;
-    const char *t;
+    const char* filtered_color = "\x1b[m";
+    const char* description_color = "\x1b[m";
+    int filtered_color_len = 3;
+    int description_color_len = 3;
+    int show_descriptions = 0;
+
+    // Match display filtering has the type separate from the match.
+    int included_type = rl_completion_matches_include_type;
+    rl_completion_matches_include_type = 0;
 
     // Find the length of the prefix common to all items: length as displayed
-    // characters (common_length) and as a byte index into the matches (sind)
+    // characters (common_length) and as a byte index into the matches (sind).
+    //
+    //      WARNING:  MAY ADJUST MAX!
+    //
     int common_length = 0;
     int sind = 0;
     if (_rl_completion_prefix_display_length > 0)
     {
-        t = visible_part(matches[0]);
+        const char* t = visible_part(access->get_match(access, 0));
         common_length = fnwidth(t);
         sind = strlen(t);
         if (common_length > max || sind > max)
@@ -924,7 +1039,7 @@ static int display_match_list_internal(char **matches, int len, int max, bool on
 #if defined(COLOR_SUPPORT)
     else if (_rl_colored_completion_prefix > 0)
     {
-        t = visible_part(matches[0]);
+        const char* t = visible_part(access->get_match(access, 0));
         common_length = fnwidth(t);
         sind = RL_STRLEN(t);
         if (common_length > max || sind > max)
@@ -933,134 +1048,23 @@ static int display_match_list_internal(char **matches, int len, int max, bool on
 #endif
 
     // How many items of MAX length can we fit in the screen window?
+    int col_max = max + 2;
     cols = complete_get_screenwidth();
-    max += 2;
-    limit = cols / max;
+    limit = cols / col_max;
 #if 0
     // Readline pads every column with spaces, so it must avoid reaching the end
     // of the screen line.  Clink doesn't pad the last column with spaces, so it
     // can eliminate this limitation.
-    if (limit != 1 && (limit * max == cols))
+    if (limit != 1 && (limit * col_max == cols))
         limit--;
 #endif
 
-    // Limit can end up -1 if cols == 0, or 0 if max > cols.  In that case,
+    // Limit can end up -1 if cols == 0, or 0 if col_max > cols.  In that case,
     // display 1 match per iteration.
     if (limit <= 0)
         limit = 1;
 
-    // How many iterations of the printing loop?
-    count = (len + (limit - 1)) / limit;
-
-    if (only_measure)
-        return count;
-
-    // Sort the items if they are not already sorted.
-#if 0
-    if (rl_ignore_completion_duplicates == 0 && rl_sort_completion_matches)
-        qsort_match_list(matches + 1, len);
-#endif
-
-    // Watch out for special case.  If LEN is less than LIMIT, then
-    // just do the inner printing loop.
-    //     0 < len <= limit  implies  count = 1.
-
-    end_prompt(1/*crlf*/);
-
-    if (_rl_print_completions_horizontally == 0)
-    {
-        // Print the sorted items, up-and-down alphabetically, like ls.
-        major_stride = 1;
-        minor_stride = count;
-    }
-    else
-    {
-        // Print the sorted items, across alphabetically, like ls -x.
-        major_stride = limit;
-        minor_stride = 1;
-    }
-
-    lines = 0;
-    for (i = 0; i < count; i++)
-    {
-        reset_tmpbuf();
-        for (j = 0, l = 1 + i * major_stride; j < limit; j++)
-        {
-            if (l > len || matches[l] == 0)
-                break;
-
-            temp = printable_part(matches[l]);
-            printed_len = append_filename(temp, matches[l], sind, 0, 0);
-            l += minor_stride;
-
-            if (j + 1 < limit && l <= len && matches[l])
-                pad_filename(printed_len, max, 0);
-        }
-#if defined(COLOR_SUPPORT)
-        if (_rl_colored_stats)
-        {
-            append_default_color();
-            append_color_indicator(C_CLR_TO_EOL);
-        }
-#endif
-
-        {
-            int lines_for_row = 1;
-            if (printed_len)
-                lines_for_row += (printed_len - 1) / _rl_screenwidth;
-            if (_rl_page_completions && lines > 0 && lines + lines_for_row >= _rl_screenheight)
-            {
-                lines = _rl_internal_pager(lines);
-                if (lines < 0)
-                    return 0;
-            }
-            lines += lines_for_row;
-        }
-
-        flush_tmpbuf();
-        rl_crlf();
-#if defined(SIGWINCH)
-        if (RL_SIG_RECEIVED() && RL_SIGWINCH_RECEIVED() == 0)
-#else
-        if (RL_SIG_RECEIVED())
-#endif
-            return 0;
-    }
-
-    return 0;
-}
-
-//------------------------------------------------------------------------------
-static int display_filtered_match_list_internal(match_display_filter_entry **matches, int len, int max, bool only_measure)
-{
-    int count, limit, printed_len, lines, cols;
-    int i, j, l;
-    int major_stride, minor_stride;
-    const char* t;
-    const char* filtered_color = "\x1b[m";
-    const char* description_color = "\x1b[m";
-    int filtered_color_len = 3;
-    int description_color_len = 3;
-    int show_descriptions = 0;
-
-    // How many items of MAX length can we fit in the screen window?
-    cols = complete_get_screenwidth();
-    max += 2;
-    limit = cols / max;
-#if 0
-    // Readline pads every column with spaces, so it must avoid reaching the end
-    // of the screen line.  Clink doesn't pad the last column with spaces, so it
-    // can eliminate this limitation.
-    if (limit != 1 && (limit * max == cols))
-        limit--;
-#endif
-
-    // Limit can end up -1 if cols == 0, or 0 if max > cols.  In that case,
-    // display 1 match per iteration.
-    if (limit <= 0)
-        limit = 1;
-
-    if (matches[0] && matches[0]->visible_display < 0)
+    if (access->has_descriptions(access))
     {
         limit = 1;
         show_descriptions = 1;
@@ -1069,44 +1073,19 @@ static int display_filtered_match_list_internal(match_display_filter_entry **mat
     // How many iterations of the printing loop?
     count = (len + (limit - 1)) / limit;
 
+    // If only measuring, short circuit without printing anything.
     if (only_measure)
+    {
+        rl_completion_matches_include_type = included_type;
         return count;
-
-    // Match display filtering has the type separate from the match.
-    int included_type = rl_completion_matches_include_type;
-    rl_completion_matches_include_type = 0;
-
-    // Find the length of the prefix common to all items: length as displayed
-    // characters (common_length) and as a byte index into the matches (sind)
-    int common_length = 0;
-    int sind = 0;
-    if (_rl_completion_prefix_display_length > 0)
-    {
-        t = visible_part(matches[0]->match);
-        common_length = fnwidth(t);
-        sind = strlen(t);
-        if (common_length > max || sind > max)
-            common_length = sind = 0;
-
-        if (common_length > _rl_completion_prefix_display_length && common_length > ELLIPSIS_LEN)
-            max -= common_length - ELLIPSIS_LEN;
-        else
-            common_length = sind = 0;
     }
-    else if (_rl_colored_completion_prefix > 0)
-    {
-        t = visible_part(matches[0]->match);
-        common_length = fnwidth(t);
-        sind = RL_STRLEN(t);
-        if (common_length > max || sind > max)
-            common_length = sind = 0;
-    }
+
+    // Give the transient prompt a chance to update before printing anything.
+    end_prompt(1/*crlf*/);
 
     // Watch out for special case.  If LEN is less than LIMIT, then
     // just do the inner printing loop.
     //     0 < len <= limit  implies  count = 1.
-
-    rl_crlf();
 
     if (_rl_print_completions_horizontally == 0)
     {
@@ -1139,45 +1118,74 @@ static int display_filtered_match_list_internal(match_display_filter_entry **mat
         reset_tmpbuf();
         for (j = 0, l = 1 + i * major_stride; j < limit; j++)
         {
-            if (l > len || matches[l] == 0)
+            if (l > len)
                 break;
 
-            const match_display_filter_entry* entry = matches[l];
-            const char* display = entry->display;
-            char* temp = printable_part((char*)entry->match);
+            const char* display = access->get_display(access, l);
+            if (!display)
+                break;
 
-            if (IS_MATCH_TYPE_NONE(entry->type) ||
-                !entry->match[0] ||
-                strcmp(display, temp) != 0)
+            unsigned char type = access->get_type(access, l);
+            const char* match = access->get_match(access, l);
+            char* temp = printable_part(display);
+
+            int use_display = (
+                (IS_MATCH_TYPE_NONE(type) && access->is_filtered_match_display(access)) ||
+                (!match || !*match) ||
+                (match != display && strcmp(match, display) != 0));
+            if (use_display)
             {
-                printed_len = entry->visible_display;
-                append_display(entry->display, 0);
+                printed_len = access->get_display_cells(access, l);
+                append_display(display, 0);
             }
             else
             {
-                printed_len = append_filename(temp, entry->match, sind, entry->type, 0);
+                printed_len = append_filename(temp, display, sind, type, 0);
             }
 
-            if (show_descriptions && matches[l]->description)
+            if (show_descriptions)
             {
-                int fixed = abs(matches[0]->visible_display) + desc_sep_padding;
-                if (fixed < cols - 1)
+                const char* description = access->get_description(access, l);
+                if (description)
                 {
-                    pad_filename(printed_len, fixed, 0);
-                    printed_len = fixed;
-                    append_tmpbuf_string(description_color, description_color_len);
-                    printed_len += ellipsify_to_callback(entry->description, cols - printed_len - 1, 0/*expand_ctrl*/, append_tmpbuf_string);
-                    append_tmpbuf_string(_normal_color, _normal_color_len);
+                    int fixed = max + desc_sep_padding;
+                    if (fixed < cols - 1)
+                    {
+                        pad_filename(printed_len, fixed, 0);
+                        printed_len = fixed;
+                        append_tmpbuf_string(description_color, description_color_len);
+                        printed_len += ellipsify_to_callback(description, cols - printed_len - 1, 0/*expand_ctrl*/, append_tmpbuf_string);
+                        append_tmpbuf_string(_normal_color, _normal_color_len);
+                    }
                 }
             }
 
             l += minor_stride;
 
-            if (j + 1 < limit && l <= len && matches[l])
-                pad_filename(printed_len, max, 0);
+            if (j + 1 < limit && l <= len)
+                pad_filename(printed_len, col_max, 0);
         }
-        append_default_color();
-        append_color_indicator(C_CLR_TO_EOL);
+#if defined(COLOR_SUPPORT)
+        if (_rl_colored_stats)
+        {
+            append_default_color();
+            append_color_indicator(C_CLR_TO_EOL);
+        }
+#endif
+
+        {
+            int lines_for_row = 1;
+            if (printed_len)
+                lines_for_row += (printed_len - 1) / _rl_screenwidth;
+            if (_rl_page_completions && lines > 0 && lines + lines_for_row >= _rl_screenheight)
+            {
+                lines = _rl_internal_pager(lines);
+                if (lines < 0)
+                    break;
+            }
+            lines += lines_for_row;
+        }
+
         flush_tmpbuf();
         rl_crlf();
 #if defined(SIGWINCH)
@@ -1185,22 +1193,29 @@ static int display_filtered_match_list_internal(match_display_filter_entry **mat
 #else
         if (RL_SIG_RECEIVED())
 #endif
-        {
-early_return:
-            rl_completion_matches_include_type = included_type;
-            return 0;
-        }
-        lines++;
-        if (_rl_page_completions && lines >= (_rl_screenheight - 1) && i < count)
-        {
-            lines = _rl_internal_pager(lines);
-            if (lines < 0)
-                goto early_return;
-        }
+            break;
     }
 
     rl_completion_matches_include_type = included_type;
-    return 1;
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+static int display_match_list_internal(char **matches, int len, int max, int only_measure)
+{
+    match_accessor* access = make_match_accessor(matches);
+    int result = display_match_list_internal_impl(access, len, max, only_measure);
+    free(access);
+    return result;
+}
+
+//------------------------------------------------------------------------------
+static int display_filtered_match_list_internal(match_display_filter_entry **matches, int len, int max, bool only_measure)
+{
+    match_accessor* access = make_filtered_match_accessor(matches);
+    int result = display_match_list_internal_impl(access, len, max, only_measure);
+    free(access);
+    return result;
 }
 
 //------------------------------------------------------------------------------
@@ -1237,7 +1252,7 @@ static int prompt_display_matches(int len)
 //------------------------------------------------------------------------------
 void display_matches(char** matches)
 {
-    int len, max, max_display, max_description, i;
+    int len, max, i;
     char *temp;
     int vis_stat;
 
@@ -1255,29 +1270,22 @@ void display_matches(char** matches)
             }
 
             len = 0;
-            max_display = 0;
-            max_description = 0;
+            max = 0;
             for (match_display_filter_entry** walk = filtered_matches + 1; *walk; len++, walk++)
             {
-                if (max_display < (*walk)->visible_display)
-                    max_display = (*walk)->visible_display;
-                if (max_description < (*walk)->visible_description)
-                    max_description = (*walk)->visible_description;
+                if (max < (*walk)->visible_display)
+                    max = (*walk)->visible_display;
             }
 
-            max = max_display;
-            if (max_description)
-                max += desc_sep_padding + max_description;
-
             if ((rl_completion_auto_query_items && _rl_screenheight > 0) ?
-                display_filtered_match_list_internal(filtered_matches, len, max, true) >= (_rl_screenheight - (_rl_vis_botlin + 1)) :
+                display_filtered_match_list_internal(filtered_matches, len, max, 1) >= (_rl_screenheight - (_rl_vis_botlin + 1)) :
                 rl_completion_query_items > 0 && len >= rl_completion_query_items)
             {
                 if (!prompt_display_matches(len))
                     goto done_filtered;
             }
 
-            display_filtered_match_list_internal(filtered_matches, len, max, false);
+            display_filtered_match_list_internal(filtered_matches, len, max, 0);
 
 done_filtered:
             free_filtered_matches(filtered_matches);
@@ -1312,14 +1320,14 @@ done_filtered:
     // If there are many items, then ask the user if she really wants to
     // see them all.
     if ((rl_completion_auto_query_items && _rl_screenheight > 0) ?
-        display_match_list_internal(matches, len, max, true) >= (_rl_screenheight - (_rl_vis_botlin + 1)) :
+        display_match_list_internal(matches, len, max, 1) >= (_rl_screenheight - (_rl_vis_botlin + 1)) :
         rl_completion_query_items > 0 && len >= rl_completion_query_items)
     {
         if (!prompt_display_matches(len))
             goto done;
     }
 
-    display_match_list_internal(matches, len, max, false);
+    display_match_list_internal(matches, len, max, 0);
 
 done:
     rl_forced_update_display();

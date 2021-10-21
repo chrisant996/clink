@@ -79,7 +79,7 @@ static int s_num_completions;
 static int s_len_prefix;
 static int s_past_flag;
 static int s_column_width[4];
-static bool s_display_filter;
+static popup_items_mode s_items_mode;
 static int s_descriptions;
 static bool s_reverse_find;
 static wstr<32> s_find;
@@ -117,7 +117,7 @@ static bool find_in_list(HWND hwnd, find_mode mode)
             return true;
         }
 
-        if (s_display_filter)
+        if (s_items_mode != popup_items_mode::simple)
         {
             p += strlen(p) + 1;
             if (StrStrI(p, find.c_str()))
@@ -126,11 +126,14 @@ static bool find_in_list(HWND hwnd, find_mode mode)
                 return true;
             }
 
-            p += strlen(p) + 1;
-            if (StrStrI(p, find.c_str()))
+            if (s_items_mode == popup_items_mode::display_filter)
             {
-                ListView_SetCurSel(hwnd, row);
-                return true;
+                p += strlen(p) + 1;
+                if (StrStrI(p, find.c_str()))
+                {
+                    ListView_SetCurSel(hwnd, row);
+                    return true;
+                }
             }
         }
 
@@ -320,7 +323,7 @@ static void get_cell_text(int row, int column, wstr_base& out, bool split_tabs=t
     {
         bool filtered = false;
         const char* display = s_items[row] + s_past_flag + s_len_prefix;
-        if (s_display_filter)
+        if (s_items_mode == popup_items_mode::display_filter)
         {
             const char* ptr = display + strlen(display) + 1;
             if (*ptr)
@@ -342,12 +345,13 @@ static void get_cell_text(int row, int column, wstr_base& out, bool split_tabs=t
             out.concat(sep);
         }
     }
-    else if (s_display_filter && column <= s_descriptions)
+    else if (s_items_mode != popup_items_mode::simple && column <= s_descriptions)
     {
         const char* ptr = s_items[row];
         ptr += strlen(ptr) + 1; // Skip match.
-        ptr += strlen(ptr) + 1; // Skip display.
-        if (split_tabs)
+        if (s_items_mode == popup_items_mode::display_filter)
+            ptr += strlen(ptr) + 1; // Skip display.
+        if (split_tabs && s_items_mode == popup_items_mode::display_filter)
         {
             out.concat(c_spacer); // Leading spaces because trailing spaces could get stripped.
             int len = 0;
@@ -461,7 +465,10 @@ static LRESULT CALLBACK PopupWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM
                 for (int j = 0; j++ < s_descriptions;)
                 {
                     cxFull -= cx;
-                    cx = min<int>(cxFull, s_column_width[j]);
+                    if (j < s_descriptions)
+                        cx = s_column_width[j];
+                    else
+                        cx = cxFull; // Last column gets the rest.
                     ListView_SetColumnWidth(s_hwnd_list, j, min<int>(cxFull, cx));
                 }
             }
@@ -779,13 +786,13 @@ popup_result do_popup_list(
     bool reverse_find,
     int& current,
     str_base& out,
-    bool display_filter)
+    popup_items_mode mode)
 {
     if (!items)
         return popup_result::error;
 
     s_past_flag = past_flag;
-    s_display_filter = display_filter;
+    s_items_mode = mode;
     s_reverse_find = reverse_find;
     s_descriptions = 0;
     memset(s_column_width, 0, sizeof(s_column_width));
@@ -812,7 +819,11 @@ popup_result do_popup_list(
         num_items--;
     }
 
-    if (s_display_filter)
+    if (s_items_mode == popup_items_mode::descriptions)
+    {
+        s_descriptions = 1;
+    }
+    else if (s_items_mode == popup_items_mode::display_filter)
     {
         for (int i = num_items; i--;)
         {

@@ -11,7 +11,7 @@
 #include <assert.h>
 
 //------------------------------------------------------------------------------
-unsigned int cell_count(const char* in)
+extern "C" unsigned int cell_count(const char* in)
 {
     unsigned int count = 0;
 

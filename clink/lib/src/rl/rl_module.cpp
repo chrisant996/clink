@@ -1061,17 +1061,27 @@ static char** alternative_matches(const char* text, int start, int end)
             break;
         }
 
-        const char* match = iter.get_match();
-        int match_len = strlen(match);
-        int match_size = past_flag + match_len + 1;
-        matches[count] = (char*)malloc(match_size);
+        const char* const match = iter.get_match();
+        const char* const description = iter.get_match_description();
+        const int match_len = strlen(match);
+        const int match_description_len = description ? strlen(description) : 0;
+        const int match_size = past_flag + match_len + 1 + match_description_len + 1;
+        char* ptr = (char*)malloc(match_size);
+
+        matches[count] = ptr;
 
         if (past_flag)
-            matches[count][0] = (char)type;
+            *(ptr++) = (char)type;
 
-        str_base str(matches[count] + past_flag, match_size - past_flag);
-        str.clear();
-        str.concat(match, match_len);
+        memcpy(ptr, match, match_len);
+        ptr += match_len;
+        *(ptr++) = '\0';
+
+        // The description, if any, immediately follows the match.
+        // WARNING:  display_match_list_internal relies on this memory layout!
+        memcpy(ptr, description, match_description_len);
+        ptr += match_description_len;
+        *(ptr++) = '\0';
 
 #ifdef DEBUG
         // Set DEBUG_MATCHES=-5 to print the first 5 matches.
@@ -1211,7 +1221,7 @@ int clink_popup_complete(int count, int invoking_key)
     switch (do_popup_list("Completions", (const char **)matches, match_count,
                           len_prefix, past_flag, completing,
                           true/*auto_complete*/, false/*reverse_find*/,
-                          current, choice, display_filtered))
+                          current, choice, display_filtered ? popup_items_mode::display_filter : popup_items_mode::descriptions))
     {
     case popup_result::cancel:
         break;

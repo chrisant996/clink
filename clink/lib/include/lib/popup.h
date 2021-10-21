@@ -15,6 +15,14 @@ enum class popup_result
 };
 
 //------------------------------------------------------------------------------
+enum class popup_items_mode
+{
+    simple,
+    descriptions,
+    display_filter,
+};
+
+//------------------------------------------------------------------------------
 struct popup_results
 {
                     popup_results(popup_result result=popup_result::cancel, int index=-1, const char* text=nullptr);
@@ -37,7 +45,7 @@ popup_result do_popup_list(
     bool reverse_find,
     int& current,
     str_base& out,
-    bool display_filter=false);
+    popup_items_mode mode=popup_items_mode::simple);
 
 //------------------------------------------------------------------------------
 const char* append_string_into_buffer(char*& buffer, const char* match, bool allow_tabs=false);
