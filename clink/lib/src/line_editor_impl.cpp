@@ -756,6 +756,7 @@ unsigned int line_editor_impl::collect_words(words& words, matches_impl* matches
             split_word.length = end_word->length - truncate;
             split_word.command_word = false;
             split_word.is_alias = false;
+            split_word.is_redir_arg = false;
             split_word.quoted = false;
             split_word.delim = str_token::invalid_delim;
 
