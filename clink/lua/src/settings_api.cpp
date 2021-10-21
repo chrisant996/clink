@@ -302,7 +302,19 @@ static int list(lua_State* state)
 
         int count = 0;
         for (setting_iter iter = settings::first(); const setting* setting = iter.next();)
-            table_add_string(state, setting->get_name(), count);
+        {
+            lua_createtable(state, 0, 2);
+
+            lua_pushliteral(state, "match");
+            lua_pushstring(state, setting->get_name());
+            lua_rawset(state, -3);
+
+            lua_pushliteral(state, "description");
+            lua_pushstring(state, setting->get_short_desc());
+            lua_rawset(state, -3);
+
+            lua_rawseti(state, -2, ++count);
+        }
 
         return 1;
     }
