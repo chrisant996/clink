@@ -5,14 +5,17 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
+- Regression in `zzzzz -d=` which lists files instead of the linked matcher's args.
+- When a single line prompt is exactly the width of the window, the input line starts on the same line, but should start on the next line.
 
 ## Medium Priority
-- Make `addmatch()` accept a `description` field in the first place, so that display filtering isn't even needed?
+- Add a quick start / beginner section to the Clink docs.
 - Maybe add descriptions for `clink set` setting names?
 - Maybe limit how many matches `possible-completions` will show with descriptions?
-- Add a quick start / beginner section to the Clink docs.
 
 ## Low Priority
+- Push fixes back to clink-completions.
+- `match_display_filter` doesn't work properly with filtering, e.g. `git checkout o` in deprecated mode doesn't filter.
 - Auto-update option, with configurable polling interval?  (Though package managers like scoop can handle updates, if Clink was installed through one.)
 
 ## Mystery (am I only imagining it?)
