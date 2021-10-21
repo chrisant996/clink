@@ -13,9 +13,17 @@
 struct match_info
 {
     const char*     match;
+    const char*     description;
     match_type      type;
     bool            select;
     bool            infer_type;
+};
+
+//------------------------------------------------------------------------------
+struct match_lookup
+{
+    const char*     match;
+    match_type      type;
 };
 
 
@@ -37,12 +45,12 @@ class match_generator;
 class matches_impl
     : public matches
 {
-    struct match_info_hasher;
-    struct match_info_comparator;
+    struct match_lookup_hasher;
+    struct match_lookup_comparator;
 
 public:
     typedef fixed_array<match_generator*, 32> generators;
-    typedef std::unordered_set<match_info, match_info_hasher, match_info_comparator> match_info_unordered_set;
+    typedef std::unordered_set<match_lookup, match_lookup_hasher, match_lookup_comparator> match_lookup_unordered_set;
 
                             matches_impl(generators* generators=nullptr, unsigned int store_size=0x10000);
     matches_iter            get_iter() const;
@@ -51,6 +59,7 @@ public:
     virtual unsigned int    get_match_count() const override;
     virtual const char*     get_match(unsigned int index) const override;
     virtual match_type      get_match_type(unsigned int index) const override;
+    virtual const char*     get_match_description(unsigned int index) const override;
     virtual bool            is_suppress_append() const override;
     virtual shadow_bool     is_filename_completion_desired() const override;
     virtual shadow_bool     is_filename_display_desired() const override;
@@ -68,6 +77,7 @@ public:
 private:
     virtual const char*     get_unfiltered_match(unsigned int index) const override;
     virtual match_type      get_unfiltered_match_type(unsigned int index) const override;
+    virtual const char*     get_unfiltered_match_description(unsigned int index) const override;
 
     friend class            match_pipeline;
     friend class            match_builder;
@@ -118,5 +128,5 @@ private:
     shadow_bool             m_filename_completion_desired;
     shadow_bool             m_filename_display_desired;
 
-    match_info_unordered_set* m_dedup = nullptr;
+    match_lookup_unordered_set* m_dedup = nullptr;
 };

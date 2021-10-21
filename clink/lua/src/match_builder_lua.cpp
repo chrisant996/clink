@@ -263,6 +263,12 @@ bool match_builder_lua::add_match_impl(lua_State* state, int stack_index, match_
             desc.type = to_match_type(lua_tostring(state, -1));
         lua_pop(state, 1);
 
+        lua_pushliteral(state, "description");
+        lua_rawget(state, stack_index);
+        if (lua_isstring(state, -1))
+            desc.description = lua_tostring(state, -1);
+        lua_pop(state, 1);
+
         if (desc.match != nullptr)
             return m_builder.add_match(desc);
     }

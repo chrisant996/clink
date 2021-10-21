@@ -45,18 +45,18 @@ static setting_enum g_translate_slashes(
 
 
 //------------------------------------------------------------------------------
-struct matches_impl::match_info_hasher
+struct matches_impl::match_lookup_hasher
 {
-    size_t operator()(const match_info& info) const
+    size_t operator()(const match_lookup& info) const
     {
         return str_hash(info.match);
     }
 };
 
 //------------------------------------------------------------------------------
-struct matches_impl::match_info_comparator
+struct matches_impl::match_lookup_comparator
 {
-    bool operator()(const match_info& i1, const match_info& i2) const
+    bool operator()(const match_lookup& i1, const match_lookup& i2) const
     {
         return (i1.type == i2.type && strcmp(i1.match, i2.match) == 0);
     }
@@ -206,6 +206,7 @@ bool match_builder::add_match(const char* match, match_type type, bool already_n
     char suffix = 0;
     match_desc desc = {
         match,
+        nullptr,
         type
     };
     return add_match(desc, already_normalised);
@@ -313,6 +314,14 @@ match_type matches_iter::get_match_type() const
     if (m_has_pattern)
         return has_match() ? m_matches.get_unfiltered_match_type(m_index) : match_type::none;
     return has_match() ? m_matches.get_match_type(m_index) : match_type::none;
+}
+
+//------------------------------------------------------------------------------
+const char* matches_iter::get_match_description() const
+{
+    if (m_has_pattern)
+        return has_match() ? m_matches.get_unfiltered_match_description(m_index) : nullptr;
+    return has_match() ? m_matches.get_match_description(m_index) : nullptr;
 }
 
 //------------------------------------------------------------------------------
@@ -500,6 +509,15 @@ match_type matches_impl::get_match_type(unsigned int index) const
 }
 
 //------------------------------------------------------------------------------
+const char* matches_impl::get_match_description(unsigned int index) const
+{
+    if (index >= get_match_count())
+        return nullptr;
+
+    return m_infos[index].description;
+}
+
+//------------------------------------------------------------------------------
 const char* matches_impl::get_unfiltered_match(unsigned int index) const
 {
     if (index >= get_info_count())
@@ -515,6 +533,15 @@ match_type matches_impl::get_unfiltered_match_type(unsigned int index) const
         return match_type::none;
 
     return m_infos[index].type;
+}
+
+//------------------------------------------------------------------------------
+const char* matches_impl::get_unfiltered_match_description(unsigned int index) const
+{
+    if (index >= get_info_count())
+        return nullptr;
+
+    return m_infos[index].description;
 }
 
 //------------------------------------------------------------------------------
@@ -697,7 +724,7 @@ bool matches_impl::add_match(const match_desc& desc, bool already_normalized)
     }
 
     if (!m_dedup)
-        m_dedup = new match_info_unordered_set;
+        m_dedup = new match_lookup_unordered_set;
 
     if (m_dedup->find({ match, type }) != m_dedup->end())
         return false;
@@ -706,9 +733,12 @@ bool matches_impl::add_match(const match_desc& desc, bool already_normalized)
     if (!store_match)
         return false;
 
-    match_info info = { store_match, type, false/*select*/, is_none/*infer_type*/ };
-    m_dedup->emplace(info); // Copies info; not a reference.
+    const char* store_description = desc.description ? m_store.store_front(desc.description) : nullptr;
 
+    match_lookup lookup = { store_match, type };
+    m_dedup->emplace(std::move(lookup));
+
+    match_info info = { store_match, store_description, type, false/*select*/, is_none/*infer_type*/ };
     m_infos.emplace_back(std::move(info));
     ++m_count;
 

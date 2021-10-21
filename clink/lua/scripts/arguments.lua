@@ -577,15 +577,6 @@ local function add_prefix(prefixes, string)
 end
 
 --------------------------------------------------------------------------------
-local lookup_descriptions
-local function ondisplaymatches_descriptions(matches)
-    for _,m in ipairs(matches) do
-        m.description = lookup_descriptions[m.match]
-    end
-    return matches
-end
-
---------------------------------------------------------------------------------
 function _argmatcher:_add(list, addee, prefixes)
     -- If addee is a flag like --foo= and is not linked, then link it to a
     -- default parser so its argument doesn't get confused as an arg for its
@@ -663,8 +654,14 @@ function _argmatcher:_generate(line_state, match_builder, extra_words)
 
     -- Are we left with a valid argument that can provide matches?
     local add_matches = function(arg, match_type)
+        local descs = matcher._descriptions
+
         for key, _ in pairs(arg._links) do
-            match_builder:addmatch(key, match_type)
+            if descs then
+                match_builder:addmatch({ match=key, description=descs[key] }, match_type)
+            else
+                match_builder:addmatch(key, match_type)
+            end
         end
 
         for _, i in ipairs(arg) do
@@ -676,7 +673,11 @@ function _argmatcher:_generate(line_state, match_builder, extra_words)
 
                 match_builder:addmatches(j, match_type)
             else
-                match_builder:addmatch(i, match_type)
+                if descs then
+                    match_builder:addmatch({ match=i, description=descs[i] }, match_type)
+                else
+                    match_builder:addmatch(i, match_type)
+                end
             end
         end
 
@@ -695,10 +696,6 @@ function _argmatcher:_generate(line_state, match_builder, extra_words)
         -- Flags are always "arg" type, which helps differentiate them from
         -- filename completions even when using _deprecated matcher mode, so
         -- that path normalization can avoid affecting flags like "/c", etc.
-        if matcher._descriptions then
-            lookup_descriptions = matcher._descriptions
-            clink.ondisplaymatches(ondisplaymatches_descriptions)
-        end
         add_matches(matcher._flags._args[1], "arg")
         return true
     else
@@ -715,10 +712,6 @@ function _argmatcher:_generate(line_state, match_builder, extra_words)
         end
         local arg = matcher._args[arg_index]
         if arg then
-            if matcher._descriptions then
-                lookup_descriptions = matcher._descriptions
-                clink.ondisplaymatches(ondisplaymatches_descriptions)
-            end
             return add_matches(arg, match_type) and true or false
         end
     end

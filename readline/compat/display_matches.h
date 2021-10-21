@@ -36,5 +36,8 @@ extern int append_filename(char* to_print, const char* full_pathname, int prefix
 extern void pad_filename(int len, int pad_to_width, int selected);
 
 extern void free_filtered_matches(match_display_filter_entry** filtered_matches);
+// printable_len() respects rl_completion_matches_include_type.
 extern int printable_len(const char* match);
+// printable_len_ex() is independent from rl_completion_matches_include_type.
+extern int printable_len_ex(const char* match, unsigned char type);
 extern void display_matches(char **matches);

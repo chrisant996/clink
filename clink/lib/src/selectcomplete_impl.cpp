@@ -180,7 +180,21 @@ void match_adapter::set_filtered_matches(match_display_filter_entry** filtered_m
             count++;
     }
     m_filtered_count = count;
-    m_has_descriptions = has_desc;
+    m_filtered_has_descriptions = has_desc;
+}
+
+//------------------------------------------------------------------------------
+void match_adapter::init_has_descriptions()
+{
+    m_has_descriptions = false;
+    for (unsigned int i = m_matches ? m_matches->get_match_count() : 0; i--;)
+    {
+        if (m_matches->get_match_description(i))
+        {
+            m_has_descriptions = true;
+            break;
+        }
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -217,7 +231,11 @@ const char* match_adapter::get_match_display(unsigned int index) const
     if (m_filtered_matches)
         return m_filtered_matches[index + 1]->display;
     if (m_matches)
+    {
+        // Don't use printable_part(), because append_filename() needs to know
+        // both the raw match and the printable part.
         return m_matches->get_match(index);
+    }
     return nullptr;
 }
 
@@ -228,8 +246,9 @@ unsigned int match_adapter::get_match_visible_display(unsigned int index) const
         return m_filtered_matches[index + 1]->visible_display;
     if (m_matches)
     {
-        const char* display = printable_part(const_cast<char*>(m_matches->get_match(index)));
-        return printable_len(display);
+        const char* match = m_matches->get_match(index);
+        match_type type = m_matches->get_match_type(index);
+        return printable_len_ex(match, static_cast<unsigned char>(type));
     }
     return 0;
 }
@@ -239,6 +258,8 @@ const char* match_adapter::get_match_description(unsigned int index) const
 {
     if (m_filtered_matches)
         return m_filtered_matches[index + 1]->description;
+    if (m_matches)
+        return m_matches->get_match_description(index);
     return nullptr;
 }
 
@@ -247,6 +268,11 @@ unsigned int match_adapter::get_match_visible_description(unsigned int index) co
 {
     if (m_filtered_matches)
         return m_filtered_matches[index + 1]->visible_description;
+    if (m_matches)
+    {
+        const char* description = m_matches->get_match_description(index);
+        return description ? cell_count(description) : 0;
+    }
     return 0;
 }
 
@@ -275,12 +301,24 @@ bool match_adapter::is_custom_display(unsigned int index) const
 }
 
 //------------------------------------------------------------------------------
+bool match_adapter::is_display_filtered() const
+{
+    return !!m_filtered_matches;
+}
+
+//------------------------------------------------------------------------------
+bool match_adapter::has_descriptions() const
+{
+    return m_filtered_matches ? m_filtered_has_descriptions : m_has_descriptions;
+}
+
+//------------------------------------------------------------------------------
 void match_adapter::free_filtered()
 {
     free_filtered_matches(m_filtered_matches);
     m_filtered_matches = nullptr;
     m_filtered_count = 0;
-    m_has_descriptions = false;
+    m_filtered_has_descriptions = false;
 }
 
 
@@ -817,7 +855,6 @@ void selectcomplete_impl::update_matches(bool restrict)
     // Update matches.
     ::update_matches();
 
-    // Find lcd when starting a new interactive completion.
     if (restrict)
     {
         // Update Readline modes based on the available completions.
@@ -827,6 +864,9 @@ void selectcomplete_impl::update_matches(bool restrict)
                 ;
             update_rl_modes_from_matches(m_matches.get_matches(), iter, m_matches.get_match_count());
         }
+
+        // Initialize whether descriptions are available.
+        m_matches.init_has_descriptions();
     }
 
     // Perform match display filtering.
@@ -946,12 +986,6 @@ void selectcomplete_impl::update_matches(bool restrict)
     // Determine the longest match.
     if (restrict || filtered)
     {
-        // Using m_matches directly means match types are separate from matches.
-        // When not filtered, get_match_visible_display() has to synthesize the
-        // visible length by using functions that are influenced by
-        // rl_completion_matches_include_type.
-        rollback<int> rb(rl_completion_matches_include_type, 0);
-
         if (restrict)
             m_match_longest = 0;
 
@@ -1194,7 +1228,7 @@ void selectcomplete_impl::update_display()
         m_printer->print("\x1b[m\x1b[J");
 
         // Show match description.
-        if (is_active() && m_desc_below)
+        if (is_active() && m_desc_below && m_matches.has_descriptions())
         {
             rl_crlf();
             rl_crlf();

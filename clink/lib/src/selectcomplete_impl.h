@@ -22,6 +22,7 @@ public:
     void            set_matches(const matches* matches);
     void            set_regen_matches(const matches* matches);
     void            set_filtered_matches(match_display_filter_entry** filtered_matches);
+    void            init_has_descriptions();
 
     matches_iter    get_iter();
     unsigned int    get_match_count() const;
@@ -33,8 +34,8 @@ public:
     match_type      get_match_type(unsigned int index) const;
     bool            is_custom_display(unsigned int index) const;
 
-    bool            is_display_filtered() const { return !!m_filtered_matches; }
-    bool            has_descriptions() const { return m_has_descriptions; }
+    bool            is_display_filtered() const;
+    bool            has_descriptions() const;
 
 private:
     void            free_filtered();
@@ -45,6 +46,7 @@ private:
     match_display_filter_entry** m_filtered_matches = nullptr;
     unsigned int    m_filtered_count = 0;
     bool            m_has_descriptions = false;
+    bool            m_filtered_has_descriptions = false;
 };
 
 //------------------------------------------------------------------------------

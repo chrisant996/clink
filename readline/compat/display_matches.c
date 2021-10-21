@@ -824,37 +824,43 @@ static const char* visible_part(const char *match)
 }
 
 //------------------------------------------------------------------------------
-int printable_len(const char* match)
+int printable_len_ex(const char* match, unsigned char type)
 {
-    const char* temp = printable_part((char*)match);
+    const char* temp = printable_part((char*)match - !!rl_completion_matches_include_type);
     int len = fnwidth(temp);
 
-    // If present, use the match type to determine whether there will be a
-    // visible stat character, and include it in the max length calculation.
-    if (rl_completion_matches_include_type)
-    {
-        int vis_stat = -1;
-        if (IS_MATCH_TYPE_DIR(match[0]) && (
+    // Use the match type to determine whether there will be a visible stat
+    // character, and include it in the max length calculation.
+    int vis_stat = -1;
+    if (IS_MATCH_TYPE_DIR(type) && (
 #if defined (VISIBLE_STATS)
-            rl_visible_stats ||
+        rl_visible_stats ||
 #endif
 #if defined (COLOR_SUPPORT)
-            _rl_colored_stats ||
+        _rl_colored_stats ||
 #endif
-            _rl_complete_mark_directories))
-        {
-            char *sep = rl_last_path_separator(match);
-            vis_stat = (!sep || sep[1]);
-        }
-#if defined (VISIBLE_STATS)
-        else if (rl_visible_stats && rl_filename_display_desired)
-            vis_stat = stat_char (match + 1, match[0]);
-#endif
-        if (vis_stat > 0)
-            len++;
+        _rl_complete_mark_directories))
+    {
+        char *sep = rl_last_path_separator(match);
+        vis_stat = (!sep || sep[1]);
     }
+#if defined (VISIBLE_STATS)
+    else if (rl_visible_stats && rl_filename_display_desired)
+        vis_stat = stat_char (match, type);
+#endif
+    if (vis_stat > 0)
+        len++;
 
     return len;
+}
+
+//------------------------------------------------------------------------------
+int printable_len(const char* match)
+{
+    if (rl_completion_matches_include_type)
+        return printable_len_ex(match + 1, match[0]);
+    else
+        return printable_len_ex(match, MATCH_TYPE_NONE);
 }
 
 //------------------------------------------------------------------------------
