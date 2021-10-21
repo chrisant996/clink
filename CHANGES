@@ -14,7 +14,9 @@
 - Fixed `:nofiles()` to dead-end an argmatcher (regression introduced in v1.0.0).
 - Fixed `clink.ondisplaymatches()` and `clink.onfiltermatches()` when there's only 1 match.
 - Fixed argmatcher for `clink --profile` so it produces directory matches.
+- Fixed intermittent incorrect match generation for `/flag:` or `/flag=` flags.
 - Fixed several minor issues with match display filtering.
+- Fixed `%CLINK_RPROMPT%` when `color.prompt` is set.
 
 #### v1.2.37
 
