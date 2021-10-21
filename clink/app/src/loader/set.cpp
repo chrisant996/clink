@@ -267,6 +267,7 @@ int set(int argc, char** argv)
     // load function handles deferred load for settings declared in scripts.
     host_lua lua;
     prompt_filter prompt_filter(lua);
+    lua_load_script(lua, app, cmd);
     lua_load_script(lua, app, exec);
     lua.load_scripts();
 

@@ -4,7 +4,8 @@
 local cmd_generator = clink.generator(40)
 
 --------------------------------------------------------------------------------
--- NOTE: If you add any settings here update set.cpp to load (lua, app, cmd).
+settings.add("color.cmdsep", "bold", "Color for & and | command separators")
+settings.add("color.cmdredir", "bold", "Color for < and > redirection symbols")
 
 --------------------------------------------------------------------------------
 local cmd_commands = {
@@ -58,4 +59,36 @@ function cmd_generator:generate(line_state, match_builder)
 
     match_builder:addmatches(cmd_commands, "cmd")
     return false
+end
+
+--------------------------------------------------------------------------------
+local amp_classifier = clink.classifier(1)
+function amp_classifier:classify(commands)
+    if commands and commands[1] then
+        local line_state = commands[1].line_state
+        local classifications = commands[1].classifications
+        local line = line_state:getline()
+        local quote = false
+        local i = 1
+        local color_cmdsep = settings.get("color.cmdsep")
+        local color_cmdredir = settings.get("color.cmdredir")
+        while (i <= #line) do
+            local c = line:sub(i,i)
+            if c == '^' then
+                i = i + 1
+            elseif c == '"' then
+                quote = not quote
+            elseif quote then
+            elseif c == '&' or c == '|' then
+                classifications:applycolor(i, 1, color_cmdsep)
+            elseif c == '>' or c == '<' then
+                classifications:applycolor(i, 1, color_cmdredir)
+                if line:sub(i,i+1) == '>&' then
+                    i = i + 1
+                    classifications:applycolor(i, 1, color_cmdredir)
+                end
+            end
+            i = i + 1
+        end
+    end
 end

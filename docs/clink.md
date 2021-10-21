@@ -898,7 +898,7 @@ The <code>line_state</code> field is a [line_state](#line_state) object that con
 The <code>classifications</code> field is a [word_classifications](#word_classifications) object to use for classifying the words in the associated command line.
 
 ```lua
-#INCLUDE [examples\ex_cmd_sep.lua]
+#INCLUDE [examples\ex_classify_envvar.lua]
 ```
 
 <a name="customisingtheprompt"></a>
