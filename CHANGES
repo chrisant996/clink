@@ -4,15 +4,17 @@
 
 #### v1.2.38
 
-- Enhancements for match descriptions:
-  - Added `color.description` Clink setting for the default match description color.
+- Enhancements for match descriptions (which are displayed when listing possible completions):
+  - Argmatchers can provide description strings for flags and/or args (e.g. "Verbose output" for `-v`, or "Do nothing" for `-n`, etc).
+  - Match generators can provide description strings when adding matches (`match_builder:addmatch()` and `match_builder:addmatches()`).
   - The `clink-select-complete` command now shows match descriptions in a single line at the bottom (instead of in a second column) when there are more than 9 matches.
-  - Added ability for argmatchers to provide description strings for flags and/or args (e.g. "Verbose output" for `-v`, or "Do nothing" for `-n`, etc).  The description strings are displayed (if present) when listing possible completions.
+  - Added `color.description` Clink setting for the default match description color.
   - Truncate descriptions when a line will wrap (or has wrapped) when listing possible completions.
 - Fixed <kbd>Backspace</kbd> in `clink-select-complete`; it had sometimes missed expanding the set of matches accordingly.
 - Fixed `:nofiles()` to dead-end an argmatcher (regression introduced in v1.0.0).
 - Fixed `clink.ondisplaymatches()` and `clink.onfiltermatches()` when there's only 1 match.
 - Fixed argmatcher for `clink --profile` so it produces directory matches.
+- Fixed several minor issues with match display filtering.
 
 #### v1.2.37
 
