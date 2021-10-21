@@ -236,7 +236,7 @@ unsigned int word_collector::collect_words(const char* line_buffer, unsigned int
     word* end_word = words.empty() ? nullptr : &words.back();
     if (!end_word || (stop_at_cursor && end_word->offset + end_word->length < line_cursor))
     {
-        words.push_back({ line_cursor, 0, !end_word, 0, 0 });
+        words.push_back({line_cursor, 0, !end_word});
     }
 
     // Adjust for quotes.
@@ -261,7 +261,7 @@ unsigned int word_collector::collect_words(const char* line_buffer, unsigned int
     if (dbg_get_env_int("DEBUG_COLLECTWORDS") < 0)
     {
         int i = 0;
-        for (word& word : words)
+        for (const word& word : words)
         {
             str<> tmp;
             str_iter it(line_buffer + word.offset, word.length);
