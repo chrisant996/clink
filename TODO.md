@@ -5,17 +5,18 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- Regression in `zzzzz -d=` which lists files instead of the linked matcher's args.
 - When a single line prompt is exactly the width of the window, the input line starts on the same line, but should start on the next line.
+  - This seems to be a regression in Readline 8.1.
+  - Readline 8.0 has a different problem, and accidentally prints part of the `\x1b[0;93;49m` color reset as plain text.
+  - This appears to be specific to printing the local prompt and it being an integral multiple of the console width, plus having "invisible characters" after that point.
 
 ## Medium Priority
-- Add a quick start / beginner section to the Clink docs.
+- `match_display_filter` doesn't work properly with filtering, e.g. `git checkout o` in deprecated mode doesn't filter.
 - Maybe add descriptions for `clink set` setting names?
-- Maybe limit how many matches `possible-completions` will show with descriptions?
+- Add a quick start / beginner section to the Clink docs.
 
 ## Low Priority
 - Push fixes back to clink-completions.
-- `match_display_filter` doesn't work properly with filtering, e.g. `git checkout o` in deprecated mode doesn't filter.
 - Auto-update option, with configurable polling interval?  (Though package managers like scoop can handle updates, if Clink was installed through one.)
 
 ## Mystery (am I only imagining it?)
@@ -39,6 +40,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 **Miscellaneous**
 - Is it a problem that `update_internal()` gets called once per char in a key sequence?  Maybe it should only happen after a key that finishes a key binding?
 - Include `wildmatch()` and an `fnmatch()` wrapper for it.  But should first update it to support UTF8.
+- Maybe limit how many matches `possible-completions` will show with descriptions?
 
 <br/>
 <br/>
