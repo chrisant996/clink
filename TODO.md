@@ -11,7 +11,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## Medium Priority
 - `match_display_filter` doesn't work properly with filtering, e.g. `git checkout o` in deprecated mode doesn't filter.
-- Maybe add descriptions for `clink set` setting names?
 - Add a quick start / beginner section to the Clink docs.
 
 ## Low Priority
