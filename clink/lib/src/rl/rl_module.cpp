@@ -1937,7 +1937,7 @@ void rl_module::set_prompt(const char* prompt, const char* rprompt, bool redispl
             force_prompt_color = true;
             m_rl_prompt.format("\x01%s\x02", prompt_color);
             if (rprompt)
-                m_rl_rprompt << prompt_color;
+                m_rl_rprompt.format("\x01%s\x02", prompt_color);
         }
     }
 
