@@ -5,10 +5,9 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- When a single line prompt is exactly the width of the window, the input line starts on the same line, but should start on the next line.
-  - This seems to be a regression in Readline 8.1.
-  - Readline 8.0 has a different problem, and accidentally prints part of the `\x1b[0;93;49m` color reset as plain text.
-  - This appears to be specific to printing the local prompt and it being an integral multiple of the console width, plus having "invisible characters" after that point.
+- Regression introduced in Readline 8.0:  When a single line prompt is exactly the width of the window, the input line starts on the same line, but should start on the next line.  The `expand_prompt()` function tries to update `local_prompt_newlines`, but it gets it wrong.
+  - Maybe it needs to force a `rl_crlf()` if the remainder of the prompt is invisible characters.
+  - Maybe it needs to mark the newline after visible+invisible characters, rather than after visible character.
 
 ## Medium Priority
 - `match_display_filter` doesn't work properly with filtering, e.g. `git checkout o` in deprecated mode doesn't filter.
