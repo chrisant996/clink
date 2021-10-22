@@ -29,8 +29,9 @@ local function failed(msg)
 end
 
 --------------------------------------------------------------------------------
+local exec_lead = "\n"
 local function exec(cmd, silent)
-    print("\n## EXEC: " .. cmd)
+    print(exec_lead .. "## EXEC: " .. cmd)
 
     if silent then
         cmd = "1>nul 2>nul "..cmd
@@ -82,6 +83,12 @@ local function copy(src, dest)
 end
 
 --------------------------------------------------------------------------------
+local function rename(src, dest)
+    src = path.translate(src)
+    return exec("ren " .. src .. " " .. dest, true)
+end
+
+--------------------------------------------------------------------------------
 local function file_exists(name)
     local f = io.open(name, "r")
     if f ~= nil then
@@ -124,13 +131,17 @@ newaction {
         local root_dir = path.getabsolute(".build/vs2019/bin").."/"
         local code_dir = path.getabsolute(".").."/"
 
+        exec_lead = ""
+
+        if not os.isdir(code_dir.."clink") or not os.isdir(code_dir.."readline") or not os.isdir(code_dir.."lua") then
+            error(code_dir.." does not appear to be a Clink repo root directory.");
+        end
+
         -- Check we have the tools we need.
         local have_msbuild = have_required_tool("msbuild", { "c:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Enterprise\\MSBuild\\Current\\Bin", "c:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Enterprise\\MSBuild\\Current\\Bin" })
         local have_nsis = have_required_tool("makensis", "c:\\Program Files (x86)\\NSIS")
         if not have_msbuild then error("MSBUILD NOT FOUND.") end
         if not have_nsis then error("NSIS NOT FOUND.") end
-
-error("THE NSIS ACTION HAS NOT BEEN TESTED YET.")
 
         -- Build the code.
         local x86_ok = true
@@ -176,10 +187,19 @@ error("THE NSIS ACTION HAS NOT BEEN TESTED YET.")
 
         -- Copy release files to a directory.
         for _, mask in ipairs(release_manifest) do
-            copy(src .. mask, dest)
+            local from = src
+            if mask == "CHANGES" or mask == "LICENSE" then
+                from = code_dir
+            elseif mask:sub(-4) == ".pdb" then
+                from = nil
+            end
+            if from then
+                copy(from .. mask, dest)
+            end
         end
 
         -- Generate documentation.
+        print()
         exec(premake .. " docs --docver="..docversion)
         copy(".build/docs/clink.html", dest)
 
@@ -187,11 +207,14 @@ error("THE NSIS ACTION HAS NOT BEEN TESTED YET.")
         local nsis_ok = false
         if have_nsis then
             local nsis_cmd = have_nsis
-            nsis_cmd = nsis_cmd .. " /DCLINK_BUILD=" .. path.getabsolute(dest)
+            nsis_cmd = nsis_cmd .. " /DCLINK_BUILD=" .. dest
             nsis_cmd = nsis_cmd .. " /DCLINK_VERSION=" .. version
             nsis_cmd = nsis_cmd .. " /DCLINK_SOURCE=" .. code_dir
             nsis_cmd = nsis_cmd .. " " .. code_dir .. "/installer/clink.nsi"
             nsis_ok = exec(nsis_cmd)
+            if nsis_ok then
+                rename(dest.."_setup.exe", "clink_setup.exe")
+            end
         end
 
         -- Report some facts about what just happened.
