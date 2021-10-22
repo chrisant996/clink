@@ -5,7 +5,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- Description is not shown when there's only one match.  This is because of a quirk in how Readline handles only one match.
 
 ## Medium Priority
 - Add a quick start / beginner section to the Clink docs.
