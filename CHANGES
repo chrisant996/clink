@@ -10,6 +10,7 @@
   - The `clink-select-complete` command now shows match descriptions in a single line at the bottom (instead of in a second column) when there are more than 9 matches.
   - Added `color.description` Clink setting for the default match description color.
   - Truncate descriptions when a line will wrap (or has wrapped) when listing possible completions.
+- Command separators (`&`, `|`) and redirection symbols (`<`, `>`, `>&`) are colored in the input line, using colors from the new `color.cmdsep` and `color.cmdredir` Clink settings.
 - Fixed <kbd>Backspace</kbd> in `clink-select-complete`; it had sometimes missed expanding the set of matches accordingly.
 - Fixed the `clink-popup-history` command to respect the `search-ignore-case` setting.
 - Fixed `:nofiles()` to dead-end an argmatcher (regression introduced in v1.0.0).
