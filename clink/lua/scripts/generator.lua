@@ -88,6 +88,7 @@ function clink._generate(line_state, match_builder)
         print("")
         print("match generator failed:")
         print(ret)
+        _current_builder = nil
         return
     end
 
