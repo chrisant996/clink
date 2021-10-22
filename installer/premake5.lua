@@ -5,6 +5,18 @@
 local any_warnings_or_failures = nil
 
 --------------------------------------------------------------------------------
+local release_manifest = {
+    "clink.bat",
+    "clink.lua",
+    "clink_x*.exe",
+    "clink*.dll",
+    "CHANGES",
+    "LICENSE",
+    "clink_x*.pdb",
+    "clink_dll_x*.pdb",
+}
+
+--------------------------------------------------------------------------------
 local function warn(msg)
     print("\x1b[0;33;1mWARNING: " .. msg.."\x1b[m")
     any_warnings_or_failures = true
@@ -102,6 +114,93 @@ local function have_required_tool(name, fallback)
 
     return nil
 end
+
+--------------------------------------------------------------------------------
+newaction {
+    trigger = "nsis",
+    description = "Creates a (debug) installer for Clink.",
+    execute = function()
+        local premake = _PREMAKE_COMMAND
+        local root_dir = path.getabsolute(".build/vs2019/bin").."/"
+        local code_dir = path.getabsolute(".").."/"
+
+        -- Check we have the tools we need.
+        local have_msbuild = have_required_tool("msbuild", { "c:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Enterprise\\MSBuild\\Current\\Bin", "c:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Enterprise\\MSBuild\\Current\\Bin" })
+        local have_nsis = have_required_tool("makensis", "c:\\Program Files (x86)\\NSIS")
+        if not have_msbuild then error("MSBUILD NOT FOUND.") end
+        if not have_nsis then error("NSIS NOT FOUND.") end
+
+error("THE NSIS ACTION HAS NOT BEEN TESTED YET.")
+
+        -- Build the code.
+        local x86_ok = true
+        local x64_ok = true
+        local toolchain = "ERROR"
+        local build_code = function (target)
+            target = target or "build"
+
+            toolchain = _OPTIONS["vsver"] or "vs2019"
+            os.chdir(".build/" .. toolchain)
+
+            x86_ok = exec(have_msbuild .. " /m /v:q /p:configuration=debug /p:platform=win32 clink.sln /t:" .. target)
+            x64_ok = exec(have_msbuild .. " /m /v:q /p:configuration=debug /p:platform=x64 clink.sln /t:" .. target)
+
+            os.chdir("../..")
+        end
+
+        build_code()
+
+        local src = path.getabsolute(".build/" .. toolchain .. "/bin/debug").."/"
+
+        -- Do a coarse check to make sure there's a build available.
+        if not os.isdir(src .. ".") or not (x86_ok or x64_ok) then
+            error("There's no build available in '" .. src .. "'")
+        end
+
+        -- Now we can extract the version from the executables.
+        local version = nil
+        local clink_exe = x86_ok and "clink_x86.exe" or "clink_x64.exe"
+        local ver_cmd = src:gsub("/", "\\")..clink_exe.." --version"
+        for line in io.popen(ver_cmd):lines() do
+            version = line
+        end
+        if not version then
+            error("Failed to extract version from build executables")
+        end
+        local docversion = version:match("%d+%.%d+%.%d+")
+
+        -- Create the output directory.
+        local dest = path.getabsolute(".build/nsis").."/"
+        rmdir(dest)
+        mkdir(dest)
+
+        -- Copy release files to a directory.
+        for _, mask in ipairs(release_manifest) do
+            copy(src .. mask, dest)
+        end
+
+        -- Generate documentation.
+        exec(premake .. " docs --docver="..docversion)
+        copy(".build/docs/clink.html", dest)
+
+        -- Build the installer.
+        local nsis_ok = false
+        if have_nsis then
+            local nsis_cmd = have_nsis
+            nsis_cmd = nsis_cmd .. " /DCLINK_BUILD=" .. path.getabsolute(dest)
+            nsis_cmd = nsis_cmd .. " /DCLINK_VERSION=" .. version
+            nsis_cmd = nsis_cmd .. " /DCLINK_SOURCE=" .. code_dir
+            nsis_cmd = nsis_cmd .. " " .. code_dir .. "/installer/clink.nsi"
+            nsis_ok = exec(nsis_cmd)
+        end
+
+        -- Report some facts about what just happened.
+        print("\n\n")
+        if not nsis_ok then     warn("INSTALLER PACKAGE FAILED") end
+        if not x86_ok then      failed("x86 BUILD FAILED") end
+        if not x64_ok then      failed("x64 BUILD FAILED") end
+    end
+}
 
 --------------------------------------------------------------------------------
 newaction {
@@ -209,18 +308,7 @@ newaction {
         mkdir(dest)
 
         -- Copy release files to a directory.
-        local manifest = {
-            "clink.bat",
-            "clink.lua",
-            "clink_x*.exe",
-            "clink*.dll",
-            "CHANGES",
-            "LICENSE",
-            "clink_x*.pdb",
-            "clink_dll_x*.pdb",
-        }
-
-        for _, mask in ipairs(manifest) do
+        for _, mask in ipairs(release_manifest) do
             copy(src .. mask, dest)
         end
 
@@ -268,7 +356,7 @@ newaction {
         -- Report some facts about what just happened.
         print("\n\n")
         if not have_7z then     warn("7-ZIP NOT FOUND -- Packing to .zip files was skipped.") end
-        if not have_nsis then   warn("NSIS NOT FOUND -- No installer was not created.") end
+        if not have_nsis then   warn("NSIS NOT FOUND -- No installer was created.") end
         if not nsis_ok then     warn("INSTALLER PACKAGE FAILED") end
         if not x86_ok then      failed("x86 BUILD FAILED") end
         if not x64_ok then      failed("x64 BUILD FAILED") end
