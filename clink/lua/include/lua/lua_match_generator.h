@@ -18,8 +18,8 @@ public:
     void            filter_matches(char** matches, char completion_type, bool filename_completion_desired);
 
 private:
-    virtual bool    generate(const line_state& line, match_builder& builder) override;
+    virtual bool    generate(const line_state& line, match_builder& builder, bool old_filtering=false) override;
     virtual void    get_word_break_info(const line_state& line, word_break_info& info) const override;
-    virtual bool    match_display_filter(const char* needle, char** matches, match_display_filter_entry*** filtered_matches, bool popup) override;
+    virtual bool    match_display_filter(const char* needle, char** matches, match_display_filter_entry*** filtered_matches, display_filter_flags flags, bool* old_filtering=nullptr) override;
     lua_state&      m_state;
 };

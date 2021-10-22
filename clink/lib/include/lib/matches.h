@@ -115,6 +115,16 @@ private:
 struct match_display_filter_entry;
 
 //------------------------------------------------------------------------------
+enum class display_filter_flags
+{
+    none                    = 0x00,
+    selectable              = 0x01,
+    plainify                = 0x02,
+};
+
+DEFINE_ENUM_FLAG_OPERATORS(display_filter_flags);
+
+//------------------------------------------------------------------------------
 class matches
 {
 public:
@@ -129,7 +139,7 @@ public:
     virtual char            get_append_character() const = 0;
     virtual int             get_suppress_quoting() const = 0;
     virtual int             get_word_break_position() const = 0;
-    virtual bool            match_display_filter(const char* needle, char** matches, match_display_filter_entry*** filtered_matches, bool popup) const = 0;
+    virtual bool            match_display_filter(const char* needle, char** matches, match_display_filter_entry*** filtered_matches, display_filter_flags flags, bool* old_filtering=nullptr) const = 0;
 
 private:
     friend class matches_iter;

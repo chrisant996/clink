@@ -652,6 +652,14 @@ function _argmatcher:_generate(line_state, match_builder, extra_words)
     local arg_index = reader._arg_index
     local match_type = ((not matcher._deprecated) and "arg") or nil
 
+    local endword
+    local endwordinfo = line_state:getwordinfo(line_state:getwordcount())
+    if clink.use_old_filtering then
+        endword = line_state:getline():sub(endwordinfo.offset, line_state:getcursor() - 1)
+    else
+        endword = line_state:getendword()
+    end
+
     -- Are we left with a valid argument that can provide matches?
     local add_matches = function(arg, match_type)
         local descs = matcher._descriptions
@@ -666,7 +674,7 @@ function _argmatcher:_generate(line_state, match_builder, extra_words)
 
         for _, i in ipairs(arg) do
             if type(i) == "function" then
-                local j = i(line_state:getendword(), word_count, line_state, match_builder)
+                local j = i(endword, word_count, line_state, match_builder)
                 if type(j) ~= "table" then
                     return j or false
                 end
@@ -686,7 +694,6 @@ function _argmatcher:_generate(line_state, match_builder, extra_words)
 
     -- Select between adding flags or matches themselves. Works in conjunction
     -- with getwordbreakinfo()'s return.
-    local endwordinfo = line_state:getwordinfo(line_state:getwordcount())
     if endwordinfo.redir then
         -- The word is an argument to a redirection symbol, so generate file
         -- matches.

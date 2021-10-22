@@ -87,7 +87,7 @@ extern int host_filter_matches(char** matches);
 extern void update_matches();
 extern void reset_generate_matches();
 extern void force_update_internal(bool restrict);
-extern matches* maybe_regenerate_matches(const char* needle, bool popup);
+extern matches* maybe_regenerate_matches(const char* needle, display_filter_flags flags);
 extern setting_color g_color_interact;
 extern int g_prompt_refilter;
 extern int g_prompt_redisplay;
@@ -986,8 +986,12 @@ static char** alternative_matches(const char* text, int start, int end)
     if (!s_matches)
         return nullptr;
 
+    const display_filter_flags flags = (s_is_popup ?
+        (display_filter_flags::selectable | display_filter_flags::plainify) :
+        (display_filter_flags::none));
+
     update_matches();
-    if (matches* regen = maybe_regenerate_matches(text, s_is_popup))
+    if (matches* regen = maybe_regenerate_matches(text, flags))
     {
         // It's ok to redirect s_matches here because s_matches is reset in
         // every rl_module::on_input() call.
@@ -1100,13 +1104,13 @@ static char** alternative_matches(const char* text, int start, int end)
 }
 
 //------------------------------------------------------------------------------
-static match_display_filter_entry** match_display_filter(const char* needle, char** matches, bool popup)
+static match_display_filter_entry** match_display_filter(const char* needle, char** matches, display_filter_flags flags)
 {
     if (!s_matches)
         return nullptr;
 
     match_display_filter_entry** filtered_matches = nullptr;
-    if (!s_matches->match_display_filter(needle, matches, &filtered_matches, popup))
+    if (!s_matches->match_display_filter(needle, matches, &filtered_matches, flags))
         return nullptr;
 
     return filtered_matches;
@@ -1115,7 +1119,7 @@ static match_display_filter_entry** match_display_filter(const char* needle, cha
 //------------------------------------------------------------------------------
 static match_display_filter_entry** match_display_filter_callback(char** matches)
 {
-    return match_display_filter(s_needle.c_str(), matches, false/*popup*/);
+    return match_display_filter(s_needle.c_str(), matches, display_filter_flags::none);
 }
 
 //------------------------------------------------------------------------------
@@ -1186,7 +1190,8 @@ int clink_popup_complete(int count, int invoking_key)
 
     // Match display filter.
     bool display_filtered = false;
-    match_display_filter_entry** filtered_matches = match_display_filter(s_needle.c_str(), matches, true/*popup*/);
+    const display_filter_flags flags = (display_filter_flags::selectable | display_filter_flags::plainify);
+    match_display_filter_entry** filtered_matches = match_display_filter(s_needle.c_str(), matches, flags);
     if (filtered_matches && filtered_matches[0] && filtered_matches[1])
     {
         display_filtered = true;

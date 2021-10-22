@@ -66,7 +66,7 @@ public:
     virtual char            get_append_character() const override;
     virtual int             get_suppress_quoting() const override;
     virtual int             get_word_break_position() const override;
-    virtual bool            match_display_filter(const char* needle, char** matches, match_display_filter_entry*** filtered_matches, bool popup) const override;
+    virtual bool            match_display_filter(const char* needle, char** matches, match_display_filter_entry*** filtered_matches, display_filter_flags flags, bool* old_filtering=nullptr) const override;
 
     void                    set_word_break_position(int position);
     void                    set_regen_blocked();

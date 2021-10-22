@@ -216,13 +216,14 @@ void match_pipeline::set_nosort(bool nosort)
 //------------------------------------------------------------------------------
 void match_pipeline::generate(
     const line_state& state,
-    const array<match_generator*>& generators) const
+    const array<match_generator*>& generators,
+    bool old_filtering) const
 {
     m_matches.set_word_break_position(state.get_end_word_offset());
 
     match_builder builder(m_matches);
     for (auto* generator : generators)
-        if (generator->generate(state, builder))
+        if (generator->generate(state, builder, old_filtering))
             break;
 
     m_matches.done_building(); // Free the temporary de-duplication data.

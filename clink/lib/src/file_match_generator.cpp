@@ -31,7 +31,7 @@ setting_bool g_glob_system(
 //------------------------------------------------------------------------------
 static class : public match_generator
 {
-    virtual bool generate(const line_state& line, match_builder& builder) override
+    virtual bool generate(const line_state& line, match_builder& builder, bool /*old_filtering*/) override
     {
         str<288> root;
         line.get_end_word(root);

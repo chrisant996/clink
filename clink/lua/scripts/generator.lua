@@ -22,6 +22,7 @@ local _generators_unsorted = false
 --- See <a href="#filteringthematchdisplay">Filtering the Match Display</a> for
 --- more information.
 clink.match_display_filter = nil
+clink.use_old_filtering = nil
 
 --------------------------------------------------------------------------------
 -- Deprecated.
@@ -62,7 +63,7 @@ function clink._reset_display_filter()
 end
 
 --------------------------------------------------------------------------------
-function clink._generate(line_state, match_builder)
+function clink._generate(line_state, match_builder, old_filtering)
     local impl = function ()
         clink.generator_stopped = nil
 
@@ -79,6 +80,7 @@ function clink._generate(line_state, match_builder)
     end
 
     clink._reset_display_filter()
+    clink.use_old_filtering = old_filtering
 
     prepare()
     _current_builder = match_builder
@@ -89,10 +91,12 @@ function clink._generate(line_state, match_builder)
         print("match generator failed:")
         print(ret)
         _current_builder = nil
+        clink.use_old_filtering = nil
         return
     end
 
     _current_builder = nil
+    clink.use_old_filtering = nil
     return ret or false
 end
 
@@ -378,7 +382,12 @@ function clink.register_match_generator(func, priority)
         local text = line_state:getendword()
         local info = line_state:getwordinfo(line_state:getwordcount())
         local first = info.offset
-        local last = first + info.length - 1
+        local last
+        if clink.use_old_filtering then
+            last = line_state:getcursor() - 1
+        else
+            last = first + info.length - 1
+        end
         -- // TODO: adjust_for_separator()?
 
         return func(text, first, last)

@@ -35,7 +35,7 @@ extern int _rl_last_v_pos;
 
 extern void reset_generate_matches();
 extern bool is_regen_blocked();
-extern matches* maybe_regenerate_matches(const char* needle, bool popup);
+extern matches* maybe_regenerate_matches(const char* needle, display_filter_flags flags);
 extern void force_update_internal(bool restrict=false);
 extern void update_matches();
 extern void update_rl_modes_from_matches(const matches* matches, const matches_iter& iter, int count);
@@ -870,12 +870,12 @@ void selectcomplete_impl::update_matches(bool restrict)
     }
 
     // Perform match display filtering.
-    const bool popup = false;
+    const display_filter_flags flags = display_filter_flags::selectable;
     bool filtered = false;
-    if (m_matches.get_matches()->match_display_filter(nullptr, nullptr, nullptr, popup))
+    if (m_matches.get_matches()->match_display_filter(nullptr, nullptr, nullptr, flags))
     {
         assert(rl_completion_matches_include_type);
-        if (matches* regen = maybe_regenerate_matches(m_needle.c_str(), popup))
+        if (matches* regen = maybe_regenerate_matches(m_needle.c_str(), flags))
         {
             m_matches.set_regen_matches(regen);
 
@@ -896,7 +896,7 @@ void selectcomplete_impl::update_matches(bool restrict)
 
             // Get filtered matches.
             match_display_filter_entry** filtered_matches = nullptr;
-            m_matches.get_matches()->match_display_filter(m_needle.c_str(), &*matches.begin(), &filtered_matches, popup);
+            m_matches.get_matches()->match_display_filter(m_needle.c_str(), &*matches.begin(), &filtered_matches, flags);
 
             // Use filtered matches.
             m_matches.set_filtered_matches(filtered_matches);
@@ -987,7 +987,12 @@ void selectcomplete_impl::update_layout()
     // showing the description.
     int slop_rows = m_desc_below ? 4 : 2;
 
-    int cols_that_fit = desc_inline ? 1 : m_screen_cols / (m_match_longest + between_cols);
+#ifdef DEBUG
+    m_annotate = !!dbg_get_env_int("DEBUG_SHOWTYPES");
+#endif
+
+    const int longest_display = get_longest_display();
+    int cols_that_fit = desc_inline ? 1 : m_screen_cols / (longest_display + between_cols);
     m_match_cols = max<int>(1, cols_that_fit);
     m_match_rows = (m_matches.get_match_count() + (m_match_cols - 1)) / m_match_cols;
 
@@ -1061,6 +1066,11 @@ void selectcomplete_impl::update_display()
             const int major_stride = _rl_print_completions_horizontally ? m_match_cols : 1;
             const int minor_stride = _rl_print_completions_horizontally ? 1 : m_match_rows;
             const int col_width = min<int>(m_match_longest, max<int>(m_screen_cols - between_cols, 1));
+#ifdef DEBUG
+            const int col_extra = get_longest_display() - col_width;
+#else
+            const int col_extra = 0;
+#endif
             for (int row = 0; row < rows; row++)
             {
                 int i = (m_top + row) * major_stride;
@@ -1095,9 +1105,8 @@ void selectcomplete_impl::update_display()
 
                         mark_tmpbuf();
                         int printed_len;
-                        if (m_matches.is_display_filtered() &&
-                            (is_match_type(match_type, match_type::none) ||
-                             m_matches.is_custom_display(i)))
+                        if ((m_matches.is_display_filtered() && is_match_type(match_type, match_type::none)) ||
+                            (m_matches.is_custom_display(i)))
                         {
                             printed_len = m_matches.get_match_visible_display(i);
                             if (printed_len > col_width)
@@ -1125,18 +1134,40 @@ void selectcomplete_impl::update_display()
                             }
                         }
 
+#ifdef DEBUG
+                        if (col_extra)
+                        {
+                            pad_filename(printed_len, col_width + 1, selected);
+                            printed_len = col_width + col_extra;
+
+                            if (!selected)
+                                append_tmpbuf_string("\x1b[36m", 5);
+                            else if (_rl_selected_color)
+                            {
+                                append_tmpbuf_string("\x1b[", 2);
+                                append_tmpbuf_string(_rl_selected_color, strlen(_rl_selected_color));
+                                append_tmpbuf_char('m');
+                            }
+
+                            char _extra[3];
+                            str_base extra(_extra);
+                            extra.format("%2x", type);
+                            append_tmpbuf_string(_extra, 2);
+                        }
+#endif
+
                         const int next = i + minor_stride;
 
                         const char* desc = m_desc_below ? nullptr : m_matches.get_match_description(i);
                         const bool last_col = (col + 1 >= m_match_cols || next >= count);
                         if (selected || !last_col || desc)
-                            pad_filename(printed_len, col_width + (selected ? 0 : between_cols), selected);
+                            pad_filename(printed_len, col_width + col_extra + (selected ? 0 : between_cols), selected);
 
                         if (desc)
                         {
                             // Leave between_cols at end of line, otherwise "\x1b[K" can erase part
                             // of the intended output.
-                            const int remaining = m_screen_cols - col_width - before_desc - between_cols;
+                            const int remaining = m_screen_cols - (col_width + col_extra) - before_desc - between_cols;
                             if (remaining > 0)
                             {
                                 printed_len = m_matches.get_match_visible_description(i);
@@ -1431,6 +1462,16 @@ void selectcomplete_impl::insert_match(int final)
 int selectcomplete_impl::get_match_row(int index) const
 {
     return _rl_print_completions_horizontally ? (index / m_match_cols) : (index % m_match_rows);
+}
+
+//------------------------------------------------------------------------------
+int selectcomplete_impl::get_longest_display() const
+{
+#ifdef DEBUG
+    return m_match_longest + (m_annotate ? 3 : 0);  // Room for space hex hex.
+#else
+    return m_match_longest;
+#endif
 }
 
 //------------------------------------------------------------------------------

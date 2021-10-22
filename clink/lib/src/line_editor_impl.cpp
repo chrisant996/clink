@@ -1138,14 +1138,15 @@ bool line_editor_impl::call_lua_rl_global_function(const char* func_name)
 }
 
 //------------------------------------------------------------------------------
-matches* maybe_regenerate_matches(const char* needle, bool popup)
+matches* maybe_regenerate_matches(const char* needle, display_filter_flags flags)
 {
     if (!s_editor || s_editor->m_matches.is_regen_blocked())
         return nullptr;
 
     // Check if a match display filter is active.
     matches_impl& regen = s_editor->m_regen_matches;
-    if (!regen.match_display_filter(nullptr, nullptr, nullptr, popup))
+    bool old_filtering = false;
+    if (!regen.match_display_filter(nullptr, nullptr, nullptr, flags, &old_filtering))
         return nullptr;
 
 #ifdef DEBUG
@@ -1170,7 +1171,7 @@ matches* maybe_regenerate_matches(const char* needle, bool popup)
     if (debug_filter) puts("-- GENERATE");
 #endif
 
-    pipeline.generate(line, s_editor->m_generators);
+    pipeline.generate(line, s_editor->m_generators, old_filtering);
 
 #ifdef DEBUG
     if (debug_filter) puts("-- SELECT");
@@ -1188,6 +1189,14 @@ matches* maybe_regenerate_matches(const char* needle, bool popup)
         puts("-- DONE");
     }
 #endif
+
+    if (old_filtering)
+    {
+        // Using old_filtering lets deprecated generators filter based on the
+        // input needle.  That poisons the collected matches for any other use,
+        // so the matches must be reset.
+        reset_generate_matches();
+    }
 
     return &regen;
 }

@@ -79,6 +79,7 @@ private:
     void            insert_needle();
     void            insert_match(int final=false);
     int             get_match_row(int index) const;
+    int             get_longest_display() const;
     void            set_top(int top);
 
     // Initialization state.
@@ -115,6 +116,11 @@ private:
     // Current input.
     str<>           m_needle;
     bool            m_was_backspace = false;
+
+    // Debugging.
+#ifdef DEBUG
+    bool            m_annotate = false;
+#endif
 };
 
 //------------------------------------------------------------------------------

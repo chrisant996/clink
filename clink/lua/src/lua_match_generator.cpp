@@ -45,7 +45,7 @@ lua_match_generator::~lua_match_generator()
 }
 
 //------------------------------------------------------------------------------
-bool lua_match_generator::generate(const line_state& line, match_builder& builder)
+bool lua_match_generator::generate(const line_state& line, match_builder& builder, bool old_filtering)
 {
     lua_State* state = m_state.get_state();
     save_stack_top ss(state);
@@ -78,7 +78,9 @@ bool lua_match_generator::generate(const line_state& line, match_builder& builde
     match_builder_lua builder_lua(builder);
     builder_lua.push(state);
 
-    if (m_state.pcall(state, 2, 1) != 0)
+    lua_pushboolean(state, old_filtering);
+
+    if (m_state.pcall(state, 3, 1) != 0)
     {
         if (const char* error = lua_tostring(state, -1))
             m_state.print_error(error);
@@ -159,12 +161,14 @@ static int plainify(const char* s, char** strip)
 }
 
 //------------------------------------------------------------------------------
-bool lua_match_generator::match_display_filter(const char* needle, char** matches, match_display_filter_entry*** filtered_matches, bool popup)
+bool lua_match_generator::match_display_filter(const char* needle, char** matches, match_display_filter_entry*** filtered_matches, display_filter_flags flags, bool* old_filtering)
 {
     bool ret = false;
     lua_State* state = m_state.get_state();
     str<> lcd;
     bool lcd_initialized = false;
+    const bool selectable = (flags & display_filter_flags::selectable) == display_filter_flags::selectable;
+    const bool strip_markup = (flags & display_filter_flags::plainify) == display_filter_flags::plainify;
 
     // A small note about the contents of 'matches' - the first match isn't
     // really a match, it's the word being completed. Readline ignores it when
@@ -197,7 +201,7 @@ bool lua_match_generator::match_display_filter(const char* needle, char** matche
 
         // Popup lists require the new API in order to differentiate between
         // what is displayed and what is inserted.
-        if (popup && !ondisplaymatches)
+        if (selectable && !ondisplaymatches)
             goto done;
 
         // NOTE:  If any ondisplaymatches are set, then match_display_filter is
@@ -223,7 +227,10 @@ bool lua_match_generator::match_display_filter(const char* needle, char** matche
     {
         if (filtered_matches)
             *filtered_matches = nullptr;
+success:
         ret = true;
+        if (old_filtering)
+            *old_filtering = !ondisplaymatches;
 done:
         top = lua_gettop(state) - top;
         lua_pop(state, top);
@@ -277,7 +284,7 @@ done:
             lua_rawseti(state, -2, i);
         }
 
-        lua_pushboolean(state, popup);
+        lua_pushboolean(state, selectable); // The "popup" argument.
     }
     else
     {
@@ -407,7 +414,7 @@ discard:
                 if (!display[0])
                     goto discard;
                 new_match->display = append_string_into_buffer(buffer, display);
-                new_match->visible_display = plainify(new_match->display, popup ? &buffer : nullptr);
+                new_match->visible_display = plainify(new_match->display, strip_markup ? &buffer : nullptr);
                 if (new_match->visible_display <= 0)
                     goto discard;
 
@@ -415,7 +422,7 @@ discard:
                 {
                     one_column = true;
                     new_match->description = append_string_into_buffer(buffer, description);
-                    new_match->visible_description = plainify(new_match->description, popup ? &buffer : nullptr);
+                    new_match->visible_description = plainify(new_match->description, strip_markup ? &buffer : nullptr);
                 }
                 else
                 {
@@ -503,9 +510,7 @@ next:
     }
 
     *filtered_matches = new_matches;
-    ret = true;
-
-    goto done;
+    goto success;
 }
 
 //------------------------------------------------------------------------------
