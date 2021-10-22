@@ -5,9 +5,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- Regression introduced in Readline 8.0:  When a single line prompt is exactly the width of the window, the input line starts on the same line, but should start on the next line.  The `expand_prompt()` function tries to update `local_prompt_newlines`, but it gets it wrong.
-  - Maybe it needs to force a `rl_crlf()` if the remainder of the prompt is invisible characters.
-  - Maybe it needs to mark the newline after visible+invisible characters, rather than after visible character.
 
 ## Medium Priority
 - `match_display_filter` doesn't work properly with filtering, e.g. `git checkout o` in deprecated mode doesn't filter.
