@@ -1293,17 +1293,17 @@ done_filtered:
         }
     }
 
-    // Handle simple case first.  What if there is only one answer?
+    // Handle "simple" case first.  What if there is only one answer?
+    char* rebuilt[3];
     if (matches[1] == 0)
     {
-        temp = printable_part(matches[0]);
-        end_prompt(1/*crlf*/);
-        reset_tmpbuf();
-        append_filename(temp, matches[0], 0, 0, 0);
-        fwrite(tmpbuf_allocated, tmpbuf_length, 1, rl_outstream);
-        rl_crlf();
-
-        goto done;
+        // Rebuild a matches array that has a first match, so the display
+        // routine can handle descriptions, and also special display when using
+        // match display filtering.
+        rebuilt[0] = matches[0];
+        rebuilt[1] = matches[0];
+        rebuilt[2] = 0;
+        matches = rebuilt;
     }
 
     // There is more than one answer.  Find out how many there are,
