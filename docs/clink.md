@@ -106,6 +106,8 @@ Name                         | Default | Description
 `color.arg`                  |         | The color for arguments in the input line when `clink.colorize_input` is enabled.
 `color.argmatcher`           |         | The color for the command name in the input line when `clink.colorize_input` is enabled, if the command name has an argmatcher available.
 <a name="color_cmd"></a>`color.cmd` | `bold` | Used when displaying shell (CMD.EXE) command completions, and in the input line when `clink.colorize_input` is enabled.
+`color.cmdredir`             | `bold`  | The color for redirection symbols (`<`, `>`, `>&`) in the input line when `clink.colorize_input` is enabled.
+`color.cmdsep`               | `bold`  | The color for command separaors (`&`, `|`) in the input line when `clink.colorize_input` is enabled.
 `color.description`          | `bright cyan` | Used when displaying descriptions for match completions.
 <a name="color_doskey"></a>`color.doskey` | `bright cyan` | Used when displaying doskey alias completions, and in the input line when `clink.colorize_input` is enabled.
 <a name="color_filtered"></a>`color.filtered` | `bold` | The default color for filtered completions (see [Filtering the Match Display](#filteringthematchdisplay)).
