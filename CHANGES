@@ -11,12 +11,15 @@
   - Added `color.description` Clink setting for the default match description color.
   - Truncate descriptions when a line will wrap (or has wrapped) when listing possible completions.
 - Fixed <kbd>Backspace</kbd> in `clink-select-complete`; it had sometimes missed expanding the set of matches accordingly.
+- Fixed the `clink-popup-history` command to respect the `search-ignore-case` setting.
 - Fixed `:nofiles()` to dead-end an argmatcher (regression introduced in v1.0.0).
 - Fixed `clink.ondisplaymatches()` and `clink.onfiltermatches()` when there's only 1 match.
+- Fixed backward compatibility for the old matching filtering API.
+- Fixed several other minor issues with match display filtering.
 - Fixed argmatcher for `clink --profile` so it produces directory matches.
 - Fixed intermittent incorrect match generation for `/flag:` or `/flag=` flags.
-- Fixed several minor issues with match display filtering.
 - Fixed `%CLINK_RPROMPT%` when `color.prompt` is set.
+- Fixed duplicate removal with deprecated match generators.
 
 #### v1.2.37
 
