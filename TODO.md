@@ -13,6 +13,9 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Add command and flag descriptions in clink-completions?
 - Push fixes back to clink-completions.
 - Auto-update option, with configurable polling interval?  (Though package managers like scoop can handle updates, if Clink was installed through one.)
+- Installer enhancements:
+  - Add checkbox in installer for creating a versioned subdirectory (ON by default); remember the setting for subsequent installs.
+  - Record whether the user overrode the default install directory; if yes then use the same destination for subsequent installs.
 
 ## Mystery (am I only imagining it?)
 - Something may be wrong with history:  Recent history entries seem like they can get lost.
