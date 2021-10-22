@@ -42,6 +42,7 @@ extern "C" {
 #include <compat/display_matches.h>
 #include <readline/posixdir.h>
 #include <readline/history.h>
+extern int find_streqn (const char *a, const char *b, int n);
 extern void rl_replace_from_history(HIST_ENTRY *entry, int flags);
 extern int _rl_get_inserted_char(void);
 extern Keymap _rl_dispatching_keymap;
@@ -1273,7 +1274,7 @@ int clink_popup_history(int count, int invoking_key)
     int total = 0;
     for (int i = 0; i < history_length; i++)
     {
-        if (!STREQN(g_rl_buffer->get_buffer(), list[i]->line, search_len))
+        if (!find_streqn(g_rl_buffer->get_buffer(), list[i]->line, search_len))
             continue;
         history[total] = list[i]->line;
         indices[total] = i;
