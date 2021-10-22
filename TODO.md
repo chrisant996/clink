@@ -11,6 +11,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Add a quick start / beginner section to the Clink docs.
 
 ## Low Priority
+- Add command and flag descriptions in clink-completions?
 - Push fixes back to clink-completions.
 - Auto-update option, with configurable polling interval?  (Though package managers like scoop can handle updates, if Clink was installed through one.)
 
