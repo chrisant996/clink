@@ -701,12 +701,7 @@ bool matches_impl::add_match(const match_desc& desc, bool already_normalized)
     else if (translate || is_none)
     {
         tmp = match;
-        if (is_none)
-        {
-            // Make room for a trailing path separator in case it's needed.
-            tmp.concat("#");
-            match = tmp.c_str();
-        }
+        match = tmp.c_str();
     }
 
     if (translate)
@@ -729,9 +724,27 @@ bool matches_impl::add_match(const match_desc& desc, bool already_normalized)
     if (m_dedup->find({ match, type }) != m_dedup->end())
         return false;
 
+    if (is_none)
+    {
+        // Make room for a trailing path separator in case it's needed later.
+        assert(tmp.c_str() == match);
+        tmp.concat("#");
+        match = tmp.c_str();
+    }
+
     const char* store_match = m_store.store_front(match);
     if (!store_match)
         return false;
+
+    if (is_none)
+    {
+        // Remove the placeholder character added earlier.  There is now room
+        // reserved to add it again later, in done_building(), if needed.
+        assert(tmp.length() > 0);
+        assert(strcmp(store_match, tmp.c_str()) == 0);
+        const_cast<char*>(store_match)[tmp.length() - 1] = '\0';
+        m_any_infer_type = true;
+    }
 
     const char* store_description = desc.description ? m_store.store_front(desc.description) : nullptr;
 
@@ -741,16 +754,6 @@ bool matches_impl::add_match(const match_desc& desc, bool already_normalized)
     match_info info = { store_match, store_description, type, false/*select*/, is_none/*infer_type*/ };
     m_infos.emplace_back(std::move(info));
     ++m_count;
-
-    if (is_none)
-    {
-        assert(strlen(store_match) == tmp.length());
-        assert(tmp.length() > 0);
-        // Remove the placeholder character added earlier (there is now room to
-        // add it again later, if needed).
-        const_cast<char*>(store_match)[tmp.length() - 1] = '\0';
-        m_any_infer_type = true;
-    }
 
     return true;
 }
@@ -778,11 +781,15 @@ void matches_impl::done_building()
                 // directory, then get_path_type() might yield unexpected
                 // results.  But that will interfere with many things, so no
                 // effort is invested here to compensate.
+                match_lookup lookup = { m_infos[i].match, m_infos[i].type };
                 switch (os::get_path_type(m_infos[i].match))
                 {
                 case os::path_type_dir:
                     {
-                        // It's a directory, so add a trailing path separator.
+                        // Remove it from the dup map before modifying it.
+                        m_dedup->erase(lookup);
+                        // It's a directory, so update the type and add a
+                        // trailing path separator.
                         const size_t len = strlen(m_infos[i].match);
                         const_cast<char*>(m_infos[i].match)[len] = sep;
                         m_infos[i].type |= match_type::dir;
@@ -790,15 +797,23 @@ void matches_impl::done_building()
                     }
                     break;
                 case os::path_type_file:
-                    m_infos[i].type |= match_type::file;
+                    {
+                        // Remove it from the dup map before modifying it.
+                        m_dedup->erase(lookup);
+                        // It's a file, so update the type.
+                        lookup.type |= match_type::file;
+                        m_infos[i].type |= lookup.type;
+                    }
                     break;
                 default:
                     continue;
                 }
 
                 // Check if it has become a duplicate.
-                if (m_dedup->find({ m_infos[i].match, m_infos[i].type }) != m_dedup->end())
+                if (m_dedup->find(lookup) != m_dedup->end())
                     m_infos.erase(m_infos.begin() + i);
+                else
+                    m_dedup->emplace(std::move(lookup));
             }
         }
     }
