@@ -104,6 +104,7 @@ Name                         | Default | Description
 `cmd.ctrld_exits`            | True    | <kbd>Ctrl</kbd>+<kbd>D</kbd> exits the process when it is pressed on an empty line.
 `cmd.get_errorlevel`         | True    | When this is enabled, Clink runs a hidden `echo %errorlevel%` command before each interactive input prompt to retrieve the last exit code for use by Lua scripts.  If you experience problems, try turning this off.  This is on by default.
 `color.arg`                  |         | The color for arguments in the input line when `clink.colorize_input` is enabled.
+`color.arginfo`              | `yellow` | Argument info color.  Some argmatchers may show that some flags or arguments accept additional arguments, when listing possible completions.  This color is used for those additional arguments.  (E.g. the "dir" in a "-x dir" listed completion.)
 `color.argmatcher`           |         | The color for the command name in the input line when `clink.colorize_input` is enabled, if the command name has an argmatcher available.
 <a name="color_cmd"></a>`color.cmd` | `bold` | Used when displaying shell (CMD.EXE) command completions, and in the input line when `clink.colorize_input` is enabled.
 `color.cmdredir`             | `bold`  | The color for redirection symbols (`<`, `>`, `>&`) in the input line when `clink.colorize_input` is enabled.
@@ -657,9 +658,13 @@ The return value is a table with the input matches filtered as desired. The matc
 
 #### Filtering The Match Display
 
-In some instances it may be preferable to display potential matches in an alternative form than the generated matches passed to and used internally by Readline. For example, it might be desirable to display a `*` next to some matches, or to show additional information about each match.
+In some instances it may be preferable to display different text when listing potential matches versus when inserting a match in the input line, or to display a description next to a match.  For example, it might be desirable to display a `*` next to some matches, or to show additional information about some matches.
 
-A match generator can use <a href="#clink.ondisplaymatches">clink.ondisplaymatches()</a> to register a function that will be called before matches are displayed (this is reset every time match generation is invoked).
+The simplest way to do that is just include the `display` and/or `description` fields when using [builder:addmatch()](#builder:addmatch).  Refer to that function's documentation for usage details.
+
+However, older versions of Clink don't support those fields.  And it may in some rare cases it may be desirable to display a list of possible completions that includes extra matches, or omits some matches (but that's discouraged because it can be confusing to users).
+
+A match generator can alternatively use <a href="#clink.ondisplaymatches">clink.ondisplaymatches()</a> to register a function that will be called before matches are displayed (this is reset every time match generation is invoked).
 
 The function receives a table argument containing the matches to be displayed, and a boolean argument indicating whether they'll be displayed in a popup window. The table argument has a `match` string field and a `type` string field; these are the same as in <a href="builder:addmatch">builder:addmatch()</a>. The return value is a table with the input matches filtered as required by the match generator.
 
@@ -693,13 +698,6 @@ function my_match_generator:generate(line_state, match_builder)
     clink.ondisplaymatches(my_filter)
 end
 ```
-
-<p/>
-
-> **Compatibility Note:**  When a match display filter has been set, it changes how match generation behaves.
-> - When a match display filter is set, then match generation is also re-run whenever matches are displayed.
-> - Normally match generation only happens at the start of a new word.  The full set of potential matches is remembered and dynamically filtered based on further typing.
-> - So if a match generator made contextual decisions during match generation (other than filtering) then it could potentially behave differently in Clink v1.x than it did in v0.x.
 
 <a name="argumentcompletion"></a>
 
@@ -735,7 +733,7 @@ If a command doesn't have an argmatcher but is a doskey macro, Clink automatical
 
 Flags and arguments may optionally have descriptions associated with them.  The descriptions, if any, are displayed when listing possible completions.
 
-Use [_argmatcher:adddescriptions()](#_argmatcher:adddescriptions) to add descriptions for flags and/or arguments.
+Use [_argmatcher:adddescriptions()](#_argmatcher:adddescriptions) to add descriptions for flags and/or arguments.  Refer to its documentation for further details about how to use it, including how to also show arguments that a flag accepts.
 
 For example, with the following matcher, typing `foo -`<kbd>Alt</kbd>+<kbd>=</kbd> will list all of the flags, plus descriptions for each.
 
