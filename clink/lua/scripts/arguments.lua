@@ -87,9 +87,9 @@ function _argreader:update(word, word_index)
             -- If next word is a flag, don't pop.  Flags are not positional, so
             -- a matcher can only be exhausted by a word that exceeds the number
             -- of argument slots the matcher has.
-            -- if is_flag then
-            --     self._arg_index = next_arg_index
-            if not pushed_flags and next_is_flag then
+            if is_flag then
+                self._arg_index = next_arg_index
+            elseif not pushed_flags and next_is_flag then
                 self._arg_index = next_arg_index
             elseif not self:_pop(next_is_flag) then
                 -- Popping must use the _arg_index as is, without incrementing
