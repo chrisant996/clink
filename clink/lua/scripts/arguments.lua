@@ -201,12 +201,6 @@ function _argreader:_pop(next_is_flag)
         return false
     end
 
-    if self._matcher and self._matcher._deprecated then
-        -- Deprecated parsers are always dead-ends, because v0.4.9 didn't have
-        -- any way to pop out of nested parsers.
-        return false
-    end
-
     while #self._stack > 0 do
         if self._matcher and self._matcher._no_file_generation then
             -- :nofiles() dead-ends the parser.
