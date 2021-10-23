@@ -17,6 +17,7 @@ static match_builder_lua::method g_methods[] = {
     { "setsuppressappend",  &match_builder_lua::set_suppress_append },
     { "setsuppressquoting", &match_builder_lua::set_suppress_quoting },
     // Only for backward compatibility:
+    { "deprecated_addmatch", &match_builder_lua::deprecated_add_match },
     { "setmatchesarefiles", &match_builder_lua::set_matches_are_files },
     {}
 };
@@ -168,6 +169,15 @@ int match_builder_lua::set_suppress_quoting(lua_State* state)
     m_builder.set_suppress_quoting(suppress);
 
     return 0;
+}
+
+//------------------------------------------------------------------------------
+// Undocumented because it exists only to enable the clink.add_match backward
+// compatibility.
+int match_builder_lua::deprecated_add_match(lua_State* state)
+{
+    m_builder.set_deprecated_mode();
+    return add_match(state);
 }
 
 //------------------------------------------------------------------------------

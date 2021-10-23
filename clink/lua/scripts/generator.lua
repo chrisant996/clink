@@ -162,7 +162,7 @@ end
 --- for now, despite being obsolete.
 function clink.add_match(match)
     if _current_builder then
-        _current_builder:addmatch(match)
+        _current_builder:deprecated_addmatch(match)
     end
 end
 

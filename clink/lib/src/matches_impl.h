@@ -85,6 +85,7 @@ private:
     void                    set_append_character(char append);
     void                    set_suppress_append(bool suppress);
     void                    set_suppress_quoting(int suppress);
+    void                    set_deprecated_mode();
     void                    set_matches_are_files(bool files);
     bool                    add_match(const match_desc& desc, bool already_normalised=false);
     unsigned int            get_info_count() const;
@@ -119,6 +120,7 @@ private:
     infos                   m_infos;
     unsigned short          m_count = 0;
     bool                    m_any_infer_type = false;
+    bool                    m_can_infer_type = true;
     bool                    m_coalesced = false;
     char                    m_append_character = '\0';
     bool                    m_suppress_append = false;

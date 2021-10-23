@@ -237,6 +237,12 @@ void match_builder::set_suppress_quoting(int suppress)
 }
 
 //------------------------------------------------------------------------------
+void match_builder::set_deprecated_mode()
+{
+    ((matches_impl&)m_matches).set_deprecated_mode();
+}
+
+//------------------------------------------------------------------------------
 void match_builder::set_matches_are_files(bool files)
 {
     return ((matches_impl&)m_matches).set_matches_are_files(files);
@@ -614,6 +620,7 @@ void matches_impl::reset()
     m_store.reset();
     m_infos.clear();
     m_any_infer_type = false;
+    m_can_infer_type = true;
     m_coalesced = false;
     m_count = 0;
     m_append_character = '\0';
@@ -655,6 +662,12 @@ void matches_impl::set_word_break_position(int position)
 void matches_impl::set_regen_blocked()
 {
     m_regen_blocked = true;
+}
+
+//------------------------------------------------------------------------------
+void matches_impl::set_deprecated_mode()
+{
+    m_can_infer_type = false;
 }
 
 //------------------------------------------------------------------------------
@@ -767,7 +780,7 @@ void matches_impl::done_building()
     // explicitly disabled, then it's necessary to post-process the matches to
     // identify which are directories, or files, or neither.
     if (m_any_infer_type && (m_filename_completion_desired.get() ||
-                             !m_filename_completion_desired.is_explicit()))
+                             (m_can_infer_type && !m_filename_completion_desired.is_explicit())))
     {
         char sep = rl_preferred_path_separator;
         if (s_slash_translation == 2)

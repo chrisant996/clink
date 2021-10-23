@@ -228,7 +228,7 @@ void match_pipeline::generate(
         if (generator->generate(state, builder, old_filtering))
             break;
 
-    m_matches.done_building(); // Free the temporary de-duplication data.
+    m_matches.done_building();
 
 #ifdef DEBUG
     if (dbg_get_env_int("DEBUG_PIPELINE"))
