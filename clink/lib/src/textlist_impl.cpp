@@ -145,6 +145,24 @@ static int limit_cells(const char* in, int limit, int& cells)
     return int(iter.get_pointer() - in);
 }
 
+//------------------------------------------------------------------------------
+static bool strstr_compare(const str_base& needle, const char* haystack)
+{
+    if (haystack && *haystack)
+    {
+        str_iter sift(haystack);
+        while (sift.more())
+        {
+            int cmp = str_compare(needle.c_str(), sift.get_pointer());
+            if (cmp == -1 || cmp == needle.length())
+                return true;
+            sift.next();
+        }
+    }
+
+    return false;
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -466,11 +484,17 @@ find:
                     i = 0;
             }
 
+            if (!from_top && (input.id == bind_id_textlist_findnext || input.id == bind_id_textlist_findprev))
+                i += direction;
+
             int original = i;
             while (true)
             {
-                int cmp = str_compare(m_needle.c_str(), m_items[i]);
-                if (cmp == -1 || cmp == m_needle.length())
+                bool match = strstr_compare(m_needle, m_items[i]);
+                for (int col = 0; !match && col < max_columns; col++)
+                    match = strstr_compare(m_needle, m_columns.get_col_text(i, col));
+
+                if (match)
                 {
                     m_index = i;
                     if (m_index < m_top || m_index >= m_top + m_visible_rows)
