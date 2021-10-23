@@ -7,16 +7,15 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Medium Priority
-- Match generator enhancements:
-  - Provide `display` or `appenddisplay`.
-  - `suppressappendchar` and etc _per match_.
+- Incr search in text mode popup list doesn't seem to work correctly.
 - Argmatcher enhancements:
   - Provide `display` or `appenddisplay`, for flags like `-lo<chgnum> <path>` so that `-lo` gets inserted but `-lo<chgnum> <path>` gets listed.
 - Add a quick start / beginner section to the Clink docs.
 
 ## Low Priority
 - Add command and flag descriptions in clink-completions?
-- Push fixes back to clink-completions.
+- Push update to clink-completions repo.
+- Push update to z.lua repo.
 - Auto-update option, with configurable polling interval?  (Though package managers like scoop can handle updates, if Clink was installed through one.)
 - Installer enhancements:
   - Add checkbox in installer for creating a versioned subdirectory (ON by default); remember the setting for subsequent installs.
@@ -45,6 +44,9 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Is it a problem that `update_internal()` gets called once per char in a key sequence?  Maybe it should only happen after a key that finishes a key binding?
 - Include `wildmatch()` and an `fnmatch()` wrapper for it.  But should first update it to support UTF8.
 - Maybe limit how many matches `possible-completions` will show with descriptions?
+- `suppressappendchar` and etc _per match_.  That is _almost_ easy to apply to Readline:
+  1. If there's exactly one match, then `alternative_matches` can set the suppress/etc variables according to the one match, otherwise to the overall value.
+  2. **But** `menu-complete` needs to know for a different specific match, every time.  Maybe add a callback Readline can invoke to give the host a chance to set variables with per-match values.
 
 <br/>
 <br/>
