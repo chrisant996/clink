@@ -22,10 +22,11 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - Add checkbox in installer for creating a versioned subdirectory (ON by default); remember the setting for subsequent installs.
   - Record whether the user overrode the default install directory; if yes then use the same destination for subsequent installs.
 
-## Mystery (am I only imagining it?)
-- Something may be wrong with history:  Recent history entries seem like they can get lost.
+## Mystery
+- Something is wrong with history:  Recent history entries seem like they can get lost.
   - Probably concurrent sessions?
   - Maybe reaping doesn't read the full history file before appending?
+  - Maybe pending deletes are getting applied to the master file prematurely?
 
 ## Tests
 
