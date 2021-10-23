@@ -190,7 +190,12 @@ end
 
 --------------------------------------------------------------------------------
 function _argreader:_push(matcher)
-    table.insert(self._stack, { self._matcher, self._arg_index })
+    -- v0.4.9 effectively pushed flag matchers, but not arg matchers.
+    -- if not self._matcher._deprecated or self._matcher._is_flag_matcher or matcher._is_flag_matcher then
+    if not matcher._deprecated or matcher._is_flag_matcher then
+        table.insert(self._stack, { self._matcher, self._arg_index })
+    end
+
     self._matcher = matcher
     self._arg_index = 1
 end
@@ -338,6 +343,7 @@ function _argmatcher:addflags(...)
 
     flag_matcher:_add(list, {...}, prefixes)
 
+    flag_matcher._is_flag_matcher = true
     flag_matcher._args[1] = list
     self._flags = flag_matcher
 
