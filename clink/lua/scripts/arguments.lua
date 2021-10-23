@@ -48,6 +48,21 @@ function _argreader._new(root, line_state)
 end
 
 --------------------------------------------------------------------------------
+--[[
+function _argreader:trace(...)
+    if self._tracing then
+        print(...)
+    end
+end
+function _argreader:starttracing(word)
+    self._tracing = true
+    self._dbgword = word
+    self:trace()
+    self:trace(word, "BEGIN", self._matcher, "stack", #self._stack, "arg_index", self._arg_index)
+end
+--]]
+
+--------------------------------------------------------------------------------
 -- When word_index is < 0, skip classifying the word, and skip trying to figure
 -- out whether a `-foo:` word should avoid following a linked parser.  This only
 -- happens when parsing extra words from expanding a doskey alias.
@@ -57,6 +72,11 @@ end
 function _argreader:update(word, word_index)
     local arg_match_type = "a" --arg
     local line_state = self._line_state
+
+    --[[
+    self._dbgword = word
+    self:trace(word, "update")
+    --]]
 
     -- Check for flags and switch matcher if the word is a flag.
     local matcher = self._matcher
@@ -194,6 +214,12 @@ function _argreader:_push(matcher)
     -- if not self._matcher._deprecated or self._matcher._is_flag_matcher or matcher._is_flag_matcher then
     if not matcher._deprecated or matcher._is_flag_matcher then
         table.insert(self._stack, { self._matcher, self._arg_index })
+        --[[
+        self:trace(self._dbgword, "push", matcher, "stack", #self._stack)
+    else
+        self:trace(self._dbgword, "set", matcher, "stack", #self._stack)
+        --if self._tracing then pause() end
+        --]]
     end
 
     self._matcher = matcher
@@ -240,6 +266,10 @@ function _argreader:_pop(next_is_flag)
         end
     end
 
+    --[[
+    self:trace("", "pop =>", self._matcher, "stack", #self._stack, "arg_index", self._arg_index)
+    self._dbgword = ""
+    --]]
     return true
 end
 
@@ -627,6 +657,10 @@ end
 --------------------------------------------------------------------------------
 function _argmatcher:_generate(line_state, match_builder, extra_words)
     local reader = _argreader(self, line_state)
+
+    --[[
+    reader:starttracing(line_state:getword(1))
+    --]]
 
     -- Consume extra words from expanded doskey alias.
     if extra_words then
