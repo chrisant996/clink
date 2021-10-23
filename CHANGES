@@ -17,10 +17,13 @@
 - Fixed `clink.ondisplaymatches()` and `clink.onfiltermatches()` when there's only 1 match.
 - Fixed backward compatibility for the old matching filtering API.
 - Fixed several other minor issues with match display filtering.
-- Fixed argmatcher for `clink --profile` so it produces directory matches.
 - Fixed intermittent incorrect match generation for `/flag:` or `/flag=` flags.
-- Fixed `%CLINK_RPROMPT%` when `color.prompt` is set.
 - Fixed duplicate removal with deprecated match generators.
+- Fixed when nested deprecated argmatchers are exhausted (regression introduced in v1.2.36).
+- Fixed deprecated match generators to not infer whether matches are filenames, to match the behavior of the v0.4.9 API.
+- Fixed how `match.wild` works with deprecated match generators; e.g. arg completions for [z.lua](https://github.com/skywind3000/z.lua) weren't working (regression introduced in v1.1.5).
+- Fixed argmatcher for `clink --profile` so it produces directory matches.
+- Fixed `%CLINK_RPROMPT%` alignment when `color.prompt` is set.
 
 #### v1.2.37
 
