@@ -204,9 +204,9 @@ project("readline")
     files("readline/compat/*.c")
     files("readline/compat/*.h")
 
-    excludes("readline/readline/emacs_keymap.c")
-    excludes("readline/readline/vi_keymap.c")
-    excludes("readline/readline/support/wcwidth.c")
+    excludes("readline/readline/emacs_keymap.c")    -- #included by readline/keymaps.c
+    excludes("readline/readline/vi_keymap.c")       -- #included by readline/keymaps.c
+    excludes("readline/readline/support/wcwidth.c") -- superseded by clink/terminal/src/wcwidth.cpp
 
 --------------------------------------------------------------------------------
 project("getopt")
