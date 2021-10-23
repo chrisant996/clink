@@ -7,9 +7,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Medium Priority
-- Incr search in text mode popup list doesn't seem to work correctly.
-- Argmatcher enhancements:
-  - Provide `display` or `appenddisplay`, for flags like `-lo<chgnum> <path>` so that `-lo` gets inserted but `-lo<chgnum> <path>` gets listed.
 - Add a quick start / beginner section to the Clink docs.
 
 ## Low Priority
