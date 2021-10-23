@@ -70,7 +70,9 @@ static unsigned int restrict_selector(
         int match_len = int(strlen(match));
         while (match_len && path::is_separator((unsigned char)match[match_len - 1]))
             match_len--;
-        infos[i].select = path::match_wild(str_iter(needle, needle_len), str_iter(match, match_len), !is_pathish(infos[i].type));
+
+        const path::star_matches_everything flag = (is_pathish(infos[i].type) ? path::at_end : path::yes);
+        infos[i].select = path::match_wild(str_iter(needle, needle_len), str_iter(match, match_len), flag);
         ++select_count;
     }
 

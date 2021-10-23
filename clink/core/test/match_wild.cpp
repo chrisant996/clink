@@ -71,9 +71,18 @@ TEST_CASE("path::match_wild()")
         REQUIRE(path::match_wild("abc/def/??i*", "abc/def/build"));
     }
 
-    SECTION("End star")
+    SECTION("Star")
     {
-        REQUIRE(!path::match_wild("ori*", "origin/master", false));
-        REQUIRE(path::match_wild("ori*", "origin/master", true));
+        REQUIRE(!path::match_wild("ori*", "origin/master", path::star_matches_everything::no));
+        REQUIRE(path::match_wild("ori*", "origin/master", path::star_matches_everything::yes));
+        REQUIRE(path::match_wild("ori*", "origin/master", path::star_matches_everything::at_end));
+
+        REQUIRE(!path::match_wild("or*st", "origin/master", path::star_matches_everything::no));
+        REQUIRE(path::match_wild("or*st", "origin/master", path::star_matches_everything::yes));
+        REQUIRE(!path::match_wild("or*st", "origin/master", path::star_matches_everything::at_end));
+
+        REQUIRE(!path::match_wild("*st*", "origin/master", path::star_matches_everything::no));
+        REQUIRE(path::match_wild("*st*", "origin/master", path::star_matches_everything::yes));
+        REQUIRE(!path::match_wild("*st*", "origin/master", path::star_matches_everything::at_end));
     }
 }
