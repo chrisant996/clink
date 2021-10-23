@@ -92,7 +92,9 @@ public:
     bool                    next();
     const char*             get_match() const;
     match_type              get_match_type() const;
+    const char*             get_match_display() const;
     const char*             get_match_description() const;
+    bool                    get_match_append_display() const;
     shadow_bool             is_filename_completion_desired() const;
     shadow_bool             is_filename_display_desired() const;
 
@@ -132,7 +134,9 @@ public:
     virtual unsigned int    get_match_count() const = 0;
     virtual const char*     get_match(unsigned int index) const = 0;
     virtual match_type      get_match_type(unsigned int index) const = 0;
+    virtual const char*     get_match_display(unsigned int index) const = 0;
     virtual const char*     get_match_description(unsigned int index) const = 0;
+    virtual bool            get_match_append_display(unsigned int index) const = 0;
     virtual bool            is_suppress_append() const = 0;
     virtual shadow_bool     is_filename_completion_desired() const = 0;
     virtual shadow_bool     is_filename_display_desired() const = 0;
@@ -145,7 +149,9 @@ private:
     friend class matches_iter;
     virtual const char*     get_unfiltered_match(unsigned int index) const { return nullptr; }
     virtual match_type      get_unfiltered_match_type(unsigned int index) const { return match_type::none; }
+    virtual const char*     get_unfiltered_match_display(unsigned int index) const { return nullptr; }
     virtual const char*     get_unfiltered_match_description(unsigned int index) const { return nullptr; }
+    virtual bool            get_unfiltered_match_append_display(unsigned int index) const { return false; }
 };
 
 
@@ -159,8 +165,10 @@ void match_type_to_string(match_type type, str_base& out);
 struct match_desc
 {
     const char*             match;          // Match text.
+    const char*             display;        // Display string.
     const char*             description;    // Description string.
     match_type              type;           // Match type.
+    bool                    append_display; // Print match text, then display string.
 };
 
 //------------------------------------------------------------------------------

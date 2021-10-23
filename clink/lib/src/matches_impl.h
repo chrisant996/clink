@@ -13,8 +13,10 @@
 struct match_info
 {
     const char*     match;
+    const char*     display;
     const char*     description;
     match_type      type;
+    bool            append_display;
     bool            select;
     bool            infer_type;
 };
@@ -59,7 +61,9 @@ public:
     virtual unsigned int    get_match_count() const override;
     virtual const char*     get_match(unsigned int index) const override;
     virtual match_type      get_match_type(unsigned int index) const override;
+    virtual const char*     get_match_display(unsigned int index) const override;
     virtual const char*     get_match_description(unsigned int index) const override;
+    virtual bool            get_match_append_display(unsigned int index) const override;
     virtual bool            is_suppress_append() const override;
     virtual shadow_bool     is_filename_completion_desired() const override;
     virtual shadow_bool     is_filename_display_desired() const override;
@@ -77,7 +81,9 @@ public:
 private:
     virtual const char*     get_unfiltered_match(unsigned int index) const override;
     virtual match_type      get_unfiltered_match_type(unsigned int index) const override;
+    virtual const char*     get_unfiltered_match_display(unsigned int index) const override;
     virtual const char*     get_unfiltered_match_description(unsigned int index) const override;
+    virtual bool            get_unfiltered_match_append_display(unsigned int index) const override;
 
     friend class            match_pipeline;
     friend class            match_builder;

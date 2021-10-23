@@ -132,6 +132,14 @@ static setting_color g_color_arg(
     "clink.colorize_input is set.",
     "bold");
 
+static setting_color g_color_arginfo(
+    "color.arginfo",
+    "Argument info color",
+    "Some argmatchers may show that some flags or arguments accept additional\n"
+    "arguments, when listing possible completions.  This color is used for those\n"
+    "additional arguments.  (E.g. the \"dir\" in a \"-x dir\" listed completion.)",
+    "yellow");
+
 static setting_color g_color_argmatcher(
     "color.argmatcher",
     "Argmatcher color",
@@ -1067,11 +1075,26 @@ static char** alternative_matches(const char* text, int start, int end)
             break;
         }
 
+        // Packed format of match is:
+        //  TYPE (unsigned char)
+        //  MATCH (nul terminated char string)
+        //  FLAGS (unsigned char)
+        //  DISPLAY (nul terminated char string)
+        //  DESCRIPTION (nul terminated char string)
+        //
+        // WARNING:  display_match_list_internal relies on this memory layout!
+
+        unsigned char flags = 0;
+        if (iter.get_match_append_display())
+            flags |= MATCH_FLAG_APPEND_DISPLAY;
+
         const char* const match = iter.get_match();
+        const char* const display = iter.get_match_display();
         const char* const description = iter.get_match_description();
         const int match_len = strlen(match);
+        const int match_display_len = display ? strlen(display) : 0;
         const int match_description_len = description ? strlen(description) : 0;
-        const int match_size = past_flag + match_len + 1 + match_description_len + 1;
+        const int match_size = past_flag + match_len + 1 + 1/*flags*/ + match_display_len + 1 + match_description_len + 1;
         char* ptr = (char*)malloc(match_size);
 
         matches[count] = ptr;
@@ -1083,8 +1106,12 @@ static char** alternative_matches(const char* text, int start, int end)
         ptr += match_len;
         *(ptr++) = '\0';
 
-        // The description, if any, immediately follows the match.
-        // WARNING:  display_match_list_internal relies on this memory layout!
+        *(ptr++) = (char)flags;
+
+        memcpy(ptr, display, match_display_len);
+        ptr += match_display_len;
+        *(ptr++) = '\0';
+
         memcpy(ptr, description, match_description_len);
         ptr += match_description_len;
         *(ptr++) = '\0';
@@ -2100,6 +2127,7 @@ void rl_module::on_begin_line(const context& context)
     _rl_alias_color = build_color_sequence(g_color_doskey, m_alias_color);
     _rl_description_color = build_color_sequence(g_color_description, m_description_color, true);
     _rl_filtered_color = build_color_sequence(g_color_filtered, m_filtered_color, true);
+    _rl_arginfo_color = build_color_sequence(g_color_arginfo, m_arginfo_color, true);
     _rl_selected_color = build_color_sequence(g_color_selected, m_selected_color);
 
     if (!s_selection_color && s_input_color)
@@ -2177,6 +2205,7 @@ void rl_module::on_end_line()
     _rl_command_color = nullptr;
     _rl_alias_color = nullptr;
     _rl_filtered_color = nullptr;
+    _rl_arginfo_color = nullptr;
     _rl_selected_color = nullptr;
 
     // This prevents any partial Readline state leaking from one line to the next

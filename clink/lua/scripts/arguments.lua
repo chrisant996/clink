@@ -436,31 +436,41 @@ end
 --- Any number of descriptions tables may be passed to the function, and each
 --- table must use one of the following schemes:
 --- <ul>
---- <li>Key/value pairs where each key is an arg or flag, and its value is the
---- associated description.
 --- <li>One or more string values that are args or flags, and a
 --- <code>description</code> field that is the associated description string.
+--- <li>Key/value pairs where each key is an arg or flag, and its value is
+--- either a description string or a table containing an optional arguments
+--- string and a description string.  If an arguments string is provided, it is
+--- appended to the arg or flag string when listing possible completions.  For
+--- example, <code>["--user"] = { " name", "Specify username"}</code> gets
+--- printed as:
+---
+--- <pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black">
+--- <span style="color:#c0c0c0">--user</span> <span style="color:#808000">name</span>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#00ffff">Specify username</span>
+--- </code></pre>
 --- </ul>
+---
 --- -show:  local foo = clink.argmatcher("foo")
---- -show:  foo:addflags("-h", "--help", "--version")
+--- -show:  foo:addflags("-h", "--help", "--user")
 --- -show:  foo:addarg("info", "set")
---- -show:  -- Example using first scheme and just one table:
+--- -show:  -- Example using first scheme and one table per description:
+--- -show:  foo:adddescriptions(
+--- -show:  &nbsp;   { "-h", "--help",   description = "Show help" },
+--- -show:  &nbsp;   { "--user",         description = "Specify user name" },
+--- -show:  &nbsp;   { "info",           description = "Prints information" },
+--- -show:  &nbsp;   { "set",            description = "Show or change settings" },
+--- -show:  )
+--- -show:  -- Example using second scheme and just one table:
 --- -show:  foo:adddescriptions( {
 --- -show:  &nbsp;   ["-h"]              = "Show help",
 --- -show:  &nbsp;   ["--help"]          = "Show help",
---- -show:  &nbsp;   ["--version"]       = "Print version info and exit",
---- -show:  &nbsp;   ["info"]            = "Prints information about Foo",
---- -show:  &nbsp;   ["set"]             = "Show or change settings for Foo",
+--- -show:  &nbsp;   ["--user"]          = { " name", "Specify user name" },
+--- -show:  &nbsp;   ["info"]            = { "Prints information" },
+--- -show:  &nbsp;   ["set"]             = { " var[=value]", "Show or change settings" },
 --- -show:  } )
---- -show:  -- Example using second scheme and one table per description:
---- -show:  foo:adddescriptions(
---- -show:  &nbsp;   { "-h", "--help",   description = "Show help" },
---- -show:  &nbsp;   { "--version",      description = "Print version info and exit" },
---- -show:  &nbsp;   { "info",           description = "Prints information about Foo" },
---- -show:  &nbsp;   { "set",            description = "Show or change settings for Foo" },
---- -show:  )
 --- You can make your scripts backward compatible with older Clink versions by
---- adding a helper function like this:
+--- adding a helper function.  The following is the safest and simplest way to
+--- support backward compatibility:
 --- -show:  -- Helper function to add descriptions, when possible.
 --- -show:  local function maybe_adddescriptions(matcher, ...)
 --- -show:  &nbsp;   if matcher and matcher.adddescriptions then
@@ -707,13 +717,28 @@ function _argmatcher:_generate(line_state, match_builder, extra_words)
     -- Are we left with a valid argument that can provide matches?
     local add_matches = function(arg, match_type)
         local descs = matcher._descriptions
+        local make_match = function(key)
+            if not descs then
+                return key
+            end
+            local m = { match=key }
+            local d = descs[key]
+            if type(d) ~= "table" then
+                m.description = d
+            else
+                if #d > 1 then
+                    m.display = d[1]
+                    m.description = d[2]
+                    m.appenddisplay = true
+                else
+                    m.description = d[1]
+                end
+            end
+            return m
+        end
 
         for key, _ in pairs(arg._links) do
-            if descs then
-                match_builder:addmatch({ match=key, description=descs[key] }, match_type)
-            else
-                match_builder:addmatch(key, match_type)
-            end
+            match_builder:addmatch(make_match(key), match_type)
         end
 
         for _, i in ipairs(arg) do
@@ -725,11 +750,7 @@ function _argmatcher:_generate(line_state, match_builder, extra_words)
 
                 match_builder:addmatches(j, match_type)
             else
-                if descs then
-                    match_builder:addmatch({ match=i, description=descs[i] }, match_type)
-                else
-                    match_builder:addmatch(i, match_type)
-                end
+                match_builder:addmatch(make_match(i), match_type)
             end
         end
 

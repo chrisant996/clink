@@ -54,6 +54,7 @@ extern int errno;
 #endif
 
 #include "display_matches.h"
+#include <assert.h>
 
 #ifdef HAVE_LSTAT
 #  define LSTAT lstat
@@ -84,6 +85,7 @@ int ellipsify_to_callback(const char* in, int limit, int expand_ctrl, vstrlen_fu
 rl_match_display_filter_func_t *rl_match_display_filter_func = NULL;
 const char *_rl_description_color = NULL;
 const char *_rl_filtered_color = NULL;
+const char *_rl_arginfo_color = NULL;
 const char *_rl_selected_color = NULL;
 
 
@@ -93,32 +95,29 @@ static char* tmpbuf_allocated = NULL;
 static char* tmpbuf_ptr = NULL;
 static int tmpbuf_length = 0;
 static int tmpbuf_capacity = 0;
-static char* tmpbuf_rollback_ptr = NULL;
 static int tmpbuf_rollback_length = 0;
 static const char* const _normal_color = "\x1b[m";
 static const int _normal_color_len = 3;
 static const int desc_sep_padding = 4;
 
 //------------------------------------------------------------------------------
-void reset_tmpbuf (void)
+void mark_tmpbuf (void)
 {
-    tmpbuf_ptr = tmpbuf_allocated;
-    tmpbuf_length = 0;
-    tmpbuf_rollback_ptr = tmpbuf_ptr;
     tmpbuf_rollback_length = tmpbuf_length;
 }
 
 //------------------------------------------------------------------------------
-void mark_tmpbuf (void)
+void reset_tmpbuf (void)
 {
-    tmpbuf_rollback_ptr = tmpbuf_ptr;
-    tmpbuf_rollback_length = tmpbuf_length;
+    tmpbuf_ptr = tmpbuf_allocated;
+    tmpbuf_length = 0;
+    mark_tmpbuf();
 }
 
 //------------------------------------------------------------------------------
 void rollback_tmpbuf (void)
 {
-    tmpbuf_ptr = tmpbuf_rollback_ptr ? tmpbuf_rollback_ptr : tmpbuf_allocated;
+    tmpbuf_ptr = tmpbuf_allocated + tmpbuf_rollback_length;
     tmpbuf_length = tmpbuf_rollback_length;
 }
 
@@ -165,6 +164,14 @@ void append_tmpbuf_string(const char* s, int len)
     memcpy(tmpbuf_ptr, s, len);
     tmpbuf_ptr += len;
     tmpbuf_length += len;
+}
+
+//------------------------------------------------------------------------------
+const char* get_tmpbuf_rollback (void)
+{
+    grow_tmpbuf(1);
+    *tmpbuf_ptr = '\0';
+    return tmpbuf_allocated + tmpbuf_rollback_length;
 }
 
 //------------------------------------------------------------------------------
@@ -633,7 +640,7 @@ static int fnappend(const char *to_print, int prefix_bytes, const char *real_pat
 }
 
 //------------------------------------------------------------------------------
-void append_display(const char* to_print, int selected)
+void append_display(const char* to_print, int selected, const char* color)
 {
     if (selected)
     {
@@ -642,8 +649,8 @@ void append_display(const char* to_print, int selected)
     else
     {
         append_default_color();
-        if (_rl_filtered_color)
-            append_tmpbuf_string(_rl_filtered_color, -1);
+        if (color)
+            append_tmpbuf_string(color, -1);
     }
 
     append_tmpbuf_string(to_print, -1);
@@ -905,6 +912,7 @@ struct match_accessor
     int             (*get_display_cells)(struct match_accessor* self, int i);
     const char*     (*get_description)(struct match_accessor* self, int i);
     int             (*get_description_cells)(struct match_accessor* self, int i);
+    int             (*get_append_display)(struct match_accessor* self, int i);
     int             (*has_descriptions)(struct match_accessor* self);
     int             (*is_filtered_match_display)(struct match_accessor* self);
 };
@@ -920,23 +928,41 @@ struct match_accessor_impl
 typedef struct match_accessor_impl match_accessor_impl;
 static unsigned char matches_get_type(struct match_accessor* self, int i) { return ((match_accessor_impl*)self)->matches[i][0]; }
 static const char* matches_get_match(struct match_accessor* self, int i) { return ((match_accessor_impl*)self)->matches[i] + 1; }
+static const char* matches_get_display(struct match_accessor* self, int i)
+{
+    const char* m = ((match_accessor_impl*)self)->matches[i] + 1;
+    const char* match = m;
+    m += strlen(m) + 1;     // skip match
+    m++;                    // skip flags
+    return *m ? m : match;  // returns DISPLAY or MATCH
+}
 static int matches_get_display_cells(struct match_accessor* self, int i)
 {
     // This is only called when the display field is being used and any path
     // in it should be displayed as-is, and therefore cell_count() is ok here.
     const char* m = ((match_accessor_impl*)self)->matches[i] + 1;
+    m += strlen(m) + 1;     // skip match
+    m++;                    // skip flags
     return cell_count(m);
 }
 static const char* matches_get_description(struct match_accessor* self, int i)
 {
     const char* m = ((match_accessor_impl*)self)->matches[i] + 1;
-    m += strlen(m) + 1;
+    m += strlen(m) + 1;     // skip match
+    m++;                    // skip flags
+    m += strlen(m) + 1;     // skip display
     return *m ? m : 0;
 }
 static int matches_get_description_cells(struct match_accessor* self, int i)
 {
     const char* desc = matches_get_description(self, i);
     return desc ? cell_count(desc) : 0;
+}
+static int matches_get_append_display(struct match_accessor* self, int i)
+{
+    const char* m = ((match_accessor_impl*)self)->matches[i] + 1;
+    m += strlen(m) + 1;
+    return (*m) & MATCH_FLAG_APPEND_DISPLAY;
 }
 static int matches_has_descriptions(struct match_accessor* self)
 {
@@ -951,10 +977,11 @@ static match_accessor* make_match_accessor(char** matches)
     match_accessor_impl* access = (match_accessor_impl*)malloc(sizeof(*access));
     access->impl.get_type = matches_get_type;
     access->impl.get_match = matches_get_match;
-    access->impl.get_display = matches_get_match; // Same as match.
+    access->impl.get_display = matches_get_display;
     access->impl.get_display_cells = matches_get_display_cells;
     access->impl.get_description = matches_get_description;
     access->impl.get_description_cells = matches_get_description_cells;
+    access->impl.get_append_display = matches_get_append_display;
     access->impl.has_descriptions = matches_has_descriptions;
     access->impl.is_filtered_match_display = matches_is_filtered_match_display;
     access->matches = matches;
@@ -983,6 +1010,7 @@ static const char* filtered_get_display(struct match_accessor* self, int i) { re
 static int filtered_get_display_cells(struct match_accessor* self, int i) { return ((filtered_match_accessor_impl*)self)->matches[i]->visible_display; }
 static const char* filtered_get_description(struct match_accessor* self, int i) { return ((filtered_match_accessor_impl*)self)->matches[i]->description; }
 static int filtered_get_description_cells(struct match_accessor* self, int i) { return ((filtered_match_accessor_impl*)self)->matches[i]->visible_description; }
+static int filtered_get_append_display(struct match_accessor* self, int i) { return 0; }
 static int filtered_has_descriptions(struct match_accessor* self) { return ((filtered_match_accessor_impl*)self)->matches[0]->visible_display < 0; }
 static int filtered_is_filtered_match_display(struct match_accessor* self) { return 1; }
 static match_accessor* make_filtered_match_accessor(match_display_filter_entry** matches)
@@ -994,6 +1022,7 @@ static match_accessor* make_filtered_match_accessor(match_display_filter_entry**
     access->impl.get_display_cells = filtered_get_display_cells;
     access->impl.get_description = filtered_get_description;
     access->impl.get_description_cells = filtered_get_description_cells;
+    access->impl.get_append_display = filtered_get_append_display;
     access->impl.has_descriptions = filtered_has_descriptions;
     access->impl.is_filtered_match_display = filtered_is_filtered_match_display;
     access->matches = matches;
@@ -1001,7 +1030,17 @@ static match_accessor* make_filtered_match_accessor(match_display_filter_entry**
 }
 
 //------------------------------------------------------------------------------
-static int display_match_list_internal_impl(match_accessor* access, int len, int max, int only_measure)
+static int use_display(match_accessor* access, unsigned char type, const char* match, const char* display, int append_display)
+{
+    return (
+        (append_display) ||
+        (IS_MATCH_TYPE_NONE(type) && access->is_filtered_match_display(access)) ||
+        (!match || !*match) ||
+        (match != display && strcmp(match, display) != 0));
+}
+
+//------------------------------------------------------------------------------
+static int display_match_list_internal(match_accessor* access, int len, int max, int only_measure)
 {
     int count, limit, printed_len, lines, cols;
     int i, j, l;
@@ -1011,10 +1050,6 @@ static int display_match_list_internal_impl(match_accessor* access, int len, int
     int filtered_color_len = 3;
     int description_color_len = 3;
     int show_descriptions = 0;
-
-    // Match display filtering has the type separate from the match.
-    int included_type = rl_completion_matches_include_type;
-    rl_completion_matches_include_type = 0;
 
     // Find the length of the prefix common to all items: length as displayed
     // characters (common_length) and as a byte index into the matches (sind).
@@ -1031,7 +1066,25 @@ static int display_match_list_internal_impl(match_accessor* access, int len, int
         if (common_length > max || sind > max)
             common_length = sind = 0;
 
-        if (common_length > _rl_completion_prefix_display_length && common_length > ELLIPSIS_LEN)
+        int can_condense = (common_length > _rl_completion_prefix_display_length && common_length > ELLIPSIS_LEN);
+        if (can_condense)
+        {
+            // Ellipsis can't be applied to matches that use a display string,
+            // unless the match string is an exact prefix of the display string.
+            for (l = 0; l < len; l++)
+            {
+                unsigned char type = access->get_type(access, l);
+                const char *match = access->get_match(access, l);
+                const char *display = access->get_display(access, l);
+                int append = access->get_append_display(access, l);
+                if (use_display(access, type, match, display, append) && !append)
+                {
+                    can_condense = 0;
+                    break;
+                }
+            }
+        }
+        if (can_condense)
             max -= common_length - ELLIPSIS_LEN;
         else
             common_length = sind = 0;
@@ -1075,10 +1128,7 @@ static int display_match_list_internal_impl(match_accessor* access, int len, int
 
     // If only measuring, short circuit without printing anything.
     if (only_measure)
-    {
-        rl_completion_matches_include_type = included_type;
         return count;
-    }
 
     // Give the transient prompt a chance to update before printing anything.
     end_prompt(1/*crlf*/);
@@ -1121,25 +1171,25 @@ static int display_match_list_internal_impl(match_accessor* access, int len, int
             if (l > len)
                 break;
 
-            const char* display = access->get_display(access, l);
-            if (!display)
-                break;
-
             unsigned char type = access->get_type(access, l);
             const char* match = access->get_match(access, l);
-            char* temp = printable_part(display);
+            const char* display = access->get_display(access, l);
+            int append = access->get_append_display(access, l);
 
-            int use_display = (
-                (IS_MATCH_TYPE_NONE(type) && access->is_filtered_match_display(access)) ||
-                (!match || !*match) ||
-                (match != display && strcmp(match, display) != 0));
-            if (use_display)
+            if (use_display(access, type, match, display, append))
             {
-                printed_len = access->get_display_cells(access, l);
-                append_display(display, 0);
+                printed_len = 0;
+                if (append)
+                {
+                    char* temp = printable_part(match);
+                    printed_len = append_filename(temp, match, sind, type, 0);
+                }
+                append_display(display, 0, append ? _rl_arginfo_color : _rl_filtered_color);
+                printed_len += access->get_display_cells(access, l);
             }
             else
             {
+                char* temp = printable_part(display);
                 printed_len = append_filename(temp, display, sind, type, 0);
             }
 
@@ -1196,26 +1246,7 @@ static int display_match_list_internal_impl(match_accessor* access, int len, int
             break;
     }
 
-    rl_completion_matches_include_type = included_type;
     return 0;
-}
-
-//------------------------------------------------------------------------------
-static int display_match_list_internal(char **matches, int len, int max, int only_measure)
-{
-    match_accessor* access = make_match_accessor(matches);
-    int result = display_match_list_internal_impl(access, len, max, only_measure);
-    free(access);
-    return result;
-}
-
-//------------------------------------------------------------------------------
-static int display_filtered_match_list_internal(match_display_filter_entry **matches, int len, int max, bool only_measure)
-{
-    match_accessor* access = make_filtered_match_accessor(matches);
-    int result = display_match_list_internal_impl(access, len, max, only_measure);
-    free(access);
-    return result;
 }
 
 //------------------------------------------------------------------------------
@@ -1277,18 +1308,21 @@ void display_matches(char** matches)
                     max = (*walk)->visible_display;
             }
 
+            match_accessor* access = make_filtered_match_accessor(filtered_matches);
+
             if ((rl_completion_auto_query_items && _rl_screenheight > 0) ?
-                display_filtered_match_list_internal(filtered_matches, len, max, 1) >= (_rl_screenheight - (_rl_vis_botlin + 1)) :
+                display_match_list_internal(access, len, max, 1) >= (_rl_screenheight - (_rl_vis_botlin + 1)) :
                 rl_completion_query_items > 0 && len >= rl_completion_query_items)
             {
                 if (!prompt_display_matches(len))
                     goto done_filtered;
             }
 
-            display_filtered_match_list_internal(filtered_matches, len, max, 0);
+            display_match_list_internal(access, len, max, 0);
 
 done_filtered:
             free_filtered_matches(filtered_matches);
+            free(access);
             goto done;
         }
     }
@@ -1306,11 +1340,35 @@ done_filtered:
         matches = rebuilt;
     }
 
+    match_accessor* access = make_match_accessor(matches);
+
+    int included_type = rl_completion_matches_include_type;
+    rl_completion_matches_include_type = 0;
+
     // There is more than one answer.  Find out how many there are,
     // and find the maximum printed length of a single entry.
     for (max = 0, i = 1; matches[i]; i++)
     {
-        len = printable_len(matches[i]);
+        unsigned char type = access->get_type(access, i);
+        const char *match = access->get_match(access, i);
+        const char *display = access->get_display(access, i);
+        int append = access->get_append_display(access, i);
+
+        if (use_display(access, type, match, display, append))
+        {
+            len = 0;
+            if (append)
+            {
+                char *temp = printable_part(match);
+                len = printable_len(match);
+            }
+            len += access->get_display_cells(access, i);
+        }
+        else
+        {
+            len = printable_len(match);
+        }
+
         if (len > max)
             max = len;
     }
@@ -1320,16 +1378,18 @@ done_filtered:
     // If there are many items, then ask the user if she really wants to
     // see them all.
     if ((rl_completion_auto_query_items && _rl_screenheight > 0) ?
-        display_match_list_internal(matches, len, max, 1) >= (_rl_screenheight - (_rl_vis_botlin + 1)) :
+        display_match_list_internal(access, len, max, 1) >= (_rl_screenheight - (_rl_vis_botlin + 1)) :
         rl_completion_query_items > 0 && len >= rl_completion_query_items)
     {
         if (!prompt_display_matches(len))
             goto done;
     }
 
-    display_match_list_internal(matches, len, max, 0);
+    display_match_list_internal(access, len, max, 0);
 
 done:
+    rl_completion_matches_include_type = included_type;
+    free(access);
     rl_forced_update_display();
     rl_display_fixed = 1;
 }

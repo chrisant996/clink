@@ -33,6 +33,7 @@ public:
     unsigned int    get_match_visible_description(unsigned int index) const;
     match_type      get_match_type(unsigned int index) const;
     bool            is_custom_display(unsigned int index) const;
+    bool            is_append_display(unsigned int index) const;
 
     bool            is_display_filtered() const;
     bool            has_descriptions() const;
@@ -80,6 +81,7 @@ private:
     void            insert_match(int final=false);
     int             get_match_row(int index) const;
     int             get_longest_display() const;
+    bool            use_display(bool append, match_type type, int index) const;
     void            set_top(int top);
 
     // Initialization state.

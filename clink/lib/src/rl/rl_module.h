@@ -60,6 +60,7 @@ private:
     str<16>         m_alias_color;
     str<16>         m_description_color;
     str<16>         m_filtered_color;
+    str<16>         m_arginfo_color;
     str<16>         m_selected_color;
     str<16>         m_arg_color;
     str<16>         m_argmatcher_color;

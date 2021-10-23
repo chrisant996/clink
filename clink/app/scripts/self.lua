@@ -24,10 +24,11 @@ local function make_inject_parser()
     :adddescriptions({
         ["--help"]      = "Show help",
         ["--pid"]       = "Inject into the specified process ID",
-        ["--profile"]   = "Specifies an alternative path for profile data",
+        ["--profile"]   = { " dir", "Specifies an alternative path for profile data" },
         ["--quiet"]     = "Suppress copyright output",
         ["--nolog"]     = "Disable file logging",
-        ["--scripts"]   = "Alternative path to load .lua scripts from"})
+        ["--scripts"]   = { " dir", "Alternative path to load .lua scripts from" },
+    })
     return inject
 end
 
@@ -396,7 +397,7 @@ clink.argmatcher(
     "--version")
 :adddescriptions({
     ["--help"]      = "Show help",
-    ["--profile"]   = "Override the profile directory",
+    ["--profile"]   = { " dir", "Override the profile directory" },
     ["--version"]   = "Print Clink's version",
     ["autorun"]     = "Manage Clink's entry in cmd.exe's autorun",
     ["echo"]        = "Echo key sequences for use in .inputrc files",

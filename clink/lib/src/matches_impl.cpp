@@ -207,7 +207,9 @@ bool match_builder::add_match(const char* match, match_type type, bool already_n
     match_desc desc = {
         match,
         nullptr,
-        type
+        nullptr,
+        type,
+        false,
     };
     return add_match(desc, already_normalised);
 }
@@ -325,11 +327,27 @@ match_type matches_iter::get_match_type() const
 }
 
 //------------------------------------------------------------------------------
+const char* matches_iter::get_match_display() const
+{
+    if (m_has_pattern)
+        return has_match() ? m_matches.get_unfiltered_match_display(m_index) : nullptr;
+    return has_match() ? m_matches.get_match_display(m_index) : nullptr;
+}
+
+//------------------------------------------------------------------------------
 const char* matches_iter::get_match_description() const
 {
     if (m_has_pattern)
         return has_match() ? m_matches.get_unfiltered_match_description(m_index) : nullptr;
     return has_match() ? m_matches.get_match_description(m_index) : nullptr;
+}
+
+//------------------------------------------------------------------------------
+bool matches_iter::get_match_append_display() const
+{
+    if (m_has_pattern)
+        return has_match() ? m_matches.get_unfiltered_match_append_display(m_index) : false;
+    return has_match() ? m_matches.get_match_append_display(m_index) : false;
 }
 
 //------------------------------------------------------------------------------
@@ -517,12 +535,30 @@ match_type matches_impl::get_match_type(unsigned int index) const
 }
 
 //------------------------------------------------------------------------------
+const char* matches_impl::get_match_display(unsigned int index) const
+{
+    if (index >= get_match_count())
+        return nullptr;
+
+    return m_infos[index].display;
+}
+
+//------------------------------------------------------------------------------
 const char* matches_impl::get_match_description(unsigned int index) const
 {
     if (index >= get_match_count())
         return nullptr;
 
     return m_infos[index].description;
+}
+
+//------------------------------------------------------------------------------
+bool matches_impl::get_match_append_display(unsigned int index) const
+{
+    if (index >= get_match_count())
+        return false;
+
+    return m_infos[index].append_display;
 }
 
 //------------------------------------------------------------------------------
@@ -544,12 +580,30 @@ match_type matches_impl::get_unfiltered_match_type(unsigned int index) const
 }
 
 //------------------------------------------------------------------------------
+const char* matches_impl::get_unfiltered_match_display(unsigned int index) const
+{
+    if (index >= get_info_count())
+        return nullptr;
+
+    return m_infos[index].display;
+}
+
+//------------------------------------------------------------------------------
 const char* matches_impl::get_unfiltered_match_description(unsigned int index) const
 {
     if (index >= get_info_count())
         return nullptr;
 
     return m_infos[index].description;
+}
+
+//------------------------------------------------------------------------------
+bool matches_impl::get_unfiltered_match_append_display(unsigned int index) const
+{
+    if (index >= get_info_count())
+        return nullptr;
+
+    return m_infos[index].append_display;
 }
 
 //------------------------------------------------------------------------------
@@ -761,12 +815,13 @@ bool matches_impl::add_match(const match_desc& desc, bool already_normalized)
         m_any_infer_type = true;
     }
 
+    const char* store_display = desc.display ? m_store.store_front(desc.display) : nullptr;
     const char* store_description = desc.description ? m_store.store_front(desc.description) : nullptr;
 
     match_lookup lookup = { store_match, type };
     m_dedup->emplace(std::move(lookup));
 
-    match_info info = { store_match, store_description, type, false/*select*/, is_none/*infer_type*/ };
+    match_info info = { store_match, store_display, store_description, type, desc.append_display, false/*select*/, is_none/*infer_type*/ };
     m_infos.emplace_back(std::move(info));
     ++m_count;
 

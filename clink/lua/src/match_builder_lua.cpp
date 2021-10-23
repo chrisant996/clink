@@ -53,15 +53,20 @@ match_builder_lua::~match_builder_lua()
 /// with the following scheme:
 /// -show:  {
 /// -show:  &nbsp;   match       = "..."    -- [string] The match text.
+/// -show:  &nbsp;   display     = "..."    -- [string] OPTIONAL; alternative text to display when listing possible completions.
 /// -show:  &nbsp;   description = "..."    -- [string] OPTIONAL; a description for the match.
 /// -show:  &nbsp;   type        = "..."    -- [string] OPTIONAL; the match type.
 /// -show:  }
 ///
-/// <li>The <code>description</code> field is optional, and is displayed when
-/// listing possible completions.
-///
+/// <ul>
+/// <li>The <code>display</code> field is optional, and is displayed instead of
+/// the <code>match</code> field when listing possible completions.  (Requires v1.2.38 or greater.)
+/// <li>The <code>description</code> field is optional, and is displayed in
+/// addition to <code>match</code> or <code>display</code> when listing possible
+/// completions.  (Requires v1.2.38 or greater.)
 /// <li>The <code>type</code> field is optional.  If omitted, then the
 /// <span class="arg">type</span> argument is used for that element.
+/// </ul>
 ///
 /// The match type affects how the match is inserted, displayed, and colored.
 /// Some type modifiers may be combined with a match type.
@@ -273,10 +278,23 @@ bool match_builder_lua::add_match_impl(lua_State* state, int stack_index, match_
             desc.type = to_match_type(lua_tostring(state, -1));
         lua_pop(state, 1);
 
+        lua_pushliteral(state, "display");
+        lua_rawget(state, stack_index);
+        if (lua_isstring(state, -1))
+            desc.display = lua_tostring(state, -1);
+        lua_pop(state, 1);
+
         lua_pushliteral(state, "description");
         lua_rawget(state, stack_index);
         if (lua_isstring(state, -1))
             desc.description = lua_tostring(state, -1);
+        lua_pop(state, 1);
+
+        // Undocumented; for internal use only.
+        lua_pushliteral(state, "appenddisplay");
+        lua_rawget(state, stack_index);
+        if (lua_isboolean(state, -1))
+            desc.append_display = lua_toboolean(state, -1);
         lua_pop(state, 1);
 
         if (desc.match != nullptr)

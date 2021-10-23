@@ -112,6 +112,7 @@ int ellipsify(const char* in, int limit, str_base& out, bool expand_ctrl)
                 if (visible_len + clen > limit)
                 {
                     out.truncate(truncate_bytes);
+                    visible_len = truncate_visible;
                     if (ellipsis_len)
                     {
                         out.concat(ellipsis, min<int>(ellipsis_len, max<int>(0, limit - truncate_visible)));
@@ -234,6 +235,9 @@ const char* match_adapter::get_match_display(unsigned int index) const
     {
         // Don't use printable_part(), because append_filename() needs to know
         // both the raw match and the printable part.
+        const char* display = m_matches->get_match_display(index);
+        if (display)
+            return display;
         return m_matches->get_match(index);
     }
     return nullptr;
@@ -246,6 +250,9 @@ unsigned int match_adapter::get_match_visible_display(unsigned int index) const
         return m_filtered_matches[index + 1]->visible_display;
     if (m_matches)
     {
+        const char* display = m_matches->get_match_display(index);
+        if (display)
+            return cell_count(display);
         const char* match = m_matches->get_match(index);
         match_type type = m_matches->get_match_type(index);
         return printable_len_ex(match, static_cast<unsigned char>(type));
@@ -298,6 +305,14 @@ bool match_adapter::is_custom_display(unsigned int index) const
             return true;
     }
     return false;
+}
+
+//------------------------------------------------------------------------------
+bool match_adapter::is_append_display(unsigned int index) const
+{
+    if (m_filtered_matches)
+        return false;
+    return m_matches->get_match_append_display(index);
 }
 
 //------------------------------------------------------------------------------
@@ -955,7 +970,22 @@ void selectcomplete_impl::update_matches(bool restrict)
         const unsigned int count = m_matches.get_match_count();
         for (unsigned int i = 0; i < count; i++)
         {
-            int len = m_matches.get_match_visible_display(i);
+            int len = 0;
+
+            match_type type = m_matches.get_match_type(i);
+            const char* match = m_matches.get_match(i);
+            bool append = m_matches.is_append_display(i);
+            if (use_display(append, type, i))
+            {
+                if (append)
+                    len += printable_len_ex(match, static_cast<unsigned char>(type));
+                len += m_matches.get_match_visible_display(i);
+            }
+            else
+            {
+                len += printable_len_ex(match, static_cast<unsigned char>(type));
+            }
+
             if (m_match_longest < len)
                 m_match_longest = len;
         }
@@ -1099,31 +1129,48 @@ void selectcomplete_impl::update_display()
 
                         const int selected = (i == m_index);
                         const char* const display = m_matches.get_match_display(i);
-                        char* temp = m_matches.is_display_filtered() ? const_cast<char*>(display) : printable_part(const_cast<char*>(display));
                         const match_type match_type = m_matches.get_match_type(i);
                         const unsigned char type = static_cast<unsigned char>(match_type);
+                        const bool append = m_matches.is_append_display(i);
 
                         mark_tmpbuf();
                         int printed_len;
-                        if ((m_matches.is_display_filtered() && is_match_type(match_type, match_type::none)) ||
-                            (m_matches.is_custom_display(i)))
+                        if (use_display(append, match_type, i))
                         {
-                            printed_len = m_matches.get_match_visible_display(i);
-                            if (printed_len > col_width)
+                            printed_len = 0;
+                            if (append)
                             {
-                                ellipsify(temp, col_width, truncated, false/*expand_ctrl*/);
-                                temp = truncated.data();
-                                printed_len = cell_count(temp);
+                                assert(!m_matches.is_display_filtered());
+                                const char* match = m_matches.get_match(i);
+                                char* temp = printable_part(const_cast<char*>(match));
+                                printed_len = append_filename(temp, match, 0, type, selected);
                             }
-                            if (selected)
+                            append_display(display, selected, append ? _rl_arginfo_color : _rl_filtered_color);
+                            printed_len += m_matches.get_match_visible_display(i);
+
+                            if (printed_len > col_width || selected)
                             {
-                                ecma48_processor(temp, &tmp, nullptr, ecma48_processor_flags::plaintext);
-                                temp = tmp.data();
+                                str<> buf(get_tmpbuf_rollback());
+                                const char* temp = buf.c_str();
+
+                                if (printed_len > col_width)
+                                {
+                                    printed_len = ellipsify(temp, col_width, truncated, false/*expand_ctrl*/);
+                                    temp = truncated.c_str();
+                                }
+                                if (selected)
+                                {
+                                    ecma48_processor(temp, &tmp, nullptr, ecma48_processor_flags::plaintext);
+                                    temp = tmp.c_str();
+                                }
+
+                                rollback_tmpbuf();
+                                append_display(temp, selected, "");
                             }
-                            append_display(temp, selected);
                         }
                         else
                         {
+                            char* temp = m_matches.is_display_filtered() ? const_cast<char*>(display) : printable_part(const_cast<char*>(display));
                             printed_len = append_filename(temp, display, 0, type, selected);
                             if (printed_len > col_width)
                             {
@@ -1472,6 +1519,14 @@ int selectcomplete_impl::get_longest_display() const
 #else
     return m_match_longest;
 #endif
+}
+
+//------------------------------------------------------------------------------
+bool selectcomplete_impl::use_display(bool append, match_type type, int index) const
+{
+    return ((append) ||
+            (m_matches.is_display_filtered() && is_match_type(type, match_type::none)) ||
+            (m_matches.is_custom_display(index)));
 }
 
 //------------------------------------------------------------------------------
