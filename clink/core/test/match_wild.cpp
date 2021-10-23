@@ -77,9 +77,9 @@ TEST_CASE("path::match_wild()")
         REQUIRE(path::match_wild("ori*", "origin/master", path::star_matches_everything::yes));
         REQUIRE(path::match_wild("ori*", "origin/master", path::star_matches_everything::at_end));
 
-        REQUIRE(!path::match_wild("or*st", "origin/master", path::star_matches_everything::no));
-        REQUIRE(path::match_wild("or*st", "origin/master", path::star_matches_everything::yes));
-        REQUIRE(!path::match_wild("or*st", "origin/master", path::star_matches_everything::at_end));
+        REQUIRE(!path::match_wild("or*st*", "origin/master", path::star_matches_everything::no));
+        REQUIRE(path::match_wild("or*st*", "origin/master", path::star_matches_everything::yes));
+        REQUIRE(!path::match_wild("or*st*", "origin/master", path::star_matches_everything::at_end));
 
         REQUIRE(!path::match_wild("*st*", "origin/master", path::star_matches_everything::no));
         REQUIRE(path::match_wild("*st*", "origin/master", path::star_matches_everything::yes));
