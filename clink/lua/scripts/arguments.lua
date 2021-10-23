@@ -49,16 +49,19 @@ end
 
 --------------------------------------------------------------------------------
 --[[
+local enable_tracing = true
 function _argreader:trace(...)
     if self._tracing then
         print(...)
     end
 end
 function _argreader:starttracing(word)
-    self._tracing = true
-    self._dbgword = word
-    self:trace()
-    self:trace(word, "BEGIN", self._matcher, "stack", #self._stack, "arg_index", self._arg_index)
+    if enable_tracing then
+        self._tracing = true
+        self._dbgword = word
+        self:trace()
+        self:trace(word, "BEGIN", self._matcher, "stack", #self._stack, "arg_index", self._arg_index)
+    end
 end
 --]]
 
@@ -187,8 +190,9 @@ function _argreader:update(word, word_index)
     end
 
     -- Does the word lead to another matcher?
+    local linked
     if arg._links then
-        local linked = arg._links[word]
+        linked = arg._links[word]
         if linked then
             if is_flag and word:match("[:=]$") and word_index >= 0 then
                 local info = line_state:getwordinfo(word_index)
@@ -205,6 +209,12 @@ function _argreader:update(word, word_index)
                 self:_push(linked)
             end
         end
+    end
+
+    -- If it's a flag and doesn't have a linked matcher, then pop to restore the
+    -- matcher that should be active for the next word.
+    if not linked and is_flag then
+        self:_pop(next_is_flag)
     end
 end
 
