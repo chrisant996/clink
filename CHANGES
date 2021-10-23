@@ -17,6 +17,7 @@
 - Fixed the `clink-popup-history` command to respect the `search-ignore-case` setting.
 - Fixed `:nofiles()` to dead-end an argmatcher (regression introduced in v1.0.0).
 - Fixed `clink.ondisplaymatches()` and `clink.onfiltermatches()` when there's only 1 match.
+- Fixed incremental find, find next, and find previous in console text popup lists.
 - Fixed backward compatibility for the old matching filtering API.
 - Fixed several other minor issues with match display filtering.
 - Fixed intermittent incorrect match generation for `/flag:` or `/flag=` flags.
