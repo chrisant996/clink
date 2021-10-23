@@ -6,9 +6,11 @@
 
 - Enhancements for match descriptions (which are displayed when listing possible completions):
   - Argmatchers can provide description strings for flags and/or args (e.g. "Verbose output" for `-v`, or "Do nothing" for `-n`, etc).
-  - Match generators can provide description strings when adding matches (`match_builder:addmatch()` and `match_builder:addmatches()`).
+  - Argmatchers can also provide argument info strings for flags and/or args.  These are hint strings, and not part of the completion match itself.  E.g. "linenum" for `--line`, which gets displayed as "--line linenum" when listing possible completions, but only "--line" is inserted.
+  - Match generators can provide `display` and `description` strings when adding matches (`match_builder:addmatch()` and `match_builder:addmatches()`) -- it is no longer necessary to use `clink.ondisplaymatches()`.
   - The `clink-select-complete` command now shows match descriptions in a single line at the bottom (instead of in a second column) when there are more than 9 matches.
-  - Added `color.description` Clink setting for the default match description color.
+  - Added `color.arginfo` Clink setting for the arguments for a flag or argument when listing possible completions.
+  - Added `color.description` Clink setting for the default match description color when listing possible completions.
   - Truncate descriptions when a line will wrap (or has wrapped) when listing possible completions.
 - Command separators (`&`, `|`) and redirection symbols (`<`, `>`, `>&`) are colored in the input line, using colors from the new `color.cmdsep` and `color.cmdredir` Clink settings.
 - Fixed <kbd>Backspace</kbd> in `clink-select-complete`; it had sometimes missed expanding the set of matches accordingly.
