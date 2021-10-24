@@ -815,8 +815,8 @@ bool matches_impl::add_match(const match_desc& desc, bool already_normalized)
         m_any_infer_type = true;
     }
 
-    const char* store_display = desc.display ? m_store.store_front(desc.display) : nullptr;
-    const char* store_description = desc.description ? m_store.store_front(desc.description) : nullptr;
+    const char* store_display = desc.display && *desc.display ? m_store.store_front(desc.display) : nullptr;
+    const char* store_description = desc.description && *desc.description ? m_store.store_front(desc.description) : nullptr;
 
     match_lookup lookup = { store_match, type };
     m_dedup->emplace(std::move(lookup));
