@@ -1283,6 +1283,7 @@ void selectcomplete_impl::update_display()
                     ellipsify(desc, m_screen_cols - 1, s, false);
                     m_printer->print(description_color, description_color_len);
                     m_printer->print(s.c_str(), s.length());
+                    m_printer->print("\x1b[m");
                 }
             }
         }
