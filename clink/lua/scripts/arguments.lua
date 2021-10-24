@@ -492,8 +492,14 @@ function _argmatcher:adddescriptions(...)
         end
         if t[1] then
             local desc = t["description"]
-            if type(desc) ~= "string" then
-                error("bad argument #".._.." (string table is missing 'description' field)")
+            if type(desc) == "table" then
+                if type(desc[1]) ~= "string" then
+                    error("bad argument #".._.." (descriptions table starting with '"..tostring(t[1]).."' does not have a string at index 1")
+                elseif desc[2] and type(desc[2]) ~= "string"  then
+                    error("bad argument #".._.." (descriptions table starting with '"..tostring(t[1]).."' has a non-string at index 2")
+                end
+            elseif type(desc) ~= "string" then
+                error("bad argument #".._.." (descriptions table starting with '"..tostring(t[1]).."' is missing a 'description' field)")
             end
             for _,key in ipairs(t) do
                 self._descriptions[key] = desc
