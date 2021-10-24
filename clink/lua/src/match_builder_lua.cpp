@@ -60,7 +60,8 @@ match_builder_lua::~match_builder_lua()
 ///
 /// <ul>
 /// <li>The <code>display</code> field is optional, and is displayed instead of
-/// the <code>match</code> field when listing possible completions.  (Requires v1.2.38 or greater.)
+/// the <code>match</code> field when listing possible completions.  It can even
+/// include ANSI escape codes for colors, etc.  (Requires v1.2.38 or greater.)
 /// <li>The <code>description</code> field is optional, and is displayed in
 /// addition to <code>match</code> or <code>display</code> when listing possible
 /// completions.  (Requires v1.2.38 or greater.)
