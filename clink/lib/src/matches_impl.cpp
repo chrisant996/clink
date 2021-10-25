@@ -601,7 +601,7 @@ const char* matches_impl::get_unfiltered_match_description(unsigned int index) c
 bool matches_impl::get_unfiltered_match_append_display(unsigned int index) const
 {
     if (index >= get_info_count())
-        return nullptr;
+        return false;
 
     return m_infos[index].append_display;
 }
