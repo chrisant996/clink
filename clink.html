@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.2.38</title>
+<title>Clink v1.2.39</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -747,7 +747,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.2.38</div>
+                <div id="title">Clink v1.2.39</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -1966,7 +1966,7 @@ end
 <p><a name="filteringmatchcompletions"></a></p>
 <h4 id="filtering-match-completions">Filtering Match Completions</h4>
 <p>A match generator or <a href="#luakeybindings">luafunc: key binding</a> can use <a href="#clink.onfiltermatches">clink.onfiltermatches()</a> to register a function that will be called after matches are generated but before they are displayed or inserted.</p>
-<p>The function receives a table argument containing the matches to be displayed, a string argument indicating the completion type, and a boolean argument indicating whether filename completion is desired. The table argument has a <code>match</code> string field and a <code>type</code> string field; these are the same as in <a href="builder:addmatch">builder:addmatch()</a>.</p>
+<p>The function receives a table argument containing the matches to be displayed, a string argument indicating the completion type, and a boolean argument indicating whether filename completion is desired. The table argument has a <code>match</code> string field and a <code>type</code> string field; these are the same as in <a href="#builder:addmatch">builder:addmatch()</a>.</p>
 <p>The possible completion types are:</p>
 <table>
 <thead>
@@ -2088,7 +2088,7 @@ end
 <p>The simplest way to do that is just include the <code>display</code> and/or <code>description</code> fields when using <a href="#builder:addmatch">builder:addmatch()</a>.  Refer to that function&#39;s documentation for usage details.</p>
 <p>However, older versions of Clink don&#39;t support those fields.  And it may in some rare cases it may be desirable to display a list of possible completions that includes extra matches, or omits some matches (but that&#39;s discouraged because it can be confusing to users).</p>
 <p>A match generator can alternatively use <a href="#clink.ondisplaymatches">clink.ondisplaymatches()</a> to register a function that will be called before matches are displayed (this is reset every time match generation is invoked).</p>
-<p>The function receives a table argument containing the matches to be displayed, and a boolean argument indicating whether they&#39;ll be displayed in a popup window. The table argument has a <code>match</code> string field and a <code>type</code> string field; these are the same as in <a href="builder:addmatch">builder:addmatch()</a>. The return value is a table with the input matches filtered as required by the match generator.</p>
+<p>The function receives a table argument containing the matches to be displayed, and a boolean argument indicating whether they&#39;ll be displayed in a popup window. The table argument has a <code>match</code> string field and a <code>type</code> string field; these are the same as in <a href="#builder:addmatch">builder:addmatch()</a>. The return value is a table with the input matches filtered as required by the match generator.</p>
 <p>The returned table can also optionally include a <code>display</code> string field and a <code>description</code> string field. When present, <code>display</code> will be displayed instead of the <code>match</code> field, and <code>description</code> will be displayed next to the match. Putting the description in a separate field enables Clink to align the descriptions in a column.</p>
 <p>Filtering the match display can affect completing matches: the <code>match</code> field is what gets inserted.  It can also affect displaying matches: the <code>display</code> field is displayed if present, otherwise the <code>match</code> field is displayed.</p>
 <p>If a match&#39;s <code>type</code> is &quot;none&quot; or its <code>match</code> field is different from its <code>display</code> field then the match is displayed using the color specified by the <a href="#color_filtered">color.filtered</a> Clink setting, otherwise normal completion coloring is applied.  The <code>display</code> and <code>description</code> fields can include ANSI escape codes to apply other colors if desired.</p>
@@ -2200,7 +2200,16 @@ the_parser = clink.argmatcher()
 the_parser:addarg({ &quot;zippy&quot;, &quot;bungle&quot;, &quot;george&quot; })
 the_parser:addarg({ rainbow_function, &quot;yellow&quot;, &quot;green&quot; })
 </code></pre>
-<p>The functions take a single argument which is a word from the command line being edited (or partial word if it is the one under the cursor). Functions should return a table of potential matches.</p>
+<p>The functions are passed four arguments, and should return a table of potential matches.</p>
+<ul>
+<li><code>word</code> is a partial string for the word under the cursor, corresponding to the argument for which matches are being generated:  it is an empty string, or if a filename is being entered then it will be the path portion (e.g. for &quot;dir1\dir2\pre&quot; <code>word</code> will be &quot;dir1\dir2&quot;).</li>
+<li><code>word_index</code> is the word index in <code>line_state</code>, corresponding to the argument for which matches are being generated.</li>
+<li><code>line_state</code> is a <a href="#line_state">line_state</a> object that contains the words for the associated command line.</li>
+<li><code>match_builder</code> is a <a href="#builder">builder</a> object (but for adding matches the function should return them in a table).</li>
+</ul>
+<blockquote>
+<p><strong>Compatibility Note:</strong> When a function argument uses the old v0.4.9 <code>clink.match_display_filter</code> approach, then the <code>word</code> argument will be the full word under the cursor, for compatibility with the v0.4.9 API.</p>
+</blockquote>
 <p>Some built-in matcher functions are available:</p>
 <table>
 <thead>
@@ -3079,7 +3088,7 @@ C-_:                kill-line                       <span class="hljs-comment">#
 <p>The Lua function receives two arguments:</p>
 <p><span class="arg"><a href="#rl_buffer">rl_buffer</a></span> gives it access to the input buffer.</p>
 <p><span class="arg"><a href="#line_state">line_state</a></span> gives it access to the same line state that a <a href="#match-generators">match generator</a> receives.</p>
-<p>Lua functions can print output, but should first call <a href="#rl_buffer:beginoutput">rl_buffer:beginoutput</a> so that the output doesn&#39;t overwrite the displayed input line.</p>
+<p>Lua functions can print output, but should first call <a href="#rl_buffer:beginoutput">rl_buffer:beginoutput()</a> so that the output doesn&#39;t overwrite the displayed input line.</p>
 <blockquote>
 <p><strong>Notes:</strong></p>
 <ul>
@@ -3384,7 +3393,7 @@ end
 <li>Some key binding sequences have changed; see <a href="#keybindings">Key Bindings</a> for more information.</li>
 <li>Match coloring is now done by Readline and is configured differently; see <a href="#completioncolors">Completion Colors</a> for more information.</li>
 <li>Settings and history should migrate automatically if the new <code>clink_settings</code> and <code>clink_history</code> files don&#39;t exist (deleting them will cause migration to happen again).  To find the directory that contains these files, run <code>clink info</code> and look for the &quot;state&quot; line.</li>
-<li>Script compatibility should be very good, but some scripts may still encounter problems.  If you do encounter a compatibility problem you can look for an updated version of the script, update the script yourself, or visit the <a href="https://github.com/chrisant996/clink/issues">repo</a> and open an issue describing details about the compatibility problem.</li>
+<li>Script compatibility should be very good, but some scripts may still encounter problems.  If you do encounter a compatibility problem you can look for an updated version of the script, update the script yourself, or visit the <a href="https://github.com/chrisant996/clink/issues">clink repo</a> and open an issue describing details about the compatibility problem.</li>
 <li>Some settings have changed slightly, and there are many new settings.  See <a href="#configclink">Configuring Clink</a> for more information.</li>
 </ul>
 <h2 id="troubleshooting-tips">Troubleshooting Tips</h2>
@@ -3967,6 +3976,11 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1239">v1.2.39</h4>
+<ul>
+<li>Fixed regression in match display filtering when listing possible completions (regression introduced in v1.2.38).</li>
+<li>Fixes display quirks in the <code>clink-select-complete</code> command when descriptions are at the bottom or when an empty <code>display</code> or <code>description</code> string is provided by a match generator.</li>
+</ul>
 <h4 id="v1238">v1.2.38</h4>
 <ul>
 <li>Enhancements for match descriptions (which are displayed when listing possible completions):<ul>
