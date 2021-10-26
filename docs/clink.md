@@ -120,7 +120,7 @@ Name                         | Default | Description
 `color.message`              | `default` | The color for the message area (e.g. the search prompt message, digit argument prompt message, etc).
 `color.popup`                |         | When set, this is used as the color for popup lists and messages.  If no color is set, then the console's popup colors are used (see the Properties dialog box for the console window).
 `color.popup_desc`           |         | When set, this is used as the color for description column(s) in popup lists.  If no color is set, then a color is chosen to complement the console's popup colors (see the Properties dialog box for the console window).
-`color.prompt`               |         | When set, this is used as the default color for the prompt.  But it's overridden by any colors set by <a href="#customisingtheprompt">Customising The Prompt</a>.
+`color.prompt`               |         | When set, this is used as the default color for the prompt.  But it's overridden by any colors set by [Customising The Prompt](#customisingtheprompt).
 <a name="color_readonly"></a>`color.readonly` | | Used when displaying file completions with the "readonly" attribute.
 `color.selected_completion`  |         | The color for the selected completion with the clink-select-complete command.  If no color is set, then bright reverse video is used.
 `color.selection`            |         | The color for selected text in the input line.  If no color is set, then reverse video is used.
@@ -200,7 +200,7 @@ Examples (specific results may depend on the console host program):
 
 ### Alternative SGR Syntax
 
-It's also possible to set any ANSI <a href="https://en.wikipedia.org/wiki/ANSI_escape_code#SGR">SGR escape code</a> using <code>sgr <span class="arg">SGR_parameters</span></code> (for example `sgr 7` is the code for reverse video, which swaps the foreground and background colors).
+It's also possible to set any ANSI [SGR escape code](https://en.wikipedia.org/wiki/ANSI_escape_code#SGR) using <code>sgr <span class="arg">SGR_parameters</span></code> (for example `sgr 7` is the code for reverse video, which swaps the foreground and background colors).
 
 Be careful, since some escape code sequences might behave strangely.
 
@@ -352,7 +352,7 @@ The quick version is that mostly you'll use these kinds of lines:
 - <code><span class="arg">keyname</span>: "luafunc:<span class="arg">lua_function_name</span>"</code>
 - <code>set <span class="arg">varname</span> <span class="arg">value</span></code>
 
-If a Readline macro begins with "luafunc:" then Clink interprets it as a Lua key binding and will invoke the named Lua function.  Function names can include periods (such as `foo.bar`) but cannot include any other punctuation.  See <a href="#luakeybindings">Lua Key Bindings</a> for more information.
+If a Readline macro begins with "luafunc:" then Clink interprets it as a Lua key binding and will invoke the named Lua function.  Function names can include periods (such as `foo.bar`) but cannot include any other punctuation.  See [Lua Key Bindings](#luakeybindings) for more information.
 
 Refer to the Readline [manual](https://tiswww.cwru.edu/php/chet/readline/rltop.html#Documentation) for a more thorough explanation of the .inputrc file format, list of available commands, and list of configuration variables and their values.
 
@@ -499,7 +499,7 @@ Typing|Typing does an incremental search.
 
 # Extending Clink With Lua
 
-Clink can be extended with <a href="https://www.lua.org/docs.html">Lua</a> scripts to customise startup actions, create completion matches, customise the prompt, and more.  The following sections describe these in more detail and show some examples.
+Clink can be extended with [Lua](https://www.lua.org/docs.html) scripts to customise startup actions, create completion matches, customise the prompt, and more.  The following sections describe these in more detail and show some examples.
 
 <a name="lua-scripts-location"></a>
 
@@ -507,7 +507,7 @@ Clink can be extended with <a href="https://www.lua.org/docs.html">Lua</a> scrip
 
 Clink loads all Lua scripts it finds in these directories:
 1. All directories listed in the `clink.path` setting, separated by semicolons.
-2. If `clink.path` is not set, then the DLL directory and the profile directory are used (see <a href="#filelocations">File Locations</a> for info about the profile directory).
+2. If `clink.path` is not set, then the DLL directory and the profile directory are used (see [File Locations](#filelocations) for info about the profile directory).
 3. All directories listed in the `%CLINK_PATH%` environment variable, separated by semicolons.
 4. All directories registered by the `clink installscripts` command.
 
@@ -524,7 +524,7 @@ Run `clink info` to see the script paths for the current session.
   - Apply color to input text.
   - Customise the prompt.
   - Perform actions before or after the user gets to edit each input line.
-  - Provide new custom commands that can be bound to keys via the <a href="#luakeybindings">luafunc: key macro syntax</a>.
+  - Provide new custom commands that can be bound to keys via the [luafunc: key macro syntax](#luakeybindings).
 - Often scripts will also define some functions and variables for use by itself and/or other scripts.
 
 The following sections describe these in more detail and show some examples.
@@ -555,9 +555,9 @@ function my_generator:generate(line_state, match_builder)
 end
 ```
 
-<span class="arg">line_state</span> is a <a href="#line_state">line_state</a> object that has information about the current line.
+<span class="arg">line_state</span> is a [line_state](#line_state) object that has information about the current line.
 
-<span class="arg">match_builder</span> is a <a href="#builder">builder</a> object to which matches can be added.
+<span class="arg">match_builder</span> is a [builder](#builder) object to which matches can be added.
 
 If no further match generators need to be called then the function should return true.  Returning false or nil continues letting other match generators get called.
 
@@ -571,7 +571,7 @@ Here is an example script that supplies git branch names as matches for `git che
 
 If needed, a generator can optionally influence word breaking for the end word by defining a `:getwordbreakinfo()` function.
 
-The function takes a <span class="arg">line_state</span> <a href="#line_state">line_state</a> object that has information about the current line.  If it returns nil or 0, the end word is truncated to 0 length.  This is the normal behavior, which allows Clink to collect and cache all matches and then filter them based on typing.  Or it can return two numbers:  word break length and an optional end word length.  The end word is split at the word break length:  one word contains the first word break length characters from the end word (if 0 length then it's discarded), and the next word contains the rest of the end word truncated to the optional word length (0 if omitted).
+The function takes a <span class="arg">line_state</span> [line_state](#line_state) object that has information about the current line.  If it returns nil or 0, the end word is truncated to 0 length.  This is the normal behavior, which allows Clink to collect and cache all matches and then filter them based on typing.  Or it can return two numbers:  word break length and an optional end word length.  The end word is split at the word break length:  one word contains the first word break length characters from the end word (if 0 length then it's discarded), and the next word contains the rest of the end word truncated to the optional word length (0 if omitted).
 
 A good example to look at is Clink's own built-in environment variable match generator.  It has a `:getwordbreakinfo()` function that understands the `%` syntax of environment variables and produces word break info accordingly.
 
@@ -633,9 +633,9 @@ end
 
 #### Filtering Match Completions
 
-A match generator or <a href="#luakeybindings">luafunc: key binding</a> can use <a href="#clink.onfiltermatches">clink.onfiltermatches()</a> to register a function that will be called after matches are generated but before they are displayed or inserted.
+A match generator or [luafunc: key binding](#luakeybindings) can use [clink.onfiltermatches()](#clink.onfiltermatches) to register a function that will be called after matches are generated but before they are displayed or inserted.
 
-The function receives a table argument containing the matches to be displayed, a string argument indicating the completion type, and a boolean argument indicating whether filename completion is desired. The table argument has a `match` string field and a `type` string field; these are the same as in <a href="builder:addmatch">builder:addmatch()</a>.
+The function receives a table argument containing the matches to be displayed, a string argument indicating the completion type, and a boolean argument indicating whether filename completion is desired. The table argument has a `match` string field and a `type` string field; these are the same as in [builder:addmatch()](#builder:addmatch).
 
 The possible completion types are:
 
@@ -648,7 +648,7 @@ Type | Description | Example
 `"@"`  | Do standard completion, and list all possible completions if there is more than one and partial completion is not possible. | `complete` (when the `show-all-if-unmodified` config variable is set)
 `"%"`  | Do menu completion (cycle through possible completions). | `menu-complete` or `old-menu-complete`
 
-The return value is a table with the input matches filtered as desired. The match filter function can remove matches, but cannot add matches (use a match generator instead).  If only one match remains after filtering, then many commands will insert the match without displaying it.  This makes it possible to spawn a process (such as <a href="https://github.com/junegunn/fzf">fzf</a>) to perform enhanced completion by interactively filtering the matches and keeping only one selected match.
+The return value is a table with the input matches filtered as desired. The match filter function can remove matches, but cannot add matches (use a match generator instead).  If only one match remains after filtering, then many commands will insert the match without displaying it.  This makes it possible to spawn a process (such as [fzf](https://github.com/junegunn/fzf)) to perform enhanced completion by interactively filtering the matches and keeping only one selected match.
 
 ```lua
 #INCLUDE [examples\ex_fzf.lua]
@@ -664,9 +664,9 @@ The simplest way to do that is just include the `display` and/or `description` f
 
 However, older versions of Clink don't support those fields.  And it may in some rare cases it may be desirable to display a list of possible completions that includes extra matches, or omits some matches (but that's discouraged because it can be confusing to users).
 
-A match generator can alternatively use <a href="#clink.ondisplaymatches">clink.ondisplaymatches()</a> to register a function that will be called before matches are displayed (this is reset every time match generation is invoked).
+A match generator can alternatively use [clink.ondisplaymatches()](#clink.ondisplaymatches) to register a function that will be called before matches are displayed (this is reset every time match generation is invoked).
 
-The function receives a table argument containing the matches to be displayed, and a boolean argument indicating whether they'll be displayed in a popup window. The table argument has a `match` string field and a `type` string field; these are the same as in <a href="builder:addmatch">builder:addmatch()</a>. The return value is a table with the input matches filtered as required by the match generator.
+The function receives a table argument containing the matches to be displayed, and a boolean argument indicating whether they'll be displayed in a popup window. The table argument has a `match` string field and a `type` string field; these are the same as in [builder:addmatch()](#builder:addmatch). The return value is a table with the input matches filtered as required by the match generator.
 
 The returned table can also optionally include a `display` string field and a `description` string field. When present, `display` will be displayed instead of the `match` field, and `description` will be displayed next to the match. Putting the description in a separate field enables Clink to align the descriptions in a column.
 
@@ -811,14 +811,21 @@ the_parser:addarg({ "zippy", "bungle", "george" })
 the_parser:addarg({ rainbow_function, "yellow", "green" })
 ```
 
-The functions take a single argument which is a word from the command line being edited (or partial word if it is the one under the cursor). Functions should return a table of potential matches.
+The functions are passed four arguments, and should return a table of potential matches.
+
+- `word` is a partial string for the word under the cursor, corresponding to the argument for which matches are being generated:  it is an empty string, or if a filename is being entered then it will be the path portion (e.g. for "dir1\dir2\pre" `word` will be "dir1\dir2\").
+- `word_index` is the word index in `line_state`, corresponding to the argument for which matches are being generated.
+- `line_state` is a [line_state](#line_state) object that contains the words for the associated command line.
+- `match_builder` is a [builder](#builder) object (but for adding matches the function should return them in a table).
+
+> **Compatibility Note:** When a function argument uses the old v0.4.9 `clink.match_display_filter` approach, then the `word` argument will be the full word under the cursor, for compatibility with the v0.4.9 API.
 
 Some built-in matcher functions are available:
 
 Function | Description
 :-: | ---
-<a href="#clink.dirmatches">clink.dirmatches</a> | Generates directory matches.
-<a href="#clink.filematches">clink.filematches</a> | Generates file matches.
+[clink.dirmatches](#clink.dirmatches) | Generates directory matches.
+[clink.filematches](#clink.filematches) | Generates file matches.
 
 #### Shorthand
 
@@ -977,11 +984,11 @@ Prompt filtering needs to be fast, or it can interfere with using the shell (e.g
 
 Clink provides a way for prompt filters to do some initial work and set the prompt, continue doing work in the background, and then refresh the prompt again when the background work is finished.  This is accomplished by using [Lua coroutines](https://www.lua.org/manual/5.2/manual.html#2.6), but Clink simplifies and streamlines the process.
 
-A prompt filter can call <a href="#clink.promptcoroutine">clink.promptcoroutine(my_func)</a> to run `my_func()` inside a coroutine.  Clink will automatically resume the coroutine repeatedly while input line editing is idle.  When `my_func()` completes, Clink will automatically refresh the prompt by triggering prompt filtering again.
+A prompt filter can call [clink.promptcoroutine(my_func)](#clink.promptcoroutine) to run `my_func()` inside a coroutine.  Clink will automatically resume the coroutine repeatedly while input line editing is idle.  When `my_func()` completes, Clink will automatically refresh the prompt by triggering prompt filtering again.
 
-Typically the motivation to use asynchronous prompt filtering is that one or more <code><span class="hljs-built_in">io</span>.<span class="hljs-built_in">popen</span>(<span class="hljs-string">"some slow command"</span>)</code> calls take too long.  They can be replaced with <a href="#io.popenyield">io.popenyield()</a> calls inside the prompt coroutine to let them run in the background.
+Typically the motivation to use asynchronous prompt filtering is that one or more <code><span class="hljs-built_in">io</span>.<span class="hljs-built_in">popen</span>(<span class="hljs-string">"some slow command"</span>)</code> calls take too long.  They can be replaced with [io.popenyield()](#io.popenyield) calls inside the prompt coroutine to let them run in the background.
 
-> **Global data:** If `my_func()` needs to use any global data, then it's important to use <a href="#clink.onbeginedit">clink.onbeginedit()</a> to register an event handler that can reset the global data for each new input line session.  Otherwise the data may accidentally "bleed" across different input line sessions.
+> **Global data:** If `my_func()` needs to use any global data, then it's important to use [clink.onbeginedit()](#clink.onbeginedit) to register an event handler that can reset the global data for each new input line session.  Otherwise the data may accidentally "bleed" across different input line sessions.
 >
 > **Backward compatibility:** A prompt filter must handle backward compatibility itself if it needs to run on versions of Clink that don't support asynchronous prompt filtering (v1.2.9 and lower).  E.g. you can use <code><span class="hljs-keyword">if</span> clink.promptcoroutine <span class="hljs-keyword">then</span></code> to test whether the API exists.
 
@@ -1163,7 +1170,7 @@ The Lua function receives two arguments:
 
 <span class="arg"><a href="#line_state">line_state</a></span> gives it access to the same line state that a [match generator](#match-generators) receives.
 
-Lua functions can print output, but should first call <a href="#rl_buffer:beginoutput">rl_buffer:beginoutput</a> so that the output doesn't overwrite the displayed input line.
+Lua functions can print output, but should first call [rl_buffer:beginoutput()](#rl_buffer:beginoutput) so that the output doesn't overwrite the displayed input line.
 
 > **Notes:**
 > - The <span class="arg">line_state</span> is nil if not using Clink v1.2.34 or higher.
@@ -1294,7 +1301,7 @@ The new Clink tries to be as backward compatible with Clink v0.4.9 as possible. 
 - Some key binding sequences have changed; see [Key Bindings](#keybindings) for more information.
 - Match coloring is now done by Readline and is configured differently; see [Completion Colors](#completioncolors) for more information.
 - Settings and history should migrate automatically if the new `clink_settings` and `clink_history` files don't exist (deleting them will cause migration to happen again).  To find the directory that contains these files, run `clink info` and look for the "state" line.
-- Script compatibility should be very good, but some scripts may still encounter problems.  If you do encounter a compatibility problem you can look for an updated version of the script, update the script yourself, or visit the <a href="https://github.com/chrisant996/clink/issues">repo</a> and open an issue describing details about the compatibility problem.
+- Script compatibility should be very good, but some scripts may still encounter problems.  If you do encounter a compatibility problem you can look for an updated version of the script, update the script yourself, or visit the [clink repo](https://github.com/chrisant996/clink/issues) and open an issue describing details about the compatibility problem.
 - Some settings have changed slightly, and there are many new settings.  See [Configuring Clink](#configclink) for more information.
 
 ## Troubleshooting Tips
