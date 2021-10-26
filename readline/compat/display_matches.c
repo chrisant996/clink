@@ -1286,6 +1286,10 @@ void display_matches(char** matches)
     int len, max, i;
     char *temp;
     int vis_stat;
+    match_accessor* access = NULL;
+
+    int included_type = rl_completion_matches_include_type;
+    rl_completion_matches_include_type = 0;
 
     // If there is a display filter, give it a chance to modify MATCHES.
     if (rl_match_display_filter_func)
@@ -1308,7 +1312,7 @@ void display_matches(char** matches)
                     max = (*walk)->visible_display;
             }
 
-            match_accessor* access = make_filtered_match_accessor(filtered_matches);
+            access = make_filtered_match_accessor(filtered_matches);
 
             if ((rl_completion_auto_query_items && _rl_screenheight > 0) ?
                 display_match_list_internal(access, len, max, 1) >= (_rl_screenheight - (_rl_vis_botlin + 1)) :
@@ -1322,7 +1326,6 @@ void display_matches(char** matches)
 
 done_filtered:
             free_filtered_matches(filtered_matches);
-            free(access);
             goto done;
         }
     }
@@ -1340,10 +1343,7 @@ done_filtered:
         matches = rebuilt;
     }
 
-    match_accessor* access = make_match_accessor(matches);
-
-    int included_type = rl_completion_matches_include_type;
-    rl_completion_matches_include_type = 0;
+    access = make_match_accessor(matches);
 
     // There is more than one answer.  Find out how many there are,
     // and find the maximum printed length of a single entry.
