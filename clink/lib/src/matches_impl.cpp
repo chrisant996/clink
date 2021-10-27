@@ -815,13 +815,14 @@ bool matches_impl::add_match(const match_desc& desc, bool already_normalized)
         m_any_infer_type = true;
     }
 
-    const char* store_display = desc.display && *desc.display ? m_store.store_front(desc.display) : nullptr;
-    const char* store_description = desc.description && *desc.description ? m_store.store_front(desc.description) : nullptr;
+    const char* store_display = (desc.display && *desc.display) ? m_store.store_front(desc.display) : nullptr;
+    const char* store_description = (desc.description && *desc.description) ? m_store.store_front(desc.description) : nullptr;
+    bool append_display = (desc.append_display && store_display);
 
     match_lookup lookup = { store_match, type };
     m_dedup->emplace(std::move(lookup));
 
-    match_info info = { store_match, store_display, store_description, type, desc.append_display, false/*select*/, is_none/*infer_type*/ };
+    match_info info = { store_match, store_display, store_description, type, append_display, false/*select*/, is_none/*infer_type*/ };
     m_infos.emplace_back(std::move(info));
     ++m_count;
 
