@@ -2,10 +2,14 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.2.40
+
+- Fixes display quirks when an empty `display` or `description` string is provided by a match generator.
+
 #### v1.2.39
 
 - Fixed regression in match display filtering when listing possible completions (regression introduced in v1.2.38).
-- Fixes display quirks in the `clink-select-complete` command when descriptions are at the bottom or when an empty `display` or `description` string is provided by a match generator.
+- Fixes display quirks in the `clink-select-complete` command when descriptions are at the bottom.
 
 #### v1.2.38
 
