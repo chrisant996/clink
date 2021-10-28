@@ -126,7 +126,7 @@ Name                         | Default | Description
 `color.selection`            |         | The color for selected text in the input line.  If no color is set, then reverse video is used.
 `color.unexpected`           | `default` | The color for unexpected arguments in the input line when `clink.colorize_input` is enabled.
 `debug.log_terminal`         | False   | Logs all terminal input and output to the clink.log file.  This is intended for diagnostic purposes only, and can make the log file grow significantly.
-`doskey.enhanced`            | True    | Enhanced Doskey adds the expansion of macros that follow `\|` and `&` command separators and respects quotes around words when parsing `$1`..`$9` tags. Note that these features do not apply to Doskey use in Batch files.
+`doskey.enhanced`            | False   | Enhanced Doskey adds the expansion of macros that follow `\|` and `&` command separators and respects quotes around words when parsing `$1`..`$9` tags. Note that these features do not apply to Doskey use in Batch files.<p><em>Warning:  Turning this on changes how doskey macros are expanded; some macros may function differently, or may not work at all.</em></p>
 `exec.aliases`               | True    | When matching executables as the first word (`exec.enable`), include doskey aliases.
 `exec.commands`              | True    | When matching executables as the first word (`exec.enable`), include CMD commands (such as `cd`, `copy`, `exit`, `for`, `if`, etc).
 `exec.cwd`                   | True    | When matching executables as the first word (`exec.enable`), include executables in the current directory. (This is implicit if the word being completed is a relative path, or if `exec.files` is true.)
