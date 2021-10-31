@@ -1310,7 +1310,7 @@ If something seems to malfunction, here are some things to try that often help t
 
 - Check if anti-malware software blocked Clink from injecting.
   - Consider adding an exclusion for Clink.
-  - In rare circumstances, using `clink inject --detours` might make anti-malware software happier (but it probably won't help).
+  - The contents of the `clink.log` file often help in determining whether anti-malware software blocked Clink.
 - Check `clink info`.  E.g. does the state dir look right, do the script paths look right, do the inputrc files look right?
 - Check `clink set`.  E.g. do the settings look right?
 - Check the `clink.log` file for clues (its location is reported by `clink info`).
