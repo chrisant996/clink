@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.2.40</title>
+<title>Clink v1.2.41</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -747,7 +747,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.2.40</div>
+                <div id="title">Clink v1.2.41</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -1024,8 +1024,8 @@ If you want a customizable prompt with a bunch of styles and an easy-to-use conf
 </tr>
 <tr>
 <td align="center"><code>doskey.enhanced</code></td>
-<td align="center">False</td>
-<td>Enhanced Doskey adds the expansion of macros that follow <code>|</code> and <code>&amp;</code> command separators and respects quotes around words when parsing <code>$1</code>..<code>$9</code> tags. Note that these features do not apply to Doskey use in Batch files.<p><em>Warning:  Turning this on changes how doskey macros are expanded; some macros may function differently, or may not work at all.</em></p></td>
+<td align="center">True</td>
+<td>Enhanced Doskey adds the expansion of macros that follow <code>|</code> and <code>&amp;</code> command separators and respects quotes around words when parsing <code>$1</code>...<code>$9</code> tags. Note that these features do not apply to Doskey use in Batch files.</td>
 </tr>
 <tr>
 <td align="center"><code>exec.aliases</code></td>
@@ -3976,6 +3976,12 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1241">v1.2.41</h4>
+<ul>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/187">#187</a> differently:  <code>doskey.enhanced</code> is <code>true</code> by default again, but if a macro contains <code>$*</code> or <code>$1</code>...<code>$9</code> tags within quotes then <code>|</code> and <code>&amp;</code> symbols are part of the arguments, not command separators (and expansion stops after that macro).</li>
+<li>Fixed compatibility when <code>doskey.enhanced</code> is <code>false</code>; <code>alias|whatever</code> should not expand <code>alias</code> because there is no space after it.</li>
+<li>Fixed doskey expansion when <code>&gt;&amp;</code> redirection symbol is present; <code>command &gt;&amp; alias</code> should not attempt to expand <code>alias</code> because it&#39;s a redirection file name, not a command.</li>
+</ul>
 <h4 id="v1240">v1.2.40</h4>
 <ul>
 <li>Fixed display quirks when an empty <code>display</code> or <code>description</code> string is provided by a match generator.</li>
