@@ -2,6 +2,12 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.2.41
+
+- Fixed [#187](https://github.com/chrisant996/clink/issues/187) differently:  `doskey.enhanced` is `true` by default again, but if a macro contains `$*` or `$1`...`$9` tags within quotes then `|` and `&` symbols are part of the arguments, not command separators (and expansion stops after that macro).
+- Fixed compatibility when `doskey.enhanced` is `false`; `alias|whatever` should not expand `alias` because there is no space after it.
+- Fixed doskey expansion when `>&` redirection symbol is present; `command >& alias` should not attempt to expand `alias` because it's a redirection file name, not a command.
+
 #### v1.2.40
 
 - Fixed display quirks when an empty `display` or `description` string is provided by a match generator.
