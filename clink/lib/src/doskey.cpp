@@ -19,11 +19,101 @@ static setting_bool g_enhanced_doskey(
     "Add enhancements to Doskey",
     "Enhanced Doskey adds the expansion of macros that follow '|' and '&'\n"
     "command separators and respects quotes around words when parsing $1...9\n"
-    "tags.  Note that these features do not apply to Doskey use in Batch files.\n"
-    "\n"
-    "WARNING:  Turning this on changes how doskey macros are expanded; some\n"
-    "macros may function differently, or may not work at all.",
-    false);
+    "tags.  Note that these features do not apply to Doskey use in Batch files.",
+    true);
+
+
+
+//------------------------------------------------------------------------------
+static bool get_alias(const wchar_t* shell_name, str_iter& in, str_base& alias, str_base& text, bool relaxed=false)
+{
+    alias.clear();
+    text.clear();
+
+    // Legacy doskey doesn't allow macros that begin with whitespace.
+    const char* start = in.get_pointer();
+    if (in.more() && *start == ' ')
+        return false;
+
+    while (true)
+    {
+        const int c = in.peek();
+
+        if (c == '>')
+        {
+            in.next();
+            if (in.peek() == '&')
+                in.next();
+            continue;
+        }
+
+        if (c == '\0' || c == ' ' || (relaxed && (c == '|' || c == '&')))
+        {
+            alias.concat(start, static_cast<unsigned int>(in.get_pointer() - start));
+            break;
+        }
+
+        in.next();
+    }
+
+    if (alias.empty())
+    {
+fallback:
+        in.reset_pointer(start);
+        if (relaxed || !g_enhanced_doskey.get())
+            return false;
+        return get_alias(shell_name, in, alias, text, true);
+    }
+
+    // Find the alias' text. First check it exists.
+    wchar_t unused;
+    wstr<32> walias(alias.c_str());
+    if (!GetConsoleAliasW(walias.data(), &unused, sizeof(unused), const_cast<wchar_t*>(shell_name)))
+        if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+            goto fallback;
+
+    // It does. Allocate space and fetch it.
+    wstr_moveable wtext;
+    wtext.reserve(8192, true/*exact*/);
+    GetConsoleAliasW(walias.data(), wtext.data(), wtext.size(), const_cast<wchar_t*>(shell_name));
+    text = wtext.c_str();
+
+    // Advance the iterator.
+    while (in.peek() == ' ')
+        in.next();
+    return true;
+}
+
+//------------------------------------------------------------------------------
+static const char* find_command_end(const char* command, int len)
+{
+    bool quote = false;
+    str_iter eat(command, len);
+    while (eat.more())
+    {
+        const char *const ptr = eat.get_pointer();
+        const int c = eat.next();
+        if (c == '\"')
+        {
+            quote = !quote;
+            continue;
+        }
+
+        if (quote)
+            continue;
+
+        if (c == '>' && eat.peek() == '&')
+        {
+            eat.next();
+        }
+        else if (c == '|' || c == '&')
+        {
+            // Command separator found.
+            return ptr;
+        }
+    }
+    return eat.get_pointer();
+}
 
 
 
@@ -197,14 +287,15 @@ bool doskey::remove_alias(const char* alias)
 
 //------------------------------------------------------------------------------
 //#define DEBUG_RESOLVEIMPL
-bool doskey::resolve_impl(const str_iter& in, str_stream* out, int* point)
+bool doskey::resolve_impl(str_iter& s, str_stream& out, int* _point)
 {
-    const unsigned int in_len = in.length();
+    str_iter command = s;
+    str_iter in = s;
 
-    // Find the alias for which to retrieve text for.
-    str_tokeniser tokens(in, " ");
-    str_iter token;
-    if (!tokens.next(token))
+    // Get alias and macro text.
+    str<32> alias;
+    str<32> text;
+    if (!get_alias(m_shell_name.data(), in, alias, text))
         return false;
 
     // Find the point range for the alias name.
@@ -212,12 +303,11 @@ bool doskey::resolve_impl(const str_iter& in, str_stream* out, int* point)
     int point_ofs = -1;
     bool point_arg_star = false;
     int point_ofs_star = -1;
-    if (point && out)
+    if (_point)
     {
-        const int delim_len = tokens.peek_delims();
-        const int alias_start = out->length();
-        const int alias_end = alias_start + token.length() + delim_len;
-        if (*point >= alias_start && *point < alias_end)
+        const int alias_start = out.length();
+        const int alias_end = alias_start + int(in.get_pointer() - s.get_pointer());
+        if (*_point >= alias_start && *_point < alias_end)
         {
             // Put point at beginning of whitespace before arg 1.
             point_arg = 0;
@@ -225,37 +315,9 @@ bool doskey::resolve_impl(const str_iter& in, str_stream* out, int* point)
         }
     }
 
-    // Legacy doskey doesn't allow macros that begin with whitespace so if the
-    // token does it won't ever resolve as an alias.
-    const char* alias_ptr = token.get_pointer();
-    if (alias_ptr != in.get_pointer())
-        return false;
-
-    str<32> alias;
-    alias.concat(alias_ptr, token.length());
-    wstr<32> walias(alias.c_str());
-
-    // Find the alias' text. First check it exists.
-    wchar_t unused;
-    if (!GetConsoleAliasW(walias.data(), &unused, sizeof(unused), m_shell_name.data()))
-        if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
-            return false;
-
-    // It does. Allocate space and fetch it.
-    wstr<4> wtext;
-    wtext.reserve(8192, true/*exact*/);
-    GetConsoleAliasW(walias.data(), wtext.data(), wtext.size(), m_shell_name.data());
-    str<4> text(wtext.c_str());
-
-    // Early out if no output location was provided:  return true because the
-    // command is an alias that needs to be expanded (this is unreachable if the
-    // GetConsoleAliasW call doesn't find an alias).
-    if (out == nullptr)
-        return true;
-
-    const int out_len = out->length();
-    if (point && *point == out_len)
-        point = nullptr; // Point at beginning stays there.
+    // Point at beginning stays there.
+    const int out_len = out.length();
+    int* point = (_point && *_point == out_len) ? nullptr : _point;
 
 #ifdef DEBUG_RESOLVEIMPL
     int dbg_row = 0;
@@ -270,7 +332,66 @@ bool doskey::resolve_impl(const str_iter& in, str_stream* out, int* point)
     }
 #endif
 
+    // Either split the input at the next command separator, or use the entire
+    // input, depending on the doskey.enhanced setting and the macro text.
+    bool split = g_enhanced_doskey.get();
+    if (split)
+    {
+        bool quote = false;
+        str_iter macro(text.c_str(), text.length());
+        while (macro.more())
+        {
+            const int c = macro.next();
+            if (c == '\"')
+                quote = !quote;
+            if (c != '$')
+                continue;
+
+            const int tag = macro.peek();
+            if ((tag == '*') || (tag >= '1' && tag <= '9'))
+            {
+                // $* or $1..9 exists inside quotes:  don't split.
+                // Suppose `ps=powershell "$*"`, then the `|` should be passed
+                // to powershell when `ps applet |Format-Table` is used.
+                if (quote)
+                {
+                    split = false;
+                    break;
+                }
+            }
+            else if (tag == '$')
+            {
+                // Skip both chars of '$$' tag.
+                macro.next();
+            }
+        }
+    }
+    if (split)
+    {
+        // Restrict to resolve only up to the command separator.
+        const char* start = in.get_pointer();
+        const char* end = in.get_pointer() + in.length();
+        const char* ptr = find_command_end(start, int(end - start));
+        command.truncate(int(ptr - command.get_pointer()));
+        in.truncate(int(ptr - in.get_pointer()));
+
+        // Consume the input up to the command separator.
+        new (&s) str_iter(ptr, int(end - ptr));
+    }
+    else
+    {
+        // Consume the entire input.
+        new (&s) str_iter(in.get_pointer() + in.length(), 0);
+    }
+
+    // Don't do point processing if the point is outside the input.
+    const bool point_in_command = (point && *point >= out_len && *point <= int(out_len + command.length()));
+    if (point && !point_in_command)
+        point = nullptr;
+
     // Collect the remaining tokens.
+    str_tokeniser tokens(in, " ");
+    str_iter token;
     if (g_enhanced_doskey.get())
         tokens.add_quote_pair("\"");
 
@@ -285,7 +406,7 @@ bool doskey::resolve_impl(const str_iter& in, str_stream* out, int* point)
         // Find the point range for the arg.
         if (point)
         {
-            const int token_start = out_len + int(desc->ptr - in.get_pointer());
+            const int token_start = out_len + int(desc->ptr - command.get_pointer());
             if (*point >= token_start)
             {
                 const int delim_len = tokens.peek_delims();
@@ -309,14 +430,14 @@ bool doskey::resolve_impl(const str_iter& in, str_stream* out, int* point)
         if (point_arg == int(args.size()))
             point_arg = -1;
         point_arg_star = true;
-        if (*point < out_len + args.front()->ptr - in.get_pointer())
+        if (*point < out_len + args.front()->ptr - command.get_pointer())
             point_ofs_star = -1;
         else
-            point_ofs_star = *point - int(out_len + args.front()->ptr - in.get_pointer());
+            point_ofs_star = *point - int(out_len + args.front()->ptr - command.get_pointer());
 #ifdef DEBUG_RESOLVEIMPL
         if (g_printer)
         {
-            tmp.format("size\t%d\targ begin\t%d\targ end\t%d\tparg\t%d\tin_cmd\t%d\tofs_star %d\t", int(args.size()), int(out_len + args.front()->ptr - in.get_pointer()), int(out_len + args.back()->ptr - in.get_pointer() + args.back()->length), point_arg, point_arg_star, point_ofs_star);
+            tmp.format("size\t%d\targ begin\t%d\targ end\t%d\tparg\t%d\tin_cmd\t%d\tofs_star %d\t", int(args.size()), int(out_len + args.front()->ptr - command.get_pointer()), int(out_len + args.back()->ptr - command.get_pointer() + args.back()->length), point_arg, point_arg_star, point_ofs_star);
             g_printer->print(tmp.c_str(), tmp.length());
         }
 #endif
@@ -333,7 +454,7 @@ bool doskey::resolve_impl(const str_iter& in, str_stream* out, int* point)
 
     // Expand the alias' text into 'out'.
     bool set_point = !!point;
-    str_stream& stream = *out;
+    str_stream& stream = out;
     const char* read = text.c_str();
     int last_arg_resolved = -1;
     for (int c = *read; c = *read; ++read)
@@ -441,7 +562,7 @@ bool doskey::resolve_impl(const str_iter& in, str_stream* out, int* point)
         // 'c' is now the arg index or -1 if it is all of them to be inserted.
         if (c < 0)
         {
-            const char* end = in.get_pointer() + in.length();
+            const char* end = command.get_pointer() + command.length();
             const char* start = args.front()->ptr;
             stream << str_stream::range(start, int(end - start));
         }
@@ -465,6 +586,13 @@ bool doskey::resolve_impl(const str_iter& in, str_stream* out, int* point)
         *point = max<int>(out_len, stream.trimmed_length());
     }
 
+    // If the point is still ahead, adjust it by the current command delta.
+    if (_point && !point_in_command && *_point >= int(out_len + command.length()))
+    {
+        *_point -= command.length();
+        *_point += out.length() - out_len;
+    }
+
 #ifdef DEBUG_RESOLVEIMPL
     if (g_printer)
         g_printer->print("\x1b[u");
@@ -474,134 +602,59 @@ bool doskey::resolve_impl(const str_iter& in, str_stream* out, int* point)
 }
 
 //------------------------------------------------------------------------------
-//#define DEBUG_RESOLVE
 void doskey::resolve(const char* chars, doskey_alias& out, int* point)
 {
     out.reset();
 
     str_stream stream;
-    if (g_enhanced_doskey.get())
+
+    bool resolves = false;
+    str_iter text(chars, int(strlen(chars)));
+    while (text.more())
     {
-        str_iter command;
-
-        // Coarse check to see if there's any aliases to resolve
+        if (resolve_impl(text, stream, point))
         {
-            bool first = true;
-            bool resolves = false;
-            str_tokeniser commands(chars, "&|");
-            commands.add_quote_pair("\"");
-            while (commands.next(command))
-            {
-                // Ignore 1 space after command separator.  For symmetry.  See
-                // loop below for details.
-                if (first)
-                    first = false;
-                else if (command.length() && command.get_pointer()[0] == ' ')
-                    command.next();
-
-                if (resolves = resolve_impl(command, nullptr, point))
-                    break;
-            }
-
-            if (!resolves)
-                return;
+            resolves = true;
+        }
+        else
+        {
+            if (!g_enhanced_doskey.get())
+                break;
+            const char* ptr = find_command_end(text.get_pointer(), text.length());
+            const int len = int(ptr - text.get_pointer());
+            stream << str_stream::range(text.get_pointer(), len);
+            new (&text) str_iter(ptr, text.length() - len);
         }
 
-        // This line will expand aliases so lets do that.
+        // Copy delimiters into the output buffer verbatim.
+        while (text.more())
         {
-#ifdef DEBUG_RESOLVE
-            int dbg_row = 0;
-#endif
+            const int c = *text.get_pointer();
+            if (c != '|' && c != '&')
+                break;
+            stream << str_stream::range(text.get_pointer(), 1);
+            text.next();
+        }
 
-            bool first = true;
-            const char* last = chars;
-            str_tokeniser commands(chars, "&|");
-            commands.add_quote_pair("\"");
-            while (commands.next(command))
-            {
-                // Copy delimiters into the output buffer verbatim.
-                if (int delim_length = int(command.get_pointer() - last))
-                    stream << str_stream::range(last, delim_length);
-                last = command.get_pointer() + command.length();
-
-                // Ignore 1 space after command separator.  So that resolve_impl
-                // can avoid expanding a doskey alias if the command starts with
-                // a space.  For the first command a single space avoids doskey
-                // alias expansion; for subsequent commands it takes two spaces
-                // to avoid doskey alias expansion.  This is so `aa & bb & cc`
-                // is possible for reability, and ` aa &  bb &  cc` will avoid
-                // doskey alias expansion.
-                if (first)
-                {
-                    first = false;
-                }
-                else if (command.length() && command.get_pointer()[0] == ' ')
-                {
-                    stream << command.get_pointer()[0];
-                    command.next();
-                }
-
-                const int base_len = stream.length();
-                int* sub_point = nullptr;
-                if (point &&
-                    *point >= command.get_pointer() - chars &&
-                    *point < int((command.get_pointer() - chars) + command.length()))
-                {
-                    sub_point = point;
-                }
-
-#ifdef DEBUG_RESOLVE
-                str<> tmp;
-                if (g_printer)
-                {
-                    dbg_row++;
-                    tmp.format("\x1b[s\x1b[%dH\x1b[K", dbg_row);
-                    g_printer->print(tmp.c_str(), tmp.length());
-                    if (point)
-                    {
-                        if (sub_point)
-                            g_printer->print("sub_point\t");
-                        if (!sub_point)
-                            g_printer->print("\t\t");
-                        tmp.format("begin\t%d\tend\t%d\tbase\t%d\t", int(command.get_pointer() - chars), command.length(), base_len);
-                        g_printer->print(tmp.c_str(), tmp.length());
-                    }
-                }
-#endif
-
-                if (!resolve_impl(command, &stream, sub_point))
-                    stream << str_stream::range(command);
-
-#ifdef DEBUG_RESOLVE
-                if (g_printer)
-                {
-                    if (point)
-                    {
-                        tmp.format("point\t%d\t", *point);
-                        g_printer->print(tmp.c_str(), tmp.length());
-                    }
-                    g_printer->print("\x1b[u");
-                }
-#endif
-
-                if (!sub_point && point && *point >= int((command.get_pointer() - chars) + command.length()))
-                {
-                    *point -= command.length();
-                    *point += stream.length() - base_len;
-                }
-            }
-
-            // Append any trailing delimiters too.
-            while (*last)
-                stream << *last++;
+        // Ignore 1 space after command separator.  So that resolve_impl can
+        // avoid expanding a doskey alias if the command starts with a space.
+        // For the first command a single space avoids doskey alias expansion;
+        // for subsequent commands it takes two spaces to avoid doskey alias
+        // expansion.  This is so `aa & bb & cc` is possible for reability, and
+        // ` aa &  bb &  cc` will avoid doskey alias expansion.
+        if (text.more() && *text.get_pointer() == ' ')
+        {
+            stream << *text.get_pointer();
+            text.next();
         }
     }
-    else if (!resolve_impl(str_iter(chars), &stream, point))
-        return;
 
     stream << '\0';
 
     // Collect the resolve result
-    stream.collect(out.m_buffer);
-    out.m_cursor = out.m_buffer.c_str();
+    if (resolves)
+    {
+        stream.collect(out.m_buffer);
+        out.m_cursor = out.m_buffer.c_str();
+    }
 }

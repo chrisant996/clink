@@ -16,6 +16,7 @@ public:
     const T*        get_pointer() const;
     const T*        get_next_pointer();
     void            reset_pointer(const T* ptr);
+    void            truncate(unsigned int len);
     int             peek();
     int             next();
     bool            more() const;
@@ -69,6 +70,14 @@ template <typename T> void str_iter_impl<T>::reset_pointer(const T* ptr)
     assert(ptr);
     assert(ptr <= m_ptr);
     m_ptr = ptr;
+}
+
+//------------------------------------------------------------------------------
+template <typename T> void str_iter_impl<T>::truncate(unsigned int len)
+{
+    assert(m_ptr);
+    assert(len <= length());
+    m_end = m_ptr + len;
 }
 
 //------------------------------------------------------------------------------

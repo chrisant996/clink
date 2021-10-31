@@ -258,7 +258,9 @@ TEST_CASE("Doskey pipe/redirect : new")
         REQUIRE(alias);
 
         REQUIRE(alias.next(line) == true);
-        REQUIRE(line.equals(output) == true);
+        REQUIRE(line.equals(output) == true, [&] () {
+            printf("input:           '%s'\nexpected output: '%s'\nactual output:   '%s'", input, output, line.c_str());
+        });
         REQUIRE(alias.next(line) == false);
     };
 
@@ -287,6 +289,11 @@ TEST_CASE("Doskey pipe/redirect : new")
     { test("alias " ARGS "|alias " ARGS, "cmd " ARGS "|cmd " ARGS); }
     doskey.remove_alias("alias");
     #undef ARGS
+
+    doskey.add_alias("alias", "powershell \"$*\"");
+    SECTION("Args in quotes")
+    { test("alias Get-Host|Format-Table", "powershell \"Get-Host|Format-Table\""); }
+    doskey.remove_alias("alias");
 }
 
 //------------------------------------------------------------------------------

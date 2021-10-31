@@ -2223,7 +2223,7 @@ void rl_module::on_input(const input& input, result& result, const context& cont
 
 #ifdef CAN_LOG_RL_TERMINAL
     if (g_debug_log_terminal.get())
-        LOG("INPUT \"%*s\", %d", input.len, input.keys, input.len);
+        LOG("INPUT \"%.*s\", %d", input.len, input.keys, input.len);
 #endif
 
     // Setup the terminal.
