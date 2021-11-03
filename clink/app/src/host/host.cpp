@@ -286,14 +286,45 @@ static bool parse_line_token(str_base& out, const char* line)
 }
 
 //------------------------------------------------------------------------------
+static bool is_cd_dash(const char* line)
+{
+    while (*line == ' ' || *line == '\t')
+        line++;
+
+    bool test_flag = true;
+    if (_strnicmp(line, "cd", 2) == 0)
+        line += 2;
+    else if (_strnicmp(line, "chdir", 5) == 0)
+        line += 5;
+    else
+        test_flag = false;
+
+    while (*line == ' ' || *line == '\t')
+        line++;
+
+    if (test_flag && _strnicmp(line, "/d", 2) == 0)
+    {
+        line += 2;
+        while (*line == ' ' || *line == '\t')
+            line++;
+    }
+
+    if (*(line++) != '-')
+        return false;
+
+    while (*line == ' ' || *line == '\t')
+        line++;
+
+    return !*line;
+}
+
+//------------------------------------------------------------------------------
 static bool intercept_directory(str_base& inout)
 {
     const char* line = inout.c_str();
 
     // Check for '-' (etc) to change to previous directory.
-    if (strcmp(line, "-") == 0 ||
-        _strcmpi(line, "cd -") == 0 ||
-        _strcmpi(line, "chdir -") == 0)
+    if (is_cd_dash(line))
     {
         prev_dir_history(inout);
         return true;
