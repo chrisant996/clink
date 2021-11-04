@@ -286,7 +286,7 @@ static bool parse_line_token(str_base& out, const char* line)
 }
 
 //------------------------------------------------------------------------------
-static bool is_cd_dash(const char* line)
+static bool is_cd_dash(const char* line, bool only_cd_chdir)
 {
     while (*line == ' ' || *line == '\t')
         line++;
@@ -296,17 +296,34 @@ static bool is_cd_dash(const char* line)
         line += 2;
     else if (_strnicmp(line, "chdir", 5) == 0)
         line += 5;
+    else if (only_cd_chdir)
+        return false;
     else
         test_flag = false;
 
-    while (*line == ' ' || *line == '\t')
-        line++;
-
-    if (test_flag && _strnicmp(line, "/d", 2) == 0)
+    if (test_flag)
     {
-        line += 2;
+        bool have_space = false;
         while (*line == ' ' || *line == '\t')
+        {
+            have_space = true;
             line++;
+        }
+
+        if (_strnicmp(line, "/d", 2) == 0)
+        {
+            have_space = false;
+            line += 2;
+            while (*line == ' ' || *line == '\t')
+            {
+                have_space = true;
+                line++;
+            }
+        }
+
+        // `cd` and `chdir` require a space before the `-`.
+        if (!have_space)
+            return false;
     }
 
     if (*(line++) != '-')
@@ -319,16 +336,19 @@ static bool is_cd_dash(const char* line)
 }
 
 //------------------------------------------------------------------------------
-static bool intercept_directory(str_base& inout)
+static bool intercept_directory(str_base& inout, bool only_cd_chdir=false)
 {
     const char* line = inout.c_str();
 
     // Check for '-' (etc) to change to previous directory.
-    if (is_cd_dash(line))
+    if (is_cd_dash(line, only_cd_chdir))
     {
         prev_dir_history(inout);
         return true;
     }
+
+    if (only_cd_chdir)
+        return false;
 
     // Parse the input for a single token.
     str<> tmp;
@@ -832,6 +852,7 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out)
     }
 
     bool resolved = false;
+    bool intercepted = false;
     bool ret = false;
     while (1)
     {
@@ -990,6 +1011,17 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out)
             if (add_history)
                 m_history->add(out.c_str());
         }
+
+        if (ret)
+        {
+            // If the line is a directory, rewrite the line to invoke the CD
+            // command to change to the directory.
+            if (intercept_directory(out, true/*only_cd_chdir*/))
+            {
+                resolved = true; // Don't test for a doskey alias.
+                intercepted = true; // Already intercepted.
+            }
+        }
         break;
     }
 
@@ -1009,7 +1041,7 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out)
         m_doskey_alias.next(out);
     }
 
-    if (ret && autostart.empty())
+    if (ret && autostart.empty() && !intercepted)
     {
         // If the line is a directory, rewrite the line to invoke the CD command
         // to change to the directory.
