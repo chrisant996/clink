@@ -1014,20 +1014,19 @@ static char** alternative_matches(const char* text, int start, int end)
         // quotes may seem surprising, but it's what CMD does and it works well.
         concat_strip_quotes(tmp, text);
 
+        bool just_tilde = false;
         if (rl_complete_with_tilde_expansion)
         {
             char* expanded = tilde_expand(tmp.c_str());
             if (expanded && strcmp(tmp.c_str(), expanded) != 0)
             {
-                bool add_sep = (tmp.c_str()[0] == '~' && tmp.c_str()[1] == '\0');
+                just_tilde = (tmp.c_str()[0] == '~' && tmp.c_str()[1] == '\0');
                 tmp = expanded;
-                if (add_sep)
-                    path::append(tmp, "");
             }
             free(expanded);
         }
 
-        if (!is_literal_wild())
+        if (!is_literal_wild() && !just_tilde)
             tmp.concat("*");
         pattern = tmp.c_str();
     }

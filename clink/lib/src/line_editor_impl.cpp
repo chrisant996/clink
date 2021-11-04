@@ -19,6 +19,7 @@
 #include <terminal/terminal_in.h>
 #include <terminal/terminal_out.h>
 #include <terminal/input_idle.h>
+#include <rl/rl_commands.h>
 extern "C" {
 #include <compat/config.h>
 #include <readline/readline.h>
@@ -488,21 +489,21 @@ void line_editor_impl::update_matches()
         str<> tmp;
         concat_strip_quotes(tmp, m_needle.c_str(), m_needle.length());
 
+        bool just_tilde = false;
         if (rl_complete_with_tilde_expansion)
         {
             char* expanded = tilde_expand(tmp.c_str());
             if (expanded && strcmp(tmp.c_str(), expanded) != 0)
             {
-                bool add_sep = (tmp.c_str()[0] == '~' && tmp.c_str()[1] == '\0');
+                just_tilde = (tmp.c_str()[0] == '~' && tmp.c_str()[1] == '\0');
                 tmp = expanded;
-                if (add_sep)
-                    path::append(tmp, "");
             }
             free(expanded);
         }
 
         m_needle = tmp.c_str();
-        m_needle.concat("*", 1);
+        if (!is_literal_wild() && !just_tilde)
+            m_needle.concat("*", 1);
         pipeline.restrict(m_needle);
     }
 
