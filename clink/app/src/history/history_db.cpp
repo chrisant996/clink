@@ -943,10 +943,6 @@ static void rewrite_master_bank(write_lock& lock, size_t* _kept=nullptr, size_t*
 //------------------------------------------------------------------------------
 static void migrate_history(const char* path, bool m_diagnostic)
 {
-    str<280> removals;
-    removals = path;
-    removals << ".removals";
-
     bank_handles handles;
     handles.m_handle_lines = open_file(path);
     if (!handles)
