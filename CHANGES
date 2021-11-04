@@ -4,7 +4,9 @@
 
 #### v1.2.42
 
-- Fixed [#191](https://github.com/chrisant996/clink/issues/191); `cd /d -` isn't supported.
+- Fixed [#193](https://github.com/chrisant996/clink/issues/193); consider removing the 50K history limit:  The `history.max_lines` Clink setting once again supports 0 to mean unlimited.  Note that as the history file grows larger, it takes longer to load.  If the size becomes a problem, you can use `clink history compact <n>` to prune the history file to N items as well as compacting it (removing deleted items).
+- Fixed [#192](https://github.com/chrisant996/clink/issues/192); completing `~` by itself does nothing:  Completing `~` by itself now inserts the %USERPROFILE% directory.  This is different than bash, because on Windows it doesn't make sense for ~ by itself to complete other user accounts.  This is a convenient way to expand tilde into a path that Windows understands.
+- Fixed [#191](https://github.com/chrisant996/clink/issues/191); `cd /d -` isn't supported:  The `cd -` feature now supports `cd /d -` as well.  It also supports `cd -` even if there is a doskey macro defined for `cd`.
 
 #### v1.2.41
 
