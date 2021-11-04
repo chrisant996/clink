@@ -36,7 +36,12 @@ namespace use_get_max_history_instead {
 static setting_int g_max_history(
     "history.max_lines",
     "The number of history lines to save",
-    "The number of history lines to save if history.save is enabled (1 to 50000).",
+    "The number of history lines to save, or 0 for unlimited.\n"
+    "\n"
+    "Warning:  The larger the history file becomes, the longer it takes to reload\n"
+    "at each prompt.  If it starts taking too long, then lower this setting.  Or\n"
+    "you can use 'clink history compact <num_lines>' to force shrinking the\n"
+    "history file to a smaller size.",
     2500);
 };
 
@@ -78,11 +83,12 @@ static setting_bool g_sticky_search(
     "many times, Enter, Down, Enter, Down, Enter, etc).",
     false);
 
-static size_t get_max_history()
+static constexpr int c_max_max_history_lines = 999999;
+static int get_max_history()
 {
-    size_t limit = use_get_max_history_instead::g_max_history.get();
-    if (!limit || limit > 50000)
-        limit = 50000;
+    int limit = use_get_max_history_instead::g_max_history.get();
+    if (limit <= 0 || limit > c_max_max_history_lines)
+        limit = c_max_max_history_lines;
     return limit;
 }
 
@@ -213,9 +219,9 @@ void auto_free_str::set(const char* s, int len)
 //------------------------------------------------------------------------------
 union line_id_impl
 {
-    explicit            line_id_impl()                  { outer = 0; }
-    explicit            line_id_impl(unsigned int o)    { offset = o; bank_index = 0; active = 1; }
-    explicit            operator bool () const          { return !!outer; }
+    explicit  line_id_impl()                  { outer = 0; }
+    explicit  line_id_impl(unsigned int o)    { offset = o; bank_index = 0; active = 1; }
+    explicit  operator bool () const          { return !!outer; }
     struct {
         unsigned int    offset : 29;
         unsigned int    bank_index : 2;
@@ -223,6 +229,8 @@ union line_id_impl
     };
     history_db::line_id outer;
 };
+
+static const line_id_impl c_max_line_id(static_cast<unsigned int>(-1));
 
 
 
@@ -340,7 +348,7 @@ public:
         template <int S>    file_iter(const read_lock& lock, char (&buffer)[S]);
         template <int S>    file_iter(void* handle, char (&buffer)[S]);
         unsigned int        next(unsigned int rollback=0);
-        unsigned int        get_buffer_offset() const   { return m_buffer_offset; }
+        unsigned __int64    get_buffer_offset() const   { return m_buffer_offset; }
         char*               get_buffer() const          { return m_buffer; }
         unsigned int        get_buffer_size() const     { return m_buffer_size; }
         unsigned int        get_remaining() const       { return m_remaining; }
@@ -349,8 +357,8 @@ public:
     private:
         char*               m_buffer;
         void*               m_handle;
+        unsigned __int64    m_buffer_offset;
         unsigned int        m_buffer_size;
-        unsigned int        m_buffer_offset;
         unsigned int        m_remaining;
     };
 
@@ -396,7 +404,7 @@ public:
     explicit        write_lock(const bank_handles& handles);
     void            clear();
     void            add(const char* line);
-    void            remove(line_id_impl id);
+    bool            remove(line_id_impl id);
     void            append(const read_lock& src);
 };
 
@@ -463,7 +471,7 @@ template <typename T> void read_lock::for_each_removal(void* handle_removals, T&
     str_iter value;
     while (iter.next(value))
     {
-        unsigned int offset = 0;
+        unsigned __int64 offset = 0;
         unsigned int len = value.length();
         for (const char *s = value.get_pointer(); len--; s++)
         {
@@ -473,8 +481,17 @@ template <typename T> void read_lock::for_each_removal(void* handle_removals, T&
             offset += *s - '0';
         }
 
-        if (offset > 0)
-            callback(offset);
+        if (offset >= c_max_line_id.offset)
+        {
+            // Should be unreachable because too-large ids should not have
+            // gotten in the removals file in the first place.
+            LOG("removal offset %zu is too large", offset);
+            assert(false);
+        }
+        else if (offset > 0)
+        {
+            callback(static_cast<unsigned int>(offset));
+        }
     }
 }
 
@@ -539,7 +556,8 @@ void read_lock::file_iter::set_file_offset(unsigned int offset)
     m_remaining = GetFileSize(m_handle, nullptr);
     offset = clamp(offset, (unsigned int)0, m_remaining);
     m_remaining -= offset;
-    m_buffer_offset = 0 - m_buffer_size;
+    // BUGBUG: Should this be `offset - m_buffer_offset`?
+    m_buffer_offset = static_cast<unsigned __int64>(0) - m_buffer_size;
     SetFilePointer(m_handle, offset, nullptr, FILE_BEGIN);
     m_buffer[0] = '\0';
 }
@@ -641,11 +659,14 @@ line_id_impl read_lock::line_iter::next(str_iter& out)
         m_first_line = false;
 
         unsigned int offset_in_buffer = int(start - m_file_iter.get_buffer());
-        unsigned int offset = m_file_iter.get_buffer_offset() + offset_in_buffer;
+        const unsigned __int64 real_offset = m_file_iter.get_buffer_offset() + offset_in_buffer;
+        const bool too_big = (real_offset >= c_max_line_id.offset);
+        assert(!too_big);
+        const unsigned int offset = too_big ? c_max_line_id.offset : static_cast<unsigned int>(real_offset);
 
         // Removals from master are deferred when `history.shared` is false, so
         // also test for deferred removals here.
-        if (*start == '|' || eating_ctag || m_removals.find(offset) != m_removals.end())
+        if (*start == '|' || eating_ctag || (!too_big && m_removals.find(offset) != m_removals.end()))
         {
             if (!eating_ctag)
                 ++m_deleted;
@@ -697,8 +718,15 @@ void write_lock::add(const char* line)
 }
 
 //------------------------------------------------------------------------------
-void write_lock::remove(line_id_impl id)
+bool write_lock::remove(line_id_impl id)
 {
+    if (id.offset == c_max_line_id.offset)
+    {
+        assert(false);
+        LOG("can't remove history line; offset is too large");
+        return false;
+    }
+
     if (m_handle_removals && id.bank_index == bank_master)
     {
         str<> s;
@@ -714,6 +742,8 @@ void write_lock::remove(line_id_impl id)
         SetFilePointer(m_handle_lines, id.offset, nullptr, FILE_BEGIN);
         WriteFile(m_handle_lines, "|", 1, &written, nullptr);
     }
+
+    return true;
 }
 
 //------------------------------------------------------------------------------
@@ -1298,7 +1328,7 @@ void history_db::clear()
 }
 
 //------------------------------------------------------------------------------
-void history_db::compact(bool force, bool uniq)
+void history_db::compact(bool force, bool uniq, int _limit)
 {
     if (!m_use_master_bank)
     {
@@ -1308,8 +1338,18 @@ void history_db::compact(bool force, bool uniq)
         return;
     }
 
-    size_t limit = get_max_history();
-    if (limit > 0 && !force)
+    const bool explicit_limit = (_limit >= 0);
+
+    size_t limit;
+    if (_limit < 0)
+        limit = get_max_history();
+    else
+        limit = _limit;
+
+    if (limit > c_max_max_history_lines)
+        limit = c_max_max_history_lines;
+
+    if (limit > 0 && (!force || explicit_limit))
     {
         LOG("History:  %zu active, %zu deleted", m_master_len, m_master_deleted_count);
         DIAG("... prune:  lines active %zu / limit %zu\n", m_master_len, limit);
@@ -1344,7 +1384,7 @@ void history_db::compact(bool force, bool uniq)
 
     // Since the ratio of deleted lines to active lines is already known here,
     // this is the most convenient/performant place to compact the master bank.
-    size_t threshold = (limit ? max(limit, m_min_compact_threshold) : 2500);
+    size_t threshold = (limit ? max(limit, m_min_compact_threshold) : 5000);
     if (force || m_master_deleted_count > threshold)
     {
         DIAG("... compact:  rewrite master bank\n");
@@ -1454,7 +1494,8 @@ bool history_db::remove_internal(line_id id, bool guard_ctag)
         }
     }
 
-    lock.remove(id_impl);
+    if (!lock.remove(id_impl))
+        return false;
 
     if (id_impl.bank_index == bank_master)
     {

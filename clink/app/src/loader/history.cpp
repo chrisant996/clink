@@ -224,12 +224,12 @@ static int clear()
 }
 
 //------------------------------------------------------------------------------
-static int compact(bool uniq)
+static int compact(bool uniq, int limit)
 {
     history_scope history;
     if (history->has_bank(bank_master))
     {
-        history->compact(true/*force*/, uniq);
+        history->compact(true/*force*/, uniq, limit);
         puts("History compacted.");
     }
     else
@@ -259,7 +259,7 @@ static int print_help()
     static const char* const help_verbs[] = {
         "[n]",          "Print history items (only the last N items if specified).",
         "clear",        "Completely clears the command history.",
-        "compact",      "Compacts the history file.",
+        "compact [n]",  "Compacts the history file.",
         "delete <n>",   "Delete Nth item (negative N indexes history backwards).",
         "add <...>",    "Join remaining arguments and appends to the history.",
         "expand <...>", "Print substitution result.",
@@ -283,7 +283,11 @@ static int print_help()
     puts_help(help_options, help_verbs);
 
     puts("The 'history' command can also emulate Bash's builtin history command. The\n"
-        "arguments -c, -d <n>, -p <...> and -s <...> are supported.");
+        "arguments -c, -d <n>, -p <...> and -s <...> are supported.\n");
+
+    puts("The 'history compact' command can shrink the history file by removing any\n"
+         "leftover placeholders for deleted items.  Use 'history compact <n>' to also\n"
+         "prune the history to no more than N items.");
 
     return 1;
 }
@@ -403,14 +407,26 @@ int history(int argc, char** argv)
 
         // 'compact' command
         if (_stricmp(verb, "compact") == 0)
-            return compact(uniq);
+        {
+            int limit = -1;
+            if (argc >= 3 && argv[2][0])
+            {
+                if (argv[2][0] < '0' || argv[2][0] > '9')
+                {
+                    fputs("history: optional argument for verb 'compact' must be a number", stderr);
+                    return print_help();
+                }
+                limit = atoi(argv[2]);
+            }
+            return compact(uniq, limit);
+        }
 
         // 'delete' command
         if (_stricmp(verb, "delete") == 0)
         {
             if (argc < 3)
             {
-                puts("history: argument required for verb 'delete'");
+                fputs("history: argument required for verb 'delete'", stderr);
                 return print_help();
             }
             else

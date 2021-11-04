@@ -117,7 +117,7 @@ public:
     void                        initialise();
     void                        load_rl_history(bool can_clean=true);
     void                        clear();
-    void                        compact(bool force=false, bool uniq=false);
+    void                        compact(bool force=false, bool uniq=false, int limit=-1);
     bool                        add(const char* line);
     int                         remove(const char* line);
     bool                        remove(line_id id) { return remove_internal(id, true); }
