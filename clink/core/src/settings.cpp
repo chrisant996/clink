@@ -197,7 +197,7 @@ bool migrate_setting(const char* name, const char* value, std::vector<setting_na
             if (x > 0)
                 out.emplace_back("history.max_lines", value);
             else if (x == 0)
-                out.emplace_back("history.max_lines", "50000"); // Simulate unlimited.
+                out.emplace_back("history.max_lines", "0"); // Unlimited.
             else
                 out.emplace_back("history.max_lines", "10000");
         }
