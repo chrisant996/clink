@@ -891,7 +891,7 @@ static bool extract_ctag(const read_lock& lock, concurrency_tag& tag)
 }
 
 //------------------------------------------------------------------------------
-static void rewrite_master_bank(write_lock& lock, size_t* _kept=nullptr, size_t* _deleted=nullptr, bool uniq=false, size_t* _dups=nullptr)
+static void rewrite_master_bank(write_lock& lock, size_t limit=0, size_t* _kept=nullptr, size_t* _deleted=nullptr, bool uniq=false, size_t* _dups=nullptr)
 {
     history_read_buffer buffer;
     str_map_case<size_t>::type seen;
@@ -933,10 +933,16 @@ static void rewrite_master_bank(write_lock& lock, size_t* _kept=nullptr, size_t*
     lock.add(tag.get());
 
     // Write lines from vector.
+    size_t skip = (0 < limit && limit < lines_to_keep.size()) ? lines_to_keep.size() - limit : 0;
     for (auto const& line : lines_to_keep)
     {
         if (line.get())
-            lock.add(line.get());
+        {
+            if (skip)
+                skip--;
+            else
+                lock.add(line.get());
+        }
     }
 }
 
@@ -1345,7 +1351,9 @@ void history_db::compact(bool force, bool uniq, int _limit)
     if (limit > c_max_max_history_lines)
         limit = c_max_max_history_lines;
 
-    if (limit > 0 && (!force || explicit_limit))
+    // When force is true, load_internal() was not called, so m_master_len is 0,
+    // this loop can't remove entries, and rewrite_master_bank() does instead.
+    if (limit > 0 && !force)
     {
         LOG("History:  %zu active, %zu deleted", m_master_len, m_master_deleted_count);
         DIAG("... prune:  lines active %zu / limit %zu\n", m_master_len, limit);
@@ -1387,7 +1395,7 @@ void history_db::compact(bool force, bool uniq, int _limit)
 
         size_t kept, deleted, dups;
         write_lock lock(get_bank(bank_master));
-        rewrite_master_bank(lock, &kept, &deleted, uniq, &dups);
+        rewrite_master_bank(lock, limit, &kept, &deleted, uniq, &dups);
         if (uniq)
         {
             LOG("Compacted history:  %zu active, %zu deleted, %zu duplicates removed", kept, deleted, dups);
