@@ -147,8 +147,9 @@ static void copy_dll(str_base& dll_path)
 //------------------------------------------------------------------------------
 static int check_dll_version(const char* clink_dll)
 {
+    wstr<> wclink_dll(clink_dll);
     char buffer[1024];
-    if (GetFileVersionInfo(clink_dll, 0, sizeof(buffer), buffer) != TRUE)
+    if (GetFileVersionInfoW(wclink_dll.c_str(), 0, sizeof(buffer), buffer) != TRUE)
     {
         ERR("Unable to get DLL version for '%s'", clink_dll);
         return 0;
