@@ -6,6 +6,7 @@
 #include "utils/app_context.h"
 
 #include <core/base.h>
+#include <core/log.h>
 #include <core/settings.h>
 #include <core/str.h>
 #include <core/str_tokeniser.h>
@@ -389,6 +390,15 @@ int history(int argc, char** argv)
             argc--;
             i--;
         }
+    }
+
+    // Start logger; but only append, don't reset the log.
+    auto* app_ctx = app_context::get();
+    if (app_ctx->is_logging_enabled() && !logger::get())
+    {
+        str<256> log_path;
+        app_ctx->get_log_path(log_path);
+        new file_logger(log_path.c_str());
     }
 
     // Try Bash-style arguments first...
