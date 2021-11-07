@@ -23,6 +23,7 @@ extern "C" {
 }
 
 #include <algorithm>
+#include <memory>
 #include <unordered_set>
 
 //------------------------------------------------------------------------------
@@ -153,6 +154,20 @@ static void* open_file(const char* path, bool if_exists=false)
     return (handle == INVALID_HANDLE_VALUE) ? nullptr : handle;
 }
 
+//------------------------------------------------------------------------------
+static void* make_removals_file(const char* path, const char* ctag)
+{
+    void* handle = open_file(path);
+    if (handle)
+    {
+        DWORD written;
+        DWORD len = DWORD(strlen(ctag));
+        WriteFile(handle, ctag, len, &written, nullptr);
+        WriteFile(handle, "\n", 1, &written, nullptr);
+    }
+    return handle;
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -222,6 +237,7 @@ union line_id_impl
     explicit  line_id_impl()                  { outer = 0; }
     explicit  line_id_impl(unsigned int o)    { offset = o; bank_index = 0; active = 1; }
     explicit  operator bool () const          { return !!outer; }
+    operator history_db::line_id () const     { return outer; }
     struct {
         unsigned int    offset : 29;
         unsigned int    bank_index : 2;
@@ -389,10 +405,11 @@ public:
     explicit                read_lock(const bank_handles& handles, bool exclusive=false);
     line_id_impl            find(const char* line) const;
     template <class T> void find(const char* line, T&& callback) const;
-    void                    apply_removals(write_lock& lock) const;
+    int                     apply_removals(write_lock& lock) const;
+    int                     collect_removals(write_lock& lock, std::vector<line_id_impl>& removals) const;
 
 private:
-    template <typename T> static void for_each_removal(void* handle_removals, T&& callback);
+    template <typename T> int for_each_removal(const read_lock& target, T&& callback) const;
 };
 
 //------------------------------------------------------------------------------
@@ -403,10 +420,14 @@ public:
                     write_lock() = default;
     explicit        write_lock(const bank_handles& handles);
     void            clear();
-    void            add(const char* line);
+    line_id_impl    add(const char* line);
     bool            remove(line_id_impl id);
     void            append(const read_lock& src);
 };
+
+//------------------------------------------------------------------------------
+static bool extract_ctag(read_lock::file_iter& iter, char* buffer, int buffer_size, concurrency_tag& tag);
+static bool extract_ctag(const read_lock& lock, concurrency_tag& tag);
 
 
 
@@ -452,23 +473,77 @@ line_id_impl read_lock::find(const char* line) const
 }
 
 //------------------------------------------------------------------------------
-void read_lock::apply_removals(write_lock& lock) const
+int read_lock::apply_removals(write_lock& lock) const
 {
-    if (m_handle_removals)
-        for_each_removal(m_handle_removals, [&] (unsigned int offset)
-        {
-            line_id_impl id(offset);
-            lock.remove(id);
-        });
+    return for_each_removal(lock, [&] (unsigned int offset)
+    {
+        line_id_impl id(offset);
+        lock.remove(id);
+    });
 }
 
 //------------------------------------------------------------------------------
-template <typename T> void read_lock::for_each_removal(void* handle_removals, T&& callback)
+int read_lock::collect_removals(write_lock& lock, std::vector<line_id_impl>& removals) const
 {
-    char tmp[512];
-    line_iter iter(handle_removals, tmp);
+    return for_each_removal(lock, [&] (unsigned int offset)
+    {
+        removals.emplace_back(offset);
+    });
+}
 
+//------------------------------------------------------------------------------
+template <typename T> int read_lock::for_each_removal(const read_lock& target, T&& callback) const
+{
+    if (!m_handle_removals)
+        return 0;
+
+    assert(m_handle_lines);
+    char tmp[512];
+
+    // Verify ctags match; don't continue otherwise!
+    {
+        bank_handles verify_handles;
+        verify_handles.m_handle_lines = target.m_handle_lines;
+        verify_handles.m_handle_removals = this->m_handle_removals;
+
+        unsigned int lines_ptr = SetFilePointer(verify_handles.m_handle_lines, 0, nullptr, FILE_CURRENT);
+        unsigned int removals_ptr = SetFilePointer(verify_handles.m_handle_removals, 0, nullptr, FILE_CURRENT);
+
+#ifdef DEBUG
+        {
+            char sz[MAX_PATH];
+            GetFinalPathNameByHandle(verify_handles.m_handle_lines, sz, sizeof_array(sz), 0);
+            const char* name = path::get_name(sz);
+            const int is_master_history = (stricmp(name, "clink_history") == 0);
+            if (!is_master_history)
+            {
+                LOG("m_handle_lines is for '%s'; expected master history instead!", sz);
+                assert(is_master_history);
+            }
+        }
+#endif
+
+        concurrency_tag master_ctag;
+        file_iter iter_lines(verify_handles.m_handle_lines, tmp);
+        extract_ctag(iter_lines, tmp, int(sizeof(tmp)), master_ctag);
+
+        concurrency_tag removals_ctag;
+        file_iter iter_removals(verify_handles.m_handle_removals, tmp);
+        extract_ctag(iter_removals, tmp, int(sizeof(tmp)), removals_ctag);
+
+        SetFilePointer(verify_handles.m_handle_lines, lines_ptr, nullptr, FILE_BEGIN);
+        SetFilePointer(verify_handles.m_handle_removals, removals_ptr, nullptr, FILE_BEGIN);
+
+        if (strcmp(master_ctag.get(), removals_ctag.get()) != 0)
+        {
+            LOG("can't apply removals; ctag mismatch: required ctag: %s, removals ctag: %s", master_ctag.get(), removals_ctag.get());
+            return -1;
+        }
+    }
+
+    // Read removal offsets; call the specified callback for each offset.
     str_iter value;
+    line_iter iter(m_handle_removals, tmp);
     while (iter.next(value))
     {
         unsigned __int64 offset = 0;
@@ -493,6 +568,8 @@ template <typename T> void read_lock::for_each_removal(void* handle_removals, T&
             callback(static_cast<unsigned int>(offset));
         }
     }
+
+    return 1;
 }
 
 
@@ -580,13 +657,10 @@ template <int S> read_lock::line_iter::line_iter(void* handle, char (&buffer)[S]
 read_lock::line_iter::line_iter(const read_lock& lock, char* buffer, int buffer_size)
 : m_file_iter(lock.m_handle_lines, buffer, buffer_size)
 {
-    if (lock.m_handle_removals)
+    lock.for_each_removal(lock, [&] (unsigned int offset)
     {
-        for_each_removal(lock.m_handle_removals, [&] (unsigned int offset)
-        {
-            m_removals.insert(offset);
-        });
-    }
+        m_removals.insert(offset);
+    });
 }
 
 //------------------------------------------------------------------------------
@@ -709,12 +783,17 @@ void write_lock::clear()
 }
 
 //------------------------------------------------------------------------------
-void write_lock::add(const char* line)
+line_id_impl write_lock::add(const char* line)
 {
     DWORD written;
-    SetFilePointer(m_handle_lines, 0, nullptr, FILE_END);
+    const DWORD offset = SetFilePointer(m_handle_lines, 0, nullptr, FILE_END);
+    if (offset == INVALID_SET_FILE_POINTER)
+        return line_id_impl();
     WriteFile(m_handle_lines, line, int(strlen(line)), &written, nullptr);
     WriteFile(m_handle_lines, "\n", 1, &written, nullptr);
+    if (offset >= c_max_line_id.offset)
+        return c_max_line_id;
+    return line_id_impl(offset);
 }
 
 //------------------------------------------------------------------------------
@@ -856,11 +935,8 @@ unsigned int history_db::iter::get_bank() const
 
 
 //------------------------------------------------------------------------------
-static bool extract_ctag(const read_lock& lock, concurrency_tag& tag)
+static bool extract_ctag(read_lock::file_iter& iter, char* buffer, int buffer_size, concurrency_tag& tag)
 {
-    char buffer[max_ctag_size];
-    read_lock::file_iter iter(lock, buffer);
-
     int bytes_read = iter.next();
     if (bytes_read <= 0)
     {
@@ -868,8 +944,8 @@ static bool extract_ctag(const read_lock& lock, concurrency_tag& tag)
         return false;
     }
 
-    if (bytes_read >= sizeof(buffer))
-        bytes_read = sizeof(buffer) - 1;
+    if (bytes_read >= buffer_size)
+        bytes_read = buffer_size - 1;
     buffer[bytes_read] = 0;
 
     if (strncmp(buffer, "|CTAG_", 6) != 0)
@@ -891,7 +967,15 @@ static bool extract_ctag(const read_lock& lock, concurrency_tag& tag)
 }
 
 //------------------------------------------------------------------------------
-static void rewrite_master_bank(write_lock& lock, size_t limit=0, size_t* _kept=nullptr, size_t* _deleted=nullptr, bool uniq=false, size_t* _dups=nullptr)
+static bool extract_ctag(const read_lock& lock, concurrency_tag& tag)
+{
+    char buffer[max_ctag_size];
+    read_lock::file_iter iter(lock, buffer);
+    return extract_ctag(iter, buffer, sizeof(buffer), tag);
+}
+
+//------------------------------------------------------------------------------
+static void rewrite_master_bank(write_lock& lock, size_t limit=0, size_t* _kept=nullptr, size_t* _deleted=nullptr, bool uniq=false, size_t* _dups=nullptr, std::map<line_id_impl, line_id_impl>* remap=nullptr)
 {
     history_read_buffer buffer;
     str_map_case<size_t>::type seen;
@@ -899,25 +983,35 @@ static void rewrite_master_bank(write_lock& lock, size_t limit=0, size_t* _kept=
     if (_dups)
         *_dups = 0;
 
+    struct remap_history_line
+    {
+        auto_free_str   m_line;
+        line_id_impl    m_old;
+        line_id_impl    m_new;
+    };
+
     // Read lines to keep into vector.
     str_iter out;
     read_lock::line_iter iter(lock, buffer.data(), buffer.size());
-    std::vector<auto_free_str> lines_to_keep;
-    while (iter.next(out))
+    std::vector<std::unique_ptr<remap_history_line>> lines_to_keep;
+    while (const line_id_impl id = iter.next(out))
     {
-        auto_free_str line(out.get_pointer(), out.length());
+        std::unique_ptr<remap_history_line> line = std::make_unique<remap_history_line>();
+        line->m_line.set(out.get_pointer(), out.length());
         if (uniq)
         {
-            auto const lookup = seen.find(line.get());
+            auto const lookup = seen.find(line->m_line.get());
             if (lookup != seen.end())
             {
-                // Reuse the old entry so the map stays valid.
+                // Reuse the old entry so the map stays valid.  Leave the old
+                // entry present but empty, so the indices don't shift.
                 line = std::move(lines_to_keep[lookup->second]);
                 if (_dups)
                     ++(*_dups);
             }
-            seen.insert_or_assign(line.get(), lines_to_keep.size());
+            seen.insert_or_assign(line->m_line.get(), lines_to_keep.size());
         }
+        line->m_old = id;
         lines_to_keep.emplace_back(std::move(line));
     }
 
@@ -941,7 +1035,32 @@ static void rewrite_master_bank(write_lock& lock, size_t limit=0, size_t* _kept=
             if (skip)
                 skip--;
             else
-                lock.add(line.get());
+                line->m_new = lock.add(line->m_line.get());
+        }
+    }
+
+    // Verify ids monotonically increase.
+#ifdef DEBUG
+    const remap_history_line* prev = nullptr;
+    for (const auto& line : lines_to_keep)
+        if (line)
+        {
+            if (prev)
+            {
+                assert(line->m_old.outer > prev->m_old.outer);
+                assert(line->m_new.outer > prev->m_new.outer);
+            }
+            prev = line.get();
+        }
+#endif
+
+    if (remap)
+    {
+        for (const auto& line : lines_to_keep)
+        {
+            if (!line)
+                continue;
+            remap->emplace(line->m_old.outer, line->m_new.outer);
         }
     }
 }
@@ -1050,24 +1169,14 @@ history_db::~history_db()
 //------------------------------------------------------------------------------
 void history_db::reap()
 {
-    // Fold each session found that has no valid alive file.
-    str<280> path;
-    path << m_bank_filenames[bank_master] << "_*";
-
     str<280> removals;
-    for (globber i(path.c_str()); i.next(path);)
-    {
-        // History files have no extension.  Don't reap supplement files such as
-        // *.removals files.
-        const char* ext = path::get_extension(path.c_str());
-        bool local = (ext && _stricmp(ext, ".local") == 0);
-        if (ext && !local)
-            continue;
 
+    for_each_session([&](str_base& path, bool local)
+    {
         path << "~";
         if (os::get_path_type(path.c_str()) == os::path_type_file)
             if (!os::unlink(path.c_str())) // abandoned alive files will unlink
-                continue;
+                return;
 
         path.truncate(path.length() - 1);
         DIAG("... reap session file '%s'\n", path.c_str());
@@ -1075,7 +1184,7 @@ void history_db::reap()
         if (local)
         {
             os::unlink(path.c_str()); // simply delete local files, i.e. `history.save` is false.
-            continue;
+            return;
         }
 
         removals = path.c_str();
@@ -1113,7 +1222,7 @@ void history_db::reap()
 
         os::unlink(removals.c_str());
         os::unlink(path.c_str());
-    }
+    });
 }
 
 //------------------------------------------------------------------------------
@@ -1173,6 +1282,9 @@ void history_db::initialise()
         path << ".local";
     DIAG("... session file '%s'\n", path.c_str());
 
+    assert(!m_bank_handles[bank_session].m_handle_lines);
+    assert(!m_bank_handles[bank_session].m_handle_removals);
+
     m_bank_handles[bank_session].m_handle_lines = open_file(path.c_str());
     if (m_use_master_bank && g_dupe_mode.get() == 2) // 'erase_prev'
     {
@@ -1180,7 +1292,7 @@ void history_db::initialise()
         removals << path << ".removals";
         DIAG("... removals file '%s'\n", removals.c_str());
 
-        m_bank_handles[bank_session].m_handle_removals = open_file(removals.c_str());
+        m_bank_handles[bank_session].m_handle_removals = make_removals_file(removals.c_str(), m_master_ctag.get());
     }
 
     reap(); // collects orphaned history files.
@@ -1229,6 +1341,26 @@ template <typename T> void history_db::for_each_bank(T&& callback) const
         read_lock lock(get_bank(i));
         if (lock && !callback(i, lock))
             break;
+    }
+}
+
+//------------------------------------------------------------------------------
+template <typename T> void history_db::for_each_session(T&& callback) const
+{
+    // Fold each session found that has no valid alive file.
+    str<280> path;
+    path << m_bank_filenames[bank_master] << "_*";
+
+    for (globber i(path.c_str()); i.next(path);)
+    {
+        // History files have no extension.  (E.g. don't reap supplement files
+        // such as *.removals files).
+        const char* ext = path::get_extension(path.c_str());
+        bool local = (ext && _stricmp(ext, ".local") == 0);
+        if (ext && !local)
+            continue;
+
+        callback(path, local);
     }
 }
 
@@ -1347,7 +1479,6 @@ void history_db::compact(bool force, bool uniq, int _limit)
         limit = get_max_history();
     else
         limit = _limit;
-
     if (limit > c_max_max_history_lines)
         limit = c_max_max_history_lines;
 
@@ -1373,7 +1504,7 @@ void history_db::compact(bool force, bool uniq, int _limit)
                     break;
                 }
                 //LOG("remove bank %u, offset %u, active %u (master len was %u)", id.bank_index, id.offset, id.active, m_master_len);
-                if (!remove(m_index_map[0]))
+                if (!remove(id))
                 {
                     LOG("failed to remove");
                     DIAG("... ... failed to remove line at offset %u\n", id.offset);
@@ -1394,8 +1525,101 @@ void history_db::compact(bool force, bool uniq, int _limit)
         DIAG("... compact:  rewrite master bank\n");
 
         size_t kept, deleted, dups;
-        write_lock lock(get_bank(bank_master));
-        rewrite_master_bank(lock, limit, &kept, &deleted, uniq, &dups);
+        assert(!m_master_ctag.empty());
+
+        bank_handles master_handles = get_bank(bank_master);
+        master_handles.m_handle_removals = nullptr; // Don't redirect removals.
+        write_lock dest(master_handles);
+
+        struct removal_file_data
+        {
+            str_moveable                m_file;
+            std::vector<line_id_impl>   m_lines;
+        };
+
+        std::vector<removal_file_data> removals_files;
+        str_moveable removals;
+
+        // Collect line ids from all removals files that match the current
+        // master.  After the master bank gets a new concurreny tag the
+        // collected line ids will be translated to their corresponding new ids
+        // and written back to the respective removals files with the updated
+        // concurrency tag.
+        for_each_session([&](str_base& path, bool local)
+        {
+            if (m_use_master_bank)
+            {
+                removals = path.c_str();
+                removals << ".removals";
+
+                if (os::get_file_size(path.c_str()) > 0 ||
+                    os::get_file_size(removals.c_str()) > 0)
+                {
+                    bank_handles compact_handles;
+                    compact_handles.m_handle_lines = open_file(path.c_str());
+                    compact_handles.m_handle_removals = open_file(removals.c_str(), true/*if_exists*/);
+
+                    if (compact_handles.m_handle_removals)
+                    {
+                        DIAG("... compact:  apply removals from '%s'\n", removals.c_str());
+
+                        // WARNING: ALWAYS LOCK MASTER BEFORE SESSION!
+                        read_lock src(compact_handles);
+                        if (src && dest)
+                        {
+                            removal_file_data data;
+                            if (src.collect_removals(dest, data.m_lines) > 0)
+                            {
+                                data.m_file = std::move(removals);
+                                removals_files.emplace_back(std::move(data));
+                            }
+                        }
+                    }
+
+                    compact_handles.close();
+                }
+            }
+        });
+
+        // Rewrite the master bank and apply the limit (if any).  This may also
+        // optionally enforce uniqueness.  The result counters are written to
+        // the log file.
+        std::map<line_id_impl, line_id_impl> remap_removals;
+        rewrite_master_bank(dest, limit, &kept, &deleted, uniq, &dups, &remap_removals);
+
+        // Extract the new master concurrency tag.
+        str<64> old_ctag(m_master_ctag.get());
+        m_master_ctag.clear();
+        extract_ctag(dest, m_master_ctag);
+        assert(!old_ctag.iequals(m_master_ctag.get())); // It should be different.
+
+        // Rewrite each removals files with the new master concurrency tag and
+        // the translated line ids.
+        str<64> tmp;
+        DWORD written;
+        for (const auto& r : removals_files)
+        {
+            assert(os::get_path_type(r.m_file.c_str()) == os::path_type_file);
+            void* handle = make_removals_file(r.m_file.c_str(), m_master_ctag.get());
+
+            // Truncate file immedately after the ctag to keep the file in a
+            // consistent state even while being rewritten.
+            SetEndOfFile(handle);
+
+            // Look up the ids and write the new ids for ones that were kept.
+            for (const auto& id : r.m_lines)
+            {
+                const auto iter = remap_removals.find(id);
+                if (iter != remap_removals.end())
+                {
+                    tmp.format("%u\n", iter->second.offset);
+                    WriteFile(handle, tmp.c_str(), tmp.length(), &written, nullptr);
+                }
+            }
+
+            CloseHandle(handle);
+        }
+
         if (uniq)
         {
             LOG("Compacted history:  %zu active, %zu deleted, %zu duplicates removed", kept, deleted, dups);
@@ -1528,32 +1752,10 @@ bool history_db::remove_internal(line_id id, bool guard_ctag)
 }
 
 //------------------------------------------------------------------------------
-bool history_db::remove(int rl_history_index, const char* line)
+bool history_db::remove(int rl_history_index, const char* /*line*/)
 {
     if (rl_history_index < 0 || size_t(rl_history_index) >= m_index_map.size())
         return false;
-
-#ifdef CLINK_DEBUG
-    // Verify the file content matches the expected state.
-    line_id_impl id_impl;
-    id_impl.outer = m_index_map[rl_history_index];
-    {
-        read_lock lock(get_bank(id_impl.bank_index));
-        assert(lock);
-
-        str_iter out;
-        history_read_buffer buffer;
-        read_lock::line_iter iter(lock, buffer.data(), buffer.size());
-
-        iter.set_file_offset(id_impl.offset);
-        assert(iter.next(out));
-
-        assert(out.length());
-        assert(strlen(line) == out.length());
-        if (*out.get_pointer() != '|')
-            assert(memcmp(line, out.get_pointer(), out.length()) == 0);
-    }
-#endif
 
     return remove(m_index_map[rl_history_index]);
 }

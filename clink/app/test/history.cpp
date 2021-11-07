@@ -66,7 +66,33 @@ struct test_history_db
     {
         m_min_compact_threshold = threshold;
     }
+
+    bool remove_by_index(int index)
+    {
+        return remove(m_index_map[index]);
+    }
+
+    bool remove_direct(const char* line)
+    {
+        rollback<void *> revert(m_bank_handles[bank_session].m_handle_removals, nullptr);
+        return remove(line);
+    }
 };
+
+//------------------------------------------------------------------------------
+static void strip_lf(char* line)
+{
+    while (line)
+    {
+        size_t len = strlen(line);
+        if (!len)
+            break;
+        len--;
+        if (line[len] != '\n')
+            break;
+        line[len] = '\0';
+    }
+}
 
 //------------------------------------------------------------------------------
 int count_files()
@@ -223,7 +249,7 @@ TEST_CASE("history db")
 
             REQUIRE(count_files() == 4);
             REQUIRE(os::get_file_size(session_path) == line_bytes);
-            REQUIRE(os::get_file_size(removals_path) == 0);
+            REQUIRE(os::get_file_size(removals_path) == 0 + history.get_master_tag_size());
             REQUIRE(os::get_file_size(master_path) == 0 + history.get_master_tag_size());
 
             line_bytes += history.get_master_tag_size(); // because reap()
@@ -243,7 +269,7 @@ TEST_CASE("history db")
 
             REQUIRE(count_files() == 4);
             REQUIRE(os::get_file_size(session_path) == session_bytes);
-            REQUIRE(os::get_file_size(removals_path) == 3);
+            REQUIRE(os::get_file_size(removals_path) == 3 + history.get_master_tag_size());
             REQUIRE(os::get_file_size(master_path) == line_bytes);
 
             line_bytes += session_bytes; // because reap()
@@ -699,5 +725,196 @@ TEST_CASE("history unique")
         REQUIRE(strcmp(history_get(1)->line, "ccc") == 0);
         REQUIRE(strcmp(history_get(2)->line, "aaa") == 0);
         REQUIRE(strcmp(history_get(3)->line, "bbb") == 0);
+    }
+}
+
+//------------------------------------------------------------------------------
+TEST_CASE("history removals ctag")
+{
+    const char* master_path = "clink_history";
+    const char* session_path = "clink_history_493";
+    const char* removals_path = "clink_history_493.removals";
+    const char* alive_path = "clink_history_493~";
+
+    // Start with an empty state dir.
+    const char* empty_fs[] = { nullptr };
+    fs_fixture fs(empty_fs);
+
+    // This sets the state id to something explicit.
+    static const char* env_desc[] = {
+        "=clink.id", "493",
+        nullptr
+    };
+    env_fixture env(env_desc);
+
+    app_context::desc context_desc;
+    context_desc.inherit_id = true;
+    str_base(context_desc.state_dir).copy(fs.get_root());
+    app_context context(context_desc);
+
+    settings::find("history.shared")->set("false");
+    settings::find("history.max_lines")->set("10");
+    settings::find("history.dupe_mode")->set("erase_prev");
+
+    SECTION("Cache invalid")
+    {
+        static const char* history_lines[] = {
+            "echo alpha",
+            "echo charlie delta",
+            "echo foxtrot golf ",
+        };
+
+        concurrency_tag orig_ctag;
+
+        {
+            test_history_db history;
+            history.clear();
+            history.load_rl_history(true); // initialize ctag
+
+            orig_ctag.set(history.get_master_tag());
+            REQUIRE(!orig_ctag.empty());
+
+            for(const char* line : history_lines)
+                history.add(line);
+
+            expect_files({master_path, session_path, removals_path, alive_path});
+        }
+
+        expect_files({master_path});
+
+        {
+            test_history_db history;
+            history.load_rl_history(false);
+
+            // Remove first line from master history directly.
+            REQUIRE(history.remove_direct(history_lines[0]));
+
+            // Compact, which throws off the line ids.
+            {
+                test_history_db separate_instance;
+                separate_instance.compact(true/*force*/);
+                REQUIRE(strcmp(orig_ctag.get(), separate_instance.get_master_tag()) != 0);
+            }
+
+            // Remove line index 1 (second line).  This uses the cached line_id,
+            // which has been invalidated by the compaction, and therefore the
+            // deletion should fail because the ctags no longer match between
+            // the history history file and the session's removals file.
+            REQUIRE(!history.remove_by_index(1));
+        }
+
+        expect_files({master_path});
+    }
+
+    SECTION("Compact translates")
+    {
+        char buffer[128];
+
+        static const char* history_lines[] = {
+            "|cho alpha",               // Marked for deletion!
+            "echo charlie delta",
+            "echo foxtrot golf ",
+        };
+
+        // Populate history.
+        {
+            test_history_db history;
+            history.clear();
+            history.load_rl_history(true); // initialize ctag
+
+            for(const char* line : history_lines)
+                REQUIRE(history.add(line));
+
+            expect_files({master_path, session_path, removals_path, alive_path});
+        }
+
+        // Queue a deferred deletion (in the .removals file).
+        {
+            test_history_db history;
+            history.load_rl_history(false);
+
+            REQUIRE(history.remove(history_lines[1]));
+
+            // At this point:
+            //  - The first history entry is marked for deletion.
+            //  - The second history entry has a deferred removal.
+
+            // Verify offset in removals file BEFORE compacting.
+            {
+                FILE* file = fopen(removals_path, "rb");
+                REQUIRE(file != nullptr);
+                REQUIRE(fgets(buffer, sizeof_array(buffer), file));
+                REQUIRE(strncmp(buffer, "|CTAG", 5) == 0);
+                const int expected_offset = int(strlen(buffer) + strlen(history_lines[0]) + 1);
+                REQUIRE(fgets(buffer, sizeof_array(buffer), file));
+                REQUIRE(atoi(buffer) == expected_offset);
+                fclose(file);
+            }
+
+            history.compact(true/*force*/);
+
+            // Verify offset in removals file AFTER compacting.
+            {
+                FILE* file = fopen(removals_path, "rb");
+                REQUIRE(file != nullptr);
+                REQUIRE(fgets(buffer, sizeof_array(buffer), file));
+                REQUIRE(strncmp(buffer, "|CTAG", 5) == 0);
+                const int expected_offset = int(strlen(buffer));
+                REQUIRE(fgets(buffer, sizeof_array(buffer), file));
+                REQUIRE(atoi(buffer) == expected_offset);
+                fclose(file);
+            }
+
+            // Verify history file content.
+            {
+                FILE* file = fopen(master_path, "rb");
+                REQUIRE(file != nullptr);
+                REQUIRE(fgets(buffer, sizeof_array(buffer), file));
+                REQUIRE(strncmp(buffer, "|CTAG", 5) == 0);
+                REQUIRE(!strchr(buffer + 1, '|'));
+
+                // history_lines[0] should be gone.
+
+                // history_lines[1] should match.
+                REQUIRE(fgets(buffer, sizeof_array(buffer), file));
+                strip_lf(buffer);
+                REQUIRE(strcmp(buffer, history_lines[1]) == 0);
+
+                // history_lines[2] should match.
+                REQUIRE(fgets(buffer, sizeof_array(buffer), file));
+                strip_lf(buffer);
+                REQUIRE(strcmp(buffer, history_lines[2]) == 0);
+
+                REQUIRE(!fgets(buffer, sizeof_array(buffer), file));
+                fclose(file);
+            }
+
+            expect_files({master_path, session_path, removals_path, alive_path});
+        }
+
+        expect_files({master_path});
+
+        // Verify the final history file content.
+        {
+            FILE* file = fopen(master_path, "rb");
+            REQUIRE(file != nullptr);
+            REQUIRE(fgets(buffer, sizeof_array(buffer), file));
+            REQUIRE(strncmp(buffer, "|CTAG", 5) == 0);
+            REQUIRE(!strchr(buffer + 1, '|'));
+
+            // history_lines[1] should be marked for deletion.
+            REQUIRE(fgets(buffer, sizeof_array(buffer), file));
+            REQUIRE(buffer[0] == '|');
+            strip_lf(buffer);
+            REQUIRE(strcmp(buffer + 1, history_lines[1] + 1) == 0);
+
+            // history_lines[2] should match.
+            REQUIRE(fgets(buffer, sizeof_array(buffer), file));
+            strip_lf(buffer);
+            REQUIRE(strcmp(buffer, history_lines[2]) == 0);
+
+            REQUIRE(!fgets(buffer, sizeof_array(buffer), file));
+            fclose(file);
+        }
     }
 }

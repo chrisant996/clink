@@ -138,6 +138,7 @@ private:
     void                        reap();
     template <typename T> void  for_each_bank(T&& callback);
     template <typename T> void  for_each_bank(T&& callback) const;
+    template <typename T> void  for_each_session(T&& callback) const;
     unsigned int                get_active_bank() const;
     bank_handles                get_bank(unsigned int index) const;
     bool                        remove_internal(line_id id, bool guard_ctag);
