@@ -34,8 +34,8 @@ public:
     bool            has_deprecated_argmatcher(const char* command);
 
     // host_callbacks:
-    void            add_history(const char* line) override;
-    void            remove_history(int rl_history_index, const char* line) override;
+    int             add_history(const char* line) override;
+    int             remove_history(int rl_history_index, const char* line) override;
     void            filter_prompt() override;
     void            filter_transient_prompt(bool final) override;
     void            filter_matches(char** matches) override;

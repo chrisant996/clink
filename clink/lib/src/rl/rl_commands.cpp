@@ -84,7 +84,7 @@ extern line_buffer* g_rl_buffer;
 extern word_collector* g_word_collector;
 extern editor_module::result* g_result;
 extern void host_cmd_enqueue_lines(std::list<str_moveable>& lines);
-extern void host_add_history(int, const char* line);
+extern int host_add_history(int, const char* line);
 extern void host_get_app_context(int& id, str_base& binaries, str_base& profile, str_base& scripts);
 extern "C" int show_cursor(int visible);
 extern int ellipsify(const char* in, int limit, str_base& out, bool expand_ctrl);
@@ -1740,7 +1740,11 @@ int edit_and_execute_command(int count, int invoking_key)
     else
     {
         line.concat(rl_line_buffer, rl_end);
-        host_add_history(0, line.c_str());
+        if (!host_add_history(0, line.c_str()))
+        {
+            rl_ding();
+            return 0;
+        }
     }
 
     str_moveable tmp_file;

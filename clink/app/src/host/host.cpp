@@ -579,15 +579,15 @@ bool host::has_deprecated_argmatcher(const char* command)
 }
 
 //------------------------------------------------------------------------------
-void host::add_history(const char* line)
+int host::add_history(const char* line)
 {
-    m_history->add(line);
+    return !!m_history->add(line);
 }
 
 //------------------------------------------------------------------------------
-void host::remove_history(int rl_history_index, const char* line)
+int host::remove_history(int rl_history_index, const char* line)
 {
-    m_history->remove(rl_history_index, line);
+    return !!m_history->remove(rl_history_index, line);
 }
 
 //------------------------------------------------------------------------------

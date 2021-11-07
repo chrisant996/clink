@@ -129,21 +129,21 @@ void set_prompt(const char* prompt, const char* rprompt, bool redisplay)
 
 
 //------------------------------------------------------------------------------
-void host_add_history(int, const char* line)
+int host_add_history(int, const char* line)
 {
     if (!s_callbacks)
-        return;
+        return 0;
 
-    s_callbacks->add_history(line);
+    return s_callbacks->add_history(line);
 }
 
 //------------------------------------------------------------------------------
-void host_remove_history(int rl_history_index, const char* line)
+int host_remove_history(int rl_history_index, const char* line)
 {
     if (!s_callbacks)
-        return;
+        return 0;
 
-    s_callbacks->remove_history(rl_history_index, line);
+    return s_callbacks->remove_history(rl_history_index, line);
 }
 
 //------------------------------------------------------------------------------

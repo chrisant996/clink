@@ -737,9 +737,18 @@ rl_add_history (int count, int key)
       rl_ding ();
       return 0;
     }
+/* begin_clink_change */
+  if (rl_add_history_hook && !(*rl_add_history_hook) (history_length - 1, rl_line_buffer))
+    {
+      rl_ding ();
+      return 0;
+    }
+/* end_clink_change */
   add_history (rl_line_buffer);
-  if (rl_add_history_hook)
-    (*rl_add_history_hook) (history_length - 1, rl_line_buffer);
+/* begin_clink_change */
+  //if (rl_add_history_hook)
+  //  (*rl_add_history_hook) (history_length - 1, rl_line_buffer);
+/* end_clink_change */
   using_history ();
   rl_delete_text (0, rl_end);
   rl_point = 0;
@@ -776,6 +785,14 @@ rl_remove_history (int count, int key)
       return 0;
     }
 
+/* begin_clink_change */
+  if (rl_remove_history_hook && !(*rl_remove_history_hook) (old_where, hist->line))
+    {
+      rl_ding ();
+      return 0;
+    }
+/* end_clink_change */
+
   if (search_pos >= 0)
     {
       int flags = rl_get_history_search_flags();
@@ -788,8 +805,10 @@ rl_remove_history (int count, int key)
     rl_get_previous_history (1, key);
 
   hist = remove_history (old_where);
-  if (rl_remove_history_hook)
-    (*rl_remove_history_hook) (old_where, hist->line);
+/* begin_clink_change */
+  //if (rl_remove_history_hook)
+  //  (*rl_remove_history_hook) (old_where, hist->line);
+/* end_clink_change */
   free_history_entry (hist);
 
   search_pos = rl_get_history_search_pos();

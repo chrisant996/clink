@@ -69,7 +69,7 @@ typedef int rl_hook_func_t PARAMS((void));
 
 /* begin_clink_change */
 /* Type for add/remove history hook function */
-typedef void rl_history_hook_func_t PARAMS((int rl_history_index, const char* line));
+typedef int rl_history_hook_func_t PARAMS((int rl_history_index, const char* line));
 /* Type for readkey input in modal situations like the pager */
 typedef int rl_read_key_hook_func_t PARAMS((void));
 /* Type for sort match list function */

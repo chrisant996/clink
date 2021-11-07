@@ -79,8 +79,8 @@ extern int          _rl_last_v_pos;
 
 extern int clink_diagnostics(int, int);
 
-extern void host_add_history(int rl_history_index, const char* line);
-extern void host_remove_history(int rl_history_index, const char* line);
+extern int host_add_history(int rl_history_index, const char* line);
+extern int host_remove_history(int rl_history_index, const char* line);
 extern void sort_match_list(char** matches, int len);
 extern int macro_hook_func(const char* macro);
 extern int host_filter_matches(char** matches);
