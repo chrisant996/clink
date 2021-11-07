@@ -5,13 +5,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- Pending deletes are getting applied to the master file even when the CTAG has changed:
-  - instance A: delete two commands at lines M and N.
-  - instance B: delete two commands at lines X and Y.
-  - instance B: `clink history compact 2000`
-  - close A and B.
-  - the master CTAG changed, but both A and B apply their .removals anyway, and the offsets are no longer valid and corrupt the history.
-  - also, `clink history compact 2000` doesn't limit it to 2000?!
 
 ## Medium Priority
 - Add a quick start / beginner section to the Clink docs.
