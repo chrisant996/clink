@@ -11,6 +11,22 @@
 #include <core/path.h>
 
 //------------------------------------------------------------------------------
+static void print_info_line(HANDLE h, const char* s)
+{
+    DWORD dummy;
+    if (GetConsoleMode(h, &dummy))
+    {
+        wstr<> tmp(s);
+        DWORD written;
+        WriteConsoleW(h, tmp.c_str(), tmp.length(), &written, nullptr);
+    }
+    else
+    {
+        printf("%s", s);
+    }
+}
+
+//------------------------------------------------------------------------------
 int clink_info(int argc, char** argv)
 {
     static const struct {
@@ -29,6 +45,8 @@ int clink_info(int argc, char** argv)
     const auto* context = app_context::get();
     const int spacing = 8;
 
+    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+
     // Version information
     printf("%-*s : %s\n", spacing, "version", CLINK_VERSION_STR);
     printf("%-*s : %d\n", spacing, "session", context->get_id());
@@ -39,12 +57,17 @@ int clink_info(int argc, char** argv)
     settings::load(settings_file.c_str());
 
     // Paths
+    str<> s;
     for (const auto& info : infos)
     {
         str<280> out;
         (context->*info.method)(out);
         if (!info.suppress_when_empty || !out.empty())
-            printf("%-*s : %s\n", spacing, info.name, out.c_str());
+        {
+            s.clear();
+            s.format("%-*s : %s\n", spacing, info.name, out.c_str());
+            print_info_line(h, s.c_str());
+        }
     }
 
     // Inputrc environment variables.
@@ -105,7 +128,11 @@ int clink_info(int argc, char** argv)
                 status = "   (exists)";
 
             if (exists || i < 2)
-                printf("%-*s     %s%s\n", spacing, "", out.c_str(), status);
+            {
+                s.clear();
+                s.format("%-*s     %s%s\n", spacing, "", out.c_str(), status);
+                print_info_line(h, s.c_str());
+            }
 
             if (exists)
                 first = false;

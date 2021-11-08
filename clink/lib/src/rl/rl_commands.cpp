@@ -1869,19 +1869,29 @@ int clink_diagnostics(int count, int invoking_key)
     g_printer->print(s.c_str(), s.length());
 
     printf("  %-*s  %s\n", spacing, "version", CLINK_VERSION_STR);
-    printf("  %-*s  %s\n", spacing, "binaries", binaries.c_str());
+
+    s.clear();
+    s.format("  %-*s  %s\n", spacing, "binaries", binaries.c_str());
+    g_printer->print(s.c_str(), s.length());
 
     // Session info.
 
     s.clear();
-    s <<bold << "session:" << norm << lf;
+    s << bold << "session:" << norm << lf;
     g_printer->print(s.c_str(), s.length());
 
     printf("  %-*s  %d\n", spacing, "session", id);
 
-    printf("  %-*s  %s\n", spacing, "profile", profile.c_str());
+    s.clear();
+    s.format("  %-*s  %s\n", spacing, "profile", profile.c_str());
+    g_printer->print(s.c_str(), s.length());
+
     if (scripts.length())
-        printf("  %-*s  %s\n", spacing, "scripts", scripts.c_str());
+    {
+        s.clear();
+        s.format("  %-*s  %s\n", spacing, "scripts", scripts.c_str());
+        g_printer->print(s.c_str(), s.length());
+    }
 
     host_call_lua_rl_global_function("clink._diagnostics");
 
