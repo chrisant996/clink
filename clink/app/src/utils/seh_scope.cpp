@@ -23,6 +23,8 @@ static LONG WINAPI exception_filter(EXCEPTION_POINTERS* info)
     }
     buffer << "\\clink.dmp";
 
+    wstr<> wpath(buffer.c_str());
+
     fputs("\n!!! CLINK'S CRASHED!", stderr);
 #ifdef _WIN64
     fputs("\n!!! v" CLINK_VERSION_STR " (x64)", stderr);
@@ -32,11 +34,22 @@ static LONG WINAPI exception_filter(EXCEPTION_POINTERS* info)
     fputs("\n!!!", stderr);
     fputs("\n!!! Writing core dump", stderr);
     fputs("\n!!! ", stderr);
-    fputs(buffer.c_str(), stderr);
+
+    DWORD dummy;
+    HANDLE h = GetStdHandle(STD_ERROR_HANDLE);
+    if (GetConsoleMode(h, &dummy))
+    {
+        DWORD written;
+        WriteConsoleW(h, wpath.c_str(), wpath.length(), &written, nullptr);
+    }
+    else
+    {
+        fputs(buffer.c_str(), stderr);
+    }
 
     // Write a core dump file.
     BOOL ok = FALSE;
-    HANDLE file = CreateFile(buffer.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, 0, nullptr);
+    HANDLE file = CreateFileW(wpath.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, 0, nullptr);
     if (file != INVALID_HANDLE_VALUE)
     {
         DWORD pid = GetCurrentProcessId();
@@ -89,9 +102,6 @@ static LONG WINAPI exception_filter(EXCEPTION_POINTERS* info)
     fputs("\n\nPress Enter to exit...", stderr);
     fgetc(stdin);
 #endif // _MSC_VER
-
-    // Would be awesome if we could unhook ourself, unload, and allow cmd.exe
-    // to continue!
 
     return EXCEPTION_CONTINUE_SEARCH;
 }
