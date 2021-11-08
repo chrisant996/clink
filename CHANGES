@@ -2,6 +2,10 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.2.43
+
+- Fixed lingering issues with non-ASCII characters in path names in Clink (follows up on the preceding fixes for non-ASCII user name characters).
+
 #### v1.2.42
 
 - Fixed potential for history file to get corrupted during compacting, if multiple Clink instances are running concurrently.
