@@ -147,8 +147,10 @@ static void get_file_path(str_base& out, bool session)
 //------------------------------------------------------------------------------
 static void* open_file(const char* path, bool if_exists=false)
 {
+    wstr<> wpath(path);
+
     DWORD share_flags = FILE_SHARE_READ|FILE_SHARE_WRITE;
-    void* handle = CreateFile(path, GENERIC_READ|GENERIC_WRITE, share_flags,
+    void* handle = CreateFileW(wpath.c_str(), GENERIC_READ|GENERIC_WRITE, share_flags,
         nullptr, if_exists ? OPEN_EXISTING : OPEN_ALWAYS, FILE_FLAG_SEQUENTIAL_SCAN, nullptr);
 
     return (handle == INVALID_HANDLE_VALUE) ? nullptr : handle;
@@ -1142,8 +1144,9 @@ history_db::history_db(bool use_master_bank)
     str<280> path(m_bank_filenames[bank_session].c_str());
     path << "~";
 
+    wstr<> wpath(path.c_str());
     DWORD flags = FILE_FLAG_DELETE_ON_CLOSE|FILE_ATTRIBUTE_HIDDEN;
-    m_alive_file = CreateFile(path.c_str(), 0, 0, nullptr, CREATE_ALWAYS, flags, nullptr);
+    m_alive_file = CreateFileW(wpath.c_str(), 0, 0, nullptr, CREATE_ALWAYS, flags, nullptr);
     m_alive_file = (m_alive_file == INVALID_HANDLE_VALUE) ? nullptr : m_alive_file;
 
     history_inhibit_expansion_function = history_expand_control;
