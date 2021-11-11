@@ -1289,7 +1289,6 @@ void display_matches(char** matches)
     match_accessor* access = NULL;
 
     int included_type = rl_completion_matches_include_type;
-    rl_completion_matches_include_type = 0;
 
     // If there is a display filter, give it a chance to modify MATCHES.
     if (rl_match_display_filter_func)
@@ -1312,6 +1311,7 @@ void display_matches(char** matches)
                     max = (*walk)->visible_display;
             }
 
+            rl_completion_matches_include_type = 0;
             access = make_filtered_match_accessor(filtered_matches);
 
             if ((rl_completion_auto_query_items && _rl_screenheight > 0) ?
@@ -1343,6 +1343,7 @@ done_filtered:
         matches = rebuilt;
     }
 
+    rl_completion_matches_include_type = 0;
     access = make_match_accessor(matches);
 
     // There is more than one answer.  Find out how many there are,
