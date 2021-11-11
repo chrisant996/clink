@@ -163,7 +163,7 @@ Section "!Application files" app_files_id
 SectionEnd
 
 ;-------------------------------------------------------------------------------
-Section "Add shortcuts to Start menu"
+Section "Add shortcuts to Start menu" section_add_shortcuts
     SetShellVarContext all
 
     StrCpy $0 "$SMPROGRAMS\clink\${CLINK_VERSION}"
@@ -173,7 +173,7 @@ Section "Add shortcuts to Start menu"
 SectionEnd
 
 ;-------------------------------------------------------------------------------
-Section "Autorun when cmd.exe starts"
+Section "Autorun when cmd.exe starts" section_autorun
     SetShellVarContext all
 
     StrCpy $0 "~\clink"
@@ -182,7 +182,7 @@ Section "Autorun when cmd.exe starts"
 SectionEnd
 
 ;-------------------------------------------------------------------------------
-Section "Set %CLINK_DIR% to install location"
+Section "Set %CLINK_DIR% to install location" section_clink_dir
     SetShellVarContext all
 
     StrCpy $0 "System\CurrentControlSet\Control\Session Manager\Environment"
@@ -199,29 +199,62 @@ SectionEnd
 
 ;-------------------------------------------------------------------------------
 Section "-"
-    ; Remember whether versioned install directory was selected.
+    ; Remember the installation directory.
+    WriteRegStr HKLM Software\Clink InstallDir $installRoot
+
+    ; Remember the shortcuts choice.
+    SectionGetFlags ${section_add_shortcuts} $0
+    IntOp $0 $0 & ${SF_SELECTED}
+    WriteRegDWORD HKLM Software\Clink AddShortcuts $0
+
+    ; Remember the autorun choice.
+    SectionGetFlags ${section_autorun} $0
+    IntOp $0 $0 & ${SF_SELECTED}
+    WriteRegDWORD HKLM Software\Clink UseAutoRun $0
+
+    ; Remember the CLINK_DIR choice.
+    SectionGetFlags ${section_clink_dir} $0
+    IntOp $0 $0 & ${SF_SELECTED}
+    WriteRegDWORD HKLM Software\Clink SetClinkDir $0
+
+    ; Remember the versioned install directory choice.
     SectionGetFlags ${section_versioned_subdir_visible} $0
     IntOp $0 $0 & ${SF_SELECTED}
     WriteRegDWORD HKLM Software\Clink VersionedSubDir $0
-
-    ; Remember the installation directory.
-    WriteRegStr HKLM Software\Clink InstallDir $installRoot
 SectionEnd
 
 ;-------------------------------------------------------------------------------
 Function .onInit
+    ; Apply remembered installation directory.
+    ReadRegStr $0 HKLM Software\Clink InstallDir
+    StrCmp $0 "" LEmptyInstallDir 0
+        StrCpy $INSTDIR $0
+    LEmptyInstallDir:
+
+    ; Apply remembered selection state for shortcuts section.
+    ReadRegDWORD $0 HKLM Software\Clink AddShortcuts
+    StrCmp $0 "0" 0 LAddShortcuts
+        SectionSetFlags ${section_add_shortcuts} 0
+    LAddShortcuts:
+
+    ; Apply remembered selection state for autorun section.
+    ReadRegDWORD $0 HKLM Software\Clink UseAutoRun
+    StrCmp $0 "0" 0 LUseAutoRun
+        SectionSetFlags ${section_autorun} 0
+    LUseAutoRun:
+
+    ; Apply remembered selection state for CLINK_DIR section.
+    ReadRegDWORD $0 HKLM Software\Clink SetClinkDir
+    StrCmp $0 "0" 0 LSetClinkDir
+        SectionSetFlags ${section_clink_dir} 0
+    LSetClinkDir:
+
     ; Apply remembered selection state for versioned install directory section.
     ReadRegDWORD $0 HKLM Software\Clink VersionedSubDir
     StrCmp $0 "0" 0 LNotVersioned
         SectionSetFlags ${section_versioned_subdir_hidden} 0
         SectionSetFlags ${section_versioned_subdir_visible} 0
     LNotVersioned:
-
-    ; Apply remembered installation directory.
-    ReadRegStr $0 HKLM Software\Clink InstallDir
-    StrCmp $0 "" LEmptyInstallDir 0
-        StrCpy $INSTDIR $0
-    LEmptyInstallDir:
 FunctionEnd
 
 ;-------------------------------------------------------------------------------
