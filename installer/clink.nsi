@@ -22,6 +22,7 @@
 ;
 
 !include "winmessages.nsh"
+!include "Sections.nsh"
 
 ;-------------------------------------------------------------------------------
 Name                    "clink v${CLINK_VERSION}"
@@ -44,6 +45,8 @@ Page instfiles
 UninstPage uninstConfirm
 UninstPage components
 UninstPage instfiles
+
+Var installRoot
 
 ;-------------------------------------------------------------------------------
 Function cleanLegacyInstall
@@ -94,6 +97,12 @@ Function cleanPreviousInstalls
 FunctionEnd
 
 ;-------------------------------------------------------------------------------
+Section "-" section_versioned_subdir_hidden
+    ; Hidden placeholder so that app_files_id can see whether to use a
+    ; versioned subdir.
+SectionEnd
+
+;-------------------------------------------------------------------------------
 Section "!Application files" app_files_id
     SectionIn RO
     SetShellVarContext all
@@ -104,7 +113,13 @@ Section "!Application files" app_files_id
 
     ; Install to a versioned folder to reduce interference between versions.
     ;
-    StrCpy $INSTDIR $INSTDIR\${CLINK_VERSION}
+    StrCpy $1 ${CLINK_VERSION}
+    SectionGetFlags ${section_versioned_subdir_hidden} $0
+    IntOp $0 $0 & ${SF_SELECTED}
+    StrCmp $0 0 0 +1
+        StrCpy $1 bin
+    StrCpy $installRoot $INSTDIR
+    StrCpy $INSTDIR $INSTDIR\$1
 
     ; Installs the main files.
     ;
@@ -177,6 +192,45 @@ Section "Set %CLINK_DIR% to install location"
 SectionEnd
 
 ;-------------------------------------------------------------------------------
+Section "Use versioned install directory" section_versioned_subdir_visible
+    ; This is visible to the user.  .onSelChange applies the selection state
+    ; from section_versioned_subdir_visible to section_versioned_subdir_hidden.
+SectionEnd
+
+;-------------------------------------------------------------------------------
+Section "-"
+    ; Remember whether versioned install directory was selected.
+    SectionGetFlags ${section_versioned_subdir_visible} $0
+    IntOp $0 $0 & ${SF_SELECTED}
+    WriteRegDWORD HKLM Software\Clink VersionedSubDir $0
+
+    ; Remember the installation directory.
+    WriteRegStr HKLM Software\Clink InstallDir $installRoot
+SectionEnd
+
+;-------------------------------------------------------------------------------
+Function .onInit
+    ; Apply remembered selection state for versioned install directory section.
+    ReadRegDWORD $0 HKLM Software\Clink VersionedSubDir
+    StrCmp $0 "0" 0 LNotVersioned
+        SectionSetFlags ${section_versioned_subdir_hidden} 0
+        SectionSetFlags ${section_versioned_subdir_visible} 0
+    LNotVersioned:
+
+    ; Apply remembered installation directory.
+    ReadRegStr $0 HKLM Software\Clink InstallDir
+    StrCmp $0 "" LEmptyInstallDir 0
+        StrCpy $INSTDIR $0
+    LEmptyInstallDir:
+FunctionEnd
+
+;-------------------------------------------------------------------------------
+Function .onSelChange
+    SectionGetFlags ${section_versioned_subdir_visible} $0
+    SectionSetFlags ${section_versioned_subdir_hidden} $0
+FunctionEnd
+
+;-------------------------------------------------------------------------------
 Section "!un.Application files"
     SectionIn RO
     SetShellVarContext all
@@ -195,6 +249,7 @@ Section "!un.Application files"
     ; Remove start menu items and uninstall registry entries.
     RMDir /r $SMPROGRAMS\clink\${CLINK_VERSION}
     RMDir $SMPROGRAMS\clink
+    DeleteRegKey HKLM Software\Clink
     DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\clink_${CLINK_VERSION}"
     DeleteRegValue HKLM "System\CurrentControlSet\Control\Session Manager\Environment" "CLINK_DIR"
 
