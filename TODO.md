@@ -14,9 +14,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Push update to clink-completions repo.
 - Push update to z.lua repo.
 - Auto-update option, with configurable polling interval?  (Though package managers like scoop can handle updates, if Clink was installed through one.)
-- Installer enhancements:
-  - Add checkbox in installer for creating a versioned subdirectory (ON by default); remember the setting for subsequent installs.
-  - Record whether the user overrode the default install directory; if yes then use the same destination for subsequent installs.
 
 ## Mystery
 
@@ -32,6 +29,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 **Installer**
 - Why does it install to a versioned path?  The .nsi file says `; Install to a versioned folder to reduce interference between versions.` so use caution when making any change there.
+  - Maybe it's to solve a race condition between AutoRun and the installer?
 
 **Miscellaneous**
 - Is it a problem that `update_internal()` gets called once per char in a key sequence?  Maybe it should only happen after a key that finishes a key binding?
