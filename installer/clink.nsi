@@ -119,6 +119,8 @@ Section "!Application files" app_files_id
 
     ; Create an uninstaller and a shortcut to it.
     ;
+    StrCpy $0 "$SMPROGRAMS\clink\${CLINK_VERSION}"
+    CreateDirectory $0
     StrCpy $1 "clink_uninstall_${CLINK_VERSION}.exe"
     WriteUninstaller "$INSTDIR\$1"
     CreateShortcut "$0\Uninstall Clink v${CLINK_VERSION}.lnk" "$INSTDIR\$1"
