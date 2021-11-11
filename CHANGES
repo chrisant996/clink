@@ -2,12 +2,15 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
-#### v1.2.43
+#### v1.2.44
 
 - Fixed `clink.ondisplaymatches()` so it receives the right match strings (regression introduced in v1.2.39).
-- Fixed lingering issues with non-ASCII characters in path names in Clink (follows up on the preceding fixes for non-ASCII user name characters).
 - Fixed [#176](https://github.com/chrisant996/clink/issues/176); use current installation dir when upgrading clink.  Now the installer remembers the chosen installation directory and defaults to the same place when installing an upgrade (all of the checkbox states are remembered, in fact).
 - Fixed [#171](https://github.com/chrisant996/clink/issues/171); have a way to override install directory.  Now the installer has a checkbox whether to install to a versioned directory (recommended).  Unchecking the box installs program files to a `bin` subdirectory, instead the usual versioned subdirectory.
+
+#### v1.2.43
+
+- Fixed lingering issues with non-ASCII characters in path names in Clink (follows up on the preceding fixes for non-ASCII user name characters).
 
 #### v1.2.42
 
