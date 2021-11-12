@@ -4,6 +4,7 @@
 
 #### v1.2.45
 
+- Clarified description of the `match.wild` Clink setting.
 - Fixed [#196](https://github.com/chrisant996/clink/issues/196); installer checkboxes not working properly.
 
 #### v1.2.44
