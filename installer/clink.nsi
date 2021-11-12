@@ -47,6 +47,7 @@ UninstPage components
 UninstPage instfiles
 
 Var installRoot
+Var uninstallerExe
 
 ;-------------------------------------------------------------------------------
 Function cleanLegacyInstall
@@ -116,8 +117,9 @@ Section "!Application files" app_files_id
     StrCpy $1 ${CLINK_VERSION}
     SectionGetFlags ${section_versioned_subdir_hidden} $0
     IntOp $0 $0 & ${SF_SELECTED}
-    StrCmp $0 0 0 +1
+    StrCmp $0 0 0 LUseVersionedSubDir
         StrCpy $1 bin
+    LUseVersionedSubDir:
     StrCpy $installRoot $INSTDIR
     StrCpy $INSTDIR $INSTDIR\$1
 
@@ -132,19 +134,16 @@ Section "!Application files" app_files_id
     File ${CLINK_BUILD}\clink.bat
     File ${CLINK_BUILD}\clink.html
 
-    ; Create an uninstaller and a shortcut to it.
+    ; Create an uninstaller.
     ;
-    StrCpy $0 "$SMPROGRAMS\clink\${CLINK_VERSION}"
-    CreateDirectory $0
-    StrCpy $1 "clink_uninstall_${CLINK_VERSION}.exe"
-    WriteUninstaller "$INSTDIR\$1"
-    CreateShortcut "$0\Uninstall Clink v${CLINK_VERSION}.lnk" "$INSTDIR\$1"
+    StrCpy $uninstallerExe "clink_uninstall_${CLINK_VERSION}.exe"
+    WriteUninstaller "$INSTDIR\$uninstallerExe"
 
     ; Add to "add/remove programs" or "programs and features"
     ;
     StrCpy $0 "Software\Microsoft\Windows\CurrentVersion\Uninstall\clink_${CLINK_VERSION}"
     WriteRegStr HKLM $0 "DisplayName"       "Clink v${CLINK_VERSION}"
-    WriteRegStr HKLM $0 "UninstallString"   "$INSTDIR\$1"
+    WriteRegStr HKLM $0 "UninstallString"   "$INSTDIR\$uninstallerExe"
     WriteRegStr HKLM $0 "Publisher"         "Christopher Antos"
     WriteRegStr HKLM $0 "DisplayIcon"       "$SYSDIR\cmd.exe,0"
     WriteRegStr HKLM $0 "URLInfoAbout"      "http://chrisant996.github.io/clink"
@@ -166,10 +165,19 @@ SectionEnd
 Section "Add shortcuts to Start menu" section_add_shortcuts
     SetShellVarContext all
 
+    ; Create start menu folder.
+    ;
     StrCpy $0 "$SMPROGRAMS\clink\${CLINK_VERSION}"
     CreateDirectory $0
+
+    ; Add shortcuts to the program and documentation.
+    ;
     CreateShortcut "$0\Clink v${CLINK_VERSION}.lnk" "$INSTDIR\clink.bat" 'startmenu --profile ~\clink' "$SYSDIR\cmd.exe" 0 SW_SHOWMINIMIZED
     CreateShortcut "$0\Clink v${CLINK_VERSION} Documentation.lnk" "$INSTDIR\clink.html"
+
+    ; Add a shortcut to the uninstaller.
+    ;
+    CreateShortcut "$0\Uninstall Clink v${CLINK_VERSION}.lnk" "$INSTDIR\$uninstallerExe"
 SectionEnd
 
 ;-------------------------------------------------------------------------------
