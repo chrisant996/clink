@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.2.43</title>
+<title>Clink v1.2.44</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -747,7 +747,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.2.43</div>
+                <div id="title">Clink v1.2.44</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -3977,6 +3977,13 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1244">v1.2.44</h4>
+<ul>
+<li>Fixed <code>clink.ondisplaymatches()</code> so it receives the right match strings (regression introduced in v1.2.39).</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/194">#194</a>; argmatcher not found when command name contains a dash (regression introduced in v1.1.5).</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/176">#176</a>; use current installation dir when upgrading clink.  Now the installer remembers the chosen installation directory and defaults to the same place when installing an upgrade (all of the checkbox states are remembered, in fact).</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/171">#171</a>; have a way to override install directory.  Now the installer has a checkbox whether to install to a versioned directory (recommended).  Unchecking the box installs program files to a <code>bin</code> subdirectory, instead the usual versioned subdirectory.</li>
+</ul>
 <h4 id="v1243">v1.2.43</h4>
 <ul>
 <li>Fixed lingering issues with non-ASCII characters in path names in Clink (follows up on the preceding fixes for non-ASCII user name characters).</li>
