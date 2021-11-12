@@ -974,7 +974,9 @@ This example modifies the right side prompt by prepending the current date:
 
 <br/>
 
-> **Note:** If the console font and encoding are mismatched, or if some kinds of emoji are present, then the right side prompt might show up positioned incorrectly.  If that happens, try adjusting the font or encoding (e.g. sometimes running `chcp utf-8` can resolve positioning issues).
+> **Notes:**
+> - If the console font and encoding are mismatched, or if some kinds of emoji are present, then the right side prompt might show up positioned incorrectly.  If that happens, try adjusting the font or encoding (e.g. sometimes running `chcp utf-8` can resolve positioning issues).
+> - If the `:filter()` function returns a string and false to stop filtering, then the `:rightfilter()` not called (because no further filter functions are called).  If you want to stop filtering but have both a left and right side prompt, then return only a string from `:filter()` and return a string and false from `:rightfilter()`.
 
 <a name="asyncpromptfiltering"></a>
 
