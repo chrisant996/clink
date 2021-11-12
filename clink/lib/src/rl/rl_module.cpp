@@ -273,8 +273,9 @@ setting_bool g_match_expand_envvars(
 setting_bool g_match_wild(
     "match.wild",
     "Match ? and * wildcards when completing",
-    "Matches ? and * wildcards when using any of the completion commands.\n"
-    "Turn this off to behave how bash does, and not match wildcards.",
+    "Matches ? and * wildcards and leading . characters when using any of the\n"
+    "completion commands.  Turn this off to behave how bash does, and not match\n"
+    "wildcards or leading dots.",
     true);
 
 setting_bool g_prompt_async(
