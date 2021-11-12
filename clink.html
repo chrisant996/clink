@@ -1180,7 +1180,7 @@ If you want a customizable prompt with a bunch of styles and an easy-to-use conf
 <tr>
 <td align="center"><code>match.wild</code></td>
 <td align="center">True</td>
-<td>Matches <code>?</code> and <code>*</code> wildcards when using any of the completion commands.  Turn this off to behave how bash does, and not match wildcards (but <code>glob-complete-word</code> always matches wildcards).</td>
+<td>Matches <code>?</code> and <code>*</code> wildcards and leading <code>.</code> when using any of the completion commands.  Turn this off to behave how bash does, and not match wildcards or leading dots (but <code>glob-complete-word</code> always matches wildcards).</td>
 </tr>
 <tr>
 <td align="center"><code>prompt.async</code></td>
@@ -3983,6 +3983,7 @@ end</code></pre></div></div><hr/>
 <h3 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
 <h4 id="v1245">v1.2.45</h4>
 <ul>
+<li>Clarified description of the <code>match.wild</code> Clink setting.</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/196">#196</a>; installer checkboxes not working properly.</li>
 </ul>
 <h4 id="v1244">v1.2.44</h4>
