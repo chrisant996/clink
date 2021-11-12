@@ -5,6 +5,7 @@
 #### v1.2.44
 
 - Fixed `clink.ondisplaymatches()` so it receives the right match strings (regression introduced in v1.2.39).
+- Fixed [#194](https://github.com/chrisant996/clink/issues/194); argmatcher not found when command name contains a dash.
 - Fixed [#176](https://github.com/chrisant996/clink/issues/176); use current installation dir when upgrading clink.  Now the installer remembers the chosen installation directory and defaults to the same place when installing an upgrade (all of the checkbox states are remembered, in fact).
 - Fixed [#171](https://github.com/chrisant996/clink/issues/171); have a way to override install directory.  Now the installer has a checkbox whether to install to a versioned directory (recommended).  Unchecking the box installs program files to a `bin` subdirectory, instead the usual versioned subdirectory.
 
