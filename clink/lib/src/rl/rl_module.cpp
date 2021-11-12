@@ -405,52 +405,6 @@ void override_rl_last_func(rl_command_func_t* func)
 
 
 //------------------------------------------------------------------------------
-static void load_user_inputrc(const char* state_dir)
-{
-#if defined(PLATFORM_WINDOWS)
-    // Remember to update clink_info() if anything changes in here.
-
-    static const char* const env_vars[] = {
-        "clink_inputrc",
-        "", // Magic value handled specially below.
-        "userprofile",
-        "localappdata",
-        "appdata",
-        "home"
-    };
-
-    static const char* const file_names[] = {
-        ".inputrc",
-        "_inputrc",
-        "clink_inputrc",
-    };
-
-    for (const char* env_var : env_vars)
-    {
-        str<280> path;
-        if (!*env_var && state_dir && *state_dir)
-            path.copy(state_dir);
-        else if (!*env_var || !os::get_env(env_var, path))
-            continue;
-
-        int base_len = path.length();
-
-        for (int j = 0; j < sizeof_array(file_names); ++j)
-        {
-            path.truncate(base_len);
-            path::append(path, file_names[j]);
-
-            if (!rl_read_init_file(path.c_str()))
-            {
-                LOG("Found Readline inputrc at '%s'", path.c_str());
-                return;
-            }
-        }
-    }
-#endif // PLATFORM_WINDOWS
-}
-
-//------------------------------------------------------------------------------
 extern "C" const char* host_get_env(const char* name)
 {
     static int rotate = 0;
@@ -1377,122 +1331,50 @@ int clink_popup_history(int count, int invoking_key)
     return 0;
 }
 
-
-
 //------------------------------------------------------------------------------
-enum {
-    bind_id_input,
-    bind_id_more_input,
-};
-
-
-
-//------------------------------------------------------------------------------
-static int terminal_read_thunk(FILE* stream)
+static void load_user_inputrc(const char* state_dir)
 {
-    if (stream == in_stream)
+#if defined(PLATFORM_WINDOWS)
+    // Remember to update clink_info() if anything changes in here.
+
+    static const char* const env_vars[] = {
+        "clink_inputrc",
+        "", // Magic value handled specially below.
+        "userprofile",
+        "localappdata",
+        "appdata",
+        "home"
+    };
+
+    static const char* const file_names[] = {
+        ".inputrc",
+        "_inputrc",
+        "clink_inputrc",
+    };
+
+    for (const char* env_var : env_vars)
     {
-        assert(s_processed_input);
-        return s_processed_input->read();
-    }
+        str<280> path;
+        if (!*env_var && state_dir && *state_dir)
+            path.copy(state_dir);
+        else if (!*env_var || !os::get_env(env_var, path))
+            continue;
 
-    if (stream == null_stream)
-        return 0;
+        int base_len = path.length();
 
-    assert(false);
-    return fgetc(stream);
-}
-
-//------------------------------------------------------------------------------
-static void terminal_write_thunk(FILE* stream, const char* chars, int char_count)
-{
-    if (stream == out_stream)
-    {
-        assert(g_printer);
-        g_printer->print(chars, char_count);
-        return;
-    }
-
-    if (stream == null_stream)
-        return;
-
-    if (stream == stderr || stream == stdout)
-    {
-        if (stream == stderr && g_rl_hide_stderr.get())
-            return;
-
-        DWORD dw;
-        HANDLE h = GetStdHandle(stream == stderr ? STD_ERROR_HANDLE : STD_OUTPUT_HANDLE);
-        if (GetConsoleMode(h, &dw))
+        for (int j = 0; j < sizeof_array(file_names); ++j)
         {
-            wstr<32> s;
-            str_iter tmpi(chars, char_count);
-            to_utf16(s, tmpi);
-            WriteConsoleW(h, s.c_str(), s.length(), &dw, nullptr);
+            path.truncate(base_len);
+            path::append(path, file_names[j]);
+
+            if (!rl_read_init_file(path.c_str()))
+            {
+                LOG("Found Readline inputrc at '%s'", path.c_str());
+                return;
+            }
         }
-        else
-        {
-            WriteFile(h, chars, char_count, &dw, nullptr);
-        }
-        return;
     }
-
-    assert(false);
-    fwrite(chars, char_count, 1, stream);
-}
-
-//------------------------------------------------------------------------------
-#ifdef CAN_LOG_RL_TERMINAL
-static void terminal_log_write(FILE* stream, const char* chars, int char_count)
-{
-    if (stream == out_stream)
-    {
-        assert(g_printer);
-        LOGCURSORPOS();
-        LOG("RL_OUTSTREAM \"%.*s\", %d", char_count, chars, char_count);
-        g_printer->print(chars, char_count);
-        return;
-    }
-
-    if (stream == null_stream)
-        return;
-
-    if (stream == stderr || stream == stdout)
-    {
-        if (stream == stderr && g_rl_hide_stderr.get())
-            return;
-
-        DWORD dw;
-        HANDLE h = GetStdHandle(stream == stderr ? STD_ERROR_HANDLE : STD_OUTPUT_HANDLE);
-        if (GetConsoleMode(h, &dw))
-        {
-            LOGCURSORPOS();
-            LOG("%s \"%.*s\", %d", (stream == stderr) ? "CONERR" : "CONOUT", char_count, chars, char_count);
-            wstr<32> s;
-            str_iter tmpi(chars, char_count);
-            to_utf16(s, tmpi);
-            WriteConsoleW(h, s.c_str(), s.length(), &dw, nullptr);
-        }
-        else
-        {
-            LOG("%s \"%.*s\", %d", (stream == stderr) ? "FILEERR" : "FILEOUT", char_count, chars, char_count);
-            WriteFile(h, chars, char_count, &dw, nullptr);
-        }
-        return;
-    }
-
-    assert(false);
-    LOGCURSORPOS();
-    LOG("FWRITE \"%.*s\", %d", char_count, chars, char_count);
-    fwrite(chars, char_count, 1, stream);
-}
-#endif
-
-//------------------------------------------------------------------------------
-static void terminal_fflush_thunk(FILE* stream)
-{
-    if (stream != out_stream && stream != null_stream)
-        fflush(stream);
+#endif // PLATFORM_WINDOWS
 }
 
 //------------------------------------------------------------------------------
@@ -1503,75 +1385,19 @@ static void bind_keyseq_list(const two_strings* list, Keymap map)
         rl_bind_keyseq_in_map(list[i][0], rl_named_function(list[i][1]), map);
 }
 
-
-
 //------------------------------------------------------------------------------
-rl_module::rl_module(const char* shell_name, terminal_in* input, const char* state_dir)
-: m_prev_group(-1)
+void initialise_readline(const char* state_dir)
 {
-    assert(!s_direct_input);
-    s_direct_input = input;
-
-    rl_getc_function = terminal_read_thunk;
-    rl_fwrite_function = terminal_write_thunk;
-#ifdef CAN_LOG_RL_TERMINAL
-    if (g_debug_log_terminal.get())
-        rl_fwrite_function = terminal_log_write;
-#endif
-    rl_fflush_function = terminal_fflush_thunk;
-    rl_instream = in_stream;
-    rl_outstream = out_stream;
-    rl_buffer_changing_hook = buffer_changing;
-    rl_selection_event_hook = cua_selection_event_hook;
-
-    rl_readline_name = shell_name;
-    rl_catch_signals = 0;
-
-    _rl_eof_char = g_ctrld_exits.get() ? CTRL('D') : -1;
-
     // Readline needs a tweak of its handling of 'meta' (i.e. IO bytes >=0x80)
     // so that it handles UTF-8 correctly (convert=input, output=output)
     _rl_convert_meta_chars_to_ascii = 0;
     _rl_output_meta_chars = 1;
 
-    // Recognize both / and \\ as path separators, and normalize to \\.
-    rl_backslash_path_sep = 1;
-    rl_preferred_path_separator = PATH_SEP[0];
-
-    // Quote spaces in completed filenames.
-    rl_completer_quote_characters = "\"";
-    rl_basic_quote_characters = "\"";
-
-    // Same list CMD uses for quoting filenames.
-    rl_filename_quote_characters = " &()[]{}^=;!%'+,`~";
-
-    // Word break characters -- equal to rl_basic_word_break_characters, with
-    // backslash removed (because rl_backslash_path_sep) and without '$' or '%'
-    // so we can let the match generators decide when '%' should start a word or
-    // end a word (see :getwordbreakinfo()).
-    rl_completer_word_break_characters = " \t\n\"'`@><=;|&{("; /* }) */
-
-    // Completion and match display.
-    rl_ignore_some_completions_function = host_filter_matches;
-    rl_attempted_completion_function = alternative_matches;
-    rl_menu_completion_entry_function = filename_menu_completion_function;
-    rl_adjust_completion_defaults = adjust_completion_defaults;
-    rl_adjust_completion_word = adjust_completion_word;
-    rl_completion_display_matches_func = display_matches;
-    rl_qsort_match_list_func = sort_match_list;
-    rl_match_display_filter_func = match_display_filter_callback;
-    rl_is_exec_func = is_exec_ext;
-    rl_compare_lcd_func = compare_lcd;
-    rl_postprocess_lcd_func = postprocess_lcd;
-    rl_read_key_hook = read_key_hook;
-    rl_get_face_func = get_face_func;
-    rl_puts_face_func = puts_face_func;
-    rl_macro_hook_func = macro_hook_func;
-    rl_last_func_hook_func = last_func_hook_func;
-    rl_ignore_completion_duplicates = 0; // We'll handle de-duplication.
-    rl_sort_completion_matches = 0; // We'll handle sorting.
-
-    _rl_comment_begin = savestring("::");   // this will do...
+    // "::" was already in use as a common idiom as a comment prefix.
+    // Note:  Depending on the CMD parser state and what follows the :: there
+    // are degenerate cases where it causes a syntax error, so technically "rem"
+    // would be more functionally correct.
+    _rl_comment_begin = savestring("::");
 
     // Add commands.
     static bool s_rl_initialized = false;
@@ -1804,6 +1630,188 @@ rl_module::rl_module(const char* shell_name, terminal_in* input, const char* sta
     bind_keyseq_list(vi_movement_key_binds, vi_movement_keymap);
 
     load_user_inputrc(state_dir);
+}
+
+
+
+//------------------------------------------------------------------------------
+enum {
+    bind_id_input,
+    bind_id_more_input,
+};
+
+
+
+//------------------------------------------------------------------------------
+static int terminal_read_thunk(FILE* stream)
+{
+    if (stream == in_stream)
+    {
+        assert(s_processed_input);
+        return s_processed_input->read();
+    }
+
+    if (stream == null_stream)
+        return 0;
+
+    assert(false);
+    return fgetc(stream);
+}
+
+//------------------------------------------------------------------------------
+static void terminal_write_thunk(FILE* stream, const char* chars, int char_count)
+{
+    if (stream == out_stream)
+    {
+        assert(g_printer);
+        g_printer->print(chars, char_count);
+        return;
+    }
+
+    if (stream == null_stream)
+        return;
+
+    if (stream == stderr || stream == stdout)
+    {
+        if (stream == stderr && g_rl_hide_stderr.get())
+            return;
+
+        DWORD dw;
+        HANDLE h = GetStdHandle(stream == stderr ? STD_ERROR_HANDLE : STD_OUTPUT_HANDLE);
+        if (GetConsoleMode(h, &dw))
+        {
+            wstr<32> s;
+            str_iter tmpi(chars, char_count);
+            to_utf16(s, tmpi);
+            WriteConsoleW(h, s.c_str(), s.length(), &dw, nullptr);
+        }
+        else
+        {
+            WriteFile(h, chars, char_count, &dw, nullptr);
+        }
+        return;
+    }
+
+    assert(false);
+    fwrite(chars, char_count, 1, stream);
+}
+
+//------------------------------------------------------------------------------
+#ifdef CAN_LOG_RL_TERMINAL
+static void terminal_log_write(FILE* stream, const char* chars, int char_count)
+{
+    if (stream == out_stream)
+    {
+        assert(g_printer);
+        LOGCURSORPOS();
+        LOG("RL_OUTSTREAM \"%.*s\", %d", char_count, chars, char_count);
+        g_printer->print(chars, char_count);
+        return;
+    }
+
+    if (stream == null_stream)
+        return;
+
+    if (stream == stderr || stream == stdout)
+    {
+        if (stream == stderr && g_rl_hide_stderr.get())
+            return;
+
+        DWORD dw;
+        HANDLE h = GetStdHandle(stream == stderr ? STD_ERROR_HANDLE : STD_OUTPUT_HANDLE);
+        if (GetConsoleMode(h, &dw))
+        {
+            LOGCURSORPOS();
+            LOG("%s \"%.*s\", %d", (stream == stderr) ? "CONERR" : "CONOUT", char_count, chars, char_count);
+            wstr<32> s;
+            str_iter tmpi(chars, char_count);
+            to_utf16(s, tmpi);
+            WriteConsoleW(h, s.c_str(), s.length(), &dw, nullptr);
+        }
+        else
+        {
+            LOG("%s \"%.*s\", %d", (stream == stderr) ? "FILEERR" : "FILEOUT", char_count, chars, char_count);
+            WriteFile(h, chars, char_count, &dw, nullptr);
+        }
+        return;
+    }
+
+    assert(false);
+    LOGCURSORPOS();
+    LOG("FWRITE \"%.*s\", %d", char_count, chars, char_count);
+    fwrite(chars, char_count, 1, stream);
+}
+#endif
+
+//------------------------------------------------------------------------------
+static void terminal_fflush_thunk(FILE* stream)
+{
+    if (stream != out_stream && stream != null_stream)
+        fflush(stream);
+}
+
+
+
+//------------------------------------------------------------------------------
+rl_module::rl_module(const char* shell_name, terminal_in* input)
+: m_prev_group(-1)
+{
+    assert(!s_direct_input);
+    s_direct_input = input;
+
+    rl_getc_function = terminal_read_thunk;
+    rl_fwrite_function = terminal_write_thunk;
+#ifdef CAN_LOG_RL_TERMINAL
+    if (g_debug_log_terminal.get())
+        rl_fwrite_function = terminal_log_write;
+#endif
+    rl_fflush_function = terminal_fflush_thunk;
+    rl_instream = in_stream;
+    rl_outstream = out_stream;
+    rl_buffer_changing_hook = buffer_changing;
+    rl_selection_event_hook = cua_selection_event_hook;
+
+    rl_readline_name = shell_name;
+    rl_catch_signals = 0;
+
+    _rl_eof_char = g_ctrld_exits.get() ? CTRL('D') : -1;
+
+    // Recognize both / and \\ as path separators, and normalize to \\.
+    rl_backslash_path_sep = 1;
+    rl_preferred_path_separator = PATH_SEP[0];
+
+    // Quote spaces in completed filenames.
+    rl_completer_quote_characters = "\"";
+    rl_basic_quote_characters = "\"";
+
+    // Same list CMD uses for quoting filenames.
+    rl_filename_quote_characters = " &()[]{}^=;!%'+,`~";
+
+    // Word break characters -- equal to rl_basic_word_break_characters, with
+    // backslash removed (because rl_backslash_path_sep) and without '$' or '%'
+    // so we can let the match generators decide when '%' should start a word or
+    // end a word (see :getwordbreakinfo()).
+    rl_completer_word_break_characters = " \t\n\"'`@><=;|&{("; /* }) */
+
+    // Completion and match display.
+    rl_ignore_some_completions_function = host_filter_matches;
+    rl_attempted_completion_function = alternative_matches;
+    rl_menu_completion_entry_function = filename_menu_completion_function;
+    rl_adjust_completion_defaults = adjust_completion_defaults;
+    rl_adjust_completion_word = adjust_completion_word;
+    rl_completion_display_matches_func = display_matches;
+    rl_qsort_match_list_func = sort_match_list;
+    rl_match_display_filter_func = match_display_filter_callback;
+    rl_is_exec_func = is_exec_ext;
+    rl_compare_lcd_func = compare_lcd;
+    rl_postprocess_lcd_func = postprocess_lcd;
+    rl_read_key_hook = read_key_hook;
+    rl_get_face_func = get_face_func;
+    rl_puts_face_func = puts_face_func;
+    rl_macro_hook_func = macro_hook_func;
+    rl_last_func_hook_func = last_func_hook_func;
+    rl_ignore_completion_duplicates = 0; // We'll handle de-duplication.
+    rl_sort_completion_matches = 0; // We'll handle sorting.
 }
 
 //------------------------------------------------------------------------------
