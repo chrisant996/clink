@@ -1279,17 +1279,13 @@ The [clink-flex-prompt](https://github.com/chrisant996/clink-flex-prompt) script
 
 ### oh-my-posh
 
-The [oh-my-posh](https://github.com/JanDeDobbeleer/oh-my-posh3) program can generate fancy prompts.  Refer to its documentation for how to configure it.
+The [oh-my-posh](https://github.com/JanDeDobbeleer/oh-my-posh) program can generate fancy prompts. Refer to its [documentation](https://ohmyposh.dev) for how to configure it.
 
-Integrating oh-my-posh with Clink is easy:  just save the following text to an `oh-my-posh.lua` file in your Clink scripts directory (run `clink info` to find that), and make sure the oh-my-posh.exe program is in a directory listed in the %PATH% environment variable.  (Or edit the script below to provide a fully qualified path to the oh-my-posh.exe program.)
+Integrating oh-my-posh with Clink is easy: just save the following text to an `oh-my-posh.lua` file in your Clink scripts directory (run `clink info` to find that), and make sure the `oh-my-posh.exe` program is in a directory listed in the `%PATH%` environment variable (or edit the script below to provide a fully qualified path to the oh-my-posh.exe program). Replace the config with your own configuration and you're good to go.
 
 ```lua
 -- oh-my-posh.lua
-local ohmyposh_prompt = clink.promptfilter(1)
-function ohmyposh_prompt:filter(prompt)
-    prompt = io.popen("oh-my-posh.exe"):read("*a")
-    return prompt, false
-end
+load(io.popen('oh-my-posh.exe --config="C:/Users/me/jandedobbeleer.omp.json" --init --shell cmd'):read("*a"))()
 ```
 
 ### z.lua
