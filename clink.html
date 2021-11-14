@@ -3380,14 +3380,10 @@ end
 <h3 id="clink-flex-prompt">clink-flex-prompt</h3>
 <p>The <a href="https://github.com/chrisant996/clink-flex-prompt">clink-flex-prompt</a> script is similar to the zsh powerlevel10k theme.  It gives Clink a very customizable prompt, with many style options.  It&#39;s also extensible so you can add your own segments.</p>
 <h3 id="oh-my-posh">oh-my-posh</h3>
-<p>The <a href="https://github.com/JanDeDobbeleer/oh-my-posh3">oh-my-posh</a> program can generate fancy prompts.  Refer to its documentation for how to configure it.</p>
-<p>Integrating oh-my-posh with Clink is easy:  just save the following text to an <code>oh-my-posh.lua</code> file in your Clink scripts directory (run <code>clink info</code> to find that), and make sure the oh-my-posh.exe program is in a directory listed in the %PATH% environment variable.  (Or edit the script below to provide a fully qualified path to the oh-my-posh.exe program.)</p>
+<p>The <a href="https://github.com/JanDeDobbeleer/oh-my-posh">oh-my-posh</a> program can generate fancy prompts. Refer to its <a href="https://ohmyposh.dev">documentation</a> for how to configure it.</p>
+<p>Integrating oh-my-posh with Clink is easy: just save the following text to an <code>oh-my-posh.lua</code> file in your Clink scripts directory (run <code>clink info</code> to find that), and make sure the <code>oh-my-posh.exe</code> program is in a directory listed in the <code>%PATH%</code> environment variable (or edit the script below to provide a fully qualified path to the oh-my-posh.exe program). Replace the config with your own configuration and you&#39;re good to go.</p>
 <pre><code class="language-lua">-- oh-my-posh.lua
-local ohmyposh_prompt = clink.promptfilter(1)
-function ohmyposh_prompt:filter(prompt)
-    prompt = io.popen(&quot;oh-my-posh.exe&quot;):read(&quot;*a&quot;)
-    return prompt, false
-end
+load(io.popen(&#39;oh-my-posh.exe --config=&quot;C:/Users/me/jandedobbeleer.omp.json&quot; --init --shell cmd&#39;):read(&quot;*a&quot;))()
 </code></pre>
 <h3 id="zlua">z.lua</h3>
 <p>The <a href="https://github.com/skywind3000/z.lua">z.lua</a> tool is a faster way to navigate directories, and it integrates with Clink.</p>
