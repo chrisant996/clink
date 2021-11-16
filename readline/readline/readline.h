@@ -735,6 +735,7 @@ extern const char *_rl_display_horizscroll_color;
 extern const char *_rl_display_message_color;
 extern char _rl_face_modmark;
 extern char _rl_face_horizscroll;
+extern char _rl_face_message;
 extern rl_get_face_func_t *rl_get_face_func;
 extern rl_puts_face_func_t *rl_puts_face_func;
 /* end_clink_change */

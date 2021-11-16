@@ -195,6 +195,7 @@ const char *_rl_display_horizscroll_color = NULL;
 const char *_rl_display_message_color = NULL;
 char _rl_face_modmark = FACE_NORMAL;
 char _rl_face_horizscroll = FACE_NORMAL;
+char _rl_face_message = FACE_NORMAL;
 rl_get_face_func_t *rl_get_face_func = (rl_get_face_func_t *)NULL;
 rl_puts_face_func_t *rl_puts_face_func = (rl_puts_face_func_t *)NULL;
 static const char *_normal_color = "\x1b[m";
@@ -1157,6 +1158,9 @@ rl_redisplay (void)
   prompt_last_screen_line = newlines;
 
 /* begin_clink_change */
+  /* Apply message face. */
+  if (msg_buf && rl_display_prompt == msg_buf)
+    memset (inv_face, _rl_face_message, strlen (msg_buf));
   /* Let the application have a chance to do processing; for example to parse
      the input line and update font faces for the line. */
   if (rl_before_display_function)
@@ -3209,8 +3213,6 @@ rl_message (va_alist)
   bneed = vsnprintf (msg_buf, msg_bufsiz, format, args);
 /* begin_clink_change */
   bneed++; /* Modern vsnprintf truncates with a null terminator. */
-  if (_rl_display_message_color)
-    bneed += strlen(_rl_display_message_color) + _normal_color_len + 4;
 /* end_clink_change */
   if (bneed >= msg_bufsiz - 1)
     {
@@ -3231,16 +3233,6 @@ rl_message (va_alist)
   msg_buf[msg_bufsiz - 1] = '\0';	/* overflow? */
 #endif
   va_end (args);
-
-/* begin_clink_change */
-  if (_rl_display_message_color)
-    {
-      char* tmp_buf = xmalloc (msg_bufsiz);
-      snprintf (tmp_buf, msg_bufsiz, "\001%s\002%s\001%s\002", _rl_display_message_color, msg_buf, _normal_color);
-      strcpy (msg_buf, tmp_buf);
-      xfree (tmp_buf);
-    }
-/* end_clink_change */
 
   if (saved_local_prompt == 0)
     {
