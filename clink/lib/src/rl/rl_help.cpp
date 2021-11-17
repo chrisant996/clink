@@ -1003,7 +1003,9 @@ void show_key_bindings(bool friendly, int mode, std::vector<key_binding_info>* o
     if (!out)
     {
         g_printer->print("\n");
-        g_result->redraw();
+
+        // Reset (not redraw!) so that transient prompt draws properly.
+        rl_reset_line_state();
     }
 
     // Tidy up (N.B. the first match is a placeholder and shouldn't be freed).
@@ -1142,7 +1144,9 @@ int clink_what_is(int, int)
     }
 
     g_printer->print("\n");
-    g_result->redraw();
+
+    // Reset (not redraw!) so that transient prompt draws properly.
+    rl_reset_line_state();
 
     return 0;
 }
