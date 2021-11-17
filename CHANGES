@@ -5,6 +5,7 @@
 #### v1.2.46
 
 - Fixed messages sometimes not being erased when finished, e.g. when using <kbd>Alt</kbd>+<kbd>digits</kbd> (regression introduced in v1.1.11).
+- Fixed potential for prompt to redraw incorrectly after showing help when the `prompt.transient` setting is enabled.
 
 #### v1.2.45
 
