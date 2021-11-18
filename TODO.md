@@ -28,8 +28,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Ability to delete, rearrange, and edit popup list items?  _[Can't realistically rearrange or edit history, due to how the history file format works.]_
 
 **Installer**
-- Why does it install to a versioned path?  The .nsi file says `; Install to a versioned folder to reduce interference between versions.` so use caution when making any change there.
-  - Maybe it's to solve a race condition between AutoRun and the installer?
 
 **Miscellaneous**
 - Is it a problem that `update_internal()` gets called once per char in a key sequence?  Maybe it should only happen after a key that finishes a key binding?
@@ -45,7 +43,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # LOW LIKELIHOOD
 
 - Make scrolling key bindings work at the pager prompt.  Note that it would need to revise how the scroll routines identify the bottom line (currently they use Readline's bottom line, but the pager displays output past that point).  _[Low value; also, Windows Terminal has scrolling hotkeys that supersede Clink, and it can scroll regardless whether prompting for input.]_
-- `magic-space` () Perform history expansion on the current line and insert a space? _[Low value, low reliability, niche audience.]_
 
 <br/>
 <br/>
