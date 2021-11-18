@@ -59,6 +59,22 @@ bool collapse_tilde(const char* in, str_base& out, bool force)
     return true;
 }
 
+//------------------------------------------------------------------------------
+static void unquote_keys(const char* in, str_base& out)
+{
+    out.clear();
+    if (in && in[0] == '"')
+    {
+        out.concat(in + 1);
+        if (out.length() && out.c_str()[out.length() - 1] == in[0])
+            out.truncate(out.length() - 1);
+    }
+    else
+    {
+        out.concat(in);
+    }
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -223,6 +239,201 @@ static int is_rl_variable_true(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  rl.getbinding
+/// -ver:   1.2.46
+/// -arg:   key:string
+/// -arg:   [keymap:string]
+/// -ret:   binding:string, type:string
+/// Returns the command or macro bound to <span class="arg">key</span>, and the
+/// type of the binding.
+///
+/// If nothing is bound to the specified key sequence, the returned binding will
+/// be nil.
+///
+/// The returned type can be <code>"function"</code>, <code>"macro"</code>, or
+/// <code>"keymap"</code> (if <span class="arg">key</span> is an incomplete key
+/// sequence).
+///
+/// If an error occurs, only nil is returned.
+///
+/// The <span class="arg">key</span> sequence string is the same format as from
+/// <code>clink echo</code>.  See <a href="#discoverkeysequences">Discovering
+/// Clink key sindings</a> for more information.
+///
+/// An optional <span class="arg">keymap</span> may be specified as well.  If it
+/// is omitted or nil, then the current keymap is searched.  Otherwise it may
+/// refer to one of the three built in keymaps:
+/// <table>
+/// <tr><th>Keymap</th><th>Description</th></tr>
+/// <tr><td><code>"emacs"</code></td><td>The Emacs keymap, which is the default keymap.</td></tr>
+/// <tr><td><code>"vi"</code>, <code>"vi-move"</code>, or <code>"vi-command"</code></td><td>The VI command mode keymap.</td></tr>
+/// <tr><td><code>"vi-insert"</code></td><td>The VI insertion mode keymap.</td></tr>
+/// </table>
+///
+/// The return value can be passed as input to
+/// <a href="#rl.setbinding">rl.setbinding()</a> or
+/// <a href="#rl.invokecommand">rl.invokecommand()</a>.
+/// -show:  local b,t = rl.getbinding([["\e[H"]], "emacs")
+/// -show:  if b then
+/// -show:  &nbsp;   print("Home is bound to "..b.." ("..t..") in emacs mode.")
+/// -show:  else
+/// -show:  &nbsp;   print("Home is not bound in emacs mode.")
+/// -show:  end
+static int get_rl_binding(lua_State* state)
+{
+    const char* _key = checkstring(state, 1);
+    const char* keymap = optstring(state, 2, nullptr);
+    if (!_key)
+        return 0;
+
+    Keymap map = keymap ? rl_get_keymap_by_name(keymap) : rl_get_keymap();
+
+    int type;
+    rl_command_func_t* func = nullptr;
+
+    {
+        str<> keys;
+        unquote_keys(_key, keys);
+
+        int keylen = 0;
+        char* keyseq = static_cast<char*>(malloc(keys.length() * 2 + 1));
+        if (rl_translate_keyseq(keys.c_str(), keyseq, &keylen))
+        {
+            free(keyseq);
+            return 0;
+        }
+
+        func = rl_function_of_keyseq_len(keyseq, keylen, map, &type);
+        free(keyseq);
+    }
+
+    if (func)
+    {
+        if (type == ISFUNC)
+        {
+            for (const FUNMAP* const* walk = funmap; *walk; ++walk)
+            {
+                if ((*walk)->function == func)
+                {
+                    lua_pushstring(state, (*walk)->name);
+                    lua_pushliteral(state, "function");
+                    return 2;
+                }
+            }
+        }
+        else if (type == ISKMAP)
+        {
+            // Bound to a keymap, i.e. the key sequence is incomplete.
+            lua_pushnil(state);
+            lua_pushliteral(state, "keymap");
+            return 2;
+        }
+        else if (type == ISMACR)
+        {
+            str<> tmp;
+
+            char* macro = _rl_untranslate_macro_value((char*)func, 0);
+            if (macro)
+                tmp << "\"" << macro << "\"";
+            else
+                tmp << "unknown macro";
+            free(macro);
+
+            lua_pushstring(state, tmp.c_str());
+            lua_pushliteral(state, "macro");
+            return 2;
+        }
+    }
+
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+/// -name:  rl.setbinding
+/// -ver:   1.2.46
+/// -arg:   key:string
+/// -arg:   binding:string | nil
+/// -arg:   [keymap:string]
+/// -ret:   boolean
+/// Binds <span class="arg">key</span> to invoke
+/// <span class="arg">binding</span>, and returns whether it was successful.
+///
+/// The <span class="arg">key</span> sequence string is the same format as from
+/// <code>clink echo</code>.  See <a href="#discoverkeysequences">Discovering
+/// Clink key sindings</a> for more information.
+///
+/// The <span class="arg">binding</span> is either the name of a Readline
+/// command, a quoted macro string (just like in the .inputrc config file), or
+/// nil to clear the key binding.
+///
+/// An optional <span class="arg">keymap</span> may be specified as well.  If it
+/// is omitted or nil, then the current keymap is searched.  Otherwise it may
+/// refer to one of the three built in keymaps:
+/// <table>
+/// <tr><th>Keymap</th><th>Description</th></tr>
+/// <tr><td><code>"emacs"</code></td><td>The Emacs keymap, which is the default keymap.</td></tr>
+/// <tr><td><code>"vi"</code>, <code>"vi-move"</code>, or <code>"vi-command"</code></td><td>The VI command mode keymap.</td></tr>
+/// <tr><td><code>"vi-insert"</code></td><td>The VI insertion mode keymap.</td></tr>
+/// </table>
+///
+/// Using Lua's <code>[[</code>..<code>]]</code> string syntax conveniently lets
+/// you simply copy the key string exactly from the <code>clink echo</code>
+/// output, without needing to translate the quotes or backslashes.
+///
+/// <strong>Note:</strong> This does not write the value into a config file.
+/// Instead it updates the key binding in memory, temporarily overriding
+/// whatever is present in any config files.  When config files are reloaded,
+/// they may replace the key binding again.
+/// -show:  local old_space = rl.getbinding('" "')
+/// -show:  function hijack_space(rl_buffer)
+/// -show:  &nbsp;   rl.invokecommand("clink-expand-line")   -- Expand envvars, etc in the line.
+/// -show:  &nbsp;   rl.invokecommand(old_space)             -- Then invoke whatever was previously bound to Space.
+/// -show:  end
+/// -show:  rl.setbinding([[" "]], [["luafunc:hijack_space"]])
+/// -show:
+/// -show:  -- The [[]] string syntax lets you copy key strings directly from 'clink echo'.
+/// -show:  -- [["\e[H"]] is much easier than translating to "\"\\e[H\"", for example.
+/// -show:  rl.setbinding([["\e[H"]], [[beginning-of-line]])
+static int set_rl_binding(lua_State* state)
+{
+    const char* _key = checkstring(state, 1);
+    const char* binding = checkstring(state, 2);
+    const char* keymap = optstring(state, 3, nullptr);
+    if (!_key || !binding)
+        return 0;
+
+    Keymap map = keymap ? rl_get_keymap_by_name(keymap) : rl_get_keymap();
+
+    str<> keys;
+    unquote_keys(_key, keys);
+
+    int result = -1;
+    if (!binding)
+    {
+        result = rl_bind_keyseq_in_map(keys.c_str(), nullptr, map);
+    }
+    else if (binding[0] == '\'' || binding[0] == '"')
+    {
+        str<> tmp;
+        tmp.concat(binding + 1);
+        if (tmp.length() && tmp.c_str()[tmp.length() - 1] == binding[0])
+            tmp.truncate(tmp.length() - 1);
+
+        result = rl_macro_bind(keys.c_str(), tmp.c_str(), map);
+    }
+    else
+    {
+        rl_command_func_t* func = rl_named_function(binding);
+        result = rl_bind_keyseq_in_map(keys.c_str(), func, map);
+        if (!func)
+            result = -1;
+    }
+
+    lua_pushboolean(state, result >= 0);
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 /// -name:  rl.invokecommand
 /// -ver:   1.1.26
 /// -arg:   command:string
@@ -250,7 +461,7 @@ static int invoke_command(lua_State* state)
     if (*command == '"')
     {
         str<> tmp(command + 1);
-        if (tmp[tmp.length() - 1] == '"')
+        if (tmp.length() && tmp[tmp.length() - 1] == '"')
             tmp.truncate(tmp.length() - 1);
 
         extern int macro_hook_func(const char* macro);
@@ -276,7 +487,8 @@ static int invoke_command(lua_State* state)
 
     int isnum;
     int count = int(lua_tointegerx(state, 2, &isnum));
-    int err = func(isnum ? count : 1, 0/*invoking_key*/);
+    int self_insert = (func == rl_insert);
+    int err = func(isnum ? count : 1, self_insert ? rl_executing_key : 0);
 
     override_rl_last_func(func);
 
@@ -582,6 +794,8 @@ void rl_lua_initialise(lua_state& lua)
         { "getvariable",            &get_rl_variable },
         { "setvariable",            &set_rl_variable },
         { "isvariabletrue",         &is_rl_variable_true },
+        { "getbinding",             &get_rl_binding },
+        { "setbinding",             &set_rl_binding },
         { "invokecommand",          &invoke_command },
         { "getlastcommand",         &get_last_command },
         { "setmatches",             &set_matches },

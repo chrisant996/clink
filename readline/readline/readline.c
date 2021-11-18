@@ -1091,6 +1091,8 @@ _rl_dispatch_subseq (register int key, Keymap map, int got_subseq)
 	{
 	  rl_executing_keyseq[rl_key_sequence_length] = '\0';
 /* begin_clink_change */
+	  rl_executing_keymap = map;
+	  rl_executing_key = key;
 	  if (rl_macro_hook_func && rl_macro_hook_func ((const char *)map[key].function))
 	    return 0;
 /* end_clink_change */
