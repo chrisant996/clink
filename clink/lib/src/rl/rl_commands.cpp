@@ -1842,6 +1842,27 @@ LUnlinkFile:
     return 0;
 }
 
+//------------------------------------------------------------------------------
+int magic_space(int count, int invoking_key)
+{
+    str<> in;
+    str<> out;
+
+    in.concat(g_rl_buffer->get_buffer(), g_rl_buffer->get_cursor());
+    if (expand_history(in.c_str(), out))
+    {
+        g_rl_buffer->begin_undo_group();
+        g_rl_buffer->remove(0, rl_point);
+        rl_point = 0;
+        if (!out.empty())
+            g_rl_buffer->insert(out.c_str());
+        g_rl_buffer->end_undo_group();
+    }
+
+    rl_insert(1, ' ');
+    return 0;
+}
+
 
 
 //------------------------------------------------------------------------------
