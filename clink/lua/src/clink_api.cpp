@@ -680,7 +680,11 @@ static int reload(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-// UNDOCUMENTED; internal use only.
+/// -name:  clink.refilterprompt
+/// -ver:   1.2.46
+/// Invoke the prompt filters again and refresh the prompt.
+///
+/// Note: this can potentially be expensive; call this only infrequently.
 int g_prompt_refilter = 0;
 static int refilter_prompt(lua_State* state)
 {
