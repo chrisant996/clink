@@ -4,6 +4,9 @@
 
 #### v1.2.46
 
+- Added a `magic-space` command that performs history expansion on the text before the cursor point and then inserts a space.  Note: this is slightly different than one in bash, which performs history expansion on the whole line and can end up inserting the space in a wrong spot.
+- Added `rl.getbinding()` and `rl.setbinding()` functions to query or override key bindings.
+- Added a `clink.refilterprompt()` function to invoke prompt filtering on demand.
 - Fixed messages sometimes not being erased when finished, e.g. when using <kbd>Alt</kbd>+<kbd>digits</kbd> (regression introduced in v1.1.11).
 - Fixed potential for prompt to redraw incorrectly after showing help when the `prompt.transient` setting is enabled.
 
