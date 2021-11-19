@@ -432,6 +432,7 @@ Name | Description
 `history-and-alias-expand-line`|A synonym for `clink-expand-history-and-alias`.
 `history-expand-line`|A synonym for `clink-expand-history`.
 `insert-last-argument`|A synonym for `yank-last-arg`.
+`magic-space`|Perform history expansion on the text before the cursor position and insert a space.  See the [History](https://tiswww.cwru.edu/php/chet/readline/history.html) manual for information on history expansion.
 `old-menu-complete-backward`|Like `old-menu-complete`, but in reverse.
 `remove-history`|While searching history, removes the current line from the history.
 `shell-expand-line`|A synonym for `clink-expand-line`.
