@@ -9,6 +9,7 @@
 - Added a `clink.refilterprompt()` function to invoke prompt filtering on demand.
 - Fixed messages sometimes not being erased when finished, e.g. when using <kbd>Alt</kbd>+<kbd>digits</kbd> (regression introduced in v1.1.11).
 - Fixed potential for prompt to redraw incorrectly after showing help when the `prompt.transient` setting is enabled.
+- Fixed settings defined by Lua scripts so that the Lua scripts can reliably see the current values even while the Lua scripts are being loaded or reloaded.
 
 #### v1.2.45
 
