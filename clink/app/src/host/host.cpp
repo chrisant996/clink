@@ -769,10 +769,19 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out)
     std::unique_ptr<prompt_filter> tmp_prompt_filter;
     if (reload_lua || local_lua)
     {
+        // Chicken and egg problem:
+        //  1.  Must load settings to know whether to delete Lua.
+        //  2.  Must delete Lua before loading settings so that the loaded map
+        //      can contain deferred setting values for settings defined by Lua
+        //      scripts.
+        // Reloading settings again after deleting Lua resolves the problem.
+        const bool reload_settings = !!m_lua;
         delete m_prompt_filter;
         delete m_lua;
         m_prompt_filter = nullptr;
         m_lua = nullptr;
+        if (reload_settings)
+            settings::load(settings_file.c_str());
     }
     if (!local_lua)
         init_scripts = !m_lua;
