@@ -281,6 +281,9 @@ static int is_rl_variable_true(lua_State* state)
 /// -show:  end
 static int get_rl_binding(lua_State* state)
 {
+    if (!funmap)
+        return 0;
+
     const char* _key = checkstring(state, 1);
     const char* keymap = optstring(state, 2, nullptr);
     if (!_key)
@@ -396,6 +399,9 @@ static int get_rl_binding(lua_State* state)
 /// -show:  rl.setbinding([["\e[H"]], [[beginning-of-line]])
 static int set_rl_binding(lua_State* state)
 {
+    if (!funmap)
+        return 0;
+
     const char* _key = checkstring(state, 1);
     const char* binding = checkstring(state, 2);
     const char* keymap = optstring(state, 3, nullptr);
