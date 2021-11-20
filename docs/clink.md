@@ -40,12 +40,12 @@ By default Clink binds <kbd>Alt</kbd>+<kbd>H</kbd> to display the current key bi
 <p>
 <table>
 <tr><td><kbd>Ctrl</kbd>+<kbd>O</kbd></td><td>This is <code>operate-and-get-next</code>, which accepts the current input line and gets the next history line.  You can search history for a command, then press <kbd>Ctrl</kbd>+<kbd>O</kbd> to run that command and queue up the next command after it.  Repeat it to conveniently rerun a series of commands from the history.</td></tr>
-<tr><td><kbd>Alt</kbd>+<kbd>.</kbd></td><td>This is <code>yank-last-arg</code>, which inserts the last argument from the previous line.  You can use it repeatedly to cycle backwards through the history, inserting the last argument from each line.  Learn more by reading up on the "yank" features in the Readline manual.</td></tr>
-<tr><td><kbd>Ctrl</kbd>+<kbd>R</kbd></td><td>This is <code>reverse-search-history</code>, which incrementally searches the history.  Press it, then type, and it does a reverse incremental search while you type.  Press <kbd>Ctrl</kbd>+<kbd>R</kbd> again (and again, etc) to search for other matches of the search text.  Learn more by reading up on the "search" and "history" features in the Readline manual.</td></tr>
+<tr><td><kbd>Alt</kbd>+<kbd>.</kbd></td><td>This is <code>yank-last-arg</code>, which inserts the last argument from the previous line.  You can use it repeatedly to cycle backwards through the history, inserting the last argument from each line.  Learn more by reading up on the "yank" features in the [Readline manual](https://tiswww.cwru.edu/php/chet/readline/rluserman.html).</td></tr>
+<tr><td><kbd>Ctrl</kbd>+<kbd>R</kbd></td><td>This is <code>reverse-search-history</code>, which incrementally searches the history.  Press it, then type, and it does a reverse incremental search while you type.  Press <kbd>Ctrl</kbd>+<kbd>R</kbd> again (and again, etc) to search for other matches of the search text.  Learn more by reading up on the "search" and "history" features in the [Readline manual](https://tiswww.cwru.edu/php/chet/readline/rluserman.html).</td></tr>
 <tr><td><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>D</kbd></td><td>This is <code>remove-history</code>, which deletes the currently selected history line after using any of the history search or navigation commands.</td></tr>
 <tr><td><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>K</kbd></td><td>This is <code>add-history</code>, which adds the current line to the history without executing it, and then clears the input line.</td></tr>
 <tr><td><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>N</kbd></td><td>This is <code>clink-menu-complete-numbers</code>, which grabs numbers with 3 or more digits from the current console screen and cycles through inserting them as completions (binary, octal, decimal, hexadecimal).  Super handy for quickly inserting a commit hash that was printed as output from a preceding command.</td></tr>
-<tr><td><kbd>Alt</kbd>+<kbd>0</kbd> to <kbd>Alt</kbd>+<kbd>9</kbd></td><td>These are <code>digit-argument</code>, which let you enter a numeric value used by many commands.  For example <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>W</kbd> copies the current word to the clipboard, but if you first type <kbd>Alt</kbd>+<kbd>2</kbd> followed by <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>W</kbd> then it copies the 3rd word to the clipboard (the first word is 0, the second is 1, etc).  Learn more by reading up on "Readline Arguments" in the Readline manual.</td></tr>
+<tr><td><kbd>Alt</kbd>+<kbd>0</kbd> to <kbd>Alt</kbd>+<kbd>9</kbd></td><td>These are <code>digit-argument</code>, which let you enter a numeric value used by many commands.  For example <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>W</kbd> copies the current word to the clipboard, but if you first type <kbd>Alt</kbd>+<kbd>2</kbd> followed by <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>W</kbd> then it copies the 3rd word to the clipboard (the first word is 0, the second is 1, etc).  Learn more by reading up on "Readline Arguments" in the [Readline manual](https://tiswww.cwru.edu/php/chet/readline/rluserman.html).</td></tr>
 <tr><td><kbd>Alt</kbd>+<kbd>H</kbd></td><td>This is <code>clink-show-help</code>, which lists the key bindings and commands.  Learn more by visiting <a href="#keybindings">Key Bindings</a>.</td></tr>
 </table>
 </p>
@@ -325,17 +325,27 @@ call "%~dp0clink.bat" inject --profile "%TEMP%\clink_portable" %1 %2 %3 %4 %5 %6
 
 # Configuring Readline
 
-Readline itself can also be configured to add custom keybindings and macros by creating a Readline init file. There is excellent documentation for all the options and commands available to configure Readline in Readline's [manual](https://tiswww.cwru.edu/php/chet/readline/rltop.html#Documentation).
+The Readline library used by Clink can be configured to add custom keybindings and macros by creating a Readline init file. There is excellent documentation for all the options and commands available to configure Readline in the [Readline manual](https://tiswww.cwru.edu/php/chet/readline/rluserman.html).
 
-Clink searches in the directories referenced by the following environment variables and loads the first `.inputrc` or `_inputrc` file found, in the order listed here:
+<table class="linkmenu">
+<tr class="lmtr"><td class="lmtd"><a href="#init-file">Init File</a></td><td class="lmtd">About the .inputrc init file.</tr>
+<tr class="lmtr"><td class="lmtd"><a href="#completion-colors">Completion Colors</a></td><td class="lmtd">How to customize the completion colors.</tr>
+<tr class="lmtr"><td class="lmtd"><a href="#popupwindow">Popup Windows</a></td><td class="lmtd">Using the popup windows.</tr>
+</table>
+
+## Init File
+
+A Readline init file defines key binding customizations and sets Readline configuration variables.
+
+A Readline init file is named `.inputrc` or `_inputrc`.  Clink searches the directories referenced by the following environment variables in the order listed here, and loads the first `.inputrc` or `_inputrc` file it finds:
 - `%CLINK_INPUTRC%`
-- The Clink profile directory (see the "state" line from `clink info`).
+- The Clink profile directory (see the "state" line from `clink info`; by default this is the same as `%USERPROFILE%` but it can be overridden by the `clink inject` command).
 - `%USERPROFILE%`
 - `%LOCALAPPDATA%`
 - `%APPDATA%`
 - `%HOME%`
 
-Other software that also uses Readline will also look for the `.inputrc` file (and possibly the `_inputrc` file too). To set macros and keybindings intended only for Clink one can use the Readline init file conditional construct like this; `$if clink [...] $endif`.
+Other software that also uses the Readline library will also look for the `.inputrc` file (and possibly the `_inputrc` file too). To set macros and keybindings intended only for Clink, one can use the Readline init file conditional construct like this; `$if clink [...] $endif`.
 
 You can use `clink info` to find the directories and configuration file for the current Clink session.
 
@@ -346,21 +356,23 @@ You can use `clink info` to find the directories and configuration file for the 
 
 ### Basic Format
 
-The quick version is that mostly you'll use these kinds of lines:
-- <code><span class="arg">keyname</span>: <span class="arg">command</span></code>
-- <code><span class="arg">keyname</span>: "<span class="arg">literal text</span>"</code>
-- <code><span class="arg">keyname</span>: "luafunc:<span class="arg">lua_function_name</span>"</code>
-- <code>set <span class="arg">varname</span> <span class="arg">value</span></code>
+The `.inputrc` file will mostly use these kinds of lines:
 
-If a Readline macro begins with "luafunc:" then Clink interprets it as a Lua key binding and will invoke the named Lua function.  Function names can include periods (such as `foo.bar`) but cannot include any other punctuation.  See [Lua Key Bindings](#luakeybindings) for more information.
+<table>
+<tr><th>Line</th><th>Description</th></tr>
+<tr><td><code><span class="arg">keyname</span>: <span class="arg">command</span></code></td><td>Binds a named command to a key.</td></tr>
+<tr><td><code><span class="arg">keyname</span>: "<span class="arg">literal text</span>"</code></td><td>Binds a macro to a key.  A macro inserts the literal text into the input line.</td></tr>
+<tr><td><code><span class="arg">keyname</span>: "luafunc:<span class="arg">lua_function_name</span>"</code></td><td>Binds a named Lua function to a key.  See <a href="#luakeybindings">Lua Key Bindings</a> for more information.</td></tr>
+<tr><td><code>set <span class="arg">varname</span> <span class="arg">value</span></code></td><td></td></tr>
+</table>
 
-Refer to the Readline [manual](https://tiswww.cwru.edu/php/chet/readline/rltop.html#Documentation) for a more thorough explanation of the .inputrc file format, list of available commands, and list of configuration variables and their values.
+See [Discovering Clink key sequences](#discovering-clink-key-sequences) for how to find the <span class="arg">keyname</span> for the key you want to bind.  See [Key Bindings](#keybindings) for more information about binding keys in Clink.
 
-See [Key Bindings](#keybindings) for more information about binding keys in Clink.
+Refer to the [Readline manual](https://tiswww.cwru.edu/php/chet/readline/rluserman.html) for a more thorough explanation of the .inputrc file format, list of available commands, and list of configuration variables and their values.
 
 ### New Configuration Variables
 
-Clink adds some new configuration variables to Readline, beyond what's described in the Readline manual:
+Clink adds some new configuration variables to Readline, beyond what's described in the [Readline manual](https://tiswww.cwru.edu/php/chet/readline/rluserman.html):
 
 Name | Default | Description
 :-:|:-:|---
@@ -371,7 +383,7 @@ Name | Default | Description
 
 ### New Commands
 
-Clink adds some new commands to Readline, beyond what's described in the Readline manual:
+Clink adds some new commands to Readline, beyond what's described in the [Readline manual](https://tiswww.cwru.edu/php/chet/readline/rluserman.html):
 
 Name | Description
 :-:|---
@@ -480,9 +492,13 @@ set LS_COLORS=so=90:fi=97:di=93:ex=92:*.pdf=30;105:*.md=4
 
 <a name="popupwindow"></a>
 
-## Popup window
+## Popup Windows
 
-The `clink-popup-complete`, `clink-popup-directories`, and `clink-popup-history` [Readline commands](#configreadline) show a searchable popup window that lists the available completions, directory history, or command history.  Here's how the popup windows work:
+Some commands show a searchable popup window that lists the available completions, directory history, or command history.
+
+For example, `win-history-list` (<kbd>F7</kbd>) and `clink-popup-directories` (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>PgUp</kbd>) show popup windows.
+
+Here's how the popup windows work:
 
 Key | Description
 :-:|---
@@ -490,11 +506,18 @@ Key | Description
 <kbd>Enter</kbd>|Inserts the highlighted completion, changes to the highlighted directory, or executes the highlighted command.
 <kbd>Shift</kbd>+<kbd>Enter</kbd>|Inserts the highlighted completion, inserts the highlighted directory, or jumps to the highlighted command history entry without executing it.
 <kbd>Ctrl</kbd>+<kbd>Enter</kbd>|Same as <kbd>Shift</kbd>+<kbd>Enter</kbd>.
+
+Most of the popup windows also have incremental search:
+
+Key | Description
+:-:|---
 Typing|Typing does an incremental search.
 <kbd>F3</kbd>|Go to the next match.
 <kbd>Ctrl</kbd>+<kbd>L</kbd>|Go to the next match.
 <kbd>Shift</kbd>+<kbd>F3</kbd>|Go to the previous match.
 <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>|Go to the previous match.
+
+The `win-history-list` command has a different search feature.  Typing digits `0`-`9` jumps to the numbered history entry, or typing a letter jumps to the preceding history entry that begins with the typed letter.  This is for compatibility with the <kbd>F7</kbd> behavior built into Windows console prompts.  Use the `clink-popup-history` command instead if you prefer for typing to do an incremental search.
 
 <a name="extending-clink"></a>
 
@@ -502,9 +525,17 @@ Typing|Typing does an incremental search.
 
 Clink can be extended with [Lua](https://www.lua.org/docs.html) scripts to customise startup actions, create completion matches, customise the prompt, and more.  The following sections describe these in more detail and show some examples.
 
+<table class="linkmenu">
+<tr class="lmtr"><td class="lmtd"><a href="#lua-scripts-location">Location of Lua Scripts</a></td><td class="lmtd">Locations from which scripts are loaded.</tr>
+<tr class="lmtr"><td class="lmtd"><a href="#matchgenerators">Match Generators</a></td><td class="lmtd">How to write match generators, or custom completion providers.</tr>
+<tr class="lmtr"><td class="lmtd"><a href="#argumentcompletion">Argument Completion</a></td><td class="lmtd">How to give commands contextual match generators for their arguments.</tr>
+<tr class="lmtr"><td class="lmtd"><a href="#classifywords">Coloring the Input Text</a></td><td class="lmtd">How to make a match generator or argument matcher override the input coloring.</tr>
+<tr class="lmtr"><td class="lmtd"><a href="#customisingtheprompt">Customising the Prompt</a></td><td class="lmtd">How to write custom prompt filters.</tr>
+</table>
+
 <a name="lua-scripts-location"></a>
 
-## The Location of Lua Scripts
+## Location of Lua Scripts
 
 Clink loads all Lua scripts it finds in these directories:
 1. All directories listed in the `clink.path` setting, separated by semicolons.
@@ -850,7 +881,7 @@ With the shorthand form flags are implied rather than declared.  When a shorthan
 
 <a name="classifywords"></a>
 
-## Coloring The Input Text
+## Coloring the Input Text
 
 When the `clink.colorize_input` [setting](#clinksettings) is enabled, [argmatcher](#argumentcompletion) automatically apply colors to the input text by parsing it.
 
@@ -911,7 +942,7 @@ The <code>classifications</code> field is a [word_classifications](#word_classif
 
 <a name="customisingtheprompt"></a>
 
-## Customising The Prompt
+## Customising the Prompt
 
 Before Clink displays the prompt it filters the prompt through [Lua](#extending-clink) so that the prompt can be customised. This happens each and every time that the prompt is shown which allows for context sensitive customisations (such as showing the current branch of a git repository).
 
