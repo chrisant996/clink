@@ -1564,10 +1564,11 @@ void initialise_readline(const char* state_dir)
         { "\\M-\\C-f",      "clink-expand-doskey-alias" }, // alt-ctrl-f
         { "\\M-\\C-k",      "add-history" },             // alt-ctrl-k
         { "\\M-\\C-n",      "clink-old-menu-complete-numbers"},// alt-ctrl-n
-        { "\\e[27;8;78~",   "clink-popup-complete-numbers"},// alt-ctrl-N
+        { "\\e[27;8;78~",   "clink-popup-complete-numbers"},// alt-ctrl-shift-n
         { "\\M-\\C-u",      "clink-up-directory" },      // alt-ctrl-u (from Clink 0.4.9)
         { "\\M-\\C-w",      "clink-copy-word" },         // alt-ctrl-w
         { "\\e[5;5~",       "clink-up-directory" },      // ctrl-pgup (changed in Clink 1.0.0)
+        { "\\e[5;7~",       "clink-popup-directories" }, // alt-ctrl-pgup
         { "\\e\\eOS",       "clink-exit" },              // alt-f4
         { "\\e[1;3H",       "clink-scroll-top" },        // alt-home
         { "\\e[1;3F",       "clink-scroll-bottom" },     // alt-end
