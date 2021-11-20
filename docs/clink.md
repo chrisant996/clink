@@ -31,7 +31,7 @@ Clink combines the native Windows shell cmd.exe with the powerful command line e
 - Colored and scriptable prompt.
 - Auto-answering of the "Terminate batch job?" prompt.
 
-By default Clink binds <kbd>Alt</kbd>+<kbd>H</kbd> to display the current key bindings. More features can also be found in GNU's [Readline](https://tiswww.cwru.edu/php/chet/readline/readline.html) and [History](https://tiswww.cwru.edu/php/chet/readline/history.html) libraries' manuals.
+By default Clink binds <kbd>Alt</kbd>+<kbd>H</kbd> to display the current key bindings. More features can also be found in GNU's [Readline](https://tiswww.cwru.edu/php/chet/readline/readline.html).
 
 <blockquote>
 <p>
@@ -386,9 +386,9 @@ Name | Description
 `clink-exit`|Replaces the current line with `exit` and executes it (exits the shell instance).
 `clink-expand-doskey-alias`|Expand the doskey alias (if any) at the beginning of the line.
 `clink-expand-env-var`|Expand the environment variable (e.g. `%FOOBAR%`) at the cursor.
-`clink-expand-history`|Perform history expansion in the current input line.  See the [History](https://tiswww.cwru.edu/php/chet/readline/history.html) manual for information on history expansion.
-`clink-expand-history-and-alias`|Perform history and doskey alias expansion in the current input line.  See the [History](https://tiswww.cwru.edu/php/chet/readline/history.html) manual for information on history expansion.
-`clink-expand-line`|Perform history, doskey alias, and environment variable expansion in the current input line.  See the [History](https://tiswww.cwru.edu/php/chet/readline/history.html) manual for information on history expansion.
+`clink-expand-history`|Perform [history](#using-history-expansion) expansion in the current input line.
+`clink-expand-history-and-alias`|Perform [history](#using-history-expansion) and doskey alias expansion in the current input line.
+`clink-expand-line`|Perform [history](#using-history-expansion), doskey alias, and environment variable expansion in the current input line.
 `clink-find-conhost`|Activates the "Find" dialog when running in a standard console window (hosted by the OS conhost).  This is equivalent to picking "Find..." from the console window's system menu.
 `clink-insert-dot-dot`|Inserts `..\` at the cursor.
 `clink-mark-conhost`|Activates the "Mark" mode when running in a standard console window (hosted by the OS conhost).  This is equivalent to picking "Mark" from the console window's system menu.
@@ -432,7 +432,7 @@ Name | Description
 `history-and-alias-expand-line`|A synonym for `clink-expand-history-and-alias`.
 `history-expand-line`|A synonym for `clink-expand-history`.
 `insert-last-argument`|A synonym for `yank-last-arg`.
-`magic-space`|Perform history expansion on the text before the cursor position and insert a space.  See the [History](https://tiswww.cwru.edu/php/chet/readline/history.html) manual for information on history expansion.
+`magic-space`|Perform [history](#using-history-expansion) expansion on the text before the cursor position and insert a space.
 `old-menu-complete-backward`|Like `old-menu-complete`, but in reverse.
 `remove-history`|While searching history, removes the current line from the history.
 `shell-expand-line`|A synonym for `clink-expand-line`.
@@ -1266,6 +1266,287 @@ Normally Clink saves a single saved master history list.  All instances of Clink
 
 It's also possible to make one or more instances of Clink use a different saved master history list by setting the `%CLINK_HISTORY_LABEL%` environment variable.  This can be up to 32 alphanumeric characters, and is appended to the master history file name.  Changing the `%CLINK_HISTORY_LABEL%` environment variable takes effect at the next input line.
 
+## Using History Expansion
+
+Clink uses Readline's [History library](https://tiswww.cwru.edu/php/chet/readline/history.html) to
+add history expansion capabilities.  If these are undesirable, they can be turned off by running
+`clink set history.expand_mode off`.
+
+The History library provides a history expansion feature that is similar
+to the history expansion provided by `csh`.  This section describes the
+syntax used to manipulate the history information.
+
+   History expansions introduce words from the history list into the
+input stream, making it easy to repeat commands, insert the arguments to
+a previous command into the current input line, or fix errors in
+previous commands quickly.
+
+   History expansion takes place in two parts.  The first is to
+determine which line from the history list should be used during
+substitution.  The second is to select portions of that line for
+inclusion into the current one.  The line selected from the history is
+called the "event", and the portions of that line that are acted upon
+are called "words".  Various "modifiers" are available to manipulate the
+selected words.  The line is broken into words in the same fashion that
+Bash does, so that several words surrounded by quotes are considered one
+word.  History expansions are introduced by the appearance of the
+history expansion character, which is `!`.
+
+   History expansion implements shell-like quoting conventions: a
+backslash can be used to remove the special handling for the next
+character; single quotes enclose verbatim sequences of characters, and
+can be used to inhibit history expansion; and characters enclosed within
+double quotes may be subject to history expansion, since backslash can
+escape the history expansion character, but single quotes may not, since
+they are not treated specially within double quotes.
+
+<table class="linkmenu">
+<tr class="lmtr"><td class="lmtd"><a href="#event-designators">Event Designators</a></td><td class="lmtd">How to specify which history line to use.</tr>
+<tr class="lmtr"><td class="lmtd"><a href="#word-designators">Word Designators</a></td><td class="lmtd">Specifying which words are of interest.</tr>
+<tr class="lmtr"><td class="lmtd"><a href="#modifiers">Modifiers</a></td><td class="lmtd">Modifying the results of substitution.</tr>
+</table>
+
+### Event Designators
+
+An event designator is a reference to a command line entry in the
+history list.  Unless the reference is absolute, events are relative to
+the current position in the history list.
+
+<table>
+<tr><td>
+<code>!</code>
+</td><td>
+     Start a history substitution, except when followed by a space, tab,
+     the end of the line, or <code>=</code>.
+</td></tr>
+
+<tr><td>
+<code>!<em>n</em></code>
+</td><td>
+     Refer to command line <em>n</em>.
+</td></tr>
+
+<tr><td>
+<code>!-<em>n</em></code>
+</td><td>
+     Refer to the command <em>n</em> lines back.
+</td></tr>
+
+<tr><td>
+<code>!!</code>
+</td><td>
+     Refer to the previous command.  This is a synonym for <code>!-1</code>.
+</td></tr>
+
+<tr><td>
+<code>!<em>string</em></code>
+</td><td>
+     Refer to the most recent command preceding the current position in
+     the history list starting with <em>string</em>.
+</td></tr>
+
+<tr><td>
+<code>!?<em>string</em>[?]</code>
+</td><td>
+     Refer to the most recent command preceding the current position in
+     the history list containing <em>string</em>.  The trailing <code>?</code> may be
+     omitted if the <em>string</em> is followed immediately by a newline.  If
+     <em>string</em> is missing, the string from the most recent search is used;
+     it is an error if there is no previous search string.
+</td></tr>
+
+<tr><td>
+<code>^<em>string1</em>^<em>string2</em>^</code>
+</td><td>
+     Quick Substitution.  Repeat the last command, replacing <em>string1</em>
+     with <em>string2</em>.  Equivalent to <code>!!:s^<em>string1</em>^<em>string2</em>^</code>.
+</td></tr>
+
+<tr><td>
+<code>!#</code>
+</td><td>
+     The entire command line typed so far.
+</td></tr>
+</table>
+
+### Word Designators
+
+Word designators are used to select desired words from the event.  A `:`
+separates the event specification from the word designator.  It may be
+omitted if the word designator begins with a `^`, `$`, `*`, `-`, or `%`.
+Words are numbered from the beginning of the line, with the first word
+being denoted by 0 (zero).  Words are inserted into the current line
+separated by single spaces.
+
+   For example,
+
+<table>
+<tr><td>
+<code>!!</code>
+</td><td>
+     designates the preceding command.  When you type this, the
+     preceding command is repeated in toto.
+</td></tr>
+
+<tr><td>
+<code>!!:$</code>
+</td><td>
+     designates the last argument of the preceding command.  This may be
+     shortened to <code>!$</code>.
+</td></tr>
+
+<tr><td>
+<code>!fi:2</code>
+</td><td>
+     designates the second argument of the most recent command starting
+     with the letters <code>fi</code>.
+</td></tr>
+</table>
+
+   Here are the word designators:
+
+<table>
+<tr><td>
+<code>0 (zero)</code>
+</td><td>
+     The 0th word.  For many applications, this is the command word.
+</td></tr>
+
+<tr><td>
+<code><em>n</em></code>
+</td><td>
+     The <em>n</em>th word.
+</td></tr>
+
+<tr><td>
+<code>^</code>
+</td><td>
+     The first argument; that is, word 1.
+</td></tr>
+
+<tr><td>
+<code>$</code>
+</td><td>
+     The last argument.
+</td></tr>
+
+<tr><td>
+<code>%</code>
+</td><td>
+     The first word matched by the most recent <code>!?<em>string</em>?</code> search, if the
+     search string begins with a character that is part of a word.
+</td></tr>
+
+<tr><td>
+<code><em>x</em>-<em>y</em></code>
+</td><td>
+     A range of words; <code>-<em>y</em></code> abbreviates <code>0-<em>y</em></code>.
+</td></tr>
+
+<tr><td>
+<code>*</code>
+</td><td>
+     All of the words, except the 0th.  This is a synonym for <code>1-$</code>.
+     It is not an error to use <code>*</code> if there is just one word in the
+     event; the empty string is returned in that case.
+</td></tr>
+
+<tr><td>
+<code><em>x</em>*</code>
+</td><td>
+     Abbreviates <code><em>x</em>-$</code>
+</td></tr>
+
+<tr><td>
+<code><em>x</em>-</code>
+</td><td>
+     Abbreviates <code><em>x</em>-$</code> like <code><em>x</em>*</code>, but omits the last word.  If <code><em>x</em></code> is
+     missing, it defaults to 0.
+</td></tr>
+</table>
+
+   If a word designator is supplied without an event specification, the
+previous command is used as the event.
+
+### Modifiers
+
+After the optional word designator, you can add a sequence of one or
+more of the following modifiers, each preceded by a `:`.  These modify,
+or edit, the word or words selected from the history event.
+
+<table>
+<tr><td>
+<code>h</code>
+</td><td>
+     Remove a trailing pathname component, leaving only the head.
+</td></tr>
+
+<tr><td>
+<code>t</code>
+</td><td>
+     Remove all leading pathname components, leaving the tail.
+</td></tr>
+
+<tr><td>
+<code>r</code>
+</td><td>
+     Remove a trailing suffix of the form <code>.<em>suffix</em></code>, leaving the
+     basename.
+</td></tr>
+
+<tr><td>
+<code>e</code>
+</td><td>
+     Remove all but the trailing suffix.
+</td></tr>
+
+<tr><td>
+<code>p</code>
+</td><td>
+     Print the new command but do not execute it.
+</td></tr>
+
+<tr><td>
+<code>s/<em>old</em>/<em>new</em>/</code>
+</td><td>
+     Substitute <em>new</em> for the first occurrence of <em>old</em> in the event line.
+     Any character may be used as the delimiter in place of <code>/</code>.  The
+     delimiter may be quoted in <em>old</em> and <em>new</em> with a single backslash.  If
+     <code>&</code> appears in <em>new</em>, it is replaced by <em>old</em>.  A single backslash will
+     quote the <code>&</code>.  If <em>old</em> is null, it is set to the last <em>old</em>
+     substituted, or, if no previous history substitutions took place,
+     the last <em>string</em> in a <code>!?<em>string</em>?</code> search.  If <em>new</em> is is null, each
+     matching <em>old</em> is deleted.  The final delimiter is optional if it is
+     the last character on the input line.
+</td></tr>
+
+<tr><td>
+<code>&</code>
+</td><td>
+     Repeat the previous substitution.
+</td></tr>
+
+<tr><td>
+<code>g</code></br>
+</td><td>
+     Cause changes to be applied over the entire event line.  Used in
+     conjunction with <code>s</code>, as in <code>gs/<em>old</em>/<em>new</em>/</code>, or with <code>&</code>.
+</td></tr>
+
+<tr><td>
+<code>a</code></br>
+</td><td>
+     The same as <code>g</code>.
+</td></tr>
+
+<tr><td>
+<code>G</code>
+</td><td>
+     Apply the following <code>s</code> or <code>&</code> modifier once to each word in the
+     event.
+</td></tr>
+</table>
+
 ## Sample Scripts
 
 Here are a few samples of what can be done with Clink.
@@ -1276,11 +1557,13 @@ The [clink-completions](https://github.com/vladimir-kotikov/clink-completions) c
 
 ### clink-flex-prompt
 
-The [clink-flex-prompt](https://github.com/chrisant996/clink-flex-prompt) script is similar to the zsh powerlevel10k theme.  It gives Clink a very customizable prompt, with many style options.  It's also extensible so you can add your own segments.
+The [clink-flex-prompt](https://github.com/chrisant996/clink-flex-prompt) script is similar to the zsh powerlevel10k theme.  It gives Clink a very customizable prompt, with many style options.  It's extensible so you can add your own segments.
+
+It also takes advantage of Clink's [asynchronous prompt refresh](#asyncpromptfiltering) to make prompts show up instantly, even in large git repos, for example.
 
 ### oh-my-posh
 
-The [oh-my-posh](https://github.com/JanDeDobbeleer/oh-my-posh) program can generate fancy prompts. Refer to its [documentation](https://ohmyposh.dev) for how to configure it.
+The [oh-my-posh](https://github.com/JanDeDobbeleer/oh-my-posh) program can generate fancy prompts. Refer to its [documentation](https://ohmyposh.dev) for how to configure it, and for sample themes.
 
 Integrating oh-my-posh with Clink is easy: just save the following text to an `oh-my-posh.lua` file in your Clink scripts directory (run `clink info` to find that), and make sure the `oh-my-posh.exe` program is in a directory listed in the `%PATH%` environment variable (or edit the script below to provide a fully qualified path to the oh-my-posh.exe program). Replace the config with your own configuration and you're good to go.
 
