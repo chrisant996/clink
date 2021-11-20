@@ -20,7 +20,11 @@ h1 {
     font-size: 2rem;
 }
 
-h2 { font-size: 1.60rem; }
+h2 {
+    border-bottom: 0.075rem #3377cc dashed;
+    font-size: 1.60rem;
+}
+
 h3 { font-size: 1.40rem; }
 h4 { font-size: 1.20rem; }
 h5 { font-size: 1.10rem; }
