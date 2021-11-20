@@ -1282,8 +1282,8 @@ int clink_popup_history(int count, int invoking_key)
     popup_result result;
     if (!g_gui_popups.get())
     {
-        extern popup_results activate_history_text_list(const char** history, int count, int index, const int* indices);
-        popup_results results = activate_history_text_list(const_cast<const char**>(history), total, current, indices);
+        extern popup_results activate_history_text_list(const char** history, int count, int index, const int* indices, int history_mode);
+        popup_results results = activate_history_text_list(const_cast<const char**>(history), total, current, indices, true);
         result = results.m_result;
         current = results.m_index;
     }

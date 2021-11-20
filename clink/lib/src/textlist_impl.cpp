@@ -34,6 +34,7 @@ enum {
     bind_id_textlist_pgdn,
     bind_id_textlist_home,
     bind_id_textlist_end,
+    bind_id_textlist_findincr,
     bind_id_textlist_findnext,
     bind_id_textlist_findprev,
     bind_id_textlist_copy,
@@ -235,7 +236,7 @@ textlist_impl::textlist_impl(input_dispatcher& dispatcher)
 }
 
 //------------------------------------------------------------------------------
-popup_results textlist_impl::activate(const char* title, const char** entries, int count, int index, bool history_mode, const int* indices, bool has_columns)
+popup_results textlist_impl::activate(const char* title, const char** entries, int count, int index, bool reverse, int history_mode, const int* indices, bool has_columns)
 {
     reset();
     m_results.clear();
@@ -252,11 +253,15 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
         return popup_result::error;
 
     // Make sure there's room.
-    m_history_mode = history_mode;      // Is used inside update_layout().
+    m_reverse = reverse;
+    m_history_mode = (history_mode != 0);
+    m_win_history = (history_mode == 2);
     update_layout();
     if (m_visible_rows <= 0)
     {
+        m_reverse = false;
         m_history_mode = false;
+        m_win_history = false;
         return popup_result::error;
     }
 
@@ -278,7 +283,7 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
     m_has_columns = has_columns;
 
     if (title && *title)
-        m_default_title.format(" %s ", title);
+        m_default_title = title;
 
     // Initialize the view.
     if (index < 0)
@@ -376,13 +381,30 @@ void textlist_impl::on_end_line()
 }
 
 //------------------------------------------------------------------------------
+static void advance_index(int& i, int direction, int max_count)
+{
+    i += direction;
+    if (direction < 0)
+    {
+        if (i < 0)
+            i = max_count - 1;
+    }
+    else
+    {
+        if (i >= max_count)
+            i = 0;
+    }
+}
+
+//------------------------------------------------------------------------------
 void textlist_impl::on_input(const input& _input, result& result, const context& context)
 {
     assert(m_active);
 
     input input = _input;
     bool set_input_clears_needle = true;
-    bool from_top = false;
+    bool from_begin = false;
+    bool need_display = false;
 
     // Cancel if no room.
     if (m_visible_rows <= 0)
@@ -451,10 +473,10 @@ navigated:
     case bind_id_textlist_findnext:
     case bind_id_textlist_findprev:
         set_input_clears_needle = false;
-        if (m_history_mode)
+        if (m_win_history)
             break;
 find:
-        if (m_history_mode)
+        if (m_win_history)
         {
             lock_cursor(false);
             show_cursor(true);
@@ -464,7 +486,9 @@ find:
         }
         else
         {
-            int direction = (input.id == bind_id_textlist_findnext) ? 1 : -1;
+            int direction = (input.id == bind_id_textlist_findprev) ? -1 : 1;
+            if (m_reverse)
+                direction = 0 - direction;
 
             int mode = g_ignore_case.get();
             if (mode < 0 || mode >= str_compare_scope::num_scope_values)
@@ -472,27 +496,21 @@ find:
             str_compare_scope _(mode, g_fuzzy_accent.get());
 
             int i = m_index;
-            if (direction < 0)
-            {
-                if (from_top)
-                    i = m_count;
-                i--;
-            }
-            else
-            {
-                if (from_top)
-                    i = 0;
-            }
+            if (from_begin)
+                i = m_reverse ? m_count - 1 : 0;
 
-            if (!from_top && (input.id == bind_id_textlist_findnext || input.id == bind_id_textlist_findprev))
-                i += direction;
+            if (input.id == bind_id_textlist_findnext || input.id == bind_id_textlist_findprev)
+                advance_index(i, direction, m_count);
 
             int original = i;
             while (true)
             {
                 bool match = strstr_compare(m_needle, m_items[i]);
-                for (int col = 0; !match && col < max_columns; col++)
-                    match = strstr_compare(m_needle, m_columns.get_col_text(i, col));
+                if (m_has_columns)
+                {
+                    for (int col = 0; !match && col < max_columns; col++)
+                        match = strstr_compare(m_needle, m_columns.get_col_text(i, col));
+                }
 
                 if (match)
                 {
@@ -500,24 +518,17 @@ find:
                     if (m_index < m_top || m_index >= m_top + m_visible_rows)
                         m_top = max<int>(0, min<int>(m_index, m_count - m_visible_rows));
                     m_prev_displayed = -1;
-                    update_display();
+                    need_display = true;
                     break;
                 }
 
-                i += direction;
-                if (direction < 0)
-                {
-                    if (i < 0)
-                        i = m_count - 1;
-                }
-                else
-                {
-                    if (i >= m_count)
-                        i = 0;
-                }
+                advance_index(i, direction, m_count);
                 if (i == m_index)
                     break;
             }
+
+            if (need_display)
+                update_display();
         }
         break;
 
@@ -554,7 +565,8 @@ find:
                     break;
                 int point = _rl_find_prev_mbchar(const_cast<char*>(m_needle.c_str()), m_needle.length(), MB_FIND_NONZERO);
                 m_needle.truncate(point);
-                from_top = !m_history_mode;
+                need_display = true;
+                from_begin = !m_win_history;
                 refresh = true;
                 goto update_needle;
             }
@@ -563,7 +575,7 @@ find:
             {
                 if (m_input_clears_needle)
                 {
-                    assert(!m_history_mode);
+                    assert(!m_win_history);
                     m_needle.clear();
                     m_needle_is_number = false;
                     m_input_clears_needle = false;
@@ -574,11 +586,12 @@ find:
                 while (iter.more())
                 {
                     unsigned int c = iter.next();
-                    if (!m_history_mode)
+                    if (!m_win_history)
                     {
                         refresh = m_has_override_title;
                         m_override_title.clear();
                         m_needle.concat(seq, int(iter.get_pointer() - seq));
+                        need_display = true;
                     }
                     else if (c >= '0' && c <= '9')
                     {
@@ -609,9 +622,12 @@ find:
 
             // Handle the input.
 update_needle:
-            if (!m_history_mode)
+            if (!m_win_history)
             {
-                input.id = bind_id_textlist_findnext;
+                input.id = bind_id_textlist_findincr;
+                m_override_title.clear();
+                if (m_needle.length())
+                    m_override_title.format("find: %-10s", m_needle.c_str());
                 goto find;
             }
             else if (m_needle_is_number)
@@ -620,7 +636,7 @@ update_needle:
                 {
                     refresh = true;
                     m_override_title.clear();
-                    m_override_title.format("\xe2\x94\xa4 enter history number: %-6s \xe2\x94\x9c", m_needle.c_str());
+                    m_override_title.format("enter history number: %-6s", m_needle.c_str());
                     int i = atoi(m_needle.c_str());
                     if (m_indices)
                     {
@@ -694,7 +710,7 @@ update_needle:
         break;
     }
 
-    if (set_input_clears_needle && !m_history_mode)
+    if (set_input_clears_needle && !m_win_history)
         m_input_clears_needle = true;
 
     // Keep dispatching input.
@@ -848,17 +864,56 @@ void textlist_impl::update_display()
                 const str_base* topline = &horzline;
                 if (m_default_title.length() || m_override_title.length())
                 {
-                    str_base* title = m_has_override_title ? &m_override_title : &m_default_title;
-                    int title_cells = cell_count(title->c_str());
+                    const char* title = m_has_override_title ? m_override_title.c_str() : m_default_title.c_str();
+                    int title_cells = 0;
+                    int title_len = 0;
+
+                    {
+                        const char* walk = title;
+                        int remaining = col_width - (2 + 2 + 2); // Corners, bars, spaces.
+                        str_iter iter(title);
+                        while (int c = iter.next())
+                        {
+                            const int width = clink_wcwidth(c);
+                            if (width > remaining)
+                                break;
+                            title_cells += width;
+                            remaining -= width;
+                            title_len = iter.get_pointer() - title;
+                        }
+                    }
+
                     int x = (col_width - 2 - title_cells) / 2;
                     tmp.clear();
                     x--;
+
                     for (int i = x; i-- > 0;)
-                        tmp.concat("\xe2\x94\x80", 3);
-                    x += title_cells;
-                    tmp.concat(title->c_str(), title->length());
+                    {
+                        if (i == 0 && m_has_override_title)
+                            tmp.concat("\xe2\x94\xa4", 3);
+                        else
+                            tmp.concat("\xe2\x94\x80", 3);
+                    }
+
+                    x += 1 + title_cells + 1;
+                    tmp.concat(" ", 1);
+                    tmp.concat(title, title_len);
+                    tmp.concat(" ", 1);
+
+                    bool cap = m_has_override_title;
                     for (int i = col_width - 2 - x; i-- > 0;)
-                        tmp.concat("\xe2\x94\x80", 3);
+                    {
+                        if (cap)
+                        {
+                            cap = false;
+                            tmp.concat("\xe2\x94\x9c", 3);
+                        }
+                        else
+                        {
+                            tmp.concat("\xe2\x94\x80", 3);
+                        }
+                    }
+
                     topline = &tmp;
                 }
 
@@ -1012,6 +1067,7 @@ void textlist_impl::reset()
     m_longest = 0;
     m_columns.clear();
     m_history_mode = false;
+    m_win_history = false;
     m_has_columns = false;
 
     m_top = 0;
@@ -1074,7 +1130,7 @@ popup_results activate_text_list(const char* title, const char** entries, int co
     if (!s_textlist)
         return popup_result::error;
 
-    return s_textlist->activate(title, entries, count, current, false/*history_mode*/, nullptr, has_columns);
+    return s_textlist->activate(title, entries, count, current, false/*reverse*/, false/*history_mode*/, nullptr, has_columns);
 }
 
 //------------------------------------------------------------------------------
@@ -1083,16 +1139,16 @@ popup_results activate_directories_text_list(const char** dirs, int count)
     if (!s_textlist)
         return popup_result::error;
 
-    return s_textlist->activate("Directories", dirs, count, count - 1, false/*history_mode*/, nullptr, false);
+    return s_textlist->activate("Directories", dirs, count, count - 1, true/*reverse*/, false/*history_mode*/, nullptr, false);
 }
 
 //------------------------------------------------------------------------------
-popup_results activate_history_text_list(const char** history, int count, int current, const int* indices)
+popup_results activate_history_text_list(const char** history, int count, int current, const int* indices, int history_mode)
 {
     if (!s_textlist)
         return popup_result::error;
 
     assert(current >= 0);
     assert(current < count);
-    return s_textlist->activate("History", history, count, current, true/*history_mode*/, indices, false);
+    return s_textlist->activate("History", history, count, current, true/*reverse*/, history_mode, indices, false);
 }

@@ -45,7 +45,7 @@ class textlist_impl
 public:
                     textlist_impl(input_dispatcher& dispatcher);
 
-    popup_results   activate(const char* title, const char** entries, int count, int index, bool history_mode, const int* indices, bool columns);
+    popup_results   activate(const char* title, const char** entries, int count, int index, bool reverse, int history_mode, const int* indices, bool columns);
 
 private:
     // editor_module.
@@ -89,7 +89,9 @@ private:
     std::vector<const char*> m_items;       // Escaped entries for display.
     int             m_longest = 0;
     addl_columns    m_columns;
+    bool            m_reverse = false;
     bool            m_history_mode = false;
+    bool            m_win_history = false;
     bool            m_has_columns = false;
 
     // Current entry.
