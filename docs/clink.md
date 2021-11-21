@@ -1579,9 +1579,11 @@ or edit, the word or words selected from the history event.
 </td></tr>
 </table>
 
-## Sample Scripts
+<a name="sample-scripts">
 
-Here are a few samples of what can be done with Clink.
+## Popular Scripts
+
+Here are some popular scripts that show off what can be done with Clink.
 
 ### clink-completions
 
@@ -1592,6 +1594,10 @@ The [clink-completions](https://github.com/vladimir-kotikov/clink-completions) c
 The [clink-flex-prompt](https://github.com/chrisant996/clink-flex-prompt) script is similar to the zsh powerlevel10k theme.  It gives Clink a very customizable prompt, with many style options.  It's extensible so you can add your own segments.
 
 It also takes advantage of Clink's [asynchronous prompt refresh](#asyncpromptfiltering) to make prompts show up instantly, even in large git repos, for example.
+
+### clink-fzf
+
+The [clink-fzf](https://github.com/chrisant996/clink-fzf) script integrates the popular [fzf](https://github.com/junegunn/fzf) "fuzzy finder" tool with Clink.
 
 ### oh-my-posh
 
