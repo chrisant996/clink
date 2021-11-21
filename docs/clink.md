@@ -1,8 +1,10 @@
 # What is Clink?
 
-Clink combines the native Windows shell cmd.exe with the powerful command line editing features of the GNU Readline library, which provides rich completion, history, and line-editing capabilities. Readline is best known for its use in the well-known Unix shell Bash, the standard shell for Mac OS X and many Linux distributions.
+Clink combines the native Windows shell cmd.exe with the powerful command line editing features of the GNU Readline library, which provides rich completion, history, and line-editing capabilities. Readline is best known for its use in the Unix shell Bash, the standard shell for Mac OS X and many Linux distributions.
 
 ### Features
+
+Here are some highlights of what Clink provides:
 
 - The same line editing as Bash (from the [GNU Readline library](https://tiswww.case.edu/php/chet/readline/rltop.html) version 8.1).
 - History persistence between sessions.
@@ -12,11 +14,10 @@ Clink combines the native Windows shell cmd.exe with the powerful command line e
   - Environment variables.
 - Context sensitive colored input text.
 - New keyboard shortcuts;
-  - Paste from clipboard (<kbd>Ctrl</kbd>+<kbd>V</kbd>).
+  - Interactive completion list (<kbd>Ctrl</kbd>+<kbd>Space</kbd>).
   - Incremental history search (<kbd>Ctrl</kbd>+<kbd>R</kbd> and <kbd>Ctrl</kbd>+<kbd>S</kbd>).
   - Powerful completion (<kbd>Tab</kbd>).
   - Undo (<kbd>Ctrl</kbd>+<kbd>Z</kbd>).
-  - Automatic `cd ..` (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>U</kbd>).
   - Environment variable expansion (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>E</kbd>).
   - Doskey alias expansion (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>F</kbd>).
   - Scroll the screen buffer (<kbd>Alt</kbd>+<kbd>Up</kbd>, etc).
