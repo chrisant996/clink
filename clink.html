@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.2.45</title>
+<title>Clink v1.2.46</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -27,7 +27,11 @@ h1 {
     font-size: 2rem;
 }
 
-h2 { font-size: 1.60rem; }
+h2 {
+    border-bottom: 0.075rem #3377cc dashed;
+    font-size: 1.60rem;
+}
+
 h3 { font-size: 1.40rem; }
 h4 { font-size: 1.20rem; }
 h5 { font-size: 1.10rem; }
@@ -108,15 +112,25 @@ kbd {
     white-space:nowrap;
 }
 
-#content td:nth-child(1) {
+#content td:nth-child(1):not(.lmtd) {
     white-space: nowrap;
 }
 
-#content td:nth-child(1) code {
+#content td:nth-child(1):not(.lmtd) code {
     border: none;
     padding: 0 0 0 0;
     border-radius: 0;
     background-color: transparent;
+}
+
+.linkmenu {
+    border: none;
+    background-color: transparent;
+    margin-left: 2rem;
+}
+
+.lmtd {
+    padding-right: 1rem;
 }
 
 .section {
@@ -153,7 +167,7 @@ kbd {
     clear: both;
 }
 
-#content table {
+#content table:not(.linkmenu) {
     font-size: 1rem;
     margin: auto 5%;
     border-collapse: collapse;
@@ -165,7 +179,7 @@ kbd {
     background-color: #eee;
 }
 
-#content td, #content th {
+#content td:not(.lmtd), #content th {
     vertical-align: text-top;
     padding: 0.2rem 0.5rem;
 }
@@ -174,15 +188,15 @@ kbd {
     background-color: #fff;
 }
 
-#content td {
+#content td:not(.lmtd) {
     border: 1px solid #ddd;
 }
 
-#content tr:nth-child(odd) {
+#content tr:nth-child(odd):not(.lmtr) {
     background-color: #fbfbfb;
 }
 
-#content tr:nth-child(even) {
+#content tr:nth-child(even):not(.lmtr) {
     background-color: #fff;
 }
 
@@ -747,7 +761,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.2.45</div>
+                <div id="title">Clink v1.2.46</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -765,8 +779,9 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
     <div id="content">
         <div class="section" id="documentation">
 <h1 id="what-is-clink">What is Clink?</h1>
-<p>Clink combines the native Windows shell cmd.exe with the powerful command line editing features of the GNU Readline library, which provides rich completion, history, and line-editing capabilities. Readline is best known for its use in the well-known Unix shell Bash, the standard shell for Mac OS X and many Linux distributions.</p>
+<p>Clink combines the native Windows shell cmd.exe with the powerful command line editing features of the GNU Readline library, which provides rich completion, history, and line-editing capabilities. Readline is best known for its use in the Unix shell Bash, the standard shell for Mac OS X and many Linux distributions.</p>
 <h3 id="features">Features</h3>
+<p>Here are some highlights of what Clink provides:</p>
 <ul>
 <li>The same line editing as Bash (from the <a href="https://tiswww.case.edu/php/chet/readline/rltop.html">GNU Readline library</a> version 8.1).</li>
 <li>History persistence between sessions.</li>
@@ -778,11 +793,10 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 </li>
 <li>Context sensitive colored input text.</li>
 <li>New keyboard shortcuts;<ul>
-<li>Paste from clipboard (<kbd>Ctrl</kbd>+<kbd>V</kbd>).</li>
+<li>Interactive completion list (<kbd>Ctrl</kbd>+<kbd>Space</kbd>).</li>
 <li>Incremental history search (<kbd>Ctrl</kbd>+<kbd>R</kbd> and <kbd>Ctrl</kbd>+<kbd>S</kbd>).</li>
 <li>Powerful completion (<kbd>Tab</kbd>).</li>
 <li>Undo (<kbd>Ctrl</kbd>+<kbd>Z</kbd>).</li>
-<li>Automatic <code>cd ..</code> (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>U</kbd>).</li>
 <li>Environment variable expansion (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>E</kbd>).</li>
 <li>Doskey alias expansion (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>F</kbd>).</li>
 <li>Scroll the screen buffer (<kbd>Alt</kbd>+<kbd>Up</kbd>, etc).</li>
@@ -801,7 +815,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 <li>Colored and scriptable prompt.</li>
 <li>Auto-answering of the &quot;Terminate batch job?&quot; prompt.</li>
 </ul>
-<p>By default Clink binds <kbd>Alt</kbd>+<kbd>H</kbd> to display the current key bindings. More features can also be found in GNU&#39;s <a href="https://tiswww.cwru.edu/php/chet/readline/readline.html">Readline</a> and <a href="https://tiswww.cwru.edu/php/chet/readline/history.html">History</a> libraries&#39; manuals.</p>
+<p>By default Clink binds <kbd>Alt</kbd>+<kbd>H</kbd> to display the current key bindings. More features can also be found in GNU&#39;s <a href="https://tiswww.cwru.edu/php/chet/readline/readline.html">Readline</a>.</p>
 <blockquote>
 <p>
 <strong>Want some quick but powerful tips to get started?</strong>
@@ -809,12 +823,12 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 <p>
 <table>
 <tr><td><kbd>Ctrl</kbd>+<kbd>O</kbd></td><td>This is <code>operate-and-get-next</code>, which accepts the current input line and gets the next history line.  You can search history for a command, then press <kbd>Ctrl</kbd>+<kbd>O</kbd> to run that command and queue up the next command after it.  Repeat it to conveniently rerun a series of commands from the history.</td></tr>
-<tr><td><kbd>Alt</kbd>+<kbd>.</kbd></td><td>This is <code>yank-last-arg</code>, which inserts the last argument from the previous line.  You can use it repeatedly to cycle backwards through the history, inserting the last argument from each line.  Learn more by reading up on the "yank" features in the Readline manual.</td></tr>
-<tr><td><kbd>Ctrl</kbd>+<kbd>R</kbd></td><td>This is <code>reverse-search-history</code>, which incrementally searches the history.  Press it, then type, and it does a reverse incremental search while you type.  Press <kbd>Ctrl</kbd>+<kbd>R</kbd> again (and again, etc) to search for other matches of the search text.  Learn more by reading up on the "search" and "history" features in the Readline manual.</td></tr>
+<tr><td><kbd>Alt</kbd>+<kbd>.</kbd></td><td>This is <code>yank-last-arg</code>, which inserts the last argument from the previous line.  You can use it repeatedly to cycle backwards through the history, inserting the last argument from each line.  Learn more by reading up on the "yank" features in the [Readline manual](https://tiswww.cwru.edu/php/chet/readline/rluserman.html).</td></tr>
+<tr><td><kbd>Ctrl</kbd>+<kbd>R</kbd></td><td>This is <code>reverse-search-history</code>, which incrementally searches the history.  Press it, then type, and it does a reverse incremental search while you type.  Press <kbd>Ctrl</kbd>+<kbd>R</kbd> again (and again, etc) to search for other matches of the search text.  Learn more by reading up on the "search" and "history" features in the [Readline manual](https://tiswww.cwru.edu/php/chet/readline/rluserman.html).</td></tr>
 <tr><td><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>D</kbd></td><td>This is <code>remove-history</code>, which deletes the currently selected history line after using any of the history search or navigation commands.</td></tr>
 <tr><td><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>K</kbd></td><td>This is <code>add-history</code>, which adds the current line to the history without executing it, and then clears the input line.</td></tr>
 <tr><td><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>N</kbd></td><td>This is <code>clink-menu-complete-numbers</code>, which grabs numbers with 3 or more digits from the current console screen and cycles through inserting them as completions (binary, octal, decimal, hexadecimal).  Super handy for quickly inserting a commit hash that was printed as output from a preceding command.</td></tr>
-<tr><td><kbd>Alt</kbd>+<kbd>0</kbd> to <kbd>Alt</kbd>+<kbd>9</kbd></td><td>These are <code>digit-argument</code>, which let you enter a numeric value used by many commands.  For example <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>W</kbd> copies the current word to the clipboard, but if you first type <kbd>Alt</kbd>+<kbd>2</kbd> followed by <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>W</kbd> then it copies the 3rd word to the clipboard (the first word is 0, the second is 1, etc).  Learn more by reading up on "Readline Arguments" in the Readline manual.</td></tr>
+<tr><td><kbd>Alt</kbd>+<kbd>0</kbd> to <kbd>Alt</kbd>+<kbd>9</kbd></td><td>These are <code>digit-argument</code>, which let you enter a numeric value used by many commands.  For example <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>W</kbd> copies the current word to the clipboard, but if you first type <kbd>Alt</kbd>+<kbd>2</kbd> followed by <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>W</kbd> then it copies the 3rd word to the clipboard (the first word is 0, the second is 1, etc).  Learn more by reading up on "Readline Arguments" in the [Readline manual](https://tiswww.cwru.edu/php/chet/readline/rluserman.html).</td></tr>
 <tr><td><kbd>Alt</kbd>+<kbd>H</kbd></td><td>This is <code>clink-show-help</code>, which lists the key bindings and commands.  Learn more by visiting <a href="#keybindings">Key Bindings</a>.</td></tr>
 </table>
 </p>
@@ -1363,17 +1377,25 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 </code></pre>
 <p><a name="configreadline"></a></p>
 <h1 id="configuring-readline">Configuring Readline</h1>
-<p>Readline itself can also be configured to add custom keybindings and macros by creating a Readline init file. There is excellent documentation for all the options and commands available to configure Readline in Readline&#39;s <a href="https://tiswww.cwru.edu/php/chet/readline/rltop.html#Documentation">manual</a>.</p>
-<p>Clink searches in the directories referenced by the following environment variables and loads the first <code>.inputrc</code> or <code>_inputrc</code> file found, in the order listed here:</p>
+<p>The Readline library used by Clink can be configured to add custom keybindings and macros by creating a Readline init file. There is excellent documentation for all the options and commands available to configure Readline in the <a href="https://tiswww.cwru.edu/php/chet/readline/rluserman.html">Readline manual</a>.</p>
+<table class="linkmenu">
+<tr class="lmtr"><td class="lmtd"><a href="#init-file">Init File</a></td><td class="lmtd">About the .inputrc init file.</tr>
+<tr class="lmtr"><td class="lmtd"><a href="#completion-colors">Completion Colors</a></td><td class="lmtd">How to customize the completion colors.</tr>
+<tr class="lmtr"><td class="lmtd"><a href="#popupwindow">Popup Windows</a></td><td class="lmtd">Using the popup windows.</tr>
+</table>
+
+<h2 id="init-file">Init File</h2>
+<p>A Readline init file defines key binding customizations and sets Readline configuration variables.</p>
+<p>A Readline init file is named <code>.inputrc</code> or <code>_inputrc</code>.  Clink searches the directories referenced by the following environment variables in the order listed here, and loads the first <code>.inputrc</code> or <code>_inputrc</code> file it finds:</p>
 <ul>
 <li><code>%CLINK_INPUTRC%</code></li>
-<li>The Clink profile directory (see the &quot;state&quot; line from <code>clink info</code>).</li>
+<li>The Clink profile directory (see the &quot;state&quot; line from <code>clink info</code>; by default this is the same as <code>%USERPROFILE%</code> but it can be overridden by the <code>clink inject</code> command).</li>
 <li><code>%USERPROFILE%</code></li>
 <li><code>%LOCALAPPDATA%</code></li>
 <li><code>%APPDATA%</code></li>
 <li><code>%HOME%</code></li>
 </ul>
-<p>Other software that also uses Readline will also look for the <code>.inputrc</code> file (and possibly the <code>_inputrc</code> file too). To set macros and keybindings intended only for Clink one can use the Readline init file conditional construct like this; <code>$if clink [...] $endif</code>.</p>
+<p>Other software that also uses the Readline library will also look for the <code>.inputrc</code> file (and possibly the <code>_inputrc</code> file too). To set macros and keybindings intended only for Clink, one can use the Readline init file conditional construct like this; <code>$if clink [...] $endif</code>.</p>
 <p>You can use <code>clink info</code> to find the directories and configuration file for the current Clink session.</p>
 <blockquote>
 <p><strong>Compatibility Notes:</strong></p>
@@ -1384,18 +1406,19 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 </ul>
 </blockquote>
 <h3 id="basic-format">Basic Format</h3>
-<p>The quick version is that mostly you&#39;ll use these kinds of lines:</p>
-<ul>
-<li><code><span class="arg">keyname</span>: <span class="arg">command</span></code></li>
-<li><code><span class="arg">keyname</span>: "<span class="arg">literal text</span>"</code></li>
-<li><code><span class="arg">keyname</span>: "luafunc:<span class="arg">lua_function_name</span>"</code></li>
-<li><code>set <span class="arg">varname</span> <span class="arg">value</span></code></li>
-</ul>
-<p>If a Readline macro begins with &quot;luafunc:&quot; then Clink interprets it as a Lua key binding and will invoke the named Lua function.  Function names can include periods (such as <code>foo.bar</code>) but cannot include any other punctuation.  See <a href="#luakeybindings">Lua Key Bindings</a> for more information.</p>
-<p>Refer to the Readline <a href="https://tiswww.cwru.edu/php/chet/readline/rltop.html#Documentation">manual</a> for a more thorough explanation of the .inputrc file format, list of available commands, and list of configuration variables and their values.</p>
-<p>See <a href="#keybindings">Key Bindings</a> for more information about binding keys in Clink.</p>
+<p>The <code>.inputrc</code> file will mostly use these kinds of lines:</p>
+<table>
+<tr><th>Line</th><th>Description</th></tr>
+<tr><td><code><span class="arg">keyname</span>: <span class="arg">command</span></code></td><td>Binds a named command to a key.</td></tr>
+<tr><td><code><span class="arg">keyname</span>: "<span class="arg">literal text</span>"</code></td><td>Binds a macro to a key.  A macro inserts the literal text into the input line.</td></tr>
+<tr><td><code><span class="arg">keyname</span>: "luafunc:<span class="arg">lua_function_name</span>"</code></td><td>Binds a named Lua function to a key.  See <a href="#luakeybindings">Lua Key Bindings</a> for more information.</td></tr>
+<tr><td><code>set <span class="arg">varname</span> <span class="arg">value</span></code></td><td></td></tr>
+</table>
+
+<p>See <a href="#discovering-clink-key-sequences">Discovering Clink key sequences</a> for how to find the <span class="arg">keyname</span> for the key you want to bind.  See <a href="#keybindings">Key Bindings</a> for more information about binding keys in Clink.</p>
+<p>Refer to the <a href="https://tiswww.cwru.edu/php/chet/readline/rluserman.html">Readline manual</a> for a more thorough explanation of the .inputrc file format, list of available commands, and list of configuration variables and their values.</p>
 <h3 id="new-configuration-variables">New Configuration Variables</h3>
-<p>Clink adds some new configuration variables to Readline, beyond what&#39;s described in the Readline manual:</p>
+<p>Clink adds some new configuration variables to Readline, beyond what&#39;s described in the <a href="https://tiswww.cwru.edu/php/chet/readline/rluserman.html">Readline manual</a>:</p>
 <table>
 <thead>
 <tr>
@@ -1426,7 +1449,7 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 </tr>
 </tbody></table>
 <h3 id="new-commands">New Commands</h3>
-<p>Clink adds some new commands to Readline, beyond what&#39;s described in the Readline manual:</p>
+<p>Clink adds some new commands to Readline, beyond what&#39;s described in the <a href="https://tiswww.cwru.edu/php/chet/readline/rluserman.html">Readline manual</a>:</p>
 <table>
 <thead>
 <tr>
@@ -1480,15 +1503,15 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 </tr>
 <tr>
 <td align="center"><code>clink-expand-history</code></td>
-<td>Perform history expansion in the current input line.  See the <a href="https://tiswww.cwru.edu/php/chet/readline/history.html">History</a> manual for information on history expansion.</td>
+<td>Perform <a href="#using-history-expansion">history</a> expansion in the current input line.</td>
 </tr>
 <tr>
 <td align="center"><code>clink-expand-history-and-alias</code></td>
-<td>Perform history and doskey alias expansion in the current input line.  See the <a href="https://tiswww.cwru.edu/php/chet/readline/history.html">History</a> manual for information on history expansion.</td>
+<td>Perform <a href="#using-history-expansion">history</a> and doskey alias expansion in the current input line.</td>
 </tr>
 <tr>
 <td align="center"><code>clink-expand-line</code></td>
-<td>Perform history, doskey alias, and environment variable expansion in the current input line.  See the <a href="https://tiswww.cwru.edu/php/chet/readline/history.html">History</a> manual for information on history expansion.</td>
+<td>Perform <a href="#using-history-expansion">history</a>, doskey alias, and environment variable expansion in the current input line.</td>
 </tr>
 <tr>
 <td align="center"><code>clink-find-conhost</code></td>
@@ -1663,6 +1686,10 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 <td>A synonym for <code>yank-last-arg</code>.</td>
 </tr>
 <tr>
+<td align="center"><code>magic-space</code></td>
+<td>Perform <a href="#using-history-expansion">history</a> expansion on the text before the cursor position and insert a space.</td>
+</tr>
+<tr>
 <td align="center"><code>old-menu-complete-backward</code></td>
 <td>Like <code>old-menu-complete</code>, but in reverse.</td>
 </tr>
@@ -1769,8 +1796,10 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 <li><code>*.md=4</code> uses underline for .md files.</li>
 </ul>
 <p><a name="popupwindow"></a></p>
-<h2 id="popup-window">Popup window</h2>
-<p>The <code>clink-popup-complete</code>, <code>clink-popup-directories</code>, and <code>clink-popup-history</code> <a href="#configreadline">Readline commands</a> show a searchable popup window that lists the available completions, directory history, or command history.  Here&#39;s how the popup windows work:</p>
+<h2 id="popup-windows">Popup Windows</h2>
+<p>Some commands show a searchable popup window that lists the available completions, directory history, or command history.</p>
+<p>For example, <code>win-history-list</code> (<kbd>F7</kbd>) and <code>clink-popup-directories</code> (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>PgUp</kbd>) show popup windows.</p>
+<p>Here&#39;s how the popup windows work:</p>
 <table>
 <thead>
 <tr>
@@ -1794,7 +1823,16 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 <td align="center"><kbd>Ctrl</kbd>+<kbd>Enter</kbd></td>
 <td>Same as <kbd>Shift</kbd>+<kbd>Enter</kbd>.</td>
 </tr>
+</tbody></table>
+<p>Most of the popup windows also have incremental search:</p>
+<table>
+<thead>
 <tr>
+<th align="center">Key</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
 <td align="center">Typing</td>
 <td>Typing does an incremental search.</td>
 </tr>
@@ -1815,11 +1853,20 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 <td>Go to the previous match.</td>
 </tr>
 </tbody></table>
+<p>The <code>win-history-list</code> command has a different search feature.  Typing digits <code>0</code>-<code>9</code> jumps to the numbered history entry, or typing a letter jumps to the preceding history entry that begins with the typed letter.  This is for compatibility with the <kbd>F7</kbd> behavior built into Windows console prompts.  Use the <code>clink-popup-history</code> command instead if you prefer for typing to do an incremental search.</p>
 <p><a name="extending-clink"></a></p>
 <h1 id="extending-clink-with-lua">Extending Clink With Lua</h1>
 <p>Clink can be extended with <a href="https://www.lua.org/docs.html">Lua</a> scripts to customise startup actions, create completion matches, customise the prompt, and more.  The following sections describe these in more detail and show some examples.</p>
+<table class="linkmenu">
+<tr class="lmtr"><td class="lmtd"><a href="#lua-scripts-location">Location of Lua Scripts</a></td><td class="lmtd">Locations from which scripts are loaded.</tr>
+<tr class="lmtr"><td class="lmtd"><a href="#matchgenerators">Match Generators</a></td><td class="lmtd">How to write match generators, or custom completion providers.</tr>
+<tr class="lmtr"><td class="lmtd"><a href="#argumentcompletion">Argument Completion</a></td><td class="lmtd">How to give commands contextual match generators for their arguments.</tr>
+<tr class="lmtr"><td class="lmtd"><a href="#classifywords">Coloring the Input Text</a></td><td class="lmtd">How to make a match generator or argument matcher override the input coloring.</tr>
+<tr class="lmtr"><td class="lmtd"><a href="#customisingtheprompt">Customising the Prompt</a></td><td class="lmtd">How to write custom prompt filters.</tr>
+</table>
+
 <p><a name="lua-scripts-location"></a></p>
-<h2 id="the-location-of-lua-scripts">The Location of Lua Scripts</h2>
+<h2 id="location-of-lua-scripts">Location of Lua Scripts</h2>
 <p>Clink loads all Lua scripts it finds in these directories:</p>
 <ol>
 <li>All directories listed in the <code>clink.path</code> setting, separated by semicolons.</li>
@@ -2243,7 +2290,7 @@ clink.argmatcher()
 </code></pre>
 <p>With the shorthand form flags are implied rather than declared.  When a shorthand table&#39;s first value is a string starting with <code>-</code> or <code>/</code> then the table is interpreted as flags.  Note that it&#39;s still possible with shorthand form to mix flag prefixes, and even add additional flag prefixes, such as <code>{ <span class="hljs-string">'-a'</span>, <span class="hljs-string">'/b'</span>, <span class="hljs-string">'=c'</span> }</code>.</p>
 <p><a name="classifywords"></a></p>
-<h2 id="coloring-the-input-text">Coloring The Input Text</h2>
+<h2 id="coloring-the-input-text">Coloring the Input Text</h2>
 <p>When the <code>clink.colorize_input</code> <a href="#clinksettings">setting</a> is enabled, <a href="#argumentcompletion">argmatcher</a> automatically apply colors to the input text by parsing it.</p>
 <p>It&#39;s possible for an argmatcher to provide a function to override how its arguments are colored.  This function is called once for each of the argmatcher&#39;s arguments.</p>
 <p>It&#39;s also possible to register a classifier function for the whole input line.  This function is very similar to a match generator; classifier functions are called in priority order, and a classifier can choose to stop the classification process.</p>
@@ -2365,7 +2412,7 @@ function envvar_classifier:classify(commands)
 end
 </code></pre>
 <p><a name="customisingtheprompt"></a></p>
-<h2 id="customising-the-prompt">Customising The Prompt</h2>
+<h2 id="customising-the-prompt">Customising the Prompt</h2>
 <p>Before Clink displays the prompt it filters the prompt through <a href="#extending-clink">Lua</a> so that the prompt can be customised. This happens each and every time that the prompt is shown which allows for context sensitive customisations (such as showing the current branch of a git repository).</p>
 <p>Writing a prompt filter is straightforward:</p>
 <ol>
@@ -3373,14 +3420,281 @@ end
 <h3 id="multiple-master-history-files">Multiple master history files</h3>
 <p>Normally Clink saves a single saved master history list.  All instances of Clink load and save the same master history list.</p>
 <p>It&#39;s also possible to make one or more instances of Clink use a different saved master history list by setting the <code>%CLINK_HISTORY_LABEL%</code> environment variable.  This can be up to 32 alphanumeric characters, and is appended to the master history file name.  Changing the <code>%CLINK_HISTORY_LABEL%</code> environment variable takes effect at the next input line.</p>
+<h2 id="using-history-expansion">Using History Expansion</h2>
+<p>Clink uses Readline&#39;s <a href="https://tiswww.cwru.edu/php/chet/readline/history.html">History library</a> to
+add history expansion capabilities.  If these are undesirable, they can be turned off by running
+<code>clink set history.expand_mode off</code>.</p>
+<p>The History library provides a history expansion feature that is similar
+to the history expansion provided by <code>csh</code>.  This section describes the
+syntax used to manipulate the history information.</p>
+<p>   History expansions introduce words from the history list into the
+input stream, making it easy to repeat commands, insert the arguments to
+a previous command into the current input line, or fix errors in
+previous commands quickly.</p>
+<p>   History expansion takes place in two parts.  The first is to
+determine which line from the history list should be used during
+substitution.  The second is to select portions of that line for
+inclusion into the current one.  The line selected from the history is
+called the &quot;event&quot;, and the portions of that line that are acted upon
+are called &quot;words&quot;.  Various &quot;modifiers&quot; are available to manipulate the
+selected words.  The line is broken into words in the same fashion that
+Bash does, so that several words surrounded by quotes are considered one
+word.  History expansions are introduced by the appearance of the
+history expansion character, which is <code>!</code>.</p>
+<p>   History expansion implements shell-like quoting conventions: a
+backslash can be used to remove the special handling for the next
+character; single quotes enclose verbatim sequences of characters, and
+can be used to inhibit history expansion; and characters enclosed within
+double quotes may be subject to history expansion, since backslash can
+escape the history expansion character, but single quotes may not, since
+they are not treated specially within double quotes.</p>
+<table class="linkmenu">
+<tr class="lmtr"><td class="lmtd"><a href="#event-designators">Event Designators</a></td><td class="lmtd">How to specify which history line to use.</tr>
+<tr class="lmtr"><td class="lmtd"><a href="#word-designators">Word Designators</a></td><td class="lmtd">Specifying which words are of interest.</tr>
+<tr class="lmtr"><td class="lmtd"><a href="#modifiers">Modifiers</a></td><td class="lmtd">Modifying the results of substitution.</tr>
+</table>
+
+<h3 id="event-designators">Event Designators</h3>
+<p>An event designator is a reference to a command line entry in the
+history list.  Unless the reference is absolute, events are relative to
+the current position in the history list.</p>
+<table>
+<tr><td>
+<code>!</code>
+</td><td>
+     Start a history substitution, except when followed by a space, tab,
+     the end of the line, or <code>=</code>.
+</td></tr>
+
+<tr><td>
+<code>!<em>n</em></code>
+</td><td>
+     Refer to command line <em>n</em>.
+</td></tr>
+
+<tr><td>
+<code>!-<em>n</em></code>
+</td><td>
+     Refer to the command <em>n</em> lines back.
+</td></tr>
+
+<tr><td>
+<code>!!</code>
+</td><td>
+     Refer to the previous command.  This is a synonym for <code>!-1</code>.
+</td></tr>
+
+<tr><td>
+<code>!<em>string</em></code>
+</td><td>
+     Refer to the most recent command preceding the current position in
+     the history list starting with <em>string</em>.
+</td></tr>
+
+<tr><td>
+<code>!?<em>string</em>[?]</code>
+</td><td>
+     Refer to the most recent command preceding the current position in
+     the history list containing <em>string</em>.  The trailing <code>?</code> may be
+     omitted if the <em>string</em> is followed immediately by a newline.  If
+     <em>string</em> is missing, the string from the most recent search is used;
+     it is an error if there is no previous search string.
+</td></tr>
+
+<tr><td>
+<code>^<em>string1</em>^<em>string2</em>^</code>
+</td><td>
+     Quick Substitution.  Repeat the last command, replacing <em>string1</em>
+     with <em>string2</em>.  Equivalent to <code>!!:s^<em>string1</em>^<em>string2</em>^</code>.
+</td></tr>
+
+<tr><td>
+<code>!#</code>
+</td><td>
+     The entire command line typed so far.
+</td></tr>
+</table>
+
+<h3 id="word-designators">Word Designators</h3>
+<p>Word designators are used to select desired words from the event.  A <code>:</code>
+separates the event specification from the word designator.  It may be
+omitted if the word designator begins with a <code>^</code>, <code>$</code>, <code>*</code>, <code>-</code>, or <code>%</code>.
+Words are numbered from the beginning of the line, with the first word
+being denoted by 0 (zero).  Words are inserted into the current line
+separated by single spaces.</p>
+<p>   For example,</p>
+<table>
+<tr><td>
+<code>!!</code>
+</td><td>
+     designates the preceding command.  When you type this, the
+     preceding command is repeated in toto.
+</td></tr>
+
+<tr><td>
+<code>!!:$</code>
+</td><td>
+     designates the last argument of the preceding command.  This may be
+     shortened to <code>!$</code>.
+</td></tr>
+
+<tr><td>
+<code>!fi:2</code>
+</td><td>
+     designates the second argument of the most recent command starting
+     with the letters <code>fi</code>.
+</td></tr>
+</table>
+
+<p>   Here are the word designators:</p>
+<table>
+<tr><td>
+<code>0 (zero)</code>
+</td><td>
+     The 0th word.  For many applications, this is the command word.
+</td></tr>
+
+<tr><td>
+<code><em>n</em></code>
+</td><td>
+     The <em>n</em>th word.
+</td></tr>
+
+<tr><td>
+<code>^</code>
+</td><td>
+     The first argument; that is, word 1.
+</td></tr>
+
+<tr><td>
+<code>$</code>
+</td><td>
+     The last argument.
+</td></tr>
+
+<tr><td>
+<code>%</code>
+</td><td>
+     The first word matched by the most recent <code>!?<em>string</em>?</code> search, if the
+     search string begins with a character that is part of a word.
+</td></tr>
+
+<tr><td>
+<code><em>x</em>-<em>y</em></code>
+</td><td>
+     A range of words; <code>-<em>y</em></code> abbreviates <code>0-<em>y</em></code>.
+</td></tr>
+
+<tr><td>
+<code>*</code>
+</td><td>
+     All of the words, except the 0th.  This is a synonym for <code>1-$</code>.
+     It is not an error to use <code>*</code> if there is just one word in the
+     event; the empty string is returned in that case.
+</td></tr>
+
+<tr><td>
+<code><em>x</em>*</code>
+</td><td>
+     Abbreviates <code><em>x</em>-$</code>
+</td></tr>
+
+<tr><td>
+<code><em>x</em>-</code>
+</td><td>
+     Abbreviates <code><em>x</em>-$</code> like <code><em>x</em>*</code>, but omits the last word.  If <code><em>x</em></code> is
+     missing, it defaults to 0.
+</td></tr>
+</table>
+
+<p>   If a word designator is supplied without an event specification, the
+previous command is used as the event.</p>
+<h3 id="modifiers">Modifiers</h3>
+<p>After the optional word designator, you can add a sequence of one or
+more of the following modifiers, each preceded by a <code>:</code>.  These modify,
+or edit, the word or words selected from the history event.</p>
+<table>
+<tr><td>
+<code>h</code>
+</td><td>
+     Remove a trailing pathname component, leaving only the head.
+</td></tr>
+
+<tr><td>
+<code>t</code>
+</td><td>
+     Remove all leading pathname components, leaving the tail.
+</td></tr>
+
+<tr><td>
+<code>r</code>
+</td><td>
+     Remove a trailing suffix of the form <code>.<em>suffix</em></code>, leaving the
+     basename.
+</td></tr>
+
+<tr><td>
+<code>e</code>
+</td><td>
+     Remove all but the trailing suffix.
+</td></tr>
+
+<tr><td>
+<code>p</code>
+</td><td>
+     Print the new command but do not execute it.
+</td></tr>
+
+<tr><td>
+<code>s/<em>old</em>/<em>new</em>/</code>
+</td><td>
+     Substitute <em>new</em> for the first occurrence of <em>old</em> in the event line.
+     Any character may be used as the delimiter in place of <code>/</code>.  The
+     delimiter may be quoted in <em>old</em> and <em>new</em> with a single backslash.  If
+     <code>&</code> appears in <em>new</em>, it is replaced by <em>old</em>.  A single backslash will
+     quote the <code>&</code>.  If <em>old</em> is null, it is set to the last <em>old</em>
+     substituted, or, if no previous history substitutions took place,
+     the last <em>string</em> in a <code>!?<em>string</em>?</code> search.  If <em>new</em> is is null, each
+     matching <em>old</em> is deleted.  The final delimiter is optional if it is
+     the last character on the input line.
+</td></tr>
+
+<tr><td>
+<code>&</code>
+</td><td>
+     Repeat the previous substitution.
+</td></tr>
+
+<tr><td>
+<code>g</code></br>
+</td><td>
+     Cause changes to be applied over the entire event line.  Used in
+     conjunction with <code>s</code>, as in <code>gs/<em>old</em>/<em>new</em>/</code>, or with <code>&</code>.
+</td></tr>
+
+<tr><td>
+<code>a</code></br>
+</td><td>
+     The same as <code>g</code>.
+</td></tr>
+
+<tr><td>
+<code>G</code>
+</td><td>
+     Apply the following <code>s</code> or <code>&</code> modifier once to each word in the
+     event.
+</td></tr>
+</table>
+
 <h2 id="sample-scripts">Sample Scripts</h2>
 <p>Here are a few samples of what can be done with Clink.</p>
 <h3 id="clink-completions">clink-completions</h3>
 <p>The <a href="https://github.com/vladimir-kotikov/clink-completions">clink-completions</a> collection of scripts has a bunch of argument matchers and completion generators for things like git, mercurial, npm, and more.</p>
 <h3 id="clink-flex-prompt">clink-flex-prompt</h3>
-<p>The <a href="https://github.com/chrisant996/clink-flex-prompt">clink-flex-prompt</a> script is similar to the zsh powerlevel10k theme.  It gives Clink a very customizable prompt, with many style options.  It&#39;s also extensible so you can add your own segments.</p>
+<p>The <a href="https://github.com/chrisant996/clink-flex-prompt">clink-flex-prompt</a> script is similar to the zsh powerlevel10k theme.  It gives Clink a very customizable prompt, with many style options.  It&#39;s extensible so you can add your own segments.</p>
+<p>It also takes advantage of Clink&#39;s <a href="#asyncpromptfiltering">asynchronous prompt refresh</a> to make prompts show up instantly, even in large git repos, for example.</p>
 <h3 id="oh-my-posh">oh-my-posh</h3>
-<p>The <a href="https://github.com/JanDeDobbeleer/oh-my-posh">oh-my-posh</a> program can generate fancy prompts. Refer to its <a href="https://ohmyposh.dev">documentation</a> for how to configure it.</p>
+<p>The <a href="https://github.com/JanDeDobbeleer/oh-my-posh">oh-my-posh</a> program can generate fancy prompts. Refer to its <a href="https://ohmyposh.dev">documentation</a> for how to configure it, and for sample themes.</p>
 <p>Integrating oh-my-posh with Clink is easy: just save the following text to an <code>oh-my-posh.lua</code> file in your Clink scripts directory (run <code>clink info</code> to find that), and make sure the <code>oh-my-posh.exe</code> program is in a directory listed in the <code>%PATH%</code> environment variable (or edit the script below to provide a fully qualified path to the oh-my-posh.exe program). Replace the config with your own configuration and you&#39;re good to go.</p>
 <pre><code class="language-lua">-- oh-my-posh.lua
 load(io.popen(&#39;oh-my-posh.exe --config=&quot;C:/Users/me/jandedobbeleer.omp.json&quot; --init --shell cmd&#39;):read(&quot;*a&quot;))()
@@ -3578,6 +3892,7 @@ function foo_prompt:filter(prompt)
 &nbsp;   -- Insert the date at the beginning of the prompt.
 &nbsp;   return os.date("%a %H:%M").." "..prompt
 end</code></pre></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="clink.refilterprompt">clink.refilterprompt</a></div> <div class="signature">() : nil</div></div><div class="body"><p class="desc">Invoke the prompt filters again and refresh the prompt.</p><p class="desc"> Note: this can potentially be expensive; call this only infrequently.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.reload">clink.reload</a></div> <div class="signature">() : nil</div></div><div class="body"><p class="desc">Reloads Lua scripts and Readline config file at the next prompt.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.translateslashes">clink.translateslashes</a></div> <div class="signature">( [<span class="arg_name">mode</span>:integer] ) : integer</div></div><div class="body"><p class="desc">This overrides how Clink translates slashes in completion matches, which is normally determined by the <code>match.translate_slashes</code> setting.</p><p class="desc"> This is reset every time match generation is invoked, so use a generator to set this.</p><p class="desc"> The <span class="arg">mode</span> specifies how to translate slashes when generators add matches: <table> <tr><th>Mode</th><th>Description</th></tr> <tr><td><code>0</code></td><td>No translation.</td></tr> <tr><td><code>1</code></td><td>Translate using the system path separator (backslash on Windows).</td></tr> <tr><td><code>2</code></td><td>Translate to slashes (<code>/</code>).</td></tr> <tr><td><code>3</code></td><td>Translate to backslashes (<code>\</code>).</td></tr> </table></p><p class="desc"> If <span class="arg">mode</span> is omitted, then the function returns the current slash translation mode without changing it.</p><p class="desc"> Note:  Clink always generates file matches using the system path separator (backslash on Windows), regardless what path separator may have been typed as input.  Setting this to <code>0</code> does not disable normalizing typed input paths when invoking completion; it only disables translating slashes in custom generators.</p><pre class="language-lua"><code>-- This example affects all match generators, by using priority -1 to
 -- run first and returning false to let generators continue.
@@ -3803,6 +4118,12 @@ function dir_matches(match_word, word_index, line_state)
 &nbsp;   end
 &nbsp;   return matches
 end</code></pre></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="rl.getbinding">rl.getbinding</a></div> <div class="signature">( <span class="arg_name">key</span>:string, [<span class="arg_name">keymap</span>:string] ) : binding:string, type:string</div></div><div class="body"><p class="desc">Returns the command or macro bound to <span class="arg">key</span>, and the type of the binding.</p><p class="desc"> If nothing is bound to the specified key sequence, the returned binding will be nil.</p><p class="desc"> The returned type can be <code>"function"</code>, <code>"macro"</code>, or <code>"keymap"</code> (if <span class="arg">key</span> is an incomplete key sequence).</p><p class="desc"> If an error occurs, only nil is returned.</p><p class="desc"> The <span class="arg">key</span> sequence string is the same format as from <code>clink echo</code>.  See <a href="#discoverkeysequences">Discovering Clink key sindings</a> for more information.</p><p class="desc"> An optional <span class="arg">keymap</span> may be specified as well.  If it is omitted or nil, then the current keymap is searched.  Otherwise it may refer to one of the three built in keymaps: <table> <tr><th>Keymap</th><th>Description</th></tr> <tr><td><code>"emacs"</code></td><td>The Emacs keymap, which is the default keymap.</td></tr> <tr><td><code>"vi"</code>, <code>"vi-move"</code>, or <code>"vi-command"</code></td><td>The VI command mode keymap.</td></tr> <tr><td><code>"vi-insert"</code></td><td>The VI insertion mode keymap.</td></tr> </table></p><p class="desc"> The return value can be passed as input to <a href="#rl.setbinding">rl.setbinding()</a> or <a href="#rl.invokecommand">rl.invokecommand()</a>.</p><pre class="language-lua"><code>local b,t = rl.getbinding([["\e[H"]], "emacs")
+if b then
+&nbsp;   print("Home is bound to "..b.." ("..t..") in emacs mode.")
+else
+&nbsp;   print("Home is not bound in emacs mode.")
+end</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="rl.getkeybindings">rl.getkeybindings</a></div> <div class="signature">( <span class="arg_name">raw</span>:boolean ) : table</div></div><div class="body"><p class="desc">Returns key bindings in a table with the following scheme:</p><pre class="language-lua"><code>local t = rl.getkeybindings()
 -- t[index].key         [string] Key name.
 -- t[index].binding     [string] Command or macro bound to the key.
@@ -3843,6 +4164,16 @@ end</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="rl.getvariable">rl.getvariable</a></div> <div class="signature">( <span class="arg_name">name</span>:string ) : string | nil</div></div><div class="body"><p class="desc">Returns the value of the named Readline configuration variable as a string, or nil if the variable name is not recognized.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="rl.invokecommand">rl.invokecommand</a></div> <div class="signature">( <span class="arg_name">command</span>:string, [<span class="arg_name">count</span>:integer] ) : boolean | nil</div></div><div class="body"><p class="desc">Invokes a Readline command named <span class="arg">command</span>.  May only be used within a <a href="#luakeybindings">luafunc: key binding</a>.</p><p class="desc"> <span class="arg">count</span> is optional and defaults to 1 if omitted.</p><p class="desc"> Returns true if the named command succeeds, false if the named command fails, or nil if the named command doesn't exist.</p><p class="desc"> Warning:  Invoking more than one Readline command in a luafunc: key binding could have unexpected results, depending on which commands are invoked.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="rl.isvariabletrue">rl.isvariabletrue</a></div> <div class="signature">( <span class="arg_name">name</span>:string ) : boolean | nil</div></div><div class="body"><p class="desc">Returns a boolean value indicating whether the named Readline configuration variable is set to true (on), or nil if the variable name is not recognized.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="rl.setbinding">rl.setbinding</a></div> <div class="signature">( <span class="arg_name">key</span>:string, <span class="arg_name">binding</span>:string | nil, [<span class="arg_name">keymap</span>:string] ) : boolean</div></div><div class="body"><p class="desc">Binds <span class="arg">key</span> to invoke <span class="arg">binding</span>, and returns whether it was successful.</p><p class="desc"> The <span class="arg">key</span> sequence string is the same format as from <code>clink echo</code>.  See <a href="#discoverkeysequences">Discovering Clink key sindings</a> for more information.</p><p class="desc"> The <span class="arg">binding</span> is either the name of a Readline command, a quoted macro string (just like in the .inputrc config file), or nil to clear the key binding.</p><p class="desc"> An optional <span class="arg">keymap</span> may be specified as well.  If it is omitted or nil, then the current keymap is searched.  Otherwise it may refer to one of the three built in keymaps: <table> <tr><th>Keymap</th><th>Description</th></tr> <tr><td><code>"emacs"</code></td><td>The Emacs keymap, which is the default keymap.</td></tr> <tr><td><code>"vi"</code>, <code>"vi-move"</code>, or <code>"vi-command"</code></td><td>The VI command mode keymap.</td></tr> <tr><td><code>"vi-insert"</code></td><td>The VI insertion mode keymap.</td></tr> </table></p><p class="desc"> Using Lua's <code>[[</code>..<code>]]</code> string syntax conveniently lets you simply copy the key string exactly from the <code>clink echo</code> output, without needing to translate the quotes or backslashes.</p><p class="desc"> <strong>Note:</strong> This does not write the value into a config file. Instead it updates the key binding in memory, temporarily overriding whatever is present in any config files.  When config files are reloaded, they may replace the key binding again.</p><pre class="language-lua"><code>local old_space = rl.getbinding('" "')
+function hijack_space(rl_buffer)
+&nbsp;   rl.invokecommand("clink-expand-line")   -- Expand envvars, etc in the line.
+&nbsp;   rl.invokecommand(old_space)             -- Then invoke whatever was previously bound to Space.
+end
+rl.setbinding([[" "]], [["luafunc:hijack_space"]])
+
+-- The [[]] string syntax lets you copy key strings directly from 'clink echo'.
+-- [["\e[H"]] is much easier than translating to "\"\\e[H\"", for example.
+rl.setbinding([["\e[H"]], [[beginning-of-line]])</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="rl.setmatches">rl.setmatches</a></div> <div class="signature">( <span class="arg_name">matches</span>:table, [<span class="arg_name">type</span>:string] ) : integer, boolean</div></div><div class="body"><p class="desc">Provides an alternative set of matches for the current word.  This discards any matches that may have already been collected and uses <span class="arg">matches</span> for subsequent Readline completion commands until any action that normally resets the matches (such as moving the cursor or editing the input line).</p><p class="desc"> May only be used within a <a href="#luakeybindings">luafunc: key binding</a>.</p><p class="desc"> The syntax is the same as for <a href="#builder:addmatches()">builder:addmatches()</a> with one addition: You can add a <code>"nosort"</code> key to the <span class="arg">matches</span> table to disable sorting the matches.</p><p class="desc"> <pre><code class="lua">local matches = {}<br/>matches["nosort"] = true<br/>rl.setmatches(matches)</code></pre></p><p class="desc"> This function can be used by a <a href="#luakeybindings">luafunc: key binding</a> to provide matches based on some special criteria.  For example, a key binding could collect numbers from the current screen buffer (such as issue numbers, commit hashes, line numbers, etc) and provide them to Readline as matches, making it convenient to grab a number from the screen and insert it as a command line argument.</p><p class="desc"> Match display filtering is also possible by using <a href="#clink.ondisplaymatches">clink.ondisplaymatches()</a> after setting the matches.</p><p class="desc"> <em>Example .inputrc key binding:</em> <pre><code class="plaintext">M-n:            <span class="hljs-string">"luafunc:completenumbers"</span>       <span class="hljs-comment"># Alt+N</span></code></pre></p><p class="desc"> <em>Example Lua function:</em></p><pre class="language-lua"><code>function completenumbers()
 &nbsp;   local _,last_luafunc = rl.getlastcommand()
 &nbsp;   if last_luafunc ~= "completenumbers" then
@@ -3977,6 +4308,18 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1246">v1.2.46</h4>
+<ul>
+<li>Added a <code>magic-space</code> command that performs history expansion on the text before the cursor point and then inserts a space.  Note: this is slightly different than one in bash, which performs history expansion on the whole line and can end up inserting the space in a wrong spot.</li>
+<li>Added <code>rl.getbinding()</code> and <code>rl.setbinding()</code> functions to query or override key bindings.</li>
+<li>Added a <code>clink.refilterprompt()</code> function to invoke prompt filtering on demand.</li>
+<li>The <code>clink-popup-directories</code> command is now bound by default to <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>PgUp</kbd>.</li>
+<li>The <code>clink-select-complete</code> command is now bound by default to <kbd>Ctrl</kbd>+<kbd>Space</kbd>.</li>
+<li>Fixed the <code>clink-popup-history</code> command so incremental search works again (regression introduced in v1.2.36).</li>
+<li>Fixed messages sometimes not being erased when finished, e.g. when using <kbd>Alt</kbd>+<kbd>digits</kbd> (regression introduced in v1.1.11).</li>
+<li>Fixed potential for prompt to redraw incorrectly after showing help when the <code>prompt.transient</code> setting is enabled.</li>
+<li>Fixed settings defined by Lua scripts so that the Lua scripts can reliably see the current values even while the Lua scripts are being loaded or reloaded.</li>
+</ul>
 <h4 id="v1245">v1.2.45</h4>
 <ul>
 <li>Clarified description of the <code>match.wild</code> Clink setting.</li>
