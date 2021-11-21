@@ -1550,7 +1550,8 @@ void initialise_readline(const char* state_dir)
         { "\\e[C",          "forward-char" },            // right
         { "\t",             "complete" },                // tab
         { "\\e[Z",          "" },                        // shift-tab
-        { "\\e[27;5;32~",   "old-menu-complete" },       // ctrl-space
+        //{ "\\e[27;5;32~",   "old-menu-complete" },       // ctrl-space
+        { "\\e[27;5;32~",   "clink-select-complete" },   // ctrl-space
         {}
     };
 
