@@ -7,8 +7,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Medium Priority
-- Add Readline and History documentation into the Clink docs (at least basic documentation about them).
 - Add a quick start / beginner section to the Clink docs.
+- Add more Readline documentation into the Clink docs.
 
 ## Low Priority
 - Add command and flag descriptions in clink-completions?
