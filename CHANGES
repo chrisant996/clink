@@ -8,6 +8,7 @@
 - Added `rl.getbinding()` and `rl.setbinding()` functions to query or override key bindings.
 - Added a `clink.refilterprompt()` function to invoke prompt filtering on demand.
 - The `clink-popup-directories` command is now bound by default to <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>PgUp</kbd>.
+- The `clink-select-complete` command is now bound by default to <kbd>Ctrl</kbd>+<kbd>Space</kbd>.
 - Fixed the `clink-popup-history` command so incremental search works again (regression introduced in v1.2.36).
 - Fixed messages sometimes not being erased when finished, e.g. when using <kbd>Alt</kbd>+<kbd>digits</kbd> (regression introduced in v1.1.11).
 - Fixed potential for prompt to redraw incorrectly after showing help when the `prompt.transient` setting is enabled.
