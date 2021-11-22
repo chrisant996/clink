@@ -255,7 +255,7 @@ local function do_docs()
             local arg = table.concat(bold_name(doc_tag.arg), ", ")
             local ret = (doc_tag.ret or { "nil" })[1]
             local var = (doc_tag.var or { nil })[1]
-            local version = doc_tag.ver
+            local version = (doc_tag.ver or { nil })[1]
             local deprecated = (doc_tag.deprecated or { nil })[1]
 
             if not version and not deprecated then
@@ -263,14 +263,22 @@ local function do_docs()
             end
 
             api_html:write('<div class="header">')
+                if version then
+                    if not ret:find(' ') then
+                        version = version..' and newer'
+                    end
+                    version = '<br/><div class="version">v'..version..'</div>'
+                else
+                    version = ''
+                end
                 api_html:write(' <div class="name"><a name="'..name..'">'..name..'</a></div>')
                 if var then
-                    api_html:write(' <div class="signature">'..var..' variable</div>')
+                    api_html:write(' <div class="signature">'..var..' variable'..version..'</div>')
                 else
                     if #arg > 0 then
                         arg = ' '..arg..' '
                     end
-                    api_html:write(' <div class="signature">('..arg..') : '..ret..'</div>')
+                    api_html:write(' <div class="signature">('..arg..') : '..ret..version..'</div>')
                 end
             api_html:write('</div>') -- header
 

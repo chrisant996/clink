@@ -198,6 +198,8 @@ kbd {
     height: 1px;
     background-image: linear-gradient(to right, rgba(0,0,0,0), rgba(0,0,0,0.3), rgba(0,0,0,0.3), rgba(0,0,0,0.3), rgba(0,0,0,0));
     width: 80%;
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
 }
 
 #content .arg {
@@ -234,6 +236,7 @@ kbd {
 
 #content #api .body {
     margin-left: 1rem;
+    margin-top: -0.5rem;
 }
 
 #content #api .header .name {
@@ -254,6 +257,12 @@ kbd {
 #content #api .function {
     margin-left: 2rem;
     margin-bottom: 1.0rem;
+}
+
+#content #api .version {
+    font-size: 80%;
+    color: #888;
+    margin-top: 0.25rem;
 }
 
 #content #api .toc {
