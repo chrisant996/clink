@@ -255,7 +255,12 @@ local function do_docs()
             local arg = table.concat(bold_name(doc_tag.arg), ", ")
             local ret = (doc_tag.ret or { "nil" })[1]
             local var = (doc_tag.var or { nil })[1]
+            local version = doc_tag.ver
             local deprecated = (doc_tag.deprecated or { nil })[1]
+
+            if not version and not deprecated then
+                error('function "'..name..'" has neither -ver nor -deprecated.')
+            end
 
             api_html:write('<div class="header">')
                 api_html:write(' <div class="name"><a name="'..name..'">'..name..'</a></div>')
