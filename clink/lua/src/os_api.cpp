@@ -426,9 +426,9 @@ int glob_files(lua_State* state)
 /// present, the value must use the same format as <code>os.time()</code>.
 ///
 /// The third argument is <span class="arg">mtime</span> and is a time to set as
-/// the file's modified time.  If omitted, the <span class="arg">atime</a> value
-/// is used (or the current time).  If present, the value must use the same
-/// format as <code>os.time()</code>.  In order to pass
+/// the file's modified time.  If omitted, the <span class="arg">atime</span>
+/// value is used (or the current time).  If present, the value must use the
+/// same format as <code>os.time()</code>.  In order to pass
 /// <span class="arg">mtime</span> it is necessary to also pass
 /// <span class="arg">atime</span>.
 int touch(lua_State* state)
