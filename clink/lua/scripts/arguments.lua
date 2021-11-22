@@ -425,6 +425,7 @@ end
 
 --------------------------------------------------------------------------------
 --- -name:  _argmatcher:adddescriptions
+--- -ver:   1.2.38
 --- -arg:   [descriptions...:table]
 --- -ret:   self
 --- Adds descriptions for arg matches and/or flag matches.  Descriptions are

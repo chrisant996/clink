@@ -231,7 +231,7 @@ int rl_buffer_lua::begin_output(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  rl_buffer:refreshline
-/// ver:    1.1.41
+/// -ver:   1.1.41
 /// Redraws the input line.
 int rl_buffer_lua::refresh_line(lua_State* state)
 {
