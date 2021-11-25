@@ -16,6 +16,7 @@ class lua_state;
 class str_base;
 class host_lua;
 class prompt_filter;
+class suggester;
 
 //------------------------------------------------------------------------------
 class host : public host_callbacks
@@ -38,6 +39,7 @@ public:
     int             remove_history(int rl_history_index, const char* line) override;
     void            filter_prompt() override;
     void            filter_transient_prompt(bool final) override;
+    void            suggest(line_state& line) override;
     void            filter_matches(char** matches) override;
     bool            call_lua_rl_global_function(const char* func_name, line_state* line) override;
     const char**    copy_dir_history(int* total) override;
@@ -61,6 +63,7 @@ private:
     history_db*     m_history = nullptr;
     host_lua*       m_lua = nullptr;
     prompt_filter*  m_prompt_filter = nullptr;
+    suggester*      m_suggester = nullptr;
     const char*     m_prompt = nullptr;
     const char*     m_rprompt = nullptr;
     str<256>        m_filtered_prompt;

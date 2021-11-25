@@ -22,6 +22,7 @@
 #include <lua/lua_state.h>
 #include <lua/lua_match_generator.h>
 #include <lua/prompt.h>
+#include <lua/suggest.h>
 #include <terminal/printer.h>
 #include <terminal/terminal_out.h>
 #include <utils/app_context.h>
@@ -62,6 +63,22 @@ static setting_enum s_prompt_transient(
     "when the current working directory hasn't changed since the last prompt.",
     "off,always,same_dir",
     0);
+
+#ifdef INCLUDE_SUGGESTIONS
+
+setting_bool g_autosuggest_enable(
+    "autosuggest.enable",
+    "Enable automatic suggestions",
+    "The default is 'off'.  ...EXPLAIN...",
+    false);
+
+setting_str g_autosuggest_strategy(
+    "autosuggest.strategy",
+    "short",
+    "desc",
+    "history completion");
+
+#endif
 
 setting_bool g_save_history(
     "history.save",
@@ -107,6 +124,7 @@ extern bool get_sticky_search_add_history(const char* line);
 extern void clear_sticky_search_position();
 extern void reset_keyseq_to_name_map();
 extern void set_prompt(const char* prompt, const char* rprompt, bool redisplay);
+extern void set_suggestion(const char* suggestion);
 
 
 
@@ -524,6 +542,7 @@ host::~host()
     purge_old_files();
 
     delete m_prompt_filter;
+    delete m_suggester;
     delete m_lua;
     delete m_history;
     delete m_printer;
@@ -628,6 +647,19 @@ void host::filter_transient_prompt(bool final)
     rprompt = nullptr;
     prompt = filter_prompt(&rprompt, false/*transient*/);
     set_prompt(prompt, rprompt, false/*redisplay*/);
+}
+
+//------------------------------------------------------------------------------
+void host::suggest(line_state& line)
+{
+#ifdef INCLUDE_SUGGESTIONS
+    if (m_suggester && g_autosuggest_enable.get())
+    {
+        str<> tmp;
+        m_suggester->suggest(line, tmp);
+        set_suggestion(tmp.c_str());
+    }
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -780,8 +812,10 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out)
         // Reloading settings again after deleting Lua resolves the problem.
         const bool reload_settings = !!m_lua;
         delete m_prompt_filter;
+        delete m_suggester;
         delete m_lua;
         m_prompt_filter = nullptr;
+        m_suggester = nullptr;
         m_lua = nullptr;
         if (reload_settings)
             settings::load(settings_file.c_str());
@@ -792,8 +826,9 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out)
         m_lua = new host_lua;
     if (!m_prompt_filter)
         m_prompt_filter = new prompt_filter(*m_lua);
+    if (!m_suggester)
+        m_suggester = new suggester(*m_lua);
     host_lua& lua = *m_lua;
-    prompt_filter& prompt_filter = *m_prompt_filter;
 
     // Load scripts.
     if (init_scripts)
@@ -1069,8 +1104,10 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out)
     if (local_lua)
     {
         delete m_prompt_filter;
+        delete m_suggester;
         delete m_lua;
         m_prompt_filter = nullptr;
+        m_suggester = nullptr;
         m_lua = nullptr;
     }
 

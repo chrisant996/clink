@@ -9,5 +9,6 @@ return {
         "prompt.lua",
         "self.lua",
         "set.lua",
+        "suggest.lua",
     }
 }

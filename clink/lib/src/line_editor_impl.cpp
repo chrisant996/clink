@@ -166,6 +166,15 @@ extern "C" void host_filter_transient_prompt(int crlf)
 }
 
 //------------------------------------------------------------------------------
+void host_suggest(line_state& line)
+{
+    if (!s_callbacks)
+        return;
+
+    s_callbacks->suggest(line);
+}
+
+//------------------------------------------------------------------------------
 int host_filter_matches(char** matches)
 {
     if (s_callbacks)
@@ -316,6 +325,7 @@ void line_editor_impl::begin_line()
     m_desc.output->begin();
     m_buffer.begin_line();
     m_prev_generate.clear();
+    m_prev_suggest.clear();
     m_prev_classify.clear();
 
     rl_before_display_function = before_display;
@@ -1080,6 +1090,7 @@ void line_editor_impl::update_internal()
             {
                 match_pipeline pipeline(m_matches);
                 pipeline.reset();
+
                 // Defer generating until update_matches().  Must set word break
                 // position in the meantime because adjust_completion_word()
                 // gets called before the deferred generate().
@@ -1115,6 +1126,18 @@ void line_editor_impl::update_internal()
 
         m_prev_key = next_key;
     }
+
+#ifdef INCLUDE_SUGGESTIONS
+    // Should we collect suggestions?
+    if (m_buffer.get_cursor() == m_buffer.get_length() &&
+        true && /* suggestions are enabled */
+        !m_prev_suggest.equals(m_buffer.get_buffer(), m_buffer.get_length()))
+    {
+        line_state line = get_linestate();
+        host_suggest(line);
+        m_prev_suggest.set(m_buffer.get_buffer(), m_buffer.get_length());
+    }
+#endif
 
     // Must defer updating m_prev_generate since the old value is still needed
     // for deciding whether to sort/select, after deciding whether to generate.

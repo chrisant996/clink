@@ -766,10 +766,20 @@ static void clear_suggestion()
 }
 
 //------------------------------------------------------------------------------
-static void set_suggestion(const char* suggestion)
+void set_suggestion(const char* suggestion)
 {
-    s_suggestion_buffer = suggestion;
-    new (&s_suggestion) str_iter(s_suggestion_buffer.c_str(), s_suggestion_buffer.length());
+    if ((s_suggestion_buffer.length() == 0) != (!suggestion || !*suggestion) ||
+        (suggestion && !s_suggestion_buffer.equals(suggestion)))
+    {
+        s_suggestion_buffer = suggestion;
+        new (&s_suggestion) str_iter(s_suggestion_buffer.c_str(), s_suggestion_buffer.length());
+
+        if (g_rl_buffer)
+        {
+            g_rl_buffer->set_need_draw();
+            g_rl_buffer->draw();
+        }
+    }
 }
 
 //------------------------------------------------------------------------------

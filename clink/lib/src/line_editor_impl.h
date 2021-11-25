@@ -146,6 +146,7 @@ private:
     str<64>             m_needle;
 
     prev_buffer         m_prev_generate;
+    prev_buffer         m_prev_suggest;
     words               m_words;
     unsigned short      m_command_offset = 0;
 
