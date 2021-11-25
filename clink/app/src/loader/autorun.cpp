@@ -18,21 +18,21 @@ void            puts_help(const char* const* help_pairs, const char* const* othe
 
 
 //------------------------------------------------------------------------------
-static HKEY open_software_key(int all_users, const char* key, int wow64, int writable)
+static HKEY open_software_key(int all_users, const char* _key, int wow64, int writable)
 {
-    str<512> buffer;
-    buffer << "Software\\";
+    wstr<> key;
+    key << L"Software\\";
     if (wow64)
-        buffer << "Wow6432Node\\";
-    buffer << key;
+        key << L"Wow6432Node\\";
+    to_utf16(key, _key);
 
     DWORD flags;
     flags = KEY_READ|(writable ? KEY_WRITE : 0);
     flags |= KEY_WOW64_64KEY;
 
     HKEY result;
-    BOOL ok = RegCreateKeyEx(all_users ? HKEY_LOCAL_MACHINE : HKEY_CURRENT_USER,
-        buffer.c_str(), 0, nullptr, REG_OPTION_NON_VOLATILE, flags, nullptr,
+    BOOL ok = RegCreateKeyExW(all_users ? HKEY_LOCAL_MACHINE : HKEY_CURRENT_USER,
+        key.c_str(), 0, nullptr, REG_OPTION_NON_VOLATILE, flags, nullptr,
         &result, nullptr);
 
     return (ok == 0) ? result : nullptr;
@@ -45,35 +45,67 @@ static void close_key(HKEY key)
 }
 
 //------------------------------------------------------------------------------
-static bool set_value(HKEY key, const char* name, const char* str)
+static bool set_value(HKEY key, const char* _name, const char* _value)
 {
+    wstr<> name(_name);
+    wstr<> value(_value);
+
     LONG ok;
-    ok = RegSetValueEx(key, name, 0, REG_SZ, (const BYTE*)str, (DWORD)strlen(str) + 1);
+    ok = RegSetValueExW(key, name.c_str(), 0, REG_SZ, (const BYTE*)value.c_str(), (DWORD)(value.length() + 1) * sizeof(*value.c_str()));
     return (ok == ERROR_SUCCESS);
 }
 
 //------------------------------------------------------------------------------
-static int get_value(HKEY key, const char* name, char** buffer)
+static int get_value(HKEY key, const char* _name, char** _buffer)
 {
-    int i;
-    DWORD req_size;
+    *_buffer = nullptr;
 
-    *buffer = nullptr;
-    i = RegQueryValueEx(key, name, nullptr, nullptr, (BYTE*)*buffer, &req_size);
+    wstr<> name(_name);
+
+    DWORD type = 0;
+    DWORD req_size = 0;
+    int i = RegQueryValueExW(key, name.c_str(), nullptr, &type, nullptr, &req_size);
     if (i != ERROR_SUCCESS && i != ERROR_MORE_DATA)
         return 0;
+    if (type != REG_SZ && type != REG_EXPAND_SZ)
+        return 0;
 
-    *buffer = (char*)malloc(req_size);
-    RegQueryValueEx(key, name, nullptr, nullptr, (BYTE*)*buffer, &req_size);
+    WCHAR* buffer = static_cast<WCHAR*>(malloc(req_size + sizeof(*buffer)));
+    if (!buffer)
+        return 0;
 
-    return req_size;
+    ZeroMemory(buffer, req_size + sizeof(*buffer));
+    RegQueryValueExW(key, name.c_str(), nullptr, nullptr, (BYTE*)buffer, &req_size);
+    assert(wcslen(buffer) <= req_size / sizeof(*buffer));
+
+    int len = WideCharToMultiByte(CP_UTF8, 0, buffer, -1, nullptr, 0, nullptr, nullptr);
+    if (len)
+    {
+        char* out = static_cast<char*>(malloc(len));
+        len = WideCharToMultiByte(CP_UTF8, 0, buffer, -1, out, len, nullptr, nullptr);
+        if (len)
+        {
+            // len is the buffer size, so find the string length.
+            len = int(strlen(out));
+assert(len);
+            *_buffer = out;
+            out = nullptr;
+        }
+        free(out);
+    }
+
+    free(buffer);
+
+    return len;
 }
 
 //------------------------------------------------------------------------------
-static bool delete_value(HKEY key, const char* name)
+static bool delete_value(HKEY key, const char* _name)
 {
+    wstr<> name(_name);
+
     LONG ok;
-    ok = RegDeleteValue(key, name);
+    ok = RegDeleteValueW(key, name.c_str());
     return (ok == ERROR_SUCCESS);
 }
 
