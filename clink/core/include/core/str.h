@@ -120,6 +120,7 @@ void str_impl<TYPE>::attach(TYPE* data, unsigned int size)
         m_data = data;
         m_size = size;
         m_owns_ptr = 1;
+        m_length = 0;
     }
     else
     {
@@ -221,7 +222,7 @@ bool str_impl<TYPE>::is_growable() const
 template <typename TYPE>
 unsigned int str_impl<TYPE>::length() const
 {
-    if (!m_length & !empty())
+    if (!m_length)
         m_length = str_len(c_str());
 
     return m_length;
@@ -504,6 +505,7 @@ void str_impl<TYPE>::reset_not_owned(TYPE* data, unsigned int size)
     m_data = data;
     m_size = size;
     m_owns_ptr = false;
+    m_length = 0;
 }
 
 
