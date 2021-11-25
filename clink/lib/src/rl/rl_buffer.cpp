@@ -96,7 +96,7 @@ void rl_buffer::draw()
     assert(m_attached);
     if (m_need_draw)
     {
-        rl_redisplay();
+        (*rl_redisplay_function)();
         m_need_draw = false;
     }
 }

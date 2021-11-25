@@ -1319,7 +1319,7 @@ int clink_popup_history(int count, int invoking_key)
 
             if (result == popup_result::use)
             {
-                rl_redisplay();
+                (*rl_redisplay_function)();
                 rl_newline(1, invoking_key);
             }
         }

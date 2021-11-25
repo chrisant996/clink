@@ -360,7 +360,7 @@ int clink_paste(int count, int invoking_key)
     host_cmd_enqueue_lines(overflow);
     if (done)
     {
-        rl_redisplay();
+        (*rl_redisplay_function)();
         rl_newline(1, invoking_key);
     }
 
@@ -687,7 +687,7 @@ int clink_selectall_conhost(int count, int invoking_key)
     {
         s_cua_anchor = 0;
         rl_point = rl_end;
-        rl_redisplay();
+        (*rl_redisplay_function)();
     }
 
     // Invoke conhost's Select All command via the system menu.
@@ -770,7 +770,7 @@ int clink_popup_directories(int count, int invoking_key)
                 rl_insert_text(dir.c_str());
             }
             rl_end_undo_group();
-            rl_redisplay();
+            (*rl_redisplay_function)();
             if (use)
                 rl_newline(1, invoking_key);
         }
@@ -1836,7 +1836,7 @@ LUnlinkFile:
     host_cmd_enqueue_lines(overflow);
 
     // Accept the input and execute it.
-    rl_redisplay();
+    (*rl_redisplay_function)();
     rl_newline(1, invoking_key);
 
     return 0;
