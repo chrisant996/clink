@@ -678,7 +678,8 @@ static void puts_face_func(const char* s, const char* face, int n)
 
             case '2':   out << fallback_color(s_input_color, c_normal); break;
             case '*':   out << fallback_color(_rl_display_modmark_color, c_normal); break;
-            case '<':   out << fallback_color(_rl_display_message_color, c_normal); break;
+            case '(':   out << fallback_color(_rl_display_message_color, c_normal); break;
+            case '<':   out << fallback_color(_rl_display_horizscroll_color, c_normal); break;
             case '#':   out << fallback_color(s_selection_color, "\x1b[0;7m"); break;
 
             case 'o':   out << fallback_color(s_input_color, c_normal); break;
@@ -2123,7 +2124,7 @@ void rl_module::on_begin_line(const context& context)
 #endif
 
     _rl_face_horizscroll = '<';
-    _rl_face_message = '<';
+    _rl_face_message = '(';
     s_input_color = build_color_sequence(g_color_input, m_input_color, true);
     s_selection_color = build_color_sequence(g_color_selection, m_selection_color, true);
     s_arg_color = build_color_sequence(g_color_arg, m_arg_color, true);
