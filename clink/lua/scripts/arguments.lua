@@ -533,7 +533,7 @@ end
 --- -ret:   self
 --- This registers a function that gets called for each word the argmatcher
 --- handles, to classify the word as part of coloring the input text.  See
---- <a href="#classifywords">Coloring The Input Text</a> for more information.
+--- <a href="#classifywords">Coloring the Input Text</a> for more information.
 function _argmatcher:setclassifier(func)
     self._classify_func = func
     return self

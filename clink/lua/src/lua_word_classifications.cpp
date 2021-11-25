@@ -62,7 +62,7 @@ lua_word_classifications::lua_word_classifications(word_classifications& classif
 /// already been classified.  But if <span class="arg">overwrite</span> is
 /// <code>false</code> the word is only classified if it hasn't been yet.
 ///
-/// See <a href="#classifywords">Coloring The Input Text</a> for more
+/// See <a href="#classifywords">Coloring the Input Text</a> for more
 /// information.
 int lua_word_classifications::classify_word(lua_State* state)
 {
@@ -123,7 +123,7 @@ int lua_word_classifications::classify_word(lua_State* state)
 /// already colored.  But if <span class="arg">overwrite</span> is
 /// <code>false</code> each character is only colored if it hasn't been yet.
 ///
-/// See <a href="#classifywords">Coloring The Input Text</a> for more
+/// See <a href="#classifywords">Coloring the Input Text</a> for more
 /// information.
 ///
 /// Note: an input line can have up to 100 different unique color strings

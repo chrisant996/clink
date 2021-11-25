@@ -74,7 +74,7 @@ end
 --- <code>:classify()</code> function which gets called in increasing
 --- <span class="arg">priority</span> order (low values to high values) when
 --- classifying words for coloring the input.  See
---- <a href="#classifywords">Coloring The Input Text</a> for more information.
+--- <a href="#classifywords">Coloring the Input Text</a> for more information.
 function clink.classifier(priority)
     if priority == nil then priority = 999 end
 

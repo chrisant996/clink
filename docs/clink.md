@@ -94,7 +94,7 @@ The following table describes the available Clink settings:
 Name                         | Default | Description
 :--:                         | :-:     | -----------
 `clink.autostart`            |         | This command is automatically run when the first CMD prompt is shown after Clink is injected.  If this is blank (the default), then Clink instead looks for clink_start.cmd in the binaries directory and profile directory and runs them.  Set it to "nul" to not run any autostart command.
-`clink.colorize_input`       | True    | Enables context sensitive coloring for the input text (see [Coloring The Input Text](#classifywords)).
+`clink.colorize_input`       | True    | Enables context sensitive coloring for the input text (see [Coloring the Input Text](#classifywords)).
 `clink.default_bindings`     | `bash`  | Clink uses bash key bindings when this is set to `bash` (the default).  When this is set to `windows` Clink overrides some of the bash defaults with familiar Windows key bindings for <kbd>Tab</kbd>, <kbd>Ctrl</kbd>+<kbd>A</kbd>, <kbd>Ctrl</kbd>+<kbd>F</kbd>, <kbd>Ctrl</kbd>+<kbd>M</kbd>, and <kbd>Right</kbd>.
 `clink.gui_popups`           | False   | When set, Clink uses GUI popup windows instead console text popups.  The `color.popup` settings have no effect on GUI popup windows.
 `clink.logo`                 | `full`  | Controls what startup logo to show when Clink is injected.  `full` = show full copyright logo, `short` = show abbreviated version info, `none` = omit the logo.
@@ -689,7 +689,7 @@ The return value is a table with the input matches filtered as desired. The matc
 
 <a name="filteringthematchdisplay"></a>
 
-#### Filtering The Match Display
+#### Filtering the Match Display
 
 In some instances it may be preferable to display different text when listing potential matches versus when inserting a match in the input line, or to display a description next to a match.  For example, it might be desirable to display a `*` next to some matches, or to show additional information about some matches.
 
