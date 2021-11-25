@@ -102,6 +102,11 @@ int     cua_copy(int count, int invoking_key);
 int     cua_cut(int count, int invoking_key);
 
 //------------------------------------------------------------------------------
+int     clink_forward_word(int count, int invoking_key);
+int     clink_forward_char(int count, int invoking_key);
+int     clink_forward_byte(int count, int invoking_key);
+
+//------------------------------------------------------------------------------
 int     win_f1(int count, int invoking_key);
 int     win_f2(int count, int invoking_key);
 int     win_f3(int count, int invoking_key);

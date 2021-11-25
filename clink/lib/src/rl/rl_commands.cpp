@@ -11,6 +11,8 @@
 #include "doskey.h"
 #include "terminal_helpers.h"
 
+#include "rl_suggestions.h"
+
 #include <core/base.h>
 #include <core/log.h>
 #include <core/path.h>
@@ -1293,6 +1295,9 @@ static char* get_previous_command()
 //------------------------------------------------------------------------------
 int win_f1(int count, int invoking_key)
 {
+    if (insert_suggestion(suggestion_action::insert_to_end))
+        return 0;
+
     if (count <= 0)
         count = 1;
 

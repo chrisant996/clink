@@ -13,6 +13,8 @@
 #include "popup.h"
 #include "terminal_helpers.h"
 
+#include "rl_suggestions.h"
+
 #include <core/base.h>
 #include <core/os.h>
 #include <core/path.h>
@@ -109,8 +111,9 @@ static int          s_init_history_pos = -1;    // Sticky history position from 
 static int          s_history_search_pos = -1;  // Most recent history search position during current edit line.
 static str_moveable s_needle;
 
-static char*        s_suggestion = nullptr;
-static int          s_suggestion_len = 0;
+static str_iter     s_suggestion;
+static str_moveable s_suggestion_buffer;
+static const char*  s_suggestion_color = nullptr;
 
 //------------------------------------------------------------------------------
 setting_bool g_classify_words(
@@ -256,6 +259,14 @@ static setting_color g_color_selection(
     "Selection color",
     "The color for selected text in the input line.",
     "");
+
+#ifdef INCLUDE_SUGGESTIONS
+static setting_color g_color_suggestion(
+    "color.suggestion",
+    "Color for suggestion text",
+    "The color for suggestion text to be inserted at the end of the input line.",
+    "bright black");
+#endif
 
 static setting_color g_color_unexpected(
     "color.unexpected",
@@ -688,8 +699,7 @@ static void puts_face_func(const char* s, const char* face, int n)
             case '(':   out << fallback_color(_rl_display_message_color, c_normal); break;
             case '<':   out << fallback_color(_rl_display_horizscroll_color, c_normal); break;
             case '#':   out << fallback_color(s_selection_color, "\x1b[0;7m"); break;
-
-            case '-':   out << "\x1b[0;90m"; break;
+            case '-':   out << fallback_color(s_suggestion_color, "\x1b[0;90m"); break;
 
             case 'o':   out << fallback_color(s_input_color, c_normal); break;
             case 'c':
@@ -741,6 +751,155 @@ static void puts_face_func(const char* s, const char* face, int n)
     }
 #endif
     g_printer->print(out.c_str(), out.length());
+}
+
+
+
+//------------------------------------------------------------------------------
+static void clear_suggestion()
+{
+    if (s_suggestion.more() && g_rl_buffer)
+        g_rl_buffer->set_need_draw();
+
+    new (&s_suggestion) str_iter();
+    s_suggestion_buffer.free();
+}
+
+//------------------------------------------------------------------------------
+static void set_suggestion(const char* suggestion)
+{
+    s_suggestion_buffer = suggestion;
+    new (&s_suggestion) str_iter(s_suggestion_buffer.c_str(), s_suggestion_buffer.length());
+}
+
+//------------------------------------------------------------------------------
+static bool is_suggestion_word_break(int c)
+{
+    return c == ' ' || c == '\t';
+}
+
+//------------------------------------------------------------------------------
+bool insert_suggestion(suggestion_action action)
+{
+    if (!s_suggestion.more() || rl_point != rl_end)
+        return false;
+
+    str<> tmp;
+    const char* insert = s_suggestion.get_pointer();
+    int len = s_suggestion.length();
+
+    bool clear = true;
+    if (action == suggestion_action::insert_next_word)
+    {
+        // Skip spaces.
+        while (int c = s_suggestion.peek())
+        {
+            if (!is_suggestion_word_break(c))
+                break;
+            s_suggestion.next();
+        }
+
+        // Skip non-spaces.
+        while (int c = s_suggestion.peek())
+        {
+            if (is_suggestion_word_break(c))
+                break;
+            s_suggestion.next();
+        }
+
+        // Skip spaces.
+        while (int c = s_suggestion.peek())
+        {
+            if (!is_suggestion_word_break(c))
+                break;
+            s_suggestion.next();
+        }
+
+        len = int(s_suggestion.get_pointer() - insert);
+        clear = !s_suggestion.more();
+
+        tmp.concat(insert, len);
+        insert = tmp.c_str();
+    }
+
+    g_rl_buffer->insert(insert);
+
+    if (clear)
+        clear_suggestion();
+
+    return true;
+}
+
+//------------------------------------------------------------------------------
+void hook_display()
+{
+    if (!s_suggestion.more() || rl_point != rl_end)
+    {
+        rl_redisplay();
+        return;
+    }
+
+    rollback<int> rb_suggestion(g_suggestion_offset, rl_end);
+    rollback<char*> rb_buf(rl_line_buffer);
+    rollback<int> rb_len(rl_line_buffer_len);
+    rollback<int> rb_end(rl_end);
+
+    char* tmp = static_cast<char*>(malloc(rl_end + s_suggestion.length() + 1));
+    if (tmp)
+    {
+        memcpy(tmp, rl_line_buffer, rl_end);
+        memcpy(tmp + rl_end, s_suggestion.get_pointer(), s_suggestion.length());
+        tmp[rl_end + s_suggestion.length()] = '\0';
+
+        rl_line_buffer = tmp;
+        rl_end += s_suggestion.length();    // ALTERS rl_end!
+        rl_line_buffer_len = rl_end;        // Use NEW value of rl_end!
+    }
+
+    rl_redisplay();
+}
+
+//------------------------------------------------------------------------------
+extern "C" void host_clear_suggestion()
+{
+    clear_suggestion();
+    if (g_rl_buffer)
+        g_rl_buffer->draw();
+}
+
+//------------------------------------------------------------------------------
+int clink_forward_word(int count, int invoking_key)
+{
+    if (count != 0)
+    {
+another_word:
+        if (insert_suggestion(suggestion_action::insert_next_word))
+        {
+            count--;
+            if (count > 0)
+                goto another_word;
+        }
+    }
+
+    return rl_forward_word(count, invoking_key);
+}
+
+//------------------------------------------------------------------------------
+int clink_forward_char(int count, int invoking_key)
+{
+    if (insert_suggestion(suggestion_action::insert_to_end))
+        return 0;
+
+    return rl_forward_char(count, invoking_key);
+}
+
+//------------------------------------------------------------------------------
+int clink_forward_byte(int count, int invoking_key)
+{
+    if (insert_suggestion(suggestion_action::insert_to_end))
+        return 0;
+
+    return rl_forward_byte(count, invoking_key);
 }
 
 
@@ -1466,7 +1625,11 @@ void initialise_readline(const char* state_dir)
         clink_add_funmap_entry("cua-copy", cua_copy, keycat_select, "Copy the selected text to the clipboard");
         clink_add_funmap_entry("cua-cut", cua_cut, keycat_select, "Cut the selected text to the clipboard");
 
+#ifdef INCLUDE_SUGGESTIONS
+        clink_add_funmap_entry("win-cursor-forward", win_f1, keycat_history, "Move cursor forward, or at end of line copy character from previous command, or insert suggestion");
+#else
         clink_add_funmap_entry("win-cursor-forward", win_f1, keycat_history, "Move cursor forward, or at end of line copy character from previous command");
+#endif
         clink_add_funmap_entry("win-copy-up-to-char", win_f2, keycat_history, "Enter a character and copy up to it from the previous command");
         clink_add_funmap_entry("win-copy-up-to-end", win_f3, keycat_history, "Copy the rest of the previous command");
         clink_add_funmap_entry("win-delete-up-to-char", win_f4, keycat_misc, "Enter a character and delete up to it in the input line");
@@ -1488,6 +1651,13 @@ void initialise_readline(const char* state_dir)
         rl_add_funmap_entry("history-expand-line", clink_expand_history);
         rl_add_funmap_entry("insert-last-argument", rl_yank_last_arg);
         rl_add_funmap_entry("shell-expand-line", clink_expand_line);
+
+#ifdef INCLUDE_SUGGESTIONS
+        // Replace some 'forward-*' commands with versions that support suggestions.
+        rl_add_funmap_entry("forward-word", clink_forward_word);
+        rl_add_funmap_entry("forward-char", clink_forward_char);
+        rl_add_funmap_entry("forward-byte", clink_forward_byte);
+#endif
 
         // Override some defaults.
         _rl_bell_preference = VISIBLE_BELL;     // Because audible is annoying.
@@ -1767,52 +1937,15 @@ static void terminal_fflush_thunk(FILE* stream)
 
 
 //------------------------------------------------------------------------------
-static void clear_suggestion()
-{
-    free(s_suggestion);
-    s_suggestion = nullptr;
-    s_suggestion_len = 0;
-}
-
-//------------------------------------------------------------------------------
-void hook_display()
-{
-    if (rl_point != rl_end || !s_suggestion || !s_suggestion_len)
-    {
-        rl_redisplay();
-        return;
-    }
-
-    rollback<int> rb_suggestion(g_suggestion_offset, rl_end);
-    rollback<char*> rb_buf(rl_line_buffer);
-    rollback<int> rb_len(rl_line_buffer_len);
-    rollback<int> rb_end(rl_end);
-
-    char* tmp = static_cast<char*>(malloc(rl_end + s_suggestion_len + 1));
-    if (tmp)
-    {
-        memcpy(tmp, rl_line_buffer, rl_end);
-        memcpy(tmp + rl_end, s_suggestion, s_suggestion_len);
-        tmp[rl_end + s_suggestion_len] = '\0';
-
-        rl_line_buffer = tmp;
-        rl_end += s_suggestion_len;     // ALTERS rl_end!
-        rl_line_buffer_len = rl_end;    // Use NEW value of rl_end!
-    }
-
-    rl_redisplay();
-}
-
-
-
-//------------------------------------------------------------------------------
 rl_module::rl_module(const char* shell_name, terminal_in* input)
 : m_prev_group(-1)
 {
     assert(!s_direct_input);
     s_direct_input = input;
 
+#ifdef INCLUDE_SUGGESTIONS
     rl_redisplay_function = hook_display;
+#endif
 
     rl_getc_function = terminal_read_thunk;
     rl_fwrite_function = terminal_write_thunk;
@@ -2192,6 +2325,9 @@ void rl_module::on_begin_line(const context& context)
     _rl_filtered_color = build_color_sequence(g_color_filtered, m_filtered_color, true);
     _rl_arginfo_color = build_color_sequence(g_color_arginfo, m_arginfo_color, true);
     _rl_selected_color = build_color_sequence(g_color_selected, m_selected_color);
+#ifdef INCLUDE_SUGGESTIONS
+    s_suggestion_color = build_color_sequence(g_color_suggestion, m_suggestion_color, true);
+#endif
 
     if (!s_selection_color && s_input_color)
     {
@@ -2231,6 +2367,8 @@ void rl_module::on_begin_line(const context& context)
 //------------------------------------------------------------------------------
 void rl_module::on_end_line()
 {
+    clear_suggestion();
+
     if (!m_done)
         done(rl_line_buffer);
 
@@ -2276,8 +2414,6 @@ void rl_module::on_end_line()
 
     g_rl_buffer = nullptr;
     g_pager = nullptr;
-
-    clear_suggestion();
 }
 
 //------------------------------------------------------------------------------

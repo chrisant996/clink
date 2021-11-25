@@ -84,7 +84,7 @@ static const struct {
   { "add-history", rl_add_history, keycat_history, "Add the current line to the history without executing it, and clear the input line" },
 /* end_clink_change */
   { "arrow-key-prefix", rl_arrow_keys, keycat_cursor, "" },
-  { "backward-byte", rl_backward_byte, keycat_cursor, "" },
+  { "backward-byte", rl_backward_byte, keycat_cursor, "Move back a single byte" },
   { "backward-char", rl_backward_char, keycat_cursor, "Move back a character" },
   { "backward-delete-char", rl_rubout, keycat_basic, "Delete the character behind the cursor point.  A numeric argument means to kill the characters instead of deleting them" },
   { "backward-kill-line", rl_backward_kill_line, keycat_killyank, "Kill backward from the cursor point to the beginning of the current line.  With a negative numeric argument, kills forward from the cursor to the end of the current line" },
@@ -118,10 +118,19 @@ static const struct {
   { "end-of-line", rl_end_of_line, keycat_basic, "Move to the end of the line" },
   { "exchange-point-and-mark", rl_exchange_point_and_mark, keycat_misc, "Swap the cursor point with the mark.  Sets the current cursor position to the saved position, and saves the old cursor position as the mark" },
   { "forward-backward-delete-char", rl_rubout_or_delete, keycat_basic, "Delete the character at the cursor point, unless the cursor is at the end of the line, in which case the character behind the cursor is deleted" },
-  { "forward-byte", rl_forward_byte, keycat_cursor, "" },
+#ifdef INCLUDE_SUGGESTIONS
+  { "forward-byte", clink_forward_byte, keycat_cursor, "Move forward a single byte, or insert suggestion" },
+  { "forward-char", clink_forward_char, keycat_cursor, "Move forward a character, or insert suggestion" },
+#else
+  { "forward-byte", rl_forward_byte, keycat_cursor, "Move forward a single byte" },
   { "forward-char", rl_forward_char, keycat_cursor, "Move forward a character" },
+#endif
   { "forward-search-history", rl_forward_search_history, keycat_history, "Incremental search forward starting at the current line and moving 'down' through the history as necessary.  Sets the marked region to the matched text" },
+#ifdef INCLUDE_SUGGESTIONS
+  { "forward-word", clink_forward_word, keycat_cursor, "Move forward to the end of the next word, or insert next suggested word" },
+#else
   { "forward-word", rl_forward_word, keycat_cursor, "Move forward to the end of the next word" },
+#endif
   { "history-search-backward", rl_history_search_backward, keycat_history, "Search backward through the history for the string of characters between the start of the current line and the cursor point.  The search string must match at the beginning of a history line.  This is a non-incremental search" },
   { "history-search-forward", rl_history_search_forward, keycat_history, "Search forward through the history for the string of characters between the start of the current line and the cursor point.  The search string must match at the beginning of a history line.  This is a non-incremental search" },
   { "history-substring-search-backward", rl_history_substr_search_backward, keycat_history, "Search backward through the history for the string of characters between the start of the current line and the cursor point.  The search string may match anywhere in a history line.  This is a non-incremental search" },
