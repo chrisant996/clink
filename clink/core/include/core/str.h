@@ -152,13 +152,21 @@ bool str_impl<TYPE>::reserve(unsigned int new_size, bool exact)
     if (!exact)
         new_size = (new_size + 63) & ~63;
 
+    const int old_size = m_size;
+    m_size = new_size;
+    if (m_size != new_size)
+    {
+        // Overflow!
+        m_size = old_size;
+        return false;
+    }
+
     TYPE* new_data = (TYPE*)malloc(new_size * sizeof(TYPE));
-    memcpy(new_data, c_str(), m_size * sizeof(TYPE));
+    memcpy(new_data, c_str(), old_size * sizeof(TYPE));
 
     free_data();
 
     m_data = new_data;
-    m_size = new_size;
     m_owns_ptr = 1;
     return true;
 }
