@@ -79,6 +79,12 @@
 #include "xmalloc.h"
 
 /* begin_clink_change */
+/* Technically, Clink uses a custom redisplay function, but it calls into the
+   default rl_redisplay() function, so Clink needs Readline to behave the same
+   as it normally does with respect to terminal support. */
+#undef CUSTOM_REDISPLAY_FUNC
+#define CUSTOM_REDISPLAY_FUNC() (0)
+
 //#if defined (__MINGW32__)
 #if defined (__MINGW32__) || defined (_WIN32)
 /* end_clink_change */

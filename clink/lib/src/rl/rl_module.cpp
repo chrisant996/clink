@@ -109,6 +109,9 @@ static int          s_init_history_pos = -1;    // Sticky history position from 
 static int          s_history_search_pos = -1;  // Most recent history search position during current edit line.
 static str_moveable s_needle;
 
+static char*        s_suggestion = nullptr;
+static int          s_suggestion_len = 0;
+
 //------------------------------------------------------------------------------
 setting_bool g_classify_words(
     "clink.colorize_input",
@@ -553,6 +556,7 @@ static const char* s_argmatcher_color = nullptr;
 static const char* s_arg_color = nullptr;
 static const char* s_flag_color = nullptr;
 static const char* s_none_color = nullptr;
+int g_suggestion_offset = -1;
 
 //------------------------------------------------------------------------------
 bool is_showing_argmatchers()
@@ -637,6 +641,9 @@ static char get_face_func(int in, int active_begin, int active_end)
             return face;
     }
 
+    if (0 <= g_suggestion_offset && g_suggestion_offset <= in)
+        return '-';
+
     return s_input_color ? '2' : '0';
 }
 
@@ -681,6 +688,8 @@ static void puts_face_func(const char* s, const char* face, int n)
             case '(':   out << fallback_color(_rl_display_message_color, c_normal); break;
             case '<':   out << fallback_color(_rl_display_horizscroll_color, c_normal); break;
             case '#':   out << fallback_color(s_selection_color, "\x1b[0;7m"); break;
+
+            case '-':   out << "\x1b[0;90m"; break;
 
             case 'o':   out << fallback_color(s_input_color, c_normal); break;
             case 'c':
@@ -1758,11 +1767,52 @@ static void terminal_fflush_thunk(FILE* stream)
 
 
 //------------------------------------------------------------------------------
+static void clear_suggestion()
+{
+    free(s_suggestion);
+    s_suggestion = nullptr;
+    s_suggestion_len = 0;
+}
+
+//------------------------------------------------------------------------------
+void hook_display()
+{
+    if (rl_point != rl_end || !s_suggestion || !s_suggestion_len)
+    {
+        rl_redisplay();
+        return;
+    }
+
+    rollback<int> rb_suggestion(g_suggestion_offset, rl_end);
+    rollback<char*> rb_buf(rl_line_buffer);
+    rollback<int> rb_len(rl_line_buffer_len);
+    rollback<int> rb_end(rl_end);
+
+    char* tmp = static_cast<char*>(malloc(rl_end + s_suggestion_len + 1));
+    if (tmp)
+    {
+        memcpy(tmp, rl_line_buffer, rl_end);
+        memcpy(tmp + rl_end, s_suggestion, s_suggestion_len);
+        tmp[rl_end + s_suggestion_len] = '\0';
+
+        rl_line_buffer = tmp;
+        rl_end += s_suggestion_len;     // ALTERS rl_end!
+        rl_line_buffer_len = rl_end;    // Use NEW value of rl_end!
+    }
+
+    rl_redisplay();
+}
+
+
+
+//------------------------------------------------------------------------------
 rl_module::rl_module(const char* shell_name, terminal_in* input)
 : m_prev_group(-1)
 {
     assert(!s_direct_input);
     s_direct_input = input;
+
+    rl_redisplay_function = hook_display;
 
     rl_getc_function = terminal_read_thunk;
     rl_fwrite_function = terminal_write_thunk;
@@ -2226,6 +2276,8 @@ void rl_module::on_end_line()
 
     g_rl_buffer = nullptr;
     g_pager = nullptr;
+
+    clear_suggestion();
 }
 
 //------------------------------------------------------------------------------

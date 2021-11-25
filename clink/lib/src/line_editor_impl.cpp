@@ -28,6 +28,7 @@ extern "C" {
 
 //------------------------------------------------------------------------------
 extern setting_bool g_classify_words;
+extern int g_suggestion_offset;
 
 extern bool is_showing_argmatchers();
 extern bool win_fn_callback_pending();
@@ -821,6 +822,10 @@ void line_editor_impl::classify()
     if (!m_classifier)
         return;
 
+    rollback<int> rb_end(rl_end);
+    if (g_suggestion_offset >= 0)
+        rl_end = g_suggestion_offset;
+
     // Skip parsing if the line buffer hasn't changed.
     if (m_prev_classify.equals(m_buffer.get_buffer(), m_buffer.get_length()))
         return;
@@ -831,7 +836,7 @@ void line_editor_impl::classify()
 
     // Hang on to the old classifications so it's possible to detect changes.
     word_classifications old_classifications(std::move(m_classifications));
-    m_classifications.init(strlen(line.get_line()), &old_classifications);
+    m_classifications.init(m_buffer.get_length(), &old_classifications);
 
     // Count number of commands so we can pre-allocate words_storage so that
     // emplace_back() doesn't invalidate pointers (references) stored in
