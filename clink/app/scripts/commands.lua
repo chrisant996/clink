@@ -64,7 +64,7 @@ function clink._popup_complete_numbers()
 end
 
 --------------------------------------------------------------------------------
-function clink._popup_show_help()
+function clink._popup_show_help(rl_buffer)
     local bindings = rl.getkeybindings()
     if #bindings <= 0 then
         rl_buffer:refreshline()
