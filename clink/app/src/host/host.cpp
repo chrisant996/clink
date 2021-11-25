@@ -606,7 +606,10 @@ void host::filter_prompt()
 void host::filter_transient_prompt(bool final)
 {
     if (!m_can_transient)
+    {
+        update_last_cwd();
         return;
+    }
 
     const char* rprompt;
     const char* prompt;
