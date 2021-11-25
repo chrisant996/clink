@@ -121,7 +121,7 @@ Name                         | Default | Description
 `color.message`              | `default` | The color for the message area (e.g. the search prompt message, digit argument prompt message, etc).
 `color.popup`                |         | When set, this is used as the color for popup lists and messages.  If no color is set, then the console's popup colors are used (see the Properties dialog box for the console window).
 `color.popup_desc`           |         | When set, this is used as the color for description column(s) in popup lists.  If no color is set, then a color is chosen to complement the console's popup colors (see the Properties dialog box for the console window).
-`color.prompt`               |         | When set, this is used as the default color for the prompt.  But it's overridden by any colors set by [Customising The Prompt](#customisingtheprompt).
+`color.prompt`               |         | When set, this is used as the default color for the prompt.  But it's overridden by any colors set by [Customizing The Prompt](#customisingtheprompt).
 <a name="color_readonly"></a>`color.readonly` | | Used when displaying file completions with the "readonly" attribute.
 `color.selected_completion`  |         | The color for the selected completion with the clink-select-complete command.  If no color is set, then bright reverse video is used.
 `color.selection`            |         | The color for selected text in the input line.  If no color is set, then reverse video is used.
@@ -524,14 +524,14 @@ The `win-history-list` command has a different search feature.  Typing digits `0
 
 # Extending Clink With Lua
 
-Clink can be extended with [Lua](https://www.lua.org/docs.html) scripts to customise startup actions, create completion matches, customise the prompt, and more.  The following sections describe these in more detail and show some examples.
+Clink can be extended with [Lua](https://www.lua.org/docs.html) scripts to customize startup actions, create completion matches, customize the prompt, and more.  The following sections describe these in more detail and show some examples.
 
 <table class="linkmenu">
 <tr class="lmtr"><td class="lmtd"><a href="#lua-scripts-location">Location of Lua Scripts</a></td><td class="lmtd">Locations from which scripts are loaded.</tr>
 <tr class="lmtr"><td class="lmtd"><a href="#matchgenerators">Match Generators</a></td><td class="lmtd">How to write match generators, or custom completion providers.</tr>
 <tr class="lmtr"><td class="lmtd"><a href="#argumentcompletion">Argument Completion</a></td><td class="lmtd">How to give commands contextual match generators for their arguments.</tr>
 <tr class="lmtr"><td class="lmtd"><a href="#classifywords">Coloring the Input Text</a></td><td class="lmtd">How to make a match generator or argument matcher override the input coloring.</tr>
-<tr class="lmtr"><td class="lmtd"><a href="#customisingtheprompt">Customising the Prompt</a></td><td class="lmtd">How to write custom prompt filters.</tr>
+<tr class="lmtr"><td class="lmtd"><a href="#customisingtheprompt">Customizing the Prompt</a></td><td class="lmtd">How to write custom prompt filters.</tr>
 </table>
 
 <a name="lua-scripts-location"></a>
@@ -552,10 +552,10 @@ Run `clink info` to see the script paths for the current session.
 
 - Loading a Lua script executes it; so when Clink loads Lua scripts from the locations above, it executes the scripts.
 - Code not inside a function is executed immediately when the script is loaded.
-- Usually scripts will register functions to customise various behaviors:
+- Usually scripts will register functions to customize various behaviors:
   - Generate completion matches.
   - Apply color to input text.
-  - Customise the prompt.
+  - Customize the prompt.
   - Perform actions before or after the user gets to edit each input line.
   - Provide new custom commands that can be bound to keys via the [luafunc: key macro syntax](#luakeybindings).
 - Often scripts will also define some functions and variables for use by itself and/or other scripts.
@@ -943,9 +943,9 @@ The <code>classifications</code> field is a [word_classifications](#word_classif
 
 <a name="customisingtheprompt"></a>
 
-## Customising the Prompt
+## Customizing the Prompt
 
-Before Clink displays the prompt it filters the prompt through [Lua](#extending-clink) so that the prompt can be customised. This happens each and every time that the prompt is shown which allows for context sensitive customisations (such as showing the current branch of a git repository).
+Before Clink displays the prompt it filters the prompt through [Lua](#extending-clink) so that the prompt can be customized. This happens each and every time that the prompt is shown which allows for context sensitive customizations (such as showing the current branch of a git repository).
 
 Writing a prompt filter is straightforward:
 1. Create a new prompt filter by calling `clink.promptfilter()` along with a priority id which dictates the order in which filters are called. Lower priority ids are called first.
@@ -1043,13 +1043,13 @@ The `%CLINK_TRANSIENT_PROMPT%` environment variable provides the initial prompt 
 
 Turn on the transient prompt with `clink set prompt.transient always`.  Or use `same_dir` instead of `always` to only use a transient prompt when the current directory is the same as the previous prompt.
 
-The transient prompt can be customised by a prompt filter:
+The transient prompt can be customized by a prompt filter:
 1. Create a new prompt filter by calling `clink.promptfilter()` along with a priority id which dictates the order in which filters are called. Lower priority ids are called first.
 2. Define a `:transientfilter()` function on the returned prompt filter.
 
 The transient filter function takes a string argument that contains the filtered prompt so far.  If the filter function returns nil, it has no effect.  If the filter function returns a string, that string is used as the new filtered prompt (and may be further modified by other prompt filters with higher priority ids).  If the filter function returns a string and a boolean, then if the boolean is false the prompt filtering is done and no further filter functions are called.
 
-A transient right side prompt is also possible (similar to the usual [right side prompt](#rightprompt)).  The `%CLINK_TRANSIENT_RPROMPT%` environment variable (note the `R` in `_RPROMPT`) provides the initial prompt string for the transient right side prompt, which can be customised by a `:transientrightfilter()` function on a prompt filter.
+A transient right side prompt is also possible (similar to the usual [right side prompt](#rightprompt)).  The `%CLINK_TRANSIENT_RPROMPT%` environment variable (note the `R` in `_RPROMPT`) provides the initial prompt string for the transient right side prompt, which can be customized by a `:transientrightfilter()` function on a prompt filter.
 
 A prompt filter must have a `:filter()` function defined on it, and may in addition have any combination of `:rightfilter()`, `:transientfilter()`, and `:transientrightfilter()` functions defined on it.
 

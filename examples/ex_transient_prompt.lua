@@ -7,25 +7,25 @@ local normal = "\x1b[m"
 -- Create prompt filter.
 local pf = clink.promptfilter(10)
 
--- Customise the normal prompt.
+-- Customize the normal prompt.
 function pf:filter(prompt)
     -- Don't return false yet; let rightfilter have a chance.
     return cwd_color.." "..os.getcwd().." "..symbol_color.." > "..normal
 end
 
--- Customise the normal right side prompt.
+-- Customize the normal right side prompt.
 function pf:rightfilter(prompt)
     -- Returns false to stop filtering.
     return date_color..os.date(), false
 end
 
--- Customise the transient prompt.
+-- Customize the transient prompt.
 function pf:transientfilter(prompt)
     -- Don't return false yet; let transientrightfilter have a chance.
     return symbol_color.."> "..normal
 end
 
--- Customise the transient right side prompt.
+-- Customize the transient right side prompt.
 function pf:transientrightfilter(prompt)
     -- Returns false to stop filtering.
     return "", false

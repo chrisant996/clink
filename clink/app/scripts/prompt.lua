@@ -110,7 +110,7 @@ end
 --- which contains the filtered prompt so far.  The function can return nil to
 --- have no effect, or can return a new prompt string.  It can optionally stop
 --- further prompt filtering by also returning false.  See
---- <a href="#customisingtheprompt">Customising the Prompt</a> for more
+--- <a href="#customisingtheprompt">Customizing the Prompt</a> for more
 --- information.
 --- -show:  local foo_prompt = clink.promptfilter(80)
 --- -show:  function foo_prompt:filter(prompt)

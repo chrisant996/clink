@@ -57,7 +57,7 @@ end
 --- <a href="#line_state">line_state</a> argument which contains the input line.
 --- The function can return nil to give the next suggester a chance, or can
 --- return a suggestion (or an empty string) to stop looking for suggestions.  See
---- <a href="#customisingsuggestions">Customising Suggestions</a> for more
+--- <a href="#customisingsuggestions">Customizing Suggestions</a> for more
 --- information.
 --- -show:  local doskeyarg = clink.suggester("doskeyarg")
 --- -show:  function doskeyarg:suggest(line)
