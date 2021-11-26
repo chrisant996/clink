@@ -55,14 +55,15 @@ end
 ---
 --- Define on the object a <code>:suggest()</code> function that takes a
 --- <a href="#line_state">line_state</a> argument which contains the input line,
---- and a string argument which contains the longest common subsequence of the
---- current set of possible completions.  The function can return nil to give
---- the next suggester a chance, or can return a suggestion (or an empty string)
---- to stop looking for suggestions.  See
---- <a href="#customisingsuggestions">Customizing Suggestions</a> for more
+--- and a <a href="#matches">matches</a> argument which contains the possible
+--- completions.  The function can return nil to give the next suggester a
+--- chance, or can return a suggestion (or an empty string) to stop looking for
+--- suggestions.
+---
+--- See <a href="#customisingsuggestions">Customizing Suggestions</a> for more
 --- information.
 --- -show:  local doskeyarg = clink.suggester("doskeyarg")
---- -show:  function doskeyarg:suggest(line, lcd)
+--- -show:  function doskeyarg:suggest(line, matches)
 --- -show:  &nbsp;   if line:getword(1) == "doskey" and
 --- -show:  &nbsp;           line:getline():match("[ \t][^ \t/][^ \t]+=") and
 --- -show:  &nbsp;           not line:getline():match("%$%*") then

@@ -64,6 +64,7 @@ legend {
 }
 
 code {
+    vertical-align: text-top;
     display: inline-block;
     font-family: "Fira Mono",monospace;
     font-size: 0.9rem;
