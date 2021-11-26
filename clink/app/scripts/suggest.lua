@@ -8,9 +8,9 @@ local suggesters = {}
 
 
 --------------------------------------------------------------------------------
-local function _do_suggest(line, lcd)
+local function _do_suggest(line, matches)
     -- Protected call to suggesters.
-    local impl = function(line, lcd)
+    local impl = function(line, matches)
         local suggested, onwards
         local strategy = settings.get("autosuggest.strategy"):explode()
         for _, name in ipairs(strategy) do
@@ -18,7 +18,7 @@ local function _do_suggest(line, lcd)
             if suggester then
                 local func = suggester.suggest
                 if func then
-                    suggested, onwards = func(suggester, line, lcd)
+                    suggested, onwards = func(suggester, line, matches)
                     if suggested ~= nil or onwards == false then
                         return suggested
                     end
@@ -27,7 +27,7 @@ local function _do_suggest(line, lcd)
         end
     end
 
-    local ok, ret = xpcall(impl, _error_handler_ret, line, lcd)
+    local ok, ret = xpcall(impl, _error_handler_ret, line, matches)
     if not ok then
         print("")
         print("suggester failed:")
@@ -39,8 +39,8 @@ local function _do_suggest(line, lcd)
 end
 
 --------------------------------------------------------------------------------
-function clink._suggest(line, lcd)
-    return _do_suggest(line, lcd)
+function clink._suggest(line, matches)
+    return _do_suggest(line, matches)
 end
 
 --------------------------------------------------------------------------------
@@ -92,26 +92,31 @@ end
 
 
 --------------------------------------------------------------------------------
+local function suffix(line, suggestion, minlen)
+    if suggestion then
+        local info = line:getwordinfo(line:getwordcount())
+        local endword = line:getline():sub(info.offset, line:getcursor())
+        local matchlen = string.matchlen(suggestion, endword)
+        if matchlen >= minlen and matchlen == #endword then
+            return suggestion:sub(matchlen + 1);
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
 local history_suggester = clink.suggester("history")
-function history_suggester:suggest(line, lcd)
+function history_suggester:suggest(line, matches)
     return clink.history_suggester(line:getline(), false)
 end
 
 --------------------------------------------------------------------------------
 local prevcmd_suggester = clink.suggester("match_prev_cmd")
-function prevcmd_suggester:suggest(line, lcd)
+function prevcmd_suggester:suggest(line, matches)
     return clink.history_suggester(line:getline(), true)
 end
 
 --------------------------------------------------------------------------------
 local completion_suggester = clink.suggester("completion")
-function completion_suggester:suggest(line, lcd)
-    if lcd and #lcd > 0 then
-        local info = line:getwordinfo(line:getwordcount())
-        local endword = line:getline():sub(info.offset, line:getcursor())
-        local matchlen = string.matchlen(lcd, endword)
-        if matchlen > 0 and matchlen == #endword then
-            return lcd:sub(matchlen + 1);
-        end
-    end
+function completion_suggester:suggest(line, matches)
+    return suffix(line, matches:getmatch(1), 1)
 end

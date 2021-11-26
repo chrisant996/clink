@@ -166,12 +166,12 @@ extern "C" void host_filter_transient_prompt(int crlf)
 }
 
 //------------------------------------------------------------------------------
-void host_suggest(line_state& line, const char* lcd)
+void host_suggest(line_state& line, matches& matches)
 {
     if (!s_callbacks)
         return;
 
-    s_callbacks->suggest(line, lcd);
+    s_callbacks->suggest(line, matches);
 }
 
 //------------------------------------------------------------------------------
@@ -1134,11 +1134,8 @@ void line_editor_impl::update_internal()
     {
         update_matches();
 
-        str<> lcd;
         line_state line = get_linestate();
-        m_matches.get_lcd(lcd);
-
-        host_suggest(line, lcd.c_str());
+        host_suggest(line, m_matches);
         m_prev_suggest.set(m_buffer.get_buffer(), m_buffer.get_length());
     }
 

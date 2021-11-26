@@ -12,6 +12,7 @@
 #include "lua_script_loader.h"
 #include "lua_state.h"
 #include "line_state_lua.h"
+#include "matches_lua.h"
 
 extern "C" {
 #include <lua.h>
@@ -27,7 +28,7 @@ suggester::suggester(lua_state& lua)
 }
 
 //------------------------------------------------------------------------------
-void suggester::suggest(line_state& line, const char* lcd, str_base& out)
+void suggester::suggest(line_state& line, matches& matches, str_base& out)
 {
     lua_State* state = m_lua.get_state();
 
@@ -41,7 +42,8 @@ void suggester::suggest(line_state& line, const char* lcd, str_base& out)
     line_state_lua line_lua(line);
     line_lua.push(state);
 
-    lua_pushstring(state, lcd);
+    matches_lua matches_lua(matches);
+    matches_lua.push(state);
 
     if (m_lua.pcall(state, 2, 1) != 0)
     {

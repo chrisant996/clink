@@ -82,9 +82,9 @@ setting_str g_autosuggest_strategy(
     "order listed, until one provides a suggestion.  There are three built-in\n"
     "strategies, and scripts can provide other strategies.\n"
     "'history' chooses the most recent matching command from the history.\n"
-    "'completion' chooses the longest common prefix of the possible completions.\n"
+    "'completion' chooses the first of the matching completions.\n"
     "'match_prev_cmd' chooses the most recent matching command whose preceding\n"
-    "history entry matches the most recently invoked command, and only works when\n"
+    "history entry matches the most recently invoked command, but only when\n"
     "the 'history.dupe_mode' setting is 'add'.",
     "match_prev_cmd history completion");
 
@@ -658,12 +658,12 @@ void host::filter_transient_prompt(bool final)
 }
 
 //------------------------------------------------------------------------------
-void host::suggest(line_state& line, const char* lcd)
+void host::suggest(line_state& line, matches& matches)
 {
     if (m_suggester && g_autosuggest_enable.get())
     {
         str<> tmp;
-        m_suggester->suggest(line, lcd, tmp);
+        m_suggester->suggest(line, matches, tmp);
         set_suggestion(tmp.c_str());
     }
 }
