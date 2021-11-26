@@ -53,7 +53,7 @@ static setting_bool g_ignore_space(
     "the history.",
     true);
 
-static setting_enum g_dupe_mode(
+setting_enum g_dupe_mode(
     "history.dupe_mode",
     "Controls how duplicate entries are handled",
     "If a line is a duplicate of an existing history entry Clink will erase\n"

@@ -34,6 +34,7 @@ extern "C" {
 //------------------------------------------------------------------------------
 extern int force_reload_scripts();
 extern setting_bool g_gui_popups;
+extern setting_enum g_dupe_mode;
 
 
 
@@ -724,15 +725,51 @@ static int history_suggester(lua_State* state)
         return 0;
 
     HIST_ENTRY** history = history_list();
+    if (!history || history_length <= 0)
+        return 0;
+
+    // 'match_prev_cmd' only works when 'history.dupe_mode' is 'add'.
+    if (match_prev_cmd && g_dupe_mode.get() != 0)
+        return 0;
+
+    int scanned = 0;
+    const DWORD tick = GetTickCount();
+
+    const int scan_min = 200;
+    const DWORD ms_max = 50;
+
+    const char* prev_cmd = (match_prev_cmd && history_length > 0) ? history[history_length - 1]->line : nullptr;
     for (int i = history_length; --i >= 0;)
     {
+        // Search at least SCAN_MIN entries.  But after that don't keep going
+        // unless it's been less than MS_MAX milliseconds.
+        if (scanned >= scan_min && !(scanned % 20) && GetTickCount() - tick >= ms_max)
+            break;
+        scanned++;
+
         str_iter lhs(line);
         str_iter rhs(history[i]->line);
-        if (str_compare<char, false/*compute_lcd*/, true/*exact_slash*/>(lhs, rhs) > 0 && !lhs.more() && rhs.more())
+        int matchlen = str_compare<char, false/*compute_lcd*/, true/*exact_slash*/>(lhs, rhs);
+
+        // lhs isn't exhausted, or rhs is exhausted?  Continue searching.
+        if (lhs.more() || !rhs.more())
+            continue;
+
+        // Zero matching length?  Is ok with 'match_prev_cmd', otherwise
+        // continue searching.
+        if (!matchlen && !match_prev_cmd)
+            continue;
+
+        // Match previous command, if needed.
+        if (match_prev_cmd)
         {
-            lua_pushstring(state, rhs.get_pointer());
-            return 1;
+            if (i <= 0 || str_compare<char, false/*compute_lcd*/, true/*exact_slash*/>(prev_cmd, history[i - 1]->line) != -1)
+                continue;
         }
+
+        // Suggest this history entry!
+        lua_pushstring(state, rhs.get_pointer());
+        return 1;
     }
 
     return 0;
