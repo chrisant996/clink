@@ -64,8 +64,6 @@ static setting_enum s_prompt_transient(
     "off,always,same_dir",
     0);
 
-#ifdef INCLUDE_SUGGESTIONS
-
 setting_bool g_autosuggest_enable(
     "autosuggest.enable",
     "Enable automatic suggestions",
@@ -77,8 +75,6 @@ setting_str g_autosuggest_strategy(
     "short",
     "desc",
     "history completion");
-
-#endif
 
 setting_bool g_save_history(
     "history.save",
@@ -652,14 +648,12 @@ void host::filter_transient_prompt(bool final)
 //------------------------------------------------------------------------------
 void host::suggest(line_state& line, const char* lcd)
 {
-#ifdef INCLUDE_SUGGESTIONS
     if (m_suggester && g_autosuggest_enable.get())
     {
         str<> tmp;
         m_suggester->suggest(line, lcd, tmp);
         set_suggestion(tmp.c_str());
     }
-#endif
 }
 
 //------------------------------------------------------------------------------

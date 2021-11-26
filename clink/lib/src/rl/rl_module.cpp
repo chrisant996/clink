@@ -261,13 +261,11 @@ static setting_color g_color_selection(
     "The color for selected text in the input line.",
     "");
 
-#ifdef INCLUDE_SUGGESTIONS
 static setting_color g_color_suggestion(
     "color.suggestion",
     "Color for suggestion text",
     "The color for suggestion text to be inserted at the end of the input line.",
     "bright black");
-#endif
 
 static setting_color g_color_unexpected(
     "color.unexpected",
@@ -1651,11 +1649,7 @@ void initialise_readline(const char* state_dir)
         clink_add_funmap_entry("cua-copy", cua_copy, keycat_select, "Copy the selected text to the clipboard");
         clink_add_funmap_entry("cua-cut", cua_cut, keycat_select, "Cut the selected text to the clipboard");
 
-#ifdef INCLUDE_SUGGESTIONS
         clink_add_funmap_entry("win-cursor-forward", win_f1, keycat_history, "Move cursor forward, or at end of line copy character from previous command, or insert suggestion");
-#else
-        clink_add_funmap_entry("win-cursor-forward", win_f1, keycat_history, "Move cursor forward, or at end of line copy character from previous command");
-#endif
         clink_add_funmap_entry("win-copy-up-to-char", win_f2, keycat_history, "Enter a character and copy up to it from the previous command");
         clink_add_funmap_entry("win-copy-up-to-end", win_f3, keycat_history, "Copy the rest of the previous command");
         clink_add_funmap_entry("win-delete-up-to-char", win_f4, keycat_misc, "Enter a character and delete up to it in the input line");
@@ -1678,13 +1672,11 @@ void initialise_readline(const char* state_dir)
         rl_add_funmap_entry("insert-last-argument", rl_yank_last_arg);
         rl_add_funmap_entry("shell-expand-line", clink_expand_line);
 
-#ifdef INCLUDE_SUGGESTIONS
         // Replace some commands with versions that support suggestions.
         rl_add_funmap_entry("forward-word", clink_forward_word);
         rl_add_funmap_entry("forward-char", clink_forward_char);
         rl_add_funmap_entry("forward-byte", clink_forward_byte);
         rl_add_funmap_entry("end-of-line", clink_end_of_line);
-#endif
 
         // Override some defaults.
         _rl_bell_preference = VISIBLE_BELL;     // Because audible is annoying.
@@ -1970,9 +1962,7 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
     assert(!s_direct_input);
     s_direct_input = input;
 
-#ifdef INCLUDE_SUGGESTIONS
     rl_redisplay_function = hook_display;
-#endif
 
     rl_getc_function = terminal_read_thunk;
     rl_fwrite_function = terminal_write_thunk;
@@ -2352,9 +2342,7 @@ void rl_module::on_begin_line(const context& context)
     _rl_filtered_color = build_color_sequence(g_color_filtered, m_filtered_color, true);
     _rl_arginfo_color = build_color_sequence(g_color_arginfo, m_arginfo_color, true);
     _rl_selected_color = build_color_sequence(g_color_selected, m_selected_color);
-#ifdef INCLUDE_SUGGESTIONS
     s_suggestion_color = build_color_sequence(g_color_suggestion, m_suggestion_color, true);
-#endif
 
     if (!s_selection_color && s_input_color)
     {

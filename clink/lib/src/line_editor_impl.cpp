@@ -1127,7 +1127,6 @@ void line_editor_impl::update_internal()
         m_prev_key = next_key;
     }
 
-#ifdef INCLUDE_SUGGESTIONS
     // Should we collect suggestions?
     if (m_buffer.get_cursor() == m_buffer.get_length() &&
         true && /* suggestions are enabled */
@@ -1142,7 +1141,6 @@ void line_editor_impl::update_internal()
         host_suggest(line, lcd.c_str());
         m_prev_suggest.set(m_buffer.get_buffer(), m_buffer.get_length());
     }
-#endif
 
     // Must defer updating m_prev_generate since the old value is still needed
     // for deciding whether to sort/select, after deciding whether to generate.
