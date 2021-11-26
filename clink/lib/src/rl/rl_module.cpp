@@ -88,6 +88,7 @@ extern int macro_hook_func(const char* macro);
 extern int host_filter_matches(char** matches);
 extern void update_matches();
 extern void reset_generate_matches();
+extern void reset_prev_suggest();
 extern void force_update_internal(bool restrict);
 extern matches* maybe_regenerate_matches(const char* needle, display_filter_flags flags);
 extern setting_color g_color_interact;
@@ -763,6 +764,8 @@ void clear_suggestion()
 
     new (&s_suggestion) str_iter();
     s_suggestion_buffer.free();
+
+    reset_prev_suggest();
 }
 
 //------------------------------------------------------------------------------

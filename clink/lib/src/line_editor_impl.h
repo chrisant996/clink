@@ -70,6 +70,7 @@ public:
     virtual void        set_keyseq_len(int len) override;
 
     void                reset_generate_matches();
+    void                reset_prev_suggest();
     void                force_update_internal(bool restrict=false);
     bool                call_lua_rl_global_function(const char* func_name);
 

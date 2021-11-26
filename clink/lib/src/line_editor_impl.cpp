@@ -1154,6 +1154,19 @@ void line_editor_impl::update_internal()
 }
 
 //------------------------------------------------------------------------------
+void line_editor_impl::reset_prev_suggest()
+{
+    m_prev_suggest.clear();
+}
+
+void reset_prev_suggest()
+{
+    assert(s_editor);
+    if (s_editor)
+        s_editor->reset_prev_suggest();
+}
+
+//------------------------------------------------------------------------------
 void line_editor_impl::before_display()
 {
     assert(s_editor);
