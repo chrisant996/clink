@@ -346,7 +346,7 @@ static bool append_match_color_indicator(const char *f, unsigned char match_type
 #endif
         }
 #if defined(S_ISLNK)
-        else if (S_ISLNK(mode))
+        else if (S_ISLNK(mode) && strncmp(_rl_color_indicator[C_LINK].string, "target", 6) != 0)
             colored_filetype = C_LINK;
 #endif
         else if (S_ISFIFO(mode))
