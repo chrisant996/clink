@@ -810,9 +810,13 @@ bool insert_suggestion(suggestion_action action)
         }
 
         // Skip non-spaces.
+        bool quote = false;
         while (int c = s_suggestion.peek())
         {
-            if (is_suggestion_word_break(c))
+            // TODO: What about `\\\"` and `^` and so on?
+            if (c == '"')
+                quote = !quote;
+            else if (!quote && is_suggestion_word_break(c))
                 break;
             s_suggestion.next();
         }
