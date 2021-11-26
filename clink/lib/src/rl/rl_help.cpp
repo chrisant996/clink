@@ -115,7 +115,11 @@ static const struct {
   { "emacs-editing-mode", rl_emacs_editing_mode, keycat_misc, "When in 'vi' command mode, this causes a switch to 'emacs' editing mode" },
   { "end-kbd-macro", rl_end_kbd_macro, keycat_misc, "Stop saving the characters typed into the current keyboard macro and save the definition" },
   { "end-of-history", rl_end_of_history, keycat_history, "Move to the end of the input history, i.e., the line currently being entered" },
+#ifdef INCLUDE_SUGGESTIONS
+  { "end-of-line", clink_end_of_line, keycat_basic, "Move to the end of the line, or insert suggestion" },
+#else
   { "end-of-line", rl_end_of_line, keycat_basic, "Move to the end of the line" },
+#endif
   { "exchange-point-and-mark", rl_exchange_point_and_mark, keycat_misc, "Swap the cursor point with the mark.  Sets the current cursor position to the saved position, and saves the old cursor position as the mark" },
   { "forward-backward-delete-char", rl_rubout_or_delete, keycat_basic, "Delete the character at the cursor point, unless the cursor is at the end of the line, in which case the character behind the cursor is deleted" },
 #ifdef INCLUDE_SUGGESTIONS

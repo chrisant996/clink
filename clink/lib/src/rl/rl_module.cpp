@@ -916,6 +916,15 @@ int clink_forward_byte(int count, int invoking_key)
     return rl_forward_byte(count, invoking_key);
 }
 
+//------------------------------------------------------------------------------
+int clink_end_of_line(int count, int invoking_key)
+{
+    if (insert_suggestion(suggestion_action::insert_to_end))
+        return 0;
+
+    return rl_end_of_line(count, invoking_key);
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -1667,10 +1676,11 @@ void initialise_readline(const char* state_dir)
         rl_add_funmap_entry("shell-expand-line", clink_expand_line);
 
 #ifdef INCLUDE_SUGGESTIONS
-        // Replace some 'forward-*' commands with versions that support suggestions.
+        // Replace some commands with versions that support suggestions.
         rl_add_funmap_entry("forward-word", clink_forward_word);
         rl_add_funmap_entry("forward-char", clink_forward_char);
         rl_add_funmap_entry("forward-byte", clink_forward_byte);
+        rl_add_funmap_entry("end-of-line", clink_end_of_line);
 #endif
 
         // Override some defaults.
