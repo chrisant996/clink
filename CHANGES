@@ -4,6 +4,12 @@
 
 #### v1.2.47
 
+- Added autosuggestions similar to the Fish shell.  Turn on by running `clink set autosuggest.enable true`.  See the `autosuggest.enable` and `autosuggest.strategy` Clink settings for details.
+- Fixed the color when the `horizontal-scroll-mode` config variable is `on`.
+- Fixed the transient prompt when using Help commands.
+- Fixed the `clink autorun` commands when paths contain Chinese characters and the system code page isn't UTF8.
+- Fixed [#209](https://github.com/chrisant996/clink/issues/209); `clink-popup-show-help` command fails.
+- Fixed [#208](https://github.com/chrisant996/clink/issues/208); orphaned symlinks are colored wrong.
 - Fixed [#203](https://github.com/chrisant996/clink/issues/203); unable to inject when Clink binary directory contains Chinese characters (regression introduced in v1.0.0).
 
 #### v1.2.46
