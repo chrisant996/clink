@@ -281,6 +281,9 @@ int glob_impl(lua_State* state, bool dirs_only, bool back_compat=false)
     if (back_compat)
         globber.suffix_dirs(false);
 
+    str_moveable tmp(mask);
+    path::to_parent(tmp, nullptr);
+
     int i = 1;
     str<288> file;
     str<16> type;
@@ -305,11 +308,16 @@ int glob_impl(lua_State* state, bool dirs_only, bool back_compat=false)
 #ifdef S_ISLNK
             if (S_ISLNK(info.st_mode))
             {
+                unsigned int len = tmp.length();
+                path::append(tmp, file.c_str());
+
                 add_type_tag(type, "link");
-                wstr<288> wfile(file.c_str());
+                wstr<288> wfile(tmp.c_str());
                 struct _stat64 st;
                 if (_wstat64(wfile.c_str(), &st) < 0)
                     add_type_tag(type, "orphaned");
+
+                tmp.truncate(len);
             }
 #endif
             if (info.attr & FILE_ATTRIBUTE_HIDDEN)
