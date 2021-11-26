@@ -94,11 +94,13 @@ end
 --------------------------------------------------------------------------------
 local history_suggester = clink.suggester("history")
 function history_suggester:suggest(line, lcd)
+    return clink.history_suggester(line:getline(), false)
 end
 
 --------------------------------------------------------------------------------
 local prevcmd_suggester = clink.suggester("match_prev_cmd")
 function prevcmd_suggester:suggest(line, lcd)
+    return clink.history_suggester(line:getline(), true)
 end
 
 --------------------------------------------------------------------------------

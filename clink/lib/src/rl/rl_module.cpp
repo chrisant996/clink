@@ -756,7 +756,7 @@ static void puts_face_func(const char* s, const char* face, int n)
 
 
 //------------------------------------------------------------------------------
-static void clear_suggestion()
+void clear_suggestion()
 {
     if (s_suggestion.more() && g_rl_buffer)
         g_rl_buffer->set_need_draw();

@@ -44,7 +44,7 @@ int normalize_accent(int c);
 //------------------------------------------------------------------------------
 // Returns how many characters match at the beginning of the strings.
 // If the entire strings match and compute_lcd is false, it returns -1.
-template <class T, int MODE, bool fuzzy_accents, bool compute_lcd>
+template <class T, int MODE, bool fuzzy_accents, bool compute_lcd, bool exact_slash>
 int str_compare_impl(str_iter_impl<T>& lhs, str_iter_impl<T>& rhs)
 {
     const T* start = lhs.get_pointer();
@@ -68,8 +68,11 @@ int str_compare_impl(str_iter_impl<T>& lhs, str_iter_impl<T>& rhs)
             d = (d == '-') ? '_' : d;
         }
 
-        if (c == '\\') c = '/';
-        if (d == '\\') d = '/';
+        if (!exact_slash)
+        {
+            if (c == '\\') c = '/';
+            if (d == '\\') d = '/';
+        }
 
         if (c != d)
         {
@@ -102,38 +105,38 @@ int str_compare_impl(str_iter_impl<T>& lhs, str_iter_impl<T>& rhs)
 }
 
 //------------------------------------------------------------------------------
-template <class T, bool compute_lcd=false>
+template <class T, bool compute_lcd=false, bool exact_slash=false>
 int str_compare(str_iter_impl<T>& lhs, str_iter_impl<T>& rhs)
 {
     bool fuzzy_accents = str_compare_scope::current_fuzzy_accents();
     switch (str_compare_scope::current())
     {
     case str_compare_scope::relaxed:
-        if (fuzzy_accents)  return str_compare_impl<T, 2, true, compute_lcd>(lhs, rhs);
-        else                return str_compare_impl<T, 2, false, compute_lcd>(lhs, rhs);
+        if (fuzzy_accents)  return str_compare_impl<T, 2, true, compute_lcd, exact_slash>(lhs, rhs);
+        else                return str_compare_impl<T, 2, false, compute_lcd, exact_slash>(lhs, rhs);
     case str_compare_scope::caseless:
-        if (fuzzy_accents)  return str_compare_impl<T, 1, true, compute_lcd>(lhs, rhs);
-        else                return str_compare_impl<T, 1, false, compute_lcd>(lhs, rhs);
+        if (fuzzy_accents)  return str_compare_impl<T, 1, true, compute_lcd, exact_slash>(lhs, rhs);
+        else                return str_compare_impl<T, 1, false, compute_lcd, exact_slash>(lhs, rhs);
     default:
-        if (fuzzy_accents)  return str_compare_impl<T, 0, true, compute_lcd>(lhs, rhs);
-        else                return str_compare_impl<T, 0, false, compute_lcd>(lhs, rhs);
+        if (fuzzy_accents)  return str_compare_impl<T, 0, true, compute_lcd, exact_slash>(lhs, rhs);
+        else                return str_compare_impl<T, 0, false, compute_lcd, exact_slash>(lhs, rhs);
     }
 }
 
 //------------------------------------------------------------------------------
-template <class T, bool compute_lcd=false>
+template <class T, bool compute_lcd=false, bool exact_slash=false>
 int str_compare(const T* lhs, const T* rhs)
 {
     str_iter_impl<T> lhs_iter(lhs);
     str_iter_impl<T> rhs_iter(rhs);
-    return str_compare<T, compute_lcd>(lhs_iter, rhs_iter);
+    return str_compare<T, compute_lcd, exact_slash>(lhs_iter, rhs_iter);
 }
 
 //------------------------------------------------------------------------------
-template <class T, bool compute_lcd=false>
+template <class T, bool compute_lcd=false, bool exact_slash=false>
 int str_compare(const str_impl<T>& lhs, const str_impl<T>& rhs)
 {
     str_iter_impl<T> lhs_iter(lhs);
     str_iter_impl<T> rhs_iter(rhs);
-    return str_compare<T, compute_lcd>(lhs_iter, rhs_iter);
+    return str_compare<T, compute_lcd, exact_slash>(lhs_iter, rhs_iter);
 }

@@ -11,6 +11,7 @@
 #include <core/os.h>
 #include <core/path.h>
 #include <core/str.h>
+#include <core/str_compare.h>
 #include <core/str_iter.h>
 #include <core/str_transform.h>
 #include <core/settings.h>
@@ -22,6 +23,7 @@
 
 extern "C" {
 #include <lua.h>
+#include <readline/history.h>
 }
 
 #include <unordered_set>
@@ -712,6 +714,30 @@ static int is_transient_prompt_filter(lua_State* state)
     return 1;
 }
 
+//------------------------------------------------------------------------------
+// UNDOCUMENTED; internal use only.
+static int history_suggester(lua_State* state)
+{
+    const char* line = checkstring(state, 1);
+    const int match_prev_cmd = lua_toboolean(state, 2);
+    if (!line)
+        return 0;
+
+    HIST_ENTRY** history = history_list();
+    for (int i = history_length; --i >= 0;)
+    {
+        str_iter lhs(line);
+        str_iter rhs(history[i]->line);
+        if (str_compare<char, false/*compute_lcd*/, true/*exact_slash*/>(lhs, rhs) > 0 && !lhs.more() && rhs.more())
+        {
+            lua_pushstring(state, rhs.get_pointer());
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -764,6 +790,7 @@ void clink_lua_initialise(lua_state& lua)
         { "refilterprompt",         &refilter_prompt },
         { "istransientpromptfilter", &is_transient_prompt_filter },
         { "get_refilter_redisplay_count", &get_refilter_redisplay_count },
+        { "history_suggester",      &history_suggester },
     };
 
     lua_State* state = lua.get_state();
