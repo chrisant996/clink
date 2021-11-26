@@ -207,6 +207,35 @@ matches_iter match_adapter::get_iter()
 }
 
 //------------------------------------------------------------------------------
+void match_adapter::get_lcd(str_base& out) const
+{
+    if (m_filtered_matches)
+    {
+        for (unsigned int i = 0; i < m_filtered_count; i++)
+        {
+            const char* match = m_filtered_matches[i + 1]->match;
+            if (!i)
+            {
+                out = match;
+            }
+            else
+            {
+                int matching = str_compare<char, true/*compute_lcd*/>(out.c_str(), match);
+                out.truncate(matching);
+            }
+        }
+    }
+    else if (m_matches)
+    {
+        m_matches->get_lcd(out);
+    }
+    else
+    {
+        out.clear();
+    }
+}
+
+//------------------------------------------------------------------------------
 unsigned int match_adapter::get_match_count() const
 {
     if (m_filtered_matches)
@@ -943,21 +972,7 @@ void selectcomplete_impl::update_matches(bool restrict)
     // Determine the lcd.
     if (restrict)
     {
-        const unsigned int count = m_matches.get_match_count();
-        for (unsigned int i = 0; i < count; i++)
-        {
-            const char* match = m_matches.get_match(i);
-            if (!i)
-            {
-                m_needle = match;
-            }
-            else
-            {
-                int matching = str_compare(m_needle.c_str(), match);
-                m_needle.truncate(matching);
-            }
-        }
-
+        m_matches.get_lcd(m_needle);
         m_lcd = m_needle.length();
     }
 

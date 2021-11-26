@@ -511,6 +511,24 @@ match_info* matches_impl::get_infos()
 }
 
 //------------------------------------------------------------------------------
+void matches_impl::get_lcd(str_base& out) const
+{
+    for (unsigned int i = 0; i < m_count; i++)
+    {
+        const char *match = m_infos[i].match;
+        if (!i)
+        {
+            out = match;
+        }
+        else
+        {
+            int matching = str_compare<char, true/*compute_lcd*/>(out.c_str(), match);
+            out.truncate(matching);
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
 unsigned int matches_impl::get_match_count() const
 {
     return m_count;

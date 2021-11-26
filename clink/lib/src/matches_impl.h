@@ -58,6 +58,7 @@ public:
     matches_iter            get_iter() const;
     matches_iter            get_iter(const char* pattern) const;
 
+    virtual void            get_lcd(str_base& out) const override;
     virtual unsigned int    get_match_count() const override;
     virtual const char*     get_match(unsigned int index) const override;
     virtual match_type      get_match_type(unsigned int index) const override;

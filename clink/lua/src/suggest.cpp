@@ -27,7 +27,7 @@ suggester::suggester(lua_state& lua)
 }
 
 //------------------------------------------------------------------------------
-void suggester::suggest(line_state& line, str_base& out)
+void suggester::suggest(line_state& line, const char* lcd, str_base& out)
 {
     lua_State* state = m_lua.get_state();
 
@@ -41,7 +41,9 @@ void suggester::suggest(line_state& line, str_base& out)
     line_state_lua line_lua(line);
     line_lua.push(state);
 
-    if (m_lua.pcall(state, 1, 1) != 0)
+    lua_pushstring(state, lcd);
+
+    if (m_lua.pcall(state, 2, 1) != 0)
     {
         if (const char* error = lua_tostring(state, -1))
             m_lua.print_error(error);

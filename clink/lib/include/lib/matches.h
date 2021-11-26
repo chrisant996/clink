@@ -131,6 +131,7 @@ class matches
 {
 public:
     virtual matches_iter    get_iter(const char* pattern = nullptr) const = 0;
+    virtual void            get_lcd(str_base& out) const = 0;
     virtual unsigned int    get_match_count() const = 0;
     virtual const char*     get_match(unsigned int index) const = 0;
     virtual match_type      get_match_type(unsigned int index) const = 0;

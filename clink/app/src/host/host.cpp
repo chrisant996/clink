@@ -650,13 +650,13 @@ void host::filter_transient_prompt(bool final)
 }
 
 //------------------------------------------------------------------------------
-void host::suggest(line_state& line)
+void host::suggest(line_state& line, const char* lcd)
 {
 #ifdef INCLUDE_SUGGESTIONS
     if (m_suggester && g_autosuggest_enable.get())
     {
         str<> tmp;
-        m_suggester->suggest(line, tmp);
+        m_suggester->suggest(line, lcd, tmp);
         set_suggestion(tmp.c_str());
     }
 #endif

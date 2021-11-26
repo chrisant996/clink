@@ -12,7 +12,7 @@ class suggester
 {
 public:
                     suggester(lua_state& lua);
-    void            suggest(line_state& line, str_base& out);
+    void            suggest(line_state& line, const char* lcd, str_base& out);
 
 private:
     lua_state&      m_lua;

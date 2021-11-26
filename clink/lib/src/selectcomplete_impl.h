@@ -25,6 +25,7 @@ public:
     void            init_has_descriptions();
 
     matches_iter    get_iter();
+    void            get_lcd(str_base& out) const;
     unsigned int    get_match_count() const;
     const char*     get_match(unsigned int index) const;
     const char*     get_match_display(unsigned int index) const;
