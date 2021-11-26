@@ -13,6 +13,7 @@ Here are some highlights of what Clink provides:
   - Directory commands.
   - Environment variables.
 - Context sensitive colored input text.
+- Automatic suggestions.
 - New keyboard shortcuts;
   - Interactive completion list (<kbd>Ctrl</kbd>+<kbd>Space</kbd>).
   - Incremental history search (<kbd>Ctrl</kbd>+<kbd>R</kbd> and <kbd>Ctrl</kbd>+<kbd>S</kbd>).
@@ -27,6 +28,7 @@ Here are some highlights of what Clink provides:
   - Typing a directory name followed by a path separator is a shortcut for `cd /d` to that directory.
   - Typing `..` or `...` is a shortcut for `cd ..` or `cd ..\..` (each additional `.` adds another `\..`).
   - Typing `-` or `cd -` changes to the previous current working directory.
+- Scriptable autosuggest with Lua.
 - Scriptable completion with Lua.
 - Scriptable key bindings with Lua.
 - Colored and scriptable prompt.
@@ -93,6 +95,8 @@ The following table describes the available Clink settings:
 
 Name                         | Default | Description
 :--:                         | :-:     | -----------
+`autosuggest.enable`         | False   | When this is `true` a suggested command may appear in `color.suggestion` color after the cursor.  If the suggestion isn't what you want, just ignore it.  Or you can accept the suggestion by pressing the <kbd>Right</kbd> arrow or <kbd>End</kbd>, or you can accept the next word of the suggestion by pressing <kbd>Ctrl</kbd>+<kbd>Right</kbd> or <kbd>Alt</kbd>+<kbd>Right</kbd>.  The `autosuggest.strategy` setting determines how a suggestion is chosen.
+`autosuggest.strategy`       | `match_prev_cmd history completion` | This determines how suggestions are chosen.  The strategies are tried in the order listed, until one provides a suggestion.  There are three built-in strategies, and scripts can provide other strategies.  `history` chooses the most recent matching command from the history.  `completion` chooses the longest common prefix of the possible completions.  `match_prev_cmd` chooses the most recent matching command whose preceding history entry matches the most recently invoked command, and only works when the `history.dupe_mode` setting is `add`.
 `clink.autostart`            |         | This command is automatically run when the first CMD prompt is shown after Clink is injected.  If this is blank (the default), then Clink instead looks for clink_start.cmd in the binaries directory and profile directory and runs them.  Set it to "nul" to not run any autostart command.
 `clink.colorize_input`       | True    | Enables context sensitive coloring for the input text (see [Coloring the Input Text](#classifywords)).
 `clink.default_bindings`     | `bash`  | Clink uses bash key bindings when this is set to `bash` (the default).  When this is set to `windows` Clink overrides some of the bash defaults with familiar Windows key bindings for <kbd>Tab</kbd>, <kbd>Ctrl</kbd>+<kbd>A</kbd>, <kbd>Ctrl</kbd>+<kbd>F</kbd>, <kbd>Ctrl</kbd>+<kbd>M</kbd>, and <kbd>Right</kbd>.
@@ -125,6 +129,7 @@ Name                         | Default | Description
 <a name="color_readonly"></a>`color.readonly` | | Used when displaying file completions with the "readonly" attribute.
 `color.selected_completion`  |         | The color for the selected completion with the clink-select-complete command.  If no color is set, then bright reverse video is used.
 `color.selection`            |         | The color for selected text in the input line.  If no color is set, then reverse video is used.
+`color.suggestion`           | `bright black` | The color for automatic suggestions when `autosuggest.enable` is enabled.
 `color.unexpected`           | `default` | The color for unexpected arguments in the input line when `clink.colorize_input` is enabled.
 `debug.log_terminal`         | False   | Logs all terminal input and output to the clink.log file.  This is intended for diagnostic purposes only, and can make the log file grow significantly.
 `doskey.enhanced`            | True    | Enhanced Doskey adds the expansion of macros that follow `\|` and `&` command separators and respects quotes around words when parsing `$1`...`$9` tags. Note that these features do not apply to Doskey use in Batch files.
@@ -1060,6 +1065,12 @@ The next example shows how to make a prompt that shows:
 ```lua
 #INCLUDE [examples\ex_transient_prompt.lua]
 ```
+
+<a name="customisingsuggestions"></a>
+
+## Customizing Suggestions
+
+TBD
 
 # Miscellaneous
 

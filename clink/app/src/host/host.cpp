@@ -67,14 +67,26 @@ static setting_enum s_prompt_transient(
 setting_bool g_autosuggest_enable(
     "autosuggest.enable",
     "Enable automatic suggestions",
-    "The default is 'off'.  ...EXPLAIN...",
+    "The default is 'false'.  When this is 'true' a suggested command may appear\n"
+    "in the 'color.suggestion' color after the cursor.  If the suggestion isn't\n"
+    "what you want, just ignore it.  Or you can accept the suggestion by pressing\n"
+    "the Right arrow or End, or you can accept the next word of the suggestion by\n"
+    "pressing Ctrl+Right or Alt+Right.  The 'autosuggest.strategy' setting\n"
+    "determines how a suggestion is chosen.",
     false);
 
 setting_str g_autosuggest_strategy(
     "autosuggest.strategy",
-    "short",
-    "desc",
-    "history completion");
+    "Controls how suggestions are chosen",
+    "This determines how suggestions are chosen.  The strategies are tried in the\n"
+    "order listed, until one provides a suggestion.  There are three built-in\n"
+    "strategies, and scripts can provide other strategies.\n"
+    "'history' chooses the most recent matching command from the history.\n"
+    "'completion' chooses the longest common prefix of the possible completions.\n"
+    "'match_prev_cmd' chooses the most recent matching command whose preceding\n"
+    "history entry matches the most recently invoked command, and only works when\n"
+    "the 'history.dupe_mode' setting is 'add'.",
+    "match_prev_cmd history completion");
 
 setting_bool g_save_history(
     "history.save",
