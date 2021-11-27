@@ -19,12 +19,12 @@ See the [issues](https://github.com/chrisant996/clink/issues) page for known iss
   - Directory commands.
   - Environment variables.
 - Context sensitive colored input text.
+- Automatic suggestions.
 - New keyboard shortcuts;
-  - Paste from clipboard (<kbd>Ctrl</kbd>+<kbd>V</kbd>).
+  - Interactive completion list (<kbd>Ctrl</kbd>+<kbd>Space</kbd>).
   - Incremental history search (<kbd>Ctrl</kbd>+<kbd>R</kbd> and <kbd>Ctrl</kbd>+<kbd>S</kbd>).
   - Powerful completion (<kbd>Tab</kbd>).
   - Undo (<kbd>Ctrl</kbd>+<kbd>Z</kbd>).
-  - Automatic `cd ..` (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>U</kbd>).
   - Environment variable expansion (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>E</kbd>).
   - Doskey alias expansion (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>F</kbd>).
   - Scroll the screen buffer (<kbd>Alt</kbd>+<kbd>Up</kbd>, etc).
@@ -34,12 +34,13 @@ See the [issues](https://github.com/chrisant996/clink/issues) page for known iss
   - Typing a directory name followed by a path separator is a shortcut for `cd /d` to that directory.
   - Typing `..` or `...` is a shortcut for `cd ..` or `cd ..\..` (each additional `.` adds another `\..`).
   - Typing `-` or `cd -` changes to the previous current working directory.
+- Scriptable autosuggest with Lua.
 - Scriptable completion with Lua.
 - Scriptable key bindings with Lua.
 - Colored and scriptable prompt.
 - Auto-answering of the "Terminate batch job?" prompt.
 
-By default Clink binds <kbd>Alt</kbd>+<kbd>H</kbd> to display the current key bindings. More features can also be found in GNU's [Readline](https://tiswww.cwru.edu/php/chet/readline/readline.html) and [History](https://tiswww.cwru.edu/php/chet/readline/history.html) libraries' manuals.
+By default Clink binds <kbd>Alt</kbd>+<kbd>H</kbd> to display the current key bindings. More features can also be found in GNU's [Readline](https://tiswww.cwru.edu/php/chet/readline/readline.html).
 
 ### Usage
 
