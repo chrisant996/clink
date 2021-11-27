@@ -83,6 +83,9 @@ function clink.suggester(name)
     if type(name) ~= "string" then
         error("Suggester name must be a string.")
     end
+    if name:match(" ") then
+        error("Suggester names cannot contain spaces.")
+    end
 
     local ret = {}
     suggesters[name] = ret
