@@ -434,21 +434,26 @@ extern "C" const char* host_get_env(const char* name)
 //------------------------------------------------------------------------------
 static const char* build_color_sequence(const setting_color& setting, str_base& out, bool include_csi = false)
 {
-    if (include_csi)
-    {
-        str<> tmp;
-        setting.get(tmp);
-        if (tmp.empty())
-            return nullptr;
-        out.clear();
-        out << "\x1b[" << tmp.c_str() << "m"; // Can't use format() because it DOESN'T GROW!
-    }
-    else
-    {
-        setting.get(out);
-    }
-    if (out.empty())
+    str<> tmp;
+    setting.get(tmp);
+    if (tmp.empty())
         return nullptr;
+
+    // WARNING:  Can't use format() because it DOESN'T GROW!
+
+    out.clear();
+
+    if (include_csi)
+        out << "\x1b[";
+
+    const char* t = tmp.c_str();
+    if (t[0] != '0' || t[1] != ';')
+        out << "0;";
+    out << tmp;
+
+    if (include_csi)
+        out << "m";
+
     return out.c_str();
 }
 
@@ -638,6 +643,9 @@ int count_prompt_lines(const char* prompt_prefix, int len)
 //------------------------------------------------------------------------------
 static char get_face_func(int in, int active_begin, int active_end)
 {
+    if (0 <= g_suggestion_offset && g_suggestion_offset <= in)
+        return '-';
+
     if (in >= active_begin && in < active_end)
         return '1';
 
@@ -650,9 +658,6 @@ static char get_face_func(int in, int active_begin, int active_end)
         if (face != ' ')
             return face;
     }
-
-    if (0 <= g_suggestion_offset && g_suggestion_offset <= in)
-        return '-';
 
     return s_input_color ? '2' : '0';
 }
