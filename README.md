@@ -68,7 +68,7 @@ Clink uses [Premake](http://premake.github.io) to generate Visual Studio solutio
 
 ### Building Documentation
 
-1. Run `npm install marked` to install the [marked](https://marked.js.org) markdown library.
+1. Run `npm install -g marked` to install the [marked](https://marked.js.org) markdown library.
 2. Run `premake5.exe docs`.
 
 ### Debugging Clink
