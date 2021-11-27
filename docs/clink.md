@@ -95,8 +95,8 @@ The following table describes the available Clink settings:
 
 Name                         | Default | Description
 :--:                         | :-:     | -----------
-`autosuggest.enable`         | False   | When this is `true` a suggested command may appear in `color.suggestion` color after the cursor.  If the suggestion isn't what you want, just ignore it.  Or you can accept the suggestion by pressing the <kbd>Right</kbd> arrow or <kbd>End</kbd>, or you can accept the next word of the suggestion by pressing <kbd>Ctrl</kbd>+<kbd>Right</kbd> or <kbd>Alt</kbd>+<kbd>Right</kbd>.  The `autosuggest.strategy` setting determines how a suggestion is chosen.
-`autosuggest.strategy`       | `match_prev_cmd history completion` | This determines how suggestions are chosen.  The strategies are tried in the order listed, until one provides a suggestion.  There are three built-in strategies, and scripts can provide other strategies.  `history` chooses the most recent matching command from the history.  `completion` chooses the first of the matching completions.  `match_prev_cmd` chooses the most recent matching command whose preceding history entry matches the most recently invoked command, but only when the `history.dupe_mode` setting is `add`.
+<a name="autosuggest_enable"></a>`autosuggest.enable` | False | When this is `true` a suggested command may appear in `color.suggestion` color after the cursor.  If the suggestion isn't what you want, just ignore it.  Or you can accept the suggestion by pressing the <kbd>Right</kbd> arrow or <kbd>End</kbd>, or you can accept the next word of the suggestion by pressing <kbd>Ctrl</kbd>+<kbd>Right</kbd>.  The `autosuggest.strategy` setting determines how a suggestion is chosen.
+<a name="autosuggest_strategy"></a>`autosuggest.strategy` | `match_prev_cmd history completion` | This determines how suggestions are chosen.  The suggestion generators are tried in the order listed, until one provides a suggestion.  There are three built-in suggestion generators, and scripts can provide new ones.  `history` chooses the most recent matching command from the history.  `completion` chooses the first of the matching completions.  `match_prev_cmd` chooses the most recent matching command whose preceding history entry matches the most recently invoked command, but only when the `history.dupe_mode` setting is `add`.
 `clink.autostart`            |         | This command is automatically run when the first CMD prompt is shown after Clink is injected.  If this is blank (the default), then Clink instead looks for clink_start.cmd in the binaries directory and profile directory and runs them.  Set it to "nul" to not run any autostart command.
 `clink.colorize_input`       | True    | Enables context sensitive coloring for the input text (see [Coloring the Input Text](#classifywords)).
 `clink.default_bindings`     | `bash`  | Clink uses bash key bindings when this is set to `bash` (the default).  When this is set to `windows` Clink overrides some of the bash defaults with familiar Windows key bindings for <kbd>Tab</kbd>, <kbd>Ctrl</kbd>+<kbd>A</kbd>, <kbd>Ctrl</kbd>+<kbd>F</kbd>, <kbd>Ctrl</kbd>+<kbd>M</kbd>, and <kbd>Right</kbd>.
@@ -129,7 +129,7 @@ Name                         | Default | Description
 <a name="color_readonly"></a>`color.readonly` | | Used when displaying file completions with the "readonly" attribute.
 `color.selected_completion`  |         | The color for the selected completion with the clink-select-complete command.  If no color is set, then bright reverse video is used.
 `color.selection`            |         | The color for selected text in the input line.  If no color is set, then reverse video is used.
-`color.suggestion`           | `bright black` | The color for automatic suggestions when `autosuggest.enable` is enabled.
+<a name="color_suggestion"></a>`color.suggestion` | `bright black` | The color for automatic suggestions when `autosuggest.enable` is enabled.
 `color.unexpected`           | `default` | The color for unexpected arguments in the input line when `clink.colorize_input` is enabled.
 `debug.log_terminal`         | False   | Logs all terminal input and output to the clink.log file.  This is intended for diagnostic purposes only, and can make the log file grow significantly.
 `doskey.enhanced`            | True    | Enhanced Doskey adds the expansion of macros that follow `\|` and `&` command separators and respects quotes around words when parsing `$1`...`$9` tags. Note that these features do not apply to Doskey use in Batch files.
@@ -953,7 +953,7 @@ The <code>classifications</code> field is a [word_classifications](#word_classif
 Before Clink displays the prompt it filters the prompt through [Lua](#extending-clink) so that the prompt can be customized. This happens each and every time that the prompt is shown which allows for context sensitive customizations (such as showing the current branch of a git repository).
 
 Writing a prompt filter is straightforward:
-1. Create a new prompt filter by calling `clink.promptfilter()` along with a priority id which dictates the order in which filters are called. Lower priority ids are called first.
+1. Create a new prompt filter by calling [clink.promptfilter()](#clink.promptfilter) along with a priority id which dictates the order in which filters are called. Lower priority ids are called first.
 2. Define a `:filter()` function on the returned prompt filter.
 
 The filter function takes a string argument that contains the filtered prompt so far.  If the filter function returns nil, it has no effect.  If the filter function returns a string, that string is used as the new filtered prompt (and may be further modified by other prompt filters with higher priority ids).  If the filter function returns a string and a boolean, then if the boolean is false the prompt filtering is done and no further filter functions are called.
@@ -1000,7 +1000,7 @@ In addition to the normal prompt filtering, Clink can also show a prompt on the 
 
 Clink expands CMD prompt `$` codes in `%CLINK_RPROMPT%`, with a few exceptions:  `$+` is not supported, `$_` ends the prompt string (it can't be more than one line), and `$V` is not supported.  Additionally, if `%CLINK_RPROMPT%` ends with `$M` then trailing spaces are trimmed from the expanded string, to maintain right alignment since `$M` includes a space if the current drive is a network drive (so e.g. `$t $d $m` is right-aligned regardless whether the current drive has a remote name).
 
-The right side prompt can be filtered through [Lua](#extending-clink) just like the normal prompt can be.  Simply define a `:rightfilter()` function on the prompt filter returned by a call to `clink.promptfilter()`.  A prompt filter can define both `:filter()` and `:rightfilter()`, or can define only `:filter()`.
+The right side prompt can be filtered through [Lua](#extending-clink) just like the normal prompt can be.  Simply define a `:rightfilter()` function on the prompt filter returned by a call to [clink.promptfilter()](#clink.promptfilter).  A prompt filter can define both `:filter()` and `:rightfilter()`, or can define only `:filter()`.
 
 The `:rightfilter()` function works the same as the `:filter()` function, except that it operates on the right side prompt.  It takes a string argument that contains the filtered right side prompt so far.  If the rightfilter function returns nil, it has no effect.  If the rightfilter function returns a string, that string is used as the new filtered right side prompt (and may be further modified by other prompt filters with higher priority ids).  If either the rightfilter function or the normal filter function returns a string and a boolean, then if the boolean is false the prompt filtering is done and no further filter functions are called.
 
@@ -1049,7 +1049,7 @@ The `%CLINK_TRANSIENT_PROMPT%` environment variable provides the initial prompt 
 Turn on the transient prompt with `clink set prompt.transient always`.  Or use `same_dir` instead of `always` to only use a transient prompt when the current directory is the same as the previous prompt.
 
 The transient prompt can be customized by a prompt filter:
-1. Create a new prompt filter by calling `clink.promptfilter()` along with a priority id which dictates the order in which filters are called. Lower priority ids are called first.
+1. Create a new prompt filter by calling [clink.promptfilter()](#clink.promptfilter) along with a priority id which dictates the order in which filters are called. Lower priority ids are called first.
 2. Define a `:transientfilter()` function on the returned prompt filter.
 
 The transient filter function takes a string argument that contains the filtered prompt so far.  If the filter function returns nil, it has no effect.  If the filter function returns a string, that string is used as the new filtered prompt (and may be further modified by other prompt filters with higher priority ids).  If the filter function returns a string and a boolean, then if the boolean is false the prompt filtering is done and no further filter functions are called.
@@ -1060,7 +1060,7 @@ A prompt filter must have a `:filter()` function defined on it, and may in addit
 
 The next example shows how to make a prompt that shows:
 1. The current directory and ` > ` on the left, and the date and time on the right.
-2. Just `> ` on the left.
+2. Just `> ` on the left, for past commands.
 
 ```lua
 #INCLUDE [examples\ex_transient_prompt.lua]
@@ -1070,7 +1070,21 @@ The next example shows how to make a prompt that shows:
 
 ## Customizing Suggestions
 
-TBD
+Clink can offer suggestions how to complete a command as you type, and you can select how it generates suggestions.
+
+Turn on [automatic suggestions](#autosuggest_enable) with `clink set autosuggest.enable true`.  Once enabled, Clink will show suggestions in a [muted color](#color.suggestion) after the end of the typed command.  To accept the suggestion press <kbd>Right</kbd> or <kbd>End</kbd>, or to accept the next word of the suggestion press <kbd>Ctrl</kbd>+<kbd>Right</kbd>.  You can ignore the suggestion if it isn't what you want; suggestions have no effect unless you accept them first.
+
+Scripts can provide custom suggestion generators, in addition to the built-in options:
+1. Create a new suggestion generator by calling [clink.suggester()][#clink.suggester] along with a name that identifies the suggestion generator, and can be added to the [`autosuggest.strategy`](#autosuggest_strategy) setting.
+2. Define a `:suggest()` function on the returned suggestion generator.
+
+The function takes a [line_state](#line_state) argument that contains the input line, and a [matches](#matches) argument that contains the possible matches from the completion engine.  If the function returns nil, the next generator listed in the strategy is called.  If the function returns a string (even an empty string), then the string is used as the suggestion.
+
+This example illustrates how to make a suggestion generator that returns the longest common prefix of the possible matches.
+
+```lua
+#INCLUDE [examples\ex_suggest.lua]
+```
 
 # Miscellaneous
 

@@ -71,16 +71,16 @@ setting_bool g_autosuggest_enable(
     "in the 'color.suggestion' color after the cursor.  If the suggestion isn't\n"
     "what you want, just ignore it.  Or you can accept the suggestion by pressing\n"
     "the Right arrow or End, or you can accept the next word of the suggestion by\n"
-    "pressing Ctrl+Right or Alt+Right.  The 'autosuggest.strategy' setting\n"
-    "determines how a suggestion is chosen.",
+    "pressing Ctrl+Right.  The 'autosuggest.strategy' setting determines how a\n"
+    "suggestion is chosen.",
     false);
 
 setting_str g_autosuggest_strategy(
     "autosuggest.strategy",
     "Controls how suggestions are chosen",
-    "This determines how suggestions are chosen.  The strategies are tried in the\n"
-    "order listed, until one provides a suggestion.  There are three built-in\n"
-    "strategies, and scripts can provide other strategies.\n"
+    "This determines how suggestions are chosen.  The suggestion generators are\n"
+    "tried in the order listed, until one provides a suggestion.  There are three\n"
+    "built-in suggestion generators, and scripts can provide new ones.\n"
     "'history' chooses the most recent matching command from the history.\n"
     "'completion' chooses the first of the matching completions.\n"
     "'match_prev_cmd' chooses the most recent matching command whose preceding\n"
