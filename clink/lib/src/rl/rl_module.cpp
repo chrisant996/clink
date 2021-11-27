@@ -1703,11 +1703,6 @@ void initialise_readline(const char* state_dir)
 
     // Bind extended keys so editing follows Windows' conventions.
     static constexpr const char* const emacs_key_binds[][2] = {
-        { "\\e[1;5D",       "backward-word" },           // ctrl-left
-        { "\\e[1;5C",       "forward-word" },            // ctrl-right
-        { "\\e[F",          "end-of-line" },             // end
-        { "\\e[H",          "beginning-of-line" },       // home
-        { "\\e[3~",         "delete-char" },             // del
         { "\\e[1;5F",       "kill-line" },               // ctrl-end
         { "\\e[1;5H",       "backward-kill-line" },      // ctrl-home
         { "\\e[5~",         "history-search-backward" }, // pgup
@@ -1715,7 +1710,6 @@ void initialise_readline(const char* state_dir)
         { "\\e[3;5~",       "kill-word" },               // ctrl-del
         { "\\d",            "backward-kill-word" },      // ctrl-backspace
         { "\\e[2~",         "overwrite-mode" },          // ins
-        { "\\e[27;5;32~",   "old-menu-complete" },       // ctrl-space
         { "\\C-c",          "clink-ctrl-c" },            // ctrl-c
         { "\\C-v",          "clink-paste" },             // ctrl-v
         { "\\C-z",          "undo" },                    // ctrl-z
@@ -1725,14 +1719,6 @@ void initialise_readline(const char* state_dir)
         { "\\C-x\\C-r",     "clink-reload" },            // ctrl-x,ctrl-r
         { "\\C-x\\C-z",     "clink-diagnostics" },       // ctrl-x,ctrl-z
         { "\\M-g",          "glob-complete-word" },      // alt-g
-        { "\\e[1;2D",       "cua-backward-char" },       // shift-left
-        { "\\e[1;2C",       "cua-forward-char" },        // shift-right
-        { "\\e[1;6D",       "cua-backward-word" },       // ctrl-shift-left
-        { "\\e[1;6C",       "cua-forward-word" },        // ctrl-shift-right
-        { "\\e[1;2H",       "cua-beg-of-line" },         // shift-home
-        { "\\e[1;2F",       "cua-end-of-line" },         // shift-end
-        { "\\e[2;2~",       "cua-copy" },                // shift-ins
-        { "\\e[3;2~",       "cua-cut" },                 // shift-del
         { "\\eOP",          "win-cursor-forward" },      // F1
         { "\\eOQ",          "win-copy-up-to-char" },     // F2
         { "\\eOR",          "win-copy-up-to-end" },      // F3
@@ -1754,7 +1740,6 @@ void initialise_readline(const char* state_dir)
         { "\\e[C",          "win-cursor-forward" },      // right
         { "\t",             "old-menu-complete" },       // tab
         { "\\e[Z",          "old-menu-complete-backward" }, // shift-tab
-        { "\\e[27;5;32~",   "clink-select-complete" },   // ctrl-space
         {}
     };
 
@@ -1767,12 +1752,11 @@ void initialise_readline(const char* state_dir)
         { "\\e[C",          "forward-char" },            // right
         { "\t",             "complete" },                // tab
         { "\\e[Z",          "" },                        // shift-tab
-        //{ "\\e[27;5;32~",   "old-menu-complete" },       // ctrl-space
-        { "\\e[27;5;32~",   "clink-select-complete" },   // ctrl-space
         {}
     };
 
     static constexpr const char* const general_key_binds[][2] = {
+        { "\\e[27;5;32~",   "clink-select-complete" },   // ctrl-space
         { "\\M-a",          "clink-insert-dot-dot" },    // alt-a
         { "\\M-c",          "clink-copy-cwd" },          // alt-c
         { "\\M-h",          "clink-show-help" },         // alt-h
@@ -1799,6 +1783,19 @@ void initialise_readline(const char* state_dir)
         { "\\e?",           "clink-what-is" },           // alt-? (alt-shift-/)
         { "\\e[27;8;191~",  "clink-show-help" },         // ctrl-alt-? (ctrl-alt-shift-/)
         { "\\e^",           "clink-expand-history" },    // alt-^
+        { "\\e[1;5D",       "backward-word" },           // ctrl-left
+        { "\\e[1;5C",       "forward-word" },            // ctrl-right
+        { "\\e[3~",         "delete-char" },             // del
+        { "\\e[F",          "end-of-line" },             // end
+        { "\\e[H",          "beginning-of-line" },       // home
+        { "\\e[1;2D",       "cua-backward-char" },       // shift-left
+        { "\\e[1;2C",       "cua-forward-char" },        // shift-right
+        { "\\e[1;6D",       "cua-backward-word" },       // ctrl-shift-left
+        { "\\e[1;6C",       "cua-forward-word" },        // ctrl-shift-right
+        { "\\e[1;2H",       "cua-beg-of-line" },         // shift-home
+        { "\\e[1;2F",       "cua-end-of-line" },         // shift-end
+        { "\\e[2;2~",       "cua-copy" },                // shift-ins
+        { "\\e[3;2~",       "cua-cut" },                 // shift-del
         {}
     };
 
