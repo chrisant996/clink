@@ -7,6 +7,7 @@
 - Added autosuggestions similar to the Fish shell.
   - Turn on by running `clink set autosuggest.enable true`.  See the `autosuggest.enable` and `autosuggest.strategy` Clink settings for details.
   - Added `clink.suggester()` function to create new suggestion generators that can be used in the `autosuggest.strategy` setting.
+- The `clink-diagnostics` command also lists match generators registered by `clink.generator()`.
 - Fixed the color when the `horizontal-scroll-mode` config variable is `on`.
 - Fixed the transient prompt when using Help commands.
 - Fixed the `clink autorun` commands when paths contain Chinese characters and the system code page isn't UTF8.
