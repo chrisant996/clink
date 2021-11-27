@@ -69,10 +69,10 @@ setting_bool g_autosuggest_enable(
     "Enable automatic suggestions",
     "The default is 'false'.  When this is 'true' a suggested command may appear\n"
     "in the 'color.suggestion' color after the cursor.  If the suggestion isn't\n"
-    "what you want, just ignore it.  Or you can accept the suggestion by pressing\n"
-    "the Right arrow or End, or you can accept the next word of the suggestion by\n"
-    "pressing Ctrl+Right.  The 'autosuggest.strategy' setting determines how a\n"
-    "suggestion is chosen.",
+    "what you want, just ignore it.  Or accept the whole suggestion with the Right\n"
+    "arrow or End key, accept the next word of the suggestion with Ctrl+Right, or\n"
+    "accept the next full word of the suggestion up to a space with Shift+Right.\n"
+    "The 'autosuggest.strategy' setting determines how a suggestion is chosen.",
     false);
 
 setting_str g_autosuggest_strategy(

@@ -8,6 +8,7 @@ enum class suggestion_action : unsigned char
 {
     insert_to_end,
     insert_next_word,
+    insert_next_full_word,
 };
 
 //------------------------------------------------------------------------------

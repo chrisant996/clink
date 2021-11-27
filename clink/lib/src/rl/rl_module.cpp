@@ -803,9 +803,10 @@ bool insert_suggestion(suggestion_action action)
     str<> tmp;
     const char* insert = s_suggestion.get_pointer();
     int len = s_suggestion.length();
+    int old_end = rl_end;
 
     bool clear = true;
-    if (action == suggestion_action::insert_next_word)
+    if (action == suggestion_action::insert_next_full_word)
     {
         // Skip spaces.
         while (int c = s_suggestion.peek())
@@ -827,14 +828,6 @@ bool insert_suggestion(suggestion_action action)
             s_suggestion.next();
         }
 
-        // Skip spaces.
-        while (int c = s_suggestion.peek())
-        {
-            if (!is_suggestion_word_break(c))
-                break;
-            s_suggestion.next();
-        }
-
         len = int(s_suggestion.get_pointer() - insert);
         clear = !s_suggestion.more();
 
@@ -842,7 +835,27 @@ bool insert_suggestion(suggestion_action action)
         insert = tmp.c_str();
     }
 
+    g_rl_buffer->begin_undo_group();
     g_rl_buffer->insert(insert);
+
+    if (action == suggestion_action::insert_next_word)
+    {
+        rl_point = old_end;
+        rl_forward_word(1, 0);
+
+        assert(insert == s_suggestion.get_pointer());
+        const int consume = rl_point - old_end;
+        while (int(s_suggestion.get_pointer() - insert) < consume)
+            s_suggestion.next();
+
+        if (rl_point < rl_end)
+        {
+            g_rl_buffer->remove(rl_point, rl_end);
+            clear = false;
+        }
+    }
+
+    g_rl_buffer->end_undo_group();
 
     if (clear)
         clear_suggestion();
@@ -1645,7 +1658,7 @@ void initialise_readline(const char* state_dir)
         clink_add_funmap_entry("clink-popup-complete-numbers", clink_popup_complete_numbers, keycat_completion, "Perform completion with a popup list of numbers from the current screen");
         clink_add_funmap_entry("clink-select-complete", clink_select_complete, keycat_completion, "Perform completion by selecting from an interactive list of possible completions; if there is only one match, insert it");
         clink_add_funmap_entry("cua-backward-char", cua_backward_char, keycat_select, "Extend selection backward one character");
-        clink_add_funmap_entry("cua-forward-char", cua_forward_char, keycat_select, "Extend selection forward one character");
+        clink_add_funmap_entry("cua-forward-char", cua_forward_char, keycat_select, "Extend selection forward one character, or insert the next full suggested word up to a space");
         clink_add_funmap_entry("cua-backward-word", cua_backward_word, keycat_select, "Extend selection backward one word");
         clink_add_funmap_entry("cua-forward-word", cua_forward_word, keycat_select, "Extend selection forward one word");
         clink_add_funmap_entry("cua-beg-of-line", cua_beg_of_line, keycat_select, "Extend selection to the beginning of the line");

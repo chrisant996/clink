@@ -977,6 +977,17 @@ int cua_backward_char(int count, int invoking_key)
 //------------------------------------------------------------------------------
 int cua_forward_char(int count, int invoking_key)
 {
+    if (count != 0)
+    {
+another_word:
+        if (insert_suggestion(suggestion_action::insert_next_full_word))
+        {
+            count--;
+            if (count > 0)
+                goto another_word;
+        }
+    }
+
     cua_selection_manager mgr;
     return rl_forward_char(count, invoking_key);
 }
