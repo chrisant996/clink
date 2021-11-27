@@ -393,3 +393,31 @@ function clink.register_match_generator(func, priority)
         return func(text, first, last)
     end
 end
+
+--------------------------------------------------------------------------------
+function clink._diag_generators()
+    if not settings.get("lua.debug") then
+        return
+    end
+
+    local bold = "\x1b[1m"          -- Bold (bright).
+    local norm = "\x1b[m"           -- Normal.
+    local print = clink.print
+
+    local any = false
+
+    clink.print(bold.."generators:"..norm)
+    for _,generator in ipairs (_generators) do
+        if generator.generate then
+            local info = debug.getinfo(generator.generate, 'S')
+            if info.short_src ~= "?" then
+                print("  "..info.short_src..":"..info.linedefined)
+                any = true
+            end
+        end
+    end
+
+    if not any then
+        print("  no generators registered")
+    end
+end

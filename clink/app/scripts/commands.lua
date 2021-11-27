@@ -88,6 +88,7 @@ function clink._diagnostics()
     clink._diag_coroutines()
     clink._diag_refilter()
     clink._diag_events()
+    clink._diag_generators()
     if clink._diag_custom then
         clink._diag_custom()
     end
