@@ -224,8 +224,15 @@ function clink._diag_events()
 
     local any_events = false
 
+    local sorted_events = {}
+    for event_name in pairs(clink._event_callbacks) do
+        table.insert(sorted_events, event_name)
+    end
+    table.sort(sorted_events, function(a, b) return a < b end)
+
     clink.print(bold.."events:"..norm)
-    for event_name,callback_table in pairs (clink._event_callbacks) do
+    for _,event_name in ipairs(sorted_events) do
+        local callback_table = clink._event_callbacks[event_name]
         local any_callbacks = false
         for _,f in ipairs(callback_table) do
             local info = debug.getinfo(f, 'S')
