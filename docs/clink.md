@@ -95,7 +95,7 @@ The following table describes the available Clink settings:
 
 Name                         | Default | Description
 :--:                         | :-:     | -----------
-<a name="autosuggest_enable"></a>`autosuggest.enable` | False | When this is `true` a suggested command may appear in `color.suggestion` color after the cursor.  If the suggestion isn't what you want, just ignore it.  Or you can accept the suggestion by pressing the <kbd>Right</kbd> arrow or <kbd>End</kbd>, or you can accept the next word of the suggestion by pressing <kbd>Ctrl</kbd>+<kbd>Right</kbd>.  The `autosuggest.strategy` setting determines how a suggestion is chosen.
+<a name="autosuggest_enable"></a>`autosuggest.enable` | False | When this is `true` a suggested command may appear in `color.suggestion` color after the cursor.  If the suggestion isn't what you want, just ignore it.  Or accept the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, accept the next word of the suggestion with <kbd>Ctrl</kbd>+<kbd>Right</kbd>, or accept the next full word of the suggestion up to a space with <kbd>Shift</kbd>+<kbd>Right</kbd>.  The `autosuggest.strategy` setting determines how a suggestion is chosen.
 <a name="autosuggest_strategy"></a>`autosuggest.strategy` | `match_prev_cmd history completion` | This determines how suggestions are chosen.  The suggestion generators are tried in the order listed, until one provides a suggestion.  There are three built-in suggestion generators, and scripts can provide new ones.  `history` chooses the most recent matching command from the history.  `completion` chooses the first of the matching completions.  `match_prev_cmd` chooses the most recent matching command whose preceding history entry matches the most recently invoked command, but only when the `history.dupe_mode` setting is `add`.
 `clink.autostart`            |         | This command is automatically run when the first CMD prompt is shown after Clink is injected.  If this is blank (the default), then Clink instead looks for clink_start.cmd in the binaries directory and profile directory and runs them.  Set it to "nul" to not run any autostart command.
 `clink.colorize_input`       | True    | Enables context sensitive coloring for the input text (see [Coloring the Input Text](#classifywords)).
@@ -440,7 +440,7 @@ Name | Description
 `cua-copy`|Copies the selection to the clipboard.
 `cua-cut`|Cuts the selection to the clipboard.
 `cua-end-of-line`|Extends the selection and moves to the end of the line.
-`cua-forward-char`|Extends the selection and moves forward a character.
+`cua-forward-char`|Extends the selection and moves forward a character, or inserts the next full suggested word up to a space.
 `cua-forward-word`|Extends the selection and moves forward a word.
 `cua-select-all`|Extends the selection to the entire current line.
 `edit-and-execute-command`|Invoke an editor on the current input line, and execute the result as commands.  This attempts to invoke %VISUAL%, %EDITOR%, or notepad.exe as the editor, in that order.
@@ -457,7 +457,7 @@ Name | Description
 `win-copy-history-number`|Enter a history number and replace the input line with the history line (mimics Windows console <kbd>F9</kbd>).
 `win-copy-up-to-char`|Enter a character and copy up to it from the previous command (mimics Windows console <kbd>F2</kbd>).
 `win-copy-up-to-end`|Copy the rest of the previous command (mimics Windows console <kbd>F3</kbd>).
-`win-cursor-forward`|Move cursor forward, or at end of line copy character from previous command (mimics Windows console <kbd>F1</kbd> and <kbd>Right</kbd>).
+`win-cursor-forward`|Move cursor forward, or at end of line copy character from previous command, or insert suggestion (mimics Windows console <kbd>F1</kbd> and <kbd>Right</kbd>).
 `win-delete-up-to-char`|Enter a character and delete up to it in the input line (mimics Windows console <kbd>F4</kbd>).
 `win-history-list`|Executes a history entry from a list (mimics Windows console <kbd>F7</kbd>).
 `win-insert-eof`|Insert ^Z (mimics Windows console <kbd>F6</kbd>).
@@ -1072,7 +1072,7 @@ The next example shows how to make a prompt that shows:
 
 Clink can offer suggestions how to complete a command as you type, and you can select how it generates suggestions.
 
-Turn on [automatic suggestions](#autosuggest_enable) with `clink set autosuggest.enable true`.  Once enabled, Clink will show suggestions in a [muted color](#color.suggestion) after the end of the typed command.  To accept the suggestion press <kbd>Right</kbd> or <kbd>End</kbd>, or to accept the next word of the suggestion press <kbd>Ctrl</kbd>+<kbd>Right</kbd>.  You can ignore the suggestion if it isn't what you want; suggestions have no effect unless you accept them first.
+Turn on [automatic suggestions](#autosuggest_enable) with `clink set autosuggest.enable true`.  Once enabled, Clink will show suggestions in a [muted color](#color.suggestion) after the end of the typed command.  Accept the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, accept the next word of the suggestion with <kbd>Ctrl</kbd>+<kbd>Right</kbd>, or accept the next full word of the suggestion up to a space with <kbd>Shift</kbd>+<kbd>Right</kbd>.  You can ignore the suggestion if it isn't what you want; suggestions have no effect unless you accept them first.
 
 Scripts can provide custom suggestion generators, in addition to the built-in options:
 1. Create a new suggestion generator by calling [clink.suggester()][#clink.suggester] along with a name that identifies the suggestion generator, and can be added to the [`autosuggest.strategy`](#autosuggest_strategy) setting.
