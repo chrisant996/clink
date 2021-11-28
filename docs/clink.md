@@ -126,7 +126,7 @@ The [`autosuggest.strategy`](#autosuggest_strategy) setting determines how a sug
 
 ### Colors
 
-Clink has many configurable colors.  Most of them are associated with either completion colors or input line colors.
+Clink has many configurable colors for match completions, input line coloring, popup lists, and more.
 
 #### Completion colors
 
@@ -136,15 +136,15 @@ To turn on colored completions, put a line `set colored-stats on` in the [.input
 
 See the [Completion Colors](#completion-colors) section for how to configure the colors for match completions.
 
-#### Input line colors
+#### Other colors
 
-Clink adds color to the input line by highlighting arguments, flags, doskey macros, and more.
+Clink adds color to the input line by highlighting arguments, flags, doskey macros, and more.  If you don't want input line colors, you can turn it off by running `clink set clink.colorize_input false`.
 
-If you don't want input line colors, you can turn it off by running `clink set clink.colorize_input false`.
+There are also colors for popup lists, and some other things.
 
 To configure a color, run <code>clink set <span class="arg">colorname</span> <span class="arg">colorvalue</span></code>.
 
-Match completions make it easy to change Clink settings:  type <code>clink set color.</code> and then use <kbd>Tab</kbd> or <kbd>Ctrl</kbd>+<kbd>Space</kbd> to see the available color settings, and to fill in a color value.
+Match completions make it easy to change Clink settings:  type <code>clink set color.</code> and then use completion (e.g. <kbd>Tab</kbd> or <kbd>Ctrl</kbd>+<kbd>Space</kbd>) to see the available color settings, and to fill in a color value.
 
 See the [Clink Settings](#clink-settings) and [Color Settings](#color-settings) sections for more information on Clink settings.
 
