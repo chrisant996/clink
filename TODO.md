@@ -6,7 +6,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## High Priority
 - Getting Started; Colors.
-- Getting Started; Key Bindings.
 
 ## Medium Priority
 - Readline command reference.
