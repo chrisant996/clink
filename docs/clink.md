@@ -602,7 +602,7 @@ If no further match generators need to be called then the function should return
 Here is an example script that supplies git branch names as matches for `git checkout`.  This example doesn't handle git aliases, but that could be added with additional script code.
 
 ```lua
-#INCLUDE [examples\ex_generate.lua]
+#INCLUDE [docs\examples\ex_generate.lua]
 ```
 
 ### The :getwordbreakinfo() Function
@@ -689,7 +689,7 @@ Type | Description | Example
 The return value is a table with the input matches filtered as desired. The match filter function can remove matches, but cannot add matches (use a match generator instead).  If only one match remains after filtering, then many commands will insert the match without displaying it.  This makes it possible to spawn a process (such as [fzf](https://github.com/junegunn/fzf)) to perform enhanced completion by interactively filtering the matches and keeping only one selected match.
 
 ```lua
-#INCLUDE [examples\ex_fzf.lua]
+#INCLUDE [docs\examples\ex_fzf.lua]
 ```
 
 <a name="filteringthematchdisplay"></a>
@@ -832,7 +832,7 @@ clink.argmatcher("git")
 A `:` or `=` at the end of a flag indicates the flag takes an argument but requires no space between the flag and its argument.  If such a flag is not linked to a parser, then it automatically gets linked to a parser to match files.  Here's an example with a few flags that take arguments without a space in between:
 
 ```lua
-#INCLUDE [examples\ex_findstr.lua]
+#INCLUDE [docs\examples\ex_findstr.lua]
 ```
 
 #### Functions As Argument Options
@@ -906,7 +906,7 @@ Words are colored by classifying the words, and each classification has an assoc
 The `clink set` command has different syntax depending on the setting type, so the argmatcher for `clink` needs help in order to get everything right.  A custom generator function parses the input text to provide appropriate matches, and a custom classifier function applies appropriate coloring.
 
 ```lua
-#INCLUDE [examples\ex_classify_samp.lua]
+#INCLUDE [docs\examples\ex_classify_samp.lua]
 ```
 
 #### Setting a classifier function for the whole input line
@@ -943,7 +943,7 @@ The <code>line_state</code> field is a [line_state](#line_state) object that con
 The <code>classifications</code> field is a [word_classifications](#word_classifications) object to use for classifying the words in the associated command line.
 
 ```lua
-#INCLUDE [examples\ex_classify_envvar.lua]
+#INCLUDE [docs\examples\ex_classify_envvar.lua]
 ```
 
 <a name="customisingtheprompt"></a>
@@ -968,7 +968,7 @@ end
 The following example illustrates setting the prompt, modifying the prompt, using ANSI escape code for colors, running a git command to find the current branch, and stopping any further processing.
 
 ```lua
-#INCLUDE [examples\ex_prompt.lua]
+#INCLUDE [docs\examples\ex_prompt.lua]
 ```
 
 The resulting prompt will look like this:
@@ -1007,7 +1007,7 @@ The `:rightfilter()` function works the same as the `:filter()` function, except
 This example modifies the right side prompt by prepending the current date:
 
 ```lua
-#INCLUDE [examples\ex_right_prompt.lua]
+#INCLUDE [docs\examples\ex_right_prompt.lua]
 ```
 
 <br/>
@@ -1035,7 +1035,7 @@ Typically the motivation to use asynchronous prompt filtering is that one or mor
 The following example illustrates running `git status` in the background.  It also remembers the status from the previous input line, so that it can reduce flicker by using the color from last time until the background status operation completes.
 
 ```lua
-#INCLUDE [examples\ex_async_prompt.lua]
+#INCLUDE [docs\examples\ex_async_prompt.lua]
 ```
 
 <a name="transientprompts"></a>
@@ -1063,7 +1063,7 @@ The next example shows how to make a prompt that shows:
 2. Just `> ` on the left, for past commands.
 
 ```lua
-#INCLUDE [examples\ex_transient_prompt.lua]
+#INCLUDE [docs\examples\ex_transient_prompt.lua]
 ```
 
 <a name="customisingsuggestions"></a>
@@ -1083,7 +1083,7 @@ The function takes a [line_state](#line_state) argument that contains the input 
 This example illustrates how to make a suggestion generator that returns the longest common prefix of the possible matches.
 
 ```lua
-#INCLUDE [examples\ex_suggest.lua]
+#INCLUDE [docs\examples\ex_suggest.lua]
 ```
 
 # Miscellaneous
@@ -1280,9 +1280,9 @@ Example key bindings for the .inputrc file:
 Example functions to go in a Lua script file:
 
 ```lua
-#INCLUDE [examples\ex_findprompt.lua]
+#INCLUDE [docs\examples\ex_findprompt.lua]
 
-#INCLUDE [examples\ex_findline.lua]
+#INCLUDE [docs\examples\ex_findline.lua]
 ```
 
 ## Saved Command History
