@@ -203,11 +203,23 @@ The new Clink tries to be as backward compatible with Clink v0.4.9 as possible. 
 
 # Configuring Clink
 
+Clink has two configuration systems, which is a result of using the Readline library to provide command history and key bindings.
+
+The following sections describe how to configure Clink itself.  To learn about the Readline configuration and key bindings, instead see [Configuring Readline](#configreadline).
+
+<table class="linkmenu">
+<tr class="lmtr"><td class="lmtd"><a href="#clinksettings">Clink Settings</a></td><td class="lmtd">How to customize Clink's settings.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#colorsettings">Color Settings</a></td><td class="lmtd">Describes the syntax used by color settings.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#filelocations">File Locations</a></td><td class="lmtd">Where Clink stores its history and settings files.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#command-line-options">Command Line Options</a></td><td class="lmtd">Describes the command line options for the Clink program.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#portable-configuration">Portable Configuration</a></td><td class="lmtd">How to set up a "portable" installation of Clink, e.g. on a USB drive or network location.</td></tr>
+</table>
+
 <a name="clinksettings"></a>
 
 ## Clink Settings
 
-The easiest way to configure Clink is to use Clink's `set` command line option.  This can list, query, and set Clink's settings. Run `clink set --help` from a Clink-installed cmd.exe process to learn more both about how to use it and to get descriptions for Clink's various options.
+The easiest way to configure Clink is to use the `clink set` command.  This can list, query, and set Clink's settings. Run `clink set --help` from a Clink-installed cmd.exe process to learn more both about how to use it and to get descriptions for Clink's various options.
 
 The following table describes the available Clink settings:
 
@@ -368,7 +380,8 @@ See <code>clink autorun --help</code> for more information.</dd>
 <dt>clink set</dt>
 <dd>
 <code>clink set</code> by itself lists all settings and their values.<br/>
-<code>clink set <span class="arg">setting_name</span></code> describes the setting shows its current value.<br/>
+<code>clink set --describe</code> by itself lists all settings and their descriptions (instead of their values).<br/>
+<code>clink set <span class="arg">setting_name</span></code> describes the setting and shows its current value.<br/>
 <code>clink set <span class="arg">setting_name</span> clear</code> resets the setting to its default value.<br/>
 <code>clink set <span class="arg">setting_name</span> <span class="arg">value</span></code> sets the setting to the specified value.</dd>
 </p>
@@ -1206,6 +1219,17 @@ This example illustrates how to make a suggestion generator that returns the lon
 ```
 
 # Miscellaneous
+
+These sections provide more information about various aspects of Clink:
+
+<table class="linkmenu">
+<tr class="lmtr"><td class="lmtd"><a href="#keybindings">Customizing Key Bindings</a></td><td class="lmtd">How to customize key bindings.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#saved-command-history">Saved Command History</a></td><td class="lmtd">How the saved command history works.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#using-history-expansion">Using History Expansion</a></td><td class="lmtd">How to use history expansion.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#popular-scripts">Popular Scripts</a></td><td class="lmtd">Some popular scripts to enhance Clink.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#troubleshooting-tips">Troubleshooting Tips</a></td><td class="lmtd">How to troubleshoot and report problems.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#privacy">Privacy</a></td><td class="lmtd">Privacy statement for Clink.</td></tr>
+</table>
 
 <a name="keybindings"></a>
 
