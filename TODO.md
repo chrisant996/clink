@@ -6,6 +6,9 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## High Priority
 - Getting Started; Colors.
+- Getting Started two H2 sections; one for the config stuff, and one for upgrading.
+  - But that may get weird because of two linkmenus adjacent each other.
+- Configuring Clink and Miscellaneous need linkmenus.
 
 ## Medium Priority
 - Readline command reference.
