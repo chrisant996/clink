@@ -53,6 +53,18 @@ function clink._list_suggesters()
 end
 
 --------------------------------------------------------------------------------
+function clink._print_suggesters()
+    local list = {}
+    for name,_ in pairs(suggesters) do
+        table.insert(list, name)
+    end
+    table.sort(list, function(a, b) return a < b end)
+    for _,name in ipairs(list) do
+        print(name)
+    end
+end
+
+--------------------------------------------------------------------------------
 --- -name:  clink.suggester
 --- -ver:   1.2.47
 --- -arg:   name:string

@@ -380,7 +380,6 @@ bool prompt_filter::s_filtering = false;
 prompt_filter::prompt_filter(lua_state& lua)
 : m_lua(lua)
 {
-    lua_load_script(lua, app, prompt);
 }
 
 //------------------------------------------------------------------------------

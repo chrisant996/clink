@@ -329,8 +329,9 @@ end
 
 --------------------------------------------------------------------------------
 local set = clink.argmatcher()
-:addflags("--help")
+:addflags("--help", "--describe")
 :adddescriptions({["--help"] = "Show help"})
+:adddescriptions({["--describe"] = "Show descriptions of settings (instead of values)"})
 :addarg(set_handler)
 :addarg(value_handler)
 :setclassifier(classify_handler)

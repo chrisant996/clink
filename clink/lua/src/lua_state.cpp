@@ -239,6 +239,11 @@ void lua_state::initialise()
     lua_load_script(self, lib, events);
     lua_load_script(self, lib, console);
     lua_load_script(self, lib, coroutines);
+
+    // Load match generator scripts.
+    lua_load_script(self, lib, generator);
+    lua_load_script(self, lib, classifier);
+    lua_load_script(self, lib, arguments);
 }
 
 //------------------------------------------------------------------------------

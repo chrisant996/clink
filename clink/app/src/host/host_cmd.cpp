@@ -226,6 +226,21 @@ static void write_line_feed()
 
 
 //------------------------------------------------------------------------------
+void host_load_app_scripts(lua_state& lua)
+{
+    lua_load_script(lua, app, cmd);
+    lua_load_script(lua, app, commands);
+    lua_load_script(lua, app, dir);
+    lua_load_script(lua, app, env);
+    lua_load_script(lua, app, exec);
+    lua_load_script(lua, app, self);
+    lua_load_script(lua, app, set);
+
+    lua_load_script(lua, app, prompt);
+    lua_load_script(lua, app, suggest);
+}
+
+//------------------------------------------------------------------------------
 bool host_has_deprecated_argmatcher(const char* command)
 {
     return host_cmd::get()->has_deprecated_argmatcher(command);
@@ -301,13 +316,7 @@ void host_cmd::shutdown()
 //------------------------------------------------------------------------------
 void host_cmd::initialise_lua(lua_state& lua)
 {
-    lua_load_script(lua, app, cmd);
-    lua_load_script(lua, app, commands);
-    lua_load_script(lua, app, dir);
-    lua_load_script(lua, app, env);
-    lua_load_script(lua, app, exec);
-    lua_load_script(lua, app, self);
-    lua_load_script(lua, app, set);
+    host_load_app_scripts(lua);
 }
 
 //------------------------------------------------------------------------------

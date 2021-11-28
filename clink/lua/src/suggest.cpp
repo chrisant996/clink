@@ -24,7 +24,6 @@ extern "C" {
 suggester::suggester(lua_state& lua)
 : m_lua(lua)
 {
-    lua_load_script(lua, app, suggest);
 }
 
 //------------------------------------------------------------------------------
