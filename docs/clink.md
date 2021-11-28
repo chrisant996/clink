@@ -36,54 +36,114 @@ Here are some highlights of what Clink provides:
 
 By default Clink binds <kbd>Alt</kbd>+<kbd>H</kbd> to display the current key bindings. More features can also be found in GNU's [Readline](https://tiswww.cwru.edu/php/chet/readline/readline.html).
 
-<blockquote>
-<p>
-<strong>Want some quick but powerful tips to get started?</strong>
-</p>
-<p>
+# Usage
+
+There are several ways to start Clink.
+
+1. If you installed the auto-run, just start `cmd.exe`.  Run `clink autorun --help` for more info.
+2. To manually start, run the Clink shortcut from the Start menu (or the clink.bat located in the install directory).
+3. To establish Clink to an existing `cmd.exe` process, use `<install_dir>\clink.exe inject`.
+
+Starting Clink injects it into a `cmd.exe` process, where it intercepts a handful of Windows API functions so that it can replace the prompt and input line editing with its own Readline-powered enhancements.
+
+# Getting Started
+
+You can use Clink right away without configuring anything:
+
+- Searchable [command history](#saved-command-history) will be saved between sessions.
+- <kbd>Tab</kbd> and <kbd>Ctrl</kbd>+<kbd>Space</kbd> will do match completion two different ways.
+- Press <kbd>Alt</kbd>+<kbd>H</kbd> to see a list of the current key bindings.
+- Press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>/</kbd> followed by another key to see what command is bound to the key.
+
+There are three main ways of customizing Clink to your preferences:  the [Readline init file](#init-file) (the `.inputrc` file), the [Clink settings](#clink-settings) (the `clink set` command), and [Lua](#extending-clink-with-lua) scripts.
+
+The following sections describe some ways to begin customizing Clink to your taste.
+
+<table class="linkmenu">
+<tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_defaultbindings">Bash vs Windows</a></td><td class="lmtd">Make <kbd>Ctrl</kbd>+<kbd>F</kbd> and <kbd>Ctrl</kbd>+<kbd>M</kbd> work like usual on Windows.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_autosuggest">Auto-suggest</a></td><td class="lmtd">How to enable and use automatic suggestions.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_colors">Colors</a></td><td class="lmtd">Configure the colors.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_keybindings">Key Bindings</a></td><td class="lmtd">Customize your key bindings.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_startupcmdscript">Startup Cmd Script</a></td><td class="lmtd">Optional automatic <code>clink_startup.cmd</code> script.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_customprompt">Custom Prompt</a></td><td class="lmtd">Customizing the command line prompt.</td></tr>
+</table>
+
+<a name="gettingstarted_defaultbindings"></a>
+
+### Bash vs Windows
+
+The default Clink key bindings are the same as in the "bash" shell for Unix/Linux.  That makes some keys like <kbd>Ctrl</kbd>+<kbd>F</kbd> and <kbd>Ctrl</kbd>+<kbd>M</kbd> behave differently than you might be used to in CMD.
+
+To instead use the familiar [Windows default key bindings](#default_bindings) you can run `clink set clink.default_bindings windows`.
+
+<a name="gettingstarted_autosuggest"></a>
+
+### Auto-suggest
+
+Clink can suggest commands as you type, based on command history and completions.
+
+To turn on automatic suggestions, run `clink set autosuggest.enable true`.  When the cursor is at the end of the input line, a suggestion may appear in a muted color.  If the suggestion isn't what you want, just ignore it.  Or accept the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, accept the next word of the suggestion with <kbd>Ctrl</kbd>+<kbd>Right</kbd>, or accept the next full word of the suggestion up to a space with <kbd>Shift</kbd>+<kbd>Right</kbd>.
+
+The [`autosuggest.strategy`](#autosuggest_strategy) setting determines how a suggestion is chosen.
+
+<a name="gettingstarted_colors"></a>
+
+### Colors
+
+TBD
+- completion colors
+- input line colors
+
+<a name="gettingstarted_keybindings"></a>
+
+### Key Bindings
+
+Clink comes with many pre-configured key bindings (keyboard shortcuts).  Here are a few that you might find especially handy.
+
 <table>
-<tr><td><kbd>Ctrl</kbd>+<kbd>O</kbd></td><td>This is <code>operate-and-get-next</code>, which accepts the current input line and gets the next history line.  You can search history for a command, then press <kbd>Ctrl</kbd>+<kbd>O</kbd> to run that command and queue up the next command after it.  Repeat it to conveniently rerun a series of commands from the history.</td></tr>
+<tr><td><kbd>Alt</kbd>+<kbd>H</kbd></td><td>This is <code>clink-show-help</code>, which lists the key bindings and commands.  Learn more by visiting <a href="#keybindings">Key Bindings</a>.</td></tr>
+<tr><td><kbd>Ctrl</kbd>+<kbd>Space</kbd></td><td>This is <code>clink-select-complete</code>, which performs completion by selecting from an interactive list of possible completions; if there is only one match, the match is inserted immediately.</td></tr>
 <tr><td><kbd>Alt</kbd>+<kbd>.</kbd></td><td>This is <code>yank-last-arg</code>, which inserts the last argument from the previous line.  You can use it repeatedly to cycle backwards through the history, inserting the last argument from each line.  Learn more by reading up on the "yank" features in the [Readline manual](https://tiswww.cwru.edu/php/chet/readline/rluserman.html).</td></tr>
 <tr><td><kbd>Ctrl</kbd>+<kbd>R</kbd></td><td>This is <code>reverse-search-history</code>, which incrementally searches the history.  Press it, then type, and it does a reverse incremental search while you type.  Press <kbd>Ctrl</kbd>+<kbd>R</kbd> again (and again, etc) to search for other matches of the search text.  Learn more by reading up on the "search" and "history" features in the [Readline manual](https://tiswww.cwru.edu/php/chet/readline/rluserman.html).</td></tr>
 <tr><td><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>D</kbd></td><td>This is <code>remove-history</code>, which deletes the currently selected history line after using any of the history search or navigation commands.</td></tr>
 <tr><td><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>K</kbd></td><td>This is <code>add-history</code>, which adds the current line to the history without executing it, and then clears the input line.</td></tr>
 <tr><td><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>N</kbd></td><td>This is <code>clink-menu-complete-numbers</code>, which grabs numbers with 3 or more digits from the current console screen and cycles through inserting them as completions (binary, octal, decimal, hexadecimal).  Super handy for quickly inserting a commit hash that was printed as output from a preceding command.</td></tr>
 <tr><td><kbd>Alt</kbd>+<kbd>0</kbd> to <kbd>Alt</kbd>+<kbd>9</kbd></td><td>These are <code>digit-argument</code>, which let you enter a numeric value used by many commands.  For example <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>W</kbd> copies the current word to the clipboard, but if you first type <kbd>Alt</kbd>+<kbd>2</kbd> followed by <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>W</kbd> then it copies the 3rd word to the clipboard (the first word is 0, the second is 1, etc).  Learn more by reading up on "Readline Arguments" in the [Readline manual](https://tiswww.cwru.edu/php/chet/readline/rluserman.html).</td></tr>
-<tr><td><kbd>Alt</kbd>+<kbd>H</kbd></td><td>This is <code>clink-show-help</code>, which lists the key bindings and commands.  Learn more by visiting <a href="#keybindings">Key Bindings</a>.</td></tr>
 </table>
-</p>
-<p>
-If you want a customizable prompt with a bunch of styles and an easy-to-use configuration wizard, check out <a href="https://github.com/chrisant996/clink-flex-prompt">clink-flex-prompt</a>.
-</p>
-</blockquote>
 
-# Usage
+TBD
+- discovering key sequences
+- edit the .inputrc file
 
-There are several ways to start Clink.
+<a name="gettingstarted_startupcmdscript"></a>
 
-1. If you installed the auto-run, just start `cmd.exe`. Run `clink autorun --help` for more info.
-2. To manually start, run the Clink shortcut from the Start menu (or the clink.bat located in the install directory).
-3. To establish Clink to an existing `cmd.exe` process, use `<install_dir>\clink.exe inject`.
+### Startup Cmd Script
 
-### How Clink Works
+When Clink is injected, it looks for a `clink_start.cmd` script in the binaries directory and [profile directory](#filelocations).  Clink automatically runs the script(s), if present, when the first CMD prompt is shown after Clink is injected.  You can set the `clink.autostart` setting to run a different command, or set it to "nul" to run no command at all.
 
-When running Clink via the methods above, Clink checks the parent process is supported and injects a DLL into it. The DLL then hooks the WriteConsole() and ReadConsole() Windows functions. The former is so that Clink can capture the current prompt, and the latter hook allows Clink to provide its own Readline-powered command line editing.
+<a name="gettingstarted_customprompt"></a>
 
-<a name="privacy"></a>
+### Custom Prompt
 
-### Privacy
+If you want a customizable prompt with a bunch of styles and an easy-to-use configuration wizard, check out <a href="https://github.com/chrisant996/clink-flex-prompt">clink-flex-prompt</a>.  If you've been disappointed by git making the prompt slow in other shells, try this prompt -- it runs git commands in the background so that the prompt appears instantly, and it refreshes the prompt when the background commands complete.
 
-Clink does not collect user data.  Clink writes diagnostic information to its local log file, and does not transmit the log file off the local computer.  For the location of the log file, refer to [File Locations](#filelocations) or run `clink info`.
+A couple of other popular configurable prompts are [oh-my-posh](#oh-my-posh) and [starship](#starship).
+
+See [Customizing the Prompt](#customisingtheprompt) for information on how to use Lua to customize the prompt.
+
+## Upgrading from Clink v0.4.9
+
+The new Clink tries to be as backward compatible with Clink v0.4.9 as possible. However, in some cases upgrading may require a little bit of configuration work.
+
+- Some key binding sequences have changed; see [Key Bindings](#keybindings) for more information.
+- Match coloring works differently now and can do much more; see [Completion Colors](#completioncolors) for more information.
+- Old settings and history migrate automatically if the new `clink_settings` and `clink_history` files don't exist (deleting them will cause migration to happen again).  To find the directory that contains these files, run `clink info` and look for the "state" line.
+- Script compatibility should be very good, but some scripts may still encounter problems.  If you do encounter a compatibility problem you can look for an updated version of the script, update the script yourself, or visit the [clink repo](https://github.com/chrisant996/clink/issues) and open an issue describing details about the compatibility problem.
+- Some settings have changed slightly, and there are many new settings.  See [Configuring Clink](#configclink) for more information.
 
 <a name="configclink"></a>
 
 # Configuring Clink
-
-## Startup Cmd Script
-
-When Clink is injected, it looks for a `clink_start.cmd` script in the binaries directory and [profile directory](#filelocations).  Clink automatically runs the scripts, if present, when the first CMD prompt is shown after Clink is injected.
-
-You can set the `clink.autostart` setting to run a different command, or set it to "nul" to run no command at all.
 
 <a name="clinksettings"></a>
 
@@ -99,7 +159,7 @@ Name                         | Default | Description
 <a name="autosuggest_strategy"></a>`autosuggest.strategy` | `match_prev_cmd history completion` | This determines how suggestions are chosen.  The suggestion generators are tried in the order listed, until one provides a suggestion.  There are three built-in suggestion generators, and scripts can provide new ones.  `history` chooses the most recent matching command from the history.  `completion` chooses the first of the matching completions.  `match_prev_cmd` chooses the most recent matching command whose preceding history entry matches the most recently invoked command, but only when the `history.dupe_mode` setting is `add`.
 `clink.autostart`            |         | This command is automatically run when the first CMD prompt is shown after Clink is injected.  If this is blank (the default), then Clink instead looks for clink_start.cmd in the binaries directory and profile directory and runs them.  Set it to "nul" to not run any autostart command.
 `clink.colorize_input`       | True    | Enables context sensitive coloring for the input text (see [Coloring the Input Text](#classifywords)).
-`clink.default_bindings`     | `bash`  | Clink uses bash key bindings when this is set to `bash` (the default).  When this is set to `windows` Clink overrides some of the bash defaults with familiar Windows key bindings for <kbd>Tab</kbd>, <kbd>Ctrl</kbd>+<kbd>A</kbd>, <kbd>Ctrl</kbd>+<kbd>F</kbd>, <kbd>Ctrl</kbd>+<kbd>M</kbd>, and <kbd>Right</kbd>.
+<a name="default_bindings"></a>`clink.default_bindings` | `bash` | Clink uses bash key bindings when this is set to `bash` (the default).  When this is set to `windows` Clink overrides some of the bash defaults with familiar Windows key bindings for <kbd>Tab</kbd>, <kbd>Ctrl</kbd>+<kbd>A</kbd>, <kbd>Ctrl</kbd>+<kbd>F</kbd>, <kbd>Ctrl</kbd>+<kbd>M</kbd>, and <kbd>Right</kbd>.
 `clink.gui_popups`           | False   | When set, Clink uses GUI popup windows instead console text popups.  The `color.popup` settings have no effect on GUI popup windows.
 `clink.logo`                 | `full`  | Controls what startup logo to show when Clink is injected.  `full` = show full copyright logo, `short` = show abbreviated version info, `none` = omit the logo.
 `clink.paste_crlf`           | `crlf`  | What to do with CR and LF characters on paste. Setting this to `delete` deletes them, `space` replaces them with spaces, `ampersand` replaces them with ampersands, and `crlf` pastes them as-is (executing commands that end with a newline).
@@ -1640,16 +1700,6 @@ load(io.popen('oh-my-posh.exe --config="C:/Users/me/jandedobbeleer.omp.json" --i
 
 The [z.lua](https://github.com/skywind3000/z.lua) tool is a faster way to navigate directories, and it integrates with Clink.
 
-## Upgrading from Clink v0.4.9
-
-The new Clink tries to be as backward compatible with Clink v0.4.9 as possible. However, in some cases upgrading may require a little bit of configuration work.
-
-- Some key binding sequences have changed; see [Key Bindings](#keybindings) for more information.
-- Match coloring is now done by Readline and is configured differently; see [Completion Colors](#completioncolors) for more information.
-- Settings and history should migrate automatically if the new `clink_settings` and `clink_history` files don't exist (deleting them will cause migration to happen again).  To find the directory that contains these files, run `clink info` and look for the "state" line.
-- Script compatibility should be very good, but some scripts may still encounter problems.  If you do encounter a compatibility problem you can look for an updated version of the script, update the script yourself, or visit the [clink repo](https://github.com/chrisant996/clink/issues) and open an issue describing details about the compatibility problem.
-- Some settings have changed slightly, and there are many new settings.  See [Configuring Clink](#configclink) for more information.
-
 ## Troubleshooting Tips
 
 If something seems to malfunction, here are some things to try that often help track down what's going wrong:
@@ -1669,3 +1719,8 @@ When [reporting an issue](https://github.com/chrisant996/clink/issues), please i
 - Please include the output from `clink info` and `clink set`.
 - Please include the `clink.log` file (the location is reported by `clink info`).
 
+<a name="privacy"></a>
+
+## Privacy
+
+Clink does not collect user data.  Clink writes diagnostic information to its local log file, and does not transmit the log file off the local computer.  For the location of the log file, refer to [File Locations](#filelocations) or run `clink info`.

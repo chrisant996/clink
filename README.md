@@ -50,6 +50,8 @@ There are several ways to start Clink.
 2. To manually start, run the Clink shortcut from the Start menu (or the clink.bat located in the install directory).
 3. To establish Clink to an existing `cmd.exe` process, use `<install_dir>\clink.exe inject`.
 
+See [Getting Started](https://chrisant996.github.io/clink/clink.html#getting-started) for information on how to get started with using Clink.
+
 ### Upgrading from Clink v0.4.9
 
 The new Clink tries to be as backward compatible with Clink v0.4.9 as possible. However, in some cases upgrading may require a little bit of configuration work. More details can be found in the [Clink documentation](https://chrisant996.github.io/clink/clink.html).
