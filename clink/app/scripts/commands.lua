@@ -65,20 +65,23 @@ end
 
 --------------------------------------------------------------------------------
 function clink._popup_show_help(rl_buffer)
-    local bindings = rl.getkeybindings()
+    local bindings = rl.getkeybindings(false, rl_buffer:getargument())
     if #bindings <= 0 then
         rl_buffer:refreshline()
         return
     end
 
+    local arg = rl_buffer:getargument()
+
     local items = {}
     for _,kb in ipairs(bindings) do
-        table.insert(items, { value=kb.binding, display=kb.key, description=kb.binding })
+        table.insert(items, { value=kb.binding, display=kb.key, description=kb.binding.."\t"..kb.desc })
     end
 
     local binding, _, index = clink.popuplist("Key Bindings", items)
     rl_buffer:refreshline()
     if binding then
+        rl_buffer:setargument()
         rl.invokecommand(binding)
     end
 end

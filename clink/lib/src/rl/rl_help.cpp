@@ -7,6 +7,7 @@
 #include <core/base.h>
 #include <core/settings.h>
 #include <core/str.h>
+#include <core/str_unordered_set.h>
 #include <terminal/printer.h>
 #include <terminal/terminal.h>
 #include <terminal/ecma48_iter.h>
@@ -521,6 +522,25 @@ static bool translate_keyseq(const char* keyseq, unsigned int len, char** key_na
 }
 
 //------------------------------------------------------------------------------
+static bool maybe_exclude_function(rl_command_func_t func)
+{
+    static rl_command_func_t* const exclude[] = {
+        rl_insert,
+        rl_do_lowercase_version,
+        rl_bracketed_paste_begin,
+        nullptr
+    };
+
+    for (rl_command_func_t* const* walk = exclude; *walk; ++walk)
+    {
+        if (*walk == func)
+            return true;
+    }
+
+    return false;
+}
+
+//------------------------------------------------------------------------------
 static Keyentry* collect_keymap(
     Keymap map,
     Keyentry* collector,
@@ -552,31 +572,8 @@ static Keyentry* collect_keymap(
         }
 
         // Add entry for a function or macro.
-        if (entry.type == ISFUNC)
-        {
-            int blacklisted;
-            int j;
-
-            // Blacklist some functions
-            int (*blacklist[])(int, int) = {
-                rl_insert,
-                rl_do_lowercase_version,
-                rl_bracketed_paste_begin,
-            };
-
-            blacklisted = 0;
-            for (j = 0; j < sizeof_array(blacklist); ++j)
-            {
-                if (blacklist[j] == entry.function)
-                {
-                    blacklisted = 1;
-                    break;
-                }
-            }
-
-            if (blacklisted)
-                continue;
-        }
+        if (entry.type == ISFUNC && maybe_exclude_function(entry.function))
+            continue;
 
         int cat = keycat_macros;
         const char *name = nullptr;
@@ -602,12 +599,13 @@ static Keyentry* collect_keymap(
         int sort;
         if (translate_keyseq(keyseq.c_str(), keyseq.length(), &collector[*offset].key_name, friendly, sort))
         {
-            collector[*offset].sort = sort;
+            Keyentry& out = collector[*offset];
+            out.sort = sort;
             if (entry.type == ISMACR)
-                collector[*offset].macro_text = _rl_untranslate_macro_value((char *)entry.function, 0);
+                out.macro_text = _rl_untranslate_macro_value((char *)entry.function, 0);
             else
-                collector[*offset].macro_text = nullptr;
-            collector[*offset].warning = false;
+                out.macro_text = nullptr;
+            out.warning = false;
 
             if (friendly && warnings && keyseq.length() > 2)
             {
@@ -620,7 +618,7 @@ static Keyentry* collect_keymap(
                     char actual2[4] = { k[2], k[3] };
                     char intent1[4] = { '\\', k[0] == 'A' ? 'M' : k[0], k[1] };
                     char intent2[4] = { '\\', k[2] == 'A' ? 'M' : k[2], k[3] };
-                    s << "\x1b[1mwarning:\x1b[m key \x1b[7m" << collector[*offset].key_name << "\x1b[m looks like a typo; did you mean \"" << intent1;
+                    s << "\x1b[1mwarning:\x1b[m key \x1b[7m" << out.key_name << "\x1b[m looks like a typo; did you mean \"" << intent1;
                     if (second)
                         s << intent2;
                     s << "\" instead of \"" << actual1;
@@ -628,17 +626,68 @@ static Keyentry* collect_keymap(
                         s << actual2;
                     s << "\"?";
                     warnings->push_back(std::move(s));
-                    collector[*offset].warning = true;
+                    out.warning = true;
                 }
             }
 
-            collector[*offset].func_name = name;
-            collector[*offset].func_desc = desc;
-            collector[*offset].cat = categories ? cat : 0;
+            out.func_name = name;
+            out.func_desc = desc;
+            out.cat = categories ? cat : 0;
             ++(*offset);
         }
 
         keyseq.truncate(old_len);
+    }
+
+    return collector;
+}
+
+//------------------------------------------------------------------------------
+static Keyentry* collect_functions(
+    Keyentry* collector,
+    int* offset,
+    int* max,
+    bool categories)
+{
+    str_unordered_set seen;
+    for (int i = 1; i < *offset; i++)
+    {
+        const char* name = collector[i].func_name;
+        if (name)
+            seen.emplace(name);
+    }
+
+    for (const FUNMAP* const* walk = funmap; *walk; ++walk)
+    {
+        if (seen.find((*walk)->name) != seen.end())
+            continue;
+
+        if (maybe_exclude_function((*walk)->function))
+            continue;
+
+        const char* name = get_function_name((*walk)->function);
+        if (name == nullptr)
+            continue;
+
+        const char* desc;
+        int cat = keycat_misc;
+        get_function_info((*walk)->function, &desc, &cat);
+
+        if (*offset >= *max)
+        {
+            *max *= 2;
+            collector = (Keyentry *)realloc(collector, sizeof(collector[0]) * *max);
+        }
+
+        Keyentry& out = collector[*offset];
+        memset(&out, 0, sizeof(out));
+        out.sort = MAKELONG(999, 999);
+        out.key_name = (char*)calloc(1, 1);
+        out.func_name = name;
+        out.func_desc = desc;
+        out.cat = categories ? cat : 0;
+
+        ++(*offset);
     }
 
     return collector;
@@ -661,11 +710,19 @@ static int __cdecl cmp_sort_collector(const void* pv1, const void* pv2)
     if (cmp)
         return cmp;
 
-    // Finally sort by key name (folding case).
+    // Next sort by key name (folding case).
     cmp = strcmpi(p1->key_name, p2->key_name);
     if (cmp)
         return cmp;
-    return strcmp(p1->key_name, p2->key_name);
+    cmp = strcmp(p1->key_name, p2->key_name);
+    if (cmp)
+        return cmp;
+
+    // Finally sort by function name (folding case).
+    cmp = strcmpi(p1->func_name, p2->func_name);
+    if (cmp)
+        return cmp;
+    return strcmp(p1->func_name, p2->func_name);
 }
 
 //------------------------------------------------------------------------------
@@ -755,6 +812,10 @@ void show_key_bindings(bool friendly, int mode, std::vector<key_binding_info>* o
     str<32> keyseq;
     std::vector<str_moveable> warnings;
     collector = collect_keymap(map, collector, &offset, &max_collect, keyseq, friendly, show_categories, (map == emacs_standard_keymap) ? &warnings : nullptr);
+
+    // Maybe include unbound commands.
+    if (mode & 4)
+        collector = collect_functions(collector, &offset, &max_collect, show_categories);
 
     // Sort the collected keymap.
     qsort(collector + 1, offset - 1, sizeof(*collector), out ? cmp_sort_collector : cmp_sort_collector_cat);

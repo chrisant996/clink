@@ -628,6 +628,7 @@ static int set_matches(lua_State* state)
 /// -name:  rl.getkeybindings
 /// -ver:   1.2.16
 /// -arg:   raw:boolean
+/// -arg:   [mode:integer]
 /// -ret:   table
 /// Returns key bindings in a table with the following scheme:
 /// -show:  local t = rl.getkeybindings()
@@ -635,6 +636,21 @@ static int set_matches(lua_State* state)
 /// -show:  -- t[index].binding     [string] Command or macro bound to the key.
 /// -show:  -- t[index].desc        [string] Description of the command.
 /// -show:  -- t[index].category    [string] Category of the command.
+///
+/// When <span class="arg">raw</span> is true, the key names are the literal key
+/// sequences without being converted to user-friendly key names.
+///
+/// The optional <span class="arg">mode</span> specifies bit flags that control
+/// how the returned table is sorted, and whether it includes commands that are
+/// not bound to any key.
+///
+/// <table>
+/// <tr><th>Mode</th><th>Description</th></tr>
+/// <tr><td>0</td><td>Key bindings, sorted by key (this is the default).</td></tr>
+/// <tr><td>1</td><td>Key bindings, sorted by category and then key.</td></tr>
+/// <tr><td>4</td><td>All commands, sorted by key.</td></tr>
+/// <tr><td>5</td><td>All commands, sorted by category and then key.</td></tr>
+/// </table>
 ///
 /// The following example demonstrates using this function in a
 /// <a href="#luakeybindings">luafunc: key binding</a> to invoke
@@ -668,11 +684,12 @@ struct key_binding_info { str_moveable name; str_moveable binding; const char* d
 int get_key_bindings(lua_State* state)
 {
     bool raw = lua_toboolean(state, 1);
+    int mode = lua_tointeger(state, 2);
 
     // Get the key bindings.
     void show_key_bindings(bool friendly, int mode, std::vector<key_binding_info>* out);
     std::vector<key_binding_info> bindings;
-    show_key_bindings(!raw, 0, &bindings);
+    show_key_bindings(!raw, mode, &bindings);
 
     // Copy the result into a lua table.
     lua_createtable(state, int(bindings.size()), 0);
