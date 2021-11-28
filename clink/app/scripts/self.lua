@@ -271,7 +271,11 @@ local function value_handler(match_word, word_index, line_state, builder, classi
     if info.type == "color" then
         return color_handler(word_index, line_state)
     elseif info.type == "string" then
-        return clink.filematches(line_state:getendword())
+        if name == "autosuggest.strategy" then
+            return clink._list_suggesters()
+        else
+            return clink.filematches(line_state:getendword())
+        end
     else
         return info.values
     end

@@ -44,6 +44,15 @@ function clink._suggest(line, matches)
 end
 
 --------------------------------------------------------------------------------
+function clink._list_suggesters()
+    local list = {}
+    for name,_ in pairs(suggesters) do
+        table.insert(list, name)
+    end
+    return list
+end
+
+--------------------------------------------------------------------------------
 --- -name:  clink.suggester
 --- -ver:   1.2.47
 --- -arg:   name:string
