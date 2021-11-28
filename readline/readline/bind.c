@@ -1932,9 +1932,10 @@ hack_special_boolean_var (int i)
   else if (_rl_stricmp (name, "enable-bracketed-paste") == 0)
     _rl_enable_active_region = _rl_enable_bracketed_paste;
 /* begin_clink_change */
-  else if (_rl_stricmp (name, "convert-meta") == 0)
+  else if (_rl_stricmp (name, "convert-meta") == 0 ||
+           _rl_stricmp (name, "output-meta") == 0)
     {
-      /* Do nothing; Clink needs this always off in order for UTF8 input to
+      /* Do nothing; Clink sets these internally in order for UTF8 input to
          work, and rl_translate_keyseq has a corresponding change to always
          convert M-x to ESC,UNMETA(x) so that actual META input (Alt+key)
          works. */
