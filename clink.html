@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.2.47</title>
+<title>Clink v1.2.48</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -771,7 +771,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.2.47</div>
+                <div id="title">Clink v1.2.48</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -881,7 +881,7 @@ If you want a customizable prompt with a bunch of styles and an easy-to-use conf
 <tbody><tr>
 <td align="center"><a name="autosuggest_enable"></a><code>autosuggest.enable</code></td>
 <td align="center">False</td>
-<td>When this is <code>true</code> a suggested command may appear in <code>color.suggestion</code> color after the cursor.  If the suggestion isn&#39;t what you want, just ignore it.  Or you can accept the suggestion by pressing the <kbd>Right</kbd> arrow or <kbd>End</kbd>, or you can accept the next word of the suggestion by pressing <kbd>Ctrl</kbd>+<kbd>Right</kbd>.  The <code>autosuggest.strategy</code> setting determines how a suggestion is chosen.</td>
+<td>When this is <code>true</code> a suggested command may appear in <code>color.suggestion</code> color after the cursor.  If the suggestion isn&#39;t what you want, just ignore it.  Or accept the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, accept the next word of the suggestion with <kbd>Ctrl</kbd>+<kbd>Right</kbd>, or accept the next full word of the suggestion up to a space with <kbd>Shift</kbd>+<kbd>Right</kbd>.  The <code>autosuggest.strategy</code> setting determines how a suggestion is chosen.</td>
 </tr>
 <tr>
 <td align="center"><a name="autosuggest_strategy"></a><code>autosuggest.strategy</code></td>
@@ -1674,7 +1674,7 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 </tr>
 <tr>
 <td align="center"><code>cua-forward-char</code></td>
-<td>Extends the selection and moves forward a character.</td>
+<td>Extends the selection and moves forward a character, or inserts the next full suggested word up to a space.</td>
 </tr>
 <tr>
 <td align="center"><code>cua-forward-word</code></td>
@@ -1742,7 +1742,7 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 </tr>
 <tr>
 <td align="center"><code>win-cursor-forward</code></td>
-<td>Move cursor forward, or at end of line copy character from previous command (mimics Windows console <kbd>F1</kbd> and <kbd>Right</kbd>).</td>
+<td>Move cursor forward, or at end of line copy character from previous command, or insert suggestion (mimics Windows console <kbd>F1</kbd> and <kbd>Right</kbd>).</td>
 </tr>
 <tr>
 <td align="center"><code>win-delete-up-to-char</code></td>
@@ -2727,7 +2727,7 @@ end
 <p><a name="customisingsuggestions"></a></p>
 <h2 id="customizing-suggestions">Customizing Suggestions</h2>
 <p>Clink can offer suggestions how to complete a command as you type, and you can select how it generates suggestions.</p>
-<p>Turn on <a href="#autosuggest_enable">automatic suggestions</a> with <code>clink set autosuggest.enable true</code>.  Once enabled, Clink will show suggestions in a <a href="#color.suggestion">muted color</a> after the end of the typed command.  To accept the suggestion press <kbd>Right</kbd> or <kbd>End</kbd>, or to accept the next word of the suggestion press <kbd>Ctrl</kbd>+<kbd>Right</kbd>.  You can ignore the suggestion if it isn&#39;t what you want; suggestions have no effect unless you accept them first.</p>
+<p>Turn on <a href="#autosuggest_enable">automatic suggestions</a> with <code>clink set autosuggest.enable true</code>.  Once enabled, Clink will show suggestions in a <a href="#color.suggestion">muted color</a> after the end of the typed command.  Accept the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, accept the next word of the suggestion with <kbd>Ctrl</kbd>+<kbd>Right</kbd>, or accept the next full word of the suggestion up to a space with <kbd>Shift</kbd>+<kbd>Right</kbd>.  You can ignore the suggestion if it isn&#39;t what you want; suggestions have no effect unless you accept them first.</p>
 <p>Scripts can provide custom suggestion generators, in addition to the built-in options:</p>
 <ol>
 <li>Create a new suggestion generator by calling [clink.suggester()][#clink.suggester] along with a name that identifies the suggestion generator, and can be added to the <a href="#autosuggest_strategy"><code>autosuggest.strategy</code></a> setting.</li>
@@ -4386,6 +4386,12 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1248">v1.2.48</h4>
+<ul>
+<li><kbd>Ctrl</kbd>+<kbd>Right</kbd> now inserts the next word of the suggestion the same way it would move to the next word, and <kbd>Shift</kbd>+<kbd>Right</kbd> inserts the next full word of the suggestion up to a space.</li>
+<li>Keys like <kbd>Home</kbd>/<kbd>End</kbd>, <kbd>Shift</kbd>+<kbd>Left</kbd>/<kbd>Right</kbd>, and <kbd>Ctrl</kbd>+<kbd>Left</kbd>/<kbd>Right</kbd> work in VI mode.</li>
+<li>Fixed input line coloring glitch when color settings use the <code>sgr</code> syntax.</li>
+</ul>
 <h4 id="v1247">v1.2.47</h4>
 <ul>
 <li>Added autosuggestions similar to the Fish shell.<ul>
