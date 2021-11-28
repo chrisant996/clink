@@ -5,7 +5,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- Configuring Clink and Miscellaneous need linkmenus.
 
 ## Medium Priority
 - Readline command reference.
