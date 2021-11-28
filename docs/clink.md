@@ -98,10 +98,12 @@ TBD
 
 ### Key Bindings
 
-Clink comes with many pre-configured key bindings (keyboard shortcuts).  Here are a few that you might find especially handy.
+You can customize your key bindings (keyboard shortcuts) by creating a `.inputrc` file and assigning key bindings in it.  See [Customizing Key Bindings](#keybindings) for more information.
+
+Clink comes with many pre-configured key bindings.  Here are a few that you might find especially handy:
 
 <table>
-<tr><td><kbd>Alt</kbd>+<kbd>H</kbd></td><td>This is <code>clink-show-help</code>, which lists the key bindings and commands.  Learn more by visiting <a href="#keybindings">Key Bindings</a>.</td></tr>
+<tr><td><kbd>Alt</kbd>+<kbd>H</kbd></td><td>This is <code>clink-show-help</code>, which lists the key bindings and commands.  Learn more by visiting <a href="#keybindings">Customizing Key Bindings</a>.</td></tr>
 <tr><td><kbd>Ctrl</kbd>+<kbd>Space</kbd></td><td>This is <code>clink-select-complete</code>, which performs completion by selecting from an interactive list of possible completions; if there is only one match, the match is inserted immediately.</td></tr>
 <tr><td><kbd>Alt</kbd>+<kbd>.</kbd></td><td>This is <code>yank-last-arg</code>, which inserts the last argument from the previous line.  You can use it repeatedly to cycle backwards through the history, inserting the last argument from each line.  Learn more by reading up on the "yank" features in the [Readline manual](https://tiswww.cwru.edu/php/chet/readline/rluserman.html).</td></tr>
 <tr><td><kbd>Ctrl</kbd>+<kbd>R</kbd></td><td>This is <code>reverse-search-history</code>, which incrementally searches the history.  Press it, then type, and it does a reverse incremental search while you type.  Press <kbd>Ctrl</kbd>+<kbd>R</kbd> again (and again, etc) to search for other matches of the search text.  Learn more by reading up on the "search" and "history" features in the [Readline manual](https://tiswww.cwru.edu/php/chet/readline/rluserman.html).</td></tr>
@@ -110,10 +112,6 @@ Clink comes with many pre-configured key bindings (keyboard shortcuts).  Here ar
 <tr><td><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>N</kbd></td><td>This is <code>clink-menu-complete-numbers</code>, which grabs numbers with 3 or more digits from the current console screen and cycles through inserting them as completions (binary, octal, decimal, hexadecimal).  Super handy for quickly inserting a commit hash that was printed as output from a preceding command.</td></tr>
 <tr><td><kbd>Alt</kbd>+<kbd>0</kbd> to <kbd>Alt</kbd>+<kbd>9</kbd></td><td>These are <code>digit-argument</code>, which let you enter a numeric value used by many commands.  For example <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>W</kbd> copies the current word to the clipboard, but if you first type <kbd>Alt</kbd>+<kbd>2</kbd> followed by <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>W</kbd> then it copies the 3rd word to the clipboard (the first word is 0, the second is 1, etc).  Learn more by reading up on "Readline Arguments" in the [Readline manual](https://tiswww.cwru.edu/php/chet/readline/rluserman.html).</td></tr>
 </table>
-
-TBD
-- discovering key sequences
-- edit the .inputrc file
 
 <a name="gettingstarted_startupcmdscript"></a>
 
@@ -135,7 +133,7 @@ See [Customizing the Prompt](#customisingtheprompt) for information on how to us
 
 The new Clink tries to be as backward compatible with Clink v0.4.9 as possible. However, in some cases upgrading may require a little bit of configuration work.
 
-- Some key binding sequences have changed; see [Key Bindings](#keybindings) for more information.
+- Some key binding sequences have changed; see [Customizing Key Bindings](#keybindings) for more information.
 - Match coloring works differently now and can do much more; see [Completion Colors](#completioncolors) for more information.
 - Old settings and history migrate automatically if the new `clink_settings` and `clink_history` files don't exist (deleting them will cause migration to happen again).  To find the directory that contains these files, run `clink info` and look for the "state" line.
 - Script compatibility should be very good, but some scripts may still encounter problems.  If you do encounter a compatibility problem you can look for an updated version of the script, update the script yourself, or visit the [clink repo](https://github.com/chrisant996/clink/issues) and open an issue describing details about the compatibility problem.
@@ -236,7 +234,7 @@ Name                         | Default | Description
 <p/>
 
 > **Compatibility Notes:**
-> - The `esc_clears_line` setting has been replaced by a `clink-reset-line` command that is by default bound to the <kbd>Escape</kbd> key.  See [Key Bindings](#keybindings) and [Readline](https://tiswww.cwru.edu/php/chet/readline/readline.html) for more information.
+> - The `esc_clears_line` setting has been replaced by a `clink-reset-line` command that is by default bound to the <kbd>Escape</kbd> key.  See [Customizing Key Bindings](#keybindings) and [Readline](https://tiswww.cwru.edu/php/chet/readline/readline.html) for more information.
 > - The `match_colour` setting has been removed, and Clink now supports Readline's completion coloring.  See [Completion Colors](#completioncolors) for more information.
 
 <a name="colorsettings"></a>
@@ -428,11 +426,11 @@ The `.inputrc` file will mostly use these kinds of lines:
 <tr><th>Line</th><th>Description</th></tr>
 <tr><td><code><span class="arg">keyname</span>: <span class="arg">command</span></code></td><td>Binds a named command to a key.</td></tr>
 <tr><td><code><span class="arg">keyname</span>: "<span class="arg">literal text</span>"</code></td><td>Binds a macro to a key.  A macro inserts the literal text into the input line.</td></tr>
-<tr><td><code><span class="arg">keyname</span>: "luafunc:<span class="arg">lua_function_name</span>"</code></td><td>Binds a named Lua function to a key.  See <a href="#luakeybindings">Lua Key Bindings</a> for more information.</td></tr>
+<tr><td><code><span class="arg">keyname</span>: "luafunc:<span class="arg">lua_function_name</span>"</code></td><td>Binds a named Lua function to a key.  See <a href="#luakeybindings">Lua key bindings</a> for more information.</td></tr>
 <tr><td><code>set <span class="arg">varname</span> <span class="arg">value</span></code></td><td></td></tr>
 </table>
 
-See [Discovering Clink key sequences](#discovering-clink-key-sequences) for how to find the <span class="arg">keyname</span> for the key you want to bind.  See [Key Bindings](#keybindings) for more information about binding keys in Clink.
+See [Discovering Clink key sequences](#discovering-clink-key-sequences) for how to find the <span class="arg">keyname</span> for the key you want to bind.  See [Customizing Key Bindings](#keybindings) for more information about binding keys in Clink.
 
 Refer to the [Readline manual](https://tiswww.cwru.edu/php/chet/readline/rluserman.html) for a more thorough explanation of the .inputrc file format, list of available commands, and list of configuration variables and their values.
 
@@ -1151,11 +1149,25 @@ This example illustrates how to make a suggestion generator that returns the lon
 
 <a name="keybindings"></a>
 
-## Key bindings
+## Customizing Key Bindings
 
-Key bindings are defined in .inputrc files.  See the [Configuring Readline](#configreadline) section for more information.
+Key bindings are defined in .inputrc files.
 
-Here is the quick version:
+The `clink-show-help` command is bound to <kbd>Alt</kbd>+<kbd>H</kbd> and lists all currently active key bindings.  The list displays "friendly" key names, and these names are generally not suitable for use in .inputrc files.  For example "Up" is the friendly name for `"\e[A"`, and "A-C-F2" is the friendly name for `"\e\e[1;5Q"`.  To see key sequence strings suitable for use in .inputrc files use `clink echo` as described below.
+
+<table class="linkmenu">
+<tr class="lmtr"><td class="lmtd"><a href="#the-inputrc-file">The .inputrc file</a></td><td class="lmtd">A quick summary of what key binding lines look like.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#sample-inputrc-file">Sample .inputrc file</a></td><td class="lmtd">Some sample key bindings.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#discoverkeysequences">Discovering Clink key sequences</a></td><td class="lmtd">How to find key names to use for key bindings.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#specialkeys">Binding special keys</a></td><td class="lmtd">A table of special key names.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#luakeybindings">Lua key bindings</a></td><td class="lmtd">How to bind keys to Lua functions.</td></tr>
+</table>
+
+### The .inputrc file
+
+You can use `clink info` to find the directories and configuration files for the current Clink session, including where the .inputrc file is located, or can be located.  See the [Readline Init File](#init-file) section for detailed information about .inputrc files.
+
+Here is a quick summary about key binding lines in .inputrc files:
 
 - A key binding is <code><span class="arg">name</span>: <span class="arg">function</span></code> or <code><span class="arg">name</span>: "<span class="arg">literal text</span>"</code>.
 - Key names are like this:
@@ -1164,14 +1176,16 @@ Here is the quick version:
   - `M-C-a` and `"\M-\C-a"` are both <kbd>Alt</kbd>+<kbd>Ctrl</kbd>+<kbd>a</kbd>.
   - `hello` is just <kbd>h</kbd>; the `ello` is a syntax error and is silently discarded by Readline.
   - `"hello"` is the series of keys <kbd>h</kbd>,<kbd>e</kbd>,<kbd>l</kbd>,<kbd>l</kbd>,<kbd>o</kbd>.
-  - Special keys like <kbd>Up</kbd> are represented by VT220 escape codes such as`"\e[A"` (see [Binding Special Keys](#specialkeys) for more info).
+  - Special keys like <kbd>Up</kbd> are represented by VT220 escape codes such as`"\e[A"` (see [Binding special keys](#specialkeys) for more info).
 - Key bindings can be either functions or macros (literal text):
   - `blah-blah` binds to a function named "blah-blah".
   - `"blah-blah"` inserts the literal text "blah-blah".
 
-You can use `clink info` to find the directories and configuration files for the current Clink session.
+See [Discovering Clink key sequences](#discoverkeysequences) to learn how to find key names for keys that you want to bind.
 
-Here is an example `.inputrc` file with key bindings that I use myself:
+### Sample .inputrc file
+
+Here is a sample `.inputrc` file with some of the key bindings that I use:
 
 <pre><code class="plaintext"><span class="hljs-meta">$if clink</span>           <span class="hljs-comment"># begin clink-only section</span>
 
@@ -1182,7 +1196,6 @@ Here is an example `.inputrc` file with key bindings that I use myself:
 <span class="hljs-string">"\t"</span>:               old-menu-complete               <span class="hljs-comment"># Tab</span>
 <span class="hljs-string">"\e[Z"</span>:             old-menu-complete-backward      <span class="hljs-comment"># Shift+Tab</span>
 <span class="hljs-string">"\e[27;5;9~"</span>:       clink-popup-complete            <span class="hljs-comment"># Ctrl+Tab</span>
-<span class="hljs-string">"\x1b[27;5;32~"</span>:    clink-select-complete           <span class="hljs-comment"># Ctrl+Space</span>
 
 <span class="hljs-comment"># Some key bindings I got used to from 4Dos/4NT/Take Command.</span>
 C-b:                                                <span class="hljs-comment"># Ctrl+B (cleared because I redefined Ctrl+F)</span>
@@ -1212,8 +1225,6 @@ C-_:                kill-line                       <span class="hljs-comment">#
 
 <span class="hljs-meta">$endif</span>              <span class="hljs-comment"># end clink-only section</span>
 </code></pre>
-
-The `clink-show-help` command is bound to <kbd>Alt</kbd>+<kbd>H</kbd> and lists all currently active key bindings.  The list displays "friendly" key names, and these names are generally not suitable for use in .inputrc files.  For example "Up" is the friendly name for `"\e[A"`, and "A-C-F2" is the friendly name for `"\e\e[1;5Q"`.  To see key sequence strings suitable for use in .inputrc files use `clink echo` as described below.
 
 > **Note:** Third party console hosts such as ConEmu may have their own key bindings that supersede Clink.  They usually have documentation for how to change or disable their key bindings to allow console programs to handle the keys instead.
 
@@ -1281,7 +1292,7 @@ The `terminal.raw_esc` setting controls the binding sequence for the <kbd>Esc</k
 
 <a name="luakeybindings"></a>
 
-### Lua Key Bindings
+### Lua key bindings
 
 You can bind a key to a [Lua](#extending-clink) function by [binding](#keybindings) it to a macro that begins with "luafunc:".  Clink will invoke the named Lua function when the key binding is input.  Function names can include periods (such as `foo.bar`) but cannot include any other punctuation.
 
