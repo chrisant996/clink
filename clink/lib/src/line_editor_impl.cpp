@@ -1132,11 +1132,30 @@ void line_editor_impl::update_internal()
         true && /* suggestions are enabled */
         !m_prev_suggest.equals(m_buffer.get_buffer(), m_buffer.get_length()))
     {
-        update_matches();
+        matches_impl* matches = nullptr;
+
+        // TODO:  Maybe detect and skip all remote paths, including SUBST and
+        // reparse points, etc?
+        if (m_words.size())
+        {
+            unsigned int offset = m_words[m_words.size() - 1].offset;
+            if (offset < m_buffer.get_length() && m_buffer.get_length() - offset >= 2)
+            {
+                // Use an empty set of matches when a UNC path is detected!
+                const char* end_word = m_buffer.get_buffer() + offset;
+                if (path::is_separator(end_word[0]) && path::is_separator(end_word[1]))
+                    matches = new matches_impl;
+            }
+        }
+
+        if (!matches)
+            update_matches();
 
         line_state line = get_linestate();
-        host_suggest(line, m_matches);
+        host_suggest(line, matches ? *matches : m_matches);
         m_prev_suggest.set(m_buffer.get_buffer(), m_buffer.get_length());
+
+        delete matches;
     }
 
     // Must defer updating m_prev_generate since the old value is still needed
