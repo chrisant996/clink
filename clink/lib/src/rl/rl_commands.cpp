@@ -938,6 +938,8 @@ void cua_after_command(bool force_clear)
     if (s_map.empty())
     {
         // No action after a cua command.
+        s_map.emplace(cua_previous_screen_line);
+        s_map.emplace(cua_next_screen_line);
         s_map.emplace(cua_backward_char);
         s_map.emplace(cua_forward_char);
         s_map.emplace(cua_backward_word);
@@ -965,6 +967,20 @@ void cua_after_command(bool force_clear)
     // If not a recognized command, clear the cua selection.
     if (force_clear || s_map.find((void*)rl_last_func) == s_map.end())
         cua_clear_selection();
+}
+
+//------------------------------------------------------------------------------
+int cua_previous_screen_line(int count, int invoking_key)
+{
+    cua_selection_manager mgr;
+    return rl_previous_screen_line(count, invoking_key);
+}
+
+//------------------------------------------------------------------------------
+int cua_next_screen_line(int count, int invoking_key)
+{
+    cua_selection_manager mgr;
+    return rl_next_screen_line(count, invoking_key);
 }
 
 //------------------------------------------------------------------------------

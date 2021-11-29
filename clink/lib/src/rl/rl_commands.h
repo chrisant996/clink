@@ -91,6 +91,8 @@ int     cua_get_anchor();
 bool    cua_point_in_selection(int in);
 int     cua_selection_event_hook(int event);
 void    cua_after_command(bool force_clear=false);
+int     cua_previous_screen_line(int count, int invoking_key);
+int     cua_next_screen_line(int count, int invoking_key);
 int     cua_backward_char(int count, int invoking_key);
 int     cua_forward_char(int count, int invoking_key);
 int     cua_backward_word(int count, int invoking_key);
