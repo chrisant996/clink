@@ -103,6 +103,7 @@ private:
     int             m_match_rows = 0;
     int             m_visible_rows = 0;
     bool            m_desc_below = false;
+    bool            m_any_displayed = false;
 
     // Inserting matches.
     int             m_anchor = -1;

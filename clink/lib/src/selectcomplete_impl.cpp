@@ -412,7 +412,11 @@ cant_activate:
     }
 
     if (!reactivate)
+    {
+        assert(!m_any_displayed);
+        m_any_displayed = false;
         m_desc_below = m_matches.get_match_count() > 9;
+    }
 
     // Make sure there's room.
     update_layout();
@@ -531,6 +535,7 @@ void selectcomplete_impl::on_begin_line(const context& context)
     m_matches.set_matches(&context.matches);
     m_printer = &context.printer;
     m_anchor = -1;
+    m_any_displayed = false;
 
     m_screen_cols = context.printer.get_columns();
     m_screen_rows = context.printer.get_rows();
@@ -541,6 +546,7 @@ void selectcomplete_impl::on_begin_line(const context& context)
 //------------------------------------------------------------------------------
 void selectcomplete_impl::on_end_line()
 {
+    assert(!m_any_displayed);
     s_selectcomplete = nullptr;
     m_buffer = nullptr;
     m_matches.set_matches(nullptr);
@@ -1101,7 +1107,6 @@ void selectcomplete_impl::update_display()
 
         // Display matches.
         int up = 0;
-        bool move_to_end = true;
         const int count = m_matches.get_match_count();
         if (is_active() && count > 0)
         {
@@ -1125,7 +1130,6 @@ void selectcomplete_impl::update_display()
                 rl_crlf();
                 up++;
 
-                move_to_end = true;
                 if (m_prev_displayed < 0 ||
                     row + m_top == get_match_row(m_index) ||
                     row + m_top == get_match_row(m_prev_displayed))
@@ -1254,16 +1258,44 @@ void selectcomplete_impl::update_display()
 
                     // Clear to end of line.
                     m_printer->print("\x1b[m\x1b[K");
-                    move_to_end = false;
                 }
             }
 
             m_prev_displayed = m_index;
+            m_any_displayed = true;
+
+            // Show match description.
+            if (m_desc_below && m_matches.has_descriptions())
+            {
+                rl_crlf();
+                m_printer->print("\x1b[m\x1b[J");
+                rl_crlf();
+                up += 2;
+                if (m_index >= 0 && m_index < m_matches.get_match_count())
+                {
+                    const char* desc = m_matches.get_match_description(m_index);
+                    if (desc && *desc)
+                    {
+                        str<> s;
+                        ellipsify(desc, m_screen_cols - 1, s, false);
+                        m_printer->print(description_color, description_color_len);
+                        m_printer->print(s.c_str(), s.length());
+                        m_printer->print("\x1b[m");
+                    }
+                }
+            }
         }
         else
         {
-            assert(move_to_end);
+            if (m_any_displayed)
+            {
+                // Move cursor to next line, then clear to end of screen.
+                rl_crlf();
+                up++;
+                m_printer->print("\x1b[m\x1b[J");
+            }
             m_prev_displayed = -1;
+            m_any_displayed = false;
         }
 
 #ifdef SHOW_DISPLAY_GENERATION
@@ -1271,37 +1303,6 @@ void selectcomplete_impl::update_display()
         if (s_chGen > 'Z')
             s_chGen = '0';
 #endif
-
-        // Move cursor to end of last input line.
-        if (move_to_end)
-        {
-            str<16> s;
-            s.format("\x1b[%dG", m_screen_cols + 1);
-            m_printer->print(s.c_str(), s.length());
-        }
-
-        // Clear to end of screen.
-        m_printer->print("\x1b[m\x1b[J");
-
-        // Show match description.
-        if (is_active() && m_desc_below && m_matches.has_descriptions())
-        {
-            rl_crlf();
-            rl_crlf();
-            up += 2;
-            if (m_index >= 0 && m_index < m_matches.get_match_count())
-            {
-                const char* desc = m_matches.get_match_description(m_index);
-                if (desc && *desc)
-                {
-                    str<> s;
-                    ellipsify(desc, m_screen_cols - 1, s, false);
-                    m_printer->print(description_color, description_color_len);
-                    m_printer->print(s.c_str(), s.length());
-                    m_printer->print("\x1b[m");
-                }
-            }
-        }
 
         // Restore cursor position.
         if (up > 0)
