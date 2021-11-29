@@ -428,7 +428,7 @@ void win_screen_buffer::set_horiz_cursor(int column)
     int width = (window.Right - window.Left) + 1;
     int height = (window.Bottom - window.Top) + 1;
 
-    column = clamp(column, 0, width);
+    column = clamp(column, 0, width - 1);
 
     COORD xy = { static_cast<SHORT>(window.Left + column), csbi.dwCursorPosition.Y };
     SetConsoleCursorPosition(m_handle, xy);
@@ -444,8 +444,8 @@ void win_screen_buffer::set_cursor(int column, int row)
     int width = (window.Right - window.Left) + 1;
     int height = (window.Bottom - window.Top) + 1;
 
-    column = clamp(column, 0, width);
-    row = clamp(row, 0, height);
+    column = clamp(column, 0, width - 1);
+    row = clamp(row, 0, height - 1);
 
     COORD xy = { static_cast<SHORT>(window.Left + column), static_cast<SHORT>(window.Top + row) };
     SetConsoleCursorPosition(m_handle, xy);
