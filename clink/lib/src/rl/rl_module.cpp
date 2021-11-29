@@ -1692,11 +1692,14 @@ void initialise_readline(const char* state_dir)
         rl_add_funmap_entry("insert-last-argument", rl_yank_last_arg);
         rl_add_funmap_entry("shell-expand-line", clink_expand_line);
 
-        // Replace some commands with versions that support suggestions.
-        rl_add_funmap_entry("forward-word", clink_forward_word);
-        rl_add_funmap_entry("forward-char", clink_forward_char);
-        rl_add_funmap_entry("forward-byte", clink_forward_byte);
-        rl_add_funmap_entry("end-of-line", clink_end_of_line);
+        // Preemptively replace some commands with versions that support suggestions.
+        clink_add_funmap_entry("forward-byte", clink_forward_byte, keycat_cursor, "Move forward a single byte, or insert suggestion");
+        clink_add_funmap_entry("forward-char", clink_forward_char, keycat_cursor, "Move forward a character, or insert suggestion");
+        clink_add_funmap_entry("forward-word", clink_forward_word, keycat_cursor, "Move forward to the end of the next word, or insert next suggested word");
+        clink_add_funmap_entry("end-of-line", clink_end_of_line, keycat_basic, "Move to the end of the line, or insert suggestion");
+
+        // Preemptively replace paste command with one that supports Unicode.
+        rl_add_funmap_entry("paste-from-clipboard", clink_paste);
 
         // Override some defaults.
         _rl_bell_preference = VISIBLE_BELL;     // Because audible is annoying.

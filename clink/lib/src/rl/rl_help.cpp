@@ -116,13 +116,13 @@ static const struct {
   { "emacs-editing-mode", rl_emacs_editing_mode, keycat_misc, "When in 'vi' command mode, this causes a switch to 'emacs' editing mode" },
   { "end-kbd-macro", rl_end_kbd_macro, keycat_misc, "Stop saving the characters typed into the current keyboard macro and save the definition" },
   { "end-of-history", rl_end_of_history, keycat_history, "Move to the end of the input history, i.e., the line currently being entered" },
-  { "end-of-line", clink_end_of_line, keycat_basic, "Move to the end of the line, or insert suggestion" },
+  //{ "end-of-line", clink_end_of_line, keycat_basic, "Move to the end of the line, or insert suggestion" },
   { "exchange-point-and-mark", rl_exchange_point_and_mark, keycat_misc, "Swap the cursor point with the mark.  Sets the current cursor position to the saved position, and saves the old cursor position as the mark" },
   { "forward-backward-delete-char", rl_rubout_or_delete, keycat_basic, "Delete the character at the cursor point, unless the cursor is at the end of the line, in which case the character behind the cursor is deleted" },
-  { "forward-byte", clink_forward_byte, keycat_cursor, "Move forward a single byte, or insert suggestion" },
-  { "forward-char", clink_forward_char, keycat_cursor, "Move forward a character, or insert suggestion" },
+  //{ "forward-byte", clink_forward_byte, keycat_cursor, "Move forward a single byte, or insert suggestion" },
+  //{ "forward-char", clink_forward_char, keycat_cursor, "Move forward a character, or insert suggestion" },
   { "forward-search-history", rl_forward_search_history, keycat_history, "Incremental search forward starting at the current line and moving 'down' through the history as necessary.  Sets the marked region to the matched text" },
-  { "forward-word", clink_forward_word, keycat_cursor, "Move forward to the end of the next word, or insert next suggested word" },
+  //{ "forward-word", clink_forward_word, keycat_cursor, "Move forward to the end of the next word, or insert next suggested word" },
   { "history-search-backward", rl_history_search_backward, keycat_history, "Search backward through the history for the string of characters between the start of the current line and the cursor point.  The search string must match at the beginning of a history line.  This is a non-incremental search" },
   { "history-search-forward", rl_history_search_forward, keycat_history, "Search forward through the history for the string of characters between the start of the current line and the cursor point.  The search string must match at the beginning of a history line.  This is a non-incremental search" },
   { "history-substring-search-backward", rl_history_substr_search_backward, keycat_history, "Search backward through the history for the string of characters between the start of the current line and the cursor point.  The search string may match anywhere in a history line.  This is a non-incremental search" },
@@ -148,7 +148,7 @@ static const struct {
   { "operate-and-get-next", rl_operate_and_get_next, keycat_history, "Accept the current line, and fetch the next line relative to the current line from the history for editing.  A numeric argument, if supplied, specifies the history entry to use instead of the current line" },
   { "overwrite-mode", rl_overwrite_mode, keycat_basic, "Toggle overwrite mode.  This commands affects only 'emacs' mode.  Each input line always starts in insert mode" },
 #if defined (_WIN32)
-  { "paste-from-clipboard", rl_paste_from_clipboard, keycat_basic, "" },
+  //{ "paste-from-clipboard", rl_paste_from_clipboard, keycat_basic, "" },
 #endif
   { "possible-completions", rl_possible_completions, keycat_completion, "List the possible completions of the text before the cursor point" },
   { "previous-history", rl_get_previous_history, keycat_history, "Move 'back' through the history list, fetching the previous command" },
@@ -204,13 +204,13 @@ static const struct {
   { "vi-end-bigword", rl_vi_eWord, keycat_misc, "" },
   { "vi-end-word", rl_vi_end_word, keycat_misc, "" },
   { "vi-eof-maybe", rl_vi_eof_maybe, keycat_misc, "" },
-  //{ "vi-eword", rl_vi_eword },
+  { "vi-eword", rl_vi_eword, keycat_misc, "" },
   //{ "vi-fWord", rl_vi_fWord },	/* BEWARE: name matching is case insensitive */
   { "vi-fetch-history", rl_vi_fetch_history, keycat_misc, "" },
   { "vi-first-print", rl_vi_first_print, keycat_misc, "" },
   { "vi-forward-bigword", rl_vi_fWord, keycat_misc, "" },
   { "vi-forward-word", rl_vi_fword, keycat_misc, "" },
-  //{ "vi-fWord", rl_vi_fWord },	/* BEWARE: name matching is case insensitive */
+  //{ "vi-fword", rl_vi_fword },	/* BEWARE: name matching is case insensitive */
   { "vi-goto-mark", rl_vi_goto_mark, keycat_misc, "" },
   { "vi-insert-beg", rl_vi_insert_beg, keycat_misc, "" },
   { "vi-insertion-mode", rl_vi_insert_mode, keycat_misc, "" },
@@ -649,29 +649,46 @@ static Keyentry* collect_functions(
     int* max,
     bool categories)
 {
-    str_unordered_set seen;
+    str_unordered_set seen_name;
+    std::unordered_set<rl_command_func_t*> seen_func;
     for (int i = 1; i < *offset; i++)
     {
-        const char* name = collector[i].func_name;
+        const Keyentry& e = collector[i];
+        const char* name = e.func_name;
         if (name)
-            seen.emplace(name);
+            seen_name.emplace(name);
     }
 
     for (const FUNMAP* const* walk = funmap; *walk; ++walk)
     {
-        if (seen.find((*walk)->name) != seen.end())
+        rl_command_func_t* func = (*walk)->function;
+        if (maybe_exclude_function(func))
             continue;
 
-        if (maybe_exclude_function((*walk)->function))
+        const char* name = (*walk)->name;
+        const char* found_name = get_function_name(func);
+        assert(found_name);
+        if (found_name == nullptr)
             continue;
 
-        const char* name = get_function_name((*walk)->function);
-        if (name == nullptr)
+        // Only add the first name for each function, and the first function for
+        // each name.
+        int seen = 0;
+        seen += seen_func.find(func) != seen_func.end();
+        seen += seen_name.find(found_name) != seen_name.end();
+        seen += seen_name.find(name) != seen_name.end();
+        if (seen < 3)
+        {
+            seen_func.emplace(func);
+            seen_name.emplace(found_name);
+            seen_name.emplace(name);
+        }
+        if (seen > 0)
             continue;
 
         const char* desc;
         int cat = keycat_misc;
-        get_function_info((*walk)->function, &desc, &cat);
+        get_function_info(func, &desc, &cat);
 
         if (*offset >= *max)
         {
@@ -683,7 +700,7 @@ static Keyentry* collect_functions(
         memset(&out, 0, sizeof(out));
         out.sort = MAKELONG(999, 999);
         out.key_name = (char*)calloc(1, 1);
-        out.func_name = name;
+        out.func_name = found_name;
         out.func_desc = desc;
         out.cat = categories ? cat : 0;
 
