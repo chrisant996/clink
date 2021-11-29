@@ -357,6 +357,7 @@ int clink_paste(int count, int invoking_key)
         g_rl_buffer->begin_undo_group();
         cua_delete();
     }
+    _rl_set_mark_at_pos(g_rl_buffer->get_cursor());
     g_rl_buffer->insert(utf8.c_str());
     if (sel)
         g_rl_buffer->end_undo_group();
