@@ -1800,6 +1800,8 @@ void initialise_readline(const char* state_dir)
         { "\\e[1;2F",       "cua-end-of-line" },         // shift-end
         { "\\e[2;2~",       "cua-copy" },                // shift-ins
         { "\\e[3;2~",       "cua-cut" },                 // shift-del
+        // Update default bindings for commands replaced for suggestions.
+        { "\\e[1;3C",       "forward-word" },            // alt-right
         {}
     };
 
