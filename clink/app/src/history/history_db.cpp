@@ -1304,7 +1304,7 @@ void history_db::initialise()
 //------------------------------------------------------------------------------
 unsigned int history_db::get_active_bank() const
 {
-    return (m_use_master_bank && g_shared.get()) ? bank_master : bank_session;
+    return (m_use_master_bank && !m_bank_handles[bank_session].m_handle_lines) ? bank_master : bank_session;
 }
 
 //------------------------------------------------------------------------------
