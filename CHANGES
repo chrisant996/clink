@@ -8,6 +8,7 @@
 - Updated match generator for `clink set autosuggest.strategy` to list the available suggestion generators.
 - The `clink-show-help` and `clink-popup-show-help` commands can include commands that aren't bound to any key, when the numeric argument is 4 (e.g. <kbd>Alt</kbd>+<kbd>4</kbd> then <kbd>Alt</kbd>+<kbd>H</kbd>).
 - The `rl.getkeybindings()` function takes an optional `mode` argument to control sorting and whether to include commands that aren't bound to any key.
+- Generating suggestions skips generating match completions when the current word looks like a UNC path.  This avoids pauses while typing that would otherwise occur when accessing networked drives.
 - Fixed <kbd>Alt</kbd>+<kbd>Right</kbd> so it accepts the next word of the suggestion, just like <kbd>Ctrl</kbd>+<kbd>Right</kbd> does.
 - Fixed the `clink-paste` command so it sets the mark to the cursor point prior to pasting.
 - Fixed when `history.dupe_mode` is "erase_prev" and `history.shared` starts true but changes to false; subsequent commands were not added to the history properly anymore in that session (regression introduced in v1.1.0).
