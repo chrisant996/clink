@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.2.48</title>
+<title>Clink v1.2.49</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -771,7 +771,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.2.48</div>
+                <div id="title">Clink v1.2.49</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -828,47 +828,131 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 <li>Auto-answering of the &quot;Terminate batch job?&quot; prompt.</li>
 </ul>
 <p>By default Clink binds <kbd>Alt</kbd>+<kbd>H</kbd> to display the current key bindings. More features can also be found in GNU&#39;s <a href="https://tiswww.cwru.edu/php/chet/readline/readline.html">Readline</a>.</p>
-<blockquote>
-<p>
-<strong>Want some quick but powerful tips to get started?</strong>
-</p>
-<p>
+<h1 id="usage">Usage</h1>
+<p>There are several ways to start Clink.</p>
+<ol>
+<li>If you installed the auto-run, just start <code>cmd.exe</code>.  Run <code>clink autorun --help</code> for more info.</li>
+<li>To manually start, run the Clink shortcut from the Start menu (or the clink.bat located in the install directory).</li>
+<li>To establish Clink to an existing <code>cmd.exe</code> process, use <code>&lt;install_dir&gt;\clink.exe inject</code>.</li>
+</ol>
+<p>Starting Clink injects it into a <code>cmd.exe</code> process, where it intercepts a handful of Windows API functions so that it can replace the prompt and input line editing with its own Readline-powered enhancements.</p>
+<h1 id="getting-started">Getting Started</h1>
+<p>You can use Clink right away without configuring anything:</p>
+<ul>
+<li>Searchable <a href="#saved-command-history">command history</a> will be saved between sessions.</li>
+<li><kbd>Tab</kbd> and <kbd>Ctrl</kbd>+<kbd>Space</kbd> will do match completion two different ways.</li>
+<li>Press <kbd>Alt</kbd>+<kbd>H</kbd> to see a list of the current key bindings.</li>
+<li>Press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>/</kbd> followed by another key to see what command is bound to the key.</li>
+</ul>
+<p>There are three main ways of customizing Clink to your preferences:  the <a href="#init-file">Readline init file</a> (the <code>.inputrc</code> file), the <a href="#clink-settings">Clink settings</a> (the <code>clink set</code> command), and <a href="#extending-clink-with-lua">Lua</a> scripts.</p>
+<h2 id="common-configuration">Common Configuration</h2>
+<p>The following sections describe some ways to begin customizing Clink to your taste.</p>
+<table class="linkmenu">
+<tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_inputrc">Create a .inputrc file</a></td><td class="lmtd">Create a .inputrc file where config variables and key bindings can be set.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_defaultbindings">Bash vs Windows</a></td><td class="lmtd">Make <kbd>Ctrl</kbd>+<kbd>F</kbd> and <kbd>Ctrl</kbd>+<kbd>M</kbd> work like usual on Windows.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_autosuggest">Auto-suggest</a></td><td class="lmtd">How to enable and use automatic suggestions.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_colors">Colors</a></td><td class="lmtd">Configure the colors.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_keybindings">Key Bindings</a></td><td class="lmtd">Customize your key bindings.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_startupcmdscript">Startup Cmd Script</a></td><td class="lmtd">Optional automatic <code>clink_startup.cmd</code> script.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_customprompt">Custom Prompt</a></td><td class="lmtd">Customizing the command line prompt.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#upgradefrom049">Upgrading from Clink v0.4.9</a></td><td class="lmtd">Notes on upgrading from a very old version of Clink.</td></tr>
+</table>
+
+<p><a name="gettingstarted_inputrc"></a></p>
+<h3 id="create-a-inputrc-file">Create a .inputrc file</h3>
+<p>First you&#39;ll want to create a <code>.inputrc</code> file, and a good place is in your Windows user profile directory.</p>
+<p>This file is used for some configuration, such as key bindings and colored completions.</p>
+<p>Create the file by running this command at a CMD prompt:</p>
+<pre><code class="language-cmd">notepad %userprofile%\.inputrc
+</code></pre>
+<p>You may want to copy/paste the following sample text into the file as a starting point, and then press <kbd>Ctrl</kbd>+<kbd>S</kbd> to save the file.</p>
+<pre><code class="language-plaintext"># Some common Readline config settings.
+
+set colored-stats                 on   # Turn on completion colors.
+set colored-completion-prefix     on   # Color the typed completion prefix.
+
+# Some config settings that only work in Clink.
+
+$if clink
+set search-ignore-case            on   # Case insensitive history searches.
+set completion-auto-query-items   on   # Prompt before showing completions if they&#39;ll exceed half the screen.
+$endif
+
+# Add your keybindings here...
+</code></pre>
+<p><a name="gettingstarted_defaultbindings"></a></p>
+<h3 id="bash-vs-windows">Bash vs Windows</h3>
+<p>The default Clink key bindings are the same as in the &quot;bash&quot; shell for Unix/Linux.  That makes some keys like <kbd>Ctrl</kbd>+<kbd>F</kbd> and <kbd>Ctrl</kbd>+<kbd>M</kbd> behave differently than you might be used to in CMD.</p>
+<p>To instead use the familiar <a href="#default_bindings">Windows default key bindings</a> you can run <code>clink set clink.default_bindings windows</code>.</p>
+<p><a name="gettingstarted_autosuggest"></a></p>
+<h3 id="auto-suggest">Auto-suggest</h3>
+<p>Clink can suggest commands as you type, based on command history and completions.</p>
+<p>To turn on automatic suggestions, run <code>clink set autosuggest.enable true</code>.  When the cursor is at the end of the input line, a suggestion may appear in a muted color.  If the suggestion isn&#39;t what you want, just ignore it.  Or accept the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, accept the next word of the suggestion with <kbd>Ctrl</kbd>+<kbd>Right</kbd>, or accept the next full word of the suggestion up to a space with <kbd>Shift</kbd>+<kbd>Right</kbd>.</p>
+<p>The <a href="#autosuggest_strategy"><code>autosuggest.strategy</code></a> setting determines how a suggestion is chosen.</p>
+<p><a name="gettingstarted_colors"></a></p>
+<h3 id="colors">Colors</h3>
+<p>Clink has many configurable colors for match completions, input line coloring, popup lists, and more.</p>
+<h4 id="completion-colors">Completion colors</h4>
+<p>When performing completion (e.g. <kbd>Tab</kbd> or <kbd>Ctrl</kbd>+<kbd>Space</kbd>) Clink can add color to the possible completions.</p>
+<p>To turn on colored completions, put a line <code>set colored-stats on</code> in the <a href="#gettingstarted_inputrc">.inputrc file</a> (if you copy/pasted the sample text, it&#39;s already there).</p>
+<p>See the <a href="#completion-colors">Completion Colors</a> section for how to configure the colors for match completions.</p>
+<h4 id="other-colors">Other colors</h4>
+<p>Clink adds color to the input line by highlighting arguments, flags, doskey macros, and more.  If you don&#39;t want input line colors, you can turn it off by running <code>clink set clink.colorize_input false</code>.</p>
+<p>There are also colors for popup lists, and some other things.</p>
+<p>To configure a color, run <code>clink set <span class="arg">colorname</span> <span class="arg">colorvalue</span></code>.</p>
+<p>Match completions make it easy to change Clink settings:  type <code>clink set color.</code> and then use completion (e.g. <kbd>Tab</kbd> or <kbd>Ctrl</kbd>+<kbd>Space</kbd>) to see the available color settings, and to fill in a color value.</p>
+<p>See the <a href="#clink-settings">Clink Settings</a> and <a href="#color-settings">Color Settings</a> sections for more information on Clink settings.</p>
+<p><a name="gettingstarted_keybindings"></a></p>
+<h3 id="key-bindings">Key Bindings</h3>
+<p>You can customize your key bindings (keyboard shortcuts) by assigning key bindings in the <a href="#gettingstarted_inputrc">.inputrc file</a>.  See <a href="#keybindings">Customizing Key Bindings</a> for more information.</p>
+<p>Clink comes with many pre-configured key bindings that invoke named commands.  Here are a few that you might find especially handy:</p>
 <table>
-<tr><td><kbd>Ctrl</kbd>+<kbd>O</kbd></td><td>This is <code>operate-and-get-next</code>, which accepts the current input line and gets the next history line.  You can search history for a command, then press <kbd>Ctrl</kbd>+<kbd>O</kbd> to run that command and queue up the next command after it.  Repeat it to conveniently rerun a series of commands from the history.</td></tr>
+<tr><td><kbd>Alt</kbd>+<kbd>H</kbd></td><td>This is <code>clink-show-help</code>, which lists the key bindings and commands.  Learn more by visiting <a href="#keybindings">Customizing Key Bindings</a>.</td></tr>
+<tr><td><kbd>Tab</kbd></td><td>This is <code>complete</code> or <code>old-menu-complete</code>, depending on the [`clink.default_bindings`](#default_bindings) Clink setting.  <code>complete</code> swhich performs completion by selecting from an interactive list of possible completions; if there is only one match, the match is inserted immediately.</td></tr>
+<tr><td><kbd>Ctrl</kbd>+<kbd>Space</kbd></td><td>This is <code>clink-select-complete</code>, which performs completion by selecting from an interactive list of possible completions; if there is only one match, the match is inserted immediately.</td></tr>
+<tr><td><kbd>Alt</kbd>+<kbd>=</kbd></td><td>This is <code>possible-completions</code>, which lists the available completions for the current word in the input line.</td></tr>
 <tr><td><kbd>Alt</kbd>+<kbd>.</kbd></td><td>This is <code>yank-last-arg</code>, which inserts the last argument from the previous line.  You can use it repeatedly to cycle backwards through the history, inserting the last argument from each line.  Learn more by reading up on the "yank" features in the [Readline manual](https://tiswww.cwru.edu/php/chet/readline/rluserman.html).</td></tr>
 <tr><td><kbd>Ctrl</kbd>+<kbd>R</kbd></td><td>This is <code>reverse-search-history</code>, which incrementally searches the history.  Press it, then type, and it does a reverse incremental search while you type.  Press <kbd>Ctrl</kbd>+<kbd>R</kbd> again (and again, etc) to search for other matches of the search text.  Learn more by reading up on the "search" and "history" features in the [Readline manual](https://tiswww.cwru.edu/php/chet/readline/rluserman.html).</td></tr>
 <tr><td><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>D</kbd></td><td>This is <code>remove-history</code>, which deletes the currently selected history line after using any of the history search or navigation commands.</td></tr>
 <tr><td><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>K</kbd></td><td>This is <code>add-history</code>, which adds the current line to the history without executing it, and then clears the input line.</td></tr>
 <tr><td><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>N</kbd></td><td>This is <code>clink-menu-complete-numbers</code>, which grabs numbers with 3 or more digits from the current console screen and cycles through inserting them as completions (binary, octal, decimal, hexadecimal).  Super handy for quickly inserting a commit hash that was printed as output from a preceding command.</td></tr>
 <tr><td><kbd>Alt</kbd>+<kbd>0</kbd> to <kbd>Alt</kbd>+<kbd>9</kbd></td><td>These are <code>digit-argument</code>, which let you enter a numeric value used by many commands.  For example <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>W</kbd> copies the current word to the clipboard, but if you first type <kbd>Alt</kbd>+<kbd>2</kbd> followed by <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>W</kbd> then it copies the 3rd word to the clipboard (the first word is 0, the second is 1, etc).  Learn more by reading up on "Readline Arguments" in the [Readline manual](https://tiswww.cwru.edu/php/chet/readline/rluserman.html).</td></tr>
-<tr><td><kbd>Alt</kbd>+<kbd>H</kbd></td><td>This is <code>clink-show-help</code>, which lists the key bindings and commands.  Learn more by visiting <a href="#keybindings">Key Bindings</a>.</td></tr>
 </table>
-</p>
-<p>
-If you want a customizable prompt with a bunch of styles and an easy-to-use configuration wizard, check out <a href="https://github.com/chrisant996/clink-flex-prompt">clink-flex-prompt</a>.
-</p>
-</blockquote>
 
-<h1 id="usage">Usage</h1>
-<p>There are several ways to start Clink.</p>
-<ol>
-<li>If you installed the auto-run, just start <code>cmd.exe</code>. Run <code>clink autorun --help</code> for more info.</li>
-<li>To manually start, run the Clink shortcut from the Start menu (or the clink.bat located in the install directory).</li>
-<li>To establish Clink to an existing <code>cmd.exe</code> process, use <code>&lt;install_dir&gt;\clink.exe inject</code>.</li>
-</ol>
-<h3 id="how-clink-works">How Clink Works</h3>
-<p>When running Clink via the methods above, Clink checks the parent process is supported and injects a DLL into it. The DLL then hooks the WriteConsole() and ReadConsole() Windows functions. The former is so that Clink can capture the current prompt, and the latter hook allows Clink to provide its own Readline-powered command line editing.</p>
-<p><a name="privacy"></a></p>
-<h3 id="privacy">Privacy</h3>
-<p>Clink does not collect user data.  Clink writes diagnostic information to its local log file, and does not transmit the log file off the local computer.  For the location of the log file, refer to <a href="#filelocations">File Locations</a> or run <code>clink info</code>.</p>
+<p>For a full list of commands available for key bindings, see <a href="#new-commands">New Commands</a> and &quot;Bindable Readline Commands&quot; in the <a href="https://tiswww.cwru.edu/php/chet/readline/rluserman.html">Readline manual</a>.</p>
+<p><a name="gettingstarted_startupcmdscript"></a></p>
+<h3 id="startup-cmd-script">Startup Cmd Script</h3>
+<p>When Clink is injected, it looks for a <code>clink_start.cmd</code> script in the binaries directory and <a href="#filelocations">profile directory</a>.  Clink automatically runs the script(s), if present, when the first CMD prompt is shown after Clink is injected.  You can set the <a href="#clink_autostart"><code>clink.autostart</code></a> setting to run a different command, or set it to &quot;nul&quot; to run no command at all.</p>
+<p><a name="gettingstarted_customprompt"></a></p>
+<h3 id="custom-prompt">Custom Prompt</h3>
+<p>If you want a customizable prompt with a bunch of styles and an easy-to-use configuration wizard, check out <a href="https://github.com/chrisant996/clink-flex-prompt">clink-flex-prompt</a>.  Also, if you&#39;ve been disappointed by git making the prompt slow in other shells, try this prompt -- it makes the prompt appear instantly by running git commands in the background and refreshing the prompt once the background commands complete.</p>
+<p>Another popular configurable prompt is <a href="#oh-my-posh">oh-my-posh</a>.</p>
+<p>See <a href="#customisingtheprompt">Customizing the Prompt</a> for information on how to use Lua to customize the prompt.</p>
+<p><a name="upgradefrom049"></a></p>
+<h2 id="upgrading-from-clink-v049">Upgrading from Clink v0.4.9</h2>
+<p>The new Clink tries to be as backward compatible with Clink v0.4.9 as possible. However, in some cases upgrading may require a little bit of configuration work.</p>
+<ul>
+<li>Some key binding sequences have changed; see <a href="#keybindings">Customizing Key Bindings</a> for more information.</li>
+<li>Match coloring works differently now and can do much more; see <a href="#completioncolors">Completion Colors</a> for more information.</li>
+<li>Old settings and history migrate automatically if the new <code>clink_settings</code> and <code>clink_history</code> files don&#39;t exist (deleting them will cause migration to happen again).  To find the directory that contains these files, run <code>clink info</code> and look for the &quot;state&quot; line.</li>
+<li>Script compatibility should be very good, but some scripts may still encounter problems.  If you do encounter a compatibility problem you can look for an updated version of the script, update the script yourself, or visit the <a href="https://github.com/chrisant996/clink/issues">clink repo</a> and open an issue describing details about the compatibility problem.</li>
+<li>Some settings have changed slightly, and there are many new settings.  See <a href="#configclink">Configuring Clink</a> for more information.</li>
+</ul>
 <p><a name="configclink"></a></p>
 <h1 id="configuring-clink">Configuring Clink</h1>
-<h2 id="startup-cmd-script">Startup Cmd Script</h2>
-<p>When Clink is injected, it looks for a <code>clink_start.cmd</code> script in the binaries directory and <a href="#filelocations">profile directory</a>.  Clink automatically runs the scripts, if present, when the first CMD prompt is shown after Clink is injected.</p>
-<p>You can set the <code>clink.autostart</code> setting to run a different command, or set it to &quot;nul&quot; to run no command at all.</p>
+<p>Clink has two configuration systems, which is a result of using the Readline library to provide command history and key bindings.</p>
+<p>The following sections describe how to configure Clink itself.  To learn about the Readline configuration and key bindings, instead see <a href="#configreadline">Configuring Readline</a>.</p>
+<table class="linkmenu">
+<tr class="lmtr"><td class="lmtd"><a href="#clinksettings">Clink Settings</a></td><td class="lmtd">How to customize Clink's settings.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#colorsettings">Color Settings</a></td><td class="lmtd">Describes the syntax used by color settings.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#filelocations">File Locations</a></td><td class="lmtd">Where Clink stores its history and settings files.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#command-line-options">Command Line Options</a></td><td class="lmtd">Describes the command line options for the Clink program.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#portable-configuration">Portable Configuration</a></td><td class="lmtd">How to set up a "portable" installation of Clink, e.g. on a USB drive or network location.</td></tr>
+</table>
+
 <p><a name="clinksettings"></a></p>
 <h2 id="clink-settings">Clink Settings</h2>
-<p>The easiest way to configure Clink is to use Clink&#39;s <code>set</code> command line option.  This can list, query, and set Clink&#39;s settings. Run <code>clink set --help</code> from a Clink-installed cmd.exe process to learn more both about how to use it and to get descriptions for Clink&#39;s various options.</p>
+<p>The easiest way to configure Clink is to use the <code>clink set</code> command.  This can list, query, and set Clink&#39;s settings. Run <code>clink set --help</code> from a Clink-installed cmd.exe process to learn more both about how to use it and to get descriptions for Clink&#39;s various options.</p>
 <p>The following table describes the available Clink settings:</p>
 <table>
 <thead>
@@ -889,9 +973,9 @@ If you want a customizable prompt with a bunch of styles and an easy-to-use conf
 <td>This determines how suggestions are chosen.  The suggestion generators are tried in the order listed, until one provides a suggestion.  There are three built-in suggestion generators, and scripts can provide new ones.  <code>history</code> chooses the most recent matching command from the history.  <code>completion</code> chooses the first of the matching completions.  <code>match_prev_cmd</code> chooses the most recent matching command whose preceding history entry matches the most recently invoked command, but only when the <code>history.dupe_mode</code> setting is <code>add</code>.</td>
 </tr>
 <tr>
-<td align="center"><code>clink.autostart</code></td>
+<td align="center"><a name="clink_autostart"></a><code>clink.autostart</code></td>
 <td align="center"></td>
-<td>This command is automatically run when the first CMD prompt is shown after Clink is injected.  If this is blank (the default), then Clink instead looks for clink_start.cmd in the binaries directory and profile directory and runs them.  Set it to &quot;nul&quot; to not run any autostart command.</td>
+<td>This command is automatically run when the first CMD prompt is shown after Clink is injected.  If this is blank (the default), then Clink instead looks for <code>clink_start.cmd</code> in the binaries directory and profile directory and runs them.  Set it to &quot;nul&quot; to not run any autostart command.</td>
 </tr>
 <tr>
 <td align="center"><code>clink.colorize_input</code></td>
@@ -899,7 +983,7 @@ If you want a customizable prompt with a bunch of styles and an easy-to-use conf
 <td>Enables context sensitive coloring for the input text (see <a href="#classifywords">Coloring the Input Text</a>).</td>
 </tr>
 <tr>
-<td align="center"><code>clink.default_bindings</code></td>
+<td align="center"><a name="default_bindings"></a><code>clink.default_bindings</code></td>
 <td align="center"><code>bash</code></td>
 <td>Clink uses bash key bindings when this is set to <code>bash</code> (the default).  When this is set to <code>windows</code> Clink overrides some of the bash defaults with familiar Windows key bindings for <kbd>Tab</kbd>, <kbd>Ctrl</kbd>+<kbd>A</kbd>, <kbd>Ctrl</kbd>+<kbd>F</kbd>, <kbd>Ctrl</kbd>+<kbd>M</kbd>, and <kbd>Right</kbd>.</td>
 </tr>
@@ -1269,7 +1353,7 @@ If you want a customizable prompt with a bunch of styles and an easy-to-use conf
 <blockquote>
 <p><strong>Compatibility Notes:</strong></p>
 <ul>
-<li>The <code>esc_clears_line</code> setting has been replaced by a <code>clink-reset-line</code> command that is by default bound to the <kbd>Escape</kbd> key.  See <a href="#keybindings">Key Bindings</a> and <a href="https://tiswww.cwru.edu/php/chet/readline/readline.html">Readline</a> for more information.</li>
+<li>The <code>esc_clears_line</code> setting has been replaced by a <code>clink-reset-line</code> command that is by default bound to the <kbd>Escape</kbd> key.  See <a href="#keybindings">Customizing Key Bindings</a> and <a href="https://tiswww.cwru.edu/php/chet/readline/readline.html">Readline</a> for more information.</li>
 <li>The <code>match_colour</code> setting has been removed, and Clink now supports Readline&#39;s completion coloring.  See <a href="#completioncolors">Completion Colors</a> for more information.</li>
 </ul>
 </blockquote>
@@ -1334,7 +1418,8 @@ See <code>clink autorun --help</code> for more information.</dd>
 <dt>clink set</dt>
 <dd>
 <code>clink set</code> by itself lists all settings and their values.<br/>
-<code>clink set <span class="arg">setting_name</span></code> describes the setting shows its current value.<br/>
+<code>clink set --describe</code> by itself lists all settings and their descriptions (instead of their values).<br/>
+<code>clink set <span class="arg">setting_name</span></code> describes the setting and shows its current value.<br/>
 <code>clink set <span class="arg">setting_name</span> clear</code> resets the setting to its default value.<br/>
 <code>clink set <span class="arg">setting_name</span> <span class="arg">value</span></code> sets the setting to the specified value.</dd>
 </p>
@@ -1406,9 +1491,9 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 <h1 id="configuring-readline">Configuring Readline</h1>
 <p>The Readline library used by Clink can be configured to add custom keybindings and macros by creating a Readline init file. There is excellent documentation for all the options and commands available to configure Readline in the <a href="https://tiswww.cwru.edu/php/chet/readline/rluserman.html">Readline manual</a>.</p>
 <table class="linkmenu">
-<tr class="lmtr"><td class="lmtd"><a href="#init-file">Init File</a></td><td class="lmtd">About the .inputrc init file.</tr>
-<tr class="lmtr"><td class="lmtd"><a href="#completion-colors">Completion Colors</a></td><td class="lmtd">How to customize the completion colors.</tr>
-<tr class="lmtr"><td class="lmtd"><a href="#popupwindow">Popup Windows</a></td><td class="lmtd">Using the popup windows.</tr>
+<tr class="lmtr"><td class="lmtd"><a href="#init-file">Init File</a></td><td class="lmtd">About the .inputrc init file.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#completion-colors">Completion Colors</a></td><td class="lmtd">How to customize the completion colors.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#popupwindow">Popup Windows</a></td><td class="lmtd">Using the popup windows.</td></tr>
 </table>
 
 <h2 id="init-file">Init File</h2>
@@ -1438,11 +1523,11 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 <tr><th>Line</th><th>Description</th></tr>
 <tr><td><code><span class="arg">keyname</span>: <span class="arg">command</span></code></td><td>Binds a named command to a key.</td></tr>
 <tr><td><code><span class="arg">keyname</span>: "<span class="arg">literal text</span>"</code></td><td>Binds a macro to a key.  A macro inserts the literal text into the input line.</td></tr>
-<tr><td><code><span class="arg">keyname</span>: "luafunc:<span class="arg">lua_function_name</span>"</code></td><td>Binds a named Lua function to a key.  See <a href="#luakeybindings">Lua Key Bindings</a> for more information.</td></tr>
+<tr><td><code><span class="arg">keyname</span>: "luafunc:<span class="arg">lua_function_name</span>"</code></td><td>Binds a named Lua function to a key.  See <a href="#luakeybindings">Lua key bindings</a> for more information.</td></tr>
 <tr><td><code>set <span class="arg">varname</span> <span class="arg">value</span></code></td><td></td></tr>
 </table>
 
-<p>See <a href="#discovering-clink-key-sequences">Discovering Clink key sequences</a> for how to find the <span class="arg">keyname</span> for the key you want to bind.  See <a href="#keybindings">Key Bindings</a> for more information about binding keys in Clink.</p>
+<p>See <a href="#discovering-clink-key-sequences">Discovering Clink key sequences</a> for how to find the <span class="arg">keyname</span> for the key you want to bind.  See <a href="#keybindings">Customizing Key Bindings</a> for more information about binding keys in Clink.</p>
 <p>Refer to the <a href="https://tiswww.cwru.edu/php/chet/readline/rluserman.html">Readline manual</a> for a more thorough explanation of the .inputrc file format, list of available commands, and list of configuration variables and their values.</p>
 <h3 id="new-configuration-variables">New Configuration Variables</h3>
 <p>Clink adds some new configuration variables to Readline, beyond what&#39;s described in the <a href="https://tiswww.cwru.edu/php/chet/readline/rluserman.html">Readline manual</a>:</p>
@@ -1634,11 +1719,11 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 </tr>
 <tr>
 <td align="center"><code>clink-show-help</code></td>
-<td>Lists the currently active key bindings using friendly key names.  A numeric argument affects showing categories and descriptions:  0 for neither, 1 for categories, 2 for descriptions, 3 for categories and descriptions (the default).</td>
+<td>Lists the currently active key bindings using friendly key names.  A numeric argument affects showing categories and descriptions:  0 for neither, 1 for categories, 2 for descriptions, 3 for categories and descriptions (the default), 4 for all commands (even if not bound to a key).</td>
 </tr>
 <tr>
 <td align="center"><code>clink-show-help-raw</code></td>
-<td>Lists the currently active key bindings using raw key sequences.  A numeric argument affects showing categories and descriptions:  0 for neither, 1 for categories, 2 for descriptions, 3 for categories and descriptions (the default).</td>
+<td>Lists the currently active key bindings using raw key sequences.  A numeric argument affects showing categories and descriptions:  0 for neither, 1 for categories, 2 for descriptions, 3 for categories and descriptions (the default), 4 for all commands (even if not bound to a key).</td>
 </tr>
 <tr>
 <td align="center"><code>clink-up-directory</code></td>
@@ -1758,7 +1843,7 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 </tr>
 </tbody></table>
 <p><a name="completioncolors"></a></p>
-<h2 id="completion-colors">Completion Colors</h2>
+<h2 id="completion-colors-1">Completion Colors</h2>
 <p>The <code>%LS_COLORS%</code> environment variable provides color definitions as a series of color definitions separated by colons (<code>:</code>).  Each definition is a either a two character type id or a file extension, followed by an equals sign and then the <a href="https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_parameters">SGR parameters</a> for an ANSI escape code.  The two character type ids are listed below.</p>
 <p>When the <code>colored-completion-prefix</code> <a href="#configreadline">Readline setting</a> is configured to <code>on</code>, then the &quot;so&quot; color from <code>%LS_COLORS%</code> is used to color the common prefix when displaying possible completions.  The default for &quot;so&quot; is magenta, but for example <code>set LS_COLORS=so=90</code> sets the color to bright black (which shows up as a dark gray).</p>
 <p>When <code>colored-stats</code> is configured to <code>on</code>, then the color definitions from <code>%LS_COLORS%</code> are used to color file completions according to their file type or extension.    Multiple definitions are separated by colons.  Also, since <code>%LS_COLORS%</code> doesn&#39;t cover readonly files, hidden files, doskey aliases, or shell commands the <a href="#color_readonly">color.readonly</a>, <a href="#color_hidden">color.hidden</a>, <a href="#color_doskey">color.doskey</a>, and <a href="#color_cmd">color.cmd</a> Clink settings exist to cover those.</p>
@@ -1885,11 +1970,12 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 <h1 id="extending-clink-with-lua">Extending Clink With Lua</h1>
 <p>Clink can be extended with <a href="https://www.lua.org/docs.html">Lua</a> scripts to customize startup actions, create completion matches, customize the prompt, and more.  The following sections describe these in more detail and show some examples.</p>
 <table class="linkmenu">
-<tr class="lmtr"><td class="lmtd"><a href="#lua-scripts-location">Location of Lua Scripts</a></td><td class="lmtd">Locations from which scripts are loaded.</tr>
-<tr class="lmtr"><td class="lmtd"><a href="#matchgenerators">Match Generators</a></td><td class="lmtd">How to write match generators, or custom completion providers.</tr>
-<tr class="lmtr"><td class="lmtd"><a href="#argumentcompletion">Argument Completion</a></td><td class="lmtd">How to give commands contextual match generators for their arguments.</tr>
-<tr class="lmtr"><td class="lmtd"><a href="#classifywords">Coloring the Input Text</a></td><td class="lmtd">How to make a match generator or argument matcher override the input coloring.</tr>
-<tr class="lmtr"><td class="lmtd"><a href="#customisingtheprompt">Customizing the Prompt</a></td><td class="lmtd">How to write custom prompt filters.</tr>
+<tr class="lmtr"><td class="lmtd"><a href="#lua-scripts-location">Location of Lua Scripts</a></td><td class="lmtd">Locations from which scripts are loaded.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#matchgenerators">Match Generators</a></td><td class="lmtd">How to write match generators, or custom completion providers.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#argumentcompletion">Argument Completion</a></td><td class="lmtd">How to give commands contextual match generators for their arguments.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#classifywords">Coloring the Input Text</a></td><td class="lmtd">How to make a match generator or argument matcher override the input coloring.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#customisingtheprompt">Customizing the Prompt</a></td><td class="lmtd">How to write custom prompt filters.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#customisingsuggestions">Customizing Suggestions</a></td><td class="lmtd">How to write custom suggestion generators.</td></tr>
 </table>
 
 <p><a name="lua-scripts-location"></a></p>
@@ -2754,10 +2840,31 @@ function prefix_suggestor:suggest(line_state, matches)
 end
 </code></pre>
 <h1 id="miscellaneous">Miscellaneous</h1>
+<p>These sections provide more information about various aspects of Clink:</p>
+<table class="linkmenu">
+<tr class="lmtr"><td class="lmtd"><a href="#keybindings">Customizing Key Bindings</a></td><td class="lmtd">How to customize key bindings.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#saved-command-history">Saved Command History</a></td><td class="lmtd">How the saved command history works.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#using-history-expansion">Using History Expansion</a></td><td class="lmtd">How to use history expansion.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#popular-scripts">Popular Scripts</a></td><td class="lmtd">Some popular scripts to enhance Clink.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#troubleshooting-tips">Troubleshooting Tips</a></td><td class="lmtd">How to troubleshoot and report problems.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#privacy">Privacy</a></td><td class="lmtd">Privacy statement for Clink.</td></tr>
+</table>
+
 <p><a name="keybindings"></a></p>
-<h2 id="key-bindings">Key bindings</h2>
-<p>Key bindings are defined in .inputrc files.  See the <a href="#configreadline">Configuring Readline</a> section for more information.</p>
-<p>Here is the quick version:</p>
+<h2 id="customizing-key-bindings">Customizing Key Bindings</h2>
+<p>Key bindings are defined in .inputrc files.</p>
+<p>The <code>clink-show-help</code> command is bound to <kbd>Alt</kbd>+<kbd>H</kbd> and lists all currently active key bindings.  The list displays &quot;friendly&quot; key names, and these names are generally not suitable for use in .inputrc files.  For example &quot;Up&quot; is the friendly name for <code>&quot;\e[A&quot;</code>, and &quot;A-C-F2&quot; is the friendly name for <code>&quot;\e\e[1;5Q&quot;</code>.  To see key sequence strings suitable for use in .inputrc files use <code>clink echo</code> as described below.</p>
+<table class="linkmenu">
+<tr class="lmtr"><td class="lmtd"><a href="#the-inputrc-file">The .inputrc file</a></td><td class="lmtd">A quick summary of what key binding lines look like.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#sample-inputrc-file">Sample .inputrc file</a></td><td class="lmtd">Some sample key bindings.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#discoverkeysequences">Discovering Clink key sequences</a></td><td class="lmtd">How to find key names to use for key bindings.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#specialkeys">Binding special keys</a></td><td class="lmtd">A table of special key names.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#luakeybindings">Lua key bindings</a></td><td class="lmtd">How to bind keys to Lua functions.</td></tr>
+</table>
+
+<h3 id="the-inputrc-file">The .inputrc file</h3>
+<p>You can use <code>clink info</code> to find the directories and configuration files for the current Clink session, including where the .inputrc file is located, or can be located.  See the <a href="#init-file">Readline Init File</a> section for detailed information about .inputrc files.</p>
+<p>Here is a quick summary about key binding lines in .inputrc files:</p>
 <ul>
 <li>A key binding is <code><span class="arg">name</span>: <span class="arg">function</span></code> or <code><span class="arg">name</span>: "<span class="arg">literal text</span>"</code>.</li>
 <li>Key names are like this:<ul>
@@ -2766,7 +2873,7 @@ end
 <li><code>M-C-a</code> and <code>&quot;\M-\C-a&quot;</code> are both <kbd>Alt</kbd>+<kbd>Ctrl</kbd>+<kbd>a</kbd>.</li>
 <li><code>hello</code> is just <kbd>h</kbd>; the <code>ello</code> is a syntax error and is silently discarded by Readline.</li>
 <li><code>&quot;hello&quot;</code> is the series of keys <kbd>h</kbd>,<kbd>e</kbd>,<kbd>l</kbd>,<kbd>l</kbd>,<kbd>o</kbd>.</li>
-<li>Special keys like <kbd>Up</kbd> are represented by VT220 escape codes such as<code>&quot;\e[A&quot;</code> (see <a href="#specialkeys">Binding Special Keys</a> for more info).</li>
+<li>Special keys like <kbd>Up</kbd> are represented by VT220 escape codes such as<code>&quot;\e[A&quot;</code> (see <a href="#specialkeys">Binding special keys</a> for more info).</li>
 </ul>
 </li>
 <li>Key bindings can be either functions or macros (literal text):<ul>
@@ -2775,8 +2882,9 @@ end
 </ul>
 </li>
 </ul>
-<p>You can use <code>clink info</code> to find the directories and configuration files for the current Clink session.</p>
-<p>Here is an example <code>.inputrc</code> file with key bindings that I use myself:</p>
+<p>See <a href="#discoverkeysequences">Discovering Clink key sequences</a> to learn how to find key names for keys that you want to bind.</p>
+<h3 id="sample-inputrc-file">Sample .inputrc file</h3>
+<p>Here is a sample <code>.inputrc</code> file with some of the key bindings that I use:</p>
 <pre><code class="plaintext"><span class="hljs-meta">$if clink</span>           <span class="hljs-comment"># begin clink-only section</span>
 
 <span class="hljs-comment"># The following key bindings are for emacs mode.</span>
@@ -2786,7 +2894,6 @@ end
 <span class="hljs-string">"\t"</span>:               old-menu-complete               <span class="hljs-comment"># Tab</span>
 <span class="hljs-string">"\e[Z"</span>:             old-menu-complete-backward      <span class="hljs-comment"># Shift+Tab</span>
 <span class="hljs-string">"\e[27;5;9~"</span>:       clink-popup-complete            <span class="hljs-comment"># Ctrl+Tab</span>
-<span class="hljs-string">"\x1b[27;5;32~"</span>:    clink-select-complete           <span class="hljs-comment"># Ctrl+Space</span>
 
 <span class="hljs-comment"># Some key bindings I got used to from 4Dos/4NT/Take Command.</span>
 C-b:                                                <span class="hljs-comment"># Ctrl+B (cleared because I redefined Ctrl+F)</span>
@@ -2817,7 +2924,6 @@ C-_:                kill-line                       <span class="hljs-comment">#
 <span class="hljs-meta">$endif</span>              <span class="hljs-comment"># end clink-only section</span>
 </code></pre>
 
-<p>The <code>clink-show-help</code> command is bound to <kbd>Alt</kbd>+<kbd>H</kbd> and lists all currently active key bindings.  The list displays &quot;friendly&quot; key names, and these names are generally not suitable for use in .inputrc files.  For example &quot;Up&quot; is the friendly name for <code>&quot;\e[A&quot;</code>, and &quot;A-C-F2&quot; is the friendly name for <code>&quot;\e\e[1;5Q&quot;</code>.  To see key sequence strings suitable for use in .inputrc files use <code>clink echo</code> as described below.</p>
 <blockquote>
 <p><strong>Note:</strong> Third party console hosts such as ConEmu may have their own key bindings that supersede Clink.  They usually have documentation for how to change or disable their key bindings to allow console programs to handle the keys instead.</p>
 </blockquote>
@@ -3190,7 +3296,7 @@ C-_:                kill-line                       <span class="hljs-comment">#
 </tr>
 </tbody></table>
 <p><a name="luakeybindings"></a></p>
-<h3 id="lua-key-bindings">Lua Key Bindings</h3>
+<h3 id="lua-key-bindings">Lua key bindings</h3>
 <p>You can bind a key to a <a href="#extending-clink">Lua</a> function by <a href="#keybindings">binding</a> it to a macro that begins with &quot;luafunc:&quot;.  Clink will invoke the named Lua function when the key binding is input.  Function names can include periods (such as <code>foo.bar</code>) but cannot include any other punctuation.</p>
 <p>The Lua function receives two arguments:</p>
 <p><span class="arg"><a href="#rl_buffer">rl_buffer</a></span> gives it access to the input buffer.</p>
@@ -3505,9 +3611,9 @@ double quotes may be subject to history expansion, since backslash can
 escape the history expansion character, but single quotes may not, since
 they are not treated specially within double quotes.</p>
 <table class="linkmenu">
-<tr class="lmtr"><td class="lmtd"><a href="#event-designators">Event Designators</a></td><td class="lmtd">How to specify which history line to use.</tr>
-<tr class="lmtr"><td class="lmtd"><a href="#word-designators">Word Designators</a></td><td class="lmtd">Specifying which words are of interest.</tr>
-<tr class="lmtr"><td class="lmtd"><a href="#modifiers">Modifiers</a></td><td class="lmtd">Modifying the results of substitution.</tr>
+<tr class="lmtr"><td class="lmtd"><a href="#event-designators">Event Designators</a></td><td class="lmtd">How to specify which history line to use.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#word-designators">Word Designators</a></td><td class="lmtd">Specifying which words are of interest.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#modifiers">Modifiers</a></td><td class="lmtd">Modifying the results of substitution.</td></tr>
 </table>
 
 <h3 id="event-designators">Event Designators</h3>
@@ -3761,15 +3867,6 @@ load(io.popen(&#39;oh-my-posh.exe --config=&quot;C:/Users/me/jandedobbeleer.omp.
 </code></pre>
 <h3 id="zlua">z.lua</h3>
 <p>The <a href="https://github.com/skywind3000/z.lua">z.lua</a> tool is a faster way to navigate directories, and it integrates with Clink.</p>
-<h2 id="upgrading-from-clink-v049">Upgrading from Clink v0.4.9</h2>
-<p>The new Clink tries to be as backward compatible with Clink v0.4.9 as possible. However, in some cases upgrading may require a little bit of configuration work.</p>
-<ul>
-<li>Some key binding sequences have changed; see <a href="#keybindings">Key Bindings</a> for more information.</li>
-<li>Match coloring is now done by Readline and is configured differently; see <a href="#completioncolors">Completion Colors</a> for more information.</li>
-<li>Settings and history should migrate automatically if the new <code>clink_settings</code> and <code>clink_history</code> files don&#39;t exist (deleting them will cause migration to happen again).  To find the directory that contains these files, run <code>clink info</code> and look for the &quot;state&quot; line.</li>
-<li>Script compatibility should be very good, but some scripts may still encounter problems.  If you do encounter a compatibility problem you can look for an updated version of the script, update the script yourself, or visit the <a href="https://github.com/chrisant996/clink/issues">clink repo</a> and open an issue describing details about the compatibility problem.</li>
-<li>Some settings have changed slightly, and there are many new settings.  See <a href="#configclink">Configuring Clink</a> for more information.</li>
-</ul>
 <h2 id="troubleshooting-tips">Troubleshooting Tips</h2>
 <p>If something seems to malfunction, here are some things to try that often help track down what&#39;s going wrong:</p>
 <ul>
@@ -3790,6 +3887,9 @@ load(io.popen(&#39;oh-my-posh.exe --config=&quot;C:/Users/me/jandedobbeleer.omp.
 <li>Please include the output from <code>clink info</code> and <code>clink set</code>.</li>
 <li>Please include the <code>clink.log</code> file (the location is reported by <code>clink info</code>).</li>
 </ul>
+<p><a name="privacy"></a></p>
+<h2 id="privacy">Privacy</h2>
+<p>Clink does not collect user data.  Clink writes diagnostic information to its local log file, and does not transmit the log file off the local computer.  For the location of the log file, refer to <a href="#filelocations">File Locations</a> or run <code>clink info</code>.</p>
         </div>
         <h1 id="lua-api">Lua API Reference</h1>
         This section describes the Clink Lua API extensions.
@@ -4202,11 +4302,11 @@ if b then
 else
 &nbsp;   print("Home is not bound in emacs mode.")
 end</code></pre></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="rl.getkeybindings">rl.getkeybindings</a></div> <div class="signature">( <span class="arg_name">raw</span>:boolean ) : table<br/><div class="version">v1.2.16 and newer</div></div></div><div class="body"><p class="desc">Returns key bindings in a table with the following scheme:</p><pre class="language-lua"><code>local t = rl.getkeybindings()
+<div class="function"><div class="header"> <div class="name"><a name="rl.getkeybindings">rl.getkeybindings</a></div> <div class="signature">( <span class="arg_name">raw</span>:boolean, [<span class="arg_name">mode</span>:integer] ) : table<br/><div class="version">v1.2.16 and newer</div></div></div><div class="body"><p class="desc">Returns key bindings in a table with the following scheme:</p><pre class="language-lua"><code>local t = rl.getkeybindings()
 -- t[index].key         [string] Key name.
 -- t[index].binding     [string] Command or macro bound to the key.
 -- t[index].desc        [string] Description of the command.
--- t[index].category    [string] Category of the command.</code></pre><p class="desc">The following example demonstrates using this function in a <a href="#luakeybindings">luafunc: key binding</a> to invoke <a href="#clink.popuplist">clink.popuplist()</a> to show a searchable list of key bindings, and then invoke whichever key binding is selected.</p><pre class="language-lua"><code>function luafunc_showkeybindings(rl_buffer)
+-- t[index].category    [string] Category of the command.</code></pre><p class="desc">When <span class="arg">raw</span> is true, the key names are the literal key sequences without being converted to user-friendly key names.</p><p class="desc"> The optional <span class="arg">mode</span> specifies bit flags that control how the returned table is sorted, and whether it includes commands that are not bound to any key.</p><p class="desc"> <table> <tr><th>Mode</th><th>Description</th></tr> <tr><td>0</td><td>Key bindings, sorted by key (this is the default).</td></tr> <tr><td>1</td><td>Key bindings, sorted by category and then key.</td></tr> <tr><td>4</td><td>All commands, sorted by key.</td></tr> <tr><td>5</td><td>All commands, sorted by category and then key.</td></tr> </table></p><p class="desc"> The following example demonstrates using this function in a <a href="#luakeybindings">luafunc: key binding</a> to invoke <a href="#clink.popuplist">clink.popuplist()</a> to show a searchable list of key bindings, and then invoke whichever key binding is selected.</p><pre class="language-lua"><code>function luafunc_showkeybindings(rl_buffer)
 &nbsp;   local bindings = rl.getkeybindings()
 &nbsp;   if #bindings <= 0 then
 &nbsp;       rl_buffer:refreshline()
@@ -4386,6 +4486,18 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1249">v1.2.49</h4>
+<ul>
+<li>Added <code>cua-previous-screen-line</code> and <code>cua-next-screen-line</code>, bound to <kbd>Shift</kbd>+<kbd>Up</kbd> and <kbd>Shift</kbd>+<kbd>Down</kbd>, to extend the text selection up/down by one screen line.</li>
+<li>Updated match generator for <code>clink set autosuggest.strategy</code> to list the available suggestion generators.</li>
+<li>The <code>clink-show-help</code> and <code>clink-popup-show-help</code> commands can include commands that aren&#39;t bound to any key, when the numeric argument is 4 (e.g. <kbd>Alt</kbd>+<kbd>4</kbd> then <kbd>Alt</kbd>+<kbd>H</kbd>).</li>
+<li>The <code>rl.getkeybindings()</code> function takes an optional <code>mode</code> argument to control sorting and whether to include commands that aren&#39;t bound to any key.</li>
+<li>Generating suggestions skips generating match completions when the current word looks like a UNC path.  This avoids pauses while typing that would otherwise occur when accessing networked drives.</li>
+<li>Fixed <kbd>Alt</kbd>+<kbd>Right</kbd> so it accepts the next word of the suggestion, just like <kbd>Ctrl</kbd>+<kbd>Right</kbd> does.</li>
+<li>Fixed the <code>clink-paste</code> command so it sets the mark to the cursor point prior to pasting.</li>
+<li>Fixed when <code>history.dupe_mode</code> is &quot;erase_prev&quot; and <code>history.shared</code> starts true but changes to false; subsequent commands were not added to the history properly anymore in that session (regression introduced in v1.1.0).</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/210">#210</a>; <code>clink-select-complete</code> drawing bug with RPROMPT.</li>
+</ul>
 <h4 id="v1248">v1.2.48</h4>
 <ul>
 <li><kbd>Ctrl</kbd>+<kbd>Right</kbd> now inserts the next word of the suggestion the same way it would move to the next word, and <kbd>Shift</kbd>+<kbd>Right</kbd> inserts the next full word of the suggestion up to a space.</li>
