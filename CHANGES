@@ -10,6 +10,7 @@
 - The `rl.getkeybindings()` function takes an optional `mode` argument to control sorting and whether to include commands that aren't bound to any key.
 - Fixed <kbd>Alt</kbd>+<kbd>Right</kbd> so it accepts the next word of the suggestion, just like <kbd>Ctrl</kbd>+<kbd>Right</kbd> does.
 - Fixed the `clink-paste` command so it sets the mark to the cursor point prior to pasting.
+- Fixed when `history.dupe_mode` is "erase_prev" and `history.shared` starts true but changes to false; subsequent commands were not added to the history properly anymore in that session (regression introduced in v1.1.0).
 - Fixed [#210](https://github.com/chrisant996/clink/issues/210); `clink-select-complete` drawing bug with RPROMPT.
 
 #### v1.2.48
