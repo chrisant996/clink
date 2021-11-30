@@ -5,12 +5,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- History loss:
-  - Start Clink while `history.shared` is `true` and `history.dupe_mode` is `erase_prev`.
-  - Run `clink set history.shared false`.
-  - <kbd>Up</kbd> and <kbd>Enter</kbd>.
-  - RESULT:  That command is gone from the history.
-  - EXPECTED:  That command should still be present, and should be the most recent history entry.
 
 ## Medium Priority
 - Readline command reference.
