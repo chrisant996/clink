@@ -5,6 +5,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
+- Still some kind of history bug when starting with `history.shared` false, and switching the mode and having multiple instances of Clink.  Looks like maybe it loses all history entries from a non-shared session?
 
 ## Medium Priority
 - Readline command reference.
