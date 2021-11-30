@@ -1657,8 +1657,8 @@ void initialise_readline(const char* state_dir)
         clink_add_funmap_entry("clink-old-menu-complete-numbers-backward", clink_old_menu_complete_numbers_backward, keycat_completion, "Like 'old-menu-complete-backward' using numbers from the current screen");
         clink_add_funmap_entry("clink-popup-complete-numbers", clink_popup_complete_numbers, keycat_completion, "Perform completion with a popup list of numbers from the current screen");
         clink_add_funmap_entry("clink-select-complete", clink_select_complete, keycat_completion, "Perform completion by selecting from an interactive list of possible completions; if there is only one match, insert it");
-        clink_add_funmap_entry("cua-previous-screen-line", cua_previous_screen_line, keycat_select, "Extend selection up one line");
-        clink_add_funmap_entry("cua-next-screen-line", cua_next_screen_line, keycat_select, "Extend selection down one line");
+        clink_add_funmap_entry("cua-previous-screen-line", cua_previous_screen_line, keycat_select, "Extend selection up one screen line");
+        clink_add_funmap_entry("cua-next-screen-line", cua_next_screen_line, keycat_select, "Extend selection down one screen line");
         clink_add_funmap_entry("cua-backward-char", cua_backward_char, keycat_select, "Extend selection backward one character");
         clink_add_funmap_entry("cua-forward-char", cua_forward_char, keycat_select, "Extend selection forward one character, or insert the next full suggested word up to a space");
         clink_add_funmap_entry("cua-backward-word", cua_backward_word, keycat_select, "Extend selection backward one word");
