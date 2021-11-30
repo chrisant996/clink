@@ -5,15 +5,12 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- Still some kind of history bug when starting with `history.shared` false, and switching the mode and having multiple instances of Clink.  Looks like maybe it loses all history entries from a non-shared session?
-  - I think it goes like this:
-    - Session 1 starts out with `history.shared` false, which creates a session bank.
-    - Session 2 runs `clink set history.shared true`.
-    - Session 1 begins a new edit line, which reloads `clink_settings`, and now there is a session bank file, but session 1 thinks it isn't using it.
-    - Session 1 exits and reaps, but does not apply the session bank to the master, and deletes the session bank.
-  - Maybe this:
-    - Reaping should always apply any session bank file that exists, regardless of the shared setting?
-    - When the `history.shared` setting changes, reap the current session at that moment?
+- History loss:
+  - Start Clink while `history.shared` is `true` and `history.dupe_mode` is `erase_prev`.
+  - Run `clink set history.shared false`.
+  - <kbd>Up</kbd> and <kbd>Enter</kbd>.
+  - RESULT:  That command is gone from the history.
+  - EXPECTED:  That command should still be present, and should be the most recent history entry.
 
 ## Medium Priority
 - Readline command reference.
