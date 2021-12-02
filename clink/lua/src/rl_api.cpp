@@ -22,6 +22,7 @@ extern "C" {
 #include "lua.h"
 #include <compat/config.h>
 #include <readline/readline.h>
+#include <readline/rldefs.h>
 #include <readline/rlprivate.h>
 extern int              _rl_completion_case_map;
 extern const char*      rl_readline_name;
@@ -803,6 +804,27 @@ static int get_prompt_info(lua_State* state)
     return 1;
 }
 
+//------------------------------------------------------------------------------
+/// -name:  rl.insertmode
+/// -ver:   1.2.50
+/// -arg:   [insert:boolean]
+/// -ret:   boolean
+/// Returns true when typing insertion mode is on.
+///
+/// When the optional <span class="arg">insert</span> argument is passed, this
+/// also sets typing insertion mode on or off accordingly.
+static int getset_insert_mode(lua_State* state)
+{
+    if (!lua_isnil(state, 1))
+    {
+        bool ins = lua_toboolean(state, 1);
+        _rl_set_insert_mode(ins ? RL_IM_INSERT : RL_IM_OVERWRITE, 0);
+    }
+
+    lua_pushboolean(state, !!(rl_insert_mode & RL_IM_INSERT));
+    return 1;
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -824,6 +846,7 @@ void rl_lua_initialise(lua_state& lua)
         { "setmatches",             &set_matches },
         { "getkeybindings",         &get_key_bindings },
         { "getpromptinfo",          &get_prompt_info },
+        { "insertmode",             &getset_insert_mode },
     };
 
     lua_State* state = lua.get_state();
