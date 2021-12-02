@@ -815,7 +815,7 @@ static int get_prompt_info(lua_State* state)
 /// also sets typing insertion mode on or off accordingly.
 static int getset_insert_mode(lua_State* state)
 {
-    if (!lua_isnil(state, 1))
+    if (lua_gettop(state) > 0)
     {
         bool ins = lua_toboolean(state, 1);
         _rl_set_insert_mode(ins ? RL_IM_INSERT : RL_IM_OVERWRITE, 0);
