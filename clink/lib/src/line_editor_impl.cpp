@@ -183,6 +183,15 @@ int host_filter_matches(char** matches)
 }
 
 //------------------------------------------------------------------------------
+void host_send_event(const char* event_name)
+{
+    if (!s_callbacks)
+        return;
+
+    s_callbacks->send_event(event_name);
+}
+
+//------------------------------------------------------------------------------
 bool host_call_lua_rl_global_function(const char* func_name)
 {
     return s_editor && s_editor->call_lua_rl_global_function(func_name);

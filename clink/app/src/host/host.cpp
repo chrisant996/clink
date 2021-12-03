@@ -698,6 +698,13 @@ const char** host::copy_dir_history(int* total)
 }
 
 //------------------------------------------------------------------------------
+void host::send_event(const char* event_name)
+{
+    if (m_lua)
+        m_lua->send_event(event_name);
+}
+
+//------------------------------------------------------------------------------
 void host::get_app_context(int& id, str_base& binaries, str_base& profile, str_base& scripts)
 {
     const auto* context = app_context::get();

@@ -196,6 +196,16 @@ function clink.onfiltermatches(func)
 end
 
 --------------------------------------------------------------------------------
+--- -name:  clink.onaftercommand
+--- -ver:   1.2.50
+--- -arg:   func:function
+--- Registers <span class="arg">func</span> to be called after every editing
+--- command (key binding).
+function clink.onaftercommand(func)
+    _add_event_callback("onaftercommand", func)
+end
+
+--------------------------------------------------------------------------------
 function clink._send_onfiltermatches_event(matches, completion_type, filename_completion_desired)
     local ret = nil
     local callbacks = clink._event_callbacks["onfiltermatches"]

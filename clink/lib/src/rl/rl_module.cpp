@@ -83,6 +83,7 @@ extern int clink_diagnostics(int, int);
 
 extern int host_add_history(int rl_history_index, const char* line);
 extern int host_remove_history(int rl_history_index, const char* line);
+extern void host_send_event(const char* event_name);
 extern void sort_match_list(char** matches, int len);
 extern int macro_hook_func(const char* macro);
 extern int host_filter_matches(char** matches);
@@ -402,6 +403,8 @@ static void last_func_hook_func()
 
     cua_after_command();
     s_last_luafunc.clear();
+
+    host_send_event("onaftercommand");
 }
 
 //------------------------------------------------------------------------------
