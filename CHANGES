@@ -5,6 +5,7 @@
 #### v1.2.50
 
 - Added `rl.insertmode()` function to get or set whether insert mode is active.
+- Added `clink.onaftercommand()` so scripts can registers a function to be called after every input command (key binding).
 
 #### v1.2.49
 
