@@ -302,8 +302,6 @@ static setting_bool g_rl_hide_stderr(
     "Suppress stderr from the Readline library",
     false);
 
-#define CAN_LOG_RL_TERMINAL
-#ifdef CAN_LOG_RL_TERMINAL
 static setting_bool g_debug_log_terminal(
     "debug.log_terminal",
     "Log Readline terminal input and output",
@@ -311,7 +309,6 @@ static setting_bool g_debug_log_terminal(
     "Having this on significantly increases the amount of information written to\n"
     "the log file.",
     false);
-#endif
 
 setting_enum g_default_bindings(
     "clink.default_bindings",
@@ -361,7 +358,6 @@ bool get_sticky_search_add_history(const char* line)
 
 
 //------------------------------------------------------------------------------
-#ifdef CAN_LOG_RL_TERMINAL
 static void LOGCURSORPOS()
 {
     CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -369,7 +365,6 @@ static void LOGCURSORPOS()
     if (GetConsoleScreenBufferInfo(h, &csbi))
         LOG("CURSORPOS %d,%d", csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y);
 }
-#endif
 
 
 
@@ -750,13 +745,12 @@ static void puts_face_func(const char* s, const char* face, int n)
     if (cur_face != '0')
         out.concat(c_normal);
 
-#ifdef CAN_LOG_RL_TERMINAL
     if (g_debug_log_terminal.get())
     {
         LOGCURSORPOS();
         LOG("PUTSFACE \"%.*s\", %d", out.length(), out.c_str(), out.length());
     }
-#endif
+
     g_printer->print(out.c_str(), out.length());
 }
 
@@ -1927,7 +1921,6 @@ static void terminal_write_thunk(FILE* stream, const char* chars, int char_count
 }
 
 //------------------------------------------------------------------------------
-#ifdef CAN_LOG_RL_TERMINAL
 static void terminal_log_write(FILE* stream, const char* chars, int char_count)
 {
     if (stream == out_stream)
@@ -1971,7 +1964,6 @@ static void terminal_log_write(FILE* stream, const char* chars, int char_count)
     LOG("FWRITE \"%.*s\", %d", char_count, chars, char_count);
     fwrite(chars, char_count, 1, stream);
 }
-#endif
 
 //------------------------------------------------------------------------------
 static void terminal_fflush_thunk(FILE* stream)
@@ -1993,10 +1985,8 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
 
     rl_getc_function = terminal_read_thunk;
     rl_fwrite_function = terminal_write_thunk;
-#ifdef CAN_LOG_RL_TERMINAL
     if (g_debug_log_terminal.get())
         rl_fwrite_function = terminal_log_write;
-#endif
     rl_fflush_function = terminal_fflush_thunk;
     rl_instream = in_stream;
     rl_outstream = out_stream;
@@ -2306,7 +2296,6 @@ void rl_module::bind_input(binder& binder)
 //------------------------------------------------------------------------------
 void rl_module::on_begin_line(const context& context)
 {
-#ifdef CAN_LOG_RL_TERMINAL
     {
         bool log = g_debug_log_terminal.get();
 
@@ -2328,7 +2317,6 @@ void rl_module::on_begin_line(const context& context)
         // Reset the fwrite function so logging changes can take effect immediately.
         rl_fwrite_function = log ? terminal_log_write : terminal_write_thunk;
     }
-#endif
 
     // Note:  set_prompt() must happen while g_rl_buffer is nullptr otherwise
     // it will tell Readline about the new prompt, but Readline isn't set up
@@ -2464,10 +2452,8 @@ void rl_module::on_input(const input& input, result& result, const context& cont
     assert(!g_result);
     g_result = &result;
 
-#ifdef CAN_LOG_RL_TERMINAL
     if (g_debug_log_terminal.get())
         LOG("INPUT \"%.*s\", %d", input.len, input.keys, input.len);
-#endif
 
     // Setup the terminal.
     struct : public terminal_in
