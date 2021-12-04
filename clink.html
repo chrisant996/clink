@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.2.49</title>
+<title>Clink v1.2.50</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -771,7 +771,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.2.49</div>
+                <div id="title">Clink v1.2.50</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -4002,6 +4002,7 @@ clink.argmatcher("foo")
 <div class="function"><div class="header"> <div class="name"><a name="clink.getsession">clink.getsession</a></div> <div class="signature">() : string<br/><div class="version">v1.1.44 and newer</div></div></div><div class="body"><p class="desc">Returns the current Clink session id.</p><p class="desc"> This is needed when using <code><span class="hljs-built_in">io</span>.<span class="hljs-built_in">popen</span>()</code> (or similar functions) to invoke <code>clink history</code> or <code>clink info</code> while Clink is installed for autorun.  The popen API spawns a new CMD.exe, which gets a new Clink instance injected, so the history or info command will use the new session unless explicitly directed to use the calling session.</p><pre class="language-lua"><code>local c = os.getalias("clink")
 local r = io.popen(c.." --session "..clink.getsession().." history")</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.lower">clink.lower</a></div> <div class="signature">( <span class="arg_name">text</span>:string ) : string<br/><div class="version">v0.4.9 and newer</div></div></div><div class="body"><p class="desc">This API correctly converts UTF8 strings to lowercase, with international linguistic awareness.</p><pre class="language-lua"><code>clink.lower("Hello World") -- returns "hello world"</code></pre></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="clink.onaftercommand">clink.onaftercommand</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil<br/><div class="version">v1.2.50 and newer</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called after every editing command (key binding).</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.onbeginedit">clink.onbeginedit</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil<br/><div class="version">v1.1.11 and newer</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called when Clink's edit prompt is activated.  The function receives no arguments and has no return values.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.ondisplaymatches">clink.ondisplaymatches</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil<br/><div class="version">v1.1.12 and newer</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called when Clink is about to display matches.  See <a href="#filteringthematchdisplay">Filtering the Match Display</a> for more information.</p><pre class="language-lua"><code>local function my_filter(matches, popup)
 &nbsp;   local new_matches = {}
@@ -4340,6 +4341,7 @@ end</code></pre></div></div><hr/>
 -- info.inputline                 [integer] Console line on which the input text starts.
 -- info.inputlinecount            [integer] Number of lines in the input text.</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="rl.getvariable">rl.getvariable</a></div> <div class="signature">( <span class="arg_name">name</span>:string ) : string | nil<br/><div class="version">v1.1.6</div></div></div><div class="body"><p class="desc">Returns the value of the named Readline configuration variable as a string, or nil if the variable name is not recognized.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="rl.insertmode">rl.insertmode</a></div> <div class="signature">( [<span class="arg_name">insert</span>:boolean] ) : boolean<br/><div class="version">v1.2.50 and newer</div></div></div><div class="body"><p class="desc">Returns true when typing insertion mode is on.</p><p class="desc"> When the optional <span class="arg">insert</span> argument is passed, this also sets typing insertion mode on or off accordingly.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="rl.invokecommand">rl.invokecommand</a></div> <div class="signature">( <span class="arg_name">command</span>:string, [<span class="arg_name">count</span>:integer] ) : boolean | nil<br/><div class="version">v1.1.26</div></div></div><div class="body"><p class="desc">Invokes a Readline command named <span class="arg">command</span>.  May only be used within a <a href="#luakeybindings">luafunc: key binding</a>.</p><p class="desc"> <span class="arg">count</span> is optional and defaults to 1 if omitted.</p><p class="desc"> Returns true if the named command succeeds, false if the named command fails, or nil if the named command doesn't exist.</p><p class="desc"> Warning:  Invoking more than one Readline command in a luafunc: key binding could have unexpected results, depending on which commands are invoked.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="rl.isvariabletrue">rl.isvariabletrue</a></div> <div class="signature">( <span class="arg_name">name</span>:string ) : boolean | nil<br/><div class="version">v1.1.6</div></div></div><div class="body"><p class="desc">Returns a boolean value indicating whether the named Readline configuration variable is set to true (on), or nil if the variable name is not recognized.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="rl.setbinding">rl.setbinding</a></div> <div class="signature">( <span class="arg_name">key</span>:string, <span class="arg_name">binding</span>:string | nil, [<span class="arg_name">keymap</span>:string] ) : boolean<br/><div class="version">v1.2.46 and newer</div></div></div><div class="body"><p class="desc">Binds <span class="arg">key</span> to invoke <span class="arg">binding</span>, and returns whether it was successful.</p><p class="desc"> The <span class="arg">key</span> sequence string is the same format as from <code>clink echo</code>.  See <a href="#discoverkeysequences">Discovering Clink key sindings</a> for more information.</p><p class="desc"> The <span class="arg">binding</span> is either the name of a Readline command, a quoted macro string (just like in the .inputrc config file), or nil to clear the key binding.</p><p class="desc"> An optional <span class="arg">keymap</span> may be specified as well.  If it is omitted or nil, then the current keymap is searched.  Otherwise it may refer to one of the three built in keymaps: <table> <tr><th>Keymap</th><th>Description</th></tr> <tr><td><code>"emacs"</code></td><td>The Emacs keymap, which is the default keymap.</td></tr> <tr><td><code>"vi"</code>, <code>"vi-move"</code>, or <code>"vi-command"</code></td><td>The VI command mode keymap.</td></tr> <tr><td><code>"vi-insert"</code></td><td>The VI insertion mode keymap.</td></tr> </table></p><p class="desc"> Using Lua's <code>[[</code>..<code>]]</code> string syntax conveniently lets you simply copy the key string exactly from the <code>clink echo</code> output, without needing to translate the quotes or backslashes.</p><p class="desc"> <strong>Note:</strong> This does not write the value into a config file. Instead it updates the key binding in memory, temporarily overriding whatever is present in any config files.  When config files are reloaded, they may replace the key binding again.</p><pre class="language-lua"><code>local old_space = rl.getbinding('" "')
@@ -4486,6 +4488,12 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1250">v1.2.50</h4>
+<ul>
+<li>Added <code>rl.insertmode()</code> function to get or set whether insert mode is active.</li>
+<li>Added <code>clink.onaftercommand()</code> so scripts can registers a function to be called after every input command (key binding).</li>
+<li>Added additional failure logging during <code>clink inject</code>.</li>
+</ul>
 <h4 id="v1249">v1.2.49</h4>
 <ul>
 <li>Added <code>cua-previous-screen-line</code> and <code>cua-next-screen-line</code>, bound to <kbd>Shift</kbd>+<kbd>Up</kbd> and <kbd>Shift</kbd>+<kbd>Down</kbd>, to extend the text selection up/down by one screen line.</li>
