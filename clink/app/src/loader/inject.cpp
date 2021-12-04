@@ -228,7 +228,7 @@ private:
 };
 
 //------------------------------------------------------------------------------
-static remote_result inject_dll(DWORD target_pid, bool is_autorun)
+static remote_result inject_dll(DWORD target_pid, bool is_autorun, bool force_host=false)
 {
     // Get path to clink's DLL that we'll inject.
     str<280> dll_path;
@@ -308,7 +308,8 @@ static remote_result inject_dll(DWORD target_pid, bool is_autorun)
             }
 
             LOG("Unknown host '%s'.", host_name ? host_name : "<no name>");
-            return {};
+            if (!force_host)
+                return {};
         }
     }
 
@@ -436,6 +437,7 @@ int inject(int argc, char** argv)
         { "nolog",       no_argument,        nullptr, 'l' },
         { "autorun",     no_argument,        nullptr, '_' },
         { "detours",     no_argument,        nullptr, '^' },
+        { "forcehost",   no_argument,        nullptr, '|' },
         { "help",        no_argument,        nullptr, 'h' },
         { nullptr, 0, nullptr, 0 }
     };
@@ -458,7 +460,7 @@ int inject(int argc, char** argv)
     int i;
     int ret = 1;
     bool is_autorun = false;
-    while ((i = getopt_long(argc, argv, "?lqhp:s:d:", options, nullptr)) != -1)
+    while ((i = getopt_long(argc, argv, "?lqhp:s:d:|", options, nullptr)) != -1)
     {
         switch (i)
         {
@@ -486,6 +488,7 @@ int inject(int argc, char** argv)
         case 'q': app_desc.quiet = true;        break;
         case 'l': app_desc.log = false;         break;
         case '^': app_desc.detours = true;      break;
+        case '|': app_desc.force = true;        break;
         case '_': ret = 0; is_autorun = true;   break;
 
         case '?':
@@ -606,7 +609,7 @@ int inject(int argc, char** argv)
     }
 
     // Inject Clink's DLL
-    remote_result remote_dll_base = inject_dll(target_pid, is_autorun);
+    remote_result remote_dll_base = inject_dll(target_pid, is_autorun, app_desc.force);
     if (remote_dll_base.ok <= 0)
     {
         if (remote_dll_base.ok < 0)
