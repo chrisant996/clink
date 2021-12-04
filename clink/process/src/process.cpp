@@ -124,19 +124,27 @@ void process::pause(bool suspend)
         s_initialized = (ntSuspendProcess && ntResumeProcess) ? 1 : -1;
     }
 
+    const char* opname = suspend ? "suspend" : "resume";
+
     if (s_initialized > 0)
     {
+        NTSTATUS status;
         handle h = OpenProcess(PROCESS_SUSPEND_RESUME, FALSE, m_pid);
         if (suspend)
-            ntSuspendProcess(h);
+            status = ntSuspendProcess(h);
         else
-            ntResumeProcess(h);
+            status = ntResumeProcess(h);
+        if (status)
+            LOG("Failed to %s process %d (status = %d).", opname, m_pid, status);
     }
     else
     {
         handle th32 = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, m_pid);
-        if (!th32)
+        if (th32 == INVALID_HANDLE_VALUE)
+        {
+            ERR("Failed to %s process %d, failed to snapshot module state.", opname, m_pid);
             return;
+        }
 
         THREADENTRY32 te = {sizeof(te)};
         BOOL ok = Thread32First(th32, &te);
@@ -145,11 +153,17 @@ void process::pause(bool suspend)
             if (te.th32OwnerProcessID == m_pid)
             {
                 handle thread = OpenThread(THREAD_ALL_ACCESS, FALSE, te.th32ThreadID);
-                suspend ? SuspendThread(thread) : ResumeThread(thread);
+                if (!thread)
+                    ERR("Failed to %s process %d, failed to open thread %d.", opname, m_pid, te.th32ThreadID);
+                else if ((suspend ? SuspendThread(thread) : ResumeThread(thread)) == -1)
+                    ERR("Failed to %s process %d, failed to %s thread %d.", opname, m_pid, opname, te.th32ThreadID);
             }
 
             ok = Thread32Next(th32, &te);
         }
+
+        if (GetLastError() != ERROR_NO_MORE_FILES)
+            ERR("Failed to enumerate threads in process %d.", m_pid);
     }
 }
 
