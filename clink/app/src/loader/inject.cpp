@@ -178,6 +178,10 @@ static int check_dll_version(const char* clink_dll)
 //------------------------------------------------------------------------------
 struct wait_monitor : public process_wait_callback
 {
+    enum wait_operation { wait_inject, wait_initialize };
+
+    wait_monitor(const char* op) : m_op(op) {}
+
     bool on_waited(DWORD tick_begin, DWORD wait_result) override
     {
         switch (wait_result)
@@ -185,16 +189,16 @@ struct wait_monitor : public process_wait_callback
         case WAIT_TIMEOUT:
             {
                 static const char c_msg_slow[] =
-                    "Injecting Clink is taking a long time...";
+                    " is taking a long time...";
                 static const char c_msg_timed_out[] =
-                    "Injecting Clink timed out.  An antivirus tool may be blocking Clink.\n"
+                    " timed out.  An antivirus tool may be blocking Clink.\n"
                     "Consider adding an exception for Clink in the antivirus tool(s) in use.";
 
                 DWORD elapsed = GetTickCount() - tick_begin;
                 if (elapsed >= 30 * 1000)
                 {
-                    LOG("%s", c_msg_timed_out);
-                    fprintf(stderr, "\n\n%s\n\n", c_msg_timed_out);
+                    LOG("%s%s", m_op, c_msg_timed_out);
+                    fprintf(stderr, "\n\n%s%s\n\n", m_op, c_msg_timed_out);
                     break;
                 }
 
@@ -202,8 +206,8 @@ struct wait_monitor : public process_wait_callback
                 {
                     if (m_elapsed < 5000)
                     {
-                        LOG("%s", c_msg_slow);
-                        fprintf(stderr, "\n\n%s", c_msg_slow);
+                        LOG("%s%s", m_op, c_msg_slow);
+                        fprintf(stderr, "\n\n%s%s", m_op, c_msg_slow);
                     }
                     else
                     {
@@ -224,6 +228,7 @@ struct wait_monitor : public process_wait_callback
     }
 
 private:
+    const char* m_op = "Something";
     DWORD m_elapsed = 0;
 };
 
@@ -314,7 +319,7 @@ static remote_result inject_dll(DWORD target_pid, bool is_autorun, bool force_ho
     }
 
     // Inject Clink DLL.
-    wait_monitor monitor;
+    wait_monitor monitor("Injecting Clink");
     return cmd_process.inject_module(dll_path.c_str(), &monitor);
 }
 
@@ -598,8 +603,11 @@ int inject(int argc, char** argv)
             to_utf16(script_path, app_desc.script_path);
             to_utf16(state_dir, app_desc.state_dir);
 
-            process(target_pid).remote_call(func, L"=clink.scripts.inject", value_scripts);
-            process(target_pid).remote_call(func, L"=clink.profile.inject", value_state);
+            str<> name;
+            name.format("Setting var in process %d", target_pid);
+            wait_monitor monitor(name.c_str());
+            process(target_pid).remote_callex(func, &monitor, L"=clink.scripts.inject", value_scripts);
+            process(target_pid).remote_callex(func, &monitor, L"=clink.profile.inject", value_state);
         }
         else if (!is_autorun)
         {
@@ -626,14 +634,14 @@ int inject(int argc, char** argv)
         return ret;
     }
 
-    // Detach from log file so the DLL can take over.
-    delete file_logger::get();
+    LOG("Initializing Clink...");
 
     // Remotely call Clink's initialisation function.
     void* our_dll_base = vm().get_alloc_base((void*)"");
     uintptr_t init_func = uintptr_t(remote_dll_base.result);
     init_func += uintptr_t(initialise_clink) - uintptr_t(our_dll_base);
-    remote_result rr = process(target_pid).remote_call((process::funcptr_t)init_func, app_desc);
+    wait_monitor monitor("Initializing Clink");
+    remote_result rr = process(target_pid).remote_callex((process::funcptr_t)init_func, &monitor, app_desc);
     if (!rr.ok)
         return ret;
 

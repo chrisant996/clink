@@ -41,6 +41,8 @@ public:
     remote_result               inject_module(const char* dll, process_wait_callback* callback);
     template <typename T> remote_result remote_call(funcptr_t function, T const& param);
     template <typename T1, typename T2> remote_result remote_call(funcptr_t function, T1 const& param1, T2 const& param2);
+    template <typename T> remote_result remote_callex(funcptr_t function, process_wait_callback* callback, T const& param);
+    template <typename T1, typename T2> remote_result remote_callex(funcptr_t function, process_wait_callback* callback, T1 const& param1, T2 const& param2);
     void                        pause();
     void                        unpause();
 
@@ -79,6 +81,20 @@ template <typename T1, typename T2>
 remote_result process::remote_call(funcptr_t function, T1 const& param1, T2 const& param2)
 {
     return remote_call_internal(function, nullptr/*callback*/, &param1, sizeof(param1), &param2, sizeof(param2));
+}
+
+//------------------------------------------------------------------------------
+template <typename T>
+remote_result process::remote_callex(funcptr_t function, process_wait_callback* callback, T const& param)
+{
+    return remote_call_internal(function, callback, &param, sizeof(param));
+}
+
+//------------------------------------------------------------------------------
+template <typename T1, typename T2>
+remote_result process::remote_callex(funcptr_t function, process_wait_callback* callback, T1 const& param1, T2 const& param2)
+{
+    return remote_call_internal(function, callback, &param1, sizeof(param1), &param2, sizeof(param2));
 }
 
 //------------------------------------------------------------------------------
