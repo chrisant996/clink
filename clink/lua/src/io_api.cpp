@@ -388,6 +388,9 @@ struct popen_buffering : public std::enable_shared_from_this<popen_buffering>
     : m_read(r)
     , m_write(w)
     {
+        assert(r != nullptr);
+        assert(w != nullptr);
+        assert(w != INVALID_HANDLE_VALUE);
     }
 
     ~popen_buffering()
@@ -483,6 +486,10 @@ TODO("COROUTINES: could use overlapped IO to enable cancelling even a blocking c
 
         // Reset file pointer so the read handle can read from the beginning.
         SetFilePointer(wh, 0, nullptr, FILE_BEGIN);
+
+        // Close the write handle since it's finished.
+        CloseHandle(_this->m_write);
+        _this->m_write = nullptr;
 
         // Signal completion events.
         SetEvent(_this->m_ready_event);
