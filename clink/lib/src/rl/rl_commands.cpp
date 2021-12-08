@@ -10,6 +10,7 @@
 #include "rl_commands.h"
 #include "doskey.h"
 #include "terminal_helpers.h"
+#include "textlist_impl.h"
 
 #include "rl_suggestions.h"
 
@@ -1558,7 +1559,6 @@ ding:
         history[i] = p ? p : "";
     }
 
-    extern popup_results activate_history_text_list(const char** history, int count, int current, const int* indices, int history_mode);
     const popup_results results = activate_history_text_list(history, history_length, min<int>(where_history(), history_length - 1), nullptr, 2);
 
     switch (results.m_result)

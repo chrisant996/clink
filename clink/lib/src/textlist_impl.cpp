@@ -236,7 +236,7 @@ textlist_impl::textlist_impl(input_dispatcher& dispatcher)
 }
 
 //------------------------------------------------------------------------------
-popup_results textlist_impl::activate(const char* title, const char** entries, int count, int index, bool reverse, int history_mode, const int* indices, bool has_columns)
+popup_results textlist_impl::activate(const char* title, const char** entries, int count, int index, bool reverse, int history_mode, const entry_info* infos, bool has_columns)
 {
     reset();
     m_results.clear();
@@ -268,7 +268,7 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
     // Gather the items.
     str<> tmp;
     m_entries = entries;
-    m_indices = indices;
+    m_infos = infos;
     m_count = count;
     for (int i = 0; i < count; i++)
     {
@@ -638,7 +638,7 @@ update_needle:
                     m_override_title.clear();
                     m_override_title.format("enter history number: %-6s", m_needle.c_str());
                     int i = atoi(m_needle.c_str());
-                    if (m_indices)
+                    if (m_infos)
                     {
                         int lookup = 0;
                         char lookupstr[16];
@@ -647,7 +647,7 @@ update_needle:
                         const int needlestr_len = int(strlen(needlestr));
                         while (lookup < m_count)
                         {
-                            _itoa_s(m_indices[lookup] + 1, lookupstr, 10);
+                            _itoa_s(m_infos[lookup].index + 1, lookupstr, 10);
                             if (strncmp(needlestr, lookupstr, needlestr_len) == 0)
                             {
                                 i = lookup;
@@ -816,7 +816,7 @@ void textlist_impl::update_display()
             int max_num_len = 0;
             if (m_history_mode)
             {
-                tmp.format("%u", m_indices ? m_indices[m_count - 1] + 1 : m_count);
+                tmp.format("%u", m_infos ? m_infos[m_count - 1].index + 1 : m_count);
                 max_num_len = tmp.length();
             }
 
@@ -857,6 +857,9 @@ void textlist_impl::update_display()
 
             str<32> desc_color;
             desc_color.format("\x1b[%sm", get_popup_desc_colors());
+
+            str<32> modmark;
+            modmark.format("%s*%s", desc_color.c_str(), color.c_str());
 
             // Display border.
             if (draw_border)
@@ -950,11 +953,16 @@ void textlist_impl::update_display()
 
                     if (m_history_mode)
                     {
-                        const int history_index = m_indices ? m_indices[i] : i;
+                        const int history_index = m_infos ? m_infos[i].index : i;
+                        const char* mark = (!m_infos[i].marked ? " " :
+                                            i == m_index ? "*" :
+                                            modmark.c_str());
                         tmp.clear();
-                        tmp.format("%*u: ", max_num_len, history_index + 1);
+                        tmp.format("%*u:%s", max_num_len, history_index + 1, mark);
                         m_printer->print(tmp.c_str(), tmp.length());// history number
                         spaces -= tmp.length();
+                        if (mark == modmark.c_str())
+                            spaces += modmark.length() - 1;
                     }
 
                     int cell_len;
@@ -1062,7 +1070,7 @@ void textlist_impl::reset()
 
     m_count = 0;
     m_entries = nullptr;    // Don't free; is only borrowed.
-    m_indices = nullptr;    // Don't free; is only borrowed.
+    m_infos = nullptr;      // Don't free; is only borrowed.
     m_items = std::move(zap_items);
     m_longest = 0;
     m_columns.clear();
@@ -1143,12 +1151,12 @@ popup_results activate_directories_text_list(const char** dirs, int count)
 }
 
 //------------------------------------------------------------------------------
-popup_results activate_history_text_list(const char** history, int count, int current, const int* indices, int history_mode)
+popup_results activate_history_text_list(const char** history, int count, int current, const entry_info* infos, int history_mode)
 {
     if (!s_textlist)
         return popup_result::error;
 
     assert(current >= 0);
     assert(current < count);
-    return s_textlist->activate("History", history, count, current, true/*reverse*/, history_mode, indices, false);
+    return s_textlist->activate("History", history, count, current, true/*reverse*/, history_mode, infos, false);
 }

@@ -12,6 +12,7 @@
 #include "word_classifications.h"
 #include "popup.h"
 #include "terminal_helpers.h"
+#include "textlist_impl.h"
 
 #include "rl_suggestions.h"
 
@@ -1462,14 +1463,15 @@ int clink_popup_history(int count, int invoking_key)
 
     // Copy the history list (just a shallow copy of the line pointers).
     char** history = (char**)malloc(sizeof(*history) * history_length);
-    int* indices = (int*)malloc(sizeof(*indices) * history_length);
+    entry_info* infos = (entry_info*)malloc(sizeof(*infos) * history_length);
     int total = 0;
     for (int i = 0; i < history_length; i++)
     {
         if (!find_streqn(g_rl_buffer->get_buffer(), list[i]->line, search_len))
             continue;
         history[total] = list[i]->line;
-        indices[total] = i;
+        infos[total].index = i;
+        infos[total].marked = (list[i]->data != nullptr);
         if (i == orig_pos)
             current = total;
         total++;
@@ -1478,7 +1480,7 @@ int clink_popup_history(int count, int invoking_key)
     {
         rl_ding();
         free(history);
-        free(indices);
+        free(infos);
         return 0;
     }
     if (current < 0)
@@ -1488,8 +1490,7 @@ int clink_popup_history(int count, int invoking_key)
     popup_result result;
     if (!g_gui_popups.get())
     {
-        extern popup_results activate_history_text_list(const char** history, int count, int index, const int* indices, int history_mode);
-        popup_results results = activate_history_text_list(const_cast<const char**>(history), total, current, indices, true);
+        popup_results results = activate_history_text_list(const_cast<const char**>(history), total, current, infos, true);
         result = results.m_result;
         current = results.m_index;
     }
@@ -1515,7 +1516,7 @@ int clink_popup_history(int count, int invoking_key)
             rl_maybe_save_line();
             rl_maybe_replace_line();
 
-            current = indices[current];
+            current = infos[current].index;
             history_set_pos(current);
             rl_replace_from_history(current_history(), 0);
 
@@ -1533,7 +1534,7 @@ int clink_popup_history(int count, int invoking_key)
     }
 
     free(history);
-    free(indices);
+    free(infos);
 
     return 0;
 }

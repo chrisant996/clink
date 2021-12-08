@@ -17,6 +17,13 @@ class printer;
 typedef const char* (*textlist_line_getter_t)(int index);
 
 //------------------------------------------------------------------------------
+struct entry_info
+{
+    int             index;
+    bool            marked;
+};
+
+//------------------------------------------------------------------------------
 class textlist_impl
     : public editor_module
 {
@@ -45,7 +52,7 @@ class textlist_impl
 public:
                     textlist_impl(input_dispatcher& dispatcher);
 
-    popup_results   activate(const char* title, const char** entries, int count, int index, bool reverse, int history_mode, const int* indices, bool columns);
+    popup_results   activate(const char* title, const char** entries, int count, int index, bool reverse, int history_mode, const entry_info* infos, bool columns);
 
 private:
     // editor_module.
@@ -85,7 +92,7 @@ private:
     // Entries.
     int             m_count = 0;
     const char**    m_entries = nullptr;    // Original entries from caller.
-    const int*      m_indices = nullptr;    // Original history numbers from caller.
+    const entry_info* m_infos = nullptr;    // Original entry numbers/etc from caller.
     std::vector<const char*> m_items;       // Escaped entries for display.
     int             m_longest = 0;
     addl_columns    m_columns;
@@ -124,3 +131,6 @@ private:
     };
     item_store      m_store;
 };
+
+//------------------------------------------------------------------------------
+popup_results activate_history_text_list(const char** history, int count, int index, const entry_info* infos, int history_mode);
