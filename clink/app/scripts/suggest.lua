@@ -18,8 +18,8 @@ local function _do_suggest(line, matches)
             if suggester then
                 local func = suggester.suggest
                 if func then
-                    suggested, onwards = func(suggester, line, matches)
-                    if suggested ~= nil or onwards == false then
+                    suggested = func(suggester, line, matches)
+                    if suggested ~= nil then
                         return suggested
                     end
                 end
