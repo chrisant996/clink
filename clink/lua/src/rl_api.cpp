@@ -22,6 +22,7 @@ extern "C" {
 #include "lua.h"
 #include <compat/config.h>
 #include <readline/readline.h>
+#include <readline/history.h>
 #include <readline/rldefs.h>
 #include <readline/rlprivate.h>
 extern int              _rl_completion_case_map;
@@ -825,6 +826,64 @@ static int getset_insert_mode(lua_State* state)
     return 1;
 }
 
+//------------------------------------------------------------------------------
+/// -name:  rl.ismodifiedline
+/// -ver:   1.2.51
+/// -ret:   boolean
+/// Returns true when the current input line is a history entry that has been
+/// modified (i.e. has an undo list).
+///
+/// This enables prompt filters to show a "modmark" of their own, as an
+/// alternative to the modmark shown when the <code>mark-modified-lines</code>
+/// Readline config setting is enabled.
+///
+/// The following sample illustrates a prompt filter that shows a "modified
+/// line" indicator when the current line is a history entry and has been
+/// modified.
+/// -show:  local p = clink.promptfilter(10)
+/// -show:  local normal = "\x1b[m"
+/// -show:
+/// -show:  local function get_settings_color(name)
+/// -show:      return "\x1b[" .. settings.get(name) .. "m"
+/// -show:  end
+/// -show:
+/// -show:  function p:filter(prompt)
+/// -show:  &nbsp;   prompt = os.getcwd()
+/// -show:  &nbsp;   if rl.ismodifiedline() then
+/// -show:  &nbsp;       -- If the current line is a history entry and has been modified,
+/// -show:  &nbsp;       -- then show an indicator.
+/// -show:  &nbsp;       prompt = get_settings_color("color.modmark") .. "*" .. normal .. " " .. prompt
+/// -show:  &nbsp;   end
+/// -show:  &nbsp;   prompt = prompt .. "\n$ "
+/// -show:  &nbsp;   return prompt
+/// -show:  end
+/// -show:
+/// -show:  local last_modmark = false
+/// -show:
+/// -show:  local function modmark_reset()
+/// -show:  &nbsp;   -- Reset the remembered state at the beginning of each edit line.
+/// -show:  &nbsp;   last_modmark = rl.ismodifiedline()
+/// -show:
+/// -show:  &nbsp;   -- Turn off `mark-modified-lines` to avoid two modmarks showing up.
+/// -show:  &nbsp;   rl.setvariable("mark-modified-lines", "off")
+/// -show:  end
+/// -show:
+/// -show:  local function modmark_refilter()
+/// -show:  &nbsp;   -- If the modmark state has changed, refresh the prompt.
+/// -show:  &nbsp;   if last_modmark ~= rl.ismodifiedline() then
+/// -show:  &nbsp;       last_modmark = rl.ismodifiedline()
+/// -show:  &nbsp;       clink.refilterprompt()
+/// -show:  &nbsp;   end
+/// -show:  end
+/// -show:
+/// -show:  clink.onbeginedit(modmark_reset)
+/// -show:  clink.onaftercommand(modmark_refilter)
+static int is_modified_line(lua_State* state)
+{
+    lua_pushboolean(state, current_history() && rl_undo_list);
+    return 1;
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -847,6 +906,7 @@ void rl_lua_initialise(lua_state& lua)
         { "getkeybindings",         &get_key_bindings },
         { "getpromptinfo",          &get_prompt_info },
         { "insertmode",             &getset_insert_mode },
+        { "ismodifiedline",         &is_modified_line },
     };
 
     lua_State* state = lua.get_state();
