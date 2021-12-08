@@ -132,7 +132,7 @@ extern bool get_sticky_search_add_history(const char* line);
 extern void clear_sticky_search_position();
 extern void reset_keyseq_to_name_map();
 extern void set_prompt(const char* prompt, const char* rprompt, bool redisplay);
-extern void set_suggestion(const char* suggestion);
+extern void set_suggestion(const char* suggestion, const char* suggestion_line=nullptr);
 
 
 
@@ -663,8 +663,9 @@ void host::suggest(line_state& line, matches& matches)
     if (m_suggester && g_autosuggest_enable.get())
     {
         str<> tmp;
-        m_suggester->suggest(line, matches, tmp);
-        set_suggestion(tmp.c_str());
+        str<> tmp_line;
+        m_suggester->suggest(line, matches, tmp, tmp_line);
+        set_suggestion(tmp.c_str(), tmp_line.c_str());
     }
 }
 

@@ -27,7 +27,7 @@ suggester::suggester(lua_state& lua)
 }
 
 //------------------------------------------------------------------------------
-void suggester::suggest(line_state& line, matches& matches, str_base& out)
+void suggester::suggest(line_state& line, matches& matches, str_base& out, str_base& out_line)
 {
     lua_State* state = m_lua.get_state();
 
@@ -44,7 +44,7 @@ void suggester::suggest(line_state& line, matches& matches, str_base& out)
     matches_lua matches_lua(matches);
     matches_lua.push(state);
 
-    if (m_lua.pcall(state, 2, 1) != 0)
+    if (m_lua.pcall(state, 2, 2) != 0)
     {
         if (const char* error = lua_tostring(state, -1))
             m_lua.print_error(error);
@@ -53,8 +53,10 @@ void suggester::suggest(line_state& line, matches& matches, str_base& out)
     }
 
     // Collect the suggestion.
-    const char* suggestion = lua_tostring(state, -1);
+    const char* suggestion = lua_tostring(state, -2);
+    const char* suggestion_line = lua_tostring(state, -1);
     out = suggestion;
+    out_line = suggestion_line;
 
     lua_settop(state, top);
 }

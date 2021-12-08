@@ -18,16 +18,16 @@ local function _do_suggest(line, matches)
             if suggester then
                 local func = suggester.suggest
                 if func then
-                    suggested = func(suggester, line, matches)
+                    suggested, suggested_line = func(suggester, line, matches)
                     if suggested ~= nil then
-                        return suggested
+                        return suggested, suggested_line
                     end
                 end
             end
         end
     end
 
-    local ok, ret = xpcall(impl, _error_handler_ret, line, matches)
+    local ok, ret, ret2 = xpcall(impl, _error_handler_ret, line, matches)
     if not ok then
         print("")
         print("suggester failed:")
@@ -35,7 +35,7 @@ local function _do_suggest(line, matches)
         return false
     end
 
-    return ret
+    return ret, ret2
 end
 
 --------------------------------------------------------------------------------

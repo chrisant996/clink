@@ -116,6 +116,7 @@ static str_moveable s_needle;
 
 static str_iter     s_suggestion;
 static str_moveable s_suggestion_buffer;
+static str_moveable s_suggestion_line_buffer;
 static const char*  s_suggestion_color = nullptr;
 
 //------------------------------------------------------------------------------
@@ -764,11 +765,13 @@ void clear_suggestion()
     new (&s_suggestion) str_iter();
     s_suggestion_buffer.free();
 
+    s_suggestion_line_buffer.free();
+
     reset_prev_suggest();
 }
 
 //------------------------------------------------------------------------------
-void set_suggestion(const char* suggestion)
+void set_suggestion(const char* suggestion, const char* suggestion_line)
 {
     if ((s_suggestion_buffer.length() == 0) != (!suggestion || !*suggestion) ||
         (suggestion && !s_suggestion_buffer.equals(suggestion)))
@@ -782,6 +785,8 @@ void set_suggestion(const char* suggestion)
             g_rl_buffer->draw();
         }
     }
+
+    s_suggestion_line_buffer = suggestion_line;
 }
 
 //------------------------------------------------------------------------------
@@ -832,6 +837,13 @@ bool insert_suggestion(suggestion_action action)
     }
 
     g_rl_buffer->begin_undo_group();
+
+    if (action == suggestion_action::insert_to_end && s_suggestion_line_buffer.length())
+    {
+        insert = s_suggestion_line_buffer.c_str();
+        g_rl_buffer->remove(0, old_end);
+    }
+
     g_rl_buffer->insert(insert);
 
     if (action == suggestion_action::insert_next_word)
