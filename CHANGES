@@ -4,6 +4,9 @@
 
 #### v1.2.51
 
+- Added back `mark-modified-lines` support (was removed in v1.2.36).
+- Added `rl.ismodifiedline()` function so prompt filters can show a modified line indicator if they wish.
+- When accepting a history suggestion in its entirety (e.g. by pressing <kbd>Right</kbd> or <kbd>End</kbd>) the original case of the line is used (avoids things like typing `set cli` and getting `set cliNK_PATH=` after accepting the suggestion).
 - Fixed when temp files from `io.popenyield()` get deleted.  They were lingering until Lua garbage collection, but they can be deleted almost immediately.
 
 #### v1.2.50
