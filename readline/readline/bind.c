@@ -1939,13 +1939,6 @@ hack_special_boolean_var (int i)
          convert M-x to ESC,UNMETA(x) so that actual META input (Alt+key)
          works. */
     }
-#ifndef INCLUDE_MODMARK
-  else if (_rl_stricmp (name, "mark-modified-lines") == 0)
-    {
-      /* Do nothing; Clink reloads the history at every prompt, so this is
-         not a useful thing in Clink. */
-    }
-#endif
 /* end_clink_change */
 }
 

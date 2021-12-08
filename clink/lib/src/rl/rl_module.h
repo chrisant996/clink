@@ -48,9 +48,7 @@ private:
     str_moveable    m_rl_rprompt;
     str<16>         m_input_color;
     str<16>         m_selection_color;
-#ifdef INCLUDE_MODMARK
     str<16>         m_modmark_color;
-#endif
     str<16>         m_horizscroll_color;
     str<16>         m_message_color;
     str<16>         m_pager_color;
