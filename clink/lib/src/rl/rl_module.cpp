@@ -1608,6 +1608,9 @@ static void bind_keyseq_list(const two_strings* list, Keymap map)
 //------------------------------------------------------------------------------
 void initialise_readline(const char* state_dir)
 {
+    static bool s_rl_initialized = false;
+    const bool init = !s_rl_initialized;
+
     // Readline needs a tweak of its handling of 'meta' (i.e. IO bytes >=0x80)
     // so that it handles UTF-8 correctly (convert=input, output=output)
     _rl_convert_meta_chars_to_ascii = 0;
@@ -1620,8 +1623,7 @@ void initialise_readline(const char* state_dir)
     _rl_comment_begin = savestring("::");
 
     // Add commands.
-    static bool s_rl_initialized = false;
-    if (!s_rl_initialized)
+    if (init)
     {
         s_rl_initialized = true;
 
@@ -1864,7 +1866,18 @@ void initialise_readline(const char* state_dir)
     bind_keyseq_list(vi_insertion_key_binds, vi_insertion_keymap);
     bind_keyseq_list(vi_movement_key_binds, vi_movement_keymap);
 
+    // Make sure the first rl_read_init_file() happens before rl_initialize() so
+    // that Clink controls the search path order.
     load_user_inputrc(state_dir);
+
+    // Do a first rl_initialize() here.  Otherwise it happens when rl_module
+    // installs the Readline callback, which happens after having loaded the Lua
+    // scripts, which means in the first edit line, any Readline variables set
+    // by Lua scripts may be overwritten by the rl_init_read_line() that happens
+    // inside rl_initialize().  That was interfering with suppressing the
+    // *-mode-string config variables.
+    if (init)
+        rl_initialize();
 }
 
 
