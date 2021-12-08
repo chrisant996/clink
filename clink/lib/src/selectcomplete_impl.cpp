@@ -1162,7 +1162,7 @@ void selectcomplete_impl::update_display()
                                 assert(!m_matches.is_display_filtered());
                                 const char* match = m_matches.get_match(i);
                                 char* temp = printable_part(const_cast<char*>(match));
-                                printed_len = append_filename(temp, match, 0, type, selected);
+                                printed_len = append_filename(temp, match, 0, 0, type, selected);
                             }
                             append_display(display, selected, append ? _rl_arginfo_color : _rl_filtered_color);
                             printed_len += m_matches.get_match_visible_display(i);
@@ -1190,13 +1190,13 @@ void selectcomplete_impl::update_display()
                         else
                         {
                             char* temp = m_matches.is_display_filtered() ? const_cast<char*>(display) : printable_part(const_cast<char*>(display));
-                            printed_len = append_filename(temp, display, 0, type, selected);
+                            printed_len = append_filename(temp, display, 0, 0, type, selected);
                             if (printed_len > col_width)
                             {
                                 rollback_tmpbuf();
                                 ellipsify(temp, col_width, truncated, true/*expand_ctrl*/);
                                 temp = truncated.data();
-                                printed_len = append_filename(temp, display, 0, type, selected);
+                                printed_len = append_filename(temp, display, 0, 0, type, selected);
                             }
                         }
 

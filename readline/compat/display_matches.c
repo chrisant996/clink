@@ -498,7 +498,7 @@ path_isdir(const char *filename)
 
 
 //------------------------------------------------------------------------------
-static int fnappend(const char *to_print, int prefix_bytes, const char *real_pathname, unsigned char match_type, int selected)
+static int fnappend(const char *to_print, int prefix_bytes, int condense, const char *real_pathname, unsigned char match_type, int selected)
 {
     int printed_len, w;
     const char *s;
@@ -523,7 +523,7 @@ static int fnappend(const char *to_print, int prefix_bytes, const char *real_pat
     // possible completions.  Only cut off prefix_bytes if we're going to be
     // printing the ellipsis, which takes precedence over coloring the
     // completion prefix (see append_filename() below).
-    if (_rl_completion_prefix_display_length > 0 && prefix_bytes >= print_len)
+    if (condense && prefix_bytes >= print_len)
         prefix_bytes = 0;
 
 #if defined(COLOR_SUPPORT)
@@ -536,7 +536,7 @@ static int fnappend(const char *to_print, int prefix_bytes, const char *real_pat
     }
 #endif
 
-    if (prefix_bytes && _rl_completion_prefix_display_length > 0)
+    if (prefix_bytes && condense)
     {
         char ellipsis = (to_print[prefix_bytes] == '.') ? '_' : '.';
 #if defined(COLOR_SUPPORT)
@@ -660,7 +660,7 @@ void append_display(const char* to_print, int selected, const char* color)
 // Print filename.  If VISIBLE_STATS is defined and we are using it, check for
 // and output a single character for 'special' filenames.  Return the number of
 // characters we output.
-int append_filename(char* to_print, const char* full_pathname, int prefix_bytes, unsigned char type, int selected)
+int append_filename(char* to_print, const char* full_pathname, int prefix_bytes, int condense, unsigned char type, int selected)
 {
     int printed_len, extension_char, slen, tlen;
     char *s, c, *new_full_pathname;
@@ -677,7 +677,7 @@ int append_filename(char* to_print, const char* full_pathname, int prefix_bytes,
     // Defer printing if we want to prefix with a color indicator.
     if (_rl_colored_stats == 0 || filename_display_desired == 0)
 #endif
-        printed_len = fnappend(to_print, prefix_bytes, to_print, match_type, selected);
+        printed_len = fnappend(to_print, prefix_bytes, condense, to_print, match_type, selected);
 
     if (filename_display_desired && (
 #if defined (VISIBLE_STATS)
@@ -760,7 +760,7 @@ int append_filename(char* to_print, const char* full_pathname, int prefix_bytes,
             // Move colored-stats code inside fnappend()
 #if defined(COLOR_SUPPORT)
             if (_rl_colored_stats)
-                printed_len = fnappend(to_print, prefix_bytes, new_full_pathname, match_type, selected);
+                printed_len = fnappend(to_print, prefix_bytes, condense, new_full_pathname, match_type, selected);
 #endif
 
             xfree(new_full_pathname);
@@ -781,7 +781,7 @@ int append_filename(char* to_print, const char* full_pathname, int prefix_bytes,
             // Move colored-stats code inside fnappend()
 #if defined (COLOR_SUPPORT)
             if (_rl_colored_stats)
-                printed_len = fnappend(to_print, prefix_bytes, s, match_type, selected);
+                printed_len = fnappend(to_print, prefix_bytes, condense, s, match_type, selected);
 #endif
         }
 
@@ -1058,6 +1058,7 @@ static int display_match_list_internal(match_accessor* access, int len, int max,
     //
     int common_length = 0;
     int sind = 0;
+    int can_condense = 0;
     if (_rl_completion_prefix_display_length > 0)
     {
         const char* t = visible_part(access->get_match(access, 0));
@@ -1066,7 +1067,7 @@ static int display_match_list_internal(match_accessor* access, int len, int max,
         if (common_length > max || sind > max)
             common_length = sind = 0;
 
-        int can_condense = (common_length > _rl_completion_prefix_display_length && common_length > ELLIPSIS_LEN);
+        can_condense = (common_length > _rl_completion_prefix_display_length && common_length > ELLIPSIS_LEN);
         if (can_condense)
         {
             // Ellipsis can't be applied to matches that use a display string,
@@ -1089,8 +1090,9 @@ static int display_match_list_internal(match_accessor* access, int len, int max,
         else
             common_length = sind = 0;
     }
+
 #if defined(COLOR_SUPPORT)
-    else if (_rl_colored_completion_prefix > 0)
+    if (sind == 0 && _rl_colored_completion_prefix > 0)
     {
         const char* t = visible_part(access->get_match(access, 0));
         common_length = fnwidth(t);
@@ -1182,7 +1184,7 @@ static int display_match_list_internal(match_accessor* access, int len, int max,
                 if (append)
                 {
                     char* temp = printable_part(match);
-                    printed_len = append_filename(temp, match, sind, type, 0);
+                    printed_len = append_filename(temp, match, sind, can_condense, type, 0);
                 }
                 append_display(display, 0, append ? _rl_arginfo_color : _rl_filtered_color);
                 printed_len += access->get_display_cells(access, l);
@@ -1190,7 +1192,7 @@ static int display_match_list_internal(match_accessor* access, int len, int max,
             else
             {
                 char* temp = printable_part(display);
-                printed_len = append_filename(temp, display, sind, type, 0);
+                printed_len = append_filename(temp, display, sind, can_condense, type, 0);
             }
 
             if (show_descriptions)

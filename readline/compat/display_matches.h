@@ -34,7 +34,7 @@ extern void append_tmpbuf_string(const char* s, int len);
 extern void flush_tmpbuf(void);
 extern void append_display(const char* to_print, int selected, const char* color);
 // type is ignored when rl_completion_matches_include_type is set.
-extern int append_filename(char* to_print, const char* full_pathname, int prefix_bytes, unsigned char type, int selected);
+extern int append_filename(char* to_print, const char* full_pathname, int prefix_bytes, int can_condense, unsigned char type, int selected);
 extern void pad_filename(int len, int pad_to_width, int selected);
 
 extern void free_filtered_matches(match_display_filter_entry** filtered_matches);
