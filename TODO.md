@@ -5,6 +5,17 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
+- Generalized solution for respecting original case when accepting suggestions.
+  - Suggesters can return a string, offset.
+    - Offset is optional and defaults to the end of the line.
+    - If offset is returned _and the string matches from the offset to the end of the line_ then the string is a valid suggestion.
+    - To insert a suggestion:
+      - Translate cursor point from original position to a position accommodating the suggestion.
+      - Find end word offset within the suggestion (or deal with it being before the suggestion).
+      - Move cursor point to the original end word offset or returned offset, whichever is greater.
+      - Replace the rest of the line with the suggestion.
+      - Determine whether to truncate the line if only the next word of the suggestion was accepted.
+      - But if the returned offset is 1 and the whole line is being accepted, then go ahead and replace the entire line.
 
 ## Medium Priority
 - Readline command reference.
