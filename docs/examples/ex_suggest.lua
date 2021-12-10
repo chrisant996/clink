@@ -13,5 +13,6 @@ function prefix_suggestor:suggest(line_state, matches)
     end
 
     -- Return the common prefix as the suggestion.
-    return prefix
+    local info = line_state:getwordinfo(line_state:getwordcount())
+    return prefix, info.offset
 end

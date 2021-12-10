@@ -226,6 +226,7 @@ The following table describes the available Clink settings:
 Name                         | Default | Description
 :--:                         | :-:     | -----------
 <a name="autosuggest_enable"></a>`autosuggest.enable` | False | When this is `true` a suggested command may appear in `color.suggestion` color after the cursor.  If the suggestion isn't what you want, just ignore it.  Or accept the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, accept the next word of the suggestion with <kbd>Ctrl</kbd>+<kbd>Right</kbd>, or accept the next full word of the suggestion up to a space with <kbd>Shift</kbd>+<kbd>Right</kbd>.  The `autosuggest.strategy` setting determines how a suggestion is chosen.
+`autosuggest.original_case`  | True | When this is enabled (the default), accepting a suggestion uses the original capitalization from the suggestion.
 <a name="autosuggest_strategy"></a>`autosuggest.strategy` | `match_prev_cmd history completion` | This determines how suggestions are chosen.  The suggestion generators are tried in the order listed, until one provides a suggestion.  There are three built-in suggestion generators, and scripts can provide new ones.  `history` chooses the most recent matching command from the history.  `completion` chooses the first of the matching completions.  `match_prev_cmd` chooses the most recent matching command whose preceding history entry matches the most recently invoked command, but only when the `history.dupe_mode` setting is `add`.
 <a name="clink_autostart"></a>`clink.autostart` | | This command is automatically run when the first CMD prompt is shown after Clink is injected.  If this is blank (the default), then Clink instead looks for `clink_start.cmd` in the binaries directory and profile directory and runs them.  Set it to "nul" to not run any autostart command.
 `clink.colorize_input`       | True    | Enables context sensitive coloring for the input text (see [Coloring the Input Text](#classifywords)).
@@ -1211,6 +1212,8 @@ Scripts can provide custom suggestion generators, in addition to the built-in op
 2. Define a `:suggest()` function on the returned suggestion generator.
 
 The function takes a [line_state](#line_state) argument that contains the input line, and a [matches](#matches) argument that contains the possible matches from the completion engine.  If the function returns nil, the next generator listed in the strategy is called.  If the function returns a string (even an empty string), then the string is used as the suggestion.
+
+The function can optionally return a string and an offset to where the suggestion begins in the input line.  This makes it easier to return suggestions in some cases, and also makes it possible to update the capitalization of the whole accepted suggestion (even the part that's already been typed).
 
 This example illustrates how to make a suggestion generator that returns the longest common prefix of the possible matches.
 
