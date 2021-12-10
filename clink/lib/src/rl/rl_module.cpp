@@ -1608,6 +1608,9 @@ void initialise_readline(const char* shell_name, const char* state_dir)
         // Preemptively replace paste command with one that supports Unicode.
         rl_add_funmap_entry("paste-from-clipboard", clink_paste);
 
+        // Readline forgot to add this command to the funmap.
+        rl_add_funmap_entry("vi-undo", rl_vi_undo);
+
         // Do a first rl_initialize() before setting any key bindings or config
         // variables.  Otherwise it would happen when rl_module installs the
         // Readline callback, after having loaded the Lua scripts.  That would
