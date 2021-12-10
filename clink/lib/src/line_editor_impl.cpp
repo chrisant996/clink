@@ -166,6 +166,15 @@ extern "C" void host_filter_transient_prompt(int crlf)
 }
 
 //------------------------------------------------------------------------------
+bool host_can_suggest(line_state& line)
+{
+    if (!s_callbacks)
+        return false;
+
+    return s_callbacks->can_suggest(line);
+}
+
+//------------------------------------------------------------------------------
 void host_suggest(line_state& line, matches& matches)
 {
     if (!s_callbacks)
@@ -334,7 +343,6 @@ void line_editor_impl::begin_line()
     m_desc.output->begin();
     m_buffer.begin_line();
     m_prev_generate.clear();
-    m_prev_suggest.clear();
     m_prev_classify.clear();
 
     rl_before_display_function = before_display;
@@ -1137,9 +1145,8 @@ void line_editor_impl::update_internal()
     }
 
     // Should we collect suggestions?
-    if (m_buffer.get_cursor() == m_buffer.get_length() &&
-        true && /* suggestions are enabled */
-        !m_prev_suggest.equals(m_buffer.get_buffer(), m_buffer.get_length()))
+    line_state line = get_linestate();
+    if (host_can_suggest(line))
     {
         matches_impl* matches = nullptr;
 
@@ -1172,9 +1179,7 @@ void line_editor_impl::update_internal()
         if (!matches)
             update_matches();
 
-        line_state line = get_linestate();
         host_suggest(line, matches ? *matches : m_matches);
-        m_prev_suggest.set(m_buffer.get_buffer(), m_buffer.get_length());
 
         delete matches;
     }
@@ -1186,19 +1191,6 @@ void line_editor_impl::update_internal()
 
     if (is_endword_tilde(get_linestate()))
         reset_generate_matches();
-}
-
-//------------------------------------------------------------------------------
-void line_editor_impl::reset_prev_suggest()
-{
-    m_prev_suggest.clear();
-}
-
-void reset_prev_suggest()
-{
-    assert(s_editor);
-    if (s_editor)
-        s_editor->reset_prev_suggest();
 }
 
 //------------------------------------------------------------------------------

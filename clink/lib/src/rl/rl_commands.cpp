@@ -91,7 +91,6 @@ extern int host_add_history(int, const char* line);
 extern void host_get_app_context(int& id, str_base& binaries, str_base& profile, str_base& scripts);
 extern "C" int show_cursor(int visible);
 extern int ellipsify(const char* in, int limit, str_base& out, bool expand_ctrl);
-extern void clear_suggestion();
 
 // This is implemented in the app layer, which makes it inaccessible to lower
 // layers.  But Readline and History are siblings, so history_db and rl_module
@@ -894,11 +893,6 @@ bool cua_point_in_selection(int in)
 //------------------------------------------------------------------------------
 int cua_selection_event_hook(int event)
 {
-    // Prevent side-to-side flicker by clearing the suggestion, if any.
-    // However, clearing the suggestion can cause show-hide flicker, because
-    // Readline forces redrawing upon text changes.
-    clear_suggestion();
-
     if (!g_rl_buffer)
         return 0;
 

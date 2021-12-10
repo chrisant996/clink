@@ -81,6 +81,13 @@ end
 --- chance, or can return a suggestion (or an empty string) to stop looking for
 --- suggestions.
 ---
+--- In Clink v1.2.51 and higher, the function may return a suggestion and an
+--- offset where the suggestion begins in the line.  This is useful if the
+--- suggester wants to be able to insert the suggestion using the original
+--- casing.  For example if you type "set varn" and a history entry is "set
+--- VARNAME" then returning <code>"set VARNAME", 1</code> or
+--- <code>"VARNAME", 5</code> can accept "set VARNAME" instead of "set varnAME".
+---
 --- See <a href="#customisingsuggestions">Customizing Suggestions</a> for more
 --- information.
 --- -show:  local doskeyarg = clink.suggester("doskeyarg")
@@ -143,5 +150,6 @@ end
 --------------------------------------------------------------------------------
 local completion_suggester = clink.suggester("completion")
 function completion_suggester:suggest(line, matches)
-    return suffix(line, matches:getmatch(1), 1)
+    local info = line:getwordinfo(line:getwordcount())
+    return matches:getmatch(1), info.offset
 end

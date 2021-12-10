@@ -114,10 +114,7 @@ static int          s_init_history_pos = -1;    // Sticky history position from 
 static int          s_history_search_pos = -1;  // Most recent history search position during current edit line.
 static str_moveable s_needle;
 
-static str_iter     s_suggestion;
-static str_moveable s_suggestion_buffer;
-static str_moveable s_suggestion_line_buffer;
-static const char*  s_suggestion_color = nullptr;
+static suggestion_manager s_suggestion;
 
 //------------------------------------------------------------------------------
 setting_bool g_classify_words(
@@ -569,6 +566,7 @@ static const char* s_argmatcher_color = nullptr;
 static const char* s_arg_color = nullptr;
 static const char* s_flag_color = nullptr;
 static const char* s_none_color = nullptr;
+static const char* s_suggestion_color = nullptr;
 int g_suggestion_offset = -1;
 
 //------------------------------------------------------------------------------
@@ -757,118 +755,9 @@ static void puts_face_func(const char* s, const char* face, int n)
 
 
 //------------------------------------------------------------------------------
-void clear_suggestion()
+void set_suggestion(line_state& line, const char* suggestion, unsigned int offset)
 {
-    if (s_suggestion.more() && g_rl_buffer)
-        g_rl_buffer->set_need_draw();
-
-    new (&s_suggestion) str_iter();
-    s_suggestion_buffer.free();
-
-    s_suggestion_line_buffer.free();
-
-    reset_prev_suggest();
-}
-
-//------------------------------------------------------------------------------
-void set_suggestion(const char* suggestion, const char* suggestion_line)
-{
-    if ((s_suggestion_buffer.length() == 0) != (!suggestion || !*suggestion) ||
-        (suggestion && !s_suggestion_buffer.equals(suggestion)))
-    {
-        s_suggestion_buffer = suggestion;
-        new (&s_suggestion) str_iter(s_suggestion_buffer.c_str(), s_suggestion_buffer.length());
-
-        if (g_rl_buffer)
-        {
-            g_rl_buffer->set_need_draw();
-            g_rl_buffer->draw();
-        }
-    }
-
-    s_suggestion_line_buffer = suggestion_line;
-}
-
-//------------------------------------------------------------------------------
-static bool is_suggestion_word_break(int c)
-{
-    return c == ' ' || c == '\t';
-}
-
-//------------------------------------------------------------------------------
-bool insert_suggestion(suggestion_action action)
-{
-    if (!s_suggestion.more() || rl_point != rl_end)
-        return false;
-
-    str<> tmp;
-    const char* insert = s_suggestion.get_pointer();
-    int len = s_suggestion.length();
-    int old_end = rl_end;
-
-    bool clear = true;
-    if (action == suggestion_action::insert_next_full_word)
-    {
-        // Skip spaces.
-        while (int c = s_suggestion.peek())
-        {
-            if (!is_suggestion_word_break(c))
-                break;
-            s_suggestion.next();
-        }
-
-        // Skip non-spaces.
-        bool quote = false;
-        while (int c = s_suggestion.peek())
-        {
-            // TODO: What about `\\\"` and `^` and so on?
-            if (c == '"')
-                quote = !quote;
-            else if (!quote && is_suggestion_word_break(c))
-                break;
-            s_suggestion.next();
-        }
-
-        len = int(s_suggestion.get_pointer() - insert);
-        clear = !s_suggestion.more();
-
-        tmp.concat(insert, len);
-        insert = tmp.c_str();
-    }
-
-    g_rl_buffer->begin_undo_group();
-
-    if (action == suggestion_action::insert_to_end && s_suggestion_line_buffer.length())
-    {
-        insert = s_suggestion_line_buffer.c_str();
-        g_rl_buffer->remove(0, old_end);
-    }
-
-    g_rl_buffer->insert(insert);
-
-    if (action == suggestion_action::insert_next_word)
-    {
-        rl_point = old_end;
-        rl_forward_word(1, 0);
-
-        assert(insert == s_suggestion.get_pointer());
-        const int consume = rl_point - old_end;
-        while (int(s_suggestion.get_pointer() - insert) < consume)
-            s_suggestion.next();
-
-        if (rl_point < rl_end)
-        {
-            g_rl_buffer->remove(rl_point, rl_end);
-            clear = false;
-        }
-    }
-
-    g_rl_buffer->end_undo_group();
-
-    if (clear)
-        clear_suggestion();
-
-    return true;
+    s_suggestion.set(line, suggestion, offset);
 }
 
 //------------------------------------------------------------------------------
@@ -885,25 +774,33 @@ void hook_display()
     rollback<int> rb_len(rl_line_buffer_len);
     rollback<int> rb_end(rl_end);
 
-    char* tmp = static_cast<char*>(malloc(rl_end + s_suggestion.length() + 1));
-    if (tmp)
+    str_moveable tmp;
+    if (s_suggestion.get_visible(tmp))
     {
-        memcpy(tmp, rl_line_buffer, rl_end);
-        memcpy(tmp + rl_end, s_suggestion.get_pointer(), s_suggestion.length());
-        tmp[rl_end + s_suggestion.length()] = '\0';
-
-        rl_line_buffer = tmp;
-        rl_end += s_suggestion.length();    // ALTERS rl_end!
-        rl_line_buffer_len = rl_end;        // Use NEW value of rl_end!
+        rl_line_buffer = tmp.data();
+        rl_line_buffer_len = tmp.length();
+        rl_end = tmp.length();
     }
 
     rl_redisplay();
 }
 
 //------------------------------------------------------------------------------
+bool can_suggest(line_state& line)
+{
+    return s_suggestion.can_suggest(line);
+}
+
+//------------------------------------------------------------------------------
+bool insert_suggestion(suggestion_action action)
+{
+    return s_suggestion.insert(action);
+}
+
+//------------------------------------------------------------------------------
 extern "C" void host_clear_suggestion()
 {
-    clear_suggestion();
+    s_suggestion.clear();
     if (g_rl_buffer)
         g_rl_buffer->draw();
 }
@@ -2421,7 +2318,7 @@ void rl_module::on_begin_line(const context& context)
 //------------------------------------------------------------------------------
 void rl_module::on_end_line()
 {
-    clear_suggestion();
+    s_suggestion.clear();
 
     if (!m_done)
         done(rl_line_buffer);
@@ -2451,6 +2348,7 @@ void rl_module::on_end_line()
     s_argmatcher_color = nullptr;
     s_flag_color = nullptr;
     s_none_color = nullptr;
+    s_suggestion_color = nullptr;
     _rl_display_modmark_color = nullptr;
     _rl_display_horizscroll_color = nullptr;
     _rl_display_message_color = nullptr;

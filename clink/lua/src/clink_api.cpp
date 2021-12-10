@@ -767,22 +767,9 @@ static int history_suggester(lua_State* state)
                 continue;
         }
 
-        // Suggest this history entry!
-        {
-            // First return value is the suggestion to append to the line.
-            lua_pushstring(state, rhs.get_pointer());
-
-            // Second return value is the whole line, when accepting the whole
-            // suggestion (e.g. by pressing Right or End).  This enables using
-            // the original casing; for example:
-            //  - History line is "FOOBAR".
-            //  - You type "foo", and "BAR" is suggested.
-            //  - You press [Right].
-            // If the suggestion is only "BAR" then the result must be "fooBAR".
-            // A better result is "FOOBAR", which requires also returning the
-            // full history line.
-            lua_pushstring(state, history[i]->line);
-        }
+        // Suggest this history entry.
+        lua_pushstring(state, history[i]->line);
+        lua_pushinteger(state, 1);
         return 2;
     }
 

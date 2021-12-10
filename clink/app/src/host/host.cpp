@@ -132,7 +132,8 @@ extern bool get_sticky_search_add_history(const char* line);
 extern void clear_sticky_search_position();
 extern void reset_keyseq_to_name_map();
 extern void set_prompt(const char* prompt, const char* rprompt, bool redisplay);
-extern void set_suggestion(const char* suggestion, const char* suggestion_line=nullptr);
+extern bool can_suggest(line_state& line);
+extern void set_suggestion(line_state& line, const char* suggestion, unsigned int offset);
 
 
 
@@ -658,14 +659,22 @@ void host::filter_transient_prompt(bool final)
 }
 
 //------------------------------------------------------------------------------
+bool host::can_suggest(line_state& line)
+{
+    return (m_suggester &&
+            g_autosuggest_enable.get() &&
+            ::can_suggest(line));
+}
+
+//------------------------------------------------------------------------------
 void host::suggest(line_state& line, matches& matches)
 {
     if (m_suggester && g_autosuggest_enable.get())
     {
-        str<> tmp;
-        str<> tmp_line;
-        m_suggester->suggest(line, matches, tmp, tmp_line);
-        set_suggestion(tmp.c_str(), tmp_line.c_str());
+        str<> suggestion;
+        unsigned int offset;
+        m_suggester->suggest(line, matches, suggestion, offset);
+        set_suggestion(line, suggestion.c_str(), offset);
     }
 }
 
