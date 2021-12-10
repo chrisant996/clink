@@ -11,6 +11,9 @@
 - Fixed a limitation in Readline so that `completion-prefix-display-length` and `colored-completion-prefix` can coexist.
 - Fixed when temp files from `io.popenyield()` get deleted.  They were lingering until Lua garbage collection, but they can be deleted almost immediately.
 - Fixed the order of initialization:  first the Readline .inputrc config file is loaded, and then Lua scripts are loaded.  This enables Lua scripts to reliably override Readline config variables if they wish (for example so a prompt filter can clear `emacs-mode-string` and print its own keymap indicator as part of the prompt).
+- Fixed transient prompt to not show keymap mode strings or the modified line mark.
+- Fixed vi mode key bindings that can accept suggestions.
+- Fixed missing `vi-undo` command; it was pre-bound to some keys but could not be bound to any other keys.
 - Fixed memory leak in suggestions.
 
 #### v1.2.50
