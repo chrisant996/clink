@@ -7,6 +7,7 @@
 - Added back `mark-modified-lines` support (was removed in v1.2.36).
 - Added `rl.ismodifiedline()` function so prompt filters can show a modified line indicator if they wish.
 - Added `autosuggest.original_case` setting (on by default) that controls whether parts of the line are updated to use the suggestion's original capitalization, or to keep the typed capitalization.
+- Added help descriptions for many vi mode commands.
 - The `:suggest()` function on suggesters can now return a suggestion string and an offset where the suggestion begins in the input line.
 - Fixed a limitation in Readline so that `completion-prefix-display-length` and `colored-completion-prefix` can coexist.
 - Fixed when temp files from `io.popenyield()` get deleted.  They were lingering until Lua garbage collection, but they can be deleted almost immediately.
