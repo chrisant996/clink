@@ -23,6 +23,15 @@ enum {
     path_type_dir,
 };
 
+enum {
+    drive_type_unknown,
+    drive_type_invalid,
+    drive_type_remote,      // Remote (network) drive.
+    drive_type_removable,   // Floppy, thumb drive, flash card reader, CD-ROM, etc.
+    drive_type_fixed,       // Hard drive, flash drive, etc.
+    drive_type_ramdisk,     // RAM disk.
+};
+
 enum temp_file_mode {
     normal              = 0x0000,   // text mode (translate line endings)
     binary              = 0x0001,   // binary mode (no translation)
@@ -38,6 +47,7 @@ enum argv_quote_mode {
 DEFINE_ENUM_FLAG_OPERATORS(temp_file_mode);
 
 int     get_path_type(const char* path);
+int     get_drive_type(const char* path, unsigned int len=-1);
 int     get_file_size(const char* path);
 bool    is_hidden(const char* path);
 void    get_current_dir(str_base& out);
@@ -55,7 +65,7 @@ bool    set_env(const char* name, const char* value);
 bool    get_alias(const char* name, str_base& out);
 bool    get_short_path_name(const char* path, str_base& out);
 bool    get_long_path_name(const char* path, str_base& out);
-bool    get_full_path_name(const char* path, str_base& out);
+bool    get_full_path_name(const char* path, str_base& out, unsigned int len=-1);
 bool    get_net_connection_name(const char* path, str_base& out);
 double  clock();
 time_t  filetime_to_time_t(const FILETIME& ft);

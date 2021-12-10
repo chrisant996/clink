@@ -199,6 +199,24 @@ int get_path_type(const char* path)
 }
 
 //------------------------------------------------------------------------------
+int get_drive_type(const char* path, unsigned int len)
+{
+    wstr<280> wpath;
+    to_utf16(wpath, str_iter(path, len));
+    UINT type = GetDriveTypeW(wpath.c_str());
+    switch (type)
+    {
+    case DRIVE_NO_ROOT_DIR:     return drive_type_invalid;
+    case DRIVE_REMOVABLE:       return drive_type_removable;
+    case DRIVE_FIXED:           return drive_type_fixed;
+    case DRIVE_REMOTE:          return drive_type_remote;
+    case DRIVE_CDROM:           return drive_type_removable;
+    case DRIVE_RAMDISK:         return drive_type_ramdisk;
+    default:                    return drive_type_unknown;
+    }
+}
+
+//------------------------------------------------------------------------------
 bool is_hidden(const char* path)
 {
     DWORD attr = get_file_attributes(path);
@@ -636,13 +654,14 @@ bool get_long_path_name(const char* path, str_base& out)
 }
 
 //------------------------------------------------------------------------------
-bool get_full_path_name(const char* path, str_base& out)
+bool get_full_path_name(const char* path, str_base& out, unsigned int len)
 {
-    wstr<> wpath(path);
+    wstr<> wpath;
+    to_utf16(wpath, str_iter(path, len));
 
     out.clear();
 
-    unsigned int len = GetFullPathNameW(wpath.c_str(), 0, nullptr, nullptr);
+    len = GetFullPathNameW(wpath.c_str(), 0, nullptr, nullptr);
     if (len)
     {
         wstr<> wout;

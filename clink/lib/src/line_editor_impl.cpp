@@ -1143,16 +1143,28 @@ void line_editor_impl::update_internal()
     {
         matches_impl* matches = nullptr;
 
-        // TODO:  Maybe detect and skip all remote paths, including SUBST and
-        // reparse points, etc?
         if (m_words.size())
         {
-            unsigned int offset = m_words[m_words.size() - 1].offset;
-            if (offset < m_buffer.get_length() && m_buffer.get_length() - offset >= 2)
+            const word& word = m_words[m_words.size() - 1];
+            if (word.offset < m_buffer.get_length() && m_buffer.get_length() - word.offset >= 2)
             {
-                // Use an empty set of matches when a UNC path is detected!
-                const char* end_word = m_buffer.get_buffer() + offset;
-                if (path::is_separator(end_word[0]) && path::is_separator(end_word[1]))
+                // Use an empty set of matches when a UNC path is detected.
+                // Or when a remote drive is detected (or unknown or invalid).
+                // Removable drives are accepted because typically these are
+                // thumb drives these days, which are fast.
+                const char* end_word = m_buffer.get_buffer() + word.offset;
+                bool no_matches = (path::is_separator(end_word[0]) && path::is_separator(end_word[1]));
+                if (!no_matches)
+                {
+                    str<> full;
+                    if (os::get_full_path_name(end_word, full, m_buffer.get_length() - word.offset))
+                    {
+                        path::get_drive(full);
+                        path::append(full, ""); // Because get_drive_type() requires a trailing path separator.
+                        no_matches = (os::get_drive_type(full.c_str()) < os::drive_type_removable);
+                    }
+                }
+                if (no_matches)
                     matches = new matches_impl;
             }
         }
