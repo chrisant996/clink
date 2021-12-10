@@ -1711,6 +1711,7 @@ void initialise_readline(const char* shell_name, const char* state_dir)
         { "\\e[1;5D",       "backward-word" },           // ctrl-left
         { "\\e[1;5C",       "forward-word" },            // ctrl-right
         { "\\e[3~",         "delete-char" },             // del
+        { "\\e[C",          "forward-char" },            // right (because of suggestions)
         { "\\e[F",          "end-of-line" },             // end
         { "\\e[H",          "beginning-of-line" },       // home
         { "\\e[1;2A",       "cua-previous-screen-line" },// shift-up
@@ -1750,6 +1751,9 @@ void initialise_readline(const char* shell_name, const char* state_dir)
     };
 
     static constexpr const char* const vi_movement_key_binds[][2] = {
+        { " ",              "forward-char" },            // space (because of suggestions)
+        { "$",              "end-of-line" },             // end (because of suggestions)
+        { "l",              "forward-char" },            // l
         { "v",              "edit-and-execute-command" }, // v
         { "\\M-\\C-j",      "emacs-editing-mode" },      // alt-ctrl-j
         { "\\M-\\C-m",      "emacs-editing-mode" },      // alt-ctrl-m
