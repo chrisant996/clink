@@ -33,6 +33,9 @@
 extern "C" {
 #include <lua.h>
 #include <lauxlib.h>
+#include <readline/readline.h>
+#include <readline/rldefs.h>
+#include <readline/rlprivate.h>
 }
 
 //------------------------------------------------------------------------------
@@ -645,7 +648,18 @@ void host::filter_transient_prompt(bool final)
     // Replace old prompt with transient prompt.
     rprompt = nullptr;
     prompt = filter_prompt(&rprompt, true/*transient*/);
-    set_prompt(prompt, rprompt, true/*redisplay*/);
+    {
+        // Make sure no mode strings in the transient prompt.
+        rollback<char*> ems(_rl_emacs_mode_str, "");
+        rollback<char*> vims(_rl_vi_ins_mode_str, "");
+        rollback<char*> vcms(_rl_vi_cmd_mode_str, "");
+        rollback<int> eml(_rl_emacs_modestr_len, 0);
+        rollback<int> viml(_rl_vi_ins_modestr_len, 0);
+        rollback<int> vcml(_rl_vi_cmd_modestr_len, 0);
+        rollback<int> mml(_rl_mark_modified_lines, 0);
+
+        set_prompt(prompt, rprompt, true/*redisplay*/);
+    }
 
     if (final)
         return;
