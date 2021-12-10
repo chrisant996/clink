@@ -1836,7 +1836,7 @@ void initialise_readline(const char* shell_name, const char* state_dir)
         { "\\M-\\C-j",      "emacs-editing-mode" },      // alt-ctrl-j
         { "\\M-\\C-k",      "kill-line" },               // alt-ctrl-k
         { "\\M-\\C-m",      "emacs-editing-mode" },      // alt-ctrl-m
-        { "\\C-_",          "vi-undo-mode" },            // ctrl--
+        { "\\C-_",          "vi-undo" },                 // ctrl--
         { "\\M-0",          "vi-arg-digit" },            // alt-0
         { "\\M-1",          "vi-arg-digit" },            // alt-1
         { "\\M-2",          "vi-arg-digit" },            // alt-2
