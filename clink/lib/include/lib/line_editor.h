@@ -31,7 +31,6 @@ public:
         host_callbacks* callbacks = nullptr;
 
         // Optional.
-        const char*     shell_name = "clink";
         const char*     prompt = "clink $ ";
         const char*     rprompt = nullptr;
         collector_tokeniser* command_tokeniser = nullptr;

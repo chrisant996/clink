@@ -20,7 +20,7 @@ class rl_module
     , public singleton<rl_module>
 {
 public:
-                    rl_module(const char* shell_name, terminal_in* input);
+                    rl_module(terminal_in* input);
                     ~rl_module();
 
     bool            is_bound(const char* seq, int len);

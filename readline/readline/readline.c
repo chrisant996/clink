@@ -1315,8 +1315,14 @@ readline_initialize_everything (void)
   /* Decide whether we should automatically go into eight-bit mode. */
   _rl_init_eightbit ();
       
+/* begin_clink_change
+ * Don't load here; Clink needs to be in control of the inputrc search.
+ * Also, loading here happened after Lua was loaded, which interfered with Lua
+ * scripts suppressing the *-mode-string config variables.
+ */
   /* Read in the init file. */
-  rl_read_init_file ((char *)NULL);
+  //rl_read_init_file ((char *)NULL);
+/* end_clink_change */
 
   /* XXX */
   if (_rl_horizontal_scroll_mode && _rl_term_autowrap)

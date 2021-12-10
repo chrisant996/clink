@@ -125,7 +125,7 @@ extern setting_bool g_prompt_async;
 
 extern void start_logger();
 
-extern void initialise_readline(const char* state_dir);
+extern void initialise_readline(const char* shell_name, const char* state_dir);
 extern bool get_sticky_search_history();
 extern bool has_sticky_search_position();
 extern bool get_sticky_search_add_history(const char* line);
@@ -850,7 +850,7 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out)
         // Load inputrc before loading scripts.  Config settings in inputrc can
         // affect Lua scripts (e.g. completion-case-map affects '-' and '_' in
         // command names in argmatchers).
-        initialise_readline(state_dir.c_str());
+        initialise_readline("clink", state_dir.c_str());
         initialise_lua(lua);
         lua.load_scripts();
     }

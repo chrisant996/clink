@@ -1606,13 +1606,12 @@ static void bind_keyseq_list(const two_strings* list, Keymap map)
 }
 
 //------------------------------------------------------------------------------
-void initialise_readline(const char* state_dir)
+void initialise_readline(const char* shell_name, const char* state_dir)
 {
-    static bool s_rl_initialized = false;
-    const bool init = !s_rl_initialized;
-
     // Readline needs a tweak of its handling of 'meta' (i.e. IO bytes >=0x80)
-    // so that it handles UTF-8 correctly (convert=input, output=output)
+    // so that it handles UTF-8 correctly (convert=input, output=output).
+    // Because these affect key binding translations, these are set even before
+    // calling rl_initialize() or binding any other keys.
     _rl_convert_meta_chars_to_ascii = 0;
     _rl_output_meta_chars = 1;
 
@@ -1623,7 +1622,8 @@ void initialise_readline(const char* state_dir)
     _rl_comment_begin = savestring("::");
 
     // Add commands.
-    if (init)
+    static bool s_rl_initialized = false;
+    if (!s_rl_initialized)
     {
         s_rl_initialized = true;
 
@@ -1710,6 +1710,19 @@ void initialise_readline(const char* state_dir)
 
         // Preemptively replace paste command with one that supports Unicode.
         rl_add_funmap_entry("paste-from-clipboard", clink_paste);
+
+        // Do a first rl_initialize() before setting any key bindings or config
+        // variables.  Otherwise it would happen when rl_module installs the
+        // Readline callback, after having loaded the Lua scripts.  That would
+        // mean certain key bindings would not take effect yet.  Also, Clink
+        // prevents rl_init_read_line() from loading the inputrc file both so it
+        // doesn't initially read the wrong inputrc file, and because
+        // rl_initialize() set some default key bindings AFTER it loaded the
+        // inputrc file.  Those were interfering with suppressing the
+        // *-mode-string config variables.
+        rl_readline_name = shell_name;
+        rl_catch_signals = 0;
+        rl_initialize();
 
         // Override some defaults.
         _rl_bell_preference = VISIBLE_BELL;     // Because audible is annoying.
@@ -1866,18 +1879,12 @@ void initialise_readline(const char* state_dir)
     bind_keyseq_list(vi_insertion_key_binds, vi_insertion_keymap);
     bind_keyseq_list(vi_movement_key_binds, vi_movement_keymap);
 
-    // Make sure the first rl_read_init_file() happens before rl_initialize() so
-    // that Clink controls the search path order.
+    // Finally, load the inputrc file.
     load_user_inputrc(state_dir);
 
-    // Do a first rl_initialize() here.  Otherwise it happens when rl_module
-    // installs the Readline callback, which happens after having loaded the Lua
-    // scripts, which means in the first edit line, any Readline variables set
-    // by Lua scripts may be overwritten by the rl_init_read_line() that happens
-    // inside rl_initialize().  That was interfering with suppressing the
-    // *-mode-string config variables.
-    if (init)
-        rl_initialize();
+    // Override the effect of any 'set keymap' assignments in the inputrc file.
+    // This mimics what rl_initialize() does.
+    rl_set_keymap_from_edit_mode();
 }
 
 
@@ -1999,7 +2006,7 @@ static void terminal_fflush_thunk(FILE* stream)
 
 
 //------------------------------------------------------------------------------
-rl_module::rl_module(const char* shell_name, terminal_in* input)
+rl_module::rl_module(terminal_in* input)
 : m_prev_group(-1)
 {
     assert(!s_direct_input);
@@ -2016,9 +2023,6 @@ rl_module::rl_module(const char* shell_name, terminal_in* input)
     rl_outstream = out_stream;
     rl_buffer_changing_hook = buffer_changing;
     rl_selection_event_hook = cua_selection_event_hook;
-
-    rl_readline_name = shell_name;
-    rl_catch_signals = 0;
 
     _rl_eof_char = g_ctrld_exits.get() ? CTRL('D') : -1;
 
