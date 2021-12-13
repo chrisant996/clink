@@ -954,7 +954,7 @@ void textlist_impl::update_display()
                     if (m_history_mode)
                     {
                         const int history_index = m_infos ? m_infos[i].index : i;
-                        const char* mark = (!m_infos[i].marked ? " " :
+                        const char* mark = (!m_infos || !m_infos[i].marked ? " " :
                                             i == m_index ? "*" :
                                             modmark.c_str());
                         tmp.clear();
