@@ -19,6 +19,7 @@ extern "C" {
 #include <compat/config.h>
 #include <readline/readline.h>
 #include <readline/rlprivate.h>
+#include <readline/rldefs.h>
 extern int complete_get_screenwidth(void);
 }
 
@@ -660,6 +661,10 @@ static Keyentry* collect_functions(
             seen_name.emplace(name);
     }
 
+#if defined (VI_MODE)
+    const bool is_vi_mode = (rl_editing_mode == vi_mode);
+#endif
+
     for (const FUNMAP* const* walk = funmap; *walk; ++walk)
     {
         rl_command_func_t* func = (*walk)->function;
@@ -686,6 +691,19 @@ static Keyentry* collect_functions(
         }
         if (seen > 0)
             continue;
+
+#if defined (VI_MODE)
+        // Only list vi commands in vi mode, since the commands are not designed
+        // to be generally usable outside of vi mode or when bound to arbitrary
+        // custom keys.
+        if (!is_vi_mode &&
+            (found_name[0] == 'v' && found_name[1] == 'i' && found_name[2] == '-') &&
+            strcmp(found_name, "vi-editing-mode") != 0 &&
+            strcmp(found_name, "vi-movement-mode") != 0)
+        {
+            continue;
+        }
+#endif /* VI_MODE */
 
         const char* desc;
         int cat = keycat_misc;
