@@ -62,32 +62,11 @@
 #include <pch.h>
 #include <wchar.h>
 
-#include <map>
-
-static HDC s_hdc = NULL;
-static HFONT s_hfont = NULL;
-static std::map<char32_t, int> s_map_ambiguous;
-static int s_cell = 0;
-
-static int get_wcwidth_from_font(char32_t ucs)
-{
-  if (s_hdc && s_hfont && s_cell)
-  {
-    ABC abc;
-    if (GetCharABCWidths(s_hdc, ucs, ucs, &abc))
-      return abc.abcB / s_cell;
-
-    INT width;
-    if (GetCharWidth32(s_hdc, ucs, ucs, &width))
-      return width / s_cell;
-  }
-
-  return -1;
-}
-
 #if defined(__cplusplus)
 extern "C" {
 #endif
+
+static int resolve_ambiguous_wcwidth(char32_t ucs);
 
 struct interval {
   char32_t first;
@@ -317,17 +296,7 @@ int mk_wcwidth_cjk(char32_t ucs)
   /* binary search in table of non-spacing characters */
   if (bisearch(ucs, ambiguous,
 	       sizeof(ambiguous) / sizeof(struct interval) - 1))
-  {
-    auto i = s_map_ambiguous.find(ucs);
-    if (i != s_map_ambiguous.end())
-	return i->second;
-
-    int width = get_wcwidth_from_font(ucs);
-    if (width < 0)
-      width = 2;
-    s_map_ambiguous[ucs] = width;
-    return 2;
-  }
+    return resolve_ambiguous_wcwidth(ucs);
 
   return mk_wcwidth(ucs);
 }
@@ -347,13 +316,93 @@ int mk_wcswidth_cjk(const char32_t *pwcs, size_t n)
 }
 
 
-static UINT s_cp = 0;
 
+//------------------------------------------------------------------------------
 typedef int wcwidth_t (char32_t);
 typedef int wcswidth_t (const char32_t*, size_t);
 
 wcwidth_t *wcwidth = mk_wcwidth;
 wcswidth_t *wcswidth = mk_wcswidth;
+
+#if defined(__cplusplus)
+} // extern "C"
+#endif
+
+#include <core/settings.h>
+#include <map>
+
+enum { EAA_font, EAA_one, EAA_two, EAA_auto };
+
+static setting_enum g_terminal_east_asian_ambiguous(
+  "terminal.east_asian_ambiguous",
+  "East Asian Ambiguous character widths",
+  "There is a group of East Asian characters whose widths are ambiguous in the\n"
+  "Unicode standard.  This setting controls how to resolve the ambiguous widths.\n"
+  "By default this is set to 'auto', but some terminal hosts may require setting\n"
+  "this to a different value to work around limitations in the terminal hosts.\n"
+  "\n"
+  "Setting this to 'font' measures the East Asian Ambiguous character widths\n"
+  "using the current font.  Setting it to 'one' uses 1 as the width, or 'two'\n"
+  "uses 2 as the width.  When this is 'auto' (the default) and the current code\n"
+  "page is 932, 936, 949, or 950 then the current font is used to measure the\n"
+  "widths, or for any other code pages (including UTF8) the East Asian Ambiguous\n"
+  "character widths are assumed to be 1.",
+  "font,one,two,auto",
+  EAA_auto);
+
+static HDC s_hdc = NULL;
+static HFONT s_hfont = NULL;
+static std::map<char32_t, int> s_map_ambiguous;
+static int s_cell = 0;
+static int s_resolve = EAA_auto;
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
+static int get_wcwidth_from_font(char32_t ucs)
+{
+  if (s_hdc && s_hfont && s_cell)
+  {
+    ABC abc;
+    if (GetCharABCWidths(s_hdc, ucs, ucs, &abc))
+      return abc.abcB / s_cell;
+
+    INT width;
+    if (GetCharWidth32(s_hdc, ucs, ucs, &width))
+      return width / s_cell;
+  }
+
+  return -1;
+}
+
+static int resolve_ambiguous_wcwidth(char32_t ucs)
+{
+  switch (s_resolve)
+  {
+  default:
+  case EAA_auto:
+  case EAA_font:
+    {
+      auto i = s_map_ambiguous.find(ucs);
+      if (i != s_map_ambiguous.end())
+        return i->second;
+
+      int width = get_wcwidth_from_font(ucs);
+      if (width < 0)
+        width = 2;
+      s_map_ambiguous[ucs] = width;
+      return width;
+    }
+    break;
+
+  case EAA_one:
+    return 1;
+
+  case EAA_two:
+    return 2;
+  }
+}
 
 static void reset_cached_font()
 {
@@ -392,22 +441,37 @@ void reset_wcwidths()
   s_map_ambiguous.clear();
   reset_cached_font();
 
-  s_cp = GetConsoleOutputCP();
+  bool use_cjk = true;
 
-  switch (s_cp)
+  s_resolve = g_terminal_east_asian_ambiguous.get();
+  if (s_resolve == EAA_auto)
   {
-  case 932:
-  case 936:
-  case 949:
-  case 950:
+    static UINT s_cp = 0;
+    s_cp = GetConsoleOutputCP();
+    switch (s_cp)
+    {
+    case 932:
+    case 936:
+    case 949:
+    case 950:
+      use_cjk = true;
+      break;
+    default:
+      use_cjk = false;
+      break;
+    }
+  }
+
+  if (use_cjk)
+  {
     wcwidth = mk_wcwidth_cjk;
     wcswidth = mk_wcswidth_cjk;
     init_cached_font();
-    break;
-  default:
+  }
+  else
+  {
     wcwidth = mk_wcwidth;
     wcswidth = mk_wcswidth;
-    break;
   }
 }
 
