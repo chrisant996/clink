@@ -13,7 +13,7 @@ Here are some highlights of what Clink provides:
   - Directory commands.
   - Environment variables.
 - Context sensitive colored input text.
-- Automatic suggestions.
+- Automatic suggestions from history and completions.
 - New keyboard shortcuts;
   - Interactive completion list (<kbd>Ctrl</kbd>+<kbd>Space</kbd>).
   - Incremental history search (<kbd>Ctrl</kbd>+<kbd>R</kbd> and <kbd>Ctrl</kbd>+<kbd>S</kbd>).
