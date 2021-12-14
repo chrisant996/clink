@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.2.50</title>
+<title>Clink v1.3.0</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -771,7 +771,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.2.50</div>
+                <div id="title">Clink v1.3.0</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -802,7 +802,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 </ul>
 </li>
 <li>Context sensitive colored input text.</li>
-<li>Automatic suggestions.</li>
+<li>Automatic suggestions from history and completions.</li>
 <li>New keyboard shortcuts;<ul>
 <li>Interactive completion list (<kbd>Ctrl</kbd>+<kbd>Space</kbd>).</li>
 <li>Incremental history search (<kbd>Ctrl</kbd>+<kbd>R</kbd> and <kbd>Ctrl</kbd>+<kbd>S</kbd>).</li>
@@ -966,6 +966,11 @@ $endif
 <td align="center"><a name="autosuggest_enable"></a><code>autosuggest.enable</code></td>
 <td align="center">False</td>
 <td>When this is <code>true</code> a suggested command may appear in <code>color.suggestion</code> color after the cursor.  If the suggestion isn&#39;t what you want, just ignore it.  Or accept the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, accept the next word of the suggestion with <kbd>Ctrl</kbd>+<kbd>Right</kbd>, or accept the next full word of the suggestion up to a space with <kbd>Shift</kbd>+<kbd>Right</kbd>.  The <code>autosuggest.strategy</code> setting determines how a suggestion is chosen.</td>
+</tr>
+<tr>
+<td align="center"><code>autosuggest.original_case</code></td>
+<td align="center">True</td>
+<td>When this is enabled (the default), accepting a suggestion uses the original capitalization from the suggestion.</td>
 </tr>
 <tr>
 <td align="center"><a name="autosuggest_strategy"></a><code>autosuggest.strategy</code></td>
@@ -1331,6 +1336,11 @@ $endif
 <td align="center"><code>terminal.differentiate_keys</code></td>
 <td align="center">False</td>
 <td>When enabled, pressing <kbd>Ctrl</kbd> + <kbd>H</kbd> or <kbd>I</kbd> or <kbd>M</kbd> or <kbd>[</kbd> generate special key sequences to enable binding them separately from <kbd>Backspace</kbd> or <kbd>Tab</kbd> or <kbd>Enter</kbd> or <kbd>Esc</kbd>.</td>
+</tr>
+<tr>
+<td align="center"><code>terminal.east_asian_ambiguous</code></td>
+<td align="center"><code>auto</code></td>
+<td>There is a group of East Asian characters whose widths are ambiguous in the Unicode standard.  This setting controls how to resolve the ambiguous widths.  By default this is set to <code>auto</code>, but some terminal hosts may require setting this to a different value to work around limitations in the terminal hosts.  Setting this to <code>font</code> measures the East Asian Ambiguous character widths using the current font.  Setting it to <code>one</code> uses 1 as the width, or <code>two</code> uses 2 as the width.  When this is <code>auto</code> (the default) and the current code page is 932, 936, 949, or 950 then the current font is used to measure the widths, or for any other code pages (including UTF8) the East Asian Ambiguous character widths are assumed to be 1.</td>
 </tr>
 <tr>
 <td align="center"><code>terminal.emulation</code></td>
@@ -2820,6 +2830,7 @@ end
 <li>Define a <code>:suggest()</code> function on the returned suggestion generator.</li>
 </ol>
 <p>The function takes a <a href="#line_state">line_state</a> argument that contains the input line, and a <a href="#matches">matches</a> argument that contains the possible matches from the completion engine.  If the function returns nil, the next generator listed in the strategy is called.  If the function returns a string (even an empty string), then the string is used as the suggestion.</p>
+<p>The function can optionally return a string and an offset to where the suggestion begins in the input line.  This makes it easier to return suggestions in some cases, and also makes it possible to update the capitalization of the whole accepted suggestion (even the part that&#39;s already been typed).</p>
 <p>This example illustrates how to make a suggestion generator that returns the longest common prefix of the possible matches.</p>
 <pre><code class="language-lua">local prefix_suggestor = clink.suggester(&quot;completion_prefix&quot;)
 
@@ -2836,7 +2847,8 @@ function prefix_suggestor:suggest(line_state, matches)
     end
 
     -- Return the common prefix as the suggestion.
-    return prefix
+    local info = line_state:getwordinfo(line_state:getwordcount())
+    return prefix, info.offset
 end
 </code></pre>
 <h1 id="miscellaneous">Miscellaneous</h1>
@@ -4055,7 +4067,7 @@ function foo_prompt:filter(prompt)
 end</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.refilterprompt">clink.refilterprompt</a></div> <div class="signature">() : nil<br/><div class="version">v1.2.46 and newer</div></div></div><div class="body"><p class="desc">Invoke the prompt filters again and refresh the prompt.</p><p class="desc"> Note: this can potentially be expensive; call this only infrequently.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.reload">clink.reload</a></div> <div class="signature">() : nil<br/><div class="version">v1.2.29 and newer</div></div></div><div class="body"><p class="desc">Reloads Lua scripts and Readline config file at the next prompt.</p></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="clink.suggester">clink.suggester</a></div> <div class="signature">( <span class="arg_name">name</span>:string ) : table<br/><div class="version">v1.2.47 and newer</div></div></div><div class="body"><p class="desc">Creates and returns a new suggester object.  Suggesters are consulted in the order their names are listed in the <code><a href="#autosuggest.strategy">autosuggest.strategy</a></code> setting.</p><p class="desc"> Define on the object a <code>:suggest()</code> function that takes a <a href="#line_state">line_state</a> argument which contains the input line, and a <a href="#matches">matches</a> argument which contains the possible completions.  The function can return nil to give the next suggester a chance, or can return a suggestion (or an empty string) to stop looking for suggestions.</p><p class="desc"> See <a href="#customisingsuggestions">Customizing Suggestions</a> for more information.</p><pre class="language-lua"><code>local doskeyarg = clink.suggester("doskeyarg")
+<div class="function"><div class="header"> <div class="name"><a name="clink.suggester">clink.suggester</a></div> <div class="signature">( <span class="arg_name">name</span>:string ) : table<br/><div class="version">v1.2.47 and newer</div></div></div><div class="body"><p class="desc">Creates and returns a new suggester object.  Suggesters are consulted in the order their names are listed in the <code><a href="#autosuggest.strategy">autosuggest.strategy</a></code> setting.</p><p class="desc"> Define on the object a <code>:suggest()</code> function that takes a <a href="#line_state">line_state</a> argument which contains the input line, and a <a href="#matches">matches</a> argument which contains the possible completions.  The function can return nil to give the next suggester a chance, or can return a suggestion (or an empty string) to stop looking for suggestions.</p><p class="desc"> In Clink v1.2.51 and higher, the function may return a suggestion and an offset where the suggestion begins in the line.  This is useful if the suggester wants to be able to insert the suggestion using the original casing.  For example if you type "set varn" and a history entry is "set VARNAME" then returning <code>"set VARNAME", 1</code> or <code>"VARNAME", 5</code> can accept "set VARNAME" instead of "set varnAME".</p><p class="desc"> See <a href="#customisingsuggestions">Customizing Suggestions</a> for more information.</p><pre class="language-lua"><code>local doskeyarg = clink.suggester("doskeyarg")
 function doskeyarg:suggest(line, matches)
 &nbsp;   if line:getword(1) == "doskey" and
 &nbsp;           line:getline():match("[ \t][^ \t/][^ \t]+=") and
@@ -4343,6 +4355,44 @@ end</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="rl.getvariable">rl.getvariable</a></div> <div class="signature">( <span class="arg_name">name</span>:string ) : string | nil<br/><div class="version">v1.1.6</div></div></div><div class="body"><p class="desc">Returns the value of the named Readline configuration variable as a string, or nil if the variable name is not recognized.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="rl.insertmode">rl.insertmode</a></div> <div class="signature">( [<span class="arg_name">insert</span>:boolean] ) : boolean<br/><div class="version">v1.2.50 and newer</div></div></div><div class="body"><p class="desc">Returns true when typing insertion mode is on.</p><p class="desc"> When the optional <span class="arg">insert</span> argument is passed, this also sets typing insertion mode on or off accordingly.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="rl.invokecommand">rl.invokecommand</a></div> <div class="signature">( <span class="arg_name">command</span>:string, [<span class="arg_name">count</span>:integer] ) : boolean | nil<br/><div class="version">v1.1.26</div></div></div><div class="body"><p class="desc">Invokes a Readline command named <span class="arg">command</span>.  May only be used within a <a href="#luakeybindings">luafunc: key binding</a>.</p><p class="desc"> <span class="arg">count</span> is optional and defaults to 1 if omitted.</p><p class="desc"> Returns true if the named command succeeds, false if the named command fails, or nil if the named command doesn't exist.</p><p class="desc"> Warning:  Invoking more than one Readline command in a luafunc: key binding could have unexpected results, depending on which commands are invoked.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="rl.ismodifiedline">rl.ismodifiedline</a></div> <div class="signature">() : boolean<br/><div class="version">v1.2.51 and newer</div></div></div><div class="body"><p class="desc">Returns true when the current input line is a history entry that has been modified (i.e. has an undo list).</p><p class="desc"> This enables prompt filters to show a "modmark" of their own, as an alternative to the modmark shown when the <code>mark-modified-lines</code> Readline config setting is enabled.</p><p class="desc"> The following sample illustrates a prompt filter that shows a "modified line" indicator when the current line is a history entry and has been modified.</p><pre class="language-lua"><code>local p = clink.promptfilter(10)
+local normal = "\x1b[m"
+
+local function get_settings_color(name)
+return "\x1b[" .. settings.get(name) .. "m"
+end
+
+function p:filter(prompt)
+&nbsp;   prompt = os.getcwd()
+&nbsp;   if rl.ismodifiedline() then
+&nbsp;       -- If the current line is a history entry and has been modified,
+&nbsp;       -- then show an indicator.
+&nbsp;       prompt = get_settings_color("color.modmark") .. "*" .. normal .. " " .. prompt
+&nbsp;   end
+&nbsp;   prompt = prompt .. "\n$ "
+&nbsp;   return prompt
+end
+
+local last_modmark = false
+
+local function modmark_reset()
+&nbsp;   -- Reset the remembered state at the beginning of each edit line.
+&nbsp;   last_modmark = rl.ismodifiedline()
+
+&nbsp;   -- Turn off `mark-modified-lines` to avoid two modmarks showing up.
+&nbsp;   rl.setvariable("mark-modified-lines", "off")
+end
+
+local function modmark_refilter()
+&nbsp;   -- If the modmark state has changed, refresh the prompt.
+&nbsp;   if last_modmark ~= rl.ismodifiedline() then
+&nbsp;       last_modmark = rl.ismodifiedline()
+&nbsp;       clink.refilterprompt()
+&nbsp;   end
+end
+
+clink.onbeginedit(modmark_reset)
+clink.onaftercommand(modmark_refilter)</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="rl.isvariabletrue">rl.isvariabletrue</a></div> <div class="signature">( <span class="arg_name">name</span>:string ) : boolean | nil<br/><div class="version">v1.1.6</div></div></div><div class="body"><p class="desc">Returns a boolean value indicating whether the named Readline configuration variable is set to true (on), or nil if the variable name is not recognized.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="rl.setbinding">rl.setbinding</a></div> <div class="signature">( <span class="arg_name">key</span>:string, <span class="arg_name">binding</span>:string | nil, [<span class="arg_name">keymap</span>:string] ) : boolean<br/><div class="version">v1.2.46 and newer</div></div></div><div class="body"><p class="desc">Binds <span class="arg">key</span> to invoke <span class="arg">binding</span>, and returns whether it was successful.</p><p class="desc"> The <span class="arg">key</span> sequence string is the same format as from <code>clink echo</code>.  See <a href="#discoverkeysequences">Discovering Clink key sindings</a> for more information.</p><p class="desc"> The <span class="arg">binding</span> is either the name of a Readline command, a quoted macro string (just like in the .inputrc config file), or nil to clear the key binding.</p><p class="desc"> An optional <span class="arg">keymap</span> may be specified as well.  If it is omitted or nil, then the current keymap is searched.  Otherwise it may refer to one of the three built in keymaps: <table> <tr><th>Keymap</th><th>Description</th></tr> <tr><td><code>"emacs"</code></td><td>The Emacs keymap, which is the default keymap.</td></tr> <tr><td><code>"vi"</code>, <code>"vi-move"</code>, or <code>"vi-command"</code></td><td>The VI command mode keymap.</td></tr> <tr><td><code>"vi-insert"</code></td><td>The VI insertion mode keymap.</td></tr> </table></p><p class="desc"> Using Lua's <code>[[</code>..<code>]]</code> string syntax conveniently lets you simply copy the key string exactly from the <code>clink echo</code> output, without needing to translate the quotes or backslashes.</p><p class="desc"> <strong>Note:</strong> This does not write the value into a config file. Instead it updates the key binding in memory, temporarily overriding whatever is present in any config files.  When config files are reloaded, they may replace the key binding again.</p><pre class="language-lua"><code>local old_space = rl.getbinding('" "')
 function hijack_space(rl_buffer)
@@ -4488,6 +4538,23 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v13">v1.3</h4>
+<ul>
+<li>Added back <code>mark-modified-lines</code> support (was removed in v1.2.36).</li>
+<li>Added <code>rl.ismodifiedline()</code> function so prompt filters can show a modified line indicator if they wish.</li>
+<li>Added <code>autosuggest.original_case</code> setting (on by default) that controls whether parts of the line are updated to use the suggestion&#39;s original capitalization, or to keep the typed capitalization.</li>
+<li>Added <code>terminal.east_asian_ambiguous</code> setting that controls how the width is determined for the <a href="https://www.unicode.org/reports/tr11-2/#:~:text=East%20Asian%20Ambiguous%20%28A%29%20-%20Characters%20that%20occur,sets%2C%20but%20also%20some%20of%20the%20mathematical%20symbols%29.">East Asian Ambiguous</a> range of characters (which includes the lambda character).  This may help with working around display issues in some terminal hosts.</li>
+<li>Added help descriptions for many vi mode commands.</li>
+<li>The <code>:suggest()</code> function on suggesters can now return a suggestion string and an offset where the suggestion begins in the input line.</li>
+<li>Fixed a limitation in Readline so that <code>completion-prefix-display-length</code> and <code>colored-completion-prefix</code> can coexist.</li>
+<li>Fixed when temp files from <code>io.popenyield()</code> get deleted.  They were lingering until Lua garbage collection, but they can be deleted almost immediately.</li>
+<li>Fixed the order of initialization:  first the Readline .inputrc config file is loaded, and then Lua scripts are loaded.  This enables Lua scripts to reliably override Readline config variables if they wish (for example so a prompt filter can clear <code>emacs-mode-string</code> and print its own keymap indicator as part of the prompt).</li>
+<li>Fixed transient prompt to not show keymap mode strings or the modified line mark.</li>
+<li>Fixed vi mode key bindings that can accept suggestions.</li>
+<li>Fixed missing <code>vi-undo</code> command; it was pre-bound to some keys but could not be bound to any other keys.</li>
+<li>Fixed the &quot;show help&quot; commands when listing unbound commands:  unbound vi mode commands should not be listed in emacs mode because the vi mode commands are only meant to be used in vi mode, and are not meant to be bound to custom keys.</li>
+<li>Fixed memory leak in suggestions.</li>
+</ul>
 <h4 id="v1250">v1.2.50</h4>
 <ul>
 <li>Added <code>rl.insertmode()</code> function to get or set whether insert mode is active.</li>
