@@ -7,7 +7,7 @@
 - Added back `mark-modified-lines` support (was removed in v1.2.36).
 - Added `rl.ismodifiedline()` function so prompt filters can show a modified line indicator if they wish.
 - Added `autosuggest.original_case` setting (on by default) that controls whether parts of the line are updated to use the suggestion's original capitalization, or to keep the typed capitalization.
-- Added `terminal.east_asian_ambiguous` setting that controls how the width is determined for the [East Asian Ambiguous](https://www.unicode.org/reports/tr11-2/#:~:text=East%20Asian%20Ambiguous%20%28A%29%20-%20Characters%20that%20occur,sets%2C%20but%20also%20some%20of%20the%20mathematical%20symbols%29.) range of characters (which includes the lambda character).  This should help with working around display issues in some terminal hosts.
+- Added `terminal.east_asian_ambiguous` setting that controls how the width is determined for the [East Asian Ambiguous](https://www.unicode.org/reports/tr11-2/#:~:text=East%20Asian%20Ambiguous%20%28A%29%20-%20Characters%20that%20occur,sets%2C%20but%20also%20some%20of%20the%20mathematical%20symbols%29.) range of characters (which includes the lambda character).  This may help with working around display issues in some terminal hosts.
 - Added help descriptions for many vi mode commands.
 - The `:suggest()` function on suggesters can now return a suggestion string and an offset where the suggestion begins in the input line.
 - Fixed a limitation in Readline so that `completion-prefix-display-length` and `colored-completion-prefix` can coexist.
