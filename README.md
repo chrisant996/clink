@@ -1,6 +1,6 @@
 ### Overview
 
-Clink combines the native Windows shell cmd.exe with the powerful command line editing features of the GNU Readline library, which provides rich completion, history, and line-editing capabilities. Readline is best known for its use in the well-known Unix shell Bash, the standard shell for Mac OS X and many Linux distributions.
+Clink combines the native Windows shell cmd.exe with the powerful command line editing features of the GNU Readline library, which provides rich completion, history, and line-editing capabilities. Readline is best known for its use in the Unix shell Bash, the standard shell for Mac OS X and many Linux distributions.
 
 For details, refer to the [Clink documentation](https://chrisant996.github.io/clink/clink.html).
 
@@ -16,6 +16,8 @@ See the [issues](https://github.com/chrisant996/clink/issues) page for known iss
 
 ### Features
 
+Here are some highlights of what Clink provides:
+
 - The same line editing as Bash (from the [GNU Readline library](https://tiswww.case.edu/php/chet/readline/rltop.html) version 8.1).
 - History persistence between sessions.
 - Context sensitive completion;
@@ -23,7 +25,7 @@ See the [issues](https://github.com/chrisant996/clink/issues) page for known iss
   - Directory commands.
   - Environment variables.
 - Context sensitive colored input text.
-- Automatic suggestions.
+- Automatic suggestions from history and completions.
 - New keyboard shortcuts;
   - Interactive completion list (<kbd>Ctrl</kbd>+<kbd>Space</kbd>).
   - Incremental history search (<kbd>Ctrl</kbd>+<kbd>R</kbd> and <kbd>Ctrl</kbd>+<kbd>S</kbd>).
@@ -50,9 +52,18 @@ By default Clink binds <kbd>Alt</kbd>+<kbd>H</kbd> to display the current key bi
 
 There are several ways to start Clink.
 
-1. If you installed the auto-run, just start `cmd.exe`. Run `clink autorun --help` for more info.
+1. If you installed the auto-run, just start `cmd.exe`.  Run `clink autorun --help` for more info.
 2. To manually start, run the Clink shortcut from the Start menu (or the clink.bat located in the install directory).
 3. To establish Clink to an existing `cmd.exe` process, use `<install_dir>\clink.exe inject`.
+
+You can use Clink right away without configuring anything:
+
+- Searchable [command history](#saved-command-history) will be saved between sessions.
+- <kbd>Tab</kbd> and <kbd>Ctrl</kbd>+<kbd>Space</kbd> will do match completion two different ways.
+- Press <kbd>Alt</kbd>+<kbd>H</kbd> to see a list of the current key bindings.
+- Press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>/</kbd> followed by another key to see what command is bound to the key.
+
+See [Getting Started](https://chrisant996.github.io/clink/clink.html#getting-started) for information on getting started with Clink.
 
 ### Upgrading from Clink v0.4.9
 
