@@ -1183,7 +1183,7 @@ static int display_match_list_internal(match_accessor* access, int len, int max,
                 printed_len = 0;
                 if (append)
                 {
-                    char* temp = printable_part(match);
+                    char* temp = printable_part((char*)match);
                     printed_len = append_filename(temp, match, sind, can_condense, type, 0);
                 }
                 append_display(display, 0, append ? _rl_arginfo_color : _rl_filtered_color);
@@ -1191,7 +1191,7 @@ static int display_match_list_internal(match_accessor* access, int len, int max,
             }
             else
             {
-                char* temp = printable_part(display);
+                char* temp = printable_part((char*)display);
                 printed_len = append_filename(temp, display, sind, can_condense, type, 0);
             }
 
@@ -1362,7 +1362,7 @@ done_filtered:
             len = 0;
             if (append)
             {
-                char *temp = printable_part(match);
+                char *temp = printable_part((char*)match);
                 len = printable_len(match);
             }
             len += access->get_display_cells(access, i);

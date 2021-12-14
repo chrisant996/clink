@@ -650,9 +650,9 @@ void host::filter_transient_prompt(bool final)
     prompt = filter_prompt(&rprompt, true/*transient*/);
     {
         // Make sure no mode strings in the transient prompt.
-        rollback<char*> ems(_rl_emacs_mode_str, "");
-        rollback<char*> vims(_rl_vi_ins_mode_str, "");
-        rollback<char*> vcms(_rl_vi_cmd_mode_str, "");
+        rollback<char*> ems(_rl_emacs_mode_str, const_cast<char*>(""));
+        rollback<char*> vims(_rl_vi_ins_mode_str, const_cast<char*>(""));
+        rollback<char*> vcms(_rl_vi_cmd_mode_str, const_cast<char*>(""));
         rollback<int> eml(_rl_emacs_modestr_len, 0);
         rollback<int> viml(_rl_vi_ins_modestr_len, 0);
         rollback<int> vcml(_rl_vi_cmd_modestr_len, 0);

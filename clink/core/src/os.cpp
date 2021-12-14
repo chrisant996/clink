@@ -199,10 +199,11 @@ int get_path_type(const char* path)
 }
 
 //------------------------------------------------------------------------------
-int get_drive_type(const char* path, unsigned int len)
+int get_drive_type(const char* _path, unsigned int len)
 {
     wstr<280> wpath;
-    to_utf16(wpath, str_iter(path, len));
+    str_iter path(_path, len);
+    to_utf16(wpath, path);
     UINT type = GetDriveTypeW(wpath.c_str());
     switch (type)
     {
@@ -654,10 +655,11 @@ bool get_long_path_name(const char* path, str_base& out)
 }
 
 //------------------------------------------------------------------------------
-bool get_full_path_name(const char* path, str_base& out, unsigned int len)
+bool get_full_path_name(const char* _path, str_base& out, unsigned int len)
 {
     wstr<> wpath;
-    to_utf16(wpath, str_iter(path, len));
+    str_iter path(_path, len);
+    to_utf16(wpath, path);
 
     out.clear();
 
