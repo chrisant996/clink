@@ -24,9 +24,6 @@ int set(int, char**);
 int installscripts(int, char**);
 int uninstallscripts(int, char**);
 int testbed(int, char**);
-#ifdef DEBUG
-int testwrap(int, char**);
-#endif
 
 //------------------------------------------------------------------------------
 void puts_help(const char* const* help_pairs, const char* const* other_pairs=nullptr)
@@ -100,9 +97,6 @@ static int dispatch_verb(const char* verb, int argc, char** argv)
         "installscripts",       installscripts,
         "uninstallscripts",     uninstallscripts,
         "testbed",              testbed,
-#ifdef DEBUG
-        "testwrap",             testwrap,
-#endif
     };
 
     for (int i = 0; i < sizeof_array(handlers); ++i)

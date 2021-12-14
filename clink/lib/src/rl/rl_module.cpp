@@ -752,100 +752,6 @@ static void puts_face_func(const char* s, const char* face, int n)
     g_printer->print(out.c_str(), out.length());
 }
 
-#ifdef DEBUG
-
-//------------------------------------------------------------------------------
-static void print(const char* str)
-{
-    wstr<> w(str);
-    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-    DWORD didWrite;
-    WriteConsoleW(h, w.c_str(), w.length(), &didWrite, nullptr);
-}
-
-//------------------------------------------------------------------------------
-void test_wrap()
-{
-    const HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-
-    DWORD mode = 0;
-    GetConsoleMode(h, &mode);
-    // SetConsoleMode(h, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
-    SetConsoleMode(h, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING | ENABLE_WRAP_AT_EOL_OUTPUT);
-
-    printf("SM_DBCSENABLED = %d\n", GetSystemMetrics(SM_DBCSENABLED));
-
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    if (GetConsoleScreenBufferInfo(h, &csbi))
-        printf("csbi.dwSize = %d,%d\n", csbi.dwSize.X, csbi.dwSize.Y);
-
-    printf("wcwidth(lambda) = %d\n", wcwidth(0x3bb));
-
-    size_t c = 0;
-    CONSOLE_SCREEN_BUFFER_INFO rgcsbi[20];
-
-    print("[?12l[?25h");
-    print("[1;32;40mD:\\Programming\\Web\\direct_sales_platform\\@frontend [1;37;40m(develop -> origin)\r\n");
-    // print("[1;39;40mλ [0m[m");
-    print("[1;39;40ma [0m[m");
-    // print("a ");
-    GetConsoleScreenBufferInfo(h, &csbi);
-    rgcsbi[c++] = csbi;
-
-    // print("[m\\[m");
-    // print("");
-    // print("[K");
-    // print("g");
-
-    while (csbi.dwCursorPosition.X < csbi.dwSize.X - 3)
-    {
-        // print("[ma[m");
-        print("a");
-        GetConsoleScreenBufferInfo(h, &csbi);
-    }
-
-    // SetConsoleMode(h, mode & ~ENABLE_WRAP_AT_EOL_OUTPUT);
-
-    for (size_t i = 0; i < 5; i++)
-    {
-        if (i == 2)
-            MessageBox(0, "break into debugger", "Clink", MB_OK);
-        // print("[mb[m");
-        print("b");
-        if (GetConsoleScreenBufferInfo(h, &csbi))
-            rgcsbi[c++] = csbi;
-    }
-
-    print(" ");
-    // SetConsoleMode(h, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
-    print("\r");
-    if (GetConsoleScreenBufferInfo(h, &csbi))
-        rgcsbi[c++] = csbi;
-
-    for (size_t i = 3; i--;)
-    {
-        print("[mc[m");
-        if (GetConsoleScreenBufferInfo(h, &csbi))
-            rgcsbi[c++] = csbi;
-    }
-
-    print("\r\n\r\n");
-
-    for (size_t i = 0; i < c; i++)
-        printf("rgcsbi[%d].dwCursorPosition = %d,%d\n", int(i), rgcsbi[i].dwCursorPosition.X, rgcsbi[i].dwCursorPosition.Y);
-
-    SetConsoleMode(h, mode);
-}
-
-//------------------------------------------------------------------------------
-static int test_wrap_command(int count, int invoking_key)
-{
-    test_wrap();
-    return 1;
-}
-
-#endif // DEBUG
-
 
 
 //------------------------------------------------------------------------------
@@ -1686,10 +1592,6 @@ void initialise_readline(const char* shell_name, const char* state_dir)
 
         clink_add_funmap_entry("clink-diagnostics", clink_diagnostics, keycat_misc, "Show internal diagnostic information");
 
-#ifdef DEBUG
-        clink_add_funmap_entry("clink-test-wrap", test_wrap_command, keycat_misc, "INTERNAL DIAGNOSTIC TEST");
-#endif
-
         // Alias some command names for convenient compatibility with bash .inputrc configuration entries.
         rl_add_funmap_entry("alias-expand-line", clink_expand_doskey_alias);
         rl_add_funmap_entry("history-and-alias-expand-line", clink_expand_history_and_alias);
@@ -1754,9 +1656,6 @@ void initialise_readline(const char* shell_name, const char* state_dir)
         { "\\e[18~",        "win-history-list" },        // F7
         { "\\e[19~",        "history-search-backward" }, // F8
         { "\\e[20~",        "win-copy-history-number" }, // F9
-#ifdef DEBUG
-        { "\\C-x\\C-a",     "clink-test-wrap" },         // ctrl-x,ctrl-a
-#endif
         {}
     };
 
