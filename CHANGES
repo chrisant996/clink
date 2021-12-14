@@ -15,6 +15,7 @@
 - Fixed transient prompt to not show keymap mode strings or the modified line mark.
 - Fixed vi mode key bindings that can accept suggestions.
 - Fixed missing `vi-undo` command; it was pre-bound to some keys but could not be bound to any other keys.
+- Fixed the "show help" commands when listing unbound commands:  unbound vi mode commands should not be listed in emacs mode because the vi mode commands are only meant to be used in vi mode, and are not meant to be bound to custom keys.
 - Fixed memory leak in suggestions.
 
 #### v1.2.50
