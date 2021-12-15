@@ -5,7 +5,6 @@
 #include "env_fixture.h"
 
 #include <core/str.h>
-#include <Windows.h>
 
 //------------------------------------------------------------------------------
 env_fixture::env_fixture(const char** env)

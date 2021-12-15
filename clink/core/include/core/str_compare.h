@@ -7,7 +7,6 @@
 #include "path.h"
 #include "str_iter.h"
 
-#include <Windows.h>
 #include <assert.h>
 
 #include <map>

@@ -6,7 +6,6 @@
 
 #include <core/log.h>
 
-#include <Windows.h>
 #include <assert.h>
 
 /*

@@ -12,7 +12,6 @@
 #include <core/settings.h>
 #include <core/str_iter.h>
 
-#include <Windows.h>
 #include <assert.h>
 
 #include <regex>

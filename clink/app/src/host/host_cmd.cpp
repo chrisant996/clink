@@ -19,8 +19,6 @@
 #include <lib/terminal_helpers.h>
 #include <lua/lua_script_loader.h>
 
-#include <Windows.h>
-
 #if 0
 #define ADMINISTRATOR_TITLE_PREFIX 10056
 #endif

@@ -4,8 +4,6 @@
 #include "pch.h"
 #include "vm.h"
 
-#include <Windows.h>
-
 //------------------------------------------------------------------------------
 static unsigned int g_alloc_granularity = 0;
 static unsigned int g_page_size         = 0;

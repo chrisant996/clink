@@ -6,7 +6,6 @@
 #include <core/base.h>
 #include <core/str.h>
 
-#include <Windows.h>
 #include <assert.h>
 
 //------------------------------------------------------------------------------

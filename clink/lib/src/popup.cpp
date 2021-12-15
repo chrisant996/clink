@@ -7,7 +7,6 @@
 #include <core/str.h>
 #include <core/str_iter.h>
 #include <core/path.h>
-#include <windows.h>
 #include <rpc.h> // for UuidCreateSequential
 #include <commctrl.h>
 #include <windowsx.h>

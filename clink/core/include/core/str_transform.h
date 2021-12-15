@@ -5,7 +5,6 @@
 
 #include "base.h"
 
-#include <Windows.h>
 #include <assert.h>
 
 class wstr_base;

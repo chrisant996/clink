@@ -8,8 +8,6 @@
 #include <core/base.h>
 #include <core/str_iter.h>
 
-#include <Windows.h>
-
 //------------------------------------------------------------------------------
 win_terminal_out::~win_terminal_out()
 {

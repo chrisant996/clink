@@ -17,7 +17,6 @@
 #include <assert.h>
 
 #include <new>
-#include <Windows.h>
 extern "C" {
 #include <readline/history.h>
 }

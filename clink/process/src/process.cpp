@@ -14,6 +14,8 @@
 #include <TlHelp32.h>
 #include <stddef.h>
 
+typedef LONG NTSTATUS;
+
 //------------------------------------------------------------------------------
 static const char* get_arch_name(process::arch arch)
 {

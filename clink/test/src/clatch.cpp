@@ -3,8 +3,6 @@
 
 #include "pch.h"
 
-#include <windows.h>
-
 // For compatibility with Windows 8.1 SDK.
 #if !defined( ENABLE_VIRTUAL_TERMINAL_PROCESSING )
 # define ENABLE_VIRTUAL_TERMINAL_PROCESSING  0x0004

@@ -6,7 +6,6 @@
 
 #include <core/log.h>
 #include <core/str.h>
-#include <Windows.h>
 
 #include <vector>
 

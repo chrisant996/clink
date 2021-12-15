@@ -12,7 +12,6 @@
 #include <core/str_iter.h>
 #include <core/settings.h>
 
-#include <Windows.h>
 #include <assert.h>
 #include <map>
 

@@ -12,7 +12,6 @@
 #include <terminal/terminal_out.h>
 #include <terminal/printer.h>
 
-#include <Windows.h>
 #include <xmmintrin.h>
 
 //------------------------------------------------------------------------------
