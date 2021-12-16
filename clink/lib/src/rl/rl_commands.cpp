@@ -1949,8 +1949,6 @@ int clink_diagnostics(int count, int invoking_key)
 
     host_call_lua_rl_global_function("clink._diagnostics");
 
-    puts("");
-
     rl_forced_update_display();
     return 0;
 }
