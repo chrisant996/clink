@@ -230,7 +230,7 @@ static const struct {
   { "vi-set-mark", rl_vi_set_mark, keycat_misc, "" },
   { "vi-subst", rl_vi_subst, keycat_misc, "" },
   { "vi-tilde-expand", rl_vi_tilde_expand, keycat_completion, "Perform tilde expansion on the current word, and enter insert mode" },
-  { "vi-undo", rl_undo_command, keycat_basic, "Incremental undo, separately remembered for each line" },
+  { "vi-undo", rl_vi_undo, keycat_basic, "Incremental undo, separately remembered for each line" },
   { "vi-unix-word-rubout", rl_vi_unix_word_rubout, keycat_killyank, "" },
   { "vi-yank-arg", rl_vi_yank_arg, keycat_history, "Insert the last argument from the previous history entry.  With an argument N, inserts the Nth word from the previous history entry (1 refers to the first word).  A negative argument inserts the Nth word from the end of the history entry." },
   { "vi-yank-pop", rl_vi_yank_pop, keycat_killyank, "" },
