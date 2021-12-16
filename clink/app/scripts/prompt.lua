@@ -157,6 +157,47 @@ function clink.prompt.register_filter(filter, priority)
     end
 end
 
+--------------------------------------------------------------------------------
+local function print_filter_src(type)
+    local any = false
+    for _,prompt in ipairs (prompt_filters) do
+        local func = prompt[type]
+        if func then
+            local info = debug.getinfo(func, 'S')
+            if info.short_src ~= "?" then
+                if not any then
+                    clink.print("  "..type..":")
+                    any = true
+                end
+                clink.print("", info.short_src..":"..info.linedefined)
+            end
+        end
+    end
+    return any
+end
+
+--------------------------------------------------------------------------------
+function clink._diag_prompts()
+    if not settings.get("lua.debug") then
+        return
+    end
+
+    local bold = "\x1b[1m"          -- Bold (bright).
+    local norm = "\x1b[m"           -- Normal.
+
+    clink.print(bold.."prompt filters:"..norm)
+
+    local any = false
+    any = print_filter_src("filter") or any
+    any = print_filter_src("rightfilter") or any
+    any = print_filter_src("transientfilter") or any
+    any = print_filter_src("transientrightfilter") or any
+
+    if not any then
+        clink.print("  no prompt filters registered")
+    end
+end
+
 
 
 --------------------------------------------------------------------------------

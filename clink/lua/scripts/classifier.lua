@@ -84,3 +84,27 @@ function clink.classifier(priority)
     _classifiers_unsorted = true
     return ret
 end
+
+--------------------------------------------------------------------------------
+function clink._diag_classifiers()
+    if not settings.get("lua.debug") then
+        return
+    end
+
+    local bold = "\x1b[1m"          -- Bold (bright).
+    local norm = "\x1b[m"           -- Normal.
+
+    local any = false
+    for _,classifier in ipairs (_classifiers) do
+        if classifier.classify then
+            local info = debug.getinfo(classifier.classify, 'S')
+            if info.short_src ~= "?" then
+                if not any then
+                    clink.print(bold.."classifiers:"..norm)
+                    any = true
+                end
+                clink.print("  "..info.short_src..":"..info.linedefined)
+            end
+        end
+    end
+end

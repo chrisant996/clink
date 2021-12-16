@@ -121,6 +121,45 @@ function clink.suggester(name)
     return ret
 end
 
+--------------------------------------------------------------------------------
+function clink._diag_suggesters()
+    if not settings.get("lua.debug") then
+        return
+    end
+
+    local bold = "\x1b[1m"          -- Bold (bright).
+    local norm = "\x1b[m"           -- Normal.
+
+    local list = {}
+    for n,s in pairs(suggesters) do
+        table.insert(list, { name=n, suggest=(s and s.suggest) })
+    end
+    table.sort(list, function(a,b) return a.name < b.name end)
+
+    local maxlen = 0
+    for _,entry in ipairs(list) do
+        local len = console.cellcount(entry.name)
+        entry.len = len
+        if len > maxlen then
+            maxlen = len
+        end
+    end
+
+    local any = false
+    for _,entry in ipairs(list) do
+        if entry.suggest then
+            local info = debug.getinfo(entry.suggest, 'S')
+            if info.short_src ~= "?" then
+                if not any then
+                    clink.print(bold.."suggesters:"..norm)
+                    any = true
+                end
+                clink.print("  "..entry.name..":"..string.rep(" ", 2 + maxlen - entry.len)..info.short_src..":"..info.linedefined)
+            end
+        end
+    end
+end
+
 
 
 --------------------------------------------------------------------------------

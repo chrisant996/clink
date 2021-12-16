@@ -87,12 +87,22 @@ function clink._popup_show_help(rl_buffer)
 end
 
 --------------------------------------------------------------------------------
-function clink._diagnostics()
+function clink._diagnostics(rl_buffer)
+    local arg = rl_buffer:getargument()
     clink._diag_coroutines()
     clink._diag_refilter()
     clink._diag_events()
-    clink._diag_generators()
+    if arg then
+        clink._diag_prompts()
+        clink._diag_generators()
+        clink._diag_classifiers()
+        clink._diag_suggesters()
+    end
     if clink._diag_custom then
-        clink._diag_custom()
+        clink._diag_custom(arg)
+    end
+
+    if not arg then
+        clink.print("\n(Use a numeric argument for additional diagnostics; e.g. press Alt+1 first.)")
     end
 end
