@@ -5,7 +5,7 @@
 #### v1.3.1
 
 - The `clink-diagnostics` command lists prompt filters, generators, classifiers, and suggesters when a numeric argument is given (e.g. <kbd>Alt</kbd>+<kbd>1</kbd> then <kbd>Ctrl</kbd>+<kbd>X</kbd>,<kbd>Ctrl</kbd>+<kbd>Z</kbd>).
-- Fixed the escape code parser to handle long cmd str parameters correctly, such as long URLs.
+- Fixed [#216](https://github.com/chrisant996/clink/issues/216); Long escaped URLs do not display correctly in a prompt.
 
 #### v1.3
 
