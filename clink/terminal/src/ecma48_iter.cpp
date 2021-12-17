@@ -67,7 +67,7 @@ static void strip_code_quotes(const char*& ptr, int& len)
 void ecma48_state::reset()
 {
     state = ecma48_state_unknown;
-    count = 0;
+    clear_buffer = true;
 }
 
 
@@ -296,11 +296,14 @@ const ecma48_code& ecma48_iter::next()
 
         if (m_state.state != ecma48_state_char)
         {
-            while (copy != m_iter.get_pointer())
+            if (m_state.clear_buffer)
             {
-                m_state.buffer[m_state.count] = *copy++;
-                m_state.count += (m_state.count < sizeof_array(m_state.buffer) - 1);
+                m_state.clear_buffer = false;
+                m_state.buffer.clear();
             }
+            const int len = int(m_iter.get_pointer() - copy);
+            m_state.buffer.concat(copy, len);
+            copy += len;
         }
 
         if (done)
@@ -309,8 +312,8 @@ const ecma48_code& ecma48_iter::next()
 
     if (m_state.state != ecma48_state_char)
     {
-        m_code.m_str = m_state.buffer;
-        m_code.m_length = m_state.count;
+        m_code.m_str = m_state.buffer.c_str();
+        m_code.m_length = m_state.buffer.length();
     }
     else
         m_code.m_length = int(m_iter.get_pointer() - m_code.get_pointer());

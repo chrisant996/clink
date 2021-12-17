@@ -146,8 +146,8 @@ private:
     friend class        ecma48_iter;
     ecma48_code         code;
     ecma48_state_enum   state;
-    int                 count;
-    char                buffer[64];
+    str<64>             buffer;
+    bool                clear_buffer;
 };
 
 
