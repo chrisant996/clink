@@ -414,8 +414,10 @@ cant_activate:
     if (!reactivate)
     {
         assert(!m_any_displayed);
-        m_any_displayed = false;
+        assert(!m_clear_display);
         m_desc_below = m_matches.get_match_count() > 9;
+        m_any_displayed = false;
+        m_clear_display = false;
     }
 
     // Make sure there's room.
@@ -536,6 +538,7 @@ void selectcomplete_impl::on_begin_line(const context& context)
     m_printer = &context.printer;
     m_anchor = -1;
     m_any_displayed = false;
+    m_clear_display = false;
 
     m_screen_cols = context.printer.get_columns();
     m_screen_rows = context.printer.get_rows();
@@ -553,6 +556,7 @@ void selectcomplete_impl::on_end_line()
     m_printer = nullptr;
     m_anchor = -1;
     m_desc_below = false;
+    m_clear_display = false;
 }
 
 //------------------------------------------------------------------------------
@@ -1012,6 +1016,8 @@ void selectcomplete_impl::update_matches(bool restrict)
         }
     }
 
+    m_clear_display = m_any_displayed;
+
     update_layout();
     update_display();
 }
@@ -1129,6 +1135,12 @@ void selectcomplete_impl::update_display()
 
                 rl_crlf();
                 up++;
+
+                if (m_clear_display && row == 0)
+                {
+                    m_printer->print("\x1b[m\x1b[J");
+                    m_clear_display = false;
+                }
 
                 if (m_prev_displayed < 0 ||
                     row + m_top == get_match_row(m_index) ||
@@ -1269,6 +1281,7 @@ void selectcomplete_impl::update_display()
             {
                 rl_crlf();
                 m_printer->print("\x1b[m\x1b[J");
+                m_clear_display = false;
                 rl_crlf();
                 up += 2;
                 if (m_index >= 0 && m_index < m_matches.get_match_count())
@@ -1293,6 +1306,7 @@ void selectcomplete_impl::update_display()
                 rl_crlf();
                 up++;
                 m_printer->print("\x1b[m\x1b[J");
+                m_clear_display = false;
             }
             m_prev_displayed = -1;
             m_any_displayed = false;
