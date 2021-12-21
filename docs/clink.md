@@ -245,6 +245,7 @@ Name                         | Default | Description
 <a name="color_cmd"></a>`color.cmd` | `bold` | Used when displaying shell (CMD.EXE) command completions, and in the input line when `clink.colorize_input` is enabled.
 `color.cmdredir`             | `bold`  | The color for redirection symbols (`<`, `>`, `>&`) in the input line when `clink.colorize_input` is enabled.
 `color.cmdsep`               | `bold`  | The color for command separaors (`&`, `|`) in the input line when `clink.colorize_input` is enabled.
+`color.comment_row`          | `bright white on cyan` | The color for the "and <em>N</em> more matches" row in the `clink-select-complete` command when `match.preview_rows` is set.
 `color.description`          | `bright cyan` | Used when displaying descriptions for match completions.
 <a name="color_doskey"></a>`color.doskey` | `bright cyan` | Used when displaying doskey alias completions, and in the input line when `clink.colorize_input` is enabled.
 <a name="color_filtered"></a>`color.filtered` | `bold` | The default color for filtered completions (see [Filtering the Match Display](#filteringthematchdisplay)).
@@ -292,6 +293,7 @@ Name                         | Default | Description
 `match.expand_envvars`       | False   | Expands environment variables in a word before performing completion.
 `match.ignore_accent`        | True    | Controls accent sensitivity when completing matches. For example, `ä` and `a` are considered equivalent with this enabled.
 `match.ignore_case`          | `relaxed` | Controls case sensitivity when completing matches. `off` = case sensitive, `on` = case insensitive, `relaxed` = case insensitive plus `-` and `_` are considered equal.
+`match.preview_rows`         | `0`     | The number of rows to show as a preview when using the `clink-select-complete` command (bound by default to <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Space</kbd>).  When this is 0, all rows are shown and if there are too many matches it instead prompts first like the `complete` command does.  Otherwise it shows the specified number of rows as a preview without prompting, and it expands to show the full set of matches when the selection is moved past the preview rows.
 `match.sort_dirs`            | `with`  | How to sort matching directory names. `before` = before files, `with` = with files, `after` = after files.
 `match.translate_slashes`    | `system` | File and directory completions can be translated to use consistent slashes.  The default is `system` to use the appropriate path separator for the OS host (backslashes on Windows).  Use `slash` to use forward slashes, or `backslash` to use backslashes.  Use `off` to turn off translating slashes from custom match generators.
 `match.wild`                 | True    | Matches `?` and `*` wildcards and leading `.` when using any of the completion commands.  Turn this off to behave how bash does, and not match wildcards or leading dots (but `glob-complete-word` always matches wildcards).
