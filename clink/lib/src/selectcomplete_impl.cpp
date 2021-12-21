@@ -43,6 +43,28 @@ extern void update_rl_modes_from_matches(const matches* matches, const matches_i
 
 
 //------------------------------------------------------------------------------
+static setting_int g_preview_rows(
+    "match.preview_rows",
+    "Preview rows",
+    "The number of rows to show as a preview when using the 'clink-select-complete'\n"
+    "command (bound by default to Ctrl+Shift+Space).  When this is 0, all rows are\n"
+    "shown and if there are too many matches it instead prompts first like the\n"
+    "'complete' command does.  Otherwise it shows the specified number of rows as\n"
+    "a preview without prompting, and it expands to show the full set of matches\n"
+    "when the selection is moved past the preview rows.",
+    5);
+
+static setting_color g_color_comment_row(
+    "color.comment_row",
+    "Color for comment row",
+    "The color for the comment row during 'clink-select-complete'.  For example,\n"
+    "the comment row is shown when only the preview rows are shown, as configured\n"
+    "by the 'match.preview_rows' setting.",
+    "bright white on cyan");
+
+
+
+//------------------------------------------------------------------------------
 enum {
     bind_id_selectcomplete_next = 60,
     bind_id_selectcomplete_prev,
@@ -414,9 +436,14 @@ cant_activate:
     if (!reactivate)
     {
         assert(!m_any_displayed);
+        assert(!m_comment_row_displayed);
+        assert(!m_expanded);
         assert(!m_clear_display);
         m_desc_below = m_matches.get_match_count() > 9;
         m_any_displayed = false;
+        m_comment_row_displayed = false;
+        m_can_prompt = g_preview_rows.get() <= 0;
+        m_expanded = false;
         m_clear_display = false;
     }
 
@@ -425,10 +452,14 @@ cant_activate:
     if (m_visible_rows <= 0)
         goto cant_activate;
 
-    // Prompt if too many.
-    if (rl_completion_auto_query_items ?
-        (m_match_rows > m_visible_rows) :
-        (rl_completion_query_items > 0 && m_matches.get_match_count() >= rl_completion_query_items))
+    // Depending on the mode, either show the first few entries and don't expand
+    // until the selection reaches an entry not yet visible, or just prompt if
+    // there are too many matches.
+    if (!m_expanded &&
+        m_can_prompt &&
+        (rl_completion_auto_query_items ?
+            (m_match_rows > m_visible_rows) :
+            (rl_completion_query_items > 0 && m_matches.get_match_count() >= rl_completion_query_items)))
     {
         // I gave up trying to coax Readline into righting the cursor position
         // purely using only ANSI codes.
@@ -469,6 +500,9 @@ cant_activate:
 
         if (!yes)
             goto cant_activate;
+
+        m_expanded = true;
+        m_can_prompt = false;
     }
 
     // Activate key bindings.
@@ -538,6 +572,9 @@ void selectcomplete_impl::on_begin_line(const context& context)
     m_printer = &context.printer;
     m_anchor = -1;
     m_any_displayed = false;
+    m_comment_row_displayed = false;
+    m_can_prompt = true;
+    m_expanded = false;
     m_clear_display = false;
 
     m_screen_cols = context.printer.get_columns();
@@ -550,12 +587,15 @@ void selectcomplete_impl::on_begin_line(const context& context)
 void selectcomplete_impl::on_end_line()
 {
     assert(!m_any_displayed);
+    assert(!m_comment_row_displayed);
+    assert(!m_expanded);
     s_selectcomplete = nullptr;
     m_buffer = nullptr;
     m_matches.set_matches(nullptr);
     m_printer = nullptr;
     m_anchor = -1;
     m_desc_below = false;
+    m_can_prompt = true;
     m_clear_display = false;
 }
 
@@ -1118,7 +1158,28 @@ void selectcomplete_impl::update_display()
         {
             update_top();
 
-            const int rows = min<int>(m_match_rows, m_visible_rows);
+            const int preview_rows = g_preview_rows.get();
+            if (!m_expanded)
+            {
+                assert(preview_rows > 0);
+                if (preview_rows + 1 >= m_visible_rows)
+                {
+                    m_expanded = true;
+                    m_prev_displayed = -1;
+                }
+                else if (m_index >= 0)
+                {
+                    if (_rl_print_completions_horizontally)
+                        m_expanded = (m_index / m_match_cols) >= preview_rows;
+                    else
+                        m_expanded = (m_index % m_match_rows) >= preview_rows;
+                    if (m_expanded)
+                        m_prev_displayed = -1;
+                }
+            }
+
+            const bool show_comment_row = !m_expanded && (preview_rows + 1 < m_match_rows);
+            const int rows = min<int>(m_visible_rows, show_comment_row ? preview_rows : m_match_rows);
             const int major_stride = _rl_print_completions_horizontally ? m_match_cols : 1;
             const int minor_stride = _rl_print_completions_horizontally ? 1 : m_match_rows;
             const int col_width = min<int>(m_match_longest, max<int>(m_screen_cols - between_cols, 1));
@@ -1127,6 +1188,8 @@ void selectcomplete_impl::update_display()
 #else
             const int col_extra = 0;
 #endif
+
+            int shown = 0;
             for (int row = 0; row < rows; row++)
             {
                 int i = (m_top + row) * major_stride;
@@ -1139,14 +1202,29 @@ void selectcomplete_impl::update_display()
                 if (m_clear_display && row == 0)
                 {
                     m_printer->print("\x1b[m\x1b[J");
+                    m_comment_row_displayed = false;
                     m_clear_display = false;
                 }
 
+                // Count matches on the row.
+                if (show_comment_row)
+                {
+                    assert(m_top == 0);
+                    int t = i;
+                    for (int col = 0; col < m_match_cols; col++)
+                    {
+                        if (t >= count)
+                            break;
+                        shown++;
+                        t += minor_stride;
+                    }
+                }
+
+                // Print matches on the row.
                 if (m_prev_displayed < 0 ||
                     row + m_top == get_match_row(m_index) ||
                     row + m_top == get_match_row(m_prev_displayed))
                 {
-                    // Print matches on the row.
                     str<> truncated;
                     str<> tmp;
                     reset_tmpbuf();
@@ -1273,6 +1351,18 @@ void selectcomplete_impl::update_display()
                 }
             }
 
+            if (show_comment_row && !m_comment_row_displayed)
+            {
+                str<> tmp;
+                rl_crlf();
+                up++;
+                const int more = m_matches.get_match_count() - shown;
+                tmp.format("\x1b[%sm... and %u more matches ...\x1b[m\x1b[K", g_color_comment_row.get(), more);
+                m_printer->print(tmp.c_str(), tmp.length());
+                m_comment_row_displayed = true;
+            }
+
+            assert(!m_clear_display);
             m_prev_displayed = m_index;
             m_any_displayed = true;
 
@@ -1281,7 +1371,6 @@ void selectcomplete_impl::update_display()
             {
                 rl_crlf();
                 m_printer->print("\x1b[m\x1b[J");
-                m_clear_display = false;
                 rl_crlf();
                 up += 2;
                 if (m_index >= 0 && m_index < m_matches.get_match_count())
@@ -1306,10 +1395,12 @@ void selectcomplete_impl::update_display()
                 rl_crlf();
                 up++;
                 m_printer->print("\x1b[m\x1b[J");
-                m_clear_display = false;
             }
             m_prev_displayed = -1;
             m_any_displayed = false;
+            m_comment_row_displayed = false;
+            m_expanded = false;
+            m_clear_display = false;
         }
 
 #ifdef SHOW_DISPLAY_GENERATION

@@ -104,6 +104,9 @@ private:
     int             m_visible_rows = 0;
     bool            m_desc_below = false;
     bool            m_any_displayed = false;
+    bool            m_comment_row_displayed = false;
+    bool            m_can_prompt = true;
+    bool            m_expanded = false;
     bool            m_clear_display = false;
 
     // Inserting matches.
