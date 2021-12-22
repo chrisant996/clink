@@ -13,6 +13,9 @@ struct match_display_filter_entry;
 class matches_iter;
 enum class match_type : unsigned char;
 
+//#define FISH_ARROW_KEYS     // Arrow keys move as in the fish shell; otherwise as in powershell.
+//#define FISH_NOWRAP_ARROWS  // Arrow keys don't wrap at the ends; hybrid of fish/powershell.
+
 //------------------------------------------------------------------------------
 class match_adapter
 {
@@ -124,6 +127,10 @@ private:
     // Current input.
     str<>           m_needle;
     bool            m_was_backspace = false;
+#if defined(FISH_ARROW_KEYS) && defined(FISH_NOWRAP_ARROWS)
+    bool            m_prev_latched = false;
+    unsigned char   m_prev_input_id = 0;
+#endif
 
     // Debugging.
 #ifdef DEBUG

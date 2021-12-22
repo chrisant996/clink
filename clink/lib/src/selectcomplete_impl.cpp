@@ -159,6 +159,62 @@ int ellipsify(const char* in, int limit, str_base& out, bool expand_ctrl)
 
 
 //------------------------------------------------------------------------------
+#ifdef FISH_ARROW_KEYS
+
+static void move_selection_lower(int& index, int& major, int& minor, const int count)
+{
+    if (!index)
+    {
+#ifdef FISH_NOWRAP_ARROWS
+        return;
+#else
+        goto find_wrapped_end;
+#endif
+    }
+
+    index -= major;
+
+    if (index < 0)
+    {
+#ifndef FISH_NOWRAP_ARROWS
+find_wrapped_end:
+#endif
+        index--;
+        index += major * minor;
+        while (index >= count)
+            index -= major;
+    }
+}
+
+static bool move_selection_higher(int& index, int& major, int& minor, const int count, bool& latched)
+{
+    if (latched)
+        return false;
+
+    if (index + major >= count && (index + 1) % major == 0)
+    {
+#ifdef FISH_NOWRAP_ARROWS
+        index = count - 1;
+        latched = true;
+#else
+        index = 0;
+#endif
+        return true;
+    }
+
+    index += major;
+
+    if (index >= count)
+        index = (index + 1) % major;
+
+    return true;
+}
+
+#endif
+
+
+
+//------------------------------------------------------------------------------
 match_adapter::~match_adapter()
 {
     free_filtered();
@@ -577,6 +633,11 @@ void selectcomplete_impl::on_begin_line(const context& context)
     m_expanded = false;
     m_clear_display = false;
 
+#if defined(FISH_ARROW_KEYS) && defined(FISH_NOWRAP_ARROWS)
+    m_prev_latched = false;
+    m_prev_input_id = 0;
+#endif
+
     m_screen_cols = context.printer.get_columns();
     m_screen_rows = context.printer.get_rows();
     m_desc_below = false;
@@ -605,6 +666,16 @@ void selectcomplete_impl::on_input(const input& _input, result& result, const co
     assert(is_active());
 
     input input = _input;
+
+#if defined(FISH_ARROW_KEYS) && defined(FISH_NOWRAP_ARROWS)
+    const unsigned char prev_input_id = m_prev_input_id;
+    if (m_prev_input_id != input.id)
+    {
+        if (input.id != bind_id_selectcomplete_down && input.id != bind_id_selectcomplete_right)
+            m_prev_latched = false;
+        m_prev_input_id = input.id;
+    }
+#endif
 
     // Convert double Backspace into Escape.
     if (input.id != bind_id_selectcomplete_backspace)
@@ -656,6 +727,81 @@ prev:
             m_index = wrap ? count - 1 : 0;
         goto navigated;
 
+#ifdef FISH_ARROW_KEYS
+#pragma region fish arrow keys
+
+    case bind_id_selectcomplete_up:
+        if (_rl_print_completions_horizontally)
+        {
+            move_selection_lower(m_index, m_match_cols, m_match_rows, count);
+            goto navigated;
+        }
+        else
+        {
+#ifdef FISH_NOWRAP_ARROWS
+            wrap = false;
+#else
+            wrap = true;
+#endif
+            goto prev;
+        }
+    case bind_id_selectcomplete_down:
+        if (_rl_print_completions_horizontally)
+        {
+            if (move_selection_higher(m_index, m_match_cols, m_match_rows, count, m_prev_latched))
+                goto navigated;
+            break;
+        }
+        else
+        {
+#ifdef FISH_NOWRAP_ARROWS
+            if (m_index == count - 1)
+                m_prev_latched = true;
+            wrap = false;
+#else
+            wrap = true;
+#endif
+            goto next;
+        }
+
+    case bind_id_selectcomplete_left:
+        if (_rl_print_completions_horizontally)
+        {
+#ifdef FISH_NOWRAP_ARROWS
+            wrap = false;
+#else
+            wrap = true;
+#endif
+            goto prev;
+        }
+        else
+        {
+            move_selection_lower(m_index, m_match_rows, m_match_cols, count);
+            goto navigated;
+        }
+    case bind_id_selectcomplete_right:
+        if (_rl_print_completions_horizontally)
+        {
+#ifdef FISH_NOWRAP_ARROWS
+            if (m_index == count - 1)
+                m_prev_latched = true;
+            wrap = false;
+#else
+            wrap = true;
+#endif
+            goto next;
+        }
+        else
+        {
+            if (move_selection_higher(m_index, m_match_rows, m_match_cols, count, m_prev_latched))
+                goto navigated;
+            break;
+        }
+
+#pragma endregion fish arrow keys
+#else // !FISH_ARROW_KEYS
+#pragma region powershell arrow keys
+
     case bind_id_selectcomplete_up:
         if (m_index == 0)
             break;
@@ -705,6 +851,9 @@ prev:
         }
         wrap = false;
         goto next;
+
+#pragma endregion powershell arrow keys
+#endif // !FISH_ARROW_KEYS
 
     case bind_id_selectcomplete_pgup:
     case bind_id_selectcomplete_pgdn:
