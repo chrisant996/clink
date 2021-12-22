@@ -165,20 +165,16 @@ static void move_selection_lower(int& index, int& major, int& minor, const int c
 {
     if (!index)
     {
-#ifdef FISH_NOWRAP_ARROWS
+        if (_rl_menu_complete_wraparound)
+            goto find_wrapped_end;
         return;
-#else
-        goto find_wrapped_end;
-#endif
     }
 
     index -= major;
 
     if (index < 0)
     {
-#ifndef FISH_NOWRAP_ARROWS
 find_wrapped_end:
-#endif
         index--;
         index += major * minor;
         while (index >= count)
@@ -193,12 +189,13 @@ static bool move_selection_higher(int& index, int& major, int& minor, const int 
 
     if (index + major >= count && (index + 1) % major == 0)
     {
-#ifdef FISH_NOWRAP_ARROWS
+        if (_rl_menu_complete_wraparound)
+        {
+            index = 0;
+            return true;
+        }
         index = count - 1;
         latched = true;
-#else
-        index = 0;
-#endif
         return true;
     }
 
@@ -633,7 +630,7 @@ void selectcomplete_impl::on_begin_line(const context& context)
     m_expanded = false;
     m_clear_display = false;
 
-#if defined(FISH_ARROW_KEYS) && defined(FISH_NOWRAP_ARROWS)
+#ifdef FISH_ARROW_KEYS
     m_prev_latched = false;
     m_prev_input_id = 0;
 #endif
@@ -667,7 +664,7 @@ void selectcomplete_impl::on_input(const input& _input, result& result, const co
 
     input input = _input;
 
-#if defined(FISH_ARROW_KEYS) && defined(FISH_NOWRAP_ARROWS)
+#ifdef FISH_ARROW_KEYS
     const unsigned char prev_input_id = m_prev_input_id;
     if (m_prev_input_id != input.id)
     {
@@ -738,11 +735,8 @@ prev:
         }
         else
         {
-#ifdef FISH_NOWRAP_ARROWS
-            wrap = false;
-#else
-            wrap = true;
-#endif
+arrow_prev:
+            wrap = !!_rl_menu_complete_wraparound;
             goto prev;
         }
     case bind_id_selectcomplete_down:
@@ -754,49 +748,24 @@ prev:
         }
         else
         {
-#ifdef FISH_NOWRAP_ARROWS
-            if (m_index == count - 1)
+arrow_next:
+            if (!_rl_menu_complete_wraparound && m_index == count - 1)
                 m_prev_latched = true;
-            wrap = false;
-#else
-            wrap = true;
-#endif
+            wrap = !!_rl_menu_complete_wraparound;
             goto next;
         }
 
     case bind_id_selectcomplete_left:
         if (_rl_print_completions_horizontally)
-        {
-#ifdef FISH_NOWRAP_ARROWS
-            wrap = false;
-#else
-            wrap = true;
-#endif
-            goto prev;
-        }
-        else
-        {
-            move_selection_lower(m_index, m_match_rows, m_match_cols, count);
-            goto navigated;
-        }
+            goto arrow_prev;
+        move_selection_lower(m_index, m_match_rows, m_match_cols, count);
+        goto navigated;
     case bind_id_selectcomplete_right:
         if (_rl_print_completions_horizontally)
-        {
-#ifdef FISH_NOWRAP_ARROWS
-            if (m_index == count - 1)
-                m_prev_latched = true;
-            wrap = false;
-#else
-            wrap = true;
-#endif
-            goto next;
-        }
-        else
-        {
-            if (move_selection_higher(m_index, m_match_rows, m_match_cols, count, m_prev_latched))
-                goto navigated;
-            break;
-        }
+            goto arrow_next;
+        if (move_selection_higher(m_index, m_match_rows, m_match_cols, count, m_prev_latched))
+            goto navigated;
+        break;
 
 #pragma endregion fish arrow keys
 #else // !FISH_ARROW_KEYS
