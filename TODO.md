@@ -5,12 +5,14 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
+- Suggestions currently resets `m_matches`, which will interfere with the ability to manage lifetime of lookaside table, for removing the embedded match type byte.  Need to push/pop or something, since the suggestions matches are transient.
 
 ## Medium Priority
 - Readline command reference.
 - Add more Readline documentation into the Clink docs.
 
 ## Low Priority
+- Can matches be collected on demand for suggestions?  So that if no configured autosuggest strategies use matches, then the match pipeline would not even collect matches.
 - Add command and flag descriptions in clink-completions?
 - Push update to clink-completions repo.
 - Push update to z.lua repo.
