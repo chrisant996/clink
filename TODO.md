@@ -5,7 +5,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- Suggestions currently resets `m_matches`, which will interfere with the ability to manage lifetime of lookaside table, for removing the embedded match type byte.  Need to push/pop or something, since the suggestions matches are transient.
 
 ## Medium Priority
 - Readline command reference.
@@ -50,6 +49,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - It's now almost possible to revert the changes to feed Readline match type information.  It's only used when displaying matches, and when inserting a match to decide whether to append a path separator.
   - [ ] Use the match pointer itself as a unique key into a lookaside table to find the match type.  This solves both the sorting problem and the duplicates problem (provided that string pooling is never in effect when producing a `matches` array for Readline).
     - [ ] **THE CHALLENGE** is to manage paired lifetime with `matches`, and nested paired lifetime for match display filtering.
+    - [ ] The challenge is exacerbated because there may be multiple `matches_impl` and `matches` arrays alive at any given time, due to `menu-complete` holding on to a `matches` array.
   - [ ] Remove `rl_completion_matches_include_type`.
   - [ ] Add a callback for Readline to get the match type.
     - [ ] Use the callback in the display functions (`print_filename`, etc).
