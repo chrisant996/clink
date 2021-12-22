@@ -44,7 +44,7 @@ popup_result do_popup_list(
     bool auto_complete,
     bool reverse_find,
     int& current,
-    str_base& out,
+    const char*& out,
     popup_items_mode mode=popup_items_mode::simple);
 
 //------------------------------------------------------------------------------

@@ -784,7 +784,7 @@ popup_result do_popup_list(
     bool auto_complete,
     bool reverse_find,
     int& current,
-    str_base& out,
+    const char*& out,
     popup_items_mode mode)
 {
     if (!items)
@@ -796,7 +796,7 @@ popup_result do_popup_list(
     s_descriptions = 0;
     memset(s_column_width, 0, sizeof(s_column_width));
 
-    out.clear();
+    out = nullptr;
     s_result = popup_result::cancel;
 
     if (completing)

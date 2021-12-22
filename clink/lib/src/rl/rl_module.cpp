@@ -1321,7 +1321,7 @@ int clink_popup_complete(int count, int invoking_key)
 
     // Popup list.
     int current = 0;
-    str<32> choice;
+    const char* choice;
     switch (do_popup_list("Completions", (const char **)matches, match_count,
                           len_prefix, past_flag, completing,
                           true/*auto_complete*/, false/*reverse_find*/,
@@ -1336,7 +1336,7 @@ int clink_popup_complete(int count, int invoking_key)
     case popup_result::use:
         {
             rollback<int> rb(rl_completion_matches_include_type, past_flag);
-            rl_insert_match(choice.data(), orig_text, orig_start, delimiter, quote_char);
+            rl_insert_match(choice, orig_text, orig_start, delimiter, quote_char);
         }
         break;
     }
@@ -1405,7 +1405,7 @@ int clink_popup_history(int count, int invoking_key)
     }
     else
     {
-        str<> choice;
+        const char* choice;
         result = do_popup_list("History",
             const_cast<const char**>(history), total, 0, 0,
             false/*completing*/, false/*auto_complete*/, true/*reverse_find*/,

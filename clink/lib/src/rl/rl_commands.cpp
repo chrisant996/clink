@@ -724,14 +724,14 @@ int clink_popup_directories(int count, int invoking_key)
     }
     else
     {
-        str<> choice;
+        const char* choice;
         int current = total - 1;
         results.m_result = do_popup_list("Directories",
             (const char **)history, total, 0, 0,
             false/*completing*/, false/*auto_complete*/, false/*reverse_find*/,
             current, choice);
         results.m_index = current;
-        results.m_text = choice.c_str();
+        results.m_text = choice;
     }
 
     // Handle results.

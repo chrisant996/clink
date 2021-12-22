@@ -4239,14 +4239,14 @@ rl_get_completions (int what_to_do, int* match_count, char** ot, int* os, int* o
 }
 
 void
-rl_insert_match (char* match, char* orig_text, int orig_start, int delimiter, char quote_char)
+rl_insert_match (const char* match, char* orig_text, int orig_start, int delimiter, char quote_char)
 {
   int past_flag = rl_completion_matches_include_type ? 1 : 0;
   int nontrivial_match = strcmp (orig_text, match + past_flag);
 
   rl_begin_undo_group();
-  insert_match (match, orig_start, SINGLE_MATCH, &quote_char);
-  append_to_match (match, orig_start, delimiter, quote_char, nontrivial_match);
+  insert_match ((char *)match, orig_start, SINGLE_MATCH, &quote_char);
+  append_to_match ((char *)match, orig_start, delimiter, quote_char, nontrivial_match);
   rl_end_undo_group();
 }
 /* end_clink_change */

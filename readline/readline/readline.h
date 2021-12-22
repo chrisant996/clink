@@ -180,7 +180,7 @@ extern int rl_menu_complete PARAMS((int, int));
 extern int rl_backward_menu_complete PARAMS((int, int));
 /* begin_clink_change */
 extern char** rl_get_completions PARAMS((int, int*, char**, int*, int*, int*, char*));
-extern void rl_insert_match PARAMS((char*, char*, int, int, char));
+extern void rl_insert_match PARAMS((const char*, char*, int, int, char));
 /* end_clink_change */
 
 /* Bindable commands for killing and yanking text, and managing the kill ring. */

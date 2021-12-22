@@ -481,7 +481,7 @@ static int popup_list(lua_State* state)
     assert(num_items == items.size());
 #endif
 
-    str<> out;
+    const char* choice;
     if (index > items.size()) index = items.size();
     if (index < 0) index = 0;
 
@@ -492,18 +492,18 @@ static int popup_list(lua_State* state)
         popup_results results = activate_text_list(title, &*items.begin(), int(items.size()), index, true/*has_columns*/);
         result = results.m_result;
         index = results.m_index;
-        out = results.m_text.c_str();
+        choice = results.m_text.c_str();
     }
     else
     {
-        result = do_popup_list(title, &*items.begin(), items.size(), 0, 0, false, false, false, index, out, popup_items_mode::display_filter);
+        result = do_popup_list(title, &*items.begin(), items.size(), 0, 0, false, false, false, index, choice, popup_items_mode::display_filter);
     }
 
     switch (result)
     {
     case popup_result::select:
     case popup_result::use:
-        lua_pushlstring(state, out.c_str(), out.length());
+        lua_pushstring(state, choice);
         lua_pushboolean(state, (result == popup_result::use));
         lua_pushinteger(state, index + 1);
         return 3;
