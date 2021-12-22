@@ -13,7 +13,10 @@ struct match_display_filter_entry;
 class matches_iter;
 enum class match_type : unsigned char;
 
-//#define FISH_ARROW_KEYS     // Arrow keys move as in the fish shell; otherwise as in powershell.
+//------------------------------------------------------------------------------
+// Define FISH_ARROW_KEYS to make arrow keys move as fish shell completion.
+// Otherwise arrow keys move as in powershell completion.
+#define FISH_ARROW_KEYS
 
 //------------------------------------------------------------------------------
 class match_adapter
