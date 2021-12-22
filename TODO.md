@@ -45,15 +45,19 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Remove match type changes from Readline?
 - Displaying matches was slow because Readline writes everything one byte at a time, which incurs significant processing overhead across several layers.
 - Adding a new `rl_completion_display_matches_func` and `display_matches()` resolved the performance satisfactorily.
-- It's now almost possible to revert the changes to feed Readline match type information.  It's only used when displaying matches, and when inserting a match to decide whether to append a path separator.  Could just add a callback for inserting.
-  - The insertion hook could avoid appending a space when inserting a flag/arg that ends in `:` or `=`.
-  - And then individual matches could have arbitrary values associated -- color, append char, or any per-match data that's desired.
-  - ~~And address the sorting problem~~, and then the match_type stuff could be removed from Readline itself (though Chet may want its performance benefits).
-- Hurdles:
-  - [ ] Duplicates.  Unclear how to allow/handle duplicate match strings with different match types or attributes (such as append char).  Could maybe pass the index in the matches array, but that still requires tunneling data in the match string and for Readline to use accessor functions, so the match type changes couldn't be removed.
-  - [x] ~~Sorting.  Readline sorts the matches, making it difficult to translate the sorted index to the unsorted list held by `matches_impl`.  Could use a binary search, but using binary search inside a sort comparator makes the algorithmic complexity O(N * logN * logN).  Caching lookup results prior to searching yields O((N * logN) + (N * logN)), but it's still a big increase in total duration.~~  _[No longer an issue since Readline now owns sorting.]_
-
-**SO:** The best compromise might be to embed the original array index at the start of each match, and use a callback to retrieve host data for each match.  It's still invasive to Readline, but at least Readline doesn't need to know any new implementation details such as match types.  But it would require sorting to be turned off in Readline.
+- It's now almost possible to revert the changes to feed Readline match type information.  It's only used when displaying matches, and when inserting a match to decide whether to append a path separator.
+  - [ ] Use the match pointer itself as a unique key into a lookaside table to find the match type.  This solves both the sorting problem and the duplicates problem (provided that string pooling is never in effect when producing a `matches` array for Readline).
+    - [ ] **THE CHALLENGE** is to manage paired lifetime with `matches`, and nested paired lifetime for match display filtering.
+  - [ ] Remove `rl_completion_matches_include_type`.
+  - [ ] Add a callback for Readline to get the match type.
+    - [ ] Use the callback in the display functions (`print_filename`, etc).
+      - [ ] And even to get the display and description fields.
+    - [ ] Use the callback in the `insert_match` and `append_to_match` functions.
+      - [ ] Move the `:` and `=` logic out of `append_to_match` and into a callback.
+    - [ ] Use the callback in the `sort_match_list` function.
+    - [ ] Use the callback in `matches_impl` for `m_dedup`.
+  - [ ] It would even be possible to not copy strings when building a `matches` array to give to Readline, **_IF_** it isn't too messy to make Readline not free the strings from the `matches` array.
+  - [ ] The lookaside table would also make it possible for individual matches to have arbitrary values associated -- color, append char, or any per-match data that's desired.
 
 <br/>
 <br/>
