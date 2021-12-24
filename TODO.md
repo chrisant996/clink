@@ -11,6 +11,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Add more Readline documentation into the Clink docs.
 
 ## Low Priority
+- Move the `:` and `=` logic out of `append_to_match` and into a callback.
+- `suppressappendchar` and etc _per match_.  This is simple now, thanks to `matches_lookaside`.
 - Can matches be collected on demand for suggestions?  So that if no configured autosuggest strategies use matches, then the match pipeline would not even collect matches.
 - Add command and flag descriptions in clink-completions?
 - Push update to clink-completions repo.
@@ -32,9 +34,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 **Miscellaneous**
 - Include `wildmatch()` and an `fnmatch()` wrapper for it.  But should first update it to support UTF8.
 - Maybe limit how many matches `possible-completions` will show with descriptions?
-- `suppressappendchar` and etc _per match_.  That is _almost_ easy to apply to Readline:
-  1. If there's exactly one match, then `alternative_matches` can set the suppress/etc variables according to the one match, otherwise to the overall value.
-  2. **But** `menu-complete` needs to know for a different specific match, every time.  Maybe add a callback Readline can invoke to give the host a chance to set variables with per-match values.
 
 <br/>
 <br/>
@@ -42,24 +41,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # MAINTENANCE
 
 - Readline 8.1 has slight bug in `update_line`; type `c` then `l`, and it now identifies **2** chars (`cl`) as needing to be displayed; seems like the diff routine has a bug with respect to the new faces capability; it used to only identify `l` as needing to be displayed.
-
-## Remove match type changes from Readline?
-- Displaying matches was slow because Readline writes everything one byte at a time, which incurs significant processing overhead across several layers.
-- Adding a new `rl_completion_display_matches_func` and `display_matches()` resolved the performance satisfactorily.
-- It's now almost possible to revert the changes to feed Readline match type information.  It's only used when displaying matches, and when inserting a match to decide whether to append a path separator.
-  - [ ] Use the match pointer itself as a unique key into a lookaside table to find the match type.  This solves both the sorting problem and the duplicates problem (provided that string pooling is never in effect when producing a `matches` array for Readline).
-    - [ ] **THE CHALLENGE** is to manage paired lifetime with `matches`, and nested paired lifetime for match display filtering.
-    - [ ] The challenge is exacerbated because there may be multiple `matches_impl` and `matches` arrays alive at any given time, due to `menu-complete` holding on to a `matches` array.
-  - [ ] Remove `rl_completion_matches_include_type`.
-  - [ ] Add a callback for Readline to get the match type.
-    - [ ] Use the callback in the display functions (`print_filename`, etc).
-      - [ ] And even to get the display and description fields.
-    - [ ] Use the callback in the `insert_match` and `append_to_match` functions.
-      - [ ] Move the `:` and `=` logic out of `append_to_match` and into a callback.
-    - [ ] Use the callback in the `sort_match_list` function.
-    - [ ] Use the callback in `matches_impl` for `m_dedup`.
-  - [ ] It would even be possible to not copy strings when building a `matches` array to give to Readline, **_IF_** it isn't too messy to make Readline not free the strings from the `matches` array.
-  - [ ] The lookaside table would also make it possible for individual matches to have arbitrary values associated -- color, append char, or any per-match data that's desired.
 
 <br/>
 <br/>
