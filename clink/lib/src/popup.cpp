@@ -76,7 +76,6 @@ static bool any_modifier_keys()
 static const char** s_items;
 static int s_num_completions;
 static int s_len_prefix;
-static int s_past_flag;
 static int s_column_width[4];
 static popup_items_mode s_items_mode;
 static int s_descriptions;
@@ -107,7 +106,7 @@ static bool find_in_list(HWND hwnd, find_mode mode)
 
     while (row >= 0 && row < s_num_completions)
     {
-        const char* p = s_items[row] + s_past_flag;
+        const char* p = s_items[row];
 
         // BUGBUG: oops, StrStrI assumes ACP, but we're using UTF8.
         if (StrStrI(p, find.c_str()))
@@ -321,7 +320,7 @@ static void get_cell_text(int row, int column, wstr_base& out, bool split_tabs=t
     if (column == 0)
     {
         bool filtered = false;
-        const char* display = s_items[row] + s_past_flag + s_len_prefix;
+        const char* display = s_items[row] + s_len_prefix;
         if (s_items_mode == popup_items_mode::display_filter)
         {
             const char* ptr = display + strlen(display) + 1;
@@ -335,8 +334,7 @@ static void get_cell_text(int row, int column, wstr_base& out, bool split_tabs=t
         to_utf16(out, display);
 
         if (!filtered &&
-            s_past_flag &&
-            IS_MATCH_TYPE_DIR(s_items[row][0]) &&
+            IS_MATCH_TYPE_DIR(lookup_match_type(s_items[row])) &&
             out.length() &&
             !path::is_separator(out.c_str()[out.length() - 1]))
         {
@@ -779,7 +777,6 @@ popup_result do_popup_list(
     const char** items,
     int num_items,
     int len_prefix,
-    int past_flag,
     bool completing,
     bool auto_complete,
     bool reverse_find,
@@ -790,7 +787,6 @@ popup_result do_popup_list(
     if (!items)
         return popup_result::error;
 
-    s_past_flag = past_flag;
     s_items_mode = mode;
     s_reverse_find = reverse_find;
     s_descriptions = 0;

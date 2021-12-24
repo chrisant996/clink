@@ -48,3 +48,9 @@ struct hooked_stat
 };
 
 void end_prompt(int crlf);
+
+// These are implemented in matches_lookaside.cpp.
+extern int lookup_match_type(const char* match);
+extern unsigned char lookup_match_flags(const char* match);
+extern const char* lookup_match_display(const char* match);
+extern const char* lookup_match_description(const char* match);

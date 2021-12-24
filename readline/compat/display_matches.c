@@ -67,6 +67,10 @@ extern int errno;
 
 #define ELLIPSIS_LEN 3
 
+#ifdef DEBUG
+extern int has_matches_lookaside(char** matches);
+#endif
+
 extern int complete_get_screenwidth (void);
 extern int fnwidth (const char *string);
 extern int get_y_or_n (int for_pager);
@@ -236,7 +240,7 @@ static void append_prefix_color(void)
 }
 
 // Returns whether any color sequence was printed.
-static bool append_match_color_indicator(const char *f, unsigned char match_type)
+static bool append_match_color_indicator(const char *f, int match_type)
 {
     enum indicator_no colored_filetype;
     COLOR_EXT_TYPE *ext; // Color extension.
@@ -449,7 +453,7 @@ static void prep_non_filename_text(void)
     }
 }
 
-static void append_colored_stat_start(const char *filename, unsigned char match_type)
+static void append_colored_stat_start(const char *filename, int match_type)
 {
     append_normal_color();
     append_match_color_indicator(filename, match_type);
@@ -483,13 +487,10 @@ static void append_selection_color(void)
 
 //------------------------------------------------------------------------------
 static int
-path_isdir(const char *filename)
+path_isdir(int match_type, const char *filename)
 {
-    if (rl_completion_matches_include_type)
-    {
-        const char *sep = rl_last_path_separator(filename);
-        return sep && !sep[1];
-    }
+    if (match_type && !IS_MATCH_TYPE_NONE(match_type))
+        return IS_MATCH_TYPE_DIR(match_type);
 
     struct stat finfo;
     return (stat(filename, &finfo) == 0 && S_ISDIR(finfo.st_mode));
@@ -498,7 +499,7 @@ path_isdir(const char *filename)
 
 
 //------------------------------------------------------------------------------
-static int fnappend(const char *to_print, int prefix_bytes, int condense, const char *real_pathname, unsigned char match_type, int selected)
+static int fnappend(const char *to_print, int prefix_bytes, int condense, const char *real_pathname, int match_type, int selected)
 {
     int printed_len, w;
     const char *s;
@@ -660,24 +661,21 @@ void append_display(const char* to_print, int selected, const char* color)
 // Print filename.  If VISIBLE_STATS is defined and we are using it, check for
 // and output a single character for 'special' filenames.  Return the number of
 // characters we output.
-int append_filename(char* to_print, const char* full_pathname, int prefix_bytes, int condense, unsigned char type, int selected)
+int append_filename(char* to_print, const char* full_pathname, int prefix_bytes, int condense, int type, int selected)
 {
     int printed_len, extension_char, slen, tlen;
     char *s, c, *new_full_pathname;
     const char *dn;
     char tmp_slash[3];
 
-    unsigned char match_type = (rl_completion_matches_include_type ? full_pathname[0] : type);
-    int filename_display_desired = rl_filename_display_desired || IS_MATCH_TYPE_DIR(match_type);
-    if (rl_completion_matches_include_type)
-        full_pathname++;
+    int filename_display_desired = rl_filename_display_desired || IS_MATCH_TYPE_DIR(type);
 
     extension_char = 0;
 #if defined(COLOR_SUPPORT)
     // Defer printing if we want to prefix with a color indicator.
     if (_rl_colored_stats == 0 || filename_display_desired == 0)
 #endif
-        printed_len = fnappend(to_print, prefix_bytes, condense, to_print, match_type, selected);
+        printed_len = fnappend(to_print, prefix_bytes, condense, to_print, type, selected);
 
     if (filename_display_desired && (
 #if defined (VISIBLE_STATS)
@@ -741,7 +739,7 @@ int append_filename(char* to_print, const char* full_pathname, int prefix_bytes,
 
 #if defined (VISIBLE_STATS)
             if (rl_visible_stats)
-                extension_char = stat_char(new_full_pathname, match_type);
+                extension_char = stat_char(new_full_pathname, type);
             else
 #endif
             if (_rl_complete_mark_directories)
@@ -753,14 +751,14 @@ int append_filename(char* to_print, const char* full_pathname, int prefix_bytes,
                     xfree(new_full_pathname);
                     new_full_pathname = tmp;
                 }
-                if (match_type <= MATCH_TYPE_NONE ? path_isdir(new_full_pathname) : IS_MATCH_TYPE_DIR(match_type))
+                if (path_isdir(type, new_full_pathname))
                     extension_char = rl_preferred_path_separator;
             }
 
             // Move colored-stats code inside fnappend()
 #if defined(COLOR_SUPPORT)
             if (_rl_colored_stats)
-                printed_len = fnappend(to_print, prefix_bytes, condense, new_full_pathname, match_type, selected);
+                printed_len = fnappend(to_print, prefix_bytes, condense, new_full_pathname, type, selected);
 #endif
 
             xfree(new_full_pathname);
@@ -771,17 +769,16 @@ int append_filename(char* to_print, const char* full_pathname, int prefix_bytes,
             s = tilde_expand(full_pathname);
 #if defined(VISIBLE_STATS)
             if (rl_visible_stats)
-                extension_char = stat_char(s, match_type);
+                extension_char = stat_char(s, type);
             else
 #endif
-            if (_rl_complete_mark_directories &&
-                ((!match_type || IS_MATCH_TYPE_NONE(match_type)) ? path_isdir(s) : IS_MATCH_TYPE_DIR(match_type)))
+            if (_rl_complete_mark_directories && path_isdir(type, s))
                 extension_char = rl_preferred_path_separator;
 
             // Move colored-stats code inside fnappend()
 #if defined (COLOR_SUPPORT)
             if (_rl_colored_stats)
-                printed_len = fnappend(to_print, prefix_bytes, condense, s, match_type, selected);
+                printed_len = fnappend(to_print, prefix_bytes, condense, s, type, selected);
 #endif
         }
 
@@ -802,7 +799,7 @@ int append_filename(char* to_print, const char* full_pathname, int prefix_bytes,
             {
                 s = tilde_expand(full_pathname);
                 if (!selected)
-                    append_colored_stat_start(s, match_type);
+                    append_colored_stat_start(s, type);
                 xfree(s);
             }
 #endif
@@ -832,9 +829,9 @@ static const char* visible_part(const char *match)
 }
 
 //------------------------------------------------------------------------------
-int printable_len_ex(const char* match, unsigned char type)
+int printable_len(const char* match, int type)
 {
-    const char* temp = printable_part((char*)match - !!rl_completion_matches_include_type);
+    const char* temp = printable_part((char*)match);
     int len = fnwidth(temp);
 
     // Use the match type to determine whether there will be a visible stat
@@ -860,15 +857,6 @@ int printable_len_ex(const char* match, unsigned char type)
         len++;
 
     return len;
-}
-
-//------------------------------------------------------------------------------
-int printable_len(const char* match)
-{
-    if (rl_completion_matches_include_type)
-        return printable_len_ex(match + 1, match[0]);
-    else
-        return printable_len_ex(match, MATCH_TYPE_NONE);
 }
 
 //------------------------------------------------------------------------------
@@ -906,7 +894,7 @@ void pad_filename(int len, int pad_to_width, int selected)
 //------------------------------------------------------------------------------
 struct match_accessor
 {
-    unsigned char   (*get_type)(struct match_accessor* self, int i);
+    int             (*get_type)(struct match_accessor* self, int i);
     const char*     (*get_match)(struct match_accessor* self, int i);
     const char*     (*get_display)(struct match_accessor* self, int i);
     int             (*get_display_cells)(struct match_accessor* self, int i);
@@ -926,43 +914,45 @@ struct match_accessor_impl
     int has_descriptions;
 };
 typedef struct match_accessor_impl match_accessor_impl;
-static unsigned char matches_get_type(struct match_accessor* self, int i) { return ((match_accessor_impl*)self)->matches[i][0]; }
-static const char* matches_get_match(struct match_accessor* self, int i) { return ((match_accessor_impl*)self)->matches[i] + 1; }
+static int matches_get_type(struct match_accessor* self, int i)
+{
+    return lookup_match_type(((match_accessor_impl*)self)->matches[i]);
+}
+static const char* matches_get_match(struct match_accessor* self, int i)
+{
+    return ((match_accessor_impl*)self)->matches[i];
+}
 static const char* matches_get_display(struct match_accessor* self, int i)
 {
-    const char* m = ((match_accessor_impl*)self)->matches[i] + 1;
-    const char* match = m;
-    m += strlen(m) + 1;     // skip match
-    m++;                    // skip flags
-    return *m ? m : match;  // returns DISPLAY or MATCH
+    const char* match = ((match_accessor_impl*)self)->matches[i];
+    const char* display = lookup_match_display(match);
+    return display && *display ? display : match;
 }
 static int matches_get_display_cells(struct match_accessor* self, int i)
 {
     // This is only called when the display field is being used and any path
     // in it should be displayed as-is, and therefore cell_count() is ok here.
-    const char* m = ((match_accessor_impl*)self)->matches[i] + 1;
-    m += strlen(m) + 1;     // skip match
-    m++;                    // skip flags
-    return cell_count(m);
+    const char* match = ((match_accessor_impl*)self)->matches[i];
+    const char* display = lookup_match_display(match);
+    return display ? cell_count(display) : 0;
 }
 static const char* matches_get_description(struct match_accessor* self, int i)
 {
-    const char* m = ((match_accessor_impl*)self)->matches[i] + 1;
-    m += strlen(m) + 1;     // skip match
-    m++;                    // skip flags
-    m += strlen(m) + 1;     // skip display
-    return *m ? m : 0;
+    const char* match = ((match_accessor_impl*)self)->matches[i];
+    const char* desc = lookup_match_description(match);
+    return desc && *desc ? desc : 0;
 }
 static int matches_get_description_cells(struct match_accessor* self, int i)
 {
-    const char* desc = matches_get_description(self, i);
+    const char* match = ((match_accessor_impl*)self)->matches[i];
+    const char* desc = lookup_match_description(match);
     return desc ? cell_count(desc) : 0;
 }
 static int matches_get_append_display(struct match_accessor* self, int i)
 {
-    const char* m = ((match_accessor_impl*)self)->matches[i] + 1;
-    m += strlen(m) + 1;
-    return (*m) & MATCH_FLAG_APPEND_DISPLAY;
+    const char* match = ((match_accessor_impl*)self)->matches[i];
+    unsigned char flags = lookup_match_flags(match);
+    return flags & MATCH_FLAG_APPEND_DISPLAY;
 }
 static int matches_has_descriptions(struct match_accessor* self)
 {
@@ -974,6 +964,8 @@ static int matches_is_filtered_match_display(struct match_accessor* self)
 }
 static match_accessor* make_match_accessor(char** matches)
 {
+    assert(has_matches_lookaside(matches));
+
     match_accessor_impl* access = (match_accessor_impl*)malloc(sizeof(*access));
     access->impl.get_type = matches_get_type;
     access->impl.get_match = matches_get_match;
@@ -1004,7 +996,7 @@ struct filtered_match_accessor_impl
     match_display_filter_entry** matches;
 };
 typedef struct filtered_match_accessor_impl filtered_match_accessor_impl;
-static unsigned char filtered_get_type(struct match_accessor* self, int i) { return ((filtered_match_accessor_impl*)self)->matches[i]->type; }
+static int filtered_get_type(struct match_accessor* self, int i) { return ((filtered_match_accessor_impl*)self)->matches[i]->type; }
 static const char* filtered_get_match(struct match_accessor* self, int i) { return ((filtered_match_accessor_impl*)self)->matches[i]->match; }
 static const char* filtered_get_display(struct match_accessor* self, int i) { return ((filtered_match_accessor_impl*)self)->matches[i]->display; }
 static int filtered_get_display_cells(struct match_accessor* self, int i) { return ((filtered_match_accessor_impl*)self)->matches[i]->visible_display; }
@@ -1030,7 +1022,7 @@ static match_accessor* make_filtered_match_accessor(match_display_filter_entry**
 }
 
 //------------------------------------------------------------------------------
-static int use_display(match_accessor* access, unsigned char type, const char* match, const char* display, int append_display)
+static int use_display(match_accessor* access, int type, const char* match, const char* display, int append_display)
 {
     return (
         (append_display) ||
@@ -1074,7 +1066,7 @@ static int display_match_list_internal(match_accessor* access, int len, int max,
             // unless the match string is an exact prefix of the display string.
             for (l = 0; l < len; l++)
             {
-                unsigned char type = access->get_type(access, l);
+                int type = access->get_type(access, l);
                 const char *match = access->get_match(access, l);
                 const char *display = access->get_display(access, l);
                 int append = access->get_append_display(access, l);
@@ -1173,7 +1165,7 @@ static int display_match_list_internal(match_accessor* access, int len, int max,
             if (l > len)
                 break;
 
-            unsigned char type = access->get_type(access, l);
+            int type = access->get_type(access, l);
             const char* match = access->get_match(access, l);
             const char* display = access->get_display(access, l);
             int append = access->get_append_display(access, l);
@@ -1290,8 +1282,6 @@ void display_matches(char** matches)
     int vis_stat;
     match_accessor* access = NULL;
 
-    int included_type = rl_completion_matches_include_type;
-
     // If there is a display filter, give it a chance to modify MATCHES.
     if (rl_match_display_filter_func)
     {
@@ -1313,7 +1303,6 @@ void display_matches(char** matches)
                     max = (*walk)->visible_display;
             }
 
-            rl_completion_matches_include_type = 0;
             access = make_filtered_match_accessor(filtered_matches);
 
             if ((rl_completion_auto_query_items && _rl_screenheight > 0) ?
@@ -1345,14 +1334,13 @@ done_filtered:
         matches = rebuilt;
     }
 
-    rl_completion_matches_include_type = 0;
     access = make_match_accessor(matches);
 
     // There is more than one answer.  Find out how many there are,
     // and find the maximum printed length of a single entry.
     for (max = 0, i = 1; matches[i]; i++)
     {
-        unsigned char type = access->get_type(access, i);
+        int type = access->get_type(access, i);
         const char *match = access->get_match(access, i);
         const char *display = access->get_display(access, i);
         int append = access->get_append_display(access, i);
@@ -1363,13 +1351,13 @@ done_filtered:
             if (append)
             {
                 char *temp = printable_part((char*)match);
-                len = printable_len(match);
+                len = printable_len(match, type);
             }
             len += access->get_display_cells(access, i);
         }
         else
         {
-            len = printable_len(match);
+            len = printable_len(match, type);
         }
 
         if (len > max)
@@ -1391,7 +1379,6 @@ done_filtered:
     display_match_list_internal(access, len, max, 0);
 
 done:
-    rl_completion_matches_include_type = included_type;
     free(access);
     rl_forced_update_display();
     rl_display_fixed = 1;

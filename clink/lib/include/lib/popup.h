@@ -39,7 +39,6 @@ popup_result do_popup_list(
     const char** items,
     int num_items,
     int len_prefix,
-    int past_flag,
     bool completing,
     bool auto_complete,
     bool reverse_find,

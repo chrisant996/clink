@@ -9,6 +9,7 @@
 #include "line_buffer.h"
 #include "line_state.h"
 #include "matches.h"
+#include "matches_lookaside.h"
 
 #include <core/base.h>
 #include <core/settings.h>
@@ -359,7 +360,7 @@ unsigned int match_adapter::get_match_visible_display(unsigned int index) const
             return cell_count(display);
         const char* match = m_matches->get_match(index);
         match_type type = m_matches->get_match_type(index);
-        return printable_len_ex(match, static_cast<unsigned char>(type));
+        return printable_len(match, static_cast<int>(type));
     }
     return 0;
 }
@@ -1061,7 +1062,6 @@ void selectcomplete_impl::update_matches(bool restrict)
 
         rl_completion_found_quote = found_quote;
         rl_completion_quote_character = quote_char;
-        rl_completion_matches_include_type = 1;
     }
 
     // Update matches.
@@ -1086,7 +1086,6 @@ void selectcomplete_impl::update_matches(bool restrict)
     bool filtered = false;
     if (m_matches.get_matches()->match_display_filter(nullptr, nullptr, nullptr, flags))
     {
-        assert(rl_completion_matches_include_type);
         if (matches* regen = maybe_regenerate_matches(m_needle.c_str(), flags))
         {
             m_matches.set_regen_matches(regen);
@@ -1161,12 +1160,12 @@ void selectcomplete_impl::update_matches(bool restrict)
             if (use_display(append, type, i))
             {
                 if (append)
-                    len += printable_len_ex(match, static_cast<unsigned char>(type));
+                    len += printable_len(match, static_cast<int>(type));
                 len += m_matches.get_match_visible_display(i);
             }
             else
             {
-                len += printable_len_ex(match, static_cast<unsigned char>(type));
+                len += printable_len(match, static_cast<int>(type));
             }
 
             if (m_match_longest < len)
@@ -1250,9 +1249,6 @@ void selectcomplete_impl::update_display()
         COORD restore = csbi.dwCursorPosition;
         const int vpos = _rl_last_v_pos;
         const int cpos = _rl_last_c_pos;
-
-        // Using m_matches directly means match types are separate from matches.
-        rollback<int> rb(rl_completion_matches_include_type, 0);
 
         // Move cursor after the input line.
         _rl_move_vert(_rl_vis_botlin);
@@ -1357,7 +1353,7 @@ void selectcomplete_impl::update_display()
                         const int selected = (i == m_index);
                         const char* const display = m_matches.get_match_display(i);
                         const match_type match_type = m_matches.get_match_type(i);
-                        const unsigned char type = static_cast<unsigned char>(match_type);
+                        const int type = static_cast<int>(match_type);
                         const bool append = m_matches.is_append_display(i);
 
                         mark_tmpbuf();
@@ -1640,15 +1636,12 @@ void selectcomplete_impl::insert_match(int final)
     if (final)
     {
         int nontrivial_lcd = compare_match(const_cast<char*>(m_needle.c_str()), match);
-        str<> match_with_type;
-        match_with_type.concat(" ");
-        match_with_type.concat(match);
-        *match_with_type.data() = static_cast<unsigned char>(type);
 
-        rollback<int> rb(rl_completion_matches_include_type, true);
         bool append_space = false;
         // UGLY: append_to_match() circumvents the m_buffer abstraction.
-        append_to_match(match_with_type.data(), m_anchor + !!*qs, m_delimiter, *qs, nontrivial_lcd);
+        set_matches_lookaside_oneoff(match, type);
+        append_to_match(const_cast<char*>(match), m_anchor + !!*qs, m_delimiter, *qs, nontrivial_lcd);
+        set_matches_lookaside_oneoff(nullptr, type);
         m_point = m_buffer->get_cursor();
 
         bool have_space = (m_buffer->get_buffer()[m_point - 1] == ' ');

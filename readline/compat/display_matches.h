@@ -7,7 +7,7 @@ struct match_display_filter_entry
     const char* match;          // Match string (pointer into buffer).
     const char* display;        // Display string (pointer into buffer).
     const char* description;    // Description string (pointer into buffer).
-    unsigned char type;         // IMPORTANT: Must immediately preceed buffer for compatibility with rl_completion_matches_include_type.
+    unsigned char type;         // Match type.
     char buffer[1];             // Variable length buffer containing match, display, and description.
 };
 typedef struct match_display_filter_entry match_display_filter_entry;
@@ -33,15 +33,11 @@ extern void append_tmpbuf_char(char c);
 extern void append_tmpbuf_string(const char* s, int len);
 extern void flush_tmpbuf(void);
 extern void append_display(const char* to_print, int selected, const char* color);
-// type is ignored when rl_completion_matches_include_type is set.
-extern int append_filename(char* to_print, const char* full_pathname, int prefix_bytes, int can_condense, unsigned char type, int selected);
+extern int append_filename(char* to_print, const char* full_pathname, int prefix_bytes, int can_condense, int type, int selected);
 extern void pad_filename(int len, int pad_to_width, int selected);
 
 extern void free_filtered_matches(match_display_filter_entry** filtered_matches);
-// printable_len() respects rl_completion_matches_include_type.
-extern int printable_len(const char* match);
-// printable_len_ex() is independent from rl_completion_matches_include_type.
-extern int printable_len_ex(const char* match, unsigned char type);
+extern int printable_len(const char* match, int type);
 
 #define MATCH_FLAG_APPEND_DISPLAY       0x01
 

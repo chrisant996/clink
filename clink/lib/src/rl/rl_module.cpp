@@ -8,6 +8,7 @@
 #include "line_state.h"
 #include "matches.h"
 #include "match_pipeline.h"
+#include "matches_lookaside.h"
 #include "word_classifier.h"
 #include "word_classifications.h"
 #include "popup.h"
@@ -855,6 +856,12 @@ int clink_end_of_line(int count, int invoking_key)
 static const matches* s_matches = nullptr;
 
 //------------------------------------------------------------------------------
+extern "C" void free_match_list_hook(char** matches)
+{
+    destroy_matches_lookaside(matches);
+}
+
+//------------------------------------------------------------------------------
 static int complete_fncmp(const char *convfn, int convlen, const char *filename, int filename_len)
 {
     // We let the OS handle wildcards, so not much to do here.  And we ignore
@@ -1106,8 +1113,6 @@ static char** alternative_matches(const char* text, int start, int end)
     if (!iter.next())
         return nullptr;
 
-    rl_completion_matches_include_type = 1;
-
 #ifdef DEBUG
     const int debug_matches = dbg_get_env_int("DEBUG_MATCHES");
 #endif
@@ -1123,20 +1128,17 @@ static char** alternative_matches(const char* text, int start, int end)
     // Deep copy of the generated matches.  Inefficient, but this is how
     // readline wants them.
     str<32> lcd;
-    int past_flag = rl_completion_matches_include_type;
     int count = 0;
     int reserved = 0;
     char** matches = nullptr;
     if (!ensure_matches_size(matches, s_matches->get_match_count(), reserved))
         return nullptr;
-    matches[0] = (char*)malloc(past_flag + (end - start) + 1);
-    if (past_flag)
-        matches[0][0] = (char)match_type::none;
-    memcpy(matches[0] + past_flag, text, end - start);
-    matches[0][past_flag + (end - start)] = '\0';
+    matches[0] = (char*)malloc((end - start) + 1);
+    memcpy(matches[0], text, end - start);
+    matches[0][(end - start)] = '\0';
     do
     {
-        match_type type = past_flag ? iter.get_match_type() : match_type::none;
+        match_type type = iter.get_match_type();
 
         ++count;
         if (!ensure_matches_size(matches, count, reserved))
@@ -1146,8 +1148,8 @@ static char** alternative_matches(const char* text, int start, int end)
         }
 
         // Packed format of match is:
-        //  TYPE (unsigned char)
         //  MATCH (nul terminated char string)
+        //  TYPE (unsigned char)
         //  FLAGS (unsigned char)
         //  DISPLAY (nul terminated char string)
         //  DESCRIPTION (nul terminated char string)
@@ -1164,18 +1166,16 @@ static char** alternative_matches(const char* text, int start, int end)
         const int match_len = strlen(match);
         const int match_display_len = display ? strlen(display) : 0;
         const int match_description_len = description ? strlen(description) : 0;
-        const int match_size = past_flag + match_len + 1 + 1/*flags*/ + match_display_len + 1 + match_description_len + 1;
+        const int match_size = match_len + 1 + 1/*type*/ + 1/*flags*/ + match_display_len + 1 + match_description_len + 1;
         char* ptr = (char*)malloc(match_size);
 
         matches[count] = ptr;
-
-        if (past_flag)
-            *(ptr++) = (char)type;
 
         memcpy(ptr, match, match_len);
         ptr += match_len;
         *(ptr++) = '\0';
 
+        *(ptr++) = (char)type;
         *(ptr++) = (char)flags;
 
         memcpy(ptr, display, match_display_len);
@@ -1189,12 +1189,13 @@ static char** alternative_matches(const char* text, int start, int end)
 #ifdef DEBUG
         // Set DEBUG_MATCHES=-5 to print the first 5 matches.
         if (debug_matches > 0 || (debug_matches < 0 && count - 1 < 0 - debug_matches))
-            printf("%u: %s, %02.2x => %s\n", count - 1, match, type, matches[count] + past_flag);
+            printf("%u: %s, %02.2x => %s\n", count - 1, match, type, matches[count]);
 #endif
     }
     while (iter.next());
     matches[count + 1] = nullptr;
 
+    create_matches_lookaside(matches);
     update_rl_modes_from_matches(s_matches, iter, count);
 
     return matches;
@@ -1239,7 +1240,7 @@ static void postprocess_lcd(char* lcd, const char* text)
         if (*text == '/' || rl_is_path_separator(*text))
             return;
 
-    lcd[!!rl_completion_matches_include_type] = '/';
+    lcd[0] = '/';
 }
 
 //------------------------------------------------------------------------------
@@ -1275,7 +1276,6 @@ int clink_popup_complete(int count, int invoking_key)
     char** matches = rl_get_completions('?', &match_count, &orig_text, &orig_start, &orig_end, &delimiter, &quote_char);
     if (!matches)
         return 0;
-    int past_flag = rl_completion_matches_include_type ? 1 : 0;
 
     // Identify common prefix.
     char* end_prefix = rl_last_path_separator(orig_text);
@@ -1311,7 +1311,7 @@ int clink_popup_complete(int count, int invoking_key)
                 for (int i = 1; filtered_matches[i]; i++)
                 {
                     if (filtered_matches[i]->match[0]) // Count non-empty matches.
-                        matches[j++] = filtered_matches[i]->buffer - past_flag;
+                        matches[j++] = filtered_matches[i]->buffer;
                 }
                 assert(j == match_count);
                 matches[match_count] = nullptr;
@@ -1319,11 +1319,13 @@ int clink_popup_complete(int count, int invoking_key)
         }
     }
 
+    create_matches_lookaside(matches);
+
     // Popup list.
     int current = 0;
     const char* choice;
     switch (do_popup_list("Completions", (const char **)matches, match_count,
-                          len_prefix, past_flag, completing,
+                          len_prefix, completing,
                           true/*auto_complete*/, false/*reverse_find*/,
                           current, choice, display_filtered ? popup_items_mode::display_filter : popup_items_mode::descriptions))
     {
@@ -1334,10 +1336,7 @@ int clink_popup_complete(int count, int invoking_key)
         break;
     case popup_result::select:
     case popup_result::use:
-        {
-            rollback<int> rb(rl_completion_matches_include_type, past_flag);
-            rl_insert_match(choice, orig_text, orig_start, delimiter, quote_char);
-        }
+        rl_insert_match(choice, orig_text, orig_start, delimiter, quote_char);
         break;
     }
 
@@ -1345,9 +1344,14 @@ int clink_popup_complete(int count, int invoking_key)
 
     free(orig_text);
     if (free_match_strings)
+    {
         _rl_free_match_list(matches);
+    }
     else
+    {
+        destroy_matches_lookaside(matches);
         free(matches);
+    }
     free_filtered_matches(filtered_matches);
 
     return 0;
@@ -1364,7 +1368,6 @@ int clink_popup_history(int count, int invoking_key)
     }
 
     rl_completion_invoking_key = invoking_key;
-    rl_completion_matches_include_type = 0;
 
     int current = -1;
     int orig_pos = where_history();
@@ -1407,7 +1410,7 @@ int clink_popup_history(int count, int invoking_key)
     {
         const char* choice;
         result = do_popup_list("History",
-            const_cast<const char**>(history), total, 0, 0,
+            const_cast<const char**>(history), total, 0,
             false/*completing*/, false/*auto_complete*/, true/*reverse_find*/,
             current, choice);
     }
@@ -1948,6 +1951,8 @@ rl_module::rl_module(terminal_in* input)
     rl_completer_word_break_characters = " \t\n\"'`@><=;|&{("; /* }) */
 
     // Completion and match display.
+    rl_lookup_match_type = lookup_match_type;
+    rl_free_match_list_hook = free_match_list_hook;
     rl_ignore_some_completions_function = host_filter_matches;
     rl_attempted_completion_function = alternative_matches;
     rl_menu_completion_entry_function = filename_menu_completion_function;

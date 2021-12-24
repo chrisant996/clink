@@ -496,7 +496,7 @@ static int popup_list(lua_State* state)
     }
     else
     {
-        result = do_popup_list(title, &*items.begin(), items.size(), 0, 0, false, false, false, index, choice, popup_items_mode::display_filter);
+        result = do_popup_list(title, &*items.begin(), items.size(), 0, false, false, false, index, choice, popup_items_mode::display_filter);
     }
 
     switch (result)

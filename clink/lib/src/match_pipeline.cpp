@@ -156,32 +156,18 @@ static void alpha_sorter(match_info* infos, int count)
 }
 
 //------------------------------------------------------------------------------
-static int __cdecl qsort_match_compare(const void* pv1, const void* pv2)
-{
-    const char** s1 = (const char**)pv1;
-    const char** s2 = (const char**)pv2;
-    return compare_string(*s1, *s2, 1 /*casefold*/);
-}
-
-//------------------------------------------------------------------------------
 void sort_match_list(char** matches, int len)
 {
     if (s_nosort || len <= 0)
         return;
-
-    if (!rl_completion_matches_include_type)
-    {
-        qsort(matches, len, sizeof(matches[0]), qsort_match_compare);
-        return;
-    }
 
     int order = g_sort_dirs.get();
     wstr<> ltmp;
     wstr<> rtmp;
 
     auto predicate = [&] (const char* l, const char* r) {
-        match_type l_type = match_type(*(l++));
-        match_type r_type = match_type(*(r++));
+        match_type l_type = (match_type)lookup_match_type(l);
+        match_type r_type = (match_type)lookup_match_type(r);
 
         ltmp.clear();
         rtmp.clear();

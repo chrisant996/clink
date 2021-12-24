@@ -688,8 +688,8 @@ extern rl_adjcmpwrd_func_t *rl_adjust_completion_word;
 extern rl_compare_lcd_func_t *rl_compare_lcd_func;
 /* Function to call for post-processing of lcd. */
 extern rl_postprocess_lcd_func_t *rl_postprocess_lcd_func;
-/* Completion functions can set this to signal that the first char of each
-   match is bit flags about the match type. */
+/* Function to call to get match type.  This lets the host cache results of
+   file system while generating completion matches, to improve performance. */
 #define MATCH_TYPE_NONE			1
 #define MATCH_TYPE_WORD			2
 #define MATCH_TYPE_ARG			3
@@ -715,7 +715,7 @@ extern rl_postprocess_lcd_func_t *rl_postprocess_lcd_func;
 #define IS_MATCH_TYPE_READONLY(x)	(((x) & MATCH_TYPE_READONLY) == MATCH_TYPE_READONLY)
 #define IS_MATCH_TYPE_PATHISH(x)	(((x) & MATCH_TYPE_MASK) >= MATCH_TYPE_FILE && \
 					 ((x) & MATCH_TYPE_MASK) <= MATCH_TYPE_LINK)
-extern int rl_completion_matches_include_type;
+extern rl_iccpfunc_t *rl_lookup_match_type;
 /* end_clink_change */
 
 /* The address of the function to call to fetch a character from the current
@@ -852,6 +852,13 @@ extern const char *rl_filename_quote_characters;
    in TEXT when it is passed to the completion function.  The shell uses
    this to help determine what kind of completing to do. */
 extern const char *rl_special_prefixes;
+
+/* begin_clink_change */
+/* If non-zero, this is the address of a function to call when
+   freeing a match list.  This can, for instance, allow a host to
+   free any data that it had associated with the match list. */
+extern rl_vcppfunc_t *rl_free_match_list_hook;
+/* end_clink_change */
 
 /* If non-zero, then this is the address of a function to call when
    completing on a directory name.  The function is called with

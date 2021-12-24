@@ -14,6 +14,7 @@
 #include <core/str_compare.h>
 #include <lib/line_state.h>
 #include <lib/matches.h>
+#include <lib/matches_lookaside.h>
 #include <lib/popup.h>
 #include <terminal/ecma48_iter.h>
 
@@ -234,12 +235,7 @@ done:
         return ret;
     }
 
-    {
-        // Need to use printable_part() and etc, but types are separate from
-        // matches here.
-        rollback<int> rb(rl_completion_matches_include_type, 0);
-        needle = printable_part(const_cast<char*>(needle));
-    }
+    needle = printable_part(const_cast<char*>(needle));
     const int needle_len = int(strlen(needle));
 
     // Count matches.
@@ -260,12 +256,7 @@ done:
         for (i = 1; i <= match_count; ++i)
         {
             const char* match = matches[mi++];
-            match_type type = match_type::none;
-            if (rl_completion_matches_include_type)
-            {
-                type = match_type(*match);
-                match++;
-            }
+            match_type type = (match_type)lookup_match_type(match);
 
             lua_createtable(state, 0, 2);
 
@@ -288,11 +279,7 @@ done:
         int mi = only_lcd ? 0 : 1;
         for (i = 1; i < match_count; ++i)
         {
-            const char* match = matches[mi++];
-            if (rl_completion_matches_include_type)
-                match++;
-
-            lua_pushstring(state, match);
+            lua_pushstring(state, matches[mi++]);
             lua_rawseti(state, -2, i);
         }
     }
@@ -410,6 +397,8 @@ discard:
 
                 if (!display[0])
                     goto discard;
+                *(buffer++) = (char)type;   // match type
+                *(buffer++) = 0;            // match flags
                 new_match->display = append_string_into_buffer(buffer, display);
                 new_match->visible_display = plainify(new_match->display, strip_markup ? &buffer : nullptr);
                 if (new_match->visible_display <= 0)
@@ -446,6 +435,8 @@ next:
 
     // Fill in entry [0]:
     //  - match is the lcd of the matches.
+    //  - match type is 0.
+    //  - match flags is 0.
     //  - display is an empty string.
     //  - visible_display is the max visible_display of the entries.
     //  - visible_display negative means has descriptions (use one column).
@@ -457,6 +448,8 @@ next:
         memset(new_matches[0], 0, sizeof(*new_matches[0]));
         char* buffer = new_matches[0]->buffer;
         new_matches[0]->match = append_string_into_buffer(buffer, lcd.c_str());
+        *(buffer++) = 0;    // match type
+        *(buffer++) = 0;    // match flags
         new_matches[0]->display = append_string_into_buffer(buffer, nullptr);
         append_string_into_buffer(buffer, nullptr); // Be consistent and add empty column even in the lcd entry.
 
@@ -556,12 +549,7 @@ void lua_match_generator::filter_matches(char** matches, char completion_type, b
     for (int i = 1; i <= match_count; ++i)
     {
         const char* match = matches[mi++];
-        match_type type = match_type::none;
-        if (rl_completion_matches_include_type)
-        {
-            type = match_type(*match);
-            match++;
-        }
+        match_type type = (match_type)lookup_match_type(match);
 
         lua_createtable(state, 0, 2);
 
@@ -642,11 +630,7 @@ void lua_match_generator::filter_matches(char** matches, char completion_type, b
     char** write = &matches[1];
     while (*read)
     {
-        const char* match = *read;
-        if (rl_completion_matches_include_type)
-            ++match;
-
-        if (keep_typeless.find(match) == keep_typeless.end())
+        if (keep_typeless.find(*read) == keep_typeless.end())
         {
             discarded = true;
             free(*read);
