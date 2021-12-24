@@ -3,65 +3,79 @@
 
 #pragma once
 
+//#define CAN_LINEAR_ALLOCATOR_BORROW
+
 //------------------------------------------------------------------------------
 class linear_allocator
 {
 public:
-                          linear_allocator(int size);
-                          linear_allocator(void* buffer, int size);
-                          ~linear_allocator();
-    void*                 alloc(int size);
-    template <class T> T* calloc(int count=1);
+                            linear_allocator(unsigned int size);
+#ifdef CAN_LINEAR_ALLOCATOR_BORROW
+                            linear_allocator(void* buffer, unsigned int size);
+#endif
+                            ~linear_allocator();
+    void                    reset();
+    void*                   alloc(unsigned int size);
+    template <class T> T*   calloc(unsigned int count=1);
+    bool                    fits(unsigned int) const;
+    bool                    oversized(unsigned int) const;
+
+    bool                    unittest_at_end(void* ptr, unsigned int size) const;
+    bool                    unittest_in_prev_page(void* ptr, unsigned int size) const;
 
 private:
-    char*                 m_buffer;
-    int                   m_used;
-    int                   m_max;
-    bool                  m_owned;
+    bool                    new_page();
+    void                    free_chain(bool keep_one=false);
+    char*                   m_ptr = nullptr;
+    unsigned int            m_used;
+    unsigned int            m_max;
+#ifdef CAN_LINEAR_ALLOCATOR_BORROW
+    bool                    m_owned = true;
+#endif
 };
 
 //------------------------------------------------------------------------------
-inline linear_allocator::linear_allocator(int size)
-: m_buffer((char*)malloc(size))
-, m_used(0)
-, m_max(size)
-, m_owned(true)
+inline void linear_allocator::reset()
 {
+    free_chain(true/*keep_one*/);
 }
 
 //------------------------------------------------------------------------------
-inline linear_allocator::linear_allocator(void* buffer, int size)
-: m_buffer((char*)buffer)
-, m_used(0)
-, m_max(size)
-, m_owned(false)
-{
-}
-
-//------------------------------------------------------------------------------
-inline linear_allocator::~linear_allocator()
-{
-    if (m_owned)
-        free(m_buffer);
-}
-
-//------------------------------------------------------------------------------
-inline void* linear_allocator::alloc(int size)
-{
-    if (size == 0)
-        return nullptr;
-
-    int used = m_used + size;
-    if (used > m_max)
-        return nullptr;
-
-    char* ptr = m_buffer + m_used;
-    m_used = used;
-    return ptr;
-}
-
-//------------------------------------------------------------------------------
-template <class T> T* linear_allocator::calloc(int count)
+template <class T> T* linear_allocator::calloc(unsigned int count)
 {
     return (T*)(alloc(sizeof(T) * count));
+}
+
+//------------------------------------------------------------------------------
+inline bool linear_allocator::fits(unsigned int size) const
+{
+    return m_used + size <= m_max;
+}
+
+//------------------------------------------------------------------------------
+inline bool linear_allocator::oversized(unsigned int size) const
+{
+    return size + sizeof(m_ptr) > m_max;
+}
+
+
+
+//------------------------------------------------------------------------------
+inline bool linear_allocator::unittest_at_end(void* ptr, unsigned int size) const
+{
+    return ptr == m_ptr + m_used - size;
+}
+
+//------------------------------------------------------------------------------
+inline bool linear_allocator::unittest_in_prev_page(void* _ptr, unsigned int size) const
+{
+#ifdef CAN_LINEAR_ALLOCATOR_BORROW
+    if (!m_owned)
+        return false;
+#endif
+    char* ptr = (char*)_ptr;
+    char* prev_page = *reinterpret_cast<char**>(m_ptr);
+    if (oversized(size))
+        return ptr == prev_page + sizeof(m_ptr);
+    return ptr >= prev_page + sizeof(m_ptr) && ptr + size <= prev_page + m_max;
 }

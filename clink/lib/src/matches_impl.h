@@ -6,6 +6,7 @@
 #include "matches.h"
 
 #include "core/array.h"
+#include "core/linear_allocator.h"
 #include <unordered_set>
 #include <vector>
 
@@ -102,22 +103,11 @@ private:
     void                    coalesce(unsigned int count_hint, bool restrict=false);
 
 private:
-    class store_impl
-        : public match_store
+    class store_impl : public linear_allocator
     {
     public:
                             store_impl(unsigned int size);
-                            ~store_impl();
-        void                reset();
         const char*         store_front(const char* str);
-        const char*         store_back(const char* str);
-
-    private:
-        unsigned int        get_size(const char* str) const;
-        bool                new_page();
-        void                free_chain(bool keep_one);
-        unsigned int        m_front;
-        unsigned int        m_back;
     };
 
     typedef std::vector<match_info> infos;

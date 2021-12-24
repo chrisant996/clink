@@ -370,102 +370,20 @@ shadow_bool matches_iter::is_filename_display_desired() const
 
 //------------------------------------------------------------------------------
 matches_impl::store_impl::store_impl(unsigned int size)
+: linear_allocator(max<unsigned int>(4096, size))
 {
-    m_size = max((unsigned int)4096, size);
-    m_ptr = nullptr;
-    new_page();
-}
-
-//------------------------------------------------------------------------------
-matches_impl::store_impl::~store_impl()
-{
-    free_chain(false/*keep_one*/);
-}
-
-//------------------------------------------------------------------------------
-void matches_impl::store_impl::reset()
-{
-    free_chain(true/*keep_one*/);
-    m_back = m_size;
-    m_front = sizeof(m_ptr);
 }
 
 //------------------------------------------------------------------------------
 const char* matches_impl::store_impl::store_front(const char* str)
 {
-    unsigned int size = get_size(str);
-    unsigned int next = m_front + size;
-    if (next > m_back && !new_page())
+    const unsigned int size = (str ? strlen(str) + 1 : 1);
+    char* ret = (char*)alloc(size);
+    if (!ret)
         return nullptr;
 
-    str_base(m_ptr + m_front, size).copy(str);
-
-    const char* ret = m_ptr + m_front;
-    m_front = next;
+    str_base(ret, size).copy(str);
     return ret;
-}
-
-//------------------------------------------------------------------------------
-const char* matches_impl::store_impl::store_back(const char* str)
-{
-    unsigned int size = get_size(str);
-    unsigned int next = m_back - size;
-    if (next < m_front && !new_page())
-        return nullptr;
-
-    m_back = next;
-    str_base(m_ptr + m_back, size).copy(str);
-
-    return m_ptr + m_back;
-}
-
-//------------------------------------------------------------------------------
-unsigned int matches_impl::store_impl::get_size(const char* str) const
-{
-    if (str == nullptr)
-        return 1;
-
-    return int(strlen(str) + 1);
-}
-
-//------------------------------------------------------------------------------
-bool matches_impl::store_impl::new_page()
-{
-    char* temp = (char*)malloc(m_size);
-    if (temp == nullptr)
-        return false;
-
-    *reinterpret_cast<char**>(temp) = m_ptr;
-    m_front = sizeof(m_ptr);
-    m_back = m_size;
-    m_ptr = temp;
-    return true;
-}
-
-//------------------------------------------------------------------------------
-void matches_impl::store_impl::free_chain(bool keep_one)
-{
-    char* ptr = m_ptr;
-
-    if (!keep_one)
-    {
-        m_ptr = nullptr;
-        m_front = sizeof(m_ptr);
-        m_back = m_size;
-    }
-
-    while (ptr)
-    {
-        char* tmp = ptr;
-        ptr = *reinterpret_cast<char**>(ptr);
-        if (keep_one)
-        {
-            keep_one = false;
-            *reinterpret_cast<char**>(tmp) = nullptr;
-        }
-        else
-            free(tmp);
-    }
 }
 
 
