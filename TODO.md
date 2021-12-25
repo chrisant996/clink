@@ -11,8 +11,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Add more Readline documentation into the Clink docs.
 
 ## Low Priority
-- Move the `:` and `=` logic out of `append_to_match` and into a callback.
-- `suppressappendchar` and etc _per match_.  This is simple now, thanks to `matches_lookaside`.
 - Can matches be collected on demand for suggestions?  So that if no configured autosuggest strategies use matches, then the match pipeline would not even collect matches.
 - Add command and flag descriptions in clink-completions?
 - Push update to clink-completions repo.
