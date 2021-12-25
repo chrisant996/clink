@@ -58,9 +58,8 @@ static setting_int g_preview_rows(
 static setting_color g_color_comment_row(
     "color.comment_row",
     "Color for comment row",
-    "The color for the comment row during 'clink-select-complete'.  For example,\n"
-    "the comment row is shown when only the preview rows are shown, as configured\n"
-    "by the 'match.preview_rows' setting.",
+    "The color for the comment row during 'clink-select-complete'.  The comment row\n"
+    "shows the \"and N more matches\" or \"rows X to Y of Z\" messages.",
     "bright white on cyan");
 
 
