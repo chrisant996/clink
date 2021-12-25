@@ -6,7 +6,7 @@
 
 - The `clink-diagnostics` command lists prompt filters, generators, classifiers, and suggesters when a numeric argument is given (e.g. <kbd>Alt</kbd>+<kbd>1</kbd> then <kbd>Ctrl</kbd>+<kbd>X</kbd>,<kbd>Ctrl</kbd>+<kbd>Z</kbd>).
 - Added `match.preview_rows` setting that makes `clink-select-complete` show the specified number of rows of matches as a preview, and expands to show the full set of matches when the selection moves past the preview rows (similar to completion in the fish shell).
-- Added `color.comment_row` setting that chooses the color for the "and <em>N</em> more matches" row when `match.preview_rows` is set.
+- Added `color.comment_row` setting that chooses the color for the comment row in `clink-select-complete`.  The comment row shows the "and <em>N</em> more matches" or "rows <em>X</em> to <em>Y</em> of <em>Z</em>" messages.
 - Changed arrow keys in `clink-select-complete` to wrap on both horizontal and vertical edges (similar to the fish shell).
 - Changed arrow keys in `clink-select-complete` at the beginning and end of the list to wrap to the other end based on the `menu-complete-wraparound` config variable.
 - Match generators can now specify an append character (or suppress appending) on a per-match basis.
