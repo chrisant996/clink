@@ -516,7 +516,12 @@ cant_activate:
         return false;
     }
 
-    if (!reactivate)
+    if (reactivate)
+    {
+        m_comment_row_displayed = false;
+        m_expanded = m_prev_expanded;
+    }
+    else
     {
         assert(!m_any_displayed);
         assert(!m_comment_row_displayed);
@@ -527,6 +532,7 @@ cant_activate:
         m_comment_row_displayed = false;
         m_can_prompt = g_preview_rows.get() <= 0;
         m_expanded = false;
+        m_prev_expanded = false;
         m_clear_display = false;
     }
 
@@ -994,7 +1000,12 @@ append_not_dup:
                     unsigned int c = iter.next();
                     if (c < ' ' || c == 0x7f)
                     {
+                        // Preserve rl_last_func across cancel() so that
+                        // reactivate can be detected.
+                        rollback<rl_command_func_t*> rb(rl_last_func);
+                        const bool expanded = m_expanded;
                         cancel(result);
+                        m_prev_expanded = expanded;
                         result.pass();
                         return;
                     }
@@ -1057,6 +1068,9 @@ void selectcomplete_impl::cancel(editor_module::result& result)
 
     result.set_bind_group(m_prev_bind_group);
     m_prev_bind_group = -1;
+
+    m_prev_expanded = m_expanded;
+    rl_last_func = nullptr;
 
     reset_generate_matches();
 
