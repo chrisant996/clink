@@ -245,7 +245,7 @@ Name                         | Default | Description
 <a name="color_cmd"></a>`color.cmd` | `bold` | Used when displaying shell (CMD.EXE) command completions, and in the input line when `clink.colorize_input` is enabled.
 `color.cmdredir`             | `bold`  | The color for redirection symbols (`<`, `>`, `>&`) in the input line when `clink.colorize_input` is enabled.
 `color.cmdsep`               | `bold`  | The color for command separaors (`&`, `|`) in the input line when `clink.colorize_input` is enabled.
-`color.comment_row`          | `bright white on cyan` | The color for the "and <em>N</em> more matches" row in the `clink-select-complete` command when `match.preview_rows` is set.
+`color.comment_row`          | `bright white on cyan` | The color for the comment row in the `clink-select-complete` command.  The comment row shows the "and <em>N</em> more matches" or "rows <em>X</em> to <em>Y</em> of <em>Z</em>" messages.
 `color.description`          | `bright cyan` | Used when displaying descriptions for match completions.
 <a name="color_doskey"></a>`color.doskey` | `bright cyan` | Used when displaying doskey alias completions, and in the input line when `clink.colorize_input` is enabled.
 <a name="color_filtered"></a>`color.filtered` | `bold` | The default color for filtered completions (see [Filtering the Match Display](#filteringthematchdisplay)).
