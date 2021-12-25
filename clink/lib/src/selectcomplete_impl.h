@@ -91,6 +91,7 @@ private:
     int             get_longest_display() const;
     bool            use_display(bool append, match_type type, int index) const;
     void            set_top(int top);
+    void            reset_top();
 
     // Initialization state.
     input_dispatcher& m_dispatcher;

@@ -597,9 +597,7 @@ cant_activate:
     // Insert first match.
     bool only_one = (m_matches.get_match_count() == 1);
     m_point = m_buffer->get_cursor();
-    m_top = 0;
-    m_index = 0;
-    m_prev_displayed = -1;
+    reset_top();
     insert_match(only_one/*final*/);
 
     // If there's only one match, then we're done.
@@ -1008,9 +1006,7 @@ append_not_dup:
 append_to_needle:
             m_needle.concat(input.keys, input.len);
 update_needle:
-            m_top = 0;
-            m_index = 0;
-            m_prev_displayed = -1;
+            reset_top();
             insert_needle();
             update_matches(false/*restrict*/);
             if (m_matches.get_match_count())
@@ -1025,9 +1021,7 @@ update_needle:
 //------------------------------------------------------------------------------
 void selectcomplete_impl::on_matches_changed(const context& context, const line_state& line, const char* needle)
 {
-    m_top = 0;
-    m_index = 0;
-    m_prev_displayed = -1;
+    reset_top();
     m_anchor = line.get_end_word_offset();
 
     // Update the needle regardless whether active.  This is so update_matches()
@@ -1228,10 +1222,6 @@ void selectcomplete_impl::update_layout()
 {
     const bool desc_inline = !m_desc_below && m_matches.has_descriptions();
 
-    // When showing description only for selected item, reserve 2 extra rows for
-    // showing the description.
-    int slop_rows = m_desc_below ? 4 : 2;
-
 #ifdef DEBUG
     m_annotate = !!dbg_get_env_int("DEBUG_SHOWTYPES");
 #endif
@@ -1243,9 +1233,17 @@ void selectcomplete_impl::update_layout()
 
     // +3 for quotes and append character (e.g. space).
     int input_height = (_rl_vis_botlin + 1) + (m_match_longest + 3 + m_screen_cols - 1) / m_screen_cols;
-    m_visible_rows = m_screen_rows - input_height - slop_rows;
-    if (m_visible_rows < 8)
+    m_visible_rows = m_screen_rows - input_height;
+
+    // When showing description only for selected item, reserve 2 extra rows for
+    // showing the description.
+    if (m_desc_below)
+        m_visible_rows -= 2;
+    m_visible_rows -= min<int>(2, m_visible_rows / 10);
+    if (m_visible_rows < 4)
         m_visible_rows = 0;
+    else if (m_visible_rows < m_match_rows)
+        m_visible_rows--;
 }
 
 //------------------------------------------------------------------------------
@@ -1321,10 +1319,13 @@ void selectcomplete_impl::update_display()
                     if (m_expanded)
                         m_prev_displayed = -1;
                 }
+                if (m_expanded)
+                    m_comment_row_displayed = false;
             }
 
-            const bool show_comment_row = !m_expanded && (preview_rows + 1 < m_match_rows);
-            const int rows = min<int>(m_visible_rows, show_comment_row ? preview_rows : m_match_rows);
+            const bool show_more_comment_row = !m_expanded && (preview_rows + 1 < m_match_rows);
+            const int rows = min<int>(m_visible_rows, show_more_comment_row ? preview_rows : m_match_rows);
+
             const int major_stride = _rl_print_completions_horizontally ? m_match_cols : 1;
             const int minor_stride = _rl_print_completions_horizontally ? 1 : m_match_rows;
             const int col_width = min<int>(m_match_longest, max<int>(m_screen_cols - between_cols, 1));
@@ -1352,7 +1353,7 @@ void selectcomplete_impl::update_display()
                 }
 
                 // Count matches on the row.
-                if (show_comment_row)
+                if (show_more_comment_row)
                 {
                     assert(m_top == 0);
                     int t = i;
@@ -1496,7 +1497,7 @@ void selectcomplete_impl::update_display()
                 }
             }
 
-            if (show_comment_row)
+            if (show_more_comment_row || (m_visible_rows < m_match_rows))
             {
                 rl_crlf();
                 up++;
@@ -1504,8 +1505,15 @@ void selectcomplete_impl::update_display()
                 if (!m_comment_row_displayed)
                 {
                     str<> tmp;
-                    const int more = m_matches.get_match_count() - shown;
-                    tmp.format("\x1b[%sm... and %u more matches ...\x1b[m\x1b[K", g_color_comment_row.get(), more);
+                    if (!m_expanded)
+                    {
+                        const int more = m_matches.get_match_count() - shown;
+                        tmp.format("\x1b[%sm... and %u more matches ...\x1b[m\x1b[K", g_color_comment_row.get(), more);
+                    }
+                    else
+                    {
+                        tmp.format("\x1b[%sm... rows %u to %u of %u ...\x1b[m\x1b[K", g_color_comment_row.get(), m_top + 1, m_top + m_visible_rows, m_match_rows);
+                    }
                     m_printer->print(tmp.c_str(), tmp.length());
                     m_comment_row_displayed = true;
                 }
@@ -1808,7 +1816,17 @@ void selectcomplete_impl::set_top(int top)
     {
         m_top = top;
         m_prev_displayed = -1;
+        m_comment_row_displayed = false;
     }
+}
+
+//------------------------------------------------------------------------------
+void selectcomplete_impl::reset_top()
+{
+    m_top = 0;
+    m_index = 0;
+    m_prev_displayed = -1;
+    m_comment_row_displayed = false;
 }
 
 //------------------------------------------------------------------------------
