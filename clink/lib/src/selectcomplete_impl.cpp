@@ -1495,15 +1495,19 @@ void selectcomplete_impl::update_display()
                 }
             }
 
-            if (show_comment_row && !m_comment_row_displayed)
+            if (show_comment_row)
             {
-                str<> tmp;
                 rl_crlf();
                 up++;
-                const int more = m_matches.get_match_count() - shown;
-                tmp.format("\x1b[%sm... and %u more matches ...\x1b[m\x1b[K", g_color_comment_row.get(), more);
-                m_printer->print(tmp.c_str(), tmp.length());
-                m_comment_row_displayed = true;
+
+                if (!m_comment_row_displayed)
+                {
+                    str<> tmp;
+                    const int more = m_matches.get_match_count() - shown;
+                    tmp.format("\x1b[%sm... and %u more matches ...\x1b[m\x1b[K", g_color_comment_row.get(), more);
+                    m_printer->print(tmp.c_str(), tmp.length());
+                    m_comment_row_displayed = true;
+                }
             }
 
             assert(!m_clear_display);
