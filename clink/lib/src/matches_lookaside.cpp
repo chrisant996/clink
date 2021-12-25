@@ -5,6 +5,7 @@
 #include "matches_lookaside.h"
 #include <core/linear_allocator.h>
 
+#include <list>
 #include <unordered_map>
 #include <assert.h>
 
