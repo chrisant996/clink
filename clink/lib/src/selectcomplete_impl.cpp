@@ -1046,6 +1046,7 @@ void selectcomplete_impl::on_terminal_resize(int columns, int rows, const contex
 
     if (is_active())
     {
+        m_prev_displayed = -1;
         update_layout();
         update_display();
     }
