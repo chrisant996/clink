@@ -8,10 +8,19 @@
 #include <unordered_map>
 #include <assert.h>
 
+extern "C" {
+#include <compat/config.h>
+#include <compat/display_matches.h>
+#include <readline/readline.h>
+};
+
+//------------------------------------------------------------------------------
+const match_extra match_details::s_empty_extra = { 0, 0, match_type::none };
+
 //------------------------------------------------------------------------------
 match_details::match_details(const char* match, const match_extra* extra)
 : m_match(match)
-, m_extra(extra)
+, m_extra(match ? extra : &s_empty_extra)
 {
 }
 
@@ -79,6 +88,7 @@ bool matches_lookaside::add(const char* match)
 
     size_t len = strlen(match) + 1;
     extra->type = static_cast<match_type>(match[len++]);
+    extra->append_char = match[len++];
     extra->flags = static_cast<unsigned char>(match[len++]);
     extra->display_offset = static_cast<unsigned short>(len);
     extra->description_offset = static_cast<unsigned short>(len + strlen(match + len) + 1);
@@ -149,10 +159,19 @@ bool destroy_matches_lookaside(char** matches)
 }
 
 //------------------------------------------------------------------------------
-void set_matches_lookaside_oneoff(const char* match, match_type type)
+void set_matches_lookaside_oneoff(const char* match, match_type type, char append_char, unsigned char flags)
 {
     s_match = match;
     s_extra.type = type;
+    s_extra.append_char = append_char;
+    s_extra.flags = flags;
+}
+
+//------------------------------------------------------------------------------
+void clear_matches_lookaside_oneoff()
+{
+    s_match = nullptr;
+    s_extra = {};
 }
 
 
@@ -161,28 +180,40 @@ void set_matches_lookaside_oneoff(const char* match, match_type type)
 extern "C" int lookup_match_type(const char* match)
 {
     match_details details = lookup_match(match);
-    return static_cast<int>(details ? details.get_type() : match_type::none);
+    return static_cast<int>(details.get_type());
+}
+
+//------------------------------------------------------------------------------
+extern "C" void override_match_append(const char* match)
+{
+    match_details details = lookup_match(match);
+    if (details.get_append_char())
+        rl_completion_append_character = (unsigned char)details.get_append_char();
+    if (details.get_flags() & MATCH_FLAG_HAS_SUPPRESS_APPEND)
+        rl_completion_suppress_append = !!(details.get_flags() & MATCH_FLAG_SUPPRESS_APPEND);
+    if (rl_filename_completion_desired)
+        rl_filename_completion_desired = !!is_pathish(details.get_type());
 }
 
 //------------------------------------------------------------------------------
 extern "C" unsigned char lookup_match_flags(const char* match)
 {
     match_details details = lookup_match(match);
-    return details ? details.get_flags() : 0;
+    return details.get_flags();
 }
 
 //------------------------------------------------------------------------------
 extern "C" const char* lookup_match_display(const char* match)
 {
     match_details details = lookup_match(match);
-    return details ? details.get_display() : nullptr;
+    return details.get_display();
 }
 
 //------------------------------------------------------------------------------
 extern "C" const char* lookup_match_description(const char* match)
 {
     match_details details = lookup_match(match);
-    return details ? details.get_description() : nullptr;
+    return details.get_description();
 }
 
 //------------------------------------------------------------------------------

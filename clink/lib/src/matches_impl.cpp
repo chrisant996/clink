@@ -194,6 +194,22 @@ void match_type_to_string(match_type type, str_base& out)
         out.concat(",readonly");
 }
 
+
+
+//------------------------------------------------------------------------------
+match_desc::match_desc(const char* match, const char* display, const char* description, match_type type)
+: match(match)
+, display(display)
+, description(description)
+, type(type)
+{
+    append_char = 0;
+    suppress_append = -1;
+    append_display = false;
+}
+
+
+
 //------------------------------------------------------------------------------
 match_builder::match_builder(matches& matches)
 : m_matches(matches)
@@ -204,13 +220,7 @@ match_builder::match_builder(matches& matches)
 bool match_builder::add_match(const char* match, match_type type, bool already_normalised)
 {
     char suffix = 0;
-    match_desc desc = {
-        match,
-        nullptr,
-        nullptr,
-        type,
-        false,
-    };
+    match_desc desc(match, nullptr, nullptr, type);
     return add_match(desc, already_normalised);
 }
 
@@ -340,6 +350,22 @@ const char* matches_iter::get_match_description() const
     if (m_has_pattern)
         return has_match() ? m_matches.get_unfiltered_match_description(m_index) : nullptr;
     return has_match() ? m_matches.get_match_description(m_index) : nullptr;
+}
+
+//------------------------------------------------------------------------------
+char matches_iter::get_match_append_char() const
+{
+    if (m_has_pattern)
+        return has_match() ? m_matches.get_unfiltered_match_append_char(m_index) : 0;
+    return has_match() ? m_matches.get_match_append_char(m_index) : 0;
+}
+
+//------------------------------------------------------------------------------
+shadow_bool matches_iter::get_match_suppress_append() const
+{
+    if (m_has_pattern)
+        return has_match() ? m_matches.get_unfiltered_match_suppress_append(m_index) : shadow_bool(false);
+    return has_match() ? m_matches.get_match_suppress_append(m_index) : shadow_bool(false);
 }
 
 //------------------------------------------------------------------------------
@@ -489,6 +515,28 @@ const char* matches_impl::get_match_description(unsigned int index) const
 }
 
 //------------------------------------------------------------------------------
+char matches_impl::get_match_append_char(unsigned int index) const
+{
+    if (index >= get_match_count())
+        return 0;
+
+    return m_infos[index].append_char;
+}
+
+//------------------------------------------------------------------------------
+shadow_bool matches_impl::get_match_suppress_append(unsigned int index) const
+{
+    shadow_bool tmp(false);
+    if (index < get_match_count())
+    {
+        char suppress = m_infos[index].suppress_append;
+        if (suppress >= 0)
+            tmp.set_explicit(suppress);
+    }
+    return tmp;
+}
+
+//------------------------------------------------------------------------------
 bool matches_impl::get_match_append_display(unsigned int index) const
 {
     if (index >= get_match_count())
@@ -531,6 +579,28 @@ const char* matches_impl::get_unfiltered_match_description(unsigned int index) c
         return nullptr;
 
     return m_infos[index].description;
+}
+
+//------------------------------------------------------------------------------
+char matches_impl::get_unfiltered_match_append_char(unsigned int index) const
+{
+    if (index >= get_info_count())
+        return 0;
+
+    return m_infos[index].append_char;
+}
+
+//------------------------------------------------------------------------------
+shadow_bool matches_impl::get_unfiltered_match_suppress_append(unsigned int index) const
+{
+    shadow_bool tmp(false);
+    if (index < get_info_count())
+    {
+        char suppress = m_infos[index].suppress_append;
+        if (suppress >= 0)
+            tmp.set_explicit(suppress);
+    }
+    return tmp;
 }
 
 //------------------------------------------------------------------------------
@@ -758,7 +828,7 @@ bool matches_impl::add_match(const match_desc& desc, bool already_normalized)
     match_lookup lookup = { store_match, type };
     m_dedup->emplace(std::move(lookup));
 
-    match_info info = { store_match, store_display, store_description, type, append_display, false/*select*/, is_none/*infer_type*/ };
+    match_info info = { store_match, store_display, store_description, type, desc.append_char, desc.suppress_append, append_display, false/*select*/, is_none/*infer_type*/ };
     m_infos.emplace_back(std::move(info));
     ++m_count;
 

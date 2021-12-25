@@ -491,6 +491,7 @@ const char *_rl_command_color = 0;
 const char *_rl_alias_color = 0;
 rl_read_key_hook_func_t *rl_read_key_hook = 0;
 rl_iccpfunc_t *rl_lookup_match_type = 0;
+rl_vccpfunc_t *rl_override_match_append = 0;
 static int no_compute_lcd = 0;
 static int quote_lcd = 0;
 static int force_quoting = 0;
@@ -1048,17 +1049,6 @@ colored_prefix_end (void)
   colored_stat_end ();		/* for now */
 }
 #endif
-
-/* begin_clink_change */
-static int is_filename_completion_desired(const char* pathname)
-{
-  if (!rl_filename_completion_desired)
-    return 0;
-  if (!rl_lookup_match_type)
-    return 1;
-  return (IS_MATCH_TYPE_PATHISH (rl_lookup_match_type (pathname)));
-}
-/* end_clink_change */
 
 /* Return the portion of PATHNAME that should be output when listing
    possible completions.  If we are hacking filename completion, we
@@ -2600,6 +2590,11 @@ append_to_match (char *text, int orig_start, int delimiter, int quote_char, int 
 
 /* begin_clink_change */
   unsigned char match_type = rl_lookup_match_type ? rl_lookup_match_type (text) : 0;
+  int orig_append = rl_completion_append_character;
+  int orig_suppress = rl_completion_suppress_append;
+  int orig_filename = rl_filename_completion_desired;
+  if (rl_override_match_append)
+    rl_override_match_append (text);
 /* end_clink_change */
 
   temp_string_index = 0;
@@ -2621,26 +2616,9 @@ append_to_match (char *text, int orig_start, int delimiter, int quote_char, int 
   else if (rl_completion_suppress_append == 0 && rl_completion_append_character)
     temp_string[temp_string_index++] = rl_completion_append_character;
 
-/* begin_clink_change */
-  /* Must not append a space after an arg type match that ends with a
-     colon or equal sign. */
-  if (temp_string_index > 0 &&
-      IS_MATCH_TYPE_ARG (match_type) &&
-      !delimiter &&
-      rl_completion_suppress_append == 0 &&
-      rl_completion_append_character == ' ' &&
-      temp_string[temp_string_index - 1] == ' ' &&
-      rl_point > 0 &&
-      strchr (":=", rl_line_buffer[rl_point - 1]))
-    temp_string_index--;
-/* end_clink_change */
-
   temp_string[temp_string_index++] = '\0';
 
-/* begin_clink_change */
-  //if (rl_filename_completion_desired)
-  if (is_filename_completion_desired (text))
-/* end_clink_change */
+  if (rl_filename_completion_desired)
     {
       filename = tilde_expand (text);
       if (rl_filename_stat_hook)
@@ -2719,6 +2697,12 @@ append_to_match (char *text, int orig_start, int delimiter, int quote_char, int 
       if (rl_point == rl_end && temp_string_index)
 	rl_insert_text (temp_string);
     }
+
+/* begin_clink_change */
+  rl_completion_append_character = orig_append;
+  rl_completion_suppress_append = orig_suppress;
+  rl_filename_completion_desired = orig_filename;
+/* end_clink_change */
 
   return (temp_string_index);
 }

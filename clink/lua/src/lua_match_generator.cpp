@@ -256,7 +256,7 @@ done:
         for (i = 1; i <= match_count; ++i)
         {
             const char* match = matches[mi++];
-            match_type type = (match_type)lookup_match_type(match);
+            match_details details = lookup_match(match);
 
             lua_createtable(state, 0, 2);
 
@@ -265,9 +265,41 @@ done:
             lua_rawset(state, -3);
 
             lua_pushliteral(state, "type");
-            match_type_to_string(type, tmp);
+            match_type_to_string(details.get_type(), tmp);
             lua_pushlstring(state, tmp.c_str(), tmp.length());
             lua_rawset(state, -3);
+
+            const char* display = details.get_display();
+            if (display && *display && display != match)
+            {
+                lua_pushliteral(state, "display");
+                lua_pushstring(state, display);
+                lua_rawset(state, -3);
+            }
+
+            const char* description = details.get_description();
+            if (description && *description)
+            {
+                lua_pushliteral(state, "description");
+                lua_pushstring(state, description);
+                lua_rawset(state, -3);
+            }
+
+            char append_char = details.get_append_char();
+            if (append_char)
+            {
+                lua_pushliteral(state, "appendchar");
+                lua_pushlstring(state, &append_char, 1);
+                lua_rawset(state, -3);
+            }
+
+            unsigned char flags = details.get_flags();
+            if (flags & MATCH_FLAG_HAS_SUPPRESS_APPEND)
+            {
+                lua_pushliteral(state, "suppressappend");
+                lua_pushboolean(state, !!(flags & MATCH_FLAG_SUPPRESS_APPEND));
+                lua_rawset(state, -3);
+            }
 
             lua_rawseti(state, -2, i);
         }
@@ -312,6 +344,8 @@ done:
             const char* display = nullptr;
             const char* description = nullptr;
             match_type type = match_type::none;
+            char append_char = 0;
+            unsigned char flags = 0;
 
             if (lua_istable(state, -1))
             {
@@ -349,6 +383,22 @@ done:
                 if (lua_isstring(state, -1))
                     description = lua_tostring(state, -1);
                 lua_pop(state, 1);
+
+                lua_pushliteral(state, "appendchar");
+                lua_rawget(state, -2);
+                if (lua_isstring(state, -1))
+                    append_char = *lua_tostring(state, -1);
+                lua_pop(state, 1);
+
+                lua_pushliteral(state, "suppressappend");
+                lua_rawget(state, -2);
+                if (lua_isboolean(state, -1))
+                {
+                    flags |= MATCH_FLAG_HAS_SUPPRESS_APPEND;
+                    if (lua_toboolean(state, -1))
+                        flags |= MATCH_FLAG_SUPPRESS_APPEND;
+                }
+                lua_pop(state, 1);
             }
             else
             {
@@ -381,11 +431,14 @@ done:
                 new_match = (match_display_filter_entry *)malloc(alloc_size);
                 memset(new_match, 0, sizeof(*new_match));
                 new_match->type = (unsigned char)type;
+                new_match->append_char = append_char;
+                new_match->flags = flags;
                 new_matches[j] = new_match;
 
                 char* buffer = new_match->buffer;
                 j++;
 
+                // Fill in buffer with PACKED MATCH FORMAT.
                 new_match->match = append_string_into_buffer(buffer, match);
                 if (match && !new_match->match[0])
                 {
@@ -398,7 +451,8 @@ discard:
                 if (!display[0])
                     goto discard;
                 *(buffer++) = (char)type;   // match type
-                *(buffer++) = 0;            // match flags
+                *(buffer++) = append_char;  // append char
+                *(buffer++) = flags;        // match flags
                 new_match->display = append_string_into_buffer(buffer, display);
                 new_match->visible_display = plainify(new_match->display, strip_markup ? &buffer : nullptr);
                 if (new_match->visible_display <= 0)
@@ -433,11 +487,9 @@ next:
     }
     new_matches[j] = nullptr;
 
-    // Fill in entry [0]:
+    // Fill in entry [0] with PACKED MATCH FORMAT (for consistency).
+    // Special meaning of specific fields in the lcd [0] entry:
     //  - match is the lcd of the matches.
-    //  - match type is 0.
-    //  - match flags is 0.
-    //  - display is an empty string.
     //  - visible_display is the max visible_display of the entries.
     //  - visible_display negative means has descriptions (use one column).
     //  - visible_description is the max visible_description of the entries.
@@ -449,9 +501,10 @@ next:
         char* buffer = new_matches[0]->buffer;
         new_matches[0]->match = append_string_into_buffer(buffer, lcd.c_str());
         *(buffer++) = 0;    // match type
+        *(buffer++) = 0;    // append char
         *(buffer++) = 0;    // match flags
         new_matches[0]->display = append_string_into_buffer(buffer, nullptr);
-        append_string_into_buffer(buffer, nullptr); // Be consistent and add empty column even in the lcd entry.
+        append_string_into_buffer(buffer, nullptr); // Be consistent and add empty description field even in the lcd entry.
 
         if (one_column)
             new_matches[0]->visible_display = 0 - max_visible_display;

@@ -724,6 +724,7 @@ function _argmatcher:_generate(line_state, match_builder, extra_words)
     -- Are we left with a valid argument that can provide matches?
     local add_matches = function(arg, match_type)
         local descs = matcher._descriptions
+        local is_arg_type = match_type == "arg"
         local make_match = function(key)
             if not descs then
                 return key
@@ -740,6 +741,13 @@ function _argmatcher:_generate(line_state, match_builder, extra_words)
                 else
                     m.description = d[1]
                 end
+            end
+            if is_arg_type and key:match("[:=]$") then
+                -- Do not append a space after an arg type match that ends with
+                -- a colon or equal sign, because programs typically require
+                -- flags and args like "--foo=" or "foo=" to have no space after
+                -- the ":" or "=" symbol.
+                m.suppressappend = true
             end
             return m
         end

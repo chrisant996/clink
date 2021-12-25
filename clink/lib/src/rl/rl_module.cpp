@@ -1147,18 +1147,29 @@ static char** alternative_matches(const char* text, int start, int end)
             break;
         }
 
-        // Packed format of match is:
-        //  MATCH (nul terminated char string)
-        //  TYPE (unsigned char)
-        //  FLAGS (unsigned char)
-        //  DISPLAY (nul terminated char string)
-        //  DESCRIPTION (nul terminated char string)
+        // PACKED MATCH FORMAT is:
+        //  - N bytes:  MATCH (nul terminated char string)
+        //  - 1 byte:   TYPE (unsigned char)
+        //  - 1 byte:   APPEND CHAR (char)
+        //  - 1 byte:   FLAGS (unsigned char)
+        //  - N bytes:  DISPLAY (nul terminated char string)
+        //  - N bytes:  DESCRIPTION (nul terminated char string)
         //
-        // WARNING:  display_match_list_internal relies on this memory layout!
+        // WARNING:  Several things rely on this memory layout, including
+        // display_match_list_internal, matches_lookaside, and
+        // match_display_filter.
 
         unsigned char flags = 0;
         if (iter.get_match_append_display())
             flags |= MATCH_FLAG_APPEND_DISPLAY;
+
+        shadow_bool suppress_append = iter.get_match_suppress_append();
+        if (suppress_append.is_explicit())
+        {
+            flags |= MATCH_FLAG_HAS_SUPPRESS_APPEND;
+            if (suppress_append.get())
+                flags |= MATCH_FLAG_SUPPRESS_APPEND;
+        }
 
         const char* const match = iter.get_match();
         const char* const display = iter.get_match_display();
@@ -1166,7 +1177,7 @@ static char** alternative_matches(const char* text, int start, int end)
         const int match_len = strlen(match);
         const int match_display_len = display ? strlen(display) : 0;
         const int match_description_len = description ? strlen(description) : 0;
-        const int match_size = match_len + 1 + 1/*type*/ + 1/*flags*/ + match_display_len + 1 + match_description_len + 1;
+        const int match_size = match_len + 1 + 1/*type*/ + 1/*append_char*/ + 1/*flags*/ + match_display_len + 1 + match_description_len + 1;
         char* ptr = (char*)malloc(match_size);
 
         matches[count] = ptr;
@@ -1176,6 +1187,7 @@ static char** alternative_matches(const char* text, int start, int end)
         *(ptr++) = '\0';
 
         *(ptr++) = (char)type;
+        *(ptr++) = (char)iter.get_match_append_char();
         *(ptr++) = (char)flags;
 
         memcpy(ptr, display, match_display_len);
@@ -1952,6 +1964,7 @@ rl_module::rl_module(terminal_in* input)
 
     // Completion and match display.
     rl_lookup_match_type = lookup_match_type;
+    rl_override_match_append = override_match_append;
     rl_free_match_list_hook = free_match_list_hook;
     rl_ignore_some_completions_function = host_filter_matches;
     rl_attempted_completion_function = alternative_matches;

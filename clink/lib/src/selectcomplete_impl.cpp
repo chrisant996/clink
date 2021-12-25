@@ -399,6 +399,38 @@ match_type match_adapter::get_match_type(unsigned int index) const
 }
 
 //------------------------------------------------------------------------------
+char match_adapter::get_match_append_char(unsigned int index) const
+{
+    if (m_filtered_matches)
+        return m_filtered_matches[index + 1]->append_char;
+    if (m_matches)
+        return m_matches->get_append_character();
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+unsigned char match_adapter::get_match_flags(unsigned int index) const
+{
+    if (m_filtered_matches)
+        return m_filtered_matches[index + 1]->flags;
+    if (m_matches)
+    {
+        unsigned char flags = 0;
+        shadow_bool suppress = m_matches->get_match_suppress_append(index);
+        if (suppress.is_explicit())
+        {
+            flags |= MATCH_FLAG_HAS_SUPPRESS_APPEND;
+            if (suppress.get())
+                flags |= MATCH_FLAG_SUPPRESS_APPEND;
+        }
+        if (m_matches->get_match_append_display(index))
+            flags |= MATCH_FLAG_APPEND_DISPLAY;
+        return flags;
+    }
+    return 0;
+}
+
+//------------------------------------------------------------------------------
 bool match_adapter::is_custom_display(unsigned int index) const
 {
     if (m_filtered_matches)
@@ -415,9 +447,7 @@ bool match_adapter::is_custom_display(unsigned int index) const
 //------------------------------------------------------------------------------
 bool match_adapter::is_append_display(unsigned int index) const
 {
-    if (m_filtered_matches)
-        return false;
-    return m_matches->get_match_append_display(index);
+    return !!(get_match_flags(index) & MATCH_FLAG_APPEND_DISPLAY);
 }
 
 //------------------------------------------------------------------------------
@@ -1597,6 +1627,8 @@ void selectcomplete_impl::insert_match(int final)
     assert(m_index < m_matches.get_match_count());
     const char* match = m_matches.get_match(m_index);
     match_type type = m_matches.get_match_type(m_index);
+    char append_char = m_matches.get_match_append_char(m_index);
+    unsigned char flags = m_matches.get_match_flags(m_index);
 
     char qs[2] = {};
     if (match &&
@@ -1639,9 +1671,9 @@ void selectcomplete_impl::insert_match(int final)
 
         bool append_space = false;
         // UGLY: append_to_match() circumvents the m_buffer abstraction.
-        set_matches_lookaside_oneoff(match, type);
+        set_matches_lookaside_oneoff(match, type, append_char, flags);
         append_to_match(const_cast<char*>(match), m_anchor + !!*qs, m_delimiter, *qs, nontrivial_lcd);
-        set_matches_lookaside_oneoff(nullptr, type);
+        clear_matches_lookaside_oneoff();
         m_point = m_buffer->get_cursor();
 
         bool have_space = (m_buffer->get_buffer()[m_point - 1] == ' ');

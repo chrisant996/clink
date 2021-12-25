@@ -8,6 +8,8 @@ struct match_display_filter_entry
     const char* display;        // Display string (pointer into buffer).
     const char* description;    // Description string (pointer into buffer).
     unsigned char type;         // Match type.
+    char append_char;           // Append character.
+    unsigned char flags;        // Match flags.
     char buffer[1];             // Variable length buffer containing match, display, and description.
 };
 typedef struct match_display_filter_entry match_display_filter_entry;
@@ -39,7 +41,10 @@ extern void pad_filename(int len, int pad_to_width, int selected);
 extern void free_filtered_matches(match_display_filter_entry** filtered_matches);
 extern int printable_len(const char* match, int type);
 
+// Flags in the PACKED MATCH FORMAT:
 #define MATCH_FLAG_APPEND_DISPLAY       0x01
+#define MATCH_FLAG_HAS_SUPPRESS_APPEND  0x02
+#define MATCH_FLAG_SUPPRESS_APPEND      0x04
 
 // For display_matches, the matches array must contain specially formatted
 // match entries:

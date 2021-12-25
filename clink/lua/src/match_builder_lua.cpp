@@ -52,10 +52,12 @@ match_builder_lua::~match_builder_lua()
 /// Alternatively, the <span class="arg">match</span> argument can be a table
 /// with the following scheme:
 /// -show:  {
-/// -show:  &nbsp;   match       = "..."    -- [string] The match text.
-/// -show:  &nbsp;   display     = "..."    -- [string] OPTIONAL; alternative text to display when listing possible completions.
-/// -show:  &nbsp;   description = "..."    -- [string] OPTIONAL; a description for the match.
-/// -show:  &nbsp;   type        = "..."    -- [string] OPTIONAL; the match type.
+/// -show:  &nbsp;   match           = "..."    -- [string] The match text.
+/// -show:  &nbsp;   display         = "..."    -- [string] OPTIONAL; alternative text to display when listing possible completions.
+/// -show:  &nbsp;   description     = "..."    -- [string] OPTIONAL; a description for the match.
+/// -show:  &nbsp;   type            = "..."    -- [string] OPTIONAL; the match type.
+/// -show:  &nbsp;   appendchar      = "..."    -- [string] OPTIONAL; character to append after the match.
+/// -show:  &nbsp;   suppressappend  = t_or_f   -- [boolean] OPTIONAL; whether to suppress appending a character after the match.
 /// -show:  }
 ///
 /// <ul>
@@ -67,6 +69,10 @@ match_builder_lua::~match_builder_lua()
 /// completions.  (Requires v1.2.38 or greater.)
 /// <li>The <code>type</code> field is optional.  If omitted, then the
 /// <span class="arg">type</span> argument is used for that element.
+/// <li>The <code>appendchar</code> field is optional, and overrides the normal
+/// behavior for only this match.  (Requires v1.3.1 or greater.)
+/// <li>The <code>suppressappend</code> field is optional, and overrides the
+/// normal behavior for only this match.  (Requires v1.3.1 or greater.)
 /// </ul>
 ///
 /// The match type affects how the match is inserted, displayed, and colored.
@@ -264,8 +270,7 @@ bool match_builder_lua::add_match_impl(lua_State* state, int stack_index, match_
         if (stack_index < 0)
             --stack_index;
 
-        match_desc desc = {};
-        desc.type = type;
+        match_desc desc(nullptr, nullptr, nullptr, type);
 
         lua_pushliteral(state, "match");
         lua_rawget(state, stack_index);
@@ -289,6 +294,18 @@ bool match_builder_lua::add_match_impl(lua_State* state, int stack_index, match_
         lua_rawget(state, stack_index);
         if (lua_isstring(state, -1))
             desc.description = lua_tostring(state, -1);
+        lua_pop(state, 1);
+
+        lua_pushliteral(state, "appendchar");
+        lua_rawget(state, stack_index);
+        if (lua_isstring(state, -1))
+            desc.append_char = *lua_tostring(state, -1);
+        lua_pop(state, 1);
+
+        lua_pushliteral(state, "suppressappend");
+        lua_rawget(state, stack_index);
+        if (lua_isboolean(state, -1))
+            desc.suppress_append = lua_toboolean(state, -1);
         lua_pop(state, 1);
 
         // Undocumented; for internal use only.

@@ -38,6 +38,8 @@ public:
     const char*     get_match_description(unsigned int index) const;
     unsigned int    get_match_visible_description(unsigned int index) const;
     match_type      get_match_type(unsigned int index) const;
+    char            get_match_append_char(unsigned int index) const;
+    unsigned char   get_match_flags(unsigned int index) const;
     bool            is_custom_display(unsigned int index) const;
     bool            is_append_display(unsigned int index) const;
 

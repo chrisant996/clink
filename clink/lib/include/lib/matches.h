@@ -94,6 +94,8 @@ public:
     match_type              get_match_type() const;
     const char*             get_match_display() const;
     const char*             get_match_description() const;
+    char                    get_match_append_char() const;
+    shadow_bool             get_match_suppress_append() const;
     bool                    get_match_append_display() const;
     shadow_bool             is_filename_completion_desired() const;
     shadow_bool             is_filename_display_desired() const;
@@ -137,6 +139,8 @@ public:
     virtual match_type      get_match_type(unsigned int index) const = 0;
     virtual const char*     get_match_display(unsigned int index) const = 0;
     virtual const char*     get_match_description(unsigned int index) const = 0;
+    virtual char            get_match_append_char(unsigned int index) const = 0;
+    virtual shadow_bool     get_match_suppress_append(unsigned int index) const = 0;
     virtual bool            get_match_append_display(unsigned int index) const = 0;
     virtual bool            is_suppress_append() const = 0;
     virtual shadow_bool     is_filename_completion_desired() const = 0;
@@ -152,6 +156,8 @@ private:
     virtual match_type      get_unfiltered_match_type(unsigned int index) const { return match_type::none; }
     virtual const char*     get_unfiltered_match_display(unsigned int index) const { return nullptr; }
     virtual const char*     get_unfiltered_match_description(unsigned int index) const { return nullptr; }
+    virtual char            get_unfiltered_match_append_char(unsigned int index) const { return 0; }
+    virtual shadow_bool     get_unfiltered_match_suppress_append(unsigned int index) const { return shadow_bool(false); }
     virtual bool            get_unfiltered_match_append_display(unsigned int index) const { return false; }
 };
 
@@ -165,11 +171,15 @@ void match_type_to_string(match_type type, str_base& out);
 //------------------------------------------------------------------------------
 struct match_desc
 {
+    match_desc(const char* match, const char* display, const char* description, match_type type);
+
     const char*             match;          // Match text.
     const char*             display;        // Display string.
     const char*             description;    // Description string.
     match_type              type;           // Match type.
-    bool                    append_display; // Print match text, then display string.
+    char                    append_char;    // Append char after match; 0 means not specified.
+    char                    suppress_append;// Suppress appending character after match; negative means not specified.
+    bool                    append_display; // Print match text followed by display string.
 };
 
 //------------------------------------------------------------------------------
