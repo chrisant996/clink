@@ -58,8 +58,8 @@ static setting_int g_preview_rows(
 static setting_int g_max_rows(
     "match.max_rows",
     "Max rows in clink-select-complete",
-    "The maximum number of rows the 'clink-select-complete' can use.  0 uses as\n"
-    "many rows as can fit.",
+    "The maximum number of rows the 'clink-select-complete' can use.  When this\n"
+    "is 0, the limit is the terminal height.",
     0);
 
 static setting_color g_color_comment_row(
