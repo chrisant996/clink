@@ -1792,6 +1792,8 @@ void selectcomplete_impl::insert_match(int final)
         m_buffer->set_need_draw();
         m_buffer->draw();
         // Update layout.
+        m_prev_displayed = -1;
+        m_comment_row_displayed = false;
         update_layout();
     }
 }
