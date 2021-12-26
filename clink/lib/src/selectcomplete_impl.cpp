@@ -527,7 +527,7 @@ cant_activate:
         assert(!m_comment_row_displayed);
         assert(!m_expanded);
         assert(!m_clear_display);
-        m_desc_below = m_matches.get_match_count() > 9;
+        m_desc_below = m_matches.has_descriptions() && (m_matches.get_match_count() > 9);
         m_any_displayed = false;
         m_comment_row_displayed = false;
         m_can_prompt = g_preview_rows.get() <= 0;
