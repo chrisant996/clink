@@ -519,7 +519,7 @@ cant_activate:
     if (reactivate)
     {
         m_comment_row_displayed = false;
-        m_expanded = m_prev_expanded;
+        m_expanded = true;
     }
     else
     {
@@ -532,7 +532,6 @@ cant_activate:
         m_comment_row_displayed = false;
         m_can_prompt = g_preview_rows.get() <= 0;
         m_expanded = false;
-        m_prev_expanded = false;
         m_clear_display = false;
     }
 
@@ -1000,12 +999,7 @@ append_not_dup:
                     unsigned int c = iter.next();
                     if (c < ' ' || c == 0x7f)
                     {
-                        // Preserve rl_last_func across cancel() so that
-                        // reactivate can be detected.
-                        rollback<rl_command_func_t*> rb(rl_last_func);
-                        const bool expanded = m_expanded;
-                        cancel(result);
-                        m_prev_expanded = expanded;
+                        cancel(result, true/*can_reactivate*/);
                         result.pass();
                         return;
                     }
@@ -1057,7 +1051,7 @@ void selectcomplete_impl::on_terminal_resize(int columns, int rows, const contex
 }
 
 //------------------------------------------------------------------------------
-void selectcomplete_impl::cancel(editor_module::result& result)
+void selectcomplete_impl::cancel(editor_module::result& result, bool can_reactivate)
 {
     assert(is_active());
 
@@ -1069,8 +1063,8 @@ void selectcomplete_impl::cancel(editor_module::result& result)
     result.set_bind_group(m_prev_bind_group);
     m_prev_bind_group = -1;
 
-    m_prev_expanded = m_expanded;
-    rl_last_func = nullptr;
+    if (!can_reactivate)
+        rl_last_func = nullptr;
 
     reset_generate_matches();
 

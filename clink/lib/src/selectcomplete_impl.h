@@ -79,7 +79,7 @@ private:
     virtual void    on_terminal_resize(int columns, int rows, const context& context) override;
 
     // Internal methods.
-    void            cancel(editor_module::result& result);
+    void            cancel(editor_module::result& result, bool can_reactivate=false);
     void            update_matches(bool restrict=false);
     void            update_len();
     void            update_layout();
@@ -115,7 +115,6 @@ private:
     bool            m_comment_row_displayed = false;
     bool            m_can_prompt = true;
     bool            m_expanded = false;
-    bool            m_prev_expanded = false;
     bool            m_clear_display = false;
 
     // Inserting matches.
