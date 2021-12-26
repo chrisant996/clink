@@ -1519,7 +1519,7 @@ void selectcomplete_impl::update_display()
                     }
                     else
                     {
-                        tmp.format("\x1b[%sm... rows %u to %u of %u ...\x1b[m\x1b[K", g_color_comment_row.get(), m_top + 1, m_top + m_visible_rows, m_match_rows);
+                        tmp.format("\x1b[%smrows %u to %u of %u\x1b[m\x1b[K", g_color_comment_row.get(), m_top + 1, m_top + m_visible_rows, m_match_rows);
                     }
                     m_printer->print(tmp.c_str(), tmp.length());
                     m_comment_row_displayed = true;
