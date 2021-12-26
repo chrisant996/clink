@@ -55,6 +55,13 @@ static setting_int g_preview_rows(
     "when the selection is moved past the preview rows.",
     5);
 
+static setting_int g_max_rows(
+    "match.max_rows",
+    "Max rows in clink-select-complete",
+    "The maximum number of rows the 'clink-select-complete' can use.  0 uses as\n"
+    "many rows as can fit.",
+    0);
+
 static setting_color g_color_comment_row(
     "color.comment_row",
     "Color for comment row",
@@ -1241,16 +1248,21 @@ void selectcomplete_impl::update_layout()
     // +3 for quotes and append character (e.g. space).
     int input_height = (_rl_vis_botlin + 1) + (m_match_longest + 3 + m_screen_cols - 1) / m_screen_cols;
     m_visible_rows = m_screen_rows - input_height;
+    m_visible_rows -= min<int>(2, m_screen_rows / 10);
+
+    const int max_rows = g_max_rows.get();
+    if (max_rows > 0 && m_visible_rows > max_rows)
+        m_visible_rows = max_rows;
 
     // When showing description only for selected item, reserve 2 extra rows for
     // showing the description.
     if (m_desc_below)
         m_visible_rows -= 2;
-    m_visible_rows -= min<int>(2, m_visible_rows / 10);
-    if (m_visible_rows < 4)
-        m_visible_rows = 0;
+
+    if (m_visible_rows < 2)
+        m_visible_rows = 0;     // At least 2 rows must fit.
     else if (m_visible_rows < m_match_rows)
-        m_visible_rows--;
+        m_visible_rows--;       // Reserve space for comment row.
 }
 
 //------------------------------------------------------------------------------
