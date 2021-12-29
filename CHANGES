@@ -14,6 +14,7 @@
 - The `os.globdirs()` and `os.globfiles()` functions now automatically yield periodically if used inside a coroutine.
 - Fixed display when typing to filter `clink-select-complete` (regression introduced in v1.2.49).
 - Fixed display of `clink-select-complete` when the current match changes the number of visible lines in the edit buffer.
+- Fixed displaying matches when only a drive letter is entered.
 - Fixed [#216](https://github.com/chrisant996/clink/issues/216); Long escaped URLs do not display correctly in a prompt.
 
 #### v1.3
