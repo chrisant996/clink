@@ -8,15 +8,16 @@
 #include <lib/line_state.h>
 
 //------------------------------------------------------------------------------
-static line_state_lua::method g_methods[] = {
-    { "getline",                &line_state_lua::get_line },
-    { "getcursor",              &line_state_lua::get_cursor },
-    { "getcommandoffset",       &line_state_lua::get_command_offset },
-    { "getcommandwordindex",    &line_state_lua::get_command_word_index },
-    { "getwordcount",           &line_state_lua::get_word_count },
-    { "getwordinfo",            &line_state_lua::get_word_info },
-    { "getword",                &line_state_lua::get_word },
-    { "getendword",             &line_state_lua::get_end_word },
+const char* const line_state_lua::c_name = "line_state_lua";
+const line_state_lua::method line_state_lua::c_methods[] = {
+    { "getline",                &get_line },
+    { "getcursor",              &get_cursor },
+    { "getcommandoffset",       &get_command_offset },
+    { "getcommandwordindex",    &get_command_word_index },
+    { "getwordcount",           &get_word_count },
+    { "getwordinfo",            &get_word_info },
+    { "getword",                &get_word },
+    { "getendword",             &get_end_word },
     {}
 };
 
@@ -24,8 +25,7 @@ static line_state_lua::method g_methods[] = {
 
 //------------------------------------------------------------------------------
 line_state_lua::line_state_lua(const line_state& line)
-: lua_bindable("line_state", g_methods)
-, m_line(line)
+: m_line(line)
 {
 }
 

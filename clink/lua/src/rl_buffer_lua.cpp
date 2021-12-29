@@ -18,21 +18,22 @@ extern "C" {
 #include <assert.h>
 
 //------------------------------------------------------------------------------
-static rl_buffer_lua::method g_methods[] = {
-    { "getbuffer",      &rl_buffer_lua::get_buffer },
-    { "getlength",      &rl_buffer_lua::get_length },
-    { "getcursor",      &rl_buffer_lua::get_cursor },
-    { "getanchor",      &rl_buffer_lua::get_anchor },
-    { "setcursor",      &rl_buffer_lua::set_cursor },
-    { "insert",         &rl_buffer_lua::insert },
-    { "remove",         &rl_buffer_lua::remove },
-    { "beginundogroup", &rl_buffer_lua::begin_undo_group },
-    { "endundogroup",   &rl_buffer_lua::end_undo_group },
-    { "beginoutput",    &rl_buffer_lua::begin_output },
-    { "refreshline",    &rl_buffer_lua::refresh_line },
-    { "getargument",    &rl_buffer_lua::get_argument },
-    { "setargument",    &rl_buffer_lua::set_argument },
-    { "ding",           &rl_buffer_lua::ding },
+const char* const rl_buffer_lua::c_name = "rl_buffer_lua";
+const rl_buffer_lua::method rl_buffer_lua::c_methods[] = {
+    { "getbuffer",      &get_buffer },
+    { "getlength",      &get_length },
+    { "getcursor",      &get_cursor },
+    { "getanchor",      &get_anchor },
+    { "setcursor",      &set_cursor },
+    { "insert",         &insert },
+    { "remove",         &remove },
+    { "beginundogroup", &begin_undo_group },
+    { "endundogroup",   &end_undo_group },
+    { "beginoutput",    &begin_output },
+    { "refreshline",    &refresh_line },
+    { "getargument",    &get_argument },
+    { "setargument",    &set_argument },
+    { "ding",           &ding },
     {}
 };
 
@@ -40,8 +41,7 @@ static rl_buffer_lua::method g_methods[] = {
 
 //------------------------------------------------------------------------------
 rl_buffer_lua::rl_buffer_lua(line_buffer& buffer)
-: lua_bindable("rl_buffer", g_methods)
-, m_rl_buffer(buffer)
+: m_rl_buffer(buffer)
 {
 }
 

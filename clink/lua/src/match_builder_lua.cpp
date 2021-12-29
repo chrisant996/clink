@@ -10,15 +10,16 @@
 #include <lib/matches.h>
 
 //------------------------------------------------------------------------------
-static match_builder_lua::method g_methods[] = {
-    { "addmatch",           &match_builder_lua::add_match },
-    { "addmatches",         &match_builder_lua::add_matches },
-    { "setappendcharacter", &match_builder_lua::set_append_character },
-    { "setsuppressappend",  &match_builder_lua::set_suppress_append },
-    { "setsuppressquoting", &match_builder_lua::set_suppress_quoting },
+const char* const match_builder_lua::c_name = "match_builder_lua";
+const match_builder_lua::method match_builder_lua::c_methods[] = {
+    { "addmatch",           &add_match },
+    { "addmatches",         &add_matches },
+    { "setappendcharacter", &set_append_character },
+    { "setsuppressappend",  &set_suppress_append },
+    { "setsuppressquoting", &set_suppress_quoting },
     // Only for backward compatibility:
-    { "deprecated_addmatch", &match_builder_lua::deprecated_add_match },
-    { "setmatchesarefiles", &match_builder_lua::set_matches_are_files },
+    { "deprecated_addmatch", &deprecated_add_match },
+    { "setmatchesarefiles", &set_matches_are_files },
     {}
 };
 
@@ -26,8 +27,7 @@ static match_builder_lua::method g_methods[] = {
 
 //------------------------------------------------------------------------------
 match_builder_lua::match_builder_lua(match_builder& builder)
-: lua_bindable<match_builder_lua>("match_builder_lua", g_methods)
-, m_builder(builder)
+: m_builder(builder)
 {
 }
 

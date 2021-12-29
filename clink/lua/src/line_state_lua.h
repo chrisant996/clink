@@ -25,4 +25,8 @@ public:
 
 private:
     const line_state&   m_line;
+
+    friend class lua_bindable<line_state_lua>;
+    static const char* const c_name;
+    static const line_state_lua::method c_methods[];
 };

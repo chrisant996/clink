@@ -37,4 +37,8 @@ private:
     line_buffer&            m_rl_buffer;
     int                     m_num_undo = 0;
     bool                    m_began_output = false;
+
+    friend class lua_bindable<rl_buffer_lua>;
+    static const char* const c_name;
+    static const method     c_methods[];
 };

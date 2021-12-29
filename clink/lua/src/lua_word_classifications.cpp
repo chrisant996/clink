@@ -19,9 +19,10 @@ extern "C" {
 #include <assert.h>
 
 //------------------------------------------------------------------------------
-static lua_word_classifications::method g_methods[] = {
-    { "classifyword",     &lua_word_classifications::classify_word },
-    { "applycolor",       &lua_word_classifications::apply_color },
+const char* const lua_word_classifications::c_name = "lua_word_classifications";
+const lua_word_classifications::method lua_word_classifications::c_methods[] = {
+    { "classifyword",     &classify_word },
+    { "applycolor",       &apply_color },
     {}
 };
 
@@ -29,8 +30,7 @@ static lua_word_classifications::method g_methods[] = {
 
 //------------------------------------------------------------------------------
 lua_word_classifications::lua_word_classifications(word_classifications& classifications, unsigned int index_offset, unsigned int command_word_index, unsigned int num_words)
-: lua_bindable("word_classifications", g_methods)
-, m_classifications(classifications)
+: m_classifications(classifications)
 , m_index_offset(index_offset)
 , m_command_word_index(command_word_index)
 , m_num_words(num_words)

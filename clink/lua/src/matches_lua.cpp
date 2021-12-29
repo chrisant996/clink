@@ -8,11 +8,12 @@
 #include <lib/matches.h>
 
 //------------------------------------------------------------------------------
-static matches_lua::method g_methods[] = {
-    { "getprefix",              &matches_lua::get_prefix },
-    { "getcount",               &matches_lua::get_count },
-    { "getmatch",               &matches_lua::get_match },
-    { "gettype",                &matches_lua::get_type },
+const char* const matches_lua::c_name = "matches_lua";
+const matches_lua::method matches_lua::c_methods[] = {
+    { "getprefix",              &get_prefix },
+    { "getcount",               &get_count },
+    { "getmatch",               &get_match },
+    { "gettype",                &get_type },
     {}
 };
 
@@ -20,8 +21,7 @@ static matches_lua::method g_methods[] = {
 
 //------------------------------------------------------------------------------
 matches_lua::matches_lua(const matches& matches)
-: lua_bindable("matches", g_methods)
-, m_matches(matches)
+: m_matches(matches)
 {
 }
 

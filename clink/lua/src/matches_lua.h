@@ -23,4 +23,8 @@ private:
     const matches&      m_matches;
     str_moveable        m_prefix;
     bool                m_has_prefix = false;
+
+    friend class lua_bindable<matches_lua>;
+    static const char* const c_name;
+    static const method c_methods[];
 };

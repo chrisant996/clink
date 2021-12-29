@@ -28,4 +28,8 @@ private:
     const unsigned int      m_index_offset;
     const unsigned int      m_command_word_index;
     const unsigned int      m_num_words;
+
+    friend class lua_bindable<lua_word_classifications>;
+    static const char* const c_name;
+    static const method     c_methods[];
 };

@@ -28,4 +28,8 @@ public:
 private:
     bool            add_match_impl(lua_State* state, int stack_index, match_type type);
     match_builder&  m_builder;
+
+    friend class lua_bindable<match_builder_lua>;
+    static const char* const c_name;
+    static const method c_methods[];
 };
