@@ -1084,6 +1084,12 @@ static char** alternative_matches(const char* text, int start, int end)
         s_matches = regen;
     }
 
+    // Special case for possible-completions with a tilde by itself:  return no
+    // matches so that it doesn't list anything.  Bash lists user accounts, but
+    // Clink only supports tilde for the current user account.
+    if (rl_completion_type == '?' && strcmp(text, "~") == 0)
+        return nullptr;
+
     str<> tmp;
     const char* pattern = nullptr;
     if (is_complete_with_wild())

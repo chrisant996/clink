@@ -48,9 +48,6 @@ static class : public match_generator
                     path::append(root, "");
             }
             free(expanded_root);
-
-            if (just_tilde && rl_completion_type == '?')
-                return true;
         }
 
         path::normalise_separators(root);
