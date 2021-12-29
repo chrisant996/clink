@@ -1285,6 +1285,7 @@ void display_matches(char** matches)
     char *temp;
     int vis_stat;
     match_accessor* access = NULL;
+    char** rebuilt = NULL;
 
     // If there is a display filter, give it a chance to modify MATCHES.
     if (rl_match_display_filter_func)
@@ -1327,7 +1328,6 @@ done_filtered:
 
     // Handle "simple" case first.  What if there is only one answer?
     char* rebuilt_storage[3];
-    char** rebuilt = NULL;
     if (matches[1] == 0)
     {
         // Rebuild a matches array that has a first match, so the display
