@@ -125,3 +125,39 @@ function clink.quote_split(str, ql, qr)
     _compat_warning("clink.quote_split() is not supported.")
     return {}
 end
+
+
+
+--------------------------------------------------------------------------------
+function os.globdirs(pattern, extrainfo)
+    local _, ismain = coroutine.running()
+    if ismain then
+        -- Use a fully native implementation for higher performance.
+        return os._globdirs(pattern, extrainfo)
+    else
+        -- Yield periodically.
+        local t = {}
+        local g = os._makedirglobber(pattern, extrainfo)
+        while g.next(t) do
+            coroutine.yield()
+        end
+        return t
+    end
+end
+
+--------------------------------------------------------------------------------
+function os.globfiles(pattern, extrainfo)
+    local _, ismain = coroutine.running()
+    if ismain then
+        -- Use a fully native implementation for higher performance.
+        return os._globfiles(pattern, extrainfo)
+    else
+        -- Yield periodically.
+        local t = {}
+        local g = os._makefileglobber(pattern, extrainfo)
+        while g.next(t) do
+            coroutine.yield()
+        end
+        return t
+    end
+end

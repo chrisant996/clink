@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "lua_state.h"
+#include "lua_bindable.h"
 
 #include <core/base.h>
 #include <core/globber.h>
@@ -77,6 +78,73 @@ static int close_file(lua_State *state)
 
     int res = fclose(p->f);
     return luaL_fileresult(state, (res == 0), NULL);
+}
+
+
+
+//------------------------------------------------------------------------------
+class globber_lua
+    : public lua_bindable<globber_lua>
+{
+public:
+                        globber_lua(const char* pattern, int extrainfo, bool dirs_only, bool back_compat=false);
+    int                 next(lua_State* state);
+
+private:
+    globber             m_globber;
+    str<288>            m_parent;
+    int                 m_extrainfo;
+    int                 m_index = 1;
+
+    friend class lua_bindable<globber_lua>;
+    static const char* const c_name;
+    static const method c_methods[];
+};
+
+//------------------------------------------------------------------------------
+const char* const globber_lua::c_name = "globber_lua";
+const globber_lua::method globber_lua::c_methods[] = {
+    { "next",                   &next },
+    {}
+};
+
+//------------------------------------------------------------------------------
+globber_lua::globber_lua(const char* pattern, int extrainfo, bool dirs_only, bool back_compat)
+: m_globber(pattern)
+, m_parent(pattern)
+, m_extrainfo(extrainfo)
+{
+    path::to_parent(m_parent, nullptr);
+
+    m_globber.files(!dirs_only);
+    m_globber.hidden(g_glob_hidden.get());
+    m_globber.system(g_glob_system.get());
+    if (back_compat)
+        m_globber.suffix_dirs(false);
+}
+
+//------------------------------------------------------------------------------
+static bool glob_next(lua_State* state, globber& globber, str_base& parent, int& index, int extrainfo);
+int globber_lua::next(lua_State* state)
+{
+    // Arg is table into which to glob files/dirs; glob_next appends into it.
+
+    const DWORD ms_max = 20;
+    const DWORD num_max = 250;
+    const DWORD tick = GetTickCount();
+
+    bool ret = false;
+    for (size_t c = 0; c < num_max; c++)
+    {
+        ret = glob_next(state, m_globber, m_parent, m_index, m_extrainfo);
+        if (!ret)
+            break;
+        if (c % 5 == 0 && GetTickCount() - tick > ms_max)
+            break;
+    }
+
+    lua_pushboolean(state, ret);
+    return 1;
 }
 
 
@@ -258,6 +326,77 @@ static void add_type_tag(str_base& out, const char* tag)
 }
 
 //------------------------------------------------------------------------------
+static bool glob_next(lua_State* state, globber& globber, str_base& parent, int& index, int extrainfo)
+{
+    str<288> file;
+    globber::extrainfo info;
+    globber::extrainfo* info_ptr = extrainfo ? &info : nullptr;
+    if (!globber.next(file, false, info_ptr))
+        return false;
+
+    if (!extrainfo)
+    {
+        lua_pushlstring(state, file.c_str(), file.length());
+    }
+    else
+    {
+        lua_createtable(state, 0, 2);
+
+        lua_pushliteral(state, "name");
+        lua_pushlstring(state, file.c_str(), file.length());
+        lua_rawset(state, -3);
+
+        str<32> type;
+        add_type_tag(type, (info.attr & FILE_ATTRIBUTE_DIRECTORY) ? "dir" : "file");
+#ifdef S_ISLNK
+        if (S_ISLNK(info.st_mode))
+        {
+            unsigned int len = parent.length();
+            path::append(parent, file.c_str());
+
+            add_type_tag(type, "link");
+            wstr<288> wfile(parent.c_str());
+            struct _stat64 st;
+            if (_wstat64(wfile.c_str(), &st) < 0)
+                add_type_tag(type, "orphaned");
+
+            parent.truncate(len);
+        }
+#endif
+        if (info.attr & FILE_ATTRIBUTE_HIDDEN)
+            add_type_tag(type, "hidden");
+        if (info.attr & FILE_ATTRIBUTE_READONLY)
+            add_type_tag(type, "readonly");
+
+        lua_pushliteral(state, "type");
+        lua_pushlstring(state, type.c_str(), type.length());
+        lua_rawset(state, -3);
+
+        if (extrainfo >= 2)
+        {
+            lua_pushliteral(state, "atime");
+            lua_pushnumber(state, lua_Number(os::filetime_to_time_t(info.accessed)));
+            lua_rawset(state, -3);
+
+            lua_pushliteral(state, "mtime");
+            lua_pushnumber(state, lua_Number(os::filetime_to_time_t(info.modified)));
+            lua_rawset(state, -3);
+
+            lua_pushliteral(state, "ctime");
+            lua_pushnumber(state, lua_Number(os::filetime_to_time_t(info.created)));
+            lua_rawset(state, -3);
+
+            lua_pushliteral(state, "size");
+            lua_pushnumber(state, lua_Number(info.size));
+            lua_rawset(state, -3);
+        }
+    }
+
+    lua_rawseti(state, -2, index++);
+    return true;
+}
+
+//------------------------------------------------------------------------------
 int glob_impl(lua_State* state, bool dirs_only, bool back_compat=false)
 {
     const char* mask = checkstring(state, 1);
@@ -285,72 +424,30 @@ int glob_impl(lua_State* state, bool dirs_only, bool back_compat=false)
     path::to_parent(tmp, nullptr);
 
     int i = 1;
-    str<288> file;
-    str<16> type;
-    globber::extrainfo info;
-    globber::extrainfo* info_ptr = extrainfo ? &info : nullptr;
-    while (globber.next(file, false, info_ptr))
-    {
-        if (!extrainfo)
-        {
-            lua_pushlstring(state, file.c_str(), file.length());
-        }
-        else
-        {
-            lua_createtable(state, 0, 2);
+    while (true)
+        if (!glob_next(state, globber, tmp, i, extrainfo))
+            break;
 
-            lua_pushliteral(state, "name");
-            lua_pushlstring(state, file.c_str(), file.length());
-            lua_rawset(state, -3);
+    return 1;
+}
 
-            type.clear();
-            add_type_tag(type, (info.attr & FILE_ATTRIBUTE_DIRECTORY) ? "dir" : "file");
-#ifdef S_ISLNK
-            if (S_ISLNK(info.st_mode))
-            {
-                unsigned int len = tmp.length();
-                path::append(tmp, file.c_str());
+//------------------------------------------------------------------------------
+int globber_impl(lua_State* state, bool dirs_only, bool back_compat=false)
+{
+    const char* mask = checkstring(state, 1);
+    if (!mask)
+        return 0;
 
-                add_type_tag(type, "link");
-                wstr<288> wfile(tmp.c_str());
-                struct _stat64 st;
-                if (_wstat64(wfile.c_str(), &st) < 0)
-                    add_type_tag(type, "orphaned");
+    int extrainfo;
+    if (back_compat)
+        extrainfo = 0;
+    else if (lua_isboolean(state, 2))
+        extrainfo = lua_toboolean(state, 2);
+    else
+        extrainfo = optinteger(state, 2, 0);
 
-                tmp.truncate(len);
-            }
-#endif
-            if (info.attr & FILE_ATTRIBUTE_HIDDEN)
-                add_type_tag(type, "hidden");
-            if (info.attr & FILE_ATTRIBUTE_READONLY)
-                add_type_tag(type, "readonly");
-
-            lua_pushliteral(state, "type");
-            lua_pushlstring(state, type.c_str(), type.length());
-            lua_rawset(state, -3);
-
-            if (extrainfo >= 2)
-            {
-                lua_pushliteral(state, "atime");
-                lua_pushnumber(state, lua_Number(os::filetime_to_time_t(info.accessed)));
-                lua_rawset(state, -3);
-
-                lua_pushliteral(state, "mtime");
-                lua_pushnumber(state, lua_Number(os::filetime_to_time_t(info.modified)));
-                lua_rawset(state, -3);
-
-                lua_pushliteral(state, "ctime");
-                lua_pushnumber(state, lua_Number(os::filetime_to_time_t(info.created)));
-                lua_rawset(state, -3);
-
-                lua_pushliteral(state, "size");
-                lua_pushnumber(state, lua_Number(info.size));
-                lua_rawset(state, -3);
-            }
-        }
-
-        lua_rawseti(state, -2, i++);
-    }
+    if (!globber_lua::make_new(state, mask, extrainfo, dirs_only, back_compat))
+        return 0;
 
     return 1;
 }
@@ -367,7 +464,7 @@ int glob_impl(lua_State* state, bool dirs_only, bool back_compat=false)
 /// The optional <span class="arg">extrainfo</span> argument can return a table
 /// of tables instead, where each sub-table corresponds to one directory and has
 /// the following scheme:
-/// -show:  local t = os.globfiles(pattern, extrainfo)
+/// -show:  local t = os.globdirs(pattern, extrainfo)
 /// -show:  -- Included when extrainfo is true or >= 1:
 /// -show:  --   t[index].name      -- [string] The directory name.
 /// -show:  --   t[index].type      -- [string] The match type (see below).
@@ -376,10 +473,12 @@ int glob_impl(lua_State* state, bool dirs_only, bool back_compat=false)
 /// -show:  --   t[index].atime     -- [number] The access time, compatible with os.time().
 /// -show:  --   t[index].mtime     -- [number] The modified time, compatible with os.time().
 /// -show:  --   t[index].ctime     -- [number] The creation time, compatible with os.time().
-/// The <span class="tablescheme">type</span> string can be "file" or "dir", and
-/// may also contain ",hidden", ",readonly", ",link", and ",orphaned" depending
-/// on the attributes (making it usable as a match type for
+/// The <span class="tablescheme">type</span> string is "dir", and may also
+/// contain ",hidden", ",readonly", ",link", and ",orphaned" depending on the
+/// attributes (making it usable as a match type for
 /// <a href="#builder:addmatch">builder:addmatch()</a>).
+///
+/// When used in a coroutine, the function automatically yields periodically.
 ///
 /// Note: any quotation marks (<code>"</code>) in
 /// <span class="arg">globpattern</span> are stripped.
@@ -414,11 +513,25 @@ int glob_dirs(lua_State* state)
 /// on the attributes (making it usable as a match type for
 /// <a href="#builder:addmatch">builder:addmatch()</a>).
 ///
+/// When used in a coroutine, the function automatically yields periodically.
+///
 /// Note: any quotation marks (<code>"</code>) in
 /// <span class="arg">globpattern</span> are stripped.
 int glob_files(lua_State* state)
 {
     return glob_impl(state, false);
+}
+
+//------------------------------------------------------------------------------
+int make_dir_globber(lua_State* state)
+{
+    return globber_impl(state, true);
+}
+
+//------------------------------------------------------------------------------
+int make_file_globber(lua_State* state)
+{
+    return globber_impl(state, false);
 }
 
 //------------------------------------------------------------------------------
@@ -1076,8 +1189,6 @@ void os_lua_initialise(lua_state& lua)
         { "unlink",      &unlink },
         { "move",        &move },
         { "copy",        &copy },
-        { "globdirs",    &glob_dirs },
-        { "globfiles",   &glob_files },
         { "touch",       &touch },
         { "getenv",      &get_env },
         { "setenv",      &set_env },
@@ -1099,6 +1210,11 @@ void os_lua_initialise(lua_state& lua)
         { "clock",       &double_clock },
         { "getclipboardtext", &get_clipboard_text },
         { "setclipboardtext", &set_clipboard_text },
+        // UNDOCUMENTED; internal use only.
+        { "_globdirs",   &glob_dirs },  // Public os.globdirs method is in core.lua.
+        { "_globfiles",  &glob_files }, // Public os.globfiles method is in core.lua.
+        { "_makedirglobber", &make_dir_globber },
+        { "_makefileglobber", &make_file_globber },
     };
 
     lua_State* state = lua.get_state();

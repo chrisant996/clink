@@ -999,10 +999,15 @@ function clink.dirmatches(match_word)
         root = rl.collapsetilde(root)
     end
 
+    local _, ismain = coroutine.running()
+
     local matches = {}
     for _, i in ipairs(os.globdirs(word.."*", true)) do
         local m = path.join(root, i.name)
         table.insert(matches, { match = m, type = i.type })
+        if not ismain and _ % 250 == 0 then
+            coroutine.yield()
+        end
     end
     return matches
 end
@@ -1037,10 +1042,15 @@ function clink.filematches(match_word)
         root = rl.collapsetilde(root)
     end
 
+    local _, ismain = coroutine.running()
+
     local matches = {}
     for _, i in ipairs(os.globfiles(word.."*", true)) do
         local m = path.join(root, i.name)
         table.insert(matches, { match = m, type = i.type })
+        if not ismain and _ % 250 == 0 then
+            coroutine.yield()
+        end
     end
     return matches
 end
