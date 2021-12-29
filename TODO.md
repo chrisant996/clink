@@ -12,8 +12,10 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## Low Priority
 - Collecting matches for suggestions:
-  - Can matches be collected on demand for suggestions?  So that if no configured autosuggest strategies use matches, then the match pipeline would not even collect matches.
-  - Can suggestions and match collection use a coroutine to avoid stuttering when match collection takes a while?
+  - [x] Make globbing support coroutines.
+  - [ ] Use coroutine to generate suggestions.
+    - [ ] After successful completion of generating suggestions, if matches were generated then transfer them to `m_matches` if they are still applicable.
+    - [ ] Use forwarding object for matches; defer generating matches until a suggester tries to access the matches?
 - Add command and flag descriptions in clink-completions?
 - Push update to clink-completions repo.
 - Push update to z.lua repo.

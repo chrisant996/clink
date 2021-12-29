@@ -7,6 +7,8 @@
 
 #include <core/str_compare.h>
 #include <lib/match_generator.h>
+#include <lua/lua_match_generator.h>
+#include <lua/lua_state.h>
 
 //------------------------------------------------------------------------------
 TEST_CASE("Quoting")
@@ -25,12 +27,15 @@ TEST_CASE("Quoting")
 
     fs_fixture fs(space_fs);
 
+    lua_state lua;
+    lua_match_generator lua_generator(lua);
+
     SECTION("Double quotes")
     {
         line_editor_tester tester;
 
         line_editor* editor = tester.get_editor();
-        editor->add_generator(file_match_generator());
+        editor->add_generator(lua_generator);
 
         SECTION("None")
         {
@@ -105,7 +110,7 @@ TEST_CASE("Quoting")
         line_editor_tester tester(desc);
 
         line_editor* editor = tester.get_editor();
-        editor->add_generator(file_match_generator());
+        editor->add_generator(lua_generator);
 
         SECTION("None")
         {
@@ -152,7 +157,7 @@ TEST_CASE("Quoting")
         line_editor_tester tester(desc);
 
         line_editor* editor = tester.get_editor();
-        editor->add_generator(file_match_generator());
+        editor->add_generator(lua_generator);
 
         SECTION("None")
         {

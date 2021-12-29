@@ -87,7 +87,6 @@ TEST_CASE("Match type : simple")
 
     line_editor_tester tester;
     tester.get_editor()->add_generator(lua_generator);
-    tester.get_editor()->add_generator(file_match_generator());
 
     SECTION("pathish matches")
     {
@@ -129,7 +128,6 @@ TEST_CASE("Match type : slash")
 
     line_editor_tester tester;
     tester.get_editor()->add_generator(lua_generator);
-    tester.get_editor()->add_generator(file_match_generator());
 
     SECTION("pathish matches")
     {
@@ -171,7 +169,6 @@ TEST_CASE("Match type : compound")
 
     line_editor_tester tester;
     tester.get_editor()->add_generator(lua_generator);
-    tester.get_editor()->add_generator(file_match_generator());
 
     SECTION("pathish matches")
     {
@@ -213,7 +210,6 @@ TEST_CASE("Match type : lcd")
 
     line_editor_tester tester;
     tester.get_editor()->add_generator(lua_generator);
-    tester.get_editor()->add_generator(file_match_generator());
 
     rl_bind_keyseq_in_map("\x99", rl_named_function("complete"), emacs_standard_keymap);
 
@@ -245,7 +241,6 @@ TEST_CASE("Match type : files")
 
     line_editor_tester tester;
     tester.get_editor()->add_generator(lua_generator);
-    tester.get_editor()->add_generator(file_match_generator());
 
     SECTION("pathish readline")
     {

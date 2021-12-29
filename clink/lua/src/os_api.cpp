@@ -20,8 +20,19 @@
 #include <memory>
 
 //------------------------------------------------------------------------------
-extern setting_bool g_glob_hidden;
-extern setting_bool g_glob_system;
+static setting_bool g_glob_hidden(
+    "files.hidden",
+    "Include hidden files",
+    "Includes or excludes files with the 'hidden' attribute set when generating\n"
+    "file lists.",
+    true);
+
+static setting_bool g_glob_system(
+    "files.system",
+    "Include system files",
+    "Includes or excludes files with the 'system' attribute set when generating\n"
+    "file lists.",
+    false);
 
 //------------------------------------------------------------------------------
 extern "C" void __cdecl __acrt_errno_map_os_error(unsigned long const oserrno);

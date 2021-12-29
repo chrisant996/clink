@@ -38,7 +38,6 @@ TEST_CASE("Directory match generation.")
 
     line_editor_tester tester;
     tester.get_editor()->add_generator(lua_generator);
-    tester.get_editor()->add_generator(file_match_generator());
 
     const char* dir_cmds[] = { "cd", "rd", "rmdir", "md", "mkdir", "pushd" };
     for (int i = 0; i < sizeof_array(dir_cmds); ++i)

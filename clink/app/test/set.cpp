@@ -68,8 +68,6 @@ TEST_CASE("Set command.")
 
     SECTION("File matching after '='")
     {
-        tester.get_editor()->add_generator(file_match_generator());
-
         SECTION("*")
         {
             tester.set_input("set simple=");

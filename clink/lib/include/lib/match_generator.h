@@ -28,5 +28,3 @@ public:
 
 private:
 };
-
-match_generator& file_match_generator();

@@ -9,6 +9,8 @@
 #include <lib/line_editor.h>
 #include <lib/match_generator.h>
 #include <lib/terminal_helpers.h>
+#include <lua/lua_match_generator.h>
+#include <lua/lua_state.h>
 #include <terminal/terminal.h>
 #include <terminal/printer.h>
 #include <utils/app_context.h>
@@ -34,9 +36,12 @@ static int editline()
     printer_context prt(term.out, &printer);
     console_config cc;
 
+    lua_state lua;
+    lua_match_generator lua_generator(lua);
+
     line_editor::desc desc = { term.in, term.out, &printer, nullptr };
     line_editor* editor = line_editor_create(desc);
-    editor->add_generator(file_match_generator());
+    editor->add_generator(lua_generator);
 
     str<> out;
     while (editor->edit(out))

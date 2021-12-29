@@ -22,7 +22,8 @@ TEST_CASE("Env. vars")
         nullptr
     };
 
-    fs_fixture fs;
+    const char* empty_fs[] = { nullptr };
+    fs_fixture fs(empty_fs);
     env_fixture env(env_desc);
 
     lua_state lua;

@@ -31,6 +31,90 @@ local _current_builder = nil
 
 
 --------------------------------------------------------------------------------
+local file_match_generator = {}
+
+--------------------------------------------------------------------------------
+local function advance_ignore_quotes(state)
+    local word = state[1]
+    local seek = #word
+    if seek > 0 then
+        while true do
+            -- Finding a non-quote is success.
+            if word:sub(seek, 1) ~= '"' then
+                state[1] = word:sub(1, seek - 1)
+                return true
+            end
+            -- Reaching the beginning is failure.
+            if seek <= 1 then
+                break
+            end
+            seek = seek -1
+            -- Finding a `\"` digraph is a failure.
+            if word:sub(seek, 1) == "\\" then
+                break
+            end
+        end
+    end
+    return false
+end
+
+--------------------------------------------------------------------------------
+local function is_dots(word)
+    local state = { word }
+
+    if not advance_ignore_quotes(state) then
+        return false            -- Too short.
+    elseif state[1]:sub(-1) ~= "." then
+        return false            -- No dot at end.
+    end
+
+    if not advance_ignore_quotes(state) then
+        return true             -- Exactly ".".
+    elseif state[1]:sub(-1) == "." and not advance_ignore_quotes(state) then
+        return true             -- Exactly "..".
+    end
+
+    local last = state[1]:sub(-1)
+    if last == "/" or last == "\\" then
+        return true             -- Ends with "\." or "\..".
+    end
+
+    return false                -- Else nope.
+end
+
+--------------------------------------------------------------------------------
+function file_match_generator:generate(line_state, match_builder)
+    local root = line_state:getendword()
+    if root == "~" then
+        root = path.join(root, "")
+    end
+    match_builder:addmatches(clink.filematches(root))
+    return true
+end
+
+--------------------------------------------------------------------------------
+function file_match_generator:getwordbreakinfo(line_state)
+    local endword = line_state:getendword()
+    local keep = #endword
+    if endword == "~" then
+        -- Tilde by itself should be expanded, so keep the whole word.
+    elseif is_dots(endword) then
+        -- `.` or `..` should be kept so that matches can include `.` or
+        -- `..` directories.  Bash includes `.` and `..` but only when those
+        -- match typed text (i.e. when there's no input text, they are not
+        -- considered possible matches).
+    else
+        keep = endword:find("[/\\][^/\\]*$") or 0
+        if keep < 2 and endword:sub(2, 2) == ":" then
+            keep = 2
+        end
+    end
+    return 0, keep
+end
+
+
+
+--------------------------------------------------------------------------------
 -- This global variable tracks which generator function, if any, stopped the
 -- most recent generate pass.  It's useful for diagnostic purposes; the file and
 -- number can be retrieved by:
@@ -76,6 +160,18 @@ function clink._generate(line_state, match_builder, old_filtering)
             end
         end
 
+        -- UGLY:  Previously the order for generators was Lua generators, then
+        -- native generators such as the file_match_generator.  But suggestions
+        -- needs match generation to run as a Lua coroutine.  That effectively
+        -- means native generators are no longer supported.  It's ok because
+        -- there aren't any other generators currently, and for extensibility
+        -- purposes it seems quite reasonable to require that generators are
+        -- implemented in Lua.  However, the internal infrastructure still makes
+        -- it look as though native generators are supported, but they are not.
+        if file_match_generator:generate(line_state, match_builder) then
+            return true
+        end
+
         return false
     end
 
@@ -105,17 +201,24 @@ function clink._get_word_break_info(line_state)
     local impl = function ()
         local truncate = 0
         local keep = 0
-        for _, generator in ipairs(_generators) do
-            if generator.getwordbreakinfo then
-                local t, k = generator:getwordbreakinfo(line_state)
-                t = t or 0
-                k = k or 0
-                if (t > truncate) or (t == truncate and k > keep) then
-                    truncate = t
-                    keep = k
-                end
+
+        local doeach = function (generator)
+            local t, k = generator:getwordbreakinfo(line_state)
+            t = t or 0
+            k = k or 0
+            if (t > truncate) or (t == truncate and k > keep) then
+                truncate = t
+                keep = k
             end
         end
+
+        for _, generator in ipairs(_generators) do
+            if generator.getwordbreakinfo then
+                doeach(generator)
+            end
+        end
+
+        doeach(file_match_generator)
 
         return truncate, keep
     end

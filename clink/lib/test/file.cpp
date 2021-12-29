@@ -10,6 +10,8 @@
 #include <core/path.h>
 #include <core/str_compare.h>
 #include <lib/match_generator.h>
+#include <lua/lua_match_generator.h>
+#include <lua/lua_state.h>
 
 #include <readline/readline.h>
 
@@ -32,6 +34,9 @@ TEST_CASE("File match generator")
     };
     env_fixture env(env_inputrc);
 
+    lua_state lua;
+    lua_match_generator lua_generator(lua);
+
     static const char* inputrc_vars[] = {
         "set mark-directories on",      "mark-dir=ON",
         "set mark-directories off",     "mark-dir=off",
@@ -44,7 +49,7 @@ TEST_CASE("File match generator")
         REQUIRE(rl_parse_and_bind(setvar.data()) == 0);
 
         line_editor_tester tester;
-        tester.get_editor()->add_generator(file_match_generator());
+        tester.get_editor()->add_generator(lua_generator);
 
         SECTION(dyn_section("File system matches", mode))
         {
