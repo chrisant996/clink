@@ -426,9 +426,11 @@ end
 --- -show:  &nbsp;   do_things_with(line)
 --- -show:  end
 --- -show:  file:close()
+local old_io_popen = io.popen
 function io.popenyield(command, mode)
     -- This outer wrapper is implemented in Lua so that it can yield.
-    if settings.get("prompt.async") and not clink.istransientpromptfilter() then
+    local _, ismain = coroutine.running()
+    if not ismain and settings.get("prompt.async") and not clink.istransientpromptfilter() then
         -- Yield to ensure only one popenyield active at a time.
         if _coroutine_yieldguard then
             set_coroutine_queued(true)
@@ -453,7 +455,18 @@ function io.popenyield(command, mode)
         end
         return file
     else
-        return io.popen(command, mode)
+        return old_io_popen(command, mode)
+    end
+end
+
+--------------------------------------------------------------------------------
+-- MAGIC:  Redirect io.popen to io.popenyield when used in read mode, so that
+-- match generators automatically yield in coroutines.
+io.popen = function (command, mode)
+    if mode and mode:find("w") then
+        return old_io_popen(command, mode)
+    else
+        return io.popenyield(command, mode)
     end
 end
 
