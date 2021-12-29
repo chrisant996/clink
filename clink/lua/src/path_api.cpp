@@ -175,7 +175,7 @@ static int get_name(lua_State* state)
 /// -ret:   string
 /// -show:  path.join("/foo", "bar")    -- returns "/foo\bar"
 /// -show:  path.join("", "bar")        -- returns "bar"
-/// -show:  path.join("/foo", "")       -- returns "/foo"
+/// -show:  path.join("/foo", "")       -- returns "/foo\"
 /// -show:  path.join(nil, "bar")       -- returns nil
 /// -show:  path.join("/foo", nil)      -- returns nil
 static int join(lua_State* state)
