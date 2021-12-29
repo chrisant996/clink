@@ -175,15 +175,6 @@ bool host_can_suggest(line_state& line)
 }
 
 //------------------------------------------------------------------------------
-void host_suggest(line_state& line, matches& matches)
-{
-    if (!s_callbacks)
-        return;
-
-    s_callbacks->suggest(line, matches);
-}
-
-//------------------------------------------------------------------------------
 int host_filter_matches(char** matches)
 {
     if (s_callbacks)
@@ -1176,10 +1167,28 @@ void line_editor_impl::update_internal()
             }
         }
 
-        if (!matches)
-            update_matches();
+#if 0
+        if (!matches && check_flag(flag_generate))
+        {
+// TODO: Start coroutine to generate matches.
+// TODO: Retrigger suggest when coroutine is finished.
+// TODO: Canceling the coroutine is the tricky part; don't just wait for gc to
+// close the globbers' FindFirstFile handles.  Maybe keep track of all globbers
+// made inside this specific coroutine, and have a way to zombie them so the
+// coroutine naturally finishes.
+//
+// line_state_lua::make_new(state, make_line_state_copy(line));
+        }
+        else if (s_callbacks)
+#else
+        if (s_callbacks)
+#endif
+        {
+            if (!matches)
+                update_matches();
 
-        host_suggest(line, matches ? *matches : m_matches);
+            s_callbacks->suggest(line, matches ? *matches : m_matches);
+        }
 
         delete matches;
     }
