@@ -68,7 +68,7 @@ void suggester::suggest(line_state& line, matches& matches, str_base& out, unsig
     {
         if (const char* error = lua_tostring(state, -1))
             m_lua.print_error(error);
-        lua_pop(state, 2);
+        lua_settop(state, top);
         return;
     }
 
