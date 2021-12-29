@@ -24,9 +24,46 @@ const line_state_lua::method line_state_lua::c_methods[] = {
 
 
 //------------------------------------------------------------------------------
-line_state_lua::line_state_lua(const line_state& line)
-: m_line(line)
+class line_state_copy
 {
+public:
+                                line_state_copy(const line_state& line);
+                                ~line_state_copy() { delete m_line; }
+    const line_state*           get_line() const { return m_line; }
+private:
+    line_state*                 m_line;
+    str_moveable                m_buffer;
+    std::vector<word>           m_words;
+};
+
+//------------------------------------------------------------------------------
+line_state_copy::line_state_copy(const line_state& line)
+{
+    m_buffer = line.get_line();
+    m_words = line.get_words(); // Deep copy.
+    m_line = new line_state(m_buffer.c_str(), line.get_cursor(), line.get_command_offset(), m_words);
+}
+
+//------------------------------------------------------------------------------
+line_state_copy* make_line_state_copy(const line_state& line)
+{
+    return new line_state_copy(line);
+}
+
+
+
+//------------------------------------------------------------------------------
+line_state_lua::line_state_lua(const line_state& line)
+{
+    m_line = &line;
+    m_copy = nullptr;
+}
+
+//------------------------------------------------------------------------------
+line_state_lua::line_state_lua(line_state_copy* copy)
+{
+    m_line = copy->get_line();
+    m_copy = copy;
 }
 
 //------------------------------------------------------------------------------
@@ -36,7 +73,7 @@ line_state_lua::line_state_lua(const line_state& line)
 /// Returns the current line in its entirety.
 int line_state_lua::get_line(lua_State* state)
 {
-    lua_pushstring(state, m_line.get_line());
+    lua_pushstring(state, m_line->get_line());
     return 1;
 }
 
@@ -47,7 +84,7 @@ int line_state_lua::get_line(lua_State* state)
 /// Returns the position of the cursor.
 int line_state_lua::get_cursor(lua_State* state)
 {
-    lua_pushinteger(state, m_line.get_cursor() + 1);
+    lua_pushinteger(state, m_line->get_cursor() + 1);
     return 1;
 }
 
@@ -63,7 +100,7 @@ int line_state_lua::get_cursor(lua_State* state)
 /// -show:  line_state:getcommandoffset() == 4
 int line_state_lua::get_command_offset(lua_State* state)
 {
-    lua_pushinteger(state, m_line.get_command_offset() + 1);
+    lua_pushinteger(state, m_line->get_command_offset() + 1);
     return 1;
 }
 
@@ -80,7 +117,7 @@ int line_state_lua::get_command_offset(lua_State* state)
 /// -show:  line_state:getcommandwordindex() == 2
 int line_state_lua::get_command_word_index(lua_State* state)
 {
-    lua_pushinteger(state, m_line.get_command_word_index() + 1);
+    lua_pushinteger(state, m_line->get_command_word_index() + 1);
     return 1;
 }
 
@@ -91,7 +128,7 @@ int line_state_lua::get_command_word_index(lua_State* state)
 /// Returns the number of words in the current line.
 int line_state_lua::get_word_count(lua_State* state)
 {
-    lua_pushinteger(state, m_line.get_word_count());
+    lua_pushinteger(state, m_line->get_word_count());
     return 1;
 }
 
@@ -121,7 +158,7 @@ int line_state_lua::get_word_info(lua_State* state)
     if (!lua_isnumber(state, 1))
         return 0;
 
-    const std::vector<word>& words = m_line.get_words();
+    const std::vector<word>& words = m_line->get_words();
     unsigned int index = int(lua_tointeger(state, 1)) - 1;
     if (index >= words.size())
         return 0;
@@ -185,7 +222,7 @@ int line_state_lua::get_word(lua_State* state)
 
     str<32> word;
     unsigned int index = int(lua_tointeger(state, 1)) - 1;
-    m_line.get_word(index, word);
+    m_line->get_word(index, word);
     lua_pushlstring(state, word.c_str(), word.length());
     return 1;
 }
@@ -208,7 +245,7 @@ int line_state_lua::get_word(lua_State* state)
 int line_state_lua::get_end_word(lua_State* state)
 {
     str<32> word;
-    m_line.get_end_word(word);
+    m_line->get_end_word(word);
     lua_pushlstring(state, word.c_str(), word.length());
     return 1;
 }

@@ -6,7 +6,11 @@
 #include "lua_bindable.h"
 
 class line_state;
+class line_state_copy;
 struct lua_State;
+
+//------------------------------------------------------------------------------
+line_state_copy* make_line_state_copy(const line_state& line);
 
 //------------------------------------------------------------------------------
 class line_state_lua
@@ -14,6 +18,7 @@ class line_state_lua
 {
 public:
                         line_state_lua(const line_state& line);
+                        line_state_lua(line_state_copy* copy);
     int                 get_line(lua_State* state);
     int                 get_cursor(lua_State* state);
     int                 get_command_offset(lua_State* state);
@@ -24,7 +29,8 @@ public:
     int                 get_end_word(lua_State* state);
 
 private:
-    const line_state&   m_line;
+    const line_state*   m_line;
+    line_state_copy*    m_copy;
 
     friend class lua_bindable<line_state_lua>;
     static const char* const c_name;
