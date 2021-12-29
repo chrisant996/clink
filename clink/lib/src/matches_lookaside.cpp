@@ -121,7 +121,7 @@ assert(false);
 }
 
 //------------------------------------------------------------------------------
-bool create_matches_lookaside(char** matches)
+extern "C" int create_matches_lookaside(char** matches)
 {
     if (!matches || !matches[0] || !matches[1])
         return false;
@@ -140,7 +140,7 @@ bool create_matches_lookaside(char** matches)
 }
 
 //------------------------------------------------------------------------------
-bool destroy_matches_lookaside(char** matches)
+extern "C" int destroy_matches_lookaside(char** matches)
 {
     if (!matches)
         return false;

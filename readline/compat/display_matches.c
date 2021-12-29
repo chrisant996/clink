@@ -67,6 +67,8 @@ extern int errno;
 
 #define ELLIPSIS_LEN 3
 
+extern int create_matches_lookaside(char** matches);
+extern int destroy_matches_lookaside(char** matches);
 #ifdef DEBUG
 extern int has_matches_lookaside(char** matches);
 #endif
@@ -1322,16 +1324,19 @@ done_filtered:
     }
 
     // Handle "simple" case first.  What if there is only one answer?
-    char* rebuilt[3];
+    char* rebuilt_storage[3];
+    char** rebuilt = NULL;
     if (matches[1] == 0)
     {
         // Rebuild a matches array that has a first match, so the display
         // routine can handle descriptions, and also special display when using
         // match display filtering.
+        rebuilt = rebuilt_storage;
         rebuilt[0] = matches[0];
         rebuilt[1] = matches[0];
         rebuilt[2] = 0;
         matches = rebuilt;
+        create_matches_lookaside(rebuilt);
     }
 
     access = make_match_accessor(matches);
@@ -1379,6 +1384,7 @@ done_filtered:
     display_match_list_internal(access, len, max, 0);
 
 done:
+    destroy_matches_lookaside(rebuilt);
     free(access);
     rl_forced_update_display();
     rl_display_fixed = 1;
