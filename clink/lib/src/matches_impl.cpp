@@ -415,9 +415,8 @@ const char* matches_impl::store_impl::store_front(const char* str)
 
 
 //------------------------------------------------------------------------------
-matches_impl::matches_impl(generators* generators, unsigned int store_size)
+matches_impl::matches_impl(unsigned int store_size)
 : m_store(min(store_size, 0x10000u))
-, m_generators(generators)
 , m_filename_completion_desired(false)
 , m_filename_display_desired(false)
 {
@@ -664,14 +663,7 @@ bool matches_impl::match_display_filter(const char* needle, char** matches, matc
     // accurately (it might have been produced by a pattern iterator) in order
     // to generate an array to pass to clink.match_display_filter.
 
-    if (!m_generators)
-        return false;
-
-    for (auto *generator : *m_generators)
-        if (generator->match_display_filter(needle, matches, filtered_matches, flags, old_filtering))
-            return true;
-
-    return false;
+    return m_generator && m_generator->match_display_filter(needle, matches, filtered_matches, flags, old_filtering);
 }
 
 //------------------------------------------------------------------------------
@@ -833,6 +825,12 @@ bool matches_impl::add_match(const match_desc& desc, bool already_normalized)
     ++m_count;
 
     return true;
+}
+
+//------------------------------------------------------------------------------
+void matches_impl::set_generator(match_generator* generator)
+{
+    m_generator = generator;
 }
 
 //------------------------------------------------------------------------------

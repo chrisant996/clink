@@ -16,7 +16,7 @@ public:
                         match_pipeline(matches_impl& matches);
     void                reset() const;
     void                set_nosort(bool nosort=true);
-    void                generate(const line_state& state, const array<match_generator*>& generators, bool old_filtering=false) const;
+    void                generate(const line_state& state, match_generator* generator, bool old_filtering=false) const;
     void                restrict(str_base& needle) const;
     void                select(const char* needle) const;
     void                sort() const;

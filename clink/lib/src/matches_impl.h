@@ -54,10 +54,9 @@ class matches_impl
     struct match_lookup_comparator;
 
 public:
-    typedef fixed_array<match_generator*, 32> generators;
     typedef std::unordered_set<match_lookup, match_lookup_hasher, match_lookup_comparator> match_lookup_unordered_set;
 
-                            matches_impl(generators* generators=nullptr, unsigned int store_size=0x10000);
+                            matches_impl(unsigned int store_size=0x10000);
     matches_iter            get_iter() const;
     matches_iter            get_iter(const char* pattern) const;
 
@@ -82,6 +81,7 @@ public:
     void                    set_regen_blocked();
     bool                    is_regen_blocked() const { return m_regen_blocked; }
 
+    void                    set_generator(match_generator* generator);
     void                    done_building();
 
 private:
@@ -119,7 +119,7 @@ private:
     typedef std::vector<match_info> infos;
 
     store_impl              m_store;
-    generators*             m_generators;
+    match_generator*        m_generator = nullptr;
     infos                   m_infos;
     unsigned short          m_count = 0;
     bool                    m_any_infer_type = false;

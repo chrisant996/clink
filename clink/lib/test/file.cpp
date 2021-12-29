@@ -49,7 +49,7 @@ TEST_CASE("File match generator")
         REQUIRE(rl_parse_and_bind(setvar.data()) == 0);
 
         line_editor_tester tester;
-        tester.get_editor()->add_generator(lua_generator);
+        tester.get_editor()->set_generator(lua_generator);
 
         SECTION(dyn_section("File system matches", mode))
         {

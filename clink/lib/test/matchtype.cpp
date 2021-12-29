@@ -86,7 +86,7 @@ TEST_CASE("Match type : simple")
     lua.do_string(script, int(strlen(script)));
 
     line_editor_tester tester;
-    tester.get_editor()->add_generator(lua_generator);
+    tester.get_editor()->set_generator(lua_generator);
 
     SECTION("pathish matches")
     {
@@ -127,7 +127,7 @@ TEST_CASE("Match type : slash")
     lua.do_string(script, int(strlen(script)));
 
     line_editor_tester tester;
-    tester.get_editor()->add_generator(lua_generator);
+    tester.get_editor()->set_generator(lua_generator);
 
     SECTION("pathish matches")
     {
@@ -168,7 +168,7 @@ TEST_CASE("Match type : compound")
     lua.do_string(script, int(strlen(script)));
 
     line_editor_tester tester;
-    tester.get_editor()->add_generator(lua_generator);
+    tester.get_editor()->set_generator(lua_generator);
 
     SECTION("pathish matches")
     {
@@ -209,7 +209,7 @@ TEST_CASE("Match type : lcd")
     lua.do_string(script, int(strlen(script)));
 
     line_editor_tester tester;
-    tester.get_editor()->add_generator(lua_generator);
+    tester.get_editor()->set_generator(lua_generator);
 
     rl_bind_keyseq_in_map("\x99", rl_named_function("complete"), emacs_standard_keymap);
 
@@ -240,7 +240,7 @@ TEST_CASE("Match type : files")
     lua.do_string(script, int(strlen(script)));
 
     line_editor_tester tester;
-    tester.get_editor()->add_generator(lua_generator);
+    tester.get_editor()->set_generator(lua_generator);
 
     SECTION("pathish readline")
     {

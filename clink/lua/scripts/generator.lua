@@ -160,14 +160,6 @@ function clink._generate(line_state, match_builder, old_filtering)
             end
         end
 
-        -- UGLY:  Previously the order for generators was Lua generators, then
-        -- native generators such as the file_match_generator.  But suggestions
-        -- needs match generation to run as a Lua coroutine.  That effectively
-        -- means native generators are no longer supported.  It's ok because
-        -- there aren't any other generators currently, and for extensibility
-        -- purposes it seems quite reasonable to require that generators are
-        -- implemented in Lua.  However, the internal infrastructure still makes
-        -- it look as though native generators are supported, but they are not.
         if file_match_generator:generate(line_state, match_builder) then
             return true
         end

@@ -41,7 +41,7 @@ static int editline()
 
     line_editor::desc desc = { term.in, term.out, &printer, nullptr };
     line_editor* editor = line_editor_create(desc);
-    editor->add_generator(lua_generator);
+    editor->set_generator(lua_generator);
 
     str<> out;
     while (editor->edit(out))

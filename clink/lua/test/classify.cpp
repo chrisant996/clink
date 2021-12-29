@@ -29,7 +29,7 @@ TEST_CASE("Lua word classification")
 
     line_editor::desc desc(nullptr, nullptr, nullptr, nullptr);
     line_editor_tester tester(desc, "&|", nullptr);
-    tester.get_editor()->add_generator(lua_generator);
+    tester.get_editor()->set_generator(lua_generator);
     tester.get_editor()->set_classifier(lua_classifier);
 
     AddConsoleAliasW(const_cast<wchar_t*>(L"dkalias"), const_cast<wchar_t*>(L"text"), host);

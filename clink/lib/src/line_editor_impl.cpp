@@ -259,8 +259,6 @@ line_editor_impl::line_editor_impl(const desc& desc)
 : m_desc(desc)
 , m_module(desc.input)
 , m_collector(desc.command_tokeniser, desc.word_tokeniser, desc.get_quote_pair())
-, m_regen_matches(&m_generators)
-, m_matches(&m_generators)
 , m_printer(*desc.printer)
 , m_pager(*this)
 , m_selectcomplete(*this)
@@ -370,10 +368,11 @@ bool line_editor_impl::add_module(editor_module& module)
 }
 
 //------------------------------------------------------------------------------
-bool line_editor_impl::add_generator(match_generator& generator)
+void line_editor_impl::set_generator(match_generator& generator)
 {
-    match_generator** slot = m_generators.push_back();
-    return (slot != nullptr) ? *slot = &generator, true : false;
+    m_generator = &generator;
+    m_regen_matches.set_generator(&generator);
+    m_matches.set_generator(&generator);
 }
 
 //------------------------------------------------------------------------------
@@ -496,7 +495,7 @@ void line_editor_impl::update_matches()
         line_state line = get_linestate();
         match_pipeline pipeline(m_matches);
         pipeline.reset();
-        pipeline.generate(line, m_generators);
+        pipeline.generate(line, m_generator);
     }
 
     if (restrict)
@@ -738,7 +737,6 @@ unsigned int line_editor_impl::collect_words(words& words, matches_impl* matches
     if (end_word->length && (mode == collect_words_mode::stop_at_cursor ||
                              mode == collect_words_mode::display_filter))
     {
-        word_break_info break_info = {};
         const char *word_start = m_buffer.get_buffer() + end_word->offset;
 
 #ifdef DEBUG
@@ -758,14 +756,8 @@ unsigned int line_editor_impl::collect_words(words& words, matches_impl* matches
         }
 #endif
 
-        for (const auto *generator : m_generators)
-        {
-            word_break_info tmp;
-            generator->get_word_break_info(line, tmp);
-            if ((tmp.truncate > break_info.truncate) ||
-                (tmp.truncate == break_info.truncate && tmp.keep > break_info.keep))
-                break_info = tmp;
-        }
+        word_break_info break_info;
+        m_generator->get_word_break_info(line, break_info);
 
         if (break_info.truncate)
         {
@@ -1254,7 +1246,7 @@ matches* maybe_regenerate_matches(const char* needle, display_filter_flags flags
     if (debug_filter) puts("-- GENERATE");
 #endif
 
-    pipeline.generate(line, s_editor->m_generators, old_filtering);
+    pipeline.generate(line, s_editor->m_generator, old_filtering);
 
 #ifdef DEBUG
     if (debug_filter) puts("-- SELECT");

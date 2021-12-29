@@ -52,7 +52,7 @@ public:
 
     // line_editor
     virtual bool        add_module(editor_module& module) override;
-    virtual bool        add_generator(match_generator& generator) override;
+    virtual void        set_generator(match_generator& generator) override;
     virtual void        set_classifier(word_classifier& classifier) override;
     virtual void        set_input_idle(input_idle* idle) override;
     virtual void        set_prompt(const char* prompt, const char* rprompt, bool redisplay) override;
@@ -77,7 +77,6 @@ public:
 private:
     typedef editor_module                       module;
     typedef fixed_array<editor_module*, 16>     modules;
-    typedef fixed_array<match_generator*, 32>   generators;
     typedef std::vector<word>                   words;
     friend void update_matches();
     friend matches* get_mutable_matches(bool nosort);
@@ -129,7 +128,7 @@ private:
     rl_buffer           m_buffer;
     word_collector      m_collector;
     modules             m_modules;
-    generators          m_generators;
+    match_generator*    m_generator;
     word_classifier*    m_classifier = nullptr;
     input_idle*         m_idle = nullptr;
     binder              m_binder;

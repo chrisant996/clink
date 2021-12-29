@@ -37,7 +37,7 @@ TEST_CASE("Directory match generation.")
     lua_load_script(lua, app, dir);
 
     line_editor_tester tester;
-    tester.get_editor()->add_generator(lua_generator);
+    tester.get_editor()->set_generator(lua_generator);
 
     const char* dir_cmds[] = { "cd", "rd", "rmdir", "md", "mkdir", "pushd" };
     for (int i = 0; i < sizeof_array(dir_cmds); ++i)

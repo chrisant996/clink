@@ -35,7 +35,7 @@ TEST_CASE("Quoting")
         line_editor_tester tester;
 
         line_editor* editor = tester.get_editor();
-        editor->add_generator(lua_generator);
+        editor->set_generator(lua_generator);
 
         SECTION("None")
         {
@@ -110,7 +110,7 @@ TEST_CASE("Quoting")
         line_editor_tester tester(desc);
 
         line_editor* editor = tester.get_editor();
-        editor->add_generator(lua_generator);
+        editor->set_generator(lua_generator);
 
         SECTION("None")
         {
@@ -157,7 +157,7 @@ TEST_CASE("Quoting")
         line_editor_tester tester(desc);
 
         line_editor* editor = tester.get_editor();
-        editor->add_generator(lua_generator);
+        editor->set_generator(lua_generator);
 
         SECTION("None")
         {

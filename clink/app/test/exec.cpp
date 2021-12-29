@@ -54,7 +54,7 @@ TEST_CASE("Executable match generation.")
 
     line_editor::desc desc(nullptr, nullptr, nullptr, nullptr);
     line_editor_tester tester(desc, "&|", nullptr);
-    tester.get_editor()->add_generator(lua_generator);
+    tester.get_editor()->set_generator(lua_generator);
 
     settings::find("exec.cwd")->set("0");
     settings::find("exec.dirs")->set("0");

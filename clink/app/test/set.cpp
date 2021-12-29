@@ -31,7 +31,7 @@ TEST_CASE("Set command.")
 
     line_editor::desc desc(nullptr, nullptr, nullptr, nullptr);
     line_editor_tester tester(desc, nullptr, " =");
-    tester.get_editor()->add_generator(lua_generator);
+    tester.get_editor()->set_generator(lua_generator);
 
     SECTION("Matches")
     {

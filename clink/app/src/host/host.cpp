@@ -912,7 +912,7 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out)
     if (init_editor)
     {
         editor = line_editor_create(desc);
-        editor->add_generator(lua);
+        editor->set_generator(lua);
         if (g_classify_words.get())
             editor->set_classifier(lua);
         editor->set_input_idle(lua);
