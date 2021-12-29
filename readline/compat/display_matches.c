@@ -821,6 +821,8 @@ int append_filename(char* to_print, const char* full_pathname, int prefix_bytes,
 static const char* visible_part(const char *match)
 {
     const char* t1 = printable_part((char*)match);
+    if (ISALPHA ((unsigned char)t1[0]) && t1[1] == ':' && t1[2] == '\0')
+        t1 += 2;
     if (!rl_filename_display_desired)
         return t1;
     // check again in case of /usr/src/
