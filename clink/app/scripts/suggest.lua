@@ -11,16 +11,16 @@ local suggesters = {}
 local function _do_suggest(line, matches)
     -- Protected call to suggesters.
     local impl = function(line, matches)
-        local suggested, onwards
+        local suggestion, offset
         local strategy = settings.get("autosuggest.strategy"):explode()
         for _, name in ipairs(strategy) do
             local suggester = suggesters[name]
             if suggester then
                 local func = suggester.suggest
                 if func then
-                    suggested, suggested_line = func(suggester, line, matches)
-                    if suggested ~= nil then
-                        return suggested, suggested_line
+                    suggestion, offset = func(suggester, line, matches)
+                    if suggestion ~= nil then
+                        return suggestion, offset
                     end
                 end
             end
@@ -32,7 +32,7 @@ local function _do_suggest(line, matches)
         print("")
         print("suggester failed:")
         print(ret)
-        return false
+        return
     end
 
     return ret, ret2
