@@ -11,10 +11,12 @@
 #include <core/settings.h>
 #include <core/os.h>
 #include <lib/line_state.h>
+#include <lib/matches.h>
 #include "lua_script_loader.h"
 #include "lua_state.h"
 #include "line_state_lua.h"
 #include "matches_lua.h"
+#include "match_builder_lua.h"
 
 extern "C" {
 #include <lua.h>
@@ -23,6 +25,8 @@ extern "C" {
 }
 
 //------------------------------------------------------------------------------
+extern matches* make_new_matches();
+extern void set_suggestion(const char* line, unsigned int endword_offset, const char* suggestion, unsigned int offset);
 extern setting_enum g_ignore_case;
 extern setting_bool g_fuzzy_accent;
 
@@ -35,12 +39,11 @@ suggester::suggester(lua_state& lua)
 }
 
 //------------------------------------------------------------------------------
-void suggester::suggest(line_state& line, matches& matches, str_base& out, unsigned int& offset)
+void suggester::suggest(line_state& line, matches* matches)
 {
     if (!*line.get_line())
     {
-        out.clear();
-        offset = 0;
+        set_suggestion("", 0, nullptr, 0);
         return;
     }
 
@@ -59,29 +62,34 @@ void suggester::suggest(line_state& line, matches& matches, str_base& out, unsig
     lua_rawget(state, -2);
 
     line_state_lua line_lua(line);
-    line_lua.push(state);
+    matches_lua matches_lua(*matches); // Doesn't deref matches, so nullptr is ok.
 
-    matches_lua matches_lua(matches);
-    matches_lua.push(state);
+    // If matches not supplied, then use a coroutine to generates matches on
+    // demand (if matches are not accessed, they will not be generated).
+    if (matches)
+    {
+        line_lua.push(state);
+        matches_lua.push(state);
+        lua_pushnil(state);
+    }
+    else
+    {
+        auto toolkit = std::make_shared<match_builder_toolkit>();
 
-    if (m_lua.pcall(state, 2, 2) != 0)
+        // These can't be bound to stack objects because they must stay valid
+        // for the duration of the coroutine.
+        line_state_lua::make_new(state, make_line_state_copy(line));
+        matches_lua::make_new(state, toolkit);
+        match_builder_lua::make_new(state, toolkit);
+    }
+
+    if (m_lua.pcall(state, 3, 0) != 0)
     {
         if (const char* error = lua_tostring(state, -1))
             m_lua.print_error(error);
         lua_settop(state, top);
         return;
     }
-
-    // Collect the suggestion.
-    bool isnum;
-    const char* suggestion = lua_tostring(state, -2);
-    int start = optinteger(state, -1, 0, &isnum) - 1;
-    const int line_len = int(strlen(line.get_line()));
-    if (!isnum || start < 0 || start > line_len)
-        start = line_len;
-
-    out = suggestion;
-    offset = start;
 
     lua_settop(state, top);
 }

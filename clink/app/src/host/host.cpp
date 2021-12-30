@@ -136,7 +136,6 @@ extern void clear_sticky_search_position();
 extern void reset_keyseq_to_name_map();
 extern void set_prompt(const char* prompt, const char* rprompt, bool redisplay);
 extern bool can_suggest(line_state& line);
-extern void set_suggestion(line_state& line, const char* suggestion, unsigned int offset);
 
 
 
@@ -681,15 +680,10 @@ bool host::can_suggest(line_state& line)
 }
 
 //------------------------------------------------------------------------------
-void host::suggest(line_state& line, matches& matches)
+void host::suggest(line_state& line, matches* matches)
 {
     if (m_suggester && g_autosuggest_enable.get())
-    {
-        str<> suggestion;
-        unsigned int offset;
-        m_suggester->suggest(line, matches, suggestion, offset);
-        set_suggestion(line, suggestion.c_str(), offset);
-    }
+        m_suggester->suggest(line, matches);
 }
 
 //------------------------------------------------------------------------------

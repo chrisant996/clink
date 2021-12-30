@@ -19,7 +19,7 @@ public:
     bool            get_visible(str_base& out) const;
     void            clear();
     bool            can_suggest(line_state& line);
-    void            set(line_state& line, const char* suggestion, unsigned int offset);
+    void            set(const char* line, unsigned int endword_offset, const char* suggestion, unsigned int offset);
     bool            insert(suggestion_action action);
     void            update_endword_offset(line_state& line);
 

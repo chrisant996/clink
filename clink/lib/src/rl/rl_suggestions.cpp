@@ -101,19 +101,19 @@ bool suggestion_manager::can_suggest(line_state& line)
 }
 
 //------------------------------------------------------------------------------
-void suggestion_manager::set(line_state& line, const char* suggestion, unsigned int offset)
+void suggestion_manager::set(const char* line, unsigned int endword_offset, const char* suggestion, unsigned int offset)
 {
 #ifdef DEBUG_SUGGEST
     static int s_suggnum = 0;
     printf("\x1b[s\x1b[H#%u:  set suggestion:  \"%s\", offset %d, endword ofs %d\x1b[K\x1b[u",
-           ++s_suggnum, suggestion, offset, line.get_end_word_offset());
+           ++s_suggnum, suggestion, offset, endword_offset);
 #endif
 
     if ((m_suggestion.length() == 0) == (!suggestion || !*suggestion) &&
         m_suggestion_offset == offset &&
-        m_endword_offset == line.get_end_word_offset() &&
+        m_endword_offset == endword_offset &&
         (!suggestion || m_suggestion.equals(suggestion)) &&
-        m_line.equals(line.get_line()))
+        m_line.equals(line))
     {
         return;
     }
@@ -127,7 +127,7 @@ malformed:
         return;
     }
 
-    const unsigned int line_len = static_cast<unsigned int>(strlen(line.get_line()));
+    const unsigned int line_len = static_cast<unsigned int>(strlen(line));
     if (line_len < offset)
     {
         assert(false);
@@ -143,7 +143,7 @@ malformed:
         int scope = g_ignore_case.get() ? str_compare_scope::caseless : str_compare_scope::exact;
         str_compare_scope compare(scope, g_fuzzy_accent.get());
 
-        str_iter orig(line.get_line() + offset);
+        str_iter orig(line + offset);
         const int matchlen = str_compare<char, false/*compute_lcd*/, true/*exact_slash*/>(orig, m_iter);
 
         if (orig.more())
@@ -151,9 +151,9 @@ malformed:
     }
 
     m_suggestion_offset = offset;
-    m_endword_offset = line.get_end_word_offset();
+    m_endword_offset = endword_offset;
 
-    m_line = line.get_line();
+    m_line = line;
 
 #ifdef DEBUG_SUGGEST
     printf("\x1b[s\x1b[2Hline:  \"%s\"\x1b[K\x1b[u", m_line.c_str());

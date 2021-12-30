@@ -4,8 +4,9 @@
 #pragma once
 
 #include "lua_bindable.h"
+#include <lib/matches.h>
+#include <memory>
 
-class matches;
 struct lua_State;
 
 //------------------------------------------------------------------------------
@@ -14,13 +15,16 @@ class matches_lua
 {
 public:
                         matches_lua(const matches& matches);
+                        matches_lua(std::shared_ptr<match_builder_toolkit>& toolkit);
+                        ~matches_lua();
     int                 get_prefix(lua_State* state);
     int                 get_count(lua_State* state);
     int                 get_match(lua_State* state);
     int                 get_type(lua_State* state);
 
 private:
-    const matches&      m_matches;
+    const matches*      m_matches;
+    std::shared_ptr<match_builder_toolkit> m_toolkit;
     str_moveable        m_prefix;
     bool                m_has_prefix = false;
 

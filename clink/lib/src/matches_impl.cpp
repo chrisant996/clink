@@ -263,6 +263,28 @@ void match_builder::set_matches_are_files(bool files)
 
 
 //------------------------------------------------------------------------------
+match_builder_toolkit::match_builder_toolkit()
+{
+    m_matches = new matches_impl();
+    m_builder = new match_builder(*m_matches);
+}
+
+//------------------------------------------------------------------------------
+match_builder_toolkit::~match_builder_toolkit()
+{
+    delete m_matches;
+    delete m_builder;
+}
+
+//------------------------------------------------------------------------------
+void match_builder_toolkit::clear()
+{
+    static_cast<matches_impl*>(m_matches)->clear();
+}
+
+
+
+//------------------------------------------------------------------------------
 matches_iter::matches_iter(const matches& matches, const char* pattern)
 : m_matches(matches)
 , m_expanded_pattern(pattern && rl_complete_with_tilde_expansion ? tilde_expand(pattern) : nullptr)
@@ -693,6 +715,13 @@ void matches_impl::reset()
     m_filename_display_desired.reset();
 
     s_slash_translation = g_translate_slashes.get();
+}
+
+//------------------------------------------------------------------------------
+void matches_impl::clear()
+{
+    reset();
+    m_store.clear();
 }
 
 //------------------------------------------------------------------------------

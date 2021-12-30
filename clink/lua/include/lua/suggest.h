@@ -13,7 +13,7 @@ class suggester
 {
 public:
                     suggester(lua_state& lua);
-    void            suggest(line_state& line, matches& matches, str_base& out, unsigned int& offset);
+    void            suggest(line_state& line, matches* matches);
 
 private:
     lua_state&      m_lua;

@@ -756,9 +756,9 @@ static void puts_face_func(const char* s, const char* face, int n)
 
 
 //------------------------------------------------------------------------------
-void set_suggestion(line_state& line, const char* suggestion, unsigned int offset)
+void set_suggestion(const char* line, unsigned int endword_offset, const char* suggestion, unsigned int offset)
 {
-    s_suggestion.set(line, suggestion, offset);
+    s_suggestion.set(line, endword_offset, suggestion, offset);
 }
 
 //------------------------------------------------------------------------------

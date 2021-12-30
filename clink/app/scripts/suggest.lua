@@ -35,12 +35,27 @@ local function _do_suggest(line, matches)
         return
     end
 
-    return ret, ret2
+    local info = line:getwordinfo(line:getwordcount())
+    clink.set_suggestion_result(line:getline(), info.offset, ret, ret2)
 end
 
 --------------------------------------------------------------------------------
-function clink._suggest(line, matches)
-    return _do_suggest(line, matches)
+function clink._suggest(line, matches, builder)
+    -- TODO: When builder is not nil, wrap matches to start a coroutine if/when
+    -- matches are accessed.
+
+    -- TODO: When coroutine is complete, transfer matches to m_matches if the
+    -- matches are still relevant (i.e. if context is identical).
+
+    -- TODO: When coroutine is complete, use builder:clear_toolkit() to release
+    -- memory.
+
+    -- TODO: Canceling the coroutine is the tricky part; don't just wait for gc
+    -- to close the globbers' FindFirstFile handles.  Maybe keep track of all
+    -- globbers made inside this specific coroutine, and have a way to zombie
+    -- them so the coroutine naturally finishes.
+
+    _do_suggest(line, matches)
 end
 
 --------------------------------------------------------------------------------

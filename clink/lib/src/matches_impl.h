@@ -85,6 +85,8 @@ public:
     void                    set_generator(match_generator* generator);
     void                    done_building();
 
+    void                    clear();
+
 private:
     virtual const char*     get_unfiltered_match(unsigned int index) const override;
     virtual match_type      get_unfiltered_match_type(unsigned int index) const override;

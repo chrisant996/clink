@@ -20,6 +20,8 @@ const match_builder_lua::method match_builder_lua::c_methods[] = {
     // Only for backward compatibility:
     { "deprecated_addmatch", &deprecated_add_match },
     { "setmatchesarefiles", &set_matches_are_files },
+    // UNDOCUMENTED; internal use only.
+    { "clear_toolkit",      &clear_toolkit },
     {}
 };
 
@@ -27,7 +29,14 @@ const match_builder_lua::method match_builder_lua::c_methods[] = {
 
 //------------------------------------------------------------------------------
 match_builder_lua::match_builder_lua(match_builder& builder)
-: m_builder(builder)
+: m_builder(&builder)
+{
+}
+
+//------------------------------------------------------------------------------
+match_builder_lua::match_builder_lua(std::shared_ptr<match_builder_toolkit>& toolkit)
+: m_builder(toolkit.get()->get_builder())
+, m_toolkit(toolkit)
 {
 }
 
@@ -138,7 +147,7 @@ int match_builder_lua::set_append_character(lua_State* state)
     if (!append)
         return 0;
 
-    m_builder.set_append_character(*append);
+    m_builder->set_append_character(*append);
 
     return 0;
 }
@@ -155,7 +164,7 @@ int match_builder_lua::set_suppress_append(lua_State* state)
     if (lua_gettop(state) > 0)
         suppress = (lua_toboolean(state, 1) != 0);
 
-    m_builder.set_suppress_append(suppress);
+    m_builder->set_suppress_append(suppress);
 
     return 0;
 }
@@ -178,7 +187,7 @@ int match_builder_lua::set_suppress_quoting(lua_State* state)
             suppress = i;
     }
 
-    m_builder.set_suppress_quoting(suppress);
+    m_builder->set_suppress_quoting(suppress);
 
     return 0;
 }
@@ -188,7 +197,7 @@ int match_builder_lua::set_suppress_quoting(lua_State* state)
 // compatibility.
 int match_builder_lua::deprecated_add_match(lua_State* state)
 {
-    m_builder.set_deprecated_mode();
+    m_builder->set_deprecated_mode();
     return add_match(state);
 }
 
@@ -198,11 +207,20 @@ int match_builder_lua::deprecated_add_match(lua_State* state)
 int match_builder_lua::set_matches_are_files(lua_State* state)
 {
     if (lua_gettop(state) <= 0 || lua_isnil(state, 1))
-        m_builder.set_matches_are_files(true);
+        m_builder->set_matches_are_files(true);
     else if (lua_isboolean(state, 1))
-        m_builder.set_matches_are_files(lua_toboolean(state, 1) != 0);
+        m_builder->set_matches_are_files(lua_toboolean(state, 1) != 0);
     else
-        m_builder.set_matches_are_files(int(lua_tointeger(state, 1)));
+        m_builder->set_matches_are_files(int(lua_tointeger(state, 1)));
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+// UNDOCUMENTED; internal use only.
+int match_builder_lua::clear_toolkit(lua_State* state)
+{
+    if (m_toolkit)
+        m_toolkit.get()->clear();
     return 0;
 }
 
@@ -263,7 +281,7 @@ bool match_builder_lua::add_match_impl(lua_State* state, int stack_index, match_
     if (lua_isstring(state, stack_index))
     {
         const char* match = lua_tostring(state, stack_index);
-        return m_builder.add_match(match, type);
+        return m_builder->add_match(match, type);
     }
     else if (lua_istable(state, stack_index))
     {
@@ -316,7 +334,7 @@ bool match_builder_lua::add_match_impl(lua_State* state, int stack_index, match_
         lua_pop(state, 1);
 
         if (desc.match != nullptr)
-            return m_builder.add_match(desc);
+            return m_builder->add_match(desc);
     }
 
     return false;

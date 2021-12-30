@@ -15,6 +15,7 @@ public:
 #endif
                             ~linear_allocator();
     void                    reset();
+    void                    clear();
     void*                   alloc(unsigned int size);
     template <class T> T*   calloc(unsigned int count=1);
     bool                    fits(unsigned int) const;
@@ -38,6 +39,12 @@ private:
 inline void linear_allocator::reset()
 {
     free_chain(true/*keep_one*/);
+}
+
+//------------------------------------------------------------------------------
+inline void linear_allocator::clear()
+{
+    free_chain(false/*keep_one*/);
 }
 
 //------------------------------------------------------------------------------

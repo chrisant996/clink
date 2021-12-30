@@ -21,7 +21,19 @@ const matches_lua::method matches_lua::c_methods[] = {
 
 //------------------------------------------------------------------------------
 matches_lua::matches_lua(const matches& matches)
-: m_matches(matches)
+: m_matches(&matches)
+{
+}
+
+//------------------------------------------------------------------------------
+matches_lua::matches_lua(std::shared_ptr<match_builder_toolkit>& toolkit)
+: m_matches(toolkit.get()->get_matches())
+, m_toolkit(toolkit)
+{
+}
+
+//------------------------------------------------------------------------------
+matches_lua::~matches_lua()
 {
 }
 
@@ -34,7 +46,7 @@ int matches_lua::get_prefix(lua_State* state)
 {
     if (!m_has_prefix)
     {
-        m_matches.get_lcd(m_prefix);
+        m_matches->get_lcd(m_prefix);
         m_has_prefix = true;
     }
 
@@ -49,7 +61,7 @@ int matches_lua::get_prefix(lua_State* state)
 /// Returns the number of available matches.
 int matches_lua::get_count(lua_State* state)
 {
-    lua_pushinteger(state, m_matches.get_match_count());
+    lua_pushinteger(state, m_matches->get_match_count());
     return 1;
 }
 
@@ -66,10 +78,10 @@ int matches_lua::get_match(lua_State* state)
     if (!isnum)
         return 0;
 
-    if (index >= m_matches.get_match_count())
+    if (index >= m_matches->get_match_count())
         return 0;
 
-    lua_pushstring(state, m_matches.get_match(index));
+    lua_pushstring(state, m_matches->get_match(index));
     return 1;
 }
 
@@ -86,11 +98,11 @@ int matches_lua::get_type(lua_State* state)
     if (!isnum)
         return 0;
 
-    if (index >= m_matches.get_match_count())
+    if (index >= m_matches->get_match_count())
         return 0;
 
     str<> type;
-    match_type_to_string(m_matches.get_match_type(index), type);
+    match_type_to_string(m_matches->get_match_type(index), type);
     lua_pushlstring(state, type.c_str(), type.length());
     return 1;
 }

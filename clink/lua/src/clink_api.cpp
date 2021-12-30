@@ -33,6 +33,7 @@ extern "C" {
 
 //------------------------------------------------------------------------------
 extern int force_reload_scripts();
+extern void set_suggestion(const char* line, unsigned int endword_offset, const char* suggestion, unsigned int offset);
 extern setting_bool g_gui_popups;
 extern setting_enum g_dupe_mode;
 
@@ -776,6 +777,29 @@ static int history_suggester(lua_State* state)
     return 0;
 }
 
+//------------------------------------------------------------------------------
+// UNDOCUMENTED; internal use only.
+static int set_suggestion_result(lua_State* state)
+{
+    bool isnum;
+    const char* line = checkstring(state, -4);
+    int endword_offset = checkinteger(state, -3, &isnum) - 1;
+    if (!line || !isnum)
+        return 0;
+
+    const int line_len = strlen(line);
+    if (endword_offset < 0 || endword_offset > line_len)
+        return 0;
+
+    const char* suggestion = optstring(state, -2, nullptr);
+    int offset = optinteger(state, -1, 0, &isnum) - 1;
+    if (!isnum || offset < 0 || offset > line_len)
+        offset = line_len;
+
+    set_suggestion(line, endword_offset, suggestion, offset);
+    return 0;
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -824,11 +848,12 @@ void clink_lua_initialise(lua_state& lua)
         { "is_rl_variable_true",    &is_rl_variable_true },
         { "slash_translation",      &slash_translation },
         { "split",                  &explode },
-        // UNDOCUMENTED; internal use only.
         { "refilterprompt",         &refilter_prompt },
+        // UNDOCUMENTED; internal use only.
         { "istransientpromptfilter", &is_transient_prompt_filter },
         { "get_refilter_redisplay_count", &get_refilter_redisplay_count },
         { "history_suggester",      &history_suggester },
+        { "set_suggestion_result",  &set_suggestion_result },
     };
 
     lua_State* state = lua.get_state();

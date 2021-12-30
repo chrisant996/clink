@@ -482,7 +482,7 @@ void line_editor_impl::update_matches()
     // Get flag states because we're about to clear them.
     bool generate = check_flag(flag_generate);
     bool restrict = check_flag(flag_restrict);
-    bool select = check_flag(flag_select);
+    bool select = generate || restrict || check_flag(flag_select);
 
     // Clear flag states before running generators, so that generators can use
     // reset_generate_matches().
@@ -1132,6 +1132,7 @@ void line_editor_impl::update_internal()
     if (host_can_suggest(line))
     {
         matches_impl* matches = nullptr;
+        matches_impl* empty_matches = nullptr;
 
         if (m_words.size())
         {
@@ -1155,34 +1156,22 @@ void line_editor_impl::update_internal()
                     }
                 }
                 if (no_matches)
-                    matches = new matches_impl;
+                    matches = empty_matches = new matches_impl;
             }
         }
 
-#if 0
-        if (!matches && check_flag(flag_generate))
+        // TODO:  Never generate matches here; let it be deferred and happen on
+        // demand in a coroutine.
+        if (!empty_matches/* && !check_flag(flag_generate)*/)
         {
-// TODO: Start coroutine to generate matches.
-// TODO: Retrigger suggest when coroutine is finished.
-// TODO: Canceling the coroutine is the tricky part; don't just wait for gc to
-// close the globbers' FindFirstFile handles.  Maybe keep track of all globbers
-// made inside this specific coroutine, and have a way to zombie them so the
-// coroutine naturally finishes.
-//
-// line_state_lua::make_new(state, make_line_state_copy(line));
-        }
-        else if (s_callbacks)
-#else
-        if (s_callbacks)
-#endif
-        {
-            if (!matches)
-                update_matches();
-
-            s_callbacks->suggest(line, matches ? *matches : m_matches);
+            update_matches();
+            matches = &m_matches;
         }
 
-        delete matches;
+        assert(s_callbacks); // Was tested above inside host_can_suggest().
+        s_callbacks->suggest(line, matches);
+
+        delete empty_matches;
     }
 
     // Must defer updating m_prev_generate since the old value is still needed

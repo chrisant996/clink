@@ -199,3 +199,18 @@ public:
 private:
     matches&                m_matches;
 };
+
+//------------------------------------------------------------------------------
+class match_builder_toolkit
+{
+public:
+                            match_builder_toolkit();
+                            ~match_builder_toolkit();
+    matches*                get_matches() const { return m_matches; }
+    match_builder*          get_builder() const { return m_builder; }
+    void                    clear();
+
+private:
+    matches*                m_matches;
+    match_builder*          m_builder;
+};
