@@ -12,6 +12,8 @@
 - Changed arrow keys in `clink-select-complete` at the beginning and end of the list to wrap to the other end based on the `menu-complete-wraparound` config variable.
 - Match generators can now specify an append character (or suppress appending) on a per-match basis.
 - The `os.globdirs()` and `os.globfiles()` functions now automatically yield periodically if used inside a coroutine.
+- The `io.popen()` function now automatically yields periodically if used in read mode (the default) inside a coroutine.
+- The `io.popenyield()` function now automatically falls back to `io.popen()` if used outside a coroutine.
 - Fixed display when typing to filter `clink-select-complete` (regression introduced in v1.2.49).
 - Fixed display of `clink-select-complete` when the current match changes the number of visible lines in the edit buffer.
 - Fixed displaying matches when only a drive letter is entered.
