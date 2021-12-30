@@ -424,6 +424,12 @@ matches_impl::matches_impl(unsigned int store_size)
 }
 
 //------------------------------------------------------------------------------
+matches_impl::~matches_impl()
+{
+    delete m_dedup;
+}
+
+//------------------------------------------------------------------------------
 matches_iter matches_impl::get_iter() const
 {
     return matches_iter(*this);
@@ -669,6 +675,9 @@ bool matches_impl::match_display_filter(const char* needle, char** matches, matc
 //------------------------------------------------------------------------------
 void matches_impl::reset()
 {
+    delete m_dedup;
+    m_dedup = nullptr;
+
     m_store.reset();
     m_infos.clear();
     m_any_infer_type = false;

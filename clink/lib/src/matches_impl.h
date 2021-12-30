@@ -57,6 +57,7 @@ public:
     typedef std::unordered_set<match_lookup, match_lookup_hasher, match_lookup_comparator> match_lookup_unordered_set;
 
                             matches_impl(unsigned int store_size=0x10000);
+                            ~matches_impl();
     matches_iter            get_iter() const;
     matches_iter            get_iter(const char* pattern) const;
 
