@@ -13,18 +13,23 @@ extern "C" {
 #include <assert.h>
 
 //------------------------------------------------------------------------------
-// Subclass must define two members:
-//  - static const char* const c_name.
-//  - static const method c_methods[], which must end with a {} element.
+// The lua_bindable<T> template binds a C++ class into a Lua object.  Its
+// lifetime is managed by either C++ or by Lua garbage collection, depending on
+// whether push() or make_new() is used, respectively.
 //
 // Use make_new() to create a new instance from the Lua heap as a Lua object.
 // Lua lifetime semantics control the lifetime (__gc invokes destructor).
 //      derived_from_lua_bindable::make_new(state, foo);
 //
-// Use push() to push a reference; does not require make_new().  C++ lifetime
-// semantics control the lifetime (__gc unbinds but does not run destructor).
+// Use push() to push a reference; does not require make_new(), but can be used
+// in conjunction with it.  C++ lifetime semantics control the lifetime (__gc
+// unbinds but does not run destructor).
 //      derived_from_lua_bindable bar(foo);
 //      bar.push(state);
+//
+// A subclass must define two members:
+//  - static const char* const c_name.
+//  - static const method c_methods[], which must end with a {} element.
 template <class T>
 class lua_bindable
 {
@@ -44,12 +49,11 @@ public:
 
 private:
     static int          call(lua_State* state);
-    static void         add_methods(lua_State* state, const method* methods);
+    static int          __gc(lua_State* state);
+    static int          __tostring(lua_State* state);
     void                make_metatable(lua_State* state);
     void                bind(lua_State* state);
     void                unbind();
-    int                 __gc(lua_State* state);
-    int                 __tostring(lua_State* state);
     lua_State*          m_state = nullptr;
     int                 m_registry_ref = LUA_NOREF;
     bool                m_owned = false;
@@ -70,43 +74,40 @@ lua_bindable<T>::~lua_bindable()
 
 //------------------------------------------------------------------------------
 template <class T>
-void lua_bindable<T>::add_methods(lua_State* state, const method* methods)
-{
-    while (methods != nullptr && methods->name != nullptr)
-    {
-        auto* ptr = (method_t*)lua_newuserdata(state, sizeof(method_t));
-        *ptr = methods->ptr;
-
-        if (luaL_newmetatable(state, "lua_bindable"))
-        {
-            lua_pushliteral(state, "__call");
-            lua_pushcfunction(state, &lua_bindable<T>::call);
-            lua_rawset(state, -3);
-        }
-
-        lua_setmetatable(state, -2);
-        lua_setfield(state, -2, methods->name);
-
-        ++methods;
-    }
-}
-
-//------------------------------------------------------------------------------
-template <class T>
 void lua_bindable<T>::make_metatable(lua_State* state)
 {
     if (luaL_newmetatable(state, T::c_name))
     {
-        static const T::method c_default_methods[] = {
-            { "__gc",       &T::__gc },
-            { "__tostring", &T::__tostring },
-            { nullptr,      nullptr }
-        };
+        // Add __gc and __tostring directly to metatable.
+
+        lua_pushcfunction(state, &T::__gc);
+        lua_setfield(state, -2, "__gc");
+
+        lua_pushcfunction(state, &T::__tostring);
+        lua_setfield(state, -2, "__tostring");
+
+        // Add other methods to __index table.
 
         lua_createtable(state, 0, 0);
 
-        add_methods(state, T::c_methods);
-        add_methods(state, c_default_methods);
+        const method* methods = T::c_methods;
+        while (methods != nullptr && methods->name != nullptr)
+        {
+            auto* ptr = (method_t*)lua_newuserdata(state, sizeof(method_t));
+            *ptr = methods->ptr;
+
+            if (luaL_newmetatable(state, "lua_bindable"))
+            {
+                lua_pushliteral(state, "__call");
+                lua_pushcfunction(state, &lua_bindable<T>::call);
+                lua_rawset(state, -3);
+            }
+
+            lua_setmetatable(state, -2);
+            lua_setfield(state, -2, methods->name);
+
+            ++methods;
+        }
 
         lua_setfield(state, -2, "__index");
     }
