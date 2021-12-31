@@ -271,6 +271,7 @@ function clink.promptcoroutine(func)
 
         -- Wrap the supplied function to track completion and end result.
         coroutine.override_src(func)
+        coroutine.override_isprompt()
         local c = coroutine.create(function (async)
             -- Call the supplied function.
             local o = func(async)

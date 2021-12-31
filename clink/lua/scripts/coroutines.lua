@@ -89,6 +89,13 @@ local function get_coroutine_generation()
 end
 
 --------------------------------------------------------------------------------
+local function is_prompt_coroutine(c)
+    if c and _coroutines[c] then
+        return _coroutines[c].isprompt
+    end
+end
+
+--------------------------------------------------------------------------------
 local function set_coroutine_yieldguard(yieldguard)
     local t = coroutine.running()
     if yieldguard then
@@ -112,7 +119,7 @@ end
 --------------------------------------------------------------------------------
 local function cancel_coroutine(message)
     _coroutine_canceled = true
-    error(message.."canceling popenyield; coroutine is orphaned")
+    error((message or "").."canceling popenyield; coroutine is orphaned")
 end
 
 --------------------------------------------------------------------------------
@@ -404,6 +411,7 @@ function clink.addcoroutine(coroutine, interval)
         func=created_info.func,
         context=created_info.context,
         generation=created_info.generation,
+        isprompt=created_info.isprompt,
         src=created_info.src,
     }
     _coroutines_created[coroutine] = nil
@@ -519,8 +527,17 @@ end
 --- -show:  file:close()
 function io.popenyield(command, mode)
     -- This outer wrapper is implemented in Lua so that it can yield.
-    local _, ismain = coroutine.running()
-    if not ismain and settings.get("prompt.async") and not clink.istransientpromptfilter() then
+    local c, ismain = coroutine.running()
+    local can_async = false
+    if not ismain then
+        -- Prompt coroutines may not run async under certain conditions.
+        if is_prompt_coroutine(c) then
+            can_async = settings.get("prompt.async") and not clink.istransientpromptfilter()
+        else
+            can_async = true
+        end
+    end
+    if can_async then
         -- Yield to ensure only one popenyield active at a time.
         if _coroutine_yieldguard then
             set_coroutine_queued(true)
@@ -532,7 +549,8 @@ function io.popenyield(command, mode)
         -- Cancel if not from the current prompt filter generation.
         if get_coroutine_generation() ~= _coroutine_generation then
             local message = (type(command) == string) and command..": " or ""
-            cancel_coroutine(message.."canceling popenyield; coroutine is orphaned")
+            cancel_coroutine(message)
+            return io.open("nul")
         end
         -- Start the popenyield.
         local file, yieldguard = io.popenyield_internal(command, mode)
@@ -571,6 +589,12 @@ function coroutine.override_src(func)
 end
 
 --------------------------------------------------------------------------------
+local override_coroutine_isprompt = nil
+function coroutine.override_isprompt()
+    override_coroutine_isprompt = true
+end
+
+--------------------------------------------------------------------------------
 local orig_coroutine_create = coroutine.create
 function coroutine.create(func)
     -- Get src of func.
@@ -583,10 +607,14 @@ function coroutine.create(func)
     end
     override_coroutine_src_func = nil
 
+    -- Get prompt generation.
+    local isprompt = override_coroutine_isprompt
+    override_coroutine_isprompt = nil
+
     -- Remember original func for diagnostic purposes later.  The table is
     -- cleared at the beginning of each input line.
     local thread = orig_coroutine_create(func)
-    _coroutines_created[thread] = { func=func, context=_coroutine_context, generation=_coroutine_generation, src=src }
+    _coroutines_created[thread] = { func=func, context=_coroutine_context, generation=_coroutine_generation, isprompt=isprompt, src=src }
     clink.addcoroutine(thread)
 
     -- Wake up idle processing.
