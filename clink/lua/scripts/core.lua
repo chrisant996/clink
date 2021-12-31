@@ -138,7 +138,7 @@ function os.globdirs(pattern, extrainfo)
         -- Yield periodically.
         local t = {}
         local g = os._makedirglobber(pattern, extrainfo)
-        while g.next(t) do
+        while g:next(t) do
             coroutine.yield()
         end
         return t
@@ -155,7 +155,7 @@ function os.globfiles(pattern, extrainfo)
         -- Yield periodically.
         local t = {}
         local g = os._makefileglobber(pattern, extrainfo)
-        while g.next(t) do
+        while g:next(t) do
             coroutine.yield()
         end
         return t
