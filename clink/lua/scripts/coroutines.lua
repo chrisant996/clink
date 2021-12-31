@@ -406,8 +406,8 @@ end
 --- added in order to be scheduled for resume while waiting for input.  Starting
 --- in v1.3.1 this is no longer necessary, but it can still be used to override
 --- the interval at which to resume the coroutine.
-function clink.addcoroutine(coroutine, interval)
-    if type(coroutine) ~= "thread" then
+function clink.addcoroutine(c, interval)
+    if type(c) ~= "thread" then
         error("bad argument #1 (coroutine expected)")
     end
     if interval ~= nil and type(interval) ~= "number" then
@@ -415,17 +415,17 @@ function clink.addcoroutine(coroutine, interval)
     end
 
     -- Change the interval for a coroutine.
-    if _coroutines[coroutine] then
-        if not _coroutines[coroutine].throttled then
-            _coroutines[coroutine].interval = interval
+    if _coroutines[c] then
+        if not _coroutines[c].throttled then
+            _coroutines[c].interval = interval
         end
         return
     end
 
     -- Add a new coroutine.
-    local created_info = _coroutines_created[coroutine] or {}
-    _coroutines[coroutine] = {
-        coroutine=coroutine,
+    local created_info = _coroutines_created[c] or {}
+    _coroutines[c] = {
+        coroutine=c,
         interval=interval or created_info.interval or 0,
         resumed=0,
         func=created_info.func,
@@ -434,24 +434,24 @@ function clink.addcoroutine(coroutine, interval)
         isprompt=created_info.isprompt,
         src=created_info.src,
     }
-    _coroutines_created[coroutine] = nil
+    _coroutines_created[c] = nil
     _coroutines_resumable = true
 end
 
 --------------------------------------------------------------------------------
-function clink.removecoroutine(coroutine)
-    if type(coroutine) == "thread" then
+function clink.removecoroutine(c)
+    if type(c) == "thread" then
         release_coroutine_yieldguard()
         if _dead then
-            table.insert(_dead, _coroutines[coroutine])
+            table.insert(_dead, _coroutines[c])
         end
-        _coroutines[coroutine] = nil
+        _coroutines[c] = nil
         _coroutines_resumable = false
         for _ in pairs(_coroutines) do
             _coroutines_resumable = true
             break
         end
-    elseif coroutine ~= nil then
+    elseif c ~= nil then
         error("bad argument #1 (coroutine expected)")
     end
 end
@@ -474,14 +474,14 @@ end
 --- spent running).  Throttling is meant to prevent long-running coroutines from
 --- draining battery power, interfering with responsiveness, or other potential
 --- problems.
-function clink.setcoroutineinterval(coroutine, interval)
-    if type(coroutine) ~= "thread" then
+function clink.setcoroutineinterval(c, interval)
+    if type(c) ~= "thread" then
         error("bad argument #1 (coroutine expected)")
     end
     if interval ~= nil and type(interval) ~= "number" then
         error("bad argument #2 (number or nil expected)")
     end
-    if not _coroutines[coroutine] then
+    if not _coroutines[c] then
         if settings.get("lua.strict") then
             error("bad argument #1 (coroutine does not exist)")
         end
@@ -491,7 +491,7 @@ function clink.setcoroutineinterval(coroutine, interval)
     -- Override the interval.  The scheduler never trusts the interval, so it's
     -- ok to blindly set the interval here even if the coroutine is currently
     -- being throttled.
-    _coroutines[coroutine].interval = interval
+    _coroutines[c].interval = interval
 end
 
 --------------------------------------------------------------------------------
@@ -500,12 +500,12 @@ end
 --- -arg:   coroutine:coroutine
 --- -arg:   name:string
 --- Sets a name for the coroutine.  This is purely for diagnostic purposes.
-function clink.setcoroutinename(coroutine, name)
-    if type(coroutine) ~= "thread" then
+function clink.setcoroutinename(c, name)
+    if type(c) ~= "thread" then
         error("bad argument #1 (coroutine expected)")
     end
-    if name and name ~= "" and _coroutines[coroutine] then
-        _coroutines[coroutine].src = "'"..name.."'"
+    if name and name ~= "" and _coroutines[c] then
+        _coroutines[c].src = "'"..name.."'"
     end
 end
 
