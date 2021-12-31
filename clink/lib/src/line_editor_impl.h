@@ -156,7 +156,6 @@ private:
     words               m_classify_words;
     unsigned short      m_classify_command_offset = 0;
 
-    str_moveable        m_prev_suggest_line;
 #ifdef DEBUG
     bool                m_in_matches_ready = false;
 #endif

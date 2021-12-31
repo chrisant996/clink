@@ -1186,8 +1186,7 @@ void line_editor_impl::update_internal()
 void line_editor_impl::try_suggest()
 {
     line_state line = get_linestate();
-    if (host_can_suggest(line) && (m_prev_suggest_line.length() != m_buffer.get_length() ||
-                                   !m_prev_suggest_line.equals(m_buffer.get_buffer())))
+    if (host_can_suggest(line))
     {
         matches_impl* matches = nullptr;
         matches_impl* empty_matches = nullptr;
@@ -1227,8 +1226,7 @@ void line_editor_impl::try_suggest()
         }
 
         assert(s_callbacks); // Was tested above inside host_can_suggest().
-        if (s_callbacks->suggest(line, matches, m_generation_id))
-            m_prev_suggest_line = m_buffer.get_buffer();
+        s_callbacks->suggest(line, matches, m_generation_id);
 
         delete empty_matches;
     }
