@@ -487,7 +487,6 @@ end
 --- -show:  &nbsp;   do_things_with(line)
 --- -show:  end
 --- -show:  file:close()
-local old_io_popen = io.popen
 function io.popenyield(command, mode)
     -- This outer wrapper is implemented in Lua so that it can yield.
     local _, ismain = coroutine.running()
@@ -516,19 +515,23 @@ function io.popenyield(command, mode)
         end
         return file
     else
-        return old_io_popen(command, mode)
+        return io.popen(command, mode)
     end
 end
 
 --------------------------------------------------------------------------------
 -- MAGIC:  Redirect io.popen to io.popenyield when used in read mode, so that
 -- match generators automatically yield in coroutines.
+local old_io_popen = io.popen
 io.popen = function (command, mode)
-    if mode and mode:find("w") then
-        return old_io_popen(command, mode)
-    else
-        return io.popenyield(command, mode)
+    if not mode or not mode:find("w") then
+        local _, ismain = coroutine.running()
+        if not ismain then
+            return io.popenyield(command, mode)
+        end
     end
+
+    return old_io_popen(command, mode)
 end
 
 --------------------------------------------------------------------------------
