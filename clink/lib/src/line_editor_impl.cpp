@@ -528,9 +528,6 @@ void line_editor_impl::update_matches()
 
     if (generate)
     {
-// TODO: Cancel all prior deferred_generate coroutines?  Discard them without
-// letting them finish?  The goal is to avoid reentrancy in Lua generators that
-// use global variables.
         line_state line = get_linestate();
         match_pipeline pipeline(m_matches);
         pipeline.reset();

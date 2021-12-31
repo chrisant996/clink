@@ -154,6 +154,10 @@ function clink._generate(line_state, match_builder, old_filtering)
         -- Backward compatibility shim.
         rl_state = { line_buffer = line_state:getline(), point = line_state:getcursor() }
 
+        -- Cancel all prior coroutines for match generation.
+        clink.cancel_match_generate_coroutines()
+
+        -- Run match generators.
         for _, generator in ipairs(_generators) do
             local ret = generator:generate(line_state, match_builder)
             if ret == true then
