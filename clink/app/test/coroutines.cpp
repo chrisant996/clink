@@ -30,6 +30,20 @@ static void set_prompt_async(bool state)
 }
 
 //------------------------------------------------------------------------------
+static void set_autosuggest_async_default()
+{
+    setting* setting = settings::find("autosuggest.async");
+    setting->set();
+}
+
+//------------------------------------------------------------------------------
+static void set_autosuggest_async(bool state)
+{
+    setting* setting = settings::find("autosuggest.async");
+    setting->set(state ? "true" : "false");
+}
+
+//------------------------------------------------------------------------------
 static bool verify_ret_true(lua_state& lua, const char* func_name)
 {
     lua_State *state = lua.get_state();
@@ -66,6 +80,8 @@ TEST_CASE("Lua coroutines.")
     lua_state lua;
     prompt_filter prompt_filter(lua);
     lua_load_script(lua, app, prompt);
+
+    set_autosuggest_async(false);
 
     SECTION("Main")
     {
@@ -195,7 +211,11 @@ TEST_CASE("Lua coroutines.")
         end\
         \
         function verify_no_coroutines()\
-            return clink._has_coroutines() ~= true\
+            if clink._has_coroutines() ~= true then\
+                return true\
+            end\
+            report_internals()\
+            return false\
         end\
         \
         function set_yieldguard_ready()\
@@ -318,4 +338,5 @@ TEST_CASE("Lua coroutines.")
     }
 
     set_prompt_async_default();
+    set_autosuggest_async_default();
 }
