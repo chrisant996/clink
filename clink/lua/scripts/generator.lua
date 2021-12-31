@@ -147,6 +147,17 @@ function clink._reset_display_filter()
 end
 
 --------------------------------------------------------------------------------
+function clink._cancel_match_generate_coroutines()
+    -- TODO: Cancel all prior deferred_generate coroutines.  Discard them
+    -- without letting them finish?  The goal is to avoid reentrancy in Lua
+    -- generators that use global variables.
+
+    -- TODO: Don't just wait for gc to close the globbers' FindFirstFile
+    -- handles; force them to short circuit, force builder:clear_toolkit(), and
+    -- zombie them (e.g. replace :addmatch() and :addmatches() with nop stubs).
+end
+
+--------------------------------------------------------------------------------
 function clink._generate(line_state, match_builder, old_filtering)
     local impl = function ()
         clink.generator_stopped = nil
@@ -155,7 +166,7 @@ function clink._generate(line_state, match_builder, old_filtering)
         rl_state = { line_buffer = line_state:getline(), point = line_state:getcursor() }
 
         -- Cancel all prior coroutines for match generation.
-        clink.cancel_match_generate_coroutines()
+        clink._cancel_match_generate_coroutines()
 
         -- Run match generators.
         for _, generator in ipairs(_generators) do

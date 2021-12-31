@@ -60,7 +60,7 @@ local function deferred_generate(line, matches, builder, generation_id)
     _cancel = true
 
     -- Cancel all prior coroutines for match generation.
-    clink.cancel_match_generate_coroutines()
+    clink._cancel_match_generate_coroutines()
 
     -- Create coroutine to generate matches.  The coroutine is automatically
     -- scheduled for resume while waiting for input.
@@ -123,17 +123,6 @@ function clink._print_suggesters()
     for _,name in ipairs(list) do
         print(name)
     end
-end
-
---------------------------------------------------------------------------------
-function clink.cancel_match_generate_coroutines()
-    -- TODO: Cancel all prior deferred_generate coroutines.  Discard them
-    -- without letting them finish?  The goal is to avoid reentrancy in Lua
-    -- generators that use global variables.
-
-    -- TODO: Don't just wait for gc to close the globbers' FindFirstFile
-    -- handles; force them to short circuit, force builder:clear_toolkit(), and
-    -- zombie them (e.g. replace :addmatch() and :addmatches() with nop stubs).
 end
 
 --------------------------------------------------------------------------------
