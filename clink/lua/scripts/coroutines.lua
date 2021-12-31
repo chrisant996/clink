@@ -240,7 +240,7 @@ function clink._resume_coroutines()
     for _,c in ipairs(remove) do
         clink.removecoroutine(c)
     end
-    if #_dead > 20 then
+    if _dead and #_dead > 20 then
         -- Trim the dead list to 20 entries.
         local t = {}
         local last = #_dead
