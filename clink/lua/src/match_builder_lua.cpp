@@ -220,7 +220,7 @@ int match_builder_lua::set_matches_are_files(lua_State* state)
 int match_builder_lua::clear_toolkit(lua_State* state)
 {
     if (m_toolkit)
-        m_toolkit.get()->clear();
+        m_toolkit->clear();
     return 0;
 }
 

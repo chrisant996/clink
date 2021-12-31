@@ -263,10 +263,14 @@ void match_builder::set_matches_are_files(bool files)
 
 
 //------------------------------------------------------------------------------
-match_builder_toolkit::match_builder_toolkit()
+match_builder_toolkit::match_builder_toolkit(int generation_id, unsigned int end_word_offset)
+: m_generation_id(generation_id)
 {
-    m_matches = new matches_impl();
-    m_builder = new match_builder(*m_matches);
+    auto* matches = new matches_impl();
+    matches->set_word_break_position(end_word_offset);
+
+    m_matches = matches;
+    m_builder = new match_builder(*matches);
 }
 
 //------------------------------------------------------------------------------
@@ -715,6 +719,30 @@ void matches_impl::reset()
     m_filename_display_desired.reset();
 
     s_slash_translation = g_translate_slashes.get();
+}
+
+//------------------------------------------------------------------------------
+void matches_impl::transfer(matches_impl& from)
+{
+    m_store = std::move(from.m_store);
+    m_generator = from.m_generator;
+    m_infos = std::move(from.m_infos);
+    m_count = from.m_count;
+    m_any_infer_type = from.m_any_infer_type;
+    m_can_infer_type = from.m_can_infer_type;
+    m_coalesced = from.m_coalesced;
+    m_append_character = from.m_append_character;
+    m_suppress_append = from.m_suppress_append;
+    m_regen_blocked = from.m_regen_blocked;
+    m_suppress_quoting = from.m_suppress_quoting;
+    m_word_break_position = from.m_word_break_position;
+    m_filename_completion_desired = from.m_filename_completion_desired;
+    m_filename_display_desired = from.m_filename_display_desired;
+    m_dedup = from.m_dedup;
+
+    from.m_generator = nullptr;
+    from.m_dedup = nullptr;
+    from.clear();
 }
 
 //------------------------------------------------------------------------------

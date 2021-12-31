@@ -204,13 +204,15 @@ private:
 class match_builder_toolkit
 {
 public:
-                            match_builder_toolkit();
+                            match_builder_toolkit(int generation_id, unsigned int end_word_offset);
                             ~match_builder_toolkit();
+    int                     get_generation_id() const { return m_generation_id; }
     matches*                get_matches() const { return m_matches; }
     match_builder*          get_builder() const { return m_builder; }
     void                    clear();
 
 private:
+    const int               m_generation_id;
     matches*                m_matches;
     match_builder*          m_builder;
 };

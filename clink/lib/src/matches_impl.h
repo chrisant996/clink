@@ -85,6 +85,7 @@ public:
     void                    set_generator(match_generator* generator);
     void                    done_building();
 
+    void                    transfer(matches_impl& from);
     void                    clear();
 
 private:

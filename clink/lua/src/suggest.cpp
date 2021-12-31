@@ -29,6 +29,16 @@ extern matches* make_new_matches();
 extern void set_suggestion(const char* line, unsigned int endword_offset, const char* suggestion, unsigned int offset);
 extern setting_enum g_ignore_case;
 extern setting_bool g_fuzzy_accent;
+static std::shared_ptr<match_builder_toolkit> s_toolkit;
+
+//------------------------------------------------------------------------------
+match_builder_toolkit* get_deferred_matches(int generation_id)
+{
+    match_builder_toolkit* toolkit = s_toolkit.get();
+    if (toolkit && toolkit->get_generation_id() == generation_id)
+        return toolkit;
+    return nullptr;
+}
 
 
 
@@ -39,12 +49,14 @@ suggester::suggester(lua_state& lua)
 }
 
 //------------------------------------------------------------------------------
-void suggester::suggest(line_state& line, matches* matches)
+bool suggester::suggest(line_state& line, matches* matches, int generation_id)
 {
+    s_toolkit.reset();
+
     if (!*line.get_line())
     {
         set_suggestion("", 0, nullptr, 0);
-        return;
+        return true;
     }
 
     lua_State* state = m_lua.get_state();
@@ -74,22 +86,27 @@ void suggester::suggest(line_state& line, matches* matches)
     }
     else
     {
-        auto toolkit = std::make_shared<match_builder_toolkit>();
+        s_toolkit = std::make_shared<match_builder_toolkit>(generation_id, line.get_end_word_offset());
 
         // These can't be bound to stack objects because they must stay valid
         // for the duration of the coroutine.
         line_state_lua::make_new(state, make_line_state_copy(line));
-        matches_lua::make_new(state, toolkit);
-        match_builder_lua::make_new(state, toolkit);
+        matches_lua::make_new(state, s_toolkit);
+        match_builder_lua::make_new(state, s_toolkit);
     }
 
-    if (m_lua.pcall(state, 3, 0) != 0)
+    lua_pushinteger(state, generation_id);
+
+    if (m_lua.pcall(state, 4, 1) != 0)
     {
         if (const char* error = lua_tostring(state, -1))
             m_lua.print_error(error);
         lua_settop(state, top);
-        return;
+        return true;
     }
 
+    const bool cancelled = lua_isboolean(state, -1) && lua_toboolean(state, -1);
+
     lua_settop(state, top);
+    return !cancelled;
 }

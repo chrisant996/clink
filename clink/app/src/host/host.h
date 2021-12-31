@@ -40,7 +40,7 @@ public:
     void            filter_prompt() override;
     void            filter_transient_prompt(bool final) override;
     bool            can_suggest(line_state& line) override;
-    void            suggest(line_state& line, matches* matches) override;
+    bool            suggest(line_state& line, matches* matches, int generation_id) override;
     void            filter_matches(char** matches) override;
     bool            call_lua_rl_global_function(const char* func_name, line_state* line) override;
     const char**    copy_dir_history(int* total) override;

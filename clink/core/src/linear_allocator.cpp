@@ -17,20 +17,24 @@ linear_allocator::linear_allocator(unsigned int size)
 }
 
 //------------------------------------------------------------------------------
-#ifdef CAN_LINEAR_ALLOCATOR_BORROW
-linear_allocator::linear_allocator(void* buffer, unsigned int size)
-: m_ptr((char*)buffer)
-, m_used(0)
-, m_max(size)
-, m_owned(false)
-{
-}
-#endif
-
-//------------------------------------------------------------------------------
 linear_allocator::~linear_allocator()
 {
     free_chain();
+}
+
+//------------------------------------------------------------------------------
+linear_allocator& linear_allocator::operator = (linear_allocator&& o)
+{
+    free_chain();
+
+    m_ptr = o.m_ptr;
+    m_used = o.m_used;
+    m_max = o.m_max;
+
+    o.m_ptr = nullptr;
+    o.m_used = o.m_max;
+
+    return *this;
 }
 
 //------------------------------------------------------------------------------
@@ -64,11 +68,6 @@ void* linear_allocator::alloc(unsigned int size)
 //------------------------------------------------------------------------------
 bool linear_allocator::new_page()
 {
-#ifdef CAN_LINEAR_ALLOCATOR_BORROW
-    if (!m_owned)
-        return false;
-#endif
-
     if (m_max < sizeof(m_ptr))
         return false;
 
@@ -85,14 +84,6 @@ bool linear_allocator::new_page()
 //------------------------------------------------------------------------------
 void linear_allocator::free_chain(bool keep_one)
 {
-#ifdef CAN_LINEAR_ALLOCATOR_BORROW
-    if (!m_owned)
-    {
-        m_used = 0;
-        return;
-    }
-#endif
-
     m_used = m_ptr && keep_one ? sizeof(m_ptr) : m_max;
 
     char* ptr = m_ptr;

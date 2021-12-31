@@ -32,6 +32,7 @@ extern int g_suggestion_offset;
 
 extern bool is_showing_argmatchers();
 extern bool win_fn_callback_pending();
+extern match_builder_toolkit* get_deferred_matches(int generation_id);
 
 
 
@@ -116,6 +117,17 @@ void update_matches()
         return;
 
     s_editor->update_matches();
+}
+
+//------------------------------------------------------------------------------
+void notify_matches_ready(int generation_id)
+{
+    if (!s_editor)
+        return;
+
+    match_builder_toolkit* toolkit = get_deferred_matches(generation_id);
+    if (toolkit)
+        s_editor->notify_matches_ready(generation_id, toolkit->get_matches());
 }
 
 //------------------------------------------------------------------------------
@@ -339,6 +351,10 @@ void line_editor_impl::begin_line()
     editor_module::context context = get_context();
     for (auto module : m_modules)
         module->on_begin_line(context);
+
+#ifdef DEBUG
+    m_in_matches_ready = false;
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -358,6 +374,8 @@ void line_editor_impl::end_line()
     g_word_collector = nullptr;
 
     clear_flag(flag_editing);
+
+    assert(!m_in_matches_ready);
 }
 
 //------------------------------------------------------------------------------
@@ -472,6 +490,28 @@ void line_editor_impl::force_update_internal(bool restrict)
 }
 
 //------------------------------------------------------------------------------
+void line_editor_impl::notify_matches_ready(int generation_id, matches* matches)
+{
+#ifdef DEBUG
+    assert(!m_in_matches_ready);
+    rollback<bool> rb(m_in_matches_ready, true);
+#endif
+
+    if (generation_id != m_generation_id)
+        return;
+
+    // Finalize the matches.
+    m_matches.done_building();
+
+    // Transfer the matches.
+    m_matches.transfer(*(matches_impl*)matches);
+    clear_flag(flag_generate);
+
+    // Trigger generating suggestion again.
+    try_suggest();
+}
+
+//------------------------------------------------------------------------------
 void line_editor_impl::update_matches()
 {
     // Get flag states because we're about to clear them.
@@ -487,6 +527,9 @@ void line_editor_impl::update_matches()
 
     if (generate)
     {
+// TODO: Cancel all prior deferred_generate coroutines?  Discard them without
+// letting them finish?  The goal is to avoid reentrancy in Lua generators that
+// use global variables.
         line_state line = get_linestate();
         match_pipeline pipeline(m_matches);
         pipeline.reset();
@@ -952,6 +995,9 @@ editor_module::context line_editor_impl::get_context() const
 void line_editor_impl::set_flag(unsigned char flag)
 {
     m_flags |= flag;
+
+    if (flag & flag_generate)
+        m_generation_id = max<int>(m_generation_id + 1, 1);
 }
 
 //------------------------------------------------------------------------------
@@ -1123,8 +1169,23 @@ void line_editor_impl::update_internal()
     }
 
     // Should we collect suggestions?
+    try_suggest();
+
+    // Must defer updating m_prev_generate since the old value is still needed
+    // for deciding whether to sort/select, after deciding whether to generate.
+    if (update_prev_generate >= 0)
+        m_prev_generate.set(m_buffer.get_buffer(), update_prev_generate);
+
+    if (is_endword_tilde(get_linestate()))
+        reset_generate_matches();
+}
+
+//------------------------------------------------------------------------------
+void line_editor_impl::try_suggest()
+{
     line_state line = get_linestate();
-    if (host_can_suggest(line))
+    if (host_can_suggest(line) && (m_prev_suggest_line.length() != m_buffer.get_length() ||
+                                   !m_prev_suggest_line.equals(m_buffer.get_buffer())))
     {
         matches_impl* matches = nullptr;
         matches_impl* empty_matches = nullptr;
@@ -1155,27 +1216,20 @@ void line_editor_impl::update_internal()
             }
         }
 
-        // TODO:  Never generate matches here; let it be deferred and happen on
-        // demand in a coroutine.
-        if (!empty_matches/* && !check_flag(flag_generate)*/)
+        // Never generate matches here; let it be deferred and happen on demand
+        // in a coroutine.
+        if (!empty_matches && !check_flag(flag_generate))
         {
             update_matches();
             matches = &m_matches;
         }
 
         assert(s_callbacks); // Was tested above inside host_can_suggest().
-        s_callbacks->suggest(line, matches);
+        if (s_callbacks->suggest(line, matches, m_generation_id))
+            m_prev_suggest_line = m_buffer.get_buffer();
 
         delete empty_matches;
     }
-
-    // Must defer updating m_prev_generate since the old value is still needed
-    // for deciding whether to sort/select, after deciding whether to generate.
-    if (update_prev_generate >= 0)
-        m_prev_generate.set(m_buffer.get_buffer(), update_prev_generate);
-
-    if (is_endword_tilde(get_linestate()))
-        reset_generate_matches();
 }
 
 //------------------------------------------------------------------------------

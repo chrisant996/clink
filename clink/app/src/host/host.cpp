@@ -680,10 +680,12 @@ bool host::can_suggest(line_state& line)
 }
 
 //------------------------------------------------------------------------------
-void host::suggest(line_state& line, matches* matches)
+bool host::suggest(line_state& line, matches* matches, int generation_id)
 {
     if (m_suggester && g_autosuggest_enable.get())
-        m_suggester->suggest(line, matches);
+        return m_suggester->suggest(line, matches, generation_id);
+
+    return false;
 }
 
 //------------------------------------------------------------------------------

@@ -4,11 +4,16 @@
 --------------------------------------------------------------------------------
 clink = clink or {}
 local suggesters = {}
+local _cancel
 
 
 
 --------------------------------------------------------------------------------
+-- Returns true when canceled; otherwise nil.
 local function _do_suggest(line, matches)
+    -- Reset cancel flag.
+    _cancel = nil
+
     -- Protected call to suggesters.
     local impl = function(line, matches)
         local suggestion, offset
@@ -19,10 +24,16 @@ local function _do_suggest(line, matches)
                 local func = suggester.suggest
                 if func then
                     suggestion, offset = func(suggester, line, matches)
+                    if _cancel then
+                        return
+                    end
                     if suggestion ~= nil then
                         return suggestion, offset
                     end
                 end
+            end
+            if _cancel then
+                return
             end
         end
     end
@@ -35,27 +46,62 @@ local function _do_suggest(line, matches)
         return
     end
 
+    if _cancel then
+        return true
+    end
+
     local info = line:getwordinfo(line:getwordcount())
     clink.set_suggestion_result(line:getline(), info.offset, ret, ret2)
 end
 
 --------------------------------------------------------------------------------
-function clink._suggest(line, matches, builder)
-    -- TODO: When builder is not nil, wrap matches to start a coroutine if/when
-    -- matches are accessed.
+local function deferred_generate(line, matches, builder, generation_id)
+    -- Cancel the current _do_suggest.
+    _cancel = true
 
-    -- TODO: When coroutine is complete, transfer matches to m_matches if the
-    -- matches are still relevant (i.e. if context is identical).
+-- TODO: Cancel all prior deferred_generate coroutines.
+-- TODO: Don't just wait for gc to close the globbers' FindFirstFile handles;
+-- force them to short circuit, force builder:clear_toolkit(), and zombie them
+-- (e.g. replace :addmatch() and :addmatches() with nop stubs).
 
-    -- TODO: When coroutine is complete, use builder:clear_toolkit() to release
-    -- memory.
+    -- Create coroutine to generate matches.  The coroutine is automatically
+    -- scheduled for resume while waiting for input.
+    coroutine.create(function ()
+        if clink._generate(line, builder) then
+            clink.matches_ready(generation_id)
+        else
+            builder:clear_toolkit()
+        end
+    end)
+end
 
-    -- TODO: Canceling the coroutine is the tricky part; don't just wait for gc
-    -- to close the globbers' FindFirstFile handles.  Maybe keep track of all
-    -- globbers made inside this specific coroutine, and have a way to zombie
-    -- them so the coroutine naturally finishes.
+--------------------------------------------------------------------------------
+local function wrap(line, matches, builder, generation_id)
+    local w = { _line = line, _matches = matches, _generation_id = generation_id }
+    function w:ensure()
+        if not self._ensured then
+            self._ensured = true
+            deferred_generate(line, matches, builder, generation_id)
+        end
+    end
 
-    _do_suggest(line, matches)
+    for key, func in pairs(debug.getmetatable(matches).__index) do
+        w[key] = function (...)
+            w:ensure()
+            return func(matches, table.unpack({...}, 2))
+        end
+    end
+
+    return w
+end
+
+--------------------------------------------------------------------------------
+function clink._suggest(line, matches, builder, generation_id)
+    if builder then
+        matches = wrap(line, matches, builder, generation_id)
+    end
+
+    return _do_suggest(line, matches)
 end
 
 --------------------------------------------------------------------------------

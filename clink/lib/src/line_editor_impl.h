@@ -72,6 +72,7 @@ public:
     void                reset_generate_matches();
     void                reset_prev_suggest();
     void                force_update_internal(bool restrict=false);
+    void                notify_matches_ready(int generation_id, matches* matches);
     bool                call_lua_rl_global_function(const char* func_name);
 
 private:
@@ -112,6 +113,7 @@ private:
     matches*            get_mutable_matches(bool nosort=false);
     void                update_internal();
     bool                update_input();
+    void                try_suggest();
     module::context     get_context() const;
     line_state          get_linestate(bool for_classify=false) const;
     void                set_flag(unsigned char flag);
@@ -143,6 +145,7 @@ private:
     key_t               m_prev_key;
     unsigned char       m_keys_size;
     unsigned char       m_flags = 0;
+    int                 m_generation_id = 0;
     str<64>             m_needle;
 
     prev_buffer         m_prev_generate;
@@ -152,6 +155,11 @@ private:
     prev_buffer         m_prev_classify;
     words               m_classify_words;
     unsigned short      m_classify_command_offset = 0;
+
+    str_moveable        m_prev_suggest_line;
+#ifdef DEBUG
+    bool                m_in_matches_ready = false;
+#endif
 
     const char*         m_insert_on_begin = nullptr;
 

@@ -151,6 +151,9 @@ function clink._generate(line_state, match_builder, old_filtering)
     local impl = function ()
         clink.generator_stopped = nil
 
+        -- Backward compatibility shim.
+        rl_state = { line_buffer = line_state:getline(), point = line_state:getcursor() }
+
         for _, generator in ipairs(_generators) do
             local ret = generator:generate(line_state, match_builder)
             if ret == true then

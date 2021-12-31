@@ -809,6 +809,20 @@ static int kick_idle(lua_State* state)
     return 0;
 }
 
+//------------------------------------------------------------------------------
+// UNDOCUMENTED; internal use only.
+static int matches_ready(lua_State* state)
+{
+    bool isnum;
+    int id = checkinteger(state, 1, &isnum);
+    if (!isnum)
+        return 0;
+
+    extern void notify_matches_ready(int generation_id);
+    notify_matches_ready(id);
+    return 0;
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -864,6 +878,7 @@ void clink_lua_initialise(lua_state& lua)
         { "history_suggester",      &history_suggester },
         { "set_suggestion_result",  &set_suggestion_result },
         { "kick_idle",              &kick_idle },
+        { "matches_ready",          &matches_ready },
     };
 
     lua_State* state = lua.get_state();

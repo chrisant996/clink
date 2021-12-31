@@ -3,17 +3,14 @@
 
 #pragma once
 
-//#define CAN_LINEAR_ALLOCATOR_BORROW
-
 //------------------------------------------------------------------------------
 class linear_allocator
 {
 public:
                             linear_allocator(unsigned int size);
-#ifdef CAN_LINEAR_ALLOCATOR_BORROW
-                            linear_allocator(void* buffer, unsigned int size);
-#endif
+                            linear_allocator(linear_allocator&& o) = delete;
                             ~linear_allocator();
+    linear_allocator&       operator = (linear_allocator&& o);
     void                    reset();
     void                    clear();
     void*                   alloc(unsigned int size);
@@ -30,9 +27,6 @@ private:
     char*                   m_ptr = nullptr;
     unsigned int            m_used;
     unsigned int            m_max;
-#ifdef CAN_LINEAR_ALLOCATOR_BORROW
-    bool                    m_owned = true;
-#endif
 };
 
 //------------------------------------------------------------------------------
@@ -76,10 +70,6 @@ inline bool linear_allocator::unittest_at_end(void* ptr, unsigned int size) cons
 //------------------------------------------------------------------------------
 inline bool linear_allocator::unittest_in_prev_page(void* _ptr, unsigned int size) const
 {
-#ifdef CAN_LINEAR_ALLOCATOR_BORROW
-    if (!m_owned)
-        return false;
-#endif
     char* ptr = (char*)_ptr;
     char* prev_page = *reinterpret_cast<char**>(m_ptr);
     if (oversized(size))
