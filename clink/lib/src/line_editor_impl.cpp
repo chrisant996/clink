@@ -28,6 +28,7 @@ extern "C" {
 
 //------------------------------------------------------------------------------
 extern setting_bool g_classify_words;
+extern setting_bool g_autosuggest_async;
 extern int g_suggestion_offset;
 
 extern bool is_showing_argmatchers();
@@ -1218,7 +1219,7 @@ void line_editor_impl::try_suggest()
 
         // Never generate matches here; let it be deferred and happen on demand
         // in a coroutine.
-        if (!empty_matches && !check_flag(flag_generate))
+        if (!empty_matches && (!check_flag(flag_generate) || !g_autosuggest_async.get()))
         {
             update_matches();
             matches = &m_matches;

@@ -67,7 +67,17 @@ static setting_enum s_prompt_transient(
     "off,always,same_dir",
     0);
 
-setting_bool g_autosuggest_enable(
+setting_bool g_autosuggest_async(
+    "autosuggest.async",
+    "Enable asynchronous suggestions",
+    "The default is 'true'.  When this is 'true' matches are generated\n"
+    "asynchronously for suggestions.  This helps to keep typing responsive.\n"
+    "However, some scripts (especially written for Clink v0.4.9) may experience\n"
+    "problems with this enabled.  If turning this off resolves an issue for you,\n"
+    "please report it at http://github.com/chrisant996/clink/issues.",
+    true);
+
+static setting_bool g_autosuggest_enable(
     "autosuggest.enable",
     "Enable automatic suggestions",
     "The default is 'false'.  When this is 'true' a suggested command may appear\n"
@@ -78,7 +88,7 @@ setting_bool g_autosuggest_enable(
     "The 'autosuggest.strategy' setting determines how a suggestion is chosen.",
     false);
 
-setting_str g_autosuggest_strategy(
+static setting_str g_autosuggest_strategy(
     "autosuggest.strategy",
     "Controls how suggestions are chosen",
     "This determines how suggestions are chosen.  The suggestion generators are\n"
