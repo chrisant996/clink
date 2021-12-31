@@ -59,20 +59,8 @@ local function deferred_generate(line, matches, builder, generation_id)
     -- Cancel the current _do_suggest.
     _cancel = true
 
-    -- Cancel all prior coroutines for match generation.
-    clink._cancel_match_generate_coroutines()
-
-    -- Create coroutine to generate matches.  The coroutine is automatically
-    -- scheduled for resume while waiting for input.
-    local c = coroutine.create(function ()
-        if clink._generate(line, builder) then
-            clink.matches_ready(generation_id)
-        else
-            builder:clear_toolkit()
-        end
-    end)
-
-    clink.setcoroutinename(c, "generate matches")
+    -- Start coroutine for match generation.
+    clink._make_match_generate_coroutine(line, matches, builder, generation_id)
 end
 
 --------------------------------------------------------------------------------

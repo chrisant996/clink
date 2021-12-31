@@ -115,6 +115,61 @@ end
 
 
 --------------------------------------------------------------------------------
+local _match_generate_coroutine
+local _started_match_generate_coroutine
+local function cancel_match_generate_coroutine()
+    if _match_generate_coroutine then
+        -- Make things (e.g. globbers) short circuit to faciliate coroutine
+        -- completing as quickly as possible.
+        clink._cancel_coroutine(_match_generate_coroutine)
+        if not _started_match_generate_coroutine then
+            -- If it never started, remove it from the scheduler.
+            clink.removecoroutine(_match_generate_coroutine)
+        end
+        _match_generate_coroutine = nil
+        _started_match_generate_coroutine = nil
+    end
+
+    -- TODO: Save/restore match filtering mechanisms to keep main match
+    -- generation separate from coroutine match generation.  Associate them with
+    -- the toolkit so that transferring matches can also transfer any match
+    -- filtering mechanisms.
+end
+
+--------------------------------------------------------------------------------
+function clink._make_match_generate_coroutine(line, matches, builder, generation_id)
+    -- Cancel all prior coroutines for match generation.
+    cancel_match_generate_coroutine()
+
+    -- Create coroutine to generate matches.  The coroutine is automatically
+    -- scheduled for resume while waiting for input.
+    local c = coroutine.create(function ()
+        -- Mark that the coroutine has started.  If a canceled coroutine never
+        -- started, it can be removed from the scheduler.
+        _started_match_generate_coroutine = true
+
+        -- Generate matches.
+        if clink._generate(line, builder) then
+            clink.matches_ready(generation_id)
+        else
+            builder:clear_toolkit()
+        end
+
+        -- Coroutine completed, so stop tracking it.
+        local c = coroutine.running()
+        if _match_generate_coroutine == c then
+            _match_generate_coroutine = nil
+            _started_match_generate_coroutine = nil
+        end
+    end)
+
+    clink.setcoroutinename(c, "generate matches")
+    _match_generate_coroutine = c
+end
+
+
+
+--------------------------------------------------------------------------------
 -- This global variable tracks which generator function, if any, stopped the
 -- most recent generate pass.  It's useful for diagnostic purposes; the file and
 -- number can be retrieved by:
@@ -126,6 +181,7 @@ local function generator_onbeginedit()
     clink.generator_stopped = nil
 end
 clink.onbeginedit(generator_onbeginedit)
+
 
 
 --------------------------------------------------------------------------------
@@ -147,17 +203,6 @@ function clink._reset_display_filter()
 end
 
 --------------------------------------------------------------------------------
-function clink._cancel_match_generate_coroutines()
-    -- TODO: Cancel all prior deferred_generate coroutines.  Discard them
-    -- without letting them finish?  The goal is to avoid reentrancy in Lua
-    -- generators that use global variables.
-
-    -- TODO: Don't just wait for gc to close the globbers' FindFirstFile
-    -- handles; force them to short circuit, force builder:clear_toolkit(), and
-    -- zombie them (e.g. replace :addmatch() and :addmatches() with nop stubs).
-end
-
---------------------------------------------------------------------------------
 function clink._generate(line_state, match_builder, old_filtering)
     local impl = function ()
         clink.generator_stopped = nil
@@ -165,8 +210,8 @@ function clink._generate(line_state, match_builder, old_filtering)
         -- Backward compatibility shim.
         rl_state = { line_buffer = line_state:getline(), point = line_state:getcursor() }
 
-        -- Cancel all prior coroutines for match generation.
-        clink._cancel_match_generate_coroutines()
+        -- Cancel any coroutines for match generation.
+        cancel_match_generate_coroutine()
 
         -- Run match generators.
         for _, generator in ipairs(_generators) do
@@ -245,6 +290,8 @@ function clink._get_word_break_info(line_state)
 
     return ret1, ret2
 end
+
+
 
 --------------------------------------------------------------------------------
 --- -name:  clink.generator
