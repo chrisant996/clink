@@ -210,7 +210,8 @@ void match_pipeline::generate(
     m_matches.set_word_break_position(state.get_end_word_offset());
 
     match_builder builder(m_matches);
-    generator->generate(state, builder, old_filtering);
+    if (generator)
+        generator->generate(state, builder, old_filtering);
 
     m_matches.done_building();
 

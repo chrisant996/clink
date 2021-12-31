@@ -796,7 +796,8 @@ unsigned int line_editor_impl::collect_words(words& words, matches_impl* matches
 #endif
 
         word_break_info break_info;
-        m_generator->get_word_break_info(line, break_info);
+        if (m_generator)
+            m_generator->get_word_break_info(line, break_info);
 
         if (break_info.truncate)
         {

@@ -130,7 +130,7 @@ private:
     rl_buffer           m_buffer;
     word_collector      m_collector;
     modules             m_modules;
-    match_generator*    m_generator;
+    match_generator*    m_generator = nullptr;
     word_classifier*    m_classifier = nullptr;
     input_idle*         m_idle = nullptr;
     binder              m_binder;
