@@ -5,6 +5,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
+- `git checkout ` shows suggestion, then <kbd>Alt+=</kbd>, and suggestion disappears.
 
 ## Medium Priority
 - Readline command reference.
@@ -13,9 +14,14 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Low Priority
 - Collecting matches for suggestions:
   - [x] Make globbing support coroutines.
-  - [ ] Use coroutine to generate suggestions.
-    - [ ] After successful completion of generating suggestions, if matches were generated then transfer them to `m_matches` if they are still applicable.
-    - [ ] Use forwarding object for matches; defer generating matches until a suggester tries to access the matches?
+  - [x] Use forwarding object for matches; defer generating matches until a suggester tries to access the matches.
+  - [x] Use coroutine to generate matches for suggestions.
+  - [x] Generate matches using the real Lua loop.
+  - [x] After successful completion of generating suggestions, if matches were generated then transfer them to `m_matches` if they are still applicable.
+  - [x] After successful completion of generating suggestions, trigger suggestions again.
+  - [ ] Coroutine diagnostics are holding on to too many dead coroutines.
+  - [ ] Cancel preceding suggestion coroutines when starting a new one; zombie all globbers in the cancelled coroutine so they short circuit out, to facilitate quick cancelation.
+  - [ ] `update_matches()` can cancel all prior deferred_generate coroutines?  Or discard them without letting them finish?  The goal is to avoid reentrancy in Lua generators that use global variables.
 - Add command and flag descriptions in clink-completions?
 - Push update to clink-completions repo.
 - Push update to z.lua repo.
