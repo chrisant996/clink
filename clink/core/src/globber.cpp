@@ -74,8 +74,7 @@ globber::globber(const char* pattern)
 //------------------------------------------------------------------------------
 globber::~globber()
 {
-    if (m_handle != nullptr)
-        FindClose(m_handle);
+    close();
 }
 
 //------------------------------------------------------------------------------
@@ -85,9 +84,7 @@ bool globber::older_than(int seconds)
     GetSystemTime(&systime);
     if (!SystemTimeToFileTime(&systime, &m_olderthan))
     {
-        if (m_handle != nullptr)
-            FindClose(m_handle);
-        m_handle = nullptr;
+        close();
         return false;
     }
 
@@ -189,11 +186,18 @@ bool globber::next(str_base& out, bool rooted, extrainfo* extrainfo)
 }
 
 //------------------------------------------------------------------------------
+void globber::close()
+{
+    if (m_handle)
+    {
+        FindClose(m_handle);
+        m_handle = nullptr;
+    }
+}
+
+//------------------------------------------------------------------------------
 void globber::next_file()
 {
-    if (FindNextFileW(m_handle, &m_data))
-        return;
-
-    FindClose(m_handle);
-    m_handle = nullptr;
+    if (m_handle && !FindNextFileW(m_handle, &m_data))
+        close();
 }

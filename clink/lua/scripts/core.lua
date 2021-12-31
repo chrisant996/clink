@@ -130,17 +130,23 @@ end
 
 --------------------------------------------------------------------------------
 function os.globdirs(pattern, extrainfo)
-    local _, ismain = coroutine.running()
+    local c, ismain = coroutine.running()
     if ismain then
         -- Use a fully native implementation for higher performance.
         return os._globdirs(pattern, extrainfo)
+    elseif clink._is_coroutine_canceled(c) then
+        return {}
     else
         -- Yield periodically.
         local t = {}
         local g = os._makedirglobber(pattern, extrainfo)
         while g:next(t) do
             coroutine.yield()
+            if clink._is_coroutine_canceled(c) then
+                return {}
+            end
         end
+        g:close()
         return t
     end
 end
@@ -151,13 +157,19 @@ function os.globfiles(pattern, extrainfo)
     if ismain then
         -- Use a fully native implementation for higher performance.
         return os._globfiles(pattern, extrainfo)
+    elseif clink._is_coroutine_canceled(c) then
+        return {}
     else
         -- Yield periodically.
         local t = {}
         local g = os._makefileglobber(pattern, extrainfo)
         while g:next(t) do
             coroutine.yield()
+            if clink._is_coroutine_canceled(c) then
+                return {}
+            end
         end
+        g:close()
         return t
     end
 end

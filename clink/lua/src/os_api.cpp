@@ -100,6 +100,7 @@ class globber_lua
 public:
                         globber_lua(const char* pattern, int extrainfo, bool dirs_only, bool back_compat=false);
     int                 next(lua_State* state);
+    int                 close(lua_State* state);
 
 private:
     globber             m_globber;
@@ -116,6 +117,7 @@ private:
 const char* const globber_lua::c_name = "globber_lua";
 const globber_lua::method globber_lua::c_methods[] = {
     { "next",                   &next },
+    { "close",                  &close },
     {}
 };
 
@@ -156,6 +158,13 @@ int globber_lua::next(lua_State* state)
 
     lua_pushboolean(state, ret);
     return 1;
+}
+
+//------------------------------------------------------------------------------
+int globber_lua::close(lua_State* state)
+{
+    m_globber.close();
+    return 0;
 }
 
 

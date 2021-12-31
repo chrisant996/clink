@@ -29,6 +29,7 @@ public:
     void                dots(bool state)        { m_dots = state; }
     bool                older_than(int seconds);
     bool                next(str_base& out, bool rooted=true, extrainfo* extrainfo=nullptr);
+    void                close();
 
 private:
                         globber(const globber&) = delete;

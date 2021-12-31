@@ -119,6 +119,7 @@ end
 --------------------------------------------------------------------------------
 local function cancel_coroutine(message)
     _coroutine_canceled = true
+    clink._cancel_coroutine()
     error((message or "").."canceling popenyield; coroutine is orphaned")
 end
 
@@ -260,6 +261,25 @@ function clink._resume_coroutines()
     for _,func in pairs(_after_coroutines) do
         func()
     end
+end
+
+--------------------------------------------------------------------------------
+function clink._cancel_coroutine(c)
+    if not c then
+        c = coroutine.running()
+    end
+
+    local entry = _coroutines[c]
+    if entry then
+        -- Causes all globbers in the coroutine to short circuit.
+        entry.canceled = true
+    end
+end
+
+--------------------------------------------------------------------------------
+function clink._is_coroutine_canceled(c)
+    local entry = _coroutines[c]
+    return entry and entry.canceled
 end
 
 --------------------------------------------------------------------------------
@@ -543,10 +563,16 @@ function io.popenyield(command, mode)
             set_coroutine_queued(true)
             while _coroutine_yieldguard do
                 coroutine.yield()
+                if clink._is_coroutine_canceled(c) then
+                    break
+                end
             end
             set_coroutine_queued(false)
+            if clink._is_coroutine_canceled(c) then
+                return io.open("nul")
+            end
         end
-        -- Cancel if not from the current prompt filter generation.
+        -- Cancel if not from the current generation.
         if get_coroutine_generation() ~= _coroutine_generation then
             local message = (type(command) == string) and command..": " or ""
             cancel_coroutine(message)
@@ -558,6 +584,9 @@ function io.popenyield(command, mode)
             set_coroutine_yieldguard(yieldguard)
             while not yieldguard:ready() do
                 coroutine.yield()
+                -- Do not allow canceling once the process has been spawned.
+                -- This enforces no more than one spawned background process is
+                -- running at a time.
             end
             set_coroutine_yieldguard(nil)
         end
