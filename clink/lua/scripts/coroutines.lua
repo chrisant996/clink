@@ -211,6 +211,8 @@ function clink._resume_coroutines()
                             print(ret)
                             entry.error = ret
                         end
+                    end
+                    if coroutine.status(entry.coroutine) == "dead" then
                         table.insert(remove, _)
                     end
                 end
