@@ -12,7 +12,7 @@ local _coroutine_context = nil          -- Context for queuing io.popenyield cal
 local _coroutine_canceled = false       -- Becomes true if an orphaned io.popenyield cancels the coroutine.
 local _coroutine_generation = 0         -- ID for current generation of coroutines.
 
-local _dead = nil                       -- List of dead coroutines.
+local _dead = nil                       -- List of dead coroutines (only when "lua.debug" is set, or in DEBUG builds).
 local _trimmed = 0                      -- Number of coroutines discarded from the dead list (overflow).
 
 local print = clink.print
@@ -320,7 +320,7 @@ function clink._diag_coroutines()
     local function collect_diag(list, threads)
         for _,entry in pairs(list) do
             local resumed = tostring(entry.resumed)
-            local status = coroutine.status(entry.coroutine)
+            local status = entry.status or coroutine.status(entry.coroutine)
             local freq = tostring(entry.interval)
             if max_resumed_len < #resumed then
                 max_resumed_len = #resumed
@@ -443,7 +443,15 @@ function clink.removecoroutine(c)
     if type(c) == "thread" then
         release_coroutine_yieldguard()
         if _dead then
-            table.insert(_dead, _coroutines[c])
+            local entry = _coroutines[c]
+            local status = coroutine.status(c)
+            -- Clear references.
+            entry.status = (status == "dead") and status or "abandoned ("..status..")"
+            entry.coroutine = tostring(c)
+            entry.func = nil
+            entry.context = nil
+            -- Move the coroutine's tracking entry to the dead list.
+            table.insert(_dead, entry)
         end
         _coroutines[c] = nil
         _coroutines_resumable = false
