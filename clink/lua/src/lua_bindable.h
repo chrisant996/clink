@@ -57,6 +57,9 @@ private:
     lua_State*          m_state = nullptr;
     int                 m_registry_ref = LUA_NOREF;
     bool                m_owned = false;
+#ifdef DEBUG
+    bool                m_deleteable = true;
+#endif
 };
 
 //------------------------------------------------------------------------------
@@ -69,6 +72,10 @@ lua_bindable<T>::lua_bindable()
 template <class T>
 lua_bindable<T>::~lua_bindable()
 {
+    // For owned objects (make_new), support currently exists only for deleting
+    // via garbage collection.
+    assert(m_deleteable);
+
     unbind();
 }
 
@@ -173,6 +180,9 @@ T* lua_bindable<T>::make_new(lua_State* state, Args... args)
     auto** self = (T**)lua_newuserdata(state, sizeof(T*));
     *self = new T(args...);
     (*self)->m_owned = true;
+#ifdef DEBUG
+    (*self)->m_deleteable = false;
+#endif
 
 #ifdef DEBUG
     assert(oldtop + 1 == lua_gettop(state));
@@ -233,7 +243,12 @@ int lua_bindable<T>::__gc(lua_State* state)
 {
     auto* const* self = (T* const*)luaL_checkudata(state, 1, T::c_name);
     if (self && *self && (*self)->m_owned)
+    {
+#ifdef DEBUG
+        (*self)->m_deleteable = true;
+#endif
         delete *self;
+    }
     return 0;
 }
 
