@@ -12,7 +12,8 @@ local _coroutine_context = nil          -- Context for queuing io.popenyield cal
 local _coroutine_canceled = false       -- Becomes true if an orphaned io.popenyield cancels the coroutine.
 local _coroutine_generation = 0         -- ID for current generation of coroutines.
 
-local _dead = nil
+local _dead = nil                       -- List of dead coroutines.
+local _trimmed = 0                      -- Number of coroutines discarded from the dead list (overflow).
 
 local print = clink.print
 
@@ -53,6 +54,7 @@ local function clear_coroutines()
     _coroutine_generation = _coroutine_generation + 1
 
     _dead = (settings.get("lua.debug") or clink.DEBUG) and {} or nil
+    _trimmed = 0
 
     if preserve then
         _coroutines[preserve.coroutine] = preserve
@@ -238,6 +240,16 @@ function clink._resume_coroutines()
     for _,c in ipairs(remove) do
         clink.removecoroutine(c)
     end
+    if #_dead > 20 then
+        -- Trim the dead list to 20 entries.
+        local t = {}
+        local last = #_dead
+        for i = last - 20 + 1, last, 1 do
+            table.insert(t, _dead[i])
+        end
+        _trimmed = _trimmed + last - 20
+        _dead = t
+    end
     for _,func in pairs(_after_coroutines) do
         func()
     end
@@ -350,6 +362,9 @@ function clink._diag_coroutines()
     -- Only list dead coroutines if there are any.
     if table_has_elements(_dead) then
         clink.print(bold.."dead coroutines:"..norm)
+        if _trimmed > 0 then
+            print("  "..deadlistcolor.."... ".._trimmed.." not listed ..."..norm)
+        end
         list_diag(deadthreads, deadlistcolor)
     end
 end
@@ -449,6 +464,21 @@ function clink.setcoroutineinterval(coroutine, interval)
     -- ok to blindly set the interval here even if the coroutine is currently
     -- being throttled.
     _coroutines[coroutine].interval = interval
+end
+
+--------------------------------------------------------------------------------
+--- -name:  clink.setcoroutinename
+--- -ver:   1.3.1
+--- -arg:   coroutine:coroutine
+--- -arg:   name:string
+--- Sets a name for the coroutine.  This is purely for diagnostic purposes.
+function clink.setcoroutinename(coroutine, name)
+    if type(coroutine) ~= "thread" then
+        error("bad argument #1 (coroutine expected)")
+    end
+    if name and name ~= "" and _coroutines[coroutine] then
+        _coroutines[coroutine].src = "'"..name.."'"
+    end
 end
 
 

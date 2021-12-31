@@ -66,13 +66,15 @@ local function deferred_generate(line, matches, builder, generation_id)
 
     -- Create coroutine to generate matches.  The coroutine is automatically
     -- scheduled for resume while waiting for input.
-    coroutine.create(function ()
+    local c = coroutine.create(function ()
         if clink._generate(line, builder) then
             clink.matches_ready(generation_id)
         else
             builder:clear_toolkit()
         end
     end)
+
+    clink.setcoroutinename(c, "generate matches")
 end
 
 --------------------------------------------------------------------------------
