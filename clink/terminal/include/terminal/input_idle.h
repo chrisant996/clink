@@ -9,7 +9,6 @@ class input_idle
 public:
     virtual             ~input_idle() = default;
     virtual void        reset() = 0;
-    virtual bool        is_enabled() = 0;
     virtual unsigned    get_timeout() = 0;
     virtual void*       get_waitevent() = 0;
     virtual void        on_idle() = 0;

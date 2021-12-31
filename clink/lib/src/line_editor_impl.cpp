@@ -417,15 +417,10 @@ bool line_editor_impl::edit(str_base& out)
         m_insert_on_begin = out.c_str();
 
     // Update first so the init state goes through.
-    input_idle* callback = m_idle;
     while (update())
     {
-        // Optimize away all subsequent callback cost once it's not needed.
-        if (callback && !callback->is_enabled())
-            callback = nullptr;
-
         if (!m_module.is_input_pending())
-            m_desc.input->select(callback);
+            m_desc.input->select(m_idle);
     }
 
     return get_line(out);

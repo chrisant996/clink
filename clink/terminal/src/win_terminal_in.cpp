@@ -597,7 +597,7 @@ void win_terminal_in::read_console(input_idle* callback)
                 SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), modeIn & ~ENABLE_PROCESSED_INPUT);
         }
 
-        while (callback && callback->is_enabled())
+        while (callback)
         {
             unsigned count = 1;
             HANDLE handles[2] = { m_stdin };

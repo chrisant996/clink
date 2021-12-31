@@ -353,6 +353,15 @@ function clink._diag_coroutines()
 end
 
 --------------------------------------------------------------------------------
+--- -name:  clink.addcoroutine
+--- -ver:   1.2.10
+--- -deprecated: clink.setcoroutineinterval
+--- -arg:   coroutine:coroutine
+--- -arg:   [interval:number]
+--- Prior to v1.3.1 this was undocumented, and coroutines had to be manually
+--- added in order to be scheduled for resume while waiting for input.  Starting
+--- in v1.3.1 this is no longer necessary, but it can still be used to override
+--- the interval at which to resume the coroutine.
 function clink.addcoroutine(coroutine, interval)
     if type(coroutine) ~= "thread" then
         error("bad argument #1 (coroutine expected)")
@@ -360,15 +369,25 @@ function clink.addcoroutine(coroutine, interval)
     if interval ~= nil and type(interval) ~= "number" then
         error("bad argument #2 (number or nil expected)")
     end
+
+    -- Change the interval for a coroutine.
+    if _coroutines[coroutine] then
+        if not _coroutines[coroutine].throttled then
+            _coroutines[coroutine].interval = interval
+        end
+        return
+    end
+
+    -- Add a new coroutine.
     local created_info = _coroutines_created[coroutine] or {}
     _coroutines[coroutine] = {
         coroutine=coroutine,
-        interval=interval or 0,
+        interval=interval or created_info.interval or 0,
         resumed=0,
         func=created_info.func,
         context=created_info.context,
         generation=created_info.generation,
-        src=created_info.src
+        src=created_info.src,
     }
     _coroutines_created[coroutine] = nil
     _coroutines_resumable = true
@@ -391,6 +410,46 @@ function clink.removecoroutine(coroutine)
         error("bad argument #1 (coroutine expected)")
     end
 end
+
+--------------------------------------------------------------------------------
+--- -name:  clink.setcoroutineinterval
+--- -ver:   1.3.1
+--- -arg:   coroutine:coroutine
+--- -arg:   [interval:number]
+--- Overrides the interval at which a coroutine is resumed.  All coroutines are
+--- automatically added with an interval of 0 by default, so calling this is
+--- only needed when you want to change the interval.
+---
+--- Coroutines are automatically resumed while waiting for input while editing
+--- the input line.
+---
+--- If a coroutine's interval is less than 5 seconds and the coroutine has been
+--- alive for more than 5 seconds, then the coroutine is throttled to run no
+--- more often than once every 5 seconds (regardless how much total time is has
+--- spent running).  Throttling is meant to prevent long-running coroutines from
+--- draining battery power, interfering with responsiveness, or other potential
+--- problems.
+function clink.setcoroutineinterval(coroutine, interval)
+    if type(coroutine) ~= "thread" then
+        error("bad argument #1 (coroutine expected)")
+    end
+    if interval ~= nil and type(interval) ~= "number" then
+        error("bad argument #2 (number or nil expected)")
+    end
+    if not _coroutines[coroutine] then
+        if settings.get("lua.strict") then
+            error("bad argument #1 (coroutine does not exist)")
+        end
+        return
+    end
+
+    -- Override the interval.  The scheduler never trusts the interval, so it's
+    -- ok to blindly set the interval here even if the coroutine is currently
+    -- being throttled.
+    _coroutines[coroutine].interval = interval
+end
+
+
 
 --------------------------------------------------------------------------------
 --- -name:  io.popenyield
@@ -493,5 +552,9 @@ function coroutine.create(func)
     -- cleared at the beginning of each input line.
     local thread = orig_coroutine_create(func)
     _coroutines_created[thread] = { func=func, context=_coroutine_context, generation=_coroutine_generation, src=src }
+    clink.addcoroutine(thread)
+
+    -- Wake up idle processing.
+    clink.kick_idle()
     return thread
 end

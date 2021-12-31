@@ -17,16 +17,27 @@ extern "C" {
 
 //------------------------------------------------------------------------------
 extern void set_io_wake_event(HANDLE event);
+static lua_input_idle* s_idle = nullptr;
+
+//------------------------------------------------------------------------------
+void kick_idle()
+{
+    if (s_idle)
+        s_idle->kick();
+}
 
 //------------------------------------------------------------------------------
 lua_input_idle::lua_input_idle(lua_state& state)
 : m_state(state)
 {
+    assert(!s_idle);
+    s_idle = this;
 }
 
 //------------------------------------------------------------------------------
 lua_input_idle::~lua_input_idle()
 {
+    s_idle = nullptr;
     set_io_wake_event(nullptr);
 }
 
@@ -63,6 +74,9 @@ unsigned lua_input_idle::get_timeout()
 {
     m_iterations++;
 
+    if (!is_enabled())
+        return INFINITE;
+
     lua_State* state = m_state.get_state();
     save_stack_top ss(state);
 
@@ -90,9 +104,6 @@ unsigned lua_input_idle::get_timeout()
 //------------------------------------------------------------------------------
 void* lua_input_idle::get_waitevent()
 {
-    if (!m_enabled)
-        return nullptr;
-
     return m_event;
 }
 
@@ -102,6 +113,15 @@ void lua_input_idle::on_idle()
     assert(m_enabled);
 
     resume_coroutines();
+}
+
+//------------------------------------------------------------------------------
+void lua_input_idle::kick()
+{
+    if (!m_enabled && has_coroutines())
+    {
+        m_enabled = true;
+    }
 }
 
 //------------------------------------------------------------------------------

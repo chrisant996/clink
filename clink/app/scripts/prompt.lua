@@ -270,7 +270,6 @@ function clink.promptcoroutine(func)
         local async = settings.get("prompt.async")
 
         -- Wrap the supplied function to track completion and end result.
-        local dependency_inversion = { c=nil }
         coroutine.override_src(func)
         local c = coroutine.create(function (async)
             -- Call the supplied function.
@@ -279,16 +278,10 @@ function clink.promptcoroutine(func)
             entry.done = true
             entry.refilter = true
             entry.result = o
-            -- Refresh the prompt.
-            if async then
-                clink.removecoroutine(dependency_inversion.c)
-            end
         end)
-        dependency_inversion.c = c
 
         if async then
             -- Add the coroutine.
-            clink.addcoroutine(c)
             clink._after_coroutines(refilterprompt_after_coroutines)
         else
             -- Run the coroutine synchronously if async is disabled.
@@ -317,6 +310,7 @@ function clink.promptcoroutine(func)
             end
             -- Update the entry indicating completion.
             entry.done = true
+            clink.removecoroutine(c)
         end
     end
 

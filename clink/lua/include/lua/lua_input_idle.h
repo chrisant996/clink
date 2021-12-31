@@ -15,12 +15,14 @@ public:
                     lua_input_idle(lua_state& state);
                     ~lua_input_idle();
     void            reset() override;
-    bool            is_enabled() override;
     unsigned        get_timeout() override;
     void*           get_waitevent() override;
     void            on_idle() override;
 
+    void            kick();
+
 private:
+    bool            is_enabled();
     bool            has_coroutines();
     void            resume_coroutines();
     lua_state&      m_state;

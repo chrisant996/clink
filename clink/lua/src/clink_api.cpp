@@ -800,6 +800,15 @@ static int set_suggestion_result(lua_State* state)
     return 0;
 }
 
+//------------------------------------------------------------------------------
+// UNDOCUMENTED; internal use only.
+static int kick_idle(lua_State* state)
+{
+    extern void kick_idle();
+    kick_idle();
+    return 0;
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -854,6 +863,7 @@ void clink_lua_initialise(lua_state& lua)
         { "get_refilter_redisplay_count", &get_refilter_redisplay_count },
         { "history_suggester",      &history_suggester },
         { "set_suggestion_result",  &set_suggestion_result },
+        { "kick_idle",              &kick_idle },
     };
 
     lua_State* state = lua.get_state();
