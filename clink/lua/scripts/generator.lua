@@ -149,7 +149,11 @@ function clink._make_match_generate_coroutine(line, matches, builder, generation
         _started_match_generate_coroutine = true
 
         -- Generate matches.
-        if clink._generate(line, builder) then
+        clink._generate(line, builder)
+
+        -- Check for cancelation.
+        local c = coroutine.running()
+        if not clink._is_coroutine_canceled(c) then
             -- PERF: This can potentially take some time, especially in Debug
             -- builds.
             clink.matches_ready(generation_id)
@@ -158,7 +162,6 @@ function clink._make_match_generate_coroutine(line, matches, builder, generation
         end
 
         -- Coroutine completed, so stop tracking it.
-        local c = coroutine.running()
         if _match_generate_coroutine == c then
             _match_generate_coroutine = nil
             _started_match_generate_coroutine = nil
