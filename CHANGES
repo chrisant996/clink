@@ -8,6 +8,7 @@
 - Added `match.max_rows` setting that limits the number of rows `clink-select-complete` can use.
 - Added `match.preview_rows` setting that makes `clink-select-complete` show the specified number of rows of matches as a preview, and expands to show the full set of matches when the selection moves past the preview rows (similar to completion in the fish shell).
 - Added `color.comment_row` setting that chooses the color for the comment row in `clink-select-complete`.  The comment row shows the "and <em>N</em> more matches" or "rows <em>X</em> to <em>Y</em> of <em>Z</em>" messages.
+- Added `autosuggest.async` setting (on by default) that lets suggestions generate matches asynchronously to stay responsive while typing.
 - Changed arrow keys in `clink-select-complete` to wrap on both horizontal and vertical edges (similar to the fish shell).
 - Changed arrow keys in `clink-select-complete` at the beginning and end of the list to wrap to the other end based on the `menu-complete-wraparound` config variable.
 - Match generators can now specify an append character (or suppress appending) on a per-match basis.
