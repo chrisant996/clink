@@ -118,7 +118,7 @@ end
 local _match_generate_coroutine
 local _started_match_generate_coroutine
 local function cancel_match_generate_coroutine()
-    if _match_generate_coroutine then
+    if _match_generate_coroutine and coroutine.running() ~= _match_generate_coroutine then
         -- Make things (e.g. globbers) short circuit to faciliate coroutine
         -- completing as quickly as possible.
         clink._cancel_coroutine(_match_generate_coroutine)
@@ -150,6 +150,8 @@ function clink._make_match_generate_coroutine(line, matches, builder, generation
 
         -- Generate matches.
         if clink._generate(line, builder) then
+            -- PERF: This can potentially take some time, especially in Debug
+            -- builds.
             clink.matches_ready(generation_id)
         else
             builder:clear_toolkit()
@@ -165,6 +167,7 @@ function clink._make_match_generate_coroutine(line, matches, builder, generation
 
     clink.setcoroutinename(c, "generate matches")
     _match_generate_coroutine = c
+    _started_match_generate_coroutine = nil
 end
 
 
@@ -210,7 +213,7 @@ function clink._generate(line_state, match_builder, old_filtering)
         -- Backward compatibility shim.
         rl_state = { line_buffer = line_state:getline(), point = line_state:getcursor() }
 
-        -- Cancel any coroutines for match generation.
+        -- Cancel any coroutines for match generation (apart from this one).
         cancel_match_generate_coroutine()
 
         -- Run match generators.

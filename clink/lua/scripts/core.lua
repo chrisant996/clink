@@ -143,7 +143,8 @@ function os.globdirs(pattern, extrainfo)
         while g:next(t) do
             coroutine.yield()
             if clink._is_coroutine_canceled(c) then
-                return {}
+                t = {}
+                break
             end
         end
         g:close()
@@ -153,7 +154,7 @@ end
 
 --------------------------------------------------------------------------------
 function os.globfiles(pattern, extrainfo)
-    local _, ismain = coroutine.running()
+    local c, ismain = coroutine.running()
     if ismain then
         -- Use a fully native implementation for higher performance.
         return os._globfiles(pattern, extrainfo)
@@ -166,7 +167,8 @@ function os.globfiles(pattern, extrainfo)
         while g:next(t) do
             coroutine.yield()
             if clink._is_coroutine_canceled(c) then
-                return {}
+                t = {}
+                break
             end
         end
         g:close()
