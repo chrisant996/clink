@@ -202,12 +202,19 @@ function clink._resume_coroutines()
                 _coroutines_resumable = true
                 local now = os.clock()
                 if next_entry_target(entry, now) <= now then
+                    local events
                     if not entry.firstclock then
                         entry.firstclock = now
                     end
                     entry.resumed = entry.resumed + 1
                     clink._set_coroutine_context(entry.context)
+                    if entry.isgenerator and not entry.keepevents then
+                        events = clink._set_coroutine_events(entry.events)
+                    end
                     local ok, ret = coroutine.resume(entry.coroutine, true--[[async]])
+                    if entry.isgenerator and not entry.keepevents then
+                        entry.events = clink._set_coroutine_events(events)
+                    end
                     if ok then
                         -- Use live clock so the interval excludes the execution
                         -- time of the coroutine.
@@ -281,6 +288,16 @@ function clink._is_coroutine_canceled(c)
     local entry = _coroutines[c]
     return entry and entry.canceled
 end
+
+--------------------------------------------------------------------------------
+function clink._keep_coroutine_events(c)
+    local entry = _coroutines[c]
+    if entry then
+        entry.keepevents = true
+    end
+end
+
+
 
 --------------------------------------------------------------------------------
 local function str_rpad(s, width, pad)
@@ -396,6 +413,8 @@ function clink._diag_coroutines()
     end
 end
 
+
+
 --------------------------------------------------------------------------------
 --- -name:  clink.addcoroutine
 --- -ver:   1.2.10
@@ -432,6 +451,7 @@ function clink.addcoroutine(c, interval)
         context=created_info.context,
         generation=created_info.generation,
         isprompt=created_info.isprompt,
+        isgenerator=created_info.isgenerator,
         src=created_info.src,
     }
     _coroutines_created[c] = nil
@@ -450,6 +470,7 @@ function clink.removecoroutine(c)
             entry.coroutine = tostring(c)
             entry.func = nil
             entry.context = nil
+            entry.events = nil
             -- Move the coroutine's tracking entry to the dead list.
             table.insert(_dead, entry)
         end
@@ -632,6 +653,12 @@ function coroutine.override_isprompt()
 end
 
 --------------------------------------------------------------------------------
+local override_coroutine_isgenerator = nil
+function coroutine.override_isgenerator()
+    override_coroutine_isgenerator = true
+end
+
+--------------------------------------------------------------------------------
 local orig_coroutine_create = coroutine.create
 function coroutine.create(func)
     -- Get src of func.
@@ -644,14 +671,23 @@ function coroutine.create(func)
     end
     override_coroutine_src_func = nil
 
-    -- Get prompt generation.
+    -- Get role.
     local isprompt = override_coroutine_isprompt
+    local isgenerator = override_coroutine_isgenerator
     override_coroutine_isprompt = nil
+    override_coroutine_isgenerator = nil
 
     -- Remember original func for diagnostic purposes later.  The table is
     -- cleared at the beginning of each input line.
     local thread = orig_coroutine_create(func)
-    _coroutines_created[thread] = { func=func, context=_coroutine_context, generation=_coroutine_generation, isprompt=isprompt, src=src }
+    _coroutines_created[thread] = {
+        func=func,
+        context=_coroutine_context,
+        generation=_coroutine_generation,
+        isprompt=isprompt,
+        isgenerator=isgenerator,
+        src=src
+    }
     clink.addcoroutine(thread)
 
     -- Wake up idle processing.

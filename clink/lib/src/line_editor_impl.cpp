@@ -121,14 +121,16 @@ void update_matches()
 }
 
 //------------------------------------------------------------------------------
-void notify_matches_ready(int generation_id)
+bool notify_matches_ready(int generation_id)
 {
     if (!s_editor)
-        return;
+        return false;
 
     match_builder_toolkit* toolkit = get_deferred_matches(generation_id);
-    if (toolkit)
-        s_editor->notify_matches_ready(generation_id, toolkit->get_matches());
+    if (!toolkit)
+        return false;
+
+    return s_editor->notify_matches_ready(generation_id, toolkit->get_matches());
 }
 
 //------------------------------------------------------------------------------
@@ -491,7 +493,7 @@ void line_editor_impl::force_update_internal(bool restrict)
 }
 
 //------------------------------------------------------------------------------
-void line_editor_impl::notify_matches_ready(int generation_id, matches* matches)
+bool line_editor_impl::notify_matches_ready(int generation_id, matches* matches)
 {
 #ifdef DEBUG
     assert(!m_in_matches_ready);
@@ -499,7 +501,7 @@ void line_editor_impl::notify_matches_ready(int generation_id, matches* matches)
 #endif
 
     if (generation_id != m_generation_id)
-        return;
+        return false;
 
     // Finalize the matches.
     m_matches.done_building();
@@ -510,6 +512,7 @@ void line_editor_impl::notify_matches_ready(int generation_id, matches* matches)
 
     // Trigger generating suggestion again.
     try_suggest();
+    return true;
 }
 
 //------------------------------------------------------------------------------

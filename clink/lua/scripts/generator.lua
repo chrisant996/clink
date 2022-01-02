@@ -129,11 +129,6 @@ local function cancel_match_generate_coroutine()
         _match_generate_coroutine = nil
         _started_match_generate_coroutine = nil
     end
-
-    -- TODO: Save/restore match filtering mechanisms to keep main match
-    -- generation separate from coroutine match generation.  Associate them with
-    -- the toolkit so that transferring matches can also transfer any match
-    -- filtering mechanisms.
 end
 
 --------------------------------------------------------------------------------
@@ -156,7 +151,9 @@ function clink._make_match_generate_coroutine(line, matches, builder, generation
         if not clink._is_coroutine_canceled(c) then
             -- PERF: This can potentially take some time, especially in Debug
             -- builds.
-            clink.matches_ready(generation_id)
+            if clink.matches_ready(generation_id) then
+                clink._keep_coroutine_events(c)
+            end
         else
             builder:clear_toolkit()
         end

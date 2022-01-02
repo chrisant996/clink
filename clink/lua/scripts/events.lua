@@ -223,6 +223,22 @@ function clink._send_onfiltermatches_event(matches, completion_type, filename_co
 end
 
 --------------------------------------------------------------------------------
+function clink._set_coroutine_events(new_events)
+    local old_events = {}
+    new_events = new_events or {}
+
+    old_events.match_display_filter = clink.match_display_filter
+    old_events.ondisplaymatches = clink._event_callbacks["ondisplaymatches"]
+    old_events.onfiltermatches = clink._event_callbacks["onfiltermatches"]
+
+    clink.match_display_filter = new_events.match_display_filter
+    clink._event_callbacks["ondisplaymatches"] = new_events.ondisplaymatches
+    clink._event_callbacks["onfiltermatches"] = new_events.onfiltermatches
+
+    return old_events
+end
+
+--------------------------------------------------------------------------------
 function clink._diag_events()
     if not settings.get("lua.debug") then
         return

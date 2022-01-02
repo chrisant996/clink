@@ -72,7 +72,7 @@ public:
     void                reset_generate_matches();
     void                reset_prev_suggest();
     void                force_update_internal(bool restrict=false);
-    void                notify_matches_ready(int generation_id, matches* matches);
+    bool                notify_matches_ready(int generation_id, matches* matches);
     bool                call_lua_rl_global_function(const char* func_name);
 
 private:

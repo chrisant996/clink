@@ -818,9 +818,9 @@ static int matches_ready(lua_State* state)
     if (!isnum)
         return 0;
 
-    extern void notify_matches_ready(int generation_id);
-    notify_matches_ready(id);
-    return 0;
+    extern bool notify_matches_ready(int generation_id);
+    lua_pushboolean(state, notify_matches_ready(id));
+    return 1;
 }
 
 
