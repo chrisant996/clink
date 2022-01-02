@@ -23,8 +23,9 @@ struct word
 class line_state
 {
 public:
-                        line_state(const char* line, unsigned int cursor, unsigned int command_offset, const std::vector<word>& words);
+                        line_state(const char* line, unsigned int length, unsigned int cursor, unsigned int command_offset, const std::vector<word>& words);
     const char*         get_line() const;
+    unsigned int        get_length() const;
     unsigned int        get_cursor() const;
     unsigned int        get_command_offset() const;
     unsigned int        get_command_word_index() const;
@@ -39,6 +40,7 @@ public:
 private:
     const std::vector<word>& m_words;
     const char*         m_line;
+    unsigned int        m_length;
     unsigned int        m_cursor;
     unsigned int        m_command_offset;
 };

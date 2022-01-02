@@ -53,7 +53,7 @@ bool suggester::suggest(line_state& line, matches* matches, int generation_id)
 {
     s_toolkit.reset();
 
-    if (!*line.get_line())
+    if (!line.get_length())
     {
         set_suggestion("", 0, nullptr, 0);
         return true;

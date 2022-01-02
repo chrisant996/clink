@@ -768,7 +768,7 @@ unsigned int line_editor_impl::collect_words(words& words, matches_impl* matches
 
     // The last word can be split by the match generators, to influence word
     // breaks. This is a little clunky but works well enough.
-    line_state line { m_buffer.get_buffer(), m_buffer.get_cursor(), command_offset, words };
+    line_state line { m_buffer.get_buffer(), m_buffer.get_length(), m_buffer.get_cursor(), command_offset, words };
     word* end_word = &words.back();
     if (end_word->length && (mode == collect_words_mode::stop_at_cursor ||
                              mode == collect_words_mode::display_filter))
@@ -921,6 +921,7 @@ void line_editor_impl::classify()
 
             linestates.emplace_back(
                 m_buffer.get_buffer(),
+                m_buffer.get_length(),
                 m_buffer.get_cursor(),
                 command_char_offset,
                 words_storage.back()
@@ -965,6 +966,7 @@ line_state line_editor_impl::get_linestate(bool for_classify) const
     {
         return {
             m_buffer.get_buffer(),
+            m_buffer.get_length(),
             m_buffer.get_cursor(),
             m_classify_command_offset,
             m_classify_words,
@@ -974,6 +976,7 @@ line_state line_editor_impl::get_linestate(bool for_classify) const
     {
         return {
             m_buffer.get_buffer(),
+            m_buffer.get_length(),
             m_buffer.get_cursor(),
             m_command_offset,
             m_words,
@@ -1269,6 +1272,7 @@ matches* maybe_regenerate_matches(const char* needle, display_filter_flags flags
     line_state line
     {
         s_editor->m_buffer.get_buffer(),
+        s_editor->m_buffer.get_length(),
         s_editor->m_buffer.get_cursor(),
         command_offset,
         words,

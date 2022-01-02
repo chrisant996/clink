@@ -75,7 +75,7 @@ void suggestion_manager::update_endword_offset(line_state& line)
 {
     if (m_iter.more() && g_rl_buffer)
     {
-        assert(m_suggestion_offset <= strlen(line.get_line()));
+        assert(m_suggestion_offset <= line.get_length());
         m_endword_offset = line.get_end_word_offset();
     }
 }
@@ -87,7 +87,8 @@ bool suggestion_manager::can_suggest(line_state& line)
         return false;
 
     assert(line.get_cursor() == g_rl_buffer->get_cursor());
-    assert(strcmp(line.get_line(), g_rl_buffer->get_buffer()) == 0);
+    assert(line.get_length() == g_rl_buffer->get_length());
+    assert(strncmp(line.get_line(), g_rl_buffer->get_buffer(), line.get_length()) == 0);
     if (g_rl_buffer->get_cursor() != g_rl_buffer->get_length())
         return false;
 
@@ -96,8 +97,10 @@ bool suggestion_manager::can_suggest(line_state& line)
     // line editor is considering whether to generate a new suggestion.
     m_endword_offset = line.get_end_word_offset();
 
+    // The buffers are not necessarily nul terminated!  Because of how
+    // hook_display() hacks suggestions into the Readline display.
     return (m_line.length() != g_rl_buffer->get_length() ||
-            !m_line.equals(g_rl_buffer->get_buffer()));
+            strncmp(m_line.c_str(), g_rl_buffer->get_buffer(), m_line.length()) != 0);
 }
 
 //------------------------------------------------------------------------------

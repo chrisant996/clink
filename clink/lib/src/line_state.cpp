@@ -14,11 +14,13 @@
 //------------------------------------------------------------------------------
 line_state::line_state(
     const char* line,
+    unsigned int length,
     unsigned int cursor,
     unsigned int command_offset,
     const std::vector<word>& words)
 : m_words(words)
 , m_line(line)
+, m_length(length)
 , m_cursor(cursor)
 , m_command_offset(command_offset)
 {
@@ -28,6 +30,12 @@ line_state::line_state(
 const char* line_state::get_line() const
 {
     return m_line;
+}
+
+//------------------------------------------------------------------------------
+unsigned int line_state::get_length() const
+{
+    return m_length;
 }
 
 //------------------------------------------------------------------------------

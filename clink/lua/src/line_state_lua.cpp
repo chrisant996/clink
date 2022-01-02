@@ -39,9 +39,9 @@ private:
 //------------------------------------------------------------------------------
 line_state_copy::line_state_copy(const line_state& line)
 {
-    m_buffer = line.get_line();
+    m_buffer.concat(line.get_line(), line.get_length());
     m_words = line.get_words(); // Deep copy.
-    m_line = new line_state(m_buffer.c_str(), line.get_cursor(), line.get_command_offset(), m_words);
+    m_line = new line_state(m_buffer.c_str(), m_buffer.length(), line.get_cursor(), line.get_command_offset(), m_words);
 }
 
 //------------------------------------------------------------------------------
@@ -73,7 +73,7 @@ line_state_lua::line_state_lua(line_state_copy* copy)
 /// Returns the current line in its entirety.
 int line_state_lua::get_line(lua_State* state)
 {
-    lua_pushstring(state, m_line->get_line());
+    lua_pushlstring(state, m_line->get_line(), m_line->get_length());
     return 1;
 }
 
