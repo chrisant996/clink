@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.3.0</title>
+<title>Clink v1.3.1</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -771,7 +771,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.3.0</div>
+                <div id="title">Clink v1.3.1</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -963,6 +963,11 @@ $endif
 </tr>
 </thead>
 <tbody><tr>
+<td align="center"><code>autosuggest.async</code></td>
+<td align="center">True</td>
+<td>When this is &#39;true&#39; matches are generated asynchronously for suggestions.  This helps to keep typing responsive.</td>
+</tr>
+<tr>
 <td align="center"><a name="autosuggest_enable"></a><code>autosuggest.enable</code></td>
 <td align="center">False</td>
 <td>When this is <code>true</code> a suggested command may appear in <code>color.suggestion</code> color after the cursor.  If the suggestion isn&#39;t what you want, just ignore it.  Or accept the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, accept the next word of the suggestion with <kbd>Ctrl</kbd>+<kbd>Right</kbd>, or accept the next full word of the suggestion up to a space with <kbd>Shift</kbd>+<kbd>Right</kbd>.  The <code>autosuggest.strategy</code> setting determines how a suggestion is chosen.</td>
@@ -1061,6 +1066,11 @@ $endif
 <td align="center"><code>color.cmdsep</code></td>
 <td align="center"><code>bold</code></td>
 <td>The color for command separaors (<code>&amp;</code>, `</td>
+</tr>
+<tr>
+<td align="center"><code>color.comment_row</code></td>
+<td align="center"><code>bright white on cyan</code></td>
+<td>The color for the comment row in the <code>clink-select-complete</code> command.  The comment row shows the &quot;and <em>N</em> more matches&quot; or &quot;rows <em>X</em> to <em>Y</em> of <em>Z</em>&quot; messages.</td>
 </tr>
 <tr>
 <td align="center"><code>color.description</code></td>
@@ -1296,6 +1306,16 @@ $endif
 <td align="center"><code>match.ignore_case</code></td>
 <td align="center"><code>relaxed</code></td>
 <td>Controls case sensitivity when completing matches. <code>off</code> = case sensitive, <code>on</code> = case insensitive, <code>relaxed</code> = case insensitive plus <code>-</code> and <code>_</code> are considered equal.</td>
+</tr>
+<tr>
+<td align="center"><code>match.max_rows</code></td>
+<td align="center"><code>0</code></td>
+<td>The maximum number of rows that <code>clink-select-complete</code> can use.  When this is 0, the limit is the terminal height.</td>
+</tr>
+<tr>
+<td align="center"><code>match.preview_rows</code></td>
+<td align="center"><code>0</code></td>
+<td>The number of rows to show as a preview when using the <code>clink-select-complete</code> command (bound by default to <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Space</kbd>).  When this is 0, all rows are shown and if there are too many matches it instead prompts first like the <code>complete</code> command does.  Otherwise it shows the specified number of rows as a preview without prompting, and it expands to show the full set of matches when the selection is moved past the preview rows.</td>
 </tr>
 <tr>
 <td align="center"><code>match.sort_dirs</code></td>
@@ -2285,6 +2305,9 @@ function my_match_generator:generate(line_state, match_builder)
     clink.ondisplaymatches(my_filter)
 end
 </code></pre>
+<blockquote>
+<p><strong>Note:</strong>  In v1.3.1 and higher, the table received by the registered ondisplaymatches function includes all the match fields (such as <code>display</code>, <code>description</code>, <code>appendchar</code>, etc), and the returned table can also include any of these fields.  In other words, in v1.3.1 and higher match filtering supports all the same fields as <a href="#builder:addmatch()">builder:addmatch()</a>.</p>
+</blockquote>
 <p><a name="argumentcompletion"></a></p>
 <h2 id="argument-completion">Argument Completion</h2>
 <p>Clink provides a framework for writing complex argument match generators in Lua.  It works by creating a parser object that describes a command&#39;s arguments and flags and then registering the parser with Clink. When Clink detects the command is being entered on the current command line being edited, it uses the parser to generate matches.</p>
@@ -2636,7 +2659,7 @@ end
 <p><strong>Notes:</strong></p>
 <ul>
 <li>If the console font and encoding are mismatched, or if some kinds of emoji are present, then the right side prompt might show up positioned incorrectly.  If that happens, try adjusting the font or encoding (e.g. sometimes running <code>chcp utf-8</code> can resolve positioning issues).</li>
-<li>If the <code>:filter()</code> function returns a string and false to stop filtering, then the <code>:rightfilter()</code> not called (because no further filter functions are called).  If you want to stop filtering but have both a left and right side prompt, then return only a string from <code>:filter()</code> and return a string and false from <code>:rightfilter()</code>.</li>
+<li>If the <code>:filter()</code> function returns a string and false to stop filtering, then the <code>:rightfilter()</code> is not called (because no further filter functions are called).  If you want to stop filtering but have both a left and right side prompt, then return only a string from <code>:filter()</code> and return a string and false from <code>:rightfilter()</code>.</li>
 </ul>
 </blockquote>
 <p><a name="asyncpromptfiltering"></a></p>
@@ -3972,11 +3995,13 @@ local my_parser = clink.argmatcher("cd")
 <div class="function"><div class="header"> <div class="name"><a name="_argmatcher:nofiles">_argmatcher:nofiles</a></div> <div class="signature">() : self<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">This makes the parser prevent invoking <a href="#matchgenerators">match generators</a>.  You can use it to "dead end" a parser and suggest no completions.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="_argmatcher:setclassifier">_argmatcher:setclassifier</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : self<br/><div class="version">v1.1.18 and newer</div></div></div><div class="body"><p class="desc">This registers a function that gets called for each word the argmatcher handles, to classify the word as part of coloring the input text.  See <a href="#classifywords">Coloring the Input Text</a> for more information.</p></div></div><hr/>
 </div><div class="group"><h5 class="group_name"><a name="builder">builder</a></h5><div class="function"><div class="header"> <div class="name"><a name="builder:addmatch">builder:addmatch</a></div> <div class="signature">( <span class="arg_name">match</span>:string|table, [<span class="arg_name">type</span>:string] ) : boolean<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Adds a match.</p><p class="desc"> The <span class="arg">match</span> argument is the match string to add.</p><p class="desc"> The <span class="arg">type</span> argument is the optional match type, or "none" if omitted (see below for the possible match types).</p><p class="desc"> Alternatively, the <span class="arg">match</span> argument can be a table with the following scheme:</p><pre class="language-lua"><code>{
-&nbsp;   match       = "..."    -- [string] The match text.
-&nbsp;   display     = "..."    -- [string] OPTIONAL; alternative text to display when listing possible completions.
-&nbsp;   description = "..."    -- [string] OPTIONAL; a description for the match.
-&nbsp;   type        = "..."    -- [string] OPTIONAL; the match type.
-}</code></pre><p class="desc"><ul> <li>The <code>display</code> field is optional, and is displayed instead of the <code>match</code> field when listing possible completions.  It can even include ANSI escape codes for colors, etc.  (Requires v1.2.38 or greater.) <li>The <code>description</code> field is optional, and is displayed in addition to <code>match</code> or <code>display</code> when listing possible completions.  (Requires v1.2.38 or greater.) <li>The <code>type</code> field is optional.  If omitted, then the <span class="arg">type</span> argument is used for that element. </ul></p><p class="desc"> The match type affects how the match is inserted, displayed, and colored. Some type modifiers may be combined with a match type.</p><p class="desc"> <table> <tr><th>Type</th><th>Description</th></tr> <tr><td>"word"</td><td>Shows the whole word even if it contains slashes.</td></tr> <tr><td>"arg"</td><td>Avoids appending a space if the match ends with a colon or equal sign.</td></tr> <tr><td>"command"</td><td>Displays the match using <a href="#color_cmd">color.cmd</a>.</td></tr> <tr><td>"alias"</td><td>Displays the match using <a href="#color_doskey">color.doskey</a>.</td></tr> <tr><td>"file"</td><td>Shows only the last path component, with appropriate file coloring.</td></tr> <tr><td>"dir"</td><td>Shows only the last path component and adds a trailing path separator, with appropriate directory coloring.</td></tr> <tr><td>"none"</td><td>For backward compatibility the match is treated like "file", unless it ends with a path separator in which case it's treated like "dir".</td></tr> </table></p><p class="desc"> <table> <tr><th>Modifier</th><th>Description</th></tr> <tr><td>"hidden"</td><td>This can be combined with "file" or "dir" to use <a href="#color_hidden">color.hidden</a> (e.g. "file,hidden").</td></tr> <tr><td>"readonly"</td><td>This can be combined with "file" or "dir" to use <a href="#color_readonly">color.readonly</a> (e.g. "file,readonly").</td></tr> <tr><td>"link"</td><td>This can be combined with "file" or "dir" to appropriate symlink coloring (e.g. "file,link").</td></tr> <tr><td>"orphaned"</td><td>This can be combined with "link" to use appropriate orphaned symlink coloring (e.g. "file,link,orphaned").</td></tr> </table></p><p class="desc"> See <a href="#completioncolors">Completion Colors</a> and <a href="#colorsettings">Color Settings</a> for more information about colors.</p><pre class="language-lua"><code>builder:addmatch("hello") -- type is "none"
+&nbsp;   match           = "..."    -- [string] The match text.
+&nbsp;   display         = "..."    -- [string] OPTIONAL; alternative text to display when listing possible completions.
+&nbsp;   description     = "..."    -- [string] OPTIONAL; a description for the match.
+&nbsp;   type            = "..."    -- [string] OPTIONAL; the match type.
+&nbsp;   appendchar      = "..."    -- [string] OPTIONAL; character to append after the match.
+&nbsp;   suppressappend  = t_or_f   -- [boolean] OPTIONAL; whether to suppress appending a character after the match.
+}</code></pre><p class="desc"><ul> <li>The <code>display</code> field is optional, and is displayed instead of the <code>match</code> field when listing possible completions.  It can even include ANSI escape codes for colors, etc.  (Requires v1.2.38 or greater.) <li>The <code>description</code> field is optional, and is displayed in addition to <code>match</code> or <code>display</code> when listing possible completions.  (Requires v1.2.38 or greater.) <li>The <code>type</code> field is optional.  If omitted, then the <span class="arg">type</span> argument is used for that element. <li>The <code>appendchar</code> field is optional, and overrides the normal behavior for only this match.  (Requires v1.3.1 or greater.) <li>The <code>suppressappend</code> field is optional, and overrides the normal behavior for only this match.  (Requires v1.3.1 or greater.) </ul></p><p class="desc"> The match type affects how the match is inserted, displayed, and colored. Some type modifiers may be combined with a match type.</p><p class="desc"> <table> <tr><th>Type</th><th>Description</th></tr> <tr><td>"word"</td><td>Shows the whole word even if it contains slashes.</td></tr> <tr><td>"arg"</td><td>Avoids appending a space if the match ends with a colon or equal sign.</td></tr> <tr><td>"command"</td><td>Displays the match using <a href="#color_cmd">color.cmd</a>.</td></tr> <tr><td>"alias"</td><td>Displays the match using <a href="#color_doskey">color.doskey</a>.</td></tr> <tr><td>"file"</td><td>Shows only the last path component, with appropriate file coloring.</td></tr> <tr><td>"dir"</td><td>Shows only the last path component and adds a trailing path separator, with appropriate directory coloring.</td></tr> <tr><td>"none"</td><td>For backward compatibility the match is treated like "file", unless it ends with a path separator in which case it's treated like "dir".</td></tr> </table></p><p class="desc"> <table> <tr><th>Modifier</th><th>Description</th></tr> <tr><td>"hidden"</td><td>This can be combined with "file" or "dir" to use <a href="#color_hidden">color.hidden</a> (e.g. "file,hidden").</td></tr> <tr><td>"readonly"</td><td>This can be combined with "file" or "dir" to use <a href="#color_readonly">color.readonly</a> (e.g. "file,readonly").</td></tr> <tr><td>"link"</td><td>This can be combined with "file" or "dir" to appropriate symlink coloring (e.g. "file,link").</td></tr> <tr><td>"orphaned"</td><td>This can be combined with "link" to use appropriate orphaned symlink coloring (e.g. "file,link,orphaned").</td></tr> </table></p><p class="desc"> See <a href="#completioncolors">Completion Colors</a> and <a href="#colorsettings">Color Settings</a> for more information about colors.</p><pre class="language-lua"><code>builder:addmatch("hello") -- type is "none"
 builder:addmatch("some_word", "word")
 builder:addmatch("/flag", "arg")
 builder:addmatch("abbrev", "alias")
@@ -4067,6 +4092,8 @@ function foo_prompt:filter(prompt)
 end</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.refilterprompt">clink.refilterprompt</a></div> <div class="signature">() : nil<br/><div class="version">v1.2.46 and newer</div></div></div><div class="body"><p class="desc">Invoke the prompt filters again and refresh the prompt.</p><p class="desc"> Note: this can potentially be expensive; call this only infrequently.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.reload">clink.reload</a></div> <div class="signature">() : nil<br/><div class="version">v1.2.29 and newer</div></div></div><div class="body"><p class="desc">Reloads Lua scripts and Readline config file at the next prompt.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="clink.setcoroutineinterval">clink.setcoroutineinterval</a></div> <div class="signature">( <span class="arg_name">coroutine</span>:coroutine, [<span class="arg_name">interval</span>:number] ) : nil<br/><div class="version">v1.3.1 and newer</div></div></div><div class="body"><p class="desc">Overrides the interval at which a coroutine is resumed.  All coroutines are automatically added with an interval of 0 by default, so calling this is only needed when you want to change the interval.</p><p class="desc"> Coroutines are automatically resumed while waiting for input while editing the input line.</p><p class="desc"> If a coroutine's interval is less than 5 seconds and the coroutine has been alive for more than 5 seconds, then the coroutine is throttled to run no more often than once every 5 seconds (regardless how much total time is has spent running).  Throttling is meant to prevent long-running coroutines from draining battery power, interfering with responsiveness, or other potential problems.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="clink.setcoroutinename">clink.setcoroutinename</a></div> <div class="signature">( <span class="arg_name">coroutine</span>:coroutine, <span class="arg_name">name</span>:string ) : nil<br/><div class="version">v1.3.1 and newer</div></div></div><div class="body"><p class="desc">Sets a name for the coroutine.  This is purely for diagnostic purposes.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.suggester">clink.suggester</a></div> <div class="signature">( <span class="arg_name">name</span>:string ) : table<br/><div class="version">v1.2.47 and newer</div></div></div><div class="body"><p class="desc">Creates and returns a new suggester object.  Suggesters are consulted in the order their names are listed in the <code><a href="#autosuggest.strategy">autosuggest.strategy</a></code> setting.</p><p class="desc"> Define on the object a <code>:suggest()</code> function that takes a <a href="#line_state">line_state</a> argument which contains the input line, and a <a href="#matches">matches</a> argument which contains the possible completions.  The function can return nil to give the next suggester a chance, or can return a suggestion (or an empty string) to stop looking for suggestions.</p><p class="desc"> In Clink v1.2.51 and higher, the function may return a suggestion and an offset where the suggestion begins in the line.  This is useful if the suggester wants to be able to insert the suggestion using the original casing.  For example if you type "set varn" and a history entry is "set VARNAME" then returning <code>"set VARNAME", 1</code> or <code>"VARNAME", 5</code> can accept "set VARNAME" instead of "set varnAME".</p><p class="desc"> See <a href="#customisingsuggestions">Customizing Suggestions</a> for more information.</p><pre class="language-lua"><code>local doskeyarg = clink.suggester("doskeyarg")
 function doskeyarg:suggest(line, matches)
 &nbsp;   if line:getword(1) == "doskey" and
@@ -4193,7 +4220,7 @@ line_state:getcommandwordindex() == 2</code></pre></div></div><hr/>
 -- info.winwidth        [integer] Width of the visible window.
 -- info.winheight       [integer] Height of the visible window.</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.getshortpathname">os.getshortpathname</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : string<br/><div class="version">v1.1.42 and newer</div></div></div><div class="body"><p class="desc">Returns the 8.3 short path name for <span class="arg">path</span>.  This may return the input path if an 8.3 short path name is not available.</p></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="os.globdirs">os.globdirs</a></div> <div class="signature">( <span class="arg_name">globpattern</span>:string, [<span class="arg_name">extrainfo</span>:integer|boolean] ) : table<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Collects directories matching <span class="arg">globpattern</span> and returns them in a table of strings.</p><p class="desc"> The optional <span class="arg">extrainfo</span> argument can return a table of tables instead, where each sub-table corresponds to one directory and has the following scheme:</p><pre class="language-lua"><code>local t = os.globfiles(pattern, extrainfo)
+<div class="function"><div class="header"> <div class="name"><a name="os.globdirs">os.globdirs</a></div> <div class="signature">( <span class="arg_name">globpattern</span>:string, [<span class="arg_name">extrainfo</span>:integer|boolean] ) : table<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Collects directories matching <span class="arg">globpattern</span> and returns them in a table of strings.</p><p class="desc"> The optional <span class="arg">extrainfo</span> argument can return a table of tables instead, where each sub-table corresponds to one directory and has the following scheme:</p><pre class="language-lua"><code>local t = os.globdirs(pattern, extrainfo)
 -- Included when extrainfo is true or >= 1:
 --   t[index].name      -- [string] The directory name.
 --   t[index].type      -- [string] The match type (see below).
@@ -4201,7 +4228,7 @@ line_state:getcommandwordindex() == 2</code></pre></div></div><hr/>
 --   t[index].size      -- [number] The file size, in bytes.
 --   t[index].atime     -- [number] The access time, compatible with os.time().
 --   t[index].mtime     -- [number] The modified time, compatible with os.time().
---   t[index].ctime     -- [number] The creation time, compatible with os.time().</code></pre><p class="desc">The <span class="tablescheme">type</span> string can be "file" or "dir", and may also contain ",hidden", ",readonly", ",link", and ",orphaned" depending on the attributes (making it usable as a match type for <a href="#builder:addmatch">builder:addmatch()</a>).</p><p class="desc"> Note: any quotation marks (<code>"</code>) in <span class="arg">globpattern</span> are stripped.</p></div></div><hr/>
+--   t[index].ctime     -- [number] The creation time, compatible with os.time().</code></pre><p class="desc">The <span class="tablescheme">type</span> string is "dir", and may also contain ",hidden", ",readonly", ",link", and ",orphaned" depending on the attributes (making it usable as a match type for <a href="#builder:addmatch">builder:addmatch()</a>).</p><p class="desc"> When used in a coroutine, the function automatically yields periodically.</p><p class="desc"> Note: any quotation marks (<code>"</code>) in <span class="arg">globpattern</span> are stripped.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.globfiles">os.globfiles</a></div> <div class="signature">( <span class="arg_name">globpattern</span>:string, [<span class="arg_name">extrainfo</span>:integer|boolean] ) : table<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Collects files and/or directories matching <span class="arg">globpattern</span> and returns them in a table of strings.</p><p class="desc"> The optional <span class="arg">extrainfo</span> argument can return a table of tables instead, where each sub-table corresponds to one file or directory and has the following scheme:</p><pre class="language-lua"><code>local t = os.globfiles(pattern, extrainfo)
 -- Included when extrainfo is true or >= 1:
 --   t[index].name      -- [string] The directory name.
@@ -4210,7 +4237,7 @@ line_state:getcommandwordindex() == 2</code></pre></div></div><hr/>
 --   t[index].size      -- [number] The file size, in bytes.
 --   t[index].atime     -- [number] The access time, compatible with os.time().
 --   t[index].mtime     -- [number] The modified time, compatible with os.time().
---   t[index].ctime     -- [number] The creation time, compatible with os.time().</code></pre><p class="desc">The <span class="tablescheme">type</span> string can be "file" or "dir", and may also contain ",hidden", ",readonly", ",link", and ",orphaned" depending on the attributes (making it usable as a match type for <a href="#builder:addmatch">builder:addmatch()</a>).</p><p class="desc"> Note: any quotation marks (<code>"</code>) in <span class="arg">globpattern</span> are stripped.</p></div></div><hr/>
+--   t[index].ctime     -- [number] The creation time, compatible with os.time().</code></pre><p class="desc">The <span class="tablescheme">type</span> string can be "file" or "dir", and may also contain ",hidden", ",readonly", ",link", and ",orphaned" depending on the attributes (making it usable as a match type for <a href="#builder:addmatch">builder:addmatch()</a>).</p><p class="desc"> When used in a coroutine, the function automatically yields periodically.</p><p class="desc"> Note: any quotation marks (<code>"</code>) in <span class="arg">globpattern</span> are stripped.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.isdir">os.isdir</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Returns whether <span class="arg">path</span> is a directory.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.isfile">os.isfile</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Returns whether <span class="arg">path</span> is a file.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.mkdir">os.mkdir</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Creates the directory <span class="arg">path</span> and returns whether it was successful.</p></div></div><hr/>
@@ -4254,7 +4281,7 @@ path.isexecext("")              -- returns false
 path.isexecext(nil)             -- returns nil</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="path.join">path.join</a></div> <div class="signature">( <span class="arg_name">left</span>:string, <span class="arg_name">right</span>:string ) : string<br/><div class="version">v1.1.0 and newer</div></div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.join("/foo", "bar")    -- returns "/foo\bar"
 path.join("", "bar")        -- returns "bar"
-path.join("/foo", "")       -- returns "/foo"
+path.join("/foo", "")       -- returns "/foo\"
 path.join(nil, "bar")       -- returns nil
 path.join("/foo", nil)      -- returns nil</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="path.normalise">path.normalise</a></div> <div class="signature">( <span class="arg_name">path</span>:string, [<span class="arg_name">separator</span>:string] ) : string<br/><div class="version">v1.1.0 and newer</div></div></div><div class="body"><p class="desc">Cleans <span class="arg">path</span> by normalising separators and removing "." and ".." elements.  If <span class="arg">separator</span> is provided it is used to delimit path elements, otherwise a system-specific delimiter is used.</p><pre class="language-lua"><code>path.normalise("a////b/\\/c/")  -- returns "a\b\c\"
@@ -4456,6 +4483,7 @@ string.matchlen("abx", "abx")       -- returns -1</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="_argmatcher:set_flags">_argmatcher:set_flags</a></div> <div class="signature">( <span class="arg_name">flags...</span>:string ) : self</div></div><div class="body"><p class="desc"><strong>Deprecated; don't use this.</strong> See <a href="#_argmatcher:addflags">_argmatcher:addflags</a> for more information.</p><p class="desc">Note:  The new API has no way to remove flags that were previously added, so converting from <code>:set_flags()</code> to <code>:addflags()</code> may require the calling script to reorganize how and when it adds flags.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="_argmatcher:setflagprefix">_argmatcher:setflagprefix</a></div> <div class="signature">( [<span class="arg_name">prefixes...</span>:string] ) : self</div></div><div class="body"><p class="desc"><strong>Deprecated; don't use this.</strong> See <a href="#_argmatcher:addflags">_argmatcher:addflags</a> for more information.</p><p class="desc">This is no longer needed (and does nothing) because <code>:addflags()</code> automatically identifies.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.add_match">clink.add_match</a></div> <div class="signature">( <span class="arg_name">match</span>:string ) : nil</div></div><div class="body"><p class="desc"><strong>Deprecated; don't use this.</strong> See <a href="#builder:addmatch">builder:addmatch</a> for more information.</p><p class="desc">This is a shim that lets clink.register_match_generator continue to work for now, despite being obsolete.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="clink.addcoroutine">clink.addcoroutine</a></div> <div class="signature">( <span class="arg_name">coroutine</span>:coroutine, [<span class="arg_name">interval</span>:number] ) : nil<br/><div class="version">v1.2.10 and newer</div></div></div><div class="body"><p class="desc"><strong>Deprecated; don't use this.</strong> See <a href="#clink.setcoroutineinterval">clink.setcoroutineinterval</a> for more information.</p><p class="desc">Prior to v1.3.1 this was undocumented, and coroutines had to be manually added in order to be scheduled for resume while waiting for input.  Starting in v1.3.1 this is no longer necessary, but it can still be used to override the interval at which to resume the coroutine.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.arg.new_parser">clink.arg.new_parser</a></div> <div class="signature">( ... ) : table</div></div><div class="body"><p class="desc"><strong>Deprecated; don't use this.</strong> See <a href="#clink.argmatcher">clink.argmatcher</a> for more information.</p><p class="desc">Creates a new parser and adds <span class="arg">...</span> to it.</p><pre class="language-lua"><code>-- Deprecated form:
 local parser = clink.arg.new_parser(
 &nbsp; { "abc", "def" },       -- arg position 1
@@ -4538,6 +4566,25 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v131">v1.3.1</h4>
+<ul>
+<li>Added <code>autosuggest.async</code> setting (on by default) that lets suggestions generate matches asynchronously to stay responsive while typing.</li>
+<li>Added <code>match.max_rows</code> setting that limits the number of rows <code>clink-select-complete</code> can use.</li>
+<li>Added <code>match.preview_rows</code> setting that makes <code>clink-select-complete</code> show the specified number of rows of matches as a preview, and expands to show the full set of matches when the selection moves past the preview rows (similar to completion in the fish shell).</li>
+<li>Added <code>color.comment_row</code> setting that chooses the color for the comment row in <code>clink-select-complete</code>.  The comment row shows the &quot;and <em>N</em> more matches&quot; or &quot;rows <em>X</em> to <em>Y</em> of <em>Z</em>&quot; messages.</li>
+<li>Changed arrow keys in <code>clink-select-complete</code> to wrap on both horizontal and vertical edges (similar to the fish shell).</li>
+<li>Changed arrow keys in <code>clink-select-complete</code> at the beginning and end of the list to wrap to the other end based on the <code>menu-complete-wraparound</code> config variable.</li>
+<li>Match generators can now specify an append character (or suppress appending) on a per-match basis.</li>
+<li>The <code>clink-diagnostics</code> command lists prompt filters, generators, classifiers, and suggesters when a numeric argument is given (e.g. <kbd>Alt</kbd>+<kbd>1</kbd> then <kbd>Ctrl</kbd>+<kbd>X</kbd>,<kbd>Ctrl</kbd>+<kbd>Z</kbd>).</li>
+<li>The <code>os.globdirs()</code> and <code>os.globfiles()</code> functions now automatically yield periodically if used inside a coroutine.</li>
+<li>The <code>io.popen()</code> function now automatically yields periodically if used in read mode (the default) inside a coroutine.</li>
+<li>The <code>io.popenyield()</code> function now automatically falls back to <code>io.popen()</code> if used outside a coroutine.</li>
+<li>Fixed input line coloring to operate on only the input line, not including the suggestion.</li>
+<li>Fixed display when typing to filter <code>clink-select-complete</code> (regression introduced in v1.2.49).</li>
+<li>Fixed display of <code>clink-select-complete</code> when the current match changes the number of visible lines in the edit buffer.</li>
+<li>Fixed displaying matches when only a drive letter is entered.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/216">#216</a>; Long escaped URLs do not display correctly in a prompt.</li>
+</ul>
 <h4 id="v13">v1.3</h4>
 <ul>
 <li>Added back <code>mark-modified-lines</code> support (was removed in v1.2.36).</li>
@@ -5926,7 +5973,7 @@ also hook cmd.exe (ConEmu, ANSICon, etc.).</li>
 <p>Clink was originally built by Martin Ridgers (<a href="https://github.com/mridgers/clink">https://github.com/mridgers/clink</a>).<br/>
 Copyright (c) 2012-2018 by Martin Ridgers.</p>
 <p>Clink has been forked and renovated by Christopher Antos (<a href="https://github.com/chrisant996/clink">https://github.com/chrisant996/clink</a>).<br/>
-Portions Copyright (c) 2020-2021 by Christopher Antos.</p>
+Portions Copyright (c) 2020-2022 by Christopher Antos.</p>
 <h3>Libraries</h3>
 
 <p>GNU Readline library version 8.1 (<a href="https://tiswww.case.edu/php/chet/readline/rltop.html">https://tiswww.case.edu/php/chet/readline/rltop.html</a>).<br/>
