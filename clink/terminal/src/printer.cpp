@@ -38,19 +38,22 @@ void printer::print(const char* data, int bytes)
     if (bytes <= 0)
         return;
 
-    if (m_next_attr != m_set_attr)
-        flush_attributes();
-
     // HACK: Work around a problem where WriteConsoleW(" ") after using
     // ScrollConsoleRelative() to scroll the cursor line past the bottom of the
     // screen window clears screen attributes from the prompt (but not if
     // scrolled the other direction, and not if the scrollbar was used to scroll
     // the screen buffer!?).
+    // NOTE: Must happen before flush_attributes(), otherwise it will try to
+    // write VT escape codes while the console is scrolled, and the color codes
+    // get ignored.
     if (s_is_scrolled)
     {
         m_terminal.flush();
         s_is_scrolled = false;
     }
+
+    if (m_next_attr != m_set_attr)
+        flush_attributes();
 
     m_terminal.write(data, bytes);
 }
