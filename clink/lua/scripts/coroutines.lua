@@ -464,15 +464,17 @@ function clink.removecoroutine(c)
         release_coroutine_yieldguard()
         if _dead then
             local entry = _coroutines[c]
-            local status = coroutine.status(c)
-            -- Clear references.
-            entry.status = (status == "dead") and status or "abandoned ("..status..")"
-            entry.coroutine = tostring(c)
-            entry.func = nil
-            entry.context = nil
-            entry.events = nil
-            -- Move the coroutine's tracking entry to the dead list.
-            table.insert(_dead, entry)
+            if entry then
+                local status = coroutine.status(c)
+                -- Clear references.
+                entry.status = (status == "dead") and status or "abandoned ("..status..")"
+                entry.coroutine = tostring(c)
+                entry.func = nil
+                entry.context = nil
+                entry.events = nil
+                -- Move the coroutine's tracking entry to the dead list.
+                table.insert(_dead, entry)
+            end
         end
         _coroutines[c] = nil
         _coroutines_resumable = false
