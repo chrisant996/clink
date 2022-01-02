@@ -71,10 +71,7 @@ setting_bool g_autosuggest_async(
     "autosuggest.async",
     "Enable asynchronous suggestions",
     "The default is 'true'.  When this is 'true' matches are generated\n"
-    "asynchronously for suggestions.  This helps to keep typing responsive.\n"
-    "However, some scripts (especially written for Clink v0.4.9) may experience\n"
-    "problems with this enabled.  If turning this off resolves an issue for you,\n"
-    "please report it at http://github.com/chrisant996/clink/issues.",
+    "asynchronously for suggestions.  This helps to keep typing responsive.",
     true);
 
 static setting_bool g_autosuggest_enable(
