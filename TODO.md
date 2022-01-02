@@ -5,7 +5,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- [ ] Separate match filtering mechanisms between main match generation versus coroutine match generation; transfer them as well when transfering matches.
 
 ## Medium Priority
 - Readline command reference.
