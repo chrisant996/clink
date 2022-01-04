@@ -2180,8 +2180,12 @@ void rl_module::set_prompt(const char* prompt, const char* rprompt, bool redispl
         return;
 
     // Erase the existing prompt.
+    int was_visible = false;
     if (redisplay)
     {
+        was_visible = show_cursor(false);
+        lock_cursor(true);
+
         // Count the number of lines the prefix takes to display.
         str_moveable bracketed_prefix;
         if (rl_get_local_prompt_prefix())
@@ -2213,6 +2217,10 @@ void rl_module::set_prompt(const char* prompt, const char* rprompt, bool redispl
     {
         g_prompt_redisplay++;
         rl_forced_update_display();
+
+        lock_cursor(false);
+        if (was_visible)
+            show_cursor(true);
     }
 }
 
@@ -2326,9 +2334,11 @@ void rl_module::on_begin_line(const context& context)
     if (!_rl_display_message_color)
         _rl_display_message_color = "\x1b[m";
 
+    lock_cursor(true); // Suppress cursor flicker.
     auto handler = [] (char* line) { rl_module::get()->done(line); };
     rl_set_rprompt(m_rl_rprompt.length() ? m_rl_rprompt.c_str() : nullptr);
     rl_callback_handler_install(m_rl_prompt.c_str(), handler);
+    lock_cursor(false);
 
     // Apply the remembered history position from the previous command, if any.
     if (s_init_history_pos >= 0)
