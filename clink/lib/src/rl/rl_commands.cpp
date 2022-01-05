@@ -20,6 +20,7 @@
 #include <core/settings.h>
 #include <terminal/printer.h>
 #include <terminal/scroll.h>
+#include <terminal/screen_buffer.h>
 
 extern "C" {
 #include <readline/readline.h>
@@ -1928,6 +1929,13 @@ int clink_diagnostics(int count, int invoking_key)
     s.format("  %-*s  %s\n", spacing, "binaries", binaries.c_str());
     g_printer->print(s.c_str(), s.length());
 
+    if (rl_explicit_arg)
+    {
+        s.clear();
+        s.format("  %-*s  %s\n", spacing, "architecture", "x" AS_STR(ARCHITECTURE));
+        g_printer->print(s.c_str(), s.length());
+    }
+
     // Session info.
 
     s.clear();
@@ -1944,6 +1952,30 @@ int clink_diagnostics(int count, int invoking_key)
     {
         s.clear();
         s.format("  %-*s  %s\n", spacing, "scripts", scripts.c_str());
+        g_printer->print(s.c_str(), s.length());
+    }
+
+    // Terminal info.
+
+    if (rl_explicit_arg)
+    {
+        s.clear();
+        s << bold << "terminal:" << norm << lf;
+        g_printer->print(s.c_str(), s.length());
+
+        const char* term = nullptr;
+        switch (get_current_ansi_handler())
+        {
+        default:                            term = "Unknown"; break;
+        case ansi_handler::clink:           term = "Clink terminal emulation"; break;
+        case ansi_handler::conemu:          term = "ConEmu"; break;
+        case ansi_handler::ansicon:         term = "ANSICON"; break;
+        case ansi_handler::winterminal:     term = "Windows Terminal"; break;
+        case ansi_handler::winconsolev2:    term = "Console V2 (with 24 bit color)"; break;
+        case ansi_handler::winconsole:      term = "Default console (16 bit color only)"; break;
+        }
+        s.clear();
+        s.format("  %-*s  %s\n", spacing, "terminal", term);
         g_printer->print(s.c_str(), s.length());
     }
 
