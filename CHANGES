@@ -2,6 +2,10 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.3.2
+
+- When loading settings, if there is no setting file yet then Clink looks for a `default_settings` file in the binaries directory and uses that to initalize the settings.
+
 #### v1.3.1
 
 - Added `autosuggest.async` setting (on by default) that lets suggestions generate matches asynchronously to stay responsive while typing.
