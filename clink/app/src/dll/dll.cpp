@@ -102,14 +102,12 @@ static void failed()
 //------------------------------------------------------------------------------
 static bool get_host_name(str_base& out)
 {
-    str<MAX_PATH> buffer;
-    if (GetModuleFileName(nullptr, buffer.data(), buffer.size()) == buffer.size())
+    char buffer[280];
+    DWORD len = GetModuleFileName(nullptr, buffer, sizeof_array(buffer));
+    if (!len || len >= sizeof_array(buffer))
         return false;
 
-    if (GetLastError() == ERROR_INSUFFICIENT_BUFFER)
-        return false;
-
-    return path::get_name(buffer.c_str(), out);
+    return path::get_name(buffer, out);
 }
 
 //------------------------------------------------------------------------------

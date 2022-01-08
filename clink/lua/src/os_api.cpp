@@ -737,9 +737,7 @@ static int get_host(lua_State* state)
 {
     WCHAR module[280];
     DWORD len = GetModuleFileNameW(nullptr, module, sizeof_array(module));
-    if (!len)
-        return 0;
-    if (len == sizeof_array(module) && GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+    if (!len || len >= sizeof_array(module))
         return 0;
 
     str<280> host;

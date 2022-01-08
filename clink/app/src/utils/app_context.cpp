@@ -175,8 +175,8 @@ void app_context::get_binaries_dir(str_base& out) const
         return;
 
     wstr<280> wout;
-    GetModuleFileNameW(HMODULE(base), wout.data(), wout.size());
-    if (GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+    DWORD wout_len = GetModuleFileNameW(HMODULE(base), wout.data(), wout.size());
+    if (!wout_len || wout_len >= wout.size())
         return;
 
     // Check for a .origin suffix indicating that we're using a copied DLL.

@@ -74,7 +74,7 @@ bool process::get_file_name(str_base& out) const
     {
         wstr<280> tmp;
         DWORD len = func(handle, nullptr, tmp.data(), tmp.size());
-        if (len)
+        if (len && len < tmp.size())
         {
             tmp.truncate(len);
             out = tmp.c_str();
