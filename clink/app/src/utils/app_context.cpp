@@ -138,6 +138,8 @@ app_context::app_context(const desc& desc)
         }
     }
 
+    init_binaries_dir();
+
     update_env();
 }
 
@@ -168,38 +170,7 @@ bool app_context::is_detours() const
 //------------------------------------------------------------------------------
 void app_context::get_binaries_dir(str_base& out) const
 {
-    out.clear();
-
-    void* base = vm().get_alloc_base((void*)"");
-    if (base == nullptr)
-        return;
-
-    wstr<280> wout;
-    DWORD wout_len = GetModuleFileNameW(HMODULE(base), wout.data(), wout.size());
-    if (!wout_len || wout_len >= wout.size())
-        return;
-
-    // Check for a .origin suffix indicating that we're using a copied DLL.
-    int out_length = wout.length();
-    wout << L".origin";
-    HANDLE origin = CreateFileW(wout.c_str(), GENERIC_READ, 0, nullptr,
-        OPEN_EXISTING, 0, nullptr);
-    if (origin != INVALID_HANDLE_VALUE)
-    {
-        DWORD read;
-        int size = GetFileSize(origin, nullptr);
-        out.reserve(size + 1);
-        ReadFile(origin, out.data(), size, &read, nullptr);
-        out.data()[size] = '\0';
-        CloseHandle(origin);
-    }
-    else
-    {
-        wout.truncate(out_length);
-        out = wout.c_str();
-    }
-
-    path::get_directory(out);
+    out = m_binaries.c_str();
 }
 
 //------------------------------------------------------------------------------
@@ -342,6 +313,43 @@ void app_context::get_script_path(str_base& out) const
 void app_context::get_script_path_readable(str_base& out) const
 {
     return get_script_path(out, true);
+}
+
+//-----------------------------------------------------------------------------
+void app_context::init_binaries_dir()
+{
+    void* base = vm().get_alloc_base((void*)"");
+    if (base == nullptr)
+        return;
+
+    wstr<280> wout;
+    DWORD wout_len = GetModuleFileNameW(HMODULE(base), wout.data(), wout.size());
+    if (!wout_len || wout_len >= wout.size())
+        return;
+
+    // Check for a .origin suffix indicating that we're using a copied DLL.
+    int out_length = wout_len;
+    wout << L".origin";
+    HANDLE origin = CreateFileW(wout.c_str(), GENERIC_READ, 0, nullptr,
+        OPEN_EXISTING, 0, nullptr);
+    if (origin != INVALID_HANDLE_VALUE)
+    {
+        DWORD read;
+        int size = GetFileSize(origin, nullptr);
+        m_binaries.reserve(size + 1);
+        ReadFile(origin, m_binaries.data(), size, &read, nullptr);
+        m_binaries.data()[size] = '\0';
+        CloseHandle(origin);
+    }
+    else
+    {
+        wout.truncate(out_length);
+        m_binaries = wout.c_str();
+    }
+
+    path::get_directory(m_binaries);
+
+    settings::use_default_settings(m_binaries.c_str());
 }
 
 //-----------------------------------------------------------------------------

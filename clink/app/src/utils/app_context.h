@@ -4,8 +4,7 @@
 #pragma once
 
 #include <core/singleton.h>
-
-class str_base;
+#include <core/str.h>
 
 //------------------------------------------------------------------------------
 class app_context
@@ -44,5 +43,7 @@ public:
 
 private:
     void        get_script_path(str_base& out, bool readable) const;
+    void        init_binaries_dir();
     desc        m_desc;
+    str<288>    m_binaries;
 };

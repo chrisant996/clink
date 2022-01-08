@@ -27,6 +27,7 @@ typedef std::map<std::string, loaded_setting> loaded_settings_map;
 static setting_map* g_setting_map = nullptr;
 static loaded_settings_map* g_loaded_settings = nullptr;
 static str_moveable* g_last_file = nullptr;
+static str_moveable s_binaries_dir;
 
 #ifdef DEBUG
 static bool s_ever_loaded = false;
@@ -261,6 +262,7 @@ bool load(const char* file)
     // Maybe migrate settings.
     str<> old_file;
     bool migrating = false;
+    bool save = false;
 
     // Open the file.
     FILE* in = fopen(file, "rb");
@@ -271,9 +273,18 @@ bool load(const char* file)
         path::get_directory(file, old_file);
         path::append(old_file, "settings");
         in = fopen(old_file.c_str(), "rb");
-        if (in == nullptr)
-            return false;
-        migrating = true;
+        migrating = (in != nullptr);
+        if (!migrating && !s_binaries_dir.empty())
+        {
+            str<280> def(s_binaries_dir.c_str());
+            path::append(def, "default_settings");
+            in = fopen(def.c_str(), "rb");
+            if (in == nullptr)
+                return false;
+
+            // Reads from default_settings and writes to file.
+            save = true;
+        }
     }
 
     // Buffer the file.
@@ -361,7 +372,10 @@ bool load(const char* file)
     // When migrating, ensure the new settings file is created so that the old
     // settings file can be deleted.  Some users or distributions may naturally
     // clean up the old settings file, so don't rely on it staying around.
-    if (migrating)
+    // When reading from default_settings, ensure the new settings file is
+    // created so that default_settings is used only the first time (for
+    // cleanliness and predictability).
+    if (migrating || save)
         save_internal(file, migrating);
 
     return true;
@@ -458,6 +472,12 @@ void TEST_set_ever_loaded()
     s_ever_loaded = true;
 }
 #endif
+
+//------------------------------------------------------------------------------
+void use_default_settings(const char* binaries)
+{
+    s_binaries_dir = binaries;
+}
 
 //------------------------------------------------------------------------------
 bool sandboxed_set_setting(const char* name, const char* value)
