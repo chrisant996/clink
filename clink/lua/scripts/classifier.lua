@@ -9,6 +9,11 @@ clink = clink or {}
 local _classifiers = {}
 local _classifiers_unsorted = false
 
+if settings.get("lua.debug") or clink.DEBUG then
+    clink.debug = clink.debug or {}
+    clink.debug._classifiers = _classifiers
+end
+
 --------------------------------------------------------------------------------
 -- This global variable tracks which generator function, if any, stopped the
 -- most recent generate pass.  It's useful for diagnostic purposes; the file and

@@ -924,6 +924,11 @@ end
 clink = clink or {}
 local _argmatchers = {}
 
+if settings.get("lua.debug") or clink.DEBUG then
+    clink.debug = clink.debug or {}
+    clink.debug._argmatchers = _argmatchers
+end
+
 --------------------------------------------------------------------------------
 --- -name:  clink.argmatcher
 --- -ver:   1.0.0

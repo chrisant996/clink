@@ -8,6 +8,13 @@
 clink = clink or {}
 local _generators = {}
 local _generators_unsorted = false
+local file_match_generator = {}
+
+if settings.get("lua.debug") or clink.DEBUG then
+    clink.debug = clink.debug or {}
+    clink.debug._generators = _generators
+    clink.debug._file_match_generator = file_match_generator
+end
 
 --------------------------------------------------------------------------------
 --- -name:  clink.match_display_filter
@@ -29,9 +36,6 @@ clink.use_old_filtering = nil
 local _current_builder = nil
 
 
-
---------------------------------------------------------------------------------
-local file_match_generator = {}
 
 --------------------------------------------------------------------------------
 local function advance_ignore_quotes(state)

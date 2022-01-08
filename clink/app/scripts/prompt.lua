@@ -6,6 +6,11 @@ clink = clink or {}
 local prompt_filters = {}
 local prompt_filters_unsorted = false
 
+if settings.get("lua.debug") or clink.DEBUG then
+    clink.debug = clink.debug or {}
+    clink.debug._prompt_filters = prompt_filters
+end
+
 
 
 --------------------------------------------------------------------------------

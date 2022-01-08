@@ -6,6 +6,11 @@ clink = clink or {}
 local suggesters = {}
 local _cancel
 
+if settings.get("lua.debug") or clink.DEBUG then
+    clink.debug = clink.debug or {}
+    clink.debug._suggesters = suggesters
+end
+
 
 
 --------------------------------------------------------------------------------
