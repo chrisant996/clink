@@ -7,6 +7,11 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Medium Priority
+- Support user-customizable terminal sequences for `ve` and `vs` and `vb`?
+  - E.g. to use Windows escape codes for overriding the cursor shape.
+  - Or escape codes private to specific terminal hosts, etc.
+  - Should probably not be profile settings (maybe envvars?) as they may need to be different for different terminal hosts.
+- Support alternative styles of visual bell?  E.g. maybe use `FlashWindow()`.
 - Readline command reference.
 - Add more Readline documentation into the Clink docs.
 
@@ -54,6 +59,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - `git checkout `<kbd>Alt</kbd>+<kbd>=</kbd> in Cmder.
 
 ## Known Issues
+- Cursor does not blink, and custom cursor shape is overridden. _[The SetConsoleCursorInfo API has changed, and now always disables blinking.  Also it always overrides the custom cursor shape chosen in the console's Properties dialog, and there is no way to query the console to find out whether it is using a custom cursor shape.]_
 - Perturbed PROMPT envvar is visible in child processes (e.g. piped shell in various file editors).
 - [#531](https://github.com/mridgers/clink/issues/531) AV detects a trojan on download _[This is likely because of the use of CreateRemoteThread and/or hooking OS APIs.  There might be a way to obfuscate the fact that clink uses those, but ultimately this is kind of an inherent problem.  Getting the binaries digitally signed might be the most effective solution, but that's financially expensive.]_
 - [Terminal #10191](https://github.com/microsoft/terminal/issues/10191#issuecomment-897345862) Microsoft Terminal does not allow a console application to know about or access the scrollback history, nor to scroll the screen.  It blocks Clink's scrolling commands, and also the `console.findline()` function and everything else that relies on access to the scrollback history.
