@@ -183,7 +183,7 @@ When Clink is injected, it looks for a `clink_start.cmd` script in the binaries 
 
 If you want a customizable prompt with a bunch of styles and an easy-to-use configuration wizard, check out <a href="https://github.com/chrisant996/clink-flex-prompt">clink-flex-prompt</a>.  Also, if you've been disappointed by git making the prompt slow in other shells, try this prompt -- it makes the prompt appear instantly by running git commands in the background and refreshing the prompt once the background commands complete.
 
-Another popular configurable prompt is [oh-my-posh](#oh-my-posh).
+Other popular configurable prompts are [oh-my-posh](#oh-my-posh) and [starship](#starship).
 
 See [Customizing the Prompt](#customisingtheprompt) for information on how to use Lua to customize the prompt.
 
@@ -434,7 +434,7 @@ Sometimes it's useful to run Clink from a flash drive or from a network share, e
 
 Here's how you can set up a portable configuration for Clink:
 
-1. Put your Lua scripts and other tools in the same directory as the Clink executable files.  For example fzf.exe, z.cmd, oh-my-posh.exe, or etc can all go in the same directory on a flash drive or network share.
+1. Put your Lua scripts and other tools in the same directory as the Clink executable files.  For example fzf.exe, z.cmd, oh-my-posh.exe, starship.exe etc can all go in the same directory on a flash drive or network share.
 2. Make a batch file such as `portable.bat` that injects Clink using a specific profile directory.
    - On a flash drive, you can have a portable profile in a subdirectory under the Clink directory.
    - On a network share, you'll want to copy some initial settings into a local profile directory (a profile directory on a network share will be slow).
@@ -1799,6 +1799,17 @@ Integrating oh-my-posh with Clink is easy: just save the following text to an `o
 ```lua
 -- oh-my-posh.lua
 load(io.popen('oh-my-posh.exe --config="C:/Users/me/jandedobbeleer.omp.json" --init --shell cmd'):read("*a"))()
+```
+
+### starship
+
+The [starship](https://github.com/starship/starship) program can also generate fancy prompts. Refer to its [documentation](https://starship.rs) for how to configure it.
+
+Integrating starship with Clink is just as easy: save the following text to a `starship.lua` file in your Clink scripts directory (run `clink info` to find that), and make sure the `starship.exe` program is in a directory listed in the `%PATH%` environment variable (or edit the script below to provide a fully qualified path to the starship.exe program). The config file for starship is located at `C:\Users\<username>\.config\starship.toml`.
+
+```lua
+-- starship.lua
+load(io.popen('starship.exe init cmd'):read("*a"))()
 ```
 
 ### z.lua
