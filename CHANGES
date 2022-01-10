@@ -5,6 +5,8 @@
 #### v1.3.2
 
 - When loading settings, if there is no setting file yet then Clink looks for a `default_settings` file in the binaries directory and uses that to initalize the settings.
+- Fixed cursor blink, which was accidentally disabled (regression introduced in v1.2.44).
+  - Note:  If you prefer no blinking, you can turn off cursor blinking by including `print("\x1b[?12l")` in a Lua script.  Or print `"\x1b[?12h"` to turn on cursor blinking.
 
 #### v1.3.1
 
