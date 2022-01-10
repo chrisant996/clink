@@ -560,6 +560,114 @@ static bool find_abort_in_keymap(str_base& out)
 
 
 //------------------------------------------------------------------------------
+static int terminal_read_thunk(FILE* stream)
+{
+    if (stream == in_stream)
+    {
+        assert(s_processed_input);
+        return s_processed_input->read();
+    }
+
+    if (stream == null_stream)
+        return 0;
+
+    assert(false);
+    return fgetc(stream);
+}
+
+//------------------------------------------------------------------------------
+static void terminal_write_thunk(FILE* stream, const char* chars, int char_count)
+{
+    if (stream == out_stream)
+    {
+        assert(g_printer);
+        g_printer->print(chars, char_count);
+        return;
+    }
+
+    if (stream == null_stream)
+        return;
+
+    if (stream == stderr || stream == stdout)
+    {
+        if (stream == stderr && g_rl_hide_stderr.get())
+            return;
+
+        DWORD dw;
+        HANDLE h = GetStdHandle(stream == stderr ? STD_ERROR_HANDLE : STD_OUTPUT_HANDLE);
+        if (GetConsoleMode(h, &dw))
+        {
+            wstr<32> s;
+            str_iter tmpi(chars, char_count);
+            to_utf16(s, tmpi);
+            WriteConsoleW(h, s.c_str(), s.length(), &dw, nullptr);
+        }
+        else
+        {
+            WriteFile(h, chars, char_count, &dw, nullptr);
+        }
+        return;
+    }
+
+    assert(false);
+    fwrite(chars, char_count, 1, stream);
+}
+
+//------------------------------------------------------------------------------
+static void terminal_log_write(FILE* stream, const char* chars, int char_count)
+{
+    if (stream == out_stream)
+    {
+        assert(g_printer);
+        LOGCURSORPOS();
+        LOG("RL_OUTSTREAM \"%.*s\", %d", char_count, chars, char_count);
+        g_printer->print(chars, char_count);
+        return;
+    }
+
+    if (stream == null_stream)
+        return;
+
+    if (stream == stderr || stream == stdout)
+    {
+        if (stream == stderr && g_rl_hide_stderr.get())
+            return;
+
+        DWORD dw;
+        HANDLE h = GetStdHandle(stream == stderr ? STD_ERROR_HANDLE : STD_OUTPUT_HANDLE);
+        if (GetConsoleMode(h, &dw))
+        {
+            LOGCURSORPOS();
+            LOG("%s \"%.*s\", %d", (stream == stderr) ? "CONERR" : "CONOUT", char_count, chars, char_count);
+            wstr<32> s;
+            str_iter tmpi(chars, char_count);
+            to_utf16(s, tmpi);
+            WriteConsoleW(h, s.c_str(), s.length(), &dw, nullptr);
+        }
+        else
+        {
+            LOG("%s \"%.*s\", %d", (stream == stderr) ? "FILEERR" : "FILEOUT", char_count, chars, char_count);
+            WriteFile(h, chars, char_count, &dw, nullptr);
+        }
+        return;
+    }
+
+    assert(false);
+    LOGCURSORPOS();
+    LOG("FWRITE \"%.*s\", %d", char_count, chars, char_count);
+    fwrite(chars, char_count, 1, stream);
+}
+
+//------------------------------------------------------------------------------
+static void terminal_fflush_thunk(FILE* stream)
+{
+    if (stream != out_stream && stream != null_stream)
+        fflush(stream);
+}
+
+
+
+//------------------------------------------------------------------------------
 static const word_classifications* s_classifications = nullptr;
 static const char* s_input_color = nullptr;
 static const char* s_selection_color = nullptr;
@@ -1524,6 +1632,65 @@ static void bind_keyseq_list(const two_strings* list, Keymap map)
 }
 
 //------------------------------------------------------------------------------
+static void init_readline_hooks()
+{
+    static bool s_first_time = true;
+
+    // These hooks must be set even before calling rl_initialize(), because it
+    // can invoke e.g. rl_fwrite_function which needs to intercept some escape
+    // sequences even during initialization.
+    //
+    // And reset these for each input line because of g_debug_log_terminal.
+    rl_getc_function = terminal_read_thunk;
+    rl_fwrite_function = terminal_write_thunk;
+    if (g_debug_log_terminal.get())
+        rl_fwrite_function = terminal_log_write;
+    rl_fflush_function = terminal_fflush_thunk;
+    rl_instream = in_stream;
+    rl_outstream = out_stream;
+
+    if (!s_first_time)
+        return;
+    s_first_time = false;
+
+    // Input line (and prompt) display hooks.
+    rl_redisplay_function = hook_display;
+    rl_get_face_func = get_face_func;
+    rl_puts_face_func = puts_face_func;
+
+    // Input event hooks.
+    rl_read_key_hook = read_key_hook;
+    rl_buffer_changing_hook = buffer_changing;
+    rl_selection_event_hook = cua_selection_event_hook;
+
+    // History hooks.
+    rl_add_history_hook = host_add_history;
+    rl_remove_history_hook = host_remove_history;
+
+    // Match completion.
+    rl_lookup_match_type = lookup_match_type;
+    rl_override_match_append = override_match_append;
+    rl_free_match_list_hook = free_match_list_hook;
+    rl_ignore_some_completions_function = host_filter_matches;
+    rl_attempted_completion_function = alternative_matches;
+    rl_menu_completion_entry_function = filename_menu_completion_function;
+    rl_adjust_completion_defaults = adjust_completion_defaults;
+    rl_adjust_completion_word = adjust_completion_word;
+    rl_qsort_match_list_func = sort_match_list;
+    rl_match_display_filter_func = match_display_filter_callback;
+    rl_compare_lcd_func = compare_lcd;
+    rl_postprocess_lcd_func = postprocess_lcd;
+
+    // Match display.
+    rl_completion_display_matches_func = display_matches;
+    rl_is_exec_func = is_exec_ext;
+
+    // Macro hooks (for "luafunc:" support).
+    rl_macro_hook_func = macro_hook_func;
+    rl_last_func_hook_func = last_func_hook_func;
+}
+
+//------------------------------------------------------------------------------
 void initialise_readline(const char* shell_name, const char* state_dir)
 {
     // Readline needs a tweak of its handling of 'meta' (i.e. IO bytes >=0x80)
@@ -1545,8 +1712,8 @@ void initialise_readline(const char* shell_name, const char* state_dir)
     {
         s_rl_initialized = true;
 
-        rl_add_history_hook = host_add_history;
-        rl_remove_history_hook = host_remove_history;
+        init_readline_hooks();
+
         clink_add_funmap_entry("clink-reload", clink_reload, keycat_misc, "Reloads Lua scripts and the inputrc file(s)");
         clink_add_funmap_entry("clink-reset-line", clink_reset_line, keycat_basic, "Clears the input line.  Can be undone, unlike revert-line");
         clink_add_funmap_entry("clink-show-help", show_rl_help, keycat_misc, "Show all key bindings.  A numeric argument affects showing categories and descriptions");
@@ -1823,131 +1990,13 @@ enum {
 
 
 //------------------------------------------------------------------------------
-static int terminal_read_thunk(FILE* stream)
-{
-    if (stream == in_stream)
-    {
-        assert(s_processed_input);
-        return s_processed_input->read();
-    }
-
-    if (stream == null_stream)
-        return 0;
-
-    assert(false);
-    return fgetc(stream);
-}
-
-//------------------------------------------------------------------------------
-static void terminal_write_thunk(FILE* stream, const char* chars, int char_count)
-{
-    if (stream == out_stream)
-    {
-        assert(g_printer);
-        g_printer->print(chars, char_count);
-        return;
-    }
-
-    if (stream == null_stream)
-        return;
-
-    if (stream == stderr || stream == stdout)
-    {
-        if (stream == stderr && g_rl_hide_stderr.get())
-            return;
-
-        DWORD dw;
-        HANDLE h = GetStdHandle(stream == stderr ? STD_ERROR_HANDLE : STD_OUTPUT_HANDLE);
-        if (GetConsoleMode(h, &dw))
-        {
-            wstr<32> s;
-            str_iter tmpi(chars, char_count);
-            to_utf16(s, tmpi);
-            WriteConsoleW(h, s.c_str(), s.length(), &dw, nullptr);
-        }
-        else
-        {
-            WriteFile(h, chars, char_count, &dw, nullptr);
-        }
-        return;
-    }
-
-    assert(false);
-    fwrite(chars, char_count, 1, stream);
-}
-
-//------------------------------------------------------------------------------
-static void terminal_log_write(FILE* stream, const char* chars, int char_count)
-{
-    if (stream == out_stream)
-    {
-        assert(g_printer);
-        LOGCURSORPOS();
-        LOG("RL_OUTSTREAM \"%.*s\", %d", char_count, chars, char_count);
-        g_printer->print(chars, char_count);
-        return;
-    }
-
-    if (stream == null_stream)
-        return;
-
-    if (stream == stderr || stream == stdout)
-    {
-        if (stream == stderr && g_rl_hide_stderr.get())
-            return;
-
-        DWORD dw;
-        HANDLE h = GetStdHandle(stream == stderr ? STD_ERROR_HANDLE : STD_OUTPUT_HANDLE);
-        if (GetConsoleMode(h, &dw))
-        {
-            LOGCURSORPOS();
-            LOG("%s \"%.*s\", %d", (stream == stderr) ? "CONERR" : "CONOUT", char_count, chars, char_count);
-            wstr<32> s;
-            str_iter tmpi(chars, char_count);
-            to_utf16(s, tmpi);
-            WriteConsoleW(h, s.c_str(), s.length(), &dw, nullptr);
-        }
-        else
-        {
-            LOG("%s \"%.*s\", %d", (stream == stderr) ? "FILEERR" : "FILEOUT", char_count, chars, char_count);
-            WriteFile(h, chars, char_count, &dw, nullptr);
-        }
-        return;
-    }
-
-    assert(false);
-    LOGCURSORPOS();
-    LOG("FWRITE \"%.*s\", %d", char_count, chars, char_count);
-    fwrite(chars, char_count, 1, stream);
-}
-
-//------------------------------------------------------------------------------
-static void terminal_fflush_thunk(FILE* stream)
-{
-    if (stream != out_stream && stream != null_stream)
-        fflush(stream);
-}
-
-
-
-//------------------------------------------------------------------------------
 rl_module::rl_module(terminal_in* input)
 : m_prev_group(-1)
 {
     assert(!s_direct_input);
     s_direct_input = input;
 
-    rl_redisplay_function = hook_display;
-
-    rl_getc_function = terminal_read_thunk;
-    rl_fwrite_function = terminal_write_thunk;
-    if (g_debug_log_terminal.get())
-        rl_fwrite_function = terminal_log_write;
-    rl_fflush_function = terminal_fflush_thunk;
-    rl_instream = in_stream;
-    rl_outstream = out_stream;
-    rl_buffer_changing_hook = buffer_changing;
-    rl_selection_event_hook = cua_selection_event_hook;
+    init_readline_hooks();
 
     _rl_eof_char = g_ctrld_exits.get() ? CTRL('D') : -1;
 
@@ -1969,25 +2018,6 @@ rl_module::rl_module(terminal_in* input)
     rl_completer_word_break_characters = " \t\n\"'`@><=;|&{("; /* }) */
 
     // Completion and match display.
-    rl_lookup_match_type = lookup_match_type;
-    rl_override_match_append = override_match_append;
-    rl_free_match_list_hook = free_match_list_hook;
-    rl_ignore_some_completions_function = host_filter_matches;
-    rl_attempted_completion_function = alternative_matches;
-    rl_menu_completion_entry_function = filename_menu_completion_function;
-    rl_adjust_completion_defaults = adjust_completion_defaults;
-    rl_adjust_completion_word = adjust_completion_word;
-    rl_completion_display_matches_func = display_matches;
-    rl_qsort_match_list_func = sort_match_list;
-    rl_match_display_filter_func = match_display_filter_callback;
-    rl_is_exec_func = is_exec_ext;
-    rl_compare_lcd_func = compare_lcd;
-    rl_postprocess_lcd_func = postprocess_lcd;
-    rl_read_key_hook = read_key_hook;
-    rl_get_face_func = get_face_func;
-    rl_puts_face_func = puts_face_func;
-    rl_macro_hook_func = macro_hook_func;
-    rl_last_func_hook_func = last_func_hook_func;
     rl_ignore_completion_duplicates = 0; // We'll handle de-duplication.
     rl_sort_completion_matches = 0; // We'll handle sorting.
 }
