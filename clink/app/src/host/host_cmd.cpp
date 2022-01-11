@@ -16,8 +16,8 @@
 #include <lib/doskey.h>
 #include <lib/line_buffer.h>
 #include <lib/line_editor.h>
-#include <lib/terminal_helpers.h>
 #include <lua/lua_script_loader.h>
+#include <terminal/terminal_helpers.h>
 
 #if 0
 #define ADMINISTRATOR_TITLE_PREFIX 10056

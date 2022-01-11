@@ -3,7 +3,6 @@
 
 #include "pch.h"
 #include "doskey.h"
-#include "terminal_helpers.h"
 
 #include <core/base.h>
 #include <core/settings.h>
@@ -12,6 +11,7 @@
 #include <core/str_tokeniser.h>
 
 #include "terminal/printer.h"
+#include "terminal/terminal_helpers.h"
 
 //------------------------------------------------------------------------------
 static setting_bool g_enhanced_doskey(

@@ -5,10 +5,11 @@
 #include "ecma48_terminal_out.h"
 #include "ecma48_iter.h"
 #include "screen_buffer.h"
+#include "terminal.h"
+#include "terminal_helpers.h"
 
-#include "core/settings.h"
+#include <core/settings.h>
 
-#include <terminal.h>
 #include <assert.h>
 
 //------------------------------------------------------------------------------

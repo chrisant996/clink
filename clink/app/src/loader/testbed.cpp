@@ -8,10 +8,10 @@
 #include <core/settings.h>
 #include <lib/line_editor.h>
 #include <lib/match_generator.h>
-#include <lib/terminal_helpers.h>
 #include <lua/lua_match_generator.h>
 #include <lua/lua_state.h>
 #include <terminal/terminal.h>
+#include <terminal/terminal_helpers.h>
 #include <terminal/printer.h>
 #include <utils/app_context.h>
 #include <getopt.h>

@@ -2,7 +2,6 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
-#include "terminal_helpers.h"
 
 #include <core/base.h>
 #include <core/settings.h>
@@ -10,6 +9,7 @@
 #include <core/str_unordered_set.h>
 #include <terminal/printer.h>
 #include <terminal/terminal.h>
+#include <terminal/terminal_helpers.h>
 #include <terminal/ecma48_iter.h>
 #include "rl_commands.h"
 #include "editor_module.h"

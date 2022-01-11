@@ -16,7 +16,7 @@
 #include <core/str_transform.h>
 #include <core/settings.h>
 #include <lib/popup.h>
-#include <lib/terminal_helpers.h>
+#include <terminal/terminal_helpers.h>
 #include <terminal/printer.h>
 #include <terminal/screen_buffer.h>
 #include <readline/readline.h>

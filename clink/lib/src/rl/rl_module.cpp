@@ -12,7 +12,6 @@
 #include "word_classifier.h"
 #include "word_classifications.h"
 #include "popup.h"
-#include "terminal_helpers.h"
 #include "textlist_impl.h"
 
 #include "rl_suggestions.h"
@@ -28,6 +27,7 @@
 #include <terminal/ecma48_iter.h>
 #include <terminal/printer.h>
 #include <terminal/terminal_in.h>
+#include <terminal/terminal_helpers.h>
 #include <terminal/key_tester.h>
 #include <terminal/screen_buffer.h>
 #include <terminal/scroll.h>

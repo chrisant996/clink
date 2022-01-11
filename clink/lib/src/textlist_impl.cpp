@@ -7,7 +7,6 @@
 #include "binder.h"
 #include "editor_module.h"
 #include "line_buffer.h"
-#include "terminal_helpers.h"
 
 #include <core/base.h>
 #include <core/settings.h>
@@ -16,6 +15,7 @@
 #include <rl/rl_commands.h>
 #include <terminal/printer.h>
 #include <terminal/ecma48_iter.h>
+#include <terminal/terminal_helpers.h>
 
 extern "C" {
 #include <readline/readline.h>

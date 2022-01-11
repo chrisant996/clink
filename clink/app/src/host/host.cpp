@@ -17,7 +17,6 @@
 #include <lib/doskey.h>
 #include <lib/match_generator.h>
 #include <lib/line_editor.h>
-#include <lib/terminal_helpers.h>
 #include <lua/lua_script_loader.h>
 #include <lua/lua_state.h>
 #include <lua/lua_match_generator.h>
@@ -25,6 +24,7 @@
 #include <lua/suggest.h>
 #include <terminal/printer.h>
 #include <terminal/terminal_out.h>
+#include <terminal/terminal_helpers.h>
 #include <utils/app_context.h>
 
 #include <list>

@@ -9,7 +9,6 @@
 #include "editor_module.h"
 #include "rl_commands.h"
 #include "doskey.h"
-#include "terminal_helpers.h"
 #include "textlist_impl.h"
 
 #include "rl_suggestions.h"
@@ -21,6 +20,7 @@
 #include <terminal/printer.h>
 #include <terminal/scroll.h>
 #include <terminal/screen_buffer.h>
+#include <terminal/terminal_helpers.h>
 
 extern "C" {
 #include <readline/readline.h>

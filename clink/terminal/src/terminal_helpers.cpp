@@ -2,11 +2,11 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
+#include "printer.h"
+#include "terminal_out.h"
 #include "terminal_helpers.h"
 
 #include <core/settings.h>
-#include <terminal/printer.h>
-#include <terminal/terminal_out.h>
 
 #include <assert.h>
 

@@ -3,7 +3,6 @@
 
 #include "pch.h"
 #include "lua_state.h"
-#include "lib/terminal_helpers.h"
 #include "terminal/scroll.h"
 #include "terminal/screen_buffer.h" // for set_console_title
 #include "terminal/printer.h"
@@ -11,6 +10,7 @@
 #include "terminal/ecma48_iter.h"
 #include "terminal/terminal.h"
 #include "terminal/terminal_in.h"
+#include "terminal/terminal_helpers.h"
 
 #include <core/base.h>
 #include <core/str.h>

@@ -6,9 +6,9 @@
 #include <core/str.h>
 #include <lib/line_editor.h>
 #include <lib/line_buffer.h>
-#include <lib/terminal_helpers.h>
 #include <terminal/terminal_in.h>
 #include <terminal/terminal_out.h>
+#include <terminal/terminal_helpers.h>
 
 #include <vector>
 

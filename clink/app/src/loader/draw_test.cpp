@@ -6,10 +6,10 @@
 #include <core/str_iter.h>
 #include <core/settings.h>
 #include <lib/line_editor.h>
-#include <lib/terminal_helpers.h>
 #include <terminal/terminal.h>
 #include <terminal/terminal_in.h>
 #include <terminal/terminal_out.h>
+#include <terminal/terminal_helpers.h>
 #include <terminal/printer.h>
 
 #include <xmmintrin.h>
