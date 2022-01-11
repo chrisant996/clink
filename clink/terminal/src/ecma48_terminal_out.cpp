@@ -15,30 +15,6 @@
 //------------------------------------------------------------------------------
 extern setting_bool g_adjust_cursor_style;
 extern "C" char *tgetstr(const char* name, char** out);
-extern "C" int is_locked_cursor();
-
-//------------------------------------------------------------------------------
-static int s_enhanced_cursor = 0;
-
-//------------------------------------------------------------------------------
-static void visible_bell()
-{
-    if (!g_adjust_cursor_style.get())
-        return;
-
-    HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
-
-    int was_visible = cursor_style(handle, !s_enhanced_cursor, 1);
-
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    GetConsoleScreenBufferInfo(handle, &csbi);
-    COORD xy = { csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y };
-    SetConsoleCursorPosition(handle, xy);
-
-    Sleep(20);
-
-    cursor_style(handle, s_enhanced_cursor, was_visible);
-}
 
 //------------------------------------------------------------------------------
 void set_console_title(const char* title)
@@ -67,6 +43,7 @@ void ecma48_terminal_out::begin()
 {
     m_screen.begin();
     reset_pending();
+    init_termcap_intercept();
 }
 
 //------------------------------------------------------------------------------
@@ -234,34 +211,14 @@ void ecma48_terminal_out::write(const char* chars, int length)
     }
     reset_pending();
 
-    if (m_screen.has_native_vt_processing())
+    const int intercept = do_termcap_intercept(chars);
+    if (intercept > 0)
+        return;
+
+    if (!intercept && m_screen.has_native_vt_processing())
     {
-        struct intercept_string
-        {
-            intercept_string(const char* s) : str(s), len(int(strlen(s))) {}
-            const char* const str;
-            const int len;
-        };
-        static const intercept_string c_strs[] =
-        {
-            tgetstr("vs", nullptr),
-            tgetstr("ve", nullptr),
-            tgetstr("vb", nullptr),
-        };
-
-        bool intercept = ((length == c_strs[0].len ||
-                           length == c_strs[1].len ||
-                           length == c_strs[2].len) &&
-                          chars[0] == '\x1b' &&
-                          (strcmp(chars, c_strs[0].str) == 0 ||
-                           strcmp(chars, c_strs[1].str) == 0 ||
-                           strcmp(chars, c_strs[2].str) == 0));
-
-        if (!intercept)
-        {
-            m_screen.write(chars, length);
-            return;
-        }
+        m_screen.write(chars, length);
+        return;
     }
 
     int need_next = (length == 1 || (chars[0] && !chars[1]));
@@ -517,7 +474,6 @@ void ecma48_terminal_out::set_private_mode(const ecma48_code::csi_base& csi)
         {
         case 12:
             cursor_style(nullptr, 1, -1);
-            s_enhanced_cursor = 1;
             break;
         case 25:
             cursor_style(nullptr, -1, 1);
@@ -539,7 +495,6 @@ void ecma48_terminal_out::reset_private_mode(const ecma48_code::csi_base& csi)
         {
         case 12:
             cursor_style(nullptr, 0, -1);
-            s_enhanced_cursor = 0;
             break;
         case 25:
             cursor_style(nullptr, -1, 0);

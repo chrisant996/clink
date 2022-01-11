@@ -12,6 +12,7 @@
 #include <assert.h>
 
 //------------------------------------------------------------------------------
+extern bool g_enhanced_cursor;
 printer* g_printer = nullptr;
 
 //------------------------------------------------------------------------------
@@ -82,6 +83,7 @@ extern "C" int cursor_style(HANDLE handle, int style, int visible)
         {
             call_set = true;
             ci.dwSize = style ? g_alternate_cursor_size : g_default_cursor_size;
+            g_enhanced_cursor = !!style;
         }
     }
 
