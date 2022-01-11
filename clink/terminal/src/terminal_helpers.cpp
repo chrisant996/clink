@@ -72,7 +72,7 @@ extern "C" int cursor_style(HANDLE handle, int style, int visible)
     if (is_locked_cursor())
         return was_visible;
 
-    bool set = false;
+    bool call_set = false;
 
     if (style >= 0)                     // -1 for no change to style
     {
@@ -80,7 +80,7 @@ extern "C" int cursor_style(HANDLE handle, int style, int visible)
         // size or shape, so it's necessary to always set it.
         if (g_adjust_cursor_style.get())
         {
-            set = true;
+            call_set = true;
             ci.dwSize = style ? g_alternate_cursor_size : g_default_cursor_size;
         }
     }
@@ -89,7 +89,7 @@ extern "C" int cursor_style(HANDLE handle, int style, int visible)
     {
         if (!!ci.bVisible != !!visible && g_adjust_cursor_style.get())
         {
-            if (get_native_ansi_handler() >= ansi_handler::winterminal)
+            if (!call_set && get_native_ansi_handler() >= ansi_handler::winterminal)
             {
                 // This avoids interfering with the cursor shape.  There's a bug
                 // in some versions of Windows starting around when Windows
@@ -101,13 +101,13 @@ extern "C" int cursor_style(HANDLE handle, int style, int visible)
             }
             else
             {
-                set = true;
+                call_set = true;
                 ci.bVisible = !!visible;
             }
         }
     }
 
-    if (set)
+    if (call_set)
         SetConsoleCursorInfo(handle, &ci);
 
     return was_visible;
