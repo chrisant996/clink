@@ -6,6 +6,7 @@
 #include "scroll.h"
 #include "input_idle.h"
 #include "key_tester.h"
+#include "terminal_helpers.h"
 
 #include <core/base.h>
 #include <core/str.h>
@@ -490,19 +491,6 @@ static unsigned int get_dimensions()
     return (cols << 16) | rows;
 }
 
-//------------------------------------------------------------------------------
-static void set_cursor_visibility(bool state)
-{
-    if (!g_adjust_cursor_style.get() || is_locked_cursor())
-        return;
-
-    HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
-    CONSOLE_CURSOR_INFO info;
-    GetConsoleCursorInfo(handle, &info);
-    info.bVisible = BOOL(state);
-    SetConsoleCursorInfo(handle, &info);
-}
-
 
 
 //------------------------------------------------------------------------------
@@ -513,13 +501,13 @@ void win_terminal_in::begin()
     m_stdin = GetStdHandle(STD_INPUT_HANDLE);
     m_dimensions = get_dimensions();
     GetConsoleMode(m_stdin, &m_prev_mode);
-    set_cursor_visibility(false);
+    show_cursor(false);
 }
 
 //------------------------------------------------------------------------------
 void win_terminal_in::end()
 {
-    set_cursor_visibility(true);
+    show_cursor(true);
     SetConsoleMode(m_stdin, m_prev_mode);
     m_stdin = nullptr;
 }
@@ -568,8 +556,8 @@ void win_terminal_in::read_console(input_idle* callback)
     // Hide the cursor unless we're accepting input so we don't have to see it
     // jump around as the screen's drawn.
     struct cursor_scope {
-        cursor_scope()  { set_cursor_visibility(true); }
-        ~cursor_scope() { set_cursor_visibility(false); }
+        cursor_scope()  { show_cursor(true); }
+        ~cursor_scope() { show_cursor(false); }
     } _cs;
 
     // Conhost restarts the cursor blink when writing to the console. It restarts

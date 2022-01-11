@@ -14,6 +14,7 @@ extern printer* g_printer;
 extern "C" int is_locked_cursor();
 extern "C" int lock_cursor(int lock);
 extern "C" int show_cursor(int visible);
+extern "C" int cursor_style(HANDLE handle, int style, int visible);
 extern "C" void use_host_input_mode(void);
 extern "C" void use_clink_input_mode(void);
 

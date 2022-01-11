@@ -13,60 +13,12 @@
 #include <assert.h>
 
 //------------------------------------------------------------------------------
-setting_bool g_adjust_cursor_style(
-    "terminal.adjust_cursor_style",
-    "Adjusts the cursor visibility and shape",
-    "Normally Clink adjusts the cursor visibility and shape, but that will override\n"
-    "the Cursor Shape settings for the default Windows console.  Disabling this\n"
-    "lets the Cursor Shape settings work, but then Clink can't show Insert Mode via\n"
-    "the cursor shape, the 'visible bell' setting doesn't work, Clink can't support\n"
-    "the ANSI escape codes for cursor shape, and the cursor may flicker or flash\n"
-    "strangely while typing.",
-    true);
-
-//------------------------------------------------------------------------------
+extern setting_bool g_adjust_cursor_style;
 extern "C" char *tgetstr(const char* name, char** out);
 extern "C" int is_locked_cursor();
 
 //------------------------------------------------------------------------------
-static int g_enhanced_cursor = 0;
-
-//------------------------------------------------------------------------------
-static int cursor_style(HANDLE handle, int style, int visible)
-{
-    CONSOLE_CURSOR_INFO ci;
-    GetConsoleCursorInfo(handle, &ci);
-    int was_visible = !!ci.bVisible;
-
-    if (!g_adjust_cursor_style.get() || is_locked_cursor())
-        return was_visible;
-
-    // Assume first encounter of cursor size is the default size.
-    static int g_default_cursor_size = -1;
-    if (g_default_cursor_size < 0)
-        g_default_cursor_size = ci.dwSize;
-
-    if (style >= 0)                     // -1 for no change to style
-    {
-        if (g_default_cursor_size > 75)
-            style = !style;
-        ci.dwSize = style ? 100 : g_default_cursor_size;
-    }
-
-    if (visible >= 0)                   // -1 for no change to visibility
-        ci.bVisible = !!visible;
-
-    SetConsoleCursorInfo(handle, &ci);
-
-    return was_visible;
-}
-
-//------------------------------------------------------------------------------
-static int cursor_style(int style, int visible)
-{
-    HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
-    return cursor_style(handle, style, visible);
-}
+static int s_enhanced_cursor = 0;
 
 //------------------------------------------------------------------------------
 static void visible_bell()
@@ -76,7 +28,7 @@ static void visible_bell()
 
     HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
 
-    int was_visible = cursor_style(handle, !g_enhanced_cursor, 1);
+    int was_visible = cursor_style(handle, !s_enhanced_cursor, 1);
 
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     GetConsoleScreenBufferInfo(handle, &csbi);
@@ -85,7 +37,7 @@ static void visible_bell()
 
     Sleep(20);
 
-    cursor_style(handle, g_enhanced_cursor, was_visible);
+    cursor_style(handle, s_enhanced_cursor, was_visible);
 }
 
 //------------------------------------------------------------------------------
@@ -564,11 +516,11 @@ void ecma48_terminal_out::set_private_mode(const ecma48_code::csi_base& csi)
         switch (csi.params[i])
         {
         case 12:
-            cursor_style(1, -1);
-            g_enhanced_cursor = 1;
+            cursor_style(nullptr, 1, -1);
+            s_enhanced_cursor = 1;
             break;
         case 25:
-            cursor_style(-1, 1);
+            cursor_style(nullptr, -1, 1);
             break;
         }
     }
@@ -586,11 +538,11 @@ void ecma48_terminal_out::reset_private_mode(const ecma48_code::csi_base& csi)
         switch (csi.params[i])
         {
         case 12:
-            cursor_style(0, -1);
-            g_enhanced_cursor = 0;
+            cursor_style(nullptr, 0, -1);
+            s_enhanced_cursor = 0;
             break;
         case 25:
-            cursor_style(-1, 0);
+            cursor_style(nullptr, -1, 0);
             break;
         }
     }
