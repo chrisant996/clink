@@ -5,14 +5,11 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- Typing seemed to stall while a prompt coroutine was running when a generator coroutine needed to run.
-  - Maybe have separate `io.popenyield()` queues for prompt coroutines versus generator coroutines?
-  - Why didn't things queue properly, though?
-  - Or was the stall instead network transmission over Remote Desktop?
-- Update docs for the new `CLINK_TERM_VE` and `CLINK_TERM_VS` envvars.
+- Add docs for the new `CLINK_TERM_VE` and `CLINK_TERM_VS` envvars.
+- Add docs for the new `default_settings` file.
+- Investigate the possibility of make `os.execute()` compatible with coroutines.  However, it might be better to change generators to use `io.popen()` instead.
 
 ## Medium Priority
-- Investigate the possibility of make `os.execute()` compatible with coroutines.  However, it might be better to change generators to use `io.popen()` instead.
 - Readline command reference.
 - Add more Readline documentation into the Clink docs.
 
@@ -66,6 +63,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - [Terminal #10191](https://github.com/microsoft/terminal/issues/10191#issuecomment-897345862) Microsoft Terminal does not allow a console application to know about or access the scrollback history, nor to scroll the screen.  It blocks Clink's scrolling commands, and also the `console.findline()` function and everything else that relies on access to the scrollback history.
 
 ## Mystery
+- Typing seemed to stall while a prompt coroutine was running when a generator coroutine needed to run.  But it was over a Remote Desktop connection, and I was unable to reproduce any stalls when the Remote Desktop connection itself was stable.
 - Windows 10.0.19042.630 seems to have problems when using WriteConsoleW with ANSI escape codes in a powerline prompt in a git repo.  But Windows 10.0.19041.630 doesn't.
 - Windows Terminal crashes on exit after `clink inject`.  The current release version was crashing (1.6.10571.0).  Older versions don't crash, and a locally built version from the terminal repo's HEAD doesn't crash.  I think the crash is probably a bug in Windows Terminal, not related to Clink.  And after I built it locally, then it stopped crashing with 1.6.10571.0 as well.  Mysterious...
 
