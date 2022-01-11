@@ -7,11 +7,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Medium Priority
-- Support user-customizable terminal sequences for `ve` and `vs` and `vb`?
-  - E.g. to use Windows escape codes for overriding the cursor shape.
-  - Or escape codes private to specific terminal hosts, etc.
-  - Should probably not be profile settings (maybe envvars?) as they may need to be different for different terminal hosts.
-- Support alternative styles of visual bell?  E.g. maybe use `FlashWindow()`.
 - Readline command reference.
 - Add more Readline documentation into the Clink docs.
 
