@@ -71,16 +71,6 @@ void suggestion_manager::clear()
 }
 
 //------------------------------------------------------------------------------
-void suggestion_manager::update_endword_offset(line_state& line)
-{
-    if (m_iter.more() && g_rl_buffer)
-    {
-        assert(m_suggestion_offset <= line.get_length());
-        m_endword_offset = line.get_end_word_offset();
-    }
-}
-
-//------------------------------------------------------------------------------
 bool suggestion_manager::can_suggest(line_state& line)
 {
     if (!g_rl_buffer)

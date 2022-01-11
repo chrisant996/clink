@@ -92,6 +92,7 @@ extern int host_add_history(int, const char* line);
 extern void host_get_app_context(int& id, str_base& binaries, str_base& profile, str_base& scripts);
 extern "C" int show_cursor(int visible);
 extern int ellipsify(const char* in, int limit, str_base& out, bool expand_ctrl);
+extern void set_suggestion(const char* line, unsigned int endword_offset, const char* suggestion, unsigned int offset);
 
 // This is implemented in the app layer, which makes it inaccessible to lower
 // layers.  But Readline and History are siblings, so history_db and rl_module
@@ -1358,6 +1359,10 @@ int win_f1(int count, int invoking_key)
             str<> more;
             more.concat(prev_buffer + old_point, end_point - old_point);
             rl_insert_text(more.c_str());
+            // Prevent generating a suggestion when inserting characters from
+            // the previous command, otherwise it's often only possible to
+            // insert one character before suggestions take over.
+            set_suggestion(rl_line_buffer, 0, rl_line_buffer, 0);
         }
     }
 
