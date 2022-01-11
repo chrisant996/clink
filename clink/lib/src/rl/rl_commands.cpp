@@ -1337,27 +1337,29 @@ int win_f1(int count, int invoking_key)
     char* prev_buffer = get_previous_command();
     if (!prev_buffer)
     {
+ding:
         rl_ding();
         return 0;
     }
 
     int old_point = 0;
     adjust_point_point(old_point, rl_point, prev_buffer);
-    if (prev_buffer[old_point])
-    {
-        int end_point = old_point;
-        adjust_point_delta(end_point, count, prev_buffer);
-        if (end_point > old_point)
-        {
-            str<> more;
-            more.concat(prev_buffer + old_point, end_point - old_point);
-            rl_insert_text(more.c_str());
-            // Prevent generating a suggestion when inserting characters from
-            // the previous command, otherwise it's often only possible to
-            // insert one character before suggestions take over.
-            set_suggestion(rl_line_buffer, 0, rl_line_buffer, 0);
-        }
-    }
+    if (!prev_buffer[old_point])
+        goto ding;
+
+    int end_point = old_point;
+    adjust_point_delta(end_point, count, prev_buffer);
+    if (end_point <= old_point)
+        goto ding;
+
+    str<> more;
+    more.concat(prev_buffer + old_point, end_point - old_point);
+    rl_insert_text(more.c_str());
+
+    // Prevent generating a suggestion when inserting characters from the
+    // previous command, otherwise it's often only possible to insert one
+    // character before suggestions take over.
+    set_suggestion(rl_line_buffer, 0, rl_line_buffer, 0);
 
     return 0;
 }
