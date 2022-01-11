@@ -211,11 +211,10 @@ void ecma48_terminal_out::write(const char* chars, int length)
     }
     reset_pending();
 
-    const int intercept = do_termcap_intercept(chars);
-    if (intercept > 0)
+    if (do_termcap_intercept(chars))
         return;
 
-    if (!intercept && m_screen.has_native_vt_processing())
+    if (m_screen.has_native_vt_processing())
     {
         m_screen.write(chars, length);
         return;

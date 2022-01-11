@@ -5,7 +5,6 @@
 #include "printer.h"
 #include "terminal_out.h"
 #include "terminal_helpers.h"
-#include "screen_buffer.h"
 
 #include <core/settings.h>
 
@@ -44,12 +43,6 @@ extern "C" int lock_cursor(int lock)
 }
 
 //------------------------------------------------------------------------------
-extern "C" int show_cursor(int visible)
-{
-    return cursor_style(nullptr, -1, !!visible);
-}
-
-//------------------------------------------------------------------------------
 extern "C" int cursor_style(HANDLE handle, int style, int visible)
 {
     if (!handle)
@@ -70,47 +63,22 @@ extern "C" int cursor_style(HANDLE handle, int style, int visible)
             g_alternate_cursor_size = 50;
     }
 
-    if (is_locked_cursor())
+    if (is_locked_cursor() || !g_adjust_cursor_style.get())
+        return was_visible;
+    if (style < 0 && visible < 0)
         return was_visible;
 
-    bool call_set = false;
+    if (style < 0)
+        style = g_enhanced_cursor;
+    else
+        g_enhanced_cursor = !!style;
 
-    if (style >= 0)                     // -1 for no change to style
-    {
-        // Unfortunately there is no way to determine the actual current cursor
-        // size or shape, so it's necessary to always set it.
-        if (g_adjust_cursor_style.get())
-        {
-            call_set = true;
-            ci.dwSize = style ? g_alternate_cursor_size : g_default_cursor_size;
-            g_enhanced_cursor = !!style;
-        }
-    }
+    ci.dwSize = style ? g_alternate_cursor_size : g_default_cursor_size;
 
-    if (visible >= 0)                   // -1 for no change to visibility
-    {
-        if (!!ci.bVisible != !!visible && g_adjust_cursor_style.get())
-        {
-            if (!call_set && get_native_ansi_handler() >= ansi_handler::winterminal)
-            {
-                // This avoids interfering with the cursor shape.  There's a bug
-                // in some versions of Windows starting around when Windows
-                // Terminal was introduced, and the SetConsoleCursorInfo API
-                // always forces Use Legacy Style.  Using escape codes to show
-                // and hide the cursor circumvents that problem.
-                DWORD written;
-                WriteConsoleW(handle, visible ? L"\u001b[?25h" : L"\u001b[?25l", 6, &written, nullptr);
-            }
-            else
-            {
-                call_set = true;
-                ci.bVisible = !!visible;
-            }
-        }
-    }
+    if (visible >= 0)
+        ci.bVisible = !!visible;
 
-    if (call_set)
-        SetConsoleCursorInfo(handle, &ci);
+    SetConsoleCursorInfo(handle, &ci);
 
     return was_visible;
 }

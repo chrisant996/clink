@@ -4,6 +4,7 @@
 #include "pch.h"
 #include "terminal_out.h"
 #include "terminal_helpers.h"
+#include "screen_buffer.h"
 
 #include <core/base.h>
 #include <core/str.h>
@@ -36,6 +37,62 @@ static bool is_cursor_blink_code(const wchar_t* chars)
 }
 
 //------------------------------------------------------------------------------
+extern "C" int show_cursor(int visible)
+{
+    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+
+    if (visible)
+    {
+        const wchar_t* str = g_enhanced_cursor ? s_term_vs.c_str() : s_term_ve.c_str();
+        unsigned int len = g_enhanced_cursor ? s_term_vs.length() : s_term_ve.length();
+
+        // Windows Terminal doesn't support using SetConsoleCursorInfo to change
+        // the cursor size, so use termcap strings instead.
+        if (get_native_ansi_handler() == ansi_handler::winterminal)
+        {
+            if (!str[0])
+            {
+                str = g_enhanced_cursor ? L"\u001b[1 q" : L"\u001b[0 q";
+                len = 6;
+            }
+        }
+
+        // If there's a termcap string and it starts with ESC, write it.
+        const wchar_t c = str[0];
+        if (c == '\x1b')
+        {
+            DWORD dw;
+            WriteConsoleW(h, str, len, &dw, nullptr);
+
+            // If the termcap string is not a blink code, proceed to the common
+            // show/hide logic to ensure the cursor is visible.  If the termcap
+            // string is a blink code, proceed to the default show logic to set
+            // both the style and visibility as usual.
+            if (!is_cursor_blink_code(str))
+                goto common;
+        }
+
+        // Set cursor style and visibility using default console APIs.  This
+        // doesn't work well on Windows Terminal, per notes above.
+        return cursor_style(h, g_enhanced_cursor, 1);
+    }
+
+common:
+
+    // On Windows terminal, the common show/hide logic is simply escape codes.
+    if (get_native_ansi_handler() >= ansi_handler::winterminal)
+    {
+        DWORD dw;
+        const int was_visible = cursor_style(h, -1, -1);
+        WriteConsoleW(h, visible ? L"\u001b[?25h" : L"\u001b[?25l", 6, &dw, nullptr);
+        return was_visible;
+    }
+
+    // Use default console APIs to set the visibility.
+    return cursor_style(h, -1, !!visible);
+}
+
+//------------------------------------------------------------------------------
 void terminal_out::init_termcap_intercept()
 {
     str<> tmp;
@@ -51,10 +108,9 @@ void terminal_out::init_termcap_intercept()
 
 //------------------------------------------------------------------------------
 // Returns:
-//      0   = not intercepted; process normally.
-//      1   = intercepted and handled.
-//      -1  = caller must intercept.
-int terminal_out::do_termcap_intercept(const char* chars)
+//  - false = not intercepted; process normally.
+//  - true  = intercepted and handled.
+bool terminal_out::do_termcap_intercept(const char* chars)
 {
     // If it's the 've' or 'vs' termcap string and there's a custom string then
     // use the custom string.  And if the custom string is exactly and only a
@@ -80,45 +136,20 @@ int terminal_out::do_termcap_intercept(const char* chars)
 
     if (chars == c_default_term_ve)
     {
-        const wchar_t c = s_term_ve[0];
         g_enhanced_cursor = false;
-        if (c == '\x1b')
-        {
-            DWORD dw;
-            HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-            WriteConsoleW(h, s_term_ve.c_str(), s_term_ve.length(), &dw, nullptr);
-            cursor_style(h, -1, 1);
-            if (!is_cursor_blink_code(s_term_ve.c_str()))
-                return 1;
-        }
-        else if (c)
-            return 1;
-        return -1;
+        show_cursor(true);
     }
     else if (chars == c_default_term_vs)
     {
-        const wchar_t c = s_term_vs[0];
         g_enhanced_cursor = true;
-        if (c == '\x1b')
-        {
-            DWORD dw;
-            HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-            WriteConsoleW(h, s_term_vs.c_str(), s_term_vs.length(), &dw, nullptr);
-            cursor_style(h, -1, 1);
-            if (!is_cursor_blink_code(s_term_vs.c_str()))
-                return 1;
-        }
-        if (c)
-            return 1;
-        return -1;
+        show_cursor(true);
     }
     else if (chars == c_default_term_vb)
-    {
         visible_bell();
-        return 1;
-    }
+    else
+        return false;
 
-    return 0;
+    return true;
 }
 
 //------------------------------------------------------------------------------
@@ -149,14 +180,15 @@ void terminal_out::visible_bell()
     // Sleep briefly so the alternate cursor shape can be seen.
     Sleep(20);
 
-    // Restore the previous cursor style.
+    // Restore the previous cursor style.  Also shows the cursor.
     if (enhanced)
         write(c_default_term_vs);
     else
         write(c_default_term_ve);
 
-    // Restore the previous cursor visibility.
-    cursor_style(handle, -1, was_visible);
+    // If the cursor was not previously visible, hide it.
+    if (!was_visible)
+        show_cursor(was_visible);
 
     assert(enhanced == g_enhanced_cursor);
 }

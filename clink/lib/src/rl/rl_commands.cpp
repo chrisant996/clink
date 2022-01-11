@@ -660,7 +660,7 @@ int clink_mark_conhost(int count, int invoking_key)
     // and position.  So we need to trick the cursor into being visible, so that
     // it gets restored as visible since that's the state Readline will be in
     // after the Mark command finishes.
-    cursor_style(nullptr, -1/*style*/, true/*visible*/);
+    show_cursor(true);
 
     // Invoke conhost's Mark command via the system menu.
     SendMessage(hwndConsole, WM_SYSCOMMAND, ID_CONSOLE_MARK, 0);

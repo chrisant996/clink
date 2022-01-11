@@ -30,7 +30,7 @@ public:
     virtual int             find_line(int starting_line, int distance, const char* text, find_line_mode mode, const BYTE* attrs=nullptr, int num_attrs=0, BYTE mask=0xff) const = 0;
 
     static void             init_termcap_intercept();
-    int                     do_termcap_intercept(const char* chars);
+    bool                    do_termcap_intercept(const char* chars);
     void                    visible_bell();
 };
 
