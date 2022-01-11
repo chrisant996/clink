@@ -5,7 +5,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- Cursor style updates aren't working in Windows Terminal.
 - Update docs for the new `CLINK_TERM_VE` and `CLINK_TERM_VS` envvars.
 
 ## Medium Priority
