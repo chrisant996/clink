@@ -5,6 +5,10 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
+- Typing seemed to stall while a prompt coroutine was running when a generator coroutine needed to run.
+  - Maybe have separate `io.popenyield()` queues for prompt coroutines versus generator coroutines?
+  - Why didn't things queue properly, though?
+  - Or was the stall instead network transmission over Remote Desktop?
 - Update docs for the new `CLINK_TERM_VE` and `CLINK_TERM_VS` envvars.
 
 ## Medium Priority
