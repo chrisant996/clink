@@ -350,7 +350,7 @@ Be careful, since some escape code sequences might behave strangely.
 
 ## File Locations
 
-Settings and history are persisted to disk from session to session. The location of these files depends on which distribution of Clink was used. If you installed Clink using the .exe installer then Clink uses the current user's non-roaming application data directory. This user directory is usually found in one of the following locations;
+Settings and history are persisted to disk from session to session. By default Clink uses the current user's non-roaming application data directory. This user directory is usually found in one of the following locations;
 
 - Windows XP: `c:\Documents and Settings\<username>\Local Settings\Application Data\clink`
 - Windows Vista onwards: `c:\Users\<username>\AppData\Local\clink`
@@ -358,6 +358,40 @@ Settings and history are persisted to disk from session to session. The location
 All of the above locations can be overridden using the <code>--profile <span class="arg">path</span></code> command line option which is specified when injecting Clink into cmd.exe using `clink inject`.  Or with the `%CLINK_PROFILE%` environment variable if it is already present when Clink is injected (this envvar takes precedence over any other mechanism of specifying a profile directory, if more than one was used).
 
 You can use `clink info` to find the directories and configuration files for the current Clink session.
+
+### Files
+
+<p>
+<dt>.inputrc</dt>
+<dd>
+This configures the Readline library used by Clink; it can contain key bindings and various settings.  See <a href="#init-file">Readline Init File</a> for details, or see <a href="#gettingstarted_inputrc">Create a .inputrc file</a> for help getting started.
+</p>
+
+<p>
+<dt>clink_settings</dt>
+<dd>
+This is where Clink stores its settings.  See <a href="#clink-settings">Clink Settings</a> for more information.
+</dd></p>
+
+<p>
+<dt>clink_history</dt>
+<dd>
+This is where Clink stores command history.  See <a href="#saved-command-history">Saved Command History</a> for more information.
+</dd></p>
+
+<p>
+<dt>clink.log</dt>
+<dd>
+The log file is written in the profile directory.  Clink writes diagnostic information to the log file while Clink is running.  Use `clink info` to find where it is located.
+</dd></p>
+
+<p>
+<dt>default_settings</dt>
+<dd>
+This is an optional file.  When Clink is started, it first tries to load settings from the `clink_settings` file.  But if that file doesn't exist yet, next Clink tries to load settings from a `default_settings` file in the binaries directory, and then saves the settings to the `clink_settings` file.
+
+The default settings file can be useful for portable installations or when sharing your favorite Clink configuration with friends.
+</dd></p>
 
 ## Command Line Options
 
@@ -383,6 +417,7 @@ See <code>clink autorun --help</code> for more information.</dd>
 </p>
 
 <p>
+<a name="clinksetcommand"></a>
 <dt>clink set</dt>
 <dd>
 <code>clink set</code> by itself lists all settings and their values.<br/>
