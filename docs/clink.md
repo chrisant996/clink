@@ -581,6 +581,7 @@ Name | Description
 `clink-expand-line`|Perform [history](#using-history-expansion), doskey alias, and environment variable expansion in the current input line.
 `clink-find-conhost`|Activates the "Find" dialog when running in a standard console window (hosted by the OS conhost).  This is equivalent to picking "Find..." from the console window's system menu.
 `clink-insert-dot-dot`|Inserts `..\` at the cursor.
+`clink-magic-suggest-space`|Inserts the next full word of the suggestion (if any) up to a space, and also inserts a space.
 `clink-mark-conhost`|Activates the "Mark" mode when running in a standard console window (hosted by the OS conhost).  This is equivalent to picking "Mark" from the console window's system menu.
 `clink-menu-complete-numbers`|Like `menu-complete`, but for numbers from the console screen (3 digits or more, up to hexadecimal).
 `clink-menu-complete-numbers-backward`|Like `menu-complete-backward`, but for numbers from the console screen (3 digits or more, up to hexadecimal).
@@ -602,6 +603,7 @@ Name | Description
 `clink-scroll-top`|Scroll the console window to the top.
 `clink-select-complete`|Like `complete`, but shows interactive menu of matches and responds to arrow keys and typing to filter the matches.
 `clink-selectall-conhost`|Mimics the "Select All" command when running in a standard console window (hosted by the OS conhots).  Selects the input line text.  If already selected, then it invokes the "Select All" command from the console window's system menu and selects the entire screen buffer's contents.
+`clink-shift-space`|Invokes the normal <kbd>Space</kbd> key binding, so that <kbd>Shift</kbd>+<kbd>Space</kbd> behaves the same as <kbd>Space</kbd>.
 `clink-show-help`|Lists the currently active key bindings using friendly key names.  A numeric argument affects showing categories and descriptions:  0 for neither, 1 for categories, 2 for descriptions, 3 for categories and descriptions (the default), 4 for all commands (even if not bound to a key).
 `clink-show-help-raw`|Lists the currently active key bindings using raw key sequences.  A numeric argument affects showing categories and descriptions:  0 for neither, 1 for categories, 2 for descriptions, 3 for categories and descriptions (the default), 4 for all commands (even if not bound to a key).
 `clink-up-directory`|Changes to the parent directory.
@@ -1272,6 +1274,7 @@ These sections provide more information about various aspects of Clink:
 <tr class="lmtr"><td class="lmtd"><a href="#saved-command-history">Saved Command History</a></td><td class="lmtd">How the saved command history works.</td></tr>
 <tr class="lmtr"><td class="lmtd"><a href="#using-history-expansion">Using History Expansion</a></td><td class="lmtd">How to use history expansion.</td></tr>
 <tr class="lmtr"><td class="lmtd"><a href="#popular-scripts">Popular Scripts</a></td><td class="lmtd">Some popular scripts to enhance Clink.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#terminal-support">Terminal Support</a></td><td class="lmtd">Information about how Clink's terminal support works.</td></tr>
 <tr class="lmtr"><td class="lmtd"><a href="#troubleshooting-tips">Troubleshooting Tips</a></td><td class="lmtd">How to troubleshoot and report problems.</td></tr>
 <tr class="lmtr"><td class="lmtd"><a href="#privacy">Privacy</a></td><td class="lmtd">Privacy statement for Clink.</td></tr>
 </table>
@@ -1349,6 +1352,7 @@ M-m:                clink-mark-conhost              <span class="hljs-comment">#
 <span class="hljs-string">"\C-x\C-v"</span>:         dump-variables                  <span class="hljs-comment"># Ctrl+X, Ctrl+V</span>
 
 <span class="hljs-comment"># Misc other key bindings.</span>
+<span class="hljs-string">"\e[27;2;32~"</span>:      clink-magic-suggest-space       <span class="hljs-comment"># Shift+Space</span>
 <span class="hljs-string">"\e[5;6~"</span>:          clink-popup-directories         <span class="hljs-comment"># Ctrl+Shift+PgUp</span>
 C-_:                kill-line                       <span class="hljs-comment"># Ctrl+- (replaces `undo`)</span>
 
@@ -1375,33 +1379,33 @@ When finished, press <kbd>Ctrl</kbd>+<kbd>C</kbd> to exit from `clink echo`.
 
 Here is a table of the key binding sequences for the special keys.  Clink primarily uses VT220 emulation for keyboard input, but also uses some Xterm extended key sequences.
 
-|           |Normal     |Shift       |Ctrl         |Ctrl+Shift   |Alt       |Alt+Shift   |Alt+Ctrl     |Alt+Ctrl+Shift|
-|:-:        |:-:        |:-:         |:-:          |:-:          |:-:       |:-:         |:-:          |:-:           |
-|Up         |`\e[A`     |`\e[1;2A`   |`\e[1;5A`    |`\e[1;6A`    |`\e[1;3A` |`\e[1;4A`   |`\e[1;7A`    |`\e[1;8A`     |
-|Down       |`\e[B`     |`\e[1;2B`   |`\e[1;5B`    |`\e[1;6B`    |`\e[1;3B` |`\e[1;4B`   |`\e[1;7B`    |`\e[1;8B`     |
-|Left       |`\e[D`     |`\e[1;2D`   |`\e[1;5D`    |`\e[1;6D`    |`\e[1;3D` |`\e[1;4D`   |`\e[1;7D`    |`\e[1;8D`     |
-|Right      |`\e[C`     |`\e[1;2C`   |`\e[1;5C`    |`\e[1;6C`    |`\e[1;3C` |`\e[1;4C`   |`\e[1;7C`    |`\e[1;8C`     |
-|Insert     |`\e[2~`    |`\e[2;2~`   |`\e[2;5~`    |`\e[2;6~`    |`\e[2;3~` |`\e[2;4~`   |`\e[2;7~`    |`\e[2;8~`     |
-|Delete     |`\e[3~`    |`\e[3;2~`   |`\e[3;5~`    |`\e[3;6~`    |`\e[3;3~` |`\e[3;4~`   |`\e[3;7~`    |`\e[3;8~`     |
-|Home       |`\e[H`     |`\e[1;2H`   |`\e[1;5H`    |`\e[1;6H`    |`\e[1;3H` |`\e[1;4H`   |`\e[1;7H`    |`\e[1;8H`     |
-|End        |`\e[F`     |`\e[1;2F`   |`\e[1;5F`    |`\e[1;6F`    |`\e[1;3F` |`\e[1;4F`   |`\e[1;7F`    |`\e[1;8F`     |
-|PgUp       |`\e[5~`    |`\e[5;2~`   |`\e[5;5~`    |`\e[5;6~`    |`\e[5;3~` |`\e[5;4~`   |`\e[5;7~`    |`\e[5;8~`     |
-|PgDn       |`\e[6~`    |`\e[6;2~`   |`\e[6;5~`    |`\e[6;6~`    |`\e[6;3~` |`\e[6;4~`   |`\e[6;7~`    |`\e[6;8~`     |
-|Tab        |`\t`       |`\e[Z`      |`\e[27;5;9~` |`\e[27;6;9~` | -        | -          | -           | -            |
-|Space      |`Space`    | -          |`\e[27;5;32~`|`\e[27;6;32~`| -        | -          |`\e[27;7;32~`|`\e[27;8;32~` |
-|Backspace  |`^h`       |`\e[27;2;8~`|`Rubout`     |`\e[27;6;8~` |`\e^h`    |`\e[27;4;8~`|`\eRubout`   |`\e[27;8;8~`  |
-|F1         |`\eOP`     |`\e[1;2P`   |`\e[1;5P`    |`\e[1;6P`    |`\e\eOP`  |`\e\e[1;2P` |`\e\e[1;5P`  |`\e\e[1;6P`   |
-|F2         |`\eOQ`     |`\e[1;2Q`   |`\e[1;5Q`    |`\e[1;6Q`    |`\e\eOQ`  |`\e\e[1;2Q` |`\e\e[1;5Q`  |`\e\e[1;6Q`   |
-|F3         |`\eOR`     |`\e[1;2R`   |`\e[1;5R`    |`\e[1;6R`    |`\e\eOR`  |`\e\e[1;2R` |`\e\e[1;5R`  |`\e\e[1;6R`   |
-|F4         |`\eOS`     |`\e[1;2S`   |`\e[1;5S`    |`\e[1;6S`    |`\e\eOS`  |`\e\e[1;2S` |`\e\e[1;5S`  |`\e\e[1;6S`   |
-|F5         |`\e[15~`   |`\e[15;2~`  |`\e[15;5~`   |`\e[15;6~`   |`\e\e[15~`|`\e\e[15;2~`|`\e\e[15;5~` |`\e\e[15;6~`  |
-|F6         |`\e[17~`   |`\e[17;2~`  |`\e[17;5~`   |`\e[17;6~`   |`\e\e[17~`|`\e\e[17;2~`|`\e\e[17;5~` |`\e\e[17;6~`  |
-|F7         |`\e[18~`   |`\e[18;2~`  |`\e[18;5~`   |`\e[18;6~`   |`\e\e[18~`|`\e\e[18;2~`|`\e\e[18;5~` |`\e\e[18;6~`  |
-|F8         |`\e[19~`   |`\e[19;2~`  |`\e[19;5~`   |`\e[19;6~`   |`\e\e[19~`|`\e\e[19;2~`|`\e\e[19;5~` |`\e\e[19;6~`  |
-|F9         |`\e[20~`   |`\e[20;2~`  |`\e[20;5~`   |`\e[20;6~`   |`\e\e[20~`|`\e\e[20;2~`|`\e\e[20;5~` |`\e\e[20;6~`  |
-|F10        |`\e[21~`   |`\e[21;2~`  |`\e[21;5~`   |`\e[21;6~`   |`\e\e[21~`|`\e\e[21;2~`|`\e\e[21;5~` |`\e\e[21;6~`  |
-|F11        |`\e[23~`   |`\e[23;2~`  |`\e[23;5~`   |`\e[23;6~`   |`\e\e[23~`|`\e\e[23;2~`|`\e\e[23;5~` |`\e\e[23;6~`  |
-|F12        |`\e[24~`   |`\e[24;2~`  |`\e[24;5~`   |`\e[24;6~`   |`\e\e[24~`|`\e\e[24;2~`|`\e\e[24;5~` |`\e\e[24;6~`  |
+|           |Normal     |Shift        |Ctrl         |Ctrl+Shift   |Alt       |Alt+Shift   |Alt+Ctrl     |Alt+Ctrl+Shift|
+|:-:        |:-:        |:-:          |:-:          |:-:          |:-:       |:-:         |:-:          |:-:           |
+|Up         |`\e[A`     |`\e[1;2A`    |`\e[1;5A`    |`\e[1;6A`    |`\e[1;3A` |`\e[1;4A`   |`\e[1;7A`    |`\e[1;8A`     |
+|Down       |`\e[B`     |`\e[1;2B`    |`\e[1;5B`    |`\e[1;6B`    |`\e[1;3B` |`\e[1;4B`   |`\e[1;7B`    |`\e[1;8B`     |
+|Left       |`\e[D`     |`\e[1;2D`    |`\e[1;5D`    |`\e[1;6D`    |`\e[1;3D` |`\e[1;4D`   |`\e[1;7D`    |`\e[1;8D`     |
+|Right      |`\e[C`     |`\e[1;2C`    |`\e[1;5C`    |`\e[1;6C`    |`\e[1;3C` |`\e[1;4C`   |`\e[1;7C`    |`\e[1;8C`     |
+|Insert     |`\e[2~`    |`\e[2;2~`    |`\e[2;5~`    |`\e[2;6~`    |`\e[2;3~` |`\e[2;4~`   |`\e[2;7~`    |`\e[2;8~`     |
+|Delete     |`\e[3~`    |`\e[3;2~`    |`\e[3;5~`    |`\e[3;6~`    |`\e[3;3~` |`\e[3;4~`   |`\e[3;7~`    |`\e[3;8~`     |
+|Home       |`\e[H`     |`\e[1;2H`    |`\e[1;5H`    |`\e[1;6H`    |`\e[1;3H` |`\e[1;4H`   |`\e[1;7H`    |`\e[1;8H`     |
+|End        |`\e[F`     |`\e[1;2F`    |`\e[1;5F`    |`\e[1;6F`    |`\e[1;3F` |`\e[1;4F`   |`\e[1;7F`    |`\e[1;8F`     |
+|PgUp       |`\e[5~`    |`\e[5;2~`    |`\e[5;5~`    |`\e[5;6~`    |`\e[5;3~` |`\e[5;4~`   |`\e[5;7~`    |`\e[5;8~`     |
+|PgDn       |`\e[6~`    |`\e[6;2~`    |`\e[6;5~`    |`\e[6;6~`    |`\e[6;3~` |`\e[6;4~`   |`\e[6;7~`    |`\e[6;8~`     |
+|Tab        |`\t`       |`\e[Z`       |`\e[27;5;9~` |`\e[27;6;9~` | -        | -          | -           | -            |
+|Space      |`Space`    |`\e[27;2;32~`|`\e[27;5;32~`|`\e[27;6;32~`| -        | -          |`\e[27;7;32~`|`\e[27;8;32~` |
+|Backspace  |`^h`       |`\e[27;2;8~` |`Rubout`     |`\e[27;6;8~` |`\e^h`    |`\e[27;4;8~`|`\eRubout`   |`\e[27;8;8~`  |
+|F1         |`\eOP`     |`\e[1;2P`    |`\e[1;5P`    |`\e[1;6P`    |`\e\eOP`  |`\e\e[1;2P` |`\e\e[1;5P`  |`\e\e[1;6P`   |
+|F2         |`\eOQ`     |`\e[1;2Q`    |`\e[1;5Q`    |`\e[1;6Q`    |`\e\eOQ`  |`\e\e[1;2Q` |`\e\e[1;5Q`  |`\e\e[1;6Q`   |
+|F3         |`\eOR`     |`\e[1;2R`    |`\e[1;5R`    |`\e[1;6R`    |`\e\eOR`  |`\e\e[1;2R` |`\e\e[1;5R`  |`\e\e[1;6R`   |
+|F4         |`\eOS`     |`\e[1;2S`    |`\e[1;5S`    |`\e[1;6S`    |`\e\eOS`  |`\e\e[1;2S` |`\e\e[1;5S`  |`\e\e[1;6S`   |
+|F5         |`\e[15~`   |`\e[15;2~`   |`\e[15;5~`   |`\e[15;6~`   |`\e\e[15~`|`\e\e[15;2~`|`\e\e[15;5~` |`\e\e[15;6~`  |
+|F6         |`\e[17~`   |`\e[17;2~`   |`\e[17;5~`   |`\e[17;6~`   |`\e\e[17~`|`\e\e[17;2~`|`\e\e[17;5~` |`\e\e[17;6~`  |
+|F7         |`\e[18~`   |`\e[18;2~`   |`\e[18;5~`   |`\e[18;6~`   |`\e\e[18~`|`\e\e[18;2~`|`\e\e[18;5~` |`\e\e[18;6~`  |
+|F8         |`\e[19~`   |`\e[19;2~`   |`\e[19;5~`   |`\e[19;6~`   |`\e\e[19~`|`\e\e[19;2~`|`\e\e[19;5~` |`\e\e[19;6~`  |
+|F9         |`\e[20~`   |`\e[20;2~`   |`\e[20;5~`   |`\e[20;6~`   |`\e\e[20~`|`\e\e[20;2~`|`\e\e[20;5~` |`\e\e[20;6~`  |
+|F10        |`\e[21~`   |`\e[21;2~`   |`\e[21;5~`   |`\e[21;6~`   |`\e\e[21~`|`\e\e[21;2~`|`\e\e[21;5~` |`\e\e[21;6~`  |
+|F11        |`\e[23~`   |`\e[23;2~`   |`\e[23;5~`   |`\e[23;6~`   |`\e\e[23~`|`\e\e[23;2~`|`\e\e[23;5~` |`\e\e[23;6~`  |
+|F12        |`\e[24~`   |`\e[24;2~`   |`\e[24;5~`   |`\e[24;6~`   |`\e\e[24~`|`\e\e[24;2~`|`\e\e[24;5~` |`\e\e[24;6~`  |
 
 When the `terminal.differentiate_keys` setting is enabled then the following key bindings are also available:
 
@@ -1850,6 +1854,35 @@ load(io.popen('starship.exe init cmd'):read("*a"))()
 ### z.lua
 
 The [z.lua](https://github.com/skywind3000/z.lua) tool is a faster way to navigate directories, and it integrates with Clink.
+
+## Terminal Support
+
+Windows programs generally don't need to worry about terminal support.  But the Readline library used by Clink comes from Unix, where there are many different kinds of terminals, and the library requires certain kinds of terminal support.
+
+Clink's keyboard driver generally produces VT220 style key sequences, but it also includes many extensions from Xterm and other sources.  Use `clink echo` to find key sequences for specific inputs.
+
+Clink's terminal output driver is designed for use with Windows and its console subsystem.  Clink can optionally handle output itself instead, and emulate terminal output support when the `terminal.emulation` setting is `emulate`, or when `auto` and Clink is running on an older version of Windows that doesn't support ANSI escape codes.  In emulation mode, 8 bit and 24 bit color escape codes are mapped to the nearest 4 bit colors.
+
+By default Clink sets the cursor style to a blinking horizontal partial-height block, or to a blink full-height solid block.  Some terminals support escape codes to select alternative cursor styles.  Clink provides environment variables where you may optionally provide escape codes to override the cursor style.  `%CLINK_TERM_VE%` selects the style for the normal cursor (insert mode), `%CLINK_TERM_VS%` selects the style for the enhanced cursor (overwrite mode).
+
+Special codes recognized in the cursor style escape code strings:
+
+<table>
+<tr><th>Code</th><th>Description</th></tr>
+<tr><td><code>\e</code></td><td>Translated to the ESC character (27 decimal, 0x1b hex).</td></tr>
+<tr><td><code>\x<span class="arg">HH</span></code></td><td>Translated to the character matching the hex <span class="arg">HH</span> value.<br/>E.g. <code>\x1b</code> is the same as <code>\e</code>, or <code>\x08</code> is a backspace, etc.</td></tr>
+<tr><td><code>\\</code></td><td>Translated to the <code>\</code> character.</td></tr>
+<tr><td><code><code>\<span class="arg">c</span></code></td><td>Any other backslash is translate to whatever character immediately follows it.<br/>E.g. <code>\a</code> becomes <code>a</code>.</td></tr>
+</table>
+
+Refer to the documentation for individual terminal programs to find what (if any) escape codes they may support.  The default console in Windows 10 supports the [DECSCUSR](https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-SP-q.1D81) escape codes for selecting cursor shape.
+
+This .cmd script sets the normal cursor to a blinking vertical bar, and the enhanced cursor to a non-blinking solid box:
+
+```cmd
+set CLINK_TERM_VE=\e[5 q
+set CLINK_TERM_VS=\e[2 q
+```
 
 ## Troubleshooting Tips
 
