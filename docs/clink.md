@@ -237,6 +237,7 @@ Name                         | Default | Description
 `clink.paste_crlf`           | `crlf`  | What to do with CR and LF characters on paste. Setting this to `delete` deletes them, `space` replaces them with spaces, `ampersand` replaces them with ampersands, and `crlf` pastes them as-is (executing commands that end with a newline).
 `clink.path`                 |         | A list of paths from which to load Lua scripts. Multiple paths can be delimited semicolons.
 `clink.promptfilter`         | True    | Enable [prompt filtering](#customising-the-prompt) by Lua scripts.
+`cmd.admin_title_prefix`     |         | When set, this replaces the "Administrator: " console title prefix.
 `cmd.auto_answer`            | `off`   | Automatically answers cmd.exe's "Terminate batch job (Y/N)?" prompts. `off` = disabled, `answer_yes` = answer Y, `answer_no` = answer N.
 `cmd.ctrld_exits`            | True    | <kbd>Ctrl</kbd>+<kbd>D</kbd> exits the process when it is pressed on an empty line.
 `cmd.get_errorlevel`         | True    | When this is enabled, Clink runs a hidden `echo %errorlevel%` command before each interactive input prompt to retrieve the last exit code for use by Lua scripts.  If you experience problems, try turning this off.  This is on by default.
