@@ -117,7 +117,7 @@ static const char* const kfx[]   = {
 
 //                                            Shf     Ctl         CtlShf      Alt   AtlShf   AltCtl      AltCtlShf
 static const char* const ktab[]  = { "\t",    CSI(Z), MOK(5;9),   MOK(6;9),   "",   "",      "",         ""         }; // TAB
-static const char* const kspc[]  = { " ",     " ",    MOK(5;32),  MOK(6;32),  "",   "",      MOK(7;32),  MOK(8;32)  }; // SPC
+static const char* const kspc[]  = { " ",  MOK(2;32), MOK(5;32),  MOK(6;32),  "",   "",      MOK(7;32),  MOK(8;32)  }; // SPC
 
 static int xterm_modifier(int key_flags)
 {

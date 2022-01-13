@@ -585,6 +585,20 @@ int clink_insert_dot_dot(int count, int invoking_key)
     return 0;
 }
 
+//------------------------------------------------------------------------------
+int clink_shift_space(int count, int invoking_key)
+{
+    return _rl_dispatch(' ', _rl_keymap);
+}
+
+//------------------------------------------------------------------------------
+int clink_magic_suggest_space(int count, int invoking_key)
+{
+    insert_suggestion(suggestion_action::insert_next_full_word);
+    g_rl_buffer->insert(" ");
+    return 0;
+}
+
 
 
 //------------------------------------------------------------------------------

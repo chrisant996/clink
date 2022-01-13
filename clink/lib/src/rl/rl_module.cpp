@@ -1730,6 +1730,8 @@ void initialise_readline(const char* shell_name, const char* state_dir)
         clink_add_funmap_entry("clink-expand-history", clink_expand_history, keycat_misc, "Performs history expansion in the input line");
         clink_add_funmap_entry("clink-expand-history-and-alias", clink_expand_history_and_alias, keycat_misc, "Performs history and doskey alias expansion in the input line");
         clink_add_funmap_entry("clink-expand-line", clink_expand_line, keycat_misc, "Performs history, doskey alias, and environment variable expansion in the input line");
+        clink_add_funmap_entry("clink-shift-space", clink_shift_space, keycat_misc, "Invokes the normal Space key binding");
+        clink_add_funmap_entry("clink-magic-suggest-space", clink_magic_suggest_space, keycat_misc, "Inserts the next full suggested word (if any) up to a space, and inserts a space");
         clink_add_funmap_entry("clink-up-directory", clink_up_directory, keycat_misc, "Executes 'cd ..' to move up one directory");
         clink_add_funmap_entry("clink-insert-dot-dot", clink_insert_dot_dot, keycat_misc, "Inserts '..\\' at the cursor point");
         clink_add_funmap_entry("clink-scroll-line-up", clink_scroll_line_up, keycat_scroll, "Scroll up one line");
@@ -1915,6 +1917,7 @@ void initialise_readline(const char* shell_name, const char* state_dir)
         { "\\e[1;2F",       "cua-end-of-line" },         // shift-end
         { "\\e[2;2~",       "cua-copy" },                // shift-ins
         { "\\e[3;2~",       "cua-cut" },                 // shift-del
+        { "\\e[27;2;32~",   "clink-shift-space" },       // shift-space
         // Update default bindings for commands replaced for suggestions.
         { "\\e[1;3C",       "forward-word" },            // alt-right
         {}

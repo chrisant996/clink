@@ -55,6 +55,8 @@ int     clink_expand_history_and_alias(int count, int invoking_key);
 int     clink_expand_line(int count, int invoking_key);
 int     clink_up_directory(int count, int invoking_key);
 int     clink_insert_dot_dot(int count, int invoking_key);
+int     clink_shift_space(int count, int invoking_key);
+int     clink_magic_suggest_space(int count, int invoking_key);
 
 //------------------------------------------------------------------------------
 int     clink_scroll_line_up(int count, int invoking_key);
