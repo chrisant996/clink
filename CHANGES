@@ -4,6 +4,8 @@
 
 #### v1.3.2
 
+- Added <kbd>Shift</kbd>+<kbd>Space</kbd> as a recognized key.  By default it is bound to `clink-shift-space`, which invokes whatever is bound to the normal <kbd>Space</kbd> key, so that it continues to behave as before unless you specifically bind something else to the <kbd>Shift</kbd>+<kbd>Space</kbd> key.
+- Added `clink-magic-suggest-space` command which inserts the next full suggested word (if any) up to a space, and then inserts a space.  Binding this to <kbd>Shift</kbd>+<kbd>Space</kbd> can be very handy.
 - When loading settings, if there is no setting file yet then Clink looks for a `default_settings` file in the binaries directory and uses that to initalize the settings.
 - Added `CLINK_TERM_VE` and `CLINK_TERM_VS` environment variables that can be set to override the normal (insert mode) and enhanced (overwrite mode) cursor styles, respectively.
 - Various minor fixes to how the cursor style is updated; the visible bell now works in Windows Terminal.
