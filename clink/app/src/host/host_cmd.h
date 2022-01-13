@@ -11,6 +11,8 @@
 #include <lib/word_collector.h>
 #include <lua/prompt.h>
 
+#define ADMIN_TITLE
+
 class lua_state;
 
 //------------------------------------------------------------------------------
@@ -38,6 +40,9 @@ private:
     static DWORD WINAPI get_env_var(LPCWSTR lpName, LPWSTR lpBuffer, DWORD nSize);
 #if 0
     static DWORD WINAPI format_message(DWORD flags, LPCVOID source, DWORD messageId, DWORD languageId, wchar_t* buffer, DWORD size, va_list* arguments);
+#endif
+#ifdef ADMIN_TITLE
+    static BOOL WINAPI  set_console_title(LPCWSTR lpConsoleTitle);
 #endif
     bool                initialise_system();
     virtual void        initialise_lua(lua_state& lua) override;

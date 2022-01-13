@@ -10,17 +10,20 @@
 
 #include <core/base.h>
 #include <core/log.h>
+#include <core/str_compare.h>
+#include <core/str_unordered_set.h>
 #include <core/settings.h>
 #include <core/os.h>
 #include <core/path.h>
+#include <core/linear_allocator.h>
 #include <lib/doskey.h>
 #include <lib/line_buffer.h>
 #include <lib/line_editor.h>
 #include <lua/lua_script_loader.h>
 #include <terminal/terminal_helpers.h>
 
-#if 0
-#define ADMINISTRATOR_TITLE_PREFIX 10056
+#ifdef ADMIN_TITLE
+#define ADMINISTRATOR_TITLE_PREFIX 0x40002748
 #endif
 
 //------------------------------------------------------------------------------
@@ -28,10 +31,12 @@ using func_SetEnvironmentVariableW_t = BOOL (WINAPI*)(LPCWSTR lpName, LPCWSTR lp
 using func_WriteConsoleW_t = BOOL (WINAPI*)(HANDLE hConsoleOutput, CONST VOID* lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved);
 using func_ReadConsoleW_t = BOOL (WINAPI*)(HANDLE hConsoleInput, VOID* lpBuffer, DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, __CONSOLE_READCONSOLE_CONTROL* pInputControl);
 using func_GetEnvironmentVariableW_t = DWORD (WINAPI*)(LPCWSTR lpName, LPWSTR lpBuffer, DWORD nSize);
+using func_SetConsoleTitleW = BOOL (WINAPI*)(LPCWSTR lpConsoleTitle);
 func_SetEnvironmentVariableW_t __Real_SetEnvironmentVariableW = SetEnvironmentVariableW;
 func_WriteConsoleW_t __Real_WriteConsoleW = WriteConsoleW;
 func_ReadConsoleW_t __Real_ReadConsoleW = ReadConsoleW;
 func_GetEnvironmentVariableW_t __Real_GetEnvironmentVariableW = GetEnvironmentVariableW;
+func_SetConsoleTitleW __Real_SetConsoleTitleW = SetConsoleTitleW;
 
 //------------------------------------------------------------------------------
 extern bool is_force_reload_scripts();
@@ -47,7 +52,7 @@ static setting_enum g_autoanswer(
     "off,answer_yes,answer_no",
     0);
 
-#if 0
+#ifdef ADMIN_TITLE
 static setting_str g_admin_title_prefix(
     "cmd.admin_title_prefix",
     "Replaces the console title prefix when elevated",
@@ -219,6 +224,30 @@ static void write_line_feed()
     HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
     DWORD written;
     __Real_WriteConsoleW(handle, L"\n", 1, &written, nullptr);
+}
+
+//------------------------------------------------------------------------------
+static bool is_elevated()
+{
+    static bool s_initialized = false;
+    static bool s_elevated = false;
+
+    if (!s_initialized)
+    {
+        HANDLE token = 0;
+        if (OpenThreadToken(GetCurrentThread(), TOKEN_QUERY, false, &token) ||
+            OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token))
+        {
+            DWORD size = 0;
+            TOKEN_ELEVATION_TYPE type = TokenElevationTypeDefault;
+            if (GetTokenInformation(token, TokenElevationType, &type, sizeof(type), &size))
+                s_elevated = (type == TokenElevationTypeFull);
+            CloseHandle(token);
+        }
+        s_initialized = true;
+    }
+
+    return s_elevated;
 }
 
 
@@ -630,6 +659,64 @@ DWORD WINAPI host_cmd::format_message(DWORD flags, LPCVOID source, DWORD message
 #endif
 
 //------------------------------------------------------------------------------
+#ifdef ADMIN_TITLE
+static wstr_unordered_set s_old_prefixes;
+static linear_allocator s_old_prefix_store(1024);
+static bool s_ever_prefix = false;
+BOOL WINAPI host_cmd::set_console_title(LPCWSTR lpConsoleTitle)
+{
+    wstr<> clink_prefix;
+
+    if (is_elevated())
+    {
+        str<> tmp;
+        wstr<280> cmd_prefix;
+        g_admin_title_prefix.get(tmp);
+        if ((tmp.length() || s_ever_prefix) && get_mui_string(ADMINISTRATOR_TITLE_PREFIX, cmd_prefix))
+        {
+            s_ever_prefix = true;
+            clink_prefix = tmp.c_str();
+
+            // Strip recognized administrator prefixes.
+            str_compare_scope _(str_compare_scope::caseless, false);
+            while (true)
+            {
+                const LPCWSTR orig = lpConsoleTitle;
+                if (cmd_prefix.length() && str_compare(lpConsoleTitle, cmd_prefix.c_str()) == cmd_prefix.length())
+                    lpConsoleTitle += cmd_prefix.length();
+                if (clink_prefix.length() && str_compare(lpConsoleTitle, clink_prefix.c_str()) == clink_prefix.length())
+                    lpConsoleTitle += clink_prefix.length();
+                for (auto& old : s_old_prefixes)
+                {
+                    const int len = str_compare(lpConsoleTitle, old);
+                    if (len > 0 && old[len] == '\0')
+                        lpConsoleTitle += len;
+                }
+                if (orig == lpConsoleTitle)
+                    break;
+            }
+
+            // Remember prefix.
+            if (clink_prefix.length() && s_old_prefixes.find(clink_prefix.c_str()) == s_old_prefixes.end())
+            {
+                const unsigned int cb = (clink_prefix.length() + 1) * sizeof(*clink_prefix.c_str());
+                wchar_t* ptr = (wchar_t*)s_old_prefix_store.alloc(cb);
+                memcpy(ptr, clink_prefix.c_str(), cb);
+                s_old_prefixes.emplace(ptr);
+            }
+
+            // Concatenate the preferred prefix and the rest of the title.
+            wstr_base* title = clink_prefix.length() ? static_cast<wstr_base*>(&clink_prefix) : static_cast<wstr_base*>(&cmd_prefix);
+            title->concat(lpConsoleTitle);
+            lpConsoleTitle = title->c_str();
+        }
+    }
+
+    return __Real_SetConsoleTitleW(lpConsoleTitle);
+}
+#endif
+
+//------------------------------------------------------------------------------
 bool host_cmd::initialise_system()
 {
     {
@@ -649,7 +736,17 @@ bool host_cmd::initialise_system()
         // prefix, but ignore failure since it's just a minor convenience.
         {
             hook_setter hooks;
-            hooks.add(type, module, "FormatMessageW", &host_cmd::format_message, &__imp_FormatMessageW);
+            hooks.attach(type, module, "FormatMessageW", &host_cmd::format_message, &__Real_FormatMessageW);
+            hooks.commit();
+        }
+#endif
+
+#ifdef ADMIN_TITLE
+        // Hook SetConsoleTitleW in order to replace the "Administrator: "
+        // prefix, but ignore failure since it's just a minor convenience.
+        {
+            hook_setter hooks;
+            hooks.attach(type, module, "SetConsoleTitleW", &host_cmd::set_console_title, &__Real_SetConsoleTitleW);
             hooks.commit();
         }
 #endif
