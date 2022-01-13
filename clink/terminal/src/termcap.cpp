@@ -93,17 +93,68 @@ common:
 }
 
 //------------------------------------------------------------------------------
-void terminal_out::init_termcap_intercept()
+static wchar_t from_hex(wchar_t c)
+{
+    if (c >= '0' && c <= '9')
+        return c - '0';
+    if (c >= 'a' && c <= 'f')
+        return 10 + c - 'a';
+    if (c >= 'A' && c <= 'F')
+        return 10 + c - 'A';
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+static void fetch_term_string(const char* envvar, wstr_moveable& out)
 {
     str<> tmp;
-    if (os::get_env("CLINK_TERM_VE", tmp))
-        s_term_ve = tmp.c_str();
+    if (!os::get_env(envvar, tmp))
+    {
+        out.clear();
+        return;
+    }
+
+    wstr_moveable wtmp(tmp.c_str());
+    if (wcschr(wtmp.c_str(), '\\'))
+    {
+        out.clear();
+        for (const wchar_t* s = wtmp.c_str(); *s; s++)
+        {
+            if (*s != '\\')
+                out.concat(s, 1);
+            else
+            {
+                s++;
+                if (*s == 'e')
+                    out.concat(L"\u001b", 1);
+                else if (*s == 0)
+                    break;
+                else if (*s != 'x')
+                    out.concat(s, 1);
+                else
+                {
+                    wchar_t c = 0;
+                    if (!s[1] || !s[2])
+                        break;
+                    c = from_hex(s[1]) << 4;
+                    c += from_hex(s[2]);
+                    out.concat(&c, 1);
+                    s += 2;
+                }
+            }
+        }
+    }
     else
-        s_term_ve.clear();
-    if (os::get_env("CLINK_TERM_VS", tmp))
-        s_term_vs = tmp.c_str();
-    else
-        s_term_vs.clear();
+    {
+        out = std::move(wtmp);
+    }
+}
+
+//------------------------------------------------------------------------------
+void terminal_out::init_termcap_intercept()
+{
+    fetch_term_string("CLINK_TERM_VE", s_term_ve);
+    fetch_term_string("CLINK_TERM_VS", s_term_vs);
 }
 
 //------------------------------------------------------------------------------
