@@ -5,8 +5,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- Add docs for the new `CLINK_TERM_VE` and `CLINK_TERM_VS` envvars.
-- Add docs for the new `default_settings` file.
 - Investigate the possibility of make `os.execute()` compatible with coroutines.  However, it might be better to change generators to use `io.popen()` instead.
 
 ## Medium Priority
