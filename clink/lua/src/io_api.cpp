@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "lua_state.h"
+#include "yield.h"
 
 #include <core/base.h>
 #include <core/os.h>
@@ -24,14 +25,6 @@
 //------------------------------------------------------------------------------
 struct popenrw_info;
 static popenrw_info* s_head = nullptr;
-static HANDLE s_wake_event = nullptr;
-
-//------------------------------------------------------------------------------
-void set_io_wake_event(HANDLE event)
-{
-    // Borrow a ref from the caller.
-    s_wake_event = event;
-}
 
 //------------------------------------------------------------------------------
 struct popenrw_info
@@ -165,24 +158,6 @@ static int pclosefile(lua_State *state)
     }
 
     return luaL_fileresult(state, (res == 0), NULL);
-}
-
-//------------------------------------------------------------------------------
-static HANDLE dup_handle(HANDLE process_handle, HANDLE h)
-{
-    HANDLE new_h = 0;
-    if (!DuplicateHandle(process_handle,
-                         h,
-                         process_handle,
-                         &new_h,
-                         0,
-                         true/*bInheritHandle*/,
-                         DUPLICATE_SAME_ACCESS))
-    {
-        os::map_errno();
-        return 0;
-    }
-    return new_h;
 }
 
 //------------------------------------------------------------------------------
@@ -350,7 +325,7 @@ struct pipe_pair
 
             local = _wfdopen(handles[index_local], c_mode[write][binary]);
             if (local)
-                remote = dup_handle(GetCurrentProcess(), reinterpret_cast<HANDLE>(_get_osfhandle(handles[index_remote])));
+                remote = os::dup_handle(GetCurrentProcess(), reinterpret_cast<HANDLE>(_get_osfhandle(handles[index_remote])), true/*inherit*/);
 
             errno_t e = errno;
             _close(handles[index_remote]);
@@ -381,8 +356,10 @@ struct pipe_pair
     FILE* local = nullptr;
 };
 
+
+
 //------------------------------------------------------------------------------
-struct popen_buffering : public std::enable_shared_from_this<popen_buffering>
+struct popen_buffering : public yield_thread
 {
     popen_buffering(FILE* r, HANDLE w)
     : m_read(r)
@@ -395,90 +372,33 @@ struct popen_buffering : public std::enable_shared_from_this<popen_buffering>
 
     ~popen_buffering()
     {
-        if (m_thread_handle)
-        {
-            cancel();
-            CloseHandle(m_thread_handle);
-        }
         if (m_read)
             fclose(m_read);
         if (m_write)
             CloseHandle(m_write);
-        if (m_ready_event)
-            CloseHandle(m_ready_event);
-        if (m_wake_event)
-            CloseHandle(m_wake_event);
     }
 
-    bool createthread()
+    int results(lua_State*) override
     {
-        assert(!m_suspended);
-        assert(!m_thread_handle);
-        assert(!m_cancelled);
-        assert(!m_ready_event);
-        assert(!m_wake_event);
-        if (s_wake_event)
-        {
-            m_wake_event = dup_handle(GetCurrentProcess(), s_wake_event);
-            if (!m_wake_event)
-                return false;
-        }
-        m_ready_event = CreateEvent(nullptr, true, false, nullptr);
-        if (!m_ready_event)
-            return false;
-        m_thread_handle = reinterpret_cast<HANDLE>(_beginthreadex(nullptr, 0, &threadproc, this, CREATE_SUSPENDED, nullptr));
-        if (!m_thread_handle)
-            return false;
-        m_holder = shared_from_this(); // Now threadproc holds a strong ref.
-        m_suspended = true;
-        return true;
-    }
-
-    void go()
-    {
-        assert(m_suspended);
-        if (m_thread_handle)
-        {
-            m_suspended = false;
-            ResumeThread(m_thread_handle);
-        }
-    }
-
-    void cancel()
-    {
-        m_cancelled = true;
-        if (m_suspended) // Can only be true when there's no concurrency.
-            ResumeThread(m_thread_handle);
-    }
-
-    bool is_ready()
-    {
-        if (!m_ready_event)
-            return false;
-        return WaitForSingleObject(m_ready_event, 0) == WAIT_OBJECT_0;
-    }
-
-    HANDLE get_ready_event()
-    {
-        return m_ready_event;
+        // Should never be called (see io.popenyield in coroutines.lua).
+        assert(false);
+        return 0;
     }
 
 private:
-    static unsigned __stdcall threadproc(void* arg)
+    void do_work() override
     {
-        popen_buffering* _this = static_cast<popen_buffering*>(arg);
-        HANDLE rh = reinterpret_cast<HANDLE>(_get_osfhandle(fileno(_this->m_read)));
-        HANDLE wh = _this->m_write;
+        HANDLE rh = reinterpret_cast<HANDLE>(_get_osfhandle(fileno(m_read)));
+        HANDLE wh = m_write;
 
-        while (!_this->m_cancelled)
+        while (!is_canceled())
         {
             DWORD len;
-TODO("COROUTINES: could use overlapped IO to enable cancelling even a blocking call.");
-            if (!ReadFile(rh, _this->m_buffer, sizeof_array(m_buffer), &len, nullptr))
+            if (!ReadFile(rh, m_buffer, sizeof_array(m_buffer), &len, nullptr))
                 break;
 
             DWORD written;
-            if (!WriteFile(wh, _this->m_buffer, len, &written, nullptr))
+            if (!WriteFile(wh, m_buffer, len, &written, nullptr))
                 break;
             if (written != len)
                 break;
@@ -488,130 +408,15 @@ TODO("COROUTINES: could use overlapped IO to enable cancelling even a blocking c
         SetFilePointer(wh, 0, nullptr, FILE_BEGIN);
 
         // Close the write handle since it's finished.
-        CloseHandle(_this->m_write);
-        _this->m_write = nullptr;
-
-        // Signal completion events.
-        SetEvent(_this->m_ready_event);
-        if (_this->m_wake_event)
-            SetEvent(_this->m_wake_event);
-
-        // Release threadproc's strong ref.
-        _this->m_holder = nullptr;
-
-        _endthreadex(0);
-        return 0;
+        CloseHandle(m_write);
+        m_write = nullptr;
     }
 
     FILE* m_read;
     HANDLE m_write;
-    HANDLE m_thread_handle = 0;
-    HANDLE m_ready_event = 0;
-    HANDLE m_wake_event = 0;
-    bool m_suspended = false;
 
-    volatile long m_cancelled = false;
-    volatile long m_ready = false;
-
-    std::shared_ptr<popen_buffering> m_holder;
     BYTE m_buffer[4096];
 };
-
-
-
-//------------------------------------------------------------------------------
-#define LUA_YIELDGUARD "clink_yield_guard"
-struct luaL_YieldGuard
-{
-    static luaL_YieldGuard* make_new(lua_State* state);
-
-    void init(std::shared_ptr<popen_buffering>& buffering, const char* command);
-
-private:
-    static int ready(lua_State* state);
-    static int command(lua_State* state);
-    static int __gc(lua_State* state);
-    static int __tostring(lua_State* state);
-
-    std::shared_ptr<popen_buffering> m_buffering;
-    str_moveable m_command;
-};
-
-//------------------------------------------------------------------------------
-luaL_YieldGuard* luaL_YieldGuard::make_new(lua_State* state)
-{
-#ifdef DEBUG
-    int oldtop = lua_gettop(state);
-#endif
-
-    luaL_YieldGuard* yg = (luaL_YieldGuard*)lua_newuserdata(state, sizeof(luaL_YieldGuard));
-    new (yg) luaL_YieldGuard();
-
-    static const luaL_Reg yglib[] =
-    {
-        {"ready", ready},
-        {"command", luaL_YieldGuard::command}, // Ambiguous because of command arg.
-        {"__gc", __gc},
-        {"__tostring", __tostring},
-        {nullptr, nullptr}
-    };
-
-    if (luaL_newmetatable(state, LUA_YIELDGUARD))
-    {
-        lua_pushvalue(state, -1);           // push metatable
-        lua_setfield(state, -2, "__index"); // metatable.__index = metatable
-        luaL_setfuncs(state, yglib, 0);     // add methods to new metatable
-    }
-    lua_setmetatable(state, -2);
-
-#ifdef DEBUG
-    int newtop = lua_gettop(state);
-    assert(oldtop - newtop == -1);
-    luaL_YieldGuard* test = (luaL_YieldGuard*)luaL_checkudata(state, -1, LUA_YIELDGUARD);
-    assert(test == yg);
-#endif
-
-    return yg;
-}
-
-//------------------------------------------------------------------------------
-void luaL_YieldGuard::init(std::shared_ptr<popen_buffering>& buffering, const char* command)
-{
-    m_buffering = buffering;
-    m_command = command;
-}
-
-//------------------------------------------------------------------------------
-int luaL_YieldGuard::ready(lua_State* state)
-{
-    luaL_YieldGuard* yg = (luaL_YieldGuard*)luaL_checkudata(state, 1, LUA_YIELDGUARD);
-    lua_pushboolean(state, yg->m_buffering->is_ready());
-    return 1;
-}
-
-//------------------------------------------------------------------------------
-int luaL_YieldGuard::command(lua_State* state)
-{
-    luaL_YieldGuard* yg = (luaL_YieldGuard*)luaL_checkudata(state, 1, LUA_YIELDGUARD);
-    lua_pushstring(state, yg->m_command.c_str());
-    return 1;
-}
-
-//------------------------------------------------------------------------------
-int luaL_YieldGuard::__gc(lua_State* state)
-{
-    luaL_YieldGuard* yg = (luaL_YieldGuard*)luaL_checkudata(state, 1, LUA_YIELDGUARD);
-    yg->~luaL_YieldGuard();
-    return 0;
-}
-
-//------------------------------------------------------------------------------
-int luaL_YieldGuard::__tostring(lua_State* state)
-{
-    luaL_YieldGuard* yg = (luaL_YieldGuard*)luaL_checkudata(state, 1, LUA_YIELDGUARD);
-    lua_pushfstring(state, "yieldguard (%p)", yg->m_buffering.get());
-    return 1;
-}
 
 
 
@@ -765,7 +570,7 @@ int luaL_YieldGuard::__tostring(lua_State* state)
         if (!temp_read)
             break;
 
-        temp_write = dup_handle(GetCurrentProcess(), reinterpret_cast<HANDLE>(_get_osfhandle(fileno(temp_read))));
+        temp_write = os::dup_handle(GetCurrentProcess(), reinterpret_cast<HANDLE>(_get_osfhandle(fileno(temp_read))), true/*inherit*/);
         if (!temp_write)
             break;
 

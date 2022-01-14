@@ -16,7 +16,7 @@ extern "C" {
 }
 
 //------------------------------------------------------------------------------
-extern void set_io_wake_event(HANDLE event);
+extern void set_yield_wake_event(HANDLE event);
 static lua_input_idle* s_idle = nullptr;
 
 //------------------------------------------------------------------------------
@@ -38,7 +38,7 @@ lua_input_idle::lua_input_idle(lua_state& state)
 lua_input_idle::~lua_input_idle()
 {
     s_idle = nullptr;
-    set_io_wake_event(nullptr);
+    set_yield_wake_event(nullptr);
 }
 
 //------------------------------------------------------------------------------
@@ -51,7 +51,7 @@ void lua_input_idle::reset()
     m_enabled = true;
     m_iterations = 0;
     m_event = CreateEvent(nullptr, false, false, nullptr);
-    set_io_wake_event(m_event);
+    set_yield_wake_event(m_event);
 
     if (old_event)
         CloseHandle(old_event);

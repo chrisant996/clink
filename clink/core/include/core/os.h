@@ -85,4 +85,6 @@ int     get_errorlevel();
 void    set_shellname(const wchar_t* shell_name);
 const wchar_t* get_shellname();
 
+HANDLE  dup_handle(HANDLE process_handle, HANDLE h, bool inherit=false);
+
 }; // namespace os

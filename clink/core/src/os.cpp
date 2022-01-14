@@ -863,6 +863,24 @@ void append_argv(str_base& out, const char* arg, argv_quote_mode mode)
 }
 #endif
 
+//------------------------------------------------------------------------------
+HANDLE dup_handle(HANDLE process_handle, HANDLE h, bool inherit)
+{
+    HANDLE new_h = 0;
+    if (!DuplicateHandle(process_handle,
+                         h,
+                         process_handle,
+                         &new_h,
+                         0,
+                         inherit,
+                         DUPLICATE_SAME_ACCESS))
+    {
+        os::map_errno();
+        return 0;
+    }
+    return new_h;
+}
+
 }; // namespace os
 
 //------------------------------------------------------------------------------
