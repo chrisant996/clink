@@ -1885,6 +1885,13 @@ set CLINK_TERM_VE=\e[5 q
 set CLINK_TERM_VS=\e[2 q
 ```
 
+Or this .cmd script sets the normal cursor to blink, and the enhanced cursor to not blink:
+
+```cmd
+set CLINK_TERM_VE=\e[?12h
+set CLINK_TERM_VS=\e[?12l
+```
+
 ## Troubleshooting Tips
 
 If something seems to malfunction, here are some things to try that often help track down what's going wrong:
