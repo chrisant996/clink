@@ -11,6 +11,7 @@
 - Added `CLINK_TERM_VE` and `CLINK_TERM_VS` environment variables that can be set to override the normal (insert mode) and enhanced (overwrite mode) cursor styles, respectively.
 - Various minor fixes to how the cursor style is updated; the visible bell now works in Windows Terminal.
 - When `os.execute()` is used in a coroutine, it automatically yields until complete.
+- Fixed async match generators (during autosuggest) to be allowed to finish, instead of getting canceled on every keystroke if they hadn't finished yet.
 - Fixed cursor blink, which was accidentally disabled (regression introduced in v1.2.44).
 - Fixed the `win-cursor-forward` command so it doesn't trigger generating a new suggestion if there isn't already one.
 
