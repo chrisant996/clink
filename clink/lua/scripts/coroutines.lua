@@ -589,7 +589,7 @@ function io.popenyield(command, mode)
         end
     end
     if can_async then
-        -- Yield to ensure only one popenyield active at a time.
+        -- Yield to ensure only one yieldable API is active at a time.
         if _coroutine_yieldguard then
             set_coroutine_queued(true)
             while _coroutine_yieldguard do
@@ -640,6 +640,52 @@ io.popen = function (command, mode)
     end
 
     return old_io_popen(command, mode)
+end
+
+--------------------------------------------------------------------------------
+-- MAGIC:  Redirect os.execute to os.executeyield when used in a coroutine.
+local old_os_execute = os.execute
+os.execute = function (command)
+    -- This outer wrapper is implemented in Lua so that it can yield.
+    local c, ismain = coroutine.running()
+    if ismain or command == nil then
+        return old_os_execute(command)
+    end
+    -- Yield to ensure only one yieldable API is active at a time.
+    if _coroutine_yieldguard then
+        set_coroutine_queued(true)
+        while _coroutine_yieldguard do
+            coroutine.yield()
+            if clink._is_coroutine_canceled(c) then
+                break
+            end
+        end
+        set_coroutine_queued(false)
+        if clink._is_coroutine_canceled(c) then
+            return nil, "exit", -1, "canceled"
+        end
+    end
+    -- Cancel if not from the current generation.
+    if get_coroutine_generation() ~= _coroutine_generation then
+        local message = (type(command) == string) and command..": " or ""
+        cancel_coroutine(message)
+        return nil, "exit", -1, "canceled"
+    end
+    -- Start the executeyield.
+    local yieldguard = os.executeyield_internal(command)
+    if yieldguard then
+        set_coroutine_yieldguard(yieldguard)
+        while not yieldguard:ready() do
+            coroutine.yield()
+            -- Do not allow canceling once the process has been spawned.
+            -- This enforces no more than one spawned background process is
+            -- running at a time.
+        end
+        set_coroutine_yieldguard(nil)
+        return yieldguard:results()
+    else
+        return nil, "exit", -1, "failed"
+    end
 end
 
 --------------------------------------------------------------------------------

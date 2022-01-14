@@ -4,6 +4,7 @@
 #include "pch.h"
 #include "lua_state.h"
 #include "lua_bindable.h"
+#include "yield.h"
 
 #include <core/base.h>
 #include <core/globber.h>
@@ -16,6 +17,10 @@
 #include <sys/utime.h>
 #include <ntverp.h> // for VER_PRODUCTMAJORVERSION to deduce SDK version
 #include <assert.h>
+
+extern "C" {
+#include <lstate.h>
+}
 
 #include <memory>
 
@@ -165,6 +170,35 @@ int globber_lua::close(lua_State* state)
 {
     m_globber.close();
     return 0;
+}
+
+
+
+//------------------------------------------------------------------------------
+struct execute_thread : public yield_thread
+{
+                    execute_thread(const char* command) : m_command(command) {}
+                    ~execute_thread() {}
+    int             results(lua_State* state) override;
+private:
+    void            do_work() override;
+    str_moveable    m_command;
+    int             m_stat = -1;
+    errno_t         m_errno = 0;
+};
+
+//------------------------------------------------------------------------------
+void execute_thread::do_work()
+{
+    m_stat = system(m_command.c_str());
+    m_errno = errno;
+}
+
+//------------------------------------------------------------------------------
+int execute_thread::results(lua_State* state)
+{
+    errno = m_errno;
+    return luaL_execresult(state, m_stat);
 }
 
 
@@ -1191,6 +1225,29 @@ static int set_clipboard_text(lua_State *state)
 }
 
 //------------------------------------------------------------------------------
+static int os_executeyield_internal(lua_State *state) // gcc can't handle 'friend' and 'static'.
+{
+    bool ismain = (G(state)->mainthread == state);
+    const char *command = luaL_optstring(state, 1, NULL);
+    if (ismain || command == nullptr)
+    {
+        assert(false);
+        return 0;
+    }
+
+    luaL_YieldGuard* yg = luaL_YieldGuard::make_new(state);
+
+    std::shared_ptr<execute_thread> thread = std::make_shared<execute_thread>(command);
+    if (thread->createthread())
+    {
+        yg->init(thread, command);
+        thread->go();
+    }
+
+    return 1; // yg
+}
+
+//------------------------------------------------------------------------------
 void os_lua_initialise(lua_state& lua)
 {
     struct {
@@ -1228,6 +1285,7 @@ void os_lua_initialise(lua_state& lua)
         { "clock",       &double_clock },
         { "getclipboardtext", &get_clipboard_text },
         { "setclipboardtext", &set_clipboard_text },
+        { "executeyield_internal", &os_executeyield_internal },
         // UNDOCUMENTED; internal use only.
         { "_globdirs",   &glob_dirs },  // Public os.globdirs method is in core.lua.
         { "_globfiles",  &glob_files }, // Public os.globfiles method is in core.lua.
