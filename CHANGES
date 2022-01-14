@@ -10,6 +10,7 @@
 - When loading settings, if there is no setting file yet then Clink looks for a `default_settings` file in the binaries directory and uses that to initalize the settings.
 - Added `CLINK_TERM_VE` and `CLINK_TERM_VS` environment variables that can be set to override the normal (insert mode) and enhanced (overwrite mode) cursor styles, respectively.
 - Various minor fixes to how the cursor style is updated; the visible bell now works in Windows Terminal.
+- When `os.execute()` is used in a coroutine, it automatically yields until complete.
 - Fixed cursor blink, which was accidentally disabled (regression introduced in v1.2.44).
   - Note:  If you prefer no blinking, you can turn off cursor blinking by including `print("\x1b[?12l")` in a Lua script.  Or print `"\x1b[?12h"` to turn on cursor blinking.
 - Fixed the `win-cursor-forward` command so it doesn't trigger generating a new suggestion if there isn't already one.
