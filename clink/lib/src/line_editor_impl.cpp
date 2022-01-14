@@ -31,6 +31,7 @@ extern setting_bool g_classify_words;
 extern setting_bool g_autosuggest_async;
 extern int g_suggestion_offset;
 
+extern "C" void host_clear_suggestion();
 extern bool is_showing_argmatchers();
 extern bool win_fn_callback_pending();
 extern match_builder_toolkit* get_deferred_matches(int generation_id);
@@ -127,10 +128,8 @@ bool notify_matches_ready(int generation_id)
         return false;
 
     match_builder_toolkit* toolkit = get_deferred_matches(generation_id);
-    if (!toolkit)
-        return false;
-
-    return s_editor->notify_matches_ready(generation_id, toolkit->get_matches());
+    matches* matches = toolkit ? toolkit->get_matches() : nullptr;
+    return s_editor->notify_matches_ready(generation_id, matches);
 }
 
 //------------------------------------------------------------------------------
@@ -500,15 +499,21 @@ bool line_editor_impl::notify_matches_ready(int generation_id, matches* matches)
     rollback<bool> rb(m_in_matches_ready, true);
 #endif
 
-    if (generation_id != m_generation_id)
-        return false;
-
-    // Finalize the matches.
-    m_matches.done_building();
-
-    // Transfer the matches.
-    m_matches.transfer(*(matches_impl*)matches);
-    clear_flag(flag_generate);
+    // The generation matches, then use the newly generated matches.
+    if (matches && generation_id == m_generation_id)
+    {
+        m_matches.done_building();
+        m_matches.transfer(*(matches_impl*)matches);
+        clear_flag(flag_generate);
+    }
+    else
+    {
+        // There's a newer generation id, so force a new suggestion, since the
+        // newer generation id's autosuggest will have been canceled due to the
+        // match generator coroutine that was already running, and which has
+        // just now signaled its completion.
+        host_clear_suggestion();
+    }
 
     // Trigger generating suggestion again.
     try_suggest();
