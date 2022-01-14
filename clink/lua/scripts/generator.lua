@@ -122,7 +122,8 @@ end
 local _match_generate_coroutine
 local _started_match_generate_coroutine
 local function cancel_match_generate_coroutine()
-    if _match_generate_coroutine and coroutine.running() ~= _match_generate_coroutine then
+    local _, ismain = coroutine.running()
+    if ismain and _match_generate_coroutine then
         -- Make things (e.g. globbers) short circuit to faciliate coroutine
         -- completing as quickly as possible.
         clink._cancel_coroutine(_match_generate_coroutine)
@@ -137,8 +138,10 @@ end
 
 --------------------------------------------------------------------------------
 function clink._make_match_generate_coroutine(line, matches, builder, generation_id)
-    -- Cancel all prior coroutines for match generation.
-    cancel_match_generate_coroutine()
+    -- Bail if there's already a match generator coroutine running.
+    if _match_generate_coroutine then
+        return
+    end
 
     -- Create coroutine to generate matches.  The coroutine is automatically
     -- scheduled for resume while waiting for input.
