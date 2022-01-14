@@ -13,6 +13,10 @@
 #include <core/str_iter.h>
 #include <core/settings.h>
 
+#ifdef DEBUG
+#include <core/log.h>
+#endif
+
 #include <assert.h>
 #include <map>
 
@@ -577,12 +581,17 @@ void win_terminal_in::read_console(input_idle* callback)
         DWORD modeIn;
         if (GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &modeIn))
         {
-            // If Lua code uses io.popen():lines() and returns without finishing
-            // reading the output, this can be reached with the console mode set
-            // wrong.  Compensate.
-            assert(!(modeIn & ENABLE_PROCESSED_INPUT));
+            // Compensate when this is reached with the console mode set wrong.
+            // This can happen when Lua code uses io.popen():lines() and returns
+            // without finishing reading the output, or uses os.execute() in a
+            // coroutine.
             if (modeIn & ENABLE_PROCESSED_INPUT)
+            {
+#ifdef DEBUG
+                LOG("UNEXPECTED: console input is in ENABLE_PROCESSED_INPUT mode (0x%x)", modeIn);
+#endif
                 SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), modeIn & ~ENABLE_PROCESSED_INPUT);
+            }
         }
 
         while (callback)
