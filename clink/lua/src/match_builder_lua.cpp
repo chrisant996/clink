@@ -17,6 +17,7 @@ const match_builder_lua::method match_builder_lua::c_methods[] = {
     { "setappendcharacter", &set_append_character },
     { "setsuppressappend",  &set_suppress_append },
     { "setsuppressquoting", &set_suppress_quoting },
+    { "setnosort",          &set_no_sort },
     // Only for backward compatibility:
     { "deprecated_addmatch", &deprecated_add_match },
     { "setmatchesarefiles", &set_matches_are_files },
@@ -189,6 +190,16 @@ int match_builder_lua::set_suppress_quoting(lua_State* state)
 
     m_builder->set_suppress_quoting(suppress);
 
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+/// -name:  builder:setnosort
+/// -ver:   1.3.3
+/// Turns off sorting the matches.
+int match_builder_lua::set_no_sort(lua_State* state)
+{
+    m_builder->set_no_sort();
     return 0;
 }
 

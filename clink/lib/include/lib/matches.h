@@ -139,6 +139,7 @@ public:
     virtual match_type      get_match_type(unsigned int index) const = 0;
     virtual const char*     get_match_display(unsigned int index) const = 0;
     virtual const char*     get_match_description(unsigned int index) const = 0;
+    virtual unsigned int    get_match_ordinal(unsigned int index) const = 0;
     virtual char            get_match_append_char(unsigned int index) const = 0;
     virtual shadow_bool     get_match_suppress_append(unsigned int index) const = 0;
     virtual bool            get_match_append_display(unsigned int index) const = 0;
@@ -192,6 +193,7 @@ public:
     void                    set_append_character(char append);
     void                    set_suppress_append(bool suppress=true);
     void                    set_suppress_quoting(int suppress=1); //0=no, 1=yes, 2=suppress end quote
+    void                    set_no_sort();
 
     void                    set_deprecated_mode();
     void                    set_matches_are_files(bool files=true);

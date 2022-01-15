@@ -336,6 +336,19 @@ function _argmatcher:addarg(...)
 end
 
 --------------------------------------------------------------------------------
+--- -name:  _argmatcher:addargunsorted
+--- -ver:   1.3.3
+--- -arg:   choices...:string|table
+--- -ret:   self
+--- This is the same as <a href="#_argmatcher:addarg">_argmatcher:addarg</a>
+--- except that this disables sorting the matches.
+function _argmatcher:addargunsorted(...)
+    self:addarg(...)
+    list.nosort = true
+    return self
+end
+
+--------------------------------------------------------------------------------
 --- -name:  _argmatcher:addflags
 --- -ver:   1.0.0
 --- -arg:   flags...:string
@@ -362,6 +375,19 @@ function _argmatcher:addflags(...)
     if not self._deprecated then
         self._flagprefix = prefixes
     end
+    return self
+end
+
+--------------------------------------------------------------------------------
+--- -name:  _argmatcher:addflagsunsorted
+--- -ver:   1.3.3
+--- -arg:   flags...:string
+--- -ret:   self
+--- This is the same as <a href="#_argmatcher:addflags">_argmatcher:addflags</a>
+--- except that this also disables sorting for flags.
+function _argmatcher:addflagsunsorted(...)
+    self:addflags(...)
+    self._flags._args[1].nosort = true
     return self
 end
 
@@ -646,6 +672,7 @@ function _argmatcher:_add(list, addee, prefixes)
             _compat_warning("warning: replacing arglink for '"..addee._key.."'", " -- merging linked argmatchers was unreliable and is no longer supported")
         end
         list._links[addee._key] = addee._matcher
+        table.insert(list, addee._key) -- Necessary to maintain original unsorted order.
         if prefixes then add_prefix(prefixes, addee._key) end
     else
         table.insert(list, addee)
@@ -724,8 +751,8 @@ function _argmatcher:_generate(line_state, match_builder, extra_words)
             return m
         end
 
-        for key, _ in pairs(arg._links) do
-            match_builder:addmatch(make_match(key), match_type)
+        if arg.nosort then
+            match_builder:setnosort()
         end
 
         for _, i in ipairs(arg) do

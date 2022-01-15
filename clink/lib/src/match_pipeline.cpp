@@ -35,9 +35,6 @@ static setting_enum g_sort_dirs(
 
 
 //------------------------------------------------------------------------------
-static bool s_nosort = false;
-
-//------------------------------------------------------------------------------
 static unsigned int normal_selector(
     const char* needle,
     match_info* infos,
@@ -155,6 +152,16 @@ static void alpha_sorter(match_info* infos, int count)
     std::sort(infos, infos + count, predicate);
 }
 
+//------------------------------------------------------------------------------
+static void ordinal_sorter(match_info* infos, int count)
+{
+    auto predicate = [&] (const match_info& lhs, const match_info& rhs) {
+        return lhs.ordinal < rhs.ordinal;
+    };
+
+    std::sort(infos, infos + count, predicate);
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -167,13 +174,12 @@ match_pipeline::match_pipeline(matches_impl& matches)
 void match_pipeline::reset() const
 {
     m_matches.reset();
-    s_nosort = false;
 }
 
 //------------------------------------------------------------------------------
-void match_pipeline::set_nosort(bool nosort)
+void match_pipeline::set_no_sort()
 {
-    s_nosort = nosort;
+    m_matches.set_no_sort();
 }
 
 //------------------------------------------------------------------------------
@@ -286,12 +292,12 @@ void match_pipeline::sort() const
     // internal sorting.  However, Clink's Lua API allows generators to disable
     // sorting.
 
-    if (s_nosort)
-        return;
-
     int count = m_matches.get_match_count();
     if (!count)
         return;
 
-    alpha_sorter(m_matches.get_infos(), count);
+    if (m_matches.m_nosort)
+        ordinal_sorter(m_matches.get_infos(), count); // "no sort" means "original order".
+    else
+        alpha_sorter(m_matches.get_infos(), count);
 }

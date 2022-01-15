@@ -16,6 +16,7 @@ struct match_info
     const char*     match;
     const char*     display;
     const char*     description;
+    unsigned        ordinal;            // Original unsorted order.
     match_type      type;
     char            append_char;        // Zero means not specified.
     char            suppress_append;    // Negative means not specified.
@@ -67,6 +68,7 @@ public:
     virtual match_type      get_match_type(unsigned int index) const override;
     virtual const char*     get_match_display(unsigned int index) const override;
     virtual const char*     get_match_description(unsigned int index) const override;
+    virtual unsigned int    get_match_ordinal(unsigned int index) const override;
     virtual char            get_match_append_char(unsigned int index) const override;
     virtual shadow_bool     get_match_suppress_append(unsigned int index) const override;
     virtual bool            get_match_append_display(unsigned int index) const override;
@@ -105,6 +107,7 @@ private:
     void                    set_suppress_quoting(int suppress);
     void                    set_deprecated_mode();
     void                    set_matches_are_files(bool files);
+    void                    set_no_sort();
     bool                    add_match(const match_desc& desc, bool already_normalised=false);
     unsigned int            get_info_count() const;
     const match_info*       get_infos() const;
@@ -132,6 +135,7 @@ private:
     char                    m_append_character = '\0';
     bool                    m_suppress_append = false;
     bool                    m_regen_blocked = false;
+    bool                    m_nosort = false;
     int                     m_suppress_quoting = 0;
     int                     m_word_break_position = -1;
     shadow_bool             m_filename_completion_desired;

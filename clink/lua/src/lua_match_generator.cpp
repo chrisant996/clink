@@ -140,7 +140,7 @@ static int plainify(const char* s, char** strip)
 }
 
 //------------------------------------------------------------------------------
-bool lua_match_generator::match_display_filter(const char* needle, char** matches, match_display_filter_entry*** filtered_matches, display_filter_flags flags, bool* old_filtering)
+bool lua_match_generator::match_display_filter(const char* needle, char** matches, match_display_filter_entry*** filtered_matches, display_filter_flags flags, bool nosort, bool* old_filtering)
 {
     bool ret = false;
     lua_State* state = m_state.get_state();

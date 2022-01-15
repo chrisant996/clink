@@ -249,6 +249,12 @@ void match_builder::set_suppress_quoting(int suppress)
 }
 
 //------------------------------------------------------------------------------
+void match_builder::set_no_sort()
+{
+    return ((matches_impl&)m_matches).set_no_sort();
+}
+
+//------------------------------------------------------------------------------
 void match_builder::set_deprecated_mode()
 {
     ((matches_impl&)m_matches).set_deprecated_mode();
@@ -546,6 +552,15 @@ const char* matches_impl::get_match_description(unsigned int index) const
 }
 
 //------------------------------------------------------------------------------
+unsigned int matches_impl::get_match_ordinal(unsigned int index) const
+{
+    if (index >= get_match_count())
+        return 0;
+
+    return m_infos[index].ordinal;
+}
+
+//------------------------------------------------------------------------------
 char matches_impl::get_match_append_char(unsigned int index) const
 {
     if (index >= get_match_count())
@@ -695,7 +710,7 @@ bool matches_impl::match_display_filter(const char* needle, char** matches, matc
     // accurately (it might have been produced by a pattern iterator) in order
     // to generate an array to pass to clink.match_display_filter.
 
-    return m_generator && m_generator->match_display_filter(needle, matches, filtered_matches, flags, old_filtering);
+    return m_generator && m_generator->match_display_filter(needle, matches, filtered_matches, flags, m_nosort, old_filtering);
 }
 
 //------------------------------------------------------------------------------
@@ -706,13 +721,14 @@ void matches_impl::reset()
 
     m_store.reset();
     m_infos.clear();
+    m_count = 0;
     m_any_infer_type = false;
     m_can_infer_type = true;
     m_coalesced = false;
-    m_count = 0;
     m_append_character = '\0';
-    m_regen_blocked = false;
     m_suppress_append = false;
+    m_regen_blocked = false;
+    m_nosort = false;
     m_suppress_quoting = 0;
     m_word_break_position = -1;
     m_filename_completion_desired.reset();
@@ -734,6 +750,7 @@ void matches_impl::transfer(matches_impl& from)
     m_append_character = from.m_append_character;
     m_suppress_append = from.m_suppress_append;
     m_regen_blocked = from.m_regen_blocked;
+    m_nosort = from.m_nosort;
     m_suppress_quoting = from.m_suppress_quoting;
     m_word_break_position = from.m_word_break_position;
     m_filename_completion_desired = from.m_filename_completion_desired;
@@ -793,6 +810,12 @@ void matches_impl::set_matches_are_files(bool files)
 {
     m_filename_completion_desired.set_explicit(files);
     m_filename_display_desired.set_explicit(files);
+}
+
+//------------------------------------------------------------------------------
+void matches_impl::set_no_sort()
+{
+    m_nosort = true;
 }
 
 //------------------------------------------------------------------------------
@@ -886,7 +909,8 @@ bool matches_impl::add_match(const match_desc& desc, bool already_normalized)
     match_lookup lookup = { store_match, type };
     m_dedup->emplace(std::move(lookup));
 
-    match_info info = { store_match, store_display, store_description, type, desc.append_char, desc.suppress_append, append_display, false/*select*/, is_none/*infer_type*/ };
+    unsigned int ordinal = static_cast<unsigned int>(m_infos.size());
+    match_info info = { store_match, store_display, store_description, ordinal, type, desc.append_char, desc.suppress_append, append_display, false/*select*/, is_none/*infer_type*/ };
     m_infos.emplace_back(std::move(info));
     ++m_count;
 

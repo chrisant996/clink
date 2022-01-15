@@ -1083,7 +1083,8 @@ matches* line_editor_impl::get_mutable_matches(bool nosort)
 
     match_pipeline pipeline(m_matches);
     pipeline.reset();
-    pipeline.set_nosort(nosort);
+    if (nosort)
+        pipeline.set_no_sort();
 
     m_matches.set_word_break_position(end_word.offset);
     m_matches.set_regen_blocked();
