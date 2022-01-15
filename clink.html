@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.3.1</title>
+<title>Clink v1.3.2</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -771,7 +771,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.3.1</div>
+                <div id="title">Clink v1.3.2</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -926,7 +926,7 @@ $endif
 <p><a name="gettingstarted_customprompt"></a></p>
 <h3 id="custom-prompt">Custom Prompt</h3>
 <p>If you want a customizable prompt with a bunch of styles and an easy-to-use configuration wizard, check out <a href="https://github.com/chrisant996/clink-flex-prompt">clink-flex-prompt</a>.  Also, if you&#39;ve been disappointed by git making the prompt slow in other shells, try this prompt -- it makes the prompt appear instantly by running git commands in the background and refreshing the prompt once the background commands complete.</p>
-<p>Another popular configurable prompt is <a href="#oh-my-posh">oh-my-posh</a>.</p>
+<p>Other popular configurable prompts are <a href="#oh-my-posh">oh-my-posh</a> and <a href="#starship">starship</a>.</p>
 <p>See <a href="#customisingtheprompt">Customizing the Prompt</a> for information on how to use Lua to customize the prompt.</p>
 <p><a name="upgradefrom049"></a></p>
 <h2 id="upgrading-from-clink-v049">Upgrading from Clink v0.4.9</h2>
@@ -1021,6 +1021,11 @@ $endif
 <td align="center"><code>clink.promptfilter</code></td>
 <td align="center">True</td>
 <td>Enable <a href="#customising-the-prompt">prompt filtering</a> by Lua scripts.</td>
+</tr>
+<tr>
+<td align="center"><code>cmd.admin_title_prefix</code></td>
+<td align="center"></td>
+<td>When set, this replaces the &quot;Administrator: &quot; console title prefix.</td>
 </tr>
 <tr>
 <td align="center"><code>cmd.auto_answer</code></td>
@@ -1415,13 +1420,46 @@ $endif
 <p>Be careful, since some escape code sequences might behave strangely.</p>
 <p><a name="filelocations"></a></p>
 <h2 id="file-locations">File Locations</h2>
-<p>Settings and history are persisted to disk from session to session. The location of these files depends on which distribution of Clink was used. If you installed Clink using the .exe installer then Clink uses the current user&#39;s non-roaming application data directory. This user directory is usually found in one of the following locations;</p>
+<p>Settings and history are persisted to disk from session to session. By default Clink uses the current user&#39;s non-roaming application data directory. This user directory is usually found in one of the following locations;</p>
 <ul>
 <li>Windows XP: <code>c:\Documents and Settings\&lt;username&gt;\Local Settings\Application Data\clink</code></li>
 <li>Windows Vista onwards: <code>c:\Users\&lt;username&gt;\AppData\Local\clink</code></li>
 </ul>
 <p>All of the above locations can be overridden using the <code>--profile <span class="arg">path</span></code> command line option which is specified when injecting Clink into cmd.exe using <code>clink inject</code>.  Or with the <code>%CLINK_PROFILE%</code> environment variable if it is already present when Clink is injected (this envvar takes precedence over any other mechanism of specifying a profile directory, if more than one was used).</p>
 <p>You can use <code>clink info</code> to find the directories and configuration files for the current Clink session.</p>
+<h3 id="files">Files</h3>
+<p>
+<dt>.inputrc</dt>
+<dd>
+This configures the Readline library used by Clink; it can contain key bindings and various settings.  See <a href="#init-file">Readline Init File</a> for details, or see <a href="#gettingstarted_inputrc">Create a .inputrc file</a> for help getting started.
+</p>
+
+<p>
+<dt>clink_settings</dt>
+<dd>
+This is where Clink stores its settings.  See <a href="#clink-settings">Clink Settings</a> for more information.
+</dd></p>
+
+<p>
+<dt>clink_history</dt>
+<dd>
+This is where Clink stores command history.  See <a href="#saved-command-history">Saved Command History</a> for more information.
+</dd></p>
+
+<p>
+<dt>clink.log</dt>
+<dd>
+The log file is written in the profile directory.  Clink writes diagnostic information to the log file while Clink is running.  Use `clink info` to find where it is located.
+</dd></p>
+
+<p>
+<dt>default_settings</dt>
+<dd>
+This is an optional file.  When Clink is started, it first tries to load settings from the `clink_settings` file.  But if that file doesn't exist yet, next Clink tries to load settings from a `default_settings` file in the binaries directory, and then saves the settings to the `clink_settings` file.
+
+<p>The default settings file can be useful for portable installations or when sharing your favorite Clink configuration with friends.</p>
+</dd></p>
+
 <h2 id="command-line-options">Command Line Options</h2>
 <p>
 <dt>clink</dt>
@@ -1445,6 +1483,7 @@ See <code>clink autorun --help</code> for more information.</dd>
 </p>
 
 <p>
+<a name="clinksetcommand"></a>
 <dt>clink set</dt>
 <dd>
 <code>clink set</code> by itself lists all settings and their values.<br/>
@@ -1494,7 +1533,7 @@ Echos key sequences to use in the .inputrc files for binding keys to Clink comma
 <p>Sometimes it&#39;s useful to run Clink from a flash drive or from a network share, especially if you want to use Clink on someone else&#39;s computer.</p>
 <p>Here&#39;s how you can set up a portable configuration for Clink:</p>
 <ol>
-<li>Put your Lua scripts and other tools in the same directory as the Clink executable files.  For example fzf.exe, z.cmd, oh-my-posh.exe, or etc can all go in the same directory on a flash drive or network share.</li>
+<li>Put your Lua scripts and other tools in the same directory as the Clink executable files.  For example fzf.exe, z.cmd, oh-my-posh.exe, starship.exe etc can all go in the same directory on a flash drive or network share.</li>
 <li>Make a batch file such as <code>portable.bat</code> that injects Clink using a specific profile directory.<ul>
 <li>On a flash drive, you can have a portable profile in a subdirectory under the Clink directory.</li>
 <li>On a network share, you&#39;ll want to copy some initial settings into a local profile directory (a profile directory on a network share will be slow).</li>
@@ -1664,6 +1703,10 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 <td>Inserts <code>..\</code> at the cursor.</td>
 </tr>
 <tr>
+<td align="center"><code>clink-magic-suggest-space</code></td>
+<td>Inserts the next full word of the suggestion (if any) up to a space, and also inserts a space.</td>
+</tr>
+<tr>
 <td align="center"><code>clink-mark-conhost</code></td>
 <td>Activates the &quot;Mark&quot; mode when running in a standard console window (hosted by the OS conhost).  This is equivalent to picking &quot;Mark&quot; from the console window&#39;s system menu.</td>
 </tr>
@@ -1746,6 +1789,10 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 <tr>
 <td align="center"><code>clink-selectall-conhost</code></td>
 <td>Mimics the &quot;Select All&quot; command when running in a standard console window (hosted by the OS conhots).  Selects the input line text.  If already selected, then it invokes the &quot;Select All&quot; command from the console window&#39;s system menu and selects the entire screen buffer&#39;s contents.</td>
+</tr>
+<tr>
+<td align="center"><code>clink-shift-space</code></td>
+<td>Invokes the normal <kbd>Space</kbd> key binding, so that <kbd>Shift</kbd>+<kbd>Space</kbd> behaves the same as <kbd>Space</kbd>.</td>
 </tr>
 <tr>
 <td align="center"><code>clink-show-help</code></td>
@@ -2881,6 +2928,7 @@ end
 <tr class="lmtr"><td class="lmtd"><a href="#saved-command-history">Saved Command History</a></td><td class="lmtd">How the saved command history works.</td></tr>
 <tr class="lmtr"><td class="lmtd"><a href="#using-history-expansion">Using History Expansion</a></td><td class="lmtd">How to use history expansion.</td></tr>
 <tr class="lmtr"><td class="lmtd"><a href="#popular-scripts">Popular Scripts</a></td><td class="lmtd">Some popular scripts to enhance Clink.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#terminal-support">Terminal Support</a></td><td class="lmtd">Information about how Clink's terminal support works.</td></tr>
 <tr class="lmtr"><td class="lmtd"><a href="#troubleshooting-tips">Troubleshooting Tips</a></td><td class="lmtd">How to troubleshoot and report problems.</td></tr>
 <tr class="lmtr"><td class="lmtd"><a href="#privacy">Privacy</a></td><td class="lmtd">Privacy statement for Clink.</td></tr>
 </table>
@@ -2953,6 +3001,7 @@ M-m:                clink-mark-conhost              <span class="hljs-comment">#
 <span class="hljs-string">"\C-x\C-v"</span>:         dump-variables                  <span class="hljs-comment"># Ctrl+X, Ctrl+V</span>
 
 <span class="hljs-comment"># Misc other key bindings.</span>
+<span class="hljs-string">"\e[27;2;32~"</span>:      clink-magic-suggest-space       <span class="hljs-comment"># Shift+Space</span>
 <span class="hljs-string">"\e[5;6~"</span>:          clink-popup-directories         <span class="hljs-comment"># Ctrl+Shift+PgUp</span>
 C-_:                kill-line                       <span class="hljs-comment"># Ctrl+- (replaces `undo`)</span>
 
@@ -3111,7 +3160,7 @@ C-_:                kill-line                       <span class="hljs-comment">#
 <tr>
 <td align="center">Space</td>
 <td align="center"><code>Space</code></td>
-<td align="center">-</td>
+<td align="center"><code>\e[27;2;32~</code></td>
 <td align="center"><code>\e[27;5;32~</code></td>
 <td align="center"><code>\e[27;6;32~</code></td>
 <td align="center">-</td>
@@ -3900,8 +3949,37 @@ or edit, the word or words selected from the history event.</p>
 <pre><code class="language-lua">-- oh-my-posh.lua
 load(io.popen(&#39;oh-my-posh.exe --config=&quot;C:/Users/me/jandedobbeleer.omp.json&quot; --init --shell cmd&#39;):read(&quot;*a&quot;))()
 </code></pre>
+<h3 id="starship">starship</h3>
+<p>The <a href="https://github.com/starship/starship">starship</a> program can also generate fancy prompts. Refer to its <a href="https://starship.rs">documentation</a> for how to configure it.</p>
+<p>Integrating starship with Clink is just as easy: save the following text to a <code>starship.lua</code> file in your Clink scripts directory (run <code>clink info</code> to find that), and make sure the <code>starship.exe</code> program is in a directory listed in the <code>%PATH%</code> environment variable (or edit the script below to provide a fully qualified path to the starship.exe program). The config file for starship is located at <code>C:\Users\&lt;username&gt;\.config\starship.toml</code>.</p>
+<pre><code class="language-lua">-- starship.lua
+load(io.popen(&#39;starship.exe init cmd&#39;):read(&quot;*a&quot;))()
+</code></pre>
 <h3 id="zlua">z.lua</h3>
 <p>The <a href="https://github.com/skywind3000/z.lua">z.lua</a> tool is a faster way to navigate directories, and it integrates with Clink.</p>
+<h2 id="terminal-support">Terminal Support</h2>
+<p>Windows programs generally don&#39;t need to worry about terminal support.  But the Readline library used by Clink comes from Unix, where there are many different kinds of terminals, and the library requires certain kinds of terminal support.</p>
+<p>Clink&#39;s keyboard driver generally produces VT220 style key sequences, but it also includes many extensions from Xterm and other sources.  Use <code>clink echo</code> to find key sequences for specific inputs.</p>
+<p>Clink&#39;s terminal output driver is designed for use with Windows and its console subsystem.  Clink can optionally handle output itself instead, and emulate terminal output support when the <code>terminal.emulation</code> setting is <code>emulate</code>, or when <code>auto</code> and Clink is running on an older version of Windows that doesn&#39;t support ANSI escape codes.  In emulation mode, 8 bit and 24 bit color escape codes are mapped to the nearest 4 bit colors.</p>
+<p>By default Clink sets the cursor style to a blinking horizontal partial-height block, or to a blink full-height solid block.  Some terminals support escape codes to select alternative cursor styles.  Clink provides environment variables where you may optionally provide escape codes to override the cursor style.  <code>%CLINK_TERM_VE%</code> selects the style for the normal cursor (insert mode), <code>%CLINK_TERM_VS%</code> selects the style for the enhanced cursor (overwrite mode).</p>
+<p>Special codes recognized in the cursor style escape code strings:</p>
+<table>
+<tr><th>Code</th><th>Description</th></tr>
+<tr><td><code>\e</code></td><td>Translated to the ESC character (27 decimal, 0x1b hex).</td></tr>
+<tr><td><code>\x<span class="arg">HH</span></code></td><td>Translated to the character matching the hex <span class="arg">HH</span> value.<br/>E.g. <code>\x1b</code> is the same as <code>\e</code>, or <code>\x08</code> is a backspace, etc.</td></tr>
+<tr><td><code>\\</code></td><td>Translated to the <code>\</code> character.</td></tr>
+<tr><td><code><code>\<span class="arg">c</span></code></td><td>Any other backslash is translate to whatever character immediately follows it.<br/>E.g. <code>\a</code> becomes <code>a</code>.</td></tr>
+</table>
+
+<p>Refer to the documentation for individual terminal programs to find what (if any) escape codes they may support.  The default console in Windows 10 supports the <a href="https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-SP-q.1D81">DECSCUSR</a> escape codes for selecting cursor shape.</p>
+<p>This .cmd script sets the normal cursor to a blinking vertical bar, and the enhanced cursor to a non-blinking solid box:</p>
+<pre><code class="language-cmd">set CLINK_TERM_VE=\e[5 q
+set CLINK_TERM_VS=\e[2 q
+</code></pre>
+<p>Or this .cmd script sets the normal cursor to blink, and the enhanced cursor to not blink:</p>
+<pre><code class="language-cmd">set CLINK_TERM_VE=\e[?12h
+set CLINK_TERM_VS=\e[?12l
+</code></pre>
 <h2 id="troubleshooting-tips">Troubleshooting Tips</h2>
 <p>If something seems to malfunction, here are some things to try that often help track down what&#39;s going wrong:</p>
 <ul>
@@ -4155,7 +4233,7 @@ while (true) do
 &nbsp;   print(line)
 end
 r:close()</code></pre></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="io.popenyield">io.popenyield</a></div> <div class="signature">( <span class="arg_name">command</span>:string, [<span class="arg_name">mode</span>:string] ) : file<br/><div class="version">v1.2.10 and newer</div></div></div><div class="body"><p class="desc">This is the same as <code><span class="hljs-built_in">io</span>.<span class="hljs-built_in">popen</span>(<span class="arg">command</span>, <span class="arg">mode</span>)</code> except that it only supports read mode and it yields until the command has finished:</p><p class="desc"> Runs <span class="arg">command</span> and returns a read file handle for reading output from the command.  It yields until the command has finished and the complete output is ready to be read without blocking.</p><p class="desc"> The <span class="arg">mode</span> can contain "r" (read mode) and/or either "t" for text mode (the default if omitted) or "b" for binary mode.  Write mode is not supported, so it cannot contain "w".</p><p class="desc"> <strong>Note:</strong> if the <code>prompt.async</code> setting is disabled, or while a <a href="transientprompts">transient prompt filter</a> is executing, then this behaves like <code><span class="hljs-built_in">io</span>.<span class="hljs-built_in">popen</span>(<span class="arg">command</span>, <span class="arg">mode</span>)</code> instead.</p><pre class="language-lua"><code>local file = io.popenyield("git status")
+<div class="function"><div class="header"> <div class="name"><a name="io.popenyield">io.popenyield</a></div> <div class="signature">( <span class="arg_name">command</span>:string, [<span class="arg_name">mode</span>:string] ) : file<br/><div class="version">v1.2.10 and newer</div></div></div><div class="body"><p class="desc">This is the same as <code><span class="hljs-built_in">io</span>.<span class="hljs-built_in">popen</span>(<span class="arg">command</span>, <span class="arg">mode</span>)</code> except that it only supports read mode and it yields until the command has finished:</p><p class="desc"> Runs <span class="arg">command</span> and returns a read file handle for reading output from the command.  It yields until the command has finished and the complete output is ready to be read without blocking.</p><p class="desc"> The <span class="arg">mode</span> can contain "r" (read mode) and/or either "t" for text mode (the default if omitted) or "b" for binary mode.  Write mode is not supported, so it cannot contain "w".</p><p class="desc"> <strong>Note:</strong> if the <code>prompt.async</code> setting is disabled, or while a <a href="#transientprompts">transient prompt filter</a> is executing, then this behaves like <code><span class="hljs-built_in">io</span>.<span class="hljs-built_in">popen</span>(<span class="arg">command</span>, <span class="arg">mode</span>)</code> instead.</p><pre class="language-lua"><code>local file = io.popenyield("git status")
 
 while (true) do
 &nbsp;   local line = file:read("*line")
@@ -4566,6 +4644,19 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v132">v1.3.2</h4>
+<ul>
+<li>Added <kbd>Shift</kbd>+<kbd>Space</kbd> as a recognized key.  By default it is bound to <code>clink-shift-space</code>, which invokes whatever is bound to the normal <kbd>Space</kbd> key, so that it continues to behave as before unless you specifically bind something else to the <kbd>Shift</kbd>+<kbd>Space</kbd> key.</li>
+<li>Added <code>clink-magic-suggest-space</code> command which inserts the next full suggested word (if any) up to a space, and then inserts a space.  Binding this to <kbd>Shift</kbd>+<kbd>Space</kbd> can be very handy.</li>
+<li>Added <code>cmd.admin_title_prefix</code> setting that can replace the &quot;Administrator: &quot; console title prefix.</li>
+<li>When loading settings, if there is no setting file yet then Clink looks for a <code>default_settings</code> file in the binaries directory and uses that to initalize the settings.</li>
+<li>Added <code>CLINK_TERM_VE</code> and <code>CLINK_TERM_VS</code> environment variables that can be set to override the normal (insert mode) and enhanced (overwrite mode) cursor styles, respectively.</li>
+<li>Various minor fixes to how the cursor style is updated; the visible bell now works in Windows Terminal.</li>
+<li>When <code>os.execute()</code> is used in a coroutine, it automatically yields until complete.</li>
+<li>Fixed async match generators (during autosuggest) to be allowed to finish, instead of getting canceled on every keystroke if they hadn&#39;t finished yet.</li>
+<li>Fixed cursor blink, which was accidentally disabled (regression introduced in v1.2.44).</li>
+<li>Fixed the <code>win-cursor-forward</code> command so it doesn&#39;t trigger generating a new suggestion if there isn&#39;t already one.</li>
+</ul>
 <h4 id="v131">v1.3.1</h4>
 <ul>
 <li>Added <code>autosuggest.async</code> setting (on by default) that lets suggestions generate matches asynchronously to stay responsive while typing.</li>
