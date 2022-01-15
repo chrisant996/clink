@@ -155,31 +155,6 @@ static void alpha_sorter(match_info* infos, int count)
     std::sort(infos, infos + count, predicate);
 }
 
-//------------------------------------------------------------------------------
-void sort_match_list(char** matches, int len)
-{
-    if (s_nosort || len <= 0)
-        return;
-
-    int order = g_sort_dirs.get();
-    wstr<> ltmp;
-    wstr<> rtmp;
-
-    auto predicate = [&] (const char* l, const char* r) {
-        match_type l_type = (match_type)lookup_match_type(l);
-        match_type r_type = (match_type)lookup_match_type(r);
-
-        ltmp.clear();
-        rtmp.clear();
-        to_utf16(ltmp, l);
-        to_utf16(rtmp, r);
-
-        return sort_worker(ltmp, l_type, rtmp, r_type, order);
-    };
-
-    std::sort(matches, matches + len, predicate);
-}
-
 
 
 //------------------------------------------------------------------------------
