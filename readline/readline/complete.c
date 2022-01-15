@@ -1062,7 +1062,10 @@ printable_part (char *pathname)
 {
   char *temp, *x;
 
-  if (rl_filename_completion_desired == 0)	/* don't need to do anything */
+/* begin_clink_change */
+  //if (rl_filename_completion_desired == 0)	/* don't need to do anything */
+  if (rl_filename_display_desired == 0)	/* don't need to do anything */
+/* end_clink_change */
     return (pathname);
 
   temp = rl_last_path_separator (pathname);
