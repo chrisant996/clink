@@ -348,34 +348,6 @@ end
 --- -show:  local my_parser = clink.argmatcher("git")
 --- -show:  :addarg({ "add", "status", "commit", "checkout" })
 --- -show:  :addflags("-a", "-g", "-p", "--help")
---- Starting in v1.2.38, flags can include description strings that are
---- displayed when listing possible completions.
---- -show:  local my_parser = clink.argmatcher("cd")
---- -show:  :addflags("/d|Also change current drive")
---- -show:  :addarg(clink.dirmatches):nofiles()
---- To make your script compatible with older Clink versions, you can copy this
---- code into your script and use it as described below:
---- -show:  -- This helper function translates flag strings that include
---- -show:  -- descriptions, to make them compatible with older Clink versions.
---- -show:  local function maybe_flag_desc(...)
---- -show:  &nbsp;   if (clink.version_encoded or 0) < 10020038 then
---- -show:  &nbsp;       local recurse
---- -show:  &nbsp;       recurse = function(flags, index)
---- -show:  &nbsp;           local f = flags[index]:gsub("^(([^|]+)|.*)$", "%2")
---- -show:  &nbsp;           if index > #flags then return nil
---- -show:  &nbsp;           elseif index < #flags then return f, recurse(flags, index + 1)
---- -show:  &nbsp;           else return f
---- -show:  &nbsp;           end
---- -show:  &nbsp;       end
---- -show:  &nbsp;       return recurse({...}, 1)
---- -show:  &nbsp;   end
---- -show:  &nbsp;   return ...
---- -show:  end
---- -show:
---- -show:  -- An example of using the helper function:
---- -show:  local my_parser = clink.argmatcher("cd")
---- -show:  :addflags(maybe_flag_desc("/d|Also change current drive"))
---- -show:  :addarg(clink.dirmatches):nofiles()
 function _argmatcher:addflags(...)
     local flag_matcher = self._flags or _argmatcher()
     local list = flag_matcher._args[1] or { _links = {} }
