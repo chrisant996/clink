@@ -226,9 +226,6 @@ done:
     int match_count = only_lcd ? 1 : 0;
     for (i = 1; matches[i]; ++i, ++match_count);
 
-    // Sort the matches.
-    sort_match_list(matches + 1, match_count);
-
     // Convert matches to a Lua table.
     lua_createtable(state, match_count, 0);
     if (ondisplaymatches)
