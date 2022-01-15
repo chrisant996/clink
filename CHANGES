@@ -2,6 +2,13 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.3.3
+
+- Argmatchers can disable sorting matches by using `argmatcher:addargunsorted()` or `argmatcher:addflagsunsorted()`.
+- Generators can disable sorting matches by using `match_builder:setnosort()`.
+- Fixed display of non-directory matches that contain slashes, such as git branch names (regression introduced in v1.3.1).
+- Fixed match display filtering in `clink-select-complete` (regression introduced in v1.3.1).
+
 #### v1.3.2
 
 - Added <kbd>Shift</kbd>+<kbd>Space</kbd> as a recognized key.  By default it is bound to `clink-shift-space`, which invokes whatever is bound to the normal <kbd>Space</kbd> key, so that it continues to behave as before unless you specifically bind something else to the <kbd>Shift</kbd>+<kbd>Space</kbd> key.
