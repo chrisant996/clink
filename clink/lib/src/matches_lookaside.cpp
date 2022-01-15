@@ -52,7 +52,7 @@ matches_lookaside::matches_lookaside(char** matches)
 , m_allocator(8192)
 {
     assert(matches);
-    if (matches[0] && matches[1])
+    if (matches[1]) // Ignore lcd (the [0] entry); list is always >= 2 entries.
         while (add(*(++matches))) {}
 };
 
@@ -123,7 +123,9 @@ assert(false);
 //------------------------------------------------------------------------------
 extern "C" int create_matches_lookaside(char** matches)
 {
-    if (!matches || !matches[0] || !matches[1])
+    // Bail if no list, or if list has no entries.
+    // Ignore lcd (the [0] entry); list is always >= 2 entries.
+    if (!matches || !matches[1])
         return false;
 
 #ifdef DEBUG

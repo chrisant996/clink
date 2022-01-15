@@ -1137,16 +1137,17 @@ void selectcomplete_impl::update_matches(bool restrict)
             {
                 const char* text = m_matches.get_match(i);
                 const size_t len = strlen(text);
-                char* match = static_cast<char*>(malloc(1 + len + 1));
-                match[0] = static_cast<char>(m_matches.get_match_type(i));
-                memcpy(match + 1, text, len + 1);
+                char* match = static_cast<char*>(malloc(len + 1));
+                memcpy(match, text, len + 1);
                 matches.emplace_back(match);
             }
             matches.emplace_back(nullptr);
 
             // Get filtered matches.
             match_display_filter_entry** filtered_matches = nullptr;
+            create_matches_lookaside(&*matches.begin());
             m_matches.get_matches()->match_display_filter(m_needle.c_str(), &*matches.begin(), &filtered_matches, flags);
+            destroy_matches_lookaside(&*matches.begin());
 
             // Use filtered matches.
             m_matches.set_filtered_matches(filtered_matches);
