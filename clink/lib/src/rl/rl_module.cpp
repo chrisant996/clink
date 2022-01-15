@@ -86,7 +86,6 @@ extern int clink_diagnostics(int, int);
 extern int host_add_history(int rl_history_index, const char* line);
 extern int host_remove_history(int rl_history_index, const char* line);
 extern void host_send_event(const char* event_name);
-extern void sort_match_list(char** matches, int len);
 extern int macro_hook_func(const char* macro);
 extern int host_filter_matches(char** matches);
 extern void update_matches();
@@ -1676,7 +1675,6 @@ static void init_readline_hooks()
     rl_menu_completion_entry_function = filename_menu_completion_function;
     rl_adjust_completion_defaults = adjust_completion_defaults;
     rl_adjust_completion_word = adjust_completion_word;
-    rl_qsort_match_list_func = sort_match_list;
     rl_match_display_filter_func = match_display_filter_callback;
     rl_compare_lcd_func = compare_lcd;
     rl_postprocess_lcd_func = postprocess_lcd;

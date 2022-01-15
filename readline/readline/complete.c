@@ -370,10 +370,6 @@ const char *rl_completer_word_break_characters = (const char *)NULL;
 rl_cpvfunc_t *rl_completion_word_break_hook = (rl_cpvfunc_t *)NULL;
 
 /* begin_clink_change */
-/* If non-zero, then this is the address of a function to call to sort the
-   list of matches.  It can accommodate any special sorting behavior the host
-   may require, such as ignoring trailing path separators. */
-rl_qsort_match_list_func_t *rl_qsort_match_list_func = (rl_qsort_match_list_func_t *)NULL;
 /* Hook function to allow an application to adjust the completion defaults
    before readline tries to perform completion.  This may even change
    rl_line_buffer, rl_point, rl_end, or etc. */
