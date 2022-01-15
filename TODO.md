@@ -7,6 +7,12 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Medium Priority
+- Argmatcher syntax for defining help-like layout format with multiple flags per line?
+  - Only when a single flag character is used (`-` but not `--`).
+  - Always use the first flag listed in a line.
+  - Heuristic for when to right justify as much of the description as fits.
+  - Highlight the full line.
+- Easier argmatcher syntax for defining flags + display + description strings.
 - Readline command reference.
 - Add more Readline documentation into the Clink docs.
 
