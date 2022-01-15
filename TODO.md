@@ -54,13 +54,11 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - `git checkout `<kbd>Alt</kbd>+<kbd>=</kbd> in Cmder.
 
 ## Known Issues
-- Cursor does not blink, and custom cursor shape is overridden. _[The SetConsoleCursorInfo API has changed, and now always disables blinking.  Also it always overrides the custom cursor shape chosen in the console's Properties dialog, and there is no way to query the console to find out whether it is using a custom cursor shape.]_
 - Perturbed PROMPT envvar is visible in child processes (e.g. piped shell in various file editors).
 - [#531](https://github.com/mridgers/clink/issues/531) AV detects a trojan on download _[This is likely because of the use of CreateRemoteThread and/or hooking OS APIs.  There might be a way to obfuscate the fact that clink uses those, but ultimately this is kind of an inherent problem.  Getting the binaries digitally signed might be the most effective solution, but that's financially expensive.]_
 - [Terminal #10191](https://github.com/microsoft/terminal/issues/10191#issuecomment-897345862) Microsoft Terminal does not allow a console application to know about or access the scrollback history, nor to scroll the screen.  It blocks Clink's scrolling commands, and also the `console.findline()` function and everything else that relies on access to the scrollback history.
 
 ## Mystery
-- Typing seemed to stall while a prompt coroutine was running when a generator coroutine needed to run.  But it was over a Remote Desktop connection, and I was unable to reproduce any stalls when the Remote Desktop connection itself was stable.
 - Windows 10.0.19042.630 seems to have problems when using WriteConsoleW with ANSI escape codes in a powerline prompt in a git repo.  But Windows 10.0.19041.630 doesn't.
 - Windows Terminal crashes on exit after `clink inject`.  The current release version was crashing (1.6.10571.0).  Older versions don't crash, and a locally built version from the terminal repo's HEAD doesn't crash.  I think the crash is probably a bug in Windows Terminal, not related to Clink.  And after I built it locally, then it stopped crashing with 1.6.10571.0 as well.  Mysterious...
 
@@ -90,7 +88,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - However, even CMD itself silently fails to run an inputted command over 8100 characters, despite allowing 8191 characters to be input.
   - So I'm comfortable punting this for now.
 - A way to disable/enable clink once injected.  _[Why?]_
-- Provide API to generate HTML string from console text.  _[Too complicated; also impossible to support more than 4-bit color.]_
 - [#486](https://github.com/mridgers/clink/issues/486) **Ctrl+C** doesn't always work properly _[Unrelated to Clink; the exact same behavior occurs with plain cmd.exe]_
 
 ---
