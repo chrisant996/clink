@@ -26,5 +26,8 @@ Detours library version 4.0.1 (https://github.com/microsoft/detours).<br/>
 Copyright (c) Microsoft Corporation. All rights reserved.<br/>
 Licensed under the [MIT](https://github.com/microsoft/Detours/blob/e5400b4ec59478cb0f435cf3b1338226bcbe28f6/LICENSE.txt) license.
 
+Match completion display uses column width calculations from GNU coreutils [ls.c](https://github.com/coreutils/coreutils/blob/master/src/ls.c).<br/>
+Licensed under the terms of the [GNU General Public License, version 3](http://www.gnu.org/licenses/gpl.html).
+
 Clink documentation embeds the highlight.js library (https://highlightjs.org).<br/>
 Highlight.js is released under the [BSD License](https://github.com/highlightjs/highlight.js/blob/master/LICENSE).
