@@ -145,6 +145,7 @@ function clink._make_match_generate_coroutine(line, matches, builder, generation
 
     -- Create coroutine to generate matches.  The coroutine is automatically
     -- scheduled for resume while waiting for input.
+    coroutine.override_isgenerator()
     local c = coroutine.create(function ()
         -- Mark that the coroutine has started.  If a canceled coroutine never
         -- started, it can be removed from the scheduler.

@@ -125,8 +125,9 @@ private:
 
     typedef std::vector<match_info> infos;
 
-    store_impl              m_store;
     match_generator*        m_generator = nullptr;
+
+    store_impl              m_store;
     infos                   m_infos;
     unsigned short          m_count = 0;
     bool                    m_any_infer_type = false;

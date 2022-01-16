@@ -740,8 +740,10 @@ void matches_impl::reset()
 //------------------------------------------------------------------------------
 void matches_impl::transfer(matches_impl& from)
 {
+    // Do not transfer m_generator; it is consumer configuration, not part of
+    // the matches state.
+
     m_store = std::move(from.m_store);
-    m_generator = from.m_generator;
     m_infos = std::move(from.m_infos);
     m_count = from.m_count;
     m_any_infer_type = from.m_any_infer_type;
@@ -757,7 +759,6 @@ void matches_impl::transfer(matches_impl& from)
     m_filename_display_desired = from.m_filename_display_desired;
     m_dedup = from.m_dedup;
 
-    from.m_generator = nullptr;
     from.m_dedup = nullptr;
     from.clear();
 }
