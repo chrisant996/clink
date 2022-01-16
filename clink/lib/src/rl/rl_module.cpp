@@ -906,6 +906,12 @@ bool insert_suggestion(suggestion_action action)
 }
 
 //------------------------------------------------------------------------------
+bool pause_suggestions(bool pause)
+{
+    return s_suggestion.pause(pause);
+}
+
+//------------------------------------------------------------------------------
 extern "C" void host_clear_suggestion()
 {
     s_suggestion.clear();

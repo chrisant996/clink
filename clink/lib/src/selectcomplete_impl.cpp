@@ -18,6 +18,7 @@
 #include <core/str_compare.h>
 #include <core/str_iter.h>
 #include <rl/rl_commands.h>
+#include <rl/rl_suggestions.h>
 #include <terminal/printer.h>
 #include <terminal/ecma48_iter.h>
 
@@ -243,6 +244,8 @@ bool selectcomplete_impl::activate(editor_module::result& result, bool reactivat
         insert_needle();
     }
 
+    pause_suggestions(true);
+
     m_inserted = false;
     m_quoted = false;
 
@@ -254,13 +257,17 @@ bool selectcomplete_impl::activate(editor_module::result& result, bool reactivat
     update_matches(true/*restrict*/);
     assert(m_anchor >= 0);
     if (m_anchor < 0)
+    {
+bail_out:
+        pause_suggestions(false);
         return false;
+    }
 
     if (!m_matches.get_match_count())
     {
 cant_activate:
         m_anchor = -1;
-        return false;
+        goto bail_out;
     }
 
     if (reactivate)
@@ -812,6 +819,8 @@ void selectcomplete_impl::cancel(editor_module::result& result, bool can_reactiv
 
     if (!can_reactivate)
         rl_last_func = nullptr;
+
+    pause_suggestions(false);
 
     reset_generate_matches();
 

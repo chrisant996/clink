@@ -76,6 +76,9 @@ bool suggestion_manager::can_suggest(line_state& line)
     if (!g_rl_buffer)
         return false;
 
+    if (m_paused)
+        return false;
+
     assert(line.get_cursor() == g_rl_buffer->get_cursor());
     assert(line.get_length() == g_rl_buffer->get_length());
     assert(strncmp(line.get_line(), g_rl_buffer->get_buffer(), line.get_length()) == 0);
@@ -331,4 +334,12 @@ bool suggestion_manager::insert(suggestion_action action)
     }
 
     return true;
+}
+
+//------------------------------------------------------------------------------
+bool suggestion_manager::pause(bool pause)
+{
+    const bool was_paused = m_paused;
+    m_paused = pause;
+    return was_paused;
 }
