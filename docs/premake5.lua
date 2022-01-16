@@ -264,7 +264,7 @@ local function do_docs()
 
             api_html:write('<div class="header">')
                 if version then
-                    if not ret:find(' ') then
+                    if not version:find(' ') then
                         version = version..' and newer'
                     end
                     version = '<br/><div class="version">v'..version..'</div>'
