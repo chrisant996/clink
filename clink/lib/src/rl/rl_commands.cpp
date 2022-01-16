@@ -236,10 +236,7 @@ static void get_word_bounds(const line_buffer& buffer, int* left, int* right)
 }
 
 //------------------------------------------------------------------------------
-extern "C" {
-
 typedef void (*vstrlen_func_t)(const char* s, int len);
-
 int ellipsify_to_callback(const char* in, int limit, int expand_ctrl, vstrlen_func_t callback)
 {
     assert(g_printer);
@@ -249,8 +246,6 @@ int ellipsify_to_callback(const char* in, int limit, int expand_ctrl, vstrlen_fu
     callback(s.c_str(), s.length());
     return visible_len;
 }
-
-} // extern "C"
 
 
 

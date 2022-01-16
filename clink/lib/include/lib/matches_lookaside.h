@@ -37,8 +37,8 @@ private:
 // Each match in 'matches' must conform to the PACKED MATCH FORMAT (except the
 // lcd entry in [0], which is omitted from the lookaside table).
 match_details lookup_match(const char* match);
-extern "C" int create_matches_lookaside(char** matches);
-extern "C" int destroy_matches_lookaside(char** matches);
+int create_matches_lookaside(char** matches);
+int destroy_matches_lookaside(char** matches);
 void set_matches_lookaside_oneoff(const char* match, match_type type, char append_char, unsigned char flags);
 void clear_matches_lookaside_oneoff();
 

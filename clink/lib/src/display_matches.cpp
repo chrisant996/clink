@@ -6,7 +6,12 @@
 
 */
 
+#include "pch.h"
+
 #define READLINE_LIBRARY
+#define BUILD_READLINE
+
+extern "C" {
 
 #if defined (HAVE_CONFIG_H)
 #  include <config.h>
@@ -53,7 +58,18 @@ extern int errno;
 #  include "readline/colors.h"
 #endif
 
+int complete_get_screenwidth (void);
+int fnwidth (const char *string);
+int get_y_or_n (int for_pager);
+char* printable_part (char* pathname);
+int stat_char (const char *filename, char match_type);
+int _rl_internal_pager (int lines);
+unsigned int cell_count(const char* in);
+
+} // extern "C"
+
 #include "display_matches.h"
+#include "matches_lookaside.h"
 #include <assert.h>
 
 #ifdef HAVE_LSTAT
@@ -66,21 +82,6 @@ extern int errno;
 #define HIDDEN_FILE(fname)	((fname)[0] == '.')
 
 #define ELLIPSIS_LEN 3
-
-extern int create_matches_lookaside(char** matches);
-extern int destroy_matches_lookaside(char** matches);
-#ifdef DEBUG
-extern int has_matches_lookaside(char** matches);
-#endif
-
-extern int complete_get_screenwidth (void);
-extern int fnwidth (const char *string);
-extern int get_y_or_n (int for_pager);
-extern char* printable_part (char* pathname);
-extern int stat_char (const char *filename, char match_type);
-extern int _rl_internal_pager (int lines);
-extern void qsort_match_list (char** matches, int len);
-extern unsigned int cell_count(const char* in);
 
 typedef void (*vstrlen_func_t)(const char* s, int len);
 int ellipsify_to_callback(const char* in, int limit, int expand_ctrl, vstrlen_func_t callback);
@@ -1279,7 +1280,7 @@ static int prompt_display_matches(int len)
 }
 
 //------------------------------------------------------------------------------
-void display_matches(char** matches)
+extern "C" void display_matches(char** matches)
 {
     int len, max, i;
     char *temp;

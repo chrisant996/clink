@@ -10,6 +10,7 @@
 #include "line_state.h"
 #include "matches.h"
 #include "matches_lookaside.h"
+#include "display_matches.h"
 
 #include <core/base.h>
 #include <core/settings.h>
@@ -21,7 +22,6 @@
 
 extern "C" {
 #include <compat/config.h>
-#include <compat/display_matches.h>
 #include <readline/readline.h>
 #include <readline/rlprivate.h>
 #include <readline/rldefs.h>

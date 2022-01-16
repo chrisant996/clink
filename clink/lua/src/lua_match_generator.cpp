@@ -16,6 +16,7 @@
 #include <lib/matches.h>
 #include <lib/matches_lookaside.h>
 #include <lib/popup.h>
+#include <lib/display_matches.h>
 #include <terminal/ecma48_iter.h>
 
 extern "C" {
@@ -23,7 +24,6 @@ extern "C" {
 #include <lauxlib.h>
 #include <lualib.h>
 #include <readline/readline.h>
-#include <compat/display_matches.h>
 char* printable_part (char* pathname);
 }
 

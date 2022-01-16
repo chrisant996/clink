@@ -13,6 +13,7 @@
 #include "word_classifications.h"
 #include "popup.h"
 #include "textlist_impl.h"
+#include "display_matches.h"
 
 #include "rl_suggestions.h"
 
@@ -43,7 +44,6 @@ extern "C" {
 #include <readline/keymaps.h>
 #include <readline/xmalloc.h>
 #include <compat/dirent.h>
-#include <compat/display_matches.h>
 #include <readline/posixdir.h>
 #include <readline/history.h>
 extern int find_streqn (const char *a, const char *b, int n);

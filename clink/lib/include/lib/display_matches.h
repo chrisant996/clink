@@ -27,19 +27,19 @@ extern const char *_rl_filtered_color;
 extern const char *_rl_arginfo_color;
 extern const char *_rl_selected_color;
 
-extern void reset_tmpbuf(void);
-extern void mark_tmpbuf(void);
-extern const char* get_tmpbuf_rollback(void);
-extern void rollback_tmpbuf(void);
-extern void append_tmpbuf_char(char c);
-extern void append_tmpbuf_string(const char* s, int len);
-extern void flush_tmpbuf(void);
-extern void append_display(const char* to_print, int selected, const char* color);
-extern int append_filename(char* to_print, const char* full_pathname, int prefix_bytes, int can_condense, int type, int selected);
-extern void pad_filename(int len, int pad_to_width, int selected);
+void reset_tmpbuf(void);
+void mark_tmpbuf(void);
+const char* get_tmpbuf_rollback(void);
+void rollback_tmpbuf(void);
+void append_tmpbuf_char(char c);
+void append_tmpbuf_string(const char* s, int len);
+void flush_tmpbuf(void);
+void append_display(const char* to_print, int selected, const char* color);
+int append_filename(char* to_print, const char* full_pathname, int prefix_bytes, int can_condense, int type, int selected);
+void pad_filename(int len, int pad_to_width, int selected);
 
-extern void free_filtered_matches(match_display_filter_entry** filtered_matches);
-extern int printable_len(const char* match, int type);
+void free_filtered_matches(match_display_filter_entry** filtered_matches);
+int printable_len(const char* match, int type);
 
 // Flags in the PACKED MATCH FORMAT:
 #define MATCH_FLAG_APPEND_DISPLAY       0x01
@@ -54,4 +54,4 @@ extern int printable_len(const char* match, int type);
 //  FLAGS (unsigned char)
 //  DISPLAY (nul terminated char string)
 //  DESCRIPTION (nul terminated char string)
-extern void display_matches(char **matches);
+extern "C" void display_matches(char **matches);

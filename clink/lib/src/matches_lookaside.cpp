@@ -2,6 +2,7 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
+#include "display_matches.h"
 #include "matches_lookaside.h"
 #include <core/linear_allocator.h>
 
@@ -11,7 +12,6 @@
 
 extern "C" {
 #include <compat/config.h>
-#include <compat/display_matches.h>
 #include <readline/readline.h>
 };
 
@@ -121,7 +121,7 @@ assert(false);
 }
 
 //------------------------------------------------------------------------------
-extern "C" int create_matches_lookaside(char** matches)
+int create_matches_lookaside(char** matches)
 {
     // Bail if no list, or if list has no entries.
     // Ignore lcd (the [0] entry); list is always >= 2 entries.
@@ -142,7 +142,7 @@ extern "C" int create_matches_lookaside(char** matches)
 }
 
 //------------------------------------------------------------------------------
-extern "C" int destroy_matches_lookaside(char** matches)
+int destroy_matches_lookaside(char** matches)
 {
     if (!matches)
         return false;
