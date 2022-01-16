@@ -93,6 +93,7 @@ extern void host_get_app_context(int& id, str_base& binaries, str_base& profile,
 extern "C" int show_cursor(int visible);
 extern int ellipsify(const char* in, int limit, str_base& out, bool expand_ctrl);
 extern void set_suggestion(const char* line, unsigned int endword_offset, const char* suggestion, unsigned int offset);
+extern "C" void host_clear_suggestion();
 
 // This is implemented in the app layer, which makes it inaccessible to lower
 // layers.  But Readline and History are siblings, so history_db and rl_module
@@ -266,6 +267,8 @@ public:
 
     ~cua_selection_manager()
     {
+        if (s_cua_anchor >= 0)
+            host_clear_suggestion();
         if (g_rl_buffer && (m_anchor != s_cua_anchor || m_point != rl_point))
             g_rl_buffer->set_need_draw();
     }
@@ -1328,6 +1331,8 @@ static char* get_previous_command()
 //------------------------------------------------------------------------------
 int win_f1(int count, int invoking_key)
 {
+    const bool had_selection = (cua_get_anchor() >= 0);
+
     if (insert_suggestion(suggestion_action::insert_to_end))
         return 0;
 
@@ -1341,6 +1346,9 @@ int win_f1(int count, int invoking_key)
     }
 
     if (!count)
+        return 0;
+
+    if (had_selection)
         return 0;
 
     char* prev_buffer = get_previous_command();

@@ -81,6 +81,8 @@ bool suggestion_manager::can_suggest(line_state& line)
     assert(strncmp(line.get_line(), g_rl_buffer->get_buffer(), line.get_length()) == 0);
     if (g_rl_buffer->get_cursor() != g_rl_buffer->get_length())
         return false;
+    if (g_rl_buffer->get_anchor() >= 0)
+        return false;
 
     // Update the endword offset.  Inserting part of a suggestion can't know
     // what the new endword offset will be, so this allows updating it when the
