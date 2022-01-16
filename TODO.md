@@ -7,12 +7,15 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Medium Priority
-- Argmatcher syntax for defining help-like layout format with multiple flags per line?
-  - Only when a single flag character is used (`-` but not `--`).
-  - Always use the first flag listed in a line.
-  - Heuristic for when to right justify as much of the description as fits.
-  - Highlight the full line.
-- Easier argmatcher syntax for defining flags + display + description strings.
+- [ ] Figure out how to have multiple items with descriptions on the same line.
+  - [ ] When to right justify the description?
+  - [ ] I would strongly prefer to only right justify when it makes a "big difference" in how many columns fit and/or how much description will be visible.
+- [ ] Argmatcher syntax for defining help-like layout format that groups multiple flags into one entry?
+  - [ ] Only group when a single flag character is used (`-` but not `--`).
+  - [ ] Always insert the first flag listed in a line.
+  - [ ] Highlight the full line?
+- [ ] Easier argmatcher syntax for defining flags + display + description strings.
+- [ ] Provide shim so scripts can use new syntax and still be compatible with older Clink.
 - Readline command reference.
 - Add more Readline documentation into the Clink docs.
 
@@ -60,6 +63,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - `git checkout `<kbd>Alt</kbd>+<kbd>=</kbd> in Cmder.
 
 ## Known Issues
+- Cursor style may behave unexpectedly in a new console window launched from a Windows Terminal console, or in a console window that gets attached to Windows Terminal.  This is because there's no reliable way for Clink to know whether it is running inside Windows Terminal.
 - Perturbed PROMPT envvar is visible in child processes (e.g. piped shell in various file editors).
 - [#531](https://github.com/mridgers/clink/issues/531) AV detects a trojan on download _[This is likely because of the use of CreateRemoteThread and/or hooking OS APIs.  There might be a way to obfuscate the fact that clink uses those, but ultimately this is kind of an inherent problem.  Getting the binaries digitally signed might be the most effective solution, but that's financially expensive.]_
 - [Terminal #10191](https://github.com/microsoft/terminal/issues/10191#issuecomment-897345862) Microsoft Terminal does not allow a console application to know about or access the scrollback history, nor to scroll the screen.  It blocks Clink's scrolling commands, and also the `console.findline()` function and everything else that relies on access to the scrollback history.
