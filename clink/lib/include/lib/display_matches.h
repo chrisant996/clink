@@ -1,5 +1,7 @@
 #pragma once
 
+enum class match_type : unsigned char;
+
 struct match_display_filter_entry
 {
     short visible_display;      // Visible characters, not counting ANSI escape codes.
@@ -35,11 +37,11 @@ void append_tmpbuf_char(char c);
 void append_tmpbuf_string(const char* s, int len);
 void flush_tmpbuf(void);
 void append_display(const char* to_print, int selected, const char* color);
-int append_filename(char* to_print, const char* full_pathname, int prefix_bytes, int can_condense, int type, int selected);
+int append_filename(char* to_print, const char* full_pathname, int prefix_bytes, int can_condense, match_type type, int selected);
 void pad_filename(int len, int pad_to_width, int selected);
 
 void free_filtered_matches(match_display_filter_entry** filtered_matches);
-int printable_len(const char* match, int type);
+int printable_len(const char* match, match_type type);
 
 // Flags in the PACKED MATCH FORMAT:
 #define MATCH_FLAG_APPEND_DISPLAY       0x01

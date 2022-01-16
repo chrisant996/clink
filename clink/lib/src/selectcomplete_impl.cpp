@@ -11,6 +11,7 @@
 #include "matches.h"
 #include "matches_lookaside.h"
 #include "display_matches.h"
+#include "match_adapter.h"
 
 #include <core/base.h>
 #include <core/settings.h>
@@ -215,267 +216,6 @@ static bool move_selection_higher(int& index, int& major, int& minor, const int 
 }
 
 #endif
-
-
-
-//------------------------------------------------------------------------------
-match_adapter::~match_adapter()
-{
-    free_filtered();
-}
-
-//------------------------------------------------------------------------------
-const matches* match_adapter::get_matches() const
-{
-    return m_matches;
-}
-
-//------------------------------------------------------------------------------
-void match_adapter::set_matches(const matches* matches)
-{
-    free_filtered();
-    m_real_matches = matches;
-    m_matches = m_real_matches;
-}
-
-//------------------------------------------------------------------------------
-void match_adapter::set_regen_matches(const matches* matches)
-{
-    free_filtered();
-    m_matches = matches ? matches : m_real_matches;
-}
-
-//------------------------------------------------------------------------------
-void match_adapter::set_filtered_matches(match_display_filter_entry** filtered_matches)
-{
-    free_filtered();
-
-    m_filtered_matches = filtered_matches;
-
-    // Skip first filtered match; it's fake, to satisfy Readline's expectation
-    // that matches start at [1].
-    unsigned int count = 0;
-    bool has_desc = false;
-    if (filtered_matches && filtered_matches[0])
-    {
-        has_desc = (filtered_matches[0]->visible_display < 0);
-        while (*(++filtered_matches))
-            count++;
-    }
-    m_filtered_count = count;
-    m_filtered_has_descriptions = has_desc;
-}
-
-//------------------------------------------------------------------------------
-void match_adapter::init_has_descriptions()
-{
-    m_has_descriptions = false;
-    for (unsigned int i = m_matches ? m_matches->get_match_count() : 0; i--;)
-    {
-        if (m_matches->get_match_description(i))
-        {
-            m_has_descriptions = true;
-            break;
-        }
-    }
-}
-
-//------------------------------------------------------------------------------
-matches_iter match_adapter::get_iter()
-{
-    assert(m_matches);
-    free_filtered();
-    return m_matches->get_iter();
-}
-
-//------------------------------------------------------------------------------
-void match_adapter::get_lcd(str_base& out) const
-{
-    if (m_filtered_matches)
-    {
-        for (unsigned int i = 0; i < m_filtered_count; i++)
-        {
-            const char* match = m_filtered_matches[i + 1]->match;
-            if (!i)
-            {
-                out = match;
-            }
-            else
-            {
-                int matching = str_compare<char, true/*compute_lcd*/>(out.c_str(), match);
-                out.truncate(matching);
-            }
-        }
-    }
-    else if (m_matches)
-    {
-        m_matches->get_lcd(out);
-    }
-    else
-    {
-        out.clear();
-    }
-}
-
-//------------------------------------------------------------------------------
-unsigned int match_adapter::get_match_count() const
-{
-    if (m_filtered_matches)
-        return m_filtered_count;
-    if (m_matches)
-        return m_matches->get_match_count();
-    return 0;
-}
-
-//------------------------------------------------------------------------------
-const char* match_adapter::get_match(unsigned int index) const
-{
-    if (m_filtered_matches)
-        return m_filtered_matches[index + 1]->match;
-    if (m_matches)
-        return m_matches->get_match(index);
-    return nullptr;
-}
-
-//------------------------------------------------------------------------------
-const char* match_adapter::get_match_display(unsigned int index) const
-{
-    if (m_filtered_matches)
-        return m_filtered_matches[index + 1]->display;
-    if (m_matches)
-    {
-        // Don't use printable_part(), because append_filename() needs to know
-        // both the raw match and the printable part.
-        const char* display = m_matches->get_match_display(index);
-        if (display)
-            return display;
-        return m_matches->get_match(index);
-    }
-    return nullptr;
-}
-
-//------------------------------------------------------------------------------
-unsigned int match_adapter::get_match_visible_display(unsigned int index) const
-{
-    if (m_filtered_matches)
-        return m_filtered_matches[index + 1]->visible_display;
-    if (m_matches)
-    {
-        const char* display = m_matches->get_match_display(index);
-        if (display)
-            return cell_count(display);
-        const char* match = m_matches->get_match(index);
-        match_type type = m_matches->get_match_type(index);
-        return printable_len(match, static_cast<int>(type));
-    }
-    return 0;
-}
-
-//------------------------------------------------------------------------------
-const char* match_adapter::get_match_description(unsigned int index) const
-{
-    if (m_filtered_matches)
-        return m_filtered_matches[index + 1]->description;
-    if (m_matches)
-        return m_matches->get_match_description(index);
-    return nullptr;
-}
-
-//------------------------------------------------------------------------------
-unsigned int match_adapter::get_match_visible_description(unsigned int index) const
-{
-    if (m_filtered_matches)
-        return m_filtered_matches[index + 1]->visible_description;
-    if (m_matches)
-    {
-        const char* description = m_matches->get_match_description(index);
-        return description ? cell_count(description) : 0;
-    }
-    return 0;
-}
-
-//------------------------------------------------------------------------------
-match_type match_adapter::get_match_type(unsigned int index) const
-{
-    if (m_filtered_matches)
-        return static_cast<match_type>(m_filtered_matches[index + 1]->type);
-    if (m_matches)
-        return m_matches->get_match_type(index);
-    return match_type::none;
-}
-
-//------------------------------------------------------------------------------
-char match_adapter::get_match_append_char(unsigned int index) const
-{
-    if (m_filtered_matches)
-        return m_filtered_matches[index + 1]->append_char;
-    if (m_matches)
-        return m_matches->get_append_character();
-    return 0;
-}
-
-//------------------------------------------------------------------------------
-unsigned char match_adapter::get_match_flags(unsigned int index) const
-{
-    if (m_filtered_matches)
-        return m_filtered_matches[index + 1]->flags;
-    if (m_matches)
-    {
-        unsigned char flags = 0;
-        shadow_bool suppress = m_matches->get_match_suppress_append(index);
-        if (suppress.is_explicit())
-        {
-            flags |= MATCH_FLAG_HAS_SUPPRESS_APPEND;
-            if (suppress.get())
-                flags |= MATCH_FLAG_SUPPRESS_APPEND;
-        }
-        if (m_matches->get_match_append_display(index))
-            flags |= MATCH_FLAG_APPEND_DISPLAY;
-        return flags;
-    }
-    return 0;
-}
-
-//------------------------------------------------------------------------------
-bool match_adapter::is_custom_display(unsigned int index) const
-{
-    if (m_filtered_matches)
-    {
-        if (!m_filtered_matches[index + 1]->match[0])
-            return true;
-        const char* temp = printable_part(const_cast<char*>(m_filtered_matches[index + 1]->match));
-        if (strcmp(temp, m_filtered_matches[index + 1]->display) != 0)
-            return true;
-    }
-    return false;
-}
-
-//------------------------------------------------------------------------------
-bool match_adapter::is_append_display(unsigned int index) const
-{
-    return !!(get_match_flags(index) & MATCH_FLAG_APPEND_DISPLAY);
-}
-
-//------------------------------------------------------------------------------
-bool match_adapter::is_display_filtered() const
-{
-    return !!m_filtered_matches;
-}
-
-//------------------------------------------------------------------------------
-bool match_adapter::has_descriptions() const
-{
-    return m_filtered_matches ? m_filtered_has_descriptions : m_has_descriptions;
-}
-
-//------------------------------------------------------------------------------
-void match_adapter::free_filtered()
-{
-    free_filtered_matches(m_filtered_matches);
-    m_filtered_matches = nullptr;
-    m_filtered_count = 0;
-    m_filtered_has_descriptions = false;
-}
 
 
 
@@ -1200,12 +940,12 @@ void selectcomplete_impl::update_matches(bool restrict)
             if (use_display(append, type, i))
             {
                 if (append)
-                    len += printable_len(match, static_cast<int>(type));
+                    len += printable_len(match, type);
                 len += m_matches.get_match_visible_display(i);
             }
             else
             {
-                len += printable_len(match, static_cast<int>(type));
+                len += printable_len(match, type);
             }
 
             if (m_match_longest < len)
@@ -1404,13 +1144,12 @@ void selectcomplete_impl::update_display()
 
                         const int selected = (i == m_index);
                         const char* const display = m_matches.get_match_display(i);
-                        const match_type match_type = m_matches.get_match_type(i);
-                        const int type = static_cast<int>(match_type);
+                        const match_type type = m_matches.get_match_type(i);
                         const bool append = m_matches.is_append_display(i);
 
                         mark_tmpbuf();
                         int printed_len;
-                        if (use_display(append, match_type, i))
+                        if (use_display(append, type, i))
                         {
                             printed_len = 0;
                             if (append)

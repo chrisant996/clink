@@ -9,7 +9,8 @@
 class str_base;
 
 //------------------------------------------------------------------------------
-enum class match_type : unsigned char
+typedef unsigned char match_type_intrinsic;
+enum class match_type : match_type_intrinsic
 {
     do_not_use,     // complete.c relies on the type never being 0, so it can use savestring().
     none,           // Behaves like dir if match ends with path sep, otherwise like file.
@@ -46,6 +47,40 @@ inline bool is_match_type(match_type type, match_type test)
     assert((int(test) & ~int(match_type::mask)) == 0);
     type &= match_type::mask;
     return type == test;
+}
+
+//------------------------------------------------------------------------------
+inline bool is_match_type_link(match_type type)
+{
+    type &= match_type::link;
+    return type == match_type::link;
+}
+
+//------------------------------------------------------------------------------
+inline bool is_match_type_orphaned(match_type type)
+{
+    type &= match_type::orphaned;
+    return type == match_type::orphaned;
+}
+
+//------------------------------------------------------------------------------
+inline bool is_match_type_hidden(match_type type)
+{
+    type &= match_type::hidden;
+    return type == match_type::hidden;
+}
+
+//------------------------------------------------------------------------------
+inline bool is_match_type_readonly(match_type type)
+{
+    type &= match_type::readonly;
+    return type == match_type::readonly;
+}
+
+//------------------------------------------------------------------------------
+inline bool is_zero(match_type type)
+{
+    return int(type) == 0;
 }
 
 

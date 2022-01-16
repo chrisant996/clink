@@ -70,6 +70,7 @@ unsigned int cell_count(const char* in);
 
 #include "display_matches.h"
 #include "matches_lookaside.h"
+#include "match_adapter.h"
 #include <assert.h>
 
 #ifdef HAVE_LSTAT
@@ -89,17 +90,17 @@ int ellipsify_to_callback(const char* in, int limit, int expand_ctrl, vstrlen_fu
 
 
 //------------------------------------------------------------------------------
-rl_match_display_filter_func_t *rl_match_display_filter_func = NULL;
-const char *_rl_description_color = NULL;
-const char *_rl_filtered_color = NULL;
-const char *_rl_arginfo_color = NULL;
-const char *_rl_selected_color = NULL;
+rl_match_display_filter_func_t *rl_match_display_filter_func = nullptr;
+const char *_rl_description_color = nullptr;
+const char *_rl_filtered_color = nullptr;
+const char *_rl_arginfo_color = nullptr;
+const char *_rl_selected_color = nullptr;
 
 
 
 //------------------------------------------------------------------------------
-static char* tmpbuf_allocated = NULL;
-static char* tmpbuf_ptr = NULL;
+static char* tmpbuf_allocated = nullptr;
+static char* tmpbuf_ptr = nullptr;
 static int tmpbuf_length = 0;
 static int tmpbuf_capacity = 0;
 static int tmpbuf_rollback_length = 0;
@@ -232,7 +233,7 @@ static void append_prefix_color(void)
 
     // What do we want to use for the prefix? Let's try cyan first, see colors.h.
     s = &_rl_color_indicator[C_PREFIX];
-    if (s->string != NULL)
+    if (s->string != nullptr)
     {
         if (is_colored(C_NORM))
             append_default_color();
@@ -243,7 +244,7 @@ static void append_prefix_color(void)
 }
 
 // Returns whether any color sequence was printed.
-static bool append_match_color_indicator(const char *f, int match_type)
+static bool append_match_color_indicator(const char *f, match_type type)
 {
     enum indicator_no colored_filetype;
     COLOR_EXT_TYPE *ext; // Color extension.
@@ -267,11 +268,11 @@ static bool append_match_color_indicator(const char *f, int match_type)
         name = filename;
     }
 
-    if (match_type)
+    if (!is_zero(type))
 #if defined(HAVE_LSTAT)
-        stat_ok = stat_from_match_type(match_type, name, &astat, &linkstat);
+        stat_ok = stat_from_match_type(static_cast<match_type_intrinsic>(type), name, &astat, &linkstat);
 #else
-        stat_ok = stat_from_match_type(match_type, name, &astat);
+        stat_ok = stat_from_match_type(static_cast<match_type_intrinsic>(type), name, &astat);
 #endif
     else
 #if defined(HAVE_LSTAT)
@@ -285,7 +286,7 @@ static bool append_match_color_indicator(const char *f, int match_type)
 #if defined(HAVE_LSTAT)
         if (S_ISLNK(mode))
         {
-            if (match_type)
+            if (!is_zero(type))
                 linkok = linkstat.st_mode != 0;
             else
                 linkok = stat(name, &linkstat) == 0;
@@ -301,10 +302,10 @@ static bool append_match_color_indicator(const char *f, int match_type)
 
     // Is this a nonexistent file?  If so, linkok == -1.
 
-    if (linkok == -1 && _rl_color_indicator[C_MISSING].string != NULL)
+    if (linkok == -1 && _rl_color_indicator[C_MISSING].string != nullptr)
         colored_filetype = C_MISSING;
 #if defined(S_ISLNK)
-    else if (linkok == 0 && S_ISLNK(mode) && _rl_color_indicator[C_ORPHAN].string != NULL)
+    else if (linkok == 0 && S_ISLNK(mode) && _rl_color_indicator[C_ORPHAN].string != nullptr)
         colored_filetype = C_ORPHAN; // dangling symlink.
 #endif
     else if (stat_ok != 0)
@@ -375,22 +376,22 @@ static bool append_match_color_indicator(const char *f, int match_type)
         }
     }
 
-    if (match_type)
+    if (!is_zero(type))
     {
         const char *override_color = 0;
-        if (IS_MATCH_TYPE_FILE(match_type) || IS_MATCH_TYPE_DIR(match_type))
+        if (is_pathish(type))
         {
-            if (_rl_hidden_color && IS_MATCH_TYPE_HIDDEN(match_type))
+            if (_rl_hidden_color && is_match_type_hidden(type))
                 override_color = _rl_hidden_color;
-            else if (_rl_readonly_color && IS_MATCH_TYPE_READONLY(match_type))
+            else if (_rl_readonly_color && is_match_type_readonly(type))
                 override_color = _rl_readonly_color;
         }
-        else if (IS_MATCH_TYPE_COMMAND(match_type))
+        else if (is_match_type(type, match_type::cmd))
         {
             override_color = _rl_command_color;
             colored_filetype = C_NORM;
         }
-        else if (IS_MATCH_TYPE_ALIAS(match_type))
+        else if (is_match_type(type, match_type::alias))
         {
             override_color = _rl_alias_color;
             colored_filetype = C_NORM;
@@ -399,7 +400,7 @@ static bool append_match_color_indicator(const char *f, int match_type)
             colored_filetype = C_NORM;
         if (override_color)
         {
-            free(filename); // NULL or savestring return value.
+            free(filename); // nullptr or savestring return value.
             // Need to reset so not dealing with attribute combinations.
             if (is_colored(C_NORM))
                 append_default_color();
@@ -411,13 +412,13 @@ static bool append_match_color_indicator(const char *f, int match_type)
     }
 
     // Check the file's suffix only if still classified as C_FILE.
-    ext = NULL;
+    ext = nullptr;
     if (colored_filetype == C_FILE)
     {
         // Test if NAME has a recognized suffix.
         len = strlen(name);
         name += len; // Pointer to final \0.
-        for (ext = _rl_color_ext_list; ext != NULL; ext = ext->next)
+        for (ext = _rl_color_ext_list; ext != nullptr; ext = ext->next)
         {
             if (ext->ext.len <= len && strncmp(name - ext->ext.len, ext->ext.string,
                                                ext->ext.len) == 0)
@@ -425,11 +426,11 @@ static bool append_match_color_indicator(const char *f, int match_type)
         }
     }
 
-    free(filename); // NULL or savestring return value.
+    free(filename); // nullptr or savestring return value.
 
     {
         const struct bin_str *const s = ext ? &(ext->seq) : &_rl_color_indicator[colored_filetype];
-        if (s->string != NULL)
+        if (s->string != nullptr)
         {
             // Need to reset so not dealing with attribute combinations.
             if (is_colored(C_NORM))
@@ -446,7 +447,7 @@ static bool append_match_color_indicator(const char *f, int match_type)
 
 static void prep_non_filename_text(void)
 {
-    if (_rl_color_indicator[C_END].string != NULL)
+    if (_rl_color_indicator[C_END].string != nullptr)
         append_color_indicator(C_END);
     else
     {
@@ -456,10 +457,10 @@ static void prep_non_filename_text(void)
     }
 }
 
-static void append_colored_stat_start(const char *filename, int match_type)
+static void append_colored_stat_start(const char *filename, match_type type)
 {
     append_normal_color();
-    append_match_color_indicator(filename, match_type);
+    append_match_color_indicator(filename, type);
 }
 
 static void append_colored_stat_end(void)
@@ -490,10 +491,10 @@ static void append_selection_color(void)
 
 //------------------------------------------------------------------------------
 static int
-path_isdir(int match_type, const char *filename)
+path_isdir(match_type type, const char *filename)
 {
-    if (match_type && !IS_MATCH_TYPE_NONE(match_type))
-        return IS_MATCH_TYPE_DIR(match_type);
+    if (!is_zero(type) && !is_match_type(type, match_type::none))
+        return is_match_type(type, match_type::dir);
 
     struct stat finfo;
     return (stat(filename, &finfo) == 0 && S_ISDIR(finfo.st_mode));
@@ -502,7 +503,7 @@ path_isdir(int match_type, const char *filename)
 
 
 //------------------------------------------------------------------------------
-static int fnappend(const char *to_print, int prefix_bytes, int condense, const char *real_pathname, int match_type, int selected)
+static int fnappend(const char *to_print, int prefix_bytes, int condense, const char *real_pathname, match_type match_type, int selected)
 {
     int printed_len, w;
     const char *s;
@@ -664,14 +665,14 @@ void append_display(const char* to_print, int selected, const char* color)
 // Print filename.  If VISIBLE_STATS is defined and we are using it, check for
 // and output a single character for 'special' filenames.  Return the number of
 // characters we output.
-int append_filename(char* to_print, const char* full_pathname, int prefix_bytes, int condense, int type, int selected)
+int append_filename(char* to_print, const char* full_pathname, int prefix_bytes, int condense, match_type type, int selected)
 {
     int printed_len, extension_char, slen, tlen;
     char *s, c, *new_full_pathname;
     const char *dn;
     char tmp_slash[3];
 
-    int filename_display_desired = rl_filename_display_desired || IS_MATCH_TYPE_DIR(type);
+    int filename_display_desired = rl_filename_display_desired || is_match_type(type, match_type::dir);
 
     extension_char = 0;
 #if defined(COLOR_SUPPORT)
@@ -742,7 +743,7 @@ int append_filename(char* to_print, const char* full_pathname, int prefix_bytes,
 
 #if defined (VISIBLE_STATS)
             if (rl_visible_stats)
-                extension_char = stat_char(new_full_pathname, type);
+                extension_char = stat_char(new_full_pathname, static_cast<match_type_intrinsic>(type));
             else
 #endif
             if (_rl_complete_mark_directories)
@@ -772,7 +773,7 @@ int append_filename(char* to_print, const char* full_pathname, int prefix_bytes,
             s = tilde_expand(full_pathname);
 #if defined(VISIBLE_STATS)
             if (rl_visible_stats)
-                extension_char = stat_char(s, type);
+                extension_char = stat_char(s, static_cast<match_type_intrinsic>(type));
             else
 #endif
             if (_rl_complete_mark_directories && path_isdir(type, s))
@@ -834,7 +835,7 @@ static const char* visible_part(const char *match)
 }
 
 //------------------------------------------------------------------------------
-int printable_len(const char* match, int type)
+int printable_len(const char* match, match_type type)
 {
     const char* temp = printable_part((char*)match);
     int len = fnwidth(temp);
@@ -842,7 +843,7 @@ int printable_len(const char* match, int type)
     // Use the match type to determine whether there will be a visible stat
     // character, and include it in the max length calculation.
     int vis_stat = -1;
-    if (IS_MATCH_TYPE_DIR(type) && (
+    if (is_match_type(type, match_type::dir) && (
 #if defined (VISIBLE_STATS)
         rl_visible_stats ||
 #endif
@@ -856,7 +857,7 @@ int printable_len(const char* match, int type)
     }
 #if defined (VISIBLE_STATS)
     else if (rl_visible_stats && rl_filename_display_desired)
-        vis_stat = stat_char (match, type);
+        vis_stat = stat_char (match, static_cast<match_type_intrinsic>(type));
 #endif
     if (vis_stat > 0)
         len++;
@@ -897,147 +898,17 @@ void pad_filename(int len, int pad_to_width, int selected)
 }
 
 //------------------------------------------------------------------------------
-struct match_accessor
-{
-    int             (*get_type)(struct match_accessor* self, int i);
-    const char*     (*get_match)(struct match_accessor* self, int i);
-    const char*     (*get_display)(struct match_accessor* self, int i);
-    int             (*get_display_cells)(struct match_accessor* self, int i);
-    const char*     (*get_description)(struct match_accessor* self, int i);
-    int             (*get_description_cells)(struct match_accessor* self, int i);
-    int             (*get_append_display)(struct match_accessor* self, int i);
-    int             (*has_descriptions)(struct match_accessor* self);
-    int             (*is_filtered_match_display)(struct match_accessor* self);
-};
-typedef struct match_accessor match_accessor;
-
-//------------------------------------------------------------------------------
-struct match_accessor_impl
-{
-    struct match_accessor impl;
-    char** matches;
-    int has_descriptions;
-};
-typedef struct match_accessor_impl match_accessor_impl;
-static int matches_get_type(struct match_accessor* self, int i)
-{
-    return lookup_match_type(((match_accessor_impl*)self)->matches[i]);
-}
-static const char* matches_get_match(struct match_accessor* self, int i)
-{
-    return ((match_accessor_impl*)self)->matches[i];
-}
-static const char* matches_get_display(struct match_accessor* self, int i)
-{
-    const char* match = ((match_accessor_impl*)self)->matches[i];
-    const char* display = lookup_match_display(match);
-    return display && *display ? display : match;
-}
-static int matches_get_display_cells(struct match_accessor* self, int i)
-{
-    // This is only called when the display field is being used and any path
-    // in it should be displayed as-is, and therefore cell_count() is ok here.
-    const char* match = ((match_accessor_impl*)self)->matches[i];
-    const char* display = lookup_match_display(match);
-    return display ? cell_count(display) : 0;
-}
-static const char* matches_get_description(struct match_accessor* self, int i)
-{
-    const char* match = ((match_accessor_impl*)self)->matches[i];
-    const char* desc = lookup_match_description(match);
-    return desc && *desc ? desc : 0;
-}
-static int matches_get_description_cells(struct match_accessor* self, int i)
-{
-    const char* match = ((match_accessor_impl*)self)->matches[i];
-    const char* desc = lookup_match_description(match);
-    return desc ? cell_count(desc) : 0;
-}
-static int matches_get_append_display(struct match_accessor* self, int i)
-{
-    const char* match = ((match_accessor_impl*)self)->matches[i];
-    unsigned char flags = lookup_match_flags(match);
-    return flags & MATCH_FLAG_APPEND_DISPLAY;
-}
-static int matches_has_descriptions(struct match_accessor* self)
-{
-    return ((match_accessor_impl*)self)->has_descriptions;
-}
-static int matches_is_filtered_match_display(struct match_accessor* self)
-{
-    return 0;
-}
-static match_accessor* make_match_accessor(char** matches)
-{
-    assert(has_matches_lookaside(matches));
-
-    match_accessor_impl* access = (match_accessor_impl*)malloc(sizeof(*access));
-    access->impl.get_type = matches_get_type;
-    access->impl.get_match = matches_get_match;
-    access->impl.get_display = matches_get_display;
-    access->impl.get_display_cells = matches_get_display_cells;
-    access->impl.get_description = matches_get_description;
-    access->impl.get_description_cells = matches_get_description_cells;
-    access->impl.get_append_display = matches_get_append_display;
-    access->impl.has_descriptions = matches_has_descriptions;
-    access->impl.is_filtered_match_display = matches_is_filtered_match_display;
-    access->matches = matches;
-    access->has_descriptions = 0;
-    for (int i = 1; matches[i]; i++)
-    {
-        if (matches_get_description(&access->impl, i))
-        {
-            access->has_descriptions = 1;
-            break;
-        }
-    }
-    return &access->impl;
-}
-
-//------------------------------------------------------------------------------
-struct filtered_match_accessor_impl
-{
-    struct match_accessor impl;
-    match_display_filter_entry** matches;
-};
-typedef struct filtered_match_accessor_impl filtered_match_accessor_impl;
-static int filtered_get_type(struct match_accessor* self, int i) { return ((filtered_match_accessor_impl*)self)->matches[i]->type; }
-static const char* filtered_get_match(struct match_accessor* self, int i) { return ((filtered_match_accessor_impl*)self)->matches[i]->match; }
-static const char* filtered_get_display(struct match_accessor* self, int i) { return ((filtered_match_accessor_impl*)self)->matches[i]->display; }
-static int filtered_get_display_cells(struct match_accessor* self, int i) { return ((filtered_match_accessor_impl*)self)->matches[i]->visible_display; }
-static const char* filtered_get_description(struct match_accessor* self, int i) { return ((filtered_match_accessor_impl*)self)->matches[i]->description; }
-static int filtered_get_description_cells(struct match_accessor* self, int i) { return ((filtered_match_accessor_impl*)self)->matches[i]->visible_description; }
-static int filtered_get_append_display(struct match_accessor* self, int i) { return 0; }
-static int filtered_has_descriptions(struct match_accessor* self) { return ((filtered_match_accessor_impl*)self)->matches[0]->visible_display < 0; }
-static int filtered_is_filtered_match_display(struct match_accessor* self) { return 1; }
-static match_accessor* make_filtered_match_accessor(match_display_filter_entry** matches)
-{
-    filtered_match_accessor_impl* access = (filtered_match_accessor_impl*)malloc(sizeof(*access));
-    access->impl.get_type = filtered_get_type;
-    access->impl.get_match = filtered_get_match;
-    access->impl.get_display = filtered_get_display;
-    access->impl.get_display_cells = filtered_get_display_cells;
-    access->impl.get_description = filtered_get_description;
-    access->impl.get_description_cells = filtered_get_description_cells;
-    access->impl.get_append_display = filtered_get_append_display;
-    access->impl.has_descriptions = filtered_has_descriptions;
-    access->impl.is_filtered_match_display = filtered_is_filtered_match_display;
-    access->matches = matches;
-    return &access->impl;
-}
-
-//------------------------------------------------------------------------------
-static int use_display(match_accessor* access, int type, const char* match, const char* display, int append_display)
+static int use_display(match_adapter* adapter, match_type type, const char* match, const char* display, bool append_display)
 {
     return (
         (append_display) ||
-        (IS_MATCH_TYPE_NONE(type) && access->is_filtered_match_display(access)) ||
+        (is_match_type(type, match_type::none) && adapter->is_display_filtered()) ||
         (!match || !*match) ||
         (match != display && strcmp(match, display) != 0));
 }
 
 //------------------------------------------------------------------------------
-static int display_match_list_internal(match_accessor* access, int len, int max, int only_measure)
+static int display_match_list_internal(match_adapter* adapter, int max, int only_measure)
 {
     int count, limit, printed_len, lines, cols;
     int i, j, l;
@@ -1047,6 +918,7 @@ static int display_match_list_internal(match_accessor* access, int len, int max,
     int filtered_color_len = 3;
     int description_color_len = 3;
     int show_descriptions = 0;
+    int len = adapter->get_match_count();
 
     // Find the length of the prefix common to all items: length as displayed
     // characters (common_length) and as a byte index into the matches (sind).
@@ -1058,7 +930,9 @@ static int display_match_list_internal(match_accessor* access, int len, int max,
     int can_condense = 0;
     if (_rl_completion_prefix_display_length > 0)
     {
-        const char* t = visible_part(access->get_match(access, 0));
+        str<32> lcd;
+        adapter->get_lcd(lcd);
+        const char* t = visible_part(lcd.c_str());
         common_length = fnwidth(t);
         sind = strlen(t);
         if (common_length > max || sind > max)
@@ -1071,11 +945,11 @@ static int display_match_list_internal(match_accessor* access, int len, int max,
             // unless the match string is an exact prefix of the display string.
             for (l = 0; l < len; l++)
             {
-                int type = access->get_type(access, l);
-                const char *match = access->get_match(access, l);
-                const char *display = access->get_display(access, l);
-                int append = access->get_append_display(access, l);
-                if (use_display(access, type, match, display, append) && !append)
+                match_type type = adapter->get_match_type(l);
+                const char *match = adapter->get_match(l);
+                const char *display = adapter->get_match_display(l);
+                int append = adapter->is_append_display(l);
+                if (use_display(adapter, type, match, display, append) && !append)
                 {
                     can_condense = 0;
                     break;
@@ -1091,7 +965,9 @@ static int display_match_list_internal(match_accessor* access, int len, int max,
 #if defined(COLOR_SUPPORT)
     if (sind == 0 && _rl_colored_completion_prefix > 0)
     {
-        const char* t = visible_part(access->get_match(access, 0));
+        str<32> lcd;
+        adapter->get_lcd(lcd);
+        const char* t = visible_part(lcd.c_str());
         common_length = fnwidth(t);
         sind = RL_STRLEN(t);
         if (common_length > max || sind > max)
@@ -1116,7 +992,7 @@ static int display_match_list_internal(match_accessor* access, int len, int max,
     if (limit <= 0)
         limit = 1;
 
-    if (access->has_descriptions(access))
+    if (adapter->has_descriptions())
     {
         limit = 1;
         show_descriptions = 1;
@@ -1165,17 +1041,17 @@ static int display_match_list_internal(match_accessor* access, int len, int max,
     for (i = 0; i < count; i++)
     {
         reset_tmpbuf();
-        for (j = 0, l = 1 + i * major_stride; j < limit; j++)
+        for (j = 0, l = i * major_stride; j < limit; j++)
         {
-            if (l > len)
+            if (l >= len)
                 break;
 
-            int type = access->get_type(access, l);
-            const char* match = access->get_match(access, l);
-            const char* display = access->get_display(access, l);
-            int append = access->get_append_display(access, l);
+            match_type type = adapter->get_match_type(l);
+            const char* match = adapter->get_match(l);
+            const char* display = adapter->get_match_display(l);
+            int append = adapter->is_append_display(l);
 
-            if (use_display(access, type, match, display, append))
+            if (use_display(adapter, type, match, display, append))
             {
                 printed_len = 0;
                 if (append)
@@ -1184,7 +1060,7 @@ static int display_match_list_internal(match_accessor* access, int len, int max,
                     printed_len = append_filename(temp, match, sind, can_condense, type, 0);
                 }
                 append_display(display, 0, append ? _rl_arginfo_color : _rl_filtered_color);
-                printed_len += access->get_display_cells(access, l);
+                printed_len += adapter->get_match_visible_display(l);
             }
             else
             {
@@ -1194,8 +1070,8 @@ static int display_match_list_internal(match_accessor* access, int len, int max,
 
             if (show_descriptions)
             {
-                const char* description = access->get_description(access, l);
-                if (description)
+                const char* description = adapter->get_match_description(l);
+                if (description && *description)
                 {
                     int fixed = max + desc_sep_padding;
                     if (fixed < cols - 1)
@@ -1211,7 +1087,7 @@ static int display_match_list_internal(match_accessor* access, int len, int max,
 
             l += minor_stride;
 
-            if (j + 1 < limit && l <= len)
+            if (j + 1 < limit && l < len)
                 pad_filename(printed_len, col_max, 0);
         }
 #if defined(COLOR_SUPPORT)
@@ -1285,8 +1161,8 @@ extern "C" void display_matches(char** matches)
     int len, max, i;
     char *temp;
     int vis_stat;
-    match_accessor* access = NULL;
-    char** rebuilt = NULL;
+    match_adapter* adapter = nullptr;
+    char** rebuilt = nullptr;
 
     // If there is a display filter, give it a chance to modify MATCHES.
     if (rl_match_display_filter_func)
@@ -1301,28 +1177,29 @@ extern "C" void display_matches(char** matches)
                 return;
             }
 
-            len = 0;
             max = 0;
-            for (match_display_filter_entry** walk = filtered_matches + 1; *walk; len++, walk++)
+            for (match_display_filter_entry** walk = filtered_matches + 1; *walk; walk++)
             {
                 if (max < (*walk)->visible_display)
                     max = (*walk)->visible_display;
             }
 
-            access = make_filtered_match_accessor(filtered_matches);
+            adapter = new match_adapter;
+            adapter->set_filtered_matches(filtered_matches);
+            filtered_matches = nullptr;
+            len = adapter->get_match_count();
 
             if ((rl_completion_auto_query_items && _rl_screenheight > 0) ?
-                display_match_list_internal(access, len, max, 1) >= (_rl_screenheight - (_rl_vis_botlin + 1)) :
+                display_match_list_internal(adapter, max, 1) >= (_rl_screenheight - (_rl_vis_botlin + 1)) :
                 rl_completion_query_items > 0 && len >= rl_completion_query_items)
             {
                 if (!prompt_display_matches(len))
                     goto done_filtered;
             }
 
-            display_match_list_internal(access, len, max, 0);
+            display_match_list_internal(adapter, max, 0);
 
 done_filtered:
-            free_filtered_matches(filtered_matches);
             goto done;
         }
     }
@@ -1342,53 +1219,54 @@ done_filtered:
         create_matches_lookaside(rebuilt);
     }
 
-    access = make_match_accessor(matches);
+    adapter = new match_adapter;
+    adapter->set_alt_matches(matches);
+    len = adapter->get_match_count();
 
     // There is more than one answer.  Find out how many there are,
     // and find the maximum printed length of a single entry.
-    for (max = 0, i = 1; matches[i]; i++)
+    for (max = 0, i = 0; i < len; i++)
     {
-        int type = access->get_type(access, i);
-        const char *match = access->get_match(access, i);
-        const char *display = access->get_display(access, i);
-        int append = access->get_append_display(access, i);
+        match_type type = adapter->get_match_type(i);
+        const char *match = adapter->get_match(i);
+        const char *display = adapter->get_match_display(i);
+        bool append = adapter->is_append_display(i);
 
-        if (use_display(access, type, match, display, append))
+        int chars;
+        if (use_display(adapter, type, match, display, append))
         {
-            len = 0;
+            chars = 0;
             if (append)
             {
                 char *temp = printable_part((char*)match);
-                len = printable_len(match, type);
+                chars = printable_len(match, type);
             }
-            len += access->get_display_cells(access, i);
+            chars += adapter->get_match_visible_display(i);
         }
         else
         {
-            len = printable_len(match, type);
+            chars = printable_len(match, type);
         }
 
-        if (len > max)
-            max = len;
+        if (chars > max)
+            max = chars;
     }
-
-    len = i - 1;
 
     // If there are many items, then ask the user if she really wants to
     // see them all.
     if ((rl_completion_auto_query_items && _rl_screenheight > 0) ?
-        display_match_list_internal(access, len, max, 1) >= (_rl_screenheight - (_rl_vis_botlin + 1)) :
+        display_match_list_internal(adapter, max, 1) >= (_rl_screenheight - (_rl_vis_botlin + 1)) :
         rl_completion_query_items > 0 && len >= rl_completion_query_items)
     {
         if (!prompt_display_matches(len))
             goto done;
     }
 
-    display_match_list_internal(access, len, max, 0);
+    display_match_list_internal(adapter, max, 0);
 
 done:
     destroy_matches_lookaside(rebuilt);
-    free(access);
+    delete adapter;
     rl_forced_update_display();
     rl_display_fixed = 1;
 }
