@@ -7,9 +7,17 @@
 */
 
 #include "pch.h"
+#include <assert.h>
 
 #define READLINE_LIBRARY
 #define BUILD_READLINE
+
+#include "display_matches.h"
+#include "matches_lookaside.h"
+#include "match_adapter.h"
+#include "column_widths.h"
+
+#include <core/settings.h>
 
 extern "C" {
 
@@ -68,11 +76,6 @@ unsigned int cell_count(const char* in);
 
 } // extern "C"
 
-#include "display_matches.h"
-#include "matches_lookaside.h"
-#include "match_adapter.h"
-#include <assert.h>
-
 #ifdef HAVE_LSTAT
 #  define LSTAT lstat
 #else
@@ -84,12 +87,16 @@ unsigned int cell_count(const char* in);
 
 #define ELLIPSIS_LEN 3
 
+#define COL_PADDING 2
+
 typedef void (*vstrlen_func_t)(const char* s, int len);
 int ellipsify_to_callback(const char* in, int limit, int expand_ctrl, vstrlen_func_t callback);
 
 
 
 //------------------------------------------------------------------------------
+extern setting_bool g_match_best_fit;
+extern setting_int g_match_limit_fitted;
 rl_match_display_filter_func_t *rl_match_display_filter_func = nullptr;
 const char *_rl_description_color = nullptr;
 const char *_rl_filtered_color = nullptr;
@@ -665,7 +672,9 @@ void append_display(const char* to_print, int selected, const char* color)
 // Print filename.  If VISIBLE_STATS is defined and we are using it, check for
 // and output a single character for 'special' filenames.  Return the number of
 // characters we output.
-int append_filename(char* to_print, const char* full_pathname, int prefix_bytes, int condense, match_type type, int selected)
+// The optional VIS_STAT_CHAR receives the visual stat char.  This is to allow
+// the visual stat char to show up correctly even after an ellipsis.
+int append_filename(char* to_print, const char* full_pathname, int prefix_bytes, int condense, match_type type, int selected, int* vis_stat_char)
 {
     int printed_len, extension_char, slen, tlen;
     char *s, c, *new_full_pathname;
@@ -794,10 +803,16 @@ int append_filename(char* to_print, const char* full_pathname, int prefix_bytes,
         {
             char *sep = rl_last_path_separator(to_print);
             if (sep && !sep[1])
+            {
+                if (vis_stat_char)
+                    *vis_stat_char = extension_char;
                 extension_char = 0;
+            }
         }
         if (extension_char)
         {
+            if (vis_stat_char)
+                *vis_stat_char = extension_char;
 #if defined(COLOR_SUPPORT)
             if (_rl_colored_stats && extension_char == rl_preferred_path_separator)
             {
@@ -817,52 +832,6 @@ int append_filename(char* to_print, const char* full_pathname, int prefix_bytes,
     }
 
     return printed_len;
-}
-
-//------------------------------------------------------------------------------
-static const char* visible_part(const char *match)
-{
-    const char* t1 = printable_part((char*)match);
-    if (ISALPHA ((unsigned char)t1[0]) && t1[1] == ':' && t1[2] == '\0')
-        t1 += 2;
-    if (!rl_filename_display_desired)
-        return t1;
-    // check again in case of /usr/src/
-    const char* t2 = rl_last_path_separator(t1);
-    if (!t2)
-        return t1;
-    return t2 + 1;
-}
-
-//------------------------------------------------------------------------------
-int printable_len(const char* match, match_type type)
-{
-    const char* temp = printable_part((char*)match);
-    int len = fnwidth(temp);
-
-    // Use the match type to determine whether there will be a visible stat
-    // character, and include it in the max length calculation.
-    int vis_stat = -1;
-    if (is_match_type(type, match_type::dir) && (
-#if defined (VISIBLE_STATS)
-        rl_visible_stats ||
-#endif
-#if defined (COLOR_SUPPORT)
-        _rl_colored_stats ||
-#endif
-        _rl_complete_mark_directories))
-    {
-        char *sep = rl_last_path_separator(match);
-        vis_stat = (!sep || sep[1]);
-    }
-#if defined (VISIBLE_STATS)
-    else if (rl_visible_stats && rl_filename_display_desired)
-        vis_stat = stat_char (match, static_cast<match_type_intrinsic>(type));
-#endif
-    if (vis_stat > 0)
-        len++;
-
-    return len;
 }
 
 //------------------------------------------------------------------------------
@@ -897,20 +866,13 @@ void pad_filename(int len, int pad_to_width, int selected)
 #endif
 }
 
-//------------------------------------------------------------------------------
-static int use_display(match_adapter* adapter, match_type type, const char* match, const char* display, bool append_display)
-{
-    return (
-        (append_display) ||
-        (is_match_type(type, match_type::none) && adapter->is_display_filtered()) ||
-        (!match || !*match) ||
-        (match != display && strcmp(match, display) != 0));
-}
+
 
 //------------------------------------------------------------------------------
-static int display_match_list_internal(match_adapter* adapter, int max, int only_measure)
+static int display_match_list_internal(match_adapter* adapter, const column_widths& widths, bool only_measure)
 {
-    int count, limit, printed_len, lines, cols;
+    const int count = adapter->get_match_count();
+    int rows, limit, printed_len, lines, cols;
     int i, j, l;
     int major_stride, minor_stride;
     const char* filtered_color = "\x1b[m";
@@ -918,79 +880,10 @@ static int display_match_list_internal(match_adapter* adapter, int max, int only
     int filtered_color_len = 3;
     int description_color_len = 3;
     int show_descriptions = 0;
-    int len = adapter->get_match_count();
 
-    // Find the length of the prefix common to all items: length as displayed
-    // characters (common_length) and as a byte index into the matches (sind).
-    //
-    //      WARNING:  MAY ADJUST MAX!
-    //
-    int common_length = 0;
-    int sind = 0;
-    int can_condense = 0;
-    if (_rl_completion_prefix_display_length > 0)
-    {
-        str<32> lcd;
-        adapter->get_lcd(lcd);
-        const char* t = visible_part(lcd.c_str());
-        common_length = fnwidth(t);
-        sind = strlen(t);
-        if (common_length > max || sind > max)
-            common_length = sind = 0;
-
-        can_condense = (common_length > _rl_completion_prefix_display_length && common_length > ELLIPSIS_LEN);
-        if (can_condense)
-        {
-            // Ellipsis can't be applied to matches that use a display string,
-            // unless the match string is an exact prefix of the display string.
-            for (l = 0; l < len; l++)
-            {
-                match_type type = adapter->get_match_type(l);
-                const char *match = adapter->get_match(l);
-                const char *display = adapter->get_match_display(l);
-                int append = adapter->is_append_display(l);
-                if (use_display(adapter, type, match, display, append) && !append)
-                {
-                    can_condense = 0;
-                    break;
-                }
-            }
-        }
-        if (can_condense)
-            max -= common_length - ELLIPSIS_LEN;
-        else
-            common_length = sind = 0;
-    }
-
-#if defined(COLOR_SUPPORT)
-    if (sind == 0 && _rl_colored_completion_prefix > 0)
-    {
-        str<32> lcd;
-        adapter->get_lcd(lcd);
-        const char* t = visible_part(lcd.c_str());
-        common_length = fnwidth(t);
-        sind = RL_STRLEN(t);
-        if (common_length > max || sind > max)
-            common_length = sind = 0;
-    }
-#endif
-
-    // How many items of MAX length can we fit in the screen window?
-    int col_max = max + 2;
     cols = complete_get_screenwidth();
-    limit = cols / col_max;
-#if 0
-    // Readline pads every column with spaces, so it must avoid reaching the end
-    // of the screen line.  Clink doesn't pad the last column with spaces, so it
-    // can eliminate this limitation.
-    if (limit != 1 && (limit * col_max == cols))
-        limit--;
-#endif
-
-    // Limit can end up -1 if cols == 0, or 0 if col_max > cols.  In that case,
-    // display 1 match per iteration.
-    if (limit <= 0)
-        limit = 1;
+    limit = widths.num_columns();
+    assert(limit > 0);
 
     if (adapter->has_descriptions())
     {
@@ -999,24 +892,24 @@ static int display_match_list_internal(match_adapter* adapter, int max, int only
     }
 
     // How many iterations of the printing loop?
-    count = (len + (limit - 1)) / limit;
+    rows = (count + (limit - 1)) / limit;
 
     // If only measuring, short circuit without printing anything.
     if (only_measure)
-        return count;
+        return rows;
 
     // Give the transient prompt a chance to update before printing anything.
     end_prompt(1/*crlf*/);
 
-    // Watch out for special case.  If LEN is less than LIMIT, then
+    // Watch out for special case.  If COUNT is less than LIMIT, then
     // just do the inner printing loop.
-    //     0 < len <= limit  implies  count = 1.
+    //     0 < count <= limit  implies  rows = 1.
 
     if (_rl_print_completions_horizontally == 0)
     {
         // Print the sorted items, up-and-down alphabetically, like ls.
         major_stride = 1;
-        minor_stride = count;
+        minor_stride = rows;
     }
     else
     {
@@ -1038,26 +931,28 @@ static int display_match_list_internal(match_adapter* adapter, int max, int only
     }
 
     lines = 0;
-    for (i = 0; i < count; i++)
+    for (i = 0; i < rows; i++)
     {
         reset_tmpbuf();
         for (j = 0, l = i * major_stride; j < limit; j++)
         {
-            if (l >= len)
+            if (l >= count)
                 break;
+
+            const int col_max = widths.column_width(j);
 
             match_type type = adapter->get_match_type(l);
             const char* match = adapter->get_match(l);
             const char* display = adapter->get_match_display(l);
             int append = adapter->is_append_display(l);
 
-            if (use_display(adapter, type, match, display, append))
+            if (adapter->use_display(l, type, append))
             {
                 printed_len = 0;
                 if (append)
                 {
                     char* temp = printable_part((char*)match);
-                    printed_len = append_filename(temp, match, sind, can_condense, type, 0);
+                    printed_len = append_filename(temp, match, widths.m_sind, widths.m_can_condense, type, 0, nullptr);
                 }
                 append_display(display, 0, append ? _rl_arginfo_color : _rl_filtered_color);
                 printed_len += adapter->get_match_visible_display(l);
@@ -1065,7 +960,7 @@ static int display_match_list_internal(match_adapter* adapter, int max, int only
             else
             {
                 char* temp = printable_part((char*)display);
-                printed_len = append_filename(temp, display, sind, can_condense, type, 0);
+                printed_len = append_filename(temp, display, widths.m_sind, widths.m_can_condense, type, 0, nullptr);
             }
 
             if (show_descriptions)
@@ -1073,7 +968,9 @@ static int display_match_list_internal(match_adapter* adapter, int max, int only
                 const char* description = adapter->get_match_description(l);
                 if (description && *description)
                 {
-                    int fixed = max + desc_sep_padding;
+                    // TODO:  Once descriptions do not imply single column, this
+                    // will have to change.
+                    int fixed = col_max - COL_PADDING + desc_sep_padding;
                     if (fixed < cols - 1)
                     {
                         pad_filename(printed_len, fixed, 0);
@@ -1087,8 +984,8 @@ static int display_match_list_internal(match_adapter* adapter, int max, int only
 
             l += minor_stride;
 
-            if (j + 1 < limit && l < len)
-                pad_filename(printed_len, col_max, 0);
+            if (j + 1 < limit && l < count)
+                pad_filename(printed_len, col_max + COL_PADDING, 0);
         }
 #if defined(COLOR_SUPPORT)
         if (_rl_colored_stats)
@@ -1158,11 +1055,9 @@ static int prompt_display_matches(int len)
 //------------------------------------------------------------------------------
 extern "C" void display_matches(char** matches)
 {
-    int len, max, i;
-    char *temp;
-    int vis_stat;
     match_adapter* adapter = nullptr;
     char** rebuilt = nullptr;
+    char* rebuilt_storage[3];
 
     // If there is a display filter, give it a chance to modify MATCHES.
     if (rl_match_display_filter_func)
@@ -1177,92 +1072,48 @@ extern "C" void display_matches(char** matches)
                 return;
             }
 
-            max = 0;
-            for (match_display_filter_entry** walk = filtered_matches + 1; *walk; walk++)
-            {
-                if (max < (*walk)->visible_display)
-                    max = (*walk)->visible_display;
-            }
-
             adapter = new match_adapter;
             adapter->set_filtered_matches(filtered_matches);
             filtered_matches = nullptr;
-            len = adapter->get_match_count();
-
-            if ((rl_completion_auto_query_items && _rl_screenheight > 0) ?
-                display_match_list_internal(adapter, max, 1) >= (_rl_screenheight - (_rl_vis_botlin + 1)) :
-                rl_completion_query_items > 0 && len >= rl_completion_query_items)
-            {
-                if (!prompt_display_matches(len))
-                    goto done_filtered;
-            }
-
-            display_match_list_internal(adapter, max, 0);
-
-done_filtered:
-            goto done;
         }
     }
 
-    // Handle "simple" case first.  What if there is only one answer?
-    char* rebuilt_storage[3];
-    if (matches[1] == 0)
+    if (!adapter)
     {
-        // Rebuild a matches array that has a first match, so the display
-        // routine can handle descriptions, and also special display when using
-        // match display filtering.
-        rebuilt = rebuilt_storage;
-        rebuilt[0] = matches[0];
-        rebuilt[1] = matches[0];
-        rebuilt[2] = 0;
-        matches = rebuilt;
-        create_matches_lookaside(rebuilt);
-    }
-
-    adapter = new match_adapter;
-    adapter->set_alt_matches(matches);
-    len = adapter->get_match_count();
-
-    // There is more than one answer.  Find out how many there are,
-    // and find the maximum printed length of a single entry.
-    for (max = 0, i = 0; i < len; i++)
-    {
-        match_type type = adapter->get_match_type(i);
-        const char *match = adapter->get_match(i);
-        const char *display = adapter->get_match_display(i);
-        bool append = adapter->is_append_display(i);
-
-        int chars;
-        if (use_display(adapter, type, match, display, append))
+        // Handle "simple" case first.  What if there is only one answer?
+        if (matches[1] == 0)
         {
-            chars = 0;
-            if (append)
-            {
-                char *temp = printable_part((char*)match);
-                chars = printable_len(match, type);
-            }
-            chars += adapter->get_match_visible_display(i);
-        }
-        else
-        {
-            chars = printable_len(match, type);
+            // Rebuild a matches array that has a first match, so the display
+            // routine can handle descriptions, and also special display when using
+            // match display filtering.
+            rebuilt = rebuilt_storage;
+            rebuilt[0] = matches[0];
+            rebuilt[1] = matches[0];
+            rebuilt[2] = 0;
+            matches = rebuilt;
+            create_matches_lookaside(rebuilt);
         }
 
-        if (chars > max)
-            max = chars;
+        adapter = new match_adapter;
+        adapter->set_alt_matches(matches);
     }
 
-    // If there are many items, then ask the user if she really wants to
-    // see them all.
+    const bool best_fit = g_match_best_fit.get();
+    const int limit_fit = g_match_limit_fitted.get();
+    const column_widths widths = calculate_columns(adapter, COL_PADDING, best_fit ? limit_fit : -1);
+
+    // If there are many items, then ask the user if she really wants to see
+    // them all.
+    const int count = adapter->get_match_count();
     if ((rl_completion_auto_query_items && _rl_screenheight > 0) ?
-        display_match_list_internal(adapter, max, 1) >= (_rl_screenheight - (_rl_vis_botlin + 1)) :
-        rl_completion_query_items > 0 && len >= rl_completion_query_items)
+        display_match_list_internal(adapter, widths, 1) >= (_rl_screenheight - (_rl_vis_botlin + 1)) :
+        rl_completion_query_items > 0 && count >= rl_completion_query_items)
     {
-        if (!prompt_display_matches(len))
+        if (!prompt_display_matches(count))
             goto done;
     }
 
-    display_match_list_internal(adapter, max, 0);
+    display_match_list_internal(adapter, widths, 0);
 
 done:
     destroy_matches_lookaside(rebuilt);

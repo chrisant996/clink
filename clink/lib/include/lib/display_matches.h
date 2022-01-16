@@ -37,7 +37,7 @@ void append_tmpbuf_char(char c);
 void append_tmpbuf_string(const char* s, int len);
 void flush_tmpbuf(void);
 void append_display(const char* to_print, int selected, const char* color);
-int append_filename(char* to_print, const char* full_pathname, int prefix_bytes, int can_condense, match_type type, int selected);
+int append_filename(char* to_print, const char* full_pathname, int prefix_bytes, int can_condense, match_type type, int selected, int* vis_stat_char);
 void pad_filename(int len, int pad_to_width, int selected);
 
 void free_filtered_matches(match_display_filter_entry** filtered_matches);

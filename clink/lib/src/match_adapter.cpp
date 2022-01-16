@@ -15,6 +15,15 @@
 extern "C" char* printable_part(char* text);
 
 //------------------------------------------------------------------------------
+void match_adapter::cached_info::clear()
+{
+    m_count = 0;
+    m_lcd.clear();
+    m_has_descriptions = -1;
+    m_has_lcd = false;
+}
+
+//------------------------------------------------------------------------------
 match_adapter::~match_adapter()
 {
     free_filtered();
@@ -33,7 +42,7 @@ void match_adapter::set_matches(const matches* matches)
     clear_alt();
     m_real_matches = matches;
     m_matches = m_real_matches;
-    m_has_descriptions = -1;
+    m_cached.clear();
 }
 
 //------------------------------------------------------------------------------
@@ -59,7 +68,7 @@ void match_adapter::set_alt_matches(char** matches)
         unsigned int count = 0;
         while (*(++matches))
             count++;
-        m_alt_count = count;
+        m_alt_cached.m_count = count;
     }
 }
 
@@ -69,25 +78,25 @@ void match_adapter::set_filtered_matches(match_display_filter_entry** filtered_m
     free_filtered();
 
     m_filtered_matches = filtered_matches;
-    m_filtered_has_descriptions = false;
+    m_filtered_cached.m_has_descriptions = false;
 
     // Skip first filtered match; it's fake, to satisfy Readline's expectation
     // that matches start at [1].
     if (filtered_matches && filtered_matches[0])
     {
-        m_filtered_has_descriptions = (filtered_matches[0]->visible_display < 0);
+        m_filtered_cached.m_has_descriptions = (filtered_matches[0]->visible_display < 0);
 
         unsigned int count = 0;
         while (*(++filtered_matches))
             count++;
-        m_filtered_count = count;
+        m_filtered_cached.m_count = count;
     }
 }
 
 //------------------------------------------------------------------------------
 void match_adapter::init_has_descriptions()
 {
-    m_has_descriptions = -1;
+    m_cached.m_has_descriptions = -1;
 }
 
 //------------------------------------------------------------------------------
@@ -104,27 +113,46 @@ void match_adapter::get_lcd(str_base& out) const
 {
     if (m_filtered_matches)
     {
-        for (unsigned int i = 0; i < m_filtered_count; i++)
+        if (!m_filtered_cached.m_has_lcd)
         {
-            const char* match = m_filtered_matches[i + 1]->match;
-            if (!i)
+            m_filtered_cached.m_has_lcd = true;
+            m_filtered_cached.m_lcd.clear();
+            for (unsigned int i = 0; i < m_filtered_cached.m_count; i++)
             {
-                out = match;
-            }
-            else
-            {
-                int matching = str_compare<char, true/*compute_lcd*/>(out.c_str(), match);
-                out.truncate(matching);
+                const char* match = m_filtered_matches[i + 1]->match;
+                if (!i)
+                {
+                    m_filtered_cached.m_lcd = match;
+                }
+                else
+                {
+                    int matching = str_compare<char, true/*compute_lcd*/>(out.c_str(), match);
+                    m_filtered_cached.m_lcd.truncate(matching);
+                }
             }
         }
+
+        out = m_filtered_cached.m_lcd.c_str();
     }
     else if (m_alt_matches)
     {
-        out = m_alt_matches[0];
+        if (!m_alt_cached.m_has_lcd)
+        {
+            m_alt_cached.m_has_lcd = true;
+            m_alt_cached.m_lcd = m_alt_matches[0];
+        }
+
+        out = m_alt_cached.m_lcd.c_str();
     }
     else if (m_matches)
     {
-        m_matches->get_lcd(out);
+        if (!m_cached.m_has_lcd)
+        {
+            m_cached.m_has_lcd = true;
+            m_matches->get_lcd(m_cached.m_lcd);
+        }
+
+        out = m_cached.m_lcd.c_str();
     }
     else
     {
@@ -136,9 +164,9 @@ void match_adapter::get_lcd(str_base& out) const
 unsigned int match_adapter::get_match_count() const
 {
     if (m_filtered_matches)
-        return m_filtered_count;
+        return m_filtered_cached.m_count;
     if (m_alt_matches)
-        return m_alt_count;
+        return m_alt_cached.m_count;
     if (m_matches)
         return m_matches->get_match_count();
     return 0;
@@ -283,7 +311,16 @@ bool match_adapter::is_custom_display(unsigned int index) const
         if (strcmp(temp, m_filtered_matches[index + 1]->display) != 0)
             return true;
     }
-    // TODO: m_alt_matches?
+
+    const char* display = get_match_display(index);
+    if (!display || !*display)
+        return false;
+
+    const char* match = get_match(index);
+    assert(match && *match);
+    if (strcmp(match, display) != 0)
+        return true;
+
     return false;
 }
 
@@ -291,6 +328,14 @@ bool match_adapter::is_custom_display(unsigned int index) const
 bool match_adapter::is_append_display(unsigned int index) const
 {
     return !!(get_match_flags(index) & MATCH_FLAG_APPEND_DISPLAY);
+}
+
+//------------------------------------------------------------------------------
+bool match_adapter::use_display(unsigned int index, match_type type, bool append) const
+{
+    return ((append) ||
+            (is_display_filtered() && is_match_type(type, match_type::none)) ||
+            (is_custom_display(index)));
 }
 
 //------------------------------------------------------------------------------
@@ -304,14 +349,14 @@ bool match_adapter::has_descriptions() const
 {
     if (m_filtered_matches)
     {
-        return m_filtered_has_descriptions > 0;
+        return m_filtered_cached.m_has_descriptions > 0;
     }
 
     if (m_alt_matches)
     {
-        if (m_alt_has_descriptions < 0)
+        if (m_alt_cached.m_has_descriptions < 0)
         {
-            m_alt_has_descriptions = false;
+            m_alt_cached.m_has_descriptions = false;
             for (char** matches = m_alt_matches; *(++matches);)
             {
                 match_details details = lookup_match(*matches);
@@ -320,30 +365,30 @@ bool match_adapter::has_descriptions() const
                     const char* desc = details.get_description();
                     if (desc && *desc)
                     {
-                        m_alt_has_descriptions = true;
+                        m_alt_cached.m_has_descriptions = true;
                         break;
                     }
                 }
             }
         }
-        return m_alt_has_descriptions > 0;
+        return m_alt_cached.m_has_descriptions > 0;
     }
 
     if (m_matches)
     {
-        if (m_has_descriptions < 0)
+        if (m_cached.m_has_descriptions < 0)
         {
-            m_has_descriptions = false;
+            m_cached.m_has_descriptions = false;
             for (unsigned int i = m_matches ? m_matches->get_match_count() : 0; i--;)
             {
                 if (m_matches->get_match_description(i))
                 {
-                    m_has_descriptions = true;
+                    m_cached.m_has_descriptions = true;
                     break;
                 }
             }
         }
-        return m_has_descriptions > 0;
+        return m_cached.m_has_descriptions > 0;
     }
     return false;
 }
@@ -351,16 +396,17 @@ bool match_adapter::has_descriptions() const
 //------------------------------------------------------------------------------
 void match_adapter::free_filtered()
 {
-    free_filtered_matches(m_filtered_matches);
-    m_filtered_matches = nullptr;
-    m_filtered_count = 0;
-    m_filtered_has_descriptions = -1;
+    if (m_filtered_matches)
+    {
+        free_filtered_matches(m_filtered_matches);
+        m_filtered_matches = nullptr;
+        m_filtered_cached.clear();
+    }
 }
 
 //------------------------------------------------------------------------------
 void match_adapter::clear_alt()
 {
     m_alt_matches = nullptr;
-    m_alt_count = 0;
-    m_alt_has_descriptions = -1;
+    m_alt_cached.clear();
 }

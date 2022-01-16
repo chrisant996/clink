@@ -35,6 +35,7 @@ public:
     unsigned char   get_match_flags(unsigned int index) const;
     bool            is_custom_display(unsigned int index) const;
     bool            is_append_display(unsigned int index) const;
+    bool            use_display(unsigned int index, match_type type, bool append) const;
 
     bool            is_display_filtered() const;
     bool            has_descriptions() const;
@@ -44,13 +45,20 @@ private:
     void            clear_alt();
 
 private:
+    struct cached_info
+    {
+        void            clear();
+        unsigned int    m_count;
+        str<32>         m_lcd;
+        char            m_has_descriptions;
+        bool            m_has_lcd;
+    };
+
     const matches*  m_matches = nullptr;
     const matches*  m_real_matches = nullptr;
     char**          m_alt_matches = nullptr;
-    unsigned int    m_alt_count = 0;
     match_display_filter_entry** m_filtered_matches = nullptr;
-    unsigned int    m_filtered_count = 0;
-    mutable char    m_has_descriptions = -1;
-    mutable char    m_alt_has_descriptions = -1;
-    mutable char    m_filtered_has_descriptions = -1;
+    mutable cached_info m_cached;
+    mutable cached_info m_alt_cached;
+    mutable cached_info m_filtered_cached;
 };

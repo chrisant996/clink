@@ -6,6 +6,7 @@
 #include "editor_module.h"
 #include "input_dispatcher.h"
 #include "match_adapter.h"
+#include "column_widths.h"
 
 #include <core/str.h>
 
@@ -74,6 +75,7 @@ private:
     bool            m_can_prompt = true;
     bool            m_expanded = false;
     bool            m_clear_display = false;
+    column_widths   m_widths;
 
     // Inserting matches.
     int             m_anchor = -1;
@@ -98,6 +100,7 @@ private:
     // Debugging.
 #ifdef DEBUG
     bool            m_annotate = false;
+    width_t         m_col_extra = 0;
 #endif
 };
 
