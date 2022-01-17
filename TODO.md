@@ -8,14 +8,17 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## Medium Priority
 - [ ] Figure out how to have multiple items with descriptions on the same line.
+  - [ ] When to show descriptions inline vs at bottom?
   - [ ] When to right justify the description?
   - [ ] I would strongly prefer to only right justify when it makes a "big difference" in how many columns fit and/or how much description will be visible.
-- [ ] Argmatcher syntax for defining help-like layout format that groups multiple flags into one entry?
-  - [ ] Only group when a single flag character is used (`-` but not `--`).
-  - [ ] Always insert the first flag listed in a line.
-  - [ ] Highlight the full line?
-- [ ] Easier argmatcher syntax for defining flags + display + description strings.
-- [ ] Provide shim so scripts can use new syntax and still be compatible with older Clink.
+  - [ ] Highlight the full line?  Not sure I like it...
+- [ ] Sort `-` flags then `--` flags, instead of mixing them?
+- [ ] Argmatcher syntax.
+  - [ ] Define help-like layout format that groups multiple flags into one entry?
+    - [ ] Only group when a single flag character is used (`-` but not `--`).
+    - [ ] Always insert the first flag listed in a line.
+  - [ ] Easier argmatcher syntax for defining flags + display + description strings.
+  - [ ] Provide shim so scripts can use new syntax and still be compatible with older Clink.
 - Readline command reference.
 - Add more Readline documentation into the Clink docs.
 
