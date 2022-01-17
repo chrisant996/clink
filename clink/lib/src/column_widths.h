@@ -19,9 +19,12 @@ struct column_widths
     size_t                  num_columns() const { return m_widths.size(); }
     width_t                 column_width(size_t i) const { return m_widths[i]; }
     std::vector<width_t>    m_widths;
-    width_t                 m_padding = 0;
-    width_t                 m_sind = 0;
-    width_t                 m_max_len = 0;
+    width_t                 m_col_padding = 0;  // Padding between columns.
+    width_t                 m_desc_padding = 0; // Min padding between match and description.
+    width_t                 m_sind = 0;         // LCD length.
+    width_t                 m_max_len = 0;      // Longest combined match and description.
+    width_t                 m_max_match = 0;    // Longest individual match string.
+    width_t                 m_max_desc = 0;     // Longest individual description string.
     bool                    m_can_condense = false;
 };
 
@@ -30,4 +33,4 @@ struct column_widths
 // MAX_MATCHES < 0 makes all columns are made the same width.
 // MAX_MATCHES > 0 disables fitting if the matches exceeds MAX_MATCHES.
 // MAX_MATCHES == 0 is unlimited.
-column_widths calculate_columns(match_adapter* adapter, width_t padding=2, int max_matches=0, width_t extra=0);
+column_widths calculate_columns(match_adapter* adapter, int max_matches=0, bool omit_desc=false, width_t extra=0);

@@ -111,86 +111,6 @@ enum {
     bind_id_selectcomplete_catchall,
 };
 
-//------------------------------------------------------------------------------
-enum {
-    between_cols = 2,
-    before_desc = 4,
-};
-
-static_assert(between_cols <= before_desc, "description separator can't be less than the column separator");
-
-
-
-//------------------------------------------------------------------------------
-// Parse ANSI escape codes to determine the visible character length of the
-// string (which gets used for column alignment).  Truncate the string with an
-// ellipsis if it exceeds a maximum visible length.
-// Returns the visible character length of the output string.
-int ellipsify(const char* in, int limit, str_base& out, bool expand_ctrl)
-{
-    int visible_len = 0;
-    int truncate_visible = -1;
-    int truncate_bytes = -1;
-
-#ifdef USE_ASCII_ELLIPSIS
-    static const char ellipsis[] = "...";
-    const int ellipsis_len = 3;
-    const int ellipsis_cells = 3;
-#else
-    static const char ellipsis[] = "\xe2\x80\xa6";
-    const int ellipsis_len = 3;
-    const int ellipsis_cells = 1;
-#endif
-
-    out.clear();
-
-    ecma48_state state;
-    ecma48_iter iter(in, state);
-    while (visible_len <= limit)
-    {
-        const ecma48_code& code = iter.next();
-        if (!code)
-            break;
-        if (code.get_type() == ecma48_code::type_chars)
-        {
-            const char* prev = code.get_pointer();
-            str_iter inner_iter(code.get_pointer(), code.get_length());
-            while (const int c = inner_iter.next())
-            {
-                const int clen = (expand_ctrl && (CTRL_CHAR(c) || c == RUBOUT)) ? 2 : clink_wcwidth(c);
-                if (truncate_visible < 0 && visible_len + clen > limit - ellipsis_cells)
-                {
-                    truncate_visible = visible_len;
-                    truncate_bytes = out.length();
-                }
-                if (visible_len + clen > limit)
-                {
-                    out.truncate(truncate_bytes);
-                    visible_len = truncate_visible;
-#ifdef USE_ASCII_ELLIPSIS
-                    out.concat(ellipsis, min<int>(ellipsis_len, max<int>(0, limit - truncate_visible)));
-#else
-                    static_assert(ellipsis_cells == 1, "Ellipsis must be exactly 1 cell.");
-                    assert(cell_count(ellipsis) == 1);
-                    out.concat(ellipsis, ellipsis_len);
-#endif
-                    visible_len += cell_count(ellipsis);
-                    return visible_len;
-                }
-                visible_len += clen;
-                out.concat(prev, inner_iter.get_pointer() - prev);
-                prev = inner_iter.get_pointer();
-            }
-        }
-        else
-        {
-            out.concat(code.get_pointer(), code.get_length());
-        }
-    }
-
-    return visible_len;
-}
-
 
 
 //------------------------------------------------------------------------------
@@ -793,6 +713,8 @@ update_needle:
             reset_top();
             insert_needle();
             update_matches(false/*restrict*/);
+            update_layout();
+            update_display();
             if (m_matches.get_match_count())
                 insert_match();
             else
@@ -989,18 +911,7 @@ void selectcomplete_impl::update_matches(bool restrict)
     }
 
     m_clear_display = m_any_displayed;
-
-#ifdef DEBUG
-    const width_t col_extra = m_col_extra;
-#else
-    const width_t col_extra = 0;
-#endif
-    const bool best_fit = g_match_best_fit.get();
-    const int limit_fit = g_match_limit_fitted.get();
-    m_widths = calculate_columns(&m_matches, between_cols, best_fit ? limit_fit : -1, col_extra);
-
-    update_layout();
-    update_display();
+    m_calc_widths = true;
 }
 
 //------------------------------------------------------------------------------
@@ -1026,12 +937,29 @@ void selectcomplete_impl::update_layout()
     m_col_extra = m_annotate ? 3 : 0;   // Room for space hex hex.
 #endif
 
-    int cols_that_fit = desc_inline ? 1 : m_widths.num_columns();
+    if (m_calc_widths)
+    {
+#ifdef DEBUG
+        const width_t col_extra = m_col_extra;
+#else
+        const width_t col_extra = 0;
+#endif
+        const bool best_fit = g_match_best_fit.get();
+        const int limit_fit = g_match_limit_fitted.get();
+        m_widths = calculate_columns(&m_matches, best_fit ? limit_fit : -1, m_desc_below, col_extra);
+        m_calc_widths = false;
+    }
+
+#ifdef ONLY_ONE_DESCRIPTION_COLUMN
+    const int cols_that_fit = desc_inline ? 1 : m_widths.num_columns();
+#else
+    const int cols_that_fit = m_widths.num_columns();
+#endif
     m_match_cols = max<int>(1, cols_that_fit);
     m_match_rows = (m_matches.get_match_count() + (m_match_cols - 1)) / m_match_cols;
 
     // +3 for quotes and append character (e.g. space).
-    int input_height = (_rl_vis_botlin + 1) + (m_match_longest + 3 + m_screen_cols - 1) / m_screen_cols;
+    const int input_height = (_rl_vis_botlin + 1) + (m_match_longest + 3 + m_screen_cols - 1) / m_screen_cols;
     m_visible_rows = m_screen_rows - input_height;
     m_visible_rows -= min<int>(2, m_screen_rows / 10);
 
@@ -1186,7 +1114,11 @@ void selectcomplete_impl::update_display()
                         if (i >= count)
                             break;
 
-                        const int col_max = (show_descriptions ? m_widths.m_max_len : m_widths.column_width(col)) - col_extra;
+#ifdef ONLY_ONE_DESCRIPTION_COLUMN
+                        const int col_max = (show_descriptions ? m_screen_cols - 1 : m_widths.column_width(col)) - col_extra;
+#else
+                        const int col_max = ((show_descriptions && m_match_cols == 1) ? min<int>(m_widths.m_max_len, m_screen_cols - 1) : m_widths.column_width(col)) - col_extra;
+#endif
 
                         const int selected = (i == m_index);
                         const char* const display = m_matches.get_match_display(i);
@@ -1242,20 +1174,48 @@ void selectcomplete_impl::update_display()
                             }
                         }
 
+                        const int next = i + minor_stride;
+
+                        const char* desc = m_desc_below ? nullptr : m_matches.get_match_description(i);
+                        if (desc && *desc)
+                        {
+                            // Leave at least one space at end of line, or else
+                            // "\x1b[K" can erase part of the intended output.
+#ifdef ONLY_ONE_DESCRIPTION_COLUMN
+                            if (selected)
+                            {
+                                pad_filename(printed_len, m_widths.m_max_match, selected);
+                                printed_len = m_widths.m_max_match;
+                            }
+                            const int pad_to = m_widths.m_max_match + 4;
+#else
+                            const unsigned int desc_cells = m_matches.get_match_visible_description(i);
+                            const int pad_to = max<int>(printed_len + m_widths.m_desc_padding, col_max - desc_cells);
+#endif
+                            if (pad_to < m_screen_cols - 1)
+                            {
+                                pad_filename(printed_len, pad_to, -1);
+                                printed_len = pad_to;
+#ifdef ONLY_ONE_DESCRIPTION_COLUMN
+#else
+                                if (!selected)
+#endif
+                                    append_tmpbuf_string(description_color, description_color_len);
+                                printed_len += ellipsify_to_callback(desc, col_max - printed_len, false/*expand_ctrl*/, append_tmpbuf_string);
+                            }
+                        }
+
 #ifdef DEBUG
                         if (col_extra)
                         {
-                            pad_filename(printed_len, col_max + 1, selected);
+                            pad_filename(printed_len, col_max + 1, -1);
                             printed_len = col_max + col_extra;
 
+#ifdef ONLY_ONE_DESCRIPTION_COLUMN
+#else
                             if (!selected)
+#endif
                                 append_tmpbuf_string("\x1b[36m", 5);
-                            else if (_rl_selected_color)
-                            {
-                                append_tmpbuf_string("\x1b[", 2);
-                                append_tmpbuf_string(_rl_selected_color, strlen(_rl_selected_color));
-                                append_tmpbuf_char('m');
-                            }
 
                             char _extra[3];
                             str_base extra(_extra);
@@ -1264,35 +1224,11 @@ void selectcomplete_impl::update_display()
                         }
 #endif
 
-                        const int next = i + minor_stride;
-
-                        const char* desc = m_desc_below ? nullptr : m_matches.get_match_description(i);
                         const bool last_col = (col + 1 >= m_match_cols || next >= count);
-                        if (selected || !last_col || desc)
-                            pad_filename(printed_len, col_max + col_extra + (selected ? 0 : between_cols), selected);
-
-                        if (desc)
-                        {
-                            // Leave between_cols at end of line, otherwise "\x1b[K" can erase part
-                            // of the intended output.
-                            const int remaining = m_screen_cols - (col_max + col_extra) - before_desc - between_cols;
-                            if (remaining > 0)
-                            {
-                                printed_len = m_matches.get_match_visible_description(i);
-                                if (printed_len > remaining)
-                                {
-                                    ellipsify(desc, remaining, truncated, false/*expand_ctrl*/);
-                                    desc = truncated.data();
-                                    printed_len = cell_count(desc);
-                                }
-                                pad_filename(0, before_desc - (selected ? 0 : between_cols), 0);
-                                append_tmpbuf_string(description_color, description_color_len);
-                                append_tmpbuf_string(desc, -1);
-                            }
-                        }
-
-                        if (selected && !last_col)
-                            pad_filename(0, between_cols, 0);
+                        if (!last_col || selected)
+                            pad_filename(printed_len, -col_max, selected);
+                        if (!last_col)
+                            pad_filename(0, m_widths.m_col_padding, 0);
 
                         i = next;
                     }

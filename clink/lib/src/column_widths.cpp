@@ -94,7 +94,7 @@ int printable_len(const char* match, match_type type)
 /* Allocate enough column info suitable for the current number of
    files and display columns, and initialize the info to represent the
    narrowest possible columns.  */
-static bool init_column_info(int max_matches, size_t max_cols, size_t count, width_t padding)
+static bool init_column_info(int max_matches, size_t max_cols, size_t count, width_t col_padding)
 {
     size_t i;
 
@@ -149,9 +149,9 @@ static bool init_column_info(int max_matches, size_t max_cols, size_t count, wid
         size_t j;
 
         s_column_info[i].valid_len = 1;
-        s_column_info[i].line_len = (i + 1) * (1 + padding);
+        s_column_info[i].line_len = (i + 1) * (1 + col_padding);
         for (j = 0; j <= i; ++j)
-            s_column_info[i].col_arr[j] = (1 + padding);
+            s_column_info[i].col_arr[j] = (1 + col_padding);
     }
 
     return true;
@@ -160,15 +160,19 @@ static bool init_column_info(int max_matches, size_t max_cols, size_t count, wid
 //------------------------------------------------------------------------------
 // Calculate the number of columns needed to represent the current set of
 // matches in the current display width.
-column_widths calculate_columns(match_adapter* adapter, width_t padding, int max_matches, width_t extra)
+column_widths calculate_columns(match_adapter* adapter, int max_matches, bool omit_desc, width_t extra)
 {
     column_widths widths;
+
+    const bool has_descriptions = !omit_desc && adapter->has_descriptions();
+    const width_t col_padding = has_descriptions ? 4 : 2;
+    const width_t desc_padding = has_descriptions ? 2 : 0;
 
     /* Determine the max possible number of display columns.  */
     const bool vertical = !_rl_print_completions_horizontally;
     const size_t line_length = complete_get_screenwidth();
     size_t max_idx = line_length;
-    max_idx = (max_idx + padding) / (1 + padding);
+    max_idx = (max_idx + col_padding) / (1 + col_padding);
 
     /* Normally the maximum number of columns is determined by the
        screen width.  But if few files are available this might limit it
@@ -176,7 +180,7 @@ column_widths calculate_columns(match_adapter* adapter, width_t padding, int max
     const size_t count = adapter->get_match_count();
     size_t max_cols = count < max_idx ? count : max_idx;
 
-    const bool fixed_cols = !init_column_info(max_matches, max_cols, count, padding);
+    const bool fixed_cols = !init_column_info(max_matches, max_cols, count, col_padding);
 
     // Find the length of the prefix common to all items: length as displayed
     // characters (common_length) and as a byte index into the matches (sind).
@@ -227,7 +231,9 @@ column_widths calculate_columns(match_adapter* adapter, width_t padding, int max
 #endif
 
     /* Compute the maximum number of possible columns.  */
-    int max_len = 0;
+    int max_match = 0;  // Longest match width in cells.
+    int max_desc = 0;   // Longest description width in cells.
+    int max_len = 0;    // Longest combined match and desc width in cells.
     int i = 0;
     for (size_t filesno = 0; filesno < count; ++filesno, ++i)
     {
@@ -256,6 +262,23 @@ column_widths calculate_columns(match_adapter* adapter, width_t padding, int max
             len -= condense_delta;
         }
 
+        if (max_match < len)
+            max_match = len;
+
+        if (has_descriptions)
+        {
+#ifdef ONLY_ONE_DESCRIPTION_COLUMN
+#else
+            const unsigned int desc_cells = adapter->get_match_visible_description(i);
+            if (desc_cells)
+            {
+                len += desc_padding + desc_cells;
+                if (max_desc < desc_cells)
+                    max_desc = desc_cells;
+            }
+#endif
+        }
+
         if (max_len < len)
             max_len = len;
 
@@ -269,7 +292,7 @@ column_widths calculate_columns(match_adapter* adapter, width_t padding, int max
                 const size_t idx = (vertical
                                     ? filesno / ((count + i) / (i + 1))
                                     : filesno % (i + 1));
-                const width_t real_length = len + (idx == i ? 0 : padding);
+                const width_t real_length = len + (idx == i ? 0 : col_padding);
 
                 if (s_column_info[i].col_arr[idx] < real_length)
                 {
@@ -286,8 +309,11 @@ column_widths calculate_columns(match_adapter* adapter, width_t padding, int max
 
     widths.m_sind = sind;
     widths.m_max_len = max_len;
+    widths.m_max_match = max_match;
+    widths.m_max_desc = max_desc;
     widths.m_can_condense = can_condense;
-    widths.m_padding = padding;
+    widths.m_col_padding = col_padding;
+    widths.m_desc_padding = desc_padding;
 
     if (fixed_cols)
     {
@@ -308,7 +334,7 @@ column_widths calculate_columns(match_adapter* adapter, width_t padding, int max
 
         size_t remove_padding = cols - 1;
         for (size_t i = 0; i < cols; ++i, --remove_padding)
-            widths.m_widths.push_back(s_column_info[cols - 1].col_arr[i] - (remove_padding ? padding : 0));
+            widths.m_widths.push_back(s_column_info[cols - 1].col_arr[i] - (remove_padding ? col_padding : 0));
     }
 
     return widths;

@@ -75,6 +75,7 @@ private:
     bool            m_can_prompt = true;
     bool            m_expanded = false;
     bool            m_clear_display = false;
+    bool            m_calc_widths = false;
     column_widths   m_widths;
 
     // Inserting matches.

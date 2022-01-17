@@ -17,7 +17,9 @@
 #include "match_adapter.h"
 #include "column_widths.h"
 
+#include <core/base.h>
 #include <core/settings.h>
+#include <terminal/ecma48_iter.h>
 
 extern "C" {
 
@@ -87,11 +89,6 @@ unsigned int cell_count(const char* in);
 
 #define ELLIPSIS_LEN 3
 
-#define COL_PADDING 2
-
-typedef void (*vstrlen_func_t)(const char* s, int len);
-int ellipsify_to_callback(const char* in, int limit, int expand_ctrl, vstrlen_func_t callback);
-
 
 
 //------------------------------------------------------------------------------
@@ -113,7 +110,6 @@ static int tmpbuf_capacity = 0;
 static int tmpbuf_rollback_length = 0;
 static const char* const _normal_color = "\x1b[m";
 static const int _normal_color_len = 3;
-static const int desc_sep_padding = 4;
 
 //------------------------------------------------------------------------------
 void mark_tmpbuf (void)
@@ -835,18 +831,22 @@ int append_filename(char* to_print, const char* full_pathname, int prefix_bytes,
 }
 
 //------------------------------------------------------------------------------
+// SELECTED > 0     : pad exactly, reset color at end.
+// SELECTED == 0    : reset color first, pad at least 1 char.
+// SELECTED == -1   : pad exactly, do not set color.
 void pad_filename(int len, int pad_to_width, int selected)
 {
+    const bool exact = selected || pad_to_width < 0;
     int num_spaces = 0;
+    if (pad_to_width < 0)
+        pad_to_width = -pad_to_width;
     if (pad_to_width <= len)
-        num_spaces = selected ? 0 : 1;
+        num_spaces = exact ? 0 : 1;
     else
         num_spaces = pad_to_width - len;
-    if (num_spaces <= 0)
-        return;
 
 #if defined(COLOR_SUPPORT)
-    if (_rl_colored_stats && !selected)
+    if (_rl_colored_stats && selected == 0)
         append_default_color();
 #endif
 
@@ -861,9 +861,90 @@ void pad_filename(int len, int pad_to_width, int selected)
     }
 
 #if defined(COLOR_SUPPORT)
-    if (_rl_colored_stats && selected)
+    if (_rl_colored_stats && selected > 0)
         append_default_color();
 #endif
+}
+
+
+
+//------------------------------------------------------------------------------
+int ellipsify_to_callback(const char* in, int limit, int expand_ctrl, vstrlen_func_t callback)
+{
+    str<> s;
+    int visible_len = ellipsify(in, limit, s, !!expand_ctrl);
+    callback(s.c_str(), s.length());
+    return visible_len;
+}
+
+//------------------------------------------------------------------------------
+// Parse ANSI escape codes to determine the visible character length of the
+// string (which gets used for column alignment).  Truncate the string with an
+// ellipsis if it exceeds a maximum visible length.
+// Returns the visible character length of the output string.
+int ellipsify(const char* in, int limit, str_base& out, bool expand_ctrl)
+{
+    int visible_len = 0;
+    int truncate_visible = -1;
+    int truncate_bytes = -1;
+
+#ifdef USE_ASCII_ELLIPSIS
+    static const char ellipsis[] = "...";
+    const int ellipsis_len = 3;
+    const int ellipsis_cells = 3;
+#else
+    static const char ellipsis[] = "\xe2\x80\xa6";
+    const int ellipsis_len = 3;
+    const int ellipsis_cells = 1;
+#endif
+
+    out.clear();
+
+    ecma48_state state;
+    ecma48_iter iter(in, state);
+    while (visible_len <= limit)
+    {
+        const ecma48_code& code = iter.next();
+        if (!code)
+            break;
+        if (code.get_type() == ecma48_code::type_chars)
+        {
+            const char* prev = code.get_pointer();
+            str_iter inner_iter(code.get_pointer(), code.get_length());
+            while (const int c = inner_iter.next())
+            {
+                const int clen = (expand_ctrl && (CTRL_CHAR(c) || c == RUBOUT)) ? 2 : clink_wcwidth(c);
+                if (truncate_visible < 0 && visible_len + clen > limit - ellipsis_cells)
+                {
+                    truncate_visible = visible_len;
+                    truncate_bytes = out.length();
+                }
+                if (visible_len + clen > limit)
+                {
+                    out.truncate(truncate_bytes);
+                    visible_len = truncate_visible;
+#ifdef USE_ASCII_ELLIPSIS
+                    out.concat(ellipsis, min<int>(ellipsis_len, max<int>(0, limit - truncate_visible)));
+#else
+                    static_assert(ellipsis_cells == 1, "Ellipsis must be exactly 1 cell.");
+                    assert(cell_count(ellipsis) == 1);
+                    out.concat(ellipsis, ellipsis_len);
+#endif
+                    visible_len += cell_count(ellipsis);
+                    return visible_len;
+                }
+                visible_len += clen;
+                out.concat(prev, inner_iter.get_pointer() - prev);
+                prev = inner_iter.get_pointer();
+            }
+        }
+        else
+        {
+            out.concat(code.get_pointer(), code.get_length());
+        }
+    }
+
+    return visible_len;
 }
 
 
@@ -872,27 +953,23 @@ void pad_filename(int len, int pad_to_width, int selected)
 static int display_match_list_internal(match_adapter* adapter, const column_widths& widths, bool only_measure)
 {
     const int count = adapter->get_match_count();
-    int rows, limit, printed_len, lines, cols;
-    int i, j, l;
-    int major_stride, minor_stride;
+    int printed_len;
     const char* filtered_color = "\x1b[m";
     const char* description_color = "\x1b[m";
     int filtered_color_len = 3;
     int description_color_len = 3;
-    int show_descriptions = 0;
 
-    cols = complete_get_screenwidth();
-    limit = widths.num_columns();
+    const int cols = complete_get_screenwidth();
+    const int show_descriptions = adapter->has_descriptions();
+#ifdef ONLY_ONE_DESCRIPTION_COLUMN
+    const int limit = show_descriptions ? 1 : widths.num_columns();
+#else
+    const int limit = widths.num_columns();
+#endif
     assert(limit > 0);
 
-    if (adapter->has_descriptions())
-    {
-        limit = 1;
-        show_descriptions = 1;
-    }
-
     // How many iterations of the printing loop?
-    rows = (count + (limit - 1)) / limit;
+    const int rows = (count + (limit - 1)) / limit;
 
     // If only measuring, short circuit without printing anything.
     if (only_measure)
@@ -905,18 +982,10 @@ static int display_match_list_internal(match_adapter* adapter, const column_widt
     // just do the inner printing loop.
     //     0 < count <= limit  implies  rows = 1.
 
-    if (_rl_print_completions_horizontally == 0)
-    {
-        // Print the sorted items, up-and-down alphabetically, like ls.
-        major_stride = 1;
-        minor_stride = rows;
-    }
-    else
-    {
-        // Print the sorted items, across alphabetically, like ls -x.
-        major_stride = limit;
-        minor_stride = 1;
-    }
+    // Horizontally means across alphabetically, like ls -x.
+    // Vertically means up-and-down alphabetically, like ls.
+    const int major_stride = _rl_print_completions_horizontally ? limit : 1;
+    const int minor_stride = _rl_print_completions_horizontally ? 1 : rows;
 
     if (_rl_filtered_color)
     {
@@ -930,21 +999,25 @@ static int display_match_list_internal(match_adapter* adapter, const column_widt
         description_color_len = strlen(description_color);
     }
 
-    lines = 0;
-    for (i = 0; i < rows; i++)
+    int lines = 0;
+    for (int i = 0; i < rows; i++)
     {
         reset_tmpbuf();
-        for (j = 0, l = i * major_stride; j < limit; j++)
+        for (int j = 0, l = i * major_stride; j < limit; j++)
         {
             if (l >= count)
                 break;
 
-            const int col_max = show_descriptions ? widths.m_max_len : widths.column_width(j);
+#ifdef ONLY_ONE_DESCRIPTION_COLUMN
+            const int col_max = show_descriptions ? cols - 1 : widths.column_width(j);
+#else
+            const int col_max = (show_descriptions && limit == 1) ? min<int>(widths.m_max_len, cols - 1) : widths.column_width(j);
+#endif
 
-            match_type type = adapter->get_match_type(l);
-            const char* match = adapter->get_match(l);
-            const char* display = adapter->get_match_display(l);
-            int append = adapter->is_append_display(l);
+            const match_type type = adapter->get_match_type(l);
+            const char* const match = adapter->get_match(l);
+            const char* const display = adapter->get_match_display(l);
+            const bool append = adapter->is_append_display(l);
 
             if (adapter->use_display(l, type, append))
             {
@@ -965,18 +1038,21 @@ static int display_match_list_internal(match_adapter* adapter, const column_widt
 
             if (show_descriptions)
             {
-                const char* description = adapter->get_match_description(l);
+                const char* const description = adapter->get_match_description(l);
                 if (description && *description)
                 {
-                    // TODO:  Once descriptions do not imply single column, this
-                    // will have to change.
-                    int fixed = col_max + desc_sep_padding;
-                    if (fixed < cols - 1)
+#ifdef ONLY_ONE_DESCRIPTION_COLUMN
+                    const int pad_to = widths.m_max_match + 4;
+#else
+                    const unsigned int desc_cells = adapter->get_match_visible_description(l);
+                    const int pad_to = max<int>(printed_len + widths.m_desc_padding, col_max - desc_cells);
+#endif
+                    if (pad_to < cols - 1)
                     {
-                        pad_filename(printed_len, fixed, 0);
-                        printed_len = fixed;
+                        pad_filename(printed_len, pad_to, 0);
+                        printed_len = pad_to;
                         append_tmpbuf_string(description_color, description_color_len);
-                        printed_len += ellipsify_to_callback(description, cols - printed_len - 1, 0/*expand_ctrl*/, append_tmpbuf_string);
+                        printed_len += ellipsify_to_callback(description, col_max - printed_len, false/*expand_ctrl*/, append_tmpbuf_string);
                         append_tmpbuf_string(_normal_color, _normal_color_len);
                     }
                 }
@@ -985,7 +1061,7 @@ static int display_match_list_internal(match_adapter* adapter, const column_widt
             l += minor_stride;
 
             if (j + 1 < limit && l < count)
-                pad_filename(printed_len, col_max + COL_PADDING, 0);
+                pad_filename(printed_len, col_max + widths.m_col_padding, 0);
         }
 #if defined(COLOR_SUPPORT)
         if (_rl_colored_stats)
@@ -1100,7 +1176,7 @@ extern "C" void display_matches(char** matches)
 
     const bool best_fit = g_match_best_fit.get();
     const int limit_fit = g_match_limit_fitted.get();
-    const column_widths widths = calculate_columns(adapter, COL_PADDING, best_fit ? limit_fit : -1);
+    const column_widths widths = calculate_columns(adapter, best_fit ? limit_fit : -1);
 
     // If there are many items, then ask the user if she really wants to see
     // them all.
