@@ -1117,6 +1117,7 @@ void selectcomplete_impl::update_display()
                     m_comment_row_displayed = false;
             }
 
+            const bool show_descriptions = !m_desc_below && m_matches.has_descriptions();
             const bool show_more_comment_row = !m_expanded && (preview_rows + 1 < m_match_rows);
             const int rows = min<int>(m_visible_rows, show_more_comment_row ? preview_rows : m_match_rows);
 
@@ -1175,7 +1176,7 @@ void selectcomplete_impl::update_display()
                         if (i >= count)
                             break;
 
-                        const int col_max = m_widths.column_width(col) - col_extra;
+                        const int col_max = (show_descriptions ? m_widths.m_max_len : m_widths.column_width(col)) - col_extra;
 
                         const int selected = (i == m_index);
                         const char* const display = m_matches.get_match_display(i);

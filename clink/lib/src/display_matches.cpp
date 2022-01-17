@@ -939,7 +939,7 @@ static int display_match_list_internal(match_adapter* adapter, const column_widt
             if (l >= count)
                 break;
 
-            const int col_max = widths.column_width(j);
+            const int col_max = show_descriptions ? widths.m_max_len : widths.column_width(j);
 
             match_type type = adapter->get_match_type(l);
             const char* match = adapter->get_match(l);
@@ -970,7 +970,7 @@ static int display_match_list_internal(match_adapter* adapter, const column_widt
                 {
                     // TODO:  Once descriptions do not imply single column, this
                     // will have to change.
-                    int fixed = col_max - COL_PADDING + desc_sep_padding;
+                    int fixed = col_max + desc_sep_padding;
                     if (fixed < cols - 1)
                     {
                         pad_filename(printed_len, fixed, 0);

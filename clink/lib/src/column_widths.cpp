@@ -285,6 +285,7 @@ column_widths calculate_columns(match_adapter* adapter, width_t padding, int max
     assert(sind <= max_len);
 
     widths.m_sind = sind;
+    widths.m_max_len = max_len;
     widths.m_can_condense = can_condense;
     widths.m_padding = padding;
 

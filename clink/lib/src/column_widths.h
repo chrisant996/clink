@@ -21,6 +21,7 @@ struct column_widths
     std::vector<width_t>    m_widths;
     width_t                 m_padding = 0;
     width_t                 m_sind = 0;
+    width_t                 m_max_len = 0;
     bool                    m_can_condense = false;
 };
 
