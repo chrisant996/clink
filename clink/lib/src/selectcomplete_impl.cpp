@@ -132,8 +132,15 @@ int ellipsify(const char* in, int limit, str_base& out, bool expand_ctrl)
     int truncate_visible = -1;
     int truncate_bytes = -1;
 
+#ifdef USE_ASCII_ELLIPSIS
     static const char ellipsis[] = "...";
     const int ellipsis_len = 3;
+    const int ellipsis_cells = 3;
+#else
+    static const char ellipsis[] = "\xe2\x80\xa6";
+    const int ellipsis_len = 3;
+    const int ellipsis_cells = 1;
+#endif
 
     out.clear();
 
@@ -151,7 +158,7 @@ int ellipsify(const char* in, int limit, str_base& out, bool expand_ctrl)
             while (const int c = inner_iter.next())
             {
                 const int clen = (expand_ctrl && (CTRL_CHAR(c) || c == RUBOUT)) ? 2 : clink_wcwidth(c);
-                if (truncate_visible < 0 && visible_len + clen > limit - ellipsis_len)
+                if (truncate_visible < 0 && visible_len + clen > limit - ellipsis_cells)
                 {
                     truncate_visible = visible_len;
                     truncate_bytes = out.length();
@@ -160,11 +167,14 @@ int ellipsify(const char* in, int limit, str_base& out, bool expand_ctrl)
                 {
                     out.truncate(truncate_bytes);
                     visible_len = truncate_visible;
-                    if (ellipsis_len)
-                    {
-                        out.concat(ellipsis, min<int>(ellipsis_len, max<int>(0, limit - truncate_visible)));
-                        visible_len += cell_count(ellipsis);
-                    }
+#ifdef USE_ASCII_ELLIPSIS
+                    out.concat(ellipsis, min<int>(ellipsis_len, max<int>(0, limit - truncate_visible)));
+#else
+                    static_assert(ellipsis_cells == 1, "Ellipsis must be exactly 1 cell.");
+                    assert(cell_count(ellipsis) == 1);
+                    out.concat(ellipsis, ellipsis_len);
+#endif
+                    visible_len += cell_count(ellipsis);
                     return visible_len;
                 }
                 visible_len += clen;

@@ -793,9 +793,19 @@ static void pad_with_spaces(str_base& str, unsigned int pad_to)
 //------------------------------------------------------------------------------
 static void append_key_macro(str_base& s, const char* macro)
 {
+#ifdef USE_ASCII_ELLIPSIS
+    static const char ellipsis[] = "...";
+    const int ellipsis_len = 3;
+    const int ellipsis_cells = 3;
+#else
+    static const char ellipsis[] = "\xe2\x80\xa6";
+    const int ellipsis_len = 3;
+    const int ellipsis_cells = 1;
+#endif
+
     const int limit = 30;
-    const int limit_ellipsis = limit - 3;
-    int ellipsis = 0;
+    const int limit_ellipsis = limit - ellipsis_cells;
+    int truncate_len = 0;
     unsigned int count = 0;
 
     str_iter iter(macro);
@@ -805,7 +815,7 @@ static void append_key_macro(str_base& s, const char* macro)
         const char* n = iter.get_pointer();
         int w = clink_wcwidth(c);
         if (count <= limit_ellipsis)
-            ellipsis = s.length();
+            truncate_len = s.length();
         if (count > limit)
             break;
         s.concat(p, int (n - p));
@@ -815,8 +825,8 @@ static void append_key_macro(str_base& s, const char* macro)
 
     if (count > limit)
     {
-        s.truncate(ellipsis);
-        s << "...";
+        s.truncate(truncate_len);
+        s << ellipsis;
     }
 }
 
