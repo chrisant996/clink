@@ -1431,15 +1431,12 @@ void selectcomplete_impl::insert_match(int final)
         clear_matches_lookaside_oneoff();
         m_point = m_buffer->get_cursor();
 
-        bool have_space = (m_buffer->get_buffer()[m_point - 1] == ' ');
-        assert(!have_space || !*qs); // Quote should not occur after a space.
-        m_buffer->insert(qs);
-
         // Pressing Space to insert a final match needs to maybe add a quote,
         // and then maybe add a space, depending on what append_to_match did.
         if (final == 2 || !is_match_type(type, match_type::dir))
         {
             // A space may or may not be present.  Delete it if one is.
+            bool have_space = (m_buffer->get_buffer()[m_point - 1] == ' ');
             bool append_space = (final == 2);
             int cursor = m_buffer->get_cursor();
             if (have_space)
