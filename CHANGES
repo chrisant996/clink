@@ -5,6 +5,7 @@
 #### v1.3.3
 
 - Match completion display calculates column widths to fit the most columns on the screen.  Can be controlled by the `match.fit_columns` and `match.limit_fitted_columns` settings.
+- Argmatchers can hide certain flags (e.g. synonyms) by using `argmatcher:hideflags()`.
 - Argmatchers can disable sorting matches by using `argmatcher:addargunsorted()` or `argmatcher:addflagsunsorted()`.
 - Generators can disable sorting matches by using `match_builder:setnosort()`.
 - Fixed display of non-directory matches that contain slashes, such as git branch names (regression introduced in v1.3.1).
