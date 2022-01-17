@@ -245,6 +245,14 @@ local completion_suggester = clink.suggester("completion")
 function completion_suggester:suggest(line, matches)
     local info = line:getwordinfo(line:getwordcount())
     if info.offset < line:getcursor() then
-        return matches:getmatch(1), info.offset
+        local typed = line:getline():sub(info.offset, line:getcursor())
+        for i = 1, 5, 1 do
+            local m = matches:getmatch(i)
+            if not m then
+                break
+            elseif m ~= typed then
+                return m, info.offset
+            end
+        end
     end
 end
