@@ -392,6 +392,34 @@ function _argmatcher:addflagsunsorted(...)
 end
 
 --------------------------------------------------------------------------------
+--- -name:  _argmatcher:hideflags
+--- -ver:   1.3.3
+--- -arg:   flags...:string
+--- -ret:   self
+--- This hides the specified flags when displaying possible completions (the
+--- flags are still recognized).
+---
+--- This is intended for use when there are several synonyms for a flag, so that
+--- input coloring and linked argmatchers work, without cluttering the possible
+--- completion list.
+--- -show:  local dirs = clink.argmatcher():addarg(clink.dirmatches)
+--- -show:  local my_parser = clink.argmatcher("mycommand")
+--- -show:  :addflags("-a", "--a", "--al", "--all",
+--- -show:            "-d"..dirs, "--d"..dirs, "--di"..dirs, "--dir"..dirs)
+--- -show:  :hideflags("--a", "--al", "--all",      -- Only "-a" is displayed.
+--- -show:             "-d", "--d", "--di")         -- Only "--dir" is displayed.
+function _argmatcher:hideflags(...)
+    local flag_matcher = self._flags or _argmatcher()
+    local list = flag_matcher._hidden or {}
+
+    flag_matcher:_hide(list, {...})
+    flag_matcher._is_flag_matcher = true
+    flag_matcher._hidden = list
+    self._flags = flag_matcher
+    return self
+end
+
+--------------------------------------------------------------------------------
 --- -name:  _argmatcher:loop
 --- -ver:   0.4.9
 --- -arg:   [index:integer]
@@ -681,6 +709,30 @@ function _argmatcher:_add(list, addee, prefixes)
 end
 
 --------------------------------------------------------------------------------
+function _argmatcher:_hide(list, addee)
+    -- Flatten out tables unless the table is a link
+    local is_link = (getmetatable(addee) == _arglink)
+    if type(addee) == "table" and not is_link and not addee.match then
+        if getmetatable(addee) == _argmatcher then
+            for _, i in ipairs(addee._args) do
+                for _, j in ipairs(i) do
+                    list[j] = true
+                end
+            end
+        else
+            for _, i in ipairs(addee) do
+                self:_hide(list, i)
+            end
+        end
+        return
+    end
+
+    if not is_link then
+        list[addee] = true
+    end
+end
+
+--------------------------------------------------------------------------------
 function _argmatcher:_generate(line_state, match_builder, extra_words)
     local reader = _argreader(self, line_state)
 
@@ -711,6 +763,7 @@ function _argmatcher:_generate(line_state, match_builder, extra_words)
     local matcher = reader._matcher
     local arg_index = reader._arg_index
     local match_type = ((not matcher._deprecated) and "arg") or nil
+    local hidden
 
     local endword
     local endwordinfo = line_state:getwordinfo(line_state:getwordcount())
@@ -763,7 +816,7 @@ function _argmatcher:_generate(line_state, match_builder, extra_words)
                 end
 
                 match_builder:addmatches(j, match_type)
-            else
+            elseif not hidden or not hidden[i] then
                 match_builder:addmatch(make_match(i), match_type)
             end
         end
@@ -782,6 +835,7 @@ function _argmatcher:_generate(line_state, match_builder, extra_words)
         -- Flags are always "arg" type, which helps differentiate them from
         -- filename completions even when using _deprecated matcher mode, so
         -- that path normalization can avoid affecting flags like "/c", etc.
+        hidden = matcher._flags._hidden
         add_matches(matcher._flags._args[1], "arg")
         return true
     else
