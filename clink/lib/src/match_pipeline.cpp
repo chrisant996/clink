@@ -104,15 +104,35 @@ inline bool sort_worker(wstr_base& l, match_type l_type,
     if (r_dir)
         path::maybe_strip_last_separator(r);
 
+    int cmp;
     DWORD flags = SORT_DIGITSASNUMBERS|NORM_LINGUISTIC_CASING;
     if (true/*casefold*/)
         flags |= LINGUISTIC_IGNORECASE;
-    int cmp = CompareStringW(LOCALE_USER_DEFAULT, flags,
-                            l.c_str(), l.length(),
-                            r.c_str(), r.length());
+    const wchar_t* l_str = l.c_str();
+    const wchar_t* r_str = r.c_str();
+
+    // Sort first by number of leading minus signs.  This is intended so that
+    // `-` flags precede `--` flags.
+    if (*l_str == '-' || *r_str == '-')
+    {
+        int l_minus = 0;
+        int r_minus = 0;
+        for (const wchar_t* l_walk = l_str; *l_walk == '-'; ++l_walk)
+            l_minus++;
+        for (const wchar_t* r_walk = r_str; *r_walk == '-'; ++r_walk)
+            r_minus++;
+        cmp = l_minus - r_minus;
+        if (cmp) return (cmp < 0);
+    }
+
+    // Sort next by the strings.
+    cmp = CompareStringW(LOCALE_USER_DEFAULT, flags,
+                            l_str, l.length(),
+                            r_str, r.length());
     cmp -= CSTR_EQUAL;
     if (cmp) return (cmp < 0);
 
+    // Finally sort by type (dir, alias, command, word, arg, file).
     unsigned char t1 = ((unsigned char)l_type) & MATCH_TYPE_MASK;
     unsigned char t2 = ((unsigned char)r_type) & MATCH_TYPE_MASK;
 
@@ -120,6 +140,9 @@ inline bool sort_worker(wstr_base& l, match_type l_type,
     if (cmp) return (cmp < 0);
 
     cmp = int(t1 == MATCH_TYPE_ALIAS) - int(t2 == MATCH_TYPE_ALIAS);
+    if (cmp) return (cmp < 0);
+
+    cmp = int(t1 == MATCH_TYPE_COMMAND) - int(t2 == MATCH_TYPE_COMMAND);
     if (cmp) return (cmp < 0);
 
     cmp = int(t1 == MATCH_TYPE_WORD) - int(t2 == MATCH_TYPE_WORD);
