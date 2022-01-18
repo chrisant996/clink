@@ -261,7 +261,7 @@ Name                         | Default | Description
 `color.popup_desc`           |         | When set, this is used as the color for description column(s) in popup lists.  If no color is set, then a color is chosen to complement the console's popup colors (see the Properties dialog box for the console window).
 `color.prompt`               |         | When set, this is used as the default color for the prompt.  But it's overridden by any colors set by [Customizing The Prompt](#customisingtheprompt).
 <a name="color_readonly"></a>`color.readonly` | | Used when displaying file completions with the "readonly" attribute.
-`color.selected_completion`  |         | The color for the selected completion with the clink-select-complete command.  If no color is set, then bright reverse video is used.
+`color.selected_completion`  |         | The color for the selected completion with the `clink-select-complete` command.  If no color is set, then bright reverse video is used.
 `color.selection`            |         | The color for selected text in the input line.  If no color is set, then reverse video is used.
 <a name="color_suggestion"></a>`color.suggestion` | `bright black` | The color for automatic suggestions when `autosuggest.enable` is enabled.
 `color.unexpected`           | `default` | The color for unexpected arguments in the input line when `clink.colorize_input` is enabled.
@@ -604,7 +604,7 @@ Name | Description
 `clink-scroll-page-down`|Scroll the console window down one page.
 `clink-scroll-page-up`|Scroll the console window up one page.
 `clink-scroll-top`|Scroll the console window to the top.
-`clink-select-complete`|Like `complete`, but shows interactive menu of matches and responds to arrow keys and typing to filter the matches.
+`clink-select-complete`|Like `complete`, but shows interactive menu of matches and responds to arrow keys and typing to filter the matches.  While completing, <kbd>F1</kbd> toggles showing match descriptions at the bottom vs next to each match.
 `clink-selectall-conhost`|Mimics the "Select All" command when running in a standard console window (hosted by the OS conhots).  Selects the input line text.  If already selected, then it invokes the "Select All" command from the console window's system menu and selects the entire screen buffer's contents.
 `clink-shift-space`|Invokes the normal <kbd>Space</kbd> key binding, so that <kbd>Shift</kbd>+<kbd>Space</kbd> behaves the same as <kbd>Space</kbd>.
 `clink-show-help`|Lists the currently active key bindings using friendly key names.  A numeric argument affects showing categories and descriptions:  0 for neither, 1 for categories, 2 for descriptions, 3 for categories and descriptions (the default), 4 for all commands (even if not bound to a key).
