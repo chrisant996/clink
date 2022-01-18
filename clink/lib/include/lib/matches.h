@@ -137,10 +137,12 @@ public:
 
 private:
     bool                    has_match() const { return m_index < m_next; }
+    bool                    try_substring();
     const matches&          m_matches;
     char*                   m_expanded_pattern;
     str_iter                m_pattern;
     bool                    m_has_pattern = false;
+    bool                    m_can_try_substring = false;
     unsigned int            m_index = 0;
     unsigned int            m_next = 0;
 

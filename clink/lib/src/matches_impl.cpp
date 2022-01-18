@@ -42,6 +42,13 @@ static setting_enum g_translate_slashes(
     1
 );
 
+static setting_bool g_substring(
+    "match.substring",
+    "Try substring if no prefix matches",
+    "Looks for substring matches if there are no prefix matches, when both this\n"
+    "and 'match.wild' are set.",
+    false
+);
 
 
 //------------------------------------------------------------------------------
@@ -303,6 +310,7 @@ matches_iter::matches_iter(const matches& matches, const char* pattern)
 , m_has_pattern(pattern != nullptr)
 , m_filename_completion_desired(matches.is_filename_completion_desired())
 , m_filename_display_desired(matches.is_filename_display_desired())
+, m_can_try_substring(can_try_substring_pattern(pattern))
 {
 }
 
@@ -326,6 +334,8 @@ bool matches_iter::next()
             if (!match)
             {
                 m_next--;
+                if (try_substring())
+                    continue;
                 return false;
             }
 
@@ -345,6 +355,7 @@ bool matches_iter::next()
     m_next++;
 
 found:
+    m_can_try_substring = false;
     if (is_pathish(get_match_type()))
         m_any_pathish = true;
     else
@@ -422,6 +433,26 @@ shadow_bool matches_iter::is_filename_display_desired() const
     if (m_filename_completion_desired && m_filename_completion_desired.is_explicit())
         m_filename_display_desired.set_implicit(true);
     return m_filename_display_desired;
+}
+
+//------------------------------------------------------------------------------
+bool matches_iter::try_substring()
+{
+    if (!m_can_try_substring)
+        return false;
+
+    m_can_try_substring = false;
+
+    char* pattern = make_substring_pattern(m_pattern.get_pointer());
+    if (!pattern)
+        return false;
+
+    free(m_expanded_pattern);
+    m_expanded_pattern = pattern;
+    m_pattern = str_iter(m_expanded_pattern, -1);
+    m_index = 0;
+    m_next = 0;
+    return true;
 }
 
 
@@ -1024,4 +1055,50 @@ void matches_impl::coalesce(unsigned int count_hint, bool restrict)
 
     if (restrict)
         m_infos.resize(j);
+}
+
+//------------------------------------------------------------------------------
+bool can_try_substring_pattern(const char* pattern)
+{
+    // Can try substring when no prefix matches, unless:
+    //  - No pattern.
+    //  - Setting is off.
+    //  - Already starts with '*'.
+    //  - Starts with '~'.
+    //  - Contains '?'.
+    //  - Contains '*' not part of a run at the end of the pattern.
+    if (pattern && *pattern && !strchr("~*", *pattern) && g_substring.get())
+    {
+        for (const char* walk = pattern; *pattern; ++pattern)
+            if (*walk == '?' || (*walk == '*' && walk[1] && walk[1] != '*'))
+                return false;
+        return true;
+    }
+    return false;
+}
+
+//------------------------------------------------------------------------------
+char* make_substring_pattern(const char* pattern, const char* append)
+{
+    const char* first = pattern;
+    const char* last = rl_last_path_separator(first);
+    if (last)
+        last++;
+    else
+        last = first;
+
+    str<> tmp;
+    tmp.concat(pattern, int(last - first));
+    tmp.concat("*", 1);
+    tmp.concat(last);
+    tmp.concat(append);
+
+    char* make = _rl_savestring(tmp.c_str());
+    if (!make || !*make)
+    {
+        free(make);
+        return false;
+    }
+
+    return make;
 }

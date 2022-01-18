@@ -144,3 +144,7 @@ private:
 
     match_lookup_unordered_set* m_dedup = nullptr;
 };
+
+//------------------------------------------------------------------------------
+bool can_try_substring_pattern(const char* pattern);
+char* make_substring_pattern(const char* pattern, const char* append=nullptr);

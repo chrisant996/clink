@@ -35,7 +35,7 @@ static setting_enum g_sort_dirs(
 
 
 //------------------------------------------------------------------------------
-static unsigned int normal_selector(
+static unsigned int prefix_selector(
     const char* needle,
     match_info* infos,
     int count)
@@ -43,36 +43,37 @@ static unsigned int normal_selector(
     int select_count = 0;
     for (int i = 0; i < count; ++i)
     {
-        const char* name = infos[i].match;
-        int j = str_compare(needle, name);
-        infos[i].select = (j < 0 || !needle[j]);
-        ++select_count;
+        const char* const name = infos[i].match;
+        const int j = str_compare(needle, name);
+        const bool select = (j < 0 || !needle[j]);
+        infos[i].select = select;
+        if (select)
+            ++select_count;
     }
-
     return select_count;
 }
 
 //------------------------------------------------------------------------------
-static unsigned int restrict_selector(
+static unsigned int pattern_selector(
     const char* needle,
     match_info* infos,
     int count)
 {
-    int needle_len = strlen(needle);
-
+    const int needle_len = strlen(needle);
     int select_count = 0;
     for (int i = 0; i < count; ++i)
     {
-        const char* match = infos[i].match;
+        const char* const match = infos[i].match;
         int match_len = int(strlen(match));
         while (match_len && path::is_separator((unsigned char)match[match_len - 1]))
             match_len--;
 
         const path::star_matches_everything flag = (is_pathish(infos[i].type) ? path::at_end : path::yes);
-        infos[i].select = path::match_wild(str_iter(needle, needle_len), str_iter(match, match_len), flag);
-        ++select_count;
+        const bool select = path::match_wild(str_iter(needle, needle_len), str_iter(match, match_len), flag);
+        infos[i].select = select;
+        if (select)
+            ++select_count;
     }
-
     return select_count;
 }
 
@@ -245,8 +246,7 @@ void match_pipeline::generate(
 //------------------------------------------------------------------------------
 void match_pipeline::restrict(str_base& needle) const
 {
-    int count = m_matches.get_info_count();
-    unsigned int selected_count = 0;
+    const int count = m_matches.get_info_count();
 
     char* expanded = nullptr;
     if (rl_complete_with_tilde_expansion)
@@ -257,9 +257,20 @@ void match_pipeline::restrict(str_base& needle) const
     }
 
     if (count)
-        selected_count = restrict_selector(needle.c_str(), m_matches.get_infos(), count);
+    {
+        if (!pattern_selector(needle.c_str(), m_matches.get_infos(), count) &&
+            can_try_substring_pattern(needle.c_str()))
+        {
+            char* sub = make_substring_pattern(needle.c_str());
+            if (sub)
+            {
+                pattern_selector(sub, m_matches.get_infos(), count);
+                free(sub);
+            }
+        }
+    }
 
-    m_matches.coalesce(selected_count, true/*restrict*/);
+    m_matches.coalesce(count, true/*restrict*/);
 
     // Trim any wildcards from needle.
     str_iter iter(needle.c_str(), needle.length());
@@ -278,8 +289,7 @@ void match_pipeline::restrict(str_base& needle) const
 //------------------------------------------------------------------------------
 void match_pipeline::select(const char* needle) const
 {
-    int count = m_matches.get_info_count();
-    unsigned int selected_count = 0;
+    const int count = m_matches.get_info_count();
 
     char* expanded = nullptr;
     if (rl_complete_with_tilde_expansion)
@@ -290,9 +300,20 @@ void match_pipeline::select(const char* needle) const
     }
 
     if (count)
-        selected_count = normal_selector(needle, m_matches.get_infos(), count);
+    {
+        if (!prefix_selector(needle, m_matches.get_infos(), count) &&
+            can_try_substring_pattern(needle))
+        {
+            char* sub = make_substring_pattern(needle, "*");
+            if (sub)
+            {
+                pattern_selector(sub, m_matches.get_infos(), count);
+                free(sub);
+            }
+        }
+    }
 
-    m_matches.coalesce(selected_count);
+    m_matches.coalesce(count);
 
 #ifdef DEBUG
     if (dbg_get_env_int("DEBUG_PIPELINE"))
