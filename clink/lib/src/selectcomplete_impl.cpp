@@ -694,6 +694,7 @@ append_not_dup:
             const int delta = get_match_row(m_index) - m_top;
 
             m_desc_below = !m_desc_below;
+            m_calc_widths = true;
             update_layout();
 
             int top = max<int>(0, get_match_row(m_index) - delta);
