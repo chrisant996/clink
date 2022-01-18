@@ -7,6 +7,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Medium Priority
+- [ ] Add a color for unrecognized command word.
 - [ ] Argmatcher syntax.
   - [ ] Define help-like layout format that groups multiple flags into one entry?
     - [ ] Only group when a single flag character is used (`-` but not `--`).
