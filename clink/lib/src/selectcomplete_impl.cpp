@@ -689,6 +689,7 @@ append_not_dup:
         break;
 
     case bind_id_selectcomplete_f1:
+        if (m_matches.has_descriptions())
         {
             const int delta = get_match_row(m_index) - m_top;
 
