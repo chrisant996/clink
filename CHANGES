@@ -8,6 +8,7 @@
 - Match descriptions are right-justified when more than one column is displayed, to help more columns fit.
 - When multiple columns of matches are displayed with descriptions, the descriptions are bracketed with parentheses for readability and accessibility purposes.
 - <kbd>F1</kbd> in `clink-select-complete` toggles between showing descriptions at the bottom vs with the matches.
+- Added `match.substring` setting that uses a substring search for completions if none are found with a prefix search.
 - Argmatchers can hide certain flags (e.g. synonyms) by using `argmatcher:hideflags()`.
 - Argmatchers can disable sorting matches by using `argmatcher:addargunsorted()` or `argmatcher:addflagsunsorted()`.
 - Generators can disable sorting matches by using `match_builder:setnosort()`.
@@ -15,6 +16,7 @@
 - Fixed display of non-directory matches that contain slashes, such as git branch names (regression introduced in v1.3.1).
 - Fixed match display filtering in `clink-select-complete` (regression introduced in v1.3.1).
 - Fixed sorting flag completions so that all `-` flags precede any `--` flags.
+- Various minor fixes in `clink-select-complete`.
 
 #### v1.3.2
 
