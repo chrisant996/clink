@@ -8,6 +8,8 @@
 
 #include <vector>
 
+#define USE_DESC_PARENS
+
 class match_adapter;
 
 //------------------------------------------------------------------------------

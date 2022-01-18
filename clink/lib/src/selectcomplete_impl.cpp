@@ -1200,8 +1200,13 @@ void selectcomplete_impl::update_display()
                         {
                             // Leave at least one space at end of line, or else
                             // "\x1b[K" can erase part of the intended output.
+#ifdef USE_DESC_PARENS
+                            const int parens = right_justify ? 2 : 0;
+#else
+                            const int parens = 0;
+#endif
                             const int pad_to = (right_justify ?
-                                max<int>(printed_len + m_widths.m_desc_padding, col_max - m_matches.get_match_visible_description(i)) :
+                                max<int>(printed_len + m_widths.m_desc_padding, col_max - (m_matches.get_match_visible_description(i) + parens)) :
                                 m_widths.m_max_match + 4);
                             if (!right_justify)
                             {
@@ -1211,10 +1216,14 @@ void selectcomplete_impl::update_display()
                             if (pad_to < m_screen_cols - 1)
                             {
                                 pad_filename(printed_len, pad_to, -1);
-                                printed_len = pad_to;
+                                printed_len = pad_to + parens;
                                 if (!selected || !right_justify)
                                     append_tmpbuf_string(description_color, description_color_len);
+                                if (parens)
+                                    append_tmpbuf_string("(", 1);
                                 printed_len += ellipsify_to_callback(desc, col_max - printed_len, false/*expand_ctrl*/, append_tmpbuf_string);
+                                if (parens)
+                                    append_tmpbuf_string(")", 1);
                             }
                         }
 

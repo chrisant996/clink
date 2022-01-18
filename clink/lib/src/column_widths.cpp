@@ -271,6 +271,9 @@ column_widths calculate_columns(match_adapter* adapter, int max_matches, bool on
             if (desc_cells)
             {
                 len += desc_padding + desc_cells;
+#ifdef USE_DESC_PARENS
+                len += 2; // For parentheses.
+#endif
                 if (max_desc < desc_cells)
                     max_desc = desc_cells;
             }

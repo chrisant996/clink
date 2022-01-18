@@ -1035,15 +1035,25 @@ static int display_match_list_internal(match_adapter* adapter, const column_widt
                 const char* const description = adapter->get_match_description(l);
                 if (description && *description)
                 {
-                    const int pad_to = (widths.m_right_justify ?
-                        max<int>(printed_len + widths.m_desc_padding, col_max - adapter->get_match_visible_description(l)) :
+                    const bool right_justify = widths.m_right_justify;
+#ifdef USE_DESC_PARENS
+                    const int parens = right_justify ? 2 : 0;
+#else
+                    const int parens = 0;
+#endif
+                    const int pad_to = (right_justify ?
+                        max<int>(printed_len + widths.m_desc_padding, col_max - (adapter->get_match_visible_description(l) + parens)) :
                         widths.m_max_match + 4);
                     if (pad_to < cols - 1)
                     {
                         pad_filename(printed_len, pad_to, 0);
-                        printed_len = pad_to;
+                        printed_len = pad_to + parens;
                         append_tmpbuf_string(description_color, description_color_len);
+                        if (parens)
+                            append_tmpbuf_string("(", 1);
                         printed_len += ellipsify_to_callback(description, col_max - printed_len, false/*expand_ctrl*/, append_tmpbuf_string);
+                        if (parens)
+                            append_tmpbuf_string(")", 1);
                         append_tmpbuf_string(_normal_color, _normal_color_len);
                     }
                 }
