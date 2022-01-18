@@ -43,6 +43,7 @@ extern matches* maybe_regenerate_matches(const char* needle, display_filter_flag
 extern void force_update_internal(bool restrict=false);
 extern void update_matches();
 extern void update_rl_modes_from_matches(const matches* matches, const matches_iter& iter, int count);
+extern void override_rl_last_func(rl_command_func_t*);
 
 
 
@@ -788,7 +789,7 @@ void selectcomplete_impl::cancel(editor_module::result& result, bool can_reactiv
     m_prev_bind_group = -1;
 
     if (!can_reactivate)
-        rl_last_func = nullptr;
+        override_rl_last_func(nullptr);
 
     pause_suggestions(false);
 
