@@ -96,7 +96,7 @@ void match_adapter::set_filtered_matches(match_display_filter_entry** filtered_m
 //------------------------------------------------------------------------------
 void match_adapter::init_has_descriptions()
 {
-    m_cached.m_has_descriptions = -1;
+    m_cached.clear();
 }
 
 //------------------------------------------------------------------------------
