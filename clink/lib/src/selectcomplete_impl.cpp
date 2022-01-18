@@ -215,6 +215,7 @@ bail_out:
     {
 cant_activate:
         m_anchor = -1;
+        reset_generate_matches();
         goto bail_out;
     }
 
