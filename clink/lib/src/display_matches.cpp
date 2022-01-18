@@ -961,11 +961,7 @@ static int display_match_list_internal(match_adapter* adapter, const column_widt
 
     const int cols = complete_get_screenwidth();
     const int show_descriptions = adapter->has_descriptions();
-#ifdef ONLY_ONE_DESCRIPTION_COLUMN
-    const int limit = show_descriptions ? 1 : widths.num_columns();
-#else
     const int limit = widths.num_columns();
-#endif
     assert(limit > 0);
 
     // How many iterations of the printing loop?
@@ -1008,11 +1004,9 @@ static int display_match_list_internal(match_adapter* adapter, const column_widt
             if (l >= count)
                 break;
 
-#ifdef ONLY_ONE_DESCRIPTION_COLUMN
-            const int col_max = show_descriptions ? cols - 1 : widths.column_width(j);
-#else
-            const int col_max = (show_descriptions && limit == 1) ? min<int>(widths.m_max_len, cols - 1) : widths.column_width(j);
-#endif
+            const int col_max = ((show_descriptions && !widths.m_right_justify) ?
+                                 cols - 1 :
+                                 widths.column_width(j));
 
             const match_type type = adapter->get_match_type(l);
             const char* const match = adapter->get_match(l);
@@ -1041,12 +1035,9 @@ static int display_match_list_internal(match_adapter* adapter, const column_widt
                 const char* const description = adapter->get_match_description(l);
                 if (description && *description)
                 {
-#ifdef ONLY_ONE_DESCRIPTION_COLUMN
-                    const int pad_to = widths.m_max_match + 4;
-#else
-                    const unsigned int desc_cells = adapter->get_match_visible_description(l);
-                    const int pad_to = max<int>(printed_len + widths.m_desc_padding, col_max - desc_cells);
-#endif
+                    const int pad_to = (widths.m_right_justify ?
+                        max<int>(printed_len + widths.m_desc_padding, col_max - adapter->get_match_visible_description(l)) :
+                        widths.m_max_match + 4);
                     if (pad_to < cols - 1)
                     {
                         pad_filename(printed_len, pad_to, 0);
@@ -1174,13 +1165,14 @@ extern "C" void display_matches(char** matches)
         adapter->set_alt_matches(matches);
     }
 
+    const int count = adapter->get_match_count();
     const bool best_fit = g_match_best_fit.get();
     const int limit_fit = g_match_limit_fitted.get();
-    const column_widths widths = calculate_columns(adapter, best_fit ? limit_fit : -1);
+    const bool one_column = count <= DESC_ONE_COLUMN_THRESHOLD;
+    const column_widths widths = calculate_columns(adapter, best_fit ? limit_fit : -1, one_column);
 
     // If there are many items, then ask the user if she really wants to see
     // them all.
-    const int count = adapter->get_match_count();
     if ((rl_completion_auto_query_items && _rl_screenheight > 0) ?
         display_match_list_internal(adapter, widths, 1) >= (_rl_screenheight - (_rl_vis_botlin + 1)) :
         rl_completion_query_items > 0 && count >= rl_completion_query_items)

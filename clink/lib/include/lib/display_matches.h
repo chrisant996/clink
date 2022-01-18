@@ -2,8 +2,6 @@
 
 #include <core/str.h>
 
-#define ONLY_ONE_DESCRIPTION_COLUMN
-
 enum class match_type : unsigned char;
 
 struct match_display_filter_entry
@@ -50,6 +48,8 @@ int ellipsify(const char* in, int limit, str_base& out, bool expand_ctrl);
 
 void free_filtered_matches(match_display_filter_entry** filtered_matches);
 int printable_len(const char* match, match_type type);
+
+#define DESC_ONE_COLUMN_THRESHOLD       9
 
 // Flags in the PACKED MATCH FORMAT:
 #define MATCH_FLAG_APPEND_DISPLAY       0x01

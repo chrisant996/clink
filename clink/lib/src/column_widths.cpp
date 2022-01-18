@@ -160,7 +160,7 @@ static bool init_column_info(int max_matches, size_t max_cols, size_t count, wid
 //------------------------------------------------------------------------------
 // Calculate the number of columns needed to represent the current set of
 // matches in the current display width.
-column_widths calculate_columns(match_adapter* adapter, int max_matches, bool omit_desc, width_t extra)
+column_widths calculate_columns(match_adapter* adapter, int max_matches, bool one_column, bool omit_desc, width_t extra)
 {
     column_widths widths;
 
@@ -180,7 +180,7 @@ column_widths calculate_columns(match_adapter* adapter, int max_matches, bool om
     const size_t count = adapter->get_match_count();
     size_t max_cols = count < max_idx ? count : max_idx;
 
-    const bool fixed_cols = !init_column_info(max_matches, max_cols, count, col_padding);
+    const bool fixed_cols = !init_column_info(max_matches, max_cols, count, col_padding) || one_column;
 
     // Find the length of the prefix common to all items: length as displayed
     // characters (common_length) and as a byte index into the matches (sind).
@@ -267,8 +267,6 @@ column_widths calculate_columns(match_adapter* adapter, int max_matches, bool om
 
         if (has_descriptions)
         {
-#ifdef ONLY_ONE_DESCRIPTION_COLUMN
-#else
             const unsigned int desc_cells = adapter->get_match_visible_description(i);
             if (desc_cells)
             {
@@ -276,7 +274,6 @@ column_widths calculate_columns(match_adapter* adapter, int max_matches, bool om
                 if (max_desc < desc_cells)
                     max_desc = desc_cells;
             }
-#endif
         }
 
         if (max_len < len)
@@ -307,18 +304,18 @@ column_widths calculate_columns(match_adapter* adapter, int max_matches, bool om
     assert(common_length <= max_len);
     assert(sind <= max_len);
 
+    widths.m_col_padding = col_padding;
+    widths.m_desc_padding = desc_padding;
     widths.m_sind = sind;
     widths.m_max_len = max_len;
     widths.m_max_match = max_match;
     widths.m_max_desc = max_desc;
     widths.m_can_condense = can_condense;
-    widths.m_col_padding = col_padding;
-    widths.m_desc_padding = desc_padding;
 
     if (fixed_cols)
     {
         const size_t col_max = max_len;
-        const size_t limit = max<size_t>(line_length / col_max, 1);
+        const size_t limit = one_column ? 1 : max<size_t>(line_length / col_max, 1);
         for (size_t i = 0; i < limit; ++i)
             widths.m_widths.push_back(col_max);
     }
@@ -336,6 +333,8 @@ column_widths calculate_columns(match_adapter* adapter, int max_matches, bool om
         for (size_t i = 0; i < cols; ++i, --remove_padding)
             widths.m_widths.push_back(s_column_info[cols - 1].col_arr[i] - (remove_padding ? col_padding : 0));
     }
+
+    widths.m_right_justify = widths.num_columns() > 1 || widths.m_max_match > (line_length * 4) / 10;
 
     return widths;
 }

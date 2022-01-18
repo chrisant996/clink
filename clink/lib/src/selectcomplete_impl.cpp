@@ -228,7 +228,7 @@ cant_activate:
         assert(!m_comment_row_displayed);
         assert(!m_expanded);
         assert(!m_clear_display);
-        m_desc_below = m_matches.has_descriptions() && (m_matches.get_match_count() > 9);
+        m_desc_below = m_matches.has_descriptions() && (m_matches.get_match_count() > DESC_ONE_COLUMN_THRESHOLD);
         m_any_displayed = false;
         m_comment_row_displayed = false;
         m_can_prompt = g_preview_rows.get() <= 0;
@@ -968,15 +968,12 @@ void selectcomplete_impl::update_layout()
 #endif
         const bool best_fit = g_match_best_fit.get();
         const int limit_fit = g_match_limit_fitted.get();
-        m_widths = calculate_columns(&m_matches, best_fit ? limit_fit : -1, m_desc_below, col_extra);
+        const bool one_column = !m_desc_below && m_matches.get_match_count() <= DESC_ONE_COLUMN_THRESHOLD;
+        m_widths = calculate_columns(&m_matches, best_fit ? limit_fit : -1, one_column, m_desc_below, col_extra);
         m_calc_widths = false;
     }
 
-#ifdef ONLY_ONE_DESCRIPTION_COLUMN
-    const int cols_that_fit = desc_inline ? 1 : m_widths.num_columns();
-#else
     const int cols_that_fit = m_widths.num_columns();
-#endif
     m_match_cols = max<int>(1, cols_that_fit);
     m_match_rows = (m_matches.get_match_count() + (m_match_cols - 1)) / m_match_cols;
 
@@ -1137,11 +1134,10 @@ void selectcomplete_impl::update_display()
                         if (i >= count)
                             break;
 
-#ifdef ONLY_ONE_DESCRIPTION_COLUMN
-                        const int col_max = (show_descriptions ? m_screen_cols - 1 : m_widths.column_width(col)) - col_extra;
-#else
-                        const int col_max = ((show_descriptions && m_match_cols == 1) ? min<int>(m_widths.m_max_len, m_screen_cols - 1) : m_widths.column_width(col)) - col_extra;
-#endif
+                        const bool right_justify = m_widths.m_right_justify;
+                        const int col_max = ((show_descriptions && !right_justify) ?
+                                             m_screen_cols - 1 :
+                                             m_widths.column_width(col)) - col_extra;
 
                         const int selected = (i == m_index);
                         const char* const display = m_matches.get_match_display(i);
@@ -1204,25 +1200,19 @@ void selectcomplete_impl::update_display()
                         {
                             // Leave at least one space at end of line, or else
                             // "\x1b[K" can erase part of the intended output.
-#ifdef ONLY_ONE_DESCRIPTION_COLUMN
-                            if (selected)
+                            const int pad_to = (right_justify ?
+                                max<int>(printed_len + m_widths.m_desc_padding, col_max - m_matches.get_match_visible_description(i)) :
+                                m_widths.m_max_match + 4);
+                            if (!right_justify)
                             {
-                                pad_filename(printed_len, m_widths.m_max_match, selected);
+                                pad_filename(printed_len, -m_widths.m_max_match, selected);
                                 printed_len = m_widths.m_max_match;
                             }
-                            const int pad_to = m_widths.m_max_match + 4;
-#else
-                            const unsigned int desc_cells = m_matches.get_match_visible_description(i);
-                            const int pad_to = max<int>(printed_len + m_widths.m_desc_padding, col_max - desc_cells);
-#endif
                             if (pad_to < m_screen_cols - 1)
                             {
                                 pad_filename(printed_len, pad_to, -1);
                                 printed_len = pad_to;
-#ifdef ONLY_ONE_DESCRIPTION_COLUMN
-#else
-                                if (!selected)
-#endif
+                                if (!selected || !right_justify)
                                     append_tmpbuf_string(description_color, description_color_len);
                                 printed_len += ellipsify_to_callback(desc, col_max - printed_len, false/*expand_ctrl*/, append_tmpbuf_string);
                             }
@@ -1234,10 +1224,7 @@ void selectcomplete_impl::update_display()
                             pad_filename(printed_len, col_max + 1, -1);
                             printed_len = col_max + col_extra;
 
-#ifdef ONLY_ONE_DESCRIPTION_COLUMN
-#else
                             if (!selected)
-#endif
                                 append_tmpbuf_string("\x1b[36m", 5);
 
                             char _extra[3];
