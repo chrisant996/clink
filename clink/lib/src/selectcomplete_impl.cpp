@@ -689,10 +689,21 @@ append_not_dup:
         break;
 
     case bind_id_selectcomplete_f1:
-        m_desc_below = !m_desc_below;
-        m_clear_display = true;
-        update_layout();
-        update_display();
+        {
+            const int delta = get_match_row(m_index) - m_top;
+
+            m_desc_below = !m_desc_below;
+            update_layout();
+
+            int top = max<int>(0, get_match_row(m_index) - delta);
+            const int max_top = max<int>(0, m_match_rows - m_visible_rows);
+            if (top > max_top)
+                top = max_top;
+            set_top(top);
+
+            m_clear_display = true;
+            update_display();
+        }
         break;
 
     case bind_id_selectcomplete_escape:
@@ -991,13 +1002,17 @@ void selectcomplete_impl::update_layout()
 void selectcomplete_impl::update_top()
 {
     const int y = get_match_row(m_index);
-    const int rows = min<int>(m_match_rows, m_visible_rows);
-    const int min_top = max<int>(0, y - (rows - 1));
-    const int max_top = max<int>(0, m_match_rows - m_visible_rows);
-    if (m_top < min_top)
-        set_top(min_top);
-    else if (m_top > max_top)
-        set_top(max_top);
+    if (m_top > y)
+    {
+        set_top(y);
+    }
+    else
+    {
+        const int rows = min<int>(m_match_rows, m_visible_rows);
+        int top = max<int>(0, y - (rows - 1));
+        if (m_top < top)
+            set_top(top);
+    }
     assert(m_top >= 0);
     assert(m_top <= max<int>(0, m_match_rows - m_visible_rows));
 }
