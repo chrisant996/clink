@@ -45,10 +45,13 @@ static setting_enum g_translate_slashes(
 static setting_bool g_substring(
     "match.substring",
     "Try substring if no prefix matches",
-    "Looks for substring matches if there are no prefix matches, when both this\n"
-    "and 'match.wild' are set.",
+    "When set, if no completions are found with a prefix search, then a substring\n"
+    "search is used.",
     false
 );
+
+extern setting_bool g_match_wild;
+
 
 
 //------------------------------------------------------------------------------
@@ -1062,16 +1065,20 @@ bool can_try_substring_pattern(const char* pattern)
 {
     // Can try substring when no prefix matches, unless:
     //  - No pattern.
-    //  - Setting is off.
-    //  - Already starts with '*'.
-    //  - Starts with '~'.
-    //  - Contains '?'.
-    //  - Contains '*' not part of a run at the end of the pattern.
+    //  - Setting 'match.substring' is off.
+    //  - Pattern already starts with '*'.
+    //  - Pattern starts with '~'.
+    //  - Setting 'match.wild' is off and:
+    //      - Pattern contains '?'.
+    //      - Pattern contains '*' (unless part of a run at the end).
     if (pattern && *pattern && !strchr("~*", *pattern) && g_substring.get())
     {
-        for (const char* walk = pattern; *pattern; ++pattern)
-            if (*walk == '?' || (*walk == '*' && walk[1] && walk[1] != '*'))
-                return false;
+        if (!g_match_wild.get())
+        {
+            for (const char* walk = pattern; *walk; ++walk)
+                if (*walk == '?' || (*walk == '*' && walk[1] && walk[1] != '*'))
+                    return false;
+        }
         return true;
     }
     return false;
