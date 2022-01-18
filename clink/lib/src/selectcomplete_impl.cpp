@@ -107,6 +107,7 @@ enum {
     bind_id_selectcomplete_backslash,
     bind_id_selectcomplete_quote,
     bind_id_selectcomplete_escape,
+    bind_id_selectcomplete_f1,
 
     bind_id_selectcomplete_catchall,
 };
@@ -340,6 +341,7 @@ void selectcomplete_impl::bind_input(binder& binder)
     binder.bind(m_bind_group, "/", bind_id_selectcomplete_slash);
     binder.bind(m_bind_group, "\\", bind_id_selectcomplete_backslash);
     binder.bind(m_bind_group, "\"", bind_id_selectcomplete_quote);
+    binder.bind(m_bind_group, "\\eOP", bind_id_selectcomplete_f1);
 
     binder.bind(m_bind_group, "^g", bind_id_selectcomplete_escape);
     if (esc)
@@ -686,6 +688,13 @@ append_not_dup:
         result.pass();
         break;
 
+    case bind_id_selectcomplete_f1:
+        m_desc_below = !m_desc_below;
+        m_clear_display = true;
+        update_layout();
+        update_display();
+        break;
+
     case bind_id_selectcomplete_escape:
         goto revert;
 
@@ -982,17 +991,13 @@ void selectcomplete_impl::update_layout()
 void selectcomplete_impl::update_top()
 {
     const int y = get_match_row(m_index);
-    if (m_top > y)
-    {
-        set_top(y);
-    }
-    else
-    {
-        const int rows = min<int>(m_match_rows, m_visible_rows);
-        int top = max<int>(0, y - (rows - 1));
-        if (m_top < top)
-            set_top(top);
-    }
+    const int rows = min<int>(m_match_rows, m_visible_rows);
+    const int min_top = max<int>(0, y - (rows - 1));
+    const int max_top = max<int>(0, m_match_rows - m_visible_rows);
+    if (m_top < min_top)
+        set_top(min_top);
+    else if (m_top > max_top)
+        set_top(max_top);
     assert(m_top >= 0);
     assert(m_top <= max<int>(0, m_match_rows - m_visible_rows));
 }
@@ -1081,6 +1086,7 @@ void selectcomplete_impl::update_display()
                 {
                     m_printer->print("\x1b[m\x1b[J");
                     m_comment_row_displayed = false;
+                    m_prev_displayed = -1;
                     m_clear_display = false;
                 }
 
