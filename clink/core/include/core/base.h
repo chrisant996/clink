@@ -66,6 +66,8 @@ extern const char* get_bindable_esc();
 //------------------------------------------------------------------------------
 #if defined(DEBUG)
 int dbg_get_env_int(const char* name);
+void dbg_printf_row(int row, const char* fmt, ...);
+void dbg_printf(const char* fmt, ...);
 #endif
 
 //------------------------------------------------------------------------------

@@ -883,8 +883,11 @@ HANDLE dup_handle(HANDLE process_handle, HANDLE h, bool inherit)
 
 }; // namespace os
 
-//------------------------------------------------------------------------------
+
+
 #if defined(DEBUG)
+
+//------------------------------------------------------------------------------
 int dbg_get_env_int(const char* name)
 {
     char tmp[32];
@@ -892,4 +895,41 @@ int dbg_get_env_int(const char* name)
     int val = (len > 0 && len < sizeof(tmp)) ? atoi(tmp) : 0;
     return val;
 }
+
+//------------------------------------------------------------------------------
+static void dbg_vprintf_row(int row, const char* fmt, va_list args)
+{
+    str<> tmp;
+    tmp << "\x1b[s\x1b[";
+    if (row > 0)
+    {
+        char buf[32];
+        tmp << itoa(row, buf, 10);
+    }
+    tmp << "H" << fmt << "\x1b[K\x1b[u";
+    vprintf(fmt, args);
+}
+
+//------------------------------------------------------------------------------
+void dbg_printf_row(int row, const char* fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+
+    dbg_vprintf_row(row, fmt, args);
+
+    va_end(args);
+}
+
+//------------------------------------------------------------------------------
+void dbg_printf(const char* fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+
+    dbg_vprintf_row(0, fmt, args);
+
+    va_end(args);
+}
+
 #endif
