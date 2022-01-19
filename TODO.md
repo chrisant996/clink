@@ -5,9 +5,9 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
+- Add custom debug memory allocator with stack traces and ability to show outstanding allocations since a particular point in time.
 
 ## Medium Priority
-- [ ] Add a color for unrecognized command word.
 - [ ] Argmatcher syntax.
   - [ ] Define help-like layout format that groups multiple flags into one entry?
     - [ ] Only group when a single flag character is used (`-` but not `--`).
