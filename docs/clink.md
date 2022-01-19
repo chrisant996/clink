@@ -250,6 +250,7 @@ Name                         | Default | Description
 `color.comment_row`          | `bright white on cyan` | The color for the comment row in the `clink-select-complete` command.  The comment row shows the "and <em>N</em> more matches" or "rows <em>X</em> to <em>Y</em> of <em>Z</em>" messages.
 `color.description`          | `bright cyan` | Used when displaying descriptions for match completions.
 <a name="color_doskey"></a>`color.doskey` | `bright cyan` | Used when displaying doskey alias completions, and in the input line when `clink.colorize_input` is enabled.
+`color.executable`           |         | When set, this is the color in the input line for a command word that is recognized as an executable file.
 <a name="color_filtered"></a>`color.filtered` | `bold` | The default color for filtered completions (see [Filtering the Match Display](#filteringthematchdisplay)).
 `color.flag`                 | `default` | The color for flags in the input line when `clink.colorize_input` is enabled.
 <a name="color_hidden"></a>`color.hidden` | | Used when displaying file completions with the "hidden" attribute.
@@ -265,6 +266,7 @@ Name                         | Default | Description
 `color.selection`            |         | The color for selected text in the input line.  If no color is set, then reverse video is used.
 <a name="color_suggestion"></a>`color.suggestion` | `bright black` | The color for automatic suggestions when `autosuggest.enable` is enabled.
 `color.unexpected`           | `default` | The color for unexpected arguments in the input line when `clink.colorize_input` is enabled.
+`color.unrecognized`         |         | When set, this is the color in the input line for a command word that is not recognized as a command, doskey macro, directory, or executable file.
 `debug.log_terminal`         | False   | Logs all terminal input and output to the clink.log file.  This is intended for diagnostic purposes only, and can make the log file grow significantly.
 `doskey.enhanced`            | True    | Enhanced Doskey adds the expansion of macros that follow `\|` and `&` command separators and respects quotes around words when parsing `$1`...`$9` tags. Note that these features do not apply to Doskey use in Batch files.
 `exec.aliases`               | True    | When matching executables as the first word (`exec.enable`), include doskey aliases.
