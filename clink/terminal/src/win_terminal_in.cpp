@@ -52,6 +52,8 @@ extern setting_enum g_default_bindings;
 //------------------------------------------------------------------------------
 extern "C" void reset_wcwidths();
 extern "C" int is_locked_cursor();
+extern HANDLE get_recognizer_event();
+extern void host_reclassify();
 
 //------------------------------------------------------------------------------
 static const int CTRL_PRESSED = LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED;
@@ -597,18 +599,29 @@ void win_terminal_in::read_console(input_idle* callback)
         while (callback)
         {
             unsigned count = 1;
-            HANDLE handles[2] = { m_stdin };
+            HANDLE handles[3] = { m_stdin };
+            DWORD recognizer_waited = WAIT_FAILED;
 
-            void* event = callback->get_waitevent();
-            if (event)
+            if (void* event = get_recognizer_event())
+            {
+                recognizer_waited = WAIT_OBJECT_0 + count;
+                handles[count++] = event;
+            }
+            if (void* event = callback->get_waitevent())
                 handles[count++] = event;
 
-            DWORD timeout = callback->get_timeout();
-            DWORD result = WaitForMultipleObjects(count, handles, false, timeout);
-            if (result != WAIT_OBJECT_0 + 1 && result != WAIT_TIMEOUT)
-                break;
+            const DWORD timeout = callback->get_timeout();
+            const DWORD waited = WaitForMultipleObjects(count, handles, false, timeout);
+            if (waited != WAIT_TIMEOUT)
+            {
+                if (waited <= WAIT_OBJECT_0 || waited >= WAIT_OBJECT_0 + count)
+                    break;
+            }
 
-            callback->on_idle();
+            if (waited == recognizer_waited)
+                host_reclassify();
+            else
+                callback->on_idle();
         }
 
         DWORD count;

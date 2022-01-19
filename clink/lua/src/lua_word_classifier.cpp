@@ -25,6 +25,8 @@ word_class to_word_class(char wc)
     switch (wc)
     {
     default:    return word_class::other;
+    case 'u':   return word_class::unrecognized;
+    case 'x':   return word_class::executable;
     case 'c':   return word_class::command;
     case 'd':   return word_class::doskey;
     case 'a':   return word_class::arg;

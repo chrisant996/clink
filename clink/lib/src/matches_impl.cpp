@@ -466,18 +466,6 @@ matches_impl::store_impl::store_impl(unsigned int size)
 {
 }
 
-//------------------------------------------------------------------------------
-const char* matches_impl::store_impl::store_front(const char* str)
-{
-    const unsigned int size = (str ? strlen(str) + 1 : 1);
-    char* ret = (char*)alloc(size);
-    if (!ret)
-        return nullptr;
-
-    str_base(ret, size).copy(str);
-    return ret;
-}
-
 
 
 //------------------------------------------------------------------------------

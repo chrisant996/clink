@@ -17,6 +17,7 @@
 #include <lib/doskey.h>
 #include <lib/match_generator.h>
 #include <lib/line_editor.h>
+#include <lib/intercept.h>
 #include <lua/lua_script_loader.h>
 #include <lua/lua_state.h>
 #include <lua/lua_match_generator.h>
@@ -237,228 +238,6 @@ static void write_line_feed()
     HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
     DWORD written;
     WriteConsoleW(handle, L"\n", 1, &written, nullptr);
-}
-
-//------------------------------------------------------------------------------
-static bool parse_line_token(str_base& out, const char* line)
-{
-    out.clear();
-
-    // Skip leading whitespace.
-    while (*line == ' ' || *line == '\t')
-        line++;
-
-    // Parse the line text.
-    bool first_component = true;
-    for (bool quoted = false; true; line++)
-    {
-        // Spaces are acceptable when quoted, otherwise it's the end of the
-        // token and any subsequent text defeats the directory shortcut feature.
-        if (*line == ' ' || *line == '\t')
-        {
-            if (!quoted)
-            {
-                // Skip trailing whitespace.
-                while (*line == ' ' || *line == '\t')
-                    line++;
-                // Parse fails if input is more than a single token.
-                if (*line)
-                    return false;
-            }
-        }
-
-        // Parse succeeds if input is one token.
-        if (!*line)
-            return out.length();
-
-        switch (*line)
-        {
-            // These characters defeat the directory shortcut feature.
-        case '^':
-        case '<':
-        case '|':
-        case '>':
-        case '%':
-            return false;
-
-            // These characters are acceptable when quoted.
-        case '@':
-        case '(':
-        case ')':
-        case '&':
-        case '+':
-        case '=':
-        case ';':
-        case ',':
-            if (!quoted)
-                return false;
-            break;
-
-            // Quotes toggle quote mode.
-        case '"':
-            first_component = false;
-            quoted = !quoted;
-            continue;
-
-            // These characters end a component.
-        case '.':
-        case '/':
-        case '\\':
-            if (first_component)
-            {
-                // Some commands are special and defeat the directory shortcut
-                // feature even if they're legitimately part of an actual path,
-                // unless they are quoted.
-                static const char* const c_commands[] = { "call", "cd", "chdir", "dir", "echo", "md", "mkdir", "popd", "pushd" };
-                for (const char* name : c_commands)
-                    if (out.iequals(name))
-                        return false;
-                first_component = false;
-            }
-            break;
-        }
-
-        out.concat(line, 1);
-    }
-}
-
-//------------------------------------------------------------------------------
-static bool is_cd_dash(const char* line, bool only_cd_chdir)
-{
-    while (*line == ' ' || *line == '\t')
-        line++;
-
-    bool test_flag = true;
-    if (_strnicmp(line, "cd", 2) == 0)
-        line += 2;
-    else if (_strnicmp(line, "chdir", 5) == 0)
-        line += 5;
-    else if (only_cd_chdir)
-        return false;
-    else
-        test_flag = false;
-
-    if (test_flag)
-    {
-        bool have_space = false;
-        while (*line == ' ' || *line == '\t')
-        {
-            have_space = true;
-            line++;
-        }
-
-        if (_strnicmp(line, "/d", 2) == 0)
-        {
-            have_space = false;
-            line += 2;
-            while (*line == ' ' || *line == '\t')
-            {
-                have_space = true;
-                line++;
-            }
-        }
-
-        // `cd` and `chdir` require a space before the `-`.
-        if (!have_space)
-            return false;
-    }
-
-    if (*(line++) != '-')
-        return false;
-
-    while (*line == ' ' || *line == '\t')
-        line++;
-
-    return !*line;
-}
-
-//------------------------------------------------------------------------------
-static bool intercept_directory(str_base& inout, bool only_cd_chdir=false)
-{
-    const char* line = inout.c_str();
-
-    // Check for '-' (etc) to change to previous directory.
-    if (is_cd_dash(line, only_cd_chdir))
-    {
-        prev_dir_history(inout);
-        return true;
-    }
-
-    if (only_cd_chdir)
-        return false;
-
-    // Parse the input for a single token.
-    str<> tmp;
-    if (!parse_line_token(tmp, line))
-        return false;
-
-    // If all dots, convert into valid path syntax moving N-1 levels.
-    // Examples:
-    //  - "..." becomes "..\..\"
-    //  - "...." becomes "..\..\..\"
-    int num_dots = 0;
-    for (const char* p = tmp.c_str(); *p; ++p, ++num_dots)
-    {
-        if (*p != '.')
-        {
-            if (!path::is_separator(p[0]) || p[1]) // Allow "...\"
-                num_dots = -1;
-            break;
-        }
-    }
-    if (num_dots >= 2)
-    {
-        tmp.clear();
-        while (num_dots > 1)
-        {
-            tmp.concat("..\\");
-            --num_dots;
-        }
-    }
-
-    // If the input doesn't end with a separator, don't handle it.  Otherwise
-    // it would interfere with launching something found on the PATH but with
-    // the same name as a subdirectory of the current working directory.
-    if (!path::is_separator(tmp.c_str()[tmp.length() - 1]))
-    {
-        // But allow a special case for "..\.." and "..\..\..", etc.
-        const char* p = tmp.c_str();
-        while (true)
-        {
-            if (p[0] != '.' || p[1] != '.')
-                return false;
-            if (p[2] == '\0')
-            {
-                tmp.concat("\\");
-                break;
-            }
-            if (!path::is_separator(p[2]))
-                return false;
-            p += 3;
-        }
-    }
-
-    // Tilde expansion.
-    if (tmp.first_of('~') >= 0)
-    {
-        char* expanded_path = tilde_expand(tmp.c_str());
-        if (expanded_path)
-        {
-            if (!tmp.equals(expanded_path))
-                tmp = expanded_path;
-            free(expanded_path);
-        }
-    }
-
-    if (os::get_path_type(tmp.c_str()) != os::path_type_dir)
-        return false;
-
-    // Normalize to system path separator, since `cd /d "/foo/"` fails because
-    // the `/d` flag disables `cd` accepting forward slashes in paths.
-    path::normalise_separators(tmp);
-
-    inout.format(" cd /d \"%s\"", tmp.c_str());
-    return true;
 }
 
 
@@ -942,7 +721,7 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out)
     }
 
     bool resolved = false;
-    bool intercepted = false;
+    intercept_result intercepted = intercept_result::none;
     bool ret = false;
     while (1)
     {
@@ -1106,10 +885,12 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out)
         {
             // If the line is a directory, rewrite the line to invoke the CD
             // command to change to the directory.
-            if (intercept_directory(out, true/*only_cd_chdir*/))
+            intercepted = intercept_directory(out.c_str(), &out, true/*only_cd_chdir*/);
+            if (intercepted != intercept_result::none)
             {
+                if (intercepted == intercept_result::prev_dir)
+                    prev_dir_history(out);
                 resolved = true; // Don't test for a doskey alias.
-                intercepted = true; // Already intercepted.
             }
         }
         break;
@@ -1131,11 +912,12 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out)
         m_doskey_alias.next(out);
     }
 
-    if (ret && autostart.empty() && !intercepted)
+    if (ret && autostart.empty() && intercepted == intercept_result::none)
     {
         // If the line is a directory, rewrite the line to invoke the CD command
         // to change to the directory.
-        intercept_directory(out);
+        if (intercept_directory(out.c_str(), &out) == intercept_result::prev_dir)
+            prev_dir_history(out);
     }
 
     line_editor_destroy(editor);

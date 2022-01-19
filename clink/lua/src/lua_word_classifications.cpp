@@ -85,6 +85,8 @@ int lua_word_classifications::classify_word(lua_State* state)
     switch (*s)
     {
     case 'o':
+    case 'u':
+    case 'x':
     case 'c':
     case 'd':
     case 'a':

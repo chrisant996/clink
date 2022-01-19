@@ -15,11 +15,13 @@ class line_state;
 enum class word_class : unsigned char
 {
     other = 0,
-    command,    // 'c'
-    doskey,     // 'd'
-    arg,        // 'a'
-    flag,       // 'f'
-    none,       // 'n'
+    unrecognized,   // 'u'
+    executable,     // 'x'
+    command,        // 'c'
+    doskey,         // 'd'
+    arg,            // 'a'
+    flag,           // 'f'
+    none,           // 'n'
     max,
     invalid = 255
 };

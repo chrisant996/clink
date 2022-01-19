@@ -104,6 +104,8 @@ void word_classifications::finish(bool show_argmatchers)
     static const char c_faces[] =
     {
         'o',    // other
+        'u',    // unrecognized
+        'x',    // executable
         'c',    // command
         'd',    // doskey
         'a',    // arg

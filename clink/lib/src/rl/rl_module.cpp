@@ -174,6 +174,13 @@ static setting_color g_color_doskey(
     "Used when Clink displays doskey macro completions.",
     "bold cyan");
 
+setting_color g_color_executable(
+    "color.executable",
+    "Color for executable command word",
+    "When set, this is the color in the input line for a command word that is\n"
+    "recognized as an executable file.",
+    "");
+
 static setting_color g_color_filtered(
     "color.filtered",
     "Filtered completion color",
@@ -274,6 +281,13 @@ static setting_color g_color_unexpected(
     "doesn't match any expected\n"
     "values.",
     "default");
+
+setting_color g_color_unrecognized(
+    "color.unrecognized",
+    "Color for unrecognized command word",
+    "When set, this is the color in the input line for a command word that is not\n"
+    "recognized as a command, doskey macro, directory, or executable file.",
+    "");
 
 setting_bool g_match_expand_envvars(
     "match.expand_envvars",
@@ -671,8 +685,10 @@ static const word_classifications* s_classifications = nullptr;
 static const char* s_input_color = nullptr;
 static const char* s_selection_color = nullptr;
 static const char* s_argmatcher_color = nullptr;
+static const char* s_executable_color = nullptr;
 static const char* s_arg_color = nullptr;
 static const char* s_flag_color = nullptr;
+static const char* s_unrecognized_color = nullptr;
 static const char* s_none_color = nullptr;
 static const char* s_suggestion_color = nullptr;
 int g_suggestion_offset = -1;
@@ -809,7 +825,20 @@ static void puts_face_func(const char* s, const char* face, int n)
             case '#':   out << fallback_color(s_selection_color, "\x1b[0;7m"); break;
             case '-':   out << fallback_color(s_suggestion_color, "\x1b[0;90m"); break;
 
-            case 'o':   out << fallback_color(s_input_color, c_normal); break;
+            case 'o':
+other:
+                out << fallback_color(s_input_color, c_normal);
+                break;
+            case 'u':
+                if (!s_unrecognized_color)
+                    goto other;
+                out << s_unrecognized_color;
+                break;
+            case 'x':
+                if (!s_executable_color)
+                    goto other;
+                out << s_executable_color;
+                break;
             case 'c':
                 if (_rl_command_color)
                     out << "\x1b[" << _rl_command_color << "m";
@@ -2341,6 +2370,8 @@ void rl_module::on_begin_line(const context& context)
     s_selection_color = build_color_sequence(g_color_selection, m_selection_color, true);
     s_arg_color = build_color_sequence(g_color_arg, m_arg_color, true);
     s_flag_color = build_color_sequence(g_color_flag, m_flag_color, true);
+    s_unrecognized_color = build_color_sequence(g_color_unrecognized, m_unrecognized_color, true);
+    s_executable_color = build_color_sequence(g_color_executable, m_executable_color, true);
     s_none_color = build_color_sequence(g_color_unexpected, m_none_color, true);
     s_argmatcher_color = build_color_sequence(g_color_argmatcher, m_argmatcher_color, true);
     _rl_display_horizscroll_color = build_color_sequence(g_color_horizscroll, m_horizscroll_color, true);
@@ -2425,6 +2456,8 @@ void rl_module::on_end_line()
     s_arg_color = nullptr;
     s_argmatcher_color = nullptr;
     s_flag_color = nullptr;
+    s_unrecognized_color = nullptr;
+    s_executable_color = nullptr;
     s_none_color = nullptr;
     s_suggestion_color = nullptr;
     _rl_display_modmark_color = nullptr;

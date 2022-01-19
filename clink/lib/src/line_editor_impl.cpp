@@ -32,6 +32,8 @@ extern setting_bool g_autosuggest_async;
 extern int g_suggestion_offset;
 
 extern "C" void host_clear_suggestion();
+extern void clear_recognizer_cache();
+extern bool check_recognizer_refresh();
 extern bool is_showing_argmatchers();
 extern bool win_fn_callback_pending();
 extern match_builder_toolkit* get_deferred_matches(int generation_id);
@@ -347,6 +349,8 @@ void line_editor_impl::begin_line()
     m_buffer.begin_line();
     m_prev_generate.clear();
     m_prev_classify.clear();
+
+    clear_recognizer_cache();
 
     rl_before_display_function = before_display;
 
@@ -966,6 +970,24 @@ void line_editor_impl::classify()
 
     if (!old_classifications.equals(m_classifications))
         m_buffer.set_need_draw();
+}
+
+//------------------------------------------------------------------------------
+void line_editor_impl::reclassify()
+{
+    if (check_recognizer_refresh())
+    {
+        m_prev_classify.clear();
+        m_buffer.set_need_draw();
+        m_buffer.draw();
+    }
+}
+
+//------------------------------------------------------------------------------
+void host_reclassify()
+{
+    if (s_editor)
+        s_editor->reclassify();
 }
 
 //------------------------------------------------------------------------------

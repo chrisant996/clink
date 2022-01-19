@@ -1242,6 +1242,8 @@ end
 
 --------------------------------------------------------------------------------
 function argmatcher_classifier:classify(commands)
+    local unrecognized_color = settings.get("color.unrecognized") ~= ""
+    local executable_color = settings.get("color.executable") ~= ""
     for _,command in ipairs(commands) do
         local line_state = command.line_state
         local word_classifier = command.classifications
@@ -1258,6 +1260,16 @@ function argmatcher_classifier:classify(commands)
                 word_classifier:classifyword(command_word_index, m.."d", false); --doskey
             elseif clink.is_cmd_command(command_word) then
                 word_classifier:classifyword(command_word_index, m.."c", false); --command
+            elseif unrecognized_color or executable_color then
+                local cl
+                local recognized = clink._recognize_command(line_state:getline(), command_word)
+                if recognized < 0 then
+                    cl = unrecognized_color and "u"                              --unrecognized
+                elseif recognized > 0 then
+                    cl = executable_color and "x"                                --executable
+                end
+                cl = cl or "o"                                                   --other
+                word_classifier:classifyword(command_word_index, m..cl, false);
             else
                 word_classifier:classifyword(command_word_index, m.."o", false); --other
             end

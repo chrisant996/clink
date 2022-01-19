@@ -120,7 +120,7 @@ private:
     {
     public:
                             store_impl(unsigned int size);
-        const char*         store_front(const char* str);
+        const char*         store_front(const char* str) { return store(str); }
     };
 
     typedef std::vector<match_info> infos;

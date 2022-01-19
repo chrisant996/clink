@@ -14,7 +14,11 @@
 #include <core/str_compare.h>
 #include <core/str_iter.h>
 #include <core/str_transform.h>
+#include <core/str_tokeniser.h>
+#include <core/str_unordered_set.h>
 #include <core/settings.h>
+#include <core/linear_allocator.h>
+#include <lib/intercept.h>
 #include <lib/popup.h>
 #include <terminal/terminal_helpers.h>
 #include <terminal/printer.h>
@@ -28,6 +32,8 @@ extern "C" {
 
 #include <unordered_set>
 #include <vector>
+#include <list>
+#include <mutex>
 
 
 
@@ -36,6 +42,398 @@ extern int force_reload_scripts();
 extern void set_suggestion(const char* line, unsigned int endword_offset, const char* suggestion, unsigned int offset);
 extern setting_bool g_gui_popups;
 extern setting_enum g_dupe_mode;
+extern setting_color g_color_unrecognized;
+extern setting_color g_color_executable;
+
+
+
+//------------------------------------------------------------------------------
+static bool search_for_extension(str_base& full, const char* word)
+{
+    path::append(full, "");
+    const unsigned int trunc = full.length();
+    const unsigned int word_len = static_cast<unsigned int>(strlen(word));
+
+    if (strchr(word, '.'))
+    {
+        full.concat(word, word_len);
+        if (os::get_path_type(full.c_str()) == os::path_type_file)
+            return true;
+    }
+    else
+    {
+        str<> pathext;
+        if (!os::get_env("pathext", pathext))
+            return false;
+
+        str_tokeniser tokens(pathext.c_str(), ";");
+        const char *start;
+        int length;
+
+        while (str_token token = tokens.next(start, length))
+        {
+            full.truncate(trunc);
+            full.concat(word, word_len);
+            full.concat(start, length);
+            if (os::get_path_type(full.c_str()) == os::path_type_file)
+                return true;
+        }
+    }
+
+    return false;
+}
+
+//------------------------------------------------------------------------------
+static bool search_for_executable(const char* _word)
+{
+    // Bail out early if it's obviously not going to succeed.
+    if (strlen(_word) >= MAX_PATH)
+        return false;
+
+// TODO: dynamically load NeedCurrentDirectoryForExePathW.
+    wstr<32> word(_word);
+    const bool need_cwd = !!NeedCurrentDirectoryForExePathW(word.c_str());
+    const bool need_path = !rl_last_path_separator(_word);
+
+    // Make list of paths to search.
+    str<> tmp;
+    str<> paths;
+    if (need_cwd)
+    {
+        os::get_current_dir(paths);
+    }
+    if (need_path && os::get_env("PATH", tmp))
+    {
+        if (paths.length() > 0)
+            paths.concat(";", 1);
+        paths.concat(tmp.c_str(), tmp.length());
+    }
+
+    str<280> token;
+    str_tokeniser tokens(paths.c_str(), ";");
+    while (tokens.next(token))
+    {
+        token.trim();
+        if (token.empty())
+            continue;
+
+        // Get full path name.
+        str<> full;
+        if (!os::get_full_path_name(token.c_str(), full, token.length()))
+            continue;
+
+        // Skip drives that are unknown, invalid, or remote.
+        {
+            char drive[4];
+            drive[0] = full.c_str()[0];
+            drive[1] = ':';
+            drive[2] = '\\';
+            drive[3] = '\0';
+            if (os::get_drive_type(drive) < os::drive_type_removable)
+                continue;
+        }
+
+        // Try PATHEXT extensions.
+        if (search_for_extension(full, _word))
+            return true;
+    }
+
+    return false;
+}
+
+//------------------------------------------------------------------------------
+class recognizer
+{
+    friend HANDLE get_recognizer_event();
+
+    struct entry
+    {
+                            entry() {}
+                            entry(const char* key, const char* word);
+        bool                empty() const { return m_key.empty(); }
+        void                clear();
+        str_moveable        m_key;
+        str_moveable        m_word;
+    };
+
+public:
+                            recognizer();
+                            ~recognizer() { shutdown(); }
+    void                    clear();
+    bool                    find(const char* key, char* cached=nullptr) const;
+    bool                    enqueue(const char* key, const char* word, char* cached=nullptr);
+    bool                    need_refresh();
+
+private:
+    bool                    usable() const;
+    bool                    store(const char* word, char cached);
+    bool                    dequeue(entry& entry);
+    void                    shutdown();
+    static void             proc(recognizer* r);
+
+private:
+    linear_allocator        m_heap;
+    str_unordered_map<char> m_cache;
+    entry                   m_queue;
+    mutable std::recursive_mutex m_mutex;
+    std::unique_ptr<std::thread> m_thread;
+    HANDLE                  m_event = nullptr;
+    bool                    m_result_available = false;
+    bool                    m_zombie = false;
+
+    static HANDLE           s_ready_event;
+};
+
+//------------------------------------------------------------------------------
+HANDLE recognizer::s_ready_event = nullptr;
+static recognizer s_recognizer;
+
+//------------------------------------------------------------------------------
+HANDLE get_recognizer_event()
+{
+    if (g_color_unrecognized.is_default() && g_color_executable.is_default())
+        return nullptr;
+
+    // Locking is not needed because concurrency is not possible until after
+    // this event has been created, which can only happen on the main thread.
+
+    if (s_recognizer.m_zombie)
+        return nullptr;
+    if (!s_recognizer.s_ready_event)
+        s_recognizer.s_ready_event = CreateEvent(nullptr, false, false, nullptr);
+    return s_recognizer.s_ready_event;
+}
+
+//------------------------------------------------------------------------------
+void clear_recognizer_cache()
+{
+    s_recognizer.clear();
+}
+
+//------------------------------------------------------------------------------
+bool check_recognizer_refresh()
+{
+    return s_recognizer.need_refresh();
+}
+
+//------------------------------------------------------------------------------
+recognizer::entry::entry(const char* key, const char* word)
+: m_key(key)
+, m_word(word)
+{
+}
+
+//------------------------------------------------------------------------------
+void recognizer::entry::clear()
+{
+    m_key.clear();
+    m_word.clear();
+}
+
+//------------------------------------------------------------------------------
+recognizer::recognizer()
+: m_heap(1024)
+{
+#ifdef DEBUG
+    // Singleton.
+    static bool s_created = false;
+    assert(!s_created);
+    s_created = true;
+#endif
+}
+
+//------------------------------------------------------------------------------
+void recognizer::clear()
+{
+    std::lock_guard<std::recursive_mutex> lock(m_mutex);
+
+    m_cache.clear();
+    m_heap.reset();
+}
+
+//------------------------------------------------------------------------------
+bool recognizer::find(const char* key, char* cached) const
+{
+    std::lock_guard<std::recursive_mutex> lock(m_mutex);
+
+    if (!usable())
+        return false;
+
+    auto const iter = m_cache.find(key);
+    if (iter == m_cache.end())
+        return false;
+
+    if (cached)
+        *cached = iter->second;
+    return true;
+}
+
+//------------------------------------------------------------------------------
+bool recognizer::enqueue(const char* key, const char* word, char* cached)
+{
+    std::lock_guard<std::recursive_mutex> lock(m_mutex);
+
+    if (!usable())
+        return false;
+
+    assert(s_ready_event);
+
+    if (!m_event)
+    {
+        m_event = CreateEvent(nullptr, false, false, nullptr);
+        if (!m_event)
+            return false;
+    }
+
+    if (!m_thread)
+        m_thread = std::make_unique<std::thread>(&proc, this);
+
+    m_queue.m_key = key;
+    m_queue.m_word = word;
+
+    // Assume unrecognized at first.
+    store(key, -1);
+    if (cached)
+        *cached = -1;
+
+    SetEvent(m_event);  // Signal thread there is work to do.
+    Sleep(0);           // Give up timeslice in case thread gets result quickly.
+    return true;
+}
+
+//------------------------------------------------------------------------------
+bool recognizer::need_refresh()
+{
+    std::lock_guard<std::recursive_mutex> lock(m_mutex);
+    if (!m_result_available)
+        return false;
+    m_result_available = false;
+    return true;
+}
+
+//------------------------------------------------------------------------------
+bool recognizer::usable() const
+{
+    return !m_zombie && s_ready_event;
+}
+
+//------------------------------------------------------------------------------
+bool recognizer::store(const char* word, char cached)
+{
+    std::lock_guard<std::recursive_mutex> lock(m_mutex);
+
+    if (!usable())
+        return false;
+
+    auto const iter = m_cache.find(word);
+    if (iter != m_cache.end())
+    {
+        m_cache.insert_or_assign(iter->first, cached);
+        m_result_available = true;
+        return true;
+    }
+
+    const char* key = m_heap.store(word);
+    if (!key)
+        return false;
+
+    m_cache.emplace(key, cached);
+    m_result_available = true;
+    return true;
+}
+
+//------------------------------------------------------------------------------
+bool recognizer::dequeue(entry& entry)
+{
+    std::lock_guard<std::recursive_mutex> lock(m_mutex);
+
+    if (!usable() || m_queue.empty())
+        return false;
+
+    entry = std::move(m_queue);
+    assert(m_queue.empty());
+    return true;
+}
+
+//------------------------------------------------------------------------------
+void recognizer::shutdown()
+{
+    std::unique_ptr<std::thread> thread;
+
+    {
+        std::lock_guard<std::recursive_mutex> lock(m_mutex);
+
+        clear();
+        m_zombie = true;
+
+        if (m_event)
+            SetEvent(m_event);
+
+        thread = std::move(m_thread);
+    }
+
+    if (thread)
+        thread->join();
+
+    if (m_event)
+        CloseHandle(m_event);
+}
+
+//------------------------------------------------------------------------------
+void recognizer::proc(recognizer* r)
+{
+    while (true)
+    {
+        if (WaitForSingleObject(r->m_event, INFINITE) != WAIT_OBJECT_0)
+        {
+            // Uh oh.
+            Sleep(5000);
+        }
+
+        entry entry;
+        while (r->dequeue(entry))
+        {
+            // Search for executable file.
+            if (search_for_executable(entry.m_word.c_str()))
+            {
+executable:
+                r->store(entry.m_key.c_str(), 1);
+            }
+            else if (const char* ext = path::get_extension(entry.m_word.c_str()))
+            {
+                // Look up file type association.
+                HKEY hkey;
+                wstr<64> commandkey(ext);
+                commandkey << L"\\shell\\open\\command";
+                if (RegOpenKeyExW(HKEY_CLASSES_ROOT, commandkey.c_str(), 0, MAXIMUM_ALLOWED, &hkey) == ERROR_SUCCESS)
+                {
+                    bool has_command = false;
+
+                    DWORD type;
+                    if (RegQueryValueExW(hkey, nullptr, 0, &type, nullptr, nullptr) == ERROR_MORE_DATA)
+                        has_command = (type == REG_SZ || type == REG_EXPAND_SZ);
+                    RegCloseKey(hkey);
+
+                    if (has_command)
+                        goto executable;
+                }
+            }
+            else
+            {
+                // Not executable.
+                r->store(entry.m_key.c_str(), -1);
+            }
+
+            // Wake idle input.
+            assert(s_ready_event);
+            SetEvent(s_ready_event);
+        }
+
+        std::lock_guard<std::recursive_mutex> lock(r->m_mutex);
+        if (r->m_zombie)
+            break;
+    }
+}
 
 
 
@@ -823,6 +1221,59 @@ static int matches_ready(lua_State* state)
     return 1;
 }
 
+//------------------------------------------------------------------------------
+// UNDOCUMENTED; internal use only.
+static int recognize_command(lua_State* state)
+{
+    const char* line = checkstring(state, 1);
+    const char* word = checkstring(state, 2);
+    if (!line || !word)
+        return 0;
+    if (!*line || !*word)
+        return 0;
+
+    // Ignore UNC paths, because they can take up to 2 minutes to time out.
+    // Even running that on a thread would either starve the consumers or
+    // accumulate threads faster than they can finish.
+    if (path::is_separator(word[0]) && path::is_separator(word[1]))
+    {
+unknown:
+        lua_pushinteger(state, 0);
+        return 1;
+    }
+
+    // Check for directory intercepts (-, ..., ...., dir\, and so on).
+    if (intercept_directory(line) != intercept_result::none)
+    {
+        lua_pushinteger(state, 1);
+        return 1;
+    }
+
+    // Check for cached result.
+    char cached;
+    if (s_recognizer.find(word, &cached))
+    {
+known:
+        lua_pushinteger(state, cached);
+        return 1;
+    }
+
+    // Expand environment variables.
+    str<32> expanded;
+    const char* orig_word = word;
+    unsigned int len = static_cast<unsigned int>(strlen(word));
+    if (os::expand_env(word, len, expanded))
+    {
+        word = expanded.c_str();
+        len = expanded.length();
+    }
+
+    // Queue for background thread processing.
+    if (s_recognizer.enqueue(orig_word, word, &cached))
+        goto known;
+    goto unknown;
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -879,6 +1330,7 @@ void clink_lua_initialise(lua_state& lua)
         { "set_suggestion_result",  &set_suggestion_result },
         { "kick_idle",              &kick_idle },
         { "matches_ready",          &matches_ready },
+        { "_recognize_command",     &recognize_command },
     };
 
     lua_State* state = lua.get_state();

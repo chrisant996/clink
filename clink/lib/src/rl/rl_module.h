@@ -64,5 +64,7 @@ private:
     str<16>         m_arg_color;
     str<16>         m_argmatcher_color;
     str<16>         m_flag_color;
+    str<16>         m_unrecognized_color;
+    str<16>         m_executable_color;
     str<16>         m_none_color;
 };

@@ -14,6 +14,7 @@ public:
     void                    reset();
     void                    clear();
     void*                   alloc(unsigned int size);
+    const char*             store(const char* str);
     template <class T> T*   talloc(unsigned int count=1);
     bool                    fits(unsigned int) const;
     bool                    oversized(unsigned int) const;

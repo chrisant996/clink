@@ -66,6 +66,18 @@ void* linear_allocator::alloc(unsigned int size)
 }
 
 //------------------------------------------------------------------------------
+const char* linear_allocator::store(const char* str)
+{
+    const unsigned int size = static_cast<unsigned int>(str ? strlen(str) + 1 : 1);
+    char* ret = (char*)alloc(size);
+    if (!ret)
+        return nullptr;
+
+    memcpy(ret, str, size);
+    return ret;
+}
+
+//------------------------------------------------------------------------------
 bool linear_allocator::new_page()
 {
     if (m_max < sizeof(m_ptr))

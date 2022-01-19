@@ -5,6 +5,7 @@
 
 #include "str_hash.h"
 #include <unordered_set>
+#include <unordered_map>
 
 //------------------------------------------------------------------------------
 struct match_hasher
@@ -35,3 +36,5 @@ struct match_comparator
 //------------------------------------------------------------------------------
 typedef std::unordered_set<const char*, match_hasher, match_comparator> str_unordered_set;
 typedef std::unordered_set<const wchar_t*, match_hasher, match_comparator> wstr_unordered_set;
+template <typename ValTy> class str_unordered_map : public std::unordered_map<const char*, ValTy, match_hasher, match_comparator> {};
+template <typename ValTy> class wstr_unordered_map : public std::unordered_map<const wchar_t*, ValTy, match_hasher, match_comparator> {};
