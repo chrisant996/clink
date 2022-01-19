@@ -286,7 +286,8 @@ setting_color g_color_unrecognized(
     "color.unrecognized",
     "Color for unrecognized command word",
     "When set, this is the color in the input line for a command word that is not\n"
-    "recognized as a command, doskey macro, directory, or executable file.",
+    "recognized as a command, doskey macro, directory, argmatcher, or executable\n"
+    "file.",
     "");
 
 setting_bool g_match_expand_envvars(
