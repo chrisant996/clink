@@ -266,7 +266,7 @@ Name                         | Default | Description
 `color.selection`            |         | The color for selected text in the input line.  If no color is set, then reverse video is used.
 <a name="color_suggestion"></a>`color.suggestion` | `bright black` | The color for automatic suggestions when `autosuggest.enable` is enabled.
 `color.unexpected`           | `default` | The color for unexpected arguments in the input line when `clink.colorize_input` is enabled.
-`color.unrecognized`         |         | When set, this is the color in the input line for a command word that is not recognized as a command, doskey macro, directory, or executable file.
+`color.unrecognized`         |         | When set, this is the color in the input line for a command word that is not recognized as a command, doskey macro, directory, argmatcher, or executable file.
 `debug.log_terminal`         | False   | Logs all terminal input and output to the clink.log file.  This is intended for diagnostic purposes only, and can make the log file grow significantly.
 `doskey.enhanced`            | True    | Enhanced Doskey adds the expansion of macros that follow `\|` and `&` command separators and respects quotes around words when parsing `$1`...`$9` tags. Note that these features do not apply to Doskey use in Batch files.
 `exec.aliases`               | True    | When matching executables as the first word (`exec.enable`), include doskey aliases.
