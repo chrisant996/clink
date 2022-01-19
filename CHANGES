@@ -9,6 +9,7 @@
 - When multiple columns of matches are displayed with descriptions, the descriptions are bracketed with parentheses for readability and accessibility purposes.
 - <kbd>F1</kbd> in `clink-select-complete` toggles between showing descriptions at the bottom vs with the matches.
 - Added `match.substring` setting that uses a substring search for completions if none are found with a prefix search.
+- Added `color.executable` and `color.unrecognized` settings.  When set, these cause the command word (the first word) to be colored if it is recognized as an executable file, or is not recognized as a command, doskey macro, directory, argmatcher, or executable file.  Lookups are asynchronous for optimum responsiveness while typing.
 - Argmatchers can hide certain flags (e.g. synonyms) by using `argmatcher:hideflags()`.
 - Argmatchers can disable sorting matches by using `argmatcher:addargunsorted()` or `argmatcher:addflagsunsorted()`.
 - Generators can disable sorting matches by using `match_builder:setnosort()`.
