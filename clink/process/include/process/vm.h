@@ -31,8 +31,8 @@ public:
     void*               get_alloc_base(void* address);
     region              get_region(void* address);
     void*               get_page(void* address);
-    region              alloc(unsigned int page_count, unsigned int access=access_read|access_write);
-    void                free(const region& region);
+    region              alloc_region(unsigned int page_count, unsigned int access=access_read|access_write);
+    void                free_region(const region& region);
     int                 get_access(const region& region);
     bool                set_access(const region& region, unsigned int access);
     bool                read(void* dest, const void* src, size_t size);

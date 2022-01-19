@@ -64,8 +64,8 @@ void suggestion_manager::clear()
         g_rl_buffer->set_need_draw();
 
     new (&m_iter) str_iter();
-    m_suggestion.free();
-    m_line.free();
+    m_suggestion.dispose();
+    m_line.dispose();
     m_suggestion_offset = -1;
     m_endword_offset = -1;
 }

@@ -234,7 +234,7 @@ remote_result process::remote_call_internal(pe_info::funcptr_t function, process
         for (const auto* c = (unsigned char*)stdcall_thunk; thunk_size < 64 && ++thunk_size, *c++ != 0xc3;);
 
     vm vm(m_pid);
-    vm::region region = vm.alloc(1, vm::access_write);
+    vm::region region = vm.alloc_region(1, vm::access_write);
     if (region.base == nullptr)
     {
         ERR("Unable to allocate virtual memory in process %d.", m_pid);
@@ -279,7 +279,7 @@ remote_result process::remote_call_internal(pe_info::funcptr_t function, process
     if (wait_result == WAIT_OBJECT_0)
     {
         vm.read(&call_ret, remote_thunk_data + offsetof(thunk_data, out), sizeof(call_ret));
-        vm.free(region);
+        vm.free_region(region);
     }
 
     return { true, call_ret };
@@ -330,7 +330,7 @@ remote_result process::remote_call_internal(pe_info::funcptr_t function, process
         for (const auto* c = (unsigned char*)stdcall_thunk2; thunk_size < 64 && ++thunk_size, *c++ != 0xc3;);
 
     vm vm(m_pid);
-    vm::region region = vm.alloc(1, vm::access_write);
+    vm::region region = vm.alloc_region(1, vm::access_write);
     if (region.base == nullptr)
     {
         ERR("Unable to allocate virtual memory in process %d.", m_pid);
@@ -384,7 +384,7 @@ remote_result process::remote_call_internal(pe_info::funcptr_t function, process
     if (wait_result == WAIT_OBJECT_0)
     {
         vm.read(&call_ret, remote_thunk_data + offsetof(thunk2_data, out), sizeof(call_ret));
-        vm.free(region);
+        vm.free_region(region);
     }
 
     return { true, call_ret };

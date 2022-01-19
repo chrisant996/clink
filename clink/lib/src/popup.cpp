@@ -37,7 +37,7 @@ void popup_results::clear()
 {
     m_result = popup_result::cancel;
     m_index = -1;
-    m_text.free();
+    m_text.dispose();
 }
 
 

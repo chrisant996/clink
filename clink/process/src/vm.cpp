@@ -109,7 +109,7 @@ void* vm::get_page(void* address)
 }
 
 //------------------------------------------------------------------------------
-vm::region vm::alloc(unsigned int page_count, unsigned int access)
+vm::region vm::alloc_region(unsigned int page_count, unsigned int access)
 {
     if (m_handle == nullptr)
         return {};
@@ -123,7 +123,7 @@ vm::region vm::alloc(unsigned int page_count, unsigned int access)
 }
 
 //------------------------------------------------------------------------------
-void vm::free(const region& region)
+void vm::free_region(const region& region)
 {
     if (m_handle == nullptr)
         return;
