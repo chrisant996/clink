@@ -1268,6 +1268,13 @@ known:
         len = expanded.length();
     }
 
+    // Wildcards mean it can't be an executable file.
+    if (strchr(word, '*') || strchr(word, '?'))
+    {
+        lua_pushinteger(state, -1);
+        return 1;
+    }
+
     // Queue for background thread processing.
     if (s_recognizer.enqueue(orig_word, word, &cached))
         goto known;
