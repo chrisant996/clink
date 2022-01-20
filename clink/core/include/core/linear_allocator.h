@@ -15,7 +15,7 @@ public:
     void                    clear();
     void*                   alloc(unsigned int size);
     const char*             store(const char* str);
-    template <class T> T*   talloc(unsigned int count=1);
+    template <class T> T*   calloc(unsigned int count=1);
     bool                    fits(unsigned int) const;
     bool                    oversized(unsigned int) const;
 
@@ -43,9 +43,12 @@ inline void linear_allocator::clear()
 }
 
 //------------------------------------------------------------------------------
-template <class T> T* linear_allocator::talloc(unsigned int count)
+template <class T> T* linear_allocator::calloc(unsigned int count)
 {
-    return (T*)(alloc(sizeof(T) * count));
+    void* p = alloc(sizeof(T) * count);
+    if (p)
+        memset(p, 0, sizeof(T) * count);
+    return static_cast<T*>(p);
 }
 
 //------------------------------------------------------------------------------

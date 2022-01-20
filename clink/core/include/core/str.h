@@ -612,7 +612,7 @@ public:
     str_moveable& operator = (str_moveable&&);
 
     char*       detach();
-    void        dispose();
+    void        free();
 
 private:
     char        m_empty[1];
@@ -630,7 +630,7 @@ public:
     wstr_moveable& operator = (wstr_moveable&&);
 
     wchar_t*    detach();
-    void        dispose();
+    void        free();
 
 protected:
     wchar_t     m_empty[1];
@@ -660,7 +660,7 @@ inline char* str_moveable::detach()
 }
 
 //------------------------------------------------------------------------------
-inline void str_moveable::dispose()
+inline void str_moveable::free()
 {
     attach(nullptr, 0);
     reset_not_owned(m_empty, _countof(m_empty));
@@ -690,7 +690,7 @@ inline wchar_t* wstr_moveable::detach()
 }
 
 //------------------------------------------------------------------------------
-inline void wstr_moveable::dispose()
+inline void wstr_moveable::free()
 {
     attach(nullptr, 0);
     reset_not_owned(m_empty, _countof(m_empty));

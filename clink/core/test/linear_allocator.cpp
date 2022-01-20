@@ -48,17 +48,17 @@ TEST_CASE("linear_allocator: oversize")
 }
 
 //------------------------------------------------------------------------------
-TEST_CASE("linear_allocator: talloc")
+TEST_CASE("linear_allocator: calloc")
 {
     linear_allocator allocator(sizeof(int) * 8 + sizeof(void*));
-    REQUIRE(allocator.talloc<int>(0) == nullptr);
+    REQUIRE(allocator.calloc<int>(0) == nullptr);
 
-    REQUIRE(allocator.talloc<int>() != nullptr);
+    REQUIRE(allocator.calloc<int>() != nullptr);
     REQUIRE(allocator.fits(sizeof(int) * 7));
-    REQUIRE(allocator.talloc<int>(7) != nullptr);
+    REQUIRE(allocator.calloc<int>(7) != nullptr);
     REQUIRE(!allocator.fits(1));
 
-    REQUIRE(allocator.talloc<int>(1) != nullptr);
+    REQUIRE(allocator.calloc<int>(1) != nullptr);
     REQUIRE(allocator.fits(sizeof(int) * 7));
     REQUIRE(!allocator.fits(sizeof(int) * 7 + 1));
 }
