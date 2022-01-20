@@ -20,8 +20,8 @@
 struct mem_tracking
 {
     static size_t           pad_size(size_t size);
-    static mem_tracking*    from_pv(const void* pv);
-    void*                   to_pv() const;
+    static mem_tracking*    from_pv(void* pv);
+    void*                   to_pv();
     void                    fill(size_t size, bool dead);
     void                    link();
     void                    unlink();
@@ -32,7 +32,7 @@ struct mem_tracking
     void                    set_label(char const* label, bool own);
 
 #ifdef INCLUDE_CALLSTACKS
-    void                    get_stack_string(char* buffer, size_t max) const;
+    void                    get_stack_string(char* buffer, size_t max, bool newlines) const;
 #endif
 
     mem_tracking*           m_prev;
@@ -44,7 +44,7 @@ struct mem_tracking
     size_t                  m_count_realloc;
 
 #ifdef INCLUDE_CALLSTACKS
-    const void*             m_stack[MAX_STACK_DEPTH]; // Max or null terminated.
+    void*                   m_stack[MAX_STACK_DEPTH]; // Max or null terminated.
 #endif
 
 private:
@@ -261,7 +261,7 @@ extern "C" char const* dbginspectmemory(void const* pv, size_t size)
     }
     max = size;
 
-    hex += dbgcchcopy("HEX: ", hex, _countof(s_hex) - (hex - s_hex));
+    hex += dbgcchcopy(hex, _countof(s_hex) - (hex - s_hex), "HEX: ");
     *(chr++) = '\"';
 
     while (size--)
@@ -299,16 +299,16 @@ extern "C" char const* dbginspectmemory(void const* pv, size_t size)
         assert(strlen(hex) < _countof(s_hex) - 3);
         assert(strlen(chr) < _countof(s_chr) - 3);
 
-        dbgcchcopy("...", hex, _countof(s_hex) - (hex - s_hex));
-        dbgcchcopy("...", chr, _countof(s_chr) - (chr - s_chr));
+        dbgcchcopy(hex, _countof(s_hex) - (hex - s_hex), "...");
+        dbgcchcopy(chr, _countof(s_chr) - (chr - s_chr), "...");
     }
 
     return (count_filtered > (max / 2)) ? s_hex : s_chr;
 }
 
-inline BYTE* byteptr(void const* const pv)
+inline BYTE* byteptr(void* pv)
 {
-    return static_cast<BYTE*>(const_cast<void*>(pv));
+    return static_cast<BYTE*>(pv);
 }
 
 size_t mem_tracking::pad_size(size_t size)
@@ -317,7 +317,7 @@ size_t mem_tracking::pad_size(size_t size)
     return sizeof(mem_tracking) + get_config().size_guard * 2 + size;
 }
 
-mem_tracking* mem_tracking::from_pv(void const* const pv)
+mem_tracking* mem_tracking::from_pv(void* pv)
 {
     assert_synchronized();
 
@@ -356,7 +356,7 @@ mem_tracking* mem_tracking::from_pv(void const* const pv)
     return p;
 }
 
-void* mem_tracking::to_pv() const
+void* mem_tracking::to_pv()
 {
     return byteptr(this) + sizeof(mem_tracking) + get_config().size_guard;
 }
@@ -460,9 +460,9 @@ void mem_tracking::set_label(char const* const label, bool const own)
 }
 
 #ifdef INCLUDE_CALLSTACKS
-void mem_tracking::get_stack_string(char* buffer, size_t max) const
+void mem_tracking::get_stack_string(char* buffer, size_t max, bool newlines) const
 {
-    format_frames(_countof(m_stack), m_stack, buffer, max, true);
+    format_frames(_countof(m_stack), m_stack, buffer, max, newlines);
 }
 #endif
 
@@ -477,7 +477,7 @@ extern "C" void dbgsetsanealloc(size_t max_alloc, size_t max_realloc, const size
 extern "C" void* dbgalloc_(size_t size, unsigned int flags)
 {
 #ifdef INCLUDE_CALLSTACKS
-    const void* stack[MAX_STACK_DEPTH];
+    void* stack[MAX_STACK_DEPTH];
     const int skip = 1 + !!(flags & memSkipOneFrame) + !!(flags &memSkipAnotherFrame);
     size_t const levels = (flags & memNoStack) ? 0 : get_callstack_frames(skip, _countof(stack), stack);
 #endif
@@ -539,7 +539,7 @@ void* dbgrealloc_(void* pv, size_t size, unsigned int flags)
         return dbgalloc_(size, flags | memSkipAnotherFrame);
 
 #ifdef INCLUDE_CALLSTACKS
-    const void* stack[MAX_STACK_DEPTH];
+    void* stack[MAX_STACK_DEPTH];
     const int skip = 1 + !!(flags & memSkipOneFrame) + !!(flags &memSkipAnotherFrame);
     size_t levels = get_callstack_frames(skip, _countof(stack), stack);
     if (levels < _countof(stack))
@@ -645,7 +645,7 @@ void dbgfree_(void* pv, unsigned int type)
     real_free(p);
 }
 
-static size_t list_leaks()
+static size_t list_leaks(size_t alloc_number, bool report)
 {
     auto_lock lock;
     auto& config = get_config();
@@ -655,26 +655,45 @@ static size_t list_leaks()
     size_t size = 0;
     char stack[MAX_STACK_STRING_LENGTH];
 
-    dbgtracef("----- Checking for leaks -----");
-    for (p = config.head; p; p = p->m_next, ++leaks)
+    const bool newlines = false;
+
+    if (report)
     {
-        size += p->m_requested_size;
-
-        stack[0] = '\0';
-#ifdef INCLUDE_CALLSTACKS
-        if (p->m_stack[0])
-            p->get_stack_string(stack, _countof(stack));
-#endif
-
-        dbgtracef("Leak:  #%zd,  %zu bytes (%zu reallocs),  0x%p,  %s,  %s%s%s",
-                  p->m_alloc_number, p->m_requested_size, p->m_count_realloc, p->to_pv(), p->get_label(),
-                  dbginspectmemory(p->to_pv(), p->m_requested_size), stack[0] ? ",  context:" : "", stack);
+        if (alloc_number)
+            dbgtracef("----- Checking for leaks since #%zd -----", alloc_number);
+        else
+            dbgtracef("----- Checking for leaks -----");
     }
 
-    dbgtracef("----- %zd leaks, %zd bytes total -----", leaks, size);
+    for (p = config.head; p; p = p->m_next)
+    {
+        if (p->m_alloc_number <= alloc_number)
+            continue;
+
+        ++leaks;
+        size += p->m_requested_size;
+
+        if (report)
+        {
+            stack[0] = '\0';
+#ifdef INCLUDE_CALLSTACKS
+            if (p->m_stack[0])
+                p->get_stack_string(stack, _countof(stack), newlines);
+#endif
+            dbgtracef("Leak:  #%zd,  %zu bytes (%zu reallocs),  0x%p,  %s,  %s%s%s",
+                    p->m_alloc_number, p->m_requested_size, p->m_count_realloc,
+                    p->to_pv(), p->get_label(), dbginspectmemory(p->to_pv(), p->m_requested_size),
+                    (!stack[0] ? "" : newlines ? "\r\n" : ",  context:"), stack);
+        }
+    }
+
+    if (report)
+    {
+        dbgtracef("----- %zd leaks, %zd bytes total -----", leaks, size);
 #ifdef USE_HEAP_STATS
     // TODO
 #endif
+    }
 
     return leaks;
 }
@@ -687,7 +706,7 @@ extern "C" void dbgsetlabel(void* pv, char const* label, bool copy)
     {
         size_t const max = strlen(label) + sizeof(*label);
         char* const copied_label = static_cast<char*>(real_malloc(max));
-        dbgcchcopy(label, copied_label, max);
+        dbgcchcopy(copied_label, max, label);
         label = copied_label;
     }
 
@@ -699,37 +718,48 @@ extern "C" void dbgdeadfillpointer(void** ppv)
     memset(ppv, get_config().deadfill, sizeof(*ppv));
 }
 
-extern "C" size_t getdbgallocnumber()
+extern "C" size_t dbggetallocnumber()
 {
     auto_lock lock;
     return get_config().alloc_number;
-}
-
-extern "C" size_t dbgcchcopy(char const* from, char* to, size_t max)
-{
-    size_t copied = 0;
-    if (max)
-    {
-        while (--max && *from)
-        {
-            *(to++) = *(from++);
-            copied++;
-        }
-        *to = '\0';
-    }
-    return copied;
 }
 
 extern "C" void dbgcheck()
 {
     auto_lock lock;
 
-    size_t const leaks = list_leaks();
+    size_t const leaks = list_leaks(0, false);
 
     if (leaks)
     {
         assert1(false, "%zd leaks detected.", leaks);
-        list_leaks();
+        list_leaks(0, true);
+    }
+}
+
+extern "C" void dbgchecksince(size_t alloc_number)
+{
+    auto_lock lock;
+
+    size_t const leaks = list_leaks(alloc_number, false);
+
+    if (leaks)
+    {
+        assert1(false, "%zd leaks detected.", leaks);
+        list_leaks(alloc_number, true);
+    }
+}
+
+extern "C" void dbgcheckfinal()
+{
+    auto_lock lock;
+
+    size_t const leaks = list_leaks(0, true);
+
+    if (leaks)
+    {
+        assert1(false, "%zd leaks detected.", leaks);
+        list_leaks(0, true);
     }
 }
 
@@ -738,6 +768,46 @@ extern "C" void dbgcheck()
 #endif // USE_HEAP_STATS
 
 #endif // USE_MEMORY_TRACKING
+
+#ifdef DEBUG
+
+extern "C" size_t dbgcchcopy(char* to, size_t max, char const* from)
+{
+    if (!max)
+        return 0;
+
+    size_t copied = 0;
+    while (--max && *from)
+    {
+        *(to++) = *(from++);
+        copied++;
+    }
+    *to = '\0';
+    return copied;
+}
+
+extern "C" size_t dbgcchcat(char* to, size_t max, char const* from)
+{
+    if (!max)
+        return 0;
+
+    max--;
+
+    size_t len = strlen(to);
+    if (len > max)
+        len = max;
+    to += len;
+
+    while (len < max && *from)
+    {
+        *(to++) = *(from++);
+        len++;
+    }
+    *to = '\0';
+    return len;
+}
+
+#endif
 
 _Ret_notnull_ _Post_writable_byte_size_(size)
 void* _cdecl operator new(size_t size)

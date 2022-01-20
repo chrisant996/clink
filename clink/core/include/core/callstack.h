@@ -24,10 +24,10 @@ CALLSTACK_EXTERN_C size_t format_callstack(int skip_frames, int total_frames, ch
 
 // Copies stack frame pointers.  They can can formatted later with
 // format_frames().
-CALLSTACK_EXTERN_C int get_callstack_frames(int skip_frames, int total_frames, const void** frames);
+CALLSTACK_EXTERN_C int get_callstack_frames(int skip_frames, int total_frames, void** frames);
 
 // Formats buffer (capacity is size of buffer) with up to total_frames.  The
 // frames are delimited with slashes or newlines.
-CALLSTACK_EXTERN_C size_t format_frames(int total_frames, const void* const* frames, char* buffer, size_t capacity, int newlines);
+CALLSTACK_EXTERN_C size_t format_frames(int total_frames, void* const* frames, char* buffer, size_t capacity, int newlines);
 
 #endif // DEBUG

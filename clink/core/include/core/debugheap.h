@@ -10,6 +10,9 @@
 
 #include <malloc.h>
 
+//------------------------------------------------------------------------------
+// Memory tracker.
+
 #ifdef USE_MEMORY_TRACKING
 
 #ifdef __cplusplus
@@ -84,7 +87,6 @@ void dbgsetlabel(void* pv, char const* label, bool copy);
 void dbgdeadfillpointer(void** ppv);
 
 size_t dbggetallocnumber();
-size_t dbgcchcopy(char const* from, char* to, size_t max);
 void dbgcheck();
 void dbgchecksince(size_t alloc_number);
 
@@ -105,3 +107,21 @@ void dbgchecksince(size_t alloc_number);
 #define _MEM_NOSIZECHECK
 
 #endif // !USE_MEMORY_TRACKING
+
+//------------------------------------------------------------------------------
+// Debug helpers.
+
+#ifdef DEBUG
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+size_t dbgcchcopy(char* to, size_t max, char const* from);
+size_t dbgcchcat(char* to, size_t max, char const* from);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif // DEBUG
