@@ -445,13 +445,16 @@ CALLSTACK_EXTERN_C size_t format_callstack(int skip_frames, int total_frames, ch
     if (total_frames > _countof(frames))
         total_frames = _countof(frames);
 
-    const int captured = get_callstack_frames(skip_frames, total_frames, frames);
-    return format_frames(captured, frames, buffer, capacity, true);
+    DWORD hash;
+    const int captured = get_callstack_frames(skip_frames, total_frames, frames, &hash);
+    return format_frames(captured, frames, hash, buffer, capacity, true);
 }
 
-CALLSTACK_EXTERN_C int get_callstack_frames(int skip_frames, int total_frames, void** frames)
+CALLSTACK_EXTERN_C int get_callstack_frames(int skip_frames, int total_frames, void** frames, DWORD* hash)
 {
     memset(frames, 0, total_frames * sizeof(*frames));
+    if (hash)
+        *hash = 0;
 
     if (!ensure())
         return 0;
@@ -467,7 +470,7 @@ CALLSTACK_EXTERN_C int get_callstack_frames(int skip_frames, int total_frames, v
         for (unsigned int attempts = 2; !captured && attempts--;)
         {
             InterlockedIncrement(&s_total_attempts);
-            captured = s_functions.RtlCaptureStackBackTrace(skip_frames + 1, total_frames, frames, nullptr);
+            captured = s_functions.RtlCaptureStackBackTrace(skip_frames + 1, total_frames, frames, hash);
             if (!captured)
             {
                 InterlockedIncrement(&s_failed_attempts);
@@ -495,6 +498,9 @@ CALLSTACK_EXTERN_C int get_callstack_frames(int skip_frames, int total_frames, v
 
     skip_frames += 2; // Skip this function and RtlCaptureContext.
 
+    if (hash)
+        *hash = 0;
+
     int captured = 0;
     for (int i = 0; i < skip_frames + total_frames; ++i)
     {
@@ -513,6 +519,18 @@ CALLSTACK_EXTERN_C int get_callstack_frames(int skip_frames, int total_frames, v
 
         if (i >= skip_frames)
         {
+            if (hash)
+            {
+                if (!*hash)
+                    *hash = 8191;
+#ifdef _WIN64
+                *hash *= 5;
+                *hash += DWORD(stackframe.AddrPC.Offset >> 32);
+#endif
+                *hash *= 5;
+                *hash += DWORD(stackframe.AddrPC.Offset);
+            }
+
             *(pdw++) = stackframe.AddrPC.Offset;
             captured++;
         }
@@ -521,7 +539,7 @@ CALLSTACK_EXTERN_C int get_callstack_frames(int skip_frames, int total_frames, v
     return captured;
 }
 
-CALLSTACK_EXTERN_C size_t format_frames(int total_frames, void* const* frames, char* buffer, size_t max, int newlines)
+CALLSTACK_EXTERN_C size_t format_frames(int total_frames, void* const* frames, DWORD hash, char* buffer, size_t max, int newlines)
 {
     if (!max)
         return 0;
@@ -535,6 +553,14 @@ CALLSTACK_EXTERN_C size_t format_frames(int total_frames, void* const* frames, c
     char* const orig_buffer = buffer;
     max--;                              // Reserve space for null terminator.
 
+    if (hash)
+    {
+        static const char c_fmt[] = "HASH 0x%08X%s";
+        const size_t copied = _snprintf_s(buffer, max, _TRUNCATE, c_fmt, hash, newlines ? "\r\n" : " / ");
+        buffer += copied;
+        max -= copied;
+    }
+
     char tmp[MAX_FRAME_LEN];
     for (int i = 0; i < total_frames && frames[i]; i++)
     {
@@ -545,14 +571,11 @@ CALLSTACK_EXTERN_C size_t format_frames(int total_frames, void* const* frames, c
         {
             //s[used++] = '\t';
         }
-        else
+        else if (i > 0)
         {
             s[used++] = ' ';
-            if (i)
-            {
-                s[used++] = '/';
-                s[used++] = ' ';
-            }
+            s[used++] = '/';
+            s[used++] = ' ';
         }
 
         used += format_frame(frames[i], s + used, _countof(tmp) - used, !newlines);

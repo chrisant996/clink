@@ -48,6 +48,7 @@ struct mem_tracking
     size_t                  m_count_realloc;
 
 #ifdef INCLUDE_CALLSTACKS
+    DWORD                   m_hash;
     void*                   m_stack[MAX_STACK_DEPTH]; // Max or null terminated.
 #endif
 
@@ -466,7 +467,7 @@ void mem_tracking::set_label(char const* const label, bool const own)
 #ifdef INCLUDE_CALLSTACKS
 void mem_tracking::get_stack_string(char* buffer, size_t max, bool newlines) const
 {
-    format_frames(_countof(m_stack), m_stack, buffer, max, newlines);
+    format_frames(_countof(m_stack), m_stack, m_hash, buffer, max, newlines);
 }
 #endif
 
@@ -481,9 +482,10 @@ extern "C" void dbgsetsanealloc(size_t max_alloc, size_t max_realloc, const size
 extern "C" void* dbgalloc_(size_t size, unsigned int flags)
 {
 #ifdef INCLUDE_CALLSTACKS
+    DWORD hash;
     void* stack[MAX_STACK_DEPTH];
     const int skip = 1 + !!(flags & memSkipOneFrame) + !!(flags &memSkipAnotherFrame);
-    size_t const levels = (flags & memNoStack) ? 0 : get_callstack_frames(skip, _countof(stack), stack);
+    size_t const levels = (flags & memNoStack) ? 0 : get_callstack_frames(skip, _countof(stack), stack, &hash);
 #endif
 
     auto_lock lock;
@@ -520,6 +522,7 @@ extern "C" void* dbgalloc_(size_t size, unsigned int flags)
     memcpy(p->m_stack, stack, levels * sizeof(stack[0]));
     if (levels < _countof(p->m_stack))
         p->m_stack[levels] = 0;
+    p->m_hash = hash;
 #endif
 
     // Link the block into the list.
@@ -543,9 +546,10 @@ void* dbgrealloc_(void* pv, size_t size, unsigned int flags)
         return dbgalloc_(size, flags | memSkipAnotherFrame);
 
 #ifdef INCLUDE_CALLSTACKS
+    DWORD hash;
     void* stack[MAX_STACK_DEPTH];
     const int skip = 1 + !!(flags & memSkipOneFrame) + !!(flags &memSkipAnotherFrame);
-    size_t levels = get_callstack_frames(skip, _countof(stack), stack);
+    size_t levels = get_callstack_frames(skip, _countof(stack), stack, &hash);
     if (levels < _countof(stack))
     {
         stack[levels] = nullptr; // Null terminate.
@@ -594,6 +598,7 @@ void* dbgrealloc_(void* pv, size_t size, unsigned int flags)
     static_assert(sizeof(p->m_stack) == sizeof(stack), "mismatched stack array size");
     static_assert(sizeof(p->m_stack[0]) == sizeof(stack[0]), "mismatched stack frame size");
     memcpy(p->m_stack, stack, levels * sizeof(stack[0]));
+    p->m_hash = hash;
 #endif
 
     // Link the block into the list.
@@ -687,7 +692,7 @@ static size_t list_leaks(size_t alloc_number, bool report)
             dbgtracef("Leak:  #%zd,  %zu bytes (%zu reallocs),  0x%p,  %s,  %s%s%s",
                     p->m_alloc_number, p->m_requested_size, p->m_count_realloc,
                     p->to_pv(), p->get_label(), dbginspectmemory(p->to_pv(), p->m_requested_size),
-                    (!stack[0] ? "" : newlines ? "\r\n" : ",  context:"), stack);
+                    (!stack[0] ? "" : newlines ? "\r\n" : ",  context: "), stack);
         }
     }
 
