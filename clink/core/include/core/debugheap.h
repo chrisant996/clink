@@ -6,6 +6,7 @@
 #ifdef DEBUG
 #define USE_MEMORY_TRACKING
 #define INCLUDE_CALLSTACKS
+#define USE_RTTI
 #endif
 
 #include <malloc.h>

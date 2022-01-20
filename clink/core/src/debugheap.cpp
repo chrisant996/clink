@@ -17,6 +17,10 @@
 #include <utility>
 #include <assert.h>
 
+#ifdef USE_RTTI
+#include <typeinfo>
+#endif
+
 struct mem_tracking
 {
     static size_t           pad_size(size_t size);
@@ -28,7 +32,7 @@ struct mem_tracking
     void                    make_zombie();
     void                    copy_from_and_free(mem_tracking* p, size_t size);
 
-    char const*             get_label() const;
+    char const*             get_label();
     void                    set_label(char const* label, bool own);
 
 #ifdef INCLUDE_CALLSTACKS
@@ -435,14 +439,14 @@ void mem_tracking::copy_from_and_free(mem_tracking* const p, size_t const size)
     dbgfree_(p->to_pv(), p->m_flags);
 }
 
-char const* mem_tracking::get_label() const
+char const* mem_tracking::get_label()
 {
     if (m_label)
         return m_label;
 
 #ifdef USE_RTTI
     if (m_flags & memRTTI)
-        return TypeIdName(*to_pv());
+        return typeid(to_pv()).name();
 #endif
 
     if (m_flags & memNewArray)
