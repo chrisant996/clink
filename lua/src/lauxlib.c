@@ -921,7 +921,10 @@ static void *l_alloc (void *ud, void *ptr, size_t osize, size_t nsize) {
     return NULL;
   }
   else
-    return realloc(ptr, nsize);
+/* begin_clink_change */
+    //return realloc(ptr, nsize);
+    return LUA_HEAP_REALLOC(ptr, nsize);
+/* end_clink_change */
 }
 
 

@@ -523,6 +523,21 @@
 ** without modifying the main part of the file.
 */
 
+/* begin_clink_change */
+#include "../../clink/core/include/core/debugheap.h"
+#ifdef USE_MEMORY_TRACKING
+#   ifdef __cplusplus
+extern "C" {
+#   endif
+DECLALLOCATOR DECLRESTRICT void* __cdecl dbgrealloc_ignore(void* pv, size_t size);
+#   ifdef __cplusplus
+}
+#   endif
+#   define LUA_HEAP_REALLOC dbgrealloc_ignore
+#else
+#   define LUA_HEAP_REALLOC realloc
+#endif
+/* end_clink_change */
 
 
 #endif

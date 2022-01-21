@@ -19,6 +19,18 @@
 #include "lstate.h"
 #include "lundump.h"
 
+/* begin_clink_change */
+#ifdef DEBUG
+#include "../../clink/core/include/core/debugheap.h"
+#ifdef USE_MEMORY_TRACKING
+DECLALLOCATOR DECLRESTRICT void* __cdecl dbgrealloc_ignore(void* pv, size_t size)
+{
+ return realloc(pv, size);
+}
+#endif
+#endif
+/* end_clink_change */
+
 static void PrintFunction(const Proto* f, int full);
 #define luaU_print	PrintFunction
 

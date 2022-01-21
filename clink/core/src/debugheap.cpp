@@ -61,14 +61,6 @@ private:
 #include "callstack.h"
 #endif
 
-#ifdef _MSC_VER
-#define DECLALLOCATOR __declspec(allocator)
-#define DECLRESTRICT __declspec(restrict)
-#else
-#define DECLALLOCATOR
-#define DECLRESTRICT
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -77,6 +69,7 @@ DECLALLOCATOR DECLRESTRICT void* __cdecl calloc(size_t count, size_t size) { ret
 void __cdecl free(void* pv) { dbgfree_(pv, 0); }
 DECLALLOCATOR DECLRESTRICT void* __cdecl malloc(size_t size) { return dbgalloc_(size, memSkipOneFrame); }
 DECLALLOCATOR DECLRESTRICT void* __cdecl realloc(void* pv, size_t size) { return dbgrealloc_(pv, size, 0|memSkipOneFrame); }
+DECLALLOCATOR DECLRESTRICT void* __cdecl dbgrealloc_ignore(void* pv, size_t size) { return dbgrealloc_(pv, size, 0|memSkipOneFrame|memIgnoreLeak); }
 
 #if 0
 // Can't replace these, because the CRT uses them internally.
@@ -817,7 +810,7 @@ extern "C" void dbgcheckfinal()
 // TODO: report heap stats
 #endif // USE_HEAP_STATS
 
-_Ret_notnull_ _Post_writable_byte_size_(size)
+_Ret_notnull_ _Post_writable_byte_size_(size) DECLALLOCATOR
 void* _cdecl operator new(size_t size)
 {
     return dbgalloc_(size, memNew|memSkipOneFrame);
@@ -829,7 +822,7 @@ void _cdecl operator delete(void* pv)
         dbgfree_(pv _MEM_NEW);
 }
 
-_Ret_notnull_ _Post_writable_byte_size_(size)
+_Ret_notnull_ _Post_writable_byte_size_(size) DECLALLOCATOR
 void* _cdecl operator new[](size_t size)
 {
     return dbgalloc_(size, memNewArray|memSkipOneFrame);

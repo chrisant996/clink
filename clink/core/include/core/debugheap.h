@@ -3,26 +3,36 @@
 
 #pragma once
 
+#if defined(__cplusplus) && defined(lconfig_h)
+} // End the enclosing extern "C" scope!
+#endif
+
 #ifdef DEBUG
 #define USE_MEMORY_TRACKING
 #define INCLUDE_CALLSTACKS
 #define USE_RTTI
 #endif
 
-#include <malloc.h>
-
 //------------------------------------------------------------------------------
 // Memory tracker.
 
 #ifdef USE_MEMORY_TRACKING
 
+#ifdef _MSC_VER
+#define DECLALLOCATOR __declspec(allocator)
+#define DECLRESTRICT __declspec(restrict)
+#else
+#define DECLALLOCATOR
+#define DECLRESTRICT
+#endif
+
 #ifdef __cplusplus
 
-_Ret_notnull_ _Post_writable_byte_size_(size)
+_Ret_notnull_ _Post_writable_byte_size_(size) DECLALLOCATOR
 void* _cdecl operator new(size_t size);
 void _cdecl operator delete(void* size);
 
-_Ret_notnull_ _Post_writable_byte_size_(size)
+_Ret_notnull_ _Post_writable_byte_size_(size) DECLALLOCATOR
 void* _cdecl operator new[](size_t size);
 void _cdecl operator delete[](void* size);
 
@@ -90,6 +100,8 @@ void* dbgalloc_(size_t size, unsigned int flags);
 void* dbgrealloc_(void* pv, size_t size, unsigned int flags);
 void dbgfree_(void* pv, unsigned int type);
 
+DECLALLOCATOR DECLRESTRICT void* __cdecl dbgrealloc_ignore(void* pv, size_t size);
+
 void dbgsetlabel(void* pv, char const* label, int copy);
 void dbgsetignore(void* pv, int ignore);
 void dbgdeadfillpointer(void** ppv);
@@ -148,3 +160,7 @@ size_t dbgcchcat(char* to, size_t max, char const* from);
 #endif
 
 #endif // DEBUG
+
+#if defined(__cplusplus) && defined(lconfig_h)
+extern "C" { // Reopen the enclosing extern "C" scope!
+#endif
