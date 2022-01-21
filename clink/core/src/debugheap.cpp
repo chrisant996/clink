@@ -678,6 +678,8 @@ static size_t list_leaks(size_t alloc_number, bool report)
     {
         if (p->m_alloc_number <= alloc_number)
             continue;
+        if (p->m_flags & memIgnoreLeak)
+            continue;
 
         ++leaks;
         size += p->m_requested_size;
@@ -707,8 +709,10 @@ static size_t list_leaks(size_t alloc_number, bool report)
     return leaks;
 }
 
-extern "C" void dbgsetlabel(void* pv, char const* label, bool copy)
+extern "C" void dbgsetlabel(void* pv, char const* label, int copy)
 {
+    auto_lock lock;
+
     mem_tracking* const p = mem_tracking::from_pv(pv);
 
     if (copy)
@@ -720,6 +724,16 @@ extern "C" void dbgsetlabel(void* pv, char const* label, bool copy)
     }
 
     p->set_label(label, copy);
+}
+
+extern "C" void dbgsetignore(void* pv, int ignore)
+{
+    auto_lock lock;
+
+    mem_tracking* const p = mem_tracking::from_pv(pv);
+
+    if ((p->m_flags & memIgnoreLeak) != (ignore ? memIgnoreLeak : 0))
+        p->m_flags ^= memIgnoreLeak;
 }
 
 extern "C" void dbgdeadfillpointer(void** ppv)
@@ -757,6 +771,33 @@ extern "C" void dbgchecksince(size_t alloc_number)
         assert1(false, "%zd leaks detected.", leaks);
         list_leaks(alloc_number, true);
     }
+}
+
+extern "C" size_t dbgignoresince(size_t alloc_number, size_t* total_bytes)
+{
+    auto_lock lock;
+    auto& config = get_config();
+
+    mem_tracking* p;
+    size_t ignored = 0;
+    size_t size = 0;
+
+    for (p = config.head; p; p = p->m_next)
+    {
+        if (p->m_alloc_number <= alloc_number)
+            continue;
+        if (p->m_flags & memIgnoreLeak)
+            continue;
+
+        p->m_flags |= memIgnoreLeak;
+
+        ++ignored;
+        size += p->m_requested_size;
+    }
+
+    if (total_bytes)
+        *total_bytes = size;
+    return ignored;
 }
 
 extern "C" void dbgcheckfinal()

@@ -44,19 +44,25 @@ enum
     MAX_STACK_DEPTH             = 12,
 #endif
 
+    memAllocatorMask            = 0x000000ff,   // Verify no mismatches between alloc/free allocator types.
+    memImmutableMask            = 0x0000ffff,   // Verify these flags do not change.
+
+    // Allocator types; immutable.        FF
     memNew                      = 0x00000001,
     memNewArray                 = 0x00000002,
-#ifdef USE_RTTI
+
+    // Allocation flags; immutable.     FF
     memRTTI                     = 0x00000100,
-#endif
     memNoSizeCheck              = 0x00000200,
     memNoStack                  = 0x00000400,
+
+    // Behavior flags.                FF
     memSkipOneFrame             = 0x00010000,
     memSkipAnotherFrame         = 0x00020000,
     memZeroInit                 = 0x00040000,
 
-    memAllocatorMask            = 0x000000ff,
-    memImmutableMask            = 0x0000ffff,
+    // State flags.                 FF
+    memIgnoreLeak               = 0x01000000,
 };
 
 #define _MEM_0                  , 0
@@ -84,12 +90,15 @@ void* dbgalloc_(size_t size, unsigned int flags);
 void* dbgrealloc_(void* pv, size_t size, unsigned int flags);
 void dbgfree_(void* pv, unsigned int type);
 
-void dbgsetlabel(void* pv, char const* label, bool copy);
+void dbgsetlabel(void* pv, char const* label, int copy);
+void dbgsetignore(void* pv, int ignore);
 void dbgdeadfillpointer(void** ppv);
 
 size_t dbggetallocnumber();
 void dbgcheck();
 void dbgchecksince(size_t alloc_number);
+size_t dbgignoresince(size_t alloc_number, size_t* total_bytes);
+void dbgcheckfinal();
 
 #ifdef USE_HEAP_STATS
 // TODO: report heap stats
@@ -99,6 +108,11 @@ void dbgchecksince(size_t alloc_number);
 }
 #endif
 
+#ifdef __cplusplus
+#define dbg_snapshot_heap(var)          const size_t var = dbggetallocnumber()
+#define dbg_ignore_since_snapshot(var)  do { dbgignoresince(var, nullptr); } while (false)
+#endif
+
 #else // !USE_MEMORY_TRACKING
 
 #define _MEM_0
@@ -106,6 +120,11 @@ void dbgchecksince(size_t alloc_number);
 #define _MEM_NEWARRAY
 #define _MEM_OBJECT
 #define _MEM_NOSIZECHECK
+
+#ifdef __cplusplus
+#define dbg_snapshot_heap(var)          ((void)0)
+#define dbg_ignore_since_snapshot(var)  ((void)0)
+#endif
 
 #endif // !USE_MEMORY_TRACKING
 
