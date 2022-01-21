@@ -29,6 +29,10 @@ public:
     bool                call_lua_rl_global_function(const char* func_name, line_state* line);
     void                call_lua_filter_matches(char** matches, int completion_type, int filename_completion_desired);
 
+#ifdef DEBUG
+    void                force_gc();
+#endif
+
 private:
     bool                load_scripts(const char* paths);
     void                load_script(const char* path);

@@ -39,6 +39,9 @@ extern "C" {
 #include <readline/rlprivate.h>
 }
 
+#include <core/debugheap.h>
+#include <core/callstack.h>
+
 //------------------------------------------------------------------------------
 setting_enum g_ignore_case(
     "match.ignore_case",
@@ -129,6 +132,15 @@ static setting_bool g_get_errorlevel(
     "scripts.  If you experience problems, try turning this off.  This is on by\n"
     "default.",
     true);
+
+#ifdef DEBUG
+static setting_bool g_debug_heap_stats(
+    "debug.heap_stats",
+    "Report heap stats for each edit line",
+    "At the beginning of each edit line, report the heap stats since the previous\n"
+    "edit line.",
+    false);
+#endif
 
 extern setting_bool g_classify_words;
 extern setting_color g_color_prompt;
@@ -698,6 +710,18 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out)
         if (g_classify_words.get())
             editor->set_classifier(lua);
         editor->set_input_idle(lua);
+
+#ifdef DEBUG
+        static size_t s_since = 0;
+        const bool report = g_debug_heap_stats.get();
+        if (report)
+            lua.force_gc();
+        if (!s_since)
+            dbgignoresince(s_since, nullptr);
+        else if (report)
+            dbgchecksince(s_since);
+        s_since = dbggetallocnumber();
+#endif
     }
 
     if (init_history)

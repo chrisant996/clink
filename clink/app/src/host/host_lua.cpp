@@ -181,3 +181,11 @@ void host_lua::call_lua_filter_matches(char** matches, int completion_type, int 
 {
     m_generator.filter_matches(matches, char(completion_type), !!filename_completion_desired);
 }
+
+//------------------------------------------------------------------------------
+#ifdef DEBUG
+void host_lua::force_gc()
+{
+    lua_gc(m_state.get_state(), LUA_GCCOLLECT, 0);
+}
+#endif

@@ -350,8 +350,6 @@ void line_editor_impl::begin_line()
     m_prev_generate.clear();
     m_prev_classify.clear();
 
-    clear_recognizer_cache();
-
     rl_before_display_function = before_display;
 
     editor_module::context context = get_context();
@@ -378,6 +376,8 @@ void line_editor_impl::end_line()
     s_editor = nullptr;
     s_callbacks = nullptr;
     g_word_collector = nullptr;
+
+    clear_recognizer_cache();
 
     clear_flag(flag_editing);
 
