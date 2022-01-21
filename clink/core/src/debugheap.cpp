@@ -647,14 +647,20 @@ void dbgfree_(void* pv, unsigned int type)
     real_free(p);
 }
 
-static size_t list_leaks(size_t alloc_number, bool report)
+struct heap_info
+{
+    size_t count_all = 0;
+    size_t count_ignored = 0;
+    size_t size_all = 0;
+    size_t size_ignored = 0;
+};
+
+static heap_info list_leaks(size_t alloc_number, bool report)
 {
     auto_lock lock;
     auto& config = get_config();
 
     mem_tracking* p;
-    size_t leaks = 0;
-    size_t size = 0;
     char stack[MAX_STACK_STRING_LENGTH];
 
     const bool newlines = false;
@@ -667,15 +673,19 @@ static size_t list_leaks(size_t alloc_number, bool report)
             dbgtracef("----- Checking for leaks -----");
     }
 
+    heap_info info;
     for (p = config.head; p; p = p->m_next)
     {
+        info.count_all++;
+        info.size_all += p->m_requested_size;
+
         if (p->m_alloc_number <= alloc_number)
             continue;
         if (p->m_flags & memIgnoreLeak)
             continue;
 
-        ++leaks;
-        size += p->m_requested_size;
+        info.count_ignored++;
+        info.size_ignored += p->m_requested_size;
 
         if (report)
         {
@@ -693,13 +703,13 @@ static size_t list_leaks(size_t alloc_number, bool report)
 
     if (report)
     {
-        dbgtracef("----- %zd leaks, %zd bytes total -----", leaks, size);
+        dbgtracef("----- %zd leaks, %zd bytes total -----", info.count_all, info.size_all);
 #ifdef USE_HEAP_STATS
     // TODO
 #endif
     }
 
-    return leaks;
+    return info;
 }
 
 extern "C" void dbgsetlabel(void* pv, char const* label, int copy)
@@ -744,11 +754,10 @@ extern "C" void dbgcheck()
 {
     auto_lock lock;
 
-    size_t const leaks = list_leaks(0, false);
-
-    if (leaks)
+    const heap_info info = list_leaks(0, false);
+    if (info.count_all)
     {
-        assert1(false, "%zd leaks detected.", leaks);
+        assert2(false, "%zu leaks detected (%zu bytes).", info.count_all, info.size_all);
         list_leaks(0, true);
     }
 }
@@ -757,11 +766,15 @@ extern "C" void dbgchecksince(size_t alloc_number)
 {
     auto_lock lock;
 
-    size_t const leaks = list_leaks(alloc_number, false);
-
-    if (leaks)
+    const heap_info info = list_leaks(alloc_number, false);
+    if (info.count_ignored)
     {
-        assert1(false, "%zd leaks detected.", leaks);
+        if (alloc_number)
+            assert4(false, "%zu leaks detected (%zu bytes).\r\n%zu total allocations (%zu bytes).",
+                    info.count_all - info.count_ignored, info.size_all - info.size_ignored,
+                    info.count_all, info.size_all);
+        else
+            assert2(false, "%zu leaks detected (%zu bytes).", info.count_all, info.size_all);
         list_leaks(alloc_number, true);
     }
 }
@@ -797,11 +810,10 @@ extern "C" void dbgcheckfinal()
 {
     auto_lock lock;
 
-    size_t const leaks = list_leaks(0, true);
-
-    if (leaks)
+    const heap_info info = list_leaks(0, true);
+    if (info.count_all)
     {
-        assert1(false, "%zd leaks detected.", leaks);
+        assert2(false, "%zu leaks detected (%zu bytes).", info.count_all, info.size_all);
         list_leaks(0, true);
     }
 }
