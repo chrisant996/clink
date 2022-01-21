@@ -118,6 +118,9 @@ void dbgcheckfinal();
 #define _MEM_0
 #define _MEM_NEW
 #define _MEM_NEWARRAY
+#ifdef USE_RTTI
+#define _MEM_RTTI
+#endif
 #define _MEM_OBJECT
 #define _MEM_NOSIZECHECK
 

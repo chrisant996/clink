@@ -817,6 +817,30 @@ extern "C" void dbgcheckfinal()
 // TODO: report heap stats
 #endif // USE_HEAP_STATS
 
+_Ret_notnull_ _Post_writable_byte_size_(size)
+void* _cdecl operator new(size_t size)
+{
+    return dbgalloc_(size, memNew|memSkipOneFrame);
+}
+
+void _cdecl operator delete(void* pv)
+{
+    if (pv)
+        dbgfree_(pv _MEM_NEW);
+}
+
+_Ret_notnull_ _Post_writable_byte_size_(size)
+void* _cdecl operator new[](size_t size)
+{
+    return dbgalloc_(size, memNewArray|memSkipOneFrame);
+}
+
+void _cdecl operator delete[](void* pv)
+{
+    if (pv)
+        dbgfree_(pv _MEM_NEWARRAY);
+}
+
 #endif // USE_MEMORY_TRACKING
 
 #ifdef DEBUG
@@ -858,27 +882,3 @@ extern "C" size_t dbgcchcat(char* to, size_t max, char const* from)
 }
 
 #endif
-
-_Ret_notnull_ _Post_writable_byte_size_(size)
-void* _cdecl operator new(size_t size)
-{
-    return dbgalloc_(size _MEM_NEW|memSkipOneFrame);
-}
-
-void _cdecl operator delete(void* pv)
-{
-    if (pv)
-        dbgfree_(pv _MEM_NEW);
-}
-
-_Ret_notnull_ _Post_writable_byte_size_(size)
-void* _cdecl operator new[](size_t size)
-{
-    return dbgalloc_(size _MEM_NEWARRAY|memSkipOneFrame);
-}
-
-void _cdecl operator delete[](void* pv)
-{
-    if (pv)
-        dbgfree_(pv _MEM_NEWARRAY);
-}
