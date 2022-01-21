@@ -67,6 +67,12 @@ line_state_lua::line_state_lua(line_state_copy* copy)
 }
 
 //------------------------------------------------------------------------------
+line_state_lua::~line_state_lua()
+{
+    delete m_copy;
+}
+
+//------------------------------------------------------------------------------
 /// -name:  line_state:getline
 /// -ver:   1.0.0
 /// -ret:   string

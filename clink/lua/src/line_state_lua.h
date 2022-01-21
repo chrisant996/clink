@@ -19,6 +19,7 @@ class line_state_lua
 public:
                         line_state_lua(const line_state& line);
                         line_state_lua(line_state_copy* copy);
+                        ~line_state_lua();
     int                 get_line(lua_State* state);
     int                 get_cursor(lua_State* state);
     int                 get_command_offset(lua_State* state);
