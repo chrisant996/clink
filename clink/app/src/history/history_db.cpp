@@ -25,6 +25,8 @@ extern "C" {
 #include <memory>
 #include <unordered_set>
 
+#include <core/debugheap.h>
+
 //------------------------------------------------------------------------------
 static setting_bool g_shared(
     "history.shared",
@@ -1393,6 +1395,8 @@ void history_db::load_internal()
         // prior to calling add_history.
         read_lock::line_iter iter(lock, buffer.data(), buffer.size() - 1);
 
+        dbg_snapshot_heap(snapshot);
+
         str_iter out;
         line_id_impl id;
         unsigned int num_lines = 0;
@@ -1413,6 +1417,8 @@ void history_db::load_internal()
                 m_master_len = m_index_map.size();
             }
         }
+
+        dbg_ignore_since_snapshot(snapshot);
 
         if (bank_index == bank_master)
             m_master_deleted_count = iter.get_deleted_count();
