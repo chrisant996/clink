@@ -2,4 +2,5 @@
 tags
 *.swp
 *.exe
+*.log
 *.patch
