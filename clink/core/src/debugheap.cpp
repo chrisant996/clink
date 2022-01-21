@@ -701,6 +701,9 @@ static heap_info list_leaks(size_t alloc_number, bool report)
         }
     }
 
+    info.count_ignored = info.count_all - info.count_ignored;
+    info.size_ignored = info.size_all - info.size_ignored;
+
     if (report)
     {
         dbgtracef("----- %zd leaks, %zd bytes total -----", info.count_all, info.size_all);
