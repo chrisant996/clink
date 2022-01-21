@@ -130,6 +130,7 @@ public:
     };
 
                             str_stream();
+                            ~str_stream();
     void                    operator << (TYPE c);
     void                    operator << (const range_desc desc);
     unsigned int            length() const;
@@ -151,6 +152,12 @@ str_stream::str_stream()
 , m_end(nullptr)
 , m_cursor(nullptr)
 {
+}
+
+//------------------------------------------------------------------------------
+str_stream::~str_stream()
+{
+    free(m_start);
 }
 
 //------------------------------------------------------------------------------
