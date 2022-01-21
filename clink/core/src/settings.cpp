@@ -11,6 +11,8 @@
 #include <string>
 #include <map>
 
+#include "debugheap.h"
+
 //------------------------------------------------------------------------------
 struct loaded_setting
 {
@@ -360,13 +362,20 @@ bool load(const char* file)
             if (migrate_setting(line_data, value, migrated_settings))
             {
                 for (const auto& pair : migrated_settings)
+                {
+                    dbg_snapshot_heap(snapshot);
                     set_setting(pair.name.c_str(), pair.value.c_str());
+                    dbg_ignore_since_snapshot(snapshot);
+                }
             }
+
             continue;
         }
 
         // Find the setting and set its value.
+        dbg_snapshot_heap(snapshot);
         set_setting(line_data, value, comment.c_str());
+        dbg_ignore_since_snapshot(snapshot);
     }
 
     // When migrating, ensure the new settings file is created so that the old
