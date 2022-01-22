@@ -279,10 +279,27 @@ void match_builder::set_matches_are_files(bool files)
 
 
 //------------------------------------------------------------------------------
-match_builder_toolkit::match_builder_toolkit(int generation_id, unsigned int end_word_offset)
+class match_builder_toolkit_impl : public match_builder_toolkit
+{
+public:
+                            match_builder_toolkit_impl(int generation_id, unsigned int end_word_offset);
+                            ~match_builder_toolkit_impl();
+    int                     get_generation_id() const override { return m_generation_id; }
+    matches*                get_matches() const override { return m_matches; }
+    match_builder*          get_builder() const override { return m_builder; }
+    void                    clear() override;
+
+private:
+    const int               m_generation_id;
+    matches_impl*           m_matches;
+    match_builder*          m_builder;
+};
+
+//------------------------------------------------------------------------------
+match_builder_toolkit_impl::match_builder_toolkit_impl(int generation_id, unsigned int end_word_offset)
 : m_generation_id(generation_id)
 {
-    auto* matches = new matches_impl();
+    matches_impl* matches = new matches_impl();
     matches->set_word_break_position(end_word_offset);
 
     m_matches = matches;
@@ -290,16 +307,22 @@ match_builder_toolkit::match_builder_toolkit(int generation_id, unsigned int end
 }
 
 //------------------------------------------------------------------------------
-match_builder_toolkit::~match_builder_toolkit()
+match_builder_toolkit_impl::~match_builder_toolkit_impl()
 {
     delete m_matches;
     delete m_builder;
 }
 
 //------------------------------------------------------------------------------
-void match_builder_toolkit::clear()
+void match_builder_toolkit_impl::clear()
 {
     static_cast<matches_impl*>(m_matches)->clear();
+}
+
+//------------------------------------------------------------------------------
+std::shared_ptr<match_builder_toolkit> make_match_builder_toolkit(int generation_id, unsigned int end_word_offset)
+{
+    return std::make_shared<match_builder_toolkit_impl>(generation_id, end_word_offset);
 }
 
 

@@ -86,7 +86,7 @@ bool suggester::suggest(line_state& line, matches* matches, int generation_id)
     }
     else
     {
-        s_toolkit = std::make_shared<match_builder_toolkit>(generation_id, line.get_end_word_offset());
+        s_toolkit = make_match_builder_toolkit(generation_id, line.get_end_word_offset());
 
         // These can't be bound to stack objects because they must stay valid
         // for the duration of the coroutine.
