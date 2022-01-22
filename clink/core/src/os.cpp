@@ -907,7 +907,7 @@ static void dbg_vprintf_row(int row, const char* fmt, va_list args)
         tmp << itoa(row, buf, 10);
     }
     tmp << "H" << fmt << "\x1b[K\x1b[u";
-    vprintf(fmt, args);
+    vprintf(tmp.c_str(), args);
 }
 
 //------------------------------------------------------------------------------
