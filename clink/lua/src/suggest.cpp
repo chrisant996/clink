@@ -32,6 +32,12 @@ extern setting_bool g_fuzzy_accent;
 static std::shared_ptr<match_builder_toolkit> s_toolkit;
 
 //------------------------------------------------------------------------------
+void reset_suggester()
+{
+    s_toolkit.reset();
+}
+
+//------------------------------------------------------------------------------
 match_builder_toolkit* get_deferred_matches(int generation_id)
 {
     match_builder_toolkit* toolkit = s_toolkit.get();
