@@ -198,6 +198,14 @@ INT_PTR WINAPI initialise_clink(const app_context::desc& app_desc)
         s_initialized = true;
     }
 
+    // Now that Clink has a background thread, it gets trickier to accurately
+    // attribute crashes to Clink.  The exception filter is per-process, so for
+    // now install it permanently, and use thread local state to determine
+    // whether Clink code crashes.  Since it's so rare to encounter a crash in
+    // CMD code, replacing the exception filter for the whole process seems
+    // unlikely to create problems.
+    install_exception_filter();
+
     seh_scope seh;
 
     auto* app_ctx = new app_context(app_desc);

@@ -13,3 +13,8 @@ public:
 private:
     void*       m_prev_filter;
 };
+
+//------------------------------------------------------------------------------
+#ifdef DEBUG
+void install_exception_filter();
+#endif
