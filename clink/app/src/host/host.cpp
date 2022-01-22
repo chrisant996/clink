@@ -707,6 +707,8 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out)
         else if (g_debug_heap_stats.get())
         {
             lua.force_gc(); // So Lua can release native refs.
+            if (prompt) dbgmarkmem(prompt);
+            if (rprompt) dbgmarkmem(rprompt);
             dbgsetreference(s_prev, " ---- Previous edit_line()");
             dbgchecksince(s_since);
         }
