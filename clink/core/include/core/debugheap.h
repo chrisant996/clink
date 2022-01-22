@@ -84,6 +84,11 @@ enum
 
 #ifdef __cplusplus
 extern "C" {
+#define _DEFAULT_ZERO           =0
+#define _DEFAULT_ONE            =1
+#else
+#define _DEFAULT_ZERO
+#define _DEFAULT_ONE
 #endif
 
 char const* dbginspectmemory(const void* pv, size_t size);
@@ -96,14 +101,15 @@ void dbgfree_(void* pv, unsigned int type);
 
 void dbgsetlabel(const void* pv, const char* label, int copy);
 void dbgverifylabel(const void* pv, const char* label);
-void dbgsetignore(const void* pv, int ignore);
-size_t dbgignoresince(size_t alloc_number, size_t* total_bytes, char const* label); // Caller is responsible for lifetime of label pointer.
+void dbgsetignore(const void* pv, int ignore _DEFAULT_ONE);
+// Caller is responsible for lifetime of label pointer.
+size_t dbgignoresince(size_t alloc_number, size_t* total_bytes, char const* label _DEFAULT_ZERO, int all_threads _DEFAULT_ZERO);
 void dbgmarkmem(const void* pv);
 
 size_t dbggetallocnumber();
-void dbgsetreference(size_t alloc_number, const char* tag);
+void dbgsetreference(size_t alloc_number, const char* tag _DEFAULT_ZERO);
 void dbgcheck();
-void dbgchecksince(size_t alloc_number);
+void dbgchecksince(size_t alloc_number, int include_all _DEFAULT_ZERO);
 void dbgcheckfinal();
 
 #ifdef USE_HEAP_STATS
@@ -115,8 +121,18 @@ void dbgcheckfinal();
 #endif
 
 #ifdef __cplusplus
-#define dbg_snapshot_heap(var)          const size_t var = dbggetallocnumber()
-#define dbg_ignore_since_snapshot(var, label)  do { dbgignoresince(var, nullptr, label); } while (false)
+class dbg_ignore_scoper
+{
+public:
+    dbg_ignore_scoper(const char* label=nullptr) : m_since(dbggetallocnumber()), m_label(label) {}
+    ~dbg_ignore_scoper() { dbgignoresince(m_since, nullptr, m_label); }
+private:
+    size_t m_since;
+    const char* m_label;
+};
+#define dbg_snapshot_heap(var)                  const size_t var = dbggetallocnumber()
+#define dbg_ignore_since_snapshot(var, label)   do { dbgignoresince(var, nullptr, label); } while (false)
+#define dbg_ignore_scope(var, label)            const dbg_ignore_scoper var(label)
 #endif
 
 #else // !USE_MEMORY_TRACKING
@@ -132,8 +148,9 @@ void dbgcheckfinal();
 #define DBG_DECLARE_OVERRIDE_MARKMEM
 
 #ifdef __cplusplus
-#define dbg_snapshot_heap(var)          ((void)0)
-#define dbg_ignore_since_snapshot(var, label)  ((void)0)
+#define dbg_snapshot_heap(var)                  ((void)0)
+#define dbg_ignore_since_snapshot(var, label)   ((void)0)
+#define dbg_ignore_scope(var, label)            ((void)0)
 #endif
 
 #endif // !USE_MEMORY_TRACKING

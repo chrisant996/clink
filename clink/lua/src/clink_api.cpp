@@ -296,9 +296,8 @@ bool recognizer::enqueue(const char* key, const char* word, char* cached)
 
     if (!m_thread)
     {
-        dbg_snapshot_heap(snapshot);
+        dbg_ignore_scope(snapshot, "Recognizer thread");
         m_thread = std::make_unique<std::thread>(&proc, this);
-        dbg_ignore_since_snapshot(snapshot, "Recognizer thread");
     }
 
     m_queue.m_key = key;

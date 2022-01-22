@@ -2237,8 +2237,11 @@ void rl_module::set_prompt(const char* prompt, const char* rprompt, bool redispl
 
     // Warning:  g_last_prompt is a mutable copy that can be altered in place;
     // it is not a synonym for m_rl_prompt.
-    g_last_prompt.clear();
-    g_last_prompt.concat(m_rl_prompt.c_str(), m_rl_prompt.length());
+    {
+        dbg_ignore_scope(snapshot, "g_last_prompt");
+        g_last_prompt.clear();
+        g_last_prompt.concat(m_rl_prompt.c_str(), m_rl_prompt.length());
+    }
 
     if (m_rl_prompt.equals(prev_prompt.c_str()) &&
         m_rl_rprompt.equals(prev_rprompt.c_str()))
@@ -2616,9 +2619,8 @@ void rl_module::on_input(const input& input, result& result, const context& cont
 //------------------------------------------------------------------------------
 void rl_module::on_matches_changed(const context& context, const line_state& line, const char* needle)
 {
-    dbg_snapshot_heap(snapshot);
+    dbg_ignore_scope(snapshot, "rl_module needle");
     s_needle = needle;
-    dbg_ignore_since_snapshot(snapshot, "rl_module needle");
 }
 
 //------------------------------------------------------------------------------

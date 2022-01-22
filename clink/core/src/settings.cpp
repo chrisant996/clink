@@ -361,21 +361,17 @@ bool load(const char* file)
             std::vector<settings::setting_name_value> migrated_settings;
             if (migrate_setting(line_data, value, migrated_settings))
             {
+                dbg_ignore_scope(snapshot, "Settings");
                 for (const auto& pair : migrated_settings)
-                {
-                    dbg_snapshot_heap(snapshot);
                     set_setting(pair.name.c_str(), pair.value.c_str());
-                    dbg_ignore_since_snapshot(snapshot, "Settings");
-                }
             }
 
             continue;
         }
 
         // Find the setting and set its value.
-        dbg_snapshot_heap(snapshot);
+        dbg_ignore_scope(snapshot, "Settings");
         set_setting(line_data, value, comment.c_str());
-        dbg_ignore_since_snapshot(snapshot, "Settings");
     }
 
     // When migrating, ensure the new settings file is created so that the old

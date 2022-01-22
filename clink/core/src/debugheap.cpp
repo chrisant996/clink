@@ -701,7 +701,7 @@ struct heap_info
     size_t size_ignored = 0;
 };
 
-static heap_info list_leaks(size_t alloc_number, bool report)
+static heap_info list_leaks(size_t alloc_number, bool report, bool include_all=false)
 {
     auto_lock lock;
     auto& config = get_config();
@@ -711,7 +711,7 @@ static heap_info list_leaks(size_t alloc_number, bool report)
     if (report)
     {
         if (alloc_number)
-            dbgtracef("----- Checking for leaks since #%zd -----", alloc_number);
+            dbgtracef("----- Checking for leaks since #%zu -----", alloc_number);
         else
             dbgtracef("----- Checking for leaks -----");
     }
@@ -731,7 +731,7 @@ static heap_info list_leaks(size_t alloc_number, bool report)
         if (p->m_flags & memMarked)
             continue;
 
-        if (p->m_alloc_number <= alloc_number)
+        if (!include_all && p->m_alloc_number <= alloc_number)
             continue;
 
         if (p->m_flags & memIgnoreLeak)
@@ -761,7 +761,7 @@ static heap_info list_leaks(size_t alloc_number, bool report)
             if (p->m_stack[0])
                 p->get_stack_string(stack, _countof(stack), newlines);
 #endif
-            dbgtracef("Leak:  #%zd,  %s%zu bytes (%u reallocs),  0x%p,  (%s),  %s%s%s",
+            dbgtracef("Leak:  #%zu,  %s%zu bytes (%u reallocs),  0x%p,  (%s),  %s%s%s",
                     p->m_alloc_number, tid, p->m_requested_size, p->m_count_realloc,
                     p->to_pv(), p->get_label(), dbginspectmemory(p->to_pv(), p->m_requested_size),
                     (!stack[0] ? "" : newlines ? "\r\n" : ",  context: "), stack);
@@ -773,10 +773,12 @@ static heap_info list_leaks(size_t alloc_number, bool report)
         if (show_reference)
             dbgtracef("----- #%zu%s -----", ref, config.reference_tag ? config.reference_tag : "");
 
-        if (alloc_number)
-            dbgtracef("----- %zd allocations, %zd bytes -----", info.count_snapshot, info.size_snapshot);
+        if (!alloc_number)
+            dbgtracef("----- total: %zu allocations, %zu bytes -----", info.count_all, info.size_all);
+        else if (!include_all)
+            dbgtracef("----- snapshot: %zu allocations, %zu bytes -----", info.count_snapshot, info.size_snapshot);
         else
-            dbgtracef("----- %zd allocations, %zd bytes -----", info.count_all, info.size_all);
+            dbgtracef("----- snapshot: %zu allocations, %zu bytes / total: %zu allocations, %zu bytes -----", info.count_snapshot, info.size_snapshot, info.count_all, info.size_all);
     }
 
     return info;
@@ -862,7 +864,7 @@ extern "C" void dbgcheck()
     dbgchecksince(0);
 }
 
-extern "C" void dbgchecksince(size_t alloc_number)
+extern "C" void dbgchecksince(size_t alloc_number, int include_all)
 {
     auto_lock lock;
 
@@ -874,13 +876,13 @@ extern "C" void dbgchecksince(size_t alloc_number)
                     info.count_snapshot, info.size_snapshot, info.count_all, info.size_all);
         else
             assert2(false, "%zu leaks detected (%zu bytes).", info.count_all, info.size_all);
-        list_leaks(alloc_number, true);
+        list_leaks(alloc_number, true, !!include_all);
     }
 
     reset_checker();
 }
 
-extern "C" size_t dbgignoresince(size_t alloc_number, size_t* total_bytes, char const* label)
+extern "C" size_t dbgignoresince(size_t alloc_number, size_t* total_bytes, char const* label, int all_threads)
 {
     auto_lock lock;
     auto& config = get_config();
@@ -896,7 +898,7 @@ extern "C" size_t dbgignoresince(size_t alloc_number, size_t* total_bytes, char 
         if (p->m_flags & memIgnoreLeak)
             continue;
 
-        if (thread != p->m_thread)
+        if (!all_threads && thread != p->m_thread)
             continue;
 
         p->m_flags |= memIgnoreLeak;

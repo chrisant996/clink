@@ -9,6 +9,7 @@
 #include <core/os.h>
 #include <core/path.h>
 #include <core/globber.h>
+#include <core/debugheap.h>
 
 #include <fcntl.h>
 #include <io.h>
@@ -562,6 +563,8 @@ private:
 
     do
     {
+        dbg_ignore_scope(snapshot, "Lua io_popenyield");
+
         os::temp_file_mode tfmode = os::temp_file_mode::delete_on_close;
         if (binary)
             tfmode |= os::temp_file_mode::binary;

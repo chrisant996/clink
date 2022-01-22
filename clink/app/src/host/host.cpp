@@ -14,6 +14,9 @@
 #include <core/str_compare.h>
 #include <core/str_tokeniser.h>
 #include <core/str_transform.h>
+#include <core/debugheap.h>
+#include <core/callstack.h>
+#include <core/assert_improved.h>
 #include <lib/doskey.h>
 #include <lib/match_generator.h>
 #include <lib/line_editor.h>
@@ -38,10 +41,6 @@ extern "C" {
 #include <readline/rldefs.h>
 #include <readline/rlprivate.h>
 }
-
-#include <core/debugheap.h>
-#include <core/callstack.h>
-#include <core/assert_improved.h>
 
 //------------------------------------------------------------------------------
 setting_enum g_ignore_case(
@@ -223,9 +222,8 @@ static void update_dir_history()
     // Add cwd to tail.
     if (!s_dir_history.size() || _stricmp(s_dir_history.back().get(), cwd.c_str()) != 0)
     {
-        dbg_snapshot_heap(snapshot);
+        dbg_ignore_scope(snapshot, "History");
         s_dir_history.push_back(cwd.c_str());
-        dbg_ignore_since_snapshot(snapshot, "History");
     }
 
     // Trim overflow from head.
@@ -430,13 +428,11 @@ void host::filter_prompt()
     if (!g_prompt_async.get())
         return;
 
-    dbg_snapshot_heap(snapshot);
+    dbg_ignore_scope(snapshot, "Prompt filter");
 
     const char* rprompt = nullptr;
     const char* prompt = filter_prompt(&rprompt, false/*transient*/);
     set_prompt(prompt, rprompt, true/*redisplay*/);
-
-    dbg_ignore_since_snapshot(snapshot, "Prompt filter");
 }
 
 //------------------------------------------------------------------------------
@@ -662,14 +658,15 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out)
     }
     if (!local_lua)
         init_scripts = !m_lua;
-    dbg_snapshot_heap(snapshot);
-    if (!m_lua)
-        m_lua = new host_lua;
-    if (!m_prompt_filter)
-        m_prompt_filter = new prompt_filter(*m_lua);
-    if (!m_suggester)
-        m_suggester = new suggester(*m_lua);
-    dbg_ignore_since_snapshot(snapshot, "Initialization overhead");
+    {
+        dbg_ignore_scope(snapshot, "Initialization overhead");
+        if (!m_lua)
+            m_lua = new host_lua;
+        if (!m_prompt_filter)
+            m_prompt_filter = new prompt_filter(*m_lua);
+        if (!m_suggester)
+            m_suggester = new suggester(*m_lua);
+    }
     host_lua& lua = *m_lua;
 
     // Load scripts.
@@ -708,7 +705,7 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out)
         if (!s_since)
         {
             s_since = dbggetallocnumber();
-            dbgignoresince(s_since, nullptr, "Initialization overhead");
+            dbgignoresince(0, nullptr, "Initialization overhead", true/*all_threads*/);
         }
         else if (g_debug_heap_stats.get())
         {
@@ -716,7 +713,7 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out)
             if (prompt) dbgmarkmem(prompt);
             if (rprompt) dbgmarkmem(rprompt);
             dbgsetreference(s_prev, " ---- Previous edit_line()");
-            dbgchecksince(s_since);
+            dbgchecksince(s_prev, true/*include_all*/);
         }
         s_prev = dbggetallocnumber();
     }
@@ -757,9 +754,8 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out)
 
         if (!m_history)
         {
-            dbg_snapshot_heap(snapshot);
+            dbg_ignore_scope(snapshot, "History");
             m_history = new history_db(g_save_history.get());
-            dbg_ignore_since_snapshot(snapshot, "History");
         }
 
         if (m_history)
@@ -990,6 +986,8 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out)
 //------------------------------------------------------------------------------
 const char* host::filter_prompt(const char** rprompt, bool transient)
 {
+    dbg_ignore_scope(snapshot, "Prompt filter");
+
     m_filtered_prompt.clear();
     m_filtered_rprompt.clear();
     if (g_filter_prompt.get() && m_prompt_filter)
