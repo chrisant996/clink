@@ -56,7 +56,9 @@ enum
     memNewArray                 = 0x00000002,
 
     // Allocation flags; immutable.     FF
-    memRTTI                     = 0x00000100,
+#ifdef USE_RTTI
+    memObject                   = 0x00000100,   // Type is `object`, which has a virtual destructor and can get the type name via RTTI.
+#endif
     memNoSizeCheck              = 0x00000200,
     memNoStack                  = 0x00000400,
 
@@ -73,9 +75,6 @@ enum
 #define _MEM_0                  , 0
 #define _MEM_NEW                , memNew
 #define _MEM_NEWARRAY           , memNewArray
-#ifdef USE_RTTI
-#define _MEM_RTTI               , memRTTI|memNew
-#endif
 #define _MEM_NOSIZECHECK        , memNoSizeCheck
 
 #define DBG_DECLARE_MARKMEM     void markmem()
@@ -129,9 +128,6 @@ void dbgcheckfinal();
 #define _MEM_0
 #define _MEM_NEW
 #define _MEM_NEWARRAY
-#ifdef USE_RTTI
-#define _MEM_RTTI
-#endif
 #define _MEM_OBJECT
 #define _MEM_NOSIZECHECK
 

@@ -12,6 +12,7 @@
 
 #include "callstack.h"
 #include "assert_improved.h"
+#include "object.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -478,16 +479,16 @@ char const* mem_tracking::get_label()
         return m_label;
 
 #ifdef USE_RTTI
-    if (m_flags & memRTTI)
-        return typeid(to_pv()).name();
+    if (m_flags & memObject)
+        return typeid(*static_cast<object*>(to_pv())).name();
 #endif
 
     if (m_flags & memNewArray)
-        return "(new[])";
+        return "new[]";
     if (m_flags & memNew)
-        return "(new)";
+        return "new";
 
-    return "(malloc)";
+    return "malloc";
 }
 
 void mem_tracking::set_label(char const* const label, bool const own)
@@ -760,7 +761,7 @@ static heap_info list_leaks(size_t alloc_number, bool report)
             if (p->m_stack[0])
                 p->get_stack_string(stack, _countof(stack), newlines);
 #endif
-            dbgtracef("Leak:  #%zd,  %s%zu bytes (%u reallocs),  0x%p,  %s,  %s%s%s",
+            dbgtracef("Leak:  #%zd,  %s%zu bytes (%u reallocs),  0x%p,  (%s),  %s%s%s",
                     p->m_alloc_number, tid, p->m_requested_size, p->m_count_realloc,
                     p->to_pv(), p->get_label(), dbginspectmemory(p->to_pv(), p->m_requested_size),
                     (!stack[0] ? "" : newlines ? "\r\n" : ",  context: "), stack);
@@ -952,6 +953,13 @@ void _cdecl operator delete[](void* pv)
     if (pv)
         dbgfree_(pv _MEM_NEWARRAY);
 }
+
+#ifdef USE_RTTI
+void* _cdecl object::operator new(size_t size)
+{
+    return dbgalloc_(size, memObject|memNew);
+}
+#endif // USE_RTTI
 
 #endif // USE_MEMORY_TRACKING
 
