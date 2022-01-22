@@ -13,6 +13,7 @@
 #include "callstack.h"
 #include "assert_improved.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <utility>
 #include <assert.h>
@@ -43,9 +44,10 @@ struct mem_tracking
     mem_tracking*           m_next;
 
     size_t                  m_alloc_number;
-    unsigned int            m_flags;
     size_t                  m_requested_size;
-    size_t                  m_count_realloc;
+    unsigned int            m_count_realloc;
+    unsigned int            m_flags;
+    DWORD                   m_thread;
 
 #ifdef INCLUDE_CALLSTACKS
     DWORD                   m_hash;
@@ -545,6 +547,7 @@ extern "C" void* dbgalloc_(size_t size, unsigned int flags)
     p->m_alloc_number = dbgnewallocnumber();
     p->m_requested_size = size;
     p->m_flags = flags;
+    p->m_thread = GetCurrentThreadId();
 
 #ifdef INCLUDE_CALLSTACKS
     static_assert(sizeof(p->m_stack) == sizeof(stack), "mismatched stack array size");
@@ -623,6 +626,7 @@ void* dbgrealloc_(void* pv, size_t size, unsigned int flags)
 
     p->m_count_realloc++;
     p->m_requested_size = size;
+    p->m_thread = GetCurrentThreadId();
 
 #ifdef INCLUDE_CALLSTACKS
     static_assert(sizeof(p->m_stack) == sizeof(stack), "mismatched stack array size");
@@ -712,7 +716,9 @@ static heap_info list_leaks(size_t alloc_number, bool report)
     }
 
     heap_info info;
+    const DWORD thread = GetCurrentThreadId();
     char stack[MAX_STACK_STRING_LENGTH];
+    char tid[32];
 
     const size_t ref = config.reference_alloc_number;
     bool show_reference = report && ref > 0;
@@ -745,13 +751,17 @@ static heap_info list_leaks(size_t alloc_number, bool report)
                 show_reference = false;
             }
 
+            tid[0] = '\0';
+            if (thread != p->m_thread)
+                sprintf_s(tid, _countof(tid), "THREAD %u,  ", p->m_thread);
+
             stack[0] = '\0';
 #ifdef INCLUDE_CALLSTACKS
             if (p->m_stack[0])
                 p->get_stack_string(stack, _countof(stack), newlines);
 #endif
-            dbgtracef("Leak:  #%zd,  %zu bytes (%zu reallocs),  0x%p,  %s,  %s%s%s",
-                    p->m_alloc_number, p->m_requested_size, p->m_count_realloc,
+            dbgtracef("Leak:  #%zd,  %s%zu bytes (%u reallocs),  0x%p,  %s,  %s%s%s",
+                    p->m_alloc_number, tid, p->m_requested_size, p->m_count_realloc,
                     p->to_pv(), p->get_label(), dbginspectmemory(p->to_pv(), p->m_requested_size),
                     (!stack[0] ? "" : newlines ? "\r\n" : ",  context: "), stack);
         }
@@ -877,11 +887,15 @@ extern "C" size_t dbgignoresince(size_t alloc_number, size_t* total_bytes, char 
     size_t ignored = 0;
     size_t size = 0;
 
+    const DWORD thread = GetCurrentThreadId();
     for (mem_tracking* p = config.head; p; p = p->m_next)
     {
         if (p->m_alloc_number <= alloc_number)
             continue;
         if (p->m_flags & memIgnoreLeak)
+            continue;
+
+        if (thread != p->m_thread)
             continue;
 
         p->m_flags |= memIgnoreLeak;
