@@ -63,7 +63,7 @@ extern "C" {
 //          return 0;
 //      }
 template <class T>
-class lua_makeable
+class lua_makeable _DBGOBJECT
 {
 public:
     typedef int         (T::*method_t)(lua_State*);

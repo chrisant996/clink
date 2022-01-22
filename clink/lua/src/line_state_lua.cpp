@@ -24,7 +24,7 @@ const line_state_lua::method line_state_lua::c_methods[] = {
 
 
 //------------------------------------------------------------------------------
-class line_state_copy
+class line_state_copy _DBGOBJECT
 {
 public:
                                 line_state_copy(const line_state& line);

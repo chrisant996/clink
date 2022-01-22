@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <core/object.h>
 #include <core/str_iter.h>
 
 #include <memory>
@@ -223,7 +224,7 @@ struct match_desc
 };
 
 //------------------------------------------------------------------------------
-class match_builder
+class match_builder _DBGOBJECT
 {
 public:
                             match_builder(matches& matches);
@@ -242,10 +243,9 @@ private:
 };
 
 //------------------------------------------------------------------------------
-class match_builder_toolkit
+class match_builder_toolkit _DBGOBJECT
 {
 public:
-    virtual                 ~match_builder_toolkit() {}
     virtual int             get_generation_id() const = 0;
     virtual matches*        get_matches() const = 0;
     virtual match_builder*  get_builder() const = 0;

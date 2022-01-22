@@ -49,7 +49,7 @@ class match_generator;
 
 //------------------------------------------------------------------------------
 class matches_impl
-    : public matches
+    : DBGOBJECT_ public matches
 {
     struct match_lookup_hasher;
     struct match_lookup_comparator;

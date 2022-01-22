@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <core/object.h>
 #include <core/str.h>
 
 extern "C" {
@@ -31,7 +32,7 @@ extern "C" {
 //  - static const char* const c_name.
 //  - static const method c_methods[], which must end with a {} element.
 template <class T>
-class lua_bindable
+class lua_bindable _DBGOBJECT
 {
 public:
     typedef int         (T::*method_t)(lua_State*);
@@ -134,8 +135,8 @@ void lua_bindable<T>::bind(lua_State* state)
     int oldtop = lua_gettop(state);
 #endif
 
-    void* self = lua_newuserdata(state, sizeof(void*));
-    *(void**)self = this;
+    auto** self = (T**)lua_newuserdata(state, sizeof(void*));
+    *self = static_cast<T*>(this);
 
     make_metatable(state);
 
@@ -159,8 +160,11 @@ void lua_bindable<T>::unbind()
         return;
 
     lua_rawgeti(m_state, LUA_REGISTRYINDEX, m_registry_ref);
-    if (void* self = lua_touserdata(m_state, -1))
-        *(void**)self = nullptr;
+    if (auto** self = (T**)lua_touserdata(m_state, -1))
+    {
+        assert(!(*self)->m_owned);
+        *self = nullptr;
+    }
     lua_pop(m_state, 1);
 
     luaL_unref(m_state, LUA_REGISTRYINDEX, m_registry_ref);
