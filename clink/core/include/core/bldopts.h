@@ -7,7 +7,7 @@
 #define VC_EXTRALEAN
 #define WIN32_LEAN_AND_MEAN
 
-#ifdef DEBUG
+#if defined(DEBUG) && defined(_MSC_VER)
 #define USE_MEMORY_TRACKING
 #define INCLUDE_CALLSTACKS
 #define USE_RTTI

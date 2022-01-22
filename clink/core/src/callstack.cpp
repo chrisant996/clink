@@ -7,7 +7,7 @@
 
 #include "pch.h"
 
-#ifdef DEBUG
+#if defined(DEBUG) && defined(_MSC_VER)
 
 #include "callstack.h"
 #include "debugheap.h"
@@ -662,4 +662,4 @@ CALLSTACK_EXTERN_C void dbgtracef(const char* fmt, ...)
     va_end(args);
 }
 
-#endif
+#endif // DEBUG && _MSC_VER

@@ -31,10 +31,12 @@ extern "C" {
 #include <readline/history.h>
 }
 
+#include <list>
+#include <memory>
+#include <mutex>
+#include <thread>
 #include <unordered_set>
 #include <vector>
-#include <list>
-#include <mutex>
 
 
 

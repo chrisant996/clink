@@ -1114,7 +1114,7 @@ char* make_substring_pattern(const char* pattern, const char* append)
     if (!make || !*make)
     {
         free(make);
-        return false;
+        return nullptr;
     }
 
     return make;

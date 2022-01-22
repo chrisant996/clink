@@ -3,7 +3,7 @@
 
 #pragma once
 
-#ifdef DEBUG
+#if defined(DEBUG) && defined(_MSC_VER)
 
 #define MAX_ADDRESS_LEN         (2 + 16)
 #define MAX_MODULE_LEN          (24)
@@ -30,4 +30,4 @@ CALLSTACK_EXTERN_C int get_callstack_frames(int skip_frames, int total_frames, v
 // frames are delimited with slashes or newlines.
 CALLSTACK_EXTERN_C size_t format_frames(int total_frames, void* const* frames, DWORD hash, char* buffer, size_t capacity, int newlines);
 
-#endif // DEBUG
+#endif // DEBUG && _MSC_VER
