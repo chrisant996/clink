@@ -2062,9 +2062,6 @@ rl_module::rl_module(terminal_in* input)
 //------------------------------------------------------------------------------
 rl_module::~rl_module()
 {
-    free(_rl_comment_begin);
-    _rl_comment_begin = nullptr;
-
     s_direct_input = nullptr;
 }
 
