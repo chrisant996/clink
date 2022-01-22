@@ -92,7 +92,7 @@ enum
 extern "C" {
 #endif
 
-char const* dbginspectmemory(void const* pv, size_t size);
+char const* dbginspectmemory(const void* pv, size_t size);
 
 void dbgsetsanealloc(size_t maxalloc, size_t maxrealloc, size_t const* exceptions);
 

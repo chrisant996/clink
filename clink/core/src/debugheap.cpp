@@ -236,6 +236,8 @@ using namespace debugheap;
 
 extern "C" char const* dbginspectmemory(void const* pv, size_t size)
 {
+    auto& config = get_config();
+
     size_t const max_inspect = 32;
     static char const c_hex[] = "0123456789ABCDEF";
     static char s_hex[5 + (3 * max_inspect) + 3 + 1];
@@ -247,6 +249,7 @@ extern "C" char const* dbginspectmemory(void const* pv, size_t size)
     char* end = nullptr;
     bool truncated = false;
     size_t count_filtered = 0;
+    size_t count_unfiltered = 0;
     size_t max;
 
     if (!size)
@@ -262,20 +265,46 @@ extern "C" char const* dbginspectmemory(void const* pv, size_t size)
     hex += dbgcchcopy(hex, _countof(s_hex) - (hex - s_hex), "HEX: ");
     *(chr++) = '\"';
 
+    bool ascii_string = true;
+    bool update_string = true;
+    bool unicode_ascii_string = !(DWORD_PTR(bytes) & 1);
+    bool unicode_update_string = unicode_ascii_string;
     while (size--)
     {
         *(hex++) = c_hex[*bytes >> 4];
         *(hex++) = c_hex[*bytes & 0x0f];
         *(hex++) = ' ';
 
+        if (size && !((chr - s_chr) & 1))
+        {
+            const wchar_t w = bytes[0] | (bytes[1] << 8);
+            if (unicode_update_string)
+            {
+                if (!w)
+                    unicode_update_string = false;
+                else if (w < 32 || w > 126)
+                    unicode_ascii_string = false;
+            }
+        }
+
         if (*bytes >= 32 && *bytes <= 126)
         {
             *(chr++) = *bytes;
+            count_unfiltered++;
         }
         else
         {
             *(chr++) = '.';
-            count_filtered++;
+            if (!*bytes)
+            {
+                update_string = false;
+            }
+            else if (*bytes != config.allocfill)
+            {
+                if (update_string)
+                    ascii_string = false;
+                count_filtered++;
+            }
         }
 
         // Ignore null termination of strings.
@@ -301,7 +330,8 @@ extern "C" char const* dbginspectmemory(void const* pv, size_t size)
         dbgcchcopy(chr, _countof(s_chr) - (chr - s_chr), "...");
     }
 
-    return (count_filtered > (max / 2)) ? s_hex : s_chr;
+    const bool string_like = (ascii_string || unicode_ascii_string) && (count_filtered <= (max / 2));
+    return string_like ? s_chr : s_hex;
 }
 
 inline BYTE* byteptr(void* pv)
