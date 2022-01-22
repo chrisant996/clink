@@ -474,7 +474,6 @@ matches_impl::matches_impl(unsigned int store_size)
 , m_filename_completion_desired(false)
 , m_filename_display_desired(false)
 {
-    m_infos.reserve(1024);
 }
 
 //------------------------------------------------------------------------------
