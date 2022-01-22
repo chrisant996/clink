@@ -109,7 +109,19 @@ void dbgmarkmem(const void* pv);
 size_t dbggetallocnumber();
 void dbgsetreference(size_t alloc_number, const char* tag _DEFAULT_ZERO);
 void dbgcheck();
-void dbgchecksince(size_t alloc_number, int include_all _DEFAULT_ZERO);
+// When ALLOC_NUMBER is 0:
+//  - all = all allocations
+//  - ignored = ignored or marked allocations
+//  - snapshot = leaks
+// When ALLOC_NUMBER != 0 and ALL_LEAKS == 0:
+//  - all = all allocations
+//  - ignored = ignored or marked allocations
+//  - snapshot = leaks after ALLOC_NUMBER
+// When ALLOC_NUMBER != 0 and ALL_LEAKS != 0:
+//  - all = all leaks
+//  - ignored = ignored or marked allocations after ALLOC_NUMBER
+//  - snapshot = leaks after ALLOC_NUMBER
+void dbgchecksince(size_t alloc_number, int all_leaks _DEFAULT_ZERO);
 void dbgcheckfinal();
 
 #ifdef USE_HEAP_STATS

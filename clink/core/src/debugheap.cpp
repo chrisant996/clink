@@ -701,12 +701,15 @@ struct heap_info
     size_t size_ignored = 0;
 };
 
-static heap_info list_leaks(size_t alloc_number, bool report, bool include_all=false)
+static heap_info list_leaks(size_t alloc_number, bool report, bool all_leaks=false)
 {
     auto_lock lock;
     auto& config = get_config();
 
     const bool newlines = false;
+
+    if (!alloc_number)
+        all_leaks = false;
 
     if (report)
     {
@@ -725,24 +728,38 @@ static heap_info list_leaks(size_t alloc_number, bool report, bool include_all=f
     bool show_reference = report && ref > 0;
     for (mem_tracking* p = config.head; p; p = p->m_next)
     {
-        info.count_all++;
-        info.size_all += p->m_requested_size;
+        const bool after = (p->m_alloc_number > alloc_number);
 
-        if (p->m_flags & memMarked)
-            continue;
-
-        if (!include_all && p->m_alloc_number <= alloc_number)
-            continue;
-
-        if (p->m_flags & memIgnoreLeak)
+        if (!all_leaks)
         {
-            info.count_ignored++;
-            info.size_ignored += p->m_requested_size;
+            info.count_all++;
+            info.size_all += p->m_requested_size;
+        }
+
+        if (p->m_flags & (memMarked|memIgnoreLeak))
+        {
+            if (!all_leaks || after)
+            {
+                info.count_ignored++;
+                info.size_ignored += p->m_requested_size;
+            }
             continue;
         }
 
-        info.count_snapshot++;
-        info.size_snapshot += p->m_requested_size;
+        if (!after && !all_leaks)
+            continue;
+
+        if (all_leaks)
+        {
+            info.count_all++;
+            info.size_all += p->m_requested_size;
+        }
+
+        if (after)
+        {
+            info.count_snapshot++;
+            info.size_snapshot += p->m_requested_size;
+        }
 
         if (report)
         {
@@ -774,11 +791,13 @@ static heap_info list_leaks(size_t alloc_number, bool report, bool include_all=f
             dbgtracef("----- #%zu%s -----", ref, config.reference_tag ? config.reference_tag : "");
 
         if (!alloc_number)
-            dbgtracef("----- total: %zu allocations, %zu bytes -----", info.count_all, info.size_all);
-        else if (!include_all)
+            dbgtracef("----- all: %zu allocations, %zu bytes -----", info.count_all, info.size_all);
+        else if (!all_leaks)
             dbgtracef("----- snapshot: %zu allocations, %zu bytes -----", info.count_snapshot, info.size_snapshot);
         else
-            dbgtracef("----- snapshot: %zu allocations, %zu bytes / total: %zu allocations, %zu bytes -----", info.count_snapshot, info.size_snapshot, info.count_all, info.size_all);
+            dbgtracef("----- snapshot: %zu allocations, %zu bytes / all leaks: %zu allocations, %zu bytes -----",
+                      info.count_snapshot, info.size_snapshot,
+                      info.count_all - info.count_snapshot, info.size_all - info.size_snapshot);
     }
 
     return info;
