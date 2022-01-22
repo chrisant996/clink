@@ -73,6 +73,7 @@ enum
 
     // State flags.                 FF
     memIgnoreLeak               = 0x01000000,
+    memMarked                   = 0x80000000,
 };
 
 #define _MEM_0                  , 0
@@ -82,6 +83,10 @@ enum
 #define _MEM_RTTI               , memRTTI|memNew
 #endif
 #define _MEM_NOSIZECHECK        , memNoSizeCheck
+
+#define DBG_DECLARE_MARKMEM     void markmem()
+#define DBG_DECLARE_VIRTUAL_MARKMEM virtual void markmem() = 0
+#define DBG_DECLARE_OVERRIDE_MARKMEM void markmem() override
 
 #define memalloc                dbgalloc
 #define memcalloc               dbgcalloc
@@ -104,6 +109,7 @@ void dbgsetlabel(const void* pv, const char* label, int copy);
 void dbgverifylabel(const void* pv, const char* label);
 void dbgsetignore(const void* pv, int ignore);
 size_t dbgignoresince(size_t alloc_number, size_t* total_bytes, char const* label); // Caller is responsible for lifetime of label pointer.
+void dbgmarkmem(const void* pv);
 
 size_t dbggetallocnumber();
 void dbgsetreference(size_t alloc_number, const char* tag);
@@ -134,6 +140,10 @@ void dbgcheckfinal();
 #endif
 #define _MEM_OBJECT
 #define _MEM_NOSIZECHECK
+
+#define DBG_DECLARE_MARKMEM
+#define DBG_DECLARE_VIRTUAL_MARKMEM
+#define DBG_DECLARE_OVERRIDE_MARKMEM
 
 #ifdef __cplusplus
 #define dbg_snapshot_heap(var)          ((void)0)

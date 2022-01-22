@@ -721,6 +721,9 @@ static heap_info list_leaks(size_t alloc_number, bool report)
         info.count_all++;
         info.size_all += p->m_requested_size;
 
+        if (p->m_flags & memMarked)
+            continue;
+
         if (p->m_alloc_number <= alloc_number)
             continue;
 
@@ -773,6 +776,12 @@ static void reset_checker()
     auto_lock lock;
     auto& config = get_config();
 
+    for (mem_tracking* p = config.head; p; p = p->m_next)
+    {
+        if (p->m_flags & memMarked)
+            p->m_flags ^= memMarked;
+    }
+
     config.reference_alloc_number = 0;
     config.reference_tag = nullptr;
 }
@@ -812,6 +821,14 @@ extern "C" void dbgsetignore(const void* pv, int ignore)
 
     if ((p->m_flags & memIgnoreLeak) != (ignore ? memIgnoreLeak : 0))
         p->m_flags ^= memIgnoreLeak;
+}
+
+extern "C" void dbgmarkmem(const void* pv)
+{
+    auto_lock lock;
+
+    mem_tracking* const p = mem_tracking::from_pv(pv);
+    p->m_flags |= memMarked;
 }
 
 extern "C" size_t dbggetallocnumber()
