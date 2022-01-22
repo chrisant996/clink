@@ -27,7 +27,6 @@ extern "C" {
 #include <readline/rldefs.h>
 #include <readline/rlprivate.h>
 #include <readline/history.h>
-#include <readline/xmalloc.h>
 extern void rl_replace_from_history(HIST_ENTRY *entry, int flags);
 }
 
