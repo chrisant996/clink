@@ -36,7 +36,7 @@ extern void reset_suggester();
 extern bool check_recognizer_refresh();
 extern bool is_showing_argmatchers();
 extern bool win_fn_callback_pending();
-extern match_builder_toolkit* get_deferred_matches(int generation_id);
+extern std::shared_ptr<match_builder_toolkit> get_deferred_matches(int generation_id);
 
 
 
@@ -129,7 +129,7 @@ bool notify_matches_ready(int generation_id)
     if (!s_editor)
         return false;
 
-    match_builder_toolkit* toolkit = get_deferred_matches(generation_id);
+    auto toolkit = get_deferred_matches(generation_id);
     matches* matches = toolkit ? toolkit->get_matches() : nullptr;
     return s_editor->notify_matches_ready(generation_id, matches);
 }

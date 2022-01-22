@@ -38,9 +38,9 @@ void reset_suggester()
 }
 
 //------------------------------------------------------------------------------
-match_builder_toolkit* get_deferred_matches(int generation_id)
+std::shared_ptr<match_builder_toolkit> get_deferred_matches(int generation_id)
 {
-    match_builder_toolkit* toolkit = s_toolkit.get();
+    std::shared_ptr<match_builder_toolkit> toolkit = s_toolkit;
     if (toolkit && toolkit->get_generation_id() == generation_id)
         return toolkit;
     return nullptr;
