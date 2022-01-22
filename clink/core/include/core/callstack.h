@@ -9,10 +9,10 @@
 #define MAX_MODULE_LEN          (24)
 #define MAX_SYMBOL_LEN          (256)
 
-//                      "\t" or " "      MODULE      "! "     SYMBOL     " + "   0xOFFSET       "\r\n" or " /"
-#define MAX_FRAME_LEN           (1 + MAX_MODULE_LEN + 2 + MAX_SYMBOL_LEN + 3 + MAX_ADDRESS_LEN + 2)
+//                                   MODULE      "! "     SYMBOL     " + "   0xOFFSET       "\r\n" or " / "
+#define MAX_FRAME_LEN           (MAX_MODULE_LEN + 2 + MAX_SYMBOL_LEN + 3 + MAX_ADDRESS_LEN + 3)
 
-#define DEFAULT_CALLSTACK_LEN   (MAX_FRAME_LEN * 20 + 1)
+#define DEFAULT_CALLSTACK_LEN   (MAX_FRAME_LEN * 20)
 
 #ifdef __cplusplus
 #define CALLSTACK_EXTERN_C      extern "C"

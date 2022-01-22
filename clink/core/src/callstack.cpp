@@ -293,14 +293,14 @@ static void get_symbol_info(void* frame, symbol_info& info)
 #endif
     }
 
-    char undecorated[256];
+    char undecorated[MAX_SYMBOL_LEN];
     char* name = nullptr;
 
-    // Reserve space for 256 characters in the Name field.
+    // Reserve space in the Name field.
     union
     {
         IMAGEHLP_SYMBOL symbol;
-        char buffer[sizeof(symbol) - 1 + 256];
+        char buffer[sizeof(symbol) + 1024];
     };
 
     __try
@@ -308,13 +308,15 @@ static void get_symbol_info(void* frame, symbol_info& info)
         memset(&symbol, 0, sizeof(symbol));
         symbol.SizeOfStruct = sizeof(symbol);
         symbol.Address = DWORD_PTR(frame);
-        symbol.MaxNameLength = sizeof(buffer) - sizeof(symbol);
+        symbol.MaxNameLength = sizeof(buffer) - (sizeof(symbol));
         if (s_functions.SymGetSymFromAddr(s_process, DWORD_PTR(frame), &info.offset, &symbol))
         {
             name = symbol.Name;
             if (s_functions.SymUnDName(&symbol, undecorated, _countof(undecorated) - 1))
                 name = undecorated;
             dbgcchcopy(info.symbol, _countof(info.symbol), name);
+            if (strlen(info.symbol) == _countof(info.symbol) - 1)
+                memset(info.symbol + _countof(info.symbol) - 4, '.', 3);
         }
     }
     __except( EXCEPTION_EXECUTE_HANDLER )
@@ -650,7 +652,7 @@ CALLSTACK_EXTERN_C void dbgtracef(const char* fmt, ...)
     va_list args;
     va_start(args, fmt);
 
-    char buffer[1024];
+    char buffer[8192];
     vsnprintf_s(buffer, _countof(buffer) - 4, _TRUNCATE, fmt, args);
     buffer[_countof(buffer) - 5] = '\0';
     dbgcchcat(buffer, _countof(buffer), "\r\n");
