@@ -612,6 +612,19 @@ void __cdecl _wassert(wchar_t const* message, wchar_t const* file, unsigned line
     _itow_s(line, tmp, 10);
 
     wchar_t wbuffer[4096];
+    wcscpy_s(wbuffer, L"ASSERT:  ");
+    wcscat_s(wbuffer, file);
+    wcscat_s(wbuffer, L" @li");
+    wcscat_s(wbuffer, tmp);
+    wcscat_s(wbuffer, L":  ");
+    wcscat_s(wbuffer, message);
+    wcscat_s(wbuffer, L"\r\n");
+#ifdef TRACE_ASSERT_STACK
+    wcscat_s(wbuffer, _countof(wbuffer), wstack);
+#endif
+
+    OutputDebugStringW(wbuffer);
+
     wcscpy_s(wbuffer, _countof(wbuffer), message);
     wcscat_s(wbuffer, L"\r\n\r\n\r\nFile: ");
     wcscat_s(wbuffer, file);

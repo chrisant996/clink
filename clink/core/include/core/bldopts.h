@@ -14,8 +14,8 @@
 #endif
 
 //------------------------------------------------------------------------------
-// Define FISH_ARROW_KEYS to make arrow keys move as fish shell completion.
-// Otherwise arrow keys move as in powershell completion.
+// Define FISH_ARROW_KEYS to make arrow keys in clink-select-complete move as in
+// fish shell completion.  Otherwise they move as in powershell completion.
 #define FISH_ARROW_KEYS
 
 //------------------------------------------------------------------------------
@@ -25,6 +25,7 @@
 //------------------------------------------------------------------------------
 // Debugging options.
 #ifdef DEBUG
+//#define TRACE_ASSERT_STACK
 //#define SHOW_DISPLAY_GENERATION
 //#define DEBUG_SUGGEST
 //#define DEBUG_RESOLVEIMPL
