@@ -33,7 +33,6 @@ extern int g_suggestion_offset;
 
 extern "C" void host_clear_suggestion();
 extern void reset_suggester();
-extern void clear_recognizer_cache();
 extern bool check_recognizer_refresh();
 extern bool is_showing_argmatchers();
 extern bool win_fn_callback_pending();
@@ -378,7 +377,6 @@ void line_editor_impl::end_line()
     s_callbacks = nullptr;
     g_word_collector = nullptr;
 
-    clear_recognizer_cache();
     reset_suggester();
 
     clear_flag(flag_editing);

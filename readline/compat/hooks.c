@@ -27,6 +27,7 @@ void            (*rl_fwrite_function)(FILE*, const char*, int)  = NULL;
 void            (*rl_fflush_function)(FILE*)                    = NULL;
 extern int is_exec_ext(const char* ext);
 extern void host_clear_suggestion();
+extern void end_recognizer();
 extern void host_filter_transient_prompt(int crlf);
 
 //------------------------------------------------------------------------------
@@ -280,6 +281,7 @@ int hooked_fstat(int fid, struct hooked_stat* out)
 void end_prompt(int crlf)
 {
     host_clear_suggestion();
+    end_recognizer();
     host_filter_transient_prompt(crlf);
 
     _rl_move_vert(_rl_vis_botlin);

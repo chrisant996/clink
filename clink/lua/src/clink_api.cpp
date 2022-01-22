@@ -39,6 +39,7 @@ extern "C" {
 
 //------------------------------------------------------------------------------
 extern int force_reload_scripts();
+extern void host_reclassify();
 extern void set_suggestion(const char* line, unsigned int endword_offset, const char* suggestion, unsigned int offset);
 extern setting_bool g_gui_popups;
 extern setting_enum g_dupe_mode;
@@ -163,11 +164,14 @@ public:
     bool                    find(const char* key, char* cached=nullptr) const;
     bool                    enqueue(const char* key, const char* word, char* cached=nullptr);
     bool                    need_refresh();
+    void                    end_line();
 
 private:
     bool                    usable() const;
     bool                    store(const char* word, char cached);
     bool                    dequeue(entry& entry);
+    bool                    set_result_available(bool available);
+    void                    notify_ready(bool available);
     void                    shutdown();
     static void             proc(recognizer* r);
 
@@ -178,6 +182,7 @@ private:
     mutable std::recursive_mutex m_mutex;
     std::unique_ptr<std::thread> m_thread;
     HANDLE                  m_event = nullptr;
+    bool                    m_processing = false;
     bool                    m_result_available = false;
     bool                    m_zombie = false;
 
@@ -199,21 +204,20 @@ HANDLE get_recognizer_event()
 
     if (s_recognizer.m_zombie)
         return nullptr;
-    if (!s_recognizer.s_ready_event)
-        s_recognizer.s_ready_event = CreateEvent(nullptr, false, false, nullptr);
     return s_recognizer.s_ready_event;
-}
-
-//------------------------------------------------------------------------------
-void clear_recognizer_cache()
-{
-    s_recognizer.clear();
 }
 
 //------------------------------------------------------------------------------
 bool check_recognizer_refresh()
 {
     return s_recognizer.need_refresh();
+}
+
+//------------------------------------------------------------------------------
+extern "C" void end_recognizer()
+{
+    s_recognizer.end_line();
+    s_recognizer.clear();
 }
 
 //------------------------------------------------------------------------------
@@ -235,11 +239,13 @@ recognizer::recognizer()
 : m_heap(1024)
 {
 #ifdef DEBUG
-    // Singleton.
+    // Singleton; assert if there's ever more than one.
     static bool s_created = false;
     assert(!s_created);
     s_created = true;
 #endif
+
+    s_recognizer.s_ready_event = CreateEvent(nullptr, true, false, nullptr);
 }
 
 //------------------------------------------------------------------------------
@@ -308,11 +314,50 @@ bool recognizer::enqueue(const char* key, const char* word, char* cached)
 //------------------------------------------------------------------------------
 bool recognizer::need_refresh()
 {
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
-    if (!m_result_available)
-        return false;
-    m_result_available = false;
-    return true;
+    return set_result_available(false);
+}
+
+//------------------------------------------------------------------------------
+void recognizer::end_line()
+{
+    HANDLE ready_event;
+    bool processing;
+
+    {
+        std::lock_guard<std::recursive_mutex> lock(m_mutex);
+        ready_event = s_ready_event;
+        processing = m_processing && !m_zombie;
+        // s_ready_event is never closed, so there is no concurrency concern
+        // about it going from non-null to null.
+        if (!ready_event)
+            return;
+    }
+
+    // If the recognizer is still processing something then wait briefly until
+    // processing is finished, in case it finishes quickly enough to be able to
+    // refresh the input line colors.
+    if (processing)
+    {
+        const DWORD tick_begin = GetTickCount();
+        while (true)
+        {
+            const volatile DWORD tick_now = GetTickCount();
+            const int timeout = int(tick_begin) + 2500 - int(tick_now);
+            if (timeout < 0)
+                break;
+
+            if (WaitForSingleObject(ready_event, DWORD(timeout)) != WAIT_OBJECT_0)
+                break;
+
+            host_reclassify();
+
+            std::lock_guard<std::recursive_mutex> lock(m_mutex);
+            if (!m_processing || !usable())
+                break;
+        }
+    }
+
+    host_reclassify();
 }
 
 //------------------------------------------------------------------------------
@@ -333,7 +378,7 @@ bool recognizer::store(const char* word, char cached)
     if (iter != m_cache.end())
     {
         m_cache.insert_or_assign(iter->first, cached);
-        m_result_available = true;
+        set_result_available(true);
         return true;
     }
 
@@ -347,7 +392,7 @@ bool recognizer::store(const char* word, char cached)
     m_cache.emplace(key, cached);
     dbg_ignore_since_snapshot(snapshot_cache, "Recognizer cache");
 
-    m_result_available = true;
+    set_result_available(true);
     return true;
 }
 
@@ -362,6 +407,39 @@ bool recognizer::dequeue(entry& entry)
     entry = std::move(m_queue);
     assert(m_queue.empty());
     return true;
+}
+
+//------------------------------------------------------------------------------
+bool recognizer::set_result_available(const bool available)
+{
+    std::lock_guard<std::recursive_mutex> lock(m_mutex);
+
+    if (available == m_result_available)
+        return available;
+
+    m_result_available = available;
+
+    if (s_ready_event)
+    {
+        if (available)
+            SetEvent(s_ready_event);
+        else
+            ResetEvent(s_ready_event);
+    }
+
+    return !available;
+}
+
+//------------------------------------------------------------------------------
+void recognizer::notify_ready(bool available)
+{
+    std::lock_guard<std::recursive_mutex> lock(m_mutex);
+
+    if (available)
+        set_result_available(available);
+
+    if (s_ready_event)
+        SetEvent(s_ready_event);
 }
 
 //------------------------------------------------------------------------------
@@ -402,11 +480,17 @@ void recognizer::proc(recognizer* r)
         entry entry;
         while (r->dequeue(entry))
         {
+            {
+                std::lock_guard<std::recursive_mutex> lock(r->m_mutex);
+                r->m_processing = true;
+            }
+
             // Search for executable file.
             if (search_for_executable(entry.m_word.c_str()))
             {
 executable:
                 r->store(entry.m_key.c_str(), 1);
+                r->notify_ready(true);
             }
             else if (const char* ext = path::get_extension(entry.m_word.c_str()))
             {
@@ -431,16 +515,15 @@ executable:
             {
                 // Not executable.
                 r->store(entry.m_key.c_str(), -1);
+                r->notify_ready(true);
             }
-
-            // Wake idle input.
-            assert(s_ready_event);
-            SetEvent(s_ready_event);
         }
 
         std::lock_guard<std::recursive_mutex> lock(r->m_mutex);
+        r->m_processing = false;
         if (r->m_zombie)
             break;
+        r->notify_ready(false);
     }
 }
 
