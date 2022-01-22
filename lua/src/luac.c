@@ -23,7 +23,7 @@
 #ifdef DEBUG
 #include "../../clink/core/include/core/debugheap.h"
 #ifdef USE_MEMORY_TRACKING
-DECLALLOCATOR DECLRESTRICT void* __cdecl dbgrealloc_ignore(void* pv, size_t size)
+DECLALLOCATOR DECLRESTRICT void* __cdecl dbgluarealloc(void* pv, size_t size)
 {
  return realloc(pv, size);
 }

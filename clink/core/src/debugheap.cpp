@@ -24,7 +24,7 @@
 struct mem_tracking
 {
     static size_t           pad_size(size_t size);
-    static mem_tracking*    from_pv(void* pv);
+    static mem_tracking*    from_pv(const void* pv);
     void*                   to_pv();
     void                    fill(size_t size, bool dead);
     void                    link();
@@ -69,7 +69,6 @@ DECLALLOCATOR DECLRESTRICT void* __cdecl calloc(size_t count, size_t size) { ret
 void __cdecl free(void* pv) { dbgfree_(pv, 0); }
 DECLALLOCATOR DECLRESTRICT void* __cdecl malloc(size_t size) { return dbgalloc_(size, memSkipOneFrame); }
 DECLALLOCATOR DECLRESTRICT void* __cdecl realloc(void* pv, size_t size) { return dbgrealloc_(pv, size, 0|memSkipOneFrame); }
-DECLALLOCATOR DECLRESTRICT void* __cdecl dbgrealloc_ignore(void* pv, size_t size) { return dbgrealloc_(pv, size, 0|memSkipOneFrame|memIgnoreLeak); }
 
 #if 0
 // Can't replace these, because the CRT uses them internally.
@@ -139,7 +138,7 @@ namespace debugheap
 {
 
 #ifdef INCLUDE_CALLSTACKS
-int const MAX_STACK_STRING_LENGTH = DEFAULT_CALLSTACK_LEN;
+int const MAX_STACK_STRING_LENGTH = MAX_FRAME_LEN * MAX_STACK_DEPTH;
 #else
 int const MAX_STACK_STRING_LENGTH = 1;
 #endif
@@ -160,6 +159,9 @@ struct config
     volatile size_t alloc_number            = 0;
     volatile size_t break_alloc_number      = 0;
     volatile size_t break_alloc_size        = 0;
+
+    volatile size_t reference_alloc_number  = 0;
+    const char* reference_tag               = nullptr;
 
     size_t max_sane_alloc                   = 65536;
     size_t max_sane_realloc                 = 1024 * 1024;
@@ -228,6 +230,11 @@ static size_t dbgnewallocnumber()
         DebugBreak();
 
     return config.alloc_number;
+}
+
+static void dbgdeadfillpointer(void** ppv)
+{
+    memset(ppv, get_config().deadfill, sizeof(*ppv));
 }
 
 };
@@ -334,9 +341,9 @@ extern "C" char const* dbginspectmemory(void const* pv, size_t size)
     return string_like ? s_chr : s_hex;
 }
 
-inline BYTE* byteptr(void* pv)
+inline BYTE* byteptr(const void* pv)
 {
-    return static_cast<BYTE*>(pv);
+    return const_cast<BYTE*>(static_cast<const BYTE*>(pv));
 }
 
 size_t mem_tracking::pad_size(size_t size)
@@ -345,7 +352,7 @@ size_t mem_tracking::pad_size(size_t size)
     return sizeof(mem_tracking) + get_config().size_guard * 2 + size;
 }
 
-mem_tracking* mem_tracking::from_pv(void* pv)
+mem_tracking* mem_tracking::from_pv(const void* pv)
 {
     assert_synchronized();
 
@@ -680,8 +687,12 @@ void dbgfree_(void* pv, unsigned int type)
 struct heap_info
 {
     size_t count_all = 0;
-    size_t count_ignored = 0;
     size_t size_all = 0;
+
+    size_t count_snapshot = 0;
+    size_t size_snapshot = 0;
+
+    size_t count_ignored = 0;
     size_t size_ignored = 0;
 };
 
@@ -689,9 +700,6 @@ static heap_info list_leaks(size_t alloc_number, bool report)
 {
     auto_lock lock;
     auto& config = get_config();
-
-    mem_tracking* p;
-    char stack[MAX_STACK_STRING_LENGTH];
 
     const bool newlines = false;
 
@@ -704,21 +712,36 @@ static heap_info list_leaks(size_t alloc_number, bool report)
     }
 
     heap_info info;
-    for (p = config.head; p; p = p->m_next)
+    char stack[MAX_STACK_STRING_LENGTH];
+
+    const size_t ref = config.reference_alloc_number;
+    bool show_reference = report && ref > 0;
+    for (mem_tracking* p = config.head; p; p = p->m_next)
     {
         info.count_all++;
         info.size_all += p->m_requested_size;
 
         if (p->m_alloc_number <= alloc_number)
             continue;
-        if (p->m_flags & memIgnoreLeak)
-            continue;
 
-        info.count_ignored++;
-        info.size_ignored += p->m_requested_size;
+        if (p->m_flags & memIgnoreLeak)
+        {
+            info.count_ignored++;
+            info.size_ignored += p->m_requested_size;
+            continue;
+        }
+
+        info.count_snapshot++;
+        info.size_snapshot += p->m_requested_size;
 
         if (report)
         {
+            if (show_reference && ref > p->m_alloc_number)
+            {
+                dbgtracef("----- #%zu%s -----", ref, config.reference_tag ? config.reference_tag : "");
+                show_reference = false;
+            }
+
             stack[0] = '\0';
 #ifdef INCLUDE_CALLSTACKS
             if (p->m_stack[0])
@@ -731,21 +754,30 @@ static heap_info list_leaks(size_t alloc_number, bool report)
         }
     }
 
-    info.count_ignored = info.count_all - info.count_ignored;
-    info.size_ignored = info.size_all - info.size_ignored;
-
     if (report)
     {
-        dbgtracef("----- %zd leaks, %zd bytes total -----", info.count_all, info.size_all);
-#ifdef USE_HEAP_STATS
-    // TODO
-#endif
+        if (show_reference)
+            dbgtracef("----- #%zu%s -----", ref, config.reference_tag ? config.reference_tag : "");
+
+        if (alloc_number)
+            dbgtracef("----- %zd allocations, %zd bytes -----", info.count_snapshot, info.size_snapshot);
+        else
+            dbgtracef("----- %zd allocations, %zd bytes -----", info.count_all, info.size_all);
     }
 
     return info;
 }
 
-extern "C" void dbgsetlabel(void* pv, char const* label, int copy)
+static void reset_checker()
+{
+    auto_lock lock;
+    auto& config = get_config();
+
+    config.reference_alloc_number = 0;
+    config.reference_tag = nullptr;
+}
+
+extern "C" void dbgsetlabel(const void* pv, char const* label, int copy)
 {
     auto_lock lock;
 
@@ -762,7 +794,17 @@ extern "C" void dbgsetlabel(void* pv, char const* label, int copy)
     p->set_label(label, copy);
 }
 
-extern "C" void dbgsetignore(void* pv, int ignore)
+extern "C" void dbgverifylabel(const void* pv, char const* label)
+{
+    auto_lock lock;
+
+    mem_tracking* const p = mem_tracking::from_pv(pv);
+
+    if (p)
+        assert(strcmp(label, p->get_label()) == 0);
+}
+
+extern "C" void dbgsetignore(const void* pv, int ignore)
 {
     auto_lock lock;
 
@@ -772,27 +814,24 @@ extern "C" void dbgsetignore(void* pv, int ignore)
         p->m_flags ^= memIgnoreLeak;
 }
 
-extern "C" void dbgdeadfillpointer(void** ppv)
-{
-    memset(ppv, get_config().deadfill, sizeof(*ppv));
-}
-
 extern "C" size_t dbggetallocnumber()
 {
     auto_lock lock;
     return get_config().alloc_number;
 }
 
-extern "C" void dbgcheck()
+extern "C" void dbgsetreference(size_t alloc_number, const char* tag)
 {
     auto_lock lock;
+    auto& config = get_config();
 
-    const heap_info info = list_leaks(0, false);
-    if (info.count_all)
-    {
-        assert2(false, "%zu leaks detected (%zu bytes).", info.count_all, info.size_all);
-        list_leaks(0, true);
-    }
+    config.reference_alloc_number = alloc_number;
+    config.reference_tag = tag;
+}
+
+extern "C" void dbgcheck()
+{
+    dbgchecksince(0);
 }
 
 extern "C" void dbgchecksince(size_t alloc_number)
@@ -800,28 +839,28 @@ extern "C" void dbgchecksince(size_t alloc_number)
     auto_lock lock;
 
     const heap_info info = list_leaks(alloc_number, false);
-    if (info.count_ignored)
+    if (info.count_snapshot)
     {
         if (alloc_number)
             assert4(false, "%zu leaks detected (%zu bytes).\r\n%zu total allocations (%zu bytes).",
-                    info.count_all - info.count_ignored, info.size_all - info.size_ignored,
-                    info.count_all, info.size_all);
+                    info.count_snapshot, info.size_snapshot, info.count_all, info.size_all);
         else
             assert2(false, "%zu leaks detected (%zu bytes).", info.count_all, info.size_all);
         list_leaks(alloc_number, true);
     }
+
+    reset_checker();
 }
 
-extern "C" size_t dbgignoresince(size_t alloc_number, size_t* total_bytes)
+extern "C" size_t dbgignoresince(size_t alloc_number, size_t* total_bytes, char const* label)
 {
     auto_lock lock;
     auto& config = get_config();
 
-    mem_tracking* p;
     size_t ignored = 0;
     size_t size = 0;
 
-    for (p = config.head; p; p = p->m_next)
+    for (mem_tracking* p = config.head; p; p = p->m_next)
     {
         if (p->m_alloc_number <= alloc_number)
             continue;
@@ -829,6 +868,8 @@ extern "C" size_t dbgignoresince(size_t alloc_number, size_t* total_bytes)
             continue;
 
         p->m_flags |= memIgnoreLeak;
+        if (label)
+            p->set_label(label, false);
 
         ++ignored;
         size += p->m_requested_size;
@@ -849,6 +890,8 @@ extern "C" void dbgcheckfinal()
         assert2(false, "%zu leaks detected (%zu bytes).", info.count_all, info.size_all);
         list_leaks(0, true);
     }
+
+    reset_checker();
 }
 
 #ifdef USE_HEAP_STATS

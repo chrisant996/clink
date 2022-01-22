@@ -100,16 +100,15 @@ void* dbgalloc_(size_t size, unsigned int flags);
 void* dbgrealloc_(void* pv, size_t size, unsigned int flags);
 void dbgfree_(void* pv, unsigned int type);
 
-DECLALLOCATOR DECLRESTRICT void* __cdecl dbgrealloc_ignore(void* pv, size_t size);
-
-void dbgsetlabel(void* pv, char const* label, int copy);
-void dbgsetignore(void* pv, int ignore);
-void dbgdeadfillpointer(void** ppv);
+void dbgsetlabel(const void* pv, const char* label, int copy);
+void dbgverifylabel(const void* pv, const char* label);
+void dbgsetignore(const void* pv, int ignore);
+size_t dbgignoresince(size_t alloc_number, size_t* total_bytes, char const* label); // Caller is responsible for lifetime of label pointer.
 
 size_t dbggetallocnumber();
+void dbgsetreference(size_t alloc_number, const char* tag);
 void dbgcheck();
 void dbgchecksince(size_t alloc_number);
-size_t dbgignoresince(size_t alloc_number, size_t* total_bytes);
 void dbgcheckfinal();
 
 #ifdef USE_HEAP_STATS
@@ -122,7 +121,7 @@ void dbgcheckfinal();
 
 #ifdef __cplusplus
 #define dbg_snapshot_heap(var)          const size_t var = dbggetallocnumber()
-#define dbg_ignore_since_snapshot(var)  do { dbgignoresince(var, nullptr); } while (false)
+#define dbg_ignore_since_snapshot(var, label)  do { dbgignoresince(var, nullptr, label); } while (false)
 #endif
 
 #else // !USE_MEMORY_TRACKING
@@ -152,8 +151,8 @@ void dbgcheckfinal();
 extern "C" {
 #endif
 
-size_t dbgcchcopy(char* to, size_t max, char const* from);
-size_t dbgcchcat(char* to, size_t max, char const* from);
+size_t dbgcchcopy(char* to, size_t max, const char* from);
+size_t dbgcchcat(char* to, size_t max, const char* from);
 
 #ifdef __cplusplus
 }

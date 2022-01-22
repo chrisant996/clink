@@ -454,7 +454,9 @@ void host_cmd::edit_line(wchar_t* chars, int max_chars)
             // WARNING:  Settings are not valid here; they are not loaded until
             // inside of host::edit_line().
             out.clear();
-            if (host::edit_line(utf8_prompt.c_str(), utf8_rprompt.c_str(), out))
+            const char* const prompt = utf8_prompt.empty() ? nullptr : utf8_prompt.c_str();
+            const char* const rprompt = utf8_rprompt.empty() ? nullptr : utf8_rprompt.c_str();
+            if (host::edit_line(prompt, rprompt, out))
             {
                 to_utf16(chars, max_chars, out.c_str());
                 break;
@@ -590,7 +592,13 @@ bool host_cmd::capture_prompt(const wchar_t* chars, int char_count)
     // writes it to the console.
 
     m_prompt.set(chars, char_count);
-    return (m_prompt.get() != nullptr);
+    if (!m_prompt.get())
+        return false;
+
+#ifdef USE_MEMORY_TRACKING
+    dbgsetignore(m_prompt.get(), true);
+#endif
+    return true;
 }
 
 //------------------------------------------------------------------------------

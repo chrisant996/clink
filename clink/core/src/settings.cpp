@@ -365,7 +365,7 @@ bool load(const char* file)
                 {
                     dbg_snapshot_heap(snapshot);
                     set_setting(pair.name.c_str(), pair.value.c_str());
-                    dbg_ignore_since_snapshot(snapshot);
+                    dbg_ignore_since_snapshot(snapshot, "Settings");
                 }
             }
 
@@ -375,7 +375,7 @@ bool load(const char* file)
         // Find the setting and set its value.
         dbg_snapshot_heap(snapshot);
         set_setting(line_data, value, comment.c_str());
-        dbg_ignore_since_snapshot(snapshot);
+        dbg_ignore_since_snapshot(snapshot, "Settings");
     }
 
     // When migrating, ensure the new settings file is created so that the old

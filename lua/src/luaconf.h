@@ -529,11 +529,11 @@
 #   ifdef __cplusplus
 extern "C" {
 #   endif
-DECLALLOCATOR DECLRESTRICT void* __cdecl dbgrealloc_ignore(void* pv, size_t size);
+DECLALLOCATOR DECLRESTRICT void* __cdecl dbgluarealloc(void* pv, size_t size);
 #   ifdef __cplusplus
 }
 #   endif
-#   define LUA_HEAP_REALLOC dbgrealloc_ignore
+#   define LUA_HEAP_REALLOC dbgluarealloc
 #else
 #   define LUA_HEAP_REALLOC realloc
 #endif

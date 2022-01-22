@@ -41,6 +41,7 @@ extern "C" {
 
 #include <core/debugheap.h>
 #include <core/callstack.h>
+#include <core/assert_improved.h>
 
 //------------------------------------------------------------------------------
 setting_enum g_ignore_case(
@@ -221,7 +222,11 @@ static void update_dir_history()
 
     // Add cwd to tail.
     if (!s_dir_history.size() || _stricmp(s_dir_history.back().get(), cwd.c_str()) != 0)
+    {
+        dbg_snapshot_heap(snapshot);
         s_dir_history.push_back(cwd.c_str());
+        dbg_ignore_since_snapshot(snapshot, "History");
+    }
 
     // Trim overflow from head.
     while (s_dir_history.size() > c_max_dir_history)
@@ -689,6 +694,26 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out)
     if (init_editor || init_prompt)
         static_cast<input_idle*>(lua)->reset();
 
+#ifdef USE_MEMORY_TRACKING
+    if (init_editor)
+    {
+        static size_t s_since = 0;
+        static size_t s_prev = 0;
+        if (!s_since)
+        {
+            s_since = dbggetallocnumber();
+            dbgignoresince(s_since, nullptr, "Initialization overhead");
+        }
+        else if (g_debug_heap_stats.get())
+        {
+            lua.force_gc(); // So Lua can release native refs.
+            dbgsetreference(s_prev, " ---- Previous edit_line()");
+            dbgchecksince(s_since);
+        }
+        s_prev = dbggetallocnumber();
+    }
+#endif
+
     line_editor::desc desc(m_terminal.in, m_terminal.out, m_printer, this);
     initialise_editor_desc(desc);
 
@@ -710,18 +735,6 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out)
         if (g_classify_words.get())
             editor->set_classifier(lua);
         editor->set_input_idle(lua);
-
-#ifdef DEBUG
-        static size_t s_since = 0;
-        const bool report = g_debug_heap_stats.get();
-        if (report)
-            lua.force_gc();
-        if (!s_since)
-            dbgignoresince(s_since, nullptr);
-        else if (report)
-            dbgchecksince(s_since);
-        s_since = dbggetallocnumber();
-#endif
     }
 
     if (init_history)
@@ -735,7 +748,11 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out)
         }
 
         if (!m_history)
+        {
+            dbg_snapshot_heap(snapshot);
             m_history = new history_db(g_save_history.get());
+            dbg_ignore_since_snapshot(snapshot, "History");
+        }
 
         if (m_history)
         {

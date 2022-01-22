@@ -33,6 +33,10 @@
 #  include "ansi_stdlib.h"
 #endif /* HAVE_STDLIB_H */
 
+/* begin_clink_change */
+#include "../../clink/core/include/core/debugheap.h"
+/* end_clink_change */
+
 #include "xmalloc.h"
 
 /* **************************************************************** */
@@ -59,6 +63,15 @@ xmalloc (size_t bytes)
   temp = malloc (bytes);
   if (temp == 0)
     memory_error_and_abort ("xmalloc");
+/* begin_clink_change */
+#ifdef USE_MEMORY_TRACKING
+  if (temp)
+    {
+      dbgsetignore (temp, 1);
+      dbgsetlabel (temp, "Readline", 0);
+    }
+#endif
+/* end_clink_change */
   return (temp);
 }
 
@@ -67,9 +80,25 @@ xrealloc (PTR_T pointer, size_t bytes)
 {
   PTR_T temp;
 
+/* begin_clink_change */
+#ifdef USE_MEMORY_TRACKING
+  if (pointer)
+    dbgverifylabel (pointer, "Readline");
+#endif
+/* end_clink_change */
+
   temp = pointer ? realloc (pointer, bytes) : malloc (bytes);
 
   if (temp == 0)
     memory_error_and_abort ("xrealloc");
+/* begin_clink_change */
+#ifdef USE_MEMORY_TRACKING
+  if (temp && !pointer)
+    {
+      dbgsetignore (temp, 1);
+      dbgsetlabel (temp, "Readline", 0);
+    }
+#endif
+/* end_clink_change */
   return (temp);
 }

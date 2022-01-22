@@ -1418,7 +1418,7 @@ void history_db::load_internal()
             }
         }
 
-        dbg_ignore_since_snapshot(snapshot);
+        dbg_ignore_since_snapshot(snapshot, "History");
 
         if (bank_index == bank_master)
             m_master_deleted_count = iter.get_deleted_count();

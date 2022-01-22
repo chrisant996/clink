@@ -609,3 +609,19 @@ save_stack_top::~save_stack_top()
     assert(lua_gettop(m_state) >= m_top);
     lua_settop(m_state, m_top);
 }
+
+
+
+//------------------------------------------------------------------------------
+#ifdef USE_MEMORY_TRACKING
+DECLALLOCATOR DECLRESTRICT void* __cdecl dbgluarealloc(void* pv, size_t size)
+{
+    pv = dbgrealloc_(pv, size, 0|memSkipOneFrame|memIgnoreLeak);
+    if (pv)
+    {
+        dbgsetignore(pv, true);
+        dbgsetlabel(pv, "LUA alloc", false);
+    }
+    return pv;
+}
+#endif
