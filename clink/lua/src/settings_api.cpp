@@ -116,10 +116,12 @@ template <typename S, typename... V> void add_impl(lua_State* state, V... value)
     const char* long_desc = (lua_gettop(state) > 3) ? checkstring(state, 4) : "";
 
     void* addr = lua_newuserdata(state, sizeof(S));
-    new (addr) S(name, short_desc, long_desc, value...);
 
-    // Apply the value read during load, if any had been saved.
+    // Initialize the definition and apply any value that was read during load.
+    dbg_snapshot_heap(snapshot);
+    new (addr) S(name, short_desc, long_desc, value...);
     ((S*)addr)->deferred_load();
+    dbg_ignore_since_snapshot(snapshot, "Settings");
 
     if (luaL_newmetatable(state, "settings_mt"))
     {

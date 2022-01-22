@@ -25,6 +25,7 @@
 #include <core/str_unordered_set.h>
 #include <core/settings.h>
 #include <core/log.h>
+#include <core/debugheap.h>
 #include <terminal/ecma48_iter.h>
 #include <terminal/printer.h>
 #include <terminal/terminal_in.h>
@@ -2615,7 +2616,9 @@ void rl_module::on_input(const input& input, result& result, const context& cont
 //------------------------------------------------------------------------------
 void rl_module::on_matches_changed(const context& context, const line_state& line, const char* needle)
 {
+    dbg_snapshot_heap(snapshot);
     s_needle = needle;
+    dbg_ignore_since_snapshot(snapshot, "rl_module needle");
 }
 
 //------------------------------------------------------------------------------

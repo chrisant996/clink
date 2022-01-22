@@ -430,9 +430,13 @@ void host::filter_prompt()
     if (!g_prompt_async.get())
         return;
 
+    dbg_snapshot_heap(snapshot);
+
     const char* rprompt = nullptr;
     const char* prompt = filter_prompt(&rprompt, false/*transient*/);
     set_prompt(prompt, rprompt, true/*redisplay*/);
+
+    dbg_ignore_since_snapshot(snapshot, "Prompt filter");
 }
 
 //------------------------------------------------------------------------------
@@ -658,12 +662,14 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out)
     }
     if (!local_lua)
         init_scripts = !m_lua;
+    dbg_snapshot_heap(snapshot);
     if (!m_lua)
         m_lua = new host_lua;
     if (!m_prompt_filter)
         m_prompt_filter = new prompt_filter(*m_lua);
     if (!m_suggester)
         m_suggester = new suggester(*m_lua);
+    dbg_ignore_since_snapshot(snapshot, "Initialization overhead");
     host_lua& lua = *m_lua;
 
     // Load scripts.

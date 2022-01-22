@@ -11,6 +11,7 @@
 #include <core/os.h>
 #include <core/settings.h>
 #include <core/str_iter.h>
+#include <core/debugheap.h>
 
 #include <assert.h>
 
@@ -769,10 +770,15 @@ bool win_screen_buffer::ensure_chars_buffer(int width) const
 {
     if (width > m_chars_capacity)
     {
-        m_chars = static_cast<WCHAR*>(malloc((width + 1) * sizeof(*m_chars)));
-        if (!m_chars)
+        WCHAR* chars = static_cast<WCHAR*>(realloc(m_chars, (width + 1) * sizeof(*m_chars)));
+        if (!chars)
             return false;
+        m_chars = chars;
         m_chars_capacity = width;
+#ifdef USE_MEMORY_TRACKING
+        dbgsetignore(chars, 1);
+        dbgsetlabel(chars, "win_screen_buffer::m_chars", false);
+#endif
     }
     return true;
 }
