@@ -16,15 +16,14 @@
 #include <core/os.h>
 #include <core/path.h>
 #include <core/linear_allocator.h>
+#include <core/debugheap.h>
 #include <lib/doskey.h>
 #include <lib/line_buffer.h>
 #include <lib/line_editor.h>
 #include <lua/lua_script_loader.h>
 #include <terminal/terminal_helpers.h>
 
-#ifdef ADMIN_TITLE
 #define ADMINISTRATOR_TITLE_PREFIX 0x40002748
-#endif
 
 //------------------------------------------------------------------------------
 using func_SetEnvironmentVariableW_t = BOOL (WINAPI*)(LPCWSTR lpName, LPCWSTR lpValue);
@@ -52,13 +51,11 @@ static setting_enum g_autoanswer(
     "off,answer_yes,answer_no",
     0);
 
-#ifdef ADMIN_TITLE
 static setting_str g_admin_title_prefix(
     "cmd.admin_title_prefix",
     "Replaces the console title prefix when elevated",
     "This replaces the console title prefix when cmd.exe is elevated.",
     "");
-#endif
 
 
 
@@ -636,38 +633,6 @@ DWORD WINAPI host_cmd::get_env_var(LPCWSTR lpName, LPWSTR lpBuffer, DWORD nSize)
 }
 
 //------------------------------------------------------------------------------
-#if 0
-DWORD WINAPI host_cmd::format_message(DWORD flags, LPCVOID source, DWORD messageId, DWORD languageId, wchar_t* buffer, DWORD size, va_list* arguments)
-{
-    if ((flags & FORMAT_MESSAGE_FROM_HMODULE) &&
-        source == nullptr &&
-        (messageId & 0x0fffffff) == ADMINISTRATOR_TITLE_PREFIX)
-    {
-        wstr<> prefix(g_admin_title_prefix.get());
-        if (prefix.length())
-        {
-            if (flags & FORMAT_MESSAGE_ALLOCATE_BUFFER)
-            {
-                size = prefix.length() + 1;
-                wchar_t* alloced = static_cast<wchar_t*>(LocalAlloc(LMEM_FIXED, size));
-                if (!alloced)
-                    return 0;
-                *((LPWSTR*)buffer) = alloced;
-                buffer = alloced;
-            }
-
-            wstr_base out(buffer, size);
-            out.copy(prefix.c_str());
-            return out.length();
-        }
-    }
-
-    return FormatMessageW(flags, source, messageId, languageId, buffer, size, arguments);
-}
-#endif
-
-//------------------------------------------------------------------------------
-#ifdef ADMIN_TITLE
 static wstr_unordered_set s_old_prefixes;
 static linear_allocator s_old_prefix_store(1024);
 static bool s_ever_prefix = false;
@@ -722,7 +687,6 @@ BOOL WINAPI host_cmd::set_console_title(LPCWSTR lpConsoleTitle)
 
     return __Real_SetConsoleTitleW(lpConsoleTitle);
 }
-#endif
 
 //------------------------------------------------------------------------------
 bool host_cmd::initialise_system()
@@ -739,17 +703,6 @@ bool host_cmd::initialise_system()
                 return false;
         }
 
-#if 0
-        // Try to hook FormatMessageW in order to replace the "Administrator: "
-        // prefix, but ignore failure since it's just a minor convenience.
-        {
-            hook_setter hooks;
-            hooks.attach(type, module, "FormatMessageW", &host_cmd::format_message, &__Real_FormatMessageW);
-            hooks.commit();
-        }
-#endif
-
-#ifdef ADMIN_TITLE
         // Hook SetConsoleTitleW in order to replace the "Administrator: "
         // prefix, but ignore failure since it's just a minor convenience.
         {
@@ -757,7 +710,6 @@ bool host_cmd::initialise_system()
             hooks.attach(type, module, "SetConsoleTitleW", &host_cmd::set_console_title, &__Real_SetConsoleTitleW);
             hooks.commit();
         }
-#endif
     }
 
     // Add an alias to Clink so it can be run from anywhere. Similar to adding

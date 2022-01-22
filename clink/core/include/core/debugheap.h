@@ -7,12 +7,6 @@
 } // End the enclosing extern "C" scope!
 #endif
 
-#ifdef DEBUG
-#define USE_MEMORY_TRACKING
-#define INCLUDE_CALLSTACKS
-#define USE_RTTI
-#endif
-
 //------------------------------------------------------------------------------
 // Memory tracker.
 

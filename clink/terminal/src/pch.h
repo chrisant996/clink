@@ -3,4 +3,6 @@
 
 #pragma once
 
+#include <core/bldopts.h>
+
 #include <Windows.h>

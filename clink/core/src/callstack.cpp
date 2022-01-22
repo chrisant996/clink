@@ -286,7 +286,7 @@ static void get_symbol_info(void* frame, symbol_info& info)
     }
     else
     {
-#ifdef DBGHELP_SPEW
+#ifdef DBGHELP_DEBUG_OUTPUT
         unlock_dbghelp();
         dbgtracef("DBGHELP: no module for 0x%p", DWORD_PTR(frame));
         lock_dbghelp();

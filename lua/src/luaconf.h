@@ -524,8 +524,9 @@
 */
 
 /* begin_clink_change */
-#include "../../clink/core/include/core/debugheap.h"
+#include "../../clink/core/include/core/bldopts.h"
 #ifdef USE_MEMORY_TRACKING
+#   include "../../clink/core/include/core/debugheap.h"
 #   ifdef __cplusplus
 extern "C" {
 #   endif

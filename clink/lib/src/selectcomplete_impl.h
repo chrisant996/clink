@@ -13,11 +13,6 @@
 class printer;
 
 //------------------------------------------------------------------------------
-// Define FISH_ARROW_KEYS to make arrow keys move as fish shell completion.
-// Otherwise arrow keys move as in powershell completion.
-#define FISH_ARROW_KEYS
-
-//------------------------------------------------------------------------------
 class selectcomplete_impl
     : public editor_module
 {
