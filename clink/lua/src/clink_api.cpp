@@ -286,7 +286,11 @@ bool recognizer::enqueue(const char* key, const char* word, char* cached)
     }
 
     if (!m_thread)
+    {
+        dbg_snapshot_heap(snapshot);
         m_thread = std::make_unique<std::thread>(&proc, this);
+        dbg_ignore_since_snapshot(snapshot, "Recognizer thread");
+    }
 
     m_queue.m_key = key;
     m_queue.m_word = word;
@@ -333,11 +337,16 @@ bool recognizer::store(const char* word, char cached)
         return true;
     }
 
+    dbg_snapshot_heap(snapshot_store);
     const char* key = m_heap.store(word);
+    dbg_ignore_since_snapshot(snapshot_store, "Recognizer store");
     if (!key)
         return false;
 
+    dbg_snapshot_heap(snapshot_cache);
     m_cache.emplace(key, cached);
+    dbg_ignore_since_snapshot(snapshot_cache, "Recognizer cache");
+
     m_result_available = true;
     return true;
 }
