@@ -5,6 +5,11 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
+- Typing a filename and pressing <kbd>Enter</kbd> quickly enough can leave the filename colored in the unrecognized color.  There should be some kind of short conditional wait upon accepting the input line, to accommodate cases where it gets recognized soon after quickly.
+
+## Heap
+- Track heap stats by label.
+- Track snapshot stats.
 
 ## Medium Priority
 - [ ] Argmatcher syntax.
