@@ -15,6 +15,4 @@ private:
 };
 
 //------------------------------------------------------------------------------
-#ifdef DEBUG
 void install_exception_filter();
-#endif

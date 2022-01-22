@@ -129,9 +129,7 @@ seh_scope::~seh_scope()
 }
 
 //------------------------------------------------------------------------------
-#ifdef DEBUG
 void install_exception_filter()
 {
     SetUnhandledExceptionFilter(exception_filter);
 }
-#endif

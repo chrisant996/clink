@@ -20,14 +20,13 @@
 #include "lundump.h"
 
 /* begin_clink_change */
-#ifdef DEBUG
-#include "../../clink/core/include/core/debugheap.h"
+#include "../../clink/core/include/core/bldopts.h"
 #ifdef USE_MEMORY_TRACKING
+#include "../../clink/core/include/core/debugheap.h"
 DECLALLOCATOR DECLRESTRICT void* __cdecl dbgluarealloc(void* pv, size_t size)
 {
  return realloc(pv, size);
 }
-#endif
 #endif
 /* end_clink_change */
 

@@ -3,10 +3,6 @@
 
 #pragma once
 
-#if defined(__cplusplus) && defined(lconfig_h)
-} // End the enclosing extern "C" scope!
-#endif
-
 //------------------------------------------------------------------------------
 // Memory tracker.
 
@@ -137,7 +133,7 @@ void dbgcheckfinal();
 
 #ifdef __cplusplus
 #define dbg_snapshot_heap(var)          ((void)0)
-#define dbg_ignore_since_snapshot(var)  ((void)0)
+#define dbg_ignore_since_snapshot(var, label)  ((void)0)
 #endif
 
 #endif // !USE_MEMORY_TRACKING
@@ -159,7 +155,3 @@ size_t dbgcchcat(char* to, size_t max, const char* from);
 #endif
 
 #endif // DEBUG
-
-#if defined(__cplusplus) && defined(lconfig_h)
-extern "C" { // Reopen the enclosing extern "C" scope!
-#endif

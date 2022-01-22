@@ -7,6 +7,7 @@
 #include <core/base.h>
 #include <core/settings.h>
 #include <core/str_tokeniser.h>
+#include <core/debugheap.h>
 
 #include <new.h>
 

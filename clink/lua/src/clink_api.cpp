@@ -18,6 +18,7 @@
 #include <core/str_unordered_set.h>
 #include <core/settings.h>
 #include <core/linear_allocator.h>
+#include <core/debugheap.h>
 #include <lib/intercept.h>
 #include <lib/popup.h>
 #include <terminal/terminal_helpers.h>

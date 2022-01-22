@@ -524,20 +524,22 @@
 */
 
 /* begin_clink_change */
-#include "../../clink/core/include/core/bldopts.h"
-#ifdef USE_MEMORY_TRACKING
-#   include "../../clink/core/include/core/debugheap.h"
-#   ifdef __cplusplus
+#ifdef BUILD_LUA
+#   include "../../clink/core/include/core/bldopts.h"
+#   ifdef USE_MEMORY_TRACKING
+#       include "../../clink/core/include/core/debugheap.h"
+#       ifdef __cplusplus
 extern "C" {
-#   endif
+#       endif // __cplusplus
 DECLALLOCATOR DECLRESTRICT void* __cdecl dbgluarealloc(void* pv, size_t size);
-#   ifdef __cplusplus
+#       ifdef __cplusplus
 }
-#   endif
-#   define LUA_HEAP_REALLOC dbgluarealloc
-#else
-#   define LUA_HEAP_REALLOC realloc
-#endif
+#       endif // __cplusplus
+#       define LUA_HEAP_REALLOC dbgluarealloc
+#   else // !USE_MEMORY_TRACKING
+#       define LUA_HEAP_REALLOC realloc
+#   endif // !USE_MEMORY_TRACKING
+#endif // BUILD_LUA
 /* end_clink_change */
 
 
