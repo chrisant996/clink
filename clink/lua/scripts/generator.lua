@@ -119,27 +119,25 @@ end
 
 
 --------------------------------------------------------------------------------
-local _match_generate_coroutine
-local _started_match_generate_coroutine
+local _match_generate_state = {}
 local function cancel_match_generate_coroutine()
     local _, ismain = coroutine.running()
-    if ismain and _match_generate_coroutine then
+    if ismain and _match_generate_state.coroutine then
         -- Make things (e.g. globbers) short circuit to faciliate coroutine
         -- completing as quickly as possible.
-        clink._cancel_coroutine(_match_generate_coroutine)
-        if not _started_match_generate_coroutine then
+        clink._cancel_coroutine(_match_generate_state.coroutine)
+        if not _match_generate_state.started then
             -- If it never started, remove it from the scheduler.
-            clink.removecoroutine(_match_generate_coroutine)
+            clink.removecoroutine(_match_generate_state.coroutine)
         end
-        _match_generate_coroutine = nil
-        _started_match_generate_coroutine = nil
+        _match_generate_state = {}
     end
 end
 
 --------------------------------------------------------------------------------
 function clink._make_match_generate_coroutine(line, matches, builder, generation_id)
     -- Bail if there's already a match generator coroutine running.
-    if _match_generate_coroutine then
+    if _match_generate_state.coroutine then
         return
     end
 
@@ -149,7 +147,7 @@ function clink._make_match_generate_coroutine(line, matches, builder, generation
     local c = coroutine.create(function ()
         -- Mark that the coroutine has started.  If a canceled coroutine never
         -- started, it can be removed from the scheduler.
-        _started_match_generate_coroutine = true
+        _match_generate_state.started = true
 
         -- Generate matches.
         clink._generate(line, builder)
@@ -157,9 +155,8 @@ function clink._make_match_generate_coroutine(line, matches, builder, generation
         -- Coroutine completed, so stop tracking it.  Must stop tracking before
         -- calling clink.matches_ready() so it doesn't immediately bail out.
         local c = coroutine.running()
-        if _match_generate_coroutine == c then
-            _match_generate_coroutine = nil
-            _started_match_generate_coroutine = nil
+        if _match_generate_state.coroutine == c then
+            _match_generate_state = {}
         end
 
         -- Check for cancelation.
@@ -175,8 +172,8 @@ function clink._make_match_generate_coroutine(line, matches, builder, generation
     end)
 
     clink.setcoroutinename(c, "generate matches")
-    _match_generate_coroutine = c
-    _started_match_generate_coroutine = nil
+    _match_generate_state.coroutine = c
+    _match_generate_state.started = nil
 end
 
 
@@ -191,6 +188,7 @@ end
 clink.generator_stopped = nil
 local function generator_onbeginedit()
     clink.generator_stopped = nil
+    _match_generate_state = {}
 end
 clink.onbeginedit(generator_onbeginedit)
 
