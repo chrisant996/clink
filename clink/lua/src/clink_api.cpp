@@ -56,11 +56,10 @@ static bool search_for_extension(str_base& full, const char* word)
 {
     path::append(full, "");
     const unsigned int trunc = full.length();
-    const unsigned int word_len = static_cast<unsigned int>(strlen(word));
 
     if (strchr(word, '.'))
     {
-        full.concat(word, word_len);
+        path::append(full, word);
         if (os::get_path_type(full.c_str()) == os::path_type_file)
             return true;
     }
@@ -77,7 +76,7 @@ static bool search_for_extension(str_base& full, const char* word)
         while (str_token token = tokens.next(start, length))
         {
             full.truncate(trunc);
-            full.concat(word, word_len);
+            path::append(full, word);
             full.concat(start, length);
             if (os::get_path_type(full.c_str()) == os::path_type_file)
                 return true;
