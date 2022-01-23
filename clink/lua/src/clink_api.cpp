@@ -170,7 +170,7 @@ public:
 
 private:
     bool                    usable() const;
-    bool                    store(const char* word, char cached);
+    bool                    store(const char* word, char cached, bool pending=false);
     bool                    dequeue(entry& entry);
     bool                    set_result_available(bool available);
     void                    notify_ready(bool available);
@@ -180,6 +180,7 @@ private:
 private:
     linear_allocator        m_heap;
     str_unordered_map<char> m_cache;
+    str_unordered_map<char> m_pending;
     entry                   m_queue;
     mutable std::recursive_mutex m_mutex;
     std::unique_ptr<std::thread> m_thread;
@@ -256,6 +257,7 @@ void recognizer::clear()
     std::lock_guard<std::recursive_mutex> lock(m_mutex);
 
     m_cache.clear();
+    m_pending.clear();
     m_heap.reset();
 }
 
@@ -264,16 +266,29 @@ bool recognizer::find(const char* key, char* cached) const
 {
     std::lock_guard<std::recursive_mutex> lock(m_mutex);
 
-    if (!usable())
-        return false;
+    if (usable())
+    {
+        auto const iter = m_cache.find(key);
+        if (iter != m_cache.end())
+        {
+            if (cached)
+                *cached = iter->second;
+            return true;
+        }
+    }
 
-    auto const iter = m_cache.find(key);
-    if (iter == m_cache.end())
-        return false;
+    if (usable())
+    {
+        auto const iter = m_pending.find(key);
+        if (iter != m_pending.end())
+        {
+            if (cached)
+                *cached = iter->second;
+            return true;
+        }
+    }
 
-    if (cached)
-        *cached = iter->second;
-    return true;
+    return false;
 }
 
 //------------------------------------------------------------------------------
@@ -303,7 +318,7 @@ bool recognizer::enqueue(const char* key, const char* word, char* cached)
     m_queue.m_word = word;
 
     // Assume unrecognized at first.
-    store(key, -1);
+    store(key, -1, true/*pending*/);
     if (cached)
         *cached = -1;
 
@@ -368,17 +383,19 @@ bool recognizer::usable() const
 }
 
 //------------------------------------------------------------------------------
-bool recognizer::store(const char* word, char cached)
+bool recognizer::store(const char* word, char cached, bool pending)
 {
     std::lock_guard<std::recursive_mutex> lock(m_mutex);
 
     if (!usable())
         return false;
 
-    auto const iter = m_cache.find(word);
-    if (iter != m_cache.end())
+    auto& map = pending ? m_pending : m_cache;
+
+    auto const iter = map.find(word);
+    if (iter != map.end())
     {
-        m_cache.insert_or_assign(iter->first, cached);
+        map.insert_or_assign(iter->first, cached);
         set_result_available(true);
         return true;
     }
@@ -390,7 +407,7 @@ bool recognizer::store(const char* word, char cached)
         return false;
 
     dbg_snapshot_heap(snapshot_cache);
-    m_cache.emplace(key, cached);
+    map.emplace(key, cached);
     dbg_ignore_since_snapshot(snapshot_cache, "Recognizer cache");
 
     set_result_available(true);
@@ -522,6 +539,7 @@ executable:
 
         std::lock_guard<std::recursive_mutex> lock(r->m_mutex);
         r->m_processing = false;
+        r->m_pending.clear();
         if (r->m_zombie)
             break;
         r->notify_ready(false);
