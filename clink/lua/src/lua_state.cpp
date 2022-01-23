@@ -551,7 +551,7 @@ bool lua_state::call_lua_rl_global_function(const char* func_name, line_state* l
         return false;
     }
 
-    extern void override_rl_last_func(rl_command_func_t*);
+    extern void override_rl_last_func(rl_command_func_t* func, bool force_when_null=false);
     override_rl_last_func(nullptr);
 
     buffer.push(state);

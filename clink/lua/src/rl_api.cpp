@@ -32,7 +32,7 @@ extern int              _rl_last_v_pos;
 
 extern matches* get_mutable_matches(bool nosort=false);
 extern const char* get_last_luafunc();
-extern void override_rl_last_func(rl_command_func_t* func);
+extern void override_rl_last_func(rl_command_func_t* func, bool force_when_null=false);
 
 extern int count_prompt_lines(const char* prompt_prefix, int len);
 

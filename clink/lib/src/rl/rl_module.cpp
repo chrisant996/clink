@@ -416,11 +416,11 @@ static void last_func_hook_func()
 }
 
 //------------------------------------------------------------------------------
-void override_rl_last_func(rl_command_func_t* func)
+void override_rl_last_func(rl_command_func_t* func, bool force_when_null)
 {
     s_has_override_rl_last_func = true;
     s_override_rl_last_func = func;
-    if (func)
+    if (func || force_when_null)
     {
         rl_last_func = func;
         cua_after_command();
