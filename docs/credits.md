@@ -31,3 +31,7 @@ Licensed under the terms of the [GNU General Public License, version 3](http://w
 
 Clink documentation embeds the highlight.js library (https://highlightjs.org).<br/>
 Highlight.js is released under the [BSD License](https://github.com/highlightjs/highlight.js/blob/master/LICENSE).
+
+Special thanks to Alexandra Barros and Matthew Wild for (https://code.matthewwild.co.uk/luatraverse).<br/>
+Originally from (http://lua-users.org/lists/lua-l/2006-07/msg00110.html).<br/>
+The script was very useful in tracking down dangling references.
