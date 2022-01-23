@@ -146,6 +146,13 @@ To configure a color, run <code>clink set <span class="arg">colorname</span> <sp
 
 Match completions make it easy to change Clink settings:  type <code>clink set color.</code> and then use completion (e.g. <kbd>Tab</kbd> or <kbd>Ctrl</kbd>+<kbd>Space</kbd>) to see the available color settings, and to fill in a color value.
 
+Here are some colors you may want to set up right away:
+
+Color | Description | Recommended
+---|---|---
+`color.executable` | Apply color when the command is an executable file. | `clink set color.executable sgr 38;5;32`
+`color.unrecognized` | Apply color when the command is not recognized. | `clink set color.unrecognized sgr 38;5;203`
+
 See the [Clink Settings](#clink-settings) and [Color Settings](#color-settings) sections for more information on Clink settings.
 
 <a name="gettingstarted_keybindings"></a>
@@ -197,6 +204,8 @@ The new Clink tries to be as backward compatible with Clink v0.4.9 as possible. 
 - Match coloring works differently now and can do much more; see [Completion Colors](#completioncolors) for more information.
 - Old settings and history migrate automatically if the new `clink_settings` and `clink_history` files don't exist (deleting them will cause migration to happen again).  To find the directory that contains these files, run `clink info` and look for the "state" line.
 - Script compatibility should be very good, but some scripts may still encounter problems.  If you do encounter a compatibility problem you can look for an updated version of the script, update the script yourself, or visit the [clink repo](https://github.com/chrisant996/clink/issues) and open an issue describing details about the compatibility problem.
+- Some match generator scripts might need adjustments to become fully compatible with the `autosuggest.enable` setting.
+- Some match generator scripts might need adjustments to become fully compatible with the `autosuggest.enable` setting.
 - Some settings have changed slightly, and there are many new settings.  See [Configuring Clink](#configclink) for more information.
 
 <a name="configclink"></a>
