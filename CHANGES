@@ -16,7 +16,9 @@
 - Fixed duplicated closing quote in `clink-select-complete`.
 - Fixed display of non-directory matches that contain slashes, such as git branch names (regression introduced in v1.3.1).
 - Fixed match display filtering in `clink-select-complete` (regression introduced in v1.3.1).
+- Fixed the `insert-comment` command (regression introduced in v1.2.44).
 - Fixed sorting flag completions so that all `-` flags precede any `--` flags.
+- Fixed a couple of memory leaks, and added memory tracking system to more easily catch leaks.
 - Various minor fixes in `clink-select-complete`.
 
 #### v1.3.2
