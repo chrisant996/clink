@@ -53,6 +53,7 @@ extern int _rl_get_inserted_char(void);
 extern Keymap _rl_dispatching_keymap;
 #define HIDDEN_FILE(fn) ((fn)[0] == '.')
 #if defined (COLOR_SUPPORT)
+#define PARSE_COLOR_ONLY_FUNCTION_PROTOTYPES
 #include <readline/parse-colors.h>
 #endif
 }

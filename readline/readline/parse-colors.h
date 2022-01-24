@@ -33,6 +33,10 @@
 
 void _rl_parse_colors (void);
 
+/* begin_clink_change */
+#ifndef PARSE_COLOR_ONLY_FUNCTION_PROTOTYPES
+/* end_clink_change */
+
 static const char *const indicator_name[]=
   {
     "lc", "rc", "ec", "rs", "no", "fi", "di", "ln", "pi", "so",
@@ -42,5 +46,9 @@ static const char *const indicator_name[]=
 
 /* Buffer for color sequences */
 static char *color_buf;
+
+/* begin_clink_change */
+#endif // ONLY_FUNCTION_PROTOTYPES
+/* end_clink_change */
 
 #endif /* !_PARSE_COLORS_H_ */
