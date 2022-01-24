@@ -13,6 +13,10 @@
 #include <wchar.h>
 #include <uchar.h>
 
+#if !defined(__cplusplus) && !defined(_MSC_VER)
+#define static_assert _Static_assert
+#endif
+
 #include "hooks.h"
 
 int     compare_string(const char* s1, const char* s2, int casefold);

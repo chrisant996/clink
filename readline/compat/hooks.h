@@ -4,13 +4,8 @@
 #pragma once
 
 #if !defined(S_IFLNK)
-# if defined(__cplusplus) || defined(_MSC_VER)
 static_assert((_S_IFMT & ~0xF000) == 0, "_S_IFMT has bits outside 0xF000");
 static_assert(_S_IFMT == S_IFMT, "_S_IFMT is not equal to S_IFMT");
-# else
-_Static_assert((_S_IFMT & ~0xF000) == 0, "_S_IFMT has bits outside 0xF000");
-_Static_assert(_S_IFMT == S_IFMT, "_S_IFMT is not equal to S_IFMT");
-# endif
 # define _S_IFLNK       0x0800
 # define S_IFLNK        _S_IFLNK
 # undef S_ISLNK
