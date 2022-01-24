@@ -1173,6 +1173,8 @@ history_db::~history_db()
 //------------------------------------------------------------------------------
 void history_db::reap()
 {
+    dbg_ignore_scope(snapshot, "History");
+
     str<280> removals;
 
     for_each_session([&](str_base& path, bool local)

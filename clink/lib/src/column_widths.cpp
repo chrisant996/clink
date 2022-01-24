@@ -11,6 +11,7 @@
 #include "column_widths.h"
 
 #include <core/base.h>
+#include <core/debugheap.h>
 
 extern "C" {
 #include <readline/readline.h>
@@ -116,6 +117,7 @@ static bool init_column_info(int max_matches, size_t max_cols, size_t count, wid
         size_t new_column_info_alloc;
         width_t *p;
 
+        dbg_ignore_scope(snapshot, "calculate_columns");
         s_column_info = (column_info*)realloc(s_column_info, max_cols * sizeof *s_column_info);
         new_column_info_alloc = max_cols;
 

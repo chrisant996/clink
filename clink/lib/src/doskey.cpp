@@ -9,6 +9,7 @@
 #include <core/str.h>
 #include <core/str_iter.h>
 #include <core/str_tokeniser.h>
+#include <core/debugheap.h>
 
 #include "terminal/printer.h"
 #include "terminal/terminal_helpers.h"
@@ -611,6 +612,8 @@ bool doskey::resolve_impl(str_iter& s, str_stream& out, int* _point)
 //------------------------------------------------------------------------------
 void doskey::resolve(const char* chars, doskey_alias& out, int* point)
 {
+    dbg_ignore_scope(snapshot, "Doskey");
+
     out.reset();
 
     str_stream stream;
