@@ -300,6 +300,39 @@ get_funky_string (char **dest, const char **src, bool equals_end, size_t *output
 }
 #endif /* COLOR_SUPPORT */
 
+/* begin_clink_change */
+static void _rl_free_colors(void)
+{
+  COLOR_EXT_TYPE *e;
+  COLOR_EXT_TYPE *e2;
+
+  static int saved = 0;
+  static struct bin_str original[sizeof(_rl_color_indicator) / sizeof(_rl_color_indicator[0])];
+
+static_assert (sizeof (_rl_color_indicator) == sizeof (original), "_rl_color_indicator and original arrays do not match");
+static_assert (sizeof (_rl_color_indicator) / sizeof (_rl_color_indicator[0]) == C_CLR_TO_EOL + 1, "_rl_color_indicator array is not the expected length");
+static_assert (C_LINK == 7, "C_LINK is not the expected index");
+
+  if (!saved)
+    {
+      memcpy (original, _rl_color_indicator, sizeof(original));
+      return;
+    }
+
+  memcpy (_rl_color_indicator, original, sizeof(original));
+
+  free (color_buf);
+  color_buf = NULL;
+  for (e = _rl_color_ext_list; e != NULL; /* empty */)
+    {
+      e2 = e;
+      e = e->next;
+      free (e2);
+    }
+  _rl_color_ext_list = NULL;
+}
+/* end_clink_change */
+
 void _rl_parse_colors(void)
 {
 #if defined (COLOR_SUPPORT)
@@ -309,6 +342,10 @@ void _rl_parse_colors(void)
   int ind_no;			/* Indicator number */
   char label[3];		/* Indicator label */
   COLOR_EXT_TYPE *ext;		/* Extension we are working on */
+
+/* begin_clink_change */
+  _rl_free_colors ();
+/* end_clink_change */
 
   p = sh_get_env_value ("LS_COLORS");
   if (p == 0 || *p == '\0')
@@ -423,18 +460,23 @@ void _rl_parse_colors(void)
 
   if (state < 0)
     {
-      COLOR_EXT_TYPE *e;
-      COLOR_EXT_TYPE *e2;
+/* begin_clink_change */
+      //COLOR_EXT_TYPE *e;
+      //COLOR_EXT_TYPE *e2;
+/* end_clink_change */
 
       _rl_errmsg ("unparsable value for LS_COLORS environment variable");
-      free (color_buf);
-      for (e = _rl_color_ext_list; e != NULL; /* empty */)
-        {
-          e2 = e;
-          e = e->next;
-          free (e2);
-        }
-      _rl_color_ext_list = NULL;
+/* begin_clink_change */
+      //free (color_buf);
+      //for (e = _rl_color_ext_list; e != NULL; /* empty */)
+      //  {
+      //    e2 = e;
+      //    e = e->next;
+      //    free (e2);
+      //  }
+      //_rl_color_ext_list = NULL;
+      _rl_free_colors ();
+/* end_clink_change */
       _rl_colored_stats = 0;	/* can't have colored stats without colors */
     }
 #else /* !COLOR_SUPPORT */
