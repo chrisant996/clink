@@ -441,7 +441,7 @@ static bool append_match_color_indicator(const char *f, match_type type)
             append_color_indicator(C_LEFT);
             append_tmpbuf_string(s->string, s->len);
             append_color_indicator(C_RIGHT);
-            return 0;
+            return (!ext && colored_filetype == C_FILE) ? 1 : 0;
         }
         else
             return 1;
@@ -864,6 +864,15 @@ void pad_filename(int len, int pad_to_width, int selected)
     if (_rl_colored_stats && selected > 0)
         append_default_color();
 #endif
+}
+
+//------------------------------------------------------------------------------
+bool get_match_color(const char* filename, match_type type, str_base& out)
+{
+    reset_tmpbuf();
+    const bool has = !append_match_color_indicator(filename, type);
+    out = get_tmpbuf_rollback();
+    return has;
 }
 
 

@@ -41,6 +41,7 @@ void flush_tmpbuf(void);
 void append_display(const char* to_print, int selected, const char* color);
 int append_filename(char* to_print, const char* full_pathname, int prefix_bytes, int can_condense, match_type type, int selected, int* vis_stat_char);
 void pad_filename(int len, int pad_to_width, int selected);
+bool get_match_color(const char *f, match_type type, str_base& out);
 
 typedef void (*vstrlen_func_t)(const char* s, int len);
 int ellipsify_to_callback(const char* in, int limit, int expand_ctrl, vstrlen_func_t callback);

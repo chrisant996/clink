@@ -13,6 +13,7 @@
 #include <core/str_iter.h>
 #include <terminal/ecma48_iter.h>
 #include "lib/matches.h"
+#include "lib/display_matches.h"
 #include "match_builder_lua.h"
 #include "prompt.h"
 
@@ -884,6 +885,57 @@ static int is_modified_line(lua_State* state)
     return 1;
 }
 
+//------------------------------------------------------------------------------
+/// -name:  rl.getmatchcolor
+/// -ver:   1.3.4
+/// -arg:   match:string|table
+/// -arg:   [type:string]
+/// -ret:   string
+/// Returns the color string associated with the match.
+///
+/// The arguments are the same as in
+/// <a href="#builder:addmatch">builder:addmatch()</a>.
+static int get_match_color(lua_State* state)
+{
+    const char* match;
+    match_type type = match_type::none;
+
+    const bool t = lua_istable(state, 1);
+    if (t)
+    {
+        lua_pushliteral(state, "match");
+        lua_rawget(state, -2);
+        match = checkstring(state, -1);
+        if (!match)
+            return 0;
+        lua_pop(state, 1);
+
+        lua_pushliteral(state, "type");
+        lua_rawget(state, -2);
+        const char* tmp = optstring(state, -1, nullptr);
+        if (tmp)
+            type = to_match_type(tmp);
+        lua_pop(state, 1);
+    }
+    else
+    {
+        match = checkstring(state, 1);
+
+        const char* tmp = optstring(state, 2, nullptr);
+        if (tmp)
+            type = to_match_type(tmp);
+    }
+
+    const bool else_exe = lua_toboolean(state, 3);
+
+    str<16> color;
+    if (!get_match_color(match, type, color) && else_exe)
+        get_match_color(".exe", match_type::file, color);
+
+    lua_pushlstring(state, color.c_str(), color.length());
+    return 1;
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -907,6 +959,7 @@ void rl_lua_initialise(lua_state& lua)
         { "getpromptinfo",          &get_prompt_info },
         { "insertmode",             &getset_insert_mode },
         { "ismodifiedline",         &is_modified_line },
+        { "getmatchcolor",          &get_match_color },
     };
 
     lua_State* state = lua.get_state();
