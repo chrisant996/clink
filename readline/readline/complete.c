@@ -3611,7 +3611,12 @@ rl_old_menu_complete (int count, int invoking_key)
      up to insert them. */
 /* begin_clink_change */
   //if (rl_last_func != rl_old_menu_complete)
-  if (rl_last_func != rl_old_menu_complete && rl_last_func != rl_backward_old_menu_complete)
+#ifdef USE_MEMORY_TRACKING
+  const int force_free = (count == -1 && invoking_key == -1);
+#else
+  const int force_free = 0;
+#endif
+  if ((rl_last_func != rl_old_menu_complete && rl_last_func != rl_backward_old_menu_complete) || force_free)
 /* end_clink_change */
     {
       /* Clean up from previous call, if any. */
@@ -3623,6 +3628,13 @@ rl_old_menu_complete (int count, int invoking_key)
       matches = (char **)NULL;
 
       rl_completion_invoking_key = invoking_key;
+
+/* begin_clink_change */
+#ifdef USE_MEMORY_TRACKING
+      if (force_free)
+        return 0;
+#endif
+/* end_clink_change */
 
       RL_SETSTATE(RL_STATE_COMPLETING);
 
@@ -3801,6 +3813,13 @@ rl_menu_complete (int count, int ignore)
 
   /* The first time through, we generate the list of matches and set things
      up to insert them. */
+/* begin_clink_change */
+#ifdef USE_MEMORY_TRACKING
+  const int force_free = (count == -1 && ignore == -1);
+  if (force_free)
+    full_completion = 1;
+#endif
+/* end_clink_change */
   if ((rl_last_func != rl_menu_complete && rl_last_func != rl_backward_menu_complete) || full_completion)
     {
       /* Clean up from previous call, if any. */
@@ -3812,6 +3831,13 @@ rl_menu_complete (int count, int ignore)
       matches = (char **)NULL;
 
       full_completion = 0;
+
+/* begin_clink_change */
+#ifdef USE_MEMORY_TRACKING
+      if (force_free)
+        return 0;
+#endif
+/* end_clink_change */
 
       RL_SETSTATE(RL_STATE_COMPLETING);
 

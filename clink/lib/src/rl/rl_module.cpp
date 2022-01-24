@@ -2435,6 +2435,12 @@ void rl_module::on_end_line()
     if (!m_done)
         done(rl_line_buffer);
 
+#ifdef USE_MEMORY_TRACKING
+    // Force freeing any cached matches, to avoid the appearance of a leak.
+    rl_menu_complete(-1, -1);
+    rl_old_menu_complete(-1, -1);
+#endif
+
     // When 'sticky' mode is enabled, remember the history position for the next
     // input line prompt.
     if (get_sticky_search_history())
