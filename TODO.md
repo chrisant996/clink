@@ -6,48 +6,29 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## High Priority
 
-## Medium Priority
+## Normal Priority
+- [ ] Ability to delete history entries from history popup list.
 - [ ] Argmatcher syntax.
   - [ ] Define help-like layout format that groups multiple flags into one entry?
     - [ ] Only group when a single flag character is used (`-` but not `--`).
     - [ ] Always insert the first flag listed in a line.
   - [ ] Easier argmatcher syntax for defining flags + display + description strings.
   - [ ] Provide shim so scripts can use new syntax and still be compatible with older Clink.
+
+## Follow Up
 - Readline command reference.
 - Add more Readline documentation into the Clink docs.
-
-## Low Priority
 - Add command and flag descriptions in clink-completions?
 - Push update to clink-completions repo.
 - Push update to z.lua repo.
-- Auto-update option, with configurable polling interval?  (Though package managers like scoop can handle updates, if Clink was installed through one.)
-
-## Mystery
 
 <br/>
 <br/>
 
 # INVESTIGATE
 
-**Popup Lists**
-- Ability to delete, rearrange, and edit popup list items?  _[Can't realistically rearrange or edit history, due to how the history file format works.]_
-
-**Installer**
-
-**Miscellaneous**
+- Auto-update option, with configurable polling interval?  (Though package managers like scoop can handle updates, if Clink was installed through one.)
 - Include `wildmatch()` and an `fnmatch()` wrapper for it.  But should first update it to support UTF8.
-
-<br/>
-<br/>
-
-# MAINTENANCE
-
-- Readline 8.1 has slight bug in `update_line`; type `c` then `l`, and it now identifies **2** chars (`cl`) as needing to be displayed; seems like the diff routine has a bug with respect to the new faces capability; it used to only identify `l` as needing to be displayed.
-
-<br/>
-<br/>
-
-# BACKLOG
 
 <br/>
 <br/>
@@ -60,6 +41,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - `git checkout `<kbd>Alt</kbd>+<kbd>=</kbd> in Cmder.
 
 ## Known Issues
+- Readline 8.1 has slight bug in `update_line`; type `c` then `l`, and it now identifies **2** chars (`cl`) as needing to be displayed; seems like the diff routine has a bug with respect to the new faces capability; it used to only identify `l` as needing to be displayed.
 - Cursor style may behave unexpectedly in a new console window launched from a Windows Terminal console, or in a console window that gets attached to Windows Terminal.  This is because there's no reliable way for Clink to know whether it is running inside Windows Terminal.
 - Perturbed PROMPT envvar is visible in child processes (e.g. piped shell in various file editors).
 - [#531](https://github.com/mridgers/clink/issues/531) AV detects a trojan on download _[This is likely because of the use of CreateRemoteThread and/or hooking OS APIs.  There might be a way to obfuscate the fact that clink uses those, but ultimately this is kind of an inherent problem.  Getting the binaries digitally signed might be the most effective solution, but that's financially expensive.]_
@@ -70,6 +52,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Windows Terminal crashes on exit after `clink inject`.  The current release version was crashing (1.6.10571.0).  Older versions don't crash, and a locally built version from the terminal repo's HEAD doesn't crash.  I think the crash is probably a bug in Windows Terminal, not related to Clink.  And after I built it locally, then it stopped crashing with 1.6.10571.0 as well.  Mysterious...
 
 ## Punt
+- Ability to rearrange and edit popup list items?  _[Can't realistically rearrange or edit history, due to how the history file format works.]_
 - Using a thread to run globbers could let suggestions uses matches even with UNC paths.  _[But **ONLY** globbers would be safe; if anything else inside match generators tries to access the UNC path then it could hang.  So it's not really safe enough.]_
 - Make scrolling key bindings work at the pager prompt.  Note that it would need to revise how the scroll routines identify the bottom line (currently they use Readline's bottom line, but the pager displays output past that point).  _[Low value; also, Windows Terminal has scrolling hotkeys that supersede Clink, and it can scroll regardless whether prompting for input.  Further, Windows Terminal is deprecating the ability for an app to scroll the screen anyway.]_
 - Is it a problem that `update_internal()` gets called once per char in a key sequence?  Maybe it should only happen after a key that finishes a key binding?  _[Doesn't cause any noticeable issues.]_
