@@ -39,6 +39,7 @@ enum {
     bind_id_textlist_findprev,
     bind_id_textlist_copy,
     bind_id_textlist_backspace,
+    bind_id_textlist_delete,
     bind_id_textlist_escape,
     bind_id_textlist_enter,
     bind_id_textlist_insert,
@@ -51,6 +52,7 @@ extern setting_enum g_ignore_case;
 extern setting_bool g_fuzzy_accent;
 extern const char* get_popup_colors();
 extern const char* get_popup_desc_colors();
+extern int host_remove_history(int rl_history_index, const char* line);
 
 //------------------------------------------------------------------------------
 static textlist_impl* s_textlist = nullptr;
@@ -236,7 +238,7 @@ textlist_impl::textlist_impl(input_dispatcher& dispatcher)
 }
 
 //------------------------------------------------------------------------------
-popup_results textlist_impl::activate(const char* title, const char** entries, int count, int index, bool reverse, int history_mode, const entry_info* infos, bool has_columns)
+popup_results textlist_impl::activate(const char* title, const char** entries, int count, int index, bool reverse, int history_mode, entry_info* infos, bool has_columns)
 {
     reset();
     m_results.clear();
@@ -302,6 +304,7 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
 
     assert(!m_active);
     m_active = true;
+    m_reset_history_index = false;
     update_display();
 
     m_dispatcher.dispatch(m_bind_group);
@@ -336,6 +339,7 @@ void textlist_impl::bind_input(binder& binder)
     const char* esc = get_bindable_esc();
 
     m_bind_group = binder.create_group("textlist");
+
     binder.bind(m_bind_group, "\\e[A", bind_id_textlist_up);            // Up
     binder.bind(m_bind_group, "\\e[B", bind_id_textlist_down);          // Down
     binder.bind(m_bind_group, "\\e[5~", bind_id_textlist_pgup);         // PgUp
@@ -351,6 +355,9 @@ void textlist_impl::bind_input(binder& binder)
     binder.bind(m_bind_group, "\\r", bind_id_textlist_enter);           // Enter
     binder.bind(m_bind_group, "\\e[27;2;13~", bind_id_textlist_insert); // Shift+Enter
     binder.bind(m_bind_group, "\\e[27;5;13~", bind_id_textlist_insert); // Ctrl+Enter
+
+    binder.bind(m_bind_group, "^d", bind_id_textlist_delete);           // Ctrl+D
+    binder.bind(m_bind_group, "\\e[3~", bind_id_textlist_delete);       // Del
 
     binder.bind(m_bind_group, "^g", bind_id_textlist_escape);           // Ctrl+G
     if (esc)
@@ -537,6 +544,56 @@ find:
             const char* text = m_entries[m_index];
             os::set_clipboard_text(text, int(strlen(text)));
             set_input_clears_needle = false;
+        }
+        break;
+
+    case bind_id_textlist_delete:
+        if (m_history_mode)
+        {
+            m_reset_history_index = true;
+            // Remove the corresponding persisted history entry.
+            const int history_index = m_infos[m_index].index;
+            host_remove_history(history_index, nullptr);
+            // Remove the corresponding entry from Readline's copy of history.
+            HIST_ENTRY* hist = remove_history(history_index);
+            free_history_entry(hist);
+            // Remove the item from the popup list.
+            int move_count = (m_count - 1) - m_index;
+            memmove(m_entries + m_index, m_entries + m_index + 1, move_count * sizeof(m_entries[0]));
+            memmove(m_infos + m_index, m_infos + m_index + 1, move_count * sizeof(m_infos[0]));
+            m_items.erase(m_items.begin() + m_index);
+            for (entry_info* info = m_infos + m_index; move_count--; info++)
+                info->index--;
+            m_count--;
+            if (!m_count)
+            {
+                cancel(popup_result::cancel);
+                return;
+            }
+            // Move index.
+            if (m_index > 0)
+                m_index--;
+            // Redisplay.
+            {
+                update_layout();
+
+                int delta = m_index - m_top;
+                if (delta >= m_visible_rows - 1)
+                    delta = m_visible_rows - 2;
+                if (delta <= 0)
+                    delta = 1;
+                if (delta >= m_visible_rows)
+                    delta = 0;
+
+                int top = max<int>(0, m_index - delta);
+                const int max_top = max<int>(0, m_count - m_visible_rows);
+                if (top > max_top)
+                    top = max_top;
+                set_top(top);
+
+                m_prev_displayed = -1;
+                update_display();
+            }
         }
         break;
 
@@ -748,6 +805,13 @@ void textlist_impl::cancel(popup_result result)
         }
     }
 
+    if (m_reset_history_index)
+    {
+        rl_replace_line("", 1);
+        using_history();
+        m_reset_history_index = false;
+    }
+
     m_active = false;
 }
 
@@ -781,6 +845,67 @@ void textlist_impl::update_top()
     }
     assert(m_top >= 0);
     assert(m_top <= max<int>(0, m_count - m_visible_rows));
+}
+
+//------------------------------------------------------------------------------
+static void make_horz_border(const char* message, int col_width, bool bars, str_base& out)
+{
+    out.clear();
+
+    if (!message || !*message)
+    {
+        while (col_width-- > 0)
+            out.concat("\xe2\x94\x80", 3);
+        return;
+    }
+
+    int cells = 0;
+    int len = 0;
+
+    {
+        const char* walk = message;
+        int remaining = col_width - (2 + 2); // Bars, spaces.
+        str_iter iter(message);
+        while (int c = iter.next())
+        {
+            const int width = clink_wcwidth(c);
+            if (width > remaining)
+                break;
+            cells += width;
+            remaining -= width;
+            len = iter.get_pointer() - message;
+        }
+    }
+
+    int x = (col_width - cells) / 2;
+    x--;
+
+    for (int i = x; i-- > 0;)
+    {
+        if (i == 0 && bars)
+            out.concat("\xe2\x94\xa4", 3);
+        else
+            out.concat("\xe2\x94\x80", 3);
+    }
+
+    x += 1 + cells + 1;
+    out.concat(" ", 1);
+    out.concat(message, len);
+    out.concat(" ", 1);
+
+    bool cap = bars;
+    for (int i = col_width - x; i-- > 0;)
+    {
+        if (cap)
+        {
+            cap = false;
+            out.concat("\xe2\x94\x9c", 3);
+        }
+        else
+        {
+            out.concat("\xe2\x94\x80", 3);
+        }
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -838,8 +963,6 @@ void textlist_impl::update_display()
             str<> noescape;
             str<> left;
             str<> horzline;
-            for (int i = col_width - 2; i--;)
-                horzline.concat("\xe2\x94\x80", 3);
 
             {
                 int x = csbi.dwCursorPosition.X - ((col_width + 1) / 2);
@@ -864,66 +987,11 @@ void textlist_impl::update_display()
             // Display border.
             if (draw_border)
             {
-                const str_base* topline = &horzline;
-                if (m_default_title.length() || m_override_title.length())
-                {
-                    const char* title = m_has_override_title ? m_override_title.c_str() : m_default_title.c_str();
-                    int title_cells = 0;
-                    int title_len = 0;
-
-                    {
-                        const char* walk = title;
-                        int remaining = col_width - (2 + 2 + 2); // Corners, bars, spaces.
-                        str_iter iter(title);
-                        while (int c = iter.next())
-                        {
-                            const int width = clink_wcwidth(c);
-                            if (width > remaining)
-                                break;
-                            title_cells += width;
-                            remaining -= width;
-                            title_len = iter.get_pointer() - title;
-                        }
-                    }
-
-                    int x = (col_width - 2 - title_cells) / 2;
-                    tmp.clear();
-                    x--;
-
-                    for (int i = x; i-- > 0;)
-                    {
-                        if (i == 0 && m_has_override_title)
-                            tmp.concat("\xe2\x94\xa4", 3);
-                        else
-                            tmp.concat("\xe2\x94\x80", 3);
-                    }
-
-                    x += 1 + title_cells + 1;
-                    tmp.concat(" ", 1);
-                    tmp.concat(title, title_len);
-                    tmp.concat(" ", 1);
-
-                    bool cap = m_has_override_title;
-                    for (int i = col_width - 2 - x; i-- > 0;)
-                    {
-                        if (cap)
-                        {
-                            cap = false;
-                            tmp.concat("\xe2\x94\x9c", 3);
-                        }
-                        else
-                        {
-                            tmp.concat("\xe2\x94\x80", 3);
-                        }
-                    }
-
-                    topline = &tmp;
-                }
-
+                make_horz_border(m_has_override_title ? m_override_title.c_str() : m_default_title.c_str(), col_width - 2, m_has_override_title, horzline);
                 m_printer->print(left.c_str(), left.length());
                 m_printer->print(color.c_str(), color.length());
                 m_printer->print("\xe2\x94\x8c");                       // ┌
-                m_printer->print(topline->c_str(), topline->length());  // ─
+                m_printer->print(horzline.c_str(), horzline.length());  // ─
                 m_printer->print("\xe2\x94\x90\x1b[m");                 // ┐
             }
 
@@ -1012,6 +1080,7 @@ void textlist_impl::update_display()
             {
                 rl_crlf();
                 up++;
+                make_horz_border(m_history_mode ? "Del=Delete" : nullptr, col_width - 2, true/*bars*/, horzline);
                 m_printer->print(left.c_str(), left.length());
                 m_printer->print(color.c_str(), color.length());
                 m_printer->print("\xe2\x94\x94");                       // └
@@ -1151,7 +1220,7 @@ popup_results activate_directories_text_list(const char** dirs, int count)
 }
 
 //------------------------------------------------------------------------------
-popup_results activate_history_text_list(const char** history, int count, int current, const entry_info* infos, int history_mode)
+popup_results activate_history_text_list(const char** history, int count, int current, entry_info* infos, int history_mode)
 {
     if (!s_textlist)
         return popup_result::error;

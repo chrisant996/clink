@@ -52,7 +52,7 @@ class textlist_impl
 public:
                     textlist_impl(input_dispatcher& dispatcher);
 
-    popup_results   activate(const char* title, const char** entries, int count, int index, bool reverse, int history_mode, const entry_info* infos, bool columns);
+    popup_results   activate(const char* title, const char** entries, int count, int index, bool reverse, int history_mode, entry_info* infos, bool columns);
 
 private:
     // editor_module.
@@ -74,6 +74,7 @@ private:
     // Result.
     popup_results   m_results;
     bool            m_active = false;
+    bool            m_reset_history_index = false;
 
     // Initialization state.
     input_dispatcher& m_dispatcher;
@@ -92,7 +93,7 @@ private:
     // Entries.
     int             m_count = 0;
     const char**    m_entries = nullptr;    // Original entries from caller.
-    const entry_info* m_infos = nullptr;    // Original entry numbers/etc from caller.
+    entry_info*     m_infos = nullptr;      // Original entry numbers/etc from caller.
     std::vector<const char*> m_items;       // Escaped entries for display.
     int             m_longest = 0;
     addl_columns    m_columns;
@@ -133,4 +134,4 @@ private:
 };
 
 //------------------------------------------------------------------------------
-popup_results activate_history_text_list(const char** history, int count, int index, const entry_info* infos, int history_mode);
+popup_results activate_history_text_list(const char** history, int count, int index, entry_info* infos, int history_mode);
