@@ -2,6 +2,13 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.3.4
+
+- Pressing <kbd>Del</kbd> or <kbd>Ctrl</kbd>+<kbd>D</kbd> in a command history popup deletes the selected history entry.
+- Fixed accidentally using only one column in `clink-select-complete` when there are 9 or fewer matches and none of them have description text (regression introduced in v1.3.3).
+- Fixed cursor style when using `clink` to start a new command window from inside a Windows Terminal window.
+- Fixed a memory leak.
+
 #### v1.3.3
 
 - Match completion display calculates column widths to fit the most columns on the screen.  Can be controlled by the `match.fit_columns` and `match.limit_fitted_columns` settings.
