@@ -48,5 +48,9 @@ goto :eof
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :launch
+setlocal
+set WT_PROFILE_ID=
+set WT_SESSION=
 start "Clink" cmd.exe /s /k ""%~dpnx0" inject %clink_profile_arg%%clink_quiet_arg%"
+endlocal
 exit /b 0
