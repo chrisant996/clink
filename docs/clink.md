@@ -701,6 +701,7 @@ Key | Description
 <kbd>Enter</kbd>|Inserts the highlighted completion, changes to the highlighted directory, or executes the highlighted command.
 <kbd>Shift</kbd>+<kbd>Enter</kbd>|Inserts the highlighted completion, inserts the highlighted directory, or jumps to the highlighted command history entry without executing it.
 <kbd>Ctrl</kbd>+<kbd>Enter</kbd>|Same as <kbd>Shift</kbd>+<kbd>Enter</kbd>.
+<kbd>Del</kbd>|In a command history popup, <kbd>Del</kbd> deletes the selected history entry.
 
 Most of the popup windows also have incremental search:
 
