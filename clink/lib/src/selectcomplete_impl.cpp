@@ -954,8 +954,6 @@ void selectcomplete_impl::update_len()
 //------------------------------------------------------------------------------
 void selectcomplete_impl::update_layout()
 {
-    const bool desc_inline = !m_desc_below && m_matches.has_descriptions();
-
 #ifdef DEBUG
     m_annotate = !!dbg_get_env_int("DEBUG_SHOWTYPES");
     m_col_extra = m_annotate ? 3 : 0;   // Room for space hex hex.
@@ -970,7 +968,8 @@ void selectcomplete_impl::update_layout()
 #endif
         const bool best_fit = g_match_best_fit.get();
         const int limit_fit = g_match_limit_fitted.get();
-        const bool one_column = !m_desc_below && m_matches.get_match_count() <= DESC_ONE_COLUMN_THRESHOLD;
+        const bool desc_inline = !m_desc_below && m_matches.has_descriptions();
+        const bool one_column = desc_inline && m_matches.get_match_count() <= DESC_ONE_COLUMN_THRESHOLD;
         m_widths = calculate_columns(&m_matches, best_fit ? limit_fit : -1, one_column, m_desc_below, col_extra);
         m_calc_widths = false;
     }
