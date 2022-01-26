@@ -155,7 +155,8 @@ static bool load_internal(FILE* in, std::function<void(const char* name, const c
 }
 
 //------------------------------------------------------------------------------
-static void load_custom_defaults(const char* file)
+// Mingw can't handle 'static' here, due to 'friend'.
+/*static*/ void load_custom_defaults(const char* file)
 {
     auto& map = get_custom_default_map();
     map.clear();
