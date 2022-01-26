@@ -337,7 +337,7 @@ local set = clink.argmatcher()
 :setclassifier(classify_handler)
 
 --------------------------------------------------------------------------------
-local history = clink.argmatcher()
+local history = clink.argmatcher("history")
 :addflags(
     "--help",
     "--bare",
