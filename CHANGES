@@ -5,8 +5,13 @@
 #### v1.3.4
 
 - Pressing <kbd>Del</kbd> or <kbd>Ctrl</kbd>+<kbd>D</kbd> in a command history popup deletes the selected history entry.
+- Added an argmatcher for `history`.
+- Improvements to the `default_settings` file:
+  - It is loaded from the profile directory, or from the binaries directory.
+  - Settings are now saved if they are set (vs clear by `clink set setting.name clear`), even if the set value matches the default value.
 - Fixed accidentally using only one column in `clink-select-complete` when there are 9 or fewer matches and none of them have description text (regression introduced in v1.3.3).
 - Fixed cursor style when using `clink` to start a new command window from inside a Windows Terminal window.
+- Fixed quirk when using Clink file completion to complete a directory name for `clink --profile \foo\`, so that the path doesn't end up malformed.
 - Fixed a memory leak.
 
 #### v1.3.3
