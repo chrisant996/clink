@@ -155,30 +155,29 @@ static bool load_internal(FILE* in, std::function<void(const char* name, const c
 }
 
 //------------------------------------------------------------------------------
-static void load_custom_defaults()
+static void load_custom_defaults(const char* file)
 {
     auto& map = get_custom_default_map();
     map.clear();
 
-    str<280> def(s_binaries_dir.c_str());
+    str<280> def(file);
+    path::to_parent(def, nullptr);
     path::append(def, "default_settings");
     FILE* in = fopen(def.c_str(), "rb");
     if (in == nullptr)
-        return;
+    {
+        def = s_binaries_dir.c_str();
+        path::append(def, "default_settings");
+        in = fopen(def.c_str(), "rb");
+        if (in == nullptr)
+            return;
+    }
 
     load_internal(in, [&map](const char* name, const char* value, const char* comment)
     {
-        auto s = settings::find(name);
-        if (s)
-        {
-            s->override_default(value);
-        }
-        else
-        {
-            loaded_setting custom_default;
-            custom_default.value = value;
-            map.emplace(name, std::move(custom_default));
-        }
+        loaded_setting custom_default;
+        custom_default.value = value;
+        map.emplace(name, std::move(custom_default));
     });
 
     fclose(in);
@@ -373,7 +372,7 @@ bool load(const char* file)
     if (file != g_last_file->c_str())
         *g_last_file = file;
 
-    load_custom_defaults();
+    load_custom_defaults(file);
     get_loaded_map().clear();
 
     // Reset settings to default.
@@ -447,8 +446,8 @@ static bool save_internal(const char* file, bool migrating)
         if (loaded != get_loaded_map().end())
             loaded->second.saved = true;
 
-        // Don't write out settings that aren't modified from their defaults.
-        if (iter->is_default())
+        // Only write out settings that have been explicitly set.
+        if (!iter->is_saveable())
             continue;
 
         fprintf(out, "# name: %s\n", iter->get_short_desc());
@@ -798,20 +797,6 @@ setting_color::setting_color(const char* name, const char* short_desc, const cha
 }
 
 //------------------------------------------------------------------------------
-bool setting_color::is_default() const
-{
-    str<> value;
-    get_descriptive(value);
-    return value.equals(static_cast<const char*>(m_default));
-}
-
-//------------------------------------------------------------------------------
-void setting_color::set()
-{
-    set(static_cast<const char*>(m_default));
-}
-
-//------------------------------------------------------------------------------
 static const char* const color_names[] = { "black", "red", "green", "yellow", "blue", "magenta", "cyan", "white" };
 
 //------------------------------------------------------------------------------
@@ -1079,23 +1064,3 @@ nope:
     while (out.length() && out.c_str()[out.length() - 1] == ' ')
         out.truncate(out.length() - 1);
 }
-
-//------------------------------------------------------------------------------
-bool setting_color::override_default(const char* value)
-{
-    if (is_default())
-    {
-        if (!parse(value, m_store))
-            return false;
-    }
-    else
-    {
-        store<const char*> verify;
-        if (!parse(value, verify))
-            return false;
-    }
-    m_default.value = value;
-    return true;
-}
-
-
