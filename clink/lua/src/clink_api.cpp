@@ -407,16 +407,12 @@ bool recognizer::store(const char* word, char cached, bool pending)
         return true;
     }
 
-    dbg_snapshot_heap(snapshot_store);
+    dbg_ignore_scope(snapshot, "Recognizer");
     const char* key = m_heap.store(word);
-    dbg_ignore_since_snapshot(snapshot_store, "Recognizer store");
     if (!key)
         return false;
 
-    dbg_snapshot_heap(snapshot_cache);
     map.emplace(key, cached);
-    dbg_ignore_since_snapshot(snapshot_cache, "Recognizer cache");
-
     set_result_available(true);
     return true;
 }
