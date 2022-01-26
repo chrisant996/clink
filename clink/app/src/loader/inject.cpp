@@ -376,6 +376,19 @@ static DWORD find_inject_target()
 //------------------------------------------------------------------------------
 void get_profile_path(const char* in, str_base& out)
 {
+    // Work around completion issue with clink.bat:
+    // `clink --profile \foo\` turns into `--profile "\foo\"` which turns into
+    // `c:\foo"` as the profile directory.
+    str<> _in;
+    {
+        const char* quote = strchr(in, '"');
+        if (quote && quote[1] == '\0')
+        {
+            _in.concat(in, static_cast<unsigned int>(quote - in));
+            in = _in.c_str();
+        }
+    }
+
     os::get_current_dir(out);
 
     if (in[0] == '~' && (!in[1] || path::is_separator(in[1])))
@@ -392,6 +405,9 @@ void get_profile_path(const char* in, str_base& out)
 
     path::append(out, in);
     path::normalise(out);
+
+    _in = out.c_str();
+    os::get_full_path_name(_in.c_str(), out);
 }
 
 //------------------------------------------------------------------------------
