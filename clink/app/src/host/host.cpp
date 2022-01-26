@@ -1047,6 +1047,8 @@ void host::update_last_cwd()
     str<> cwd;
     os::get_current_dir(cwd);
 
+    dbg_ignore_scope(snapshot, "History");
+
     wstr_moveable wcwd(cwd.c_str());
     if (wcwd.iequals(m_last_cwd.c_str()))
     {
