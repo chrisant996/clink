@@ -499,10 +499,18 @@ void recognizer::proc(recognizer* r)
         }
 
         entry entry;
-        while (r->dequeue(entry))
+        while (true)
         {
             {
                 std::lock_guard<std::recursive_mutex> lock(r->m_mutex);
+                if (r->m_zombie || !r->dequeue(entry))
+                {
+                    r->m_processing = false;
+                    r->m_pending.clear();
+                    if (!r->m_zombie)
+                        r->notify_ready(false);
+                    break;
+                }
                 r->m_processing = true;
             }
 
@@ -539,13 +547,6 @@ executable:
                 r->notify_ready(true);
             }
         }
-
-        std::lock_guard<std::recursive_mutex> lock(r->m_mutex);
-        r->m_processing = false;
-        r->m_pending.clear();
-        if (r->m_zombie)
-            break;
-        r->notify_ready(false);
     }
 }
 
