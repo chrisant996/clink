@@ -66,6 +66,8 @@ void                TEST_set_ever_loaded();
 //------------------------------------------------------------------------------
 class setting
 {
+    friend void load_custom_defaults();
+
 public:
     enum type_e : unsigned char {
         type_unknown,
@@ -90,6 +92,8 @@ public:
 
 protected:
                     setting(const char* name, const char* short_desc, const char* long_desc, type_e type);
+    const char*     get_custom_default() const;
+    virtual bool    override_default(const char* value) = 0;
     str<settings::c_max_len_name + 1, false> m_name;
     str<settings::c_max_len_short_desc + 1, false> m_short_desc;
     str<128>        m_long_desc;
@@ -127,10 +131,11 @@ public:
     virtual void    set() override;
     virtual bool    set(const char* value) override;
     virtual void    get(str_base& out) const override;
-
     void            deferred_load();
 
 protected:
+    virtual bool    parse(const char* value, store<T>& out);
+    virtual bool    override_default(const char* value) override;
     struct          type;
     store<T>        m_store;
     store<T>        m_default;
@@ -153,14 +158,26 @@ template <typename T> setting_impl<T>::setting_impl(
     T default_value)
 : setting(name, short_desc, long_desc, type_e(type::id))
 {
-    m_default.value = default_value;
-    m_store.value = default_value;
+    const char* custom_default = get_custom_default();
+    if (!custom_default ||
+        !parse(custom_default, m_default) ||
+        !parse(custom_default, m_store))
+    {
+        m_default.value = default_value;
+        m_store.value = default_value;
+    }
 }
 
 //------------------------------------------------------------------------------
 template <typename T> void setting_impl<T>::set()
 {
     m_store.value = T(m_default);
+}
+
+//------------------------------------------------------------------------------
+template <typename T> bool setting_impl<T>::set(const char* value)
+{
+    return parse(value, m_store);
 }
 
 //------------------------------------------------------------------------------
@@ -183,6 +200,14 @@ template <typename T> void setting_impl<T>::deferred_load()
         set(value);
 }
 
+//------------------------------------------------------------------------------
+template <typename T> bool setting_impl<T>::override_default(const char* value)
+{
+    if (is_default() && !parse(value, m_store))
+        return false;
+    return parse(value, m_default);
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -202,13 +227,13 @@ class setting_enum
 public:
                        setting_enum(const char* name, const char* short_desc, const char* values, int default_value);
                        setting_enum(const char* name, const char* short_desc, const char* long_desc, const char* values, int default_value);
-    virtual bool       set(const char* value) override;
     virtual void       get(str_base& out) const override;
     const char*        get_options() const;
 
     using setting_impl<int>::get;
 
 protected:
+    virtual bool       parse(const char* value, store<int>& out) override;
     static const char* next_option(const char* option);
     str<48>            m_options;
 };
@@ -222,6 +247,9 @@ public:
                        setting_color(const char* name, const char* short_desc, const char* long_desc, const char* default_value);
     virtual bool       is_default() const override;
     virtual void       set() override;
-    virtual bool       set(const char* value) override;
+    virtual bool       set(const char* value) override { return setting_str::set(value); }
     virtual void       get_descriptive(str_base& out) const override;
+protected:
+    virtual bool       parse(const char* value, store<const char*>& out) override;
+    virtual bool       override_default(const char* value) override;
 };

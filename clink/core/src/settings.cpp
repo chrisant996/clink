@@ -10,6 +10,7 @@
 #include <assert.h>
 #include <string>
 #include <map>
+#include <functional>
 
 #include "debugheap.h"
 
@@ -28,6 +29,7 @@ typedef std::map<std::string, loaded_setting> loaded_settings_map;
 //------------------------------------------------------------------------------
 static setting_map* g_setting_map = nullptr;
 static loaded_settings_map* g_loaded_settings = nullptr;
+static loaded_settings_map* g_custom_defaults = nullptr;
 static str_moveable* g_last_file = nullptr;
 static str_moveable s_binaries_dir;
 
@@ -50,6 +52,13 @@ static auto& get_loaded_map()
     return *g_loaded_settings;
 }
 
+static auto& get_custom_default_map()
+{
+    if (!g_custom_defaults)
+        g_custom_defaults = new loaded_settings_map;
+    return *g_custom_defaults;
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -68,6 +77,111 @@ setting* setting_iter::next()
     auto* i = m_iter->second;
     m_iter++;
     return i;
+}
+
+
+
+//------------------------------------------------------------------------------
+static bool load_internal(FILE* in, std::function<void(const char* name, const char* value, const char* comment)> load_setting)
+{
+    dbg_ignore_scope(snapshot, "Settings");
+
+    // Buffer the file.
+    fseek(in, 0, SEEK_END);
+    int size = ftell(in);
+    fseek(in, 0, SEEK_SET);
+
+    if (size == 0)
+    {
+        fclose(in);
+        return false;
+    }
+
+    str<4096> buffer;
+    buffer.reserve(size);
+
+    char* data = buffer.data();
+    fread(data, size, 1, in);
+    fclose(in);
+    data[size] = '\0';
+
+    // Split at new lines.
+    bool was_comment = false;
+    str<> comment;
+    str<256> line;
+    str_tokeniser lines(buffer.c_str(), "\n\r");
+    while (lines.next(line))
+    {
+        char* line_data = line.data();
+
+        // Clear the comment accumulator after a non-comment line.
+        if (!was_comment)
+            comment.clear();
+
+        // Skip line's leading whitespace.
+        while (isspace(*line_data))
+            ++line_data;
+
+        // Comment?
+        if (line_data[0] == '#')
+        {
+            was_comment = true;
+            comment.concat(line_data);
+            comment.concat("\n");
+            continue;
+        }
+
+        // 'key = value'?
+        was_comment = false;
+        char* value = strchr(line_data, '=');
+        if (value == nullptr)
+            continue;
+
+        *value++ = '\0';
+
+        // Trim whitespace.
+        char* key_end = value - 2;
+        while (key_end >= line_data && isspace(*key_end))
+            --key_end;
+        key_end[1] = '\0';
+
+        while (*value && isspace(*value))
+            ++value;
+
+        load_setting(line_data, value, comment.c_str());
+    }
+
+    return true;
+}
+
+//------------------------------------------------------------------------------
+static void load_custom_defaults()
+{
+    auto& map = get_custom_default_map();
+    map.clear();
+
+    str<280> def(s_binaries_dir.c_str());
+    path::append(def, "default_settings");
+    FILE* in = fopen(def.c_str(), "rb");
+    if (in == nullptr)
+        return;
+
+    load_internal(in, [&map](const char* name, const char* value, const char* comment)
+    {
+        auto s = settings::find(name);
+        if (s)
+        {
+            s->override_default(value);
+        }
+        else
+        {
+            loaded_setting custom_default;
+            custom_default.value = value;
+            map.emplace(name, std::move(custom_default));
+        }
+    });
+
+    fclose(in);
 }
 
 
@@ -259,12 +373,16 @@ bool load(const char* file)
     if (file != g_last_file->c_str())
         *g_last_file = file;
 
+    load_custom_defaults();
     get_loaded_map().clear();
+
+    // Reset settings to default.
+    for (auto iter = settings::first(); auto* next = iter.next();)
+        next->set();
 
     // Maybe migrate settings.
     str<> old_file;
     bool migrating = false;
-    bool save = false;
 
     // Open the file.
     FILE* in = fopen(file, "rb");
@@ -275,112 +393,33 @@ bool load(const char* file)
         path::get_directory(file, old_file);
         path::append(old_file, "settings");
         in = fopen(old_file.c_str(), "rb");
-        migrating = (in != nullptr);
-        if (!migrating && !s_binaries_dir.empty())
-        {
-            str<280> def(s_binaries_dir.c_str());
-            path::append(def, "default_settings");
-            in = fopen(def.c_str(), "rb");
-            if (in == nullptr)
-                return false;
-
-            // Reads from default_settings and writes to file.
-            save = true;
-        }
+        if (in == nullptr)
+            return false;
+        migrating = true;
     }
 
-    // Buffer the file.
-    fseek(in, 0, SEEK_END);
-    int size = ftell(in);
-    fseek(in, 0, SEEK_SET);
-
-    if (size == 0)
+    load_internal(in, [migrating](const char* name, const char* value, const char* comment)
     {
-        fclose(in);
-        return false;
-    }
-
-    str<4096> buffer;
-    buffer.reserve(size);
-
-    char* data = buffer.data();
-    fread(data, size, 1, in);
-    fclose(in);
-    data[size] = '\0';
-
-    // Reset settings to default.
-    for (auto iter = settings::first(); auto* next = iter.next();)
-        next->set();
-
-    // Split at new lines.
-    bool was_comment = false;
-    str<> comment;
-    str<256> line;
-    str_tokeniser lines(buffer.c_str(), "\n\r");
-    while (lines.next(line))
-    {
-        char* line_data = line.data();
-
-        // Clear the comment accumulator after a non-comment line.
-        if (!was_comment)
-            comment.clear();
-
-        // Skip line's leading whitespace.
-        while (isspace(*line_data))
-            ++line_data;
-
-        // Comment?
-        if (line_data[0] == '#')
-        {
-            was_comment = true;
-            comment.concat(line_data);
-            comment.concat("\n");
-            continue;
-        }
-
-        // 'key = value'?
-        was_comment = false;
-        char* value = strchr(line_data, '=');
-        if (value == nullptr)
-            continue;
-
-        *value++ = '\0';
-
-        // Trim whitespace.
-        char* key_end = value - 2;
-        while (key_end >= line_data && isspace(*key_end))
-            --key_end;
-        key_end[1] = '\0';
-
-        while (*value && isspace(*value))
-            ++value;
-
         // Migrate old setting.
         if (migrating)
         {
             std::vector<settings::setting_name_value> migrated_settings;
-            if (migrate_setting(line_data, value, migrated_settings))
+            if (migrate_setting(name, value, migrated_settings))
             {
-                dbg_ignore_scope(snapshot, "Settings");
                 for (const auto& pair : migrated_settings)
                     set_setting(pair.name.c_str(), pair.value.c_str());
             }
-
-            continue;
+            return;
         }
 
         // Find the setting and set its value.
-        dbg_ignore_scope(snapshot, "Settings");
-        set_setting(line_data, value, comment.c_str());
-    }
+        set_setting(name, value, comment);
+    });
 
     // When migrating, ensure the new settings file is created so that the old
     // settings file can be deleted.  Some users or distributions may naturally
     // clean up the old settings file, so don't rely on it staying around.
-    // When reading from default_settings, ensure the new settings file is
-    // created so that default_settings is used only the first time (for
-    // cleanliness and predictability).
-    if (migrating || save)
+    if (migrating)
         save_internal(file, migrating);
 
     return true;
@@ -565,23 +604,32 @@ const char* setting::get_loaded_value(const char* name)
     return loaded->second.value.c_str();
 }
 
+//------------------------------------------------------------------------------
+const char* setting::get_custom_default() const
+{
+    const auto custom_default = get_custom_default_map().find(m_name.c_str());
+    if (custom_default == get_custom_default_map().end())
+        return nullptr;
+    return custom_default->second.value.c_str();
+}
+
 
 
 //------------------------------------------------------------------------------
-template <> bool setting_impl<bool>::set(const char* value)
+template <> bool setting_impl<bool>::parse(const char* value, store<bool>& out)
 {
-    if (stricmp(value, "true") == 0)  { m_store.value = 1; return true; }
-    if (stricmp(value, "false") == 0) { m_store.value = 0; return true; }
+    if (stricmp(value, "true") == 0)  { out.value = 1; return true; }
+    if (stricmp(value, "false") == 0) { out.value = 0; return true; }
 
-    if (stricmp(value, "on") == 0)    { m_store.value = 1; return true; }
-    if (stricmp(value, "off") == 0)   { m_store.value = 0; return true; }
+    if (stricmp(value, "on") == 0)    { out.value = 1; return true; }
+    if (stricmp(value, "off") == 0)   { out.value = 0; return true; }
 
-    if (stricmp(value, "yes") == 0)   { m_store.value = 1; return true; }
-    if (stricmp(value, "no") == 0)    { m_store.value = 0; return true; }
+    if (stricmp(value, "yes") == 0)   { out.value = 1; return true; }
+    if (stricmp(value, "no") == 0)    { out.value = 0; return true; }
 
     if (*value >= '0' && *value <= '9')
     {
-        m_store.value = !!atoi(value);
+        out.value = !!atoi(value);
         return true;
     }
 
@@ -589,19 +637,19 @@ template <> bool setting_impl<bool>::set(const char* value)
 }
 
 //------------------------------------------------------------------------------
-template <> bool setting_impl<int>::set(const char* value)
+template <> bool setting_impl<int>::parse(const char* value, store<int>& out)
 {
     if ((*value < '0' || *value > '9') && *value != '-')
         return false;
 
-    m_store.value = atoi(value);
+    out.value = atoi(value);
     return true;
 }
 
 //------------------------------------------------------------------------------
-template <> bool setting_impl<const char*>::set(const char* value)
+template <> bool setting_impl<const char*>::parse(const char* value, store<const char*>& out)
 {
-    m_store.value = value;
+    out.value = value;
     return true;
 }
 
@@ -651,7 +699,7 @@ setting_enum::setting_enum(
 }
 
 //------------------------------------------------------------------------------
-bool setting_enum::set(const char* value)
+bool setting_enum::parse(const char* value, store<int>& out)
 {
     int by_int = -1;
     if (*value >= '0' && *value <= '9')
@@ -677,7 +725,7 @@ bool setting_enum::set(const char* value)
         if ((by_int == 0) ||
             (by_int < 0 && _strnicmp(option, value, option_len) == 0))
         {
-            m_store.value = i;
+            out.value = i;
             return true;
         }
 
@@ -767,10 +815,13 @@ void setting_color::set()
 static const char* const color_names[] = { "black", "red", "green", "yellow", "blue", "magenta", "cyan", "white" };
 
 //------------------------------------------------------------------------------
-bool setting_color::set(const char* value)
+bool setting_color::parse(const char* value, store<const char*>& out)
 {
     if (!value || !*value)
-        return setting_str::set("");
+    {
+        out.value.clear();
+        return true;
+    }
 
     str<> code;
     str<16> token;
@@ -797,7 +848,8 @@ bool setting_color::set(const char* value)
                 code.concat(part.get_pointer(), part.length());
             if (parts.next(part)) // too many tokens
                 return false;
-            return setting_str::set(code.c_str());
+            out.value = code.c_str();
+            return true;
         }
 
         first_part = false;
@@ -901,7 +953,8 @@ bool setting_color::set(const char* value)
         code << ";49";
     }
 
-    return setting_str::set(code.c_str());
+    out.value = code.c_str();
+    return true;
 }
 
 //------------------------------------------------------------------------------
@@ -1026,3 +1079,23 @@ nope:
     while (out.length() && out.c_str()[out.length() - 1] == ' ')
         out.truncate(out.length() - 1);
 }
+
+//------------------------------------------------------------------------------
+bool setting_color::override_default(const char* value)
+{
+    if (is_default())
+    {
+        if (!parse(value, m_store))
+            return false;
+    }
+    else
+    {
+        store<const char*> verify;
+        if (!parse(value, verify))
+            return false;
+    }
+    m_default.value = value;
+    return true;
+}
+
+
