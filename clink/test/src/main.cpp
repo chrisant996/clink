@@ -7,6 +7,12 @@
 #include "core/settings.h"
 #include "core/os.h"
 
+extern "C" {
+#include <readline/readline.h>
+#include <readline/rldefs.h>
+#include <readline/rlprivate.h>
+}
+
 #include <list>
 #include <assert.h>
 
@@ -43,6 +49,8 @@ int main(int argc, char** argv)
 #endif
 
     os::set_shellname(L"clink_test_harness");
+
+    _rl_bell_preference = VISIBLE_BELL;     // Because audible is annoying.
 
     while (argc > 0)
     {
