@@ -5,6 +5,10 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
+- default_settings in binaries dir should be copied to profile dir.
+- default_settings in profile dir can work almost as the binaries dir one currently does, BUT:
+  - Must use built-in defaults to decide when to omit persisting settings values.
+  - Must have some way to override a custom default and force the same value as the built-in default.
 
 ## Normal Priority
 - [ ] Some way to install with all "fancy mode" features set?
