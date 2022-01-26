@@ -42,7 +42,8 @@ struct column_info
 
 //------------------------------------------------------------------------------
 /* Array with information about column filledness.  */
-struct column_info *s_column_info = nullptr;
+static struct column_info *s_column_info = nullptr;
+
 
 
 //------------------------------------------------------------------------------
