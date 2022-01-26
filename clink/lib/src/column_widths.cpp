@@ -95,7 +95,7 @@ int printable_len(const char* match, match_type type)
 /* Allocate enough column info suitable for the current number of
    files and display columns, and initialize the info to represent the
    narrowest possible columns.  */
-static bool init_column_info(int max_matches, size_t max_cols, size_t count, width_t col_padding)
+static bool init_column_info(int max_matches, size_t& max_cols, size_t count, width_t col_padding)
 {
     size_t i;
 
