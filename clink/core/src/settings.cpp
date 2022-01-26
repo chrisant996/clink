@@ -969,6 +969,15 @@ static bool strip_if_ends_with(str_base& s, const char* suffix, unsigned int len
 }
 
 //------------------------------------------------------------------------------
+void setting_color::set()
+{
+    const char* custom_default = get_custom_default();
+    if (!custom_default || !parse(custom_default, m_store))
+        parse(static_cast<const char*>(m_default), m_store);
+    m_save = !is_default();
+}
+
+//------------------------------------------------------------------------------
 void setting_color::get_descriptive(str_base& out) const
 {
     str<> tmp;
