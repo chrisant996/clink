@@ -666,9 +666,11 @@ CALLSTACK_EXTERN_C void dbgtracef(const char* fmt, ...)
     va_start(args, fmt);
 
     char buffer[8192];
-    vsnprintf_s(buffer, _countof(buffer) - 4, _TRUNCATE, fmt, args);
+    size_t size = _countof(buffer) - 4;
+    int used = _snprintf_s(buffer, size, _TRUNCATE, "%u\t", GetCurrentThreadId());
+    used += vsnprintf_s(buffer + used, size - used, _TRUNCATE, fmt, args);
     buffer[_countof(buffer) - 5] = '\0';
-    dbgcchcat(buffer, _countof(buffer), "\r\n");
+    dbgcchcat(buffer + used, size - used, "\r\n");
 
     OutputDebugStringA(buffer);
 
