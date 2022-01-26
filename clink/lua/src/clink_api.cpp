@@ -199,8 +199,15 @@ static recognizer s_recognizer;
 //------------------------------------------------------------------------------
 HANDLE get_recognizer_event()
 {
-    if (g_color_unrecognized.is_default() && g_color_executable.is_default())
-        return nullptr;
+    str<32> tmp;
+    g_color_unrecognized.get_descriptive(tmp);
+    if (tmp.empty())
+    {
+        str<32> tmp2;
+        g_color_executable.get_descriptive(tmp2);
+        if (tmp2.empty())
+            return nullptr;
+    }
 
     // Locking is not needed because concurrency is not possible until after
     // this event has been created, which can only happen on the main thread.
