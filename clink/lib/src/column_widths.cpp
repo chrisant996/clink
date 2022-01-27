@@ -288,6 +288,7 @@ column_widths calculate_columns(match_adapter* adapter, int max_matches, bool on
         if (fixed_cols)
             continue;
 
+        size_t max_valid = -1;
         for (size_t i = 0; i < max_cols; ++i)
         {
             if (s_column_info[i].valid_len)
@@ -303,8 +304,14 @@ column_widths calculate_columns(match_adapter* adapter, int max_matches, bool on
                     s_column_info[i].col_arr[idx] = real_length;
                     s_column_info[i].valid_len = (s_column_info[i].line_len < line_length);
                 }
+
+                if (s_column_info[i].valid_len)
+                    max_valid = i;
             }
         }
+
+        if (max_cols > max_valid + 1)
+            max_cols = max_valid + 1;
     }
 
     assert(common_length <= max_len);
