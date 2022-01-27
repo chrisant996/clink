@@ -14,8 +14,6 @@ struct lab
 
     void from_rgb(COLORREF c);
 
-    bool operator==(lab const &lab) { return !memcmp(this, &lab, sizeof(lab)); }
-
     double l = 0;
     double a = 0;
     double b = 0;

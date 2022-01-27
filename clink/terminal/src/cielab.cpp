@@ -14,7 +14,6 @@ struct xyz
     xyz(COLORREF c) { from_rgb(c); }
 
     void from_rgb(COLORREF c);
-    COLORREF to_rgb() const;
 
     double x = 0;
     double y = 0;
@@ -28,14 +27,6 @@ struct xyz
         else                    d = (d / 12.92);
         return max<>(min<>(d, 1.0), 0.0);
     }
-
-    // XYZ to RGB conversion math shared by each channel
-    static BYTE LinearToSRGB(double val)
-    {
-        if (val > 0.0031308)    val = (1.055 * pow(val, (double(1) / 2.4)) - 0.055);
-        else                    val = (val * 12.92);
-        return BYTE(max<>(min<>(val * 255.0, 255.0), 0.0));
-    }
 };
 
 //------------------------------------------------------------------------------
@@ -48,18 +39,6 @@ void xyz::from_rgb(COLORREF c)
     x = rLinear * 0.4124 + gLinear * 0.3576 + bLinear * 0.1805;
     y = rLinear * 0.2126 + gLinear * 0.7152 + bLinear * 0.0722;
     z = rLinear * 0.0193 + gLinear * 0.1192 + bLinear * 0.9505;
-}
-
-//------------------------------------------------------------------------------
-COLORREF xyz::to_rgb() const
-{
-    double rLinear = x * 3.2406 + y * -1.5372 + z * -0.4986;
-    double gLinear = x * -0.9689 + y * 1.8758 + z * 0.0415;
-    double bLinear = x * 0.0557 + y * -0.2040 + z * 1.0570;
-
-    return RGB(LinearToSRGB(rLinear),
-               LinearToSRGB(gLinear),
-               LinearToSRGB(bLinear));
 }
 
 
