@@ -12,6 +12,7 @@
 - Minor performance improvement when calculating columns widths when `match.fit_columns` is enabled.
 - Fixed accidentally using only one column in `clink-select-complete` when there are 9 or fewer matches and none of them have description text (regression introduced in v1.3.3).
 - Fixed crash when displaying matches and `match.fit_columns` is enabled and the terminal width is greater than 150 characters.
+- Fixed potential busy loop during idle (until a key is pressed) in certain cases (regression introduced in v1.3.3).
 - Fixed the emulated terminal color conversions from 8-bit and 24-bit.
 - Fixed cursor style when using `clink` to start a new command window from inside a Windows Terminal window.
 - Fixed quirk when using Clink file completion to complete a directory name for `clink --profile \foo\`, so that the path doesn't end up malformed.
