@@ -25,7 +25,7 @@ struct xyz
         double d = double(val) / 255;
         if (d > 0.04045)        d = pow(((d + 0.055) / 1.055), 2.4);
         else                    d = (d / 12.92);
-        return max<>(min<>(d, 1.0), 0.0);
+        return max<>(min<>(d, 1.0), 0.0) * 100;
     }
 };
 
