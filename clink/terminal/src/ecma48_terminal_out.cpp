@@ -17,6 +17,9 @@ extern setting_bool g_adjust_cursor_style;
 extern "C" char *tgetstr(const char* name, char** out);
 
 //------------------------------------------------------------------------------
+static unsigned char s_rgb_cube[] = { 0x00, 0x5f, 0x87, 0xaf, 0xd7, 0xff };
+
+//------------------------------------------------------------------------------
 void set_console_title(const char* title)
 {
     wstr<> out;
@@ -349,7 +352,7 @@ void ecma48_terminal_out::set_attributes(const ecma48_code::csi_base& csi)
                         }
                         else if (idx >= 232)
                         {
-                            unsigned char gray = (int(idx) - 232) * 255 / 23;
+                            unsigned char gray = 0x08 + (int(idx) - 232) * 10;
                             if (is_fg)
                                 attr.set_fg(gray, gray, gray);
                             else
@@ -364,9 +367,9 @@ void ecma48_terminal_out::set_attributes(const ecma48_code::csi_base& csi)
                             idx /= 6;
                             unsigned char r = idx;
                             if (is_fg)
-                                attr.set_fg(r * 51, g * 51, b * 51);
+                                attr.set_fg(s_rgb_cube[r], s_rgb_cube[g], s_rgb_cube[b]);
                             else
-                                attr.set_bg(r * 51, g * 51, b * 51);
+                                attr.set_bg(s_rgb_cube[r], s_rgb_cube[g], s_rgb_cube[b]);
                         }
                     }
                     i++;
