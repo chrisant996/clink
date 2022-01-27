@@ -435,20 +435,21 @@ bool recognizer::set_result_available(const bool available)
 {
     std::lock_guard<std::recursive_mutex> lock(m_mutex);
 
-    if (available == m_result_available)
-        return available;
+    const bool was_available = m_result_available;
+    const bool changing = (available != m_result_available);
 
-    m_result_available = available;
+    if (changing)
+        m_result_available = available;
 
     if (s_ready_event)
     {
-        if (available)
-            SetEvent(s_ready_event);
-        else
+        if (!available)
             ResetEvent(s_ready_event);
+        else if (changing)
+            SetEvent(s_ready_event);
     }
 
-    return !available;
+    return was_available;
 }
 
 //------------------------------------------------------------------------------
@@ -459,6 +460,9 @@ void recognizer::notify_ready(bool available)
     if (available)
         set_result_available(available);
 
+    // Always set the ready event, even if no results are available:  this lets
+    // end_line() stop waiting when the queue is finished being processed, even
+    // if no results are available.
     if (s_ready_event)
         SetEvent(s_ready_event);
 }
