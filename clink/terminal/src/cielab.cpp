@@ -47,53 +47,78 @@ namespace cie
 {
 
 //------------------------------------------------------------------------------
+inline double pow2(double x)
+{
+    return x * x;
+}
+
+//------------------------------------------------------------------------------
+inline double pivot_xyz(double n)
+{
+    if (n > 0.008856)   return pow(n, 1.0 / 3.0);
+    else                return (7.787 * n) + (16.0 / 116.0);
+}
+
+//------------------------------------------------------------------------------
 void lab::from_rgb(COLORREF c)
 {
     xyz xyz(c);
 
-    double x = xyz.x / 100; // Equal Energy Reference-X
-    double y = xyz.y / 100; // Equal Energy Reference-Y
-    double z = xyz.z / 100; // Equal Energy Reference-Z
+#if 1
+    // Observer 2°, Illuminant D65 (CIE 1931)
+    constexpr double ref_x =  95.047;
+    constexpr double ref_y = 100.000;
+    constexpr double ref_z = 108.883;
+#else
+    // Observer 10°, Illuminant D65 (CIE 1964)
+    constexpr double ref_x =  94.811;
+    constexpr double ref_y = 100.000;
+    constexpr double ref_z = 107.304;
+#endif
 
-    if (x > 0.008856)   x = pow(x, 1.0 / 3);
-    else                x = (7.787 * x) + (16.0 / 116);
-    if (y > 0.008856)   y = pow(y, 1.0 / 3);
-    else                y = (7.787 * y) + (16.0 / 116);
-    if (z > 0.008856)   z = pow(z, 1.0 / 3);
-    else                z = (7.787 * z) + (16.0 / 116);
+    double x = pivot_xyz(xyz.x / ref_x);
+    double y = pivot_xyz(xyz.y / ref_y);
+    double z = pivot_xyz(xyz.z / ref_z);
 
-    l = (116.0 * y) - 16;
+    l = (116.0 * y) - 16.0;
     a = 500.0 * (x - y);
     b = 200.0 * (y - z);
 }
 
 //------------------------------------------------------------------------------
-float deltaE2(const lab& lab1, const lab& lab2)
+static double deltaE_2_internal(const lab& lab1, const lab& lab2)
 {
     double const deltaE2 = (pow2(lab1.l - lab2.l) +
                             pow2(lab1.a - lab2.a) +
                             pow2(lab1.b - lab2.b));
 
-    return float(deltaE2) * 100;
+    return deltaE2;
 }
 
 //------------------------------------------------------------------------------
-float deltaE(const lab& lab1, const lab& lab2)
+double deltaE_2(const lab& lab1, const lab& lab2)
 {
-    double const deltaE = sqrt(pow2(lab1.l - lab2.l) +
-                               pow2(lab1.a - lab2.a) +
-                               pow2(lab1.b - lab2.b));
-
-    return float(deltaE) * 100;
+    return deltaE_2_internal(lab1, lab2) * 100.0;
 }
 
 //------------------------------------------------------------------------------
-float deltaE(COLORREF c1, COLORREF c2)
+#if 0
+double deltaE(const lab& lab1, const lab& lab2)
+{
+    return sqrt(deltaE_2_internal(lab1, lab2)) * 100.0;
+}
+#endif
+
+//------------------------------------------------------------------------------
+#if 0
+double deltaE(COLORREF c1, COLORREF c2)
 {
     lab lab1(c1);
     lab lab2(c2);
 
-    return deltaE(lab1, lab2);
+    // Clink only needs the least delta, so sqrt() isn't necessary.
+    return deltaE_2(lab1, lab2);
 }
+#endif
 
 };

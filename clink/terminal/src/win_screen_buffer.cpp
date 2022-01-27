@@ -643,13 +643,13 @@ static bool get_nearest_color(void* handle, const unsigned char (&rgb)[3], unsig
         return false;
 
     cie::lab target(RGB(rgb[0], rgb[1], rgb[2]));
-    float best_deltaE = 0;
+    double best_deltaE = 0;
     int best_idx = -1;
 
     for (int i = sizeof_array(infoex.ColorTable); i--;)
     {
         cie::lab candidate(infoex.ColorTable[i]);
-        float deltaE = cie::deltaE(target, candidate);
+        double deltaE = cie::deltaE_2(target, candidate);
         if (best_idx < 0 || best_deltaE > deltaE)
         {
             best_deltaE = deltaE;

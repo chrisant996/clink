@@ -20,14 +20,13 @@ struct lab
 };
 
 //------------------------------------------------------------------------------
-inline double pow2(double x)
-{
-    return x * x;
-}
+// Delta E* CIE (1976)
+double deltaE_2(const lab& lab1, const lab& lab2);      // skips sqrt()
+//double deltaE(const lab& lab1, const lab& lab2);
+//double deltaE(COLORREF c1, COLORREF c2);
 
 //------------------------------------------------------------------------------
-float deltaE2(const lab& lab1, const lab& lab2);    // squared
-float deltaE(const lab& lab1, const lab& lab2);     // sqrt()
-float deltaE(COLORREF c1, COLORREF c2);
+// Delta E 1994 gets confused too easily by luminance.
+// Delta E 2000 uses a lot of trigonometric ratios, and looks too slow.
 
 };
