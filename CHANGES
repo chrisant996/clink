@@ -9,6 +9,7 @@
 - Improvements to the `default_settings` file:
   - It is loaded from the profile directory, or from the binaries directory.
   - Settings are now saved if they are set (vs clear by `clink set setting.name clear`), even if the set value matches the default value.
+- Minor performance improvement when calculating columns widths when `match.fit_columns` is enabled.
 - Fixed accidentally using only one column in `clink-select-complete` when there are 9 or fewer matches and none of them have description text (regression introduced in v1.3.3).
 - Fixed crash when displaying matches and `match.fit_columns` is enabled and the terminal width is greater than 150 characters.
 - Fixed cursor style when using `clink` to start a new command window from inside a Windows Terminal window.
