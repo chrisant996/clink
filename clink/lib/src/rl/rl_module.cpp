@@ -385,6 +385,7 @@ static void LOGCURSORPOS()
 //------------------------------------------------------------------------------
 void set_pending_luafunc(const char* macro)
 {
+    dbg_ignore_scope(snapshot, "s_pending_luafunc");
     s_has_pending_luafunc = true;
     s_pending_luafunc.copy(macro);
 }
