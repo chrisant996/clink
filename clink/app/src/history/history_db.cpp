@@ -517,7 +517,7 @@ template <typename T> int read_lock::for_each_removal(const read_lock& target, T
             char sz[MAX_PATH];
             GetFinalPathNameByHandle(verify_handles.m_handle_lines, sz, sizeof_array(sz), 0);
             const char* name = path::get_name(sz);
-            const int is_master_history = (stricmp(name, "clink_history") == 0);
+            const int is_master_history = (strnicmp(name, "clink_history", 13) == 0 && name[13] != '_');
             if (!is_master_history)
             {
                 LOG("m_handle_lines is for '%s'; expected master history instead!", sz);
