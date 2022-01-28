@@ -316,6 +316,7 @@ static_assert (C_LINK == 7, "C_LINK is not the expected index");
   if (!saved)
     {
       memcpy (original, _rl_color_indicator, sizeof(original));
+      saved = 1;
       return;
     }
 
