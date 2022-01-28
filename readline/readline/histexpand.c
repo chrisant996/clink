@@ -464,12 +464,18 @@ get_subst_pattern (char *str, int *iptr, int delimiter, int is_rhs, int *lenptr)
 	int v;
 	if ((v = _rl_get_char_len (str + si, &ps)) > 1)
 	  si += v - 1;
-	else if (str[si] == '\\' && str[si + 1] == delimiter)
+/* begin_clink_change */
+	//else if (str[si] == '\\' && str[si + 1] == delimiter)
+	else if (str[si] == '\\' && delimiter && str[si + 1] == delimiter)
+/* end_clink_change */
 	  si++;
       }
     else
 #endif /* HANDLE_MULTIBYTE */
-      if (str[si] == '\\' && str[si + 1] == delimiter)
+/* begin_clink_change */
+      //if (str[si] == '\\' && str[si + 1] == delimiter)
+      if (str[si] == '\\' && delimiter && str[si + 1] == delimiter)
+/* end_clink_change */
 	si++;
 
   if (si > i || is_rhs)
@@ -478,7 +484,10 @@ get_subst_pattern (char *str, int *iptr, int delimiter, int is_rhs, int *lenptr)
       for (j = 0, k = i; k < si; j++, k++)
 	{
 	  /* Remove a backslash quoting the search string delimiter. */
-	  if (str[k] == '\\' && str[k + 1] == delimiter)
+/* begin_clink_change */
+	  //if (str[k] == '\\' && str[k + 1] == delimiter)
+	  if (str[k] == '\\' && delimiter && str[k + 1] == delimiter)
+/* end_clink_change */
 	    k++;
 	  s[j] = str[k];
 	}
@@ -1542,7 +1551,10 @@ get_word:
 	  continue;
 	}
 
-      if (string[i] == '\\' && delimiter != '\'' &&
+/* begin_clink_change */
+      //if (string[i] == '\\' && delimiter != '\'' &&
+      if (string[i] == '\\' && string[i + 1] && delimiter != '\'' &&
+/* end_clink_change */
 	  (delimiter != '"' || member (string[i], slashify_in_quotes)))
 	{
 	  i++;
