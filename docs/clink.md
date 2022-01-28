@@ -128,7 +128,7 @@ The [`autosuggest.strategy`](#autosuggest_strategy) setting determines how a sug
 
 Clink has many configurable colors for match completions, input line coloring, popup lists, and more.
 
-#### Completion colors
+#### For completion
 
 When performing completion (e.g. <kbd>Tab</kbd> or <kbd>Ctrl</kbd>+<kbd>Space</kbd>) Clink can add color to the possible completions.
 
