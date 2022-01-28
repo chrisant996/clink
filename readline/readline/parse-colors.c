@@ -67,8 +67,9 @@ struct bin_str _rl_color_indicator[] =
     { LEN_STR_PAIR ("0") },             //  rs: Reset to ordinary colors
     { 0, NULL },                        //  no: Normal
     { 0, NULL },                        //  fi: File: default
-    { LEN_STR_PAIR ("01;34") },         //  di: Directory: bright blue
 /* begin_clink_change */
+    //{ LEN_STR_PAIR ("01;34") },         //  di: Directory: bright blue
+    { LEN_STR_PAIR ("01;33") },         //  di: Directory: bright yellow
     //{ LEN_STR_PAIR ("01;36") },         //  ln: Symlink: bright cyan
     { LEN_STR_PAIR ("target") },        //  ln: Symlink: color according to target
 /* end_clink_change */
