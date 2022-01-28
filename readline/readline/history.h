@@ -262,6 +262,10 @@ extern char history_comment_char;
 extern char *history_no_expand_chars;
 extern char *history_search_delimiter_chars;
 
+/* begin_clink_change */
+extern int history_host_backslash_escape;
+/* end_clink_change */
+
 extern int history_quotes_inhibit_expansion;
 extern int history_quoting_state;
 

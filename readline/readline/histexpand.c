@@ -54,7 +54,7 @@
 #define HISTORY_QUOTE_CHARACTERS	"\"'`"
 #define HISTORY_EVENT_DELIMITERS	"^$*%-"
 
-#define slashify_in_quotes "\\`\"$"
+#define slashify_in_quotes (history_host_backslash_escape ? "\\`\"$" : "")
 
 #define fielddelim(c)	(whitespace(c) || (c) == '\n')
 
@@ -109,6 +109,11 @@ char *history_word_delimiters = HISTORY_WORD_DELIMITERS;
 /* If set, this points to a function that is called to verify that a
    particular history expansion should be performed. */
 rl_linebuf_func_t *history_inhibit_expansion_function;
+
+/* begin_clink_change */
+/* Indicates whether backslash is an escape character in the host. */
+int history_host_backslash_escape = 1;
+/* end_clink_change */
 
 int history_quoting_state = 0;
 
@@ -464,18 +469,12 @@ get_subst_pattern (char *str, int *iptr, int delimiter, int is_rhs, int *lenptr)
 	int v;
 	if ((v = _rl_get_char_len (str + si, &ps)) > 1)
 	  si += v - 1;
-/* begin_clink_change */
-	//else if (str[si] == '\\' && str[si + 1] == delimiter)
-	else if (str[si] == '\\' && delimiter && str[si + 1] == delimiter)
-/* end_clink_change */
+	else if (str[si] == '\\' && str[si + 1] == delimiter)
 	  si++;
       }
     else
 #endif /* HANDLE_MULTIBYTE */
-/* begin_clink_change */
-      //if (str[si] == '\\' && str[si + 1] == delimiter)
-      if (str[si] == '\\' && delimiter && str[si + 1] == delimiter)
-/* end_clink_change */
+      if (str[si] == '\\' && str[si + 1] == delimiter)
 	si++;
 
   if (si > i || is_rhs)
@@ -484,10 +483,7 @@ get_subst_pattern (char *str, int *iptr, int delimiter, int is_rhs, int *lenptr)
       for (j = 0, k = i; k < si; j++, k++)
 	{
 	  /* Remove a backslash quoting the search string delimiter. */
-/* begin_clink_change */
-	  //if (str[k] == '\\' && str[k + 1] == delimiter)
-	  if (str[k] == '\\' && delimiter && str[k + 1] == delimiter)
-/* end_clink_change */
+	  if (str[k] == '\\' && str[k + 1] == delimiter)
 	    k++;
 	  s[j] = str[k];
 	}
@@ -1158,7 +1154,11 @@ history_expand (char *hstring, char **output)
 	  break;
 
 	case '\\':
-	  passc++;
+/* begin_clink_change */
+	  //passc++;
+	  if (history_host_backslash_escape)
+	    passc++;
+/* end_clink_change */
 	  ADD_CHAR (tchar);
 	  break;
 
@@ -1545,6 +1545,10 @@ get_word:
 
   for (; string[i]; i++)
     {
+/* begin_clink_change */
+      if (history_host_backslash_escape) {
+/* end_clink_change */
+
       if (string[i] == '\\' && string[i + 1] == '\n')
 	{
 	  i++;
@@ -1560,6 +1564,10 @@ get_word:
 	  i++;
 	  continue;
 	}
+
+/* begin_clink_change */
+      } // history_host_backslash_escape
+/* end_clink_change */
 
       /* delimiter must be set and set to something other than a quote if
 	 nestdelim is set, so these tests are safe. */

@@ -1743,6 +1743,10 @@ void initialise_readline(const char* shell_name, const char* state_dir)
     // would be more functionally correct.
     _rl_comment_begin = savestring("::");
 
+    // CMD does not consider backslash to be an escape character (in particular,
+    // it cannot escape a space).
+    history_host_backslash_escape = 0;
+
     // Add commands.
     static bool s_rl_initialized = false;
     if (!s_rl_initialized)
