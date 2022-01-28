@@ -226,23 +226,25 @@ void app_context::get_history_path(str_base& out) const
     // Optionally add a qualifying label of up to 32 alphanumeric characters.
     // This enables different instances to use different master history lists.
     str<64> label;
-    if (os::get_env("clink_history_label", label))
+    if (!os::get_env("clink_history_label", label))
+        return;
+
+    label.trim();
+
+    unsigned int label_len = 0;
+    str_iter iter(label);
+    while (iter.more())
     {
-        unsigned int label_len = 0;
-        str_iter iter(label);
-        while (iter.more())
+        const char* ptr = iter.get_pointer();
+        unsigned int c = iter.next();
+        if (iswalnum(c))
         {
-            const char* ptr = iter.get_pointer();
-            unsigned int c = iter.next();
-            if (iswalnum(c))
-            {
-                if (!label_len)
-                    out.concat("-", 1);
-                out.concat(ptr, static_cast<unsigned int>(iter.get_pointer() - ptr));
-                label_len++;
-                if (label_len >= 32)
-                    break;
-            }
+            if (!label_len)
+                out.concat("-", 1);
+            out.concat(ptr, static_cast<unsigned int>(iter.get_pointer() - ptr));
+            label_len++;
+            if (label_len >= 32)
+                break;
         }
     }
 }
