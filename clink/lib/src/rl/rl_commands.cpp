@@ -991,6 +991,7 @@ another_word:
             count--;
             if (count > 0)
                 goto another_word;
+            return 0;
         }
     }
 
