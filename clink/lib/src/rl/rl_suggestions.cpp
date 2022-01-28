@@ -306,13 +306,11 @@ bool suggestion_manager::insert(suggestion_action action)
         }
         else if (action == suggestion_action::insert_next_word)
         {
-            const unsigned int old_cursor = g_rl_buffer->get_cursor();
-
             // Skip forward a word.
             rl_forward_word(1, 0);
 
             // Resync the suggestion iterator.
-            resync_suggestion_iterator(old_cursor);
+            resync_suggestion_iterator(end_offset);
         }
 
         trunc = (g_rl_buffer->get_cursor() < g_rl_buffer->get_length());
