@@ -199,6 +199,7 @@ void win_screen_buffer::begin()
     GetConsoleScreenBufferInfo(m_handle, &csbi);
     m_default_attr = csbi.wAttributes & attr_mask_all;
     m_bold = !!(m_default_attr & attr_mask_bold);
+    m_reverse = false;
 
     bool native_vt = m_native_vt;
     switch (g_terminal_emulation.get())
@@ -616,11 +617,12 @@ void win_screen_buffer::set_attributes(attributes attr)
     // Reverse video
     if (auto rev = attr.get_reverse())
     {
-        if (rev.value)
+        if (rev.value != m_reverse)
         {
             int fg = (out_attr & ~attr_mask_bg);
             int bg = (out_attr & attr_mask_bg);
             out_attr = (fg << 4) | (bg >> 4);
+            m_reverse = rev.value;
         }
     }
 

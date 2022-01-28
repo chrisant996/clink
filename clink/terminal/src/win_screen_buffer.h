@@ -57,6 +57,7 @@ private:
     unsigned short  m_default_attr = 0x07;
     unsigned short  m_ready = 0;
     bool            m_bold = false;
+    bool            m_reverse = false;
     bool            m_native_vt = false;
 
     mutable WORD*   m_attrs = nullptr;
