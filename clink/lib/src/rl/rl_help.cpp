@@ -7,6 +7,7 @@
 #include <core/settings.h>
 #include <core/str.h>
 #include <core/str_unordered_set.h>
+#include <core/debugheap.h>
 #include <terminal/printer.h>
 #include <terminal/terminal.h>
 #include <terminal/terminal_helpers.h>
@@ -245,6 +246,8 @@ static void ensure_keydesc_map()
     if (!s_inited)
     {
         s_inited = true;
+
+        dbg_ignore_scope(snapshot, "ensure_keydesc_map");
 
         if (!s_pmap_keydesc)
             s_pmap_keydesc = new keydesc_map;
