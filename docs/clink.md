@@ -289,7 +289,7 @@ Name                         | Default | Description
 `files.hidden`               | True    | Includes or excludes files with the "hidden" attribute set when generating file lists.
 `files.system`               | False   | Includes or excludes files with the "system" attribute set when generating file lists.
 `history.dont_add_to_history_cmds` | `exit history` | List of commands that aren't automatically added to the history. Commands are separated by spaces, commas, or semicolons. Default is `exit history`, to exclude both of those commands.
-`history.dupe_mode`          | `erase_prev` | If a line is a duplicate of an existing history entry Clink will erase the duplicate when this is set to 'erase_prev'. Setting it to 'ignore' will not add duplicates to the history, and setting it to 'add' will always add lines (except when overridden by `history.sticky_search`).
+`history.dupe_mode`          | `erase_prev` | If a line is a duplicate of an existing history entry Clink will erase the duplicate when this is set to `erase_prev`. Setting it to `ignore` will not add duplicates to the history, and setting it to `add` will always add lines (except when overridden by `history.sticky_search`).
 `history.expand_mode`        | `not_quoted` | The `!` character in an entered line can be interpreted to introduce words from the history. This can be enabled and disable by setting this value to `on` or `off`. Values of `not_squoted`, `not_dquoted`, or `not_quoted` will skip any `!` character quoted in single, double, or both quotes respectively.
 `history.ignore_space`       | True    | Ignore lines that begin with whitespace when adding lines in to the history.
 `history.max_lines`          | 2500    | The number of history lines to save if `history.save` is enabled (1 to 50000).
@@ -1521,6 +1521,8 @@ Line|Description
 `somecmd`|Expands doskey alias and adds to history.
 <code>&nbsp;somecmd</code>|Doesn't expand doskey alias and doesn't add to history.
 `;somecmd`|Doesn't expand doskey alias but does add to history.
+
+There are several settings that control how history works.  Run `clink set history*` to see them.
 
 ### The master history file
 
