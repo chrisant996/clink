@@ -5,6 +5,7 @@
 #### v1.3.4
 
 - Pressing <kbd>Del</kbd> or <kbd>Ctrl</kbd>+<kbd>D</kbd> in a command history popup deletes the selected history entry.
+- Changed the default color for directory match completions to bright yellow (bright blue is hard to see).
 - Added an argmatcher for `history`.
 - Improvements to the `default_settings` file:
   - It is loaded from the profile directory, or from the binaries directory.
@@ -12,6 +13,7 @@
 - Minor performance improvement when calculating columns widths when `match.fit_columns` is enabled.
 - Fixed accidentally using only one column in `clink-select-complete` when there are 9 or fewer matches and none of them have description text (regression introduced in v1.3.3).
 - Fixed <kbd>Shift</kbd>+<kbd>Right</kbd> to accept the next full word of the suggestion without clearing the rest of the suggestion (regression introduced in v1.3.3).
+- Fixed terminal emulation for the reverse video escape codes (this also fixes the right border color of the selected item in popup lists).
 - Fixed buffer overrun in Readline `yank-last-arg` when the previous command ends in a backslash.
 - Fixed the Readline History library to not apply Unix style backslash escaping in CMD (e.g. in `program subdir\ text` there are 3 arguments; the `\ ` is not an escaped space).
 - Fixed crash when displaying matches and `match.fit_columns` is enabled and the terminal width is greater than 150 characters.
