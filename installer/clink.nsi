@@ -23,6 +23,7 @@
 
 !include "winmessages.nsh"
 !include "Sections.nsh"
+!include "FileFunc.nsh"
 
 ;-------------------------------------------------------------------------------
 Name                    "clink v${CLINK_VERSION}"
@@ -57,7 +58,7 @@ Function cleanLegacyInstall
 
     ; Start menu items and uninstall registry entry.
     ;
-    StrCpy $0 "Software\Microsoft\Windows\CurrentVersion\Uninstall" 
+    StrCpy $0 "Software\Microsoft\Windows\CurrentVersion\Uninstall"
     Delete $SMPROGRAMS\clink\*
     RMDir $SMPROGRAMS\clink
     DeleteRegKey HKLM $0"\Product"
@@ -74,7 +75,7 @@ FunctionEnd
 
 ;-------------------------------------------------------------------------------
 Function cleanPreviousInstalls
-    StrCpy $0 "Software\Microsoft\Windows\CurrentVersion\Uninstall" 
+    StrCpy $0 "Software\Microsoft\Windows\CurrentVersion\Uninstall"
     StrCpy $1 0
     EnumUninstallKeysLoop:
         EnumRegKey $2 HKLM $0 $1
@@ -88,7 +89,9 @@ Function cleanPreviousInstalls
             StrCpy $3 $2 6
             StrCmp $3 "clink_" 0 EndIfClinkUninstallEntry
                 ReadRegStr $4 HKLM "$0\$2" "UninstallString"
-                ExecWait '"$4" /S'
+                ${GetParent} $4 $5
+                ExecWait '"$4" /S _?=$5'
+                Delete $4
                 DeleteRegKey HKLM "$0\$2"
         EndIfClinkUninstallEntry:
 
@@ -107,7 +110,7 @@ SectionEnd
 Section "!Application files" app_files_id
     SectionIn RO
     SetShellVarContext all
-    
+
     ; Clean up version >= 0.2
     ;
     Call cleanPreviousInstalls
