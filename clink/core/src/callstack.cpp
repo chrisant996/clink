@@ -235,9 +235,9 @@ static void unlock_dbghelp()
 
 struct symbol_info
 {
-    char    module[MAX_MODULE_LEN];
-    char    symbol[MAX_SYMBOL_LEN];
-    size_t  offset;
+    char        module[MAX_MODULE_LEN];
+    char        symbol[MAX_SYMBOL_LEN];
+    DWORD_PTR   offset;
 };
 
 static DWORD_PTR load_module_symbols(void* frame)
