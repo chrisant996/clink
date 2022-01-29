@@ -9,7 +9,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Normal Priority
 - [ ] Some way to install with all "fancy mode" features set?
   - [ ] `default_settings`
-  - [ ] Also some `.inputrc` variables:
+  - [ ] Also some `.inputrc` variables, maybe in a `default_inputrc` file?
     Variable | Value
     -|-
     `colored-completion-prefix` | `on`
