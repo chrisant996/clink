@@ -21,33 +21,40 @@
 ; SOFTWARE.
 ;
 
+!include "MUI2.nsh"
 !include "winmessages.nsh"
 !include "Sections.nsh"
 !include "FileFunc.nsh"
 
 ;-------------------------------------------------------------------------------
+Unicode                 true
 Name                    "clink v${CLINK_VERSION}"
 InstallDir              "$PROGRAMFILES\clink"
+InstallDirRegKey        HKLM "Software\Clink" "InstallDir"
 OutFile                 "${CLINK_BUILD}_setup.exe"
 AllowSkipFiles          off
 SetCompressor           /SOLID lzma
 LicenseBkColor          /windows
-LicenseData             ${CLINK_SOURCE}\installer\license.rtf
 LicenseForceSelection   off
 RequestExecutionLevel   admin
 XPStyle                 on
 
 ;-------------------------------------------------------------------------------
-Page license
-Page directory
-Page components
-Page instfiles
+!define MUI_COMPONENTSPAGE_SMALLDESC
 
-UninstPage uninstConfirm
-UninstPage components
-UninstPage instfiles
+!define MUI_UI_COMPONENTSPAGE_SMALLDESC "${CLINK_SOURCE}\installer\modern_mediumdesc.exe"
 
-Var installRoot
+!insertmacro MUI_PAGE_LICENSE "${CLINK_SOURCE}\installer\license.rtf"
+!insertmacro MUI_PAGE_COMPONENTS
+!insertmacro MUI_PAGE_DIRECTORY
+!insertmacro MUI_PAGE_INSTFILES
+
+!insertmacro MUI_UNPAGE_CONFIRM
+!insertmacro MUI_UNPAGE_COMPONENTS
+!insertmacro MUI_UNPAGE_INSTFILES
+
+!insertmacro MUI_LANGUAGE "English"
+
 Var uninstallerExe
 
 ;-------------------------------------------------------------------------------
@@ -195,9 +202,6 @@ SectionEnd
 
 ;-------------------------------------------------------------------------------
 Section "-"
-    ; Remember the installation directory.
-    WriteRegStr HKLM Software\Clink InstallDir $installRoot
-
     ; Remember the enhanced default settings choice.
     SectionGetFlags ${section_enhance} $0
     IntOp $0 $0 & ${SF_SELECTED}
@@ -253,7 +257,7 @@ Function .onInit
 FunctionEnd
 
 ;-------------------------------------------------------------------------------
-Section "!un.Application files"
+Section "!un.Application files" section_un_app_files
     SectionIn RO
     SetShellVarContext all
 
@@ -281,9 +285,32 @@ Section "!un.Application files"
 SectionEnd
 
 ;-------------------------------------------------------------------------------
-Section /o "un.User scripts and history"
+Section /o "un.User scripts and history" section_un_scripts
     SetShellVarContext all
 
     RMDIR /r $APPDATA\clink         ; ...legacy path.
     RMDIR /r $LOCALAPPDATA\clink
 SectionEnd
+
+;-------------------------------------------------------------------------------
+LangString desc_app_files           ${LANG_ENGLISH} "Installs the Clink application files."
+LangString desc_enhanced_defaults   ${LANG_ENGLISH} "Pre-configures Clink with several popular enhancements enabled, including colors and familiar key bindings designed for Windows.  Any of them can be changed after installation."
+LangString desc_add_shortcuts       ${LANG_ENGLISH} "Adds Start Menu shortcuts for Clink and its documentation."
+LangString desc_clink_dir           ${LANG_ENGLISH} "Sets %CLINK_DIR% to the Clink install location."
+LangString desc_autorun             ${LANG_ENGLISH} "Configures the CMD.EXE AutoRun regkey to inject Clink when CMD.EXE starts.  This can be convenient, but also makes starting CMD.EXE always a little slower."
+
+LangString undesc_app_files         ${LANG_ENGLISH} "Removes the Clink application files."
+LangString undesc_scripts           ${LANG_ENGLISH} "Removes the default Clink profile directory for the current user."
+
+!insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
+    !insertmacro MUI_DESCRIPTION_TEXT ${app_files_id} $(desc_app_files)
+    !insertmacro MUI_DESCRIPTION_TEXT ${section_enhance} $(desc_enhanced_defaults)
+    !insertmacro MUI_DESCRIPTION_TEXT ${section_add_shortcuts} $(desc_add_shortcuts)
+    !insertmacro MUI_DESCRIPTION_TEXT ${section_clink_dir} $(desc_clink_dir)
+    !insertmacro MUI_DESCRIPTION_TEXT ${section_autorun} $(desc_autorun)
+!insertmacro MUI_FUNCTION_DESCRIPTION_END
+
+!insertmacro MUI_UNFUNCTION_DESCRIPTION_BEGIN
+    !insertmacro MUI_DESCRIPTION_TEXT ${section_un_app_files} $(undesc_app_files)
+    !insertmacro MUI_DESCRIPTION_TEXT ${section_un_scripts} $(undesc_scripts)
+!insertmacro MUI_UNFUNCTION_DESCRIPTION_END
