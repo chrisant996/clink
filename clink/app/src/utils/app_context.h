@@ -33,16 +33,19 @@ public:
     void        get_state_dir(str_base& out) const;
     void        get_autostart_command(str_base& out) const;
     void        get_log_path(str_base& out) const;
+    void        get_default_settings_file(str_base& out) const;
     void        get_settings_path(str_base& out) const;
     void        get_history_path(str_base& out) const;
     void        get_script_path(str_base& out) const;
     void        get_script_path_readable(str_base& out) const;
+    void        get_default_init_file(str_base& out) const;
     bool        update_env() const;
 
     static void override_id(int id);
 
 private:
     void        get_script_path(str_base& out, bool readable) const;
+    void        get_default_file(const char* name, str_base& out) const;
     void        init_binaries_dir();
     desc        m_desc;
     str<288>    m_binaries;

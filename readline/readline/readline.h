@@ -559,6 +559,11 @@ extern int rl_readline_version;			/* e.g., 0x0402 */
 /* True if this is real GNU readline. */
 extern int rl_gnu_readline_p;
 
+/* begin_clink_change */
+/* Init file to load as defaults, before loading the user's init file. */
+extern const char *_rl_default_init_file;
+/* end_clink_change */
+
 /* Flags word encapsulating the current readline state. */
 extern unsigned long rl_readline_state;
 

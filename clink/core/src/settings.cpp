@@ -161,18 +161,12 @@ static bool load_internal(FILE* in, std::function<void(const char* name, const c
     auto& map = get_custom_default_map();
     map.clear();
 
-    str<280> def(file);
-    path::to_parent(def, nullptr);
-    path::append(def, "default_settings");
-    FILE* in = fopen(def.c_str(), "rb");
+    if (!file || !*file)
+        return;
+
+    FILE* in = fopen(file, "rb");
     if (in == nullptr)
-    {
-        def = s_binaries_dir.c_str();
-        path::append(def, "default_settings");
-        in = fopen(def.c_str(), "rb");
-        if (in == nullptr)
-            return;
-    }
+        return;
 
     load_internal(in, [&map](const char* name, const char* value, const char* comment)
     {
@@ -362,7 +356,7 @@ bool migrate_setting(const char* name, const char* value, std::vector<setting_na
 static bool save_internal(const char* file, bool migrating);
 
 //------------------------------------------------------------------------------
-bool load(const char* file)
+bool load(const char* file, const char* default_file)
 {
 #ifdef DEBUG
     s_ever_loaded = true;
@@ -373,7 +367,7 @@ bool load(const char* file)
     if (file != g_last_file->c_str())
         *g_last_file = file;
 
-    load_custom_defaults(file);
+    load_custom_defaults(default_file);
     get_loaded_map().clear();
 
     // Reset settings to default.

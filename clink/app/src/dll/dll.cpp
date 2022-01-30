@@ -59,8 +59,10 @@ static void success()
 
     // Load settings to check if the logo should be abbreviated or omitted.
     str<288> settings_file;
+    str<288> default_settings_file;
     app->get_settings_path(settings_file);
-    settings::load(settings_file.c_str());
+    app->get_default_settings_file(default_settings_file);
+    settings::load(settings_file.c_str(), default_settings_file.c_str());
     const int logo = s_clink_logo.get();
     if (!logo)
         return;

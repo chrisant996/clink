@@ -148,7 +148,7 @@ extern setting_bool g_prompt_async;
 
 extern void start_logger();
 
-extern void initialise_readline(const char* shell_name, const char* state_dir);
+extern void initialise_readline(const char* shell_name, const char* state_dir, const char* bin_dir);
 extern bool get_sticky_search_history();
 extern bool has_sticky_search_position();
 extern bool get_sticky_search_add_history(const char* line);
@@ -554,10 +554,12 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out)
     // Load Clink's settings.  The load function handles deferred load for
     // settings declared in scripts.
     str<288> settings_file;
+    str<288> default_settings_file;
     str<288> state_dir;
     app->get_settings_path(settings_file);
+    app->get_default_settings_file(default_settings_file);
     app->get_state_dir(state_dir);
-    settings::load(settings_file.c_str());
+    settings::load(settings_file.c_str(), default_settings_file.c_str());
     reset_keyseq_to_name_map();
 
     // Set up the string comparison mode.
@@ -654,7 +656,7 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out)
         m_suggester = nullptr;
         m_lua = nullptr;
         if (reload_settings)
-            settings::load(settings_file.c_str());
+            settings::load(settings_file.c_str(), default_settings_file.c_str());
     }
     if (!local_lua)
         init_scripts = !m_lua;
@@ -675,7 +677,9 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out)
         // Load inputrc before loading scripts.  Config settings in inputrc can
         // affect Lua scripts (e.g. completion-case-map affects '-' and '_' in
         // command names in argmatchers).
-        initialise_readline("clink", state_dir.c_str());
+        str_moveable bin_dir;
+        app->get_binaries_dir(bin_dir);
+        initialise_readline("clink", state_dir.c_str(), bin_dir.c_str());
         initialise_lua(lua);
         lua.load_scripts();
     }

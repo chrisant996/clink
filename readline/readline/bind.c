@@ -72,6 +72,10 @@ extern char *strchr (), *strrchr ();
 /* Variables exported by this file. */
 Keymap rl_binding_keymap;
 
+/* begin_clink_change */
+const char *_rl_default_init_file = NULL;
+/* end_clink_change */
+
 static int _rl_skip_to_delim PARAMS((char *, int, int));
 
 #if defined (USE_VARARGS) && defined (PREFER_STDARG)
@@ -981,6 +985,11 @@ rl_read_init_file (const char *filename)
 	return 0;
       filename = SYS_INPUTRC;
     }
+
+/* begin_clink_change */
+  if (_rl_default_init_file)
+    _rl_read_init_file (_rl_default_init_file, 1);
+/* end_clink_change */
 
 #if defined (__MSDOS__)
   if (_rl_read_init_file (filename, 0) == 0)

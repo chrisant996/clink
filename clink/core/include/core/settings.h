@@ -34,10 +34,9 @@ const unsigned int c_max_len_short_desc = 48;
 
 setting_iter        first();
 setting*            find(const char* name);
-bool                load(const char* file);
+bool                load(const char* file, const char* default_file=nullptr);
 bool                save(const char* file);
 
-void                use_default_settings(const char* binaries);
 bool                sandboxed_set_setting(const char* name, const char* value);
 
 struct setting_name_value

@@ -42,8 +42,10 @@ private:
 history_scope::history_scope()
 {
     // Load settings.
+    str<288> default_settings_file;
     app_context::get()->get_settings_path(m_path);
-    settings::load(m_path.c_str());
+    app_context::get()->get_default_settings_file(default_settings_file);
+    settings::load(m_path.c_str(), default_settings_file.c_str());
 
     m_history = new history_db(g_save_history.get());
 

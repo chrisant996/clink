@@ -9,6 +9,10 @@
 #include <core/settings.h>
 #include <core/os.h>
 #include <core/path.h>
+#include <getopt.h>
+
+//------------------------------------------------------------------------------
+void puts_help(const char* const* help_pairs, const char* const* other_pairs=nullptr);
 
 //------------------------------------------------------------------------------
 static void print_info_line(HANDLE h, const char* s)
@@ -34,40 +38,59 @@ int clink_info(int argc, char** argv)
         void        (app_context::*method)(str_base&) const;
         bool        suppress_when_empty;
     } infos[] = {
-        { "binaries",   &app_context::get_binaries_dir },
-        { "state",      &app_context::get_state_dir },
-        { "log",        &app_context::get_log_path },
-        { "settings",   &app_context::get_settings_path },
-        { "history",    &app_context::get_history_path },
-        { "scripts",    &app_context::get_script_path_readable, true/*suppress_when_empty*/ },
+        { "binaries",           &app_context::get_binaries_dir },
+        { "state",              &app_context::get_state_dir },
+        { "log",                &app_context::get_log_path },
+        { "default settings",   &app_context::get_default_settings_file, true/*suppress_when_empty*/ },
+        { "settings",           &app_context::get_settings_path },
+        { "history",            &app_context::get_history_path },
+        { "scripts",            &app_context::get_script_path_readable, true/*suppress_when_empty*/ },
+        { "default_inputrc",    &app_context::get_default_init_file, true/*suppress_when_empty*/ },
+    };
+
+    struct info_output
+    {
+                        info_output(const char* name, str_moveable&& value) : name(name), value(std::move(value)) {}
+        const char*     name;
+        str_moveable    value;
     };
 
     const auto* context = app_context::get();
-    const int spacing = 8;
 
     HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
 
-    // Version information
-    printf("%-*s : %s\n", spacing, "version", CLINK_VERSION_STR);
-    printf("%-*s : %d\n", spacing, "session", context->get_id());
-
     // Load the settings from disk, since script paths are affected by settings.
     str<280> settings_file;
+    str<280> default_settings_file;
     app_context::get()->get_settings_path(settings_file);
-    settings::load(settings_file.c_str());
+    app_context::get()->get_default_settings_file(default_settings_file);
+    settings::load(settings_file.c_str(), default_settings_file.c_str());
 
-    // Paths
-    str<> s;
+    // Get values to output.
+    int spacing = 8;
+    std::vector<info_output> outputs;
     for (const auto& info : infos)
     {
-        str<280> out;
+        str_moveable out;
         (context->*info.method)(out);
         if (!info.suppress_when_empty || !out.empty())
         {
-            s.clear();
-            s.format("%-*s : %s\n", spacing, info.name, out.c_str());
-            print_info_line(h, s.c_str());
+            outputs.emplace_back(info.name, std::move(out));
+            spacing = max<int>(spacing, int(strlen(info.name)));
         }
+    }
+
+    // Version information.
+    printf("%-*s : %s\n", spacing, "version", CLINK_VERSION_STR);
+    printf("%-*s : %d\n", spacing, "session", context->get_id());
+
+    // Output the values.
+    str<> s;
+    for (const auto& output : outputs)
+    {
+        s.clear();
+        s.format("%-*s : %s\n", spacing, output.name, output.value.c_str());
+        print_info_line(h, s.c_str());
     }
 
     // Inputrc environment variables.

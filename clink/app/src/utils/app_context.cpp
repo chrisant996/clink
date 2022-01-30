@@ -211,6 +211,12 @@ void app_context::get_log_path(str_base& out) const
 }
 
 //------------------------------------------------------------------------------
+void app_context::get_default_settings_file(str_base& out) const
+{
+    get_default_file("default_settings", out);
+}
+
+//------------------------------------------------------------------------------
 void app_context::get_settings_path(str_base& out) const
 {
     get_state_dir(out);
@@ -317,6 +323,28 @@ void app_context::get_script_path_readable(str_base& out) const
     return get_script_path(out, true);
 }
 
+//------------------------------------------------------------------------------
+void app_context::get_default_init_file(str_base& out) const
+{
+    get_default_file("default_inputrc", out);
+}
+
+//------------------------------------------------------------------------------
+void app_context::get_default_file(const char* name, str_base& out) const
+{
+    get_state_dir(out);
+    path::append(out, name);
+    if (os::get_path_type(out.c_str()) == os::path_type_file)
+        return;
+
+    get_binaries_dir(out);
+    path::append(out, name);
+    if (os::get_path_type(out.c_str()) == os::path_type_file)
+        return;
+
+    out.clear();
+}
+
 //-----------------------------------------------------------------------------
 void app_context::init_binaries_dir()
 {
@@ -350,8 +378,6 @@ void app_context::init_binaries_dir()
     }
 
     path::get_directory(m_binaries);
-
-    settings::use_default_settings(m_binaries.c_str());
 }
 
 //-----------------------------------------------------------------------------

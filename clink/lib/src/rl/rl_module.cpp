@@ -1728,8 +1728,10 @@ static void init_readline_hooks()
 }
 
 //------------------------------------------------------------------------------
-void initialise_readline(const char* shell_name, const char* state_dir)
+void initialise_readline(const char* shell_name, const char* state_dir, const char* default_inputrc)
 {
+    dbg_ignore_scope(snapshot, "Readline initialization");
+
     // Readline needs a tweak of its handling of 'meta' (i.e. IO bytes >=0x80)
     // so that it handles UTF-8 correctly (convert=input, output=output).
     // Because these affect key binding translations, these are set even before
@@ -1752,6 +1754,10 @@ void initialise_readline(const char* shell_name, const char* state_dir)
     if (!s_rl_initialized)
     {
         s_rl_initialized = true;
+
+        static str_moveable s_default_inputrc;
+        s_default_inputrc = default_inputrc;
+        _rl_default_init_file = s_default_inputrc.empty() ? nullptr : s_default_inputrc.c_str();
 
         init_readline_hooks();
 

@@ -28,8 +28,10 @@ static int editline()
 
     // Load the settings from disk, since terminal I/O is affected by settings.
     str<280> settings_file;
+    str<280> default_settings_file;
     app_context::get()->get_settings_path(settings_file);
-    settings::load(settings_file.c_str());
+    app_context::get()->get_default_settings_file(default_settings_file);
+    settings::load(settings_file.c_str(), default_settings_file.c_str());
 
     terminal term = terminal_create();
     printer printer(*term.out);
