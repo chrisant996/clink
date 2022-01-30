@@ -165,6 +165,14 @@ Section "!Application files" app_files_id
 SectionEnd
 
 ;-------------------------------------------------------------------------------
+Section "Use enhanced default settings" section_enhance
+    SetShellVarContext all
+
+    File ${CLINK_BUILD}\default_settings
+    File ${CLINK_BUILD}\default_inputrc
+SectionEnd
+
+;-------------------------------------------------------------------------------
 Section "Add shortcuts to Start menu" section_add_shortcuts
     SetShellVarContext all
 
@@ -184,15 +192,6 @@ Section "Add shortcuts to Start menu" section_add_shortcuts
 SectionEnd
 
 ;-------------------------------------------------------------------------------
-Section "Autorun when cmd.exe starts" section_autorun
-    SetShellVarContext all
-
-    StrCpy $0 "~\clink"
-    ExecShellWait "open" "$INSTDIR\clink_x86.exe" 'autorun --allusers uninstall' SW_HIDE
-    ExecShellWait "open" "$INSTDIR\clink_x86.exe" 'autorun install -- --profile "$0"' SW_HIDE
-SectionEnd
-
-;-------------------------------------------------------------------------------
 Section "Set %CLINK_DIR% to install location" section_clink_dir
     SetShellVarContext all
 
@@ -203,7 +202,16 @@ Section "Set %CLINK_DIR% to install location" section_clink_dir
 SectionEnd
 
 ;-------------------------------------------------------------------------------
-Section "Use versioned install directory" section_versioned_subdir_visible
+Section /o "Autorun when cmd.exe starts" section_autorun
+    SetShellVarContext all
+
+    StrCpy $0 "~\clink"
+    ExecShellWait "open" "$INSTDIR\clink_x86.exe" 'autorun --allusers uninstall' SW_HIDE
+    ExecShellWait "open" "$INSTDIR\clink_x86.exe" 'autorun install -- --profile "$0"' SW_HIDE
+SectionEnd
+
+;-------------------------------------------------------------------------------
+Section /o "Use versioned install directory" section_versioned_subdir_visible
     ; This is visible to the user.  .onSelChange applies the selection state
     ; from section_versioned_subdir_visible to section_versioned_subdir_hidden.
 SectionEnd
@@ -212,6 +220,11 @@ SectionEnd
 Section "-"
     ; Remember the installation directory.
     WriteRegStr HKLM Software\Clink InstallDir $installRoot
+
+    ; Remember the enhanced default settings choice.
+    SectionGetFlags ${section_enhance} $0
+    IntOp $0 $0 & ${SF_SELECTED}
+    WriteRegDWORD HKLM Software\Clink EnhancedDefaultSettings $0
 
     ; Remember the shortcuts choice.
     SectionGetFlags ${section_add_shortcuts} $0
@@ -241,6 +254,12 @@ Function .onInit
     StrCmp $0 "" LEmptyInstallDir 0
         StrCpy $INSTDIR $0
     LEmptyInstallDir:
+
+    ; Apply remembered selection state for enhanced default settings section.
+    ReadRegDWORD $0 HKLM Software\Clink EnhancedDefaultSettings
+    StrCmp $0 "0" 0 LEnhancedDefaultSettings
+        SectionSetFlags ${section_enhance} 0
+    LEnhancedDefaultSettings:
 
     ; Apply remembered selection state for shortcuts section.
     ReadRegDWORD $0 HKLM Software\Clink AddShortcuts
@@ -287,6 +306,8 @@ Section "!un.Application files"
     Delete /REBOOTOK $INSTDIR\clink*
     Delete $INSTDIR\CHANGES
     Delete $INSTDIR\LICENSE
+    Delete $INSTDIR\default_settings
+    Delete $INSTDIR\default_inputrc
     RMDir /REBOOTOK $INSTDIR
     RMDir /REBOOTOK $INSTDIR\..
 

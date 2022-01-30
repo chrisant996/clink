@@ -14,6 +14,8 @@ local release_manifest = {
     "LICENSE",
     "clink_x*.pdb",
     "clink_dll_x*.pdb",
+    "default_settings",
+    "default_inputrc",
 }
 
 --------------------------------------------------------------------------------
@@ -188,7 +190,7 @@ newaction {
         -- Copy release files to a directory.
         for _, mask in ipairs(release_manifest) do
             local from = src
-            if mask == "CHANGES" or mask == "LICENSE" then
+            if mask == "CHANGES" or mask == "LICENSE" or mask == "default_settings" or mask == "default_inputrc" then
                 from = code_dir
             elseif mask:sub(-4) == ".pdb" then
                 from = nil
