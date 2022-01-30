@@ -5,7 +5,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- [ ] Installer option to use enhanced defaults (install `default_settings` and `default_inputrc` to the binaries directory).
 
 ## Normal Priority
 - [ ] Argmatcher syntax.
