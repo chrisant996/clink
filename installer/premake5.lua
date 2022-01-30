@@ -334,7 +334,11 @@ newaction {
 
         -- Copy release files to a directory.
         for _, mask in ipairs(release_manifest) do
-            copy(src .. mask, dest)
+            local from = src
+            if mask == "default_settings" or mask == "default_inputrc" then
+                from = code_dir
+            end
+            copy(from .. mask, dest)
         end
 
         -- Generate documentation.
