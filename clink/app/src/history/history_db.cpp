@@ -44,7 +44,7 @@ static setting_int g_max_history(
     "at each prompt.  If it starts taking too long, then lower this setting.  Or\n"
     "you can use 'clink history compact <num_lines>' to force shrinking the\n"
     "history file to a smaller size.",
-    2500);
+    10000);
 };
 
 static setting_bool g_ignore_space(
