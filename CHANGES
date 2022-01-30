@@ -2,14 +2,26 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.3.5
+
+- Raised default `history.max_lines` to 10000.
+- Added an optional `default_inputrc` file:
+  - It is loaded from the profile directory, or from the binaries directory.
+  - It uses the same format as the `.inputrc` file, and is loaded immediately before the `.inputrc` files.
+  - It has the effect of superseding built-in default values for  Readline configuration variables and key bindings; any settings in the `.inputrc` supersede those in the `default_inputrc` file.
+- The installer has a new "Use enhanced default settings" option which installs `default_settings` and `default_inputrc` files to provide default values that activate more of the Clink enhancements (to give a more enhanced experience "out of the box").
+- The installer no longer defaults to installing AutoRun or using a versioned install directory.  Those are all still supported, but are not recommended default settings.
+- Fixed [#231](https://github.com/chrisant996/clink/issues/231); installer fails sometimes when uncheck "Use versioned install directory".
+
 #### v1.3.4
 
 - Pressing <kbd>Del</kbd> or <kbd>Ctrl</kbd>+<kbd>D</kbd> in a command history popup deletes the selected history entry.
 - Changed the default color for directory match completions to bright yellow (bright blue is hard to see).
 - Added an argmatcher for `history`.
-- Improvements to the `default_settings` file:
+- Added an optional `default_settings` file:
   - It is loaded from the profile directory, or from the binaries directory.
-  - Settings are now saved if they are set (vs clear by `clink set setting.name clear`), even if the set value matches the default value.
+  - It uses the same format as the `clink_settings` file, and the values in it supersede the built-in default values for settings.
+  - Settings are now saved if they are set (vs cleared by `clink set setting.name clear`), even if the set value matches the default value.
 - Minor performance improvement when calculating columns widths when `match.fit_columns` is enabled.
 - Fixed accidentally using only one column in `clink-select-complete` when there are 9 or fewer matches and none of them have description text (regression introduced in v1.3.3).
 - Fixed <kbd>Shift</kbd>+<kbd>Right</kbd> to accept the next full word of the suggestion without clearing the rest of the suggestion (regression introduced in v1.3.3).
