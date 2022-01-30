@@ -101,12 +101,6 @@ Function cleanPreviousInstalls
 FunctionEnd
 
 ;-------------------------------------------------------------------------------
-Section "-" section_versioned_subdir_hidden
-    ; Hidden placeholder so that app_files_id can see whether to use a
-    ; versioned subdir.
-SectionEnd
-
-;-------------------------------------------------------------------------------
 Section "!Application files" app_files_id
     SectionIn RO
     SetShellVarContext all
@@ -114,17 +108,6 @@ Section "!Application files" app_files_id
     ; Clean up version >= 0.2
     ;
     Call cleanPreviousInstalls
-
-    ; Install to a versioned folder to reduce interference between versions.
-    ;
-    StrCpy $1 ${CLINK_VERSION}
-    SectionGetFlags ${section_versioned_subdir_hidden} $0
-    IntOp $0 $0 & ${SF_SELECTED}
-    StrCmp $0 0 0 LUseVersionedSubDir
-        StrCpy $1 bin
-    LUseVersionedSubDir:
-    StrCpy $installRoot $INSTDIR
-    StrCpy $INSTDIR $INSTDIR\$1
 
     ; Installs the main files.
     ;
@@ -211,12 +194,6 @@ Section /o "Autorun when cmd.exe starts" section_autorun
 SectionEnd
 
 ;-------------------------------------------------------------------------------
-Section /o "Use versioned install directory" section_versioned_subdir_visible
-    ; This is visible to the user.  .onSelChange applies the selection state
-    ; from section_versioned_subdir_visible to section_versioned_subdir_hidden.
-SectionEnd
-
-;-------------------------------------------------------------------------------
 Section "-"
     ; Remember the installation directory.
     WriteRegStr HKLM Software\Clink InstallDir $installRoot
@@ -240,11 +217,6 @@ Section "-"
     SectionGetFlags ${section_clink_dir} $0
     IntOp $0 $0 & ${SF_SELECTED}
     WriteRegDWORD HKLM Software\Clink SetClinkDir $0
-
-    ; Remember the versioned install directory choice.
-    SectionGetFlags ${section_versioned_subdir_visible} $0
-    IntOp $0 $0 & ${SF_SELECTED}
-    WriteRegDWORD HKLM Software\Clink VersionedSubDir $0
 SectionEnd
 
 ;-------------------------------------------------------------------------------
@@ -278,19 +250,6 @@ Function .onInit
     StrCmp $0 "0" 0 LSetClinkDir
         SectionSetFlags ${section_clink_dir} 0
     LSetClinkDir:
-
-    ; Apply remembered selection state for versioned install directory section.
-    ReadRegDWORD $0 HKLM Software\Clink VersionedSubDir
-    StrCmp $0 "0" 0 LNotVersioned
-        SectionSetFlags ${section_versioned_subdir_hidden} 0
-        SectionSetFlags ${section_versioned_subdir_visible} 0
-    LNotVersioned:
-FunctionEnd
-
-;-------------------------------------------------------------------------------
-Function .onSelChange
-    SectionGetFlags ${section_versioned_subdir_visible} $0
-    SectionSetFlags ${section_versioned_subdir_hidden} $0
 FunctionEnd
 
 ;-------------------------------------------------------------------------------
