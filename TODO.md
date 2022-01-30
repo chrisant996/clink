@@ -5,20 +5,9 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
+- [ ] Installer option to use enhanced defaults (install `default_settings` and `default_inputrc` to the binaries directory).
 
 ## Normal Priority
-- [ ] Some way to install with all "fancy mode" features set?
-  - [ ] `default_settings`
-  - [ ] `default_inputrc`
-    Variable | Value
-    -|-
-    `colored-completion-prefix` | `on`
-    `colored-stats` | `on`
-    `mark-symlinked-directories` | `on`
-    `completion-auto-query-items` | `on`
-    `history-point-at-end-of-anchored-search` | `on`
-    `search-ignore-case` | `on`
-
 - [ ] Argmatcher syntax.
   - [ ] Define help-like layout format that groups multiple flags into one entry?
     - [ ] Only group when a single flag character is used (`-` but not `--`).
