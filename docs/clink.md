@@ -403,9 +403,17 @@ The log file is written in the profile directory.  Clink writes diagnostic infor
 <p>
 <dt>default_settings</dt>
 <dd>
-This is an optional file.  When Clink is started, it first tries to load settings from the `clink_settings` file.  But if that file doesn't exist yet, next Clink tries to load settings from a `default_settings` file in the binaries directory, and then saves the settings to the `clink_settings` file.
+This is an optional file.  When Clink loads its settings, it first tries to load default values for settings from a `default_settings` file in either the profile directory or the binaries directory.  Then it loads the `clink_settings` file from the profile directory.
 
-The default settings file can be useful for portable installations or when sharing your favorite Clink configuration with friends.
+The `default_settings` file can be useful for portable installations or when sharing your favorite Clink configuration with friends.
+</dd></p>
+
+<p>
+<dt>default_inputrc</dt>
+<dd>
+This is an optional file.  When Clink loads the <a href="#init-file">Readline Init File</a>, it first tries to load default values from a `default_inputrc` file in either the profile directory or the binaries directory.  Then it loads the `.inputrc` file.
+
+The `default_inputrc` file can be useful for portable installations or when sharing your favorite Clink configuration with friends.
 </dd></p>
 
 ## Command Line Options
