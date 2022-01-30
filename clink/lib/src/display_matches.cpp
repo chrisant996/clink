@@ -534,14 +534,11 @@ static int fnappend(const char *to_print, int prefix_bytes, int condense, const 
     if (condense && prefix_bytes >= print_len)
         prefix_bytes = 0;
 
+    if (selected)
+        append_selection_color();
 #if defined(COLOR_SUPPORT)
-    if (_rl_colored_stats)
-    {
-        if (selected)
-            append_selection_color();
-        else if (prefix_bytes == 0 || _rl_colored_completion_prefix <= 0)
-            append_colored_stat_start(real_pathname, match_type);
-    }
+    else if (_rl_colored_stats && (prefix_bytes == 0 || _rl_colored_completion_prefix <= 0))
+        append_colored_stat_start(real_pathname, match_type);
 #endif
 
     if (prefix_bytes && condense)
@@ -860,10 +857,8 @@ void pad_filename(int len, int pad_to_width, int selected)
         num_spaces -= spaces_bytes;
     }
 
-#if defined(COLOR_SUPPORT)
-    if (_rl_colored_stats && selected > 0)
+    if (selected > 0)
         append_default_color();
-#endif
 }
 
 //------------------------------------------------------------------------------
