@@ -23,7 +23,6 @@ color.selected_completion         = sgr 38;5;16;48;5;254
 color.selection                   = sgr 38;5;16;48;5;179
 color.suggestion                  = sgr 38;5;239
 color.unrecognized                = sgr 38;5;203
-exec.files                        = True
 history.max_lines                 = 25000
 match.expand_envvars              = True
 match.substring                   = True
