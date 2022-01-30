@@ -166,7 +166,9 @@ struct config
     volatile size_t reference_alloc_number  = 0;
     const char* reference_tag               = nullptr;
 
-    size_t max_sane_alloc                   = 65536;
+    // The max_sane_alloc would ideally be 64 * 1024, but std::vector uses new
+    // even when reallocating and raises too many false alerts.
+    size_t max_sane_alloc                   = 256 * 1024;
     size_t max_sane_realloc                 = 1024 * 1024;
     size_t const *sane_alloc_exceptions     = nullptr; // 0 terminated list of exceptions.
 };
