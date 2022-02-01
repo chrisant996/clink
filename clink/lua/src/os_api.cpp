@@ -532,7 +532,8 @@ int globber_impl(lua_State* state, bool dirs_only, bool back_compat=false)
 /// attributes (making it usable as a match type for
 /// <a href="#builder:addmatch">builder:addmatch()</a>).
 ///
-/// When used in a coroutine, the function automatically yields periodically.
+/// Starting in v1.3.1, when this is used in a coroutine it automatically yields
+/// periodically.
 ///
 /// Note: any quotation marks (<code>"</code>) in
 /// <span class="arg">globpattern</span> are stripped.
@@ -567,7 +568,8 @@ int glob_dirs(lua_State* state)
 /// on the attributes (making it usable as a match type for
 /// <a href="#builder:addmatch">builder:addmatch()</a>).
 ///
-/// When used in a coroutine, the function automatically yields periodically.
+/// Starting in v1.3.1, when this is used in a coroutine it automatically yields
+/// periodically.
 ///
 /// Note: any quotation marks (<code>"</code>) in
 /// <span class="arg">globpattern</span> are stripped.
