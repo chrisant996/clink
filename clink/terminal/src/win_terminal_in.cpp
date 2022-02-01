@@ -557,6 +557,39 @@ key_tester* win_terminal_in::set_key_tester(key_tester* keys)
 }
 
 //------------------------------------------------------------------------------
+static void fix_console_input_mode(HANDLE h)
+{
+    DWORD modeIn;
+    if (GetConsoleMode(h, &modeIn))
+    {
+        // Compensate when this is reached with the console mode set wrong.
+        // For example, this can happen when Lua code uses io.popen():lines()
+        // and returns without finishing reading the output, or uses
+        // os.execute() in a coroutine.
+        if (modeIn & ENABLE_PROCESSED_INPUT)
+        {
+#ifdef DEBUG
+            LOG("CONSOLE MODE: console input is in ENABLE_PROCESSED_INPUT mode (0x%x)", modeIn);
+#endif
+            SetConsoleMode(h, modeIn & ~ENABLE_PROCESSED_INPUT);
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+static void fix_console_output_mode(HANDLE h, DWORD modeExpected)
+{
+    DWORD modeActual;
+    if (GetConsoleMode(h, &modeActual) && modeActual != modeExpected)
+    {
+#ifdef DEBUG
+        LOG("CONSOLE MODE: console output mode changed (expected 0x%x, actual 0x%x)", modeExpected, modeActual);
+#endif
+        SetConsoleMode(h, modeExpected);
+    }
+}
+
+//------------------------------------------------------------------------------
 void win_terminal_in::read_console(input_idle* callback)
 {
     // Hide the cursor unless we're accepting input so we don't have to see it
@@ -580,21 +613,10 @@ void win_terminal_in::read_console(input_idle* callback)
     unsigned int buffer_count = m_buffer_count;
     while (buffer_count == m_buffer_count)
     {
-        DWORD modeIn;
-        if (GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &modeIn))
-        {
-            // Compensate when this is reached with the console mode set wrong.
-            // This can happen when Lua code uses io.popen():lines() and returns
-            // without finishing reading the output, or uses os.execute() in a
-            // coroutine.
-            if (modeIn & ENABLE_PROCESSED_INPUT)
-            {
-#ifdef DEBUG
-                LOG("UNEXPECTED: console input is in ENABLE_PROCESSED_INPUT mode (0x%x)", modeIn);
-#endif
-                SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), modeIn & ~ENABLE_PROCESSED_INPUT);
-            }
-        }
+        DWORD modeExpected;
+        const bool has_mode = !!GetConsoleMode(stdout_handle, &modeExpected);
+
+        fix_console_input_mode(m_stdin);
 
         while (callback)
         {
@@ -610,6 +632,8 @@ void win_terminal_in::read_console(input_idle* callback)
             if (void* event = callback->get_waitevent())
                 handles[count++] = event;
 
+            fix_console_input_mode(m_stdin);
+
             const DWORD timeout = callback->get_timeout();
             const DWORD waited = WaitForMultipleObjects(count, handles, false, timeout);
             if (waited != WAIT_TIMEOUT)
@@ -622,7 +646,13 @@ void win_terminal_in::read_console(input_idle* callback)
                 host_reclassify();
             else
                 callback->on_idle();
+
+            if (has_mode)
+                fix_console_output_mode(stdout_handle, modeExpected);
         }
+
+        if (has_mode)
+            fix_console_output_mode(stdout_handle, modeExpected);
 
         DWORD count;
         INPUT_RECORD record;
