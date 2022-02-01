@@ -64,6 +64,7 @@ local function clear_coroutines()
 
     for _, entry in ipairs(preserve) do
         _coroutines[entry.coroutine] = entry
+        _coroutines_resumable = true
     end
 end
 clink.onbeginedit(clear_coroutines)
