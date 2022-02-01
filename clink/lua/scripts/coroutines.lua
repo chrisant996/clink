@@ -37,11 +37,17 @@ local print = clink.print
 
 --------------------------------------------------------------------------------
 local function clear_coroutines()
-    local preserve
+    local preserve = {}
     if _coroutine_yieldguard then
         -- Preserve the active popenyield entry so the system can tell when to
         -- dequeue the next one.
-        preserve = _coroutines[_coroutine_yieldguard.coroutine]
+        table.insert(preserve, _coroutines[_coroutine_yieldguard.coroutine])
+    end
+
+    for _, entry in pairs(_coroutines) do
+        if entry.untilcomplete then
+            table.insert(preserve, entry)
+        end
     end
 
     _coroutines = {}
@@ -56,8 +62,8 @@ local function clear_coroutines()
     _dead = (settings.get("lua.debug") or clink.DEBUG) and {} or nil
     _trimmed = 0
 
-    if preserve then
-        _coroutines[preserve.coroutine] = preserve
+    for _, entry in ipairs(preserve) do
+        _coroutines[entry.coroutine] = entry
     end
 end
 clink.onbeginedit(clear_coroutines)
@@ -121,6 +127,18 @@ local function cancel_coroutine(message)
     _coroutine_canceled = true
     clink._cancel_coroutine()
     error((message or "").."canceling popenyield; coroutine is orphaned")
+end
+
+--------------------------------------------------------------------------------
+local function check_generation(c)
+    if get_coroutine_generation() == _coroutine_generation then
+        return true
+    end
+    local entry = _coroutines[c]
+    if entry and entry.untilcomplete then
+        return true
+    end
+    return false
 end
 
 --------------------------------------------------------------------------------
@@ -358,7 +376,7 @@ function clink._diag_coroutines()
     local function list_diag(threads, plain)
         for _,t in ipairs(threads) do
             local key = tostring(t.entry.coroutine):gsub("thread: ", "")..":"
-            local gen = (t.entry.generation == _coroutine_generation) and "" or (yellow.."gen "..t.entry.generation..plain.."  ")
+            local gen = (t.entry.generation == _coroutine_generation) and "" or (yellow.."gen "..tostring(t.entry.generation)..plain.."  ")
             local status = (t.status == "suspended") and "" or (statcolor..t.status..plain.."  ")
             if t.entry.error then
                 gen = red.."error"..plain.."  "..gen
@@ -374,7 +392,7 @@ function clink._diag_coroutines()
             end
             local res = "resumed "..str_rpad(t.resumed, max_resumed_len)
             local freq = "freq "..str_rpad(t.freq, max_freq_len)
-            local src = t.entry.src
+            local src = tostring(t.entry.src)
             print(plain.."  "..key.."  "..gen..status..res.."  "..freq.."  "..src..norm)
             if t.entry.error then
                 print(plain.."  "..str_rpad("", #key + 2)..red..t.entry.error..norm)
@@ -526,6 +544,31 @@ function clink.setcoroutineinterval(c, interval)
 end
 
 --------------------------------------------------------------------------------
+--- -name:  clink.runcoroutineuntilcomplete
+--- -ver:   1.3.5
+--- -arg:   coroutine:coroutine
+--- By default, a coroutine is canceled if it doesn't complete before an edit
+--- line ends.  In some cases it may be necessary for a coroutine to run until
+--- it completes, even if it spans multiple edit lines.
+---
+--- <strong>Note:</strong>  Use with caution.  This can potentially cause
+--- performance problems or cause prompt filtering to experience delays.
+function clink.runcoroutineuntilcomplete(c)
+    if type(c) ~= "thread" then
+        error("bad argument #1 (coroutine expected)")
+    end
+    if not _coroutines[c] then
+        if settings.get("lua.strict") then
+            error("bad argument #1 (coroutine does not exist)")
+        end
+        return
+    end
+
+    -- Set the coroutine to run until complete.
+    _coroutines[c].untilcomplete = true
+end
+
+--------------------------------------------------------------------------------
 --- -name:  clink.setcoroutinename
 --- -ver:   1.3.1
 --- -arg:   coroutine:coroutine
@@ -604,7 +647,7 @@ function io.popenyield(command, mode)
             end
         end
         -- Cancel if not from the current generation.
-        if get_coroutine_generation() ~= _coroutine_generation then
+        if not check_generation(c) then
             local message = (type(command) == string) and command..": " or ""
             cancel_coroutine(message)
             return io.open("nul")
@@ -666,7 +709,7 @@ os.execute = function (command)
         end
     end
     -- Cancel if not from the current generation.
-    if get_coroutine_generation() ~= _coroutine_generation then
+    if not check_generation(c) then
         local message = (type(command) == string) and command..": " or ""
         cancel_coroutine(message)
         return nil, "exit", -1, "canceled"
