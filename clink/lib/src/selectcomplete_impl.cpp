@@ -1138,7 +1138,7 @@ void selectcomplete_impl::update_display()
                         const bool right_justify = m_widths.m_right_justify;
                         const int col_max = ((show_descriptions && !right_justify) ?
                                              m_screen_cols - 1 :
-                                             m_widths.column_width(col)) - col_extra;
+                                             min<int>(m_screen_cols - 1, m_widths.column_width(col))) - col_extra;
 
                         const int selected = (i == m_index);
                         const char* const display = m_matches.get_match_display(i);
