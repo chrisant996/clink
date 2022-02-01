@@ -206,10 +206,7 @@ int luaL_YieldGuard::results(lua_State* state)
 {
     luaL_YieldGuard* yg = (luaL_YieldGuard*)luaL_checkudata(state, 1, LUA_YIELDGUARD);
     if (yg && yg->m_thread)
-    {
-        yg->m_thread->results(state);
-        return 1;
-    }
+        return yg->m_thread->results(state);
     return 0;
 }
 
