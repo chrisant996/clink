@@ -15,6 +15,7 @@
 - Added `clink.runcoroutineuntilcomplete()` which allows a coroutine to keep running past the end of one edit line, and into the next edit line.
 - Fixed `os.execute()` return values when run in a coroutine (regression introduced in v1.3.2).
 - Fixed the selection color in `clink-select-complete` when `colored-stats` is off.
+- Fixed problems when displaying matches that exceed the screen width.
 - Fixed [#231](https://github.com/chrisant996/clink/issues/231); installer fails sometimes when uncheck "Use versioned install directory".
 
 #### v1.3.4
