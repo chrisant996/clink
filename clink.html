@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.3.4</title>
+<title>Clink v1.3.5</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -771,7 +771,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.3.4</div>
+                <div id="title">Clink v1.3.5</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -1276,7 +1276,7 @@ $endif
 </tr>
 <tr>
 <td align="center"><code>history.max_lines</code></td>
-<td align="center">2500</td>
+<td align="center">10000</td>
 <td>The number of history lines to save if <code>history.save</code> is enabled (1 to 50000).</td>
 </tr>
 <tr>
@@ -1502,9 +1502,17 @@ The log file is written in the profile directory.  Clink writes diagnostic infor
 <p>
 <dt>default_settings</dt>
 <dd>
-This is an optional file.  When Clink is started, it first tries to load settings from the `clink_settings` file.  But if that file doesn't exist yet, next Clink tries to load settings from a `default_settings` file in the binaries directory, and then saves the settings to the `clink_settings` file.
+This is an optional file.  When Clink loads its settings, it first tries to load default values for settings from a `default_settings` file in either the profile directory or the binaries directory.  Then it loads the `clink_settings` file from the profile directory.
 
-<p>The default settings file can be useful for portable installations or when sharing your favorite Clink configuration with friends.</p>
+<p>The <code>default_settings</code> file can be useful for portable installations or when sharing your favorite Clink configuration with friends.</p>
+</dd></p>
+
+<p>
+<dt>default_inputrc</dt>
+<dd>
+This is an optional file.  When Clink loads the <a href="#init-file">Readline Init File</a>, it first tries to load default values from a `default_inputrc` file in either the profile directory or the binaries directory.  Then it loads the `.inputrc` file.
+
+<p>The <code>default_inputrc</code> file can be useful for portable installations or when sharing your favorite Clink configuration with friends.</p>
 </dd></p>
 
 <h2 id="command-line-options">Command Line Options</h2>
@@ -4209,6 +4217,7 @@ function foo_prompt:filter(prompt)
 end</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.refilterprompt">clink.refilterprompt</a></div> <div class="signature">() : nil<br/><div class="version">v1.2.46 and newer</div></div></div><div class="body"><p class="desc">Invoke the prompt filters again and refresh the prompt.</p><p class="desc"> Note: this can potentially be expensive; call this only infrequently.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.reload">clink.reload</a></div> <div class="signature">() : nil<br/><div class="version">v1.2.29 and newer</div></div></div><div class="body"><p class="desc">Reloads Lua scripts and Readline config file at the next prompt.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="clink.runcoroutineuntilcomplete">clink.runcoroutineuntilcomplete</a></div> <div class="signature">( <span class="arg_name">coroutine</span>:coroutine ) : nil<br/><div class="version">v1.3.5 and newer</div></div></div><div class="body"><p class="desc">By default, a coroutine is canceled if it doesn't complete before an edit line ends.  In some cases it may be necessary for a coroutine to run until it completes, even if it spans multiple edit lines.</p><p class="desc"> <strong>Note:</strong>  Use with caution.  This can potentially cause performance problems or cause prompt filtering to experience delays.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.setcoroutineinterval">clink.setcoroutineinterval</a></div> <div class="signature">( <span class="arg_name">coroutine</span>:coroutine, [<span class="arg_name">interval</span>:number] ) : nil<br/><div class="version">v1.3.1 and newer</div></div></div><div class="body"><p class="desc">Overrides the interval at which a coroutine is resumed.  All coroutines are automatically added with an interval of 0 by default, so calling this is only needed when you want to change the interval.</p><p class="desc"> Coroutines are automatically resumed while waiting for input while editing the input line.</p><p class="desc"> If a coroutine's interval is less than 5 seconds and the coroutine has been alive for more than 5 seconds, then the coroutine is throttled to run no more often than once every 5 seconds (regardless how much total time is has spent running).  Throttling is meant to prevent long-running coroutines from draining battery power, interfering with responsiveness, or other potential problems.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.setcoroutinename">clink.setcoroutinename</a></div> <div class="signature">( <span class="arg_name">coroutine</span>:coroutine, <span class="arg_name">name</span>:string ) : nil<br/><div class="version">v1.3.1 and newer</div></div></div><div class="body"><p class="desc">Sets a name for the coroutine.  This is purely for diagnostic purposes.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.suggester">clink.suggester</a></div> <div class="signature">( <span class="arg_name">name</span>:string ) : table<br/><div class="version">v1.2.47 and newer</div></div></div><div class="body"><p class="desc">Creates and returns a new suggester object.  Suggesters are consulted in the order their names are listed in the <code><a href="#autosuggest.strategy">autosuggest.strategy</a></code> setting.</p><p class="desc"> Define on the object a <code>:suggest()</code> function that takes a <a href="#line_state">line_state</a> argument which contains the input line, and a <a href="#matches">matches</a> argument which contains the possible completions.  The function can return nil to give the next suggester a chance, or can return a suggestion (or an empty string) to stop looking for suggestions.</p><p class="desc"> In Clink v1.2.51 and higher, the function may return a suggestion and an offset where the suggestion begins in the line.  This is useful if the suggester wants to be able to insert the suggestion using the original casing.  For example if you type "set varn" and a history entry is "set VARNAME" then returning <code>"set VARNAME", 1</code> or <code>"VARNAME", 5</code> can accept "set VARNAME" instead of "set varnAME".</p><p class="desc"> See <a href="#customisingsuggestions">Customizing Suggestions</a> for more information.</p><pre class="language-lua"><code>local doskeyarg = clink.suggester("doskeyarg")
@@ -4345,7 +4354,7 @@ line_state:getcommandwordindex() == 2</code></pre></div></div><hr/>
 --   t[index].size      -- [number] The file size, in bytes.
 --   t[index].atime     -- [number] The access time, compatible with os.time().
 --   t[index].mtime     -- [number] The modified time, compatible with os.time().
---   t[index].ctime     -- [number] The creation time, compatible with os.time().</code></pre><p class="desc">The <span class="tablescheme">type</span> string is "dir", and may also contain ",hidden", ",readonly", ",link", and ",orphaned" depending on the attributes (making it usable as a match type for <a href="#builder:addmatch">builder:addmatch()</a>).</p><p class="desc"> When used in a coroutine, the function automatically yields periodically.</p><p class="desc"> Note: any quotation marks (<code>"</code>) in <span class="arg">globpattern</span> are stripped.</p></div></div><hr/>
+--   t[index].ctime     -- [number] The creation time, compatible with os.time().</code></pre><p class="desc">The <span class="tablescheme">type</span> string is "dir", and may also contain ",hidden", ",readonly", ",link", and ",orphaned" depending on the attributes (making it usable as a match type for <a href="#builder:addmatch">builder:addmatch()</a>).</p><p class="desc"> Starting in v1.3.1, when this is used in a coroutine it automatically yields periodically.</p><p class="desc"> Note: any quotation marks (<code>"</code>) in <span class="arg">globpattern</span> are stripped.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.globfiles">os.globfiles</a></div> <div class="signature">( <span class="arg_name">globpattern</span>:string, [<span class="arg_name">extrainfo</span>:integer|boolean] ) : table<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Collects files and/or directories matching <span class="arg">globpattern</span> and returns them in a table of strings.</p><p class="desc"> The optional <span class="arg">extrainfo</span> argument can return a table of tables instead, where each sub-table corresponds to one file or directory and has the following scheme:</p><pre class="language-lua"><code>local t = os.globfiles(pattern, extrainfo)
 -- Included when extrainfo is true or >= 1:
 --   t[index].name      -- [string] The directory name.
@@ -4354,7 +4363,7 @@ line_state:getcommandwordindex() == 2</code></pre></div></div><hr/>
 --   t[index].size      -- [number] The file size, in bytes.
 --   t[index].atime     -- [number] The access time, compatible with os.time().
 --   t[index].mtime     -- [number] The modified time, compatible with os.time().
---   t[index].ctime     -- [number] The creation time, compatible with os.time().</code></pre><p class="desc">The <span class="tablescheme">type</span> string can be "file" or "dir", and may also contain ",hidden", ",readonly", ",link", and ",orphaned" depending on the attributes (making it usable as a match type for <a href="#builder:addmatch">builder:addmatch()</a>).</p><p class="desc"> When used in a coroutine, the function automatically yields periodically.</p><p class="desc"> Note: any quotation marks (<code>"</code>) in <span class="arg">globpattern</span> are stripped.</p></div></div><hr/>
+--   t[index].ctime     -- [number] The creation time, compatible with os.time().</code></pre><p class="desc">The <span class="tablescheme">type</span> string can be "file" or "dir", and may also contain ",hidden", ",readonly", ",link", and ",orphaned" depending on the attributes (making it usable as a match type for <a href="#builder:addmatch">builder:addmatch()</a>).</p><p class="desc"> Starting in v1.3.1, when this is used in a coroutine it automatically yields periodically.</p><p class="desc"> Note: any quotation marks (<code>"</code>) in <span class="arg">globpattern</span> are stripped.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.isdir">os.isdir</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Returns whether <span class="arg">path</span> is a directory.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.isfile">os.isfile</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Returns whether <span class="arg">path</span> is a file.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.mkdir">os.mkdir</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Creates the directory <span class="arg">path</span> and returns whether it was successful.</p></div></div><hr/>
@@ -4684,14 +4693,33 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v135">v1.3.5</h4>
+<ul>
+<li>Raised default <code>history.max_lines</code> to 10000.</li>
+<li>Added an optional <code>default_inputrc</code> file:<ul>
+<li>It is loaded from the profile directory, or from the binaries directory.</li>
+<li>It uses the same format as the <code>.inputrc</code> file, and is loaded immediately before the <code>.inputrc</code> files.</li>
+<li>It has the effect of superseding built-in default values for  Readline configuration variables and key bindings; any settings in the <code>.inputrc</code> supersede those in the <code>default_inputrc</code> file.</li>
+</ul>
+</li>
+<li>The installer has a new &quot;Use enhanced default settings&quot; option which installs <code>default_settings</code> and <code>default_inputrc</code> files to provide default values that activate more of the Clink enhancements (to give a more enhanced experience &quot;out of the box&quot;).</li>
+<li>The installer no longer defaults to installing AutoRun.</li>
+<li>The installer no longer has an option to use versioned install directory; files are installed directly in the install directory.</li>
+<li>Added <code>clink.runcoroutineuntilcomplete()</code> which allows a coroutine to keep running past the end of one edit line, and into the next edit line.</li>
+<li>Fixed <code>os.execute()</code> return values when run in a coroutine (regression introduced in v1.3.2).</li>
+<li>Fixed the selection color in <code>clink-select-complete</code> when <code>colored-stats</code> is off.</li>
+<li>Fixed problems when displaying matches that exceed the screen width.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/231">#231</a>; installer fails sometimes when uncheck &quot;Use versioned install directory&quot;.</li>
+</ul>
 <h4 id="v134">v1.3.4</h4>
 <ul>
 <li>Pressing <kbd>Del</kbd> or <kbd>Ctrl</kbd>+<kbd>D</kbd> in a command history popup deletes the selected history entry.</li>
 <li>Changed the default color for directory match completions to bright yellow (bright blue is hard to see).</li>
 <li>Added an argmatcher for <code>history</code>.</li>
-<li>Improvements to the <code>default_settings</code> file:<ul>
+<li>Added an optional <code>default_settings</code> file:<ul>
 <li>It is loaded from the profile directory, or from the binaries directory.</li>
-<li>Settings are now saved if they are set (vs clear by <code>clink set setting.name clear</code>), even if the set value matches the default value.</li>
+<li>It uses the same format as the <code>clink_settings</code> file, and the values in it supersede the built-in default values for settings.</li>
+<li>Settings are now saved if they are set (vs cleared by <code>clink set setting.name clear</code>), even if the set value matches the default value.</li>
 </ul>
 </li>
 <li>Minor performance improvement when calculating columns widths when <code>match.fit_columns</code> is enabled.</li>
