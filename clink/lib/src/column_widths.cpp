@@ -325,7 +325,7 @@ column_widths calculate_columns(match_adapter* adapter, int max_matches, bool on
     widths.m_max_desc = max_desc;
     widths.m_can_condense = can_condense;
 
-    if (fixed_cols)
+    if (fixed_cols || max_cols <= 0)
     {
         const size_t col_max = max_len + col_padding;
         const size_t limit = one_column ? 1 : max<size_t>((line_length + col_padding - 1) / col_max, 1);
