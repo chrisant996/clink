@@ -2,6 +2,10 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.3.6
+
+- Fix potential for a coroutine to have extra delays sometimes when continuing past the end of one edit line, and into the next edit line.
+
 #### v1.3.5
 
 - Raised default `history.max_lines` to 10000.
