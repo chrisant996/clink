@@ -14,6 +14,33 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - [ ] Easier argmatcher syntax for defining flags + display + description strings.
   - [ ] Provide shim so scripts can use new syntax and still be compatible with older Clink.
 
+## Argmatcher syntax
+- `{ flag="-x", display="NUM", description="Does a thing with NUM", withflag="-y", withprev=true, hide=true }`
+- `{ "-x" }` -> one is flag.
+- `{ "-x", "Does a thing" }` -> two are flag, description.
+- `{ "-x", "NUM", "Does a thing" }` -> three are flag, display, description.
+- `{ disp="text" }` -> `disp` is synonym for `display`.
+- `{ desc="text" }` -> `desc` is synonym for `description`.
+- `{ "-x", display="text" }` -> first is flag, etc.
+- `withflag` groups with named flag; the description for all is taken from the first with a description.
+- `withprev` groups with preceding flag; the description for all is taken from the first with a description.
+- `hide` hides the flag, but still recognizes it.
+- Grouping flags lists them on the same line.
+  - Hard limit?
+  - Drop extras that "don't fit"?
+- Requires a new method (and shim).
+  - Has to be a method, so that shimming is possible.
+  - Maybe `addflagtable` or `addflagsinfo` or `addextendedflags`?
+- Future-proofing:  how to ignore future-version entries that won't be interpreted properly by the current version?
+
+```lua
+:addflagtable({
+  { "-x"..numparser, "NUM", "Does a thing with NUM" },
+  { "--do-x"..numparser, " NUM", withprev=true },
+  { "-?", hide=true },
+})
+```
+
 ## Follow Up
 - Readline command reference.
 - Add more Readline documentation into the Clink docs.
