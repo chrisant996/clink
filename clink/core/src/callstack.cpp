@@ -479,7 +479,7 @@ CALLSTACK_EXTERN_C int get_callstack_frames(int skip_frames, int total_frames, v
                 if (attempts && s_total_attempts >= 1000)
                 {
                     // I want to know if it fails more than very rarely.
-                    assert(float(s_failed_attempts) / float(s_total_attempts) < 0.001);
+                    assert(float(s_failed_attempts) / float(s_total_attempts) < 0.005);
                 }
             }
         }
