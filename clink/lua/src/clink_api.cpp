@@ -519,11 +519,10 @@ void recognizer::proc(recognizer* r)
             }
 
             // Search for executable file.
+            char result = -1; // Assume not executable.
             if (search_for_executable(entry.m_word.c_str()))
             {
-executable:
-                r->store(entry.m_key.c_str(), 1);
-                r->notify_ready(true);
+                result = 1;
             }
             else if (const char* ext = path::get_extension(entry.m_word.c_str()))
             {
@@ -541,15 +540,13 @@ executable:
                     RegCloseKey(hkey);
 
                     if (has_command)
-                        goto executable;
+                        result = 1;
                 }
             }
-            else
-            {
-                // Not executable.
-                r->store(entry.m_key.c_str(), -1);
-                r->notify_ready(true);
-            }
+
+            // Store result.
+            r->store(entry.m_key.c_str(), result);
+            r->notify_ready(true);
         }
     }
 }
