@@ -4,7 +4,8 @@
 
 #### v1.3.6
 
-- Fix potential for a coroutine to have extra delays sometimes when continuing past the end of one edit line, and into the next edit line.
+- Fixed potential for a coroutine to have extra delays sometimes when continuing past the end of one edit line, and into the next edit line.
+- Fixed a potential busy loop when the command word is unrecognized.
 
 #### v1.3.5
 
