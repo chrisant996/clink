@@ -22,6 +22,8 @@ public:
 private:
     void            read_console(input_idle* callback=nullptr);
     void            process_input(const KEY_EVENT_RECORD& key_event);
+    void            process_input(const MOUSE_EVENT_RECORD& mouse_event);
+    void            filter_unbound_input(unsigned int buffer_count);
     void            push(unsigned int value);
     void            push(const char* seq);
     unsigned char   pop();
@@ -29,6 +31,7 @@ private:
     void*           m_stdin = nullptr;
     unsigned int    m_dimensions = 0;
     unsigned long   m_prev_mode = 0;
+    DWORD           m_prev_mouse_button_state = 0;
     unsigned char   m_buffer_head = 0;
     unsigned char   m_buffer_count = 0;
     wchar_t         m_lead_surrogate = 0;

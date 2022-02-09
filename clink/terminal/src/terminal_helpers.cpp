@@ -5,6 +5,7 @@
 #include "printer.h"
 #include "terminal_out.h"
 #include "terminal_helpers.h"
+#include "screen_buffer.h"
 
 #include <core/settings.h>
 
@@ -13,6 +14,7 @@
 //------------------------------------------------------------------------------
 extern bool g_enhanced_cursor;
 printer* g_printer = nullptr;
+bool g_echo_input = false;
 
 //------------------------------------------------------------------------------
 setting_bool g_adjust_cursor_style(
@@ -25,6 +27,19 @@ setting_bool g_adjust_cursor_style(
     "the ANSI escape codes for cursor shape, and the cursor may flicker or flash\n"
     "strangely while typing.",
     true);
+
+setting_enum g_mouse_input(
+    "terminal.mouse_input",
+    "Clink mouse input",
+    "... EXPERIMENTAL, WORK IN PROGRESS ...\n"
+    "Clink can request to handle mouse input.  This enables clicking in the input\n"
+    "line to set the cursor position, but it may have side effects.\n"
+    "... TBD ...\n"
+    "'off' lets the terminal host handle mouse input, 'on' forces the terminal to\n"
+    "let Clink handle mouse input, 'auto' lets Clink handle mouse input only if\n"
+    "possible without interfering with the terminal's configured mode.",
+    "off,on,auto",
+    2);
 
 //------------------------------------------------------------------------------
 static bool s_locked_cursor_visibility = false;
@@ -128,6 +143,48 @@ extern "C" void use_clink_input_mode(void)
 
 
 //------------------------------------------------------------------------------
+static DWORD select_mouse_input(DWORD mode)
+{
+    if (g_echo_input)
+        return 0;
+
+    switch (g_mouse_input.get())
+    {
+    default:
+    case 0:
+        // Off.
+        break;
+    case 1:
+        // On.
+        switch (get_native_ansi_handler())
+        {
+        case ansi_handler::conemu:
+            mode |= ENABLE_MOUSE_INPUT;
+            break;
+        default:
+            mode &= ~ENABLE_QUICK_EDIT_MODE;
+            mode |= ENABLE_MOUSE_INPUT;
+            break;
+        }
+        break;
+    case 2:
+        // Auto.
+        switch (get_native_ansi_handler())
+        {
+        case ansi_handler::conemu:
+            mode |= ENABLE_MOUSE_INPUT;
+            break;
+        default:
+            mode |= (mode & ENABLE_QUICK_EDIT_MODE) ? 0 : ENABLE_MOUSE_INPUT;
+            break;
+        }
+        break;
+    }
+
+    return mode;
+}
+
+//------------------------------------------------------------------------------
 console_config::console_config(HANDLE handle)
     : m_handle(handle ? handle : GetStdHandle(STD_INPUT_HANDLE))
 {
@@ -135,9 +192,12 @@ console_config::console_config(HANDLE handle)
     GetConsoleMode(m_handle, &m_prev_mode);
     save_host_input_mode(m_prev_mode);
 
+    // NOTE:  Windows Terminal doesn't reliably respond to changes of the
+    // ENABLE_MOUSE_INPUT flag when ENABLE_AUTO_POSITION is missing.
     DWORD mode = m_prev_mode;
     mode &= ~(ENABLE_PROCESSED_INPUT|ENABLE_LINE_INPUT|ENABLE_ECHO_INPUT|ENABLE_MOUSE_INPUT);
     mode |= ENABLE_WINDOW_INPUT;
+    mode = select_mouse_input(mode);
     SetConsoleMode(m_handle, mode);
 }
 

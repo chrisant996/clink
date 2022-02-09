@@ -508,6 +508,12 @@ void win_terminal_in::begin()
     m_dimensions = get_dimensions();
     GetConsoleMode(m_stdin, &m_prev_mode);
     show_cursor(false);
+
+    m_prev_mouse_button_state = 0;
+    if (GetKeyState(VK_LBUTTON) < 0)
+        m_prev_mouse_button_state |= FROM_LEFT_1ST_BUTTON_PRESSED;
+    if (GetKeyState(VK_RBUTTON) < 0)
+        m_prev_mouse_button_state |= RIGHTMOST_BUTTON_PRESSED;
 }
 
 //------------------------------------------------------------------------------
@@ -562,17 +568,30 @@ static void fix_console_input_mode(HANDLE h)
     DWORD modeIn;
     if (GetConsoleMode(h, &modeIn))
     {
+        DWORD mode = modeIn;
+
         // Compensate when this is reached with the console mode set wrong.
         // For example, this can happen when Lua code uses io.popen():lines()
         // and returns without finishing reading the output, or uses
         // os.execute() in a coroutine.
-        if (modeIn & ENABLE_PROCESSED_INPUT)
-        {
+        mode &= ~ENABLE_PROCESSED_INPUT;
 #ifdef DEBUG
+        if (modeIn & ENABLE_PROCESSED_INPUT)
             LOG("CONSOLE MODE: console input is in ENABLE_PROCESSED_INPUT mode (0x%x)", modeIn);
 #endif
-            SetConsoleMode(h, modeIn & ~ENABLE_PROCESSED_INPUT);
+
+        if (modeIn & ENABLE_MOUSE_INPUT)
+        {
+            const bool any_modifier_keys = (
+                GetKeyState(VK_SHIFT) < 0 ||
+                GetKeyState(VK_CONTROL) < 0 ||
+                GetKeyState(VK_MENU) < 0);
+            if (any_modifier_keys)
+                modeIn |= ENABLE_QUICK_EDIT_MODE;
         }
+
+        if (mode != modeIn)
+            SetConsoleMode(h, modeIn);
     }
 }
 
@@ -610,7 +629,7 @@ void win_terminal_in::read_console(input_idle* callback)
 
     // Read input records sent from the terminal (aka conhost) until some
     // input has been buffered.
-    unsigned int buffer_count = m_buffer_count;
+    const unsigned int buffer_count = m_buffer_count;
     while (buffer_count == m_buffer_count)
     {
         DWORD modeExpected;
@@ -668,68 +687,17 @@ void win_terminal_in::read_console(input_idle* callback)
         switch (record.EventType)
         {
         case KEY_EVENT:
-            {
-                auto& key_event = record.Event.KeyEvent;
+            process_input(record.Event.KeyEvent);
+            filter_unbound_input(buffer_count);
+            break;
 
-                // Some times conhost can send through ALT codes, with the
-                // resulting Unicode code point in the Alt key-up event.
-                if (!key_event.bKeyDown
-                    && key_event.wVirtualKeyCode == VK_MENU
-                    && key_event.uChar.UnicodeChar)
-                {
-                    key_event.bKeyDown = TRUE;
-                    key_event.dwControlKeyState = 0;
-                }
+        case MOUSE_EVENT:
+            process_input(record.Event.MouseEvent);
+            break;
 
-                if (key_event.bKeyDown)
-                {
-                    process_input(key_event);
-
-                    // If the processed input chord isn't bound, discard it.
-                    // Otherwise unbound keys can have the tail part of their
-                    // sequence show up as though it were typed input.  The
-                    // approach here assumes no more than one key sequence per
-                    // input record.
-                    if (m_keys)
-                    {
-                        // If there are unprocessed queued keys, then we don't
-                        // know what keymap will be active when this new input
-                        // gets processed, so we can't accurately tell whether
-                        // the key sequence is bound to anything.
-                        assert(buffer_count == 0);
-
-                        const int len = m_buffer_count - buffer_count;
-                        if (len > 0)
-                        {
-                            // m_buffer is circular, so copy the key sequence to
-                            // a separate sequential buffer.
-                            char chord[sizeof_array(m_buffer) + 1];
-                            static const unsigned int mask = sizeof_array(m_buffer) - 1;
-                            for (int i = 0; i < len; ++i)
-                                chord[i] = m_buffer[(m_buffer_head + i) & mask];
-
-                            // Readline has a bug in rl_function_of_keyseq_len
-                            // that looks for nul termination even though it's
-                            // supposed to use a length instead.
-                            chord[len] = '\0';
-
-                            str<32> new_chord;
-                            if (m_keys->translate(chord, len, new_chord))
-                            {
-                                m_buffer_count = buffer_count;
-                                for (unsigned int i = 0; i < new_chord.length(); ++i)
-                                    push((unsigned int)new_chord.c_str()[i]);
-                            }
-                            else if (!m_keys->is_bound(chord, len))
-                            {
-                                m_buffer_count = buffer_count;
-                            }
-
-                            m_keys->set_keyseq_len(m_buffer_count);
-                        }
-                    }
-                }
-            }
+        case FOCUS_EVENT:
+// TODO: adjust ENABLE_QUICK_EDIT_MODE as appropriate when losing focus,
+// as part of the mouse input support.
             break;
 
         case WINDOW_BUFFER_SIZE_EVENT:
@@ -751,6 +719,91 @@ void win_terminal_in::read_console(input_idle* callback)
 }
 
 //------------------------------------------------------------------------------
+static void verbose_input(KEY_EVENT_RECORD const& record)
+{
+    int key_char = record.uChar.UnicodeChar;
+    int key_vk = record.wVirtualKeyCode;
+    int key_sc = record.wVirtualScanCode;
+    int key_flags = record.dwControlKeyState;
+
+    char buf[32];
+    buf[0] = 0;
+    str_base tmps(buf);
+    const char* key_name = key_name_from_vk(key_vk, tmps) ? buf : "UNKNOWN";
+
+#if defined(USE_TOUNICODE_FOR_DEADKEYS)
+    static const char* const maybe_newline = "";
+    int tu = 0;
+    WCHAR wbuf[33] = {};
+    BYTE keystate[256];
+    if (GetKeyboardState(keystate))
+    {
+        // NOT VIABLE:
+        //  - Is destructive; it alters the internal keyboard state.
+        //  - It doesn't detect dead keys anyway.
+        tu = ToUnicode(key_vk, key_sc, keystate, wbuf, sizeof_array(wbuf) - 1, 2);
+        if (tu >= 0)
+            wbuf[tu] = '\0';
+    }
+#elif defined(USE_MAPVIRTUALKEY_FOR_DEADKEYS)
+    static const char* const maybe_newline = "";
+#else
+    static const char* const maybe_newline = "\n";
+#endif
+
+    printf("key event:  %c%c%c %c%c  flags=0x%08.8x  char=0x%04.4x  vk=0x%04.4x  scan=0x%04.4x  \"%s\"%s",
+            (key_flags & SHIFT_PRESSED) ? 'S' : '_',
+            (key_flags & LEFT_CTRL_PRESSED) ? 'C' : '_',
+            (key_flags & LEFT_ALT_PRESSED) ? 'A' : '_',
+            (key_flags & RIGHT_ALT_PRESSED) ? 'A' : '_',
+            (key_flags & RIGHT_CTRL_PRESSED) ? 'C' : '_',
+            key_flags,
+            key_char,
+            key_vk,
+            key_sc,
+            key_name,
+            maybe_newline);
+
+#if defined(USE_TOUNICODE_FOR_DEADKEYS)
+    if (tu == 0)
+    {
+        printf("  (unknown key)");
+    }
+    else
+    {
+        if (tu < 0)
+            printf("  dead key \"");
+        else
+            printf("  ToUnicode \"");
+
+        DWORD written;
+        WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), wbuf, int(wcslen(wbuf)), &written, nullptr);
+
+        printf("\"");
+    }
+
+    puts("");
+#elif defined(USE_MAPVIRTUALKEY_FOR_DEADKEYS)
+    // CLOSE...BUT NOT VIABLE:
+    //  - Always uses the keyboard input layout from when the process
+    //    started, even when using the Ex version of the API and using
+    //    GetKeyboardLayout(GetCurrentThreadId()) to get the current layout.
+    //  - Always reports accent/etc characters as dead keys, even when
+    //    they're not.  E.g. pressing Grave Accent twice calls both of them
+    //    dead keys, when in reality the second one is not dead and gets
+    //    translated to the actual grave accent character.
+    //
+    // The second issue could be accommodated by only checking if the input
+    // was not translatable into text.  But it doesn't use the current
+    // keyboard layout, so it's unreliable.
+    if (INT(MapVirtualKeyW(key_vk, MAPVK_VK_TO_CHAR)) < 0)
+        printf("  (dead key)");
+
+    puts("");
+#endif
+}
+
+//------------------------------------------------------------------------------
 void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
 {
     int key_char = record.uChar.UnicodeChar;
@@ -758,11 +811,26 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
     int key_sc = record.wVirtualScanCode;
     int key_flags = record.dwControlKeyState;
 
+    // Only respond to key down events.
+    if (!record.bKeyDown)
+    {
+        // Some times conhost can send through ALT codes, with the resulting
+        // Unicode code point in the Alt key-up event.
+        if (key_vk == VK_MENU && key_char)
+            key_flags = 0;
+        else
+            return;
+    }
+
     // We filter out Alt key presses unless they generated a character.
     if (key_vk == VK_MENU)
     {
         if (key_char)
+        {
+            if (s_verbose_input)
+                verbose_input(record);
             push(key_char);
+        }
 
         return;
     }
@@ -772,83 +840,7 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
         return;
 
     if (s_verbose_input)
-    {
-        char buf[32];
-        buf[0] = 0;
-        str_base tmps(buf);
-        const char* key_name = key_name_from_vk(key_vk, tmps) ? buf : "UNKNOWN";
-
-#if defined(USE_TOUNICODE_FOR_DEADKEYS)
-        static const char* const maybe_newline = "";
-        int tu = 0;
-        WCHAR wbuf[33] = {};
-        BYTE keystate[256];
-        if (GetKeyboardState(keystate))
-        {
-            // NOT VIABLE:
-            //  - Is destructive; it alters the internal keyboard state.
-            //  - It doesn't detect dead keys anyway.
-            tu = ToUnicode(key_vk, key_sc, keystate, wbuf, sizeof_array(wbuf) - 1, 2);
-            if (tu >= 0)
-                wbuf[tu] = '\0';
-        }
-#elif defined(USE_MAPVIRTUALKEY_FOR_DEADKEYS)
-        static const char* const maybe_newline = "";
-#else
-        static const char* const maybe_newline = "\n";
-#endif
-
-        printf("key event:  %c%c%c %c%c  flags=0x%08.8x  char=0x%04.4x  vk=0x%04.4x  scan=0x%04.4x  \"%s\"%s",
-                (key_flags & SHIFT_PRESSED) ? 'S' : '_',
-                (key_flags & LEFT_CTRL_PRESSED) ? 'C' : '_',
-                (key_flags & LEFT_ALT_PRESSED) ? 'A' : '_',
-                (key_flags & RIGHT_ALT_PRESSED) ? 'A' : '_',
-                (key_flags & RIGHT_CTRL_PRESSED) ? 'C' : '_',
-                key_flags,
-                key_char,
-                key_vk,
-                key_sc,
-                key_name,
-                maybe_newline);
-
-#if defined(USE_TOUNICODE_FOR_DEADKEYS)
-        if (tu == 0)
-        {
-            printf("  (unknown key)");
-        }
-        else
-        {
-            if (tu < 0)
-                printf("  dead key \"");
-            else
-                printf("  ToUnicode \"");
-
-            DWORD written;
-            WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), wbuf, int(wcslen(wbuf)), &written, nullptr);
-
-            printf("\"");
-        }
-
-        puts("");
-#elif defined(USE_MAPVIRTUALKEY_FOR_DEADKEYS)
-        // CLOSE...BUT NOT VIABLE:
-        //  - Always uses the keyboard input layout from when the process
-        //    started, even when using the Ex version of the API and using
-        //    GetKeyboardLayout(GetCurrentThreadId()) to get the current layout.
-        //  - Always reports accent/etc characters as dead keys, even when
-        //    they're not.  E.g. pressing Grave Accent twice calls both of them
-        //    dead keys, when in reality the second one is not dead and gets
-        //    translated to the actual grave accent character.
-        //
-        // The second issue could be accommodated by only checking if the input
-        // was not translatable into text.  But it doesn't use the current
-        // keyboard layout, so it's unreliable.
-        if (INT(MapVirtualKeyW(key_vk, MAPVK_VK_TO_CHAR)) < 0)
-            printf("  (dead key)");
-
-        puts("");
-#endif
-    }
+        verbose_input(record);
 
     // Special treatment for escape.
     if (key_char == 0x1b && (key_vk == VK_ESCAPE || !g_differentiate_keys.get()))
@@ -1079,6 +1071,103 @@ not_ctrl:
         push(key_seq.c_str());
         return;
     }
+}
+
+//------------------------------------------------------------------------------
+void win_terminal_in::process_input(MOUSE_EVENT_RECORD const& record)
+{
+    auto key_flags = record.dwControlKeyState;
+
+    if (s_verbose_input)
+    {
+        printf("mouse event:  %u,%u  %c%c%c %c%c  ctrlkeystate=0x%08.8x  buttonstate=0x%04.4x  eventflags=0x%04.4x\n",
+                record.dwMousePosition.X,
+                record.dwMousePosition.Y,
+                (key_flags & SHIFT_PRESSED) ? 'S' : '_',
+                (key_flags & LEFT_CTRL_PRESSED) ? 'C' : '_',
+                (key_flags & LEFT_ALT_PRESSED) ? 'A' : '_',
+                (key_flags & RIGHT_ALT_PRESSED) ? 'A' : '_',
+                (key_flags & RIGHT_CTRL_PRESSED) ? 'C' : '_',
+                key_flags,
+                record.dwButtonState,
+                record.dwEventFlags);
+    }
+
+    auto prev_mouse_button_state = m_prev_mouse_button_state;
+    m_prev_mouse_button_state = record.dwButtonState;
+
+    if (!(prev_mouse_button_state & RIGHTMOST_BUTTON_PRESSED) &&
+        (record.dwButtonState & RIGHTMOST_BUTTON_PRESSED))
+    {
+        DWORD mode;
+        if (GetConsoleMode(m_stdin, &mode) && !(mode & ENABLE_QUICK_EDIT_MODE))
+        {
+            HWND hwndConsole = GetConsoleWindow();
+            if (IsWindowVisible(hwndConsole) &&
+                (GetWindowLongW(hwndConsole, GWL_STYLE) & WS_VISIBLE))
+            {
+                POINT pt;
+                GetCursorPos(&pt);
+                LPARAM lParam = MAKELPARAM(pt.x, pt.y);
+                SendMessage(hwndConsole, WM_CONTEXTMENU, 0, lParam);
+            }
+        }
+        else
+        {
+// TODO: Send mouse right click key sequence.
+// TODO: Bind mouse right click key sequence to `clink-paste`.
+        }
+        return;
+    }
+
+// TODO: translate click into VT mouse input codes.
+// TODO: upstream layers need to be able to handle VT mouse input codes.
+}
+
+//------------------------------------------------------------------------------
+void win_terminal_in::filter_unbound_input(unsigned int buffer_count)
+{
+    // If the processed input chord isn't bound, discard it.  Otherwise unbound
+    // keys can have the tail part of their sequence show up as though it were
+    // typed input.  The approach here assumes no more than one key sequence per
+    // input record.
+    if (!m_keys)
+        return;
+
+    // If there are unprocessed queued keys, then we don't know what keymap will
+    // be active when this new input gets processed, so we can't accurately tell
+    // whether the key sequence is bound to anything.
+    assert(buffer_count == 0);
+
+    const int len = m_buffer_count - buffer_count;
+    if (len <= 0)
+        return;
+
+    // m_buffer is circular, so copy the key sequence to a separate sequential
+    // buffer.  And also because Readline has a bug in rl_function_of_keyseq_len
+    // that looks for nul termination even though it's supposed to use a length
+    // instead; copying to a separate buffer makes that easier to mitigate.
+    char chord[sizeof_array(m_buffer) + 1];
+    static const unsigned int mask = sizeof_array(m_buffer) - 1;
+    for (int i = 0; i < len; ++i)
+        chord[i] = m_buffer[(m_buffer_head + i) & mask];
+    chord[len] = '\0'; // Word around rl_function_of_keyseq_len bug.
+
+    str<32> new_chord;
+    if (m_keys->translate(chord, len, new_chord))
+    {
+        // Reset buffer and push translated chord.
+        m_buffer_count = buffer_count;
+        for (unsigned int i = 0; i < new_chord.length(); ++i)
+            push((unsigned int)new_chord.c_str()[i]);
+    }
+    else if (!m_keys->is_bound(chord, len))
+    {
+        // Reset buffer, discarding the chord.
+        m_buffer_count = buffer_count;
+    }
+
+    m_keys->set_keyseq_len(m_buffer_count);
 }
 
 //------------------------------------------------------------------------------

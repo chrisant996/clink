@@ -44,6 +44,9 @@ int input_echo(int argc, char** argv)
 
     console_config cc;
 
+    extern bool g_echo_input;
+    g_echo_input = true;
+
     terminal terminal = terminal_create();
     terminal_in& input = *terminal.in;
     input.begin();
