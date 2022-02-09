@@ -4,8 +4,10 @@
 
 #### v1.3.6
 
+- <kbd>Ctrl</kbd>+<kbd>X</kbd>,<kbd>Ctrl</kbd>+<kbd>Z</kbd> with a numeric argument always includes registered Lua match generators, prompt filters, etc even when the `lua.debug` setting is off.
 - Fixed potential for a coroutine to have extra delays sometimes when continuing past the end of one edit line, and into the next edit line.
 - Fixed a potential busy loop when the command word is unrecognized.
+- Fixed Quick Edit mode in plain Conhost windows; it had always been disabled (I never noticed because I always configure console windows to disable it anyway).
 
 #### v1.3.5
 
