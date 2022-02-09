@@ -239,8 +239,9 @@ function clink._set_coroutine_events(new_events)
 end
 
 --------------------------------------------------------------------------------
-function clink._diag_events()
-    if not settings.get("lua.debug") then
+function clink._diag_events(arg)
+    arg = (arg and arg > 0)
+    if not arg and not settings.get("lua.debug") then
         return
     end
 

@@ -91,7 +91,7 @@ function clink._diagnostics(rl_buffer)
     local arg = rl_buffer:getargument()
     clink._diag_coroutines()
     clink._diag_refilter()
-    clink._diag_events()
+    clink._diag_events(arg)
     if arg then
         clink._diag_prompts()
         clink._diag_generators()
