@@ -5,6 +5,13 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
+- Mouse input:
+  - [ ] Produce VT mouse input codes.
+  - [ ] Respond to VT mouse input codes.
+    - [ ] Click in line buffer.
+    - [ ] Click in selectcomplete_impl.
+    - [ ] Click in textlist_impl.
+    - [ ] Right click for Paste.
 
 ## Normal Priority
 - [ ] Argmatcher syntax.
@@ -31,6 +38,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Requires a new method (and shim).
   - Has to be a method, so that shimming is possible.
   - Maybe `addflagtable` or `addflagsinfo` or `addextendedflags`?
+  - And `addargtable`?
+  - `:addargunsorted()` makes less sense now...
 - Future-proofing:  how to ignore future-version entries that won't be interpreted properly by the current version?
 
 ```lua
