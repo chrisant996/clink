@@ -134,7 +134,11 @@ console_config::console_config(HANDLE handle)
     extern void save_host_input_mode(DWORD);
     GetConsoleMode(m_handle, &m_prev_mode);
     save_host_input_mode(m_prev_mode);
-    SetConsoleMode(m_handle, ENABLE_WINDOW_INPUT);
+
+    DWORD mode = m_prev_mode;
+    mode &= ~(ENABLE_PROCESSED_INPUT|ENABLE_LINE_INPUT|ENABLE_ECHO_INPUT|ENABLE_MOUSE_INPUT);
+    mode |= ENABLE_WINDOW_INPUT;
+    SetConsoleMode(m_handle, mode);
 }
 
 console_config::~console_config()
