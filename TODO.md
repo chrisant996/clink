@@ -6,12 +6,12 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## High Priority
 - Mouse input:
-  - [ ] Produce VT mouse input codes.
-  - [ ] Respond to VT mouse input codes.
-    - [ ] Click in line buffer.
-    - [ ] Click in selectcomplete_impl.
-    - [ ] Click in textlist_impl.
-    - [ ] Right click for Paste.
+  - [x] Right click for Paste.
+  - [x] Click in line buffer.
+  - [ ] Double click.
+  - [ ] Click in textlist_impl.
+  - [ ] Click in selectcomplete_impl.
+  - [ ] Drag.
 
 ## Normal Priority
 - [ ] Argmatcher syntax.
