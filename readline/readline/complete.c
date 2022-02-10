@@ -3632,7 +3632,10 @@ rl_old_menu_complete (int count, int invoking_key)
 /* begin_clink_change */
 #ifdef USE_MEMORY_TRACKING
       if (force_free)
-        return 0;
+        {
+          orig_text = 0;
+          return 0;
+        }
 #endif
 /* end_clink_change */
 
@@ -3835,7 +3838,10 @@ rl_menu_complete (int count, int ignore)
 /* begin_clink_change */
 #ifdef USE_MEMORY_TRACKING
       if (force_free)
-        return 0;
+        {
+          orig_text = 0;
+          return 0;
+        }
 #endif
 /* end_clink_change */
 
