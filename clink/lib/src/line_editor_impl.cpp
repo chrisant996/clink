@@ -305,9 +305,9 @@ void line_editor_impl::initialise()
             return binder->create_group(name);
         }
 
-        virtual bool bind(unsigned int group, const char* chord, unsigned char key) override
+        virtual bool bind(unsigned int group, const char* chord, unsigned char key, bool has_params=false) override
         {
-            return binder->bind(group, chord, *module, key);
+            return binder->bind(group, chord, *module, key, has_params);
         }
 
         ::binder*       binder;
@@ -727,7 +727,7 @@ bool line_editor_impl::update_input()
             rollback<bind_resolver::binding*> _(m_pending_binding, &binding);
 
             editor_module::context context = get_context();
-            editor_module::input input = { chord.c_str(), chord.length(), id };
+            editor_module::input input = { chord.c_str(), chord.length(), id, binding.get_params() };
             module->on_input(input, result, context);
         }
 

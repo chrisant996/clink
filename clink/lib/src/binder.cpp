@@ -9,6 +9,7 @@
 #include <core/str_hash.h>
 
 #include <algorithm>
+#include <assert.h>
 
 //------------------------------------------------------------------------------
 template <int SIZE> static bool translate_chord(const char* chord, char (&out)[SIZE], int& len)
@@ -165,7 +166,8 @@ bool binder::bind(
     unsigned int group,
     const char* chord,
     editor_module& module,
-    unsigned char id)
+    unsigned char id,
+    bool has_params)
 {
     // Validate input
     if (group >= sizeof_array(m_nodes))
@@ -188,7 +190,7 @@ bool binder::bind(
     int depth = 0;
     int head = group;
     for (; len; ++chord, ++depth, --len)
-        if (!(head = insert_child(head, *chord)))
+        if (!(head = insert_child(head, *chord, has_params && *chord == '*')))
             return false;
 
     --chord;
@@ -274,12 +276,15 @@ int binder::is_bound(unsigned int group, const char* seq, int len) const
 }
 
 //------------------------------------------------------------------------------
-int binder::insert_child(int parent, unsigned char key)
+int binder::insert_child(int parent, unsigned char key, bool has_params)
 {
     if (int child = find_child(parent, key))
+    {
+        assert(get_node(child).has_params == has_params);
         return child;
+    }
 
-    return add_child(parent, key);
+    return add_child(parent, key, has_params);
 }
 
 //------------------------------------------------------------------------------
@@ -287,11 +292,16 @@ int binder::find_child(int parent, unsigned char key) const
 {
     const node* node = m_nodes + parent;
 
+    if (node->has_params && key >= '0' && key <= '9')
+        return parent;
+
     int index = node->child;
     for (; index > parent; index = node->next)
     {
         node = m_nodes + index;
         if (node->key == key)
+            return index;
+        if (node->has_params && key >= '0' && key <= '9')
             return index;
     }
 
@@ -299,7 +309,7 @@ int binder::find_child(int parent, unsigned char key) const
 }
 
 //------------------------------------------------------------------------------
-int binder::add_child(int parent, unsigned char key)
+int binder::add_child(int parent, unsigned char key, bool has_params)
 {
     int child = alloc_nodes();
     if (child < 0)
@@ -307,6 +317,7 @@ int binder::add_child(int parent, unsigned char key)
 
     node addee = {};
     addee.key = key;
+    addee.has_params = has_params;
 
     int current_child = m_nodes[parent].child;
     if (current_child < parent)

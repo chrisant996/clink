@@ -19,18 +19,19 @@ public:
                         binder();
     int                 get_group(const char* name=nullptr);
     int                 create_group(const char* name);
-    bool                bind(unsigned int group, const char* chord, editor_module& module, unsigned char id);
+    bool                bind(unsigned int group, const char* chord, editor_module& module, unsigned char id, bool has_params=false);
     int                 is_bound(unsigned int group, const char* seq, int len) const;
 
 private:
     static const int    link_bits = 9;
-    static const int    module_bits = 6;
+    static const int    module_bits = 5;
 
     struct node
     {
         unsigned short  is_group    : 1;
         unsigned short  next        : link_bits;
         unsigned short  module      : module_bits;
+        unsigned short  has_params  : 1;
 
         unsigned short  child       : link_bits;
         unsigned short  depth       : 4;
@@ -52,9 +53,9 @@ private:
     typedef fixed_array<editor_module*, (1 << module_bits)> modules;
 
     friend class        bind_resolver;
-    int                 insert_child(int parent, unsigned char key);
+    int                 insert_child(int parent, unsigned char key, bool has_params);
     int                 find_child(int parent, unsigned char key) const;
-    int                 add_child(int parent, unsigned char key);
+    int                 add_child(int parent, unsigned char key, bool has_params);
     int                 find_tail(int head);
     int                 append(int head, unsigned char key);
     const node&         get_node(unsigned int index) const;

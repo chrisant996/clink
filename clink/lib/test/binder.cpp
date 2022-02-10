@@ -41,7 +41,7 @@ TEST_CASE("Binder")
     SECTION("Overflow : module")
     {
         int group = binder.get_group();
-        for (int i = 0; i < 64; ++i)
+        for (int i = 0; i < 32; ++i)
             REQUIRE(binder.bind(group, "", ((editor_module*)0)[i], char(i)));
 
         auto& module = ((editor_module*)0)[0xff];
@@ -114,6 +114,69 @@ TEST_CASE("Binder")
         for (const char* chord : chords)
         {
             REQUIRE(!binder.bind(group, chord, *(editor_module*)0, 234));
+        }
+    }
+
+    SECTION("Chords with params")
+    {
+        struct {
+            const char* input;
+            bool match;
+            unsigned int param0;
+            unsigned int param1;
+        } chords[] = {
+            "$!1;1~",     true,   1,    1,
+            "$!23;1~",    true,   23,   1,
+            "$!1;23~",    true,   1,    23,
+            "$!456;23~",  true,   456,  23,
+            "$!23;456~",  true,   23,   456,
+            "$!A;B~",     false,  0,    0,
+            "$!1;B~",     false,  0,    0,
+            "$!A;1~",     false,  0,    0,
+            "$!1~",       false,  0,    0,
+            "$!1;2;3~",   false,  0,    0,
+        };
+
+        int group = binder.get_group();
+        auto& module = *(editor_module*)(&chords);
+        REQUIRE(binder.bind(group, "$!*;*~", module, 123, true/*has_params*/));
+
+        for (const auto& chord : chords)
+        {
+            bind_resolver resolver(binder);
+            for (const char* c = chord.input; *c; ++c)
+            {
+                if (resolver.step(*c))
+                    break;
+            }
+
+            auto binding = resolver.next();
+            if (chord.match)
+            {
+                REQUIRE(binding, [&] () {
+                    printf("input '%s' no binding found\n", chord.input);
+                });
+                REQUIRE(binding.get_id() == 123);
+                REQUIRE(binding.get_module() == &module);
+
+                unsigned int value;
+                REQUIRE(binding.get_params().get(0, value), [&] () {
+                    printf("input '%s' first param not found\n", chord.input);
+                });
+                REQUIRE(value == chord.param0, [&] () {
+                    printf("input '%s' first param %u, expected %u\n", chord.input, value, chord.param0);
+                });
+                REQUIRE(binding.get_params().get(1, value), [&] () {
+                    printf("input '%s' second param not found\n", chord.input);
+                });
+                REQUIRE(value == chord.param1, [&] () {
+                    printf("input '%s' second param %u, expected %u\n", chord.input, value, chord.param1);
+                });
+            }
+            else
+            {
+                REQUIRE(!binding);
+            }
         }
     }
 }

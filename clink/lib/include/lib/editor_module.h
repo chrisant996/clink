@@ -4,6 +4,7 @@
 #pragma once
 
 #include <core/base.h>
+#include "bind_resolver.h"
 
 class printer;
 class pager;
@@ -30,6 +31,7 @@ public:
         const char*         keys;
         unsigned int        len;    // Because '\0' is C-@ and is a valid input.
         unsigned char       id;
+        bind_resolver::bind_params params;
     };
 
     struct context
@@ -47,7 +49,7 @@ public:
     {
         virtual int         get_group(const char* name=nullptr) const = 0;
         virtual int         create_group(const char* name) = 0;
-        virtual bool        bind(unsigned int group, const char* chord, unsigned char id) = 0;
+        virtual bool        bind(unsigned int group, const char* chord, unsigned char id, bool has_params=false) = 0;
     };
 
     virtual                 ~editor_module() = default;

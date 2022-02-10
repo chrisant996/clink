@@ -11,6 +11,23 @@ class str_base;
 class bind_resolver
 {
 public:
+    class binding;
+
+    class bind_params
+    {
+    public:
+        bool            get(unsigned int param, unsigned int& value) const;
+        unsigned int    count() const;
+    private:
+        friend class    bind_resolver;
+        friend class    bind_resolver::binding;
+        bool            add(unsigned short value, unsigned char len);
+        void            clear();
+        unsigned short  m_params[4];
+        unsigned char   m_num = 0;
+        short           m_len = 0;
+    };
+
     class binding
     {
     public:
@@ -18,17 +35,19 @@ public:
         editor_module*  get_module() const;
         unsigned char   get_id() const;
         void            get_chord(str_base& chord) const;
+        const bind_params& get_params() const;
         void            claim();
 
     private:
         friend class    bind_resolver;
                         binding() = default;
-                        binding(bind_resolver* resolver, int node_index);
+                        binding(bind_resolver* resolver, int node_index, const bind_params& params);
         bind_resolver*  m_outer = nullptr;
         unsigned short  m_node_index;
         unsigned char   m_module;
-        unsigned char   m_depth;
+        unsigned char   m_len;
         unsigned char   m_id;
+        bind_params     m_params;
     };
 
                         bind_resolver(const binder& binder);
@@ -48,6 +67,11 @@ private:
     unsigned short      m_group = 1;
     bool                m_pending_input = false;
     unsigned char       m_tail = 0;
+    unsigned char       m_key_len = 0;
+    bind_params         m_params;
+    unsigned short      m_param_accumulator = 0;
+    unsigned char       m_param_len = 0;
+    bool                m_pending_param = false;
     unsigned char       m_key_count = 0;
     char                m_keys[16];
 };

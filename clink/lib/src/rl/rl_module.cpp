@@ -2034,6 +2034,8 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
 //------------------------------------------------------------------------------
 enum {
     bind_id_input,
+    bind_id_left_click,
+    bind_id_right_click,
     bind_id_more_input,
 };
 
@@ -2354,6 +2356,8 @@ bool rl_module::next_line(str_base& out)
 void rl_module::bind_input(binder& binder)
 {
     int default_group = binder.get_group();
+    binder.bind(default_group, "\x1b[$*;*L", bind_id_left_click, true/*has_params*/);
+    binder.bind(default_group, "\x1b[$*;*R", bind_id_right_click, true/*has_params*/);
     binder.bind(default_group, "", bind_id_input);
 
     m_catch_group = binder.create_group("readline");
