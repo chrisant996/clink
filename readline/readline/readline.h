@@ -424,6 +424,9 @@ extern int rl_clear_visible_line PARAMS((void));
 extern int rl_clear_message PARAMS((void));
 extern int rl_reset_line_state PARAMS((void));
 extern int rl_crlf PARAMS((void));
+/* begin_clink_change */
+extern int rl_get_prompt_prefix_visible PARAMS((void));
+/* end_clink_change */
 
 /* Functions to manage the mark and region, especially the notion of an
    active mark and an active region. */

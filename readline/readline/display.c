@@ -1811,6 +1811,14 @@ rl_redisplay (void)
   _rl_release_sigint ();
 }
 
+/* begin_clink_change */
+int
+rl_get_prompt_prefix_visible ()
+{
+  return prompt_physical_chars;
+}
+/* end_clink_change */
+
 static void
 putc_face (int c, int face, char *cur_face)
 {

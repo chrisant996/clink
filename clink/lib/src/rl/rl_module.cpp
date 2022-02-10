@@ -2527,13 +2527,85 @@ void rl_module::on_end_line()
 }
 
 //------------------------------------------------------------------------------
+bool translate_xy_to_readline(unsigned int x, unsigned int y, int& pos)
+{
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+
+    int v_pos_y = (csbi.dwCursorPosition.Y - csbi.srWindow.Top);
+    int v_pos = _rl_last_v_pos - v_pos_y + y;
+
+    if (v_pos < 0)
+        return false;
+    if (v_pos > _rl_vis_botlin)
+        return false;
+
+    const int prefix = rl_get_prompt_prefix_visible();
+    int point = 0;
+
+    str_iter iter(g_rl_buffer->get_buffer(), g_rl_buffer->get_length());
+    for (unsigned int i = 0; i <= v_pos; i++)
+    {
+        const int target = (i == v_pos ? x : _rl_screenwidth);
+        int consumed = i ? 0 : prefix;
+
+        const char* ptr = iter.get_pointer();
+        while (iter.more())
+        {
+            const char* prev = iter.get_pointer();
+            const int c = iter.next();
+            const int w = clink_wcwidth(c);
+            if (consumed + w > target)
+            {
+                iter.reset_pointer(prev);
+                break;
+            }
+            consumed += w;
+        }
+
+        point += int(iter.get_pointer() - ptr);
+    }
+
+    assert(point <= g_rl_buffer->get_length());
+
+    pos = point;
+    return true;
+}
+
+//------------------------------------------------------------------------------
 void rl_module::on_input(const input& input, result& result, const context& context)
 {
     assert(!g_result);
-    g_result = &result;
 
     if (g_debug_log_terminal.get())
         LOG("INPUT \"%.*s\", %d", input.len, input.keys, input.len);
+
+    if (input.id == bind_id_left_click)
+    {
+        unsigned int p0, p1;
+        input.params.get(0, p0);
+        input.params.get(1, p1);
+        int pos;
+        if (translate_xy_to_readline(p0, p1, pos))
+        {
+            if (pos != rl_point)
+            {
+                g_rl_buffer->set_cursor(pos);
+                g_rl_buffer->set_need_draw();
+                g_rl_buffer->draw();
+            }
+        }
+        return;
+    }
+    else if (input.id == bind_id_right_click)
+    {
+// TODO: May need an option.  I hate right-click paste; so dangerous!
+        //clink_paste(0, 0);
+        rl_ding();
+        return;
+    }
+
+    g_result = &result;
 
     // Setup the terminal.
     struct : public terminal_in
