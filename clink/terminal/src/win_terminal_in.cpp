@@ -7,6 +7,7 @@
 #include "input_idle.h"
 #include "key_tester.h"
 #include "terminal_helpers.h"
+#include "screen_buffer.h"
 
 #include <core/base.h>
 #include <core/str.h>
@@ -488,10 +489,10 @@ enum : unsigned char
 
 
 //------------------------------------------------------------------------------
-static unsigned int get_dimensions()
+unsigned int win_terminal_in::get_dimensions()
 {
     CONSOLE_SCREEN_BUFFER_INFO csbi;
-    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+    GetConsoleScreenBufferInfo(m_stdout, &csbi);
     auto cols = short(csbi.dwSize.X);
     auto rows = short(csbi.srWindow.Bottom - csbi.srWindow.Top) + 1;
     return (cols << 16) | rows;
@@ -505,6 +506,7 @@ void win_terminal_in::begin()
     m_buffer_count = 0;
     m_lead_surrogate = 0;
     m_stdin = GetStdHandle(STD_INPUT_HANDLE);
+    m_stdout = GetStdHandle(STD_OUTPUT_HANDLE);
     m_dimensions = get_dimensions();
     GetConsoleMode(m_stdin, &m_prev_mode);
     show_cursor(false);
@@ -522,6 +524,7 @@ void win_terminal_in::end()
     show_cursor(true);
     SetConsoleMode(m_stdin, m_prev_mode);
     m_stdin = nullptr;
+    m_stdout = nullptr;
 }
 
 //------------------------------------------------------------------------------
@@ -621,11 +624,10 @@ void win_terminal_in::read_console(input_idle* callback)
     // Conhost restarts the cursor blink when writing to the console. It restarts
     // hidden which means that if you type faster than the blink the cursor turns
     // invisible. Fortunately, moving the cursor restarts the blink on visible.
-    HANDLE stdout_handle = GetStdHandle(STD_OUTPUT_HANDLE);
     CONSOLE_SCREEN_BUFFER_INFO csbi;
-    GetConsoleScreenBufferInfo(stdout_handle, &csbi);
+    GetConsoleScreenBufferInfo(m_stdout, &csbi);
     if (!is_scroll_mode())
-        SetConsoleCursorPosition(stdout_handle, csbi.dwCursorPosition);
+        SetConsoleCursorPosition(m_stdout, csbi.dwCursorPosition);
 
     // Read input records sent from the terminal (aka conhost) until some
     // input has been buffered.
@@ -633,7 +635,7 @@ void win_terminal_in::read_console(input_idle* callback)
     while (buffer_count == m_buffer_count)
     {
         DWORD modeExpected;
-        const bool has_mode = !!GetConsoleMode(stdout_handle, &modeExpected);
+        const bool has_mode = !!GetConsoleMode(m_stdout, &modeExpected);
 
         fix_console_input_mode(m_stdin);
 
@@ -667,11 +669,11 @@ void win_terminal_in::read_console(input_idle* callback)
                 callback->on_idle();
 
             if (has_mode)
-                fix_console_output_mode(stdout_handle, modeExpected);
+                fix_console_output_mode(m_stdout, modeExpected);
         }
 
         if (has_mode)
-            fix_console_output_mode(stdout_handle, modeExpected);
+            fix_console_output_mode(m_stdout, modeExpected);
 
         DWORD count;
         INPUT_RECORD record;
@@ -708,7 +710,7 @@ void win_terminal_in::read_console(input_idle* callback)
 
             {
                 CONSOLE_SCREEN_BUFFER_INFO csbiNew;
-                GetConsoleScreenBufferInfo(stdout_handle, &csbiNew);
+                GetConsoleScreenBufferInfo(m_stdout, &csbiNew);
                 if (csbi.dwSize.X != csbiNew.dwSize.X)
                     return;
                 csbi = csbiNew; // Update for next time.
@@ -777,7 +779,7 @@ static void verbose_input(KEY_EVENT_RECORD const& record)
             printf("  ToUnicode \"");
 
         DWORD written;
-        WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), wbuf, int(wcslen(wbuf)), &written, nullptr);
+        WriteConsoleW(m_stdout, wbuf, int(wcslen(wbuf)), &written, nullptr);
 
         printf("\"");
     }
@@ -1074,54 +1076,83 @@ not_ctrl:
 }
 
 //------------------------------------------------------------------------------
-void win_terminal_in::process_input(MOUSE_EVENT_RECORD const& record)
+static void verbose_input(MOUSE_EVENT_RECORD const& record)
 {
     auto key_flags = record.dwControlKeyState;
 
-    if (s_verbose_input)
-    {
-        printf("mouse event:  %u,%u  %c%c%c %c%c  ctrlkeystate=0x%08.8x  buttonstate=0x%04.4x  eventflags=0x%04.4x\n",
-                record.dwMousePosition.X,
-                record.dwMousePosition.Y,
-                (key_flags & SHIFT_PRESSED) ? 'S' : '_',
-                (key_flags & LEFT_CTRL_PRESSED) ? 'C' : '_',
-                (key_flags & LEFT_ALT_PRESSED) ? 'A' : '_',
-                (key_flags & RIGHT_ALT_PRESSED) ? 'A' : '_',
-                (key_flags & RIGHT_CTRL_PRESSED) ? 'C' : '_',
-                key_flags,
-                record.dwButtonState,
-                record.dwEventFlags);
-    }
+    printf("mouse event:  %u,%u  %c%c%c %c%c  ctrlkeystate=0x%08.8x  buttonstate=0x%04.4x  eventflags=0x%04.4x\n",
+            record.dwMousePosition.X,
+            record.dwMousePosition.Y,
+            (key_flags & SHIFT_PRESSED) ? 'S' : '_',
+            (key_flags & LEFT_CTRL_PRESSED) ? 'C' : '_',
+            (key_flags & LEFT_ALT_PRESSED) ? 'A' : '_',
+            (key_flags & RIGHT_ALT_PRESSED) ? 'A' : '_',
+            (key_flags & RIGHT_CTRL_PRESSED) ? 'C' : '_',
+            key_flags,
+            record.dwButtonState,
+            record.dwEventFlags);
+}
 
-    auto prev_mouse_button_state = m_prev_mouse_button_state;
+//------------------------------------------------------------------------------
+void win_terminal_in::process_input(MOUSE_EVENT_RECORD const& record)
+{
+    // Remember the button state, to differentiate press vs release.
+    const auto prv = m_prev_mouse_button_state;
     m_prev_mouse_button_state = record.dwButtonState;
 
-    if (!(prev_mouse_button_state & RIGHTMOST_BUTTON_PRESSED) &&
-        (record.dwButtonState & RIGHTMOST_BUTTON_PRESSED))
+    // In a race condition, both left and right click may happen simultaneously.
+    // Only respond to one; left has priority over right.
+    const auto btn = record.dwButtonState;
+    const bool left_click = (!(prv & FROM_LEFT_1ST_BUTTON_PRESSED) && (btn & FROM_LEFT_1ST_BUTTON_PRESSED));
+    const bool right_click = !left_click && (!(prv & RIGHTMOST_BUTTON_PRESSED) && (btn & RIGHTMOST_BUTTON_PRESSED));
+
+    // WM_CONTEXTMENU and mouse wheel scrolling should happen no matter what.
+    DWORD mode;
+    if (GetConsoleMode(m_stdin, &mode) && !(mode & ENABLE_QUICK_EDIT_MODE))
     {
-        DWORD mode;
-        if (GetConsoleMode(m_stdin, &mode) && !(mode & ENABLE_QUICK_EDIT_MODE))
+        if (right_click)
         {
             HWND hwndConsole = GetConsoleWindow();
             if (IsWindowVisible(hwndConsole) &&
                 (GetWindowLongW(hwndConsole, GWL_STYLE) & WS_VISIBLE))
             {
+                if (s_verbose_input)
+                    verbose_input(record);
+
                 POINT pt;
                 GetCursorPos(&pt);
                 LPARAM lParam = MAKELPARAM(pt.x, pt.y);
                 SendMessage(hwndConsole, WM_CONTEXTMENU, 0, lParam);
+                return;
             }
         }
-        else
-        {
-// TODO: Send mouse right click key sequence.
-// TODO: Bind mouse right click key sequence to `clink-paste`.
-        }
+
+// TODO: Mouse wheel.
+    }
+
+    // Any other mouse input may go to the caller, so check whether the caller
+    // is prepared to accept mouse input.
+    if (!m_keys->accepts_mouse_input())
+        return;
+
+    if (s_verbose_input)
+        verbose_input(record);
+
+    // Left or right click.
+    if (left_click || right_click)
+    {
+        CONSOLE_SCREEN_BUFFER_INFO csbi;
+        GetConsoleScreenBufferInfo(m_stdout, &csbi);
+
+        str<16> tmp;
+// TODO: Double click.
+        const char code = left_click ? 'L' : 'R';
+        tmp.format("\x1b[$%u;%u%c", record.dwMousePosition.X - csbi.srWindow.Left, record.dwMousePosition.Y - csbi.srWindow.Top, code);
+        push(tmp.c_str());
         return;
     }
 
-// TODO: translate click into VT mouse input codes.
-// TODO: upstream layers need to be able to handle VT mouse input codes.
+// TODO: Mouse drag; for extending CUA selection.
 }
 
 //------------------------------------------------------------------------------

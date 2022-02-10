@@ -11,6 +11,7 @@ class key_tester
 public:
     virtual         ~key_tester() = default;
     virtual bool    is_bound(const char* seq, int len) = 0;
+    virtual bool    accepts_mouse_input() { return false; }
     virtual bool    translate(const char* seq, int len, str_base& out) { return false; }
     virtual void    set_keyseq_len(int len) {}
 };

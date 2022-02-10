@@ -2157,6 +2157,29 @@ LNope:
 }
 
 //------------------------------------------------------------------------------
+bool rl_module::accepts_mouse_input()
+{
+    // `quoted-insert` only accepts keyboard input.
+    if (rl_is_insert_next_callback_pending())
+        return false;
+
+    // The F2, F4, and F9 console compatibility implementations only accept
+    // keyboard input.
+    if (win_fn_callback_pending())
+        return false;
+
+    // Various states should only accept "simple" input.
+    if (RL_ISSTATE(RL_SIMPLE_INPUT_STATES))
+        return false;
+
+    // Multi-key chords only accept keyboard input.
+    if (RL_ISSTATE(RL_STATE_MULTIKEY))
+        return false;
+
+    return true;
+}
+
+//------------------------------------------------------------------------------
 bool rl_module::translate(const char* seq, int len, str_base& out)
 {
     const char* bindableEsc = get_bindable_esc();

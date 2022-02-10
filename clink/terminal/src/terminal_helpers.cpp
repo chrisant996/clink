@@ -14,7 +14,7 @@
 //------------------------------------------------------------------------------
 extern bool g_enhanced_cursor;
 printer* g_printer = nullptr;
-bool g_echo_input = false;
+bool g_accept_mouse_input = false;
 
 //------------------------------------------------------------------------------
 setting_bool g_adjust_cursor_style(
@@ -145,7 +145,7 @@ extern "C" void use_clink_input_mode(void)
 //------------------------------------------------------------------------------
 static DWORD select_mouse_input(DWORD mode)
 {
-    if (g_echo_input)
+    if (!g_accept_mouse_input)
         return 0;
 
     switch (g_mouse_input.get())
@@ -185,12 +185,15 @@ static DWORD select_mouse_input(DWORD mode)
 }
 
 //------------------------------------------------------------------------------
-console_config::console_config(HANDLE handle)
+console_config::console_config(HANDLE handle, bool accept_mouse_input)
     : m_handle(handle ? handle : GetStdHandle(STD_INPUT_HANDLE))
 {
     extern void save_host_input_mode(DWORD);
     GetConsoleMode(m_handle, &m_prev_mode);
     save_host_input_mode(m_prev_mode);
+
+    m_prev_accept_mouse_input = g_accept_mouse_input;
+    g_accept_mouse_input = accept_mouse_input;
 
     // NOTE:  Windows Terminal doesn't reliably respond to changes of the
     // ENABLE_MOUSE_INPUT flag when ENABLE_AUTO_POSITION is missing.
@@ -204,6 +207,7 @@ console_config::console_config(HANDLE handle)
 console_config::~console_config()
 {
     SetConsoleMode(m_handle, m_prev_mode);
+    g_accept_mouse_input = m_prev_accept_mouse_input;
 }
 
 

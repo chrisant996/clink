@@ -531,7 +531,7 @@ BOOL WINAPI host_cmd::read_console(
         // doesn't read input fast enough the OS can handle processed input
         // while it's enabled between ReadConsoleInputW calls.
         {
-            console_config cc(input);
+            console_config cc(input, true/*accept_mouse_input*/);
             reset_wcwidths();
             host_cmd::get()->edit_line(chars, max_chars);
         }

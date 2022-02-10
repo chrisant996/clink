@@ -24,6 +24,7 @@ public:
                     ~rl_module();
 
     bool            is_bound(const char* seq, int len);
+    bool            accepts_mouse_input();
     bool            translate(const char* seq, int len, str_base& out);
     void            set_keyseq_len(int len);
     void            set_prompt(const char* prompt, const char* rprompt, bool redisplay);

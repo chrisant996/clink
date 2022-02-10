@@ -53,6 +53,7 @@ public:
                     textlist_impl(input_dispatcher& dispatcher);
 
     popup_results   activate(const char* title, const char** entries, int count, int index, bool reverse, int history_mode, entry_info* infos, bool columns);
+    bool            is_active() const;
 
 private:
     // editor_module.

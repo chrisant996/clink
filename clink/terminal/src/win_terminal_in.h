@@ -20,6 +20,7 @@ public:
     virtual key_tester* set_key_tester(key_tester* keys) override;
 
 private:
+    unsigned int    get_dimensions();
     void            read_console(input_idle* callback=nullptr);
     void            process_input(const KEY_EVENT_RECORD& key_event);
     void            process_input(const MOUSE_EVENT_RECORD& mouse_event);
@@ -29,6 +30,7 @@ private:
     unsigned char   pop();
     key_tester*     m_keys;
     void*           m_stdin = nullptr;
+    void*           m_stdout = nullptr;
     unsigned int    m_dimensions = 0;
     unsigned long   m_prev_mode = 0;
     DWORD           m_prev_mouse_button_state = 0;

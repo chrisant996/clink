@@ -23,15 +23,18 @@ extern "C" void use_clink_input_mode(void);
 //
 // Clear 'processed input' flag so key presses such as Ctrl-C and Ctrl-S aren't
 // swallowed.  We also want events about window size changes.
+//
+// Also initialize ENABLE_MOUSE_INPUT according to setting and terminal state.
 class console_config
 {
 public:
-    console_config(HANDLE handle=nullptr);
+    console_config(HANDLE handle=nullptr, bool accept_mouse_input=false);
     ~console_config();
 
 private:
     const HANDLE    m_handle;
     DWORD           m_prev_mode;
+    bool            m_prev_accept_mouse_input;
 };
 
 //------------------------------------------------------------------------------

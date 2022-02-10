@@ -334,6 +334,12 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
 }
 
 //------------------------------------------------------------------------------
+bool textlist_impl::is_active() const
+{
+    return m_active;
+}
+
+//------------------------------------------------------------------------------
 void textlist_impl::bind_input(binder& binder)
 {
     const char* esc = get_bindable_esc();

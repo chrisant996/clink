@@ -636,6 +636,18 @@ bool line_editor_impl::is_bound(const char* seq, int len)
 }
 
 //------------------------------------------------------------------------------
+bool line_editor_impl::accepts_mouse_input()
+{
+    if (m_selectcomplete.is_active())
+        return false;
+    if (m_textlist.is_active())
+        return false;
+    if (m_bind_resolver.get_group() == m_binder.get_group())
+        return m_module.accepts_mouse_input();
+    return false;
+}
+
+//------------------------------------------------------------------------------
 bool line_editor_impl::translate(const char* seq, int len, str_base& out)
 {
     return m_module.translate(seq, len, out);
