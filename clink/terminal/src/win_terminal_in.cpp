@@ -585,12 +585,17 @@ static void fix_console_input_mode(HANDLE h)
 
         if (modeIn & ENABLE_MOUSE_INPUT)
         {
-            const bool any_modifier_keys = (
-                GetKeyState(VK_SHIFT) < 0 ||
-                GetKeyState(VK_CONTROL) < 0 ||
-                GetKeyState(VK_MENU) < 0);
-            if (any_modifier_keys)
-                modeIn |= ENABLE_QUICK_EDIT_MODE;
+            if (get_native_ansi_handler() != ansi_handler::conemu)
+            {
+                const bool any_modifier_keys = (
+                    GetKeyState(VK_SHIFT) < 0 ||
+                    GetKeyState(VK_CONTROL) < 0 ||
+                    GetKeyState(VK_MENU) < 0);
+                if (any_modifier_keys)
+                    modeIn |= ENABLE_QUICK_EDIT_MODE;
+                else
+                    modeIn &= ~ENABLE_QUICK_EDIT_MODE;
+            }
         }
 
         if (mode != modeIn)
