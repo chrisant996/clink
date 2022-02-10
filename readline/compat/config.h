@@ -19,6 +19,11 @@
 
 #include "hooks.h"
 
+#if defined(BUILD_READLINE) && !defined(__cplusplus)
+#include "../../clink/core/include/core/bldopts.h"
+#include "../../clink/core/include/core/debugheap.h"
+#endif
+
 int     compare_string(const char* s1, const char* s2, int casefold);
 
 // here be dragons (for purposes of utf-8 and capturing stdio)

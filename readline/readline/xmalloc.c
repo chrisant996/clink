@@ -33,11 +33,6 @@
 #  include "ansi_stdlib.h"
 #endif /* HAVE_STDLIB_H */
 
-/* begin_clink_change */
-#include "../../clink/core/include/core/bldopts.h"
-#include "../../clink/core/include/core/debugheap.h"
-/* end_clink_change */
-
 #include "xmalloc.h"
 
 /* **************************************************************** */

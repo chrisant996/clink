@@ -5,7 +5,9 @@
 
 #define NOMINMAX
 #define VC_EXTRALEAN
+#ifndef BUILD_READLINE
 #define WIN32_LEAN_AND_MEAN
+#endif
 
 #if defined(DEBUG) && defined(_MSC_VER)
 #define USE_MEMORY_TRACKING
