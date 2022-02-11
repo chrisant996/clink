@@ -1110,47 +1110,53 @@ void win_terminal_in::process_input(MOUSE_EVENT_RECORD const& record)
     const auto btn = record.dwButtonState;
     const bool left_click = (!(prv & FROM_LEFT_1ST_BUTTON_PRESSED) && (btn & FROM_LEFT_1ST_BUTTON_PRESSED));
     const bool right_click = !left_click && (!(prv & RIGHTMOST_BUTTON_PRESSED) && (btn & RIGHTMOST_BUTTON_PRESSED));
+    const bool double_click = left_click && (record.dwEventFlags & DOUBLE_CLICK);
+    const bool wheel = !left_click && !right_click && (record.dwEventFlags & MOUSE_WHEELED);
+    //const bool drag = ...NYI...
 
-    // WM_CONTEXTMENU and mouse wheel scrolling should happen no matter what.
-    DWORD mode;
-    if (GetConsoleMode(m_stdin, &mode) && !(mode & ENABLE_QUICK_EDIT_MODE))
-    {
-        if (right_click)
-        {
-            HWND hwndConsole = GetConsoleWindow();
-            if (IsWindowVisible(hwndConsole) &&
-                (GetWindowLongW(hwndConsole, GWL_STYLE) & WS_VISIBLE))
-            {
-                if (s_verbose_input)
-                    verbose_input(record);
+    const mouse_input_type mask = (left_click ? mouse_input_type::left_click :
+                                   right_click ? mouse_input_type::right_click :
+                                   double_click ? mouse_input_type::double_click :
+                                   wheel ? mouse_input_type::wheel :
+                                   mouse_input_type::none);
 
-                POINT pt;
-                GetCursorPos(&pt);
-                LPARAM lParam = MAKELPARAM(pt.x, pt.y);
-                SendMessage(hwndConsole, WM_CONTEXTMENU, 0, lParam);
-                return;
-            }
-        }
-
-        if (record.dwEventFlags & MOUSE_WHEELED)
-        {
-            // Windows Terminal does NOT support programmatic scrolling.
-            // ConEmu and plain Conhost DO support programmatic scrolling.
-            int direction = (0 - short(HIWORD(record.dwButtonState))) / 120;
-            UINT wheel_scroll_lines = 3;
-            SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 0, &wheel_scroll_lines, false);
-            ScrollConsoleRelative(m_stdout, direction * int(wheel_scroll_lines), SCR_BYLINE);
-            return;
-        }
-    }
-
-    // Any other mouse input may go to the caller, so check whether the caller
-    // is prepared to accept mouse input.
-    if (!m_keys->accepts_mouse_input())
+    if (mask == mouse_input_type::none)
         return;
 
     if (s_verbose_input)
         verbose_input(record);
+
+    // If the caller isn't prepared to handle the mouse input, then handle
+    // certain universal behaviors here.
+    if (!m_keys->accepts_mouse_input(mask))
+    {
+        DWORD mode;
+        if (GetConsoleMode(m_stdin, &mode) && !(mode & ENABLE_QUICK_EDIT_MODE))
+        {
+            if (right_click)
+            {
+                HWND hwndConsole = GetConsoleWindow();
+                if (IsWindowVisible(hwndConsole) &&
+                    (GetWindowLongW(hwndConsole, GWL_STYLE) & WS_VISIBLE))
+                {
+                    POINT pt;
+                    GetCursorPos(&pt);
+                    LPARAM lParam = MAKELPARAM(pt.x, pt.y);
+                    SendMessage(hwndConsole, WM_CONTEXTMENU, 0, lParam);
+                }
+            }
+            else if (wheel)
+            {
+                // Windows Terminal does NOT support programmatic scrolling.
+                // ConEmu and plain Conhost DO support programmatic scrolling.
+                int direction = (0 - short(HIWORD(record.dwButtonState))) / 120;
+                UINT wheel_scroll_lines = 3;
+                SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 0, &wheel_scroll_lines, false);
+                ScrollConsoleRelative(m_stdout, direction * int(wheel_scroll_lines), SCR_BYLINE);
+            }
+        }
+        return;
+    }
 
     // Left or right click.
     if (left_click || right_click)
@@ -1162,6 +1168,24 @@ void win_terminal_in::process_input(MOUSE_EVENT_RECORD const& record)
         const char code = (right_click ? 'R' :
                            record.dwEventFlags & DOUBLE_CLICK ? 'D' : 'L');
         tmp.format("\x1b[$%u;%u%c", record.dwMousePosition.X - csbi.srWindow.Left, record.dwMousePosition.Y - csbi.srWindow.Top, code);
+        push(tmp.c_str());
+        return;
+    }
+
+    // Mouse wheel.
+    if (wheel)
+    {
+        // Windows Terminal does NOT support programmatic scrolling.
+        // ConEmu and plain Conhost DO support programmatic scrolling.
+        int direction = (0 - short(HIWORD(record.dwButtonState))) / 120;
+        UINT wheel_scroll_lines = 3;
+        SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 0, &wheel_scroll_lines, false);
+
+        str<16> tmp;
+        const char code = (direction < 0 ? 'A' : 'B');
+        if (direction < 0)
+            direction = 0 - direction;
+        tmp.format("\x1b[$%u%c", direction * int(wheel_scroll_lines), code);
         push(tmp.c_str());
         return;
     }

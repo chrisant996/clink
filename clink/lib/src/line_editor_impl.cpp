@@ -636,14 +636,14 @@ bool line_editor_impl::is_bound(const char* seq, int len)
 }
 
 //------------------------------------------------------------------------------
-bool line_editor_impl::accepts_mouse_input()
+bool line_editor_impl::accepts_mouse_input(mouse_input_type type)
 {
     if (m_selectcomplete.is_active())
         return false;
     if (m_textlist.is_active())
         return false;
     if (m_bind_resolver.get_group() == m_binder.get_group())
-        return m_module.accepts_mouse_input();
+        return m_module.accepts_mouse_input(type);
     return false;
 }
 

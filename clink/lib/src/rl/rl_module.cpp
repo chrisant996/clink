@@ -2190,7 +2190,7 @@ LNope:
 }
 
 //------------------------------------------------------------------------------
-bool rl_module::accepts_mouse_input()
+bool rl_module::accepts_mouse_input(mouse_input_type type)
 {
     // `quoted-insert` only accepts keyboard input.
     if (rl_is_insert_next_callback_pending())
@@ -2209,7 +2209,14 @@ bool rl_module::accepts_mouse_input()
     if (RL_ISSTATE(RL_STATE_MULTIKEY))
         return false;
 
-    return true;
+    switch (type)
+    {
+    case mouse_input_type::left_click:
+    case mouse_input_type::double_click:
+        return true;
+    }
+
+    return false;
 }
 
 //------------------------------------------------------------------------------
