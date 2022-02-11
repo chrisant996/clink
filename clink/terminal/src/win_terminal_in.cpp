@@ -702,11 +702,6 @@ void win_terminal_in::read_console(input_idle* callback)
             process_input(record.Event.MouseEvent);
             break;
 
-        case FOCUS_EVENT:
-// TODO: adjust ENABLE_QUICK_EDIT_MODE as appropriate when losing focus,
-// as part of the mouse input support.
-            break;
-
         case WINDOW_BUFFER_SIZE_EVENT:
             // Windows can move the cursor onto a new line as a result of line
             // wrapping adjustments.  If the width changes then return to give
