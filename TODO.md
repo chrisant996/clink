@@ -5,16 +5,9 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- Mouse input:
-  - [x] Right click for Paste.
-  - [x] Click in line buffer.
-  - [x] Double click.
-  - [x] Wheel click.
-  - [x] textlist_impl -- left click, double click, wheel.
-  - [x] selectcomplete_impl -- left click, double click, wheel.
-  - [ ] Drag and double click drag.
 
 ## Normal Priority
+- [ ] Mouse input; click+drag and double click+drag for text selection.
 - [ ] Argmatcher syntax.
   - [ ] Define help-like layout format that groups multiple flags into one entry?
     - [ ] Only group when a single flag character is used (`-` but not `--`).
