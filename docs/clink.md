@@ -67,6 +67,7 @@ The following sections describe some ways to begin customizing Clink to your tas
 <tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_autosuggest">Auto-suggest</a></td><td class="lmtd">How to enable and use automatic suggestions.</td></tr>
 <tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_colors">Colors</a></td><td class="lmtd">Configure the colors.</td></tr>
 <tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_keybindings">Key Bindings</a></td><td class="lmtd">Customize your key bindings.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_mouseinput">Mouse Input</a></td><td class="lmtd">Optionally enable mouse clicks in the input line, etc.</td></tr>
 <tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_startupcmdscript">Startup Cmd Script</a></td><td class="lmtd">Optional automatic <code>clink_startup.cmd</code> script.</td></tr>
 <tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_customprompt">Custom Prompt</a></td><td class="lmtd">Customizing the command line prompt.</td></tr>
 <tr class="lmtr"><td class="lmtd"><a href="#upgradefrom049">Upgrading from Clink v0.4.9</a></td><td class="lmtd">Notes on upgrading from a very old version of Clink.</td></tr>
@@ -177,6 +178,26 @@ Clink comes with many pre-configured key bindings that invoke named commands.  H
 </table>
 
 For a full list of commands available for key bindings, see [New Commands](#new-commands) and "Bindable Readline Commands" in the [Readline manual](https://tiswww.cwru.edu/php/chet/readline/rluserman.html).
+
+<a name="gettingstarted_mouseinput"></a>
+
+### Mouse Input
+
+Clink can optionally respond to mouse input, instead of letting the terminal respond to mouse input (e.g. to select text on the screen).  When mouse input is enabled in Clink, you can click in the input line or in popup lists, and the mouse wheel scrolls popup lists.
+
+Use <code>clink set terminal.mouse_input <span class="arg">mode</span></code> with one of the following modes to control whether Clink responds to mouse input:
+
+Mode | Description
+---|---
+`off` | Lets the terminal host handle mouse input.
+`on` | Lets Clink handle mouse input.
+`auto` | Lets Clink handle mouse input in ConEmu and in the default Conhost terminal when Quick Edit mode is unchecked in the console Properties dialog.
+
+When mouse input is enabled in Clink, then mouse input works a little differently:
+- You can always hold <kbd>Shift</kbd>, <kbd>Ctrl</kbd>, or <kbd>Alt</kbd> while clicking or using the mouse wheel to bypass Clink and use the normal terminal mouse input (for example, to select text on the screen).
+- In Windows Terminal, the mouse wheel can scroll popup lists, but can only scroll the terminal if you hold <kbd>Shift</kbd> or <kbd>Alt</kbd> while using the mouse wheel (<kbd>Ctrl</kbd> with the mouse wheel zooms the terminal).
+  - Note that in Windows Terminal <kbd>Shift</kbd>+<kbd>RightClick</kbd> has a special meaning and turns off line ending detection when copying the selected text to the clipboard.  Hold <kbd>Ctrl</kbd> or <kbd>Alt</kbd> when right clicking to do the normal copy with line ending detection.
+- In ConEmu, the mouse wheel always scrolls the terminal; Clink cannot use it to scroll popup lists.
 
 <a name="gettingstarted_startupcmdscript"></a>
 
@@ -321,6 +342,7 @@ Name                         | Default | Description
 `terminal.differentiate_keys`| False   | When enabled, pressing <kbd>Ctrl</kbd> + <kbd>H</kbd> or <kbd>I</kbd> or <kbd>M</kbd> or <kbd>[</kbd> generate special key sequences to enable binding them separately from <kbd>Backspace</kbd> or <kbd>Tab</kbd> or <kbd>Enter</kbd> or <kbd>Esc</kbd>.
 `terminal.east_asian_ambiguous`|`auto` | There is a group of East Asian characters whose widths are ambiguous in the Unicode standard.  This setting controls how to resolve the ambiguous widths.  By default this is set to `auto`, but some terminal hosts may require setting this to a different value to work around limitations in the terminal hosts.  Setting this to `font` measures the East Asian Ambiguous character widths using the current font.  Setting it to `one` uses 1 as the width, or `two` uses 2 as the width.  When this is `auto` (the default) and the current code page is 932, 936, 949, or 950 then the current font is used to measure the widths, or for any other code pages (including UTF8) the East Asian Ambiguous character widths are assumed to be 1.
 `terminal.emulation`         | `auto`  | Clink can either emulate a virtual terminal and handle ANSI escape codes itself, or let the console host natively handle ANSI escape codes. `native` = pass output directly to the console host process, `emulate` = clink handles ANSI escape codes itself, `auto` = emulate except when running in ConEmu, Windows Terminal, or Windows 10 new console.
+`terminal.mouse_input`       | `auto`  | Clink can optionally respond to mouse input, instead of letting the terminal respond to mouse input (e.g. to select text on the screen).  When mouse input is enabled in Clink, clicking in the input line sets the cursor position, and clicking in popup lists selects an item, etc.  Setting this to `off` lets the terminal host handle mouse input, `on` lets Clink handle mouse input, and `auto` lets Clink handle mouse input in ConEmu and in the default Conhost terminal when Quick Edit mode is unchecked in the console Properties dialog.  For more information see [Mouse Input](#gettingstarted_mouseinput).
 `terminal.raw_esc`           | False | When enabled, pressing Esc sends a literal escape character like in Unix/etc terminals.  This setting is disabled by default to provide a more predictable, reliable, and configurable input experience on Windows.  Changing this only affects future Clink sessions, not the current session.
 `terminal.use_altgr_substitute`| False | Support Windows' <kbd>Ctrl</kbd>-<kbd>Alt</kbd> substitute for <kbd>AltGr</kbd>. Turning this off may resolve collisions with Readline's key bindings.
 
@@ -640,6 +662,7 @@ Name | Description
 `cua-forward-char`|Extends the selection and moves forward a character, or inserts the next full suggested word up to a space.
 `cua-forward-word`|Extends the selection and moves forward a word.
 `cua-select-all`|Extends the selection to the entire current line.
+`cua-select-word`|Selects the word at the cursor.
 `edit-and-execute-command`|Invoke an editor on the current input line, and execute the result as commands.  This attempts to invoke %VISUAL%, %EDITOR%, or notepad.exe as the editor, in that order.
 `glob-complete-word`|Perform wildcard completion on the text before the cursor point, with a `*` implicitly appended.
 `glob-expand-word`|Insert all the wildcard completions that `glob-list-expansions` would list.  If a numeric argument is supplied, a `*` is implicitly appended before completion.
