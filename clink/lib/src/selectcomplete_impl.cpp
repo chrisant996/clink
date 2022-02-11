@@ -22,6 +22,7 @@
 #include <rl/rl_suggestions.h>
 #include <terminal/printer.h>
 #include <terminal/ecma48_iter.h>
+#include <terminal/key_tester.h>
 
 extern "C" {
 #include <compat/config.h>
@@ -100,6 +101,10 @@ enum {
     bind_id_selectcomplete_right,
     bind_id_selectcomplete_pgup,
     bind_id_selectcomplete_pgdn,
+    bind_id_selectcomplete_leftclick,
+    bind_id_selectcomplete_doubleclick,
+    bind_id_selectcomplete_wheelup,
+    bind_id_selectcomplete_wheeldown,
     bind_id_selectcomplete_backspace,
     bind_id_selectcomplete_delete,
     bind_id_selectcomplete_space,
@@ -336,6 +341,10 @@ void selectcomplete_impl::bind_input(binder& binder)
     binder.bind(m_bind_group, "\\e[C", bind_id_selectcomplete_right);
     binder.bind(m_bind_group, "\\e[5~", bind_id_selectcomplete_pgup);
     binder.bind(m_bind_group, "\\e[6~", bind_id_selectcomplete_pgdn);
+    binder.bind(m_bind_group, "\\e[$*;*L", bind_id_selectcomplete_leftclick, true/*has_params*/);
+    binder.bind(m_bind_group, "\\e[$*;*D", bind_id_selectcomplete_doubleclick, true/*has_params*/);
+    binder.bind(m_bind_group, "\\e[$*A", bind_id_selectcomplete_wheelup, true/*has_params*/);
+    binder.bind(m_bind_group, "\\e[$*B", bind_id_selectcomplete_wheeldown, true/*has_params*/);
     binder.bind(m_bind_group, "^h", bind_id_selectcomplete_backspace);
     binder.bind(m_bind_group, "\\e[3~", bind_id_selectcomplete_delete);
     binder.bind(m_bind_group, " ", bind_id_selectcomplete_space);
@@ -623,6 +632,73 @@ arrow_next:
         }
         break;
 
+    case bind_id_selectcomplete_leftclick:
+    case bind_id_selectcomplete_doubleclick:
+        {
+            unsigned int p0, p1;
+            input.params.get(0, p0);
+            input.params.get(1, p1);
+            p1 -= m_mouse_offset;
+            const unsigned int rows = m_displayed_rows;
+            if (p1 < rows)
+            {
+                const int row = p1 + m_top;
+                const int major_stride = _rl_print_completions_horizontally ? m_match_cols : 1;
+                const int minor_stride = _rl_print_completions_horizontally ? 1 : m_match_rows;
+                int index = major_stride * row;
+                int x1 = 0;
+                for (int i = 0; i < m_widths.num_columns(); ++i)
+                {
+                    if (p0 >= x1 && p0 < x1 + m_widths.column_width(i))
+                    {
+                        m_index = index;
+                        update_display();
+                        if (input.id == bind_id_selectcomplete_doubleclick)
+                            goto enter;
+                        break;
+                    }
+                    x1 += m_widths.column_width(i) + m_widths.m_col_padding;
+                    index += minor_stride;
+                }
+            }
+            else
+            {
+                cancel(result, true/*can_reactivate*/);
+                result.pass();
+                return;
+            }
+        }
+        break;
+
+    case bind_id_selectcomplete_wheelup:
+    case bind_id_selectcomplete_wheeldown:
+        {
+            unsigned int p0;
+            input.params.get(0, p0);
+            const int major_stride = _rl_print_completions_horizontally ? m_match_cols : 1;
+            const int match_row = get_match_row(m_index);
+            const int prev_index = m_index;
+            const int prev_top = m_top;
+            if (input.id == bind_id_selectcomplete_wheelup)
+                m_index -= min<unsigned int>(match_row, p0) * major_stride;
+            else
+                m_index += min<unsigned int>(m_match_rows - 1 - match_row, p0) * major_stride;
+            const int count = m_matches.get_match_count();
+            if (m_index >= count)
+            {
+                m_index = count - 1;
+                const int rows = min<int>(m_match_rows, m_visible_rows);
+                if (m_top + rows - 1 == get_match_row(m_index))
+                {
+                    const int max_top = max<int>(0, m_match_rows - rows);
+                    set_top(min<int>(max_top, m_top + 1));
+                }
+            }
+            if (m_index != prev_index || m_top != prev_top)
+                update_display();
+        }
+        break;
+
     case bind_id_selectcomplete_backspace:
         if (m_needle.length() <= m_lcd)
         {
@@ -650,6 +726,7 @@ delete_completion:
         break;
 
     case bind_id_selectcomplete_enter:
+enter:
         insert_match(true/*final*/);
         cancel(result);
         m_inserted = false; // A subsequent activation should not resume.
@@ -1078,6 +1155,7 @@ void selectcomplete_impl::update_display()
             const bool show_descriptions = !m_desc_below && m_matches.has_descriptions();
             const bool show_more_comment_row = !m_expanded && (preview_rows + 1 < m_match_rows);
             const int rows = min<int>(m_visible_rows, show_more_comment_row ? preview_rows : m_match_rows);
+            m_displayed_rows = rows;
 
             const int major_stride = _rl_print_completions_horizontally ? m_match_cols : 1;
             const int minor_stride = _rl_print_completions_horizontally ? 1 : m_match_rows;
@@ -1335,6 +1413,8 @@ void selectcomplete_impl::update_display()
             s.format("\x1b[%dA", up);
             m_printer->print(s.c_str(), s.length());
         }
+        GetConsoleScreenBufferInfo(h, &csbi);
+        m_mouse_offset = csbi.dwCursorPosition.Y + 1/*to top item*/;
         _rl_move_vert(vpos);
         _rl_last_c_pos = cpos;
         GetConsoleScreenBufferInfo(h, &csbi);
@@ -1582,6 +1662,20 @@ void selectcomplete_impl::reset_top()
 bool selectcomplete_impl::is_active() const
 {
     return m_prev_bind_group >= 0 && m_buffer && m_printer && m_anchor >= 0 && m_point >= m_anchor;
+}
+
+//------------------------------------------------------------------------------
+bool selectcomplete_impl::accepts_mouse_input(mouse_input_type type) const
+{
+    switch (type)
+    {
+    case mouse_input_type::left_click:
+    case mouse_input_type::double_click:
+    case mouse_input_type::wheel:
+        return true;
+    default:
+        return false;
+    }
 }
 
 

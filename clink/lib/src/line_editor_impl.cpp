@@ -639,7 +639,7 @@ bool line_editor_impl::is_bound(const char* seq, int len)
 bool line_editor_impl::accepts_mouse_input(mouse_input_type type)
 {
     if (m_selectcomplete.is_active())
-        return false;
+        return m_selectcomplete.accepts_mouse_input(type);
     if (m_textlist.is_active())
         return m_textlist.accepts_mouse_input(type);
     if (m_bind_resolver.get_group() == m_binder.get_group())
@@ -738,7 +738,17 @@ bool line_editor_impl::update_input()
         if (binding) // May have been claimed already by dispatch() inside on_input().
         {
             if (result.flags & result_impl::flag_pass)
+            {
+                // win_terminal_in avoids producing input that won't be handled.
+                // But it can't predict when result.pass() might be used, so the
+                // onus is on the pass() caller to make sure passing the binding
+                // upstream won't leave it unhandled.  If it's unhandled, then
+                // the key sequence gets split at the point of mismatch, and the
+                // rest gets interpreted as a separate key sequence.
+                //
+                // For example, mouse input can be especially susceptible.
                 continue;
+            }
             binding.claim();
         }
 

@@ -135,6 +135,11 @@ void bind_resolver::set_group(int group)
     m_group = group;
     m_node_index = group;
     m_pending_input = true;
+
+    m_params.clear();
+    m_param_accumulator = 0;
+    m_param_len = 0;
+    m_pending_param = false;
 }
 
 //------------------------------------------------------------------------------

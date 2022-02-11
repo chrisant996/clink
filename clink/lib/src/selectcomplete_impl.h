@@ -11,6 +11,7 @@
 #include <core/str.h>
 
 class printer;
+enum class mouse_input_type : unsigned char;
 
 //------------------------------------------------------------------------------
 class selectcomplete_impl
@@ -22,6 +23,7 @@ public:
     bool            activate(editor_module::result& result, bool reactivate);
     bool            point_within(int in) const;
     bool            is_active() const;
+    bool            accepts_mouse_input(mouse_input_type type) const;
 
 private:
     // editor_module.
@@ -61,9 +63,11 @@ private:
     // Layout.
     int             m_screen_cols = 0;
     int             m_screen_rows = 0;
+    int             m_mouse_offset = 0;
     int             m_match_cols = 0;
     int             m_match_rows = 0;
     int             m_visible_rows = 0;
+    int             m_displayed_rows = 0;
     bool            m_desc_below = false;
     bool            m_any_displayed = false;
     bool            m_comment_row_displayed = false;
