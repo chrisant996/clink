@@ -2037,8 +2037,38 @@ enum {
     bind_id_input,
     bind_id_left_click,
     bind_id_right_click,
+    bind_id_double_click,
     bind_id_more_input,
 };
+
+
+
+//------------------------------------------------------------------------------
+void mouse_info::clear()
+{
+    m_x = m_y = -1;
+    m_tick = GetTickCount() - 0xffff;
+    m_clicks = 0;
+}
+
+//------------------------------------------------------------------------------
+int mouse_info::on_click(const unsigned int x, const unsigned int y, const bool dblclk)
+{
+    const DWORD now = GetTickCount();
+
+    if (dblclk)
+        m_clicks = 2;
+    else if (m_clicks == 2 && x == m_x && y == m_y && now - m_tick <= GetDoubleClickTime())
+        m_clicks = 3;
+    else
+        m_clicks = 1;
+
+    m_x = static_cast<unsigned short>(x);
+    m_y = static_cast<unsigned short>(y);
+    m_tick = now;
+
+    return m_clicks;
+}
 
 
 
@@ -2359,6 +2389,7 @@ void rl_module::bind_input(binder& binder)
     int default_group = binder.get_group();
     binder.bind(default_group, "\x1b[$*;*L", bind_id_left_click, true/*has_params*/);
     binder.bind(default_group, "\x1b[$*;*R", bind_id_right_click, true/*has_params*/);
+    binder.bind(default_group, "\x1b[$*;*D", bind_id_double_click, true/*has_params*/);
     binder.bind(default_group, "", bind_id_input);
 
     m_catch_group = binder.create_group("readline");
@@ -2464,6 +2495,8 @@ void rl_module::on_begin_line(const context& context)
     m_done = !m_queued_lines.empty();
     m_eof = false;
     m_prev_group = -1;
+
+    m_mouse.clear();
 }
 
 //------------------------------------------------------------------------------
@@ -2581,7 +2614,7 @@ void rl_module::on_input(const input& input, result& result, const context& cont
     if (g_debug_log_terminal.get())
         LOG("INPUT \"%.*s\", %d", input.len, input.keys, input.len);
 
-    if (input.id == bind_id_left_click)
+    if (input.id == bind_id_left_click || input.id == bind_id_double_click)
     {
         unsigned int p0, p1;
         input.params.get(0, p0);
@@ -2589,11 +2622,24 @@ void rl_module::on_input(const input& input, result& result, const context& cont
         int pos;
         if (translate_xy_to_readline(p0, p1, pos))
         {
-            if (pos != rl_point)
+            const int clicks = m_mouse.on_click(p0, p1, input.id == bind_id_double_click);
+            if (clicks == 3)
             {
-                g_rl_buffer->set_cursor(pos);
-                g_rl_buffer->set_need_draw();
-                g_rl_buffer->draw();
+                cua_select_all(0, 0);
+            }
+            else
+            {
+                if (pos != rl_point || cua_get_anchor() >= 0)
+                {
+                    cua_clear_selection();
+                    g_rl_buffer->set_cursor(pos);
+                    g_rl_buffer->set_need_draw();
+                    g_rl_buffer->draw();
+                }
+                if (clicks == 2)
+                {
+                    cua_select_word(0, 0);
+                }
             }
         }
         return;

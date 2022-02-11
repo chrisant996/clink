@@ -11,8 +11,22 @@
 
 class terminal_in;
 class line_buffer;
+enum class mouse_input_type : unsigned char;
 
 extern line_buffer& buffer;
+
+//------------------------------------------------------------------------------
+class mouse_info
+{
+public:
+    void            clear();
+    int             on_click(unsigned int x, unsigned int y, bool dblclk);
+private:
+    unsigned short  m_x;
+    unsigned short  m_y;
+    unsigned int    m_tick;
+    unsigned char   m_clicks;
+};
 
 //------------------------------------------------------------------------------
 class rl_module
@@ -44,6 +58,7 @@ private:
     int             m_catch_group;
     bool            m_done;
     bool            m_eof;
+    mouse_info      m_mouse;
     std::vector<str_moveable> m_queued_lines;
     str_moveable    m_rl_prompt;
     str_moveable    m_rl_rprompt;
