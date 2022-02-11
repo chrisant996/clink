@@ -1014,6 +1014,49 @@ int cua_forward_word(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
+int cua_select_word(int count, int invoking_key)
+{
+    cua_selection_manager mgr;
+
+    const int orig_point = rl_point;
+
+    // Look forward for a word.
+    rl_forward_word(1, 0);
+    int end = rl_point;
+    rl_backward_word(1, 0);
+    const int high_mid = rl_point;
+
+    rl_point = orig_point;
+
+    // Look backward for a word.
+    rl_backward_word(1, 0);
+    int begin = rl_point;
+    rl_forward_word(1, 0);
+    const int low_mid = rl_point;
+
+    if (high_mid <= orig_point)
+    {
+        begin = high_mid;
+    }
+    else if (low_mid >= orig_point)
+    {
+        end = low_mid;
+    }
+    else
+    {
+        // The original point is between two words.  For now, select the text
+        // between the words.
+        begin = low_mid;
+        end = high_mid;
+    }
+
+    s_cua_anchor = begin;
+    rl_point = end;
+
+    return 0;
+}
+
+//------------------------------------------------------------------------------
 int cua_beg_of_line(int count, int invoking_key)
 {
     cua_selection_manager mgr;
