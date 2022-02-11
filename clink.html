@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.3.5</title>
+<title>Clink v1.3.6</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -771,7 +771,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.3.5</div>
+                <div id="title">Clink v1.3.6</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -853,6 +853,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 <tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_autosuggest">Auto-suggest</a></td><td class="lmtd">How to enable and use automatic suggestions.</td></tr>
 <tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_colors">Colors</a></td><td class="lmtd">Configure the colors.</td></tr>
 <tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_keybindings">Key Bindings</a></td><td class="lmtd">Customize your key bindings.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_mouseinput">Mouse Input</a></td><td class="lmtd">Optionally enable mouse clicks in the input line, etc.</td></tr>
 <tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_startupcmdscript">Startup Cmd Script</a></td><td class="lmtd">Optional automatic <code>clink_startup.cmd</code> script.</td></tr>
 <tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_customprompt">Custom Prompt</a></td><td class="lmtd">Customizing the command line prompt.</td></tr>
 <tr class="lmtr"><td class="lmtd"><a href="#upgradefrom049">Upgrading from Clink v0.4.9</a></td><td class="lmtd">Notes on upgrading from a very old version of Clink.</td></tr>
@@ -940,6 +941,39 @@ $endif
 </table>
 
 <p>For a full list of commands available for key bindings, see <a href="#new-commands">New Commands</a> and &quot;Bindable Readline Commands&quot; in the <a href="https://tiswww.cwru.edu/php/chet/readline/rluserman.html">Readline manual</a>.</p>
+<p><a name="gettingstarted_mouseinput"></a></p>
+<h3 id="mouse-input">Mouse Input</h3>
+<p>Clink can optionally respond to mouse input, instead of letting the terminal respond to mouse input (e.g. to select text on the screen).  When mouse input is enabled in Clink, you can click in the input line or in popup lists, and the mouse wheel scrolls popup lists.</p>
+<p>Use <code>clink set terminal.mouse_input <span class="arg">mode</span></code> with one of the following modes to control whether Clink responds to mouse input:</p>
+<table>
+<thead>
+<tr>
+<th>Mode</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>off</code></td>
+<td>Lets the terminal host handle mouse input.</td>
+</tr>
+<tr>
+<td><code>on</code></td>
+<td>Lets Clink handle mouse input.</td>
+</tr>
+<tr>
+<td><code>auto</code></td>
+<td>Lets Clink handle mouse input in ConEmu and in the default Conhost terminal when Quick Edit mode is unchecked in the console Properties dialog.</td>
+</tr>
+</tbody></table>
+<p>When mouse input is enabled in Clink, then mouse input works a little differently:</p>
+<ul>
+<li>You can always hold <kbd>Shift</kbd>, <kbd>Ctrl</kbd>, or <kbd>Alt</kbd> while clicking or using the mouse wheel to bypass Clink and use the normal terminal mouse input (for example, to select text on the screen).</li>
+<li>In Windows Terminal, the mouse wheel can scroll popup lists, but can only scroll the terminal if you hold <kbd>Shift</kbd> or <kbd>Alt</kbd> while using the mouse wheel (<kbd>Ctrl</kbd> with the mouse wheel zooms the terminal).<ul>
+<li>Note that in Windows Terminal <kbd>Shift</kbd>+<kbd>RightClick</kbd> has a special meaning and turns off line ending detection when copying the selected text to the clipboard.  Hold <kbd>Ctrl</kbd> or <kbd>Alt</kbd> when right clicking to do the normal copy with line ending detection.</li>
+</ul>
+</li>
+<li>In ConEmu, the mouse wheel always scrolls the terminal; Clink cannot use it to scroll popup lists.</li>
+</ul>
 <p><a name="gettingstarted_startupcmdscript"></a></p>
 <h3 id="startup-cmd-script">Startup Cmd Script</h3>
 <p>When Clink is injected, it looks for a <code>clink_start.cmd</code> script in the binaries directory and <a href="#filelocations">profile directory</a>.  Clink automatically runs the script(s), if present, when the first CMD prompt is shown after Clink is injected.  You can set the <a href="#clink_autostart"><code>clink.autostart</code></a> setting to run a different command, or set it to &quot;nul&quot; to run no command at all.</p>
@@ -1418,6 +1452,11 @@ $endif
 <td align="center"><code>terminal.emulation</code></td>
 <td align="center"><code>auto</code></td>
 <td>Clink can either emulate a virtual terminal and handle ANSI escape codes itself, or let the console host natively handle ANSI escape codes. <code>native</code> = pass output directly to the console host process, <code>emulate</code> = clink handles ANSI escape codes itself, <code>auto</code> = emulate except when running in ConEmu, Windows Terminal, or Windows 10 new console.</td>
+</tr>
+<tr>
+<td align="center"><code>terminal.mouse_input</code></td>
+<td align="center"><code>auto</code></td>
+<td>Clink can optionally respond to mouse input, instead of letting the terminal respond to mouse input (e.g. to select text on the screen).  When mouse input is enabled in Clink, clicking in the input line sets the cursor position, and clicking in popup lists selects an item, etc.  Setting this to <code>off</code> lets the terminal host handle mouse input, <code>on</code> lets Clink handle mouse input, and <code>auto</code> lets Clink handle mouse input in ConEmu and in the default Conhost terminal when Quick Edit mode is unchecked in the console Properties dialog.  For more information see <a href="#gettingstarted_mouseinput">Mouse Input</a>.</td>
 </tr>
 <tr>
 <td align="center"><code>terminal.raw_esc</code></td>
@@ -1900,6 +1939,10 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 <tr>
 <td align="center"><code>cua-select-all</code></td>
 <td>Extends the selection to the entire current line.</td>
+</tr>
+<tr>
+<td align="center"><code>cua-select-word</code></td>
+<td>Selects the word at the cursor.</td>
 </tr>
 <tr>
 <td align="center"><code>edit-and-execute-command</code></td>
@@ -4693,6 +4736,15 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v136">v1.3.6</h4>
+<ul>
+<li>Added <code>terminal.mouse_input</code> setting; the default is <code>auto</code>.  <code>auto</code> lets mouse input work in ConEmu, or in the default Conhost terminal when Quick Edit mode is unchecked in the console Properties dialog.  See the documentation for more information.</li>
+<li>Added <code>cua-select-word</code> command that selects the word at the cursor.</li>
+<li><kbd>Ctrl</kbd>+<kbd>X</kbd>,<kbd>Ctrl</kbd>+<kbd>Z</kbd> with a numeric argument always includes registered Lua match generators, prompt filters, etc even when the <code>lua.debug</code> setting is off.</li>
+<li>Fixed potential for a coroutine to have extra delays sometimes when continuing past the end of one edit line, and into the next edit line.</li>
+<li>Fixed a potential busy loop when the command word is unrecognized.</li>
+<li>Fixed Quick Edit mode in plain Conhost windows; it had always been disabled (I never noticed because I always configure console windows to disable it anyway).</li>
+</ul>
 <h4 id="v135">v1.3.5</h4>
 <ul>
 <li>Raised default <code>history.max_lines</code> to 10000.</li>
