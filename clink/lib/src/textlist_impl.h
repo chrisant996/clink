@@ -89,6 +89,8 @@ private:
     int             m_screen_cols = 0;
     int             m_screen_rows = 0;
     int             m_mouse_offset = 0;
+    int             m_mouse_left = 0;
+    int             m_mouse_width = 0;
     int             m_visible_rows = 0;
     str<32>         m_default_title;
     str<32>         m_override_title;

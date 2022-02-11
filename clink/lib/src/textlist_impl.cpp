@@ -647,7 +647,7 @@ find:
             input.params.get(1, p1);
             p1 -= m_mouse_offset;
             const unsigned int rows = min<int>(m_count, m_visible_rows);
-            if (p1 < rows)
+            if (p1 < rows && p0 >= m_mouse_left && p0 < m_mouse_left + m_mouse_width)
             {
                 m_index = p1 + m_top;
                 update_display();
@@ -1037,6 +1037,8 @@ void textlist_impl::update_display()
                     x = center_x;
                 if (x > 0)
                     left.format("\x1b[%uG", x + 1);
+                m_mouse_left = x + 1;
+                m_mouse_width = col_width - 2;
             }
 
             str<32> color;
