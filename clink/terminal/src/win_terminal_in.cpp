@@ -1123,7 +1123,7 @@ void win_terminal_in::process_input(MOUSE_EVENT_RECORD const& record)
 
     // If the caller isn't prepared to handle the mouse input, then handle
     // certain universal behaviors here.
-    if (!m_keys->accepts_mouse_input(mask))
+    if (!m_keys || !m_keys->accepts_mouse_input(mask))
     {
         DWORD mode;
         if (GetConsoleMode(m_stdin, &mode) && !(mode & ENABLE_QUICK_EDIT_MODE))
