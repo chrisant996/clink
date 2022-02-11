@@ -8,10 +8,11 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Mouse input:
   - [x] Right click for Paste.
   - [x] Click in line buffer.
-  - [ ] Double click.
-  - [ ] Click in textlist_impl.
-  - [ ] Click in selectcomplete_impl.
-  - [ ] Drag.
+  - [x] Double click.
+  - [x] Wheel click.
+  - [x] textlist_impl -- left click, double click, wheel.
+  - [x] selectcomplete_impl -- left click, double click, wheel.
+  - [ ] Drag and double click drag.
 
 ## Normal Priority
 - [ ] Argmatcher syntax.
