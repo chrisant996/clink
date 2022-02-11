@@ -12,6 +12,7 @@
 #include <vector>
 
 class printer;
+enum class mouse_input_type : unsigned char;
 
 //------------------------------------------------------------------------------
 typedef const char* (*textlist_line_getter_t)(int index);
@@ -54,6 +55,7 @@ public:
 
     popup_results   activate(const char* title, const char** entries, int count, int index, bool reverse, int history_mode, entry_info* infos, bool columns);
     bool            is_active() const;
+    bool            accepts_mouse_input(mouse_input_type type) const;
 
 private:
     // editor_module.
@@ -86,6 +88,7 @@ private:
     // Layout.
     int             m_screen_cols = 0;
     int             m_screen_rows = 0;
+    int             m_mouse_offset = 0;
     int             m_visible_rows = 0;
     str<32>         m_default_title;
     str<32>         m_override_title;

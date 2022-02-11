@@ -16,6 +16,7 @@
 #include <terminal/printer.h>
 #include <terminal/ecma48_iter.h>
 #include <terminal/terminal_helpers.h>
+#include <terminal/key_tester.h>
 
 extern "C" {
 #include <readline/readline.h>
@@ -43,6 +44,10 @@ enum {
     bind_id_textlist_escape,
     bind_id_textlist_enter,
     bind_id_textlist_insert,
+    bind_id_textlist_leftclick,
+    bind_id_textlist_doubleclick,
+    bind_id_textlist_wheelup,
+    bind_id_textlist_wheeldown,
 
     bind_id_textlist_catchall = binder::id_catchall_only_printable,
 };
@@ -340,6 +345,20 @@ bool textlist_impl::is_active() const
 }
 
 //------------------------------------------------------------------------------
+bool textlist_impl::accepts_mouse_input(mouse_input_type type) const
+{
+    switch (type)
+    {
+    case mouse_input_type::left_click:
+    case mouse_input_type::double_click:
+    case mouse_input_type::wheel:
+        return true;
+    default:
+        return false;
+    }
+}
+
+//------------------------------------------------------------------------------
 void textlist_impl::bind_input(binder& binder)
 {
     const char* esc = get_bindable_esc();
@@ -368,6 +387,11 @@ void textlist_impl::bind_input(binder& binder)
     binder.bind(m_bind_group, "^g", bind_id_textlist_escape);           // Ctrl+G
     if (esc)
         binder.bind(m_bind_group, esc, bind_id_textlist_escape);        // Esc
+
+    binder.bind(m_bind_group, "\\e[$*;*L", bind_id_textlist_leftclick, true/*has_params*/);
+    binder.bind(m_bind_group, "\\e[$*;*D", bind_id_textlist_doubleclick, true/*has_params*/);
+    binder.bind(m_bind_group, "\\e[$*A", bind_id_textlist_wheelup, true/*has_params*/);
+    binder.bind(m_bind_group, "\\e[$*B", bind_id_textlist_wheeldown, true/*has_params*/);
 
     binder.bind(m_bind_group, "", bind_id_textlist_catchall);
 }
@@ -614,6 +638,40 @@ find:
     case bind_id_textlist_insert:
         cancel(popup_result::select);
         return;
+
+    case bind_id_textlist_leftclick:
+    case bind_id_textlist_doubleclick:
+        {
+            unsigned int p0, p1;
+            input.params.get(0, p0);
+            input.params.get(1, p1);
+            p1 -= m_mouse_offset;
+            const unsigned int rows = min<int>(m_count, m_visible_rows);
+            if (p1 < rows)
+            {
+                m_index = p1 + m_top;
+                update_display();
+                if (input.id == bind_id_textlist_doubleclick)
+                {
+                    cancel(popup_result::use);
+                    return;
+                }
+            }
+        }
+        break;
+
+    case bind_id_textlist_wheelup:
+    case bind_id_textlist_wheeldown:
+        {
+            unsigned int p0;
+            input.params.get(0, p0);
+            if (input.id == bind_id_textlist_wheelup)
+                m_index -= min<unsigned int>(m_index, p0);
+            else
+                m_index += min<unsigned int>(m_count - 1 - m_index, p0);
+            update_display();
+        }
+        break;
 
     case bind_id_textlist_backspace:
     case bind_id_textlist_catchall:
@@ -1111,6 +1169,8 @@ void textlist_impl::update_display()
             s.format("\x1b[%dA", up);
             m_printer->print(s.c_str(), s.length());
         }
+        GetConsoleScreenBufferInfo(h, &csbi);
+        m_mouse_offset = csbi.dwCursorPosition.Y + 1/*to border*/ + 1/*to top item*/;
         _rl_move_vert(vpos);
         _rl_last_c_pos = cpos;
         GetConsoleScreenBufferInfo(h, &csbi);
