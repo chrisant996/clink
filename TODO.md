@@ -8,41 +8,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## Normal Priority
 - [ ] Mouse input; click+drag and double click+drag for text selection.
-- [ ] Argmatcher syntax.
-  - [ ] Define help-like layout format that groups multiple flags into one entry?
-    - [ ] Only group when a single flag character is used (`-` but not `--`).
-    - [ ] Always insert the first flag listed in a line.
-  - [ ] Easier argmatcher syntax for defining flags + display + description strings.
-  - [ ] Provide shim so scripts can use new syntax and still be compatible with older Clink.
-
-## Argmatcher syntax
-- `{ flag="-x", display="NUM", description="Does a thing with NUM", withflag="-y", withprev=true, hide=true }`
-- `{ "-x" }` -> one is flag.
-- `{ "-x", "Does a thing" }` -> two are flag, description.
-- `{ "-x", "NUM", "Does a thing" }` -> three are flag, display, description.
-- `{ disp="text" }` -> `disp` is synonym for `display`.
-- `{ desc="text" }` -> `desc` is synonym for `description`.
-- `{ "-x", display="text" }` -> first is flag, etc.
-- `withflag` groups with named flag; the description for all is taken from the first with a description.
-- `withprev` groups with preceding flag; the description for all is taken from the first with a description.
-- `hide` hides the flag, but still recognizes it.
-- Grouping flags lists them on the same line.
-  - Hard limit?
-  - Drop extras that "don't fit"?
-- Requires a new method (and shim).
-  - Has to be a method, so that shimming is possible.
-  - Maybe `addflagtable` or `addflagsinfo` or `addextendedflags`?
-  - And `addargtable`?
-  - `:addargunsorted()` makes less sense now...
-- Future-proofing:  how to ignore future-version entries that won't be interpreted properly by the current version?
-
-```lua
-:addflagtable({
-  { "-x"..numparser, "NUM", "Does a thing with NUM" },
-  { "--do-x"..numparser, " NUM", withprev=true },
-  { "-?", hide=true },
-})
-```
 
 ## Follow Up
 - Readline command reference.
@@ -50,6 +15,9 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Add command and flag descriptions in clink-completions?
 - Push update to clink-completions repo.
 - Push update to z.lua repo.
+
+## Argmatcher syntax
+- See the argmatcher_syntax branch.
 
 <br/>
 <br/>
