@@ -31,13 +31,22 @@ setting_bool g_adjust_cursor_style(
 setting_enum g_mouse_input(
     "terminal.mouse_input",
     "Clink mouse input",
-    "... EXPERIMENTAL, WORK IN PROGRESS ...\n"
-    "Clink can request to handle mouse input.  This enables clicking in the input\n"
-    "line to set the cursor position, but it may have side effects.\n"
-    "... TBD ...\n"
-    "'off' lets the terminal host handle mouse input, 'on' forces the terminal to\n"
-    "let Clink handle mouse input, 'auto' lets Clink handle mouse input only if\n"
-    "possible without interfering with the terminal's configured mode.",
+    "Clink can optionally respond to mouse input, instead of letting the terminal\n"
+    "respond to mouse input (e.g. to select text on the screen).  When mouse input\n"
+    "is enabled in Clink, clicking in the input line sets the cursor position, and\n"
+    "clicking in popup lists selects an item, etc.\n"
+    "\n"
+    "'off' lets the terminal host handle mouse input.\n"
+    "'on' lets Clink handle mouse input.\n"
+    "'auto' lets Clink handle mouse input in ConEmu and in the default Conhost\n"
+    "terminal when Quick Edit mode is unchecked in the console Properties dialog.\n"
+    "\n"
+    "NOTES:\n"
+    "- ConEmu does not let Clink respond to the mouse wheel.\n"
+    "- Windows Terminal does not let Clink scroll the terminal, but you can scroll\n"
+    "  by holding Shift or Alt while using the mouse wheel.\n"
+    "- Holding Shift, Ctrl, or Alt while clicking allows the normal terminal mouse\n"
+    "  input to still work (for example, to select text on the screen).",
     "off,on,auto",
     2);
 
