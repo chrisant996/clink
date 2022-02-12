@@ -661,11 +661,18 @@ arrow_next:
                     index += minor_stride;
                 }
             }
-            else
+            else if (int(p1) < 0)
             {
                 cancel(result, true/*can_reactivate*/);
                 result.pass();
                 return;
+            }
+            else if (!m_expanded)
+            {
+                m_expanded = true;
+                m_comment_row_displayed = false;
+                m_prev_displayed = -1;
+                update_display();
             }
         }
         break;
