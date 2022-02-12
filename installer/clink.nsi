@@ -245,8 +245,8 @@ Function .onInit
 
     ; Apply remembered selection state for autorun section.
     ReadRegDWORD $0 HKLM Software\Clink UseAutoRun
-    StrCmp $0 "0" 0 LUseAutoRun
-        SectionSetFlags ${section_autorun} 0
+    StrCmp $0 "1" 0 LUseAutoRun
+        SectionSetFlags ${section_autorun} ${SF_SELECTED}
     LUseAutoRun:
 
     ; Apply remembered selection state for CLINK_DIR section.
