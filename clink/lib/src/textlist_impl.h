@@ -6,6 +6,7 @@
 #include "editor_module.h"
 #include "input_dispatcher.h"
 #include "popup.h"
+#include "scroll_helper.h"
 
 #include <core/str.h>
 
@@ -117,6 +118,7 @@ private:
     str<16>         m_needle;
     bool            m_needle_is_number = false;
     bool            m_input_clears_needle = false;
+    scroll_helper   m_scroll_helper;
 
     // Content store.
     class item_store
