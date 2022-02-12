@@ -1107,12 +1107,13 @@ void win_terminal_in::process_input(MOUSE_EVENT_RECORD const& record)
     const bool right_click = !left_click && (!(prv & RIGHTMOST_BUTTON_PRESSED) && (btn & RIGHTMOST_BUTTON_PRESSED));
     const bool double_click = left_click && (record.dwEventFlags & DOUBLE_CLICK);
     const bool wheel = !left_click && !right_click && (record.dwEventFlags & MOUSE_WHEELED);
-    //const bool drag = ...NYI...
+    const bool drag = (btn & FROM_LEFT_1ST_BUTTON_PRESSED) && !left_click && !right_click && !wheel && (record.dwEventFlags & MOUSE_MOVED);
 
     const mouse_input_type mask = (left_click ? mouse_input_type::left_click :
                                    right_click ? mouse_input_type::right_click :
                                    double_click ? mouse_input_type::double_click :
                                    wheel ? mouse_input_type::wheel :
+                                   drag ? mouse_input_type::drag :
                                    mouse_input_type::none);
 
     if (mask == mouse_input_type::none)
@@ -1153,14 +1154,15 @@ void win_terminal_in::process_input(MOUSE_EVENT_RECORD const& record)
         return;
     }
 
-    // Left or right click.
-    if (left_click || right_click)
+    // Left or right click, or drag.
+    if (left_click || right_click || drag)
     {
         CONSOLE_SCREEN_BUFFER_INFO csbi;
         GetConsoleScreenBufferInfo(m_stdout, &csbi);
 
         str<16> tmp;
-        const char code = (right_click ? 'R' :
+        const char code = (drag ? 'M' :
+                           right_click ? 'R' :
                            record.dwEventFlags & DOUBLE_CLICK ? 'D' : 'L');
         tmp.format("\x1b[$%u;%u%c", record.dwMousePosition.X - csbi.srWindow.Left, record.dwMousePosition.Y - csbi.srWindow.Top, code);
         push(tmp.c_str());
@@ -1184,8 +1186,6 @@ void win_terminal_in::process_input(MOUSE_EVENT_RECORD const& record)
         push(tmp.c_str());
         return;
     }
-
-// TODO: Mouse drag; for extending CUA selection.
 }
 
 //------------------------------------------------------------------------------
