@@ -92,7 +92,6 @@ extern int macro_hook_func(const char* macro);
 extern int host_filter_matches(char** matches);
 extern void update_matches();
 extern void reset_generate_matches();
-extern void reset_prev_suggest();
 extern void force_update_internal(bool restrict);
 extern matches* maybe_regenerate_matches(const char* needle, display_filter_flags flags);
 extern setting_color g_color_interact;
@@ -2037,6 +2036,7 @@ enum {
     bind_id_input,
     bind_id_left_click,
     bind_id_double_click,
+    bind_id_drag,
     bind_id_more_input,
 };
 
@@ -2048,6 +2048,7 @@ void mouse_info::clear()
     m_x = m_y = -1;
     m_tick = GetTickCount() - 0xffff;
     m_clicks = 0;
+    m_anchor1 = m_anchor2 = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -2067,6 +2068,39 @@ int mouse_info::on_click(const unsigned int x, const unsigned int y, const bool 
     m_tick = now;
 
     return m_clicks;
+}
+
+//------------------------------------------------------------------------------
+int mouse_info::clicked() const
+{
+    return m_clicks;
+}
+
+//------------------------------------------------------------------------------
+void mouse_info::set_anchor(int anchor1, int anchor2)
+{
+    m_anchor1 = anchor1;
+    m_anchor2 = anchor2;
+}
+
+//------------------------------------------------------------------------------
+bool mouse_info::get_anchor(int point, int& anchor, int& pos) const
+{
+    if (point < m_anchor1)
+    {
+        anchor = m_anchor2;
+        pos = point;
+        return true;
+    }
+    if (point >= m_anchor2)
+    {
+        anchor = m_anchor1;
+        pos = point;
+        return true;
+    }
+    anchor = m_anchor1;
+    pos = m_anchor2;
+    return false;
 }
 
 
@@ -2212,6 +2246,7 @@ bool rl_module::accepts_mouse_input(mouse_input_type type)
     {
     case mouse_input_type::left_click:
     case mouse_input_type::double_click:
+    case mouse_input_type::drag:
         return true;
     }
 
@@ -2395,6 +2430,7 @@ void rl_module::bind_input(binder& binder)
     int default_group = binder.get_group();
     binder.bind(default_group, "\x1b[$*;*L", bind_id_left_click, true/*has_params*/);
     binder.bind(default_group, "\x1b[$*;*D", bind_id_double_click, true/*has_params*/);
+    binder.bind(default_group, "\x1b[$*;*M", bind_id_drag, true/*has_params*/);
     binder.bind(default_group, "", bind_id_input);
 
     m_catch_group = binder.create_group("readline");
@@ -2566,7 +2602,7 @@ void rl_module::on_end_line()
 }
 
 //------------------------------------------------------------------------------
-bool translate_xy_to_readline(unsigned int x, unsigned int y, int& pos)
+bool translate_xy_to_readline(unsigned int x, unsigned int y, int& pos, bool clip=false)
 {
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
@@ -2575,9 +2611,17 @@ bool translate_xy_to_readline(unsigned int x, unsigned int y, int& pos)
     int v_pos = _rl_last_v_pos - v_pos_y + y;
 
     if (v_pos < 0)
-        return false;
+    {
+        if (!clip)
+            return false;
+        v_pos = 0;
+    }
     if (v_pos > _rl_vis_botlin)
-        return false;
+    {
+        if (!clip)
+            return false;
+        v_pos = _rl_vis_botlin;
+    }
 
     const int prefix = rl_get_prompt_prefix_visible();
     int point = 0;
@@ -2619,35 +2663,77 @@ void rl_module::on_input(const input& input, result& result, const context& cont
     if (g_debug_log_terminal.get())
         LOG("INPUT \"%.*s\", %d", input.len, input.keys, input.len);
 
-    if (input.id == bind_id_left_click || input.id == bind_id_double_click)
+    switch (input.id)
     {
-        unsigned int p0, p1;
-        input.params.get(0, p0);
-        input.params.get(1, p1);
-        int pos;
-        if (translate_xy_to_readline(p0, p1, pos))
+    case bind_id_left_click:
+    case bind_id_double_click:
+    case bind_id_drag:
         {
-            const int clicks = m_mouse.on_click(p0, p1, input.id == bind_id_double_click);
-            if (clicks == 3)
+            unsigned int p0, p1;
+            input.params.get(0, p0);
+            input.params.get(1, p1);
+            int pos;
+            const bool drag = (input.id == bind_id_drag);
+            if (translate_xy_to_readline(p0, p1, pos, drag && m_mouse.clicked()))
             {
-                cua_select_all(0, 0);
+                const int clicks = drag ? m_mouse.clicked() : m_mouse.on_click(p0, p1, input.id == bind_id_double_click);
+                if (clicks == 3)
+                {
+                    cua_select_all(0, 0);
+                }
+                else if (clicks)
+                {
+                    if (drag)
+                    {
+                        int anchor;
+                        if (m_mouse.get_anchor(pos, anchor, pos))
+                        {
+                            rollback<int> rb(rl_point, pos);
+                            if (pos < anchor)
+                            {
+                                rl_forward_word(1, 0);
+                                rl_backward_word(1, 0);
+                                if (rl_point > pos)
+                                {
+                                    rl_point = pos;
+                                    rl_backward_word(1, 0);
+                                }
+                            }
+                            else
+                            {
+                                rl_backward_word(1, 0);
+                                rl_forward_word(1, 0);
+                                if (rl_point <= pos)
+                                {
+                                    rl_point = pos;
+                                    rl_forward_word(1, 0);
+                                }
+                            }
+                            pos = rl_point;
+                        }
+                        g_rl_buffer->set_selection(anchor, pos);
+                    }
+                    else
+                    {
+                        const bool moved = (pos != rl_point);
+                        g_rl_buffer->set_cursor(pos);
+                        m_mouse.set_anchor(pos, pos);
+                        if (moved)
+                            g_rl_buffer->set_need_draw();
+                        if (clicks == 2)
+                        {
+                            cua_select_word(0, 0);
+                            m_mouse.set_anchor(g_rl_buffer->get_anchor(), g_rl_buffer->get_cursor());
+                        }
+                    }
+                }
             }
             else
             {
-                if (pos != rl_point || cua_get_anchor() >= 0)
-                {
-                    cua_clear_selection();
-                    g_rl_buffer->set_cursor(pos);
-                    g_rl_buffer->set_need_draw();
-                    g_rl_buffer->draw();
-                }
-                if (clicks == 2)
-                {
-                    cua_select_word(0, 0);
-                }
+                m_mouse.clear();
             }
+            return;
         }
-        return;
     }
 
     g_result = &result;

@@ -21,11 +21,16 @@ class mouse_info
 public:
     void            clear();
     int             on_click(unsigned int x, unsigned int y, bool dblclk);
+    int             clicked() const;
+    void            set_anchor(int anchor1, int anchor2);
+    bool            get_anchor(int point, int& anchor, int& pos) const;
 private:
     unsigned short  m_x;
     unsigned short  m_y;
     unsigned int    m_tick;
     unsigned char   m_clicks;
+    int             m_anchor1;
+    int             m_anchor2;
 };
 
 //------------------------------------------------------------------------------

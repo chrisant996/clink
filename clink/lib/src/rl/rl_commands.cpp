@@ -862,9 +862,24 @@ ding:
 
 
 //------------------------------------------------------------------------------
-void cua_clear_selection()
+bool cua_clear_selection()
 {
+    if (s_cua_anchor < 0)
+        return false;
     s_cua_anchor = -1;
+    return true;
+}
+
+//------------------------------------------------------------------------------
+bool cua_set_selection(int anchor, int point)
+{
+    const int new_anchor = min<int>(rl_end, anchor);
+    const int new_point = max<int>(0, min<int>(rl_end, point));
+    if (new_anchor == s_cua_anchor && new_point == rl_point)
+        return false;
+    s_cua_anchor = new_anchor;
+    rl_point = new_point;
+    return true;
 }
 
 //------------------------------------------------------------------------------
@@ -1038,7 +1053,7 @@ int cua_select_word(int count, int invoking_key)
     {
         begin = high_mid;
     }
-    else if (low_mid >= orig_point)
+    else if (low_mid > orig_point)
     {
         end = low_mid;
     }
