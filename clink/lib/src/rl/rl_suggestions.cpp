@@ -120,6 +120,7 @@ void suggestion_manager::set(const char* line, unsigned int endword_offset, cons
     {
 malformed:
         clear();
+        m_line = line;
         if (g_rl_buffer)
             g_rl_buffer->draw();
         return;
