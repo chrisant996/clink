@@ -4,6 +4,9 @@
 
 #### v1.3.7
 
+- Mouse click+drag now works.
+- Mouse click below `clink-select-complete` list expands the list instead of dismissing it.
+- Fixed responding to mouse clicks when terminal is scrolled (it only worked in Windows Terminal).
 - Fixed [#237](https://github.com/chrisant996/clink/issues/237); installer does not maintain previously selected "Autorun when cmd.exe starts" (regression introduced in v1.3.5).
 
 #### v1.3.6
