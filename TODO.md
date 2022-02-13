@@ -7,7 +7,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
-- [ ] Mouse input; click+drag and double click+drag for text selection.
 
 ## Follow Up
 - Readline command reference.
