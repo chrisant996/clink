@@ -566,10 +566,10 @@ key_tester* win_terminal_in::set_key_tester(key_tester* keys)
 }
 
 //------------------------------------------------------------------------------
-static void fix_console_input_mode(HANDLE h)
+void win_terminal_in::fix_console_input_mode()
 {
     DWORD modeIn;
-    if (GetConsoleMode(h, &modeIn))
+    if (GetConsoleMode(m_stdin, &modeIn))
     {
         DWORD mode = modeIn;
 
@@ -584,22 +584,10 @@ static void fix_console_input_mode(HANDLE h)
 #endif
 
         if (modeIn & ENABLE_MOUSE_INPUT)
-        {
-            if (get_native_ansi_handler() != ansi_handler::conemu)
-            {
-                const bool any_modifier_keys = (
-                    GetKeyState(VK_SHIFT) < 0 ||
-                    GetKeyState(VK_CONTROL) < 0 ||
-                    GetKeyState(VK_MENU) < 0);
-                if (any_modifier_keys)
-                    modeIn |= ENABLE_QUICK_EDIT_MODE;
-                else
-                    modeIn &= ~ENABLE_QUICK_EDIT_MODE;
-            }
-        }
+            console_config::fix_quick_edit_mode(modeIn);
 
         if (mode != modeIn)
-            SetConsoleMode(h, modeIn);
+            SetConsoleMode(m_stdin, modeIn);
     }
 }
 
@@ -642,7 +630,7 @@ void win_terminal_in::read_console(input_idle* callback)
         DWORD modeExpected;
         const bool has_mode = !!GetConsoleMode(m_stdout, &modeExpected);
 
-        fix_console_input_mode(m_stdin);
+        fix_console_input_mode();
 
         while (callback)
         {
@@ -658,7 +646,7 @@ void win_terminal_in::read_console(input_idle* callback)
             if (void* event = callback->get_waitevent())
                 handles[count++] = event;
 
-            fix_console_input_mode(m_stdin);
+            fix_console_input_mode();
 
             const DWORD timeout = callback->get_timeout();
             const DWORD waited = WaitForMultipleObjects(count, handles, false, timeout);

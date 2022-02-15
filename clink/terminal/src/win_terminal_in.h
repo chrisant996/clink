@@ -21,6 +21,7 @@ public:
 
 private:
     unsigned int    get_dimensions();
+    void            fix_console_input_mode();
     void            read_console(input_idle* callback=nullptr);
     void            process_input(const KEY_EVENT_RECORD& key_event);
     void            process_input(const MOUSE_EVENT_RECORD& mouse_event);
