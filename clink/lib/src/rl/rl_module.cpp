@@ -2686,7 +2686,7 @@ void rl_module::on_input(const input& input, result& result, const context& cont
                     if (drag)
                     {
                         int anchor;
-                        if (m_mouse.get_anchor(pos, anchor, pos))
+                        if (m_mouse.get_anchor(pos, anchor, pos) && clicks == 2)
                         {
                             rollback<int> rb(rl_point, pos);
                             if (pos < anchor)
