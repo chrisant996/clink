@@ -29,7 +29,7 @@ setting_bool g_adjust_cursor_style(
     "strangely while typing.",
     true);
 
-setting_enum g_mouse_input(
+static setting_enum g_mouse_input(
     "terminal.mouse_input",
     "Clink mouse input",
     "Clink can optionally respond to mouse input, instead of letting the terminal\n"
@@ -50,6 +50,23 @@ setting_enum g_mouse_input(
     "  input to still work (for example, to select text on the screen).",
     "off,on,auto",
     2);
+
+static setting_str g_mouse_modifier(
+    "terminal.mouse_modifier",
+    "Modifier keys for mouse input",
+    "This selects which modifier keys (Alt, Ctrl, Shift) must be held in order\n"
+    "for Clink to respond to mouse input when mouse input is enabled by the\n"
+    "'terminal.mouse_input' setting.\n"
+    "\n"
+    "This is a text string that can list one or more modifier keys:  'alt', 'ctrl',\n"
+    "and 'shift'.  For example, setting it to \"alt shift\" causes Clink to only\n"
+    "respond to mouse input when both Alt and Shift are held (and not Ctrl).\n"
+    "If the %CLINK_MOUSE_MODIFIER% environment variable is set then its value\n"
+    "supersedes this setting.\n"
+    "\n"
+    "Note that in the default Conhost terminal when Quick Edit mode is turned off\n"
+    "then Clink will also respond to mouse input when no modifier keys are held.",
+    "");
 
 //------------------------------------------------------------------------------
 static bool s_locked_cursor_visibility = false;
@@ -230,13 +247,11 @@ console_config::console_config(HANDLE handle, bool accept_mouse_input)
     s_quick_edit = !!(m_prev_mode & ENABLE_QUICK_EDIT_MODE);
 
     str<16> tmp;
-    s_mouse_alt = s_mouse_ctrl = s_mouse_shift = false;
-    if (os::get_env("clink_mouse_modifier", tmp))
-    {
-        s_mouse_alt = !!strstri("alt", tmp.c_str());
-        s_mouse_ctrl = !!strstri("ctrl", tmp.c_str());
-        s_mouse_shift = !!strstri("shift", tmp.c_str());
-    }
+    if (!os::get_env("clink_mouse_modifier", tmp) || tmp.empty())
+        g_mouse_modifier.get(tmp);
+    s_mouse_alt = !!strstri("alt", tmp.c_str());
+    s_mouse_ctrl = !!strstri("ctrl", tmp.c_str());
+    s_mouse_shift = !!strstri("shift", tmp.c_str());
 
     // NOTE:  Windows Terminal doesn't reliably respond to changes of the
     // ENABLE_MOUSE_INPUT flag when ENABLE_AUTO_POSITION is missing.
