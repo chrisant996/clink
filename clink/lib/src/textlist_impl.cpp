@@ -587,7 +587,7 @@ find:
         {
             m_reset_history_index = true;
             // Remove the corresponding persisted history entry.
-            const int history_index = m_infos[m_index].index;
+            const int history_index = m_infos ? m_infos[m_index].index : m_index;
             host_remove_history(history_index, nullptr);
             // Remove the corresponding entry from Readline's copy of history.
             HIST_ENTRY* hist = remove_history(history_index);
@@ -595,10 +595,13 @@ find:
             // Remove the item from the popup list.
             int move_count = (m_count - 1) - m_index;
             memmove(m_entries + m_index, m_entries + m_index + 1, move_count * sizeof(m_entries[0]));
-            memmove(m_infos + m_index, m_infos + m_index + 1, move_count * sizeof(m_infos[0]));
             m_items.erase(m_items.begin() + m_index);
-            for (entry_info* info = m_infos + m_index; move_count--; info++)
-                info->index--;
+            if (m_infos)
+            {
+                memmove(m_infos + m_index, m_infos + m_index + 1, move_count * sizeof(m_infos[0]));
+                for (entry_info* info = m_infos + m_index; move_count--; info++)
+                    info->index--;
+            }
             m_count--;
             if (!m_count)
             {
