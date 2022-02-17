@@ -663,11 +663,11 @@ int inject(int argc, char** argv)
 
     // If host validation fails when autorun, then don't report that as a
     // failure since it's an expected and common case.
-    if (rr.result > 0)              // Success.
+    if (INT_PTR(rr.result) > 0)       // Success.
         ret = 0;
-    else if (rr.result < 0)         // Ignorable failure; don't report error.
+    else if (INT_PTR(rr.result) < 0)  // Ignorable failure; don't report error.
         ret = 0;
-    else                            // Failure.
+    else                              // Failure.
         ret = 1;
 
     if (!ret)
