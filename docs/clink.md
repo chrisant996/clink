@@ -193,11 +193,16 @@ Mode | Description
 `on` | Lets Clink handle mouse input.
 `auto` | Lets Clink handle mouse input in ConEmu and in the default Conhost terminal when Quick Edit mode is unchecked in the console Properties dialog.
 
+Use <code>clink set terminal.mouse_modifier <span class="arg">modifiers</span></code> or <code>set CLINK_MOUSE_MODIFIER=<span class="arg">modifiers</span></code> to control which modifier keys must be held for Clink to respond to mouse input.
+
+These select which modifier keys (<kbd>Alt</kbd>, <kbd>Ctrl</kbd>, <kbd>Shift</kbd>) must be held in order for Clink to respond to mouse input when mouse input is enabled by the `terminal.mouse_input` setting.  <span class="arg">modifiers</span> is a text string that can list one or more modifier keys:  'alt', 'ctrl', and 'shift'.  For example, setting it to "alt shift" causes Clink to only respond to mouse input when both <kbd>Alt</kbd> and <kbd>Shift</kbd> are held (and not <kbd>Ctrl</kbd>).  If the `%CLINK_MOUSE_MODIFIER%` environment variable is set then its value
+supersedes the `terminal.mouse_modifier` setting.  In Windows Terminal many modifier keys do special things with mouse clicks, so the modifier key combination that interferes least with built in Windows Terminal behaviors is <kbd>Ctrl</kbd>+<kbd>Alt</kbd>.
+
 When mouse input is enabled in Clink, then mouse input works a little differently:
-- You can always hold <kbd>Shift</kbd>, <kbd>Ctrl</kbd>, or <kbd>Alt</kbd> while clicking or using the mouse wheel to bypass Clink and use the normal terminal mouse input (for example, to select text on the screen).
-- In Windows Terminal, the mouse wheel can scroll popup lists, but can only scroll the terminal if you hold <kbd>Shift</kbd> or <kbd>Alt</kbd> while using the mouse wheel (<kbd>Ctrl</kbd> with the mouse wheel zooms the terminal).
-  - Note that in Windows Terminal <kbd>Shift</kbd>+<kbd>RightClick</kbd> has a special meaning and turns off line ending detection when copying the selected text to the clipboard.  Hold <kbd>Ctrl</kbd> or <kbd>Alt</kbd> when right clicking to do the normal copy with line ending detection.
+- You can bypass Clink mouse input and use the normal terminal mouse input by holding a different combination of modifier keys than listed in `terminal.mouse_modifier` or `%CLINK_MOUSE_MODIFIER%`.
+- Windows Terminal treats <kbd>Shift</kbd>+<kbd>RightClick</kbd> specially and turns off line ending detection when copying the selected text to the clipboard.  Hold <kbd>Ctrl</kbd> or <kbd>Alt</kbd> when right clicking to do the normal copy with line ending detection.
 - In ConEmu, the mouse wheel always scrolls the terminal; Clink cannot use it to scroll popup lists.
+- In the default Conhost terminal when Quick Edit mode is turned off then Clink will also respond to mouse input when no modifier keys are held.
 
 <a name="gettingstarted_startupcmdscript"></a>
 
@@ -343,6 +348,9 @@ Name                         | Default | Description
 `terminal.east_asian_ambiguous`|`auto` | There is a group of East Asian characters whose widths are ambiguous in the Unicode standard.  This setting controls how to resolve the ambiguous widths.  By default this is set to `auto`, but some terminal hosts may require setting this to a different value to work around limitations in the terminal hosts.  Setting this to `font` measures the East Asian Ambiguous character widths using the current font.  Setting it to `one` uses 1 as the width, or `two` uses 2 as the width.  When this is `auto` (the default) and the current code page is 932, 936, 949, or 950 then the current font is used to measure the widths, or for any other code pages (including UTF8) the East Asian Ambiguous character widths are assumed to be 1.
 `terminal.emulation`         | `auto`  | Clink can either emulate a virtual terminal and handle ANSI escape codes itself, or let the console host natively handle ANSI escape codes. `native` = pass output directly to the console host process, `emulate` = clink handles ANSI escape codes itself, `auto` = emulate except when running in ConEmu, Windows Terminal, or Windows 10 new console.
 `terminal.mouse_input`       | `auto`  | Clink can optionally respond to mouse input, instead of letting the terminal respond to mouse input (e.g. to select text on the screen).  When mouse input is enabled in Clink, clicking in the input line sets the cursor position, and clicking in popup lists selects an item, etc.  Setting this to `off` lets the terminal host handle mouse input, `on` lets Clink handle mouse input, and `auto` lets Clink handle mouse input in ConEmu and in the default Conhost terminal when Quick Edit mode is unchecked in the console Properties dialog.  For more information see [Mouse Input](#gettingstarted_mouseinput).
+`terminal.mouse_modifier`    |       | This selects which modifier keys (<kbd>Alt</kbd>, <kbd>Ctrl</kbd>, <kbd>Shift</kbd>) must be held in order
+for Clink to respond to mouse input when mouse input is enabled by the `terminal.mouse_input` setting.  This is a text string that can list one or more modifier keys:  'alt', 'ctrl', and 'shift'.  For example, setting it to "alt shift" causes Clink to only respond to mouse input when both <kbd>Alt</kbd> and <kbd>Shift</kbd> are held (and not <kbd>Ctrl</kbd>).  If the `%CLINK_MOUSE_MODIFIER%` environment variable is set then its value
+supersedes this setting.  For more information see [Mouse Input](#gettingstarted_mouseinput).
 `terminal.raw_esc`           | False | When enabled, pressing Esc sends a literal escape character like in Unix/etc terminals.  This setting is disabled by default to provide a more predictable, reliable, and configurable input experience on Windows.  Changing this only affects future Clink sessions, not the current session.
 `terminal.use_altgr_substitute`| False | Support Windows' <kbd>Ctrl</kbd>-<kbd>Alt</kbd> substitute for <kbd>AltGr</kbd>. Turning this off may resolve collisions with Readline's key bindings.
 
