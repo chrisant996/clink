@@ -158,8 +158,8 @@ SectionEnd
 Section "Use enhanced default settings" section_enhance
     SetShellVarContext all
 
-    File ${CLINK_BUILD}\default_settings
-    File ${CLINK_BUILD}\default_inputrc
+    File /oname=default_settings ${CLINK_BUILD}\_default_settings
+    File /oname=default_inputrc ${CLINK_BUILD}\_default_inputrc
 SectionEnd
 
 ;-------------------------------------------------------------------------------
