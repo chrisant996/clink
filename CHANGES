@@ -4,7 +4,11 @@
 
 #### v1.3.8
 
+- Added `terminal.mouse_modifier` setting and `%CLINK_MOUSE_MODIFIER%` environment variable; these can override the modifier keys that activate Clink mouse input.
+- Added `%CLINK_SETTINGS%` environment variable; this can override the directory where the `clink_settings` file is located.  This can be used to put it in a directory that syncs between computers, for example.
+- The .zip file now contains `_default_settings` and `_default_inputrc` so that they do not take effect unless manually renamed to remove the `_` name prefix.  This avoids changing the defaults unexpectedly.
 - Fixed mouse click+drag in the input line (it accidentally behaved like double click+drag).
+- Fixed [#239](https://github.com/chrisant996/clink/issues/239); crash when <kbd>F7</kbd> and <kbd>Del</kbd>.
 
 #### v1.3.7
 
