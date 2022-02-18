@@ -437,6 +437,11 @@ This configures the Readline library used by Clink; it can contain key bindings 
 <dt>clink_settings</dt>
 <dd>
 This is where Clink stores its settings.  See <a href="#clink-settings">Clink Settings</a> for more information.
+
+The location of the `clink_settings` file may also be overridden with the `%CLINK_SETTINGS%` environment variable.  This is not recommended because it can be confusing; if the environment variable gets cleared or isn't always set then a different settings file may get used sometimes.  But, one reason to use it is to make your settings sync with other computers.
+
+- `set CLINK_SETTINGS=%USERPROFILE%\OneDrive\clink` can let settings sync between computers through your OneDrive account.
+- `set CLINK_SETTINGS=%USERPROFILE%\AppData\Roaming` can let settings sync between computers in a work environment.
 </dd></p>
 
 <p>
