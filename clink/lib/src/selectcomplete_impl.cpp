@@ -1349,6 +1349,12 @@ void selectcomplete_impl::update_display()
 
                         const int next = i + minor_stride;
 
+                        if (show_descriptions && !right_justify)
+                        {
+                            pad_filename(printed_len, -m_widths.m_max_match, selected);
+                            printed_len = m_widths.m_max_match;
+                        }
+
                         const char* desc = m_desc_below ? nullptr : m_matches.get_match_description(i);
                         if (desc && *desc)
                         {
@@ -1362,11 +1368,6 @@ void selectcomplete_impl::update_display()
                             const int pad_to = (right_justify ?
                                 max<int>(printed_len + m_widths.m_desc_padding, col_max - (m_matches.get_match_visible_description(i) + parens)) :
                                 m_widths.m_max_match + 4);
-                            if (!right_justify)
-                            {
-                                pad_filename(printed_len, -m_widths.m_max_match, selected);
-                                printed_len = m_widths.m_max_match;
-                            }
                             if (pad_to < m_screen_cols - 1)
                             {
                                 pad_filename(printed_len, pad_to, -1);
