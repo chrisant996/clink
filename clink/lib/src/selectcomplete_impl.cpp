@@ -101,6 +101,8 @@ enum {
     bind_id_selectcomplete_right,
     bind_id_selectcomplete_pgup,
     bind_id_selectcomplete_pgdn,
+    bind_id_selectcomplete_first,
+    bind_id_selectcomplete_last,
     bind_id_selectcomplete_leftclick,
     bind_id_selectcomplete_doubleclick,
     bind_id_selectcomplete_wheelup,
@@ -342,6 +344,8 @@ void selectcomplete_impl::bind_input(binder& binder)
     binder.bind(m_bind_group, "\\e[C", bind_id_selectcomplete_right);
     binder.bind(m_bind_group, "\\e[5~", bind_id_selectcomplete_pgup);
     binder.bind(m_bind_group, "\\e[6~", bind_id_selectcomplete_pgdn);
+    binder.bind(m_bind_group, "\\e[1;5H", bind_id_selectcomplete_first);
+    binder.bind(m_bind_group, "\\e[1;5F", bind_id_selectcomplete_last);
     binder.bind(m_bind_group, "\\e[$*;*L", bind_id_selectcomplete_leftclick, true/*has_params*/);
     binder.bind(m_bind_group, "\\e[$*;*D", bind_id_selectcomplete_doubleclick, true/*has_params*/);
     binder.bind(m_bind_group, "\\e[$*A", bind_id_selectcomplete_wheelup, true/*has_params*/);
@@ -632,6 +636,22 @@ arrow_next:
                 }
                 goto navigated;
             }
+        }
+        break;
+
+    case bind_id_selectcomplete_first:
+        m_index = 0;
+        goto navigated;
+    case bind_id_selectcomplete_last:
+        if (count > 0)
+        {
+            m_index = count - 1;
+            const int rows = min<int>(m_match_rows, m_visible_rows);
+            int row = get_match_row(m_index);
+            if (row + 1 < m_match_rows)
+                row++;
+            set_top(max<int>(0, row - (rows - 1)));
+            goto navigated;
         }
         break;
 
