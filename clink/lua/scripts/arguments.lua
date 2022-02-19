@@ -343,6 +343,7 @@ end
 --- This is the same as <a href="#_argmatcher:addarg">_argmatcher:addarg</a>
 --- except that this disables sorting the matches.
 function _argmatcher:addargunsorted(...)
+    local list = self._args[self._nextargindex]
     self:addarg(...)
     list.nosort = true
     return self
