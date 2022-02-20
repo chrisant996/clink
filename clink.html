@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.3.7</title>
+<title>Clink v1.3.8</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -771,7 +771,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.3.7</div>
+                <div id="title">Clink v1.3.8</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -848,6 +848,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 <h2 id="common-configuration">Common Configuration</h2>
 <p>The following sections describe some ways to begin customizing Clink to your taste.</p>
 <table class="linkmenu">
+<tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_enhanceddefaults">Enhanced default settings</a></td><td class="lmtd">Optionally use enhanced default settings.</td></tr>
 <tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_inputrc">Create a .inputrc file</a></td><td class="lmtd">Create a .inputrc file where config variables and key bindings can be set.</td></tr>
 <tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_defaultbindings">Bash vs Windows</a></td><td class="lmtd">Make <kbd>Ctrl</kbd>+<kbd>F</kbd> and <kbd>Ctrl</kbd>+<kbd>M</kbd> work like usual on Windows.</td></tr>
 <tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_autosuggest">Auto-suggest</a></td><td class="lmtd">How to enable and use automatic suggestions.</td></tr>
@@ -859,6 +860,11 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 <tr class="lmtr"><td class="lmtd"><a href="#upgradefrom049">Upgrading from Clink v0.4.9</a></td><td class="lmtd">Notes on upgrading from a very old version of Clink.</td></tr>
 </table>
 
+<p><a name="gettingstarted_enhanceddefaults"></a></p>
+<h3 id="enhanced-default-settings">Enhanced default settings</h3>
+<p>Clink can be installed with plain defaults, or it can be installed with enhanced default settings that enable more of Clink&#39;s enhancements by default.</p>
+<p>If you install Clink with the setup program and &quot;Use enhanced default settings&quot; is checked, then the enhanced defaults are activated, and then in some places where this documentation refers to default settings the stated default may have been overridden.</p>
+<p>If you install Clink from the .zip file then enhanced default settings are activated when the <code>default_settings</code> and <code>default_inputrc</code> files are present in the binaries directory or in the profile directory.  The .zip file comes with the files, but their names have a <code>_</code> prefix so that enhanced defaults won&#39;t automatically take effect.  You can activate the enhanced default settings by renaming the files to remove the <code>_</code> prefix.</p>
 <p><a name="gettingstarted_inputrc"></a></p>
 <h3 id="create-a-inputrc-file">Create a .inputrc file</h3>
 <p>First you&#39;ll want to create a <code>.inputrc</code> file, and a good place is in your Windows user profile directory.</p>
@@ -885,14 +891,17 @@ $endif
 <h3 id="bash-vs-windows">Bash vs Windows</h3>
 <p>The default Clink key bindings are the same as in the &quot;bash&quot; shell for Unix/Linux.  That makes some keys like <kbd>Ctrl</kbd>+<kbd>F</kbd> and <kbd>Ctrl</kbd>+<kbd>M</kbd> behave differently than you might be used to in CMD.</p>
 <p>To instead use the familiar <a href="#default_bindings">Windows default key bindings</a> you can run <code>clink set clink.default_bindings windows</code>.</p>
+<p>Or, if you use the setup program with &quot;Use enhanced default settings&quot; checked then &quot;windows&quot; key bindings are the default.</p>
 <p><a name="gettingstarted_autosuggest"></a></p>
 <h3 id="auto-suggest">Auto-suggest</h3>
 <p>Clink can suggest commands as you type, based on command history and completions.</p>
 <p>To turn on automatic suggestions, run <code>clink set autosuggest.enable true</code>.  When the cursor is at the end of the input line, a suggestion may appear in a muted color.  If the suggestion isn&#39;t what you want, just ignore it.  Or accept the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, accept the next word of the suggestion with <kbd>Ctrl</kbd>+<kbd>Right</kbd>, or accept the next full word of the suggestion up to a space with <kbd>Shift</kbd>+<kbd>Right</kbd>.</p>
 <p>The <a href="#autosuggest_strategy"><code>autosuggest.strategy</code></a> setting determines how a suggestion is chosen.</p>
+<p>Or, if you use the setup program with &quot;Use enhanced default settings&quot; checked then automatic suggestions are enabled by default.</p>
 <p><a name="gettingstarted_colors"></a></p>
 <h3 id="colors">Colors</h3>
 <p>Clink has many configurable colors for match completions, input line coloring, popup lists, and more.</p>
+<p>If you use the setup program with &quot;Use enhanced default settings&quot; checked then many of the color settings have more colorful default values.</p>
 <h4 id="for-completion">For completion</h4>
 <p>When performing completion (e.g. <kbd>Tab</kbd> or <kbd>Ctrl</kbd>+<kbd>Space</kbd>) Clink can add color to the possible completions.</p>
 <p>To turn on colored completions, put a line <code>set colored-stats on</code> in the <a href="#gettingstarted_inputrc">.inputrc file</a> (if you copy/pasted the sample text, it&#39;s already there).</p>
@@ -965,14 +974,15 @@ $endif
 <td>Lets Clink handle mouse input in ConEmu and in the default Conhost terminal when Quick Edit mode is unchecked in the console Properties dialog.</td>
 </tr>
 </tbody></table>
+<p>Use <code>clink set terminal.mouse_modifier <span class="arg">modifiers</span></code> or <code>set CLINK_MOUSE_MODIFIER=<span class="arg">modifiers</span></code> to control which modifier keys must be held for Clink to respond to mouse input.</p>
+<p>These select which modifier keys (<kbd>Alt</kbd>, <kbd>Ctrl</kbd>, <kbd>Shift</kbd>) must be held in order for Clink to respond to mouse input when mouse input is enabled by the <code>terminal.mouse_input</code> setting.  <span class="arg">modifiers</span> is a text string that can list one or more modifier keys:  &#39;alt&#39;, &#39;ctrl&#39;, and &#39;shift&#39;.  For example, setting it to &quot;alt shift&quot; causes Clink to only respond to mouse input when both <kbd>Alt</kbd> and <kbd>Shift</kbd> are held (and not <kbd>Ctrl</kbd>).  If the <code>%CLINK_MOUSE_MODIFIER%</code> environment variable is set then its value
+supersedes the <code>terminal.mouse_modifier</code> setting.  In Windows Terminal many modifier keys do special things with mouse clicks, so the modifier key combination that interferes least with built in Windows Terminal behaviors is <kbd>Ctrl</kbd>+<kbd>Alt</kbd>.</p>
 <p>When mouse input is enabled in Clink, then mouse input works a little differently:</p>
 <ul>
-<li>You can always hold <kbd>Shift</kbd>, <kbd>Ctrl</kbd>, or <kbd>Alt</kbd> while clicking or using the mouse wheel to bypass Clink and use the normal terminal mouse input (for example, to select text on the screen).</li>
-<li>In Windows Terminal, the mouse wheel can scroll popup lists, but can only scroll the terminal if you hold <kbd>Shift</kbd> or <kbd>Alt</kbd> while using the mouse wheel (<kbd>Ctrl</kbd> with the mouse wheel zooms the terminal).<ul>
-<li>Note that in Windows Terminal <kbd>Shift</kbd>+<kbd>RightClick</kbd> has a special meaning and turns off line ending detection when copying the selected text to the clipboard.  Hold <kbd>Ctrl</kbd> or <kbd>Alt</kbd> when right clicking to do the normal copy with line ending detection.</li>
-</ul>
-</li>
+<li>You can bypass Clink mouse input and use the normal terminal mouse input by holding a different combination of modifier keys than listed in <code>terminal.mouse_modifier</code> or <code>%CLINK_MOUSE_MODIFIER%</code>.</li>
+<li>Windows Terminal treats <kbd>Shift</kbd>+<kbd>RightClick</kbd> specially and turns off line ending detection when copying the selected text to the clipboard.  Hold <kbd>Ctrl</kbd> or <kbd>Alt</kbd> when right clicking to do the normal copy with line ending detection.</li>
 <li>In ConEmu, the mouse wheel always scrolls the terminal; Clink cannot use it to scroll popup lists.</li>
+<li>In the default Conhost terminal when Quick Edit mode is turned off then Clink will also respond to mouse input when no modifier keys are held.</li>
 </ul>
 <p><a name="gettingstarted_startupcmdscript"></a></p>
 <h3 id="startup-cmd-script">Startup Cmd Script</h3>
@@ -1014,7 +1024,7 @@ $endif
 <thead>
 <tr>
 <th align="center">Name</th>
-<th align="center">Default</th>
+<th align="center">Default <a href="#alternatedefault">*</a></th>
 <th>Description</th>
 </tr>
 </thead>
@@ -1025,7 +1035,7 @@ $endif
 </tr>
 <tr>
 <td align="center"><a name="autosuggest_enable"></a><code>autosuggest.enable</code></td>
-<td align="center">False</td>
+<td align="center">False <a href="#alternatedefault">*</a></td>
 <td>When this is <code>true</code> a suggested command may appear in <code>color.suggestion</code> color after the cursor.  If the suggestion isn&#39;t what you want, just ignore it.  Or accept the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, accept the next word of the suggestion with <kbd>Ctrl</kbd>+<kbd>Right</kbd>, or accept the next full word of the suggestion up to a space with <kbd>Shift</kbd>+<kbd>Right</kbd>.  The <code>autosuggest.strategy</code> setting determines how a suggestion is chosen.</td>
 </tr>
 <tr>
@@ -1050,7 +1060,7 @@ $endif
 </tr>
 <tr>
 <td align="center"><a name="default_bindings"></a><code>clink.default_bindings</code></td>
-<td align="center"><code>bash</code></td>
+<td align="center"><code>bash</code> <a href="#alternatedefault">*</a></td>
 <td>Clink uses bash key bindings when this is set to <code>bash</code> (the default).  When this is set to <code>windows</code> Clink overrides some of the bash defaults with familiar Windows key bindings for <kbd>Tab</kbd>, <kbd>Ctrl</kbd>+<kbd>A</kbd>, <kbd>Ctrl</kbd>+<kbd>F</kbd>, <kbd>Ctrl</kbd>+<kbd>M</kbd>, and <kbd>Right</kbd>.</td>
 </tr>
 <tr>
@@ -1105,72 +1115,72 @@ $endif
 </tr>
 <tr>
 <td align="center"><code>color.arginfo</code></td>
-<td align="center"><code>yellow</code></td>
+<td align="center"><code>yellow</code> <a href="#alternatedefault">*</a></td>
 <td>Argument info color.  Some argmatchers may show that some flags or arguments accept additional arguments, when listing possible completions.  This color is used for those additional arguments.  (E.g. the &quot;dir&quot; in a &quot;-x dir&quot; listed completion.)</td>
 </tr>
 <tr>
 <td align="center"><code>color.argmatcher</code></td>
-<td align="center"></td>
+<td align="center"><a href="#alternatedefault">*</a></td>
 <td>The color for the command name in the input line when <code>clink.colorize_input</code> is enabled, if the command name has an argmatcher available.</td>
 </tr>
 <tr>
 <td align="center"><a name="color_cmd"></a><code>color.cmd</code></td>
-<td align="center"><code>bold</code></td>
+<td align="center"><code>bold</code> <a href="#alternatedefault">*</a></td>
 <td>Used when displaying shell (CMD.EXE) command completions, and in the input line when <code>clink.colorize_input</code> is enabled.</td>
 </tr>
 <tr>
 <td align="center"><code>color.cmdredir</code></td>
-<td align="center"><code>bold</code></td>
+<td align="center"><code>bold</code> <a href="#alternatedefault">*</a></td>
 <td>The color for redirection symbols (<code>&lt;</code>, <code>&gt;</code>, <code>&gt;&amp;</code>) in the input line when <code>clink.colorize_input</code> is enabled.</td>
 </tr>
 <tr>
 <td align="center"><code>color.cmdsep</code></td>
-<td align="center"><code>bold</code></td>
+<td align="center"><code>bold</code> <a href="#alternatedefault">*</a></td>
 <td>The color for command separaors (<code>&amp;</code>, `</td>
 </tr>
 <tr>
 <td align="center"><code>color.comment_row</code></td>
-<td align="center"><code>bright white on cyan</code></td>
+<td align="center"><code>bright white on cyan</code> <a href="#alternatedefault">*</a></td>
 <td>The color for the comment row in the <code>clink-select-complete</code> command.  The comment row shows the &quot;and <em>N</em> more matches&quot; or &quot;rows <em>X</em> to <em>Y</em> of <em>Z</em>&quot; messages.</td>
 </tr>
 <tr>
 <td align="center"><code>color.description</code></td>
-<td align="center"><code>bright cyan</code></td>
+<td align="center"><code>bright cyan</code> <a href="#alternatedefault">*</a></td>
 <td>Used when displaying descriptions for match completions.</td>
 </tr>
 <tr>
 <td align="center"><a name="color_doskey"></a><code>color.doskey</code></td>
-<td align="center"><code>bright cyan</code></td>
+<td align="center"><code>bright cyan</code> <a href="#alternatedefault">*</a></td>
 <td>Used when displaying doskey alias completions, and in the input line when <code>clink.colorize_input</code> is enabled.</td>
 </tr>
 <tr>
 <td align="center"><code>color.executable</code></td>
-<td align="center"></td>
+<td align="center"><a href="#alternatedefault">*</a></td>
 <td>When set, this is the color in the input line for a command word that is recognized as an executable file.</td>
 </tr>
 <tr>
 <td align="center"><a name="color_filtered"></a><code>color.filtered</code></td>
-<td align="center"><code>bold</code></td>
+<td align="center"><code>bold</code> <a href="#alternatedefault">*</a></td>
 <td>The default color for filtered completions (see <a href="#filteringthematchdisplay">Filtering the Match Display</a>).</td>
 </tr>
 <tr>
 <td align="center"><code>color.flag</code></td>
-<td align="center"><code>default</code></td>
+<td align="center"><code>default</code> <a href="#alternatedefault">*</a></td>
 <td>The color for flags in the input line when <code>clink.colorize_input</code> is enabled.</td>
 </tr>
 <tr>
 <td align="center"><a name="color_hidden"></a><code>color.hidden</code></td>
-<td align="center"></td>
+<td align="center"><a href="#alternatedefault">*</a></td>
 <td>Used when displaying file completions with the &quot;hidden&quot; attribute.</td>
 </tr>
 <tr>
 <td align="center"><code>color.horizscroll</code></td>
-<td align="center"></td>
+<td align="center"><a href="#alternatedefault">*</a></td>
 <td>The color for the <code>&lt;</code> or <code>&gt;</code> horizontal scroll indicators when Readline&#39;s <code>horizontal-scroll-mode</code> variable is set.</td>
 </tr>
 <tr>
 <td align="center"><code>color.input</code></td>
-<td align="center"></td>
+<td align="center"><a href="#alternatedefault">*</a></td>
 <td>The color for input line text. Note that when <code>clink.colorize_input</code> is disabled, the entire input line is displayed using <code>color.input</code>.</td>
 </tr>
 <tr>
@@ -1200,22 +1210,22 @@ $endif
 </tr>
 <tr>
 <td align="center"><a name="color_readonly"></a><code>color.readonly</code></td>
-<td align="center"></td>
+<td align="center"><a href="#alternatedefault">*</a></td>
 <td>Used when displaying file completions with the &quot;readonly&quot; attribute.</td>
 </tr>
 <tr>
 <td align="center"><code>color.selected_completion</code></td>
-<td align="center"></td>
+<td align="center"><a href="#alternatedefault">*</a></td>
 <td>The color for the selected completion with the <code>clink-select-complete</code> command.  If no color is set, then bright reverse video is used.</td>
 </tr>
 <tr>
 <td align="center"><code>color.selection</code></td>
-<td align="center"></td>
+<td align="center"><a href="#alternatedefault">*</a></td>
 <td>The color for selected text in the input line.  If no color is set, then reverse video is used.</td>
 </tr>
 <tr>
 <td align="center"><a name="color_suggestion"></a><code>color.suggestion</code></td>
-<td align="center"><code>bright black</code></td>
+<td align="center"><code>bright black</code> <a href="#alternatedefault">*</a></td>
 <td>The color for automatic suggestions when <code>autosuggest.enable</code> is enabled.</td>
 </tr>
 <tr>
@@ -1225,7 +1235,7 @@ $endif
 </tr>
 <tr>
 <td align="center"><code>color.unrecognized</code></td>
-<td align="center"></td>
+<td align="center"><a href="#alternatedefault">*</a></td>
 <td>When set, this is the color in the input line for a command word that is not recognized as a command, doskey macro, directory, argmatcher, or executable file.</td>
 </tr>
 <tr>
@@ -1310,7 +1320,7 @@ $endif
 </tr>
 <tr>
 <td align="center"><code>history.max_lines</code></td>
-<td align="center">10000</td>
+<td align="center">10000 <a href="#alternatedefault">*</a></td>
 <td>The number of history lines to save if <code>history.save</code> is enabled (1 to 50000).</td>
 </tr>
 <tr>
@@ -1365,7 +1375,7 @@ $endif
 </tr>
 <tr>
 <td align="center"><code>match.expand_envvars</code></td>
-<td align="center">False</td>
+<td align="center">False <a href="#alternatedefault">*</a></td>
 <td>Expands environment variables in a word before performing completion.</td>
 </tr>
 <tr>
@@ -1405,7 +1415,7 @@ $endif
 </tr>
 <tr>
 <td align="center"><code>match.substring</code></td>
-<td align="center">False</td>
+<td align="center">False <a href="#alternatedefault">*</a></td>
 <td>When set, if no completions are found with a prefix search, then a substring search is used.</td>
 </tr>
 <tr>
@@ -1459,6 +1469,21 @@ $endif
 <td>Clink can optionally respond to mouse input, instead of letting the terminal respond to mouse input (e.g. to select text on the screen).  When mouse input is enabled in Clink, clicking in the input line sets the cursor position, and clicking in popup lists selects an item, etc.  Setting this to <code>off</code> lets the terminal host handle mouse input, <code>on</code> lets Clink handle mouse input, and <code>auto</code> lets Clink handle mouse input in ConEmu and in the default Conhost terminal when Quick Edit mode is unchecked in the console Properties dialog.  For more information see <a href="#gettingstarted_mouseinput">Mouse Input</a>.</td>
 </tr>
 <tr>
+<td align="center"><code>terminal.mouse_modifier</code></td>
+<td align="center"></td>
+<td>This selects which modifier keys (<kbd>Alt</kbd>, <kbd>Ctrl</kbd>, <kbd>Shift</kbd>) must be held in order</td>
+</tr>
+<tr>
+<td align="center">for Clink to respond to mouse input when mouse input is enabled by the <code>terminal.mouse_input</code> setting.  This is a text string that can list one or more modifier keys:  &#39;alt&#39;, &#39;ctrl&#39;, and &#39;shift&#39;.  For example, setting it to &quot;alt shift&quot; causes Clink to only respond to mouse input when both <kbd>Alt</kbd> and <kbd>Shift</kbd> are held (and not <kbd>Ctrl</kbd>).  If the <code>%CLINK_MOUSE_MODIFIER%</code> environment variable is set then its value</td>
+<td align="center"></td>
+<td></td>
+</tr>
+<tr>
+<td align="center">supersedes this setting.  For more information see <a href="#gettingstarted_mouseinput">Mouse Input</a>.</td>
+<td align="center"></td>
+<td></td>
+</tr>
+<tr>
 <td align="center"><code>terminal.raw_esc</code></td>
 <td align="center">False</td>
 <td>When enabled, pressing Esc sends a literal escape character like in Unix/etc terminals.  This setting is disabled by default to provide a more predictable, reliable, and configurable input experience on Windows.  Changing this only affects future Clink sessions, not the current session.</td>
@@ -1471,6 +1496,10 @@ $endif
 </tbody></table>
 <p/>
 
+<p><a name="alternatedefault"></a></p>
+<ul>
+<li>Some settings have alternative default values when Clink is installed with &quot;Use enhanced default settings&quot; checked in the setup program.  This enables more of Clink&#39;s enhancements by default.</li>
+</ul>
 <blockquote>
 <p><strong>Compatibility Notes:</strong></p>
 <ul>
@@ -1524,8 +1553,12 @@ This configures the Readline library used by Clink; it can contain key bindings 
 <dt>clink_settings</dt>
 <dd>
 This is where Clink stores its settings.  See <a href="#clink-settings">Clink Settings</a> for more information.
-</dd></p>
 
+<p>The location of the <code>clink_settings</code> file may also be overridden with the <code>%CLINK_SETTINGS%</code> environment variable.  This is not recommended because it can be confusing; if the environment variable gets cleared or isn&#39;t always set then a different settings file may get used sometimes.  But, one reason to use it is to make your settings sync with other computers.</p>
+<ul>
+<li><code>set CLINK_SETTINGS=%USERPROFILE%\OneDrive\clink</code> can let settings sync between computers through your OneDrive account.</li>
+<li><code>set CLINK_SETTINGS=%USERPROFILE%\AppData\Roaming</code> can let settings sync between computers in a work environment.</dd></p></li>
+</ul>
 <p>
 <dt>clink_history</dt>
 <dd>
@@ -4736,11 +4769,23 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v138">v1.3.8</h4>
+<ul>
+<li>Added <code>terminal.mouse_modifier</code> setting and <code>%CLINK_MOUSE_MODIFIER%</code> environment variable; these can override the modifier keys that activate Clink mouse input.</li>
+<li>Added <code>%CLINK_SETTINGS%</code> environment variable; this can override the directory where the <code>clink_settings</code> file is located.  This can be used to put it in a directory that syncs between computers, for example.</li>
+<li>During <code>clink-select-complete</code> <kbd>Ctrl</kbd>+<kbd>Home</kbd> or <kbd>Ctrl</kbd>+<kbd>End</kbd> select the first or last match.</li>
+<li>When <code>argmatcher:addarg()</code> is passed a table containing <code>nosort=true</code> then the matches are unsorted (displayed in the order listed in the table).</li>
+<li>The .zip file now contains <code>_default_settings</code> and <code>_default_inputrc</code> so that they do not take effect unless manually renamed to remove the <code>_</code> name prefix.  This avoids changing the defaults unexpectedly.</li>
+<li>Fixed mouse click+drag in the input line (it accidentally behaved like double click+drag).</li>
+<li>Fixed the selection highlight width in <code>clink-select-complete</code> when some matches have descriptions but some do not.</li>
+<li>Fixed <code>argmatcher:addargunsorted()</code> to turn off sort.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/239">#239</a>; crash when <kbd>F7</kbd> and <kbd>Del</kbd>.</li>
+</ul>
 <h4 id="v137">v1.3.7</h4>
 <ul>
 <li>Mouse click+drag now works.</li>
 <li>Mouse click below <code>clink-select-complete</code> list expands the list instead of dismissing it.</li>
-<li>Fixed responding to mouse clicks when terminal is scrolled (it only worked in Windows Terminal).</li>
+<li>Fixed responding to mouse clicks when the terminal&#39;s scrollback buffer is not empty (it only worked in Windows Terminal).</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/237">#237</a>; installer does not maintain previously selected &quot;Autorun when cmd.exe starts&quot; (regression introduced in v1.3.5).</li>
 </ul>
 <h4 id="v136">v1.3.6</h4>
