@@ -62,6 +62,7 @@ There are three main ways of customizing Clink to your preferences:  the [Readli
 The following sections describe some ways to begin customizing Clink to your taste.
 
 <table class="linkmenu">
+<tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_enhanceddefaults">Enhanced default settings</a></td><td class="lmtd">Optionally use enhanced default settings.</td></tr>
 <tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_inputrc">Create a .inputrc file</a></td><td class="lmtd">Create a .inputrc file where config variables and key bindings can be set.</td></tr>
 <tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_defaultbindings">Bash vs Windows</a></td><td class="lmtd">Make <kbd>Ctrl</kbd>+<kbd>F</kbd> and <kbd>Ctrl</kbd>+<kbd>M</kbd> work like usual on Windows.</td></tr>
 <tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_autosuggest">Auto-suggest</a></td><td class="lmtd">How to enable and use automatic suggestions.</td></tr>
@@ -72,6 +73,16 @@ The following sections describe some ways to begin customizing Clink to your tas
 <tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_customprompt">Custom Prompt</a></td><td class="lmtd">Customizing the command line prompt.</td></tr>
 <tr class="lmtr"><td class="lmtd"><a href="#upgradefrom049">Upgrading from Clink v0.4.9</a></td><td class="lmtd">Notes on upgrading from a very old version of Clink.</td></tr>
 </table>
+
+<a name="gettingstarted_enhanceddefaults"></a>
+
+### Enhanced default settings
+
+Clink can be installed with plain defaults, or it can be installed with enhanced default settings that enable more of Clink's enhancements by default.
+
+If you install Clink with the setup program and "Use enhanced default settings" is checked, then the enhanced defaults are activated, and then in some places where this documentation refers to default settings the stated default may have been overridden.
+
+If you install Clink from the .zip file then enhanced default settings are activated when the `default_settings` and `default_inputrc` files are present in the binaries directory or in the profile directory.  The .zip file comes with the files, but their names have a `_` prefix so that enhanced defaults won't automatically take effect.  You can activate the enhanced default settings by renaming the files to remove the `_` prefix.
 
 <a name="gettingstarted_inputrc"></a>
 
@@ -113,6 +124,8 @@ The default Clink key bindings are the same as in the "bash" shell for Unix/Linu
 
 To instead use the familiar [Windows default key bindings](#default_bindings) you can run `clink set clink.default_bindings windows`.
 
+Or, if you use the setup program with "Use enhanced default settings" checked then "windows" key bindings are the default.
+
 <a name="gettingstarted_autosuggest"></a>
 
 ### Auto-suggest
@@ -123,11 +136,15 @@ To turn on automatic suggestions, run `clink set autosuggest.enable true`.  When
 
 The [`autosuggest.strategy`](#autosuggest_strategy) setting determines how a suggestion is chosen.
 
+Or, if you use the setup program with "Use enhanced default settings" checked then automatic suggestions are enabled by default.
+
 <a name="gettingstarted_colors"></a>
 
 ### Colors
 
 Clink has many configurable colors for match completions, input line coloring, popup lists, and more.
+
+If you use the setup program with "Use enhanced default settings" checked then many of the color settings have more colorful default values.
 
 #### For completion
 
@@ -193,11 +210,16 @@ Mode | Description
 `on` | Lets Clink handle mouse input.
 `auto` | Lets Clink handle mouse input in ConEmu and in the default Conhost terminal when Quick Edit mode is unchecked in the console Properties dialog.
 
+Use <code>clink set terminal.mouse_modifier <span class="arg">modifiers</span></code> or <code>set CLINK_MOUSE_MODIFIER=<span class="arg">modifiers</span></code> to control which modifier keys must be held for Clink to respond to mouse input.
+
+These select which modifier keys (<kbd>Alt</kbd>, <kbd>Ctrl</kbd>, <kbd>Shift</kbd>) must be held in order for Clink to respond to mouse input when mouse input is enabled by the `terminal.mouse_input` setting.  <span class="arg">modifiers</span> is a text string that can list one or more modifier keys:  'alt', 'ctrl', and 'shift'.  For example, setting it to "alt shift" causes Clink to only respond to mouse input when both <kbd>Alt</kbd> and <kbd>Shift</kbd> are held (and not <kbd>Ctrl</kbd>).  If the `%CLINK_MOUSE_MODIFIER%` environment variable is set then its value
+supersedes the `terminal.mouse_modifier` setting.  In Windows Terminal many modifier keys do special things with mouse clicks, so the modifier key combination that interferes least with built in Windows Terminal behaviors is <kbd>Ctrl</kbd>+<kbd>Alt</kbd>.
+
 When mouse input is enabled in Clink, then mouse input works a little differently:
-- You can always hold <kbd>Shift</kbd>, <kbd>Ctrl</kbd>, or <kbd>Alt</kbd> while clicking or using the mouse wheel to bypass Clink and use the normal terminal mouse input (for example, to select text on the screen).
-- In Windows Terminal, the mouse wheel can scroll popup lists, but can only scroll the terminal if you hold <kbd>Shift</kbd> or <kbd>Alt</kbd> while using the mouse wheel (<kbd>Ctrl</kbd> with the mouse wheel zooms the terminal).
-  - Note that in Windows Terminal <kbd>Shift</kbd>+<kbd>RightClick</kbd> has a special meaning and turns off line ending detection when copying the selected text to the clipboard.  Hold <kbd>Ctrl</kbd> or <kbd>Alt</kbd> when right clicking to do the normal copy with line ending detection.
+- You can bypass Clink mouse input and use the normal terminal mouse input by holding a different combination of modifier keys than listed in `terminal.mouse_modifier` or `%CLINK_MOUSE_MODIFIER%`.
+- Windows Terminal treats <kbd>Shift</kbd>+<kbd>RightClick</kbd> specially and turns off line ending detection when copying the selected text to the clipboard.  Hold <kbd>Ctrl</kbd> or <kbd>Alt</kbd> when right clicking to do the normal copy with line ending detection.
 - In ConEmu, the mouse wheel always scrolls the terminal; Clink cannot use it to scroll popup lists.
+- In the default Conhost terminal when Quick Edit mode is turned off then Clink will also respond to mouse input when no modifier keys are held.
 
 <a name="gettingstarted_startupcmdscript"></a>
 
@@ -253,15 +275,15 @@ The easiest way to configure Clink is to use the `clink set` command.  This can 
 
 The following table describes the available Clink settings:
 
-Name                         | Default | Description
+Name                         | Default [*](#alternatedefault) | Description
 :--:                         | :-:     | -----------
 `autosuggest.async`          | True    | When this is <code>true</code> matches are generated asynchronously for suggestions.  This helps to keep typing responsive.
-<a name="autosuggest_enable"></a>`autosuggest.enable` | False | When this is `true` a suggested command may appear in `color.suggestion` color after the cursor.  If the suggestion isn't what you want, just ignore it.  Or accept the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, accept the next word of the suggestion with <kbd>Ctrl</kbd>+<kbd>Right</kbd>, or accept the next full word of the suggestion up to a space with <kbd>Shift</kbd>+<kbd>Right</kbd>.  The `autosuggest.strategy` setting determines how a suggestion is chosen.
+<a name="autosuggest_enable"></a>`autosuggest.enable` | False [*](#alternatedefault) | When this is `true` a suggested command may appear in `color.suggestion` color after the cursor.  If the suggestion isn't what you want, just ignore it.  Or accept the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, accept the next word of the suggestion with <kbd>Ctrl</kbd>+<kbd>Right</kbd>, or accept the next full word of the suggestion up to a space with <kbd>Shift</kbd>+<kbd>Right</kbd>.  The `autosuggest.strategy` setting determines how a suggestion is chosen.
 `autosuggest.original_case`  | True | When this is enabled (the default), accepting a suggestion uses the original capitalization from the suggestion.
 <a name="autosuggest_strategy"></a>`autosuggest.strategy` | `match_prev_cmd history completion` | This determines how suggestions are chosen.  The suggestion generators are tried in the order listed, until one provides a suggestion.  There are three built-in suggestion generators, and scripts can provide new ones.  `history` chooses the most recent matching command from the history.  `completion` chooses the first of the matching completions.  `match_prev_cmd` chooses the most recent matching command whose preceding history entry matches the most recently invoked command, but only when the `history.dupe_mode` setting is `add`.
 <a name="clink_autostart"></a>`clink.autostart` | | This command is automatically run when the first CMD prompt is shown after Clink is injected.  If this is blank (the default), then Clink instead looks for `clink_start.cmd` in the binaries directory and profile directory and runs them.  Set it to "nul" to not run any autostart command.
 `clink.colorize_input`       | True    | Enables context sensitive coloring for the input text (see [Coloring the Input Text](#classifywords)).
-<a name="default_bindings"></a>`clink.default_bindings` | `bash` | Clink uses bash key bindings when this is set to `bash` (the default).  When this is set to `windows` Clink overrides some of the bash defaults with familiar Windows key bindings for <kbd>Tab</kbd>, <kbd>Ctrl</kbd>+<kbd>A</kbd>, <kbd>Ctrl</kbd>+<kbd>F</kbd>, <kbd>Ctrl</kbd>+<kbd>M</kbd>, and <kbd>Right</kbd>.
+<a name="default_bindings"></a>`clink.default_bindings` | `bash` [*](#alternatedefault) | Clink uses bash key bindings when this is set to `bash` (the default).  When this is set to `windows` Clink overrides some of the bash defaults with familiar Windows key bindings for <kbd>Tab</kbd>, <kbd>Ctrl</kbd>+<kbd>A</kbd>, <kbd>Ctrl</kbd>+<kbd>F</kbd>, <kbd>Ctrl</kbd>+<kbd>M</kbd>, and <kbd>Right</kbd>.
 `clink.gui_popups`           | False   | When set, Clink uses GUI popup windows instead console text popups.  The `color.popup` settings have no effect on GUI popup windows.
 `clink.logo`                 | `full`  | Controls what startup logo to show when Clink is injected.  `full` = show full copyright logo, `short` = show abbreviated version info, `none` = omit the logo.
 `clink.paste_crlf`           | `crlf`  | What to do with CR and LF characters on paste. Setting this to `delete` deletes them, `space` replaces them with spaces, `ampersand` replaces them with ampersands, and `crlf` pastes them as-is (executing commands that end with a newline).
@@ -272,31 +294,31 @@ Name                         | Default | Description
 `cmd.ctrld_exits`            | True    | <kbd>Ctrl</kbd>+<kbd>D</kbd> exits the process when it is pressed on an empty line.
 `cmd.get_errorlevel`         | True    | When this is enabled, Clink runs a hidden `echo %errorlevel%` command before each interactive input prompt to retrieve the last exit code for use by Lua scripts.  If you experience problems, try turning this off.  This is on by default.
 `color.arg`                  |         | The color for arguments in the input line when `clink.colorize_input` is enabled.
-`color.arginfo`              | `yellow` | Argument info color.  Some argmatchers may show that some flags or arguments accept additional arguments, when listing possible completions.  This color is used for those additional arguments.  (E.g. the "dir" in a "-x dir" listed completion.)
-`color.argmatcher`           |         | The color for the command name in the input line when `clink.colorize_input` is enabled, if the command name has an argmatcher available.
-<a name="color_cmd"></a>`color.cmd` | `bold` | Used when displaying shell (CMD.EXE) command completions, and in the input line when `clink.colorize_input` is enabled.
-`color.cmdredir`             | `bold`  | The color for redirection symbols (`<`, `>`, `>&`) in the input line when `clink.colorize_input` is enabled.
-`color.cmdsep`               | `bold`  | The color for command separaors (`&`, `|`) in the input line when `clink.colorize_input` is enabled.
-`color.comment_row`          | `bright white on cyan` | The color for the comment row in the `clink-select-complete` command.  The comment row shows the "and <em>N</em> more matches" or "rows <em>X</em> to <em>Y</em> of <em>Z</em>" messages.
-`color.description`          | `bright cyan` | Used when displaying descriptions for match completions.
-<a name="color_doskey"></a>`color.doskey` | `bright cyan` | Used when displaying doskey alias completions, and in the input line when `clink.colorize_input` is enabled.
-`color.executable`           |         | When set, this is the color in the input line for a command word that is recognized as an executable file.
-<a name="color_filtered"></a>`color.filtered` | `bold` | The default color for filtered completions (see [Filtering the Match Display](#filteringthematchdisplay)).
-`color.flag`                 | `default` | The color for flags in the input line when `clink.colorize_input` is enabled.
-<a name="color_hidden"></a>`color.hidden` | | Used when displaying file completions with the "hidden" attribute.
-`color.horizscroll`          |         | The color for the `<` or `>` horizontal scroll indicators when Readline's `horizontal-scroll-mode` variable is set.
-`color.input`                |         | The color for input line text. Note that when `clink.colorize_input` is disabled, the entire input line is displayed using `color.input`.
+`color.arginfo`              | `yellow` [*](#alternatedefault) | Argument info color.  Some argmatchers may show that some flags or arguments accept additional arguments, when listing possible completions.  This color is used for those additional arguments.  (E.g. the "dir" in a "-x dir" listed completion.)
+`color.argmatcher`           | [*](#alternatedefault) | The color for the command name in the input line when `clink.colorize_input` is enabled, if the command name has an argmatcher available.
+<a name="color_cmd"></a>`color.cmd` | `bold` [*](#alternatedefault) | Used when displaying shell (CMD.EXE) command completions, and in the input line when `clink.colorize_input` is enabled.
+`color.cmdredir`             | `bold` [*](#alternatedefault) | The color for redirection symbols (`<`, `>`, `>&`) in the input line when `clink.colorize_input` is enabled.
+`color.cmdsep`               | `bold` [*](#alternatedefault) | The color for command separaors (`&`, `|`) in the input line when `clink.colorize_input` is enabled.
+`color.comment_row`          | `bright white on cyan` [*](#alternatedefault) | The color for the comment row in the `clink-select-complete` command.  The comment row shows the "and <em>N</em> more matches" or "rows <em>X</em> to <em>Y</em> of <em>Z</em>" messages.
+`color.description`          | `bright cyan` [*](#alternatedefault) | Used when displaying descriptions for match completions.
+<a name="color_doskey"></a>`color.doskey` | `bright cyan` [*](#alternatedefault) | Used when displaying doskey alias completions, and in the input line when `clink.colorize_input` is enabled.
+`color.executable`           | [*](#alternatedefault) | When set, this is the color in the input line for a command word that is recognized as an executable file.
+<a name="color_filtered"></a>`color.filtered` | `bold` [*](#alternatedefault) | The default color for filtered completions (see [Filtering the Match Display](#filteringthematchdisplay)).
+`color.flag`                 | `default` [*](#alternatedefault) | The color for flags in the input line when `clink.colorize_input` is enabled.
+<a name="color_hidden"></a>`color.hidden` | [*](#alternatedefault) | Used when displaying file completions with the "hidden" attribute.
+`color.horizscroll`          | [*](#alternatedefault) | The color for the `<` or `>` horizontal scroll indicators when Readline's `horizontal-scroll-mode` variable is set.
+`color.input`                | [*](#alternatedefault) | The color for input line text. Note that when `clink.colorize_input` is disabled, the entire input line is displayed using `color.input`.
 `color.interact`             | `bold`  | The color for prompts such as a pager's `--More?--` prompt.
 `color.message`              | `default` | The color for the message area (e.g. the search prompt message, digit argument prompt message, etc).
 `color.popup`                |         | When set, this is used as the color for popup lists and messages.  If no color is set, then the console's popup colors are used (see the Properties dialog box for the console window).
 `color.popup_desc`           |         | When set, this is used as the color for description column(s) in popup lists.  If no color is set, then a color is chosen to complement the console's popup colors (see the Properties dialog box for the console window).
 `color.prompt`               |         | When set, this is used as the default color for the prompt.  But it's overridden by any colors set by [Customizing The Prompt](#customisingtheprompt).
-<a name="color_readonly"></a>`color.readonly` | | Used when displaying file completions with the "readonly" attribute.
-`color.selected_completion`  |         | The color for the selected completion with the `clink-select-complete` command.  If no color is set, then bright reverse video is used.
-`color.selection`            |         | The color for selected text in the input line.  If no color is set, then reverse video is used.
-<a name="color_suggestion"></a>`color.suggestion` | `bright black` | The color for automatic suggestions when `autosuggest.enable` is enabled.
+<a name="color_readonly"></a>`color.readonly` | [*](#alternatedefault) | Used when displaying file completions with the "readonly" attribute.
+`color.selected_completion`  | [*](#alternatedefault) | The color for the selected completion with the `clink-select-complete` command.  If no color is set, then bright reverse video is used.
+`color.selection`            | [*](#alternatedefault) | The color for selected text in the input line.  If no color is set, then reverse video is used.
+<a name="color_suggestion"></a>`color.suggestion` | `bright black` [*](#alternatedefault) | The color for automatic suggestions when `autosuggest.enable` is enabled.
 `color.unexpected`           | `default` | The color for unexpected arguments in the input line when `clink.colorize_input` is enabled.
-`color.unrecognized`         |         | When set, this is the color in the input line for a command word that is not recognized as a command, doskey macro, directory, argmatcher, or executable file.
+`color.unrecognized`         |  [*](#alternatedefault) | When set, this is the color in the input line for a command word that is not recognized as a command, doskey macro, directory, argmatcher, or executable file.
 `debug.log_terminal`         | False   | Logs all terminal input and output to the clink.log file.  This is intended for diagnostic purposes only, and can make the log file grow significantly.
 `doskey.enhanced`            | True    | Enhanced Doskey adds the expansion of macros that follow `\|` and `&` command separators and respects quotes around words when parsing `$1`...`$9` tags. Note that these features do not apply to Doskey use in Batch files.
 `exec.aliases`               | True    | When matching executables as the first word (`exec.enable`), include doskey aliases.
@@ -313,7 +335,7 @@ Name                         | Default | Description
 `history.dupe_mode`          | `erase_prev` | If a line is a duplicate of an existing history entry Clink will erase the duplicate when this is set to `erase_prev`. Setting it to `ignore` will not add duplicates to the history, and setting it to `add` will always add lines (except when overridden by `history.sticky_search`).
 `history.expand_mode`        | `not_quoted` | The `!` character in an entered line can be interpreted to introduce words from the history. This can be enabled and disable by setting this value to `on` or `off`. Values of `not_squoted`, `not_dquoted`, or `not_quoted` will skip any `!` character quoted in single, double, or both quotes respectively.
 `history.ignore_space`       | True    | Ignore lines that begin with whitespace when adding lines in to the history.
-`history.max_lines`          | 10000   | The number of history lines to save if `history.save` is enabled (1 to 50000).
+`history.max_lines`          | 10000 [*](#alternatedefault) | The number of history lines to save if `history.save` is enabled (1 to 50000).
 `history.save`               | True    | Saves history between sessions. When disabled, history is neither read from nor written to a master history list; history for each session exists only in memory until the session ends.
 `history.shared`             | False   | When history is shared, all instances of Clink update the master history list after each command and reload the master history list on each prompt.  When history is not shared, each instance updates the master history list on exit.
 `history.sticky_search`      | False   | When enabled, reusing a history line does not add the reused line to the end of the history, and it leaves the history search position on the reused line so next/prev history can continue from there (e.g. replaying commands via <kbd>Up</kbd> several times then <kbd>Enter</kbd>, <kbd>Down</kbd>, <kbd>Enter</kbd>, etc).
@@ -324,7 +346,7 @@ Name                         | Default | Description
 <a name="lua_reload_scripts"></a>`lua.reload_scripts` | False | When false, Lua scripts are loaded once and are only reloaded if forced (see [The Location of Lua Scripts](#lua-scripts-location) for details).  When true, Lua scripts are loaded each time the edit prompt is activated.
 `lua.strict`                 | True    | When enabled, argument errors cause Lua scripts to fail.  This may expose bugs in some older scripts, causing them to fail where they used to succeed. In that case you can try turning this off, but please alert the script owner about the issue so they can fix the script.
 `lua.traceback_on_error`     | False   | Prints stack trace on Lua errors.
-`match.expand_envvars`       | False   | Expands environment variables in a word before performing completion.
+`match.expand_envvars`       | False [*](#alternatedefault) | Expands environment variables in a word before performing completion.
 `match.fit_columns`          | True    | When displaying match completions, this calculates column widths to fit as many as possible on the screen.
 `match.ignore_accent`        | True    | Controls accent sensitivity when completing matches. For example, `ä` and `a` are considered equivalent with this enabled.
 `match.ignore_case`          | `relaxed` | Controls case sensitivity when completing matches. `off` = case sensitive, `on` = case insensitive, `relaxed` = case insensitive plus `-` and `_` are considered equal.
@@ -332,7 +354,7 @@ Name                         | Default | Description
 `match.max_rows`             | `0`     | The maximum number of rows that `clink-select-complete` can use.  When this is 0, the limit is the terminal height.
 `match.preview_rows`         | `0`     | The number of rows to show as a preview when using the `clink-select-complete` command (bound by default to <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Space</kbd>).  When this is 0, all rows are shown and if there are too many matches it instead prompts first like the `complete` command does.  Otherwise it shows the specified number of rows as a preview without prompting, and it expands to show the full set of matches when the selection is moved past the preview rows.
 `match.sort_dirs`            | `with`  | How to sort matching directory names. `before` = before files, `with` = with files, `after` = after files.
-`match.substring`            | False   | When set, if no completions are found with a prefix search, then a substring search is used.
+`match.substring`            | False [*](#alternatedefault) | When set, if no completions are found with a prefix search, then a substring search is used.
 `match.translate_slashes`    | `system` | File and directory completions can be translated to use consistent slashes.  The default is `system` to use the appropriate path separator for the OS host (backslashes on Windows).  Use `slash` to use forward slashes, or `backslash` to use backslashes.  Use `off` to turn off translating slashes from custom match generators.
 `match.wild`                 | True    | Matches `?` and `*` wildcards and leading `.` when using any of the completion commands.  Turn this off to behave how bash does, and not match wildcards or leading dots (but `glob-complete-word` always matches wildcards).
 `prompt.async`               | True    | Enables [asynchronous prompt refresh](#asyncpromptfiltering).  Turn this off if prompt filter refreshes are annoying or cause problems.
@@ -343,10 +365,17 @@ Name                         | Default | Description
 `terminal.east_asian_ambiguous`|`auto` | There is a group of East Asian characters whose widths are ambiguous in the Unicode standard.  This setting controls how to resolve the ambiguous widths.  By default this is set to `auto`, but some terminal hosts may require setting this to a different value to work around limitations in the terminal hosts.  Setting this to `font` measures the East Asian Ambiguous character widths using the current font.  Setting it to `one` uses 1 as the width, or `two` uses 2 as the width.  When this is `auto` (the default) and the current code page is 932, 936, 949, or 950 then the current font is used to measure the widths, or for any other code pages (including UTF8) the East Asian Ambiguous character widths are assumed to be 1.
 `terminal.emulation`         | `auto`  | Clink can either emulate a virtual terminal and handle ANSI escape codes itself, or let the console host natively handle ANSI escape codes. `native` = pass output directly to the console host process, `emulate` = clink handles ANSI escape codes itself, `auto` = emulate except when running in ConEmu, Windows Terminal, or Windows 10 new console.
 `terminal.mouse_input`       | `auto`  | Clink can optionally respond to mouse input, instead of letting the terminal respond to mouse input (e.g. to select text on the screen).  When mouse input is enabled in Clink, clicking in the input line sets the cursor position, and clicking in popup lists selects an item, etc.  Setting this to `off` lets the terminal host handle mouse input, `on` lets Clink handle mouse input, and `auto` lets Clink handle mouse input in ConEmu and in the default Conhost terminal when Quick Edit mode is unchecked in the console Properties dialog.  For more information see [Mouse Input](#gettingstarted_mouseinput).
+`terminal.mouse_modifier`    |       | This selects which modifier keys (<kbd>Alt</kbd>, <kbd>Ctrl</kbd>, <kbd>Shift</kbd>) must be held in order
+for Clink to respond to mouse input when mouse input is enabled by the `terminal.mouse_input` setting.  This is a text string that can list one or more modifier keys:  'alt', 'ctrl', and 'shift'.  For example, setting it to "alt shift" causes Clink to only respond to mouse input when both <kbd>Alt</kbd> and <kbd>Shift</kbd> are held (and not <kbd>Ctrl</kbd>).  If the `%CLINK_MOUSE_MODIFIER%` environment variable is set then its value
+supersedes this setting.  For more information see [Mouse Input](#gettingstarted_mouseinput).
 `terminal.raw_esc`           | False | When enabled, pressing Esc sends a literal escape character like in Unix/etc terminals.  This setting is disabled by default to provide a more predictable, reliable, and configurable input experience on Windows.  Changing this only affects future Clink sessions, not the current session.
 `terminal.use_altgr_substitute`| False | Support Windows' <kbd>Ctrl</kbd>-<kbd>Alt</kbd> substitute for <kbd>AltGr</kbd>. Turning this off may resolve collisions with Readline's key bindings.
 
 <p/>
+
+<a name="alternatedefault"></a>
+
+* Some settings have alternative default values when Clink is installed with "Use enhanced default settings" checked in the setup program.  This enables more of Clink's enhancements by default.
 
 > **Compatibility Notes:**
 > - The `esc_clears_line` setting has been replaced by a `clink-reset-line` command that is by default bound to the <kbd>Escape</kbd> key.  See [Customizing Key Bindings](#keybindings) and [Readline](https://tiswww.cwru.edu/php/chet/readline/readline.html) for more information.
@@ -408,6 +437,11 @@ This configures the Readline library used by Clink; it can contain key bindings 
 <dt>clink_settings</dt>
 <dd>
 This is where Clink stores its settings.  See <a href="#clink-settings">Clink Settings</a> for more information.
+
+The location of the `clink_settings` file may also be overridden with the `%CLINK_SETTINGS%` environment variable.  This is not recommended because it can be confusing; if the environment variable gets cleared or isn't always set then a different settings file may get used sometimes.  But, one reason to use it is to make your settings sync with other computers.
+
+- `set CLINK_SETTINGS=%USERPROFILE%\OneDrive\clink` can let settings sync between computers through your OneDrive account.
+- `set CLINK_SETTINGS=%USERPROFILE%\AppData\Roaming` can let settings sync between computers in a work environment.
 </dd></p>
 
 <p>

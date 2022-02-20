@@ -219,7 +219,8 @@ void app_context::get_default_settings_file(str_base& out) const
 //------------------------------------------------------------------------------
 void app_context::get_settings_path(str_base& out) const
 {
-    get_state_dir(out);
+    if (!os::get_env("clink_settings", out) || out.empty())
+        get_state_dir(out);
     path::append(out, "clink_settings");
 }
 

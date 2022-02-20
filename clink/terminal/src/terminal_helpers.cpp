@@ -8,6 +8,7 @@
 #include "screen_buffer.h"
 
 #include <core/settings.h>
+#include <core/os.h>
 
 #include <assert.h>
 
@@ -28,7 +29,7 @@ setting_bool g_adjust_cursor_style(
     "strangely while typing.",
     true);
 
-setting_enum g_mouse_input(
+static setting_enum g_mouse_input(
     "terminal.mouse_input",
     "Clink mouse input",
     "Clink can optionally respond to mouse input, instead of letting the terminal\n"
@@ -49,6 +50,23 @@ setting_enum g_mouse_input(
     "  input to still work (for example, to select text on the screen).",
     "off,on,auto",
     2);
+
+static setting_str g_mouse_modifier(
+    "terminal.mouse_modifier",
+    "Modifier keys for mouse input",
+    "This selects which modifier keys (Alt, Ctrl, Shift) must be held in order\n"
+    "for Clink to respond to mouse input when mouse input is enabled by the\n"
+    "'terminal.mouse_input' setting.\n"
+    "\n"
+    "This is a text string that can list one or more modifier keys:  'alt', 'ctrl',\n"
+    "and 'shift'.  For example, setting it to \"alt shift\" causes Clink to only\n"
+    "respond to mouse input when both Alt and Shift are held (and not Ctrl).\n"
+    "If the %CLINK_MOUSE_MODIFIER% environment variable is set then its value\n"
+    "supersedes this setting.\n"
+    "\n"
+    "Note that in the default Conhost terminal when Quick Edit mode is turned off\n"
+    "then Clink will also respond to mouse input when no modifier keys are held.",
+    "");
 
 //------------------------------------------------------------------------------
 static bool s_locked_cursor_visibility = false;
@@ -152,6 +170,12 @@ extern "C" void use_clink_input_mode(void)
 
 
 //------------------------------------------------------------------------------
+static bool s_mouse_alt = false;
+static bool s_mouse_ctrl = false;
+static bool s_mouse_shift = false;
+static bool s_quick_edit = false;
+
+//------------------------------------------------------------------------------
 static DWORD select_mouse_input(DWORD mode)
 {
     if (!g_accept_mouse_input)
@@ -184,13 +208,29 @@ static DWORD select_mouse_input(DWORD mode)
             mode |= ENABLE_MOUSE_INPUT;
             break;
         default:
-            mode |= (mode & ENABLE_QUICK_EDIT_MODE) ? 0 : ENABLE_MOUSE_INPUT;
+            if (s_mouse_alt || s_mouse_ctrl || s_mouse_shift)
+                mode |= ENABLE_MOUSE_INPUT;
+            else if (!(mode & ENABLE_QUICK_EDIT_MODE))
+                mode |= ENABLE_MOUSE_INPUT;
             break;
         }
         break;
     }
 
     return mode;
+}
+
+//------------------------------------------------------------------------------
+static bool strstri(const char* needle, const char* haystack)
+{
+    const size_t len = strlen(needle);
+    while (*haystack)
+    {
+        if (_strnicmp(needle, haystack, len) == 0)
+            return true;
+        haystack++;
+    }
+    return false;
 }
 
 //------------------------------------------------------------------------------
@@ -204,6 +244,15 @@ console_config::console_config(HANDLE handle, bool accept_mouse_input)
     m_prev_accept_mouse_input = g_accept_mouse_input;
     g_accept_mouse_input = accept_mouse_input;
 
+    s_quick_edit = !!(m_prev_mode & ENABLE_QUICK_EDIT_MODE);
+
+    str<16> tmp;
+    if (!os::get_env("clink_mouse_modifier", tmp) || tmp.empty())
+        g_mouse_modifier.get(tmp);
+    s_mouse_alt = !!strstri("alt", tmp.c_str());
+    s_mouse_ctrl = !!strstri("ctrl", tmp.c_str());
+    s_mouse_shift = !!strstri("shift", tmp.c_str());
+
     // NOTE:  Windows Terminal doesn't reliably respond to changes of the
     // ENABLE_MOUSE_INPUT flag when ENABLE_AUTO_POSITION is missing.
     DWORD mode = m_prev_mode;
@@ -213,10 +262,52 @@ console_config::console_config(HANDLE handle, bool accept_mouse_input)
     SetConsoleMode(m_handle, mode);
 }
 
+//------------------------------------------------------------------------------
 console_config::~console_config()
 {
     SetConsoleMode(m_handle, m_prev_mode);
     g_accept_mouse_input = m_prev_accept_mouse_input;
+}
+
+//------------------------------------------------------------------------------
+void console_config::fix_quick_edit_mode(DWORD& mode)
+{
+    if (!g_accept_mouse_input)
+        return;
+
+    if (get_native_ansi_handler() == ansi_handler::conemu)
+        return;
+
+    if (s_mouse_alt || s_mouse_ctrl || s_mouse_shift)
+    {
+        if (is_mouse_modifier() || (!s_quick_edit && no_mouse_modifiers()))
+            mode &= ~ENABLE_QUICK_EDIT_MODE;
+        else
+            mode |= ENABLE_QUICK_EDIT_MODE;
+    }
+    else
+    {
+        if (is_mouse_modifier())
+            mode &= ~ENABLE_QUICK_EDIT_MODE;
+        else
+            mode |= ENABLE_QUICK_EDIT_MODE;
+    }
+}
+
+//------------------------------------------------------------------------------
+bool console_config::is_mouse_modifier()
+{
+    return ((GetKeyState(VK_SHIFT) < 0) == s_mouse_shift &&
+            (GetKeyState(VK_CONTROL) < 0) == s_mouse_ctrl &&
+            (GetKeyState(VK_MENU) < 0) == s_mouse_alt);
+}
+
+//------------------------------------------------------------------------------
+bool console_config::no_mouse_modifiers()
+{
+    return (!(GetKeyState(VK_SHIFT) < 0) &&
+            !(GetKeyState(VK_CONTROL) < 0) &&
+            !(GetKeyState(VK_MENU) < 0));
 }
 
 

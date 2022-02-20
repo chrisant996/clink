@@ -566,10 +566,10 @@ key_tester* win_terminal_in::set_key_tester(key_tester* keys)
 }
 
 //------------------------------------------------------------------------------
-static void fix_console_input_mode(HANDLE h)
+void win_terminal_in::fix_console_input_mode()
 {
     DWORD modeIn;
-    if (GetConsoleMode(h, &modeIn))
+    if (GetConsoleMode(m_stdin, &modeIn))
     {
         DWORD mode = modeIn;
 
@@ -584,22 +584,10 @@ static void fix_console_input_mode(HANDLE h)
 #endif
 
         if (modeIn & ENABLE_MOUSE_INPUT)
-        {
-            if (get_native_ansi_handler() != ansi_handler::conemu)
-            {
-                const bool any_modifier_keys = (
-                    GetKeyState(VK_SHIFT) < 0 ||
-                    GetKeyState(VK_CONTROL) < 0 ||
-                    GetKeyState(VK_MENU) < 0);
-                if (any_modifier_keys)
-                    modeIn |= ENABLE_QUICK_EDIT_MODE;
-                else
-                    modeIn &= ~ENABLE_QUICK_EDIT_MODE;
-            }
-        }
+            console_config::fix_quick_edit_mode(modeIn);
 
         if (mode != modeIn)
-            SetConsoleMode(h, modeIn);
+            SetConsoleMode(m_stdin, modeIn);
     }
 }
 
@@ -642,7 +630,7 @@ void win_terminal_in::read_console(input_idle* callback)
         DWORD modeExpected;
         const bool has_mode = !!GetConsoleMode(m_stdout, &modeExpected);
 
-        fix_console_input_mode(m_stdin);
+        fix_console_input_mode();
 
         while (callback)
         {
@@ -658,7 +646,7 @@ void win_terminal_in::read_console(input_idle* callback)
             if (void* event = callback->get_waitevent())
                 handles[count++] = event;
 
-            fix_console_input_mode(m_stdin);
+            fix_console_input_mode();
 
             const DWORD timeout = callback->get_timeout();
             const DWORD waited = WaitForMultipleObjects(count, handles, false, timeout);
@@ -1107,12 +1095,13 @@ void win_terminal_in::process_input(MOUSE_EVENT_RECORD const& record)
     const bool right_click = !left_click && (!(prv & RIGHTMOST_BUTTON_PRESSED) && (btn & RIGHTMOST_BUTTON_PRESSED));
     const bool double_click = left_click && (record.dwEventFlags & DOUBLE_CLICK);
     const bool wheel = !left_click && !right_click && (record.dwEventFlags & MOUSE_WHEELED);
-    //const bool drag = ...NYI...
+    const bool drag = (btn & FROM_LEFT_1ST_BUTTON_PRESSED) && !left_click && !right_click && !wheel && (record.dwEventFlags & MOUSE_MOVED);
 
     const mouse_input_type mask = (left_click ? mouse_input_type::left_click :
                                    right_click ? mouse_input_type::right_click :
                                    double_click ? mouse_input_type::double_click :
                                    wheel ? mouse_input_type::wheel :
+                                   drag ? mouse_input_type::drag :
                                    mouse_input_type::none);
 
     if (mask == mouse_input_type::none)
@@ -1153,14 +1142,15 @@ void win_terminal_in::process_input(MOUSE_EVENT_RECORD const& record)
         return;
     }
 
-    // Left or right click.
-    if (left_click || right_click)
+    // Left or right click, or drag.
+    if (left_click || right_click || drag)
     {
         CONSOLE_SCREEN_BUFFER_INFO csbi;
         GetConsoleScreenBufferInfo(m_stdout, &csbi);
 
         str<16> tmp;
-        const char code = (right_click ? 'R' :
+        const char code = (drag ? 'M' :
+                           right_click ? 'R' :
                            record.dwEventFlags & DOUBLE_CLICK ? 'D' : 'L');
         tmp.format("\x1b[$%u;%u%c", record.dwMousePosition.X - csbi.srWindow.Left, record.dwMousePosition.Y - csbi.srWindow.Top, code);
         push(tmp.c_str());
@@ -1184,8 +1174,6 @@ void win_terminal_in::process_input(MOUSE_EVENT_RECORD const& record)
         push(tmp.c_str());
         return;
     }
-
-// TODO: Mouse drag; for extending CUA selection.
 }
 
 //------------------------------------------------------------------------------

@@ -88,7 +88,8 @@ bool    point_in_select_complete(int in);
 int     clink_select_complete(int count, int invoking_key);
 
 //------------------------------------------------------------------------------
-void    cua_clear_selection();
+bool    cua_clear_selection();
+bool    cua_set_selection(int anchor, int point);
 int     cua_get_anchor();
 bool    cua_point_in_selection(int in);
 int     cua_selection_event_hook(int event);

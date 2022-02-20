@@ -20,6 +20,7 @@ public:
     virtual unsigned int    get_cursor() const = 0;
     virtual int             get_anchor() const = 0;
     virtual unsigned int    set_cursor(unsigned int pos) = 0;
+    virtual void            set_selection(unsigned int anchor, unsigned int pos) = 0;
     virtual bool            insert(const char* text) = 0;
     virtual bool            remove(unsigned int from, unsigned int to) = 0;
     virtual void            begin_undo_group() = 0;

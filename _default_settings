@@ -1,3 +1,6 @@
+# When this file is named "default_settings" and is in the binaries
+# directory or profile directory, it provides enhanced default settings.
+
 # Override built-in default settings with ones that provide a more
 # enhanced Clink experience.
 

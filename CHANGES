@@ -2,6 +2,25 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.3.8
+
+- Added `terminal.mouse_modifier` setting and `%CLINK_MOUSE_MODIFIER%` environment variable; these can override the modifier keys that activate Clink mouse input.
+- Added `%CLINK_SETTINGS%` environment variable; this can override the directory where the `clink_settings` file is located.  This can be used to put it in a directory that syncs between computers, for example.
+- During `clink-select-complete` <kbd>Ctrl</kbd>+<kbd>Home</kbd> or <kbd>Ctrl</kbd>+<kbd>End</kbd> select the first or last match.
+- When `argmatcher:addarg()` is passed a table containing `nosort=true` then the matches are unsorted (displayed in the order listed in the table).
+- The .zip file now contains `_default_settings` and `_default_inputrc` so that they do not take effect unless manually renamed to remove the `_` name prefix.  This avoids changing the defaults unexpectedly.
+- Fixed mouse click+drag in the input line (it accidentally behaved like double click+drag).
+- Fixed the selection highlight width in `clink-select-complete` when some matches have descriptions but some do not.
+- Fixed `argmatcher:addargunsorted()` to turn off sort.
+- Fixed [#239](https://github.com/chrisant996/clink/issues/239); crash when <kbd>F7</kbd> and <kbd>Del</kbd>.
+
+#### v1.3.7
+
+- Mouse click+drag now works.
+- Mouse click below `clink-select-complete` list expands the list instead of dismissing it.
+- Fixed responding to mouse clicks when the terminal's scrollback buffer is not empty (it only worked in Windows Terminal).
+- Fixed [#237](https://github.com/chrisant996/clink/issues/237); installer does not maintain previously selected "Autorun when cmd.exe starts" (regression introduced in v1.3.5).
+
 #### v1.3.6
 
 - Added `terminal.mouse_input` setting; the default is `auto`.  `auto` lets mouse input work in ConEmu, or in the default Conhost terminal when Quick Edit mode is unchecked in the console Properties dialog.  See the documentation for more information.

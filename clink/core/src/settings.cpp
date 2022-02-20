@@ -6,6 +6,7 @@
 #include "str.h"
 #include "str_tokeniser.h"
 #include "path.h"
+#include "os.h"
 
 #include <assert.h>
 #include <string>
@@ -422,6 +423,12 @@ bool load(const char* file, const char* default_file)
 //------------------------------------------------------------------------------
 static bool save_internal(const char* file, bool migrating)
 {
+    // Make sure the directory exists, since %CLINK_SETTINGS% may point to a
+    // directory that does not yet exist.
+    str<> parent(file);
+    path::to_parent(parent, nullptr);
+    os::make_dir(parent.c_str());
+
     // Open settings file.  When migrating, fail if the file already exists, so
     // that if multiple concurrent migrations occur only one of them writes the
     // new settings file.

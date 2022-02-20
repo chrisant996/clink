@@ -101,10 +101,13 @@ enum {
     bind_id_selectcomplete_right,
     bind_id_selectcomplete_pgup,
     bind_id_selectcomplete_pgdn,
+    bind_id_selectcomplete_first,
+    bind_id_selectcomplete_last,
     bind_id_selectcomplete_leftclick,
     bind_id_selectcomplete_doubleclick,
     bind_id_selectcomplete_wheelup,
     bind_id_selectcomplete_wheeldown,
+    bind_id_selectcomplete_drag,
     bind_id_selectcomplete_backspace,
     bind_id_selectcomplete_delete,
     bind_id_selectcomplete_space,
@@ -341,10 +344,13 @@ void selectcomplete_impl::bind_input(binder& binder)
     binder.bind(m_bind_group, "\\e[C", bind_id_selectcomplete_right);
     binder.bind(m_bind_group, "\\e[5~", bind_id_selectcomplete_pgup);
     binder.bind(m_bind_group, "\\e[6~", bind_id_selectcomplete_pgdn);
+    binder.bind(m_bind_group, "\\e[1;5H", bind_id_selectcomplete_first);
+    binder.bind(m_bind_group, "\\e[1;5F", bind_id_selectcomplete_last);
     binder.bind(m_bind_group, "\\e[$*;*L", bind_id_selectcomplete_leftclick, true/*has_params*/);
     binder.bind(m_bind_group, "\\e[$*;*D", bind_id_selectcomplete_doubleclick, true/*has_params*/);
     binder.bind(m_bind_group, "\\e[$*A", bind_id_selectcomplete_wheelup, true/*has_params*/);
     binder.bind(m_bind_group, "\\e[$*B", bind_id_selectcomplete_wheeldown, true/*has_params*/);
+    binder.bind(m_bind_group, "\\e[$*;*M", bind_id_selectcomplete_drag, true/*has_params*/);
     binder.bind(m_bind_group, "^h", bind_id_selectcomplete_backspace);
     binder.bind(m_bind_group, "\\e[3~", bind_id_selectcomplete_delete);
     binder.bind(m_bind_group, " ", bind_id_selectcomplete_space);
@@ -375,6 +381,7 @@ void selectcomplete_impl::on_begin_line(const context& context)
     m_can_prompt = true;
     m_expanded = false;
     m_clear_display = false;
+    m_scroll_helper.clear();
 
 #ifdef FISH_ARROW_KEYS
     m_prev_latched = false;
@@ -632,40 +639,108 @@ arrow_next:
         }
         break;
 
+    case bind_id_selectcomplete_first:
+        m_index = 0;
+        goto navigated;
+    case bind_id_selectcomplete_last:
+        if (count > 0)
+        {
+            m_index = count - 1;
+            const int rows = min<int>(m_match_rows, m_visible_rows);
+            int row = get_match_row(m_index);
+            if (row + 1 < m_match_rows)
+                row++;
+            set_top(max<int>(0, row - (rows - 1)));
+            goto navigated;
+        }
+        break;
+
     case bind_id_selectcomplete_leftclick:
     case bind_id_selectcomplete_doubleclick:
+    case bind_id_selectcomplete_drag:
         {
+            const unsigned int now = m_scroll_helper.on_input();
+
             unsigned int p0, p1;
             input.params.get(0, p0);
             input.params.get(1, p1);
             p1 -= m_mouse_offset;
             const unsigned int rows = m_displayed_rows;
+            bool scrolling = false;
+            int row = p1 + m_top;
+            const int revert_top = m_top;
             if (p1 < rows)
             {
-                const int row = p1 + m_top;
+do_mouse_position:
                 const int major_stride = _rl_print_completions_horizontally ? m_match_cols : 1;
                 const int minor_stride = _rl_print_completions_horizontally ? 1 : m_match_rows;
                 int index = major_stride * row;
-                int x1 = 0;
+                unsigned int x1 = 0;
                 for (int i = 0; i < m_widths.num_columns(); ++i)
                 {
-                    if (p0 >= x1 && p0 < x1 + m_widths.column_width(i))
+                    width_t col_width = m_widths.column_width(i);
+                    if (i + 1 >= m_widths.num_columns())
+                        col_width += m_screen_cols;
+                    else if (scrolling)
+                        col_width += m_widths.m_col_padding;
+                    if (p0 >= x1 && p0 < x1 + col_width)
                     {
                         m_index = index;
+                        if (scrolling)
+                            m_scroll_helper.on_scroll(now);
+                        if (m_index >= m_matches.get_match_count())
+                        {
+                            set_top(max<int>(revert_top, get_match_row(m_matches.get_match_count()) - (rows - 1)));
+                            m_index = m_matches.get_match_count() - 1;
+                        }
                         update_display();
                         if (input.id == bind_id_selectcomplete_doubleclick)
                             goto enter;
+                        scrolling = false; // Don't revert top.
                         break;
                     }
                     x1 += m_widths.column_width(i) + m_widths.m_col_padding;
                     index += minor_stride;
                 }
             }
+            else if (int(p1) < 0)
+            {
+                if (input.id == bind_id_selectcomplete_drag)
+                {
+                    if (m_scroll_helper.can_scroll() && m_top > 0)
+                    {
+                        set_top(max<int>(0, m_top - m_scroll_helper.scroll_speed()));
+                        row = m_top;
+                        scrolling = true;
+                        goto do_mouse_position;
+                    }
+                }
+                else
+                {
+                    cancel(result, true/*can_reactivate*/);
+                    result.pass();
+                    return;
+                }
+            }
             else
             {
-                cancel(result, true/*can_reactivate*/);
-                result.pass();
-                return;
+                if (!m_expanded)
+                {
+                    m_expanded = true;
+                    m_comment_row_displayed = false;
+                    m_prev_displayed = -1;
+                    update_display();
+                }
+                else if (input.id == bind_id_selectcomplete_drag)
+                {
+                    if (m_scroll_helper.can_scroll() && m_top + rows < m_match_rows)
+                    {
+                        row = m_top + rows;
+                        set_top(min<int>(m_match_rows - rows, m_top + m_scroll_helper.scroll_speed()));
+                        scrolling = true;
+                        goto do_mouse_position;
+                    }
+                }
             }
         }
         break;
@@ -1274,6 +1349,12 @@ void selectcomplete_impl::update_display()
 
                         const int next = i + minor_stride;
 
+                        if (show_descriptions && !right_justify)
+                        {
+                            pad_filename(printed_len, -m_widths.m_max_match, selected);
+                            printed_len = m_widths.m_max_match;
+                        }
+
                         const char* desc = m_desc_below ? nullptr : m_matches.get_match_description(i);
                         if (desc && *desc)
                         {
@@ -1287,11 +1368,6 @@ void selectcomplete_impl::update_display()
                             const int pad_to = (right_justify ?
                                 max<int>(printed_len + m_widths.m_desc_padding, col_max - (m_matches.get_match_visible_description(i) + parens)) :
                                 m_widths.m_max_match + 4);
-                            if (!right_justify)
-                            {
-                                pad_filename(printed_len, -m_widths.m_max_match, selected);
-                                printed_len = m_widths.m_max_match;
-                            }
                             if (pad_to < m_screen_cols - 1)
                             {
                                 pad_filename(printed_len, pad_to, -1);
@@ -1414,7 +1490,7 @@ void selectcomplete_impl::update_display()
             m_printer->print(s.c_str(), s.length());
         }
         GetConsoleScreenBufferInfo(h, &csbi);
-        m_mouse_offset = csbi.dwCursorPosition.Y + 1/*to top item*/;
+        m_mouse_offset = csbi.dwCursorPosition.Y - csbi.srWindow.Top + 1/*to top item*/;
         _rl_move_vert(vpos);
         _rl_last_c_pos = cpos;
         GetConsoleScreenBufferInfo(h, &csbi);
@@ -1672,6 +1748,7 @@ bool selectcomplete_impl::accepts_mouse_input(mouse_input_type type) const
     case mouse_input_type::left_click:
     case mouse_input_type::double_click:
     case mouse_input_type::wheel:
+    case mouse_input_type::drag:
         return true;
     default:
         return false;

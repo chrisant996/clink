@@ -18,6 +18,7 @@ public:
     virtual unsigned int    get_cursor() const override;
     virtual int             get_anchor() const override;
     virtual unsigned int    set_cursor(unsigned int pos) override;
+    virtual void            set_selection(unsigned int anchor, unsigned int pos) override;
     virtual bool            insert(const char* text) override;
     virtual bool            remove(unsigned int from, unsigned int to) override;
     virtual void            draw() override;

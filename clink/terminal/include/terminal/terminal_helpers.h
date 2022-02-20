@@ -28,10 +28,13 @@ extern "C" void use_clink_input_mode(void);
 class console_config
 {
 public:
-    console_config(HANDLE handle=nullptr, bool accept_mouse_input=false);
-    ~console_config();
+                    console_config(HANDLE handle=nullptr, bool accept_mouse_input=false);
+                    ~console_config();
+    static void     fix_quick_edit_mode(DWORD& mode);
 
 private:
+    static bool     is_mouse_modifier();
+    static bool     no_mouse_modifiers();
     const HANDLE    m_handle;
     DWORD           m_prev_mode;
     bool            m_prev_accept_mouse_input;

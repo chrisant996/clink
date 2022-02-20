@@ -7,6 +7,7 @@
 #include "input_dispatcher.h"
 #include "match_adapter.h"
 #include "column_widths.h"
+#include "scroll_helper.h"
 
 #include <core/str.h>
 
@@ -96,6 +97,7 @@ private:
     bool            m_prev_latched = false;
     unsigned char   m_prev_input_id = 0;
 #endif
+    scroll_helper   m_scroll_helper;
 
     // Debugging.
 #ifdef DEBUG

@@ -343,6 +343,7 @@ end
 --- This is the same as <a href="#_argmatcher:addarg">_argmatcher:addarg</a>
 --- except that this disables sorting the matches.
 function _argmatcher:addargunsorted(...)
+    local list = self._args[self._nextargindex]
     self:addarg(...)
     list.nosort = true
     return self
@@ -671,6 +672,9 @@ function _argmatcher:_add(list, addee, prefixes)
     -- Flatten out tables unless the table is a link
     local is_link = (getmetatable(addee) == _arglink)
     if type(addee) == "table" and not is_link and not addee.match then
+        if addee.nosort then
+            list.nosort = true
+        end
         if getmetatable(addee) == _argmatcher then
             for _, i in ipairs(addee._args) do
                 for _, j in ipairs(i) do
@@ -809,12 +813,16 @@ function _argmatcher:_generate(line_state, match_builder, extra_words)
         end
 
         for _, i in ipairs(arg) do
-            if type(i) == "function" then
+            local t = type(i)
+            if t == "function" then
                 local j = i(endword, word_count, line_state, match_builder)
                 if type(j) ~= "table" then
                     return j or false
                 end
 
+                if j.nosort then
+                    match_builder:setnosort()
+                end
                 match_builder:addmatches(j, match_type)
             elseif not hidden or not hidden[i] then
                 match_builder:addmatch(make_match(i), match_type)

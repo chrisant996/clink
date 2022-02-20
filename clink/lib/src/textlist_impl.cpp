@@ -48,6 +48,7 @@ enum {
     bind_id_textlist_doubleclick,
     bind_id_textlist_wheelup,
     bind_id_textlist_wheeldown,
+    bind_id_textlist_drag,
 
     bind_id_textlist_catchall = binder::id_catchall_only_printable,
 };
@@ -352,6 +353,7 @@ bool textlist_impl::accepts_mouse_input(mouse_input_type type) const
     case mouse_input_type::left_click:
     case mouse_input_type::double_click:
     case mouse_input_type::wheel:
+    case mouse_input_type::drag:
         return true;
     default:
         return false;
@@ -392,6 +394,7 @@ void textlist_impl::bind_input(binder& binder)
     binder.bind(m_bind_group, "\\e[$*;*D", bind_id_textlist_doubleclick, true/*has_params*/);
     binder.bind(m_bind_group, "\\e[$*A", bind_id_textlist_wheelup, true/*has_params*/);
     binder.bind(m_bind_group, "\\e[$*B", bind_id_textlist_wheeldown, true/*has_params*/);
+    binder.bind(m_bind_group, "\\e[$*;*M", bind_id_textlist_drag, true/*has_params*/);
 
     binder.bind(m_bind_group, "", bind_id_textlist_catchall);
 }
@@ -403,6 +406,8 @@ void textlist_impl::on_begin_line(const context& context)
     s_textlist = this;
     m_buffer = &context.buffer;
     m_printer = &context.printer;
+
+    m_scroll_helper.clear();
 
     m_screen_cols = context.printer.get_columns();
     m_screen_rows = context.printer.get_rows();
@@ -582,7 +587,7 @@ find:
         {
             m_reset_history_index = true;
             // Remove the corresponding persisted history entry.
-            const int history_index = m_infos[m_index].index;
+            const int history_index = m_infos ? m_infos[m_index].index : m_index;
             host_remove_history(history_index, nullptr);
             // Remove the corresponding entry from Readline's copy of history.
             HIST_ENTRY* hist = remove_history(history_index);
@@ -590,10 +595,13 @@ find:
             // Remove the item from the popup list.
             int move_count = (m_count - 1) - m_index;
             memmove(m_entries + m_index, m_entries + m_index + 1, move_count * sizeof(m_entries[0]));
-            memmove(m_infos + m_index, m_infos + m_index + 1, move_count * sizeof(m_infos[0]));
             m_items.erase(m_items.begin() + m_index);
-            for (entry_info* info = m_infos + m_index; move_count--; info++)
-                info->index--;
+            if (m_infos)
+            {
+                memmove(m_infos + m_index, m_infos + m_index + 1, move_count * sizeof(m_infos[0]));
+                for (entry_info* info = m_infos + m_index; move_count--; info++)
+                    info->index--;
+            }
             m_count--;
             if (!m_count)
             {
@@ -641,13 +649,26 @@ find:
 
     case bind_id_textlist_leftclick:
     case bind_id_textlist_doubleclick:
+    case bind_id_textlist_drag:
         {
+            const unsigned int now = m_scroll_helper.on_input();
+
             unsigned int p0, p1;
             input.params.get(0, p0);
             input.params.get(1, p1);
-            p1 -= m_mouse_offset;
             const unsigned int rows = min<int>(m_count, m_visible_rows);
-            if (p1 < rows && p0 >= m_mouse_left && p0 < m_mouse_left + m_mouse_width)
+            if (input.id != bind_id_textlist_drag)
+            {
+                if (int(p1) < m_mouse_offset - 1 || p1 >= m_mouse_offset - 1 + rows + 2/*border*/)
+                {
+                    cancel(popup_result::cancel);
+                    return;
+                }
+                if (p0 >= m_mouse_left && p0 < m_mouse_left + m_mouse_width)
+                    break;
+            }
+            p1 -= m_mouse_offset;
+            if (p1 < rows)
             {
                 m_index = p1 + m_top;
                 update_display();
@@ -655,6 +676,27 @@ find:
                 {
                     cancel(popup_result::use);
                     return;
+                }
+            }
+            else if (input.id == bind_id_textlist_drag && m_scroll_helper.can_scroll())
+            {
+                if (int(p1) < 0)
+                {
+                    if (m_top > 0)
+                    {
+                        set_top(max<int>(0, m_top - m_scroll_helper.scroll_speed()));
+                        m_index = m_top;
+                        update_display();
+                    }
+                }
+                else
+                {
+                    if (m_top + rows < m_count)
+                    {
+                        set_top(min<int>(m_count - rows, m_top + m_scroll_helper.scroll_speed()));
+                        m_index = m_top + rows - 1;
+                        update_display();
+                    }
                 }
             }
         }
@@ -1172,7 +1214,7 @@ void textlist_impl::update_display()
             m_printer->print(s.c_str(), s.length());
         }
         GetConsoleScreenBufferInfo(h, &csbi);
-        m_mouse_offset = csbi.dwCursorPosition.Y + 1/*to border*/ + 1/*to top item*/;
+        m_mouse_offset = csbi.dwCursorPosition.Y - csbi.srWindow.Top + 1/*to border*/ + 1/*to top item*/;
         _rl_move_vert(vpos);
         _rl_last_c_pos = cpos;
         GetConsoleScreenBufferInfo(h, &csbi);

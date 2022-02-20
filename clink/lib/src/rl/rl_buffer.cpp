@@ -69,8 +69,17 @@ int rl_buffer::get_anchor() const
 unsigned int rl_buffer::set_cursor(unsigned int pos)
 {
     assert(m_attached);
-    cua_clear_selection();
+    if (cua_clear_selection())
+        m_need_draw = true;
     return rl_point = min<unsigned int>(pos, rl_end);
+}
+
+//------------------------------------------------------------------------------
+void rl_buffer::set_selection(unsigned int anchor, unsigned int pos)
+{
+    assert(m_attached);
+    if (cua_set_selection(anchor, pos))
+        m_need_draw = true;
 }
 
 //------------------------------------------------------------------------------

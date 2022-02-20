@@ -158,8 +158,8 @@ SectionEnd
 Section "Use enhanced default settings" section_enhance
     SetShellVarContext all
 
-    File ${CLINK_BUILD}\default_settings
-    File ${CLINK_BUILD}\default_inputrc
+    File /oname=default_settings ${CLINK_BUILD}\_default_settings
+    File /oname=default_inputrc ${CLINK_BUILD}\_default_inputrc
 SectionEnd
 
 ;-------------------------------------------------------------------------------
@@ -245,8 +245,8 @@ Function .onInit
 
     ; Apply remembered selection state for autorun section.
     ReadRegDWORD $0 HKLM Software\Clink UseAutoRun
-    StrCmp $0 "0" 0 LUseAutoRun
-        SectionSetFlags ${section_autorun} 0
+    StrCmp $0 "1" 0 LUseAutoRun
+        SectionSetFlags ${section_autorun} ${SF_SELECTED}
     LUseAutoRun:
 
     ; Apply remembered selection state for CLINK_DIR section.
