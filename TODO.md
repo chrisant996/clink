@@ -24,6 +24,10 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - [ ] Easier argmatcher syntax for defining flags + display + description strings.
 - [ ] Provide shim so scripts can use new syntax and still be compatible with older Clink.
 
+### History
+- [ ] Some way to mark certain argmatcher arg positions to include matches from the history file.  Parse the history file via a coroutine.
+- [ ] Or a setting to apply history parsing to all arg positions in all argmatchers?
+
 ### Syntax Notes
 - `{ flag="-x", display="NUM", description="Does a thing with NUM", withflag="-y", withprev=true, hide=true }`
 - `{ "-x" }` -> one is flag.
