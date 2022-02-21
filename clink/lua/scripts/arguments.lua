@@ -286,9 +286,59 @@ end
 
 
 --------------------------------------------------------------------------------
+local _argmatcher_fromhistory = {}
+
+--------------------------------------------------------------------------------
+function clink._generate_from_historyline(line_state)
+    -- TODO: Look up argmatcher.
+    -- TODO: If it doesn't match _argmatcher_fromhistory.root then return.
+    -- TODO: Make a reader.
+    -- TODO: Parse the line_state.
+    -- TODO: WHEN ._matcher == _argmatcher_fromhistory.argmatcher AND
+    -- ._arg_index == _argmatcher_fromhistory.argslot THEN add word to
+    -- _argmatcher_fromhistory.builder as a match.
+end
+
+
+
+--------------------------------------------------------------------------------
 local _argmatcher = {}
 _argmatcher.__index = _argmatcher
 setmetatable(_argmatcher, { __call = function (x, ...) return x._new(...) end })
+
+--------------------------------------------------------------------------------
+local function apply_options_to_list(addee, list)
+    if addee.nosort then
+        list.nosort = true
+    end
+    if addee.fromhistory then
+        list.fromhistory = true
+    end
+end
+
+--------------------------------------------------------------------------------
+local function apply_options_to_builder(reader, arg, builder)
+    if arg.nosort then
+        builder:setnosort()
+    end
+    if arg.fromhistory then
+        -- Lua/C++/Lua language transition precludes running this in a
+        -- coroutine, but also the performance of this might not always be
+        -- responsive enough to run as often as suggestions would like to.
+        local _, ismain = coroutine.running()
+        if ismain then
+            _argmatcher_fromhistory.argmatcher = reader._matcher
+            _argmatcher_fromhistory.argslot = reader._arg_index
+            _argmatcher_fromhistory.builder = builder
+            -- Let the C++ code iterate through the history and call back into
+            -- Lua to parse individual history lines.
+            clink._generate_from_history()
+            -- Clear references.  Clear builder because it goes out of scope,
+            -- and clear other references to facilitate garbage collection.
+            _argmatcher_fromhistory = {}
+        end
+    end
+end
 
 --------------------------------------------------------------------------------
 function _argmatcher._new()
@@ -672,9 +722,7 @@ function _argmatcher:_add(list, addee, prefixes)
     -- Flatten out tables unless the table is a link
     local is_link = (getmetatable(addee) == _arglink)
     if type(addee) == "table" and not is_link and not addee.match then
-        if addee.nosort then
-            list.nosort = true
-        end
+        apply_options_to_list(addee, list)
         if getmetatable(addee) == _argmatcher then
             for _, i in ipairs(addee._args) do
                 for _, j in ipairs(i) do
@@ -738,6 +786,9 @@ end
 
 --------------------------------------------------------------------------------
 function _argmatcher:_generate(line_state, match_builder, extra_words)
+    _argmatcher_fromhistory = {}
+    _argmatcher_fromhistory.root = self
+
     local reader = _argreader(self, line_state)
 
     --[[
@@ -808,10 +859,7 @@ function _argmatcher:_generate(line_state, match_builder, extra_words)
             return m
         end
 
-        if arg.nosort then
-            match_builder:setnosort()
-        end
-
+        apply_options_to_builder(reader, arg, match_builder)
         for _, i in ipairs(arg) do
             local t = type(i)
             if t == "function" then
@@ -820,9 +868,7 @@ function _argmatcher:_generate(line_state, match_builder, extra_words)
                     return j or false
                 end
 
-                if j.nosort then
-                    match_builder:setnosort()
-                end
+                apply_options_to_builder(reader, j, match_builder)
                 match_builder:addmatches(j, match_type)
             elseif not hidden or not hidden[i] then
                 match_builder:addmatch(make_match(i), match_type)

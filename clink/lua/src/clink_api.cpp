@@ -1397,6 +1397,18 @@ known:
     goto unknown;
 }
 
+//------------------------------------------------------------------------------
+static int generate_from_history(lua_State* state)
+{
+    // TODO: Look up clink._generate_from_historyline for use.
+    // TODO: For each history entry:
+    // TODO: Collect commands.
+    // TODO: For each command:
+    // TODO: Collect words.
+    // TODO: Call clink._generate_from_historyline(line_state).
+    return 0;
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -1454,6 +1466,7 @@ void clink_lua_initialise(lua_state& lua)
         { "kick_idle",              &kick_idle },
         { "matches_ready",          &matches_ready },
         { "_recognize_command",     &recognize_command },
+        { "_generate_from_history", &generate_from_history },
     };
 
     lua_State* state = lua.get_state();
