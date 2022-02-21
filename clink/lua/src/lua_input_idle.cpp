@@ -86,12 +86,7 @@ unsigned lua_input_idle::get_timeout()
     lua_rawget(state, -2);
 
     if (m_state.pcall(state, 0, 1) != 0)
-    {
-        if (const char* error = lua_tostring(state, -1))
-            m_state.print_error(error);
-
         return INFINITE;
-    }
 
     int isnum;
     double sec = lua_tonumberx(state, -1, &isnum);
@@ -136,12 +131,7 @@ bool lua_input_idle::has_coroutines()
     lua_rawget(state, -2);
 
     if (m_state.pcall(state, 0, 1) != 0)
-    {
-        if (const char* error = lua_tostring(state, -1))
-            m_state.print_error(error);
-
         return false;
-    }
 
     bool has = lua_toboolean(state, -1);
     return has;
@@ -158,11 +148,5 @@ void lua_input_idle::resume_coroutines()
     lua_pushliteral(state, "_resume_coroutines");
     lua_rawget(state, -2);
 
-    if (m_state.pcall(state, 0, 0) != 0)
-    {
-        if (const char* error = lua_tostring(state, -1))
-            m_state.print_error(error);
-
-        return;
-    }
+    m_state.pcall(state, 0, 0);
 }

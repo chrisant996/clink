@@ -399,12 +399,7 @@ bool host::has_deprecated_argmatcher(const char* command)
     lua_pushstring(state, command);
 
     if (lua.pcall(state, 1, 1) != 0)
-    {
-        if (const char* error = lua_tostring(state, -1))
-            lua.print_error(error);
-
         return false;
-    }
 
     bool has = lua_toboolean(state, -1);
     return has;

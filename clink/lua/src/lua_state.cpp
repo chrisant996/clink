@@ -268,8 +268,6 @@ bool lua_state::do_string(const char* string, int length)
     bool ok = !luaL_loadbuffer(m_state, string, length, string);
     if (ok)
         ok = !pcall(0, LUA_MULTRET);
-    else if (const char* error = lua_tostring(m_state, -1))
-        print_error(error);
 
     return ok;
 }
@@ -282,8 +280,6 @@ bool lua_state::do_file(const char* path)
     bool ok = !luaL_loadfile(m_state, path);
     if (ok)
         ok = !pcall(0, LUA_MULTRET);
-    else if (const char* error = lua_tostring(m_state, -1))
-        print_error(error);
 
     return ok;
 }
@@ -350,7 +346,7 @@ report_error:
 }
 
 //------------------------------------------------------------------------------
-int lua_state::pcall(lua_State* L, int nargs, int nresults)
+int lua_state::pcall_silent(lua_State* L, int nargs, int nresults)
 {
     // Lua scripts can have a side effect of changing the console mode (e.g. if
     // they spawn another process, such as in a prompt filter), so always
@@ -379,6 +375,21 @@ int lua_state::pcall(lua_State* L, int nargs, int nresults)
     // Restore the console mode.
     SetConsoleMode(hIn, modeIn);
     SetConsoleMode(hOut, modeOut);
+    return ret;
+}
+
+//------------------------------------------------------------------------------
+int lua_state::pcall(lua_State* L, int nargs, int nresults)
+{
+    const int ret = pcall_silent(L, nargs, nresults);
+    if (ret != 0)
+    {
+        if (const char* error = lua_tostring(L, -1))
+        {
+            puts("");
+            puts(error);
+        }
+    }
     return ret;
 }
 
@@ -480,11 +491,7 @@ bool lua_state::send_event_internal(const char* event_name, const char* event_me
 
     // Call the event callback.
     if (pcall(1 + nargs, nret) != 0)
-    {
-        if (const char* error = lua_tostring(state, -1))
-            print_error(error);
         goto done;
-    }
 
     ret = true;
 
@@ -561,7 +568,7 @@ bool lua_state::call_lua_rl_global_function(const char* func_name, line_state* l
         lua_pushnil(state);
 
     rollback<bool> rb(s_in_luafunc, true);
-    bool success = (pcall(2, 0) == LUA_OK);
+    bool success = (pcall_silent(2, 0) == LUA_OK);
 
     extern void set_pending_luafunc(const char *);
     set_pending_luafunc(func_name);
@@ -578,13 +585,6 @@ bool lua_state::call_lua_rl_global_function(const char* func_name, line_state* l
     }
 
     return true;
-}
-
-//------------------------------------------------------------------------------
-void lua_state::print_error(const char* error)
-{
-    puts("");
-    puts(error);
 }
 
 //------------------------------------------------------------------------------

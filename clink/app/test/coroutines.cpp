@@ -56,7 +56,7 @@ static bool verify_ret_true(lua_state& lua, const char* func_name)
         return false;
     }
 
-    bool success = (lua.pcall(0, 1) == LUA_OK);
+    bool success = (lua.pcall_silent(0, 1) == LUA_OK);
     if (!success)
     {
         if (const char* error = lua_tostring(state, -1))

@@ -411,8 +411,6 @@ void prompt_filter::filter(const char* in, const char* rin, str_base& out, str_b
     rollback<bool> rb(s_filtering, true);
     if (m_lua.pcall(state, 2, 2) != 0)
     {
-        if (const char* error = lua_tostring(state, -1))
-            m_lua.print_error(error);
         lua_pop(state, 2);
         return;
     }
