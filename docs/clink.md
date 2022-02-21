@@ -69,7 +69,7 @@ The following sections describe some ways to begin customizing Clink to your tas
 <tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_colors">Colors</a></td><td class="lmtd">Configure the colors.</td></tr>
 <tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_keybindings">Key Bindings</a></td><td class="lmtd">Customize your key bindings.</td></tr>
 <tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_mouseinput">Mouse Input</a></td><td class="lmtd">Optionally enable mouse clicks in the input line, etc.</td></tr>
-<tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_startupcmdscript">Startup Cmd Script</a></td><td class="lmtd">Optional automatic <code>clink_startup.cmd</code> script.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_startupcmdscript">Startup Cmd Script</a></td><td class="lmtd">Optional automatic <code>clink_start.cmd</code> script.</td></tr>
 <tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_customprompt">Custom Prompt</a></td><td class="lmtd">Customizing the command line prompt.</td></tr>
 <tr class="lmtr"><td class="lmtd"><a href="#upgradefrom049">Upgrading from Clink v0.4.9</a></td><td class="lmtd">Notes on upgrading from a very old version of Clink.</td></tr>
 </table>
