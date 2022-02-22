@@ -143,9 +143,8 @@ int match_builder_lua::add_match(lua_State* state)
 /// have been added yet.
 int match_builder_lua::is_empty(lua_State* state)
 {
-    m_builder->is_empty();
-
-    return 0;
+    lua_pushboolean(state, m_builder->is_empty());
+    return 1;
 }
 
 //------------------------------------------------------------------------------
