@@ -241,6 +241,12 @@ bool match_builder::add_match(const match_desc& desc, bool already_normalized)
 }
 
 //------------------------------------------------------------------------------
+bool match_builder::is_empty()
+{
+    return ((matches_impl&)m_matches).get_match_count() == 0;
+}
+
+//------------------------------------------------------------------------------
 void match_builder::set_append_character(char append)
 {
     return ((matches_impl&)m_matches).set_append_character(append);
