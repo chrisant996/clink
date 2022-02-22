@@ -32,6 +32,10 @@ local function make_dummy_builder()
 end
 
 --------------------------------------------------------------------------------
+local _argmatcher_fromhistory = {}
+local _argmatcher_fromhistory_root
+
+--------------------------------------------------------------------------------
 local _argreader = {}
 _argreader.__index = _argreader
 setmetatable(_argreader, { __call = function (x, ...) return x._new(...) end })
@@ -134,6 +138,15 @@ function _argreader:update(word, word_index)
             end
         end
         return
+    end
+
+    -- Generate matches from history.
+    if self._fromhistory_matcher then
+        if self._fromhistory_matcher == matcher and self._fromhistory_argindex == arg_index then
+            if _argmatcher_fromhistory.builder then
+                _argmatcher_fromhistory.builder:addmatch(word, "word")
+            end
+        end
     end
 
     -- Parse the word type.
@@ -281,22 +294,6 @@ function _argreader:_pop(next_is_flag)
     self._dbgword = ""
     --]]
     return true
-end
-
-
-
---------------------------------------------------------------------------------
-local _argmatcher_fromhistory = {}
-
---------------------------------------------------------------------------------
-function clink._generate_from_historyline(line_state)
-    -- TODO: Look up argmatcher.
-    -- TODO: If it doesn't match _argmatcher_fromhistory.root then return.
-    -- TODO: Make a reader.
-    -- TODO: Parse the line_state.
-    -- TODO: WHEN ._matcher == _argmatcher_fromhistory.argmatcher AND
-    -- ._arg_index == _argmatcher_fromhistory.argslot THEN add word to
-    -- _argmatcher_fromhistory.builder as a match.
 end
 
 
@@ -786,9 +783,6 @@ end
 
 --------------------------------------------------------------------------------
 function _argmatcher:_generate(line_state, match_builder, extra_words)
-    _argmatcher_fromhistory = {}
-    _argmatcher_fromhistory.root = self
-
     local reader = _argreader(self, line_state)
 
     --[[
@@ -1233,6 +1227,36 @@ local function _find_argmatcher(line_state, check_existence)
     end
 end
 
+--------------------------------------------------------------------------------
+function clink._generate_from_historyline(line_state)
+    local argmatcher, has_argmatcher, extra_words = _find_argmatcher(line_state)
+    if not argmatcher or argmatcher ~= _argmatcher_fromhistory_root then
+        return
+    end
+
+    local reader = _argreader(argmatcher, line_state)
+    reader._fromhistory_matcher = _argmatcher_fromhistory.argmatcher
+    reader._fromhistory_argindex = _argmatcher_fromhistory.argslot
+
+    -- Consume extra words from expanded doskey alias.
+    if extra_words then
+        for word_index = 2, #extra_words do
+            reader:update(extra_words[word_index], -1)
+        end
+    end
+
+    -- Consume words and use them to move through matchers' arguments.
+    local word_count = line_state:getwordcount()
+    local command_word_index = line_state:getcommandwordindex()
+    for word_index = command_word_index + 1, word_count do
+        local info = line_state:getwordinfo(word_index)
+        if not info.redir then
+            local word = line_state:getword(word_index)
+            reader:update(word, word_index)
+        end
+    end
+end
+
 
 
 --------------------------------------------------------------------------------
@@ -1244,7 +1268,12 @@ local argmatcher_classifier = clink.classifier(clink.argmatcher_generator_priori
 function argmatcher_generator:generate(line_state, match_builder)
     local argmatcher, has_argmatcher, extra_words = _find_argmatcher(line_state)
     if argmatcher then
-        return argmatcher:_generate(line_state, match_builder, extra_words)
+        _argmatcher_fromhistory = {}
+        _argmatcher_fromhistory_root = self
+        local ret = argmatcher:_generate(line_state, match_builder, extra_words)
+        _argmatcher_fromhistory = {}
+        _argmatcher_fromhistory_root = nil
+        return ret
     end
 
     return false
