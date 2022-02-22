@@ -81,10 +81,5 @@ void lua_word_classifier::classify(const std::vector<line_state>& commands, word
         lua_rawseti(state, -2, int(++ii));
     }
 
-    if (m_state.pcall(state, 1, 1) != 0)
-    {
-        if (const char* error = lua_tostring(state, -1))
-            m_state.print_error(error);
-        return;
-    }
+    m_state.pcall(state, 1, 1);
 }

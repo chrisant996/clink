@@ -60,12 +60,7 @@ bool lua_match_generator::generate(const line_state& line, match_builder& builde
     lua_pushboolean(state, old_filtering);
 
     if (m_state.pcall(state, 3, 1) != 0)
-    {
-        if (const char* error = lua_tostring(state, -1))
-            m_state.print_error(error);
-
         return false;
-    }
 
     int use_matches = lua_toboolean(state, -1);
     return !!use_matches;
@@ -87,9 +82,6 @@ void lua_match_generator::get_word_break_info(const line_state& line, word_break
 
     if (m_state.pcall(state, 1, 2) != 0)
     {
-        if (const char* error = lua_tostring(state, -1))
-            m_state.print_error(error);
-
         info.clear();
         return;
     }
@@ -169,11 +161,7 @@ bool lua_match_generator::match_display_filter(const char* needle, char** matche
         lua_pushliteral(state, "ondisplaymatches");
 
         if (m_state.pcall(1, 1) != 0)
-        {
-            if (const char *error = lua_tostring(state, -1))
-                m_state.print_error(error);
             goto done;
-        }
 
         ondisplaymatches = (!lua_isnil(state, -1) && lua_toboolean(state, -1) != false);
         lua_pop(state, lua_gettop(state) - top);
@@ -296,11 +284,7 @@ done:
 
     // Call the filter.
     if (m_state.pcall(ondisplaymatches ? 2 : 1, 1) != 0)
-    {
-        if (const char *error = lua_tostring(state, -1))
-            m_state.print_error(error);
         goto done;
-    }
 
     // Bail out if filter function didn't return a table.
     if (!lua_istable(state, -1))
@@ -549,11 +533,7 @@ void lua_match_generator::filter_matches(char** matches, char completion_type, b
     lua_pushliteral(state, "onfiltermatches");
 
     if (m_state.pcall(1, 1) != 0)
-    {
-        if (const char *error = lua_tostring(state, -1))
-            m_state.print_error(error);
         return;
-    }
 
     bool onfiltermatches = (!lua_isnil(state, -1) && lua_toboolean(state, -1) != false);
     if (!onfiltermatches)
@@ -605,11 +585,7 @@ void lua_match_generator::filter_matches(char** matches, char completion_type, b
 
     // Call the filter.
     if (m_state.pcall(3, 1) != 0)
-    {
-        if (const char *error = lua_tostring(state, -1))
-            m_state.print_error(error);
         return;
-    }
 
     // If nil is returned then no filtering occurred.
     if (lua_isnil(state, -1))

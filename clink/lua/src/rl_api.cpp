@@ -613,10 +613,7 @@ static int set_matches(lua_State* state)
         lua_pushliteral(state, "_reset_display_filter");
         lua_rawget(state, -2);
         if (lua_state::pcall(state, 0, 0) != 0)
-        {
-            puts(lua_tostring(state, -1));
             return 0;
-        }
     }
 
     rl_last_func = nullptr;

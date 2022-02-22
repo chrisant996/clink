@@ -38,14 +38,14 @@ public:
     static bool     push_named_function(lua_State* L, const char* func_name, str_base* error=nullptr);
 
     static int      pcall(lua_State* L, int nargs, int nresults);
+    static int      pcall_silent(lua_State* L, int nargs, int nresults);
     int             pcall(int nargs, int nresults) { return pcall(m_state, nargs, nresults); }
+    int             pcall_silent(int nargs, int nresults) { return pcall_silent(m_state, nargs, nresults); }
 
     bool            send_event(const char* event_name, int nargs=0);
     bool            send_event_cancelable(const char* event_name, int nargs=0);
     bool            send_event_cancelable_string_inout(const char* event_name, const char* string, str_base& out);
     bool            call_lua_rl_global_function(const char* func_name, line_state* line);
-
-    void            print_error(const char* error);
 
 #ifdef DEBUG
     void            dump_stack(int pos);

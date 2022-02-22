@@ -61,13 +61,13 @@ bool suggester::suggest(line_state& line, matches* matches, int generation_id)
 
     if (!line.get_length())
     {
+nosuggest:
         set_suggestion("", 0, nullptr, 0);
         return true;
     }
 
     lua_State* state = m_lua.get_state();
-
-    int top = lua_gettop(state);
+    save_stack_top ss(state);
 
     // Do not allow relaxed comparison for suggestions, as it is too confusing,
     // as a result of the logic to respect original case.
@@ -104,15 +104,8 @@ bool suggester::suggest(line_state& line, matches* matches, int generation_id)
     lua_pushinteger(state, generation_id);
 
     if (m_lua.pcall(state, 4, 1) != 0)
-    {
-        if (const char* error = lua_tostring(state, -1))
-            m_lua.print_error(error);
-        lua_settop(state, top);
-        return true;
-    }
+        goto nosuggest;
 
     const bool cancelled = lua_isboolean(state, -1) && lua_toboolean(state, -1);
-
-    lua_settop(state, top);
     return !cancelled;
 }

@@ -1137,14 +1137,7 @@ static int debug_print(lua_State *state)
         lua_pushvalue(state, -1);           // Function to be called (tostring).
         lua_pushvalue(state, i);            // Value to print.
         if (lua_state::pcall(state, 1, 1) != 0)
-        {
-            if (const char* error = lua_tostring(state, -1))
-            {
-                puts("");
-                puts(error);
-            }
             return 0;
-        }
 
         // Get result from the tostring call.
         size_t l;
