@@ -5,6 +5,7 @@
 #### v1.3.9
 
 - Argmatchers can generate matches from history.  An argmatcher argument slot match table can include `fromhistory=true` to generate additional matches by parsing the history file to find values for that argument slot from commands in the history file.
+- Added `match_builder:isempty()`.
 - Fixed [#244](https://github.com/chrisant996/clink/issues/244); installer did not detect previous installation directory (regression introduced in v1.3.5; the fix takes effect on the next install _after_ an install with the fix).
 
 #### v1.3.8
