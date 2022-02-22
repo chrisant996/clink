@@ -25,7 +25,12 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - [ ] Provide shim so scripts can use new syntax and still be compatible with older Clink.
 
 ### History
-- [ ] Some way to mark certain argmatcher arg positions to include matches from the history file.  Parse the history file via a coroutine.
+- [x] Some way to mark certain argmatcher arg positions to include matches from the history file.
+  - [x] Parses history on demand.
+  - [x] Seems reasonably fast in a non-debug builds.
+  - [x] Does **_NOT_** parse history when generating suggestions, due to language transitions being incompatible with coroutine execution.
+    - That should be reasonable when the autosuggest strategy has `history` before `completion`.
+    - Is it worth trying to restructure the code to support coroutine execution?  E.g. via a history enumerator that returns `line_state` objects.
 - [ ] Or a setting to apply history parsing to all arg positions in all argmatchers?
 
 ### Syntax Notes
