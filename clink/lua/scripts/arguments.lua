@@ -1269,7 +1269,7 @@ function argmatcher_generator:generate(line_state, match_builder)
     local argmatcher, has_argmatcher, extra_words = _find_argmatcher(line_state)
     if argmatcher then
         _argmatcher_fromhistory = {}
-        _argmatcher_fromhistory_root = self
+        _argmatcher_fromhistory_root = argmatcher
         local ret = argmatcher:_generate(line_state, match_builder, extra_words)
         _argmatcher_fromhistory = {}
         _argmatcher_fromhistory_root = nil
