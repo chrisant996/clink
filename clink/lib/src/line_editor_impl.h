@@ -108,7 +108,8 @@ private:
     void                initialise();
     void                begin_line();
     void                end_line();
-    void                collect_words(bool for_classify=false);
+    void                collect_words();
+    commands            collect_commands();
     unsigned int        collect_words(words& words, matches_impl* matches, collect_words_mode mode);
     void                classify();
     matches*            get_mutable_matches(bool nosort=false);

@@ -10,6 +10,9 @@
 #include <core/str.h>
 #include <core/str_iter.h>
 #include <core/str_tokeniser.h>
+#include <core/str_map.h>
+#include <core/linear_allocator.h>
+#include <core/auto_free_str.h>
 #include <core/os.h>
 
 #include <vector>
@@ -53,6 +56,41 @@ word_token simple_word_tokeniser::next(unsigned int& offset, unsigned int& lengt
 
 
 //------------------------------------------------------------------------------
+class alias_cache
+{
+public:
+    alias_cache() : m_names(4096) {}
+    bool get_alias(const char* name, str_base& out);
+private:
+    str_map_caseless<auto_free_str>::type m_map;
+    linear_allocator m_names;
+};
+
+//------------------------------------------------------------------------------
+bool alias_cache::get_alias(const char* name, str_base& out)
+{
+    const auto& iter = m_map.find(name);
+    if (iter != m_map.end())
+    {
+        const char* value = iter->second.get();
+        if (!value)
+            return false;
+        out = value;
+        return true;
+    }
+
+    const bool exists = os::get_alias(name, out);
+
+    const char* cache_name = m_names.store(name);
+    auto_free_str cache_value(out.c_str(), out.length());
+    m_map.emplace(cache_name, std::move(cache_value));
+
+    return exists;
+}
+
+
+
+//------------------------------------------------------------------------------
 word_collector::word_collector(collector_tokeniser* command_tokeniser, collector_tokeniser* word_tokeniser, const char* quote_pair)
 : m_command_tokeniser(command_tokeniser)
 , m_word_tokeniser(word_tokeniser)
@@ -68,8 +106,16 @@ word_collector::word_collector(collector_tokeniser* command_tokeniser, collector
 //------------------------------------------------------------------------------
 word_collector::~word_collector()
 {
+    delete m_alias_cache;
     if (m_delete_word_tokeniser)
         delete m_word_tokeniser;
+}
+
+//------------------------------------------------------------------------------
+void word_collector::init_alias_cache()
+{
+    if (!m_alias_cache)
+        m_alias_cache = new alias_cache;
 }
 
 //------------------------------------------------------------------------------
@@ -121,12 +167,21 @@ void word_collector::find_command_bounds(const char* buffer, unsigned int length
 }
 
 //------------------------------------------------------------------------------
+bool word_collector::get_alias(const char* name, str_base& out) const
+{
+    if (m_alias_cache)
+        return m_alias_cache->get_alias(name, out);
+    return os::get_alias(name, out);
+}
+
+//------------------------------------------------------------------------------
 unsigned int word_collector::collect_words(const char* line_buffer, unsigned int line_length, unsigned int line_cursor,
                                            std::vector<word>& words, collect_words_mode mode) const
 {
     words.clear();
 
     std::vector<command> commands;
+    commands.reserve(5);
     bool stop_at_cursor = (mode == collect_words_mode::stop_at_cursor ||
                            mode == collect_words_mode::display_filter);
     find_command_bounds(line_buffer, line_length, line_cursor, commands, stop_at_cursor);
@@ -154,7 +209,7 @@ unsigned int word_collector::collect_words(const char* line_buffer, unsigned int
                 str<32> lookup;
                 str<32> alias;
                 lookup.concat(line_buffer + command.offset, first_word_len);
-                if (os::get_alias(lookup.c_str(), alias))
+                if (get_alias(lookup.c_str(), alias))
                 {
                     unsigned char delim = (doskey_len < command.length) ? line_buffer[command.offset + doskey_len] : 0;
                     doskey_len = first_word_len;
@@ -286,4 +341,70 @@ unsigned int word_collector::collect_words(const char* line_buffer, unsigned int
 unsigned int word_collector::collect_words(const line_buffer& buffer, std::vector<word>& words, collect_words_mode mode) const
 {
     return collect_words(buffer.get_buffer(), buffer.get_length(), buffer.get_cursor(), words, mode);
+}
+
+//------------------------------------------------------------------------------
+commands::commands(const char* line_buffer, unsigned int line_length, unsigned int line_cursor, const std::vector<word>& words)
+{
+    // Count number of commands so we can pre-allocate words_storage so that
+    // emplace_back() doesn't invalidate pointers (references) stored in
+    // linestates.
+    unsigned int num_commands = 0;
+    for (const auto& word : words)
+    {
+        if (word.command_word)
+            num_commands++;
+    }
+
+    // Build vector containing one line_state per command.
+    size_t i = 0;
+    std::vector<word> tmp;
+    tmp.reserve(words.size());
+    m_words_storage.reserve(num_commands);
+    while (true)
+    {
+        if (!tmp.empty() && (i >= words.size() || words[i].command_word))
+        {
+            // Make sure classifiers can tell whether the word has a space
+            // before it, so that ` doskeyalias` gets classified as NOT a doskey
+            // alias, since doskey::resolve() won't expand it as a doskey alias.
+            int command_char_offset = tmp[0].offset;
+            if (command_char_offset == 1 && line_buffer[0] == ' ')
+                command_char_offset--;
+            else if (command_char_offset >= 2 &&
+                     line_buffer[command_char_offset - 1] == ' ' &&
+                     line_buffer[command_char_offset - 2] == ' ')
+                command_char_offset--;
+
+            m_words_storage.emplace_back(std::move(tmp));
+            assert(tmp.empty());
+            tmp.reserve(words.size());
+
+            m_linestates.emplace_back(
+                line_buffer,
+                line_length,
+                line_cursor,
+                command_char_offset,
+                m_words_storage.back()
+            );
+        }
+
+        if (i >= words.size())
+            break;
+
+        tmp.emplace_back(words[i]);
+        i++;
+    }
+}
+
+//------------------------------------------------------------------------------
+commands::commands(const line_buffer& buffer, const std::vector<word>& words)
+: commands(buffer.get_buffer(), buffer.get_length(), buffer.get_cursor(), words)
+{
+}
+
+//------------------------------------------------------------------------------
+const std::vector<line_state>& commands::get_linestates() const
+{
+    return m_linestates;
 }

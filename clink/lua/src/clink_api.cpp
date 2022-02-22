@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "lua_state.h"
+#include "line_state_lua.h"
 #include "prompt.h"
 #include "../../app/src/version.h" // Ugh.
 
@@ -21,6 +22,8 @@
 #include <core/debugheap.h>
 #include <lib/intercept.h>
 #include <lib/popup.h>
+#include <lib/word_collector.h>
+#include <lib/cmd_tokenisers.h>
 #include <terminal/terminal_helpers.h>
 #include <terminal/printer.h>
 #include <terminal/screen_buffer.h>
@@ -1399,6 +1402,53 @@ known:
 }
 
 //------------------------------------------------------------------------------
+static int generate_from_history(lua_State* state)
+{
+    HIST_ENTRY** list = history_list();
+    if (!list)
+        return 0;
+
+    cmd_command_tokeniser command_tokeniser;
+    cmd_word_tokeniser word_tokeniser;
+    word_collector collector(&command_tokeniser, &word_tokeniser);
+    collector.init_alias_cache();
+
+    save_stack_top ss(state);
+
+    lua_getglobal(state, "clink");
+    lua_pushliteral(state, "_generate_from_historyline");
+    lua_rawget(state, -2);
+
+    while (*list)
+    {
+        const char* buffer = (*list)->line;
+        unsigned int len = static_cast<unsigned int>(strlen(buffer));
+
+        // Collect one line_state for each command in the line.
+        std::vector<word> words;
+        collector.collect_words(buffer, len, len/*cursor*/, words, collect_words_mode::whole_command);
+        commands commands(buffer, len, 0, words);
+
+        for (const line_state& line : commands.get_linestates())
+        {
+            // clink._generate_from_historyline
+            lua_pushvalue(state, -1);
+
+            // line_state
+            line_state_lua line_lua(line);
+            line_lua.push(state);
+
+            if (lua_state::pcall(state, 1, 0) != 0)
+                break;
+        }
+
+        list++;
+    }
+
+    return 0;
+}
+
+//------------------------------------------------------------------------------
 static int mark_deprecated_argmatcher(lua_State* state)
 {
     const char* name = checkstring(state, 1);
@@ -1464,6 +1514,7 @@ void clink_lua_initialise(lua_state& lua)
         { "kick_idle",              &kick_idle },
         { "matches_ready",          &matches_ready },
         { "_recognize_command",     &recognize_command },
+        { "_generate_from_history", &generate_from_history },
         { "_mark_deprecated_argmatcher", &mark_deprecated_argmatcher },
     };
 
