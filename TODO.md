@@ -7,6 +7,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
+- Document the `fromhistory` and `nosort` table entries in argmatchers.
 
 ## Follow Up
 - Readline command reference.
