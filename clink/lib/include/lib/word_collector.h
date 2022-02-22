@@ -12,6 +12,7 @@
 
 class line_buffer;
 class collector_tokeniser;
+class alias_cache;
 
 //------------------------------------------------------------------------------
 enum class collect_words_mode { stop_at_cursor, display_filter, whole_command };
@@ -49,6 +50,8 @@ public:
     word_collector(collector_tokeniser* command_tokeniser=nullptr, collector_tokeniser* word_tokeniser=nullptr, const char* quote_pair=nullptr);
     ~word_collector();
 
+    void init_alias_cache();
+
     unsigned int collect_words(const char* buffer, unsigned int length, unsigned int cursor,
                                std::vector<word>& words, collect_words_mode mode) const;
     unsigned int collect_words(const line_buffer& buffer,
@@ -64,10 +67,12 @@ private:
     char get_closing_quote() const;
     void find_command_bounds(const char* buffer, unsigned int length, unsigned int cursor,
                              std::vector<command>& commands, bool stop_at_cursor) const;
+    bool get_alias(const char* name, str_base& out) const;
 
 private:
     collector_tokeniser* const m_command_tokeniser;
     collector_tokeniser* m_word_tokeniser;
+    alias_cache* m_alias_cache = nullptr;
     const char* const m_quote_pair;
     bool m_delete_word_tokeniser = false;
 };
