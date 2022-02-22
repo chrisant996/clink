@@ -287,3 +287,69 @@ unsigned int word_collector::collect_words(const line_buffer& buffer, std::vecto
 {
     return collect_words(buffer.get_buffer(), buffer.get_length(), buffer.get_cursor(), words, mode);
 }
+
+//------------------------------------------------------------------------------
+commands::commands(const char* line_buffer, unsigned int line_length, unsigned int line_cursor, const std::vector<word>& words)
+{
+    // Count number of commands so we can pre-allocate words_storage so that
+    // emplace_back() doesn't invalidate pointers (references) stored in
+    // linestates.
+    unsigned int num_commands = 0;
+    for (const auto& word : words)
+    {
+        if (word.command_word)
+            num_commands++;
+    }
+
+    // Build vector containing one line_state per command.
+    size_t i = 0;
+    std::vector<word> tmp;
+    tmp.reserve(words.size());
+    m_words_storage.reserve(num_commands);
+    while (true)
+    {
+        if (!tmp.empty() && (i >= words.size() || words[i].command_word))
+        {
+            // Make sure classifiers can tell whether the word has a space
+            // before it, so that ` doskeyalias` gets classified as NOT a doskey
+            // alias, since doskey::resolve() won't expand it as a doskey alias.
+            int command_char_offset = tmp[0].offset;
+            if (command_char_offset == 1 && line_buffer[0] == ' ')
+                command_char_offset--;
+            else if (command_char_offset >= 2 &&
+                     line_buffer[command_char_offset - 1] == ' ' &&
+                     line_buffer[command_char_offset - 2] == ' ')
+                command_char_offset--;
+
+            m_words_storage.emplace_back(std::move(tmp));
+            assert(tmp.empty());
+            tmp.reserve(words.size());
+
+            m_linestates.emplace_back(
+                line_buffer,
+                line_length,
+                line_cursor,
+                command_char_offset,
+                m_words_storage.back()
+            );
+        }
+
+        if (i >= words.size())
+            break;
+
+        tmp.emplace_back(words[i]);
+        i++;
+    }
+}
+
+//------------------------------------------------------------------------------
+commands::commands(const line_buffer& buffer, const std::vector<word>& words)
+: commands(buffer.get_buffer(), buffer.get_length(), buffer.get_cursor(), words)
+{
+}
+
+//------------------------------------------------------------------------------
+const std::vector<line_state>& commands::get_linestates() const
+{
+    return m_linestates;
+}

@@ -54,6 +54,11 @@ public:
     unsigned int collect_words(const line_buffer& buffer,
                                std::vector<word>& words, collect_words_mode mode) const;
 
+    void collect_commands(const char* line_buffer, unsigned int line_length, unsigned int line_cursor,
+                          const std::vector<word>& words, std::vector<line_state>& commands);
+    void collect_commands(const line_buffer& buffer,
+                          const std::vector<word>& words, std::vector<line_state>& commands);
+
 private:
     char get_opening_quote() const;
     char get_closing_quote() const;
@@ -81,4 +86,16 @@ private:
     const char* m_delims;
     const char* m_start = nullptr;
     str_tokeniser* m_tokeniser = nullptr;
+};
+
+//------------------------------------------------------------------------------
+class commands
+{
+public:
+    commands(const char* line_buffer, unsigned int line_length, unsigned int line_cursor, const std::vector<word>& words);
+    commands(const line_buffer& buffer, const std::vector<word>& words);
+    const std::vector<line_state>& get_linestates() const;
+private:
+    std::vector<std::vector<word>> m_words_storage;
+    std::vector<line_state> m_linestates;
 };

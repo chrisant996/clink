@@ -784,12 +784,18 @@ bool line_editor_impl::update_input()
 }
 
 //------------------------------------------------------------------------------
-void line_editor_impl::collect_words(bool for_classify)
+void line_editor_impl::collect_words()
 {
-    if (for_classify)
-        m_classify_command_offset = collect_words(m_classify_words, nullptr, collect_words_mode::whole_command);
-    else
-        m_command_offset = collect_words(m_words, &m_matches, collect_words_mode::stop_at_cursor);
+    m_command_offset = collect_words(m_words, &m_matches, collect_words_mode::stop_at_cursor);
+}
+
+//------------------------------------------------------------------------------
+commands line_editor_impl::collect_commands()
+{
+    m_classify_command_offset = collect_words(m_classify_words, nullptr, collect_words_mode::whole_command);
+
+    commands commands(m_buffer, m_classify_words);
+    return commands;
 }
 
 //------------------------------------------------------------------------------
@@ -912,65 +918,13 @@ void line_editor_impl::classify()
     if (m_prev_classify.equals(m_buffer.get_buffer(), m_buffer.get_length()))
         return;
 
-    // Use the full line; don't stop at the cursor.
-    collect_words(true/*for_classify*/);
-    line_state line = get_linestate(true/*for_classify*/);
-
     // Hang on to the old classifications so it's possible to detect changes.
     word_classifications old_classifications(std::move(m_classifications));
     m_classifications.init(m_buffer.get_length(), &old_classifications);
 
-    // Count number of commands so we can pre-allocate words_storage so that
-    // emplace_back() doesn't invalidate pointers (references) stored in
-    // linestates.
-    unsigned int num_commands = 0;
-    for (const auto& word : m_classify_words)
-    {
-        if (word.command_word)
-            num_commands++;
-    }
-
-    // Build vector containing one line_state per command.
-    size_t i = 0;
-    std::vector<word> words;
-    std::vector<std::vector<word>> words_storage;
-    std::vector<line_state> linestates;
-    words_storage.reserve(num_commands);
-    while (true)
-    {
-        if (!words.empty() && (i >= m_classify_words.size() || m_classify_words[i].command_word))
-        {
-            // Make sure classifiers can tell whether the word has a space
-            // before it, so that ` doskeyalias` gets classified as NOT a doskey
-            // alias, since doskey::resolve() won't expand it as a doskey alias.
-            int command_char_offset = words[0].offset;
-            if (command_char_offset == 1 && m_buffer.get_buffer()[0] == ' ')
-                command_char_offset--;
-            else if (command_char_offset >= 2 &&
-                     m_buffer.get_buffer()[command_char_offset - 1] == ' ' &&
-                     m_buffer.get_buffer()[command_char_offset - 2] == ' ')
-                command_char_offset--;
-
-            words_storage.emplace_back(std::move(words));
-            assert(words.empty());
-
-            linestates.emplace_back(
-                m_buffer.get_buffer(),
-                m_buffer.get_length(),
-                m_buffer.get_cursor(),
-                command_char_offset,
-                words_storage.back()
-            );
-        }
-
-        if (i >= m_classify_words.size())
-            break;
-
-        words.push_back(m_classify_words[i]);
-        i++;
-    }
-
-    m_classifier->classify(linestates, m_classifications);
+    // Use the full line; don't stop at the cursor.
+    commands commands = collect_commands();
+    m_classifier->classify(commands.get_linestates(), m_classifications);
     m_classifications.finish(is_showing_argmatchers());
 
 #ifdef DEBUG
