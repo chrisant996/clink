@@ -444,7 +444,7 @@ void mem_tracking::unlink()
     if (m_next)
         m_next->m_prev = m_prev;
 
-    if( m_prev )
+    if (m_prev)
         m_prev->m_next = m_next;
     else
         config.head = m_next;
@@ -627,6 +627,7 @@ void* dbgrealloc_(void* pv, size_t size, unsigned int flags)
 
     // Update memory block details.
 
+    p->m_alloc_number = dbgnewallocnumber();
     p->m_count_realloc++;
     p->m_requested_size = size;
     p->m_thread = GetCurrentThreadId();
@@ -914,8 +915,11 @@ extern "C" size_t dbgignoresince(size_t alloc_number, size_t* total_bytes, char 
     const DWORD thread = GetCurrentThreadId();
     for (mem_tracking* p = config.head; p; p = p->m_next)
     {
+        // Optimization:  Break out once past the range of interest; the list is
+        // sorted by allocation number.
         if (p->m_alloc_number <= alloc_number)
-            continue;
+            break;
+
         if (p->m_flags & memIgnoreLeak)
             continue;
 
