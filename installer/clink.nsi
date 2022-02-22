@@ -202,6 +202,9 @@ SectionEnd
 
 ;-------------------------------------------------------------------------------
 Section "-"
+    ; Remember the installation directory.
+    WriteRegStr HKLM Software\Clink InstallDir $INSTDIR
+
     ; Remember the enhanced default settings choice.
     SectionGetFlags ${section_enhance} $0
     IntOp $0 $0 & ${SF_SELECTED}
