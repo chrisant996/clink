@@ -12,6 +12,7 @@
 #include <core/str.h>
 #include <core/str_tokeniser.h>
 #include <core/str_map.h>
+#include <core/auto_free_str.h>
 #include <core/path.h>
 #include <core/log.h>
 #include <assert.h>
@@ -190,46 +191,6 @@ void concurrency_tag::set(const char* tag)
 {
     assert(m_tag.empty());
     m_tag = tag;
-}
-
-
-
-//------------------------------------------------------------------------------
-class auto_free_str
-{
-public:
-                        auto_free_str() = default;
-                        auto_free_str(const char* s, int len) { set(s, len); }
-                        auto_free_str(auto_free_str&& other) : m_ptr(other.m_ptr) { other.m_ptr = nullptr; }
-                        ~auto_free_str() { free(m_ptr); }
-
-    auto_free_str&      operator=(const char* s) { set(s); return *this; }
-    auto_free_str&      operator=(auto_free_str&& other) { free(m_ptr); m_ptr = other.m_ptr; other.m_ptr = nullptr; return *this; }
-    void                set(const char* s, int len = -1);
-    const char*         get() const { return m_ptr; }
-
-private:
-    char*               m_ptr = nullptr;
-};
-
-//------------------------------------------------------------------------------
-void auto_free_str::set(const char* s, int len)
-{
-    if (s == m_ptr)
-    {
-        if (len < int(strlen(m_ptr)))
-            m_ptr[len] = '\0';
-    }
-    else
-    {
-        char* old = m_ptr;
-        if (len < 0)
-            len = int(strlen(s));
-        m_ptr = (char*)malloc(len + 1);
-        memcpy(m_ptr, s, len);
-        m_ptr[len] = '\0';
-        free(old);
-    }
 }
 
 
