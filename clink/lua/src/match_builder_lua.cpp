@@ -14,6 +14,7 @@ const char* const match_builder_lua::c_name = "match_builder_lua";
 const match_builder_lua::method match_builder_lua::c_methods[] = {
     { "addmatch",           &add_match },
     { "addmatches",         &add_matches },
+    { "isempty",            &is_empty },
     { "setappendcharacter", &set_append_character },
     { "setsuppressappend",  &set_suppress_append },
     { "setsuppressquoting", &set_suppress_quoting },
@@ -132,6 +133,19 @@ int match_builder_lua::add_match(lua_State* state)
 
     lua_pushboolean(state, ret);
     return 1;
+}
+
+//------------------------------------------------------------------------------
+/// -name:  builder:isempty
+/// -ver:   1.3.9
+/// -ret:   boolean
+/// Returns whether the match builder is empty.  It is empty when no matches
+/// have been added yet.
+int match_builder_lua::is_empty(lua_State* state)
+{
+    m_builder->is_empty();
+
+    return 0;
 }
 
 //------------------------------------------------------------------------------

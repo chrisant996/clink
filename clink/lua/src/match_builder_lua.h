@@ -21,6 +21,7 @@ public:
                     ~match_builder_lua();
     int             add_match(lua_State* state);
     int             add_matches(lua_State* state);
+    int             is_empty(lua_State* state);
     int             set_append_character(lua_State* state);
     int             set_suppress_append(lua_State* state);
     int             set_suppress_quoting(lua_State* state);
