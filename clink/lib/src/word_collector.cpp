@@ -66,6 +66,13 @@ word_collector::word_collector(collector_tokeniser* command_tokeniser, collector
 }
 
 //------------------------------------------------------------------------------
+word_collector::~word_collector()
+{
+    if (m_delete_word_tokeniser)
+        delete m_word_tokeniser;
+}
+
+//------------------------------------------------------------------------------
 char word_collector::get_opening_quote() const
 {
     return m_quote_pair[0];

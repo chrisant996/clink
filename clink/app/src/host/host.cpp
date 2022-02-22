@@ -380,32 +380,6 @@ bool host::dequeue_line(wstr_base& out)
 }
 
 //------------------------------------------------------------------------------
-bool host::has_deprecated_argmatcher(const char* command)
-{
-    assert(m_lua);
-    if (!m_lua)
-        return false;
-
-    lua_state& lua(*m_lua);
-    lua_State* state = lua.get_state();
-
-    lua_getglobal(state, "clink");
-    lua_pushliteral(state, "arg");
-    lua_rawget(state, -2);
-
-    lua_pushliteral(state, "has_deprecated_parser");
-    lua_rawget(state, -2);
-
-    lua_pushstring(state, command);
-
-    if (lua.pcall(state, 1, 1) != 0)
-        return false;
-
-    bool has = lua_toboolean(state, -1);
-    return has;
-}
-
-//------------------------------------------------------------------------------
 int host::add_history(const char* line)
 {
     return !!m_history->add(line);

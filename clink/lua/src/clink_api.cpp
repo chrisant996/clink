@@ -43,6 +43,7 @@ extern "C" {
 //------------------------------------------------------------------------------
 extern int force_reload_scripts();
 extern void host_reclassify();
+extern void host_mark_deprecated_argmatcher(const char* name);
 extern void set_suggestion(const char* line, unsigned int endword_offset, const char* suggestion, unsigned int offset);
 extern setting_bool g_gui_popups;
 extern setting_enum g_dupe_mode;
@@ -1398,14 +1399,11 @@ known:
 }
 
 //------------------------------------------------------------------------------
-static int generate_from_history(lua_State* state)
+static int mark_deprecated_argmatcher(lua_State* state)
 {
-    // TODO: Look up clink._generate_from_historyline for use.
-    // TODO: For each history entry:
-    // TODO: Collect commands.
-    // TODO: For each command:
-    // TODO: Collect words.
-    // TODO: Call clink._generate_from_historyline(line_state).
+    const char* name = checkstring(state, 1);
+    if (name)
+        host_mark_deprecated_argmatcher(name);
     return 0;
 }
 
@@ -1466,7 +1464,7 @@ void clink_lua_initialise(lua_state& lua)
         { "kick_idle",              &kick_idle },
         { "matches_ready",          &matches_ready },
         { "_recognize_command",     &recognize_command },
-        { "_generate_from_history", &generate_from_history },
+        { "_mark_deprecated_argmatcher", &mark_deprecated_argmatcher },
     };
 
     lua_State* state = lua.get_state();

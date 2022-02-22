@@ -47,6 +47,7 @@ class word_collector
 
 public:
     word_collector(collector_tokeniser* command_tokeniser=nullptr, collector_tokeniser* word_tokeniser=nullptr, const char* quote_pair=nullptr);
+    ~word_collector();
 
     unsigned int collect_words(const char* buffer, unsigned int length, unsigned int cursor,
                                std::vector<word>& words, collect_words_mode mode) const;

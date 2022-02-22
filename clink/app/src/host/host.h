@@ -32,8 +32,6 @@ public:
     void            enqueue_lines(std::list<str_moveable>& lines);
     bool            dequeue_line(wstr_base& out);
 
-    bool            has_deprecated_argmatcher(const char* command);
-
     // host_callbacks:
     int             add_history(const char* line) override;
     int             remove_history(int rl_history_index, const char* line) override;
