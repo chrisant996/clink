@@ -26,9 +26,15 @@ static const char script[] =
 "    { match = 'xyz', type = 'word' }\n"
 "}\n"
 "\n"
+"local addl_dir = {\n"
+"    { match = 'dir\\\\blip', type = 'file' },\n"
+"    { match = 'dir\\\\boom', type = 'file' },\n"
+"}\n"
+"\n"
 "local available_dir = {\n"
 "    { match = 'dir\\\\bark', type = 'file' },\n"
 "    { match = 'dir\\\\boxy', type = 'file' },\n"
+"    addl_dir,\n"
 "}\n"
 "\n"
 "function string.starts(str, start)\n"
@@ -132,7 +138,7 @@ TEST_CASE("Match type : slash")
     SECTION("pathish matches")
     {
         tester.set_input("plugh dir\\");
-        tester.set_expected_matches("dir\\bark", "dir\\boxy");
+        tester.set_expected_matches("dir\\bark", "dir\\boxy", "dir\\blip", "dir\\boom");
         tester.run();
     }
 
@@ -146,7 +152,7 @@ TEST_CASE("Match type : slash")
     SECTION("pathish readline")
     {
         tester.set_input("plugh dir/\x1b*");
-        tester.set_expected_output("plugh dir\\bark dir\\boxy ");
+        tester.set_expected_output("plugh dir\\bark dir\\blip dir\\boom dir\\boxy ");
         tester.run();
     }
 
@@ -245,7 +251,7 @@ TEST_CASE("Match type : files")
     SECTION("pathish readline")
     {
         tester.set_input("plugh dir\\b\x1b*");
-        tester.set_expected_output("plugh dir\\bark dir\\boxy ");
+        tester.set_expected_output("plugh dir\\bark dir\\blip dir\\boom dir\\boxy ");
         tester.run();
     }
 
