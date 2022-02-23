@@ -302,13 +302,14 @@ int match_builder_lua::add_matches(lua_State* state)
 //------------------------------------------------------------------------------
 bool match_builder_lua::add_match_impl(lua_State* state, int stack_index, match_type type)
 {
-    if (lua_isstring(state, stack_index))
+    if (lua_isstring(state, stack_index) || lua_isnumber(state, stack_index))
     {
         const char* match = lua_tostring(state, stack_index);
         return m_builder->add_match(match, type);
     }
     else if (lua_istable(state, stack_index))
     {
+        const int orig_stack_index = stack_index;
         if (stack_index < 0)
             --stack_index;
 
@@ -320,45 +321,67 @@ bool match_builder_lua::add_match_impl(lua_State* state, int stack_index, match_
             desc.match = lua_tostring(state, -1);
         lua_pop(state, 1);
 
-        lua_pushliteral(state, "type");
-        lua_rawget(state, stack_index);
-        if (lua_isstring(state, -1))
-            desc.type = to_match_type(lua_tostring(state, -1));
-        lua_pop(state, 1);
+        if (desc.match)
+        {
+            lua_pushliteral(state, "type");
+            lua_rawget(state, stack_index);
+            if (lua_isstring(state, -1))
+                desc.type = to_match_type(lua_tostring(state, -1));
+            lua_pop(state, 1);
 
-        lua_pushliteral(state, "display");
-        lua_rawget(state, stack_index);
-        if (lua_isstring(state, -1))
-            desc.display = lua_tostring(state, -1);
-        lua_pop(state, 1);
+            lua_pushliteral(state, "display");
+            lua_rawget(state, stack_index);
+            if (lua_isstring(state, -1))
+                desc.display = lua_tostring(state, -1);
+            lua_pop(state, 1);
 
-        lua_pushliteral(state, "description");
-        lua_rawget(state, stack_index);
-        if (lua_isstring(state, -1))
-            desc.description = lua_tostring(state, -1);
-        lua_pop(state, 1);
+            lua_pushliteral(state, "description");
+            lua_rawget(state, stack_index);
+            if (lua_isstring(state, -1))
+                desc.description = lua_tostring(state, -1);
+            lua_pop(state, 1);
 
-        lua_pushliteral(state, "appendchar");
-        lua_rawget(state, stack_index);
-        if (lua_isstring(state, -1))
-            desc.append_char = *lua_tostring(state, -1);
-        lua_pop(state, 1);
+            lua_pushliteral(state, "appendchar");
+            lua_rawget(state, stack_index);
+            if (lua_isstring(state, -1))
+                desc.append_char = *lua_tostring(state, -1);
+            lua_pop(state, 1);
 
-        lua_pushliteral(state, "suppressappend");
-        lua_rawget(state, stack_index);
-        if (lua_isboolean(state, -1))
-            desc.suppress_append = lua_toboolean(state, -1);
-        lua_pop(state, 1);
+            lua_pushliteral(state, "suppressappend");
+            lua_rawget(state, stack_index);
+            if (lua_isboolean(state, -1))
+                desc.suppress_append = lua_toboolean(state, -1);
+            lua_pop(state, 1);
 
-        // Undocumented; for internal use only.
-        lua_pushliteral(state, "appenddisplay");
-        lua_rawget(state, stack_index);
-        if (lua_isboolean(state, -1))
-            desc.append_display = lua_toboolean(state, -1);
-        lua_pop(state, 1);
+            // Undocumented; for internal use only.
+            lua_pushliteral(state, "appenddisplay");
+            lua_rawget(state, stack_index);
+            if (lua_isboolean(state, -1))
+                desc.append_display = lua_toboolean(state, -1);
+            lua_pop(state, 1);
 
-        if (desc.match != nullptr)
-            return m_builder->add_match(desc);
+            // If the table defines a match, add the match.
+            if (desc.match != nullptr)
+                return m_builder->add_match(desc);
+        }
+        else
+        {
+            // The table is not a single match, but it might contain multiple
+            // matches.  For backward compatibility with v0.4.9, recursively
+            // enumerate elements in the table and add them.
+            const int num = int(lua_rawlen(state, orig_stack_index));
+            if (num > 0)
+            {
+                bool ret = false;
+                for (int i = 1; i <= num; ++i)
+                {
+                    lua_rawgeti(state, orig_stack_index, i);
+                    ret = add_match_impl(state, -1, type) || ret;
+                    lua_pop(state, 1);
+                }
+                return ret;
+            }
+        }
     }
 
     return false;
