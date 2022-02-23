@@ -422,6 +422,18 @@ TEST_CASE("Lua arg parsers")
             local tbl_2 = { 'four', 'five', tbl_1 }\
             q = clink.argmatcher():addarg('fifth', tbl_2) \
             clink.argmatcher('argcmd_nested'):addarg({'once', tbl_1 } .. q)\
+            \
+            local tbl_3 = {\
+                { match='abc', description='Two' },\
+                { match='def', description='Three' },\
+            }\
+            local tbl_4 = {\
+                { match='doe' },\
+                { match='deer' },\
+                tbl_3,\
+            }\
+            q = clink.argmatcher():addarg(tbl_4) \
+            clink.argmatcher('argcmd_nested_ex'):addarg({'once', tbl_3 } .. q)\
         ";
 
         REQUIRE(lua.do_string(script));
@@ -437,6 +449,20 @@ TEST_CASE("Lua arg parsers")
         {
             tester.set_input("argcmd_nested once f");
             tester.set_expected_matches("fifth", "four", "five");
+            tester.run();
+        }
+
+        SECTION("Nested table: sub-parser 2")
+        {
+            tester.set_input("argcmd_nested two f");
+            tester.set_expected_matches("fifth", "four", "five");
+            tester.run();
+        }
+
+        SECTION("Nested table: extended syntax")
+        {
+            tester.set_input("argcmd_nested_ex once d");
+            tester.set_expected_matches("deer", "def", "doe");
             tester.run();
         }
     }
@@ -747,6 +773,30 @@ TEST_CASE("Lua arg parsers")
         {
             tester.set_input("echo \x1b*");
             tester.set_expected_output("echo aardvark clink\\ clink.future\\ zebra ");
+            tester.run();
+        }
+    }
+
+    SECTION("Nosort")
+    {
+        const char* script = "\
+            clink.argmatcher('argcmd_sort'):addarg({'z', 'm', 'n', 'a'})\
+            clink.argmatcher('argcmd_nosort'):addarg({nosort=true, 'z', 'm', 'n', 'a'})\
+        ";
+
+        REQUIRE(lua.do_string(script));
+
+        SECTION("Nosort: sort")
+        {
+            tester.set_input("argcmd_sort \x1b*");
+            tester.set_expected_output("argcmd_sort a m n z ");
+            tester.run();
+        }
+
+        SECTION("Nosort: nosort")
+        {
+            tester.set_input("argcmd_nosort \x1b*");
+            tester.set_expected_output("argcmd_nosort z m n a ");
             tester.run();
         }
     }
