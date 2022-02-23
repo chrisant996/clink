@@ -823,32 +823,48 @@ function _argmatcher:_generate(line_state, match_builder, extra_words)
     end
 
     -- Are we left with a valid argument that can provide matches?
-    local add_matches = function(arg, match_type)
+    local add_matches -- Separate decl and init to enable recursion.
+    add_matches = function(arg, match_type)
         local descs = matcher._descriptions
         local is_arg_type = match_type == "arg"
         local make_match = function(key)
-            if not descs then
-                return key
-            end
-            local m = { match=key }
-            local d = descs[key]
-            if type(d) ~= "table" then
-                m.description = d
-            else
-                if #d > 1 then
-                    m.display = d[1]
-                    m.description = d[2]
-                    m.appenddisplay = true
-                else
-                    m.description = d[1]
+            local m = {}
+            local t = type(key)
+            if t == "string" or t == "number" then
+                m.match = tostring(key)
+            elseif t == "table" and key.match then
+                for n,v in pairs(key) do
+                    m[n] = v
                 end
+                t = type(m.match)
+                if t == "number" then
+                    m.match = tostring(m.match)
+                elseif t ~= "string" then
+                    return nil
+                end
+            else
+                return nil
             end
-            if is_arg_type and key:match("[:=]$") then
-                -- Do not append a space after an arg type match that ends with
-                -- a colon or equal sign, because programs typically require
-                -- flags and args like "--foo=" or "foo=" to have no space after
-                -- the ":" or "=" symbol.
-                m.suppressappend = true
+            if descs then
+                local d = descs[key]
+                if type(d) ~= "table" then
+                    m.description = m.description or d
+                else
+                    if #d > 1 then
+                        m.display = m.display or d[1]
+                        m.description = m.description or d[2]
+                        m.appenddisplay = true
+                    else
+                        m.description = m.description or d[1]
+                    end
+                end
+                if is_arg_type and m.match:match("[:=]$") then
+                    -- Do not append a space after an arg type match that ends with
+                    -- a colon or equal sign, because programs typically require
+                    -- flags and args like "--foo=" or "foo=" to have no space after
+                    -- the ":" or "=" symbol.
+                    m.suppressappend = true
+                end
             end
             return m
         end
@@ -864,8 +880,19 @@ function _argmatcher:_generate(line_state, match_builder, extra_words)
 
                 apply_options_to_builder(reader, j, match_builder)
                 match_builder:addmatches(j, match_type)
-            elseif not hidden or not hidden[i] then
-                match_builder:addmatch(make_match(i), match_type)
+            elseif t == "string" or t == "number" then
+                i = tostring(i)
+                if not hidden or not hidden[i] then
+                    match_builder:addmatch(make_match(i), match_type)
+                end
+            elseif t == "table" then
+                if i.match ~= nil then
+                    if not hidden or not hidden[i.match] then
+                        match_builder:addmatch(make_match(i), match_type)
+                    end
+                else
+                    add_matches(i, match_type)
+                end
             end
         end
 
