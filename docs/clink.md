@@ -997,13 +997,13 @@ end
 
 ## Argument Completion
 
-Clink provides a framework for writing complex argument match generators in Lua.  It works by creating a parser object that describes a command's arguments and flags and then registering the parser with Clink. When Clink detects the command is being entered on the current command line being edited, it uses the parser to generate matches.
+Clink provides a framework for writing complex argument match generators in Lua.  It works by creating a parser object that describes a command's arguments and flags and associating the parser with one or more commands.  When Clink detects a parser is associated with the command being edited, it uses the parser to generate matches.
 
 Here is an example of a simple parser for the command `foobar`;
 
 ```lua
 clink.argmatcher("foobar")
-:addflags("-foo", "-bar")
+:addflags("-foo", "-bar")          -- Flags
 :addarg({ "hello", "hi" })         -- Completions for arg #1
 :addarg({ "world", "wombles" })    -- Completions for arg #2
 ```
