@@ -1004,10 +1004,8 @@ Here is an example of a simple parser for the command `foobar`;
 ```lua
 clink.argmatcher("foobar")
 :addflags("-foo", "-bar")
-:addarg(
-    { "hello", "hi" },      -- Completions for arg #1
-    { "world", "wombles" }  -- Completions for arg #2
-)
+:addarg({ "hello", "hi" })         -- Completions for arg #1
+:addarg({ "world", "wombles" })    -- Completions for arg #2
 ```
 
 This parser describes a command that has two positional arguments each with two potential options. It also has two flags which the parser considers to be position independent meaning that provided the word being completed starts with a certain prefix the parser with attempt to match the from the set of flags.
