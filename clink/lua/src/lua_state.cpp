@@ -265,11 +265,22 @@ bool lua_state::do_string(const char* string, int length)
     if (length < 0)
         length = int(strlen(string));
 
-    bool ok = !luaL_loadbuffer(m_state, string, length, string);
-    if (ok)
-        ok = !pcall(0, LUA_MULTRET);
+    int err = luaL_loadbuffer(m_state, string, length, string);
+    if (err)
+    {
+        if (g_lua_debug.get())
+        {
+            if (const char* error = lua_tostring(m_state, -1))
+                puts(error);
+        }
+        return false;
+    }
 
-    return ok;
+    err = pcall(0, LUA_MULTRET);
+    if (err)
+        return false;
+
+    return true;
 }
 
 //------------------------------------------------------------------------------
@@ -277,11 +288,22 @@ bool lua_state::do_file(const char* path)
 {
     save_stack_top ss(m_state);
 
-    bool ok = !luaL_loadfile(m_state, path);
-    if (ok)
-        ok = !pcall(0, LUA_MULTRET);
+    int err = luaL_loadfile(m_state, path);
+    if (err)
+    {
+        if (g_lua_debug.get())
+        {
+            if (const char* error = lua_tostring(m_state, -1))
+                puts(error);
+        }
+        return false;
+    }
 
-    return ok;
+    err = pcall(0, LUA_MULTRET);
+    if (err)
+        return false;
+
+    return true;
 }
 
 //------------------------------------------------------------------------------
