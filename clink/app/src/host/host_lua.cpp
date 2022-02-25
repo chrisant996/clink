@@ -13,6 +13,7 @@
 #include <core/str_transform.h>
 #include <core/str_unordered_set.h>
 #include <core/settings.h>
+#include <core/log.h>
 
 #include <vector>
 
@@ -81,6 +82,10 @@ bool host_lua::load_scripts(const char* paths)
     if (paths == nullptr || paths[0] == '\0')
         return false;
 
+    os::high_resolution_clock clock;
+    unsigned num_loaded = 0;
+    unsigned num_failed = 0;
+
     bool first = true;
 
     std::vector<wstr_moveable> seen_strings;
@@ -105,7 +110,12 @@ bool host_lua::load_scripts(const char* paths)
             str<280> clink;
             if (path::join(token.c_str(), "clink.lua", clink) &&
                 os::get_path_type(clink.c_str()) == os::path_type_file)
-                m_state.do_file(clink.c_str());
+            {
+                if (m_state.do_file(clink.c_str()))
+                    num_loaded++;
+                else
+                    num_failed++;
+            }
         }
 
         // Load a given directory only once.
@@ -119,13 +129,19 @@ bool host_lua::load_scripts(const char* paths)
         seen.emplace(out.c_str());
         seen_strings.emplace_back(std::move(out));
 
-        load_script(token.c_str());
+        load_script(token.c_str(), num_loaded, num_failed);
     }
+
+    if (num_failed)
+        LOG("Loaded %u Lua scripts in %u ms (%u failed)", num_loaded, unsigned(clock.elapsed() * 1000), num_failed);
+    else
+        LOG("Loaded %u Lua scripts in %u ms", num_loaded, unsigned(clock.elapsed() * 1000));
+
     return true;
 }
 
 //------------------------------------------------------------------------------
-void host_lua::load_script(const char* path)
+void host_lua::load_script(const char* path, unsigned& num_loaded, unsigned& num_failed)
 {
     str_moveable buffer;
     path::join(path, "*.lua", buffer);
@@ -137,7 +153,12 @@ void host_lua::load_script(const char* path)
     {
         const char* s = path::get_name(buffer.c_str());
         if (stricmp(s, "clink.lua") != 0)
-            m_state.do_file(buffer.c_str());
+        {
+            if (m_state.do_file(buffer.c_str()))
+                num_loaded++;
+            else
+                num_failed++;
+        }
     }
 }
 

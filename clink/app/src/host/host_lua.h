@@ -35,7 +35,7 @@ public:
 
 private:
     bool                load_scripts(const char* paths);
-    void                load_script(const char* path);
+    void                load_script(const char* path, unsigned& num_loaded, unsigned& num_failed);
     lua_state           m_state;
     lua_match_generator m_generator;
     lua_word_classifier m_classifier;

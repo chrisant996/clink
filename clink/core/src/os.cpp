@@ -24,6 +24,10 @@ extern "C" void __cdecl __acrt_errno_map_os_error(unsigned long const oserrno)
 #endif
 
 //------------------------------------------------------------------------------
+// Start the clock for os::clock() at global scope initialization.
+static const os::high_resolution_clock s_clock;
+
+//------------------------------------------------------------------------------
 // We use UTF8 everywhere, and we need to tell the CRT so that mbrtowc and etc
 // use UTF8 instead of the default CRT pseudo-locale.
 class auto_set_locale_utf8
@@ -87,52 +91,45 @@ DWORD delay_load_mpr::WNetGetConnectionW(LPCWSTR lpLocalName, LPWSTR lpRemoteNam
 
 
 
-//------------------------------------------------------------------------------
-static const struct high_resolution_clock
-{
-    high_resolution_clock()
-    {
-        LARGE_INTEGER freq;
-        LARGE_INTEGER start;
-        if (QueryPerformanceFrequency(&freq) &&
-            QueryPerformanceCounter(&start) &&
-            freq.QuadPart)
-        {
-            m_freq = double(freq.QuadPart);
-            m_start = start.QuadPart;
-        }
-        else
-        {
-            m_freq = 0;
-            m_start = 0;
-        }
-    }
-
-    double elapsed() const
-    {
-        if (!m_freq)
-            return -1;
-
-        LARGE_INTEGER current;
-        if (!QueryPerformanceCounter(&current))
-            return -1;
-
-        const long long delta = current.QuadPart - m_start;
-        if (delta < 0)
-            return -1;
-
-        const double result = double(delta) / m_freq;
-        return result;
-    }
-
-    double m_freq;
-    long long m_start;
-} s_clock;
-
-
-
 namespace os
 {
+
+//------------------------------------------------------------------------------
+os::high_resolution_clock::high_resolution_clock()
+{
+    LARGE_INTEGER freq;
+    LARGE_INTEGER start;
+    if (QueryPerformanceFrequency(&freq) &&
+        QueryPerformanceCounter(&start) &&
+        freq.QuadPart)
+    {
+        m_freq = double(freq.QuadPart);
+        m_start = start.QuadPart;
+    }
+    else
+    {
+        m_freq = 0;
+        m_start = 0;
+    }
+}
+
+//------------------------------------------------------------------------------
+double os::high_resolution_clock::elapsed() const
+{
+    if (!m_freq)
+        return -1;
+
+    LARGE_INTEGER current;
+    if (!QueryPerformanceCounter(&current))
+        return -1;
+
+    const long long delta = current.QuadPart - m_start;
+    if (delta < 0)
+        return -1;
+
+    const double result = double(delta) / m_freq;
+    return result;
+}
 
 //------------------------------------------------------------------------------
 void map_errno() { __acrt_errno_map_os_error(GetLastError()); }

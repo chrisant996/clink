@@ -46,6 +46,16 @@ enum argv_quote_mode {
 
 DEFINE_ENUM_FLAG_OPERATORS(temp_file_mode);
 
+class high_resolution_clock
+{
+public:
+                high_resolution_clock();
+    double      elapsed() const;
+private:
+    double      m_freq;
+    long long   m_start;
+};
+
 int     get_path_type(const char* path);
 int     get_drive_type(const char* path, unsigned int len=-1);
 int     get_file_size(const char* path);
