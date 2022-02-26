@@ -1,30 +1,38 @@
+html {
+	background-color: #F8F8F8 ;
+}
+
 body {
+	border: solid #a0a0a0 1px ;
+	border-radius: 20px ;
+	padding: 26px ;
+	margin: 16px ;
 	color: #000000 ;
 	background-color: #FFFFFF ;
 	font-family: Helvetica, Arial, sans-serif ;
 	text-align: justify ;
-	margin-right: 20px ;
-	margin-left: 20px ;
+	line-height: 1.25 ;
 }
 
 h1, h2, h3, h4 {
 	font-family: Verdana, Geneva, sans-serif ;
 	font-weight: normal ;
-	font-style: italic ;
+	font-style: normal ;
 }
 
 h2 {
 	padding-top: 0.4em ;
 	padding-bottom: 0.4em ;
-	padding-left: 20px ;
-	padding-right: 20px ;
-	margin-left: -20px ;
-	background-color: #E0E0FF ;
+	padding-left: 0.8em ;
+	padding-right: 0.8em ;
+	background-color: #D0D0FF ;
+	border-radius: 8px ;
+	border: solid #a0a0a0 1px ;
 }
 
 h3 {
 	padding-left: 0.5em ;
-	border-left: solid #E0E0FF 1em ;
+	border-left: solid #D0D0FF 1em ;
 }
 
 table h3 {
@@ -45,11 +53,16 @@ a:visited {
 
 a:link:hover, a:visited:hover {
 	color: #000080 ;
-	background-color: #E0E0FF ;
+	background-color: #D0D0FF ;
+	border-radius: 4px ;
 }
 
 a:link:active, a:visited:active {
 	color: #FF0000 ;
+}
+
+h1 a img {
+	vertical-align: text-bottom ;
 }
 
 hr {
@@ -57,27 +70,37 @@ hr {
 	height: 1px ;
 	color: #a0a0a0 ;
 	background-color: #a0a0a0 ;
+	display: none ;
+}
+
+table hr {
+	display: block ;
 }
 
 :target {
 	background-color: #F8F8F8 ;
 	padding: 8px ;
 	border: solid #a0a0a0 2px ;
+	border-radius: 8px ;
 }
 
 .footer {
 	color: gray ;
-	font-size: small ;
+	font-size: x-small ;
 }
 
 input[type=text] {
 	border: solid #a0a0a0 2px ;
 	border-radius: 2em ;
-	-moz-border-radius: 2em ;
 	background-image: url('images/search.png') ;
-	background-repeat: no-repeat;
+	background-repeat: no-repeat ;
 	background-position: 4px center ;
 	padding-left: 20px ;
 	height: 2em ;
 }
 
+pre.session {
+	background-color: #F8F8F8 ;
+	padding: 1em ;
+	border-radius: 8px ;
+}

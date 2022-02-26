@@ -1,5 +1,5 @@
 /*
-** $Id: ldebug.c,v 2.88 2011/11/30 12:43:51 roberto Exp $
+** $Id: ldebug.c,v 2.90.1.4 2015/02/19 17:05:13 roberto Exp $
 ** Debug Interface
 ** See Copyright Notice in lua.h
 */
@@ -30,6 +30,9 @@
 
 
 
+#define noLuaClosure(f)		((f) == NULL || (f)->c.tt == LUA_TCCL)
+
+
 static const char *getfuncname (lua_State *L, CallInfo *ci, const char **name);
 
 
@@ -41,6 +44,16 @@ static int currentpc (CallInfo *ci) {
 
 static int currentline (CallInfo *ci) {
   return getfuncline(ci_func(ci)->p, currentpc(ci));
+}
+
+
+static void swapextra (lua_State *L) {
+  if (L->status == LUA_YIELD) {
+    CallInfo *ci = L->ci;  /* get function that yielded */
+    StkId temp = ci->func;  /* exchange its 'func' and 'extra' values */
+    ci->func = restorestack(L, ci->extra);
+    ci->extra = savestack(L, temp);
+  }
 }
 
 
@@ -141,6 +154,7 @@ static const char *findlocal (lua_State *L, CallInfo *ci, int n,
 LUA_API const char *lua_getlocal (lua_State *L, const lua_Debug *ar, int n) {
   const char *name;
   lua_lock(L);
+  swapextra(L);
   if (ar == NULL) {  /* information about non-active function? */
     if (!isLfunction(L->top - 1))  /* not a Lua function? */
       name = NULL;
@@ -155,6 +169,7 @@ LUA_API const char *lua_getlocal (lua_State *L, const lua_Debug *ar, int n) {
       api_incr_top(L);
     }
   }
+  swapextra(L);
   lua_unlock(L);
   return name;
 }
@@ -162,18 +177,21 @@ LUA_API const char *lua_getlocal (lua_State *L, const lua_Debug *ar, int n) {
 
 LUA_API const char *lua_setlocal (lua_State *L, const lua_Debug *ar, int n) {
   StkId pos = 0;  /* to avoid warnings */
-  const char *name = findlocal(L, ar->i_ci, n, &pos);
+  const char *name;
   lua_lock(L);
+  swapextra(L);
+  name = findlocal(L, ar->i_ci, n, &pos);
   if (name)
     setobjs2s(L, pos, L->top - 1);
   L->top--;  /* pop value */
+  swapextra(L);
   lua_unlock(L);
   return name;
 }
 
 
 static void funcinfo (lua_Debug *ar, Closure *cl) {
-  if (cl == NULL || cl->c.isC) {
+  if (noLuaClosure(cl)) {
     ar->source = "=[C]";
     ar->linedefined = -1;
     ar->lastlinedefined = -1;
@@ -191,9 +209,9 @@ static void funcinfo (lua_Debug *ar, Closure *cl) {
 
 
 static void collectvalidlines (lua_State *L, Closure *f) {
-  if (f == NULL || f->c.isC) {
+  if (noLuaClosure(f)) {
     setnilvalue(L->top);
-    incr_top(L);
+    api_incr_top(L);
   }
   else {
     int i;
@@ -201,7 +219,7 @@ static void collectvalidlines (lua_State *L, Closure *f) {
     int *lineinfo = f->l.p->lineinfo;
     Table *t = luaH_new(L);  /* new table to store active lines */
     sethvalue(L, L->top, t);  /* push it on stack */
-    incr_top(L);
+    api_incr_top(L);
     setbvalue(&v, 1);  /* boolean 'true' to be the value of all indices */
     for (i = 0; i < f->l.p->sizelineinfo; i++)  /* for all lines with code */
       luaH_setint(L, t, lineinfo[i], &v);  /* table[line] = true */
@@ -210,7 +228,7 @@ static void collectvalidlines (lua_State *L, Closure *f) {
 
 
 static int auxgetinfo (lua_State *L, const char *what, lua_Debug *ar,
-                    Closure *f, CallInfo *ci) {
+                       Closure *f, CallInfo *ci) {
   int status = 1;
   for (; *what; what++) {
     switch (*what) {
@@ -224,7 +242,7 @@ static int auxgetinfo (lua_State *L, const char *what, lua_Debug *ar,
       }
       case 'u': {
         ar->nups = (f == NULL) ? 0 : f->c.nupvalues;
-        if (f == NULL || f->c.isC) {
+        if (noLuaClosure(f)) {
           ar->isvararg = 1;
           ar->nparams = 0;
         }
@@ -266,6 +284,7 @@ LUA_API int lua_getinfo (lua_State *L, const char *what, lua_Debug *ar) {
   CallInfo *ci;
   StkId func;
   lua_lock(L);
+  swapextra(L);
   if (*what == '>') {
     ci = NULL;
     func = L->top - 1;
@@ -282,8 +301,9 @@ LUA_API int lua_getinfo (lua_State *L, const char *what, lua_Debug *ar) {
   status = auxgetinfo(L, what, ar, cl, ci);
   if (strchr(what, 'f')) {
     setobjs2s(L, L->top, func);
-    incr_top(L);
+    api_incr_top(L);
   }
+  swapextra(L);
   if (strchr(what, 'L'))
     collectvalidlines(L, cl);
   lua_unlock(L);
@@ -324,12 +344,20 @@ static void kname (Proto *p, int pc, int c, const char **name) {
 }
 
 
+static int filterpc (int pc, int jmptarget) {
+  if (pc < jmptarget)  /* is code conditional (inside a jump)? */
+    return -1;  /* cannot know who sets that register */
+  else return pc;  /* current position sets that register */
+}
+
+
 /*
 ** try to find last instruction before 'lastpc' that modified register 'reg'
 */
 static int findsetreg (Proto *p, int lastpc, int reg) {
   int pc;
   int setreg = -1;  /* keep last instruction that changed 'reg' */
+  int jmptarget = 0;  /* any code before this address is conditional */
   for (pc = 0; pc < lastpc; pc++) {
     Instruction i = p->code[pc];
     OpCode op = GET_OPCODE(i);
@@ -338,33 +366,38 @@ static int findsetreg (Proto *p, int lastpc, int reg) {
       case OP_LOADNIL: {
         int b = GETARG_B(i);
         if (a <= reg && reg <= a + b)  /* set registers from 'a' to 'a+b' */
-          setreg = pc;
+          setreg = filterpc(pc, jmptarget);
         break;
       }
       case OP_TFORCALL: {
-        if (reg >= a + 2) setreg = pc;  /* affect all regs above its base */
+        if (reg >= a + 2)  /* affect all regs above its base */
+          setreg = filterpc(pc, jmptarget);
         break;
       }
       case OP_CALL:
       case OP_TAILCALL: {
-        if (reg >= a) setreg = pc;  /* affect all registers above base */
+        if (reg >= a)  /* affect all registers above base */
+          setreg = filterpc(pc, jmptarget);
         break;
       }
       case OP_JMP: {
         int b = GETARG_sBx(i);
         int dest = pc + 1 + b;
         /* jump is forward and do not skip `lastpc'? */
-        if (pc < dest && dest <= lastpc)
-          pc += b;  /* do the jump */
+        if (pc < dest && dest <= lastpc) {
+          if (dest > jmptarget)
+            jmptarget = dest;  /* update 'jmptarget' */
+        }
         break;
       }
       case OP_TEST: {
-        if (reg == a) setreg = pc;  /* jumped code can change 'a' */
+        if (reg == a)  /* jumped code can change 'a' */
+          setreg = filterpc(pc, jmptarget);
         break;
       }
       default:
         if (testAMode(op) && reg == a)  /* any instruction that set A */
-          setreg = pc;
+          setreg = filterpc(pc, jmptarget);
         break;
     }
   }
@@ -515,7 +548,7 @@ l_noret luaG_typeerror (lua_State *L, const TValue *o, const char *op) {
 
 l_noret luaG_concaterror (lua_State *L, StkId p1, StkId p2) {
   if (ttisstring(p1) || ttisnumber(p1)) p1 = p2;
-  lua_assert(!ttisstring(p1) && !ttisnumber(p2));
+  lua_assert(!ttisstring(p1) && !ttisnumber(p1));
   luaG_typeerror(L, p1, "concatenate");
 }
 
@@ -560,7 +593,7 @@ l_noret luaG_errormsg (lua_State *L) {
     if (!ttisfunction(errfunc)) luaD_throw(L, LUA_ERRERR);
     setobjs2s(L, L->top, L->top - 1);  /* move argument */
     setobjs2s(L, L->top - 1, errfunc);  /* push function */
-    incr_top(L);
+    L->top++;
     luaD_call(L, L->top - 2, 1, 0);  /* call it */
   }
   luaD_throw(L, LUA_ERRRUN);
