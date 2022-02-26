@@ -8,6 +8,7 @@
 - Added `match_builder:isempty()`.
 - Added mouse horizontal wheel support in `clink-select-complete`.
 - Loading Lua scripts now reports any syntax errors when the `lua.debug` setting is enabled.
+- Incorporate Lua 5.2.4 (minor patches to the Lua language).
 - Fixed when an argmatcher adds nested tables of matches using the new `{ match="abc" }` syntax, so that the nested matches are added recursively and properly suppress adding a space after argument matches that end with `:` or `=`.
 - Fixed when `match_builder:addmatch()` and `match_builder:addmatches()` add nested tables of matches using the new `{ match="abc" }` syntax, so that the nested matches are added recursively.
 - Fixed `remove-history` so that it updates the history offset correctly and subsequent editing operations affect the correct undo list.
