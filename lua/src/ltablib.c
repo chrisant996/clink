@@ -1,10 +1,11 @@
 /*
-** $Id: ltablib.c,v 1.63 2011/11/28 17:26:30 roberto Exp $
+** $Id: ltablib.c,v 1.65.1.2 2014/05/07 16:32:55 roberto Exp $
 ** Library for Table Manipulation
 ** See Copyright Notice in lua.h
 */
 
 
+#include <limits.h>
 #include <stddef.h>
 
 #define ltablib_c
@@ -16,8 +17,8 @@
 #include "lualib.h"
 
 
-#define aux_getn(L,n)  \
-	(luaL_checktype(L, n, LUA_TTABLE), luaL_len(L, n))
+#define aux_getn(L,n)	(luaL_checktype(L, n, LUA_TTABLE), luaL_len(L, n))
+
 
 
 #if defined(LUA_COMPAT_MAXN)
@@ -49,7 +50,7 @@ static int tinsert (lua_State *L) {
     case 3: {
       int i;
       pos = luaL_checkint(L, 2);  /* 2nd argument is the position */
-      if (pos > e) e = pos;  /* `grow' array if necessary */
+      luaL_argcheck(L, 1 <= pos && pos <= e, 2, "position out of bounds");
       for (i = e; i > pos; i--) {  /* move up elements */
         lua_rawgeti(L, 1, i-1);
         lua_rawseti(L, 1, i);  /* t[i] = t[i-1] */
@@ -66,17 +67,17 @@ static int tinsert (lua_State *L) {
 
 
 static int tremove (lua_State *L) {
-  int e = aux_getn(L, 1);
-  int pos = luaL_optint(L, 2, e);
-  if (!(1 <= pos && pos <= e))  /* position is outside bounds? */
-    return 0;  /* nothing to remove */
+  int size = aux_getn(L, 1);
+  int pos = luaL_optint(L, 2, size);
+  if (pos != size)  /* validate 'pos' if given */
+    luaL_argcheck(L, 1 <= pos && pos <= size + 1, 1, "position out of bounds");
   lua_rawgeti(L, 1, pos);  /* result = t[pos] */
-  for ( ;pos<e; pos++) {
+  for ( ; pos < size; pos++) {
     lua_rawgeti(L, 1, pos+1);
     lua_rawseti(L, 1, pos);  /* t[pos] = t[pos+1] */
   }
   lua_pushnil(L);
-  lua_rawseti(L, 1, e);  /* t[e] = nil */
+  lua_rawseti(L, 1, pos);  /* t[pos] = nil */
   return 1;
 }
 
@@ -134,13 +135,14 @@ static int pack (lua_State *L) {
 
 
 static int unpack (lua_State *L) {
-  int i, e, n;
+  int i, e;
+  unsigned int n;
   luaL_checktype(L, 1, LUA_TTABLE);
   i = luaL_optint(L, 2, 1);
   e = luaL_opt(L, luaL_checkint, 3, luaL_len(L, 1));
   if (i > e) return 0;  /* empty range */
-  n = e - i + 1;  /* number of elements */
-  if (n <= 0 || !lua_checkstack(L, n))  /* n <= 0 means arith. overflow */
+  n = (unsigned int)e - (unsigned int)i;  /* number of elements minus 1 */
+  if (n > (INT_MAX - 10) || !lua_checkstack(L, ++n))
     return luaL_error(L, "too many results to unpack");
   lua_rawgeti(L, 1, i);  /* push arg[i] (avoiding overflow problems) */
   while (i++ < e)  /* push arg[i + 1...e] */
