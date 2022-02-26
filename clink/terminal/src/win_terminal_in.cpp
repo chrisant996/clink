@@ -1095,12 +1095,14 @@ void win_terminal_in::process_input(MOUSE_EVENT_RECORD const& record)
     const bool right_click = !left_click && (!(prv & RIGHTMOST_BUTTON_PRESSED) && (btn & RIGHTMOST_BUTTON_PRESSED));
     const bool double_click = left_click && (record.dwEventFlags & DOUBLE_CLICK);
     const bool wheel = !left_click && !right_click && (record.dwEventFlags & MOUSE_WHEELED);
-    const bool drag = (btn & FROM_LEFT_1ST_BUTTON_PRESSED) && !left_click && !right_click && !wheel && (record.dwEventFlags & MOUSE_MOVED);
+    const bool hwheel = !left_click && !right_click && !wheel && (record.dwEventFlags & MOUSE_HWHEELED);
+    const bool drag = (btn & FROM_LEFT_1ST_BUTTON_PRESSED) && !left_click && !right_click && !wheel && !hwheel && (record.dwEventFlags & MOUSE_MOVED);
 
     const mouse_input_type mask = (left_click ? mouse_input_type::left_click :
                                    right_click ? mouse_input_type::right_click :
                                    double_click ? mouse_input_type::double_click :
                                    wheel ? mouse_input_type::wheel :
+                                   hwheel ? mouse_input_type::hwheel :
                                    drag ? mouse_input_type::drag :
                                    mouse_input_type::none);
 
@@ -1171,6 +1173,21 @@ void win_terminal_in::process_input(MOUSE_EVENT_RECORD const& record)
         if (direction < 0)
             direction = 0 - direction;
         tmp.format("\x1b[$%u%c", direction * int(wheel_scroll_lines), code);
+        push(tmp.c_str());
+        return;
+    }
+
+    // Mouse horizontal wheel.
+    if (hwheel)
+    {
+        int direction = (short(HIWORD(record.dwButtonState))) / 32;
+        UINT hwheel_distance = 1;
+
+        str<16> tmp;
+        const char code = (direction < 0 ? '<' : '>');
+        if (direction < 0)
+            direction = 0 - direction;
+        tmp.format("\x1b[$%u%c", direction * int(hwheel_distance), code);
         push(tmp.c_str());
         return;
     }

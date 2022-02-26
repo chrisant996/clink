@@ -42,7 +42,11 @@ int input_echo(int argc, char** argv)
     app_context::get()->get_default_settings_file(default_settings_file);
     settings::load(settings_file.c_str(), default_settings_file.c_str());
 
+#ifdef TEST_MOUSE_INPUT
+    console_config cc(nullptr, true);
+#else
     console_config cc;
+#endif
 
     terminal terminal = terminal_create();
     terminal_in& input = *terminal.in;

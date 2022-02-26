@@ -107,6 +107,8 @@ enum {
     bind_id_selectcomplete_doubleclick,
     bind_id_selectcomplete_wheelup,
     bind_id_selectcomplete_wheeldown,
+    bind_id_selectcomplete_wheelleft,
+    bind_id_selectcomplete_wheelright,
     bind_id_selectcomplete_drag,
     bind_id_selectcomplete_backspace,
     bind_id_selectcomplete_delete,
@@ -350,6 +352,8 @@ void selectcomplete_impl::bind_input(binder& binder)
     binder.bind(m_bind_group, "\\e[$*;*D", bind_id_selectcomplete_doubleclick, true/*has_params*/);
     binder.bind(m_bind_group, "\\e[$*A", bind_id_selectcomplete_wheelup, true/*has_params*/);
     binder.bind(m_bind_group, "\\e[$*B", bind_id_selectcomplete_wheeldown, true/*has_params*/);
+    binder.bind(m_bind_group, "\\e[$*<", bind_id_selectcomplete_wheelleft, true/*has_params*/);
+    binder.bind(m_bind_group, "\\e[$*>", bind_id_selectcomplete_wheelright, true/*has_params*/);
     binder.bind(m_bind_group, "\\e[$*;*M", bind_id_selectcomplete_drag, true/*has_params*/);
     binder.bind(m_bind_group, "^h", bind_id_selectcomplete_backspace);
     binder.bind(m_bind_group, "\\e[3~", bind_id_selectcomplete_delete);
@@ -509,11 +513,13 @@ arrow_next:
         }
 
     case bind_id_selectcomplete_left:
+    case bind_id_selectcomplete_wheelleft:
         if (_rl_print_completions_horizontally)
             goto arrow_prev;
         move_selection_lower(m_index, m_match_rows, m_match_cols, count);
         goto navigated;
     case bind_id_selectcomplete_right:
+    case bind_id_selectcomplete_wheelright:
         if (_rl_print_completions_horizontally)
             goto arrow_next;
         if (move_selection_higher(m_index, m_match_rows, m_match_cols, count, m_prev_latched))
@@ -1748,6 +1754,7 @@ bool selectcomplete_impl::accepts_mouse_input(mouse_input_type type) const
     case mouse_input_type::left_click:
     case mouse_input_type::double_click:
     case mouse_input_type::wheel:
+    case mouse_input_type::hwheel:
     case mouse_input_type::drag:
         return true;
     default:

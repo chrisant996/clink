@@ -13,6 +13,7 @@ enum class mouse_input_type : unsigned char
     right_click,
     double_click,
     wheel,
+    hwheel,
     drag,
 };
 
