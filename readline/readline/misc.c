@@ -804,11 +804,9 @@ rl_remove_history (int count, int key)
   else
     rl_get_previous_history (1, key);
 
+  if (old_where <= history_offset)
+    history_offset--;
   hist = remove_history (old_where);
-/* begin_clink_change */
-  //if (rl_remove_history_hook)
-  //  (*rl_remove_history_hook) (old_where, hist->line);
-/* end_clink_change */
   free_history_entry (hist);
 
   search_pos = rl_get_history_search_pos();
