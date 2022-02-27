@@ -162,5 +162,15 @@ int clink_info(int argc, char** argv)
         }
     }
 
+    str<> state_dir;
+    app_context::get()->get_state_dir(state_dir);
+    if (os::get_path_type(state_dir.c_str()) == os::path_type_file)
+    {
+        fprintf(stderr,
+                "warning: invalid profile directory '%s'.\n"
+                "The profile directory must be a directory, but it is a file.\n",
+                state_dir.c_str());
+    }
+
     return 0;
 }

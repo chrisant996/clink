@@ -49,4 +49,5 @@ private:
     void        init_binaries_dir();
     desc        m_desc;
     str<288>    m_binaries;
+    mutable str_moveable m_validated;
 };

@@ -14,6 +14,7 @@
 #include <core/str_compare.h>
 #include <core/str_tokeniser.h>
 #include <core/str_transform.h>
+#include <core/log.h>
 #include <core/debugheap.h>
 #include <core/callstack.h>
 #include <core/assert_improved.h>
@@ -559,16 +560,33 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out)
     {
         if (interactive)
         {
+            str<> tmp_errfile;
+            get_errorlevel_tmp_name(tmp_errfile);
+
             if (s_inspect_errorlevel)
             {
+                // Make sure the errorlevel tmp file can be written.  If not
+                // then skip interrogating it.  Otherwise a confusing error
+                // message may appear.  For example if the profile directory
+                // points at a file by mistake, or access is denied, or etc.
+                {
+                    wstr<> wtmp_errfile(tmp_errfile.c_str());
+                    DWORD share_flags = FILE_SHARE_READ|FILE_SHARE_WRITE;
+                    HANDLE errfile = CreateFileW(wtmp_errfile.c_str(), GENERIC_READ|GENERIC_WRITE,
+                                                 share_flags, nullptr, CREATE_ALWAYS, 0, nullptr);
+                    if (errfile == INVALID_HANDLE_VALUE)
+                    {
+                        ERR("Unable to create errorlevel tmp file '%s'", tmp_errfile.c_str());
+                        goto skip_errorlevel;
+                    }
+                    CloseHandle(errfile);
+                }
+
                 inspect_errorlevel = true;
                 interactive = false;
             }
             else
             {
-                str<> tmp_errfile;
-                get_errorlevel_tmp_name(tmp_errfile);
-
                 FILE* f = fopen(tmp_errfile.c_str(), "r");
                 if (f)
                 {
@@ -589,6 +607,7 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out)
     }
     else
     {
+skip_errorlevel:
         s_inspect_errorlevel = true;
     }
 

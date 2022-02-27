@@ -418,5 +418,17 @@ bool app_context::update_env() const
     get_binaries_dir(bin_dir);
     os::set_env("=clink.bin", bin_dir.c_str());
 
+    if (!m_desc.inherit_id && !m_validated.equals(m_desc.state_dir))
+    {
+        if (os::get_path_type(m_desc.state_dir) == os::path_type_file)
+        {
+            fprintf(stderr,
+                    "warning: invalid profile directory '%s'.\n"
+                    "The profile directory must be a directory, but it is a file.\n",
+                    m_desc.state_dir);
+        }
+        m_validated = m_desc.state_dir;
+    }
+
     return reset;
 }
