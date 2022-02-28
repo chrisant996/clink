@@ -101,9 +101,18 @@ int line_state_lua::get_cursor(lua_State* state)
 /// Returns the offset to the start of the delimited command in the line that's
 /// being effectively edited. Note that this may not be the offset of the first
 /// command of the line unquoted as whitespace isn't considered for words.
-/// -show:  -- Given the following line; abc& 123
+/// -show:  -- Given the following line; abc&123
 /// -show:  -- where commands are separated by & symbols.
-/// -show:  line_state:getcommandoffset() == 4
+/// -show:  line_state:getcommandoffset() == 5
+///
+/// The command offset points to the beginning of the command, but that might be
+/// a space character.  Two spaces after a command separator is like one space
+/// at the beginning of a line; it disables doskey alias expansion.  So, if the
+/// command offset points at a space, then you know the first word will not be
+/// treated as a doskey alias.
+/// -show:  -- Given the following line; abc&  123
+/// -show:  -- where commands are separated by & symbols.
+/// -show:  line_state:getcommandoffset() == 6
 int line_state_lua::get_command_offset(lua_State* state)
 {
     lua_pushinteger(state, m_line->get_command_offset() + 1);
