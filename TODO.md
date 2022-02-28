@@ -5,8 +5,15 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
+- Need a way to trigger reclassify input line.
 
 ## Normal Priority
+- Re: [#101](https://github.com/chrisant996/clink/issues/101); mechanism to dynamically extend or reset an argmatcher.
+  - Allow an argmatcher to dynamically extend or reset itself.
+  - Support match generation.
+  - Support input line coloring.
+    - Use a coroutine so that the argmatcher can extend itself while the user is typing, without making typing non-responsive.
+  - **_May need to hook up merging argmatchers again!_**
 
 ## Follow Up
 - Readline command reference.
