@@ -858,13 +858,6 @@ function _argmatcher:_generate(line_state, match_builder, extra_words)
                         m.description = m.description or d[1]
                     end
                 end
-                if is_arg_type and m.match:match("[:=]$") then
-                    -- Do not append a space after an arg type match that ends with
-                    -- a colon or equal sign, because programs typically require
-                    -- flags and args like "--foo=" or "foo=" to have no space after
-                    -- the ":" or "=" symbol.
-                    m.suppressappend = true
-                end
             end
             return m
         end

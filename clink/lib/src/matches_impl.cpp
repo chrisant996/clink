@@ -216,6 +216,20 @@ match_desc::match_desc(const char* match, const char* display, const char* descr
     append_char = 0;
     suppress_append = -1;
     append_display = false;
+
+    // Do not append a space after an arg type match that ends with a colon or
+    // equal sign, because programs typically require flags and args like
+    // "--foo=" or "foo=" to have no space after the ":" or "=" symbol.
+    if (match && is_match_type(type, match_type::arg))
+    {
+        const size_t len = strlen(match);
+        if (len)
+        {
+            const char c = match[len - 1];
+            if (c == ':' || c == '=')
+                suppress_append = true;
+        }
+    }
 }
 
 

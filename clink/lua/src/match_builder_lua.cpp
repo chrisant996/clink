@@ -313,21 +313,23 @@ bool match_builder_lua::add_match_impl(lua_State* state, int stack_index, match_
         if (stack_index < 0)
             --stack_index;
 
-        match_desc desc(nullptr, nullptr, nullptr, type);
+        const char* match = nullptr;
 
         lua_pushliteral(state, "match");
         lua_rawget(state, stack_index);
         if (lua_isstring(state, -1))
-            desc.match = lua_tostring(state, -1);
+            match = lua_tostring(state, -1);
         lua_pop(state, 1);
 
-        if (desc.match)
+        if (match)
         {
             lua_pushliteral(state, "type");
             lua_rawget(state, stack_index);
             if (lua_isstring(state, -1))
-                desc.type = to_match_type(lua_tostring(state, -1));
+                type = to_match_type(lua_tostring(state, -1));
             lua_pop(state, 1);
+
+            match_desc desc(match, nullptr, nullptr, type);
 
             lua_pushliteral(state, "display");
             lua_rawget(state, stack_index);
