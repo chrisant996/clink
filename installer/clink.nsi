@@ -40,6 +40,10 @@ RequestExecutionLevel   admin
 XPStyle                 on
 
 ;-------------------------------------------------------------------------------
+!insertmacro GetParameters
+!insertmacro GetOptions
+
+;-------------------------------------------------------------------------------
 !define MUI_COMPONENTSPAGE_SMALLDESC
 
 !define MUI_UI_COMPONENTSPAGE_SMALLDESC "${CLINK_SOURCE}\installer\modern_mediumdesc.exe"
@@ -55,6 +59,8 @@ XPStyle                 on
 
 !insertmacro MUI_LANGUAGE "English"
 
+;-------------------------------------------------------------------------------
+Var noEnhance
 Var uninstallerExe
 
 ;-------------------------------------------------------------------------------
@@ -192,7 +198,7 @@ Section "Set %CLINK_DIR% to install location" section_clink_dir
 SectionEnd
 
 ;-------------------------------------------------------------------------------
-Section /o "Autorun when cmd.exe starts" section_autorun
+Section "Autorun when cmd.exe starts" section_autorun
     SetShellVarContext all
 
     StrCpy $0 "~\clink"
@@ -228,6 +234,14 @@ SectionEnd
 
 ;-------------------------------------------------------------------------------
 Function .onInit
+    ; Check command line options.
+    ${GetParameters} $1
+    ClearErrors
+    ${GetOptions} $1 '/?' $0
+    IfErrors +3 0
+        MessageBox MB_OK "/?\tShow this help.\n/noEnhance\tUncheck 'Use enhanced default settings'."
+        Abort
+
     ; Apply remembered installation directory.
     ReadRegStr $0 HKLM Software\Clink InstallDir
     StrCmp $0 "" LEmptyInstallDir 0
@@ -235,9 +249,14 @@ Function .onInit
     LEmptyInstallDir:
 
     ; Apply remembered selection state for enhanced default settings section.
-    ReadRegDWORD $0 HKLM Software\Clink EnhancedDefaultSettings
-    StrCmp $0 "0" 0 LEnhancedDefaultSettings
-        SectionSetFlags ${section_enhance} 0
+    SectionSetFlags ${section_enhance} 0
+    ClearErrors
+    ${GetOptions} $1 '/noEnhance' $0
+    IfErrors 0 LEnhancedDefaultSettings
+        ReadRegDWORD $0 HKLM Software\Clink EnhancedDefaultSettings
+        SectionSetFlags ${section_enhance} ${SF_SELECTED}
+        StrCmp $0 "0" 0 LEnhancedDefaultSettings
+            SectionSetFlags ${section_enhance} 0
     LEnhancedDefaultSettings:
 
     ; Apply remembered selection state for shortcuts section.
@@ -248,8 +267,8 @@ Function .onInit
 
     ; Apply remembered selection state for autorun section.
     ReadRegDWORD $0 HKLM Software\Clink UseAutoRun
-    StrCmp $0 "1" 0 LUseAutoRun
-        SectionSetFlags ${section_autorun} ${SF_SELECTED}
+    StrCmp $0 "0" 0 LUseAutoRun
+        SectionSetFlags ${section_autorun} 0
     LUseAutoRun:
 
     ; Apply remembered selection state for CLINK_DIR section.
