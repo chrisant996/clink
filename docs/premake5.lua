@@ -320,6 +320,6 @@ end
 --------------------------------------------------------------------------------
 newaction {
     trigger = "docs",
-    description = "Generate Clink's documentation.",
+    description = "Clink: Generate Clink's documentation",
     execute = do_docs,
 }

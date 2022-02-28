@@ -124,7 +124,7 @@ end
 --------------------------------------------------------------------------------
 newaction {
     trigger = "embed",
-    description = "Update embedded scripts for Clink",
+    description = "Clink: Update embedded scripts for Clink",
     execute = function ()
         do_embed()
     end

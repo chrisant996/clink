@@ -127,7 +127,7 @@ end
 --------------------------------------------------------------------------------
 newaction {
     trigger = "nsis",
-    description = "Creates a (debug) installer for Clink.",
+    description = "Clink: Creates a (debug) installer for Clink",
     execute = function()
         local premake = _PREMAKE_COMMAND
         local root_dir = path.getabsolute(".build/vs2019/bin").."/"
@@ -230,7 +230,7 @@ newaction {
 --------------------------------------------------------------------------------
 newaction {
     trigger = "release",
-    description = "Creates a release of Clink.",
+    description = "Clink: Creates a release of Clink",
     execute = function ()
         local premake = _PREMAKE_COMMAND
         local root_dir = path.getabsolute(".build/release").."/"
@@ -399,19 +399,19 @@ newaction {
 newoption {
    trigger     = "vsver",
    value       = "VER",
-   description = "Version of Visual Studio to build release with"
+   description = "Clink: Version of Visual Studio to build release with"
 }
 
 --------------------------------------------------------------------------------
 newoption {
    trigger     = "docver",
    value       = "DOCVER",
-   description = "Clink version to inject in documentation"
+   description = "Clink: Clink version to inject in documentation"
 }
 
 --------------------------------------------------------------------------------
 newoption {
    trigger     = "commit",
    value       = "SPEC",
-   description = "Git commit/tag to build Clink release from"
+   description = "Clink: Git commit/tag to build Clink release from"
 }
