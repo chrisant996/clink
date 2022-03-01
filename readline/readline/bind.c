@@ -2619,7 +2619,7 @@ _rl_get_keyname (int key)
 /* begin_clink_change */
   /* The modern encoding is UTF8, not ISO Latin 1.  Print octal escape
      sequences so the output is valid UTF8.  This changes C. */
-  else if (c >= 160)
+  else if (c >= 160 && c <= 255)
     {
       keyname[i++] = '\\';
       keyname[i++] = '0' + ((((unsigned char)c) >> 6) & 0x07);
