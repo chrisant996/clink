@@ -16,6 +16,7 @@
 - Fixed when `match_builder:addmatch()` and `match_builder:addmatches()` add nested tables of matches using the new `{ match="abc" }` syntax, so that the nested matches are added recursively.
 - Fixed when `match_builder:addmatch()` and `match_builder:addmatches()` add an `"arg"` match type, so that they automatically suppress appending a space after matches that end with `:` or `=` (the behavior was documented, but did not work correctly).
 - Fixed `remove-history` so that it updates the history offset correctly and subsequent editing operations affect the correct undo list.
+- Fixed obscure issues in how certain key binding patterns were reported by `clink-show-help` and `dump-functions`.
 - Fixed [#244](https://github.com/chrisant996/clink/issues/244); installer did not detect previous installation directory (regression introduced in v1.3.5; the fix takes effect on the next install _after_ an install with the fix).
 
 #### v1.3.8
