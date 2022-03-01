@@ -12,6 +12,7 @@
 #include <core/base.h>
 #include <core/str.h>
 #include <core/str_iter.h>
+#include <core/str_hash.h>
 #include <core/settings.h>
 
 #ifdef DEBUG
@@ -19,7 +20,7 @@
 #endif
 
 #include <assert.h>
-#include <map>
+#include <unordered_map>
 
 //------------------------------------------------------------------------------
 setting_bool g_terminal_raw_esc(
@@ -229,12 +230,24 @@ struct keyseq_name : public no_copy
 //------------------------------------------------------------------------------
 struct keyseq_key : public no_copy
 {
-    keyseq_key(const char* p, bool find = false) { this->s = p; this->find = find; }
-    keyseq_key(keyseq_key&& a) { s = a.s; find = a.find; a.s = nullptr; }
-    keyseq_key& operator=(keyseq_key&& a) { s = a.s; find = a.find; a.s = nullptr; return *this; }
+    keyseq_key(const char* p, unsigned int find_len=0) { this->s = p; this->find_len = find_len; }
+    keyseq_key(keyseq_key&& a) { s = a.s; find_len = a.find_len; a.s = nullptr; }
+    keyseq_key& operator=(keyseq_key&& a) { s = a.s; find_len = a.find_len; a.s = nullptr; return *this; }
 
     const char* s;
-    bool find;
+    unsigned int find_len;
+};
+
+//------------------------------------------------------------------------------
+struct keyseq_hasher
+{
+    size_t operator()(const keyseq_key& lookup) const
+    {
+        unsigned int find_len = lookup.find_len;
+        if (!find_len)
+            find_len = static_cast<unsigned int>(strlen(lookup.s));
+        return str_hash(lookup.s, find_len);
+    }
 };
 
 //------------------------------------------------------------------------------
@@ -242,26 +255,28 @@ struct map_cmp_str
 {
     bool operator()(keyseq_key const& a, keyseq_key const& b) const
     {
-        if (a.find)
+        if (a.find_len)
         {
-            assert(!b.find);
+            assert(!b.find_len);
             const char* bs = b.s;
-            for (const char* as = a.s; *as; as++, bs++)
+            unsigned int len = a.find_len;
+            for (const char* as = a.s; len--; as++, bs++)
             {
                 int cmp = int((unsigned char)*as) - int((unsigned char)*bs);
                 if (cmp)
-                    return cmp < 0;
+                    return false;
             }
         }
-        else if (b.find)
+        else if (b.find_len)
         {
-            assert(!a.find);
+            assert(!a.find_len);
             const char* as = a.s;
-            for (const char* bs = b.s; *bs; as++, bs++)
+            unsigned int len = b.find_len;
+            for (const char* bs = b.s; len--; as++, bs++)
             {
                 int cmp = int((unsigned char)*as) - int((unsigned char)*bs);
                 if (cmp)
-                    return cmp < 0;
+                    return false;
             }
         }
         else
@@ -271,16 +286,18 @@ struct map_cmp_str
             while (true)
             {
                 int cmp = int((unsigned char)*as) - int((unsigned char)*bs);
-                if (cmp || !*as)
-                    return cmp < 0;
+                if (cmp)
+                    return false;
+                if (!*as)
+                    break;
                 as++;
                 bs++;
             }
         }
-        return false;
+        return true;
     }
 };
-static std::map<keyseq_key, keyseq_name, map_cmp_str> map_keyseq_to_name;
+static std::unordered_map<keyseq_key, keyseq_name, keyseq_hasher, map_cmp_str> map_keyseq_to_name;
 static char map_keyseq_differentiate = -1;
 static int map_default_bindings = -1;
 
@@ -415,16 +432,20 @@ const char* find_key_name(const char* keyseq, int& len, int& eqclass, int& order
     if (!keyseq || !*keyseq)
         return nullptr;
 
-    // Look up the sequence in the special key names map.
+    // Look up the sequence in the special key names map.  Finds the longest
+    // matching key name (in case of non-unique names existing).
     ensure_keyseqs_to_names();
-    keyseq_key lookup(keyseq, true/*find*/);
-    auto const& iter = map_keyseq_to_name.find(lookup);
-    if (iter != map_keyseq_to_name.end())
+    for (unsigned int find_len = min<unsigned int>(16, static_cast<unsigned int>(strlen(keyseq))); find_len; --find_len)
     {
-        len = (int)strlen(iter->first.s);
-        eqclass = iter->second.eq;
-        order = iter->second.o - (int)map_keyseq_to_name.size();
-        return iter->second.s;
+        keyseq_key lookup(keyseq, find_len);
+        auto const& iter = map_keyseq_to_name.find(lookup);
+        if (iter != map_keyseq_to_name.end())
+        {
+            len = (int)strlen(iter->first.s);
+            eqclass = iter->second.eq;
+            order = iter->second.o - (int)map_keyseq_to_name.size();
+            return iter->second.s;
+        }
     }
 
     // Try to deduce the name if it's an extended XTerm key sequence.
