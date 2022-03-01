@@ -55,7 +55,7 @@ extern setting_enum g_default_bindings;
 extern "C" void reset_wcwidths();
 extern "C" int is_locked_cursor();
 extern HANDLE get_recognizer_event();
-extern void host_reclassify();
+extern void host_refresh_recognizer();
 
 //------------------------------------------------------------------------------
 static const int CTRL_PRESSED = LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED;
@@ -678,7 +678,7 @@ void win_terminal_in::read_console(input_idle* callback)
             }
 
             if (waited == recognizer_waited)
-                host_reclassify();
+                host_refresh_recognizer();
             else
                 callback->on_idle();
 

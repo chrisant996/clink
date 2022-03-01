@@ -9,6 +9,7 @@
 #include "match_pipeline.h"
 #include "pager.h"
 #include "host_callbacks.h"
+#include "reclassify.h"
 
 #include <core/base.h>
 #include <core/os.h>
@@ -949,9 +950,11 @@ void line_editor_impl::classify()
 }
 
 //------------------------------------------------------------------------------
-void line_editor_impl::reclassify()
+void line_editor_impl::reclassify(reclassify_reason why)
 {
-    if (check_recognizer_refresh())
+    // Test check_recognizer_refresh() first, to ensure its side effects occur
+    // when necessary.
+    if (check_recognizer_refresh() || why == reclassify_reason::force)
     {
         m_prev_classify.clear();
         m_buffer.set_need_draw();
@@ -960,10 +963,17 @@ void line_editor_impl::reclassify()
 }
 
 //------------------------------------------------------------------------------
-void host_reclassify()
+void host_reclassify(reclassify_reason why)
 {
     if (s_editor)
-        s_editor->reclassify();
+        s_editor->reclassify(why);
+}
+
+//------------------------------------------------------------------------------
+void host_refresh_recognizer()
+{
+    if (s_editor)
+        s_editor->reclassify(reclassify_reason::recognizer);
 }
 
 //------------------------------------------------------------------------------

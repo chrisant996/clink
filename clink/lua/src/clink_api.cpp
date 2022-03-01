@@ -24,6 +24,7 @@
 #include <lib/popup.h>
 #include <lib/word_collector.h>
 #include <lib/cmd_tokenisers.h>
+#include <lib/reclassify.h>
 #include <terminal/terminal_helpers.h>
 #include <terminal/printer.h>
 #include <terminal/screen_buffer.h>
@@ -45,7 +46,6 @@ extern "C" {
 
 //------------------------------------------------------------------------------
 extern int force_reload_scripts();
-extern void host_reclassify();
 extern void host_mark_deprecated_argmatcher(const char* name);
 extern void set_suggestion(const char* line, unsigned int endword_offset, const char* suggestion, unsigned int offset);
 extern setting_bool g_gui_popups;
@@ -376,7 +376,7 @@ void recognizer::end_line()
             if (WaitForSingleObject(ready_event, DWORD(timeout)) != WAIT_OBJECT_0)
                 break;
 
-            host_reclassify();
+            host_reclassify(reclassify_reason::recognizer);
 
             std::lock_guard<std::recursive_mutex> lock(m_mutex);
             if (!m_processing || !usable())
@@ -384,7 +384,7 @@ void recognizer::end_line()
         }
     }
 
-    host_reclassify();
+    host_reclassify(reclassify_reason::recognizer);
 }
 
 //------------------------------------------------------------------------------
@@ -1202,6 +1202,16 @@ static int reload(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  clink.reclassifyline
+/// -ver:   1.3.9
+/// Reclassify the input line text again and refresh the input line display.
+static int reclassify_line(lua_State* state)
+{
+    host_reclassify(reclassify_reason::force);
+    return 0;
+}
+
+//------------------------------------------------------------------------------
 /// -name:  clink.refilterprompt
 /// -ver:   1.2.46
 /// Invoke the prompt filters again and refresh the prompt.
@@ -1485,6 +1495,8 @@ void clink_lua_initialise(lua_state& lua)
         { "getansihost",            &get_ansi_host },
         { "translateslashes",       &translate_slashes },
         { "reload",                 &reload },
+        { "reclassifyline",         &reclassify_line },
+        { "refilterprompt",         &refilter_prompt },
         // Backward compatibility with the Clink 0.4.8 API.  Clink 1.0.0a1 had
         // moved these APIs away from "clink.", but backward compatibility
         // requires them here as well.
@@ -1505,7 +1517,6 @@ void clink_lua_initialise(lua_state& lua)
         { "is_rl_variable_true",    &is_rl_variable_true },
         { "slash_translation",      &slash_translation },
         { "split",                  &explode },
-        { "refilterprompt",         &refilter_prompt },
         // UNDOCUMENTED; internal use only.
         { "istransientpromptfilter", &is_transient_prompt_filter },
         { "get_refilter_redisplay_count", &get_refilter_redisplay_count },
