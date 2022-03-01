@@ -398,7 +398,7 @@ static bool translate_keyseq(const char* keyseq, unsigned int len, char** key_na
         unsigned int comma_threshold = 0;
         for (unsigned int i = 0; i < len; i++)
         {
-            if (!i && len == 2 && keyseq[0] == 0x1b)
+            if (!i && len == 2 && keyseq[0] == 0x1b && keyseq[1] != 0x1b)
             {
                 comma_threshold++;
                 tmp << "\\M-";
