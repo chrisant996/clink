@@ -5,8 +5,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- [ ] Need a way to trigger reclassify input line.
 - [ ] `"qq": "QQ"` in `.inputrc`, and then type `qa` --> infinite loop.
+- [ ] `"\e["` is the sequence for <kbd>Alt</kbd>+<kbd>[</kbd>, which is ambiguous and falls into weird input states.
 
 ## Normal Priority
 - [ ] Re: [#101](https://github.com/chrisant996/clink/issues/101); mechanism to dynamically extend or reset an argmatcher.
@@ -15,7 +15,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - Support input line coloring.
     - Use a coroutine so that the argmatcher can extend itself while the user is typing, without making typing non-responsive.
   - **_May need to hook up merging argmatchers again!_**
-- [ ] `"\e["` is the sequence for <kbd>Alt</kbd>+<kbd>[</kbd>, which is ambiguous and falls into weird input states.
 - [ ] Make `clink-show-help` call out prefix key sequences, since they can behave in a confusing manner?
 
 ## Follow Up
