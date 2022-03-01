@@ -30,6 +30,7 @@ extern int complete_get_screenwidth(void);
 //------------------------------------------------------------------------------
 extern pager* g_pager;
 extern editor_module::result* g_result;
+extern setting_bool g_terminal_raw_esc;
 extern int ellipsify(const char* in, int limit, str_base& out, bool expand_ctrl);
 extern int read_key_direct(bool wait);
 
@@ -385,6 +386,8 @@ static bool translate_keyseq(const char* keyseq, unsigned int len, char** key_na
     int order = 0;
     sort = 0;
 
+    const bool raw_esc = g_terminal_raw_esc.get();
+
     // TODO: Produce identical sort order for both friend names and raw names?
 
     bool first_key = true;
@@ -467,13 +470,16 @@ static bool translate_keyseq(const char* keyseq, unsigned int len, char** key_na
                     if (need_comma > 0)
                         tmp.concat(",", 1);
                     need_comma = 0;
-                    tmp.concat("A-");
-                    eqclass |= 4;
-                    keyseq++;
-                    if (*keyseq >= 'A' && *keyseq <= 'Z')
+                    if (!raw_esc || keyseq[1] != '\x1b')
                     {
-                        tmp.concat("S-");
-                        eqclass |= 1;
+                        tmp.concat("A-");
+                        eqclass |= 4;
+                        keyseq++;
+                        if (*keyseq >= 'A' && *keyseq <= 'Z')
+                        {
+                            tmp.concat("S-");
+                            eqclass |= 1;
+                        }
                     }
                 }
                 if (*keyseq >= 0 && *keyseq < ' ')
