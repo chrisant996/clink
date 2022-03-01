@@ -567,10 +567,10 @@ static Keyentry* collect_keymap(
 
     ensure_keydesc_map();
 
-    for (i = 0; i < 256; ++i)
+    for (i = 0; i < KEYMAP_SIZE; ++i)
     {
-        bool prefix = false;
-        KEYMAP_ENTRY entry = map[i];
+        const bool prefix = (i == ANYOTHERKEY);
+        const KEYMAP_ENTRY& entry = map[i];
         if (entry.function == nullptr)
             continue;
 
@@ -581,11 +581,7 @@ static Keyentry* collect_keymap(
             concat_key_string(i, keyseq);
             collector = collect_keymap((Keymap)entry.function, collector, offset, max, keyseq, friendly, categories, warnings);
             keyseq.truncate(old_len);
-            if (!map[ANYOTHERKEY].function)
-                continue;
-            // Handle a key sequence that is a prefix of a longer key sequence.
-            entry = map[ANYOTHERKEY];
-            prefix = true;
+            continue;
         }
 
         // Add entry for a function or macro.
