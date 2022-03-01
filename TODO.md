@@ -5,15 +5,20 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- Need a way to trigger reclassify input line.
+- [ ] Need a way to trigger reclassify input line.
+- [ ] `"qq": "QQ"` in `.inputrc`, and then type `qa` --> infinite loop.
+- [ ] There may be a problem in Clink/Readline with respect to Readline's processing for `ANYOTHERKEY`.
 
 ## Normal Priority
-- Re: [#101](https://github.com/chrisant996/clink/issues/101); mechanism to dynamically extend or reset an argmatcher.
+- [ ] Re: [#101](https://github.com/chrisant996/clink/issues/101); mechanism to dynamically extend or reset an argmatcher.
   - Allow an argmatcher to dynamically extend or reset itself.
   - Support match generation.
   - Support input line coloring.
     - Use a coroutine so that the argmatcher can extend itself while the user is typing, without making typing non-responsive.
   - **_May need to hook up merging argmatchers again!_**
+- [ ] `"\e["` is the sequence for <kbd>Alt</kbd>+<kbd>[</kbd>, which is ambiguous and falls into weird input states.
+- [ ] Make `clink-show-help` call out prefix key sequences, since they can behave in a confusing manner?
+- [ ] Maybe deal with timeouts in keyboard input?  Could differentiate <kbd>Esc</kbd> versus <kbd>Esc</kbd>,<kbd>Esc</kbd> but is very dangerous because it makes input processing unpredictable depending on the CPU availability.
 
 ## Follow Up
 - Readline command reference.
