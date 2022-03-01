@@ -1140,6 +1140,13 @@ _rl_subseq_result (int r, Keymap map, int key, int got_subseq)
 	     Let's use this one.  Then we can dispatch using the original
 	     key, since there are commands (e.g., in vi mode) for which it
 	     matters. */
+/* begin_clink_change */
+	  /* Use a temporary variable; otherwise if a "show help" function
+	     is bound to a shadowed key, then the "show help" function
+	     will report this key inaccurately. */
+	  KEYMAP_ENTRY_ARRAY tmpmap;
+	  m = tmpmap;
+/* end_clink_change */
 	  nt = m[key].type;
 	  nf = m[key].function;
 
