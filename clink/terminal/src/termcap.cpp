@@ -358,14 +358,14 @@ char* tgetstr(const char* name, char** out)
     case 'cl': str = CSI(H) CSI(J); break; // Clear screen, cursor to top-left.
 
     // Movement key bindings.
-    case 'kh': str = CSI(H); break; // Home
-    case '@7': str = CSI(F); break; // End
-    case 'kD': str = CSI(3); break; // Del
-    case 'kI': str = CSI(2); break; // Ins
-    case 'ku': str = CSI(A); break; // Up
-    case 'kd': str = CSI(B); break; // Down
-    case 'kr': str = CSI(C); break; // Right
-    case 'kl': str = CSI(D); break; // Left
+    case 'kh': str = CSI(H);  break; // Home
+    case '@7': str = CSI(F);  break; // End
+    case 'kD': str = CSI(3~); break; // Del
+    case 'kI': str = CSI(2~); break; // Ins
+    case 'ku': str = CSI(A);  break; // Up
+    case 'kd': str = CSI(B);  break; // Down
+    case 'kr': str = CSI(C);  break; // Right
+    case 'kl': str = CSI(D);  break; // Left
 
     // Cursor movement.
     case 'ch': str = CSI(%dG); break;
