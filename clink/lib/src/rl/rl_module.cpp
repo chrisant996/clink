@@ -1729,7 +1729,9 @@ static void init_readline_hooks()
 //------------------------------------------------------------------------------
 void initialise_readline(const char* shell_name, const char* state_dir, const char* default_inputrc)
 {
-    dbg_ignore_scope(snapshot, "Readline initialization");
+    // Can't give a more specific scope like "Readline initialization", because
+    // realloc of some things will use "Readline" and assert on label change.
+    dbg_ignore_scope(snapshot, "Readline");
 
     // Readline needs a tweak of its handling of 'meta' (i.e. IO bytes >=0x80)
     // so that it handles UTF-8 correctly (convert=input, output=output).
