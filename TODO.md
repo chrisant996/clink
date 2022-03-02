@@ -5,7 +5,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- [ ] `"\e["` is the sequence for <kbd>Alt</kbd>+<kbd>[</kbd>, which is ambiguous and falls into weird input states.
 
 ## Normal Priority
 - [ ] Re: [#101](https://github.com/chrisant996/clink/issues/101); mechanism to dynamically extend or reset an argmatcher.
