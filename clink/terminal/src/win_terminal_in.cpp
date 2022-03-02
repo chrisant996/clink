@@ -421,9 +421,9 @@ void reset_keyseq_to_name_map()
 }
 
 //------------------------------------------------------------------------------
-static bool key_name_from_vk(int key_vk, str_base& out)
+static bool key_name_from_vk(int key_vk, str_base& out, int scan=0)
 {
-    UINT key_scan = MapVirtualKeyW(key_vk, MAPVK_VK_TO_VSC);
+    UINT key_scan = scan ? scan : MapVirtualKeyW(key_vk, MAPVK_VK_TO_VSC);
     if (key_scan)
     {
         LONG l = (key_scan & 0x01ff) << 16;
@@ -754,7 +754,7 @@ static void verbose_input(KEY_EVENT_RECORD const& record)
     char buf[32];
     buf[0] = 0;
     str_base tmps(buf);
-    const char* key_name = key_name_from_vk(key_vk, tmps) ? buf : "UNKNOWN";
+    const char* key_name = key_name_from_vk(key_vk, tmps, key_sc) ? buf : "UNKNOWN";
 
     const char* dead = "";
 #if defined(USE_TOUNICODE_FOR_DEADKEYS)
