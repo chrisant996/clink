@@ -19,6 +19,7 @@
 - Fixed `remove-history` so that it updates the history offset correctly and subsequent editing operations affect the correct undo list.
 - Fixed obscure issues in how certain key binding patterns were reported by `clink-show-help` and `dump-functions`.
 - Fixed how `clink echo` reports <kbd>Ctrl</kbd>+<kbd>Backspace</kbd> and <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Backspace</kbd>.
+- Fixed [#249](https://github.com/chrisant996/clink/issues/249); sending keystrokes from WScript does nothing for some keys.
 - Fixed [#244](https://github.com/chrisant996/clink/issues/244); installer did not detect previous installation directory (regression introduced in v1.3.5; the fix takes effect on the next install _after_ an install with the fix).
 
 #### v1.3.8
