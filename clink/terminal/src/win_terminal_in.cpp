@@ -960,54 +960,24 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
         }
     }
 
-    // The numpad keys such as PgUp, End, etc. don't come through with the
-    // ENHANCED_KEY flag set so we'll infer it here.
+    const char* const* seqs = nullptr;
     switch (key_vk)
     {
-    case VK_UP:
-    case VK_DOWN:
-    case VK_LEFT:
-    case VK_RIGHT:
-    case VK_HOME:
-    case VK_END:
-    case VK_INSERT:
-    case VK_DELETE:
-    case VK_PRIOR:
-    case VK_NEXT:
-    case VK_BACK:
-        key_flags |= ENHANCED_KEY;
-        break;
-    };
-
-    // Convert enhanced keys to normal mode xterm compatible escape sequences.
-    if (key_flags & ENHANCED_KEY)
+    case VK_UP:     seqs = terminfo::kcuu1; break;  // up
+    case VK_DOWN:   seqs = terminfo::kcud1; break;  // down
+    case VK_LEFT:   seqs = terminfo::kcub1; break;  // left
+    case VK_RIGHT:  seqs = terminfo::kcuf1; break;  // right
+    case VK_HOME:   seqs = terminfo::khome; break;  // insert
+    case VK_END:    seqs = terminfo::kend; break;   // delete
+    case VK_INSERT: seqs = terminfo::kich1; break;  // home
+    case VK_DELETE: seqs = terminfo::kdch1; break;  // end
+    case VK_PRIOR:  seqs = terminfo::kpp; break;    // pgup
+    case VK_NEXT:   seqs = terminfo::knp; break;    // pgdn
+    case VK_BACK:   seqs = terminfo::kbks; break;   // bkspc
+    }
+    if (seqs)
     {
-        static const struct {
-            int                 code;
-            const char* const*  seqs;
-        } sc_map[] = {
-            { 'H', terminfo::kcuu1, }, // up
-            { 'P', terminfo::kcud1, }, // down
-            { 'K', terminfo::kcub1, }, // left
-            { 'M', terminfo::kcuf1, }, // right
-            { 'R', terminfo::kich1, }, // insert
-            { 'S', terminfo::kdch1, }, // delete
-            { 'G', terminfo::khome, }, // home
-            { 'O', terminfo::kend, },  // end
-            { 'I', terminfo::kpp, },   // pgup
-            { 'Q', terminfo::knp, },   // pgdn
-            { '\x0e', terminfo::kbks, },// bkspc
-        };
-
-        for (const auto& iter : sc_map)
-        {
-            if (iter.code != key_sc)
-                continue;
-
-            push(iter.seqs[terminfo::keymod_index(key_flags)]);
-            break;
-        }
-
+        push(seqs[terminfo::keymod_index(key_flags)]);
         return;
     }
 
