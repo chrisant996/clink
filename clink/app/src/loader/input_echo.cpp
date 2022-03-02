@@ -30,7 +30,6 @@ int input_echo(int argc, char** argv)
             verbose_input = true;
     }
 
-    extern void set_verbose_input(bool verbose);
     set_verbose_input(verbose_input);
 
     puts("Type a key to see its key sequence string.\nPress Ctrl+C when finished.");

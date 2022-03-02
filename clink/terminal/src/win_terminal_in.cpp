@@ -214,10 +214,10 @@ inline bool is_lead_surrogate(unsigned int ch) { return IN_RANGE(0xD800, ch, 0xD
 
 
 //------------------------------------------------------------------------------
-static bool s_verbose_input = false;
-void set_verbose_input(bool verbose)
+static char s_verbose_input = false;
+void set_verbose_input(int verbose)
 {
-    s_verbose_input = verbose;
+    s_verbose_input = char(verbose);
 }
 
 
@@ -756,58 +756,33 @@ static void verbose_input(KEY_EVENT_RECORD const& record)
     str_base tmps(buf);
     const char* key_name = key_name_from_vk(key_vk, tmps) ? buf : "UNKNOWN";
 
+    const char* dead = "";
 #if defined(USE_TOUNICODE_FOR_DEADKEYS)
+    // NOT VIABLE:
+    //  - Is destructive; it alters the internal keyboard state.
+    //  - It doesn't detect dead keys anyway.
+    str<> tmp;
     static const char* const maybe_newline = "";
     int tu = 0;
-    WCHAR wbuf[33] = {};
+    char tmp2[33];
+    WCHAR wbuf[33];
     BYTE keystate[256];
+    tmp2[0] = '\0';
     if (GetKeyboardState(keystate))
     {
-        // NOT VIABLE:
-        //  - Is destructive; it alters the internal keyboard state.
-        //  - It doesn't detect dead keys anyway.
+        wbuf[0] = '\0';
         tu = ToUnicode(key_vk, key_sc, keystate, wbuf, sizeof_array(wbuf) - 1, 2);
         if (tu >= 0)
             wbuf[tu] = '\0';
+        to_utf8(str_base(tmp2), wbuf);
     }
-#elif defined(USE_MAPVIRTUALKEY_FOR_DEADKEYS)
-    static const char* const maybe_newline = "";
-#else
-    static const char* const maybe_newline = "\n";
-#endif
-
-    printf("key event:  %c%c%c %c%c  flags=0x%08.8x  char=0x%04.4x  vk=0x%04.4x  scan=0x%04.4x  \"%s\"%s",
-            (key_flags & SHIFT_PRESSED) ? 'S' : '_',
-            (key_flags & LEFT_CTRL_PRESSED) ? 'C' : '_',
-            (key_flags & LEFT_ALT_PRESSED) ? 'A' : '_',
-            (key_flags & RIGHT_ALT_PRESSED) ? 'A' : '_',
-            (key_flags & RIGHT_CTRL_PRESSED) ? 'C' : '_',
-            key_flags,
-            key_char,
-            key_vk,
-            key_sc,
-            key_name,
-            maybe_newline);
-
-#if defined(USE_TOUNICODE_FOR_DEADKEYS)
     if (tu == 0)
-    {
-        printf("  (unknown key)");
-    }
+        tmp << "  (unknown key)";
+    else if (tu < 0)
+        tmp << "  dead key \"" << tmp2 << "\"";
     else
-    {
-        if (tu < 0)
-            printf("  dead key \"");
-        else
-            printf("  ToUnicode \"");
-
-        DWORD written;
-        WriteConsoleW(m_stdout, wbuf, int(wcslen(wbuf)), &written, nullptr);
-
-        printf("\"");
-    }
-
-    puts("");
+        tmp << "  ToUnicode \"" << tmp2 << "\"";
+    dead = tmp.c_str();
 #elif defined(USE_MAPVIRTUALKEY_FOR_DEADKEYS)
     // CLOSE...BUT NOT VIABLE:
     //  - Always uses the keyboard input layout from when the process
@@ -821,11 +796,29 @@ static void verbose_input(KEY_EVENT_RECORD const& record)
     // The second issue could be accommodated by only checking if the input
     // was not translatable into text.  But it doesn't use the current
     // keyboard layout, so it's unreliable.
+    str<> tmp;
     if (INT(MapVirtualKeyW(key_vk, MAPVK_VK_TO_CHAR)) < 0)
-        printf("  (dead key)");
-
-    puts("");
+        tmp << "  (dead key)";
+    dead = tmp.c_str();
 #endif
+
+    const char* pro = (s_verbose_input > 1) ? "\x1b[s\x1b[H" : "";
+    const char* epi = (s_verbose_input > 1) ? "\x1b[K\x1b[u" : "\n";
+
+    printf("%skey event:  %c%c%c %c%c  flags=0x%08.8x  char=0x%04.4x  vk=0x%04.4x  scan=0x%04.4x  \"%s\"%s%s",
+            pro,
+            (key_flags & SHIFT_PRESSED) ? 'S' : '_',
+            (key_flags & LEFT_CTRL_PRESSED) ? 'C' : '_',
+            (key_flags & LEFT_ALT_PRESSED) ? 'A' : '_',
+            (key_flags & RIGHT_ALT_PRESSED) ? 'A' : '_',
+            (key_flags & RIGHT_CTRL_PRESSED) ? 'C' : '_',
+            key_flags,
+            key_char,
+            key_vk,
+            key_sc,
+            key_name,
+            dead,
+            epi);
 }
 
 //------------------------------------------------------------------------------

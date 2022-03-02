@@ -516,6 +516,14 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out)
     const app_context* app = app_context::get();
     bool reset = app->update_env();
 
+#ifdef DEBUG
+    {
+        str<> tmp;
+        os::get_env("CLINK_VERBOSE_INPUT", tmp);
+        set_verbose_input(atoi(tmp.c_str()));
+    }
+#endif
+
     path::refresh_pathext();
 
     cwd_restorer cwd;

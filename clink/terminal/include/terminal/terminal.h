@@ -22,3 +22,6 @@ void                terminal_destroy(const terminal& terminal);
 
 //------------------------------------------------------------------------------
 const char*         find_key_name(const char* keyseq, int& len, int& eqclass, int& order);
+
+//------------------------------------------------------------------------------
+void                set_verbose_input(int verbose); // 1 = inline, 2 = at top of screen
