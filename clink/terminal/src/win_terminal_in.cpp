@@ -26,9 +26,15 @@
 setting_bool g_terminal_raw_esc(
     "terminal.raw_esc",
     "Esc sends a literal escape character",
-    "When enabled, pressing Esc sends a literal escape character like in Unix/etc\n"
-    "terminals.  This setting is disabled by default to provide a more predictable,\n"
-    "reliable, and configurable input experience on Windows.\n"
+    "When disabled (the default), pressing Esc or Alt+[ or Alt+Shift+O send unique\n"
+    "key sequences to provide a predictable, reliable, and configurable input\n"
+    "experience.  Use 'clink echo' to find the key sequences.\n"
+    "\n"
+    "When this setting is enabled, then pressing those keys sends the same key\n"
+    "sequences as in Unix/etc.  However, they are ambiguous and conflict with the\n"
+    "beginning of many other key sequences, leading to surprising or confusing\n"
+    "input situations."
+    "\n"
     "Changing this only affects future Clink sessions, not the current session.",
     false);
 
@@ -81,6 +87,8 @@ static const char* const knp[]   = { CSI(6~), CSI(6;2~), CSI(6;5~), CSI(6;6~), C
 static const char* const kbks[]  = { "\b",    MOK(2;8),  "\x7f",    MOK(6;8),  "\x1b\b",  MOK(4;8),  "\x1b\x7f",MOK(8;8)  }; // bkspc
 static const char* const kret[]  = { "\r",    MOK(2;13), MOK(5;13), MOK(6;13), MOK(3;13), MOK(4;13), MOK(7;13), MOK(8;13) }; // enter (return)
 static const char* const kcbt    = CSI(Z);
+static const char* const kaltO   = CSI(27;4;79~);
+static const char* const kaltlb  = CSI(27;3;91~);
 static const char* const kfx[]   = {
     // kf1-12 : Fx unmodified
     SS3(P),     SS3(Q),     SS3(R),     SS3(S),
@@ -378,6 +386,12 @@ static void ensure_keyseqs_to_names()
     {
         builder = mods[0];
         add_keyseq_to_name("\x0d", "Enter", builder, 0);
+    }
+
+    if (!g_terminal_raw_esc.get())
+    {
+        add_keyseq_to_name("\x1b[27;3;91~", "A-[", builder, 0);
+        add_keyseq_to_name("\x1b[27;4;79~", "A-S-O", builder, 0);
     }
 
     if (!map_keyseq_differentiate)
@@ -921,6 +935,17 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
     if (key_char)
     {
         bool simple_char;
+
+        if (key_char == 'O' && !g_terminal_raw_esc.get() && !(key_flags & CTRL_PRESSED) && (key_flags & SHIFT_PRESSED) && (key_flags & ALT_PRESSED))
+        {
+            push(terminfo::kaltO);
+            return;
+        }
+        if (key_char == '[' && !g_terminal_raw_esc.get() && !(key_flags & (CTRL_PRESSED|SHIFT_PRESSED)) && (key_flags & ALT_PRESSED))
+        {
+            push(terminfo::kaltlb);
+            return;
+        }
 
         assert(key_vk != VK_TAB);
         if (key_vk == 'H' || key_vk == 'I')
