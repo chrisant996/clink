@@ -1468,7 +1468,7 @@ A chord can be formed by concatenating multiple key binding sequences. For examp
 
 When finished, press <kbd>Ctrl</kbd>+<kbd>C</kbd> to exit from `clink echo`.
 
-> **Note:** With non-US keyboard layouts, `clink echo` is not able to ignore dead key input (accent keys, for example).  It print the key sequence for the dead key itself, which is not useful.  You can ignore that and press the next key, and then it prints the correct key sequence to use in key bindings.
+> **Note:** With non-US keyboard layouts, `clink echo` is not able to ignore dead key input (accent keys, for example).  It prints the key sequence for the dead key itself, which is not useful.  You can ignore that and press the next key, and then it prints the correct key sequence to use in key bindings.
 
 <a name="specialkeys"></a>
 
@@ -1513,12 +1513,12 @@ When the `terminal.differentiate_keys` setting is enabled then the following key
 |`M` |`\e[27;5;77~`  |`\e[27;6;77~`  |`\em`          |`\eM`          |`\e[27;7;77~`  |`\e[27;8;77~`  |
 |`[` |`\e[27;5;219~` |`\e[27;6;219~` |`\e[27;3;219~` |`\e[27;4;219~` |`\e[27;7;219~` |`\e[27;8;219~` |
 
-The `terminal.raw_esc` setting controls the binding sequence for the <kbd>Esc</kbd> key:
+The `terminal.raw_esc` setting controls the binding sequence for the <kbd>Esc</kbd> key and a couple of other keys:
 
-|`terminal.raw_esc` Setting Value|Key Binding Sequence|
-|:-|-|
-|False (the default)|`\e[27;27~`|
-|True (replicate Unix terminal input quirks and issues)|`\e`|
+|`terminal.raw_esc` Setting Value|Esc|Alt+[|Alt+Shift+O|
+|:-|-|-|-|
+|False (the default)|`\e[27;27~`|`\e[27;3;91~`|`\e[27;4;79~`
+|True (replicate Unix terminal input quirks and issues)|`\e`|`\e[`|`\eO`
 
 <a name="luakeybindings"></a>
 
