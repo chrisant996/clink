@@ -74,6 +74,8 @@ int input_echo(int argc, char** argv)
                 printf("\\x%02x", unsigned(c));
             else if (c == 0x1b)
                 printf("\\e");
+            else if (c == 0x7f)
+                printf("Rubout");
             else if (c < 0x20)
                 printf("\\C-%c", c|0x40);
             else
