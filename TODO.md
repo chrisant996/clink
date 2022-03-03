@@ -9,11 +9,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Normal Priority
 - [ ] Re: [#101](https://github.com/chrisant996/clink/issues/101); mechanism to dynamically extend or reset an argmatcher.
   - Allow an argmatcher to dynamically extend or reset itself.
-  - Support match generation.
-  - Support input line coloring.
-    - Use a coroutine so that the argmatcher can extend itself while the user is typing, without making typing non-responsive.
-  - **_May need to hook up merging argmatchers again!_**
-- [ ] Make `clink-show-help` call out prefix key sequences, since they can behave in a confusing manner?
+    - Some callback that gets run in a coroutine and can add to the argmatcher, and/or to a specify argslot.  E.g. `delayinit=callback`.
+  - Use a coroutine so that the argmatcher can extend itself while the user is typing, without making typing non-responsive.
 
 ## Follow Up
 - Readline command reference.
@@ -56,6 +53,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Windows Terminal crashes on exit after `clink inject`.  The current release version was crashing (1.6.10571.0).  Older versions don't crash, and a locally built version from the terminal repo's HEAD doesn't crash.  I think the crash is probably a bug in Windows Terminal, not related to Clink.  And after I built it locally, then it stopped crashing with 1.6.10571.0 as well.  Mysterious...
 
 ## Punt
+- Make `clink-show-help` call out prefix key sequences, since they can behave in a confusing manner?  _[Complex present in a non-confusing way, and very rare to actually occur.  Not worth the investment at this time.]_
 - Maybe deal with timeouts in keyboard input?  Could differentiate <kbd>Esc</kbd> versus <kbd>Esc</kbd>,<kbd>Esc</kbd> but is very dangerous because it makes input processing unpredictable depending on the CPU availability.  _[Too dangerous.  And turned out to not be the issue.]_
 - Ability to rearrange and edit popup list items?  _[Can't realistically rearrange or edit history, due to how the history file format works.]_
 - Using a thread to run globbers could let suggestions uses matches even with UNC paths.  _[But **ONLY** globbers would be safe; if anything else inside match generators tries to access the UNC path then it could hang.  So it's not really safe enough.]_
