@@ -20,18 +20,6 @@ end
 
 
 --------------------------------------------------------------------------------
-local function make_dummy_builder()
-    local dummy = {}
-    function dummy:addmatch() end
-    function dummy:addmatches() end
-    function dummy:setappendcharacter() end
-    function dummy:setsuppressappend() end
-    function dummy:setsuppressquoting() end
-    function dummy:setmatchesarefiles() end
-    return dummy
-end
-
---------------------------------------------------------------------------------
 local _argmatcher_fromhistory = {}
 local _argmatcher_fromhistory_root
 
