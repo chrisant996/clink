@@ -7,10 +7,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
-- [ ] Re: [#101](https://github.com/chrisant996/clink/issues/101); mechanism to dynamically extend or reset an argmatcher.
-  - Allow an argmatcher to dynamically extend or reset itself.
-    - Some callback that gets run in a coroutine and can add to the argmatcher, and/or to a specify argslot.  E.g. `delayinit=callback`.
-  - Use a coroutine so that the argmatcher can extend itself while the user is typing, without making typing non-responsive.
 
 ## Follow Up
 - Readline command reference.
