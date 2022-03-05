@@ -14,9 +14,14 @@ clink.argmatcher("cd", "chdir")
 :nofiles()
 
 --------------------------------------------------------------------------------
-clink.argmatcher("pushd", "md", "mkdir")
+clink.argmatcher("pushd")
 :addarg(clink.dirmatches)
 :nofiles()
+
+--------------------------------------------------------------------------------
+clink.argmatcher("md", "mkdir")
+:addarg(clink.dirmatches)
+:loop()
 
 --------------------------------------------------------------------------------
 clink.argmatcher("rd", "rmdir")
@@ -26,4 +31,4 @@ clink.argmatcher("rd", "rmdir")
     ["/q"] = "Quiet mode, do not ask if ok to remove a directory tree with /S",
 })
 :addarg(clink.dirmatches)
-:nofiles()
+:loop()
