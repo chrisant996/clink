@@ -449,6 +449,8 @@ function _argmatcher:reset()
     self._no_file_generation = nil
     self._hidden = nil
     self._classify_func = nil
+    self._inited = nil
+    self._initgen = nil
     return self
 end
 
