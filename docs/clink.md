@@ -1093,6 +1093,8 @@ A `:` or `=` at the end of a flag indicates the flag takes an argument but requi
 
 Argument options are not limited solely to strings. Clink also accepts functions too so more context aware argument options can be used.
 
+The function is called each time matches are generated for the argument position.
+
 ```lua
 local function rainbow_function(word)
     return { "red", "white", "blue" }
@@ -1137,6 +1139,92 @@ Match completions are normally listed in sorted order.  In some cases it may be 
 ```lua
 local the_parser = clink.argmatcher()
 the_parser:addarg({ nosort=true, "red", "orange", "yellow", "green", "blue", "indigo", "violet" })
+```
+
+#### Adaptive Argmatchers
+
+Some argmatchers may need to adapt on the fly.  For example, a program may have different features available depending on the current directory, or may want to define its arguments and flags by parsing the `--help` text from running a program.
+
+An argmatcher can define a "delayed initialization" callback function that gets calls when the argmatcher gets used, allowing it to defer potentially expensive initialization work until it's actually needed.  An argmatcher can also define a separate "delayed initialization" function for each argument position.
+
+##### Delayed initialization for the argmatcher
+
+You can use [_argmatcher:setdelayinit()](#_argmatcher:setdelayinit) to define how the argmatcher should perform delayed initialization.
+
+If the definition needs to adapt based on the current directory or other criteria, then the callback function should first test whether the definition needs to change.  If so, first reset the argmatcher and then initialize it.  To reset the argmatcher, use [_argmatcher:reset()](#_argmatcher:reset) which resets it back to an empty, freshly created state.
+
+```lua
+local prev_dir = ""
+
+-- Initialize the argmatcher.
+local function init(argmatcher)
+    local r = io.popen("some_command --help 2>nul")
+    for line in r:lines() do
+        -- PUT PARSING CODE HERE.
+        -- Use the Lua string functions to parse the lines.
+        -- Use argmatcher:addflags(), argmatcher:addarg(), etc to initialize the argmatcher.
+    end
+    r:close()
+end
+
+-- This function has the opportunity to reset and (re)initialize the argmatcher.
+local function ondelayinit(argmatcher)
+    local dir = os.getcwd()
+    if prev_dir ~= dir then  -- When current directory has changed,
+        prev_dir = dir      -- Remember the new current directory,
+        argmatcher:reset()  -- Reset the argmatcher,
+        init(argmatcher)    -- And re-initialize it.
+    end
+end
+
+-- Create the argmatcher and set up delayed initialization.
+local m = clink.argmatcher("some_command")
+if m.setdelayinit then        -- Can't use setdelayinit before Clink v1.3.10.
+    m:setdelayinit(ondelayinit)
+end
+```
+
+##### Delayed initialization for an argument position
+
+If the overall flags and meaning of the argument positions don't need to be updated, and only the possible values need to be updated within certain argument positions, then you can include <code>delayinit=<span class="arg">function</span></code> in the argument table.
+
+The <span class="arg">function</span> should return a table of matches which will be added to the values for the argument position.  The table of matches supports the same syntax as [_argmatcher:addarg()](#_argmatcher:addarg).
+
+The <span class="arg">function</span> is called only once, the first time the argument position is used.  The only way for the function to be called again for that is to use [Delayed initialization for the argmatcher](#delayed-initialization-for-the-argmatcher) and reset the argmatcher and re-initialize it.
+
+This is different from [Functions As Argument Options](#functions-as-argument-options).  The `delayinit` function is called the first time the argmatcher is used, and the results are added to the matches for the rest of the Clink session.  But a function as an argument option is called every time matches are generated for the argument position, and it is never called when applying input line coloring.
+
+```lua
+-- A function to delay-initialize argument values.
+-- This function is used to delay-initialize two different argument positions,
+-- and so it gets called up to two separate times (once for each position where
+-- it is specified).
+-- If the function needs to behave slightly differently for different
+-- argmatchers or argument positions, it can use the two parameters it receives
+-- to identify the specific context in which it is being called.
+local function sc_init_dirs(argmatcher, argindex)
+    return {
+        path.join(os.getenv("USERPROFILE"), "Documents"),
+        path.join(os.getenv("USERPROFILE"), "Pictures")
+    }
+end
+
+-- A function to delay-initialize flag values.
+local function sc_init_flags(argmatcher)
+    -- This calls sc_init_dirs() when the '--dir=' flag is used.
+    return { "--dir=" .. clink.argmatcher():addarg({ delayinit=sc_init_dirs }) }
+end
+
+-- Define an argmatcher with two argument positions, and the second one uses
+-- delayed initialization.
+local m = clink.argmatcher("some_command")
+m:addarg({ "abc", "def", "ghi" })
+m:addarg({ delayinit=sc_init_dirs }) -- This sc_init_dirs() when the second arg position is used.
+
+-- You can also use delayinit with flags, but you must set the flag prefix
+-- character(s) so that Clink can know when to call the delayinit function.
+m:addflags({ delayinit=sc_init_flags })
+m:setflagprefix("-")
 ```
 
 #### Shorthand
