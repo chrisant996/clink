@@ -1677,56 +1677,56 @@ the current position in the history list.
 <tr><td>
 <code>!</code>
 </td><td>
-     Start a history substitution, except when followed by a space, tab,
-     the end of the line, or <code>=</code>.
+    Start a history substitution, except when followed by a space, tab,
+    the end of the line, or <code>=</code>.
 </td></tr>
 
 <tr><td>
 <code>!<em>n</em></code>
 </td><td>
-     Refer to command line <em>n</em>.
+    Refer to command line <em>n</em>.
 </td></tr>
 
 <tr><td>
 <code>!-<em>n</em></code>
 </td><td>
-     Refer to the command <em>n</em> lines back.
+    Refer to the command <em>n</em> lines back.
 </td></tr>
 
 <tr><td>
 <code>!!</code>
 </td><td>
-     Refer to the previous command.  This is a synonym for <code>!-1</code>.
+    Refer to the previous command.  This is a synonym for <code>!-1</code>.
 </td></tr>
 
 <tr><td>
 <code>!<em>string</em></code>
 </td><td>
-     Refer to the most recent command preceding the current position in
-     the history list starting with <em>string</em>.
+    Refer to the most recent command preceding the current position in
+    the history list starting with <em>string</em>.
 </td></tr>
 
 <tr><td>
 <code>!?<em>string</em>[?]</code>
 </td><td>
-     Refer to the most recent command preceding the current position in
-     the history list containing <em>string</em>.  The trailing <code>?</code> may be
-     omitted if the <em>string</em> is followed immediately by a newline.  If
-     <em>string</em> is missing, the string from the most recent search is used;
-     it is an error if there is no previous search string.
+    Refer to the most recent command preceding the current position in
+    the history list containing <em>string</em>.  The trailing <code>?</code> may be
+    omitted if the <em>string</em> is followed immediately by a newline.  If
+    <em>string</em> is missing, the string from the most recent search is used;
+    it is an error if there is no previous search string.
 </td></tr>
 
 <tr><td>
 <code>^<em>string1</em>^<em>string2</em>^</code>
 </td><td>
-     Quick Substitution.  Repeat the last command, replacing <em>string1</em>
-     with <em>string2</em>.  Equivalent to <code>!!:s^<em>string1</em>^<em>string2</em>^</code>.
+    Quick Substitution.  Repeat the last command, replacing <em>string1</em>
+    with <em>string2</em>.  Equivalent to <code>!!:s^<em>string1</em>^<em>string2</em>^</code>.
 </td></tr>
 
 <tr><td>
 <code>!#</code>
 </td><td>
-     The entire command line typed so far.
+    The entire command line typed so far.
 </td></tr>
 </table>
 
@@ -1739,94 +1739,94 @@ Words are numbered from the beginning of the line, with the first word
 being denoted by 0 (zero).  Words are inserted into the current line
 separated by single spaces.
 
-   For example,
+For example,
 
 <table>
 <tr><td>
 <code>!!</code>
 </td><td>
-     designates the preceding command.  When you type this, the
-     preceding command is repeated in toto.
+    designates the preceding command.  When you type this, the
+    preceding command is repeated in toto.
 </td></tr>
 
 <tr><td>
 <code>!!:$</code>
 </td><td>
-     designates the last argument of the preceding command.  This may be
-     shortened to <code>!$</code>.
+    designates the last argument of the preceding command.  This may be
+    shortened to <code>!$</code>.
 </td></tr>
 
 <tr><td>
 <code>!fi:2</code>
 </td><td>
-     designates the second argument of the most recent command starting
-     with the letters <code>fi</code>.
+    designates the second argument of the most recent command starting
+    with the letters <code>fi</code>.
 </td></tr>
 </table>
 
-   Here are the word designators:
+Here are the word designators:
 
 <table>
 <tr><td>
 <code>0 (zero)</code>
 </td><td>
-     The 0th word.  For many applications, this is the command word.
+    The 0th word.  For many applications, this is the command word.
 </td></tr>
 
 <tr><td>
 <code><em>n</em></code>
 </td><td>
-     The <em>n</em>th word.
+    The <em>n</em>th word.
 </td></tr>
 
 <tr><td>
 <code>^</code>
 </td><td>
-     The first argument; that is, word 1.
+    The first argument; that is, word 1.
 </td></tr>
 
 <tr><td>
 <code>$</code>
 </td><td>
-     The last argument.
+    The last argument.
 </td></tr>
 
 <tr><td>
 <code>%</code>
 </td><td>
-     The first word matched by the most recent <code>!?<em>string</em>?</code> search, if the
-     search string begins with a character that is part of a word.
+    The first word matched by the most recent <code>!?<em>string</em>?</code> search, if the
+    search string begins with a character that is part of a word.
 </td></tr>
 
 <tr><td>
 <code><em>x</em>-<em>y</em></code>
 </td><td>
-     A range of words; <code>-<em>y</em></code> abbreviates <code>0-<em>y</em></code>.
+    A range of words; <code>-<em>y</em></code> abbreviates <code>0-<em>y</em></code>.
 </td></tr>
 
 <tr><td>
 <code>*</code>
 </td><td>
-     All of the words, except the 0th.  This is a synonym for <code>1-$</code>.
-     It is not an error to use <code>*</code> if there is just one word in the
-     event; the empty string is returned in that case.
+    All of the words, except the 0th.  This is a synonym for <code>1-$</code>.
+    It is not an error to use <code>*</code> if there is just one word in the
+    event; the empty string is returned in that case.
 </td></tr>
 
 <tr><td>
 <code><em>x</em>*</code>
 </td><td>
-     Abbreviates <code><em>x</em>-$</code>
+    Abbreviates <code><em>x</em>-$</code>
 </td></tr>
 
 <tr><td>
 <code><em>x</em>-</code>
 </td><td>
-     Abbreviates <code><em>x</em>-$</code> like <code><em>x</em>*</code>, but omits the last word.  If <code><em>x</em></code> is
-     missing, it defaults to 0.
+    Abbreviates <code><em>x</em>-$</code> like <code><em>x</em>*</code>, but omits the last word.  If <code><em>x</em></code> is
+    missing, it defaults to 0.
 </td></tr>
 </table>
 
-   If a word designator is supplied without an event specification, the
+If a word designator is supplied without an event specification, the
 previous command is used as the event.
 
 ### Modifiers
@@ -1839,72 +1839,72 @@ or edit, the word or words selected from the history event.
 <tr><td>
 <code>h</code>
 </td><td>
-     Remove a trailing pathname component, leaving only the head.
+    Remove a trailing pathname component, leaving only the head.
 </td></tr>
 
 <tr><td>
 <code>t</code>
 </td><td>
-     Remove all leading pathname components, leaving the tail.
+    Remove all leading pathname components, leaving the tail.
 </td></tr>
 
 <tr><td>
 <code>r</code>
 </td><td>
-     Remove a trailing suffix of the form <code>.<em>suffix</em></code>, leaving the
-     basename.
+    Remove a trailing suffix of the form <code>.<em>suffix</em></code>, leaving the
+    basename.
 </td></tr>
 
 <tr><td>
 <code>e</code>
 </td><td>
-     Remove all but the trailing suffix.
+    Remove all but the trailing suffix.
 </td></tr>
 
 <tr><td>
 <code>p</code>
 </td><td>
-     Print the new command but do not execute it.
+    Print the new command but do not execute it.
 </td></tr>
 
 <tr><td>
 <code>s/<em>old</em>/<em>new</em>/</code>
 </td><td>
-     Substitute <em>new</em> for the first occurrence of <em>old</em> in the event line.
-     Any character may be used as the delimiter in place of <code>/</code>.  The
-     delimiter may be quoted in <em>old</em> and <em>new</em> with a single backslash.  If
-     <code>&</code> appears in <em>new</em>, it is replaced by <em>old</em>.  A single backslash will
-     quote the <code>&</code>.  If <em>old</em> is null, it is set to the last <em>old</em>
-     substituted, or, if no previous history substitutions took place,
-     the last <em>string</em> in a <code>!?<em>string</em>?</code> search.  If <em>new</em> is is null, each
-     matching <em>old</em> is deleted.  The final delimiter is optional if it is
-     the last character on the input line.
+    Substitute <em>new</em> for the first occurrence of <em>old</em> in the event line.
+    Any character may be used as the delimiter in place of <code>/</code>.  The
+    delimiter may be quoted in <em>old</em> and <em>new</em> with a single backslash.  If
+    <code>&</code> appears in <em>new</em>, it is replaced by <em>old</em>.  A single backslash will
+    quote the <code>&</code>.  If <em>old</em> is null, it is set to the last <em>old</em>
+    substituted, or, if no previous history substitutions took place,
+    the last <em>string</em> in a <code>!?<em>string</em>?</code> search.  If <em>new</em> is is null, each
+    matching <em>old</em> is deleted.  The final delimiter is optional if it is
+    the last character on the input line.
 </td></tr>
 
 <tr><td>
 <code>&</code>
 </td><td>
-     Repeat the previous substitution.
+    Repeat the previous substitution.
 </td></tr>
 
 <tr><td>
 <code>g</code></br>
 </td><td>
-     Cause changes to be applied over the entire event line.  Used in
-     conjunction with <code>s</code>, as in <code>gs/<em>old</em>/<em>new</em>/</code>, or with <code>&</code>.
+    Cause changes to be applied over the entire event line.  Used in
+    conjunction with <code>s</code>, as in <code>gs/<em>old</em>/<em>new</em>/</code>, or with <code>&</code>.
 </td></tr>
 
 <tr><td>
 <code>a</code></br>
 </td><td>
-     The same as <code>g</code>.
+    The same as <code>g</code>.
 </td></tr>
 
 <tr><td>
 <code>G</code>
 </td><td>
-     Apply the following <code>s</code> or <code>&</code> modifier once to each word in the
-     event.
+    Apply the following <code>s</code> or <code>&</code> modifier once to each word in the
+    event.
 </td></tr>
 </table>
 
