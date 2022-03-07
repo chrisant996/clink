@@ -9,6 +9,10 @@
 #include <lua/lua_match_generator.h>
 #include <lua/lua_state.h>
 
+extern "C" {
+#include <lua.h>
+}
+
 //------------------------------------------------------------------------------
 TEST_CASE("Lua arg parsers")
 {
@@ -798,6 +802,89 @@ TEST_CASE("Lua arg parsers")
             tester.set_input("argcmd_nosort \x1b*");
             tester.set_expected_output("argcmd_nosort z m n a ");
             tester.run();
+        }
+    }
+
+    SECTION("Adaptive")
+    {
+        const char* script = "\
+            local generation = 0\
+            local reset = true\
+            \
+            clink.onbeginedit(function ()\
+                generation = generation + 1\
+            end)\
+            \
+            clink.onendedit(function (line)\
+                if line:find('reset') then\
+                    reset = true\
+                end\
+            end)\
+            \
+            local function ondelayinitarg(matcher, argindex)\
+                return { 'mb'..generation..'('..argindex..')' }\
+            end\
+            \
+            local function ondelayinit(matcher)\
+                if reset then\
+                    reset = false\
+                    matcher:reset()\
+                    matcher:addarg({ 'aa'..generation, 'ab'..generation, 'zz'..generation })\
+                    matcher:addarg({ delayinit=ondelayinitarg, 'ma' })\
+                end\
+            end\
+            \
+            adapt = clink.argmatcher('adapt'):setdelayinit(ondelayinit)\
+        ";
+
+        REQUIRE(lua.do_string(script));
+
+        SECTION("Delayinit argmatcher")
+        {
+            lua.send_event("onbeginedit");
+            tester.set_input("adapt \x1b*");
+            tester.set_expected_output("adapt aa1 ab1 zz1 ");
+            tester.run();
+            lua_pushlstring(lua.get_state(), "adapt", 5);
+            lua.send_event("onendedit", 1);
+
+            lua.send_event("onbeginedit");
+            tester.set_input("adapt \x1b*");
+            tester.set_expected_output("adapt aa1 ab1 zz1 ");
+            tester.run();
+            lua_pushlstring(lua.get_state(), "reset", 5);
+            lua.send_event("onendedit", 1);
+
+            lua.send_event("onbeginedit");
+            tester.set_input("adapt \x1b*");
+            tester.set_expected_output("adapt aa3 ab3 zz3 ");
+            tester.run();
+            lua_pushlstring(lua.get_state(), "adapt", 5);
+            lua.send_event("onendedit", 1);
+        }
+
+        SECTION("Delayinit argument position")
+        {
+            lua.send_event("onbeginedit");
+            tester.set_input("adapt x \x1b*");
+            tester.set_expected_output("adapt x ma mb1(2) ");
+            tester.run();
+            lua_pushlstring(lua.get_state(), "adapt", 5);
+            lua.send_event("onendedit", 1);
+
+            lua.send_event("onbeginedit");
+            tester.set_input("adapt x \x1b*");
+            tester.set_expected_output("adapt x ma mb1(2) ");
+            tester.run();
+            lua_pushlstring(lua.get_state(), "reset", 5);
+            lua.send_event("onendedit", 1);
+
+            lua.send_event("onbeginedit");
+            tester.set_input("adapt x \x1b*");
+            tester.set_expected_output("adapt x ma mb3(2) ");
+            tester.run();
+            lua_pushlstring(lua.get_state(), "adapt", 5);
+            lua.send_event("onendedit", 1);
         }
     }
 }
