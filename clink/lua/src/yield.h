@@ -23,6 +23,8 @@ struct yield_thread : public std::enable_shared_from_this<yield_thread>
     bool            is_ready();
     HANDLE          get_ready_event();
 
+    void            wait(unsigned int timeout);
+
     virtual int     results(lua_State* state) = 0;
 
 protected:
@@ -58,6 +60,7 @@ private:
     static int ready(lua_State* state);
     static int command(lua_State* state);
     static int results(lua_State* state);
+    static int wait(lua_State* state);
     static int __gc(lua_State* state);
     static int __tostring(lua_State* state);
 

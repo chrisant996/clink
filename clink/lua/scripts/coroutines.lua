@@ -290,6 +290,25 @@ function clink._resume_coroutines()
 end
 
 --------------------------------------------------------------------------------
+function clink._finish_coroutine(c)
+    while true do
+        local status = coroutine.status(c)
+        if not status or status == "dead" then
+            break
+        end
+
+        local duration = clink._wait_duration()
+        if _coroutine_yieldguard and duration and duration > 0 then
+            _coroutine_yieldguard.yieldguard:wait(duration)
+        end
+
+        -- Must run all coroutines:  there could be inter-dependencies, and the
+        -- target coroutine may be blocking on another coroutine's yieldguard.
+        clink._resume_coroutines()
+    end
+end
+
+--------------------------------------------------------------------------------
 function clink._cancel_coroutine(c)
     if not c then
         c = coroutine.running()

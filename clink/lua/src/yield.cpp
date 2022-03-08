@@ -3,15 +3,11 @@
 
 #include "pch.h"
 #include "yield.h"
+#include "lua_state.h"
 
 #include <core/os.h>
 
-// #include <fcntl.h>
-// #include <io.h>
-// #include <stdio.h>
 #include <process.h>
-// #include <list>
-// #include <memory>
 #include <assert.h>
 
 //------------------------------------------------------------------------------
@@ -104,6 +100,13 @@ HANDLE yield_thread::get_ready_event()
 }
 
 //------------------------------------------------------------------------------
+void yield_thread::wait(unsigned int timeout)
+{
+    if (m_ready_event)
+        WaitForSingleObject(m_ready_event, timeout);
+}
+
+//------------------------------------------------------------------------------
 bool yield_thread::is_canceled() const
 {
     return !!m_cancelled;
@@ -149,6 +152,7 @@ luaL_YieldGuard* luaL_YieldGuard::make_new(lua_State* state)
         {"ready", ready},
         {"command", command},
         {"results", results},
+        {"wait", wait},
         {"__gc", __gc},
         {"__tostring", __tostring},
         {nullptr, nullptr}
@@ -207,6 +211,22 @@ int luaL_YieldGuard::results(lua_State* state)
     luaL_YieldGuard* yg = (luaL_YieldGuard*)luaL_checkudata(state, 1, LUA_YIELDGUARD);
     if (yg && yg->m_thread)
         return yg->m_thread->results(state);
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+int luaL_YieldGuard::wait(lua_State* state)
+{
+    luaL_YieldGuard* yg = (luaL_YieldGuard*)luaL_checkudata(state, 1, LUA_YIELDGUARD);
+    if (yg && yg->m_thread)
+    {
+        int isnum;
+        const double sec = lua_tonumberx(state, 2, &isnum);
+        const unsigned int timeout = (!isnum ? INFINITE :
+                                      (sec > 0) ? unsigned(sec * 1000) :
+                                      0);
+        yg->m_thread->wait(timeout);
+    }
     return 0;
 }
 

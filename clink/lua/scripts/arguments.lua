@@ -66,6 +66,60 @@ end
 --]]
 
 --------------------------------------------------------------------------------
+local function do_delayed_init(list, matcher, arg_index)
+    -- Don't init while generating matches from history, as that could be
+    -- excessively expensive (could run thousands of callbacks).
+    if _argmatcher_fromhistory and _argmatcher_fromhistory.argmatcher then
+        return
+    end
+
+    -- Track flags initialization as position 0.
+    if matcher._flags and list == matcher._flags._args[1] then
+        arg_index = 0
+    end
+
+    -- New edit line starts a new generation number.  Reset any delay init
+    -- callbacks that didn't finish.
+    if (matcher._init_generation or 0) < _delayinit_generation then
+        matcher._init_coroutine = nil
+        matcher._init_generation = _delayinit_generation
+    end
+
+    local _, ismain = coroutine.running()
+    local async_delayinit = not ismain or not clink._in_generate()
+
+    -- Start the delay init callback if it hasn't already started.
+    local c = matcher._init_coroutine and matcher._init_coroutine[arg_index]
+    if not c then
+        if not matcher._init_coroutine then
+            matcher._init_coroutine = {}
+        end
+
+        c = coroutine.create(function ()
+            -- Invoke the delayinit callback and add the results to the arg
+            -- slot's list of matches.
+            local addees = list.delayinit(matcher, arg_index)
+            matcher:_add(list, addees)
+            -- Mark the init callback as finished.
+            matcher._init_coroutine[arg_index] = nil
+            list.delayinit = nil
+            -- If originally started from not-main, then reclassify.
+            if async_delayinit then
+                clink.reclassifyline()
+            end
+        end)
+
+        matcher._init_coroutine[arg_index] = c
+    end
+
+    -- Finish (run) the coroutine immediately only when the main coroutine is
+    -- generating matches.
+    if not async_delayinit and c then
+        clink._finish_coroutine(c)
+    end
+end
+
+--------------------------------------------------------------------------------
 -- When word_index is < 0, skip classifying the word, and skip trying to figure
 -- out whether a `-foo:` word should avoid following a linked parser.  This only
 -- happens when parsing extra words from expanding a doskey alias.
@@ -88,6 +142,10 @@ function _argreader:update(word, word_index)
     local pushed_flags
     if is_flag then
         if matcher._flags then
+            local arg = matcher._flags._args[1]
+            if arg and arg.delayinit then
+                do_delayed_init(arg, matcher, 0)
+            end
             self:_push(matcher._flags)
             arg_match_type = "f" --flag
             pushed_flags = true
@@ -134,6 +192,11 @@ function _argreader:update(word, word_index)
             end
         end
         return
+    end
+
+    -- Delay initialize the argmatcher, if needed.
+    if arg.delayinit then
+        do_delayed_init(arg, matcher, arg_index)
     end
 
     -- Generate matches from history.
@@ -315,16 +378,6 @@ local function apply_options_to_list(addee, list)
 end
 
 --------------------------------------------------------------------------------
-local function set_arg_inited(matcher, arg_index, value)
-    if not matcher._inited then
-        matcher._inited = {}
-    end
-    if (matcher._inited[arg_index] or 0) < value then
-        matcher._inited[arg_index] = value
-    end
-end
-
---------------------------------------------------------------------------------
 local function apply_options_to_builder(reader, arg, builder)
     -- Disable sorting, if requested.  This goes first because it is
     -- unconditional and should take effect immediately.
@@ -332,58 +385,9 @@ local function apply_options_to_builder(reader, arg, builder)
         builder:setnosort()
     end
 
-    -- Delay initialize the argmatcher, if requested.  But not while generating
-    -- matches from history, as that could be excessively expensive (could run
-    -- thousands of callbacks).  This goes before 'fromhistory' so that when
-    -- invoked from main if it adds 'fromhistory' that will take effect
-    -- immediately.
-    if arg.delayinit and not (_argmatcher_fromhistory and _argmatcher_fromhistory.argmatcher) then
-        local matcher = reader._matcher
-        local argindex = reader._arg_index
-        -- New edit line starts a new generation number.  Reset any delay init
-        -- callbacks that didn't finish.
-        if (matcher._initgen or 0) < _delayinit_generation then
-            if matcher._inited then
-                for i,v in pairs(matcher._inited) do
-                    if v == 1 then
-                        matcher._inited[i] = 0
-                    end
-                end
-            end
-            matcher._initgen = _delayinit_generation
-        end
-        -- Start the delay init callback if it hasn't already started.
-        if not matcher._inited or (matcher._inited[argindex] or 0) < 1 then
-            -- Mark the init callback as started.
-            set_arg_inited(matcher, argindex, 1)
-            local _, ismain = coroutine.running()
-            -- FUTURE: Serialize/chain multiple callbacks?
-            local c = coroutine.create(function ()
-                -- Invoke the delayinit callback and add the results to the arg
-                -- slot's list of matches..
-                local addees = arg.delayinit(matcher, argindex)
-                local list = matcher._args[argindex]
-                if list then
-                    matcher:_add(list, addees)
-                end
-                -- Mark the init callback as finished.
-                set_arg_inited(matcher, argindex, 2)
-                -- If originally started from not-main, then reclassify.
-                if not ismain then
-                    clink.reclassifyline()
-                end
-            end)
-            -- Run the coroutine immediately, if currently in main.
-            if ismain then
-                while true do
-                    coroutine.resume(c)
-                    local status = coroutine.status(c)
-                    if not status or status == "dead" then
-                        break
-                    end
-                end
-            end
-        end
+    -- Delay initialize the argmatcher, if needed.
+    if arg.delayinit then
+        do_delayed_init(arg, reader._matcher, reader._arg_index)
     end
 
     -- Generate matches from history, if requested.
@@ -449,8 +453,8 @@ function _argmatcher:reset()
     self._no_file_generation = nil
     self._hidden = nil
     self._classify_func = nil
-    self._inited = nil
-    self._initgen = nil
+    self._init_coroutine = nil
+    self._init_generation = nil
     return self
 end
 

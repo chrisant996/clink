@@ -213,6 +213,11 @@ function clink._reset_display_filter()
 end
 
 --------------------------------------------------------------------------------
+function clink._in_generate()
+    return _current_builder and true
+end
+
+--------------------------------------------------------------------------------
 function clink._generate(line_state, match_builder, old_filtering)
     local impl = function ()
         clink.generator_stopped = nil
