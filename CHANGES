@@ -5,6 +5,7 @@
 #### v1.3.10
 
 - An argmatcher can extend itself on the fly, when needed.  For example, if it needs to parse arguments and flags from `--help` text, or if the available command arguments change based on the current directory, or etc.  See [Adaptive Argmatchers](#adaptive-argmatchers) for more information.
+- Fixed mouse clicks in `clink-select-complete` to insert the clicked match, in addition to highlighting it.
 - Fixed [#252](https://github.com/chrisant996/clink/issues/252); `md` and `rd` should complete more than 1 argument.
 
 #### v1.3.9
