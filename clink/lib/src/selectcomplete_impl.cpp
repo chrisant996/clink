@@ -699,6 +699,7 @@ do_mouse_position:
                             set_top(max<int>(revert_top, get_match_row(m_matches.get_match_count()) - (rows - 1)));
                             m_index = m_matches.get_match_count() - 1;
                         }
+                        insert_match();
                         update_display();
                         if (input.id == bind_id_selectcomplete_doubleclick)
                             goto enter;
