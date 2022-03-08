@@ -23,10 +23,27 @@ end
 local _argmatcher_fromhistory = {}
 local _argmatcher_fromhistory_root
 local _delayinit_generation = 0
+local _clear_onuse_coroutine = {}
+local _clear_delayinit_coroutine = {}
 
 --------------------------------------------------------------------------------
 clink.onbeginedit(function ()
     _delayinit_generation = _delayinit_generation + 1
+
+    -- Clear dangling coroutine references in matchers.  Otherwise if a
+    -- coroutine doesn't finish before a new edit line begins, there will be
+    -- references that can't be garbage collected until the next time the
+    -- matcher performs delayed initialization.
+    for m,_ in pairs(_clear_onuse_coroutine) do
+        m._onuse_coroutine = nil
+    end
+    for m,a in pairs(_clear_delayinit_coroutine) do
+        for i,_ in pairs(a) do
+            m._init_coroutine[i] = nil
+        end
+    end
+    _clear_onuse_coroutine = {}
+    _clear_delayinit_coroutine = {}
 end)
 
 
@@ -103,14 +120,21 @@ local function do_delayed_init(list, matcher, arg_index)
             matcher:_add(list, addees)
             -- Mark the init callback as finished.
             matcher._init_coroutine[arg_index] = nil
+            _clear_delayinit_coroutine[matcher][arg_index] = nil
             list.delayinit = nil
             -- If originally started from not-main, then reclassify.
             if async_delayinit then
                 clink.reclassifyline()
             end
         end)
--- TODO: Need to ensure this is cleared at onbeginedit!
         matcher._init_coroutine[arg_index] = c
+
+        -- Set up to be able to efficiently clear dangling coroutine references,
+        -- e.g. in case a coroutine doesn't finish before a new edit line.
+        if not _clear_delayinit_coroutine[matcher] then
+            _clear_delayinit_coroutine[matcher] = {}
+        end
+        _clear_delayinit_coroutine[matcher][arg_index] = c
     end
 
     -- Finish (run) the coroutine immediately only when the main coroutine is
@@ -1374,12 +1398,16 @@ local function _do_onuse_callback(argmatcher)
         c = coroutine.create(function ()
             argmatcher._delayinit_func(argmatcher)
             argmatcher._onuse_coroutine = nil
+            _clear_onuse_coroutine[argmatcher] = nil
             if async_delayinit then
                 clink.reclassifyline()
             end
         end)
--- TODO: Need to ensure this is cleared at onbeginedit!
         argmatcher._onuse_coroutine = c
+
+        -- Set up to be able to efficiently clear dangling coroutine references,
+        -- e.g. in case a coroutine doesn't finish before a new edit line.
+        _clear_onuse_coroutine[argmatcher] = argmatcher
     end
 
     -- Finish (run) the coroutine immediately only when the main coroutine is
