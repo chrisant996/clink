@@ -1188,7 +1188,7 @@ end
 
 If the overall flags and meaning of the argument positions don't need to be updated, and only the possible values need to be updated within certain argument positions, then you can include <code>delayinit=<span class="arg">function</span></code> in the argument table.
 
-The <span class="arg">function</span> should return a table of matches which will be added to the values for the argument position.  The table of matches supports the same syntax as [_argmatcher:addarg()](#_argmatcher:addarg).
+The <span class="arg">function</span> should return a table of matches which will be added to the values for the argument position.  The table of matches supports the same syntax as [_argmatcher:addarg()](#_argmatcher:addarg).  The function receives two parameters:  <span class="arg">argmatcher</span> is the current argmatcher, and <span class="arg">argindex</span> is the argument position in the argmatcher (0 is flags, 1 is the first argument position, and so on).
 
 The <span class="arg">function</span> is called only once, the first time the argument position is used.  The only way for the function to be called again for that is to use [Delayed initialization for the argmatcher](#delayed-initialization-for-the-argmatcher) and reset the argmatcher and re-initialize it.
 
