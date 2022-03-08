@@ -84,6 +84,15 @@ If you install Clink with the setup program and "Use enhanced default settings" 
 
 If you install Clink from the .zip file then enhanced default settings are activated when the `default_settings` and `default_inputrc` files are present in the binaries directory or in the profile directory.  The .zip file comes with the files, but their names have a `_` prefix so that enhanced defaults won't automatically take effect.  You can activate the enhanced default settings by renaming the files to remove the `_` prefix.
 
+Here are some of the enhanced defaults.  Review the `default_settings` and `default_inputrc` files for the full list.
+- [Automatic suggestions](#gettingstarted_autosuggest) are enabled.
+- Many [color settings](#gettingstarted_colors) have colorful defaults.
+- Uses [Windows key bindings](#gettingstarted_defaultbindings) by default.
+- The [command history](#saved-command-history)'s default [limit](#history_max_lines) is increased to 25,000 entries.
+- Completion expands environment variables (the [`match.expand_envvars`]() setting).
+- If no completions are found with a prefix search, then a substring search is used (the [`match.substring`](#match_substring) setting).
+- <kbd>Ctrl</kbd>+<kbd>D</kbd> does not exit CMD (the [`cmd.ctrld_exits`](#ctrld_exits) setting).
+
 <a name="gettingstarted_inputrc"></a>
 
 ### Create a .inputrc file
@@ -120,11 +129,26 @@ $endif
 
 ### Bash vs Windows
 
-The default Clink key bindings are the same as in the "bash" shell for Unix/Linux.  That makes some keys like <kbd>Ctrl</kbd>+<kbd>F</kbd> and <kbd>Ctrl</kbd>+<kbd>M</kbd> behave differently than you might be used to in CMD.
+The default Clink key bindings are the same as in the "bash" shell for Unix/Linux.  That makes some keys like <kbd>Ctrl</kbd>+<kbd>A</kbd>, <kbd>Ctrl</kbd>+<kbd>F</kbd>, and <kbd>Ctrl</kbd>+<kbd>M</kbd> behave differently than you might be used to in CMD.
 
 To instead use the familiar [Windows default key bindings](#default_bindings) you can run `clink set clink.default_bindings windows`.
 
-Or, if you use the setup program with "Use enhanced default settings" checked then "windows" key bindings are the default.
+Or, if you use the setup program with "Use enhanced default settings" checked then "windows" key bindings are the default, and you can run `clink set clink.default_bindings bash` to use the bash default key bindings.
+
+Clink comes with many default key bindings.  Use <kbd>Alt</kbd>+<kbd>H</kbd> to see all of the active key bindings, or use <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>?</kbd> to check what is bound to a specific key.  See [Key Bindings](#gettingstarted_keybindings) to get started configuring your own key bindings.
+
+Here are the differences between the Windows defaults and the bash defaults:
+
+Key | Windows | Bash
+-|-|-
+<kbd>Ctrl</kbd>+<kbd>A</kbd> | Select All. | Go to beginning of line.
+<kbd>Ctrl</kbd>+<kbd>B</kbd> | (not bound) | Move backward one character.
+<kbd>Ctrl</kbd>+<kbd>E</kbd> | Expands doskey aliases, environment variables, and [history expansions](#using-history-expansion) in the current line. | Go to end of line.
+<kbd>Ctrl</kbd>+<kbd>F</kbd> | Find text (in plain Conhost console windows). | Move forward one character.
+<kbd>Ctrl</kbd>+<kbd>M</kbd> | Mark text (in plain Conhost console windows). | Same as <kbd>Enter</kbd>.
+<kbd>Tab</kbd> | Cycle forward through available completions. | Bash style completion.
+<kbd>Shift</kbd>+<kbd>Tab</kbd> | Cycle backward through available completions. | (not bound)
+<kbd>Right</kbd> | Move forward one character, or at the end of the line insert the next character from the previous input line. | Move forward one character.
 
 <a name="gettingstarted_autosuggest"></a>
 
@@ -291,7 +315,7 @@ Name                         | Default [*](#alternatedefault) | Description
 `clink.promptfilter`         | True    | Enable [prompt filtering](#customising-the-prompt) by Lua scripts.
 `cmd.admin_title_prefix`     |         | When set, this replaces the "Administrator: " console title prefix.
 `cmd.auto_answer`            | `off`   | Automatically answers cmd.exe's "Terminate batch job (Y/N)?" prompts. `off` = disabled, `answer_yes` = answer Y, `answer_no` = answer N.
-`cmd.ctrld_exits`            | True    | <kbd>Ctrl</kbd>+<kbd>D</kbd> exits the process when it is pressed on an empty line.
+<a name="ctrld_exits"></a>`cmd.ctrld_exits` | True | <kbd>Ctrl</kbd>+<kbd>D</kbd> exits the process when it is pressed on an empty line.
 `cmd.get_errorlevel`         | True    | When this is enabled, Clink runs a hidden `echo %errorlevel%` command before each interactive input prompt to retrieve the last exit code for use by Lua scripts.  If you experience problems, try turning this off.  This is on by default.
 `color.arg`                  |         | The color for arguments in the input line when `clink.colorize_input` is enabled.
 `color.arginfo`              | `yellow` [*](#alternatedefault) | Argument info color.  Some argmatchers may show that some flags or arguments accept additional arguments, when listing possible completions.  This color is used for those additional arguments.  (E.g. the "dir" in a "-x dir" listed completion.)
@@ -335,7 +359,7 @@ Name                         | Default [*](#alternatedefault) | Description
 `history.dupe_mode`          | `erase_prev` | If a line is a duplicate of an existing history entry Clink will erase the duplicate when this is set to `erase_prev`. Setting it to `ignore` will not add duplicates to the history, and setting it to `add` will always add lines (except when overridden by `history.sticky_search`).
 `history.expand_mode`        | `not_quoted` | The `!` character in an entered line can be interpreted to introduce words from the history. This can be enabled and disable by setting this value to `on` or `off`. Values of `not_squoted`, `not_dquoted`, or `not_quoted` will skip any `!` character quoted in single, double, or both quotes respectively.
 `history.ignore_space`       | True    | Ignore lines that begin with whitespace when adding lines in to the history.
-`history.max_lines`          | 10000 [*](#alternatedefault) | The number of history lines to save if `history.save` is enabled (1 to 50000).
+<a name="history_max_lines"></a>`history.max_lines` | 10000 [*](#alternatedefault) | The number of history lines to save if `history.save` is enabled (1 to 50000).
 `history.save`               | True    | Saves history between sessions. When disabled, history is neither read from nor written to a master history list; history for each session exists only in memory until the session ends.
 `history.shared`             | False   | When history is shared, all instances of Clink update the master history list after each command and reload the master history list on each prompt.  When history is not shared, each instance updates the master history list on exit.
 `history.sticky_search`      | False   | When enabled, reusing a history line does not add the reused line to the end of the history, and it leaves the history search position on the reused line so next/prev history can continue from there (e.g. replaying commands via <kbd>Up</kbd> several times then <kbd>Enter</kbd>, <kbd>Down</kbd>, <kbd>Enter</kbd>, etc).
@@ -346,7 +370,7 @@ Name                         | Default [*](#alternatedefault) | Description
 <a name="lua_reload_scripts"></a>`lua.reload_scripts` | False | When false, Lua scripts are loaded once and are only reloaded if forced (see [The Location of Lua Scripts](#lua-scripts-location) for details).  When true, Lua scripts are loaded each time the edit prompt is activated.
 `lua.strict`                 | True    | When enabled, argument errors cause Lua scripts to fail.  This may expose bugs in some older scripts, causing them to fail where they used to succeed. In that case you can try turning this off, but please alert the script owner about the issue so they can fix the script.
 `lua.traceback_on_error`     | False   | Prints stack trace on Lua errors.
-`match.expand_envvars`       | False [*](#alternatedefault) | Expands environment variables in a word before performing completion.
+<a name="match_expand_envvars"></a>`match.expand_envvars` | False [*](#alternatedefault) | Expands environment variables in a word before performing completion.
 `match.fit_columns`          | True    | When displaying match completions, this calculates column widths to fit as many as possible on the screen.
 `match.ignore_accent`        | True    | Controls accent sensitivity when completing matches. For example, `ä` and `a` are considered equivalent with this enabled.
 `match.ignore_case`          | `relaxed` | Controls case sensitivity when completing matches. `off` = case sensitive, `on` = case insensitive, `relaxed` = case insensitive plus `-` and `_` are considered equal.
@@ -354,7 +378,7 @@ Name                         | Default [*](#alternatedefault) | Description
 `match.max_rows`             | `0`     | The maximum number of rows that `clink-select-complete` can use.  When this is 0, the limit is the terminal height.
 `match.preview_rows`         | `0`     | The number of rows to show as a preview when using the `clink-select-complete` command (bound by default to <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Space</kbd>).  When this is 0, all rows are shown and if there are too many matches it instead prompts first like the `complete` command does.  Otherwise it shows the specified number of rows as a preview without prompting, and it expands to show the full set of matches when the selection is moved past the preview rows.
 `match.sort_dirs`            | `with`  | How to sort matching directory names. `before` = before files, `with` = with files, `after` = after files.
-`match.substring`            | False [*](#alternatedefault) | When set, if no completions are found with a prefix search, then a substring search is used.
+<a name="match_substring"></a>`match.substring` | False [*](#alternatedefault) | When set, if no completions are found with a prefix search, then a substring search is used.
 `match.translate_slashes`    | `system` | File and directory completions can be translated to use consistent slashes.  The default is `system` to use the appropriate path separator for the OS host (backslashes on Windows).  Use `slash` to use forward slashes, or `backslash` to use backslashes.  Use `off` to turn off translating slashes from custom match generators.
 `match.wild`                 | True    | Matches `?` and `*` wildcards and leading `.` when using any of the completion commands.  Turn this off to behave how bash does, and not match wildcards or leading dots (but `glob-complete-word` always matches wildcards).
 `prompt.async`               | True    | Enables [asynchronous prompt refresh](#asyncpromptfiltering).  Turn this off if prompt filter refreshes are annoying or cause problems.
@@ -373,7 +397,7 @@ Name                         | Default [*](#alternatedefault) | Description
 
 <a name="alternatedefault"></a>
 
-* Some settings have alternative default values when Clink is installed with "Use enhanced default settings" checked in the setup program.  This enables more of Clink's enhancements by default.
+**&ast;** Some settings have alternative default values when Clink is installed with "Use enhanced default settings" checked in the setup program.  This enables more of Clink's enhancements by default.
 
 > **Compatibility Notes:**
 > - The `esc_clears_line` setting has been replaced by a `clink-reset-line` command that is by default bound to the <kbd>Escape</kbd> key.  See [Customizing Key Bindings](#keybindings) and [Readline](https://tiswww.cwru.edu/php/chet/readline/readline.html) for more information.
