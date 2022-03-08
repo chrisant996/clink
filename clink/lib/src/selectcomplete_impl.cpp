@@ -1215,8 +1215,7 @@ void selectcomplete_impl::update_display()
             const int preview_rows = g_preview_rows.get();
             if (!m_expanded)
             {
-                assert(preview_rows > 0);
-                if (preview_rows + 1 >= m_visible_rows)
+                if (preview_rows <= 0 || preview_rows + 1 >= m_visible_rows)
                 {
                     m_expanded = true;
                     m_prev_displayed = -1;
