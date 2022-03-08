@@ -95,6 +95,7 @@ local function do_delayed_init(list, matcher, arg_index)
             matcher._init_coroutine = {}
         end
 
+        -- Run the delayinit callback in a coroutine so typing is responsive.
         c = coroutine.create(function ()
             -- Invoke the delayinit callback and add the results to the arg
             -- slot's list of matches.
@@ -108,14 +109,18 @@ local function do_delayed_init(list, matcher, arg_index)
                 clink.reclassifyline()
             end
         end)
-
+-- TODO: Need to ensure this is cleared at onbeginedit!
         matcher._init_coroutine[arg_index] = c
     end
 
     -- Finish (run) the coroutine immediately only when the main coroutine is
     -- generating matches.
-    if not async_delayinit and c then
+    if not async_delayinit then
         clink._finish_coroutine(c)
+    else
+        -- Run the coroutine up to the first yield, so that if it doesn't need
+        -- to yield at all then it completes right now.
+        coroutine.resume(c)
     end
 end
 
@@ -1347,12 +1352,41 @@ end
 
 --------------------------------------------------------------------------------
 local function _do_onuse_callback(argmatcher)
-    if argmatcher._delayinit_func and (argmatcher._onuse_generation or 0) < _delayinit_generation then
+    -- Don't init while generating matches from history, as that could be
+    -- excessively expensive (could run thousands of callbacks).
+    if _argmatcher_fromhistory and _argmatcher_fromhistory.argmatcher then
+        return
+    end
+
+    if (argmatcher._onuse_generation or 0) < _delayinit_generation then
         argmatcher._onuse_generation = _delayinit_generation
+    else
+        return
+    end
+
+    local _, ismain = coroutine.running()
+    local async_delayinit = not ismain or not clink._in_generate()
+
+    -- Start the delay init callback if it hasn't already started.
+    local c = argmatcher._onuse_coroutine
+    if not c then
         -- Run the delayinit callback in a coroutine so typing is responsive.
-        local c = coroutine.create(function ()
+        c = coroutine.create(function ()
             argmatcher._delayinit_func(argmatcher)
+            argmatcher._onuse_coroutine = nil
+            if async_delayinit then
+                clink.reclassifyline()
+            end
         end)
+-- TODO: Need to ensure this is cleared at onbeginedit!
+        argmatcher._onuse_coroutine = c
+    end
+
+    -- Finish (run) the coroutine immediately only when the main coroutine is
+    -- generating matches.
+    if not async_delayinit then
+        clink._finish_coroutine(c)
+    else
         -- Run the coroutine up to the first yield, so that if it doesn't need
         -- to yield at all then it completes right now.
         coroutine.resume(c)
