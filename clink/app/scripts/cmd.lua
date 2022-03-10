@@ -62,9 +62,10 @@ function cmd_generator:generate(line_state, match_builder)
 end
 
 --------------------------------------------------------------------------------
-local amp_classifier = clink.classifier(1)
-function amp_classifier:classify(commands)
+local cmd_classifier = clink.classifier(1)
+function cmd_classifier:classify(commands)
     if commands and commands[1] then
+        -- Command separators and redirection symbols.
         local line_state = commands[1].line_state
         local classifications = commands[1].classifications
         local line = line_state:getline()
@@ -89,6 +90,21 @@ function amp_classifier:classify(commands)
                 end
             end
             i = i + 1
+        end
+
+        -- Special case coloring for rem command.
+        for _,command in pairs(commands) do
+            line_state = command.line_state
+            if line_state:getword(1) == "rem" then
+                local info = line_state:getwordinfo(1)
+                local color = settings.get("color.description")
+                if color == "" then
+                    color = "0"
+                end
+                command.classifications:classifyword(1, "c")
+                command.classifications:applycolor(info.offset + info.length, #line, color)
+                break
+            end
         end
     end
 end
