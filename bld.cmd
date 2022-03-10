@@ -128,7 +128,7 @@ if x%__MSBUILD% == x echo error: Unable to find MSBuild.&goto :eof
 set __SLNNAME=%__SLN%
 call :setslnname %__SLN%
 
-echo.
+rem echo.
 %EC% %BOLD%%NEG% Building %__SLNNAME% %__PLATFORM% %__CONFIG% %POS%%NORM%
 %__MSBUILD% -nologo -v:minimal %__MULTICPU% -p:Configuration=%__CONFIG% -p:Platform=%__PLATFORM% %__TARGETS% %__ARGS% %__SLN%
 if errorlevel 1 goto :eof
