@@ -1588,7 +1588,7 @@ function argmatcher_classifier:classify(commands)
                 word_classifier:classifyword(command_word_index, m.."c", false); --command
             elseif unrecognized_color or executable_color then
                 local cl
-                local recognized = clink._recognize_command(line_state:getline(), command_word)
+                local recognized = clink._recognize_command(line_state:getline(), command_word, info.quoted)
                 if recognized < 0 then
                     cl = unrecognized_color and "u"                              --unrecognized
                 elseif recognized > 0 then

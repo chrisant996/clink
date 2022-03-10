@@ -1357,10 +1357,29 @@ static int recognize_command(lua_State* state)
 {
     const char* line = checkstring(state, 1);
     const char* word = checkstring(state, 2);
+    const bool quoted = lua_toboolean(state, 3);
     if (!line || !word)
         return 0;
     if (!*line || !*word)
         return 0;
+
+    str<> tmp;
+    if (!quoted)
+    {
+        str_iter iter(word);
+        while (iter.more())
+        {
+            const char* ptr = iter.get_pointer();
+            const int c = iter.next();
+            if (c != '^' || !iter.peek())
+                tmp.concat(ptr, iter.get_pointer() - ptr);
+        }
+        word = tmp.c_str();
+    }
+
+    str<> tmp2;
+    if (os::expand_env(word, -1, tmp2))
+        word = tmp2.c_str();
 
     // Ignore UNC paths, because they can take up to 2 minutes to time out.
     // Even running that on a thread would either starve the consumers or

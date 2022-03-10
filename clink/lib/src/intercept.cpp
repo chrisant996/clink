@@ -23,6 +23,7 @@ static bool parse_line_token(str_base& out, const char* line)
         line++;
 
     // Parse the line text.
+    bool expand = false;
     bool first_component = true;
     for (bool quoted = false; true; line++)
     {
@@ -43,16 +44,22 @@ static bool parse_line_token(str_base& out, const char* line)
 
         // Parse succeeds if input is one token.
         if (!*line)
-            return out.length();
+        {
+            if (expand)
+            {
+                str<> tmp;
+                if (os::expand_env(out.c_str(), out.length(), tmp))
+                    out = tmp.c_str();
+            }
+            return out.length() > 0;
+        }
 
         switch (*line)
         {
             // These characters defeat the directory shortcut feature.
-        case '^':
         case '<':
         case '|':
         case '>':
-        case '%':
             return false;
 
             // These characters are acceptable when quoted.
@@ -73,6 +80,19 @@ static bool parse_line_token(str_base& out, const char* line)
             first_component = false;
             quoted = !quoted;
             continue;
+
+            // Caret is eaten, unless quoted or the last character.
+        case '^':
+            first_component = false;
+            if (!quoted && line[1])
+                continue;
+            break;
+
+            // Percent requires expanding environment variables.
+        case '%':
+            first_component = false;
+            expand = true;
+            break;
 
             // These characters end a component.
         case '.':
