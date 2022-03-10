@@ -9,6 +9,9 @@
 class cmd_tokeniser_impl : public collector_tokeniser
 {
 public:
+    cmd_tokeniser_impl();
+    ~cmd_tokeniser_impl();
+    void begin_line();
     void start(const str_iter& iter, const char* quote_pair) override;
 protected:
     char get_opening_quote() const;
@@ -17,6 +20,7 @@ protected:
     str_iter m_iter;
     const char* m_start;
     const char* m_quote_pair;
+    alias_cache* m_alias_cache = nullptr;
     bool m_next_redir_arg;
 };
 
@@ -34,3 +38,7 @@ class cmd_word_tokeniser : public cmd_tokeniser_impl
 public:
     word_token next(unsigned int& offset, unsigned int& length) override;
 };
+
+//------------------------------------------------------------------------------
+int skip_leading_parens(str_iter& iter, bool& first, alias_cache* alias_cache=nullptr);
+unsigned int trim_trailing_parens(const char* start, unsigned int offset, unsigned int length, int parens);

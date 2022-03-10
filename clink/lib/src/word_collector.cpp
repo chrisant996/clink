@@ -5,6 +5,7 @@
 #include "line_buffer.h"
 #include "line_state.h"
 #include "word_collector.h"
+#include "alias_cache.h"
 
 #include <core/base.h>
 #include <core/str.h>
@@ -51,41 +52,6 @@ word_token simple_word_tokeniser::next(unsigned int& offset, unsigned int& lengt
     offset = static_cast<unsigned int>(ptr - m_start);
     length = len;
     return word_token(token.delim);
-}
-
-
-
-//------------------------------------------------------------------------------
-class alias_cache
-{
-public:
-    alias_cache() : m_names(4096) {}
-    bool get_alias(const char* name, str_base& out);
-private:
-    str_map_caseless<auto_free_str>::type m_map;
-    linear_allocator m_names;
-};
-
-//------------------------------------------------------------------------------
-bool alias_cache::get_alias(const char* name, str_base& out)
-{
-    const auto& iter = m_map.find(name);
-    if (iter != m_map.end())
-    {
-        const char* value = iter->second.get();
-        if (!value)
-            return false;
-        out = value;
-        return true;
-    }
-
-    const bool exists = os::get_alias(name, out);
-
-    const char* cache_name = m_names.store(name);
-    auto_free_str cache_value(out.c_str(), out.length());
-    m_map.emplace(cache_name, std::move(cache_value));
-
-    return exists;
 }
 
 

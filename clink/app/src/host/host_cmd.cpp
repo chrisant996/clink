@@ -446,6 +446,8 @@ void host_cmd::edit_line(wchar_t* chars, int max_chars)
     // them if so desired.
     add_aliases(false/*force*/);
 
+    m_command_tokeniser.begin_line();
+
     bool resolved = false;
     wstr_base wout(chars, max_chars);
 

@@ -3,8 +3,13 @@
 
 #include "pch.h"
 #include "cmd_tokenisers.h"
+#include "alias_cache.h"
 
 #include <core/base.h>
+#include <core/os.h>
+#include <core/settings.h>
+
+extern setting_bool g_enhanced_doskey;
 
 //------------------------------------------------------------------------------
 enum input_type { iTxt, iSpc, iDig, iIn, iOut, iAmp, iPipe, iMAX };
@@ -56,6 +61,24 @@ static_assert(sizeof_array(c_transition) == size_t(tokeniser_state::sBREAK), "ar
 
 
 //------------------------------------------------------------------------------
+cmd_tokeniser_impl::cmd_tokeniser_impl()
+{
+    m_alias_cache = new alias_cache;
+}
+
+//------------------------------------------------------------------------------
+cmd_tokeniser_impl::~cmd_tokeniser_impl()
+{
+    delete m_alias_cache;
+}
+
+//------------------------------------------------------------------------------
+void cmd_tokeniser_impl::begin_line()
+{
+    m_alias_cache->clear();
+}
+
+//------------------------------------------------------------------------------
 void cmd_tokeniser_impl::start(const str_iter& iter, const char* quote_pair)
 {
     m_iter = iter;
@@ -83,6 +106,76 @@ char cmd_tokeniser_impl::get_closing_quote() const
 
 
 //------------------------------------------------------------------------------
+int skip_leading_parens(str_iter& iter, bool& first, alias_cache* alias_cache)
+{
+    int parens = 0;
+    bool do_parens = true;
+
+    if ((first || g_enhanced_doskey.get()) && iter.more() && iter.peek() == '(')
+    {
+        str<> tmp;
+        str<> tmp2;
+        const char* orig = iter.get_pointer();
+        while (iter.more())
+        {
+            const int c = iter.peek();
+            if (c == ' ' || c == '\t')
+                break;
+            iter.next();
+        }
+        tmp.concat(orig, static_cast<unsigned int>(iter.get_pointer() - orig));
+        do_parens = (alias_cache ?
+                     !alias_cache->get_alias(tmp.c_str(), tmp2) :
+                     !os::get_alias(tmp.c_str(), tmp2));
+        iter.reset_pointer(orig);
+    }
+
+    if (do_parens)
+    {
+        const char* orig = iter.get_pointer();
+        while (iter.more())
+        {
+            const int c = iter.peek();
+            if (c != ' ' && c != '(')
+                break;
+            iter.next();
+            if (c == '(')
+            {
+                first = false;
+                if (iter.more() && iter.peek() == ' ')
+                    iter.next();
+                orig = iter.get_pointer();
+                parens++;
+            }
+        }
+        iter.reset_pointer(orig);
+    }
+
+    return parens;
+}
+
+//------------------------------------------------------------------------------
+unsigned int trim_trailing_parens(const char* start, unsigned int offset, unsigned int length, int parens)
+{
+    unsigned int ret = length;
+
+    // Skip trailing parens to match skipped leading parens.
+    while (parens > 0 && length > offset)
+    {
+        length--;
+        if (start[length] == ')')
+        {
+            parens--;
+            ret = length;
+        }
+        else if (start[length] != ' ')
+            break;
+    }
+
+    return ret;
+}
+
+//------------------------------------------------------------------------------
 word_token cmd_command_tokeniser::next(unsigned int& offset, unsigned int& length)
 {
     if (!m_iter.more())
@@ -100,10 +193,11 @@ word_token cmd_command_tokeniser::next(unsigned int& offset, unsigned int& lengt
         m_iter.next();
     }
 
-    const bool first = (m_iter.get_pointer() == m_start);
+    bool first = (m_iter.get_pointer() == m_start);
+    int parens = skip_leading_parens(m_iter, first, m_alias_cache);
 
-    // Match the doskey-disabler space in doskey::resolve().
-    if (!first && m_iter.more() && m_iter.peek() == ' ')
+    // Eat padding space after command separate or open paren.
+    if (!first && !parens && m_iter.more() && m_iter.peek() == ' ')
         m_iter.next();
 
     offset = static_cast<unsigned int>(m_iter.get_pointer() - m_start);
@@ -161,6 +255,7 @@ word_token cmd_command_tokeniser::next(unsigned int& offset, unsigned int& lengt
     }
 
     length = static_cast<unsigned int>(m_iter.get_pointer() - m_start) - is_break;
+    length = trim_trailing_parens(m_start, offset, length, parens);
     assert(length >= offset);
     length -= offset;
 

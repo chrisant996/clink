@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "doskey.h"
+#include "cmd_tokenisers.h"
 
 #include <core/base.h>
 #include <core/settings.h>
@@ -15,7 +16,7 @@
 #include "terminal/terminal_helpers.h"
 
 //------------------------------------------------------------------------------
-static setting_bool g_enhanced_doskey(
+setting_bool g_enhanced_doskey(
     "doskey.enhanced",
     "Add enhancements to Doskey",
     "Enhanced Doskey adds the expansion of macros that follow '|' and '&'\n"
@@ -26,10 +27,13 @@ static setting_bool g_enhanced_doskey(
 
 
 //------------------------------------------------------------------------------
-static bool get_alias(const wchar_t* shell_name, str_iter& in, str_base& alias, str_base& text, bool relaxed=false)
+static bool get_alias(const wchar_t* shell_name, str_iter& in, str_base& alias, str_base& text, int& parens, bool relaxed=false)
 {
     alias.clear();
     text.clear();
+
+    bool first = true;
+    parens = skip_leading_parens(in, first);
 
     // Legacy doskey doesn't allow macros that begin with whitespace.
     const char* start = in.get_pointer();
@@ -50,7 +54,9 @@ static bool get_alias(const wchar_t* shell_name, str_iter& in, str_base& alias, 
 
         if (c == '\0' || c == ' ' || (relaxed && (c == '|' || c == '&')))
         {
-            alias.concat(start, static_cast<unsigned int>(in.get_pointer() - start));
+            unsigned int len = static_cast<unsigned int>(in.get_pointer() - start);
+            len = trim_trailing_parens(start, 0, len, parens);
+            alias.concat(start, len);
             break;
         }
 
@@ -63,7 +69,7 @@ fallback:
         in.reset_pointer(start);
         if (relaxed || !g_enhanced_doskey.get())
             return false;
-        return get_alias(shell_name, in, alias, text, true);
+        return get_alias(shell_name, in, alias, text, parens, true);
     }
 
     // Find the alias' text. First check it exists.
@@ -303,7 +309,8 @@ bool doskey::resolve_impl(str_iter& s, str_stream& out, int* _point)
     // Get alias and macro text.
     str<32> alias;
     str<32> text;
-    if (!get_alias(m_shell_name.data(), in, alias, text))
+    int parens;
+    if (!get_alias(m_shell_name.data(), in, alias, text, parens))
         return false;
 
     // Find the point range for the alias name.
@@ -380,8 +387,10 @@ bool doskey::resolve_impl(str_iter& s, str_stream& out, int* _point)
         const char* start = in.get_pointer();
         const char* end = in.get_pointer() + in.length();
         const char* ptr = find_command_end(start, int(end - start));
+        unsigned int len = static_cast<unsigned int>(ptr - in.get_pointer());
+        len = trim_trailing_parens(start, 0, len, parens);
         command.truncate(int(ptr - command.get_pointer()));
-        in.truncate(int(ptr - in.get_pointer()));
+        in.truncate(len);
 
         // Consume the input up to the command separator.
         new (&s) str_iter(ptr, int(end - ptr));
