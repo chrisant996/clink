@@ -5,8 +5,19 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
+- [ ] Collecting words needs to support the weird word break characters for `rem`.
+- [ ] `>nul rem asdf` isn't recognized as `rem` by the command tokeniser.
 
 ## Normal Priority
+- [ ] `(`..`)` and doskey macros:
+  - [ ] Resolve needs to preserve the `(` and `)` portions: `( dw & echo foo )` resolves to `filestat & echo foo )`.
+  - [ ] Add unit tests.
+
+## Low Priority
+- [ ] Recognizer and argmatcher lookup should support `@` syntax.
+- [ ] Collecting words should support `@   command` syntax.
+- [ ] `program,blah` should break at the `,` (but maybe not in all cases???) -- and similarly for some other characters.
+- Investigate feasibility/cost/benefit of adding back (some) support for merging argmatchers?  Also find the old merging unit tests.
 
 ## Follow Up
 - Readline command reference.
