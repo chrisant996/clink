@@ -903,6 +903,11 @@ void set_suggestion(const char* line, unsigned int endword_offset, const char* s
 //------------------------------------------------------------------------------
 void hook_display()
 {
+    static bool s_busy = false;
+    if (s_busy)
+        return;
+    rollback<bool> rb(s_busy, true);
+
     if (!s_suggestion.more() || rl_point != rl_end)
     {
         rl_redisplay();
