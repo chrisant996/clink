@@ -106,6 +106,11 @@ char cmd_tokeniser_impl::get_closing_quote() const
 
 
 //------------------------------------------------------------------------------
+static const char c_rem_matcher[4] = { 'r', 'e', 'm' };
+static const char c_REM_matcher[4] = { 'R', 'E', 'M' };
+static const char c_rem_end[] = "&(=+[]\\|;:,.<>/ \t";
+
+//------------------------------------------------------------------------------
 int skip_leading_parens(str_iter& iter, bool& first, alias_cache* alias_cache)
 {
     int parens = 0;
@@ -206,6 +211,7 @@ word_token cmd_command_tokeniser::next(unsigned int& offset, unsigned int& lengt
     bool in_quote = false;
     bool is_break = false;
     tokeniser_state state = sSpc;
+    int rem_state = 0;
     while (m_iter.more())
     {
         c = m_iter.next();
@@ -237,6 +243,31 @@ word_token cmd_command_tokeniser::next(unsigned int& offset, unsigned int& lengt
                 state = sSpc;
                 new_state = c_transition[state][input];
             }
+
+            if (rem_state < 0)
+            {
+                // Not a 'rem' command.
+            }
+            else if (rem_state == 3)
+            {
+                if (!(c & ~0x7f) && strchr(c_rem_end, static_cast<unsigned char>(c)))
+                {
+                    // It's a 'rem' command, so consume the rest of the line.
+                    while (m_iter.more())
+                        m_iter.next();
+                    c = 0;
+                    break;
+                }
+                rem_state = -1;
+            }
+            else if (rem_state == 0 && (new_state > sDig || c == ' ' || c == '\t' || c == '(' || c == '@'))
+            {
+                // Not text to be tested for 'rem'.
+            }
+            else if (c == c_rem_matcher[rem_state] || c == c_REM_matcher[rem_state])
+                rem_state++;
+            else
+                rem_state = -1;
 
             if (new_state == sBREAK)
             {
@@ -334,7 +365,8 @@ word_token cmd_word_tokeniser::next(unsigned int& offset, unsigned int& length)
 
             input_type input = get_input_type(c);
             tokeniser_state new_state = c_transition[state][input];
-            assert(new_state != sBREAK);
+            if (new_state == sBREAK) // 'rem' can lead to this.
+                new_state = sTxt;
 
             // sARG, sVALID, and sBAD mean end_word onwards is a redirection
             // token and c starts a new token.
@@ -352,7 +384,8 @@ word_token cmd_word_tokeniser::next(unsigned int& offset, unsigned int& length)
                 c = m_iter.peek();
                 input = get_input_type(c);
                 new_state = c_transition[state][input];
-                assert(new_state != sBREAK);
+                if (new_state == sBREAK) // 'rem' can lead to this.
+                    new_state = sTxt;
             }
 
             // Space after a digit needs to include the digit in the word.
