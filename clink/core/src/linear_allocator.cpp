@@ -45,12 +45,12 @@ void* linear_allocator::alloc(unsigned int size)
 
     if (oversized(size))
     {
+        if (!m_ptr && !new_page())
+            return nullptr;
         // An over-sized allocation gets its own "page", which gets inserted
         // into the chain without discarding the current page.
         char* oversized = (char*)malloc(size + sizeof(m_ptr));
         if (oversized == nullptr)
-            return nullptr;
-        if (!m_ptr && !new_page())
             return nullptr;
         *reinterpret_cast<char**>(oversized) = *reinterpret_cast<char**>(m_ptr);
         *reinterpret_cast<char**>(m_ptr) = oversized;
