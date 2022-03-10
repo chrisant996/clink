@@ -8,6 +8,7 @@
 #include <core/str.h>
 #include <core/str_iter.h>
 #include <core/os.h>
+#include <lib/line_buffer.h>
 #include "lua_script_loader.h"
 #include "lua_state.h"
 
@@ -18,6 +19,9 @@ extern "C" {
 }
 
 #include <algorithm>
+
+//------------------------------------------------------------------------------
+extern line_buffer* g_rl_buffer;
 
 //------------------------------------------------------------------------------
 #define MR(x)                        L##x L"\x08"
@@ -407,9 +411,19 @@ void prompt_filter::filter(const char* in, const char* rin, str_base& out, str_b
 
     lua_pushstring(state, in);
     lua_pushstring(state, rin);
+    if (g_rl_buffer && transient)
+    {
+        lua_pushlstring(state, g_rl_buffer->get_buffer(), g_rl_buffer->get_length());
+        lua_pushinteger(state, g_rl_buffer->get_cursor());
+    }
+    else
+    {
+        lua_pushnil(state);
+        lua_pushnil(state);
+    }
 
     rollback<bool> rb(s_filtering, true);
-    if (m_lua.pcall(state, 2, 2) != 0)
+    if (m_lua.pcall(state, 4, 2) != 0)
     {
         lua_pop(state, 2);
         return;

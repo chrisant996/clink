@@ -26,7 +26,7 @@ end
 
 
 --------------------------------------------------------------------------------
-local function _do_filter_prompt(type, prompt, rprompt)
+local function _do_filter_prompt(type, prompt, rprompt, line, cursor)
     -- Sort by priority if required.
     if prompt_filters_unsorted then
         local lambda = function(a, b) return a._priority < b._priority end
@@ -71,9 +71,18 @@ local function _do_filter_prompt(type, prompt, rprompt)
         return prompt, rprompt
     end
 
+    -- Backward compatibility shim.
+    local old_rl_state = rl_state
+    if line then
+        rl_state = { line_buffer = line, point = cursor }
+    end
+
     set_current_prompt_filter(nil)
     local ok, ret, rret = xpcall(impl, _error_handler_ret, prompt, rprompt)
     set_current_prompt_filter(nil)
+
+    rl_state = old_rl_state
+
     if not ok then
         print("")
         print("prompt filter failed:")
@@ -85,13 +94,13 @@ local function _do_filter_prompt(type, prompt, rprompt)
 end
 
 --------------------------------------------------------------------------------
-function clink._filter_prompt(prompt, rprompt)
-    return _do_filter_prompt("", prompt, rprompt)
+function clink._filter_prompt(prompt, rprompt, line, cursor)
+    return _do_filter_prompt("", prompt, rprompt, line, cursor)
 end
 
 --------------------------------------------------------------------------------
-function clink._filter_transient_prompt(prompt, rprompt)
-    return _do_filter_prompt("transient", prompt, rprompt)
+function clink._filter_transient_prompt(prompt, rprompt, line, cursor)
+    return _do_filter_prompt("transient", prompt, rprompt, line, cursor)
 end
 
 --------------------------------------------------------------------------------
