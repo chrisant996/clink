@@ -119,7 +119,9 @@ local function classify_to_end(idx, line_state, classify, wc)
         end
     end
     if offset then
-        classify:applycolor(offset, #line_state:getline() - offset + 1, color_for_word_class(wc))
+        local info = line_state:getwordinfo(line_state:getwordcount())
+        local len = info.offset + info.length
+        classify:applycolor(offset, len - offset + 1, color_for_word_class(wc))
     end
 end
 
