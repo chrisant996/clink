@@ -5,9 +5,12 @@
 #### v1.3.10
 
 - An argmatcher can extend itself on the fly, when needed.  For example, if it needs to parse arguments and flags from `--help` text, or if the available command arguments change based on the current directory, or etc.  See [Adaptive Argmatchers](#adaptive-argmatchers) for more information.
-- `^` and environment variables are recognized when coloring the command word, and when navigating by typing a directory name by itself.
-- Add input line coloring for the `rem` command.
-- Fixed heap corruption (regression introduced in v1.3.1).
+- Recognizes `^` and environment variables when coloring the command word, and when navigating by typing a directory name by itself.
+- Added input line coloring for the `rem` command.
+- Fixed memory corruption (regression introduced in v1.3.1).
+- Fixed input line coloring for `clink set setting value & another command`.
+- Fixed argmatcher input line coloring for matches using the `{ match="abc" }` syntax.
+- Fixed finding an argmatcher after `(` at the beginning of the line.
 - Fixed mouse clicks in `clink-select-complete` to insert the clicked match, in addition to highlighting it.
 - Fixed [#252](https://github.com/chrisant996/clink/issues/252); `md` and `rd` should complete more than 1 argument.
 
