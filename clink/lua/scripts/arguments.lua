@@ -277,9 +277,10 @@ function _argreader:update(word, word_index)
                 end
                 if not matched then
                     for _, i in ipairs(arg) do
-                        if type(i) == "function" then
+                        local it = type(i)
+                        if it == "function" then
                             t = 'o' --other (placeholder; superseded by :classifyword).
-                        elseif i == word then
+                        elseif i == word or (it == "table" and i.match == word) then
                             t = arg_match_type
                             break
                         end
