@@ -99,6 +99,10 @@ void linear_allocator::free_chain(bool keep_one)
     m_used = m_ptr && keep_one ? sizeof(m_ptr) : m_max;
 
     char* ptr = m_ptr;
+
+    if (!keep_one)
+        m_ptr = nullptr;
+
     while (ptr)
     {
         char* tmp = ptr;
