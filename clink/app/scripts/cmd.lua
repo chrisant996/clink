@@ -9,12 +9,13 @@ settings.add("color.cmdredir", "bold", "Color for < and > redirection symbols")
 
 --------------------------------------------------------------------------------
 local cmd_commands = {
-    "assoc", "break", "call", "cd", "chcp", "chdir", "cls", "color", "copy",
-    "date", "del", "dir", "diskcomp", "diskcopy", "echo", "endlocal", "erase",
-    "exit", "for", "format", "ftype", "goto", "graftabl", "if", "md", "mkdir",
-    "mklink", "more", "move", "path", "pause", "popd", "prompt", "pushd", "rd",
-    "rem", "ren", "rename", "rmdir", "set", "setlocal", "shift", "start",
-    "time", "title", "tree", "type", "ver", "verify", "vol"
+    "assoc", "attrib", "break", "call", "cd", "chcp", "chdir", "cls",
+    "color", "copy", "date", "del", "dir", "dpath", "echo", "endlocal",
+    "erase", "exit", "for", "format", "ftype", "goto", "help", "if", "md",
+    "mkdir", "mklink", "more", "move", "path", "pause", "popd", "prompt",
+    "pushd", "rd", "rem", "ren", "rename", "rmdir", "set", "setlocal",
+    "shift", "start", "subst", "tasklist", "taskkill", "time", "title",
+    "type", "ver", "verify", "vol",
 }
 
 --------------------------------------------------------------------------------
