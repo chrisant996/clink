@@ -8,6 +8,7 @@
 #include <core/base.h>
 #include <core/os.h>
 #include <core/settings.h>
+#include <core/debugheap.h>
 
 extern setting_bool g_enhanced_doskey;
 
@@ -106,9 +107,99 @@ char cmd_tokeniser_impl::get_closing_quote() const
 
 
 //------------------------------------------------------------------------------
-static const char c_rem_matcher[4] = { 'r', 'e', 'm' };
-static const char c_REM_matcher[4] = { 'R', 'E', 'M' };
-static const char c_rem_end[] = "&(=+[]\\|;:,.<>/ \t";
+const char* const cmd_state::c_delimit = "&(=+[]\\|;:,.<>/ \t";
+str_map_caseless<state_flag>::type cmd_state::s_map;
+
+//------------------------------------------------------------------------------
+void cmd_state::ensure_map()
+{
+    if (s_map.size() > 0)
+        return;
+
+    // Internal commands in CMD get special word break treatment.
+
+    static const char* const c_cmds[] =
+    {
+        // These treat special word break characters as part of the input.
+        "assoc", "color", "ftype", "if", "set", "ver", "verify",
+        // These treat special word break characters as ignored delimiters.
+        "break", "call", "cd", "chdir", "cls", "copy", "date", "del", "dir",
+        "dpath", "echo", "endlocal", "erase", "exit", "for", "goto", "md",
+        "mkdir", "mklink", "move", "path", "pause", "popd", "prompt", "pushd",
+        "rd", "ren", "rename", "rmdir", "setlocal", "shift", "start", "time",
+        "title", "type", "vol",
+    };
+
+    dbg_ignore_scope(snapshot, "cmd_state::ensure_map");
+
+    s_map.emplace("rem", flag_rem);
+    for (const char* cmd : c_cmds)
+        s_map.emplace(cmd, flag_none);
+};
+
+//------------------------------------------------------------------------------
+void cmd_state::clear()
+{
+    m_word.clear();
+    m_failed = false;
+    m_match = false;
+    m_match_flag = flag_none;
+}
+
+//------------------------------------------------------------------------------
+bool cmd_state::test(const int c, const tokeniser_state new_state)
+{
+    // Not a command.
+    if (m_failed)
+        return false;
+
+    // Some characters can precede a command; e.g. `>nul ` or `( ` before `rem`.
+    if (!m_word.length() && (new_state > sDig || c == ' ' || c == '\t' || c == '(' || c == '@'))
+        return false;
+
+    // If the word is too long or a non-ASCII character is encountered, it can't
+    // be a command (i.e. CMD internal command).
+    if (m_word.length() > 8 || (c & ~0x7f))
+    {
+        cancel();
+        return false;
+    }
+
+    // The accumulated word could be a command; is it followed by an appropriate
+    // delimiter?
+    if (m_match)
+    {
+        if (strchr(c_delimit, static_cast<unsigned char>(c)))
+        {
+            cancel();
+            return true;
+        }
+        m_match = false;
+    }
+
+    // Accumulate the word.
+    char ch = char(c);
+    m_word.concat(&ch, 1);
+
+    // Test if the accumulated word so far matches a command name.
+    auto const it = s_map.find(m_word.c_str());
+    if (it == s_map.end())
+        return false;
+
+    // If 'rem' is the only command of interest, short circuit because it is now
+    // clear the command word is not 'rem'.
+    if (m_only_rem && !(it->second & flag_rem))
+    {
+        cancel();
+        return false;
+    }
+
+    m_match = true;
+    m_match_flag = it->second;
+    return false;
+}
+
+
 
 //------------------------------------------------------------------------------
 int skip_leading_parens(str_iter& iter, bool& first, alias_cache* alias_cache)
@@ -210,8 +301,9 @@ word_token cmd_command_tokeniser::next(unsigned int& offset, unsigned int& lengt
     int c = 0;
     bool in_quote = false;
     bool is_break = false;
+    bool is_arg = false;
     tokeniser_state state = sSpc;
-    int rem_state = 0;
+    cmd_state cmd_state(true/*only_rem*/);
     while (m_iter.more())
     {
         c = m_iter.next();
@@ -242,32 +334,19 @@ word_token cmd_command_tokeniser::next(unsigned int& offset, unsigned int& lengt
             {
                 state = sSpc;
                 new_state = c_transition[state][input];
+                is_arg = true;
             }
+            else if (new_state != sTxt)
+                is_arg = false;
 
-            if (rem_state < 0)
+            if (new_state <= sDig && !is_arg && cmd_state.test(c, new_state))
             {
-                // Not a 'rem' command.
+                // It's a 'rem' command, so consume the rest of the line.
+                while (m_iter.more())
+                    m_iter.next();
+                c = 0;
+                break;
             }
-            else if (rem_state == 3)
-            {
-                if (!(c & ~0x7f) && strchr(c_rem_end, static_cast<unsigned char>(c)))
-                {
-                    // It's a 'rem' command, so consume the rest of the line.
-                    while (m_iter.more())
-                        m_iter.next();
-                    c = 0;
-                    break;
-                }
-                rem_state = -1;
-            }
-            else if (rem_state == 0 && (new_state > sDig || c == ' ' || c == '\t' || c == '(' || c == '@'))
-            {
-                // Not text to be tested for 'rem'.
-            }
-            else if (c == c_rem_matcher[rem_state] || c == c_REM_matcher[rem_state])
-                rem_state++;
-            else
-                rem_state = -1;
 
             if (new_state == sBREAK)
             {
@@ -301,6 +380,13 @@ bool cmd_command_tokeniser::has_deprecated_argmatcher(const char* command)
 }
 
 
+
+//------------------------------------------------------------------------------
+void cmd_word_tokeniser::start(const str_iter& iter, const char* quote_pair)
+{
+    base::start(iter, quote_pair);
+    m_cmd_state.clear();
+}
 
 //------------------------------------------------------------------------------
 word_token cmd_word_tokeniser::next(unsigned int& offset, unsigned int& length)
@@ -365,7 +451,7 @@ word_token cmd_word_tokeniser::next(unsigned int& offset, unsigned int& length)
 
             input_type input = get_input_type(c);
             tokeniser_state new_state = c_transition[state][input];
-            if (new_state == sBREAK) // 'rem' can lead to this.
+            if (new_state == sBREAK) // 'rem a&b' leads to this.
                 new_state = sTxt;
 
             // sARG, sVALID, and sBAD mean end_word onwards is a redirection
@@ -395,6 +481,10 @@ word_token cmd_word_tokeniser::next(unsigned int& offset, unsigned int& length)
             // Must handle sARG, etc before halting, so "foo >" registers the
             // second (and empty) word as a redir_arg.
             if (!m_iter.more())
+                break;
+
+            // Internal commands have special word break syntax.
+            if (new_state == sTxt && m_cmd_state.test(c, new_state))
                 break;
 
             m_iter.next();

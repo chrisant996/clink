@@ -96,15 +96,19 @@ function cmd_classifier:classify(commands)
         -- Special case coloring for rem command.
         for _,command in pairs(commands) do
             line_state = command.line_state
-            if line_state:getword(1) == "rem" then
-                local info = line_state:getwordinfo(1)
-                local color = settings.get("color.description")
-                if color == "" then
-                    color = "0"
+            for i = 1, line_state:getwordcount(), 1 do
+                local info = line_state:getwordinfo(i)
+                if not info.redir then
+                    if line_state:getword(i) == "rem" then
+                        local color = settings.get("color.description")
+                        if color == "" then
+                            color = "0"
+                        end
+                        command.classifications:classifyword(1, "c")
+                        command.classifications:applycolor(info.offset + info.length, #line, color)
+                    end
+                    break
                 end
-                command.classifications:classifyword(1, "c")
-                command.classifications:applycolor(info.offset + info.length, #line, color)
-                break
             end
         end
     end
