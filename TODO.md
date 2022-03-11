@@ -5,8 +5,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- [ ] Collecting words needs to support the weird word break characters for `rem`.
-- [ ] `>nul rem asdf` isn't recognized as `rem` by the command tokeniser.
 
 ## Normal Priority
 - [ ] `(`..`)` and doskey macros:
@@ -14,8 +12,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - [ ] Add unit tests.
 
 ## Low Priority
-- [ ] Recognizer and argmatcher lookup should support `@` syntax.
-- [ ] Collecting words should support `@   command` syntax.
 - [ ] `program,blah` should break at the `,` (but maybe not in all cases???) -- and similarly for some other characters.
 - Investigate feasibility/cost/benefit of adding back (some) support for merging argmatchers?  Also find the old merging unit tests.
 
@@ -60,6 +56,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Windows Terminal crashes on exit after `clink inject`.  The current release version was crashing (1.6.10571.0).  Older versions don't crash, and a locally built version from the terminal repo's HEAD doesn't crash.  I think the crash is probably a bug in Windows Terminal, not related to Clink.  And after I built it locally, then it stopped crashing with 1.6.10571.0 as well.  Mysterious...
 
 ## Punt
+- Recognizer and argmatcher lookup should support `@` syntax; collecting words should support `@   command` syntax.  _[Not worth the effort; using `@` at the command prompt has no effect anyway.]_
 - Make `clink-show-help` call out prefix key sequences, since they can behave in a confusing manner?  _[Complex present in a non-confusing way, and very rare to actually occur.  Not worth the investment at this time.]_
 - Maybe deal with timeouts in keyboard input?  Could differentiate <kbd>Esc</kbd> versus <kbd>Esc</kbd>,<kbd>Esc</kbd> but is very dangerous because it makes input processing unpredictable depending on the CPU availability.  _[Too dangerous.  And turned out to not be the issue.]_
 - Ability to rearrange and edit popup list items?  _[Can't realistically rearrange or edit history, due to how the history file format works.]_
