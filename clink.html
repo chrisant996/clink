@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.3.9</title>
+<title>Clink v1.3.10</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -771,7 +771,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.3.9</div>
+                <div id="title">Clink v1.3.10</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -865,6 +865,16 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 <p>Clink can be installed with plain defaults, or it can be installed with enhanced default settings that enable more of Clink&#39;s enhancements by default.</p>
 <p>If you install Clink with the setup program and &quot;Use enhanced default settings&quot; is checked, then the enhanced defaults are activated, and then in some places where this documentation refers to default settings the stated default may have been overridden.</p>
 <p>If you install Clink from the .zip file then enhanced default settings are activated when the <code>default_settings</code> and <code>default_inputrc</code> files are present in the binaries directory or in the profile directory.  The .zip file comes with the files, but their names have a <code>_</code> prefix so that enhanced defaults won&#39;t automatically take effect.  You can activate the enhanced default settings by renaming the files to remove the <code>_</code> prefix.</p>
+<p>Here are some of the enhanced defaults.  Review the <code>default_settings</code> and <code>default_inputrc</code> files for the full list.</p>
+<ul>
+<li><a href="#gettingstarted_autosuggest">Automatic suggestions</a> are enabled.</li>
+<li>Many <a href="#gettingstarted_colors">color settings</a> have colorful defaults.</li>
+<li>Uses <a href="#gettingstarted_defaultbindings">Windows key bindings</a> by default.</li>
+<li>The <a href="#saved-command-history">command history</a>&#39;s default <a href="#history_max_lines">limit</a> is increased to 25,000 entries.</li>
+<li>Completion expands environment variables (the <a href=""><code>match.expand_envvars</code></a> setting).</li>
+<li>If no completions are found with a prefix search, then a substring search is used (the <a href="#match_substring"><code>match.substring</code></a> setting).</li>
+<li><kbd>Ctrl</kbd>+<kbd>D</kbd> does not exit CMD (the <a href="#ctrld_exits"><code>cmd.ctrld_exits</code></a> setting).</li>
+</ul>
 <p><a name="gettingstarted_inputrc"></a></p>
 <h3 id="create-a-inputrc-file">Create a .inputrc file</h3>
 <p>First you&#39;ll want to create a <code>.inputrc</code> file, and a good place is in your Windows user profile directory.</p>
@@ -889,9 +899,60 @@ $endif
 </code></pre>
 <p><a name="gettingstarted_defaultbindings"></a></p>
 <h3 id="bash-vs-windows">Bash vs Windows</h3>
-<p>The default Clink key bindings are the same as in the &quot;bash&quot; shell for Unix/Linux.  That makes some keys like <kbd>Ctrl</kbd>+<kbd>F</kbd> and <kbd>Ctrl</kbd>+<kbd>M</kbd> behave differently than you might be used to in CMD.</p>
+<p>The default Clink key bindings are the same as in the &quot;bash&quot; shell for Unix/Linux.  That makes some keys like <kbd>Ctrl</kbd>+<kbd>A</kbd>, <kbd>Ctrl</kbd>+<kbd>F</kbd>, and <kbd>Ctrl</kbd>+<kbd>M</kbd> behave differently than you might be used to in CMD.</p>
 <p>To instead use the familiar <a href="#default_bindings">Windows default key bindings</a> you can run <code>clink set clink.default_bindings windows</code>.</p>
-<p>Or, if you use the setup program with &quot;Use enhanced default settings&quot; checked then &quot;windows&quot; key bindings are the default.</p>
+<p>Or, if you use the setup program with &quot;Use enhanced default settings&quot; checked then &quot;windows&quot; key bindings are the default, and you can run <code>clink set clink.default_bindings bash</code> to use the bash default key bindings.</p>
+<p>Clink comes with many default key bindings.  Use <kbd>Alt</kbd>+<kbd>H</kbd> to see all of the active key bindings, or use <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>?</kbd> to check what is bound to a specific key.  See <a href="#gettingstarted_keybindings">Key Bindings</a> to get started configuring your own key bindings.</p>
+<p>Here are the differences between the Windows defaults and the bash defaults:</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Windows</th>
+<th>Bash</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><kbd>Ctrl</kbd>+<kbd>A</kbd></td>
+<td>Select All.</td>
+<td>Go to beginning of line.</td>
+</tr>
+<tr>
+<td><kbd>Ctrl</kbd>+<kbd>B</kbd></td>
+<td>(not bound)</td>
+<td>Move backward one character.</td>
+</tr>
+<tr>
+<td><kbd>Ctrl</kbd>+<kbd>E</kbd></td>
+<td>Expands doskey aliases, environment variables, and <a href="#using-history-expansion">history expansions</a> in the current line.</td>
+<td>Go to end of line.</td>
+</tr>
+<tr>
+<td><kbd>Ctrl</kbd>+<kbd>F</kbd></td>
+<td>Find text (in plain Conhost console windows).</td>
+<td>Move forward one character.</td>
+</tr>
+<tr>
+<td><kbd>Ctrl</kbd>+<kbd>M</kbd></td>
+<td>Mark text (in plain Conhost console windows).</td>
+<td>Same as <kbd>Enter</kbd>.</td>
+</tr>
+<tr>
+<td><kbd>Tab</kbd></td>
+<td>Cycle forward through available completions.</td>
+<td>Bash style completion.</td>
+</tr>
+<tr>
+<td><kbd>Shift</kbd>+<kbd>Tab</kbd></td>
+<td>Cycle backward through available completions.</td>
+<td>(not bound)</td>
+</tr>
+<tr>
+<td><kbd>Right</kbd></td>
+<td>Move forward one character, or at the end of the line insert the next character from the previous input line.</td>
+<td>Move forward one character.</td>
+</tr>
+</tbody></table>
 <p><a name="gettingstarted_autosuggest"></a></p>
 <h3 id="auto-suggest">Auto-suggest</h3>
 <p>Clink can suggest commands as you type, based on command history and completions.</p>
@@ -1099,7 +1160,7 @@ supersedes the <code>terminal.mouse_modifier</code> setting.  In Windows Termina
 <td>Automatically answers cmd.exe&#39;s &quot;Terminate batch job (Y/N)?&quot; prompts. <code>off</code> = disabled, <code>answer_yes</code> = answer Y, <code>answer_no</code> = answer N.</td>
 </tr>
 <tr>
-<td align="center"><code>cmd.ctrld_exits</code></td>
+<td align="center"><a name="ctrld_exits"></a><code>cmd.ctrld_exits</code></td>
 <td align="center">True</td>
 <td><kbd>Ctrl</kbd>+<kbd>D</kbd> exits the process when it is pressed on an empty line.</td>
 </tr>
@@ -1319,7 +1380,7 @@ supersedes the <code>terminal.mouse_modifier</code> setting.  In Windows Termina
 <td>Ignore lines that begin with whitespace when adding lines in to the history.</td>
 </tr>
 <tr>
-<td align="center"><code>history.max_lines</code></td>
+<td align="center"><a name="history_max_lines"></a><code>history.max_lines</code></td>
 <td align="center">10000 <a href="#alternatedefault">*</a></td>
 <td>The number of history lines to save if <code>history.save</code> is enabled (1 to 50000).</td>
 </tr>
@@ -1374,7 +1435,7 @@ supersedes the <code>terminal.mouse_modifier</code> setting.  In Windows Termina
 <td>Prints stack trace on Lua errors.</td>
 </tr>
 <tr>
-<td align="center"><code>match.expand_envvars</code></td>
+<td align="center"><a name="match_expand_envvars"></a><code>match.expand_envvars</code></td>
 <td align="center">False <a href="#alternatedefault">*</a></td>
 <td>Expands environment variables in a word before performing completion.</td>
 </tr>
@@ -1414,7 +1475,7 @@ supersedes the <code>terminal.mouse_modifier</code> setting.  In Windows Termina
 <td>How to sort matching directory names. <code>before</code> = before files, <code>with</code> = with files, <code>after</code> = after files.</td>
 </tr>
 <tr>
-<td align="center"><code>match.substring</code></td>
+<td align="center"><a name="match_substring"></a><code>match.substring</code></td>
 <td align="center">False <a href="#alternatedefault">*</a></td>
 <td>When set, if no completions are found with a prefix search, then a substring search is used.</td>
 </tr>
@@ -1487,9 +1548,7 @@ supersedes the <code>terminal.mouse_modifier</code> setting.  In Windows Termina
 <p/>
 
 <p><a name="alternatedefault"></a></p>
-<ul>
-<li>Some settings have alternative default values when Clink is installed with &quot;Use enhanced default settings&quot; checked in the setup program.  This enables more of Clink&#39;s enhancements by default.</li>
-</ul>
+<p><strong>&ast;</strong> Some settings have alternative default values when Clink is installed with &quot;Use enhanced default settings&quot; checked in the setup program.  This enables more of Clink&#39;s enhancements by default.</p>
 <blockquote>
 <p><strong>Compatibility Notes:</strong></p>
 <ul>
@@ -2555,6 +2614,7 @@ c_parser:addarg({ b_parser })               -- Arg #2 is &quot;abc&quot; or &quo
 </code></pre>
 <h4 id="functions-as-argument-options">Functions As Argument Options</h4>
 <p>Argument options are not limited solely to strings. Clink also accepts functions too so more context aware argument options can be used.</p>
+<p>The function is called each time matches are generated for the argument position.</p>
 <pre><code class="language-lua">local function rainbow_function(word)
     return { &quot;red&quot;, &quot;white&quot;, &quot;blue&quot; }
 end
@@ -2600,6 +2660,77 @@ clink.argmatcher(&quot;program&quot;):addflags({ &quot;--host&quot;..host_parser
 <p>Match completions are normally listed in sorted order.  In some cases it may be desirable to disable sorting and list match completions in a specific order.  To disable sorting, include <code>nosort=true</code> in the argument table.  When sorting is disabled, matches are listed in the order they were added.</p>
 <pre><code class="language-lua">local the_parser = clink.argmatcher()
 the_parser:addarg({ nosort=true, &quot;red&quot;, &quot;orange&quot;, &quot;yellow&quot;, &quot;green&quot;, &quot;blue&quot;, &quot;indigo&quot;, &quot;violet&quot; })
+</code></pre>
+<h4 id="adaptive-argmatchers">Adaptive Argmatchers</h4>
+<p>Some argmatchers may need to adapt on the fly.  For example, a program may have different features available depending on the current directory, or may want to define its arguments and flags by parsing the <code>--help</code> text from running a program.</p>
+<p>An argmatcher can define a &quot;delayed initialization&quot; callback function that gets calls when the argmatcher gets used, allowing it to defer potentially expensive initialization work until it&#39;s actually needed.  An argmatcher can also define a separate &quot;delayed initialization&quot; function for each argument position.</p>
+<h5 id="delayed-initialization-for-the-argmatcher">Delayed initialization for the argmatcher</h5>
+<p>You can use <a href="#_argmatcher:setdelayinit">_argmatcher:setdelayinit()</a> to define how the argmatcher should perform delayed initialization.</p>
+<p>If the definition needs to adapt based on the current directory or other criteria, then the callback function should first test whether the definition needs to change.  If so, first reset the argmatcher and then initialize it.  To reset the argmatcher, use <a href="#_argmatcher:reset">_argmatcher:reset()</a> which resets it back to an empty, freshly created state.</p>
+<pre><code class="language-lua">local prev_dir = &quot;&quot;
+
+-- Initialize the argmatcher.
+local function init(argmatcher)
+    local r = io.popen(&quot;some_command --help 2&gt;nul&quot;)
+    for line in r:lines() do
+        -- PUT PARSING CODE HERE.
+        -- Use the Lua string functions to parse the lines.
+        -- Use argmatcher:addflags(), argmatcher:addarg(), etc to initialize the argmatcher.
+    end
+    r:close()
+end
+
+-- This function has the opportunity to reset and (re)initialize the argmatcher.
+local function ondelayinit(argmatcher)
+    local dir = os.getcwd()
+    if prev_dir ~= dir then  -- When current directory has changed,
+        prev_dir = dir      -- Remember the new current directory,
+        argmatcher:reset()  -- Reset the argmatcher,
+        init(argmatcher)    -- And re-initialize it.
+    end
+end
+
+-- Create the argmatcher and set up delayed initialization.
+local m = clink.argmatcher(&quot;some_command&quot;)
+if m.setdelayinit then        -- Can&#39;t use setdelayinit before Clink v1.3.10.
+    m:setdelayinit(ondelayinit)
+end
+</code></pre>
+<h5 id="delayed-initialization-for-an-argument-position">Delayed initialization for an argument position</h5>
+<p>If the overall flags and meaning of the argument positions don&#39;t need to be updated, and only the possible values need to be updated within certain argument positions, then you can include <code>delayinit=<span class="arg">function</span></code> in the argument table.</p>
+<p>The <span class="arg">function</span> should return a table of matches which will be added to the values for the argument position.  The table of matches supports the same syntax as <a href="#_argmatcher:addarg">_argmatcher:addarg()</a>.  The function receives two parameters:  <span class="arg">argmatcher</span> is the current argmatcher, and <span class="arg">argindex</span> is the argument position in the argmatcher (0 is flags, 1 is the first argument position, and so on).</p>
+<p>The <span class="arg">function</span> is called only once, the first time the argument position is used.  The only way for the function to be called again for that is to use <a href="#delayed-initialization-for-the-argmatcher">Delayed initialization for the argmatcher</a> and reset the argmatcher and re-initialize it.</p>
+<p>This is different from <a href="#functions-as-argument-options">Functions As Argument Options</a>.  The <code>delayinit</code> function is called the first time the argmatcher is used, and the results are added to the matches for the rest of the Clink session.  But a function as an argument option is called every time matches are generated for the argument position, and it is never called when applying input line coloring.</p>
+<pre><code class="language-lua">-- A function to delay-initialize argument values.
+-- This function is used to delay-initialize two different argument positions,
+-- and so it gets called up to two separate times (once for each position where
+-- it is specified).
+-- If the function needs to behave slightly differently for different
+-- argmatchers or argument positions, it can use the two parameters it receives
+-- to identify the specific context in which it is being called.
+local function sc_init_dirs(argmatcher, argindex)
+    return {
+        path.join(os.getenv(&quot;USERPROFILE&quot;), &quot;Documents&quot;),
+        path.join(os.getenv(&quot;USERPROFILE&quot;), &quot;Pictures&quot;)
+    }
+end
+
+-- A function to delay-initialize flag values.
+local function sc_init_flags(argmatcher)
+    -- This calls sc_init_dirs() when the &#39;--dir=&#39; flag is used.
+    return { &quot;--dir=&quot; .. clink.argmatcher():addarg({ delayinit=sc_init_dirs }) }
+end
+
+-- Define an argmatcher with two argument positions, and the second one uses
+-- delayed initialization.
+local m = clink.argmatcher(&quot;some_command&quot;)
+m:addarg({ &quot;abc&quot;, &quot;def&quot;, &quot;ghi&quot; })
+m:addarg({ delayinit=sc_init_dirs }) -- This sc_init_dirs() when the second arg position is used.
+
+-- You can also use delayinit with flags, but you must set the flag prefix
+-- character(s) so that Clink can know when to call the delayinit function.
+m:addflags({ delayinit=sc_init_flags })
+m:setflagprefix(&quot;-&quot;)
 </code></pre>
 <h4 id="shorthand">Shorthand</h4>
 <p>It is also possible to omit the <code>addarg</code> and <code>addflags</code> function calls and use a more declarative shorthand form:</p>
@@ -3849,56 +3980,56 @@ the current position in the history list.</p>
 <tr><td>
 <code>!</code>
 </td><td>
-     Start a history substitution, except when followed by a space, tab,
-     the end of the line, or <code>=</code>.
+    Start a history substitution, except when followed by a space, tab,
+    the end of the line, or <code>=</code>.
 </td></tr>
 
 <tr><td>
 <code>!<em>n</em></code>
 </td><td>
-     Refer to command line <em>n</em>.
+    Refer to command line <em>n</em>.
 </td></tr>
 
 <tr><td>
 <code>!-<em>n</em></code>
 </td><td>
-     Refer to the command <em>n</em> lines back.
+    Refer to the command <em>n</em> lines back.
 </td></tr>
 
 <tr><td>
 <code>!!</code>
 </td><td>
-     Refer to the previous command.  This is a synonym for <code>!-1</code>.
+    Refer to the previous command.  This is a synonym for <code>!-1</code>.
 </td></tr>
 
 <tr><td>
 <code>!<em>string</em></code>
 </td><td>
-     Refer to the most recent command preceding the current position in
-     the history list starting with <em>string</em>.
+    Refer to the most recent command preceding the current position in
+    the history list starting with <em>string</em>.
 </td></tr>
 
 <tr><td>
 <code>!?<em>string</em>[?]</code>
 </td><td>
-     Refer to the most recent command preceding the current position in
-     the history list containing <em>string</em>.  The trailing <code>?</code> may be
-     omitted if the <em>string</em> is followed immediately by a newline.  If
-     <em>string</em> is missing, the string from the most recent search is used;
-     it is an error if there is no previous search string.
+    Refer to the most recent command preceding the current position in
+    the history list containing <em>string</em>.  The trailing <code>?</code> may be
+    omitted if the <em>string</em> is followed immediately by a newline.  If
+    <em>string</em> is missing, the string from the most recent search is used;
+    it is an error if there is no previous search string.
 </td></tr>
 
 <tr><td>
 <code>^<em>string1</em>^<em>string2</em>^</code>
 </td><td>
-     Quick Substitution.  Repeat the last command, replacing <em>string1</em>
-     with <em>string2</em>.  Equivalent to <code>!!:s^<em>string1</em>^<em>string2</em>^</code>.
+    Quick Substitution.  Repeat the last command, replacing <em>string1</em>
+    with <em>string2</em>.  Equivalent to <code>!!:s^<em>string1</em>^<em>string2</em>^</code>.
 </td></tr>
 
 <tr><td>
 <code>!#</code>
 </td><td>
-     The entire command line typed so far.
+    The entire command line typed so far.
 </td></tr>
 </table>
 
@@ -3909,92 +4040,92 @@ omitted if the word designator begins with a <code>^</code>, <code>$</code>, <co
 Words are numbered from the beginning of the line, with the first word
 being denoted by 0 (zero).  Words are inserted into the current line
 separated by single spaces.</p>
-<p>   For example,</p>
+<p>For example,</p>
 <table>
 <tr><td>
 <code>!!</code>
 </td><td>
-     designates the preceding command.  When you type this, the
-     preceding command is repeated in toto.
+    designates the preceding command.  When you type this, the
+    preceding command is repeated in toto.
 </td></tr>
 
 <tr><td>
 <code>!!:$</code>
 </td><td>
-     designates the last argument of the preceding command.  This may be
-     shortened to <code>!$</code>.
+    designates the last argument of the preceding command.  This may be
+    shortened to <code>!$</code>.
 </td></tr>
 
 <tr><td>
 <code>!fi:2</code>
 </td><td>
-     designates the second argument of the most recent command starting
-     with the letters <code>fi</code>.
+    designates the second argument of the most recent command starting
+    with the letters <code>fi</code>.
 </td></tr>
 </table>
 
-<p>   Here are the word designators:</p>
+<p>Here are the word designators:</p>
 <table>
 <tr><td>
 <code>0 (zero)</code>
 </td><td>
-     The 0th word.  For many applications, this is the command word.
+    The 0th word.  For many applications, this is the command word.
 </td></tr>
 
 <tr><td>
 <code><em>n</em></code>
 </td><td>
-     The <em>n</em>th word.
+    The <em>n</em>th word.
 </td></tr>
 
 <tr><td>
 <code>^</code>
 </td><td>
-     The first argument; that is, word 1.
+    The first argument; that is, word 1.
 </td></tr>
 
 <tr><td>
 <code>$</code>
 </td><td>
-     The last argument.
+    The last argument.
 </td></tr>
 
 <tr><td>
 <code>%</code>
 </td><td>
-     The first word matched by the most recent <code>!?<em>string</em>?</code> search, if the
-     search string begins with a character that is part of a word.
+    The first word matched by the most recent <code>!?<em>string</em>?</code> search, if the
+    search string begins with a character that is part of a word.
 </td></tr>
 
 <tr><td>
 <code><em>x</em>-<em>y</em></code>
 </td><td>
-     A range of words; <code>-<em>y</em></code> abbreviates <code>0-<em>y</em></code>.
+    A range of words; <code>-<em>y</em></code> abbreviates <code>0-<em>y</em></code>.
 </td></tr>
 
 <tr><td>
 <code>*</code>
 </td><td>
-     All of the words, except the 0th.  This is a synonym for <code>1-$</code>.
-     It is not an error to use <code>*</code> if there is just one word in the
-     event; the empty string is returned in that case.
+    All of the words, except the 0th.  This is a synonym for <code>1-$</code>.
+    It is not an error to use <code>*</code> if there is just one word in the
+    event; the empty string is returned in that case.
 </td></tr>
 
 <tr><td>
 <code><em>x</em>*</code>
 </td><td>
-     Abbreviates <code><em>x</em>-$</code>
+    Abbreviates <code><em>x</em>-$</code>
 </td></tr>
 
 <tr><td>
 <code><em>x</em>-</code>
 </td><td>
-     Abbreviates <code><em>x</em>-$</code> like <code><em>x</em>*</code>, but omits the last word.  If <code><em>x</em></code> is
-     missing, it defaults to 0.
+    Abbreviates <code><em>x</em>-$</code> like <code><em>x</em>*</code>, but omits the last word.  If <code><em>x</em></code> is
+    missing, it defaults to 0.
 </td></tr>
 </table>
 
-<p>   If a word designator is supplied without an event specification, the
+<p>If a word designator is supplied without an event specification, the
 previous command is used as the event.</p>
 <h3 id="modifiers">Modifiers</h3>
 <p>After the optional word designator, you can add a sequence of one or
@@ -4004,72 +4135,72 @@ or edit, the word or words selected from the history event.</p>
 <tr><td>
 <code>h</code>
 </td><td>
-     Remove a trailing pathname component, leaving only the head.
+    Remove a trailing pathname component, leaving only the head.
 </td></tr>
 
 <tr><td>
 <code>t</code>
 </td><td>
-     Remove all leading pathname components, leaving the tail.
+    Remove all leading pathname components, leaving the tail.
 </td></tr>
 
 <tr><td>
 <code>r</code>
 </td><td>
-     Remove a trailing suffix of the form <code>.<em>suffix</em></code>, leaving the
-     basename.
+    Remove a trailing suffix of the form <code>.<em>suffix</em></code>, leaving the
+    basename.
 </td></tr>
 
 <tr><td>
 <code>e</code>
 </td><td>
-     Remove all but the trailing suffix.
+    Remove all but the trailing suffix.
 </td></tr>
 
 <tr><td>
 <code>p</code>
 </td><td>
-     Print the new command but do not execute it.
+    Print the new command but do not execute it.
 </td></tr>
 
 <tr><td>
 <code>s/<em>old</em>/<em>new</em>/</code>
 </td><td>
-     Substitute <em>new</em> for the first occurrence of <em>old</em> in the event line.
-     Any character may be used as the delimiter in place of <code>/</code>.  The
-     delimiter may be quoted in <em>old</em> and <em>new</em> with a single backslash.  If
-     <code>&</code> appears in <em>new</em>, it is replaced by <em>old</em>.  A single backslash will
-     quote the <code>&</code>.  If <em>old</em> is null, it is set to the last <em>old</em>
-     substituted, or, if no previous history substitutions took place,
-     the last <em>string</em> in a <code>!?<em>string</em>?</code> search.  If <em>new</em> is is null, each
-     matching <em>old</em> is deleted.  The final delimiter is optional if it is
-     the last character on the input line.
+    Substitute <em>new</em> for the first occurrence of <em>old</em> in the event line.
+    Any character may be used as the delimiter in place of <code>/</code>.  The
+    delimiter may be quoted in <em>old</em> and <em>new</em> with a single backslash.  If
+    <code>&</code> appears in <em>new</em>, it is replaced by <em>old</em>.  A single backslash will
+    quote the <code>&</code>.  If <em>old</em> is null, it is set to the last <em>old</em>
+    substituted, or, if no previous history substitutions took place,
+    the last <em>string</em> in a <code>!?<em>string</em>?</code> search.  If <em>new</em> is is null, each
+    matching <em>old</em> is deleted.  The final delimiter is optional if it is
+    the last character on the input line.
 </td></tr>
 
 <tr><td>
 <code>&</code>
 </td><td>
-     Repeat the previous substitution.
+    Repeat the previous substitution.
 </td></tr>
 
 <tr><td>
 <code>g</code></br>
 </td><td>
-     Cause changes to be applied over the entire event line.  Used in
-     conjunction with <code>s</code>, as in <code>gs/<em>old</em>/<em>new</em>/</code>, or with <code>&</code>.
+    Cause changes to be applied over the entire event line.  Used in
+    conjunction with <code>s</code>, as in <code>gs/<em>old</em>/<em>new</em>/</code>, or with <code>&</code>.
 </td></tr>
 
 <tr><td>
 <code>a</code></br>
 </td><td>
-     The same as <code>g</code>.
+    The same as <code>g</code>.
 </td></tr>
 
 <tr><td>
 <code>G</code>
 </td><td>
-     Apply the following <code>s</code> or <code>&</code> modifier once to each word in the
-     event.
+    Apply the following <code>s</code> or <code>&</code> modifier once to each word in the
+    event.
 </td></tr>
 </table>
 
@@ -4198,7 +4329,9 @@ local my_parser = clink.argmatcher("mycommand")
 :addarg("two", "dos")       -- third arg can be two or dos
 :loop(2)    -- fourth arg loops back to position 2, for one or uno, and so on</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="_argmatcher:nofiles">_argmatcher:nofiles</a></div> <div class="signature">() : self<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">This makes the parser prevent invoking <a href="#matchgenerators">match generators</a>.  You can use it to "dead end" a parser and suggest no completions.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="_argmatcher:reset">_argmatcher:reset</a></div> <div class="signature">() : self<br/><div class="version">v1.3.10 and newer</div></div></div><div class="body"><p class="desc">Resets the argmatcher to an empty state.  All flags, arguments, and settings are cleared and reset back to a freshly-created state.</p><p class="desc"> See <a href="#adaptive-argmatchers">Adaptive Argmatchers</a> for more information.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="_argmatcher:setclassifier">_argmatcher:setclassifier</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : self<br/><div class="version">v1.1.18 and newer</div></div></div><div class="body"><p class="desc">This registers a function that gets called for each word the argmatcher handles, to classify the word as part of coloring the input text.  See <a href="#classifywords">Coloring the Input Text</a> for more information.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="_argmatcher:setdelayinit">_argmatcher:setdelayinit</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : self<br/><div class="version">v1.3.10 and newer</div></div></div><div class="body"><p class="desc">This registers a function that gets called the first time the argmatcher is used in each edit line session.  See <a href="#adaptive-argmatchers">Adaptive Argmatchers</a> for more information.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="_argmatcher:setflagprefix">_argmatcher:setflagprefix</a></div> <div class="signature">( [<span class="arg_name">prefixes...</span>:string] ) : self<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">This is almost never needed, because <code>:addflags()</code> automatically identifies flag prefix characters.</p><p class="desc"> However, any flags generated by functions can't influence the automatic flag prefix character(s) detection.  So in some cases it may be necessary to directly set the flag prefix.</p><p class="desc"> <strong>Note:</strong> <code>:setflagprefix()</code> behaves differently in different versions of Clink: <table> <tr><th>Version</th><th>Description</th></tr> <tr><td>v1.0.0 through v1.1.3</td><td>Sets the flag prefix characters.</td></tr> <tr><td>v1.1.4 through v1.2.35</td><td>Only sets flag prefix characters in an argmatcher created using the deprecated <a href="#clink.arg.register_parser">clink.arg.register_parser()</a> function.  Otherwise it has no effect.</td></tr> <tr><td>v1.2.36 through v1.3.8</td><td>Does nothing.</td></tr> <tr><td>v1.3.9 onward</td><td>Adds flag prefix characters, in addition to the ones automatically identified.</td></tr> </table></p><pre class="language-lua"><code>local function make_flags()
 &nbsp;   return { '-a', '-b', '-c' }
 end
@@ -4784,6 +4917,18 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1310">v1.3.10</h4>
+<ul>
+<li>An argmatcher can extend itself on the fly, when needed.  For example, if it needs to parse arguments and flags from <code>--help</code> text, or if the available command arguments change based on the current directory, or etc.  See <a href="#adaptive-argmatchers">Adaptive Argmatchers</a> for more information.</li>
+<li>Recognizes <code>^</code> and environment variables when coloring the command word, and when navigating by typing a directory name by itself.</li>
+<li>Added input line coloring for the <code>rem</code> command.</li>
+<li>Fixed memory corruption (regression introduced in v1.3.1).</li>
+<li>Fixed input line coloring for <code>clink set setting value &amp; another command</code>.</li>
+<li>Fixed argmatcher input line coloring for matches using the <code>{ match=&quot;abc&quot; }</code> syntax.</li>
+<li>Fixed finding an argmatcher after <code>(</code> at the beginning of the line.</li>
+<li>Fixed mouse clicks in <code>clink-select-complete</code> to insert the clicked match, in addition to highlighting it.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/252">#252</a>; <code>md</code> and <code>rd</code> should complete more than 1 argument.</li>
+</ul>
 <h4 id="v139">v1.3.9</h4>
 <ul>
 <li>When <code>argmatcher:addarg()</code> is passed a table containing <code>fromhistory=true</code> then additional matches are generated by parsing the history file to find values for that argument slot from commands in the history file.</li>
