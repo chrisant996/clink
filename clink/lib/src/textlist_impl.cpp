@@ -593,6 +593,7 @@ find:
             HIST_ENTRY* hist = remove_history(history_index);
             free_history_entry(hist);
             // Remove the item from the popup list.
+            const int old_rows = min<int>(m_visible_rows, m_count);
             int move_count = (m_count - 1) - m_index;
             memmove(m_entries + m_index, m_entries + m_index + 1, move_count * sizeof(m_entries[0]));
             m_items.erase(m_items.begin() + m_index);
@@ -613,6 +614,10 @@ find:
                 m_index--;
             // Redisplay.
             {
+                const int new_rows = min<int>(m_visible_rows, m_count);
+                if (new_rows < old_rows)
+                    m_force_clear = true;
+
                 update_layout();
 
                 int delta = m_index - m_top;
@@ -1196,6 +1201,9 @@ void textlist_impl::update_display()
                 m_printer->print("\xe2\x94\x98\x1b[m");                 // ┘
             }
 
+            if (m_force_clear)
+                m_printer->print("\x1b[m\x1b[J");
+
             m_prev_displayed = m_index;
         }
         else
@@ -1205,6 +1213,8 @@ void textlist_impl::update_display()
 
             m_prev_displayed = -1;
         }
+
+        m_force_clear = false;
 
         // Restore cursor position.
         if (up > 0)
@@ -1246,6 +1256,7 @@ void textlist_impl::reset()
     m_default_title.clear();
     m_override_title.clear();
     m_has_override_title = false;
+    m_force_clear = false;
 
     m_count = 0;
     m_entries = nullptr;    // Don't free; is only borrowed.

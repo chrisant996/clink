@@ -96,6 +96,7 @@ private:
     str<32>         m_default_title;
     str<32>         m_override_title;
     bool            m_has_override_title = false;
+    bool            m_force_clear = false;
 
     // Entries.
     int             m_count = 0;
