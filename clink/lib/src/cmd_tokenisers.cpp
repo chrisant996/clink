@@ -394,6 +394,8 @@ word_token cmd_word_tokeniser::next(unsigned int& offset, unsigned int& length)
     if (!m_iter.more())
         return word_token(word_token::invalid_delim);
 
+    static const char c_word_delims[] = " \t\n\"'`!^+=;,()[]{}";
+
     const char oq = get_opening_quote();
     const char cq = get_closing_quote();
 
@@ -407,7 +409,7 @@ word_token cmd_word_tokeniser::next(unsigned int& offset, unsigned int& length)
         while (m_iter.more())
         {
             const int c = m_iter.peek();
-            if ((c & ~0xff) || !strchr(" \t=;", c))
+            if ((c & ~0xff) || !strchr(c_word_delims, c))
                 break;
             m_iter.next();
         }
@@ -494,7 +496,7 @@ word_token cmd_word_tokeniser::next(unsigned int& offset, unsigned int& length)
             // Space or equal or semicolon is a word break.
             if (new_state == sSpc)
                 break;
-            if (new_state == sTxt && (c == '=' || c == ';'))
+            if (new_state == sTxt && strchr(c_word_delims, c))
                 break;
 
             // Normal text always updates the end of the word.

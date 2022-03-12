@@ -2134,11 +2134,17 @@ rl_module::rl_module(terminal_in* input)
     // Same list CMD uses for quoting filenames.
     rl_filename_quote_characters = " &()[]{}^=;!%'+,`~";
 
-    // Word break characters -- equal to rl_basic_word_break_characters, with
+    // Basic word break characters.
+    // Readline does not currently use rl_basic_word_break_characters or
+    // rl_basic_word_break_characters_without_backslash for anything.
+
+    // Completer word break characters -- rl_basic_word_break_characters, with
     // backslash removed (because rl_backslash_path_sep) and without '$' or '%'
     // so we can let the match generators decide when '%' should start a word or
     // end a word (see :getwordbreakinfo()).
-    rl_completer_word_break_characters = " \t\n\"'`@><=;|&{("; /* }) */
+    // NOTE:  Due to adjust_completion_word(), this has no practical effect
+    // anymore.  Word break characters are handled by cmd_word_tokeniser.
+    rl_completer_word_break_characters = " \t\n\"'`@><=;|&{(,"; /* }) */
 
     // Completion and match display.
     rl_ignore_completion_duplicates = 0; // We'll handle de-duplication.
