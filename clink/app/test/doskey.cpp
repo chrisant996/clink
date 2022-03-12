@@ -517,3 +517,60 @@ TEST_CASE("Doskey cursor point : multiple commands")
         doskey.remove_alias("az");
     }
 }
+
+//------------------------------------------------------------------------------
+TEST_CASE("Doskey cursor point : grouping parens")
+{
+    str<> line;
+    doskey doskey("shell");
+
+    for (int i = 0; i < 2; ++i)
+    {
+        const bool enhanced = (i != 0);
+        use_enhanced(enhanced);
+
+        static const int c_points[] =
+        {
+            0,  0,
+            2,  2,
+            6,  4,
+            7,  4,
+            8,  5,
+            10, 7,
+            12, 9,
+            14, 11,
+            16, 13,
+            19, 16,
+            20, 17,
+            24, 19,
+            25, 19,
+            26, 20,
+            28, 22,
+            30, 24,
+            31, 25,
+            32, 26,
+            33, 27,
+        };
+
+        doskey.add_alias("alias", "qq $*");
+        //                111111111122222222223333
+        //      0123456789012345678901234567890123
+        line = "( alias hello ) & ( alias world )";
+        //                111111111122222222
+        //      0123456789012345678901234567
+        //     "( qq hello ) & ( qq world )"
+        for (int j = 0; j < sizeof_array(c_points); j += 2)
+        {
+            const int from = c_points[j + 0];
+            const int expected = (enhanced || from <= 20) ? c_points[j + 1] : from - 3;
+            int point = from;
+            doskey_alias alias;
+            doskey.resolve(line.c_str(), alias, &point);
+            REQUIRE(point == expected, [&] () {
+                printf("FROM %d:\nexpected: %d\nactual:   %d", from, expected, point);
+            });
+        }
+
+        doskey.remove_alias("alias");
+    }
+}
