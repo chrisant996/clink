@@ -6,7 +6,7 @@
 
 - Updated the list of recognized CMD command names.
 - Better support for `(` and `)` when expanding doskey macros (e.g. now `( macro foo ) & ( macro bar )` works).
-- Fixed word break characters during completion.  Only `=` `;` had never worked before, and now the normal CMD completion word break characters work (including `,` `!` `+` `(` and many others).
+- Fixed word break characters during completion.  Only `=` `;` had ever worked before, and now the normal CMD completion word break characters work (including `,` `!` `+` `(` and many others).
 
 #### v1.3.10
 
