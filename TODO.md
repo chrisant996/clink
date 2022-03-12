@@ -7,7 +7,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
-- Add unit tests for `(`..`)` cases for doskey macros.
 
 ## Low Priority
 - Investigate feasibility/cost/benefit of adding back (some) support for merging argmatchers?  Also find the old merging unit tests.
