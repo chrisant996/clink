@@ -27,18 +27,24 @@ setting_bool g_enhanced_doskey(
 
 
 //------------------------------------------------------------------------------
-static bool get_alias(const wchar_t* shell_name, str_iter& in, str_base& alias, str_base& text, int& parens, bool relaxed=false)
+static bool get_alias(const wchar_t* shell_name, str_iter& in, unsigned int& skipped, str_base& alias, str_base& text, int& parens, bool relaxed=false)
 {
     alias.clear();
     text.clear();
 
+    // Skip leading spaces and parens.
     bool first = true;
+    const char* orig = in.get_pointer();
     parens = skip_leading_parens(in, first);
+    skipped = static_cast<unsigned int>(in.get_pointer() - orig);
 
     // Legacy doskey doesn't allow macros that begin with whitespace.
     const char* start = in.get_pointer();
     if (in.more() && *start == ' ')
+    {
+        in.reset_pointer(orig);
         return false;
+    }
 
     while (true)
     {
@@ -66,10 +72,10 @@ static bool get_alias(const wchar_t* shell_name, str_iter& in, str_base& alias, 
     if (alias.empty())
     {
 fallback:
-        in.reset_pointer(start);
+        in.reset_pointer(orig);
         if (relaxed || !g_enhanced_doskey.get())
             return false;
-        return get_alias(shell_name, in, alias, text, parens, true);
+        return get_alias(shell_name, in, skipped, alias, text, parens, true);
     }
 
     // Find the alias' text. First check it exists.
@@ -110,6 +116,10 @@ static const char* find_command_end(const char* command, int len)
             continue;
 
         if (c == '>' && eat.peek() == '&')
+        {
+            eat.next();
+        }
+        else if (c == '^' && eat.more())
         {
             eat.next();
         }
@@ -303,15 +313,18 @@ bool doskey::remove_alias(const char* alias)
 //#define DEBUG_RESOLVEIMPL
 bool doskey::resolve_impl(str_iter& s, str_stream& out, int* _point)
 {
+    const int out_len = out.length();
     str_iter command = s;
     str_iter in = s;
 
     // Get alias and macro text.
     str<32> alias;
     str<32> text;
+    unsigned int skipped;
     int parens;
-    if (!get_alias(m_shell_name.data(), in, alias, text, parens))
+    if (!get_alias(m_shell_name.data(), in, skipped, alias, text, parens))
         return false;
+    out << str_stream::range(s.get_pointer(), skipped);
 
     // Find the point range for the alias name.
     int point_arg = -1;
@@ -331,8 +344,7 @@ bool doskey::resolve_impl(str_iter& s, str_stream& out, int* _point)
     }
 
     // Point at beginning stays there.
-    const int out_len = out.length();
-    int* point = (_point && *_point == out_len) ? nullptr : _point;
+    int* point = (_point && static_cast<unsigned int>(*_point) <= out.length()) ? nullptr : _point;
 
 #ifdef DEBUG_RESOLVEIMPL
     int dbg_row = 0;
