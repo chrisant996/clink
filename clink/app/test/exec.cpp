@@ -287,7 +287,7 @@ TEST_CASE("Executable match generation.")
         {
             tester.set_input("s");
             tester.set_expected_matches(
-                "set", "setlocal", "shift", "start",
+                "set", "setlocal", "shift", "start", "subst",
                 "spa ce.exe"
             );
             tester.run();
