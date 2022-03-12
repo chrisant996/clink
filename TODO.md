@@ -7,13 +7,12 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
-- [ ] `(`..`)` and doskey macros:
-  - [ ] Resolve needs to preserve the `(` and `)` portions: `( dw & echo foo )` resolves to `filestat & echo foo )`.
-  - [ ] Add unit tests.
+- Add unit tests for `(`..`)` cases for doskey macros.
 
 ## Low Priority
 - [ ] `program,blah` should break at the `,` (but maybe not in all cases???) -- and similarly for some other characters.
 - Investigate feasibility/cost/benefit of adding back (some) support for merging argmatchers?  Also find the old merging unit tests.
+- Explore adjusting default colors to have better contrast with white/light backgrounds?
 
 ## Follow Up
 - Readline command reference.
