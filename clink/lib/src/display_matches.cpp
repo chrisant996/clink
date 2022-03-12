@@ -1182,7 +1182,7 @@ extern "C" void display_matches(char** matches)
     const int count = adapter->get_match_count();
     const bool best_fit = g_match_best_fit.get();
     const int limit_fit = g_match_limit_fitted.get();
-    const bool one_column = count <= DESC_ONE_COLUMN_THRESHOLD;
+    const bool one_column = adapter->has_descriptions() && count <= DESC_ONE_COLUMN_THRESHOLD;
     const column_widths widths = calculate_columns(adapter, best_fit ? limit_fit : -1, one_column);
 
     // If there are many items, then ask the user if she really wants to see
