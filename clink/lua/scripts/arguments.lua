@@ -550,9 +550,11 @@ function _argmatcher:addflags(...)
     flag_matcher._args[1] = list
     self._flags = flag_matcher
 
-    if not self._deprecated then
-        self._flagprefix = prefixes
+    if self._deprecated and not prefixes["-"] then
+        prefixes["-"] = 0
     end
+
+    self._flagprefix = prefixes
     return self
 end
 
@@ -1772,7 +1774,6 @@ function clink.arg.new_parser(...)
     local parser = clink.argmatcher()
     parser._deprecated = true
     parser._flagprefix = {}
-    parser._flagprefix['-'] = 0
     if ... then
         local success, msg = xpcall(parser_initialise, _error_handler_ret, parser, ...)
         if not success then
