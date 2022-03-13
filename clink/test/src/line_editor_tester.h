@@ -65,6 +65,7 @@ public:
     line_editor*                get_editor() const;
     void                        set_input(const char* input);
     template <class ...T> void  set_expected_matches(T... t); // T must be const char*
+    void                        set_expected_matches_list(const char* const* expected); // The list must be terminated with nullptr.
     void                        set_expected_classifications(const char* classifications);
     void                        set_expected_output(const char* expected);
     void                        run();

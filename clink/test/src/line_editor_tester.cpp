@@ -284,6 +284,17 @@ void line_editor_tester::expected_matches_impl(int dummy, ...)
 }
 
 //------------------------------------------------------------------------------
+void line_editor_tester::set_expected_matches_list(const char* const* expected)
+{
+    m_expected_matches.clear();
+
+    while (*expected)
+        m_expected_matches.push_back(*(expected++));
+
+    m_has_matches = true;
+}
+
+//------------------------------------------------------------------------------
 bool line_editor_tester::get_line(str_base& line)
 {
     if (!m_editor->get_line(line))
