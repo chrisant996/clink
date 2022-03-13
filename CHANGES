@@ -13,6 +13,7 @@
   - Merging argmatchers works again.  It is still a simple merge similar to v0.4.9, but it should be sufficient for common cases.
   - Fixed some bugs in how Clink v0.4.9 merged argmatchers (the unit tests for merging fail in v0.4.9).
   - Added support for some merging cases that weren't implemented yet in v0.4.9.
+- And other obscure minor backward compatibility fixes.
 
 #### v1.3.10
 
