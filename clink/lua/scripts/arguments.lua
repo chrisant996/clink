@@ -881,6 +881,95 @@ local function add_prefix(prefixes, string)
 end
 
 --------------------------------------------------------------------------------
+local function get_sub_parser(argument, str)
+    if argument._links then
+        for key, matcher in pairs(argument._links) do
+            if key == str then
+                return matcher
+            end
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
+local function merge_parsers(lhs, rhs)
+    -- Merging parsers is not a trivial matter and this implementation is far
+    -- from correct.  It behaves reasonably for common cases.
+
+    -- Merge flags.
+    if rhs._flags then
+        lhs:addflags(rhs._flags._args[1])
+    end
+
+    -- Get the first argument in RHS.  Merging is only applied to the first
+    -- argument.
+    local rhs_arg_1 = rhs._args[1]
+    if rhs_arg_1 == nil then
+        return
+    end
+
+    -- Get reference to the LHS's first argument table (creating it if needed).
+    local lhs_arg_1 = lhs._args[1]
+    if lhs_arg_1 == nil then
+        lhs_arg_1 = {}
+        lhs._args[1] = lhs_arg_1
+    end
+
+    -- Link RHS to LHS through sub-parsers.
+    local rlinks = rhs_arg_1._links or {}
+    for _, rarg in ipairs(rhs_arg_1) do
+        local key
+        if type(key) == "table" then
+            key = key.match
+        end
+        if not key then
+            key = rarg
+        end
+
+        local child = rlinks[key]
+        if child then
+            -- If LHS's first argument has rarg in it which links to a sub-parser
+            -- then we need to recursively merge them.
+            local lhs_sub_parser = get_sub_parser(lhs_arg_1, key)
+            if lhs_sub_parser then
+                merge_parsers(lhs_sub_parser, child)
+            else
+                lhs:_add(lhs_arg_1, key .. child)
+            end
+        else
+            lhs:_add(lhs_arg_1, rarg)
+        end
+    end
+
+    -- Merge special directives.
+    if rhs_arg_1.fromhistory then lhs_arg_1.fromhistory = rhs_arg_1.fromhistory end
+    if rhs_arg_1.nosort then lhs_arg_1.nosort = rhs_arg_1.nosort end
+    if rhs_arg_1.delayinit then lhs_arg_1.delayinit = rhs_arg_1.delayinit end
+
+    -- Merge descriptions.
+    if rhs._descriptions then
+        local lhs_desc = lhs._descriptions
+        if not lhs_desc then
+            lhs_desc = {}
+            lhs._descriptions = lhs_desc
+        end
+        for k,d in pairs(rhs._descriptions) do
+            lhs_desc[k] = d
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
+local function merge_or_assign(lhs, rhs)
+    if lhs then
+        merge_parsers(lhs, rhs)
+        return lhs
+    else
+        return rhs
+    end
+end
+
+--------------------------------------------------------------------------------
 function _argmatcher:_add(list, addee, prefixes)
     -- If addee is a flag like --foo= and is not linked, then link it to a
     -- default parser so its argument doesn't get confused as an arg for its
@@ -901,10 +990,7 @@ function _argmatcher:_add(list, addee, prefixes)
                 end
                 if i._links then
                     for k, m in pairs(i._links) do
-                        if list._links[k] then
-                            _compat_warning("warning: replacing arglink for '"..k.."'", " -- merging linked argmatchers was unreliable and is no longer supported")
-                        end
-                        list._links[k] = m
+                        list._links[k] = merge_or_assign(list._links[k], m)
                         if prefixes then add_prefix(prefixes, k) end
                     end
                 end
@@ -918,10 +1004,7 @@ function _argmatcher:_add(list, addee, prefixes)
     end
 
     if is_link then
-        if list._links[addee._key] then
-            _compat_warning("warning: replacing arglink for '"..addee._key.."'", " -- merging linked argmatchers was unreliable and is no longer supported")
-        end
-        list._links[addee._key] = addee._matcher
+        list._links[addee._key] = merge_or_assign(list._links[addee._key], addee._matcher)
         table.insert(list, addee._key) -- Necessary to maintain original unsorted order.
         if prefixes then add_prefix(prefixes, addee._key) end
     else
@@ -1117,13 +1200,14 @@ end
 --------------------------------------------------------------------------------
 --- -name:  _argmatcher:add_arguments
 --- -deprecated: _argmatcher:addarg
---- <code>:add_arguments()</code> adds one argument slot per table passed to it,
---- but <code>:addarg()</code> adds one argument slot containing everything
---- passed to it.  Be careful when updating scripts to use the new APIs; simply
---- renaming the call may not be enough, and it may be necessary to split it
---- into multiple separate calls to achieve the same behavior as before.
+--- Adds one argument slot per table passed to it (as v0.4.9 did).
+---
+--- <strong>Note:</strong> v1.3.10 and lower <code>:add_arguments()</code>
+--- mistakenly added all arguments into the first argument slot.
 function _argmatcher:add_arguments(...)
-    self:addarg(...)
+    for _,arg in pairs({...}) do
+        self:addarg(arg)
+    end
     return self
 end
 
@@ -1164,19 +1248,15 @@ end
 --- -deprecated: _argmatcher:addarg
 --- -arg:   choices...:string|table
 --- -ret:   self
---- <code>:set_arguments()</code> adds one argument slot per table passed to it,
---- but <code>:addarg()</code> adds one argument slot containing everything
---- passed to it.  Be careful when updating scripts to use the new APIs; simply
---- renaming the call may not be enough, and it may be necessary to split it
---- into multiple separate calls to achieve the same behavior as before.
+--- Sets one argument slot per table passed to it (as v0.4.9 did).
 ---
---- Note:  The new API has no way to remove argument slots that were previously
---- added, so converting from <code>:set_arguments()</code> to
---- <code>:addarg()</code> may require the calling script to reorganize how and
---- when it adds arguments.
+--- <strong>Note:</strong> v1.3.10 and lower <code>:add_arguments()</code>
+--- mistakenly set all arguments into the first argument slot.
 function _argmatcher:set_arguments(...)
     self._args = { _links = {} }
-    self:addarg(...)
+    for _,arg in pairs({...}) do
+        self:addarg(arg)
+    end
     return self
 end
 
@@ -1234,11 +1314,14 @@ end
 --- other parsers, and more.  See <a href="#argumentcompletion">Argument
 --- Completion</a> for more information.
 ---
---- If one <span class="arg">command</span> is provided and an argument matcher
---- parser object is already associated with the command, this returns the
---- existing parser rather than creating a new parser.  Using :addarg() starts
---- at arg position 1, making it possible to merge new args and etc into the
---- existing parser.
+--- If one <span class="arg">command</span> is provided and there is already an
+--- argmatcher for it, then this returns the existing parser rather than
+--- creating a new parser.  Using :addarg() starts at arg position 1, making it
+--- possible to merge new args and etc into the existing parser.
+---
+--- <strong>Note:</strong>  Merging <a href="#linked-parsers">linked
+--- argmatchers</a> only merges the first argument position.  The merge is
+--- simple, but should be sufficient for common simple cases.
 function clink.argmatcher(...)
     -- Extract priority from the arguments.
     local priority = 999
@@ -1705,27 +1788,31 @@ end
 --- -arg:   cmd:string
 --- -arg:   parser:table
 --- -ret:   table
---- Adds <span class="arg">parser</span> to the first argmatcher for
---- <span class="arg">cmd</span>.  This behaves similarly to v0.4.8, but not
---- identically.  The Clink schema has changed significantly enough that there
---- is no direct 1:1 translation.  Calling
---- <code>clink.arg.register_parser</code> repeatedly with the same command to
---- merge parsers is not supported anymore.
+--- Adds <span class="arg">parser</span> to the argmatcher for
+--- <span class="arg">cmd</span>.
+---
+--- If there is already an argmatcher for <span class="arg">cmd</span> then the
+--- two argmatchers are merged.  It is only a simple merge; a more sophisticated
+--- merge would be much slower and use much more memory.  The simple merge
+--- should be sufficient for common simple cases.
+---
+--- <strong>Note:</strong> In v1.3.11, merging parsers should be a bit improved
+--- compared to how v0.4.9 merging worked.  In v1.0 through v1.3.10, merging
+--- parsers doesn't work very well.
 --- -show:  -- Deprecated form:
---- -show:  local parser1 = clink.arg.new_parser("abc", "def")
---- -show:  local parser2 = clink.arg.new_parser("ghi", "jkl")
+--- -show:  local parser1 = clink.arg.new_parser():set_arguments({ "abc", "def" }, { "old_second" })
+--- -show:  local parser2 = clink.arg.new_parser():set_arguments({ "ghi", "jkl" }, { "new_second" })
 --- -show:  clink.arg.register_parser("foo", parser1)
 --- -show:  clink.arg.register_parser("foo", parser2)
+--- -show:  -- In v0.4.9 that syntax only merged the first argument position, and "ghi" and
+--- -show:  -- "jkl" ended up with no further arguments.  In v1.3.11 and higher that syntax
+--- -show:  -- ends up with "ghi" and "jkl" having only "old_second" as a second argument.
 --- -show:
 --- -show:  -- Replace with new form:
---- -show:  clink.argmatcher("foo"):addarg(parser1, parser2)
---- -show:
---- -show:  -- Warning:  Note that the following are NOT the same as above!
---- -show:  -- This replaces parser1 with parser2:
 --- -show:  clink.argmatcher("foo"):addarg(parser1)
 --- -show:  clink.argmatcher("foo"):addarg(parser2)
---- -show:  -- This uses only parser2 if/when parser1 finishes parsing args:
---- -show:  clink.argmatcher("foo"):addarg(parser1):addarg(parser2)
+--- -show:  -- In v1.3.11 and higher this syntax ends up with all 4 first argument strings
+--- -show:  -- having both "old_second" and "new_second" as a second argument.
 function clink.arg.register_parser(cmd, parser)
     cmd = clink.lower(cmd)
 
@@ -1736,7 +1823,7 @@ function clink.arg.register_parser(cmd, parser)
     local matcher = _argmatchers[cmd]
     if matcher then
         -- Merge new parser (parser) into existing parser (matcher).
-        local success, msg = xpcall(parser_initialise, _error_handler_ret, matcher, parser)
+        local success, msg = xpcall(merge_parsers, _error_handler_ret, matcher, parser)
         if not success then
             error(msg, 2)
         end
