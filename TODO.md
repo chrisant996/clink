@@ -9,7 +9,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Normal Priority
 
 ## Low Priority
-- Investigate feasibility/cost/benefit of adding back (some) support for merging argmatchers?  Also find the old merging unit tests.
 
 ## Follow Up
 - Readline command reference.
