@@ -7,6 +7,12 @@
 - Updated the list of recognized CMD command names.
 - Better support for `(` and `)` when expanding doskey macros (e.g. now `( macro foo ) & ( macro bar )` works).
 - Fixed word break characters during completion.  Only `=` `;` had ever worked before, and now the normal CMD completion word break characters work (including `,` `!` `+` `(` and many others).
+- Fixed match display to not force a single column unless there are descriptions present.
+- Fixed backward compatibility for `_argmatcher:add_arguments()` and `_argmatcher:set_arguments()` (they were mistakenly adding all the arguments into the first argument position).
+- Fixed backward compatibility for merging argmatchers.
+  - Merging argmatchers works again.  It is still a simple merge similar to v0.4.9, but it should be sufficient for common cases.
+  - Fixed some bugs in how Clink v0.4.9 merged argmatchers (the unit tests for merging fail in v0.4.9).
+  - Added support for some merging cases that weren't implemented yet in v0.4.9.
 
 #### v1.3.10
 
