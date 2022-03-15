@@ -70,6 +70,7 @@ private:
     int             m_visible_rows = 0;
     int             m_displayed_rows = 0;
     bool            m_desc_below = false;
+    bool            m_init_desc_below = false;
     bool            m_any_displayed = false;
     bool            m_comment_row_displayed = false;
     bool            m_can_prompt = true;

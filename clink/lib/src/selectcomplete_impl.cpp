@@ -240,7 +240,7 @@ cant_activate:
         assert(!m_comment_row_displayed);
         assert(!m_expanded);
         assert(!m_clear_display);
-        m_desc_below = m_matches.has_descriptions() && (m_matches.get_match_count() > DESC_ONE_COLUMN_THRESHOLD);
+        m_init_desc_below = true;
         m_any_displayed = false;
         m_comment_row_displayed = false;
         m_can_prompt = g_preview_rows.get() <= 0;
@@ -395,6 +395,7 @@ void selectcomplete_impl::on_begin_line(const context& context)
     m_screen_cols = context.printer.get_columns();
     m_screen_rows = context.printer.get_rows();
     m_desc_below = false;
+    m_init_desc_below = true;
     update_layout();
 }
 
@@ -410,6 +411,7 @@ void selectcomplete_impl::on_end_line()
     m_printer = nullptr;
     m_anchor = -1;
     m_desc_below = false;
+    m_init_desc_below = true;
     m_can_prompt = true;
     m_clear_display = false;
 }
@@ -1118,6 +1120,19 @@ void selectcomplete_impl::update_layout()
     m_col_extra = m_annotate ? 3 : 0;   // Room for space hex hex.
 #endif
 
+    bool init_desc_below = m_calc_widths && m_init_desc_below;
+    if (init_desc_below)
+    {
+        m_init_desc_below = false;
+        m_desc_below = false;
+        if (m_matches.has_descriptions() && (m_matches.get_match_count() > 100))
+        {
+force_desc_below:
+            m_desc_below = true;
+            init_desc_below = false;
+        }
+    }
+
     if (m_calc_widths)
     {
 #ifdef DEBUG
@@ -1136,6 +1151,14 @@ void selectcomplete_impl::update_layout()
     const int cols_that_fit = m_widths.num_columns();
     m_match_cols = max<int>(1, cols_that_fit);
     m_match_rows = (m_matches.get_match_count() + (m_match_cols - 1)) / m_match_cols;
+
+    // If initializing where to display descriptions, and they don't fit inline
+    // in a small number of rows, then display them below.
+    if (init_desc_below && !m_desc_below && m_match_rows > DESC_ONE_COLUMN_THRESHOLD)
+    {
+        m_calc_widths = true;
+        goto force_desc_below;
+    }
 
     // +3 for quotes and append character (e.g. space).
     const int input_height = (_rl_vis_botlin + 1) + (m_match_longest + 3 + m_screen_cols - 1) / m_screen_cols;
