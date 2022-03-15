@@ -74,6 +74,7 @@ public:
 
     void                reset_generate_matches();
     void                reclassify(reclassify_reason why);
+    void                try_suggest();
     void                force_update_internal(bool restrict=false);
     bool                notify_matches_ready(int generation_id, matches* matches);
     bool                call_lua_rl_global_function(const char* func_name);
@@ -117,7 +118,6 @@ private:
     matches*            get_mutable_matches(bool nosort=false);
     void                update_internal();
     bool                update_input();
-    void                try_suggest();
     module::context     get_context() const;
     line_state          get_linestate(bool for_classify=false) const;
     void                set_flag(unsigned char flag);

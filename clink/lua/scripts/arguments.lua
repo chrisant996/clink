@@ -57,6 +57,7 @@ setmetatable(_argreader, { __call = function (x, ...) return x._new(...) end })
 function _argreader._new(root, line_state)
     local reader = setmetatable({
         _matcher = root,
+        _realmatcher = root,
         _line_state = line_state,
         _arg_index = 1,
         _stack = {},
@@ -124,6 +125,7 @@ local function do_delayed_init(list, matcher, arg_index)
             list.delayinit = nil
             -- If originally started from not-main, then reclassify.
             if async_delayinit then
+                clink._invalidate_matches()
                 clink.reclassifyline()
             end
         end)
@@ -166,6 +168,7 @@ function _argreader:update(word, word_index)
 
     -- Check for flags and switch matcher if the word is a flag.
     local matcher = self._matcher
+    local realmatcher = self._realmatcher
     local is_flag = matcher:_is_flag(word)
     local next_is_flag = matcher:_is_flag(line_state:getword(word_index + 1))
     local pushed_flags
@@ -175,7 +178,7 @@ function _argreader:update(word, word_index)
             if arg and arg.delayinit then
                 do_delayed_init(arg, matcher, 0)
             end
-            self:_push(matcher._flags)
+            self:_push(matcher._flags, matcher)
             arg_match_type = "f" --flag
             pushed_flags = true
         else
@@ -183,7 +186,9 @@ function _argreader:update(word, word_index)
         end
     end
 
-    matcher = self._matcher -- Update matcher after possible _push.
+    -- Update matcher after possible _push.
+    matcher = self._matcher
+    realmatcher = self._realmatcher
     local arg_index = self._arg_index
     local arg = matcher._args[arg_index]
     local next_arg_index = arg_index + 1
@@ -225,7 +230,7 @@ function _argreader:update(word, word_index)
 
     -- Delay initialize the argmatcher, if needed.
     if arg.delayinit then
-        do_delayed_init(arg, matcher, arg_index)
+        do_delayed_init(arg, realmatcher, arg_index)
     end
 
     -- Generate matches from history.
@@ -321,11 +326,14 @@ function _argreader:update(word, word_index)
 end
 
 --------------------------------------------------------------------------------
-function _argreader:_push(matcher)
+-- When matcher is a flags matcher, its outer matcher must be passed in (as
+-- realmatcher) so that delayinit can be given the real matcher from the API's
+-- perspective.
+function _argreader:_push(matcher, realmatcher)
     -- v0.4.9 effectively pushed flag matchers, but not arg matchers.
     -- if not self._matcher._deprecated or self._matcher._is_flag_matcher or matcher._is_flag_matcher then
     if not matcher._deprecated or matcher._is_flag_matcher then
-        table.insert(self._stack, { self._matcher, self._arg_index })
+        table.insert(self._stack, { self._matcher, self._arg_index, self._realmatcher })
         --[[
         self:trace(self._dbgword, "push", matcher, "stack", #self._stack)
     else
@@ -336,6 +344,7 @@ function _argreader:_push(matcher)
 
     self._matcher = matcher
     self._arg_index = 1
+    self._realmatcher = realmatcher or matcher
 end
 
 --------------------------------------------------------------------------------
@@ -350,7 +359,7 @@ function _argreader:_pop(next_is_flag)
             return false
         end
 
-        self._matcher, self._arg_index = table.unpack(table.remove(self._stack))
+        self._matcher, self._arg_index, self._realmatcher = table.unpack(table.remove(self._stack))
 
         if self._matcher._loop then
             -- Matcher is looping; stop popping so it can handle the argument.
@@ -379,7 +388,7 @@ function _argreader:_pop(next_is_flag)
     end
 
     --[[
-    self:trace("", "pop =>", self._matcher, "stack", #self._stack, "arg_index", self._arg_index)
+    self:trace("", "pop =>", self._matcher, "stack", #self._stack, "arg_index", self._arg_index, "realmatcher", self._realmatcher)
     self._dbgword = ""
     --]]
     return true
@@ -417,7 +426,7 @@ local function apply_options_to_builder(reader, arg, builder)
 
     -- Delay initialize the argmatcher, if needed.
     if arg.delayinit then
-        do_delayed_init(arg, reader._matcher, reader._arg_index)
+        do_delayed_init(arg, reader._realmatcher, reader._arg_index)
     end
 
     -- Generate matches from history, if requested.

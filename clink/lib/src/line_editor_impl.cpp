@@ -200,6 +200,15 @@ int host_filter_matches(char** matches)
 }
 
 //------------------------------------------------------------------------------
+void host_invalidate_matches()
+{
+    reset_generate_matches();
+    host_clear_suggestion();
+    if (s_editor)
+        s_editor->try_suggest();
+}
+
+//------------------------------------------------------------------------------
 void host_send_event(const char* event_name)
 {
     if (!s_callbacks)

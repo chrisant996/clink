@@ -46,6 +46,7 @@ extern "C" {
 
 //------------------------------------------------------------------------------
 extern int force_reload_scripts();
+extern void host_invalidate_matches();
 extern void host_mark_deprecated_argmatcher(const char* name);
 extern void set_suggestion(const char* line, unsigned int endword_offset, const char* suggestion, unsigned int offset);
 extern setting_bool g_gui_popups;
@@ -1486,6 +1487,13 @@ static int mark_deprecated_argmatcher(lua_State* state)
     return 0;
 }
 
+//------------------------------------------------------------------------------
+static int invalidate_matches(lua_State* state)
+{
+    host_invalidate_matches();
+    return 0;
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -1546,6 +1554,7 @@ void clink_lua_initialise(lua_state& lua)
         { "_recognize_command",     &recognize_command },
         { "_generate_from_history", &generate_from_history },
         { "_mark_deprecated_argmatcher", &mark_deprecated_argmatcher },
+        { "_invalidate_matches",    &invalidate_matches },
     };
 
     lua_State* state = lua.get_state();
