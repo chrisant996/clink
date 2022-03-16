@@ -1181,7 +1181,9 @@ If the definition needs to adapt based on the current directory or other criteri
 local prev_dir = ""
 
 -- Initialize the argmatcher.
-local function init(argmatcher)
+-- v1.3.12 and higher receive a command_word parameter as well, which is the
+-- word in the command line that matched this argmatcher.
+local function init(argmatcher, command_word)
     local r = io.popen("some_command --help 2>nul")
     for line in r:lines() do
         -- PUT PARSING CODE HERE.
