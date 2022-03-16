@@ -6,6 +6,7 @@
 
 - Improved `clink-select-complete` to show inline descriptions as long as they don't require more than 9 rows to display the matches.
 - Fixed redundant argmatcher delayinit for flags.
+- And other obscure minor backward compatibility fixes.
 
 #### v1.3.11
 
