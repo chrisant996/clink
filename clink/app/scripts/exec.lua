@@ -170,7 +170,3 @@ function exec_generator:generate(line_state, match_builder)
 
     return true
 end
-
-function clink.sigh()
-    print("oh man")
-end
