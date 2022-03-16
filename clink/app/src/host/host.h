@@ -28,7 +28,7 @@ public:
     virtual bool    initialise() = 0;
     virtual void    shutdown() = 0;
 
-    const char*     filter_prompt(const char** rprompt, bool transient=false);
+    const char*     filter_prompt(const char** rprompt, bool transient=false, bool final=false);
     void            enqueue_lines(std::list<str_moveable>& lines);
     bool            dequeue_line(wstr_base& out);
 

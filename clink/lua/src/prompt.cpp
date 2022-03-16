@@ -395,7 +395,7 @@ void prompt_filter::filter(const char* in, str_base& out)
 }
 
 //------------------------------------------------------------------------------
-void prompt_filter::filter(const char* in, const char* rin, str_base& out, str_base& rout, bool transient)
+void prompt_filter::filter(const char* in, const char* rin, str_base& out, str_base& rout, bool transient, bool final)
 {
     lua_State* state = m_lua.get_state();
 
@@ -415,15 +415,17 @@ void prompt_filter::filter(const char* in, const char* rin, str_base& out, str_b
     {
         lua_pushlstring(state, g_rl_buffer->get_buffer(), g_rl_buffer->get_length());
         lua_pushinteger(state, g_rl_buffer->get_cursor());
+        lua_pushboolean(state, final);
     }
     else
     {
         lua_pushnil(state);
         lua_pushnil(state);
+        lua_pushnil(state);
     }
 
     rollback<bool> rb(s_filtering, true);
-    if (m_lua.pcall(state, 4, 2) != 0)
+    if (m_lua.pcall(state, 5, 2) != 0)
     {
         lua_pop(state, 2);
         return;

@@ -419,7 +419,7 @@ void host::filter_transient_prompt(bool final)
 
     // Replace old prompt with transient prompt.
     rprompt = nullptr;
-    prompt = filter_prompt(&rprompt, true/*transient*/);
+    prompt = filter_prompt(&rprompt, true/*transient*/, final);
     {
         // Make sure no mode strings in the transient prompt.
         rollback<char*> ems(_rl_emacs_mode_str, const_cast<char*>(""));
@@ -984,7 +984,7 @@ skip_errorlevel:
 }
 
 //------------------------------------------------------------------------------
-const char* host::filter_prompt(const char** rprompt, bool transient)
+const char* host::filter_prompt(const char** rprompt, bool transient, bool final)
 {
     dbg_ignore_scope(snapshot, "Prompt filter");
 
@@ -1012,7 +1012,8 @@ const char* host::filter_prompt(const char** rprompt, bool transient)
                                 rp,
                                 m_filtered_prompt,
                                 m_filtered_rprompt,
-                                transient);
+                                transient,
+                                final);
     }
     else
     {
