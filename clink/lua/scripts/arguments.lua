@@ -1470,7 +1470,7 @@ local function _has_argmatcher(command_word)
 end
 
 --------------------------------------------------------------------------------
-local function _do_onuse_callback(argmatcher)
+local function _do_onuse_callback(argmatcher, command_word)
     -- Don't init while generating matches from history, as that could be
     -- excessively expensive (could run thousands of callbacks).
     if _argmatcher_fromhistory and _argmatcher_fromhistory.argmatcher then
@@ -1491,7 +1491,7 @@ local function _do_onuse_callback(argmatcher)
     if not c then
         -- Run the delayinit callback in a coroutine so typing is responsive.
         c = coroutine.create(function ()
-            argmatcher._delayinit_func(argmatcher)
+            argmatcher._delayinit_func(argmatcher, command_word)
             argmatcher._onuse_coroutine = nil
             _clear_onuse_coroutine[argmatcher] = nil
             if async_delayinit then
@@ -1538,7 +1538,7 @@ local function _find_argmatcher(line_state, check_existence)
         if check_existence then
             argmatcher = nil
         elseif argmatcher._delayinit_func then
-            _do_onuse_callback(argmatcher)
+            _do_onuse_callback(argmatcher, command_word)
         end
         return argmatcher, true
     end
@@ -1560,7 +1560,7 @@ local function _find_argmatcher(line_state, check_existence)
                         if check_existence then
                             argmatcher = nil
                         elseif argmatcher._delayinit_func then
-                            _do_onuse_callback(argmatcher)
+                            _do_onuse_callback(argmatcher, words[1])
                         end
                         return argmatcher, true, words
                     end
