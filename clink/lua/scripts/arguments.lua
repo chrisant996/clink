@@ -167,16 +167,24 @@ function _argreader:update(word, word_index)
     --]]
 
     -- Check for flags and switch matcher if the word is a flag.
+    local is_flag
+    local next_is_flag
+    local end_flags
     local matcher = self._matcher
     local realmatcher = self._realmatcher
-    local is_flag = matcher:_is_flag(word)
-    local next_is_flag = matcher:_is_flag(line_state:getword(word_index + 1))
     local pushed_flags
+    if not self._noflags then
+        is_flag = matcher:_is_flag(word)
+    end
     if is_flag then
         if matcher._flags then
             local arg = matcher._flags._args[1]
             if arg and arg.delayinit then
                 do_delayed_init(arg, matcher, 0)
+            end
+            if word == matcher._endofflags then
+                self._noflags = true
+                end_flags = true
             end
             self:_push(matcher._flags, matcher)
             arg_match_type = "f" --flag
@@ -184,6 +192,11 @@ function _argreader:update(word, word_index)
         else
             return
         end
+    end
+    if not is_flag and realmatcher._flagsanywhere == false then
+        self._noflags = true
+    else
+        next_is_flag = not self._noflags and matcher:_is_flag(line_state:getword(word_index + 1))
     end
 
     -- Update matcher after possible _push.
@@ -213,6 +226,9 @@ function _argreader:update(word, word_index)
             end
         end
     else
+        if end_flags then
+            self:_pop(next_is_flag)
+        end
         self._arg_index = next_arg_index
     end
 
@@ -278,6 +294,8 @@ function _argreader:update(word, word_index)
                                 end
                             end
                         end
+                    elseif end_flags then
+                        t = arg_match_type
                     end
                 end
                 if not matched then
@@ -333,7 +351,7 @@ function _argreader:_push(matcher, realmatcher)
     -- v0.4.9 effectively pushed flag matchers, but not arg matchers.
     -- if not self._matcher._deprecated or self._matcher._is_flag_matcher or matcher._is_flag_matcher then
     if not matcher._deprecated or matcher._is_flag_matcher then
-        table.insert(self._stack, { self._matcher, self._arg_index, self._realmatcher })
+        table.insert(self._stack, { self._matcher, self._arg_index, self._realmatcher, self._noflags })
         --[[
         self:trace(self._dbgword, "push", matcher, "stack", #self._stack)
     else
@@ -345,6 +363,7 @@ function _argreader:_push(matcher, realmatcher)
     self._matcher = matcher
     self._arg_index = 1
     self._realmatcher = realmatcher or matcher
+    self._noflags = nil
 end
 
 --------------------------------------------------------------------------------
@@ -359,7 +378,7 @@ function _argreader:_pop(next_is_flag)
             return false
         end
 
-        self._matcher, self._arg_index, self._realmatcher = table.unpack(table.remove(self._stack))
+        self._matcher, self._arg_index, self._realmatcher, self._noflags = table.unpack(table.remove(self._stack))
 
         if self._matcher._loop then
             -- Matcher is looping; stop popping so it can handle the argument.
@@ -388,7 +407,7 @@ function _argreader:_pop(next_is_flag)
     end
 
     --[[
-    self:trace("", "pop =>", self._matcher, "stack", #self._stack, "arg_index", self._arg_index, "realmatcher", self._realmatcher)
+    self:trace("", "pop =>", self._matcher, "stack", #self._stack, "arg_index", self._arg_index, "realmatcher", self._realmatcher, "noflags", self._noflags)
     self._dbgword = ""
     --]]
     return true
@@ -445,6 +464,20 @@ local function apply_options_to_builder(reader, arg, builder)
             -- Clear references.  Clear builder because it goes out of scope,
             -- and clear other references to facilitate garbage collection.
             _argmatcher_fromhistory = {}
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
+local function add_prefix(prefixes, string)
+    if string and type(string) == "string" then
+        local prefix = string:sub(1, 1)
+        if prefix:len() > 0 then
+            if prefix:match('[A-Za-z]') then
+                error("Flag string '"..string.."' is invalid because it starts with a letter and would interfere with argument matching.")
+            else
+                prefixes[prefix] = (prefixes[prefix] or 0) + 1
+            end
         end
     end
 end
@@ -668,6 +701,45 @@ function _argmatcher:setflagprefix(...)
 end
 
 --------------------------------------------------------------------------------
+--- -name:  _argmatcher:setflagsanywhere
+--- -ver:   1.3.12
+--- -arg:   anywhere:boolean
+--- -ret:   self
+--- When <span class="arg">anywhere</span> is false, flags are only recognized
+--- until an argument is encountered.  Otherwise they are recognized anywhere
+--- (which is the default).
+function _argmatcher:setflagsanywhere(anywhere)
+    if anywhere then
+        self._flagsanywhere = true
+    else
+        self._flagsanywhere = false
+    end
+    return self
+end
+
+--------------------------------------------------------------------------------
+--- -name:  _argmatcher:setendofflags
+--- -ver:   1.3.12
+--- -arg:   [endofflags:string|boolean]
+--- -ret:   self
+--- When <span class="arg">endofflags</span> is a string, it is a special flag
+--- that signals the end of flags.  When <span class="arg">endflags</span> is
+--- true or nil, then "<code>--</code>" is used as the end of flags string.
+--- Otherwise, the end of flags string is cleared.
+function _argmatcher:setendofflags(endofflags)
+    if endofflags == true or endofflags == nil then
+        endofflags = "--"
+    elseif type(endofflags) ~= "string" then
+        endofflags = nil
+    end
+    if endofflags then
+        add_prefix(self._flagprefix, endofflags)
+    end
+    self._endofflags = endofflags
+    return self
+end
+
+--------------------------------------------------------------------------------
 --- -name:  _argmatcher:adddescriptions
 --- -ver:   1.2.38
 --- -arg:   [descriptions...:table]
@@ -875,20 +947,6 @@ function _argmatcher:_is_flag(word)
     end
 
     return false
-end
-
---------------------------------------------------------------------------------
-local function add_prefix(prefixes, string)
-    if string and type(string) == "string" then
-        local prefix = string:sub(1, 1)
-        if prefix:len() > 0 then
-            if prefix:match('[A-Za-z]') then
-                error("Flag string '"..string.."' is invalid because it starts with a letter and would interfere with argument matching.")
-            else
-                prefixes[prefix] = (prefixes[prefix] or 0) + 1
-            end
-        end
-    end
 end
 
 --------------------------------------------------------------------------------
