@@ -5,9 +5,10 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- `git merge --strategy-option diff-algorithm=` is not colored as a recognized arg.
-- `whatever --flag=linked_parser` is not invoking the linked parser anymore; maybe related to the `--` change?
-- Unit tests for more argmatcher cases, especially the ones above. ↑↑
+- Unit tests for more argmatcher cases, especially the ones above.
+  - `foo --flag={linked_parser}` must follow to the linked parser.
+  - `foo --bogus=blah arg` must interpret `arg` as argument position 1.
+  - `foo --flag flagargvalue=linkedargvalue` must color the line correctly.
 
 ## Normal Priority
 
