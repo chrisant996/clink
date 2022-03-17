@@ -151,6 +151,59 @@ local function do_delayed_init(list, matcher, arg_index)
 end
 
 --------------------------------------------------------------------------------
+local function is_word_present(word, arg, t, arg_match_type)
+    for _, i in ipairs(arg) do
+        local it = type(i)
+        if it == "function" then
+            t = 'o' --other (placeholder; superseded by :classifyword).
+        elseif i == word or (it == "table" and i.match == word) then
+            return arg_match_type, true
+        end
+    end
+    return t, false
+end
+
+--------------------------------------------------------------------------------
+local function get_classify_color(code)
+    if code == "a" then
+        local color = settings.get("color.arg")
+        if color ~= "" then
+            return color
+        end
+        return settings.get("color.input")
+    end
+
+    local name
+    if code == "c" then     name = "color.cmd"
+    elseif code == "d" then name = "color.doskey"
+    elseif code == "f" then name = "color.flag"
+    elseif code == "o" then name = "color.input"
+    elseif code == "n" then name = "color.unexpected"
+    end
+
+    if name then
+        return settings.get(name)
+    end
+
+    return ""
+end
+
+--------------------------------------------------------------------------------
+local function lookup_link(arg, word, line_state, word_index)
+    if arg and arg._links then
+        local eqlink
+        if line_state then
+            local info = line_state:getwordinfo(word_index)
+            local pos = info.offset + info.length
+            if line_state:getline():sub(pos, pos) == "=" then
+                eqlink = arg._links[word.."="]
+            end
+        end
+        return eqlink or arg._links[word]
+    end
+end
+
+--------------------------------------------------------------------------------
 -- When word_index is < 0, skip classifying the word, and skip trying to figure
 -- out whether a `-foo:` word should avoid following a linked parser.  This only
 -- happens when parsing extra words from expanding a doskey alias.
@@ -177,9 +230,9 @@ function _argreader:update(word, word_index)
             self._matcher._flags and
             self._matcher:_is_flag(word) and
             word:find("[:=]$") then
-        -- Check if the word links to another matcher.
+        -- Check if the word does not link to another matcher.
         local flagarg = self._matcher._flags._args[1]
-        if not (flagarg and flagarg._links and flagarg._links[word]) then
+        if not lookup_link(flagarg, word) then
             -- Check if the next word is adjacent.
             local thiswordinfo = line_state:getwordinfo(word_index)
             local nextwordinfo = line_state:getwordinfo(word_index + 1)
@@ -328,14 +381,16 @@ function _argreader:update(word, word_index)
                     end
                 end
                 if not matched then
-                    for _, i in ipairs(arg) do
-                        local it = type(i)
-                        if it == "function" then
-                            t = 'o' --other (placeholder; superseded by :classifyword).
-                        elseif i == word or (it == "table" and i.match == word) then
-                            t = arg_match_type
-                            break
+                    local this_info = line_state:getwordinfo(word_index)
+                    local pos = this_info.offset + this_info.length
+                    if line_state:getline():sub(pos, pos) == "=" then
+                        t, matched = is_word_present(word.."=", arg, t, arg_match_type)
+                        if matched then
+                            self._word_classifier:applycolor(pos, 1, get_classify_color(t))
                         end
+                    end
+                    if not matched then
+                        t, matched = is_word_present(word, arg, t, arg_match_type)
                     end
                 end
             end
@@ -344,24 +399,20 @@ function _argreader:update(word, word_index)
     end
 
     -- Does the word lead to another matcher?
-    local linked
-    if arg._links then
-        linked = arg._links[word]
+    local linked = lookup_link(arg, word, line_state, word_index)
+    if linked then
+        if is_flag and word:match("[:=]$") and word_index >= 0 then
+            local info = line_state:getwordinfo(word_index)
+            if info and
+                    line_state:getcursor() ~= info.offset + info.length and
+                    line_state:getline():sub(info.offset + info.length, info.offset + info.length) == " " then
+                -- Don't follow linked parser on `--foo=` flag if there's a
+                -- space after the `:` or `=` unless the cursor is on the space.
+                linked = nil
+            end
+        end
         if linked then
-            if is_flag and word:match("[:=]$") and word_index >= 0 then
-                local info = line_state:getwordinfo(word_index)
-                if info and
-                        line_state:getcursor() ~= info.offset + info.length and
-                        line_state:getline():sub(info.offset + info.length, info.offset + info.length) == " " then
-                    -- Don't follow linked parser on `--foo=` flag if there's a
-                    -- space after the `:` or `=` unless the cursor is on the
-                    -- space.
-                    linked = nil
-                end
-            end
-            if linked then
-                self:_push(linked)
-            end
+            self:_push(linked)
         end
     end
 
