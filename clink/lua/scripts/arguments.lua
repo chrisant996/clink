@@ -1217,6 +1217,13 @@ function _argmatcher:_generate(line_state, match_builder, extra_words)
         return true
     end
 
+    -- Backward compatibility shim.
+    if rl_state then
+        rl_state.first = endwordinfo.offset
+        rl_state.last = line_state:getcursor()
+        rl_state.text = line_state:getline():sub(rl_state.first, rl_state.last - 1)
+    end
+
     -- Select between adding flags or matches themselves. Works in conjunction
     -- with getwordbreakinfo()'s return.
     if endwordinfo.redir then

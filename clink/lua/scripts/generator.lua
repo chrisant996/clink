@@ -258,11 +258,13 @@ function clink._generate(line_state, match_builder, old_filtering)
         print(ret)
         _current_builder = nil
         clink.use_old_filtering = nil
+        rl_state = nil
         return
     end
 
     _current_builder = nil
     clink.use_old_filtering = nil
+    rl_state = nil
     return ret or false
 end
 

@@ -222,17 +222,26 @@ function clink._resume_coroutines()
                 local now = os.clock()
                 if next_entry_target(entry, now) <= now then
                     local events
+                    local old_rl_state
                     if not entry.firstclock then
                         entry.firstclock = now
                     end
                     entry.resumed = entry.resumed + 1
                     clink._set_coroutine_context(entry.context)
-                    if entry.isgenerator and not entry.keepevents then
-                        events = clink._set_coroutine_events(entry.events)
+                    if entry.isgenerator then
+                        old_rl_state = rl_state
+                        rl_state = entry.rl_state
+                        if not entry.keepevents then
+                            events = clink._set_coroutine_events(entry.events)
+                        end
                     end
                     local ok, ret = coroutine.resume(entry.coroutine, true--[[async]])
-                    if entry.isgenerator and not entry.keepevents then
-                        entry.events = clink._set_coroutine_events(events)
+                    if entry.isgenerator then
+                        entry.rl_state = rl_state
+                        rl_state = old_rl_state
+                        if not entry.keepevents then
+                            entry.events = clink._set_coroutine_events(events)
+                        end
                     end
                     if ok then
                         -- Use live clock so the interval excludes the execution
@@ -490,6 +499,7 @@ function clink.addcoroutine(c, interval)
         generation=created_info.generation,
         isprompt=created_info.isprompt,
         isgenerator=created_info.isgenerator,
+        rl_state=rl_state,
         src=created_info.src,
     }
     _coroutines_created[c] = nil
