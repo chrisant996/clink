@@ -1802,7 +1802,14 @@ local function starts_with_flag_character(parser, part)
         return false
     end
 
+    -- For compatibility, always consider '-' and '/' to be flag prefix
+    -- characters while initializing a parser.  This is important so that
+    -- `parser('-x'..parser(...))` works.
     local prefix = part:sub(1, 1)
+    if prefix == "-" or prefix == "/" then
+        return true
+    end
+
     local num_with_prefix = parser._flagprefix[prefix]
     return num_with_prefix and (num_with_prefix > 0) and true or false
 end
