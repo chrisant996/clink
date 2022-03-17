@@ -194,9 +194,11 @@ local function lookup_link(arg, word, line_state, word_index)
         local eqlink
         if line_state then
             local info = line_state:getwordinfo(word_index)
-            local pos = info.offset + info.length
-            if line_state:getline():sub(pos, pos) == "=" then
-                eqlink = arg._links[word.."="]
+            if info then -- word_index may be -1 when expanding a doskey alias.
+                local pos = info.offset + info.length
+                if line_state:getline():sub(pos, pos) == "=" then
+                    eqlink = arg._links[word.."="]
+                end
             end
         end
         return eqlink or arg._links[word]
