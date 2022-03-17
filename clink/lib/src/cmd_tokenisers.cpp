@@ -394,7 +394,8 @@ word_token cmd_word_tokeniser::next(unsigned int& offset, unsigned int& length)
     if (!m_iter.more())
         return word_token(word_token::invalid_delim);
 
-    static const char c_word_delims[] = " \t\n\"'`!^+=;,()[]{}";
+    // No double quote, as that would break quoting rules.
+    static const char c_word_delims[] = " \t\n'`!^+=;,()[]{}";
 
     const char oq = get_opening_quote();
     const char cq = get_closing_quote();
