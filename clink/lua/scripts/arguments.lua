@@ -166,6 +166,35 @@ function _argreader:update(word, word_index)
     self:trace(word, "update")
     --]]
 
+    -- When a flag ends with : or = but doesn't link to another matcher, and if
+    -- the next word is adjacent, then treat the next word as an argument to the
+    -- flag instead of advancing to the next argument position.
+    if self._phantomposition then
+        -- Skip past a phantom position.
+        self._phantomposition = nil
+        return
+    elseif not self._noflags and
+            self._matcher._flags and
+            self._matcher:_is_flag(word) and
+            word:find("[:=]$") then
+        -- Check if the word links to another matcher.
+        local flagarg = self._matcher._flags._args[1]
+        if not (flagarg and flagarg._links and flagarg._links[word]) then
+            -- Check if the next word is adjacent.
+            local thiswordinfo = line_state:getwordinfo(word_index)
+            local nextwordinfo = line_state:getwordinfo(word_index + 1)
+            if nextwordinfo then
+                local thisend = thiswordinfo.offset + thiswordinfo.length + (thiswordinfo.quoted and 1 or 0)
+                local nextbegin = nextwordinfo.offset - (nextwordinfo.quoted and 1 or 0)
+                if thisend >= nextbegin then
+                    -- Treat the next word as though there were a linked matcher
+                    -- that generates file matches.
+                    self._phantomposition = true
+                end
+            end
+        end
+    end
+
     -- Check for flags and switch matcher if the word is a flag.
     local is_flag
     local next_is_flag
@@ -195,8 +224,8 @@ function _argreader:update(word, word_index)
     end
     if not is_flag and realmatcher._flagsanywhere == false then
         self._noflags = true
-    else
-        next_is_flag = not self._noflags and matcher:_is_flag(line_state:getword(word_index + 1))
+    elseif not self._noflags then
+        next_is_flag = matcher:_is_flag(line_state:getword(word_index + 1))
     end
 
     -- Update matcher after possible _push.
@@ -1238,18 +1267,13 @@ function _argmatcher:_generate(line_state, match_builder, extra_words)
         hidden = matcher._flags._hidden
         add_matches(matcher._flags._args[1], "arg")
         return true
+    elseif reader._phantomposition then
+        -- Generate file matches for phantom positions, i.e. any flag ending
+        -- with : or = that does explicitly link to another matcher.
+        match_builder:addmatches(clink.filematches(line_state:getendword()))
+        return true
     else
-        -- When endword is adjacent the previous word and the previous word ends
-        -- with : or = then this is a flag-attached arg, not an arg position.
-        if line_state:getwordcount() > 1 then
-            local prevwordinfo = line_state:getwordinfo(line_state:getwordcount() - 1)
-            if prevwordinfo.offset + prevwordinfo.length == endwordinfo.offset and
-                    matcher:_is_flag(line_state:getword(line_state:getwordcount() - 1)) and
-                    line_state:getline():sub(endwordinfo.offset - 1, endwordinfo.offset - 1):find("[:=]") then
-                match_builder:addmatches(clink.filematches(line_state:getendword()))
-                return true
-            end
-        end
+        -- Generate matches for the argument position.
         local arg = matcher._args[arg_index]
         if arg then
             return add_matches(arg, match_type) and true or false
