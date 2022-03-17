@@ -5,10 +5,15 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
+- `git merge --strategy-option diff-algorithm=` is not colored as a recognized arg.
+- `whatever --flag=linked_parser` is not invoking the linked parser anymore; maybe related to the `--` change?
+- Unit tests for more argmatcher cases, especially the ones above. ↑↑
 
 ## Normal Priority
 
 ## Low Priority
+- Mouse input toggling is unreliable in Windows Terminal, and sometimes ends up disallowing mouse input.
+- Once in a while raw mouse input sequences spuriously show up in the edit line; have only noticed it when the CMD window did not have focus at the time.
 
 ## Follow Up
 - Readline command reference.
