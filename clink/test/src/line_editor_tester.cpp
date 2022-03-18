@@ -240,12 +240,11 @@ void line_editor_tester::run()
                 'f',    // word_class::flag
                 'n',    // word_class::none
             };
-            static_assert(sizeof_array(c_lookup) - 1/*nul*/ == int(word_class::max), "c_lookup size does not match word_class::max");
+            static_assert(sizeof_array(c_lookup) == int(word_class::max), "c_lookup size does not match word_class::max");
 
             const word_class_info& wc = *(*classifications)[i];
-            assert(unsigned(wc.word_class) < sizeof_array(c_lookup) - 1/*nul*/);
-
-            c.concat(&c_lookup[unsigned(wc.word_class)], 1);
+            if (unsigned(wc.word_class) < sizeof_array(c_lookup))
+                c.concat(&c_lookup[unsigned(wc.word_class)], 1);
         }
 
         REQUIRE(m_expected_classifications.equals(c.c_str()), [&] () {
