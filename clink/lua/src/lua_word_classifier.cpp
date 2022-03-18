@@ -20,19 +20,32 @@ extern "C" {
 }
 
 //------------------------------------------------------------------------------
-word_class to_word_class(char wc)
+word_class to_word_class(char ch)
 {
-    switch (wc)
-    {
-    default:    return word_class::other;
-    case 'u':   return word_class::unrecognized;
-    case 'x':   return word_class::executable;
-    case 'c':   return word_class::command;
-    case 'd':   return word_class::doskey;
-    case 'a':   return word_class::arg;
-    case 'f':   return word_class::flag;
-    case 'n':   return word_class::none;
-    }
+    const struct {
+        char ch;
+        word_class wc;
+    } c_lookup[] = {
+        { 'o', word_class::other },
+        { 'u', word_class::unrecognized },
+        { 'x', word_class::executable },
+        { 'c', word_class::command },
+        { 'd', word_class::doskey },
+        { 'a', word_class::arg },
+        { 'f', word_class::flag },
+        { 'n', word_class::none },
+    };
+    static_assert(sizeof_array(c_lookup) == int(word_class::max), "c_lookup does not match size of word_class enumeration");
+
+    word_class wc = word_class::other;
+    for (const auto& lookup : c_lookup)
+        if (lookup.ch == ch)
+        {
+            wc = lookup.wc;
+            break;
+        }
+
+    return wc;
 }
 
 //------------------------------------------------------------------------------

@@ -94,6 +94,10 @@ local function color_for_word_class(wc)
         c = settings.get("color.flag")
     elseif wc == "o" then
         c = settings.get("color.input")
+    elseif wc == "x" then
+        c = settings.get("color.executable")
+    elseif wc == "u" then
+        c = settings.get("color.unrecognized")
     elseif wc == "n" then
         c = settings.get("color.unexpected")
     elseif wc == "m" then

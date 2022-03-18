@@ -177,6 +177,8 @@ local function get_classify_color(code)
     if code == "c" then     name = "color.cmd"
     elseif code == "d" then name = "color.doskey"
     elseif code == "f" then name = "color.flag"
+    elseif code == "x" then name = "color.executable"
+    elseif code == "u" then name = "color.unrecognized"
     elseif code == "o" then name = "color.input"
     elseif code == "n" then name = "color.unexpected"
     end

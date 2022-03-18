@@ -940,7 +940,8 @@ void line_editor_impl::classify()
 #ifdef DEBUG
     if (dbg_get_env_int("DEBUG_CLASSIFY"))
     {
-        static const char *const word_class_name[] = {"other", "command", "doskey", "arg", "flag", "none"};
+        static const char *const word_class_name[] = {"other", "unrecognized", "executable", "command", "doskey", "arg", "flag", "none"};
+        static_assert(sizeof_array(word_class_name) == int(word_class::max), "word_class flag count mismatch");
         printf("CLASSIFIED '%s' -- ", m_buffer.get_buffer());
         word_class wc;
         for (unsigned int i = 0; i < m_classifications.size(); ++i)

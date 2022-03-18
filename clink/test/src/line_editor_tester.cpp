@@ -224,17 +224,23 @@ void line_editor_tester::run()
         str<> c;
         for (unsigned int i = 0; i < classifications->size(); ++i)
         {
-            const word_class_info& wc = *(*classifications)[i];
-            switch (wc.word_class)
+            static const char c_lookup[] =
             {
-            default:                    c.concat("o", 1); break;
-            case word_class::command:   c.concat("c", 1); break;
-            case word_class::doskey:    c.concat("d", 1); break;
-            case word_class::arg:       c.concat("a", 1); break;
-            case word_class::flag:      c.concat("f", 1); break;
-            case word_class::none:      c.concat("n", 1); break;
-            case word_class::invalid:   break;
-            }
+                'o',    // word_class::other
+                'u',    // word_class::unrecognized
+                'x',    // word_class::executable
+                'c',    // word_class::command
+                'd',    // word_class::doskey
+                'a',    // word_class::arg
+                'f',    // word_class::flag
+                'n',    // word_class::none
+            };
+            static_assert(sizeof_array(c_lookup) - 1/*nul*/ == int(word_class::max), "c_lookup size does not match word_class::max");
+
+            const word_class_info& wc = *(*classifications)[i];
+            assert(unsigned(wc.word_class) < sizeof_array(c_lookup) - 1/*nul*/);
+
+            c.concat(&c_lookup[unsigned(wc.word_class)], 1);
         }
 
         REQUIRE(m_expected_classifications.equals(c.c_str()), [&] () {
