@@ -805,6 +805,78 @@ TEST_CASE("Lua arg parsers")
         }
     }
 
+    SECTION("Paired")
+    {
+        const char* script = "\
+            q = clink.argmatcher():addarg('x', 'y', 'z')\
+            p = clink.argmatcher():addarg('red', 'green', 'blue', 'mode='..q)\
+            clink.argmatcher('paired')\
+            :addflags({'--abc:'..p, '--def='..p, '--xyz'..p})\
+            :addarg('AA', 'BB')\
+            :addarg('XX', 'YY')\
+        ";
+
+        REQUIRE(lua.do_string(script));
+
+        SECTION("Follow")
+        {
+            SECTION("colon")
+            {
+                tester.set_input("paired --abc:");
+                tester.set_expected_matches("red", "green", "blue", "mode=");
+                tester.run();
+            }
+
+            SECTION("equal")
+            {
+                tester.set_input("paired --def=");
+                tester.set_expected_matches("red", "green", "blue", "mode=");
+                tester.run();
+            }
+
+            SECTION("arg")
+            {
+                tester.set_input("paired --xyz mode=");
+                tester.set_expected_matches("x", "y", "z");
+                tester.run();
+            }
+        }
+
+        SECTION("Phantom files")
+        {
+            SECTION("colon")
+            {
+                tester.set_input("paired --waffle:f");
+                tester.set_expected_matches("file1", "file2");
+                tester.run();
+            }
+
+            SECTION("equal")
+            {
+                tester.set_input("paired --waffle=d");
+                tester.set_expected_matches("dir1\\", "dir2\\");
+                tester.run();
+            }
+        }
+
+        SECTION("Phantom position")
+        {
+            SECTION("colon")
+            {
+                tester.set_input("paired --waffle:pancake ");
+                tester.set_expected_matches("AA", "BB");
+                tester.run();
+            }
+
+            SECTION("equal")
+            {
+                tester.set_input("paired --waffle=pancake ");
+                tester.set_expected_matches("AA", "BB");
+                tester.run();
+            }
+        }
+    }
+
     SECTION("Adaptive")
     {
         const char* script = "\

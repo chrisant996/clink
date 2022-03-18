@@ -12,6 +12,7 @@
 #include <lib/word_classifier.h>
 #include <lib/word_classifications.h>
 #include <lib/word_collector.h>
+#include <lib/cmd_tokenisers.h>
 #include <readline/readline.h>
 
 #include <stdio.h>
@@ -92,8 +93,12 @@ line_editor_tester::line_editor_tester(const line_editor::desc& _desc, const cha
 
     if (command_delims)
         m_command_tokeniser = new simple_word_tokeniser(command_delims);
+    else
+        m_command_tokeniser = new cmd_command_tokeniser();
     if (word_delims)
         m_word_tokeniser = new simple_word_tokeniser(word_delims);
+    else
+        m_word_tokeniser = new cmd_word_tokeniser();
 
     desc.command_tokeniser = m_command_tokeniser;
     desc.word_tokeniser = m_word_tokeniser;

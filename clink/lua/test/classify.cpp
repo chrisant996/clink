@@ -479,6 +479,32 @@ TEST_CASE("Lua word classification")
         }
     }
 
+    SECTION("Paired")
+    {
+        const char* script = "\
+            local q = clink.argmatcher():addarg('x', 'y', 'z')\
+            local p = clink.argmatcher():addarg('red', 'green', 'blue', 'mode='..q)\
+            clink.argmatcher('paired')\
+            :addflags({'--abc:'..p, '--def='..p, '--xyz'..p})\
+            :addarg('AA', 'BB')\
+            :addarg('XX', 'YY')\
+        ";
+
+        REQUIRE(lua.do_string(script));
+
+        SECTION("Equal word")
+        {
+            tester.set_input("paired --xyz mode=x");
+            tester.set_expected_classifications("ofaa");
+        }
+
+        SECTION("Equal text")
+        {
+            tester.set_input("paired --xyz mode=qqq");
+            tester.set_expected_classifications("ofao");
+        }
+    }
+
     SECTION("Doskey")
     {
         SECTION("No space")
