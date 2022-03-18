@@ -5,10 +5,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- Unit tests for more argmatcher cases, especially the ones above.
-  - `foo --flag={linked_parser}` must follow to the linked parser.
-  - `foo --bogus=blah arg` must interpret `arg` as argument position 1.
-  - `foo --flag flagargvalue=linkedargvalue` must color the line correctly.
+- `test -d` shows "error in error handling", so it looks like some script errors are occurring behind the scenes.
 
 ## Normal Priority
 
