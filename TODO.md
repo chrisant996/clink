@@ -8,10 +8,18 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - `test -d` shows "error in error handling", so it looks like some script errors are occurring behind the scenes.
 
 ## Normal Priority
+- Let the yieldguards run in parallel?
+  - Things are bottlenecking behind the prompt filters.
+  - Or maybe run only the promptcoroutine yieldguards in series.
+  - This could also make it realistic to resume a single coroutine in a loop until completion, instead of running ALL coroutines.
+  - Maybe limit how many generations can have outstanding yieldguards at a time.
+  - How about running background coroutines in series, but once the main coroutine depends on one then let it run in parallel?
+- Fish completions?  May be feasible to try to parse fish completion files, if the format isn't too encrusted with shell script syntax?  Could mostly be provided by a standalone Lua script, but there would at least need to be an event for when a command is encountered that doesn't have any argmatcher registered.
 
 ## Low Priority
 - Mouse input toggling is unreliable in Windows Terminal, and sometimes ends up disallowing mouse input.
 - Once in a while raw mouse input sequences spuriously show up in the edit line; have only noticed it when the CMD window did not have focus at the time.
+- Should coroutines really be able to make Readline redraw immediately?  Should instead set a flag that the main coroutine responds to when it gains control again?
 
 ## Follow Up
 - Readline command reference.
