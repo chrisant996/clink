@@ -406,6 +406,7 @@ word_token cmd_word_tokeniser::next(unsigned int& offset, unsigned int& length)
 
     auto start_new_word = [this, &start_word, &end_word, &offset, &redir_arg]()
     {
+        m_cmd_state.clear();
         // Skip past any separators.
         while (m_iter.more())
         {
