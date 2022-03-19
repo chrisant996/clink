@@ -7,6 +7,7 @@
 - Improved `clink-select-complete` to show inline descriptions as long as they don't require more than 9 rows to display the matches.
 - Added second argument to the `delayinit` function for an argmatcher.
 - Added `argmatcher:setflagsanywhere()` and `argmatcher:setendofflags()` to control where flags are recognized.
+- Added `clink.getargmatcher()` to find the argmatcher for a command name or command line (`line_state`).
 - Improved support for argmatcher non-flag argument values that end with `=`:  now they can have a linked argmatcher, and input line coloring is applied correctly.
 - Fixed quotes during completion (regression introduced in v1.3.11).
 - Fixed redundant argmatcher delayinit for flags.
