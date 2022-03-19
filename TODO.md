@@ -12,8 +12,21 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - Or maybe run only the promptcoroutine yieldguards in series.
   - This could also make it realistic to resume a single coroutine in a loop until completion, instead of running ALL coroutines.
   - Maybe limit how many generations can have outstanding yieldguards at a time.
-  - How about running background coroutines in series, but once the main coroutine depends on one then let it run in parallel?
+  - Maybe limit how many yieldguards can be outstanding at a time.
+  - How about running background coroutines in series, but once the main coroutine depends on one then let it run in parallel?  _[Could deadlock if a coroutine yields to wait for results from another coroutine.]_
+  - **Proposal:**
+    - [ ] Run promptcoroutine coroutines in series, serialize their yieldguards wrt each other (but not wrt other yieldguards).
+    - [ ] Run match generator coroutines in series, serialize their yieldguards wrt each other (but not wrt other yieldguards).
+    - [ ] Don't serialize other yieldguards.
+    - [ ] Do throttle to no more than _N_ concurrent yieldguards at a time (_N_ == 10 seems a good starting point for a limit).
+    - [x] When the main coroutine is waiting on a coroutine to complete, in the meantime run all coroutines.
 - Fish completions?  May be feasible to try to parse fish completion files, if the format isn't too encrusted with shell script syntax?  Could mostly be provided by a standalone Lua script, but there would at least need to be an event for when a command is encountered that doesn't have any argmatcher registered.
+  - [x] Add `clink.getargmatcher()`.
+  - [ ] Add `clink.oncommand()` to be fired when a command word changes (must be followed by at least one more character).
+    - [ ] Remember command words for the line (must be followed by at least one more character).
+    - [ ] When a command word is added that is not already in the line, fire the event.
+    - [ ] When a command word is no longer in the line, remove it from the remembered set.
+    - [ ] Probably `line_editor_impl` should be responsible for this.
 
 ## Low Priority
 - Mouse input toggling is unreliable in Windows Terminal, and sometimes ends up disallowing mouse input.
