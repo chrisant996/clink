@@ -81,6 +81,7 @@ struct lua_longjmp {
 };
 
 
+#include "lauxlib.h"
 static void seterrorobj (lua_State *L, int errcode, StkId oldtop) {
   switch (errcode) {
     case LUA_ERRMEM: {  /* memory error? */
@@ -88,6 +89,14 @@ static void seterrorobj (lua_State *L, int errcode, StkId oldtop) {
       break;
     }
     case LUA_ERRERR: {
+/* begin_clink_change */
+#ifdef DEBUG
+      luaL_traceback(L, L, "LUA_ERRERR", 1);
+      const char* s = lua_tolstring(L, -1, NULL);
+      puts(s);
+      lua_pop(L, 1);
+#endif
+/* end_clink_change */
       setsvalue2s(L, oldtop, luaS_newliteral(L, "error in error handling"));
       break;
     }
