@@ -66,7 +66,8 @@ local normal = "\x1b[m"
 -- debugger is started yet, and whether debugger.lua is embedded (precompiled).
 local step_adjust_start = 0
 local step_adjust_started = 1
-if ((debug.getinfo(IsWindows, 'S') or {}).short_src or '') == '?' then
+local dummy_for_detection = function () end
+if ((debug.getinfo(dummy_for_detection, 'S') or {}).short_src or '') == '?' then
   step_adjust_start = -1
   step_adjust_started = -1
 end
