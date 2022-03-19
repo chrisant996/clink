@@ -5,7 +5,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- `test -d` shows "error in error handling", so it looks like some script errors are occurring behind the scenes.
 
 ## Normal Priority
 - Let the yieldguards run in parallel?
