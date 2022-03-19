@@ -1715,6 +1715,31 @@ local function _find_argmatcher(line_state, check_existence)
 end
 
 --------------------------------------------------------------------------------
+--- -name:  clink.getargmatcher
+--- -ver:   1.3.12
+--- -arg:   find:string|line_state
+--- -ret:   argmatcher|nil
+--- Finds the argmatcher registered to handle a command, if any.
+---
+--- When <span class="arg">find</span> is a string it is interpreted as the
+--- name of a command, and this looks up the argmatcher for the named command.
+---
+--- When <span class="arg">find</span> is a <a href="#line_state">line_state</a>
+--- this looks up the argmatcher for the command line.
+---
+--- If no argmatcher is found, this returns nil.
+function clink.getargmatcher(find)
+    local t = type(find)
+    if t == "string" then
+        return _has_argmatcher(find)
+    elseif t == "userdata" then
+        return _find_argmatcher(find)
+    else
+        return nil
+    end
+end
+
+--------------------------------------------------------------------------------
 function clink._generate_from_historyline(line_state)
     local argmatcher, has_argmatcher, extra_words = _find_argmatcher(line_state)
     if not argmatcher or argmatcher ~= _argmatcher_fromhistory_root then
