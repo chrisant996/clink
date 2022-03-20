@@ -1852,7 +1852,7 @@ function argmatcher_classifier:classify(commands)
             local m = has_argmatcher and "m" or ""
             if info.alias then
                 word_classifier:classifyword(command_word_index, m.."d", false); --doskey
-            elseif clink.is_cmd_command(command_word) then
+            elseif not info.quoted and clink.is_cmd_command(command_word) then
                 word_classifier:classifyword(command_word_index, m.."c", false); --command
             elseif unrecognized_color or executable_color then
                 local cl
