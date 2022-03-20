@@ -6,6 +6,7 @@
 //------------------------------------------------------------------------------
 class line_state;
 class matches;
+enum class recognition : char;
 
 //------------------------------------------------------------------------------
 class host_callbacks
@@ -21,5 +22,7 @@ public:
     virtual bool call_lua_rl_global_function(const char* func_name, line_state* line) = 0;
     virtual const char** copy_dir_history(int* total) = 0;
     virtual void send_event(const char* event_name) = 0;
+    virtual void send_oncommand_event(line_state& line, const char* command, bool quoted, recognition recog, const char* file) = 0;
+    virtual bool has_event_handler(const char* event_name) = 0;
     virtual void get_app_context(int& id, str_base& binaries, str_base& profile, str_base& scripts) = 0;
 };

@@ -115,6 +115,7 @@ private:
     commands            collect_commands();
     unsigned int        collect_words(words& words, matches_impl* matches, collect_words_mode mode);
     void                classify();
+    void                maybe_send_oncommand_event();
     matches*            get_mutable_matches(bool nosort=false);
     void                update_internal();
     bool                update_input();
@@ -159,6 +160,9 @@ private:
     prev_buffer         m_prev_classify;
     words               m_classify_words;
     unsigned short      m_classify_command_offset = 0;
+
+    str<16>             m_prev_command_word;
+    bool                m_prev_command_word_quoted;
 
 #ifdef DEBUG
     bool                m_in_matches_ready = false;

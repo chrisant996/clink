@@ -10,6 +10,8 @@
 #include "pager.h"
 #include "host_callbacks.h"
 #include "reclassify.h"
+#include "cmd_tokenisers.h"
+#include "doskey.h"
 
 #include <core/base.h>
 #include <core/os.h>
@@ -37,6 +39,7 @@ extern void reset_suggester();
 extern bool check_recognizer_refresh();
 extern bool is_showing_argmatchers();
 extern bool win_fn_callback_pending();
+extern recognition recognize_command(const char* line, const char* word, bool quoted, bool& ready, str_base* file=nullptr);
 extern std::shared_ptr<match_builder_toolkit> get_deferred_matches(int generation_id);
 
 
@@ -359,6 +362,8 @@ void line_editor_impl::begin_line()
     m_buffer.begin_line();
     m_prev_generate.clear();
     m_prev_classify.clear();
+    m_prev_command_word.clear();
+    m_prev_command_word_quoted = false;
 
     rl_before_display_function = before_display;
 
@@ -960,11 +965,77 @@ void line_editor_impl::classify()
 }
 
 //------------------------------------------------------------------------------
+void line_editor_impl::maybe_send_oncommand_event()
+{
+    if (!m_desc.callbacks)
+        return;
+
+    line_state line = get_linestate();
+    if (line.get_word_count() <= 1)
+        return;
+
+    const word& info = line.get_words()[0];
+    if (m_prev_command_word_quoted == info.quoted &&
+        m_prev_command_word.length() == info.length &&
+        _strnicmp(m_prev_command_word.c_str(), m_buffer.get_buffer() + info.offset, info.length) == 0)
+        return;
+
+    str<> first_word;
+    bool quoted = info.quoted;
+    first_word.concat(line.get_line() + info.offset, info.length);
+
+    if (m_desc.callbacks->has_event_handler("oncommand"))
+    {
+        doskey_alias resolved;
+        doskey doskey("cmd.exe");
+        doskey.resolve(line.get_line(), resolved);
+
+        str<32> command;
+        str_moveable tmp;
+        const char* lookup = first_word.c_str();
+        if (resolved && resolved.next(tmp))
+        {
+            str_tokeniser tokens(tmp.c_str(), " \t");
+            tokens.add_quote_pair("\"");
+
+            const char *start;
+            int length;
+            str_token token = tokens.next(start, length);
+            if (token)
+            {
+                command.concat(start, length);
+                quoted = (start > line.get_line() && start[-1] == '"');
+                lookup = command.c_str();
+            }
+        }
+
+        bool ready;
+        str<> file;
+        const recognition recognized = recognize_command(line.get_line(), lookup, quoted, ready, &file);
+        if (!ready)
+            return;
+
+        m_desc.callbacks->send_oncommand_event(line, lookup, quoted, recognized, file.c_str());
+    }
+
+    m_prev_command_word = first_word.c_str();
+    m_prev_command_word_quoted = quoted;
+}
+
+//------------------------------------------------------------------------------
 void line_editor_impl::reclassify(reclassify_reason why)
 {
     // Test check_recognizer_refresh() first, to ensure its side effects occur
     // when necessary.
-    if (check_recognizer_refresh() || why == reclassify_reason::force)
+    const bool refresh = check_recognizer_refresh();
+
+    if (refresh)
+    {
+        why = reclassify_reason::force;
+        maybe_send_oncommand_event();
+    }
+
+    if (refresh || why == reclassify_reason::force)
     {
         m_prev_classify.clear();
         m_buffer.set_need_draw();
@@ -1197,6 +1268,9 @@ void line_editor_impl::update_internal()
 
         m_prev_key = next_key;
     }
+
+    // Send oncommand event when command word changes.
+    maybe_send_oncommand_event();
 
     // Should we collect suggestions?
     try_suggest();

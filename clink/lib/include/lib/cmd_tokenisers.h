@@ -5,8 +5,6 @@
 
 #include "word_collector.h"
 
-#include <core/str_map.h>
-
 //------------------------------------------------------------------------------
 enum tokeniser_state;
 
@@ -22,12 +20,11 @@ DEFINE_ENUM_FLAG_OPERATORS(state_flag);
 class cmd_state
 {
 public:
-    cmd_state(bool only_rem=false) : m_only_rem(only_rem) { ensure_map(); }
+    cmd_state(bool only_rem=false) : m_only_rem(only_rem) {}
     void clear();
     bool test(int c, tokeniser_state new_state);
     void cancel() { m_failed = true; }
 private:
-    void ensure_map();
     str<16> m_word;
     bool m_failed = false;
     bool m_match = false;
@@ -35,7 +32,6 @@ private:
     const bool m_only_rem;
     static const char* const c_delimit;
     static const char* const c_delimit_eat;
-    static str_map_caseless<state_flag>::type s_map;
 };
 
 //------------------------------------------------------------------------------
@@ -77,5 +73,6 @@ private:
 };
 
 //------------------------------------------------------------------------------
+bool is_cmd_command(const char* word, state_flag* flag=nullptr);
 int skip_leading_parens(str_iter& iter, bool& first, alias_cache* alias_cache=nullptr);
 unsigned int trim_trailing_parens(const char* start, unsigned int offset, unsigned int length, int parens);

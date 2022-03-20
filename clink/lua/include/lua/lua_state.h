@@ -16,6 +16,9 @@ class line_state;
 typedef double lua_Number;
 
 //------------------------------------------------------------------------------
+enum class recognition : char { unrecognized = -1, unknown, executable, navigate, max };
+
+//------------------------------------------------------------------------------
 int checkinteger(lua_State* state, int index, bool* isnum=nullptr);
 int optinteger(lua_State* state, int index, int default_value, bool* isnum=nullptr);
 lua_Number checknumber(lua_State* state, int index, bool* isnum=nullptr);
@@ -45,6 +48,7 @@ public:
     bool            send_event(const char* event_name, int nargs=0);
     bool            send_event_cancelable(const char* event_name, int nargs=0);
     bool            send_event_cancelable_string_inout(const char* event_name, const char* string, str_base& out);
+    bool            send_oncommand_event(line_state& line, const char* command, bool quoted, recognition recog, const char* file);
     bool            call_lua_rl_global_function(const char* func_name, line_state* line);
 
 #ifdef DEBUG

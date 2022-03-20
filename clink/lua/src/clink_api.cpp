@@ -57,7 +57,7 @@ extern setting_color g_color_executable;
 
 
 //------------------------------------------------------------------------------
-static bool search_for_extension(str_base& full, const char* word)
+static bool search_for_extension(str_base& full, const char* word, str_base& out)
 {
     path::append(full, "");
     const unsigned int trunc = full.length();
@@ -66,7 +66,10 @@ static bool search_for_extension(str_base& full, const char* word)
     {
         path::append(full, word);
         if (os::get_path_type(full.c_str()) == os::path_type_file)
+        {
+            out = full.c_str();
             return true;
+        }
     }
     else
     {
@@ -84,7 +87,10 @@ static bool search_for_extension(str_base& full, const char* word)
             path::append(full, word);
             full.concat(start, length);
             if (os::get_path_type(full.c_str()) == os::path_type_file)
+            {
+                out = full.c_str();
                 return true;
+            }
         }
     }
 
@@ -92,7 +98,7 @@ static bool search_for_extension(str_base& full, const char* word)
 }
 
 //------------------------------------------------------------------------------
-static bool search_for_executable(const char* _word)
+static bool search_for_executable(const char* _word, str_base& out)
 {
     // Bail out early if it's obviously not going to succeed.
     if (strlen(_word) >= MAX_PATH)
@@ -142,7 +148,7 @@ static bool search_for_executable(const char* _word)
         }
 
         // Try PATHEXT extensions.
-        if (search_for_extension(full, _word))
+        if (search_for_extension(full, _word, out))
             return true;
     }
 
@@ -153,6 +159,12 @@ static bool search_for_executable(const char* _word)
 class recognizer
 {
     friend HANDLE get_recognizer_event();
+
+    struct cache_entry
+    {
+        str_moveable        m_file;
+        recognition         m_recognition;
+    };
 
     struct entry
     {
@@ -168,14 +180,14 @@ public:
                             recognizer();
                             ~recognizer() { shutdown(); }
     void                    clear();
-    bool                    find(const char* key, char* cached=nullptr) const;
-    bool                    enqueue(const char* key, const char* word, char* cached=nullptr);
+    int                     find(const char* key, recognition& cached, str_base* file) const;
+    bool                    enqueue(const char* key, const char* word, recognition* cached=nullptr);
     bool                    need_refresh();
     void                    end_line();
 
 private:
     bool                    usable() const;
-    bool                    store(const char* word, char cached, bool pending=false);
+    bool                    store(const char* word, const char* file, recognition cached, bool pending=false);
     bool                    dequeue(entry& entry);
     bool                    set_result_available(bool available);
     void                    notify_ready(bool available);
@@ -184,8 +196,8 @@ private:
 
 private:
     linear_allocator        m_heap;
-    str_unordered_map<char> m_cache;
-    str_unordered_map<char> m_pending;
+    str_unordered_map<cache_entry> m_cache;
+    str_unordered_map<cache_entry> m_pending;
     entry                   m_queue;
     mutable std::recursive_mutex m_mutex;
     std::unique_ptr<std::thread> m_thread;
@@ -274,7 +286,7 @@ void recognizer::clear()
 }
 
 //------------------------------------------------------------------------------
-bool recognizer::find(const char* key, char* cached) const
+int recognizer::find(const char* key, recognition& cached, str_base* file) const
 {
     std::lock_guard<std::recursive_mutex> lock(m_mutex);
 
@@ -283,9 +295,10 @@ bool recognizer::find(const char* key, char* cached) const
         auto const iter = m_cache.find(key);
         if (iter != m_cache.end())
         {
-            if (cached)
-                *cached = iter->second;
-            return true;
+            cached = iter->second.m_recognition;
+            if (file)
+                *file = iter->second.m_file.c_str();
+            return 1;
         }
     }
 
@@ -294,17 +307,18 @@ bool recognizer::find(const char* key, char* cached) const
         auto const iter = m_pending.find(key);
         if (iter != m_pending.end())
         {
-            if (cached)
-                *cached = iter->second;
-            return true;
+            cached = iter->second.m_recognition;
+            if (file)
+                *file = iter->second.m_file.c_str(); // Always empty.
+            return -1;
         }
     }
 
-    return false;
+    return 0;
 }
 
 //------------------------------------------------------------------------------
-bool recognizer::enqueue(const char* key, const char* word, char* cached)
+bool recognizer::enqueue(const char* key, const char* word, recognition* cached)
 {
     std::lock_guard<std::recursive_mutex> lock(m_mutex);
 
@@ -330,9 +344,9 @@ bool recognizer::enqueue(const char* key, const char* word, char* cached)
     m_queue.m_word = word;
 
     // Assume unrecognized at first.
-    store(key, -1, true/*pending*/);
+    store(key, nullptr, recognition::unrecognized, true/*pending*/);
     if (cached)
-        *cached = -1;
+        *cached = recognition::unrecognized;
 
     SetEvent(m_event);  // Signal thread there is work to do.
     Sleep(0);           // Give up timeslice in case thread gets result quickly.
@@ -395,7 +409,7 @@ bool recognizer::usable() const
 }
 
 //------------------------------------------------------------------------------
-bool recognizer::store(const char* word, char cached, bool pending)
+bool recognizer::store(const char* word, const char* file, recognition cached, bool pending)
 {
     std::lock_guard<std::recursive_mutex> lock(m_mutex);
 
@@ -407,7 +421,10 @@ bool recognizer::store(const char* word, char cached, bool pending)
     auto const iter = map.find(word);
     if (iter != map.end())
     {
-        map.insert_or_assign(iter->first, cached);
+        cache_entry entry;
+        entry.m_file = file;
+        entry.m_recognition = cached;
+        map.insert_or_assign(iter->first, std::move(entry));
         set_result_available(true);
         return true;
     }
@@ -417,7 +434,10 @@ bool recognizer::store(const char* word, char cached, bool pending)
     if (!key)
         return false;
 
-    map.emplace(key, cached);
+    cache_entry entry;
+    entry.m_file = file;
+    entry.m_recognition = cached;
+    map.emplace(key, std::move(entry));
     set_result_available(true);
     return true;
 }
@@ -524,10 +544,11 @@ void recognizer::proc(recognizer* r)
             }
 
             // Search for executable file.
-            char result = -1; // Assume not executable.
-            if (search_for_executable(entry.m_word.c_str()))
+            str<> found;
+            recognition result = recognition::unrecognized;
+            if (search_for_executable(entry.m_word.c_str(), found))
             {
-                result = 1;
+                result = recognition::executable;
             }
             else if (const char* ext = path::get_extension(entry.m_word.c_str()))
             {
@@ -545,15 +566,79 @@ void recognizer::proc(recognizer* r)
                     RegCloseKey(hkey);
 
                     if (has_command)
-                        result = 1;
+                        result = recognition::executable;
                 }
             }
 
             // Store result.
-            r->store(entry.m_key.c_str(), result);
+            r->store(entry.m_key.c_str(), found.c_str(), result);
             r->notify_ready(true);
         }
     }
+}
+
+//------------------------------------------------------------------------------
+recognition recognize_command(const char* line, const char* word, bool quoted, bool& ready, str_base* file)
+{
+    ready = true;
+
+    str<> tmp;
+    if (!quoted)
+    {
+        str_iter iter(word);
+        while (iter.more())
+        {
+            const char* ptr = iter.get_pointer();
+            const int c = iter.next();
+            if (c != '^' || !iter.peek())
+                tmp.concat(ptr, static_cast<int>(iter.get_pointer() - ptr));
+        }
+        word = tmp.c_str();
+    }
+
+    str<> tmp2;
+    if (os::expand_env(word, -1, tmp2))
+        word = tmp2.c_str();
+
+    // Ignore UNC paths, because they can take up to 2 minutes to time out.
+    // Even running that on a thread would either starve the consumers or
+    // accumulate threads faster than they can finish.
+    if (path::is_separator(word[0]) && path::is_separator(word[1]))
+        return recognition::unknown;
+
+    // Check for directory intercepts (-, ..., ...., dir\, and so on).
+    if (intercept_directory(line) != intercept_result::none)
+        return recognition::navigate;
+
+    // Check for cached result.
+    recognition cached;
+    const int found = s_recognizer.find(word, cached, file);
+    if (found)
+    {
+        ready = (found > 0);
+        return cached;
+    }
+
+    // Expand environment variables.
+    str<32> expanded;
+    const char* orig_word = word;
+    unsigned int len = static_cast<unsigned int>(strlen(word));
+    if (os::expand_env(word, len, expanded))
+    {
+        word = expanded.c_str();
+        len = expanded.length();
+    }
+
+    // Wildcards mean it can't be an executable file.
+    if (strchr(word, '*') || strchr(word, '?'))
+        return recognition::unrecognized;
+
+    // Queue for background thread processing.
+    if (!s_recognizer.enqueue(orig_word, word, &cached))
+        return recognition::unknown;
+
+    ready = false;
+    return cached;
 }
 
 
@@ -1364,71 +1449,10 @@ static int recognize_command(lua_State* state)
     if (!*line || !*word)
         return 0;
 
-    str<> tmp;
-    if (!quoted)
-    {
-        str_iter iter(word);
-        while (iter.more())
-        {
-            const char* ptr = iter.get_pointer();
-            const int c = iter.next();
-            if (c != '^' || !iter.peek())
-                tmp.concat(ptr, iter.get_pointer() - ptr);
-        }
-        word = tmp.c_str();
-    }
-
-    str<> tmp2;
-    if (os::expand_env(word, -1, tmp2))
-        word = tmp2.c_str();
-
-    // Ignore UNC paths, because they can take up to 2 minutes to time out.
-    // Even running that on a thread would either starve the consumers or
-    // accumulate threads faster than they can finish.
-    if (path::is_separator(word[0]) && path::is_separator(word[1]))
-    {
-unknown:
-        lua_pushinteger(state, 0);
-        return 1;
-    }
-
-    // Check for directory intercepts (-, ..., ...., dir\, and so on).
-    if (intercept_directory(line) != intercept_result::none)
-    {
-        lua_pushinteger(state, 1);
-        return 1;
-    }
-
-    // Check for cached result.
-    char cached;
-    if (s_recognizer.find(word, &cached))
-    {
-known:
-        lua_pushinteger(state, cached);
-        return 1;
-    }
-
-    // Expand environment variables.
-    str<32> expanded;
-    const char* orig_word = word;
-    unsigned int len = static_cast<unsigned int>(strlen(word));
-    if (os::expand_env(word, len, expanded))
-    {
-        word = expanded.c_str();
-        len = expanded.length();
-    }
-
-    // Wildcards mean it can't be an executable file.
-    if (strchr(word, '*') || strchr(word, '?'))
-    {
-        lua_pushinteger(state, -1);
-        return 1;
-    }
-
-    // Queue for background thread processing.
-    if (s_recognizer.enqueue(orig_word, word, &cached))
-        goto known;
-    goto unknown;
+    bool ready;
+    const recognition recognized = recognize_command(line, word, quoted, ready, nullptr/*file*/);
+    lua_pushinteger(state, int(recognized));
+    return 1;
 }
 
 //------------------------------------------------------------------------------
@@ -1494,6 +1518,17 @@ static int invalidate_matches(lua_State* state)
     return 0;
 }
 
+//------------------------------------------------------------------------------
+static int is_cmd_command(lua_State* state)
+{
+    const char* word = checkstring(state, 1);
+    if (!word)
+        return 0;
+
+    lua_pushboolean(state, is_cmd_command(word));
+    return 1;
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -1555,6 +1590,7 @@ void clink_lua_initialise(lua_state& lua)
         { "_generate_from_history", &generate_from_history },
         { "_mark_deprecated_argmatcher", &mark_deprecated_argmatcher },
         { "_invalidate_matches",    &invalidate_matches },
+        { "is_cmd_command",         &is_cmd_command },
     };
 
     lua_State* state = lua.get_state();

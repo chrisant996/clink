@@ -12,6 +12,7 @@
 #include <core/str_tokeniser.h>
 #include <core/os.h>
 #include <core/debugheap.h>
+#include <lib/cmd_tokenisers.h>
 
 #include <memory>
 #include <assert.h>
@@ -481,7 +482,7 @@ void dump_lua_stack(lua_State* state, int pos)
 // Calls any event_name callbacks registered by scripts.  Arguments can be
 // passed by passing nargs equal to the number of pushed arguments.  On success,
 // the stack is left with nret return values.  On error, the stack is popped to
-// the original level.
+// the original level and then nargs are popped.
 bool lua_state::send_event_internal(const char* event_name, const char* event_mechanism, int nargs, int nret)
 {
     bool ret = false;
@@ -528,6 +529,8 @@ done:
     else
     {
         lua_settop(state, pos);
+        if (nargs > 0)
+            lua_pop(state, nargs);
     }
     return ret;
 }
@@ -563,6 +566,47 @@ bool lua_state::send_event_cancelable_string_inout(const char* event_name, const
         out = result;
 
     return true;
+}
+
+//------------------------------------------------------------------------------
+bool lua_state::send_oncommand_event(line_state& line, const char* command, bool quoted, recognition recog, const char* file)
+{
+    assert(recog != recognition::unknown);
+    if (recog != recognition::unrecognized && recog != recognition::executable)
+        return false;
+
+    lua_State* state = get_state();
+    line_state_lua line_lua(line);
+
+    const char* type;
+    if (!quoted && is_cmd_command(command))
+        type = "command";
+    else if (recog == recognition::executable)
+        type = "executable";
+    else
+        type = "unrecognized";
+
+    line_lua.push(state);
+
+    lua_createtable(state, 0, 4);
+
+    lua_pushliteral(state, "command");
+    lua_pushstring(state, command);
+    lua_rawset(state, -3);
+
+    lua_pushliteral(state, "quoted");
+    lua_pushboolean(state, quoted);
+    lua_rawset(state, -3);
+
+    lua_pushliteral(state, "type");
+    lua_pushstring(state, type);
+    lua_rawset(state, -3);
+
+    lua_pushliteral(state, "file");
+    lua_pushstring(state, file);
+    lua_rawset(state, -3);
+
+    return send_event("oncommand", 2);
 }
 
 //------------------------------------------------------------------------------

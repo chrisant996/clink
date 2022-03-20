@@ -498,6 +498,36 @@ void host::send_event(const char* event_name)
 }
 
 //------------------------------------------------------------------------------
+void host::send_oncommand_event(line_state& line, const char* command, bool quoted, recognition recog, const char* file)
+{
+    if (m_lua)
+        m_lua->send_oncommand_event(line, command, quoted, recog, file);
+}
+
+//------------------------------------------------------------------------------
+bool host::has_event_handler(const char* event_name)
+{
+    if (!m_lua)
+        return false;
+
+    lua_state& lua = *m_lua;
+    lua_State* state = lua.get_state();
+
+    save_stack_top ss(state);
+
+    lua_getglobal(state, "clink");
+    lua_pushliteral(state, "_has_event_callbacks");
+    lua_rawget(state, -2);
+
+    lua_pushstring(state, event_name);
+
+    if (lua.pcall(1, 1) != 0)
+        return false;
+
+    return lua_toboolean(state, -1) != false;
+}
+
+//------------------------------------------------------------------------------
 void host::get_app_context(int& id, str_base& binaries, str_base& profile, str_base& scripts)
 {
     const auto* context = app_context::get();

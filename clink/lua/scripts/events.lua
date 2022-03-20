@@ -136,6 +136,27 @@ function clink.onfilterinput(func)
 end
 
 --------------------------------------------------------------------------------
+--- -name:  clink.oncommand
+--- -ver:   1.3.12
+--- -arg:   func:function
+--- Registers <span class="arg">func</span> to be called when the command word
+--- changes in the edit line.
+---
+--- The function receives 2 arguments:  the <a href="#line_state">line_state</a>
+--- for the command, and a table with the following scheme:
+--- -show:  {
+--- -show:  &nbsp;   command =   -- [string] The command.
+--- -show:  &nbsp;   quoted  =   -- [boolean] Whether the command is quoted in the command line.
+--- -show:  &nbsp;   type    =   -- [string] "unrecognized", "executable", or "command" (a CMD command name).
+--- -show:  &nbsp;   file    =   -- [string] The file that would be executed, or an empty string.
+--- -show:  }
+---
+--- The function has no return values.
+function clink.oncommand(func)
+    _add_event_callback("oncommand", func)
+end
+
+--------------------------------------------------------------------------------
 --- -name:  clink.ondisplaymatches
 --- -ver:   1.1.12
 --- -arg:   func:function

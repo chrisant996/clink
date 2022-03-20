@@ -108,34 +108,42 @@ char cmd_tokeniser_impl::get_closing_quote() const
 
 //------------------------------------------------------------------------------
 const char* const cmd_state::c_delimit = "&(=+[]\\|;:,.<>/ \t";
-str_map_caseless<state_flag>::type cmd_state::s_map;
 
 //------------------------------------------------------------------------------
-void cmd_state::ensure_map()
+bool is_cmd_command(const char* word, state_flag* flag)
 {
-    if (s_map.size() > 0)
-        return;
+    dbg_ignore_scope(snapshot, "is_cmd_command"); // (s_map ctor allocates.)
+    static str_map_caseless<state_flag>::type s_map;
 
-    // Internal commands in CMD get special word break treatment.
-
-    static const char* const c_cmds[] =
+    if (s_map.size() == 0)
     {
-        // These treat special word break characters as part of the input.
-        "assoc", "color", "ftype", "if", "set", "ver", "verify",
-        // These treat special word break characters as ignored delimiters.
-        "break", "call", "cd", "chdir", "cls", "copy", "date", "del", "dir",
-        "dpath", "echo", "endlocal", "erase", "exit", "for", "goto", "md",
-        "mkdir", "mklink", "move", "path", "pause", "popd", "prompt", "pushd",
-        "rd", "ren", "rename", "rmdir", "setlocal", "shift", "start", "time",
-        "title", "type", "vol",
-    };
+        // Internal commands in CMD get special word break treatment.
 
-    dbg_ignore_scope(snapshot, "cmd_state::ensure_map");
+        static const char* const c_cmds[] =
+        {
+            // These treat special word break characters as part of the input.
+            "assoc", "color", "ftype", "if", "set", "ver", "verify",
+            // These treat special word break characters as ignored delimiters.
+            "break", "call", "cd", "chdir", "cls", "copy", "date", "del", "dir",
+            "dpath", "echo", "endlocal", "erase", "exit", "for", "goto", "md",
+            "mkdir", "mklink", "move", "path", "pause", "popd", "prompt", "pushd",
+            "rd", "ren", "rename", "rmdir", "setlocal", "shift", "start", "time",
+            "title", "type", "vol",
+        };
 
-    s_map.emplace("rem", flag_rem);
-    for (const char* cmd : c_cmds)
-        s_map.emplace(cmd, flag_none);
-};
+        s_map.emplace("rem", flag_rem);
+        for (const char* cmd : c_cmds)
+            s_map.emplace(cmd, flag_none);
+    }
+
+    auto const it = s_map.find(word);
+    if (it == s_map.end())
+        return false;
+
+    if (flag)
+        *flag = it->second;
+    return true;
+}
 
 //------------------------------------------------------------------------------
 void cmd_state::clear()
@@ -182,20 +190,20 @@ bool cmd_state::test(const int c, const tokeniser_state new_state)
     m_word.concat(&ch, 1);
 
     // Test if the accumulated word so far matches a command name.
-    auto const it = s_map.find(m_word.c_str());
-    if (it == s_map.end())
+    state_flag flag;
+    if (!is_cmd_command(m_word.c_str(), &flag))
         return false;
 
     // If 'rem' is the only command of interest, short circuit because it is now
     // clear the command word is not 'rem'.
-    if (m_only_rem && !(it->second & flag_rem))
+    if (m_only_rem && !(flag & flag_rem))
     {
         cancel();
         return false;
     }
 
     m_match = true;
-    m_match_flag = it->second;
+    m_match_flag = flag;
     return false;
 }
 
