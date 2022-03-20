@@ -13,6 +13,7 @@
 #include <core/settings.h>
 #include <core/str.h>
 #include <core/str_iter.h>
+#include <lib/doskey.h>
 #include <process/process.h>
 #include <sys/utime.h>
 #include <ntverp.h> // for VER_PRODUCTMAJORVERSION to deduce SDK version
@@ -866,6 +867,40 @@ int get_aliases(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  os.resolvealias
+/// -ver:   1.3.12
+/// -arg:   text:string
+/// -ret:   table|nil
+/// Identifies whether <span class="arg">text</span> begins with a doskey alias,
+/// and expands the doskey alias.
+///
+/// Returns a table of strings, or nil if there is no associated doskey alias.
+/// The return type is a table of strings because doskey aliases can be defined
+/// to expand into multiple command lines:  one entry in the table per resolved
+/// command line.  Most commonly, the table will contain one string.
+int resolve_alias(lua_State* state)
+{
+    const char* in = checkstring(state, 1);
+    if (!in)
+        return 0;
+
+    doskey_alias out;
+    doskey doskey("cmd.exe");
+    doskey.resolve(in, out);
+
+    if (!out)
+        return 0;
+
+    lua_createtable(state, 1, 0);
+
+    str<> tmp;
+    while (out.next(tmp))
+        lua_pushlstring(state, tmp.c_str(), tmp.length());
+
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 /// -name:  os.getscreeninfo
 /// -ver:   1.1.2
 /// -ret:   table
@@ -1268,6 +1303,7 @@ void os_lua_initialise(lua_state& lua)
         { "geterrorlevel", &get_errorlevel },
         { "getalias",    &get_alias },
         { "getaliases",  &get_aliases },
+        { "resolvealias", &resolve_alias },
         { "getscreeninfo", &get_screen_info },
         { "getbatterystatus", &get_battery_status },
         { "getpid",      &get_pid },

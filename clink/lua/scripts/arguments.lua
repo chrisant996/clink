@@ -1692,12 +1692,11 @@ local function _find_argmatcher(line_state, check_existence)
         local next_ofs = info.offset + info.length
         local next_char = line_state:getline():sub(next_ofs, next_ofs)
         if next_char == "" or next_char == " " or next_char == "\t" then
-            local alias = os.getalias(command_word)
-            if alias and alias ~= "" then
-                -- This doesn't even try to handle redirection symbols in the alias
-                -- because the cost/benefit ratio is unappealing.
-                alias = alias:gsub("%$.*$", "")
-                local words = string.explode(alias, " \t", '"')
+            local expanded = os.resolvealias(line_state:getline())
+            if expanded and expanded[1] then
+                -- This doesn't even try to handle redirection symbols in the
+                -- alias because the cost/benefit ratio is unappealing.
+                local words = string.explode(expanded[1], " \t", '"')
                 if #words > 0 then
                     argmatcher = _has_argmatcher(words[1])
                     if argmatcher then
