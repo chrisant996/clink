@@ -119,6 +119,7 @@ bool is_cmd_command(const char* word, state_flag* flag)
     {
         // Internal commands in CMD get special word break treatment.
 
+        // NOTE: Keep in sync with cmd_commands in cmd.lua.
         static const char* const c_cmds[] =
         {
             // These treat special word break characters as part of the input.

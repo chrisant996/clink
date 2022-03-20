@@ -8,6 +8,18 @@ settings.add("color.cmdsep", "bold", "Color for & and | command separators")
 settings.add("color.cmdredir", "bold", "Color for < and > redirection symbols")
 
 --------------------------------------------------------------------------------
+-- NOTE: Keep in sync with is_cmd_command() in cmd_tokenisers.cpp.
+local cmd_commands = {
+    "assoc", "attrib", "break", "call", "cd", "chcp", "chdir", "cls",
+    "color", "copy", "date", "del", "dir", "dpath", "echo", "endlocal",
+    "erase", "exit", "for", "format", "ftype", "goto", "help", "if", "md",
+    "mkdir", "mklink", "more", "move", "path", "pause", "popd", "prompt",
+    "pushd", "rd", "rem", "ren", "rename", "rmdir", "set", "setlocal",
+    "shift", "start", "subst", "tasklist", "taskkill", "time", "title",
+    "type", "ver", "verify", "vol",
+}
+
+--------------------------------------------------------------------------------
 function cmd_generator:generate(line_state, match_builder)
     -- Cmd commands only apply for the first word of a line.
     if line_state:getwordcount() > 1 then
