@@ -20,7 +20,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
     - [ ] Don't serialize other yieldguards.
     - [ ] Do throttle to no more than _N_ concurrent yieldguards at a time (_N_ == 10 seems a good starting point for a limit).
     - [x] When the main coroutine is waiting on a coroutine to complete, in the meantime run all coroutines.
-- Fish completions?  May be feasible to try to parse fish completion files, if the format isn't too encrusted with shell script syntax?
+
 ## Low Priority
 - Mouse input toggling is unreliable in Windows Terminal, and sometimes ends up disallowing mouse input.
 - Once in a while raw mouse input sequences spuriously show up in the edit line; have only noticed it when the CMD window did not have focus at the time.
