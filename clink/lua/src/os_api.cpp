@@ -894,8 +894,11 @@ int resolve_alias(lua_State* state)
     lua_createtable(state, 1, 0);
 
     str<> tmp;
-    while (out.next(tmp))
+    for (int i = 1; out.next(tmp); ++i)
+    {
         lua_pushlstring(state, tmp.c_str(), tmp.length());
+        lua_rawseti(state, -2, i);
+    }
 
     return 1;
 }
