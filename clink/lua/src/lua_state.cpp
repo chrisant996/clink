@@ -497,7 +497,11 @@ bool lua_state::send_event_internal(const char* event_name, const char* event_me
     lua_pushstring(state, event_mechanism);
     lua_rawget(state, -2);
     if (lua_isnil(state, -1))
-        goto done;
+    {
+        lua_settop(state, top);
+        lua_pop(state, nargs);
+        return false;
+    }
     lua_insert(state, -2);
     lua_pop(state, 1);
 
@@ -513,26 +517,7 @@ bool lua_state::send_event_internal(const char* event_name, const char* event_me
     }
 
     // Call the event callback.
-    if (pcall(1 + nargs, nret) != 0)
-        goto done;
-
-    ret = true;
-
-done:
-    if (ret)
-    {
-        int crem = lua_gettop(state) - pos - nret;
-        int irem = pos - lua_gettop(state);
-        while (crem-- > 0)
-            lua_remove(state, irem);
-    }
-    else
-    {
-        lua_settop(state, pos);
-        if (nargs > 0)
-            lua_pop(state, nargs);
-    }
-    return ret;
+    return pcall(1 + nargs, nret) == 0;
 }
 
 //------------------------------------------------------------------------------
