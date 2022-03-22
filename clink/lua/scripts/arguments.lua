@@ -1639,6 +1639,7 @@ local function _do_onuse_callback(argmatcher, command_word)
             argmatcher._onuse_coroutine = nil
             _clear_onuse_coroutine[argmatcher] = nil
             if async_delayinit then
+                clink._invalidate_matches()
                 clink.reclassifyline()
             end
         end)
