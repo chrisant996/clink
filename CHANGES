@@ -12,6 +12,8 @@
 - Added `clink.oncommand()` to register a function to be called when a command is entered in the edit line.
 - Improved support for argmatcher non-flag argument values that end with `=`:  now they can have a linked argmatcher, and input line coloring is applied correctly.
 - Fixed quotes during completion (regression introduced in v1.3.11).
+- Fixed `cd /d dir` argmatcher (regression introduced in v1.3.11).
+- Fixed input line coloring for `"echo"` and other CMD commands; quotes disqualify a word from being a CMD command.
 - Fixed redundant argmatcher delayinit for flags.
 - Various minor backward compatibility fixes.
 
