@@ -4,6 +4,10 @@
 
 #### v1.3.12
 
+- Fixed edge case when `operate-and-get-next` is used and the command fetched from history uses a delayinit argmatcher and automatic suggestions are enabled.
+
+#### v1.3.12
+
 - Improved `clink-select-complete` to show inline descriptions as long as they don't require more than 9 rows to display the matches.
 - Added second argument to the `delayinit` function for an argmatcher.
 - Added `argmatcher:setflagsanywhere()` and `argmatcher:setendofflags()` to control where flags are recognized.
