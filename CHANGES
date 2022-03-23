@@ -4,7 +4,8 @@
 
 #### v1.3.12
 
-- Fixed edge case when `operate-and-get-next` is used and the command fetched from history uses a delayinit argmatcher and automatic suggestions are enabled.
+- Fixed completions for words that contain `.`, such as `clink set color.`<kbd>Tab</kbd> (regression introduced in v1.3.11).
+- Fixed obscure edge case with delayinit argmatchers and `operate-and-get-next`.
 
 #### v1.3.12
 
