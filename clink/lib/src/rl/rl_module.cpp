@@ -813,7 +813,10 @@ static void puts_face_func(const char* s, const char* face, int n)
                     const char* color = s_classifications->get_face_output(cur_face);
                     if (color)
                     {
-                        out << "\x1b[" << color << "m";
+                        out << "\x1b[";
+                        if (color[0] != '0' || color[1] != ';')
+                            out << "0;";
+                        out << color << "m";
                         break;
                     }
                 }
