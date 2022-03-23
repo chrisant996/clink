@@ -150,9 +150,19 @@ bool is_cmd_command(const char* word, state_flag* flag)
 void cmd_state::clear()
 {
     m_word.clear();
+    m_first = true;
     m_failed = false;
     m_match = false;
     m_match_flag = flag_none;
+}
+
+//------------------------------------------------------------------------------
+void cmd_state::next_word()
+{
+    if (m_first)
+        m_first = false;
+    else
+        m_failed = true;
 }
 
 //------------------------------------------------------------------------------
@@ -415,7 +425,7 @@ word_token cmd_word_tokeniser::next(unsigned int& offset, unsigned int& length)
 
     auto start_new_word = [this, &start_word, &end_word, &offset, &redir_arg]()
     {
-        m_cmd_state.clear();
+        m_cmd_state.next_word();
         // Skip past any separators.
         while (m_iter.more())
         {

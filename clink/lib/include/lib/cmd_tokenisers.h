@@ -22,16 +22,17 @@ class cmd_state
 public:
     cmd_state(bool only_rem=false) : m_only_rem(only_rem) {}
     void clear();
+    void next_word();
     bool test(int c, tokeniser_state new_state);
     void cancel() { m_failed = true; }
 private:
     str<16> m_word;
-    bool m_failed = false;
+    bool m_first = false;
+    bool m_failed = true;
     bool m_match = false;
     state_flag m_match_flag = flag_none;
     const bool m_only_rem;
     static const char* const c_delimit;
-    static const char* const c_delimit_eat;
 };
 
 //------------------------------------------------------------------------------
