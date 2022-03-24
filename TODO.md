@@ -5,8 +5,12 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
+- Make sure cwd is saved/restored around events, coroutines, etc.
+- Add a way for an `onfilterinput` event handler to set the cwd and make it stick (vs getting reverted).
 
 ## Normal Priority
+
+## Low Priority
 - Let the yieldguards run in parallel?
   - Things are bottlenecking behind the prompt filters.
   - Or maybe run only the promptcoroutine yieldguards in series.
@@ -20,8 +24,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
     - [ ] Don't serialize other yieldguards.
     - [ ] Do throttle to no more than _N_ concurrent yieldguards at a time (_N_ == 10 seems a good starting point for a limit).
     - [x] When the main coroutine is waiting on a coroutine to complete, in the meantime run all coroutines.
-
-## Low Priority
 - Mouse input toggling is unreliable in Windows Terminal, and sometimes ends up disallowing mouse input.
 - Once in a while raw mouse input sequences spuriously show up in the edit line; have only noticed it when the CMD window did not have focus at the time.
 - Should coroutines really be able to make Readline redraw immediately?  Should instead set a flag that the main coroutine responds to when it gains control again?
