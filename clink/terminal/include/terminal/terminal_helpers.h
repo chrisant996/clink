@@ -45,6 +45,7 @@ class printer_context
 {
 public:
     printer_context(terminal_out* terminal, printer* printer);
+    printer_context(const printer_context&) = delete;
     ~printer_context();
 
 private:

@@ -23,6 +23,7 @@
 #include <lib/line_editor.h>
 #include <lua/lua_script_loader.h>
 #include <terminal/terminal_helpers.h>
+#include <terminal/printer.h>
 
 #define ADMINISTRATOR_TITLE_PREFIX 0x40002748
 
@@ -41,6 +42,8 @@ func_SetConsoleTitleW_t __Real_SetConsoleTitleW = SetConsoleTitleW;
 //------------------------------------------------------------------------------
 extern bool is_force_reload_scripts();
 extern "C" void reset_wcwidths();
+extern printer* g_printer;
+extern str<> g_last_prompt;
 
 //------------------------------------------------------------------------------
 extern setting_bool g_ctrld_exits;
@@ -175,31 +178,6 @@ static void check_more_continuation(const wchar_t* prompt, DWORD len)
         more++;
         prompt++;
     }
-}
-
-//------------------------------------------------------------------------------
-static BOOL WINAPI single_char_read(
-    HANDLE input,
-    wchar_t* buffer,
-    DWORD buffer_size,
-    LPDWORD read_in,
-    __CONSOLE_READCONSOLE_CONTROL* control)
-{
-    int reply;
-
-    if (reply = check_auto_answer())
-    {
-        *buffer = reply;
-        *read_in = 1;
-
-        // Echo Clink's response.
-        DWORD dummy;
-        __Real_WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), buffer, 1, &dummy, nullptr);
-        return TRUE;
-    }
-
-    // Default behaviour.
-    return __Real_ReadConsoleW(input, buffer, buffer_size, read_in, control);
 }
 
 //------------------------------------------------------------------------------
@@ -526,25 +504,77 @@ BOOL WINAPI host_cmd::read_console(
     // It does this to handle y/n/all prompts which isn't an compatible use-
     // case for readline.
     if (max_chars == 1)
-        return single_char_read(input, chars, max_chars, read_in, control);
+    {
+        int reply;
+
+        if (reply = check_auto_answer())
+        {
+            *chars = reply;
+            *read_in = 1;
+
+            // Echo Clink's response.
+            DWORD dummy;
+            __Real_WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), chars, 1, &dummy, nullptr);
+            return TRUE;
+        }
+
+        // Default behaviour.
+        if (!host_cmd::get()->dequeue_char(chars))
+            return TRUE;
+        return __Real_ReadConsoleW(input, chars, max_chars, read_in, control);
+    }
 
     s_answered = 0;
 
+    // Always dequeue if queued lines are present:  the More? continuation
+    // prompt, a Yes/No/All prompt, an edit line prompt, etc -- in Conhost's
+    // implementation of ReadConsoleW all of them return the next $T segment
+    // from an expanded doskey macro.
+    const wchar_t* prompt = host_cmd::get()->m_prompt.get();
     wstr_base line(chars, max_chars);
-    if (more_continuation && host_cmd::get()->dequeue_line(line))
+    if (host_cmd::get()->dequeue_line(line))
     {
         // Respond with the dequeued line.
         DWORD written;
         while (line.length() && line.c_str()[line.length() - 1] == '\n')
             line.truncate(line.length() - 1);
-        HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-        __Real_WriteConsoleW(h, line.c_str(), line.length(), &written, nullptr);
-        __Real_WriteConsoleW(h, L"\r\n", 2, &written, nullptr);
+        if (more_continuation)
+        {
+            HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+            __Real_WriteConsoleW(h, line.c_str(), line.length(), &written, nullptr);
+            __Real_WriteConsoleW(h, L"\r\n", 2, &written, nullptr);
+        }
+        else if (prompt == nullptr || *prompt == L'\0')
+        {
+            // No prompt, so no output.
+        }
+        else
+        {
+            char const* read = g_last_prompt.c_str();
+            char* write = g_last_prompt.data();
+            while (*read)
+            {
+                if (*read != 0x01 && *read != 0x02)
+                {
+                    *write = *read;
+                    ++write;
+                }
+                ++read;
+            }
+            *write = '\0';
+
+            auto prt = host_cmd::get()->make_printer_context();
+            g_printer->print(g_last_prompt.c_str(), g_last_prompt.length());
+            // Add a newline so that output always starts on the line after the
+            // prompt.  Conhost starts output on the prompt line, making the
+            // output look as though it's what was typed as input.  Clink
+            // attempts to clear up the confusion.
+            g_printer->print("\n");
+        }
     }
     else
     {
         // Cmd.exe can want line input for reasons other than command entry.
-        const wchar_t* prompt = host_cmd::get()->m_prompt.get();
         if (prompt == nullptr || *prompt == L'\0')
             return __Real_ReadConsoleW(input, chars, max_chars, read_in, control);
 

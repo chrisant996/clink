@@ -11,12 +11,14 @@
 #include <lib/host_callbacks.h>
 
 #include <list>
+#include <memory>
 
 class lua_state;
 class str_base;
 class host_lua;
 class prompt_filter;
 class suggester;
+class printer_context;
 
 //------------------------------------------------------------------------------
 class host : public host_callbacks
@@ -31,6 +33,7 @@ public:
     const char*     filter_prompt(const char** rprompt, bool transient=false, bool final=false);
     void            enqueue_lines(std::list<str_moveable>& lines);
     bool            dequeue_line(wstr_base& out);
+    bool            dequeue_char(wchar_t* out);
 
     // host_callbacks:
     int             add_history(const char* line) override;
@@ -48,6 +51,7 @@ public:
     void            get_app_context(int& id, str_base& binaries, str_base& profile, str_base& scripts) override;
 
 protected:
+    std::unique_ptr<printer_context> make_printer_context();
     bool            edit_line(const char* prompt, const char* rprompt, str_base& out);
     virtual void    initialise_lua(lua_state& lua) = 0;
     virtual void    initialise_editor_desc(line_editor::desc& desc) = 0;
@@ -55,11 +59,11 @@ protected:
 private:
     void            purge_old_files();
     void            update_last_cwd();
+    void            pop_queued_line();
 
 private:
     const char*     m_name;
     doskey          m_doskey;
-    doskey_alias    m_doskey_alias;
     terminal        m_terminal;
     printer*        m_printer;
     history_db*     m_history = nullptr;
@@ -71,6 +75,7 @@ private:
     str<256>        m_filtered_prompt;
     str<256>        m_filtered_rprompt;
     std::list<str_moveable> m_queued_lines;
+    unsigned int    m_char_cursor = 0;
     wstr_moveable   m_last_cwd;
     bool            m_can_transient = false;
 };

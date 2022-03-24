@@ -47,7 +47,6 @@ private:
     bool                is_interactive() const;
     tagged_prompt       m_prompt;
     doskey              m_doskey;
-    doskey_alias        m_doskey_alias;
     cmd_command_tokeniser m_command_tokeniser;
     cmd_word_tokeniser  m_word_tokeniser;
 };

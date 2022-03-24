@@ -34,6 +34,7 @@
 
 #include <list>
 #include <memory>
+#include <assert.h>
 
 extern "C" {
 #include <lua.h>
@@ -157,11 +158,6 @@ extern void clear_sticky_search_position();
 extern void reset_keyseq_to_name_map();
 extern void set_prompt(const char* prompt, const char* rprompt, bool redisplay);
 extern bool can_suggest(line_state& line);
-
-
-
-//------------------------------------------------------------------------------
-extern str<> g_last_prompt;
 
 
 
@@ -375,9 +371,35 @@ bool host::dequeue_line(wstr_base& out)
     if (m_queued_lines.empty())
         return false;
 
-    out = m_queued_lines.front().c_str();
-    m_queued_lines.pop_front();
+    out = m_queued_lines.front().c_str() + m_char_cursor;
+    pop_queued_line();
     return true;
+}
+
+//------------------------------------------------------------------------------
+bool host::dequeue_char(wchar_t* out)
+{
+    if (m_queued_lines.empty())
+        return false;
+
+    const auto& front = m_queued_lines.front();
+    if (m_char_cursor >= front.length())
+    {
+        assert(false);
+        return false;
+    }
+
+    *out = front.c_str()[m_char_cursor++];
+    if (m_char_cursor >= front.length())
+        pop_queued_line();
+    return true;
+}
+
+//------------------------------------------------------------------------------
+void host::pop_queued_line()
+{
+    m_queued_lines.pop_front();
+    m_char_cursor = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -539,6 +561,12 @@ void host::get_app_context(int& id, str_base& binaries, str_base& profile, str_b
 }
 
 //------------------------------------------------------------------------------
+std::unique_ptr<printer_context> host::make_printer_context()
+{
+    return std::make_unique<printer_context>(m_terminal.out, m_printer);
+}
+
+//------------------------------------------------------------------------------
 bool host::edit_line(const char* prompt, const char* rprompt, str_base& out)
 {
     assert(!m_prompt); // Reentrancy not supported!
@@ -580,10 +608,10 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out)
     static bool s_autostart = true;
     static std::unique_ptr<autostart_display> s_autostart_display;
     str_moveable autostart;
-    bool interactive = !m_doskey_alias && ((m_queued_lines.size() == 0) ||
-                                           (m_queued_lines.size() == 1 &&
-                                            (m_queued_lines.front().length() == 0 ||
-                                             m_queued_lines.front().c_str()[m_queued_lines.front().length() - 1] != '\n')));
+    bool interactive = ((m_queued_lines.size() == 0) ||
+                        (m_queued_lines.size() == 1 &&
+                         (m_queued_lines.front().length() == 0 ||
+                          m_queued_lines.front().c_str()[m_queued_lines.front().length() - 1] != '\n')));
     if (interactive && s_autostart)
     {
         s_autostart = false;
@@ -843,118 +871,68 @@ skip_errorlevel:
         // Give the directory history queue a crack at the current directory.
         update_dir_history();
 
-        // Doskey is implemented on the server side of a ReadConsoleW() call
-        // (i.e. in conhost.exe). Commands separated by a "$T" are returned one
-        // command at a time through successive calls to ReadConsoleW().
         resolved = false;
-        if (m_doskey_alias.next(out))
+        ret = editor && editor->edit(out);
+        if (!ret)
+            break;
+
+        // Determine whether to add the line to history.  Must happen before
+        // calling expand() because that resets the history position.
+        bool add_history = true;
+        if (rl_has_saved_history())
         {
-            m_terminal.out->begin();
-            m_terminal.out->end();
-            resolved = true;
-            ret = true;
+            // Don't add to history when operate-and-get-next was used, as
+            // that would defeat the command.
+            add_history = false;
         }
-        else
+        else if (!out.empty() && get_sticky_search_history() && has_sticky_search_position())
         {
-            bool edit = true;
-            if (!m_queued_lines.empty())
-            {
-                out.concat(m_queued_lines.front().c_str());
-                m_queued_lines.pop_front();
-
-                unsigned int len = out.length();
-                while (len && out.c_str()[len - 1] == '\n')
-                {
-                    out.truncate(--len);
-                    edit = false;
-                }
-            }
-
-            if (!edit)
-            {
-                char const* read = g_last_prompt.c_str();
-                char* write = g_last_prompt.data();
-                while (*read)
-                {
-                    if (*read != 0x01 && *read != 0x02)
-                    {
-                        *write = *read;
-                        ++write;
-                    }
-                    ++read;
-                }
-                *write = '\0';
-
-                m_printer->print(g_last_prompt.c_str(), g_last_prompt.length());
-                m_printer->print(out.c_str(), out.length());
-                m_printer->print("\n");
-                ret = true;
-            }
-            else
-            {
-                ret = editor && editor->edit(out);
-                if (!ret)
-                    break;
-            }
-
-            // Determine whether to add the line to history.  Must happen before
-            // calling expand() because that resets the history position.
-            bool add_history = true;
-            if (rl_has_saved_history())
-            {
-                // Don't add to history when operate-and-get-next was used, as
-                // that would defeat the command.
-                add_history = false;
-            }
-            else if (!out.empty() && get_sticky_search_history() && has_sticky_search_position())
-            {
-                // Query whether the sticky search position should be added
-                // (i.e. the input line matches the history entry corresponding
-                // to the sticky search history position).
-                add_history = get_sticky_search_add_history(out.c_str());
-            }
-            if (add_history)
-                clear_sticky_search_position();
-
-            // Handle history event expansion.  expand() is a static method,
-            // so can call it even when m_history is nullptr.
-            if (m_history->expand(out.c_str(), out) == history_db::expand_print)
-            {
-                puts(out.c_str());
-                continue;
-            }
-
-            // Should we skip adding certain commands?
-            if (g_exclude_from_history_cmds.get() &&
-                *g_exclude_from_history_cmds.get())
-            {
-                const char* c = out.c_str();
-                while (*c == ' ' || *c == '\t')
-                    ++c;
-
-                bool exclude = false;
-                str<> token;
-                str_tokeniser tokens(g_exclude_from_history_cmds.get(), " ,;");
-                while (tokens.next(token))
-                {
-                    if (token.length() &&
-                        _strnicmp(c, token.c_str(), token.length()) == 0 &&
-                        !isalnum((unsigned char)c[token.length()]) &&
-                        !path::is_separator(c[token.length()]))
-                    {
-                        exclude = true;
-                        break;
-                    }
-                }
-
-                if (exclude)
-                    break;
-            }
-
-            // Add the line to the history.
-            if (add_history)
-                m_history->add(out.c_str());
+            // Query whether the sticky search position should be added
+            // (i.e. the input line matches the history entry corresponding
+            // to the sticky search history position).
+            add_history = get_sticky_search_add_history(out.c_str());
         }
+        if (add_history)
+            clear_sticky_search_position();
+
+        // Handle history event expansion.  expand() is a static method,
+        // so can call it even when m_history is nullptr.
+        if (m_history->expand(out.c_str(), out) == history_db::expand_print)
+        {
+            puts(out.c_str());
+            continue;
+        }
+
+        // Should we skip adding certain commands?
+        if (g_exclude_from_history_cmds.get() &&
+            *g_exclude_from_history_cmds.get())
+        {
+            const char* c = out.c_str();
+            while (*c == ' ' || *c == '\t')
+                ++c;
+
+            bool exclude = false;
+            str<> token;
+            str_tokeniser tokens(g_exclude_from_history_cmds.get(), " ,;");
+            while (tokens.next(token))
+            {
+                if (token.length() &&
+                    _strnicmp(c, token.c_str(), token.length()) == 0 &&
+                    !isalnum((unsigned char)c[token.length()]) &&
+                    !path::is_separator(c[token.length()]))
+                {
+                    exclude = true;
+                    break;
+                }
+            }
+
+            if (exclude)
+                break;
+        }
+
+        // Add the line to the history.
+        if (add_history)
+            m_history->add(out.c_str());
 
         if (ret)
         {
@@ -983,8 +961,29 @@ skip_errorlevel:
 
     if (!resolved)
     {
-        m_doskey.resolve(out.c_str(), m_doskey_alias);
-        m_doskey_alias.next(out);
+        doskey_alias alias;
+
+        m_doskey.resolve(out.c_str(), alias);
+        alias.next(out);
+
+        // Doskey is implemented on the server side of a ReadConsoleW() call
+        // (i.e. in conhost.exe).  Commands separated by a "$T" are returned one
+        // command at a time through successive calls to ReadConsoleW().
+        // Therefore, queue the rest of the resolved lines at the FRONT so they
+        // happen in the right order relative to anything else already queued
+        // (e.g. from Paste).
+        if (alias)
+        {
+            std::list<str_moveable> lines;
+            str_moveable next;
+            // Collect the resolved lines in reverse order.
+            while (alias.next(next))
+                lines.emplace_front(std::move(next));
+            // Insert the lines in reverse order at the front of the queue,
+            // which reverses them back into the original order.
+            for (auto& push : lines)
+                m_queued_lines.emplace_front(std::move(push));
+        }
     }
 
     if (ret && autostart.empty() && intercepted == intercept_result::none)
