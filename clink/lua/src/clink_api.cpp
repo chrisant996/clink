@@ -615,6 +615,14 @@ recognition recognize_command(const char* line, const char* word, bool quoted, b
     if (intercept_directory(line) != intercept_result::none)
         return recognition::navigate;
 
+    // Check for drive letter.
+    if (word[0] && word[1] == ':' && !word[2])
+    {
+        int type = os::get_drive_type(word);
+        if (type > os::drive_type_invalid)
+            return recognition::navigate;
+    }
+
     // Check for cached result.
     recognition cached;
     const int found = s_recognizer.find(word, cached, file);
