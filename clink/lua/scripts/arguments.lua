@@ -320,6 +320,9 @@ function _argreader:update(word, word_index)
 
     -- Some matchers have no args at all.  Or ran out of args.
     if not arg then
+        if matcher._chain_command then
+            return true
+        end
         if self._word_classifier and word_index >= 0 then
             if matcher._no_file_generation then
                 self._word_classifier:classifyword(word_index, "n", false)  --none
@@ -927,6 +930,30 @@ function _argmatcher:nofiles()
 end
 
 --------------------------------------------------------------------------------
+--- -name:  _argmatcher:chaincommand
+--- -ver:   1.3.13
+--- -ret:   self
+--- This makes the rest of the line be parsed as a separate command.  You can
+--- use it to "chain" from one parser to another.
+---
+--- For example, `cmd.exe program arg` is example of a line where one command
+--- can have another command within it.  `:chaincommand()` enables `program arg`
+--- to be parsed separately.  If `program` has an argmatcher, then it takes over
+--- and parses the rest of the input line.
+--- -show:  clink.argmatcher("program"):addflags("/x", "/y")
+--- -show:  clink.argmatcher("cmd"):addflags("/c", "/k"):chaincommand()
+--- -show:  -- Consider the following input:
+--- -show:  --    cmd /c program /
+--- -show:  -- "cmd" is colored as an argmatcher.
+--- -show:  -- "/c" is colored as a flag (by the "cmd" argmatcher).
+--- -show:  -- "program" is colored as an argmatcher.
+--- -show:  -- "/" generates completions "/x" and "/y".
+function _argmatcher:chaincommand()
+    self._chain_command = true
+    return self
+end
+
+--------------------------------------------------------------------------------
 --- -name:  _argmatcher:setclassifier
 --- -ver:   1.1.18
 --- -arg:   func:function
@@ -1201,7 +1228,9 @@ function _argmatcher:_generate(line_state, match_builder, extra_words)
     -- Consume extra words from expanded doskey alias.
     if extra_words then
         for word_index = 2, #extra_words do
-            reader:update(extra_words[word_index], -1)
+            if reader:update(extra_words[word_index], -1) and word_index == #extra_words then
+                return true, 1, extra_words[word_index]
+            end
         end
     end
 
@@ -1212,7 +1241,9 @@ function _argmatcher:_generate(line_state, match_builder, extra_words)
         local info = line_state:getwordinfo(word_index)
         if not info.redir then
             local word = line_state:getword(word_index)
-            reader:update(word, word_index)
+            if reader:update(word, word_index) then
+                return true, word_index
+            end
         end
     end
 
@@ -1666,7 +1697,7 @@ end
 --  argmatcher  = The argmatcher, unless there are too few words to use it.
 --  exists      = True if argmatcher exists (even if too few words to use it).
 --  words       = Table of words to run through reader before continuing.
-local function _find_argmatcher(line_state, check_existence)
+local function _find_argmatcher(line_state, check_existence, lookup)
     -- Running an argmatcher only makes sense if there's two or more words.
     local word_count = line_state:getwordcount()
     local command_word_index = line_state:getcommandwordindex()
@@ -1677,7 +1708,7 @@ local function _find_argmatcher(line_state, check_existence)
         check_existence = nil
     end
 
-    local command_word = line_state:getword(command_word_index)
+    local command_word = lookup or line_state:getword(command_word_index)
     local argmatcher = _has_argmatcher(command_word)
     if argmatcher then
         if check_existence then
@@ -1688,7 +1719,7 @@ local function _find_argmatcher(line_state, check_existence)
         return argmatcher, true
     end
 
-    if command_word_index == 1 then
+    if command_word_index == 1 and not lookup then
         local info = line_state:getwordinfo(1)
         local next_ofs = info.offset + info.length
         local next_char = line_state:getline():sub(next_ofs, next_ofs)
@@ -1742,10 +1773,13 @@ end
 
 --------------------------------------------------------------------------------
 function clink._generate_from_historyline(line_state)
-    local argmatcher, has_argmatcher, extra_words = _find_argmatcher(line_state)
+    local lookup
+::do_command::
+    local argmatcher, has_argmatcher, extra_words = _find_argmatcher(line_state, nil, lookup)
     if not argmatcher or argmatcher ~= _argmatcher_fromhistory_root then
         return
     end
+    lookup = nil
 
     local reader = _argreader(argmatcher, line_state)
     reader._fromhistory_matcher = _argmatcher_fromhistory.argmatcher
@@ -1754,7 +1788,10 @@ function clink._generate_from_historyline(line_state)
     -- Consume extra words from expanded doskey alias.
     if extra_words then
         for word_index = 2, #extra_words do
-            reader:update(extra_words[word_index], -1)
+            if reader:update(extra_words[word_index], -1) and word_index == #extra_words then
+                lookup = extra_words[word_index]
+                goto do_command
+            end
         end
     end
 
@@ -1765,7 +1802,10 @@ function clink._generate_from_historyline(line_state)
         local info = line_state:getwordinfo(word_index)
         if not info.redir then
             local word = line_state:getword(word_index)
-            reader:update(word, word_index)
+            if reader:update(word, word_index) then
+                line_state:shift(word_index)
+                goto do_command
+            end
         end
     end
 end
@@ -1779,11 +1819,19 @@ local argmatcher_classifier = clink.classifier(clink.argmatcher_generator_priori
 
 --------------------------------------------------------------------------------
 function argmatcher_generator:generate(line_state, match_builder)
-    local argmatcher, has_argmatcher, extra_words = _find_argmatcher(line_state)
+    local lookup
+::do_command::
+    local argmatcher, has_argmatcher, extra_words = _find_argmatcher(line_state, nil, lookup)
+    lookup = nil
     if argmatcher then
         _argmatcher_fromhistory = {}
         _argmatcher_fromhistory_root = argmatcher
-        local ret = argmatcher:_generate(line_state, match_builder, extra_words)
+        local ret, shift, inner = argmatcher:_generate(line_state, match_builder, extra_words)
+        if ret and (shift or inner) then
+            line_state:shift(shift)
+            lookup = inner
+            goto do_command
+        end
         _argmatcher_fromhistory = {}
         _argmatcher_fromhistory_root = nil
         return ret
@@ -1794,14 +1842,20 @@ end
 
 --------------------------------------------------------------------------------
 function argmatcher_generator:getwordbreakinfo(line_state)
-    local argmatcher, has_argmatcher, extra_words = _find_argmatcher(line_state)
+    local lookup
+::do_command::
+    local argmatcher, has_argmatcher, extra_words = _find_argmatcher(line_state, nil, lookup)
+    lookup = nil
     if argmatcher then
         local reader = _argreader(argmatcher, line_state)
 
         -- Consume extra words from expanded doskey alias.
         if extra_words then
             for word_index = 2, #extra_words do
-                reader:update(extra_words[word_index], -1)
+                if reader:update(extra_words[word_index], -1) and word_index == #extra_words then
+                    lookup = extra_words[word_index]
+                    goto do_command
+                end
             end
         end
 
@@ -1812,7 +1866,10 @@ function argmatcher_generator:getwordbreakinfo(line_state)
             local info = line_state:getwordinfo(word_index)
             if not info.redir then
                 local word = line_state:getword(word_index)
-                reader:update(word, word_index)
+                if reader:update(word, word_index) then
+                    line_state:shift(word_index)
+                    goto do_command
+                end
             end
         end
 
@@ -1841,11 +1898,14 @@ function argmatcher_classifier:classify(commands)
     local unrecognized_color = settings.get("color.unrecognized") ~= ""
     local executable_color = settings.get("color.executable") ~= ""
     for _,command in ipairs(commands) do
+        local lookup
+::do_command::
         local line_state = command.line_state
         local word_classifier = command.classifications
 
-        local argmatcher, has_argmatcher, extra_words = _find_argmatcher(line_state, true)
+        local argmatcher, has_argmatcher, extra_words = _find_argmatcher(line_state, true, lookup)
         local command_word_index = line_state:getcommandwordindex()
+        lookup = nil
 
         local word_count = line_state:getwordcount()
         local command_word = line_state:getword(command_word_index) or ""
@@ -1878,7 +1938,10 @@ function argmatcher_classifier:classify(commands)
             -- Consume extra words from expanded doskey alias.
             if extra_words then
                 for word_index = 2, #extra_words do
-                    reader:update(extra_words[word_index], -1)
+                    if reader:update(extra_words[word_index], -1) and word_index == #extra_words then
+                        lookup = extra_words[word_index]
+                        goto do_command
+                    end
                 end
             end
 
@@ -1887,7 +1950,11 @@ function argmatcher_classifier:classify(commands)
                 local info = line_state:getwordinfo(word_index)
                 if not info.redir then
                     local word = line_state:getword(word_index)
-                    reader:update(word, word_index)
+                    if reader:update(word, word_index) then
+                        line_state:shift(word_index)
+                        word_classifier:shift(word_index, line_state:getcommandwordindex())
+                        goto do_command
+                    end
                 end
             end
         end

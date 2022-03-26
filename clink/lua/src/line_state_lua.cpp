@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "line_state_lua.h"
+#include "lua_state.h"
 
 #include <core/array.h>
 #include <lib/line_state.h>
@@ -18,6 +19,8 @@ const line_state_lua::method line_state_lua::c_methods[] = {
     { "getwordinfo",            &get_word_info },
     { "getword",                &get_word },
     { "getendword",             &get_end_word },
+    // UNDOCUMENTED; internal use only.
+    { "shift",                  &shift },
     {}
 };
 
@@ -115,7 +118,18 @@ int line_state_lua::get_cursor(lua_State* state)
 /// -show:  line_state:getcommandoffset() == 6
 int line_state_lua::get_command_offset(lua_State* state)
 {
-    lua_pushinteger(state, m_line->get_command_offset() + 1);
+    unsigned int offset = m_line->get_command_offset();
+    if (m_shift)
+    {
+        const auto& words = m_line->get_words();
+        const auto& w = words[m_shift - 1];
+        offset = w.offset + w.length;
+        const char* line = m_line->get_line();
+        while (line[offset] != ' ' && line[offset] != '\t' && offset < words[m_shift].offset)
+            offset++;
+    }
+
+    lua_pushinteger(state, offset + 1);
     return 1;
 }
 
@@ -132,7 +146,16 @@ int line_state_lua::get_command_offset(lua_State* state)
 /// -show:  line_state:getcommandwordindex() == 2
 int line_state_lua::get_command_word_index(lua_State* state)
 {
-    lua_pushinteger(state, m_line->get_command_word_index() + 1);
+    unsigned int index = m_line->get_command_word_index();
+    if (m_shift)
+    {
+        const auto& words = m_line->get_words();
+        const unsigned int count = m_line->get_word_count();
+        while (index < count && words[index].is_redir_arg)
+            index++;
+    }
+
+    lua_pushinteger(state, index + 1);
     return 1;
 }
 
@@ -143,7 +166,7 @@ int line_state_lua::get_command_word_index(lua_State* state)
 /// Returns the number of words in the current line.
 int line_state_lua::get_word_count(lua_State* state)
 {
-    lua_pushinteger(state, m_line->get_word_count());
+    lua_pushinteger(state, m_line->get_word_count() - m_shift);
     return 1;
 }
 
@@ -174,7 +197,7 @@ int line_state_lua::get_word_info(lua_State* state)
         return 0;
 
     const std::vector<word>& words = m_line->get_words();
-    unsigned int index = int(lua_tointeger(state, 1)) - 1;
+    unsigned int index = int(lua_tointeger(state, 1)) - 1 + m_shift;
     if (index >= words.size())
         return 0;
 
@@ -237,7 +260,7 @@ int line_state_lua::get_word(lua_State* state)
 
     str<32> word;
     unsigned int index = int(lua_tointeger(state, 1)) - 1;
-    m_line->get_word(index, word);
+    m_line->get_word(m_shift + index, word);
     lua_pushlstring(state, word.c_str(), word.length());
     return 1;
 }
@@ -262,5 +285,26 @@ int line_state_lua::get_end_word(lua_State* state)
     str<32> word;
     m_line->get_end_word(word);
     lua_pushlstring(state, word.c_str(), word.length());
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+// UNDOCUMENTED; internal use only.
+int line_state_lua::shift(lua_State* state)
+{
+    unsigned int num = optinteger(state, 1, 0);
+
+    if (num > 0)
+    {
+        num -= 1;
+        if (num > m_line->get_word_count() || m_shift + num > m_line->get_word_count())
+            num = m_line->get_word_count() - m_shift;
+        if (!num)
+            return 0;
+
+        m_shift += num;
+    }
+
+    lua_pushinteger(state, m_shift);
     return 1;
 }

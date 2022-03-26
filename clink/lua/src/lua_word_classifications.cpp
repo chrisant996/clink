@@ -23,6 +23,8 @@ const char* const lua_word_classifications::c_name = "lua_word_classifications";
 const lua_word_classifications::method lua_word_classifications::c_methods[] = {
     { "classifyword",     &classify_word },
     { "applycolor",       &apply_color },
+    // UNDOCUMENTED; internal use only.
+    { "shift",            &shift },
     {}
 };
 
@@ -71,7 +73,7 @@ int lua_word_classifications::classify_word(lua_State* state)
     if (!lua_isnumber(state, 1) || !lua_isstring(state, 2))
         return 0;
 
-    const unsigned int index = static_cast<unsigned int>(int(lua_tointeger(state, 1)) - 1);
+    const unsigned int index = static_cast<unsigned int>(int(lua_tointeger(state, 1)) - 1) + m_shift;
     const char* s = lua_tostring(state, 2);
     bool overwrite = !lua_isboolean(state, 3) || lua_toboolean(state, 3);
     if (!s)
@@ -151,4 +153,30 @@ int lua_word_classifications::apply_color(lua_State* state)
 
     m_classifications.apply_face(start, length, face, overwrite);
     return 0;
+}
+
+//------------------------------------------------------------------------------
+// UNDOCUMENTED; internal use only.
+int lua_word_classifications::shift(lua_State* state)
+{
+    unsigned int num = optinteger(state, 1, 0);
+    unsigned int cmd = optinteger(state, 2, 1);
+
+    if (num > 0)
+    {
+        num -= 1;
+        if (num > m_num_words || m_shift + num > m_num_words)
+            num = m_num_words - m_shift;
+        if (!num)
+            return 0;
+
+        m_shift += num;
+        if (cmd > m_num_words || m_shift + cmd - 1 > m_num_words)
+            cmd = 1;
+        m_command_word_index = m_shift + cmd - 1;
+    }
+
+    lua_pushinteger(state, m_shift);
+    lua_pushinteger(state, m_command_word_index);
+    return 2;
 }

@@ -28,10 +28,12 @@ public:
     int                 get_word_info(lua_State* state);
     int                 get_word(lua_State* state);
     int                 get_end_word(lua_State* state);
+    int                 shift(lua_State* state);
 
 private:
     const line_state*   m_line;
     line_state_copy*    m_copy;
+    unsigned int        m_shift = 0;
 
     friend class lua_bindable<line_state_lua>;
     static const char* const c_name;
