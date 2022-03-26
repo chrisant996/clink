@@ -294,7 +294,7 @@ unsigned int word_collector::collect_words(const char* line_buffer, unsigned int
             str<> tmp;
             str_iter it(line_buffer + word.offset, word.length);
             tmp.concat(it.get_pointer(), it.length());
-            printf("WORD %d '%s'%s\n", i, tmp.c_str(), word.is_redir_arg ? " redir" : "");
+            printf("WORD %d '%s'%s%s\n", i, tmp.c_str(), word.is_redir_arg ? " redir" : "", word.command_word ? " command" : "");
             i++;
         }
     }

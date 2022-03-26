@@ -826,27 +826,45 @@ unsigned int line_editor_impl::collect_words(words& words, matches_impl* matches
     // breaks. This is a little clunky but works well enough.
     line_state line { m_buffer.get_buffer(), m_buffer.get_length(), m_buffer.get_cursor(), command_offset, words };
     word* end_word = &words.back();
+
+#ifdef DEBUG
+    str<> tmp1;
+    str<> tmp2;
+    if (dbg_row > 0)
+    {
+        if (words.size() > 0)
+        {
+            tmp1.format("\x1b[s\x1b[%dHcollected words:        ", dbg_row);
+            m_printer.print(tmp1.c_str(), tmp1.length());
+            for (auto const& w : words)
+            {
+                const char* q = w.quoted ? "\"" : "";
+                if (w.is_redir_arg)
+                    m_printer.print(">");
+                if (w.command_word)
+                    m_printer.print("!");
+                if (w.length)
+                    tmp1.format("%s\x1b[0;37;7m%.*s\x1b[m%s ", q, w.length, m_buffer.get_buffer() + w.offset, q);
+                else
+                    tmp1.format("\x1b[0;37;7m \x1b[m ");
+                m_printer.print(tmp1.c_str(), tmp1.length());
+            }
+            m_printer.print("\x1b[K\x1b[u");
+        }
+        else
+        {
+            tmp1.format("\x1b[s\x1b[%dH\x1b[mno words collected\x1b[K\x1b[u", dbg_row);
+            m_printer.print(tmp1.c_str(), tmp1.length());
+            tmp2.format("\x1b[s\x1b[%dH\x1b[m\x1b[K\x1b[u", dbg_row + 1);
+            m_printer.print(tmp2.c_str(), tmp2.length());
+        }
+    }
+#endif
+
     if (end_word->length && (mode == collect_words_mode::stop_at_cursor ||
                              mode == collect_words_mode::display_filter))
     {
         const char *word_start = m_buffer.get_buffer() + end_word->offset;
-
-#ifdef DEBUG
-        if (dbg_row > 0)
-        {
-            str<> tmp;
-            tmp.format("\x1b[s\x1b[%dHcollected words:        ", dbg_row);
-            m_printer.print(tmp.c_str(), tmp.length());
-            for (auto const& w : words)
-            {
-                if (w.is_redir_arg)
-                    m_printer.print(">");
-                tmp.format("\x1b[0;37;7m%.*s\x1b[m ", w.length, m_buffer.get_buffer() + w.offset);
-                m_printer.print(tmp.c_str(), tmp.length());
-            }
-            m_printer.print("\x1b[K\x1b[u");
-        }
-#endif
 
         word_break_info break_info;
         if (m_generator)
@@ -876,25 +894,27 @@ unsigned int line_editor_impl::collect_words(words& words, matches_impl* matches
 #ifdef DEBUG
         if (dbg_row > 0)
         {
-            str<> tmp;
             int i_word = 1;
-            tmp.format("\x1b[s\x1b[%dHafter word break info:  ", dbg_row + 1);
-            m_printer.print(tmp.c_str(), tmp.length());
+            tmp2.format("\x1b[s\x1b[%dHafter word break info:  ", dbg_row + 1);
+            m_printer.print(tmp2.c_str(), tmp2.length());
             for (auto const& w : words)
             {
+                const char* q = w.quoted ? "\"" : "";
                 if (w.is_redir_arg)
                     m_printer.print(">");
+                if (w.command_word)
+                    m_printer.print("!");
                 if (i_word == words.size())
                 {
-                    tmp.format("\x1b[0;35;7m%.*s\x1b[0;37;7m%.*s\x1b[m ",
-                        keep, m_buffer.get_buffer() + w.offset,
-                        w.length - keep, m_buffer.get_buffer() + w.offset + keep);
+                    tmp2.format("%s\x1b[0;35;7m%.*s\x1b[0;37;7m%.*s\x1b[m%s ",
+                        q, keep, m_buffer.get_buffer() + w.offset,
+                        w.length - keep, m_buffer.get_buffer() + w.offset + keep, q);
                 }
                 else
                 {
-                    tmp.format("\x1b[0;37;7m%.*s\x1b[m ", w.length, m_buffer.get_buffer() + w.offset);
+                    tmp2.format("%s\x1b[0;37;7m%.*s\x1b[m%s ", q, w.length, m_buffer.get_buffer() + w.offset, q);
                 }
-                m_printer.print(tmp.c_str(), tmp.length());
+                m_printer.print(tmp2.c_str(), tmp2.length());
                 i_word++;
             }
             m_printer.print("\x1b[K\x1b[u");
@@ -905,14 +925,15 @@ unsigned int line_editor_impl::collect_words(words& words, matches_impl* matches
         assert(matches);
         matches->set_word_break_position(end_word->offset);
     }
+
 #ifdef DEBUG
-    else if (dbg_row > 0)
+    if (dbg_row > 0)
     {
-        str<> tmp;
-        tmp.format("\x1b[s\x1b[%dH\x1b[mno words collected\x1b[K\x1b[u", dbg_row);
-        m_printer.print(tmp.c_str(), tmp.length());
-        tmp.format("\x1b[s\x1b[%dH\x1b[m\x1b[K\x1b[u", dbg_row + 1);
-        m_printer.print(tmp.c_str(), tmp.length());
+        if (tmp2.empty())
+        {
+            tmp2.format("\x1b[s\x1b[%dH\x1b[m\x1b[K\x1b[u", dbg_row + 1);
+            m_printer.print(tmp2.c_str(), tmp2.length());
+        }
     }
 #endif
 
