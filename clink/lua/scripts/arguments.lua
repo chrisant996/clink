@@ -268,6 +268,9 @@ function _argreader:update(word, word_index)
             if arg and arg.delayinit then
                 do_delayed_init(arg, matcher, 0)
             end
+            if arg and arg.onarg and clink._in_generate() then
+                arg.onarg(0, word, word_index, line_state)
+            end
             if word == matcher._endofflags then
                 self._noflags = true
                 end_flags = true
@@ -333,9 +336,14 @@ function _argreader:update(word, word_index)
         return
     end
 
-    -- Delay initialize the argmatcher, if needed.
-    if arg.delayinit then
-        do_delayed_init(arg, realmatcher, arg_index)
+    -- Run delayinit and onarg (is_flag runs them further above).
+    if not is_flag then
+        if arg.delayinit then
+            do_delayed_init(arg, realmatcher, arg_index)
+        end
+        if arg.onarg and clink._in_generate() then
+            arg.onarg(arg_index, word, word_index, line_state)
+        end
     end
 
     -- Generate matches from history.
@@ -516,6 +524,9 @@ local function apply_options_to_list(addee, list)
         if type(addee.delayinit) == "function" then
             list.delayinit = addee.delayinit
         end
+    end
+    if addee.onarg then
+        list.onarg = addee.onarg
     end
     if addee.fromhistory then
         list.fromhistory = true
