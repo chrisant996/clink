@@ -98,7 +98,7 @@ static bool search_for_extension(str_base& full, const char* word, str_base& out
 }
 
 //------------------------------------------------------------------------------
-static bool search_for_executable(const char* _word, str_base& out)
+static bool search_for_executable(const char* _word, const char* cwd, str_base& out)
 {
     // Bail out early if it's obviously not going to succeed.
     if (strlen(_word) >= MAX_PATH)
@@ -114,7 +114,10 @@ static bool search_for_executable(const char* _word, str_base& out)
     str<> paths;
     if (need_cwd)
     {
-        os::get_current_dir(paths);
+        if (cwd)
+            paths = cwd;
+        else
+            os::get_current_dir(paths);
     }
     if (need_path && os::get_env("PATH", tmp))
     {
@@ -174,6 +177,7 @@ class recognizer
         void                clear();
         str_moveable        m_key;
         str_moveable        m_word;
+        str_moveable        m_cwd;
     };
 
 public:
@@ -252,6 +256,7 @@ recognizer::entry::entry(const char* key, const char* word)
 : m_key(key)
 , m_word(word)
 {
+    os::get_current_dir(m_cwd);
 }
 
 //------------------------------------------------------------------------------
@@ -546,7 +551,7 @@ void recognizer::proc(recognizer* r)
             // Search for executable file.
             str<> found;
             recognition result = recognition::unrecognized;
-            if (search_for_executable(entry.m_word.c_str(), found))
+            if (search_for_executable(entry.m_word.c_str(), entry.m_cwd.c_str(), found))
             {
                 result = recognition::executable;
             }

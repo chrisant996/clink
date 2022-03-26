@@ -29,6 +29,7 @@ struct yield_thread : public std::enable_shared_from_this<yield_thread>
 
 protected:
     bool            is_canceled() const;
+    const char*     get_cwd() const;
 
 private:
     virtual void    do_work() = 0;
@@ -38,6 +39,7 @@ private:
     HANDLE m_thread_handle = 0;
     HANDLE m_ready_event = 0;
     HANDLE m_wake_event = 0;
+    str_moveable m_cwd;
     bool m_suspended = false;
 
     volatile long m_cancelled = false;

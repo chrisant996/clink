@@ -56,6 +56,13 @@ private:
     long long   m_start;
 };
 
+struct cwd_restorer
+{
+    cwd_restorer();
+    ~cwd_restorer();
+    wchar_t m_path[288];
+};
+
 int     get_path_type(const char* path);
 int     get_drive_type(const char* path, unsigned int len=-1);
 int     get_file_size(const char* path);

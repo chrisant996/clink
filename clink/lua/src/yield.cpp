@@ -49,6 +49,7 @@ bool yield_thread::createthread()
     assert(!m_cancelled);
     assert(!m_ready_event);
     assert(!m_wake_event);
+    os::get_current_dir(m_cwd);
     if (s_wake_event)
     {
         m_wake_event = os::dup_handle(GetCurrentProcess(), s_wake_event, false/*inherit*/);
@@ -110,6 +111,12 @@ void yield_thread::wait(unsigned int timeout)
 bool yield_thread::is_canceled() const
 {
     return !!m_cancelled;
+}
+
+//------------------------------------------------------------------------------
+const char* yield_thread::get_cwd() const
+{
+    return m_cwd.c_str();
 }
 
 //------------------------------------------------------------------------------

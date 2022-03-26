@@ -132,6 +132,21 @@ double os::high_resolution_clock::elapsed() const
 }
 
 //------------------------------------------------------------------------------
+cwd_restorer::cwd_restorer()
+{
+    GetCurrentDirectoryW(sizeof_array(m_path), m_path);
+}
+
+//------------------------------------------------------------------------------
+cwd_restorer::~cwd_restorer()
+{
+    wchar_t path[288];
+    DWORD dw = GetCurrentDirectoryW(sizeof_array(path), path);
+    if (!dw || dw >= sizeof_array(path) || wcscmp(path, m_path) != 0)
+        SetCurrentDirectoryW(m_path);
+}
+
+//------------------------------------------------------------------------------
 void map_errno() { __acrt_errno_map_os_error(GetLastError()); }
 void map_errno(unsigned long const oserrno) { __acrt_errno_map_os_error(oserrno); }
 

@@ -516,6 +516,9 @@ bool lua_state::send_event_internal(const char* event_name, const char* event_me
         lua_insert(state, ins);
     }
 
+    // Preserve cwd around events.
+    os::cwd_restorer cwd;
+
     // Call the event callback.
     return pcall(1 + nargs, nret) == 0;
 }

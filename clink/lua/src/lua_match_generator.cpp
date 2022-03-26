@@ -12,6 +12,7 @@
 #include <core/str_hash.h>
 #include <core/str_unordered_set.h>
 #include <core/str_compare.h>
+#include <core/os.h>
 #include <lib/line_state.h>
 #include <lib/matches.h>
 #include <lib/matches_lookaside.h>
@@ -59,6 +60,8 @@ bool lua_match_generator::generate(const line_state& line, match_builder& builde
 
     lua_pushboolean(state, old_filtering);
 
+    os::cwd_restorer cwd;
+
     if (m_state.pcall(state, 3, 1) != 0)
         return false;
 
@@ -79,6 +82,8 @@ void lua_match_generator::get_word_break_info(const line_state& line, word_break
 
     line_state_lua line_lua(line);
     line_lua.push(state);
+
+    os::cwd_restorer cwd;
 
     if (m_state.pcall(state, 1, 2) != 0)
     {

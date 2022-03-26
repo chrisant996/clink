@@ -255,16 +255,6 @@ static void write_line_feed()
 
 
 //------------------------------------------------------------------------------
-struct cwd_restorer
-{
-    cwd_restorer() { os::get_current_dir(m_path); }
-    ~cwd_restorer() { os::set_current_dir(m_path.c_str()); }
-    str<288> m_path;
-};
-
-
-
-//------------------------------------------------------------------------------
 struct autostart_display
 {
     void save();
@@ -586,7 +576,7 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out)
 
     path::refresh_pathext();
 
-    cwd_restorer cwd;
+    os::cwd_restorer cwd;
     printer_context prt(m_terminal.out, m_printer);
 
     // Load Clink's settings.  The load function handles deferred load for

@@ -800,6 +800,7 @@ function coroutine.create(func)
 
     -- Remember original func for diagnostic purposes later.  The table is
     -- cleared at the beginning of each input line.
+    local cwd = os.getcwd()
     local thread = orig_coroutine_create(func)
     _coroutines_created[thread] = {
         func=func,
@@ -807,6 +808,7 @@ function coroutine.create(func)
         generation=_coroutine_generation,
         isprompt=isprompt,
         isgenerator=isgenerator,
+        cwd=cwd,
         src=src
     }
     clink.addcoroutine(thread)
@@ -814,4 +816,22 @@ function coroutine.create(func)
     -- Wake up idle processing.
     clink.kick_idle()
     return thread
+end
+
+--------------------------------------------------------------------------------
+local orig_coroutine_resume = coroutine.resume
+function coroutine.resume(co, ...)
+    local entry = _coroutines[co]
+
+    if entry and entry.cwd and entry.cwd ~= os.getcwd() then
+        os.chdir(entry.cwd)
+    end
+
+    local ret = table.pack(orig_coroutine_resume(co, ...))
+
+    if entry then
+        entry.cwd = os.getcwd()
+    end
+
+    return table.unpack(ret)
 end
