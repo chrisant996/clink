@@ -191,7 +191,7 @@ private:
 //------------------------------------------------------------------------------
 void execute_thread::do_work()
 {
-    m_stat = system(m_command.c_str());
+    m_stat = os::system(m_command.c_str(), get_cwd());
     m_errno = errno;
 }
 

@@ -162,145 +162,6 @@ static int pclosefile(lua_State *state)
 }
 
 //------------------------------------------------------------------------------
-#ifndef USE_PORTABLE
-extern "C" wchar_t* __cdecl __acrt_wgetpath(
-    wchar_t const* const delimited_paths,
-    wchar_t*       const result,
-    size_t         const result_count
-    );
-#endif
-
-//------------------------------------------------------------------------------
-static bool search_path(wstr_base& out, const wchar_t* file)
-{
-#ifndef USE_PORTABLE
-
-    wstr_moveable wpath;
-    {
-        int len = GetEnvironmentVariableW(L"PATH", nullptr, 0);
-        if (len)
-        {
-            wpath.reserve(len);
-            len = GetEnvironmentVariableW(L"COMSPEC", wpath.data(), wpath.size());
-        }
-    }
-
-    if (!wpath.length())
-        return false;
-
-    wchar_t buf[MAX_PATH];
-    wstr_base buffer(buf);
-
-    const wchar_t* current = wpath.c_str();
-    while ((current = __acrt_wgetpath(current, buffer.data(), buffer.size() - 1)) != 0)
-    {
-        unsigned int len = buffer.length();
-        if (len && !path::is_separator(buffer.c_str()[len - 1]))
-        {
-            if (!buffer.concat(L"\\"))
-                continue;
-        }
-
-        if (!buffer.concat(file))
-            continue;
-
-        DWORD attr = GetFileAttributesW(buffer.c_str());
-        if (attr != 0xffffffff)
-        {
-            out.clear();
-            out.concat(buffer.c_str(), buffer.length());
-            return true;
-        }
-    }
-
-    return false;
-
-#else
-
-    wchar_t buf[MAX_PATH];
-
-    wchar_t* file_part;
-    DWORD dw = SearchPathW(nullptr, file, nullptr, sizeof_array(buf), buf, &file_part);
-    if (dw == 0 || dw >= sizeof_array(buf))
-        return false;
-
-    out.clear();
-    out.concat(buf, dw);
-    return true;
-
-#endif
-}
-
-//------------------------------------------------------------------------------
-static intptr_t popenrw_internal(const char* command, HANDLE hStdin, HANDLE hStdout)
-{
-    // Determine which command processor to use:  command.com or cmd.exe:
-    static wchar_t const default_cmd_exe[] = L"cmd.exe";
-    wstr_moveable comspec;
-    const wchar_t* cmd_exe = default_cmd_exe;
-    {
-        int len = GetEnvironmentVariableW(L"COMSPEC", nullptr, 0);
-        if (len)
-        {
-            comspec.reserve(len);
-            len = GetEnvironmentVariableW(L"COMSPEC", comspec.data(), comspec.size());
-            if (len)
-                cmd_exe = comspec.c_str();
-        }
-    }
-
-    STARTUPINFOW startup_info = { 0 };
-    startup_info.cb = sizeof(startup_info);
-
-    // The following arguments are used by the OS for duplicating the handles:
-    startup_info.dwFlags = STARTF_USESTDHANDLES;
-    startup_info.hStdInput  = hStdin;
-    startup_info.hStdOutput = hStdout;
-    startup_info.hStdError  = reinterpret_cast<HANDLE>(_get_osfhandle(2));
-
-    wstr<> command_line;
-    command_line << cmd_exe;
-    command_line << L" /c ";
-    to_utf16(command_line, command);
-
-    // Find the path at which the executable is accessible:
-    wstr_moveable selected_cmd_exe;
-    DWORD attrCmd = GetFileAttributesW(cmd_exe);
-    if (attrCmd == 0xffffffff)
-    {
-        errno_t e = errno;
-        if (!search_path(selected_cmd_exe, cmd_exe))
-        {
-            errno = e;
-            return 0;
-        }
-        cmd_exe = selected_cmd_exe.c_str();
-    }
-
-    PROCESS_INFORMATION process_info = PROCESS_INFORMATION();
-    BOOL const child_status = CreateProcessW(
-        cmd_exe,
-        command_line.data(),
-        nullptr,
-        nullptr,
-        TRUE/*bInheritHandles*/,
-        0,
-        nullptr,
-        nullptr,
-        &startup_info,
-        &process_info);
-
-    if (!child_status)
-    {
-        os::map_errno();
-        return 0;
-    }
-
-    CloseHandle(process_info.hThread);
-    return reinterpret_cast<intptr_t>(process_info.hProcess);
-}
-
-//------------------------------------------------------------------------------
 struct pipe_pair
 {
     ~pipe_pair()
@@ -492,7 +353,7 @@ private:
     if (!failed)
     {
         popenrw_info* info = new popenrw_info;
-        intptr_t process_handle = popenrw_internal(command, pipe_stdin.remote, pipe_stdout.remote);
+        HANDLE process_handle = os::spawn_internal(command, nullptr, pipe_stdin.remote, pipe_stdout.remote);
 
         if (!process_handle)
         {
@@ -513,7 +374,7 @@ private:
 
             info->r = pr->f;
             info->w = pw->f;
-            info->process_handle = process_handle;
+            info->process_handle = reinterpret_cast<intptr_t>(process_handle);
             popenrw_info::add(info);
 
             pipe_stdin.transfer_local();
@@ -588,7 +449,7 @@ private:
             break;
 
         info = new popenrw_info;
-        intptr_t process_handle = popenrw_internal(command, NULL, pipe_stdout.remote);
+        HANDLE process_handle = os::spawn_internal(command, nullptr, NULL, pipe_stdout.remote);
         if (!process_handle)
             break;
 
@@ -597,7 +458,7 @@ private:
         temp_read = nullptr;
 
         info->r = pr->f;
-        info->process_handle = process_handle;
+        info->process_handle = reinterpret_cast<intptr_t>(process_handle);
         info->async = true;
         popenrw_info::add(info);
         info = nullptr;
