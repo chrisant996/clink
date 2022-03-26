@@ -5,17 +5,56 @@
 -- NOTE: If you add any settings here update set.cpp to load (lua, app, dir).
 
 --------------------------------------------------------------------------------
+local function get_dir_arg(word, word_index, line_state)
+    local info = line_state:getwordinfo(word_index)
+    if info and info.offset + info.length < line_state:getcursor() then
+        local ws = info.offset
+        local endinfo = line_state:getwordinfo(line_state:getwordcount())
+        if endinfo then
+            local we = endinfo.offset + endinfo.length - 1
+            word = line_state:getline():sub(ws, we)
+            return word
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
+local function onarg_cd(arg_index, word, word_index, line_state)
+    -- Match generation after this may be relative to the new directory.
+    local dir = get_dir_arg(word, word_index, line_state)
+    if dir then
+        if line_state:getword(word_index - 1):lower() ~= "/d" then
+            local cwd = os.getcwd()
+            local drive = path.getdrive(dir)
+            if path.getdrive(cwd) ~= drive then
+                return
+            end
+        end
+        os.chdir(dir)
+    end
+end
+
+--------------------------------------------------------------------------------
+local function onarg_pushd(arg_index, word, word_index, line_state)
+    -- Match generation after this is relative to the new directory.
+    local dir = get_dir_arg(word, word_index, line_state)
+    if dir then
+        os.chdir(word)
+    end
+end
+
+--------------------------------------------------------------------------------
 clink.argmatcher("cd", "chdir")
 :addflags("/d")
 :adddescriptions({
     ["/d"] = "Also change drive"
 })
-:addarg(clink.dirmatches)
+:addarg({onarg=onarg_cd, clink.dirmatches})
 :nofiles()
 
 --------------------------------------------------------------------------------
 clink.argmatcher("pushd")
-:addarg(clink.dirmatches)
+:addarg({onarg=onarg_pushd, clink.dirmatches})
 :nofiles()
 
 --------------------------------------------------------------------------------
