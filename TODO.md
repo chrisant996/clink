@@ -25,6 +25,12 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Mouse input toggling is unreliable in Windows Terminal, and sometimes ends up disallowing mouse input.
 - Once in a while raw mouse input sequences spuriously show up in the edit line; have only noticed it when the CMD window did not have focus at the time.
 - Should coroutines really be able to make Readline redraw immediately?  Should instead set a flag that the main coroutine responds to when it gains control again?
+- Investigate feasibility and performance cost for improving cwd safety?
+  - [ ] Save/restore cwd around resuming coroutines?
+  - [ ] Save/restore cwd around generators and classifiers and suggesters?
+  - [ ] Make threads not use cwd at all, since cwd is per-process (not per-thread).
+  - These could make it possible for shifting the command word to also set cwd for generators.  So that `i dir pgm compl`<kbd>Tab</kbd> can complete relative to `dir` instead of the previous cwd.
+  - But it seems very niche, and then what about `pushd dir & pgm compl`<kbd>Tab</kbd>?  And `if a==b (pushd dir) else (pgm compl`<kbd>Tab</kbd>?  And so on.
 
 ## Follow Up
 - Readline command reference.
