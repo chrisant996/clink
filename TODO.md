@@ -7,6 +7,9 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
+- [ ] Document the `onarg` callback.
+- [ ] `pushd dir & echo `<kbd>Alt+=</kbd> may need to step through previous command segments with `reader:update()`.
+- [ ] Argmatchers are currently stateless.  The `onarg` callback gives them the ability to have state.  But there is currently no way for them to know when `generate` begins, and so there is no way for them to know when to reset their state.  The motivation for adding `onarg` was to enable `os.chdir()` to be used, and Clink happens to manage/reset the current directory state, but argmatchers currently can't reset other state info.
 
 ## Low Priority
 - Let the yieldguards run in parallel?
@@ -25,12 +28,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Mouse input toggling is unreliable in Windows Terminal, and sometimes ends up disallowing mouse input.
 - Once in a while raw mouse input sequences spuriously show up in the edit line; have only noticed it when the CMD window did not have focus at the time.
 - Should coroutines really be able to make Readline redraw immediately?  Should instead set a flag that the main coroutine responds to when it gains control again?
-- Investigate feasibility and performance cost for improving cwd safety?
-  - [ ] Save/restore cwd around resuming coroutines?
-  - [ ] Save/restore cwd around generators and classifiers and suggesters?
-  - [ ] Make threads not use cwd at all, since cwd is per-process (not per-thread).
-  - These could make it possible for shifting the command word to also set cwd for generators.  So that `i dir pgm compl`<kbd>Tab</kbd> can complete relative to `dir` instead of the previous cwd.
-  - But it seems very niche, and then what about `pushd dir & pgm compl`<kbd>Tab</kbd>?  And `if a==b (pushd dir) else (pgm compl`<kbd>Tab</kbd>?  And so on.
 
 ## Follow Up
 - Readline command reference.
