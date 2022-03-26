@@ -359,19 +359,21 @@ host::~host()
 }
 
 //------------------------------------------------------------------------------
-void host::enqueue_lines(std::list<str_moveable>& lines)
+void host::enqueue_lines(std::list<str_moveable>& lines, bool hide_prompt)
 {
     for (auto& line : lines)
-        m_queued_lines.emplace_back(std::move(line));
+        m_queued_lines.emplace_back(std::move(line), hide_prompt);
 }
 
 //------------------------------------------------------------------------------
-bool host::dequeue_line(wstr_base& out)
+bool host::dequeue_line(wstr_base& out, bool& hide_prompt)
 {
     if (m_queued_lines.empty())
         return false;
 
-    out = m_queued_lines.front().c_str() + m_char_cursor;
+    const auto& front = m_queued_lines.front();
+    out = front.m_line.c_str() + m_char_cursor;
+    hide_prompt = front.m_hide_prompt;
     pop_queued_line();
     return true;
 }
@@ -382,15 +384,15 @@ bool host::dequeue_char(wchar_t* out)
     if (m_queued_lines.empty())
         return false;
 
-    const auto& front = m_queued_lines.front();
-    if (m_char_cursor >= front.length())
+    const auto& line = m_queued_lines.front().m_line;
+    if (m_char_cursor >= line.length())
     {
         assert(false);
         return false;
     }
 
-    *out = front.c_str()[m_char_cursor++];
-    if (m_char_cursor >= front.length())
+    *out = line.c_str()[m_char_cursor++];
+    if (m_char_cursor >= line.length())
         pop_queued_line();
     return true;
 }
@@ -610,8 +612,8 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out)
     str_moveable autostart;
     bool interactive = ((m_queued_lines.size() == 0) ||
                         (m_queued_lines.size() == 1 &&
-                         (m_queued_lines.front().length() == 0 ||
-                          m_queued_lines.front().c_str()[m_queued_lines.front().length() - 1] != '\n')));
+                         (m_queued_lines.front().m_line.length() == 0 ||
+                          m_queued_lines.front().m_line.c_str()[m_queued_lines.front().m_line.length() - 1] != '\n')));
     if (interactive && s_autostart)
     {
         s_autostart = false;
@@ -956,43 +958,57 @@ skip_errorlevel:
         lua.send_event("onendedit", 1);
     }
 
+    std::list<str_moveable> more_out;
     if (send_event)
-        lua.send_event_cancelable_string_inout("onfilterinput", out.c_str(), out);
+        lua.send_event_cancelable_string_inout("onfilterinput", out.c_str(), out, &more_out);
+
+    std::list<queued_line> queue;
 
     if (!resolved)
     {
+        str_moveable next;
         doskey_alias alias;
 
-        m_doskey.resolve(out.c_str(), alias);
-        alias.next(out);
-
         // Doskey is implemented on the server side of a ReadConsoleW() call
-        // (i.e. in conhost.exe).  Commands separated by a "$T" are returned one
-        // command at a time through successive calls to ReadConsoleW().
-        // Therefore, queue the rest of the resolved lines at the FRONT so they
-        // happen in the right order relative to anything else already queued
-        // (e.g. from Paste).
-        if (alias)
+        // (i.e. in conhost.exe).  Commands separated by a "$T" are returned
+        // one command at a time through successive calls to ReadConsoleW().
         {
-            std::list<str_moveable> lines;
-            str_moveable next;
-            // Collect the resolved lines in reverse order.
+            m_doskey.resolve(out.c_str(), alias);
+            if (alias)
+                alias.next(out); // First line goes into OUT to be returned.
             while (alias.next(next))
-                lines.emplace_front(std::move(next));
-            // Insert the lines in reverse order at the front of the queue,
-            // which reverses them back into the original order.
-            for (auto& push : lines)
-                m_queued_lines.emplace_front(std::move(push));
+                queue.emplace_back(std::move(next), false);
+        }
+
+        for (auto& another : more_out)
+        {
+            m_doskey.resolve(another.c_str(), alias);
+            if (!alias)
+                queue.emplace_back(std::move(another), true);
+            while (alias.next(next))
+                queue.emplace_back(std::move(next), true);
         }
     }
 
+    // If the line is a directory, rewrite the line to invoke the CD command to
+    // change to the directory.
     if (ret && autostart.empty() && intercepted == intercept_result::none)
     {
-        // If the line is a directory, rewrite the line to invoke the CD command
-        // to change to the directory.
         if (intercept_directory(out.c_str(), &out) == intercept_result::prev_dir)
             prev_dir_history(out);
+
+        for (auto& queued : queue)
+        {
+            if (intercept_directory(queued.m_line.c_str(), &queued.m_line) == intercept_result::prev_dir)
+                prev_dir_history(queued.m_line);
+        }
+
     }
+
+    // Insert the lines in reverse order at the front of the queue, to execute
+    // them in the original order.
+    for (std::list<queued_line>::reverse_iterator it = queue.rbegin(); it != queue.rend(); ++it)
+        m_queued_lines.emplace_front(std::move(*it));
 
     line_editor_destroy(editor);
 

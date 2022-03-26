@@ -272,9 +272,9 @@ bool host_has_deprecated_argmatcher(const char* command)
 }
 
 //------------------------------------------------------------------------------
-void host_cmd_enqueue_lines(std::list<str_moveable>& lines)
+void host_cmd_enqueue_lines(std::list<str_moveable>& lines, bool hide_prompt)
 {
-    host_cmd::get()->enqueue_lines(lines);
+    host_cmd::get()->enqueue_lines(lines, hide_prompt);
 }
 
 
@@ -532,7 +532,8 @@ BOOL WINAPI host_cmd::read_console(
     // from an expanded doskey macro.
     const wchar_t* prompt = host_cmd::get()->m_prompt.get();
     wstr_base line(chars, max_chars);
-    if (host_cmd::get()->dequeue_line(line))
+    bool hide_prompt;
+    if (host_cmd::get()->dequeue_line(line, hide_prompt))
     {
         // Respond with the dequeued line.
         DWORD written;
@@ -548,7 +549,7 @@ BOOL WINAPI host_cmd::read_console(
         {
             // No prompt, so no output.
         }
-        else
+        else if (!hide_prompt)
         {
             char const* read = g_last_prompt.c_str();
             char* write = g_last_prompt.data();

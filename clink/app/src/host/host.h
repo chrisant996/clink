@@ -23,6 +23,13 @@ class printer_context;
 //------------------------------------------------------------------------------
 class host : public host_callbacks
 {
+    struct queued_line
+    {
+        queued_line(str_moveable&& line, bool hide_prompt) : m_line(std::move(line)), m_hide_prompt(hide_prompt) {}
+        str_moveable m_line;
+        bool m_hide_prompt;
+    };
+
 public:
                     host(const char* name);
     virtual         ~host();
@@ -31,8 +38,8 @@ public:
     virtual void    shutdown() = 0;
 
     const char*     filter_prompt(const char** rprompt, bool transient=false, bool final=false);
-    void            enqueue_lines(std::list<str_moveable>& lines);
-    bool            dequeue_line(wstr_base& out);
+    void            enqueue_lines(std::list<str_moveable>& lines, bool hide_prompt);
+    bool            dequeue_line(wstr_base& out, bool& hide_prompt);
     bool            dequeue_char(wchar_t* out);
 
     // host_callbacks:
@@ -74,7 +81,7 @@ private:
     const char*     m_rprompt = nullptr;
     str<256>        m_filtered_prompt;
     str<256>        m_filtered_rprompt;
-    std::list<str_moveable> m_queued_lines;
+    std::list<queued_line> m_queued_lines;
     unsigned int    m_char_cursor = 0;
     wstr_moveable   m_last_cwd;
     bool            m_can_transient = false;

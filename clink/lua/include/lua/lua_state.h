@@ -3,7 +3,10 @@
 
 #pragma once
 
+#include <core/str.h>
+
 #include <functional>
+#include <list>
 
 extern "C" {
 #include <readline/readline.h>
@@ -47,7 +50,7 @@ public:
 
     bool            send_event(const char* event_name, int nargs=0);
     bool            send_event_cancelable(const char* event_name, int nargs=0);
-    bool            send_event_cancelable_string_inout(const char* event_name, const char* string, str_base& out);
+    bool            send_event_cancelable_string_inout(const char* event_name, const char* string, str_base& out, std::list<str_moveable>* more_out=nullptr);
     bool            send_oncommand_event(line_state& line, const char* command, bool quoted, recognition recog, const char* file);
     bool            call_lua_rl_global_function(const char* func_name, line_state* line);
 

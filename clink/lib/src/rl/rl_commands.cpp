@@ -86,7 +86,7 @@ static bool s_force_reload_scripts = false;
 extern line_buffer* g_rl_buffer;
 extern word_collector* g_word_collector;
 extern editor_module::result* g_result;
-extern void host_cmd_enqueue_lines(std::list<str_moveable>& lines);
+extern void host_cmd_enqueue_lines(std::list<str_moveable>& lines, bool hide_prompt);
 extern int host_add_history(int, const char* line);
 extern void host_get_app_context(int& id, str_base& binaries, str_base& profile, str_base& scripts);
 extern "C" int show_cursor(int visible);
@@ -348,7 +348,7 @@ int clink_paste(int count, int invoking_key)
     g_rl_buffer->insert(utf8.c_str());
     if (sel)
         g_rl_buffer->end_undo_group();
-    host_cmd_enqueue_lines(overflow);
+    host_cmd_enqueue_lines(overflow, false);
     if (done)
     {
         (*rl_redisplay_function)();
@@ -1930,7 +1930,7 @@ LUnlinkFile:
     g_rl_buffer->end_undo_group();
 
     // Queue any additional lines.
-    host_cmd_enqueue_lines(overflow);
+    host_cmd_enqueue_lines(overflow, false);
 
     // Accept the input and execute it.
     (*rl_redisplay_function)();

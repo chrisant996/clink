@@ -20,7 +20,7 @@ extern "C" {
 extern bool g_force_load_debugger;
 
 //------------------------------------------------------------------------------
-void host_cmd_enqueue_lines(std::list<str_moveable>& lines)
+void host_cmd_enqueue_lines(std::list<str_moveable>& lines, bool hide_prompt)
 {
     assert(false);
 }

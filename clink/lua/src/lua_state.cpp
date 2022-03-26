@@ -536,7 +536,7 @@ bool lua_state::send_event_cancelable(const char* event_name, int nargs)
 
 //------------------------------------------------------------------------------
 // Calls any event_name callbacks registered by scripts.
-bool lua_state::send_event_cancelable_string_inout(const char* event_name, const char* string, str_base& out)
+bool lua_state::send_event_cancelable_string_inout(const char* event_name, const char* string, str_base& out, std::list<str_moveable>* more_out)
 {
     if (!string)
         string = "";
@@ -546,9 +546,29 @@ bool lua_state::send_event_cancelable_string_inout(const char* event_name, const
     if (!send_event_internal(event_name, "_send_event_cancelable_string_inout", 1, 1))
         return false;
 
-    const char* result = lua_isstring(m_state, -1) ? lua_tostring(m_state, -1) : nullptr;
-    if (result)
-        out = result;
+    if (lua_isstring(m_state, -1))
+    {
+        out = lua_tostring(m_state, -1);
+    }
+    else if (lua_istable(m_state, -1))
+    {
+        out.clear();
+
+        const size_t len = lua_rawlen(m_state, -1);
+        for (unsigned int i = 1; i <= len; ++i)
+        {
+            lua_rawgeti(m_state, -1, i);
+            if (lua_isstring(m_state, -1))
+            {
+                const char* s = lua_tostring(m_state, -1);
+                if (i == 1)
+                    out = s;
+                else if (more_out)
+                    more_out->emplace_back(s);
+                lua_pop(m_state, 1);
+            }
+        }
+    }
 
     return true;
 }

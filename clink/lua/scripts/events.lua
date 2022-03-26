@@ -128,6 +128,9 @@ end
 --- second is not nil and is false then it stops further onfilterinput handlers
 --- from running.
 ---
+--- Starting in v1.3.13 <span class="arg">func</span> may return a table of
+--- strings, and each is executed as a command line.
+---
 --- <strong>Note:</strong>  Be very careful if you replace the text; this has
 --- the potential to interfere with or even ruin the user's ability to enter
 --- command lines for CMD to process.
