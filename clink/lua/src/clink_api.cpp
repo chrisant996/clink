@@ -168,7 +168,6 @@ class recognizer
     struct entry
     {
                             entry() {}
-                            entry(const char* key, const char* word);
         bool                empty() const { return m_key.empty(); }
         void                clear();
         str_moveable        m_key;
@@ -248,18 +247,11 @@ extern "C" void end_recognizer()
 }
 
 //------------------------------------------------------------------------------
-recognizer::entry::entry(const char* key, const char* word)
-: m_key(key)
-, m_word(word)
-{
-    os::get_current_dir(m_cwd);
-}
-
-//------------------------------------------------------------------------------
 void recognizer::entry::clear()
 {
     m_key.clear();
     m_word.clear();
+    m_cwd.clear();
 }
 
 //------------------------------------------------------------------------------
@@ -281,6 +273,7 @@ void recognizer::clear()
 {
     std::lock_guard<std::recursive_mutex> lock(m_mutex);
 
+    m_queue.clear();
     m_cache.clear();
     m_pending.clear();
     m_heap.reset();
