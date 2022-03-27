@@ -113,12 +113,7 @@ static bool search_for_executable(const char* _word, const char* cwd, str_base& 
     str<> tmp;
     str<> paths;
     if (need_cwd)
-    {
-        if (cwd)
-            paths = cwd;
-        else
-            os::get_current_dir(paths);
-    }
+        paths = cwd;
     if (need_path && os::get_env("PATH", tmp))
     {
         if (paths.length() > 0)
@@ -126,6 +121,7 @@ static bool search_for_executable(const char* _word, const char* cwd, str_base& 
         paths.concat(tmp.c_str(), tmp.length());
     }
 
+    str<> full;
     str<280> token;
     str_tokeniser tokens(paths.c_str(), ";");
     while (tokens.next(token))
@@ -135,8 +131,8 @@ static bool search_for_executable(const char* _word, const char* cwd, str_base& 
             continue;
 
         // Get full path name.
-        str<> full;
-        if (!os::get_full_path_name(token.c_str(), full, token.length()))
+        path::join(cwd, token.c_str(), tmp);
+        if (!os::get_full_path_name(tmp.c_str(), full, tmp.length()))
             continue;
 
         // Skip drives that are unknown, invalid, or remote.
