@@ -185,7 +185,7 @@ public:
                             ~recognizer() { shutdown(); }
     void                    clear();
     int                     find(const char* key, recognition& cached, str_base* file) const;
-    bool                    enqueue(const char* key, const char* word, recognition* cached=nullptr);
+    bool                    enqueue(const char* key, const char* word, const char* cwd, recognition* cached=nullptr);
     bool                    need_refresh();
     void                    end_line();
 
@@ -323,7 +323,7 @@ int recognizer::find(const char* key, recognition& cached, str_base* file) const
 }
 
 //------------------------------------------------------------------------------
-bool recognizer::enqueue(const char* key, const char* word, recognition* cached)
+bool recognizer::enqueue(const char* key, const char* word, const char* cwd, recognition* cached)
 {
     std::lock_guard<std::recursive_mutex> lock(m_mutex);
 
@@ -347,6 +347,7 @@ bool recognizer::enqueue(const char* key, const char* word, recognition* cached)
 
     m_queue.m_key = key;
     m_queue.m_word = word;
+    m_queue.m_cwd = cwd;
 
     // Assume unrecognized at first.
     store(key, nullptr, recognition::unrecognized, true/*pending*/);
@@ -647,7 +648,9 @@ recognition recognize_command(const char* line, const char* word, bool quoted, b
         return recognition::unrecognized;
 
     // Queue for background thread processing.
-    if (!s_recognizer.enqueue(orig_word, word, &cached))
+    str<> cwd;
+    os::get_current_dir(cwd);
+    if (!s_recognizer.enqueue(orig_word, word, cwd.c_str(), &cached))
         return recognition::unknown;
 
     ready = false;
