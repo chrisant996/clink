@@ -8,8 +8,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## Normal Priority
 - [ ] Document the `onarg` callback.
+- [ ] Document the `user_data` parameter to `onarg` and match functions.
 - [ ] `pushd dir & echo `<kbd>Alt+=</kbd> may need to step through previous command segments with `reader:update()`.
-- [ ] Argmatchers are currently stateless.  The `onarg` callback gives them the ability to have state.  But there is currently no way for them to know when `generate` begins, and so there is no way for them to know when to reset their state.  The motivation for adding `onarg` was to enable `os.chdir()` to be used, and Clink happens to manage/reset the current directory state, but argmatchers currently can't reset other state info.
 
 ## Low Priority
 - Let the yieldguards run in parallel?
