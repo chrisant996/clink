@@ -58,6 +58,7 @@ function _argreader._new(root, line_state)
     local reader = setmetatable({
         _matcher = root,
         _realmatcher = root,
+        _user_data = {},
         _line_state = line_state,
         _arg_index = 1,
         _stack = {},
@@ -269,7 +270,7 @@ function _argreader:update(word, word_index)
                 do_delayed_init(arg, matcher, 0)
             end
             if arg and arg.onarg and clink._in_generate() then
-                arg.onarg(0, word, word_index, line_state)
+                arg.onarg(0, word, word_index, line_state, self._user_data)
             end
             if word == matcher._endofflags then
                 self._noflags = true
@@ -342,7 +343,7 @@ function _argreader:update(word, word_index)
             do_delayed_init(arg, realmatcher, arg_index)
         end
         if arg.onarg and clink._in_generate() then
-            arg.onarg(arg_index, word, word_index, line_state)
+            arg.onarg(arg_index, word, word_index, line_state, self._user_data)
         end
     end
 
@@ -446,7 +447,7 @@ function _argreader:_push(matcher, realmatcher)
     -- v0.4.9 effectively pushed flag matchers, but not arg matchers.
     -- if not self._matcher._deprecated or self._matcher._is_flag_matcher or matcher._is_flag_matcher then
     if not matcher._deprecated or matcher._is_flag_matcher then
-        table.insert(self._stack, { self._matcher, self._arg_index, self._realmatcher, self._noflags })
+        table.insert(self._stack, { self._matcher, self._arg_index, self._realmatcher, self._noflags, self._user_data })
         --[[
         self:trace(self._dbgword, "push", matcher, "stack", #self._stack)
     else
@@ -459,6 +460,9 @@ function _argreader:_push(matcher, realmatcher)
     self._arg_index = 1
     self._realmatcher = realmatcher or matcher
     self._noflags = nil
+    if not realmatcher then -- Don't start new user data when switching to flags matcher.
+        self._user_data = {}
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -473,7 +477,7 @@ function _argreader:_pop(next_is_flag)
             return false
         end
 
-        self._matcher, self._arg_index, self._realmatcher, self._noflags = table.unpack(table.remove(self._stack))
+        self._matcher, self._arg_index, self._realmatcher, self._noflags, self._user_data = table.unpack(table.remove(self._stack))
 
         if self._matcher._loop then
             -- Matcher is looping; stop popping so it can handle the argument.
@@ -1317,7 +1321,7 @@ function _argmatcher:_generate(line_state, match_builder, extra_words)
         for _, i in ipairs(arg) do
             local t = type(i)
             if t == "function" then
-                local j = i(endword, word_count, line_state, match_builder)
+                local j = i(endword, word_count, line_state, match_builder, reader._user_data)
                 if type(j) ~= "table" then
                     return j or false
                 end
