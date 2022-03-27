@@ -120,7 +120,7 @@ private:
     void                update_internal();
     bool                update_input();
     module::context     get_context() const;
-    line_state          get_linestate(bool for_classify=false) const;
+    line_state          get_linestate() const;
     void                set_flag(unsigned char flag);
     void                clear_flag(unsigned char flag);
     bool                check_flag(unsigned char flag) const;
@@ -159,7 +159,6 @@ private:
 
     prev_buffer         m_prev_classify;
     words               m_classify_words;
-    unsigned short      m_classify_command_offset = 0;
 
     str<16>             m_prev_command_word;
     bool                m_prev_command_word_quoted;

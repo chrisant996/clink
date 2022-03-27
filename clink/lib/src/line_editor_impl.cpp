@@ -807,7 +807,7 @@ void line_editor_impl::collect_words()
 //------------------------------------------------------------------------------
 commands line_editor_impl::collect_commands()
 {
-    m_classify_command_offset = collect_words(m_classify_words, nullptr, collect_words_mode::whole_command);
+    collect_words(m_classify_words, nullptr, collect_words_mode::whole_command);
 
     commands commands(m_buffer, m_classify_words);
     return commands;
@@ -1079,28 +1079,15 @@ void host_refresh_recognizer()
 }
 
 //------------------------------------------------------------------------------
-line_state line_editor_impl::get_linestate(bool for_classify) const
+line_state line_editor_impl::get_linestate() const
 {
-    if (for_classify)
-    {
-        return {
-            m_buffer.get_buffer(),
-            m_buffer.get_length(),
-            m_buffer.get_cursor(),
-            m_classify_command_offset,
-            m_classify_words,
-        };
-    }
-    else
-    {
-        return {
-            m_buffer.get_buffer(),
-            m_buffer.get_length(),
-            m_buffer.get_cursor(),
-            m_command_offset,
-            m_words,
-        };
-    }
+    return {
+        m_buffer.get_buffer(),
+        m_buffer.get_length(),
+        m_buffer.get_cursor(),
+        m_command_offset,
+        m_words,
+    };
 }
 
 //------------------------------------------------------------------------------
