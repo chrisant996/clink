@@ -861,8 +861,7 @@ unsigned int line_editor_impl::collect_words(words& words, matches_impl* matches
     }
 #endif
 
-    if (end_word->length && (mode == collect_words_mode::stop_at_cursor ||
-                             mode == collect_words_mode::display_filter))
+    if (end_word->length && mode == collect_words_mode::stop_at_cursor)
     {
         const char *word_start = m_buffer.get_buffer() + end_word->offset;
 
@@ -1378,7 +1377,7 @@ matches* maybe_regenerate_matches(const char* needle, display_filter_flags flags
 #endif
 
     std::vector<word> words;
-    unsigned int command_offset = s_editor->collect_words(words, &regen, collect_words_mode::display_filter);
+    unsigned int command_offset = s_editor->collect_words(words, &regen, collect_words_mode::stop_at_cursor);
     line_state line
     {
         s_editor->m_buffer.get_buffer(),

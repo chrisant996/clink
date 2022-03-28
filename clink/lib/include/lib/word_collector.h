@@ -15,7 +15,7 @@ class collector_tokeniser;
 class alias_cache;
 
 //------------------------------------------------------------------------------
-enum class collect_words_mode { stop_at_cursor, display_filter, whole_command };
+enum class collect_words_mode { stop_at_cursor, whole_command };
 
 //------------------------------------------------------------------------------
 class word_token

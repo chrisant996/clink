@@ -148,8 +148,7 @@ unsigned int word_collector::collect_words(const char* line_buffer, unsigned int
 
     std::vector<command> commands;
     commands.reserve(5);
-    bool stop_at_cursor = (mode == collect_words_mode::stop_at_cursor ||
-                           mode == collect_words_mode::display_filter);
+    const bool stop_at_cursor = (mode == collect_words_mode::stop_at_cursor);
     find_command_bounds(line_buffer, line_length, line_cursor, commands, stop_at_cursor);
 
     unsigned int command_offset = 0;
