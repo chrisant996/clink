@@ -62,26 +62,35 @@ static bool search_for_extension(str_base& full, const char* word, str_base& out
     path::append(full, "");
     const unsigned int trunc = full.length();
 
-    if (strchr(word, '.'))
+    str<> pathext;
+    if (!os::get_env("pathext", pathext))
+        return false;
+
+    str_tokeniser tokens(pathext.c_str(), ";");
+    const char *start;
+    int length;
+
+    const char* ext = path::get_extension(word);
+    str<16> token_ext;
+
+    while (str_token token = tokens.next(start, length))
     {
-        path::append(full, word);
-        if (os::get_path_type(full.c_str()) == os::path_type_file)
+        if (ext)
         {
-            out = full.c_str();
-            return true;
+            token_ext.clear();
+            token_ext.concat(start, length);
+            if (token_ext.iequals(ext))
+            {
+                full.truncate(trunc);
+                path::append(full, word);
+                if (os::get_path_type(full.c_str()) == os::path_type_file)
+                {
+                    out = full.c_str();
+                    return true;
+                }
+            }
         }
-    }
-    else
-    {
-        str<> pathext;
-        if (!os::get_env("pathext", pathext))
-            return false;
-
-        str_tokeniser tokens(pathext.c_str(), ";");
-        const char *start;
-        int length;
-
-        while (str_token token = tokens.next(start, length))
+        else
         {
             full.truncate(trunc);
             path::append(full, word);
