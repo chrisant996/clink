@@ -453,11 +453,11 @@ const line_states& commands::get_linestates(const line_buffer& buffer) const
 }
 
 //------------------------------------------------------------------------------
-const line_state& commands::get_linestate(const line_buffer& buffer) const
+const line_state& commands::get_linestate(const char* buffer, unsigned int len) const
 {
     assert(m_linestates.size());
     const auto& back = m_linestates.back();
-    if (buffer.get_buffer() != back.get_line() || buffer.get_length() != back.get_length())
+    if (buffer != back.get_line() || len != back.get_length())
     {
         static line_state* s_none = nullptr;
         if (!s_none)
@@ -468,4 +468,10 @@ const line_state& commands::get_linestate(const line_buffer& buffer) const
         return *s_none;
     }
     return back;
+}
+
+//------------------------------------------------------------------------------
+const line_state& commands::get_linestate(const line_buffer& buffer) const
+{
+    return get_linestate(buffer.get_buffer(), buffer.get_length());
 }

@@ -99,6 +99,7 @@ public:
     void clear();
     const line_states& get_linestates(const char* buffer, unsigned int len) const;
     const line_states& get_linestates(const line_buffer& buffer) const;
+    const line_state& get_linestate(const char* buffer, unsigned int len) const;
     const line_state& get_linestate(const line_buffer& buffer) const;
 private:
     void clear_internal();
