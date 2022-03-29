@@ -3,11 +3,12 @@
 
 #pragma once
 
+#include <vector>
+
 class str_base;
-class line_state;
+class line_states;
 class match_generator;
 class matches_impl;
-template <typename T> class array;
 
 //------------------------------------------------------------------------------
 class match_pipeline
@@ -16,7 +17,7 @@ public:
                         match_pipeline(matches_impl& matches);
     void                reset() const;
     void                set_no_sort();
-    void                generate(const line_state& state, match_generator* generator, bool old_filtering=false) const;
+    void                generate(const line_states& states, match_generator* generator, bool old_filtering=false) const;
     void                restrict(str_base& needle) const;
     void                select(const char* needle) const;
     void                sort() const;

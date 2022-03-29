@@ -5,6 +5,7 @@
 
 //------------------------------------------------------------------------------
 class line_state;
+class line_states;
 class matches;
 enum class recognition : char;
 
@@ -16,8 +17,8 @@ public:
     virtual int remove_history(int rl_history_index, const char* line) = 0;
     virtual void filter_prompt() = 0;
     virtual void filter_transient_prompt(bool final) = 0;
-    virtual bool can_suggest(line_state& line) = 0;
-    virtual bool suggest(line_state& line, matches* matches, int generation_id) = 0;
+    virtual bool can_suggest(const line_state& line) = 0;
+    virtual bool suggest(const line_states& lines, matches* matches, int generation_id) = 0;
     virtual void filter_matches(char** matches) = 0;
     virtual bool call_lua_rl_global_function(const char* func_name, line_state* line) = 0;
     virtual const char** copy_dir_history(int* total) = 0;

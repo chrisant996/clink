@@ -67,7 +67,7 @@ unsigned int line_state::get_command_word_index() const
 unsigned int line_state::get_end_word_offset() const
 {
     if (m_words.size() > 0)
-        return m_words[m_words.size() - 1].offset;
+        return m_words.back().offset;
     return 0;
 }
 

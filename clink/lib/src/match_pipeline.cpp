@@ -208,15 +208,17 @@ void match_pipeline::set_no_sort()
 
 //------------------------------------------------------------------------------
 void match_pipeline::generate(
-    const line_state& state,
+    const line_states& states,
     match_generator* generator,
     bool old_filtering) const
 {
+    const auto& state = states.back();
+
     m_matches.set_word_break_position(state.get_end_word_offset());
 
     match_builder builder(m_matches);
     if (generator)
-        generator->generate(state, builder, old_filtering);
+        generator->generate(states, builder, old_filtering);
 
     m_matches.done_building();
 

@@ -55,7 +55,7 @@ lua_word_classifier::lua_word_classifier(lua_state& state)
 }
 
 //------------------------------------------------------------------------------
-void lua_word_classifier::classify(const std::vector<line_state>& commands, word_classifications& classifications)
+void lua_word_classifier::classify(const line_states& commands, word_classifications& classifications)
 {
     lua_State* state = m_state.get_state();
     save_stack_top ss(state);

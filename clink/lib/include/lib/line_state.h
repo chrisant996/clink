@@ -44,3 +44,10 @@ private:
     unsigned int        m_cursor;
     unsigned int        m_command_offset;
 };
+
+//------------------------------------------------------------------------------
+class line_states : public std::vector<line_state>
+{
+public:
+                        line_states() = default;
+};

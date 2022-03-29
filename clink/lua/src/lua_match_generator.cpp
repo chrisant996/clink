@@ -42,7 +42,7 @@ lua_match_generator::~lua_match_generator()
 }
 
 //------------------------------------------------------------------------------
-bool lua_match_generator::generate(const line_state& line, match_builder& builder, bool old_filtering)
+bool lua_match_generator::generate(const line_states& lines, match_builder& builder, bool old_filtering)
 {
     lua_State* state = m_state.get_state();
     save_stack_top ss(state);
@@ -52,7 +52,7 @@ bool lua_match_generator::generate(const line_state& line, match_builder& builde
     lua_pushliteral(state, "_generate");
     lua_rawget(state, -2);
 
-    line_state_lua line_lua(line);
+    line_state_lua line_lua(lines.back());
     line_lua.push(state);
 
     match_builder_lua builder_lua(builder);

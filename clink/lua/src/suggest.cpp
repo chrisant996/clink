@@ -55,9 +55,11 @@ suggester::suggester(lua_state& lua)
 }
 
 //------------------------------------------------------------------------------
-bool suggester::suggest(line_state& line, matches* matches, int generation_id)
+bool suggester::suggest(const line_states& lines, matches* matches, int generation_id)
 {
     s_toolkit.reset();
+
+    const line_state& line = lines.back();
 
     if (!line.get_length())
     {

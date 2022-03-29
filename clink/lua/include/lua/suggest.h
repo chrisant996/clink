@@ -5,7 +5,7 @@
 
 class lua_state;
 class str_base;
-class line_state;
+class line_states;
 class matches;
 
 //------------------------------------------------------------------------------
@@ -13,7 +13,7 @@ class suggester
 {
 public:
                     suggester(lua_state& lua);
-    bool            suggest(line_state& line, matches* matches, int generation_id);
+    bool            suggest(const line_states& lines, matches* matches, int generation_id);
 
 private:
     lua_state&      m_lua;

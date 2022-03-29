@@ -18,7 +18,7 @@ public:
     bool            more() const;
     bool            get_visible(str_base& out) const;
     void            clear();
-    bool            can_suggest(line_state& line);
+    bool            can_suggest(const line_state& line);
     void            set(const char* line, unsigned int endword_offset, const char* suggestion, unsigned int offset);
     bool            insert(suggestion_action action);
     bool            pause(bool pause);

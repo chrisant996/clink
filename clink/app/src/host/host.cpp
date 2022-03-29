@@ -157,7 +157,7 @@ extern bool get_sticky_search_add_history(const char* line);
 extern void clear_sticky_search_position();
 extern void reset_keyseq_to_name_map();
 extern void set_prompt(const char* prompt, const char* rprompt, bool redisplay);
-extern bool can_suggest(line_state& line);
+extern bool can_suggest(const line_state& line);
 
 
 
@@ -459,7 +459,7 @@ void host::filter_transient_prompt(bool final)
 }
 
 //------------------------------------------------------------------------------
-bool host::can_suggest(line_state& line)
+bool host::can_suggest(const line_state& line)
 {
     return (m_suggester &&
             g_autosuggest_enable.get() &&
@@ -467,10 +467,10 @@ bool host::can_suggest(line_state& line)
 }
 
 //------------------------------------------------------------------------------
-bool host::suggest(line_state& line, matches* matches, int generation_id)
+bool host::suggest(const line_states& lines, matches* matches, int generation_id)
 {
     if (m_suggester && g_autosuggest_enable.get())
-        return m_suggester->suggest(line, matches, generation_id);
+        return m_suggester->suggest(lines, matches, generation_id);
 
     return false;
 }

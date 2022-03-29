@@ -97,13 +97,13 @@ public:
     void set(const line_buffer& buffer, const std::vector<word>& words);
     unsigned int break_end_word(unsigned int truncate, unsigned int keep);
     void clear();
-    const std::vector<line_state>& get_linestates(const char* buffer, unsigned int len) const;
-    const std::vector<line_state>& get_linestates(const line_buffer& buffer) const;
+    const line_states& get_linestates(const char* buffer, unsigned int len) const;
+    const line_states& get_linestates(const line_buffer& buffer) const;
     const line_state& get_linestate(const line_buffer& buffer) const;
 private:
     void clear_internal();
     std::vector<std::vector<word>> m_words_storage;
-    std::vector<line_state> m_linestates;
+    line_states m_linestates;
 #ifdef DEBUG
     bool m_broke_end_word;
 #endif

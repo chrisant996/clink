@@ -186,7 +186,7 @@ extern "C" void host_filter_transient_prompt(int crlf)
 }
 
 //------------------------------------------------------------------------------
-bool host_can_suggest(line_state& line)
+bool host_can_suggest(const line_state& line)
 {
     if (!s_callbacks)
         return false;
@@ -909,6 +909,10 @@ unsigned int line_editor_impl::collect_words(words& words, matches_impl* matches
     }
 #endif
 
+    words.clear();
+    for (const auto& w : commands.get_linestate(m_buffer).get_words())
+        words.emplace_back(w);
+
     return command_offset;
 }
 
@@ -1261,7 +1265,8 @@ void line_editor_impl::update_internal()
 //------------------------------------------------------------------------------
 void line_editor_impl::try_suggest()
 {
-    line_state line = get_linestate();
+    const line_states& lines = m_commands.get_linestates(m_buffer);
+    line_state line = lines.back();
     if (host_can_suggest(line))
     {
         matches_impl* matches = nullptr;
@@ -1269,7 +1274,7 @@ void line_editor_impl::try_suggest()
 
         if (m_words.size())
         {
-            const word& word = m_words[m_words.size() - 1];
+            const word& word = m_words.back();
             if (word.offset < m_buffer.get_length() && m_buffer.get_length() - word.offset >= 2)
             {
                 // Use an empty set of matches when a UNC path is detected.
@@ -1302,7 +1307,7 @@ void line_editor_impl::try_suggest()
         }
 
         assert(s_callbacks); // Was tested above inside host_can_suggest().
-        s_callbacks->suggest(line, matches, m_generation_id);
+        s_callbacks->suggest(lines, matches, m_generation_id);
 
         delete empty_matches;
     }
@@ -1346,7 +1351,6 @@ matches* maybe_regenerate_matches(const char* needle, display_filter_flags flags
     commands commands;
     std::vector<word> words;
     unsigned int command_offset = s_editor->collect_words(words, &regen, collect_words_mode::stop_at_cursor, commands);
-    line_state line = commands.get_linestate(s_editor->m_buffer);
 
     match_pipeline pipeline(regen);
     pipeline.reset();
@@ -1355,7 +1359,8 @@ matches* maybe_regenerate_matches(const char* needle, display_filter_flags flags
     if (debug_filter) puts("-- GENERATE");
 #endif
 
-    pipeline.generate(line, s_editor->m_generator, old_filtering);
+    const auto linestates = commands.get_linestates(s_editor->m_buffer);
+    pipeline.generate(linestates, s_editor->m_generator, old_filtering);
 
 #ifdef DEBUG
     if (debug_filter) puts("-- SELECT");

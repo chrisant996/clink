@@ -103,7 +103,7 @@ void word_collector_tester::run()
         REQUIRE(words[i].is_redir_arg == expected_redir_arg);
     }
 
-    const word& last_word = words[words.size() - 1];
+    const word& last_word = words.back();
     REQUIRE(last_word.length == 0);
 }
 

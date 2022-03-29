@@ -71,7 +71,7 @@ void suggestion_manager::clear()
 }
 
 //------------------------------------------------------------------------------
-bool suggestion_manager::can_suggest(line_state& line)
+bool suggestion_manager::can_suggest(const line_state& line)
 {
     if (!g_rl_buffer)
         return false;

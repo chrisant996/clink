@@ -934,7 +934,7 @@ void hook_display()
 }
 
 //------------------------------------------------------------------------------
-bool can_suggest(line_state& line)
+bool can_suggest(const line_state& line)
 {
     return s_suggestion.can_suggest(line);
 }
