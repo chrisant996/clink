@@ -1489,7 +1489,7 @@ static int generate_from_history(lua_State* state)
         collector.collect_words(buffer, len, len/*cursor*/, words, collect_words_mode::whole_command);
         commands.set(buffer, len, 0, words);
 
-        for (const line_state& line : commands.get_linestates())
+        for (const line_state& line : commands.get_linestates(buffer, len))
         {
             // clink._generate_from_historyline
             lua_pushvalue(state, -1);

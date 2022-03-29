@@ -564,10 +564,10 @@ void line_editor_impl::update_matches()
 
     if (generate)
     {
-        line_state line = get_linestate();
+        const auto linestates = m_commands.get_linestates(m_buffer);
         match_pipeline pipeline(m_matches);
         pipeline.reset();
-        pipeline.generate(line, m_generator);
+        pipeline.generate(linestates, m_generator);
     }
 
     if (restrict)
@@ -932,7 +932,7 @@ void line_editor_impl::classify()
 
     // Use the full line; don't stop at the cursor.
     commands commands = collect_commands();
-    m_classifier->classify(commands.get_linestates(), m_classifications);
+    m_classifier->classify(commands.get_linestates(m_buffer), m_classifications);
     m_classifications.finish(is_showing_argmatchers());
 
 #ifdef DEBUG

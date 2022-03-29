@@ -428,21 +428,44 @@ void commands::clear_internal()
 }
 
 //------------------------------------------------------------------------------
-const std::vector<line_state>& commands::get_linestates() const
+const std::vector<line_state>& commands::get_linestates(const char* buffer, unsigned int len) const
 {
+    assert(m_linestates.size());
+    const auto& front = m_linestates.front();
+    if (buffer != front.get_line() || len != front.get_length())
+    {
+        static std::vector<line_state>* s_none = nullptr;
+        if (!s_none)
+        {
+            std::vector<word>* wv = new std::vector<word>;
+            s_none = new std::vector<line_state>;
+            s_none->push_back({ nullptr, 0, 0, 0, *wv });
+        }
+        return *s_none;
+    }
     return m_linestates;
 }
 
 //------------------------------------------------------------------------------
-line_state commands::get_linestate(const line_buffer& buffer) const
+const std::vector<line_state>& commands::get_linestates(const line_buffer& buffer) const
+{
+    return get_linestates(buffer.get_buffer(), buffer.get_length());
+}
+
+//------------------------------------------------------------------------------
+const line_state& commands::get_linestate(const line_buffer& buffer) const
 {
     assert(m_linestates.size());
-    const auto& last = m_linestates[m_linestates.size() - 1];
-    return {
-        buffer.get_buffer(),
-        buffer.get_length(),
-        buffer.get_cursor(),
-        last.get_command_offset(),
-        last.get_words(),
-    };
+    const auto& back = m_linestates.back();
+    if (buffer.get_buffer() != back.get_line() || buffer.get_length() != back.get_length())
+    {
+        static line_state* s_none = nullptr;
+        if (!s_none)
+        {
+            std::vector<word>* wv = new std::vector<word>;
+            s_none = new line_state(nullptr, 0, 0, 0, *wv);
+        }
+        return *s_none;
+    }
+    return back;
 }
