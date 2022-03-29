@@ -1485,8 +1485,9 @@ static int generate_from_history(lua_State* state)
 
         // Collect one line_state for each command in the line.
         std::vector<word> words;
+        commands commands;
         collector.collect_words(buffer, len, len/*cursor*/, words, collect_words_mode::whole_command);
-        commands commands(buffer, len, 0, words);
+        commands.set(buffer, len, 0, words);
 
         for (const line_state& line : commands.get_linestates())
         {

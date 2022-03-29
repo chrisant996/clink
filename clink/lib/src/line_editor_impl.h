@@ -113,7 +113,7 @@ private:
     void                end_line();
     void                collect_words();
     commands            collect_commands();
-    unsigned int        collect_words(words& words, matches_impl* matches, collect_words_mode mode);
+    unsigned int        collect_words(words& words, matches_impl* matches, collect_words_mode mode, commands& commands);
     void                classify();
     void                maybe_send_oncommand_event();
     matches*            get_mutable_matches(bool nosort=false);
@@ -156,6 +156,7 @@ private:
     prev_buffer         m_prev_generate;
     words               m_words;
     unsigned short      m_command_offset = 0;
+    commands            m_commands;
 
     prev_buffer         m_prev_classify;
     words               m_classify_words;

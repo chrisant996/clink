@@ -115,20 +115,12 @@ void word_collector::find_command_bounds(const char* buffer, unsigned int length
     unsigned int command_length;
     while (m_command_tokeniser->next(command_start, command_length))
     {
-        if (stop_at_cursor)
-        {
-            // Have we found the command containing the cursor?
-            if (cursor >= command_start &&
-                cursor <= command_start + command_length)
-            {
-                commands.push_back({ command_start, command_length });
-                return;
-            }
-        }
-        else
-        {
-            commands.push_back({ command_start, command_length });
-        }
+        commands.push_back({ command_start, command_length });
+
+        // Have we found the command containing the cursor?
+        if (stop_at_cursor && (cursor >= command_start &&
+                               cursor <= command_start + command_length))
+            return;
     }
 }
 
@@ -309,8 +301,10 @@ unsigned int word_collector::collect_words(const line_buffer& buffer, std::vecto
 }
 
 //------------------------------------------------------------------------------
-commands::commands(const char* line_buffer, unsigned int line_length, unsigned int line_cursor, const std::vector<word>& words)
+void commands::set(const char* line_buffer, unsigned int line_length, unsigned int line_cursor, const std::vector<word>& words)
 {
+    clear_internal();
+
     // Count number of commands so we can pre-allocate words_storage so that
     // emplace_back() doesn't invalidate pointers (references) stored in
     // linestates.
@@ -360,16 +354,95 @@ commands::commands(const char* line_buffer, unsigned int line_length, unsigned i
         tmp.emplace_back(words[i]);
         i++;
     }
+
+    if (m_words_storage.size() > 0)
+    {
+        // Guarantee room for get_word_break_info() to append an empty end word.
+        std::vector<word>& last = m_words_storage.back();
+        last.reserve(last.size() + 1);
+    }
 }
 
 //------------------------------------------------------------------------------
-commands::commands(const line_buffer& buffer, const std::vector<word>& words)
-: commands(buffer.get_buffer(), buffer.get_length(), buffer.get_cursor(), words)
+void commands::set(const line_buffer& buffer, const std::vector<word>& words)
 {
+    set(buffer.get_buffer(), buffer.get_length(), buffer.get_cursor(), words);
+}
+
+//------------------------------------------------------------------------------
+unsigned int commands::break_end_word(unsigned int truncate, unsigned int keep)
+{
+#ifdef DEBUG
+    assert(!m_broke_end_word);
+    m_broke_end_word = true;
+#endif
+
+    word* end_word = const_cast<word*>(&m_linestates.back().get_words().back());
+    if (truncate)
+    {
+        truncate = min<unsigned int>(truncate, end_word->length);
+
+        word split_word;
+        split_word.offset = end_word->offset + truncate;
+        split_word.length = end_word->length - truncate;
+        split_word.command_word = false;
+        split_word.is_alias = false;
+        split_word.is_redir_arg = false;
+        split_word.quoted = false;
+        split_word.delim = str_token::invalid_delim;
+
+        std::vector<word>* words = const_cast<std::vector<word>*>(&m_words_storage.back());
+        end_word->length = truncate;
+        words->push_back(split_word);
+        end_word = &words->back();
+    }
+
+    keep = min<unsigned int>(keep, end_word->length);
+    end_word->length = keep;
+    return end_word->offset;
+}
+
+//------------------------------------------------------------------------------
+void commands::clear()
+{
+    clear_internal();
+
+    m_words_storage.emplace_back();
+    m_linestates.emplace_back(line_state {
+        nullptr,
+        0,
+        0,
+        0,
+        m_words_storage[0]
+    });
+}
+
+//------------------------------------------------------------------------------
+void commands::clear_internal()
+{
+    m_words_storage.clear();
+    m_linestates.clear();
+#ifdef DEBUG
+    m_broke_end_word = false;
+#endif
 }
 
 //------------------------------------------------------------------------------
 const std::vector<line_state>& commands::get_linestates() const
 {
     return m_linestates;
+}
+
+//------------------------------------------------------------------------------
+line_state commands::get_linestate(const line_buffer& buffer) const
+{
+    assert(m_linestates.size());
+    const auto& last = m_linestates[m_linestates.size() - 1];
+    return {
+        buffer.get_buffer(),
+        buffer.get_length(),
+        buffer.get_cursor(),
+        last.get_command_offset(),
+        last.get_words(),
+    };
 }

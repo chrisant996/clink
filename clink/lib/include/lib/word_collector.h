@@ -57,11 +57,6 @@ public:
     unsigned int collect_words(const line_buffer& buffer,
                                std::vector<word>& words, collect_words_mode mode) const;
 
-    void collect_commands(const char* line_buffer, unsigned int line_length, unsigned int line_cursor,
-                          const std::vector<word>& words, std::vector<line_state>& commands);
-    void collect_commands(const line_buffer& buffer,
-                          const std::vector<word>& words, std::vector<line_state>& commands);
-
 private:
     char get_opening_quote() const;
     char get_closing_quote() const;
@@ -97,10 +92,18 @@ private:
 class commands
 {
 public:
-    commands(const char* line_buffer, unsigned int line_length, unsigned int line_cursor, const std::vector<word>& words);
-    commands(const line_buffer& buffer, const std::vector<word>& words);
+    commands() { clear(); }
+    void set(const char* line_buffer, unsigned int line_length, unsigned int line_cursor, const std::vector<word>& words);
+    void set(const line_buffer& buffer, const std::vector<word>& words);
+    unsigned int break_end_word(unsigned int truncate, unsigned int keep);
+    void clear();
     const std::vector<line_state>& get_linestates() const;
+    line_state get_linestate(const line_buffer& buffer) const;
 private:
+    void clear_internal();
     std::vector<std::vector<word>> m_words_storage;
     std::vector<line_state> m_linestates;
+#ifdef DEBUG
+    bool m_broke_end_word;
+#endif
 };

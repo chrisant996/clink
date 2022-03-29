@@ -365,6 +365,10 @@ void line_editor_impl::begin_line()
     m_prev_command_word.clear();
     m_prev_command_word_quoted = false;
 
+    m_words.clear();
+    m_commands.clear();
+    m_classify_words.clear();
+
     rl_before_display_function = before_display;
 
     editor_module::context context = get_context();
@@ -387,6 +391,10 @@ void line_editor_impl::end_line()
     m_buffer.end_line();
     m_desc.output->end();
     m_desc.input->end();
+
+    m_words.clear();
+    m_commands.clear();
+    m_classify_words.clear();
 
     s_editor = nullptr;
     s_callbacks = nullptr;
@@ -801,33 +809,25 @@ bool line_editor_impl::update_input()
 //------------------------------------------------------------------------------
 void line_editor_impl::collect_words()
 {
-    m_command_offset = collect_words(m_words, &m_matches, collect_words_mode::stop_at_cursor);
+    m_command_offset = collect_words(m_words, &m_matches, collect_words_mode::stop_at_cursor, m_commands);
 }
 
 //------------------------------------------------------------------------------
 commands line_editor_impl::collect_commands()
 {
-    collect_words(m_classify_words, nullptr, collect_words_mode::whole_command);
-
-    commands commands(m_buffer, m_classify_words);
+    commands commands;
+    collect_words(m_classify_words, nullptr, collect_words_mode::whole_command, commands);
     return commands;
 }
 
 //------------------------------------------------------------------------------
-unsigned int line_editor_impl::collect_words(words& words, matches_impl* matches, collect_words_mode mode)
+unsigned int line_editor_impl::collect_words(words& words, matches_impl* matches, collect_words_mode mode, commands& commands)
 {
     unsigned int command_offset = m_collector.collect_words(m_buffer, words, mode);
+    commands.set(m_buffer, words);
 
 #ifdef DEBUG
     const int dbg_row = dbg_get_env_int("DEBUG_COLLECTWORDS");
-#endif
-
-    // The last word can be split by the match generators, to influence word
-    // breaks. This is a little clunky but works well enough.
-    line_state line { m_buffer.get_buffer(), m_buffer.get_length(), m_buffer.get_cursor(), command_offset, words };
-    word* end_word = &words.back();
-
-#ifdef DEBUG
     str<> tmp1;
     str<> tmp2;
     if (dbg_row > 0)
@@ -861,34 +861,14 @@ unsigned int line_editor_impl::collect_words(words& words, matches_impl* matches
     }
 #endif
 
-    if (end_word->length && mode == collect_words_mode::stop_at_cursor)
+    // The last word can be split by the match generators, to influence word
+    // breaks. This is a little clunky but works well enough.
+    if (words.back().length && mode == collect_words_mode::stop_at_cursor)
     {
-        const char *word_start = m_buffer.get_buffer() + end_word->offset;
-
         word_break_info break_info;
         if (m_generator)
-            m_generator->get_word_break_info(line, break_info);
-
-        if (break_info.truncate)
-        {
-            int truncate = min<unsigned int>(break_info.truncate, end_word->length);
-
-            word split_word;
-            split_word.offset = end_word->offset + truncate;
-            split_word.length = end_word->length - truncate;
-            split_word.command_word = false;
-            split_word.is_alias = false;
-            split_word.is_redir_arg = false;
-            split_word.quoted = false;
-            split_word.delim = str_token::invalid_delim;
-
-            end_word->length = truncate;
-            words.push_back(split_word);
-            end_word = &words.back();
-        }
-
-        int keep = min<unsigned int>(break_info.keep, end_word->length);
-        end_word->length = keep;
+            m_generator->get_word_break_info(commands.get_linestate(m_buffer), break_info);
+        const unsigned int end_word_offset = commands.break_end_word(break_info.truncate, break_info.keep);
 
 #ifdef DEBUG
         if (dbg_row > 0)
@@ -896,23 +876,16 @@ unsigned int line_editor_impl::collect_words(words& words, matches_impl* matches
             int i_word = 1;
             tmp2.format("\x1b[s\x1b[%dHafter word break info:  ", dbg_row + 1);
             m_printer.print(tmp2.c_str(), tmp2.length());
-            for (auto const& w : words)
+            for (auto const& w : commands.get_linestate(m_buffer).get_words())
             {
                 const char* q = w.quoted ? "\"" : "";
                 if (w.is_redir_arg)
                     m_printer.print(">");
                 if (w.command_word)
                     m_printer.print("!");
-                if (i_word == words.size())
-                {
-                    tmp2.format("%s\x1b[0;35;7m%.*s\x1b[0;37;7m%.*s\x1b[m%s ",
-                        q, keep, m_buffer.get_buffer() + w.offset,
-                        w.length - keep, m_buffer.get_buffer() + w.offset + keep, q);
-                }
-                else
-                {
-                    tmp2.format("%s\x1b[0;37;7m%.*s\x1b[m%s ", q, w.length, m_buffer.get_buffer() + w.offset, q);
-                }
+                const char* color = (i_word == words.size()) ? "35;7" : "37;7";
+                const char* delim = (i_word + 1 == words.size()) ? "" : " ";
+                tmp2.format("%s\x1b[0;%sm%.*s\x1b[m%s", q, color, w.length, m_buffer.get_buffer() + w.offset, q, delim);
                 m_printer.print(tmp2.c_str(), tmp2.length());
                 i_word++;
             }
@@ -922,7 +895,7 @@ unsigned int line_editor_impl::collect_words(words& words, matches_impl* matches
 
         // Need to coordinate with Readline when we redefine word breaks.
         assert(matches);
-        matches->set_word_break_position(end_word->offset);
+        matches->set_word_break_position(end_word_offset);
     }
 
 #ifdef DEBUG
@@ -1080,13 +1053,7 @@ void host_refresh_recognizer()
 //------------------------------------------------------------------------------
 line_state line_editor_impl::get_linestate() const
 {
-    return {
-        m_buffer.get_buffer(),
-        m_buffer.get_length(),
-        m_buffer.get_cursor(),
-        m_command_offset,
-        m_words,
-    };
+    return m_commands.get_linestate(m_buffer);
 }
 
 //------------------------------------------------------------------------------
@@ -1376,16 +1343,10 @@ matches* maybe_regenerate_matches(const char* needle, display_filter_flags flags
     if (debug_filter) puts("REGENERATE_MATCHES");
 #endif
 
+    commands commands;
     std::vector<word> words;
-    unsigned int command_offset = s_editor->collect_words(words, &regen, collect_words_mode::stop_at_cursor);
-    line_state line
-    {
-        s_editor->m_buffer.get_buffer(),
-        s_editor->m_buffer.get_length(),
-        s_editor->m_buffer.get_cursor(),
-        command_offset,
-        words,
-    };
+    unsigned int command_offset = s_editor->collect_words(words, &regen, collect_words_mode::stop_at_cursor, commands);
+    line_state line = commands.get_linestate(s_editor->m_buffer);
 
     match_pipeline pipeline(regen);
     pipeline.reset();
