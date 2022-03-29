@@ -10,6 +10,9 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - [ ] Document the `onarg` callback.
 - [ ] Document the `user_data` parameter to `onarg` and match functions.
 - [ ] `pushd dir & echo `<kbd>Alt+=</kbd> may need to step through previous command segments with `reader:update()`.
+  - [ ] `clink._generate`
+  - [ ] `clink._suggest`
+- [ ] Collecting words currently happens in update_internal, but probably it belongs in alternative_matches and/or update_matches.
 
 ## Low Priority
 - Let the yieldguards run in parallel?
