@@ -29,11 +29,6 @@ end
 --- See <a href="#filteringthematchdisplay">Filtering the Match Display</a> for
 --- more information.
 clink.match_display_filter = nil
-clink.use_old_filtering = nil
-
---------------------------------------------------------------------------------
--- Deprecated.
-local _current_builder = nil
 
 
 
@@ -214,7 +209,7 @@ end
 
 --------------------------------------------------------------------------------
 function clink._in_generate()
-    return _current_builder and true
+    return clink.co_state._current_builder and true
 end
 
 --------------------------------------------------------------------------------
@@ -246,27 +241,27 @@ function clink._generate(line_state, line_states, match_builder, old_filtering)
     end
 
     clink._reset_display_filter()
-    clink.use_old_filtering = old_filtering
-    clink._argmatchers_line_states = line_states
+    clink.co_state.use_old_filtering = old_filtering
+    clink.co_state.argmatcher_line_states = line_states
 
     prepare()
-    _current_builder = match_builder
+    clink.co_state._current_builder = match_builder
 
     local ok, ret = xpcall(impl, _error_handler_ret)
     if not ok then
         print("")
         print("match generator failed:")
         print(ret)
-        _current_builder = nil
-        clink.use_old_filtering = nil
-        clink._argmatchers_line_states = nil
+        clink.co_state._current_builder = nil
+        clink.co_state.use_old_filtering = nil
+        clink.co_state.argmatcher_line_states = nil
         rl_state = nil
         return
     end
 
-    _current_builder = nil
-    clink.use_old_filtering = nil
-    clink._argmatchers_line_states = nil
+    clink.co_state._current_builder = nil
+    clink.co_state.use_old_filtering = nil
+    clink.co_state.argmatcher_line_states = nil
     rl_state = nil
     return ret or false
 end
@@ -341,8 +336,8 @@ end
 --- This is a shim that lets clink.register_match_generator continue to work
 --- for now, despite being obsolete.
 function clink.add_match(match)
-    if _current_builder then
-        _current_builder:deprecated_addmatch(match)
+    if clink.co_state._current_builder then
+        clink.co_state._current_builder:deprecated_addmatch(match)
     end
 end
 
@@ -496,8 +491,8 @@ end
 --- This is only needed when using deprecated APIs.  It's automatically inferred
 --- from the match type when using the current APIs.
 function clink.matches_are_files(files)
-    if _current_builder then
-        _current_builder:setmatchesarefiles(files)
+    if clink.co_state._current_builder then
+        clink.co_state._current_builder:setmatchesarefiles(files)
     end
 end
 
@@ -505,8 +500,8 @@ end
 --- -name:  clink.suppress_char_append
 --- -deprecated: builder:setsuppressappend
 function clink.suppress_char_append()
-    if _current_builder then
-        _current_builder:setsuppressappend(true)
+    if clink.co_state._current_builder then
+        clink.co_state._current_builder:setsuppressappend(true)
     end
 end
 
@@ -514,8 +509,8 @@ end
 --- -name:  clink.suppress_quoting
 --- -deprecated: builder:setsuppressquoting
 function clink.suppress_quoting()
-    if _current_builder then
-        _current_builder:setsuppressquoting(true)
+    if clink.co_state._current_builder then
+        clink.co_state._current_builder:setsuppressquoting(true)
     end
 end
 
@@ -563,7 +558,7 @@ function clink.register_match_generator(func, priority)
         local info = line_state:getwordinfo(line_state:getwordcount())
         local first = info.offset
         local last
-        if clink.use_old_filtering then
+        if clink.co_state.use_old_filtering then
             last = line_state:getcursor() - 1
         else
             last = first + info.length - 1

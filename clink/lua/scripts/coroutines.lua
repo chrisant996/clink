@@ -15,6 +15,9 @@ local _coroutine_generation = 0         -- ID for current generation of coroutin
 local _dead = nil                       -- List of dead coroutines (only when "lua.debug" is set, or in DEBUG builds).
 local _trimmed = 0                      -- Number of coroutines discarded from the dead list (overflow).
 
+local _main_perthread_state = {}
+clink.co_state = _main_perthread_state
+
 local print = clink.print
 
 --------------------------------------------------------------------------------
@@ -469,11 +472,7 @@ local function restore_coroutine_state(entry, thread)
 
     if entry.isgenerator then
         old_state.rl_state = rl_state
-        old_state._argmatchers_line_states = clink._argmatchers_line_states
-
         rl_state = state.rl_state
-        clink._argmatchers_line_states = state._argmatchers_line_states
-
         if not entry.keepevents then
             old_state.events = clink._set_coroutine_events(state.events)
         end
@@ -501,12 +500,8 @@ local function save_coroutine_state(entry, thread)
 
     if entry.isgenerator then
         state.rl_state = rl_state
-        state._argmatchers_line_states = clink._argmatchers_line_states
-
         if old_state then
             rl_state = old_state.rl_state
-            clink._argmatchers_line_states = old_state._argmatchers_line_states
-
             if not entry.keepevents then
                 state.events = clink._set_coroutine_events(old_state.events)
             end
@@ -554,6 +549,7 @@ function clink.addcoroutine(c, interval)
         isprompt=created_info.isprompt,
         isgenerator=created_info.isgenerator,
         state={},
+        co_state={},
         src=created_info.src,
     }
     save_coroutine_state(entry)
@@ -863,6 +859,7 @@ function coroutine.create(func)
         isprompt=isprompt,
         isgenerator=isgenerator,
         state={},
+        co_state={},
         src=src,
     }
     save_coroutine_state(entry)
@@ -882,8 +879,12 @@ function coroutine.resume(co, ...)
     local entry = _coroutines[co]
     restore_coroutine_state(entry, co)
 
+    local old_co_state = clink.co_state
+    clink.co_state = entry.co_state
+
     local ret = table.pack(orig_coroutine_resume(co, ...))
 
+    clink.co_state = old_co_state
     save_coroutine_state(entry, co)
     return table.unpack(ret)
 end

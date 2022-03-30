@@ -1277,7 +1277,7 @@ function _argmatcher:_generate(line_state, match_builder, extra_words)
 
     local endword
     local endwordinfo = line_state:getwordinfo(line_state:getwordcount())
-    if clink.use_old_filtering then
+    if clink.co_state.use_old_filtering then
         endword = line_state:getline():sub(endwordinfo.offset, line_state:getcursor() - 1)
     else
         endword = line_state:getendword()
@@ -1845,16 +1845,16 @@ local function do_generate(line_state, match_builder)
     local argmatcher, has_argmatcher, extra_words = _find_argmatcher(line_state, nil, lookup)
     lookup = nil
     if argmatcher then
-        _argmatcher_fromhistory = {}
-        _argmatcher_fromhistory_root = argmatcher
+        clink.co_state._argmatcher_fromhistory = {}
+        clink.co_state._argmatcher_fromhistory_root = argmatcher
         local ret, shift, inner = argmatcher:_generate(line_state, match_builder, extra_words)
         if ret and (shift or inner) then
             line_state:shift(shift)
             lookup = inner
             goto do_command
         end
-        _argmatcher_fromhistory = {}
-        _argmatcher_fromhistory_root = nil
+        clink.co_state._argmatcher_fromhistory = {}
+        clink.co_state._argmatcher_fromhistory_root = nil
         return ret
     end
 
@@ -1863,11 +1863,11 @@ end
 
 --------------------------------------------------------------------------------
 function argmatcher_generator:generate(line_state, match_builder)
-    if clink._argmatchers_line_states then
-        local num = #clink._argmatchers_line_states - 1
+    if clink.co_state.argmatcher_line_states then
+        local num = #clink.co_state.argmatcher_line_states - 1
         for i = 1, num do
             -- Don't pass match_builder; these parse without generating.
-            do_generate(clink._argmatchers_line_states[i].line_state)
+            do_generate(clink.co_state.argmatcher_line_states[i].line_state)
         end
     end
 
