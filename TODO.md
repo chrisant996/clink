@@ -5,13 +5,11 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
+- Unit test for `coroutine.resume()` swapping state correctly (and automatically).
 
 ## Normal Priority
 - [ ] Document the `onarg` callback.
 - [ ] Document the `user_data` parameter to `onarg` and match functions.
-- [ ] `pushd dir & echo `<kbd>Alt+=</kbd> may need to step through previous command segments with `reader:update()`.
-  - [ ] `clink._generate`
-  - [ ] `clink._suggest`
 - [ ] Collecting words currently happens in update_internal, but probably it belongs in alternative_matches and/or update_matches.
 
 ## Low Priority
@@ -35,6 +33,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Follow Up
 - Readline command reference.
 - Add more Readline documentation into the Clink docs.
+- Add specfic doc section on `exec.*` settings?
 - Add command and flag descriptions in clink-completions?
 - Push update to clink-completions repo.
 - Push update to z.lua repo.
