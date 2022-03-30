@@ -24,10 +24,12 @@ local function onarg_cd(arg_index, word, word_index, line_state)
     local dir = get_dir_arg(word, word_index, line_state)
     if dir then
         if line_state:getword(word_index - 1):lower() ~= "/d" then
-            local cwd = os.getcwd()
             local drive = path.getdrive(dir)
-            if path.getdrive(cwd) ~= drive then
-                return
+            if drive then
+                local cwd = os.getcwd()
+                if path.getdrive(cwd) ~= drive then
+                    return
+                end
             end
         end
         os.chdir(dir)
