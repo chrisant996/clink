@@ -18,6 +18,7 @@ public:
                         line_states_lua(const line_states& lines, word_classifications& classifications);
                         ~line_states_lua() = default;
     void                push(lua_State* state);
+    static void         make_new(lua_State* state, const line_states& lines);
 private:
     std::vector<line_state_lua> m_lines;
     std::vector<lua_word_classifications> m_classifications;

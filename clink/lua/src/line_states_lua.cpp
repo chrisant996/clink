@@ -63,3 +63,20 @@ void line_states_lua::push(lua_State* state)
         lua_rawseti(state, -2, int(++ii));
     }
 }
+
+//------------------------------------------------------------------------------
+void line_states_lua::make_new(lua_State* state, const line_states& lines)
+{
+    // Package the lua objects into a table.
+    lua_createtable(state, int(lines.size()), 0);
+    for (size_t ii = 0; ii < lines.size();)
+    {
+        lua_createtable(state, 0, 2);
+
+        lua_pushliteral(state, "line_state");
+        line_state_lua::make_new(state, lines[ii]);
+        lua_rawset(state, -3);
+
+        lua_rawseti(state, -2, int(++ii));
+    }
+}

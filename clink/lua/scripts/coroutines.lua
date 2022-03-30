@@ -206,6 +206,7 @@ function clink._set_coroutine_context(context)
 end
 
 --------------------------------------------------------------------------------
+local _coroutines_fallback_state = {}
 function clink._resume_coroutines()
     if not _coroutines_resumable then
         return
@@ -221,28 +222,12 @@ function clink._resume_coroutines()
                 _coroutines_resumable = true
                 local now = os.clock()
                 if next_entry_target(entry, now) <= now then
-                    local events
-                    local old_rl_state
                     if not entry.firstclock then
                         entry.firstclock = now
                     end
                     entry.resumed = entry.resumed + 1
                     clink._set_coroutine_context(entry.context)
-                    if entry.isgenerator then
-                        old_rl_state = rl_state
-                        rl_state = entry.rl_state
-                        if not entry.keepevents then
-                            events = clink._set_coroutine_events(entry.events)
-                        end
-                    end
                     local ok, ret = coroutine.resume(entry.coroutine, true--[[async]])
-                    if entry.isgenerator then
-                        entry.rl_state = rl_state
-                        rl_state = old_rl_state
-                        if not entry.keepevents then
-                            entry.events = clink._set_coroutine_events(events)
-                        end
-                    end
                     if ok then
                         -- Use live clock so the interval excludes the execution
                         -- time of the coroutine.
@@ -267,6 +252,7 @@ function clink._resume_coroutines()
 
     -- Prepare.
     _coroutines_resumable = false
+    _coroutines_fallback_state = {}
     clink._set_coroutine_context(nil)
 
     -- Protected call.
@@ -279,6 +265,7 @@ function clink._resume_coroutines()
     end
 
     -- Cleanup.
+    _coroutines_fallback_state = {}
     clink._set_coroutine_context(nil)
     for _,c in ipairs(remove) do
         clink.removecoroutine(c)
@@ -463,6 +450,73 @@ end
 
 
 --------------------------------------------------------------------------------
+local function restore_coroutine_state(entry, thread)
+    if not entry then
+        entry = _coroutines_fallback_state[thread]
+        if not entry then
+            entry = { state = {} }
+            _coroutines_fallback_state[thread] = entry
+        end
+    end
+
+    local state = entry.state
+    local old_state = {}
+
+    old_state.cwd = os.getcwd()
+    if state.cwd and state.cwd ~= old_state.cwd then
+        os.chdir(state.cwd)
+    end
+
+    if entry.isgenerator then
+        old_state.rl_state = rl_state
+        old_state._argmatchers_line_states = clink._argmatchers_line_states
+
+        rl_state = state.rl_state
+        clink._argmatchers_line_states = state._argmatchers_line_states
+
+        if not entry.keepevents then
+            old_state.events = clink._set_coroutine_events(state.events)
+        end
+    end
+
+    entry.old_state = old_state
+end
+
+--------------------------------------------------------------------------------
+local function save_coroutine_state(entry, thread)
+    if not entry then
+        entry = _coroutines_fallback_state[thread]
+        if not entry then -- Should be impossible; but return to avoid errors.
+            return
+        end
+    end
+
+    local state = entry.state
+    local old_state = entry.old_state
+
+    state.cwd = os.getcwd()
+    if old_state and state.cwd ~= old_state.cwd then
+        os.chdir(old_state.cwd)
+    end
+
+    if entry.isgenerator then
+        state.rl_state = rl_state
+        state._argmatchers_line_states = clink._argmatchers_line_states
+
+        if old_state then
+            rl_state = old_state.rl_state
+            clink._argmatchers_line_states = old_state._argmatchers_line_states
+
+            if not entry.keepevents then
+                state.events = clink._set_coroutine_events(old_state.events)
+            end
+        end
+    end
+
+    entry.old_state = nil
+end
+
+--------------------------------------------------------------------------------
 --- -name:  clink.addcoroutine
 --- -ver:   1.2.10
 --- -deprecated: clink.setcoroutineinterval
@@ -490,7 +544,7 @@ function clink.addcoroutine(c, interval)
 
     -- Add a new coroutine.
     local created_info = _coroutines_created[c] or {}
-    _coroutines[c] = {
+    local entry = {
         coroutine=c,
         interval=interval or created_info.interval or 0,
         resumed=0,
@@ -499,9 +553,11 @@ function clink.addcoroutine(c, interval)
         generation=created_info.generation,
         isprompt=created_info.isprompt,
         isgenerator=created_info.isgenerator,
-        rl_state=rl_state,
+        state={},
         src=created_info.src,
     }
+    save_coroutine_state(entry)
+    _coroutines[c] = entry
     _coroutines_created[c] = nil
     _coroutines_resumable = true
 end
@@ -520,6 +576,8 @@ function clink.removecoroutine(c)
                 entry.func = nil
                 entry.context = nil
                 entry.events = nil
+                entry.state = nil
+                entry.old_state = nil
                 -- Move the coroutine's tracking entry to the dead list.
                 table.insert(_dead, entry)
             end
@@ -798,19 +856,19 @@ function coroutine.create(func)
     override_coroutine_isprompt = nil
     override_coroutine_isgenerator = nil
 
-    -- Remember original func for diagnostic purposes later.  The table is
-    -- cleared at the beginning of each input line.
-    local cwd = os.getcwd()
-    local thread = orig_coroutine_create(func)
-    _coroutines_created[thread] = {
+    local entry = {
         func=func,
         context=_coroutine_context,
         generation=_coroutine_generation,
         isprompt=isprompt,
         isgenerator=isgenerator,
-        cwd=cwd,
-        src=src
+        state={},
+        src=src,
     }
+    save_coroutine_state(entry)
+
+    local thread = orig_coroutine_create(func)
+    _coroutines_created[thread] = entry
     clink.addcoroutine(thread)
 
     -- Wake up idle processing.
@@ -822,16 +880,10 @@ end
 local orig_coroutine_resume = coroutine.resume
 function coroutine.resume(co, ...)
     local entry = _coroutines[co]
-
-    if entry and entry.cwd and entry.cwd ~= os.getcwd() then
-        os.chdir(entry.cwd)
-    end
+    restore_coroutine_state(entry, co)
 
     local ret = table.pack(orig_coroutine_resume(co, ...))
 
-    if entry then
-        entry.cwd = os.getcwd()
-    end
-
+    save_coroutine_state(entry, co)
     return table.unpack(ret)
 end

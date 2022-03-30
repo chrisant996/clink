@@ -7,6 +7,7 @@
 #include "lua_script_loader.h"
 #include "lua_state.h"
 #include "line_state_lua.h"
+#include "line_states_lua.h"
 #include "match_builder_lua.h"
 
 #include <core/str_hash.h>
@@ -55,6 +56,9 @@ bool lua_match_generator::generate(const line_states& lines, match_builder& buil
     line_state_lua line_lua(lines.back());
     line_lua.push(state);
 
+    line_states_lua lines_lua(lines);
+    lines_lua.push(state);
+
     match_builder_lua builder_lua(builder);
     builder_lua.push(state);
 
@@ -62,7 +66,7 @@ bool lua_match_generator::generate(const line_states& lines, match_builder& buil
 
     os::cwd_restorer cwd;
 
-    if (m_state.pcall(state, 3, 1) != 0)
+    if (m_state.pcall(state, 4, 1) != 0)
         return false;
 
     int use_matches = lua_toboolean(state, -1);

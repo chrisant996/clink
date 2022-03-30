@@ -15,6 +15,7 @@
 #include "lua_script_loader.h"
 #include "lua_state.h"
 #include "line_state_lua.h"
+#include "line_states_lua.h"
 #include "matches_lua.h"
 #include "match_builder_lua.h"
 
@@ -81,16 +82,24 @@ nosuggest:
     lua_pushliteral(state, "_suggest");
     lua_rawget(state, -2);
 
-    line_state_lua line_lua(line);
-    matches_lua matches_lua(*matches); // Doesn't deref matches, so nullptr is ok.
-
     // If matches not supplied, then use a coroutine to generates matches on
     // demand (if matches are not accessed, they will not be generated).
     if (matches)
     {
+        line_state_lua line_lua(line);
         line_lua.push(state);
+
+        line_states_lua lines_lua(lines);
+        lines_lua.push(state);
+
+        matches_lua matches_lua(*matches); // Doesn't deref matches, so nullptr is ok.
         matches_lua.push(state);
+
         lua_pushnil(state);
+        lua_pushinteger(state, generation_id);
+
+        if (m_lua.pcall(state, 5, 1) != 0)
+            goto nosuggest;
     }
     else
     {
@@ -99,14 +108,14 @@ nosuggest:
         // These can't be bound to stack objects because they must stay valid
         // for the duration of the coroutine.
         line_state_lua::make_new(state, make_line_state_copy(line));
+        line_states_lua::make_new(state, lines);
         matches_lua::make_new(state, s_toolkit);
         match_builder_lua::make_new(state, s_toolkit);
+        lua_pushinteger(state, generation_id);
+
+        if (m_lua.pcall(state, 5, 1) != 0)
+            goto nosuggest;
     }
-
-    lua_pushinteger(state, generation_id);
-
-    if (m_lua.pcall(state, 4, 1) != 0)
-        goto nosuggest;
 
     const bool cancelled = lua_isboolean(state, -1) && lua_toboolean(state, -1);
     return !cancelled;

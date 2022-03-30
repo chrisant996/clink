@@ -135,7 +135,7 @@ local function cancel_match_generate_coroutine()
 end
 
 --------------------------------------------------------------------------------
-function clink._make_match_generate_coroutine(line, matches, builder, generation_id)
+function clink._make_match_generate_coroutine(line, lines, matches, builder, generation_id)
     -- Bail if there's already a match generator coroutine running.
     if _match_generate_state.coroutine then
         return
@@ -150,7 +150,7 @@ function clink._make_match_generate_coroutine(line, matches, builder, generation
         _match_generate_state.started = true
 
         -- Generate matches.
-        clink._generate(line, builder)
+        clink._generate(line, lines, builder)
 
         -- Coroutine completed, so stop tracking it.  Must stop tracking before
         -- calling clink.matches_ready() so it doesn't immediately bail out.
@@ -218,7 +218,7 @@ function clink._in_generate()
 end
 
 --------------------------------------------------------------------------------
-function clink._generate(line_state, match_builder, old_filtering)
+function clink._generate(line_state, line_states, match_builder, old_filtering)
     local impl = function ()
         clink.generator_stopped = nil
 
@@ -247,6 +247,7 @@ function clink._generate(line_state, match_builder, old_filtering)
 
     clink._reset_display_filter()
     clink.use_old_filtering = old_filtering
+    clink._argmatchers_line_states = line_states
 
     prepare()
     _current_builder = match_builder
@@ -258,12 +259,14 @@ function clink._generate(line_state, match_builder, old_filtering)
         print(ret)
         _current_builder = nil
         clink.use_old_filtering = nil
+        clink._argmatchers_line_states = nil
         rl_state = nil
         return
     end
 
     _current_builder = nil
     clink.use_old_filtering = nil
+    clink._argmatchers_line_states = nil
     rl_state = nil
     return ret or false
 end

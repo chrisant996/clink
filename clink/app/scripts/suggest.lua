@@ -15,7 +15,7 @@ end
 
 --------------------------------------------------------------------------------
 -- Returns true when canceled; otherwise nil.
-local function _do_suggest(line, matches)
+local function _do_suggest(line, lines, matches)
     -- Reset cancel flag.
     _cancel = nil
 
@@ -60,21 +60,21 @@ local function _do_suggest(line, matches)
 end
 
 --------------------------------------------------------------------------------
-local function deferred_generate(line, matches, builder, generation_id)
+local function deferred_generate(line, lines, matches, builder, generation_id)
     -- Cancel the current _do_suggest.
     _cancel = true
 
     -- Start coroutine for match generation.
-    clink._make_match_generate_coroutine(line, matches, builder, generation_id)
+    clink._make_match_generate_coroutine(line, lines, matches, builder, generation_id)
 end
 
 --------------------------------------------------------------------------------
-local function wrap(line, matches, builder, generation_id)
-    local w = { _line = line, _matches = matches, _generation_id = generation_id }
+local function wrap(line, lines, matches, builder, generation_id)
+    local w = { _line = line, _lines = lines, _matches = matches, _generation_id = generation_id }
     function w:ensure()
         if not self._ensured then
             self._ensured = true
-            deferred_generate(line, matches, builder, generation_id)
+            deferred_generate(line, lines, matches, builder, generation_id)
         end
     end
 
@@ -89,12 +89,12 @@ local function wrap(line, matches, builder, generation_id)
 end
 
 --------------------------------------------------------------------------------
-function clink._suggest(line, matches, builder, generation_id)
+function clink._suggest(line, lines, matches, builder, generation_id)
     if builder then
-        matches = wrap(line, matches, builder, generation_id)
+        matches = wrap(line, lines, matches, builder, generation_id)
     end
 
-    return _do_suggest(line, matches)
+    return _do_suggest(line, lines, matches)
 end
 
 --------------------------------------------------------------------------------
