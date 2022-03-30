@@ -1865,9 +1865,6 @@ end
 function argmatcher_generator:generate(line_state, match_builder)
     if clink._argmatchers_line_states then
         local num = #clink._argmatchers_line_states - 1
-        if num > 0 then
-            pause()
-        end
         for i = 1, num do
             -- Don't pass match_builder; these parse without generating.
             do_generate(clink._argmatchers_line_states[i].line_state)
