@@ -1262,6 +1262,12 @@ function _argmatcher:_generate(line_state, match_builder, extra_words)
         end
     end
 
+    -- If not generating matches, then just consume the end word and return.
+    if not match_builder then
+        reader:update(line_state:getword(word_count), word_count)
+        return
+    end
+
     -- There should always be a matcher left on the stack, but the arg_index
     -- could be well out of range.
     local matcher = reader._matcher
@@ -1833,7 +1839,7 @@ local argmatcher_generator = clink.generator(clink.argmatcher_generator_priority
 local argmatcher_classifier = clink.classifier(clink.argmatcher_generator_priority)
 
 --------------------------------------------------------------------------------
-function argmatcher_generator:generate(line_state, match_builder)
+local function do_generate(line_state, match_builder)
     local lookup
 ::do_command::
     local argmatcher, has_argmatcher, extra_words = _find_argmatcher(line_state, nil, lookup)
@@ -1853,6 +1859,22 @@ function argmatcher_generator:generate(line_state, match_builder)
     end
 
     return false
+end
+
+--------------------------------------------------------------------------------
+function argmatcher_generator:generate(line_state, match_builder)
+    if clink._argmatchers_line_states then
+        local num = #clink._argmatchers_line_states - 1
+        if num > 0 then
+            pause()
+        end
+        for i = 1, num do
+            -- Don't pass match_builder; these parse without generating.
+            do_generate(clink._argmatchers_line_states[i].line_state)
+        end
+    end
+
+    return do_generate(line_state, match_builder)
 end
 
 --------------------------------------------------------------------------------

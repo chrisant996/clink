@@ -74,7 +74,7 @@ void line_states_lua::make_new(lua_State* state, const line_states& lines)
         lua_createtable(state, 0, 2);
 
         lua_pushliteral(state, "line_state");
-        line_state_lua::make_new(state, lines[ii]);
+        line_state_lua::make_new(state, make_line_state_copy(lines[ii]));
         lua_rawset(state, -3);
 
         lua_rawseti(state, -2, int(++ii));
