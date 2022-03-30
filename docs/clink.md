@@ -42,7 +42,7 @@ There are several ways to start Clink.
 
 1. If you installed the auto-run, just start `cmd.exe`.  Run `clink autorun --help` for more info.
 2. To manually start, run the Clink shortcut from the Start menu (or the clink.bat located in the install directory).
-3. To establish Clink to an existing `cmd.exe` process, use `<install_dir>\clink.exe inject`.
+3. To establish Clink to an existing `cmd.exe` process, use `<install_dir>\clink inject`.
 
 Starting Clink injects it into a `cmd.exe` process, where it intercepts a handful of Windows API functions so that it can replace the prompt and input line editing with its own Readline-powered enhancements.
 
