@@ -4,8 +4,17 @@
 
 #### v1.3.13
 
+- Argmatchers can use `:chaincommand()` to treat the rest of the command line as another command.
+  - Added an argmatcher for `cmd` that uses `:chaincommand()`.
+  - E.g. so that completion after `cmd program ` can be parsed by an argmatcher for `program` instead of `cmd`.
+- _**TBD:  document the `onarg` callback, and how argmatchers can influence match generation for commands that follow.**_
+- _**TBD:  document the `user_data` parameter.**_
+- _**TBD:  `cd` and `pushd` now affect match completion for subsequent commands in the input line.**_
+- Functions registered with `clink.onfilterinput()` may optionally return multiple lines in a table.
 - Fixed completions for words that contain `.`, such as `clink set color.`<kbd>Tab</kbd> (regression introduced in v1.3.11).
 - Fixed doskey macros that use `echo off $T ...`.
+- Fixed input line coloring for a drive letter by itself.
+- Fixed input line coloring for a file that exists but is not executable.
 - Fixed obscure edge case with delayinit argmatchers and `operate-and-get-next`.
 - Fixed potentially inconsistent input line coloring when `classifier:applycolor()` is given an escape code that sets only the foreground or background color.
 
