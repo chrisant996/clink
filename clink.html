@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.3.12</title>
+<title>Clink v1.3.13</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -771,7 +771,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.3.12</div>
+                <div id="title">Clink v1.3.13</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -833,7 +833,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 <ol>
 <li>If you installed the auto-run, just start <code>cmd.exe</code>.  Run <code>clink autorun --help</code> for more info.</li>
 <li>To manually start, run the Clink shortcut from the Start menu (or the clink.bat located in the install directory).</li>
-<li>To establish Clink to an existing <code>cmd.exe</code> process, use <code>&lt;install_dir&gt;\clink.exe inject</code>.</li>
+<li>To establish Clink to an existing <code>cmd.exe</code> process, use <code>&lt;install_dir&gt;\clink inject</code>.</li>
 </ol>
 <p>Starting Clink injects it into a <code>cmd.exe</code> process, where it intercepts a handful of Windows API functions so that it can replace the prompt and input line editing with its own Readline-powered enhancements.</p>
 <h1 id="getting-started">Getting Started</h1>
@@ -2623,12 +2623,13 @@ local the_parser = clink.argmatcher()
 the_parser:addarg({ &quot;zippy&quot;, &quot;bungle&quot;, &quot;george&quot; })
 the_parser:addarg({ rainbow_function, &quot;yellow&quot;, &quot;green&quot; })
 </code></pre>
-<p>The functions are passed four arguments, and should return a table of potential matches.</p>
+<p>The functions are passed five arguments, and should return a table of potential matches.</p>
 <ul>
 <li><code>word</code> is a partial string for the word under the cursor, corresponding to the argument for which matches are being generated:  it is an empty string, or if a filename is being entered then it will be the path portion (e.g. for &quot;dir1\dir2\pre&quot; <code>word</code> will be &quot;dir1\dir2&quot;).</li>
 <li><code>word_index</code> is the word index in <code>line_state</code>, corresponding to the argument for which matches are being generated.</li>
 <li><code>line_state</code> is a <a href="#line_state">line_state</a> object that contains the words for the associated command line.</li>
 <li><code>match_builder</code> is a <a href="#builder">builder</a> object (but for adding matches the function should return them in a table).</li>
+<li><code>user_data</code> is a table that the argmatcher can use to help it parse the input line.  See <a href="#responsive-argmatchers">Responding to Arguments in Argmatchers</a> for more information about the <code>user_data</code> table.</li>
 </ul>
 <blockquote>
 <p><strong>Compatibility Note:</strong> When a function argument uses the old v0.4.9 <code>clink.match_display_filter</code> approach, then the <code>word</code> argument will be the full word under the cursor, for compatibility with the v0.4.9 API.</p>
@@ -2665,7 +2666,10 @@ the_parser:addarg({ nosort=true, &quot;red&quot;, &quot;orange&quot;, &quot;yell
 <p>Some argmatchers may need to adapt on the fly.  For example, a program may have different features available depending on the current directory, or may want to define its arguments and flags by parsing the <code>--help</code> text from running a program.</p>
 <p>An argmatcher can define a &quot;delayed initialization&quot; callback function that gets calls when the argmatcher gets used, allowing it to defer potentially expensive initialization work until it&#39;s actually needed.  An argmatcher can also define a separate &quot;delayed initialization&quot; function for each argument position.</p>
 <h5 id="delayed-initialization-for-the-argmatcher">Delayed initialization for the argmatcher</h5>
-<p>You can use <a href="#_argmatcher:setdelayinit">_argmatcher:setdelayinit()</a> to define how the argmatcher should perform delayed initialization.</p>
+<p>You can use <a href="#_argmatcher:setdelayinit">_argmatcher:setdelayinit()</a> to set a function that performs delayed initialization for the argmatcher.  The function receives one parameter:</p>
+<ul>
+<li><code>argmatcher</code> is the argmatcher to be initialized.</li>
+</ul>
 <p>If the definition needs to adapt based on the current directory or other criteria, then the callback function should first test whether the definition needs to change.  If so, first reset the argmatcher and then initialize it.  To reset the argmatcher, use <a href="#_argmatcher:reset">_argmatcher:reset()</a> which resets it back to an empty, freshly created state.</p>
 <pre><code class="language-lua">local prev_dir = &quot;&quot;
 
@@ -2700,9 +2704,13 @@ end
 </code></pre>
 <h5 id="delayed-initialization-for-an-argument-position">Delayed initialization for an argument position</h5>
 <p>If the overall flags and meaning of the argument positions don&#39;t need to be updated, and only the possible values need to be updated within certain argument positions, then you can include <code>delayinit=<span class="arg">function</span></code> in the argument table.</p>
-<p>The <span class="arg">function</span> should return a table of matches which will be added to the values for the argument position.  The table of matches supports the same syntax as <a href="#_argmatcher:addarg">_argmatcher:addarg()</a>.  The function receives two parameters:  <span class="arg">argmatcher</span> is the current argmatcher, and <span class="arg">argindex</span> is the argument position in the argmatcher (0 is flags, 1 is the first argument position, and so on).</p>
-<p>The <span class="arg">function</span> is called only once, the first time the argument position is used.  The only way for the function to be called again for that is to use <a href="#delayed-initialization-for-the-argmatcher">Delayed initialization for the argmatcher</a> and reset the argmatcher and re-initialize it.</p>
-<p>This is different from <a href="#functions-as-argument-options">Functions As Argument Options</a>.  The <code>delayinit</code> function is called the first time the argmatcher is used, and the results are added to the matches for the rest of the Clink session.  But a function as an argument option is called every time matches are generated for the argument position, and it is never called when applying input line coloring.</p>
+<p>The <span class="arg">function</span> should return a table of matches which will be added to the values for the argument position.  The table of matches supports the same syntax as <a href="#_argmatcher:addarg">_argmatcher:addarg()</a>.  The function receives two parameters:</p>
+<ul>
+<li><code>argmatcher</code> is the current argmatcher.</li>
+<li><code>argindex</code> is the argument position in the argmatcher (0 is flags, 1 is the first argument position, 2 is the second argument position, and so on).</li>
+</ul>
+<p>The <span class="arg">function</span> is called only once, the first time the argument position is used.  The only way for the function to be called again for that argmatcher is to use <a href="#delayed-initialization-for-the-argmatcher">Delayed initialization for the argmatcher</a> and reset the argmatcher and then re-initialize it.</p>
+<p>Delayed initialization for an argument position is different from <a href="#functions-as-argument-options">Functions As Argument Options</a>.  The <code>delayinit</code> function is called the first time the argmatcher is used, and the results are added to the matches for the rest of the Clink session.  But a function as an argument option is called every time matches are generated for the argument position, and it is never called when applying input line coloring.</p>
 <pre><code class="language-lua">-- A function to delay-initialize argument values.
 -- This function is used to delay-initialize two different argument positions,
 -- and so it gets called up to two separate times (once for each position where
@@ -2733,6 +2741,34 @@ m:addarg({ delayinit=sc_init_dirs }) -- This sc_init_dirs() when the second arg 
 -- character(s) so that Clink can know when to call the delayinit function.
 m:addflags({ delayinit=sc_init_flags })
 m:setflagprefix(&quot;-&quot;)
+</code></pre>
+<p><a name="responsive-argmatchers"></a></p>
+<h4 id="responding-to-arguments-in-argmatchers">Responding to Arguments in Argmatchers</h4>
+<p>Argmatchers can be more involved in parsing the command line, if they wish.</p>
+<p>An argmatcher can supply an &quot;on arg&quot; function to be called when the argmatcher parses an argument position.  The function can influence parsing the rest of the input line.  For example, the presence of a flag <code>--only-dirs</code> might change what match completions should be provided somewhere else in the input line.</p>
+<p>Supply an &quot;on arg&quot; function by including <code>onarg=<span class="arg">function</span></code> in the argument table with <a href="#_argmatcher:addarg">_argmatcher:addarg()</a>.  The function is passed five arguments, and it doesn&#39;t return anything (the function receives the same arguments as <a href="#functions-as-argument-options">Functions As Argument Options</a>).</p>
+<ul>
+<li><code>word</code> is a partial string for the word under the cursor, corresponding to the argument for which matches are being generated:  it is an empty string, or if a filename is being entered then it will be the path portion (e.g. for &quot;dir1\dir2\pre&quot; <code>word</code> will be &quot;dir1\dir2&quot;).</li>
+<li><code>word_index</code> is the word index in <code>line_state</code>, corresponding to the argument for which matches are being generated.</li>
+<li><code>line_state</code> is a <a href="#line_state">line_state</a> object that contains the words for the associated command line.</li>
+<li><code>match_builder</code> is a <a href="#builder">builder</a> object (but for adding matches the function should return them in a table).</li>
+<li><code>user_data</code> is a table that the argmatcher can use to help it parse the input line.</li>
+</ul>
+<p>When parsing begins, the <code>user_data</code> is an empty table.  Each time a flag or argument links to another argmatcher, the new argmatcher gets a separate new empty <code>user_data</code> table.  Your &quot;on arg&quot; functions can set data from the table, and then can also get data that was set earlier by your &quot;on arg&quot; functions.</p>
+<p>An &quot;on arg&quot; function can also use <a href="#os.chdir">os.chdir()</a> to set the current directory.  Generating match completions saves and restores the current directory when finished, so argmatcher &quot;on arg&quot; functions can set the current directory and thus cause match completion later in the input line to complete file names relative to the change directory.  For example, the built-in <code>cd</code> and <code>pushd</code> argmatches use an &quot;on arg&quot; function so that <code>pushd \other_dir &amp; program </code><kbd>Tab</kbd> can complete file names from <code>\other_dir</code> instead of the (real) current directory.</p>
+<pre><code class="language-lua">local function onarg_pushd(arg_index, word, word_index, line_state)
+    -- Match generation after this is relative to the new directory.
+    if word ~= &quot;&quot; then
+        os.chdir(word)
+    end
+end
+
+clink.argmatcher(&quot;pushd&quot;)
+:addarg({
+    onarg=onarg_pushd,  -- Chdir to the directory argument.
+    clink.dirmatches,   -- Generate directory matches.
+})
+:nofiles()
 </code></pre>
 <h4 id="shorthand">Shorthand</h4>
 <p>It is also possible to omit the <code>addarg</code> and <code>addflags</code> function calls and use a more declarative shorthand form:</p>
@@ -4319,6 +4355,14 @@ maybe_adddescriptions(foo, {
 :addarg({ "add", "status", "commit", "checkout" })
 :addflags("-a", "-g", "-p", "--help")</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="_argmatcher:addflagsunsorted">_argmatcher:addflagsunsorted</a></div> <div class="signature">( <span class="arg_name">flags...</span>:string ) : self<br/><div class="version">v1.3.3 and newer</div></div></div><div class="body"><p class="desc">This is the same as <a href="#_argmatcher:addflags">_argmatcher:addflags</a> except that this also disables sorting for flags.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="_argmatcher:chaincommand">_argmatcher:chaincommand</a></div> <div class="signature">() : self<br/><div class="version">v1.3.13 and newer</div></div></div><div class="body"><p class="desc">This makes the rest of the line be parsed as a separate command.  You can use it to "chain" from one parser to another.</p><p class="desc"> For example, `cmd.exe program arg` is example of a line where one command can have another command within it.  `:chaincommand()` enables `program arg` to be parsed separately.  If `program` has an argmatcher, then it takes over and parses the rest of the input line.</p><pre class="language-lua"><code>clink.argmatcher("program"):addflags("/x", "/y")
+clink.argmatcher("cmd"):addflags("/c", "/k"):chaincommand()
+-- Consider the following input:
+--    cmd /c program /
+-- "cmd" is colored as an argmatcher.
+-- "/c" is colored as a flag (by the "cmd" argmatcher).
+-- "program" is colored as an argmatcher.
+-- "/" generates completions "/x" and "/y".</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="_argmatcher:hideflags">_argmatcher:hideflags</a></div> <div class="signature">( <span class="arg_name">flags...</span>:string ) : self<br/><div class="version">v1.3.3 and newer</div></div></div><div class="body"><p class="desc">This hides the specified flags when displaying possible completions (the flags are still recognized).</p><p class="desc"> This is intended for use when there are several synonyms for a flag, so that input coloring and linked argmatchers work, without cluttering the possible completion list.</p><pre class="language-lua"><code>local dirs = clink.argmatcher():addarg(clink.dirmatches)
 local my_parser = clink.argmatcher("mycommand")
 :addflags("-a", "--a", "--al", "--all",
@@ -4420,7 +4464,7 @@ function my_match_generator:generate(line_state, match_builder)
 &nbsp;   clink.ondisplaymatches(my_filter)
 end</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.onendedit">clink.onendedit</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil<br/><div class="version">v1.1.20 and newer</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called when Clink's edit prompt ends.  The function receives a string argument containing the input text from the edit prompt.</p><p class="desc"> <strong>Breaking Change in v1.2.16:</strong>  The ability to replace the user's input has been moved to a separate <a href="#clink.onfilterinput">onfilterinput</a> event.</p></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="clink.onfilterinput">clink.onfilterinput</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil<br/><div class="version">v1.2.16 and newer</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called after Clink's edit prompt ends (it is called after the <a href="#clink.oneditedit">onendedit</a> event).  The function receives a string argument containing the input text from the edit prompt.  The function returns up to two values.  If the first is not nil then it's a string that replaces the edit prompt text.  If the second is not nil and is false then it stops further onfilterinput handlers from running.</p><p class="desc"> <strong>Note:</strong>  Be very careful if you replace the text; this has the potential to interfere with or even ruin the user's ability to enter command lines for CMD to process.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="clink.onfilterinput">clink.onfilterinput</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil<br/><div class="version">v1.2.16 and newer</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called after Clink's edit prompt ends (it is called after the <a href="#clink.oneditedit">onendedit</a> event).  The function receives a string argument containing the input text from the edit prompt.  The function returns up to two values.  If the first is not nil then it's a string that replaces the edit prompt text.  If the second is not nil and is false then it stops further onfilterinput handlers from running.</p><p class="desc"> Starting in v1.3.13 <span class="arg">func</span> may return a table of strings, and each is executed as a command line.</p><p class="desc"> <strong>Note:</strong>  Be very careful if you replace the text; this has the potential to interfere with or even ruin the user's ability to enter command lines for CMD to process.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.onfiltermatches">clink.onfiltermatches</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil<br/><div class="version">v1.1.41 and newer</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called after Clink generates matches for completion.  See <a href="#filteringmatchcompletions"> Filtering Match Completions</a> for more information.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.oninject">clink.oninject</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil<br/><div class="version">v1.1.21 and newer</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called when Clink is injected into a CMD process.  The function is called only once per session.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.popuplist">clink.popuplist</a></div> <div class="signature">( <span class="arg_name">title</span>:string, <span class="arg_name">items</span>:table, [<span class="arg_name">index</span>:integer] ) : string, boolean, integer<br/><div class="version">v1.2.17 and newer</div></div></div><div class="body"><p class="desc">Displays a popup list and returns the selected item.  May only be used within a <a href="#luakeybindings">luafunc: key binding</a>.</p><p class="desc"> <span class="arg">title</span> is required and captions the popup list.</p><p class="desc"> <span class="arg">items</span> is a table of strings to display.</p><p class="desc"> <span class="arg">index</span> optionally specifies the default item (or 1 if omitted).</p><p class="desc"> The function returns one of the following: <ul> <li>nil if the popup is canceled or an error occurs. <li>string indicating the <code>value</code> field from the selected item (or the <code>display</code> field if no value field is present). <li>boolean which is true if the item was selected with <kbd>Shift</kbd> or <kbd>Ctrl</kbd> pressed. <li>integer indicating the index of the selected item in the original <span class="arg">items</span> table. </ul></p><p class="desc"> Alternatively, the <span class="arg">items</span> argument can be a table of tables with the following scheme:</p><pre class="language-lua"><code>{
@@ -4928,6 +4972,27 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1313">v1.3.13</h4>
+<ul>
+<li>Argmatchers can use <code>:chaincommand()</code> to treat the rest of the command line as another command.<ul>
+<li>Added an argmatcher for <code>cmd</code> that uses <code>:chaincommand()</code>.</li>
+<li>E.g. so that completion after <code>cmd program </code> can be parsed by an argmatcher for <code>program</code> instead of <code>cmd</code>.</li>
+</ul>
+</li>
+<li>Argmatchers can be more involved in parsing the command line, if they wish.  See <a href="#responsive-argmatchers">Responding to Arguments in Argmatchers</a> for more information.<ul>
+<li>A callback function can be assigned to an argument position by including <code>onarg=your_callback_function</code> in the table given to <code>:addarg()</code>.</li>
+<li>The <code>onarg</code> callback and match functions receive an additional <code>user_data</code> parameter.  When parsing begins, the <code>user_data</code> is an empty table, and your functions can set or get data from the table.  Each time a flag or argument links to another argmatcher, the new argmatcher gets a separate new empty <code>user_data</code> table.</li>
+<li>The built-in <code>cd</code> and <code>pushd</code> argmatchers use this to influence match completion for the rest of the input line.  E.g. <code>pushd \foo &amp; program </code><kbd>Tab</kbd> uses <code>\foo</code> as the current directory when generating possible completions.</li>
+</ul>
+</li>
+<li>Functions registered with <code>clink.onfilterinput()</code> may optionally return multiple lines in a table.</li>
+<li>Fixed completions for words that contain <code>.</code>, such as <code>clink set color.</code><kbd>Tab</kbd> (regression introduced in v1.3.11).</li>
+<li>Fixed doskey macros that use <code>echo off $T ...</code>.</li>
+<li>Fixed input line coloring for a drive letter by itself.</li>
+<li>Fixed input line coloring for a file that exists but is not executable.</li>
+<li>Fixed obscure edge case with delayinit argmatchers and <code>operate-and-get-next</code>.</li>
+<li>Fixed potentially inconsistent input line coloring when <code>classifier:applycolor()</code> is given an escape code that sets only the foreground or background color.</li>
+</ul>
 <h4 id="v1312">v1.3.12</h4>
 <ul>
 <li>Improved <code>clink-select-complete</code> to show inline descriptions as long as they don&#39;t require more than 9 rows to display the matches.</li>
