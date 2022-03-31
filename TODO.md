@@ -8,9 +8,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Unit test for `coroutine.resume()` swapping state correctly (and automatically).
 
 ## Normal Priority
-- [ ] Document the `onarg` callback.
-- [ ] Document the `user_data` parameter to `onarg` and match functions.
-- [ ] Collecting words currently happens in update_internal, but probably it belongs in alternative_matches and/or update_matches.
 
 ## Low Priority
 - Let the yieldguards run in parallel?
@@ -29,6 +26,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Mouse input toggling is unreliable in Windows Terminal, and sometimes ends up disallowing mouse input.
 - Once in a while raw mouse input sequences spuriously show up in the edit line; have only noticed it when the CMD window did not have focus at the time.
 - Should coroutines really be able to make Readline redraw immediately?  Should instead set a flag that the main coroutine responds to when it gains control again?
+- Collecting words currently happens in update_internal, but probably it belongs in alternative_matches and/or update_matches.
 
 ## Follow Up
 - Readline command reference.
