@@ -7,9 +7,10 @@
 - Argmatchers can use `:chaincommand()` to treat the rest of the command line as another command.
   - Added an argmatcher for `cmd` that uses `:chaincommand()`.
   - E.g. so that completion after `cmd program ` can be parsed by an argmatcher for `program` instead of `cmd`.
-- _**TBD:  document the `onarg` callback, and how argmatchers can influence match generation for commands that follow.**_
-- _**TBD:  document the `user_data` parameter.**_
-- _**TBD:  `cd` and `pushd` now affect match completion for subsequent commands in the input line.**_
+- Argmatchers can be more involved in parsing the command line, if they wish.  See [Responding to Arguments in Argmatchers](#responsive-argmatchers) for more information.
+  - A callback function can be assigned to an argument position by including `onarg=your_callback_function` in the table given to `:addarg()`.
+  - The `onarg` callback and match functions receive an additional `user_data` parameter.  When parsing begins, the `user_data` is an empty table, and your functions can set or get data from the table.  Each time a flag or argument links to another argmatcher, the new argmatcher gets a separate new empty `user_data` table.
+  - The built-in `cd` and `pushd` argmatchers use this to influence match completion for the rest of the input line.  E.g. `pushd \foo & program `<kbd>Tab</kbd> uses `\foo` as the current directory when generating possible completions.
 - Functions registered with `clink.onfilterinput()` may optionally return multiple lines in a table.
 - Fixed completions for words that contain `.`, such as `clink set color.`<kbd>Tab</kbd> (regression introduced in v1.3.11).
 - Fixed doskey macros that use `echo off $T ...`.
