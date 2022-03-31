@@ -1129,12 +1129,13 @@ the_parser:addarg({ "zippy", "bungle", "george" })
 the_parser:addarg({ rainbow_function, "yellow", "green" })
 ```
 
-The functions are passed four arguments, and should return a table of potential matches.
+The functions are passed five arguments, and should return a table of potential matches.
 
 - `word` is a partial string for the word under the cursor, corresponding to the argument for which matches are being generated:  it is an empty string, or if a filename is being entered then it will be the path portion (e.g. for "dir1\dir2\pre" `word` will be "dir1\dir2\").
 - `word_index` is the word index in `line_state`, corresponding to the argument for which matches are being generated.
 - `line_state` is a [line_state](#line_state) object that contains the words for the associated command line.
 - `match_builder` is a [builder](#builder) object (but for adding matches the function should return them in a table).
+- `user_data` is a table that the argmatcher can use to help it parse the input line.  See [Responding to Arguments in Argmatchers](#responsive-argmatchers) for more information about the `user_data` table.
 
 > **Compatibility Note:** When a function argument uses the old v0.4.9 `clink.match_display_filter` approach, then the `word` argument will be the full word under the cursor, for compatibility with the v0.4.9 API.
 
@@ -1173,7 +1174,9 @@ An argmatcher can define a "delayed initialization" callback function that gets 
 
 ##### Delayed initialization for the argmatcher
 
-You can use [_argmatcher:setdelayinit()](#_argmatcher:setdelayinit) to define how the argmatcher should perform delayed initialization.
+You can use [_argmatcher:setdelayinit()](#_argmatcher:setdelayinit) to set a function that performs delayed initialization for the argmatcher.  The function receives one parameter:
+
+- `argmatcher` is the argmatcher to be initialized.
 
 If the definition needs to adapt based on the current directory or other criteria, then the callback function should first test whether the definition needs to change.  If so, first reset the argmatcher and then initialize it.  To reset the argmatcher, use [_argmatcher:reset()](#_argmatcher:reset) which resets it back to an empty, freshly created state.
 
@@ -1214,11 +1217,14 @@ end
 
 If the overall flags and meaning of the argument positions don't need to be updated, and only the possible values need to be updated within certain argument positions, then you can include <code>delayinit=<span class="arg">function</span></code> in the argument table.
 
-The <span class="arg">function</span> should return a table of matches which will be added to the values for the argument position.  The table of matches supports the same syntax as [_argmatcher:addarg()](#_argmatcher:addarg).  The function receives two parameters:  <span class="arg">argmatcher</span> is the current argmatcher, and <span class="arg">argindex</span> is the argument position in the argmatcher (0 is flags, 1 is the first argument position, and so on).
+The <span class="arg">function</span> should return a table of matches which will be added to the values for the argument position.  The table of matches supports the same syntax as [_argmatcher:addarg()](#_argmatcher:addarg).  The function receives two parameters:
 
-The <span class="arg">function</span> is called only once, the first time the argument position is used.  The only way for the function to be called again for that is to use [Delayed initialization for the argmatcher](#delayed-initialization-for-the-argmatcher) and reset the argmatcher and re-initialize it.
+- `argmatcher` is the current argmatcher.
+- `argindex` is the argument position in the argmatcher (0 is flags, 1 is the first argument position, 2 is the second argument position, and so on).
 
-This is different from [Functions As Argument Options](#functions-as-argument-options).  The `delayinit` function is called the first time the argmatcher is used, and the results are added to the matches for the rest of the Clink session.  But a function as an argument option is called every time matches are generated for the argument position, and it is never called when applying input line coloring.
+The <span class="arg">function</span> is called only once, the first time the argument position is used.  The only way for the function to be called again for that argmatcher is to use [Delayed initialization for the argmatcher](#delayed-initialization-for-the-argmatcher) and reset the argmatcher and then re-initialize it.
+
+Delayed initialization for an argument position is different from [Functions As Argument Options](#functions-as-argument-options).  The `delayinit` function is called the first time the argmatcher is used, and the results are added to the matches for the rest of the Clink session.  But a function as an argument option is called every time matches are generated for the argument position, and it is never called when applying input line coloring.
 
 ```lua
 -- A function to delay-initialize argument values.
@@ -1251,6 +1257,42 @@ m:addarg({ delayinit=sc_init_dirs }) -- This sc_init_dirs() when the second arg 
 -- character(s) so that Clink can know when to call the delayinit function.
 m:addflags({ delayinit=sc_init_flags })
 m:setflagprefix("-")
+```
+
+<a name="responsive-argmatchers"></a>
+
+#### Responding to Arguments in Argmatchers
+
+Argmatchers can be more involved in parsing the command line, if they wish.
+
+An argmatcher can supply an "on arg" function to be called when the argmatcher parses an argument position.  The function can influence parsing the rest of the input line.  For example, the presence of a flag `--only-dirs` might change what match completions should be provided somewhere else in the input line.
+
+Supply an "on arg" function by including <code>onarg=<span class="arg">function</span></code> in the argument table with [_argmatcher:addarg()](#_argmatcher:addarg).  The function is passed five arguments, and it doesn't return anything (the function receives the same arguments as [Functions As Argument Options](#functions-as-argument-options)).
+
+- `word` is a partial string for the word under the cursor, corresponding to the argument for which matches are being generated:  it is an empty string, or if a filename is being entered then it will be the path portion (e.g. for "dir1\dir2\pre" `word` will be "dir1\dir2\").
+- `word_index` is the word index in `line_state`, corresponding to the argument for which matches are being generated.
+- `line_state` is a [line_state](#line_state) object that contains the words for the associated command line.
+- `match_builder` is a [builder](#builder) object (but for adding matches the function should return them in a table).
+- `user_data` is a table that the argmatcher can use to help it parse the input line.
+
+When parsing begins, the `user_data` is an empty table.  Each time a flag or argument links to another argmatcher, the new argmatcher gets a separate new empty `user_data` table.  Your "on arg" functions can set data from the table, and then can also get data that was set earlier by your "on arg" functions.
+
+An "on arg" function can also use [os.chdir()](#os.chdir) to set the current directory.  Generating match completions saves and restores the current directory when finished, so argmatcher "on arg" functions can set the current directory and thus cause match completion later in the input line to complete file names relative to the change directory.  For example, the built-in `cd` and `pushd` argmatches use an "on arg" function so that `pushd \other_dir & program `<kbd>Tab</kbd> can complete file names from `\other_dir` instead of the (real) current directory.
+
+```lua
+local function onarg_pushd(arg_index, word, word_index, line_state)
+    -- Match generation after this is relative to the new directory.
+    if word ~= "" then
+        os.chdir(word)
+    end
+end
+
+clink.argmatcher("pushd")
+:addarg({
+    onarg=onarg_pushd,  -- Chdir to the directory argument.
+    clink.dirmatches,   -- Generate directory matches.
+})
+:nofiles()
 ```
 
 #### Shorthand
