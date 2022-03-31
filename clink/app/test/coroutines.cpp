@@ -2,6 +2,7 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
+#include "fs_fixture.h"
 
 #include <core/base.h>
 #include <core/str.h>
@@ -77,14 +78,14 @@ static bool verify_ret_true(lua_state& lua, const char* func_name)
 //------------------------------------------------------------------------------
 TEST_CASE("Lua coroutines.")
 {
-    lua_state lua;
-    prompt_filter prompt_filter(lua);
-    lua_load_script(lua, app, prompt);
-
     set_autosuggest_async(false);
 
     SECTION("Main")
     {
+        lua_state lua;
+        prompt_filter prompt_filter(lua);
+        lua_load_script(lua, app, prompt);
+
         const char* script = "\
         function reset_coroutine_test()\
             _refilter = false\
@@ -337,6 +338,125 @@ TEST_CASE("Lua coroutines.")
         }
     }
 
-    set_prompt_async_default();
+    SECTION("Coroutine state")
+    {
+        fs_fixture fs;
+
+        lua_state lua;
+        lua_load_script(lua, app, prompt);
+
+        const char* script = "\
+        CO_expected = {}\
+        CO_actual = {}\
+        MN_expected = {}\
+        MN_actual = {}\
+        \
+        local function str_rpad(s, width, pad)\
+            if width <= #s then\
+                return s\
+            end\
+            return s..string.rep(pad or ' ', width - #s)\
+        end\
+        \
+        local function print_var(name, value)\
+            print(str_rpad(name, 15), value)\
+        end\
+        \
+        local function report_internals()\
+            print()\
+            if diag_func then\
+                diag_func()\
+            end\
+            clink._diag_coroutines()\
+        end\
+        \
+        local function report_CO()\
+            print('CO_expected:', 'rs', CO_expected.rs, 'als', CO_expected.als, 'cwd', CO_expected.cwd)\
+            print('CO_actual:', 'rs', CO_actual.rs, 'als', CO_actual.als, 'cwd', CO_actual.cwd)\
+        end\
+        \
+        local function report_MN()\
+            print('MN_expected:', 'rs', MN_expected.rs, 'als', MN_expected.als, 'cwd', MN_expected.cwd)\
+            print('MN_actual:', 'rs', MN_actual.rs, 'als', MN_actual.als, 'cwd', MN_actual.cwd)\
+        end\
+        \
+        local function report_CO_MN()\
+            report_CO()\
+            report_MN()\
+        end\
+        \
+        local function verify_true(value, diag_func)\
+            if value then\
+                return true\
+            else\
+                report_internals(diag_func)\
+            end\
+        end\
+        \
+        local function verify_result(expected, actual)\
+            return (actual.cwd == expected.cwd and\
+                    actual.rl_state == expected.rl_state and\
+                    actual.argmatcher_line_states == expected.argmatcher_line_states)\
+        end\
+        \
+        function verify_CO_result()\
+            return verify_true(verify_result(CO_expected, CO_actual), report_CO)\
+        end\
+        \
+        function verify_MN_result()\
+            return verify_true(verify_result(MN_expected, MN_actual), report_MN)\
+        end\
+        \
+        function verify_different()\
+            return verify_true(CO_actual.cwd ~= MN_actual.cwd and\
+                               CO_actual.rs ~= MN_actual.rs and\
+                               CO_actual.als ~= MN_actual.als, report_CO_MN)\
+        end\
+        \
+        local function co_func()\
+            clink.co_state.argmatcher_line_states = { 77 }\
+            CO_actual.cwd = os.getcwd()\
+            CO_actual.rs = rl_state[1]\
+            CO_actual.als = clink.co_state.argmatcher_line_states[1]\
+        end\
+        \
+        rl_state = { 11 }\
+        clink.co_state.argmatcher_line_states = { 12 }\
+        \
+        CO_expected.cwd = os.getcwd()\
+        CO_expected.rs = 11\
+        CO_expected.als = 77\
+        \
+        coroutine.override_isgenerator()\
+        local co = coroutine.create(co_func)\
+        \
+        os.chdir('dir1')\
+        rl_state = { 33 }\
+        clink.co_state.argmatcher_line_states = { 34 }\
+        \
+        MN_expected.cwd = os.getcwd()\
+        MN_expected.rs = 33\
+        MN_expected.als = 34\
+        \
+        coroutine.resume(co)\
+        \
+        MN_actual.cwd = os.getcwd()\
+        MN_actual.rs = rl_state[1]\
+        MN_actual.als = clink.co_state.argmatcher_line_states[1]\
+        ";
+
+        REQUIRE(lua.do_string(script));
+
+        SECTION("Swap")
+        {
+            str<> out;
+
+            REQUIRE(out.equals(""));
+            REQUIRE(verify_ret_true(lua, "verify_MN_result"));
+            REQUIRE(verify_ret_true(lua, "verify_CO_result"));
+            REQUIRE(verify_ret_true(lua, "verify_different"));
+        }
+    }
+
     set_autosuggest_async_default();
 }
