@@ -5,7 +5,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- Unit test for `coroutine.resume()` swapping state correctly (and automatically).
 
 ## Normal Priority
 
