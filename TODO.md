@@ -5,8 +5,12 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
+- <kbd>Ctrl</kbd>+<kbd>C</kbd>/<kbd>Break</kbd> needs to be able to interrupt Readline things (like `sigint` would), and needs to be able to interrupt queued input lines.
+- <kbd>Ctrl</kbd>+<kbd>C</kbd>/<kbd>Break</kbd> ideally would be able to interrupt a Lua script feedback loop where the script is using `onbeginedit` and `onfilterinput` to produce the effect of a looping script, if such a thing .
 
 ## Normal Priority
+- Some way to push keys?
+- Some way for `onbeginedit` handler to short circuit and cause the edit line to return without showing a prompt or input, and either provide filtered input or go through `onfilterinput` (and maybe `onendedit`).
 
 ## Low Priority
 - Let the yieldguards run in parallel?
