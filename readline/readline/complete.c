@@ -135,7 +135,7 @@ rl_iccpfunc_t *rl_is_exec_func = (rl_iccpfunc_t *)NULL;
 #if defined (VISIBLE_STATS)
 /* begin_clink_change */
 //static int stat_char PARAMS((char *));
-int stat_char PARAMS((const char *, char));
+static int stat_char PARAMS((const char *, char));
 /* end_clink_change */
 #endif
 
@@ -155,13 +155,11 @@ static char *rl_quote_filename PARAMS((char *, int, char *));
 
 static void _rl_complete_sigcleanup PARAMS((int, void *));
 
-/* begin_clink_change */
-/*static*/ void set_completion_defaults PARAMS((int));
-/*static*/ int get_y_or_n PARAMS((int));
-/*static*/ int _rl_internal_pager PARAMS((int));
-/*static*/ char *printable_part PARAMS((char *));
-/*static*/ int fnwidth PARAMS((const char *));
-/* end_clink_change */
+static void set_completion_defaults PARAMS((int));
+static int get_y_or_n PARAMS((int));
+static int _rl_internal_pager PARAMS((int));
+static char *printable_part PARAMS((char *));
+static int fnwidth PARAMS((const char *));
 /* begin_clink_change */
 //static int fnprint PARAMS((const char *, int, const char *));
 static int fnprint PARAMS((const char *, int, const char *, unsigned char));
@@ -174,17 +172,15 @@ static char **remove_duplicate_matches PARAMS((char **));
 static void insert_match PARAMS((char *, int, int, char *));
 /* begin_clink_change */
 //static int append_to_match PARAMS((char *, int, int, int));
-int append_to_match PARAMS((char *, int, int, int, int));
+static int append_to_match PARAMS((char *, int, int, int, int));
 /* end_clink_change */
 static void insert_all_matches PARAMS((char **, int, char *));
 static int complete_fncmp PARAMS((const char *, int, const char *, int));
 static void display_matches PARAMS((char **));
 static int compute_lcd_of_matches PARAMS((char **, int, const char *));
 static int postprocess_matches PARAMS((char ***, int));
-/* begin_clink_change */
-/*static*/ int compare_match PARAMS((char *, const char *));
-/*static*/ int complete_get_screenwidth PARAMS((void));
-/* end_clink_change */
+static int compare_match PARAMS((char *, const char *));
+static int complete_get_screenwidth PARAMS((void));
 
 static char *make_quoted_replacement PARAMS((char *, int, char *));
 
@@ -911,10 +907,9 @@ stat_from_match_type (int match_type, const char* fn, struct stat* finfo)
      `|' for FIFOs
      `%' for character special devices
      `#' for block special devices */
+static int
 /* begin_clink_change */
-//static int
 //stat_char (char *filename)
-int
 stat_char (const char *filename, char match_type)
 /* end_clink_change */
 {
@@ -2075,10 +2070,7 @@ postprocess_matches (char ***matchesp, int matching_filenames)
   return (1);
 }
 
-/* begin_clink_change */
-//static int
-int
-/* end_clink_change */
+static int
 complete_get_screenwidth (void)
 {
   int cols;
@@ -2095,18 +2087,22 @@ complete_get_screenwidth (void)
   return _rl_screenwidth;
 }
 
+/* begin_clink_change */
+int
+__complete_get_screenwidth (void)
+{
+  return complete_get_screenwidth ();
+}
+/* end_clink_change */
+
 /* A convenience function for displaying a list of strings in
    columnar format on readline's output stream.  MATCHES is the list
    of strings, in argv format, LEN is the number of strings in MATCHES,
    and MAX is the length of the longest string in MATCHES.
    ONLY_MEASURE measures the number of lines that would be printed,
    without printing them. */
-/* begin_clink_change */
-//void
-//rl_display_match_list (char **matches, int len, int max)
-static int
-rl_display_match_list_internal (char **matches, int len, int max, int only_measure)
-/* end_clink_change */
+void
+rl_display_match_list (char **matches, int len, int max)
 {
   int count, limit, printed_len, lines, cols;
   int i, j, k, l, common_length, sind;
@@ -2167,11 +2163,6 @@ rl_display_match_list_internal (char **matches, int len, int max, int only_measu
   /* How many iterations of the printing loop? */
   count = (len + (limit - 1)) / limit;
 
-/* begin_clink_change */
-  if (only_measure)
-    return count;
-/* end_clink_change */
-
   /* Watch out for special case.  If LEN is less than LIMIT, then
      just do the inner printing loop.
 	   0 < len <= limit  implies  count = 1. */
@@ -2214,19 +2205,13 @@ rl_display_match_list_internal (char **matches, int len, int max, int only_measu
 #else
 	  if (RL_SIG_RECEIVED ())
 #endif
-/* begin_clink_change */
-	    //return;
-	    return 0;
-/* end_clink_change */
+	    return;
 	  lines++;
 	  if (_rl_page_completions && lines >= (_rl_screenheight - 1) && i < count)
 	    {
 	      lines = _rl_internal_pager (lines);
 	      if (lines < 0)
-/* begin_clink_change */
-		//return;
-		return 0;
-/* end_clink_change */
+		return;
 	    }
 	}
     }
@@ -2243,10 +2228,7 @@ rl_display_match_list_internal (char **matches, int len, int max, int only_measu
 #else
 	  if (RL_SIG_RECEIVED ())
 #endif
-/* begin_clink_change */
-	    //return;
-	    return 0;
-/* end_clink_change */
+	    return;
 	  if (matches[i+1])
 	    {
 	      if (limit == 1 || (i && (limit > 1) && (i % limit) == 0))
@@ -2257,10 +2239,7 @@ rl_display_match_list_internal (char **matches, int len, int max, int only_measu
 		    {
 		      lines = _rl_internal_pager (lines);
 		      if (lines < 0)
-/* begin_clink_change */
-			//return;
-			return 0;
-/* end_clink_change */
+			return;
 		    }
 		}
 	      else if (max <= printed_len)
@@ -2272,19 +2251,7 @@ rl_display_match_list_internal (char **matches, int len, int max, int only_measu
 	}
       rl_crlf ();
     }
-
-/* begin_clink_change */
-  return 0;
-/* end_clink_change */
 }
-
-/* begin_clink_change */
-void
-rl_display_match_list (char **matches, int len, int max)
-{
-  rl_display_match_list_internal (matches, len, max, 0);
-}
-/* end_clink_change */
 
 /* Display MATCHES, a list of matching filenames in argv format.  This
    handles the simple case -- a single match -- first.  If there is more
@@ -2383,12 +2350,7 @@ display_matches (char **matches)
 	
   /* If there are many items, then ask the user if she really wants to
      see them all. */
-/* begin_clink_change */
-  //if (rl_completion_query_items > 0 && len >= rl_completion_query_items)
-  if ((rl_completion_auto_query_items && _rl_screenheight > 0) ?
-      rl_display_match_list_internal (matches, len, max, 1) >= (_rl_screenheight - (_rl_vis_botlin + 1)) :
-      rl_completion_query_items > 0 && len >= rl_completion_query_items)
-/* end_clink_change */
+  if (rl_completion_query_items > 0 && len >= rl_completion_query_items)
     {
       rl_crlf ();
 /* begin_clink_change */
@@ -2581,10 +2543,9 @@ insert_match (char *match, int start, int mtype, char *qc)
    (it's initially set to the what the user has chosen, indicated by the
    value of _rl_complete_mark_symlink_dirs, but may be modified by an
    application's completion function). */
+static int
 /* begin_clink_change */
-//static int
 //append_to_match (char *text, int delimiter, int quote_char, int nontrivial_match)
-int
 append_to_match (char *text, int orig_start, int delimiter, int quote_char, int nontrivial_match)
 /* end_clink_change */
 {
@@ -2711,6 +2672,14 @@ append_to_match (char *text, int orig_start, int delimiter, int quote_char, int 
   return (temp_string_index);
 }
 
+/* begin_clink_change */
+int
+__append_to_match (char *text, int orig_start, int delimiter, int quote_char, int nontrivial_match)
+{
+  return append_to_match (text, orig_start, delimiter, quote_char, nontrivial_match);
+}
+/* end_clink_change */
+
 static void
 insert_all_matches (char **matches, int point, char *qc)
 {
@@ -2768,9 +2737,7 @@ _rl_free_match_list (char **matches)
 /* Compare a possibly-quoted filename TEXT from the line buffer and a possible
    MATCH that is the product of filename completion, which acts on the dequoted
    text. */
-/* begin_clink_change */
-/*static*/ int
-/* end_clink_change */
+static int
 compare_match (char *text, const char *match)
 {
   char *temp;
@@ -2786,6 +2753,14 @@ compare_match (char *text, const char *match)
     }      
   return (strcmp (text, match));
 }
+
+/* begin_clink_change */
+int
+__compare_match (char *text, const char *match)
+{
+  return compare_match (text, match);
+}
+/* end_clink_change */
 
 /* Complete the word at or before point.
    WHAT_TO_DO says what to do with the completion.
@@ -4132,5 +4107,35 @@ rl_insert_match (const char* match, char* orig_text, int orig_start, int delimit
   insert_match ((char *)match, orig_start, SINGLE_MATCH, &quote_char);
   append_to_match ((char *)match, orig_start, delimiter, quote_char, nontrivial_match);
   rl_end_undo_group();
+}
+
+void __set_completion_defaults (int what_to_do)
+{
+  set_completion_defaults (what_to_do);
+}
+
+int __get_y_or_n (int for_pager)
+{
+  return get_y_or_n (for_pager);
+}
+
+int ___rl_internal_pager (int lines)
+{
+  return _rl_internal_pager (lines);
+}
+
+char *__printable_part (char* pathname)
+{
+  return printable_part (pathname);
+}
+
+int __fnwidth (const char* string)
+{
+  return fnwidth (string);
+}
+
+int __stat_char (const char *filename, char match_type)
+{
+  return stat_char (filename, match_type);
 }
 /* end_clink_change */

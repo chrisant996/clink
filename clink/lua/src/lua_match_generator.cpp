@@ -26,7 +26,7 @@ extern "C" {
 #include <lauxlib.h>
 #include <lualib.h>
 #include <readline/readline.h>
-char* printable_part (char* pathname);
+char* __printable_part (char* pathname);
 }
 
 #include <unordered_set>
@@ -213,7 +213,7 @@ done:
         return ret;
     }
 
-    needle = printable_part(const_cast<char*>(needle));
+    needle = __printable_part(const_cast<char*>(needle));
     const int needle_len = int(strlen(needle));
 
     // Count matches.

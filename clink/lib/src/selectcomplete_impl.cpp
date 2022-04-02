@@ -30,11 +30,11 @@ extern "C" {
 #include <readline/rlprivate.h>
 #include <readline/rldefs.h>
 #include <readline/colors.h>
-int compare_match(char* text, const char* match);
-int append_to_match(char* text, int orig_start, int delimiter, int quote_char, int nontrivial_match);
-char* printable_part(char* text);
-void set_completion_defaults(int what_to_do);
-int get_y_or_n(int for_pager);
+int __compare_match(char* text, const char* match);
+int __append_to_match(char* text, int orig_start, int delimiter, int quote_char, int nontrivial_match);
+char* __printable_part(char* text);
+void __set_completion_defaults(int what_to_do);
+int __get_y_or_n(int for_pager);
 extern int _rl_last_v_pos;
 };
 
@@ -291,7 +291,7 @@ cant_activate:
         SetConsoleCursorPosition(h, restore);
 
         // Wait for input.
-        bool yes = get_y_or_n(0) > 0;
+        bool yes = __get_y_or_n(0) > 0;
 
         // Erase prompt.
         _rl_move_vert(_rl_vis_botlin);
@@ -969,7 +969,7 @@ void selectcomplete_impl::update_matches(bool restrict)
     // Initialize when starting a new interactive completion.
     if (restrict)
     {
-        set_completion_defaults('%');
+        __set_completion_defaults('%');
 
         int found_quote = 0;
         int quote_char = 0;
@@ -1336,7 +1336,7 @@ void selectcomplete_impl::update_display()
                             {
                                 assert(!m_matches.is_display_filtered());
                                 const char* match = m_matches.get_match(i);
-                                char* temp = printable_part(const_cast<char*>(match));
+                                char* temp = __printable_part(const_cast<char*>(match));
                                 printed_len = append_filename(temp, match, 0, 0, type, selected, nullptr);
                             }
                             append_display(display, selected, append ? _rl_arginfo_color : _rl_filtered_color);
@@ -1365,7 +1365,7 @@ void selectcomplete_impl::update_display()
                         else
                         {
                             int vis_stat_char;
-                            char* temp = m_matches.is_display_filtered() ? const_cast<char*>(display) : printable_part(const_cast<char*>(display));
+                            char* temp = m_matches.is_display_filtered() ? const_cast<char*>(display) : __printable_part(const_cast<char*>(display));
                             printed_len = append_filename(temp, display, 0, 0, type, selected, &vis_stat_char);
                             if (printed_len > col_max)
                             {
@@ -1627,17 +1627,17 @@ void selectcomplete_impl::insert_match(int final)
 
     if (final)
     {
-        int nontrivial_lcd = compare_match(const_cast<char*>(m_needle.c_str()), match);
+        int nontrivial_lcd = __compare_match(const_cast<char*>(m_needle.c_str()), match);
 
         bool append_space = false;
-        // UGLY: append_to_match() circumvents the m_buffer abstraction.
+        // UGLY: __append_to_match() circumvents the m_buffer abstraction.
         set_matches_lookaside_oneoff(match, type, append_char, flags);
-        append_to_match(const_cast<char*>(match), m_anchor + !!*qs, m_delimiter, *qs, nontrivial_lcd);
+        __append_to_match(const_cast<char*>(match), m_anchor + !!*qs, m_delimiter, *qs, nontrivial_lcd);
         clear_matches_lookaside_oneoff();
         m_point = m_buffer->get_cursor();
 
         // Pressing Space to insert a final match needs to maybe add a quote,
-        // and then maybe add a space, depending on what append_to_match did.
+        // and then maybe add a space, depending on what __append_to_match did.
         if (final == 2 || !is_match_type(type, match_type::dir))
         {
             // A space may or may not be present.  Delete it if one is.

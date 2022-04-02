@@ -68,12 +68,12 @@ extern int errno;
 #  include "readline/colors.h"
 #endif
 
-int complete_get_screenwidth (void);
-int fnwidth (const char *string);
-int get_y_or_n (int for_pager);
-char* printable_part (char* pathname);
-int stat_char (const char *filename, char match_type);
-int _rl_internal_pager (int lines);
+int __complete_get_screenwidth (void);
+int __fnwidth (const char *string);
+int __get_y_or_n (int for_pager);
+char* __printable_part (char* pathname);
+int __stat_char (const char *filename, char match_type);
+int ___rl_internal_pager (int lines);
 unsigned int cell_count(const char* in);
 
 } // extern "C"
@@ -745,7 +745,7 @@ int append_filename(char* to_print, const char* full_pathname, int prefix_bytes,
 
 #if defined (VISIBLE_STATS)
             if (rl_visible_stats)
-                extension_char = stat_char(new_full_pathname, static_cast<match_type_intrinsic>(type));
+                extension_char = __stat_char(new_full_pathname, static_cast<match_type_intrinsic>(type));
             else
 #endif
             if (_rl_complete_mark_directories)
@@ -775,7 +775,7 @@ int append_filename(char* to_print, const char* full_pathname, int prefix_bytes,
             s = tilde_expand(full_pathname);
 #if defined(VISIBLE_STATS)
             if (rl_visible_stats)
-                extension_char = stat_char(s, static_cast<match_type_intrinsic>(type));
+                extension_char = __stat_char(s, static_cast<match_type_intrinsic>(type));
             else
 #endif
             if (_rl_complete_mark_directories && path_isdir(type, s))
@@ -963,7 +963,7 @@ static int display_match_list_internal(match_adapter* adapter, const column_widt
     int filtered_color_len = 3;
     int description_color_len = 3;
 
-    const int cols = complete_get_screenwidth();
+    const int cols = __complete_get_screenwidth();
     const int show_descriptions = adapter->has_descriptions();
     const int limit = widths.num_columns();
     assert(limit > 0);
@@ -1022,7 +1022,7 @@ static int display_match_list_internal(match_adapter* adapter, const column_widt
                 printed_len = 0;
                 if (append)
                 {
-                    char* temp = printable_part((char*)match);
+                    char* temp = __printable_part((char*)match);
                     printed_len = append_filename(temp, match, widths.m_sind, widths.m_can_condense, type, 0, nullptr);
                 }
                 append_display(display, 0, append ? _rl_arginfo_color : _rl_filtered_color);
@@ -1030,7 +1030,7 @@ static int display_match_list_internal(match_adapter* adapter, const column_widt
             }
             else
             {
-                char* temp = printable_part((char*)display);
+                char* temp = __printable_part((char*)display);
                 printed_len = append_filename(temp, display, widths.m_sind, widths.m_can_condense, type, 0, nullptr);
             }
 
@@ -1082,7 +1082,7 @@ static int display_match_list_internal(match_adapter* adapter, const column_widt
                 lines_for_row += (printed_len - 1) / _rl_screenwidth;
             if (_rl_page_completions && lines > 0 && lines + lines_for_row >= _rl_screenheight)
             {
-                lines = _rl_internal_pager(lines);
+                lines = ___rl_internal_pager(lines);
                 if (lines < 0)
                     break;
             }
@@ -1124,7 +1124,7 @@ static int prompt_display_matches(int len)
     if (_rl_pager_color)
         fprintf(rl_outstream, _normal_color);
     fflush(rl_outstream);
-    if (get_y_or_n(0) == 0)
+    if (__get_y_or_n(0) == 0)
     {
         rl_crlf();
         return 0;

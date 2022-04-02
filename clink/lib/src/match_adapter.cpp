@@ -12,7 +12,7 @@
 #include <terminal/ecma48_iter.h>
 
 //------------------------------------------------------------------------------
-extern "C" char* printable_part(char* text);
+extern "C" char* __printable_part(char* text);
 
 //------------------------------------------------------------------------------
 void match_adapter::cached_info::clear()
@@ -211,7 +211,7 @@ const char* match_adapter::get_match_display(unsigned int index) const
     else
         return nullptr;
 
-    // Don't use printable_part(), because append_filename() needs to know
+    // Don't use __printable_part(), because append_filename() needs to know
     // both the raw match and the printable part.
     if (display && *display)
         return display;
@@ -320,7 +320,7 @@ bool match_adapter::is_custom_display(unsigned int index) const
     {
         if (!m_filtered_matches[index + 1]->match[0])
             return true;
-        const char* temp = printable_part(const_cast<char*>(m_filtered_matches[index + 1]->match));
+        const char* temp = __printable_part(const_cast<char*>(m_filtered_matches[index + 1]->match));
         if (strcmp(temp, m_filtered_matches[index + 1]->display) != 0)
             return true;
     }

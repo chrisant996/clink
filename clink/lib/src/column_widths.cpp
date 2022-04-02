@@ -17,10 +17,10 @@ extern "C" {
 #include <readline/readline.h>
 #include <readline/rldefs.h>
 #include <readline/rlprivate.h>
-int complete_get_screenwidth(void);
-int fnwidth(const char *string);
-char* printable_part(char* pathname);
-int stat_char(const char *filename, char match_type);
+int __complete_get_screenwidth(void);
+int __fnwidth(const char *string);
+char* __printable_part(char* pathname);
+int __stat_char(const char *filename, char match_type);
 }
 
 #include <vector>
@@ -49,7 +49,7 @@ static struct column_info *s_column_info = nullptr;
 //------------------------------------------------------------------------------
 static const char* visible_part(const char *match)
 {
-    const char* t1 = printable_part((char*)match);
+    const char* t1 = __printable_part((char*)match);
     if (ISALPHA ((unsigned char)t1[0]) && t1[1] == ':' && t1[2] == '\0')
         t1 += 2;
     if (!rl_filename_display_desired)
@@ -64,8 +64,8 @@ static const char* visible_part(const char *match)
 //------------------------------------------------------------------------------
 int printable_len(const char* match, match_type type)
 {
-    const char* temp = printable_part((char*)match);
-    int len = fnwidth(temp);
+    const char* temp = __printable_part((char*)match);
+    int len = __fnwidth(temp);
 
     // Use the match type to determine whether there will be a visible stat
     // character, and include it in the max length calculation.
@@ -84,7 +84,7 @@ int printable_len(const char* match, match_type type)
     }
 #if defined (VISIBLE_STATS)
     else if (rl_visible_stats && rl_filename_display_desired)
-        vis_stat = stat_char (match, static_cast<match_type_intrinsic>(type));
+        vis_stat = __stat_char (match, static_cast<match_type_intrinsic>(type));
 #endif
     if (vis_stat > 0)
         len++;
@@ -173,7 +173,7 @@ column_widths calculate_columns(match_adapter* adapter, int max_matches, bool on
 
     /* Determine the max possible number of display columns.  */
     const bool vertical = !_rl_print_completions_horizontally;
-    const size_t line_length = complete_get_screenwidth();
+    const size_t line_length = __complete_get_screenwidth();
     size_t max_idx = line_length;
     max_idx = (max_idx + col_padding) / (1 + col_padding);
 
@@ -196,7 +196,7 @@ column_widths calculate_columns(match_adapter* adapter, int max_matches, bool on
         str<32> lcd;
         adapter->get_lcd(lcd);
         const char* t = visible_part(lcd.c_str());
-        common_length = fnwidth(t);
+        common_length = __fnwidth(t);
         sind = strlen(t);
 
         can_condense = (common_length > _rl_completion_prefix_display_length && common_length > ELLIPSIS_LEN);
@@ -228,7 +228,7 @@ column_widths calculate_columns(match_adapter* adapter, int max_matches, bool on
         str<32> lcd;
         adapter->get_lcd(lcd);
         const char* t = visible_part(lcd.c_str());
-        common_length = fnwidth(t);
+        common_length = __fnwidth(t);
         sind = strlen(t);
     }
 #endif
@@ -249,7 +249,7 @@ column_widths calculate_columns(match_adapter* adapter, int max_matches, bool on
         {
             if (append)
             {
-                char *temp = printable_part((char*)match);
+                char *temp = __printable_part((char*)match);
                 len += printable_len(match, type);
             }
             len += adapter->get_match_visible_display(i);

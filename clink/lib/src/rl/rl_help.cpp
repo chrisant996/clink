@@ -21,7 +21,7 @@ extern "C" {
 #include <readline/readline.h>
 #include <readline/rlprivate.h>
 #include <readline/rldefs.h>
-extern int complete_get_screenwidth(void);
+extern int __complete_get_screenwidth(void);
 }
 
 #include <vector>
@@ -948,7 +948,7 @@ void show_key_bindings(bool friendly, int mode, std::vector<key_binding_info>* o
 
     // Calculate columns.
     auto longest = [&longest_key, &longest_func, desc_pad](int cat) { return longest_key[cat] + 3 + longest_func[cat] + 2 + desc_pad; };
-    const int max_width = out ? 0 : complete_get_screenwidth();
+    const int max_width = out ? 0 : __complete_get_screenwidth();
     const int columns_that_fit = show_descriptions ? 0 : max_width / longest(0);
     const int columns = max(1, columns_that_fit);
 
