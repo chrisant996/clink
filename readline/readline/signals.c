@@ -128,6 +128,11 @@ sigset_t _rl_orig_sigset;
 /* **************************************************************** */
 
 static sighandler_cxt old_int, old_term, old_hup, old_alrm, old_quit;
+/* begin_clink_change */
+#if defined (SIGBREAK)
+static sighandler_cxt old_break;
+#endif
+/* end_clink_change */
 #if defined (SIGTSTP)
 static sighandler_cxt old_tstp, old_ttou, old_ttin;
 #endif
@@ -200,11 +205,22 @@ _rl_handle_signal (int sig)
      handler, ignore it until rl_clear_signals resets the catcher. */
 #  if defined (SIGALRM)
   if (sig == SIGINT || sig == SIGALRM)
+/* begin_clink_change */
+#  elif defined (SIGBREAK)
+  if (sig == SIGINT || sig == SIGBREAK)
+/* end_clink_change */
 #  else
   if (sig == SIGINT)
 #  endif
     rl_set_sighandler (sig, SIG_IGN, &dummy_cxt);
 #endif /* !HAVE_BSD_SIGNALS && !HAVE_POSIX_SIGNALS */
+
+/* begin_clink_change */
+#if defined (SIGBREAK)
+  if (sig == SIGBREAK)
+    sig = SIGINT;
+#endif
+/* end_clink_change */
 
   /* If there's a sig cleanup function registered, call it and `deregister'
      the cleanup function to avoid multiple calls */
@@ -488,6 +504,11 @@ rl_set_signals (void)
 
       rl_maybe_set_sighandler (SIGINT, rl_signal_handler, &old_int);
       rl_maybe_set_sighandler (SIGTERM, rl_signal_handler, &old_term);
+/* begin_clink_change */
+#if defined (SIGBREAK)
+      rl_maybe_set_sighandler (SIGBREAK, rl_signal_handler, &old_break);
+#endif
+/* end_clink_change */
 #if defined (SIGHUP)
       rl_maybe_set_sighandler (SIGHUP, rl_signal_handler, &old_hup);
 #endif
@@ -560,6 +581,11 @@ rl_clear_signals (void)
 	 overhead */
       rl_maybe_restore_sighandler (SIGINT, &old_int);
       rl_maybe_restore_sighandler (SIGTERM, &old_term);
+/* begin_clink_change */
+#if defined (SIGBREAK)
+      rl_maybe_restore_sighandler (SIGBREAK, &old_break);
+#endif
+/* end_clink_change */
 #if defined (SIGHUP)
       rl_maybe_restore_sighandler (SIGHUP, &old_hup);
 #endif

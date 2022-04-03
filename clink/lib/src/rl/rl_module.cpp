@@ -1868,7 +1868,7 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
         // inputrc file.  Those were interfering with suppressing the
         // *-mode-string config variables.
         rl_readline_name = shell_name;
-        rl_catch_signals = 0;
+        rl_catch_signals = 1;
         rl_initialize();
 
         // Override some defaults.
