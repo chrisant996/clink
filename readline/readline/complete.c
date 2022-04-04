@@ -588,7 +588,13 @@ _rl_reset_completion_state (void)
 static void
 _rl_complete_sigcleanup (int sig, void *ptr)
 {
+/* begin_clink_change */
+#if defined (SIGBREAK)
+  if (sig == SIGINT || sig == SIGBREAK)	/* XXX - for now */
+#else
   if (sig == SIGINT)	/* XXX - for now */
+#endif
+/* end_clink_change */
     {
       _rl_free_match_list ((char **)ptr);
       _rl_complete_display_matches_interrupt = 1;

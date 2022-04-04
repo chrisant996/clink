@@ -34,6 +34,7 @@
 #include <terminal/screen_buffer.h>
 #include <terminal/scroll.h>
 
+#include <signal.h>
 #include <unordered_set>
 
 extern "C" {
@@ -334,6 +335,46 @@ setting_enum g_default_bindings(
 
 extern setting_bool g_terminal_raw_esc;
 extern setting_bool g_gui_popups;
+
+
+
+//------------------------------------------------------------------------------
+static void clink_reset_event_hook()
+{
+  rl_signal_event_hook = nullptr;
+}
+
+//------------------------------------------------------------------------------
+static int clink_event_hook()
+{
+    rl_cleanup_after_signal();
+    clink_reset_event_hook();
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+static void clink_set_event_hook()
+{
+    rl_signal_event_hook = clink_event_hook;
+}
+
+//------------------------------------------------------------------------------
+void clink_sighandler(int sig)
+{
+    // raise() clears the signal handler, so set it again.
+    signal(sig, clink_sighandler);
+    if (RL_ISSTATE(RL_STATE_SIGHANDLER))
+        clink_set_event_hook();
+}
+
+//------------------------------------------------------------------------------
+static void _cdecl dummy_display_matches_hook(char**, int, int)
+{
+    // This exists purely to prevent rl_complete_internal from setting up
+    // _rl_complete_sigcleanup and freeing matches out from under Clink code.
+    // Clink uses rl_completion_display_matches_func, which isn't fully
+    // integrated into Readline.
+}
 
 
 
@@ -1727,6 +1768,7 @@ static void init_readline_hooks()
 
     // Match display.
     rl_completion_display_matches_func = display_matches;
+    rl_completion_display_matches_hook = dummy_display_matches_hook;
     rl_is_exec_func = is_exec_ext;
 
     // Macro hooks (for "luafunc:" support).
@@ -1858,6 +1900,14 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
         // Readline forgot to add this command to the funmap.
         rl_add_funmap_entry("vi-undo", rl_vi_undo);
 
+        // Install signal handlers so that Readline doesn't trigger process exit
+        // in response to Ctrl+C or Ctrl+Break.
+        rl_catch_signals = 1;
+        signal(SIGINT, clink_sighandler);
+#ifdef SIGBREAK
+        signal(SIGBREAK, clink_sighandler);
+#endif
+
         // Do a first rl_initialize() before setting any key bindings or config
         // variables.  Otherwise it would happen when rl_module installs the
         // Readline callback, after having loaded the Lua scripts.  That would
@@ -1868,7 +1918,6 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
         // inputrc file.  Those were interfering with suppressing the
         // *-mode-string config variables.
         rl_readline_name = shell_name;
-        rl_catch_signals = 1;
         rl_initialize();
 
         // Override some defaults.

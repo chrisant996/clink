@@ -215,13 +215,6 @@ _rl_handle_signal (int sig)
     rl_set_sighandler (sig, SIG_IGN, &dummy_cxt);
 #endif /* !HAVE_BSD_SIGNALS && !HAVE_POSIX_SIGNALS */
 
-/* begin_clink_change */
-#if defined (SIGBREAK)
-  if (sig == SIGBREAK)
-    sig = SIGINT;
-#endif
-/* end_clink_change */
-
   /* If there's a sig cleanup function registered, call it and `deregister'
      the cleanup function to avoid multiple calls */
   if (_rl_sigcleanup)
@@ -243,6 +236,11 @@ _rl_handle_signal (int sig)
   switch (sig)
     {
     case SIGINT:
+/* begin_clink_change */
+#if defined (SIGBREAK)
+    case SIGBREAK:
+#endif
+/* end_clink_change */
       _rl_reset_completion_state ();
       rl_free_line_state ();
 #if defined (READLINE_CALLBACKS)
@@ -790,6 +788,11 @@ rl_echo_signal_char (int sig)
 
   switch (sig)
     {
+/* begin_clink_change */
+#if defined (SIGBREAK)
+    case SIGBREAK:
+#endif
+/* end_clink_change */
     case SIGINT:  c = _rl_intr_char; break;
 #if defined (SIGQUIT)
     case SIGQUIT: c = _rl_quit_char; break;

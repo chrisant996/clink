@@ -610,6 +610,10 @@ rl_getc (FILE *stream)
       /* keyboard-generated signals of interest */
 #if defined (SIGQUIT)
       else if (_rl_caught_signal == SIGINT || _rl_caught_signal == SIGQUIT)
+/* begin_clink_change */
+#elif defined (SIGBREAK)
+      else if (_rl_caught_signal == SIGINT || _rl_caught_signal == SIGBREAK)
+/* end_clink_change */
 #else
       else if (_rl_caught_signal == SIGINT)
 #endif
