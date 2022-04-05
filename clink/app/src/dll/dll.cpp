@@ -200,6 +200,37 @@ INT_PTR WINAPI initialise_clink(const app_context::desc& app_desc)
         s_initialized = true;
     }
 
+#ifdef DEBUG
+    {
+        DWORD type;
+        DWORD data;
+        DWORD size = sizeof(data);
+        LSTATUS status = RegGetValueW(HKEY_CURRENT_USER, L"Software\\Clink", L"WaitForAttach", RRF_RT_REG_DWORD, &type, &data, &size);
+        if (status == ERROR_SUCCESS && type == REG_DWORD)
+        {
+            bool wait = (data == 1);
+            if (data == 2)
+            {
+                const DWORD began = GetTickCount();
+                while (GetKeyState(VK_CONTROL) < 0)
+                {
+                    wait = (GetTickCount() - began > 500);
+                    if (wait)
+                        break;
+                    Sleep(10);
+                }
+            }
+            if (wait)
+            {
+                str<> msg;
+                DWORD pid = GetCurrentProcessId();
+                msg.format("Attach debugger to process %u (0x%x) and click OK.", pid, pid);
+                MessageBox(0, msg.c_str(), "Clink", MB_OK);
+            }
+        }
+    }
+#endif
+
     // Now that Clink has a background thread, it gets trickier to accurately
     // attribute crashes to Clink.  The exception filter is per-process, so for
     // now install it permanently, and use thread local state to determine
