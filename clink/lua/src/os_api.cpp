@@ -41,6 +41,9 @@ static setting_bool g_glob_system(
     false);
 
 //------------------------------------------------------------------------------
+extern bool clink_is_signaled();
+
+//------------------------------------------------------------------------------
 extern "C" void __cdecl __acrt_errno_map_os_error(unsigned long const oserrno);
 static void map_errno() { __acrt_errno_map_os_error(GetLastError()); }
 static void map_errno(unsigned long const oserrno) { __acrt_errno_map_os_error(oserrno); }
@@ -479,9 +482,22 @@ int glob_impl(lua_State* state, bool dirs_only, bool back_compat=false)
     path::to_parent(tmp, nullptr);
 
     int i = 1;
-    while (true)
-        if (!glob_next(state, globber, tmp, i, extrainfo))
-            break;
+    if (back_compat)
+    {
+        while (true)
+            if (!glob_next(state, globber, tmp, i, extrainfo))
+                break;
+    }
+    else
+    {
+        while (true)
+        {
+            if (!glob_next(state, globber, tmp, i, extrainfo))
+                break;
+            if (!(i & 0x03) && clink_is_signaled())
+                break;
+        }
+    }
 
     return 1;
 }
@@ -1281,6 +1297,18 @@ static int os_executeyield_internal(lua_State *state) // gcc can't handle 'frien
 }
 
 //------------------------------------------------------------------------------
+/// -name:  os.issignaled
+/// -ver:   1.3.14
+/// -ret:   boolean
+/// Returns whether a <kbb>Ctrl</kbd>+<kbd>Break</kbd> has been received.
+/// Scripts may use this to decide when to end work early.
+static int is_signaled(lua_State *state)
+{
+    lua_pushboolean(state, clink_is_signaled());
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 void os_lua_initialise(lua_state& lua)
 {
     struct {
@@ -1320,6 +1348,7 @@ void os_lua_initialise(lua_state& lua)
         { "getclipboardtext", &get_clipboard_text },
         { "setclipboardtext", &set_clipboard_text },
         { "executeyield_internal", &os_executeyield_internal },
+        { "issignaled",  &is_signaled },
         // UNDOCUMENTED; internal use only.
         { "_globdirs",   &glob_dirs },  // Public os.globdirs method is in core.lua.
         { "_globfiles",  &glob_files }, // Public os.globfiles method is in core.lua.
