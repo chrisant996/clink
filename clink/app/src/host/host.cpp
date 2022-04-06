@@ -366,7 +366,36 @@ bool host::dequeue_line(wstr_base& out, bool& hide_prompt)
     const auto& front = m_queued_lines.front();
     out = front.m_line.c_str() + m_char_cursor;
     hide_prompt = front.m_hide_prompt;
+
+    std::list<str_moveable> queue;
+    if (!m_char_cursor && !hide_prompt)
+    {
+        str<> line(front.m_line.c_str());
+        while (line.length())
+        {
+            const char c = line[line.length() - 1];
+            if (c == '\r' || c == '\n')
+                line.truncate(line.length() - 1);
+            else
+                break;
+        }
+        doskey_alias alias;
+        m_doskey.resolve(line.c_str(), alias);
+        if (alias)
+        {
+            str_moveable next;
+            if (alias.next(next))
+                out = next.c_str();
+            while (alias.next(next))
+                queue.push_front(std::move(next));
+        }
+    }
+
     pop_queued_line();
+
+    for (auto& line : queue)
+        m_queued_lines.emplace_front(std::move(line), true);
+
     return true;
 }
 
