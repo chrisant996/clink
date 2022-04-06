@@ -41,6 +41,7 @@ public:
     void            enqueue_lines(std::list<str_moveable>& lines, bool hide_prompt);
     bool            dequeue_line(wstr_base& out, bool& hide_prompt);
     bool            dequeue_char(wchar_t* out);
+    void            cleanup_after_signal();
 
     // host_callbacks:
     int             add_history(const char* line) override;

@@ -151,6 +151,7 @@ extern setting_bool g_prompt_async;
 extern void start_logger();
 
 extern void initialise_readline(const char* shell_name, const char* state_dir, const char* bin_dir);
+extern bool clink_maybe_handle_signal();
 extern bool get_sticky_search_history();
 extern bool has_sticky_search_position();
 extern bool get_sticky_search_add_history(const char* line);
@@ -358,6 +359,7 @@ void host::enqueue_lines(std::list<str_moveable>& lines, bool hide_prompt)
 //------------------------------------------------------------------------------
 bool host::dequeue_line(wstr_base& out, bool& hide_prompt)
 {
+    clink_maybe_handle_signal();
     if (m_queued_lines.empty())
         return false;
 
@@ -371,6 +373,7 @@ bool host::dequeue_line(wstr_base& out, bool& hide_prompt)
 //------------------------------------------------------------------------------
 bool host::dequeue_char(wchar_t* out)
 {
+    clink_maybe_handle_signal();
     if (m_queued_lines.empty())
         return false;
 
@@ -385,6 +388,13 @@ bool host::dequeue_char(wchar_t* out)
     if (m_char_cursor >= line.length())
         pop_queued_line();
     return true;
+}
+
+//------------------------------------------------------------------------------
+void host::cleanup_after_signal()
+{
+    m_queued_lines.clear();
+    m_char_cursor = 0;
 }
 
 //------------------------------------------------------------------------------

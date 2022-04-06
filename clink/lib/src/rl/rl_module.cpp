@@ -89,8 +89,10 @@ extern int clink_diagnostics(int, int);
 extern int host_add_history(int rl_history_index, const char* line);
 extern int host_remove_history(int rl_history_index, const char* line);
 extern void host_send_event(const char* event_name);
+extern void host_cleanup_after_signal();
 extern int macro_hook_func(const char* macro);
 extern int host_filter_matches(char** matches);
+extern void interrupt_input();
 extern void update_matches();
 extern void reset_generate_matches();
 extern void force_update_internal(bool restrict);
@@ -339,15 +341,23 @@ extern setting_bool g_gui_popups;
 
 
 //------------------------------------------------------------------------------
+static volatile int clink_signal = 0;
+static bool clink_rl_cleanup_needed = false;
+
+//------------------------------------------------------------------------------
 static void clink_reset_event_hook()
 {
-  rl_signal_event_hook = nullptr;
+    rl_signal_event_hook = nullptr;
+    clink_signal = 0;
+    clink_rl_cleanup_needed = false;
 }
 
 //------------------------------------------------------------------------------
 static int clink_event_hook()
 {
-    rl_cleanup_after_signal();
+    if (clink_rl_cleanup_needed)
+        rl_cleanup_after_signal();
+    host_cleanup_after_signal();
     clink_reset_event_hook();
     return 0;
 }
@@ -359,12 +369,50 @@ static void clink_set_event_hook()
 }
 
 //------------------------------------------------------------------------------
+static BOOL WINAPI clink_ctrlevent_handler(DWORD ctrl_type)
+{
+    if (ctrl_type == CTRL_C_EVENT || ctrl_type == CTRL_BREAK_EVENT)
+    {
+        clink_signal = (ctrl_type == CTRL_C_EVENT) ? SIGINT : SIGBREAK;
+        interrupt_input();
+    }
+    return false;
+}
+
+//------------------------------------------------------------------------------
 void clink_sighandler(int sig)
 {
     // raise() clears the signal handler, so set it again.
     signal(sig, clink_sighandler);
-    if (RL_ISSTATE(RL_STATE_SIGHANDLER))
-        clink_set_event_hook();
+    clink_set_event_hook();
+    clink_signal = sig;
+    clink_rl_cleanup_needed = !!RL_ISSTATE(RL_STATE_SIGHANDLER);
+}
+
+//------------------------------------------------------------------------------
+bool clink_is_signaled()
+{
+    return clink_signal != 0;
+}
+
+//------------------------------------------------------------------------------
+bool clink_maybe_handle_signal()
+{
+    const bool signaled = clink_is_signaled();
+    if (signaled)
+    {
+        if (rl_signal_event_hook)
+            (*rl_signal_event_hook)();
+        else
+            clink_reset_event_hook();
+    }
+    return signaled;
+}
+
+//------------------------------------------------------------------------------
+void clink_shutdown_ctrlevent()
+{
+    SetConsoleCtrlHandler(clink_ctrlevent_handler, false);
 }
 
 //------------------------------------------------------------------------------
@@ -1907,6 +1955,7 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
 #ifdef SIGBREAK
         signal(SIGBREAK, clink_sighandler);
 #endif
+        SetConsoleCtrlHandler(clink_ctrlevent_handler, true);
 
         // Do a first rl_initialize() before setting any key bindings or config
         // variables.  Otherwise it would happen when rl_module installs the

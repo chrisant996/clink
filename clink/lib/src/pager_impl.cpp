@@ -14,6 +14,8 @@
 #include <core/str_iter.h>
 #include <terminal/printer.h>
 
+extern bool clink_is_signaled();
+
 setting_color g_color_interact(
     "color.interact",
     "For user-interaction prompts",
@@ -117,6 +119,12 @@ bool pager_impl::on_print_lines(printer& printer, int lines)
 
     printer.print(g_color_interact.get(), "-- More --");
     m_dispatcher.dispatch(m_pager_bind_group);
+
+    if (clink_is_signaled())
+    {
+        m_max = -1;
+        return false;
+    }
 
     printer.print("\x1b[1K\r");
     return m_max >= 0;

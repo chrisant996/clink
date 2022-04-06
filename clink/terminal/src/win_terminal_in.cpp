@@ -64,6 +64,9 @@ extern HANDLE get_recognizer_event();
 extern void host_refresh_recognizer();
 
 //------------------------------------------------------------------------------
+static HANDLE s_interrupt = NULL;
+
+//------------------------------------------------------------------------------
 static const int CTRL_PRESSED = LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED;
 static const int ALT_PRESSED = LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED;
 
@@ -218,6 +221,13 @@ static char s_verbose_input = false;
 void set_verbose_input(int verbose)
 {
     s_verbose_input = char(verbose);
+}
+
+//------------------------------------------------------------------------------
+void interrupt_input()
+{
+    if (s_interrupt)
+        SetEvent(s_interrupt);
 }
 
 
@@ -538,6 +548,9 @@ unsigned int win_terminal_in::get_dimensions()
 //------------------------------------------------------------------------------
 void win_terminal_in::begin()
 {
+    if (!s_interrupt)
+        s_interrupt = CreateEvent(nullptr, false, false, nullptr);
+
     m_buffer_count = 0;
     m_lead_surrogate = 0;
     m_stdin = GetStdHandle(STD_INPUT_HANDLE);
@@ -657,6 +670,10 @@ void win_terminal_in::read_console(input_idle* callback)
     if (!is_scroll_mode())
         SetConsoleCursorPosition(m_stdout, csbi.dwCursorPosition);
 
+    // Reset interrupt detection (allow Ctrl+Break to cancel input).
+    if (s_interrupt)
+        ResetEvent(s_interrupt);
+
     // Read input records sent from the terminal (aka conhost) until some
     // input has been buffered.
     const unsigned int buffer_count = m_buffer_count;
@@ -667,34 +684,50 @@ void win_terminal_in::read_console(input_idle* callback)
 
         fix_console_input_mode();
 
-        while (callback)
+        while (true)
         {
             unsigned count = 1;
-            HANDLE handles[3] = { m_stdin };
+            HANDLE handles[4] = { m_stdin };
             DWORD recognizer_waited = WAIT_FAILED;
 
-            if (void* event = get_recognizer_event())
+            if (s_interrupt)
+                handles[count++] = s_interrupt;
+
+            if (callback)
             {
-                recognizer_waited = WAIT_OBJECT_0 + count;
-                handles[count++] = event;
+                if (void* event = get_recognizer_event())
+                {
+                    recognizer_waited = WAIT_OBJECT_0 + count;
+                    handles[count++] = event;
+                }
+                if (void* event = callback->get_waitevent())
+                    handles[count++] = event;
             }
-            if (void* event = callback->get_waitevent())
-                handles[count++] = event;
 
             fix_console_input_mode();
 
-            const DWORD timeout = callback->get_timeout();
+            const DWORD timeout = callback ? callback->get_timeout() : INFINITE;
             const DWORD waited = WaitForMultipleObjects(count, handles, false, timeout);
             if (waited != WAIT_TIMEOUT)
             {
                 if (waited <= WAIT_OBJECT_0 || waited >= WAIT_OBJECT_0 + count)
                     break;
+                if (waited == WAIT_OBJECT_0 + 1 && s_interrupt)
+                {
+                    m_buffer_head = 0;
+                    m_buffer_count = 1;
+                    m_buffer[0] = input_abort_byte;
+                    return;
+                }
             }
 
-            if (waited == recognizer_waited)
-                host_refresh_recognizer();
-            else
-                callback->on_idle();
+            if (callback)
+            {
+                if (waited == recognizer_waited)
+                    host_refresh_recognizer();
+                else
+                    callback->on_idle();
+            }
 
             if (has_mode)
                 fix_console_output_mode(m_stdout, modeExpected);

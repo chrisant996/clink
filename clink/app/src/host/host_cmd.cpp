@@ -40,6 +40,7 @@ func_GetEnvironmentVariableW_t __Real_GetEnvironmentVariableW = GetEnvironmentVa
 func_SetConsoleTitleW_t __Real_SetConsoleTitleW = SetConsoleTitleW;
 
 //------------------------------------------------------------------------------
+extern void clink_shutdown_ctrlevent();
 extern bool is_force_reload_scripts();
 extern "C" void reset_wcwidths();
 extern printer* g_printer;
@@ -277,6 +278,12 @@ void host_cmd_enqueue_lines(std::list<str_moveable>& lines, bool hide_prompt)
     host_cmd::get()->enqueue_lines(lines, hide_prompt);
 }
 
+//------------------------------------------------------------------------------
+void host_cleanup_after_signal()
+{
+    host_cmd::get()->cleanup_after_signal();
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -336,6 +343,8 @@ void host_cmd::shutdown()
         m_doskey.remove_alias("history");
     if (os::get_alias("clink", tmp) && tmp.equals(clink.c_str()))
         m_doskey.remove_alias("clink");
+
+    clink_shutdown_ctrlevent();
 }
 
 //------------------------------------------------------------------------------

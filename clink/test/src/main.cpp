@@ -26,6 +26,11 @@ void host_cmd_enqueue_lines(std::list<str_moveable>& lines, bool hide_prompt)
 }
 
 //------------------------------------------------------------------------------
+void host_cleanup_after_signal()
+{
+}
+
+//------------------------------------------------------------------------------
 void host_mark_deprecated_argmatcher(const char* command)
 {
 }

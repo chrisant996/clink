@@ -39,6 +39,8 @@ extern void reset_suggester();
 extern bool check_recognizer_refresh();
 extern bool is_showing_argmatchers();
 extern bool win_fn_callback_pending();
+extern bool clink_is_signaled();
+extern bool clink_maybe_handle_signal();
 extern recognition recognize_command(const char* line, const char* word, bool quoted, bool& ready, str_base* file=nullptr);
 extern std::shared_ptr<match_builder_toolkit> get_deferred_matches(int generation_id);
 
@@ -630,6 +632,8 @@ void line_editor_impl::dispatch(int bind_group)
     const int prev_bind_group = m_bind_resolver.get_group();
     m_bind_resolver.set_group(bind_group);
 
+    const bool was_signaled = clink_is_signaled();
+
     m_dispatching++;
 
     do
@@ -640,6 +644,9 @@ void line_editor_impl::dispatch(int bind_group)
     while (!update_input() || m_invalid_dispatch);
 
     m_dispatching--;
+
+    if (!was_signaled && clink_is_signaled())
+        set_flag(flag_nested_signal);
 
     assert(check_flag(flag_editing));
 
@@ -687,6 +694,12 @@ void line_editor_impl::set_keyseq_len(int len)
 // to help dispatch() be able to dispatch an entire chord.
 bool line_editor_impl::update_input()
 {
+    if (check_flag(flag_nested_signal))
+    {
+        clink_maybe_handle_signal();
+        clear_flag(flag_nested_signal);
+    }
+
     if (!m_module.is_input_pending())
     {
         int key = m_desc.input->read();
@@ -702,8 +715,11 @@ bool line_editor_impl::update_input()
 
         if (key == terminal_in::input_abort)
         {
-            m_buffer.reset();
-            end_line();
+            if (!m_dispatching)
+            {
+                m_buffer.reset();
+                end_line();
+            }
             return true;
         }
 
