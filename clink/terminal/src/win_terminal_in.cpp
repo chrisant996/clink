@@ -17,6 +17,7 @@
 
 #ifdef DEBUG
 #include <core/log.h>
+#include <core/debugheap.h>
 #endif
 
 #include <assert.h>
@@ -357,6 +358,8 @@ static void ensure_keyseqs_to_names()
         map_keyseq_differentiate == !!g_differentiate_keys.get() &&
         map_default_bindings == g_default_bindings.get())
         return;
+
+    dbg_ignore_scope(snapshot, "Key names");
 
     static const char* const mods[] = { "", "S-", "C-", "C-S-", "A-", "A-S-", "A-C-", "A-C-S-" };
     static_assert(sizeof_array(mods) == sizeof_array(terminfo::kcuu1), "modifier name count must match modified key array sizes");
