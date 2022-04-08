@@ -14,10 +14,10 @@
 #include <core/str_iter.h>
 #include <core/str_hash.h>
 #include <core/settings.h>
+#include <core/debugheap.h>
 
 #ifdef DEBUG
 #include <core/log.h>
-#include <core/debugheap.h>
 #endif
 
 #include <assert.h>
