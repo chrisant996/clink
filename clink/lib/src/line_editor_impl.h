@@ -97,7 +97,6 @@ private:
         flag_select         = 1 << 4,
         flag_done           = 1 << 5,
         flag_eof            = 1 << 6,
-        flag_nested_signal  = 1 << 7,
     };
 
     struct key_t

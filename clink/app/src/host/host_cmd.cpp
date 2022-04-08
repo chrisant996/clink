@@ -41,6 +41,8 @@ func_SetConsoleTitleW_t __Real_SetConsoleTitleW = SetConsoleTitleW;
 
 //------------------------------------------------------------------------------
 extern void clink_shutdown_ctrlevent();
+extern bool clink_is_signaled();
+extern bool clink_maybe_handle_signal();
 extern bool is_force_reload_scripts();
 extern "C" void reset_wcwidths();
 extern printer* g_printer;
@@ -509,6 +511,11 @@ BOOL WINAPI host_cmd::read_console(
     if (GetFileType(input) != FILE_TYPE_CHAR)
         return __Real_ReadConsoleW(input, chars, max_chars, read_in, control);
 
+    // clink_maybe_handle_signal() needs g_printer for output.
+    dbg_snapshot_heap(prt_ignore);
+    auto prt = host_cmd::get()->make_printer_context();
+    dbg_ignore_since_snapshot(prt_ignore, "read_console");
+
     // If cmd.exe is asking for one character at a time, use the original path
     // It does this to handle y/n/all prompts which isn't an compatible use-
     // case for readline.
@@ -573,7 +580,6 @@ BOOL WINAPI host_cmd::read_console(
             }
             *write = '\0';
 
-            auto prt = host_cmd::get()->make_printer_context();
             g_printer->print(g_last_prompt.c_str(), g_last_prompt.length());
             // Add a newline so that output always starts on the line after the
             // prompt.  Conhost starts output on the prompt line, making the
@@ -600,6 +606,8 @@ BOOL WINAPI host_cmd::read_console(
             reset_wcwidths();
             host_cmd::get()->edit_line(chars, max_chars);
         }
+
+        assert(!clink_is_signaled());
     }
 
     // ReadConsole will also include the CRLF of the line that was input.

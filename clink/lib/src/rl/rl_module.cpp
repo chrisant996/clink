@@ -356,7 +356,12 @@ static void clink_reset_event_hook()
 static int clink_event_hook()
 {
     if (clink_rl_cleanup_needed)
-        rl_cleanup_after_signal();
+    {
+        rl_callback_sigcleanup();
+        rl_echo_signal_char(SIGBREAK);
+    }
+    _rl_move_vert(_rl_vis_botlin);
+    rl_crlf();
     host_cleanup_after_signal();
     clink_reset_event_hook();
     return 0;
@@ -386,7 +391,7 @@ void clink_sighandler(int sig)
     signal(sig, clink_sighandler);
     clink_set_event_hook();
     clink_signal = sig;
-    clink_rl_cleanup_needed = !!RL_ISSTATE(RL_STATE_SIGHANDLER);
+    clink_rl_cleanup_needed = !RL_ISSTATE(RL_STATE_SIGHANDLER);
 }
 
 //------------------------------------------------------------------------------
@@ -999,6 +1004,12 @@ void hook_display()
     if (s_busy)
         return;
     rollback<bool> rb(s_busy, true);
+
+    // Readline callback mode seems to have some problems with how redisplay
+    // works.  It shows the old buffer and shows the prompt at an inopportune
+    // time.  So just disable it so Clink can drive when redisplay happens.
+    if (clink_is_signaled())
+        return;
 
     if (!s_suggestion.more() || rl_point != rl_end)
     {
@@ -1951,6 +1962,8 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
         // Install signal handlers so that Readline doesn't trigger process exit
         // in response to Ctrl+C or Ctrl+Break.
         rl_catch_signals = 1;
+        _rl_echoctl = 1;
+        _rl_intr_char = CTRL('C');
         signal(SIGINT, clink_sighandler);
 #ifdef SIGBREAK
         signal(SIGBREAK, clink_sighandler);

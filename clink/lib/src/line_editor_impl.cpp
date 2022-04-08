@@ -496,6 +496,12 @@ bool line_editor_impl::update()
 
     update_input();
 
+    if (clink_maybe_handle_signal())
+    {
+        m_buffer.reset();
+        end_line();
+    }
+
     if (!check_flag(flag_editing))
         return false;
 
@@ -645,9 +651,6 @@ void line_editor_impl::dispatch(int bind_group)
 
     m_dispatching--;
 
-    if (!was_signaled && clink_is_signaled())
-        set_flag(flag_nested_signal);
-
     assert(check_flag(flag_editing));
 
     m_bind_resolver.set_group(prev_bind_group);
@@ -694,10 +697,15 @@ void line_editor_impl::set_keyseq_len(int len)
 // to help dispatch() be able to dispatch an entire chord.
 bool line_editor_impl::update_input()
 {
-    if (check_flag(flag_nested_signal))
+    if (clink_is_signaled())
     {
-        clink_maybe_handle_signal();
-        clear_flag(flag_nested_signal);
+        m_buffer.reset();
+        if (!m_dispatching)
+        {
+            clink_maybe_handle_signal();
+            end_line();
+        }
+        return true;
     }
 
     if (!m_module.is_input_pending())
@@ -768,6 +776,9 @@ bool line_editor_impl::update_input()
             editor_module::context context = get_context();
             editor_module::input input = { chord.c_str(), chord.length(), id, binding.get_params() };
             module->on_input(input, result, context);
+
+            if (clink_is_signaled())
+                return true;
         }
 
         m_bind_resolver.set_group(result.group);

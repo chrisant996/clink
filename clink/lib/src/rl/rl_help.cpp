@@ -33,6 +33,7 @@ extern editor_module::result* g_result;
 extern setting_bool g_terminal_raw_esc;
 extern int ellipsify(const char* in, int limit, str_base& out, bool expand_ctrl);
 extern int read_key_direct(bool wait);
+extern bool clink_is_signaled();
 
 //------------------------------------------------------------------------------
 struct Keyentry
@@ -1247,6 +1248,9 @@ int clink_what_is(int, int)
             not_bound = true;
         }
     }
+
+    if (clink_is_signaled())
+        return 0;
 
     g_printer->print("\r\x1b[J");
 
