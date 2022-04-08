@@ -2,6 +2,13 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.3.14
+
+- <kbd>Ctrl</kbd>+<kbd>Break</kbd> can now interrupt some operations, including match display and match generators and the `os.globfiles()` and `os.globdirs()` functions in Lua scripts.  
+- Added `os.issignaled()` so Lua scripts can cooperatively interrupt themselves.
+- Fixed displaying pasted lines.
+- Fixed doskey aliases in pasted lines.
+
 #### v1.3.13
 
 - Argmatchers can use `:chaincommand()` to treat the rest of the command line as another command.
