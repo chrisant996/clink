@@ -25,9 +25,11 @@ class host : public host_callbacks
 {
     struct queued_line
     {
-        queued_line(str_moveable&& line, bool hide_prompt) : m_line(std::move(line)), m_hide_prompt(hide_prompt) {}
+        queued_line(str_moveable&& line, bool hide_prompt, bool show_line)
+            : m_line(std::move(line)), m_hide_prompt(hide_prompt), m_show_line(show_line) {}
         str_moveable m_line;
         bool m_hide_prompt;
+        bool m_show_line;
     };
 
 public:
@@ -38,8 +40,8 @@ public:
     virtual void    shutdown() = 0;
 
     const char*     filter_prompt(const char** rprompt, bool transient=false, bool final=false);
-    void            enqueue_lines(std::list<str_moveable>& lines, bool hide_prompt);
-    bool            dequeue_line(wstr_base& out, bool& hide_prompt);
+    void            enqueue_lines(std::list<str_moveable>& lines, bool hide_prompt, bool show_line);
+    bool            dequeue_line(wstr_base& out, bool& hide_prompt, bool& show_line);
     bool            dequeue_char(wchar_t* out);
     void            cleanup_after_signal();
 
@@ -60,7 +62,7 @@ public:
 
 protected:
     std::unique_ptr<printer_context> make_printer_context();
-    bool            edit_line(const char* prompt, const char* rprompt, str_base& out);
+    bool            edit_line(const char* prompt, const char* rprompt, str_base& out, bool edit=true);
     virtual void    initialise_lua(lua_state& lua) = 0;
     virtual void    initialise_editor_desc(line_editor::desc& desc) = 0;
 
@@ -82,6 +84,7 @@ private:
     const char*     m_rprompt = nullptr;
     str<256>        m_filtered_prompt;
     str<256>        m_filtered_rprompt;
+    str_moveable    m_pending_command;
     std::list<queued_line> m_queued_lines;
     unsigned int    m_char_cursor = 0;
     wstr_moveable   m_last_cwd;

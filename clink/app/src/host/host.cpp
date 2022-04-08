@@ -350,14 +350,14 @@ host::~host()
 }
 
 //------------------------------------------------------------------------------
-void host::enqueue_lines(std::list<str_moveable>& lines, bool hide_prompt)
+void host::enqueue_lines(std::list<str_moveable>& lines, bool hide_prompt, bool show_line)
 {
     for (auto& line : lines)
-        m_queued_lines.emplace_back(std::move(line), hide_prompt);
+        m_queued_lines.emplace_back(std::move(line), hide_prompt, show_line);
 }
 
 //------------------------------------------------------------------------------
-bool host::dequeue_line(wstr_base& out, bool& hide_prompt)
+bool host::dequeue_line(wstr_base& out, bool& hide_prompt, bool& show_line)
 {
     clink_maybe_handle_signal();
     if (m_queued_lines.empty())
@@ -366,9 +366,10 @@ bool host::dequeue_line(wstr_base& out, bool& hide_prompt)
     const auto& front = m_queued_lines.front();
     out = front.m_line.c_str() + m_char_cursor;
     hide_prompt = front.m_hide_prompt;
+    show_line = front.m_show_line;
 
     std::list<str_moveable> queue;
-    if (!m_char_cursor && !hide_prompt)
+    if (!m_char_cursor && !hide_prompt && !show_line)
     {
         str<> line(front.m_line.c_str());
         while (line.length())
@@ -394,7 +395,7 @@ bool host::dequeue_line(wstr_base& out, bool& hide_prompt)
     pop_queued_line();
 
     for (auto& line : queue)
-        m_queued_lines.emplace_front(std::move(line), true);
+        m_queued_lines.emplace_front(std::move(line), true, false);
 
     return true;
 }
@@ -598,7 +599,7 @@ std::unique_ptr<printer_context> host::make_printer_context()
 }
 
 //------------------------------------------------------------------------------
-bool host::edit_line(const char* prompt, const char* rprompt, str_base& out)
+bool host::edit_line(const char* prompt, const char* rprompt, str_base& out, bool edit)
 {
     assert(!m_prompt); // Reentrancy not supported!
 
@@ -638,7 +639,8 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out)
     static bool s_autostart = true;
     static std::unique_ptr<autostart_display> s_autostart_display;
     str_moveable autostart;
-    bool interactive = ((m_queued_lines.size() == 0) ||
+    bool interactive = ((!edit) || // Not-edit means show and return.
+                        (m_queued_lines.size() == 0) ||
                         (m_queued_lines.size() == 1 &&
                          (m_queued_lines.front().m_line.length() == 0 ||
                           m_queued_lines.front().m_line.c_str()[m_queued_lines.front().m_line.length() - 1] != '\n')));
@@ -654,7 +656,8 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out)
     bool inspect_errorlevel = false;
     if (g_get_errorlevel.get())
     {
-        if (interactive)
+// TODO: Handle when interactive and !edit; don't lose the input content.
+        if (interactive && edit)
         {
             str<> tmp_errfile;
             get_errorlevel_tmp_name(tmp_errfile);
@@ -889,6 +892,10 @@ skip_errorlevel:
             str<> tmp_errfile;
             get_errorlevel_tmp_name(tmp_errfile);
 
+            dbg_snapshot_heap(snapshot);
+            m_pending_command = out.c_str();
+            dbg_ignore_since_snapshot(snapshot, "command queued by get errorlevel");
+
             m_terminal.out->begin();
             m_terminal.out->end();
             out.format(" echo %%errorlevel%% 2>nul >\"%s\"", tmp_errfile.c_str());
@@ -897,12 +904,17 @@ skip_errorlevel:
             move_cursor_up_one_line();
             break;
         }
+        if (m_pending_command.length())
+        {
+            out = m_pending_command.c_str();
+            m_pending_command.free();
+        }
 
         // Give the directory history queue a crack at the current directory.
         update_dir_history();
 
         resolved = false;
-        ret = editor && editor->edit(out);
+        ret = editor && editor->edit(out, edit);
         if (!ret)
             break;
 
@@ -1005,16 +1017,16 @@ skip_errorlevel:
             if (alias)
                 alias.next(out); // First line goes into OUT to be returned.
             while (alias.next(next))
-                queue.emplace_back(std::move(next), false);
+                queue.emplace_back(std::move(next), false, false);
         }
 
         for (auto& another : more_out)
         {
             m_doskey.resolve(another.c_str(), alias);
             if (!alias)
-                queue.emplace_back(std::move(another), true);
+                queue.emplace_back(std::move(another), true, false);
             while (alias.next(next))
-                queue.emplace_back(std::move(next), true);
+                queue.emplace_back(std::move(next), true, false);
         }
     }
 

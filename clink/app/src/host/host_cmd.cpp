@@ -275,9 +275,9 @@ bool host_has_deprecated_argmatcher(const char* command)
 }
 
 //------------------------------------------------------------------------------
-void host_cmd_enqueue_lines(std::list<str_moveable>& lines, bool hide_prompt)
+void host_cmd_enqueue_lines(std::list<str_moveable>& lines, bool hide_prompt, bool show_line)
 {
-    host_cmd::get()->enqueue_lines(lines, hide_prompt);
+    host_cmd::get()->enqueue_lines(lines, hide_prompt, show_line);
 }
 
 //------------------------------------------------------------------------------
@@ -428,7 +428,7 @@ void host_cmd::add_aliases(bool force)
 }
 
 //------------------------------------------------------------------------------
-void host_cmd::edit_line(wchar_t* chars, int max_chars)
+void host_cmd::edit_line(wchar_t* chars, int max_chars, bool edit)
 {
     // Exiting a nested CMD will remove the aliases, so re-add them if missing.
     // But don't overwrite them if they already exist: let the user override
@@ -464,10 +464,10 @@ void host_cmd::edit_line(wchar_t* chars, int max_chars)
         {
             // WARNING:  Settings are not valid here; they are not loaded until
             // inside of host::edit_line().
-            out.clear();
+            out = chars;
             const char* const prompt = utf8_prompt.empty() ? nullptr : utf8_prompt.c_str();
             const char* const rprompt = utf8_rprompt.empty() ? nullptr : utf8_rprompt.c_str();
-            if (host::edit_line(prompt, rprompt, out))
+            if (host::edit_line(prompt, rprompt, out, edit))
             {
                 to_utf16(chars, max_chars, out.c_str());
                 break;
@@ -542,15 +542,26 @@ BOOL WINAPI host_cmd::read_console(
 
     s_answered = 0;
 
+    // Initialize the output buffer.
+    wstr_base line(chars, max_chars);
+    if (max_chars)
+        chars[0] = '\0';
+
     // Always dequeue if queued lines are present:  the More? continuation
     // prompt, a Yes/No/All prompt, an edit line prompt, etc -- in Conhost's
     // implementation of ReadConsoleW all of them return the next $T segment
     // from an expanded doskey macro.
     const wchar_t* prompt = host_cmd::get()->m_prompt.get();
-    wstr_base line(chars, max_chars);
     bool hide_prompt;
-    if (host_cmd::get()->dequeue_line(line, hide_prompt))
+    bool show_line = false;
+    bool edit_line = false;
+    if (host_cmd::get()->dequeue_line(line, hide_prompt, show_line))
     {
+        // When show_line is true but the line doesn't end with a newline, then
+        // the line should be editable.
+        if (show_line)
+            edit_line = (!line.empty() && line[line.length() - 1] != '\n');
+
         // Respond with the dequeued line.
         DWORD written;
         while (line.length() && line.c_str()[line.length() - 1] == '\n')
@@ -560,12 +571,17 @@ BOOL WINAPI host_cmd::read_console(
             HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
             __Real_WriteConsoleW(h, line.c_str(), line.length(), &written, nullptr);
             __Real_WriteConsoleW(h, L"\r\n", 2, &written, nullptr);
+            // When edit_line is true the line should be editable.  But when
+            // more_continuation is true, there's no way to edit the line.
+            // Give up and treat it as though it ended with a newline.
+            show_line = edit_line = false;
         }
         else if (prompt == nullptr || *prompt == L'\0')
         {
             // No prompt, so no output.
+            show_line = edit_line = false;
         }
-        else if (!hide_prompt)
+        else if (!hide_prompt && !show_line)
         {
             char const* read = g_last_prompt.c_str();
             char* write = g_last_prompt.data();
@@ -594,6 +610,11 @@ BOOL WINAPI host_cmd::read_console(
         if (prompt == nullptr || *prompt == L'\0')
             return __Real_ReadConsoleW(input, chars, max_chars, read_in, control);
 
+        show_line = edit_line = true;
+    }
+
+    if (show_line)
+    {
         // Redirection in CMD can change CMD's STD handles, causing Clink's C
         // runtime to have stale handles.  Check and reset them if necessary.
         reset_stdio_handles();
@@ -604,7 +625,7 @@ BOOL WINAPI host_cmd::read_console(
         {
             console_config cc(input, true/*accept_mouse_input*/);
             reset_wcwidths();
-            host_cmd::get()->edit_line(chars, max_chars);
+            host_cmd::get()->edit_line(chars, max_chars, edit_line);
         }
 
         assert(!clink_is_signaled());

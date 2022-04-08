@@ -460,16 +460,24 @@ bool line_editor_impl::get_line(str_base& out)
 }
 
 //------------------------------------------------------------------------------
-bool line_editor_impl::edit(str_base& out)
+bool line_editor_impl::edit(str_base& out, bool edit)
 {
     if (!check_flag(flag_editing))
         m_insert_on_begin = out.c_str();
 
-    // Update first so the init state goes through.
-    while (update())
+    if (edit)
     {
-        if (!m_module.is_input_pending())
-            m_desc.input->select(m_idle);
+        // Update first so the init state goes through.
+        while (update())
+        {
+            if (!m_module.is_input_pending())
+                m_desc.input->select(m_idle);
+        }
+    }
+    else
+    {
+        update();
+        rl_newline(0, 0);
     }
 
     return get_line(out);

@@ -59,7 +59,7 @@ public:
     virtual void        set_input_idle(input_idle* idle) override;
     virtual void        set_prompt(const char* prompt, const char* rprompt, bool redisplay) override;
     virtual bool        get_line(str_base& out) override;
-    virtual bool        edit(str_base& out) override;
+    virtual bool        edit(str_base& out, bool edit=true) override;
     virtual bool        update() override;
     virtual void        update_matches() override;
 
