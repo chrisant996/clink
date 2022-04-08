@@ -511,10 +511,17 @@ BOOL WINAPI host_cmd::read_console(
     if (GetFileType(input) != FILE_TYPE_CHAR)
         return __Real_ReadConsoleW(input, chars, max_chars, read_in, control);
 
+    host_cmd* const hc = host_cmd::get();
+
     // clink_maybe_handle_signal() needs g_printer for output.
     dbg_snapshot_heap(prt_ignore);
-    auto prt = host_cmd::get()->make_printer_context();
+    auto prt = hc->make_printer_context();
     dbg_ignore_since_snapshot(prt_ignore, "read_console");
+
+    // Always dequeue if queued lines are present:  the More? continuation
+    // prompt, a Yes/No/All prompt, an edit line prompt, etc -- in Conhost's
+    // implementation of ReadConsoleW all of them return the next $T segment
+    // from an expanded doskey macro.
 
     // If cmd.exe is asking for one character at a time, use the original path
     // It does this to handle y/n/all prompts which isn't an compatible use-
@@ -535,7 +542,7 @@ BOOL WINAPI host_cmd::read_console(
         }
 
         // Default behaviour.
-        if (!host_cmd::get()->dequeue_char(chars))
+        if (!hc->dequeue_char(chars))
             return TRUE;
         return __Real_ReadConsoleW(input, chars, max_chars, read_in, control);
     }
@@ -547,42 +554,44 @@ BOOL WINAPI host_cmd::read_console(
     if (max_chars)
         chars[0] = '\0';
 
-    // Always dequeue if queued lines are present:  the More? continuation
-    // prompt, a Yes/No/All prompt, an edit line prompt, etc -- in Conhost's
-    // implementation of ReadConsoleW all of them return the next $T segment
-    // from an expanded doskey macro.
+    // Cmd.exe can want line input for reasons other than command entry.
     const wchar_t* prompt = host_cmd::get()->m_prompt.get();
-    bool hide_prompt;
-    bool show_line = false;
-    bool edit_line = false;
-    if (host_cmd::get()->dequeue_line(line, hide_prompt, show_line))
+    dequeue_flags flags = dequeue_flags::none;
+    if (more_continuation || prompt == nullptr || *prompt == L'\0')
     {
-        // When show_line is true but the line doesn't end with a newline, then
-        // the line should be editable.
-        if (show_line)
-            edit_line = (!line.empty() && line[line.length() - 1] != '\n');
+        if (hc->dequeue_line(line, flags))
+        {
+            if (more_continuation || (flags & dequeue_flags::show_line) != dequeue_flags::none)
+            {
+                DWORD written;
+                HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+                __Real_WriteConsoleW(h, line.c_str(), line.length(), &written, nullptr);
+                __Real_WriteConsoleW(h, L"\r\n", 2, &written, nullptr);
+            }
+            // When edit_line is true the line should be editable.  But when not
+            // using the Readline editor, give up and treat the line as though
+            // it ended with a newline.
+            return true;
+        }
+        return __Real_ReadConsoleW(input, chars, max_chars, read_in, control);
+    }
 
-        // Respond with the dequeued line.
-        DWORD written;
+    // Respond with a queued line, if available.
+    if (hc->dequeue_line(line, flags))
+    {
+        // Trim the newline, since it gets added again further below.
         while (line.length() && line.c_str()[line.length() - 1] == '\n')
             line.truncate(line.length() - 1);
-        if (more_continuation)
+
+        if (check_dequeue_flag(flags, dequeue_flags::show_line))
         {
-            HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-            __Real_WriteConsoleW(h, line.c_str(), line.length(), &written, nullptr);
-            __Real_WriteConsoleW(h, L"\r\n", 2, &written, nullptr);
-            // When edit_line is true the line should be editable.  But when
-            // more_continuation is true, there's no way to edit the line.
-            // Give up and treat it as though it ended with a newline.
-            show_line = edit_line = false;
+            // Need to show the line, which will also show the prompt, so no
+            // action is needed here.
         }
-        else if (prompt == nullptr || *prompt == L'\0')
+        else if (!check_dequeue_flag(flags, dequeue_flags::hide_prompt))
         {
-            // No prompt, so no output.
-            show_line = edit_line = false;
-        }
-        else if (!hide_prompt && !show_line)
-        {
+            // Show the most recent prompt.  But first strip any 0x01 and 0x02
+            // characters that may be present.
             char const* read = g_last_prompt.c_str();
             char* write = g_last_prompt.data();
             while (*read)
@@ -604,16 +613,8 @@ BOOL WINAPI host_cmd::read_console(
             g_printer->print("\n");
         }
     }
-    else
-    {
-        // Cmd.exe can want line input for reasons other than command entry.
-        if (prompt == nullptr || *prompt == L'\0')
-            return __Real_ReadConsoleW(input, chars, max_chars, read_in, control);
 
-        show_line = edit_line = true;
-    }
-
-    if (show_line)
+    if (check_dequeue_flag(flags, dequeue_flags::show_line))
     {
         // Redirection in CMD can change CMD's STD handles, causing Clink's C
         // runtime to have stale handles.  Check and reset them if necessary.
@@ -625,9 +626,11 @@ BOOL WINAPI host_cmd::read_console(
         {
             console_config cc(input, true/*accept_mouse_input*/);
             reset_wcwidths();
-            host_cmd::get()->edit_line(chars, max_chars, edit_line);
+            hc->edit_line(chars, max_chars, check_dequeue_flag(flags, dequeue_flags::edit_line));
         }
 
+        // There's a race condition where this assert can fire, and that's fine.
+        // The point is to make sure it generally doesn't bleed through to here.
         assert(!clink_is_signaled());
     }
 

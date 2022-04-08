@@ -21,15 +21,29 @@ class suggester;
 class printer_context;
 
 //------------------------------------------------------------------------------
+enum class dequeue_flags
+{
+    none            = 0x00,
+    hide_prompt     = 0x01,
+    show_line       = 0x02,
+    edit_line       = 0x04,
+};
+DEFINE_ENUM_FLAG_OPERATORS(dequeue_flags);
+
+inline bool check_dequeue_flag(const dequeue_flags check, const dequeue_flags mask)
+{
+    return (check & mask) != dequeue_flags::none;
+}
+
+//------------------------------------------------------------------------------
 class host : public host_callbacks
 {
     struct queued_line
     {
-        queued_line(str_moveable&& line, bool hide_prompt, bool show_line)
-            : m_line(std::move(line)), m_hide_prompt(hide_prompt), m_show_line(show_line) {}
+        queued_line(str_moveable&& line, dequeue_flags flags)
+            : m_line(std::move(line)), m_flags(flags) {}
         str_moveable m_line;
-        bool m_hide_prompt;
-        bool m_show_line;
+        dequeue_flags m_flags;
     };
 
 public:
@@ -41,7 +55,7 @@ public:
 
     const char*     filter_prompt(const char** rprompt, bool transient=false, bool final=false);
     void            enqueue_lines(std::list<str_moveable>& lines, bool hide_prompt, bool show_line);
-    bool            dequeue_line(wstr_base& out, bool& hide_prompt, bool& show_line);
+    bool            dequeue_line(wstr_base& out, dequeue_flags& flags);
     bool            dequeue_char(wchar_t* out);
     void            cleanup_after_signal();
 
@@ -89,4 +103,6 @@ private:
     unsigned int    m_char_cursor = 0;
     wstr_moveable   m_last_cwd;
     bool            m_can_transient = false;
+    bool            m_bypass_dequeue = false;
+    dequeue_flags   m_bypass_flags = dequeue_flags::none;
 };

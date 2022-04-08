@@ -352,24 +352,48 @@ host::~host()
 //------------------------------------------------------------------------------
 void host::enqueue_lines(std::list<str_moveable>& lines, bool hide_prompt, bool show_line)
 {
+    // It's nonsensical to hide the prompt and show the line.
+    // It's nonsensical to edit the line but not show the line.
+    assert(!(hide_prompt && show_line));
+
     for (auto& line : lines)
-        m_queued_lines.emplace_back(std::move(line), hide_prompt, show_line);
+    {
+        dequeue_flags flags = dequeue_flags::none;
+        if (hide_prompt) flags |= dequeue_flags::hide_prompt;
+        if (show_line)
+        {
+            flags |= dequeue_flags::show_line;
+            if (line.empty() || line[line.length() - 1] != '\n')
+                flags |= dequeue_flags::edit_line;
+        }
+        m_queued_lines.emplace_back(std::move(line), flags);
+    }
 }
 
 //------------------------------------------------------------------------------
-bool host::dequeue_line(wstr_base& out, bool& hide_prompt, bool& show_line)
+bool host::dequeue_line(wstr_base& out, dequeue_flags& flags)
 {
+    if (m_bypass_dequeue)
+    {
+        m_bypass_dequeue = false;
+        flags = m_bypass_flags;
+        return false;
+    }
+
     clink_maybe_handle_signal();
     if (m_queued_lines.empty())
+    {
+        flags = dequeue_flags::show_line|dequeue_flags::edit_line;
         return false;
+    }
 
     const auto& front = m_queued_lines.front();
     out = front.m_line.c_str() + m_char_cursor;
-    hide_prompt = front.m_hide_prompt;
-    show_line = front.m_show_line;
+    flags = front.m_flags;
 
     std::list<str_moveable> queue;
-    if (!m_char_cursor && !hide_prompt && !show_line)
+    if (!m_char_cursor &&
+        (flags & (dequeue_flags::hide_prompt|dequeue_flags::show_line)) == dequeue_flags::none)
     {
         str<> line(front.m_line.c_str());
         while (line.length())
@@ -395,7 +419,7 @@ bool host::dequeue_line(wstr_base& out, bool& hide_prompt, bool& show_line)
     pop_queued_line();
 
     for (auto& line : queue)
-        m_queued_lines.emplace_front(std::move(line), true, false);
+        m_queued_lines.emplace_front(std::move(line), dequeue_flags::hide_prompt);
 
     return true;
 }
@@ -656,8 +680,7 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out, boo
     bool inspect_errorlevel = false;
     if (g_get_errorlevel.get())
     {
-// TODO: Handle when interactive and !edit; don't lose the input content.
-        if (interactive && edit)
+        if (interactive)
         {
             str<> tmp_errfile;
             get_errorlevel_tmp_name(tmp_errfile);
@@ -894,6 +917,9 @@ skip_errorlevel:
 
             dbg_snapshot_heap(snapshot);
             m_pending_command = out.c_str();
+            m_bypass_dequeue = true;
+            m_bypass_flags = dequeue_flags::show_line;
+            m_bypass_flags |= (edit ? dequeue_flags::edit_line : dequeue_flags::none);
             dbg_ignore_since_snapshot(snapshot, "command queued by get errorlevel");
 
             m_terminal.out->begin();
@@ -1017,16 +1043,16 @@ skip_errorlevel:
             if (alias)
                 alias.next(out); // First line goes into OUT to be returned.
             while (alias.next(next))
-                queue.emplace_back(std::move(next), false, false);
+                queue.emplace_back(std::move(next), dequeue_flags::none);
         }
 
         for (auto& another : more_out)
         {
             m_doskey.resolve(another.c_str(), alias);
             if (!alias)
-                queue.emplace_back(std::move(another), true, false);
+                queue.emplace_back(std::move(another), dequeue_flags::hide_prompt);
             while (alias.next(next))
-                queue.emplace_back(std::move(next), true, false);
+                queue.emplace_back(std::move(next), dequeue_flags::hide_prompt);
         }
     }
 
