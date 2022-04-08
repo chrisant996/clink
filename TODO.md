@@ -5,8 +5,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- If last pasted line doesn't end with a newline, then it should be editable instead of immediately executing it.
-- Paste multiple lines with `clink.paste_crlf` = `crlf` doesn't show the pasted text for the 2nd line and onwards.
 
 ## Normal Priority
 - Some way to push keys?  (Push keys to Clink; not to other processes.)
