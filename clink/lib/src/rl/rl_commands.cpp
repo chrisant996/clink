@@ -33,6 +33,7 @@ extern void rl_replace_from_history(HIST_ENTRY *entry, int flags);
 
 #include <list>
 #include <unordered_set>
+#include <signal.h>
 
 #include "../../../clink/app/src/version.h" // Ugh.
 
@@ -100,14 +101,6 @@ extern "C" void host_clear_suggestion();
 // and rl_commands should be siblings.  That's a lot of reshuffling for little
 // benefit, so just use a forward decl for now.
 extern bool expand_history(const char* in, str_base& out);
-
-//------------------------------------------------------------------------------
-static void write_line_feed()
-{
-    HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
-    DWORD written;
-    WriteConsoleW(handle, L"\n", 1, &written, nullptr);
-}
 
 //------------------------------------------------------------------------------
 static void strip_crlf(char* line, std::list<str_moveable>& overflow, int setting, bool* _done)
@@ -322,9 +315,8 @@ int clink_ctrl_c(int count, int invoking_key)
         return 0;
     }
 
-    clink_reset_line(1, 0);
-    write_line_feed();
-    rl_newline(1, invoking_key);
+    extern void clink_sighandler(int sig);
+    clink_sighandler(SIGINT);
 
     return 0;
 }
