@@ -169,22 +169,22 @@ TEST_CASE("Lua coroutines.")
         \
         function verify_notready_1aaa()\
             local dur = clink._wait_duration()\
-            return verify_true(not _yieldguard_ready and _command == '1aaa', function () print_var('dur', dur) end)\
+            return verify_true(not _yieldguard:ready() and _command == '1aaa', function () print_var('dur', dur) end)\
         end\
         \
         function verify_notready_3aaa()\
             local dur = clink._wait_duration()\
-            return verify_true(not _yieldguard_ready and _command == '3aaa', function () print_var('dur', dur) end)\
+            return verify_true(not _yieldguard:ready() and _command == '3aaa', function () print_var('dur', dur) end)\
         end\
         \
         function verify_notready_3bbb()\
             local dur = clink._wait_duration()\
-            return verify_true(not _yieldguard_ready and _command == '3bbb', function () print_var('dur', dur) end)\
+            return verify_true(not _yieldguard:ready() and _command == '3bbb', function () print_var('dur', dur) end)\
         end\
         \
         function verify_notready_3ccc()\
             local dur = clink._wait_duration()\
-            return verify_true(not _yieldguard_ready and _command == '3ccc', function () print_var('dur', dur) end)\
+            return verify_true(not _yieldguard:ready() and _command == '3ccc', function () print_var('dur', dur) end)\
         end\
         \
         function verify_not_refilter()\
