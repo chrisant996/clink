@@ -7,28 +7,17 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
+- <kbd>Ctrl</kbd>+<kbd>Break</kbd> doesn't work properly in `selectcomplete_impl` or `textlist_impl`.
 - Some way to push keys?  (Push keys to Clink; not to other processes.)
 - Some way for `onbeginedit` handler to short circuit and cause the edit line to return without showing a prompt or input, and either provide filtered input or go through `onfilterinput` (and maybe `onendedit`).
 - <kbd>Ctrl</kbd>+<kbd>C</kbd>/<kbd>Break</kbd> ideally would be able to interrupt a Lua script feedback loop where the script is using `onbeginedit` and `onfilterinput` to produce the effect of a looping script.
 
 ## Low Priority
-- Let the yieldguards run in parallel?
-  - Things are bottlenecking behind the prompt filters.
-  - Or maybe run only the promptcoroutine yieldguards in series.
-  - This could also make it realistic to resume a single coroutine in a loop until completion, instead of running ALL coroutines.
-  - Maybe limit how many generations can have outstanding yieldguards at a time.
-  - Maybe limit how many yieldguards can be outstanding at a time.
-  - How about running background coroutines in series, but once the main coroutine depends on one then let it run in parallel?  _[Could deadlock if a coroutine yields to wait for results from another coroutine.]_
-  - **Proposal:**
-    - [ ] Run promptcoroutine coroutines in series, serialize their yieldguards wrt each other (but not wrt other yieldguards).
-    - [ ] Run match generator coroutines in series, serialize their yieldguards wrt each other (but not wrt other yieldguards).
-    - [ ] Don't serialize other yieldguards.
-    - [ ] Do throttle to no more than _N_ concurrent yieldguards at a time (_N_ == 10 seems a good starting point for a limit).
-    - [x] When the main coroutine is waiting on a coroutine to complete, in the meantime run all coroutines.
+- Collecting words currently happens in update_internal, but probably it also belongs in alternative_matches and/or update_matches:
+  - If a `luafunc:` macro first does anything that alters the line buffer, and then invokes a completion command, then the collected words will be inaccurate.
 - Mouse input toggling is unreliable in Windows Terminal, and sometimes ends up disallowing mouse input.
 - Once in a while raw mouse input sequences spuriously show up in the edit line; have only noticed it when the CMD window did not have focus at the time.
 - Should coroutines really be able to make Readline redraw immediately?  Should instead set a flag that the main coroutine responds to when it gains control again?
-- Collecting words currently happens in update_internal, but probably it belongs in alternative_matches and/or update_matches.
 
 ## Follow Up
 - Readline command reference.
