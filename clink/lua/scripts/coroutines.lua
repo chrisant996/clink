@@ -7,7 +7,7 @@ local _coroutines = {}
 local _coroutines_created = {}          -- Remembers creation info for each coroutine, for use by clink.addcoroutine.
 local _after_coroutines = {}            -- Funcs to run after a pass resuming coroutines.
 local _coroutines_resumable = false     -- When false, coroutines will no longer run.
-local _coroutine_yieldguard = nil       -- Which coroutine is yielding inside popenyield.
+local _coroutine_yieldguard = {}        -- Which coroutine is yielding inside popenyield, for a given category of coroutines.
 local _coroutine_context = nil          -- Context for queuing io.popenyield calls from a same source.
 local _coroutine_canceled = false       -- Becomes true if an orphaned io.popenyield cancels the coroutine.
 local _coroutine_generation = 0         -- ID for current generation of coroutines.
@@ -23,12 +23,19 @@ local print = clink.print
 --------------------------------------------------------------------------------
 -- Scheme for entries in _coroutines:
 --
---  Initialized by clink.addcoroutine:
+--  Initialized by coroutine.create:
 --      coroutine:      The coroutine.
 --      func:           The function the coroutine runs.
 --      interval:       Interval at which to schedule the coroutine.
+--      resumed:        How many times the coroutine has been resumed.
 --      context:        The context in which the coroutine was created.
 --      generation:     The generation to which this coroutine belongs.
+--      yield_category: The category, for serializing types of yieldguards.
+--      isprompt:       True means this is a prompt coroutine.
+--      isgenerator:    True means this is a generator coroutine.
+--      state:          Global state context for the coroutine (contains variables that are swapped).
+--      co_state:       Global state context for the coroutine (the table itself is swapped).
+--      src:            The source code file and line for the coroutine function.
 --
 --  Updated by the coroutine management system:
 --      resumed:        Number of times the coroutine has been resumed.
@@ -40,11 +47,11 @@ local print = clink.print
 
 --------------------------------------------------------------------------------
 local function clear_coroutines()
+    -- Preserve the active popenyield entries so the system can tell when to
+    -- dequeue the next one.
     local preserve = {}
-    if _coroutine_yieldguard then
-        -- Preserve the active popenyield entry so the system can tell when to
-        -- dequeue the next one.
-        table.insert(preserve, _coroutines[_coroutine_yieldguard.coroutine])
+    for _, cyg in pairs(_coroutine_yieldguard) do
+        table.insert(preserve, _coroutines[cyg.coroutine])
     end
 
     for _, entry in pairs(_coroutines) do
@@ -74,19 +81,25 @@ clink.onbeginedit(clear_coroutines)
 
 --------------------------------------------------------------------------------
 local function release_coroutine_yieldguard()
-    if _coroutine_yieldguard and _coroutine_yieldguard.yieldguard:ready() then
-        local entry = _coroutines[_coroutine_yieldguard.coroutine]
-        if entry and entry.yieldguard == _coroutine_yieldguard.yieldguard then
-            entry.throttleclock = os.clock()
-            entry.yieldguard = nil
-            _coroutine_yieldguard = nil
-            for _,entry in pairs(_coroutines) do
-                if entry.queued then
-                    entry.queued = nil
-                    break
+    local nil_cats = {}
+    for category, cyg in pairs(_coroutine_yieldguard) do
+        if cyg.yieldguard:ready() then
+            local entry = _coroutines[cyg.coroutine]
+            if entry and entry.yieldguard == cyg.yieldguard then
+                entry.throttleclock = os.clock()
+                entry.yieldguard = nil
+                table.insert(nil_cats, category)
+                for _,entry in pairs(_coroutines) do
+                    if entry.queued then
+                        entry.queued = nil
+                        break
+                    end
                 end
             end
         end
+    end
+    for _, cat in ipairs(nil_cats) do
+        _coroutine_yieldguard[cat] = nil
     end
 end
 
@@ -108,13 +121,16 @@ end
 --------------------------------------------------------------------------------
 local function set_coroutine_yieldguard(yieldguard)
     local t = coroutine.running()
+    local entry = _coroutines[t]
     if yieldguard then
-        _coroutine_yieldguard = { coroutine=t, yieldguard=yieldguard }
+        if entry.yield_category then
+            _coroutine_yieldguard[entry.yield_category] = { coroutine=t, yieldguard=yieldguard }
+        end
     else
         release_coroutine_yieldguard()
     end
-    if t and _coroutines[t] then
-        _coroutines[t].yieldguard = yieldguard
+    if t and entry then
+        entry.yieldguard = yieldguard
     end
 end
 
@@ -297,8 +313,14 @@ function clink._finish_coroutine(c)
         end
 
         local duration = clink._wait_duration()
-        if _coroutine_yieldguard and duration and duration > 0 then
-            _coroutine_yieldguard.yieldguard:wait(duration)
+        if duration and duration > 0 then
+            local entry = _coroutines[c]
+            if entry.yield_category then
+                local cyg = _coroutine_yieldguard[entry.yield_category]
+                if cyg then
+                    cyg.yieldguard:wait(duration)
+                end
+            end
         end
 
         -- Must run all coroutines:  there could be inter-dependencies, and the
@@ -349,6 +371,30 @@ local function table_has_elements(t)
     if t then
         for _ in pairs(t) do
             return true
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
+local function spairs(t, order)
+    -- collect the keys
+    local keys = {}
+    for k in pairs(t) do keys[#keys+1] = k end
+
+    -- if order function given, sort by it by passing the table and keys a, b,
+    -- otherwise just sort the keys
+    if order then
+        table.sort(keys, function(a,b) return order(t, a, b) end)
+    else
+        table.sort(keys)
+    end
+
+    -- return the iterator function
+    local i = 0
+    return function()
+        i = i + 1
+        if keys[i] then
+            return keys[i], t[keys[i]]
         end
     end
 end
@@ -425,17 +471,19 @@ function clink._diag_coroutines()
     end
 
     -- Only list coroutines if there are any, or if there's unfinished state.
-    if table_has_elements(threads) or _coroutines_resumable or _coroutine_yieldguard then
+    local any_cyg = next(_coroutine_yieldguard) and true or false
+    if table_has_elements(threads) or _coroutines_resumable or any_cyg then
         clink.print(bold.."coroutines:"..norm)
         if show_gen then
             print("  generation", (mixed_gen and yellow or norm).."gen ".._coroutine_generation..norm)
         end
         print("  resumable", _coroutines_resumable)
         print("  wait_duration", clink._wait_duration())
-        if _coroutine_yieldguard then
-            local yg = _coroutine_yieldguard.yieldguard
-            print("  yieldguard", (yg:ready() and green.."ready"..norm or yellow.."yield"..norm))
-            print("  yieldcommand", '"'..yg:command()..'"')
+        for category, cyg in spairs(_coroutine_yieldguard) do
+            local yg = cyg.yieldguard
+            print("  "..category)
+            print("    yieldguard      "..(yg:ready() and green.."ready"..norm or yellow.."yield"..norm))
+            print("    yieldcommand    \""..yg:command().."\"")
         end
         list_diag(threads, norm)
     end
@@ -530,32 +578,9 @@ function clink.addcoroutine(c, interval)
     end
 
     -- Change the interval for a coroutine.
-    if _coroutines[c] then
-        if not _coroutines[c].throttled then
-            _coroutines[c].interval = interval
-        end
-        return
+    if _coroutines[c] and not _coroutines[c].throttled then
+        _coroutines[c].interval = interval
     end
-
-    -- Add a new coroutine.
-    local created_info = _coroutines_created[c] or {}
-    local entry = {
-        coroutine=c,
-        interval=interval or created_info.interval or 0,
-        resumed=0,
-        func=created_info.func,
-        context=created_info.context,
-        generation=created_info.generation,
-        isprompt=created_info.isprompt,
-        isgenerator=created_info.isgenerator,
-        state={},
-        co_state={},
-        src=created_info.src,
-    }
-    save_coroutine_state(entry)
-    _coroutines[c] = entry
-    _coroutines_created[c] = nil
-    _coroutines_resumable = true
 end
 
 --------------------------------------------------------------------------------
@@ -717,9 +742,10 @@ function io.popenyield(command, mode)
     end
     if can_async then
         -- Yield to ensure only one yieldable API is active at a time.
-        if _coroutine_yieldguard then
+        local category = _coroutines[c] and _coroutines[c].yield_category
+        if _coroutine_yieldguard[category] then
             set_coroutine_queued(true)
-            while _coroutine_yieldguard do
+            while _coroutine_yieldguard[category] do
                 coroutine.yield()
                 if clink._is_coroutine_canceled(c) then
                     break
@@ -779,9 +805,10 @@ os.execute = function (command)
         return old_os_execute(command)
     end
     -- Yield to ensure only one yieldable API is active at a time.
-    if _coroutine_yieldguard then
+    local category = _coroutines[c] and _coroutines[c].yield_category
+    if _coroutine_yieldguard[category] then
         set_coroutine_queued(true)
-        while _coroutine_yieldguard do
+        while _coroutine_yieldguard[category] do
             coroutine.yield()
             if clink._is_coroutine_canceled(c) then
                 break
@@ -853,11 +880,14 @@ function coroutine.create(func)
     override_coroutine_isgenerator = nil
 
     local entry = {
+        interval=0,
+        resumed=0,
         func=func,
         context=_coroutine_context,
         generation=_coroutine_generation,
         isprompt=isprompt,
         isgenerator=isgenerator,
+        yield_category=(isprompt and "prompt" or (isgenerator and "generator")),
         state={},
         co_state={},
         src=src,
@@ -865,10 +895,11 @@ function coroutine.create(func)
     save_coroutine_state(entry)
 
     local thread = orig_coroutine_create(func)
-    _coroutines_created[thread] = entry
-    clink.addcoroutine(thread)
+    entry.coroutine = thread
+    _coroutines[thread] = entry
 
     -- Wake up idle processing.
+    _coroutines_resumable = true
     clink.kick_idle()
     return thread
 end
