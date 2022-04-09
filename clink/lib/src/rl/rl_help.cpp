@@ -33,7 +33,7 @@ extern editor_module::result* g_result;
 extern setting_bool g_terminal_raw_esc;
 extern int ellipsify(const char* in, int limit, str_base& out, bool expand_ctrl);
 extern int read_key_direct(bool wait);
-extern bool clink_is_signaled();
+extern int clink_is_signaled();
 
 //------------------------------------------------------------------------------
 struct Keyentry

@@ -938,6 +938,25 @@ void selectcomplete_impl::on_terminal_resize(int columns, int rows, const contex
 }
 
 //------------------------------------------------------------------------------
+void selectcomplete_impl::on_signal(int sig)
+{
+    if (is_active())
+    {
+        struct dummy_result : public editor_module::result
+        {
+            virtual void    pass() override {}
+            virtual void    loop() override {}
+            virtual void    done(bool eof) override {}
+            virtual void    redraw() override {}
+            virtual int     set_bind_group(int id) override { return 0; }
+        };
+
+        dummy_result result;
+        cancel(result);
+    }
+}
+
+//------------------------------------------------------------------------------
 void selectcomplete_impl::cancel(editor_module::result& result, bool can_reactivate)
 {
     assert(is_active());

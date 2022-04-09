@@ -39,7 +39,7 @@ extern void reset_suggester();
 extern bool check_recognizer_refresh();
 extern bool is_showing_argmatchers();
 extern bool win_fn_callback_pending();
-extern bool clink_is_signaled();
+extern int clink_is_signaled();
 extern bool clink_maybe_handle_signal();
 extern recognition recognize_command(const char* line, const char* word, bool quoted, bool& ready, str_base* file=nullptr);
 extern std::shared_ptr<match_builder_toolkit> get_deferred_matches(int generation_id);
@@ -707,6 +707,9 @@ bool line_editor_impl::update_input()
 {
     if (clink_is_signaled())
     {
+        const int sig = clink_is_signaled();
+        for (auto* module : m_modules)
+            module->on_signal(sig);
         m_buffer.reset();
         if (!m_dispatching)
         {

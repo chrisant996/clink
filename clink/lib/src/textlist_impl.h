@@ -66,6 +66,7 @@ private:
     virtual void    on_input(const input& input, result& result, const context& context) override;
     virtual void    on_matches_changed(const context& context, const line_state& line, const char* needle) override;
     virtual void    on_terminal_resize(int columns, int rows, const context& context) override;
+    virtual void    on_signal(int sig) override;
 
     // Internal methods.
     void            cancel(popup_result result);

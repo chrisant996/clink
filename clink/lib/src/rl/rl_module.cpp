@@ -395,9 +395,9 @@ void clink_sighandler(int sig)
 }
 
 //------------------------------------------------------------------------------
-bool clink_is_signaled()
+int clink_is_signaled()
 {
-    return clink_signal != 0;
+    return clink_signal;
 }
 
 //------------------------------------------------------------------------------
@@ -998,6 +998,13 @@ void set_suggestion(const char* line, unsigned int endword_offset, const char* s
 }
 
 //------------------------------------------------------------------------------
+static bool s_force_signaled_redisplay = false;
+void force_signaled_redisplay()
+{
+    s_force_signaled_redisplay = true;
+}
+
+//------------------------------------------------------------------------------
 void hook_display()
 {
     static bool s_busy = false;
@@ -1009,7 +1016,11 @@ void hook_display()
     // works.  It shows the old buffer and shows the prompt at an inopportune
     // time.  So just disable it so Clink can drive when redisplay happens.
     if (clink_is_signaled())
-        return;
+    {
+        if (!s_force_signaled_redisplay)
+            return;
+        s_force_signaled_redisplay = false;
+    }
 
     if (!s_suggestion.more() || rl_point != rl_end)
     {
@@ -3095,4 +3106,9 @@ void rl_module::on_terminal_resize(int columns, int rows, const context& context
 
     // Let Readline update its display.
     rl_resize_terminal();
+}
+
+//------------------------------------------------------------------------------
+void rl_module::on_signal(int sig)
+{
 }

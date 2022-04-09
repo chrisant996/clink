@@ -14,7 +14,7 @@
 #include <core/str_iter.h>
 #include <terminal/printer.h>
 
-extern bool clink_is_signaled();
+extern int clink_is_signaled();
 
 setting_color g_color_interact(
     "color.interact",
@@ -91,6 +91,11 @@ void pager_impl::on_matches_changed(const context& context, const line_state& li
 
 //------------------------------------------------------------------------------
 void pager_impl::on_terminal_resize(int columns, int rows, const context& context)
+{
+}
+
+//------------------------------------------------------------------------------
+void pager_impl::on_signal(int sig)
 {
 }
 

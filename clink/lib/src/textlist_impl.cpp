@@ -59,6 +59,8 @@ extern setting_bool g_fuzzy_accent;
 extern const char* get_popup_colors();
 extern const char* get_popup_desc_colors();
 extern int host_remove_history(int rl_history_index, const char* line);
+extern int clink_is_signaled();
+extern void force_signaled_redisplay();
 
 //------------------------------------------------------------------------------
 static textlist_impl* s_textlist = nullptr;
@@ -322,8 +324,11 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
     assert(!m_active);
     update_display();
 
-    _rl_refresh_line();
-    rl_display_fixed = 1;
+    if (!clink_is_signaled())
+    {
+        _rl_refresh_line();
+        rl_display_fixed = 1;
+    }
 
     lock_cursor(false);
     show_cursor(true);
@@ -898,6 +903,21 @@ void textlist_impl::on_terminal_resize(int columns, int rows, const context& con
 
     if (m_active)
         cancel(popup_result::cancel);
+}
+
+//------------------------------------------------------------------------------
+void textlist_impl::on_signal(int sig)
+{
+    if (m_active)
+    {
+        rollback<volatile int> rb_sig(_rl_caught_signal, 0);
+        m_active = false;
+        update_display();
+        force_signaled_redisplay();
+        _rl_refresh_line();
+        rl_display_fixed = 1;
+        m_active = true;
+    }
 }
 
 //------------------------------------------------------------------------------

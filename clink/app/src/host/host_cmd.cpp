@@ -41,7 +41,7 @@ func_SetConsoleTitleW_t __Real_SetConsoleTitleW = SetConsoleTitleW;
 
 //------------------------------------------------------------------------------
 extern void clink_shutdown_ctrlevent();
-extern bool clink_is_signaled();
+extern int clink_is_signaled();
 extern bool clink_maybe_handle_signal();
 extern bool is_force_reload_scripts();
 extern "C" void reset_wcwidths();

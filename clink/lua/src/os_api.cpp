@@ -41,7 +41,7 @@ static setting_bool g_glob_system(
     false);
 
 //------------------------------------------------------------------------------
-extern bool clink_is_signaled();
+extern int clink_is_signaled();
 
 //------------------------------------------------------------------------------
 extern "C" void __cdecl __acrt_errno_map_os_error(unsigned long const oserrno);
