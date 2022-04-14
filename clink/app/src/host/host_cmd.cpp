@@ -542,7 +542,7 @@ BOOL WINAPI host_cmd::read_console(
         }
 
         // Default behaviour.
-        if (!hc->dequeue_char(chars))
+        if (hc->dequeue_char(chars))
             return TRUE;
         return __Real_ReadConsoleW(input, chars, max_chars, read_in, control);
     }
