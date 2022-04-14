@@ -35,7 +35,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # INVESTIGATE
 
 - Auto-update option, with configurable polling interval?  (Though package managers like scoop can handle updates, if Clink was installed through one.)
-- Include `wildmatch()` and an `fnmatch()` wrapper for it.  But should first update it to support UTF8.
 
 <br/>
 <br/>
@@ -60,6 +59,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Windows Terminal crashes on exit after `clink inject`.  The current release version was crashing (1.6.10571.0).  Older versions don't crash, and a locally built version from the terminal repo's HEAD doesn't crash.  I think the crash is probably a bug in Windows Terminal, not related to Clink.  And after I built it locally, then it stopped crashing with 1.6.10571.0 as well.  Mysterious...
 
 ## Punt
+- Include `wildmatch()` and an `fnmatch()` wrapper for it.  But should first update it to support UTF8.  _[Not worth the effort; and recursive match generation doesn't make much sense anyway.  Could potentially be useful in globbing purposes other than match generation, though.]_
 - There's no straightforward way to let Lua scripts change the current directory and have CMD pick up the changed state.  CMD maintains internal private state about what directory to use when running commands and programs.  Running `cd` is the only way to alter CMD's internal private state.
 - Explore adjusting default colors to have better contrast with white/light backgrounds?  _[No, it is tilting at windmills.  Never mind about Clink; nothing else will work reasonably in light themes, either, at least not the way they're currently defined in Windows Terminal.  If Windows Terminal fixes its themes, then it will become possible to have a single set of color definitions in Clink that work well in both light and dark themes.  Until then, it doesn't make sense to make complicated attempts to overcome the broader external problems.]_
 - Recognizer and argmatcher lookup should support `@` syntax; collecting words should support `@   command` syntax.  _[Not worth the effort; using `@` at the command prompt has no effect anyway.]_
