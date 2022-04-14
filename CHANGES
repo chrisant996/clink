@@ -6,9 +6,10 @@
 
 - <kbd>Ctrl</kbd>+<kbd>Break</kbd> can now interrupt some operations, including match display and match generators and the `os.globfiles()` and `os.globdirs()` functions in Lua scripts.
 - Added `os.issignaled()` so Lua scripts can cooperatively interrupt themselves.
-- Improved responsiveness of completion commands when an async prompt filter is still running in the background.
+- Improved responsiveness of completion commands when an async prompt filter is still running in the background (`io.popen()` and `os.execute()` are serialized in prompt filter coroutines, and are serialized separately in match generator coroutines, but are not serialized in other coroutines).
 - Fixed displaying pasted lines.
 - Fixed doskey aliases in pasted lines.
+- Fixed [#268](https://github.com/chrisant996/clink/issues/268); crash when `copy` command prompts whether to overwrite a file (regression introduced in v1.3.13).
 
 #### v1.3.13
 
