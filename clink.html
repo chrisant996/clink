@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.3.13</title>
+<title>Clink v1.3.15</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -771,7 +771,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.3.13</div>
+                <div id="title">Clink v1.3.15</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -4646,6 +4646,7 @@ line_state:getcommandwordindex() == 2</code></pre></div></div><hr/>
 --   t[index].ctime     -- [number] The creation time, compatible with os.time().</code></pre><p class="desc">The <span class="tablescheme">type</span> string can be "file" or "dir", and may also contain ",hidden", ",readonly", ",link", and ",orphaned" depending on the attributes (making it usable as a match type for <a href="#builder:addmatch">builder:addmatch()</a>).</p><p class="desc"> Starting in v1.3.1, when this is used in a coroutine it automatically yields periodically.</p><p class="desc"> Note: any quotation marks (<code>"</code>) in <span class="arg">globpattern</span> are stripped.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.isdir">os.isdir</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Returns whether <span class="arg">path</span> is a directory.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.isfile">os.isfile</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Returns whether <span class="arg">path</span> is a file.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="os.issignaled">os.issignaled</a></div> <div class="signature">() : boolean<br/><div class="version">v1.3.14 and newer</div></div></div><div class="body"><p class="desc">Returns whether a <kbb>Ctrl</kbd>+<kbd>Break</kbd> has been received. Scripts may use this to decide when to end work early.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.mkdir">os.mkdir</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Creates the directory <span class="arg">path</span> and returns whether it was successful.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.move">os.move</a></div> <div class="signature">( <span class="arg_name">src</span>:string, <span class="arg_name">dest</span>:string ) : boolean<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Moves the <span class="arg">src</span> file to the <span class="arg">dest</span> file.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.resolvealias">os.resolvealias</a></div> <div class="signature">( <span class="arg_name">text</span>:string ) : table|nil<br/><div class="version">v1.3.12 and newer</div></div></div><div class="body"><p class="desc">Identifies whether <span class="arg">text</span> begins with a doskey alias, and expands the doskey alias.</p><p class="desc"> Returns a table of strings, or nil if there is no associated doskey alias. The return type is a table of strings because doskey aliases can be defined to expand into multiple command lines:  one entry in the table per resolved command line.  Most commonly, the table will contain one string.</p></div></div><hr/>
@@ -4972,6 +4973,19 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1315">v1.3.15</h4>
+<ul>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/269">#269</a>; reverse video could get confused (regression introduced in v1.3, and incompletely fixed in v1.3.4).</li>
+</ul>
+<h4 id="v1314">v1.3.14</h4>
+<ul>
+<li><kbd>Ctrl</kbd>+<kbd>Break</kbd> can now interrupt some operations, including match display and match generators and the <code>os.globfiles()</code> and <code>os.globdirs()</code> functions in Lua scripts.</li>
+<li>Added <code>os.issignaled()</code> so Lua scripts can cooperatively interrupt themselves.</li>
+<li>Improved responsiveness of completion commands when an async prompt filter is still running in the background (<code>io.popen()</code> and <code>os.execute()</code> are serialized in prompt filter coroutines, and are serialized separately in match generator coroutines, but are not serialized in other coroutines).</li>
+<li>Fixed displaying pasted lines.</li>
+<li>Fixed doskey aliases in pasted lines.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/268">#268</a>; crash when <code>copy</code> command prompts whether to overwrite a file (regression introduced in v1.3.13).</li>
+</ul>
 <h4 id="v1313">v1.3.13</h4>
 <ul>
 <li>Argmatchers can use <code>:chaincommand()</code> to treat the rest of the command line as another command.<ul>
