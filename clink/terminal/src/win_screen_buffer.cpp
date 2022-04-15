@@ -545,6 +545,14 @@ void win_screen_buffer::set_attributes(attributes attr)
 
     int out_attr = csbi.wAttributes & attr_mask_all;
 
+    // Un-reverse so processing can operate on normalized attributes.
+    if (m_reverse)
+    {
+        int fg = (out_attr & ~attr_mask_bg);
+        int bg = (out_attr & attr_mask_bg);
+        out_attr = (fg << 4) | (bg >> 4);
+    }
+
     // Note to self; lookup table is probably much faster.
     auto swizzle = [] (int rgbi) {
         int b_r_ = ((rgbi & 0x01) << 2) | !!(rgbi & 0x04);
@@ -616,14 +624,14 @@ void win_screen_buffer::set_attributes(attributes attr)
 
     // Reverse video
     if (auto rev = attr.get_reverse())
+        m_reverse = rev.value;
+
+    // Apply reverse video
+    if (m_reverse)
     {
-        if (rev.value != m_reverse)
-        {
-            int fg = (out_attr & ~attr_mask_bg);
-            int bg = (out_attr & attr_mask_bg);
-            out_attr = (fg << 4) | (bg >> 4);
-            m_reverse = rev.value;
-        }
+        int fg = (out_attr & ~attr_mask_bg);
+        int bg = (out_attr & attr_mask_bg);
+        out_attr = (fg << 4) | (bg >> 4);
     }
 
     out_attr |= csbi.wAttributes & ~attr_mask_all;
