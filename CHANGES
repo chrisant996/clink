@@ -2,6 +2,10 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.3.16
+
+- Fixed executable file detection for file extensions that point at Progids instead of having a shell command.
+
 #### v1.3.15
 
 - Fixed [#269](https://github.com/chrisant996/clink/issues/269); reverse video could get confused (regression introduced in v1.3, and incompletely fixed in v1.3.4).
