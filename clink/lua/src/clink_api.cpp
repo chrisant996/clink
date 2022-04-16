@@ -572,6 +572,21 @@ void recognizer::proc(recognizer* r)
                     if (has_command)
                         result = recognition::executable;
                 }
+                else
+                {
+                    commandkey = ext;
+                    commandkey << L"\\OpenWithProgids";
+                    if (RegOpenKeyExW(HKEY_CLASSES_ROOT, commandkey.c_str(), 0, MAXIMUM_ALLOWED, &hkey) == ERROR_SUCCESS)
+                    {
+                        wchar_t name[8];
+                        DWORD max_name = sizeof(name);
+                        DWORD type;
+                        const DWORD err = RegEnumValueW(hkey, 0, name, &max_name, nullptr, &type, nullptr, nullptr);
+                        if ((err == ERROR_SUCCESS || err == ERROR_MORE_DATA) && (type == REG_SZ || type == REG_NONE))
+                            result = recognition::executable;
+                        RegCloseKey(hkey);
+                    }
+                }
             }
 
             // Store result.
