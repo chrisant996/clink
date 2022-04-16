@@ -315,6 +315,10 @@ rl_vi_redo (int count, int c)
 int
 rl_vi_undo (int count, int key)
 {
+/* begin_clink_change */
+  /* Defeat compiler optimization that folds rl_vi_undo and rl_undo_command. */
+  static int dummy = 0;
+/* end_clink_change */
   return (rl_undo_command (count, key));
 }
     
