@@ -57,6 +57,20 @@ You can use Clink right away without configuring anything:
 
 There are three main ways of customizing Clink to your preferences:  the [Readline init file](#init-file) (the `.inputrc` file), the [Clink settings](#clink-settings) (the `clink set` command), and [Lua](#extending-clink-with-lua) scripts.
 
+## How Completion Works
+
+Clink can offer possible completions for the word at the cursor, and can insert them for you.  Clink can complete file names, directories, environment variables, and commands.  It also allows you to provide custom completion generators using Lua scripts that execute inside Clink (see [Extending Clink With Lua](#extending-clink-with-lua)).
+
+By default, pressing <kbd>Tab</kbd> performs completion the same way that bash does on Unix and Linux.  When you press <kbd>Tab</kbd>, Clink finds matches for how to complete the word at the cursor.  It automatically inserts the longest common prefix shared by the possible completions.  If you press <kbd>Tab</kbd> again, it also lists the possible completions.
+
+If you install Clink with "Use enhanced defaults" or if you set [`clink.default_bindings`](#default_bindings) to use "windows" defaults, then pressing <kbd>Tab</kbd> cycles through the possible completions, replacing the word with the next possible completion each time.
+
+Pressing <kbd>Ctrl</kbd>-<kbd>Space</kbd> shows an interactive list of possible completions.  You can use the arrow keys to choose which completion to insert, and you can type to filter the list.  <kbd>Enter</kbd> inserts the selected completion, or <kbd>Space</kbd> inserts the selected completion and makes sure a space follows it to allow typing a next argument.
+
+The first word of each command line is the command or program to execute, or a file to open.  By default, Clink provides completions for the first word based on all executable programs on the system PATH, but not from the current directory.  You can turn off executable completion by running `clink set exec.enable false`, or you can adjust its behavior by changing the various `exec.*` settings (see [Clink Settings](#clink-settings) for more information about them).  
+
+See [Completion Commands](#completion-commands) and [Clink Commands](#clink-commands) for more available completion commands.
+
 ## Common Configuration
 
 The following sections describe some ways to begin customizing Clink to your taste.
@@ -377,7 +391,7 @@ Name                         | Default [*](#alternatedefault) | Description
 `match.ignore_case`          | `relaxed` | Controls case sensitivity when completing matches. `off` = case sensitive, `on` = case insensitive, `relaxed` = case insensitive plus `-` and `_` are considered equal.
 `match.limit_fitted_columns` | `0`     | When the `match.fit_columns` setting is enabled, this disables calculating column widths when the number of matches exceeds this value.  The default is 0 (unlimited).  Depending on the screen width and CPU speed, setting a limit may avoid delays.
 `match.max_rows`             | `0`     | The maximum number of rows that `clink-select-complete` can use.  When this is 0, the limit is the terminal height.
-`match.preview_rows`         | `0`     | The number of rows to show as a preview when using the `clink-select-complete` command (bound by default to <kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>Space</kbd>).  When this is 0, all rows are shown and if there are too many matches it instead prompts first like the `complete` command does.  Otherwise it shows the specified number of rows as a preview without prompting, and it expands to show the full set of matches when the selection is moved past the preview rows.
+`match.preview_rows`         | `0`     | The number of rows to show as a preview when using the `clink-select-complete` command (bound by default to <kbd>Ctrl</kbd>-<kbd>Space</kbd>).  When this is 0, all rows are shown and if there are too many matches it instead prompts first like the `complete` command does.  Otherwise it shows the specified number of rows as a preview without prompting, and it expands to show the full set of matches when the selection is moved past the preview rows.
 `match.sort_dirs`            | `with`  | How to sort matching directory names. `before` = before files, `with` = with files, `after` = after files.
 <a name="match_substring"></a>`match.substring` | False [*](#alternatedefault) | When set, if no completions are found with a prefix search, then a substring search is used.
 `match.translate_slashes`    | `system` | File and directory completions can be translated to use consistent slashes.  The default is `system` to use the appropriate path separator for the OS host (backslashes on Windows).  Use `slash` to use forward slashes, or `backslash` to use backslashes.  Use `off` to turn off translating slashes from custom match generators.
@@ -945,9 +959,18 @@ $include c:\dir\inputrc
 
 #### Sample .inputrc file
 
-Here is a sample `.inputrc` file with some of the key bindings that I use:
+Here is a sample `.inputrc` file with some of the variables and key bindings that I use:
 
 <pre><code class="plaintext"><span class="hljs-meta">$if clink</span>           <span class="hljs-comment"># begin clink-only section</span>
+
+<span class="hljs-meta">set colored-completion-prefix                       on</span>
+<span class="hljs-meta">set colored-stats                                   on</span>
+<span class="hljs-meta">set mark-symlinked-directories                      on</span>
+<span class="hljs-meta">set visible-stats                                   off</span>
+<span class="hljs-meta">set completion-auto-query-items                     on</span>
+<span class="hljs-meta">set history-point-at-end-of-anchored-search         on</span>
+<span class="hljs-meta">set menu-complete-wraparound                        off</span>
+<span class="hljs-meta">set search-ignore-case                              on</span>
 
 <span class="hljs-comment"># The following key bindings are for emacs mode.</span>
 <span class="hljs-meta">set keymap emacs</span>
@@ -1083,6 +1106,7 @@ Command | Key | Description
 `insert-completions` | <kbd>Alt</kbd>-<kbd>*</kbd> | Insert all completions of the text before point that would have been generated by `possible-completions`.
 `menu-complete` | | Similar to `complete`, but replaces the word to be completed with a single match from the list of possible completions. Repeated execution of `menu-complete` steps through the list of possible completions, inserting each match in turn. At the end of the list of completions, the bell is rung (subject to the setting of [`bell-style`](#configbellstyle)) and the original text is restored. An argument of _n_ moves _n_ positions forward in the list of matches; a negative argument may be used to move backward through the list. This command is intended to be bound to <kbd>TAB</kbd>, but is unbound by default.
 `menu-complete-backward` | | Identical to `menu-complete`, but moves backward through the list of possible completions, as if `menu-complete` had been given a negative argument.
+`old-menu-complete` | | Similar to `menu-complete` but isn't limited by [`completion-query-items`](#configcompletionqueryitems) and doesn't include the common prefix of the possible completions. This behaves like the default completion in cmd.exe on Windows.
 `delete-char-or-list` | | Deletes the character under the cursor if not at the beginning or end of the line (like `delete-char`). If at the end of the line, behaves identically to `possible-completions`. This command is unbound by default.
 
 ### Keyboard Macros
@@ -1177,7 +1201,7 @@ Command | Key | Description
 `clink-scroll-page-down` | <kbd>Alt</kbd>-<kbd>PgDn</kbd> | Scroll the console window down one page.
 `clink-scroll-page-up` | <kbd>Alt</kbd>-<kbd>PgUp</kbd> | Scroll the console window up one page.
 `clink-scroll-top` | <kbd>Alt</kbd>-<kbd>Home</kbd> | Scroll the console window to the top.
-`clink-select-complete` | <kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>Space</kbd> | Like `complete`, but shows interactive menu of matches and responds to arrow keys and typing to filter the matches.  While completing, <kbd>F1</kbd> toggles showing match descriptions at the bottom vs next to each match.
+`clink-select-complete` | <kbd>Ctrl</kbd>-<kbd>Space</kbd> | Like `complete`, but shows interactive menu of matches and responds to arrow keys and typing to filter the matches.  While completing, <kbd>F1</kbd> toggles showing match descriptions at the bottom vs next to each match.
 `clink-selectall-conhost` | | Mimics the "Select All" command when running in a standard console window (hosted by the OS conhots).  Selects the input line text.  If already selected, then it invokes the "Select All" command from the console window's system menu and selects the entire screen buffer's contents. When [`clink.default_bindings`](#default_bindings) is enabled, this is bound to <kbd>Ctrl</kbd>-<kbd>a</kbd>.
 `clink-shift-space` | <kbd>Shift</kbd>-<kbd>Space</kbd> | Invokes the normal <kbd>Space</kbd> key binding, so that <kbd>Shift</kbd>-<kbd>Space</kbd> behaves the same as <kbd>Space</kbd>.
 `clink-show-help` | <kbd>Alt</kbd>-<kbd>h</kbd> | Lists the currently active key bindings using friendly key names.  A numeric argument affects showing categories and descriptions:  0 for neither, 1 for categories, 2 for descriptions, 3 for categories and descriptions (the default), 4 for all commands (even if not bound to a key).
