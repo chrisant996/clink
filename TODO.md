@@ -19,12 +19,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Should coroutines really be able to make Readline redraw immediately?  Should instead set a flag that the main coroutine responds to when it gains control again?
 
 ## Follow Up
-- Add Readline documentation into the Clink docs.
-  - [ ] Add all Readline documentation.
-  - [ ] Add commands that the Readline manual didn't mention.
-  - [ ] Add section on how completion works.
-    - [ ] Explain how the `exec.*` settings work.
-  - [ ] Remove stray links to the Readline and History manuals.
 - Update other repos:
   - [ ] Add command and flag descriptions in clink-completions?
   - [ ] Push update to clink-completions repo.
