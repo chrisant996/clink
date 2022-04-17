@@ -15,15 +15,15 @@ Here are some highlights of what Clink provides:
 - Context sensitive colored input text.
 - Automatic suggestions from history and completions.
 - New keyboard shortcuts;
-  - Interactive completion list (<kbd>Ctrl</kbd>+<kbd>Space</kbd>).
-  - Incremental history search (<kbd>Ctrl</kbd>+<kbd>R</kbd> and <kbd>Ctrl</kbd>+<kbd>S</kbd>).
+  - Interactive completion list (<kbd>Ctrl</kbd>-<kbd>Space</kbd>).
+  - Incremental history search (<kbd>Ctrl</kbd>-<kbd>R</kbd> and <kbd>Ctrl</kbd>-<kbd>S</kbd>).
   - Powerful completion (<kbd>Tab</kbd>).
-  - Undo (<kbd>Ctrl</kbd>+<kbd>Z</kbd>).
-  - Environment variable expansion (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>E</kbd>).
-  - Doskey alias expansion (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>F</kbd>).
-  - Scroll the screen buffer (<kbd>Alt</kbd>+<kbd>Up</kbd>, etc).
+  - Undo (<kbd>Ctrl</kbd>-<kbd>Z</kbd>).
+  - Environment variable expansion (<kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>E</kbd>).
+  - Doskey alias expansion (<kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>F</kbd>).
+  - Scroll the screen buffer (<kbd>Alt</kbd>-<kbd>Up</kbd>, etc).
   - <kbd>Shift</kbd>+Arrow keys to select text, typing replaces selected text, etc.
-  - (press <kbd>Alt</kbd>+<kbd>H</kbd> for many more...)
+  - (press <kbd>Alt</kbd>-<kbd>H</kbd> for many more...)
 - Directory shortcuts;
   - Typing a directory name followed by a path separator is a shortcut for `cd /d` to that directory.
   - Typing `..` or `...` is a shortcut for `cd ..` or `cd ..\..` (each additional `.` adds another `\..`).
@@ -34,7 +34,7 @@ Here are some highlights of what Clink provides:
 - Colored and scriptable prompt.
 - Auto-answering of the "Terminate batch job?" prompt.
 
-By default Clink binds <kbd>Alt</kbd>+<kbd>H</kbd> to display the current key bindings. More features can also be found in GNU's [Readline](https://tiswww.cwru.edu/php/chet/readline/readline.html).
+By default Clink binds <kbd>Alt</kbd>-<kbd>H</kbd> to display the current key bindings. More features can also be found in GNU's [Readline](https://tiswww.cwru.edu/php/chet/readline/readline.html).
 
 # Usage
 
@@ -51,9 +51,9 @@ Starting Clink injects it into a `cmd.exe` process, where it intercepts a handfu
 You can use Clink right away without configuring anything:
 
 - Searchable [command history](#saved-command-history) will be saved between sessions.
-- <kbd>Tab</kbd> and <kbd>Ctrl</kbd>+<kbd>Space</kbd> will do match completion two different ways.
-- Press <kbd>Alt</kbd>+<kbd>H</kbd> to see a list of the current key bindings.
-- Press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>/</kbd> followed by another key to see what command is bound to the key.
+- <kbd>Tab</kbd> and <kbd>Ctrl</kbd>-<kbd>Space</kbd> will do match completion two different ways.
+- Press <kbd>Alt</kbd>-<kbd>H</kbd> to see a list of the current key bindings.
+- Press <kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>/</kbd> followed by another key to see what command is bound to the key.
 
 There are three main ways of customizing Clink to your preferences:  the [Readline init file](#init-file) (the `.inputrc` file), the [Clink settings](#clink-settings) (the `clink set` command), and [Lua](#extending-clink-with-lua) scripts.
 
@@ -64,7 +64,7 @@ The following sections describe some ways to begin customizing Clink to your tas
 <table class="linkmenu">
 <tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_enhanceddefaults">Enhanced default settings</a></td><td class="lmtd">Optionally use enhanced default settings.</td></tr>
 <tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_inputrc">Create a .inputrc file</a></td><td class="lmtd">Create a .inputrc file where config variables and key bindings can be set.</td></tr>
-<tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_defaultbindings">Bash vs Windows</a></td><td class="lmtd">Make <kbd>Ctrl</kbd>+<kbd>F</kbd> and <kbd>Ctrl</kbd>+<kbd>M</kbd> work like usual on Windows.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_defaultbindings">Bash vs Windows</a></td><td class="lmtd">Make <kbd>Ctrl</kbd>-<kbd>F</kbd> and <kbd>Ctrl</kbd>-<kbd>M</kbd> work like usual on Windows.</td></tr>
 <tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_autosuggest">Auto-suggest</a></td><td class="lmtd">How to enable and use automatic suggestions.</td></tr>
 <tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_colors">Colors</a></td><td class="lmtd">Configure the colors.</td></tr>
 <tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_keybindings">Key Bindings</a></td><td class="lmtd">Customize your key bindings.</td></tr>
@@ -91,7 +91,7 @@ Here are some of the enhanced defaults.  Review the `default_settings` and `defa
 - The [command history](#saved-command-history)'s default [limit](#history_max_lines) is increased to 25,000 entries.
 - Completion expands environment variables (the [`match.expand_envvars`]() setting).
 - If no completions are found with a prefix search, then a substring search is used (the [`match.substring`](#match_substring) setting).
-- <kbd>Ctrl</kbd>+<kbd>D</kbd> does not exit CMD (the [`cmd.ctrld_exits`](#ctrld_exits) setting).
+- <kbd>Ctrl</kbd>-<kbd>D</kbd> does not exit CMD (the [`cmd.ctrld_exits`](#ctrld_exits) setting).
 
 <a name="gettingstarted_inputrc"></a>
 
@@ -107,7 +107,7 @@ Create the file by running this command at a CMD prompt:
 notepad %userprofile%\.inputrc
 ```
 
-You may want to copy/paste the following sample text into the file as a starting point, and then press <kbd>Ctrl</kbd>+<kbd>S</kbd> to save the file.
+You may want to copy/paste the following sample text into the file as a starting point, and then press <kbd>Ctrl</kbd>-<kbd>S</kbd> to save the file.
 
 ```plaintext
 # Some common Readline config settings.
@@ -129,25 +129,25 @@ $endif
 
 ### Bash vs Windows
 
-The default Clink key bindings are the same as in the "bash" shell for Unix/Linux.  That makes some keys like <kbd>Ctrl</kbd>+<kbd>A</kbd>, <kbd>Ctrl</kbd>+<kbd>F</kbd>, and <kbd>Ctrl</kbd>+<kbd>M</kbd> behave differently than you might be used to in CMD.
+The default Clink key bindings are the same as in the "bash" shell for Unix/Linux.  That makes some keys like <kbd>Ctrl</kbd>-<kbd>A</kbd>, <kbd>Ctrl</kbd>-<kbd>F</kbd>, and <kbd>Ctrl</kbd>-<kbd>M</kbd> behave differently than you might be used to in CMD.
 
 To instead use the familiar [Windows default key bindings](#default_bindings) you can run `clink set clink.default_bindings windows`.
 
 Or, if you use the setup program with "Use enhanced default settings" checked then "windows" key bindings are the default, and you can run `clink set clink.default_bindings bash` to use the bash default key bindings.
 
-Clink comes with many default key bindings.  Use <kbd>Alt</kbd>+<kbd>H</kbd> to see all of the active key bindings, or use <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>?</kbd> to check what is bound to a specific key.  See [Key Bindings](#gettingstarted_keybindings) to get started configuring your own key bindings.
+Clink comes with many default key bindings.  Use <kbd>Alt</kbd>-<kbd>H</kbd> to see all of the active key bindings, or use <kbd>Alt</kbd>-<kbd>Shift</kbd>-<kbd>?</kbd> to check what is bound to a specific key.  See [Key Bindings](#gettingstarted_keybindings) to get started configuring your own key bindings.
 
 Here are the differences between the Windows defaults and the bash defaults:
 
 Key | Windows | Bash
 -|-|-
-<kbd>Ctrl</kbd>+<kbd>A</kbd> | Select All. | Go to beginning of line.
-<kbd>Ctrl</kbd>+<kbd>B</kbd> | (not bound) | Move backward one character.
-<kbd>Ctrl</kbd>+<kbd>E</kbd> | Expands doskey aliases, environment variables, and [history expansions](#using-history-expansion) in the current line. | Go to end of line.
-<kbd>Ctrl</kbd>+<kbd>F</kbd> | Find text (in plain Conhost console windows). | Move forward one character.
-<kbd>Ctrl</kbd>+<kbd>M</kbd> | Mark text (in plain Conhost console windows). | Same as <kbd>Enter</kbd>.
+<kbd>Ctrl</kbd>-<kbd>A</kbd> | Select All. | Go to beginning of line.
+<kbd>Ctrl</kbd>-<kbd>B</kbd> | (not bound) | Move backward one character.
+<kbd>Ctrl</kbd>-<kbd>E</kbd> | Expands doskey aliases, environment variables, and [history expansions](#using-history-expansion) in the current line. | Go to end of line.
+<kbd>Ctrl</kbd>-<kbd>F</kbd> | Find text (in plain Conhost console windows). | Move forward one character.
+<kbd>Ctrl</kbd>-<kbd>M</kbd> | Mark text (in plain Conhost console windows). | Same as <kbd>Enter</kbd>.
 <kbd>Tab</kbd> | Cycle forward through available completions. | Bash style completion.
-<kbd>Shift</kbd>+<kbd>Tab</kbd> | Cycle backward through available completions. | (not bound)
+<kbd>Shift</kbd>-<kbd>Tab</kbd> | Cycle backward through available completions. | (not bound)
 <kbd>Right</kbd> | Move forward one character, or at the end of the line insert the next character from the previous input line. | Move forward one character.
 
 <a name="gettingstarted_autosuggest"></a>
@@ -156,7 +156,7 @@ Key | Windows | Bash
 
 Clink can suggest commands as you type, based on command history and completions.
 
-To turn on automatic suggestions, run `clink set autosuggest.enable true`.  When the cursor is at the end of the input line, a suggestion may appear in a muted color.  If the suggestion isn't what you want, just ignore it.  Or accept the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, accept the next word of the suggestion with <kbd>Ctrl</kbd>+<kbd>Right</kbd>, or accept the next full word of the suggestion up to a space with <kbd>Shift</kbd>+<kbd>Right</kbd>.
+To turn on automatic suggestions, run `clink set autosuggest.enable true`.  When the cursor is at the end of the input line, a suggestion may appear in a muted color.  If the suggestion isn't what you want, just ignore it.  Or accept the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, accept the next word of the suggestion with <kbd>Ctrl</kbd>-<kbd>Right</kbd>, or accept the next full word of the suggestion up to a space with <kbd>Shift</kbd>-<kbd>Right</kbd>.
 
 The [`autosuggest.strategy`](#autosuggest_strategy) setting determines how a suggestion is chosen.
 
@@ -172,7 +172,7 @@ If you use the setup program with "Use enhanced default settings" checked then m
 
 #### For completion
 
-When performing completion (e.g. <kbd>Tab</kbd> or <kbd>Ctrl</kbd>+<kbd>Space</kbd>) Clink can add color to the possible completions.
+When performing completion (e.g. <kbd>Tab</kbd> or <kbd>Ctrl</kbd>-<kbd>Space</kbd>) Clink can add color to the possible completions.
 
 To turn on colored completions, put a line `set colored-stats on` in the [.inputrc file](#gettingstarted_inputrc) (if you copy/pasted the sample text, it's already there).
 
@@ -186,7 +186,7 @@ There are also colors for popup lists, and some other things.
 
 To configure a color, run <code>clink set <span class="arg">colorname</span> <span class="arg">colorvalue</span></code>.
 
-Match completions make it easy to change Clink settings:  type <code>clink set color.</code> and then use completion (e.g. <kbd>Tab</kbd> or <kbd>Ctrl</kbd>+<kbd>Space</kbd>) to see the available color settings, and to fill in a color value.
+Match completions make it easy to change Clink settings:  type <code>clink set color.</code> and then use completion (e.g. <kbd>Tab</kbd> or <kbd>Ctrl</kbd>-<kbd>Space</kbd>) to see the available color settings, and to fill in a color value.
 
 Here are some colors you may want to set up right away:
 
@@ -206,16 +206,16 @@ You can customize your key bindings (keyboard shortcuts) by assigning key bindin
 Clink comes with many pre-configured key bindings that invoke named commands.  Here are a few that you might find especially handy:
 
 <table>
-<tr><td><kbd>Alt</kbd>+<kbd>H</kbd></td><td>This is <code>clink-show-help</code>, which lists the key bindings and commands.  Learn more by visiting <a href="#keybindings">Customizing Key Bindings</a>.</td></tr>
+<tr><td><kbd>Alt</kbd>-<kbd>H</kbd></td><td>This is <code>clink-show-help</code>, which lists the key bindings and commands.  Learn more by visiting <a href="#keybindings">Customizing Key Bindings</a>.</td></tr>
 <tr><td><kbd>Tab</kbd></td><td>This is <code>complete</code> or <code>old-menu-complete</code>, depending on the [`clink.default_bindings`](#default_bindings) Clink setting.  <code>complete</code> swhich performs completion by selecting from an interactive list of possible completions; if there is only one match, the match is inserted immediately.</td></tr>
-<tr><td><kbd>Ctrl</kbd>+<kbd>Space</kbd></td><td>This is <code>clink-select-complete</code>, which performs completion by selecting from an interactive list of possible completions; if there is only one match, the match is inserted immediately.</td></tr>
-<tr><td><kbd>Alt</kbd>+<kbd>=</kbd></td><td>This is <code>possible-completions</code>, which lists the available completions for the current word in the input line.</td></tr>
-<tr><td><kbd>Alt</kbd>+<kbd>.</kbd></td><td>This is <code>yank-last-arg</code>, which inserts the last argument from the previous line.  You can use it repeatedly to cycle backwards through the history, inserting the last argument from each line.  Learn more by reading up on the "yank" features in the [Readline manual](https://tiswww.cwru.edu/php/chet/readline/rluserman.html).</td></tr>
-<tr><td><kbd>Ctrl</kbd>+<kbd>R</kbd></td><td>This is <code>reverse-search-history</code>, which incrementally searches the history.  Press it, then type, and it does a reverse incremental search while you type.  Press <kbd>Ctrl</kbd>+<kbd>R</kbd> again (and again, etc) to search for other matches of the search text.  Learn more by reading up on the "search" and "history" features in the [Readline manual](https://tiswww.cwru.edu/php/chet/readline/rluserman.html).</td></tr>
-<tr><td><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>D</kbd></td><td>This is <code>remove-history</code>, which deletes the currently selected history line after using any of the history search or navigation commands.</td></tr>
-<tr><td><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>K</kbd></td><td>This is <code>add-history</code>, which adds the current line to the history without executing it, and then clears the input line.</td></tr>
-<tr><td><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>N</kbd></td><td>This is <code>clink-menu-complete-numbers</code>, which grabs numbers with 3 or more digits from the current console screen and cycles through inserting them as completions (binary, octal, decimal, hexadecimal).  Super handy for quickly inserting a commit hash that was printed as output from a preceding command.</td></tr>
-<tr><td><kbd>Alt</kbd>+<kbd>0</kbd> to <kbd>Alt</kbd>+<kbd>9</kbd></td><td>These are <code>digit-argument</code>, which let you enter a numeric value used by many commands.  For example <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>W</kbd> copies the current word to the clipboard, but if you first type <kbd>Alt</kbd>+<kbd>2</kbd> followed by <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>W</kbd> then it copies the 3rd word to the clipboard (the first word is 0, the second is 1, etc).  Learn more by reading up on "Readline Arguments" in the [Readline manual](https://tiswww.cwru.edu/php/chet/readline/rluserman.html).</td></tr>
+<tr><td><kbd>Ctrl</kbd>-<kbd>Space</kbd></td><td>This is <code>clink-select-complete</code>, which performs completion by selecting from an interactive list of possible completions; if there is only one match, the match is inserted immediately.</td></tr>
+<tr><td><kbd>Alt</kbd>-<kbd>=</kbd></td><td>This is <code>possible-completions</code>, which lists the available completions for the current word in the input line.</td></tr>
+<tr><td><kbd>Alt</kbd>-<kbd>.</kbd></td><td>This is <code>yank-last-arg</code>, which inserts the last argument from the previous line.  You can use it repeatedly to cycle backwards through the history, inserting the last argument from each line.  Learn more by reading up on the "yank" features in the [Readline manual](https://tiswww.cwru.edu/php/chet/readline/rluserman.html).</td></tr>
+<tr><td><kbd>Ctrl</kbd>-<kbd>R</kbd></td><td>This is <code>reverse-search-history</code>, which incrementally searches the history.  Press it, then type, and it does a reverse incremental search while you type.  Press <kbd>Ctrl</kbd>-<kbd>R</kbd> again (and again, etc) to search for other matches of the search text.  Learn more by reading up on the "search" and "history" features in the [Readline manual](https://tiswww.cwru.edu/php/chet/readline/rluserman.html).</td></tr>
+<tr><td><kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>D</kbd></td><td>This is <code>remove-history</code>, which deletes the currently selected history line after using any of the history search or navigation commands.</td></tr>
+<tr><td><kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>K</kbd></td><td>This is <code>add-history</code>, which adds the current line to the history without executing it, and then clears the input line.</td></tr>
+<tr><td><kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>N</kbd></td><td>This is <code>clink-menu-complete-numbers</code>, which grabs numbers with 3 or more digits from the current console screen and cycles through inserting them as completions (binary, octal, decimal, hexadecimal).  Super handy for quickly inserting a commit hash that was printed as output from a preceding command.</td></tr>
+<tr><td><kbd>Alt</kbd>-<kbd>0</kbd> to <kbd>Alt</kbd>-<kbd>9</kbd></td><td>These are <code>digit-argument</code>, which let you enter a numeric value used by many commands.  For example <kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>W</kbd> copies the current word to the clipboard, but if you first type <kbd>Alt</kbd>-<kbd>2</kbd> followed by <kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>W</kbd> then it copies the 3rd word to the clipboard (the first word is 0, the second is 1, etc).  Learn more by reading up on "Readline Arguments" in the [Readline manual](https://tiswww.cwru.edu/php/chet/readline/rluserman.html).</td></tr>
 </table>
 
 For a full list of commands available for key bindings, see [New Commands](#new-commands) and "Bindable Readline Commands" in the [Readline manual](https://tiswww.cwru.edu/php/chet/readline/rluserman.html).
@@ -237,11 +237,11 @@ Mode | Description
 Use <code>clink set terminal.mouse_modifier <span class="arg">modifiers</span></code> or <code>set CLINK_MOUSE_MODIFIER=<span class="arg">modifiers</span></code> to control which modifier keys must be held for Clink to respond to mouse input.
 
 These select which modifier keys (<kbd>Alt</kbd>, <kbd>Ctrl</kbd>, <kbd>Shift</kbd>) must be held in order for Clink to respond to mouse input when mouse input is enabled by the `terminal.mouse_input` setting.  <span class="arg">modifiers</span> is a text string that can list one or more modifier keys:  'alt', 'ctrl', and 'shift'.  For example, setting it to "alt shift" causes Clink to only respond to mouse input when both <kbd>Alt</kbd> and <kbd>Shift</kbd> are held (and not <kbd>Ctrl</kbd>).  If the `%CLINK_MOUSE_MODIFIER%` environment variable is set then its value
-supersedes the `terminal.mouse_modifier` setting.  In Windows Terminal many modifier keys do special things with mouse clicks, so the modifier key combination that interferes least with built in Windows Terminal behaviors is <kbd>Ctrl</kbd>+<kbd>Alt</kbd>.
+supersedes the `terminal.mouse_modifier` setting.  In Windows Terminal many modifier keys do special things with mouse clicks, so the modifier key combination that interferes least with built in Windows Terminal behaviors is <kbd>Ctrl</kbd>-<kbd>Alt</kbd>.
 
 When mouse input is enabled in Clink, then mouse input works a little differently:
 - You can bypass Clink mouse input and use the normal terminal mouse input by holding a different combination of modifier keys than listed in `terminal.mouse_modifier` or `%CLINK_MOUSE_MODIFIER%`.
-- Windows Terminal treats <kbd>Shift</kbd>+<kbd>RightClick</kbd> specially and turns off line ending detection when copying the selected text to the clipboard.  Hold <kbd>Ctrl</kbd> or <kbd>Alt</kbd> when right clicking to do the normal copy with line ending detection.
+- Windows Terminal treats <kbd>Shift</kbd>-<kbd>RightClick</kbd> specially and turns off line ending detection when copying the selected text to the clipboard.  Hold <kbd>Ctrl</kbd> or <kbd>Alt</kbd> when right clicking to do the normal copy with line ending detection.
 - In ConEmu, the mouse wheel always scrolls the terminal; Clink cannot use it to scroll popup lists.
 - In the default Conhost terminal when Quick Edit mode is turned off then Clink will also respond to mouse input when no modifier keys are held.
 
@@ -302,12 +302,12 @@ The following table describes the available Clink settings:
 Name                         | Default [*](#alternatedefault) | Description
 :--:                         | :-:     | -----------
 `autosuggest.async`          | True    | When this is <code>true</code> matches are generated asynchronously for suggestions.  This helps to keep typing responsive.
-<a name="autosuggest_enable"></a>`autosuggest.enable` | False [*](#alternatedefault) | When this is `true` a suggested command may appear in `color.suggestion` color after the cursor.  If the suggestion isn't what you want, just ignore it.  Or accept the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, accept the next word of the suggestion with <kbd>Ctrl</kbd>+<kbd>Right</kbd>, or accept the next full word of the suggestion up to a space with <kbd>Shift</kbd>+<kbd>Right</kbd>.  The `autosuggest.strategy` setting determines how a suggestion is chosen.
+<a name="autosuggest_enable"></a>`autosuggest.enable` | False [*](#alternatedefault) | When this is `true` a suggested command may appear in `color.suggestion` color after the cursor.  If the suggestion isn't what you want, just ignore it.  Or accept the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, accept the next word of the suggestion with <kbd>Ctrl</kbd>-<kbd>Right</kbd>, or accept the next full word of the suggestion up to a space with <kbd>Shift</kbd>-<kbd>Right</kbd>.  The `autosuggest.strategy` setting determines how a suggestion is chosen.
 `autosuggest.original_case`  | True | When this is enabled (the default), accepting a suggestion uses the original capitalization from the suggestion.
 <a name="autosuggest_strategy"></a>`autosuggest.strategy` | `match_prev_cmd history completion` | This determines how suggestions are chosen.  The suggestion generators are tried in the order listed, until one provides a suggestion.  There are three built-in suggestion generators, and scripts can provide new ones.  `history` chooses the most recent matching command from the history.  `completion` chooses the first of the matching completions.  `match_prev_cmd` chooses the most recent matching command whose preceding history entry matches the most recently invoked command, but only when the `history.dupe_mode` setting is `add`.
 <a name="clink_autostart"></a>`clink.autostart` | | This command is automatically run when the first CMD prompt is shown after Clink is injected.  If this is blank (the default), then Clink instead looks for `clink_start.cmd` in the binaries directory and profile directory and runs them.  Set it to "nul" to not run any autostart command.
 `clink.colorize_input`       | True    | Enables context sensitive coloring for the input text (see [Coloring the Input Text](#classifywords)).
-<a name="default_bindings"></a>`clink.default_bindings` | `bash` [*](#alternatedefault) | Clink uses bash key bindings when this is set to `bash` (the default).  When this is set to `windows` Clink overrides some of the bash defaults with familiar Windows key bindings for <kbd>Tab</kbd>, <kbd>Ctrl</kbd>+<kbd>A</kbd>, <kbd>Ctrl</kbd>+<kbd>F</kbd>, <kbd>Ctrl</kbd>+<kbd>M</kbd>, and <kbd>Right</kbd>.
+<a name="default_bindings"></a>`clink.default_bindings` | `bash` [*](#alternatedefault) | Clink uses bash key bindings when this is set to `bash` (the default).  When this is set to `windows` Clink overrides some of the bash defaults with familiar Windows key bindings for <kbd>Tab</kbd>, <kbd>Ctrl</kbd>-<kbd>A</kbd>, <kbd>Ctrl</kbd>-<kbd>F</kbd>, <kbd>Ctrl</kbd>-<kbd>M</kbd>, and <kbd>Right</kbd>.
 `clink.gui_popups`           | False   | When set, Clink uses GUI popup windows instead console text popups.  The `color.popup` settings have no effect on GUI popup windows.
 `clink.logo`                 | `full`  | Controls what startup logo to show when Clink is injected.  `full` = show full copyright logo, `short` = show abbreviated version info, `none` = omit the logo.
 `clink.paste_crlf`           | `crlf`  | What to do with CR and LF characters on paste. Setting this to `delete` deletes them, `space` replaces them with spaces, `ampersand` replaces them with ampersands, and `crlf` pastes them as-is (executing commands that end with a newline).
@@ -315,7 +315,7 @@ Name                         | Default [*](#alternatedefault) | Description
 `clink.promptfilter`         | True    | Enable [prompt filtering](#customising-the-prompt) by Lua scripts.
 `cmd.admin_title_prefix`     |         | When set, this replaces the "Administrator: " console title prefix.
 `cmd.auto_answer`            | `off`   | Automatically answers cmd.exe's "Terminate batch job (Y/N)?" prompts. `off` = disabled, `answer_yes` = answer Y, `answer_no` = answer N.
-<a name="ctrld_exits"></a>`cmd.ctrld_exits` | True | <kbd>Ctrl</kbd>+<kbd>D</kbd> exits the process when it is pressed on an empty line.
+<a name="ctrld_exits"></a>`cmd.ctrld_exits` | True | <kbd>Ctrl</kbd>-<kbd>D</kbd> exits the process when it is pressed on an empty line.
 `cmd.get_errorlevel`         | True    | When this is enabled, Clink runs a hidden `echo %errorlevel%` command before each interactive input prompt to retrieve the last exit code for use by Lua scripts.  If you experience problems, try turning this off.  This is on by default.
 `color.arg`                  |         | The color for arguments in the input line when `clink.colorize_input` is enabled.
 `color.arginfo`              | `yellow` [*](#alternatedefault) | Argument info color.  Some argmatchers may show that some flags or arguments accept additional arguments, when listing possible completions.  This color is used for those additional arguments.  (E.g. the "dir" in a "-x dir" listed completion.)
@@ -376,7 +376,7 @@ Name                         | Default [*](#alternatedefault) | Description
 `match.ignore_case`          | `relaxed` | Controls case sensitivity when completing matches. `off` = case sensitive, `on` = case insensitive, `relaxed` = case insensitive plus `-` and `_` are considered equal.
 `match.limit_fitted_columns` | `0`     | When the `match.fit_columns` setting is enabled, this disables calculating column widths when the number of matches exceeds this value.  The default is 0 (unlimited).  Depending on the screen width and CPU speed, setting a limit may avoid delays.
 `match.max_rows`             | `0`     | The maximum number of rows that `clink-select-complete` can use.  When this is 0, the limit is the terminal height.
-`match.preview_rows`         | `0`     | The number of rows to show as a preview when using the `clink-select-complete` command (bound by default to <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Space</kbd>).  When this is 0, all rows are shown and if there are too many matches it instead prompts first like the `complete` command does.  Otherwise it shows the specified number of rows as a preview without prompting, and it expands to show the full set of matches when the selection is moved past the preview rows.
+`match.preview_rows`         | `0`     | The number of rows to show as a preview when using the `clink-select-complete` command (bound by default to <kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>Space</kbd>).  When this is 0, all rows are shown and if there are too many matches it instead prompts first like the `complete` command does.  Otherwise it shows the specified number of rows as a preview without prompting, and it expands to show the full set of matches when the selection is moved past the preview rows.
 `match.sort_dirs`            | `with`  | How to sort matching directory names. `before` = before files, `with` = with files, `after` = after files.
 <a name="match_substring"></a>`match.substring` | False [*](#alternatedefault) | When set, if no completions are found with a prefix search, then a substring search is used.
 `match.translate_slashes`    | `system` | File and directory completions can be translated to use consistent slashes.  The default is `system` to use the appropriate path separator for the OS host (backslashes on Windows).  Use `slash` to use forward slashes, or `backslash` to use backslashes.  Use `off` to turn off translating slashes from custom match generators.
@@ -385,12 +385,12 @@ Name                         | Default [*](#alternatedefault) | Description
 <a name="prompt-transient"></a>`prompt.transient` | `off` | Controls when past prompts are collapsed ([transient prompts](#transientprompts)).  `off` = never collapse past prompts, `always` = always collapse past prompts, `same_dir` = only collapse past prompts when the current working directory hasn't changed since the last prompt.
 `readline.hide_stderr`       | False   | Suppresses stderr from the Readline library.  Enable this if Readline error messages are getting in the way.
 `terminal.adjust_cursor_style`| True   | When enabled, Clink adjusts the cursor shape and visibility to show Insert Mode, produce the visible bell effect, avoid disorienting cursor flicker, and to support ANSI escape codes that adjust the cursor shape and visibility. But it interferes with the Windows 10 Cursor Shape console setting. You can make the Cursor Shape setting work by disabling this Clink setting (and the features this provides).
-`terminal.differentiate_keys`| False   | When enabled, pressing <kbd>Ctrl</kbd> + <kbd>H</kbd> or <kbd>I</kbd> or <kbd>M</kbd> or <kbd>[</kbd> generate special key sequences to enable binding them separately from <kbd>Backspace</kbd> or <kbd>Tab</kbd> or <kbd>Enter</kbd> or <kbd>Esc</kbd>.
+`terminal.differentiate_keys`| False   | When enabled, pressing <kbd>Ctrl</kbd>+<kbd>H</kbd> or <kbd>I</kbd> or <kbd>M</kbd> or <kbd>[</kbd> generate special key sequences to enable binding them separately from <kbd>Backspace</kbd> or <kbd>Tab</kbd> or <kbd>Enter</kbd> or <kbd>Esc</kbd>.
 `terminal.east_asian_ambiguous`|`auto` | There is a group of East Asian characters whose widths are ambiguous in the Unicode standard.  This setting controls how to resolve the ambiguous widths.  By default this is set to `auto`, but some terminal hosts may require setting this to a different value to work around limitations in the terminal hosts.  Setting this to `font` measures the East Asian Ambiguous character widths using the current font.  Setting it to `one` uses 1 as the width, or `two` uses 2 as the width.  When this is `auto` (the default) and the current code page is 932, 936, 949, or 950 then the current font is used to measure the widths, or for any other code pages (including UTF8) the East Asian Ambiguous character widths are assumed to be 1.
 `terminal.emulation`         | `auto`  | Clink can either emulate a virtual terminal and handle ANSI escape codes itself, or let the console host natively handle ANSI escape codes. `native` = pass output directly to the console host process, `emulate` = clink handles ANSI escape codes itself, `auto` = emulate except when running in ConEmu, Windows Terminal, or Windows 10 new console.
 `terminal.mouse_input`       | `auto`  | Clink can optionally respond to mouse input, instead of letting the terminal respond to mouse input (e.g. to select text on the screen).  When mouse input is enabled in Clink, clicking in the input line sets the cursor position, and clicking in popup lists selects an item, etc.  Setting this to `off` lets the terminal host handle mouse input, `on` lets Clink handle mouse input, and `auto` lets Clink handle mouse input in ConEmu and in the default Conhost terminal when Quick Edit mode is unchecked in the console Properties dialog.  For more information see [Mouse Input](#gettingstarted_mouseinput).
 `terminal.mouse_modifier`    |       | This selects which modifier keys (<kbd>Alt</kbd>, <kbd>Ctrl</kbd>, <kbd>Shift</kbd>) must be held in order for Clink to respond to mouse input when mouse input is enabled by the `terminal.mouse_input` setting.  This is a text string that can list one or more modifier keys:  'alt', 'ctrl', and 'shift'.  For example, setting it to "alt shift" causes Clink to only respond to mouse input when both <kbd>Alt</kbd> and <kbd>Shift</kbd> are held (and not <kbd>Ctrl</kbd>).  If the `%CLINK_MOUSE_MODIFIER%` environment variable is set then its value supersedes this setting.  For more information see [Mouse Input](#gettingstarted_mouseinput).
-`terminal.raw_esc`           | False | When enabled, pressing Esc sends a literal escape character like in Unix/etc terminals.  This setting is disabled by default to provide a more predictable, reliable, and configurable input experience on Windows.  Changing this only affects future Clink sessions, not the current session.
+<a name="terminal_raw_esc"></a>`terminal.raw_esc` | False | When enabled, pressing <kbd>Esc</kbd> sends a literal escape character like in Unix or Linux terminals.  This setting is disabled by default to provide a more predictable, reliable, and configurable input experience on Windows.  Changing this only affects future Clink sessions, not the current session.
 `terminal.use_altgr_substitute`| False | Support Windows' <kbd>Ctrl</kbd>-<kbd>Alt</kbd> substitute for <kbd>AltGr</kbd>. Turning this off may resolve collisions with Readline's key bindings.
 
 <p/>
@@ -561,7 +561,7 @@ Or <code>clink --version</code> shows just the version number.</dd>
 <p>
 <dt>clink echo</dt>
 <dd>
-Echos key sequences to use in the .inputrc files for binding keys to Clink commands.  Each key pressed prints the associated key sequence on a separate line, until <kbd>Ctrl</kbd>+<kbd>C</kbd> is pressed.</dd>
+Echos key sequences to use in the .inputrc files for binding keys to Clink commands.  Each key pressed prints the associated key sequence on a separate line, until <kbd>Ctrl</kbd>-<kbd>C</kbd> is pressed.</dd>
 </p>
 
 ## Portable Configuration
@@ -604,19 +604,94 @@ call "%~dp0clink.bat" inject --profile "%TEMP%\clink_portable" %1 %2 %3 %4 %5 %6
 
 # Configuring Readline
 
-The Readline library used by Clink can be configured to add custom keybindings and macros by creating a Readline init file. There is excellent documentation for all the options and commands available to configure Readline in the [Readline manual](https://tiswww.cwru.edu/php/chet/readline/rluserman.html).
+Clink uses the [GNU Readline library](https://tiswww.case.edu/php/chet/readline/rltop.html) to provide line editing functionality, which can be configured to add custom keybindings and macros by creating a Readline init file. The Readline documentation is included directly in this Clink documentation, below.
 
 <table class="linkmenu">
-<tr class="lmtr"><td class="lmtd"><a href="#init-file">Init File</a></td><td class="lmtd">About the .inputrc init file.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#the-basics">The Basics</a></td><td class="lmtd">The basics of using the Readline input editor in Clink.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#init-file">Init File</a></td><td class="lmtd">About the .inputrc init file, configuration variables, and key bindings.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#bindable-commands">Bindable Commands</a></td><td class="lmtd">The commands available for key bindings.</td></tr>
 <tr class="lmtr"><td class="lmtd"><a href="#completion-colors">Completion Colors</a></td><td class="lmtd">How to customize the completion colors.</td></tr>
 <tr class="lmtr"><td class="lmtd"><a href="#popupwindow">Popup Windows</a></td><td class="lmtd">Using the popup windows.</td></tr>
 </table>
 
+## The Basics
+
+### Bare Essentials
+
+To enter characters into the line, simply type them. The typed character appears where the cursor was, and then the cursor moves one space to the right. If you mistype a character, you can use <kbd>Backspace</kbd> to back up and delete the mistyped character.
+
+Sometimes you may mistype a character, and not notice the error until you have typed several other characters. In that case, you can type <kbd>Left</kbd> (the left arrow key) to move the cursor to the left, and then correct your mistake. Afterwards, you can move the cursor to the right with <kbd>Right</kbd> (the right arrow key).
+
+When you add text in the middle of a line, you will notice that characters to the right of the cursor are "pushed over" to make room for the text that you have inserted. Likewise, when you delete text behind the cursor, characters to the right of the cursor are "pulled back" to fill in the blank space created by the removal of the text. A list of the bare essentials for editing the text of an input line follows.
+
+Key | Description
+-|-
+<kbd>Left</kbd> | Move back one character.
+<kbd>Right</kbd> | Move forward one character.
+<kbd>Backspace</kbd> | Delete the character to the left of the cursor.
+<kbd>Del</kbd> | Delete the character underneath the cursor.
+<kbd>A</kbd>, <kbd>a</kbd>, <kbd>1</kbd>, <kbd>!</kbd>, <kbd>"</kbd>, <kbd>/</kbd>, etc | Insert the typed character into the line at the cursor.
+<kbd>Ctrl</kbd>-<kbd>z</kbd> or<br/><kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>u</kbd> | Undo the last editing command. You can undo all the way back to an empty line.
+<kbd>Home</kbd> | Move to the start of the line.
+<kbd>End</kbd> | Move to the end of the line.
+<kbd>Ctrl</kbd>-<kbd>Left</kbd> | Move backward a word, where a word is composed of letters and digits.
+<kbd>Ctrl</kbd>-<kbd>Right</kbd> | Move forward a word.
+
+### Killing and Yanking
+
+_Killing_ text means to delete the text from the line, but to save it away for later use, usually by _yanking_ (re-inserting) it back into the line. ("Cut" and "paste" are more recent jargon for "kill" and "yank", but killing and yanking do not affect the system's clipboard.)
+
+If the description for a command says that it "kills" text, then you can be sure that you can get the text back in a different (or the same) place later.
+
+When you use a kill command, the text is saved in a _kill-ring_. Any number of consecutive kills save all of the killed text together, so that when you yank it back, you get it all. The kill ring is not line specific; the text that you killed on a previously typed line is available to be yanked back later, when you are typing another line.
+
+Here are some basic commands for killing text.
+
+Key | Description
+-|-
+<kbd>Ctrl</kbd>-<kbd>End</kbd> | Kill the text from the current cursor position to the end of the line.
+<kbd>Ctrl</kbd>-<kbd>Del</kbd> | Kill from the cursor to the end of the current word, or, if between words, to the end of the next word. Word boundaries are the same as those used by <kbd>Ctrl</kbd>-<kbd>Right</kbd>.
+<kbd>Ctrl</kbd>-<kbd>Backspace</kbd> | Kill from the cursor the start of the current word, or, if between words, to the start of the previous word. Word boundaries are the same as those used by <kbd>Ctrl</kbd>-<kbd>Left</kbd>.
+<kbd>Ctrl</kbd>-<kbd>w</kbd> | Kill from the cursor to the previous whitespace. This is different than <kbd>Ctrl</kbd>-<kbd>Backspace</kbd> because the word boundaries differ.
+
+Here is how to _yank_ the text back into the line. Yanking means to copy the most-recently-killed text from the kill buffer.
+
+Key | Description
+-|-
+<kbd>Ctrl</kbd>-<kbd>y</kbd> | Yank the most recently killed text back into the buffer at the cursor.
+<kbd>Alt</kbd>-<kbd>y</kbd> | Rotate the kill-ring, and yank the new top. You can only do this if the prior command is <kbd>Ctrl</kbd>-<kbd>y</kbd> or <kbd>Alt</kbd>-<kbd>y</kbd>.
+
+### Readline Arguments
+
+You can pass numeric arguments to Readline commands. Sometimes the argument acts as a repeat count, other times it is the _sign_ of the argument that is significant. If you pass a negative argument to a command which normally acts in a forward direction, that command will act in a backward direction. For example, to kill text back to the start of the line, you might type <kbd>Alt</kbd>-<kbd>-</kbd> <kbd>Ctrl</kbd>-<kbd>k</kbd>.
+
+The general way to pass numeric arguments to a command is to type meta digits before the command. If the first "digit" typed is a minus sign (`-`), then the sign of the argument will be negative. Once you have typed one meta digit to get the argument started, you can type the remainder of the digits, and then the command. For example, to give the <kbd>Del</kbd> command an argument of 10, you could type <kbd>Alt</kbd>-<kbd>1</kbd> <kbd>0</kbd> <kbd>Del</kbd>, which will delete the next ten characters on the input line.
+
+<a name="rlsearchinhistory"></a>
+
+### Searching for Commands in the History
+
+Readline provides commands for searching through the command history for lines containing a specified string. There are two search modes: _incremental_ and _non-incremental_.
+
+Incremental searches begin before the user has finished typing the search string. As each character of the search string is typed, Readline displays the next entry from the history matching the string typed so far. An incremental search requires only as many characters as needed to find the desired history entry. To search backward in the history for a particular string, type <kbd>Ctrl</kbd>-<kbd>r</kbd>. Typing <kbd>Ctrl</kbd>-<kbd>s</kbd> searches forward through the history. The characters present in the value of the `isearch-terminators` variable are used to terminate an incremental search. If that variable has not been assigned a value, then <kbd>Esc</kbd> or <kbd>Ctrl</kbd>-<kbd>j</kbd> will terminate an incremental search. <kbd>Ctrl</kbd>-<kbd>g</kbd> will abort an incremental search and restore the original line. When the search is terminated, the history entry containing the search string becomes the current line.
+
+To find other matching entries in the history list, type <kbd>Ctrl</kbd>-<kbd>r</kbd> or <kbd>Ctrl</kbd>-<kbd>s</kbd> as appropriate. This will search backward or forward in the history for the next entry matching the search string typed so far. Any other key sequence bound to a Readline command will terminate the search and execute that command. For instance, <kbd>Enter</kbd> will terminate the search and accept the line, thereby executing the command from the history list. A movement command will terminate the search, make the last line found the current line, and begin editing.
+
+Readline remembers the last incremental search string. If two <kbd>Ctrl</kbd>-<kbd>r</kbd>'s are typed without any intervening characters defining a new search string, any remembered search string is used.
+
+Non-incremental searches read the entire search string before starting to search for matching history lines. The search string may be typed by the user or be part of the contents of the current line. Type <kbd>Alt</kbd>-<kbd>p</kbd> or <kbd>Alt</kbd>-<kbd>n</kbd> to start a non-incremental search backwards or forwards.
+
+To search backward in the history for a line starting with the text before the cursor, type <kbd>PgUp</kbd>. Or search forward by typing <kbd>PgDn</kbd>.
+
 ## Init File
 
-A Readline init file defines key binding customizations and sets Readline configuration variables.
+You can customize key bindings and configuration variables by using an init file.
 
-A Readline init file is named `.inputrc` or `_inputrc`.  Clink searches the directories referenced by the following environment variables in the order listed here, and loads the first `.inputrc` or `_inputrc` file it finds:
+"[Configuration variables](#readline-configuration-variables)" are customized in the init file, but "[Clink settings](#clink-settings)" are customized with the `clink set` command.
+
+### Init File Location
+
+The Readline init file is named `.inputrc` or `_inputrc`.  Clink searches the directories referenced by the following environment variables in the order listed here, and loads the first `.inputrc` or `_inputrc` file it finds:
 - `%CLINK_INPUTRC%`
 - The Clink profile directory (see the "state" line from `clink info`; by default this is the same as `%USERPROFILE%` but it can be overridden by the `clink inject` command).
 - `%USERPROFILE%`
@@ -633,9 +708,91 @@ You can use `clink info` to find the directories and configuration file for the 
 > - For backward compatibility, `clink_inputrc` is also loaded from the above locations, but it has been deprecated and may be removed in the future.
 > - Clink v1.0.0a0 through Clink v1.2.27 accidentally loaded up to one Readline init file from each of the searched directories. That was incorrect behavior for loading Readline init files and has been fixed. If similar behavior is still desired, consider using the `$include` directive in the Readline init file, to load additional files.
 
-### Basic Format
+### Init File Syntax
 
-The `.inputrc` file will mostly use these kinds of lines:
+There are only a few basic constructs allowed in the Readline init file:
+
+- Blank lines are ignored.
+- Lines beginning with a `#` are comments.
+- Lines beginning with a `$` indicate [conditional init constructs](#conditional-init-constructs).
+- Other lines denote [Readline configuration variables](#readline-configuration-variables) and [Readline key bindings](#readline-key-bindings).
+
+#### Readline configuration variables
+
+You can modify the behavior of Readline by altering the values of configuration variables in Readline using the `set` command within the init file. The syntax is simple:
+
+<pre><code class="plaintext">set <span class="arg">variable</span> <span class="arg">value</span></code></pre>
+
+Here, for example, is how to change from the default Emacs-like key binding to use `vi` line editing commands:
+
+<pre><code class="plaintext">set editing-mode vi</code></pre>
+
+Variable names and values, where appropriate, are recognized without regard to case. Unrecognized variable names are ignored.
+
+Boolean variables (those that can be set to on or off) are set to on if the value is null or empty, `on` (case-insensitive), or `1`. Any other value results in the variable being set to off.
+
+Variable | Description
+-|-
+<a name="configbellstyle"></a>`bell-style` | Controls what happens when Readline wants to ring the terminal bell. If set to "none", Readline never rings the bell. If set to "visible" (the default in Clink), Readline uses a visible bell if one is available. If set to "audible", Readline attempts to ring the terminal's bell.
+`blink-matching-paren` | If set to "on", Readline attempts to briefly move the cursor to an opening parenthesis when a closing parenthesis is inserted. The default is "off".
+`colored-completion-prefix` | If set to "on", when listing completions, Readline displays the common prefix of the set of possible completions using a different color. The color definitions are taken from the value of the `%LS_COLORS%` environment variable. The default is "off".
+`colored-stats` | If set to "on", Readline displays possible completions using different colors to indicate their file type. The color definitions are taken from the value of the `%LS_COLORS%` environment variable. The default is "off".
+<a name="configcommentbegin"></a>`comment-begin` | The string to insert at the beginning of the line when the `insert-comment` command is executed. The default value is "::".
+<a name="configcompletiondisplaywidth"></a>`completion-display-width` | The number of screen columns used to display possible matches when performing completion. The value is ignored if it is less than 0 or greater than the terminal screen width. A value of 0 will cause matches to be displayed one per line. The default value is -1.
+`completion-ignore-case` | If set to "on", Readline performs filename matching and completion in a case-insensitive fashion. The default value is "on".
+`completion-prefix-display-length` | The length in characters of the common prefix of a list of possible completions that is displayed without modification. When set to a value greater than zero, common prefixes longer than this value are replaced with an ellipsis when displaying possible completions.
+<a namme="configcompletionqueryitems"></a>`completion-query-items` | The number of possible completions that determines when the user is asked whether the list of possibilities should be displayed. If the number of possible completions is greater than or equal to this value, Readline will ask whether or not the user wishes to view them; otherwise, they are simply listed. This variable must be set to an integer value greater than or equal to 0. A negative value means Readline should never ask. The default limit is 100.
+`echo-control-characters` | When set to "on", on operating systems that indicate they support it, readline echoes a character corresponding to a signal generated from the keyboard. The default is "on".
+`editing-mode` | This controls which Readline input mode is used by default. When set to "emacs" (the default), Readline starts up in Emacs editing mode, where keystrokes are most similar to Emacs. When set to "vi", then `vi` input mode is used.
+`emacs-mode-string` | If the `show-mode-in-prompt` variable is enabled, this string is displayed immediately before the last line of the primary prompt when emacs editing mode is active. The value is expanded like a key binding, so the standard set of meta- and control prefixes and backslash escape sequences is available. Use the "\1" and "\2" escapes to begin and end sequences of non-printing characters, which can be used to embed a terminal control sequence into the mode string. The default is "@".
+`enable-bracketed-paste` | When set to "on", Readline will configure the terminal in a way that will enable it to insert each paste into the editing buffer as a single string of characters, instead of treating each character as if it had been read from the keyboard. This can prevent pasted characters from being interpreted as editing commands. The default is "on".
+`expand-tilde` | If set to "on", tilde expansion is performed when Readline attempts word completion. The default is "off".
+`history-preserve-point` | If set to "on", the history code attempts to place the point (the current cursor position) at the same location on each history line retrieved with `previous-history` or `next-history`. The default is "off".
+`horizontal-scroll-mode` | This variable can be set to either "on" or "off". Setting it to "on" means that the text of the lines being edited will scroll horizontally on a single screen line when they are longer than the width of the screen, instead of wrapping onto a new screen line. This variable is automatically set to "on" for terminals of height 1. By default, this variable is set to "off".
+`isearch-terminators` | The string of characters that should terminate an incremental search without subsequently executing the character as a command (see [Searching for Commands in the History](#rlsearchinhistory)). If this variable has not been given a value, the characters <kbd>Esc</kbd> and <kbd>Ctrl</kbd>-<kbd>j</kbd> will terminate an incremental search.
+`keymap` | Sets Readline's idea of the current keymap for key binding commands. Built-in keymap names are `emacs`, `emacs-standard`, `emacs-meta`, `emacs-ctlx`, `vi`, `vi-move`, `vi-command`, and `vi-insert`. `vi` is equivalent to `vi-command` (`vi-move` is also a synonym); `emacs` is equivalent to `emacs-standard`. The default value is `emacs`. The value of the `editing-mode` variable also affects the default keymap.
+`mark-directories` | If set to "on", completed directory names have a slash appended. The default is "on".
+`mark-modified-lines` | This variable, when set to "on", causes Readline to display an asterisk (`*`) at the start of history lines which have been modified. This variable is "off" by default.
+`mark-symlinked-directories` | If set to "on", completed names which are symbolic links to directories have a slash appended (subject to the value of `mark-directories`). The default is "off".
+`match-hidden-files` | This variable, when set to "on", causes Readline to match files whose names begin with a `.` (hidden files on Unix and Linux) when performing filename completion. If set to "off", the leading `.` must be supplied by the user in the filename to be completed. This variable is "on" by default.
+`menu-complete-display-prefix` | If set to "on", menu completion displays the common prefix of the list of possible completions (which may be empty) before cycling through the list. The default is "off".
+`page-completions` | If set to "on", Readline uses an internal `more`-like pager to display a screenful of possible completions at a time. This variable is "on" by default.
+`print-completions-horizontally` | If set to "on", Readline will display completions with matches sorted horizontally in alphabetical order, rather than down the screen. The default is "off".
+`show-all-if-ambiguous` | This alters the default behavior of the completion functions. If set to "on", words which have more than one possible completion cause the matches to be listed immediately instead of ringing the bell. The default value is "off".
+`show-all-if-unmodified` | This alters the default behavior of the completion functions in a fashion similar to `show-all-if-ambiguous`. If set to "on", words which have more than one possible completion without any possible partial completion (the possible completions don't share a common prefix) cause the matches to be listed immediately instead of ringing the bell. The default value is "off".
+`show-mode-in-prompt` | If set to "on", add a string to the beginning of the prompt indicating the editing mode: emacs, vi command, or vi insertion. The mode strings are user-settable (e.g., `emacs-mode-string`). The default value is "off".
+`skip-completed-text` | If set to "on", this alters the default completion behavior when inserting a single match into the line. It's only active when performing completion in the middle of a word. If enabled, Readline does not insert characters from the completion that match characters after point (the cursor position) in the word being completed, so portions of the word following the cursor are not duplicated. For instance, if this is enabled, attempting completion when the cursor is after the `e` in "Makefile" will result in "Makefile" rather than "Makefilefile", assuming there is a single possible completion. The default value is "off".
+`vi-cmd-mode-string` | If the `show-mode-in-prompt` variable is enabled, this string is displayed immediately before the last line of the primary prompt when vi editing mode is active and in command mode. The value is expanded like a key binding, so the standard set of meta- and control prefixes and backslash escape sequences is available. Use the "\1" and "\2" escapes to begin and end sequences of non-printing characters, which can be used to embed a terminal control sequence into the mode string. The default is "(cmd)".
+`vi-ins-mode-string` | If the `show-mode-in-prompt` variable is enabled, this string is displayed immediately before the last line of the primary prompt when vi editing mode is active and in insertion mode. The value is expanded like a key binding, so the standard set of meta- and control prefixes and backslash escape sequences is available. Use the "\1" and "\2" escapes to begin and end sequences of non-printing characters, which can be used to embed a terminal control sequence into the mode string. The default is "(ins)".
+`visible-stats` | If set to "on", a character denoting a file's type is appended to the filename when listing possible completions. The default is "off".
+
+Clink adds some new configuration variables for Readline:
+
+Variable | Description
+-|-
+`completion-auto-query-items` | If set to "on", automatically prompts before displaying completions if they need more than half a screen page (this overrules the [`completion-query-items`](#configcompletionqueryitems) variable). The default is "on".
+`history-point-at-end-of-anchored-search` | If set to "on", this puts the cursor at the end of the line when using `history-search-forward` or `history-search-backward`. The default is "off".
+`menu-complete-wraparound` | If this is "on", the `menu-complete` family of commands wraps around when reaching the end of the possible completions. The default is "on".
+`search-ignore-case` | Controls whether the history search commands ignore case. The default is "on".
+
+Some configuration variables are deprecated in Clink:
+
+Variable | Description
+-|-
+`bind-tty-special-chars` | Clink doesn't need or use this.
+`completion-map-case` | Instead, use the [`match.ignore_case`](#match_ignore_case) Clink setting (see the `relaxed` mode).
+`convert-meta` | Clink requires this to be "on", and sets it to "on".
+`disable-completion` | If set to "on", Readline will inhibit word completion. Completion characters will be inserted into the line as if they had been mapped to `self-insert`. The default is "off".
+`enable-meta-key` | Clink requires this to be "on", and sets it to "on".
+`history-size` | Instead, use the [`history.max_lines`](#history_max_lines) Clink setting.
+`input-meta` | Clink requires this to be "on", and sets it to "on".
+`keyseq-timeout` | Clink does not support this.
+`output-meta` | Clink requires this to be "on", and sets it to "on".
+`revert-all-at-newline` | Clink always reverts all in-memory changes to history lines each time a new input prompt starts.
+
+#### Readline key bindings
+
+_**... TBD ...**_
 
 <table>
 <tr><th>Line</th><th>Description</th></tr>
@@ -647,96 +804,233 @@ The `.inputrc` file will mostly use these kinds of lines:
 
 See [Discovering Clink key sequences](#discovering-clink-key-sequences) for how to find the <span class="arg">keyname</span> for the key you want to bind.  See [Customizing Key Bindings](#keybindings) for more information about binding keys in Clink.
 
-Refer to the [Readline manual](https://tiswww.cwru.edu/php/chet/readline/rluserman.html) for a more thorough explanation of the .inputrc file format, list of available commands, and list of configuration variables and their values.
+#### Conditional init constructs
 
-### New Configuration Variables
+_**... TBD ...**_
 
-Clink adds some new configuration variables to Readline, beyond what's described in the [Readline manual](https://tiswww.cwru.edu/php/chet/readline/rluserman.html):
+## Bindable Commands
 
-Name | Default | Description
-:-:|:-:|---
-`completion-auto-query-items`|on|Automatically prompts before displaying completions if they need more than half a screen page.
-`history-point-at-end-of-anchored-search`|off|Puts the cursor at the end of the line when using `history-search-forward` or `history-search-backward`.
-`menu-complete-wraparound`|on|The `menu-complete` family of commands wraps around when reaching the end of the possible completions.
-`search-ignore-case`|on|Controls whether the history search commands ignore case.
+### Commands For Moving
 
-### New Commands
+Command | Key | Description
+-|:-:|-
+`beginning-of-line` | <kbd>Home</kbd> | Move to the start of the current line.
+`end-of-line` | <kbd>End</kbd> | Move to the end of the line.
+`forward-char` | <kbd>Right</kbd> | Move forward a character.
+`backward-char` | <kbd>Left</kbd> | Move back a character.
+`forward-word` | <kbd>Ctrl</kbd>-<kbd>Right</kbd> | Move forward to the end of the next word. Words are composed of letters and digits.
+`backward-word` | <kbd>Ctrl</kbd>-<kbd>Left</kbd> | Move back to the start of the current or previous word. Words are composed of letters and digits.
+`previous-screen-line` | | Attempt to move point to the same physical screen column on the previous physical screen line. This will not have the desired effect if the current Readline line does not take up more than one physical line or if point is not greater than the length of the prompt plus the screen width.
+`next-screen-line` | | Attempt to move point to the same physical screen column on the next physical screen line. This will not have the desired effect if the current Readline line does not take up more than one physical line or if the length of the current Readline line is not greater than the length of the prompt plus the screen width.
+`clear-display` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>l</kbd> | Clear the screen and, if possible, the terminal's scrollback buffer, then redraw the current line, leaving the current line at the top of the screen.
+`clear-screen` | <kbd>Ctrl</kbd>-<kbd>l</kbd> | Clear the screen, then redraw the current line, leaving the current line at the top of the screen.
+`redraw-current-line` | | Refresh the current line. By default, this is unbound.
 
-Clink adds some new commands to Readline, beyond what's described in the [Readline manual](https://tiswww.cwru.edu/php/chet/readline/rluserman.html):
+### Commands For Manipulating The History
 
-Name | Description
-:-:|---
-`add-history`|Adds the current line to the history without executing it, and clears the editing line.
-`alias-expand-line`|A synonym for `clink-expand-doskey-alias`.
-`clink-complete-numbers`|Like `complete`, but for numbers from the console screen (3 digits or more, up to hexadecimal).
-`clink-copy-cwd`|Copy the current working directory to the clipboard.
-`clink-copy-line`|Copy the current line to the clipboard.
-`clink-copy-word`|Copy the word at the cursor to the clipboard, or copies the nth word if a numeric argument is provided via the `digit-argument` keys.
-`clink-ctrl-c`|Discards the current line and starts a new one (like <kbd>Ctrl</kbd>+<kbd>C</kbd> in CMD.EXE).
-`clink-diagnostics`|Show internal diagnostic information.
-`clink-exit`|Replaces the current line with `exit` and executes it (exits the shell instance).
-`clink-expand-doskey-alias`|Expand the doskey alias (if any) at the beginning of the line.
-`clink-expand-env-var`|Expand the environment variable (e.g. `%FOOBAR%`) at the cursor.
-`clink-expand-history`|Perform [history](#using-history-expansion) expansion in the current input line.
-`clink-expand-history-and-alias`|Perform [history](#using-history-expansion) and doskey alias expansion in the current input line.
-`clink-expand-line`|Perform [history](#using-history-expansion), doskey alias, and environment variable expansion in the current input line.
-`clink-find-conhost`|Activates the "Find" dialog when running in a standard console window (hosted by the OS conhost).  This is equivalent to picking "Find..." from the console window's system menu.
-`clink-insert-dot-dot`|Inserts `..\` at the cursor.
-`clink-magic-suggest-space`|Inserts the next full word of the suggestion (if any) up to a space, and also inserts a space.
-`clink-mark-conhost`|Activates the "Mark" mode when running in a standard console window (hosted by the OS conhost).  This is equivalent to picking "Mark" from the console window's system menu.
-`clink-menu-complete-numbers`|Like `menu-complete`, but for numbers from the console screen (3 digits or more, up to hexadecimal).
-`clink-menu-complete-numbers-backward`|Like `menu-complete-backward`, but for numbers from the console screen (3 digits or more, up to hexadecimal).
-`clink-old-menu-complete-numbers`|Like `old-menu-complete`, but for numbers from the console screen (3 digits or more, up to hexadecimal).
-`clink-old-menu-complete-numbers-backward`|Like `old-menu-complete-backward`, but for numbers from the console screen (3 digits or more, up to hexadecimal).
-`clink-paste`|Paste the clipboard at the cursor.
-`clink-popup-complete`|Show a [popup window](#popupwindow) that lists the available completions.
-`clink-popup-complete-numbers`|Like `clink-popup-complete`, but for numbers from the console screen (3 digits or more, up to hexadecimal).
-`clink-popup-directories`|Show a [popup window](#popupwindow) of recent current working directories.  In the popup, use <kbd>Enter</kbd> to `cd /d` to the highlighted directory.
-`clink-popup-history`|Show a [popup window](#popupwindow) that lists the command history (if any text precedes the cursor then it uses an anchored search to filter the list).  In the popup, use <kbd>Enter</kbd> to execute the highlighted command.
-`clink-popup-show-help`|Show a [popup window](#popupwindow) that lists the currently active key bindings, and can invoke a selected key binding.  The default key binding for this is <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>H</kbd>.
-`clink-reload`|Reloads the .inputrc file and the Lua scripts.
-`clink-reset-line`|Clears the current line.
-`clink-scroll-bottom`|Scroll the console window to the bottom (the current input line).
-`clink-scroll-line-down`|Scroll the console window down one line.
-`clink-scroll-line-up`|Scroll the console window up one line.
-`clink-scroll-page-down`|Scroll the console window down one page.
-`clink-scroll-page-up`|Scroll the console window up one page.
-`clink-scroll-top`|Scroll the console window to the top.
-`clink-select-complete`|Like `complete`, but shows interactive menu of matches and responds to arrow keys and typing to filter the matches.  While completing, <kbd>F1</kbd> toggles showing match descriptions at the bottom vs next to each match.
-`clink-selectall-conhost`|Mimics the "Select All" command when running in a standard console window (hosted by the OS conhots).  Selects the input line text.  If already selected, then it invokes the "Select All" command from the console window's system menu and selects the entire screen buffer's contents.
-`clink-shift-space`|Invokes the normal <kbd>Space</kbd> key binding, so that <kbd>Shift</kbd>+<kbd>Space</kbd> behaves the same as <kbd>Space</kbd>.
-`clink-show-help`|Lists the currently active key bindings using friendly key names.  A numeric argument affects showing categories and descriptions:  0 for neither, 1 for categories, 2 for descriptions, 3 for categories and descriptions (the default), 4 for all commands (even if not bound to a key).
-`clink-show-help-raw`|Lists the currently active key bindings using raw key sequences.  A numeric argument affects showing categories and descriptions:  0 for neither, 1 for categories, 2 for descriptions, 3 for categories and descriptions (the default), 4 for all commands (even if not bound to a key).
-`clink-up-directory`|Changes to the parent directory.
-`clink-what-is`|Show the key binding for the next key sequence that is input.
-`cua-backward-char`|Extends the selection and moves back a character.
-`cua-backward-word`|Extends the selection and moves back a word.
-`cua-beg-of-line`|Extends the selection and moves to the start of the current line.
-`cua-copy`|Copies the selection to the clipboard.
-`cua-cut`|Cuts the selection to the clipboard.
-`cua-end-of-line`|Extends the selection and moves to the end of the line.
-`cua-forward-char`|Extends the selection and moves forward a character, or inserts the next full suggested word up to a space.
-`cua-forward-word`|Extends the selection and moves forward a word.
-`cua-select-all`|Extends the selection to the entire current line.
-`cua-select-word`|Selects the word at the cursor.
-`edit-and-execute-command`|Invoke an editor on the current input line, and execute the result as commands.  This attempts to invoke %VISUAL%, %EDITOR%, or notepad.exe as the editor, in that order.
-`glob-complete-word`|Perform wildcard completion on the text before the cursor point, with a `*` implicitly appended.
-`glob-expand-word`|Insert all the wildcard completions that `glob-list-expansions` would list.  If a numeric argument is supplied, a `*` is implicitly appended before completion.
-`glob-list-expansions`|List the possible wildcard completions of the text before the cursor point.  If a numeric argument is supplied, a `*` is implicitly appended before completion.
-`history-and-alias-expand-line`|A synonym for `clink-expand-history-and-alias`.
-`history-expand-line`|A synonym for `clink-expand-history`.
-`insert-last-argument`|A synonym for `yank-last-arg`.
-`magic-space`|Perform [history](#using-history-expansion) expansion on the text before the cursor position and insert a space.
-`old-menu-complete-backward`|Like `old-menu-complete`, but in reverse.
-`remove-history`|While searching history, removes the current line from the history.
-`shell-expand-line`|A synonym for `clink-expand-line`.
-`win-copy-history-number`|Enter a history number and replace the input line with the history line (mimics Windows console <kbd>F9</kbd>).
-`win-copy-up-to-char`|Enter a character and copy up to it from the previous command (mimics Windows console <kbd>F2</kbd>).
-`win-copy-up-to-end`|Copy the rest of the previous command (mimics Windows console <kbd>F3</kbd>).
-`win-cursor-forward`|Move cursor forward, or at end of line copy character from previous command, or insert suggestion (mimics Windows console <kbd>F1</kbd> and <kbd>Right</kbd>).
-`win-delete-up-to-char`|Enter a character and delete up to it in the input line (mimics Windows console <kbd>F4</kbd>).
-`win-history-list`|Executes a history entry from a list (mimics Windows console <kbd>F7</kbd>).
-`win-insert-eof`|Insert ^Z (mimics Windows console <kbd>F6</kbd>).
+Command | Key | Description
+-|:-:|-
+`accept-line` | <kbd>Enter</kbd> | Accept the line regardless of where the cursor is. If this line is non-empty, it may be added to the history list for future recall.
+`previous-history` | <kbd>Ctrl</kbd>-<kbd>p</kbd> | Move "back" through the history list, fetching the previous command.
+`next-history` | <kbd>Ctrl</kbd>-<kbd>n</kbd> | Move "forward" through the history list, fetching the next command.
+`beginning-of-history` | <kbd>Alt</kbd>-<kbd><</kbd> | Move to the first line in the history.
+`end-of-history` | <kbd>Alt</kbd>-<kbd>></kbd> | Move to the end of the input history, i.e., the line currently being entered.
+`reverse-search-history` | <kbd>Ctrl</kbd>-<kbd>r</kbd> | Search backward starting at the current line and moving "up" through the history as necessary. This is an incremental search. This command sets the region to the matched text and activates the mark.
+`forward-search-history` | <kbd>Ctrl</kbd>-<kbd>s</kbd> | Search forward starting at the current line and moving "down" through the history as necessary. This is an incremental search. This command sets the region to the matched text and activates the mark.
+`non-incremental-reverse-search-history` | <kbd>Alt</kbd>-<kbd>p</kbd> | Search backward starting at the current line and moving "up" through the history as necessary using a non-incremental search for a string supplied by the user. The search string may match anywhere in a history line.
+`non-incremental-forward-search-history` | <kbd>Alt</kbd>-<kbd>n</kbd> | Search forward starting at the current line and moving "down" through the history as necessary using a non-incremental search for a string supplied by the user. The search string may match anywhere in a history line.
+`history-search-forward` | | Search forward through the history for the string of characters between the start of the current line and the point. The search string must match at the beginning of a history line. This is a non-incremental search. By default, this command is unbound.
+`history-search-backward` | | Search backward through the history for the string of characters between the start of the current line and the point. The search string must match at the beginning of a history line. This is a non-incremental search. By default, this command is unbound.
+`history-substring-search-forward` | | Search forward through the history for the string of characters between the start of the current line and the point. The search string may match anywhere in a history line. This is a non-incremental search. By default, this command is unbound.
+`history-substring-search-backward` | | Search backward through the history for the string of characters between the start of the current line and the point. The search string may match anywhere in a history line. This is a non-incremental search. By default, this command is unbound.
+`yank-nth-arg` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>y</kbd> | Insert the first argument to the previous command (usually the second word on the previous line) at point. With an argument _n_, insert the <em>n</em>th word from the previous command (the words in the previous command begin with word 0). A negative argument inserts the <em>n</em>th word from the end of the previous command. Once the argument _n_ is computed, the argument is extracted as if the "!n" history expansion had been specified.
+`yank-last-arg` | <kbd>Alt</kbd>-<kbd>.</kbd> or <kbd>Alt</kbd>-<kbd>_</kbd> | Insert last argument to the previous command (the last word of the previous history entry). With a numeric argument, behave exactly like `yank-nth-arg`. Successive calls to `yank-last-arg` move back through the history list, inserting the last word (or the word specified by the argument to the first call) of each line in turn. Any numeric argument supplied to these successive calls determines the direction to move through the history. A negative argument switches the direction through the history (back or forward). The history expansion facilities are used to extract the last argument, as if the "!$" history expansion had been specified.
+`operate-and-get-next` | <kbd>Ctrl</kbd>-<kbd>o</kbd> | Accept the current line for return to the calling application as if a newline had been entered, and fetch the next line relative to the current line from the history for editing. A numeric argument, if supplied, specifies the history entry to use instead of the current line.
+
+### Commands For Changing Text
+
+Command | Key | Description
+-|:-:|-
+`delete-char` | <kbd>Ctrl</kbd>-<kbd>d</kbd> | Delete the character at point.<br/>Note: also see the [`cmd.ctrld_exits`](#ctrld_exits) setting.
+`backward-delete-char` | <kbd>Backspace</kbd> | Delete the character behind the cursor. A numeric argument means to kill the characters instead of deleting them.
+`forward-backward-delete-char` | | Delete the character under the cursor, unless the cursor is at the end of the line, in which case the character behind the cursor is deleted. By default, this is not bound to a key.
+`quoted-insert` | <kbd>Ctrl</kbd>-<kbd>q</kbd> | Add the next character typed to the line verbatim. This is how to insert key sequences like <kbd>Ctrl</kbd>-<kbd>h</kbd> or <kbd>Tab</kbd>, for example.
+`tab-insert` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>i</kbd> | Insert a tab character.
+`self-insert` | <kbd>a</kbd>, <kbd>b</kbd>, <kbd>A</kbd>, <kbd>1</kbd>, <kbd>!</kbd>, etc | Insert the key itself.
+`bracketed-paste-begin` | | This function is intended to be bound to the "bracketed paste" escape sequence sent by some terminals, and such a binding is assigned by default. It allows Readline to insert the pasted text as a single unit without treating each character as if it had been read from the keyboard. The characters are inserted as if each one was bound to `self-insert` instead of executing any editing commands.<br/>Bracketed paste sets the region (the characters between point and the mark) to the inserted text. It uses the concept of an active mark: when the mark is active, Readline redisplay uses the terminal's standout mode to denote the region.
+`transpose-chars` | <kbd>Ctrl</kbd>-<kbd>t</kbd> | Drag the character before the cursor forward over the character at the cursor, moving the cursor forward as well. If the insertion point is at the end of the line, then this transposes the last two characters of the line. Negative arguments have no effect.
+`transpose-words` | <kbd>Alt</kbd>-<kbd>t</kbd> | Drag the word before point past the word after point, moving point past that word as well. If the insertion point is at the end of the line, this transposes the last two words on the line.
+`upcase-word` | <kbd>Alt</kbd>-<kbd>u</kbd> | Uppercase the current (or following) word. With a negative argument, uppercase the previous word, but do not move the cursor.
+`downcase-word` | <kbd>Alt</kbd>-<kbd>l</kbd> | Lowercase the current (or following) word. With a negative argument, lowercase the previous word, but do not move the cursor.
+`capitalize-word` | <kbd>Alt</kbd>-<kbd>c</kbd> | Capitalize the current (or following) word. With a negative argument, capitalize the previous word, but do not move the cursor.
+`overwrite-mode` | | Toggle overwrite mode. With an explicit positive numeric argument, switches to overwrite mode. With an explicit non-positive numeric argument, switches to insert mode. This command affects only emacs mode; vi mode does overwrite differently. Each new command line prompt starts in insert mode.<br/>In overwrite mode, characters bound to `self-insert` replace the text at point rather than pushing the text to the right. Characters bound to `backward-delete-char` replace the character before point with a space.<br/>By default, this command is unbound.
+
+### Killing And Yanking
+
+Command | Key | Description
+-|:-:|-
+`kill-line` | <kbd>Ctrl</kbd>-<kbd>k</kbd> | Kill the text from point to the end of the line. With a negative numeric argument, kill backward from the cursor to the beginning of the current line.
+`backward-kill-line` | <kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>Backspace</kbd> | Kill backward from the cursor to the beginning of the current line. With a negative numeric argument, kill forward from the cursor to the end of the current line.
+`unix-line-discard` | <kbd>Ctrl</kbd>-<kbd>u</kbd> | Kill backward from the cursor to the beginning of the current line.
+`kill-whole-line` | | Kill all characters on the current line, no matter where point is. By default, this is unbound.
+`kill-word` | <kbd>Alt</kbd>-<kbd>d</kbd> | Kill from point to the end of the current word, or if between words, to the end of the next word. Word boundaries are the same as `forward-word`.
+`backward-kill-word` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>Backspace</kbd> | Kill the word behind point. Word boundaries are the same as `backward-word`.
+`shell-transpose-words` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>t</kbd> | Drag the word before point past the word after point, moving point past that word as well. If the insertion point is at the end of the line, this transposes the last two words on the line. Word boundaries are the same as `shell-forward-word` and `shell-backward-word`.
+`unix-word-rubout` | <kbd>Ctrl</kbd>-<kbd>w</kbd> | Kill the word behind point, using white space as a word boundary. The killed text is saved on the kill-ring.
+`unix-filename-rubout` | | Kill the word behind point, using white space and the slash character as the word boundaries. The killed text is saved on the kill-ring.
+`delete-horizontal-space` | | Delete all spaces and tabs around point. By default, this is unbound.
+`kill-region` | | Kill the text in the current region. By default, this command is unbound.
+`copy-region-as-kill` | | Copy the text in the region to the kill buffer, so it can be yanked right away. By default, this command is unbound.
+`copy-backward-word` | | Copy the word before point to the kill buffer. The word boundaries are the same as `backward-word`. By default, this command is unbound.
+`copy-forward-word` | | Copy the word following point to the kill buffer. The word boundaries are the same as `forward-word`. By default, this command is unbound.
+`yank` | <kbd>Ctrl</kbd>-<kbd>y</kbd> | Yank the top of the kill ring into the buffer at point.
+`yank-pop` | <kbd>Alt</kbd>-<kbd>y</kbd> | Rotate the kill-ring, and yank the new top. You can only do this if the prior command is `yank` or `yank-pop`.
+
+### Specifying Numeric Arguments
+
+Command | Key | Description
+-|:-:|-
+`digit-argument` | <kbd>Alt</kbd>-<kbd>0</kbd>, <kbd>Alt</kbd>-<kbd>1</kbd>, ... <kbd>Alt</kbd>-<kbd>-</kbd> | Add this digit to the argument already accumulating, or start a new argument. <kbd>Alt</kbd>-<kbd>-</kbd> starts a negative argument.
+`universal-argument` | | This is another way to specify an argument. If this command is followed by one or more digits, optionally with a leading minus sign, those digits define the argument. If the command is followed by digits, executing `universal-argument` again ends the numeric argument, but is otherwise ignored. As a special case, if this command is immediately followed by a character that is neither a digit nor minus sign, the argument count for the next command is multiplied by four. The argument count is initially one, so executing this function the first time makes the argument count four, a second time makes the argument count sixteen, and so on. By default, this is not bound to a key.
+
+### Completion Commands
+
+Command | Key | Description
+-|:-:|-
+`complete` | <kbd>Tab</kbd> | Attempt to perform completion on the text before point.
+`possible-completions` | <kbd>Alt</kbd>-<kbd>=</kbd> | List the possible completions of the text before point. When displaying completions, Readline sets the number of columns used for display to the value of [`completion-display-width`](#configcompletiondisplaywidth), the value of the environment variable `%COLUMNS%`, or the screen width, in that order.
+`insert-completions` | <kbd>Alt</kbd>-<kbd>*</kbd> | Insert all completions of the text before point that would have been generated by `possible-completions`.
+`menu-complete` | | Similar to `complete`, but replaces the word to be completed with a single match from the list of possible completions. Repeated execution of `menu-complete` steps through the list of possible completions, inserting each match in turn. At the end of the list of completions, the bell is rung (subject to the setting of [`bell-style`](#configbellstyle)) and the original text is restored. An argument of _n_ moves _n_ positions forward in the list of matches; a negative argument may be used to move backward through the list. This command is intended to be bound to <kbd>TAB</kbd>, but is unbound by default.
+`menu-complete-backward` | | Identical to `menu-complete`, but moves backward through the list of possible completions, as if `menu-complete` had been given a negative argument.
+`delete-char-or-list` | | Deletes the character under the cursor if not at the beginning or end of the line (like `delete-char`). If at the end of the line, behaves identically to `possible-completions`. This command is unbound by default.
+
+### Keyboard Macros
+
+Command | Key | Description
+-|:-:|-
+`start-kbd-macro` | <kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>(</kbd> | Begin saving the characters typed into the current keyboard macro.
+`end-kbd-macro` | <kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>)</kbd> | Stop saving the characters typed into the current keyboard macro and save the definition.
+`call-last-kbd-macro` | <kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>e</kbd> | Re-execute the last keyboard macro defined, by making the characters in the macro appear as if typed at the keyboard.
+`print-last-kbd-macro` | | Print the last keboard macro defined in a format suitable for the inputrc file.
+
+### Some Miscellaneous Commands
+
+Command | Key | Description
+-|:-:|-
+`re-read-init-file` | <kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>r</kbd> | Read in the contents of the inputrc file, and incorporate any bindings or variable assignments found there.
+`abort` | <kbd>Ctrl</kbd>-<kbd>g</kbd> | Abort the current editing command and ring the terminal's bell (subject to the setting of [`bell-style`](#configbellstyle)).
+`do-lowercase-version` | <kbd>Alt</kbd>-<kbd>A</kbd>, <kbd>Alt</kbd>-<kbd>B</kbd>, <kbd>Alt</kbd>-<kbd>x</kbd>, ... | If the metafied character x is upper case, run the command that is bound to the corresponding metafied lower case character. The behavior is undefined if x is already lower case.
+`undo` | <kbd>Ctrl</kbd>-<kbd>_</kbd> or <kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>u</kbd> | Incremental undo, separately remembered for each line.
+`revert-line` | <kbd>Alt</kbd>-<kbd>r</kbd> | Undo all changes made to this line. This is like executing the `undo` command enough times to get back to the beginning.
+`tilde-expand` | <kbd>Alt</kbd>-<kbd>~</kbd> | Perform tilde expansion on the current word.
+`set-mark` | <kbd>Ctrl</kbd>-<kbd>@</kbd> | Set the mark to the point. If a numeric argument is supplied, the mark is set to that position.
+`exchange-point-and-mark` | <kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>x</kbd> | Swap the point with the mark. The current cursor position is set to the saved position, and the old cursor position is saved as the mark.
+`character-search` | <kbd>Ctrl</kbd>-<kbd>]</kbd> | A character is read and point is moved to the next occurrence of that character. A negative count searches for previous occurrences.
+`character-search-backward` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>]</kbd> | A character is read and point is moved to the previous occurrence of that character. A negative count searches for subsequent occurrences.
+`insert-comment` | <kbd>Alt</kbd>-<kbd>#</kbd> | Without a numeric argument, the value of the [`comment-begin`](#configcommentbegin) variable is inserted at the beginning of the current line. If a numeric argument is supplied, this command acts as a toggle: if the characters at the beginning of the line do not match the value of `comment-begin`, the value is inserted, otherwise the characters in `comment-begin` are deleted from the beginning of the line. In either case, the line is accepted as if a newline had been typed.
+`dump-functions` | | Print all of the functions and their key bindings to the Readline output stream. If a numeric argument is supplied, the output is formatted in such a way that it can be made part of an inputrc file. This command is unbound by default.
+`dump-variables` | | Print all of the settable variables and their values to the Readline output stream. If a numeric argument is supplied, the output is formatted in such a way that it can be made part of an inputrc file. This command is unbound by default.
+`dump-macros` | | Print all of the Readline key sequences bound to macros and the strings they output. If a numeric argument is supplied, the output is formatted in such a way that it can be made part of an inputrc file. This command is unbound by default.
+
+### Readline vi Mode
+
+While the Readline library does not have a full set of vi editing functions, it does contain enough to allow simple editing of the line. The Readline vi mode behaves as specified in the POSIX standard.
+
+In order to switch interactively between emacs and vi editing modes, use the command <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>j</kbd> (bound to `emacs-editing-mode` when in vi mode and to `vi-editing-mode` in emacs mode). The Readline default is emacs mode.
+
+When you enter a line in vi mode, you are already placed in "insertion" mode, as if you had typed an "i". Pressing <kbd>Esc</kbd> switches you into "command" mode, where you can edit the text of the line with the standard vi movement keys, move to previous history lines with "k" and subsequent lines with "j", and so forth.
+
+Command | Key | Description
+-|:-:|-
+`emacs-editing-mode` | <kbd>Ctrl</kbd>-<kbd>e</kbd> | When in vi command mode, this causes a switch to emacs editing mode.
+`vi-editing-mode` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>j</kbd> | When in emacs editing mode, this causes a switch to vi editing mode.
+
+### Other Readline Commands
+
+These other commands are not very useful in Clink, but exist nevertheless.
+
+Command | Key | Description
+-|:-:|-
+`prefix-meta` | | "Metafy" the next character typed. This is for keyboards without an <kbd>Alt</kbd> meta key. Typing a key bound to `prefix-meta` and then <kbd>f</kbd> is equivalent to typing <kbd>Alt</kbd>-<kbd>f</kbd>. By default this is bound to <kbd>Esc</kbd>, but only when the <a href="#terminal_raw_esc">`terminal.raw_esc`</a> Clink setting is enabled.
+`skip-csi-sequence` | | This has no effect unless the <a href="#terminal_raw_esc">`terminal.raw_esc`</a> Clink setting is enabled. Reads enough characters to consume a multi-key sequence such as those defined for keys like <kbd>Home</kbd> and <kbd>End</kbd>. Such sequences begin with a Control Sequence Indicator (CSI), which is `ESC` `[`. If this sequence is bound to "\e[", keys producing such sequences will have no effect unless explicitly bound to a readline command, instead of inserting stray characters into the editing buffer. This is unbound by default.
+
+### Clink Commands
+
+Clink also adds some new commands, beyond what's normally provided by Readline.
+
+Command | Key | Description
+-|:-:|-
+`add-history` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>k</kbd> | Adds the current line to the history without executing it, and clears the editing line.
+`alias-expand-line` | | A synonym for `clink-expand-doskey-alias`.
+`clink-complete-numbers` | | Like `complete`, but for numbers from the console screen (3 digits or more, up to hexadecimal).
+`clink-copy-cwd` | <kbd>Alt</kbd>-<kbd>c</kbd> | Copy the current working directory to the clipboard.
+`clink-copy-line` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>c</kbd> | Copy the current line to the clipboard.
+`clink-copy-word` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>w</kbd> | Copy the word at the cursor to the clipboard, or copies the nth word if a numeric argument is provided via the `digit-argument` keys.
+`clink-ctrl-c` | <kbd>Ctrl</kbd>-<kbd>c</kbd> | Discards the current line and starts a new one (like <kbd>Ctrl</kbd>-<kbd>C</kbd> in CMD.EXE).
+`clink-diagnostics` | <kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>z</kbd> | Show internal diagnostic information.
+`clink-exit` | <kbd>Alt</kbd>-<kbd>F4</kbd> | Replaces the current line with `exit` and executes it (exits the shell instance).
+`clink-expand-doskey-alias` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>f</kbd> | Expand the doskey alias (if any) at the beginning of the line.
+`clink-expand-env-var` | | Expand the environment variable (e.g. `%FOOBAR%`) at the cursor.
+`clink-expand-history` | <kbd>Alt</kbd>-<kbd>^</kbd> | Perform [history](#using-history-expansion) expansion in the current input line.
+`clink-expand-history-and-alias` | | Perform [history](#using-history-expansion) and doskey alias expansion in the current input line.
+`clink-expand-line` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>e</kbd> | Perform [history](#using-history-expansion), doskey alias, and environment variable expansion in the current input line.
+`clink-find-conhost` | | Activates the "Find" dialog when running in a standard console window (hosted by the OS conhost).  This is equivalent to picking "Find..." from the console window's system menu. When [`clink.default_bindings`](#default_bindings) is enabled, this is bound to <kbd>Ctrl</kbd>-<kbd>f</kbd>.
+`clink-insert-dot-dot` | <kbd>Alt</kbd>-<kbd>a</kbd> | Inserts `..\` at the cursor.
+`clink-magic-suggest-space` | | Inserts the next full word of the suggestion (if any) up to a space, and also inserts a space.
+`clink-mark-conhost` | | Activates the "Mark" mode when running in a standard console window (hosted by the OS conhost).  This is equivalent to picking "Mark" from the console window's system menu. When [`clink.default_bindings`](#default_bindings) is enabled, this is bound to <kbd>Ctrl</kbd>-<kbd>m</kbd>.
+`clink-menu-complete-numbers` | | Like `menu-complete`, but for numbers from the console screen (3 digits or more, up to hexadecimal).
+`clink-menu-complete-numbers-backward` | | Like `menu-complete-backward`, but for numbers from the console screen (3 digits or more, up to hexadecimal).
+`clink-old-menu-complete-numbers` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>n</kbd> | Like `old-menu-complete`, but for numbers from the console screen (3 digits or more, up to hexadecimal).
+`clink-old-menu-complete-numbers-backward` | | Like `old-menu-complete-backward`, but for numbers from the console screen (3 digits or more, up to hexadecimal).
+`clink-paste` | <kbd>Ctrl</kbd>-<kbd>v</kbd> | Paste the clipboard at the cursor.
+`clink-popup-complete` | | Show a [popup window](#popupwindow) that lists the available completions.
+`clink-popup-complete-numbers` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>N</kbd> | Like `clink-popup-complete`, but for numbers from the console screen (3 digits or more, up to hexadecimal).
+`clink-popup-directories` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>PgUp</kbd> | Show a [popup window](#popupwindow) of recent current working directories.  In the popup, use <kbd>Enter</kbd> to `cd /d` to the highlighted directory.
+`clink-popup-history` | | Show a [popup window](#popupwindow) that lists the command history (if any text precedes the cursor then it uses an anchored search to filter the list).  In the popup, use <kbd>Enter</kbd> to execute the highlighted command.
+`clink-popup-show-help` | | Show a [popup window](#popupwindow) that lists the currently active key bindings, and can invoke a selected key binding.  The default key binding for this is <kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>H</kbd>.
+`clink-reload` | <kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>r</kbd> | Reloads the .inputrc file and the Lua scripts.
+`clink-reset-line` | <kbd>Esc</kbd> | Clears the current line.
+`clink-scroll-bottom` | <kbd>Alt</kbd>-<kbd>End</kbd> | Scroll the console window to the bottom (the current input line).
+`clink-scroll-line-down` | <kbd>Alt</kbd>-<kbd>Down</kbd> | Scroll the console window down one line.
+`clink-scroll-line-up` | <kbd>Alt</kbd>-<kbd>Up</kbd> | Scroll the console window up one line.
+`clink-scroll-page-down` | <kbd>Alt</kbd>-<kbd>PgDn</kbd> | Scroll the console window down one page.
+`clink-scroll-page-up` | <kbd>Alt</kbd>-<kbd>PgUp</kbd> | Scroll the console window up one page.
+`clink-scroll-top` | <kbd>Alt</kbd>-<kbd>Home</kbd> | Scroll the console window to the top.
+`clink-select-complete` | <kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>Space</kbd> | Like `complete`, but shows interactive menu of matches and responds to arrow keys and typing to filter the matches.  While completing, <kbd>F1</kbd> toggles showing match descriptions at the bottom vs next to each match.
+`clink-selectall-conhost` | | Mimics the "Select All" command when running in a standard console window (hosted by the OS conhots).  Selects the input line text.  If already selected, then it invokes the "Select All" command from the console window's system menu and selects the entire screen buffer's contents. When [`clink.default_bindings`](#default_bindings) is enabled, this is bound to <kbd>Ctrl</kbd>-<kbd>a</kbd>.
+`clink-shift-space` | <kbd>Shift</kbd>-<kbd>Space</kbd> | Invokes the normal <kbd>Space</kbd> key binding, so that <kbd>Shift</kbd>-<kbd>Space</kbd> behaves the same as <kbd>Space</kbd>.
+`clink-show-help` | <kbd>Alt</kbd>-<kbd>h</kbd> | Lists the currently active key bindings using friendly key names.  A numeric argument affects showing categories and descriptions:  0 for neither, 1 for categories, 2 for descriptions, 3 for categories and descriptions (the default), 4 for all commands (even if not bound to a key).
+`clink-show-help-raw` | | Lists the currently active key bindings using raw key sequences.  A numeric argument affects showing categories and descriptions:  0 for neither, 1 for categories, 2 for descriptions, 3 for categories and descriptions (the default), 4 for all commands (even if not bound to a key).
+`clink-up-directory` | <kbd>Ctrl</kbd>-<kbd>PgUp</kbd> | Changes to the parent directory.
+`clink-what-is` | <kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>/</kbd> | Show the key binding for the next key sequence that is input.
+`cua-backward-char` | <kbd>Shift</kbd>-<kbd>Left</kbd> | Extends the selection and moves back a character.
+`cua-backward-word` | <kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>Left</kbd> | Extends the selection and moves back a word.
+`cua-beg-of-line` | <kbd>Shift</kbd>-<kbd>Home</kbd> | Extends the selection and moves to the start of the current line.
+`cua-copy` | <kbd>Shift</kbd>-<kbd>Ins</kbd> | Copies the selection to the clipboard.
+`cua-cut` | <kbd>Shift</kbd>-<kbd>Del</kbd> | Cuts the selection to the clipboard.
+`cua-end-of-line` | <kbd>Shift</kbd>-<kbd>End</kbd> | Extends the selection and moves to the end of the line.
+`cua-forward-char` | <kbd>Shift</kbd>-<kbd>Right</kbd> | Extends the selection and moves forward a character, or inserts the next full suggested word up to a space.
+`cua-forward-word` | <kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>Right</kbd> | Extends the selection and moves forward a word.
+`cua-select-all` | | Extends the selection to the entire current line.
+`cua-select-word` | | Selects the word at the cursor.
+`edit-and-execute-command` | <kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>e</kbd> | Invoke an editor on the current input line, and execute the result as commands.  This attempts to invoke `%VISUAL%`, `%EDITOR%`, or `notepad.exe` as the editor, in that order.
+`glob-complete-word` | <kbd>Alt</kbd>-<kbd>g</kbd> | Perform wildcard completion on the text before the cursor point, with a `*` implicitly appended.
+`glob-expand-word` | <kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>*</kbd> | Insert all the wildcard completions that `glob-list-expansions` would list.  If a numeric argument is supplied, a `*` is implicitly appended before completion.
+`glob-list-expansions` | <kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>g</kbd> | List the possible wildcard completions of the text before the cursor point.  If a numeric argument is supplied, a `*` is implicitly appended before completion.
+`history-and-alias-expand-line` | | A synonym for `clink-expand-history-and-alias`.
+`history-expand-line` | | A synonym for `clink-expand-history`.
+`insert-last-argument` | | A synonym for `yank-last-arg`.
+`magic-space` | | Perform [history](#using-history-expansion) expansion on the text before the cursor position and insert a space.
+`old-menu-complete-backward` | | Like `old-menu-complete`, but in reverse.
+`remove-history` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>d</kbd> | While searching history, removes the current line from the history.
+`shell-expand-line` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>e</kbd> | A synonym for `clink-expand-line`.
+`win-copy-history-number` | <kbd>F9</kbd> | Enter a history number and replace the input line with the history line (mimics Windows console <kbd>F9</kbd>).
+`win-copy-up-to-char` | <kbd>F2</kbd> | Enter a character and copy up to it from the previous command (mimics Windows console <kbd>F2</kbd>).
+`win-copy-up-to-end` | <kbd>F3</kbd> | Copy the rest of the previous command (mimics Windows console <kbd>F3</kbd>).
+`win-cursor-forward` | <kbd>F1</kbd> | Move cursor forward, or at end of line copy character from previous command, or insert suggestion (mimics Windows console <kbd>F1</kbd> and <kbd>Right</kbd>).
+`win-delete-up-to-char` | <kbd>F4</kbd> | Enter a character and delete up to it in the input line (mimics Windows console <kbd>F4</kbd>).
+`win-history-list` | <kbd>F7</kbd> | Executes a history entry from a list (mimics Windows console <kbd>F7</kbd>).
+`win-insert-eof` | <kbd>F6</kbd> | Insert ^Z (mimics Windows console <kbd>F6</kbd>).
 
 <a name="completioncolors"></a>
 
@@ -778,7 +1072,7 @@ set LS_COLORS=so=90:fi=97:di=93:ex=92:*.pdf=30;105:*.md=4
 
 Some commands show a searchable popup window that lists the available completions, directory history, or command history.
 
-For example, `win-history-list` (<kbd>F7</kbd>) and `clink-popup-directories` (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>PgUp</kbd>) show popup windows.
+For example, `win-history-list` (<kbd>F7</kbd>) and `clink-popup-directories` (<kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>PgUp</kbd>) show popup windows.
 
 Here's how the popup windows work:
 
@@ -786,8 +1080,8 @@ Key | Description
 :-:|---
 <kbd>Escape</kbd>|Cancels the popup.
 <kbd>Enter</kbd>|Inserts the highlighted completion, changes to the highlighted directory, or executes the highlighted command.
-<kbd>Shift</kbd>+<kbd>Enter</kbd>|Inserts the highlighted completion, inserts the highlighted directory, or jumps to the highlighted command history entry without executing it.
-<kbd>Ctrl</kbd>+<kbd>Enter</kbd>|Same as <kbd>Shift</kbd>+<kbd>Enter</kbd>.
+<kbd>Shift</kbd>-<kbd>Enter</kbd>|Inserts the highlighted completion, inserts the highlighted directory, or jumps to the highlighted command history entry without executing it.
+<kbd>Ctrl</kbd>-<kbd>Enter</kbd>|Same as <kbd>Shift</kbd>-<kbd>Enter</kbd>.
 <kbd>Del</kbd>|In a command history popup, <kbd>Del</kbd> deletes the selected history entry.
 
 Most of the popup windows also have incremental search:
@@ -796,9 +1090,9 @@ Key | Description
 :-:|---
 Typing|Typing does an incremental search.
 <kbd>F3</kbd>|Go to the next match.
-<kbd>Ctrl</kbd>+<kbd>L</kbd>|Go to the next match.
-<kbd>Shift</kbd>+<kbd>F3</kbd>|Go to the previous match.
-<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>|Go to the previous match.
+<kbd>Ctrl</kbd>-<kbd>L</kbd>|Go to the next match.
+<kbd>Shift</kbd>-<kbd>F3</kbd>|Go to the previous match.
+<kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>L</kbd>|Go to the previous match.
 
 The `win-history-list` command has a different search feature.  Typing digits `0`-`9` jumps to the numbered history entry, or typing a letter jumps to the preceding history entry that begins with the typed letter.  This is for compatibility with the <kbd>F7</kbd> behavior built into Windows console prompts.  Use the `clink-popup-history` command instead if you prefer for typing to do an incremental search.
 
@@ -827,7 +1121,7 @@ Clink loads all Lua scripts it finds in these directories:
 3. All directories listed in the `%CLINK_PATH%` environment variable, separated by semicolons.
 4. All directories registered by the `clink installscripts` command.
 
-Lua scripts are loaded once and are only reloaded if forced because the scripts locations change, the `clink-reload` command is invoked (<kbd>Ctrl</kbd>+<kbd>X</kbd>,<kbd>Ctrl</kbd>+<kbd>R</kbd>), or the `lua.reload_scripts` setting changes (or is True).
+Lua scripts are loaded once and are only reloaded if forced because the scripts locations change, the `clink-reload` command is invoked (<kbd>Ctrl</kbd>-<kbd>X</kbd>,<kbd>Ctrl</kbd>-<kbd>R</kbd>), or the `lua.reload_scripts` setting changes (or is True).
 
 Run `clink info` to see the script paths for the current session.
 
@@ -1041,7 +1335,7 @@ wombles  wonder   world
 C:&gt;foobar hello -foo wo<span style="color:#ffffff">_</span>
 </code></pre>
 
-When displaying possible completions, flag matches are only shown if the flag character has been input (so `command ` and <kbd>Alt</kbd>+<kbd>=</kbd> would list only non-flag matches, or `command -` and <kbd>Alt</kbd>+<kbd>=</kbd> would list only flag matches).
+When displaying possible completions, flag matches are only shown if the flag character has been input (so `command ` and <kbd>Alt</kbd>-<kbd>=</kbd> would list only non-flag matches, or `command -` and <kbd>Alt</kbd>-<kbd>=</kbd> would list only flag matches).
 
 If a command doesn't have an argmatcher but is a doskey macro, Clink automatically expands the doskey macro and looks for an argmatcher for the expanded command.  A macro like `gco=git checkout $*` automatically reuses a `git` argmatcher and produces completions for its `checkout` argument.  However, it only expands the doskey macro up to the first `$`, so complex aliases like `foo=app 2$gnul text $*` or `foo=$2 $1` might behave strangely.
 
@@ -1051,7 +1345,7 @@ Flags and arguments may optionally have descriptions associated with them.  The 
 
 Use [_argmatcher:adddescriptions()](#_argmatcher:adddescriptions) to add descriptions for flags and/or arguments.  Refer to its documentation for further details about how to use it, including how to also show arguments that a flag accepts.
 
-For example, with the following matcher, typing `foo -`<kbd>Alt</kbd>+<kbd>=</kbd> will list all of the flags, plus descriptions for each.
+For example, with the following matcher, typing `foo -`<kbd>Alt</kbd>-<kbd>=</kbd> will list all of the flags, plus descriptions for each.
 
 ```lua
 clink.argmatcher("foo")
@@ -1502,7 +1796,7 @@ The next example shows how to make a prompt that shows:
 
 Clink can offer suggestions how to complete a command as you type, and you can select how it generates suggestions.
 
-Turn on [automatic suggestions](#autosuggest_enable) with `clink set autosuggest.enable true`.  Once enabled, Clink will show suggestions in a [muted color](#color.suggestion) after the end of the typed command.  Accept the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, accept the next word of the suggestion with <kbd>Ctrl</kbd>+<kbd>Right</kbd>, or accept the next full word of the suggestion up to a space with <kbd>Shift</kbd>+<kbd>Right</kbd>.  You can ignore the suggestion if it isn't what you want; suggestions have no effect unless you accept them first.
+Turn on [automatic suggestions](#autosuggest_enable) with `clink set autosuggest.enable true`.  Once enabled, Clink will show suggestions in a [muted color](#color.suggestion) after the end of the typed command.  Accept the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, accept the next word of the suggestion with <kbd>Ctrl</kbd>-<kbd>Right</kbd>, or accept the next full word of the suggestion up to a space with <kbd>Shift</kbd>-<kbd>Right</kbd>.  You can ignore the suggestion if it isn't what you want; suggestions have no effect unless you accept them first.
 
 Scripts can provide custom suggestion generators, in addition to the built-in options:
 1. Create a new suggestion generator by calling [clink.suggester()][#clink.suggester] along with a name that identifies the suggestion generator, and can be added to the [`autosuggest.strategy`](#autosuggest_strategy) setting.
@@ -1538,7 +1832,7 @@ These sections provide more information about various aspects of Clink:
 
 Key bindings are defined in .inputrc files.
 
-The `clink-show-help` command is bound to <kbd>Alt</kbd>+<kbd>H</kbd> and lists all currently active key bindings.  The list displays "friendly" key names, and these names are generally not suitable for use in .inputrc files.  For example "Up" is the friendly name for `"\e[A"`, and "A-C-F2" is the friendly name for `"\e\e[1;5Q"`.  To see key sequence strings suitable for use in .inputrc files use `clink echo` as described below.
+The `clink-show-help` command is bound to <kbd>Alt</kbd>-<kbd>H</kbd> and lists all currently active key bindings.  The list displays "friendly" key names, and these names are generally not suitable for use in .inputrc files.  For example "Up" is the friendly name for `"\e[A"`, and "A-C-F2" is the friendly name for `"\e\e[1;5Q"`.  To see key sequence strings suitable for use in .inputrc files use `clink echo` as described below.
 
 <table class="linkmenu">
 <tr class="lmtr"><td class="lmtd"><a href="#the-inputrc-file">The .inputrc file</a></td><td class="lmtd">A quick summary of what key binding lines look like.</td></tr>
@@ -1546,6 +1840,7 @@ The `clink-show-help` command is bound to <kbd>Alt</kbd>+<kbd>H</kbd> and lists 
 <tr class="lmtr"><td class="lmtd"><a href="#discoverkeysequences">Discovering Clink key sequences</a></td><td class="lmtd">How to find key names to use for key bindings.</td></tr>
 <tr class="lmtr"><td class="lmtd"><a href="#specialkeys">Binding special keys</a></td><td class="lmtd">A table of special key names.</td></tr>
 <tr class="lmtr"><td class="lmtd"><a href="#luakeybindings">Lua key bindings</a></td><td class="lmtd">How to bind keys to Lua functions.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#nometakey">I do not have a Meta or <kbd>Alt</kbd> key</a></td><td class="lmtd">What to do if your keyboard doesn't have any <kbd>Alt</kbd> or Meta keys.</td></tr>
 </table>
 
 ### The .inputrc file
@@ -1556,9 +1851,9 @@ Here is a quick summary about key binding lines in .inputrc files:
 
 - A key binding is <code><span class="arg">name</span>: <span class="arg">function</span></code> or <code><span class="arg">name</span>: "<span class="arg">literal text</span>"</code>.
 - Key names are like this:
-  - `C-a` and `"\C-a"` are both <kbd>Ctrl</kbd>+<kbd>a</kbd>.
-  - `M-a` and `"\M-a"` are both <kbd>Alt</kbd>+<kbd>a</kbd>.
-  - `M-C-a` and `"\M-\C-a"` are both <kbd>Alt</kbd>+<kbd>Ctrl</kbd>+<kbd>a</kbd>.
+  - `C-a` and `"\C-a"` are both <kbd>Ctrl</kbd>-<kbd>a</kbd>.
+  - `M-a` and `"\M-a"` are both <kbd>Alt</kbd>-<kbd>a</kbd>.
+  - `M-C-a` and `"\M-\C-a"` are both <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>a</kbd>.
   - `hello` is just <kbd>h</kbd>; the `ello` is a syntax error and is silently discarded by Readline.
   - `"hello"` is the series of keys <kbd>h</kbd>,<kbd>e</kbd>,<kbd>l</kbd>,<kbd>l</kbd>,<kbd>o</kbd>.
   - Special keys like <kbd>Up</kbd> are represented by VT220 escape codes such as`"\e[A"` (see [Binding special keys](#specialkeys) for more info).
@@ -1620,9 +1915,9 @@ C-_:                kill-line                       <span class="hljs-comment">#
 
 Clink provides an easy way to find the key sequence for any key combination that Clink supports. Run `clink echo` and then press key combinations; the associated key binding sequence is printed to the console output and can be used for a key binding in the inputrc file.
 
-A chord can be formed by concatenating multiple key binding sequences. For example, `"\C-X"` and `"\e[H"` can be concatenated to form `"\C-X\e[H"` representing the chord <kbd>Ctrl</kbd>+<kbd>X</kbd>,<kbd>Home</kbd>.
+A chord can be formed by concatenating multiple key binding sequences. For example, `"\C-X"` and `"\e[H"` can be concatenated to form `"\C-X\e[H"` representing the chord <kbd>Ctrl</kbd>-<kbd>X</kbd>,<kbd>Home</kbd>.
 
-When finished, press <kbd>Ctrl</kbd>+<kbd>C</kbd> to exit from `clink echo`.
+When finished, press <kbd>Ctrl</kbd>-<kbd>C</kbd> to exit from `clink echo`.
 
 > **Note:** With non-US keyboard layouts, `clink echo` is not able to ignore dead key input (accent keys, for example).  It prints the key sequence for the dead key itself, which is not useful.  You can ignore that and press the next key, and then it prints the correct key sequence to use in key bindings.
 
@@ -1669,7 +1964,7 @@ When the `terminal.differentiate_keys` setting is enabled then the following key
 |`M` |`\e[27;5;77~`  |`\e[27;6;77~`  |`\em`          |`\eM`          |`\e[27;7;77~`  |`\e[27;8;77~`  |
 |`[` |`\e[27;5;219~` |`\e[27;6;219~` |`\e[27;3;219~` |`\e[27;4;219~` |`\e[27;7;219~` |`\e[27;8;219~` |
 
-The `terminal.raw_esc` setting controls the binding sequence for the <kbd>Esc</kbd> key and a couple of other keys:
+The <a href="#terminal_raw_esc">`terminal.raw_esc`</a> setting controls the binding sequence for the <kbd>Esc</kbd> key and a couple of other keys:
 
 |`terminal.raw_esc` Setting Value|Esc|Alt+[|Alt+Shift+O|
 |:-|-|-|-|
@@ -1723,9 +2018,9 @@ end
 
 <a name="findlineexample"></a>
 
-Here is an example that makes <kbd>F7</kbd>/<kbd>F8</kbd> jump to the previous/next screen line containing "error" or "warn" colored red or yellow, and makes <kbd>Shift</kbd>+<kbd>F7</kbd>/<kbd>Shift</kbd>+<kbd>F8</kbd> jump to the previous/next prompt line.
+Here is an example that makes <kbd>F7</kbd>/<kbd>F8</kbd> jump to the previous/next screen line containing "error" or "warn" colored red or yellow, and makes <kbd>Shift</kbd>-<kbd>F7</kbd>/<kbd>Shift</kbd>-<kbd>F8</kbd> jump to the previous/next prompt line.
 
-One way to use these is when reviewing compiler errors after building a project at the command line.  Press <kbd>Shift</kbd>+<kbd>F7</kbd> to jump to the previous prompt line, and then use <kbd>F8</kbd> repeatedly to jump to each next compiler warning or error listed on the screen.
+One way to use these is when reviewing compiler errors after building a project at the command line.  Press <kbd>Shift</kbd>-<kbd>F7</kbd> to jump to the previous prompt line, and then use <kbd>F8</kbd> repeatedly to jump to each next compiler warning or error listed on the screen.
 
 Example key bindings for the .inputrc file:
 
@@ -1742,6 +2037,18 @@ Example functions to go in a Lua script file:
 
 #INCLUDE [docs\examples\ex_findline.lua]
 ```
+
+<a name="nometakey"></a>
+
+### I do not have a Meta or <kbd>Alt</kbd> key
+
+If you do not have a Meta or <kbd>Alt</kbd> key, or another key working as a Meta key, there is another way to generate "metafied" keystrokes such as <kbd>M-k</kbd>.
+
+You can configure `clink set terminal.raw_esc true` to make the <kbd>Esc</kbd> work as it does in Unix and Linux, and then you can type <kbd>Esc</kbd> followed by <kbd>k</kbd>. This is known as "metafying" the <kbd>k</kbd> key.
+
+Clink is a Windows program, and so by default it makes the <kbd>Esc</kbd> key reset the input state, since that's how <kbd>Esc</kbd> generally works on Windows. When you enable the <a href="#terminal_raw_esc">`terminal.raw_esc`</a> Clink setting, the <kbd>Esc</kbd> key changes its behavior, and pressing unbound special keys can land you in all of the same strange "stuck input" situations as in Unix and Linux.
+
+But it might be more convenient to acquire a keyboard that has an <kbd>Alt</kbd> key.
 
 ## Saved Command History
 
