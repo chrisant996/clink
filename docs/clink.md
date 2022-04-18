@@ -222,16 +222,16 @@ You can customize your key bindings (keyboard shortcuts) by assigning key bindin
 Clink comes with many pre-configured key bindings that invoke named commands.  Here are a few that you might find especially handy:
 
 <table>
-<tr><td><kbd>Alt</kbd>-<kbd>H</kbd></td><td>This is <code>clink-show-help</code>, which lists the key bindings and commands.  Learn more by visiting <a href="#keybindings">Customizing Key Bindings</a>.</td></tr>
-<tr><td><kbd>Tab</kbd></td><td>This is <code>complete</code> or <code>old-menu-complete</code>, depending on the [`clink.default_bindings`](#default_bindings) Clink setting.  <code>complete</code> swhich performs completion by selecting from an interactive list of possible completions; if there is only one match, the match is inserted immediately.</td></tr>
+<tr><td><kbd>Alt</kbd>-<kbd>H</kbd></td><td>This is <code>clink-show-help</code>, which lists the key bindings and commands.</td></tr>
+<tr><td><kbd>Tab</kbd></td><td>This is <code>complete</code> or <code>old-menu-complete</code>, depending on the <code><a href="#default_bindings">clink.default_bindings</a></code> Clink setting.  <code>complete</code> swhich performs completion by selecting from an interactive list of possible completions; if there is only one match, the match is inserted immediately.</td></tr>
 <tr><td><kbd>Ctrl</kbd>-<kbd>Space</kbd></td><td>This is <code>clink-select-complete</code>, which performs completion by selecting from an interactive list of possible completions; if there is only one match, the match is inserted immediately.</td></tr>
 <tr><td><kbd>Alt</kbd>-<kbd>=</kbd></td><td>This is <code>possible-completions</code>, which lists the available completions for the current word in the input line.</td></tr>
-<tr><td><kbd>Alt</kbd>-<kbd>.</kbd></td><td>This is <code>yank-last-arg</code>, which inserts the last argument from the previous line.  You can use it repeatedly to cycle backwards through the history, inserting the last argument from each line.  Learn more by reading about [Killing and Yanking](#killing-and-yanking).
-<tr><td><kbd>Ctrl</kbd>-<kbd>R</kbd></td><td>This is <code>reverse-search-history</code>, which incrementally searches the history.  Press it, then type, and it does a reverse incremental search while you type.  Press <kbd>Ctrl</kbd>-<kbd>R</kbd> again (and again, etc) to search for other matches of the search text.  Learn more by reading about [Searching for Commands in the History](#searching-for-commands-in-the-history).</td></tr>
+<tr><td><kbd>Alt</kbd>-<kbd>.</kbd></td><td>This is <code>yank-last-arg</code>, which inserts the last argument from the previous line.  You can use it repeatedly to cycle backwards through the history, inserting the last argument from each line.  Learn more by reading about <a href="#killing-and-yanking">Killing and Yanking</a>.
+<tr><td><kbd>Ctrl</kbd>-<kbd>R</kbd></td><td>This is <code>reverse-search-history</code>, which incrementally searches the history.  Press it, then type, and it does a reverse incremental search while you type.  Press <kbd>Ctrl</kbd>-<kbd>R</kbd> again (and again, etc) to search for other matches of the search text.  Learn more by reading about <a href="#searching-for-commands-in-the-history">Searching for Commands in the History</a>.</td></tr>
 <tr><td><kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>D</kbd></td><td>This is <code>remove-history</code>, which deletes the currently selected history line after using any of the history search or navigation commands.</td></tr>
 <tr><td><kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>K</kbd></td><td>This is <code>add-history</code>, which adds the current line to the history without executing it, and then clears the input line.</td></tr>
 <tr><td><kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>N</kbd></td><td>This is <code>clink-menu-complete-numbers</code>, which grabs numbers with 3 or more digits from the current console screen and cycles through inserting them as completions (binary, octal, decimal, hexadecimal).  Super handy for quickly inserting a commit hash that was printed as output from a preceding command.</td></tr>
-<tr><td><kbd>Alt</kbd>-<kbd>0</kbd> to <kbd>Alt</kbd>-<kbd>9</kbd></td><td>These are <code>digit-argument</code>, which let you enter a numeric value used by many commands.  For example <kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>W</kbd> copies the current word to the clipboard, but if you first type <kbd>Alt</kbd>-<kbd>2</kbd> followed by <kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>W</kbd> then it copies the 3rd word to the clipboard (the first word is 0, the second is 1, etc).  Learn more by reading about [Readline Arguments](#readline-arguments).</td></tr>
+<tr><td><kbd>Alt</kbd>-<kbd>0</kbd> to <kbd>Alt</kbd>-<kbd>9</kbd></td><td>These are <code>digit-argument</code>, which let you enter a numeric value used by many commands.  For example <kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>W</kbd> copies the current word to the clipboard, but if you first type <kbd>Alt</kbd>-<kbd>2</kbd> followed by <kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>W</kbd> then it copies the 3rd word to the clipboard (the first word is 0, the second is 1, etc).  Learn more by reading about <a href="#readline-arguments">Readline Arguments</a>.</td></tr>
 </table>
 
 For a full list of commands available for key bindings, see [Bindable Commands](#bindable-commands).
@@ -252,7 +252,7 @@ Mode | Description
 
 Use <code>clink set terminal.mouse_modifier <span class="arg">modifiers</span></code> or <code>set CLINK_MOUSE_MODIFIER=<span class="arg">modifiers</span></code> to control which modifier keys must be held for Clink to respond to mouse input.
 
-These select which modifier keys (<kbd>Alt</kbd>, <kbd>Ctrl</kbd>, <kbd>Shift</kbd>) must be held in order for Clink to respond to mouse input when mouse input is enabled by the `terminal.mouse_input` setting.  <span class="arg">modifiers</span> is a text string that can list one or more modifier keys:  'alt', 'ctrl', and 'shift'.  For example, setting it to "alt shift" causes Clink to only respond to mouse input when both <kbd>Alt</kbd> and <kbd>Shift</kbd> are held (and not <kbd>Ctrl</kbd>).  If the `%CLINK_MOUSE_MODIFIER%` environment variable is set then its value
+These select which modifier keys (<kbd>Alt</kbd>, <kbd>Ctrl</kbd>, <kbd>Shift</kbd>) must be held in order for Clink to respond to mouse input when mouse input is enabled by the `terminal.mouse_input` setting.  <span class="arg">modifiers</span> is a text string that can list one or more modifier keys:  "alt", "ctrl", and "shift".  For example, setting it to "alt shift" causes Clink to only respond to mouse input when both <kbd>Alt</kbd> and <kbd>Shift</kbd> are held (and not <kbd>Ctrl</kbd>).  If the `%CLINK_MOUSE_MODIFIER%` environment variable is set then its value
 supersedes the `terminal.mouse_modifier` setting.  In Windows Terminal many modifier keys do special things with mouse clicks, so the modifier key combination that interferes least with built in Windows Terminal behaviors is <kbd>Ctrl</kbd>-<kbd>Alt</kbd>.
 
 When mouse input is enabled in Clink, then mouse input works a little differently:
@@ -697,6 +697,8 @@ Readline remembers the last incremental search string. If two <kbd>Ctrl</kbd>-<k
 Non-incremental searches read the entire search string before starting to search for matching history lines. The search string may be typed by the user or be part of the contents of the current line. Type <kbd>Alt</kbd>-<kbd>p</kbd> or <kbd>Alt</kbd>-<kbd>n</kbd> to start a non-incremental search backwards or forwards.
 
 To search backward in the history for a line starting with the text before the cursor, type <kbd>PgUp</kbd>. Or search forward by typing <kbd>PgDn</kbd>.
+
+See [Saved Command History](#saved-command-history) for more information on how history works.
 
 ## Init File
 
@@ -2006,7 +2008,7 @@ Clink can offer suggestions how to complete a command as you type, and you can s
 Turn on [automatic suggestions](#autosuggest_enable) with `clink set autosuggest.enable true`.  Once enabled, Clink will show suggestions in a [muted color](#color.suggestion) after the end of the typed command.  Accept the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, accept the next word of the suggestion with <kbd>Ctrl</kbd>-<kbd>Right</kbd>, or accept the next full word of the suggestion up to a space with <kbd>Shift</kbd>-<kbd>Right</kbd>.  You can ignore the suggestion if it isn't what you want; suggestions have no effect unless you accept them first.
 
 Scripts can provide custom suggestion generators, in addition to the built-in options:
-1. Create a new suggestion generator by calling [clink.suggester()][#clink.suggester] along with a name that identifies the suggestion generator, and can be added to the [`autosuggest.strategy`](#autosuggest_strategy) setting.
+1. Create a new suggestion generator by calling [clink.suggester()](#clink.suggester) along with a name that identifies the suggestion generator, and can be added to the [`autosuggest.strategy`](#autosuggest_strategy) setting.
 2. Define a `:suggest()` function on the returned suggestion generator.
 
 The function takes a [line_state](#line_state) argument that contains the input line, and a [matches](#matches) argument that contains the possible matches from the completion engine.  If the function returns nil, the next generator listed in the strategy is called.  If the function returns a string (even an empty string), then the string is used as the suggestion.
