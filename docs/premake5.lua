@@ -313,7 +313,9 @@ local function do_docs()
     -- Expand out template.
     print("")
     print(">> " .. out_path)
-    generate_file("docs/clink.html", io.open(tmp_path, "w"))
+    local tmp_file = io.open(tmp_path, "w")
+    generate_file("docs/clink.html", tmp_file)
+    tmp_file:close()
 
     -- Generate table of contents from H1 and H2 tags.
     local toc = io.open(".build/docs/toc_html", "w")
@@ -326,7 +328,9 @@ local function do_docs()
     toc:close()
 
     -- Expand out final documentation.
-    generate_file(tmp_path, io.open(out_path, "w"))
+    local out_file = io.open(out_path, "w")
+    generate_file(tmp_path, out_file)
+    out_file:close()
     print("")
 end
 
