@@ -67,7 +67,7 @@ If you install Clink with "Use enhanced defaults" or if you set [`clink.default_
 
 Pressing <kbd>Ctrl</kbd>-<kbd>Space</kbd> shows an interactive list of possible completions.  You can use the arrow keys to choose which completion to insert, and you can type to filter the list.  <kbd>Enter</kbd> inserts the selected completion, or <kbd>Space</kbd> inserts the selected completion and makes sure a space follows it to allow typing a next argument.
 
-The first word of each command line is the command or program to execute, or a file to open.  By default, Clink provides completions for the first word based on all executable programs on the system PATH, but not from the current directory.  You can turn off executable completion by running `clink set exec.enable false`, or you can adjust its behavior by changing the various `exec.*` settings (see [Clink Settings](#clink-settings) for more information about them).  
+The first word of each command line is the command or program to execute, or a file to open.  By default, Clink provides completions for the first word based on all executable programs on the system PATH and the current directory, but not non-executable files.  You can turn off executable completion by running `clink set exec.enable false`, or you can adjust its behavior by changing the various `exec.*` settings (see [Clink Settings](#clink-settings) for more information about them).  
 
 See [Completion Commands](#completion-commands) and [Clink Commands](#clink-commands) for more available completion commands.
 
