@@ -13,29 +13,6 @@
 
     function go()
     {
-        // Generate a table of contents from h* tags.
-        var toc = document.getElementById("toc");
-        toc.innerHTML = "";
-        var headings = document.querySelectorAll("h1,h2");
-        for (var i = 0; i < headings.length; ++i)
-        {
-            var h = headings[i];
-
-            var anchor = document.createElement("a");
-            anchor.name = h.id;
-            h.parentNode.insertBefore(anchor, h);
-
-            var a = document.createElement("a");
-            a.href = "#" + h.id;
-            a.innerHTML = h.innerHTML;
-
-            var div = document.createElement("div");
-            div.appendChild(a);
-            div.className = h.tagName;
-
-            toc.appendChild(div);
-        }
-
         // Apply syntax highlighting.
         hljs.initHighlighting();
 
@@ -54,7 +31,9 @@
 <body onload="go();">
     <table width="100%" style="border:none"><tr>
         <td style="text-align:left">
-            <div id="toc"></div>
+            <div id="toc">
+                <!-- NEXT PASS INCLUDE .build/docs/toc_html -->
+            </div>
         </td>
         <td style="text-align:right">
             <div id="header">

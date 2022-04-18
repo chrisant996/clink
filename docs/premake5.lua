@@ -52,6 +52,7 @@ local function generate_file(source_path, out)
             else
                 line = line:gsub("%$%(CLINK_VERSION%)", docver)
                 line = line:gsub("<br>", "&lt;br&gt;")
+                line = line:gsub("<!%-%- NEXT PASS INCLUDE (.*) %-%->", "$(INCLUDE %1)")
                 out:write(line .. "\n")
             end
         end
@@ -189,6 +190,7 @@ end
 
 --------------------------------------------------------------------------------
 local function do_docs()
+    local tmp_path = ".build/docs/clink_tmp"
     out_path = ".build/docs/clink.html"
 
     os.execute("1>nul 2>nul md .build\\docs")
@@ -311,7 +313,20 @@ local function do_docs()
     -- Expand out template.
     print("")
     print(">> " .. out_path)
-    generate_file("docs/clink.html", io.open(out_path, "w"))
+    generate_file("docs/clink.html", io.open(tmp_path, "w"))
+
+    -- Generate table of contents from H1 and H2 tags.
+    local toc = io.open(".build/docs/toc_html", "w")
+    for line in io.open(tmp_path, "r"):lines() do
+        local tag, id, text = line:match('^ *<(h[12]) id="(.*)">(.*)</h')
+        if tag then
+            toc:write('<div><a class="'..tag..'" href="#'..id..'">'..text..'</a></div>\n')
+        end
+    end
+    toc:close()
+
+    -- Expand out final documentation.
+    generate_file(tmp_path, io.open(out_path, "w"))
     print("")
 end
 
