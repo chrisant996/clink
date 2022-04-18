@@ -24,16 +24,16 @@ h1 {
     width: 100%;
     padding: 2rem 0 0 0;
     border-bottom: 0.15rem #3377cc solid;
-    font-size: 2rem;
+    font-size: 2.30rem;
 }
 
 h2 {
     border-bottom: 0.075rem #3377cc dashed;
-    font-size: 1.60rem;
+    font-size: 1.95rem;
 }
 
-h3 { font-size: 1.40rem; }
-h4 { font-size: 1.20rem; }
+h3 { font-size: 1.60rem; }
+h4 { font-size: 1.35rem; }
 h5 { font-size: 1.10rem; }
 h6 { font-size: 1.00rem; }
 
@@ -41,6 +41,10 @@ dt {
     font-family: Rambla,Roboto,Calibri,Arial,Helvetica,sans-serif;
     font-weight: 700;
     padding: 0 0 0.4rem 0;
+}
+
+.toppadding {
+    padding: 0.6rem 0 0 0;
 }
 
 blockquote {
@@ -726,29 +730,6 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 
     function go()
     {
-        // Generate a table of contents from h* tags.
-        var toc = document.getElementById("toc");
-        toc.innerHTML = "";
-        var headings = document.querySelectorAll("h1,h2");
-        for (var i = 0; i < headings.length; ++i)
-        {
-            var h = headings[i];
-
-            var anchor = document.createElement("a");
-            anchor.name = h.id;
-            h.parentNode.insertBefore(anchor, h);
-
-            var a = document.createElement("a");
-            a.href = "#" + h.id;
-            a.innerHTML = h.innerHTML;
-
-            var div = document.createElement("div");
-            div.appendChild(a);
-            div.className = h.tagName;
-
-            toc.appendChild(div);
-        }
-
         // Apply syntax highlighting.
         hljs.initHighlighting();
 
@@ -767,7 +748,45 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 <body onload="go();">
     <table width="100%" style="border:none"><tr>
         <td style="text-align:left">
-            <div id="toc"></div>
+            <div id="toc">
+<div><a class="h1" href="#what-is-clink">What is Clink?</a></div>
+<div><a class="h1" href="#usage">Usage</a></div>
+<div><a class="h1" href="#getting-started">Getting Started</a></div>
+<div><a class="h2" href="#how-completion-works">How Completion Works</a></div>
+<div><a class="h2" href="#common-configuration">Common Configuration</a></div>
+<div><a class="h2" href="#upgrading-from-clink-v049">Upgrading from Clink v0.4.9</a></div>
+<div><a class="h1" href="#configuring-clink">Configuring Clink</a></div>
+<div><a class="h2" href="#clink-settings">Clink Settings</a></div>
+<div><a class="h2" href="#color-settings">Color Settings</a></div>
+<div><a class="h2" href="#file-locations">File Locations</a></div>
+<div><a class="h2" href="#command-line-options">Command Line Options</a></div>
+<div><a class="h2" href="#portable-configuration">Portable Configuration</a></div>
+<div><a class="h1" href="#configuring-readline">Configuring Readline</a></div>
+<div><a class="h2" href="#the-basics">The Basics</a></div>
+<div><a class="h2" href="#init-file">Init File</a></div>
+<div><a class="h2" href="#bindable-commands">Bindable Commands</a></div>
+<div><a class="h2" href="#completion-colors">Completion Colors</a></div>
+<div><a class="h2" href="#popup-windows">Popup Windows</a></div>
+<div><a class="h1" href="#extending-clink-with-lua">Extending Clink With Lua</a></div>
+<div><a class="h2" href="#location-of-lua-scripts">Location of Lua Scripts</a></div>
+<div><a class="h2" href="#match-generators">Match Generators</a></div>
+<div><a class="h2" href="#argument-completion">Argument Completion</a></div>
+<div><a class="h2" href="#coloring-the-input-text">Coloring the Input Text</a></div>
+<div><a class="h2" href="#customizing-the-prompt">Customizing the Prompt</a></div>
+<div><a class="h2" href="#customizing-suggestions">Customizing Suggestions</a></div>
+<div><a class="h1" href="#miscellaneous">Miscellaneous</a></div>
+<div><a class="h2" href="#customizing-key-bindings">Customizing Key Bindings</a></div>
+<div><a class="h2" href="#saved-command-history">Saved Command History</a></div>
+<div><a class="h2" href="#using-history-expansion">Using History Expansion</a></div>
+<div><a class="h2" href="#popular-scripts">Popular Scripts</a></div>
+<div><a class="h2" href="#terminal-support">Terminal Support</a></div>
+<div><a class="h2" href="#troubleshooting-tips">Troubleshooting Tips</a></div>
+<div><a class="h2" href="#privacy">Privacy</a></div>
+<div><a class="h1" href="#lua-api">Lua API Reference</a></div>
+<div><a class="h1" href="#changes">Changes</a></div>
+<div><a class="h1" href="#license">License</a></div>
+<div><a class="h1" href="#credits">Credits</a></div>
+            </div>
         </td>
         <td style="text-align:right">
             <div id="header">
@@ -804,15 +823,15 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 <li>Context sensitive colored input text.</li>
 <li>Automatic suggestions from history and completions.</li>
 <li>New keyboard shortcuts;<ul>
-<li>Interactive completion list (<kbd>Ctrl</kbd>+<kbd>Space</kbd>).</li>
-<li>Incremental history search (<kbd>Ctrl</kbd>+<kbd>R</kbd> and <kbd>Ctrl</kbd>+<kbd>S</kbd>).</li>
+<li>Interactive completion list (<kbd>Ctrl</kbd>-<kbd>Space</kbd>).</li>
+<li>Incremental history search (<kbd>Ctrl</kbd>-<kbd>R</kbd> and <kbd>Ctrl</kbd>-<kbd>S</kbd>).</li>
 <li>Powerful completion (<kbd>Tab</kbd>).</li>
-<li>Undo (<kbd>Ctrl</kbd>+<kbd>Z</kbd>).</li>
-<li>Environment variable expansion (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>E</kbd>).</li>
-<li>Doskey alias expansion (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>F</kbd>).</li>
-<li>Scroll the screen buffer (<kbd>Alt</kbd>+<kbd>Up</kbd>, etc).</li>
-<li><kbd>Shift</kbd>+Arrow keys to select text, typing replaces selected text, etc.</li>
-<li>(press <kbd>Alt</kbd>+<kbd>H</kbd> for many more...)</li>
+<li>Undo (<kbd>Ctrl</kbd>-<kbd>Z</kbd>).</li>
+<li>Environment variable expansion (<kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>E</kbd>).</li>
+<li>Doskey alias expansion (<kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>F</kbd>).</li>
+<li>Scroll the screen buffer (<kbd>Alt</kbd>-<kbd>Up</kbd>, etc).</li>
+<li><kbd>Shift</kbd>-Arrow keys to select text, typing replaces selected text, etc.</li>
+<li>(press <kbd>Alt</kbd>-<kbd>H</kbd> for many more...)</li>
 </ul>
 </li>
 <li>Directory shortcuts;<ul>
@@ -827,7 +846,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 <li>Colored and scriptable prompt.</li>
 <li>Auto-answering of the &quot;Terminate batch job?&quot; prompt.</li>
 </ul>
-<p>By default Clink binds <kbd>Alt</kbd>+<kbd>H</kbd> to display the current key bindings. More features can also be found in GNU&#39;s <a href="https://tiswww.cwru.edu/php/chet/readline/readline.html">Readline</a>.</p>
+<p>By default Clink binds <kbd>Alt</kbd>-<kbd>H</kbd> to display the current key bindings.</p>
 <h1 id="usage">Usage</h1>
 <p>There are several ways to start Clink.</p>
 <ol>
@@ -840,17 +859,24 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 <p>You can use Clink right away without configuring anything:</p>
 <ul>
 <li>Searchable <a href="#saved-command-history">command history</a> will be saved between sessions.</li>
-<li><kbd>Tab</kbd> and <kbd>Ctrl</kbd>+<kbd>Space</kbd> will do match completion two different ways.</li>
-<li>Press <kbd>Alt</kbd>+<kbd>H</kbd> to see a list of the current key bindings.</li>
-<li>Press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>/</kbd> followed by another key to see what command is bound to the key.</li>
+<li><kbd>Tab</kbd> and <kbd>Ctrl</kbd>-<kbd>Space</kbd> will do match completion two different ways.</li>
+<li>Press <kbd>Alt</kbd>-<kbd>H</kbd> to see a list of the current key bindings.</li>
+<li>Press <kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>/</kbd> followed by another key to see what command is bound to the key.</li>
 </ul>
 <p>There are three main ways of customizing Clink to your preferences:  the <a href="#init-file">Readline init file</a> (the <code>.inputrc</code> file), the <a href="#clink-settings">Clink settings</a> (the <code>clink set</code> command), and <a href="#extending-clink-with-lua">Lua</a> scripts.</p>
+<h2 id="how-completion-works">How Completion Works</h2>
+<p>Clink can offer possible completions for the word at the cursor, and can insert them for you.  Clink can complete file names, directories, environment variables, and commands.  It also allows you to provide custom completion generators using Lua scripts that execute inside Clink (see <a href="#extending-clink-with-lua">Extending Clink With Lua</a>).</p>
+<p>By default, pressing <kbd>Tab</kbd> performs completion the same way that bash does on Unix and Linux.  When you press <kbd>Tab</kbd>, Clink finds matches for how to complete the word at the cursor.  It automatically inserts the longest common prefix shared by the possible completions.  If you press <kbd>Tab</kbd> again, it also lists the possible completions.</p>
+<p>If you install Clink with &quot;Use enhanced defaults&quot; or if you set <a href="#default_bindings"><code>clink.default_bindings</code></a> to use &quot;windows&quot; defaults, then pressing <kbd>Tab</kbd> cycles through the possible completions, replacing the word with the next possible completion each time.</p>
+<p>Pressing <kbd>Ctrl</kbd>-<kbd>Space</kbd> shows an interactive list of possible completions.  You can use the arrow keys to choose which completion to insert, and you can type to filter the list.  <kbd>Enter</kbd> inserts the selected completion, or <kbd>Space</kbd> inserts the selected completion and makes sure a space follows it to allow typing a next argument.</p>
+<p>The first word of each command line is the command or program to execute, or a file to open.  By default, Clink provides completions for the first word based on all executable programs on the system PATH and the current directory, but not non-executable files.  You can turn off executable completion by running <code>clink set exec.enable false</code>, or you can adjust its behavior by changing the various <code>exec.*</code> settings (see <a href="#clink-settings">Clink Settings</a> for more information about them).  </p>
+<p>See <a href="#completion-commands">Completion Commands</a> and <a href="#clink-commands">Clink Commands</a> for more available completion commands.</p>
 <h2 id="common-configuration">Common Configuration</h2>
 <p>The following sections describe some ways to begin customizing Clink to your taste.</p>
 <table class="linkmenu">
 <tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_enhanceddefaults">Enhanced default settings</a></td><td class="lmtd">Optionally use enhanced default settings.</td></tr>
 <tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_inputrc">Create a .inputrc file</a></td><td class="lmtd">Create a .inputrc file where config variables and key bindings can be set.</td></tr>
-<tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_defaultbindings">Bash vs Windows</a></td><td class="lmtd">Make <kbd>Ctrl</kbd>+<kbd>F</kbd> and <kbd>Ctrl</kbd>+<kbd>M</kbd> work like usual on Windows.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_defaultbindings">Bash vs Windows</a></td><td class="lmtd">Make <kbd>Ctrl</kbd>-<kbd>F</kbd> and <kbd>Ctrl</kbd>-<kbd>M</kbd> work like usual on Windows.</td></tr>
 <tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_autosuggest">Auto-suggest</a></td><td class="lmtd">How to enable and use automatic suggestions.</td></tr>
 <tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_colors">Colors</a></td><td class="lmtd">Configure the colors.</td></tr>
 <tr class="lmtr"><td class="lmtd"><a href="#gettingstarted_keybindings">Key Bindings</a></td><td class="lmtd">Customize your key bindings.</td></tr>
@@ -873,7 +899,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 <li>The <a href="#saved-command-history">command history</a>&#39;s default <a href="#history_max_lines">limit</a> is increased to 25,000 entries.</li>
 <li>Completion expands environment variables (the <a href=""><code>match.expand_envvars</code></a> setting).</li>
 <li>If no completions are found with a prefix search, then a substring search is used (the <a href="#match_substring"><code>match.substring</code></a> setting).</li>
-<li><kbd>Ctrl</kbd>+<kbd>D</kbd> does not exit CMD (the <a href="#ctrld_exits"><code>cmd.ctrld_exits</code></a> setting).</li>
+<li><kbd>Ctrl</kbd>-<kbd>D</kbd> does not exit CMD (the <a href="#ctrld_exits"><code>cmd.ctrld_exits</code></a> setting).</li>
 </ul>
 <p><a name="gettingstarted_inputrc"></a></p>
 <h3 id="create-a-inputrc-file">Create a .inputrc file</h3>
@@ -882,7 +908,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 <p>Create the file by running this command at a CMD prompt:</p>
 <pre><code class="language-cmd">notepad %userprofile%\.inputrc
 </code></pre>
-<p>You may want to copy/paste the following sample text into the file as a starting point, and then press <kbd>Ctrl</kbd>+<kbd>S</kbd> to save the file.</p>
+<p>You may want to copy/paste the following sample text into the file as a starting point, and then press <kbd>Ctrl</kbd>-<kbd>S</kbd> to save the file.</p>
 <pre><code class="language-plaintext"># Some common Readline config settings.
 
 set colored-stats                 on   # Turn on completion colors.
@@ -897,12 +923,13 @@ $endif
 
 # Add your keybindings here...
 </code></pre>
+<p>See <a href="#init-file">Init File</a> for more information on Readline init files.</p>
 <p><a name="gettingstarted_defaultbindings"></a></p>
 <h3 id="bash-vs-windows">Bash vs Windows</h3>
-<p>The default Clink key bindings are the same as in the &quot;bash&quot; shell for Unix/Linux.  That makes some keys like <kbd>Ctrl</kbd>+<kbd>A</kbd>, <kbd>Ctrl</kbd>+<kbd>F</kbd>, and <kbd>Ctrl</kbd>+<kbd>M</kbd> behave differently than you might be used to in CMD.</p>
+<p>The default Clink key bindings are the same as in the &quot;bash&quot; shell for Unix/Linux.  That makes some keys like <kbd>Ctrl</kbd>-<kbd>A</kbd>, <kbd>Ctrl</kbd>-<kbd>F</kbd>, and <kbd>Ctrl</kbd>-<kbd>M</kbd> behave differently than you might be used to in CMD.</p>
 <p>To instead use the familiar <a href="#default_bindings">Windows default key bindings</a> you can run <code>clink set clink.default_bindings windows</code>.</p>
 <p>Or, if you use the setup program with &quot;Use enhanced default settings&quot; checked then &quot;windows&quot; key bindings are the default, and you can run <code>clink set clink.default_bindings bash</code> to use the bash default key bindings.</p>
-<p>Clink comes with many default key bindings.  Use <kbd>Alt</kbd>+<kbd>H</kbd> to see all of the active key bindings, or use <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>?</kbd> to check what is bound to a specific key.  See <a href="#gettingstarted_keybindings">Key Bindings</a> to get started configuring your own key bindings.</p>
+<p>Clink comes with many default key bindings.  Use <kbd>Alt</kbd>-<kbd>H</kbd> to see all of the active key bindings, or use <kbd>Alt</kbd>-<kbd>Shift</kbd>-<kbd>?</kbd> to check what is bound to a specific key.  See <a href="#gettingstarted_keybindings">Key Bindings</a> to get started configuring your own key bindings.</p>
 <p>Here are the differences between the Windows defaults and the bash defaults:</p>
 <table>
 <thead>
@@ -913,27 +940,27 @@ $endif
 </tr>
 </thead>
 <tbody><tr>
-<td><kbd>Ctrl</kbd>+<kbd>A</kbd></td>
+<td><kbd>Ctrl</kbd>-<kbd>A</kbd></td>
 <td>Select All.</td>
 <td>Go to beginning of line.</td>
 </tr>
 <tr>
-<td><kbd>Ctrl</kbd>+<kbd>B</kbd></td>
+<td><kbd>Ctrl</kbd>-<kbd>B</kbd></td>
 <td>(not bound)</td>
 <td>Move backward one character.</td>
 </tr>
 <tr>
-<td><kbd>Ctrl</kbd>+<kbd>E</kbd></td>
+<td><kbd>Ctrl</kbd>-<kbd>E</kbd></td>
 <td>Expands doskey aliases, environment variables, and <a href="#using-history-expansion">history expansions</a> in the current line.</td>
 <td>Go to end of line.</td>
 </tr>
 <tr>
-<td><kbd>Ctrl</kbd>+<kbd>F</kbd></td>
+<td><kbd>Ctrl</kbd>-<kbd>F</kbd></td>
 <td>Find text (in plain Conhost console windows).</td>
 <td>Move forward one character.</td>
 </tr>
 <tr>
-<td><kbd>Ctrl</kbd>+<kbd>M</kbd></td>
+<td><kbd>Ctrl</kbd>-<kbd>M</kbd></td>
 <td>Mark text (in plain Conhost console windows).</td>
 <td>Same as <kbd>Enter</kbd>.</td>
 </tr>
@@ -943,7 +970,7 @@ $endif
 <td>Bash style completion.</td>
 </tr>
 <tr>
-<td><kbd>Shift</kbd>+<kbd>Tab</kbd></td>
+<td><kbd>Shift</kbd>-<kbd>Tab</kbd></td>
 <td>Cycle backward through available completions.</td>
 <td>(not bound)</td>
 </tr>
@@ -956,7 +983,7 @@ $endif
 <p><a name="gettingstarted_autosuggest"></a></p>
 <h3 id="auto-suggest">Auto-suggest</h3>
 <p>Clink can suggest commands as you type, based on command history and completions.</p>
-<p>To turn on automatic suggestions, run <code>clink set autosuggest.enable true</code>.  When the cursor is at the end of the input line, a suggestion may appear in a muted color.  If the suggestion isn&#39;t what you want, just ignore it.  Or accept the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, accept the next word of the suggestion with <kbd>Ctrl</kbd>+<kbd>Right</kbd>, or accept the next full word of the suggestion up to a space with <kbd>Shift</kbd>+<kbd>Right</kbd>.</p>
+<p>To turn on automatic suggestions, run <code>clink set autosuggest.enable true</code>.  When the cursor is at the end of the input line, a suggestion may appear in a muted color.  If the suggestion isn&#39;t what you want, just ignore it.  Or accept the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, accept the next word of the suggestion with <kbd>Ctrl</kbd>-<kbd>Right</kbd>, or accept the next full word of the suggestion up to a space with <kbd>Shift</kbd>-<kbd>Right</kbd>.</p>
 <p>The <a href="#autosuggest_strategy"><code>autosuggest.strategy</code></a> setting determines how a suggestion is chosen.</p>
 <p>Or, if you use the setup program with &quot;Use enhanced default settings&quot; checked then automatic suggestions are enabled by default.</p>
 <p><a name="gettingstarted_colors"></a></p>
@@ -964,14 +991,14 @@ $endif
 <p>Clink has many configurable colors for match completions, input line coloring, popup lists, and more.</p>
 <p>If you use the setup program with &quot;Use enhanced default settings&quot; checked then many of the color settings have more colorful default values.</p>
 <h4 id="for-completion">For completion</h4>
-<p>When performing completion (e.g. <kbd>Tab</kbd> or <kbd>Ctrl</kbd>+<kbd>Space</kbd>) Clink can add color to the possible completions.</p>
+<p>When performing completion (e.g. <kbd>Tab</kbd> or <kbd>Ctrl</kbd>-<kbd>Space</kbd>) Clink can add color to the possible completions.</p>
 <p>To turn on colored completions, put a line <code>set colored-stats on</code> in the <a href="#gettingstarted_inputrc">.inputrc file</a> (if you copy/pasted the sample text, it&#39;s already there).</p>
 <p>See the <a href="#completion-colors">Completion Colors</a> section for how to configure the colors for match completions.</p>
 <h4 id="other-colors">Other colors</h4>
 <p>Clink adds color to the input line by highlighting arguments, flags, doskey macros, and more.  If you don&#39;t want input line colors, you can turn it off by running <code>clink set clink.colorize_input false</code>.</p>
 <p>There are also colors for popup lists, and some other things.</p>
 <p>To configure a color, run <code>clink set <span class="arg">colorname</span> <span class="arg">colorvalue</span></code>.</p>
-<p>Match completions make it easy to change Clink settings:  type <code>clink set color.</code> and then use completion (e.g. <kbd>Tab</kbd> or <kbd>Ctrl</kbd>+<kbd>Space</kbd>) to see the available color settings, and to fill in a color value.</p>
+<p>Match completions make it easy to change Clink settings:  type <code>clink set color.</code> and then use completion (e.g. <kbd>Tab</kbd> or <kbd>Ctrl</kbd>-<kbd>Space</kbd>) to see the available color settings, and to fill in a color value.</p>
 <p>Here are some colors you may want to set up right away:</p>
 <table>
 <thead>
@@ -998,19 +1025,19 @@ $endif
 <p>You can customize your key bindings (keyboard shortcuts) by assigning key bindings in the <a href="#gettingstarted_inputrc">.inputrc file</a>.  See <a href="#keybindings">Customizing Key Bindings</a> for more information.</p>
 <p>Clink comes with many pre-configured key bindings that invoke named commands.  Here are a few that you might find especially handy:</p>
 <table>
-<tr><td><kbd>Alt</kbd>+<kbd>H</kbd></td><td>This is <code>clink-show-help</code>, which lists the key bindings and commands.  Learn more by visiting <a href="#keybindings">Customizing Key Bindings</a>.</td></tr>
-<tr><td><kbd>Tab</kbd></td><td>This is <code>complete</code> or <code>old-menu-complete</code>, depending on the [`clink.default_bindings`](#default_bindings) Clink setting.  <code>complete</code> swhich performs completion by selecting from an interactive list of possible completions; if there is only one match, the match is inserted immediately.</td></tr>
-<tr><td><kbd>Ctrl</kbd>+<kbd>Space</kbd></td><td>This is <code>clink-select-complete</code>, which performs completion by selecting from an interactive list of possible completions; if there is only one match, the match is inserted immediately.</td></tr>
-<tr><td><kbd>Alt</kbd>+<kbd>=</kbd></td><td>This is <code>possible-completions</code>, which lists the available completions for the current word in the input line.</td></tr>
-<tr><td><kbd>Alt</kbd>+<kbd>.</kbd></td><td>This is <code>yank-last-arg</code>, which inserts the last argument from the previous line.  You can use it repeatedly to cycle backwards through the history, inserting the last argument from each line.  Learn more by reading up on the "yank" features in the [Readline manual](https://tiswww.cwru.edu/php/chet/readline/rluserman.html).</td></tr>
-<tr><td><kbd>Ctrl</kbd>+<kbd>R</kbd></td><td>This is <code>reverse-search-history</code>, which incrementally searches the history.  Press it, then type, and it does a reverse incremental search while you type.  Press <kbd>Ctrl</kbd>+<kbd>R</kbd> again (and again, etc) to search for other matches of the search text.  Learn more by reading up on the "search" and "history" features in the [Readline manual](https://tiswww.cwru.edu/php/chet/readline/rluserman.html).</td></tr>
-<tr><td><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>D</kbd></td><td>This is <code>remove-history</code>, which deletes the currently selected history line after using any of the history search or navigation commands.</td></tr>
-<tr><td><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>K</kbd></td><td>This is <code>add-history</code>, which adds the current line to the history without executing it, and then clears the input line.</td></tr>
-<tr><td><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>N</kbd></td><td>This is <code>clink-menu-complete-numbers</code>, which grabs numbers with 3 or more digits from the current console screen and cycles through inserting them as completions (binary, octal, decimal, hexadecimal).  Super handy for quickly inserting a commit hash that was printed as output from a preceding command.</td></tr>
-<tr><td><kbd>Alt</kbd>+<kbd>0</kbd> to <kbd>Alt</kbd>+<kbd>9</kbd></td><td>These are <code>digit-argument</code>, which let you enter a numeric value used by many commands.  For example <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>W</kbd> copies the current word to the clipboard, but if you first type <kbd>Alt</kbd>+<kbd>2</kbd> followed by <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>W</kbd> then it copies the 3rd word to the clipboard (the first word is 0, the second is 1, etc).  Learn more by reading up on "Readline Arguments" in the [Readline manual](https://tiswww.cwru.edu/php/chet/readline/rluserman.html).</td></tr>
+<tr><td><kbd>Alt</kbd>-<kbd>H</kbd></td><td>This is <code>clink-show-help</code>, which lists the key bindings and commands.</td></tr>
+<tr><td><kbd>Tab</kbd></td><td>This is <code>complete</code> or <code>old-menu-complete</code>, depending on the <code><a href="#default_bindings">clink.default_bindings</a></code> Clink setting.  <code>complete</code> swhich performs completion by selecting from an interactive list of possible completions; if there is only one match, the match is inserted immediately.</td></tr>
+<tr><td><kbd>Ctrl</kbd>-<kbd>Space</kbd></td><td>This is <code>clink-select-complete</code>, which performs completion by selecting from an interactive list of possible completions; if there is only one match, the match is inserted immediately.</td></tr>
+<tr><td><kbd>Alt</kbd>-<kbd>=</kbd></td><td>This is <code>possible-completions</code>, which lists the available completions for the current word in the input line.</td></tr>
+<tr><td><kbd>Alt</kbd>-<kbd>.</kbd></td><td>This is <code>yank-last-arg</code>, which inserts the last argument from the previous line.  You can use it repeatedly to cycle backwards through the history, inserting the last argument from each line.  Learn more by reading about <a href="#killing-and-yanking">Killing and Yanking</a>.
+<tr><td><kbd>Ctrl</kbd>-<kbd>R</kbd></td><td>This is <code>reverse-search-history</code>, which incrementally searches the history.  Press it, then type, and it does a reverse incremental search while you type.  Press <kbd>Ctrl</kbd>-<kbd>R</kbd> again (and again, etc) to search for other matches of the search text.  Learn more by reading about <a href="#searching-for-commands-in-the-history">Searching for Commands in the History</a>.</td></tr>
+<tr><td><kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>D</kbd></td><td>This is <code>remove-history</code>, which deletes the currently selected history line after using any of the history search or navigation commands.</td></tr>
+<tr><td><kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>K</kbd></td><td>This is <code>add-history</code>, which adds the current line to the history without executing it, and then clears the input line.</td></tr>
+<tr><td><kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>N</kbd></td><td>This is <code>clink-menu-complete-numbers</code>, which grabs numbers with 3 or more digits from the current console screen and cycles through inserting them as completions (binary, octal, decimal, hexadecimal).  Super handy for quickly inserting a commit hash that was printed as output from a preceding command.</td></tr>
+<tr><td><kbd>Alt</kbd>-<kbd>0</kbd> to <kbd>Alt</kbd>-<kbd>9</kbd></td><td>These are <code>digit-argument</code>, which let you enter a numeric value used by many commands.  For example <kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>W</kbd> copies the current word to the clipboard, but if you first type <kbd>Alt</kbd>-<kbd>2</kbd> followed by <kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>W</kbd> then it copies the 3rd word to the clipboard (the first word is 0, the second is 1, etc).  Learn more by reading about <a href="#readline-arguments">Readline Arguments</a>.</td></tr>
 </table>
 
-<p>For a full list of commands available for key bindings, see <a href="#new-commands">New Commands</a> and &quot;Bindable Readline Commands&quot; in the <a href="https://tiswww.cwru.edu/php/chet/readline/rluserman.html">Readline manual</a>.</p>
+<p>For a full list of commands available for key bindings, see <a href="#bindable-commands">Bindable Commands</a>.</p>
 <p><a name="gettingstarted_mouseinput"></a></p>
 <h3 id="mouse-input">Mouse Input</h3>
 <p>Clink can optionally respond to mouse input, instead of letting the terminal respond to mouse input (e.g. to select text on the screen).  When mouse input is enabled in Clink, you can click in the input line or in popup lists, and the mouse wheel scrolls popup lists.</p>
@@ -1036,12 +1063,12 @@ $endif
 </tr>
 </tbody></table>
 <p>Use <code>clink set terminal.mouse_modifier <span class="arg">modifiers</span></code> or <code>set CLINK_MOUSE_MODIFIER=<span class="arg">modifiers</span></code> to control which modifier keys must be held for Clink to respond to mouse input.</p>
-<p>These select which modifier keys (<kbd>Alt</kbd>, <kbd>Ctrl</kbd>, <kbd>Shift</kbd>) must be held in order for Clink to respond to mouse input when mouse input is enabled by the <code>terminal.mouse_input</code> setting.  <span class="arg">modifiers</span> is a text string that can list one or more modifier keys:  &#39;alt&#39;, &#39;ctrl&#39;, and &#39;shift&#39;.  For example, setting it to &quot;alt shift&quot; causes Clink to only respond to mouse input when both <kbd>Alt</kbd> and <kbd>Shift</kbd> are held (and not <kbd>Ctrl</kbd>).  If the <code>%CLINK_MOUSE_MODIFIER%</code> environment variable is set then its value
-supersedes the <code>terminal.mouse_modifier</code> setting.  In Windows Terminal many modifier keys do special things with mouse clicks, so the modifier key combination that interferes least with built in Windows Terminal behaviors is <kbd>Ctrl</kbd>+<kbd>Alt</kbd>.</p>
+<p>These select which modifier keys (<kbd>Alt</kbd>, <kbd>Ctrl</kbd>, <kbd>Shift</kbd>) must be held in order for Clink to respond to mouse input when mouse input is enabled by the <code>terminal.mouse_input</code> setting.  <span class="arg">modifiers</span> is a text string that can list one or more modifier keys:  &quot;alt&quot;, &quot;ctrl&quot;, and &quot;shift&quot;.  For example, setting it to &quot;alt shift&quot; causes Clink to only respond to mouse input when both <kbd>Alt</kbd> and <kbd>Shift</kbd> are held (and not <kbd>Ctrl</kbd>).  If the <code>%CLINK_MOUSE_MODIFIER%</code> environment variable is set then its value
+supersedes the <code>terminal.mouse_modifier</code> setting.  In Windows Terminal many modifier keys do special things with mouse clicks, so the modifier key combination that interferes least with built in Windows Terminal behaviors is <kbd>Ctrl</kbd>-<kbd>Alt</kbd>.</p>
 <p>When mouse input is enabled in Clink, then mouse input works a little differently:</p>
 <ul>
 <li>You can bypass Clink mouse input and use the normal terminal mouse input by holding a different combination of modifier keys than listed in <code>terminal.mouse_modifier</code> or <code>%CLINK_MOUSE_MODIFIER%</code>.</li>
-<li>Windows Terminal treats <kbd>Shift</kbd>+<kbd>RightClick</kbd> specially and turns off line ending detection when copying the selected text to the clipboard.  Hold <kbd>Ctrl</kbd> or <kbd>Alt</kbd> when right clicking to do the normal copy with line ending detection.</li>
+<li>Windows Terminal treats <kbd>Shift</kbd>-<kbd>RightClick</kbd> specially and turns off line ending detection when copying the selected text to the clipboard.  Hold <kbd>Ctrl</kbd> or <kbd>Alt</kbd> when right clicking to do the normal copy with line ending detection.</li>
 <li>In ConEmu, the mouse wheel always scrolls the terminal; Clink cannot use it to scroll popup lists.</li>
 <li>In the default Conhost terminal when Quick Edit mode is turned off then Clink will also respond to mouse input when no modifier keys are held.</li>
 </ul>
@@ -1061,7 +1088,6 @@ supersedes the <code>terminal.mouse_modifier</code> setting.  In Windows Termina
 <li>Match coloring works differently now and can do much more; see <a href="#completioncolors">Completion Colors</a> for more information.</li>
 <li>Old settings and history migrate automatically if the new <code>clink_settings</code> and <code>clink_history</code> files don&#39;t exist (deleting them will cause migration to happen again).  To find the directory that contains these files, run <code>clink info</code> and look for the &quot;state&quot; line.</li>
 <li>Script compatibility should be very good, but some scripts may still encounter problems.  If you do encounter a compatibility problem you can look for an updated version of the script, update the script yourself, or visit the <a href="https://github.com/chrisant996/clink/issues">clink repo</a> and open an issue describing details about the compatibility problem.</li>
-<li>Some match generator scripts might need adjustments to become fully compatible with the <code>autosuggest.enable</code> setting.</li>
 <li>Some match generator scripts might need adjustments to become fully compatible with the <code>autosuggest.enable</code> setting.</li>
 <li>Some settings have changed slightly, and there are many new settings.  See <a href="#configclink">Configuring Clink</a> for more information.</li>
 </ul>
@@ -1097,7 +1123,7 @@ supersedes the <code>terminal.mouse_modifier</code> setting.  In Windows Termina
 <tr>
 <td align="center"><a name="autosuggest_enable"></a><code>autosuggest.enable</code></td>
 <td align="center">False <a href="#alternatedefault">*</a></td>
-<td>When this is <code>true</code> a suggested command may appear in <code>color.suggestion</code> color after the cursor.  If the suggestion isn&#39;t what you want, just ignore it.  Or accept the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, accept the next word of the suggestion with <kbd>Ctrl</kbd>+<kbd>Right</kbd>, or accept the next full word of the suggestion up to a space with <kbd>Shift</kbd>+<kbd>Right</kbd>.  The <code>autosuggest.strategy</code> setting determines how a suggestion is chosen.</td>
+<td>When this is <code>true</code> a suggested command may appear in <code>color.suggestion</code> color after the cursor.  If the suggestion isn&#39;t what you want, just ignore it.  Or accept the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, accept the next word of the suggestion with <kbd>Ctrl</kbd>-<kbd>Right</kbd>, or accept the next full word of the suggestion up to a space with <kbd>Shift</kbd>-<kbd>Right</kbd>.  The <code>autosuggest.strategy</code> setting determines how a suggestion is chosen.</td>
 </tr>
 <tr>
 <td align="center"><code>autosuggest.original_case</code></td>
@@ -1122,7 +1148,7 @@ supersedes the <code>terminal.mouse_modifier</code> setting.  In Windows Termina
 <tr>
 <td align="center"><a name="default_bindings"></a><code>clink.default_bindings</code></td>
 <td align="center"><code>bash</code> <a href="#alternatedefault">*</a></td>
-<td>Clink uses bash key bindings when this is set to <code>bash</code> (the default).  When this is set to <code>windows</code> Clink overrides some of the bash defaults with familiar Windows key bindings for <kbd>Tab</kbd>, <kbd>Ctrl</kbd>+<kbd>A</kbd>, <kbd>Ctrl</kbd>+<kbd>F</kbd>, <kbd>Ctrl</kbd>+<kbd>M</kbd>, and <kbd>Right</kbd>.</td>
+<td>Clink uses bash key bindings when this is set to <code>bash</code> (the default).  When this is set to <code>windows</code> Clink overrides some of the bash defaults with familiar Windows key bindings for <kbd>Tab</kbd>, <kbd>Ctrl</kbd>-<kbd>A</kbd>, <kbd>Ctrl</kbd>-<kbd>F</kbd>, <kbd>Ctrl</kbd>-<kbd>M</kbd>, and <kbd>Right</kbd>.</td>
 </tr>
 <tr>
 <td align="center"><code>clink.gui_popups</code></td>
@@ -1162,7 +1188,7 @@ supersedes the <code>terminal.mouse_modifier</code> setting.  In Windows Termina
 <tr>
 <td align="center"><a name="ctrld_exits"></a><code>cmd.ctrld_exits</code></td>
 <td align="center">True</td>
-<td><kbd>Ctrl</kbd>+<kbd>D</kbd> exits the process when it is pressed on an empty line.</td>
+<td><kbd>Ctrl</kbd>-<kbd>D</kbd> exits the process when it is pressed on an empty line.</td>
 </tr>
 <tr>
 <td align="center"><code>cmd.get_errorlevel</code></td>
@@ -1467,7 +1493,7 @@ supersedes the <code>terminal.mouse_modifier</code> setting.  In Windows Termina
 <tr>
 <td align="center"><code>match.preview_rows</code></td>
 <td align="center"><code>0</code></td>
-<td>The number of rows to show as a preview when using the <code>clink-select-complete</code> command (bound by default to <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Space</kbd>).  When this is 0, all rows are shown and if there are too many matches it instead prompts first like the <code>complete</code> command does.  Otherwise it shows the specified number of rows as a preview without prompting, and it expands to show the full set of matches when the selection is moved past the preview rows.</td>
+<td>The number of rows to show as a preview when using the <code>clink-select-complete</code> command (bound by default to <kbd>Ctrl</kbd>-<kbd>Space</kbd>).  When this is 0, all rows are shown and if there are too many matches it instead prompts first like the <code>complete</code> command does.  Otherwise it shows the specified number of rows as a preview without prompting, and it expands to show the full set of matches when the selection is moved past the preview rows.</td>
 </tr>
 <tr>
 <td align="center"><code>match.sort_dirs</code></td>
@@ -1512,7 +1538,7 @@ supersedes the <code>terminal.mouse_modifier</code> setting.  In Windows Termina
 <tr>
 <td align="center"><code>terminal.differentiate_keys</code></td>
 <td align="center">False</td>
-<td>When enabled, pressing <kbd>Ctrl</kbd> + <kbd>H</kbd> or <kbd>I</kbd> or <kbd>M</kbd> or <kbd>[</kbd> generate special key sequences to enable binding them separately from <kbd>Backspace</kbd> or <kbd>Tab</kbd> or <kbd>Enter</kbd> or <kbd>Esc</kbd>.</td>
+<td>When enabled, pressing <kbd>Ctrl</kbd>-<kbd>H</kbd> or <kbd>I</kbd> or <kbd>M</kbd> or <kbd>[</kbd> generate special key sequences to enable binding them separately from <kbd>Backspace</kbd> or <kbd>Tab</kbd> or <kbd>Enter</kbd> or <kbd>Esc</kbd>.</td>
 </tr>
 <tr>
 <td align="center"><code>terminal.east_asian_ambiguous</code></td>
@@ -1535,9 +1561,9 @@ supersedes the <code>terminal.mouse_modifier</code> setting.  In Windows Termina
 <td>This selects which modifier keys (<kbd>Alt</kbd>, <kbd>Ctrl</kbd>, <kbd>Shift</kbd>) must be held in order for Clink to respond to mouse input when mouse input is enabled by the <code>terminal.mouse_input</code> setting.  This is a text string that can list one or more modifier keys:  &#39;alt&#39;, &#39;ctrl&#39;, and &#39;shift&#39;.  For example, setting it to &quot;alt shift&quot; causes Clink to only respond to mouse input when both <kbd>Alt</kbd> and <kbd>Shift</kbd> are held (and not <kbd>Ctrl</kbd>).  If the <code>%CLINK_MOUSE_MODIFIER%</code> environment variable is set then its value supersedes this setting.  For more information see <a href="#gettingstarted_mouseinput">Mouse Input</a>.</td>
 </tr>
 <tr>
-<td align="center"><code>terminal.raw_esc</code></td>
+<td align="center"><a name="terminal_raw_esc"></a><code>terminal.raw_esc</code></td>
 <td align="center">False</td>
-<td>When enabled, pressing Esc sends a literal escape character like in Unix/etc terminals.  This setting is disabled by default to provide a more predictable, reliable, and configurable input experience on Windows.  Changing this only affects future Clink sessions, not the current session.</td>
+<td>When enabled, pressing <kbd>Esc</kbd> sends a literal escape character like in Unix or Linux terminals.  This setting is disabled by default to provide a more predictable, reliable, and configurable input experience on Windows.  Changing this only affects future Clink sessions, not the current session.</td>
 </tr>
 <tr>
 <td align="center"><code>terminal.use_altgr_substitute</code></td>
@@ -1552,7 +1578,7 @@ supersedes the <code>terminal.mouse_modifier</code> setting.  In Windows Termina
 <blockquote>
 <p><strong>Compatibility Notes:</strong></p>
 <ul>
-<li>The <code>esc_clears_line</code> setting has been replaced by a <code>clink-reset-line</code> command that is by default bound to the <kbd>Escape</kbd> key.  See <a href="#keybindings">Customizing Key Bindings</a> and <a href="https://tiswww.cwru.edu/php/chet/readline/readline.html">Readline</a> for more information.</li>
+<li>The <code>esc_clears_line</code> setting has been replaced by a <code>clink-reset-line</code> command that is by default bound to the <kbd>Escape</kbd> key.  See <a href="#keybindings">Customizing Key Bindings</a> for more information.</li>
 <li>The <code>match_colour</code> setting has been removed, and Clink now supports Readline&#39;s completion coloring.  See <a href="#completioncolors">Completion Colors</a> for more information.</li>
 </ul>
 </blockquote>
@@ -1702,7 +1728,7 @@ Or <code>clink --version</code> shows just the version number.</dd>
 <p>
 <dt>clink echo</dt>
 <dd>
-Echos key sequences to use in the .inputrc files for binding keys to Clink commands.  Each key pressed prints the associated key sequence on a separate line, until <kbd>Ctrl</kbd>+<kbd>C</kbd> is pressed.</dd>
+Echos key sequences to use in the .inputrc files for binding keys to Clink commands.  Each key pressed prints the associated key sequence on a separate line, until <kbd>Ctrl</kbd>-<kbd>C</kbd> is pressed.</dd>
 </p>
 
 <h2 id="portable-configuration">Portable Configuration</h2>
@@ -1734,16 +1760,131 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 </code></pre>
 <p><a name="configreadline"></a></p>
 <h1 id="configuring-readline">Configuring Readline</h1>
-<p>The Readline library used by Clink can be configured to add custom keybindings and macros by creating a Readline init file. There is excellent documentation for all the options and commands available to configure Readline in the <a href="https://tiswww.cwru.edu/php/chet/readline/rluserman.html">Readline manual</a>.</p>
+<p>Clink uses the <a href="https://tiswww.case.edu/php/chet/readline/rltop.html">GNU Readline library</a> to provide line editing functionality, which can be configured to add custom keybindings and macros by creating a Readline init file. The Clink documentation includes an updated and tailored copy of the Readline documentation, below.</p>
 <table class="linkmenu">
-<tr class="lmtr"><td class="lmtd"><a href="#init-file">Init File</a></td><td class="lmtd">About the .inputrc init file.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#the-basics">The Basics</a></td><td class="lmtd">The basics of using the Readline input editor in Clink.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#init-file">Init File</a></td><td class="lmtd">About the .inputrc init file, configuration variables, and key bindings.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#bindable-commands">Bindable Commands</a></td><td class="lmtd">The commands available for key bindings.</td></tr>
 <tr class="lmtr"><td class="lmtd"><a href="#completion-colors">Completion Colors</a></td><td class="lmtd">How to customize the completion colors.</td></tr>
 <tr class="lmtr"><td class="lmtd"><a href="#popupwindow">Popup Windows</a></td><td class="lmtd">Using the popup windows.</td></tr>
 </table>
 
+<h2 id="the-basics">The Basics</h2>
+<h3 id="bare-essentials">Bare Essentials</h3>
+<p>To enter characters into the line, simply type them. The typed character appears where the cursor was, and then the cursor moves one space to the right. If you mistype a character, you can use <kbd>Backspace</kbd> to back up and delete the mistyped character.</p>
+<p>Sometimes you may mistype a character, and not notice the error until you have typed several other characters. In that case, you can type <kbd>Left</kbd> (the left arrow key) to move the cursor to the left, and then correct your mistake. Afterwards, you can move the cursor to the right with <kbd>Right</kbd> (the right arrow key).</p>
+<p>When you add text in the middle of a line, you will notice that characters to the right of the cursor are &quot;pushed over&quot; to make room for the text that you have inserted. Likewise, when you delete text behind the cursor, characters to the right of the cursor are &quot;pulled back&quot; to fill in the blank space created by the removal of the text. A list of the bare essentials for editing the text of an input line follows.</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><kbd>Left</kbd></td>
+<td>Move back one character.</td>
+</tr>
+<tr>
+<td><kbd>Right</kbd></td>
+<td>Move forward one character.</td>
+</tr>
+<tr>
+<td><kbd>Backspace</kbd></td>
+<td>Delete the character to the left of the cursor.</td>
+</tr>
+<tr>
+<td><kbd>Del</kbd></td>
+<td>Delete the character underneath the cursor.</td>
+</tr>
+<tr>
+<td><kbd>A</kbd>, <kbd>a</kbd>, <kbd>1</kbd>, <kbd>!</kbd>, <kbd>"</kbd>, <kbd>/</kbd>, etc</td>
+<td>Insert the typed character into the line at the cursor.</td>
+</tr>
+<tr>
+<td><kbd>Ctrl</kbd>-<kbd>z</kbd> or<br/><kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>u</kbd></td>
+<td>Undo the last editing command. You can undo all the way back to an empty line.</td>
+</tr>
+<tr>
+<td><kbd>Home</kbd></td>
+<td>Move to the start of the line.</td>
+</tr>
+<tr>
+<td><kbd>End</kbd></td>
+<td>Move to the end of the line.</td>
+</tr>
+<tr>
+<td><kbd>Ctrl</kbd>-<kbd>Left</kbd></td>
+<td>Move backward a word, where a word is composed of letters and digits.</td>
+</tr>
+<tr>
+<td><kbd>Ctrl</kbd>-<kbd>Right</kbd></td>
+<td>Move forward a word.</td>
+</tr>
+</tbody></table>
+<h3 id="killing-and-yanking">Killing and Yanking</h3>
+<p><em>Killing</em> text means to delete the text from the line, but to save it away for later use, usually by <em>yanking</em> (re-inserting) it back into the line. (&quot;Cut&quot; and &quot;paste&quot; are more recent jargon for &quot;kill&quot; and &quot;yank&quot;, but killing and yanking do not affect the system&#39;s clipboard.)</p>
+<p>If the description for a command says that it &quot;kills&quot; text, then you can be sure that you can get the text back in a different (or the same) place later.</p>
+<p>When you use a kill command, the text is saved in a <em>kill-ring</em>. Any number of consecutive kills save all of the killed text together, so that when you yank it back, you get it all. The kill ring is not line specific; the text that you killed on a previously typed line is available to be yanked back later, when you are typing another line.</p>
+<p>Here are some basic commands for killing text.</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><kbd>Ctrl</kbd>-<kbd>End</kbd></td>
+<td>Kill the text from the current cursor position to the end of the line.</td>
+</tr>
+<tr>
+<td><kbd>Ctrl</kbd>-<kbd>Del</kbd></td>
+<td>Kill from the cursor to the end of the current word, or, if between words, to the end of the next word. Word boundaries are the same as those used by <kbd>Ctrl</kbd>-<kbd>Right</kbd>.</td>
+</tr>
+<tr>
+<td><kbd>Ctrl</kbd>-<kbd>Backspace</kbd></td>
+<td>Kill from the cursor the start of the current word, or, if between words, to the start of the previous word. Word boundaries are the same as those used by <kbd>Ctrl</kbd>-<kbd>Left</kbd>.</td>
+</tr>
+<tr>
+<td><kbd>Ctrl</kbd>-<kbd>w</kbd></td>
+<td>Kill from the cursor to the previous whitespace. This is different than <kbd>Ctrl</kbd>-<kbd>Backspace</kbd> because the word boundaries differ.</td>
+</tr>
+</tbody></table>
+<p>Here is how to <em>yank</em> the text back into the line. Yanking means to copy the most-recently-killed text from the kill buffer.</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><kbd>Ctrl</kbd>-<kbd>y</kbd></td>
+<td>Yank the most recently killed text back into the buffer at the cursor.</td>
+</tr>
+<tr>
+<td><kbd>Alt</kbd>-<kbd>y</kbd></td>
+<td>Rotate the kill-ring, and yank the new top. You can only do this if the prior command is <kbd>Ctrl</kbd>-<kbd>y</kbd> or <kbd>Alt</kbd>-<kbd>y</kbd>.</td>
+</tr>
+</tbody></table>
+<h3 id="readline-arguments">Readline Arguments</h3>
+<p>You can pass numeric arguments to Readline commands. Sometimes the argument acts as a repeat count, other times it is the <em>sign</em> of the argument that is significant. If you pass a negative argument to a command which normally acts in a forward direction, that command will act in a backward direction. For example, to kill text back to the start of the line, you might type <kbd>Alt</kbd>-<kbd>-</kbd> <kbd>Ctrl</kbd>-<kbd>k</kbd>.</p>
+<p>The general way to pass numeric arguments to a command is to type meta digits before the command. If the first &quot;digit&quot; typed is a minus sign (<code>-</code>), then the sign of the argument will be negative. Once you have typed one meta digit to get the argument started, you can type the remainder of the digits, and then the command. For example, to give the <kbd>Del</kbd> command an argument of 10, you could type <kbd>Alt</kbd>-<kbd>1</kbd> <kbd>0</kbd> <kbd>Del</kbd>, which will delete the next ten characters on the input line.</p>
+<p><a name="rlsearchinhistory"></a></p>
+<h3 id="searching-for-commands-in-the-history">Searching for Commands in the History</h3>
+<p>Readline provides commands for searching through the command history for lines containing a specified string. There are two search modes: <em>incremental</em> and <em>non-incremental</em>.</p>
+<p>Incremental searches begin before the user has finished typing the search string. As each character of the search string is typed, Readline displays the next entry from the history matching the string typed so far. An incremental search requires only as many characters as needed to find the desired history entry. To search backward in the history for a particular string, type <kbd>Ctrl</kbd>-<kbd>r</kbd>. Typing <kbd>Ctrl</kbd>-<kbd>s</kbd> searches forward through the history. The characters present in the value of the <code>isearch-terminators</code> variable are used to terminate an incremental search. If that variable has not been assigned a value, then <kbd>Esc</kbd> or <kbd>Ctrl</kbd>-<kbd>j</kbd> will terminate an incremental search. <kbd>Ctrl</kbd>-<kbd>g</kbd> will abort an incremental search and restore the original line. When the search is terminated, the history entry containing the search string becomes the current line.</p>
+<p>To find other matching entries in the history list, type <kbd>Ctrl</kbd>-<kbd>r</kbd> or <kbd>Ctrl</kbd>-<kbd>s</kbd> as appropriate. This will search backward or forward in the history for the next entry matching the search string typed so far. Any other key sequence bound to a Readline command will terminate the search and execute that command. For instance, <kbd>Enter</kbd> will terminate the search and accept the line, thereby executing the command from the history list. A movement command will terminate the search, make the last line found the current line, and begin editing.</p>
+<p>Readline remembers the last incremental search string. If two <kbd>Ctrl</kbd>-<kbd>r</kbd>&#39;s are typed without any intervening characters defining a new search string, any remembered search string is used.</p>
+<p>Non-incremental searches read the entire search string before starting to search for matching history lines. The search string may be typed by the user or be part of the contents of the current line. Type <kbd>Alt</kbd>-<kbd>p</kbd> or <kbd>Alt</kbd>-<kbd>n</kbd> to start a non-incremental search backwards or forwards.</p>
+<p>To search backward in the history for a line starting with the text before the cursor, type <kbd>PgUp</kbd>. Or search forward by typing <kbd>PgDn</kbd>.</p>
+<p>See <a href="#saved-command-history">Saved Command History</a> for more information on how history works.</p>
 <h2 id="init-file">Init File</h2>
-<p>A Readline init file defines key binding customizations and sets Readline configuration variables.</p>
-<p>A Readline init file is named <code>.inputrc</code> or <code>_inputrc</code>.  Clink searches the directories referenced by the following environment variables in the order listed here, and loads the first <code>.inputrc</code> or <code>_inputrc</code> file it finds:</p>
+<p>You can customize key bindings and configuration variables by using an init file.</p>
+<p>&quot;<a href="#readline-configuration-variables">Configuration variables</a>&quot; are customized in the init file, but &quot;<a href="#clink-settings">Clink settings</a>&quot; are customized with the <code>clink set</code> command.</p>
+<h3 id="init-file-location">Init File Location</h3>
+<p>The Readline init file is named <code>.inputrc</code> or <code>_inputrc</code>.  Clink searches the directories referenced by the following environment variables in the order listed here, and loads the first <code>.inputrc</code> or <code>_inputrc</code> file it finds:</p>
 <ul>
 <li><code>%CLINK_INPUTRC%</code></li>
 <li>The Clink profile directory (see the &quot;state&quot; line from <code>clink info</code>; by default this is the same as <code>%USERPROFILE%</code> but it can be overridden by the <code>clink inject</code> command).</li>
@@ -1762,340 +1903,1409 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 <li>Clink v1.0.0a0 through Clink v1.2.27 accidentally loaded up to one Readline init file from each of the searched directories. That was incorrect behavior for loading Readline init files and has been fixed. If similar behavior is still desired, consider using the <code>$include</code> directive in the Readline init file, to load additional files.</li>
 </ul>
 </blockquote>
-<h3 id="basic-format">Basic Format</h3>
-<p>The <code>.inputrc</code> file will mostly use these kinds of lines:</p>
+<h3 id="init-file-syntax">Init File Syntax</h3>
+<p>There are only a few basic constructs allowed in the Readline init file:</p>
+<ul>
+<li>Blank lines are ignored.</li>
+<li>Lines beginning with a <code>#</code> are comments.</li>
+<li>Lines beginning with a <code>$</code> indicate <a href="#conditional-init-constructs">conditional init constructs</a>.</li>
+<li>Other lines denote <a href="#readline-configuration-variables">Readline configuration variables</a> and <a href="#readline-key-bindings">Readline key bindings</a>.</li>
+</ul>
+<h4 id="readline-configuration-variables">Readline configuration variables</h4>
+<p>You can modify the behavior of Readline by altering the values of configuration variables in Readline using the <code>set</code> command within the init file. The syntax is simple:</p>
+<pre><code class="plaintext">set <span class="arg">variable</span> <span class="arg">value</span></code></pre>
+
+<p>Here, for example, is how to change from the default Emacs-like key binding to use <code>vi</code> line editing commands:</p>
+<pre><code class="plaintext">set editing-mode vi</code></pre>
+
+<p>Variable names and values, where appropriate, are recognized without regard to case. Unrecognized variable names are ignored.</p>
+<p>Boolean variables (those that can be set to on or off) are set to on if the value is null or empty, <code>on</code> (case-insensitive), or <code>1</code>. Any other value results in the variable being set to off.</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a name="configbellstyle"></a><code>bell-style</code></td>
+<td>Controls what happens when Readline wants to ring the terminal bell. If set to &quot;none&quot;, Readline never rings the bell. If set to &quot;visible&quot; (the default in Clink), Readline uses a visible bell if one is available. If set to &quot;audible&quot;, Readline attempts to ring the terminal&#39;s bell.</td>
+</tr>
+<tr>
+<td><code>blink-matching-paren</code></td>
+<td>If set to &quot;on&quot;, Readline attempts to briefly move the cursor to an opening parenthesis when a closing parenthesis is inserted. The default is &quot;off&quot;.</td>
+</tr>
+<tr>
+<td><code>colored-completion-prefix</code></td>
+<td>If set to &quot;on&quot;, when listing completions, Readline displays the common prefix of the set of possible completions using a different color. The color definitions are taken from the value of the <code>%LS_COLORS%</code> environment variable. The default is &quot;off&quot;.</td>
+</tr>
+<tr>
+<td><code>colored-stats</code></td>
+<td>If set to &quot;on&quot;, Readline displays possible completions using different colors to indicate their file type. The color definitions are taken from the value of the <code>%LS_COLORS%</code> environment variable. The default is &quot;off&quot;.</td>
+</tr>
+<tr>
+<td><a name="configcommentbegin"></a><code>comment-begin</code></td>
+<td>The string to insert at the beginning of the line when the <code>insert-comment</code> command is executed. The default value is &quot;::&quot;.</td>
+</tr>
+<tr>
+<td><a name="configcompletiondisplaywidth"></a><code>completion-display-width</code></td>
+<td>The number of screen columns used to display possible matches when performing completion. The value is ignored if it is less than 0 or greater than the terminal screen width. A value of 0 will cause matches to be displayed one per line. The default value is -1.</td>
+</tr>
+<tr>
+<td><code>completion-ignore-case</code></td>
+<td>If set to &quot;on&quot;, Readline performs filename matching and completion in a case-insensitive fashion. The default value is &quot;on&quot;.</td>
+</tr>
+<tr>
+<td><code>completion-prefix-display-length</code></td>
+<td>The length in characters of the common prefix of a list of possible completions that is displayed without modification. When set to a value greater than zero, common prefixes longer than this value are replaced with an ellipsis when displaying possible completions.</td>
+</tr>
+<tr>
+<td><a namme="configcompletionqueryitems"></a><code>completion-query-items</code></td>
+<td>The number of possible completions that determines when the user is asked whether the list of possibilities should be displayed. If the number of possible completions is greater than or equal to this value, Readline will ask whether or not the user wishes to view them; otherwise, they are simply listed. This variable must be set to an integer value greater than or equal to 0. A negative value means Readline should never ask. The default limit is 100.</td>
+</tr>
+<tr>
+<td><code>echo-control-characters</code></td>
+<td>When set to &quot;on&quot;, on operating systems that indicate they support it, readline echoes a character corresponding to a signal generated from the keyboard. The default is &quot;on&quot;.</td>
+</tr>
+<tr>
+<td><code>editing-mode</code></td>
+<td>This controls which Readline input mode is used by default. When set to &quot;emacs&quot; (the default), Readline starts up in Emacs editing mode, where keystrokes are most similar to Emacs. When set to &quot;vi&quot;, then <code>vi</code> input mode is used.</td>
+</tr>
+<tr>
+<td><code>emacs-mode-string</code></td>
+<td>If the <code>show-mode-in-prompt</code> variable is enabled, this string is displayed immediately before the last line of the primary prompt when emacs editing mode is active. The value is expanded like a key binding, so the standard set of meta- and control prefixes and backslash escape sequences is available. Use the &quot;\1&quot; and &quot;\2&quot; escapes to begin and end sequences of non-printing characters, which can be used to embed a terminal control sequence into the mode string. The default is &quot;@&quot;.</td>
+</tr>
+<tr>
+<td><code>enable-bracketed-paste</code></td>
+<td>When set to &quot;on&quot;, Readline will configure the terminal in a way that will enable it to insert each paste into the editing buffer as a single string of characters, instead of treating each character as if it had been read from the keyboard. This can prevent pasted characters from being interpreted as editing commands. The default is &quot;on&quot;.</td>
+</tr>
+<tr>
+<td><code>expand-tilde</code></td>
+<td>If set to &quot;on&quot;, tilde expansion is performed when Readline attempts word completion. The default is &quot;off&quot;.</td>
+</tr>
+<tr>
+<td><code>history-preserve-point</code></td>
+<td>If set to &quot;on&quot;, the history code attempts to place the point (the current cursor position) at the same location on each history line retrieved with <code>previous-history</code> or <code>next-history</code>. The default is &quot;off&quot;.</td>
+</tr>
+<tr>
+<td><code>horizontal-scroll-mode</code></td>
+<td>This variable can be set to either &quot;on&quot; or &quot;off&quot;. Setting it to &quot;on&quot; means that the text of the lines being edited will scroll horizontally on a single screen line when they are longer than the width of the screen, instead of wrapping onto a new screen line. This variable is automatically set to &quot;on&quot; for terminals of height 1. By default, this variable is set to &quot;off&quot;.</td>
+</tr>
+<tr>
+<td><code>isearch-terminators</code></td>
+<td>The string of characters that should terminate an incremental search without subsequently executing the character as a command (see <a href="#rlsearchinhistory">Searching for Commands in the History</a>). If this variable has not been given a value, the characters <kbd>Esc</kbd> and <kbd>Ctrl</kbd>-<kbd>j</kbd> will terminate an incremental search.</td>
+</tr>
+<tr>
+<td><code>keymap</code></td>
+<td>Sets Readline&#39;s idea of the current keymap for key binding commands. Built-in keymap names are <code>emacs</code>, <code>emacs-standard</code>, <code>emacs-meta</code>, <code>emacs-ctlx</code>, <code>vi</code>, <code>vi-move</code>, <code>vi-command</code>, and <code>vi-insert</code>. <code>vi</code> is equivalent to <code>vi-command</code> (<code>vi-move</code> is also a synonym); <code>emacs</code> is equivalent to <code>emacs-standard</code>. The default value is <code>emacs</code>. The value of the <code>editing-mode</code> variable also affects the default keymap.</td>
+</tr>
+<tr>
+<td><code>mark-directories</code></td>
+<td>If set to &quot;on&quot;, completed directory names have a slash appended. The default is &quot;on&quot;.</td>
+</tr>
+<tr>
+<td><code>mark-modified-lines</code></td>
+<td>This variable, when set to &quot;on&quot;, causes Readline to display an asterisk (<code>*</code>) at the start of history lines which have been modified. This variable is &quot;off&quot; by default.</td>
+</tr>
+<tr>
+<td><code>mark-symlinked-directories</code></td>
+<td>If set to &quot;on&quot;, completed names which are symbolic links to directories have a slash appended (subject to the value of <code>mark-directories</code>). The default is &quot;off&quot;.</td>
+</tr>
+<tr>
+<td><code>match-hidden-files</code></td>
+<td>This variable, when set to &quot;on&quot;, causes Readline to match files whose names begin with a <code>.</code> (hidden files on Unix and Linux) when performing filename completion. If set to &quot;off&quot;, the leading <code>.</code> must be supplied by the user in the filename to be completed. This variable is &quot;on&quot; by default.</td>
+</tr>
+<tr>
+<td><code>menu-complete-display-prefix</code></td>
+<td>If set to &quot;on&quot;, menu completion displays the common prefix of the list of possible completions (which may be empty) before cycling through the list. The default is &quot;off&quot;.</td>
+</tr>
+<tr>
+<td><code>page-completions</code></td>
+<td>If set to &quot;on&quot;, Readline uses an internal <code>more</code>-like pager to display a screenful of possible completions at a time. This variable is &quot;on&quot; by default.</td>
+</tr>
+<tr>
+<td><code>print-completions-horizontally</code></td>
+<td>If set to &quot;on&quot;, Readline will display completions with matches sorted horizontally in alphabetical order, rather than down the screen. The default is &quot;off&quot;.</td>
+</tr>
+<tr>
+<td><code>show-all-if-ambiguous</code></td>
+<td>This alters the default behavior of the completion functions. If set to &quot;on&quot;, words which have more than one possible completion cause the matches to be listed immediately instead of ringing the bell. The default value is &quot;off&quot;.</td>
+</tr>
+<tr>
+<td><code>show-all-if-unmodified</code></td>
+<td>This alters the default behavior of the completion functions in a fashion similar to <code>show-all-if-ambiguous</code>. If set to &quot;on&quot;, words which have more than one possible completion without any possible partial completion (the possible completions don&#39;t share a common prefix) cause the matches to be listed immediately instead of ringing the bell. The default value is &quot;off&quot;.</td>
+</tr>
+<tr>
+<td><code>show-mode-in-prompt</code></td>
+<td>If set to &quot;on&quot;, add a string to the beginning of the prompt indicating the editing mode: emacs, vi command, or vi insertion. The mode strings are user-settable (e.g., <code>emacs-mode-string</code>). The default value is &quot;off&quot;.</td>
+</tr>
+<tr>
+<td><code>skip-completed-text</code></td>
+<td>If set to &quot;on&quot;, this alters the default completion behavior when inserting a single match into the line. It&#39;s only active when performing completion in the middle of a word. If enabled, Readline does not insert characters from the completion that match characters after point (the cursor position) in the word being completed, so portions of the word following the cursor are not duplicated. For instance, if this is enabled, attempting completion when the cursor is after the <code>e</code> in &quot;Makefile&quot; will result in &quot;Makefile&quot; rather than &quot;Makefilefile&quot;, assuming there is a single possible completion. The default value is &quot;off&quot;.</td>
+</tr>
+<tr>
+<td><code>vi-cmd-mode-string</code></td>
+<td>If the <code>show-mode-in-prompt</code> variable is enabled, this string is displayed immediately before the last line of the primary prompt when vi editing mode is active and in command mode. The value is expanded like a key binding, so the standard set of meta- and control prefixes and backslash escape sequences is available. Use the &quot;\1&quot; and &quot;\2&quot; escapes to begin and end sequences of non-printing characters, which can be used to embed a terminal control sequence into the mode string. The default is &quot;(cmd)&quot;.</td>
+</tr>
+<tr>
+<td><code>vi-ins-mode-string</code></td>
+<td>If the <code>show-mode-in-prompt</code> variable is enabled, this string is displayed immediately before the last line of the primary prompt when vi editing mode is active and in insertion mode. The value is expanded like a key binding, so the standard set of meta- and control prefixes and backslash escape sequences is available. Use the &quot;\1&quot; and &quot;\2&quot; escapes to begin and end sequences of non-printing characters, which can be used to embed a terminal control sequence into the mode string. The default is &quot;(ins)&quot;.</td>
+</tr>
+<tr>
+<td><code>visible-stats</code></td>
+<td>If set to &quot;on&quot;, a character denoting a file&#39;s type is appended to the filename when listing possible completions. The default is &quot;off&quot;.</td>
+</tr>
+</tbody></table>
+<p>Clink adds some new configuration variables for Readline:</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>completion-auto-query-items</code></td>
+<td>If set to &quot;on&quot;, automatically prompts before displaying completions if they need more than half a screen page (this overrules the <a href="#configcompletionqueryitems"><code>completion-query-items</code></a> variable). The default is &quot;on&quot;.</td>
+</tr>
+<tr>
+<td><code>history-point-at-end-of-anchored-search</code></td>
+<td>If set to &quot;on&quot;, this puts the cursor at the end of the line when using <code>history-search-forward</code> or <code>history-search-backward</code>. The default is &quot;off&quot;.</td>
+</tr>
+<tr>
+<td><code>menu-complete-wraparound</code></td>
+<td>If this is &quot;on&quot;, the <code>menu-complete</code> family of commands wraps around when reaching the end of the possible completions. The default is &quot;on&quot;.</td>
+</tr>
+<tr>
+<td><code>search-ignore-case</code></td>
+<td>Controls whether the history search commands ignore case. The default is &quot;on&quot;.</td>
+</tr>
+</tbody></table>
+<p>Some configuration variables are deprecated in Clink:</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>bind-tty-special-chars</code></td>
+<td>Clink doesn&#39;t need or use this.</td>
+</tr>
+<tr>
+<td><code>completion-map-case</code></td>
+<td>Instead, use the <a href="#match_ignore_case"><code>match.ignore_case</code></a> Clink setting (see the <code>relaxed</code> mode).</td>
+</tr>
+<tr>
+<td><code>convert-meta</code></td>
+<td>Clink requires this to be &quot;on&quot;, and sets it to &quot;on&quot;.</td>
+</tr>
+<tr>
+<td><code>disable-completion</code></td>
+<td>If set to &quot;on&quot;, Readline will inhibit word completion. Completion characters will be inserted into the line as if they had been mapped to <code>self-insert</code>. The default is &quot;off&quot;.</td>
+</tr>
+<tr>
+<td><code>enable-meta-key</code></td>
+<td>Clink requires this to be &quot;on&quot;, and sets it to &quot;on&quot;.</td>
+</tr>
+<tr>
+<td><code>history-size</code></td>
+<td>Instead, use the <a href="#history_max_lines"><code>history.max_lines</code></a> Clink setting.</td>
+</tr>
+<tr>
+<td><code>input-meta</code></td>
+<td>Clink requires this to be &quot;on&quot;, and sets it to &quot;on&quot;.</td>
+</tr>
+<tr>
+<td><code>keyseq-timeout</code></td>
+<td>Clink does not support this.</td>
+</tr>
+<tr>
+<td><code>output-meta</code></td>
+<td>Clink requires this to be &quot;on&quot;, and sets it to &quot;on&quot;.</td>
+</tr>
+<tr>
+<td><code>revert-all-at-newline</code></td>
+<td>Clink always reverts all in-memory changes to history lines each time a new input prompt starts.</td>
+</tr>
+</tbody></table>
+<h4 id="readline-key-bindings">Readline key bindings</h4>
+<p>The syntax for controlling key bindings in the init file is simple. First you need to find the name of the command that you want to change. The following sections contain tables of the command name, the default keybinding, if any, and a short description of what the command does (see <a href="#bindable-commands">Bindable Commands</a>).</p>
+<p>Once you know the name of the command, simply place on a line in the init file the name of the key you wish to bind the command to, a colon, and then the name of the command. There can be no space between the key name and the colon (any space will be interpreted as part of the key name). The name of the key can be expressed in different ways, depending on what you find most comfortable.</p>
+<p>In addition to command names, Readline allows keys to be bound to a string that is inserted when the key is pressed (a <em>macro</em>).</p>
 <table>
 <tr><th>Line</th><th>Description</th></tr>
 <tr><td><code><span class="arg">keyname</span>: <span class="arg">command</span></code></td><td>Binds a named command to a key.</td></tr>
 <tr><td><code><span class="arg">keyname</span>: "<span class="arg">literal text</span>"</code></td><td>Binds a macro to a key.  A macro inserts the literal text into the input line.</td></tr>
 <tr><td><code><span class="arg">keyname</span>: "luafunc:<span class="arg">lua_function_name</span>"</code></td><td>Binds a named Lua function to a key.  See <a href="#luakeybindings">Lua key bindings</a> for more information.</td></tr>
-<tr><td><code>set <span class="arg">varname</span> <span class="arg">value</span></code></td><td></td></tr>
 </table>
 
-<p>See <a href="#discovering-clink-key-sequences">Discovering Clink key sequences</a> for how to find the <span class="arg">keyname</span> for the key you want to bind.  See <a href="#keybindings">Customizing Key Bindings</a> for more information about binding keys in Clink.</p>
-<p>Refer to the <a href="https://tiswww.cwru.edu/php/chet/readline/rluserman.html">Readline manual</a> for a more thorough explanation of the .inputrc file format, list of available commands, and list of configuration variables and their values.</p>
-<h3 id="new-configuration-variables">New Configuration Variables</h3>
-<p>Clink adds some new configuration variables to Readline, beyond what&#39;s described in the <a href="https://tiswww.cwru.edu/php/chet/readline/rluserman.html">Readline manual</a>:</p>
+<p>
+<dt>Key names</dt>
+Key names can be a _name_ or a _sequence_.  Names are not quoted, and sequences are quoted.
+</p>
+
+<p><em>Names</em> can be used to refer to simple keys like <code>Space</code>, <code>Return</code>, <code>Tab</code>, letters and digits (<code>A</code>, <code>b</code>, <code>1</code>, ...), and most punctuation (<code>!</code>, <code>@</code>, <code>.</code>, <code>_</code>, ...).  Names can also include modifier prefixes <code>C-</code> or <code>Control-</code> for the <kbd>Ctrl</kbd> key, or <code>M-</code> or <code>Meta-</code> for the Meta or <kbd>Alt</kbd> key.  However, modifier prefixes don&#39;t work with simple key names; you can&#39;t use <code>C-Space</code>, instead a <em>sequence</em> is needed for special keys like that.</p>
+<p><em>Sequences</em> are surrounded by double quotes, and specify an entire sequence of input characters.  Some special escape codes can be used:</p>
 <table>
 <thead>
 <tr>
-<th align="center">Name</th>
-<th align="center">Default</th>
+<th>Code</th>
 <th>Description</th>
 </tr>
 </thead>
 <tbody><tr>
-<td align="center"><code>completion-auto-query-items</code></td>
-<td align="center">on</td>
-<td>Automatically prompts before displaying completions if they need more than half a screen page.</td>
+<td><code>\C-</code></td>
+<td>Prefix meaning <kbd>Ctrl</kbd>.</td>
 </tr>
 <tr>
-<td align="center"><code>history-point-at-end-of-anchored-search</code></td>
-<td align="center">off</td>
-<td>Puts the cursor at the end of the line when using <code>history-search-forward</code> or <code>history-search-backward</code>.</td>
+<td><code>\M-</code></td>
+<td>Prefix meaning Meta or <kbd>Alt</kbd>.</td>
 </tr>
 <tr>
-<td align="center"><code>menu-complete-wraparound</code></td>
-<td align="center">on</td>
-<td>The <code>menu-complete</code> family of commands wraps around when reaching the end of the possible completions.</td>
+<td><code>\e</code></td>
+<td>The literal ESC (escape) character code, which is the first character code in most special key sequences.<br/>Note: the ESC code isn&#39;t necessarily the same as the <kbd>Esc</kbd> key; see <a href="#terminal_raw_esc"><code>terminal.raw_esc</code></a>.</td>
 </tr>
 <tr>
-<td align="center"><code>search-ignore-case</code></td>
-<td align="center">on</td>
-<td>Controls whether the history search commands ignore case.</td>
+<td><code>\\</code></td>
+<td>Backslash.</td>
+</tr>
+<tr>
+<td><code>\&quot;</code></td>
+<td><code>&quot;</code>, a double quotation mark.</td>
+</tr>
+<tr>
+<td><code>\&#39;</code></td>
+<td><code>&#39;</code>, a single quote or apostrophe.</td>
+</tr>
+<tr>
+<td><code>\a</code></td>
+<td>Alert (bell).</td>
+</tr>
+<tr>
+<td><code>\b</code></td>
+<td>Backspace.</td>
+</tr>
+<tr>
+<td><code>\d</code></td>
+<td>Delete. (Note: this is not very useful for Clink; it is not the <kbd>Del</kbd> key.)</td>
+</tr>
+<tr>
+<td><code>\f</code></td>
+<td>Form feed.</td>
+</tr>
+<tr>
+<td><code>\n</code></td>
+<td>Newline.</td>
+</tr>
+<tr>
+<td><code>\r</code></td>
+<td>Carriage return.</td>
+</tr>
+<tr>
+<td><code>\t</code></td>
+<td>Horizontal tab.</td>
+</tr>
+<tr>
+<td><code>\v</code></td>
+<td>Vertical tab.</td>
+</tr>
+<tr>
+<td><code>&lt;span class="arg">nnn</span></code></td>
+<td>The eight-bit character whose value is the octal value <em>nnn</em> (one to three digits)</td>
+</tr>
+<tr>
+<td><code>\x<span class="arg">HH</span></code></td>
+<td>The eight-bit character whose value is the hexadecimal value <em>HH</em> (one or two hex digits)</td>
 </tr>
 </tbody></table>
-<h3 id="new-commands">New Commands</h3>
-<p>Clink adds some new commands to Readline, beyond what&#39;s described in the <a href="https://tiswww.cwru.edu/php/chet/readline/rluserman.html">Readline manual</a>:</p>
+<p>Here are some examples to illustrate the differences between <em>names</em> and <em>sequences</em>:</p>
 <table>
 <thead>
 <tr>
-<th align="center">Name</th>
+<th>Name</th>
+<th>Sequence</th>
 <th>Description</th>
 </tr>
 </thead>
 <tbody><tr>
-<td align="center"><code>add-history</code></td>
+<td><code>C-a</code></td>
+<td><code>&quot;\C-a&quot;</code></td>
+<td>Both refer to <kbd>Ctrl</kbd>-<kbd>a</kbd>.</td>
+</tr>
+<tr>
+<td><code>M-a</code></td>
+<td><code>&quot;\M-a&quot;</code></td>
+<td>Both refer to <kbd>Alt</kbd>-<kbd>a</kbd>.</td>
+</tr>
+<tr>
+<td><code>M-C-a</code></td>
+<td><code>&quot;\M-\C-a&quot;</code></td>
+<td>Both refer to <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>a</kbd>.</td>
+</tr>
+<tr>
+<td><code>hello</code></td>
+<td></td>
+<td>It&#39;s just <kbd>h</kbd>.  It is not quoted, so it is a <em>name</em>.  The <code>ello</code> part is a syntax error and is silently discarded by Readline.</td>
+</tr>
+<tr>
+<td></td>
+<td><code>&quot;hello&quot;</code></td>
+<td>The series of five keys <kbd>h</kbd> <kbd>e</kbd> <kbd>l</kbd> <kbd>l</kbd> <kbd>o</kbd>.</td>
+</tr>
+<tr>
+<td><code>Space</code></td>
+<td></td>
+<td>The <kbd>Space</kbd> key.</td>
+</tr>
+<tr>
+<td></td>
+<td><code>&quot;Space&quot;</code></td>
+<td>The series of five keys <kbd>S</kbd> <kbd>p</kbd> <kbd>a</kbd> <kbd>c</kbd> <kbd>e</kbd>.</td>
+</tr>
+</tbody></table>
+<p>Special keys like <kbd>Up</kbd> are represented by VT220 escape codes such as<code>&quot;\e[A&quot;</code>.  See <a href="#discovering-clink-key-sequences">Discovering Clink key sequences</a> and <a href="#specialkeys">Binding special keys</a> for how to find the <span class="arg">keyname</span> for the key you want to bind.</p>
+<p>
+<dt>Key bindings</dt>
+Key bindings can be either functions or macros (literal text).  Functions are not quoted, and macros are quoted.
+</p>
+
+<ul>
+<li><code>blah-blah</code> binds to a function named &quot;blah-blah&quot;.</li>
+<li><code>&quot;blah-blah&quot;</code> is a macro that inserts the literal text &quot;blah-blah&quot; into the line.</li>
+</ul>
+<p>When entering the text of a macro, single or double quotes must be used to indicate a macro definition. Unquoted text is assumed to be a function name. In the macro body, the backslash escapes described above are expanded. Backslash will quote any other character in the macro text, including <code>&quot;</code> and <code>&#39;</code>. For example, the following binding will make pressing <kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>\</kbd> insert a single <code>\</code> into the line:</p>
+<pre><code class="language-plaintext">&quot;\C-x\\&quot;: &quot;\\&quot;
+</code></pre>
+<p>
+<dt>Examples</dt>
+
+<pre><code class="language-plaintext"># Using key names.
+C-u: universal-argument         # Bind Ctrl-u to invoke the universal-argument command.
+C-o: &quot;&gt; output&quot;                 # Bind Ctrl-o to insert the text &quot;&gt; output&quot; into the line.
+
+# Using key sequences.
+&quot;\C-u&quot;: universal-argument      # Bind Ctrl-u to invoke the universal-argument command.
+&quot;\C-x\C-r&quot;: clink-reload        # Bind Ctrl-x,Ctrl-r to reload the configuration and Lua scripts for Clink.
+&quot;\eOP&quot;: clink-popup-show-help   # Bind F1 to invoke the clink-popup-show-help command.
+</code></pre>
+</p>
+
+<p>See <a href="#keybindings">Customizing Key Bindings</a> for more information about binding keys in Clink.</p>
+<h4 id="conditional-init-constructs">Conditional init constructs</h4>
+<p>Readline implements a facility similar in spirit to the conditional compilation features of the C preprocessor which allows key bindings and variable settings to be performed as the result of tests. There are four parser directives used.</p>
+<p><dt class="toppadding">$if</dt></p><dd>
+<dd>
+
+<p>The <code>$if</code> construct allows bindings to be made based on the editing mode, the terminal being used, or the application using Readline. The text of the test, after any comparison operator, extends to the end of the line; unless otherwise noted, no characters are required to isolate it.</p>
+<p>The <code>$if mode=</code> form of the <code>$if</code> directive is used to test whether Readline is in <code>emacs</code> or <code>vi</code> mode. This may be used in conjunction with the &quot;set keymap&quot; command, for instance, to set bindings in the <code>emacs-standard</code> and <code>emacs-ctlx</code> keymaps only if Readline is starting out in <code>emacs</code> mode. (The directive is only tested during startup.)</p>
+<pre><code class="language-plaintext">$if mode == emacs
+set show-mode-in-prompt on
+$endif
+</code></pre>
+<p>The <code>$if term=</code> form may be used to include terminal-specific key bindings, perhaps to bind the key sequences output by the terminal&#39;s function keys. The word on the right side of the &quot;=&quot; is tested against both the full name of the terminal and the portion of the terminal name before the first &quot;-&quot;. This allows <code>sun</code> to match both <code>sun</code> and <code>sun-cmd</code>, for instance. This is not useful with Clink, because Clink has its own terminal driver.</p>
+<p>The <code>$if version</code> test may be used to perform comparisons against specific Readline versions. The <code>version</code> expands to the current Readline version. The set of comparison operators includes <code>=</code> (and <code>==</code>), <code>!=</code>, <code>&lt;=</code>, <code>&gt;=</code>, <code>&lt;</code>, and <code>&gt;</code>. The version number supplied on the right side of the operator consists of a major version number, an optional decimal point, and an optional minor version (e.g., &quot;7.1&quot;). If the minor version is omitted, it is assumed to be &quot;0&quot;. The operator may be separated from the string <code>version</code> and from the version number argument by whitespace. The following example sets a variable if the Readline version being used is 7.0 or newer:</p>
+<pre><code class="language-plaintext">$if version &gt;= 7.0
+set show-mode-in-prompt on
+$endif
+</code></pre>
+<p>The <code>$if application</code> construct is used to include application-specific settings. Each program using the Readline library sets the <em>application name</em>, and you can test for a particular value. This could be used to bind key sequences to functions useful for a specific program. For instance, the following command adds a key sequence that quotes the current or previous word, but only in Clink:</p>
+<pre><code class="language-plaintext">$if clink
+# Quote the current or previous word
+&quot;\C-xq&quot;: &quot;\eb\&quot;\ef\&quot;&quot;
+$endif
+</code></pre>
+<p>The <code>$if variable</code> construct provides simple equality tests for Readline variables and values. The permitted comparison operators are <code>=</code>, <code>==</code>, and <code>!=</code>. The variable name must be separated from the comparison operator by whitespace; the operator may be separated from the value on the right hand side by whitespace. Both string and boolean variables may be tested. Boolean variables must be tested against the values <em>on</em> and <em>off</em>. The following example is equivalent to the <code>mode=emacs</code> test described above:</p>
+<pre><code class="language-plaintext">$if editing-mode == emacs
+set show-mode-in-prompt on
+$endif
+</code></pre>
+</dd>
+
+<p><dt class="toppadding">$endif</dt></p><dd>
+
+<p>This command, as seen in the previous example, terminates an <code>$if</code> command.</p>
+</dd>
+
+<p><dt class="toppadding">$else</dt></p><dd>
+
+<p>Commands in this branch of the <code>$if</code> directive are executed if the test fails.</p>
+</dd>
+
+<p><dt class="toppadding">$include</dt></p><dd>
+
+<p>This directive takes a single filename as an argument and reads commands and bindings from that file. For example, the following directive reads from &quot;c:\dir\inputrc&quot;:</p>
+<pre><code class="language-plaintext">$include c:\dir\inputrc
+</code></pre>
+</dd>
+
+<h4 id="sample-inputrc-file">Sample .inputrc file</h4>
+<p>Here is a sample <code>.inputrc</code> file with some of the variables and key bindings that I use:</p>
+<pre><code class="plaintext"><span class="hljs-meta">$if clink</span>           <span class="hljs-comment"># begin clink-only section</span>
+
+<span class="hljs-meta">set colored-completion-prefix                       on</span>
+<span class="hljs-meta">set colored-stats                                   on</span>
+<span class="hljs-meta">set mark-symlinked-directories                      on</span>
+<span class="hljs-meta">set visible-stats                                   off</span>
+<span class="hljs-meta">set completion-auto-query-items                     on</span>
+<span class="hljs-meta">set history-point-at-end-of-anchored-search         on</span>
+<span class="hljs-meta">set menu-complete-wraparound                        off</span>
+<span class="hljs-meta">set search-ignore-case                              on</span>
+
+<span class="hljs-comment"># The following key bindings are for emacs mode.</span>
+<span class="hljs-meta">set keymap emacs</span>
+
+<span class="hljs-string">"\e[27;8;72~"</span>:      clink-popup-show-help           <span class="hljs-comment"># Alt-Ctrl-Shift-H</span>
+
+<span class="hljs-comment"># Completion key bindings.</span>
+<span class="hljs-string">"\t"</span>:               old-menu-complete               <span class="hljs-comment"># Tab</span>
+<span class="hljs-string">"\e[Z"</span>:             old-menu-complete-backward      <span class="hljs-comment"># Shift-Tab</span>
+<span class="hljs-string">"\e[27;5;9~"</span>:       clink-popup-complete            <span class="hljs-comment"># Ctrl-Tab</span>
+
+<span class="hljs-comment"># Some key bindings I got used to from 4Dos/4NT/Take Command.</span>
+C-b:                                                <span class="hljs-comment"># Ctrl-B (cleared because I redefined Ctrl-F)</span>
+C-d:                remove-history                  <span class="hljs-comment"># Ctrl-D (replaces `delete-char`)</span>
+C-f:                clink-expand-doskey-alias       <span class="hljs-comment"># Ctrl-F (replaces `forward-char`)</span>
+C-k:                add-history                     <span class="hljs-comment"># Ctrl-K (replaces `kill-line`)</span>
+<span class="hljs-string">"\e[A"</span>:             history-search-backward         <span class="hljs-comment"># Up (replaces `previous-history`)</span>
+<span class="hljs-string">"\e[B"</span>:             history-search-forward          <span class="hljs-comment"># Down (replaces `next-history`)</span>
+<span class="hljs-string">"\e[5~"</span>:            clink-popup-history             <span class="hljs-comment"># PgUp (replaces `history-search-backward`)</span>
+<span class="hljs-string">"\e[6~"</span>:                                            <span class="hljs-comment"># PgDn (cleared because I redefined PgUp)</span>
+<span class="hljs-string">"\e[1;5F"</span>:          end-of-line                     <span class="hljs-comment"># Ctrl-End (replaces `kill-line`)</span>
+<span class="hljs-string">"\e[1;5H"</span>:          beginning-of-line               <span class="hljs-comment"># Ctrl-Home (replaces `backward-kill-line`)</span>
+
+<span class="hljs-comment"># Some key bindings handy in default (conhost) console windows.</span>
+M-b:                                                <span class="hljs-comment"># Alt-B (cleared because I redefined Alt-F)</span>
+M-f:                clink-find-conhost              <span class="hljs-comment"># Alt-F for "Find..." from the console's system menu</span>
+M-m:                clink-mark-conhost              <span class="hljs-comment"># Alt-M for "Mark" from the console's system menu</span>
+
+<span class="hljs-comment"># Some key bindings for interrogating the Readline configuration.</span>
+<span class="hljs-string">"\C-x\C-f"</span>:         dump-functions                  <span class="hljs-comment"># Ctrl-X, Ctrl-F</span>
+<span class="hljs-string">"\C-x\C-m"</span>:         dump-macros                     <span class="hljs-comment"># Ctrl-X, Ctrl-M</span>
+<span class="hljs-string">"\C-x\C-v"</span>:         dump-variables                  <span class="hljs-comment"># Ctrl-X, Ctrl-V</span>
+
+<span class="hljs-comment"># Misc other key bindings.</span>
+<span class="hljs-string">"\e[27;2;32~"</span>:      clink-magic-suggest-space       <span class="hljs-comment"># Shift-Space</span>
+<span class="hljs-string">"\e[5;6~"</span>:          clink-popup-directories         <span class="hljs-comment"># Ctrl-Shift-PgUp</span>
+C-_:                kill-line                       <span class="hljs-comment"># Ctrl-- (replaces `undo`)</span>
+
+<span class="hljs-meta">$endif</span>              <span class="hljs-comment"># end clink-only section</span>
+</code></pre>
+
+<h2 id="bindable-commands">Bindable Commands</h2>
+<h3 id="commands-for-moving">Commands For Moving</h3>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th align="center">Key</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>beginning-of-line</code></td>
+<td align="center"><kbd>Home</kbd></td>
+<td>Move to the start of the current line.</td>
+</tr>
+<tr>
+<td><code>end-of-line</code></td>
+<td align="center"><kbd>End</kbd></td>
+<td>Move to the end of the line.</td>
+</tr>
+<tr>
+<td><code>forward-char</code></td>
+<td align="center"><kbd>Right</kbd></td>
+<td>Move forward a character.</td>
+</tr>
+<tr>
+<td><code>backward-char</code></td>
+<td align="center"><kbd>Left</kbd></td>
+<td>Move back a character.</td>
+</tr>
+<tr>
+<td><code>forward-word</code></td>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>Right</kbd></td>
+<td>Move forward to the end of the next word. Words are composed of letters and digits.</td>
+</tr>
+<tr>
+<td><code>backward-word</code></td>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>Left</kbd></td>
+<td>Move back to the start of the current or previous word. Words are composed of letters and digits.</td>
+</tr>
+<tr>
+<td><code>previous-screen-line</code></td>
+<td align="center"></td>
+<td>Attempt to move point to the same physical screen column on the previous physical screen line. This will not have the desired effect if the current Readline line does not take up more than one physical line or if point is not greater than the length of the prompt plus the screen width.</td>
+</tr>
+<tr>
+<td><code>next-screen-line</code></td>
+<td align="center"></td>
+<td>Attempt to move point to the same physical screen column on the next physical screen line. This will not have the desired effect if the current Readline line does not take up more than one physical line or if the length of the current Readline line is not greater than the length of the prompt plus the screen width.</td>
+</tr>
+<tr>
+<td><code>clear-display</code></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>l</kbd></td>
+<td>Clear the screen and, if possible, the terminal&#39;s scrollback buffer, then redraw the current line, leaving the current line at the top of the screen.</td>
+</tr>
+<tr>
+<td><code>clear-screen</code></td>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>l</kbd></td>
+<td>Clear the screen, then redraw the current line, leaving the current line at the top of the screen.</td>
+</tr>
+<tr>
+<td><code>redraw-current-line</code></td>
+<td align="center"></td>
+<td>Refresh the current line. By default, this is unbound.</td>
+</tr>
+</tbody></table>
+<h3 id="commands-for-manipulating-the-history">Commands For Manipulating The History</h3>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th align="center">Key</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>accept-line</code></td>
+<td align="center"><kbd>Enter</kbd></td>
+<td>Accept the line regardless of where the cursor is. If this line is non-empty, it may be added to the history list for future recall.</td>
+</tr>
+<tr>
+<td><code>previous-history</code></td>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>p</kbd></td>
+<td>Move &quot;back&quot; through the history list, fetching the previous command.</td>
+</tr>
+<tr>
+<td><code>next-history</code></td>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>n</kbd></td>
+<td>Move &quot;forward&quot; through the history list, fetching the next command.</td>
+</tr>
+<tr>
+<td><code>beginning-of-history</code></td>
+<td align="center"><kbd>Alt</kbd>-<kbd><</kbd></td>
+<td>Move to the first line in the history.</td>
+</tr>
+<tr>
+<td><code>end-of-history</code></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>></kbd></td>
+<td>Move to the end of the input history, i.e., the line currently being entered.</td>
+</tr>
+<tr>
+<td><code>reverse-search-history</code></td>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>r</kbd></td>
+<td>Search backward starting at the current line and moving &quot;up&quot; through the history as necessary. This is an incremental search. This command sets the region to the matched text and activates the mark.</td>
+</tr>
+<tr>
+<td><code>forward-search-history</code></td>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>s</kbd></td>
+<td>Search forward starting at the current line and moving &quot;down&quot; through the history as necessary. This is an incremental search. This command sets the region to the matched text and activates the mark.</td>
+</tr>
+<tr>
+<td><code>non-incremental-reverse-search-history</code></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>p</kbd></td>
+<td>Search backward starting at the current line and moving &quot;up&quot; through the history as necessary using a non-incremental search for a string supplied by the user. The search string may match anywhere in a history line.</td>
+</tr>
+<tr>
+<td><code>non-incremental-forward-search-history</code></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>n</kbd></td>
+<td>Search forward starting at the current line and moving &quot;down&quot; through the history as necessary using a non-incremental search for a string supplied by the user. The search string may match anywhere in a history line.</td>
+</tr>
+<tr>
+<td><code>history-search-forward</code></td>
+<td align="center"></td>
+<td>Search forward through the history for the string of characters between the start of the current line and the point. The search string must match at the beginning of a history line. This is a non-incremental search. By default, this command is unbound.</td>
+</tr>
+<tr>
+<td><code>history-search-backward</code></td>
+<td align="center"></td>
+<td>Search backward through the history for the string of characters between the start of the current line and the point. The search string must match at the beginning of a history line. This is a non-incremental search. By default, this command is unbound.</td>
+</tr>
+<tr>
+<td><code>history-substring-search-forward</code></td>
+<td align="center"></td>
+<td>Search forward through the history for the string of characters between the start of the current line and the point. The search string may match anywhere in a history line. This is a non-incremental search. By default, this command is unbound.</td>
+</tr>
+<tr>
+<td><code>history-substring-search-backward</code></td>
+<td align="center"></td>
+<td>Search backward through the history for the string of characters between the start of the current line and the point. The search string may match anywhere in a history line. This is a non-incremental search. By default, this command is unbound.</td>
+</tr>
+<tr>
+<td><code>yank-nth-arg</code></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>y</kbd></td>
+<td>Insert the first argument to the previous command (usually the second word on the previous line) at point. With an argument <em>n</em>, insert the <em>n</em>th word from the previous command (the words in the previous command begin with word 0). A negative argument inserts the <em>n</em>th word from the end of the previous command. Once the argument <em>n</em> is computed, the argument is extracted as if the &quot;!n&quot; history expansion had been specified.</td>
+</tr>
+<tr>
+<td><code>yank-last-arg</code></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>.</kbd> or <kbd>Alt</kbd>-<kbd>_</kbd></td>
+<td>Insert last argument to the previous command (the last word of the previous history entry). With a numeric argument, behave exactly like <code>yank-nth-arg</code>. Successive calls to <code>yank-last-arg</code> move back through the history list, inserting the last word (or the word specified by the argument to the first call) of each line in turn. Any numeric argument supplied to these successive calls determines the direction to move through the history. A negative argument switches the direction through the history (back or forward). The history expansion facilities are used to extract the last argument, as if the &quot;!$&quot; history expansion had been specified.</td>
+</tr>
+<tr>
+<td><code>operate-and-get-next</code></td>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>o</kbd></td>
+<td>Accept the current line for return to the calling application as if a newline had been entered, and fetch the next line relative to the current line from the history for editing. A numeric argument, if supplied, specifies the history entry to use instead of the current line.</td>
+</tr>
+</tbody></table>
+<h3 id="commands-for-changing-text">Commands For Changing Text</h3>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th align="center">Key</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>delete-char</code></td>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>d</kbd></td>
+<td>Delete the character at point.<br/>Note: also see the <a href="#ctrld_exits"><code>cmd.ctrld_exits</code></a> setting.</td>
+</tr>
+<tr>
+<td><code>backward-delete-char</code></td>
+<td align="center"><kbd>Backspace</kbd></td>
+<td>Delete the character behind the cursor. A numeric argument means to kill the characters instead of deleting them.</td>
+</tr>
+<tr>
+<td><code>forward-backward-delete-char</code></td>
+<td align="center"></td>
+<td>Delete the character under the cursor, unless the cursor is at the end of the line, in which case the character behind the cursor is deleted. By default, this is not bound to a key.</td>
+</tr>
+<tr>
+<td><code>quoted-insert</code></td>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>q</kbd></td>
+<td>Add the next character typed to the line verbatim. This is how to insert key sequences like <kbd>Ctrl</kbd>-<kbd>h</kbd> or <kbd>Tab</kbd>, for example.</td>
+</tr>
+<tr>
+<td><code>tab-insert</code></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>i</kbd></td>
+<td>Insert a tab character.</td>
+</tr>
+<tr>
+<td><code>self-insert</code></td>
+<td align="center"><kbd>a</kbd>, <kbd>b</kbd>, <kbd>A</kbd>, <kbd>1</kbd>, <kbd>!</kbd>, etc</td>
+<td>Insert the key itself.</td>
+</tr>
+<tr>
+<td><code>bracketed-paste-begin</code></td>
+<td align="center"></td>
+<td>This function is intended to be bound to the &quot;bracketed paste&quot; escape sequence sent by some terminals, and such a binding is assigned by default. It allows Readline to insert the pasted text as a single unit without treating each character as if it had been read from the keyboard. The characters are inserted as if each one was bound to <code>self-insert</code> instead of executing any editing commands.<br/>Bracketed paste sets the region (the characters between point and the mark) to the inserted text. It uses the concept of an active mark: when the mark is active, Readline redisplay uses the terminal&#39;s standout mode to denote the region.</td>
+</tr>
+<tr>
+<td><code>transpose-chars</code></td>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>t</kbd></td>
+<td>Drag the character before the cursor forward over the character at the cursor, moving the cursor forward as well. If the insertion point is at the end of the line, then this transposes the last two characters of the line. Negative arguments have no effect.</td>
+</tr>
+<tr>
+<td><code>transpose-words</code></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>t</kbd></td>
+<td>Drag the word before point past the word after point, moving point past that word as well. If the insertion point is at the end of the line, this transposes the last two words on the line.</td>
+</tr>
+<tr>
+<td><code>upcase-word</code></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>u</kbd></td>
+<td>Uppercase the current (or following) word. With a negative argument, uppercase the previous word, but do not move the cursor.</td>
+</tr>
+<tr>
+<td><code>downcase-word</code></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>l</kbd></td>
+<td>Lowercase the current (or following) word. With a negative argument, lowercase the previous word, but do not move the cursor.</td>
+</tr>
+<tr>
+<td><code>capitalize-word</code></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>c</kbd></td>
+<td>Capitalize the current (or following) word. With a negative argument, capitalize the previous word, but do not move the cursor.</td>
+</tr>
+<tr>
+<td><code>overwrite-mode</code></td>
+<td align="center"></td>
+<td>Toggle overwrite mode. With an explicit positive numeric argument, switches to overwrite mode. With an explicit non-positive numeric argument, switches to insert mode. This command affects only emacs mode; vi mode does overwrite differently. Each new command line prompt starts in insert mode.<br/>In overwrite mode, characters bound to <code>self-insert</code> replace the text at point rather than pushing the text to the right. Characters bound to <code>backward-delete-char</code> replace the character before point with a space.<br/>By default, this command is unbound.</td>
+</tr>
+</tbody></table>
+<h3 id="killing-and-yanking-1">Killing And Yanking</h3>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th align="center">Key</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>kill-line</code></td>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>k</kbd></td>
+<td>Kill the text from point to the end of the line. With a negative numeric argument, kill backward from the cursor to the beginning of the current line.</td>
+</tr>
+<tr>
+<td><code>backward-kill-line</code></td>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>Backspace</kbd></td>
+<td>Kill backward from the cursor to the beginning of the current line. With a negative numeric argument, kill forward from the cursor to the end of the current line.</td>
+</tr>
+<tr>
+<td><code>unix-line-discard</code></td>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>u</kbd></td>
+<td>Kill backward from the cursor to the beginning of the current line.</td>
+</tr>
+<tr>
+<td><code>kill-whole-line</code></td>
+<td align="center"></td>
+<td>Kill all characters on the current line, no matter where point is. By default, this is unbound.</td>
+</tr>
+<tr>
+<td><code>kill-word</code></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>d</kbd></td>
+<td>Kill from point to the end of the current word, or if between words, to the end of the next word. Word boundaries are the same as <code>forward-word</code>.</td>
+</tr>
+<tr>
+<td><code>backward-kill-word</code></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>Backspace</kbd></td>
+<td>Kill the word behind point. Word boundaries are the same as <code>backward-word</code>.</td>
+</tr>
+<tr>
+<td><code>shell-transpose-words</code></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>t</kbd></td>
+<td>Drag the word before point past the word after point, moving point past that word as well. If the insertion point is at the end of the line, this transposes the last two words on the line. Word boundaries are the same as <code>shell-forward-word</code> and <code>shell-backward-word</code>.</td>
+</tr>
+<tr>
+<td><code>unix-word-rubout</code></td>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>w</kbd></td>
+<td>Kill the word behind point, using white space as a word boundary. The killed text is saved on the kill-ring.</td>
+</tr>
+<tr>
+<td><code>unix-filename-rubout</code></td>
+<td align="center"></td>
+<td>Kill the word behind point, using white space and the slash character as the word boundaries. The killed text is saved on the kill-ring.</td>
+</tr>
+<tr>
+<td><code>delete-horizontal-space</code></td>
+<td align="center"></td>
+<td>Delete all spaces and tabs around point. By default, this is unbound.</td>
+</tr>
+<tr>
+<td><code>kill-region</code></td>
+<td align="center"></td>
+<td>Kill the text in the current region. By default, this command is unbound.</td>
+</tr>
+<tr>
+<td><code>copy-region-as-kill</code></td>
+<td align="center"></td>
+<td>Copy the text in the region to the kill buffer, so it can be yanked right away. By default, this command is unbound.</td>
+</tr>
+<tr>
+<td><code>copy-backward-word</code></td>
+<td align="center"></td>
+<td>Copy the word before point to the kill buffer. The word boundaries are the same as <code>backward-word</code>. By default, this command is unbound.</td>
+</tr>
+<tr>
+<td><code>copy-forward-word</code></td>
+<td align="center"></td>
+<td>Copy the word following point to the kill buffer. The word boundaries are the same as <code>forward-word</code>. By default, this command is unbound.</td>
+</tr>
+<tr>
+<td><code>yank</code></td>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>y</kbd></td>
+<td>Yank the top of the kill ring into the buffer at point.</td>
+</tr>
+<tr>
+<td><code>yank-pop</code></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>y</kbd></td>
+<td>Rotate the kill-ring, and yank the new top. You can only do this if the prior command is <code>yank</code> or <code>yank-pop</code>.</td>
+</tr>
+</tbody></table>
+<h3 id="specifying-numeric-arguments">Specifying Numeric Arguments</h3>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th align="center">Key</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>digit-argument</code></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>0</kbd>, <kbd>Alt</kbd>-<kbd>1</kbd>, ... <kbd>Alt</kbd>-<kbd>-</kbd></td>
+<td>Add this digit to the argument already accumulating, or start a new argument. <kbd>Alt</kbd>-<kbd>-</kbd> starts a negative argument.</td>
+</tr>
+<tr>
+<td><code>universal-argument</code></td>
+<td align="center"></td>
+<td>This is another way to specify an argument. If this command is followed by one or more digits, optionally with a leading minus sign, those digits define the argument. If the command is followed by digits, executing <code>universal-argument</code> again ends the numeric argument, but is otherwise ignored. As a special case, if this command is immediately followed by a character that is neither a digit nor minus sign, the argument count for the next command is multiplied by four. The argument count is initially one, so executing this function the first time makes the argument count four, a second time makes the argument count sixteen, and so on. By default, this is not bound to a key.</td>
+</tr>
+</tbody></table>
+<h3 id="completion-commands">Completion Commands</h3>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th align="center">Key</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>complete</code></td>
+<td align="center"><kbd>Tab</kbd></td>
+<td>Attempt to perform completion on the text before point.</td>
+</tr>
+<tr>
+<td><code>possible-completions</code></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>=</kbd></td>
+<td>List the possible completions of the text before point. When displaying completions, Readline sets the number of columns used for display to the value of <a href="#configcompletiondisplaywidth"><code>completion-display-width</code></a>, the value of the environment variable <code>%COLUMNS%</code>, or the screen width, in that order.</td>
+</tr>
+<tr>
+<td><code>insert-completions</code></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>*</kbd></td>
+<td>Insert all completions of the text before point that would have been generated by <code>possible-completions</code>.</td>
+</tr>
+<tr>
+<td><code>menu-complete</code></td>
+<td align="center"></td>
+<td>Similar to <code>complete</code>, but replaces the word to be completed with a single match from the list of possible completions. Repeated execution of <code>menu-complete</code> steps through the list of possible completions, inserting each match in turn. At the end of the list of completions, the bell is rung (subject to the setting of <a href="#configbellstyle"><code>bell-style</code></a>) and the original text is restored. An argument of <em>n</em> moves <em>n</em> positions forward in the list of matches; a negative argument may be used to move backward through the list. This command is intended to be bound to <kbd>TAB</kbd>, but is unbound by default.</td>
+</tr>
+<tr>
+<td><code>menu-complete-backward</code></td>
+<td align="center"></td>
+<td>Identical to <code>menu-complete</code>, but moves backward through the list of possible completions, as if <code>menu-complete</code> had been given a negative argument.</td>
+</tr>
+<tr>
+<td><code>old-menu-complete</code></td>
+<td align="center"></td>
+<td>Similar to <code>menu-complete</code> but isn&#39;t limited by <a href="#configcompletionqueryitems"><code>completion-query-items</code></a> and doesn&#39;t include the common prefix of the possible completions. This behaves like the default completion in cmd.exe on Windows.</td>
+</tr>
+<tr>
+<td><code>delete-char-or-list</code></td>
+<td align="center"></td>
+<td>Deletes the character under the cursor if not at the beginning or end of the line (like <code>delete-char</code>). If at the end of the line, behaves identically to <code>possible-completions</code>. This command is unbound by default.</td>
+</tr>
+</tbody></table>
+<h3 id="keyboard-macros">Keyboard Macros</h3>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th align="center">Key</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>start-kbd-macro</code></td>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>(</kbd></td>
+<td>Begin saving the characters typed into the current keyboard macro.</td>
+</tr>
+<tr>
+<td><code>end-kbd-macro</code></td>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>)</kbd></td>
+<td>Stop saving the characters typed into the current keyboard macro and save the definition.</td>
+</tr>
+<tr>
+<td><code>call-last-kbd-macro</code></td>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>e</kbd></td>
+<td>Re-execute the last keyboard macro defined, by making the characters in the macro appear as if typed at the keyboard.</td>
+</tr>
+<tr>
+<td><code>print-last-kbd-macro</code></td>
+<td align="center"></td>
+<td>Print the last keboard macro defined in a format suitable for the inputrc file.</td>
+</tr>
+</tbody></table>
+<h3 id="some-miscellaneous-commands">Some Miscellaneous Commands</h3>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th align="center">Key</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>re-read-init-file</code></td>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>r</kbd></td>
+<td>Read in the contents of the inputrc file, and incorporate any bindings or variable assignments found there.</td>
+</tr>
+<tr>
+<td><code>abort</code></td>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>g</kbd></td>
+<td>Abort the current editing command and ring the terminal&#39;s bell (subject to the setting of <a href="#configbellstyle"><code>bell-style</code></a>).</td>
+</tr>
+<tr>
+<td><code>do-lowercase-version</code></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>A</kbd>, <kbd>Alt</kbd>-<kbd>B</kbd>, <kbd>Alt</kbd>-<kbd>x</kbd>, ...</td>
+<td>If the metafied character x is upper case, run the command that is bound to the corresponding metafied lower case character. The behavior is undefined if x is already lower case.</td>
+</tr>
+<tr>
+<td><code>undo</code></td>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>_</kbd> or <kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>u</kbd></td>
+<td>Incremental undo, separately remembered for each line.</td>
+</tr>
+<tr>
+<td><code>revert-line</code></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>r</kbd></td>
+<td>Undo all changes made to this line. This is like executing the <code>undo</code> command enough times to get back to the beginning.</td>
+</tr>
+<tr>
+<td><code>tilde-expand</code></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>~</kbd></td>
+<td>Perform tilde expansion on the current word.</td>
+</tr>
+<tr>
+<td><code>set-mark</code></td>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>@</kbd></td>
+<td>Set the mark to the point. If a numeric argument is supplied, the mark is set to that position.</td>
+</tr>
+<tr>
+<td><code>exchange-point-and-mark</code></td>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>x</kbd></td>
+<td>Swap the point with the mark. The current cursor position is set to the saved position, and the old cursor position is saved as the mark.</td>
+</tr>
+<tr>
+<td><code>character-search</code></td>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>]</kbd></td>
+<td>A character is read and point is moved to the next occurrence of that character. A negative count searches for previous occurrences.</td>
+</tr>
+<tr>
+<td><code>character-search-backward</code></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>]</kbd></td>
+<td>A character is read and point is moved to the previous occurrence of that character. A negative count searches for subsequent occurrences.</td>
+</tr>
+<tr>
+<td><code>insert-comment</code></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>#</kbd></td>
+<td>Without a numeric argument, the value of the <a href="#configcommentbegin"><code>comment-begin</code></a> variable is inserted at the beginning of the current line. If a numeric argument is supplied, this command acts as a toggle: if the characters at the beginning of the line do not match the value of <code>comment-begin</code>, the value is inserted, otherwise the characters in <code>comment-begin</code> are deleted from the beginning of the line. In either case, the line is accepted as if a newline had been typed.</td>
+</tr>
+<tr>
+<td><code>dump-functions</code></td>
+<td align="center"></td>
+<td>Print all of the functions and their key bindings to the Readline output stream. If a numeric argument is supplied, the output is formatted in such a way that it can be made part of an inputrc file. This command is unbound by default.</td>
+</tr>
+<tr>
+<td><code>dump-variables</code></td>
+<td align="center"></td>
+<td>Print all of the settable variables and their values to the Readline output stream. If a numeric argument is supplied, the output is formatted in such a way that it can be made part of an inputrc file. This command is unbound by default.</td>
+</tr>
+<tr>
+<td><code>dump-macros</code></td>
+<td align="center"></td>
+<td>Print all of the Readline key sequences bound to macros and the strings they output. If a numeric argument is supplied, the output is formatted in such a way that it can be made part of an inputrc file. This command is unbound by default.</td>
+</tr>
+</tbody></table>
+<h3 id="readline-vi-mode">Readline vi Mode</h3>
+<p>While the Readline library does not have a full set of vi editing functions, it does contain enough to allow simple editing of the line. The Readline vi mode behaves as specified in the POSIX standard.</p>
+<p>In order to switch interactively between emacs and vi editing modes, use the command <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>j</kbd> (bound to <code>emacs-editing-mode</code> when in vi mode and to <code>vi-editing-mode</code> in emacs mode). The Readline default is emacs mode.</p>
+<p>When you enter a line in vi mode, you are already placed in &quot;insertion&quot; mode, as if you had typed an &quot;i&quot;. Pressing <kbd>Esc</kbd> switches you into &quot;command&quot; mode, where you can edit the text of the line with the standard vi movement keys, move to previous history lines with &quot;k&quot; and subsequent lines with &quot;j&quot;, and so forth.</p>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th align="center">Key</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>emacs-editing-mode</code></td>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>e</kbd></td>
+<td>When in vi command mode, this causes a switch to emacs editing mode.</td>
+</tr>
+<tr>
+<td><code>vi-editing-mode</code></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>j</kbd></td>
+<td>When in emacs editing mode, this causes a switch to vi editing mode.</td>
+</tr>
+</tbody></table>
+<h3 id="other-readline-commands">Other Readline Commands</h3>
+<p>These other commands are not very useful in Clink, but exist nevertheless.</p>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th align="center">Key</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>prefix-meta</code></td>
+<td align="center"></td>
+<td>&quot;Metafy&quot; the next character typed. This is for keyboards without an <kbd>Alt</kbd> meta key. Typing a key bound to <code>prefix-meta</code> and then <kbd>f</kbd> is equivalent to typing <kbd>Alt</kbd>-<kbd>f</kbd>. By default this is bound to <kbd>Esc</kbd>, but only when the <a href="#terminal_raw_esc"><code>terminal.raw_esc</code></a> Clink setting is enabled.</td>
+</tr>
+<tr>
+<td><code>skip-csi-sequence</code></td>
+<td align="center"></td>
+<td>This has no effect unless the <a href="#terminal_raw_esc"><code>terminal.raw_esc</code></a> Clink setting is enabled. Reads enough characters to consume a multi-key sequence such as those defined for keys like <kbd>Home</kbd> and <kbd>End</kbd>. Such sequences begin with a Control Sequence Indicator (CSI), which is <code>ESC</code> <code>[</code>. If this sequence is bound to &quot;\e[&quot;, keys producing such sequences will have no effect unless explicitly bound to a readline command, instead of inserting stray characters into the editing buffer. This is unbound by default.</td>
+</tr>
+</tbody></table>
+<h3 id="clink-commands">Clink Commands</h3>
+<p>Clink also adds some new commands, beyond what&#39;s normally provided by Readline.</p>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th align="center">Key</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>add-history</code></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>k</kbd></td>
 <td>Adds the current line to the history without executing it, and clears the editing line.</td>
 </tr>
 <tr>
-<td align="center"><code>alias-expand-line</code></td>
+<td><code>alias-expand-line</code></td>
+<td align="center"></td>
 <td>A synonym for <code>clink-expand-doskey-alias</code>.</td>
 </tr>
 <tr>
-<td align="center"><code>clink-complete-numbers</code></td>
+<td><code>clink-complete-numbers</code></td>
+<td align="center"></td>
 <td>Like <code>complete</code>, but for numbers from the console screen (3 digits or more, up to hexadecimal).</td>
 </tr>
 <tr>
-<td align="center"><code>clink-copy-cwd</code></td>
+<td><code>clink-copy-cwd</code></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>c</kbd></td>
 <td>Copy the current working directory to the clipboard.</td>
 </tr>
 <tr>
-<td align="center"><code>clink-copy-line</code></td>
+<td><code>clink-copy-line</code></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>c</kbd></td>
 <td>Copy the current line to the clipboard.</td>
 </tr>
 <tr>
-<td align="center"><code>clink-copy-word</code></td>
+<td><code>clink-copy-word</code></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>w</kbd></td>
 <td>Copy the word at the cursor to the clipboard, or copies the nth word if a numeric argument is provided via the <code>digit-argument</code> keys.</td>
 </tr>
 <tr>
-<td align="center"><code>clink-ctrl-c</code></td>
-<td>Discards the current line and starts a new one (like <kbd>Ctrl</kbd>+<kbd>C</kbd> in CMD.EXE).</td>
+<td><code>clink-ctrl-c</code></td>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>c</kbd></td>
+<td>Discards the current line and starts a new one (like <kbd>Ctrl</kbd>-<kbd>C</kbd> in CMD.EXE).</td>
 </tr>
 <tr>
-<td align="center"><code>clink-diagnostics</code></td>
+<td><code>clink-diagnostics</code></td>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>z</kbd></td>
 <td>Show internal diagnostic information.</td>
 </tr>
 <tr>
-<td align="center"><code>clink-exit</code></td>
+<td><code>clink-exit</code></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>F4</kbd></td>
 <td>Replaces the current line with <code>exit</code> and executes it (exits the shell instance).</td>
 </tr>
 <tr>
-<td align="center"><code>clink-expand-doskey-alias</code></td>
+<td><code>clink-expand-doskey-alias</code></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>f</kbd></td>
 <td>Expand the doskey alias (if any) at the beginning of the line.</td>
 </tr>
 <tr>
-<td align="center"><code>clink-expand-env-var</code></td>
+<td><code>clink-expand-env-var</code></td>
+<td align="center"></td>
 <td>Expand the environment variable (e.g. <code>%FOOBAR%</code>) at the cursor.</td>
 </tr>
 <tr>
-<td align="center"><code>clink-expand-history</code></td>
+<td><code>clink-expand-history</code></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>^</kbd></td>
 <td>Perform <a href="#using-history-expansion">history</a> expansion in the current input line.</td>
 </tr>
 <tr>
-<td align="center"><code>clink-expand-history-and-alias</code></td>
+<td><code>clink-expand-history-and-alias</code></td>
+<td align="center"></td>
 <td>Perform <a href="#using-history-expansion">history</a> and doskey alias expansion in the current input line.</td>
 </tr>
 <tr>
-<td align="center"><code>clink-expand-line</code></td>
+<td><code>clink-expand-line</code></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>e</kbd></td>
 <td>Perform <a href="#using-history-expansion">history</a>, doskey alias, and environment variable expansion in the current input line.</td>
 </tr>
 <tr>
-<td align="center"><code>clink-find-conhost</code></td>
-<td>Activates the &quot;Find&quot; dialog when running in a standard console window (hosted by the OS conhost).  This is equivalent to picking &quot;Find...&quot; from the console window&#39;s system menu.</td>
+<td><code>clink-find-conhost</code></td>
+<td align="center"></td>
+<td>Activates the &quot;Find&quot; dialog when running in a standard console window (hosted by the OS conhost).  This is equivalent to picking &quot;Find...&quot; from the console window&#39;s system menu. When <a href="#default_bindings"><code>clink.default_bindings</code></a> is enabled, this is bound to <kbd>Ctrl</kbd>-<kbd>f</kbd>.</td>
 </tr>
 <tr>
-<td align="center"><code>clink-insert-dot-dot</code></td>
+<td><code>clink-insert-dot-dot</code></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>a</kbd></td>
 <td>Inserts <code>..\</code> at the cursor.</td>
 </tr>
 <tr>
-<td align="center"><code>clink-magic-suggest-space</code></td>
+<td><code>clink-magic-suggest-space</code></td>
+<td align="center"></td>
 <td>Inserts the next full word of the suggestion (if any) up to a space, and also inserts a space.</td>
 </tr>
 <tr>
-<td align="center"><code>clink-mark-conhost</code></td>
-<td>Activates the &quot;Mark&quot; mode when running in a standard console window (hosted by the OS conhost).  This is equivalent to picking &quot;Mark&quot; from the console window&#39;s system menu.</td>
+<td><code>clink-mark-conhost</code></td>
+<td align="center"></td>
+<td>Activates the &quot;Mark&quot; mode when running in a standard console window (hosted by the OS conhost).  This is equivalent to picking &quot;Mark&quot; from the console window&#39;s system menu. When <a href="#default_bindings"><code>clink.default_bindings</code></a> is enabled, this is bound to <kbd>Ctrl</kbd>-<kbd>m</kbd>.</td>
 </tr>
 <tr>
-<td align="center"><code>clink-menu-complete-numbers</code></td>
+<td><code>clink-menu-complete-numbers</code></td>
+<td align="center"></td>
 <td>Like <code>menu-complete</code>, but for numbers from the console screen (3 digits or more, up to hexadecimal).</td>
 </tr>
 <tr>
-<td align="center"><code>clink-menu-complete-numbers-backward</code></td>
+<td><code>clink-menu-complete-numbers-backward</code></td>
+<td align="center"></td>
 <td>Like <code>menu-complete-backward</code>, but for numbers from the console screen (3 digits or more, up to hexadecimal).</td>
 </tr>
 <tr>
-<td align="center"><code>clink-old-menu-complete-numbers</code></td>
+<td><code>clink-old-menu-complete-numbers</code></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>n</kbd></td>
 <td>Like <code>old-menu-complete</code>, but for numbers from the console screen (3 digits or more, up to hexadecimal).</td>
 </tr>
 <tr>
-<td align="center"><code>clink-old-menu-complete-numbers-backward</code></td>
+<td><code>clink-old-menu-complete-numbers-backward</code></td>
+<td align="center"></td>
 <td>Like <code>old-menu-complete-backward</code>, but for numbers from the console screen (3 digits or more, up to hexadecimal).</td>
 </tr>
 <tr>
-<td align="center"><code>clink-paste</code></td>
+<td><code>clink-paste</code></td>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>v</kbd></td>
 <td>Paste the clipboard at the cursor.</td>
 </tr>
 <tr>
-<td align="center"><code>clink-popup-complete</code></td>
+<td><code>clink-popup-complete</code></td>
+<td align="center"></td>
 <td>Show a <a href="#popupwindow">popup window</a> that lists the available completions.</td>
 </tr>
 <tr>
-<td align="center"><code>clink-popup-complete-numbers</code></td>
+<td><code>clink-popup-complete-numbers</code></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>N</kbd></td>
 <td>Like <code>clink-popup-complete</code>, but for numbers from the console screen (3 digits or more, up to hexadecimal).</td>
 </tr>
 <tr>
-<td align="center"><code>clink-popup-directories</code></td>
+<td><code>clink-popup-directories</code></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>PgUp</kbd></td>
 <td>Show a <a href="#popupwindow">popup window</a> of recent current working directories.  In the popup, use <kbd>Enter</kbd> to <code>cd /d</code> to the highlighted directory.</td>
 </tr>
 <tr>
-<td align="center"><code>clink-popup-history</code></td>
+<td><code>clink-popup-history</code></td>
+<td align="center"></td>
 <td>Show a <a href="#popupwindow">popup window</a> that lists the command history (if any text precedes the cursor then it uses an anchored search to filter the list).  In the popup, use <kbd>Enter</kbd> to execute the highlighted command.</td>
 </tr>
 <tr>
-<td align="center"><code>clink-popup-show-help</code></td>
-<td>Show a <a href="#popupwindow">popup window</a> that lists the currently active key bindings, and can invoke a selected key binding.  The default key binding for this is <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>H</kbd>.</td>
+<td><code>clink-popup-show-help</code></td>
+<td align="center"></td>
+<td>Show a <a href="#popupwindow">popup window</a> that lists the currently active key bindings, and can invoke a selected key binding.  The default key binding for this is <kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>H</kbd>.</td>
 </tr>
 <tr>
-<td align="center"><code>clink-reload</code></td>
+<td><code>clink-reload</code></td>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>r</kbd></td>
 <td>Reloads the .inputrc file and the Lua scripts.</td>
 </tr>
 <tr>
-<td align="center"><code>clink-reset-line</code></td>
+<td><code>clink-reset-line</code></td>
+<td align="center"><kbd>Esc</kbd></td>
 <td>Clears the current line.</td>
 </tr>
 <tr>
-<td align="center"><code>clink-scroll-bottom</code></td>
+<td><code>clink-scroll-bottom</code></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>End</kbd></td>
 <td>Scroll the console window to the bottom (the current input line).</td>
 </tr>
 <tr>
-<td align="center"><code>clink-scroll-line-down</code></td>
+<td><code>clink-scroll-line-down</code></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>Down</kbd></td>
 <td>Scroll the console window down one line.</td>
 </tr>
 <tr>
-<td align="center"><code>clink-scroll-line-up</code></td>
+<td><code>clink-scroll-line-up</code></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>Up</kbd></td>
 <td>Scroll the console window up one line.</td>
 </tr>
 <tr>
-<td align="center"><code>clink-scroll-page-down</code></td>
+<td><code>clink-scroll-page-down</code></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>PgDn</kbd></td>
 <td>Scroll the console window down one page.</td>
 </tr>
 <tr>
-<td align="center"><code>clink-scroll-page-up</code></td>
+<td><code>clink-scroll-page-up</code></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>PgUp</kbd></td>
 <td>Scroll the console window up one page.</td>
 </tr>
 <tr>
-<td align="center"><code>clink-scroll-top</code></td>
+<td><code>clink-scroll-top</code></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>Home</kbd></td>
 <td>Scroll the console window to the top.</td>
 </tr>
 <tr>
-<td align="center"><code>clink-select-complete</code></td>
+<td><code>clink-select-complete</code></td>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>Space</kbd></td>
 <td>Like <code>complete</code>, but shows interactive menu of matches and responds to arrow keys and typing to filter the matches.  While completing, <kbd>F1</kbd> toggles showing match descriptions at the bottom vs next to each match.</td>
 </tr>
 <tr>
-<td align="center"><code>clink-selectall-conhost</code></td>
-<td>Mimics the &quot;Select All&quot; command when running in a standard console window (hosted by the OS conhots).  Selects the input line text.  If already selected, then it invokes the &quot;Select All&quot; command from the console window&#39;s system menu and selects the entire screen buffer&#39;s contents.</td>
+<td><code>clink-selectall-conhost</code></td>
+<td align="center"></td>
+<td>Mimics the &quot;Select All&quot; command when running in a standard console window (hosted by the OS conhots).  Selects the input line text.  If already selected, then it invokes the &quot;Select All&quot; command from the console window&#39;s system menu and selects the entire screen buffer&#39;s contents. When <a href="#default_bindings"><code>clink.default_bindings</code></a> is enabled, this is bound to <kbd>Ctrl</kbd>-<kbd>a</kbd>.</td>
 </tr>
 <tr>
-<td align="center"><code>clink-shift-space</code></td>
-<td>Invokes the normal <kbd>Space</kbd> key binding, so that <kbd>Shift</kbd>+<kbd>Space</kbd> behaves the same as <kbd>Space</kbd>.</td>
+<td><code>clink-shift-space</code></td>
+<td align="center"><kbd>Shift</kbd>-<kbd>Space</kbd></td>
+<td>Invokes the normal <kbd>Space</kbd> key binding, so that <kbd>Shift</kbd>-<kbd>Space</kbd> behaves the same as <kbd>Space</kbd>.</td>
 </tr>
 <tr>
-<td align="center"><code>clink-show-help</code></td>
+<td><code>clink-show-help</code></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>h</kbd></td>
 <td>Lists the currently active key bindings using friendly key names.  A numeric argument affects showing categories and descriptions:  0 for neither, 1 for categories, 2 for descriptions, 3 for categories and descriptions (the default), 4 for all commands (even if not bound to a key).</td>
 </tr>
 <tr>
-<td align="center"><code>clink-show-help-raw</code></td>
+<td><code>clink-show-help-raw</code></td>
+<td align="center"></td>
 <td>Lists the currently active key bindings using raw key sequences.  A numeric argument affects showing categories and descriptions:  0 for neither, 1 for categories, 2 for descriptions, 3 for categories and descriptions (the default), 4 for all commands (even if not bound to a key).</td>
 </tr>
 <tr>
-<td align="center"><code>clink-up-directory</code></td>
+<td><code>clink-up-directory</code></td>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>PgUp</kbd></td>
 <td>Changes to the parent directory.</td>
 </tr>
 <tr>
-<td align="center"><code>clink-what-is</code></td>
+<td><code>clink-what-is</code></td>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>/</kbd></td>
 <td>Show the key binding for the next key sequence that is input.</td>
 </tr>
 <tr>
-<td align="center"><code>cua-backward-char</code></td>
+<td><code>cua-backward-char</code></td>
+<td align="center"><kbd>Shift</kbd>-<kbd>Left</kbd></td>
 <td>Extends the selection and moves back a character.</td>
 </tr>
 <tr>
-<td align="center"><code>cua-backward-word</code></td>
+<td><code>cua-backward-word</code></td>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>Left</kbd></td>
 <td>Extends the selection and moves back a word.</td>
 </tr>
 <tr>
-<td align="center"><code>cua-beg-of-line</code></td>
+<td><code>cua-beg-of-line</code></td>
+<td align="center"><kbd>Shift</kbd>-<kbd>Home</kbd></td>
 <td>Extends the selection and moves to the start of the current line.</td>
 </tr>
 <tr>
-<td align="center"><code>cua-copy</code></td>
+<td><code>cua-copy</code></td>
+<td align="center"><kbd>Shift</kbd>-<kbd>Ins</kbd></td>
 <td>Copies the selection to the clipboard.</td>
 </tr>
 <tr>
-<td align="center"><code>cua-cut</code></td>
+<td><code>cua-cut</code></td>
+<td align="center"><kbd>Shift</kbd>-<kbd>Del</kbd></td>
 <td>Cuts the selection to the clipboard.</td>
 </tr>
 <tr>
-<td align="center"><code>cua-end-of-line</code></td>
+<td><code>cua-end-of-line</code></td>
+<td align="center"><kbd>Shift</kbd>-<kbd>End</kbd></td>
 <td>Extends the selection and moves to the end of the line.</td>
 </tr>
 <tr>
-<td align="center"><code>cua-forward-char</code></td>
+<td><code>cua-forward-char</code></td>
+<td align="center"><kbd>Shift</kbd>-<kbd>Right</kbd></td>
 <td>Extends the selection and moves forward a character, or inserts the next full suggested word up to a space.</td>
 </tr>
 <tr>
-<td align="center"><code>cua-forward-word</code></td>
+<td><code>cua-forward-word</code></td>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>Right</kbd></td>
 <td>Extends the selection and moves forward a word.</td>
 </tr>
 <tr>
-<td align="center"><code>cua-select-all</code></td>
+<td><code>cua-next-screen-line</code></td>
+<td align="center"><kbd>Shift</kbd>-<kbd>Down</kbd></td>
+<td>Extends the selection down one line.</td>
+</tr>
+<tr>
+<td><code>cua-previous-screen-line</code></td>
+<td align="center"><kbd>Shift</kbd>-<kbd>Up</kbd></td>
+<td>Extends the selection up one line.</td>
+</tr>
+<tr>
+<td><code>cua-select-all</code></td>
+<td align="center"></td>
 <td>Extends the selection to the entire current line.</td>
 </tr>
 <tr>
-<td align="center"><code>cua-select-word</code></td>
+<td><code>cua-select-word</code></td>
+<td align="center"></td>
 <td>Selects the word at the cursor.</td>
 </tr>
 <tr>
-<td align="center"><code>edit-and-execute-command</code></td>
-<td>Invoke an editor on the current input line, and execute the result as commands.  This attempts to invoke %VISUAL%, %EDITOR%, or notepad.exe as the editor, in that order.</td>
+<td><code>edit-and-execute-command</code></td>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>e</kbd></td>
+<td>Invoke an editor on the current input line, and execute the result as commands.  This attempts to invoke <code>%VISUAL%</code>, <code>%EDITOR%</code>, or <code>notepad.exe</code> as the editor, in that order.</td>
 </tr>
 <tr>
-<td align="center"><code>glob-complete-word</code></td>
+<td><code>glob-complete-word</code></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>g</kbd></td>
 <td>Perform wildcard completion on the text before the cursor point, with a <code>*</code> implicitly appended.</td>
 </tr>
 <tr>
-<td align="center"><code>glob-expand-word</code></td>
+<td><code>glob-expand-word</code></td>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>*</kbd></td>
 <td>Insert all the wildcard completions that <code>glob-list-expansions</code> would list.  If a numeric argument is supplied, a <code>*</code> is implicitly appended before completion.</td>
 </tr>
 <tr>
-<td align="center"><code>glob-list-expansions</code></td>
+<td><code>glob-list-expansions</code></td>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>g</kbd></td>
 <td>List the possible wildcard completions of the text before the cursor point.  If a numeric argument is supplied, a <code>*</code> is implicitly appended before completion.</td>
 </tr>
 <tr>
-<td align="center"><code>history-and-alias-expand-line</code></td>
+<td><code>history-and-alias-expand-line</code></td>
+<td align="center"></td>
 <td>A synonym for <code>clink-expand-history-and-alias</code>.</td>
 </tr>
 <tr>
-<td align="center"><code>history-expand-line</code></td>
+<td><code>history-expand-line</code></td>
+<td align="center"></td>
 <td>A synonym for <code>clink-expand-history</code>.</td>
 </tr>
 <tr>
-<td align="center"><code>insert-last-argument</code></td>
+<td><code>insert-last-argument</code></td>
+<td align="center"></td>
 <td>A synonym for <code>yank-last-arg</code>.</td>
 </tr>
 <tr>
-<td align="center"><code>magic-space</code></td>
+<td><code>magic-space</code></td>
+<td align="center"></td>
 <td>Perform <a href="#using-history-expansion">history</a> expansion on the text before the cursor position and insert a space.</td>
 </tr>
 <tr>
-<td align="center"><code>old-menu-complete-backward</code></td>
+<td><code>old-menu-complete-backward</code></td>
+<td align="center"></td>
 <td>Like <code>old-menu-complete</code>, but in reverse.</td>
 </tr>
 <tr>
-<td align="center"><code>remove-history</code></td>
+<td><code>remove-history</code></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>d</kbd></td>
 <td>While searching history, removes the current line from the history.</td>
 </tr>
 <tr>
-<td align="center"><code>shell-expand-line</code></td>
+<td><code>shell-expand-line</code></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>e</kbd></td>
 <td>A synonym for <code>clink-expand-line</code>.</td>
 </tr>
 <tr>
-<td align="center"><code>win-copy-history-number</code></td>
+<td><code>win-copy-history-number</code></td>
+<td align="center"><kbd>F9</kbd></td>
 <td>Enter a history number and replace the input line with the history line (mimics Windows console <kbd>F9</kbd>).</td>
 </tr>
 <tr>
-<td align="center"><code>win-copy-up-to-char</code></td>
+<td><code>win-copy-up-to-char</code></td>
+<td align="center"><kbd>F2</kbd></td>
 <td>Enter a character and copy up to it from the previous command (mimics Windows console <kbd>F2</kbd>).</td>
 </tr>
 <tr>
-<td align="center"><code>win-copy-up-to-end</code></td>
+<td><code>win-copy-up-to-end</code></td>
+<td align="center"><kbd>F3</kbd></td>
 <td>Copy the rest of the previous command (mimics Windows console <kbd>F3</kbd>).</td>
 </tr>
 <tr>
-<td align="center"><code>win-cursor-forward</code></td>
+<td><code>win-cursor-forward</code></td>
+<td align="center"><kbd>F1</kbd></td>
 <td>Move cursor forward, or at end of line copy character from previous command, or insert suggestion (mimics Windows console <kbd>F1</kbd> and <kbd>Right</kbd>).</td>
 </tr>
 <tr>
-<td align="center"><code>win-delete-up-to-char</code></td>
+<td><code>win-delete-up-to-char</code></td>
+<td align="center"><kbd>F4</kbd></td>
 <td>Enter a character and delete up to it in the input line (mimics Windows console <kbd>F4</kbd>).</td>
 </tr>
 <tr>
-<td align="center"><code>win-history-list</code></td>
+<td><code>win-history-list</code></td>
+<td align="center"><kbd>F7</kbd></td>
 <td>Executes a history entry from a list (mimics Windows console <kbd>F7</kbd>).</td>
 </tr>
 <tr>
-<td align="center"><code>win-insert-eof</code></td>
+<td><code>win-insert-eof</code></td>
+<td align="center"><kbd>F6</kbd></td>
 <td>Insert ^Z (mimics Windows console <kbd>F6</kbd>).</td>
 </tr>
 </tbody></table>
@@ -2167,7 +3377,7 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 <p><a name="popupwindow"></a></p>
 <h2 id="popup-windows">Popup Windows</h2>
 <p>Some commands show a searchable popup window that lists the available completions, directory history, or command history.</p>
-<p>For example, <code>win-history-list</code> (<kbd>F7</kbd>) and <code>clink-popup-directories</code> (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>PgUp</kbd>) show popup windows.</p>
+<p>For example, <code>win-history-list</code> (<kbd>F7</kbd>) and <code>clink-popup-directories</code> (<kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>PgUp</kbd>) show popup windows.</p>
 <p>Here&#39;s how the popup windows work:</p>
 <table>
 <thead>
@@ -2185,12 +3395,12 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 <td>Inserts the highlighted completion, changes to the highlighted directory, or executes the highlighted command.</td>
 </tr>
 <tr>
-<td align="center"><kbd>Shift</kbd>+<kbd>Enter</kbd></td>
+<td align="center"><kbd>Shift</kbd>-<kbd>Enter</kbd></td>
 <td>Inserts the highlighted completion, inserts the highlighted directory, or jumps to the highlighted command history entry without executing it.</td>
 </tr>
 <tr>
-<td align="center"><kbd>Ctrl</kbd>+<kbd>Enter</kbd></td>
-<td>Same as <kbd>Shift</kbd>+<kbd>Enter</kbd>.</td>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>Enter</kbd></td>
+<td>Same as <kbd>Shift</kbd>-<kbd>Enter</kbd>.</td>
 </tr>
 <tr>
 <td align="center"><kbd>Del</kbd></td>
@@ -2214,15 +3424,15 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 <td>Go to the next match.</td>
 </tr>
 <tr>
-<td align="center"><kbd>Ctrl</kbd>+<kbd>L</kbd></td>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>L</kbd></td>
 <td>Go to the next match.</td>
 </tr>
 <tr>
-<td align="center"><kbd>Shift</kbd>+<kbd>F3</kbd></td>
+<td align="center"><kbd>Shift</kbd>-<kbd>F3</kbd></td>
 <td>Go to the previous match.</td>
 </tr>
 <tr>
-<td align="center"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd></td>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>L</kbd></td>
 <td>Go to the previous match.</td>
 </tr>
 </tbody></table>
@@ -2248,7 +3458,7 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 <li>All directories listed in the <code>%CLINK_PATH%</code> environment variable, separated by semicolons.</li>
 <li>All directories registered by the <code>clink installscripts</code> command.</li>
 </ol>
-<p>Lua scripts are loaded once and are only reloaded if forced because the scripts locations change, the <code>clink-reload</code> command is invoked (<kbd>Ctrl</kbd>+<kbd>X</kbd>,<kbd>Ctrl</kbd>+<kbd>R</kbd>), or the <code>lua.reload_scripts</code> setting changes (or is True).</p>
+<p>Lua scripts are loaded once and are only reloaded if forced because the scripts locations change, the <code>clink-reload</code> command is invoked (<kbd>Ctrl</kbd>-<kbd>X</kbd>,<kbd>Ctrl</kbd>-<kbd>R</kbd>), or the <code>lua.reload_scripts</code> setting changes (or is True).</p>
 <p>Run <code>clink info</code> to see the script paths for the current session.</p>
 <h3 id="tips-for-starting-to-write-lua-scripts">Tips for starting to write Lua scripts</h3>
 <ul>
@@ -2555,12 +3765,12 @@ wombles  wonder   world
 C:&gt;foobar hello -foo wo<span style="color:#ffffff">_</span>
 </code></pre>
 
-<p>When displaying possible completions, flag matches are only shown if the flag character has been input (so <code>command </code> and <kbd>Alt</kbd>+<kbd>=</kbd> would list only non-flag matches, or <code>command -</code> and <kbd>Alt</kbd>+<kbd>=</kbd> would list only flag matches).</p>
+<p>When displaying possible completions, flag matches are only shown if the flag character has been input (so <code>command </code> and <kbd>Alt</kbd>-<kbd>=</kbd> would list only non-flag matches, or <code>command -</code> and <kbd>Alt</kbd>-<kbd>=</kbd> would list only flag matches).</p>
 <p>If a command doesn&#39;t have an argmatcher but is a doskey macro, Clink automatically expands the doskey macro and looks for an argmatcher for the expanded command.  A macro like <code>gco=git checkout $*</code> automatically reuses a <code>git</code> argmatcher and produces completions for its <code>checkout</code> argument.  However, it only expands the doskey macro up to the first <code>$</code>, so complex aliases like <code>foo=app 2$gnul text $*</code> or <code>foo=$2 $1</code> might behave strangely.</p>
 <h3 id="descriptions-for-flags-and-arguments">Descriptions for Flags and Arguments</h3>
 <p>Flags and arguments may optionally have descriptions associated with them.  The descriptions, if any, are displayed when listing possible completions.</p>
 <p>Use <a href="#_argmatcher:adddescriptions">_argmatcher:adddescriptions()</a> to add descriptions for flags and/or arguments.  Refer to its documentation for further details about how to use it, including how to also show arguments that a flag accepts.</p>
-<p>For example, with the following matcher, typing <code>foo -</code><kbd>Alt</kbd>+<kbd>=</kbd> will list all of the flags, plus descriptions for each.</p>
+<p>For example, with the following matcher, typing <code>foo -</code><kbd>Alt</kbd>-<kbd>=</kbd> will list all of the flags, plus descriptions for each.</p>
 <pre><code class="language-lua">clink.argmatcher(&quot;foo&quot;)
 :addflags(&quot;-?&quot;, &quot;-h&quot;, &quot;-n&quot;, &quot;-v&quot;, &quot;--help&quot;, &quot;--nothing&quot;, &quot;--verbose&quot;)
 :addarg(&quot;print&quot;, &quot;delete&quot;)
@@ -3196,10 +4406,10 @@ end
 <p><a name="customisingsuggestions"></a></p>
 <h2 id="customizing-suggestions">Customizing Suggestions</h2>
 <p>Clink can offer suggestions how to complete a command as you type, and you can select how it generates suggestions.</p>
-<p>Turn on <a href="#autosuggest_enable">automatic suggestions</a> with <code>clink set autosuggest.enable true</code>.  Once enabled, Clink will show suggestions in a <a href="#color.suggestion">muted color</a> after the end of the typed command.  Accept the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, accept the next word of the suggestion with <kbd>Ctrl</kbd>+<kbd>Right</kbd>, or accept the next full word of the suggestion up to a space with <kbd>Shift</kbd>+<kbd>Right</kbd>.  You can ignore the suggestion if it isn&#39;t what you want; suggestions have no effect unless you accept them first.</p>
+<p>Turn on <a href="#autosuggest_enable">automatic suggestions</a> with <code>clink set autosuggest.enable true</code>.  Once enabled, Clink will show suggestions in a <a href="#color.suggestion">muted color</a> after the end of the typed command.  Accept the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, accept the next word of the suggestion with <kbd>Ctrl</kbd>-<kbd>Right</kbd>, or accept the next full word of the suggestion up to a space with <kbd>Shift</kbd>-<kbd>Right</kbd>.  You can ignore the suggestion if it isn&#39;t what you want; suggestions have no effect unless you accept them first.</p>
 <p>Scripts can provide custom suggestion generators, in addition to the built-in options:</p>
 <ol>
-<li>Create a new suggestion generator by calling [clink.suggester()][#clink.suggester] along with a name that identifies the suggestion generator, and can be added to the <a href="#autosuggest_strategy"><code>autosuggest.strategy</code></a> setting.</li>
+<li>Create a new suggestion generator by calling <a href="#clink.suggester">clink.suggester()</a> along with a name that identifies the suggestion generator, and can be added to the <a href="#autosuggest_strategy"><code>autosuggest.strategy</code></a> setting.</li>
 <li>Define a <code>:suggest()</code> function on the returned suggestion generator.</li>
 </ol>
 <p>The function takes a <a href="#line_state">line_state</a> argument that contains the input line, and a <a href="#matches">matches</a> argument that contains the possible matches from the completion engine.  If the function returns nil, the next generator listed in the strategy is called.  If the function returns a string (even an empty string), then the string is used as the suggestion.</p>
@@ -3239,86 +4449,25 @@ end
 <p><a name="keybindings"></a></p>
 <h2 id="customizing-key-bindings">Customizing Key Bindings</h2>
 <p>Key bindings are defined in .inputrc files.</p>
-<p>The <code>clink-show-help</code> command is bound to <kbd>Alt</kbd>+<kbd>H</kbd> and lists all currently active key bindings.  The list displays &quot;friendly&quot; key names, and these names are generally not suitable for use in .inputrc files.  For example &quot;Up&quot; is the friendly name for <code>&quot;\e[A&quot;</code>, and &quot;A-C-F2&quot; is the friendly name for <code>&quot;\e\e[1;5Q&quot;</code>.  To see key sequence strings suitable for use in .inputrc files use <code>clink echo</code> as described below.</p>
+<p>The <code>clink-show-help</code> command is bound to <kbd>Alt</kbd>-<kbd>H</kbd> and lists all currently active key bindings.  The list displays &quot;friendly&quot; key names, and these names are generally not suitable for use in .inputrc files.  For example &quot;Up&quot; is the friendly name for <code>&quot;\e[A&quot;</code>, and &quot;A-C-F2&quot; is the friendly name for <code>&quot;\e\e[1;5Q&quot;</code>.  To see key sequence strings suitable for use in .inputrc files use <code>clink echo</code> as described below.</p>
 <table class="linkmenu">
-<tr class="lmtr"><td class="lmtd"><a href="#the-inputrc-file">The .inputrc file</a></td><td class="lmtd">A quick summary of what key binding lines look like.</td></tr>
-<tr class="lmtr"><td class="lmtd"><a href="#sample-inputrc-file">Sample .inputrc file</a></td><td class="lmtd">Some sample key bindings.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#the-inputrc-file">The .inputrc file</a></td><td class="lmtd">Where to find the .inputrc file, and more information about it.</td></tr>
 <tr class="lmtr"><td class="lmtd"><a href="#discoverkeysequences">Discovering Clink key sequences</a></td><td class="lmtd">How to find key names to use for key bindings.</td></tr>
 <tr class="lmtr"><td class="lmtd"><a href="#specialkeys">Binding special keys</a></td><td class="lmtd">A table of special key names.</td></tr>
 <tr class="lmtr"><td class="lmtd"><a href="#luakeybindings">Lua key bindings</a></td><td class="lmtd">How to bind keys to Lua functions.</td></tr>
+<tr class="lmtr"><td class="lmtd"><a href="#nometakey">I do not have a Meta or <kbd>Alt</kbd> key</a></td><td class="lmtd">What to do if your keyboard doesn't have any <kbd>Alt</kbd> or Meta keys.</td></tr>
 </table>
 
 <h3 id="the-inputrc-file">The .inputrc file</h3>
 <p>You can use <code>clink info</code> to find the directories and configuration files for the current Clink session, including where the .inputrc file is located, or can be located.  See the <a href="#init-file">Readline Init File</a> section for detailed information about .inputrc files.</p>
-<p>Here is a quick summary about key binding lines in .inputrc files:</p>
-<ul>
-<li>A key binding is <code><span class="arg">name</span>: <span class="arg">function</span></code> or <code><span class="arg">name</span>: "<span class="arg">literal text</span>"</code>.</li>
-<li>Key names are like this:<ul>
-<li><code>C-a</code> and <code>&quot;\C-a&quot;</code> are both <kbd>Ctrl</kbd>+<kbd>a</kbd>.</li>
-<li><code>M-a</code> and <code>&quot;\M-a&quot;</code> are both <kbd>Alt</kbd>+<kbd>a</kbd>.</li>
-<li><code>M-C-a</code> and <code>&quot;\M-\C-a&quot;</code> are both <kbd>Alt</kbd>+<kbd>Ctrl</kbd>+<kbd>a</kbd>.</li>
-<li><code>hello</code> is just <kbd>h</kbd>; the <code>ello</code> is a syntax error and is silently discarded by Readline.</li>
-<li><code>&quot;hello&quot;</code> is the series of keys <kbd>h</kbd>,<kbd>e</kbd>,<kbd>l</kbd>,<kbd>l</kbd>,<kbd>o</kbd>.</li>
-<li>Special keys like <kbd>Up</kbd> are represented by VT220 escape codes such as<code>&quot;\e[A&quot;</code> (see <a href="#specialkeys">Binding special keys</a> for more info).</li>
-</ul>
-</li>
-<li>Key bindings can be either functions or macros (literal text):<ul>
-<li><code>blah-blah</code> binds to a function named &quot;blah-blah&quot;.</li>
-<li><code>&quot;blah-blah&quot;</code> inserts the literal text &quot;blah-blah&quot;.</li>
-</ul>
-</li>
-</ul>
-<p>See <a href="#discoverkeysequences">Discovering Clink key sequences</a> to learn how to find key names for keys that you want to bind.</p>
-<h3 id="sample-inputrc-file">Sample .inputrc file</h3>
-<p>Here is a sample <code>.inputrc</code> file with some of the key bindings that I use:</p>
-<pre><code class="plaintext"><span class="hljs-meta">$if clink</span>           <span class="hljs-comment"># begin clink-only section</span>
-
-<span class="hljs-comment"># The following key bindings are for emacs mode.</span>
-<span class="hljs-meta">set keymap emacs</span>
-
-<span class="hljs-comment"># Completion key bindings.</span>
-<span class="hljs-string">"\t"</span>:               old-menu-complete               <span class="hljs-comment"># Tab</span>
-<span class="hljs-string">"\e[Z"</span>:             old-menu-complete-backward      <span class="hljs-comment"># Shift+Tab</span>
-<span class="hljs-string">"\e[27;5;9~"</span>:       clink-popup-complete            <span class="hljs-comment"># Ctrl+Tab</span>
-
-<span class="hljs-comment"># Some key bindings I got used to from 4Dos/4NT/Take Command.</span>
-C-b:                                                <span class="hljs-comment"># Ctrl+B (cleared because I redefined Ctrl+F)</span>
-C-d:                remove-history                  <span class="hljs-comment"># Ctrl+D (replaces `delete-char`)</span>
-C-f:                clink-expand-doskey-alias       <span class="hljs-comment"># Ctrl+F (replaces `forward-char`)</span>
-C-k:                add-history                     <span class="hljs-comment"># Ctrl+K (replaces `kill-line`)</span>
-<span class="hljs-string">"\e[A"</span>:             history-search-backward         <span class="hljs-comment"># Up (replaces `previous-history`)</span>
-<span class="hljs-string">"\e[B"</span>:             history-search-forward          <span class="hljs-comment"># Down (replaces `next-history`)</span>
-<span class="hljs-string">"\e[5~"</span>:            clink-popup-history             <span class="hljs-comment"># PgUp (replaces `history-search-backward`)</span>
-<span class="hljs-string">"\e[6~"</span>:                                            <span class="hljs-comment"># PgDn (cleared because I redefined PgUp)</span>
-<span class="hljs-string">"\e[1;5F"</span>:          end-of-line                     <span class="hljs-comment"># Ctrl+End (replaces `kill-line`)</span>
-<span class="hljs-string">"\e[1;5H"</span>:          beginning-of-line               <span class="hljs-comment"># Ctrl+Home (replaces `backward-kill-line`)</span>
-
-<span class="hljs-comment"># Some key bindings handy in default (conhost) console windows.</span>
-M-b:                                                <span class="hljs-comment"># Alt+B (cleared because I redefined Alt+F)</span>
-M-f:                clink-find-conhost              <span class="hljs-comment"># Alt+F for "Find..." from the console's system menu</span>
-M-m:                clink-mark-conhost              <span class="hljs-comment"># Alt+M for "Mark" from the console's system menu</span>
-
-<span class="hljs-comment"># Some key bindings for interrogating the Readline configuration.</span>
-<span class="hljs-string">"\C-x\C-f"</span>:         dump-functions                  <span class="hljs-comment"># Ctrl+X, Ctrl+F</span>
-<span class="hljs-string">"\C-x\C-m"</span>:         dump-macros                     <span class="hljs-comment"># Ctrl+X, Ctrl+M</span>
-<span class="hljs-string">"\C-x\C-v"</span>:         dump-variables                  <span class="hljs-comment"># Ctrl+X, Ctrl+V</span>
-
-<span class="hljs-comment"># Misc other key bindings.</span>
-<span class="hljs-string">"\e[27;2;32~"</span>:      clink-magic-suggest-space       <span class="hljs-comment"># Shift+Space</span>
-<span class="hljs-string">"\e[5;6~"</span>:          clink-popup-directories         <span class="hljs-comment"># Ctrl+Shift+PgUp</span>
-C-_:                kill-line                       <span class="hljs-comment"># Ctrl+- (replaces `undo`)</span>
-
-<span class="hljs-meta">$endif</span>              <span class="hljs-comment"># end clink-only section</span>
-</code></pre>
-
 <blockquote>
 <p><strong>Note:</strong> Third party console hosts such as ConEmu may have their own key bindings that supersede Clink.  They usually have documentation for how to change or disable their key bindings to allow console programs to handle the keys instead.</p>
 </blockquote>
 <p><a name="discoverkeysequences"></a></p>
 <h3 id="discovering-clink-key-sequences">Discovering Clink key sequences</h3>
 <p>Clink provides an easy way to find the key sequence for any key combination that Clink supports. Run <code>clink echo</code> and then press key combinations; the associated key binding sequence is printed to the console output and can be used for a key binding in the inputrc file.</p>
-<p>A chord can be formed by concatenating multiple key binding sequences. For example, <code>&quot;\C-X&quot;</code> and <code>&quot;\e[H&quot;</code> can be concatenated to form <code>&quot;\C-X\e[H&quot;</code> representing the chord <kbd>Ctrl</kbd>+<kbd>X</kbd>,<kbd>Home</kbd>.</p>
-<p>When finished, press <kbd>Ctrl</kbd>+<kbd>C</kbd> to exit from <code>clink echo</code>.</p>
+<p>A chord can be formed by concatenating multiple key binding sequences. For example, <code>&quot;\C-X&quot;</code> and <code>&quot;\e[H&quot;</code> can be concatenated to form <code>&quot;\C-X\e[H&quot;</code> representing the chord <kbd>Ctrl</kbd>-<kbd>X</kbd>,<kbd>Home</kbd>.</p>
+<p>When finished, press <kbd>Ctrl</kbd>-<kbd>C</kbd> to exit from <code>clink echo</code>.</p>
 <blockquote>
 <p><strong>Note:</strong> With non-US keyboard layouts, <code>clink echo</code> is not able to ignore dead key input (accent keys, for example).  It prints the key sequence for the dead key itself, which is not useful.  You can ignore that and press the next key, and then it prints the correct key sequence to use in key bindings.</p>
 </blockquote>
@@ -3332,11 +4481,11 @@ C-_:                kill-line                       <span class="hljs-comment">#
 <th align="center">Normal</th>
 <th align="center">Shift</th>
 <th align="center">Ctrl</th>
-<th align="center">Ctrl+Shift</th>
+<th align="center">Ctrl-Shift</th>
 <th align="center">Alt</th>
-<th align="center">Alt+Shift</th>
-<th align="center">Alt+Ctrl</th>
-<th align="center">Alt+Ctrl+Shift</th>
+<th align="center">Alt-Shift</th>
+<th align="center">Alt-Ctrl</th>
+<th align="center">Alt-Ctrl-Shift</th>
 </tr>
 </thead>
 <tbody><tr>
@@ -3621,11 +4770,11 @@ C-_:                kill-line                       <span class="hljs-comment">#
 <tr>
 <th align="center"></th>
 <th align="center">Ctrl</th>
-<th align="center">Ctrl+Shift</th>
+<th align="center">Ctrl-Shift</th>
 <th align="center">Alt</th>
-<th align="center">Alt+Shift</th>
-<th align="center">Alt+Ctrl</th>
-<th align="center">Alt+Ctrl+Shift</th>
+<th align="center">Alt-Shift</th>
+<th align="center">Alt-Ctrl</th>
+<th align="center">Alt-Ctrl-Shift</th>
 </tr>
 </thead>
 <tbody><tr>
@@ -3665,14 +4814,14 @@ C-_:                kill-line                       <span class="hljs-comment">#
 <td align="center"><code>\e[27;8;219~</code></td>
 </tr>
 </tbody></table>
-<p>The <code>terminal.raw_esc</code> setting controls the binding sequence for the <kbd>Esc</kbd> key and a couple of other keys:</p>
+<p>The <a href="#terminal_raw_esc"><code>terminal.raw_esc</code></a> setting controls the binding sequence for the <kbd>Esc</kbd> key and a couple of other keys:</p>
 <table>
 <thead>
 <tr>
 <th align="left"><code>terminal.raw_esc</code> Setting Value</th>
 <th>Esc</th>
-<th>Alt+[</th>
-<th>Alt+Shift+O</th>
+<th>Alt-[</th>
+<th>Alt-Shift-O</th>
 </tr>
 </thead>
 <tbody><tr>
@@ -3723,8 +4872,8 @@ end
 </code></pre>
 <h4 id="advanced-example">Advanced example</h4>
 <p><a name="findlineexample"></a></p>
-<p>Here is an example that makes <kbd>F7</kbd>/<kbd>F8</kbd> jump to the previous/next screen line containing &quot;error&quot; or &quot;warn&quot; colored red or yellow, and makes <kbd>Shift</kbd>+<kbd>F7</kbd>/<kbd>Shift</kbd>+<kbd>F8</kbd> jump to the previous/next prompt line.</p>
-<p>One way to use these is when reviewing compiler errors after building a project at the command line.  Press <kbd>Shift</kbd>+<kbd>F7</kbd> to jump to the previous prompt line, and then use <kbd>F8</kbd> repeatedly to jump to each next compiler warning or error listed on the screen.</p>
+<p>Here is an example that makes <kbd>F7</kbd>/<kbd>F8</kbd> jump to the previous/next screen line containing &quot;error&quot; or &quot;warn&quot; colored red or yellow, and makes <kbd>Shift</kbd>-<kbd>F7</kbd>/<kbd>Shift</kbd>-<kbd>F8</kbd> jump to the previous/next prompt line.</p>
+<p>One way to use these is when reviewing compiler errors after building a project at the command line.  Press <kbd>Shift</kbd>-<kbd>F7</kbd> to jump to the previous prompt line, and then use <kbd>F8</kbd> repeatedly to jump to each next compiler warning or error listed on the screen.</p>
 <p>Example key bindings for the .inputrc file:</p>
 <pre><code class="plaintext"><span class="hljs-string">"\e[18~"</span>:       <span class="hljs-string">"luafunc:find_prev_colored_line"</span>
 <span class="hljs-string">"\e[19~"</span>:       <span class="hljs-string">"luafunc:find_next_colored_line"</span>
@@ -3936,6 +5085,12 @@ function find_next_colored_line(rl_buffer)
     end
 end
 </code></pre>
+<p><a name="nometakey"></a></p>
+<h3 id="i-do-not-have-a-meta-or-alt-key">I do not have a Meta or <kbd>Alt</kbd> key</h3>
+<p>If you do not have a Meta or <kbd>Alt</kbd> key, or another key working as a Meta key, there is another way to generate &quot;metafied&quot; keystrokes such as <kbd>M-k</kbd>.</p>
+<p>You can configure <code>clink set terminal.raw_esc true</code> to make the <kbd>Esc</kbd> work as it does in Unix and Linux, and then you can type <kbd>Esc</kbd> followed by <kbd>k</kbd>. This is known as &quot;metafying&quot; the <kbd>k</kbd> key.</p>
+<p>Clink is a Windows program, and so by default it makes the <kbd>Esc</kbd> key reset the input state, since that&#39;s how <kbd>Esc</kbd> generally works on Windows. When you enable the <a href="#terminal_raw_esc"><code>terminal.raw_esc</code></a> Clink setting, the <kbd>Esc</kbd> key changes its behavior, and pressing unbound special keys can land you in all of the same strange &quot;stuck input&quot; situations as in Unix and Linux.</p>
+<p>But it might be more convenient to acquire a keyboard that has an <kbd>Alt</kbd> key.</p>
 <h2 id="saved-command-history">Saved Command History</h2>
 <p>Clink has a list of commands from the current session, and it can be saved and loaded across sessions.</p>
 <p>A line won&#39;t be added to history if either of the following are true:</p>
