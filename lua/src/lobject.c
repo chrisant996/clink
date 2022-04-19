@@ -154,6 +154,29 @@ static lua_Number lua_strx2number (const char *s, char **endptr) {
 
 #endif
 
+#if defined(JH_LUA_BINCONST)
+static lua_Number lua_strb2number (const char *s, char **endptr) {
+  lua_Number r = 0.0;
+  int i = 0; int f = 0;
+  *endptr = cast(char *, s);  /* nothing is valid yet */
+  while (lisspace(cast_uchar(*s))) s++;  /* skip initial spaces */
+  if (!(*s == '0' && (*(s + 1) == 'b' || *(s + 1) == 'B')))  /* check '0b' */
+    return 0.0;  /* invalid format (no '0b') */
+  s += 2;  /* skip '0b' */
+  while ((*s == '0') || (*s == '1'))
+  {
+	f = 0;
+	r *= 2.0;
+	if (*s == '1') r += 1.0;
+	i++; s++;
+	while (*s == '_') {s++; f = 1;}
+  }
+  if ((i == 0) || (f > 0))
+    return 0.0;  /* invalid format */
+  *endptr = cast(char *, s);  /* valid up to here */
+  return r;
+}
+#endif
 
 int luaO_str2d (const char *s, size_t len, lua_Number *result) {
   char *endptr;
@@ -161,6 +184,10 @@ int luaO_str2d (const char *s, size_t len, lua_Number *result) {
     return 0;
   else if (strpbrk(s, "xX"))  /* hexa? */
     *result = lua_strx2number(s, &endptr);
+#if defined(JH_LUA_BINCONST)
+  else if (strpbrk(s, "bB")) /* bina? */
+    *result = lua_strb2number(s, &endptr);
+#endif
   else
     *result = lua_str2number(s, &endptr);
   if (endptr == s) return 0;  /* nothing recognized */

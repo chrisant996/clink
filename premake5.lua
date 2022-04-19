@@ -221,6 +221,7 @@ project("lua")
     language("c")
     kind("staticlib")
     defines("BUILD_LUA")
+    defines("JH_LUA_BINCONST")  -- support for binary literals
     files("lua/src/*.c")
     files("lua/src/*.h")
     excludes("lua/src/lua.c")

@@ -239,7 +239,11 @@ static void read_numeral (LexState *ls, SemInfo *seminfo) {
   for (;;) {
     if (check_next(ls, expo))  /* exponent part? */
       check_next(ls, "+-");  /* optional exponent sign */
+#if defined(JH_LUA_BINCONST)
+    if (lisxdigit(ls->current) || ls->current == '.' || ls->current == '_')
+#else
     if (lisxdigit(ls->current) || ls->current == '.')
+#endif
       save_and_next(ls);
     else  break;
   }
