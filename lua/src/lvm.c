@@ -246,11 +246,16 @@ int luaV_lessequal (lua_State *L, const TValue *l, const TValue *r) {
     return luai_numle(L, nvalue(l), nvalue(r));
   else if (ttisstring(l) && ttisstring(r))
     return l_strcmp(rawtsvalue(l), rawtsvalue(r)) <= 0;
-  else if ((res = call_orderTM(L, l, r, TM_LE)) >= 0)  /* first try `le' */
+  else if ((res = call_orderTM(L, l, r, TM_LE)) >= 0)  /* try 'le' */
     return res;
-  else if ((res = call_orderTM(L, r, l, TM_LT)) < 0)  /* else try `lt' */
-    luaG_ordererror(L, l, r);
-  return !res;
+  else {  /* try 'lt': */
+    L->ci->callstatus |= CIST_LEQ;  /* mark it is doing 'lt' for 'le' */
+    res = call_orderTM(L, r, l, TM_LT);
+    L->ci->callstatus ^= CIST_LEQ;  /* clear mark */
+    if (res < 0)
+      luaG_ordererror(L, l, r);
+    return !res;  /* result is negated */
+  }
 }
 
 
@@ -435,11 +440,11 @@ void luaV_finishOp (lua_State *L) {
     case OP_LE: case OP_LT: case OP_EQ: {
       int res = !l_isfalse(L->top - 1);
       L->top--;
-      /* metamethod should not be called when operand is K */
-      lua_assert(!ISK(GETARG_B(inst)));
-      if (op == OP_LE &&  /* "<=" using "<" instead? */
-          ttisnil(luaT_gettmbyobj(L, base + GETARG_B(inst), TM_LE)))
-        res = !res;  /* invert result */
+      if (ci->callstatus & CIST_LEQ) {  /* "<=" using "<" instead? */
+        lua_assert(op == OP_LE);
+        ci->callstatus ^= CIST_LEQ;  /* clear mark */
+        res = !res;  /* negate result */
+      }
       lua_assert(GET_OPCODE(*ci->u.l.savedpc) == OP_JMP);
       if (res != GETARG_A(inst))  /* condition failed? */
         ci->u.l.savedpc++;  /* skip jump instruction */
@@ -751,9 +756,8 @@ void luaV_execute (lua_State *L) {
       )
       vmcasenb(OP_RETURN,
         int b = GETARG_B(i);
-        if (b != 0) L->top = ra+b-1;
         if (cl->p->sizep > 0) luaF_close(L, base);
-        b = luaD_poscall(L, ra);
+        b = luaD_poscall(L, ra, (b != 0 ? b - 1 : L->top - ra));
         if (!(ci->callstatus & CIST_REENTRY))  /* 'ci' still the called one */
           return;  /* external invocation: return */
         else {  /* invocation via reentry: continue execution */

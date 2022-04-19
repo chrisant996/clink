@@ -324,6 +324,8 @@ static void adjust_assign (LexState *ls, int nvars, int nexps, expdesc *e) {
       luaK_nil(fs, reg, extra);
     }
   }
+  if (nexps > nvars)
+    ls->fs->freereg -= nexps - nvars;  /* remove extra values */
 }
 
 
@@ -1150,11 +1152,8 @@ static void assignment (LexState *ls, struct LHS_assign *lh, int nvars) {
     int nexps;
     checknext(ls, '=');
     nexps = explist(ls, &e);
-    if (nexps != nvars) {
+    if (nexps != nvars)
       adjust_assign(ls, nvars, nexps, &e);
-      if (nexps > nvars)
-        ls->fs->freereg -= nexps - nvars;  /* remove extra values */
-    }
     else {
       luaK_setoneret(ls->fs, &e);  /* close last expression */
       luaK_storevar(ls->fs, &lh->v, &e);
@@ -1220,7 +1219,7 @@ static void labelstat (LexState *ls, TString *label, int line) {
   checkrepeated(fs, ll, label);  /* check for repeated labels */
   checknext(ls, TK_DBCOLON);  /* skip double colon */
   /* create new entry for this label */
-  l = newlabelentry(ls, ll, label, line, fs->pc);
+  l = newlabelentry(ls, ll, label, line, luaK_getlabel(fs));
   skipnoopstat(ls);  /* skip other no-op statements */
   if (block_follow(ls, 0)) {  /* label is last no-op statement in the block? */
     /* assume that locals are already out of scope */
@@ -1384,7 +1383,7 @@ static void test_then_block (LexState *ls, int *escapelist) {
     luaK_goiffalse(ls->fs, &v);  /* will jump to label if condition is true */
     enterblock(fs, &bl, 0);  /* must enter block before 'goto' */
     gotostat(ls, v.t);  /* handle goto/break */
-    skipnoopstat(ls);  /* skip other no-op statements */
+    while (testnext(ls, ';')) {}  /* skip semicolons */
     if (block_follow(ls, 0)) {  /* 'goto' is the entire block? */
       leaveblock(fs);
       return;  /* and that is it */

@@ -101,6 +101,7 @@ typedef struct CallInfo {
 #define CIST_STAT	(1<<5)	/* call has an error status (pcall) */
 #define CIST_TAIL	(1<<6)	/* call was tail called */
 #define CIST_HOOKYIELD	(1<<7)	/* last hook called yielded */
+#define CIST_LEQ	(1<<8)  /* using __lt for __le */
 
 
 #define isLua(ci)	((ci)->callstatus & CIST_LUA)
