@@ -1309,6 +1309,24 @@ static int is_signaled(lua_State *state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  os.sleep
+/// -ver:   1.3.16
+/// -arg:   seconds:number
+/// Sleeps for the indicated duration, in seconds, with millisecond granularity.
+/// -show:  os.sleep(0.01)  -- Sleep for 10 milliseconds.
+static int sleep(lua_State *state)
+{
+    int isnum;
+    double sec = lua_tonumberx(state, -1, &isnum);
+    if (isnum)
+    {
+        const DWORD ms = DWORD(sec * 1000);
+        Sleep(ms);
+    }
+    return 0;
+}
+
+//------------------------------------------------------------------------------
 void os_lua_initialise(lua_state& lua)
 {
     struct {
@@ -1349,6 +1367,7 @@ void os_lua_initialise(lua_state& lua)
         { "setclipboardtext", &set_clipboard_text },
         { "executeyield_internal", &os_executeyield_internal },
         { "issignaled",  &is_signaled },
+        { "sleep",       &sleep },
         // UNDOCUMENTED; internal use only.
         { "_globdirs",   &glob_dirs },  // Public os.globdirs method is in core.lua.
         { "_globfiles",  &glob_files }, // Public os.globfiles method is in core.lua.
