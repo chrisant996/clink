@@ -160,6 +160,11 @@ extern void reset_keyseq_to_name_map();
 extern void set_prompt(const char* prompt, const char* rprompt, bool redisplay);
 extern bool can_suggest(const line_state& line);
 
+#ifdef DEBUG
+extern bool g_suppress_signal_assert;
+extern int clink_is_signaled();
+#endif
+
 
 
 //------------------------------------------------------------------------------
@@ -1017,6 +1022,10 @@ skip_errorlevel:
         break;
     }
 
+#ifdef DEBUG
+    const bool was_signaled = clink_is_signaled();
+#endif
+
     if (send_event)
     {
         lua_state& state = lua;
@@ -1090,6 +1099,11 @@ skip_errorlevel:
 
     m_prompt = nullptr;
     m_rprompt = nullptr;
+
+#ifdef DEBUG
+    if (!was_signaled && clink_is_signaled())
+        g_suppress_signal_assert = true;
+#endif
 
     return ret;
 }

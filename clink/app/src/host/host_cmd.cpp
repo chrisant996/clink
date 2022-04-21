@@ -494,6 +494,9 @@ void host_cmd::edit_line(wchar_t* chars, int max_chars, bool edit)
 }
 
 //------------------------------------------------------------------------------
+#ifdef DEBUG
+bool g_suppress_signal_assert = false;
+#endif
 BOOL WINAPI host_cmd::read_console(
     HANDLE input,
     void* _chars,
@@ -631,7 +634,10 @@ BOOL WINAPI host_cmd::read_console(
 
         // There's a race condition where this assert can fire, and that's fine.
         // The point is to make sure it generally doesn't bleed through to here.
-        assert(!clink_is_signaled());
+#ifdef DEBUG
+        assert(g_suppress_signal_assert || !clink_is_signaled());
+        g_suppress_signal_assert = false;
+#endif
     }
 
     // ReadConsole will also include the CRLF of the line that was input.

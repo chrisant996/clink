@@ -20,6 +20,11 @@ extern "C" {
 extern bool g_force_load_debugger;
 
 //------------------------------------------------------------------------------
+#ifdef DEBUG
+bool g_suppress_signal_assert = false;
+#endif
+
+//------------------------------------------------------------------------------
 void host_cmd_enqueue_lines(std::list<str_moveable>& lines, bool hide_prompt, bool show_line)
 {
     assert(false);
