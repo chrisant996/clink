@@ -929,7 +929,7 @@ skip_errorlevel:
 
             m_terminal.out->begin();
             m_terminal.out->end();
-            out.format(" echo %%errorlevel%% 2>nul >\"%s\"", tmp_errfile.c_str());
+            out.format(" set clink_dummy_capture_env= & echo %%errorlevel%% 2>nul >\"%s\"", tmp_errfile.c_str());
             resolved = true;
             ret = true;
             move_cursor_up_one_line();

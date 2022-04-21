@@ -641,17 +641,14 @@ bool set_env(const char* name, const char* value)
     if (value != nullptr)
         wvalue = value;
 
-    // Update C/C++ runtime so that Lua/etc are affected.
+    // Update the host's environment via the C/C++ runtime so that Lua/etc are
+    // affected.  Because the `set` command in CMD.EXE looks at a snapshot of
+    // the environment, it won't see updates until it takes a new snapshot,
+    // which happens whenever `set` sets or clears a variable.
+    //
+    // NOTE:  This does not invoke the hooked version, and it does not intercept
+    // setting PROMPT from inside Clink.
     _wputenv_s(wname.c_str(), wvalue.c_str());
-
-    // Update the host's environment string table (CMD.EXE).
-    // NOTE:  This intentionally calls the hooked version, so that it can
-    // appropriately intercept setting PROMPT.
-    const wchar_t* value_arg = (value != nullptr) ? wvalue.c_str() : nullptr;
-    if (SetEnvironmentVariableW(wname.c_str(), value_arg) != 0)
-        return true;
-
-    map_errno();
     return false;
 }
 
