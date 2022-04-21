@@ -2241,6 +2241,16 @@ bool mouse_info::get_anchor(int point, int& anchor, int& pos) const
 rl_module::rl_module(terminal_in* input)
 : m_prev_group(-1)
 {
+    if (g_debug_log_terminal.get())
+    {
+        static bool s_first = true;
+        if (s_first)
+        {
+            s_first = false;
+            LOG("terminal size %u x %u", _rl_screenwidth, _rl_screenheight);
+        }
+    }
+
     assert(!s_direct_input);
     s_direct_input = input;
 
@@ -3106,6 +3116,9 @@ void rl_module::on_terminal_resize(int columns, int rows, const context& context
 
     // Let Readline update its display.
     rl_resize_terminal();
+
+    if (g_debug_log_terminal.get())
+        LOG("terminal size %u x %u", _rl_screenwidth, _rl_screenheight);
 }
 
 //------------------------------------------------------------------------------
