@@ -12,6 +12,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - <kbd>Ctrl</kbd>+<kbd>C</kbd>/<kbd>Break</kbd> ideally would be able to interrupt a Lua script feedback loop where the script is using `onbeginedit` and `onfilterinput` to produce the effect of a looping script.
 
 ## Low Priority
+- `console.readinput()` changes the console state, and can interfere with proper line wrapping behavior.
 - Collecting words currently happens in update_internal, but probably it also belongs in alternative_matches and/or update_matches:
   - If a `luafunc:` macro first does anything that alters the line buffer, and then invokes a completion command, then the collected words will be inaccurate.
 - Mouse input toggling is unreliable in Windows Terminal, and sometimes ends up disallowing mouse input.
