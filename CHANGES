@@ -4,6 +4,7 @@
 
 #### v1.3.16
 
+- Added `os.sleep()`.
 - Revised the Clink documentation to directly include the Readline documentation.
 - Fixed executable file detection for file extensions that point at Progids instead of having a shell command.
 
