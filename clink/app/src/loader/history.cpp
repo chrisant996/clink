@@ -334,6 +334,7 @@ static int history_bash(int argc, char** argv)
 
         case ':': // option's missing argument.
         case '?': // unknown option.
+            optind = -1;
             return print_help();
 
         default:
