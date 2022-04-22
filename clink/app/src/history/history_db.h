@@ -114,7 +114,7 @@ public:
 
                                 history_db(bool use_master_bank);
                                 ~history_db();
-    void                        initialise();
+    void                        initialise(str_base* error_message=nullptr);
     void                        load_rl_history(bool can_clean=true);
     void                        clear();
     void                        compact(bool force=false, bool uniq=false, int limit=-1);
@@ -142,9 +142,11 @@ private:
     unsigned int                get_active_bank() const;
     bank_handles                get_bank(unsigned int index) const;
     bool                        remove_internal(line_id id, bool guard_ctag);
+    void                        make_open_error(str_base* error_message, unsigned char bank) const;
     void*                       m_alive_file;
     bank_handles                m_bank_handles[bank_count];
     str<32>                     m_bank_filenames[bank_count];
+    DWORD                       m_bank_error[bank_count];
     concurrency_tag             m_master_ctag;
     std::vector<line_id>        m_index_map;
     size_t                      m_master_len;

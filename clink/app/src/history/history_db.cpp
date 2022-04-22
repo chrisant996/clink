@@ -159,6 +159,14 @@ static void* open_file(const char* path, bool if_exists=false)
 }
 
 //------------------------------------------------------------------------------
+static void* open_file(const char* path, DWORD& err, bool if_exists=false)
+{
+    void* handle = open_file(path, if_exists);
+    err = handle ? NOERROR : GetLastError();
+    return handle;
+}
+
+//------------------------------------------------------------------------------
 static void* make_removals_file(const char* path, const char* ctag)
 {
     void* handle = open_file(path);
@@ -1197,7 +1205,7 @@ void history_db::reap()
 }
 
 //------------------------------------------------------------------------------
-void history_db::initialise()
+void history_db::initialise(str_base* error_message)
 {
     if (m_bank_handles[bank_master])
         return;
@@ -1214,7 +1222,8 @@ void history_db::initialise()
             migrate_history(path.c_str(), m_diagnostic);
 
         // Open the master bank file.
-        m_bank_handles[bank_master].m_handle_lines = open_file(path.c_str());
+        m_bank_handles[bank_master].m_handle_lines = open_file(path.c_str(), m_bank_error[bank_master]);
+        make_open_error(error_message, bank_master);
 
         // Retrieve concurrency tag from start of master bank.
         m_master_ctag.clear();
@@ -1256,7 +1265,8 @@ void history_db::initialise()
     assert(!m_bank_handles[bank_session].m_handle_lines);
     assert(!m_bank_handles[bank_session].m_handle_removals);
 
-    m_bank_handles[bank_session].m_handle_lines = open_file(path.c_str());
+    m_bank_handles[bank_session].m_handle_lines = open_file(path.c_str(), m_bank_error[bank_session]);
+    make_open_error(error_message, bank_session);
     if (m_use_master_bank && g_dupe_mode.get() == 2) // 'erase_prev'
     {
         str<280> removals;
@@ -1724,6 +1734,32 @@ bool history_db::remove_internal(line_id id, bool guard_ctag)
     }
 
     return true;
+}
+
+//------------------------------------------------------------------------------
+void history_db::make_open_error(str_base* error_message, unsigned char bank) const
+{
+    const DWORD code = m_bank_error[bank];
+    if (code && error_message && error_message->empty())
+    {
+        error_message->format("Unable to open history file \"%s\".\n", m_bank_filenames[bank].c_str());
+
+        wchar_t buf[1024];
+        const DWORD flags = FORMAT_MESSAGE_FROM_SYSTEM|FORMAT_MESSAGE_IGNORE_INSERTS;
+        const DWORD cch = FormatMessageW(flags, 0, code, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), buf, sizeof_array(buf), nullptr);
+
+        str<> tmp;
+        if (cch)
+            tmp = buf;
+        else if (code < 65536)
+            tmp.format("Error %u.", code);
+        else
+            tmp.format("Error 0x%08X.", code);
+        error_message->concat(tmp.c_str());
+
+        while (error_message->length() && strchr("\r\n", error_message->c_str()[error_message->length() - 1]))
+            error_message->truncate(error_message->length() - 1);
+    }
 }
 
 //------------------------------------------------------------------------------

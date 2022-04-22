@@ -52,7 +52,11 @@ history_scope::history_scope()
     if (s_diag)
         m_history->enable_diagnostic_output();
 
-    m_history->initialise();
+    str<> msg;
+    m_history->initialise(&msg);
+
+    if (msg.length())
+        puts(msg.c_str());
 }
 
 
