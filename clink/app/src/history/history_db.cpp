@@ -1740,7 +1740,10 @@ bool history_db::remove_internal(line_id id, bool guard_ctag)
 void history_db::make_open_error(str_base* error_message, unsigned char bank) const
 {
     const DWORD code = m_bank_error[bank];
-    if (code && error_message && error_message->empty())
+    if (code != NOERROR &&
+        code != ERROR_FILE_NOT_FOUND &&
+        error_message &&
+        error_message->empty())
     {
         error_message->format("Unable to open history file \"%s\".\n", m_bank_filenames[bank].c_str());
 
