@@ -335,11 +335,11 @@ public:
         void                set_file_offset(unsigned int offset);
 
     private:
-        char*               m_buffer;
-        void*               m_handle;
-        unsigned __int64    m_buffer_offset;
-        unsigned int        m_buffer_size;
-        unsigned int        m_remaining;
+        char*               m_buffer = nullptr;
+        void*               m_handle = nullptr;
+        unsigned __int64    m_buffer_offset = 0;
+        unsigned int        m_buffer_size = 0;
+        unsigned int        m_remaining = 0;
     };
 
     class line_iter : public no_copy
@@ -572,7 +572,11 @@ read_lock::file_iter::file_iter(void* handle, char* buffer, int buffer_size)
 unsigned int read_lock::file_iter::next(unsigned int rollback)
 {
     if (!m_remaining)
-        return (m_buffer[0] = '\0');
+    {
+        if (m_buffer)
+            m_buffer[0] = '\0';
+        return 0;
+    }
 
     rollback = min<unsigned>(rollback, m_buffer_size);
     if (rollback)
