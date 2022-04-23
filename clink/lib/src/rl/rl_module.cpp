@@ -2588,15 +2588,31 @@ void rl_module::bind_input(binder& binder)
 //------------------------------------------------------------------------------
 void rl_module::on_begin_line(const context& context)
 {
-    {
-        bool log = g_debug_log_terminal.get();
+    const bool log_terminal = g_debug_log_terminal.get();
 
+    // Readline only detects terminal size changes while its line editor is
+    // active.  If the terminal size isn't what Readline thought, then update
+    // it now.
+    {
+        CONSOLE_SCREEN_BUFFER_INFO csbi;
+        HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+        GetConsoleScreenBufferInfo(h, &csbi);
+
+        if (_rl_screenheight != csbi.dwSize.Y || _rl_screenwidth != csbi.dwSize.X)
+        {
+            rl_set_screen_size(csbi.dwSize.Y, csbi.dwSize.X);
+            if (log_terminal)
+                LOG("terminal size %u x %u", _rl_screenwidth, _rl_screenheight);
+        }
+    }
+
+    {
         // Remind if logging is on.
         static bool s_remind = true;
         if (s_remind)
         {
             s_remind = false;
-            if (log)
+            if (log_terminal)
             {
                 str<> s;
                 s.format("\x1b[93mreminder: Clink is logging terminal input and output.\x1b[m\n"
@@ -2607,7 +2623,7 @@ void rl_module::on_begin_line(const context& context)
         }
 
         // Reset the fwrite function so logging changes can take effect immediately.
-        rl_fwrite_function = log ? terminal_log_write : terminal_write_thunk;
+        rl_fwrite_function = log_terminal ? terminal_log_write : terminal_write_thunk;
     }
 
     // Note:  set_prompt() must happen while g_rl_buffer is nullptr otherwise
