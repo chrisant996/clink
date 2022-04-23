@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.3.15</title>
+<title>Clink v1.3.16</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -790,7 +790,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.3.15</div>
+                <div id="title">Clink v1.3.16</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -5808,6 +5808,7 @@ line_state:getcommandwordindex() == 2</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.rmdir">os.rmdir</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Removes the directory <span class="arg">path</span> and returns whether it was successful.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.setclipboardtext">os.setclipboardtext</a></div> <div class="signature">() : boolean<br/><div class="version">v1.2.32 and newer</div></div></div><div class="body"><p class="desc">This sets the text onto the system clipboard, and returns whether it was successful.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.setenv">os.setenv</a></div> <div class="signature">( <span class="arg_name">name</span>:string, <span class="arg_name">value</span>:string ) : boolean<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Sets the <span class="arg">name</span> environment variable to <span class="arg">value</span> and returns whether it was successful.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="os.sleep">os.sleep</a></div> <div class="signature">( <span class="arg_name">seconds</span>:number ) : nil<br/><div class="version">v1.3.16 and newer</div></div></div><div class="body"><p class="desc">Sleeps for the indicated duration, in seconds, with millisecond granularity.</p><pre class="language-lua"><code>os.sleep(0.01)  -- Sleep for 10 milliseconds.</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.touch">os.touch</a></div> <div class="signature">( <span class="arg_name">path</span>:string, [<span class="arg_name">atime</span>:number], [<span class="arg_name">mtime</span>:number] ) : nil<br/><div class="version">v1.2.31 and newer</div></div></div><div class="body"><p class="desc">Sets the access and modified times for <span class="arg">path</span>.</p><p class="desc"> The second argument is <span class="arg">atime</span> and is a time to set as the file's access time.  If omitted, the current time is used.  If present, the value must use the same format as <code>os.time()</code>.</p><p class="desc"> The third argument is <span class="arg">mtime</span> and is a time to set as the file's modified time.  If omitted, the <span class="arg">atime</span> value is used (or the current time).  If present, the value must use the same format as <code>os.time()</code>.  In order to pass <span class="arg">mtime</span> it is necessary to also pass <span class="arg">atime</span>.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.unlink">os.unlink</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Deletes the file <span class="arg">path</span> and returns whether it was successful.</p></div></div><hr/>
 </div><div class="group"><h5 class="group_name"><a name="path">path</a></h5><div class="function"><div class="header"> <div class="name"><a name="path.getbasename">path.getbasename</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : string<br/><div class="version">v1.1.0 and newer</div></div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.getbasename("/foo/bar.ext")    -- returns "bar"
@@ -6128,6 +6129,15 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1316">v1.3.16</h4>
+<ul>
+<li>Added <code>os.sleep()</code>.</li>
+<li>Revised the Clink documentation to directly include the Readline documentation.</li>
+<li>Fixed executable file detection for file extensions that point at Progids instead of having a shell command.</li>
+<li>Fixed double help message from <code>history</code> command when invalid flags are used.</li>
+<li>Fixed crash when file permissions block accessing the history file, and the <code>history</code> command reports an error message accordingly.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/262">#262</a>; changing the terminal width between prompts (while a different program is running) caused Readline to start displaying the input line incorrectly.</li>
+</ul>
 <h4 id="v1315">v1.3.15</h4>
 <ul>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/269">#269</a>; reverse video could get confused (regression introduced in v1.3, and incompletely fixed in v1.3.4).</li>
