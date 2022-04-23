@@ -7,6 +7,9 @@
 - Added `os.sleep()`.
 - Revised the Clink documentation to directly include the Readline documentation.
 - Fixed executable file detection for file extensions that point at Progids instead of having a shell command.
+- Fixed double help message from `history` command when invalid flags are used.
+- Fixed crash when file permissions block accessing the history file, and the `history` command reports an error message accordingly.
+- Fixed [#262](https://github.com/chrisant996/clink/issues/262); changing the terminal width between prompts (while a different program is running) caused Readline to start displaying the input line incorrectly.
 
 #### v1.3.15
 
