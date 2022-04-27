@@ -41,6 +41,7 @@ extern "C" {
 #include <thread>
 #include <unordered_set>
 #include <vector>
+#include <shlwapi.h>
 
 
 
@@ -161,6 +162,25 @@ static bool search_for_executable(const char* _word, const char* cwd, str_base& 
     }
 
     return false;
+}
+
+//------------------------------------------------------------------------------
+bool has_file_association(const char* name)
+{
+    const char* ext = path::get_extension(name);
+    if (!ext)
+        return false;
+
+    if (os::get_path_type(name) != os::path_type_file)
+        return false;
+
+    wstr<32> wext(ext);
+    DWORD cchOut = 0;
+    HRESULT hr = AssocQueryStringW(ASSOCF_INIT_IGNOREUNKNOWN|ASSOCF_NOFIXUPS, ASSOCSTR_EXECUTABLE, wext.c_str(), nullptr, nullptr, &cchOut);
+    if (FAILED(hr) || !cchOut)
+        return false;
+
+    return true;
 }
 
 //------------------------------------------------------------------------------
@@ -550,43 +570,10 @@ void recognizer::proc(recognizer* r)
             // Search for executable file.
             str<> found;
             recognition result = recognition::unrecognized;
-            if (search_for_executable(entry.m_word.c_str(), entry.m_cwd.c_str(), found))
+            if (search_for_executable(entry.m_word.c_str(), entry.m_cwd.c_str(), found) ||
+                has_file_association(entry.m_word.c_str()))
             {
                 result = recognition::executable;
-            }
-            else if (const char* ext = path::get_extension(entry.m_word.c_str()))
-            {
-                // Look up file type association.
-                HKEY hkey;
-                wstr<64> commandkey(ext);
-                commandkey << L"\\shell\\open\\command";
-                if (RegOpenKeyExW(HKEY_CLASSES_ROOT, commandkey.c_str(), 0, MAXIMUM_ALLOWED, &hkey) == ERROR_SUCCESS)
-                {
-                    bool has_command = false;
-
-                    DWORD type;
-                    if (RegQueryValueExW(hkey, nullptr, 0, &type, nullptr, nullptr) == ERROR_MORE_DATA)
-                        has_command = (type == REG_SZ || type == REG_EXPAND_SZ);
-                    RegCloseKey(hkey);
-
-                    if (has_command)
-                        result = recognition::executable;
-                }
-                else
-                {
-                    commandkey = ext;
-                    commandkey << L"\\OpenWithProgids";
-                    if (RegOpenKeyExW(HKEY_CLASSES_ROOT, commandkey.c_str(), 0, MAXIMUM_ALLOWED, &hkey) == ERROR_SUCCESS)
-                    {
-                        wchar_t name[8];
-                        DWORD max_name = sizeof(name);
-                        DWORD type;
-                        const DWORD err = RegEnumValueW(hkey, 0, name, &max_name, nullptr, &type, nullptr, nullptr);
-                        if ((err == ERROR_SUCCESS || err == ERROR_MORE_DATA) && (type == REG_SZ || type == REG_NONE))
-                            result = recognition::executable;
-                        RegCloseKey(hkey);
-                    }
-                }
             }
 
             // Store result.
