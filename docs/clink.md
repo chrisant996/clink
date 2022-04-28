@@ -787,7 +787,7 @@ Clink adds some new configuration variables for Readline:
 
 Variable | Description
 -|-
-`completion-auto-query-items` | If set to "on", automatically prompts before displaying completions if they need more than half a screen page (this overrules the [`completion-query-items`](#configcompletionqueryitems) variable). The default is "on".
+`completion-auto-query-items` | If set to "on", automatically prompts before displaying completions if they won't fit without scrolling (this overrules the [`completion-query-items`](#configcompletionqueryitems) variable). The default is "on".
 `history-point-at-end-of-anchored-search` | If set to "on", this puts the cursor at the end of the line when using `history-search-forward` or `history-search-backward`. The default is "off".
 `menu-complete-wraparound` | If this is "on", the `menu-complete` family of commands wraps around when reaching the end of the possible completions. The default is "on".
 `search-ignore-case` | Controls whether the history search commands ignore case. The default is "on".
