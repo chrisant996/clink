@@ -1169,10 +1169,11 @@ Command | Key | Description
 -|:-:|-
 `add-history` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>k</kbd> | Adds the current line to the history without executing it, and clears the editing line.
 `alias-expand-line` | | A synonym for `clink-expand-doskey-alias`.
+`clink-accept-suggestion` | | If there is a suggestion, insert the suggestion and accept the input line (like `accept-line`).
 `clink-complete-numbers` | | Like `complete`, but for numbers from the console screen (3 digits or more, up to hexadecimal).
 `clink-copy-cwd` | <kbd>Alt</kbd>-<kbd>c</kbd> | Copy the current working directory to the clipboard.
 `clink-copy-line` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>c</kbd> | Copy the current line to the clipboard.
-`clink-copy-word` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>w</kbd> | Copy the word at the cursor to the clipboard, or copies the nth word if a numeric argument is provided via the `digit-argument` keys.
+`clink-copy-word` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>w</kbd> | Copy the word at the cursor to the clipboard, or copies the <em>n</em>th word if a numeric argument is provided via the `digit-argument` keys.
 `clink-ctrl-c` | <kbd>Ctrl</kbd>-<kbd>c</kbd> | Discards the current line and starts a new one (like <kbd>Ctrl</kbd>-<kbd>C</kbd> in CMD.EXE).
 `clink-diagnostics` | <kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>z</kbd> | Show internal diagnostic information.
 `clink-exit` | <kbd>Alt</kbd>-<kbd>F4</kbd> | Replaces the current line with `exit` and executes it (exits the shell instance).
@@ -1183,6 +1184,7 @@ Command | Key | Description
 `clink-expand-line` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>e</kbd> | Perform [history](#using-history-expansion), doskey alias, and environment variable expansion in the current input line.
 `clink-find-conhost` | | Activates the "Find" dialog when running in a standard console window (hosted by the OS conhost).  This is equivalent to picking "Find..." from the console window's system menu. When [`clink.default_bindings`](#default_bindings) is enabled, this is bound to <kbd>Ctrl</kbd>-<kbd>f</kbd>.
 `clink-insert-dot-dot` | <kbd>Alt</kbd>-<kbd>a</kbd> | Inserts `..\` at the cursor.
+`clink-insert-suggestion` | | If there is a suggestion, insert the suggestion.
 `clink-magic-suggest-space` | | Inserts the next full word of the suggestion (if any) up to a space, and also inserts a space.
 `clink-mark-conhost` | | Activates the "Mark" mode when running in a standard console window (hosted by the OS conhost).  This is equivalent to picking "Mark" from the console window's system menu. When [`clink.default_bindings`](#default_bindings) is enabled, this is bound to <kbd>Ctrl</kbd>-<kbd>m</kbd>.
 `clink-menu-complete-numbers` | | Like `menu-complete`, but for numbers from the console screen (3 digits or more, up to hexadecimal).
