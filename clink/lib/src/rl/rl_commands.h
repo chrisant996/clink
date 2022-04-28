@@ -112,6 +112,8 @@ int     clink_forward_word(int count, int invoking_key);
 int     clink_forward_char(int count, int invoking_key);
 int     clink_forward_byte(int count, int invoking_key);
 int     clink_end_of_line(int count, int invoking_key);
+int     clink_insert_suggestion(int count, int invoking_key);
+int     clink_accept_suggestion(int count, int invoking_key);
 
 //------------------------------------------------------------------------------
 int     win_f1(int count, int invoking_key);
