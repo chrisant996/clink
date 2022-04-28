@@ -2598,9 +2598,12 @@ void rl_module::on_begin_line(const context& context)
         HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
         GetConsoleScreenBufferInfo(h, &csbi);
 
-        if (_rl_screenheight != csbi.dwSize.Y || _rl_screenwidth != csbi.dwSize.X)
+        const int width = csbi.dwSize.X;
+        const int height = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
+
+        if (_rl_screenheight != height || _rl_screenwidth != width)
         {
-            rl_set_screen_size(csbi.dwSize.Y, csbi.dwSize.X);
+            rl_set_screen_size(height, width);
             if (log_terminal)
                 LOG("terminal size %u x %u", _rl_screenwidth, _rl_screenheight);
         }
