@@ -8,8 +8,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## Normal Priority
 - Some way to push keys?  (Push keys to Clink; not to other processes.)
-- Some way for `onbeginedit` handler to short circuit and cause the edit line to return without showing a prompt or input, and either provide filtered input or go through `onfilterinput` (and maybe `onendedit`).
-  - <kbd>Ctrl</kbd>+<kbd>C</kbd>/<kbd>Break</kbd> ideally would be able to interrupt a Lua script feedback loop where the script is using `onbeginedit` and `onfilterinput` to produce the effect of a looping script.
 
 ## Low Priority
 - `console.readinput()` changes the console state, and can interfere with proper line wrapping behavior.
