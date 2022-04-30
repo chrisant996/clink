@@ -23,6 +23,7 @@ public:
     bool                is_script_path_changed() const;
 
     bool                send_event(const char* event_name, int nargs=0);
+    bool                send_event_string_out(const char* event_name, str_base& out, int nargs=0);
     bool                send_event_cancelable(const char* event_name, int nargs=0);
     bool                send_event_cancelable_string_inout(const char* event_name, const char* string, str_base& out, std::list<str_moveable>* more_out=nullptr);
     bool                send_oncommand_event(line_state& line, const char* command, bool quoted, recognition recog, const char* file);

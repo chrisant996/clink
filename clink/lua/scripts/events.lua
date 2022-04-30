@@ -18,6 +18,23 @@ function clink._send_event(event, ...)
 end
 
 --------------------------------------------------------------------------------
+-- Sends a named event to all registered callback handlers for it.  If any
+-- handler returns a string then stop.
+function clink._send_event_string_out(event, ...)
+    local callbacks = clink._event_callbacks[event]
+    if callbacks ~= nil then
+        local _, func, s
+        for _, func in ipairs(callbacks) do
+            s = func(...)
+            if type(s) == "string" then
+                return s
+            end
+        end
+    end
+    return nil
+end
+
+--------------------------------------------------------------------------------
 -- Sends a named event to all registered callback handlers for it, and if any
 -- handler returns false then stop (returning nil does not stop).
 function clink._send_event_cancelable(event, ...)
@@ -97,8 +114,43 @@ end
 --- Registers <span class="arg">func</span> to be called when Clink's edit
 --- prompt is activated.  The function receives no arguments and has no return
 --- values.
+---
+--- Starting in v1.3.18 <span class="arg">func</span> may optionally return a
+--- string.  If a string is returned, it is executed as a command line without
+--- showing a prompt and without invoking the input line editor.
+---
+--- <strong>Note:</strong>  Be very careful if you return a string; this has the
+--- potential to interfere with the user's ability to use CMD.  Mistakes in the
+--- command string can have the potential to cause damage to the system very
+--- quickly.  It is also possible for a script to cause an infinite loop, and
+--- therefore <kbd>Ctrl</kbd>-<kbd>Break</kbd> causes the next string to be
+--- ignored.
 function clink.onbeginedit(func)
     _add_event_callback("onbeginedit", func)
+end
+
+--------------------------------------------------------------------------------
+--- -name:  clink.onprovideline
+--- -ver:   1.3.18
+--- -arg:   func:function
+--- -ret:   nil | string
+---
+--- Registers <span class="arg">func</span> to be called after the
+--- <a href="#clink.onbeginedit">onbeginedit</a> event but before the input line
+--- editor starts.  If <span class="arg">func</span> returns a string, it is
+--- executed as a command line without showing a prompt.  The input line editor
+--- is skipped, and the <a href="#clink.onendedit">onendedit</a> and
+--- <a href="#clink.onfilterinput">onfilterinput</a> events happen immediately.
+---
+--- <strong>Note:</strong>  Be very careful when returning a string; this can
+--- interfere with the user's ability to use CMD.  Mistakes in the command
+--- string can have potential to cause damage to the system very quickly.  It is
+--- also possible for a script to cause an infinite loop, and therefore
+--- <kbd>Ctrl</kbd>-<kbd>Break</kbd> skips the next
+--- <a href="#clink.onprovideline">onprovideline</a> event, allowing the user
+--- to regain control.
+function clink.onprovideline(func)
+    _add_event_callback("onprovideline", func)
 end
 
 --------------------------------------------------------------------------------
@@ -121,7 +173,7 @@ end
 --- -ver:   1.2.16
 --- -arg:   func:function
 --- Registers <span class="arg">func</span> to be called after Clink's edit
---- prompt ends (it is called after the <a href="#clink.oneditedit">onendedit</a>
+--- prompt ends (it is called after the <a href="#clink.onendedit">onendedit</a>
 --- event).  The function receives a string argument containing the input text
 --- from the edit prompt.  The function returns up to two values.  If the first
 --- is not nil then it's a string that replaces the edit prompt text.  If the

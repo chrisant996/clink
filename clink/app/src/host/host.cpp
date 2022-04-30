@@ -454,6 +454,7 @@ void host::cleanup_after_signal()
 {
     m_queued_lines.clear();
     m_char_cursor = 0;
+    m_skip_provide_line = true;
 }
 
 //------------------------------------------------------------------------------
@@ -811,6 +812,26 @@ skip_errorlevel:
     if (send_event)
         lua.send_event("onbeginedit");
 
+    // Send onprovideline event.
+    bool skip_editor = false;
+    if (send_event)
+    {
+        if (!m_skip_provide_line && !clink_is_signaled())
+        {
+            str<> tmp;
+            lua.send_event_string_out("onprovideline", tmp);
+            if (tmp.length())
+            {
+                LOG("ONPROVIDELINE: %s", tmp.c_str());
+                out = tmp.c_str();
+                init_editor = false;
+                init_prompt = false;
+                skip_editor = true;
+            }
+        }
+        m_skip_provide_line = false;
+    }
+
     // Reset input idle.  Must happen before filtering the prompt, so that the
     // wake event is available.
     if (init_editor || init_prompt)
@@ -944,18 +965,19 @@ skip_errorlevel:
         // Give the directory history queue a crack at the current directory.
         update_dir_history();
 
-        resolved = false;
-        ret = editor && editor->edit(out, edit);
+        ret = skip_editor || (editor && editor->edit(out, edit));
         if (!ret)
             break;
 
         // Determine whether to add the line to history.  Must happen before
         // calling expand() because that resets the history position.
         bool add_history = true;
-        if (rl_has_saved_history())
+        if (skip_editor || rl_has_saved_history())
         {
-            // Don't add to history when operate-and-get-next was used, as
-            // that would defeat the command.
+            // Don't add to history when the onprovideline event returned a
+            // string.  Don't add to history when the operate-and-get-next
+            // command was used, as that would rearrange history and interfere
+            // with the command.
             add_history = false;
         }
         else if (!out.empty() && get_sticky_search_history() && has_sticky_search_position())
@@ -974,19 +996,22 @@ skip_errorlevel:
         {
             puts(out.c_str());
             out.clear();
-            end_prompt(true/*crlf*/);
-            continue;
+            if (!skip_editor)
+            {
+                end_prompt(true/*crlf*/);
+                continue;
+            }
         }
 
         // Should we skip adding certain commands?
-        if (g_exclude_from_history_cmds.get() &&
+        if (add_history &&
+            g_exclude_from_history_cmds.get() &&
             *g_exclude_from_history_cmds.get())
         {
             const char* c = out.c_str();
             while (*c == ' ' || *c == '\t')
                 ++c;
 
-            bool exclude = false;
             str<> token;
             str_tokeniser tokens(g_exclude_from_history_cmds.get(), " ,;");
             while (tokens.next(token))
@@ -996,32 +1021,29 @@ skip_errorlevel:
                     !isalnum((unsigned char)c[token.length()]) &&
                     !path::is_separator(c[token.length()]))
                 {
-                    exclude = true;
+                    add_history = false;
                     break;
                 }
             }
-
-            if (exclude)
-                break;
         }
 
         // Add the line to the history.
         if (add_history)
             m_history->add(out.c_str());
-
-        if (ret)
-        {
-            // If the line is a directory, rewrite the line to invoke the CD
-            // command to change to the directory.
-            intercepted = intercept_directory(out.c_str(), &out, true/*only_cd_chdir*/);
-            if (intercepted != intercept_result::none)
-            {
-                if (intercepted == intercept_result::prev_dir)
-                    prev_dir_history(out);
-                resolved = true; // Don't test for a doskey alias.
-            }
-        }
         break;
+    }
+
+    if (ret && !resolved)
+    {
+        // If the line is a directory, rewrite the line to invoke the CD command
+        // to change to the directory.
+        intercepted = intercept_directory(out.c_str(), &out, true/*only_cd_chdir*/);
+        if (intercepted != intercept_result::none)
+        {
+            if (intercepted == intercept_result::prev_dir)
+                prev_dir_history(out);
+            resolved = true; // Don't test for a doskey alias.
+        }
     }
 
 #ifdef DEBUG

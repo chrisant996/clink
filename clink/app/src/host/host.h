@@ -103,6 +103,7 @@ private:
     unsigned int    m_char_cursor = 0;
     wstr_moveable   m_last_cwd;
     bool            m_can_transient = false;
+    bool            m_skip_provide_line = false;
     bool            m_bypass_dequeue = false;
     dequeue_flags   m_bypass_flags = dequeue_flags::none;
 };

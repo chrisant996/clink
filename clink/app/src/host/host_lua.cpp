@@ -180,6 +180,12 @@ bool host_lua::send_event(const char* event_name, int nargs)
 }
 
 //------------------------------------------------------------------------------
+bool host_lua::send_event_string_out(const char* event_name, str_base& out, int nargs)
+{
+    return m_state.send_event_string_out(event_name, out, nargs);
+}
+
+//------------------------------------------------------------------------------
 bool host_lua::send_event_cancelable(const char* event_name, int nargs)
 {
     return m_state.send_event_cancelable(event_name, nargs);
