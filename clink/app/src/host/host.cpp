@@ -159,10 +159,10 @@ extern void clear_sticky_search_position();
 extern void reset_keyseq_to_name_map();
 extern void set_prompt(const char* prompt, const char* rprompt, bool redisplay);
 extern bool can_suggest(const line_state& line);
+extern int clink_is_signaled();
 
 #ifdef DEBUG
 extern bool g_suppress_signal_assert;
-extern int clink_is_signaled();
 #endif
 
 
