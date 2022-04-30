@@ -973,6 +973,8 @@ skip_errorlevel:
         if (m_history->expand(out.c_str(), out) == history_db::expand_print)
         {
             puts(out.c_str());
+            out.clear();
+            end_prompt(true/*crlf*/);
             continue;
         }
 
