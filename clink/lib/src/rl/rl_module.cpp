@@ -1115,7 +1115,7 @@ int clink_end_of_line(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
-int clink_insert_suggestion(int count, int invoking_key)
+int clink_insert_suggested_line(int count, int invoking_key)
 {
     if (!insert_suggestion(suggestion_action::insert_to_end))
         rl_ding();
@@ -1124,7 +1124,25 @@ int clink_insert_suggestion(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
-int clink_accept_suggestion(int count, int invoking_key)
+int clink_insert_suggested_full_word(int count, int invoking_key)
+{
+    if (!insert_suggestion(suggestion_action::insert_next_full_word))
+        rl_ding();
+
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+int clink_insert_suggested_word(int count, int invoking_key)
+{
+    if (!insert_suggestion(suggestion_action::insert_next_word))
+        rl_ding();
+
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+int clink_accept_suggested_line(int count, int invoking_key)
 {
     if (insert_suggestion(suggestion_action::insert_to_end))
         return rl_newline(count, invoking_key);
@@ -1901,7 +1919,7 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
 
         init_readline_hooks();
 
-        clink_add_funmap_entry("clink-accept-suggestion", clink_accept_suggestion, keycat_misc, "If there is a suggestion, insert the suggestion and accept the input line");
+        clink_add_funmap_entry("clink-accept-suggested-line", clink_accept_suggested_line, keycat_misc, "If there is a suggestion, insert the suggested line and accept the input line");
         clink_add_funmap_entry("clink-complete-numbers", clink_complete_numbers, keycat_completion, "Perform completion using numbers from the current screen");
         clink_add_funmap_entry("clink-copy-cwd", clink_copy_cwd, keycat_misc, "Copies the current working directory to the clipboard");
         clink_add_funmap_entry("clink-copy-line", clink_copy_line, keycat_misc, "Copies the input line to the clipboard");
@@ -1915,7 +1933,9 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
         clink_add_funmap_entry("clink-expand-line", clink_expand_line, keycat_misc, "Performs history, doskey alias, and environment variable expansion in the input line");
         clink_add_funmap_entry("clink-find-conhost", clink_find_conhost, keycat_misc, "Invokes the 'Find...' command in a standalone CMD window");
         clink_add_funmap_entry("clink-insert-dot-dot", clink_insert_dot_dot, keycat_misc, "Inserts '..\\' at the cursor point");
-        clink_add_funmap_entry("clink-insert-suggestion", clink_insert_suggestion, keycat_misc, "If there is a suggestion, insert the suggestion");
+        clink_add_funmap_entry("clink-insert-suggested-full-word", clink_insert_suggested_full_word, keycat_misc, "If there is a suggestion, insert the next full word from the suggested line");
+        clink_add_funmap_entry("clink-insert-suggested-line", clink_insert_suggested_line, keycat_misc, "If there is a suggestion, insert the suggested line");
+        clink_add_funmap_entry("clink-insert-suggested-word", clink_insert_suggested_word, keycat_misc, "If there is a suggestion, insert the next word from the suggested line");
         clink_add_funmap_entry("clink-magic-suggest-space", clink_magic_suggest_space, keycat_misc, "Inserts the next full suggested word (if any) up to a space, and inserts a space");
         clink_add_funmap_entry("clink-mark-conhost", clink_mark_conhost, keycat_misc, "Invokes the 'Mark' command in a standalone CMD window");
         clink_add_funmap_entry("clink-menu-complete-numbers", clink_menu_complete_numbers, keycat_completion, "Like 'menu-complete' using numbers from the current screen");
