@@ -4,7 +4,7 @@
 
 #### v1.3.18
 
-- Added `clink-insert-suggestion` and `clink-accept-suggestion` commands (see [#280](https://github.com/chrisant996/clink/issues/280)).
+- Added `clink-insert-suggested-line`, `clink-insert-suggested-word`, `clink-insert-suggested-full-word`, and `clink-accept-suggested-line` commands (see [#280](https://github.com/chrisant996/clink/issues/280)).
 - Added `clink.onprovideline()` so scripts can register a function to be called after `onbeginedit` but before any input is processed.  The function can return a string to be executed as a command line, in which case the line editor is not invoked and the `onendedit` and `onfilterinput` events happen immediately.
 
 #### v1.3.17
