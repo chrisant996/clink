@@ -20,8 +20,6 @@ end
 
 
 --------------------------------------------------------------------------------
-local _argmatcher_fromhistory = {}
-local _argmatcher_fromhistory_root
 local _delayinit_generation = 0
 local _clear_onuse_coroutine = {}
 local _clear_delayinit_coroutine = {}
@@ -88,7 +86,7 @@ end
 local function do_delayed_init(list, matcher, arg_index)
     -- Don't init while generating matches from history, as that could be
     -- excessively expensive (could run thousands of callbacks).
-    if _argmatcher_fromhistory and _argmatcher_fromhistory.argmatcher then
+    if clink.co_state._argmatcher_fromhistory and clink.co_state._argmatcher_fromhistory.argmatcher then
         return
     end
 
@@ -350,8 +348,8 @@ function _argreader:update(word, word_index)
     -- Generate matches from history.
     if self._fromhistory_matcher then
         if self._fromhistory_matcher == matcher and self._fromhistory_argindex == arg_index then
-            if _argmatcher_fromhistory.builder then
-                _argmatcher_fromhistory.builder:addmatch(word, "word")
+            if clink.co_state._argmatcher_fromhistory.builder then
+                clink.co_state._argmatcher_fromhistory.builder:addmatch(word, "word")
             end
         end
     end
@@ -557,15 +555,15 @@ local function apply_options_to_builder(reader, arg, builder)
         -- responsive enough to run as often as suggestions would like to.
         local _, ismain = coroutine.running()
         if ismain then
-            _argmatcher_fromhistory.argmatcher = reader._matcher
-            _argmatcher_fromhistory.argslot = reader._arg_index
-            _argmatcher_fromhistory.builder = builder
+            clink.co_state._argmatcher_fromhistory.argmatcher = reader._matcher
+            clink.co_state._argmatcher_fromhistory.argslot = reader._arg_index
+            clink.co_state._argmatcher_fromhistory.builder = builder
             -- Let the C++ code iterate through the history and call back into
             -- Lua to parse individual history lines.
             clink._generate_from_history()
             -- Clear references.  Clear builder because it goes out of scope,
             -- and clear other references to facilitate garbage collection.
-            _argmatcher_fromhistory = {}
+            clink.co_state._argmatcher_fromhistory = {}
         end
     end
 end
@@ -1669,7 +1667,7 @@ end
 local function _do_onuse_callback(argmatcher, command_word)
     -- Don't init while generating matches from history, as that could be
     -- excessively expensive (could run thousands of callbacks).
-    if _argmatcher_fromhistory and _argmatcher_fromhistory.argmatcher then
+    if clink.co_state._argmatcher_fromhistory and clink.co_state._argmatcher_fromhistory.argmatcher then
         return
     end
 
@@ -1797,14 +1795,14 @@ function clink._generate_from_historyline(line_state)
     local lookup
 ::do_command::
     local argmatcher, has_argmatcher, extra_words = _find_argmatcher(line_state, nil, lookup)
-    if not argmatcher or argmatcher ~= _argmatcher_fromhistory_root then
+    if not argmatcher or argmatcher ~= clink.co_state._argmatcher_fromhistory_root then
         return
     end
     lookup = nil
 
     local reader = _argreader(argmatcher, line_state)
-    reader._fromhistory_matcher = _argmatcher_fromhistory.argmatcher
-    reader._fromhistory_argindex = _argmatcher_fromhistory.argslot
+    reader._fromhistory_matcher = clink.co_state._argmatcher_fromhistory.argmatcher
+    reader._fromhistory_argindex = clink.co_state._argmatcher_fromhistory.argslot
 
     -- Consume extra words from expanded doskey alias.
     if extra_words then
