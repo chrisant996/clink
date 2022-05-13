@@ -24,6 +24,7 @@ public:
     void clear();
     void next_word();
     bool test(int c, tokeniser_state new_state);
+    bool is_first() const { return m_first; }
     void cancel() { m_failed = true; }
 private:
     str<16> m_word;
@@ -71,6 +72,7 @@ public:
     word_token next(unsigned int& offset, unsigned int& length) override;
 private:
     cmd_state m_cmd_state;
+    bool m_command_word;
 };
 
 //------------------------------------------------------------------------------

@@ -405,6 +405,7 @@ void cmd_word_tokeniser::start(const str_iter& iter, const char* quote_pair)
 {
     base::start(iter, quote_pair);
     m_cmd_state.clear();
+    m_command_word = true;
 }
 
 //------------------------------------------------------------------------------
@@ -414,6 +415,7 @@ word_token cmd_word_tokeniser::next(unsigned int& offset, unsigned int& length)
         return word_token(word_token::invalid_delim);
 
     // No double quote, as that would break quoting rules.
+    static const char c_name_delims[] = " \t\n'`!^=;,()[]{}";
     static const char c_word_delims[] = " \t\n'`!^+=;,()[]{}";
 
     const char oq = get_opening_quote();
@@ -422,24 +424,25 @@ word_token cmd_word_tokeniser::next(unsigned int& offset, unsigned int& length)
     const char* start_word;
     const char* end_word;
     bool redir_arg;
+    bool command_word = m_command_word;
 
-    auto start_new_word = [this, &start_word, &end_word, &offset, &redir_arg]()
+    auto start_new_word = [this, &start_word, &end_word, &offset, &redir_arg, &command_word]()
     {
         m_cmd_state.next_word();
+        // Pick up carried redir_arg.
+        redir_arg = m_next_redir_arg;
+        m_next_redir_arg = false;
         // Skip past any separators.
         while (m_iter.more())
         {
             const int c = m_iter.peek();
-            if ((c & ~0xff) || !strchr(c_word_delims, c))
+            if ((c & ~0xff) || !strchr((command_word || redir_arg) ? c_name_delims : c_word_delims, c))
                 break;
             m_iter.next();
         }
         // Set offset and end of word.
         start_word = end_word = m_iter.get_pointer();
         offset = static_cast<unsigned int>(end_word - m_start);
-        // Pick up carried redir_arg.
-        redir_arg = m_next_redir_arg;
-        m_next_redir_arg = false;
     };
 
     start_new_word();
@@ -517,7 +520,7 @@ word_token cmd_word_tokeniser::next(unsigned int& offset, unsigned int& length)
             // Space or equal or semicolon is a word break.
             if (new_state == sSpc)
                 break;
-            if (new_state == sTxt && strchr(c_word_delims, c))
+            if (new_state == sTxt && strchr((command_word || redir_arg) ? c_name_delims : c_word_delims, c))
                 break;
 
             // Normal text always updates the end of the word.
@@ -535,6 +538,9 @@ word_token cmd_word_tokeniser::next(unsigned int& offset, unsigned int& length)
     }
 
     length = static_cast<unsigned int>(end_word - start_word);
+
+    if (!redir_arg)
+        m_command_word = false;
 
     return word_token(m_iter.more() ? c : 0, redir_arg);
 }
