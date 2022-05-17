@@ -176,10 +176,10 @@ static bool s_mouse_shift = false;
 static bool s_quick_edit = false;
 
 //------------------------------------------------------------------------------
-static DWORD select_mouse_input(DWORD mode)
+DWORD select_mouse_input(DWORD mode)
 {
     if (!g_accept_mouse_input)
-        return 0;
+        return mode & ~ENABLE_MOUSE_INPUT;
 
     switch (g_mouse_input.get())
     {

@@ -634,7 +634,8 @@ void win_terminal_in::fix_console_input_mode()
             LOG("CONSOLE MODE: console input is in ENABLE_PROCESSED_INPUT mode (0x%x)", modeIn);
 #endif
 
-        if (modeIn & ENABLE_MOUSE_INPUT)
+        mode = select_mouse_input(mode);
+        if (mode & ENABLE_MOUSE_INPUT)
             console_config::fix_quick_edit_mode(mode);
 
         if (mode != modeIn)
