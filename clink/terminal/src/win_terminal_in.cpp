@@ -635,10 +635,10 @@ void win_terminal_in::fix_console_input_mode()
 #endif
 
         if (modeIn & ENABLE_MOUSE_INPUT)
-            console_config::fix_quick_edit_mode(modeIn);
+            console_config::fix_quick_edit_mode(mode);
 
         if (mode != modeIn)
-            SetConsoleMode(m_stdin, modeIn);
+            SetConsoleMode(m_stdin, mode);
     }
 }
 
