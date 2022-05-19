@@ -10,6 +10,7 @@
 - Fixed executable file detection for file names that contain `+` characters.
 - Fixed some input keys accidentally handled by the OS sometimes (regression introduced in v1.3.6; original fix was introduced in v1.2.10).
 - Fixed timing conditions where other console programs could accidentally override Clink's mouse input mode.
+- Fixed left mouse click in popup lists when `terminal.mouse_input` is enabled.
 
 #### v1.3.17
 
