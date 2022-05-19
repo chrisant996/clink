@@ -674,7 +674,7 @@ find:
                     cancel(popup_result::cancel);
                     return;
                 }
-                if (p0 >= m_mouse_left && p0 < m_mouse_left + m_mouse_width)
+                if (p0 < m_mouse_left || p0 >= m_mouse_left + m_mouse_width)
                     break;
             }
             p1 -= m_mouse_offset;
