@@ -5,8 +5,10 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
+- `clink.argmatcher()` doesn't fall back to file completion -- Is that a regression?  If it's intentional, then what's the point of `:nofiles()`?
 
 ## Normal Priority
+- Some way to have e.g. multiple separate `ut` argmatchers that are associated with different `ut` program paths.
 - Some way to push keys?  (Push keys to Clink; not to other processes.)
 
 ## Low Priority
@@ -32,6 +34,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # INVESTIGATE
 
 - Auto-update option, with configurable polling interval?  (Though package managers like scoop can handle updates, if Clink was installed through one.)
+  - Make a new `clink update` command.
+  - Protect against concurrent updates.
 
 <br/>
 <br/>
