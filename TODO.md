@@ -5,7 +5,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- `clink.argmatcher()` doesn't fall back to file completion -- Is that a regression?  If it's intentional, then what's the point of `:nofiles()`?
+- Sometimes completion isn't working, but I haven't found consistent repro steps yet.
+- Sometimes delayinit argmatchers (e.g. `premake`) aren't initializing at all.
 
 ## Normal Priority
 - Some way to have e.g. multiple separate `ut` argmatchers that are associated with different `ut` program paths.
