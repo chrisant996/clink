@@ -1532,23 +1532,57 @@ Here is an example of a simple parser for the command `foobar`;
 
 ```lua
 clink.argmatcher("foobar")
-:addflags("-foo", "-bar")          -- Flags
-:addarg({ "hello", "hi" })         -- Completions for arg #1
-:addarg({ "world", "wombles" })    -- Completions for arg #2
+:addflags("-foo", "-bar")          -- Flags.
+:addarg({ "hello", "hi" })         -- Completions for arg #1.
+:addarg({ "world", "wombles" })    -- Completions for arg #2.
 ```
 
 This parser describes a command that has two positional arguments each with two possible completions. It also has two flags which the parser considers to be position independent, meaning that provided the word being completed starts with the prefix character (in this example `-`) then the parser will attempt to match the word from the set of flags.
 
 On the command line completion would look something like this:
 
-<pre style="border-radius:initial;border:initial"><code class="plaintext" style="background-color:black;color:#cccccc">C:&gt;foobar hello -foo wo
-wombles  wonder   world
-C:&gt;foobar hello -foo wo<span style="color:#ffffff">_</span>
+<pre style="border-radius:initial;border:initial"><code class="plaintext" style="background-color:black;color:#cccccc">C:\&gt;foobar hello -foo wo
+wombles  wonder  world
+C:\&gt;foobar hello -foo wo<span style="color:#ffffff">_</span>
 </code></pre>
 
 When displaying possible completions, flag matches are only shown if the flag character has been input (so `command ` and <kbd>Alt</kbd>-<kbd>=</kbd> would list only non-flag matches, or `command -` and <kbd>Alt</kbd>-<kbd>=</kbd> would list only flag matches).
 
 If a command doesn't have an argmatcher but is a doskey macro, Clink automatically expands the doskey macro and looks for an argmatcher for the expanded command.  A macro like `gco=git checkout $*` automatically reuses a `git` argmatcher and produces completions for its `checkout` argument.  However, it only expands the doskey macro up to the first `$`, so complex aliases like `foo=app 2$gnul text $*` or `foo=$2 $1` might behave strangely.
+
+### Automatic Filename Completion
+
+A fresh, empty argmatcher provides no completions.
+
+```lua
+clink.argmatcher("foobar")         -- The "foobar" command provides no completions.
+```
+
+Once any flags or argument positions have been added to an argmatcher, then the argmatcher will provide completions.
+
+```lua
+clink.argmatcher("foobar")
+:addflags("-foo", "-bar")          -- Flags.
+:addarg({ "hello", "hi" })         -- Completions for arg #1.
+:addarg({ "world", "wombles" })    -- Completions for arg #2.
+```
+
+When completing a word that doesn't have a corresponding argument position the argmatcher will automatically use filename completion.  For example, the `foobar` argmatcher has two argument positions, and completing a third word uses filename completion.
+
+<pre style="border-radius:initial;border:initial"><code class="plaintext" style="background-color:black;color:#cccccc">C:\&gt;foobar hello world pro
+Program Files\  Program Files(x86)\  ProgramData\
+C:\&gt;foobar hello world pro<span style="color:#ffffff">_</span>
+</code></pre>
+
+Use [_argmatcher:nofiles()](#_argmatcher:nofiles) if you want to disable the automatic filename completion and "dead end" an argmatcher for extra words.
+
+```lua
+clink.argmatcher("foobar")
+:addflags("-foo", "-bar")          -- Flags
+:addarg({ "hello", "hi" })         -- Completions for arg #1
+:addarg({ "world", "wombles" })    -- Completions for arg #2
+:nofiles()                         -- Using :nofiles() prevents further completions.
+```
 
 ### Descriptions for Flags and Arguments
 
