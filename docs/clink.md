@@ -1537,7 +1537,7 @@ clink.argmatcher("foobar")
 :addarg({ "world", "wombles" })    -- Completions for arg #2
 ```
 
-This parser describes a command that has two positional arguments each with two potential options. It also has two flags which the parser considers to be position independent meaning that provided the word being completed starts with a certain prefix the parser with attempt to match the from the set of flags.
+This parser describes a command that has two positional arguments each with two possible completions. It also has two flags which the parser considers to be position independent, meaning that provided the word being completed starts with the prefix character (in this example `-`) then the parser will attempt to match the word from the set of flags.
 
 On the command line completion would look something like this:
 
