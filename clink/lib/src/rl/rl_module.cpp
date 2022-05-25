@@ -2135,7 +2135,8 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
         { "\\e[1;6C",       "cua-forward-word" },        // ctrl-shift-right
         { "\\e[1;2H",       "cua-beg-of-line" },         // shift-home
         { "\\e[1;2F",       "cua-end-of-line" },         // shift-end
-        { "\\e[2;2~",       "cua-copy" },                // shift-ins
+        { "\\e[2;5~",       "cua-copy" },                // ctrl-ins
+        { "\\e[2;2~",       "clink-paste" },             // shift-ins
         { "\\e[3;2~",       "cua-cut" },                 // shift-del
         { "\\e[27;2;32~",   "clink-shift-space" },       // shift-space
         // Update default bindings for commands replaced for suggestions.
