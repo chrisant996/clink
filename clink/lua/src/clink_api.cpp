@@ -543,6 +543,8 @@ void recognizer::shutdown()
 //------------------------------------------------------------------------------
 void recognizer::proc(recognizer* r)
 {
+    CoInitialize(0);
+
     while (true)
     {
         if (WaitForSingleObject(r->m_event, INFINITE) != WAIT_OBJECT_0)
@@ -581,6 +583,8 @@ void recognizer::proc(recognizer* r)
             r->notify_ready(true);
         }
     }
+
+    CoUninitialize();
 }
 
 //------------------------------------------------------------------------------
