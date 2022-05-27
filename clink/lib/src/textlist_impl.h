@@ -44,11 +44,13 @@ class textlist_impl
         const char* get_col_text(int row, int col) const;
         int         get_col_width(int col) const;
         const char* add_entry(const char* entry);
+        bool        get_any_tabs() const;
         void        clear();
     private:
         textlist_impl::item_store& m_store;
         std::vector<column_text> m_rows;
         int         m_longest[max_columns] = {};
+        bool        m_any_tabs = false;
     };
 
 public:

@@ -209,6 +209,7 @@ const char* textlist_impl::addl_columns::add_entry(const char* ptr)
     {
         str<> tmp;
         int col = 0;
+        bool any_tabs = false;
         while (col < sizeof_array(column_text.column))
         {
             const char* tab = strchr(ptr, '\t');
@@ -218,9 +219,11 @@ const char* textlist_impl::addl_columns::add_entry(const char* ptr)
             ptr = tab;
             if (!ptr)
                 break;
+            any_tabs = true;
             col++;
             ptr++;
         }
+        m_any_tabs |= any_tabs;
     }
 
     m_rows.emplace_back(std::move(column_text));
@@ -229,11 +232,18 @@ const char* textlist_impl::addl_columns::add_entry(const char* ptr)
 }
 
 //------------------------------------------------------------------------------
+bool textlist_impl::addl_columns::get_any_tabs() const
+{
+    return m_any_tabs;
+}
+
+//------------------------------------------------------------------------------
 void textlist_impl::addl_columns::clear()
 {
     std::vector<column_text> zap;
     m_rows = std::move(zap);
     memset(&m_longest, 0, sizeof(m_longest));
+    m_any_tabs = false;
 }
 
 
@@ -1175,6 +1185,13 @@ void textlist_impl::update_display()
                     {
                         if (i != m_index)
                             m_printer->print(desc_color.c_str(), desc_color.length());
+
+                        if (m_columns.get_any_tabs())
+                        {
+                            make_spaces(min<int>(spaces, m_longest - cell_len), tmp);
+                            m_printer->print(tmp.c_str(), tmp.length()); // spaces
+                            spaces -= tmp.length();
+                        }
 
                         for (int col = 0; col < max_columns && spaces > 0; col++)
                         {
