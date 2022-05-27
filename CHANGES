@@ -11,10 +11,13 @@
 - Fixed some input keys accidentally handled by the OS sometimes (regression introduced in v1.3.6; original fix was introduced in v1.2.10).
 - Fixed timing conditions where other console programs could accidentally override Clink's mouse input mode.
 - Fixed left mouse click in popup lists when `terminal.mouse_input` is enabled.
+- Fixed alternate key bindings for copy (<kbd>Ctrl</kbd>-<kbd>Ins</kbd>) and paste (<kbd>Shift</kbd>-<kbd>Ins</kbd>).
+- Fixed description column alignment in `clink.popuplist()`.
 
 #### v1.3.17
 
 - Fixed coloring executable files in the input line (some file types weren't detected correctly, and missing files were considered executable if their extension had a file type association).
+- Fixed a potential crash when coloring executable files in the input line (regression introduced in v1.3.16).
 - Fixed [#281](https://github.com/chrisant996/clink/issues/281); screen height detected incorrectly (regression introduced in v1.3.16).
 
 #### v1.3.16
