@@ -992,12 +992,15 @@ static int to_uppercase(lua_State* state)
 /// The function returns one of the following:
 /// <ul>
 /// <li>nil if the popup is canceled or an error occurs.
+/// <li>Three values:
+/// <ul>
 /// <li>string indicating the <code>value</code> field from the selected item
 /// (or the <code>display</code> field if no value field is present).
 /// <li>boolean which is true if the item was selected with <kbd>Shift</kbd> or
 /// <kbd>Ctrl</kbd> pressed.
 /// <li>integer indicating the index of the selected item in the original
 /// <span class="arg">items</span> table.
+/// </ul>
 /// </ul>
 ///
 /// Alternatively, the <span class="arg">items</span> argument can be a table of
@@ -1019,6 +1022,13 @@ static int to_uppercase(lua_State* state)
 /// The optional <code>description</code> field is displayed in a dimmed color
 /// in a second column.  If it contains tab characters (<code>"\t"</code>) the
 /// description string is split into multiple columns (up to 3).
+///
+/// Starting in v1.3.18, if any description contains a tab character, then the
+/// descriptions are automatically aligned in a column.
+///
+/// Otherwise, the descriptions follow immediately after the display field.
+/// They can be aligned in a column by making all of the display fields be the
+/// same number of character cells.
 static int popup_list(lua_State* state)
 {
     if (!lua_state::is_in_luafunc())
