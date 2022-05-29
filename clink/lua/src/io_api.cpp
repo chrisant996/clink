@@ -497,7 +497,8 @@ private:
 /// -ret:   file
 /// This function opens a file named by <span class="arg">filename</span>, in
 /// the mode specified in the string <span class="arg">mode</span>.  It returns
-/// a new file handle, or, in case of errors, nil plus an error message.
+/// a new file handle, or, in case of errors, nil plus an error message and
+/// error number.
 ///
 /// The <span class="arg">mode</span> string can be any of the following:
 /// <ul>
@@ -517,6 +518,90 @@ private:
 /// The <code>'x'</code> modes are Clink extensions to Lua.
 
 //------------------------------------------------------------------------------
+static int io_sclose(lua_State* state)
+{
+    luaL_Stream* p = ((luaL_Stream*)luaL_checkudata(state, 1, LUA_FILEHANDLE));
+    int res = fclose(p->f);
+    return luaL_fileresult(state, (res == 0), NULL);
+}
+
+//------------------------------------------------------------------------------
+/// -name:  io.sopen
+/// -arg:   filename:string
+/// -arg:   [mode:string]
+/// -arg:   [deny:string]
+/// -ret:   file
+/// This is the same as <a href="#io.open"><code>io.open()</code></a>, but adds
+/// an optional <code>deny</code> argument that specifies the type of sharing
+/// allowed.
+///
+/// This function opens a file named by <span class="arg">filename</span>, in
+/// the mode specified in the string <span class="arg">mode</span>.  It returns
+/// a new file handle, or, in case of errors, nil plus an error message and
+/// error number.
+///
+/// The <span class="arg">mode</span> string can be any of the following:
+/// <ul>
+/// <li><code>"r"</code>: read mode (the default);
+/// <li><code>"w"</code>: write mode;
+/// <li><code>"wx"</code>: write mode, but fail if the file already exists;
+/// <li><code>"a"</code>: append mode;
+/// <li><code>"r+"</code>: update mode, all previous data is preserved;
+/// <li><code>"w+"</code>: update mode, all previous data is erased;
+/// <li><code>"w+x"</code>: update mode, all previous data is erased, but fail if the file already exists;
+/// <li><code>"a+"</code>: append update mode, previous data is preserved, writing is only allowed at the end of file.
+/// </ul>
+///
+/// The <span class="arg">mode</span> string can also have a <code>'b'</code> at
+/// the end to open the file in binary mode.
+///
+/// The <span class="arg">deny</span> string can be any of the following:
+/// <ul>
+/// <li><code>"r"</code> denies read access;
+/// <li><code>"w"</code> denies write access;
+/// <li><code>"rw"</code> denies read and write access;
+/// <li><code>""</code> permits read and write access (the default).
+/// </ul>
+static int io_sopen(lua_State* state)
+{
+    const char* filename = luaL_checkstring(state, 1);
+    const char* mode = luaL_optstring(state, 2, "r");
+    const char* deny = luaL_optstring(state, 3, "");
+
+    luaL_Stream* p = (luaL_Stream*)lua_newuserdata(state, sizeof(luaL_Stream));
+    luaL_setmetatable(state, LUA_FILEHANDLE);
+    p->f = NULL;
+    p->closef = &io_sclose;
+
+    const char *md = mode; /* to traverse/check mode */
+    luaL_argcheck(state, lua_checkmode(md), 2, "invalid mode");
+
+    int share = 0;
+    if (!deny[0])
+    {
+        share = _SH_DENYNO;
+    }
+    else if (deny[0] == 'r')
+    {
+        if (!deny[1])
+            share = _SH_DENYRD;
+        else if (deny[1] == 'w' && !deny[2])
+            share = _SH_DENYRW;
+    }
+    else if (deny[0] == 'w')
+    {
+        if (!deny[1])
+            share = _SH_DENYWR;
+        else if (deny[1] == 'r' && !deny[2])
+            share = _SH_DENYRW;
+    }
+    luaL_argcheck(state, (share != 0), 3, "invalid deny");
+
+    p->f = _fsopen(filename, mode, share);
+    return (p->f == NULL) ? luaL_fileresult(state, 0, filename) : 1;
+}
+
+//------------------------------------------------------------------------------
 void io_lua_initialise(lua_state& lua)
 {
     struct {
@@ -525,6 +610,7 @@ void io_lua_initialise(lua_state& lua)
     } methods[] = {
         { "popenrw",                    &io_popenrw },
         { "popenyield_internal",        &io_popenyield },
+        { "sopen",                      &io_sopen },
     };
 
     lua_State* state = lua.get_state();
