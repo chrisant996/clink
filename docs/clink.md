@@ -579,6 +579,26 @@ Or <code>clink --version</code> shows just the version number.</dd>
 Echos key sequences to use in the .inputrc files for binding keys to Clink commands.  Each key pressed prints the associated key sequence on a separate line, until <kbd>Ctrl</kbd>-<kbd>C</kbd> is pressed.</dd>
 </p>
 
+<p>
+<dt>clink update</dt>
+<dd>
+Checks for an updated version of Clink.  If one is available, it is downloaded and will be installed the next time Clink is injected.</dd>
+</p>
+
+## Automatic Updates
+
+By default, Clink periodically and automatically checks for new versions.
+
+You can control the frequency with <code>clink set clink.update_interval <span class="arg">days</span></code>, where <span class="arg">days</span> is the minimum number of days between checking for updates.
+
+You can turn auto-updates off with `clink set clink.autoupdate false`, or turn them on with `clink set clink.autoupdate true`.
+
+The updater does nothing if the Clink program files are readonly, or if Clink is installed in a protected directory (such as "C:\Program Files").
+
+Notes:
+- The auto-updater settings are stored in the profile, so different profiles can be configured differently for automatic updates.
+- The updater requires PowerShell, which is present by default in Windows 7 and higher.
+
 ## Portable Configuration
 
 Sometimes it's useful to run Clink from a flash drive or from a network share, especially if you want to use Clink on someone else's computer.
