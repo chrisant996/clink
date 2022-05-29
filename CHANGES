@@ -7,6 +7,8 @@
 - Added `clink-insert-suggested-line`, `clink-insert-suggested-word`, `clink-insert-suggested-full-word`, and `clink-accept-suggested-line` commands (see [#280](https://github.com/chrisant996/clink/issues/280)).
 - Added `clink.onprovideline()` so scripts can register a function to be called after `onbeginedit` but before any input is processed.  The function can return a string to be executed as a command line, in which case the line editor is not invoked and the `onendedit` and `onfilterinput` events happen immediately (see [#263](https://github.com/chrisant996/clink/discussions/263)).
 - Added `os.gettemppath()` to get the system temporary directory.
+- Added `io.sopen()` to control sharing access when opening or creating a file.
+- Both `io.open()` and `io.sopen()` support the `"x"` file mode modifier (combined with `"w"` or `"w+"`), which makes the function fail if the file already exists.
 - Fixed generating matches from history (`fromhistory=true`) in argmatchers (regression introduced in v1.3.13).
 - Fixed executable file detection for file names that contain `+` characters.
 - Fixed some input keys accidentally handled by the OS sometimes (regression introduced in v1.3.6; original fix was introduced in v1.2.10).
