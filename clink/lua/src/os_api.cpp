@@ -536,10 +536,10 @@ int globber_impl(lua_State* state, bool dirs_only, bool back_compat=false)
 /// of tables instead, where each sub-table corresponds to one directory and has
 /// the following scheme:
 /// -show:  local t = os.globdirs(pattern, extrainfo)
-/// -show:  -- Included when extrainfo is true or >= 1:
+/// -show:  -- Included when extrainfo is true or >= 1 (requires v1.1.7 or higher):
 /// -show:  --   t[index].name      -- [string] The directory name.
 /// -show:  --   t[index].type      -- [string] The match type (see below).
-/// -show:  -- Included when extrainfo is 2:
+/// -show:  -- Included when extrainfo is 2 (requires v1.2.31 or higher):
 /// -show:  --   t[index].size      -- [number] The file size, in bytes.
 /// -show:  --   t[index].atime     -- [number] The access time, compatible with os.time().
 /// -show:  --   t[index].mtime     -- [number] The modified time, compatible with os.time().
@@ -572,10 +572,10 @@ int glob_dirs(lua_State* state)
 /// of tables instead, where each sub-table corresponds to one file or directory
 /// and has the following scheme:
 /// -show:  local t = os.globfiles(pattern, extrainfo)
-/// -show:  -- Included when extrainfo is true or >= 1:
+/// -show:  -- Included when extrainfo is true or >= 1 (requires v1.1.7 or higher):
 /// -show:  --   t[index].name      -- [string] The file or directory name.
 /// -show:  --   t[index].type      -- [string] The match type (see below).
-/// -show:  -- Included when extrainfo is 2:
+/// -show:  -- Included when extrainfo is 2 (requires v1.2.31 or higher):
 /// -show:  --   t[index].size      -- [number] The file size, in bytes.
 /// -show:  --   t[index].atime     -- [number] The access time, compatible with os.time().
 /// -show:  --   t[index].mtime     -- [number] The modified time, compatible with os.time().
