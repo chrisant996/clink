@@ -5,6 +5,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
+- Make setup exe explain about C:\Program Files.
 - Sometimes completion isn't working, but I haven't found consistent repro steps yet.
 - Sometimes delayinit argmatchers (e.g. `premake`) aren't initializing at all.
 
@@ -32,19 +33,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 <br/>
 <br/>
 
-# INVESTIGATE
-
-- Auto-update option, with configurable polling interval?  (Though package managers like scoop can handle updates, if Clink was installed through one.)
-  - [x] Make a new `clink update` command.
-  - [x] Deal with C:\Program Files.
-  - [ ] Make setup exe explain about C:\Program Files.
-  - [x] Should the setting be in the `clink_settings` file, or in the registry? _[They're stored in the profile, so that portable installs can behave separately from other profiles.]_
-  - [x] Should the default be ON or OFF? _[On.]_
-  - [x] Protect against concurrent updates.
-
-<br/>
-<br/>
-
 # APPENDICES
 
 ## Manual Test Verifications
@@ -58,6 +46,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Perturbed PROMPT envvar is visible in child processes (e.g. piped shell in various file editors).
 - [#531](https://github.com/mridgers/clink/issues/531) AV detects a trojan on download _[This is likely because of the use of CreateRemoteThread and/or hooking OS APIs.  There might be a way to obfuscate the fact that clink uses those, but ultimately this is kind of an inherent problem.  Getting the binaries digitally signed might be the most effective solution, but that's financially expensive.]_
 - [Terminal #10191](https://github.com/microsoft/terminal/issues/10191#issuecomment-897345862) Microsoft Terminal does not allow a console application to know about or access the scrollback history, nor to scroll the screen.  It blocks Clink's scrolling commands, and also the `console.findline()` function and everything else that relies on access to the scrollback history.
+- The auto-updater settings are stored in the profile.  That makes it more cumbersome to control the auto-updater settings if you use multiple Clink profiles.  However, it makes it possible to control the auto-updater settings separately in "portable installs" (e.g. on a USB memory stick).
 
 ## Mystery
 - `"qq": "QQ"` in `.inputrc`, and then type `qa` --> infinite loop.  _[Was occurring in a 1.3.9 development build; but no longer repros in a later 1.3.9 build, and also does not repro in the 1.3.8 release build.]_
