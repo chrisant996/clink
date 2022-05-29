@@ -35,8 +35,12 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # INVESTIGATE
 
 - Auto-update option, with configurable polling interval?  (Though package managers like scoop can handle updates, if Clink was installed through one.)
-  - Make a new `clink update` command.
-  - Protect against concurrent updates.
+  - [x] Make a new `clink update` command.
+  - [ ] Deal with C:\Program Files.
+  - [ ] Make setup exe explain about C:\Program Files.
+  - [ ] Should the setting be in the `clink_settings` file, or in the registry?
+  - [ ] Should the default be ON or OFF?
+  - [ ] Protect against concurrent updates.
 
 <br/>
 <br/>
