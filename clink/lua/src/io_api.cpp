@@ -492,6 +492,7 @@ private:
 
 //------------------------------------------------------------------------------
 /// -name:  io.open
+/// -ver:   0.0.1
 /// -arg:   filename:string
 /// -arg:   [mode:string]
 /// -ret:   file
@@ -504,11 +505,11 @@ private:
 /// <ul>
 /// <li><code>"r"</code>: read mode (the default);
 /// <li><code>"w"</code>: write mode;
-/// <li><code>"wx"</code>: write mode, but fail if the file already exists;
+/// <li><code>"wx"</code>: write mode, but fail if the file already exists (requires v1.3.18 or higher);
 /// <li><code>"a"</code>: append mode;
 /// <li><code>"r+"</code>: update mode, all previous data is preserved;
 /// <li><code>"w+"</code>: update mode, all previous data is erased;
-/// <li><code>"w+x"</code>: update mode, all previous data is erased, but fail if the file already exists;
+/// <li><code>"w+x"</code>: update mode, all previous data is erased, but fail if the file already exists (requires v1.3.18 or higher);
 /// <li><code>"a+"</code>: append update mode, previous data is preserved, writing is only allowed at the end of file.
 /// </ul>
 ///
@@ -527,6 +528,7 @@ static int io_sclose(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  io.sopen
+/// -ver:   1.3.18
 /// -arg:   filename:string
 /// -arg:   [mode:string]
 /// -arg:   [deny:string]
