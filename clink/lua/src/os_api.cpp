@@ -573,7 +573,7 @@ int glob_dirs(lua_State* state)
 /// and has the following scheme:
 /// -show:  local t = os.globfiles(pattern, extrainfo)
 /// -show:  -- Included when extrainfo is true or >= 1:
-/// -show:  --   t[index].name      -- [string] The directory name.
+/// -show:  --   t[index].name      -- [string] The file or directory name.
 /// -show:  --   t[index].type      -- [string] The match type (see below).
 /// -show:  -- Included when extrainfo is 2:
 /// -show:  --   t[index].size      -- [number] The file size, in bytes.
@@ -1151,6 +1151,18 @@ static int get_full_path_name(lua_State *state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  os.gettemppath
+/// -ver:   1.3.18
+/// -ret:   string
+/// Returns the path of the system temporary directory.
+static int get_temp_path(lua_State *state)
+{
+    str<> out;
+    bool ok = os::get_temp_dir(out);
+    return lua_osstringresult(state, out.c_str(), ok);
+}
+
+//------------------------------------------------------------------------------
 /// -name:  os.getnetconnectionname
 /// -ver:   1.2.27
 /// -arg:   path:string
@@ -1360,6 +1372,7 @@ void os_lua_initialise(lua_state& lua)
         { "getshortpathname", &get_short_path_name },
         { "getlongpathname", &get_long_path_name },
         { "getfullpathname", &get_full_path_name },
+        { "gettemppath", &get_temp_path },
         { "getnetconnectionname", &get_net_connection_name },
         { "debugprint",  &debug_print },
         { "clock",       &double_clock },
