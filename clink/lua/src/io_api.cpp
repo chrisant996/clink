@@ -491,6 +491,32 @@ private:
 }
 
 //------------------------------------------------------------------------------
+/// -name:  io.open
+/// -arg:   filename:string
+/// -arg:   [mode:string]
+/// -ret:   file
+/// This function opens a file named by <span class="arg">filename</span>, in
+/// the mode specified in the string <span class="arg">mode</span>.  It returns
+/// a new file handle, or, in case of errors, nil plus an error message.
+///
+/// The <span class="arg">mode</span> string can be any of the following:
+/// <ul>
+/// <li><code>"r"</code>: read mode (the default);
+/// <li><code>"w"</code>: write mode;
+/// <li><code>"wx"</code>: write mode, but fail if the file already exists;
+/// <li><code>"a"</code>: append mode;
+/// <li><code>"r+"</code>: update mode, all previous data is preserved;
+/// <li><code>"w+"</code>: update mode, all previous data is erased;
+/// <li><code>"w+x"</code>: update mode, all previous data is erased, but fail if the file already exists;
+/// <li><code>"a+"</code>: append update mode, previous data is preserved, writing is only allowed at the end of file.
+/// </ul>
+///
+/// The <span class="arg">mode</span> string can also have a <code>'b'</code> at
+/// the end to open the file in binary mode.
+///
+/// The <code>'x'</code> modes are Clink extensions to Lua.
+
+//------------------------------------------------------------------------------
 void io_lua_initialise(lua_state& lua)
 {
     struct {

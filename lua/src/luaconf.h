@@ -545,7 +545,9 @@
 ** without modifying the main part of the file.
 */
 
-/* begin_clink_change */
+/* begin_clink_change
+ * Make Lua use Clink's debug heap.
+ */
 #ifdef BUILD_LUA
 #   include "../../clink/core/include/core/bldopts.h"
 #   ifdef USE_MEMORY_TRACKING
@@ -564,6 +566,12 @@ DECLALLOCATOR DECLRESTRICT void* __cdecl dbgluarealloc(void* pv, size_t size);
 #endif // BUILD_LUA
 /* end_clink_change */
 
+/* begin_clink_change
+ * Allow the "x" mode: fail creating file if file already exists.
+ */
+#define lua_checkmode __lua_checkmode
+LUA_API int __lua_checkmode(const char* mode);
+/* end_clink_change */
 
 #endif
 

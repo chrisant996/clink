@@ -44,6 +44,21 @@
 
 #endif
 
+/* begin_clink_change
+ * Allow the "x" mode: fail creating file if file already exists.
+ */
+LUA_API int __lua_checkmode(const char* mode)
+{
+ const int wr = (*mode == 'w');
+ return (
+   (*mode != '\0' && strchr("rwa", *(mode++)) != NULL &&
+   (*mode != '+' || ++mode) &&          /* skip if char is '+' */
+   (*mode != 'x' || (wr && ++mode)) &&  /* skip if char is 'x' and 'w' was present */
+   (*mode != 'b' || ++mode) &&          /* skip if char is 'b' */
+   (*mode == '\0')));
+}
+/* end_clink_change */
+
 /*
 ** {======================================================
 ** lua_popen spawns a new process connected to the current
