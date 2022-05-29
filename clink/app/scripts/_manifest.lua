@@ -10,5 +10,6 @@ return {
         "self.lua",
         "set.lua",
         "suggest.lua",
+        "update.lua",
     }
 }

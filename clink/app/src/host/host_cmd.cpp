@@ -251,6 +251,7 @@ void host_load_app_scripts(lua_state& lua)
 
     lua_load_script(lua, app, prompt);
     lua_load_script(lua, app, suggest);
+    lua_load_script(lua, app, update);
 }
 
 //------------------------------------------------------------------------------

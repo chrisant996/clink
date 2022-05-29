@@ -21,6 +21,7 @@ int history(int, char**);
 int inject(int, char**);
 int input_echo(int, char**);
 int set(int, char**);
+int update(int, char**);
 int installscripts(int, char**);
 int uninstallscripts(int, char**);
 int testbed(int, char**);
@@ -53,6 +54,7 @@ static void show_usage()
         "inject",          "Injects Clink into a process",
         "autorun",         "Manage Clink's entry in cmd.exe's autorun",
         "set",             "Adjust Clink's settings",
+        "update",          "Check for an update for Clink",
         "installscripts",  "Add a path to search for scripts",
         "uninstallscripts","Remove a path to search for scripts",
         "history",         "List and operate on the command history",
@@ -94,6 +96,7 @@ static int dispatch_verb(const char* verb, int argc, char** argv)
         "info",                 clink_info,
         "inject",               inject,
         "set",                  set,
+        "update",               update,
         "installscripts",       installscripts,
         "uninstallscripts",     uninstallscripts,
         "testbed",              testbed,

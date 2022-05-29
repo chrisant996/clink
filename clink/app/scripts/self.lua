@@ -366,6 +366,12 @@ local history = clink.argmatcher("history")
 :nofiles()
 
 --------------------------------------------------------------------------------
+local update = clink.argmatcher()
+:addflags("--help")
+:adddescriptions({["--help"] = "Show help"})
+:nofiles()
+
+--------------------------------------------------------------------------------
 local installscripts = clink.argmatcher()
 :addflags("--help")
 :adddescriptions({["--help"] = "Show help"})
@@ -399,6 +405,7 @@ clink.argmatcher(
     "history"   .. history,
     "info"      .. nothing,
     "inject"    .. make_inject_parser():nofiles(),
+    "update"    .. update,
     "installscripts" .. installscripts,
     "uninstallscripts" .. uninstallscripts,
     "set"       .. set)
@@ -415,6 +422,7 @@ clink.argmatcher(
     ["history"]     = "List and operate on the command history",
     ["info"]        = "Prints information about Clink",
     ["inject"]      = "Injects Clink into a process",
+    ["update"]      = "Check for an update for Clink",
     ["installscripts"] = "Add a path to search for scripts",
     ["uninstallscripts"] = "Remove a path to search for scripts",
     ["set"]         = "Adjust Clink's settings"})
