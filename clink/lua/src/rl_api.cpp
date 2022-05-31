@@ -933,6 +933,80 @@ static int get_match_color(lua_State* state)
     return 1;
 }
 
+//------------------------------------------------------------------------------
+/// -name:  rl.gethistorycount
+/// -ver:   1.3.18
+/// -ret:   integer
+/// Returns the number of history items.
+static int get_history_count(lua_State* state)
+{
+    lua_pushinteger(state, history_length);
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+/// -name:  rl.gethistoryitems
+/// -ver:   1.3.18
+/// -ret:   start:integer
+/// -ret:   end:integer
+/// Returns a table of history items.
+///
+/// The first history item is 1, and the last history item is
+/// <a href="#rl.gethistorycount"><code>rl.gethistorycount()</code></a>.  For
+/// best performance, use <span class="arg">start</span> and
+/// <span class="arg">end</span> to request only the range of history items that
+/// will be needed.
+///
+/// Each history item is a table with the following scheme:
+/// -show:  local h = rl.gethistoryitems(1, rl.gethistorycount())
+/// -show:  -- h.line       [string] The item's command line string.
+/// -show:  -- h.time       [integer or nil] The item's time, compatible with os.time().
+///
+/// <strong>Note:</strong> the time field is omitted if the history item does
+/// not have an associated time.  Currently, no history items have times because
+/// Clink doesn't store times in the history file, but that is likely to change
+/// in the future.
+static int get_history_items(lua_State* state)
+{
+    bool isnum;
+    int start = checkinteger(state, 1, &isnum) - 1;
+    if (!isnum)
+        return 0;
+    int end = checkinteger(state, 2, &isnum);
+    if (!isnum)
+        return 0;
+
+    if (start >= history_length || end < 1)
+        return 0;
+    if (start < 0)
+        start = 0;
+    if (end > history_length)
+        end = history_length;
+
+    lua_createtable(state, (end - start) - 1, 0);
+
+    HIST_ENTRY const* const* const items = history_list();
+    int index = 0;
+    for (int i = start; i < end; ++i)
+    {
+        lua_createtable(state, 0, 2);
+
+        lua_pushliteral(state, "line");
+        lua_pushstring(state, items[i]->line);
+        lua_rawset(state, -3);
+
+        if (items[i]->timestamp)
+        {
+            lua_pushliteral(state, "time");
+            lua_pushinteger(state, atoi(items[i]->timestamp));
+            lua_rawset(state, -3);
+        }
+
+        lua_rawseti(state, -2, ++index);
+    }
+    return 1;
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -957,6 +1031,8 @@ void rl_lua_initialise(lua_state& lua)
         { "insertmode",             &getset_insert_mode },
         { "ismodifiedline",         &is_modified_line },
         { "getmatchcolor",          &get_match_color },
+        { "gethistorycount",        &get_history_count },
+        { "gethistoryitems",        &get_history_items },
     };
 
     lua_State* state = lua.get_state();
