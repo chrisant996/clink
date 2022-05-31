@@ -859,29 +859,8 @@ skip_errorlevel:
     }
 #endif
 
-    line_editor::desc desc(m_terminal.in, m_terminal.out, m_printer, this);
-    initialise_editor_desc(desc);
-
-    // Filter the prompt.  Unless processing a multiline doskey macro.
-    if (init_prompt)
-    {
-        m_prompt = prompt ? prompt : "";
-        m_rprompt = rprompt ? rprompt : "";
-        desc.prompt = filter_prompt(&desc.rprompt);
-    }
-
-    // Create the editor and add components to it.
-    line_editor* editor = nullptr;
-
-    if (init_editor)
-    {
-        editor = line_editor_create(desc);
-        editor->set_generator(lua);
-        if (g_classify_words.get())
-            editor->set_classifier(lua);
-        editor->set_input_idle(lua);
-    }
-
+    // Initialize history before filtering the prompt, so that the Lua history
+    // APIs can work.
     if (init_history)
     {
         if (m_history &&
@@ -895,7 +874,9 @@ skip_errorlevel:
         if (!m_history)
         {
             dbg_ignore_scope(snapshot, "History");
-            m_history = new history_db(g_save_history.get());
+            str<> history_path;
+            app->get_history_path(history_path);
+            m_history = new history_db(history_path.c_str(), app->get_id(), g_save_history.get());
         }
 
         if (m_history)
@@ -903,6 +884,27 @@ skip_errorlevel:
             m_history->initialise();
             m_history->load_rl_history();
         }
+    }
+
+    // Filter the prompt.  Unless processing a multiline doskey macro.
+    line_editor::desc desc(m_terminal.in, m_terminal.out, m_printer, this);
+    initialise_editor_desc(desc);
+    if (init_prompt)
+    {
+        m_prompt = prompt ? prompt : "";
+        m_rprompt = rprompt ? rprompt : "";
+        desc.prompt = filter_prompt(&desc.rprompt);
+    }
+
+    // Create the editor and add components to it.
+    line_editor* editor = nullptr;
+    if (init_editor)
+    {
+        editor = line_editor_create(desc);
+        editor->set_generator(lua);
+        if (g_classify_words.get())
+            editor->set_classifier(lua);
+        editor->set_input_idle(lua);
     }
 
     bool resolved = false;

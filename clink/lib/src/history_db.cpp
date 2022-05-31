@@ -3,7 +3,6 @@
 
 #include "pch.h"
 #include "history_db.h"
-#include "utils/app_context.h"
 
 #include <core/base.h>
 #include <core/globber.h>
@@ -128,22 +127,6 @@ static int history_expand_control(char* line, int marker_pos)
     }
 
     return 0;
-}
-
-//------------------------------------------------------------------------------
-static void get_file_path(str_base& out, bool session)
-{
-    out.clear();
-
-    const auto* app = app_context::get();
-    app->get_history_path(out);
-
-    if (session)
-    {
-        str<16> suffix;
-        suffix.format("_%d", app->get_id());
-        out << suffix;
-    }
 }
 
 //------------------------------------------------------------------------------
@@ -1099,8 +1082,10 @@ static void migrate_history(const char* path, bool m_diagnostic)
 
 
 //------------------------------------------------------------------------------
-history_db::history_db(bool use_master_bank)
-: m_use_master_bank(use_master_bank)
+history_db::history_db(const char* path, int id, bool use_master_bank)
+: m_path(path)
+, m_id(id)
+, m_use_master_bank(use_master_bank)
 {
     memset(m_bank_handles, 0, sizeof(m_bank_handles));
     m_master_len = 0;
@@ -1115,12 +1100,12 @@ history_db::history_db(bool use_master_bank)
     get_file_path(m_bank_filenames[bank_session], true);
 
     // Create a self-deleting file to used to indicate this session's alive
-    str<280> path(m_bank_filenames[bank_session].c_str());
-    path << "~";
+    str<280> alive(m_bank_filenames[bank_session].c_str());
+    alive << "~";
 
-    wstr<> wpath(path.c_str());
+    wstr<> walive(alive.c_str());
     DWORD flags = FILE_FLAG_DELETE_ON_CLOSE|FILE_ATTRIBUTE_HIDDEN;
-    m_alive_file = CreateFileW(wpath.c_str(), 0, 0, nullptr, CREATE_ALWAYS, flags, nullptr);
+    m_alive_file = CreateFileW(walive.c_str(), 0, 0, nullptr, CREATE_ALWAYS, flags, nullptr);
     m_alive_file = (m_alive_file == INVALID_HANDLE_VALUE) ? nullptr : m_alive_file;
 
     history_inhibit_expansion_function = history_expand_control;
@@ -1342,6 +1327,19 @@ template <typename T> void history_db::for_each_session(T&& callback) const
             continue;
 
         callback(path, local);
+    }
+}
+
+//------------------------------------------------------------------------------
+void history_db::get_file_path(str_base& out, bool session) const
+{
+    out = m_path.c_str();
+
+    if (session)
+    {
+        str<16> suffix;
+        suffix.format("_%d", m_id);
+        out << suffix;
     }
 }
 

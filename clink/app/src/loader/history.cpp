@@ -2,7 +2,6 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
-#include "history/history_db.h"
 #include "utils/app_context.h"
 
 #include <core/base.h>
@@ -10,6 +9,7 @@
 #include <core/settings.h>
 #include <core/str.h>
 #include <core/str_tokeniser.h>
+#include <lib/history_db.h>
 
 #include <getopt.h>
 #include <stdio.h>
@@ -42,12 +42,15 @@ private:
 history_scope::history_scope()
 {
     // Load settings.
-    str<288> default_settings_file;
-    app_context::get()->get_settings_path(m_path);
-    app_context::get()->get_default_settings_file(default_settings_file);
+    str<> history_path;
+    str<> default_settings_file;
+    auto app = app_context::get();
+    app->get_settings_path(m_path);
+    app->get_history_path(history_path);
+    app->get_default_settings_file(default_settings_file);
     settings::load(m_path.c_str(), default_settings_file.c_str());
 
-    m_history = new history_db(g_save_history.get());
+    m_history = new history_db(history_path.c_str(), app->get_id(), g_save_history.get());
 
     if (s_diag)
         m_history->enable_diagnostic_output();

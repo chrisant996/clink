@@ -3,11 +3,11 @@
 
 #pragma once
 
-#include "history/history_db.h"
 #include "terminal/terminal.h"
 
 #include <lib/doskey.h>
 #include <lib/line_editor.h>
+#include <lib/history_db.h>
 #include <lib/host_callbacks.h>
 
 #include <list>

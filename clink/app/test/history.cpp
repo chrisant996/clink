@@ -11,7 +11,7 @@
 #include <core/os.h>
 #include <core/settings.h>
 #include <core/str.h>
-#include <history/history_db.h>
+#include <lib/history_db.h>
 #include <utils/app_context.h>
 
 #include <initializer_list>
@@ -33,11 +33,19 @@ char* tgetstr(const char*, char**);
 #define CTRL_R "\x12"
 
 //------------------------------------------------------------------------------
+static const char* get_history_path()
+{
+    static str<> path;
+    app_context::get()->get_history_path(path);
+    return path.c_str();
+}
+
+//------------------------------------------------------------------------------
 struct test_history_db
     : public history_db
 {
     test_history_db()
-    : history_db(true/*use_master_bank*/)
+    : history_db(get_history_path(), app_context::get()->get_id(), true/*use_master_bank*/)
     {
         initialise();
     }
