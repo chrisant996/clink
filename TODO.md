@@ -14,6 +14,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Sometimes delayinit argmatchers (e.g. `premake`) aren't initializing at all.
 
 ## Normal Priority
+- Add some `rl.` functions to get the number of history items, and access history items, etc (see [#294](https://github.com/chrisant996/clink/issues/294)).
 - Some way to have e.g. multiple separate `ut` argmatchers that are associated with different `ut` program paths.
 - Some way to push keys?  (Push keys to Clink; not to other processes.)
 
