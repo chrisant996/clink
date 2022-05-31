@@ -10,6 +10,7 @@
 #include "rl_commands.h"
 #include "doskey.h"
 #include "textlist_impl.h"
+#include "history_db.h"
 
 #include "rl_suggestions.h"
 
@@ -89,7 +90,6 @@ extern line_buffer* g_rl_buffer;
 extern word_collector* g_word_collector;
 extern editor_module::result* g_result;
 extern void host_cmd_enqueue_lines(std::list<str_moveable>& lines, bool hide_prompt, bool show_line);
-extern int host_add_history(int, const char* line);
 extern void host_get_app_context(int& id, str_base& binaries, str_base& profile, str_base& scripts);
 extern "C" int show_cursor(int visible);
 extern int ellipsify(const char* in, int limit, str_base& out, bool expand_ctrl);
@@ -227,6 +227,22 @@ static void get_word_bounds(const line_buffer& buffer, int* left, int* right)
         *right = int(post - str);
     else
         *right = int(strlen(str));
+}
+
+
+
+//------------------------------------------------------------------------------
+int host_add_history(int, const char* line)
+{
+    history_database* h = history_database::get();
+    return h && h->add(line);
+}
+
+//------------------------------------------------------------------------------
+int host_remove_history(int rl_history_index, const char* line)
+{
+    history_database* h = history_database::get();
+    return h && h->remove(rl_history_index, line);
 }
 
 

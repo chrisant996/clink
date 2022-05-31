@@ -13,8 +13,6 @@ enum class recognition : char;
 class host_callbacks
 {
 public:
-    virtual int add_history(const char* line) = 0;
-    virtual int remove_history(int rl_history_index, const char* line) = 0;
     virtual void filter_prompt() = 0;
     virtual void filter_transient_prompt(bool final) = 0;
     virtual bool can_suggest(const line_state& line) = 0;

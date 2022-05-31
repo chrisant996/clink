@@ -35,6 +35,10 @@ void    clear_force_reload_scripts();
 int     force_reload_scripts();
 
 //------------------------------------------------------------------------------
+int     host_add_history(int, const char* line);
+int     host_remove_history(int rl_history_index, const char* line);
+
+//------------------------------------------------------------------------------
 int     show_rl_help(int, int);
 int     show_rl_help_raw(int, int);
 int     clink_what_is(int, int);

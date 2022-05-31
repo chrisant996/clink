@@ -60,8 +60,6 @@ public:
     void            cleanup_after_signal();
 
     // host_callbacks:
-    int             add_history(const char* line) override;
-    int             remove_history(int rl_history_index, const char* line) override;
     void            filter_prompt() override;
     void            filter_transient_prompt(bool final) override;
     bool            can_suggest(const line_state& line) override;
@@ -90,7 +88,6 @@ private:
     doskey          m_doskey;
     terminal        m_terminal;
     printer*        m_printer;
-    history_db*     m_history = nullptr;
     host_lua*       m_lua = nullptr;
     prompt_filter*  m_prompt_filter = nullptr;
     suggester*      m_suggester = nullptr;

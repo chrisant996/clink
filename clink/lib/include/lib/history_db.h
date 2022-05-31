@@ -4,6 +4,7 @@
 #pragma once
 
 #include <core/str_iter.h>
+#include <core/singleton.h>
 
 #include <vector>
 
@@ -166,5 +167,12 @@ template <int S> history_db::iter history_db::read_lines(char (&buffer)[S])
 {
     return read_lines(buffer, S);
 }
+
+//------------------------------------------------------------------------------
+class history_database : public history_db, public singleton<history_database>
+{
+public:
+    history_database(const char* path, int id, bool use_master_bank);
+};
 
 #define DIAG(fmt, ...)          do { if (m_diagnostic) fprintf(stderr, fmt, ##__VA_ARGS__); } while (false)

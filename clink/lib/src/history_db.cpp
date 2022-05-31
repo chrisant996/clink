@@ -1829,6 +1829,14 @@ bool history_db::is_stale_name() const
 
 
 //------------------------------------------------------------------------------
+history_database::history_database(const char* path, int id, bool use_master_bank)
+: history_db(path, id, use_master_bank)
+{
+}
+
+
+
+//------------------------------------------------------------------------------
 bool expand_history(const char* in, str_base& out)
 {
     return history_db::expand(in, out) >= history_db::expand_result::expand_ok;

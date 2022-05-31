@@ -349,7 +349,6 @@ host::~host()
     delete m_prompt_filter;
     delete m_suggester;
     delete m_lua;
-    delete m_history;
     delete m_printer;
     terminal_destroy(m_terminal);
 }
@@ -462,18 +461,6 @@ void host::pop_queued_line()
 {
     m_queued_lines.pop_front();
     m_char_cursor = 0;
-}
-
-//------------------------------------------------------------------------------
-int host::add_history(const char* line)
-{
-    return !!m_history->add(line);
-}
-
-//------------------------------------------------------------------------------
-int host::remove_history(int rl_history_index, const char* line)
-{
-    return !!m_history->remove(rl_history_index, line);
 }
 
 //------------------------------------------------------------------------------
@@ -861,28 +848,29 @@ skip_errorlevel:
 
     // Initialize history before filtering the prompt, so that the Lua history
     // APIs can work.
+    history_db* history = history_database::get();
     if (init_history)
     {
-        if (m_history &&
-            ((g_save_history.get() != m_history->has_bank(bank_master)) ||
-             m_history->is_stale_name()))
+        if (history &&
+            ((g_save_history.get() != history->has_bank(bank_master)) ||
+             history->is_stale_name()))
         {
-            delete m_history;
-            m_history = 0;
+            delete history;
+            history = nullptr;
         }
 
-        if (!m_history)
+        if (!history)
         {
             dbg_ignore_scope(snapshot, "History");
             str<> history_path;
             app->get_history_path(history_path);
-            m_history = new history_db(history_path.c_str(), app->get_id(), g_save_history.get());
+            history = new history_database(history_path.c_str(), app->get_id(), g_save_history.get());
         }
 
-        if (m_history)
+        if (history)
         {
-            m_history->initialise();
-            m_history->load_rl_history();
+            history->initialise();
+            history->load_rl_history();
         }
     }
 
@@ -994,7 +982,7 @@ skip_errorlevel:
 
         // Handle history event expansion.  expand() is a static method,
         // so can call it even when m_history is nullptr.
-        if (m_history->expand(out.c_str(), out) == history_db::expand_print)
+        if (history->expand(out.c_str(), out) == history_db::expand_print)
         {
             puts(out.c_str());
             out.clear();
@@ -1030,8 +1018,9 @@ skip_errorlevel:
         }
 
         // Add the line to the history.
-        if (add_history)
-            m_history->add(out.c_str());
+        assert(history);
+        if (add_history && history)
+            history->add(out.c_str());
         break;
     }
 

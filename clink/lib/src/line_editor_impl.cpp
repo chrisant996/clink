@@ -152,24 +152,6 @@ void set_prompt(const char* prompt, const char* rprompt, bool redisplay)
 
 
 //------------------------------------------------------------------------------
-int host_add_history(int, const char* line)
-{
-    if (!s_callbacks)
-        return 0;
-
-    return s_callbacks->add_history(line);
-}
-
-//------------------------------------------------------------------------------
-int host_remove_history(int rl_history_index, const char* line)
-{
-    if (!s_callbacks)
-        return 0;
-
-    return s_callbacks->remove_history(rl_history_index, line);
-}
-
-//------------------------------------------------------------------------------
 void host_filter_prompt()
 {
     if (!s_callbacks)
