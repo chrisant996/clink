@@ -152,16 +152,18 @@ static void print_history(unsigned int tail_count, bool bare)
     bool translate = is_console(hout);
 
     unsigned int timelen = 0;
-    struct tm tm;
+    struct tm tm = {};
     if (s_showtime)
     {
-        const time_t now = time(0);
-        if (localtime_s(&tm, &now) == 0)
-        {
-            timebuf[0] = '\0';
-            strftime(timebuf, sizeof_array(timebuf), s_timeformat.c_str(), &tm);
-            timelen = cell_count(timebuf);
-        }
+        tm.tm_year = 2001;
+        tm.tm_mon = 11;
+        tm.tm_mday = 15;
+        tm.tm_hour = 23;
+        tm.tm_min = 30;
+        tm.tm_sec = 30;
+        timebuf[0] = '\0';
+        strftime(timebuf, sizeof_array(timebuf), s_timeformat.c_str(), &tm);
+        timelen = cell_count(timebuf);
     }
 
     str<32> timestamp;
