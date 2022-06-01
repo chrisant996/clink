@@ -266,6 +266,9 @@ history_get_time (HIST_ENTRY *hist)
 static char *
 hist_inittime (void)
 {
+/* begin_clink_change */
+#if 0
+/* end_clink_change */
   time_t t;
   char ts[64], *ret;
 
@@ -279,6 +282,11 @@ hist_inittime (void)
   ret[0] = history_comment_char;
 
   return ret;
+/* begin_clink_change */
+#else
+  return 0;
+#endif
+/* end_clink_change */
 }
 
 /* Place STRING at the end of the history list.  The data field
@@ -405,7 +413,10 @@ replace_history_entry (int which, const char *line, histdata_t data)
 
   temp->line = savestring (line);
   temp->data = data;
-  temp->timestamp = savestring (old_value->timestamp);
+/* begin_clink_change */
+  //temp->timestamp = savestring (old_value->timestamp);
+  temp->timestamp = old_value->timestamp ? savestring (old_value->timestamp) : 0;
+/* end_clink_change */
   the_history[which] = temp;
 
   return (old_value);
