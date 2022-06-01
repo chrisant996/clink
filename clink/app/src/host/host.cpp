@@ -136,6 +136,7 @@ setting_str g_history_timeformat(
     "Some common format specifiers are:\n"
     "  %a    Abbreviated weekday name (Thu).\n"
     "  %b    Abbreviated month name (Aug).\n"
+    "  %c    Date and time (Thu Aug 23 14:55:02 2001).\n"
     "  %D    Short MM/DD/YY date (08/23/01).\n"
     "  %F    Short YYYY/MM/DD date (2001-08-23).\n"
     "  %p    AM or PM designation (PM).\n"
