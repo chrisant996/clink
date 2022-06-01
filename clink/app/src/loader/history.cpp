@@ -56,6 +56,15 @@ history_scope::history_scope()
     app->get_default_settings_file(default_settings_file);
     settings::load(m_path.c_str(), default_settings_file.c_str());
 
+    if (g_history_timestamp.get() == 2)
+        s_showtime = true;
+    if (s_timeformat.empty())
+    {
+        g_history_timeformat.get(s_timeformat);
+        if (s_timeformat.empty())
+            s_timeformat = "F% T%  ";
+    }
+
     m_history = new history_db(history_path.c_str(), app->get_id(), g_save_history.get());
 
     if (s_diag)
@@ -409,9 +418,6 @@ static bool is_flag(const char* arg, const char* flag, unsigned int min_len=-1)
 //------------------------------------------------------------------------------
 int history(int argc, char** argv)
 {
-    s_showtime = g_history_timestamp.get() == 2;
-    g_history_timeformat.get(s_timeformat);
-
     // Check to see if the user asked from some help!
     bool bare = false;
     bool uniq = false;
@@ -446,9 +452,6 @@ int history(int argc, char** argv)
             i--;
         }
     }
-
-    if (s_timeformat.empty())
-        s_timeformat = "F% T%  ";
 
     // Start logger; but only append, don't reset the log.
     auto* app_ctx = app_context::get();
