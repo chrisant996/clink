@@ -456,10 +456,11 @@ int inject(int argc, char** argv)
         { "quiet",       no_argument,        nullptr, 'q' },
         { "pid",         required_argument,  nullptr, 'd' },
         { "nolog",       no_argument,        nullptr, 'l' },
+        { "help",        no_argument,        nullptr, 'h' },
+        // Undocumented flags.
         { "autorun",     no_argument,        nullptr, '_' },
         { "detours",     no_argument,        nullptr, '^' },
         { "forcehost",   no_argument,        nullptr, '|' },
-        { "help",        no_argument,        nullptr, 'h' },
         { nullptr, 0, nullptr, 0 }
     };
 
