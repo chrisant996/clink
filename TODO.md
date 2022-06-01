@@ -4,17 +4,14 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 # IMPROVEMENTS
 
-## Automatic Updater
-- Make setup exe explain about C:\Program Files.
-- `clink update --disallow-automatic` and `clink update --allow-automatic` to control a registry key.
-- _Maybe postpone:  Ideally the updater could have a way to run an embedded script in the newly installed version, to do any needed finalization.  But there isn't really a way to reliably determine whether it needs to run, nor to handle errors that may occur._
-
 ## High Priority
+- Document history timestamps.
+- Make setup exe explain about C:\Program Files.
 - Sometimes completion isn't working, but I haven't found consistent repro steps yet.
 - Sometimes delayinit argmatchers (e.g. `premake`) aren't initializing at all.
 
 ## Normal Priority
-- Add some `rl.` functions to get the number of history items, and access history items, etc (see [#294](https://github.com/chrisant996/clink/issues/294)).
+- Allow horizontal scrolling in textlist.
 - Some way to have e.g. multiple separate `ut` argmatchers that are associated with different `ut` program paths.
 - Some way to push keys?  (Push keys to Clink; not to other processes.)
 
@@ -59,6 +56,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Windows Terminal crashes on exit after `clink inject`.  The current release version was crashing (1.6.10571.0).  Older versions don't crash, and a locally built version from the terminal repo's HEAD doesn't crash.  I think the crash is probably a bug in Windows Terminal, not related to Clink.  And after I built it locally, then it stopped crashing with 1.6.10571.0 as well.  Mysterious...
 
 ## Punt
+- Postpone:  Ideally the updater could have a way to run an embedded script in the newly installed version, to do any needed finalization.  But there isn't really a way to reliably determine whether it needs to run, nor to handle errors that may occur.  And a more reliable mechanism is to do upgrade steps on the next inject.
 - Include `wildmatch()` and an `fnmatch()` wrapper for it.  But should first update it to support UTF8.  _[Not worth the effort; and recursive match generation doesn't make much sense anyway.  Could potentially be useful in globbing purposes other than match generation, though.]_
 - There's no straightforward way to let Lua scripts change the current directory and have CMD pick up the changed state.  CMD maintains internal private state about what directory to use when running commands and programs.  Running `cd` is the only way to alter CMD's internal private state.
 - Explore adjusting default colors to have better contrast with white/light backgrounds?  _[No, it is tilting at windmills.  Never mind about Clink; nothing else will work reasonably in light themes, either, at least not the way they're currently defined in Windows Terminal.  If Windows Terminal fixes its themes, then it will become possible to have a single set of color definitions in Clink that work well in both light and dark themes.  Until then, it doesn't make sense to make complicated attempts to overcome the broader external problems.]_
