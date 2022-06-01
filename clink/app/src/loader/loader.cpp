@@ -51,22 +51,22 @@ static void show_usage()
 {
     static const char* help_usage = "Usage: [options] <verb> [verb_options]\n";
     static const char* help_verbs[] = {
-        "inject",          "Injects Clink into a process",
-        "autorun",         "Manage Clink's entry in cmd.exe's autorun",
-        "set",             "Adjust Clink's settings",
-        "update",          "Check for an update for Clink",
-        "installscripts",  "Add a path to search for scripts",
-        "uninstallscripts","Remove a path to search for scripts",
-        "history",         "List and operate on the command history",
-        "info",            "Prints information about Clink",
-        "echo",            "Echo key sequences for use in .inputrc files",
+        "inject",          "Injects Clink into a process.",
+        "autorun",         "Manage Clink's entry in cmd.exe's autorun.",
+        "set",             "Adjust Clink's settings.",
+        "update",          "Check for an update for Clink.",
+        "installscripts",  "Add a path to search for scripts.",
+        "uninstallscripts","Remove a path to search for scripts.",
+        "history",         "List and operate on the command history.",
+        "info",            "Prints information about Clink.",
+        "echo",            "Echo key sequences for use in .inputrc files.",
         "",                "('<verb> --help' for more details)",
         nullptr
     };
     static const char* help_options[] = {
-        "--profile <dir>", "Use <dir> as Clink's profile directory",
-        "--session <id>",  "Override Clink's session id (for history and info)",
-        "--version",       "Print Clink's version and exit",
+        "--profile <dir>", "Use <dir> as Clink's profile directory.",
+        "--session <id>",  "Override Clink's session id (for history and info).",
+        "--version",       "Print Clink's version and exit.",
         nullptr
     };
 
