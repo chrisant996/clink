@@ -76,6 +76,7 @@ private:
     void            update_top();
     void            update_display();
     void            set_top(int top);
+    void            adjust_horz_offset(int delta);
     void            reset();
 
     // Result.
@@ -96,6 +97,9 @@ private:
     int             m_mouse_left = 0;
     int             m_mouse_width = 0;
     int             m_visible_rows = 0;
+    int             m_max_num_len = 0;
+    int             m_horz_offset = 0;
+    int             m_longest_visible = 0;
     str<32>         m_default_title;
     str<32>         m_override_title;
     bool            m_has_override_title = false;

@@ -31,10 +31,16 @@ extern int _rl_last_v_pos;
 enum {
     bind_id_textlist_up = 60,
     bind_id_textlist_down,
+    bind_id_textlist_left,
+    bind_id_textlist_right,
+    bind_id_textlist_ctrlleft,
+    bind_id_textlist_ctrlright,
     bind_id_textlist_pgup,
     bind_id_textlist_pgdn,
     bind_id_textlist_home,
     bind_id_textlist_end,
+    bind_id_textlist_ctrlhome,
+    bind_id_textlist_ctrlend,
     bind_id_textlist_findincr,
     bind_id_textlist_findnext,
     bind_id_textlist_findprev,
@@ -143,17 +149,43 @@ static void make_spaces(int num, str_base& out)
 }
 
 //------------------------------------------------------------------------------
-static int limit_cells(const char* in, int limit, int& cells)
+static int limit_cells(const char* in, int limit, int& cells, int* horz_offset=nullptr)
 {
     cells = 0;
     str_iter iter(in, strlen(in));
-    while (int c = iter.next())
+
+    if (horz_offset)
     {
+        int skip = *horz_offset;
+        const char* const orig = in;
+        while (skip > 0)
+        {
+            const int c = iter.next();
+            if (!c)
+                break;
+            const int width = clink_wcwidth(c);
+            if (width > 0)
+            {
+                skip -= width;
+                in = iter.get_pointer();
+            }
+        }
+        *horz_offset = int(in - orig);
+    }
+
+    const char* end = in;
+    while (true)
+    {
+        end = iter.get_pointer();
+        const int c = iter.next();
+        if (!c)
+            break;
         cells += clink_wcwidth(c);
-        if (cells >= limit)
+        if (cells > limit)
             break;
     }
-    return int(iter.get_pointer() - in);
+
+    return int(end - in);
 }
 
 //------------------------------------------------------------------------------
@@ -272,6 +304,11 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
     if (RL_ISSTATE(RL_STATE_MACRODEF) != 0)
         return popup_result::error;
 
+    // Attach to list of items.
+    m_entries = entries;
+    m_infos = infos;
+    m_count = count;
+
     // Make sure there's room.
     m_reverse = reverse;
     m_history_mode = (history_mode != 0);
@@ -287,9 +324,6 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
 
     // Gather the items.
     str<> tmp;
-    m_entries = entries;
-    m_infos = infos;
-    m_count = count;
     for (int i = 0; i < count; i++)
     {
         const char* text;
@@ -384,10 +418,16 @@ void textlist_impl::bind_input(binder& binder)
 
     binder.bind(m_bind_group, "\\e[A", bind_id_textlist_up);            // Up
     binder.bind(m_bind_group, "\\e[B", bind_id_textlist_down);          // Down
+    binder.bind(m_bind_group, "\\e[D", bind_id_textlist_left);          // Left
+    binder.bind(m_bind_group, "\\e[C", bind_id_textlist_right);         // Right
+    binder.bind(m_bind_group, "\\e[1;5D", bind_id_textlist_ctrlleft);   // Ctrl+Left
+    binder.bind(m_bind_group, "\\e[1;5C", bind_id_textlist_ctrlright);  // Ctrl+Right
     binder.bind(m_bind_group, "\\e[5~", bind_id_textlist_pgup);         // PgUp
     binder.bind(m_bind_group, "\\e[6~", bind_id_textlist_pgdn);         // PgDn
     binder.bind(m_bind_group, "\\e[H", bind_id_textlist_home);          // Home
     binder.bind(m_bind_group, "\\e[F", bind_id_textlist_end);           // End
+    binder.bind(m_bind_group, "\\e[1;5H", bind_id_textlist_ctrlhome);   // Ctrl+Home
+    binder.bind(m_bind_group, "\\e[1;5F", bind_id_textlist_ctrlend);    // Ctrl+End
     binder.bind(m_bind_group, "\\eOR", bind_id_textlist_findnext);      // F3
     binder.bind(m_bind_group, "\\e[1;2R", bind_id_textlist_findprev);   // Shift+F3
     binder.bind(m_bind_group, "^l", bind_id_textlist_findnext);         // Ctrl+L
@@ -735,6 +775,25 @@ find:
         }
         break;
 
+    case bind_id_textlist_left:
+        adjust_horz_offset(-1);
+        break;
+    case bind_id_textlist_right:
+        adjust_horz_offset(+1);
+        break;
+    case bind_id_textlist_ctrlleft:
+        adjust_horz_offset(-16);
+        break;
+    case bind_id_textlist_ctrlright:
+        adjust_horz_offset(+16);
+        break;
+    case bind_id_textlist_ctrlhome:
+        adjust_horz_offset(-999999);
+        break;
+    case bind_id_textlist_ctrlend:
+        adjust_horz_offset(+999999);
+        break;
+
     case bind_id_textlist_backspace:
     case bind_id_textlist_catchall:
         {
@@ -967,6 +1026,14 @@ void textlist_impl::update_layout()
 
     if (m_screen_cols <= min_screen_cols)
         m_visible_rows = 0;
+
+    m_max_num_len = 0;
+    if (m_history_mode && m_count > 0)
+    {
+        str<> tmp;
+        tmp.format("%u", m_infos ? m_infos[m_count - 1].index + 1 : m_count);
+        m_max_num_len = tmp.length();
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -1078,15 +1145,7 @@ void textlist_impl::update_display()
             const bool draw_border = (m_prev_displayed < 0) || m_override_title.length() || m_has_override_title;
             m_has_override_title = !m_override_title.empty();
 
-            str<> tmp;
-            int max_num_len = 0;
-            if (m_history_mode)
-            {
-                tmp.format("%u", m_infos ? m_infos[m_count - 1].index + 1 : m_count);
-                max_num_len = tmp.length();
-            }
-
-            int longest = m_longest + (max_num_len ? max_num_len + 2 : 0); // +2 for ": ".
+            int longest = m_longest + (m_max_num_len ? m_max_num_len + 2 : 0); // +2 for ": ".
             if (m_has_columns)
             {
                 for (int i = 0; i < max_columns; i++)
@@ -1097,6 +1156,14 @@ void textlist_impl::update_display()
                 }
             }
             longest = max<int>(longest, 40);
+
+            str<> tmp;
+            if (m_history_mode && m_prev_displayed < 0)
+            {
+                m_longest_visible = 0;
+                for (int row = 0; row < m_visible_rows; ++row)
+                    m_longest_visible = max<int>(m_longest_visible, make_item(m_items[m_top + row], tmp));
+            }
 
             const int effective_screen_cols = (m_screen_cols < 40) ? m_screen_cols : max<int>(40, m_screen_cols - 4);
             const int col_width = min<int>(longest + 2, effective_screen_cols); // +2 for borders.
@@ -1169,7 +1236,7 @@ void textlist_impl::update_display()
                                             i == m_index ? "*" :
                                             modmark.c_str());
                         tmp.clear();
-                        tmp.format("%*u:%s", max_num_len, history_index + 1, mark);
+                        tmp.format("%*u:%s", m_max_num_len, history_index + 1, mark);
                         m_printer->print(tmp.c_str(), tmp.length());// history number
                         spaces -= tmp.length();
                         if (mark == modmark.c_str())
@@ -1177,12 +1244,15 @@ void textlist_impl::update_display()
                     }
 
                     int cell_len;
-                    const int char_len = limit_cells(m_items[i], spaces, cell_len);
-                    m_printer->print(m_items[i], char_len);         // main text
+                    int offset = m_horz_offset;
+                    const int char_len = limit_cells(m_items[i], spaces, cell_len, &offset);
+                    m_printer->print(m_items[i] + offset, char_len);// main text
                     spaces -= cell_len;
 
                     if (m_has_columns)
                     {
+                        assert(!m_history_mode); // Incompatible with m_horz_offset.
+
                         if (i != m_index)
                             m_printer->print(desc_color.c_str(), desc_color.length());
 
@@ -1283,6 +1353,25 @@ void textlist_impl::set_top(int top)
 }
 
 //------------------------------------------------------------------------------
+void textlist_impl::adjust_horz_offset(int delta)
+{
+    if (m_history_mode)
+    {
+        const int was = m_horz_offset;
+
+        m_horz_offset += delta;
+        m_horz_offset = min<int>(m_horz_offset, m_longest_visible - (m_mouse_width - m_max_num_len - 2 - 4));
+        m_horz_offset = max<int>(m_horz_offset, 0);
+
+        if (was != m_horz_offset)
+        {
+            m_prev_displayed = -1;
+            update_display();
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
 void textlist_impl::reset()
 {
     std::vector<const char*> zap_items;
@@ -1290,6 +1379,9 @@ void textlist_impl::reset()
     // Don't reset screen row and cols; they stay in sync with the terminal.
 
     m_visible_rows = 0;
+    m_max_num_len = 0;
+    m_horz_offset = 0;
+    m_longest_visible = 0;
     m_default_title.clear();
     m_override_title.clear();
     m_has_override_title = false;
