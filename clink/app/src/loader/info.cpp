@@ -12,9 +12,6 @@
 #include <getopt.h>
 
 //------------------------------------------------------------------------------
-void puts_help(const char* const* help_pairs, const char* const* other_pairs=nullptr);
-
-//------------------------------------------------------------------------------
 static void print_info_line(HANDLE h, const char* s)
 {
     DWORD dummy;
@@ -160,6 +157,32 @@ int clink_info(int argc, char** argv)
             if (exists)
                 first = false;
         }
+    }
+
+    // Automatic updates.
+    {
+        DWORD type;
+        DWORD value;
+        DWORD size;
+        const char* message = nullptr;
+        const char* flag = "";
+
+        if (!message && RegGetValueW(HKEY_LOCAL_MACHINE, L"Software\\Clink", L"DisallowAutoUpdate", RRF_RT_REG_DWORD, &type, &value, &size) == ERROR_SUCCESS)
+        {
+            if (type == REG_DWORD && value)
+            {
+                message = "Automatic updates are disabled for all users.";
+                flag = "--allusers ";
+            }
+        }
+        if (!message && RegGetValueW(HKEY_CURRENT_USER, L"Software\\Clink", L"DisallowAutoUpdate", RRF_RT_REG_DWORD, &type, &value, &size) == ERROR_SUCCESS)
+        {
+            if (type == REG_DWORD && value)
+                message = "Automatic updates are disabled for the current user.";
+        }
+
+        if (message)
+            printf("\n%s\nThey can be renabled by 'clink update %s--allow-automatic'.\n", message, flag);
     }
 
     str<> state_dir;
