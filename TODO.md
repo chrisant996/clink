@@ -10,7 +10,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - Or maybe even better is to have setting that CHECKS for updates and alerts about them.
   - And require explicit `clink update`, with prompt for elevation if necessary.
   - And some way to show what's new?
-- Allow horizontal scrolling in textlist.
 - Sometimes completion isn't working, but I haven't found consistent repro steps yet.
 - Sometimes delayinit argmatchers (e.g. `premake`) aren't initializing at all.
 
