@@ -110,6 +110,41 @@ setting_bool g_save_history(
     "Changing this setting only takes effect for new instances.",
     true);
 
+setting_enum g_history_timestamp(
+    "history.time_stamp",
+    "History item timestamps",
+    "The default is 'off'.  When this is 'save', timestamps are saved for each\n"
+    "history item but are only shown when the '--show-time' flag is used with the\n"
+    "'history' command.  When this is 'show', timestamps are saved and are always\n"
+    "shown.",
+    "off,save,show",
+    0);
+
+setting_str g_history_timeformat(
+    "history.time_format",
+    "Format for showing history times",
+    "This specifies a format string to override the default string (\"%H %T  \")\n"
+    "for showing timestamps for history items.  Timestamps are shown when the\n"
+    "'history.show_time' setting is enabled.  This can be overridden by flags in\n"
+    "the 'history' command."
+    "\n"
+    "The format string may contain regular characters and special format\n"
+    "specifiers.  Format specifiers begin with a percent sign (%), and are expanded\n"
+    "to their corresponding values.  For a list of possible format specifiers,\n"
+    "refer to the C++ strftime() documentation.\n"
+    "\n"
+    "Some common format specifiers are:\n"
+    "  %a    Abbreviated weekday name (Thu).\n"
+    "  %b    Abbreviated month name (Aug).\n"
+    "  %D    Short MM/DD/YY date (08/23/01).\n"
+    "  %F    Short YYYY/MM/DD date (2001-08-23).\n"
+    "  %p    AM or PM designation (PM).\n"
+    "  %r    12-hour clock time (02:55:02 pm).\n"
+    "  %R    24-hour clock time (14:55).\n"
+    "  %T    ISO 8601 time format HH:MM:SS (14:55:02).\n"
+    "  %%    A % sign.",
+    "%F %T  ");
+
 static setting_str g_exclude_from_history_cmds(
     "history.dont_add_to_history_cmds",
     "Commands not automatically added to the history",

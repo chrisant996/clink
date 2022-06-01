@@ -347,10 +347,14 @@ local history = clink.argmatcher("history")
 :addflags(
     "--help",
     "--bare",
+    "--show-time",
+    "--time-format"..clink.argmatcher():addarg(),
     "--unique")
 :adddescriptions({
     ["--help"]      = "Show help",
     ["--bare"]      = "Omit item numbers when printing history",
+    ["--show-time"] = "Show history item timestamps, if any",
+    ["--time-format"] = "Override the format string for showing timestamps",
     ["--unique"]    = "Remove duplicates when compacting history",
     ["add"]         = "Append the rest of the line to the history",
     ["clear"]       = "Completely clears the command history",

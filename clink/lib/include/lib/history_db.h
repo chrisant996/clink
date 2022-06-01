@@ -104,7 +104,7 @@ public:
     public:
                                 iter(iter&& other);
                                 ~iter();
-        line_id                 next(str_iter& out);
+        line_id                 next(str_iter& out, str_base* timestamp=nullptr);
         unsigned int            get_bank() const;
 
     private:

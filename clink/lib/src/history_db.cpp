@@ -85,6 +85,8 @@ static setting_bool g_sticky_search(
     "many times, Enter, Down, Enter, Down, Enter, etc).",
     false);
 
+extern setting_enum g_history_timestamp;
+
 static constexpr int c_max_max_history_lines = 999999;
 static int get_max_history()
 {
@@ -342,7 +344,7 @@ public:
         template <int S>    line_iter(const read_lock& lock, char (&buffer)[S]);
         template <int S>    line_iter(void* handle, char (&buffer)[S]);
                             ~line_iter() = default;
-        line_id_impl        next(str_iter& out);
+        line_id_impl        next(str_iter& out, str_base* timestamp=nullptr);
         void                set_file_offset(unsigned int offset);
         unsigned int        get_deleted_count() const { return m_deleted; }
 
@@ -641,8 +643,10 @@ inline bool is_line_breaker(unsigned char c)
 }
 
 //------------------------------------------------------------------------------
-line_id_impl read_lock::line_iter::next(str_iter& out)
+line_id_impl read_lock::line_iter::next(str_iter& out, str_base* timestamp)
 {
+    if (timestamp)
+        timestamp->clear();
     while (m_remaining || provision())
     {
         const char* last = m_file_iter.get_buffer() + m_file_iter.get_buffer_size();
@@ -696,6 +700,21 @@ line_id_impl read_lock::line_iter::next(str_iter& out)
         const bool too_big = (real_offset >= c_max_line_id.offset);
         assert(!too_big);
         const unsigned int offset = too_big ? c_max_line_id.offset : static_cast<unsigned int>(real_offset);
+
+        // Timestamps precede the line they're associated with, so that the
+        // iterator can easily determine whether there's a timestamp and return
+        // both the line and the timestamp in a single call.
+        if (*start == '|')
+        {
+            if (strncmp(start, "|\ttime=", 7) == 0)
+            {
+                if (timestamp)
+                    (*timestamp) = start + 7;
+                continue;
+            }
+            if (timestamp)
+                timestamp->clear();
+        }
 
         // Removals from master are deferred when `history.shared` is false, so
         // also test for deferred removals here.
@@ -804,7 +823,7 @@ class read_line_iter
 {
 public:
                             read_line_iter(const history_db& db, unsigned int this_size);
-    history_db::line_id     next(str_iter& out);
+    history_db::line_id     next(str_iter& out, str_base* timestamp=nullptr);
     unsigned int            get_bank() const { return m_bank_index; }
 
 private:
@@ -845,14 +864,14 @@ bool read_line_iter::next_bank()
 }
 
 //------------------------------------------------------------------------------
-history_db::line_id read_line_iter::next(str_iter& out)
+history_db::line_id read_line_iter::next(str_iter& out, str_base* timestamp)
 {
     if (m_bank_index > sizeof_array(m_db.m_bank_handles))
         return 0;
 
     do
     {
-        if (line_id_impl ret = m_line_iter.next(out))
+        if (line_id_impl ret = m_line_iter.next(out, timestamp))
         {
             ret.bank_index = m_bank_index - 1;
             return ret.outer;
@@ -880,9 +899,9 @@ history_db::iter::~iter()
 }
 
 //------------------------------------------------------------------------------
-history_db::line_id history_db::iter::next(str_iter& out)
+history_db::line_id history_db::iter::next(str_iter& out, str_base* timestamp)
 {
-    return impl ? ((read_line_iter*)impl)->next(out) : 0;
+    return impl ? ((read_line_iter*)impl)->next(out, timestamp) : 0;
 }
 
 //------------------------------------------------------------------------------
@@ -1373,14 +1392,17 @@ void history_db::load_internal()
         dbg_snapshot_heap(snapshot);
 
         str_iter out;
+        str<32> time;
         line_id_impl id;
         unsigned int num_lines = 0;
-        while (id = iter.next(out))
+        while (id = iter.next(out, &time))
         {
             const char* line = out.get_pointer();
             int buffer_offset = int(line - buffer.data());
             buffer.data()[buffer_offset + out.length()] = '\0';
             add_history(line);
+            if (!time.empty())
+                add_history_time(time.c_str());
 
             num_lines++;
 
@@ -1646,6 +1668,14 @@ bool history_db::add(const char* line)
     write_lock lock(get_bank(get_active_bank()));
     if (!lock)
         return false;
+
+    if (g_history_timestamp.get() > 0)
+    {
+        str<32> timestamp;
+        const time_t now = time(0);
+        timestamp.format("|\ttime=%u", now);
+        lock.add(timestamp.c_str());
+    }
 
     lock.add(line);
     return true;
