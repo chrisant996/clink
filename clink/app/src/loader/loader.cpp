@@ -8,6 +8,8 @@
 
 #include <core/base.h>
 #include <core/str.h>
+#include <core/str_iter.h>
+#include <terminal/ecma48_iter.h>
 
 extern "C" {
 #include <getopt.h>
@@ -27,6 +29,56 @@ int uninstallscripts(int, char**);
 int testbed(int, char**);
 
 //------------------------------------------------------------------------------
+static bool get_next_segment(const char*& desc, unsigned int wrap, str_base& out)
+{
+    if (!*desc)
+        return false;
+
+    unsigned int len_fits = 0;
+    unsigned int len_break = 0;
+    unsigned int len_advance = 0;
+    unsigned int cells = 0;
+
+    str_iter iter(desc);
+    while (true)
+    {
+        const int c = iter.next();
+
+        if (!c || c == ' ')
+        {
+            len_fits = len_break;
+            len_advance = int(iter.get_pointer() - desc);
+        }
+        if (!c)
+            break;
+
+        const int w = clink_wcwidth(c);
+        if (wrap && cells + w > wrap)
+            break;
+        cells += w;
+
+        if (c != ' ')
+            len_break = int(iter.get_pointer() - desc);
+    }
+
+    out.clear();
+    out.concat(desc, len_fits);
+    desc += len_advance;
+    return true;
+}
+
+//------------------------------------------------------------------------------
+static void print_with_wrapping(int max_len, const char* arg, const char* desc, unsigned int wrap)
+{
+    str<128> buf;
+    while (get_next_segment(desc, wrap, buf))
+    {
+        printf("  %-*s  %s\n", max_len, arg, buf.c_str());
+        arg = "";
+    }
+}
+
+//------------------------------------------------------------------------------
 void puts_help(const char* const* help_pairs, const char* const* other_pairs=nullptr)
 {
     int max_len = -1;
@@ -36,11 +88,26 @@ void puts_help(const char* const* help_pairs, const char* const* other_pairs=nul
         for (int i = 0; other_pairs[i]; i += 2)
             max_len = max((int)strlen(other_pairs[i]), max_len);
 
+    DWORD wrap = 78;
+#if 0
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi))
+    {
+        if (csbi.dwSize.X >= 40)
+            csbi.dwSize.X -= 2;
+        wrap = max<DWORD>(wrap, min<DWORD>(100, csbi.dwSize.X));
+    }
+#endif
+    if (wrap <= DWORD(max_len + 20))
+        wrap = 0;
+    if (wrap)
+        wrap -= 2 + max_len + 2;
+
     for (int i = 0; help_pairs[i]; i += 2)
     {
         const char* arg = help_pairs[i];
         const char* desc = help_pairs[i + 1];
-        printf("  %-*s  %s\n", max_len, arg, desc);
+        print_with_wrapping(max_len, arg, desc, wrap);
     }
 
     puts("");
