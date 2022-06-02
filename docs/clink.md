@@ -329,8 +329,9 @@ Name                         | Default [*](#alternatedefault) | Description
 `clink.path`                 |         | A list of paths from which to load Lua scripts. Multiple paths can be delimited semicolons.
 `clink.promptfilter`         | True    | Enable [prompt filtering](#customising-the-prompt) by Lua scripts.
 `cmd.admin_title_prefix`     |         | When set, this replaces the "Administrator: " console title prefix.
+`cmd.altf4_exits`            | True    | When set, pressing <kbd>Alt</kbd>-<kbd>F4</kbd> exits the cmd.exe process.
 `cmd.auto_answer`            | `off`   | Automatically answers cmd.exe's "Terminate batch job (Y/N)?" prompts. `off` = disabled, `answer_yes` = answer Y, `answer_no` = answer N.
-<a name="ctrld_exits"></a>`cmd.ctrld_exits` | True | <kbd>Ctrl</kbd>-<kbd>D</kbd> exits the process when it is pressed on an empty line.
+<a name="ctrld_exits"></a>`cmd.ctrld_exits` | True | <kbd>Ctrl</kbd>-<kbd>D</kbd> exits the cmd.exe process when it is pressed on an empty line.
 `cmd.get_errorlevel`         | True    | When this is enabled, Clink runs a hidden `echo %errorlevel%` command before each interactive input prompt to retrieve the last exit code for use by Lua scripts.  If you experience problems, try turning this off.  This is on by default.
 `color.arg`                  |         | The color for arguments in the input line when `clink.colorize_input` is enabled.
 `color.arginfo`              | `yellow` [*](#alternatedefault) | Argument info color.  Some argmatchers may show that some flags or arguments accept additional arguments, when listing possible completions.  This color is used for those additional arguments.  (E.g. the "dir" in a "-x dir" listed completion.)
@@ -378,6 +379,8 @@ Name                         | Default [*](#alternatedefault) | Description
 `history.save`               | True    | Saves history between sessions. When disabled, history is neither read from nor written to a master history list; history for each session exists only in memory until the session ends.
 `history.shared`             | False   | When history is shared, all instances of Clink update the master history list after each command and reload the master history list on each prompt.  When history is not shared, each instance updates the master history list on exit.
 `history.sticky_search`      | False   | When enabled, reusing a history line does not add the reused line to the end of the history, and it leaves the history search position on the reused line so next/prev history can continue from there (e.g. replaying commands via <kbd>Up</kbd> several times then <kbd>Enter</kbd>, <kbd>Down</kbd>, <kbd>Enter</kbd>, etc).
+`history.time_format`        | `%F %T  ` | This specifies a time format string for showing timestamps for history items.
+`history.time_stamp`         | `off`   | The default is `off`.  When this is `save`, timestamps are saved for each history item but are only shown when the `--show-time` flag is used with the `history` command.  When this is `show`, timestamps are saved for each history item, and timestamps are shown in the `history` command unless the `--bare` flag is used.
 `lua.break_on_error`         | False   | Breaks into Lua debugger on Lua errors.
 `lua.break_on_traceback`     | False   | Breaks into Lua debugger on `traceback()`.
 <a name="lua_debug"></a>`lua.debug` | False | Loads a simple embedded command line debugger when enabled. Breakpoints can be added by calling [pause()](#pause).
