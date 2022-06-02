@@ -1115,7 +1115,7 @@ Command | Key | Description
 
 Command | Key | Description
 -|:-:|-
-`digit-argument` | <kbd>Alt</kbd>-<kbd>0</kbd>, <kbd>Alt</kbd>-<kbd>1</kbd>, ... <kbd>Alt</kbd>-<kbd>-</kbd> | Add this digit to the argument already accumulating, or start a new argument. <kbd>Alt</kbd>-<kbd>-</kbd> starts a negative argument.
+`digit-argument` | <kbd>Alt</kbd>-<kbd><em>digit</em></kbd> or <kbd>Alt</kbd>-<kbd>-</kbd> | Add this <em>digit</em> to the argument already accumulating, or start a new argument. <kbd>Alt</kbd>-<kbd>-</kbd> starts a negative argument.
 `universal-argument` | | This is another way to specify an argument. If this command is followed by one or more digits, optionally with a leading minus sign, those digits define the argument. If the command is followed by digits, executing `universal-argument` again ends the numeric argument, but is otherwise ignored. As a special case, if this command is immediately followed by a character that is neither a digit nor minus sign, the argument count for the next command is multiplied by four. The argument count is initially one, so executing this function the first time makes the argument count four, a second time makes the argument count sixteen, and so on. By default, this is not bound to a key.
 
 ### Completion Commands
@@ -1145,8 +1145,8 @@ Command | Key | Description
 -|:-:|-
 `re-read-init-file` | <kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>r</kbd> | Read in the contents of the inputrc file, and incorporate any bindings or variable assignments found there.
 `abort` | <kbd>Ctrl</kbd>-<kbd>g</kbd> | Abort the current editing command and ring the terminal's bell (subject to the setting of [`bell-style`](#configbellstyle)).
-`do-lowercase-version` | <kbd>Alt</kbd>-<kbd>A</kbd>, <kbd>Alt</kbd>-<kbd>B</kbd>, <kbd>Alt</kbd>-<kbd><em>x</em></kbd>, ... | If the metafied character <em>x</em> is upper case, run the command that is bound to the corresponding metafied lower case character. The behavior is undefined if <em>x</em> is already lower case.
-`undo` | <kbd>Ctrl</kbd>-<kbd>z</kbd> or <kbd>Ctrl</kbd>-<kbd>_</kbd> or <kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>u</kbd> | Incremental undo, separately remembered for each line.
+`do-lowercase-version` | <kbd>Alt</kbd>-<kbd><em>X</em></kbd>, etc | If the key <kbd><em>X</em></kbd> is an upper case letter, run the command that is bound to the corresponding <kbd>Alt</kbd>-<kbd><em>x</em></kbd> lower case letter. The behavior is undefined if <em>x</em> is already lower case.
+`undo` | <kbd>Ctrl</kbd>-<kbd>z</kbd> or <kbd>Ctrl</kbd>-<kbd>_</kbd> | Incremental undo, separately remembered for each line.
 `revert-line` | <kbd>Alt</kbd>-<kbd>r</kbd> | Undo all changes made to this line. This is like executing the `undo` command enough times to get back to the beginning.
 `tilde-expand` | <kbd>Alt</kbd>-<kbd>~</kbd> | Perform tilde expansion on the current word.
 `set-mark` | <kbd>Ctrl</kbd>-<kbd>@</kbd> | Set the mark to the point. If a numeric argument is supplied, the mark is set to that position.
