@@ -2176,6 +2176,10 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
     const char* bindableEsc = get_bindable_esc();
     if (bindableEsc)
     {
+        rl_unbind_key_in_map('\x1b'/*alt-ctrl-[*/, emacs_meta_keymap);
+        rl_unbind_key_in_map('\x1d'/*alt-ctrl-]*/, emacs_meta_keymap);
+        rl_bind_keyseq_in_map("\\e[27;7;219~"/*alt-ctrl-[*/, rl_named_function("complete"), emacs_standard_keymap);
+        rl_bind_keyseq_in_map("\\e[27;7;221~"/*alt-ctrl-]*/, rl_named_function("character-search-backward"), emacs_standard_keymap);
         rl_bind_keyseq_in_map(bindableEsc, rl_named_function("clink-reset-line"), emacs_standard_keymap);
         rl_bind_keyseq_in_map(bindableEsc, rl_named_function("vi-movement-mode"), vi_insertion_keymap);
     }
