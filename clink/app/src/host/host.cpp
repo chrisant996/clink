@@ -123,7 +123,7 @@ setting_enum g_history_timestamp(
 setting_str g_history_timeformat(
     "history.time_format",
     "Format for showing history times",
-    "This specifies a format string to override the default string (\"%H %T  \")\n"
+    "This specifies a format string to override the default string (\"%F %T  \")\n"
     "for showing timestamps for history items.  Timestamps are shown when the\n"
     "'history.show_time' setting is enabled.  This can be overridden by flags in\n"
     "the 'history' command."
