@@ -1088,7 +1088,7 @@ Command | Key | Description
 `transpose-words` | <kbd>Alt</kbd>-<kbd>t</kbd> | Drag the word before point past the word after point, moving point past that word as well. If the insertion point is at the end of the line, this transposes the last two words on the line.
 `upcase-word` | <kbd>Alt</kbd>-<kbd>u</kbd> | Uppercase the current (or following) word. With a negative argument, uppercase the previous word, but do not move the cursor.
 `downcase-word` | <kbd>Alt</kbd>-<kbd>l</kbd> | Lowercase the current (or following) word. With a negative argument, lowercase the previous word, but do not move the cursor.
-`capitalize-word` | <kbd>Alt</kbd>-<kbd>c</kbd> | Capitalize the current (or following) word. With a negative argument, capitalize the previous word, but do not move the cursor.
+`capitalize-word` | | Capitalize the current (or following) word. With a negative argument, capitalize the previous word, but do not move the cursor.
 `overwrite-mode` | | Toggle overwrite mode. With an explicit positive numeric argument, switches to overwrite mode. With an explicit non-positive numeric argument, switches to insert mode. This command affects only emacs mode; vi mode does overwrite differently. Each new command line prompt starts in insert mode.<br/>In overwrite mode, characters bound to `self-insert` replace the text at point rather than pushing the text to the right. Characters bound to `backward-delete-char` replace the character before point with a space.<br/>By default, this command is unbound.
 
 ### Killing And Yanking
@@ -1101,7 +1101,6 @@ Command | Key | Description
 `kill-whole-line` | | Kill all characters on the current line, no matter where point is. By default, this is unbound.
 `kill-word` | <kbd>Alt</kbd>-<kbd>d</kbd> | Kill from point to the end of the current word, or if between words, to the end of the next word. Word boundaries are the same as `forward-word`.
 `backward-kill-word` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>Backspace</kbd> | Kill the word behind point. Word boundaries are the same as `backward-word`.
-`shell-transpose-words` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>t</kbd> | Drag the word before point past the word after point, moving point past that word as well. If the insertion point is at the end of the line, this transposes the last two words on the line. Word boundaries are the same as `shell-forward-word` and `shell-backward-word`.
 `unix-word-rubout` | <kbd>Ctrl</kbd>-<kbd>w</kbd> | Kill the word behind point, using white space as a word boundary. The killed text is saved on the kill-ring.
 `unix-filename-rubout` | | Kill the word behind point, using white space and the slash character as the word boundaries. The killed text is saved on the kill-ring.
 `delete-horizontal-space` | | Delete all spaces and tabs around point. By default, this is unbound.
@@ -1146,8 +1145,8 @@ Command | Key | Description
 -|:-:|-
 `re-read-init-file` | <kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>r</kbd> | Read in the contents of the inputrc file, and incorporate any bindings or variable assignments found there.
 `abort` | <kbd>Ctrl</kbd>-<kbd>g</kbd> | Abort the current editing command and ring the terminal's bell (subject to the setting of [`bell-style`](#configbellstyle)).
-`do-lowercase-version` | <kbd>Alt</kbd>-<kbd>A</kbd>, <kbd>Alt</kbd>-<kbd>B</kbd>, <kbd>Alt</kbd>-<kbd>x</kbd>, ... | If the metafied character x is upper case, run the command that is bound to the corresponding metafied lower case character. The behavior is undefined if x is already lower case.
-`undo` | <kbd>Ctrl</kbd>-<kbd>_</kbd> or <kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>u</kbd> | Incremental undo, separately remembered for each line.
+`do-lowercase-version` | <kbd>Alt</kbd>-<kbd>A</kbd>, <kbd>Alt</kbd>-<kbd>B</kbd>, <kbd>Alt</kbd>-<kbd><em>x</em></kbd>, ... | If the metafied character <em>x</em> is upper case, run the command that is bound to the corresponding metafied lower case character. The behavior is undefined if <em>x</em> is already lower case.
+`undo` | <kbd>Ctrl</kbd>-<kbd>z</kbd> or <kbd>Ctrl</kbd>-<kbd>_</kbd> or <kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>u</kbd> | Incremental undo, separately remembered for each line.
 `revert-line` | <kbd>Alt</kbd>-<kbd>r</kbd> | Undo all changes made to this line. This is like executing the `undo` command enough times to get back to the beginning.
 `tilde-expand` | <kbd>Alt</kbd>-<kbd>~</kbd> | Perform tilde expansion on the current word.
 `set-mark` | <kbd>Ctrl</kbd>-<kbd>@</kbd> | Set the mark to the point. If a numeric argument is supplied, the mark is set to that position.
