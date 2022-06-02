@@ -11,7 +11,7 @@
 #include <terminal/printer.h>
 #include <terminal/terminal.h>
 #include <terminal/terminal_helpers.h>
-#include <terminal/ecma48_iter.h>
+#include <terminal/ecma48_wrapper.h>
 #include "rl_commands.h"
 #include "editor_module.h"
 #include "pager.h"
@@ -1298,9 +1298,11 @@ int clink_what_is(int, int)
                     s << "unknown macro";
                 free(macro);
             }
-            s << "\n";
 
-            g_printer->print(s.c_str(), s.length());
+            str<> tmp;
+            ecma48_wrapper wrapper(s.c_str(), _rl_screenwidth - 2);
+            while (wrapper.next(tmp))
+                g_printer->print(tmp.c_str(), tmp.length());
         }
     }
 

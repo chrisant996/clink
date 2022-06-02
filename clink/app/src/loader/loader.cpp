@@ -9,7 +9,7 @@
 #include <core/base.h>
 #include <core/str.h>
 #include <core/str_iter.h>
-#include <terminal/ecma48_iter.h>
+#include <terminal/ecma48_wrapper.h>
 
 extern "C" {
 #include <getopt.h>
@@ -29,51 +29,13 @@ int uninstallscripts(int, char**);
 int testbed(int, char**);
 
 //------------------------------------------------------------------------------
-static bool get_next_segment(const char*& desc, unsigned int wrap, str_base& out)
-{
-    if (!*desc)
-        return false;
-
-    unsigned int len_fits = 0;
-    unsigned int len_break = 0;
-    unsigned int len_advance = 0;
-    unsigned int cells = 0;
-
-    str_iter iter(desc);
-    while (true)
-    {
-        const int c = iter.next();
-
-        if (!c || c == ' ')
-        {
-            len_fits = len_break;
-            len_advance = int(iter.get_pointer() - desc);
-        }
-        if (!c)
-            break;
-
-        const int w = clink_wcwidth(c);
-        if (wrap && cells + w > wrap)
-            break;
-        cells += w;
-
-        if (c != ' ')
-            len_break = int(iter.get_pointer() - desc);
-    }
-
-    out.clear();
-    out.concat(desc, len_fits);
-    desc += len_advance;
-    return true;
-}
-
-//------------------------------------------------------------------------------
 static void print_with_wrapping(int max_len, const char* arg, const char* desc, unsigned int wrap)
 {
     str<128> buf;
-    while (get_next_segment(desc, wrap, buf))
+    ecma48_wrapper wrapper(desc, wrap);
+    while (wrapper.next(buf))
     {
-        printf("  %-*s  %s\n", max_len, arg, buf.c_str());
+        printf("  %-*s  %s", max_len, arg, buf.c_str());
         arg = "";
     }
 }
