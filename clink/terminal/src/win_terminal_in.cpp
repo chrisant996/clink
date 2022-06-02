@@ -859,6 +859,44 @@ static void verbose_input(KEY_EVENT_RECORD const& record)
 }
 
 //------------------------------------------------------------------------------
+// Try to handle Alt-Ctrl-[, Alt-Ctrl-], Alt-Ctrl-\ better, at least in keyboard
+// layouts where the [, ], or \ is the regular (unshifted) name of the key.
+static bool translate_ctrl_bracket(int& key_vk, int key_sc)
+{
+    char buf[32];
+    buf[0] = 0;
+    str_base tmps(buf);
+
+    // Can't realistically apply caching here, because software keyboard layouts
+    // can be changed dynamically.
+    const char* key_name = key_name_from_vk(key_vk, tmps, key_sc) ? buf : "UNKNOWN";
+
+    if (key_name[1])
+        return false;
+
+    switch (key_name[0])
+    {
+    case '[':
+        if (!g_terminal_raw_esc.get())
+        {
+            // Must avoid this because it would produce "\e\e" which is the
+            // prefix for some Fn keys (e.g. Alt-F4 is "\e\eOS").  But raw Esc
+            // mode explicitly requests that behavior.
+            return false;
+        }
+        break;
+    case ']':
+    case '\\':
+        break;
+    default:
+        return false;
+    }
+
+    key_vk = key_name[0] - '@';
+    return true;
+}
+
+//------------------------------------------------------------------------------
 void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
 {
     int key_char = record.uChar.UnicodeChar;
@@ -1077,7 +1115,8 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
                     break;
                 default:
 not_ctrl:
-                    ctrl_code = false;
+                    if (!translate_ctrl_bracket(key_vk, key_sc))
+                        ctrl_code = false;
                     break;
                 }
                 break;
