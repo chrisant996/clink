@@ -724,6 +724,17 @@ bool line_editor_impl::update_input()
             return true;
         }
 
+        if (key == terminal_in::input_exit)
+        {
+            if (!m_dispatching)
+            {
+                m_buffer.reset();
+                m_buffer.insert("exit");
+                end_line();
+            }
+            return true;
+        }
+
         if (key < 0)
             return true;
 

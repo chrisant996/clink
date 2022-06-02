@@ -11,6 +11,9 @@
 #include <utils/app_context.h>
 
 //------------------------------------------------------------------------------
+extern setting_bool g_altf4_exits;
+
+//------------------------------------------------------------------------------
 int input_echo(int argc, char** argv)
 {
     bool verbose_input = false;
@@ -40,6 +43,8 @@ int input_echo(int argc, char** argv)
     app_context::get()->get_settings_path(settings_file);
     app_context::get()->get_default_settings_file(default_settings_file);
     settings::load(settings_file.c_str(), default_settings_file.c_str());
+
+    g_altf4_exits.set("0"); // Override the setting so Alt-F4 can be reported.
 
 #ifdef TEST_MOUSE_INPUT
     console_config cc(nullptr, true);

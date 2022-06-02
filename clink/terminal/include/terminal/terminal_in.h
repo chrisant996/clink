@@ -15,6 +15,7 @@ public:
         input_timeout,
         input_abort,
         input_terminal_resize,
+        input_exit,
     };
 
     virtual         ~terminal_in() = default;

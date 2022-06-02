@@ -39,6 +39,12 @@ setting_bool g_terminal_raw_esc(
     "Changing this only affects future Clink sessions, not the current session.",
     false);
 
+setting_bool g_altf4_exits(
+    "cmd.altf4_exits",
+    "Pressing Alt-F4 exits session",
+    "When enabled (the default), pressing Alt-F4 exits cmd.exe.",
+    true);
+
 static setting_bool g_differentiate_keys(
     "terminal.differentiate_keys",
     "Use special sequences for Ctrl-H, -I, -M, -[",
@@ -529,9 +535,17 @@ const char* find_key_name(const char* keyseq, int& len, int& eqclass, int& order
 //------------------------------------------------------------------------------
 enum : unsigned char
 {
+    // Currently, the first byte in UTF8 cannot have the high 5 bits all 1.
+    // That gives us room to define some magic characters:
+    //      0xff  0xfe  0xfd  0xfc  0xfb  0xfa  0xf9  0xf8
+    //
+    // Longer term, it's probably worth pushing valid UTF8 representations of
+    // invalid UTF8 codepoints, if that's possible.
+
     input_abort_byte    = 0xff,
     input_none_byte     = 0xfe,
     input_timeout_byte  = 0xfd,
+    input_exit_byte     = 0xfc,
 };
 
 
@@ -604,6 +618,7 @@ int win_terminal_in::read()
     case input_none_byte:       return terminal_in::input_none;
     case input_timeout_byte:    return terminal_in::input_timeout;
     case input_abort_byte:      return terminal_in::input_abort;
+    case input_exit_byte:       return terminal_in::input_exit;
     default:                    return c;
     }
 }
@@ -995,6 +1010,13 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
     if (key_func <= (VK_F12 - VK_F1))
     {
         int kfx_group = terminfo::keymod_index(key_flags);
+        if (kfx_group == 4 && key_func == 3 && g_altf4_exits.get())
+        {
+            m_buffer_head = 0;
+            m_buffer_count = 1;
+            m_buffer[0] = input_exit_byte;
+            return;
+        }
         push((terminfo::kfx + (12 * kfx_group) + key_func)[0]);
         return;
     }
