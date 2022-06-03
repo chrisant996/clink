@@ -214,6 +214,7 @@ int execute_thread::results(lua_State* state)
 /// -ret:   boolean
 /// Changes the current directory to <span class="arg">path</span> and returns
 /// whether it was successful.
+/// If unsuccessful it returns false, an error message, and the error number.
 int set_current_dir(lua_State* state)
 {
     const char* dir = checkstring(state, 1);
@@ -245,6 +246,7 @@ int get_current_dir(lua_State* state)
 /// -ret:   boolean
 /// Creates the directory <span class="arg">path</span> and returns whether it
 /// was successful.
+/// If unsuccessful it returns false, an error message, and the error number.
 static int make_dir(lua_State* state)
 {
     const char* dir = checkstring(state, 1);
@@ -262,6 +264,7 @@ static int make_dir(lua_State* state)
 /// -ret:   boolean
 /// Removes the directory <span class="arg">path</span> and returns whether it
 /// was successful.
+/// If unsuccessful it returns false, an error message, and the error number.
 static int remove_dir(lua_State* state)
 {
     const char* dir = checkstring(state, 1);
@@ -327,6 +330,7 @@ static int is_hidden(lua_State* state)
 /// -ret:   boolean
 /// Deletes the file <span class="arg">path</span> and returns whether it was
 /// successful.
+/// If unsuccessful it returns false, an error message, and the error number.
 static int unlink(lua_State* state)
 {
     const char* path = checkstring(state, 1);
@@ -345,6 +349,7 @@ static int unlink(lua_State* state)
 /// -ret:   boolean
 /// Moves the <span class="arg">src</span> file to the
 /// <span class="arg">dest</span> file.
+/// If unsuccessful it returns false, an error message, and the error number.
 static int move(lua_State* state)
 {
     const char* src = checkstring(state, 1);
@@ -364,6 +369,7 @@ static int move(lua_State* state)
 /// -ret:   boolean
 /// Copies the <span class="arg">src</span> file to the
 /// <span class="arg">dest</span> file.
+/// If unsuccessful it returns false, an error message, and the error number.
 static int copy(lua_State* state)
 {
     const char* src = checkstring(state, 1);
@@ -613,7 +619,10 @@ int make_file_globber(lua_State* state)
 /// -arg:   path:string
 /// -arg:   [atime:number]
 /// -arg:   [mtime:number]
-/// Sets the access and modified times for <span class="arg">path</span>.
+/// -ret:   boolean
+/// Sets the access and modified times for <span class="arg">path</span>, and
+/// returns whether it was successful.
+/// If unsuccessful it returns false, an error message, and the error number.
 ///
 /// The second argument is <span class="arg">atime</span> and is a time to set
 /// as the file's access time.  If omitted, the current time is used.  If
@@ -695,6 +704,7 @@ int get_env(lua_State* state)
 /// -ret:   boolean
 /// Sets the <span class="arg">name</span> environment variable to
 /// <span class="arg">value</span> and returns whether it was successful.
+/// If unsuccessful it returns false, an error message, and the error number.
 int set_env(lua_State* state)
 {
     const char* name = checkstring(state, 1);
@@ -1060,14 +1070,10 @@ int get_pid(lua_State* state)
 /// default is "t".
 ///
 /// When successful, the function returns a file handle and the file name.
+/// If unsuccessful it returns nil, an error message, and the error number.
 ///
 /// <strong>Note:</strong> Be sure to delete the file when finished, or it will
 /// be leaked.
-///
-/// If the function is unable to create a file it returns nil, an error message,
-/// and an error number.  For example if the directory is inaccessible, or if
-/// there are already too many files, or invalid file name characters are used,
-/// or etc.
 static int create_tmp_file(lua_State *state)
 {
     const char* prefix = optstring(state, 1, "");
@@ -1105,6 +1111,7 @@ static int create_tmp_file(lua_State *state)
 /// -ret:   string
 /// Returns the 8.3 short path name for <span class="arg">path</span>.  This may
 /// return the input path if an 8.3 short path name is not available.
+/// If unsuccessful it returns nil, an error message, and the error number.
 static int get_short_path_name(lua_State *state)
 {
     const char* path = checkstring(state, 1);
@@ -1122,6 +1129,7 @@ static int get_short_path_name(lua_State *state)
 /// -arg:   path:string
 /// -ret:   string
 /// Returns the long path name for <span class="arg">path</span>.
+/// If unsuccessful it returns nil, an error message, and the error number.
 static int get_long_path_name(lua_State *state)
 {
     const char* path = checkstring(state, 1);
@@ -1139,6 +1147,7 @@ static int get_long_path_name(lua_State *state)
 /// -arg:   path:string
 /// -ret:   string
 /// Returns the full path name for <span class="arg">path</span>.
+/// If unsuccessful it returns nil, an error message, and the error number.
 static int get_full_path_name(lua_State *state)
 {
     const char* path = checkstring(state, 1);
@@ -1155,6 +1164,7 @@ static int get_full_path_name(lua_State *state)
 /// -ver:   1.3.18
 /// -ret:   string
 /// Returns the path of the system temporary directory.
+/// If unsuccessful it returns nil, an error message, and the error number.
 static int get_temp_path(lua_State *state)
 {
     str<> out;
@@ -1169,6 +1179,7 @@ static int get_temp_path(lua_State *state)
 /// -ret:   string
 /// Returns the remote name associated with <span class="arg">path</span>, or an
 /// empty string if it's not a network drive.
+/// If unsuccessful it returns nil, an error message, and the error number.
 static int get_net_connection_name(lua_State *state)
 {
     const char* path = checkstring(state, 1);
