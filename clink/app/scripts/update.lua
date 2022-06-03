@@ -95,6 +95,10 @@ local function test_protected_dir(filename)
     return true
 end
 
+local function get_local_tag()
+    return "v" .. clink.version_major .. "." .. clink.version_minor .. "." .. clink.version_patch
+end
+
 local function parse_version_tag(tag)
     local maj, min, pat
     maj, min, pat = tag:match("v(%d+)%.(%d+)%.(%d+)")
@@ -103,6 +107,36 @@ local function parse_version_tag(tag)
     end
     if maj and min then
         return tonumber(maj), tonumber(min), tonumber(pat or 0)
+    end
+end
+
+local function is_rhs_version_newer(lhs, rhs)
+    local lmaj, lmin, lpat = parse_version_tag(lhs or "")
+    local rmaj, rmin, rpat = parse_version_tag(rhs or "")
+
+    if not lmaj then
+        return rmaj and true
+    end
+    if not rmaj then
+        return false
+    end
+
+    if rmaj > lmaj then
+        return true
+    elseif rmaj < lmaj then
+        return false
+    end
+
+    if rmin > lmin then
+        return true
+    elseif rmin < lmin then
+        return false
+    end
+
+    if rpat > lpat then
+        return true
+    else
+        return false
     end
 end
 
@@ -134,11 +168,11 @@ local function has_zip_file()
         return nil
     end
 
-    local latest
+    local latest, lmaj, lmin, lpat
     local files = os.globfiles(path.join(update_dir, "*.zip"), true)
     for _, f in ipairs(files) do
         if f.type:find("file") then
-            if not latest or f.mtime > latest.mtime then
+            if is_rhs_version_newer(latest and latest.name, f.name) then
                 latest = f
             end
         end
@@ -211,7 +245,7 @@ local function can_check_for_update(force)
 end
 
 local function internal_check_for_update(force)
-    local local_tag = "v" .. clink.version_major .. "." .. clink.version_minor .. "." .. clink.version_patch
+    local local_tag = get_local_tag()
 
     -- Use github API to query latest release.
     if force then
@@ -240,22 +274,15 @@ local function internal_check_for_update(force)
     end
 
     -- Compare versions.
-    local needed = true
     log_info("latest release is " .. cloud_tag .. ".")
-    local cmaj, cmin, cpat = parse_version_tag(cloud_tag)
-    if clink.version_major > cmaj then
-        needed = false
-    elseif clink.version_major == cmaj then
-        if clink.version_minor > cmin then
-            needed = false
-        elseif clink.version_minor == cmin then
-            if clink.version_patch >= cpat then
-                needed = false
-            end
-        end
-    end
-    if not needed then
+    if not is_rhs_version_newer(local_tag, cloud_tag) then
         return nil, log_info("no update available; local version " .. local_tag .. " is not older than latest release " .. cloud_tag .. ".")
+    end
+
+    -- Check if already downloaded.
+    local local_zip = has_zip_file()
+    if local_zip and clink.lower(path.getbasename(local_zip)) == clink.lower(cloud_tag) then
+        return local_zip
     end
 
     -- Download latest release zip file.
@@ -266,7 +293,7 @@ local function internal_check_for_update(force)
         print("Downloading latest release...")
     end
     local f
-    local local_zip = get_update_dir()
+    local_zip = get_update_dir()
     if local_zip then
         local_zip = path.join(local_zip, cloud_tag .. ".zip")
         f, err = io.open(local_zip, "w+")
@@ -288,6 +315,17 @@ local function internal_check_for_update(force)
     return local_zip
 end
 
+local function update_lastcheck(update_dir)
+    local tagfile = path.join(update_dir, tag_filename)
+    local f, err = io.open(tagfile, "w")
+    if f then
+        f:write(tostring(os.time()) .. "\n")
+        f:close()
+    else
+        log_info(concat_error("unable to record last update time to '" .. tagfile .. "'.", err))
+    end
+end
+
 local function check_for_update(force)
     local update_dir, err = get_update_dir()
     if not update_dir then
@@ -304,24 +342,16 @@ local function check_for_update(force)
     -- Attempt to update.
     local ret, err = internal_check_for_update(force)
 
+    -- Record last update time.
+    update_lastcheck(update_dir)
+
     -- Dispose of the concurrency protection.
     g:close()
     os.remove(guardfile)
     return ret, err
 end
 
-local function update_lastcheck(tagfile)
-    local f, err = io.open(tagfile, "w")
-    if not f then
-        local nope = log_info("unable to record last update time to '" .. tagfile .. "'.")
-        return nil, concat_error(nope, err)
-    end
-    f:write(tostring(os.time()) .. "\n")
-    f:close()
-    return true
-end
-
-local function try_update(force)
+local function is_update_ready(force)
     local exe_path, err = get_exe_path()
     if not exe_path then
         return nil, err
@@ -334,75 +364,94 @@ local function try_update(force)
 
     local ok, err = find_prereqs()
     if not ok then
-        return nil, concat_error(err, log_info("autoupdate requires Windows 10 or higher."))
+        return nil, concat_error(err, log_info("autoupdate requires PowerShell."))
     end
 
     local tagfile = path.join(update_dir, tag_filename)
 
     -- Download latest zip file, or use zip file that's already been downloaded.
-    local cloud_tag
-    local zip_file, err = has_zip_file()
-    if not zip_file then
-        if force then
-            cloud_tag, err = can_check_for_update()
-            if not cloud_tag then
-                return nil, err
-            end
-        end
+    local can
+    local zip_file
+    if force then
+        can, err = can_check_for_update(force)
+    else
+        can = true -- When not force, can_check_for_update() was already called.
+    end
+    if can then
         zip_file, err = check_for_update(force)
+    end
+    if not zip_file then
+        -- If an update is already downloaded, then ignore any error that may
+        -- have occurred while attempting to check/download a new update.
+        zip_file = has_zip_file()
         if not zip_file then
-            update_lastcheck(tagfile)
+            -- If no zip file is already downloaded, then report the error from
+            -- the earlier check_for_update().
             return nil, err
         end
     end
-    if not cloud_tag then
-        cloud_tag = path.getbasename(zip_file)
+
+    -- Verify the zip file is newer.
+    local cloud_tag = path.getbasename(zip_file)
+    if not is_rhs_version_newer(get_local_tag(), cloud_tag) then
+        return nil, log_info("no update available; local version " .. local_tag .. " is not older than latest release " .. cloud_tag .. ".")
     end
 
-    -- When forcing (`clink update`), the clink executable is in use, so the
-    -- downloaded zip file will be applied the next time Clink is injected.
-    if force then
-        return true, "update to " .. path.getbasename(zip_file) .. " will happen the next time Clink is injected."
-    end
+    -- Update is ready.
+    log_info("update in " .. zip_file .. " is ready to be applied.")
+    return zip_file
+end
 
-    -- Expand the zip file.
+local function apply_update(zip_file)
     if force then
         print("Expanding zip file...")
     end
     log_info("expanding " .. zip_file .. " into " .. exe_path .. ".")
+
+    -- Get all zip files.
     local t = os.globfiles(path.join(update_dir, "*.zip"))
+
+    -- Expand the zip file.
     local ok, err = unzip(zip_file, exe_path)
+
+    -- Delete all zip files.
     for _, z in ipairs(t) do
         os.remove(path.join(update_dir, z))
     end
+
+    -- Determine success or failure.
     if not ok then
         local nope = log_info("failed to unzip the latest release.")
-        update_lastcheck(tagfile)
         return nil, concat_error(nope, err)
     end
-
-    -- The update appears to have succeeded (and if it didn't, the next check
-    -- for updates will reassess and retry).  Write the last update time.
-    ok, err = update_lastcheck(tagfile)
-    if not ok then
-        return nil, err
-    end
-
     return true, log_info("updated Clink to " .. cloud_tag .. ".")
 end
 
 local function try_autoupdate()
-    -- This wrapper around try_update() is necessary because all coroutines are
-    -- initially resumed with (true), because of an oversight in how Clink
-    -- manages coroutines for the clink.promptcoroutine() stuff.
-    return try_update(false)
+    is_update_ready(false)
 end
 
 --------------------------------------------------------------------------------
 local function autoupdate()
     if not settings.get("clink.autoupdate") then
         log_info("clink.autoupdate is false.")
-    elseif can_check_for_update() then
+        return
+    end
+
+    -- Report if an update is downloaded already.
+    local zip_file = has_zip_file()
+    if zip_file and can_check_for_update(true) then
+        local tag = path.getbasename(zip_file)
+        clink.print("\x1b[1mClink " .. tag .. " is available.\x1b[m")
+        print("- To apply the update, run 'clink update'.")
+        print("- To stop checking for updates, run 'clink set clink.autoupdate false'.")
+        print("- To view the release notes, visit the Releases page:")
+        print(string.format("  https://github.com/%s/releases", github_repo))
+        print("")
+    end
+
+    -- Possibly check for a new update.
+    if can_check_for_update() then
         local c = coroutine.create(try_autoupdate)
         clink.runcoroutineuntilcomplete(c)
     end
@@ -412,34 +461,10 @@ clink.oninject(autoupdate)
 
 --------------------------------------------------------------------------------
 function clink.updatenow()
-
-    find_prereqs()
-
-    local api = string.format([[2>nul ]] .. powershell_exe .. [[ -Command "$ProgressPreference='SilentlyContinue' ; Invoke-WebRequest https://api.github.com/repos/%s/releases/latest | Select-Object -ExpandProperty Content"]], github_repo)
-    local f, err = io.popen(api)
-    if not f then
-        print("ERROR during POPEN")
-        return
-    end
-    local latest_zip
-    for line in f:lines() do
-        local tag = line:match('"tag_name": *"(.-)"')
-        local match = line:match('"browser_download_url": *"(.-%.zip)"')
-        if not cloud_tag and tag then
-            cloud_tag = tag
-        end
-        if not latest_zip and match then
-            latest_zip = match
-        end
-    end
-    f:close()
-    print("TAG", cloud_tag)
-    print("URL", latest_zip)
-
-    local ok, err = can_check_for_update(true)
-    if not ok then
-        return false, err
+    local zip_file, err = is_update_ready(true)
+    if not zip_file then
+        return nil, err
     end
 
-    return try_update(true)
+    return apply_update(zip_file)
 end
