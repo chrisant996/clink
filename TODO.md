@@ -6,10 +6,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## High Priority
 - Document history timestamps.
-- Make setup exe explain about C:\Program Files.
-  - Or maybe even better is to have setting that CHECKS for updates and alerts about them.
-  - And require explicit `clink update`, with prompt for elevation if necessary.
-  - And some way to show what's new?
 - Sometimes completion isn't working, but I haven't found consistent repro steps yet.
 - Sometimes delayinit argmatchers (e.g. `premake`) aren't initializing at all.
 
