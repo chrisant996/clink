@@ -127,7 +127,7 @@ int update(int argc, char** argv)
                 return 0;
             }
         }
-        puts("You must have administator rights to use the --allusers flag.");
+        puts("You must have administrator rights to use the --allusers flag.");
         return 1;
     }
 

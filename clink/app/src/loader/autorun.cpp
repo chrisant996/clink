@@ -530,7 +530,7 @@ int autorun(int argc, char** argv)
     // Do the magic.
     if (!check_registry_access())
     {
-        puts("You must have administator rights to access cmd.exe's autorun.");
+        puts("You must have administrator rights to access cmd.exe's autorun.");
         return 1;
     }
 
