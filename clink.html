@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.3.17</title>
+<title>Clink v1.3.18</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -760,6 +760,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 <div><a class="h2" href="#color-settings">Color Settings</a></div>
 <div><a class="h2" href="#file-locations">File Locations</a></div>
 <div><a class="h2" href="#command-line-options">Command Line Options</a></div>
+<div><a class="h2" href="#automatic-updates">Automatic Updates</a></div>
 <div><a class="h2" href="#portable-configuration">Portable Configuration</a></div>
 <div><a class="h1" href="#configuring-readline">Configuring Readline</a></div>
 <div><a class="h2" href="#the-basics">The Basics</a></div>
@@ -790,7 +791,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.3.17</div>
+                <div id="title">Clink v1.3.18</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -1181,6 +1182,11 @@ supersedes the <code>terminal.mouse_modifier</code> setting.  In Windows Termina
 <td>When set, this replaces the &quot;Administrator: &quot; console title prefix.</td>
 </tr>
 <tr>
+<td align="center"><code>cmd.altf4_exits</code></td>
+<td align="center">True</td>
+<td>When set, pressing <kbd>Alt</kbd>-<kbd>F4</kbd> exits the cmd.exe process.</td>
+</tr>
+<tr>
 <td align="center"><code>cmd.auto_answer</code></td>
 <td align="center"><code>off</code></td>
 <td>Automatically answers cmd.exe&#39;s &quot;Terminate batch job (Y/N)?&quot; prompts. <code>off</code> = disabled, <code>answer_yes</code> = answer Y, <code>answer_no</code> = answer N.</td>
@@ -1188,7 +1194,7 @@ supersedes the <code>terminal.mouse_modifier</code> setting.  In Windows Termina
 <tr>
 <td align="center"><a name="ctrld_exits"></a><code>cmd.ctrld_exits</code></td>
 <td align="center">True</td>
-<td><kbd>Ctrl</kbd>-<kbd>D</kbd> exits the process when it is pressed on an empty line.</td>
+<td><kbd>Ctrl</kbd>-<kbd>D</kbd> exits the cmd.exe process when it is pressed on an empty line.</td>
 </tr>
 <tr>
 <td align="center"><code>cmd.get_errorlevel</code></td>
@@ -1424,6 +1430,16 @@ supersedes the <code>terminal.mouse_modifier</code> setting.  In Windows Termina
 <td align="center"><code>history.sticky_search</code></td>
 <td align="center">False</td>
 <td>When enabled, reusing a history line does not add the reused line to the end of the history, and it leaves the history search position on the reused line so next/prev history can continue from there (e.g. replaying commands via <kbd>Up</kbd> several times then <kbd>Enter</kbd>, <kbd>Down</kbd>, <kbd>Enter</kbd>, etc).</td>
+</tr>
+<tr>
+<td align="center"><code>history.time_format</code></td>
+<td align="center"><code>%F %T &nbsp</code></td>
+<td>This specifies a time format string for showing timestamps for history items.  For a list of format specifiers see <code>clink set history.time_format</code> or <a href="#history-timestamps">History Timestamps</a>.</td>
+</tr>
+<tr>
+<td align="center"><code>history.time_stamp</code></td>
+<td align="center"><code>off</code></td>
+<td>The default is <code>off</code>.  When this is <code>save</code>, timestamps are saved for each history item but are only shown when the <code>--show-time</code> flag is used with the <code>history</code> command.  When this is <code>show</code>, timestamps are saved for each history item, and timestamps are shown in the <code>history</code> command unless the <code>--bare</code> flag is used.</td>
 </tr>
 <tr>
 <td align="center"><code>lua.break_on_error</code></td>
@@ -1731,6 +1747,22 @@ Or <code>clink --version</code> shows just the version number.</dd>
 Echos key sequences to use in the .inputrc files for binding keys to Clink commands.  Each key pressed prints the associated key sequence on a separate line, until <kbd>Ctrl</kbd>-<kbd>C</kbd> is pressed.</dd>
 </p>
 
+<p>
+<dt>clink update</dt>
+<dd>
+Checks for an updated version of Clink.  If one is available, it is downloaded and will be installed the next time Clink is injected.</dd>
+</p>
+
+<h2 id="automatic-updates">Automatic Updates</h2>
+<p>By default, Clink periodically and automatically checks for new versions.  When an update is available, Clink prints a message on startup.  To apply an update, run <code>clink update</code> when convenient to do so.</p>
+<p>You can control the frequency of update checks with <code>clink set clink.update_interval <span class="arg">days</span></code>, where <span class="arg">days</span> is the minimum number of days between checking for updates.</p>
+<p>You can turn update checks off with <code>clink set clink.autoupdate false</code>, or turn them on with <code>clink set clink.autoupdate true</code>.</p>
+<p>Notes:</p>
+<ul>
+<li>The auto-updater settings are stored in the profile, so different profiles can be configured differently for automatic updates.</li>
+<li>The updater does nothing if the Clink program files are readonly.</li>
+<li>The updater requires PowerShell, which is present by default in Windows 7 and higher.</li>
+</ul>
 <h2 id="portable-configuration">Portable Configuration</h2>
 <p>Sometimes it&#39;s useful to run Clink from a flash drive or from a network share, especially if you want to use Clink on someone else&#39;s computer.</p>
 <p>Here&#39;s how you can set up a portable configuration for Clink:</p>
@@ -2066,7 +2098,7 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 </thead>
 <tbody><tr>
 <td><code>completion-auto-query-items</code></td>
-<td>If set to &quot;on&quot;, automatically prompts before displaying completions if they need more than half a screen page (this overrules the <a href="#configcompletionqueryitems"><code>completion-query-items</code></a> variable). The default is &quot;on&quot;.</td>
+<td>If set to &quot;on&quot;, automatically prompts before displaying completions if they won&#39;t fit without scrolling (this overrules the <a href="#configcompletionqueryitems"><code>completion-query-items</code></a> variable). The default is &quot;on&quot;.</td>
 </tr>
 <tr>
 <td><code>history-point-at-end-of-anchored-search</code></td>
@@ -2615,7 +2647,7 @@ C-_:                kill-line                       <span class="hljs-comment">#
 </tr>
 <tr>
 <td><code>capitalize-word</code></td>
-<td align="center"><kbd>Alt</kbd>-<kbd>c</kbd></td>
+<td align="center"></td>
 <td>Capitalize the current (or following) word. With a negative argument, capitalize the previous word, but do not move the cursor.</td>
 </tr>
 <tr>
@@ -2662,11 +2694,6 @@ C-_:                kill-line                       <span class="hljs-comment">#
 <td><code>backward-kill-word</code></td>
 <td align="center"><kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>Backspace</kbd></td>
 <td>Kill the word behind point. Word boundaries are the same as <code>backward-word</code>.</td>
-</tr>
-<tr>
-<td><code>shell-transpose-words</code></td>
-<td align="center"><kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>t</kbd></td>
-<td>Drag the word before point past the word after point, moving point past that word as well. If the insertion point is at the end of the line, this transposes the last two words on the line. Word boundaries are the same as <code>shell-forward-word</code> and <code>shell-backward-word</code>.</td>
 </tr>
 <tr>
 <td><code>unix-word-rubout</code></td>
@@ -2725,8 +2752,8 @@ C-_:                kill-line                       <span class="hljs-comment">#
 </thead>
 <tbody><tr>
 <td><code>digit-argument</code></td>
-<td align="center"><kbd>Alt</kbd>-<kbd>0</kbd>, <kbd>Alt</kbd>-<kbd>1</kbd>, ... <kbd>Alt</kbd>-<kbd>-</kbd></td>
-<td>Add this digit to the argument already accumulating, or start a new argument. <kbd>Alt</kbd>-<kbd>-</kbd> starts a negative argument.</td>
+<td align="center"><kbd>Alt</kbd>-<kbd><em>digit</em></kbd> or <kbd>Alt</kbd>-<kbd>-</kbd></td>
+<td>Add this <em>digit</em> to the argument already accumulating, or start a new argument. <kbd>Alt</kbd>-<kbd>-</kbd> starts a negative argument.</td>
 </tr>
 <tr>
 <td><code>universal-argument</code></td>
@@ -2830,12 +2857,12 @@ C-_:                kill-line                       <span class="hljs-comment">#
 </tr>
 <tr>
 <td><code>do-lowercase-version</code></td>
-<td align="center"><kbd>Alt</kbd>-<kbd>A</kbd>, <kbd>Alt</kbd>-<kbd>B</kbd>, <kbd>Alt</kbd>-<kbd>x</kbd>, ...</td>
-<td>If the metafied character x is upper case, run the command that is bound to the corresponding metafied lower case character. The behavior is undefined if x is already lower case.</td>
+<td align="center"><kbd>Alt</kbd>-<kbd><em>X</em></kbd>, etc</td>
+<td>If the key <kbd><em>X</em></kbd> is an upper case letter, run the command that is bound to the corresponding <kbd>Alt</kbd>-<kbd><em>x</em></kbd> lower case letter. The behavior is undefined if <em>x</em> is already lower case.</td>
 </tr>
 <tr>
 <td><code>undo</code></td>
-<td align="center"><kbd>Ctrl</kbd>-<kbd>_</kbd> or <kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>u</kbd></td>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>z</kbd> or <kbd>Ctrl</kbd>-<kbd>_</kbd></td>
 <td>Incremental undo, separately remembered for each line.</td>
 </tr>
 <tr>
@@ -2954,6 +2981,11 @@ C-_:                kill-line                       <span class="hljs-comment">#
 <td>A synonym for <code>clink-expand-doskey-alias</code>.</td>
 </tr>
 <tr>
+<td><code>clink-accept-suggestion</code></td>
+<td align="center"></td>
+<td>If there is a suggestion, insert the suggestion and accept the input line (like <code>accept-line</code>).</td>
+</tr>
+<tr>
 <td><code>clink-complete-numbers</code></td>
 <td align="center"></td>
 <td>Like <code>complete</code>, but for numbers from the console screen (3 digits or more, up to hexadecimal).</td>
@@ -2971,7 +3003,7 @@ C-_:                kill-line                       <span class="hljs-comment">#
 <tr>
 <td><code>clink-copy-word</code></td>
 <td align="center"><kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>w</kbd></td>
-<td>Copy the word at the cursor to the clipboard, or copies the nth word if a numeric argument is provided via the <code>digit-argument</code> keys.</td>
+<td>Copy the word at the cursor to the clipboard, or copies the <em>n</em>th word if a numeric argument is provided via the <code>digit-argument</code> keys.</td>
 </tr>
 <tr>
 <td><code>clink-ctrl-c</code></td>
@@ -3022,6 +3054,11 @@ C-_:                kill-line                       <span class="hljs-comment">#
 <td><code>clink-insert-dot-dot</code></td>
 <td align="center"><kbd>Alt</kbd>-<kbd>a</kbd></td>
 <td>Inserts <code>..\</code> at the cursor.</td>
+</tr>
+<tr>
+<td><code>clink-insert-suggestion</code></td>
+<td align="center"></td>
+<td>If there is a suggestion, insert the suggestion.</td>
 </tr>
 <tr>
 <td><code>clink-magic-suggest-space</code></td>
@@ -3754,19 +3791,42 @@ end
 <p>Clink provides a framework for writing complex argument match generators in Lua.  It works by creating a parser object that describes a command&#39;s arguments and flags and associating the parser with one or more commands.  When Clink detects a parser is associated with the command being edited, it uses the parser to generate matches.</p>
 <p>Here is an example of a simple parser for the command <code>foobar</code>;</p>
 <pre><code class="language-lua">clink.argmatcher(&quot;foobar&quot;)
-:addflags(&quot;-foo&quot;, &quot;-bar&quot;)          -- Flags
-:addarg({ &quot;hello&quot;, &quot;hi&quot; })         -- Completions for arg #1
-:addarg({ &quot;world&quot;, &quot;wombles&quot; })    -- Completions for arg #2
+:addflags(&quot;-foo&quot;, &quot;-bar&quot;)          -- Flags.
+:addarg({ &quot;hello&quot;, &quot;hi&quot; })         -- Completions for arg #1.
+:addarg({ &quot;world&quot;, &quot;wombles&quot; })    -- Completions for arg #2.
 </code></pre>
-<p>This parser describes a command that has two positional arguments each with two potential options. It also has two flags which the parser considers to be position independent meaning that provided the word being completed starts with a certain prefix the parser with attempt to match the from the set of flags.</p>
+<p>This parser describes a command that has two positional arguments each with two possible completions. It also has two flags which the parser considers to be position independent, meaning that provided the word being completed starts with the prefix character (in this example <code>-</code>) then the parser will attempt to match the word from the set of flags.</p>
 <p>On the command line completion would look something like this:</p>
-<pre style="border-radius:initial;border:initial"><code class="plaintext" style="background-color:black;color:#cccccc">C:&gt;foobar hello -foo wo
-wombles  wonder   world
-C:&gt;foobar hello -foo wo<span style="color:#ffffff">_</span>
+<pre style="border-radius:initial;border:initial"><code class="plaintext" style="background-color:black;color:#cccccc">C:\&gt;foobar hello -foo wo
+wombles  wonder  world
+C:\&gt;foobar hello -foo wo<span style="color:#ffffff">_</span>
 </code></pre>
 
 <p>When displaying possible completions, flag matches are only shown if the flag character has been input (so <code>command </code> and <kbd>Alt</kbd>-<kbd>=</kbd> would list only non-flag matches, or <code>command -</code> and <kbd>Alt</kbd>-<kbd>=</kbd> would list only flag matches).</p>
 <p>If a command doesn&#39;t have an argmatcher but is a doskey macro, Clink automatically expands the doskey macro and looks for an argmatcher for the expanded command.  A macro like <code>gco=git checkout $*</code> automatically reuses a <code>git</code> argmatcher and produces completions for its <code>checkout</code> argument.  However, it only expands the doskey macro up to the first <code>$</code>, so complex aliases like <code>foo=app 2$gnul text $*</code> or <code>foo=$2 $1</code> might behave strangely.</p>
+<h3 id="automatic-filename-completion">Automatic Filename Completion</h3>
+<p>A fresh, empty argmatcher provides no completions.</p>
+<pre><code class="language-lua">clink.argmatcher(&quot;foobar&quot;)         -- The &quot;foobar&quot; command provides no completions.
+</code></pre>
+<p>Once any flags or argument positions have been added to an argmatcher, then the argmatcher will provide completions.</p>
+<pre><code class="language-lua">clink.argmatcher(&quot;foobar&quot;)
+:addflags(&quot;-foo&quot;, &quot;-bar&quot;)          -- Flags.
+:addarg({ &quot;hello&quot;, &quot;hi&quot; })         -- Completions for arg #1.
+:addarg({ &quot;world&quot;, &quot;wombles&quot; })    -- Completions for arg #2.
+</code></pre>
+<p>When completing a word that doesn&#39;t have a corresponding argument position the argmatcher will automatically use filename completion.  For example, the <code>foobar</code> argmatcher has two argument positions, and completing a third word uses filename completion.</p>
+<pre style="border-radius:initial;border:initial"><code class="plaintext" style="background-color:black;color:#cccccc">C:\&gt;foobar hello world pro
+Program Files\  Program Files(x86)\  ProgramData\
+C:\&gt;foobar hello world pro<span style="color:#ffffff">_</span>
+</code></pre>
+
+<p>Use <a href="#_argmatcher:nofiles">_argmatcher:nofiles()</a> if you want to disable the automatic filename completion and &quot;dead end&quot; an argmatcher for extra words.</p>
+<pre><code class="language-lua">clink.argmatcher(&quot;foobar&quot;)
+:addflags(&quot;-foo&quot;, &quot;-bar&quot;)          -- Flags
+:addarg({ &quot;hello&quot;, &quot;hi&quot; })         -- Completions for arg #1
+:addarg({ &quot;world&quot;, &quot;wombles&quot; })    -- Completions for arg #2
+:nofiles()                         -- Using :nofiles() prevents further completions.
+</code></pre>
 <h3 id="descriptions-for-flags-and-arguments">Descriptions for Flags and Arguments</h3>
 <p>Flags and arguments may optionally have descriptions associated with them.  The descriptions, if any, are displayed when listing possible completions.</p>
 <p>Use <a href="#_argmatcher:adddescriptions">_argmatcher:adddescriptions()</a> to add descriptions for flags and/or arguments.  Refer to its documentation for further details about how to use it, including how to also show arguments that a flag accepts.</p>
@@ -5131,6 +5191,98 @@ end
 <h3 id="multiple-master-history-files">Multiple master history files</h3>
 <p>Normally Clink saves a single saved master history list.  All instances of Clink load and save the same master history list.</p>
 <p>It&#39;s also possible to make one or more instances of Clink use a different saved master history list by setting the <code>%CLINK_HISTORY_LABEL%</code> environment variable.  This can be up to 32 alphanumeric characters, and is appended to the master history file name.  Changing the <code>%CLINK_HISTORY_LABEL%</code> environment variable takes effect at the next input line.</p>
+<h3 id="history-timestamps">History timestamps</h3>
+<p>History items can optionally save the timestamp when they were added, and the timestamps can be shown in the <code>history</code> command.</p>
+<p>Use <code>clink set history.time_stamp off</code> to not save or show timestamps for history items (this is the default).  Turning off timestamps doesn&#39;t remove existing timestamps.</p>
+<p>Use <code>clink set history.time_stamp save</code> to save timestamps for each history item but only show them in the <code>history</code> command when the <code>--show-time</code> flag is used.</p>
+<p>Use <code>clink set history.time_stamp show</code> to save timestamps for each history item and show them in the <code>history</code> command unless the <code>--bare</code> flag is used.</p>
+<p>Use <code>clink set history.time_format <span class="arg">format</span></code> to specify the format for showing timestamps (the default format is <code>%F %T &nbsp</code>).</p>
+<p>The <span class="arg">format</span> string may contain regular characters and special format specifiers.  Format specifiers begin with a percent sign (<code>%</code>), and are expanded to their corresponding values.  For a list of possible format specifiers, refer to the C++ strftime() documentation.</p>
+<p>Some common format specifiers are:</p>
+<table>
+<thead>
+<tr>
+<th>Specifier</th>
+<th>Expands To</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>%a</code></td>
+<td>Abbreviated weekday name for the locale (e.g. Thu).</td>
+</tr>
+<tr>
+<td><code>%b</code></td>
+<td>Abbreviated month name for the locale (e.g. Aug).</td>
+</tr>
+<tr>
+<td><code>%c</code></td>
+<td>Date and time representation for the locale.</td>
+</tr>
+<tr>
+<td><code>%D</code></td>
+<td>Short MM/DD/YY date (e.g. 08/23/01).</td>
+</tr>
+<tr>
+<td><code>%F</code></td>
+<td>Short YYYY/MM/DD date (e.g. 2001-08-23).</td>
+</tr>
+<tr>
+<td><code>%H</code></td>
+<td>Hour in 24-hour format (00 - 23).</td>
+</tr>
+<tr>
+<td><code>%I</code></td>
+<td>Hour in 12-hour format (01 - 12).</td>
+</tr>
+<tr>
+<td><code>%m</code></td>
+<td>Month (01 - 12).</td>
+</tr>
+<tr>
+<td><code>%M</code></td>
+<td>Minutes (00 - 59).</td>
+</tr>
+<tr>
+<td><code>%p</code></td>
+<td>AM or PM indicator for the locale.</td>
+</tr>
+<tr>
+<td><code>%r</code></td>
+<td>12-hour clock time for the locale (e.g. 02:55:41 pm).</td>
+</tr>
+<tr>
+<td><code>%R</code></td>
+<td>24-hour clock time (e.g. 14:55).</td>
+</tr>
+<tr>
+<td><code>%S</code></td>
+<td>Seconds (00 - 59).</td>
+</tr>
+<tr>
+<td><code>%T</code></td>
+<td>ISO 8601 time format HH:MM:SS (e.g. 14:55:41).</td>
+</tr>
+<tr>
+<td><code>%x</code></td>
+<td>Date representation for the locale.</td>
+</tr>
+<tr>
+<td><code>%X</code></td>
+<td>Time representation for the locale.</td>
+</tr>
+<tr>
+<td><code>%y</code></td>
+<td>Year without century (00 - 99).</td>
+</tr>
+<tr>
+<td><code>%Y</code></td>
+<td>Year with century (e.g. 2001).</td>
+</tr>
+<tr>
+<td><code>%%</code></td>
+<td>A <code>%</code> sign.</td>
+</tr>
+</tbody></table>
 <h2 id="using-history-expansion">Using History Expansion</h2>
 <p>Clink uses Readline&#39;s <a href="https://tiswww.cwru.edu/php/chet/readline/history.html">History library</a> to
 add history expansion capabilities.  If these are undesirable, they can be turned off by running
@@ -5591,7 +5743,7 @@ clink.argmatcher("foo")
 local r = io.popen(c.." --session "..clink.getsession().." history")</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.lower">clink.lower</a></div> <div class="signature">( <span class="arg_name">text</span>:string ) : string<br/><div class="version">v0.4.9 and newer</div></div></div><div class="body"><p class="desc">This API correctly converts UTF8 strings to lowercase, with international linguistic awareness.</p><pre class="language-lua"><code>clink.lower("Hello World") -- returns "hello world"</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.onaftercommand">clink.onaftercommand</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil<br/><div class="version">v1.2.50 and newer</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called after every editing command (key binding).</p></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="clink.onbeginedit">clink.onbeginedit</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil<br/><div class="version">v1.1.11 and newer</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called when Clink's edit prompt is activated.  The function receives no arguments and has no return values.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="clink.onbeginedit">clink.onbeginedit</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil<br/><div class="version">v1.1.11 and newer</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called when Clink's edit prompt is activated.  The function receives no arguments and has no return values.</p><p class="desc"> Starting in v1.3.18 <span class="arg">func</span> may optionally return a string.  If a string is returned, it is executed as a command line without showing a prompt and without invoking the input line editor.</p><p class="desc"> <strong>Note:</strong>  Be very careful if you return a string; this has the potential to interfere with the user's ability to use CMD.  Mistakes in the command string can have the potential to cause damage to the system very quickly.  It is also possible for a script to cause an infinite loop, and therefore <kbd>Ctrl</kbd>-<kbd>Break</kbd> causes the next string to be ignored.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.oncommand">clink.oncommand</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil<br/><div class="version">v1.3.12 and newer</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called when the command word changes in the edit line.</p><p class="desc"> The function receives 2 arguments:  the <a href="#line_state">line_state</a> for the command, and a table with the following scheme:</p><pre class="language-lua"><code>{
 &nbsp;   command =   -- [string] The command.
 &nbsp;   quoted  =   -- [boolean] Whether the command is quoted in the command line.
@@ -5619,17 +5771,18 @@ function my_match_generator:generate(line_state, match_builder)
 &nbsp;   clink.ondisplaymatches(my_filter)
 end</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.onendedit">clink.onendedit</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil<br/><div class="version">v1.1.20 and newer</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called when Clink's edit prompt ends.  The function receives a string argument containing the input text from the edit prompt.</p><p class="desc"> <strong>Breaking Change in v1.2.16:</strong>  The ability to replace the user's input has been moved to a separate <a href="#clink.onfilterinput">onfilterinput</a> event.</p></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="clink.onfilterinput">clink.onfilterinput</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil<br/><div class="version">v1.2.16 and newer</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called after Clink's edit prompt ends (it is called after the <a href="#clink.oneditedit">onendedit</a> event).  The function receives a string argument containing the input text from the edit prompt.  The function returns up to two values.  If the first is not nil then it's a string that replaces the edit prompt text.  If the second is not nil and is false then it stops further onfilterinput handlers from running.</p><p class="desc"> Starting in v1.3.13 <span class="arg">func</span> may return a table of strings, and each is executed as a command line.</p><p class="desc"> <strong>Note:</strong>  Be very careful if you replace the text; this has the potential to interfere with or even ruin the user's ability to enter command lines for CMD to process.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="clink.onfilterinput">clink.onfilterinput</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil<br/><div class="version">v1.2.16 and newer</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called after Clink's edit prompt ends (it is called after the <a href="#clink.onendedit">onendedit</a> event).  The function receives a string argument containing the input text from the edit prompt.  The function returns up to two values.  If the first is not nil then it's a string that replaces the edit prompt text.  If the second is not nil and is false then it stops further onfilterinput handlers from running.</p><p class="desc"> Starting in v1.3.13 <span class="arg">func</span> may return a table of strings, and each is executed as a command line.</p><p class="desc"> <strong>Note:</strong>  Be very careful if you replace the text; this has the potential to interfere with or even ruin the user's ability to enter command lines for CMD to process.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.onfiltermatches">clink.onfiltermatches</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil<br/><div class="version">v1.1.41 and newer</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called after Clink generates matches for completion.  See <a href="#filteringmatchcompletions"> Filtering Match Completions</a> for more information.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.oninject">clink.oninject</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil<br/><div class="version">v1.1.21 and newer</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called when Clink is injected into a CMD process.  The function is called only once per session.</p></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="clink.popuplist">clink.popuplist</a></div> <div class="signature">( <span class="arg_name">title</span>:string, <span class="arg_name">items</span>:table, [<span class="arg_name">index</span>:integer] ) : string, boolean, integer<br/><div class="version">v1.2.17 and newer</div></div></div><div class="body"><p class="desc">Displays a popup list and returns the selected item.  May only be used within a <a href="#luakeybindings">luafunc: key binding</a>.</p><p class="desc"> <span class="arg">title</span> is required and captions the popup list.</p><p class="desc"> <span class="arg">items</span> is a table of strings to display.</p><p class="desc"> <span class="arg">index</span> optionally specifies the default item (or 1 if omitted).</p><p class="desc"> The function returns one of the following: <ul> <li>nil if the popup is canceled or an error occurs. <li>string indicating the <code>value</code> field from the selected item (or the <code>display</code> field if no value field is present). <li>boolean which is true if the item was selected with <kbd>Shift</kbd> or <kbd>Ctrl</kbd> pressed. <li>integer indicating the index of the selected item in the original <span class="arg">items</span> table. </ul></p><p class="desc"> Alternatively, the <span class="arg">items</span> argument can be a table of tables with the following scheme:</p><pre class="language-lua"><code>{
+<div class="function"><div class="header"> <div class="name"><a name="clink.onprovideline">clink.onprovideline</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil | string<br/><div class="version">v1.3.18 and newer</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called after the <a href="#clink.onbeginedit">onbeginedit</a> event but before the input line editor starts.  If <span class="arg">func</span> returns a string, it is executed as a command line without showing a prompt.  The input line editor is skipped, and the <a href="#clink.onendedit">onendedit</a> and <a href="#clink.onfilterinput">onfilterinput</a> events happen immediately.</p><p class="desc"> <strong>Note:</strong>  Be very careful when returning a string; this can interfere with the user's ability to use CMD.  Mistakes in the command string can have potential to cause damage to the system very quickly.  It is also possible for a script to cause an infinite loop, and therefore <kbd>Ctrl</kbd>-<kbd>Break</kbd> skips the next <a href="#clink.onprovideline">onprovideline</a> event, allowing the user to regain control.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="clink.popuplist">clink.popuplist</a></div> <div class="signature">( <span class="arg_name">title</span>:string, <span class="arg_name">items</span>:table, [<span class="arg_name">index</span>:integer] ) : string, boolean, integer<br/><div class="version">v1.2.17 and newer</div></div></div><div class="body"><p class="desc">Displays a popup list and returns the selected item.  May only be used within a <a href="#luakeybindings">luafunc: key binding</a>.</p><p class="desc"> <span class="arg">title</span> is required and captions the popup list.</p><p class="desc"> <span class="arg">items</span> is a table of strings to display.</p><p class="desc"> <span class="arg">index</span> optionally specifies the default item (or 1 if omitted).</p><p class="desc"> The function returns one of the following: <ul> <li>nil if the popup is canceled or an error occurs. <li>Three values: <ul> <li>string indicating the <code>value</code> field from the selected item (or the <code>display</code> field if no value field is present). <li>boolean which is true if the item was selected with <kbd>Shift</kbd> or <kbd>Ctrl</kbd> pressed. <li>integer indicating the index of the selected item in the original <span class="arg">items</span> table. </ul> </ul></p><p class="desc"> Alternatively, the <span class="arg">items</span> argument can be a table of tables with the following scheme:</p><pre class="language-lua"><code>{
 &nbsp;   {
 &nbsp;       value       = "...",   -- Required; this is returned if the item is chosen.
 &nbsp;       display     = "...",   -- Optional; displayed instead of value.
 &nbsp;       description = "...",   -- Optional; displayed in a dimmed color in a second column.
 &nbsp;   },
 &nbsp;   ...
-}</code></pre><p class="desc">The <code>value</code> field is returned if the item is chosen.</p><p class="desc"> The optional <code>display</code> field is displayed in the popup list instead of the <code>value</code> field.</p><p class="desc"> The optional <code>description</code> field is displayed in a dimmed color in a second column.  If it contains tab characters (<code>"\t"</code>) the description string is split into multiple columns (up to 3).</p></div></div><hr/>
+}</code></pre><p class="desc">The <code>value</code> field is returned if the item is chosen.</p><p class="desc"> The optional <code>display</code> field is displayed in the popup list instead of the <code>value</code> field.</p><p class="desc"> The optional <code>description</code> field is displayed in a dimmed color in a second column.  If it contains tab characters (<code>"\t"</code>) the description string is split into multiple columns (up to 3).</p><p class="desc"> Starting in v1.3.18, if any description contains a tab character, then the descriptions are automatically aligned in a column.</p><p class="desc"> Otherwise, the descriptions follow immediately after the display field. They can be aligned in a column by making all of the display fields be the same number of character cells.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.print">clink.print</a></div> <div class="signature">( ... ) : nil<br/><div class="version">v1.2.11 and newer</div></div></div><div class="body"><p class="desc">This works like <code>print()</code>, but this supports ANSI escape codes.</p><p class="desc"> If the special value <code>NONL</code> is included anywhere in the argument list then the usual trailing newline is omitted.  This can sometimes be useful particularly when printing certain ANSI escape codes.</p><p class="desc"> <strong>Note:</strong>  In Clink versions before v1.2.11 the <code>clink.print()</code> API exists (undocumented) but accepts exactly one string argument and is therefore not fully compatible with normal <code>print()</code> syntax.  If you use fewer or more than 1 argument or if the argument is not a string, then first checking the Clink version (e.g. <a href="#clink.version_encoded">clink.version_encoded</a>) can avoid runtime errors.</p><pre class="language-lua"><code>clink.print("\x1b[32mgreen\x1b[m \x1b[35mmagenta\x1b[m")
 -- Outputs <code>green</code> in green, a space, and <code>magenta</code> in magenta.
 
@@ -5700,7 +5853,8 @@ end</code></pre></div></div><hr/>
 &nbsp;       "^%x+$")               -- A candidate containing only hexadecimal digits is a match.</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="console.scroll">console.scroll</a></div> <div class="signature">( <span class="arg_name">mode</span>:string, <span class="arg_name">amount</span>:integer ) : integer<br/><div class="version">v1.1.20 and newer</div></div></div><div class="body"><p class="desc">Scrolls the console screen buffer and returns the number of lines scrolled up (negative) or down (positive).</p><p class="desc"> The <span class="arg">mode</span> specifies how to scroll: <table> <tr><th>Mode</th><th>Description</th></tr> <tr><td>"line"</td><td>Scrolls by <span class="arg">amount</span> lines; negative is up and positive is down.</td></tr> <tr><td>"page"</td><td>Scrolls by <span class="arg">amount</span> pages; negative is up and positive is down.</td></tr> <tr><td>"end"</td><td>Scrolls to the top if <span class="arg">amount</span> is negative, or to the bottom if positive.</td></tr> <tr><td>"absolute"</td><td>Scrolls to line <span class="arg">amount</span>, from 1 to <a href="#console.getnumlines">console.getnumlines()</a>.</td></tr> </table></p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="console.settitle">console.settitle</a></div> <div class="signature">( <span class="arg_name">title</span>:string ) : nil<br/><div class="version">v1.1.32 and newer</div></div></div><div class="body"><p class="desc">Sets the console title text.</p></div></div><hr/>
-</div><div class="group"><h5 class="group_name"><a name="io">io</a></h5><div class="function"><div class="header"> <div class="name"><a name="io.popenrw">io.popenrw</a></div> <div class="signature">( <span class="arg_name">command</span>:string, [<span class="arg_name">mode</span>:string] ) : file, file<br/><div class="version">v1.1.42 and newer</div></div></div><div class="body"><p class="desc">Runs <code>command</code> and returns two file handles:  a file handle for reading output from the command, and a file handle for writing input to the command.</p><p class="desc"> <span class="arg">mode</span> can be "t" for text mode (the default if omitted) or "b" for binary mode.</p><p class="desc"> If the function fails it returns nil, an error message, and an error number.</p><p class="desc"> <fieldset><legend>Warning</legend> This can result in deadlocks unless the command fully reads all of its input before writing any output.  This is because Lua uses blocking IO to read and write file handles.  If the write buffer fills (or the read buffer is empty) then the write (or read) will block and can only become unblocked if the command correspondingly reads (or writes).  But the other command can easily experience the same blocking IO problem on its end, resulting in a deadlock: process 1 is blocked from writing more until process 2 reads, but process 2 can't read because it is blocked from writing until process 1 reads. </fieldset></p><pre class="language-lua"><code>local r,w = io.popenrw("fzf.exe --height 40%")
+</div><div class="group"><h5 class="group_name"><a name="io">io</a></h5><div class="function"><div class="header"> <div class="name"><a name="io.open">io.open</a></div> <div class="signature">( <span class="arg_name">filename</span>:string, [<span class="arg_name">mode</span>:string] ) : file<br/><div class="version">v0.0.1 and newer</div></div></div><div class="body"><p class="desc">This function opens a file named by <span class="arg">filename</span>, in the mode specified in the string <span class="arg">mode</span>.  It returns a new file handle, or, in case of errors, nil plus an error message and error number.</p><p class="desc"> The <span class="arg">mode</span> string can be any of the following: <ul> <li><code>"r"</code>: read mode (the default); <li><code>"w"</code>: write mode; <li><code>"wx"</code>: write mode, but fail if the file already exists (requires v1.3.18 or higher); <li><code>"a"</code>: append mode; <li><code>"r+"</code>: update mode, all previous data is preserved; <li><code>"w+"</code>: update mode, all previous data is erased; <li><code>"w+x"</code>: update mode, all previous data is erased, but fail if the file already exists (requires v1.3.18 or higher); <li><code>"a+"</code>: append update mode, previous data is preserved, writing is only allowed at the end of file. </ul></p><p class="desc"> The <span class="arg">mode</span> string can also have a <code>'b'</code> at the end to open the file in binary mode.</p><p class="desc"> The <code>'x'</code> modes are Clink extensions to Lua.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="io.popenrw">io.popenrw</a></div> <div class="signature">( <span class="arg_name">command</span>:string, [<span class="arg_name">mode</span>:string] ) : file, file<br/><div class="version">v1.1.42 and newer</div></div></div><div class="body"><p class="desc">Runs <code>command</code> and returns two file handles:  a file handle for reading output from the command, and a file handle for writing input to the command.</p><p class="desc"> <span class="arg">mode</span> can be "t" for text mode (the default if omitted) or "b" for binary mode.</p><p class="desc"> If the function fails it returns nil, an error message, and an error number.</p><p class="desc"> <fieldset><legend>Warning</legend> This can result in deadlocks unless the command fully reads all of its input before writing any output.  This is because Lua uses blocking IO to read and write file handles.  If the write buffer fills (or the read buffer is empty) then the write (or read) will block and can only become unblocked if the command correspondingly reads (or writes).  But the other command can easily experience the same blocking IO problem on its end, resulting in a deadlock: process 1 is blocked from writing more until process 2 reads, but process 2 can't read because it is blocked from writing until process 1 reads. </fieldset></p><pre class="language-lua"><code>local r,w = io.popenrw("fzf.exe --height 40%")
 
 w:write("hello\n")
 w:write("world\n")
@@ -5724,6 +5878,7 @@ while (true) do
 &nbsp;   do_things_with(line)
 end
 file:close()</code></pre></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="io.sopen">io.sopen</a></div> <div class="signature">( <span class="arg_name">filename</span>:string, [<span class="arg_name">mode</span>:string], [<span class="arg_name">deny</span>:string] ) : file<br/><div class="version">v1.3.18 and newer</div></div></div><div class="body"><p class="desc">This is the same as <a href="#io.open"><code>io.open()</code></a>, but adds an optional <code>deny</code> argument that specifies the type of sharing allowed.</p><p class="desc"> This function opens a file named by <span class="arg">filename</span>, in the mode specified in the string <span class="arg">mode</span>.  It returns a new file handle, or, in case of errors, nil plus an error message and error number.</p><p class="desc"> The <span class="arg">mode</span> string can be any of the following: <ul> <li><code>"r"</code>: read mode (the default); <li><code>"w"</code>: write mode; <li><code>"wx"</code>: write mode, but fail if the file already exists; <li><code>"a"</code>: append mode; <li><code>"r+"</code>: update mode, all previous data is preserved; <li><code>"w+"</code>: update mode, all previous data is erased; <li><code>"w+x"</code>: update mode, all previous data is erased, but fail if the file already exists; <li><code>"a+"</code>: append update mode, previous data is preserved, writing is only allowed at the end of file. </ul></p><p class="desc"> The <span class="arg">mode</span> string can also have a <code>'b'</code> at the end to open the file in binary mode.</p><p class="desc"> The <span class="arg">deny</span> string can be any of the following: <ul> <li><code>"r"</code> denies read access; <li><code>"w"</code> denies write access; <li><code>"rw"</code> denies read and write access; <li><code>""</code> permits read and write access (the default). </ul></p></div></div><hr/>
 </div><div class="group"><h5 class="group_name"><a name="line_state">line_state</a></h5><div class="function"><div class="header"> <div class="name"><a name="line_state:getcommandoffset">line_state:getcommandoffset</a></div> <div class="signature">() : integer<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Returns the offset to the start of the delimited command in the line that's being effectively edited. Note that this may not be the offset of the first command of the line unquoted as whitespace isn't considered for words.</p><pre class="language-lua"><code>-- Given the following line; abc&123
 -- where commands are separated by & symbols.
 line_state:getcommandoffset() == 5</code></pre><p class="desc">The command offset points to the beginning of the command, but that might be a space character.  Two spaces after a command separator is like one space at the beginning of a line; it disables doskey alias expansion.  So, if the command offset points at a space, then you know the first word will not be treated as a doskey alias.</p><pre class="language-lua"><code>-- Given the following line; abc&  123
@@ -5750,10 +5905,10 @@ line_state:getcommandwordindex() == 2</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="matches:getmatch">matches:getmatch</a></div> <div class="signature">( <span class="arg_name">index</span>:integer ) : string<br/><div class="version">v1.2.47 and newer</div></div></div><div class="body"><p class="desc">Returns the match text for the <span class="arg">index</span> match.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="matches:getprefix">matches:getprefix</a></div> <div class="signature">() : string<br/><div class="version">v1.2.47 and newer</div></div></div><div class="body"><p class="desc">Returns the longest common prefix of the available matches.</p></div></div><hr/>
 </div><div class="group"><h5 class="group_name"><a name="matches_lua">matches_lua</a></h5><div class="function"><div class="header"> <div class="name"><a name="matches_lua:gettype">matches_lua:gettype</a></div> <div class="signature">( <span class="arg_name">index</span>:integer ) : string<br/><div class="version">v1.2.47 and newer</div></div></div><div class="body"><p class="desc">Returns the match type for the <span class="arg">index</span> match.</p></div></div><hr/>
-</div><div class="group"><h5 class="group_name"><a name="os">os</a></h5><div class="function"><div class="header"> <div class="name"><a name="os.chdir">os.chdir</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Changes the current directory to <span class="arg">path</span> and returns whether it was successful.</p></div></div><hr/>
+</div><div class="group"><h5 class="group_name"><a name="os">os</a></h5><div class="function"><div class="header"> <div class="name"><a name="os.chdir">os.chdir</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Changes the current directory to <span class="arg">path</span> and returns whether it was successful. If unsuccessful it returns false, an error message, and the error number.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.clock">os.clock</a></div> <div class="signature">() : number<br/><div class="version">v1.2.30 and newer</div></div></div><div class="body"><p class="desc">This returns the number of seconds since the program started.</p><p class="desc"> Normally, Lua's os.clock() has millisecond precision until the program has been running for almost 25 days, and then it suddenly breaks and starts always returning -0.001 seconds.</p><p class="desc"> Clink's version of os.clock() has microsecond precision until the program has been running for many weeks.  It maintains at least millisecond precision until the program has been running for many years.</p><p class="desc"> It was necessary to replace os.clock() in order for <a href="#asyncpromptfiltering">asynchronous prompt filtering</a> to continue working when CMD has been running for more than 25 days.</p></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="os.copy">os.copy</a></div> <div class="signature">( <span class="arg_name">src</span>:string, <span class="arg_name">dest</span>:string ) : boolean<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Copies the <span class="arg">src</span> file to the <span class="arg">dest</span> file.</p></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="os.createtmpfile">os.createtmpfile</a></div> <div class="signature">( [<span class="arg_name">prefix</span>:string], [<span class="arg_name">ext</span>:string], [<span class="arg_name">path</span>:string], [<span class="arg_name">mode</span>:string] ) : file, string<br/><div class="version">v1.1.42 and newer</div></div></div><div class="body"><p class="desc">Creates a uniquely named file, intended for use as a temporary file.  The name pattern is "<em>location</em> <code>\</code> <em>prefix</em> <code>_</code> <em>processId</em> <code>_</code> <em>uniqueNum</em> <em>extension</em>".</p><p class="desc"> <span class="arg">prefix</span> optionally specifies a prefix for the file name and defaults to "tmp".</p><p class="desc"> <span class="arg">ext</span> optionally specifies a suffix for the file name and defaults to "" (if <span class="arg">ext</span> starts with a period "." then it is a filename extension).</p><p class="desc"> <span class="arg">path</span> optionally specifies a path location in which to create the file.  The default is the system TEMP directory.</p><p class="desc"> <span class="arg">mode</span> optionally specifies "t" for text mode (line endings are translated) or "b" for binary mode (untranslated IO).  The default is "t".</p><p class="desc"> When successful, the function returns a file handle and the file name.</p><p class="desc"> <strong>Note:</strong> Be sure to delete the file when finished, or it will be leaked.</p><p class="desc"> If the function is unable to create a file it returns nil, an error message, and an error number.  For example if the directory is inaccessible, or if there are already too many files, or invalid file name characters are used, or etc.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="os.copy">os.copy</a></div> <div class="signature">( <span class="arg_name">src</span>:string, <span class="arg_name">dest</span>:string ) : boolean<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Copies the <span class="arg">src</span> file to the <span class="arg">dest</span> file. If unsuccessful it returns false, an error message, and the error number.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="os.createtmpfile">os.createtmpfile</a></div> <div class="signature">( [<span class="arg_name">prefix</span>:string], [<span class="arg_name">ext</span>:string], [<span class="arg_name">path</span>:string], [<span class="arg_name">mode</span>:string] ) : file, string<br/><div class="version">v1.1.42 and newer</div></div></div><div class="body"><p class="desc">Creates a uniquely named file, intended for use as a temporary file.  The name pattern is "<em>location</em> <code>\</code> <em>prefix</em> <code>_</code> <em>processId</em> <code>_</code> <em>uniqueNum</em> <em>extension</em>".</p><p class="desc"> <span class="arg">prefix</span> optionally specifies a prefix for the file name and defaults to "tmp".</p><p class="desc"> <span class="arg">ext</span> optionally specifies a suffix for the file name and defaults to "" (if <span class="arg">ext</span> starts with a period "." then it is a filename extension).</p><p class="desc"> <span class="arg">path</span> optionally specifies a path location in which to create the file.  The default is the system TEMP directory.</p><p class="desc"> <span class="arg">mode</span> optionally specifies "t" for text mode (line endings are translated) or "b" for binary mode (untranslated IO).  The default is "t".</p><p class="desc"> When successful, the function returns a file handle and the file name. If unsuccessful it returns nil, an error message, and the error number.</p><p class="desc"> <strong>Note:</strong> Be sure to delete the file when finished, or it will be leaked.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.debugprint">os.debugprint</a></div> <div class="signature">( ... ) : nil<br/><div class="version">v1.2.20 and newer</div></div></div><div class="body"><p class="desc">This works like <code>print()</code> but writes the output via the OS `OutputDebugString()` API.</p><p class="desc"> This function has no effect if the `lua.debug` Clink setting is off.</p><pre class="language-lua"><code>clink.debugprint("my variable = "..myvar)</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.expandenv">os.expandenv</a></div> <div class="signature">( <span class="arg_name">value</span>:string ) : string<br/><div class="version">v1.2.5 and newer</div></div></div><div class="body"><p class="desc">Returns <span class="arg">value</span> with any <code>%name%</code> environment variables expanded.  Names are case insensitive.  Special CMD syntax is not supported (e.g. <code>%name:str1=str2%</code> or <code>%name:~offset,length%</code>).</p><p class="desc"> Note: See <a href="#os.getenv">os.getenv()</a> for a list of special variable names.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.getalias">os.getalias</a></div> <div class="signature">( <span class="arg_name">name</span>:string ) : string | nil<br/><div class="version">v1.1.4 and newer</div></div></div><div class="body"><p class="desc">Returns command string for doskey alias <span class="arg">name</span>, or nil if the named alias does not exist.</p></div></div><hr/>
@@ -5770,31 +5925,32 @@ line_state:getcommandwordindex() == 2</code></pre></div></div><hr/>
 -- t[index].name        [string] The environment variable's name.
 -- t[index].value       [string] The environment variable's value.</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.geterrorlevel">os.geterrorlevel</a></div> <div class="signature">() : integer<br/><div class="version">v1.2.14 and newer</div></div></div><div class="body"><p class="desc">Returns the last command's exit code, if the <code>cmd.get_errorlevel</code> setting is enabled (it is disabled by default).  Otherwise it returns 0.</p></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="os.getfullpathname">os.getfullpathname</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : string<br/><div class="version">v1.1.42 and newer</div></div></div><div class="body"><p class="desc">Returns the full path name for <span class="arg">path</span>.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="os.getfullpathname">os.getfullpathname</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : string<br/><div class="version">v1.1.42 and newer</div></div></div><div class="body"><p class="desc">Returns the full path name for <span class="arg">path</span>. If unsuccessful it returns nil, an error message, and the error number.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.gethost">os.gethost</a></div> <div class="signature">() : string<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Returns the fully qualified file name of the host process.  Currently only CMD.EXE can host Clink.</p></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="os.getlongpathname">os.getlongpathname</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : string<br/><div class="version">v1.1.42 and newer</div></div></div><div class="body"><p class="desc">Returns the long path name for <span class="arg">path</span>.</p></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="os.getnetconnectionname">os.getnetconnectionname</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : string<br/><div class="version">v1.2.27 and newer</div></div></div><div class="body"><p class="desc">Returns the remote name associated with <span class="arg">path</span>, or an empty string if it's not a network drive.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="os.getlongpathname">os.getlongpathname</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : string<br/><div class="version">v1.1.42 and newer</div></div></div><div class="body"><p class="desc">Returns the long path name for <span class="arg">path</span>. If unsuccessful it returns nil, an error message, and the error number.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="os.getnetconnectionname">os.getnetconnectionname</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : string<br/><div class="version">v1.2.27 and newer</div></div></div><div class="body"><p class="desc">Returns the remote name associated with <span class="arg">path</span>, or an empty string if it's not a network drive. If unsuccessful it returns nil, an error message, and the error number.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.getpid">os.getpid</a></div> <div class="signature">() : integer<br/><div class="version">v1.1.41 and newer</div></div></div><div class="body"><p class="desc">Returns the CMD.EXE process ID. This is mainly intended to help with salting unique resource names (for example named pipes).</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.getscreeninfo">os.getscreeninfo</a></div> <div class="signature">() : table<br/><div class="version">v1.1.2 and newer</div></div></div><div class="body"><p class="desc">Returns dimensions of the terminal's buffer and visible window. The returned table has the following scheme:</p><pre class="language-lua"><code>local info = os.getscreeninfo()
 -- info.bufwidth        [integer] Width of the screen buffer.
 -- info.bufheight       [integer] Height of the screen buffer.
 -- info.winwidth        [integer] Width of the visible window.
 -- info.winheight       [integer] Height of the visible window.</code></pre></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="os.getshortpathname">os.getshortpathname</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : string<br/><div class="version">v1.1.42 and newer</div></div></div><div class="body"><p class="desc">Returns the 8.3 short path name for <span class="arg">path</span>.  This may return the input path if an 8.3 short path name is not available.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="os.getshortpathname">os.getshortpathname</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : string<br/><div class="version">v1.1.42 and newer</div></div></div><div class="body"><p class="desc">Returns the 8.3 short path name for <span class="arg">path</span>.  This may return the input path if an 8.3 short path name is not available. If unsuccessful it returns nil, an error message, and the error number.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="os.gettemppath">os.gettemppath</a></div> <div class="signature">() : string<br/><div class="version">v1.3.18 and newer</div></div></div><div class="body"><p class="desc">Returns the path of the system temporary directory. If unsuccessful it returns nil, an error message, and the error number.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.globdirs">os.globdirs</a></div> <div class="signature">( <span class="arg_name">globpattern</span>:string, [<span class="arg_name">extrainfo</span>:integer|boolean] ) : table<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Collects directories matching <span class="arg">globpattern</span> and returns them in a table of strings.</p><p class="desc"> The optional <span class="arg">extrainfo</span> argument can return a table of tables instead, where each sub-table corresponds to one directory and has the following scheme:</p><pre class="language-lua"><code>local t = os.globdirs(pattern, extrainfo)
--- Included when extrainfo is true or >= 1:
+-- Included when extrainfo is true or >= 1 (requires v1.1.7 or higher):
 --   t[index].name      -- [string] The directory name.
 --   t[index].type      -- [string] The match type (see below).
--- Included when extrainfo is 2:
+-- Included when extrainfo is 2 (requires v1.2.31 or higher):
 --   t[index].size      -- [number] The file size, in bytes.
 --   t[index].atime     -- [number] The access time, compatible with os.time().
 --   t[index].mtime     -- [number] The modified time, compatible with os.time().
 --   t[index].ctime     -- [number] The creation time, compatible with os.time().</code></pre><p class="desc">The <span class="tablescheme">type</span> string is "dir", and may also contain ",hidden", ",readonly", ",link", and ",orphaned" depending on the attributes (making it usable as a match type for <a href="#builder:addmatch">builder:addmatch()</a>).</p><p class="desc"> Starting in v1.3.1, when this is used in a coroutine it automatically yields periodically.</p><p class="desc"> Note: any quotation marks (<code>"</code>) in <span class="arg">globpattern</span> are stripped.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.globfiles">os.globfiles</a></div> <div class="signature">( <span class="arg_name">globpattern</span>:string, [<span class="arg_name">extrainfo</span>:integer|boolean] ) : table<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Collects files and/or directories matching <span class="arg">globpattern</span> and returns them in a table of strings.</p><p class="desc"> The optional <span class="arg">extrainfo</span> argument can return a table of tables instead, where each sub-table corresponds to one file or directory and has the following scheme:</p><pre class="language-lua"><code>local t = os.globfiles(pattern, extrainfo)
--- Included when extrainfo is true or >= 1:
---   t[index].name      -- [string] The directory name.
+-- Included when extrainfo is true or >= 1 (requires v1.1.7 or higher):
+--   t[index].name      -- [string] The file or directory name.
 --   t[index].type      -- [string] The match type (see below).
--- Included when extrainfo is 2:
+-- Included when extrainfo is 2 (requires v1.2.31 or higher):
 --   t[index].size      -- [number] The file size, in bytes.
 --   t[index].atime     -- [number] The access time, compatible with os.time().
 --   t[index].mtime     -- [number] The modified time, compatible with os.time().
@@ -5802,15 +5958,15 @@ line_state:getcommandwordindex() == 2</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.isdir">os.isdir</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Returns whether <span class="arg">path</span> is a directory.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.isfile">os.isfile</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Returns whether <span class="arg">path</span> is a file.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.issignaled">os.issignaled</a></div> <div class="signature">() : boolean<br/><div class="version">v1.3.14 and newer</div></div></div><div class="body"><p class="desc">Returns whether a <kbb>Ctrl</kbd>+<kbd>Break</kbd> has been received. Scripts may use this to decide when to end work early.</p></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="os.mkdir">os.mkdir</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Creates the directory <span class="arg">path</span> and returns whether it was successful.</p></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="os.move">os.move</a></div> <div class="signature">( <span class="arg_name">src</span>:string, <span class="arg_name">dest</span>:string ) : boolean<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Moves the <span class="arg">src</span> file to the <span class="arg">dest</span> file.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="os.mkdir">os.mkdir</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Creates the directory <span class="arg">path</span> and returns whether it was successful. If unsuccessful it returns false, an error message, and the error number.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="os.move">os.move</a></div> <div class="signature">( <span class="arg_name">src</span>:string, <span class="arg_name">dest</span>:string ) : boolean<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Moves the <span class="arg">src</span> file to the <span class="arg">dest</span> file. If unsuccessful it returns false, an error message, and the error number.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.resolvealias">os.resolvealias</a></div> <div class="signature">( <span class="arg_name">text</span>:string ) : table|nil<br/><div class="version">v1.3.12 and newer</div></div></div><div class="body"><p class="desc">Identifies whether <span class="arg">text</span> begins with a doskey alias, and expands the doskey alias.</p><p class="desc"> Returns a table of strings, or nil if there is no associated doskey alias. The return type is a table of strings because doskey aliases can be defined to expand into multiple command lines:  one entry in the table per resolved command line.  Most commonly, the table will contain one string.</p></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="os.rmdir">os.rmdir</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Removes the directory <span class="arg">path</span> and returns whether it was successful.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="os.rmdir">os.rmdir</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Removes the directory <span class="arg">path</span> and returns whether it was successful. If unsuccessful it returns false, an error message, and the error number.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.setclipboardtext">os.setclipboardtext</a></div> <div class="signature">() : boolean<br/><div class="version">v1.2.32 and newer</div></div></div><div class="body"><p class="desc">This sets the text onto the system clipboard, and returns whether it was successful.</p></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="os.setenv">os.setenv</a></div> <div class="signature">( <span class="arg_name">name</span>:string, <span class="arg_name">value</span>:string ) : boolean<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Sets the <span class="arg">name</span> environment variable to <span class="arg">value</span> and returns whether it was successful.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="os.setenv">os.setenv</a></div> <div class="signature">( <span class="arg_name">name</span>:string, <span class="arg_name">value</span>:string ) : boolean<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Sets the <span class="arg">name</span> environment variable to <span class="arg">value</span> and returns whether it was successful. If unsuccessful it returns false, an error message, and the error number.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.sleep">os.sleep</a></div> <div class="signature">( <span class="arg_name">seconds</span>:number ) : nil<br/><div class="version">v1.3.16 and newer</div></div></div><div class="body"><p class="desc">Sleeps for the indicated duration, in seconds, with millisecond granularity.</p><pre class="language-lua"><code>os.sleep(0.01)  -- Sleep for 10 milliseconds.</code></pre></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="os.touch">os.touch</a></div> <div class="signature">( <span class="arg_name">path</span>:string, [<span class="arg_name">atime</span>:number], [<span class="arg_name">mtime</span>:number] ) : nil<br/><div class="version">v1.2.31 and newer</div></div></div><div class="body"><p class="desc">Sets the access and modified times for <span class="arg">path</span>.</p><p class="desc"> The second argument is <span class="arg">atime</span> and is a time to set as the file's access time.  If omitted, the current time is used.  If present, the value must use the same format as <code>os.time()</code>.</p><p class="desc"> The third argument is <span class="arg">mtime</span> and is a time to set as the file's modified time.  If omitted, the <span class="arg">atime</span> value is used (or the current time).  If present, the value must use the same format as <code>os.time()</code>.  In order to pass <span class="arg">mtime</span> it is necessary to also pass <span class="arg">atime</span>.</p></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="os.unlink">os.unlink</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Deletes the file <span class="arg">path</span> and returns whether it was successful.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="os.touch">os.touch</a></div> <div class="signature">( <span class="arg_name">path</span>:string, [<span class="arg_name">atime</span>:number], [<span class="arg_name">mtime</span>:number] ) : boolean<br/><div class="version">v1.2.31 and newer</div></div></div><div class="body"><p class="desc">Sets the access and modified times for <span class="arg">path</span>, and returns whether it was successful. If unsuccessful it returns false, an error message, and the error number.</p><p class="desc"> The second argument is <span class="arg">atime</span> and is a time to set as the file's access time.  If omitted, the current time is used.  If present, the value must use the same format as <code>os.time()</code>.</p><p class="desc"> The third argument is <span class="arg">mtime</span> and is a time to set as the file's modified time.  If omitted, the <span class="arg">atime</span> value is used (or the current time).  If present, the value must use the same format as <code>os.time()</code>.  In order to pass <span class="arg">mtime</span> it is necessary to also pass <span class="arg">atime</span>.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="os.unlink">os.unlink</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Deletes the file <span class="arg">path</span> and returns whether it was successful. If unsuccessful it returns false, an error message, and the error number.</p></div></div><hr/>
 </div><div class="group"><h5 class="group_name"><a name="path">path</a></h5><div class="function"><div class="header"> <div class="name"><a name="path.getbasename">path.getbasename</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : string<br/><div class="version">v1.1.0 and newer</div></div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.getbasename("/foo/bar.ext")    -- returns "bar"
 path.getbasename("")                -- returns ""
 path.getbasename(nil)               -- returns nil</code></pre></div></div><hr/>
@@ -5906,6 +6062,10 @@ if b then
 else
 &nbsp;   print("Home is not bound in emacs mode.")
 end</code></pre></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="rl.gethistorycount">rl.gethistorycount</a></div> <div class="signature">() : integer<br/><div class="version">v1.3.18 and newer</div></div></div><div class="body"><p class="desc">Returns the number of history items.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="rl.gethistoryitems">rl.gethistoryitems</a></div> <div class="signature">() : start:integer<br/><div class="version">v1.3.18 and newer</div></div></div><div class="body"><p class="desc">Returns a table of history items.</p><p class="desc"> The first history item is 1, and the last history item is <a href="#rl.gethistorycount"><code>rl.gethistorycount()</code></a>.  For best performance, use <span class="arg">start</span> and <span class="arg">end</span> to request only the range of history items that will be needed.</p><p class="desc"> Each history item is a table with the following scheme:</p><pre class="language-lua"><code>local h = rl.gethistoryitems(1, rl.gethistorycount())
+-- h.line       [string] The item's command line string.
+-- h.time       [integer or nil] The item's time, compatible with os.time().</code></pre><p class="desc"><strong>Note:</strong> the time field is omitted if the history item does not have an associated time.  Currently, no history items have times because Clink doesn't store times in the history file, but that is likely to change in the future.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="rl.getkeybindings">rl.getkeybindings</a></div> <div class="signature">( <span class="arg_name">raw</span>:boolean, [<span class="arg_name">mode</span>:integer] ) : table<br/><div class="version">v1.2.16 and newer</div></div></div><div class="body"><p class="desc">Returns key bindings in a table with the following scheme:</p><pre class="language-lua"><code>local t = rl.getkeybindings()
 -- t[index].key         [string] Key name.
 -- t[index].binding     [string] Command or macro bound to the key.
@@ -6129,9 +6289,33 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1318">v1.3.18</h4>
+<ul>
+<li>Added a built-in updater for Clink, which is enabled by default.  When enabled, Clink reports when an update is available.  Run <code>clink update</code> to apply the update.</li>
+<li>Added <code>clink-insert-suggested-line</code>, <code>clink-insert-suggested-word</code>, <code>clink-insert-suggested-full-word</code>, and <code>clink-accept-suggested-line</code> commands (see <a href="https://github.com/chrisant996/clink/issues/280">#280</a>).</li>
+<li>Added optional timestamps in the history file.  The new <code>history.time_stamp</code> and <code>history.time_format</code> settings control whether timestamps are saved and whether/how timestamps are shown.</li>
+<li>Added <code>cmd.altf4_exits</code> setting to control whether <kbd>Alt</kbd>-<kbd>F4</kbd> makes cmd.exe exit.  This is so that when the <code>terminal.raw_esc</code> setting is enabled pressing <kbd>Esc</kbd><kbd>Esc</kbd> behaves the same as <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>[</kbd> as expected, while still allowing <kbd>Alt</kbd>-<kbd>F4</kbd> to work.</li>
+<li>Added horizontal scrolling in the history popup list.</li>
+<li>Added <code>clink.onprovideline()</code> so scripts can register a function to be called after <code>onbeginedit</code> but before any input is processed.  The function can return a string to be executed as a command line, in which case the line editor is not invoked and the <code>onendedit</code> and <code>onfilterinput</code> events happen immediately (see <a href="https://github.com/chrisant996/clink/discussions/263">#263</a>).</li>
+<li>Added <code>rl.gethistorycount()</code> and <code>rl.gethistoryitems()</code> to access the history items.</li>
+<li>Added <code>os.gettemppath()</code> to get the system temporary directory.</li>
+<li>Added <code>io.sopen()</code> to control sharing access when opening or creating a file.</li>
+<li>Both <code>io.open()</code> and <code>io.sopen()</code> support the <code>&quot;x&quot;</code> file mode modifier (combined with <code>&quot;w&quot;</code> or <code>&quot;w+&quot;</code>), which makes the function fail if the file already exists.</li>
+<li>Improved the <code>what-is</code> command to apply word wrapping to the command description.</li>
+<li>Fixed generating matches from history (<code>fromhistory=true</code>) in argmatchers (regression introduced in v1.3.13).</li>
+<li>Fixed executable file detection for file names that contain <code>+</code> characters.</li>
+<li>Fixed some input keys accidentally handled by the OS sometimes (regression introduced in v1.3.6; original fix was introduced in v1.2.10).</li>
+<li>Fixed timing conditions where other console programs could accidentally override Clink&#39;s mouse input mode.</li>
+<li>Fixed left mouse click in popup lists when <code>terminal.mouse_input</code> is enabled.</li>
+<li>Fixed alternate key bindings for copy (<kbd>Ctrl</kbd>-<kbd>Ins</kbd>) and paste (<kbd>Shift</kbd>-<kbd>Ins</kbd>).</li>
+<li>Fixed description column alignment in <code>clink.popuplist()</code>.</li>
+<li>Fixed keyboard driver for <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>[</kbd> when the <code>terminal.raw_esc</code> setting is enabled.</li>
+<li>Fixed keyboard driver for <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>]</kbd> and <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>&lt;/kbd>.</li>
+</ul>
 <h4 id="v1317">v1.3.17</h4>
 <ul>
 <li>Fixed coloring executable files in the input line (some file types weren&#39;t detected correctly, and missing files were considered executable if their extension had a file type association).</li>
+<li>Fixed a potential crash when coloring executable files in the input line (regression introduced in v1.3.16).</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/281">#281</a>; screen height detected incorrectly (regression introduced in v1.3.16).</li>
 </ul>
 <h4 id="v1316">v1.3.16</h4>
@@ -6382,7 +6566,7 @@ end</code></pre></div></div><hr/>
 <h4 id="v1250">v1.2.50</h4>
 <ul>
 <li>Added <code>rl.insertmode()</code> function to get or set whether insert mode is active.</li>
-<li>Added <code>clink.onaftercommand()</code> so scripts can registers a function to be called after every input command (key binding).</li>
+<li>Added <code>clink.onaftercommand()</code> so scripts can register a function to be called after every input command (key binding).</li>
 <li>Added additional failure logging during <code>clink inject</code>.</li>
 </ul>
 <h4 id="v1249">v1.2.49</h4>
