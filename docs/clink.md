@@ -379,7 +379,7 @@ Name                         | Default [*](#alternatedefault) | Description
 `history.save`               | True    | Saves history between sessions. When disabled, history is neither read from nor written to a master history list; history for each session exists only in memory until the session ends.
 `history.shared`             | False   | When history is shared, all instances of Clink update the master history list after each command and reload the master history list on each prompt.  When history is not shared, each instance updates the master history list on exit.
 `history.sticky_search`      | False   | When enabled, reusing a history line does not add the reused line to the end of the history, and it leaves the history search position on the reused line so next/prev history can continue from there (e.g. replaying commands via <kbd>Up</kbd> several times then <kbd>Enter</kbd>, <kbd>Down</kbd>, <kbd>Enter</kbd>, etc).
-`history.time_format`        | `%F %T  ` | This specifies a time format string for showing timestamps for history items.
+`history.time_format`        | <code>%F %T &nbsp</code> | This specifies a time format string for showing timestamps for history items.  For a list of format specifiers see `clink set history.time_format` or [History Timestamps](#history-timestamps).
 `history.time_stamp`         | `off`   | The default is `off`.  When this is `save`, timestamps are saved for each history item but are only shown when the `--show-time` flag is used with the `history` command.  When this is `show`, timestamps are saved for each history item, and timestamps are shown in the `history` command unless the `--bare` flag is used.
 `lua.break_on_error`         | False   | Breaks into Lua debugger on Lua errors.
 `lua.break_on_traceback`     | False   | Breaks into Lua debugger on `traceback()`.
@@ -2294,6 +2294,44 @@ When the setting is disabled, then each instance of Clink loads the master file 
 Normally Clink saves a single saved master history list.  All instances of Clink load and save the same master history list.
 
 It's also possible to make one or more instances of Clink use a different saved master history list by setting the `%CLINK_HISTORY_LABEL%` environment variable.  This can be up to 32 alphanumeric characters, and is appended to the master history file name.  Changing the `%CLINK_HISTORY_LABEL%` environment variable takes effect at the next input line.
+
+### History timestamps
+
+History items can optionally save the timestamp when they were added, and the timestamps can be shown in the `history` command.
+
+Use `clink set history.time_stamp off` to not save or show timestamps for history items (this is the default).  Turning off timestamps doesn't remove existing timestamps.
+
+Use `clink set history.time_stamp save` to save timestamps for each history item but only show them in the `history` command when the `--show-time` flag is used.
+
+Use `clink set history.time_stamp show` to save timestamps for each history item and show them in the `history` command unless the `--bare` flag is used.
+
+Use <code>clink set history.time_format <span class="arg">format</span></code> to specify the format for showing timestamps (the default format is <code>%F %T &nbsp</code>).
+
+The <span class="arg">format</span> string may contain regular characters and special format specifiers.  Format specifiers begin with a percent sign (`%`), and are expanded to their corresponding values.  For a list of possible format specifiers, refer to the C++ strftime() documentation.
+
+Some common format specifiers are:
+
+Specifier | Expands To
+-|-
+`%a` | Abbreviated weekday name for the locale (e.g. Thu).
+`%b` | Abbreviated month name for the locale (e.g. Aug).
+`%c` | Date and time representation for the locale.
+`%D` | Short MM/DD/YY date (e.g. 08/23/01).
+`%F` | Short YYYY/MM/DD date (e.g. 2001-08-23).
+`%H` | Hour in 24-hour format (00 - 23).
+`%I` | Hour in 12-hour format (01 - 12).
+`%m` | Month (01 - 12).
+`%M` | Minutes (00 - 59).
+`%p` | AM or PM indicator for the locale.
+`%r` | 12-hour clock time for the locale (e.g. 02:55:41 pm).
+`%R` | 24-hour clock time (e.g. 14:55).
+`%S` | Seconds (00 - 59).
+`%T` | ISO 8601 time format HH:MM:SS (e.g. 14:55:41).
+`%x` | Date representation for the locale.
+`%X` | Time representation for the locale.
+`%y` | Year without century (00 - 99).
+`%Y` | Year with century (e.g. 2001).
+`%%` | A `%` sign.
 
 ## Using History Expansion
 
