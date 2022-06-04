@@ -4,7 +4,7 @@
 
 #### v1.3.18
 
-- Added a built-in auto-updater for Clink, which is enabled by default.  Clink must be installed in a non-protected directory for the updater to work (not "C:\Program Files", for example).
+- Added a built-in updater for Clink, which is enabled by default.  When enabled, Clink reports when an update is available.  Run `clink update` to apply the update.
 - Added `clink-insert-suggested-line`, `clink-insert-suggested-word`, `clink-insert-suggested-full-word`, and `clink-accept-suggested-line` commands (see [#280](https://github.com/chrisant996/clink/issues/280)).
 - Added optional timestamps in the history file.  The new `history.time_stamp` and `history.time_format` settings control whether timestamps are saved and whether/how timestamps are shown.
 - Added `cmd.altf4_exits` setting to control whether <kbd>Alt</kbd>-<kbd>F4</kbd> makes cmd.exe exit.  This is so that when the `terminal.raw_esc` setting is enabled pressing <kbd>Esc</kbd><kbd>Esc</kbd> behaves the same as <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>[</kbd> as expected, while still allowing <kbd>Alt</kbd>-<kbd>F4</kbd> to work.
