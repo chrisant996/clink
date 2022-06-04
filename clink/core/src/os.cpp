@@ -507,9 +507,23 @@ FILE* create_temp_file(str_base* out, const char* _prefix, const char* _ext, tem
         _get_errno(&err);
         if (err == EINVAL || err == EMFILE)
             break;
+        if (err == EACCES)
+        {
+            // Break out if there is no such file and yet access is denied.
+            // There's no point doing 65535 retries.
+            const DWORD attr = GetFileAttributesW(wpath.c_str());
+            if (attr == INVALID_FILE_ATTRIBUTES)
+                return nullptr;
+        }
 
         unique++;
         wpath.truncate(base_len);
+    }
+
+    if (!f)
+    {
+        map_errno(ERROR_NO_MORE_FILES);
+        return nullptr;
     }
 
     if (out)
@@ -517,9 +531,6 @@ FILE* create_temp_file(str_base* out, const char* _prefix, const char* _ext, tem
         wstr_iter tmpi(wpath.c_str(), wpath.length());
         to_utf8(*out, tmpi);
     }
-
-    if (!f)
-        map_errno(ERROR_NO_MORE_FILES);
 
     return f;
 }
