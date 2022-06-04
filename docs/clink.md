@@ -590,16 +590,15 @@ Checks for an updated version of Clink.  If one is available, it is downloaded a
 
 ## Automatic Updates
 
-By default, Clink periodically and automatically checks for new versions.
+By default, Clink periodically and automatically checks for new versions.  When an update is available, Clink prints a message on startup.  To apply an update, run `clink update` when convenient to do so.
 
-You can control the frequency with <code>clink set clink.update_interval <span class="arg">days</span></code>, where <span class="arg">days</span> is the minimum number of days between checking for updates.
+You can control the frequency of update checks with <code>clink set clink.update_interval <span class="arg">days</span></code>, where <span class="arg">days</span> is the minimum number of days between checking for updates.
 
-You can turn auto-updates off with `clink set clink.autoupdate false`, or turn them on with `clink set clink.autoupdate true`.
-
-The updater does nothing if the Clink program files are readonly, or if Clink is installed in a protected directory (such as "C:\Program Files").
+You can turn update checks off with `clink set clink.autoupdate false`, or turn them on with `clink set clink.autoupdate true`.
 
 Notes:
 - The auto-updater settings are stored in the profile, so different profiles can be configured differently for automatic updates.
+- The updater does nothing if the Clink program files are readonly.
 - The updater requires PowerShell, which is present by default in Windows 7 and higher.
 
 ## Portable Configuration
