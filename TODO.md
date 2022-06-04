@@ -6,7 +6,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## High Priority
 - Document history timestamps.
-- Document the updater.
 - Sometimes completion isn't working, but I haven't found consistent repro steps yet.
 - Sometimes delayinit argmatchers (e.g. `premake`) aren't initializing at all.
 
