@@ -29,6 +29,9 @@ int uninstallscripts(int, char**);
 int testbed(int, char**);
 
 //------------------------------------------------------------------------------
+bool g_elevated = false;
+
+//------------------------------------------------------------------------------
 static void print_with_wrapping(int max_len, const char* arg, const char* desc, unsigned int wrap)
 {
     str<128> buf;
@@ -161,11 +164,13 @@ int loader(int argc, char** argv)
     int session = 0;
 
     struct option options[] = {
-        { "help",    no_argument,       nullptr, 'h' },
-        { "profile", required_argument, nullptr, 'p' },
-        { "session", required_argument, nullptr, '~' },
-        { "version", no_argument,       nullptr, 'v' },
-        { nullptr,   0,                 nullptr, 0 }
+        { "help",     no_argument,       nullptr, 'h' },
+        { "profile",  required_argument, nullptr, 'p' },
+        { "session",  required_argument, nullptr, '~' },
+        { "version",  no_argument,       nullptr, 'v' },
+        // Undocumented; for internal use by the 'update' command.
+        { "elevated", no_argument,       nullptr, '%' },
+        { nullptr,    0,                 nullptr, 0 }
     };
 
     // Without arguments, show help.
@@ -195,6 +200,10 @@ int loader(int argc, char** argv)
 
         case '~':
             app_desc.id = atoi(optarg);
+            break;
+
+        case '%':
+            g_elevated = true;
             break;
 
         case '?':

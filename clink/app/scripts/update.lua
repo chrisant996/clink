@@ -71,10 +71,7 @@ local function get_update_dir()
 end
 
 local function get_exe_path(include_exe)
-    local exe_path = os.getalias("clink"):match('^"(.*)"')
-    if exe_path and not include_exe then
-        exe_path = path.toparent(exe_path)
-    end
+    local exe_path = os.getenv("=clink.bin")
     if exe_path == "" then
         exe_path = nil
     end
@@ -82,17 +79,6 @@ local function get_exe_path(include_exe)
         return nil, log_info("unable to find Clink executable file.")
     end
     return exe_path
-end
-
-local function test_protected_dir(filename)
-    local dir_vars = { "ProgramFiles", "ProgramFiles(x86)", "ProgramData", "SystemRoot" }
-    for _, var in ipairs(dir_vars) do
-        local value = os.getenv(var)
-        if value and clink.lower(filename:sub(1, #value)) == clink.lower(value) then
-            return false, log_info("unable to update Clink in protected directory " .. value .. ".")
-        end
-    end
-    return true
 end
 
 local function get_local_tag()
@@ -141,6 +127,13 @@ local function is_rhs_version_newer(lhs, rhs)
 end
 
 --------------------------------------------------------------------------------
+local function delete_files(dir, wild)
+    local t = os.globfiles(path.join(dir, wild))
+    for _, d in ipairs(t) do
+        os.remove(path.join(dir, d))
+    end
+end
+
 local function unzip(zip, out)
     if out and out ~= "" and os.isdir(out) then
         local fmt = [[2>nul ]] .. powershell_exe .. [[ -Command $ProgressPreference='SilentlyContinue' ; Expand-Archive -Force -LiteralPath "%s" -DestinationPath "%s" ; echo $error.count]]
@@ -162,6 +155,50 @@ local function unzip(zip, out)
     end
 end
 
+local function install_file(from_dir, to_dir, name)
+    local src = path.join(from_dir, name)
+    local dst = path.join(to_dir, name)
+
+    -- Copy file.
+    local ok, err, code = os.copy(src, dst)
+    if ok then
+        return true
+    end
+
+    -- No?  Create a tmp file to reserve a unique name for renaming.
+    local file, err2, code2 = os.createtmpfile("~clink.", ".old", to_dir, "b")
+    if not file then
+        if code2 == 13 then
+            -- Access denied when trying to create tmp file for renaming may
+            -- indicate elevation is required.
+            code = -1
+        end
+        return nil, err, code
+    end
+    file:close()
+
+    -- Delete the temp file so the name is available for renaming.
+    local tmp = err2
+    os.remove(tmp)
+
+    -- Rename away.
+    ok, err2, code2 = os.move(dst, tmp)
+    if not ok then
+        os.remove(tmp)
+        return nil, err, code
+    end
+
+    -- Retry copy.
+    ok, err2, code2 = os.copy(src, dst)
+    if ok then
+        return true
+    end
+
+    -- Still no?  Rename back.
+    os.move(tmp, dst)
+    return nil, err, code
+end
+
 local function has_zip_file()
     local update_dir = get_update_dir()
     if not update_dir then
@@ -180,7 +217,7 @@ local function has_zip_file()
     if not latest then
         return nil
     end
-    return latest.name
+    return path.join(update_dir, latest.name)
 end
 
 local function can_check_for_update(force)
@@ -206,11 +243,6 @@ local function can_check_for_update(force)
     local ok, err = find_prereqs()
     if not ok then
         return false, concat_error(err, log_info("autoupdate requires PowerShell."))
-    end
-
-    ok, err = test_protected_dir(clink_exe)
-    if not ok then
-        return false, err
     end
 
     local tagfile, err = get_update_dir()
@@ -392,6 +424,7 @@ local function is_update_ready(force)
     end
 
     -- Verify the zip file is newer.
+    local local_tag = get_local_tag()
     local cloud_tag = path.getbasename(zip_file)
     if not is_rhs_version_newer(get_local_tag(), cloud_tag) then
         return nil, log_info("no update available; local version " .. local_tag .. " is not older than latest release " .. cloud_tag .. ".")
@@ -402,29 +435,63 @@ local function is_update_ready(force)
     return zip_file
 end
 
-local function apply_update(zip_file)
+local function apply_update(zip_file, force)
+    local exe_path, err = get_exe_path()
+    if not exe_path then
+        return nil, err
+    end
+
+    local update_dir, err = get_update_dir()
+    if not update_dir then
+        return nil, err
+    end
+
+    local cloud_tag = path.getbasename(zip_file)
+    local expand_dir = path.join(update_dir, cloud_tag)
     if force then
         print("Expanding zip file...")
     end
-    log_info("expanding " .. zip_file .. " into " .. exe_path .. ".")
+    log_info("expanding " .. zip_file .. " into " .. expand_dir .. ".")
 
-    -- Get all zip files.
-    local t = os.globfiles(path.join(update_dir, "*.zip"))
-
-    -- Expand the zip file.
-    local ok, err = unzip(zip_file, exe_path)
-
-    -- Delete all zip files.
-    for _, z in ipairs(t) do
-        os.remove(path.join(update_dir, z))
+    -- Prepare the temp directory; ensure it is empty (avoid copying stray
+    -- pre-existing files).
+    delete_files(expand_dir, "*")
+    os.rmdir(expand_dir)
+    if os.isdir(expand_dir) then
+        return nil, log_info("temp path '" .. expand_dir .. "' already exists.")
+    end
+    local ok, err = os.mkdir(expand_dir)
+    if not ok then
+        return nil, log_info("unable to create temp path '" .. expand_dir .. "'.")
     end
 
-    -- Determine success or failure.
+    -- Expand the zip file.
+    local ok, err = unzip(zip_file, expand_dir)
     if not ok then
         local nope = log_info("failed to unzip the latest release.")
         return nil, concat_error(nope, err)
     end
-    return true, log_info("updated Clink to " .. cloud_tag .. ".")
+
+    -- Apply expanded files.
+    local t = os.globfiles(path.join(expand_dir, "*"))
+    for _, f in ipairs(t) do
+        ok, err, code = install_file(expand_dir, exe_path, f)
+        if not ok then
+            local ret = nil
+            if code == -1 then
+                ret = -1 -- Signal that a retry with elevation is needed.
+            end
+            return ret, log_info(concat_error("failed to install file '" .. f .. "'.", err))
+        end
+    end
+
+    -- Cleanup.
+    delete_files(expand_dir, "*")
+    os.rmdir(expand_dir)
+    delete_files(update_dir, "*.zip")
+    delete_files(exe_path, "~clink.*.old")
+
+    return 1, log_info("updated Clink to " .. cloud_tag .. ".")
 end
 
 local function try_autoupdate()
@@ -466,5 +533,5 @@ function clink.updatenow()
         return nil, err
     end
 
-    return apply_update(zip_file)
+    return apply_update(zip_file, true)
 end

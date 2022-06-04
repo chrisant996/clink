@@ -17,29 +17,172 @@ extern "C" {
 }
 
 #include <getopt.h>
+#include <shlwapi.h>
 
 //------------------------------------------------------------------------------
 extern void host_load_app_scripts(lua_state& lua);
 void puts_help(const char* const* help_pairs, const char* const* other_pairs=nullptr);
+extern bool g_elevated;
+
+//------------------------------------------------------------------------------
+static union {
+    FARPROC proc[2];
+    struct {
+        BOOL (WINAPI* IsUserAnAdmin)();
+        BOOL (WINAPI* ShellExecuteExW)(SHELLEXECUTEINFOW* pExecInfo);
+    };
+} s_shell32;
+
+//------------------------------------------------------------------------------
+static bool is_elevation_needed()
+{
+    HMODULE const hlib = LoadLibrary("shell32.dll");
+    if (!hlib)
+        return false;
+
+    DLLGETVERSIONPROC pDllGetVersion;
+    pDllGetVersion = DLLGETVERSIONPROC(GetProcAddress(hlib, "DllGetVersion"));
+    if (!pDllGetVersion)
+        return false;
+
+    DLLVERSIONINFO dvi = { sizeof(dvi) };
+    HRESULT hr = (*pDllGetVersion)(&dvi);
+    if (FAILED(hr))
+        return false;
+
+    const DWORD dwVersion = MAKELONG(dvi.dwMinorVersion, dvi.dwMajorVersion);
+    if (dwVersion < MAKELONG(0, 5))
+        return false;
+
+    s_shell32.proc[0] = GetProcAddress(hlib, "IsUserAnAdmin");
+    s_shell32.proc[1] = GetProcAddress(hlib, "ShellExecuteExW");
+    return s_shell32.proc[0] && s_shell32.proc[1] && !s_shell32.IsUserAnAdmin();
+}
+
+//------------------------------------------------------------------------------
+static bool run_as_admin(HWND hwnd, const wchar_t* file, const wchar_t* args)
+{
+    SHELLEXECUTEINFOW sei = { sizeof(sei) };
+    sei.hwnd = hwnd;
+    sei.fMask = SEE_MASK_FLAG_DDEWAIT|SEE_MASK_FLAG_NO_UI|SEE_MASK_NOCLOSEPROCESS;
+    sei.lpVerb = L"runas";
+    sei.lpFile = file;
+    sei.lpParameters = args;
+    sei.nShow = SW_SHOWNORMAL;
+
+    if (!s_shell32.ShellExecuteExW(&sei) || !sei.hProcess)
+        return false;
+
+    WaitForSingleObject(sei.hProcess, INFINITE);
+
+    DWORD exitcode = 999;
+    if (!GetExitCodeProcess(sei.hProcess, &exitcode))
+        exitcode = 1;
+    CloseHandle(sei.hProcess);
+
+    return exitcode == 0;
+}
+
+//------------------------------------------------------------------------------
+static wchar_t* get_wargs()
+{
+    // Skip arg zero, which is the path to the program being executed.
+    wchar_t* wargs = GetCommandLineW();
+    if (*wargs == '\"')
+    {
+        wargs++;
+        while (true)
+        {
+            wchar_t c = *wargs;
+            if (!c)
+                break;
+            if (c == '\"')
+            {
+                wargs++;
+                if (*wargs == ' ' || *wargs == '\t')
+                    wargs++;
+                break;
+            }
+            wargs++;
+        }
+    }
+    else
+    {
+        while (true)
+        {
+            wchar_t c = *wargs;
+            if (!c || c == ' ' || c == '\t')
+                break;
+            wargs++;
+        }
+    }
+    return wargs;
+}
 
 //------------------------------------------------------------------------------
 static bool call_updater(lua_state& lua)
 {
+    auto app_ctx = app_context::get();
+    app_ctx->update_env(); // Set %=clink.bin% so the Lua code can find the exe.
+
     lua_State *state = lua.get_state();
     save_stack_top ss(state);
     lua.push_named_function(state, "clink.updatenow");
     lua.pcall_silent(state, 0, 2);
 
-    const bool ok = !!lua_toboolean(state, -2);
+    int ok = int(lua_tointeger(state, -2));
     const char* msg = lua_tostring(state, -1);
+
+    if (ok < 0)
+    {
+        if (is_elevation_needed())
+        {
+            WCHAR file[MAX_PATH * 2];
+            DWORD len = GetModuleFileNameW(NULL, file, _countof(file));
+            str_moveable s;
+            str_moveable profile;
+            app_ctx->get_state_dir(profile);
+            s.format("--elevated --profile \"%s\" ", profile.c_str());
+            wstr_moveable wargs(s.c_str());
+            wargs << get_wargs();
+            if (len < _countof(file) - 1 && run_as_admin(NULL, file, wargs.c_str()))
+            {
+                ok = true;
+                msg = "updated Clink.";
+                goto done;
+            }
+        }
+        ok = false;
+    }
+
+done:
     if (!ok && !msg)
         msg = "the update attempt failed for an unknown reason.";
 
-    str<> tmp;
-    tmp = msg;
-    tmp.data()[0] = toupper(tmp.data()[0]);
-    fputs(tmp.c_str(), ok ? stdout : stderr);
-    return ok;
+    if (msg && *msg)
+    {
+        str<> tmp;
+        tmp = msg;
+        tmp.data()[0] = toupper(tmp.data()[0]);
+        fprintf(ok ? stdout : stderr, "%s\n", tmp.c_str());
+    }
+
+    if (g_elevated)
+    {
+        HANDLE h = GetStdHandle(STD_INPUT_HANDLE);
+        if (h)
+        {
+            DWORD mode;
+            if (GetConsoleMode(h, &mode) && (mode & (ENABLE_LINE_INPUT|ENABLE_PROCESSED_INPUT|ENABLE_ECHO_INPUT)))
+            {
+                printf("\nPress any key to continue . . . ");
+                _getch();
+                puts("");
+            }
+        }
+    }
+
+    return !!ok;
 }
 
 //------------------------------------------------------------------------------
