@@ -6,7 +6,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## High Priority
 - Sometimes completion isn't working, but I haven't found consistent repro steps yet.
-- Sometimes delayinit argmatchers (e.g. `premake`) aren't initializing at all.
 
 ## Normal Priority
 - Some way to have e.g. multiple separate `ut` argmatchers that are associated with different `ut` program paths.
@@ -46,6 +45,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - The auto-updater settings are stored in the profile.  That makes it more cumbersome to control the auto-updater settings if you use multiple Clink profiles.  However, it makes it possible to control the auto-updater settings separately in "portable installs" (e.g. on a USB memory stick).
 
 ## Mystery
+- Sometimes delayinit argmatchers (e.g. `premake`) aren't initializing at all.  _[Almost certainly the problem fixed by 2d0b8b8e1c.]_
 - Mouse input toggling is unreliable in Windows Terminal, and sometimes ends up disallowing mouse input.  _[Might be fixed by bb870fc494?]_
 - Once in a while raw mouse input sequences spuriously show up in the edit line; have only noticed it when the CMD window did not have focus at the time.  _[Might be fixed by bb870fc494?]_
 - `"qq": "QQ"` in `.inputrc`, and then type `qa` --> infinite loop.  _[Was occurring in a 1.3.9 development build; but no longer repros in a later 1.3.9 build, and also does not repro in the 1.3.8 release build.]_
