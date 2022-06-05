@@ -10,6 +10,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Normal Priority
 - Some way to have e.g. multiple separate `ut` argmatchers that are associated with different `ut` program paths.
 - Some way to push keys?  (Push keys to Clink; not to other processes.)
+- Some way to defer loading completion scripts?
 
 ## Low Priority
 - `console.readinput()` changes the console state, and can interfere with proper line wrapping behavior.
