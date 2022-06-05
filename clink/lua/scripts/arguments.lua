@@ -124,7 +124,7 @@ local function do_delayed_init(list, matcher, arg_index)
             list.delayinit = nil
             -- If originally started from not-main, then reclassify.
             if async_delayinit then
-                clink._invalidate_matches()
+                clink._signal_delayed_init()
                 clink.reclassifyline()
             end
         end)
@@ -1689,7 +1689,7 @@ local function _do_onuse_callback(argmatcher, command_word)
             argmatcher._onuse_coroutine = nil
             _clear_onuse_coroutine[argmatcher] = nil
             if async_delayinit then
-                clink._invalidate_matches()
+                clink._signal_delayed_init()
                 clink.reclassifyline()
             end
         end)

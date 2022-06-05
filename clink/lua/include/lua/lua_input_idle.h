@@ -21,6 +21,9 @@ public:
 
     void            kick();
 
+    static void     signal_delayed_init();
+    static void     signal_reclassify();
+
 private:
     bool            is_enabled();
     bool            has_coroutines();
@@ -29,4 +32,7 @@ private:
     void*           m_event = 0;
     unsigned        m_iterations = 0;
     bool            m_enabled = true;
+
+    static bool     s_signaled_delayed_init;
+    static bool     s_signaled_reclassify;
 };

@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "lua_state.h"
+#include "lua_input_idle.h"
 #include "line_state_lua.h"
 #include "prompt.h"
 #include "../../app/src/version.h" // Ugh.
@@ -32,6 +33,7 @@
 
 extern "C" {
 #include <lua.h>
+#include <lstate.h>
 #include <readline/history.h>
 }
 
@@ -47,7 +49,7 @@ extern "C" {
 
 //------------------------------------------------------------------------------
 extern int force_reload_scripts();
-extern void host_invalidate_matches();
+extern void host_signal_delayed_init();
 extern void host_mark_deprecated_argmatcher(const char* name);
 extern void set_suggestion(const char* line, unsigned int endword_offset, const char* suggestion, unsigned int offset);
 extern setting_bool g_gui_popups;
@@ -1323,7 +1325,11 @@ static int reload(lua_State* state)
 /// Reclassify the input line text again and refresh the input line display.
 static int reclassify_line(lua_State* state)
 {
-    host_reclassify(reclassify_reason::force);
+    const bool ismain = (G(state)->mainthread == state);
+    if (ismain)
+        host_reclassify(reclassify_reason::force);
+    else
+        lua_input_idle::signal_reclassify();
     return 0;
 }
 
@@ -1543,9 +1549,9 @@ static int mark_deprecated_argmatcher(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-static int invalidate_matches(lua_State* state)
+static int signal_delayed_init(lua_State* state)
 {
-    host_invalidate_matches();
+    lua_input_idle::signal_delayed_init();
     return 0;
 }
 
@@ -1620,7 +1626,7 @@ void clink_lua_initialise(lua_state& lua)
         { "_recognize_command",     &recognize_command },
         { "_generate_from_history", &generate_from_history },
         { "_mark_deprecated_argmatcher", &mark_deprecated_argmatcher },
-        { "_invalidate_matches",    &invalidate_matches },
+        { "_signal_delayed_init",   &signal_delayed_init },
         { "is_cmd_command",         &is_cmd_command },
     };
 

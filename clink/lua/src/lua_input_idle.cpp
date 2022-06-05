@@ -6,6 +6,7 @@
 #include "lua_state.h"
 
 #include <core/base.h>
+#include <lib/reclassify.h>
 
 #include <assert.h>
 
@@ -16,6 +17,7 @@ extern "C" {
 }
 
 //------------------------------------------------------------------------------
+extern void host_invalidate_matches();
 extern void set_yield_wake_event(HANDLE event);
 static lua_input_idle* s_idle = nullptr;
 
@@ -25,6 +27,10 @@ void kick_idle()
     if (s_idle)
         s_idle->kick();
 }
+
+//------------------------------------------------------------------------------
+bool lua_input_idle::s_signaled_delayed_init = false;
+bool lua_input_idle::s_signaled_reclassify = false;
 
 //------------------------------------------------------------------------------
 lua_input_idle::lua_input_idle(lua_state& state)
@@ -45,6 +51,9 @@ lua_input_idle::~lua_input_idle()
 void lua_input_idle::reset()
 {
     HANDLE old_event = m_event;
+
+    s_signaled_delayed_init = false;
+    s_signaled_reclassify = false;
 
     // Create new event before closing old handle, to prevent the OS from
     // reusing the same event handle after it's closed.
@@ -108,6 +117,18 @@ void lua_input_idle::on_idle()
     assert(m_enabled);
 
     resume_coroutines();
+
+    if (s_signaled_delayed_init)
+    {
+        s_signaled_delayed_init = false;
+        host_invalidate_matches();
+    }
+
+    if (s_signaled_reclassify)
+    {
+        s_signaled_reclassify = false;
+        host_reclassify(reclassify_reason::force);
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -117,6 +138,18 @@ void lua_input_idle::kick()
     {
         m_enabled = true;
     }
+}
+
+//------------------------------------------------------------------------------
+void lua_input_idle::signal_delayed_init()
+{
+    s_signaled_delayed_init = true;
+}
+
+//------------------------------------------------------------------------------
+void lua_input_idle::signal_reclassify()
+{
+    s_signaled_reclassify = true;
 }
 
 //------------------------------------------------------------------------------
