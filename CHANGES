@@ -4,6 +4,8 @@
 
 #### v1.3.19
 
+- Added `directories.dupe_mode` setting that controls how duplicates are handled in the directory history list for the `clink-popup-directories` command.
+- Added <kbd>Del</kbd> to delete a directory entry in the `clink-popup-directories` command.
 - Fixed obscure intermittent problem with `delayinit` argmatchers.
 
 #### v1.3.18
