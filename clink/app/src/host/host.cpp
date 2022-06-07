@@ -110,6 +110,17 @@ setting_bool g_save_history(
     "Changing this setting only takes effect for new instances.",
     true);
 
+static setting_enum g_directories_dupe_mode(
+    "directories.dupe_mode",
+    "Controls duplicates in directory history",
+    "Controls how the current directory history is updated.  A value of 'add' (the\n"
+    "default) always adds the current directory to the directory history.  A value\n"
+    "of 'erase_prev' will erase any previous entries for the current directory and\n"
+    "then add it to the directory history.\n"
+    "Note that directory history is not saved between sessions."
+    "add,erase_prev",
+    0);
+
 setting_enum g_history_timestamp(
     "history.time_stamp",
     "History item timestamps",
@@ -267,8 +278,31 @@ static void update_dir_history()
     str<> cwd;
     os::get_current_dir(cwd);
 
+    bool add = true;                    // 'add'
+    switch (g_directories_dupe_mode.get())
+    {
+    case 1:                             // 'erase_prev'
+        {
+            auto iter = s_dir_history.begin();
+            while (iter != s_dir_history.end())
+            {
+                auto next(iter);
+                ++next;
+                if (_stricmp(iter->get(), cwd.c_str()) == 0)
+                    s_dir_history.erase(iter);
+                iter = next;
+            }
+        }
+        break;
+    }
+
+    if (!s_dir_history.size())
+        add = true;
+    else if (add && _stricmp(s_dir_history.back().get(), cwd.c_str()) == 0)
+        add = false;
+
     // Add cwd to tail.
-    if (!s_dir_history.size() || _stricmp(s_dir_history.back().get(), cwd.c_str()) != 0)
+    if (add)
     {
         dbg_ignore_scope(snapshot, "History");
         s_dir_history.push_back(cwd.c_str());
