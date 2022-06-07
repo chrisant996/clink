@@ -65,6 +65,7 @@ extern setting_bool g_fuzzy_accent;
 extern const char* get_popup_colors();
 extern const char* get_popup_desc_colors();
 extern int host_remove_history(int rl_history_index, const char* line);
+extern bool host_remove_dir_history(int index);
 extern int clink_is_signaled();
 extern void force_signaled_redisplay();
 
@@ -288,7 +289,7 @@ textlist_impl::textlist_impl(input_dispatcher& dispatcher)
 }
 
 //------------------------------------------------------------------------------
-popup_results textlist_impl::activate(const char* title, const char** entries, int count, int index, bool reverse, int history_mode, entry_info* infos, bool has_columns)
+popup_results textlist_impl::activate(const char* title, const char** entries, int count, int index, bool reverse, textlist_mode mode, entry_info* infos, bool has_columns)
 {
     reset();
     m_results.clear();
@@ -311,12 +312,14 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
 
     // Make sure there's room.
     m_reverse = reverse;
-    m_history_mode = (history_mode != 0);
-    m_win_history = (history_mode == 2);
+    m_mode = mode;
+    m_history_mode = is_history_mode(mode);
+    m_win_history = (mode == textlist_mode::win_history);
     update_layout();
     if (m_visible_rows <= 0)
     {
         m_reverse = false;
+        m_mode = textlist_mode::general;
         m_history_mode = false;
         m_win_history = false;
         return popup_result::error;
@@ -638,15 +641,31 @@ find:
         break;
 
     case bind_id_textlist_delete:
-        if (m_history_mode)
         {
-            m_reset_history_index = true;
-            // Remove the corresponding persisted history entry.
-            const int history_index = m_infos ? m_infos[m_index].index : m_index;
-            host_remove_history(history_index, nullptr);
-            // Remove the corresponding entry from Readline's copy of history.
-            HIST_ENTRY* hist = remove_history(history_index);
-            free_history_entry(hist);
+            // Remove the entry.
+            const int external_index = m_infos ? m_infos[m_index].index : m_index;
+            if (m_history_mode)
+            {
+                m_reset_history_index = true;
+                // Remove the corresponding persisted history entry.
+                host_remove_history(external_index, nullptr);
+                // Remove the corresponding entry from Readline's copy of history.
+                HIST_ENTRY* hist = remove_history(external_index);
+                free_history_entry(hist);
+            }
+            else if (m_mode == textlist_mode::directories)
+            {
+                if (!host_remove_dir_history(external_index))
+                {
+                    rl_ding();
+                    break;
+                }
+            }
+            else
+            {
+                break;
+            }
+
             // Remove the item from the popup list.
             const int old_rows = min<int>(m_visible_rows, m_count);
             int move_count = (m_count - 1) - m_index;
@@ -664,9 +683,11 @@ find:
                 cancel(popup_result::cancel);
                 return;
             }
+
             // Move index.
             if (m_index > 0)
                 m_index--;
+
             // Redisplay.
             {
                 const int new_rows = min<int>(m_visible_rows, m_count);
@@ -1300,7 +1321,8 @@ void textlist_impl::update_display()
             {
                 rl_crlf();
                 up++;
-                make_horz_border(m_history_mode ? "Del=Delete" : nullptr, col_width - 2, true/*bars*/, horzline);
+                const bool show_del = (m_history_mode || m_mode == textlist_mode::directories);
+                make_horz_border(show_del ? "Del=Delete" : nullptr, col_width - 2, true/*bars*/, horzline);
                 m_printer->print(left.c_str(), left.length());
                 m_printer->print(color.c_str(), color.length());
                 m_printer->print("\xe2\x94\x94");                       // └
@@ -1457,7 +1479,7 @@ popup_results activate_text_list(const char* title, const char** entries, int co
     if (!s_textlist)
         return popup_result::error;
 
-    return s_textlist->activate(title, entries, count, current, false/*reverse*/, false/*history_mode*/, nullptr, has_columns);
+    return s_textlist->activate(title, entries, count, current, false/*reverse*/, textlist_mode::general, nullptr, has_columns);
 }
 
 //------------------------------------------------------------------------------
@@ -1466,16 +1488,17 @@ popup_results activate_directories_text_list(const char** dirs, int count)
     if (!s_textlist)
         return popup_result::error;
 
-    return s_textlist->activate("Directories", dirs, count, count - 1, true/*reverse*/, false/*history_mode*/, nullptr, false);
+    return s_textlist->activate("Directories", dirs, count, count - 1, true/*reverse*/, textlist_mode::directories, nullptr, false);
 }
 
 //------------------------------------------------------------------------------
-popup_results activate_history_text_list(const char** history, int count, int current, entry_info* infos, int history_mode)
+popup_results activate_history_text_list(const char** history, int count, int current, entry_info* infos, bool win_history)
 {
     if (!s_textlist)
         return popup_result::error;
 
     assert(current >= 0);
     assert(current < count);
-    return s_textlist->activate("History", history, count, current, true/*reverse*/, history_mode, infos, false);
+    textlist_mode mode = win_history ? textlist_mode::win_history : textlist_mode::history;
+    return s_textlist->activate("History", history, count, current, true/*reverse*/, mode, infos, false);
 }

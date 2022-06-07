@@ -1628,7 +1628,7 @@ ding:
         history[i] = p ? p : "";
     }
 
-    const popup_results results = activate_history_text_list(history, history_length, min<int>(where_history(), history_length - 1), nullptr, 2);
+    const popup_results results = activate_history_text_list(history, history_length, min<int>(where_history(), history_length - 1), nullptr, true/*win_history*/);
 
     switch (results.m_result)
     {

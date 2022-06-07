@@ -19,6 +19,17 @@ enum class mouse_input_type : unsigned char;
 typedef const char* (*textlist_line_getter_t)(int index);
 
 //------------------------------------------------------------------------------
+enum class textlist_mode
+{
+    general,
+    directories,
+    history,
+    win_history,
+};
+
+inline bool is_history_mode(textlist_mode mode) { return mode == textlist_mode::history || mode == textlist_mode::win_history; }
+
+//------------------------------------------------------------------------------
 struct entry_info
 {
     int             index;
@@ -56,7 +67,7 @@ class textlist_impl
 public:
                     textlist_impl(input_dispatcher& dispatcher);
 
-    popup_results   activate(const char* title, const char** entries, int count, int index, bool reverse, int history_mode, entry_info* infos, bool columns);
+    popup_results   activate(const char* title, const char** entries, int count, int index, bool reverse, textlist_mode mode, entry_info* infos, bool columns);
     bool            is_active() const;
     bool            accepts_mouse_input(mouse_input_type type) const;
 
@@ -112,6 +123,7 @@ private:
     std::vector<const char*> m_items;       // Escaped entries for display.
     int             m_longest = 0;
     addl_columns    m_columns;
+    textlist_mode   m_mode = textlist_mode::general;
     bool            m_reverse = false;
     bool            m_history_mode = false;
     bool            m_win_history = false;
@@ -150,4 +162,4 @@ private:
 };
 
 //------------------------------------------------------------------------------
-popup_results activate_history_text_list(const char** history, int count, int index, entry_info* infos, int history_mode);
+popup_results activate_history_text_list(const char** history, int count, int index, entry_info* infos, bool win_history);

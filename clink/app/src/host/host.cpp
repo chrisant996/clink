@@ -293,6 +293,20 @@ static void prev_dir_history(str_base& inout)
     inout.format(" cd /d \"%s\"", a->get());
 }
 
+//------------------------------------------------------------------------------
+bool host_remove_dir_history(int index)
+{
+    for (auto iter = s_dir_history.begin(); iter != s_dir_history.end(); ++iter, --index)
+    {
+        if (index == 0)
+        {
+            s_dir_history.erase(iter);
+            return true;
+        }
+    }
+    return false;
+}
+
 
 
 //------------------------------------------------------------------------------
