@@ -5,7 +5,7 @@
 #### v1.3.20
 
 - Speculative fix for [#296](https://github.com/chrisant996/clink/issues/296).
-- Fixed potential malfunction in popup lists if there are very few items (regression introduced in v1.3.18).
+- Fixed potential crash in popup lists if there are only a few items (regression introduced in v1.3.18).
 
 #### v1.3.19
 
