@@ -1182,7 +1182,8 @@ void textlist_impl::update_display()
             if (m_history_mode && m_prev_displayed < 0)
             {
                 m_longest_visible = 0;
-                for (int row = 0; row < m_visible_rows; ++row)
+                const int rows = min<int>(m_count, m_visible_rows);
+                for (int row = 0; row < rows; ++row)
                     m_longest_visible = max<int>(m_longest_visible, make_item(m_items[m_top + row], tmp));
             }
 
