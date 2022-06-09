@@ -2014,11 +2014,6 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
         rl_catch_signals = 1;
         _rl_echoctl = 1;
         _rl_intr_char = CTRL('C');
-        signal(SIGINT, clink_sighandler);
-#ifdef SIGBREAK
-        signal(SIGBREAK, clink_sighandler);
-#endif
-        SetConsoleCtrlHandler(clink_ctrlevent_handler, true);
 
         // Do a first rl_initialize() before setting any key bindings or config
         // variables.  Otherwise it would happen when rl_module installs the
@@ -2281,6 +2276,8 @@ bool mouse_info::get_anchor(int point, int& anchor, int& pos) const
 //------------------------------------------------------------------------------
 rl_module::rl_module(terminal_in* input)
 : m_prev_group(-1)
+, m_old_int(SIG_DFL)
+, m_old_break(SIG_DFL)
 {
     if (g_debug_log_terminal.get())
     {
@@ -2631,6 +2628,12 @@ void rl_module::on_begin_line(const context& context)
 {
     const bool log_terminal = g_debug_log_terminal.get();
 
+    m_old_int = signal(SIGINT, clink_sighandler);
+#ifdef SIGBREAK
+    m_old_break = signal(SIGBREAK, clink_sighandler);
+#endif
+    SetConsoleCtrlHandler(clink_ctrlevent_handler, true);
+
     // Readline only detects terminal size changes while its line editor is
     // active.  If the terminal size isn't what Readline thought, then update
     // it now.
@@ -2807,6 +2810,14 @@ void rl_module::on_end_line()
 
     g_rl_buffer = nullptr;
     g_pager = nullptr;
+
+    SetConsoleCtrlHandler(clink_ctrlevent_handler, false);
+#ifdef SIGBREAK
+    signal(SIGBREAK, m_old_break);
+    m_old_break = SIG_DFL;
+#endif
+    signal(SIGINT, m_old_int);
+    m_old_int = SIG_DFL;
 }
 
 //------------------------------------------------------------------------------

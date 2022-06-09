@@ -12,6 +12,7 @@
 class terminal_in;
 class line_buffer;
 enum class mouse_input_type : unsigned char;
+typedef void (_cdecl sig_func_t)(int);
 
 extern line_buffer& buffer;
 
@@ -89,4 +90,6 @@ private:
     str<16>         m_unrecognized_color;
     str<16>         m_executable_color;
     str<16>         m_none_color;
+    sig_func_t*     m_old_int;
+    sig_func_t*     m_old_break;
 };
