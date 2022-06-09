@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.3.18</title>
+<title>Clink v1.3.19</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -791,7 +791,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.3.18</div>
+                <div id="title">Clink v1.3.19</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -6289,6 +6289,13 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1319">v1.3.19</h4>
+<ul>
+<li>Added <code>directories.dupe_mode</code> setting that controls how duplicates are handled in the directory history list for the <code>clink-popup-directories</code> command.</li>
+<li>Added <kbd>Del</kbd> to delete a directory entry in the <code>clink-popup-directories</code> command.</li>
+<li>Fixed obscure intermittent problem with <code>delayinit</code> argmatchers.</li>
+<li>Fixed <kbd>Ctrl</kbd>-<kbd>C</kbd> and <kbd>Ctrl</kbd>-<kbd>Break</kbd> in CMD built-in commands (regression introduced in v1.3.14).</li>
+</ul>
 <h4 id="v1318">v1.3.18</h4>
 <ul>
 <li>Added a built-in updater for Clink, which is enabled by default.  When enabled, Clink reports when an update is available.  Run <code>clink update</code> to apply the update.</li>
