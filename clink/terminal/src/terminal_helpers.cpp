@@ -210,6 +210,8 @@ DWORD select_mouse_input(DWORD mode)
         default:
             if (s_mouse_alt || s_mouse_ctrl || s_mouse_shift)
                 mode |= ENABLE_MOUSE_INPUT;
+            else if (get_native_ansi_handler() == ansi_handler::winterminal)
+                mode &= ~ENABLE_MOUSE_INPUT;
             else if (!(mode & ENABLE_QUICK_EDIT_MODE))
                 mode |= ENABLE_MOUSE_INPUT;
             break;
