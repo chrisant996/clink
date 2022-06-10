@@ -1261,7 +1261,7 @@ void win_terminal_in::process_input(MOUSE_EVENT_RECORD const& record)
         const char code = (drag ? 'M' :
                            right_click ? 'R' :
                            record.dwEventFlags & DOUBLE_CLICK ? 'D' : 'L');
-        tmp.format("\x1b[$%u;%u%c", record.dwMousePosition.X - csbi.srWindow.Left, record.dwMousePosition.Y - csbi.srWindow.Top, code);
+        tmp.format("\x1b[$%u;%u%c", record.dwMousePosition.X, record.dwMousePosition.Y, code);
         push(tmp.c_str());
         return;
     }

@@ -1354,7 +1354,7 @@ void textlist_impl::update_display()
             m_printer->print(s.c_str(), s.length());
         }
         GetConsoleScreenBufferInfo(h, &csbi);
-        m_mouse_offset = csbi.dwCursorPosition.Y - csbi.srWindow.Top + 1/*to border*/ + 1/*to top item*/;
+        m_mouse_offset = csbi.dwCursorPosition.Y + 1/*to border*/ + 1/*to top item*/;
         _rl_move_vert(vpos);
         _rl_last_c_pos = cpos;
         GetConsoleScreenBufferInfo(h, &csbi);

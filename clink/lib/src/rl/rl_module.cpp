@@ -2852,8 +2852,8 @@ bool translate_xy_to_readline(unsigned int x, unsigned int y, int& pos, bool cli
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
 
-    int v_pos_y = (csbi.dwCursorPosition.Y - csbi.srWindow.Top);
-    int v_pos = _rl_last_v_pos - v_pos_y + y;
+    const int v_begin_line_y = max<int>(0, csbi.dwCursorPosition.Y - _rl_last_v_pos);
+    int v_pos = y - v_begin_line_y;
 
     if (v_pos < 0)
     {
