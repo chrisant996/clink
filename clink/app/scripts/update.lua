@@ -515,12 +515,14 @@ local function autoupdate()
     local zip_file = has_zip_file()
     if zip_file and can_check_for_update(true) then
         local tag = path.getbasename(zip_file)
-        clink.print("\x1b[1mClink " .. tag .. " is available.\x1b[m")
-        print("- To apply the update, run 'clink update'.")
-        print("- To stop checking for updates, run 'clink set clink.autoupdate false'.")
-        print("- To view the release notes, visit the Releases page:")
-        print(string.format("  https://github.com/%s/releases", github_repo))
-        print("")
+        if is_rhs_version_newer(get_local_tag(), tag) then
+            clink.print("\x1b[1mClink " .. tag .. " is available.\x1b[m")
+            print("- To apply the update, run 'clink update'.")
+            print("- To stop checking for updates, run 'clink set clink.autoupdate false'.")
+            print("- To view the release notes, visit the Releases page:")
+            print(string.format("  https://github.com/%s/releases", github_repo))
+            print("")
+        end
     end
 
     -- Possibly check for a new update.
