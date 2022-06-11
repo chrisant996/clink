@@ -127,10 +127,16 @@ local function is_rhs_version_newer(lhs, rhs)
 end
 
 --------------------------------------------------------------------------------
-local function delete_files(dir, wild)
+local function delete_files(dir, wild, except)
+    if except then
+        except = path.join(dir, except)
+    end
     local t = os.globfiles(path.join(dir, wild))
     for _, d in ipairs(t) do
-        os.remove(path.join(dir, d))
+        local full = path.join(dir, d)
+        if not except or string.equalsi(full, except) then
+            os.remove(full)
+        end
     end
 end
 
@@ -488,7 +494,7 @@ local function apply_update(zip_file, force)
     -- Cleanup.
     delete_files(expand_dir, "*")
     os.rmdir(expand_dir)
-    delete_files(update_dir, "*.zip")
+    delete_files(update_dir, "*.zip", zip_file)
     delete_files(exe_path, "~clink.*.old")
 
     return 1, log_info("updated Clink to " .. cloud_tag .. ".")
