@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.3.20</title>
+<title>Clink v1.3.21</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -791,7 +791,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.3.20</div>
+                <div id="title">Clink v1.3.21</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -5968,8 +5968,7 @@ line_state:getcommandwordindex() == 2</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.touch">os.touch</a></div> <div class="signature">( <span class="arg_name">path</span>:string, [<span class="arg_name">atime</span>:number], [<span class="arg_name">mtime</span>:number] ) : boolean<br/><div class="version">v1.2.31 and newer</div></div></div><div class="body"><p class="desc">Sets the access and modified times for <span class="arg">path</span>, and returns whether it was successful. If unsuccessful it returns false, an error message, and the error number.</p><p class="desc"> The second argument is <span class="arg">atime</span> and is a time to set as the file's access time.  If omitted, the current time is used.  If present, the value must use the same format as <code>os.time()</code>.</p><p class="desc"> The third argument is <span class="arg">mtime</span> and is a time to set as the file's modified time.  If omitted, the <span class="arg">atime</span> value is used (or the current time).  If present, the value must use the same format as <code>os.time()</code>.  In order to pass <span class="arg">mtime</span> it is necessary to also pass <span class="arg">atime</span>.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.unlink">os.unlink</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Deletes the file <span class="arg">path</span> and returns whether it was successful. If unsuccessful it returns false, an error message, and the error number.</p></div></div><hr/>
 </div><div class="group"><h5 class="group_name"><a name="path">path</a></h5><div class="function"><div class="header"> <div class="name"><a name="path.getbasename">path.getbasename</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : string<br/><div class="version">v1.1.0 and newer</div></div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.getbasename("/foo/bar.ext")    -- returns "bar"
-path.getbasename("")                -- returns ""
-path.getbasename(nil)               -- returns nil</code></pre></div></div><hr/>
+path.getbasename("")                -- returns ""</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="path.getdirectory">path.getdirectory</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : nil or string<br/><div class="version">v1.1.0 and newer</div></div></div><div class="body"><p class="desc">This is similar to <a href="#path.toparent">path.toparent()</a> but can behave differently when the input path ends with a path separator.  This is the recommended API for parsing a path into its component pieces, but is not recommended for walking up through parent directories.</p><pre class="language-lua"><code>path.getdirectory("foo")                -- returns nil
 path.getdirectory("\foo")               -- returns "\"
 path.getdirectory("c:foo")              -- returns "c:"
@@ -5979,34 +5978,27 @@ path.getdirectory("c:\foo\bar")         -- returns "c:\foo"
 path.getdirectory("\\foo\bar")          -- returns "\\foo\bar"
 path.getdirectory("\\foo\bar\dir")      -- returns "\\foo\bar"
 path.getdirectory("")                   -- returns nil
-path.getdirectory(nil)                  -- returns nil
 
 -- These split the path components differently than path.toparent().
 path.getdirectory([[c:\foo\bar\]])      -- returns "c:\foo\bar"
 path.getdirectory([[\\foo\bar\dir\]])   -- returns "\\foo\bar\dir"</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="path.getdrive">path.getdrive</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : nil or string<br/><div class="version">v1.1.0 and newer</div></div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.getdrive("e:/foo/bar")     -- returns "e:"
 path.getdrive("foo/bar")        -- returns nil
-path.getdrive("")               -- returns nil
-path.getdrive(nil)              -- returns nil</code></pre></div></div><hr/>
+path.getdrive("")               -- returns nil</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="path.getextension">path.getextension</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : string<br/><div class="version">v1.1.0 and newer</div></div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.getextension("bar.ext")    -- returns ".ext"
 path.getextension("bar")        -- returns ""
-path.getextension("")           -- returns ""
-path.getextension(nil)          -- returns nil</code></pre></div></div><hr/>
+path.getextension("")           -- returns ""</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="path.getname">path.getname</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : string<br/><div class="version">v1.1.0 and newer</div></div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.getname("/foo/bar.ext")    -- returns "bar.ext"
-path.getname("")                -- returns ""
-path.getname(nil)               -- returns nil</code></pre></div></div><hr/>
+path.getname("")                -- returns ""</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="path.isexecext">path.isexecext</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean<br/><div class="version">v1.1.5 and newer</div></div></div><div class="body"><p class="desc">Examines the extension of the path name.  Returns true if the extension is listed in %PATHEXT%.  This caches the extensions in a map so that it's more efficient than getting and parsing %PATHEXT% each time.</p><pre class="language-lua"><code>path.isexecext("program.exe")   -- returns true
 path.isexecext("file.doc")      -- returns false
-path.isexecext("")              -- returns false
-path.isexecext(nil)             -- returns nil</code></pre></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="path.join">path.join</a></div> <div class="signature">( <span class="arg_name">left</span>:string, <span class="arg_name">right</span>:string ) : string<br/><div class="version">v1.1.0 and newer</div></div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.join("/foo", "bar")    -- returns "/foo\bar"
-path.join("", "bar")        -- returns "bar"
-path.join("/foo", "")       -- returns "/foo\"
-path.join(nil, "bar")       -- returns nil
-path.join("/foo", nil)      -- returns nil</code></pre></div></div><hr/>
+path.isexecext("")              -- returns false</code></pre></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="path.join">path.join</a></div> <div class="signature">( <span class="arg_name">left</span>:string, <span class="arg_name">right</span>:string ) : string<br/><div class="version">v1.1.0 and newer</div></div></div><div class="body"><p class="desc">If <span class="arg">right</span> is a relative path, this joins <span class="arg">left</span> and <span class="arg">right</span>.</p><p class="desc"> If <span class="arg">right</span> is not a relative path, this returns <span class="arg">right</span>.</p><pre class="language-lua"><code>path.join("/foo", "bar")        -- returns "/foo\bar"
+path.join("", "bar")            -- returns "bar"
+path.join("/foo", "")           -- returns "/foo\"
+path.join("/foo", "/bar/xyz")   -- returns "/bar/xyz"</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="path.normalise">path.normalise</a></div> <div class="signature">( <span class="arg_name">path</span>:string, [<span class="arg_name">separator</span>:string] ) : string<br/><div class="version">v1.1.0 and newer</div></div></div><div class="body"><p class="desc">Cleans <span class="arg">path</span> by normalising separators and removing "." and ".." elements.  If <span class="arg">separator</span> is provided it is used to delimit path elements, otherwise a system-specific delimiter is used.</p><pre class="language-lua"><code>path.normalise("a////b/\\/c/")  -- returns "a\b\c\"
-path.normalise("")              -- returns ""
-path.normalise(nil)             -- returns nil</code></pre></div></div><hr/>
+path.normalise("")              -- returns ""</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="path.toparent">path.toparent</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : parent:string, child:string<br/><div class="version">v1.1.20 and newer</div></div></div><div class="body"><p class="desc">Splits the last path component from <span class="arg">path</span>, if possible. Returns the result and the component that was split, if any.</p><p class="desc"> This is similar to <a href="#path.getdirectory">path.getdirectory()</a> but can behave differently when the input path ends with a path separator.  This is the recommended API for walking up through parent directories.</p><pre class="language-lua"><code>local parent,child
 parent,child = path.toparent("foo")             -- returns "", "foo"
 parent,child = path.toparent("\foo")            -- returns "\", "foo"
@@ -6017,7 +6009,6 @@ parent,child = path.toparent("c:\foo\bar")      -- returns "c:\foo", "bar"
 parent,child = path.toparent("\\foo\bar")       -- returns "\\foo\bar", ""
 parent,child = path.toparent("\\foo\bar\dir")   -- returns "\\foo\bar", "dir"
 parent,child = path.toparent("")                -- returns "", ""
-parent,child = path.toparent(nil)               -- returns nil
 
 -- These split the path components differently than path.getdirectory().
 parent,child = path.toparent([[c:\foo\bar\]])   -- returns "c:\foo", "bar"
@@ -6289,10 +6280,16 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1321">v1.3.21</h4>
+<ul>
+<li>Improved the auto-updater when there are multiple copies of Clink on a computer; it no longer needs to download the .zip update file multiple times.</li>
+<li>Fixed mouse input when the console is scrolled.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/299">#299</a>; update shown even though up to date.</li>
+</ul>
 <h4 id="v1320">v1.3.20</h4>
 <ul>
-<li>Speculative fix for <a href="https://github.com/chrisant996/clink/issues/296">#296</a>.</li>
 <li>Fixed potential crash in popup lists if there are only a few items (regression introduced in v1.3.18).</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/296">#296</a>; on some computers closing CMD reports it&#39;s taking too long to close (the fix works around external issue).</li>
 </ul>
 <h4 id="v1319">v1.3.19</h4>
 <ul>
