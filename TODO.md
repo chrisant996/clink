@@ -13,6 +13,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Some way to defer loading completion scripts?
 
 ## Low Priority
+- Once in a while raw mouse input sequences spuriously show up in the edit line; have only noticed it when the CMD window did not have focus at the time.  _[Not fixed by bb870fc494.]_
 - `console.readinput()` changes the console state, and can interfere with proper line wrapping behavior.
 - Collecting words currently happens in update_internal, but probably it also belongs in alternative_matches and/or update_matches:
   - If a `luafunc:` macro first does anything that alters the line buffer, and then invokes a completion command, then the collected words will be inaccurate.
@@ -48,7 +49,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Mystery
 - Sometimes delayinit argmatchers (e.g. `premake`) aren't initializing at all.  _[Almost certainly the problem fixed by 2d0b8b8e1c.]_
 - Mouse input toggling is unreliable in Windows Terminal, and sometimes ends up disallowing mouse input.  _[Might be fixed by bb870fc494?]_
-- Once in a while raw mouse input sequences spuriously show up in the edit line; have only noticed it when the CMD window did not have focus at the time.  _[Might be fixed by bb870fc494?]_
 - `"qq": "QQ"` in `.inputrc`, and then type `qa` --> infinite loop.  _[Was occurring in a 1.3.9 development build; but no longer repros in a later 1.3.9 build, and also does not repro in the 1.3.8 release build.]_
 - Windows 10.0.19042.630 seems to have problems when using WriteConsoleW with ANSI escape codes in a powerline prompt in a git repo.  But Windows 10.0.19041.630 doesn't.
 - Windows Terminal crashes on exit after `clink inject`.  The current release version was crashing (1.6.10571.0).  Older versions don't crash, and a locally built version from the terminal repo's HEAD doesn't crash.  I think the crash is probably a bug in Windows Terminal, not related to Clink.  And after I built it locally, then it stopped crashing with 1.6.10571.0 as well.  Mysterious...
