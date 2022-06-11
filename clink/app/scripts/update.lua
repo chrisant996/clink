@@ -134,7 +134,7 @@ local function delete_files(dir, wild, except)
     local t = os.globfiles(path.join(dir, wild))
     for _, d in ipairs(t) do
         local full = path.join(dir, d)
-        if not except or string.equalsi(full, except) then
+        if not except or not string.equalsi(full, except) then
             os.remove(full)
         end
     end
