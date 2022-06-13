@@ -2,6 +2,10 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.3.22
+
+- Fixed [#300](https://github.com/chrisant996/clink/issues/300); unable to find latest release zip file.
+
 #### v1.3.21
 
 - Improved the auto-updater when there are multiple copies of Clink on a computer; it no longer needs to download the .zip update file multiple times.
