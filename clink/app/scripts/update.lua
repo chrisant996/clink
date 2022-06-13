@@ -286,11 +286,16 @@ local function internal_check_for_update(force)
     local local_tag = get_local_tag()
 
     -- Use github API to query latest release.
+    --
+    -- PowerShell needs -UseBasicParsing to prevent assuming the response is
+    -- HTML and attempting to use IE to parse the DOM and execute scripts, and
+    -- and needs to force TLS 1.2 because older versions of PowerShell default
+    -- to using TLS 1.0.
     if force then
         print("Checking latest version...")
     end
     local cloud_tag
-    local api = string.format([[2>nul ]] .. powershell_exe .. [[ -Command "$ProgressPreference='SilentlyContinue' ; Invoke-WebRequest -UseBasicParsing https://api.github.com/repos/%s/releases/latest | Select-Object -ExpandProperty Content"]], github_repo)
+    local api = string.format([[2>nul ]] .. powershell_exe .. [[ -Command "$ProgressPreference='SilentlyContinue' ; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls ; Invoke-WebRequest -UseBasicParsing https://api.github.com/repos/%s/releases/latest | Select-Object -ExpandProperty Content"]], github_repo)
     local f, err = io.popen(api)
     if not f then
         return nil, concat_error(err, log_info("unable to query github api."))
