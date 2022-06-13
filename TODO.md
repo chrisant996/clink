@@ -8,6 +8,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Sometimes completion isn't working, but I haven't found consistent repro steps yet.
 
 ## Normal Priority
+- Optional feature to simplify auto-path-separator after completion, like in `zsh`:  highlight `\` in a color, and if <kbd>Space</kbd> is the next input then replace the `"\"` with `" "`.
 - Some way to have e.g. multiple separate `ut` argmatchers that are associated with different `ut` program paths.
 - Some way to push keys?  (Push keys to Clink; not to other processes.)
 - Some way to defer loading completion scripts?
