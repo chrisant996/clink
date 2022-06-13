@@ -6,6 +6,14 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## High Priority
 - Sometimes completion isn't working, but I haven't found consistent repro steps yet.
+  - Could potentially be the cause of below as well, since delayinit happens only once?
+- Sometimes delayinit argmatchers (e.g. `premake`) aren't initializing at all.
+  - Seems to be a race condition.
+  - Can repro with simply launch, cd, `pre` and <kbd>Up</kbd> several times rapidly -- but it's very hard to make it happen on demand.
+  - Diag observations; true regardless whether init is successful (non-empty).
+    - Multiple dead 'generate matches' coroutines.
+    - Dead coroutine from ?1687 (the coroutine created in `_do_onuse_callback`).
+    - Generators stopped by ?:1863 (`argmatcher_generator:generate`).
 
 ## Normal Priority
 - Optional feature to simplify auto-path-separator after completion, like in `zsh`:  highlight `\` in a color, and if <kbd>Space</kbd> is the next input then replace the `"\"` with `" "`.
@@ -48,7 +56,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - The auto-updater settings are stored in the profile.  That makes it more cumbersome to control the auto-updater settings if you use multiple Clink profiles.  However, it makes it possible to control the auto-updater settings separately in "portable installs" (e.g. on a USB memory stick).
 
 ## Mystery
-- Sometimes delayinit argmatchers (e.g. `premake`) aren't initializing at all.  _[Almost certainly the problem fixed by 2d0b8b8e1c.]_
 - Mouse input toggling is unreliable in Windows Terminal, and sometimes ends up disallowing mouse input.  _[Might be fixed by bb870fc494?]_
 - `"qq": "QQ"` in `.inputrc`, and then type `qa` --> infinite loop.  _[Was occurring in a 1.3.9 development build; but no longer repros in a later 1.3.9 build, and also does not repro in the 1.3.8 release build.]_
 - Windows 10.0.19042.630 seems to have problems when using WriteConsoleW with ANSI escape codes in a powerline prompt in a git repo.  But Windows 10.0.19041.630 doesn't.
