@@ -2,6 +2,10 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.3.23
+
+- Fixed both parts of [#300](https://github.com/chrisant996/clink/issues/300); unable to find latest release zip file (incomplete fix in v1.3.22 by mistake).
+
 #### v1.3.22
 
 - When the `lua.debug` setting is enabled, any uncaught errors in coroutines are reported (and logged).
