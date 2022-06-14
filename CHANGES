@@ -5,6 +5,7 @@
 #### v1.3.23
 
 - Automatically loads Lua completion scripts from `completions` directories.  This allows you to optionally store completion scripts (argmatcher scripts) in a separate directory from your other Lua scripts, so that completion scripts are only loaded when needed.  This can speed up Clink start time, if you have a large volume of argmatcher scripts.  See [Completion Directories](#completion-directories) for more information.
+- Fixed `clink.oncommand()` when redirection appears on the command line before the command name (e.g. `>somefile command`).
 - Fixed both parts of [#300](https://github.com/chrisant996/clink/issues/300); unable to find latest release zip file (incomplete fix in v1.3.22 by mistake).
 
 #### v1.3.22
