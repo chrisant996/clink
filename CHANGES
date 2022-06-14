@@ -4,6 +4,7 @@
 
 #### v1.3.22
 
+- Fixed edge case that could cause Windows Terminal to temporarily stop responding mouse input.
 - Fixed [#300](https://github.com/chrisant996/clink/issues/300); unable to find latest release zip file.
 
 #### v1.3.21
