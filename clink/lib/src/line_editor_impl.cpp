@@ -1002,7 +1002,20 @@ void line_editor_impl::maybe_send_oncommand_event()
     if (line.get_word_count() <= 1)
         return;
 
-    const word& info = line.get_words()[0];
+    const word* p = nullptr;
+    for (size_t i = 0; i < line.get_words().size(); ++i)
+    {
+        const word& tmp = line.get_words()[i];
+        if (!tmp.is_redir_arg)
+        {
+            p = &tmp;
+            break;
+        }
+    }
+    if (!p)
+        return;
+
+    const word& info = *p;
     if (m_prev_command_word_quoted == info.quoted &&
         m_prev_command_word.length() == info.length &&
         _strnicmp(m_prev_command_word.c_str(), m_buffer.get_buffer() + info.offset, info.length) == 0)
