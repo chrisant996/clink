@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.3.21</title>
+<title>Clink v1.3.22</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -791,7 +791,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.3.21</div>
+                <div id="title">Clink v1.3.22</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -1142,6 +1142,11 @@ supersedes the <code>terminal.mouse_modifier</code> setting.  In Windows Termina
 <td>This command is automatically run when the first CMD prompt is shown after Clink is injected.  If this is blank (the default), then Clink instead looks for <code>clink_start.cmd</code> in the binaries directory and profile directory and runs them.  Set it to &quot;nul&quot; to not run any autostart command.</td>
 </tr>
 <tr>
+<td align="center"><code>clink.autoupdate</code></td>
+<td align="center">True</td>
+<td>When enabled, Clink periodically checks for updates for the Clink program files (see <a href="#automatic-updates">Automatic Updates</a>).</td>
+</tr>
+<tr>
 <td align="center"><code>clink.colorize_input</code></td>
 <td align="center">True</td>
 <td>Enables context sensitive coloring for the input text (see <a href="#classifywords">Coloring the Input Text</a>).</td>
@@ -1175,6 +1180,11 @@ supersedes the <code>terminal.mouse_modifier</code> setting.  In Windows Termina
 <td align="center"><code>clink.promptfilter</code></td>
 <td align="center">True</td>
 <td>Enable <a href="#customising-the-prompt">prompt filtering</a> by Lua scripts.</td>
+</tr>
+<tr>
+<td align="center"><code>clink.update_interval</code></td>
+<td align="center"><code>5</code></td>
+<td>The Clink autoupdater will wait this many days between update checks (see <a href="#automatic-updates">Automatic Updates</a>).</td>
 </tr>
 <tr>
 <td align="center"><code>cmd.admin_title_prefix</code></td>
@@ -6280,6 +6290,12 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1322">v1.3.22</h4>
+<ul>
+<li>When the <code>lua.debug</code> setting is enabled, any uncaught errors in coroutines are reported (and logged).</li>
+<li>Fixed edge case that could cause Windows Terminal to temporarily stop responding mouse input.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/300">#300</a>; unable to find latest release zip file.</li>
+</ul>
 <h4 id="v1321">v1.3.21</h4>
 <ul>
 <li>Improved the auto-updater when there are multiple copies of Clink on a computer; it no longer needs to download the .zip update file multiple times.</li>
