@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.3.22</title>
+<title>Clink v1.3.23</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -791,7 +791,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.3.22</div>
+                <div id="title">Clink v1.3.23</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -3507,6 +3507,20 @@ C-_:                kill-line                       <span class="hljs-comment">#
 </ol>
 <p>Lua scripts are loaded once and are only reloaded if forced because the scripts locations change, the <code>clink-reload</code> command is invoked (<kbd>Ctrl</kbd>-<kbd>X</kbd>,<kbd>Ctrl</kbd>-<kbd>R</kbd>), or the <code>lua.reload_scripts</code> setting changes (or is True).</p>
 <p>Run <code>clink info</code> to see the script paths for the current session.</p>
+<h3 id="completion-directories">Completion directories</h3>
+<p>You may optionally put Lua completion scripts in a <code>completions</code> directory.  That prevents them from being loaded when Clink starts, and instead they are only loaded when needed.  That can make Clink load faster if you have a large quantity of Lua scripts that define argmatchers.</p>
+<p>When a command name is typed, if a corresponding argmatcher is not already loaded then the completions directories are searched for a Lua script by the same name.  If found, then the Lua script is loaded.  This is similar to how completion scripts work in shells like bash, zsh, and fish.</p>
+<p>For example, if you type <code>xyz</code> and an argmatcher for <code>xyz</code> is not yet loaded, then if <code>xyz.lua</code> exists in one of the completions directories it will be loaded.</p>
+<p>Clink looks for completion scripts in these directories:</p>
+<ol>
+<li>If <code>%CLINK_COMPLETIONS_DIR%</code> is set, that directory is searched first.</li>
+<li>If <code>%CLINK_PATH%</code> is set, then <code>%CLINK_PATH%\completions</code> is searched next.</li>
+<li>If the Clink program directory has a <code>completions</code> subdirectory, it is searched next (e.g. <code>C:\tools\clink\completions</code>).</li>
+<li>If the Clink profile directory has a <code>completions</code> subdirectory, it is searched next (e.g. <code>C:\Users\me\AppData\Local\clink\completions</code>).</li>
+</ol>
+<blockquote>
+<p><strong>Note:</strong>  If a script defines more than an argmatcher, then putting it in a completions directory may cause its other functionality to not work until a command is typed with the same name as the script.  For example, if a script in a completions directory defines an argmatcher and also a prompt filter, the prompt filter won&#39;t be loaded until the corresponding command name is typed.  Whether that is desirable depends on the script and on your preference.</p>
+</blockquote>
 <h3 id="tips-for-starting-to-write-lua-scripts">Tips for starting to write Lua scripts</h3>
 <ul>
 <li>Loading a Lua script executes it; so when Clink loads Lua scripts from the locations above, it executes the scripts.</li>
@@ -6290,6 +6304,12 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1323">v1.3.23</h4>
+<ul>
+<li>Automatically loads Lua completion scripts from <code>completions</code> directories.  This allows you to optionally store completion scripts (argmatcher scripts) in a separate directory from your other Lua scripts, so that completion scripts are only loaded when needed.  This can speed up Clink start time, if you have a large volume of argmatcher scripts.  See <a href="#completion-directories">Completion Directories</a> for more information.</li>
+<li>Fixed <code>clink.oncommand()</code> when redirection appears on the command line before the command name (e.g. <code>&gt;somefile command</code>).</li>
+<li>Fixed both parts of <a href="https://github.com/chrisant996/clink/issues/300">#300</a>; unable to find latest release zip file (incomplete fix in v1.3.22 by mistake).</li>
+</ul>
 <h4 id="v1322">v1.3.22</h4>
 <ul>
 <li>When the <code>lua.debug</code> setting is enabled, any uncaught errors in coroutines are reported (and logged).</li>
