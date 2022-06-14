@@ -5,6 +5,11 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
+- Repro for mouse input mode snafu in Windows Terminal:
+  - Start a Clink session.
+  - Run a program to list shelves.
+  - Press and release Shift.
+  - Windows Terminal no longer accepts mouse input, until changing tabs.
 - Sometimes completion isn't working, but I haven't found consistent repro steps yet.
   - Could potentially be the cause of below as well, since delayinit happens only once?
 - Sometimes delayinit argmatchers (e.g. `premake`) aren't initializing at all.
