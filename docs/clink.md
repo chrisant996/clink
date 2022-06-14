@@ -1359,6 +1359,22 @@ Lua scripts are loaded once and are only reloaded if forced because the scripts 
 
 Run `clink info` to see the script paths for the current session.
 
+### Completion directories
+
+You may optionally put Lua completion scripts in a `completions` directory.  That prevents them from being loaded when Clink starts, and instead they are only loaded when needed.  That can make Clink load faster if you have a large quantity of Lua scripts that define argmatchers.
+
+When a command name is typed, if a corresponding argmatcher is not already loaded then the completions directories are searched for a Lua script by the same name.  If found, then the Lua script is loaded.  This is similar to how completion scripts work in shells like bash, zsh, and fish.
+
+For example, if you type `xyz` and an argmatcher for `xyz` is not yet loaded, then if `xyz.lua` exists in one of the completions directories it will be loaded.
+
+Clink looks for completion scripts in these directories:
+1. If `%CLINK_COMPLETIONS_DIR%` is set, that directory is searched first.
+2. If `%CLINK_PATH%` is set, then `%CLINK_PATH%\completions` is searched next.
+3. If the Clink program directory has a `completions` subdirectory, it is searched next (e.g. `C:\tools\clink\completions`).
+4. If the Clink profile directory has a `completions` subdirectory, it is searched next (e.g. `C:\Users\me\AppData\Local\clink\completions`).
+
+> **Note:**  If a script defines more than an argmatcher, then putting it in a completions directory may cause its other functionality to not work until a command is typed with the same name as the script.  For example, if a script in a completions directory defines an argmatcher and also a prompt filter, the prompt filter won't be loaded until the corresponding command name is typed.  Whether that is desirable depends on the script and on your preference.
+
 ### Tips for starting to write Lua scripts
 
 - Loading a Lua script executes it; so when Clink loads Lua scripts from the locations above, it executes the scripts.
