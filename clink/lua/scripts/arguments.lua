@@ -1645,9 +1645,7 @@ end
 
 
 --------------------------------------------------------------------------------
-local function _has_argmatcher(command_word)
-    command_word = clink.lower(command_word)
-
+local function _is_argmatcher_loaded(command_word)
     -- Check for an exact match.
     local argmatcher = _argmatchers[path.getname(command_word)]
     if argmatcher then
@@ -1661,6 +1659,100 @@ local function _has_argmatcher(command_word)
             return argmatcher
         end
     end
+end
+
+--------------------------------------------------------------------------------
+local loaded_argmatchers = {}
+
+--------------------------------------------------------------------------------
+local function get_completion_dirs()
+    local dir = os.getenv("CLINK_COMPLETIONS_DIR")
+    local cp = os.getenv("CLINK_PATH")
+    local bin = os.getenv("=clink.bin")
+    local profile = os.getenv("=clink.profile")
+
+    local dirs = {}
+    if dir and dir ~= "" then
+        table.insert(dirs, dir)
+    end
+    if cp and cp ~= "" then
+        table.insert(dirs, path.join(cp, "completions"))
+    end
+    if bin and bin ~= "" then
+        table.insert(dirs, path.join(bin, "completions"))
+    end
+    if profile and profile ~= "" then
+        table.insert(dirs, path.join(profile, "completions"))
+    end
+
+    return dirs
+end
+
+--------------------------------------------------------------------------------
+-- This checks if an argmatcher is already loaded for the specified word.  If
+-- not, then it looks for a Lua script by that name in one of the completions
+-- directories.  If found, the script is loaded, and it checks again whether an
+-- argmatcher is already loaded for the specified word.
+local function _has_argmatcher(command_word)
+    if command_word == "" then
+        return
+    end
+
+    command_word = clink.lower(command_word)
+
+    local argmatcher = _is_argmatcher_loaded(command_word)
+
+    -- If an argmatcher isn't loaded, look for a Lua script by that name in one
+    -- of the completions directories.  If found, load it and check again.
+    if not argmatcher and not loaded_argmatchers[command_word] then
+        -- Make sure scripts aren't loaded multiple times.
+        loaded_argmatchers[command_word] = 1 -- Attempted.
+
+        -- Where to look.
+        local dirs = get_completion_dirs()
+
+        -- What to look for.
+        local primary = command_word..".lua"
+        local secondary
+        if path.isexecext(command_word) then
+            secondary = path.getbasename(command_word)
+            if secondary == "" then
+                secondary = nil
+            else
+                secondary = secondary..".lua"
+            end
+        end
+
+        -- Look for file.
+        for _,d in ipairs(dirs) do
+            if d then
+                local file = path.join(d, primary)
+                if not os.isfile(file) then
+                    if not secondary then
+                        file = nil
+                    else
+                        file = path.join(d, secondary)
+                        if not os.isfile(file) then
+                            file = nil
+                        end
+                    end
+                end
+                if file then
+                    loaded_argmatchers[command_word] = 2 -- Attempted and Loaded.
+                    -- Load the file.
+                    dofile(file)
+                    -- Check again, and stop if argmatcher is loaded.
+                    argmatcher = _is_argmatcher_loaded(command_word)
+                    if argmatcher then
+                        loaded_argmatchers[command_word] = 3 -- Attempted, loaded, and has argmatcher.
+                        break
+                    end
+                end
+            end
+        end
+    end
+
+    return argmatcher
 end
 
 --------------------------------------------------------------------------------
@@ -1993,6 +2085,44 @@ function argmatcher_classifier:classify(commands)
     end
 
     return false -- continue
+end
+
+
+
+--------------------------------------------------------------------------------
+function clink._diag_completions_dirs()
+    local bold = "\x1b[1m"          -- Bold (bright).
+    local norm = "\x1b[m"           -- Normal.
+
+    clink.print(bold.."completions:"..norm)
+
+    clink.print("  completions lookup directories:")
+
+    local dirs = get_completion_dirs()
+    for _,d in ipairs(dirs) do
+        clink.print("", d)
+    end
+
+    clink.print("  completions lookup statistics:")
+
+    local attempted = 0
+    local loaded = 0
+    local found = 0
+    for _,v in pairs(loaded_argmatchers) do
+        if v >= 1 then
+            attempted = attempted + 1
+        end
+        if v >= 2 then
+            loaded = loaded + 1
+        end
+        if v >= 3 then
+            found = found + 1
+        end
+    end
+
+    clink.print("", "commands searched:", attempted)
+    clink.print("", "Lua scripts loaded:", loaded)
+    clink.print("", "argmatchers loaded:", found)
 end
 
 

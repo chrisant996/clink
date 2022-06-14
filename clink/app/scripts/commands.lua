@@ -97,6 +97,7 @@ function clink._diagnostics(rl_buffer)
         clink._diag_generators()
         clink._diag_classifiers()
         clink._diag_suggesters()
+        clink._diag_completions_dirs()
     end
     if clink._diag_custom then
         clink._diag_custom(arg)
