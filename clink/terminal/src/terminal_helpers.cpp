@@ -277,22 +277,38 @@ void console_config::fix_quick_edit_mode(DWORD& mode)
     if (!g_accept_mouse_input)
         return;
 
-    if (get_native_ansi_handler() == ansi_handler::conemu)
-        return;
+    switch (get_native_ansi_handler())
+    {
+    case ansi_handler::conemu:
+        break;
 
-    if (s_mouse_alt || s_mouse_ctrl || s_mouse_shift)
-    {
-        if (is_mouse_modifier() || (!s_quick_edit && no_mouse_modifiers()))
+    case ansi_handler::winterminal:
+        if ((s_mouse_alt || s_mouse_ctrl || s_mouse_shift) && is_mouse_modifier())
+        {
             mode &= ~ENABLE_QUICK_EDIT_MODE;
+        }
         else
+        {
             mode |= ENABLE_QUICK_EDIT_MODE;
-    }
-    else
-    {
-        if (is_mouse_modifier())
-            mode &= ~ENABLE_QUICK_EDIT_MODE;
+        }
+        break;
+
+    default:
+        if (s_mouse_alt || s_mouse_ctrl || s_mouse_shift)
+        {
+            if (is_mouse_modifier() || (!s_quick_edit && no_mouse_modifiers()))
+                mode &= ~ENABLE_QUICK_EDIT_MODE;
+            else
+                mode |= ENABLE_QUICK_EDIT_MODE;
+        }
         else
-            mode |= ENABLE_QUICK_EDIT_MODE;
+        {
+            if (is_mouse_modifier())
+                mode &= ~ENABLE_QUICK_EDIT_MODE;
+            else
+                mode |= ENABLE_QUICK_EDIT_MODE;
+        }
+        break;
     }
 }
 
