@@ -1141,7 +1141,7 @@ static int popup_list(lua_State* state)
     case popup_result::select:
     case popup_result::use:
         lua_pushstring(state, choice);
-        lua_pushboolean(state, (result == popup_result::use));
+        lua_pushboolean(state, (result == popup_result::select));
         lua_pushinteger(state, index + 1);
         return 3;
     }
