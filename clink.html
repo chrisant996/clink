@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.3.23</title>
+<title>Clink v1.3.24</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -791,7 +791,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.3.23</div>
+                <div id="title">Clink v1.3.24</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -1172,7 +1172,7 @@ supersedes the <code>terminal.mouse_modifier</code> setting.  In Windows Termina
 <td>What to do with CR and LF characters on paste. Setting this to <code>delete</code> deletes them, <code>space</code> replaces them with spaces, <code>ampersand</code> replaces them with ampersands, and <code>crlf</code> pastes them as-is (executing commands that end with a newline).</td>
 </tr>
 <tr>
-<td align="center"><code>clink.path</code></td>
+<td align="center"><a name="clink_dot_path"></a><code>clink.path</code></td>
 <td align="center"></td>
 <td>A list of paths from which to load Lua scripts. Multiple paths can be delimited semicolons.</td>
 </tr>
@@ -3513,10 +3513,17 @@ C-_:                kill-line                       <span class="hljs-comment">#
 <p>For example, if you type <code>xyz</code> and an argmatcher for <code>xyz</code> is not yet loaded, then if <code>xyz.lua</code> exists in one of the completions directories it will be loaded.</p>
 <p>Clink looks for completion scripts in these directories:</p>
 <ol>
-<li>If <code>%CLINK_COMPLETIONS_DIR%</code> is set, that directory is searched first.</li>
-<li>If <code>%CLINK_PATH%</code> is set, then <code>%CLINK_PATH%\completions</code> is searched next.</li>
+<li>Any directories listed in the <code>%CLINK_COMPLETIONS_DIR%</code> environment variable (multiple directories may be separated by semicolons).</li>
+<li>If the <a href="#clink_dot_path"><code>clink.path</code></a> setting is set, then:<ul>
+<li>A <code>completions</code> subdirectory under each directory in the setting (multiple directories may be separated by semicolons).</li>
+</ul>
+</li>
+<li>If the <code>clink.path</code> setting is not set, then:<ul>
 <li>If the Clink program directory has a <code>completions</code> subdirectory, it is searched next (e.g. <code>C:\tools\clink\completions</code>).</li>
 <li>If the Clink profile directory has a <code>completions</code> subdirectory, it is searched next (e.g. <code>C:\Users\me\AppData\Local\clink\completions</code>).</li>
+</ul>
+</li>
+<li>A <code>completions</code> subdirectory under each directory listed in the <code>%CLINK_PATH%</code> environment variable (multiple directories may be separated by semicolons).</li>
 </ol>
 <blockquote>
 <p><strong>Note:</strong>  If a script defines more than an argmatcher, then putting it in a completions directory may cause its other functionality to not work until a command is typed with the same name as the script.  For example, if a script in a completions directory defines an argmatcher and also a prompt filter, the prompt filter won&#39;t be loaded until the corresponding command name is typed.  Whether that is desirable depends on the script and on your preference.</p>
@@ -6304,6 +6311,11 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1324">v1.3.24</h4>
+<ul>
+<li>Standardized the order in which <code>completions</code> directories are searched.</li>
+<li>Fixed the second return value from <code>clink.popuplist()</code>, which was backwards by mistake.</li>
+</ul>
 <h4 id="v1323">v1.3.23</h4>
 <ul>
 <li>Automatically loads Lua completion scripts from <code>completions</code> directories.  This allows you to optionally store completion scripts (argmatcher scripts) in a separate directory from your other Lua scripts, so that completion scripts are only loaded when needed.  This can speed up Clink start time, if you have a large volume of argmatcher scripts.  See <a href="#completion-directories">Completion Directories</a> for more information.</li>
