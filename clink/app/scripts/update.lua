@@ -142,7 +142,7 @@ end
 
 local function unzip(zip, out)
     if out and out ~= "" and os.isdir(out) then
-        local fmt = [[2>nul ]] .. powershell_exe .. [[ -Command $ProgressPreference='SilentlyContinue' ; Expand-Archive -Force -LiteralPath "%s" -DestinationPath "%s" ; echo $error.count]]
+        local fmt = [[2>nul ]] .. powershell_exe .. [[ -Command $ProgressPreference='SilentlyContinue' ; Expand-Archive -Force -LiteralPath \"%s\" -DestinationPath \"%s\" ; echo $error.count]]
         local cmd = string.format(fmt, zip, out)
         local f = io.popen(cmd)
         if f then
