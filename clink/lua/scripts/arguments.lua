@@ -1665,25 +1665,31 @@ end
 local loaded_argmatchers = {}
 
 --------------------------------------------------------------------------------
-local function get_completion_dirs()
-    local dir = os.getenv("CLINK_COMPLETIONS_DIR")
-    local cp = os.getenv("CLINK_PATH")
-    local bin = os.getenv("=clink.bin")
-    local profile = os.getenv("=clink.profile")
+local function add_dirs_from_var(t, var, subdir)
+    if var and var ~= "" then
+        local dirs = string.explode(var, ";", '"')
+        subdir = subdir or ""
+        for _,d in ipairs(dirs) do
+            d = d:gsub('"', "")
+            d = path.getdirectory(path.join(d, subdir))
+            table.insert(t, d)
+        end
+        return true
+    end
+end
 
+--------------------------------------------------------------------------------
+local function get_completion_dirs()
     local dirs = {}
-    if dir and dir ~= "" then
-        table.insert(dirs, dir)
+
+    add_dirs_from_var(dirs, os.getenv("CLINK_COMPLETIONS_DIR"))
+
+    if not add_dirs_from_var(dirs, settings.get("clink.path"), "completions") then
+        add_dirs_from_var(dirs, os.getenv("=clink.bin"))
+        add_dirs_from_var(dirs, os.getenv("=clink.profile"))
     end
-    if cp and cp ~= "" then
-        table.insert(dirs, path.join(cp, "completions"))
-    end
-    if bin and bin ~= "" then
-        table.insert(dirs, path.join(bin, "completions"))
-    end
-    if profile and profile ~= "" then
-        table.insert(dirs, path.join(profile, "completions"))
-    end
+
+    add_dirs_from_var(dirs, os.getenv("CLINK_PATH"), "completions")
 
     return dirs
 end
@@ -1725,7 +1731,7 @@ local function _has_argmatcher(command_word)
 
         -- Look for file.
         for _,d in ipairs(dirs) do
-            if d then
+            if d ~= "" then
                 local file = path.join(d, primary)
                 if not os.isfile(file) then
                     if not secondary then
