@@ -4,6 +4,7 @@
 
 #### v1.3.24
 
+- Standardized the order in which `completions` directories are searched.
 - Fixed the second return value from `clink.popuplist()`, which was backwards by mistake.
 
 #### v1.3.23
