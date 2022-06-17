@@ -327,7 +327,7 @@ Name                         | Default [*](#alternatedefault) | Description
 `clink.gui_popups`           | False   | When set, Clink uses GUI popup windows instead console text popups.  The `color.popup` settings have no effect on GUI popup windows.
 `clink.logo`                 | `full`  | Controls what startup logo to show when Clink is injected.  `full` = show full copyright logo, `short` = show abbreviated version info, `none` = omit the logo.
 `clink.paste_crlf`           | `crlf`  | What to do with CR and LF characters on paste. Setting this to `delete` deletes them, `space` replaces them with spaces, `ampersand` replaces them with ampersands, and `crlf` pastes them as-is (executing commands that end with a newline).
-`clink.path`                 |         | A list of paths from which to load Lua scripts. Multiple paths can be delimited semicolons.
+<a name="clink_dot_path"></a>`clink.path` | | A list of paths from which to load Lua scripts. Multiple paths can be delimited semicolons.
 `clink.promptfilter`         | True    | Enable [prompt filtering](#customising-the-prompt) by Lua scripts.
 `clink.update_interval`      | `5`     | The Clink autoupdater will wait this many days between update checks (see [Automatic Updates](#automatic-updates)).
 `cmd.admin_title_prefix`     |         | When set, this replaces the "Administrator: " console title prefix.
@@ -1368,10 +1368,13 @@ When a command name is typed, if a corresponding argmatcher is not already loade
 For example, if you type `xyz` and an argmatcher for `xyz` is not yet loaded, then if `xyz.lua` exists in one of the completions directories it will be loaded.
 
 Clink looks for completion scripts in these directories:
-1. If `%CLINK_COMPLETIONS_DIR%` is set, that directory is searched first.
-2. If `%CLINK_PATH%` is set, then `%CLINK_PATH%\completions` is searched next.
-3. If the Clink program directory has a `completions` subdirectory, it is searched next (e.g. `C:\tools\clink\completions`).
-4. If the Clink profile directory has a `completions` subdirectory, it is searched next (e.g. `C:\Users\me\AppData\Local\clink\completions`).
+1. Any directories listed in the `%CLINK_COMPLETIONS_DIR%` environment variable (multiple directories may be separated by semicolons).
+2. If the [`clink.path`](#clink_dot_path) setting is set, then:
+   - A `completions` subdirectory under each directory in the setting (multiple directories may be separated by semicolons).
+3. If the `clink.path` setting is not set, then:
+   - If the Clink program directory has a `completions` subdirectory, it is searched next (e.g. `C:\tools\clink\completions`).
+   - If the Clink profile directory has a `completions` subdirectory, it is searched next (e.g. `C:\Users\me\AppData\Local\clink\completions`).
+4. A `completions` subdirectory under each directory listed in the `%CLINK_PATH%` environment variable (multiple directories may be separated by semicolons).
 
 > **Note:**  If a script defines more than an argmatcher, then putting it in a completions directory may cause its other functionality to not work until a command is typed with the same name as the script.  For example, if a script in a completions directory defines an argmatcher and also a prompt filter, the prompt filter won't be loaded until the corresponding command name is typed.  Whether that is desirable depends on the script and on your preference.
 
