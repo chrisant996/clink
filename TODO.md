@@ -10,6 +10,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Sometimes delayinit argmatchers (e.g. `premake`) aren't initializing at all.
   - Seems to be a race condition.
   - Can repro with simply launch, cd, `pre` and <kbd>Up</kbd> several times rapidly -- but it's very hard to make it happen on demand.
+    - Try on laptop battery, `pre` and <kbd>Up</kbd> to "premake embed" then <kbd>Ctrl</kbd>+<kbd>O</kbd> before delayinit completes -- does it get stuck when the generation of coroutines is discarded, and never spin up another to retry the delayinit?
+    - But I think one time I literally only used `pre` and <kbd>Up</kbd> but it still got permanently stuck without delayinit?  Maybe I'm misremembering??  I thought I confirmed that `menu-complete` knew about 0 completions, though.
   - Diag observations; true regardless whether init is successful (non-empty).
     - Multiple dead 'generate matches' coroutines.
     - Dead coroutine from ?1687 (the coroutine created in `_do_onuse_callback`).
