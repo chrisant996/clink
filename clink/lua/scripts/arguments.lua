@@ -1695,6 +1695,69 @@ local function get_completion_dirs()
 end
 
 --------------------------------------------------------------------------------
+local function is_device_name(word)
+    local c = clink.lower(path.getbasename(word):gsub(" +$", ""):gsub("%:.*$", ""))
+    if c == "nul" or c == "con" or c == "aux" then
+        return true
+    elseif c:match("^com[0-9]$") or c:match("^lpt[0-9]$") then
+        return true
+    end
+end
+
+--------------------------------------------------------------------------------
+local function attempt_load_argmatcher(command_word)
+    -- Make sure scripts aren't loaded multiple times.
+    loaded_argmatchers[command_word] = 1 -- Attempted.
+
+    -- Device names are not valid commands.
+    if is_device_name(command_word) then
+        return
+    end
+
+    -- Where to look.
+    local dirs = get_completion_dirs()
+
+    -- What to look for.
+    local primary = command_word..".lua"
+    if path.isexecext(command_word) then
+        secondary = path.getbasename(command_word)
+        if secondary == "" then
+            secondary = nil
+        else
+            secondary = secondary..".lua"
+        end
+    end
+
+    -- Look for file.
+    for _,d in ipairs(dirs) do
+        if d ~= "" then
+            local file = path.join(d, primary)
+            if not os.isfile(file) then
+                if not secondary then
+                    file = nil
+                else
+                    file = path.join(d, secondary)
+                    if not os.isfile(file) then
+                        file = nil
+                    end
+                end
+            end
+            if file then
+                loaded_argmatchers[command_word] = 2 -- Attempted and Loaded.
+                -- Load the file.
+                dofile(file)
+                -- Check again, and stop if argmatcher is loaded.
+                local argmatcher = _is_argmatcher_loaded(command_word)
+                if argmatcher then
+                    loaded_argmatchers[command_word] = 3 -- Attempted, loaded, and has argmatcher.
+                    return argmatcher
+                end
+            end
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
 -- This checks if an argmatcher is already loaded for the specified word.  If
 -- not, then it looks for a Lua script by that name in one of the completions
 -- directories.  If found, the script is loaded, and it checks again whether an
@@ -1711,51 +1774,7 @@ local function _has_argmatcher(command_word)
     -- If an argmatcher isn't loaded, look for a Lua script by that name in one
     -- of the completions directories.  If found, load it and check again.
     if not argmatcher and not loaded_argmatchers[command_word] then
-        -- Make sure scripts aren't loaded multiple times.
-        loaded_argmatchers[command_word] = 1 -- Attempted.
-
-        -- Where to look.
-        local dirs = get_completion_dirs()
-
-        -- What to look for.
-        local primary = command_word..".lua"
-        local secondary
-        if path.isexecext(command_word) then
-            secondary = path.getbasename(command_word)
-            if secondary == "" then
-                secondary = nil
-            else
-                secondary = secondary..".lua"
-            end
-        end
-
-        -- Look for file.
-        for _,d in ipairs(dirs) do
-            if d ~= "" then
-                local file = path.join(d, primary)
-                if not os.isfile(file) then
-                    if not secondary then
-                        file = nil
-                    else
-                        file = path.join(d, secondary)
-                        if not os.isfile(file) then
-                            file = nil
-                        end
-                    end
-                end
-                if file then
-                    loaded_argmatchers[command_word] = 2 -- Attempted and Loaded.
-                    -- Load the file.
-                    dofile(file)
-                    -- Check again, and stop if argmatcher is loaded.
-                    argmatcher = _is_argmatcher_loaded(command_word)
-                    if argmatcher then
-                        loaded_argmatchers[command_word] = 3 -- Attempted, loaded, and has argmatcher.
-                        break
-                    end
-                end
-            end
-        end
+        argmatcher = attempt_load_argmatcher(command_word)
     end
 
     return argmatcher
@@ -2048,11 +2067,13 @@ function argmatcher_classifier:classify(commands)
                 word_classifier:classifyword(command_word_index, m.."c", false); --command
             elseif unrecognized_color or executable_color then
                 local cl
-                local recognized = clink._recognize_command(line_state:getline(), command_word, info.quoted)
-                if recognized < 0 then
-                    cl = unrecognized_color and "u"                              --unrecognized
-                elseif recognized > 0 then
-                    cl = executable_color and "x"                                --executable
+                if not is_device_name(command_word) then
+                    local recognized = clink._recognize_command(line_state:getline(), command_word, info.quoted)
+                    if recognized < 0 then
+                        cl = unrecognized_color and "u"                              --unrecognized
+                    elseif recognized > 0 then
+                        cl = executable_color and "x"                                --executable
+                    end
                 end
                 cl = cl or "o"                                                   --other
                 word_classifier:classifyword(command_word_index, m..cl, false);
