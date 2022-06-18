@@ -346,7 +346,7 @@ local function internal_check_for_update(force)
     end
     f:close()
     log_info("downloading " .. latest_zip .. " to " .. local_zip .. ".")
-    local cmd = string.format([[2>nul ]] .. powershell_exe .. [[ -Command "$ProgressPreference='SilentlyContinue' ; Invoke-WebRequest '%s' -OutFile '%s'"]], latest_zip, local_zip)
+    local cmd = string.format([[2>nul ]] .. powershell_exe .. [[ -Command "$ProgressPreference='SilentlyContinue' ; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12 ; Invoke-WebRequest '%s' -OutFile '%s'"]], latest_zip, local_zip)
     f, err = io.popen(cmd)
     if not f then
         os.remove(local_zip)
