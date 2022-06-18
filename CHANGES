@@ -2,6 +2,12 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.3.25
+
+- Fixed updater when `%TEMP%` contains spaces.
+- Fixed executable file detection to color variations of device names as neither recognized nor unrecognized (names such as aux, con, lpt1, and com1).
+- Fixed [#304](https://github.com/chrisant996/clink/issues/304); hang when typing variations of device names such as aux, con, lpt1, and com1 (regression introduced in v1.3.23).
+
 #### v1.3.24
 
 - Standardized the order in which `completions` directories are searched.
