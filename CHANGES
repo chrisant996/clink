@@ -5,8 +5,9 @@
 #### v1.3.25
 
 - Fixed updater when `%TEMP%` contains spaces.
-- Fixed executable file detection to color variations of device names as neither recognized nor unrecognized (names such as aux, con, lpt1, and com1).
-- Fixed [#304](https://github.com/chrisant996/clink/issues/304); hang when typing variations of device names such as aux, con, lpt1, and com1 (regression introduced in v1.3.23).
+- Fixed executable file detection to color device names (such as nul, aux, con, lpt1, and com1) as neither recognized nor unrecognized.
+- Fixed [#304](https://github.com/chrisant996/clink/issues/304); hang when typing device names (such as aux, con, lpt1, and com1) (regression introduced in v1.3.23).
+- Fixed [#303](https://github.com/chrisant996/clink/issues/303); downloading latest update doesn't work on Windows 8.x.
 
 #### v1.3.24
 
