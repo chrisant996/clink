@@ -669,7 +669,9 @@ recognition recognize_command(const char* line, const char* word, bool quoted, b
 /// -name:  clink.print
 /// -ver:   1.2.11
 /// -arg:   ...
-/// This works like <code>print()</code>, but this supports ANSI escape codes.
+/// This works like
+/// <a href="https://www.lua.org/manual/5.2/manual.html#pdf-print">print()</a>,
+/// but this supports ANSI escape codes and Unicode.
 ///
 /// If the special value <code>NONL</code> is included anywhere in the argument
 /// list then the usual trailing newline is omitted.  This can sometimes be
