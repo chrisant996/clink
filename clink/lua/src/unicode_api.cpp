@@ -81,11 +81,14 @@ BOOL delay_load_normaliz::IsNormalizedString(NORM_FORM NormForm, LPCWSTR lpStrin
 
 
 //------------------------------------------------------------------------------
-/* translate a relative string position: negative means back from end */
-static size_t posrelat (ptrdiff_t pos, size_t len) {
-    if (pos >= 0) return (size_t)pos;
-    else if (0u - (size_t)pos > len) return 0;
-    else return len - ((size_t)-pos) + 1;
+#define in_range(lo, c, hi)     ((unsigned)((c) - (lo)) <= unsigned((hi) - (lo)))
+
+//------------------------------------------------------------------------------
+static bool is_combining_mark(int c)
+{
+    return (in_range(0x0300, c, 0x36f) ||
+            in_range(0x20d0, c, 0x20ef) ||
+            in_range(0x3099, c, 0x309a));
 }
 
 
@@ -250,90 +253,66 @@ static int isnormalized(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-/// -name:  unicode.sub
+/// -name:  unicode.iter
 /// -ver:   1.3.26
 /// -arg:   text:string
-/// -arg:   start:integer
-/// -arg:   end:integer
-/// -ret:   string
-/// This is like
-/// <a href="https://www.lua.org/manual/5.2/manual.html#pdf-string.sub"><code>string.sub</code></a>,
-/// but <span class="arg">start</span> and <span class="arg">end</span> refer to
-/// the number of Unicode codepoints, instead of the number of bytes.  This is
-/// useful for performing substring manipulation on Unicode strings, without
-/// severing Unicode characters.
+/// -ret:   iterator
+/// This returns an iterator which steps through <span class="arg">text</span>
+/// one Unicode codepoint at a time.  Each call to the iterator returns the
+/// string for the next codepoint, the numeric value of the codepoint, and a
+/// boolean indicating whether the codepoint is a combining mark.
 /// -show:  -- UTF8 sample string:
 /// -show:  -- Index by codepoint:   1       2       3           4       5
 /// -show:  -- Unicode character:    à       é       ᴆ           õ       û
 /// -show:  local text            = "\xc3\xa0\xc3\xa9\xe1\xb4\x86\xc3\xb5\xc3\xbb"
 /// -show:  -- Index by byte:        1   2   3   4   5   6   7   8   9   10  11
 /// -show:
-/// -show:  -- Get substring specified by Unicode codepoint index, rather than by byte index:
-/// -show:  -- Start at the 2nd Unicode codepoint, which in this case is at the 3rd byte.
-/// -show:  -- End after the 3rd Unicode codepoint, which in this case is at the 8th byte.
-/// -show:  local sub = unicode.sub(text, 2, 3) -- Receives "\xc3\xa9\xe1\xb4\x86", which is "éᴆ".
+/// -show:  for str, value, combining in unicode.iter(text) do
+/// -show:      -- Note that the default lua print() function is not fully aware
+/// -show:      -- of Unicode, so clink.print() is needed to print Unicode text.
+/// -show:      local bytes = ""
+/// -show:      for i = 1, #str do
+/// -show:          bytes = bytes .. string.format("\\x%02x", str:byte(i, i))
+/// -show:      end
+/// -show:      clink.print(str, value, combining, bytes)
+/// -show:  end
 /// -show:
-/// -show:  clink.print(sub) -- Prints "éᴆ".
-/// -show:
-/// -show:  -- Note that the default lua print() function is not fully aware of
-/// -show:  -- Unicode.  It converts the Unicode string to the current locale
-/// -show:  -- encoding, and won't print the intended string.
-/// -show:  print(sub)       -- Depending on the current locale, this may print "é?" or something else.
-static int usub(lua_State* state)
+/// -show:  -- The above prints the following:
+/// -show:  --      à       224     false   \xc3\xa0
+/// -show:  --      é       233     false   \xc3\xa9
+/// -show:  --      ᴆ       7430    false   \xe1\xb4\x86
+/// -show:  --      õ       245     false   \xc3\xb5
+/// -show:  --      û       373     false   \xc3\xbb
+static int iter_aux (lua_State* state)
 {
-    bool isnum;
-    const char* s = checkstring(state, 1);
-    int i = checkinteger(state, 2, &isnum);
-    int j = optinteger(state, 3, -1);
-    if (!s || !isnum)
+    const char* text = lua_tolstring(state, lua_upvalueindex(1), nullptr);
+    const int pos = int(lua_tointeger(state, lua_upvalueindex(2)));
+    const char* s = text + pos;
+
+    str_iter iter(s);
+    const int c = iter.next();
+    if (!c)
         return 0;
 
-    size_t start;
-    size_t end;
+    const char* e = iter.get_pointer();
 
-    if (i < 0 || j < 0)
-    {
-        size_t l = 0;
-        str_iter iter(s);
-        while (iter.next())
-            l++;
+    lua_pushinteger(state, int(e - text));
+    lua_replace(state, lua_upvalueindex(2));
 
-        start = posrelat(i, l);
-        end = posrelat(j, l);
+    lua_pushlstring(state, s, size_t(e - s));
+    lua_pushinteger(state, c);
+    lua_pushboolean(state, is_combining_mark(c));
+    return 3;
+}
+static int iter(lua_State* state)
+{
+    const char* s = checkstring(state, 1);
+    if (!s)
+        return 0;
 
-        if (end > l)
-            end = l;
-    }
-    else
-    {
-        start = size_t(i);
-        end = size_t(j);
-    }
-
-    if (start < 1)
-        start = 1;
-    start--;
-
-    if (start <= end)
-    {
-        str_iter iter(s);
-
-        end -= start;
-        while (start--)
-            iter.next();
-        const char* p = iter.get_pointer();
-
-        while (end--)
-            iter.next();
-        const char* q = iter.get_pointer();
-
-        lua_pushlstring(state, p, size_t(q - p));
-    }
-    else
-    {
-        lua_pushliteral(state, "");
-    }
-
+    lua_settop(state, 1);                   // Reuse the pushed string.
+    lua_pushinteger(state, 0);              // Push a position for the next iteration.
+    lua_pushcclosure(state, iter_aux, 2);
     return 1;
 }
 
@@ -346,7 +325,7 @@ void unicode_lua_initialise(lua_state& lua)
     } methods[] = {
         { "normalize",      &normalize },
         { "isnormalized",   &isnormalized },
-        { "sub",            &usub },
+        { "iter",           &iter },    // TODO: return an iterator that returns string for one codepoint, value of the codepoint, and whether it is a combining mark.
     };
 
     lua_State* state = lua.get_state();
