@@ -4,7 +4,7 @@
 
 #### v1.3.26
 
-- Added `unicode.sub()`, `unicode.isnormalized()`, and `unicode.normalize()` for more precise UTF8 string manipulation.
+- Added `unicode.iter()`, `unicode.isnormalized()`, and `unicode.normalize()` for more precise UTF8 string manipulation.
 
 #### v1.3.25
 
