@@ -270,7 +270,9 @@ Function .onInit
         SectionSetFlags ${section_autorun} 0
     LUseAutoRun:
 
-    ; Apply remembered selection state for CLINK_DIR section.
+    ; Apply remembered selection state for CLINK_DIR section, unless /D is used.
+    ${GetOptionsS} $1 '/D' $2
+    IfErrors 0 LSetClinkDir
     ReadRegDWORD $0 HKLM Software\Clink SetClinkDir
     StrCmp $0 "0" 0 LSetClinkDir
         SectionSetFlags ${section_clink_dir} 0
