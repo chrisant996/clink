@@ -26,6 +26,7 @@ settings.add("clink.update_interval", 5, "Days between update checks", "The Clin
 
 --------------------------------------------------------------------------------
 local powershell_exe
+local reg_exe
 local checked_prereqs
 
 local function make_file_at_path(root, rhs)
@@ -43,13 +44,18 @@ local function find_prereqs()
     if not checked_prereqs then
         local sysroot = os.getenv("systemroot")
         powershell_exe = make_file_at_path(sysroot, "System32\\WindowsPowerShell\\v1.0\\powershell.exe")
+        reg_exe = make_file_at_path(sysroot, "System32\\reg.exe")
         checked_prereqs = true
     end
     if not powershell_exe then
         return nil, log_info("unable to find PowerShell.")
-    else
-        return powershell_exe
+    elseif not reg_exe then
+        return nil, log_info("unable to find Reg.exe.")
     end
+
+    powershell_exe = '"' .. powershell_exe .. '"'
+    reg_exe = '"' .. reg_exe .. '"'
+    return true
 end
 
 --------------------------------------------------------------------------------
@@ -124,6 +130,44 @@ local function is_rhs_version_newer(lhs, rhs)
     else
         return false
     end
+end
+
+local function get_installation_type()
+    local exe_path, err = get_exe_path()
+    if not exe_path then
+        return nil, err
+    end
+
+    local done
+    local ret = "zip"
+
+    local r = io.popen("2>nul " .. reg_exe .. " query hklm\\software\\microsoft\\windows\\currentversion\\uninstall /reg:32")
+    if r then
+        for line in r:lines() do
+            if line:lower():match("clink_[^/\\]+$") then
+                local i = io.popen("2>nul " .. reg_exe .. " query " .. line .. " /reg:32 /s")
+                if i then
+                    for line in i:lines() do
+                        local location = line:match("^ +InstallLocation +REG_SZ +(.+)$")
+                        if location and string.equalsi(location, exe_path) then
+                            ret = "exe"
+                            done = true
+                            break
+                        end
+                    end
+                    i:close()
+                end
+            end
+            if done then
+                break
+            end
+        end
+        r:close()
+    else
+        log_info("unable to query registry for installation type.")
+    end
+
+    return ret
 end
 
 --------------------------------------------------------------------------------
@@ -205,14 +249,19 @@ local function install_file(from_dir, to_dir, name)
     return nil, err, code
 end
 
-local function has_zip_file()
+local function has_update_file(install_type)
     local update_dir = get_update_dir()
     if not update_dir then
         return nil
     end
 
+    local install_type = get_installation_type()
+    if not install_type then
+        return nil
+    end
+
     local latest, lmaj, lmin, lpat
-    local files = os.globfiles(path.join(update_dir, "*.zip"), true)
+    local files = os.globfiles(path.join(update_dir, "*." .. install_type), true)
     for _, f in ipairs(files) do
         if f.type:find("file") then
             if is_rhs_version_newer(latest and latest.name, f.name) then
@@ -284,6 +333,7 @@ end
 
 local function internal_check_for_update(force)
     local local_tag = get_local_tag()
+    local install_type = get_installation_type()
 
     -- Use github API to query latest release.
     --
@@ -300,20 +350,20 @@ local function internal_check_for_update(force)
     if not f then
         return nil, concat_error(err, log_info("unable to query github api."))
     end
-    local latest_zip
+    local latest_update_file
     for line in f:lines() do
         local tag = line:match('"tag_name": *"(.-)"')
-        local match = line:match('"browser_download_url": *"(.-%.zip)"')
+        local match = line:match('"browser_download_url": *"(.-%.' .. install_type .. ')"')
         if not cloud_tag and tag then
             cloud_tag = tag
         end
-        if not latest_zip and match then
-            latest_zip = match
+        if not latest_update_file and match then
+            latest_update_file = match
         end
     end
     f:close()
-    if not latest_zip then
-        return nil, log_info("unable to find latest release zip file.")
+    if not latest_update_file then
+        return nil, log_info("unable to find latest release " .. install_type .. " file.")
     end
 
     -- Compare versions.
@@ -323,39 +373,40 @@ local function internal_check_for_update(force)
     end
 
     -- Check if already downloaded.
-    local local_zip = has_zip_file()
-    if local_zip and clink.lower(path.getbasename(local_zip)) == clink.lower(cloud_tag) then
-        return local_zip
+    local local_update_file = has_update_file(install_type)
+    if local_update_file and clink.lower(path.getbasename(local_update_file)) == clink.lower(cloud_tag) then
+        return local_update_file
     end
 
-    -- Download latest release zip file.
+    -- Download latest release update file (zip or exe).
     -- Note:  Because of github redirection, there's no way to verify whether
-    -- the file existed.  But if it's not a zip file then the expand will fail,
-    -- and that's good enough.
+    -- the file existed on the server.  But if it's not a zip file then the
+    -- expand will fail, and if it's not an exe file then execution will fail.
+    -- That's good enough.
     if force then
         print("Downloading latest release...")
     end
     local f
-    local_zip = get_update_dir()
-    if local_zip then
-        local_zip = path.join(local_zip, cloud_tag .. ".zip")
-        f, err = io.open(local_zip, "w+")
+    local_update_file = get_update_dir()
+    if local_update_file then
+        local_update_file = path.join(local_update_file, cloud_tag .. "." .. install_type)
+        f, err = io.open(local_update_file, "w+")
     end
     if not f then
-        return nil, concat_error(err, log_info("unable to create update zip file."))
+        return nil, concat_error(err, log_info("unable to create update " .. install_type .. " file."))
     end
     f:close()
-    log_info("downloading " .. latest_zip .. " to " .. local_zip .. ".")
-    local cmd = string.format([[2>nul ]] .. powershell_exe .. [[ -Command "$ProgressPreference='SilentlyContinue' ; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12 ; Invoke-WebRequest '%s' -OutFile '%s'"]], latest_zip, local_zip)
+    log_info("downloading " .. latest_update_file .. " to " .. local_update_file .. ".")
+    local cmd = string.format([[2>nul ]] .. powershell_exe .. [[ -Command "$ProgressPreference='SilentlyContinue' ; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12 ; Invoke-WebRequest '%s' -OutFile '%s'"]], latest_update_file, local_update_file)
     f, err = io.popen(cmd)
     if not f then
-        os.remove(local_zip)
-        return nil, concat_error(err, log_info("failed to download zip file."))
+        os.remove(local_update_file)
+        return nil, concat_error(err, log_info("failed to download " .. install_type .. " file."))
     end
     for _ in f:lines() do
     end
     f:close()
-    return local_zip
+    return local_update_file
 end
 
 local function update_lastcheck(update_dir)
@@ -412,41 +463,42 @@ local function is_update_ready(force)
 
     local tagfile = path.join(update_dir, tag_filename)
 
-    -- Download latest zip file, or use zip file that's already been downloaded.
+    -- Download latest update file, or use update file that's already been
+    -- downloaded.
     local can
-    local zip_file
+    local update_file
     if force then
         can, err = can_check_for_update(force)
     else
         can = true -- When not force, can_check_for_update() was already called.
     end
     if can then
-        zip_file, err = check_for_update(force)
+        update_file, err = check_for_update(force)
     end
-    if not zip_file then
+    if not update_file then
         -- If an update is already downloaded, then ignore any error that may
         -- have occurred while attempting to check/download a new update.
-        zip_file = has_zip_file()
-        if not zip_file then
-            -- If no zip file is already downloaded, then report the error from
-            -- the earlier check_for_update().
+        update_file = has_update_file()
+        if not update_file then
+            -- If no update file is already downloaded, then report the error
+            -- from the earlier check_for_update().
             return nil, err
         end
     end
 
-    -- Verify the zip file is newer.
+    -- Verify the update file is newer.
     local local_tag = get_local_tag()
-    local cloud_tag = path.getbasename(zip_file)
+    local cloud_tag = path.getbasename(update_file)
     if not is_rhs_version_newer(get_local_tag(), cloud_tag) then
         return nil, log_info("no update available; local version " .. local_tag .. " is not older than latest release " .. cloud_tag .. ".")
     end
 
     -- Update is ready.
-    log_info("update in " .. zip_file .. " is ready to be applied.")
+    log_info("update in " .. update_file .. " is ready to be applied.")
     return zip_file
 end
 
-local function apply_update(zip_file, force)
+local function apply_zip_update(zip_file, force)
     local exe_path, err = get_exe_path()
     if not exe_path then
         return nil, err
@@ -505,6 +557,23 @@ local function apply_update(zip_file, force)
     return 1, log_info("updated Clink to " .. cloud_tag .. ".")
 end
 
+local function run_exe_installer(exe_file)
+    local exe_path, err = get_exe_path()
+    if not exe_path then
+        return nil, err
+    end
+
+    print("Launching the Clink setup program...")
+    local command = exe_file .. " /S /D=" .. exe_path
+    log_info("launching setup program '" .. command .. "'")
+    os.execute(command)
+
+    -- Cleanup.
+    delete_files(update_dir, "*.exe", exe_file)
+
+    return 1, log
+end
+
 local function try_autoupdate()
     is_update_ready(false)
 end
@@ -517,9 +586,9 @@ local function autoupdate()
     end
 
     -- Report if an update is downloaded already.
-    local zip_file = has_zip_file()
-    if zip_file and can_check_for_update(true) then
-        local tag = path.getbasename(zip_file)
+    local update_file = has_update_file()
+    if update_file and can_check_for_update(true) then
+        local tag = path.getbasename(update_file)
         if is_rhs_version_newer(get_local_tag(), tag) then
             clink.print("\x1b[1mClink " .. tag .. " is available.\x1b[m")
             print("- To apply the update, run 'clink update'.")
@@ -541,10 +610,17 @@ clink.oninject(autoupdate)
 
 --------------------------------------------------------------------------------
 function clink.updatenow()
-    local zip_file, err = is_update_ready(true)
-    if not zip_file then
+    local update_file, err = is_update_ready(true)
+    if not update_file then
         return nil, err
     end
 
-    return apply_update(zip_file, true)
+    local install_type = path.getextension(update_file):lower()
+    if install_type == "zip" then
+        return apply_zip_update(update_file, true)
+    elseif install_type == "exe" then
+        return run_exe_installer(update_file)
+    else
+        return nil, log_info("unable to determine update type from '" .. update_file .. "'.")
+    end
 end
