@@ -29,8 +29,12 @@
 ;-------------------------------------------------------------------------------
 Unicode                 true
 Name                    "clink v${CLINK_VERSION}"
-InstallDir              "$PROGRAMFILES\clink"
-InstallDirRegKey        HKLM "Software\Clink" "InstallDir"
+; InstallDir and InstallDirRegKey are omitted so that /D= usage can be detected.
+; The .onInit function handles providing a default value when /D= is omitted,
+; reading the InstallDir regkey when appropriate.  The "-" section handles
+; writing the InstallDir regkey.
+;InstallDir              "$PROGRAMFILES\clink"
+;InstallDirRegKey        HKLM "Software\Clink" "InstallDir"
 OutFile                 "${CLINK_BUILD}_setup.exe"
 AllowSkipFiles          off
 SetCompressor           /SOLID lzma
@@ -233,19 +237,25 @@ SectionEnd
 
 ;-------------------------------------------------------------------------------
 Function .onInit
-    ; Check command line options.
     ${GetParameters} $1
+
+    ; Check command line options.
     ClearErrors
     ${GetOptions} $1 '/?' $0
+    IfErrors 0 +4
+    ClearErrors
+    ${GetOptions} $1 '-?' $0
     IfErrors +3 0
         MessageBox MB_OK "/?\tShow this help.\n/noEnhance\tUncheck 'Use enhanced default settings'."
         Abort
 
-    ; Apply remembered installation directory.
-    ReadRegStr $0 HKLM Software\Clink InstallDir
-    StrCmp $0 "" LEmptyInstallDir 0
-        StrCpy $INSTDIR $0
-    LEmptyInstallDir:
+    ; Apply remembered installation directory, unless /D is used.
+    StrCmp $INSTDIR "" 0 LInstallDir
+        StrCpy $INSTDIR "$PROGRAMFILES\clink"
+        ReadRegStr $0 HKLM Software\Clink InstallDir
+        StrCmp $0 "" LInstallDir 0
+            StrCpy $INSTDIR $0
+    LInstallDir:
 
     ; Apply remembered selection state for enhanced default settings section.
     SectionSetFlags ${section_enhance} 0
@@ -270,9 +280,7 @@ Function .onInit
         SectionSetFlags ${section_autorun} 0
     LUseAutoRun:
 
-    ; Apply remembered selection state for CLINK_DIR section, unless /D is used.
-    ${GetOptionsS} $1 '/D' $2
-    IfErrors 0 LSetClinkDir
+    ; Apply remembered selection state for CLINK_DIR section.
     ReadRegDWORD $0 HKLM Software\Clink SetClinkDir
     StrCmp $0 "0" 0 LSetClinkDir
         SectionSetFlags ${section_clink_dir} 0
