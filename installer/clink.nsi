@@ -246,7 +246,7 @@ Function .onInit
     ClearErrors
     ${GetOptions} $1 '-?' $0
     IfErrors +3 0
-        MessageBox MB_OK "/?\tShow this help.\n/noEnhance\tUncheck 'Use enhanced default settings'."
+        MessageBox MB_OK "/?$\t$\tShow this help.$\n/noEnhance$\tUncheck 'Use enhanced default settings'.$\n/S$\t$\tSilently install.$\n/D=dir$\t$\tInstallation directory.$\n$\nIf /D=dir is used, it must come last in the command line, it must not use quotes, and dir must be an absolute path."
         Abort
 
     ; Apply remembered installation directory, unless /D is used.
