@@ -29,6 +29,8 @@ local powershell_exe
 local reg_exe
 local checked_prereqs
 
+local can_use_setup_exe = false
+
 local function make_file_at_path(root, rhs)
     if root and rhs then
         if root ~= "" and rhs ~= "" then
@@ -44,17 +46,21 @@ local function find_prereqs()
     if not checked_prereqs then
         local sysroot = os.getenv("systemroot")
         powershell_exe = make_file_at_path(sysroot, "System32\\WindowsPowerShell\\v1.0\\powershell.exe")
-        reg_exe = make_file_at_path(sysroot, "System32\\reg.exe")
+        if can_use_setup_exe then
+            reg_exe = make_file_at_path(sysroot, "System32\\reg.exe")
+        end
         checked_prereqs = true
     end
     if not powershell_exe then
         return nil, log_info("unable to find PowerShell.")
-    elseif not reg_exe then
+    elseif can_use_setup_exe and not reg_exe then
         return nil, log_info("unable to find Reg.exe.")
     end
 
     powershell_exe = '"' .. powershell_exe .. '"'
-    reg_exe = '"' .. reg_exe .. '"'
+    if can_use_setup_exe then
+        reg_exe = '"' .. reg_exe .. '"'
+    end
     return true
 end
 
@@ -133,9 +139,18 @@ local function is_rhs_version_newer(lhs, rhs)
 end
 
 local function get_installation_type()
+    if not can_use_setup_exe then
+        return "zip"
+    end
+
     local exe_path, err = get_exe_path()
     if not exe_path then
         return nil, err
+    end
+
+    local ok, err = find_prereqs()
+    if not ok then
+        return nil, concat_error(err, log_info("autoupdate requires PowerShell."))
     end
 
     local done
@@ -353,7 +368,7 @@ local function internal_check_for_update(force)
     local latest_update_file
     for line in f:lines() do
         local tag = line:match('"tag_name": *"(.-)"')
-        local match = line:match('"browser_download_url": *"(.-%.' .. install_type .. ')"')
+        local match = line:match('"browser_download_url": *"([^"]-%.' .. install_type .. ')"')
         if not cloud_tag and tag then
             cloud_tag = tag
         end
@@ -495,7 +510,7 @@ local function is_update_ready(force)
 
     -- Update is ready.
     log_info("update in " .. update_file .. " is ready to be applied.")
-    return zip_file
+    return update_file
 end
 
 local function apply_zip_update(zip_file, force)
@@ -557,21 +572,31 @@ local function apply_zip_update(zip_file, force)
     return 1, log_info("updated Clink to " .. cloud_tag .. ".")
 end
 
-local function run_exe_installer(exe_file)
+local function run_exe_installer(setup_exe)
     local exe_path, err = get_exe_path()
     if not exe_path then
         return nil, err
     end
 
+    local update_dir, err = get_update_dir()
+    if not update_dir then
+        return nil, err
+    end
+
+    local cloud_tag = path.getbasename(setup_exe)
     print("Launching the Clink setup program...")
-    local command = exe_file .. " /S /D=" .. exe_path
+    local command = setup_exe .. " /S /D=" .. exe_path
     log_info("launching setup program '" .. command .. "'")
-    os.execute(command)
+-- PROBLEM:  This gets blocked by malware protection.
+    local ok, what, code = os.execute(command)
+    if not ok or code ~= 0 then
+        return nil, log_info(string.format("setup program %s.", ok and "canceled" or "failed"))
+    end
 
     -- Cleanup.
-    delete_files(update_dir, "*.exe", exe_file)
+    delete_files(update_dir, "*.exe", setup_exe)
 
-    return 1, log
+    return 1, log_info("updated Clink to " .. cloud_tag .. ".")
 end
 
 local function try_autoupdate()
@@ -616,9 +641,9 @@ function clink.updatenow()
     end
 
     local install_type = path.getextension(update_file):lower()
-    if install_type == "zip" then
+    if install_type == ".zip" then
         return apply_zip_update(update_file, true)
-    elseif install_type == "exe" then
+    elseif install_type == ".exe" then
         return run_exe_installer(update_file)
     else
         return nil, log_info("unable to determine update type from '" .. update_file .. "'.")
