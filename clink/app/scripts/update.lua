@@ -82,15 +82,15 @@ local function get_update_dir()
     return target
 end
 
-local function get_exe_path(include_exe)
-    local exe_path = os.getenv("=clink.bin")
-    if exe_path == "" then
-        exe_path = nil
+local function get_bin_dir()
+    local bin_dir = os.getenv("=clink.bin")
+    if bin_dir == "" then
+        bin_dir = nil
     end
-    if not exe_path then
+    if not bin_dir then
         return nil, log_info("unable to find Clink executable file.")
     end
-    return exe_path
+    return bin_dir
 end
 
 local function get_local_tag()
@@ -143,8 +143,8 @@ local function get_installation_type()
         return "zip"
     end
 
-    local exe_path, err = get_exe_path()
-    if not exe_path then
+    local bin_dir, err = get_bin_dir()
+    if not bin_dir then
         return nil, err
     end
 
@@ -164,7 +164,7 @@ local function get_installation_type()
                 if i then
                     for line in i:lines() do
                         local location = line:match("^ +InstallLocation +REG_SZ +(.+)$")
-                        if location and string.equalsi(location, exe_path) then
+                        if location and string.equalsi(location, bin_dir) then
                             ret = "exe"
                             done = true
                             break
@@ -291,12 +291,12 @@ local function has_update_file(install_type)
 end
 
 local function can_check_for_update(force)
-    local clink_exe, err = get_exe_path(true--[[include_exe]])
-    if not clink_exe then
+    local bin_dir, err = get_bin_dir()
+    if not bin_dir then
         return false, err
     end
 
-    local t = os.globfiles(path.join(clink_exe, "clink_x??.exe"), true)
+    local t = os.globfiles(path.join(bin_dir, "clink_x??.exe"), true)
     if not t or not t[1] or not t[1].type then
         err = log_info("could not determine target location.")
         return false, err
@@ -306,7 +306,7 @@ local function can_check_for_update(force)
         return false, log_info("cannot update because files are readonly.")
     end
 
-    local lib = path.join(clink_exe, path.getbasename(t[1].name) .. ".lib")
+    local lib = path.join(bin_dir, path.getbasename(t[1].name) .. ".lib")
     if os.isfile(lib) then
         return false, log_info("autoupdate is disabled for local build directories.")
     end
@@ -462,7 +462,7 @@ local function check_for_update(force)
 end
 
 local function is_update_ready(force)
-    local exe_path, err = get_exe_path()
+    local exe_path, err = get_bin_dir()
     if not exe_path then
         return nil, err
     end
@@ -515,8 +515,8 @@ local function is_update_ready(force)
 end
 
 local function apply_zip_update(zip_file, force)
-    local exe_path, err = get_exe_path()
-    if not exe_path then
+    local bin_dir, err = get_bin_dir()
+    if not bin_dir then
         return nil, err
     end
 
@@ -554,7 +554,7 @@ local function apply_zip_update(zip_file, force)
     -- Apply expanded files.
     local t = os.globfiles(path.join(expand_dir, "*"))
     for _, f in ipairs(t) do
-        ok, err, code = install_file(expand_dir, exe_path, f)
+        ok, err, code = install_file(expand_dir, bin_dir, f)
         if not ok then
             local ret = nil
             if code == -1 then
@@ -568,14 +568,14 @@ local function apply_zip_update(zip_file, force)
     delete_files(expand_dir, "*")
     os.rmdir(expand_dir)
     delete_files(update_dir, "*.zip", zip_file)
-    delete_files(exe_path, "~clink.*.old")
+    delete_files(bin_dir, "~clink.*.old")
 
     return 1, log_info("updated Clink to " .. cloud_tag .. ".")
 end
 
 local function run_exe_installer(setup_exe)
-    local exe_path, err = get_exe_path()
-    if not exe_path then
+    local bin_dir, err = get_bin_dir()
+    if not bin_dir then
         return nil, err
     end
 
@@ -586,7 +586,7 @@ local function run_exe_installer(setup_exe)
 
     local cloud_tag = path.getbasename(setup_exe)
     print("Launching the Clink setup program...")
-    local command = setup_exe .. " /S /D=" .. exe_path
+    local command = setup_exe .. " /S /D=" .. bin_dir
     log_info("launching setup program '" .. command .. "'")
 -- PROBLEM:  This gets blocked by malware protection.
     local ok, what, code = os.execute(command)
