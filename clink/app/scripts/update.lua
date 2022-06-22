@@ -296,7 +296,7 @@ local function can_check_for_update(force)
         return false, err
     end
 
-    local t = os.globfiles(clink_exe, true)
+    local t = os.globfiles(path.join(clink_exe, "clink_x??.exe"), true)
     if not t or not t[1] or not t[1].type then
         err = log_info("could not determine target location.")
         return false, err
@@ -306,7 +306,8 @@ local function can_check_for_update(force)
         return false, log_info("cannot update because files are readonly.")
     end
 
-    if os.isfile(path.join(path.getdirectory(clink_exe), path.getbasename(clink_exe) .. ".lib")) then
+    local lib = path.join(clink_exe, path.getbasename(t[1].name) .. ".lib")
+    if os.isfile(lib) then
         return false, log_info("autoupdate is disabled for local build directories.")
     end
 
