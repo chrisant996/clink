@@ -18,7 +18,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
     - Generators stopped by ?:1863 (`argmatcher_generator:generate`).
 
 ## Normal Priority
-- UPDATER:  If the copy being updated is in the same directory as the InstallDir in the registry, then try to update the version number string.
 - Some way to have e.g. multiple separate `ut` argmatchers that are associated with different `ut` program paths.
 - Some way to push keys?  (Push keys to Clink; not to other processes.)
 
