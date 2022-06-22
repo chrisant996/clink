@@ -5,6 +5,7 @@
 #### v1.3.26
 
 - Added `unicode.iter()`, `unicode.isnormalized()`, and `unicode.normalize()` for more precise UTF8 string manipulation.
+- The updater now includes an HTTP header to request no caching, in an effort to work around an issue on Win8.x.
 - Fixed the `/D=` flag in the setup program.
 
 #### v1.3.25
