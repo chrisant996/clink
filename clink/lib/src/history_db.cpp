@@ -1796,8 +1796,14 @@ void history_db::make_open_error(str_base* error_message, unsigned char bank) co
 //------------------------------------------------------------------------------
 bool history_db::remove(int rl_history_index, const char* /*line*/)
 {
-    if (rl_history_index < 0 || size_t(rl_history_index) >= m_index_map.size())
+    if (rl_history_index < 0)
         return false;
+
+    if (size_t(rl_history_index) >= m_index_map.size())
+    {
+        // It may be an in-memory-only entry, so allow Readline to remove it.
+        return true;
+    }
 
     return remove(m_index_map[rl_history_index]);
 }
