@@ -28,6 +28,8 @@ settings.add("clink.update_interval", 5, "Days between update checks", "The Clin
 local powershell_exe
 local reg_exe
 local checked_prereqs
+local this_install_type
+local this_install_key
 
 local can_use_setup_exe = false
 
@@ -46,21 +48,17 @@ local function find_prereqs()
     if not checked_prereqs then
         local sysroot = os.getenv("systemroot")
         powershell_exe = make_file_at_path(sysroot, "System32\\WindowsPowerShell\\v1.0\\powershell.exe")
-        if can_use_setup_exe then
-            reg_exe = make_file_at_path(sysroot, "System32\\reg.exe")
-        end
+        reg_exe = make_file_at_path(sysroot, "System32\\reg.exe")
         checked_prereqs = true
     end
     if not powershell_exe then
         return nil, log_info("unable to find PowerShell.")
-    elseif can_use_setup_exe and not reg_exe then
+    elseif not reg_exe then
         return nil, log_info("unable to find Reg.exe.")
     end
 
     powershell_exe = '"' .. powershell_exe .. '"'
-    if can_use_setup_exe then
-        reg_exe = '"' .. reg_exe .. '"'
-    end
+    reg_exe = '"' .. reg_exe .. '"'
     return true
 end
 
@@ -139,50 +137,52 @@ local function is_rhs_version_newer(lhs, rhs)
 end
 
 local function get_installation_type()
-    if not can_use_setup_exe then
-        return "zip"
-    end
+    if not this_install_type then
+        local bin_dir, err = get_bin_dir()
+        if not bin_dir then
+            return nil, err
+        end
 
-    local bin_dir, err = get_bin_dir()
-    if not bin_dir then
-        return nil, err
-    end
+        local ok, err = find_prereqs()
+        if not ok then
+            return nil, concat_error(err, log_info("autoupdate requires PowerShell."))
+        end
 
-    local ok, err = find_prereqs()
-    if not ok then
-        return nil, concat_error(err, log_info("autoupdate requires PowerShell."))
-    end
+        local done
+        this_install_type = "zip"
 
-    local done
-    local ret = "zip"
-
-    local r = io.popen("2>nul " .. reg_exe .. " query hklm\\software\\microsoft\\windows\\currentversion\\uninstall /reg:32")
-    if r then
-        for line in r:lines() do
-            if line:lower():match("clink_[^/\\]+$") then
-                local i = io.popen("2>nul " .. reg_exe .. " query " .. line .. " /reg:32 /s")
-                if i then
-                    for line in i:lines() do
-                        local location = line:match("^ +InstallLocation +REG_SZ +(.+)$")
-                        if location and string.equalsi(location, bin_dir) then
-                            ret = "exe"
-                            done = true
-                            break
+        local r = io.popen("2>nul " .. reg_exe .. " query hklm\\software\\microsoft\\windows\\currentversion\\uninstall /reg:32")
+        if r then
+            for key in r:lines() do
+                if key:lower():match("clink_[^/\\]+$") then
+                    local i = io.popen("2>nul " .. reg_exe .. " query " .. line .. " /reg:32 /s")
+                    if i then
+                        for line in i:lines() do
+                            local location = line:match("^ +InstallLocation +REG_SZ +(.+)$")
+                            if location and string.equalsi(location, bin_dir) then
+                                this_install_key = key
+                                this_install_type = "exe"
+                                done = true
+                                break
+                            end
                         end
+                        i:close()
                     end
-                    i:close()
+                end
+                if done then
+                    break
                 end
             end
-            if done then
-                break
-            end
+            r:close()
+        else
+            log_info("unable to query registry for installation type.")
         end
-        r:close()
-    else
-        log_info("unable to query registry for installation type.")
     end
 
-    return ret
+    -- This sets this_install_type to the actual installation type.  This
+    -- returns "zip" if can_use_setup_exe is false, otherwise it returns the
+    -- actual installation type.
+    return can_use_setup_exe and this_install_type or "zip"
 end
 
 --------------------------------------------------------------------------------
@@ -264,7 +264,7 @@ local function install_file(from_dir, to_dir, name)
     return nil, err, code
 end
 
-local function has_update_file(install_type)
+local function has_update_file()
     local update_dir = get_update_dir()
     if not update_dir then
         return nil
@@ -564,6 +564,13 @@ local function apply_zip_update(zip_file, force)
         end
     end
 
+    -- Update installed version.
+    if this_install_type == "exe" and this_install_key then
+        local version = cloud_tag:gsub("^v", "")
+        os.execute(reg_exe .. ' add "' .. this_install_key .. '" /v DisplayName /t REG_SZ /d "Clink v' .. version .. '" /f /reg:32')
+        os.execute(reg_exe .. ' add "' .. this_install_key .. '" /v DisplayVersion /t REG_SZ /d "' .. version .. '" /f /reg:32')
+    end
+
     -- Cleanup.
     delete_files(expand_dir, "*")
     os.rmdir(expand_dir)
@@ -635,16 +642,23 @@ end
 clink.oninject(autoupdate)
 
 --------------------------------------------------------------------------------
-function clink.updatenow()
+function clink.updatenow(elevated)
     local update_file, err = is_update_ready(true)
     if not update_file then
         return nil, err
     end
 
-    local install_type = path.getextension(update_file):lower()
-    if install_type == ".zip" then
+    local install_type = get_installation_type()
+    if not elevated and install_type == "zip" and this_install_type == "exe" then
+        return -1, log_info("elevation required to update InstallDir in registry.")
+    end
+
+    local ext = path.getextension(update_file):lower():match("^%.(.+)$")
+    if ext ~= install_type then
+        return nil, log_info(string.format("mismatched update type (%s) and update file (%s).", install_type, ext))
+    elseif ext == "zip" then
         return apply_zip_update(update_file, true)
-    elseif install_type == ".exe" then
+    elseif ext == "exe" then
         return run_exe_installer(update_file)
     else
         return nil, log_info("unable to determine update type from '" .. update_file .. "'.")

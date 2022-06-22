@@ -122,12 +122,15 @@ static wchar_t* get_wargs()
 //------------------------------------------------------------------------------
 static bool call_updater(lua_state& lua)
 {
+    const bool elevated = !is_elevation_needed();
+
     auto app_ctx = app_context::get();
     app_ctx->update_env(); // Set %=clink.bin% so the Lua code can find the exe.
 
     lua_State *state = lua.get_state();
     save_stack_top ss(state);
     lua.push_named_function(state, "clink.updatenow");
+    lua_pushboolean(state, elevated);
     lua.pcall_silent(state, 0, 2);
 
     int ok = int(lua_tointeger(state, -2));
@@ -135,7 +138,7 @@ static bool call_updater(lua_state& lua)
 
     if (ok < 0)
     {
-        if (is_elevation_needed())
+        if (!elevated)
         {
             WCHAR file[MAX_PATH * 2];
             DWORD len = GetModuleFileNameW(NULL, file, _countof(file));
