@@ -117,7 +117,7 @@ static setting_enum g_directories_dupe_mode(
     "default) always adds the current directory to the directory history.  A value\n"
     "of 'erase_prev' will erase any previous entries for the current directory and\n"
     "then add it to the directory history.\n"
-    "Note that directory history is not saved between sessions."
+    "Note that directory history is not saved between sessions.",
     "add,erase_prev",
     0);
 
