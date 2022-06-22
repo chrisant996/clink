@@ -2,15 +2,17 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
-#### v1.3.27
-
-- Fixed the `directories.dupe_mode` setting in `clink set`.
-
 #### v1.3.26
 
 - Added `unicode.iter()`, `unicode.isnormalized()`, and `unicode.normalize()` for more precise UTF8 string manipulation.
 - The updater now includes an HTTP header to request no caching, in an effort to work around an issue on Win8.x.
+- The updater now updates the version number displayed in the "Apps & features" section of Settings in Windows (or "Add or Remove Programs" in Control Panel in older versions of Windows).
+- Fixed the `directories.dupe_mode` setting in `clink set`.
+- Fixed the `remove-history` command when trying to remove a history entry added by the `add-history` command that hasn't yet been saved.
 - Fixed the `/D=` flag in the setup program.
+- Fixed potential double-load of scripts in the profile or binaries directories, due to an issue while searching `completions` directories (regression introduced in v1.3.24).
+- Fixed potential infinite loop when merging an argmatcher with itself.
+- Fixed potential accidental resume of an orphaned coroutine.
 
 #### v1.3.25
 
