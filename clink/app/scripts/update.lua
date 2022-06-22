@@ -368,7 +368,7 @@ local function internal_check_for_update(force)
     end
     local latest_update_file
     for line in f:lines() do
-        local tag = line:match('"tag_name": *"(.-)"')
+        local tag = line:match('"tag_name": *"([^"]-)"')
         local match = line:match('"browser_download_url": *"([^"]-%.' .. install_type .. ')"')
         if not cloud_tag and tag then
             cloud_tag = tag
