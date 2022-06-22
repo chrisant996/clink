@@ -61,7 +61,7 @@ You can use Clink right away without configuring anything:
 - Searchable [command history](#saved-command-history) will be saved between sessions.
 - <kbd>Tab</kbd> and <kbd>Ctrl</kbd>+<kbd>Space</kbd> will do match completion two different ways.
 - Press <kbd>Alt</kbd>+<kbd>H</kbd> to see a list of the current key bindings.
-- Press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>/</kbd> followed by another key to see what command is bound to the key.
+- Press <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>/</kbd> followed by another key to see what command is bound to the key.
 
 See [Getting Started](https://chrisant996.github.io/clink/clink.html#getting-started) for information on getting started with Clink.
 
