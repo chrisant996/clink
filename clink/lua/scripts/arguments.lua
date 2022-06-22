@@ -1673,10 +1673,12 @@ local loaded_argmatchers = {}
 local function add_dirs_from_var(t, var, subdir)
     if var and var ~= "" then
         local dirs = string.explode(var, ";", '"')
-        subdir = subdir or ""
         for _,d in ipairs(dirs) do
             d = d:gsub('"', "")
-            d = path.getdirectory(path.join(d, subdir))
+            if subdir then
+                d = path.join(d, "completions")
+            end
+            d = path.getdirectory(path.join(d, "")) -- Makes sure no trailing path separator.
             table.insert(t, d)
         end
         return true
@@ -1687,14 +1689,14 @@ end
 local function get_completion_dirs()
     local dirs = {}
 
-    add_dirs_from_var(dirs, os.getenv("CLINK_COMPLETIONS_DIR"))
+    add_dirs_from_var(dirs, os.getenv("CLINK_COMPLETIONS_DIR"), false)
 
-    if not add_dirs_from_var(dirs, settings.get("clink.path"), "completions") then
-        add_dirs_from_var(dirs, os.getenv("=clink.bin"))
-        add_dirs_from_var(dirs, os.getenv("=clink.profile"))
+    if not add_dirs_from_var(dirs, settings.get("clink.path"), true) then
+        add_dirs_from_var(dirs, os.getenv("=clink.bin"), true)
+        add_dirs_from_var(dirs, os.getenv("=clink.profile", true))
     end
 
-    add_dirs_from_var(dirs, os.getenv("CLINK_PATH"), "completions")
+    add_dirs_from_var(dirs, os.getenv("CLINK_PATH"), true)
 
     return dirs
 end
