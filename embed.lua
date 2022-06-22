@@ -37,12 +37,14 @@ local function compare_values(t, a, b)
 end
 
 --------------------------------------------------------------------------------
-local function do_embed()
+local function do_embed(debug_info)
     -- Find the Lua compilers.
     local archs = {
         ["64"] = { luac = os.matchfiles(".build/*/bin/final/luac_x64.exe")[1] },
         ["86"] = { luac = os.matchfiles(".build/*/bin/final/luac_x86.exe")[1] },
     }
+
+    debug_info = debug_info and "" or " -s"
 
     for name, arch in spairs(archs) do
         if not arch.luac then
@@ -78,7 +80,7 @@ local function do_embed()
                 out:write("#if ARCHITECTURE == "..name.."\n")
 
                 -- Compile the input Lua script to binary.
-                exec(arch.luac.." -s -o .build/embed_temp "..file)
+                exec(arch.luac..debug_info.." -o .build/embed_temp "..file)
                 local bin_in = io.open(".build/embed_temp", "rb")
                 local bin_data = bin_in:read("*a")
                 bin_in:close()
@@ -127,5 +129,14 @@ newaction {
     description = "Clink: Update embedded scripts for Clink",
     execute = function ()
         do_embed()
+    end
+}
+
+--------------------------------------------------------------------------------
+newaction {
+    trigger = "embed_debug",
+    description = "Clink: Update embedded scripts for Clink with debugging info",
+    execute = function ()
+        do_embed(true--[[debug_info]])
     end
 }

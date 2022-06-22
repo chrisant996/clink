@@ -286,7 +286,7 @@ newaction {
 
         -- Build everything.
         build_code("luac")
-        exec(premake .. " embed")
+        exec(premake .. " " .. (_OPTIONS["dbginfo"] and "embed_debug" or "embed"))
         build_code()
 
         local src = path.getabsolute(".build/" .. toolchain .. "/bin/final").."/"
@@ -414,4 +414,10 @@ newoption {
    trigger     = "commit",
    value       = "SPEC",
    description = "Clink: Git commit/tag to build Clink release from"
+}
+
+--------------------------------------------------------------------------------
+newoption {
+    trigger     = "dbginfo",
+    description = "Clink: Include debug info in embedded Lua scripts"
 }
