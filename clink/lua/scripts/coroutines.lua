@@ -235,7 +235,7 @@ function clink._resume_coroutines()
     local remove = {}
     local impl = function()
         for _,entry in pairs(_coroutines) do
-            if coroutine.status(entry.coroutine) == "dead" then
+            if coroutine.status(entry.coroutine) == "dead" or not check_generation(entry.coroutine) then
                 table.insert(remove, _)
             else
                 _coroutines_resumable = true
