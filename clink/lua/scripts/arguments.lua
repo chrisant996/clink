@@ -1089,6 +1089,11 @@ local function merge_parsers(lhs, rhs)
     -- Merging parsers is not a trivial matter and this implementation is far
     -- from correct.  It behaves reasonably for common cases.
 
+    -- Don't merge with itself!
+    if lhs == rhs then
+        return
+    end
+
     -- Merge flags.
     if rhs._flags then
         lhs:addflags(rhs._flags._args[1])
