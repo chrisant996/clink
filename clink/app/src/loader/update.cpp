@@ -131,7 +131,7 @@ static bool call_updater(lua_state& lua)
     save_stack_top ss(state);
     lua.push_named_function(state, "clink.updatenow");
     lua_pushboolean(state, elevated);
-    lua.pcall_silent(state, 0, 2);
+    lua.pcall_silent(state, 1, 2);
 
     int ok = int(lua_tointeger(state, -2));
     const char* msg = lua_tostring(state, -1);

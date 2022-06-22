@@ -155,7 +155,7 @@ local function get_installation_type()
         if r then
             for key in r:lines() do
                 if key:lower():match("clink_[^/\\]+$") then
-                    local i = io.popen("2>nul " .. reg_exe .. " query " .. line .. " /reg:32 /s")
+                    local i = io.popen('2>nul ' .. reg_exe .. ' query "' .. key .. '" /reg:32 /s')
                     if i then
                         for line in i:lines() do
                             local location = line:match("^ +InstallLocation +REG_SZ +(.+)$")
