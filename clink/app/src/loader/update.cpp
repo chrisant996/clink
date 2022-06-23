@@ -138,7 +138,11 @@ static bool call_updater(lua_state& lua)
 
     if (ok < 0)
     {
-        if (!elevated)
+        if (elevated)
+        {
+            ok = false;
+        }
+        else
         {
             WCHAR file[MAX_PATH * 2];
             DWORD len = GetModuleFileNameW(NULL, file, _countof(file));
@@ -148,17 +152,11 @@ static bool call_updater(lua_state& lua)
             s.format("--elevated --profile \"%s\" ", profile.c_str());
             wstr_moveable wargs(s.c_str());
             wargs << get_wargs();
-            if (len < _countof(file) - 1 && run_as_admin(NULL, file, wargs.c_str()))
-            {
-                ok = true;
-                msg = "updated Clink.";
-                goto done;
-            }
+            ok = (len < _countof(file) - 1 && run_as_admin(NULL, file, wargs.c_str()));
+            msg = ok ? "updated Clink." : "update failed; see log file for details.";
         }
-        ok = false;
     }
 
-done:
     if (!ok && !msg)
         msg = "the update attempt failed for an unknown reason.";
 

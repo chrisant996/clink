@@ -192,6 +192,28 @@ local function get_installation_type()
 end
 
 --------------------------------------------------------------------------------
+local function collect_output(output, line)
+    local num = #output
+    if num < 10 then
+        table.insert(output, line)
+    elseif num == 10 then
+        table.insert(output, "...")
+    end
+end
+
+local function log_output(command, output)
+    log_info(command)
+    if #output > 0 then
+        log_info("output from command:")
+        for _,line in ipairs(output) do
+            log_info("    "..line)
+        end
+    else
+        log_info("no output from command.")
+    end
+end
+
+--------------------------------------------------------------------------------
 local function delete_files(dir, wild, except)
     if except then
         except = path.join(dir, except)
@@ -206,24 +228,34 @@ local function delete_files(dir, wild, except)
 end
 
 local function unzip(zip, out)
-    if out and out ~= "" and os.isdir(out) then
-        local fmt = [[2>nul ]] .. powershell_exe .. [[ -Command $ProgressPreference='SilentlyContinue' ; Expand-Archive -Force -LiteralPath \"%s\" -DestinationPath \"%s\" ; echo $error.count]]
-        local cmd = string.format(fmt, zip, out)
-        local f = io.popen(cmd)
-        if f then
-            local result = nil
-            if f:read() == "0" then
-                result = true
-            end
-            for _ in f:lines() do
-                result = nil
-            end
-            f:close()
-            return result
-        end
-    else
+    if not out or out == "" or not os.isdir(out) then
         return nil, log_info("output directory '" .. tostring(out) .. "' does not exist.")
     end
+
+    local fmt = [[2>&1 ]] .. powershell_exe .. [[ -Command $ProgressPreference='SilentlyContinue' ; Expand-Archive -Force -LiteralPath \"%sxyz\" -DestinationPath \"%s\" ; echo $error.count]]
+    local cmd = string.format(fmt, zip, out)
+    local f, err = io.popen(cmd)
+    if not f then
+        log_info(cmd)
+        return nil, err
+    end
+
+    local result
+    local output = {}
+    for line in f:lines() do
+        collect_output(output, line)
+    end
+    if #output == 1 and output[1] == "0" then
+        result = true
+    end
+    f:close()
+
+    if not result then
+        log_output(cmd, output)
+        return nil
+    end
+
+    return result
 end
 
 local function install_file(from_dir, to_dir, name)
@@ -282,9 +314,9 @@ local function has_update_file()
     end
 
     local latest, lmaj, lmin, lpat
-    local files = os.globfiles(path.join(update_dir, "*." .. install_type), true)
+    local files = os.globfiles(path.join(update_dir, "*." .. install_type), 2)
     for _, f in ipairs(files) do
-        if f.type:find("file") then
+        if f.size > 0 and f.type:find("file") then
             if is_rhs_version_newer(latest and latest.name, f.name) then
                 latest = f
             end
@@ -367,12 +399,14 @@ local function internal_check_for_update(force)
         print("Checking latest version...")
     end
     local cloud_tag
-    local api = string.format([[2>nul ]] .. powershell_exe .. [[ -Command "$ProgressPreference='SilentlyContinue' ; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12 ; Invoke-WebRequest -Headers @{\"cache-control\"=\"no-cache\"} -UseBasicParsing https://api.github.com/repos/%s/releases/latest | Select-Object -ExpandProperty Content"]], github_repo)
+    local api = string.format([[2>&1 ]] .. powershell_exe .. [[ -Command "$ProgressPreference='SilentlyContinue' ; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12 ; Invoke-WebRequest -Headers @{\"cache-control\"=\"no-cache\"} -UseBasicParsing https://api.github.com/repos/%s/releases/latest | Select-Object -ExpandProperty Content"]], github_repo)
     local f, err = io.popen(api)
     if not f then
+        log_info(api)
         return nil, concat_error(err, log_info("unable to query github api."))
     end
     local latest_update_file
+    local output = {}
     for line in f:lines() do
         local tag = line:match('"tag_name": *"([^"]-)"')
         local match = line:match('"browser_download_url": *"([^"]-%.' .. install_type .. ')"')
@@ -382,9 +416,11 @@ local function internal_check_for_update(force)
         if not latest_update_file and match then
             latest_update_file = match
         end
+        collect_output(output, line)
     end
     f:close()
     if not latest_update_file then
+        log_output(api, output)
         return nil, log_info("unable to find latest release " .. install_type .. " file.")
     end
 
@@ -408,26 +444,38 @@ local function internal_check_for_update(force)
     if force then
         print("Downloading latest release...")
     end
-    local f
-    local_update_file = get_update_dir()
+    local_update_file, err = get_update_dir()
     if local_update_file then
         local_update_file = path.join(local_update_file, cloud_tag .. "." .. install_type)
-        f, err = io.open(local_update_file, "w+")
+    else
+        return nil, err
     end
-    if not f then
-        return nil, concat_error(err, log_info("unable to create update " .. install_type .. " file."))
-    end
-    f:close()
     log_info("downloading " .. latest_update_file .. " to " .. local_update_file .. ".")
-    local cmd = string.format([[2>nul ]] .. powershell_exe .. [[ -Command "$ProgressPreference='SilentlyContinue' ; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12 ; Invoke-WebRequest '%s' -OutFile '%s'"]], latest_update_file, local_update_file)
+    local cmd = string.format([[2>&1 ]] .. powershell_exe .. [[ -Command "$ProgressPreference='SilentlyContinue' ; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12 ; Invoke-WebRequest '%s' -OutFile '%s'"]], latest_update_file, local_update_file)
     f, err = io.popen(cmd)
     if not f then
+        log_info(cmd)
         os.remove(local_update_file)
         return nil, concat_error(err, log_info("failed to download " .. install_type .. " file."))
     end
-    for _ in f:lines() do
+    local output = {}
+    for line in f:lines() do
+        collect_output(output, line)
     end
     f:close()
+
+    local ok = os.isfile(local_update_file)
+    if ok then
+        local info = os.globfiles(local_update_file, 2)
+        if not info or not info[1] or not info[1].size or info[1].size == 0 then
+            ok = false
+        end
+    end
+    if not ok then
+        log_output(cmd, output)
+        return nil, log_info("failed to download " .. install_type .. " file.")
+    end
+
     return local_update_file
 end
 
