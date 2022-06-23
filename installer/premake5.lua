@@ -127,11 +127,12 @@ end
 --------------------------------------------------------------------------------
 newaction {
     trigger = "nsis",
-    description = "Clink: Creates a (debug) installer for Clink",
+    description = "Clink: Creates a pre-release installer for Clink (reltype is debug by default)",
     execute = function()
         local premake = _PREMAKE_COMMAND
         local root_dir = path.getabsolute(".build/vs2019/bin").."/"
         local code_dir = path.getabsolute(".").."/"
+        local config = _OPTIONS["config"] or "debug"
 
         exec_lead = ""
 
@@ -155,15 +156,15 @@ newaction {
             toolchain = _OPTIONS["vsver"] or "vs2019"
             os.chdir(".build/" .. toolchain)
 
-            x86_ok = exec(have_msbuild .. " /m /v:q /p:configuration=debug /p:platform=win32 clink.sln /t:" .. target)
-            x64_ok = exec(have_msbuild .. " /m /v:q /p:configuration=debug /p:platform=x64 clink.sln /t:" .. target)
+            x86_ok = exec(have_msbuild .. " /m /v:q /p:configuration=" .. config .. " /p:platform=win32 clink.sln /t:" .. target)
+            x64_ok = exec(have_msbuild .. " /m /v:q /p:configuration=" .. config .. " /p:platform=x64 clink.sln /t:" .. target)
 
             os.chdir("../..")
         end
 
         build_code()
 
-        local src = path.getabsolute(".build/" .. toolchain .. "/bin/debug").."/"
+        local src = path.getabsolute(".build/" .. toolchain .. "/bin/" .. config) .. "/"
 
         -- Do a coarse check to make sure there's a build available.
         if not os.isdir(src .. ".") or not (x86_ok or x64_ok) then
@@ -215,7 +216,7 @@ newaction {
             nsis_cmd = nsis_cmd .. " " .. code_dir .. "/installer/clink.nsi"
             nsis_ok = exec(nsis_cmd)
             if nsis_ok then
-                rename(dest.."_setup.exe", "clink_setup.exe")
+                rename(dest.."_setup.exe", "clink_setup_" .. config .. ".exe")
             end
         end
 
@@ -414,6 +415,18 @@ newoption {
    trigger     = "commit",
    value       = "SPEC",
    description = "Clink: Git commit/tag to build Clink release from"
+}
+
+--------------------------------------------------------------------------------
+newoption {
+    trigger     = "config",
+    value       = "CONFIG",
+    description = "Clink: The build configuration for 'nsis' command",
+    allowed     = {
+        { "debug",      "For local use; debug mode code, uses local Lua scripts"},
+        { "release",    "For local use; optimized code, uses local Lua scripts" },
+        { "final",      "Can share installer externally; optimized code, Lua scripts are embedded" },
+    }
 }
 
 --------------------------------------------------------------------------------
