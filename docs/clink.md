@@ -53,7 +53,7 @@ You can use Clink right away without configuring anything:
 - Searchable [command history](#saved-command-history) will be saved between sessions.
 - <kbd>Tab</kbd> and <kbd>Ctrl</kbd>-<kbd>Space</kbd> will do match completion two different ways.
 - Press <kbd>Alt</kbd>-<kbd>H</kbd> to see a list of the current key bindings.
-- Press <kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>/</kbd> followed by another key to see what command is bound to the key.
+- Press <kbd>Alt</kbd>-<kbd>Shift</kbd>-<kbd>/</kbd> followed by another key to see what command is bound to the key.
 
 There are three main ways of customizing Clink to your preferences:  the [Readline init file](#init-file) (the `.inputrc` file), the [Clink settings](#clink-settings) (the `clink set` command), and [Lua](#extending-clink-with-lua) scripts.
 
@@ -1234,7 +1234,7 @@ Command | Key | Description
 `clink-show-help` | <kbd>Alt</kbd>-<kbd>h</kbd> | Lists the currently active key bindings using friendly key names.  A numeric argument affects showing categories and descriptions:  0 for neither, 1 for categories, 2 for descriptions, 3 for categories and descriptions (the default), 4 for all commands (even if not bound to a key).
 `clink-show-help-raw` | | Lists the currently active key bindings using raw key sequences.  A numeric argument affects showing categories and descriptions:  0 for neither, 1 for categories, 2 for descriptions, 3 for categories and descriptions (the default), 4 for all commands (even if not bound to a key).
 `clink-up-directory` | <kbd>Ctrl</kbd>-<kbd>PgUp</kbd> | Changes to the parent directory.
-`clink-what-is` | <kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>/</kbd> | Show the key binding for the next key sequence that is input.
+`clink-what-is` | <kbd>Alt</kbd>-<kbd>Shift</kbd>-<kbd>/</kbd> | Show the key binding for the next key sequence that is input.
 `cua-backward-char` | <kbd>Shift</kbd>-<kbd>Left</kbd> | Extends the selection and moves back a character.
 `cua-backward-word` | <kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>Left</kbd> | Extends the selection and moves back a word.
 `cua-beg-of-line` | <kbd>Shift</kbd>-<kbd>Home</kbd> | Extends the selection and moves to the start of the current line.
