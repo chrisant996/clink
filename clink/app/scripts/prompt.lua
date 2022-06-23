@@ -305,14 +305,15 @@ function clink.promptcoroutine(func)
             local max_iter = 25
             for iteration = 1, max_iter + 1, 1 do
                 -- Pass false to let it know it is not async.
-                local result, _ = coroutine.resume(c, false--[[async]])
-                if result then
+                local ok, ret = coroutine.resume(c, false--[[async]])
+                if ok then
                     if coroutine.status(c) == "dead" then
                         break
                     end
                 else
-                    if _ and type(_) == "string" then
-                        _error_handler(_)
+                    if ret and type(ret) == "string" then
+                        _error_handler(ret)
+                        entry.error = ret
                     end
                     break
                 end
