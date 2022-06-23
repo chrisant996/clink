@@ -44,6 +44,7 @@ local print = clink.print
 --      lastclock:      The os.clock() from the end of the last resume.
 --      infinite:       Use INFINITE wait for this coroutine; it's actively inside popenyield.
 --      queued:         Use INFINITE wait for this coroutine; it's queued inside popenyield.
+--      yieldguard:     Yielding due to io.popen, os.execute, etc.
 
 --------------------------------------------------------------------------------
 local function clear_coroutines()
@@ -104,10 +105,9 @@ local function release_coroutine_yieldguard()
 end
 
 --------------------------------------------------------------------------------
-local function get_coroutine_generation()
-    local t = coroutine.running()
-    if t and _coroutines[t] then
-        return _coroutines[t].generation
+local function get_coroutine_generation(c)
+    if c and _coroutines[c] then
+        return _coroutines[c].generation
     end
 end
 
@@ -151,7 +151,7 @@ end
 
 --------------------------------------------------------------------------------
 local function check_generation(c)
-    if get_coroutine_generation() == _coroutine_generation then
+    if get_coroutine_generation(c) == _coroutine_generation then
         return true
     end
     local entry = _coroutines[c]
@@ -234,9 +234,12 @@ function clink._resume_coroutines()
     -- Protected call to resume coroutines.
     local remove = {}
     local impl = function()
-        for _,entry in pairs(_coroutines) do
-            if coroutine.status(entry.coroutine) == "dead" or not check_generation(entry.coroutine) then
-                table.insert(remove, _)
+        for c,entry in pairs(_coroutines) do
+            if coroutine.status(c) == "dead" then
+                table.insert(remove, c)
+            elseif not check_generation(c) and not entry.yieldguard then
+                entry.canceled = true
+                table.insert(remove, c)
             else
                 _coroutines_resumable = true
                 local now = os.clock()
@@ -246,23 +249,26 @@ function clink._resume_coroutines()
                     end
                     entry.resumed = entry.resumed + 1
                     clink._set_coroutine_context(entry.context)
-                    local ok, ret = coroutine.resume(entry.coroutine, true--[[async]])
+                    local ok, ret
+                    if entry.isprompt or entry.isgenerator then
+                        ok, ret = coroutine.resume(c, true--[[async]])
+                    else
+                        ok, ret = coroutine.resume(c)
+                    end
                     if ok then
                         -- Use live clock so the interval excludes the execution
                         -- time of the coroutine.
                         entry.lastclock = os.clock()
                     else
-                        if _coroutine_canceled then
-                            entry.canceled = true
-                        else
+                        if not entry.canceled then
                             print("")
                             print("coroutine failed:")
                             print(ret)
                             entry.error = ret
                         end
                     end
-                    if coroutine.status(entry.coroutine) == "dead" then
-                        table.insert(remove, _)
+                    if coroutine.status(c) == "dead" then
+                        table.insert(remove, c)
                     end
                 end
             end
