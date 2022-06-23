@@ -401,8 +401,11 @@ function clink.match_files(pattern, full_path, find_func)
     end
 
     -- Glob files.
+    local glob
     pattern = pattern:gsub("/", "\\")
-    local glob = find_func(pattern, true)
+    if type(find_func) == "function" then
+        glob = find_func(pattern, true)
+    end
 
     -- Get glob's base.
     local base = ""
@@ -413,10 +416,12 @@ function clink.match_files(pattern, full_path, find_func)
 
     -- Match them.
     local num = 0
-    for _, i in ipairs(glob) do
-        local full = base..i
-        clink.add_match(full)
-        num = num + 1
+    if type(glob) == "table" then
+        for _, i in ipairs(glob) do
+            local full = base..tostring(i)
+            clink.add_match(full)
+            num = num + 1
+        end
     end
     return num
 end
