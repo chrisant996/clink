@@ -438,7 +438,10 @@ TEST_CASE("Lua coroutines.")
         MN_expected.rs = 33\
         MN_expected.als = 34\
         \
-        coroutine.resume(co)\
+        local _, err = coroutine.resume(co)\
+        if err then\
+            error(err)\
+        end\
         \
         MN_actual.cwd = os.getcwd()\
         MN_actual.rs = rl_state[1]\
