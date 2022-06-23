@@ -2,6 +2,11 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.3.27
+
+- Added more detailed logging when the updater fails.
+- Added check to make sure PowerShell v5 is present when using `clink update`.
+
 #### v1.3.26
 
 - Added `unicode.iter()`, `unicode.isnormalized()`, and `unicode.normalize()` for more precise UTF8 string manipulation.
