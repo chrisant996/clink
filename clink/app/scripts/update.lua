@@ -28,6 +28,8 @@ settings.add("clink.update_interval", 5, "Days between update checks", "The Clin
 local powershell_exe
 local reg_exe
 local checked_prereqs
+local prereq_error
+
 local this_install_type
 local this_install_key
 
@@ -38,7 +40,7 @@ local function make_file_at_path(root, rhs)
         if root ~= "" and rhs ~= "" then
             local ret = path.join(root, rhs)
             if os.isfile(ret) then
-                return ret
+                return '"' .. ret .. '"'
             end
         end
     end
@@ -51,18 +53,33 @@ local function find_prereqs()
         reg_exe = make_file_at_path(sysroot, "System32\\reg.exe")
         checked_prereqs = true
 
-        if powershell_exe then
-            powershell_exe = '"' .. powershell_exe .. '"'
-        end
-        if reg_exe then
-            reg_exe = '"' .. reg_exe .. '"'
+        if not powershell_exe then
+            prereq_error = log_info("unable to find PowerShell v5.")
+        elseif not reg_exe then
+            prereq_error = log_info("unable to find Reg.exe.")
+        else
+            local f = io.popen("2>&1 " .. powershell_exe .. " Get-Host")
+            if not f then
+                powershell_exe = nil
+            else
+                for line in f:lines() do
+line = "Version          : 3.0.1234.3445"
+                    local ver = line:match("^ *Version *: *([0-9]+%.[0-9]+)%.")
+                    if not prereq_error and ver then
+print("Version", ver, tonumber(ver))
+                        if tonumber(ver) < 5.0 then
+                            powershell_exe = nil
+                            prereq_error = log_info("found PowerShell v" .. ver)
+                        end
+                    end
+                end
+                f:close()
+            end
         end
     end
 
-    if not powershell_exe then
-        return nil, log_info("unable to find PowerShell.")
-    elseif not reg_exe then
-        return nil, log_info("unable to find Reg.exe.")
+    if prereq_error then
+        return nil, prereq_error
     end
 
     return true
@@ -151,7 +168,7 @@ local function get_installation_type()
 
         local ok, err = find_prereqs()
         if not ok then
-            return nil, concat_error(err, log_info("autoupdate requires PowerShell."))
+            return nil, concat_error(err, log_info("autoupdate requires PowerShell v5."))
         end
 
         local done
@@ -351,7 +368,7 @@ local function can_check_for_update(force)
 
     local ok, err = find_prereqs()
     if not ok then
-        return false, concat_error(err, log_info("autoupdate requires PowerShell."))
+        return false, concat_error(err, log_info("autoupdate requires PowerShell v5."))
     end
 
     local tagfile, err = get_update_dir()
@@ -528,7 +545,7 @@ local function is_update_ready(force)
 
     local ok, err = find_prereqs()
     if not ok then
-        return nil, concat_error(err, log_info("autoupdate requires PowerShell."))
+        return nil, concat_error(err, log_info("autoupdate requires PowerShell v5."))
     end
 
     local tagfile = path.join(update_dir, tag_filename)
