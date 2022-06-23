@@ -50,15 +50,21 @@ local function find_prereqs()
         powershell_exe = make_file_at_path(sysroot, "System32\\WindowsPowerShell\\v1.0\\powershell.exe")
         reg_exe = make_file_at_path(sysroot, "System32\\reg.exe")
         checked_prereqs = true
+
+        if powershell_exe then
+            powershell_exe = '"' .. powershell_exe .. '"'
+        end
+        if reg_exe then
+            reg_exe = '"' .. reg_exe .. '"'
+        end
     end
+
     if not powershell_exe then
         return nil, log_info("unable to find PowerShell.")
     elseif not reg_exe then
         return nil, log_info("unable to find Reg.exe.")
     end
 
-    powershell_exe = '"' .. powershell_exe .. '"'
-    reg_exe = '"' .. reg_exe .. '"'
     return true
 end
 
@@ -566,9 +572,10 @@ local function apply_zip_update(zip_file, force)
 
     -- Update installed version.
     if this_install_type == "exe" and this_install_key then
+        print("Updating registry keys...")
         local version = cloud_tag:gsub("^v", "")
-        os.execute(reg_exe .. ' add "' .. this_install_key .. '" /v DisplayName /t REG_SZ /d "Clink v' .. version .. '" /f /reg:32')
-        os.execute(reg_exe .. ' add "' .. this_install_key .. '" /v DisplayVersion /t REG_SZ /d "' .. version .. '" /f /reg:32')
+        os.execute('>nul ' .. reg_exe .. ' add "' .. this_install_key .. '" /v DisplayName /t REG_SZ /d "Clink v' .. version .. '" /f /reg:32')
+        os.execute('>nul ' .. reg_exe .. ' add "' .. this_install_key .. '" /v DisplayVersion /t REG_SZ /d "' .. version .. '" /f /reg:32')
     end
 
     -- Cleanup.
@@ -650,7 +657,8 @@ function clink.updatenow(elevated)
 
     local install_type = get_installation_type()
     if not elevated and install_type == "zip" and this_install_type == "exe" then
-        return -1, log_info("elevation required to update InstallDir in registry.")
+        log_info("elevation required to update InstallDir in registry.")
+        return -1
     end
 
     local ext = path.getextension(update_file):lower():match("^%.(.+)$")
