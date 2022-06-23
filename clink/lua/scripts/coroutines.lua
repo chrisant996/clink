@@ -9,7 +9,6 @@ local _after_coroutines = {}            -- Funcs to run after a pass resuming co
 local _coroutines_resumable = false     -- When false, coroutines will no longer run.
 local _coroutine_yieldguard = {}        -- Which coroutine is yielding inside popenyield, for a given category of coroutines.
 local _coroutine_context = nil          -- Context for queuing io.popenyield calls from a same source.
-local _coroutine_canceled = false       -- Becomes true if an orphaned io.popenyield cancels the coroutine.
 local _coroutine_generation = 0         -- ID for current generation of coroutines.
 
 local _dead = nil                       -- List of dead coroutines (only when "lua.debug" is set, or in DEBUG builds).
@@ -42,7 +41,6 @@ local print = clink.print
 --      firstclock:     The os.clock() from the beginning of the first resume.
 --      throttleclock:  The os.clock() from the end of the most recent yieldguard.
 --      lastclock:      The os.clock() from the end of the last resume.
---      infinite:       Use INFINITE wait for this coroutine; it's actively inside popenyield.
 --      queued:         Use INFINITE wait for this coroutine; it's queued inside popenyield.
 --      yieldguard:     Yielding due to io.popen, os.execute, etc.
 
@@ -67,7 +65,6 @@ local function clear_coroutines()
     _coroutines_resumable = false
     -- Don't touch _coroutine_yieldguard; it only gets cleared when the thread finishes.
     _coroutine_context = nil
-    _coroutine_canceled = false
     _coroutine_generation = _coroutine_generation + 1
 
     _dead = (settings.get("lua.debug") or clink.DEBUG) and {} or nil
@@ -144,7 +141,6 @@ end
 
 --------------------------------------------------------------------------------
 local function cancel_coroutine(message)
-    _coroutine_canceled = true
     clink._cancel_coroutine()
     error((message or "").."canceling popenyield; coroutine is orphaned")
 end
@@ -221,7 +217,6 @@ end
 --------------------------------------------------------------------------------
 function clink._set_coroutine_context(context)
     _coroutine_context = context
-    _coroutine_canceled = false
 end
 
 --------------------------------------------------------------------------------
