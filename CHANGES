@@ -13,6 +13,8 @@
 - Fixed potential double-load of scripts in the profile or binaries directories, due to an issue while searching `completions` directories (regression introduced in v1.3.24).
 - Fixed potential infinite loop when merging an argmatcher with itself.
 - Fixed potential accidental resume of an orphaned coroutine.
+- Fixed potential double-reporting of coroutine errors when the `lua.debug` setting is enabled.
+- Internal maintenance to the coroutine management system.
 
 #### v1.3.25
 
