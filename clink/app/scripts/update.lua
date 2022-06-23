@@ -232,7 +232,7 @@ local function unzip(zip, out)
         return nil, log_info("output directory '" .. tostring(out) .. "' does not exist.")
     end
 
-    local fmt = [[2>&1 ]] .. powershell_exe .. [[ -Command $ProgressPreference='SilentlyContinue' ; Expand-Archive -Force -LiteralPath \"%sxyz\" -DestinationPath \"%s\" ; echo $error.count]]
+    local fmt = [[2>&1 ]] .. powershell_exe .. [[ -Command $ProgressPreference='SilentlyContinue' ; Expand-Archive -Force -LiteralPath \"%s\" -DestinationPath \"%s\" ; echo $error.count]]
     local cmd = string.format(fmt, zip, out)
     local f, err = io.popen(cmd)
     if not f then
