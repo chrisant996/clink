@@ -915,9 +915,12 @@ function coroutine.resume(co, ...)
 
     local ret = table.pack(orig_coroutine_resume(co, ...))
 
-    if ret and not ret[1] and ret[2] and settings.get("lua.debug") then
-        log.info("error in coroutine:  "..tostring(ret[2]))
-        print(ret[2])
+    if ret and not ret[1] and ret[2] then
+        local err = tostring(ret[2])
+        entry.error = err
+        if settings.get("lua.debug") then
+            log.info("error in coroutine:  "..err)
+        end
     end
 
     clink.co_state = old_co_state

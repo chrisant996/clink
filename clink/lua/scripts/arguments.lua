@@ -145,7 +145,12 @@ local function do_delayed_init(list, matcher, arg_index)
     else
         -- Run the coroutine up to the first yield, so that if it doesn't need
         -- to yield at all then it completes right now.
-        coroutine.resume(c)
+        local ok, ret = coroutine.resume(c)
+        if not ok and ret and settings.get("lua.debug") then
+            print("")
+            print("coroutine failed:")
+            print(ret)
+        end
     end
 end
 
@@ -1831,7 +1836,12 @@ local function _do_onuse_callback(argmatcher, command_word)
     else
         -- Run the coroutine up to the first yield, so that if it doesn't need
         -- to yield at all then it completes right now.
-        coroutine.resume(c)
+        local ok, ret = coroutine.resume(c)
+        if not ok and ret and settings.get("lua.debug") then
+            print("")
+            print("coroutine failed:")
+            print(ret)
+        end
     end
 end
 
