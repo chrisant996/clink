@@ -550,16 +550,15 @@ local function is_update_ready(force)
 
     -- Download latest update file, or use update file that's already been
     -- downloaded.
-    local can
     local update_file
     if force then
+        local can
         can, err = can_check_for_update(force)
-    else
-        can = true -- When not force, can_check_for_update() was already called.
+        if not can then
+            return nil, err
+        end
     end
-    if can then
-        update_file, err = check_for_update(force)
-    end
+    update_file, err = check_for_update(force)
     if not update_file then
         -- If an update is already downloaded, then ignore any error that may
         -- have occurred while attempting to check/download a new update.
