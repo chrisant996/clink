@@ -6,6 +6,7 @@
 
 - Added more detailed logging when the updater fails.
 - Added check to make sure PowerShell v5 is present when using `clink update`.
+- Added `unicode.fromcodepage()` and `unicode.tocodepage()` for UTF8 conversions.  One of the cases where this can be useful is when handling redirected output from programs that product output using the current Active Code Page.
 
 #### v1.3.26
 
