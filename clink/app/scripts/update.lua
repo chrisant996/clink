@@ -58,12 +58,12 @@ local function find_prereqs()
         elseif not reg_exe then
             prereq_error = log_info("unable to find Reg.exe.")
         else
-            local f = io.popen("2>&1 " .. powershell_exe .. " Get-Host")
+            local f = io.popen('2>&1 ' .. powershell_exe .. ' -Command "Get-Host | Select-Object Version"')
             if not f then
                 powershell_exe = nil
             else
                 for line in f:lines() do
-                    local ver = line:match("^ *Version *: *([0-9]+%.[0-9]+)%.")
+                    local ver = line:match("^ *([0-9]+%.[0-9]+)")
                     if not prereq_error and ver then
                         if tonumber(ver) < 5.0 then
                             powershell_exe = nil
