@@ -67,7 +67,7 @@ local function find_prereqs()
                     if not prereq_error and ver then
                         if tonumber(ver) < 5.0 then
                             powershell_exe = nil
-                            prereq_error = log_info("found PowerShell v" .. ver)
+                            prereq_error = log_info("found PowerShell v" .. ver .. ".")
                         end
                     end
                 end
