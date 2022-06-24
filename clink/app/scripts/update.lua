@@ -63,10 +63,8 @@ local function find_prereqs()
                 powershell_exe = nil
             else
                 for line in f:lines() do
-line = "Version          : 3.0.1234.3445"
                     local ver = line:match("^ *Version *: *([0-9]+%.[0-9]+)%.")
                     if not prereq_error and ver then
-print("Version", ver, tonumber(ver))
                         if tonumber(ver) < 5.0 then
                             powershell_exe = nil
                             prereq_error = log_info("found PowerShell v" .. ver)
