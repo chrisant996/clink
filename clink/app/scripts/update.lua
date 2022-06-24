@@ -179,6 +179,8 @@ local function get_installation_type()
                     local i = io.popen('2>nul ' .. reg_exe .. ' query "' .. key .. '" /reg:32 /s')
                     if i then
                         for line in i:lines() do
+                            local utf8 = unicode.fromcodepage(line)
+                            line = utf8 or line
                             local location = line:match("^ +InstallLocation +REG_SZ +(.+)$")
                             if location and string.equalsi(location, bin_dir) then
                                 this_install_key = key
@@ -258,6 +260,8 @@ local function unzip(zip, out)
     local result
     local output = {}
     for line in f:lines() do
+        local utf8 = unicode.fromcodepage(line)
+        line = utf8 or line
         collect_output(output, line)
     end
     if #output == 1 and output[1] == "0" then
@@ -423,6 +427,8 @@ local function internal_check_for_update(force)
     local latest_update_file
     local output = {}
     for line in f:lines() do
+        local utf8 = unicode.fromcodepage(line)
+        line = utf8 or line
         local tag = line:match('"tag_name": *"([^"]-)"')
         local match = line:match('"browser_download_url": *"([^"]-%.' .. install_type .. ')"')
         if not cloud_tag and tag then
@@ -475,6 +481,8 @@ local function internal_check_for_update(force)
     end
     local output = {}
     for line in f:lines() do
+        local utf8 = unicode.fromcodepage(line)
+        line = utf8 or line
         collect_output(output, line)
     end
     f:close()
