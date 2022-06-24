@@ -317,6 +317,87 @@ static int iter(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  unicode.fromcodepage
+/// -ver:   1.3.27
+/// -arg:   text:string
+/// -arg:   [codepage:integer]
+/// -ret:   string | nil
+/// This converts <span class="arg">text</span> from the
+/// <span class="arg">codepage</span> encoding to UTF8.
+///
+/// When <span class="arg">codepage</span> is omitted, the current Active Code
+/// Page is used.
+///
+/// If the text cannot be converted, nil is returned.
+///
+/// <strong>Note:</strong>  Clink uses UTF8 internally, and conversion to/from
+/// other encodings is intended for use with file input/output or network
+/// input/output.
+static int from_codepage(lua_State* state)
+{
+    const char* s = checkstring(state, 1);
+    int cp = optinteger(state, 2, CP_ACP);
+    if (!s)
+        return 0;
+
+    int len = MultiByteToWideChar(cp, 0, s, -1, nullptr, 0);
+    if (len <= 0)
+        return 0;
+
+    wstr_moveable tmp;
+    tmp.reserve(len + 32); // Add 32 for slop, just in case.
+
+    len = MultiByteToWideChar(cp, 0, s, -1, tmp.data(), tmp.size());
+    if (len <= 0)
+        return 0;
+
+    str_moveable out(tmp.c_str());
+    lua_pushlstring(state, out.c_str(), out.length());
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+/// -name:  unicode.tocodepage
+/// -ver:   1.3.27
+/// -arg:   text:string
+/// -arg:   [codepage:integer]
+/// -ret:   string | nil
+/// This converts <span class="arg">text</span> from UTF8 to the
+/// <span class="arg">codepage</span> encoding.
+///
+/// When <span class="arg">codepage</span> is omitted, the current Active Code
+/// Page is used.
+///
+/// If the text cannot be converted, nil is returned.
+///
+/// <strong>Note:</strong>  Clink uses UTF8 internally, and conversion to/from
+/// other encodings is intended for use with file input/output or network
+/// input/output.
+static int to_codepage(lua_State* state)
+{
+    const char* s = checkstring(state, 1);
+    int cp = optinteger(state, 2, CP_ACP);
+    if (!s)
+        return 0;
+
+    wstr_moveable tmp(s);
+
+    int len = WideCharToMultiByte(cp, 0, tmp.c_str(), -1, nullptr, 0, nullptr, nullptr);
+    if (len <= 0)
+        return 0;
+
+    str_moveable out;
+    out.reserve(len + 32); // Add 32 for slop, just in case.
+
+    len = WideCharToMultiByte(cp, 0, tmp.c_str(), -1, out.data(), out.size(), nullptr, nullptr);
+    if (len <= 0)
+        return 0;
+
+    lua_pushlstring(state, out.c_str(), out.length());
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 void unicode_lua_initialise(lua_state& lua)
 {
     struct {
@@ -325,7 +406,9 @@ void unicode_lua_initialise(lua_state& lua)
     } methods[] = {
         { "normalize",      &normalize },
         { "isnormalized",   &isnormalized },
-        { "iter",           &iter },    // TODO: return an iterator that returns string for one codepoint, value of the codepoint, and whether it is a combining mark.
+        { "iter",           &iter },
+        { "fromcodepage",   &from_codepage },
+        { "tocodepage",     &to_codepage },
     };
 
     lua_State* state = lua.get_state();
