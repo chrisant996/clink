@@ -35,6 +35,47 @@ local this_install_key
 
 local can_use_setup_exe = false
 
+local function parse_version_tag(tag)
+    local maj, min, pat
+    maj, min, pat = tag:match("v(%d+)%.(%d+)%.(%d+)")
+    if not maj then
+        maj, min = tag:match("v(%d+)%.(%d+)")
+    end
+    if maj and min then
+        return tonumber(maj), tonumber(min), tonumber(pat or 0)
+    end
+end
+
+local function is_rhs_version_newer(lhs, rhs)
+    local lmaj, lmin, lpat = parse_version_tag(lhs or "")
+    local rmaj, rmin, rpat = parse_version_tag(rhs or "")
+
+    if not lmaj then
+        return rmaj and true
+    end
+    if not rmaj then
+        return false
+    end
+
+    if rmaj > lmaj then
+        return true
+    elseif rmaj < lmaj then
+        return false
+    end
+
+    if rmin > lmin then
+        return true
+    elseif rmin < lmin then
+        return false
+    end
+
+    if rpat > lpat then
+        return true
+    else
+        return false
+    end
+end
+
 local function make_file_at_path(root, rhs)
     if root and rhs then
         if root ~= "" and rhs ~= "" then
@@ -65,7 +106,7 @@ local function find_prereqs()
                 for line in f:lines() do
                     local ver = line:match("^ *([0-9]+%.[0-9]+)")
                     if not prereq_error and ver then
-                        if tonumber(ver) < 5.0 then
+                        if is_rhs_version_newer("v" .. ver, "v5.0") then
                             powershell_exe = nil
                             prereq_error = log_info("found PowerShell v" .. ver .. ".")
                         end
@@ -114,47 +155,6 @@ end
 
 local function get_local_tag()
     return "v" .. clink.version_major .. "." .. clink.version_minor .. "." .. clink.version_patch
-end
-
-local function parse_version_tag(tag)
-    local maj, min, pat
-    maj, min, pat = tag:match("v(%d+)%.(%d+)%.(%d+)")
-    if not maj then
-        maj, min = tag:match("v(%d+)%.(%d+)")
-    end
-    if maj and min then
-        return tonumber(maj), tonumber(min), tonumber(pat or 0)
-    end
-end
-
-local function is_rhs_version_newer(lhs, rhs)
-    local lmaj, lmin, lpat = parse_version_tag(lhs or "")
-    local rmaj, rmin, rpat = parse_version_tag(rhs or "")
-
-    if not lmaj then
-        return rmaj and true
-    end
-    if not rmaj then
-        return false
-    end
-
-    if rmaj > lmaj then
-        return true
-    elseif rmaj < lmaj then
-        return false
-    end
-
-    if rmin > lmin then
-        return true
-    elseif rmin < lmin then
-        return false
-    end
-
-    if rpat > lpat then
-        return true
-    else
-        return false
-    end
 end
 
 local function get_installation_type()
