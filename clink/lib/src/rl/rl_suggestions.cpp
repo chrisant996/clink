@@ -83,7 +83,10 @@ bool suggestion_manager::can_suggest(const line_state& line)
     assert(line.get_length() == g_rl_buffer->get_length());
     assert(strncmp(line.get_line(), g_rl_buffer->get_buffer(), line.get_length()) == 0);
     if (g_rl_buffer->get_cursor() != g_rl_buffer->get_length())
+    {
+        clear();
         return false;
+    }
     if (g_rl_buffer->get_anchor() >= 0)
         return false;
 
@@ -212,6 +215,7 @@ bool suggestion_manager::insert(suggestion_action action)
             g_rl_buffer->end_undo_group();
         }
         clear();
+        m_line.concat(g_rl_buffer->get_buffer(), g_rl_buffer->get_length());
         return !orig_iter.more();
     }
 
@@ -322,15 +326,11 @@ bool suggestion_manager::insert(suggestion_action action)
     // End the undo group.
     g_rl_buffer->end_undo_group();
 
-    if (trunc)
-    {
-        m_line.clear();
-        m_line.concat(g_rl_buffer->get_buffer(), g_rl_buffer->get_length());
-    }
-    else
-    {
+    if (!trunc)
         clear();
-    }
+
+    m_line.clear();
+    m_line.concat(g_rl_buffer->get_buffer(), g_rl_buffer->get_length());
 
     return true;
 }
