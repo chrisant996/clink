@@ -57,6 +57,10 @@ extern setting_enum g_dupe_mode;
 extern setting_color g_color_unrecognized;
 extern setting_color g_color_executable;
 
+#ifdef TRACK_LOADED_LUA_FILES
+extern "C" int is_lua_file_loaded(lua_State* state, const char* filename);
+#endif
+
 
 
 //------------------------------------------------------------------------------
@@ -1568,6 +1572,20 @@ static int is_cmd_command(lua_State* state)
     return 1;
 }
 
+//------------------------------------------------------------------------------
+#ifdef TRACK_LOADED_LUA_FILES
+static int clink_is_lua_file_loaded(lua_State* state)
+{
+    const char* filename = checkstring(state, 1);
+    if (!filename)
+        return 0;
+
+    int loaded = is_lua_file_loaded(state, filename);
+    lua_pushboolean(state, loaded);
+    return 1;
+}
+#endif
+
 
 
 //------------------------------------------------------------------------------
@@ -1630,6 +1648,9 @@ void clink_lua_initialise(lua_state& lua)
         { "_mark_deprecated_argmatcher", &mark_deprecated_argmatcher },
         { "_signal_delayed_init",   &signal_delayed_init },
         { "is_cmd_command",         &is_cmd_command },
+#ifdef TRACK_LOADED_LUA_FILES
+        { "is_lua_file_loaded",     &clink_is_lua_file_loaded },
+#endif
     };
 
     lua_State* state = lua.get_state();
