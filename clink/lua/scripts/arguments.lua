@@ -1730,7 +1730,7 @@ local function attempt_load_argmatcher(command_word)
     local dirs = get_completion_dirs()
 
     -- What to look for.
-    local primary = command_word..".lua"
+    local primary = path.getname(command_word)..".lua"
     if path.isexecext(command_word) then
         secondary = path.getbasename(command_word)
         if secondary == "" then
