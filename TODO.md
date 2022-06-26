@@ -16,6 +16,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
     - Multiple dead 'generate matches' coroutines.
     - Dead coroutine from ?1687 (the coroutine created in `_do_onuse_callback`).
     - Generators stopped by ?:1863 (`argmatcher_generator:generate`).
+  - Found it!  Starting a new prompt generation while the delayinit is running orphans it and never finishes.
 
 ## Normal Priority
 - Some way for explicit `io.popenyield()` + `p:close()` in a coroutine to be able to get the exit code, without causing Clink/Cmd to hang while waiting for the spawned process to exit.
