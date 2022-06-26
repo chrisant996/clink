@@ -1075,6 +1075,12 @@ bool can_suggest(const line_state& line)
 }
 
 //------------------------------------------------------------------------------
+bool accepted_whole_suggestion()
+{
+    return s_suggestion.accepted_whole_suggestion();
+}
+
+//------------------------------------------------------------------------------
 bool insert_suggestion(suggestion_action action)
 {
     return s_suggestion.insert(action);

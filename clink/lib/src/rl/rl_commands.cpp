@@ -1390,7 +1390,7 @@ int win_f1(int count, int invoking_key)
 {
     const bool had_selection = (cua_get_anchor() >= 0);
 
-    if (insert_suggestion(suggestion_action::insert_to_end))
+    if (insert_suggestion(suggestion_action::insert_to_end) || accepted_whole_suggestion())
         return 0;
 
     if (count <= 0)

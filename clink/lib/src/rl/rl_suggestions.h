@@ -19,6 +19,7 @@ public:
     bool            get_visible(str_base& out) const;
     void            clear();
     bool            can_suggest(const line_state& line);
+    bool            accepted_whole_suggestion() const { return m_accepted_whole; }
     void            set(const char* line, unsigned int endword_offset, const char* suggestion, unsigned int offset);
     bool            insert(suggestion_action action);
     bool            pause(bool pause);
@@ -31,8 +32,10 @@ private:
     unsigned int    m_suggestion_offset = -1;
     unsigned int    m_endword_offset = -1;
     bool            m_paused = false;
+    bool            m_accepted_whole = false;
 };
 
 //------------------------------------------------------------------------------
 bool pause_suggestions(bool pause);
 bool insert_suggestion(suggestion_action action);
+bool accepted_whole_suggestion();

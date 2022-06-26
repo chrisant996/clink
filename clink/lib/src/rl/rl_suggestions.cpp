@@ -68,6 +68,7 @@ void suggestion_manager::clear()
     m_line.free();
     m_suggestion_offset = -1;
     m_endword_offset = -1;
+    m_accepted_whole = false;
 }
 
 //------------------------------------------------------------------------------
@@ -88,6 +89,11 @@ bool suggestion_manager::can_suggest(const line_state& line)
         return false;
     }
     if (g_rl_buffer->get_anchor() >= 0)
+        return false;
+
+    // Must check this AFTER checking cursor at end, so that moving the cursor
+    // can clear the flag.
+    if (accepted_whole_suggestion())
         return false;
 
     // Update the endword offset.  Inserting part of a suggestion can't know
@@ -216,6 +222,7 @@ bool suggestion_manager::insert(suggestion_action action)
         }
         clear();
         m_line.concat(g_rl_buffer->get_buffer(), g_rl_buffer->get_length());
+        m_accepted_whole = true;
         return !orig_iter.more();
     }
 
@@ -327,7 +334,10 @@ bool suggestion_manager::insert(suggestion_action action)
     g_rl_buffer->end_undo_group();
 
     if (!trunc)
+    {
         clear();
+        m_accepted_whole = true;
+    }
 
     m_line.clear();
     m_line.concat(g_rl_buffer->get_buffer(), g_rl_buffer->get_length());
