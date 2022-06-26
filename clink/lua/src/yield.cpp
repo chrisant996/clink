@@ -89,9 +89,10 @@ void yield_thread::cancel()
 //------------------------------------------------------------------------------
 bool yield_thread::is_ready()
 {
-    if (!m_ready_event)
+    HANDLE event = get_ready_event();
+    if (!event)
         return false;
-    return WaitForSingleObject(m_ready_event, 0) == WAIT_OBJECT_0;
+    return WaitForSingleObject(event, 0) == WAIT_OBJECT_0;
 }
 
 //------------------------------------------------------------------------------
@@ -101,10 +102,18 @@ HANDLE yield_thread::get_ready_event()
 }
 
 //------------------------------------------------------------------------------
+void yield_thread::set_need_completion()
+{
+    // The base class implementation should never be reached.
+    assert(false);
+}
+
+//------------------------------------------------------------------------------
 void yield_thread::wait(unsigned int timeout)
 {
-    if (m_ready_event)
-        WaitForSingleObject(m_ready_event, timeout);
+    HANDLE event = get_ready_event();
+    if (event)
+        WaitForSingleObject(event, timeout);
 }
 
 //------------------------------------------------------------------------------
@@ -130,6 +139,10 @@ unsigned __stdcall yield_thread::threadproc(void *arg)
     // Signal completion events.
     SetEvent(_this->m_ready_event);
     if (_this->m_wake_event)
+        SetEvent(_this->m_wake_event);
+
+    // Give subclass a chance to do completion processing.
+    if (_this->m_wake_event && _this->do_completion())
         SetEvent(_this->m_wake_event);
 
     // Release threadproc's strong ref.
@@ -158,6 +171,7 @@ luaL_YieldGuard* luaL_YieldGuard::make_new(lua_State* state)
     {
         {"ready", ready},
         {"command", command},
+        {"set_need_completion", set_need_completion},
         {"results", results},
         {"wait", wait},
         {"__gc", __gc},
@@ -210,6 +224,15 @@ int luaL_YieldGuard::command(lua_State* state)
     luaL_YieldGuard* yg = (luaL_YieldGuard*)luaL_checkudata(state, 1, LUA_YIELDGUARD);
     lua_pushstring(state, yg->get_command());
     return 1;
+}
+
+//------------------------------------------------------------------------------
+int luaL_YieldGuard::set_need_completion(lua_State* state)
+{
+    luaL_YieldGuard* yg = (luaL_YieldGuard*)luaL_checkudata(state, 1, LUA_YIELDGUARD);
+    if (yg && yg->m_thread)
+        yg->m_thread->set_need_completion();
+    return 0;
 }
 
 //------------------------------------------------------------------------------

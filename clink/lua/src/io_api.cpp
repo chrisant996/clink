@@ -238,13 +238,43 @@ struct popen_buffering : public yield_thread
             fclose(m_read);
         if (m_write)
             CloseHandle(m_write);
+        if (m_stat_event)
+            CloseHandle(m_stat_event);
+        if (m_process_handle)
+            CloseHandle(m_process_handle);
     }
 
-    int results(lua_State*) override
+    bool createthread()
     {
-        // Should never be called (see io.popenyield in coroutines.lua).
-        assert(false);
-        return 0;
+        assert(!m_stat_event);
+        m_stat_event = CreateEvent(nullptr, true, false, nullptr);
+        if (!m_stat_event)
+            return false;
+        return yield_thread::createthread();
+    }
+
+    void go(HANDLE process_handle)
+    {
+        m_process_handle = os::dup_handle(GetCurrentProcess(), process_handle);
+        yield_thread::go();
+    }
+
+    HANDLE get_ready_event() override
+    {
+        if (m_need_completion)
+            return m_stat_event;
+        return yield_thread::get_ready_event();
+    }
+
+    void set_need_completion() override
+    {
+        m_need_completion = true;
+    }
+
+    int results(lua_State* state) override
+    {
+        errno = m_errno;
+        return luaL_execresult(state, m_stat);
     }
 
 private:
@@ -274,10 +304,27 @@ private:
         m_write = nullptr;
     }
 
-    FILE* m_read;
-    HANDLE m_write;
+    bool do_completion() override
+    {
+        if (!m_stat_event || !m_process_handle)
+            return false;
 
-    BYTE m_buffer[4096];
+        m_stat = pclosewait(intptr_t(m_process_handle));
+        m_errno = errno;
+        SetEvent(m_stat_event);
+        return true;
+    }
+
+    FILE*           m_read;
+    HANDLE          m_write;
+    HANDLE          m_stat_event = 0;
+    HANDLE          m_process_handle = 0;
+
+    int             m_stat = -1;
+    errno_t         m_errno = 0;
+    volatile long   m_need_completion = false;
+
+    BYTE            m_buffer[4096];
 };
 
 
@@ -464,7 +511,7 @@ private:
         info = nullptr;
 
         yg->init(buffering, command);
-        buffering->go();
+        buffering->go(process_handle);
 
         failed = false;
     }
