@@ -18,6 +18,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
     - Generators stopped by ?:1863 (`argmatcher_generator:generate`).
 
 ## Normal Priority
+- Some way for explicit `io.popenyield()` + `p:close()` in a coroutine to be able to get the exit code, without causing Clink/Cmd to hang while waiting for the spawned process to exit.
 - Some way to have e.g. multiple separate `ut` argmatchers that are associated with different `ut` program paths.
 - Some way to push keys?  (Push keys to Clink; not to other processes.)
 
