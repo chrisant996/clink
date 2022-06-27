@@ -130,6 +130,10 @@ local function do_delayed_init(list, matcher, arg_index)
         end)
         matcher._init_coroutine[arg_index] = c
 
+        -- Make sure the delayinit coroutine runs to completion, even if a new
+        -- prompt generation begins (which would normally orphan coroutines).
+        clink.runcoroutineuntilcomplete(c)
+
         -- Set up to be able to efficiently clear dangling coroutine references,
         -- e.g. in case a coroutine doesn't finish before a new edit line.
         if not _clear_delayinit_coroutine[matcher] then
@@ -1823,6 +1827,10 @@ local function _do_onuse_callback(argmatcher, command_word)
             end
         end)
         argmatcher._onuse_coroutine = c
+
+        -- Make sure the delayinit coroutine runs to completion, even if a new
+        -- prompt generation begins (which would normally orphan coroutines).
+        clink.runcoroutineuntilcomplete(c)
 
         -- Set up to be able to efficiently clear dangling coroutine references,
         -- e.g. in case a coroutine doesn't finish before a new edit line.

@@ -31,6 +31,7 @@ void kick_idle()
 //------------------------------------------------------------------------------
 bool lua_input_idle::s_signaled_delayed_init = false;
 bool lua_input_idle::s_signaled_reclassify = false;
+static HANDLE s_wake_event = 0;
 
 //------------------------------------------------------------------------------
 lua_input_idle::lua_input_idle(lua_state& state)
@@ -38,32 +39,27 @@ lua_input_idle::lua_input_idle(lua_state& state)
 {
     assert(!s_idle);
     s_idle = this;
+    if (!s_wake_event)
+    {
+        s_wake_event = CreateEvent(nullptr, false, false, nullptr);
+        set_yield_wake_event(s_wake_event);
+    }
 }
 
 //------------------------------------------------------------------------------
 lua_input_idle::~lua_input_idle()
 {
     s_idle = nullptr;
-    set_yield_wake_event(nullptr);
 }
 
 //------------------------------------------------------------------------------
 void lua_input_idle::reset()
 {
-    HANDLE old_event = m_event;
-
     s_signaled_delayed_init = false;
     s_signaled_reclassify = false;
 
-    // Create new event before closing old handle, to prevent the OS from
-    // reusing the same event handle after it's closed.
     m_enabled = true;
     m_iterations = 0;
-    m_event = CreateEvent(nullptr, false, false, nullptr);
-    set_yield_wake_event(m_event);
-
-    if (old_event)
-        CloseHandle(old_event);
 }
 
 //------------------------------------------------------------------------------
@@ -108,7 +104,7 @@ unsigned lua_input_idle::get_timeout()
 //------------------------------------------------------------------------------
 void* lua_input_idle::get_waitevent()
 {
-    return m_event;
+    return s_wake_event;
 }
 
 //------------------------------------------------------------------------------

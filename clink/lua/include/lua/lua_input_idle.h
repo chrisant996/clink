@@ -29,7 +29,6 @@ private:
     bool            has_coroutines();
     void            resume_coroutines();
     lua_state&      m_state;
-    void*           m_event = 0;
     unsigned        m_iterations = 0;
     bool            m_enabled = true;
 

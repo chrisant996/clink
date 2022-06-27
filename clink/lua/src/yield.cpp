@@ -37,8 +37,6 @@ yield_thread::~yield_thread()
     }
     if (m_ready_event)
         CloseHandle(m_ready_event);
-    if (m_wake_event)
-        CloseHandle(m_wake_event);
 }
 
 //------------------------------------------------------------------------------
@@ -48,14 +46,9 @@ bool yield_thread::createthread()
     assert(!m_thread_handle);
     assert(!m_cancelled);
     assert(!m_ready_event);
-    assert(!m_wake_event);
     os::get_current_dir(m_cwd);
-    if (s_wake_event)
-    {
-        m_wake_event = os::dup_handle(GetCurrentProcess(), s_wake_event, false/*inherit*/);
-        if (!m_wake_event)
-            return false;
-    }
+    if (!s_wake_event)
+        return false;
     m_ready_event = CreateEvent(nullptr, true, false, nullptr);
     if (!m_ready_event)
         return false;
@@ -138,12 +131,11 @@ unsigned __stdcall yield_thread::threadproc(void *arg)
 
     // Signal completion events.
     SetEvent(_this->m_ready_event);
-    if (_this->m_wake_event)
-        SetEvent(_this->m_wake_event);
+    SetEvent(s_wake_event);
 
     // Give subclass a chance to do completion processing.
-    if (_this->m_wake_event && _this->do_completion())
-        SetEvent(_this->m_wake_event);
+    if (_this->do_completion())
+        SetEvent(s_wake_event);
 
     // Release threadproc's strong ref.
     _this->m_holder = nullptr;

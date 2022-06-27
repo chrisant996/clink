@@ -40,7 +40,6 @@ private:
 
     HANDLE m_thread_handle = 0;
     HANDLE m_ready_event = 0;
-    HANDLE m_wake_event = 0;
     str_moveable m_cwd;
     bool m_suspended = false;
 
