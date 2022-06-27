@@ -526,6 +526,7 @@ void recognizer::notify_ready(bool available)
 void recognizer::shutdown()
 {
     std::unique_ptr<std::thread> thread;
+    HANDLE event;
 
     {
         std::lock_guard<std::recursive_mutex> lock(m_mutex);
@@ -533,17 +534,25 @@ void recognizer::shutdown()
         clear();
         m_zombie = true;
 
-        if (m_event)
-            SetEvent(m_event);
+        event = m_event;
+        m_event = 0;
 
         thread = std::move(m_thread);
     }
 
     if (thread)
+    {
+        // Must join() before SetEvent(), otherwise a race condition is possible
+        // where the thread exists before join() is reached, which causes the
+        // join() to throw an unhandled exception and crash.
         thread->join();
+    }
 
-    if (m_event)
-        CloseHandle(m_event);
+    if (event)
+    {
+        SetEvent(event);
+        CloseHandle(event);
+    }
 }
 
 //------------------------------------------------------------------------------
