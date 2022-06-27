@@ -5,21 +5,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- Sometimes completion isn't working, but I haven't found consistent repro steps yet.
-  - Could potentially be the cause of below as well, since delayinit happens only once?
-- Sometimes delayinit argmatchers (e.g. `premake`) aren't initializing at all.
-  - Seems to be a race condition.
-  - Can repro with simply launch, cd, `pre` and <kbd>Up</kbd> several times rapidly -- but it's very hard to make it happen on demand.
-    - Try on laptop battery, `pre` and <kbd>Up</kbd> to "premake embed" then <kbd>Ctrl</kbd>+<kbd>O</kbd> before delayinit completes -- does it get stuck when the generation of coroutines is discarded, and never spin up another to retry the delayinit?
-    - But I think one time I literally only used `pre` and <kbd>Up</kbd> but it still got permanently stuck without delayinit?  Maybe I'm misremembering??  I thought I confirmed that `menu-complete` knew about 0 completions, though.
-  - Diag observations; true regardless whether init is successful (non-empty).
-    - Multiple dead 'generate matches' coroutines.
-    - Dead coroutine from ?1687 (the coroutine created in `_do_onuse_callback`).
-    - Generators stopped by ?:1863 (`argmatcher_generator:generate`).
-  - Found it!  Starting a new prompt generation while the delayinit is running orphans it and never finishes.
 
 ## Normal Priority
-- Some way for explicit `io.popenyield()` + `p:close()` in a coroutine to be able to get the exit code, without causing Clink/Cmd to hang while waiting for the spawned process to exit.
 - Some way to have e.g. multiple separate `ut` argmatchers that are associated with different `ut` program paths.
 - Some way to push keys?  (Push keys to Clink; not to other processes.)
 
@@ -58,6 +45,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - The auto-updater settings are stored in the profile.  That makes it more cumbersome to control the auto-updater settings if you use multiple Clink profiles.  However, it makes it possible to control the auto-updater settings separately in "portable installs" (e.g. on a USB memory stick).
 
 ## Mystery
+- Sometimes completion isn't working, but I haven't found consistent repro steps yet.  _[Might be solved now that delayinit coroutines run to completion regardless whether a new prompt generation begins before the delayinit coroutine finishes.]_
 - Mouse input toggling is unreliable in Windows Terminal, and sometimes ends up disallowing mouse input.  _[Might be fixed by bb870fc494?]_
 - `"qq": "QQ"` in `.inputrc`, and then type `qa` --> infinite loop.  _[Was occurring in a 1.3.9 development build; but no longer repros in a later 1.3.9 build, and also does not repro in the 1.3.8 release build.]_
 - Windows 10.0.19042.630 seems to have problems when using WriteConsoleW with ANSI escape codes in a powerline prompt in a git repo.  But Windows 10.0.19041.630 doesn't.
