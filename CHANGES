@@ -6,6 +6,8 @@
 
 - Fixed how <kbd>Right</kbd> and etc work after fully accepting an input line suggestion.  It shouldn't immediately show a new suggestion when the current suggestion is fully accepted (until the cursor is moved or the text changes), and `win-cursor-forward` shouldn't append characters from the previous command (e.g. when `clink.default_bindings` is `windows`).  Otherwise holding or double-pressing <kbd>Right</kbd> can accidentally turn into something the user didn't intend.
 - Fixed double-loading completion script when a command word includes a path component (e.g. "c:\clink_dir\program.exe" mistakenly attempted to load "c:\clink_dir\program.lua" instead of loading "program.lua" from the completions directories).
+- Fixed delayinit argmatchers so they don't get orphaned if a new input line starts before they finish.
+- Fixed `file:close()` to be able to return the process exit state even after `io.popen()` or `io.popenyield()` in a coroutine.
 
 #### v1.3.28
 
