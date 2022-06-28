@@ -4,6 +4,7 @@
 
 #### v1.3.30
 
+- Fixed the `menu-complete` family of commands for `fromhistory` argmatchers when `autosuggest.enable` is enabled.
 - Fixed potential crash on exit, due to race condition when ending the executable file detection thread (introduced in v1.3.3).
 
 #### v1.3.29
