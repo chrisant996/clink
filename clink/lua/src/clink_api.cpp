@@ -1673,22 +1673,33 @@ void clink_lua_initialise(lua_state& lua)
         lua_rawset(state, -3);
     }
 
+    lua_pushliteral(state, "version_encoded");
     lua_pushinteger(state, CLINK_VERSION_MAJOR * 10000000 +
                            CLINK_VERSION_MINOR *    10000 +
                            CLINK_VERSION_PATCH);
-    lua_setfield(state, -2, "version_encoded");
+    lua_rawset(state, -3);
+
+    lua_pushliteral(state, "version_major");
     lua_pushinteger(state, CLINK_VERSION_MAJOR);
-    lua_setfield(state, -2, "version_major");
+    lua_rawset(state, -3);
+
+    lua_pushliteral(state, "version_minor");
     lua_pushinteger(state, CLINK_VERSION_MINOR);
-    lua_setfield(state, -2, "version_minor");
+    lua_rawset(state, -3);
+
+    lua_pushliteral(state, "version_patch");
     lua_pushinteger(state, CLINK_VERSION_PATCH);
-    lua_setfield(state, -2, "version_patch");
+    lua_rawset(state, -3);
+
+    lua_pushliteral(state, "version_commit");
     lua_pushstring(state, AS_STR(CLINK_COMMIT));
-    lua_setfield(state, -2, "version_commit");
+    lua_rawset(state, -3);
+
 
 #ifdef DEBUG
+    lua_pushliteral(state, "DEBUG");
     lua_pushboolean(state, true);
-    lua_setfield(state, -2, "DEBUG");
+    lua_rawset(state, -3);
 #endif
 
     lua_setglobal(state, "clink");
