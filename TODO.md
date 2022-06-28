@@ -17,6 +17,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - But the STDOUT handle is not a console handle, so CMD doesn't call `WriteConsoleW`, so Clink can't intercept the prompt, so Clink isn't able to intercept the line editor.
   - CMD instead calls `WriteFile()` inside `CmdPutChars()`, and gets an error that the handle is invalid.
   - So, somehow the STDOUT handle has been replaced.  It seems likely that it is somehow related to coroutines and `io.popen()`.
+- **MYSTERY:** Crash on exit.
 
 ## Normal Priority
 - Some way to have e.g. multiple separate `ut` argmatchers that are associated with different `ut` program paths.
