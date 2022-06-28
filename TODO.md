@@ -5,6 +5,13 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
+- Problem with `fromhistory` argmatchers.
+  - `sed -e `<kbd>Tab</kbd> works.
+  - `sed -e s`<kbd>Tab</kbd> works.
+  - `sed -b -e `<kbd>Tab</kbd> works.
+  - `sed -b -e s`<kbd>Tab</kbd> **DOES NOT WORK.**
+  - All of them work with <kbd>Ctrl</kbd>-<kbd>Space</kbd> or <kbd>Alt</kbd>-<kbd>=</kbd>.
+- **MYSTERY:** Suddenly out of nowhere, the input line was not captured properly (there was no captured prompt, so it fell back to `ReadConsoleW`), and every action resulted in "The handle is invalid." being printed after returning control to CMD.  This occurred after waiting some time after trying to reproduce the `fromhistory` argmatcher issue -- unclear what connection there could be between them...
 
 ## Normal Priority
 - Some way to have e.g. multiple separate `ut` argmatchers that are associated with different `ut` program paths.
