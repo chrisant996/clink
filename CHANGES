@@ -2,6 +2,10 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.3.30
+
+- Fixed potential crash on exit, due to race condition when ending the executable file detection thread (introduced in v1.3.3).
+
 #### v1.3.29
 
 - Fixed how <kbd>Right</kbd> and etc work after fully accepting an input line suggestion.  It shouldn't immediately show a new suggestion when the current suggestion is fully accepted (until the cursor is moved or the text changes), and `win-cursor-forward` shouldn't append characters from the previous command (e.g. when `clink.default_bindings` is `windows`).  Otherwise holding or double-pressing <kbd>Right</kbd> can accidentally turn into something the user didn't intend.
