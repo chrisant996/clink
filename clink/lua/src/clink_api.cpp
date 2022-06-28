@@ -212,7 +212,8 @@ class recognizer
 
 public:
                             recognizer();
-                            ~recognizer() { shutdown(); }
+                            ~recognizer() { assert(!m_thread); }
+    void                    shutdown();
     void                    clear();
     int                     find(const char* key, recognition& cached, str_base* file) const;
     bool                    enqueue(const char* key, const char* word, const char* cwd, recognition* cached=nullptr);
@@ -225,7 +226,6 @@ private:
     bool                    dequeue(entry& entry);
     bool                    set_result_available(bool available);
     void                    notify_ready(bool available);
-    void                    shutdown();
     static void             proc(recognizer* r);
 
 private:
@@ -279,6 +279,12 @@ extern "C" void end_recognizer()
 {
     s_recognizer.end_line();
     s_recognizer.clear();
+}
+
+//------------------------------------------------------------------------------
+void shutdown_recognizer()
+{
+    s_recognizer.shutdown();
 }
 
 //------------------------------------------------------------------------------

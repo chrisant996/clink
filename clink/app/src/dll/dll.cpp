@@ -124,6 +124,9 @@ static void shutdown_clink()
         g_host = nullptr;
     }
 
+    extern void shutdown_recognizer();
+    shutdown_recognizer();
+
     if (logger* logger = logger::get())
         delete logger;
 
