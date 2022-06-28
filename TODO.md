@@ -11,7 +11,12 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - `sed -b -e `<kbd>Tab</kbd> works.
   - `sed -b -e s`<kbd>Tab</kbd> **DOES NOT WORK.**
   - All of them work with <kbd>Ctrl</kbd>-<kbd>Space</kbd> or <kbd>Alt</kbd>-<kbd>=</kbd>.
-- **MYSTERY:** Suddenly out of nowhere, the input line was not captured properly (there was no captured prompt, so it fell back to `ReadConsoleW`), and every action resulted in "The handle is invalid." being printed after returning control to CMD.  This occurred after waiting some time after trying to reproduce the `fromhistory` argmatcher issue -- unclear what connection there could be between them...
+- **MYSTERY:** Suddenly out of nowhere, the input line was not captured properly (there was no captured prompt, so it fell back to `ReadConsoleW`), and every action resulted in "The handle is invalid." being printed after returning control to CMD.
+  - This has happened a few times.  The repro steps were different each time.
+  - `PrintPrompt()` tries to print the correct prompt string.
+  - But the STDOUT handle is not a console handle, so CMD doesn't call `WriteConsoleW`, so Clink can't intercept the prompt, so Clink isn't able to intercept the line editor.
+  - CMD instead calls `WriteFile()` inside `CmdPutChars()`, and gets an error that the handle is invalid.
+  - So, somehow the STDOUT handle has been replaced.  It seems likely that it is somehow related to coroutines and `io.popen()`.
 
 ## Normal Priority
 - Some way to have e.g. multiple separate `ut` argmatchers that are associated with different `ut` program paths.
