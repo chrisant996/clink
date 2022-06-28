@@ -559,9 +559,6 @@ local function apply_options_to_builder(reader, arg, builder)
 
     -- Generate matches from history, if requested.
     if arg.fromhistory then
-        -- Lua/C++/Lua language transition precludes running this in a
-        -- coroutine, but also the performance of this might not always be
-        -- responsive enough to run as often as suggestions would like to.
         local _, ismain = coroutine.running()
         if ismain then
             clink.co_state._argmatcher_fromhistory.argmatcher = reader._matcher
@@ -573,6 +570,14 @@ local function apply_options_to_builder(reader, arg, builder)
             -- Clear references.  Clear builder because it goes out of scope,
             -- and clear other references to facilitate garbage collection.
             clink.co_state._argmatcher_fromhistory = {}
+        else
+            -- This can take a long time, depending on the size of the history.
+            -- So it isn't suitable to run in a suggestions coroutine.  However,
+            -- the menu-complete family of completion commands reuse available
+            -- match results, which then sees no matches.  So, the match
+            -- pipeline needs to be informed that matches will need to be
+            -- regenerated.
+            clink._reset_generate_matches()
         end
     end
 end

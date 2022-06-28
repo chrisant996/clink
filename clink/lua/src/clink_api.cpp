@@ -1555,6 +1555,14 @@ static int generate_from_history(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+static int api_reset_generate_matches(lua_State* state)
+{
+    extern void reset_generate_matches();
+    reset_generate_matches();
+    return 0;
+}
+
+//------------------------------------------------------------------------------
 static int mark_deprecated_argmatcher(lua_State* state)
 {
     const char* name = checkstring(state, 1);
@@ -1654,6 +1662,7 @@ void clink_lua_initialise(lua_state& lua)
         { "matches_ready",          &matches_ready },
         { "_recognize_command",     &recognize_command },
         { "_generate_from_history", &generate_from_history },
+        { "_reset_generate_matches", &api_reset_generate_matches },
         { "_mark_deprecated_argmatcher", &mark_deprecated_argmatcher },
         { "_signal_delayed_init",   &signal_delayed_init },
         { "is_cmd_command",         &is_cmd_command },
