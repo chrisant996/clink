@@ -963,9 +963,7 @@ static int get_history_count(lua_State* state)
 /// -show:  -- h.time       [integer or nil] The item's time, compatible with os.time().
 ///
 /// <strong>Note:</strong> the time field is omitted if the history item does
-/// not have an associated time.  Currently, no history items have times because
-/// Clink doesn't store times in the history file, but that is likely to change
-/// in the future.
+/// not have an associated time.
 static int get_history_items(lua_State* state)
 {
     bool isnum;
