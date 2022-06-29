@@ -412,6 +412,7 @@ private:
 
     luaL_Stream* pr = nullptr;
     luaL_YieldGuard* yg = nullptr;
+    pipe_pair pipe_stdin;
     pipe_pair pipe_stdout;
 
     pr = (luaL_Stream*)lua_newuserdata(state, sizeof(luaL_Stream));
@@ -444,7 +445,10 @@ private:
             break;
 
         // The pipe and temp_write are both binary to simplify the thread's job.
-        if (!pipe_stdout.init(false/*write*/, true/*binary*/))
+        // Must provide pipe_stdin to the spawned process, or some processes may
+        // error out due to missing stdin handle (e.g. FC and XCOPY).
+        if (!pipe_stdin.init(true/*write*/, true/*binary*/) ||
+            !pipe_stdout.init(false/*write*/, true/*binary*/))
             break;
 
         buffering = std::make_shared<popen_buffering>(pipe_stdout.local, temp_write);
@@ -454,7 +458,7 @@ private:
             break;
 
         info = new popenrw_info;
-        HANDLE process_handle = os::spawn_internal(command, nullptr, NULL, pipe_stdout.remote);
+        HANDLE process_handle = os::spawn_internal(command, nullptr, pipe_stdin.remote, pipe_stdout.remote);
         if (!process_handle)
             break;
 
