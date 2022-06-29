@@ -230,6 +230,8 @@ struct popen_buffering : public yield_thread
         assert(r != nullptr);
         assert(w != nullptr);
         assert(w != INVALID_HANDLE_VALUE);
+        assert(!m_stat_event);
+        assert(!m_process_handle);
     }
 
     ~popen_buffering()
@@ -255,6 +257,7 @@ struct popen_buffering : public yield_thread
 
     void go(HANDLE process_handle)
     {
+        assert(!m_process_handle);
         m_process_handle = os::dup_handle(GetCurrentProcess(), process_handle);
         yield_thread::go();
     }
@@ -311,6 +314,7 @@ private:
 
         m_stat = pclosewait(intptr_t(m_process_handle));
         m_errno = errno;
+        m_process_handle = 0;
         SetEvent(m_stat_event);
         return true;
     }
