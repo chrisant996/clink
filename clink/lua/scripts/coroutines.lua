@@ -696,54 +696,6 @@ end
 
 
 --------------------------------------------------------------------------------
-local function wrap_c_object(obj)
-    local proxy = {}
-    local wrapper_metatable = {}
-
-    function wrapper_metatable.__index(self, key)
-        local ret = rawget(self, key)
-        if not ret then
-            ret = obj[key]
-            if type(ret) == "function" then
-                return function(self, ...)
-                    return ret(obj, ...)
-                end
-            end
-        end
-        return ret
-    end
-
-    setmetatable(proxy, wrapper_metatable)
-    return proxy
-end
-
---------------------------------------------------------------------------------
-local function wrap_pfile(file, yieldguard)
-    local proxy = wrap_c_object(file)
-
-    proxy._old_close = proxy.close
-
-    function proxy:close(key)
-        if not yieldguard then
-            return self:_old_close()
-        else
-            self:_old_close()
-            yieldguard:set_need_completion() -- Make ready() wait for process exit.
-            set_coroutine_yieldguard(yieldguard)
-            while not yieldguard:ready() do
-                coroutine.yield()
-                -- Do not allow canceling.  This enforces no more than one
-                -- spawned background process is running at a time.
-            end
-            set_coroutine_yieldguard(nil)
-            return yieldguard:results()
-        end
-    end
-
-    return proxy
-end
-
---------------------------------------------------------------------------------
 --- -name:  io.popenyield
 --- -ver:   1.2.10
 --- -arg:   command:string
@@ -814,9 +766,6 @@ function io.popenyield(command, mode)
         -- Start the popenyield.
         local file, yieldguard = io.popenyield_internal(command, mode)
         if file and yieldguard then
-            -- Wrap so file:close() can yield until exit code is available.
-            file = wrap_pfile(file, yieldguard)
-            -- Yield until ready.
             set_coroutine_yieldguard(yieldguard)
             while not yieldguard:ready() do
                 coroutine.yield()
