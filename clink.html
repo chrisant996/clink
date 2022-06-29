@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.3.29</title>
+<title>Clink v1.3.30</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -791,7 +791,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.3.29</div>
+                <div id="title">Clink v1.3.30</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -6087,7 +6087,7 @@ end</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="rl.gethistorycount">rl.gethistorycount</a></div> <div class="signature">() : integer<br/><div class="version">v1.3.18 and newer</div></div></div><div class="body"><p class="desc">Returns the number of history items.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="rl.gethistoryitems">rl.gethistoryitems</a></div> <div class="signature">() : start:integer<br/><div class="version">v1.3.18 and newer</div></div></div><div class="body"><p class="desc">Returns a table of history items.</p><p class="desc"> The first history item is 1, and the last history item is <a href="#rl.gethistorycount"><code>rl.gethistorycount()</code></a>.  For best performance, use <span class="arg">start</span> and <span class="arg">end</span> to request only the range of history items that will be needed.</p><p class="desc"> Each history item is a table with the following scheme:</p><pre class="language-lua"><code>local h = rl.gethistoryitems(1, rl.gethistorycount())
 -- h.line       [string] The item's command line string.
--- h.time       [integer or nil] The item's time, compatible with os.time().</code></pre><p class="desc"><strong>Note:</strong> the time field is omitted if the history item does not have an associated time.  Currently, no history items have times because Clink doesn't store times in the history file, but that is likely to change in the future.</p></div></div><hr/>
+-- h.time       [integer or nil] The item's time, compatible with os.time().</code></pre><p class="desc"><strong>Note:</strong> the time field is omitted if the history item does not have an associated time.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="rl.getkeybindings">rl.getkeybindings</a></div> <div class="signature">( <span class="arg_name">raw</span>:boolean, [<span class="arg_name">mode</span>:integer] ) : table<br/><div class="version">v1.2.16 and newer</div></div></div><div class="body"><p class="desc">Returns key bindings in a table with the following scheme:</p><pre class="language-lua"><code>local t = rl.getkeybindings()
 -- t[index].key         [string] Key name.
 -- t[index].binding     [string] Command or macro bound to the key.
@@ -6337,6 +6337,11 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1330">v1.3.30</h4>
+<ul>
+<li>Fixed the <code>menu-complete</code> family of commands for <code>fromhistory</code> argmatchers when <code>autosuggest.enable</code> is enabled.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/311">#311</a>; &quot;The handle is invalid.&quot; (regression introduced in v1.3.29).</li>
+</ul>
 <h4 id="v1329">v1.3.29</h4>
 <ul>
 <li>Fixed how <kbd>Right</kbd> and etc work after fully accepting an input line suggestion.  It shouldn&#39;t immediately show a new suggestion when the current suggestion is fully accepted (until the cursor is moved or the text changes), and <code>win-cursor-forward</code> shouldn&#39;t append characters from the previous command (e.g. when <code>clink.default_bindings</code> is <code>windows</code>).  Otherwise holding or double-pressing <kbd>Right</kbd> can accidentally turn into something the user didn&#39;t intend.</li>
