@@ -741,9 +741,9 @@ end
 --- -show:  local dirs = clink.argmatcher():addarg(clink.dirmatches)
 --- -show:  local my_parser = clink.argmatcher("mycommand")
 --- -show:  :addflags("-a", "--a", "--al", "--all",
---- -show:            "-d"..dirs, "--d"..dirs, "--di"..dirs, "--dir"..dirs)
+--- -show:  &nbsp;         "-d"..dirs, "--d"..dirs, "--di"..dirs, "--dir"..dirs)
 --- -show:  :hideflags("--a", "--al", "--all",      -- Only "-a" is displayed.
---- -show:             "-d", "--d", "--di")         -- Only "--dir" is displayed.
+--- -show:  &nbsp;          "-d", "--d", "--di")         -- Only "--dir" is displayed.
 function _argmatcher:hideflags(...)
     local flag_matcher = self._flags or _argmatcher()
     local list = flag_matcher._hidden or {}

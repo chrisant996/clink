@@ -842,7 +842,7 @@ static int getset_insert_mode(lua_State* state)
 /// -show:  local normal = "\x1b[m"
 /// -show:
 /// -show:  local function get_settings_color(name)
-/// -show:      return "\x1b[" .. settings.get(name) .. "m"
+/// -show:  &nbsp;   return "\x1b[" .. settings.get(name) .. "m"
 /// -show:  end
 /// -show:
 /// -show:  function p:filter(prompt)
