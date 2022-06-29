@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.3.30</title>
+<title>Clink v1.3.31</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -791,7 +791,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.3.30</div>
+                <div id="title">Clink v1.3.31</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -6337,6 +6337,10 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1331">v1.3.31</h4>
+<ul>
+<li>Reverted the v1.3.29 change to <code>file:close()</code> that returned the process exit state even after <code>io.popen()</code> or <code>io.popenyield()</code> in a coroutine.  It had subtle negative side effects.</li>
+</ul>
 <h4 id="v1330">v1.3.30</h4>
 <ul>
 <li>Fixed the <code>menu-complete</code> family of commands for <code>fromhistory</code> argmatchers when <code>autosuggest.enable</code> is enabled.</li>
