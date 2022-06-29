@@ -5704,9 +5704,9 @@ clink.argmatcher("cmd"):addflags("/c", "/k"):chaincommand()
 <div class="function"><div class="header"> <div class="name"><a name="_argmatcher:hideflags">_argmatcher:hideflags</a></div> <div class="signature">( <span class="arg_name">flags...</span>:string ) : self<br/><div class="version">v1.3.3 and newer</div></div></div><div class="body"><p class="desc">This hides the specified flags when displaying possible completions (the flags are still recognized).</p><p class="desc"> This is intended for use when there are several synonyms for a flag, so that input coloring and linked argmatchers work, without cluttering the possible completion list.</p><pre class="language-lua"><code>local dirs = clink.argmatcher():addarg(clink.dirmatches)
 local my_parser = clink.argmatcher("mycommand")
 :addflags("-a", "--a", "--al", "--all",
-"-d"..dirs, "--d"..dirs, "--di"..dirs, "--dir"..dirs)
+&nbsp;         "-d"..dirs, "--d"..dirs, "--di"..dirs, "--dir"..dirs)
 :hideflags("--a", "--al", "--all",      -- Only "-a" is displayed.
-"-d", "--d", "--di")         -- Only "--dir" is displayed.</code></pre></div></div><hr/>
+&nbsp;          "-d", "--d", "--di")         -- Only "--dir" is displayed.</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="_argmatcher:loop">_argmatcher:loop</a></div> <div class="signature">( [<span class="arg_name">index</span>:integer] ) : self<br/><div class="version">v0.4.9 and newer</div></div></div><div class="body"><p class="desc">This makes the parser loop back to argument position <span class="arg">index</span> when it runs out of positional sets of arguments (if <span class="arg">index</span> is omitted it loops back to argument position 1).</p><pre class="language-lua"><code>clink.argmatcher("xyzzy")
 :addarg("zero", "cero")     -- first arg can be zero or cero
 :addarg("one", "uno")       -- second arg can be one or uno
@@ -6133,7 +6133,7 @@ end</code></pre></div></div><hr/>
 local normal = "\x1b[m"
 
 local function get_settings_color(name)
-return "\x1b[" .. settings.get(name) .. "m"
+&nbsp;   return "\x1b[" .. settings.get(name) .. "m"
 end
 
 function p:filter(prompt)
@@ -6228,13 +6228,13 @@ local text            = "\xc3\xa0\xc3\xa9\xe1\xb4\x86\xc3\xb5\xc3\xbb"
 -- Index by byte:        1   2   3   4   5   6   7   8   9   10  11
 
 for str, value, combining in unicode.iter(text) do
--- Note that the default lua print() function is not fully aware
--- of Unicode, so clink.print() is needed to print Unicode text.
-local bytes = ""
-for i = 1, #str do
-bytes = bytes .. string.format("\\x%02x", str:byte(i, i))
-end
-clink.print(str, value, combining, bytes)
+&nbsp;   -- Note that the default lua print() function is not fully aware
+&nbsp;   -- of Unicode, so clink.print() is needed to print Unicode text.
+&nbsp;   local bytes = ""
+&nbsp;   for i = 1, #str do
+&nbsp;       bytes = bytes .. string.format("\\x%02x", str:byte(i, i))
+&nbsp;   end
+&nbsp;   clink.print(str, value, combining, bytes)
 end
 
 -- The above prints the following:
