@@ -1877,7 +1877,7 @@ LUnlinkFile:
     // Save and reset console state.
     HANDLE std_handles[2] = { GetStdHandle(STD_INPUT_HANDLE), GetStdHandle(STD_OUTPUT_HANDLE) };
     DWORD prev_mode[2];
-    static_assert(_countof(std_handles) == _countof(prev_mode), "array sizes much match");
+    static_assert(_countof(std_handles) == _countof(prev_mode), "array sizes must match");
     for (size_t i = 0; i < _countof(std_handles); ++i)
         GetConsoleMode(std_handles[i], &prev_mode[i]);
     SetConsoleMode(std_handles[0], (prev_mode[0] | ENABLE_PROCESSED_INPUT) & ~(ENABLE_WINDOW_INPUT|ENABLE_MOUSE_INPUT));
@@ -2079,7 +2079,7 @@ int macro_hook_func(const char* macro)
 
         HANDLE std_handles[2] = { GetStdHandle(STD_INPUT_HANDLE), GetStdHandle(STD_OUTPUT_HANDLE) };
         DWORD prev_mode[2];
-        static_assert(_countof(std_handles) == _countof(prev_mode), "array sizes much match");
+        static_assert(_countof(std_handles) == _countof(prev_mode), "array sizes must match");
         for (size_t i = 0; i < _countof(std_handles); ++i)
             GetConsoleMode(std_handles[i], &prev_mode[i]);
 
