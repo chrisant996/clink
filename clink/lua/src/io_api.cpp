@@ -152,10 +152,15 @@ static int pclosefile(lua_State *state)
     intptr_t process_handle = info->get_wait_handle();
     if (process_handle)
     {
+        int stat = 0;
         bool wait = !info->is_async();
         popenrw_info::remove(info);
         delete info;
-        return luaL_execresult(state, wait ? pclosewait(process_handle) : 0);
+        if (wait)
+            stat = pclosewait(process_handle);
+        else
+            CloseHandle(HANDLE(process_handle));
+        return luaL_execresult(state, stat);
     }
 
     return luaL_fileresult(state, (res == 0), NULL);
