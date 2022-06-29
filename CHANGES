@@ -6,6 +6,7 @@
 
 - Fixed the `menu-complete` family of commands for `fromhistory` argmatchers when `autosuggest.enable` is enabled.
 - Fixed potential crash on exit, due to race condition when ending the executable file detection thread (introduced in v1.3.3).
+- Fixed [#311](https://github.com/chrisant996/clink/issues/311); "The handle is invalid." (regression introduced in v1.3.29).
 
 #### v1.3.29
 
