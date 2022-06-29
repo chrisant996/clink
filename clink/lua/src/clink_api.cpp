@@ -238,7 +238,7 @@ private:
     HANDLE                  m_event = nullptr;
     bool                    m_processing = false;
     bool                    m_result_available = false;
-    bool                    m_zombie = false;
+    volatile bool           m_zombie = false;
 
     static HANDLE           s_ready_event;
 };
@@ -532,7 +532,6 @@ void recognizer::notify_ready(bool available)
 void recognizer::shutdown()
 {
     std::unique_ptr<std::thread> thread;
-    HANDLE event;
 
     {
         std::lock_guard<std::recursive_mutex> lock(m_mutex);
@@ -540,25 +539,17 @@ void recognizer::shutdown()
         clear();
         m_zombie = true;
 
-        event = m_event;
-        m_event = 0;
+        if (m_event)
+            SetEvent(m_event);
 
         thread = std::move(m_thread);
     }
 
     if (thread)
-    {
-        // Must join() before SetEvent(), otherwise a race condition is possible
-        // where the thread exists before join() is reached, which causes the
-        // join() to throw an unhandled exception and crash.
         thread->join();
-    }
 
-    if (event)
-    {
-        SetEvent(event);
-        CloseHandle(event);
-    }
+    if (m_event)
+        CloseHandle(m_event);
 }
 
 //------------------------------------------------------------------------------
@@ -603,9 +594,13 @@ void recognizer::proc(recognizer* r)
             r->store(entry.m_key.c_str(), found.c_str(), result);
             r->notify_ready(true);
         }
+
+        if (r->m_zombie)
+            break;
     }
 
     CoUninitialize();
+puts("ended");
 }
 
 //------------------------------------------------------------------------------
