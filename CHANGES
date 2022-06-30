@@ -4,7 +4,9 @@
 
 #### v1.3.31
 
-- Reverted the v1.3.29 change to `file:close()` that returned the process exit state even after `io.popen()` or `io.popenyield()` in a coroutine.  It had subtle negative side effects.
+- The `io.popenyield()` function now also returns a function that can be used to get the exit status from the command.
+- Reverted the v1.3.29 change to `file:close()` that returned the process exit state even after `io.popen()` or `io.popenyield()` in a coroutine.  It had subtle negative side effects, and is replaced by returning a "pclose" function from `io.popenyield()`.
+- Fixed `io.popenyield()` for some programs (such as FC and XCOPY) that fail to start if the stdin handle is empty.
 
 #### v1.3.30
 
