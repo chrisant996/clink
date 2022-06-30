@@ -527,7 +527,7 @@ end
 --- generators.  It has been superseded by the
 --- <a href="#line_state">line_state</a> type parameter passed into match
 --- generator functions when using the new
---- <a href="#clink.generator">clink.generator</a> API.
+--- <a href="#clink.generator">clink.generator()</a> API.
 
 --------------------------------------------------------------------------------
 --- -name:  clink.register_match_generator

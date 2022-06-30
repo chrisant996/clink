@@ -542,9 +542,8 @@ static int io_sclose(lua_State* state)
 /// -arg:   [mode:string]
 /// -arg:   [deny:string]
 /// -ret:   file
-/// This is the same as <a href="#io.open"><code>io.open()</code></a>, but adds
-/// an optional <code>deny</code> argument that specifies the type of sharing
-/// allowed.
+/// This is the same as <a href="#io.open">io.open()</a>, but adds an optional
+/// <code>deny</code> argument that specifies the type of sharing allowed.
 ///
 /// This function opens a file named by <span class="arg">filename</span>, in
 /// the mode specified in the string <span class="arg">mode</span>.  It returns

@@ -86,8 +86,8 @@ static void unquote_keys(const char* in, str_base& out)
 /// -arg:   path:string
 /// -arg:   [force:boolean]
 /// -ret:   string
-/// Undoes Readline tilde expansion.  See <a href="#rl.expandtilde">rl.expandtilde</a>
-/// for more information.
+/// Undoes Readline tilde expansion.  See
+/// <a href="#rl.expandtilde">rl.expandtilde()</a> for more information.
 /// -show:  rl.collapsetilde("C:\Users\yourusername\Documents")
 /// -show:  &nbsp;
 /// -show:  -- The return value depends on the expand-tilde configuration variable:
@@ -119,14 +119,14 @@ static int collapse_tilde(lua_State* state)
 /// Performs Readline tilde expansion.
 ///
 /// When generating filename matches for a word, use the
-/// <a href="#rl.expandtilde">rl.expandtilde</a> and
-/// <a href="#rl.collapsetilde">rl.collapsetilde</a> helper functions to perform
+/// <a href="#rl.expandtilde">rl.expandtilde()</a> and
+/// <a href="#rl.collapsetilde">rl.collapsetilde()</a> helper functions to perform
 /// tilde completion expansion according to Readline's configuration.
 ///
-/// Use <a href="#rl.expandtilde">rl.expandtilde</a> to do tilde expansion
+/// Use <a href="#rl.expandtilde">rl.expandtilde()</a> to do tilde expansion
 /// before collecting file matches (e.g. via
-/// <a href="#os.globfiles">os.globfiles</a>).  If it indicates that it expanded
-/// the string, then use <a href="#rl.collapsetilde">rl.collapsetilde</a> to put
+/// <a href="#os.globfiles">os.globfiles()</a>).  If it indicates that it expanded
+/// the string, then use <a href="#rl.collapsetilde">rl.collapsetilde()</a> to put
 /// back the tilde before returning a match.
 /// -show:  local result, expanded = rl.expandtilde("~\Documents")
 /// -show:  -- result is "C:\Users\yourusername\Documents"
@@ -952,8 +952,8 @@ static int get_history_count(lua_State* state)
 /// Returns a table of history items.
 ///
 /// The first history item is 1, and the last history item is
-/// <a href="#rl.gethistorycount"><code>rl.gethistorycount()</code></a>.  For
-/// best performance, use <span class="arg">start</span> and
+/// <a href="#rl.gethistorycount">rl.gethistorycount()</a>.  For best
+/// performance, use <span class="arg">start</span> and
 /// <span class="arg">end</span> to request only the range of history items that
 /// will be needed.
 ///

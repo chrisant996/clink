@@ -1511,8 +1511,8 @@ end
 --- -arg:   [message:string]
 --- -arg:   [lines:integer]
 --- -arg:   [force:boolean]
---- Breaks into the Lua debugger, if the <a href="#lua_debug">lua.debug</a>
---- setting is enabled.
+--- Breaks into the Lua debugger, if the
+--- <code><a href="#lua_debug">lua.debug</a></code> setting is enabled.
 ---
 --- If <code>pause()</code> is used by itself, the debugger breaks on the line
 --- after the pause call.

@@ -700,24 +700,27 @@ end
 --- -ver:   1.2.10
 --- -arg:   command:string
 --- -arg:   [mode:string]
---- -ret:   file
---- This is the same as
---- <code><span class="hljs-built_in">io</span>.<span class="hljs-built_in">popen</span>(<span class="arg">command</span>, <span class="arg">mode</span>)</code>
---- except that it only supports read mode and it yields until the command has
---- finished:
+--- -ret:   file, function
+--- This behaves similar to
+--- <a href="https://www.lua.org/manual/5.2/manual.html#pdf-io.popen">io.popen()</a>
+--- except that it only supports read mode and when used in a coroutine it
+--- yields until the command has finished.
 ---
---- Runs <span class="arg">command</span> and returns a read file handle for
---- reading output from the command.  It yields until the command has finished
---- and the complete output is ready to be read without blocking.
+--- The <span class="arg">command</span> argument is the command to run.
 ---
---- The <span class="arg">mode</span> can contain "r" (read mode) and/or either
---- "t" for text mode (the default if omitted) or "b" for binary mode.  Write
---- mode is not supported, so it cannot contain "w".
+--- The <span class="arg">mode</span> argument is the optional mode to use.  It
+--- can contain "r" (read mode) and/or either "t" for text mode (the default if
+--- omitted) or "b" for binary mode.  Write mode is not supported, so it cannot
+--- contain "w".
+---
+--- This runs the specified command and returns a read file handle for reading
+--- output from the command.  It yields until the command has finished and the
+--- complete output is ready to be read without blocking.
 ---
 --- <strong>Note:</strong> if the <code>prompt.async</code> setting is disabled,
 --- or while a <a href="#transientprompts">transient prompt filter</a> is
---- executing, then this behaves like
---- <code><span class="hljs-built_in">io</span>.<span class="hljs-built_in">popen</span>(<span class="arg">command</span>, <span class="arg">mode</span>)</code>
+--- executing, or if used outside of a coroutine, then this behaves like
+--- <code><a href="https://www.lua.org/manual/5.2/manual.html#pdf-io.popen">io.popen()</a></code>
 --- instead.
 --- -show:  local file = io.popenyield("git status")
 --- -show:
