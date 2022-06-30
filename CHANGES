@@ -2,11 +2,11 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
-#### v1.3.32
+#### v1.3.33
 
 - The `io.popenyield()` function now also returns a function that can be used to get the exit status from the command.
 - Fixed `io.popenyield()` for some programs (such as FC and XCOPY) that fail to start if the stdin handle is empty.
-- Fixed slow startup due to inefficiency in the updater check at startup (regression introduced in v1.3.26).
+- Fixed [#312](https://github.com/chrisant996/clink/issues/312); slow startup due to inefficiency in the updater check at startup (regression introduced in v1.3.26).
 
 #### v1.3.31
 
