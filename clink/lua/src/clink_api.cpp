@@ -57,6 +57,12 @@ extern setting_enum g_dupe_mode;
 extern setting_color g_color_unrecognized;
 extern setting_color g_color_executable;
 
+#ifdef _WIN64
+static const char c_uninstall_key[] = "SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
+#else
+static const char c_uninstall_key[] = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
+#endif
+
 #ifdef TRACK_LOADED_LUA_FILES
 extern "C" int is_lua_file_loaded(lua_State* state, const char* filename);
 #endif
@@ -1591,6 +1597,132 @@ static int is_cmd_command(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+static int get_installation_type(lua_State* state)
+{
+    // Open the Uninstall key.
+
+    HKEY hkey;
+    wstr<> where(c_uninstall_key);
+    if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, where.c_str(), 0, MAXIMUM_ALLOWED, &hkey))
+    {
+failed:
+        lua_pushliteral(state, "zip");
+        return 1;
+    }
+
+    // Get binaries path.
+
+    WCHAR long_bin_dir[MAX_PATH * 2];
+    {
+        str<> tmp;
+        if (!os::get_env("=clink.bin", tmp))
+            goto failed;
+
+        wstr<> bin_dir(tmp.c_str());
+        DWORD len = GetLongPathNameW(bin_dir.c_str(), long_bin_dir, sizeof_array(long_bin_dir));
+        if (!len || len >= sizeof_array(long_bin_dir))
+            goto failed;
+
+        long_bin_dir[len] = '\0';
+    }
+
+    // Enumerate installed programs.
+
+    bool found = false;
+    WCHAR install_key[MAX_PATH];
+    install_key[0] = '\0';
+
+    for (DWORD index = 0; true; ++index)
+    {
+        DWORD size = sizeof_array(install_key); // Characters, not bytes, for RegEnumKeyExW.
+        if (ERROR_NO_MORE_ITEMS == RegEnumKeyExW(hkey, index, install_key, &size, 0, nullptr, nullptr, nullptr))
+            break;
+
+        if (size >= sizeof_array(install_key))
+            size = sizeof_array(install_key) - 1;
+        install_key[size] = '\0';
+
+        // Ignore if not a Clink installation.
+        if (_wcsnicmp(install_key, L"clink_", 6))
+            continue;
+
+        HKEY hsubkey;
+        if (RegOpenKeyExW(hkey, install_key, 0, MAXIMUM_ALLOWED, &hsubkey))
+            continue;
+
+        DWORD type;
+        WCHAR location[280];
+        DWORD len = sizeof(location); // Bytes, not characters, for RegQueryValueExW.
+        LSTATUS status = RegQueryValueExW(hsubkey, L"InstallLocation", NULL, &type, LPBYTE(&location), &len);
+        RegCloseKey(hsubkey);
+
+        if (status)
+            continue;
+
+        len = len / 2;
+        if (len >= sizeof_array(location))
+            continue;
+        location[len] = '\0';
+
+        // If the uninstall location matches the current binaries directory,
+        // then this is a match.
+        WCHAR long_location[MAX_PATH * 2];
+        len = GetLongPathNameW(location, long_location, sizeof_array(long_location));
+        if (len && len < sizeof_array(long_location) && !_wcsicmp(long_bin_dir, long_location))
+        {
+            found = true;
+            break;
+        }
+    }
+
+    RegCloseKey(hkey);
+
+    if (!found)
+        goto failed;
+
+    str<> tmp(install_key);
+    lua_pushliteral(state, "exe");
+    lua_pushstring(state, tmp.c_str());
+    return 2;
+}
+
+//------------------------------------------------------------------------------
+static int set_install_version(lua_State* state)
+{
+    const char* key = checkstring(state, 1);
+    const char* ver = checkstring(state, 2);
+    if (!key || !ver || _strnicmp(key, "clink_", 6))
+        return 0;
+
+    if (ver[0] == 'v')
+        ver++;
+
+    wstr<> where(c_uninstall_key);
+    wstr<> wkey(key);
+    where << L"\\" << wkey.c_str();
+
+    HKEY hkey;
+    LSTATUS status = RegOpenKeyExW(HKEY_LOCAL_MACHINE, where.c_str(), 0, MAXIMUM_ALLOWED, &hkey);
+    if (status)
+        return 0;
+
+    wstr<> name;
+    wstr<> version(ver);
+    name << L"Clink v" << version.c_str();
+
+    bool ok = true;
+    ok = ok && !RegSetValueExW(hkey, L"DisplayName", 0, REG_SZ, reinterpret_cast<const BYTE*>(name.c_str()), (name.length() + 1) * sizeof(*name.c_str()));
+    ok = ok && !RegSetValueExW(hkey, L"DisplayVersion", 0, REG_SZ, reinterpret_cast<const BYTE*>(version.c_str()), (version.length() + 1) * sizeof(*version.c_str()));
+    RegCloseKey(hkey);
+
+    if (!ok)
+        return 0;
+
+    lua_pushboolean(state, true);
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 #ifdef TRACK_LOADED_LUA_FILES
 static int clink_is_lua_file_loaded(lua_State* state)
 {
@@ -1667,6 +1799,8 @@ void clink_lua_initialise(lua_state& lua)
         { "_mark_deprecated_argmatcher", &mark_deprecated_argmatcher },
         { "_signal_delayed_init",   &signal_delayed_init },
         { "is_cmd_command",         &is_cmd_command },
+        { "_get_installation_type", &get_installation_type },
+        { "_set_install_version",   &set_install_version },
 #ifdef TRACK_LOADED_LUA_FILES
         { "is_lua_file_loaded",     &clink_is_lua_file_loaded },
 #endif

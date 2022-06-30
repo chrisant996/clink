@@ -26,12 +26,12 @@ settings.add("clink.update_interval", 5, "Days between update checks", "The Clin
 
 --------------------------------------------------------------------------------
 local powershell_exe
-local reg_exe
 local checked_prereqs
 local prereq_error
 
 local this_install_type
 local this_install_key
+local latest_cloud_tag
 
 local can_use_setup_exe = false
 
@@ -91,13 +91,10 @@ local function find_prereqs()
     if not checked_prereqs then
         local sysroot = os.getenv("systemroot")
         powershell_exe = make_file_at_path(sysroot, "System32\\WindowsPowerShell\\v1.0\\powershell.exe")
-        reg_exe = make_file_at_path(sysroot, "System32\\reg.exe")
         checked_prereqs = true
 
         if not powershell_exe then
             prereq_error = log_info("unable to find PowerShell v5.")
-        elseif not reg_exe then
-            prereq_error = log_info("unable to find Reg.exe.")
         else
             local f = io.popen('2>&1 ' .. powershell_exe .. ' -Command "Get-Host | Select-Object Version"')
             if not f then
@@ -159,53 +156,13 @@ end
 
 local function get_installation_type()
     if not this_install_type then
-        local bin_dir, err = get_bin_dir()
-        if not bin_dir then
-            return nil, err
-        end
-
-        local ok, err = find_prereqs()
-        if not ok then
-            return nil, concat_error(err, log_info("autoupdate requires PowerShell v5."))
-        end
-
-        local done
-        this_install_type = "zip"
-
-        local r = io.popen("2>nul " .. reg_exe .. " query hklm\\software\\microsoft\\windows\\currentversion\\uninstall /reg:32")
-        if r then
-            for key in r:lines() do
-                if key:lower():match("clink_[^/\\]+$") then
-                    local i = io.popen('2>nul ' .. reg_exe .. ' query "' .. key .. '" /reg:32 /s')
-                    if i then
-                        for line in i:lines() do
-                            local utf8 = unicode.fromcodepage(line)
-                            line = utf8 or line
-                            local location = line:match("^ +InstallLocation +REG_SZ +(.+)$")
-                            if location and string.equalsi(location, bin_dir) then
-                                this_install_key = key
-                                this_install_type = "exe"
-                                done = true
-                                break
-                            end
-                        end
-                        i:close()
-                    end
-                end
-                if done then
-                    break
-                end
-            end
-            r:close()
-        else
-            log_info("unable to query registry for installation type.")
-        end
+        this_install_type, this_install_key = clink._get_installation_type()
     end
 
     -- This sets this_install_type to the actual installation type.  This
     -- returns "zip" if can_use_setup_exe is false, otherwise it returns the
     -- actual installation type.
-    return can_use_setup_exe and this_install_type or "zip"
+    return can_use_setup_exe and this_install_key and this_install_type or "zip"
 end
 
 --------------------------------------------------------------------------------
@@ -368,11 +325,6 @@ local function can_check_for_update(force)
         return false, log_info("autoupdate is disabled for local build directories.")
     end
 
-    local ok, err = find_prereqs()
-    if not ok then
-        return false, concat_error(err, log_info("autoupdate requires PowerShell v5."))
-    end
-
     local tagfile, err = get_update_dir()
     if not tagfile then
         return false, err
@@ -440,10 +392,14 @@ local function internal_check_for_update(force)
         collect_output(output, line)
     end
     f:close()
-    if not latest_update_file then
+    if not cloud_tag then
+        log_output(api, output)
+        return nil, log_info("unable to find latest release.")
+    elseif not latest_update_file then
         log_output(api, output)
         return nil, log_info("unable to find latest release " .. install_type .. " file.")
     end
+    latest_cloud_tag = cloud_tag
 
     -- Compare versions.
     log_info("latest release is " .. cloud_tag .. ".")
@@ -463,7 +419,7 @@ local function internal_check_for_update(force)
     -- expand will fail, and if it's not an exe file then execution will fail.
     -- That's good enough.
     if force then
-        print("Downloading latest release...")
+        print("Downloading latest release " .. cloud_tag .. "...")
     end
     local_update_file, err = get_update_dir()
     if local_update_file then
@@ -527,7 +483,7 @@ local function check_for_update(force)
     end
 
     -- Attempt to update.
-    local ret, err = internal_check_for_update(force)
+    local ret, err, cloud_tag = internal_check_for_update(force)
 
     -- Record last update time.
     update_lastcheck(update_dir)
@@ -535,7 +491,7 @@ local function check_for_update(force)
     -- Dispose of the concurrency protection.
     g:close()
     os.remove(guardfile)
-    return ret, err
+    return ret, err, cloud_tag
 end
 
 local function is_update_ready(force)
@@ -580,7 +536,7 @@ local function is_update_ready(force)
 
     -- Verify the update file is newer.
     local local_tag = get_local_tag()
-    local cloud_tag = path.getbasename(update_file)
+    local cloud_tag = latest_cloud_tag or path.getbasename(update_file)
     if not is_rhs_version_newer(get_local_tag(), cloud_tag) then
         return nil, log_info("no update available; local version " .. local_tag .. " is not older than latest release " .. cloud_tag .. ".")
     end
@@ -643,9 +599,7 @@ local function apply_zip_update(zip_file, force)
     -- Update installed version.
     if this_install_type == "exe" and this_install_key then
         print("Updating registry keys...")
-        local version = cloud_tag:gsub("^v", "")
-        os.execute('>nul ' .. reg_exe .. ' add "' .. this_install_key .. '" /v DisplayName /t REG_SZ /d "Clink v' .. version .. '" /f /reg:32')
-        os.execute('>nul ' .. reg_exe .. ' add "' .. this_install_key .. '" /v DisplayVersion /t REG_SZ /d "' .. version .. '" /f /reg:32')
+        clink._set_install_version(this_install_key, cloud_tag);
     end
 
     -- Cleanup.
@@ -720,6 +674,8 @@ clink.oninject(autoupdate)
 
 --------------------------------------------------------------------------------
 function clink.updatenow(elevated)
+    latest_cloud_tag = nil
+
     local update_file, err = is_update_ready(true)
     if not update_file then
         return nil, err
