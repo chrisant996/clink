@@ -110,9 +110,16 @@ void* lua_input_idle::get_waitevent()
 //------------------------------------------------------------------------------
 void lua_input_idle::on_idle()
 {
-    assert(m_enabled);
-
-    resume_coroutines();
+    // An example how this can be reached with !m_enabled is when
+    // io.popenyield() wakes idle after getting the process exit code, but it
+    // can't know whether any Lua code has/will yield to wait for the exit code.
+    // If Lua code hasn't finished or is yielding to wait, then m_enabled will
+    // still be true.  But if the corresponding Lua coroutine finished without
+    // ever yielding to wait for the exit code then m_enabled may be false, if
+    // that was the last coroutine.  In that case, there are no coroutines and
+    // so short circuiting is an appropriate optimization here.
+    if (m_enabled)
+        resume_coroutines();
 
     if (s_signaled_delayed_init)
     {

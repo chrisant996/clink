@@ -717,6 +717,12 @@ end
 --- output from the command.  It yields until the command has finished and the
 --- complete output is ready to be read without blocking.
 ---
+--- In v1.3.31 and higher, it also returns a function which can be used to get
+--- the exit status for the command.  The function returns the same values as
+--- <a href="https://www.lua.org/manual/5.2/manual.html#pdf-os.execute">os.execute()</a>.
+--- The function may be used only once, and it closes the read file handle, so
+--- if the function is used then do not use <code>file:close()</code>.
+---
 --- <strong>Note:</strong> if the <code>prompt.async</code> setting is disabled,
 --- or while a <a href="#transientprompts">transient prompt filter</a> is
 --- executing, or if used outside of a coroutine, then this behaves like
@@ -732,6 +738,12 @@ end
 --- -show:  &nbsp;   do_things_with(line)
 --- -show:  end
 --- -show:  file:close()
+--- Here is an example showing how to get the exit status, if desired:
+--- -show:  -- Clink v1.3.31 and higher return a pclose function, for optional use.
+--- -show:  local file, pclose = io.popenyield("kubectl.exe")
+--- -show:  if file then
+--- -show:  &nbsp;   local ok, what, code = pclose()
+--- -show:  end
 function io.popenyield(command, mode)
     -- This outer wrapper is implemented in Lua so that it can yield.
     local c, ismain = coroutine.running()
@@ -778,7 +790,31 @@ function io.popenyield(command, mode)
             end
             set_coroutine_yieldguard(nil)
         end
-        return file
+        -- Make a pclose function.
+        local state = { yg=yieldguard }
+        local pclose = file and yieldguard and function ()
+            -- Only allow to run once.
+            if state.zombie then
+                error("function already used; can only be used once.")
+                return
+            end
+            state.zombie = true
+            -- Close the file.
+            file:close()
+            -- Make ready() wait for process exit.
+            yieldguard:set_need_completion()
+            -- Yield until ready.
+            set_coroutine_yieldguard(yieldguard)
+            while not yieldguard:ready() do
+                coroutine.yield()
+                -- Do not allow canceling.  This enforces no more than one spawned
+                -- background process is running at a time.
+            end
+            set_coroutine_yieldguard(nil)
+            -- Return exit status.
+            return yieldguard:results()
+        end
+        return file, pclose
     else
         return io.popen(command, mode)
     end
