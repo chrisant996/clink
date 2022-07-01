@@ -206,8 +206,11 @@ local function unzip(zip, out)
         return nil, log_info("output directory '" .. tostring(out) .. "' does not exist.")
     end
 
-    local fmt = [[2>&1 ]] .. powershell_exe .. [[ -Command $ProgressPreference='SilentlyContinue' ; Expand-Archive -Force -LiteralPath \"%s\" -DestinationPath \"%s\" ; echo $error.count]]
-    local cmd = string.format(fmt, zip, out)
+    local success_tag = "CLINK-UNZIP-SUCCEEDED"
+    local failure_tag = "CLINK-UNZIP-FAILED"
+    local expand_archive = string.format([[$ProgressPreference='SilentlyContinue' ; Expand-Archive -Force -LiteralPath \"%s\" -DestinationPath \"%s\"]], zip, out)
+    local powershell_command = string.format([[try { %s ; echo "%s" } catch { echo "%s" ; echo $_.Exception.Message ; echo "`nALL ERRORS:`n" ; echo $error }]], expand_archive, success_tag, failure_tag)
+    local cmd = string.format([[2>&1 %s -Command "%s"]], powershell_exe, powershell_command)
     local f, err = io.popen(cmd)
     if not f then
         log_info(cmd)
@@ -216,12 +219,19 @@ local function unzip(zip, out)
 
     local result
     local output = {}
+    local saw_success
+    local saw_failure
     for line in f:lines() do
         local utf8 = unicode.fromcodepage(line)
         line = utf8 or line
         collect_output(output, line)
+        if line == success_tag then
+            saw_success = true
+        elseif line == failure_tag then
+            saw_failure = true
+        end
     end
-    if #output == 1 and output[1] == "0" then
+    if saw_success and not saw_failure then
         result = true
     end
     f:close()
