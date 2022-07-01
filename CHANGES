@@ -4,6 +4,7 @@
 
 #### v1.3.34
 
+- Improved error reporting in `lua.debug` mode for coroutine failures.
 - Fixed the updater when there are PowerShell configuration problems that cause internal errors unrelated to Clink's use of PowerShell.
 
 #### v1.3.33
