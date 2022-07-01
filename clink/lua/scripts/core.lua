@@ -89,14 +89,12 @@ end
 --------------------------------------------------------------------------------
 -- This is the error handler used for reporting coroutine errors.
 function _co_error_handler(co, message)
-    local trace = settings.get("lua.traceback_on_error")
-    if trace then
-        print(debug.traceback(co, message, 2))
-    end
-    if _can_pause and settings.get("lua.break_on_error") then
-        pause("break on error: "..message)
-    end
-    if not trace then
+    local trc = settings.get("lua.traceback_on_error")
+    local brk = _can_pause and settings.get("lua.break_on_error")
+    if settings.get("lua.traceback_on_error") or
+            (_can_pause and settings.get("lua.break_on_error")) then
+        print(debug.traceback(co, message))
+    else
         print(message)
     end
 end
