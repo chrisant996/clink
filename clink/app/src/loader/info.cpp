@@ -171,18 +171,18 @@ int clink_info(int argc, char** argv)
         {
             if (type == REG_DWORD && value)
             {
-                message = "Automatic updates are disabled for all users.";
+                message = "Automatic updates are disallowed for all users.";
                 flag = "--allusers ";
             }
         }
         if (!message && RegGetValueW(HKEY_CURRENT_USER, L"Software\\Clink", L"DisallowAutoUpdate", RRF_RT_REG_DWORD, &type, &value, &size) == ERROR_SUCCESS)
         {
             if (type == REG_DWORD && value)
-                message = "Automatic updates are disabled for the current user.";
+                message = "Automatic updates are disallowed for the current user.";
         }
 
         if (message)
-            printf("\n%s\nThey can be renabled by 'clink update %s--allow-automatic'.\n", message, flag);
+            printf("\n%s\nThey can be allowed by 'clink update %s--allow-automatic'.\n", message, flag);
     }
 
     str<> state_dir;

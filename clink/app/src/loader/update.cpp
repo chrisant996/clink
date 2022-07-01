@@ -245,8 +245,8 @@ int update(int argc, char** argv)
                 "\n"
                 "The --disallow-automatic flag disables automatic updates for all profiles,\n"
                 "overriding the 'clink.autoupdate' setting.  Adding the --allusers flag affects\n"
-                "all users, but requires admin rights.  'clink info' reports whether automatic\n"
-                "updates are allowed.\n"
+                "all users, but requires admin rights.  'clink info' reports when automatic\n"
+                "updates are disallowed.\n"
                 "\n"
                 "The updater requires PowerShell.\n");
             return ret;
