@@ -152,6 +152,7 @@ static bool call_updater(lua_state& lua)
             s.format("--elevated --profile \"%s\" ", profile.c_str());
             wstr_moveable wargs(s.c_str());
             wargs << get_wargs();
+            puts("Requesting administrator access to install update...");
             ok = (len < _countof(file) - 1 && run_as_admin(NULL, file, wargs.c_str()));
             msg = ok ? "updated Clink." : "update failed; see log file for details.";
         }
