@@ -258,7 +258,7 @@ function clink._resume_coroutines()
                         if not entry.canceled then
                             print("")
                             print("coroutine failed:")
-                            print(ret)
+                            _co_error_handler(c, ret)
                             entry.error = ret
                         end
                     end
@@ -280,7 +280,7 @@ function clink._resume_coroutines()
     if not ok then
         print("")
         print("coroutine failed:")
-        print(ret)
+        _co_error_handler(c, ret)
         -- Don't return yet!  Need to do cleanup.
     end
 

@@ -153,7 +153,7 @@ local function do_delayed_init(list, matcher, arg_index)
         if not ok and ret and settings.get("lua.debug") then
             print("")
             print("coroutine failed:")
-            print(ret)
+            _co_error_handler(c, ret)
         end
     end
 end
@@ -1853,7 +1853,7 @@ local function _do_onuse_callback(argmatcher, command_word)
         if not ok and ret and settings.get("lua.debug") then
             print("")
             print("coroutine failed:")
-            print(ret)
+            _co_error_handler(c, ret)
         end
     end
 end

@@ -86,6 +86,21 @@ function _error_handler_ret(message)
     return debug.traceback(message, 2)
 end
 
+--------------------------------------------------------------------------------
+-- This is the error handler used for reporting coroutine errors.
+function _co_error_handler(co, message)
+    local trace = settings.get("lua.traceback_on_error")
+    if trace then
+        print(debug.traceback(co, message, 2))
+    end
+    if _can_pause and settings.get("lua.break_on_error") then
+        pause("break on error: "..message)
+    end
+    if not trace then
+        print(message)
+    end
+end
+
 
 
 --------------------------------------------------------------------------------
