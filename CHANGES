@@ -4,7 +4,7 @@
 
 #### v1.3.34
 
-- Fixed the updater when there are PowerShell problems that cause internal errors every time PowerShell is launched, which are unrelated to Clink's use of PowerShell.
+- Fixed the updater when there are PowerShell configuration problems that cause internal errors unrelated to Clink's use of PowerShell.
 
 #### v1.3.33
 
