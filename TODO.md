@@ -11,7 +11,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Some way to push keys?  (Push keys to Clink; not to other processes.)
 
 ## Low Priority
-- Is there some way to make `file:close()` safely yield after `io.popenyield()`?  Or to make a separate function that can yield?
 - Once in a while raw mouse input sequences spuriously show up in the edit line; have only noticed it when the CMD window did not have focus at the time.  _[Not fixed by bb870fc494.]_
 - `console.readinput()` changes the console state, and can interfere with proper line wrapping behavior.
 - Collecting words currently happens in update_internal, but probably it also belongs in alternative_matches and/or update_matches:
