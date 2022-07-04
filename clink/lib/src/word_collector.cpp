@@ -209,7 +209,7 @@ unsigned int word_collector::collect_words(const char* line_buffer, unsigned int
             // abstraction between collecting words and running argmatchers
             // breaks down here.
             //
-            // Rather that redesign the system or dream up a complex solution,
+            // Rather than redesign the system or dream up a complex solution,
             // we'll use a simple(ish) mitigation that works the vast majority
             // of the time because / and - are the only flag characters in
             // widespread use.
