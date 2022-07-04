@@ -188,6 +188,15 @@ unsigned int word_collector::collect_words(const char* line_buffer, unsigned int
             if (!token)
                 break;
 
+            // Plus sign is never a word break immediately after a space.
+            if (word_offset >= 2 &&
+                line_buffer[word_offset - 1] == '+' &&
+                line_buffer[word_offset - 2] == ' ')
+            {
+                word_offset--;
+                word_length++;
+            }
+
             word_offset += command.offset + doskey_len;
             const char* word_start = line_buffer + word_offset;
 
