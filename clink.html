@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.3.33</title>
+<title>Clink v1.3.34</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -798,7 +798,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.3.33</div>
+                <div id="title">Clink v1.3.34</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -6400,6 +6400,15 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1334">v1.3.34</h4>
+<ul>
+<li>Improved error reporting in <code>lua.debug</code> mode for coroutine failures.</li>
+<li>Fixed argmatcher flag definitions that begin with <code>+</code> (regression introduced in v1.3.11).</li>
+<li>Fixed the updater when there are PowerShell configuration problems that cause internal errors unrelated to Clink&#39;s use of PowerShell.</li>
+<li>Fixed potential coroutine failure if a <code>delayinit</code> argmatcher is still running after a new input line begins (regression introduced in v1.3.29).</li>
+<li>Fixed <code>os.getfileattributes()</code>, <code>os.isfile()</code>, and <code>os.isdir()</code> to fail as intended when the input includes a wildcard (regression introduced in v1.1.0).</li>
+<li>Fixed potential Lua error when typing a command name that included a wildcard, if the wildcard matched a file in a <code>completions</code> directory (regression introduced in v1.3.23, due to the <code>os.getfileattributes()</code> issue above).</li>
+</ul>
 <h4 id="v1333">v1.3.33</h4>
 <ul>
 <li>The <code>io.popenyield()</code> function now also returns a function that can be used to get the exit status from the command.</li>
