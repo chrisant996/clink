@@ -119,8 +119,14 @@ local function do_delayed_init(list, matcher, arg_index)
             local addees = list.delayinit(matcher, arg_index)
             matcher:_add(list, addees)
             -- Mark the init callback as finished.
-            matcher._init_coroutine[arg_index] = nil
-            _clear_delayinit_coroutine[matcher][arg_index] = nil
+            local mic = matcher._init_coroutine
+            if mic then -- Avoid error if argmatcher was reset in the meantime.
+                mic[arg_index] = nil
+            end
+            local cdc = _clear_delayinit_coroutine[matcher]
+            if cdc then -- It may have been cleared by a new edit session.
+                cdc[arg_index] = nil
+            end
             list.delayinit = nil
             -- If originally started from not-main, then reclassify.
             if async_delayinit then
