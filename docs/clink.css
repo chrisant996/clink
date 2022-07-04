@@ -110,11 +110,11 @@ kbd {
     white-space:nowrap;
 }
 
-#content td:nth-child(1):not(.lmtd) {
+#content table:not(.linkmenu) td:nth-child(1) {
     white-space: nowrap;
 }
 
-#content td:nth-child(1):not(.lmtd) code {
+#content table:not(.linkmenu) td:nth-child(1) code {
     border: none;
     padding: 0 0 0 0;
     border-radius: 0;
@@ -125,10 +125,6 @@ kbd {
     border: none;
     background-color: transparent;
     margin-left: 2rem;
-}
-
-.lmtd {
-    padding-right: 1rem;
 }
 
 .section {
@@ -177,7 +173,7 @@ kbd {
     background-color: #eee;
 }
 
-#content td:not(.lmtd), #content th {
+#content table:not(.linkmenu) td, #content th {
     vertical-align: text-top;
     padding: 0.2rem 0.5rem;
 }
@@ -186,16 +182,20 @@ kbd {
     background-color: #fff;
 }
 
-#content td:not(.lmtd) {
+#content table:not(.linkmenu) td {
     border: 1px solid #ddd;
 }
 
-#content tr:nth-child(odd):not(.lmtr) {
+#content table:not(.linkmenu) tr:nth-child(odd) {
     background-color: #fbfbfb;
 }
 
-#content tr:nth-child(even):not(.lmtr) {
+#content table:not(.linkmenu) tr:nth-child(even) {
     background-color: #fff;
+}
+
+#content table.linkmenu td {
+    padding-right: 1rem;
 }
 
 #content hr {
