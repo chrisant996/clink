@@ -8,6 +8,8 @@
 - Fixed argmatcher flag definitions that begin with `+` (regression introduced in v1.3.11).
 - Fixed the updater when there are PowerShell configuration problems that cause internal errors unrelated to Clink's use of PowerShell.
 - Fixed potential coroutine failure if a `delayinit` argmatcher is still running after a new input line begins (regression introduced in v1.3.29).
+- Fixed `os.getfileattributes()`, `os.isfile()`, and `os.isdir()` to fail as intended when the input includes a wildcard (regression introduced in v1.1.0).
+- Fixed potential Lua error when typing a command name that included a wildcard, if the wildcard matched a file in a `completions` directory (regression introduced in v1.3.23, due to the `os.getfileattributes()` issue above).
 
 #### v1.3.33
 
