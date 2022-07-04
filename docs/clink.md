@@ -211,7 +211,7 @@ Color | Description | Recommended
 `color.executable` | Apply color when the command is an executable file. | `clink set color.executable sgr 38;5;32`
 `color.unrecognized` | Apply color when the command is not recognized. | `clink set color.unrecognized sgr 38;5;203`
 
-See the [Clink Settings](#clink-settings) and [Color Settings](#color-settings) sections for more information on Clink settings.
+See the [Clink Settings](#clink-settings), [Color Settings](#color-settings), and [Coloring the Input Text](#classifywords) sections for more information on Clink color settings.
 
 <a name="gettingstarted_keybindings"></a>
 
@@ -322,7 +322,7 @@ Name                         | Default [*](#alternatedefault) | Description
 <a name="autosuggest_strategy"></a>`autosuggest.strategy` | `match_prev_cmd history completion` | This determines how suggestions are chosen.  The suggestion generators are tried in the order listed, until one provides a suggestion.  There are three built-in suggestion generators, and scripts can provide new ones.  `history` chooses the most recent matching command from the history.  `completion` chooses the first of the matching completions.  `match_prev_cmd` chooses the most recent matching command whose preceding history entry matches the most recently invoked command, but only when the `history.dupe_mode` setting is `add`.
 <a name="clink_autostart"></a>`clink.autostart` | | This command is automatically run when the first CMD prompt is shown after Clink is injected.  If this is blank (the default), then Clink instead looks for `clink_start.cmd` in the binaries directory and profile directory and runs them.  Set it to "nul" to not run any autostart command.
 `clink.autoupdate`           | True    | When enabled, Clink periodically checks for updates for the Clink program files (see [Automatic Updates](#automatic-updates)).
-`clink.colorize_input`       | True    | Enables context sensitive coloring for the input text (see [Coloring the Input Text](#classifywords)).
+<a name="clink_colorize_input"></a>`clink.colorize_input` | True | Enables context sensitive coloring for the input text (see [Coloring the Input Text](#classifywords)).
 <a name="default_bindings"></a>`clink.default_bindings` | `bash` [*](#alternatedefault) | Clink uses bash key bindings when this is set to `bash` (the default).  When this is set to `windows` Clink overrides some of the bash defaults with familiar Windows key bindings for <kbd>Tab</kbd>, <kbd>Ctrl</kbd>-<kbd>A</kbd>, <kbd>Ctrl</kbd>-<kbd>F</kbd>, <kbd>Ctrl</kbd>-<kbd>M</kbd>, and <kbd>Right</kbd>.
 `clink.gui_popups`           | False   | When set, Clink uses GUI popup windows instead console text popups.  The `color.popup` settings have no effect on GUI popup windows.
 `clink.logo`                 | `full`  | Controls what startup logo to show when Clink is injected.  `full` = show full copyright logo, `short` = show abbreviated version info, `none` = omit the logo.
@@ -335,21 +335,21 @@ Name                         | Default [*](#alternatedefault) | Description
 `cmd.auto_answer`            | `off`   | Automatically answers cmd.exe's "Terminate batch job (Y/N)?" prompts. `off` = disabled, `answer_yes` = answer Y, `answer_no` = answer N.
 <a name="ctrld_exits"></a>`cmd.ctrld_exits` | True | <kbd>Ctrl</kbd>-<kbd>D</kbd> exits the cmd.exe process when it is pressed on an empty line.
 `cmd.get_errorlevel`         | True    | When this is enabled, Clink runs a hidden `echo %errorlevel%` command before each interactive input prompt to retrieve the last exit code for use by Lua scripts.  If you experience problems, try turning this off.  This is on by default.
-`color.arg`                  |         | The color for arguments in the input line when `clink.colorize_input` is enabled.
+<a name="color_arg"></a>`color.arg` |  | The color for arguments in the input line when `clink.colorize_input` is enabled.
 `color.arginfo`              | `yellow` [*](#alternatedefault) | Argument info color.  Some argmatchers may show that some flags or arguments accept additional arguments, when listing possible completions.  This color is used for those additional arguments.  (E.g. the "dir" in a "-x dir" listed completion.)
-`color.argmatcher`           | [*](#alternatedefault) | The color for the command name in the input line when `clink.colorize_input` is enabled, if the command name has an argmatcher available.
+<a name="color_argmatcher"></a>`color.argmatcher` | [*](#alternatedefault) | The color for the command name in the input line when `clink.colorize_input` is enabled, if the command name has an argmatcher available.
 <a name="color_cmd"></a>`color.cmd` | `bold` [*](#alternatedefault) | Used when displaying shell (CMD.EXE) command completions, and in the input line when `clink.colorize_input` is enabled.
-`color.cmdredir`             | `bold` [*](#alternatedefault) | The color for redirection symbols (`<`, `>`, `>&`) in the input line when `clink.colorize_input` is enabled.
-`color.cmdsep`               | `bold` [*](#alternatedefault) | The color for command separaors (`&`, `|`) in the input line when `clink.colorize_input` is enabled.
+<a name="color_cmdredir"></a>`color.cmdredir` | `bold` [*](#alternatedefault) | The color for redirection symbols (`<`, `>`, `>&`) in the input line when `clink.colorize_input` is enabled.
+<a name="color_cmdsep"><a/>`color.cmdsep` | `bold` [*](#alternatedefault) | The color for command separators (`&`, `\|`) in the input line when `clink.colorize_input` is enabled.
 `color.comment_row`          | `bright white on cyan` [*](#alternatedefault) | The color for the comment row in the `clink-select-complete` command.  The comment row shows the "and <em>N</em> more matches" or "rows <em>X</em> to <em>Y</em> of <em>Z</em>" messages.
 `color.description`          | `bright cyan` [*](#alternatedefault) | Used when displaying descriptions for match completions.
 <a name="color_doskey"></a>`color.doskey` | `bright cyan` [*](#alternatedefault) | Used when displaying doskey alias completions, and in the input line when `clink.colorize_input` is enabled.
-`color.executable`           | [*](#alternatedefault) | When set, this is the color in the input line for a command word that is recognized as an executable file.
+<a name="color_executable"></a>`color.executable` | [*](#alternatedefault) | When set, this is the color in the input line for a command word that is recognized as an executable file when `clink.colorize_input` is enabled.
 <a name="color_filtered"></a>`color.filtered` | `bold` [*](#alternatedefault) | The default color for filtered completions (see [Filtering the Match Display](#filteringthematchdisplay)).
-`color.flag`                 | `default` [*](#alternatedefault) | The color for flags in the input line when `clink.colorize_input` is enabled.
+<a name="color_flag"></a>`color.flag` | `default` [*](#alternatedefault) | The color for flags in the input line when `clink.colorize_input` is enabled.
 <a name="color_hidden"></a>`color.hidden` | [*](#alternatedefault) | Used when displaying file completions with the "hidden" attribute.
 `color.horizscroll`          | [*](#alternatedefault) | The color for the `<` or `>` horizontal scroll indicators when Readline's `horizontal-scroll-mode` variable is set.
-`color.input`                | [*](#alternatedefault) | The color for input line text. Note that when `clink.colorize_input` is disabled, the entire input line is displayed using `color.input`.
+<a name="color_input"></a>`color.input` | [*](#alternatedefault) | The color for input line text. Note that when `clink.colorize_input` is disabled, the entire input line is displayed using `color.input`.
 `color.interact`             | `bold`  | The color for prompts such as a pager's `--More?--` prompt.
 `color.message`              | `default` | The color for the message area (e.g. the search prompt message, digit argument prompt message, etc).
 `color.popup`                |         | When set, this is used as the color for popup lists and messages.  If no color is set, then the console's popup colors are used (see the Properties dialog box for the console window).
@@ -357,10 +357,10 @@ Name                         | Default [*](#alternatedefault) | Description
 `color.prompt`               |         | When set, this is used as the default color for the prompt.  But it's overridden by any colors set by [Customizing The Prompt](#customisingtheprompt).
 <a name="color_readonly"></a>`color.readonly` | [*](#alternatedefault) | Used when displaying file completions with the "readonly" attribute.
 `color.selected_completion`  | [*](#alternatedefault) | The color for the selected completion with the `clink-select-complete` command.  If no color is set, then bright reverse video is used.
-`color.selection`            | [*](#alternatedefault) | The color for selected text in the input line.  If no color is set, then reverse video is used.
+`color.selection`            | [*](#alternatedefault) | The color for selected text in the input line (for example, when using <kbd>Shift</kbd>-Arrow keys).  If no color is set, then reverse video is used.
 <a name="color_suggestion"></a>`color.suggestion` | `bright black` [*](#alternatedefault) | The color for automatic suggestions when `autosuggest.enable` is enabled.
-`color.unexpected`           | `default` | The color for unexpected arguments in the input line when `clink.colorize_input` is enabled.
-`color.unrecognized`         |  [*](#alternatedefault) | When set, this is the color in the input line for a command word that is not recognized as a command, doskey macro, directory, argmatcher, or executable file.
+<a name="color_unexpected"></a>`color.unexpected` | `default` | The color for unexpected arguments in the input line when `clink.colorize_input` is enabled.
+<a name="color_unrecognized"></a>`color.unrecognized` |  [*](#alternatedefault) | When set, this is the color in the input line for a command word that is not recognized as a command, doskey macro, directory, argmatcher, or executable file.
 `debug.log_terminal`         | False   | Logs all terminal input and output to the clink.log file.  This is intended for diagnostic purposes only, and can make the log file grow significantly.
 `doskey.enhanced`            | True    | Enhanced Doskey adds the expansion of macros that follow `\|` and `&` command separators and respects quotes around words when parsing `$1`...`$9` tags. Note that these features do not apply to Doskey use in Batch files.
 `exec.aliases`               | True    | When matching executables as the first word (`exec.enable`), include doskey aliases.
@@ -429,7 +429,7 @@ Name                         | Default [*](#alternatedefault) | Description
 
 ### Friendly Color Names
 
-The Clink color settings use the following syntax:
+The Clink color [settings](#clinksettings) are the ones whose names begin with `color.`.  Color settings use the following syntax:
 
 <code>[<span class="arg">attributes</span>] [<span class="arg">foreground_color</span>] [on [<span class="arg">background_color</span>]]</code>
 
@@ -1900,13 +1900,71 @@ With the shorthand form flags are implied rather than declared.  When a shorthan
 
 ## Coloring the Input Text
 
-When the `clink.colorize_input` [setting](#clinksettings) is enabled, [argmatcher](#argumentcompletion) automatically apply colors to the input text by parsing it.
+When the <code><a href="#clink_colorize_input">clink.colorize_input</a></code> setting is disabled, then the entire input line is colored by the <code><a href="#color_input">color.input</a></code> setting.  When the setting is enabled, then [argmatchers](#argumentcompletion) automatically apply colors to the input text as they parse it.
 
-It's possible for an argmatcher to provide a function to override how its arguments are colored.  This function is called once for each of the argmatcher's arguments.
+It's possible for an argmatcher to provide a function to [override how its arguments are colored](#classier_override_arguments).  This function is called once for each of the argmatcher's arguments.
 
-It's also possible to register a classifier function for the whole input line.  This function is very similar to a match generator; classifier functions are called in priority order, and a classifier can choose to stop the classification process.
+It's also possible to register a classifier function for [the whole input line](#classier_override_line).  This function is very similar to a match generator; classifier functions are called in priority order, and a classifier can choose to stop the classification process.
+
+### Coloring the Command Word
+
+The command word is colored based on the command type, in priority order:
+
+1. Commands that have an argmatcher defined use <code><a href="#color_argmatcher">color.argmatcher</a></code>.
+2. Built-in CMD commands use <code><a href="#color_cmd">color.cmd</a></code>.
+3. Doskey aliases use <code><a href="#color_doskey">color.doskey</a></code>.
+4. Recognized executable files use <code><a href="#color_executable">color.executable</a></code> if it is set.
+5. Unrecognized command words use <code><a href="#color_unrecognized">color.unrecognized</a></code> if it is set.
+6. If none of the above apply, then <code><a href="#color_input">color.input</a></code> is used.
+
+Here are examples, using the colors from the [Use enhanced defaults](#gettingstarted_enhanceddefaults) installation option:
+
+<pre style="border-radius:initial;border:initial"><code class="plaintext" style="background-color:black"><table class="console" cellpadding=0 cellspacing=0>
+<tr><td><span style="color:#c0c0c0">c:\dir></span><span style="color:#00d700">clink</span></td><td style="color:#d7d7d7;text-align:right"><em>'clink' has an argmatcher</em></td></tr>
+<tr><td><span style="color:#c0c0c0">c:\dir></span><span style="color:#ffffff">attrib</span></td><td style="color:#d7d7d7;text-align:right"><em>'attrib' is a CMD command</em></td></tr>
+<tr><td><span style="color:#c0c0c0">c:\dir></span><span style="color:#5fafff">myalias</span></td><td style="color:#d7d7d7;text-align:right"><em>if 'myalias' is a doskey alias</em></td></tr>
+<tr><td><span style="color:#c0c0c0">c:\dir></span><span style="color:#0087ff">control</span></td><td style="color:#d7d7d7;text-align:right"><em>'control' is an executable</em></td></tr>
+<tr><td><span style="color:#c0c0c0">c:\dir></span><span style="color:#ff5f5f">xyzabc123</span></td><td style="color:#d7d7d7;text-align:right"><em>unrecognized</em></td></tr>
+<tr><td><span style="color:#c0c0c0">c:\dir></span><span style="color:#ffd787">whatever</span></td><td style="color:#d7d7d7;text-align:right"><em>if executable and unrecognized colors are not set</em></td></tr>
+</table></code></pre>
+
+### Coloring Command Separators and Redirection
+
+Command separators and redirection are colored accordingly:
+
+- Command separators use <code><a href="#color_cmdsep">color.cmdsep</a></code>.
+- Redirection symbols use <code><a href="#color_cmdredir">color.cmdredir</a></code>.
+- Redirected files use <code><a href="#color_input">color.input</a></code>.
+
+Here are examples, using the colors from the [Use enhanced defaults](#gettingstarted_enhanceddefaults) installation option:
+
+<pre style="border-radius:initial;border:initial"><code class="plaintext" style="background-color:black"><table class="console" cellpadding=0 cellspacing=0>
+<tr><td><span style="color:#c0c0c0">c:\dir></span><span style="color:#ffffff">pushd</span> <span style="color:#ffaf00">&</span> <span style="color:#ffffff">popd</span></td><td style="color:#d7d7d7;text-align:right"><em>'&' is the command separator</em></td></tr>
+<tr><td><span style="color:#c0c0c0">c:\dir></span><span style="color:#ffffff">set</span> <span style="color:#d78700">&gt;</span><span style="color:#ffd787">file</span></td><td style="color:#d7d7d7;text-align:right"><em>redirecting 'set' to 'file'</em></td></tr>
+</table></code></pre>
+
+### Coloring Other Input Text
+
+Other input words are colored based on how argmatchers parse the input text.
+
+- If an argmatcher isn't defined for a command, then the input text is colored using <code><a href="#color_input">color.input</a></code>.
+- Flags defined by the command's argmatcher use <code><a href="#color_flag">color.flag</a></code>.
+- Arguments defined by the command's argmatcher use <code><a href="#color_arg">color.arg</a></code>.
+- Text the goes past what the command's argmatcher expects uses <code><a href="#color_unexpected">color.unexpected</a></code>.
+
+Here are examples, using the colors from the [Use enhanced defaults](#gettingstarted_enhanceddefaults) installation option:
+
+<pre style="border-radius:initial;border:initial"><code class="plaintext" style="background-color:black"><table class="console" cellpadding=0 cellspacing=0>
+<tr><td><span style="color:#c0c0c0">c:\dir></span><span style="color:#00d700">clink</span> <span style="color:#87d7ff">--help</span></td><td style="color:#d7d7d7;text-align:right"><em>'--help' is defined as a flag for 'clink'</em></td></tr>
+<tr><td><span style="color:#c0c0c0">c:\dir></span><span style="color:#00d700">clink</span> <span style="color:#ffffff">set</span></td><td style="color:#d7d7d7;text-align:right"><em>'set' is defined as an argument for 'clink'</em></td></tr>
+<tr><td><span style="color:#c0c0c0">c:\dir></span><span style="color:#00d700">clink</span> <span style="color:#ffffff">set</span> <span style="color:#ffffff">color.arg</span></td><td style="color:#d7d7d7;text-align:right"><em>'color.arg' is defined as an argument for 'clink set'</em></td></tr>
+<tr><td><span style="color:#c0c0c0">c:\dir></span><span style="color:#00d700">clink</span> <span style="color:#ffffff">set</span> <span style="color:#c0c0c0">abc.xyz</span></td><td style="color:#d7d7d7;text-align:right"><em>'abc.xyz' is not a recognized argument for 'clink set'</em></td></tr>
+<tr><td><span style="color:#c0c0c0">c:\dir></span><span style="color:#0087ff">findstr</span> <span style="color:#ffd787">/s needle haystack\*</span></td><td style="color:#d7d7d7;text-align:right"><em>if 'findstr' has no argmatcher, all words use 'color.input'</em></td></tr>
+</table></code></pre>
 
 ### More Advanced Stuff
+
+<a name="classier_override_arguments"></a>
 
 #### Setting a classifier function in an argmatcher
 
@@ -1919,6 +1977,8 @@ The `clink set` command has different syntax depending on the setting type, so t
 ```lua
 #INCLUDE [docs\examples\ex_classify_samp.lua]
 ```
+
+<a name="classier_override_line"></a>
 
 #### Setting a classifier function for the whole input line
 

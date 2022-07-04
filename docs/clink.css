@@ -127,6 +127,13 @@ kbd {
     margin-left: 2rem;
 }
 
+.console {
+    border: none;
+    background-color: transparent;
+    margin-left: 0;
+    width: 100%;
+}
+
 .section {
 }
 
@@ -161,7 +168,7 @@ kbd {
     clear: both;
 }
 
-#content table:not(.linkmenu) {
+#content table:not(.linkmenu,.console) {
     font-size: 1rem;
     margin: auto 5%;
     border-collapse: collapse;
@@ -182,15 +189,15 @@ kbd {
     background-color: #fff;
 }
 
-#content table:not(.linkmenu) td {
+#content table:not(.linkmenu,.console) td {
     border: 1px solid #ddd;
 }
 
-#content table:not(.linkmenu) tr:nth-child(odd) {
+#content table:not(.linkmenu,.console) tr:nth-child(odd) {
     background-color: #fbfbfb;
 }
 
-#content table:not(.linkmenu) tr:nth-child(even) {
+#content table:not(.linkmenu,.console) tr:nth-child(even) {
     background-color: #fff;
 }
 
