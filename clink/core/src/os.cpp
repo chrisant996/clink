@@ -233,13 +233,28 @@ void set_shellname(const wchar_t* shell_name) { s_shell_name = shell_name; }
 const wchar_t* get_shellname() { return s_shell_name; }
 
 //------------------------------------------------------------------------------
+static bool has_wildcard(const wchar_t* path)
+{
+    if (!path)
+        return false;
+    for (; *path; ++path)
+    {
+        if (*path == '*' || *path == '?')
+            return true;
+    }
+    return false;
+}
+
+//------------------------------------------------------------------------------
 DWORD get_file_attributes(const wchar_t* path)
 {
     // FindFirstFileW can handle cases that GetFileAttributesW can't (e.g. files
     // open exclusively, some hidden/system files in the system root directory).
     // But it can't handle a root directory, so if the incoming path ends with a
     // separator then use GetFileAttributesW instead.
-    if (*path && path::is_separator(path[wcslen(path) - 1]))
+    if (!*path ||
+        path::is_separator(path[wcslen(path) - 1]) ||
+        has_wildcard(path))
     {
         DWORD attr = GetFileAttributesW(path);
         if (attr == INVALID_FILE_ATTRIBUTES)
