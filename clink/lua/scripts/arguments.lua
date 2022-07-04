@@ -1733,6 +1733,10 @@ end
 
 --------------------------------------------------------------------------------
 local function attempt_load_argmatcher(command_word)
+    if not command_word or command_word == "" then
+        return
+    end
+
     -- Make sure scripts aren't loaded multiple times.
     loaded_argmatchers[command_word] = 1 -- Attempted.
 
@@ -1790,7 +1794,7 @@ end
 -- directories.  If found, the script is loaded, and it checks again whether an
 -- argmatcher is already loaded for the specified word.
 local function _has_argmatcher(command_word)
-    if command_word == "" then
+    if not command_word or command_word == "" then
         return
     end
 
@@ -1881,6 +1885,10 @@ local function _find_argmatcher(line_state, check_existence, lookup)
     end
 
     local command_word = lookup or line_state:getword(command_word_index)
+    if not command_word or command_word == "" then
+        return
+    end
+
     local argmatcher = _has_argmatcher(command_word)
     if argmatcher then
         if check_existence then
@@ -1902,7 +1910,7 @@ local function _find_argmatcher(line_state, check_existence, lookup)
                 -- because the cost/benefit ratio is unappealing.
                 alias = alias:gsub("%$.*$", "")
                 local words = string.explode(alias, " \t", '"')
-                if #words > 0 then
+                if words[1] then
                     argmatcher = _has_argmatcher(words[1])
                     if argmatcher then
                         if check_existence then
