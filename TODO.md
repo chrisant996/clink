@@ -7,11 +7,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
-- Consider argmatcher scenarios:
-  - Doskey alias `dir=filestat`, with argmatcher explicitly defined for `filestat`.
-  - Delayinit argmatcher for `dir`, the built-in command.
-  - If `dir` is first mapped to the `filestat` argmatcher, then it always uses the `filestat` argmatcher even when the command word will not be expanded as a doskey alias.
-  - If `dir` is first mapped to the built-in command's delayinit argmatcher, then it always that argmatcher even when `dir` will be expanded as a doskey alias.  However, this might be unavoidable without a smart delayinit argmatcher that can switch between them dynamically.
 - Some way to have e.g. multiple separate `ut` argmatchers that are associated with different `ut` program paths.
 - Some way to push keys?  (Push keys to Clink; not to other processes.)
 
