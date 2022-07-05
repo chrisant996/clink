@@ -1706,19 +1706,25 @@ local function add_dirs_from_var(t, var, subdir)
 end
 
 --------------------------------------------------------------------------------
-local function get_completion_dirs()
-    local dirs = {}
+local _completion_dirs_str = ""
+local _completion_dirs_list = {}
+function clink._set_completion_dirs(str)
+    if str ~= _completion_dirs_str then
+        local dirs = {}
 
-    add_dirs_from_var(dirs, os.getenv("CLINK_COMPLETIONS_DIR"), false)
+        _completion_dirs_str = str
+        _completion_dirs_list = dirs
 
-    if not add_dirs_from_var(dirs, settings.get("clink.path"), true) then
-        add_dirs_from_var(dirs, os.getenv("=clink.bin"), true)
-        add_dirs_from_var(dirs, os.getenv("=clink.profile"), true)
+        add_dirs_from_var(dirs, os.getenv("CLINK_COMPLETIONS_DIR"), false)
+        for _,d in ipairs(string.explode(str, " ", '"')) do
+            add_dirs_from_var(dirs, d, true)
+        end
     end
+end
 
-    add_dirs_from_var(dirs, os.getenv("CLINK_PATH"), true)
-
-    return dirs
+--------------------------------------------------------------------------------
+local function get_completion_dirs()
+    return _completion_dirs_list
 end
 
 --------------------------------------------------------------------------------

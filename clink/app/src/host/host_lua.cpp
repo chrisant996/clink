@@ -69,11 +69,26 @@ host_lua::operator input_idle* ()
 //------------------------------------------------------------------------------
 void host_lua::load_scripts()
 {
+    // Load scripts.
     str<280> script_path;
     app_context::get()->get_script_path(script_path);
     load_scripts(script_path.c_str());
     m_prev_script_path = script_path.c_str();
     clear_force_reload_scripts();
+
+    // Set the script paths so argmatchers can be loaded from completion dirs.
+    {
+        lua_State* state = m_state.get_state();
+        save_stack_top ss(state);
+
+        lua_getglobal(state, "clink");
+        lua_pushliteral(state, "_set_completion_dirs");
+        lua_rawget(state, -2);
+
+        lua_pushlstring(state, script_path.c_str(), script_path.length());
+
+        m_state.pcall(1, 0);
+    }
 }
 
 //------------------------------------------------------------------------------

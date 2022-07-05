@@ -381,8 +381,11 @@ local update = clink.argmatcher()
 
 --------------------------------------------------------------------------------
 local installscripts = clink.argmatcher()
-:addflags("--help")
-:adddescriptions({["--help"] = "Show help"})
+:addflags("--help", "--list")
+:adddescriptions({
+    ["--help"] = "Show help",
+    ["--list"] = "List all installed script paths",
+})
 :addarg(clink.dirmatches)
 :nofiles()
 
@@ -397,8 +400,12 @@ end
 
 --------------------------------------------------------------------------------
 local uninstallscripts = clink.argmatcher()
-:addflags("--help")
-:adddescriptions({["--help"] = "Show help"})
+:addflags("--help", "--list", "--all")
+:adddescriptions({
+    ["--help"] = "Show help",
+    ["--list"] = "List all installed script paths",
+    ["--all"] = "Uninstall all installed script paths",
+})
 :addarg(uninstall_handler)
 :nofiles()
 
