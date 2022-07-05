@@ -1369,12 +1369,7 @@ For example, if you type `xyz` and an argmatcher for `xyz` is not yet loaded, th
 
 Clink looks for completion scripts in these directories:
 1. Any directories listed in the `%CLINK_COMPLETIONS_DIR%` environment variable (multiple directories may be separated by semicolons).
-2. If the <code><a href="#clink_dot_path">clink.path</a></code> setting is set, then:
-   - A `completions` subdirectory under each directory in the setting (multiple directories may be separated by semicolons).
-3. If the `clink.path` setting is not set, then:
-   - If the Clink program directory has a `completions` subdirectory, it is searched next (e.g. `C:\tools\clink\completions`).
-   - If the Clink profile directory has a `completions` subdirectory, it is searched next (e.g. `C:\Users\me\AppData\Local\clink\completions`).
-4. A `completions` subdirectory under each directory listed in the `%CLINK_PATH%` environment variable (multiple directories may be separated by semicolons).
+2. A `completions` subdirectory under each scripts directory listed by `clink info` (see [Location of Lua Scripts](#lua-scripts-location)).
 
 > **Note:**  If a script defines more than an argmatcher, then putting it in a completions directory may cause its other functionality to not work until a command is typed with the same name as the script.  For example, if a script in a completions directory defines an argmatcher and also a prompt filter, the prompt filter won't be loaded until the corresponding command name is typed.  Whether that is desirable depends on the script and on your preference.
 
