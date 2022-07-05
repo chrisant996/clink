@@ -1713,7 +1713,7 @@ local function get_completion_dirs()
 
     if not add_dirs_from_var(dirs, settings.get("clink.path"), true) then
         add_dirs_from_var(dirs, os.getenv("=clink.bin"), true)
-        add_dirs_from_var(dirs, os.getenv("=clink.profile", true))
+        add_dirs_from_var(dirs, os.getenv("=clink.profile"), true)
     end
 
     add_dirs_from_var(dirs, os.getenv("CLINK_PATH"), true)
