@@ -5,6 +5,7 @@
 #### v1.3.35
 
 - Fixed finding a `completions` directory under the profile directory.
+- Fixed finding a `completions` directory under script directories set via `clink installscripts`.
 
 #### v1.3.34
 
