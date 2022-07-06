@@ -127,11 +127,19 @@ inline bool sort_worker(wstr_base& l, match_type l_type,
     }
 
     // Sort next by the strings.
-    cmp = CompareStringW(LOCALE_USER_DEFAULT, flags,
-                            l_str, l.length(),
-                            r_str, r.length());
+    cmp = CompareStringW(LOCALE_USER_DEFAULT, flags, l_str, l.length(), r_str, r.length());
     cmp -= CSTR_EQUAL;
     if (cmp) return (cmp < 0);
+
+    // If case insensitive sort, then compare again as case sensitive, for
+    // consistent ordering.
+    if (flags & LINGUISTIC_IGNORECASE)
+    {
+        flags &= ~LINGUISTIC_IGNORECASE;
+        cmp = CompareStringW(LOCALE_USER_DEFAULT, flags, l_str, l.length(), r_str, r.length());
+        cmp -= CSTR_EQUAL;
+        if (cmp) return (cmp < 0);
+    }
 
     // Finally sort by type (dir, alias, command, word, arg, file).
     unsigned char t1 = ((unsigned char)l_type) & MATCH_TYPE_MASK;
