@@ -6,6 +6,7 @@
 
 - Fixed finding a `completions` directory under the profile directory.
 - Fixed finding a `completions` directory under script directories set via `clink installscripts`.
+- Fixed consistent sort order for completion matches that differ only by case.
 
 #### v1.3.34
 
