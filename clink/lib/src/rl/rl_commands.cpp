@@ -2120,5 +2120,6 @@ int force_reload_scripts()
     s_force_reload_scripts = true;
     if (g_result)
         g_result->done(true); // Force a new edit line so scripts can be reloaded.
+    readline_internal_teardown(true);
     return rl_re_read_init_file(0, 0);
 }
