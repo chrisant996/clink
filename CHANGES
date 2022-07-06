@@ -7,6 +7,7 @@
 - Fixed finding a `completions` directory under the profile directory.
 - Fixed finding a `completions` directory under script directories set via `clink installscripts`.
 - Fixed consistent sort order for completion matches that differ only by case.
+- Fixed `undo` (<kbd>Ctrl</kbd>-<kbd>z</kbd>) after using `clink-reload` (<kbd>Ctrl</kbd>-</kbd>x</kbd>,<kbd>Ctrl</kbd>-<kbd>r</kbd>).  This also fixes `rl.ismodifiedline()` after `clink-reload`, which was causing clink-flex-prompt to show a modmark after `clink-reload`.
 
 #### v1.3.34
 
