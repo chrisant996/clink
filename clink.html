@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.3.34</title>
+<title>Clink v1.3.35</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -798,7 +798,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.3.34</div>
+                <div id="title">Clink v1.3.35</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -3521,16 +3521,7 @@ C-_:                kill-line                       <span class="hljs-comment">#
 <p>Clink looks for completion scripts in these directories:</p>
 <ol>
 <li>Any directories listed in the <code>%CLINK_COMPLETIONS_DIR%</code> environment variable (multiple directories may be separated by semicolons).</li>
-<li>If the <code><a href="#clink_dot_path">clink.path</a></code> setting is set, then:<ul>
-<li>A <code>completions</code> subdirectory under each directory in the setting (multiple directories may be separated by semicolons).</li>
-</ul>
-</li>
-<li>If the <code>clink.path</code> setting is not set, then:<ul>
-<li>If the Clink program directory has a <code>completions</code> subdirectory, it is searched next (e.g. <code>C:\tools\clink\completions</code>).</li>
-<li>If the Clink profile directory has a <code>completions</code> subdirectory, it is searched next (e.g. <code>C:\Users\me\AppData\Local\clink\completions</code>).</li>
-</ul>
-</li>
-<li>A <code>completions</code> subdirectory under each directory listed in the <code>%CLINK_PATH%</code> environment variable (multiple directories may be separated by semicolons).</li>
+<li>A <code>completions</code> subdirectory under each scripts directory listed by <code>clink info</code> (see <a href="#lua-scripts-location">Location of Lua Scripts</a>).</li>
 </ol>
 <blockquote>
 <p><strong>Note:</strong>  If a script defines more than an argmatcher, then putting it in a completions directory may cause its other functionality to not work until a command is typed with the same name as the script.  For example, if a script in a completions directory defines an argmatcher and also a prompt filter, the prompt filter won&#39;t be loaded until the corresponding command name is typed.  Whether that is desirable depends on the script and on your preference.</p>
@@ -6400,6 +6391,17 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1335">v1.3.35</h4>
+<ul>
+<li>Fixed finding a <code>completions</code> directory under the profile directory.</li>
+<li>Fixed finding a <code>completions</code> directory under script directories set via <code>clink installscripts</code>.</li>
+<li>Fixed <code>clink.refilterprompt()</code> when the prompt wraps past the edge of the screen and a right-sided prompt string is present.</li>
+<li>Fixed <code>rl.getpromptinfo()</code> when the prompt wraps past the edge of the screen (the <code>promptline</code> and <code>inputline</code> fields were inaccurate).</li>
+<li>Fixed consistent sort order for completion matches that differ only by case.</li>
+<li>Fixed <code>undo</code> (<kbd>Ctrl</kbd>-<kbd>z</kbd>) after using <code>clink-reload</code> (<kbd>Ctrl</kbd>-</kbd>x</kbd>,<kbd>Ctrl</kbd>-<kbd>r</kbd>).  This also fixes <code>rl.ismodifiedline()</code> after <code>clink-reload</code>, which was causing clink-flex-prompt to show a modmark after <code>clink-reload</code>.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/321">#321</a>; incremental search not working in the <code>clink-popup-history</code> command (regression introduced in v1.3.19).</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/320">#320</a>; prompt becomes garbled when prompt is updated by async prompt filters and wraps past the edge of the screen and a right-sided prompt string is present.</li>
+</ul>
 <h4 id="v1334">v1.3.34</h4>
 <ul>
 <li>Improved error reporting in <code>lua.debug</code> mode for coroutine failures.</li>
