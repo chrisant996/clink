@@ -616,7 +616,7 @@ find:
                 {
                     m_index = i;
                     if (m_index < m_top || m_index >= m_top + m_visible_rows)
-                        m_top = max<int>(0, min<int>(m_index, m_count - m_visible_rows));
+                        m_top = max<int>(0, min<int>(m_index - (m_visible_rows / 2), m_count - m_visible_rows));
                     m_prev_displayed = -1;
                     need_display = true;
                     break;
