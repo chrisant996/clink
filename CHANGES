@@ -5,6 +5,9 @@
 #### v1.3.36
 
 - Incremental search in `clink-popup-history` now centers the found item if it is scrolled out of view.
+- Tilde expansion is supported for all Lua script directory names and for the `%CLINK_PROFILE%` environment variable (but there is a quirk, and for the profile directory tilde expands to `%LOCALAPPDATA%` for backward compatibility purposes).
+- Fixed some tilde expansion issues; quotes weren't always recognized, and embedded tildes could in some cases result in malformed paths.
+- Fixed semicolon delimiter in `%CLINK_COMPLETIONS_DIR%`.
 
 #### v1.3.35
 
