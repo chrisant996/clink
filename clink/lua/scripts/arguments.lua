@@ -1716,7 +1716,7 @@ function clink._set_completion_dirs(str)
         _completion_dirs_list = dirs
 
         add_dirs_from_var(dirs, os.getenv("CLINK_COMPLETIONS_DIR"), false)
-        for _,d in ipairs(string.explode(str, " ", '"')) do
+        for _,d in ipairs(string.explode(str, ";", '"')) do
             add_dirs_from_var(dirs, d, true)
         end
     end
