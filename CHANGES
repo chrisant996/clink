@@ -6,8 +6,11 @@
 
 - Fixed finding a `completions` directory under the profile directory.
 - Fixed finding a `completions` directory under script directories set via `clink installscripts`.
+- Fixed `clink.refilterprompt()` when the prompt wraps past the edge of the screen and a right-sided prompt string is present.
+- Fixed `rl.getpromptinfo()` when the prompt wraps past the edge of the screen (the `promptline` and `inputline` fields were inaccurate).
 - Fixed consistent sort order for completion matches that differ only by case.
 - Fixed `undo` (<kbd>Ctrl</kbd>-<kbd>z</kbd>) after using `clink-reload` (<kbd>Ctrl</kbd>-</kbd>x</kbd>,<kbd>Ctrl</kbd>-<kbd>r</kbd>).  This also fixes `rl.ismodifiedline()` after `clink-reload`, which was causing clink-flex-prompt to show a modmark after `clink-reload`.
+- Fixed [#320](https://github.com/chrisant996/clink/issues/320); prompt becomes garbled when prompt is updated by async prompt filters and wraps past the edge of the screen and a right-sided prompt string is present.
 
 #### v1.3.34
 
