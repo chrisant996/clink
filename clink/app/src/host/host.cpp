@@ -941,7 +941,7 @@ skip_errorlevel:
 
     // Initialize history before filtering the prompt, so that the Lua history
     // APIs can work.
-    history_db* history = history_database::get();
+    history_database* history = history_database::get();
     if (init_history)
     {
         if (history &&
