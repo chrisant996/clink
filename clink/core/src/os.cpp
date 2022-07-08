@@ -367,10 +367,9 @@ bool make_dir(const char* dir)
     if (type == path_type_dir)
         return true;
 
-    str<> next;
-    path::get_directory(dir, next);
+    str<> next(dir);
 
-    if (!next.empty() && !path::is_root(next.c_str()))
+    if (path::to_parent(next, nullptr)  && !path::is_root(next.c_str()))
         if (!make_dir(next.c_str()))
             return false;
 
