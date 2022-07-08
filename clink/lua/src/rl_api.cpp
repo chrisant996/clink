@@ -47,18 +47,17 @@ bool collapse_tilde(const char* in, str_base& out, bool force)
     if (expand_tilde && !force)
         return false;
 
-    char *tilde = tilde_expand("~");
-    if (!tilde)
+    str_moveable tilde;
+    if (!path::tilde_expand("~", tilde))
         return false;
 
-    int tilde_len = int(strlen(tilde));
-    int j = str_compare(in, tilde);
-    free(tilde);
-
-    if (j >= 0 && j != tilde_len)
+    str_iter in_iter(in);
+    str_iter tilde_iter(tilde.c_str());
+    int j = str_compare(in_iter, tilde_iter);
+    if (j >= 0 && in_iter.more())
         return false;
 
-    out.format("~%s", in + tilde_len);
+    out.format("~%s", in_iter.get_pointer());
     return true;
 }
 
@@ -157,15 +156,30 @@ static int collapse_tilde(lua_State* state)
 /// -show:  end
 static int expand_tilde(lua_State* state)
 {
-    const char* path = checkstring(state, 1);
-    if (!path)
+    const char* in = checkstring(state, 1);
+    if (!in)
         return 0;
 
-    char* expanded_path = tilde_expand(path);
-    bool expanded = expanded_path && strcmp(path, expanded_path) != 0;
-    lua_pushstring(state, expanded_path ? expanded_path : path);
+    // Strip all quotes.
+    const bool quote = (in[0] == '"');
+    str<> tmp;
+    for (const char* walk = in; *walk; ++walk)
+    {
+        if (*walk != '"')
+            tmp.concat(walk, 1);
+    }
+
+    str<> expanded_path;
+    bool expanded = tmp.c_str()[0] == '~' && path::tilde_expand(tmp.c_str(), expanded_path);
+
+    str<> out;
+    if (quote)
+        out << "\"";
+    out << (expanded ? expanded_path.c_str() : tmp.c_str());
+    if (quote)
+        out << "\"";
+    lua_pushstring(state, out.c_str());
     lua_pushboolean(state, expanded);
-    free(expanded_path);
     return 2;
 }
 

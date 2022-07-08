@@ -348,9 +348,17 @@ std::shared_ptr<match_builder_toolkit> make_match_builder_toolkit(int generation
 
 
 //------------------------------------------------------------------------------
+static char* __tilde_expand(const char* in)
+{
+    str_moveable tmp;
+    path::tilde_expand(in, tmp);
+    return tmp.detach();
+}
+
+//------------------------------------------------------------------------------
 matches_iter::matches_iter(const matches& matches, const char* pattern)
 : m_matches(matches)
-, m_expanded_pattern(pattern && rl_complete_with_tilde_expansion ? tilde_expand(pattern) : nullptr)
+, m_expanded_pattern(pattern && rl_complete_with_tilde_expansion ? __tilde_expand(pattern) : nullptr)
 , m_pattern((m_expanded_pattern ? m_expanded_pattern : pattern),
             (m_expanded_pattern ? m_expanded_pattern : pattern) ? -1 : 0)
 , m_has_pattern(pattern != nullptr)

@@ -389,22 +389,15 @@ void get_profile_path(const char* in, str_base& out)
         }
     }
 
-    os::get_current_dir(out);
-
-    if (in[0] == '~' && (!in[1] || path::is_separator(in[1])))
+    // QUIRK:  --profile expanded tilde to %HOME%\AppData\Local, so to keep
+    // older installations working upon upgrade, Clink is locked into that
+    // strange and inconsistent behavior.
+    if (!path::tilde_expand(in, out, true/*use_appdata_local*/))
     {
-        wchar_t dir[MAX_PATH];
-        if (SHGetFolderPathW(0, CSIDL_LOCAL_APPDATA, nullptr, 0, dir) == S_OK)
-        {
-            out = dir;
-            ++in;
-            while (path::is_separator(*in))
-                ++in;
-        }
+        os::get_current_dir(out);
+        path::append(out, in);
+        path::normalise(out);
     }
-
-    path::append(out, in);
-    path::normalise(out);
 
     _in = out.c_str();
     os::get_full_path_name(_in.c_str(), out);

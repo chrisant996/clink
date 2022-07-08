@@ -574,19 +574,15 @@ void line_editor_impl::update_matches()
 
         // Strip quotes so `"foo\"ba` can complete to `"foo\bar"`.  Stripping
         // quotes may seem surprising, but it's what CMD does and it works well.
-        str<> tmp;
+        str_moveable tmp;
         concat_strip_quotes(tmp, m_needle.c_str(), m_needle.length());
 
         bool just_tilde = false;
-        if (rl_complete_with_tilde_expansion)
+        if (rl_complete_with_tilde_expansion && tmp.c_str()[0] == '~')
         {
-            char* expanded = tilde_expand(tmp.c_str());
-            if (expanded && strcmp(tmp.c_str(), expanded) != 0)
-            {
-                just_tilde = (tmp.c_str()[0] == '~' && tmp.c_str()[1] == '\0');
-                tmp = expanded;
-            }
-            free(expanded);
+            just_tilde = !tmp.c_str()[1];
+            if (!path::tilde_expand(tmp))
+                just_tilde = false;
         }
 
         m_needle = tmp.c_str();

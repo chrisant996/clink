@@ -133,10 +133,12 @@ bool host_lua::load_scripts(const char* paths)
             }
         }
 
-        // Load a given directory only once.
-        tmp = token.c_str();
+        // Expand and normalize the directory.
+        path::tilde_expand(token.c_str(), tmp);
         path::normalise(tmp);
         path::maybe_strip_last_separator(tmp);
+
+        // Load a given directory only once.
         transform = tmp.c_str();
         str_transform(transform.c_str(), transform.length(), out, transform_mode::lower);
         if (seen.find(out.c_str()) != seen.end())
@@ -144,7 +146,7 @@ bool host_lua::load_scripts(const char* paths)
         seen.emplace(out.c_str());
         seen_strings.emplace_back(std::move(out));
 
-        load_script(token.c_str(), num_loaded, num_failed);
+        load_script(tmp.c_str(), num_loaded, num_failed);
     }
 
     if (num_failed)

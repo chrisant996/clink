@@ -1425,7 +1425,7 @@ static char** alternative_matches(const char* text, int start, int end)
     if (rl_completion_type == '?' && strcmp(text, "~") == 0)
         return nullptr;
 
-    str<> tmp;
+    str_moveable tmp;
     const char* pattern = nullptr;
     if (is_complete_with_wild())
     {
@@ -1434,15 +1434,11 @@ static char** alternative_matches(const char* text, int start, int end)
         concat_strip_quotes(tmp, text);
 
         bool just_tilde = false;
-        if (rl_complete_with_tilde_expansion)
+        if (rl_complete_with_tilde_expansion && tmp.c_str()[0] == '~')
         {
-            char* expanded = tilde_expand(tmp.c_str());
-            if (expanded && strcmp(tmp.c_str(), expanded) != 0)
-            {
-                just_tilde = (tmp.c_str()[0] == '~' && tmp.c_str()[1] == '\0');
-                tmp = expanded;
-            }
-            free(expanded);
+            just_tilde = !tmp.c_str()[1];
+            if (!path::tilde_expand(tmp))
+                just_tilde = false;
         }
 
         if (!is_literal_wild() && !just_tilde)

@@ -177,7 +177,7 @@ intercept_result intercept_directory(const char* line, str_base* out, bool only_
         return intercept_result::none;
 
     // Parse the input for a single token.
-    str<> tmp;
+    str_moveable tmp;
     if (!parse_line_token(tmp, line))
         return intercept_result::none;
 
@@ -227,17 +227,7 @@ intercept_result intercept_directory(const char* line, str_base* out, bool only_
         }
     }
 
-    // Tilde expansion.
-    if (tmp.first_of('~') >= 0)
-    {
-        char* expanded_path = tilde_expand(tmp.c_str());
-        if (expanded_path)
-        {
-            if (!tmp.equals(expanded_path))
-                tmp = expanded_path;
-            free(expanded_path);
-        }
-    }
+    path::tilde_expand(tmp);
 
     if (os::get_path_type(tmp.c_str()) != os::path_type_dir)
         return intercept_result::none;

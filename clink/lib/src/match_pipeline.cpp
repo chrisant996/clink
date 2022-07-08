@@ -258,12 +258,11 @@ void match_pipeline::restrict(str_base& needle) const
 {
     const int count = m_matches.get_info_count();
 
-    char* expanded = nullptr;
-    if (rl_complete_with_tilde_expansion)
+    str<> expanded;
+    if (rl_complete_with_tilde_expansion && needle.c_str()[0] == '~')
     {
-        expanded = tilde_expand(needle.c_str());
-        if (expanded && strcmp(needle.c_str(), expanded) != 0)
-            needle = expanded;
+        if (path::tilde_expand(needle.c_str(), expanded))
+            needle = expanded.c_str();
     }
 
     if (count)
@@ -294,8 +293,6 @@ void match_pipeline::restrict(str_base& needle) const
             break;
         }
     }
-
-    free(expanded);
 }
 
 //------------------------------------------------------------------------------
@@ -303,12 +300,11 @@ void match_pipeline::select(const char* needle) const
 {
     const int count = m_matches.get_info_count();
 
-    char* expanded = nullptr;
-    if (rl_complete_with_tilde_expansion)
+    str<> expanded;
+    if (rl_complete_with_tilde_expansion && needle[0] == '~')
     {
-        expanded = tilde_expand(needle);
-        if (expanded && strcmp(needle, expanded) != 0)
-            needle = expanded;
+        if (path::tilde_expand(needle, expanded))
+            needle = expanded.c_str();
     }
 
     if (count)
@@ -337,8 +333,6 @@ void match_pipeline::select(const char* needle) const
                m_matches.get_match_count());
     }
 #endif
-
-    free(expanded);
 }
 
 //------------------------------------------------------------------------------

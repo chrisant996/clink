@@ -5,6 +5,7 @@
 
 class str_base;
 class wstr_base;
+class str_moveable;
 
 //------------------------------------------------------------------------------
 namespace path
@@ -29,6 +30,8 @@ bool        get_name(const char* in, str_base& out);
 bool        get_name(const wchar_t* in, wstr_base& out);
 const char* get_name(const char* in);
 const wchar_t* get_name(const wchar_t* in);
+bool        tilde_expand(const char* in, str_base& out, bool use_appdata_local=false);
+bool        tilde_expand(str_moveable& in_out, bool use_appdata_local=false);
 bool        is_rooted(const char* path);
 bool        is_root(const char* path);
 bool        join(const char* lhs, const char* rhs, str_base& out);

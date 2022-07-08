@@ -11,6 +11,8 @@
 #include <string>
 #include <map>
 
+#include <Shlobj.h>
+
 //------------------------------------------------------------------------------
 struct ext_comparer
 {
@@ -359,6 +361,57 @@ const wchar_t* get_name(const wchar_t* in)
 #endif
 
     return in;
+}
+
+//------------------------------------------------------------------------------
+bool tilde_expand(const char* in, str_base& out, bool use_appdata_local)
+{
+    if (!in || in[0] != '~' || (in[1] && !is_separator(in[1])))
+    {
+        out = in;
+        return false;
+    }
+
+    if (use_appdata_local)
+    {
+        wstr<280> wlocal;
+        if (SHGetFolderPathW(0, CSIDL_LOCAL_APPDATA, nullptr, 0, wlocal.data()) == S_OK)
+        {
+            to_utf8(out, wlocal.c_str());
+        }
+        else
+        {
+            os::get_env("HOME", out);
+            path::append(out, "AppData\\Local");
+        }
+    }
+    else
+    {
+        os::get_env("HOME", out);
+    }
+
+    in++;
+    while (path::is_separator(*in))
+        ++in;
+
+    path::append(out, in);
+    path::normalise(out);
+    return true;
+}
+
+//------------------------------------------------------------------------------
+bool tilde_expand(str_moveable& in_out, bool use_appdata_local)
+{
+    const char* in = in_out.c_str();
+    if (!in || in[0] != '~' || (in[1] && !is_separator(in[1])))
+        return false;
+
+    str_moveable expanded;
+    if (!tilde_expand(in, expanded, use_appdata_local))
+        return false;
+
+    in_out = std::move(expanded);
+    return true;
 }
 
 //------------------------------------------------------------------------------

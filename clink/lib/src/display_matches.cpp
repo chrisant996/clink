@@ -729,6 +729,7 @@ int append_filename(char* to_print, const char* full_pathname, int prefix_bytes,
             }
             else
                 dn = full_pathname;
+            // BUGBUG: path::tilde_expand() would behave more correctly.
             s = tilde_expand(dn);
             if (rl_directory_completion_hook)
                 (*rl_directory_completion_hook)(&s);
@@ -772,6 +773,7 @@ int append_filename(char* to_print, const char* full_pathname, int prefix_bytes,
         }
         else
         {
+            // BUGBUG: path::tilde_expand() would behave more correctly.
             s = tilde_expand(full_pathname);
 #if defined(VISIBLE_STATS)
             if (rl_visible_stats)
@@ -809,6 +811,7 @@ int append_filename(char* to_print, const char* full_pathname, int prefix_bytes,
 #if defined(COLOR_SUPPORT)
             if (_rl_colored_stats && extension_char == rl_preferred_path_separator)
             {
+                // BUGBUG: path::tilde_expand() would behave more correctly.
                 s = tilde_expand(full_pathname);
                 if (!selected)
                     append_colored_stat_start(s, type);

@@ -1694,7 +1694,7 @@ local function add_dirs_from_var(t, var, subdir)
     if var and var ~= "" then
         local dirs = string.explode(var, ";", '"')
         for _,d in ipairs(dirs) do
-            d = d:gsub('"', "")
+            d = rl.expandtilde(d:gsub('"', ""))
             if subdir then
                 d = path.join(d, "completions")
             end
