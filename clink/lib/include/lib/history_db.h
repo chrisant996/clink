@@ -135,6 +135,7 @@ public:
 
 private:
     friend                      class read_line_iter;
+    bool                        is_valid() const;
     void                        get_file_path(str_base& out, bool session) const;
     void                        load_internal();
     void                        reap();
@@ -145,7 +146,7 @@ private:
     bank_handles                get_bank(unsigned int index) const;
     bool                        remove_internal(line_id id, bool guard_ctag);
     void                        make_open_error(str_base* error_message, unsigned char bank) const;
-    void*                       m_alive_file;
+    void*                       m_alive_file = nullptr;
     str_moveable                m_path;
     int                         m_id;
     bank_handles                m_bank_handles[bank_count];

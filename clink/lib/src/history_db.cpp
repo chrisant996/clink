@@ -469,7 +469,8 @@ template <typename T> int read_lock::for_each_removal(const read_lock& target, T
 #ifdef DEBUG
         {
             char sz[MAX_PATH];
-            GetFinalPathNameByHandle(verify_handles.m_handle_lines, sz, sizeof_array(sz), 0);
+            DWORD path_len = GetFinalPathNameByHandle(verify_handles.m_handle_lines, sz, sizeof_array(sz), 0);
+            assert(path_len);
             const char* name = path::get_name(sz);
             const int is_master_history = (strnicmp(name, "clink_history", 13) == 0 && name[13] != '_');
             if (!is_master_history)
@@ -1106,9 +1107,19 @@ history_db::history_db(const char* path, int id, bool use_master_bank)
 , m_id(id)
 , m_use_master_bank(use_master_bank)
 {
+    static_assert(sizeof(line_id) == sizeof(line_id_impl), "");
+
     memset(m_bank_handles, 0, sizeof(m_bank_handles));
     m_master_len = 0;
     m_master_deleted_count = 0;
+
+    history_inhibit_expansion_function = history_expand_control;
+
+    if (path::is_device(m_path.c_str()))
+    {
+        m_path.clear();
+        return;
+    }
 
     // Remember the bank file names so they are stable for the lifetime of this
     // history_db.  Otherwise changing %CLINK_HISTORY_LABEL% can change the file
@@ -1126,17 +1137,14 @@ history_db::history_db(const char* path, int id, bool use_master_bank)
     DWORD flags = FILE_FLAG_DELETE_ON_CLOSE|FILE_ATTRIBUTE_HIDDEN;
     m_alive_file = CreateFileW(walive.c_str(), 0, 0, nullptr, CREATE_ALWAYS, flags, nullptr);
     m_alive_file = (m_alive_file == INVALID_HANDLE_VALUE) ? nullptr : m_alive_file;
-
-    history_inhibit_expansion_function = history_expand_control;
-
-    static_assert(sizeof(line_id) == sizeof(line_id_impl), "");
 }
 
 //------------------------------------------------------------------------------
 history_db::~history_db()
 {
     // Close alive handle
-    CloseHandle(m_alive_file);
+    if (m_alive_file)
+        CloseHandle(m_alive_file);
 
     // Close all but the master bank. We're going to append to the master one.
     for (int i = 1; i < sizeof_array(m_bank_handles); ++i)
@@ -1150,6 +1158,9 @@ history_db::~history_db()
 //------------------------------------------------------------------------------
 void history_db::reap()
 {
+    if (!is_valid())
+        return;
+
     dbg_ignore_scope(snapshot, "History");
 
     str<280> removals;
@@ -1211,7 +1222,7 @@ void history_db::reap()
 //------------------------------------------------------------------------------
 void history_db::initialise(str_base* error_message)
 {
-    if (m_bank_handles[bank_master])
+    if (m_bank_handles[bank_master] || !is_valid())
         return;
 
     str<280> path;
@@ -1298,7 +1309,7 @@ bank_handles history_db::get_bank(unsigned int index) const
     //   - EXCEPT in apply_removals(), but the caller adjusts that case.
     // Writing session needs session lines.
     bank_handles handles;
-    if (index < sizeof_array(m_bank_handles))
+    if (index < sizeof_array(m_bank_handles) && is_valid())
     {
         handles.m_handle_lines = m_bank_handles[index].m_handle_lines;
         if (index == bank_master)
@@ -1332,6 +1343,8 @@ template <typename T> void history_db::for_each_bank(T&& callback) const
 //------------------------------------------------------------------------------
 template <typename T> void history_db::for_each_session(T&& callback) const
 {
+    assert(is_valid());
+
     // Fold each session found that has no valid alive file.
     str<280> path;
     path << m_bank_filenames[bank_master] << "_*";
@@ -1350,11 +1363,17 @@ template <typename T> void history_db::for_each_session(T&& callback) const
 }
 
 //------------------------------------------------------------------------------
+bool history_db::is_valid() const
+{
+    return !m_path.empty();
+}
+
+//------------------------------------------------------------------------------
 void history_db::get_file_path(str_base& out, bool session) const
 {
     out = m_path.c_str();
 
-    if (session)
+    if (session && is_valid())
     {
         str<16> suffix;
         suffix.format("_%d", m_id);
@@ -1431,6 +1450,9 @@ void history_db::load_internal()
 //------------------------------------------------------------------------------
 void history_db::load_rl_history(bool can_clean)
 {
+    if (!is_valid())
+        return;
+
     load_internal();
 
     // The `clink history` command needs to be able to avoid cleaning the master
@@ -1445,6 +1467,9 @@ void history_db::load_rl_history(bool can_clean)
 //------------------------------------------------------------------------------
 void history_db::clear()
 {
+    if (!is_valid())
+        return;
+
     DIAG("... clearing history\n");
 
     for_each_bank([&] (unsigned int bank_index, write_lock& lock)
@@ -1469,6 +1494,9 @@ void history_db::clear()
 //------------------------------------------------------------------------------
 void history_db::compact(bool force, bool uniq, int _limit)
 {
+    if (!is_valid())
+        return;
+
     if (!m_use_master_bank)
     {
         assert(false);
@@ -1857,6 +1885,9 @@ bool history_db::has_bank(unsigned char bank) const
 //------------------------------------------------------------------------------
 bool history_db::is_stale_name() const
 {
+    if (!is_valid())
+        return false;
+
     str<280> path;
     get_file_path(path, false);
     return !path.equals(m_bank_filenames[bank_master].c_str());
