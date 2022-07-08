@@ -1729,12 +1729,7 @@ end
 
 --------------------------------------------------------------------------------
 local function is_device_name(word)
-    local c = clink.lower(path.getbasename(word):gsub(" +$", ""):gsub("%:.*$", ""))
-    if c == "nul" or c == "con" or c == "aux" then
-        return true
-    elseif c:match("^com[0-9]$") or c:match("^lpt[0-9]$") then
-        return true
-    end
+    return path.isdevice(word)
 end
 
 --------------------------------------------------------------------------------

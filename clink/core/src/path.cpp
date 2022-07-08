@@ -149,7 +149,16 @@ void normalise(char* in_out, int sep)
 
         // UNC.
         if (test_unc && is_separator(*write))
+        {
             *write++ = char(sep);
+            // Device namespace.
+            if (write[0] == '.' && (!write[1] || is_separator(write[1])))
+            {
+                write++;
+                if (is_separator(write[0]))
+                    *write++ = char(sep);
+            }
+        }
     }
 
     const char* __restrict start = write;
@@ -447,6 +456,41 @@ bool is_root(const char* path)
         ++path;
 
     return (*path == '\0');
+}
+
+//------------------------------------------------------------------------------
+bool is_device(const char* _path)
+{
+    if (is_separator(_path[0]) && is_separator(_path[1]) && _path[2] == '.')
+        return (!_path[3] || is_separator(_path[3]));
+
+    str<> path(_path);
+    str<> child;
+    while (path::to_parent(path, &child))
+    {
+        char* truncate = strpbrk(child.data(), ":.");
+        if (truncate)
+            child.truncate(static_cast<unsigned int>(truncate - child.c_str()));
+
+        const char* name = child.c_str();
+        while (*name == ' ')
+            name++;
+
+        static const char* const c_devices[] = { "nul", "aux", "con" };
+        static const char* const c_devicesDigit[] = { "com", "lpt" };
+        for (const char* device : c_devices)
+        {
+            if (!_stricmp(name, device))
+                return true;
+        }
+        for (const char* device : c_devicesDigit)
+        {
+            if (!_strnicmp(name, device, 3) && name[3] >= '0' && name[3] <= '9' && !name[4])
+                return true;
+        }
+    }
+
+    return false;
 }
 
 //------------------------------------------------------------------------------

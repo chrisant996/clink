@@ -253,6 +253,18 @@ static int to_parent(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+// UNDOCUMENTED; internal use only.
+static int is_device(lua_State* state)
+{
+    const char* path = checkstring(state, 1);
+    if (!path)
+        return 0;
+
+    lua_pushboolean(state, path::is_device(path));
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 void path_lua_initialise(lua_state& lua)
 {
     struct {
@@ -268,6 +280,8 @@ void path_lua_initialise(lua_state& lua)
         { "join",          &join },
         { "isexecext",     &is_exec_ext },
         { "toparent",      &to_parent },
+        // UNDOCUMENTED; internal use only.
+        { "isdevice",      &is_device },
     };
 
     lua_State* state = lua.get_state();
