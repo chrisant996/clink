@@ -294,6 +294,8 @@ void match_pipeline::restrict(str_base& needle) const
             break;
         }
     }
+
+    free(expanded);
 }
 
 //------------------------------------------------------------------------------
