@@ -467,6 +467,10 @@ All of the above locations can be overridden using the <code>--profile <span cla
 
 You can use `clink info` to find the directories and configuration files for the current Clink session.
 
+> **Notes:**
+> - Clink performs tilde expansion on the `%CLINK_PROFILE%` environment variable value.  If the path begins with `~\` then it is replaced with the current user's home directory (`%HOMEDRIVE%%HOMEPATH%` or `%USERPROFILE%`).
+> - The `--profile` flag has a quirk for backward compatibility with older versions of Clink: `~\` in `--profile` is expanded to `%LOCALAPPDATA%` instead.
+
 ### Files
 
 <p>
@@ -528,6 +532,8 @@ Shows command line usage help.</dd>
 Injects Clink into a CMD.EXE process.<br/>
 See <code>clink inject --help</code> for more information.</dd>
 </p>
+
+> **Note:** The `clink inject --If the path begins with `~\` then it is replaced with the current user's home directory (`%HOMEDRIVE%%HOMEPATH%` or `%USERPROFILE%`).
 
 <p>
 <dt>clink autorun</dt>
@@ -1358,6 +1364,8 @@ Clink loads all Lua scripts it finds in these directories:
 Lua scripts are loaded once and are only reloaded if forced because the scripts locations change, the `clink-reload` command is invoked (<kbd>Ctrl</kbd>-<kbd>X</kbd>,<kbd>Ctrl</kbd>-<kbd>R</kbd>), or the `lua.reload_scripts` setting changes (or is True).
 
 Run `clink info` to see the script paths for the current session.
+
+> **Note:** Clink performs tilde expansion on the Lua script directory names.  If the path begins with `~\` then it is replaced with the current user's home directory (`%HOMEDRIVE%%HOMEPATH%` or `%USERPROFILE%`).
 
 ### Completion directories
 
