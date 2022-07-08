@@ -2,6 +2,10 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.3.36
+
+- Incremental search in `clink-popup-history` now centers the found item if it is scrolled out of view.
+
 #### v1.3.35
 
 - Fixed finding a `completions` directory under the profile directory.
