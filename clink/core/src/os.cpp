@@ -1116,6 +1116,14 @@ int dbg_get_env_int(const char* name)
 static void dbg_vprintf_row(int row, const char* fmt, va_list args)
 {
     str<> tmp;
+    if (row < 0)
+    {
+        tmp.vformat(fmt, args);
+        wstr<> wtmp(tmp.c_str());
+        OutputDebugStringW(wtmp.c_str());
+        return;
+    }
+
     tmp << "\x1b[s\x1b[";
     if (row > 0)
     {
