@@ -8,6 +8,8 @@
 - Tilde expansion is supported for all Lua script directory names and for the `%CLINK_PROFILE%` environment variable (but there is a quirk, and for the profile directory tilde expands to `%LOCALAPPDATA%` for backward compatibility purposes).
 - Fixed some tilde expansion issues; quotes weren't always recognized, and embedded tildes could in some cases result in malformed paths.
 - Fixed semicolon delimiter in `%CLINK_COMPLETIONS_DIR%`.
+- Fixed stack exhaustion crash when using `inject --profile nul`.
+- Fixed detection of device names when coloring command words; a device name anywhere in a path is not a valid executable.
 
 #### v1.3.35
 
