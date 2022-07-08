@@ -425,6 +425,7 @@ expand_prompt (const char *pmt, int flags, int *lp, int *lip, int *niflp, int *v
 
 /* begin_clink_change */
   can_add_invis = 0;
+  newlines = 0;
 /* end_clink_change */
   mb_cur_max = MB_CUR_MAX;
 
@@ -649,7 +650,7 @@ rl_set_rprompt (const char *rprompt)
 
   if (rprompt && *rprompt)
     {
-      rl_rprompt = expand_prompt (rprompt, 0, (int *)NULL, (int *)NULL, (int *)NULL, &rl_visible_rprompt_length);
+      rl_rprompt = expand_prompt (rprompt, PMT_RPROMPT, (int *)NULL, (int *)NULL, (int *)NULL, &rl_visible_rprompt_length);
     }
   else
     {
