@@ -828,9 +828,11 @@ bool is_showing_argmatchers()
 // the prompt again after it's already been displayed, it's necessary to draw
 // the prefix again.  To do that, it's necessary to know how many lines to move
 // up to reach the beginning of the prompt prefix.
-int count_prompt_lines(const char* prompt_prefix, int len)
+//
+// Note:  This only counts whole lines; i.e. caused by newline or wrapping.
+int count_prompt_lines(const char* prompt_prefix)
 {
-    if (len <= 0 || !prompt_prefix)
+    if (!prompt_prefix || !*prompt_prefix)
         return 0;
 
     assert(_rl_screenwidth > 0);
@@ -840,7 +842,11 @@ int count_prompt_lines(const char* prompt_prefix, int len)
     int cells = 0;
     bool ignore = false;
 
-    str_iter iter(prompt_prefix, len);
+    str<> bracketed;
+    ecma48_processor_flags flags = ecma48_processor_flags::bracket;
+    ecma48_processor(prompt_prefix, &bracketed, nullptr/*cell_count*/, flags);
+
+    str_iter iter(bracketed.c_str(), bracketed.length());
     while (int c = iter.next())
     {
         if (ignore)
@@ -875,8 +881,6 @@ int count_prompt_lines(const char* prompt_prefix, int len)
         }
         cells += w;
     }
-
-    assert(!cells);
 
     return lines;
 }
@@ -2581,14 +2585,8 @@ void rl_module::set_prompt(const char* prompt, const char* rprompt, bool redispl
         was_visible = show_cursor(false);
         lock_cursor(true);
 
-        // Count the number of lines the prefix takes to display.
-        str_moveable bracketed_prefix;
-        if (rl_get_local_prompt_prefix())
-        {
-            ecma48_processor_flags flags = ecma48_processor_flags::bracket;
-            ecma48_processor(rl_get_local_prompt_prefix(), &bracketed_prefix, nullptr/*cell_count*/, flags);
-        }
-        int lines = count_prompt_lines(bracketed_prefix.c_str(), bracketed_prefix.length());
+        // Count the number of lines the prompt takes to display.
+        int lines = count_prompt_lines(rl_get_local_prompt_prefix());
 
         // Clear the input line and the prompt prefix.
         rl_clear_visible_line();

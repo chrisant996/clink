@@ -35,7 +35,7 @@ extern matches* get_mutable_matches(bool nosort=false);
 extern const char* get_last_luafunc();
 extern void override_rl_last_func(rl_command_func_t* func, bool force_when_null=false);
 
-extern int count_prompt_lines(const char* prompt_prefix, int len);
+extern int count_prompt_lines(const char* prompt_prefix);
 
 
 
@@ -753,15 +753,11 @@ static int get_prompt_info(lua_State* state)
 
     lua_createtable(state, 0, 7);
 
-    str_moveable bracketed_prefix;
     const char* prefix = rl_get_local_prompt_prefix();
-    if (prefix)
-    {
-        ecma48_processor_flags flags = ecma48_processor_flags::bracket;
-        ecma48_processor(prefix, &bracketed_prefix, nullptr/*cell_count*/, flags);
-    }
+    const char* prompt = rl_get_local_prompt();
 
-    int prefix_lines = count_prompt_lines(bracketed_prefix.c_str(), bracketed_prefix.length());
+    int prefix_lines = count_prompt_lines(prefix);
+    int prompt_lines = count_prompt_lines(prompt);
 
     lua_pushliteral(state, "promptprefix");
     lua_pushstring(state, prefix);
@@ -772,7 +768,7 @@ static int get_prompt_info(lua_State* state)
     lua_rawset(state, -3);
 
     lua_pushliteral(state, "prompt");
-    lua_pushstring(state, rl_get_local_prompt());
+    lua_pushstring(state, prompt);
     lua_rawset(state, -3);
 
     if (rl_rprompt)
@@ -785,10 +781,12 @@ static int get_prompt_info(lua_State* state)
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi))
     {
-        int input_line = csbi.dwCursorPosition.Y - _rl_last_v_pos;
+        int anchor = csbi.dwCursorPosition.Y - _rl_last_v_pos;
+        int prompt_line = anchor - prefix_lines;
+        int input_line = anchor + prompt_lines;
 
         lua_pushliteral(state, "promptline");
-        lua_pushinteger(state, 1 + input_line - prefix_lines);
+        lua_pushinteger(state, 1 + prompt_line);
         lua_rawset(state, -3);
 
         lua_pushliteral(state, "inputline");
@@ -796,7 +794,7 @@ static int get_prompt_info(lua_State* state)
         lua_rawset(state, -3);
 
         lua_pushliteral(state, "inputlinecount");
-        lua_pushinteger(state, 1 + _rl_vis_botlin);
+        lua_pushinteger(state, 1 + _rl_vis_botlin - prompt_lines);
         lua_rawset(state, -3);
     }
 
