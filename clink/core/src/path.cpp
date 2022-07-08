@@ -427,7 +427,9 @@ bool tilde_expand(str_moveable& in_out, bool use_appdata_local)
 bool is_rooted(const char* path)
 {
 #if defined(PLATFORM_WINDOWS)
-    if (path[0] && path[1] == ':')
+    if (is_separator(path[0]) && is_separator(path[1]))
+        path += past_unc(path);
+    else if (path[0] && path[1] == ':')
         path += 2;
 #endif
 
@@ -439,19 +441,14 @@ bool is_root(const char* path)
 {
 #if defined(PLATFORM_WINDOWS)
     // Windows' drives prefixes.
-    // "X:" ?
-    if (path[0] && path[1] == ':')
-    {
-        if (path[2] == '\0')
-            return true;
-
-        // "X:\" or "X://" ?
-        if (path[3] == '\0' && is_separator(path[2]))
-            return true;
-    }
+    // "X:" or UNC root?
+    if (is_separator(path[0]) && is_separator(path[1]))
+        path += past_unc(path);
+    else if (path[0] && path[1] == ':')
+        path += 2;
 #endif
 
-    // "[/ or /]+" ?
+    // "[/ or \]+" ?
     while (is_separator(*path))
         ++path;
 
