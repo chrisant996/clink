@@ -37,6 +37,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - `git checkout `<kbd>Alt</kbd>+<kbd>=</kbd> in Cmder.
 
 ## Known Issues
+- Readline's `expand_tilde()` doesn't handle embedded `{space}{tilde}{pathsep}` correctly in strings.
 - Readline 8.1 has slight bug in `update_line`; type `c` then `l`, and it now identifies **2** chars (`cl`) as needing to be displayed; seems like the diff routine has a bug with respect to the new faces capability; it used to only identify `l` as needing to be displayed.
 - Cursor style may behave unexpectedly in a new console window launched from a Windows Terminal console, or in a console window that gets attached to Windows Terminal.  This is because there's no reliable way for Clink to know whether it is running inside Windows Terminal.
 - Perturbed PROMPT envvar is visible in child processes (e.g. piped shell in various file editors).
