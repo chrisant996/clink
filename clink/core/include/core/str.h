@@ -60,6 +60,7 @@ public:
     bool                concat(const TYPE* src, int n=-1);
     bool                concat_no_truncate(const TYPE* src, int n);
     bool                format(const TYPE* format, ...);
+    bool                vformat(const TYPE* format, va_list args);
     TYPE                operator [] (unsigned int i) const;
     str_impl&           operator << (const TYPE* rhs);
     template <int I>
@@ -416,6 +417,21 @@ inline bool str_impl<char>::format(const char* format, ...)
 
 //------------------------------------------------------------------------------
 template <>
+inline bool str_impl<char>::vformat(const char* format, va_list args)
+{
+    int len = vsnprint(m_data, m_size, format, args);
+    assert(len >= 0); // Compiler should comply with spec.
+    if (len >= int(m_size) && reserve(len))
+        len = vsnprint(m_data, m_size, format, args);
+
+    m_data[m_size - 1] = '\0';
+    m_length = 0;
+
+    return ((unsigned int)len <= m_size);
+}
+
+//------------------------------------------------------------------------------
+template <>
 inline bool str_impl<wchar_t>::format(const wchar_t* format, ...)
 {
     va_list args;
@@ -431,6 +447,26 @@ inline bool str_impl<wchar_t>::format(const wchar_t* format, ...)
             len = vsnprint(m_data, m_size - 1, format, args);
     }
     va_end(args);
+
+    m_data[m_size - 1] = '\0';
+    m_length = 0;
+
+    return ((unsigned int)len <= m_size);
+}
+
+//------------------------------------------------------------------------------
+template <>
+inline bool str_impl<wchar_t>::vformat(const wchar_t* format, va_list args)
+{
+    int len = vsnprint(m_data, m_size - 1, format, args);
+    if (len < 0 && is_growable())
+    {
+        // _vsnwprintf works differently and only indicates how much space is
+        // needed if explicitly asked.
+        len = vsnprint(nullptr, 0, format, args);
+        if (len >= 0 && reserve(len))
+            len = vsnprint(m_data, m_size - 1, format, args);
+    }
 
     m_data[m_size - 1] = '\0';
     m_length = 0;
