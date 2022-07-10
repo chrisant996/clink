@@ -7,7 +7,10 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
-- Allow argmatcher args to specify a character that loops the arg generator (e.g. `;` or `+` for delimited lists).  Or always globally recognize `;` and `+` to loop the current arg's match generator?  (Even though not many programs' arguments actually support delimited lists.)
+- Special handling for `+` and `;` or etc:
+  - Allow argmatcher args to specify characters that loops the arg generator (e.g. `;` or `+` for delimited lists).
+  - Allow argmatcher args to specify characters that do NOT break words for that arg (e.g. `+` in Perforce file types).
+  - Allow argmatcher arg generators to handle single character non-delimited flags (e.g. `dir /a:adh`).
 - Some way to have e.g. multiple separate `ut` argmatchers that are associated with different `ut` program paths.
 - Some way to push keys?  (Push keys to Clink; not to other processes.)
 
