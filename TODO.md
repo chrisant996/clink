@@ -7,6 +7,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
+- Allow argmatcher args to specify a character that loops the arg generator (e.g. `;` or `+` for delimited lists).  Or always globally recognize `;` and `+` to loop the current arg's match generator?  (Even though not many programs' arguments actually support delimited lists.)
 - Some way to have e.g. multiple separate `ut` argmatchers that are associated with different `ut` program paths.
 - Some way to push keys?  (Push keys to Clink; not to other processes.)
 
