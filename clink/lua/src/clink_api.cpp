@@ -725,6 +725,7 @@ static int clink_print(lua_State* state)
     lua_getglobal(state, "NONL");           // Special value `NONL`.
     lua_getglobal(state, "tostring");       // Function to convert to string (reused each loop iteration).
 
+    int printed = 0;
     for (int i = 1; i <= n; i++)
     {
         // Check for magic `NONL` value.
@@ -758,7 +759,7 @@ static int clink_print(lua_State* state)
         lua_pop(state, 1);                  // Pop result.
 
         // Add tab character to the output.
-        if (i > 1)
+        if (printed++)
             out << "\t";
 
         // Add string result to the output.
