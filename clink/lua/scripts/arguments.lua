@@ -1534,6 +1534,20 @@ if settings.get("lua.debug") or clink.DEBUG then
 end
 
 --------------------------------------------------------------------------------
+local function get_creation_srcinfo()
+    for level = 3, 10 do
+        local info = debug.getinfo(level, "Sl")
+        if not info then
+            break
+        end
+        if info.short_src ~= "?" then
+            return info.short_src..":"..info.currentline
+        end
+    end
+    return "?"
+end
+
+--------------------------------------------------------------------------------
 --- -name:  clink.argmatcher
 --- -ver:   1.0.0
 --- -arg:   [priority:integer]
@@ -1587,6 +1601,10 @@ function clink.argmatcher(...)
         for _, i in ipairs(input) do
             _argmatchers[clink.lower(i)] = matcher
         end
+    end
+
+    if matcher then
+        matcher._srccreated = get_creation_srcinfo()
     end
 
     return matcher
@@ -2162,6 +2180,58 @@ end
 
 
 --------------------------------------------------------------------------------
+local function spairs(t, order)
+    -- collect the keys
+    local keys = {}
+    for k in pairs(t) do keys[#keys+1] = k end
+
+    -- if order function given, sort by it by passing the table and keys a, b,
+    -- otherwise just sort the keys
+    if order then
+        table.sort(keys, function(a,b) return order(t, a, b) end)
+    else
+        table.sort(keys)
+    end
+
+    -- return the iterator function
+    local i = 0
+    return function()
+        i = i + 1
+        if keys[i] then
+            return keys[i], t[keys[i]]
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
+function clink._diag_argmatchers()
+    local bold = "\x1b[1m"          -- Bold (bright).
+    local norm = "\x1b[m"           -- Normal.
+
+    clink.print(bold.."argmatchers:"..norm)
+
+    local width = 0
+    for k,v in pairs(_argmatchers) do
+        if width < #k then
+            width = #k
+        end
+    end
+
+    local any = false
+    local fmt = "  %-"..width.."s  :  %s"
+    for k,v in spairs(_argmatchers) do
+        local src = v._srccreated
+        if src and src ~= "?" then
+            any = true
+            clink.print(string.format(fmt, k, src))
+        end
+    end
+    if not any then
+        clink.print("  none")
+    end
+end
+
+--------------------------------------------------------------------------------
 function clink._diag_completions_dirs()
     local bold = "\x1b[1m"          -- Bold (bright).
     local norm = "\x1b[m"           -- Normal.
@@ -2266,6 +2336,9 @@ function clink.arg.new_parser(...)
         if not success then
             error(msg, 2)
         end
+    end
+    if parser then
+        parser._srccreated = get_creation_srcinfo()
     end
     return parser
 end

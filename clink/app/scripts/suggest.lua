@@ -200,6 +200,7 @@ function clink._diag_suggesters()
     end
 
     local any = false
+    local fmt = "  %-"..maxlen.."s  :  %s"
     for _,entry in ipairs(list) do
         if entry.suggest then
             local info = debug.getinfo(entry.suggest, 'S')
@@ -208,7 +209,7 @@ function clink._diag_suggesters()
                     clink.print(bold.."suggesters:"..norm)
                     any = true
                 end
-                clink.print("  "..entry.name..":"..string.rep(" ", 2 + maxlen - entry.len)..info.short_src..":"..info.linedefined)
+                clink.print(string.format(fmt, entry.name, info.short_src..":"..info.linedefined))
             end
         end
     end
