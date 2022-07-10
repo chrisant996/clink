@@ -861,17 +861,26 @@ unsigned int line_editor_impl::collect_words(words& words, matches_impl* matches
     {
         if (words.size() > 0)
         {
+            bool command = true;
             tmp1.format("\x1b[s\x1b[%dHcollected words:        ", dbg_row);
             m_printer.print(tmp1.c_str(), tmp1.length());
             for (auto const& w : words)
             {
                 const char* q = w.quoted ? "\"" : "";
+                if (w.command_word)
+                    command = true;
                 if (w.is_redir_arg)
                     m_printer.print(">");
                 if (w.command_word)
                     m_printer.print("!");
+                const char* color = "37";
+                if (command && !w.is_redir_arg)
+                {
+                    command = false;
+                    color = "4;32";
+                }
                 if (w.length)
-                    tmp1.format("%s\x1b[0;37;7m%.*s\x1b[m%s ", q, w.length, m_buffer.get_buffer() + w.offset, q);
+                    tmp1.format("%s\x1b[0;%s;7m%.*s\x1b[m%s ", q, color, w.length, m_buffer.get_buffer() + w.offset, q);
                 else
                     tmp1.format("\x1b[0;37;7m \x1b[m ");
                 m_printer.print(tmp1.c_str(), tmp1.length());
@@ -900,19 +909,29 @@ unsigned int line_editor_impl::collect_words(words& words, matches_impl* matches
 #ifdef DEBUG
         if (dbg_row > 0)
         {
+            bool command = true;
             int i_word = 1;
             tmp2.format("\x1b[s\x1b[%dHafter word break info:  ", dbg_row + 1);
             m_printer.print(tmp2.c_str(), tmp2.length());
-            for (auto const& w : commands.get_linestate(m_buffer).get_words())
+            auto const& after_break_words = commands.get_linestate(m_buffer).get_words();
+            for (auto const& w : after_break_words)
             {
                 const char* q = w.quoted ? "\"" : "";
+                if (w.command_word)
+                    command = true;
                 if (w.is_redir_arg)
                     m_printer.print(">");
                 if (w.command_word)
                     m_printer.print("!");
-                const char* color = (i_word == words.size()) ? "35;7" : "37;7";
-                const char* delim = (i_word + 1 == words.size()) ? "" : " ";
-                tmp2.format("%s\x1b[0;%sm%.*s\x1b[m%s", q, color, w.length, m_buffer.get_buffer() + w.offset, q, delim);
+                const char* color = "37;7";
+                if (command && !w.is_redir_arg)
+                {
+                    command = false;
+                    color = "4;32;7";
+                }
+                if (i_word == after_break_words.size())
+                    color = "35;7";
+                tmp2.format("%s\x1b[0;%sm%.*s\x1b[m%s ", q, color, w.length, m_buffer.get_buffer() + w.offset, q);
                 m_printer.print(tmp2.c_str(), tmp2.length());
                 i_word++;
             }
