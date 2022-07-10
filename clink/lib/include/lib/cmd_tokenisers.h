@@ -43,7 +43,7 @@ public:
     cmd_tokeniser_impl();
     ~cmd_tokeniser_impl();
     void begin_line();
-    void start(const str_iter& iter, const char* quote_pair) override;
+    void start(const str_iter& iter, const char* quote_pair, bool at_beginning=true) override;
 protected:
     char get_opening_quote() const;
     char get_closing_quote() const;
@@ -68,7 +68,7 @@ class cmd_word_tokeniser : public cmd_tokeniser_impl
 {
     typedef cmd_tokeniser_impl base;
 public:
-    void start(const str_iter& iter, const char* quote_pair) override;
+    void start(const str_iter& iter, const char* quote_pair, bool at_beginning=true) override;
     word_token next(unsigned int& offset, unsigned int& length) override;
 private:
     cmd_state m_cmd_state;

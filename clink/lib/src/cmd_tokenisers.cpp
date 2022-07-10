@@ -80,7 +80,7 @@ void cmd_tokeniser_impl::begin_line()
 }
 
 //------------------------------------------------------------------------------
-void cmd_tokeniser_impl::start(const str_iter& iter, const char* quote_pair)
+void cmd_tokeniser_impl::start(const str_iter& iter, const char* quote_pair, bool at_beginning)
 {
     m_iter = iter;
     m_start = iter.get_pointer();
@@ -401,11 +401,11 @@ bool cmd_command_tokeniser::has_deprecated_argmatcher(const char* command)
 
 
 //------------------------------------------------------------------------------
-void cmd_word_tokeniser::start(const str_iter& iter, const char* quote_pair)
+void cmd_word_tokeniser::start(const str_iter& iter, const char* quote_pair, bool at_beginning)
 {
     base::start(iter, quote_pair);
     m_cmd_state.clear();
-    m_command_word = true;
+    m_command_word = at_beginning;
 }
 
 //------------------------------------------------------------------------------

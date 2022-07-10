@@ -32,7 +32,7 @@ simple_word_tokeniser::~simple_word_tokeniser()
 }
 
 //------------------------------------------------------------------------------
-void simple_word_tokeniser::start(const str_iter& iter, const char* quote_pair)
+void simple_word_tokeniser::start(const str_iter& iter, const char* quote_pair, bool at_beginning)
 {
     delete m_tokeniser;
     m_start = iter.get_pointer();
@@ -179,7 +179,7 @@ unsigned int word_collector::collect_words(const char* line_buffer, unsigned int
             }
         }
 
-        m_word_tokeniser->start(str_iter(line_buffer + command.offset + doskey_len, command.length - doskey_len), m_quote_pair);
+        m_word_tokeniser->start(str_iter(line_buffer + command.offset + doskey_len, command.length - doskey_len), m_quote_pair, first);
         while (1)
         {
             unsigned int word_offset = 0;

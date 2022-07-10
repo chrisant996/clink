@@ -32,7 +32,7 @@ public:
 class collector_tokeniser
 {
 public:
-    virtual void start(const str_iter& iter, const char* quote_pair) = 0;
+    virtual void start(const str_iter& iter, const char* quote_pair, bool at_beginning=true) = 0;
     virtual word_token next(unsigned int& offset, unsigned int& length) = 0;
     virtual bool has_deprecated_argmatcher(const char* command) { return false; }
 };
@@ -79,7 +79,7 @@ public:
     simple_word_tokeniser(const char* delims = " \t");
     ~simple_word_tokeniser();
 
-    void start(const str_iter& iter, const char* quote_pair) override;
+    void start(const str_iter& iter, const char* quote_pair, bool at_beginning=true) override;
     word_token next(unsigned int& offset, unsigned int& length) override;
 
 private:
