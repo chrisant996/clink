@@ -2718,6 +2718,18 @@ It also takes advantage of Clink's [asynchronous prompt refresh](#asyncpromptfil
 
 The [clink-fzf](https://github.com/chrisant996/clink-fzf) script integrates the popular [fzf](https://github.com/junegunn/fzf) "fuzzy finder" tool with Clink.
 
+### clink-gizmos
+
+The [clink-gizmos](https://github.com/chrisant996/clink-gizmos) collection of scripts has several handy scripts such as:
+
+- Argmatchers for `msbuild`, `findstr`, `robocopy`, `xcopy`, `doskey`, `premake5`, and more.
+- Scripts to auto-generate argmatchers for commands by parsing their help text.
+- Automatically show a divider line before + after certain commands, to make it easy to see where their output begins and ends, and the elapsed time taken by the command.  This is especially handy when invoking compilers and build tools.
+- The `i.lua` script to run a {command} in a {directory} and restore the original current directory afterwards.  While typing the {command}, completions are even generated relative to the specified {directory} rather than the current directory.
+- The `fzf.lua` script from [clink-fzf](https://github.com/chrisant996/clink-fzf) for integrating the popular [fzf](https://github.com/junegunn/fzf) "fuzzy finder" tool with Clink.
+- The `luaexec.lua` script which has various features handy for Clink Lua script authors.
+- And more.
+
 ### oh-my-posh
 
 The [oh-my-posh](https://github.com/JanDeDobbeleer/oh-my-posh) program can generate fancy prompts. Refer to its [documentation](https://ohmyposh.dev) for how to configure it, and for sample themes.
