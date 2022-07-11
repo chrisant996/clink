@@ -700,7 +700,7 @@ end
 --- -ver:   1.2.10
 --- -arg:   command:string
 --- -arg:   [mode:string]
---- -ret:   file, function
+--- -ret:   file, function (see remarks below)
 --- This behaves similar to
 --- <a href="https://www.lua.org/manual/5.2/manual.html#pdf-io.popen">io.popen()</a>
 --- except that it only supports read mode and when used in a coroutine it
@@ -717,11 +717,19 @@ end
 --- output from the command.  It yields until the command has finished and the
 --- complete output is ready to be read without blocking.
 ---
---- In v1.3.31 and higher, it also returns a function which can be used to get
---- the exit status for the command.  The function returns the same values as
+--- In v1.3.31 and higher, it may also return a function.  If the second return
+--- value is a function then it can be used to get the exit status for the
+--- command.  The function returns the same values as
 --- <a href="https://www.lua.org/manual/5.2/manual.html#pdf-os.execute">os.execute()</a>.
 --- The function may be used only once, and it closes the read file handle, so
---- if the function is used then do not use <code>file:close()</code>.
+--- if the function is used then do not use <code>file:close()</code>.  Or, if
+--- the second return value is not a function, then the exit status may be
+--- retrieved from calling `file:close()` on the returned file handle.
+---
+--- <strong>Compatibility Note:</strong> when `io.popen()` is used in a
+--- coroutine, it is automatically redirected to `io.popenyield()`.  This means
+--- on success the second return value from `io.popen()` in a coroutine may not
+--- be nil as callers might normally expect.
 ---
 --- <strong>Note:</strong> if the <code>prompt.async</code> setting is disabled,
 --- or while a <a href="#transientprompts">transient prompt filter</a> is
