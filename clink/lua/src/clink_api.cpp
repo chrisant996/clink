@@ -361,36 +361,39 @@ int recognizer::find(const char* key, recognition& cached, str_base* file) const
 //------------------------------------------------------------------------------
 bool recognizer::enqueue(const char* key, const char* word, const char* cwd, recognition* cached)
 {
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
-
-    if (!usable())
-        return false;
-
-    assert(s_ready_event);
-
-    if (!m_event)
     {
-        m_event = CreateEvent(nullptr, false, false, nullptr);
-        if (!m_event)
+        std::lock_guard<std::recursive_mutex> lock(m_mutex);
+
+        if (!usable())
             return false;
+
+        assert(s_ready_event);
+
+        if (!m_event)
+        {
+            m_event = CreateEvent(nullptr, false, false, nullptr);
+            if (!m_event)
+                return false;
+        }
+
+        if (!m_thread)
+        {
+            dbg_ignore_scope(snapshot, "Recognizer thread");
+            m_thread = std::make_unique<std::thread>(&proc, this);
+        }
+
+        m_queue.m_key = key;
+        m_queue.m_word = word;
+        m_queue.m_cwd = cwd;
+
+        // Assume unrecognized at first.
+        store(key, nullptr, recognition::unrecognized, true/*pending*/);
+        if (cached)
+            *cached = recognition::unrecognized;
+
+        SetEvent(m_event);  // Signal thread there is work to do.
     }
 
-    if (!m_thread)
-    {
-        dbg_ignore_scope(snapshot, "Recognizer thread");
-        m_thread = std::make_unique<std::thread>(&proc, this);
-    }
-
-    m_queue.m_key = key;
-    m_queue.m_word = word;
-    m_queue.m_cwd = cwd;
-
-    // Assume unrecognized at first.
-    store(key, nullptr, recognition::unrecognized, true/*pending*/);
-    if (cached)
-        *cached = recognition::unrecognized;
-
-    SetEvent(m_event);  // Signal thread there is work to do.
     Sleep(0);           // Give up timeslice in case thread gets result quickly.
     return true;
 }
