@@ -114,6 +114,7 @@ static int collapse_tilde(lua_State* state)
 /// -name:  rl.expandtilde
 /// -ver:   1.1.6
 /// -arg:   path:string
+/// -arg:   [whole_line:boolean]
 /// -ret:   string, boolean
 /// Performs Readline tilde expansion.
 ///
@@ -121,6 +122,11 @@ static int collapse_tilde(lua_State* state)
 /// <a href="#rl.expandtilde">rl.expandtilde()</a> and
 /// <a href="#rl.collapsetilde">rl.collapsetilde()</a> helper functions to perform
 /// tilde completion expansion according to Readline's configuration.
+///
+/// An optional <span class="arg">whole_line</span> argument selects whether to
+/// expand tildes everywhere in the input string (pass true), or to expand only
+/// a tilde at the beginning of the input string (pass false or omit the
+/// second argument).  See the Compatibility Note below for more information.
 ///
 /// Use <a href="#rl.expandtilde">rl.expandtilde()</a> to do tilde expansion
 /// before collecting file matches (e.g. via
@@ -154,33 +160,72 @@ static int collapse_tilde(lua_State* state)
 /// -show:  &nbsp;   end
 /// -show:  &nbsp;   return matches
 /// -show:  end
+/// <fieldset><legend>Compatibility Note:</legend>
+/// The original intended usage for this function was to expand tildes in a
+/// single word.  But sometimes it may be convenient to expand tildes for an
+/// entire command line all at once.
+///
+/// Prior to v1.3.36, this function simply asked the Readline library to expand
+/// tildes, but that mode of operation doesn't respect quotes and has quirks
+/// that can produce unexpected results when the input is a single pathname
+/// (which was the documented supported usage).
+///
+/// In v1.3.36 this function fixed that problem, and expands tildes correctly
+/// a single pathname as the input (and also accepts quotes).  But that broke an
+/// undocumented quirk that could expand tildes for a whole command line as
+/// the input.
+///
+/// In v1.3.37 and newer, this function accepts a boolean second argument which
+/// selects whether to expand for a whole input line using the quirky Readline
+/// tilde expansion (pass true), or to expand for a single pathname as the input
+/// (pass false or omit the second argument).
+///
+/// Passing true for the second argument causes any version of Clink (except
+/// v1.3.36) to expand the input as a whole command line.
+/// </fieldset>
 static int expand_tilde(lua_State* state)
 {
     const char* in = checkstring(state, 1);
+    bool whole_line = lua_toboolean(state, 2);
     if (!in)
         return 0;
 
-    // Strip all quotes.
-    const bool quote = (in[0] == '"');
-    str<> tmp;
-    for (const char* walk = in; *walk; ++walk)
+    if (whole_line)
     {
-        if (*walk != '"')
-            tmp.concat(walk, 1);
+        char* expanded_path = tilde_expand(in);
+        bool expanded = expanded_path && strcmp(in, expanded_path) != 0;
+        lua_pushstring(state, expanded_path ? expanded_path : in);
+        lua_pushboolean(state, expanded);
+        free(expanded_path);
+        return 2;
     }
+    else
+    {
+        // Strip all quotes.
+        const bool quote = (in[0] == '"');
+        str<> tmp;
+        for (const char* walk = in; *walk; ++walk)
+        {
+            if (*walk != '"')
+                tmp.concat(walk, 1);
+        }
 
-    str<> expanded_path;
-    bool expanded = tmp.c_str()[0] == '~' && path::tilde_expand(tmp.c_str(), expanded_path);
+        // Expand the input as a single word.
+        str<> expanded_path;
+        bool expanded = tmp.c_str()[0] == '~' && path::tilde_expand(tmp.c_str(), expanded_path);
 
-    str<> out;
-    if (quote)
-        out << "\"";
-    out << (expanded ? expanded_path.c_str() : tmp.c_str());
-    if (quote)
-        out << "\"";
-    lua_pushstring(state, out.c_str());
-    lua_pushboolean(state, expanded);
-    return 2;
+        // Add quotes again if the input originally started with a quote.
+        str<> out;
+        if (quote)
+            out << "\"";
+        out << (expanded ? expanded_path.c_str() : tmp.c_str());
+        if (quote)
+            out << "\"";
+
+        lua_pushstring(state, out.c_str());
+        lua_pushboolean(state, expanded);
+        return 2;
+    }
 }
 
 //------------------------------------------------------------------------------
