@@ -309,6 +309,32 @@ function _argreader:update(word, word_index)
     local arg = matcher._args[arg_index]
     local next_arg_index = arg_index + 1
 
+    -- If the arg has looping characters defined and a looping character
+    -- separates this word from the next, then don't advance to the next
+    -- argument index.
+    if arg and arg.loopchars and word_index < line_state:getwordcount() then
+        local thiswordinfo = line_state:getwordinfo(word_index)
+        local nextwordinfo = line_state:getwordinfo(word_index + 1)
+        local s = thiswordinfo.offset + thiswordinfo.length + (thiswordinfo.quoted and 1 or 0)
+        local e = nextwordinfo.offset - 1 - (nextwordinfo.quoted and 1 or 0)
+        if s == e then
+            -- Two words are separated by a looping character, and the
+            -- looping char is a natural word break char (e.g. semicolon).
+            local line = line_state:getline()
+            if line and arg.loopchars:find(line:sub(s, e, 1, true)) then
+                next_arg_index = arg_index
+            end
+        elseif s - 1 == e then
+            local line = line_state:getline()
+            if line and arg.loopchars:find(line:sub(e, e, 1, true)) then
+                -- End word is immediately preceded by a looping character.
+                -- This is reached when getwordbreakinfo() splits a word due to
+                -- a looping char that is not a natural word break char.
+                next_arg_index = arg_index
+            end
+        end
+    end
+
     -- If arg_index is out of bounds we should loop if set or return to the
     -- previous matcher if possible.
     if next_arg_index > #matcher._args then
@@ -412,18 +438,41 @@ function _argreader:update(word, word_index)
                 if not matched then
                     local this_info = line_state:getwordinfo(word_index)
                     local pos = this_info.offset + this_info.length
-                    if line_state:getline():sub(pos, pos) == "=" then
+                    local line = line_state:getline()
+                    if line:sub(pos, pos) == "=" then
+                        -- If "word" is immediately followed by an equal sign,
+                        -- then check if "word=" is a recognized argument.
                         t, matched = is_word_present(word.."=", arg, t, arg_match_type)
                         if matched then
                             self._word_classifier:applycolor(pos, 1, get_classify_color(t))
                         end
                     end
                     if not matched then
-                        t, matched = is_word_present(word, arg, t, arg_match_type)
+                        if arg.loopchars then
+                            -- If the arg has looping characters defined, then
+                            -- split the word and apply colors to the sub-words.
+                            pos = this_info.offset
+                            local split = string.explode(word, arg.loopchars, '"')
+                            for _, w in ipairs(split) do
+                                t, matched = is_word_present(w, arg, t, arg_match_type)
+                                if matched then
+                                    local i = line:find(w, pos, true)
+                                    if i then
+                                        self._word_classifier:applycolor(i, #w, get_classify_color(t))
+                                        pos = i + #w
+                                    end
+                                end
+                            end
+                            t = nil
+                        else
+                            t, matched = is_word_present(word, arg, t, arg_match_type)
+                        end
                     end
                 end
             end
-            self._word_classifier:classifyword(word_index, t, false)
+            if t then
+                self._word_classifier:classifyword(word_index, t, false)
+            end
         end
     end
 
@@ -533,6 +582,27 @@ _argmatcher.__index = _argmatcher
 setmetatable(_argmatcher, { __call = function (x, ...) return x._new(...) end })
 
 --------------------------------------------------------------------------------
+local function append_uniq_chars(chars, find, add)
+    chars = chars or ""
+    find = find or "[]"
+    for i = 1, #add do
+        local c = add:sub(i, i)
+        if not chars:find(c, 1, true) then
+            local byte = string.byte(c)
+            local pct = ""
+            if byte < 97 or byte > 122 then -- <'a' or >'z'
+                pct = "%"
+            end
+            -- Update the list.
+            chars = chars .. c
+            -- Update the find expression.
+            find = find:sub(1, #find - 1) .. pct .. c .. "]"
+        end
+    end
+    return chars, find
+end
+
+--------------------------------------------------------------------------------
 local function apply_options_to_list(addee, list)
     if addee.nosort then
         list.nosort = true
@@ -547,6 +617,10 @@ local function apply_options_to_list(addee, list)
     end
     if addee.fromhistory then
         list.fromhistory = true
+    end
+    if addee.loopchars then
+        -- Apply looping characters, but avoid duplicates.
+        list.loopchars, list.loopcharsfind = append_uniq_chars(list.loopchars, list.loopcharsfind, addee.loopchars)
     end
 end
 
@@ -661,6 +735,16 @@ end
 --- <a href="#argumentcompletion">Argument Completion</a> for more information.
 --- -show:  local my_parser = clink.argmatcher("git")
 --- -show:  :addarg("add", "status", "commit", "checkout")
+--- When providing a table of arguments, the table can contain some special
+--- entries:
+--- <p><table>
+--- <tr><th>Entry</th><th>More Info</th><th>Version</th></tr>
+--- <tr><td><code>delayinit=<span class="arg">function</span></code></td><td>See <a href="#addarg_delayinit">Delayed initialization for an argument position</a>.</td><td class="version">v1.3.10 and newer</td></tr>
+--- <tr><td><code>fromhistory=true</code></td><td>See <a href="#addarg_fromhistory">Generate Matches From History</a>.</td><td class="version">v1.3.9 and newer</td></tr>
+--- <tr><td><code>loopchars="<span class="arg">characters</span>"</code></td><td>See <a href="#addarg_loopchars">Delimited Arguments</a>.</td><td class="version">v1.3.37 and newer</td></tr>
+--- <tr><td><code>nosort=true</code></td><td>See <a href="#addarg_nosort">Disable Sorting Matches</a>.</td><td class="version">v1.3.3 and newer</td></tr>
+--- <tr><td><code>onarg=<span class="arg">function</span></code></td><td>See <a href="#responsive-argmatchers">Responding to Arguments in Argmatchers</a>.</td><td class="version">v1.3.13 and newer</td></tr>
+--- </table></p>
 function _argmatcher:addarg(...)
     local list = self._args[self._nextargindex]
     if not list then
@@ -2085,9 +2169,26 @@ function argmatcher_generator:getwordbreakinfo(line_state)
             end
         end
 
+        -- Looping characters are also word break characters.
+        argmatcher = reader._matcher
+        local arg = argmatcher._args[reader._arg_index]
+        if arg and arg.loopchars then
+            local word = line_state:getendword()
+            local pos = 0
+            while true do
+                local next = word:find(arg.loopcharsfind, pos + 1)
+                if not next then
+                    break
+                end
+                pos = next
+            end
+            if pos > 0 then
+                return pos, 0
+            end
+        end
+
         -- There should always be a matcher left on the stack, but the arg_index
         -- could be well out of range.
-        argmatcher = reader._matcher
         if argmatcher and argmatcher._flags then
             local word = line_state:getendword()
             if argmatcher:_is_flag(word) then
