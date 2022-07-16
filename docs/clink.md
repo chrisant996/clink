@@ -285,7 +285,7 @@ The new Clink tries to be as backward compatible with Clink v0.4.9 as possible. 
 
 - Some key binding sequences have changed; see [Customizing Key Bindings](#keybindings) for more information.
 - Match coloring works differently now and can do much more; see [Completion Colors](#completioncolors) for more information.
-- Old settings and history migrate automatically if the new `clink_settings` and `clink_history` files don't exist (deleting them will cause migration to happen again).  To find the directory that contains these files, run `clink info` and look for the "state" line.
+- Old settings and history migrate automatically if the new `clink_settings` and `clink_history` files don't exist (deleting them will cause migration to happen again).  To find the directory that contains these files, run `clink set` and look for the "state" line.
 - Script compatibility should be very good, but some scripts may still encounter problems.  If you do encounter a compatibility problem you can look for an updated version of the script, update the script yourself, or visit the [clink repo](https://github.com/chrisant996/clink/issues) and open an issue describing details about the compatibility problem.
 - Some match generator scripts might need adjustments to become fully compatible with the `autosuggest.enable` setting.
 - Some settings have changed slightly, and there are many new settings.  See [Configuring Clink](#configclink) for more information.
