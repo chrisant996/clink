@@ -308,6 +308,71 @@ static int is_file(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  os.getdrivetype
+/// -ver:   1.3.37
+/// -arg:   path:string
+/// -ret:   string
+/// Returns the drive type for the drive associated with the specified
+/// <span class="arg">path</span>.
+///
+/// Relative paths automatically use the current drive.  Absolute paths use the
+/// specified drive.  UNC paths are always reported as remote drives.
+///
+/// The possible drive types are:
+/// <p><table>
+/// <tr><th>Type</th><th>Description</th></tr>
+/// <tr><td>"unknown"</td><td>The drive type could not be determined.</td></tr>
+/// <tr><td>"invalid"</td><td>The drive type is invalid; for example, there is no volume mounted at the specified path.</td></tr>
+/// <tr><td>"removable"</td><td>Floppy disk drive, thumb drive, flash card reader, CD-ROM, etc.</td></tr>
+/// <tr><td>"fixed"</td><td>Hard drive, solid state drive, etc.</td></tr>
+/// <tr><td>"ramdisk"</td><td>RAM disk.</td></tr>
+/// <tr><td>"remote"</td><td>Remote (network) drive.</td></tr>
+/// </table></p>
+/// -show:  local t = os.getdrivetype("c:")
+/// -show:  if t == "remote" then
+/// -show:  &nbsp;   -- Network paths are often slow, and code may want to detect and skip them.
+/// -show:  end
+static int get_drive_type(lua_State* state)
+{
+    const char* path = checkstring(state, 1);
+    if (!path)
+        return 0;
+
+    int type = os::drive_type_unknown;
+    if (path::is_unc(path))
+    {
+        type = os::drive_type_remote;
+    }
+    else
+    {
+        str<> full;
+        if (os::get_full_path_name(path, full))
+        {
+            path::get_drive(full);
+            path::append(full, ""); // Because get_drive_type() requires a trailing path separator.
+            type = os::get_drive_type(path);
+        }
+    }
+
+    const char* ret;
+    switch (type)
+    {
+    default:
+        assert(false);
+        // fallthrough...
+    case os::drive_type_unknown:    ret = "unknown"; break;
+    case os::drive_type_invalid:    ret = "invalid"; break;
+    case os::drive_type_remote:     ret = "remote"; break;      // Remote (network) drive.
+    case os::drive_type_removable:  ret = "removable"; break;   // Floppy, thumb drive, flash card reader, CD-ROM, etc.
+    case os::drive_type_fixed:      ret = "fixed"; break;       // Hard drive, flash drive, etc.
+    case os::drive_type_ramdisk:    ret = "ramdisk"; break;     // RAM disk.
+    }
+
+    lua_pushstring(state, ret);
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 /// -name:  os.ishidden
 /// -deprecated: os.globfiles
 /// -arg:   path:string
@@ -1362,6 +1427,7 @@ void os_lua_initialise(lua_state& lua)
         { "rmdir",       &remove_dir },
         { "isdir",       &is_dir },
         { "isfile",      &is_file },
+        { "getdrivetype", &get_drive_type },
         { "ishidden",    &is_hidden },
         { "unlink",      &unlink },
         { "move",        &move },
