@@ -638,7 +638,7 @@ recognition recognize_command(const char* line, const char* word, bool quoted, b
     // Ignore UNC paths, because they can take up to 2 minutes to time out.
     // Even running that on a thread would either starve the consumers or
     // accumulate threads faster than they can finish.
-    if (path::is_separator(word[0]) && path::is_separator(word[1]))
+    if (path::is_unc(word))
         return recognition::unknown;
 
     // Check for directory intercepts (-, ..., ...., dir\, and so on).

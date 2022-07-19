@@ -195,6 +195,9 @@ void fail(const char* expr, const char* file, int line, CALLBACK&& cb)
     if (clatch::section::scope CLATCH_IDENT(scope) = clatch::section::scope(_clatch_tree_iter, CLATCH_IDENT(section), name))
 
 
+#define SECTIONNAME()\
+    clatch::section::get_outer_store()->m_name
+
 #define REQUIRE(expr, ...)\
     do {\
         auto* _clatch_s = clatch::section::get_outer_store();\

@@ -20,6 +20,8 @@ TEST_CASE("path::get_base_name()")
         SECTION("4") { path::get_base_name("filename", s); }
         SECTION("5") { path::get_base_name("c:filename.ext", s); }
         SECTION("6") { path::get_base_name("c:filename", s); }
+        SECTION("7") { path::get_base_name("\\\\?\\c:\\filename", s); }
+        SECTION("8") { path::get_base_name("\\\\?\\c:filename", s); }
 
         REQUIRE(s.equals("filename"));
     }
@@ -160,6 +162,22 @@ TEST_CASE("path::get_directory()")
         s.clear();
         path::get_directory("\\\\foo", s);
         REQUIRE(s.equals("\\\\foo"));
+
+        s.clear();
+        path::get_directory("\\\\?\\UNC\\foo\\bar\\abc", s);
+        REQUIRE(s.equals("\\\\?\\UNC\\foo\\bar"));
+
+        s.clear();
+        path::get_directory("\\\\?\\UNC\\foo\\bar\\", s);
+        REQUIRE(s.equals("\\\\?\\UNC\\foo\\bar"));
+
+        s.clear();
+        path::get_directory("\\\\?\\UNC\\foo\\bar", s);
+        REQUIRE(s.equals("\\\\?\\UNC\\foo\\bar"));
+
+        s.clear();
+        path::get_directory("\\\\?\\UNC\\foo", s);
+        REQUIRE(s.equals("\\\\?\\UNC\\foo"));
     }
 }
 
@@ -168,7 +186,7 @@ TEST_CASE("path::get_drive()")
 {
     SECTION("Has drive")
     {
-        str<> s, t;
+        str<> s, t, u;
 
         SECTION("0") { s << "e:"; }
         SECTION("1") { s << "e:/"; }
@@ -176,10 +194,17 @@ TEST_CASE("path::get_drive()")
         SECTION("3") { s << "e:one/filename.ext"; }
         SECTION("4") { s << "E:\\one/filename.ext"; }
         SECTION("5") { s << "E:one/filename.ext"; }
+        SECTION("6") { s << "\\\\?\\E:\\filename.ext"; }
+        SECTION("7") { s << "\\\\?\\E:filename.ext"; }
+
+        u = s.c_str();
 
         REQUIRE(path::get_drive(s.c_str(), t));
         REQUIRE((t.equals("e:") || t.equals("E:")));
         REQUIRE(path::get_drive(t));
+
+        REQUIRE(path::get_drive(u));
+        REQUIRE(u.equals(t.c_str()));
     }
 
     SECTION("No drive")
@@ -241,6 +266,9 @@ TEST_CASE("path::get_name()")
         SECTION("0") { path::get_name("one/two/three/filename.ext", s); }
         SECTION("1") { path::get_name("one/two/three\\filename.ext", s); }
         SECTION("2") { path::get_name("filename.ext", s); }
+        SECTION("3") { path::get_name("\\\\?\\filename.ext", s); }
+        SECTION("4") { path::get_name("\\\\?\\c:filename.ext", s); }
+        SECTION("5") { path::get_name("\\\\?\\UNC\\foo\\bar\\filename.ext", s); }
 
         REQUIRE(s.equals("filename.ext"));
     }
@@ -267,6 +295,8 @@ TEST_CASE("path::get_name()")
         SECTION("1") { in = "//"; }
         SECTION("2") { in = "/\\/"; }
         SECTION("3") { in = "\\"; }
+        SECTION("4") { in = "\\\\?\\UNC\\foo"; }
+        SECTION("4") { in = "\\\\?\\UNC\\foo\\bar"; }
 
         REQUIRE(path::get_name(in)[0] == '\0');
     }
@@ -285,6 +315,9 @@ TEST_CASE("path::is_rooted()")
         REQUIRE(path::is_rooted("e:\\one"));
         REQUIRE(path::is_rooted("/one"));
         REQUIRE(path::is_rooted("\\one"));
+        REQUIRE(path::is_rooted("\\\\?\\e:\\one"));
+        REQUIRE(path::is_rooted("\\\\?\\UNC\\foo\\bar\\one"));
+        REQUIRE(path::is_rooted("\\\\foo\\bar\\one"));
     }
 
     SECTION("False")
@@ -293,6 +326,10 @@ TEST_CASE("path::is_rooted()")
         REQUIRE(!path::is_rooted("e:one"));
         REQUIRE(!path::is_rooted("one"));
         REQUIRE(!path::is_rooted(""));
+        REQUIRE(!path::is_rooted("\\\\?\\one"));
+        REQUIRE(!path::is_rooted("\\\\?\\UNC\\foo"));
+        REQUIRE(!path::is_rooted("\\\\foo\\bar"));
+        REQUIRE(!path::is_rooted("\\\\foo"));
     }
 }
 
@@ -307,6 +344,11 @@ TEST_CASE("path::is_root()")
         REQUIRE(path::is_root("/"));
         REQUIRE(path::is_root("\\"));
         REQUIRE(path::is_root(""));
+        REQUIRE(path::is_root("\\\\?\\e:"));
+        REQUIRE(path::is_root("\\\\?\\e:/"));
+        REQUIRE(path::is_root("\\\\?\\UNC\\foo\\bar"));
+        REQUIRE(path::is_root("\\\\?\\UNC\\foo\\bar\\"));
+        REQUIRE(path::is_root("\\\\?\\UNC\\one"));
     }
 
     SECTION("False")
@@ -317,6 +359,7 @@ TEST_CASE("path::is_root()")
         REQUIRE(!path::is_root("/one"));
         REQUIRE(!path::is_root("\\one"));
         REQUIRE(!path::is_root("one"));
+        REQUIRE(!path::is_root("\\\\?\\one"));
     }
 }
 
@@ -375,15 +418,24 @@ TEST_CASE("path::join()")
         s.copy("x:/");
         path::append(s, "one");
         REQUIRE(s.equals("x:/one"));
+        s.copy("\\\\?\\x:/");
+        path::append(s, "one");
+        REQUIRE(s.equals("\\\\?\\x:/one"));
 
         s.copy("x:\\");
         path::append(s, "one");
         REQUIRE(s.equals("x:\\one"));
+        s.copy("\\\\?\\x:\\");
+        path::append(s, "one");
+        REQUIRE(s.equals("\\\\?\\x:\\one"));
 
         // Relative
         s.copy("x:");
         path::append(s, "one");
         REQUIRE(s.equals("x:one"));
+        s.copy("\\\\?\\x:");
+        path::append(s, "one");
+        REQUIRE(s.equals("\\\\?\\x:one"));
     }
 }
 
@@ -420,126 +472,165 @@ TEST_CASE("path::join(get_dir(), get_name())")
 }
 
 //------------------------------------------------------------------------------
+static void adjust_path(str_base& inout, int mode)
+{
+    if (mode)
+    {
+        str<> tmp(inout.c_str());
+        const char* in = tmp.c_str();
+        const bool unc = path::is_separator(in[0]) && path::is_separator(in[1]);
+        inout.clear();
+        if (unc)
+            inout << "\\\\?\\UNC\\";
+        else
+            inout << "\\\\?\\";
+        while (path::is_separator(*in))
+            ++in;
+        inout << in;
+    }
+}
+
+//------------------------------------------------------------------------------
 TEST_CASE("path::to_parent()")
 {
+    const char* name;
     const char* in;
     const char* out;
     const char* kid;
     const char* rejoined;
 
-    SECTION("Normal")
+    for (int i = 0; i < 2; ++i)
     {
-        in = "c:/one/two";
-        out = "c:/one";
-        kid = "two";
-        rejoined = "c:/one/two";
+        SECTION("Normal")
+        {
+            name = SECTIONNAME();
+            in = "c:/one/two";
+            out = "c:/one";
+            kid = "two";
+            rejoined = "c:/one/two";
+        }
+
+        SECTION("Normal end")
+        {
+            name = SECTIONNAME();
+            in = "c:/one/two/";
+            out = "c:/one";
+            kid = "two";
+            rejoined = "c:/one/two";
+        }
+
+        SECTION("Normal root")
+        {
+            name = SECTIONNAME();
+            in = "c:/one";
+            out = "c:/";
+            kid = "one";
+            rejoined = "c:/one";
+        }
+
+        SECTION("Normal can't")
+        {
+            name = SECTIONNAME();
+            in = "c:/";
+            out = "c:/";
+            kid = "";
+            rejoined = "c:/";
+        }
+
+        SECTION("Drive")
+        {
+            name = SECTIONNAME();
+            in = "c:";
+            out = "c:";
+            kid = "";
+            rejoined = "c:";
+        }
+
+        SECTION("UNC")
+        {
+            name = SECTIONNAME();
+            in = "//foo/bar/abc/def";
+            out = "//foo/bar/abc";
+            kid = "def";
+            rejoined = "//foo/bar/abc/def";
+        }
+
+        SECTION("UNC end")
+        {
+            name = SECTIONNAME();
+            in = "//foo/bar/abc/def/";
+            out = "//foo/bar/abc";
+            kid = "def";
+            rejoined = "//foo/bar/abc/def";
+        }
+
+        SECTION("UNC root")
+        {
+            name = SECTIONNAME();
+            in = "//foo/bar/abc";
+            out = "//foo/bar";
+            kid = "abc";
+            rejoined = "//foo/bar/abc";
+        }
+
+        SECTION("UNC can't")
+        {
+            name = SECTIONNAME();
+            in = "//foo/bar";
+            out = "//foo/bar";
+            kid = "";
+            rejoined = "//foo/bar/";
+        }
+
+        SECTION("UNC can't end")
+        {
+            name = SECTIONNAME();
+            in = "//foo/bar/";
+            out = "//foo/bar";
+            kid = "";
+            rejoined = "//foo/bar/";
+        }
+
+        SECTION("No seps")
+        {
+            name = SECTIONNAME();
+            in = "foo";
+            out = "";
+            kid = "foo";
+            rejoined = "foo";
+        }
+        str<> parent, child;
+        str<> orig, verify;
+
+        parent = in;
+        orig = in;
+        verify = out;
+
+        adjust_path(parent, i);
+        adjust_path(orig, i);
+        adjust_path(verify, i);
+
+        path::to_parent(parent, &child);
+        REQUIRE(parent.equals(verify.c_str()), [&] () { printf("%s%s\n\nplain input:\t\t'%s'\nexpected parent:\t'%s'\nactual parent:\t\t'%s'", name, i ? " (namespace)" : "", orig.c_str(), verify.c_str(), parent.c_str()); });
+        REQUIRE(child.equals(kid), [&] () { printf("%s%s\n\ninput:\t\t\t'%s'\nexpected child:\t'%s'\nactual child:\t\t'%s'", name, i ? " (namespace)" : "", orig.c_str(), kid, child.c_str()); });
+        path::append(parent, child.c_str());
+
+        parent = in;
+        adjust_path(parent, i);
+        path::normalise(parent, '\\');
+        path::normalise(orig, '\\');
+        path::normalise(verify, '\\');
+
+        path::to_parent(parent, &child);
+        REQUIRE(parent.equals(verify.c_str()),  [&] () { printf("%s%s\n\nnormalized input:\t'%s'\nexpected parent:\t'%s'\nactual parent:\t\t'%s'", name, i ? " (namespace)" : "", orig.c_str(), verify.c_str(), parent.c_str()); });
+        REQUIRE(child.equals(kid), [&] () { printf("%s%s\n\nnormalized input:\t'%s'\nexpected child:\t'%s'\nactual child:\t\t'%s'", name, i ? " (namespace)" : "", orig.c_str(), kid, child.c_str()); });
+
+        verify = rejoined;
+        adjust_path(verify, i);
+        path::normalise(verify, '\\');
+        path::append(parent, child.c_str());
+        REQUIRE(parent.equals(verify.c_str()), [&] () { printf("%s%s\n\nexpected rejoined:\t'%s'\nactual rejoined:\t'%s'", name, i ? " (namespace)" : "", verify.c_str(), parent.c_str()); });
     }
-
-    SECTION("Normal end")
-    {
-        in = "c:/one/two/";
-        out = "c:/one";
-        kid = "two";
-        rejoined = "c:/one/two";
-    }
-
-    SECTION("Normal root")
-    {
-        in = "c:/one";
-        out = "c:/";
-        kid = "one";
-        rejoined = "c:/one";
-    }
-
-    SECTION("Normal can't")
-    {
-        in = "c:/";
-        out = "c:/";
-        kid = "";
-        rejoined = "c:/";
-    }
-
-    SECTION("Drive")
-    {
-        in = "c:";
-        out = "c:";
-        kid = "";
-        rejoined = "c:";
-    }
-
-    SECTION("UNC")
-    {
-        in = "//foo/bar/abc/def";
-        out = "//foo/bar/abc";
-        kid = "def";
-        rejoined = "//foo/bar/abc/def";
-    }
-
-    SECTION("UNC end")
-    {
-        in = "//foo/bar/abc/def/";
-        out = "//foo/bar/abc";
-        kid = "def";
-        rejoined = "//foo/bar/abc/def";
-    }
-
-    SECTION("UNC root")
-    {
-        in = "//foo/bar/abc";
-        out = "//foo/bar";
-        kid = "abc";
-        rejoined = "//foo/bar/abc";
-    }
-
-    SECTION("UNC can't")
-    {
-        in = "//foo/bar";
-        out = "//foo/bar";
-        kid = "";
-        rejoined = "//foo/bar/";
-    }
-
-    SECTION("UNC can't end")
-    {
-        in = "//foo/bar/";
-        out = "//foo/bar";
-        kid = "";
-        rejoined = "//foo/bar/";
-    }
-
-    SECTION("No seps")
-    {
-        in = "foo";
-        out = "";
-        kid = "foo";
-        rejoined = "foo";
-    }
-
-    str<> parent, child;
-    str<> orig, verify;
-
-    parent = in;
-    orig = in;
-    verify = out;
-
-    path::to_parent(parent, &child);
-    REQUIRE(parent.equals(verify.c_str()));
-    REQUIRE(child.equals(kid));
-    path::append(parent, child.c_str());
-
-    parent = in;
-    path::normalise(parent, '\\');
-    path::normalise(orig, '\\');
-    path::normalise(verify, '\\');
-
-    path::to_parent(parent, &child);
-    REQUIRE(parent.equals(verify.c_str()));
-    REQUIRE(child.equals(kid));
-
-    verify = rejoined;
-    path::normalise(verify, '\\');
-    path::append(parent, child.c_str());
-    REQUIRE(parent.equals(verify.c_str()));
 }
 
 //------------------------------------------------------------------------------
@@ -602,4 +693,9 @@ TEST_CASE("path::normalise() 2")
     test("../../..", "../../..");
     test("../xxx/../..", "../..");
     test("../../xxx/../..", "../../..");
+
+    test("//?/foo/../..", "//?/");
+    test("//?/a:/..", "//?/a:/");
+    test("//?/UNC/foo/bar/..", "//?/UNC/foo/bar");
+    test("//?/UNC/foo/bar/../abc", "//?/UNC/foo/bar/abc");
 }

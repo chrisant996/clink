@@ -1341,7 +1341,7 @@ void line_editor_impl::try_suggest()
                 // Removable drives are accepted because typically these are
                 // thumb drives these days, which are fast.
                 const char* end_word = m_buffer.get_buffer() + word.offset;
-                bool no_matches = (path::is_separator(end_word[0]) && path::is_separator(end_word[1]));
+                bool no_matches = path::is_unc(end_word);
                 if (!no_matches)
                 {
                     str<> full;

@@ -30,16 +30,52 @@ static bool s_have_pathexts = false;
 static std::map<std::wstring, bool, ext_comparer> s_pathexts;
 
 //------------------------------------------------------------------------------
-template<typename TYPE> static unsigned int past_unc(const TYPE* path)
+template<typename TYPE> static void skip_sep(const TYPE*& path)
 {
-    unsigned int start = 2;
-    while (path[start] && !path::is_separator(path[start]))
-        start++;
-    while (path[start] && path::is_separator(path[start]))
-        start++;
-    while (path[start] && !path::is_separator(path[start]))
-        start++;
-    return start;
+    while (path::is_separator(*path))
+        ++path;
+}
+
+//------------------------------------------------------------------------------
+template<typename TYPE> static void skip_sep(TYPE*& path)
+{
+    while (path::is_separator(*path))
+        ++path;
+}
+
+//------------------------------------------------------------------------------
+template<typename TYPE> static void skip_nonsep(const TYPE*& path)
+{
+    while (*path && !path::is_separator(*path))
+        ++path;
+}
+
+//------------------------------------------------------------------------------
+template<typename TYPE> static unsigned int past_ssqs(const TYPE* path)
+{
+    const TYPE* p = path;
+    if (!path::is_separator(*(p++)))
+        return 0;
+    if (!path::is_separator(*(p++)))
+        return 0;
+    if (*(p++) != '?')
+        return 0;
+    if (!path::is_separator(*(p++)))
+        return 0;
+    skip_sep(p);
+    return static_cast<unsigned int>(p - path);
+}
+
+//------------------------------------------------------------------------------
+template<typename TYPE> static const TYPE* past_drive(const TYPE* path)
+{
+    if (!path::is_unc(path, &path))
+    {
+        path += past_ssqs(path);
+        if (iswalpha(static_cast<unsigned int>(path[0])) && path[1] == ':')
+            path += 2;
+    }
+    return path;
 }
 
 //------------------------------------------------------------------------------
@@ -65,43 +101,36 @@ static const wchar_t* get_last_separator(const wchar_t* in)
 //------------------------------------------------------------------------------
 static int get_directory_end(const char* path)
 {
-    if (const char* slash = get_last_separator(path))
+    const char* p = path;
+
+#if defined(PLATFORM_WINDOWS)
+    // Windows and its drive prefixes and UNC paths.
+    p = past_drive(p);
+#endif
+
+    // Don't strip '/' if it's the first char.
+    if ((p == path || p[-1] == ':') && path::is_separator(*p))
+        ++p;
+
+    const char* slash = get_last_separator(p);
+    if (!slash)
+        return int(p - path);
+
+    // Trim consecutive slashes unless they're leading ones.
+    const char* first_slash = slash;
+    while (first_slash >= p)
     {
-        // Trim consecutive slashes unless they're leading ones.
-        const char* first_slash = slash;
-        while (first_slash >= path)
-        {
-            if (!path::is_separator(*first_slash))
-                break;
+        if (!path::is_separator(*first_slash))
+            break;
 
-            --first_slash;
-        }
-        ++first_slash;
-
-        if (first_slash != path)
-            slash = first_slash;
-
-        // Don't strip '/' if it's the first char.
-        if (slash == path)
-            ++slash;
-
-#if defined(PLATFORM_WINDOWS)
-        // Same for Windows and its drive prefixes and UNC paths.
-        if (path[0] && path[1] == ':' && slash == path + 2)
-            ++slash;
-        else if (path::is_separator(path[0]) && path::is_separator(path[1]))
-            slash = max(slash, path + past_unc(path));
-#endif
-
-        return int(slash - path);
+        --first_slash;
     }
+    ++first_slash;
 
-#if defined(PLATFORM_WINDOWS)
-    if (path[0] && path[1] == ':')
-        return 2;
-#endif
+    if (first_slash != p)
+        slash = first_slash;
 
-    return 0;
+    return int(slash - path);
 }
 
 
@@ -130,45 +159,59 @@ void normalise(char* in_out, int sep)
     if (!sep)
         sep = PATH_SEP[0];
 
-    bool test_unc = true;
+    bool dots = true;
+    bool eat_extra_dots = false;
+    bool is_unc = path::is_unc(in_out);
+
 #if defined(PLATFORM_WINDOWS)
-    if (in_out[0] && in_out[1] == ':')
+    if (is_separator(in_out[0]) && is_separator(in_out[1]) && in_out[2] == '.' && is_separator(in_out[3]))
+        dots = false; // Device namespace does not normalize . or .. in paths.
+    else
     {
-        in_out += 2;
-        test_unc = false;
+        const char* past = past_drive(in_out);
+        eat_extra_dots = (past > in_out && is_separator(in_out[0]) && is_separator(in_out[1]) && in_out[2] == '?');
+        if (past >= in_out + 1 && is_separator(in_out[0]) && is_separator(in_out[1]))
+            in_out += 2; // Preserve the 2 leading separators.
+        char* __restrict write = in_out;
+        while (in_out < past)
+        {
+            char c = *in_out;
+            *write = c;
+            if (is_separator(c))
+                skip_sep(in_out);
+            else
+                ++in_out;
+            ++write;
+        }
     }
 #endif
+
+    // BUGBUG:  Two reasonable perspectives:
+    //
+    // 1.  This should normalize . and .. even in \\?\ paths.
+    // 2.  This should not normalize . or .. in \\?\ paths.
+    //
+    // Maybe there should be a parameter, so that the caller can choose.
 
     unsigned int piece_count = 0;
 
     char* __restrict write = in_out;
+    int unc_offset = 0;
     if (is_separator(*write))
     {
         *write++ = char(sep);
         piece_count = INT_MAX;
-
-        // UNC.
-        if (test_unc && is_separator(*write))
-        {
-            *write++ = char(sep);
-            // Device namespace.
-            if (write[0] == '.' && (!write[1] || is_separator(write[1])))
-            {
-                write++;
-                if (is_separator(write[0]))
-                    *write++ = char(sep);
-            }
-        }
+        if (is_unc)
+            ++unc_offset;
     }
 
-    const char* __restrict start = write;
+    const char* const __restrict start = write - unc_offset;
     const char* __restrict read = write;
     for (; const char* __restrict next = next_element(read); read = next)
     {
-        while (is_separator(*read))
-            ++read;
+        skip_sep(read);
 
-        if (read[0] == '.')
+        if (read[0] == '.' && dots)
         {
             bool two_dot = (read[1] == '.');
 
@@ -187,13 +230,20 @@ void normalise(char* in_out, int sep)
                             break;
                     }
 
-                    piece_count -= !!piece_count;
+                    --piece_count;
+                    continue;
+                }
+                else if (eat_extra_dots)
+                {
                     continue;
                 }
             }
         }
         else
             ++piece_count;
+
+        if (is_unc && write == start)
+            *write++ = char(sep);
 
         for (; read < next; ++read)
             *write++ = is_separator(*read) ? char(sep) : *read;
@@ -235,8 +285,8 @@ const char* next_element(const char* in)
     if (*in == '\0')
         return nullptr;
 
-    for (; is_separator(*in); ++in);
-    for (; *in && !is_separator(*in); ++in);
+    skip_sep(in);
+    skip_nonsep(in);
     return in + !!*in;
 }
 
@@ -272,10 +322,17 @@ bool get_directory(str_base& in_out)
 bool get_drive(const char* in, str_base& out)
 {
 #if defined(PLATFORM_WINDOWS)
+    // Advance past \\?\ if present.
+    in += past_ssqs(in);
+
+    // If not 'X:' then there's no drive.
     if ((in[1] != ':') || (unsigned(tolower(in[0]) - 'a') > ('z' - 'a')))
         return false;
 
-    return out.concat(in, 2);
+    // Return the drive.
+    const char c = in[0];
+    out.clear();
+    return out.format("%c:", c);
 #else
     return false;
 #endif
@@ -284,15 +341,7 @@ bool get_drive(const char* in, str_base& out)
 //------------------------------------------------------------------------------
 bool get_drive(str_base& in_out)
 {
-#if defined(PLATFORM_WINDOWS)
-    if ((in_out[1] != ':') || (unsigned(tolower(in_out[0]) - 'a') > ('z' - 'a')))
-        return false;
-
-    in_out.truncate(2);
-    return (in_out.size() > 2);
-#else
-    return false;
-#endif
+    return get_drive(in_out.c_str(), in_out);
 }
 
 //------------------------------------------------------------------------------
@@ -345,31 +394,31 @@ bool get_name(const wchar_t* in, wstr_base& out)
 }
 
 //------------------------------------------------------------------------------
-const char* get_name(const char* in)
+template<typename T>
+const T* get_name(const T* in)
 {
-    if (const char* slash = get_last_separator(in))
-        return slash + 1;
-
 #if defined(PLATFORM_WINDOWS)
-    if (in[0] && in[1] == ':')
-        in += 2;
+    // Skip UNC root, \\?\ prefix, and/or drive letter.  This is important so
+    // that they are not misinterpreted as a file name.
+    in = past_drive(in);
 #endif
+
+    if (const T* slash = get_last_separator(in))
+        return slash + 1;
 
     return in;
 }
 
 //------------------------------------------------------------------------------
+const char* get_name(const char* in)
+{
+    return get_name<char>(in);
+}
+
+//------------------------------------------------------------------------------
 const wchar_t* get_name(const wchar_t* in)
 {
-    if (const wchar_t* slash = get_last_separator(in))
-        return slash + 1;
-
-#if defined(PLATFORM_WINDOWS)
-    if (in[0] && in[1] == ':')
-        in += 2;
-#endif
-
-    return in;
+    return get_name<wchar_t>(in);
 }
 
 //------------------------------------------------------------------------------
@@ -400,8 +449,7 @@ bool tilde_expand(const char* in, str_base& out, bool use_appdata_local)
     }
 
     in++;
-    while (path::is_separator(*in))
-        ++in;
+    skip_sep(in);
 
     path::append(out, in);
     path::normalise(out);
@@ -424,33 +472,39 @@ bool tilde_expand(str_moveable& in_out, bool use_appdata_local)
 }
 
 //------------------------------------------------------------------------------
-bool is_rooted(const char* path)
-{
-#if defined(PLATFORM_WINDOWS)
-    if (is_separator(path[0]) && is_separator(path[1]))
-        path += past_unc(path);
-    else if (path[0] && path[1] == ':')
-        path += 2;
-#endif
-
-    return is_separator(*path);
-}
-
-//------------------------------------------------------------------------------
-bool is_root(const char* path)
+static bool find_root(const char* path, const char*& child)
 {
 #if defined(PLATFORM_WINDOWS)
     // Windows' drives prefixes.
     // "X:" or UNC root?
-    if (is_separator(path[0]) && is_separator(path[1]))
-        path += past_unc(path);
-    else if (path[0] && path[1] == ':')
-        path += 2;
+    path = past_drive(path);
 #endif
 
+    child = path;
+
+    return !*path || is_separator(*path);
+}
+
+//------------------------------------------------------------------------------
+// is_rooted means it is a root plus at least a path separator.
+//
+// QUIRK:  \\foo and \\foo\ and \\?\UNC\foo and \\?\UNC\foo\ are reported as
+// rooted, because saying they're not would create path parsing problems.
+bool is_rooted(const char* path)
+{
+    const char* child;
+    return find_root(path, child) && is_separator(*child);
+}
+
+//------------------------------------------------------------------------------
+// is_root means cannot subdivide the string, i.e. cannot move up the hierarchy.
+bool is_root(const char* path)
+{
+    if (!find_root(path, path))
+        return false;
+
     // "[/ or \]+" ?
-    while (is_separator(*path))
-        ++path;
+    skip_sep(path);
 
     return (*path == '\0');
 }
@@ -512,7 +566,12 @@ bool append(str_base& out, const char* rhs)
         add_separator &= !is_separator(out[last]);
 
 #if defined(PLATFORM_WINDOWS)
-        add_separator &= !(isalpha((unsigned char)out[0]) && out[1] == ':' && out[2] == '\0');
+        const char* in = out.c_str();
+        if (!is_unc(in, &in))
+        {
+            in += past_ssqs(in);
+            add_separator &= !(isalpha((unsigned char)in[0]) && in[1] == ':' && in[2] == '\0');
+        }
 #endif
     }
     else
@@ -529,12 +588,7 @@ bool append(str_base& out, const char* rhs)
 // letter or UNC root, and doesn't strip an initial (root) separator.
 void maybe_strip_last_separator(str_base& out)
 {
-    unsigned int start = 0;
-
-    if (isalpha((unsigned char)out[0]) && out[1] == ':')
-        start += 2;
-    else if (out[0] == '\\' && out[1] == '\\')
-        start += 2;
+    unsigned int start = static_cast<unsigned int>(past_drive(out.c_str()) - out.c_str());
 
     if (is_separator(out[start]))
         start++;
@@ -544,17 +598,10 @@ void maybe_strip_last_separator(str_base& out)
 }
 void maybe_strip_last_separator(wstr_base& out)
 {
-    unsigned int start = 0;
+    unsigned int start = static_cast<unsigned int>(past_drive(out.c_str()) - out.c_str());
 
-    if (is_separator(out[0]) && is_separator(out[1]))
-        start = past_unc(out.c_str());
-    else
-    {
-        if (iswalpha(out[0]) && out[1] == ':')
-            start += 2;
-        if (is_separator(out[start]))
-            start++;
-    }
+    if (is_separator(out[start]))
+        ++start;
 
     while (out.length() > start && is_separator(out[out.length() - 1]))
         out.truncate(out.length() - 1);
@@ -565,35 +612,36 @@ void maybe_strip_last_separator(wstr_base& out)
 // non-zero if out changed, or zero if out didn't change.
 bool to_parent(str_base& out, str_base* child)
 {
-    unsigned int start = 0;
-    unsigned int end = out.length();
     unsigned int orig_len = out.length();
 
-    if (is_separator(out[0]) && is_separator(out[1]))
-        start = past_unc(out.c_str());
-    else
+    // Find end of drive or UNC root plus separator(s).
+    unsigned int start = static_cast<unsigned int>(past_drive(out.c_str()) - out.c_str());
+    if (start && out[start - 1] == ':')
     {
-        if (isalpha((unsigned char)out[0]) && out[1] == ':')
-            start += 2;
-        if (is_separator(out[start]))
-            start++;
+        while (is_separator(out[start]))
+            ++start;
     }
 
+    // Trim separators at the end.
+    unsigned int end = out.length();
     while (end > 0 && is_separator(out[end - 1]))
         end--;
+
+    // Trim the last path component.
     int child_end = end;
     while (end > 0 && !is_separator(out[end - 1]))
         end--;
-
     if (end < start)
         end = start;
 
+    // Return the last path component.
     if (child)
     {
         child->clear();
         child->concat(out.c_str() + end, child_end - end);
     }
 
+    // Trim trailing separators.
     while (end > start && is_separator(out[end - 1]))
         end--;
 
@@ -602,31 +650,108 @@ bool to_parent(str_base& out, str_base* child)
 }
 
 //------------------------------------------------------------------------------
+// Optional out parameter past_unc points just after the UNC server\share part
+// (and does not include a separator past that).
+template<typename T>
+bool is_unc(const T* path, const T** past_unc)
+{
+    if (!is_separator(path[0]) || !is_separator(path[1]))
+        return false;
+
+    const T* const in = path;
+    skip_sep(path);
+    unsigned int leading = static_cast<unsigned int>(path - in);
+
+    // Check for device namespace.
+    if (path[0] == '.' && (!path[1] || is_separator(path[1])))
+        return false;
+
+    // Check for \\?\UNC\ namespace.
+    if (leading == 2 && path[0] == '?' && is_separator(path[1]))
+    {
+        ++path;
+        skip_sep(path);
+
+        if (*path != 'U' && *path != 'u')
+            return false;
+        ++path;
+        if (*path != 'N' && *path != 'n')
+            return false;
+        ++path;
+        if (*path != 'C' && *path != 'c')
+            return false;
+        ++path;
+
+        if (!is_separator(*path))
+            return false;
+        skip_sep(path);
+    }
+
+    if (past_unc)
+    {
+        // Skip server name.
+        skip_nonsep(path);
+        while (*path && !is_separator(*path))
+            ++path;
+
+        // Skip separator.
+        skip_sep(path);
+
+        // Skip share name.
+        skip_nonsep(path);
+
+        *past_unc = path;
+    }
+    return true;
+}
+
+//------------------------------------------------------------------------------
+bool is_unc(const char* path, const char** past_unc)
+{
+    return is_unc<char>(path, past_unc);
+}
+
+//------------------------------------------------------------------------------
+bool is_unc(const wchar_t* path, const wchar_t** past_unc)
+{
+    return is_unc<wchar_t>(path, past_unc);
+}
+
+//------------------------------------------------------------------------------
 bool is_incomplete_unc(const char* path)
 {
     // If it doesn't start with "\\" then it isn't a UNC path.
     if (!is_separator(path[0]) || !is_separator(path[1]))
         return false;
-    while (is_separator(*path))
-        path++;
+
+    // Maybe \\?\UNC\.
+    if (path[2] == '?')
+    {
+        if (!is_separator(path[3]))
+            return false;
+        path += 4;
+        skip_sep(path);
+        if (_strnicmp(path, "UNC", 3) != 0 || !is_separator(path[3]))
+            return false;
+        path += 4;
+    }
+
+    skip_sep(path);
 
     // Server name.
     if (isspace((unsigned char)*path))
         return true;
-    while (*path && !is_separator(*path))
-        path++;
+    skip_nonsep(path);
 
     // Separator after server name.
     if (!is_separator(*path))
         return true;
-    while (is_separator(*path))
-        path++;
+    skip_sep(path);
 
     // Share name.
     if (isspace((unsigned char)*path))
         return true;
-    while (*path && !is_separator(*path))
-        path++;
+    skip_nonsep(path);
 
     // Separator after share name.
     if (!is_separator(*path))
