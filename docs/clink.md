@@ -1365,7 +1365,9 @@ Lua scripts are loaded once and are only reloaded if forced because the scripts 
 
 Run `clink info` to see the script paths for the current session.
 
-> **Note:** Clink performs tilde expansion on the Lua script directory names.  If the path begins with `~\` then it is replaced with the current user's home directory (`%HOMEDRIVE%%HOMEPATH%` or `%USERPROFILE%`).
+> **Notes:**
+> - "completions" is a special reserved directory name:  a "completions" directory under any of the Lua script directories listed in `clink info` has special meaning, and should not contain scripts unless they are specially written to be put in a "completions" directory.  See [Completion directories](#completion-directories) for more information.
+> - Clink performs tilde expansion on the Lua script directory names.  If the path begins with `~\` then it is replaced with the current user's home directory (`%HOMEDRIVE%%HOMEPATH%` or `%USERPROFILE%`).
 
 ### Completion directories
 
@@ -1379,7 +1381,11 @@ Clink looks for completion scripts in these directories:
 1. Any directories listed in the `%CLINK_COMPLETIONS_DIR%` environment variable (multiple directories may be separated by semicolons).
 2. A `completions` subdirectory under each scripts directory listed by `clink info` (see [Location of Lua Scripts](#lua-scripts-location)).
 
-> **Note:**  If a script defines more than an argmatcher, then putting it in a completions directory may cause its other functionality to not work until a command is typed with the same name as the script.  For example, if a script in a completions directory defines an argmatcher and also a prompt filter, the prompt filter won't be loaded until the corresponding command name is typed.  Whether that is desirable depends on the script and on your preference.
+> **Note:**  If you download scripts, then don't put them in a "completions" directory unless they specifically say they can be put there.
+>
+> If a script defines more than an argmatcher, then putting it in a completions directory may cause its other functionality to not work until a command is typed with the same name as the script.  For example, if a script in a completions directory defines an argmatcher and also a prompt filter, the prompt filter won't be loaded until the corresponding command name is typed.  Whether that is desirable depends on the script and on your preference.
+>
+> For example, the scripts from the [clink-completions](https://github.com/vladimir-kotikov/clink-completions) project belong in a normal script directory, because they have other functionality besides just completions, and they won't work correctly in a "completions" directory.
 
 ### Tips for starting to write Lua scripts
 
