@@ -237,6 +237,48 @@ function _argreader:update(word, word_index)
     self:trace(word, "update")
     --]]
 
+    --[[ ... PROTOTYPE CODE ...
+    -- WORD_INDEX makes joining super complicated...
+ self._nodelimitchars = "+"
+    if self._nodelimitchars then
+        if self._joinwords then
+            if self._joinwords > 1 then
+                self._joinwords = self._joinwords - 1
+            else
+                self._joinwords = nil
+            end
+            return
+        else
+            local thiswordinfo = line_state:getwordinfo(word_index)
+            local line = line_state:getline()
+            for i = word_index, line_state:getwordcount() - 1 do
+                local nextwordinfo = line_state:getwordinfo(i + 1)
+                local s = thiswordinfo.offset + thiswordinfo.length
+                local e = nextwordinfo.offset - 1
+                local join = true
+                for i = s + (thiswordinfo.quoted and 1 or 0), e - (nextwordinfo.quoted and 1 or 0) do
+                    local c = line:sub(i, i)
+                    if not self._nodelimitchars:find(c, 1, true) then
+ print("NO CUZ '"..tostring(c).."'")
+                        join = false
+                        break
+                    end
+                end
+                if not join then
+                    break
+                end
+                if i + 1 == line_state:getwordcount() and not self._word_classifier then
+                    word = word .. line:sub(s, e)
+                else
+                    word = word .. line:sub(s, e + nextwordinfo.length)
+                    self._joinwords = (self._joinwords or 0) + 1
+                end
+ print("JOINEM!", ">"..word.."<")
+            end
+        end
+    end
+    --]]
+
     -- When a flag ends with : or = but doesn't link to another matcher, and if
     -- the next word is adjacent, then treat the next word as an argument to the
     -- flag instead of advancing to the next argument position.
