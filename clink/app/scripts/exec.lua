@@ -119,18 +119,22 @@ function exec_generator:generate(line_state, match_builder)
         paths = {}
     end
 
+    local co, ismain = coroutine.running()
+
     local add_files = function(pattern, rooted)
         local any_added = false
-        local root = nil
-        if rooted then
-            root = (path.getdirectory(pattern) or ""):gsub("/", "\\")
-            if expanded then
-                root = rl.collapsetilde(root)
+        if ismain or os.getdrivetype(pattern) ~= "remote" then
+            local root = nil
+            if rooted then
+                root = (path.getdirectory(pattern) or ""):gsub("/", "\\")
+                if expanded then
+                    root = rl.collapsetilde(root)
+                end
             end
-        end
-        for _, f in ipairs(os.globfiles(pattern, true)) do
-            local file = (root and path.join(root, f.name)) or f.name
-            any_added = match_builder:addmatch({ match = file, type = f.type }) or any_added
+            for _, f in ipairs(os.globfiles(pattern, true)) do
+                local file = (root and path.join(root, f.name)) or f.name
+                any_added = match_builder:addmatch({ match = file, type = f.type }) or any_added
+            end
         end
         return any_added
     end
