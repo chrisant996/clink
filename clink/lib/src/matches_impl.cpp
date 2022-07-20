@@ -1030,6 +1030,7 @@ void matches_impl::done_building()
                         // trailing path separator.
                         const size_t len = strlen(m_infos[i].match);
                         const_cast<char*>(m_infos[i].match)[len] = sep;
+                        m_infos[i].type &= ~match_type::mask;
                         m_infos[i].type |= match_type::dir;
                         assert(m_infos[i].match[len + 1] == '\0');
                     }
@@ -1039,7 +1040,9 @@ void matches_impl::done_building()
                         // Remove it from the dup map before modifying it.
                         m_dedup->erase(lookup);
                         // It's a file, so update the type.
+                        lookup.type &= ~match_type::mask;
                         lookup.type |= match_type::file;
+                        m_infos[i].type &= ~match_type::mask;
                         m_infos[i].type |= lookup.type;
                     }
                     break;
