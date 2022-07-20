@@ -21,6 +21,7 @@ const line_state_lua::method line_state_lua::c_methods[] = {
     { "getendword",             &get_end_word },
     // UNDOCUMENTED; internal use only.
     { "shift",                  &shift },
+    { "join",                   &join },
     {}
 };
 
@@ -33,6 +34,7 @@ public:
                                 line_state_copy(const line_state& line);
                                 ~line_state_copy() { delete m_line; }
     const line_state*           get_line() const { return m_line; }
+    bool                        join(unsigned int index);
 private:
     line_state*                 m_line;
     str_moveable                m_buffer;
@@ -45,6 +47,39 @@ line_state_copy::line_state_copy(const line_state& line)
     m_buffer.concat(line.get_line(), line.get_length());
     m_words = line.get_words(); // Deep copy.
     m_line = new line_state(m_buffer.c_str(), m_buffer.length(), line.get_cursor(), line.get_command_offset(), m_words);
+}
+
+//------------------------------------------------------------------------------
+bool line_state_copy::join(unsigned int index)
+{
+    if (index + 1 >= m_words.size())
+        return false;
+
+    auto& this_word = m_words[index];
+    auto& next_word = m_words[index+1];
+
+    assert(!this_word.command_word);
+    assert(!next_word.command_word);
+    assert(!this_word.is_alias);
+    assert(!next_word.is_alias);
+    assert(!this_word.is_redir_arg);
+    assert(!next_word.is_redir_arg);
+    assert(!this_word.quoted);
+    assert(!next_word.quoted);
+
+    if (this_word.command_word || next_word.command_word)
+        return false;
+    if (this_word.is_alias || next_word.is_alias)
+        return false;
+    if (this_word.is_redir_arg || next_word.is_redir_arg)
+        return false;
+    if (this_word.quoted || next_word.quoted)
+        return false;
+
+    this_word.length = next_word.offset + next_word.length - this_word.offset;
+    this_word.delim = next_word.delim;
+    m_words.erase(m_words.begin() + index + 1);
+    return true;
 }
 
 //------------------------------------------------------------------------------
@@ -306,5 +341,37 @@ int line_state_lua::shift(lua_State* state)
     }
 
     lua_pushinteger(state, m_shift);
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+// UNDOCUMENTED; internal use only.
+int line_state_lua::join(lua_State* state)
+{
+    if (!lua_isnumber(state, 1))
+        return 0;
+
+    unsigned int index = m_shift + int(lua_tointeger(state, 1));
+    if (index < 1 || index + 1 > m_line->get_word_count())
+    {
+nope:
+        lua_pushboolean(state, false);
+        return 1;
+    }
+
+    --index;
+
+    // Make a writable copy, if necessary.
+    if (!m_copy)
+    {
+        m_copy = new line_state_copy(*m_line);
+        m_line = m_copy->get_line();
+    }
+
+    // Join with next word.
+    if (!m_copy->join(index))
+        goto nope;
+
+    lua_pushboolean(state, true);
     return 1;
 }

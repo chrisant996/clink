@@ -238,43 +238,27 @@ function _argreader:update(word, word_index)
     --]]
 
     --[[ ... PROTOTYPE CODE ...
-    -- WORD_INDEX makes joining super complicated...
- self._nodelimitchars = "+"
-    if self._nodelimitchars then
-        if self._joinwords then
-            if self._joinwords > 1 then
-                self._joinwords = self._joinwords - 1
-            else
-                self._joinwords = nil
-            end
-            return
-        else
-            local thiswordinfo = line_state:getwordinfo(word_index)
-            local line = line_state:getline()
-            for i = word_index, line_state:getwordcount() - 1 do
-                local nextwordinfo = line_state:getwordinfo(i + 1)
-                local s = thiswordinfo.offset + thiswordinfo.length
-                local e = nextwordinfo.offset - 1
-                local join = true
-                for i = s + (thiswordinfo.quoted and 1 or 0), e - (nextwordinfo.quoted and 1 or 0) do
-                    local c = line:sub(i, i)
-                    if not self._nodelimitchars:find(c, 1, true) then
- print("NO CUZ '"..tostring(c).."'")
-                        join = false
-                        break
-                    end
-                end
-                if not join then
+    -- Join words separated by non-delimiter characters.
+-- TODO: arg.nodelimitchars
+    if word_index > 0 and self._nodelimitchars then
+        local thiswordinfo = line_state:getwordinfo(word_index)
+        local line = line_state:getline()
+        while word_index < line_state:getwordcount() do
+            local nextwordinfo = line_state:getwordinfo(word_index + 1)
+            local s = thiswordinfo.offset + thiswordinfo.length
+            local e = nextwordinfo.offset - 1
+            local join = true
+            for i = s + (thiswordinfo.quoted and 1 or 0), e - (nextwordinfo.quoted and 1 or 0) do
+                local c = line:sub(i, i)
+                if not self._nodelimitchars:find(c, 1, true) then
+                    join = false
                     break
                 end
-                if i + 1 == line_state:getwordcount() and not self._word_classifier then
-                    word = word .. line:sub(s, e)
-                else
-                    word = word .. line:sub(s, e + nextwordinfo.length)
-                    self._joinwords = (self._joinwords or 0) + 1
-                end
- print("JOINEM!", ">"..word.."<")
             end
+            if not join or not line_state:join(word_index) then
+                break
+            end
+            word = line_state:getword(word_index)
         end
     end
     --]]
@@ -664,6 +648,10 @@ local function apply_options_to_list(addee, list)
         -- Apply looping characters, but avoid duplicates.
         list.loopchars, list.loopcharsfind = append_uniq_chars(list.loopchars, list.loopcharsfind, addee.loopchars)
     end
+    if addee.nodelimitchars then
+        -- Apply non-delimiter characters, but avoid duplicates.
+        list.nodelimitchars = append_uniq_chars(list.nodelimitchars, nil, addee.nodelimitchars)
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -784,6 +772,7 @@ end
 --- <tr><td><code>delayinit=<span class="arg">function</span></code></td><td>See <a href="#addarg_delayinit">Delayed initialization for an argument position</a>.</td><td class="version">v1.3.10 and newer</td></tr>
 --- <tr><td><code>fromhistory=true</code></td><td>See <a href="#addarg_fromhistory">Generate Matches From History</a>.</td><td class="version">v1.3.9 and newer</td></tr>
 --- <tr><td><code>loopchars="<span class="arg">characters</span>"</code></td><td>See <a href="#addarg_loopchars">Delimited Arguments</a>.</td><td class="version">v1.3.37 and newer</td></tr>
+--- <tr><td><code>nodelimitchars="<span class="arg">characters</span>"</code></td><td>See <a href="#addarg_loopchars">Delimited Arguments</a>.</td><td class="version">v1.3.37 and newer</td></tr>
 --- <tr><td><code>nosort=true</code></td><td>See <a href="#addarg_nosort">Disable Sorting Matches</a>.</td><td class="version">v1.3.3 and newer</td></tr>
 --- <tr><td><code>onarg=<span class="arg">function</span></code></td><td>See <a href="#responsive-argmatchers">Responding to Arguments in Argmatchers</a>.</td><td class="version">v1.3.13 and newer</td></tr>
 --- </table></p>
@@ -1403,6 +1392,11 @@ function _argmatcher:_generate(line_state, match_builder, extra_words)
     local command_word_index = line_state:getcommandwordindex()
     for word_index = command_word_index + 1, (word_count - 1) do
         local info = line_state:getwordinfo(word_index)
+        if not info then
+            -- update() may join() words, reducing the word count, causing
+            -- getwordinfo() to return nil.
+            break
+        end
         if not info.redir then
             local word = line_state:getword(word_index)
             if reader:update(word, word_index) then
@@ -2125,6 +2119,11 @@ function clink._generate_from_historyline(line_state)
     local command_word_index = line_state:getcommandwordindex()
     for word_index = command_word_index + 1, word_count do
         local info = line_state:getwordinfo(word_index)
+        if not info then
+            -- update() may join() words, reducing the word count, causing
+            -- getwordinfo() to return nil.
+            break
+        end
         if not info.redir then
             local word = line_state:getword(word_index)
             if reader:update(word, word_index) then
@@ -2202,6 +2201,11 @@ function argmatcher_generator:getwordbreakinfo(line_state)
         local command_word_index = line_state:getcommandwordindex()
         for word_index = command_word_index + 1, (word_count - 1) do
             local info = line_state:getwordinfo(word_index)
+            if not info then
+                -- update() may join() words, reducing the word count, causing
+                -- getwordinfo() to return nil.
+                break
+            end
             if not info.redir then
                 local word = line_state:getword(word_index)
                 if reader:update(word, word_index) then
@@ -2305,6 +2309,11 @@ function argmatcher_classifier:classify(commands)
             -- Consume words and use them to move through matchers' arguments.
             for word_index = command_word_index + 1, word_count do
                 local info = line_state:getwordinfo(word_index)
+                if not info then
+                    -- update() may join() words, reducing the word count,
+                    -- causing getwordinfo() to return nil.
+                    break
+                end
                 if not info.redir then
                     local word = line_state:getword(word_index)
                     if reader:update(word, word_index) then
