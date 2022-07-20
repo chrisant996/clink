@@ -1727,6 +1727,15 @@ static int set_install_version(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+#ifdef DEBUG
+static int last_allocation_number(lua_State* state)
+{
+    lua_pushinteger(state, dbggetallocnumber());
+    return 1;
+}
+#endif
+
+//------------------------------------------------------------------------------
 #ifdef TRACK_LOADED_LUA_FILES
 static int clink_is_lua_file_loaded(lua_State* state)
 {
@@ -1805,6 +1814,9 @@ void clink_lua_initialise(lua_state& lua)
         { "is_cmd_command",         &is_cmd_command },
         { "_get_installation_type", &get_installation_type },
         { "_set_install_version",   &set_install_version },
+#ifdef DEBUG
+        { "last_allocation_number", &last_allocation_number },
+#endif
 #ifdef TRACK_LOADED_LUA_FILES
         { "is_lua_file_loaded",     &clink_is_lua_file_loaded },
 #endif
