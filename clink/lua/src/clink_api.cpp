@@ -5,6 +5,7 @@
 #include "lua_state.h"
 #include "lua_input_idle.h"
 #include "line_state_lua.h"
+#include "line_states_lua.h"
 #include "prompt.h"
 #include "../../app/src/version.h" // Ugh.
 
@@ -1375,6 +1376,47 @@ static int refilter_prompt(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  clink.parseline
+/// -ver:   1.3.37
+/// -arg:   line:string
+/// -ret:   table
+/// This parses the <span class="arg">line</span> string into a table of
+/// commands, with one <a href="#line_state">line_state</a> for each command
+/// parsed from the line string.
+///
+/// The returned table of tables has the following scheme:
+/// -show:  local commands = clink.parseline("echo hello & echo world")
+/// -show:  -- commands[1].line_state corresponds to "echo hello".
+/// -show:  -- commands[2].line_state corresponds to "echo world".
+static int parse_line(lua_State* state)
+{
+    const char* line = checkstring(state, 1);
+    if (!line)
+        return 0;
+
+    // A word collector is lightweight, and there is currently no need to
+    // support tokenisers for anything other than CMD.  So just create a
+    // temporary one here.
+    cmd_command_tokeniser command_tokeniser;
+    cmd_word_tokeniser word_tokeniser;
+    word_collector collector(&command_tokeniser, &word_tokeniser, "\"");
+
+    // Collect words from the whole line.
+    std::vector<word> tmp_words;
+    unsigned int len = static_cast<unsigned int>(strlen(line));
+    collector.collect_words(line, len, 0, tmp_words, collect_words_mode::whole_command);
+
+    // Group words into one line_state per command.
+    commands commands;
+    commands.set(line, len, 0, tmp_words);
+
+    // Make a deep copy in an object allocated in the Lua heap.  Garbage
+    // collection will free it.
+    line_states_lua::make_new(state, commands.get_linestates(line, len));
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 // UNDOCUMENTED; internal use only.
 int g_prompt_redisplay = 0;
 static int get_refilter_redisplay_count(lua_State* state)
@@ -1779,6 +1821,7 @@ void clink_lua_initialise(lua_state& lua)
         { "reload",                 &reload },
         { "reclassifyline",         &reclassify_line },
         { "refilterprompt",         &refilter_prompt },
+        { "parseline",              &parse_line },
         // Backward compatibility with the Clink 0.4.8 API.  Clink 1.0.0a1 had
         // moved these APIs away from "clink.", but backward compatibility
         // requires them here as well.
