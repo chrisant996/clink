@@ -1784,22 +1784,6 @@ clink.argmatcher("foo")
 :addarg(clink.filematches)
 ```
 
-<!-- PROTOTYPE, NOT YET AVAILABLE
-Or in some cases an argument may need to be able to contain a character that would normally be a separator, such as `+`.
-
-In Clink v1.3.37 and higher, you can override word separator characters for an argument slot by including `nodelimitchars="+"` (or set `nodelimitchars=` a list of characters that should not separate words).
-
-```lua
--- This argmatcher accepts syntax like "foo --type text+m filename".
--- Typing "foo --type text+" and pressing TAB generates completions for the file
--- type argument to the --type flag (not files, as it normally would).
-local filetypes = clink.argmatcher():addarg({nodelimitchars="+", "text", "text+m", "text+w"})
-clink.argmatcher("foo")
-:addflags("--type" .. filetypes)
-:addarg(clink.filematches)
-```
--->
-
 #### Adaptive Argmatchers
 
 Some argmatchers may need to adapt on the fly.  For example, a program may have different features available depending on the current directory, or may want to define its arguments and flags by parsing the `--help` text from running a program.

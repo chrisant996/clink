@@ -755,7 +755,6 @@ end
 --- <tr><td><code>delayinit=<span class="arg">function</span></code></td><td>See <a href="#addarg_delayinit">Delayed initialization for an argument position</a>.</td><td class="version">v1.3.10 and newer</td></tr>
 --- <tr><td><code>fromhistory=true</code></td><td>See <a href="#addarg_fromhistory">Generate Matches From History</a>.</td><td class="version">v1.3.9 and newer</td></tr>
 --- <tr><td><code>loopchars="<span class="arg">characters</span>"</code></td><td>See <a href="#addarg_loopchars">Delimited Arguments</a>.</td><td class="version">v1.3.37 and newer</td></tr>
---- <!--<tr><td><code>nodelimitchars="<span class="arg">characters</span>"</code></td><td>See <a href="#addarg_loopchars">Delimited Arguments</a>.</td><td class="version">v1.3.37 and newer</td></tr>-->
 --- <tr><td><code>nosort=true</code></td><td>See <a href="#addarg_nosort">Disable Sorting Matches</a>.</td><td class="version">v1.3.3 and newer</td></tr>
 --- <tr><td><code>onarg=<span class="arg">function</span></code></td><td>See <a href="#responsive-argmatchers">Responding to Arguments in Argmatchers</a>.</td><td class="version">v1.3.13 and newer</td></tr>
 --- </table></p>
