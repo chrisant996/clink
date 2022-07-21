@@ -29,7 +29,6 @@ public:
     int                 get_word(lua_State* state);
     int                 get_end_word(lua_State* state);
     int                 shift(lua_State* state);
-    int                 join(lua_State* state);
 
 private:
     const line_state*   m_line;

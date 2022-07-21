@@ -227,32 +227,6 @@ local function lookup_link(arg, word, line_state, word_index)
 end
 
 --------------------------------------------------------------------------------
--- Join words separated by non-delimiter characters.
-local function apply_nodelimitchars(arg, line_state, word_index)
-    if word_index > 0 and arg.nodelimitchars then
-        local line = line_state:getline()
-        while word_index < line_state:getwordcount() do
-            local thiswordinfo = line_state:getwordinfo(word_index)
-            local nextwordinfo = line_state:getwordinfo(word_index + 1)
-            local s = thiswordinfo.offset + thiswordinfo.length
-            local e = nextwordinfo.offset - 1
-            local join = true
-            for i = s + (thiswordinfo.quoted and 1 or 0), e - (nextwordinfo.quoted and 1 or 0) do
-                local c = line:sub(i, i)
-                if not arg.nodelimitchars:find(c, 1, true) then
-                    join = false
-                    break
-                end
-            end
-            if not join or not line_state:join(word_index) then
-                break
-            end
-        end
-    end
-    return line_state:getword(word_index)
-end
-
---------------------------------------------------------------------------------
 -- When word_index is < 0, skip classifying the word, and skip trying to figure
 -- out whether a `-foo:` word should avoid following a linked parser.  This only
 -- happens when parsing extra words from expanding a doskey alias.
@@ -298,23 +272,6 @@ function _argreader:update(word, word_index, skip_last)
             end
         end
     end
-
-    --[[ ... PROTOTYPE CODE ...
-    -- Join words separated by non-delimiter characters.  Must happen early
-    -- because ??? EXPLANATION ???.
-    local tmparg = self._matcher._args[self._arg_index]
-    if tmparg and tmparg.nodelimitchars then
-        local is_flag = not self._noflags and self._matcher:_is_flag(word)
-        if not is_flag then
-            if apply_nodelimitchars(tmparg, line_state, word_index) then
-                word = line_state:getword(word_index)
-                if skip_last and word_index >= line_state:getwordcount() then
-                    return
-                end
-            end
-        end
-    end
-    --]]
 
     -- Check for flags and switch matcher if the word is a flag.
     local is_flag
@@ -1426,11 +1383,6 @@ function _argmatcher:_generate(line_state, match_builder, extra_words)
     local command_word_index = line_state:getcommandwordindex()
     for word_index = command_word_index + 1, (line_state:getwordcount() - 1) do
         local info = line_state:getwordinfo(word_index)
-        if not info then
-            -- update() may join() words, reducing the word count, causing
-            -- getwordinfo() to return nil.
-            break
-        end
         if not info.redir then
             local word = line_state:getword(word_index)
             if reader:update(word, word_index, true--[[skip_last]]) then
@@ -2153,11 +2105,6 @@ function clink._generate_from_historyline(line_state)
     local command_word_index = line_state:getcommandwordindex()
     for word_index = command_word_index + 1, line_state:getwordcount() do
         local info = line_state:getwordinfo(word_index)
-        if not info then
-            -- update() may join() words, reducing the word count, causing
-            -- getwordinfo() to return nil.
-            break
-        end
         if not info.redir then
             local word = line_state:getword(word_index)
             if reader:update(word, word_index) then
@@ -2234,11 +2181,6 @@ function argmatcher_generator:getwordbreakinfo(line_state)
         local command_word_index = line_state:getcommandwordindex()
         for word_index = command_word_index + 1, (line_state:getwordcount() - 1) do
             local info = line_state:getwordinfo(word_index)
-            if not info then
-                -- update() may join() words, reducing the word count, causing
-                -- getwordinfo() to return nil.
-                break
-            end
             if not info.redir then
                 local word = line_state:getword(word_index)
                 if reader:update(word, word_index, true--[[skip_last]]) then
@@ -2341,11 +2283,6 @@ function argmatcher_classifier:classify(commands)
             -- Consume words and use them to move through matchers' arguments.
             for word_index = command_word_index + 1, line_state:getwordcount() do
                 local info = line_state:getwordinfo(word_index)
-                if not info then
-                    -- update() may join() words, reducing the word count,
-                    -- causing getwordinfo() to return nil.
-                    break
-                end
                 if not info.redir then
                     local word = line_state:getword(word_index)
                     if reader:update(word, word_index) then
