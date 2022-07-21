@@ -7,12 +7,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
-- Special handling for `+` and `;` or etc:
-  - Allow argmatcher args to specify characters that do NOT break words for that arg (e.g. `+` in Perforce file types).
-    - [ ] `foo --type text+` mistakenly includes "text" as a match.  Even if `getwordbreakinfo()` joins words correctly, they don't propagate back up from Lua.
-    - [ ] `foo --type text+m` colors `text` but not the `+m` part.
-    - [ ] `foo --type text+m --type` colors `+m` as a flag and doesn't color the second `--type`; there is a mismatch in word indices.  Maybe this is also because the joined words don't propagate back up from Lua.
-    - [ ] `foo --type asdf+m` shows `text+m` as a match because it's not using the whole `asdf+m` as the needle, probably because the joined words don't propagate back up from Lua.
 - Some way to have e.g. multiple separate `ut` argmatchers that are associated with different `ut` program paths.
 - Some way to push keys?  (Push keys to Clink; not to other processes.)
 
