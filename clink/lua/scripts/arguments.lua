@@ -67,9 +67,14 @@ end
 --------------------------------------------------------------------------------
 --[[
 local enable_tracing = true
+local debug_print = true
 function _argreader:trace(...)
     if self._tracing then
-        print(...)
+        if debug_print then
+            os.debugprint(...)
+        else
+            print(...)
+        end
     end
 end
 function _argreader:starttracing(word)
