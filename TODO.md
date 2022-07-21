@@ -13,8 +13,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
     - [ ] `foo --type text+m` colors `text` but not the `+m` part.
     - [ ] `foo --type text+m --type` colors `+m` as a flag and doesn't color the second `--type`; there is a mismatch in word indices.  Maybe this is also because the joined words don't propagate back up from Lua.
     - [ ] `foo --type asdf+m` shows `text+m` as a match because it's not using the whole `asdf+m` as the needle, probably because the joined words don't propagate back up from Lua.
-  - Allow argmatcher arg generators to handle single character non-delimited flags (e.g. `dir /a:adh`).
-    - Maybe via `onarg` fanciness?
 - Some way to have e.g. multiple separate `ut` argmatchers that are associated with different `ut` program paths.
 - Some way to push keys?  (Push keys to Clink; not to other processes.)
 
