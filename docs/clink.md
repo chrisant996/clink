@@ -1749,7 +1749,7 @@ local host_parser = clink.argmatcher():addarg({ fromhistory=true, os.getenv("COM
 clink.argmatcher("program"):addflags({ "--host"..host_parser })
 ```
 
-<a name="addarg_nosort"></a>>
+<a name="addarg_nosort"></a>
 
 #### Disable Sorting Matches
 
@@ -1766,7 +1766,7 @@ the_parser:addarg({ nosort=true, "red", "orange", "yellow", "green", "blue", "in
 
 In some cases an argument for programs may accept a list of values separated by `;` or `+` or etc.  Normally `;` or `+` are argument separators (like space), and advance the argmatcher to the next argument slot.
 
-In Clink v1.3.36 and higher, you can make them stay on the current argument slot by including `loopchars=";"` (or set `loopchars=` a list of value delimiters).
+In Clink v1.3.37 and higher, you can make them stay on the current argument slot by including `loopchars=";"` (or set `loopchars=` a list of value delimiters).
 
 ```lua
 -- This argmatcher accepts syntax like "foo color filename".
