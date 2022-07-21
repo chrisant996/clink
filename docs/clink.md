@@ -1905,10 +1905,10 @@ An argmatcher can supply an "on arg" function to be called when the argmatcher p
 
 Supply an "on arg" function by including <code>onarg=<span class="arg">function</span></code> in the argument table with [_argmatcher:addarg()](#_argmatcher:addarg).  The function is passed five arguments, and it doesn't return anything (the function receives the same arguments as [Functions As Argument Options](#functions-as-argument-options)).
 
+- `arg_index` is the argument index in the argmatcher.
 - `word` is a partial string for the word under the cursor, corresponding to the argument for which matches are being generated:  it is an empty string, or if a filename is being entered then it will be the path portion (e.g. for "dir1\dir2\pre" `word` will be "dir1\dir2\").
 - `word_index` is the word index in `line_state`, corresponding to the argument for which matches are being generated.
 - `line_state` is a [line_state](#line_state) object that contains the words for the associated command line.
-- `match_builder` is a [builder](#builder) object (but for adding matches the function should return them in a table).
 - `user_data` is a table that the argmatcher can use to help it parse the input line.
 
 When parsing begins, the `user_data` is an empty table.  Each time a flag or argument links to another argmatcher, the new argmatcher gets a separate new empty `user_data` table.  Your "on arg" functions can set data from the table, and then can also get data that was set earlier by your "on arg" functions.
@@ -1916,7 +1916,7 @@ When parsing begins, the `user_data` is an empty table.  Each time a flag or arg
 An "on arg" function can also use [os.chdir()](#os.chdir) to set the current directory.  Generating match completions saves and restores the current directory when finished, so argmatcher "on arg" functions can set the current directory and thus cause match completion later in the input line to complete file names relative to the change directory.  For example, the built-in `cd` and `pushd` argmatches use an "on arg" function so that `pushd \other_dir & program `<kbd>Tab</kbd> can complete file names from `\other_dir` instead of the (real) current directory.
 
 ```lua
-local function onarg_pushd(arg_index, word, word_index, line_state)
+local function onarg_pushd(arg_index, word, word_index, line_state, user_data)
     -- Match generation after this is relative to the new directory.
     if word ~= "" then
         os.chdir(word)
