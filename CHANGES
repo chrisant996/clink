@@ -10,7 +10,7 @@
 - The `clink-diagnostics` command now lists registered argmatchers when the numeric arg > 1 (<kbd>Alt</kbd>-<kbd>2</kbd>,<kbd>Ctrl</kbd>-<kbd>x</kbd>,<kbd>Ctrl</kbd>-<kbd>r</kbd>).
 - Rewrote the path parsing routines to properly respect UNC paths and `\\?\` syntax and `\\?\UNC\` syntax.
 - Fixed `clink.print(NONL, etc)` to not print a TAB character after a `NONL` that is the first argument.
-- Fixed [#329](https://github.com/chrisant996/clink/issues/329); file completions may be marked as directories (regression introduced in v1.2.36; affects only backward compatibility mode).
+- Fixed [#329](https://github.com/chrisant996/clink/issues/329); file completions may be mistakenly marked as directories (regression introduced in v1.2.36; affects only backward compatibility mode).
 - Fixed [#326](https://github.com/chrisant996/clink/issues/326); `rl.expandtilde()` doesn't have a way to expand tildes everywhere in an input line string.
 - Fixed [#325](https://github.com/chrisant996/clink/issues/325); potential hangs while typing if `%PATH%` contains a UNC path.
 
