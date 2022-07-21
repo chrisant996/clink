@@ -56,29 +56,28 @@ bool line_state_copy::join(unsigned int index)
         return false;
 
     auto& this_word = m_words[index];
-    auto& next_word = m_words[index+1];
+    const auto& next_word = m_words[index+1];
 
-    assert(!this_word.command_word);
-    assert(!next_word.command_word);
-    assert(!this_word.is_alias);
-    assert(!next_word.is_alias);
-    assert(!this_word.is_redir_arg);
-    assert(!next_word.is_redir_arg);
-    assert(!this_word.quoted);
-    assert(!next_word.quoted);
-
+    // Don't join special words.
     if (this_word.command_word || next_word.command_word)
         return false;
     if (this_word.is_alias || next_word.is_alias)
         return false;
     if (this_word.is_redir_arg || next_word.is_redir_arg)
         return false;
-    if (this_word.quoted || next_word.quoted)
+
+    // Don't join if quoting is different; it would violate the quoting rules.
+    if (this_word.quoted != next_word.quoted)
         return false;
 
-    this_word.length = next_word.offset + next_word.length - this_word.offset;
+    // Join this word, the next word, and the characters in between them.
+    if (next_word.length == 0)
+        this_word.length = 0; // Special case for end word.
+    else
+        this_word.length = next_word.offset + next_word.length - this_word.offset;
     this_word.delim = next_word.delim;
     m_words.erase(m_words.begin() + index + 1);
+
     return true;
 }
 
