@@ -7,6 +7,7 @@
 - When `argmatcher:addarg()` is passed a table containing <code>loopchars="<span class="arg">chars</span>"</code> then the <span class="arg">chars</span> are treated as delimiters for a single argument, and they do not move on to the next argument slot in the parser.
 - Added `clink.parseline()` to parse a string into one or more `line_state` objects.
 - Added `os.getdrivetype()` to get the drive type for a path; especially useful if your code needs to skip network paths.
+- Added `match_builder:setvolatile()` to force the matches to be used only once.  This makes it possible for match generators to produce different kinds of matches based on what has been typed, e.g. an email address match generator could list user names until `@` is typed, and then list domain names.
 - The `clink-diagnostics` command now lists registered argmatchers when the numeric arg > 1 (<kbd>Alt</kbd>-<kbd>2</kbd>,<kbd>Ctrl</kbd>-<kbd>x</kbd>,<kbd>Ctrl</kbd>-<kbd>r</kbd>).
 - Rewrote the path parsing routines to properly respect UNC paths and `\\?\` syntax and `\\?\UNC\` syntax.
 - Fixed `clink.print(NONL, etc)` to not print a TAB character after a `NONL` that is the first argument.
