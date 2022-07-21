@@ -549,6 +549,9 @@ bool line_editor_impl::notify_matches_ready(int generation_id, matches* matches)
 //------------------------------------------------------------------------------
 void line_editor_impl::update_matches()
 {
+    if (m_matches.is_volatile())
+        reset_generate_matches();
+
     // Get flag states because we're about to clear them.
     bool generate = check_flag(flag_generate);
     bool restrict = check_flag(flag_restrict);

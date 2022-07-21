@@ -285,6 +285,12 @@ void match_builder::set_no_sort()
 }
 
 //------------------------------------------------------------------------------
+void match_builder::set_volatile()
+{
+    return ((matches_impl&)m_matches).set_volatile();
+}
+
+//------------------------------------------------------------------------------
 void match_builder::set_deprecated_mode()
 {
     ((matches_impl&)m_matches).set_deprecated_mode();
@@ -801,6 +807,7 @@ void matches_impl::reset()
     m_suppress_append = false;
     m_regen_blocked = false;
     m_nosort = false;
+    m_volatile = false;
     m_suppress_quoting = 0;
     m_word_break_position = -1;
     m_filename_completion_desired.reset();
@@ -825,6 +832,7 @@ void matches_impl::transfer(matches_impl& from)
     m_suppress_append = from.m_suppress_append;
     m_regen_blocked = from.m_regen_blocked;
     m_nosort = from.m_nosort;
+    m_volatile = from.m_volatile;
     m_suppress_quoting = from.m_suppress_quoting;
     m_word_break_position = from.m_word_break_position;
     m_filename_completion_desired = from.m_filename_completion_desired;
@@ -889,6 +897,12 @@ void matches_impl::set_matches_are_files(bool files)
 void matches_impl::set_no_sort()
 {
     m_nosort = true;
+}
+
+//------------------------------------------------------------------------------
+void matches_impl::set_volatile()
+{
+    m_volatile = true;
 }
 
 //------------------------------------------------------------------------------

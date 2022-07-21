@@ -83,6 +83,7 @@ public:
     void                    set_word_break_position(int position);
     void                    set_regen_blocked();
     bool                    is_regen_blocked() const { return m_regen_blocked; }
+    bool                    is_volatile() const { return m_volatile; }
 
     void                    set_generator(match_generator* generator);
     void                    done_building();
@@ -108,6 +109,7 @@ private:
     void                    set_deprecated_mode();
     void                    set_matches_are_files(bool files);
     void                    set_no_sort();
+    void                    set_volatile();
     bool                    add_match(const match_desc& desc, bool already_normalised=false);
     unsigned int            get_info_count() const;
     const match_info*       get_infos() const;
@@ -137,6 +139,7 @@ private:
     bool                    m_suppress_append = false;
     bool                    m_regen_blocked = false;
     bool                    m_nosort = false;
+    bool                    m_volatile = false;
     int                     m_suppress_quoting = 0;
     int                     m_word_break_position = -1;
     shadow_bool             m_filename_completion_desired;

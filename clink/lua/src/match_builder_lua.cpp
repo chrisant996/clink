@@ -19,6 +19,7 @@ const match_builder_lua::method match_builder_lua::c_methods[] = {
     { "setsuppressappend",  &set_suppress_append },
     { "setsuppressquoting", &set_suppress_quoting },
     { "setnosort",          &set_no_sort },
+    { "setvolatile",        &set_volatile },
     // Only for backward compatibility:
     { "deprecated_addmatch", &deprecated_add_match },
     { "setmatchesarefiles", &set_matches_are_files },
@@ -213,6 +214,31 @@ int match_builder_lua::set_suppress_quoting(lua_State* state)
 int match_builder_lua::set_no_sort(lua_State* state)
 {
     m_builder->set_no_sort();
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+/// -name:  builder:setvolatile
+/// -ver:   1.3.37
+/// Forces the generated matches to be used only once.
+///
+/// Normally Clink tries to reuse the most recently generated list of matches,
+/// if possible.  It is an optimization, to avoid doing potentally expensive
+/// work multiple times in a row to generate the same list of matches when
+/// nothing has changed.  Normally the optimization is beneficial, and typing
+/// more letters in a word can simply filter the existing list of matches.
+///
+/// But sometimes an argument may have special syntax.  For example, an email
+/// address argument might want to generate matches for names until the word
+/// contains a <code>@</code>, and then it might want to generate matches for
+/// domain names.  The optimization interferes with situations where parsing the
+/// word produces a completely different list of possible matches.
+///
+/// Making the generated matches volatile ensures matches are generated anew
+/// each time completion is invoked.
+int match_builder_lua::set_volatile(lua_State* state)
+{
+    m_builder->set_volatile();
     return 0;
 }
 

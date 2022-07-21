@@ -235,6 +235,7 @@ public:
     void                    set_suppress_append(bool suppress=true);
     void                    set_suppress_quoting(int suppress=1); //0=no, 1=yes, 2=suppress end quote
     void                    set_no_sort();
+    void                    set_volatile();
 
     void                    set_deprecated_mode();
     void                    set_matches_are_files(bool files=true);
