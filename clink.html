@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.3.36</title>
+<title>Clink v1.3.37</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -798,7 +798,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.3.36</div>
+                <div id="title">Clink v1.3.37</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -1094,11 +1094,21 @@ supersedes the <code>terminal.mouse_modifier</code> setting.  In Windows Termina
 <ul>
 <li>Some key binding sequences have changed; see <a href="#keybindings">Customizing Key Bindings</a> for more information.</li>
 <li>Match coloring works differently now and can do much more; see <a href="#completioncolors">Completion Colors</a> for more information.</li>
-<li>Old settings and history migrate automatically if the new <code>clink_settings</code> and <code>clink_history</code> files don&#39;t exist (deleting them will cause migration to happen again).  To find the directory that contains these files, run <code>clink info</code> and look for the &quot;state&quot; line.</li>
+<li>Old settings and history migrate automatically if you use the same profile directory when upgrading.  If you use a different profile directory, then you can still migrate the old settings and history by copying certain files.  See below for details.</li>
 <li>Script compatibility should be very good, but some scripts may still encounter problems.  If you do encounter a compatibility problem you can look for an updated version of the script, update the script yourself, or visit the <a href="https://github.com/chrisant996/clink/issues">clink repo</a> and open an issue describing details about the compatibility problem.</li>
 <li>Some match generator scripts might need adjustments to become fully compatible with the <code>autosuggest.enable</code> setting.</li>
 <li>Some settings have changed slightly, and there are many new settings.  See <a href="#configclink">Configuring Clink</a> for more information.</li>
 </ul>
+<h3 id="migrating-between-different-profile-directories">Migrating between different profile directories</h3>
+<p>All versions of Clink use the same default profile directory location.  If you haven&#39;t overridden the profile directory, then your settings and history will automatically migrate when upgrading to newer versions of Clink.</p>
+<p>If you choose to use a different profile directory, then you can still make migration happen by copying certain files:</p>
+<ol>
+<li>When using Clink v0.4.9 you can use <code>clink set</code> to find the settings file path.</li>
+<li>When using newer versions of Clink you can use <code>clink info</code> to find the profile directory.</li>
+<li>Copy the <code>settings</code> and <code>.history</code> files from the old directory into the new directory.</li>
+<li>If you already have a <code>clink_settings</code> or <code>clink_history</code> file in your new profile directory, then you&#39;ll need to rename them in order for migration to happen (e.g. add <code>.txt</code> to the names).</li>
+<li>Close the Clink session(s) and open new ones.</li>
+</ol>
 <p><a name="configclink"></a></p>
 <h1 id="configuring-clink">Configuring Clink</h1>
 <p>Clink has two configuration systems, which is a result of using the Readline library to provide command history and key bindings.</p>
@@ -3525,7 +3535,11 @@ C-_:                kill-line                       <span class="hljs-comment">#
 <p>Lua scripts are loaded once and are only reloaded if forced because the scripts locations change, the <code>clink-reload</code> command is invoked (<kbd>Ctrl</kbd>-<kbd>X</kbd>,<kbd>Ctrl</kbd>-<kbd>R</kbd>), or the <code>lua.reload_scripts</code> setting changes (or is True).</p>
 <p>Run <code>clink info</code> to see the script paths for the current session.</p>
 <blockquote>
-<p><strong>Note:</strong> Clink performs tilde expansion on the Lua script directory names.  If the path begins with <code>~\</code> then it is replaced with the current user&#39;s home directory (<code>%HOMEDRIVE%%HOMEPATH%</code> or <code>%USERPROFILE%</code>).</p>
+<p><strong>Notes:</strong></p>
+<ul>
+<li>&quot;completions&quot; is a special reserved directory name:  a &quot;completions&quot; directory under any of the Lua script directories listed in <code>clink info</code> has special meaning, and should not contain scripts unless they are specially written to be put in a &quot;completions&quot; directory.  See <a href="#completion-directories">Completion directories</a> for more information.</li>
+<li>Clink performs tilde expansion on the Lua script directory names.  If the path begins with <code>~\</code> then it is replaced with the current user&#39;s home directory (<code>%HOMEDRIVE%%HOMEPATH%</code> or <code>%USERPROFILE%</code>).</li>
+</ul>
 </blockquote>
 <h3 id="completion-directories">Completion directories</h3>
 <p>You may optionally put Lua completion scripts in a <code>completions</code> directory.  That prevents them from being loaded when Clink starts, and instead they are only loaded when needed.  That can make Clink load faster if you have a large quantity of Lua scripts that define argmatchers.</p>
@@ -3537,7 +3551,9 @@ C-_:                kill-line                       <span class="hljs-comment">#
 <li>A <code>completions</code> subdirectory under each scripts directory listed by <code>clink info</code> (see <a href="#lua-scripts-location">Location of Lua Scripts</a>).</li>
 </ol>
 <blockquote>
-<p><strong>Note:</strong>  If a script defines more than an argmatcher, then putting it in a completions directory may cause its other functionality to not work until a command is typed with the same name as the script.  For example, if a script in a completions directory defines an argmatcher and also a prompt filter, the prompt filter won&#39;t be loaded until the corresponding command name is typed.  Whether that is desirable depends on the script and on your preference.</p>
+<p><strong>Note:</strong>  If you download scripts, then don&#39;t put them in a &quot;completions&quot; directory unless they specifically say they can be put there.</p>
+<p>If a script defines more than an argmatcher, then putting it in a completions directory may cause its other functionality to not work until a command is typed with the same name as the script.  For example, if a script in a completions directory defines an argmatcher and also a prompt filter, the prompt filter won&#39;t be loaded until the corresponding command name is typed.  Whether that is desirable depends on the script and on your preference.</p>
+<p>For example, the scripts from the <a href="https://github.com/vladimir-kotikov/clink-completions">clink-completions</a> project belong in a normal script directory, because they have other functionality besides just completions, and they won&#39;t work correctly in a &quot;completions&quot; directory.</p>
 </blockquote>
 <h3 id="tips-for-starting-to-write-lua-scripts">Tips for starting to write Lua scripts</h3>
 <ul>
@@ -3557,11 +3573,20 @@ C-_:                kill-line                       <span class="hljs-comment">#
 <p><a name="matchgenerators"></a></p>
 <h2 id="match-generators">Match Generators</h2>
 <p>These are Lua functions that are called as part of Readline&#39;s completion process (for example when pressing <kbd>Tab</kbd>).</p>
+<table class="linkmenu">
+<tr><td><a href="#generator_basics">The Basics</a></td><td>A quick example to show the basics.</td></tr>
+<tr><td style="padding-top: 0.5rem"><em>More Advanced Stuff</em></td><td></td></tr>
+<tr><td style="padding-left: 2rem"><a href="#filteringmatchcompletions">Filtering Match Completions</a></td><td>How to modify how completion happens.</td></tr>
+<tr><td style="padding-left: 2rem"><a href="#filteringthematchdisplay">Filtering the Match Display</a></td><td>How to modify how possible completions are displayed.</td></tr>
+</table>
+
+<p><a name="generator_basics"></a></p>
+<h3 id="the-basics-1">The Basics</h3>
 <p>First create a match generator object:</p>
 <pre><code class="language-lua">local my_generator = clink.generator(priority)
 </code></pre>
 <p>The <span class="arg">priority</span> argument is a number that influences when the generator gets called, with lower numbers going before higher numbers.</p>
-<h3 id="the-generate-function">The :generate() Function</h3>
+<h4 id="the-generate-function">The :generate() Function</h4>
 <p>Next define a match generator function on the object, taking the following form:</p>
 <pre><code class="language-lua">function my_generator:generate(line_state, match_builder)
     -- Use the line_state object to examine the current line and create matches.
@@ -3619,7 +3644,7 @@ function git_branch_autocomplete:generate(line_state, match_builder)
     return matchCount &gt; 0
 end
 </code></pre>
-<h3 id="the-getwordbreakinfo-function">The :getwordbreakinfo() Function</h3>
+<h4 id="the-getwordbreakinfo-function">The :getwordbreakinfo() Function</h4>
 <p>If needed, a generator can optionally influence word breaking for the end word by defining a <code>:getwordbreakinfo()</code> function.</p>
 <p>The function takes a <span class="arg">line_state</span> <a href="#line_state">line_state</a> object that has information about the current line.  If it returns nil or 0, the end word is truncated to 0 length.  This is the normal behavior, which allows Clink to collect and cache all matches and then filter them based on typing.  Or it can return two numbers:  word break length and an optional end word length.  The end word is split at the word break length:  one word contains the first word break length characters from the end word (if 0 length then it&#39;s discarded), and the next word contains the rest of the end word truncated to the optional word length (0 if omitted).</p>
 <p>A good example to look at is Clink&#39;s own built-in environment variable match generator.  It has a <code>:getwordbreakinfo()</code> function that understands the <code>%</code> syntax of environment variables and produces word break info accordingly.</p>
@@ -3796,7 +3821,7 @@ end
 <h4 id="filtering-the-match-display">Filtering the Match Display</h4>
 <p>In some instances it may be preferable to display different text when listing potential matches versus when inserting a match in the input line, or to display a description next to a match.  For example, it might be desirable to display a <code>*</code> next to some matches, or to show additional information about some matches.</p>
 <p>The simplest way to do that is just include the <code>display</code> and/or <code>description</code> fields when using <a href="#builder:addmatch">builder:addmatch()</a>.  Refer to that function&#39;s documentation for usage details.</p>
-<p>However, older versions of Clink don&#39;t support those fields.  And it may in some rare cases it may be desirable to display a list of possible completions that includes extra matches, or omits some matches (but that&#39;s discouraged because it can be confusing to users).</p>
+<p>However, older versions of Clink don&#39;t support those fields.  And in some cases it may be desirable to display a list of possible completions that includes extra matches, or omits some matches (but that&#39;s discouraged because it can be confusing to users).</p>
 <p>A match generator can alternatively use <a href="#clink.ondisplaymatches">clink.ondisplaymatches()</a> to register a function that will be called before matches are displayed (this is reset every time match generation is invoked).</p>
 <p>The function receives a table argument containing the matches to be displayed, and a boolean argument indicating whether they&#39;ll be displayed in a popup window. The table argument has a <code>match</code> string field and a <code>type</code> string field; these are the same as in <a href="#builder:addmatch">builder:addmatch()</a>. The return value is a table with the input matches filtered as required by the match generator.</p>
 <p>The returned table can also optionally include a <code>display</code> string field and a <code>description</code> string field. When present, <code>display</code> will be displayed instead of the <code>match</code> field, and <code>description</code> will be displayed next to the match. Putting the description in a separate field enables Clink to align the descriptions in a column.</p>
@@ -3826,11 +3851,28 @@ function my_match_generator:generate(line_state, match_builder)
 end
 </code></pre>
 <blockquote>
-<p><strong>Note:</strong>  In v1.3.1 and higher, the table received by the registered ondisplaymatches function includes all the match fields (such as <code>display</code>, <code>description</code>, <code>appendchar</code>, etc), and the returned table can also include any of these fields.  In other words, in v1.3.1 and higher match filtering supports all the same fields as <a href="#builder:addmatch()">builder:addmatch()</a>.</p>
+<p><strong>Note:</strong>  In v1.3.1 and higher, the table received by the registered ondisplaymatches function includes all the match fields (such as <code>display</code>, <code>description</code>, <code>appendchar</code>, etc), and the returned table can also include any of these fields.  In other words, in v1.3.1 and higher match filtering supports all the same fields as <a href="#builder:addmatch">builder:addmatch()</a>.</p>
 </blockquote>
 <p><a name="argumentcompletion"></a></p>
 <h2 id="argument-completion">Argument Completion</h2>
 <p>Clink provides a framework for writing complex argument match generators in Lua.  It works by creating a parser object that describes a command&#39;s arguments and flags and associating the parser with one or more commands.  When Clink detects a parser is associated with the command being edited, it uses the parser to generate matches.</p>
+<table class="linkmenu">
+<tr><td><a href="#argmatcher_basics">The Basics</a></td><td>A quick example to show the basics.</td></tr>
+<tr><td><a href="#argmatcher_autofiles">Automatic Filename Completion</a></td><td>By default, filename completion is used.</td></tr>
+<tr><td><a href="#argmatcher_descriptions">Descriptions for Flags and Arguments</a></td><td>How to add descriptive text.</td></tr>
+<tr><td style="padding-top: 0.5rem"><em>More Advanced Stuff</em></td><td></td></tr>
+<tr><td style="padding-left: 2rem"><a href="#argmatcher_linking">Linking Parsers</a></td><td>How to link a parser to a word or flag.</td></tr>
+<tr><td style="padding-left: 2rem"><a href="#argmatcher_functions">Functions As Argument Options</a></td><td>Using a function to provide completions.</td></tr>
+<tr><td style="padding-left: 2rem"><a href="#addarg_fromhistory">Generate Matches From History</a></td><td>Providing completions from the history.</td></tr>
+<tr><td style="padding-left: 2rem"><a href="#addarg_nosort">Disable Sorting Matches</a></td><td>How to disable auto-sorted completions.</td></tr>
+<tr><td style="padding-left: 2rem"><a href="#addarg_loopchars">Delimited Arguments</a></td><td>How to allow multiple completions in the same argument slot (e.g. <code>file1;file2;file3</code>).</td></tr>
+<tr><td style="padding-left: 2rem"><a href="#argmatcher_adaptive">Adaptive Argmatchers</a></td><td>How an argmatcher can define or modify itself on the fly.</td></tr>
+<tr><td style="padding-left: 2rem"><a href="#responsive-argmatchers">Responding to Arguments in Argmatchers</a></td><td>When argument slots need to influence one another.</td></tr>
+<tr><td style="padding-left: 2rem"><a href="#argmatcher_shorthand">Shorthand</a></td><td>Alternative syntax for defining argmatchers.</td></tr>
+</table>
+
+<p><a name="argmatcher_basics"></a></p>
+<h3 id="the-basics-2">The Basics</h3>
 <p>Here is an example of a simple parser for the command <code>foobar</code>;</p>
 <pre><code class="language-lua">clink.argmatcher(&quot;foobar&quot;)
 :addflags(&quot;-foo&quot;, &quot;-bar&quot;)          -- Flags.
@@ -3846,6 +3888,7 @@ C:\&gt;foobar hello -foo wo<span style="color:#ffffff">_</span>
 
 <p>When displaying possible completions, flag matches are only shown if the flag character has been input (so <code>command </code> and <kbd>Alt</kbd>-<kbd>=</kbd> would list only non-flag matches, or <code>command -</code> and <kbd>Alt</kbd>-<kbd>=</kbd> would list only flag matches).</p>
 <p>If a command doesn&#39;t have an argmatcher but is a doskey macro, Clink automatically expands the doskey macro and looks for an argmatcher for the expanded command.  A macro like <code>gco=git checkout $*</code> automatically reuses a <code>git</code> argmatcher and produces completions for its <code>checkout</code> argument.  However, it only expands the doskey macro up to the first <code>$</code>, so complex aliases like <code>foo=app 2$gnul text $*</code> or <code>foo=$2 $1</code> might behave strangely.</p>
+<p><a name="argmatcher_autofiles"></a></p>
 <h3 id="automatic-filename-completion">Automatic Filename Completion</h3>
 <p>A fresh, empty argmatcher provides no completions.</p>
 <pre><code class="language-lua">clink.argmatcher(&quot;foobar&quot;)         -- The &quot;foobar&quot; command provides no completions.
@@ -3869,6 +3912,7 @@ C:\&gt;foobar hello world pro<span style="color:#ffffff">_</span>
 :addarg({ &quot;world&quot;, &quot;wombles&quot; })    -- Completions for arg #2
 :nofiles()                         -- Using :nofiles() prevents further completions.
 </code></pre>
+<p><a name="argmatcher_descriptions"></a></p>
 <h3 id="descriptions-for-flags-and-arguments">Descriptions for Flags and Arguments</h3>
 <p>Flags and arguments may optionally have descriptions associated with them.  The descriptions, if any, are displayed when listing possible completions.</p>
 <p>Use <a href="#_argmatcher:adddescriptions">_argmatcher:adddescriptions()</a> to add descriptions for flags and/or arguments.  Refer to its documentation for further details about how to use it, including how to also show arguments that a flag accepts.</p>
@@ -3887,6 +3931,7 @@ C:\&gt;foobar hello world pro<span style="color:#ffffff">_</span>
 )
 </code></pre>
 <h3 id="more-advanced-stuff-1">More Advanced Stuff</h3>
+<p><a name="argmatcher_linking"></a></p>
 <h4 id="linking-parsers">Linking Parsers</h4>
 <p>There are often situations where the parsing of a command&#39;s arguments is dependent on the previous words (<code>git merge ...</code> compared to <code>git log ...</code> for example). For these scenarios Clink allows you to link parsers to arguments&#39; words using Lua&#39;s concatenation operator.</p>
 <pre><code class="language-lua">local a_parser = clink.argmatcher():addarg({ &quot;foo&quot;, &quot;bar&quot; })
@@ -3897,7 +3942,7 @@ c_parser:addarg({ b_parser })               -- Arg #2 is &quot;abc&quot; or &quo
 </code></pre>
 <p>As the example above shows, it is also possible to use a parser without concatenating it to a word.</p>
 <p>When Clink follows a link to a parser it will only return to the previous parser when the linked parser runs out of arguments.</p>
-<h4 id="flags-with-arguments">Flags With Arguments</h4>
+<h5 id="flags-with-arguments">Flags With Arguments</h5>
 <p>Parsers can be concatenated with flags, too.</p>
 <p>Here&#39;s an example of a flag that takes an argument:</p>
 <pre><code class="language-lua">clink.argmatcher(&quot;git&quot;)
@@ -3924,6 +3969,7 @@ c_parser:addarg({ b_parser })               -- Arg #2 is &quot;abc&quot; or &quo
     &quot;/d:&quot;..clink.argmatcher():addarg( clink.dirmatches )
 })
 </code></pre>
+<p><a name="argmatcher_functions"></a></p>
 <h4 id="functions-as-argument-options">Functions As Argument Options</h4>
 <p>Argument options are not limited solely to strings. Clink also accepts functions too so more context aware argument options can be used.</p>
 <p>The function is called each time matches are generated for the argument position.</p>
@@ -3963,20 +4009,42 @@ the_parser:addarg({ rainbow_function, &quot;yellow&quot;, &quot;green&quot; })
 <td>Generates file matches.</td>
 </tr>
 </tbody></table>
+<p><a name="addarg_fromhistory"></a></p>
 <h4 id="generate-matches-from-history">Generate Matches From History</h4>
 <p>An argument position can collect matches from the history file.  When an argument table contains <code>fromhistory=true</code> then additional matches are generated by parsing the history file to find values for that argument slot from commands in the history file.</p>
 <p>This example generates matches for arguments to a <code>--host</code> flag by parsing the history file for host names used in the past, and also includes the current computer name.</p>
 <pre><code class="language-lua">local host_parser = clink.argmatcher():addarg({ fromhistory=true, os.getenv(&quot;COMPUTERNAME&quot;) })
 clink.argmatcher(&quot;program&quot;):addflags({ &quot;--host&quot;..host_parser })
 </code></pre>
+<p><a name="addarg_nosort"></a></p>
 <h4 id="disable-sorting-matches">Disable Sorting Matches</h4>
 <p>Match completions are normally listed in sorted order.  In some cases it may be desirable to disable sorting and list match completions in a specific order.  To disable sorting, include <code>nosort=true</code> in the argument table.  When sorting is disabled, matches are listed in the order they were added.</p>
 <pre><code class="language-lua">local the_parser = clink.argmatcher()
 the_parser:addarg({ nosort=true, &quot;red&quot;, &quot;orange&quot;, &quot;yellow&quot;, &quot;green&quot;, &quot;blue&quot;, &quot;indigo&quot;, &quot;violet&quot; })
 </code></pre>
+<p><a name="addarg_loopchars"></a></p>
+<h4 id="delimited-arguments">Delimited Arguments</h4>
+<p>In some cases an argument for programs may accept a list of values separated by <code>;</code> or <code>+</code> or etc.  Normally <code>;</code> or <code>+</code> are argument separators (like space), and advance the argmatcher to the next argument slot.</p>
+<p>In Clink v1.3.37 and higher, you can make them stay on the current argument slot by including <code>loopchars=&quot;;&quot;</code> (or set <code>loopchars=</code> a list of value delimiters).</p>
+<pre><code class="language-lua">-- This argmatcher accepts syntax like &quot;foo color filename&quot;.
+-- Typing &quot;foo red f&quot; and pressing TAB generates completions for files.
+-- Typing &quot;foo red;&quot; and pressing TAB generates completions for files.
+clink.argmatcher(&quot;foo&quot;)
+:addarg({&quot;red&quot;, &quot;green&quot;, &quot;blue&quot;})
+:addarg(clink.filematches)
+
+-- This argmatcher accepts syntax like &quot;foo color[;color...] filename&quot;.
+-- Typing &quot;foo red f&quot; and pressing TAB generates completions for files.
+-- Typing &quot;foo red;&quot; and pressing TAB generates completions for colors (not files).
+clink.argmatcher(&quot;foo&quot;)
+:addarg({loopchars=&quot;;&quot;, &quot;red&quot;, &quot;green&quot;, &quot;blue&quot;})
+:addarg(clink.filematches)
+</code></pre>
+<p><a name="argmatcher_adaptive"></a></p>
 <h4 id="adaptive-argmatchers">Adaptive Argmatchers</h4>
 <p>Some argmatchers may need to adapt on the fly.  For example, a program may have different features available depending on the current directory, or may want to define its arguments and flags by parsing the <code>--help</code> text from running a program.</p>
 <p>An argmatcher can define a &quot;delayed initialization&quot; callback function that gets calls when the argmatcher gets used, allowing it to defer potentially expensive initialization work until it&#39;s actually needed.  An argmatcher can also define a separate &quot;delayed initialization&quot; function for each argument position.</p>
+<p><a name="argmatcher_setdelayinit"></a></p>
 <h5 id="delayed-initialization-for-the-argmatcher">Delayed initialization for the argmatcher</h5>
 <p>You can use <a href="#_argmatcher:setdelayinit">_argmatcher:setdelayinit()</a> to set a function that performs delayed initialization for the argmatcher.  The function receives one parameter:</p>
 <ul>
@@ -4014,6 +4082,7 @@ if m.setdelayinit then        -- Can&#39;t use setdelayinit before Clink v1.3.10
     m:setdelayinit(ondelayinit)
 end
 </code></pre>
+<p><a name="addarg_delayinit"></a></p>
 <h5 id="delayed-initialization-for-an-argument-position">Delayed initialization for an argument position</h5>
 <p>If the overall flags and meaning of the argument positions don&#39;t need to be updated, and only the possible values need to be updated within certain argument positions, then you can include <code>delayinit=<span class="arg">function</span></code> in the argument table.</p>
 <p>The <span class="arg">function</span> should return a table of matches which will be added to the values for the argument position.  The table of matches supports the same syntax as <a href="#_argmatcher:addarg">_argmatcher:addarg()</a>.  The function receives two parameters:</p>
@@ -4060,15 +4129,15 @@ m:setflagprefix(&quot;-&quot;)
 <p>An argmatcher can supply an &quot;on arg&quot; function to be called when the argmatcher parses an argument position.  The function can influence parsing the rest of the input line.  For example, the presence of a flag <code>--only-dirs</code> might change what match completions should be provided somewhere else in the input line.</p>
 <p>Supply an &quot;on arg&quot; function by including <code>onarg=<span class="arg">function</span></code> in the argument table with <a href="#_argmatcher:addarg">_argmatcher:addarg()</a>.  The function is passed five arguments, and it doesn&#39;t return anything (the function receives the same arguments as <a href="#functions-as-argument-options">Functions As Argument Options</a>).</p>
 <ul>
-<li><code>word</code> is a partial string for the word under the cursor, corresponding to the argument for which matches are being generated:  it is an empty string, or if a filename is being entered then it will be the path portion (e.g. for &quot;dir1\dir2\pre&quot; <code>word</code> will be &quot;dir1\dir2&quot;).</li>
-<li><code>word_index</code> is the word index in <code>line_state</code>, corresponding to the argument for which matches are being generated.</li>
+<li><code>arg_index</code> is the argument index in the argmatcher, corresponding to the argument being parsed.</li>
+<li><code>word</code> is a partial string for the word under the cursor, corresponding to the argument being parsed:  it is an empty string, or if a filename is being entered then it will be the path portion (e.g. for &quot;dir1\dir2\pre&quot; <code>word</code> will be &quot;dir1\dir2&quot;).</li>
+<li><code>word_index</code> is the word index in <code>line_state</code>, corresponding to the argument being parsed.</li>
 <li><code>line_state</code> is a <a href="#line_state">line_state</a> object that contains the words for the associated command line.</li>
-<li><code>match_builder</code> is a <a href="#builder">builder</a> object (but for adding matches the function should return them in a table).</li>
 <li><code>user_data</code> is a table that the argmatcher can use to help it parse the input line.</li>
 </ul>
 <p>When parsing begins, the <code>user_data</code> is an empty table.  Each time a flag or argument links to another argmatcher, the new argmatcher gets a separate new empty <code>user_data</code> table.  Your &quot;on arg&quot; functions can set data from the table, and then can also get data that was set earlier by your &quot;on arg&quot; functions.</p>
 <p>An &quot;on arg&quot; function can also use <a href="#os.chdir">os.chdir()</a> to set the current directory.  Generating match completions saves and restores the current directory when finished, so argmatcher &quot;on arg&quot; functions can set the current directory and thus cause match completion later in the input line to complete file names relative to the change directory.  For example, the built-in <code>cd</code> and <code>pushd</code> argmatches use an &quot;on arg&quot; function so that <code>pushd \other_dir &amp; program </code><kbd>Tab</kbd> can complete file names from <code>\other_dir</code> instead of the (real) current directory.</p>
-<pre><code class="language-lua">local function onarg_pushd(arg_index, word, word_index, line_state)
+<pre><code class="language-lua">local function onarg_pushd(arg_index, word, word_index, line_state, user_data)
     -- Match generation after this is relative to the new directory.
     if word ~= &quot;&quot; then
         os.chdir(word)
@@ -4082,6 +4151,7 @@ clink.argmatcher(&quot;pushd&quot;)
 })
 :nofiles()
 </code></pre>
+<p><a name="argmatcher_shorthand"></a></p>
 <h4 id="shorthand">Shorthand</h4>
 <p>It is also possible to omit the <code>addarg</code> and <code>addflags</code> function calls and use a more declarative shorthand form:</p>
 <pre><code class="language-lua">-- Shorthand form; requires tables.
@@ -4100,8 +4170,16 @@ clink.argmatcher()
 <p><a name="classifywords"></a></p>
 <h2 id="coloring-the-input-text">Coloring the Input Text</h2>
 <p>When the <code><a href="#clink_colorize_input">clink.colorize_input</a></code> setting is disabled, then the entire input line is colored by the <code><a href="#color_input">color.input</a></code> setting.  When the setting is enabled, then <a href="#argumentcompletion">argmatchers</a> automatically apply colors to the input text as they parse it.</p>
-<p>It&#39;s possible for an argmatcher to provide a function to <a href="#classier_override_arguments">override how its arguments are colored</a>.  This function is called once for each of the argmatcher&#39;s arguments.</p>
-<p>It&#39;s also possible to register a classifier function for <a href="#classier_override_line">the whole input line</a>.  This function is very similar to a match generator; classifier functions are called in priority order, and a classifier can choose to stop the classification process.</p>
+<table class="linkmenu">
+<tr><td><a href="#inputcolor_command">Coloring the Command Word</a></td><td>How the command word is colored.</td></tr>
+<tr><td><a href="#inputcolor_redir">Coloring Command Separators and Redirection</a></td><td>How special characters are colored.</td></tr>
+<tr><td><a href="#inputcolor_other">Coloring Other Input Text</a></td><td>How other text is colored.</td></tr>
+<tr><td style="padding-top: 0.5rem"><em>More Advanced Stuff</em></td><td></td></tr>
+<tr><td style="padding-left: 2rem"><a href="#classier_override_arguments">Setting a classifier function in an argmatcher</a></td><td>How to apply colors for arguments.</td></tr>
+<tr><td style="padding-left: 2rem"><a href="#classier_override_line">Setting a classifier function for the whole input line</a></td><td>How to apply colors anywhere in the line.</td></tr>
+</table>
+
+<p><a name="inputcolor_command"></a></p>
 <h3 id="coloring-the-command-word">Coloring the Command Word</h3>
 <p>The command word is colored based on the command type, in priority order:</p>
 <ol>
@@ -4122,6 +4200,7 @@ clink.argmatcher()
 <tr><td><span style="color:#c0c0c0">c:\dir></span><span style="color:#ffd787">whatever</span></td><td style="color:#d7d7d7;text-align:right"><em>if executable and unrecognized colors are not set</em></td></tr>
 </table></code></pre>
 
+<p><a name="inputcolor_redir"></a></p>
 <h3 id="coloring-command-separators-and-redirection">Coloring Command Separators and Redirection</h3>
 <p>Command separators and redirection are colored accordingly:</p>
 <ul>
@@ -4135,6 +4214,7 @@ clink.argmatcher()
 <tr><td><span style="color:#c0c0c0">c:\dir></span><span style="color:#ffffff">set</span> <span style="color:#d78700">&gt;</span><span style="color:#ffd787">file</span></td><td style="color:#d7d7d7;text-align:right"><em>redirecting 'set' to 'file'</em></td></tr>
 </table></code></pre>
 
+<p><a name="inputcolor_other"></a></p>
 <h3 id="coloring-other-input-text">Coloring Other Input Text</h3>
 <p>Other input words are colored based on how argmatchers parse the input text.</p>
 <ul>
@@ -4274,6 +4354,17 @@ end
 <p><a name="customisingtheprompt"></a></p>
 <h2 id="customizing-the-prompt">Customizing the Prompt</h2>
 <p>Before Clink displays the prompt it filters the prompt through <a href="#extending-clink">Lua</a> so that the prompt can be customized. This happens each and every time that the prompt is shown which allows for context sensitive customizations (such as showing the current branch of a git repository).</p>
+<table class="linkmenu">
+<tr><td><a href="#promptfilter_basics">The Basics</a></td><td>A quick example to show the basics.</td></tr>
+<tr><td><a href="#escapecodes">ANSI escape codes in the prompt string</a></td><td>How special characters are colored.</td></tr>
+<tr><td style="padding-top: 0.5rem"><em>More Advanced Stuff</em></td><td></td></tr>
+<tr><td style="padding-left: 2rem"><a href="#rightprompt">Right Side Prompt</a></td><td>How to add prompt text at the right edge of the terminal.</td></tr>
+<tr><td style="padding-left: 2rem"><a href="#asyncpromptfiltering">Asynchronous Prompt Filtering</a></td><td>How to make the prompt show up instantly.</td></tr>
+<tr><td style="padding-left: 2rem"><a href="#transientprompts">Transient Prompt</a></td><td>How to display completed prompts differently than the current prompt.</td></tr>
+</table>
+
+<p><a name="promptfilter_basics"></a></p>
+<h3 id="the-basics-3">The Basics</h3>
 <p>Writing a prompt filter is straightforward:</p>
 <ol>
 <li>Create a new prompt filter by calling <a href="#clink.promptfilter">clink.promptfilter()</a> along with a priority id which dictates the order in which filters are called. Lower priority ids are called first.</li>
@@ -4348,6 +4439,11 @@ end
 <p><a name="escapecodes"></a></p>
 <h3 id="ansi-escape-codes-in-the-prompt-string">ANSI escape codes in the prompt string</h3>
 <p>Readline needs to be told which characters in the prompt are unprintable or invisible.  To help with that, Clink automatically detects most standard ANSI escape codes (and most of ConEmu&#39;s non-standard escape codes) and the BEL character (^G, audible bell) and surrounds them with <code>\001</code> (^A) and <code>\002</code> (^B) characters.  For any other unprintable characters, the <code>\001</code> and <code>\002</code> characters need to be added manually.  Otherwise Readline misinterprets the length of the prompt and can display the prompt and input line incorrectly in some cases (especially if the input line wraps onto a second line).</p>
+<p>Here are a couple of links with more information about ANSI escape codes:</p>
+<ul>
+<li><a href="https://en.wikipedia.org/wiki/ANSI_escape_code">Wikipedia - ANSI Escape Code</a></li>
+<li><a href="https://docs.microsoft.com/en-us/windows/console/console-virtual-terminal-sequences">Console Virtual Terminal Sequences</a></li>
+</ul>
 <h3 id="more-advanced-stuff-3">More Advanced Stuff</h3>
 <p><a name="rightprompt"></a></p>
 <h4 id="right-side-prompt">Right Side Prompt</h4>
@@ -5654,6 +5750,17 @@ or edit, the word or words selected from the history event.</p>
 <p>It also takes advantage of Clink&#39;s <a href="#asyncpromptfiltering">asynchronous prompt refresh</a> to make prompts show up instantly, even in large git repos, for example.</p>
 <h3 id="clink-fzf">clink-fzf</h3>
 <p>The <a href="https://github.com/chrisant996/clink-fzf">clink-fzf</a> script integrates the popular <a href="https://github.com/junegunn/fzf">fzf</a> &quot;fuzzy finder&quot; tool with Clink.</p>
+<h3 id="clink-gizmos">clink-gizmos</h3>
+<p>The <a href="https://github.com/chrisant996/clink-gizmos">clink-gizmos</a> collection of scripts has several handy scripts such as:</p>
+<ul>
+<li>Argmatchers for <code>msbuild</code>, <code>findstr</code>, <code>robocopy</code>, <code>xcopy</code>, <code>doskey</code>, <code>premake5</code>, and more.</li>
+<li>Scripts to auto-generate argmatchers for commands by parsing their help text.</li>
+<li>Automatically show a divider line before + after certain commands, to make it easy to see where their output begins and ends, and the elapsed time taken by the command.  This is especially handy when invoking compilers and build tools.</li>
+<li>The <code>i.lua</code> script to run a {command} in a {directory} and restore the original current directory afterwards.  While typing the {command}, completions are even generated relative to the specified {directory} rather than the current directory.</li>
+<li>The <code>fzf.lua</code> script from <a href="https://github.com/chrisant996/clink-fzf">clink-fzf</a> for integrating the popular <a href="https://github.com/junegunn/fzf">fzf</a> &quot;fuzzy finder&quot; tool with Clink.</li>
+<li>The <code>luaexec.lua</code> script which has various features handy for Clink Lua script authors.</li>
+<li>And more.</li>
+</ul>
 <h3 id="oh-my-posh">oh-my-posh</h3>
 <p>The <a href="https://github.com/JanDeDobbeleer/oh-my-posh">oh-my-posh</a> program can generate fancy prompts. Refer to its <a href="https://ohmyposh.dev">documentation</a> for how to configure it, and for sample themes.</p>
 <p>Integrating oh-my-posh with Clink is easy: just save the following text to an <code>oh-my-posh.lua</code> file in your Clink scripts directory (run <code>clink info</code> to find that), and make sure the <code>oh-my-posh.exe</code> program is in a directory listed in the <code>%PATH%</code> environment variable (or edit the script below to provide a fully qualified path to the oh-my-posh.exe program). Replace the config with your own configuration and you&#39;re good to go.</p>
@@ -5720,7 +5827,7 @@ set CLINK_TERM_VS=\e[?12l
         Also see <a href="https://www.lua.org/docs.html">Lua Documentation</a> and the <a href="https://www.lua.org/manual/5.2/">Lua 5.2 Manual</a> for more information about the Lua programming language.
         <div class="section" id="api">
 <h3>API groups</h3><p/><div class="toc"><div class="H1"><a href="#_argmatcher">_argmatcher</a></div><div class="H1"><a href="#builder">builder</a></div><div class="H1"><a href="#clink">clink</a></div><div class="H1"><a href="#console">console</a></div><div class="H1"><a href="#io">io</a></div><div class="H1"><a href="#line_state">line_state</a></div><div class="H1"><a href="#log">log</a></div><div class="H1"><a href="#matches">matches</a></div><div class="H1"><a href="#matches_lua">matches_lua</a></div><div class="H1"><a href="#os">os</a></div><div class="H1"><a href="#path">path</a></div><div class="H1"><a href="#rl">rl</a></div><div class="H1"><a href="#rl_buffer">rl_buffer</a></div><div class="H1"><a href="#settings">settings</a></div><div class="H1"><a href="#string">string</a></div><div class="H1"><a href="#unicode">unicode</a></div><div class="H1"><a href="#word_classifications">word_classifications</a></div><div class="H1"><a href="#[other]">[other]</a></div></div><div class="group"><h5 class="group_name"><a name="_argmatcher">_argmatcher</a></h5><div class="function"><div class="header"> <div class="name"><a name="_argmatcher:addarg">_argmatcher:addarg</a></div> <div class="signature">( <span class="arg_name">choices...</span>:string|table ) : self<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">This adds argument matches.  Arguments can be a string, a string linked to another parser by the concatenation operator, a table of arguments, or a function that returns a table of arguments.  See <a href="#argumentcompletion">Argument Completion</a> for more information.</p><pre class="language-lua"><code>local my_parser = clink.argmatcher("git")
-:addarg("add", "status", "commit", "checkout")</code></pre></div></div><hr/>
+:addarg("add", "status", "commit", "checkout")</code></pre><p class="desc">When providing a table of arguments, the table can contain some special entries: <p><table> <tr><th>Entry</th><th>More Info</th><th>Version</th></tr> <tr><td><code>delayinit=<span class="arg">function</span></code></td><td>See <a href="#addarg_delayinit">Delayed initialization for an argument position</a>.</td><td class="version">v1.3.10 and newer</td></tr> <tr><td><code>fromhistory=true</code></td><td>See <a href="#addarg_fromhistory">Generate Matches From History</a>.</td><td class="version">v1.3.9 and newer</td></tr> <tr><td><code>loopchars="<span class="arg">characters</span>"</code></td><td>See <a href="#addarg_loopchars">Delimited Arguments</a>.</td><td class="version">v1.3.37 and newer</td></tr> <tr><td><code>nosort=true</code></td><td>See <a href="#addarg_nosort">Disable Sorting Matches</a>.</td><td class="version">v1.3.3 and newer</td></tr> <tr><td><code>onarg=<span class="arg">function</span></code></td><td>See <a href="#responsive-argmatchers">Responding to Arguments in Argmatchers</a>.</td><td class="version">v1.3.13 and newer</td></tr> </table></p></p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="_argmatcher:addargunsorted">_argmatcher:addargunsorted</a></div> <div class="signature">( <span class="arg_name">choices...</span>:string|table ) : self<br/><div class="version">v1.3.3 and newer</div></div></div><div class="body"><p class="desc">This is the same as <a href="#_argmatcher:addarg">_argmatcher:addarg</a> except that this disables sorting the matches.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="_argmatcher:adddescriptions">_argmatcher:adddescriptions</a></div> <div class="signature">( [<span class="arg_name">descriptions...</span>:table] ) : self<br/><div class="version">v1.2.38 and newer</div></div></div><div class="body"><p class="desc">Adds descriptions for arg matches and/or flag matches.  Descriptions are displayed for their associated args or flags whenever possible completions are listed, for example by the <code>complete</code> or <code>clink-select-complete</code> or <code>possible-completions</code> commands.</p><p class="desc"> Any number of descriptions tables may be passed to the function, and each table must use one of the following schemes: <ul> <li>One or more string values that are args or flags, and a <code>description</code> field that is the associated description string. <li>Key/value pairs where each key is an arg or flag, and its value is either a description string or a table containing an optional arguments string and a description string.  If an arguments string is provided, it is appended to the arg or flag string when listing possible completions.  For example, <code>["--user"] = { " name", "Specify username"}</code> gets printed as:</p><p class="desc"> <pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"> <span style="color:#c0c0c0">--user</span> <span style="color:#808000">name</span>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#00ffff">Specify username</span> </code></pre> </ul></p><p class="desc"></p><pre class="language-lua"><code>local foo = clink.argmatcher("foo")
 foo:addflags("-h", "--help", "--user")
@@ -5754,7 +5861,7 @@ maybe_adddescriptions(foo, {
 })</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="_argmatcher:addflags">_argmatcher:addflags</a></div> <div class="signature">( <span class="arg_name">flags...</span>:string ) : self<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">This adds flag matches.  Flags are separate from arguments:  When listing possible completions for an empty word, only arguments are listed.  But when the word being completed starts with the first character of any of the flags, then only flags are listed.  See <a href="#argumentcompletion">Argument Completion</a> for more information.</p><pre class="language-lua"><code>local my_parser = clink.argmatcher("git")
 :addarg({ "add", "status", "commit", "checkout" })
-:addflags("-a", "-g", "-p", "--help")</code></pre></div></div><hr/>
+:addflags("-a", "-g", "-p", "--help")</code></pre><p class="desc">When providing a table of flags, the table can contain some special entries: <p><table> <tr><th>Entry</th><th>More Info</th><th>Version</th></tr> <tr><td><code>delayinit=<span class="arg">function</span></code></td><td>See <a href="#addarg_delayinit">Delayed initialization for an argument position</a>.</td><td class="version">v1.3.10 and newer</td></tr> <tr><td><code>fromhistory=true</code></td><td>See <a href="#addarg_fromhistory">Generate Matches From History</a>.</td><td class="version">v1.3.9 and newer</td></tr> <tr><td><code>nosort=true</code></td><td>See <a href="#addarg_nosort">Disable Sorting Matches</a>.</td><td class="version">v1.3.3 and newer</td></tr> <tr><td><code>onarg=<span class="arg">function</span></code></td><td>See <a href="#responsive-argmatchers">Responding to Arguments in Argmatchers</a>.</td><td class="version">v1.3.13 and newer</td></tr> </table></p></p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="_argmatcher:addflagsunsorted">_argmatcher:addflagsunsorted</a></div> <div class="signature">( <span class="arg_name">flags...</span>:string ) : self<br/><div class="version">v1.3.3 and newer</div></div></div><div class="body"><p class="desc">This is the same as <a href="#_argmatcher:addflags">_argmatcher:addflags</a> except that this also disables sorting for flags.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="_argmatcher:chaincommand">_argmatcher:chaincommand</a></div> <div class="signature">() : self<br/><div class="version">v1.3.13 and newer</div></div></div><div class="body"><p class="desc">This makes the rest of the line be parsed as a separate command.  You can use it to "chain" from one parser to another.</p><p class="desc"> For example, `cmd.exe program arg` is example of a line where one command can have another command within it.  `:chaincommand()` enables `program arg` to be parsed separately.  If `program` has an argmatcher, then it takes over and parses the rest of the input line.</p><pre class="language-lua"><code>clink.argmatcher("program"):addflags("/x", "/y")
 clink.argmatcher("cmd"):addflags("/c", "/k"):chaincommand()
@@ -5814,6 +5921,7 @@ builder:addmatches({
 <div class="function"><div class="header"> <div class="name"><a name="builder:setnosort">builder:setnosort</a></div> <div class="signature">() : nil<br/><div class="version">v1.3.3 and newer</div></div></div><div class="body"><p class="desc">Turns off sorting the matches.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="builder:setsuppressappend">builder:setsuppressappend</a></div> <div class="signature">( [<span class="arg_name">state</span>:boolean] ) : nil<br/><div class="version">v1.1.2 and newer</div></div></div><div class="body"><p class="desc">Sets whether to suppress appending anything after the match except a possible closing quote.  For example the env var match generator uses this.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="builder:setsuppressquoting">builder:setsuppressquoting</a></div> <div class="signature">( [<span class="arg_name">state</span>:integer] ) : nil<br/><div class="version">v1.1.2 and newer</div></div></div><div class="body"><p class="desc">Sets whether to suppress quoting for the matches.  Set to 0 for normal quoting, or 1 to suppress quoting, or 2 to suppress end quotes.  For example the env var match generator sets this to 1 to overcome the quoting that would normally happen for "%" characters in filenames.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="builder:setvolatile">builder:setvolatile</a></div> <div class="signature">() : nil<br/><div class="version">v1.3.37 and newer</div></div></div><div class="body"><p class="desc">Forces the generated matches to be used only once.</p><p class="desc"> Normally Clink tries to reuse the most recently generated list of matches, if possible.  It is an optimization, to avoid doing potentally expensive work multiple times in a row to generate the same list of matches when nothing has changed.  Normally the optimization is beneficial, and typing more letters in a word can simply filter the existing list of matches.</p><p class="desc"> But sometimes an argument may have special syntax.  For example, an email address argument might want to generate matches for names until the word contains a <code>@</code>, and then it might want to generate matches for domain names.  The optimization interferes with situations where parsing the word produces a completely different list of possible matches.</p><p class="desc"> Making the generated matches volatile ensures matches are generated anew each time completion is invoked.</p></div></div><hr/>
 </div><div class="group"><h5 class="group_name"><a name="clink">clink</a></h5><div class="function"><div class="header"> <div class="name"><a name="clink.argmatcher">clink.argmatcher</a></div> <div class="signature">( [<span class="arg_name">priority</span>:integer], <span class="arg_name">commands...</span>:string ) : <a href="#_argmatcher">_argmatcher</a><br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Creates and returns a new argument matcher parser object.  Use <a href="#_argmatcher:addarg">:addarg()</a> and etc to add arguments, flags, other parsers, and more.  See <a href="#argumentcompletion">Argument Completion</a> for more information.</p><p class="desc"> If one <span class="arg">command</span> is provided and there is already an argmatcher for it, then this returns the existing parser rather than creating a new parser.  Using :addarg() starts at arg position 1, making it possible to merge new args and etc into the existing parser.</p><p class="desc"> <strong>Note:</strong>  Merging <a href="#linked-parsers">linked argmatchers</a> only merges the first argument position.  The merge is simple, but should be sufficient for common simple cases.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.classifier">clink.classifier</a></div> <div class="signature">( [<span class="arg_name">priority</span>:integer] ) : table<br/><div class="version">v1.1.49 and newer</div></div></div><div class="body"><p class="desc">Creates and returns a new word classifier object.  Define on the object a <code>:classify()</code> function which gets called in increasing <span class="arg">priority</span> order (low values to high values) when classifying words for coloring the input.  See <a href="#classifywords">Coloring the Input Text</a> for more information.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.dirmatches">clink.dirmatches</a></div> <div class="signature">( <span class="arg_name">word</span>:string ) : table<br/><div class="version">v1.1.18 and newer</div></div></div><div class="body"><p class="desc">You can use this function in an argmatcher to supply directory matches. This automatically handles Readline tilde completion.</p><pre class="language-lua"><code>-- Make "cd" generate directory matches (no files).
@@ -5869,6 +5977,9 @@ end</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.onfiltermatches">clink.onfiltermatches</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil<br/><div class="version">v1.1.41 and newer</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called after Clink generates matches for completion.  See <a href="#filteringmatchcompletions"> Filtering Match Completions</a> for more information.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.oninject">clink.oninject</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil<br/><div class="version">v1.1.21 and newer</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called when Clink is injected into a CMD process.  The function is called only once per session.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.onprovideline">clink.onprovideline</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil | string<br/><div class="version">v1.3.18 and newer</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called after the <a href="#clink.onbeginedit">onbeginedit</a> event but before the input line editor starts.  If <span class="arg">func</span> returns a string, it is executed as a command line without showing a prompt.  The input line editor is skipped, and the <a href="#clink.onendedit">onendedit</a> and <a href="#clink.onfilterinput">onfilterinput</a> events happen immediately.</p><p class="desc"> <strong>Note:</strong>  Be very careful when returning a string; this can interfere with the user's ability to use CMD.  Mistakes in the command string can have potential to cause damage to the system very quickly.  It is also possible for a script to cause an infinite loop, and therefore <kbd>Ctrl</kbd>-<kbd>Break</kbd> skips the next <a href="#clink.onprovideline">onprovideline</a> event, allowing the user to regain control.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="clink.parseline">clink.parseline</a></div> <div class="signature">( <span class="arg_name">line</span>:string ) : table<br/><div class="version">v1.3.37 and newer</div></div></div><div class="body"><p class="desc">This parses the <span class="arg">line</span> string into a table of commands, with one <a href="#line_state">line_state</a> for each command parsed from the line string.</p><p class="desc"> The returned table of tables has the following scheme:</p><pre class="language-lua"><code>local commands = clink.parseline("echo hello & echo world")
+-- commands[1].line_state corresponds to "echo hello".
+-- commands[2].line_state corresponds to "echo world".</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.popuplist">clink.popuplist</a></div> <div class="signature">( <span class="arg_name">title</span>:string, <span class="arg_name">items</span>:table, [<span class="arg_name">index</span>:integer] ) : string, boolean, integer<br/><div class="version">v1.2.17 and newer</div></div></div><div class="body"><p class="desc">Displays a popup list and returns the selected item.  May only be used within a <a href="#luakeybindings">luafunc: key binding</a>.</p><p class="desc"> <span class="arg">title</span> is required and captions the popup list.</p><p class="desc"> <span class="arg">items</span> is a table of strings to display.</p><p class="desc"> <span class="arg">index</span> optionally specifies the default item (or 1 if omitted).</p><p class="desc"> The function returns one of the following: <ul> <li>nil if the popup is canceled or an error occurs. <li>Three values: <ul> <li>string indicating the <code>value</code> field from the selected item (or the <code>display</code> field if no value field is present). <li>boolean which is true if the item was selected with <kbd>Shift</kbd> or <kbd>Ctrl</kbd> pressed. <li>integer indicating the index of the selected item in the original <span class="arg">items</span> table. </ul> </ul></p><p class="desc"> Alternatively, the <span class="arg">items</span> argument can be a table of tables with the following scheme:</p><pre class="language-lua"><code>{
 &nbsp;   {
 &nbsp;       value       = "...",   -- Required; this is returned if the item is chosen.
@@ -5962,7 +6073,7 @@ while (true) do
 &nbsp;   print(line)
 end
 r:close()</code></pre></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="io.popenyield">io.popenyield</a></div> <div class="signature">( <span class="arg_name">command</span>:string, [<span class="arg_name">mode</span>:string] ) : file, function<br/><div class="version">v1.2.10 and newer</div></div></div><div class="body"><p class="desc">This behaves similar to <a href="https://www.lua.org/manual/5.2/manual.html#pdf-io.popen">io.popen()</a> except that it only supports read mode and when used in a coroutine it yields until the command has finished.</p><p class="desc"> The <span class="arg">command</span> argument is the command to run.</p><p class="desc"> The <span class="arg">mode</span> argument is the optional mode to use.  It can contain "r" (read mode) and/or either "t" for text mode (the default if omitted) or "b" for binary mode.  Write mode is not supported, so it cannot contain "w".</p><p class="desc"> This runs the specified command and returns a read file handle for reading output from the command.  It yields until the command has finished and the complete output is ready to be read without blocking.</p><p class="desc"> In v1.3.31 and higher, it also returns a function which can be used to get the exit status for the command.  The function returns the same values as <a href="https://www.lua.org/manual/5.2/manual.html#pdf-os.execute">os.execute()</a>. The function may be used only once, and it closes the read file handle, so if the function is used then do not use <code>file:close()</code>.</p><p class="desc"> <strong>Note:</strong> if the <code>prompt.async</code> setting is disabled, or while a <a href="#transientprompts">transient prompt filter</a> is executing, or if used outside of a coroutine, then this behaves like <code><a href="https://www.lua.org/manual/5.2/manual.html#pdf-io.popen">io.popen()</a></code> instead.</p><pre class="language-lua"><code>local file = io.popenyield("git status")
+<div class="function"><div class="header"> <div class="name"><a name="io.popenyield">io.popenyield</a></div> <div class="signature">( <span class="arg_name">command</span>:string, [<span class="arg_name">mode</span>:string] ) : file, function (see remarks below)<br/><div class="version">v1.2.10 and newer</div></div></div><div class="body"><p class="desc">This behaves similar to <a href="https://www.lua.org/manual/5.2/manual.html#pdf-io.popen">io.popen()</a> except that it only supports read mode and when used in a coroutine it yields until the command has finished.</p><p class="desc"> The <span class="arg">command</span> argument is the command to run.</p><p class="desc"> The <span class="arg">mode</span> argument is the optional mode to use.  It can contain "r" (read mode) and/or either "t" for text mode (the default if omitted) or "b" for binary mode.  Write mode is not supported, so it cannot contain "w".</p><p class="desc"> This runs the specified command and returns a read file handle for reading output from the command.  It yields until the command has finished and the complete output is ready to be read without blocking.</p><p class="desc"> In v1.3.31 and higher, it may also return a function.  If the second return value is a function then it can be used to get the exit status for the command.  The function returns the same values as <a href="https://www.lua.org/manual/5.2/manual.html#pdf-os.execute">os.execute()</a>. The function may be used only once, and it closes the read file handle, so if the function is used then do not use <code>file:close()</code>.  Or, if the second return value is not a function, then the exit status may be retrieved from calling `file:close()` on the returned file handle.</p><p class="desc"> <strong>Compatibility Note:</strong> when `io.popen()` is used in a coroutine, it is automatically redirected to `io.popenyield()`.  This means on success the second return value from `io.popen()` in a coroutine may not be nil as callers might normally expect.</p><p class="desc"> <strong>Note:</strong> if the <code>prompt.async</code> setting is disabled, or while a <a href="#transientprompts">transient prompt filter</a> is executing, or if used outside of a coroutine, then this behaves like <code><a href="https://www.lua.org/manual/5.2/manual.html#pdf-io.popen">io.popen()</a></code> instead.</p><pre class="language-lua"><code>local file = io.popenyield("git status")
 
 while (true) do
 &nbsp;   local line = file:read("*line")
@@ -6018,6 +6129,10 @@ line_state:getcommandwordindex() == 2</code></pre></div></div><hr/>
 -- t.batterysaver       [boolean] Whether Battery Saver mode is active.</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.getclipboardtext">os.getclipboardtext</a></div> <div class="signature">() : string | nil<br/><div class="version">v1.2.32 and newer</div></div></div><div class="body"><p class="desc">This returns the text from the system clipboard, or nil if there is no text on the system clipboard.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.getcwd">os.getcwd</a></div> <div class="signature">() : string<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Returns the current directory.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="os.getdrivetype">os.getdrivetype</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : string<br/><div class="version">v1.3.37 and newer</div></div></div><div class="body"><p class="desc">Returns the drive type for the drive associated with the specified <span class="arg">path</span>.</p><p class="desc"> Relative paths automatically use the current drive.  Absolute paths use the specified drive.  UNC paths are always reported as remote drives.</p><p class="desc"> The possible drive types are: <p><table> <tr><th>Type</th><th>Description</th></tr> <tr><td>"unknown"</td><td>The drive type could not be determined.</td></tr> <tr><td>"invalid"</td><td>The drive type is invalid; for example, there is no volume mounted at the specified path.</td></tr> <tr><td>"removable"</td><td>Floppy disk drive, thumb drive, flash card reader, CD-ROM, etc.</td></tr> <tr><td>"fixed"</td><td>Hard drive, solid state drive, etc.</td></tr> <tr><td>"ramdisk"</td><td>RAM disk.</td></tr> <tr><td>"remote"</td><td>Remote (network) drive.</td></tr> </table></p></p><pre class="language-lua"><code>local t = os.getdrivetype("c:")
+if t == "remote" then
+&nbsp;   -- Network paths are often slow, and code may want to detect and skip them.
+end</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.getenv">os.getenv</a></div> <div class="signature">( <span class="arg_name">name</span>:string ) : string | nil<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Returns the value of the named environment variable, or nil if it doesn't exist.</p><p class="desc"> Note: Certain environment variable names receive special treatment:</p><p class="desc"> <table> <tr><th>Name</th><th>Special Behavior</th></tr> <tr><td><code>"HOME"</code></td><td>If %HOME% is not set then a return value is synthesized from %HOMEDRIVE% and %HOMEPATH%, or from %USERPROFILE%.</td></tr> <tr><td><code>"ERRORLEVEL"</code></td><td>When the <code>cmd.get_errorlevel</code> setting is enabled (it is off by default) this returns the most recent exit code, just like the <code>echo %ERRORLEVEL%</code> command displays.  Otherwise this returns 0.</td></tr> </table></p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="os.getenvnames">os.getenvnames</a></div> <div class="signature">() : table<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Returns all environment variables in a table with the following scheme:</p><pre class="language-lua"><code>local t = os.getenvnames()
 -- t[index].name        [string] The environment variable's name.
@@ -6118,7 +6233,7 @@ parent,child = path.toparent([[\\foo\bar\dir\]])-- returns "\\foo\bar", "dir"</c
 -- When "off", the function returns "~\Documents".
 &nbsp;
 -- Or when <span class="arg">force</span> is true, the function returns "~\Documents".</code></pre></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><a name="rl.expandtilde">rl.expandtilde</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : string, boolean<br/><div class="version">v1.1.6 and newer</div></div></div><div class="body"><p class="desc">Performs Readline tilde expansion.</p><p class="desc"> When generating filename matches for a word, use the <a href="#rl.expandtilde">rl.expandtilde()</a> and <a href="#rl.collapsetilde">rl.collapsetilde()</a> helper functions to perform tilde completion expansion according to Readline's configuration.</p><p class="desc"> Use <a href="#rl.expandtilde">rl.expandtilde()</a> to do tilde expansion before collecting file matches (e.g. via <a href="#os.globfiles">os.globfiles()</a>).  If it indicates that it expanded the string, then use <a href="#rl.collapsetilde">rl.collapsetilde()</a> to put back the tilde before returning a match.</p><pre class="language-lua"><code>local result, expanded = rl.expandtilde("~\Documents")
+<div class="function"><div class="header"> <div class="name"><a name="rl.expandtilde">rl.expandtilde</a></div> <div class="signature">( <span class="arg_name">path</span>:string, [<span class="arg_name">whole_line</span>:boolean] ) : string, boolean<br/><div class="version">v1.1.6 and newer</div></div></div><div class="body"><p class="desc">Performs Readline tilde expansion.</p><p class="desc"> When generating filename matches for a word, use the <a href="#rl.expandtilde">rl.expandtilde()</a> and <a href="#rl.collapsetilde">rl.collapsetilde()</a> helper functions to perform tilde completion expansion according to Readline's configuration.</p><p class="desc"> An optional <span class="arg">whole_line</span> argument selects whether to expand tildes everywhere in the input string (pass true), or to expand only a tilde at the beginning of the input string (pass false or omit the second argument).  See the Compatibility Note below for more information.</p><p class="desc"> Use <a href="#rl.expandtilde">rl.expandtilde()</a> to do tilde expansion before collecting file matches (e.g. via <a href="#os.globfiles">os.globfiles()</a>).  If it indicates that it expanded the string, then use <a href="#rl.collapsetilde">rl.collapsetilde()</a> to put back the tilde before returning a match.</p><pre class="language-lua"><code>local result, expanded = rl.expandtilde("~\Documents")
 -- result is "C:\Users\yourusername\Documents"
 -- expanded is true
 
@@ -6144,7 +6259,7 @@ function dir_matches(match_word, word_index, line_state)
 &nbsp;       table.insert(matches, { match = dir, type = d.type })
 &nbsp;   end
 &nbsp;   return matches
-end</code></pre></div></div><hr/>
+end</code></pre><p class="desc"><fieldset><legend>Compatibility Note:</legend> The original intended usage for this function was to expand tildes in a single word.  But sometimes it may be convenient to expand tildes for an entire command line all at once.</p><p class="desc"> Prior to v1.3.36, this function simply asked the Readline library to expand tildes, but that mode of operation doesn't respect quotes and has quirks that can produce unexpected results when the input is a single pathname (which was the documented supported usage).</p><p class="desc"> In v1.3.36 this function fixed that problem, and expands tildes correctly a single pathname as the input (and also accepts quotes).  But that broke an undocumented quirk that could expand tildes for a whole command line as the input.</p><p class="desc"> In v1.3.37 and newer, this function accepts a boolean second argument which selects whether to expand for a whole input line using the quirky Readline tilde expansion (pass true), or to expand for a single pathname as the input (pass false or omit the second argument).</p><p class="desc"> Passing true for the second argument causes any version of Clink (except v1.3.36) to expand the input as a whole command line. </fieldset></p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="rl.getbinding">rl.getbinding</a></div> <div class="signature">( <span class="arg_name">key</span>:string, [<span class="arg_name">keymap</span>:string] ) : binding:string, type:string<br/><div class="version">v1.2.46 and newer</div></div></div><div class="body"><p class="desc">Returns the command or macro bound to <span class="arg">key</span>, and the type of the binding.</p><p class="desc"> If nothing is bound to the specified key sequence, the returned binding will be nil.</p><p class="desc"> The returned type can be <code>"function"</code>, <code>"macro"</code>, or <code>"keymap"</code> (if <span class="arg">key</span> is an incomplete key sequence).</p><p class="desc"> If an error occurs, only nil is returned.</p><p class="desc"> The <span class="arg">key</span> sequence string is the same format as from <code>clink echo</code>.  See <a href="#discoverkeysequences">Discovering Clink key sindings</a> for more information.</p><p class="desc"> An optional <span class="arg">keymap</span> may be specified as well.  If it is omitted or nil, then the current keymap is searched.  Otherwise it may refer to one of the three built in keymaps: <table> <tr><th>Keymap</th><th>Description</th></tr> <tr><td><code>"emacs"</code></td><td>The Emacs keymap, which is the default keymap.</td></tr> <tr><td><code>"vi"</code>, <code>"vi-move"</code>, or <code>"vi-command"</code></td><td>The VI command mode keymap.</td></tr> <tr><td><code>"vi-insert"</code></td><td>The VI insertion mode keymap.</td></tr> </table></p><p class="desc"> The return value can be passed as input to <a href="#rl.setbinding">rl.setbinding()</a> or <a href="#rl.invokecommand">rl.invokecommand()</a>.</p><pre class="language-lua"><code>local b,t = rl.getbinding([["\e[H"]], "emacs")
 if b then
 &nbsp;   print("Home is bound to "..b.." ("..t..") in emacs mode.")
@@ -6404,6 +6519,19 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1337">v1.3.37</h4>
+<ul>
+<li>When <code>argmatcher:addarg()</code> is passed a table containing <code>loopchars="<span class="arg">chars</span>"</code> then the <span class="arg">chars</span> are treated as delimiters for a single argument, and they do not move on to the next argument slot in the parser.</li>
+<li>Added <code>clink.parseline()</code> to parse a string into one or more <code>line_state</code> objects.</li>
+<li>Added <code>os.getdrivetype()</code> to get the drive type for a path; especially useful if your code needs to skip network paths.</li>
+<li>Added <code>match_builder:setvolatile()</code> to force the matches to be used only once.  This makes it possible for match generators to produce different kinds of matches based on what has been typed, e.g. an email address match generator could list user names until <code>@</code> is typed, and then list domain names.</li>
+<li>The <code>clink-diagnostics</code> command now lists registered argmatchers when the numeric arg &gt; 1 (<kbd>Alt</kbd>-<kbd>2</kbd>,<kbd>Ctrl</kbd>-<kbd>x</kbd>,<kbd>Ctrl</kbd>-<kbd>r</kbd>).</li>
+<li>Rewrote the path parsing routines to properly respect UNC paths and <code>\\?\</code> syntax and <code>\\?\UNC\</code> syntax.</li>
+<li>Fixed <code>clink.print(NONL, etc)</code> to not print a TAB character after a <code>NONL</code> that is the first argument.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/329">#329</a>; file completions may be mistakenly marked as directories (regression introduced in v1.2.36; affects only backward compatibility mode).</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/326">#326</a>; <code>rl.expandtilde()</code> doesn&#39;t have a way to expand tildes everywhere in an input line string.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/325">#325</a>; potential hangs while typing if <code>%PATH%</code> contains a UNC path.</li>
+</ul>
 <h4 id="v1336">v1.3.36</h4>
 <ul>
 <li>Incremental search in <code>clink-popup-history</code> now centers the found item if it is scrolled out of view.</li>
