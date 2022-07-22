@@ -285,10 +285,21 @@ The new Clink tries to be as backward compatible with Clink v0.4.9 as possible. 
 
 - Some key binding sequences have changed; see [Customizing Key Bindings](#keybindings) for more information.
 - Match coloring works differently now and can do much more; see [Completion Colors](#completioncolors) for more information.
-- Old settings and history migrate automatically if the new `clink_settings` and `clink_history` files don't exist (deleting them will cause migration to happen again).  To find the directory that contains these files, run `clink info` and look for the "state" line.
+- Old settings and history migrate automatically if you use the same profile directory when upgrading.  If you use a different profile directory, then you can still migrate the old settings and history by copying certain files.  See below for details.
 - Script compatibility should be very good, but some scripts may still encounter problems.  If you do encounter a compatibility problem you can look for an updated version of the script, update the script yourself, or visit the [clink repo](https://github.com/chrisant996/clink/issues) and open an issue describing details about the compatibility problem.
 - Some match generator scripts might need adjustments to become fully compatible with the `autosuggest.enable` setting.
 - Some settings have changed slightly, and there are many new settings.  See [Configuring Clink](#configclink) for more information.
+
+### Migrating between different profile directories
+
+All versions of Clink use the same default profile directory location.  If you haven't overridden the profile directory, then your settings and history will automatically migrate when upgrading to newer versions of Clink.
+
+If you choose to use a different profile directory, then you can still make migration happen by copying certain files:
+1. When using Clink v0.4.9 you can use `clink set` to find the settings file path.
+2. When using newer versions of Clink you can use `clink info` to find the profile directory.
+3. Copy the `settings` and `.history` files from the old directory into the new directory.
+4. If you already have a `clink_settings` or `clink_history` file in your new profile directory, then you'll need to rename them in order for migration to happen (e.g. add `.txt` to the names).
+5. Close the Clink session(s) and open new ones.
 
 <a name="configclink"></a>
 
@@ -1407,6 +1418,17 @@ The following sections describe these in more detail and show some examples.
 
 These are Lua functions that are called as part of Readline's completion process (for example when pressing <kbd>Tab</kbd>).
 
+<table class="linkmenu">
+<tr><td><a href="#generator_basics">The Basics</a></td><td>A quick example to show the basics.</td></tr>
+<tr><td style="padding-top: 0.5rem"><em>More Advanced Stuff</em></td><td></td></tr>
+<tr><td style="padding-left: 2rem"><a href="#filteringmatchcompletions">Filtering Match Completions</a></td><td>How to modify how completion happens.</td></tr>
+<tr><td style="padding-left: 2rem"><a href="#filteringthematchdisplay">Filtering the Match Display</a></td><td>How to modify how possible completions are displayed.</td></tr>
+</table>
+
+<a name="generator_basics"></a>
+
+### The Basics
+
 First create a match generator object:
 
 ```lua
@@ -1415,7 +1437,7 @@ local my_generator = clink.generator(priority)
 
 The <span class="arg">priority</span> argument is a number that influences when the generator gets called, with lower numbers going before higher numbers.
 
-### The :generate() Function
+#### The :generate() Function
 
 Next define a match generator function on the object, taking the following form:
 
@@ -1439,7 +1461,7 @@ Here is an example script that supplies git branch names as matches for `git che
 #INCLUDE [docs\examples\ex_generate.lua]
 ```
 
-### The :getwordbreakinfo() Function
+#### The :getwordbreakinfo() Function
 
 If needed, a generator can optionally influence word breaking for the end word by defining a `:getwordbreakinfo()` function.
 
@@ -1534,7 +1556,7 @@ In some instances it may be preferable to display different text when listing po
 
 The simplest way to do that is just include the `display` and/or `description` fields when using [builder:addmatch()](#builder:addmatch).  Refer to that function's documentation for usage details.
 
-However, older versions of Clink don't support those fields.  And it may in some rare cases it may be desirable to display a list of possible completions that includes extra matches, or omits some matches (but that's discouraged because it can be confusing to users).
+However, older versions of Clink don't support those fields.  And in some cases it may be desirable to display a list of possible completions that includes extra matches, or omits some matches (but that's discouraged because it can be confusing to users).
 
 A match generator can alternatively use [clink.ondisplaymatches()](#clink.ondisplaymatches) to register a function that will be called before matches are displayed (this is reset every time match generation is invoked).
 
@@ -1579,6 +1601,25 @@ end
 
 Clink provides a framework for writing complex argument match generators in Lua.  It works by creating a parser object that describes a command's arguments and flags and associating the parser with one or more commands.  When Clink detects a parser is associated with the command being edited, it uses the parser to generate matches.
 
+<table class="linkmenu">
+<tr><td><a href="#argmatcher_basics">The Basics</a></td><td>A quick example to show the basics.</td></tr>
+<tr><td><a href="#argmatcher_autofiles">Automatic Filename Completion</a></td><td>By default, filename completion is used.</td></tr>
+<tr><td><a href="#argmatcher_descriptions">Descriptions for Flags and Arguments</a></td><td>How to add descriptive text.</td></tr>
+<tr><td style="padding-top: 0.5rem"><em>More Advanced Stuff</em></td><td></td></tr>
+<tr><td style="padding-left: 2rem"><a href="#argmatcher_linking">Linking Parsers</a></td><td>How to link a parser to a word or flag.</td></tr>
+<tr><td style="padding-left: 2rem"><a href="#argmatcher_functions">Functions As Argument Options</a></td><td>Using a function to provide completions.</td></tr>
+<tr><td style="padding-left: 2rem"><a href="#addarg_fromhistory">Generate Matches From History</a></td><td>Providing completions from the history.</td></tr>
+<tr><td style="padding-left: 2rem"><a href="#addarg_nosort">Disable Sorting Matches</a></td><td>How to disable auto-sorted completions.</td></tr>
+<tr><td style="padding-left: 2rem"><a href="#addarg_loopchars">Delimited Arguments</a></td><td>How to allow multiple completions in the same argument slot (e.g. <code>file1;file2;file3</code>).</td></tr>
+<tr><td style="padding-left: 2rem"><a href="#argmatcher_adaptive">Adaptive Argmatchers</a></td><td>How an argmatcher can define or modify itself on the fly.</td></tr>
+<tr><td style="padding-left: 2rem"><a href="#responsive-argmatchers">Responding to Arguments in Argmatchers</a></td><td>When argument slots need to influence one another.</td></tr>
+<tr><td style="padding-left: 2rem"><a href="#argmatcher_shorthand">Shorthand</a></td><td>Alternative syntax for defining argmatchers.</td></tr>
+</table>
+
+<a name="argmatcher_basics"></a>
+
+### The Basics
+
 Here is an example of a simple parser for the command `foobar`;
 
 ```lua
@@ -1600,6 +1641,8 @@ C:\&gt;foobar hello -foo wo<span style="color:#ffffff">_</span>
 When displaying possible completions, flag matches are only shown if the flag character has been input (so `command ` and <kbd>Alt</kbd>-<kbd>=</kbd> would list only non-flag matches, or `command -` and <kbd>Alt</kbd>-<kbd>=</kbd> would list only flag matches).
 
 If a command doesn't have an argmatcher but is a doskey macro, Clink automatically expands the doskey macro and looks for an argmatcher for the expanded command.  A macro like `gco=git checkout $*` automatically reuses a `git` argmatcher and produces completions for its `checkout` argument.  However, it only expands the doskey macro up to the first `$`, so complex aliases like `foo=app 2$gnul text $*` or `foo=$2 $1` might behave strangely.
+
+<a name="argmatcher_autofiles"></a>
 
 ### Automatic Filename Completion
 
@@ -1635,6 +1678,8 @@ clink.argmatcher("foobar")
 :nofiles()                         -- Using :nofiles() prevents further completions.
 ```
 
+<a name="argmatcher_descriptions"></a>
+
 ### Descriptions for Flags and Arguments
 
 Flags and arguments may optionally have descriptions associated with them.  The descriptions, if any, are displayed when listing possible completions.
@@ -1660,6 +1705,8 @@ clink.argmatcher("foo")
 
 ### More Advanced Stuff
 
+<a name="argmatcher_linking"></a>
+
 #### Linking Parsers
 
 There are often situations where the parsing of a command's arguments is dependent on the previous words (`git merge ...` compared to `git log ...` for example). For these scenarios Clink allows you to link parsers to arguments' words using Lua's concatenation operator.
@@ -1676,7 +1723,7 @@ As the example above shows, it is also possible to use a parser without concaten
 
 When Clink follows a link to a parser it will only return to the previous parser when the linked parser runs out of arguments.
 
-#### Flags With Arguments
+##### Flags With Arguments
 
 Parsers can be concatenated with flags, too.
 
@@ -1702,6 +1749,8 @@ A `:` or `=` at the end of a flag indicates the flag takes an argument but requi
 ```lua
 #INCLUDE [docs\examples\ex_findstr.lua]
 ```
+
+<a name="argmatcher_functions"></a>
 
 #### Functions As Argument Options
 
@@ -1784,11 +1833,15 @@ clink.argmatcher("foo")
 :addarg(clink.filematches)
 ```
 
+<a name="argmatcher_adaptive"></a>
+
 #### Adaptive Argmatchers
 
 Some argmatchers may need to adapt on the fly.  For example, a program may have different features available depending on the current directory, or may want to define its arguments and flags by parsing the `--help` text from running a program.
 
 An argmatcher can define a "delayed initialization" callback function that gets calls when the argmatcher gets used, allowing it to defer potentially expensive initialization work until it's actually needed.  An argmatcher can also define a separate "delayed initialization" function for each argument position.
+
+<a name="argmatcher_setdelayinit"></a>
 
 ##### Delayed initialization for the argmatcher
 
@@ -1915,6 +1968,8 @@ clink.argmatcher("pushd")
 :nofiles()
 ```
 
+<a name="argmatcher_shorthand"></a>
+
 #### Shorthand
 
 It is also possible to omit the `addarg` and `addflags` function calls and use a more declarative shorthand form:
@@ -1941,9 +1996,16 @@ With the shorthand form flags are implied rather than declared.  When a shorthan
 
 When the <code><a href="#clink_colorize_input">clink.colorize_input</a></code> setting is disabled, then the entire input line is colored by the <code><a href="#color_input">color.input</a></code> setting.  When the setting is enabled, then [argmatchers](#argumentcompletion) automatically apply colors to the input text as they parse it.
 
-It's possible for an argmatcher to provide a function to [override how its arguments are colored](#classier_override_arguments).  This function is called once for each of the argmatcher's arguments.
+<table class="linkmenu">
+<tr><td><a href="#inputcolor_command">Coloring the Command Word</a></td><td>How the command word is colored.</td></tr>
+<tr><td><a href="#inputcolor_redir">Coloring Command Separators and Redirection</a></td><td>How special characters are colored.</td></tr>
+<tr><td><a href="#inputcolor_other">Coloring Other Input Text</a></td><td>How other text is colored.</td></tr>
+<tr><td style="padding-top: 0.5rem"><em>More Advanced Stuff</em></td><td></td></tr>
+<tr><td style="padding-left: 2rem"><a href="#classier_override_arguments">Setting a classifier function in an argmatcher</a></td><td>How to apply colors for arguments.</td></tr>
+<tr><td style="padding-left: 2rem"><a href="#classier_override_line">Setting a classifier function for the whole input line</a></td><td>How to apply colors anywhere in the line.</td></tr>
+</table>
 
-It's also possible to register a classifier function for [the whole input line](#classier_override_line).  This function is very similar to a match generator; classifier functions are called in priority order, and a classifier can choose to stop the classification process.
+<a name="inputcolor_command"></a>
 
 ### Coloring the Command Word
 
@@ -1967,6 +2029,8 @@ Here are examples, using the colors from the [Use enhanced defaults](#gettingsta
 <tr><td><span style="color:#c0c0c0">c:\dir></span><span style="color:#ffd787">whatever</span></td><td style="color:#d7d7d7;text-align:right"><em>if executable and unrecognized colors are not set</em></td></tr>
 </table></code></pre>
 
+<a name="inputcolor_redir"></a>
+
 ### Coloring Command Separators and Redirection
 
 Command separators and redirection are colored accordingly:
@@ -1981,6 +2045,8 @@ Here are examples, using the colors from the [Use enhanced defaults](#gettingsta
 <tr><td><span style="color:#c0c0c0">c:\dir></span><span style="color:#ffffff">pushd</span> <span style="color:#ffaf00">&</span> <span style="color:#ffffff">popd</span></td><td style="color:#d7d7d7;text-align:right"><em>'&' is the command separator</em></td></tr>
 <tr><td><span style="color:#c0c0c0">c:\dir></span><span style="color:#ffffff">set</span> <span style="color:#d78700">&gt;</span><span style="color:#ffd787">file</span></td><td style="color:#d7d7d7;text-align:right"><em>redirecting 'set' to 'file'</em></td></tr>
 </table></code></pre>
+
+<a name="inputcolor_other"></a>
 
 ### Coloring Other Input Text
 
@@ -2062,6 +2128,19 @@ The <code>classifications</code> field is a [word_classifications](#word_classif
 
 Before Clink displays the prompt it filters the prompt through [Lua](#extending-clink) so that the prompt can be customized. This happens each and every time that the prompt is shown which allows for context sensitive customizations (such as showing the current branch of a git repository).
 
+<table class="linkmenu">
+<tr><td><a href="#promptfilter_basics">The Basics</a></td><td>A quick example to show the basics.</td></tr>
+<tr><td><a href="#escapecodes">ANSI escape codes in the prompt string</a></td><td>How special characters are colored.</td></tr>
+<tr><td style="padding-top: 0.5rem"><em>More Advanced Stuff</em></td><td></td></tr>
+<tr><td style="padding-left: 2rem"><a href="#rightprompt">Right Side Prompt</a></td><td>How to add prompt text at the right edge of the terminal.</td></tr>
+<tr><td style="padding-left: 2rem"><a href="#asyncpromptfiltering">Asynchronous Prompt Filtering</a></td><td>How to make the prompt show up instantly.</td></tr>
+<tr><td style="padding-left: 2rem"><a href="#transientprompts">Transient Prompt</a></td><td>How to display completed prompts differently than the current prompt.</td></tr>
+</table>
+
+<a name="promptfilter_basics"></a>
+
+### The Basics
+
 Writing a prompt filter is straightforward:
 1. Create a new prompt filter by calling [clink.promptfilter()](#clink.promptfilter) along with a priority id which dictates the order in which filters are called. Lower priority ids are called first.
 2. Define a `:filter()` function on the returned prompt filter.
@@ -2099,6 +2178,10 @@ The resulting prompt will look like this:
 ### ANSI escape codes in the prompt string
 
 Readline needs to be told which characters in the prompt are unprintable or invisible.  To help with that, Clink automatically detects most standard ANSI escape codes (and most of ConEmu's non-standard escape codes) and the BEL character (^G, audible bell) and surrounds them with `\001` (^A) and `\002` (^B) characters.  For any other unprintable characters, the `\001` and `\002` characters need to be added manually.  Otherwise Readline misinterprets the length of the prompt and can display the prompt and input line incorrectly in some cases (especially if the input line wraps onto a second line).
+
+Here are a couple of links with more information about ANSI escape codes:
+- [Wikipedia - ANSI Escape Code](https://en.wikipedia.org/wiki/ANSI_escape_code)
+- [Console Virtual Terminal Sequences](https://docs.microsoft.com/en-us/windows/console/console-virtual-terminal-sequences)
 
 ### More Advanced Stuff
 
