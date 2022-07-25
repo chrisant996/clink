@@ -347,6 +347,7 @@ void line_editor_impl::begin_line()
     m_prev_generate.clear();
     m_prev_classify.clear();
     m_prev_command_word.clear();
+    m_prev_command_word_offset = -1;
     m_prev_command_word_quoted = false;
 
     m_words.clear();
@@ -1035,11 +1036,13 @@ void line_editor_impl::maybe_send_oncommand_event()
 
     const word& info = *p;
     if (m_prev_command_word_quoted == info.quoted &&
+        m_prev_command_word_offset == info.offset &&
         m_prev_command_word.length() == info.length &&
         _strnicmp(m_prev_command_word.c_str(), m_buffer.get_buffer() + info.offset, info.length) == 0)
         return;
 
     str<> first_word;
+    unsigned int offset = info.offset;
     bool quoted = info.quoted;
     first_word.concat(line.get_line() + info.offset, info.length);
 
@@ -1078,6 +1081,7 @@ void line_editor_impl::maybe_send_oncommand_event()
     }
 
     m_prev_command_word = first_word.c_str();
+    m_prev_command_word_offset = offset;
     m_prev_command_word_quoted = quoted;
 }
 

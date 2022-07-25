@@ -162,6 +162,7 @@ private:
     words               m_classify_words;
 
     str<16>             m_prev_command_word;
+    unsigned int        m_prev_command_word_offset;
     bool                m_prev_command_word_quoted;
 
 #ifdef DEBUG
