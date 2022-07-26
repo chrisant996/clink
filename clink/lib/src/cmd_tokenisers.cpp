@@ -294,7 +294,11 @@ unsigned int trim_trailing_parens(const char* start, unsigned int offset, unsign
 word_token cmd_command_tokeniser::next(unsigned int& offset, unsigned int& length)
 {
     if (!m_iter.more())
+    {
+        offset = static_cast<unsigned int>(m_iter.get_pointer() - m_start);
+        length = 0;
         return word_token(word_token::invalid_delim);
+    }
 
     const char oq = get_opening_quote();
     const char cq = get_closing_quote();

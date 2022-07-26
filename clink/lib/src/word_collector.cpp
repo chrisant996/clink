@@ -122,6 +122,10 @@ void word_collector::find_command_bounds(const char* buffer, unsigned int length
                                cursor <= command_start + command_length))
             return;
     }
+
+    // Need to provide an empty command, because there's an empty command.  For
+    // example exec.enable needs this so it can generate matches appropriately.
+    commands.push_back({ command_start, command_length });
 }
 
 //------------------------------------------------------------------------------
@@ -145,9 +149,11 @@ unsigned int word_collector::collect_words(const char* line_buffer, unsigned int
 
     unsigned int command_offset = 0;
 
+    bool first = true;
     for (auto& command : commands)
     {
-        bool first = true;
+        first = true;
+
         unsigned int doskey_len = 0;
         bool deprecated_argmatcher = false;
 
@@ -264,7 +270,7 @@ unsigned int word_collector::collect_words(const char* line_buffer, unsigned int
     word* end_word = words.empty() ? nullptr : &words.back();
     if (!end_word || (stop_at_cursor && end_word->offset + end_word->length < line_cursor))
     {
-        words.push_back({line_cursor, 0, !end_word});
+        words.push_back({line_cursor, 0, first});
     }
 
     // Adjust for quotes.
