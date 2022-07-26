@@ -37,13 +37,14 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - `git checkout `<kbd>Alt</kbd>+<kbd>=</kbd> in Cmder.
 
 ## Known Issues
-- Readline's `expand_tilde()` doesn't handle embedded `{space}{tilde}{pathsep}` correctly in strings.
+- Readline's `expand_tilde()` doesn't handle embedded `{space}{tilde}{pathsep}` correctly in strings; `rl.expandtilde()` does, and has an optional parameter to use Readline's original style of tilde expansion.
 - Readline 8.1 has slight bug in `update_line`; type `c` then `l`, and it now identifies **2** chars (`cl`) as needing to be displayed; seems like the diff routine has a bug with respect to the new faces capability; it used to only identify `l` as needing to be displayed.
 - Cursor style may behave unexpectedly in a new console window launched from a Windows Terminal console, or in a console window that gets attached to Windows Terminal.  This is because there's no reliable way for Clink to know whether it is running inside Windows Terminal.
 - Perturbed PROMPT envvar is visible in child processes (e.g. piped shell in various file editors).
 - [#531](https://github.com/mridgers/clink/issues/531) AV detects a trojan on download _[This is likely because of the use of CreateRemoteThread and/or hooking OS APIs.  There might be a way to obfuscate the fact that clink uses those, but ultimately this is kind of an inherent problem.  Getting the binaries digitally signed might be the most effective solution, but that's financially expensive.]_
 - [Terminal #10191](https://github.com/microsoft/terminal/issues/10191#issuecomment-897345862) Microsoft Terminal does not allow a console application to know about or access the scrollback history, nor to scroll the screen.  It blocks Clink's scrolling commands, and also the `console.findline()` function and everything else that relies on access to the scrollback history.
 - The auto-updater settings are stored in the profile.  That makes it more cumbersome to control the auto-updater settings if you use multiple Clink profiles.  However, it makes it possible to control the auto-updater settings separately in "portable installs" (e.g. on a USB memory stick).
+- `"cd"` finds the `cd` argmatcher, but that's misleading since `cd` is a built in command in CMD.
 
 ## Mystery
 - Sometimes completion isn't working, but I haven't found consistent repro steps yet.  _[Might be solved now that delayinit coroutines run to completion regardless whether a new prompt generation begins before the delayinit coroutine finishes.]_
