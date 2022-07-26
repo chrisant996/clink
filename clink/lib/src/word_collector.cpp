@@ -46,11 +46,13 @@ word_token simple_word_tokeniser::next(unsigned int& offset, unsigned int& lengt
     const char* ptr;
     int len;
     str_token token = m_tokeniser->next(ptr, len);
-    if (!token)
-        return word_token(word_token::invalid_delim);
 
     offset = static_cast<unsigned int>(ptr - m_start);
     length = len;
+
+    if (!token)
+        return word_token(word_token::invalid_delim);
+
     return word_token(token.delim);
 }
 
@@ -122,6 +124,10 @@ void word_collector::find_command_bounds(const char* buffer, unsigned int length
                                cursor <= command_start + command_length))
             return;
     }
+
+    // Catch uninitialized variables.
+    assert(command_start < 0xccccc);
+    assert(command_length < 0xccccc);
 
     // Need to provide an empty command, because there's an empty command.  For
     // example exec.enable needs this so it can generate matches appropriately.

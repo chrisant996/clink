@@ -129,12 +129,13 @@ str_token str_tokeniser_impl<T>::next_impl(const T*& out_start, int& out_length)
 
     const T* end = m_iter.get_pointer();
 
+    // Set the output.
+    out_start = start;
+    out_length = int(end - start);
+
     // Empty string? Must be the end of the input. We're done here.
     if (start == end)
         return str_token::invalid_delim;
 
-    // Set the output and return.
-    out_start = start;
-    out_length = int(end - start);
     return max_delim ? *max_delim : 0;
 }
