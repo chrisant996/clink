@@ -82,10 +82,8 @@ function exec_generator:generate(line_state, match_builder)
 
     -- If enabled, lines prefixed with whitespace disable executable matching.
     if settings.get("exec.space_prefix") then
-        local word_info = line_state:getwordinfo(1)
         local offset = line_state:getcommandoffset()
-        if word_info.quoted then offset = offset + 1 end
-        if word_info.offset > offset then
+        if line_state:getline():sub(offset, offset):find("[ \t]") then
             return false
         end
     end
