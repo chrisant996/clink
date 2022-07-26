@@ -31,12 +31,16 @@ function cmd_generator:generate(line_state, match_builder)
         return false
     end
 
-    -- They should be skipped if the the line's whitespace prefixed.
+    -- Cmd commands cannot be quoted.
+    local word_info = line_state:getwordinfo(1)
+    if word_info.quoted then
+        return false
+    end
+
+    -- They should be skipped if the line's whitespace prefixed.
     if settings.get("exec.space_prefix") then
-        local word_info = line_state:getwordinfo(1)
         local offset = line_state:getcommandoffset()
-        if word_info.quoted then offset = offset + 1 end
-        if word_info.offset > offset then
+        if line_state:getline():sub(offset, offset):find("[ \t]") then
             return false
         end
     end
