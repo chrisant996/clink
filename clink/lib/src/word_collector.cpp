@@ -337,6 +337,8 @@ void commands::set(const char* line_buffer, unsigned int line_length, unsigned i
             // before it, so that ` doskeyalias` gets classified as NOT a doskey
             // alias, since doskey::resolve() won't expand it as a doskey alias.
             int command_char_offset = tmp[0].offset;
+            if (tmp[0].quoted)
+                command_char_offset--;
             if (command_char_offset == 1 && line_buffer[0] == ' ')
                 command_char_offset--;
             else if (command_char_offset >= 2 &&
