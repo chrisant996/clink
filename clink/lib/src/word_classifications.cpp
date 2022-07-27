@@ -119,10 +119,13 @@ void word_classifications::finish(bool show_argmatchers)
         const size_t end = min<unsigned int>(info.end, m_length);
         for (size_t pos = info.start; pos < end; ++pos)
         {
-            if (info.argmatcher && show_argmatchers)
-                m_faces[pos] = 'm';
-            else if (m_faces[pos] == ' ' && info.word_class < word_class::max)
-                m_faces[pos] = c_faces[int(info.word_class)];
+            if (m_faces[pos] == ' ')
+            {
+                if (info.argmatcher && show_argmatchers)
+                    m_faces[pos] = 'm';
+                else if (info.word_class < word_class::max)
+                    m_faces[pos] = c_faces[int(info.word_class)];
+            }
         }
     }
 }
