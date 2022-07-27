@@ -9,6 +9,7 @@
 - Fixed `line_state:getcommandoffset()` when the first word is quoted.
 - Fixed `line_state` parsing for input lines such as `foo.exe&`, so that the `exec.enable` setting can generate matches properly.
 - Fixed completion so that CMD command names are not among the completions when preceded by a quote.
+- Fixed `color.argmatcher` color to not overwrite custom colors that may have already been applied.
 
 #### v1.3.37
 
