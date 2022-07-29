@@ -2001,8 +2001,8 @@ When the <code><a href="#clink_colorize_input">clink.colorize_input</a></code> s
 <tr><td><a href="#inputcolor_redir">Coloring Command Separators and Redirection</a></td><td>How special characters are colored.</td></tr>
 <tr><td><a href="#inputcolor_other">Coloring Other Input Text</a></td><td>How other text is colored.</td></tr>
 <tr><td style="padding-top: 0.5rem"><em>More Advanced Stuff</em></td><td></td></tr>
-<tr><td style="padding-left: 2rem"><a href="#classier_override_arguments">Setting a classifier function in an argmatcher</a></td><td>How to apply colors for arguments.</td></tr>
-<tr><td style="padding-left: 2rem"><a href="#classier_override_line">Setting a classifier function for the whole input line</a></td><td>How to apply colors anywhere in the line.</td></tr>
+<tr><td style="padding-left: 2rem"><a href="#classifier_override_arguments">Setting a classifier function in an argmatcher</a></td><td>How to apply colors for arguments.</td></tr>
+<tr><td style="padding-left: 2rem"><a href="#classifier_override_line">Setting a classifier function for the whole input line</a></td><td>How to apply colors anywhere in the line.</td></tr>
 </table>
 
 <a name="inputcolor_command"></a>
@@ -2069,7 +2069,7 @@ Here are examples, using the colors from the [Use enhanced defaults](#gettingsta
 
 ### More Advanced Stuff
 
-<a name="classier_override_arguments"></a>
+<a name="classifier_override_arguments"></a>
 
 #### Setting a classifier function in an argmatcher
 
@@ -2083,7 +2083,7 @@ The `clink set` command has different syntax depending on the setting type, so t
 #INCLUDE [docs\examples\ex_classify_samp.lua]
 ```
 
-<a name="classier_override_line"></a>
+<a name="classifier_override_line"></a>
 
 #### Setting a classifier function for the whole input line
 
