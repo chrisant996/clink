@@ -1572,6 +1572,7 @@ static int recognize_command(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  clink.recognizecommand
+/// -ver:   1.3.38
 /// -arg:   [line:string]
 /// -arg:   word:string
 /// -arg:   [quoted:boolean]
