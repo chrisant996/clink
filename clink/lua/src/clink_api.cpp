@@ -635,6 +635,10 @@ recognition recognize_command(const char* line, const char* word, bool quoted, b
     if (os::expand_env(word, -1, tmp2))
         word = tmp2.c_str();
 
+    // Ignore device names.
+    if (path::is_device(word))
+        return recognition::unknown;
+
     // Ignore UNC paths, because they can take up to 2 minutes to time out.
     // Even running that on a thread would either starve the consumers or
     // accumulate threads faster than they can finish.
