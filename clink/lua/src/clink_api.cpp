@@ -620,13 +620,21 @@ recognition recognize_command(const char* line, const char* word, bool quoted, b
     str<> tmp;
     if (!quoted)
     {
+        bool caret = false;
         str_iter iter(word);
         while (iter.more())
         {
             const char* ptr = iter.get_pointer();
             const int c = iter.next();
-            if (c != '^' || !iter.peek())
+            if (!caret && c == '^' && iter.peek())
+            {
+                caret = true;
+            }
+            else
+            {
                 tmp.concat(ptr, static_cast<int>(iter.get_pointer() - ptr));
+                caret = false;
+            }
         }
         word = tmp.c_str();
     }
