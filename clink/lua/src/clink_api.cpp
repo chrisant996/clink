@@ -610,7 +610,6 @@ void recognizer::proc(recognizer* r)
     }
 
     CoUninitialize();
-puts("ended");
 }
 
 //------------------------------------------------------------------------------
