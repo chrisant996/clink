@@ -2289,6 +2289,7 @@ These sections provide more information about various aspects of Clink:
 <tr><td><a href="#keybindings">Customizing Key Bindings</a></td><td>How to customize key bindings.</td></tr>
 <tr><td><a href="#saved-command-history">Saved Command History</a></td><td>How the saved command history works.</td></tr>
 <tr><td><a href="#using-history-expansion">Using History Expansion</a></td><td>How to use history expansion.</td></tr>
+<tr><td><a href="#directory-shortcuts">Directory Shortcuts</a></td><td>Convenient shortcut for changing the current directory.</td></tr>
 <tr><td><a href="#popular-scripts">Popular Scripts</a></td><td>Some popular scripts to enhance Clink.</td></tr>
 <tr><td><a href="#terminal-support">Terminal Support</a></td><td>Information about how Clink's terminal support works.</td></tr>
 <tr><td><a href="#troubleshooting-tips">Troubleshooting Tips</a></td><td>How to troubleshoot and report problems.</td></tr>
@@ -2816,6 +2817,16 @@ or edit, the word or words selected from the history event.
     event.
 </td></tr>
 </table>
+
+## Directory Shortcuts
+
+Clink provides some typing savers for changing the current directory.
+
+- Typing a directory name followed by a path separator is a shortcut for `cd /d` to that directory.
+- Typing `..` or `...` is a shortcut for `cd ..` or `cd ..\..` (each additional `.` adds another `\..`).
+- Typing `-` or `cd -` changes to the previous current working directory.
+
+These shortcuts only work in the interactive command line; they do not work in batch scripts.
 
 <a name="sample-scripts">
 
