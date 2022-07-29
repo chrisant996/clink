@@ -4,12 +4,14 @@
 
 #### v1.3.38
 
+- Added `clink.recognizecommand()` function that input line coloring classifiers can use to find whether to color a word as executable.  This is the same mechanism Clink uses internally, and the analysis is asynchronous.
 - Fixed argmatcher lookup to favor doskey aliases, so that e.g. "<code>dir</code>" can be aliased to an alternative program but "<code>&nbsp;dir</code>" can invoke the built-in dir command, and they can each have separate argmatchers.
 - Fixed the `oncommand` event to also fire when the command word offset changes, because adding/removing a leading space can change whether the command is an alias, which can make the typed command word resolve to a different file or program to invoke.
 - Fixed `line_state:getcommandoffset()` when the first word is quoted.
 - Fixed `line_state` parsing for input lines such as `foo.exe&`, so that the `exec.enable` setting can generate matches properly.
 - Fixed completion so that CMD command names are not among the completions when preceded by a quote.
 - Fixed `color.argmatcher` color to not overwrite custom colors that may have already been applied.
+- Fixed `^` to not be a word break character when parsing the input line.
 
 #### v1.3.37
 
