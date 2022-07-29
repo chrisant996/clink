@@ -2249,13 +2249,11 @@ function argmatcher_classifier:classify(commands)
                 word_classifier:classifyword(command_word_index, m.."c", false); --command
             elseif unrecognized_color or executable_color then
                 local cl
-                if not is_device_name(command_word) then
-                    local recognized = clink._recognize_command(line_state:getline(), command_word, info.quoted)
-                    if recognized < 0 then
-                        cl = unrecognized_color and "u"                              --unrecognized
-                    elseif recognized > 0 then
-                        cl = executable_color and "x"                                --executable
-                    end
+                local recognized = clink._recognize_command(line_state:getline(), command_word, info.quoted)
+                if recognized < 0 then
+                    cl = unrecognized_color and "u"                              --unrecognized
+                elseif recognized > 0 then
+                    cl = executable_color and "x"                                --executable
                 end
                 cl = cl or "o"                                                   --other
                 word_classifier:classifyword(command_word_index, m..cl, false);
