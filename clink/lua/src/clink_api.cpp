@@ -1571,6 +1571,81 @@ static int recognize_command(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  clink.recognizecommand
+/// -arg:   [line:string]
+/// -arg:   word:string
+/// -arg:   [quoted:boolean]
+/// -ret:   word_class:string, ready:boolean
+/// This reports the input line coloring word classification to use for a
+/// command word.  The return value can be passed into
+/// <a href="#word_classifications:classifyword">word_classifications:classifyword()</a>
+/// as its <span class="arg">word_class</span> argument.
+///
+/// This is intended for advanced input line coloring purposes.  For example if
+/// a script uses <a href="#clink.onfilterinput">clink.onfilterinput()</a> to
+/// modify the input text, then it can use this function inside a custom
+/// <a href="#classifier_override_line">classifier</a> to look up the color
+/// appropriate for the modified input text.
+///
+/// The <span class="arg">line</span> is optional and may be an empty string or
+/// omitted.  When present, it is parsed to check if it would be processed as a
+/// <a href="#directory-shortcuts">directory shortcut</a>.
+///
+/// The <span class="arg">word</span> is a string indicating the word to be
+/// analyzed.
+///
+/// The <span class="arg">quoted</span> is optional.  When true, it indicates
+/// the word is quoted and any <code>^</code> characters are taken as-is,
+/// rather than treating them as the usual CMD escape character.
+///
+/// The possible return values for <span class="arg">word_class</span> are:
+///
+/// <table>
+/// <tr><th>Code</th><th>Classification</th><th>Clink Color Setting</th></tr>
+/// <tr><td><code>"x"</code></td><td>Executable; used for the first word when it is not a command or doskey alias, but is an executable name that exists.</td><td><code>color.executable</code></td></tr>
+/// <tr><td><code>"u"</code></td><td>Unrecognized; used for the first word when it is not a command, doskey alias, or recognized executable name.</td><td><code>color.unrecognized</code></td></tr>
+/// <tr><td><code>"o"</code></td><td>Other; used for file names and words that don't fit any of the other classifications.</td><td><code>color.input</code></td></tr>
+/// </table>
+///
+/// The possible return values for <span class="arg">ready</span> are:
+///
+/// <ul>
+/// <li>True if the analysis has completed.</li>
+/// <li>False if the analysis has not yet completed (and the returned word class
+/// may be a temporary placeholder).</li>
+/// </ul>
+///
+/// <strong>Note:</strong>  This always returns immediately, and it uses a
+/// background thread to analyze the <span class="arg">word</a> asynchronously.
+/// When the background thread finishes analyzing the word, Clink automatically
+/// redisplays the input line, giving classifiers a chance to call this function
+/// again and get the final <span class="arg">word_class</span> result.
+static int api_recognize_command(lua_State* state)
+{
+    int iword = lua_isstring(state, 2) ? 2 : 1;
+    int iline = iword - 1;
+    const char* line = (iline < 1 || lua_isnil(state, iline)) ? "" : checkstring(state, iline);
+    const char* word = checkstring(state, iword);
+    const bool quoted = lua_toboolean(state, iword + 1);
+    if (!line || !word)
+        return 0;
+    if (!*line || !*word)
+        return 0;
+
+    bool ready;
+    const recognition recognized = recognize_command(line, word, quoted, ready, nullptr/*file*/);
+
+    char cl = 'o';
+    if (int(recognized) < 0)
+        cl = 'u';
+    else if (int(recognized) > 0)
+        cl = 'x';
+    lua_pushlstring(state, &cl, 1);
+    lua_pushboolean(state, ready);
+    return 2;
+}
+
+//------------------------------------------------------------------------------
 static int generate_from_history(lua_State* state)
 {
     HIST_ENTRY** list = history_list();
@@ -1833,6 +1908,7 @@ void clink_lua_initialise(lua_state& lua)
         { "reclassifyline",         &reclassify_line },
         { "refilterprompt",         &refilter_prompt },
         { "parseline",              &parse_line },
+        { "recognizecommand",       &api_recognize_command },
         // Backward compatibility with the Clink 0.4.8 API.  Clink 1.0.0a1 had
         // moved these APIs away from "clink.", but backward compatibility
         // requires them here as well.
