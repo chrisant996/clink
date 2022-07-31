@@ -103,6 +103,9 @@ int main(int argc, char** argv)
     const char* prefix = (argc > 0) ? argv[0] : "";
     int result = (clatch::run(prefix) != true);
 
+    extern void shutdown_recognizer();
+    shutdown_recognizer();
+
     if (timer)
     {
         DWORD elapsed = GetTickCount() - start;
