@@ -1669,6 +1669,14 @@ end
 --- creating a new parser.  Using :addarg() starts at arg position 1, making it
 --- possible to merge new args and etc into the existing parser.
 ---
+--- In Clink v1.3.38 and higher, if a <span class="arg">command</span> is a
+--- fully qualified path, then it is only used when the typed command expands to
+--- the same fully qualified path.  This makes it possible to create one
+--- argmatcher for <code>c:\general\program.exe</code> and another for
+--- <code>c:\special\program.exe</code>.  For example, aliases may be used to
+--- make both programs runnable, or the system PATH might be changed temporarily
+--- while working in a particular context.
+---
 --- <strong>Note:</strong>  Merging <a href="#linked-parsers">linked
 --- argmatchers</a> only merges the first argument position.  The merge is
 --- simple, but should be sufficient for common simple cases.
@@ -1796,7 +1804,13 @@ end
 --------------------------------------------------------------------------------
 local function _is_argmatcher_loaded(command_word)
     -- Check for an exact match.
-    local argmatcher = _argmatchers[path.getname(command_word)]
+    local argmatcher = _argmatchers[command_word]
+    if argmatcher then
+        return argmatcher
+    end
+
+    -- Check for a name match.
+    argmatcher = _argmatchers[path.getname(command_word)]
     if argmatcher then
         return argmatcher
     end
@@ -1920,6 +1934,16 @@ local function _has_argmatcher(command_word)
 
     command_word = clink.lower(command_word)
 
+    -- Don't invoke the recognizer while generating matches from history, as
+    -- that could be excessively expensive (could queue thousands of lookups).
+    if not (clink.co_state._argmatcher_fromhistory and clink.co_state._argmatcher_fromhistory.argmatcher) then
+        -- Pass true because argmatcher lookups always treat ^ literally.
+        local _, ready, file = clink.recognizecommand(command_word, true)
+        if file then
+            command_word = file
+        end
+    end
+
     local argmatcher = _is_argmatcher_loaded(command_word)
 
     -- If an argmatcher isn't loaded, look for a Lua script by that name in one
@@ -2031,6 +2055,16 @@ local function _find_argmatcher(line_state, check_existence, lookup)
                     end
                 end
             end
+        end
+    end
+
+    -- Don't invoke the recognizer while generating matches from history, as
+    -- that could be excessively expensive (could queue thousands of lookups).
+    if not (clink.co_state._argmatcher_fromhistory and clink.co_state._argmatcher_fromhistory.argmatcher) then
+        -- Pass true because argmatcher lookups always treat ^ literally.
+        local _, ready, file = clink.recognizecommand(command_word, true)
+        if file then
+            command_word = file
         end
     end
 
