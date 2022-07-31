@@ -1610,6 +1610,7 @@ Clink provides a framework for writing complex argument match generators in Lua.
 <tr><td style="padding-left: 2rem"><a href="#argmatcher_functions">Functions As Argument Options</a></td><td>Using a function to provide completions.</td></tr>
 <tr><td style="padding-left: 2rem"><a href="#addarg_fromhistory">Generate Matches From History</a></td><td>Providing completions from the history.</td></tr>
 <tr><td style="padding-left: 2rem"><a href="#addarg_nosort">Disable Sorting Matches</a></td><td>How to disable auto-sorted completions.</td></tr>
+<tr><td style="padding-left: 2rem"><a href="#argmatcher_fullyqualified">Fully Qualified Pathnames</a></td><td>How to make different argmatchers for programs with the same name.</td></tr>
 <tr><td style="padding-left: 2rem"><a href="#addarg_loopchars">Delimited Arguments</a></td><td>How to allow multiple completions in the same argument slot (e.g. <code>file1;file2;file3</code>).</td></tr>
 <tr><td style="padding-left: 2rem"><a href="#argmatcher_adaptive">Adaptive Argmatchers</a></td><td>How an argmatcher can define or modify itself on the fly.</td></tr>
 <tr><td style="padding-left: 2rem"><a href="#responsive-argmatchers">Responding to Arguments in Argmatchers</a></td><td>When argument slots need to influence one another.</td></tr>
@@ -1808,6 +1809,16 @@ Match completions are normally listed in sorted order.  In some cases it may be 
 local the_parser = clink.argmatcher()
 the_parser:addarg({ nosort=true, "red", "orange", "yellow", "green", "blue", "indigo", "violet" })
 ```
+
+<a name="argmatcher_fullyqualified"></a>
+
+#### Fully Qualified Pathnames
+
+Sometimes there may be more than one program installed with the same name.  For example, there might be multiple versions of `grep` installed.
+
+In Clink v1.3.38 and higher, you can define argmatchers using fully qualified pathnames.  For example, this makes it possible to define one argmatcher for `c:\EmployerTools\grep.exe` and another for `d:\PersonalTools\grep.exe`, and the corresponding argmatcher will be used when appropriate.
+
+In the example above, you could define an argmatcher for `c:\EmployerTools\grep.exe`, and also define an argmatcher for `grep` (or have a `grep.lua` file in a `completions` directory).  The plain `grep` one would be used whenever the typed `grep` doesn't resolve to the EmployerTools copy.
 
 <a name="addarg_loopchars"></a>
 
