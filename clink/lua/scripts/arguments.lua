@@ -1852,11 +1852,6 @@ local function get_completion_dirs()
 end
 
 --------------------------------------------------------------------------------
-local function is_device_name(word)
-    return path.isdevice(word)
-end
-
---------------------------------------------------------------------------------
 local function attempt_load_argmatcher(command_word)
     if not command_word or command_word == "" then
         return
@@ -1866,7 +1861,7 @@ local function attempt_load_argmatcher(command_word)
     loaded_argmatchers[command_word] = 1 -- Attempted.
 
     -- Device names are not valid commands.
-    if is_device_name(command_word) then
+    if path.isdevice(command_word) then
         return
     end
 
