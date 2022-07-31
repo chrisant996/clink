@@ -654,7 +654,7 @@ recognition recognize_command(const char* line, const char* word, bool quoted, b
         return recognition::unknown;
 
     // Check for directory intercepts (-, ..., ...., dir\, and so on).
-    if (intercept_directory(line) != intercept_result::none)
+    if (line && *line && intercept_directory(line) != intercept_result::none)
         return recognition::navigate;
 
     // Check for drive letter.
@@ -1576,7 +1576,7 @@ static int recognize_command(lua_State* state)
 /// -arg:   [line:string]
 /// -arg:   word:string
 /// -arg:   [quoted:boolean]
-/// -ret:   word_class:string, ready:boolean
+/// -ret:   word_class:string, ready:boolean, file:string
 /// This reports the input line coloring word classification to use for a
 /// command word.  The return value can be passed into
 /// <a href="#word_classifications:classifyword">word_classifications:classifyword()</a>
@@ -1616,6 +1616,9 @@ static int recognize_command(lua_State* state)
 /// may be a temporary placeholder).</li>
 /// </ul>
 ///
+/// The return value for <span class="arg">file</span> is the fully qualified
+/// path to the found executable file, if any, or nil.
+///
 /// <strong>Note:</strong>  This always returns immediately, and it uses a
 /// background thread to analyze the <span class="arg">word</a> asynchronously.
 /// When the background thread finishes analyzing the word, Clink automatically
@@ -1628,13 +1631,14 @@ static int api_recognize_command(lua_State* state)
     const char* line = (iline < 1 || lua_isnil(state, iline)) ? "" : checkstring(state, iline);
     const char* word = checkstring(state, iword);
     const bool quoted = lua_toboolean(state, iword + 1);
-    if (!line || !word)
+    if (iline > 0 && (!line || !*line))
         return 0;
-    if (!*line || !*word)
+    if (!word || !*word)
         return 0;
 
     bool ready;
-    const recognition recognized = recognize_command(line, word, quoted, ready, nullptr/*file*/);
+    str<> file;
+    const recognition recognized = recognize_command(line, word, quoted, ready, &file);
 
     char cl = 'o';
     if (int(recognized) < 0)
@@ -1643,7 +1647,11 @@ static int api_recognize_command(lua_State* state)
         cl = 'x';
     lua_pushlstring(state, &cl, 1);
     lua_pushboolean(state, ready);
-    return 2;
+    if (file.empty())
+        lua_pushnil(state);
+    else
+        lua_pushlstring(state, file.c_str(), file.length());
+    return 3;
 }
 
 //------------------------------------------------------------------------------
