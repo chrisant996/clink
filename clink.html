@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.3.37</title>
+<title>Clink v1.3.38</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -786,6 +786,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 <div><a class="h2" href="#customizing-key-bindings">Customizing Key Bindings</a></div>
 <div><a class="h2" href="#saved-command-history">Saved Command History</a></div>
 <div><a class="h2" href="#using-history-expansion">Using History Expansion</a></div>
+<div><a class="h2" href="#directory-shortcuts">Directory Shortcuts</a></div>
 <div><a class="h2" href="#popular-scripts">Popular Scripts</a></div>
 <div><a class="h2" href="#terminal-support">Terminal Support</a></div>
 <div><a class="h2" href="#troubleshooting-tips">Troubleshooting Tips</a></div>
@@ -798,7 +799,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.3.37</div>
+                <div id="title">Clink v1.3.38</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -3865,6 +3866,7 @@ end
 <tr><td style="padding-left: 2rem"><a href="#argmatcher_functions">Functions As Argument Options</a></td><td>Using a function to provide completions.</td></tr>
 <tr><td style="padding-left: 2rem"><a href="#addarg_fromhistory">Generate Matches From History</a></td><td>Providing completions from the history.</td></tr>
 <tr><td style="padding-left: 2rem"><a href="#addarg_nosort">Disable Sorting Matches</a></td><td>How to disable auto-sorted completions.</td></tr>
+<tr><td style="padding-left: 2rem"><a href="#argmatcher_fullyqualified">Fully Qualified Pathnames</a></td><td>How to make different argmatchers for programs with the same name.</td></tr>
 <tr><td style="padding-left: 2rem"><a href="#addarg_loopchars">Delimited Arguments</a></td><td>How to allow multiple completions in the same argument slot (e.g. <code>file1;file2;file3</code>).</td></tr>
 <tr><td style="padding-left: 2rem"><a href="#argmatcher_adaptive">Adaptive Argmatchers</a></td><td>How an argmatcher can define or modify itself on the fly.</td></tr>
 <tr><td style="padding-left: 2rem"><a href="#responsive-argmatchers">Responding to Arguments in Argmatchers</a></td><td>When argument slots need to influence one another.</td></tr>
@@ -4022,6 +4024,11 @@ clink.argmatcher(&quot;program&quot;):addflags({ &quot;--host&quot;..host_parser
 <pre><code class="language-lua">local the_parser = clink.argmatcher()
 the_parser:addarg({ nosort=true, &quot;red&quot;, &quot;orange&quot;, &quot;yellow&quot;, &quot;green&quot;, &quot;blue&quot;, &quot;indigo&quot;, &quot;violet&quot; })
 </code></pre>
+<p><a name="argmatcher_fullyqualified"></a></p>
+<h4 id="fully-qualified-pathnames">Fully Qualified Pathnames</h4>
+<p>Sometimes there may be more than one program installed with the same name.  For example, there might be multiple versions of <code>grep</code> installed.</p>
+<p>In Clink v1.3.38 and higher, you can define argmatchers using fully qualified pathnames.  For example, this makes it possible to define one argmatcher for <code>c:\EmployerTools\grep.exe</code> and another for <code>d:\PersonalTools\grep.exe</code>, and the corresponding argmatcher will be used when appropriate.</p>
+<p>In the example above, you could define an argmatcher for <code>c:\EmployerTools\grep.exe</code>, and also define an argmatcher for <code>grep</code> (or have a <code>grep.lua</code> file in a <code>completions</code> directory).  The plain <code>grep</code> one would be used whenever the typed <code>grep</code> doesn&#39;t resolve to the EmployerTools copy.</p>
 <p><a name="addarg_loopchars"></a></p>
 <h4 id="delimited-arguments">Delimited Arguments</h4>
 <p>In some cases an argument for programs may accept a list of values separated by <code>;</code> or <code>+</code> or etc.  Normally <code>;</code> or <code>+</code> are argument separators (like space), and advance the argmatcher to the next argument slot.</p>
@@ -4175,8 +4182,8 @@ clink.argmatcher()
 <tr><td><a href="#inputcolor_redir">Coloring Command Separators and Redirection</a></td><td>How special characters are colored.</td></tr>
 <tr><td><a href="#inputcolor_other">Coloring Other Input Text</a></td><td>How other text is colored.</td></tr>
 <tr><td style="padding-top: 0.5rem"><em>More Advanced Stuff</em></td><td></td></tr>
-<tr><td style="padding-left: 2rem"><a href="#classier_override_arguments">Setting a classifier function in an argmatcher</a></td><td>How to apply colors for arguments.</td></tr>
-<tr><td style="padding-left: 2rem"><a href="#classier_override_line">Setting a classifier function for the whole input line</a></td><td>How to apply colors anywhere in the line.</td></tr>
+<tr><td style="padding-left: 2rem"><a href="#classifier_override_arguments">Setting a classifier function in an argmatcher</a></td><td>How to apply colors for arguments.</td></tr>
+<tr><td style="padding-left: 2rem"><a href="#classifier_override_line">Setting a classifier function for the whole input line</a></td><td>How to apply colors anywhere in the line.</td></tr>
 </table>
 
 <p><a name="inputcolor_command"></a></p>
@@ -4233,7 +4240,7 @@ clink.argmatcher()
 </table></code></pre>
 
 <h3 id="more-advanced-stuff-2">More Advanced Stuff</h3>
-<p><a name="classier_override_arguments"></a></p>
+<p><a name="classifier_override_arguments"></a></p>
 <h4 id="setting-a-classifier-function-in-an-argmatcher">Setting a classifier function in an argmatcher</h4>
 <p>In cases where an <a href="#argumentcompletion">argmatcher</a> isn&#39;t able to color the input text in the desired manner, it&#39;s possible to supply a classifier function that overrides how the argmatcher colors the input text.  An argmatcher&#39;s classifier function is called once for each word the argmatcher parses, but it can classify any words (not just the word it was called for).  Each argmatcher can have its own classifier function, so when there are linked argmatchers more than one function may be invoked.</p>
 <p>Words are colored by classifying the words, and each classification has an associated color.  See <a href="#word_classifications:classifyword">word_classifications:classifyword()</a> for the available classification codes.</p>
@@ -4274,7 +4281,7 @@ local matcher = clink.argmatcher(&quot;samp&quot;)
 :addarg({ clink.filematches })
 :setclassifier(classify_handler)
 </code></pre>
-<p><a name="classier_override_line"></a></p>
+<p><a name="classifier_override_line"></a></p>
 <h4 id="setting-a-classifier-function-for-the-whole-input-line">Setting a classifier function for the whole input line</h4>
 <p>In some cases it may be desireable to use a custom classifier to apply coloring in an input line.</p>
 <p>First create a classifier object:</p>
@@ -4690,6 +4697,7 @@ end
 <tr><td><a href="#keybindings">Customizing Key Bindings</a></td><td>How to customize key bindings.</td></tr>
 <tr><td><a href="#saved-command-history">Saved Command History</a></td><td>How the saved command history works.</td></tr>
 <tr><td><a href="#using-history-expansion">Using History Expansion</a></td><td>How to use history expansion.</td></tr>
+<tr><td><a href="#directory-shortcuts">Directory Shortcuts</a></td><td>Convenient shortcut for changing the current directory.</td></tr>
 <tr><td><a href="#popular-scripts">Popular Scripts</a></td><td>Some popular scripts to enhance Clink.</td></tr>
 <tr><td><a href="#terminal-support">Terminal Support</a></td><td>Information about how Clink's terminal support works.</td></tr>
 <tr><td><a href="#troubleshooting-tips">Troubleshooting Tips</a></td><td>How to troubleshoot and report problems.</td></tr>
@@ -5739,6 +5747,14 @@ or edit, the word or words selected from the history event.</p>
 </td></tr>
 </table>
 
+<h2 id="directory-shortcuts">Directory Shortcuts</h2>
+<p>Clink provides some typing savers for changing the current directory.</p>
+<ul>
+<li>Typing a directory name followed by a path separator is a shortcut for <code>cd /d</code> to that directory.</li>
+<li>Typing <code>..</code> or <code>...</code> is a shortcut for <code>cd ..</code> or <code>cd ..\..</code> (each additional <code>.</code> adds another <code>\..</code>).</li>
+<li>Typing <code>-</code> or <code>cd -</code> changes to the previous current working directory.</li>
+</ul>
+<p>These shortcuts only work in the interactive command line; they do not work in batch scripts.</p>
 <a name="sample-scripts">
 
 <h2 id="popular-scripts">Popular Scripts</h2>
@@ -5922,7 +5938,7 @@ builder:addmatches({
 <div class="function"><div class="header"> <div class="name"><a name="builder:setsuppressappend">builder:setsuppressappend</a></div> <div class="signature">( [<span class="arg_name">state</span>:boolean] ) : nil<br/><div class="version">v1.1.2 and newer</div></div></div><div class="body"><p class="desc">Sets whether to suppress appending anything after the match except a possible closing quote.  For example the env var match generator uses this.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="builder:setsuppressquoting">builder:setsuppressquoting</a></div> <div class="signature">( [<span class="arg_name">state</span>:integer] ) : nil<br/><div class="version">v1.1.2 and newer</div></div></div><div class="body"><p class="desc">Sets whether to suppress quoting for the matches.  Set to 0 for normal quoting, or 1 to suppress quoting, or 2 to suppress end quotes.  For example the env var match generator sets this to 1 to overcome the quoting that would normally happen for "%" characters in filenames.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="builder:setvolatile">builder:setvolatile</a></div> <div class="signature">() : nil<br/><div class="version">v1.3.37 and newer</div></div></div><div class="body"><p class="desc">Forces the generated matches to be used only once.</p><p class="desc"> Normally Clink tries to reuse the most recently generated list of matches, if possible.  It is an optimization, to avoid doing potentally expensive work multiple times in a row to generate the same list of matches when nothing has changed.  Normally the optimization is beneficial, and typing more letters in a word can simply filter the existing list of matches.</p><p class="desc"> But sometimes an argument may have special syntax.  For example, an email address argument might want to generate matches for names until the word contains a <code>@</code>, and then it might want to generate matches for domain names.  The optimization interferes with situations where parsing the word produces a completely different list of possible matches.</p><p class="desc"> Making the generated matches volatile ensures matches are generated anew each time completion is invoked.</p></div></div><hr/>
-</div><div class="group"><h5 class="group_name"><a name="clink">clink</a></h5><div class="function"><div class="header"> <div class="name"><a name="clink.argmatcher">clink.argmatcher</a></div> <div class="signature">( [<span class="arg_name">priority</span>:integer], <span class="arg_name">commands...</span>:string ) : <a href="#_argmatcher">_argmatcher</a><br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Creates and returns a new argument matcher parser object.  Use <a href="#_argmatcher:addarg">:addarg()</a> and etc to add arguments, flags, other parsers, and more.  See <a href="#argumentcompletion">Argument Completion</a> for more information.</p><p class="desc"> If one <span class="arg">command</span> is provided and there is already an argmatcher for it, then this returns the existing parser rather than creating a new parser.  Using :addarg() starts at arg position 1, making it possible to merge new args and etc into the existing parser.</p><p class="desc"> <strong>Note:</strong>  Merging <a href="#linked-parsers">linked argmatchers</a> only merges the first argument position.  The merge is simple, but should be sufficient for common simple cases.</p></div></div><hr/>
+</div><div class="group"><h5 class="group_name"><a name="clink">clink</a></h5><div class="function"><div class="header"> <div class="name"><a name="clink.argmatcher">clink.argmatcher</a></div> <div class="signature">( [<span class="arg_name">priority</span>:integer], <span class="arg_name">commands...</span>:string ) : <a href="#_argmatcher">_argmatcher</a><br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Creates and returns a new argument matcher parser object.  Use <a href="#_argmatcher:addarg">:addarg()</a> and etc to add arguments, flags, other parsers, and more.  See <a href="#argumentcompletion">Argument Completion</a> for more information.</p><p class="desc"> If one <span class="arg">command</span> is provided and there is already an argmatcher for it, then this returns the existing parser rather than creating a new parser.  Using :addarg() starts at arg position 1, making it possible to merge new args and etc into the existing parser.</p><p class="desc"> In Clink v1.3.38 and higher, if a <span class="arg">command</span> is a fully qualified path, then it is only used when the typed command expands to the same fully qualified path.  This makes it possible to create one argmatcher for <code>c:\general\program.exe</code> and another for <code>c:\special\program.exe</code>.  For example, aliases may be used to make both programs runnable, or the system PATH might be changed temporarily while working in a particular context.</p><p class="desc"> <strong>Note:</strong>  Merging <a href="#linked-parsers">linked argmatchers</a> only merges the first argument position.  The merge is simple, but should be sufficient for common simple cases.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.classifier">clink.classifier</a></div> <div class="signature">( [<span class="arg_name">priority</span>:integer] ) : table<br/><div class="version">v1.1.49 and newer</div></div></div><div class="body"><p class="desc">Creates and returns a new word classifier object.  Define on the object a <code>:classify()</code> function which gets called in increasing <span class="arg">priority</span> order (low values to high values) when classifying words for coloring the input.  See <a href="#classifywords">Coloring the Input Text</a> for more information.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.dirmatches">clink.dirmatches</a></div> <div class="signature">( <span class="arg_name">word</span>:string ) : table<br/><div class="version">v1.1.18 and newer</div></div></div><div class="body"><p class="desc">You can use this function in an argmatcher to supply directory matches. This automatically handles Readline tilde completion.</p><pre class="language-lua"><code>-- Make "cd" generate directory matches (no files).
 clink.argmatcher("cd")
@@ -6006,6 +6022,7 @@ function foo_prompt:filter(prompt)
 &nbsp;   return os.date("%a %H:%M").." "..prompt
 end</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.reclassifyline">clink.reclassifyline</a></div> <div class="signature">() : nil<br/><div class="version">v1.3.9 and newer</div></div></div><div class="body"><p class="desc">Reclassify the input line text again and refresh the input line display.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><a name="clink.recognizecommand">clink.recognizecommand</a></div> <div class="signature">( [<span class="arg_name">line</span>:string], <span class="arg_name">word</span>:string, [<span class="arg_name">quoted</span>:boolean] ) : word_class:string, ready:boolean, file:string<br/><div class="version">v1.3.38 and newer</div></div></div><div class="body"><p class="desc">This reports the input line coloring word classification to use for a command word.  The return value can be passed into <a href="#word_classifications:classifyword">word_classifications:classifyword()</a> as its <span class="arg">word_class</span> argument.</p><p class="desc"> This is intended for advanced input line coloring purposes.  For example if a script uses <a href="#clink.onfilterinput">clink.onfilterinput()</a> to modify the input text, then it can use this function inside a custom <a href="#classifier_override_line">classifier</a> to look up the color appropriate for the modified input text.</p><p class="desc"> The <span class="arg">line</span> is optional and may be an empty string or omitted.  When present, it is parsed to check if it would be processed as a <a href="#directory-shortcuts">directory shortcut</a>.</p><p class="desc"> The <span class="arg">word</span> is a string indicating the word to be analyzed.</p><p class="desc"> The <span class="arg">quoted</span> is optional.  When true, it indicates the word is quoted and any <code>^</code> characters are taken as-is, rather than treating them as the usual CMD escape character.</p><p class="desc"> The possible return values for <span class="arg">word_class</span> are:</p><p class="desc"> <table> <tr><th>Code</th><th>Classification</th><th>Clink Color Setting</th></tr> <tr><td><code>"x"</code></td><td>Executable; used for the first word when it is not a command or doskey alias, but is an executable name that exists.</td><td><code>color.executable</code></td></tr> <tr><td><code>"u"</code></td><td>Unrecognized; used for the first word when it is not a command, doskey alias, or recognized executable name.</td><td><code>color.unrecognized</code></td></tr> <tr><td><code>"o"</code></td><td>Other; used for file names and words that don't fit any of the other classifications.</td><td><code>color.input</code></td></tr> </table></p><p class="desc"> The possible return values for <span class="arg">ready</span> are:</p><p class="desc"> <ul> <li>True if the analysis has completed.</li> <li>False if the analysis has not yet completed (and the returned word class may be a temporary placeholder).</li> </ul></p><p class="desc"> The return value for <span class="arg">file</span> is the fully qualified path to the found executable file, if any, or nil.</p><p class="desc"> <strong>Note:</strong>  This always returns immediately, and it uses a background thread to analyze the <span class="arg">word</a> asynchronously. When the background thread finishes analyzing the word, Clink automatically redisplays the input line, giving classifiers a chance to call this function again and get the final <span class="arg">word_class</span> result.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.refilterprompt">clink.refilterprompt</a></div> <div class="signature">() : nil<br/><div class="version">v1.2.46 and newer</div></div></div><div class="body"><p class="desc">Invoke the prompt filters again and refresh the prompt.</p><p class="desc"> Note: this can potentially be expensive; call this only infrequently.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.reload">clink.reload</a></div> <div class="signature">() : nil<br/><div class="version">v1.2.29 and newer</div></div></div><div class="body"><p class="desc">Reloads Lua scripts and Readline config file at the next prompt.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><a name="clink.runcoroutineuntilcomplete">clink.runcoroutineuntilcomplete</a></div> <div class="signature">( <span class="arg_name">coroutine</span>:coroutine ) : nil<br/><div class="version">v1.3.5 and newer</div></div></div><div class="body"><p class="desc">By default, a coroutine is canceled if it doesn't complete before an edit line ends.  In some cases it may be necessary for a coroutine to run until it completes, even if it spans multiple edit lines.</p><p class="desc"> <strong>Note:</strong>  Use with caution.  This can potentially cause performance problems or cause prompt filtering to experience delays.</p></div></div><hr/>
@@ -6519,6 +6536,18 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes">Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork">Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1338">v1.3.38</h4>
+<ul>
+<li>Added <code>clink.recognizecommand()</code> function that input line coloring classifiers can use to find whether to color a word as executable.  This is the same mechanism Clink uses internally, and the analysis is asynchronous.</li>
+<li>Now <code>clink.argmatcher(command)</code> may be passed a fully qualified pathname for <span class="arg">command</span> to enable different argmatchers for programs with the same name.</li>
+<li>Fixed argmatcher lookup to favor doskey aliases, so that e.g. &quot;<code>dir</code>&quot; can be aliased to an alternative program but &quot;<code>&nbsp;dir</code>&quot; can invoke the built-in dir command, and they can each have separate argmatchers.</li>
+<li>Fixed the <code>oncommand</code> event to also fire when the command word offset changes, because adding/removing a leading space can change whether the command is an alias, which can make the typed command word resolve to a different file or program to invoke.</li>
+<li>Fixed <code>line_state:getcommandoffset()</code> when the first word is quoted.</li>
+<li>Fixed <code>line_state</code> parsing for input lines such as <code>foo.exe&amp;</code>, so that the <code>exec.enable</code> setting can generate matches properly.</li>
+<li>Fixed completion so that CMD command names are not among the completions when preceded by a quote.</li>
+<li>Fixed <code>color.argmatcher</code> color to not overwrite custom colors that may have already been applied.</li>
+<li>Fixed <code>^</code> to not be a word break character when parsing the input line.</li>
+</ul>
 <h4 id="v1337">v1.3.37</h4>
 <ul>
 <li>When <code>argmatcher:addarg()</code> is passed a table containing <code>loopchars="<span class="arg">chars</span>"</code> then the <span class="arg">chars</span> are treated as delimiters for a single argument, and they do not move on to the next argument slot in the parser.</li>
