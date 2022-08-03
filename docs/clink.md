@@ -106,6 +106,7 @@ Here are some of the enhanced defaults.  Review the `default_settings` and `defa
 - Completion expands environment variables (the <code><a href="#match_expand_envvars">match.expand_envvars</a></code> setting).
 - If no completions are found with a prefix search, then a substring search is used (the <code><a href="#match_substring">match.substring</a></code> setting).
 - <kbd>Ctrl</kbd>-<kbd>D</kbd> does not exit CMD (the <code><a href="#ctrld_exits">cmd.ctrld_exits</a></code> setting).
+- History saves and shows time stamps.
 
 <a name="gettingstarted_inputrc"></a>
 
