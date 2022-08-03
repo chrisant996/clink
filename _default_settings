@@ -27,6 +27,7 @@ color.selection                   = sgr 38;5;16;48;5;179
 color.suggestion                  = sgr 38;5;239
 color.unrecognized                = sgr 38;5;203
 history.max_lines                 = 25000
+history.time_stamp                = show
 match.expand_envvars              = True
 match.substring                   = True
 
