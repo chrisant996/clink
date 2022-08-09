@@ -11,6 +11,44 @@ body {
     margin: 0 auto;
 }
 
+.wlink {
+    opacity: 0%;
+    width: 100px;
+    position: absolute;
+    left: -24px;
+}
+
+.wfix {
+    visibility: hidden;
+    width: 0;
+}
+
+.wlink:hover {
+    opacity: 100%;
+}
+
+/*
+.wlink a {
+    color: inherit;
+}
+
+.wlink a:link {
+    color: inherit;
+}
+
+.wlink a:visited {
+    color: inherit;
+}
+
+.wlink a:hover {
+    color: inherit;
+}
+
+.wlink a:active {
+    color: inherit;
+}
+*/
+
 h1, h2, h3, h4, h5, h6, dt { font-family: Rambla,Roboto,Calibri,Arial,Helvetica,sans-serif }
 
 h1 {
@@ -29,6 +67,17 @@ h3 { font-size: 1.60rem; }
 h4 { font-size: 1.35rem; }
 h5 { font-size: 1.10rem; }
 h6 { font-size: 1.00rem; }
+
+h1, h2, h3, h4, h5, h6 {
+    position: relative;
+}
+
+h1:hover .wlink { opacity: 100% }
+h2:hover .wlink { opacity: 100% }
+h3:hover .wlink { opacity: 100% }
+h4:hover .wlink { opacity: 100% }
+h5:hover .wlink { opacity: 100% }
+h6:hover .wlink { opacity: 100% }
 
 dt {
     font-family: Rambla,Roboto,Calibri,Arial,Helvetica,sans-serif;
@@ -255,6 +304,12 @@ kbd {
     font-weight: bold;
     float: left;
     width: 40%;
+    position: relative;
+    margin-left: -24px;
+}
+
+#content #api .header .name:hover .wlink {
+    opacity: 100%;
 }
 
 #content #api .header .signature {

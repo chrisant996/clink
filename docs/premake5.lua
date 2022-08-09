@@ -7,6 +7,16 @@ local function starts_with(str, start)
 end
 
 --------------------------------------------------------------------------------
+local function make_weblink(name, div)
+    local tag = div and "div" or "span"
+    if name then
+        return '<'..tag..' class="wlink"><a href="#'..name..'"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></'..tag..'>'
+    else
+        return '<'..tag..' class="wlink"><svg width=16 height=16 style="display:none"/></'..tag..'>'
+    end
+end
+
+--------------------------------------------------------------------------------
 local function markdown_file(source_path, out)
     print("  << " .. source_path)
 
@@ -38,13 +48,14 @@ local function markdown_file(source_path, out)
 end
 
 --------------------------------------------------------------------------------
-local function generate_file(source_path, out)
+local function generate_file(source_path, out, weblinks)
     print("  << " .. source_path)
     local docver = _OPTIONS["docver"] or clink_git_name:upper()
+    local last_name
     for line in io.open(source_path, "r"):lines() do
         local include = line:match("%$%(INCLUDE +([^)]+)%)")
         if include then
-            generate_file(include, out)
+            generate_file(include, out, weblinks)
         else
             local md = line:match("%$%(MARKDOWN +([^)]+)%)")
             if md then
@@ -53,7 +64,29 @@ local function generate_file(source_path, out)
                 line = line:gsub("%$%(CLINK_VERSION%)", docver)
                 line = line:gsub("<br>", "&lt;br&gt;")
                 line = line:gsub("<!%-%- NEXT PASS INCLUDE (.*) %-%->", "$(INCLUDE %1)")
-                out:write(line .. "\n")
+
+                local n, hopen, hclose
+                if weblinks then
+                    n = line:match('<a name="([^"]+)"')
+                    hopen, hclose = line:match('^( *<h[0-9][^>]*>)(.+)$')
+                    if n then
+                        last_name = n
+                    end
+                    if hopen and not last_name then
+                        last_name = hopen:match('id="([^"]+)"')
+                    end
+                end
+                if hopen then
+                    out:write(hopen)
+                    out:write(make_weblink(last_name, true--[[div]]))
+                    out:write(hclose .. "\n")
+                else
+                    out:write(line .. "\n")
+                end
+
+                if hopen then
+                    last_name = nil
+                end
             end
         end
     end
@@ -231,7 +264,11 @@ local function do_docs()
     table.sort(groups, compare_groups)
 
     local api_html = io.open(".build/docs/api_html", "w")
-    api_html:write('<h3>API groups</h3>')
+    api_html:write('<h3 id="lua-api-groups">API groups</h3>')
+    api_html:write('<svg style="display:none" xmlns="http://www.w3.org/2000/svg"><defs><symbol id="wicon" viewBox="0 0 16 16" fill="currentColor">')
+    api_html:write('<path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1.002 1.002 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4.018 4.018 0 0 1-.128-1.287z"/>')
+    api_html:write('<path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243L6.586 4.672z"/>')
+    api_html:write('</symbol></defs></svg>')
     api_html:write('<p/><div class="toc">')
     for _, group in ipairs(groups) do
         if group.name ~= "Deprecated" then
@@ -273,7 +310,7 @@ local function do_docs()
                 else
                     version = ''
                 end
-                api_html:write(' <div class="name"><a name="'..name..'">'..name..'</a></div>')
+                api_html:write(' <div class="name">'..make_weblink(name)..'<a name="'..name..'">'..name..'</a></div>')
                 if var then
                     api_html:write(' <div class="signature">'..var..' variable'..version..'</div>')
                 else
@@ -320,8 +357,11 @@ local function do_docs()
     -- Generate table of contents from H1 and H2 tags.
     local toc = io.open(".build/docs/toc_html", "w")
     for line in io.open(tmp_path, "r"):lines() do
-        local tag, id, text = line:match('^ *<(h[12]) id="(.*)">(.*)</h')
+        local tag, id, text = line:match('^ *<(h[12]) id="([^"]*)">(.*)</h')
         if tag then
+            if text:match("<svg") then
+                text = text:match("^<span.+/span>(.+)$")
+            end
             toc:write('<div><a class="'..tag..'" href="#'..id..'">'..text..'</a></div>\n')
         end
     end
@@ -329,7 +369,7 @@ local function do_docs()
 
     -- Expand out final documentation.
     local out_file = io.open(out_path, "w")
-    generate_file(tmp_path, out_file)
+    generate_file(tmp_path, out_file, true--[[weblinks]])
     out_file:close()
     print("")
 end
