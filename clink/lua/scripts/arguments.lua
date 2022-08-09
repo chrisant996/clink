@@ -1692,7 +1692,7 @@ function clink.argmatcher(...)
     -- If multiple commands are listed, merging isn't supported.
     local matcher = nil
     for _, i in ipairs(input) do
-        matcher = _argmatchers[clink.lower(i)]
+        matcher = _argmatchers[path.normalise(clink.lower(i))]
         if #input <= 1 then
             break
         end
@@ -1713,7 +1713,7 @@ function clink.argmatcher(...)
         matcher = _argmatcher()
         matcher._priority = priority
         for _, i in ipairs(input) do
-            _argmatchers[clink.lower(i)] = matcher
+            _argmatchers[path.normalise(clink.lower(i))] = matcher
         end
     end
 
@@ -1932,7 +1932,7 @@ local function _has_argmatcher(command_word)
         return
     end
 
-    command_word = clink.lower(command_word)
+    command_word = path.normalise(clink.lower(command_word))
 
     -- Don't invoke the recognizer while generating matches from history, as
     -- that could be excessively expensive (could queue thousands of lookups).
@@ -2521,7 +2521,7 @@ end
 --- -show:  -- In v1.3.11 and higher this syntax ends up with all 4 first argument strings
 --- -show:  -- having both "old_second" and "new_second" as a second argument.
 function clink.arg.register_parser(cmd, parser)
-    cmd = clink.lower(cmd)
+    cmd = path.normalise(clink.lower(cmd))
 
     if parser and parser._deprecated then
         clink._mark_deprecated_argmatcher(cmd)
