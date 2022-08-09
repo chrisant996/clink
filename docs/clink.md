@@ -2840,7 +2840,7 @@ Clink provides some typing savers for changing the current directory.
 
 These shortcuts only work in the interactive command line; they do not work in batch scripts.
 
-<a name="sample-scripts">
+<a name="sample-scripts"></a>
 
 ## Popular Scripts
 
