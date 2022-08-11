@@ -5,6 +5,7 @@
 #### v1.3.39
 
 - "Use enhanced defaults" now includes history timestamps.
+- Fixed reporting unbound commands in `clink-show-help` when arg is 4 (<kbd>Alt</kbd>-<kbd>4</kbd>,<kbd>Alt</kbd>-<kbd>H</kbd>) (regression introduced in v1.3.9).
 - Fixed to normalize path separators in a fully qualified pathname when using `clink.argmatcher(full_path)`.
 - The documentation now shows a link icon when hovering over any heading or API name, to make it easy to copy and share links.
 
