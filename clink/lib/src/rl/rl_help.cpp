@@ -849,6 +849,10 @@ static bool is_keyentry_equivalent(const Keyentry* map, int a, int b)
 {
     const Keyentry& ka = map[a];
     const Keyentry& kb = map[b];
+    // Empty names are not equivalent (necessary to report unbound commands).
+    if ((!ka.key_name || !*ka.key_name) || (!kb.key_name || !*kb.key_name))
+        return false;
+    // Different names are not equivalent.
     if (!ka.key_name != !kb.key_name || strcmp(ka.key_name, kb.key_name) != 0)
         return false;
     assert(ka.sort == kb.sort);
@@ -896,6 +900,7 @@ void show_key_bindings(bool friendly, int mode, std::vector<key_binding_info>* o
     qsort(collector + 1, offset - 1, sizeof(*collector), out ? cmp_sort_collector : cmp_sort_collector_cat);
 
     // Remove duplicates; these can happen due to ANYOTHERKEY.
+// TODO: But don't remove unbound entries!
     {
         Keyentry* tortoise = collector + 1;
         Keyentry* hare = collector + 1;
