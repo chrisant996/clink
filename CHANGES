@@ -5,6 +5,7 @@
 #### v1.3.39
 
 - "Use enhanced defaults" now includes history timestamps.
+- Fixed suggestions to resume after fully accepting an input line suggestion and then changing the text (regression introduced in v1.3.29).
 - Fixed reporting unbound commands in `clink-show-help` when arg is 4 (<kbd>Alt</kbd>-<kbd>4</kbd>,<kbd>Alt</kbd>-<kbd>H</kbd>) (regression introduced in v1.3.9).
 - Fixed to normalize path separators in a fully qualified pathname when using `clink.argmatcher(full_path)`.
 - The documentation now shows a link icon when hovering over any heading or API name, to make it easy to copy and share links.
@@ -57,7 +58,6 @@
 #### v1.3.34
 
 - Improved error reporting in `lua.debug` mode for coroutine failures.
-- Fixed suggestions to resume after fully accepting an input line suggestion and then changing the text (regression introduced in v1.3.29).
 - Fixed argmatcher flag definitions that begin with `+` (regression introduced in v1.3.11).
 - Fixed the updater when there are PowerShell configuration problems that cause internal errors unrelated to Clink's use of PowerShell.
 - Fixed potential coroutine failure if a `delayinit` argmatcher is still running after a new input line begins (regression introduced in v1.3.29).
