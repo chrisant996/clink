@@ -87,8 +87,10 @@ local function release_coroutine_yieldguard()
                 entry.throttleclock = os.clock()
                 entry.yieldguard = nil
                 table.insert(nil_cats, category)
+                -- TODO: This is an arbitrary order, but the dequeue order
+                -- should ideally be FIFO.
                 for _,entry in pairs(_coroutines) do
-                    if entry.queued then
+                    if entry.queued and entry.category == category then
                         entry.queued = nil
                         break
                     end
