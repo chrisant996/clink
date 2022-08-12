@@ -91,10 +91,18 @@ bool suggestion_manager::can_suggest(const line_state& line)
     if (g_rl_buffer->get_anchor() >= 0)
         return false;
 
+    const bool diff = (m_line.length() != g_rl_buffer->get_length() ||
+                       strncmp(m_line.c_str(), g_rl_buffer->get_buffer(), m_line.length()) != 0);
+
     // Must check this AFTER checking cursor at end, so that moving the cursor
     // can clear the flag.
     if (accepted_whole_suggestion())
-        return false;
+    {
+        if (diff)
+            clear();
+        else
+            return false;
+    }
 
     // Update the endword offset.  Inserting part of a suggestion can't know
     // what the new endword offset will be, so this allows updating it when the
@@ -103,8 +111,7 @@ bool suggestion_manager::can_suggest(const line_state& line)
 
     // The buffers are not necessarily nul terminated!  Because of how
     // hook_display() hacks suggestions into the Readline display.
-    return (m_line.length() != g_rl_buffer->get_length() ||
-            strncmp(m_line.c_str(), g_rl_buffer->get_buffer(), m_line.length()) != 0);
+    return diff;
 }
 
 //------------------------------------------------------------------------------
