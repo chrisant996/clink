@@ -457,9 +457,12 @@ function clink._diag_coroutines()
             end
             if t.entry.canceled then
                 status = status..cyan.."canceled"..plain.."  "
+            else
+                -- TODO: Show when throttled.
             end
             local res = "resumed "..str_rpad(t.resumed, max_resumed_len)
             local freq = "freq "..str_rpad(t.freq, max_freq_len)
+            -- TODO: Show next wakeup time.
             local src = tostring(t.entry.src)
             print(plain.."  "..key.."  "..gen..status..res.."  "..freq.."  "..src..norm)
             if t.entry.error then
