@@ -122,8 +122,11 @@ local function set_coroutine_yieldguard(yieldguard)
     local t = coroutine.running()
     local entry = _coroutines[t]
     if yieldguard then
+        local cyg = { coroutine=t, yieldguard=yieldguard }
         if entry.yield_category then
-            _coroutine_yieldguard[entry.yield_category] = { coroutine=t, yieldguard=yieldguard }
+            _coroutine_yieldguard[entry.yield_category] = cyg
+        else
+            table.insert(_coroutine_yieldguard, cyg)
         end
     else
         release_coroutine_yieldguard()
