@@ -7,6 +7,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
+- Show time stamps in history popup?
 - Some way to push keys?  (Push keys to Clink; not to other processes.)
 
 ## Low Priority
