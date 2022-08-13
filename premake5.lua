@@ -126,15 +126,15 @@ local function write_clink_commit_file(commit)
     end
 end
 
+--------------------------------------------------------------------------------
+if _ACTION and (_ACTION:find("^vs") or _ACTION:find("^gmake")) then
+    clink_git_name, clink_git_commit = get_git_info()
+    write_clink_commit_file(clink_git_commit)
+end
+
 
 
 --------------------------------------------------------------------------------
-clink_git_name, clink_git_commit = get_git_info()
-
--- Ideally I want to write clink_commit.h only when generating a workspace.
--- But for now it runs on _ALL_ actions.
-write_clink_commit_file(clink_git_commit)
-
 workspace("clink")
     configurations({"debug", "release", "final"})
     platforms({"x32", "x64"})
