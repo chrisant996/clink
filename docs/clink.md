@@ -1210,7 +1210,7 @@ Command | Key | Description
 -|:-:|-
 `add-history` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>k</kbd> | Adds the current line to the history without executing it, and clears the editing line.
 `alias-expand-line` | | A synonym for `clink-expand-doskey-alias`.
-`clink-accept-suggestion` | | If there is a suggestion, insert the suggestion and accept the input line (like `accept-line`).
+`clink-accept-suggested-line` | | If there is a suggestion, insert the suggestion and accept the input line (like `accept-line`).
 `clink-complete-numbers` | | Like `complete`, but for numbers from the console screen (3 digits or more, up to hexadecimal).
 `clink-copy-cwd` | <kbd>Alt</kbd>-<kbd>c</kbd> | Copy the current working directory to the clipboard.
 `clink-copy-line` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>c</kbd> | Copy the current line to the clipboard.
@@ -1225,7 +1225,9 @@ Command | Key | Description
 `clink-expand-line` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>e</kbd> | Perform [history](#using-history-expansion), doskey alias, and environment variable expansion in the current input line.
 `clink-find-conhost` | | Activates the "Find" dialog when running in a standard console window (hosted by the OS conhost).  This is equivalent to picking "Find..." from the console window's system menu. When <code><a href="#default_bindings">clink.default_bindings</a></code> is enabled, this is bound to <kbd>Ctrl</kbd>-<kbd>f</kbd>.
 `clink-insert-dot-dot` | <kbd>Alt</kbd>-<kbd>a</kbd> | Inserts `..\` at the cursor.
-`clink-insert-suggestion` | | If there is a suggestion, insert the suggestion.
+`clink-insert-suggested-full-word` | | If there is a suggestion, insert the next full word from the suggested line.
+`clink-insert-suggested-line` | | If there is a suggestion, insert the suggested line.
+`clink-insert-suggested-word` | | If there is a suggestion, insert the next word from the suggested line.
 `clink-magic-suggest-space` | | Inserts the next full word of the suggestion (if any) up to a space, and also inserts a space.
 `clink-mark-conhost` | | Activates the "Mark" mode when running in a standard console window (hosted by the OS conhost).  This is equivalent to picking "Mark" from the console window's system menu. When <code><a href="#default_bindings">clink.default_bindings</a></code> is enabled, this is bound to <kbd>Ctrl</kbd>-<kbd>m</kbd>.
 `clink-menu-complete-numbers` | | Like `menu-complete`, but for numbers from the console screen (3 digits or more, up to hexadecimal).
