@@ -108,8 +108,9 @@ function cmd_classifier:classify(commands)
     end
 end
 
+local chain = clink.argmatcher():chaincommand()
+
 local onoff = clink.argmatcher():addarg("ON", "OFF")
 clink.argmatcher("cmd")
-:addflags("/c", "/k", "/s", "/q", "/d", "/a", "/u")
+:addflags("/c"..chain, "/k"..chain, "/s", "/q", "/d", "/a", "/u")
 :addflags("/t:"..clink.argmatcher():addarg({fromhistory=true}), "/e:"..onoff, "/f:"..onoff, "/v:"..onoff)
-:chaincommand()
