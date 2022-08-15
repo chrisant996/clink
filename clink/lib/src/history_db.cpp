@@ -710,7 +710,11 @@ line_id_impl read_lock::line_iter::next(str_iter& out, str_base* timestamp)
             if (strncmp(start, "|\ttime=", 7) == 0)
             {
                 if (timestamp)
-                    (*timestamp) = start + 7;
+                {
+                    start += 7;
+                    timestamp->clear();
+                    timestamp->concat(start, int(end - start));
+                }
                 continue;
             }
             if (timestamp)
