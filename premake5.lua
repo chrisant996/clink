@@ -127,9 +127,13 @@ local function write_clink_commit_file(commit)
 end
 
 --------------------------------------------------------------------------------
-if _ACTION and (_ACTION:find("^vs") or _ACTION:find("^gmake")) then
-    clink_git_name, clink_git_commit = get_git_info()
-    write_clink_commit_file(clink_git_commit)
+if _ACTION then
+    local workspace = (_ACTION:find("^vs") or _ACTION:find("^gmake"))
+    local docs = (_ACTION == "docs")
+    if workspace or docs then
+        clink_git_name, clink_git_commit = get_git_info()
+        write_clink_commit_file(clink_git_commit)
+    end
 end
 
 
