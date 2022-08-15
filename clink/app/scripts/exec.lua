@@ -107,7 +107,7 @@ local function exec_matches(line_state, match_builder, chained)
     local text_dir = (path.getdirectory(text) or ""):gsub("/", "\\")
     if #text_dir == 0 then
         -- Add console aliases as matches.
-        if settings.get("exec.aliases") then
+        if not chained and settings.get("exec.aliases") then
             local aliases = os.getaliases()
             match_builder:addmatches(aliases, "alias")
         end
