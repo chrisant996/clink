@@ -1513,6 +1513,9 @@ function _argmatcher:_generate(line_state, match_builder, extra_words)
         local arg = matcher._args[arg_index]
         if arg then
             return add_matches(arg, match_type) and true or false
+        elseif matcher._chain_command then
+            local exec = clink._exec_matches(line_state, match_builder, true--[[chained]])
+            return exec or add_matches({clink.filematches}) or false
         end
     end
 

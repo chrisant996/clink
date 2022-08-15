@@ -61,16 +61,15 @@ end
 --------------------------------------------------------------------------------
 local exec_generator = clink.generator(50)
 
-function exec_generator:generate(line_state, match_builder)
-    -- If executable matching is disabled do nothing
+local function exec_matches(line_state, match_builder, chained)
+    -- If executable matching is disabled do nothing.
     if not settings.get("exec.enable") then
         return false
     end
 
-    -- We're only interested in exec completion if this is the first word of
-    -- the line.
+    -- Special cases for "~", ".", and "..".
     local endword = line_state:getendword()
-    if line_state:getwordcount() > 1 or endword == "~" then
+    if endword == "~" then
         return false
     elseif endword == "." or endword == ".." then
         -- This is to mimic how bash seems to work when completing `.` or `..`
@@ -82,9 +81,20 @@ function exec_generator:generate(line_state, match_builder)
 
     -- If enabled, lines prefixed with whitespace disable executable matching.
     if settings.get("exec.space_prefix") then
-        local offset = line_state:getcommandoffset()
-        if line_state:getline():sub(offset, offset):find("[ \t]") then
-            return false
+        if chained then
+            local info = line_state:getwordinfo(line_state:getwordcount())
+            if info then
+                local offset = info.offset - (info.quoted and 2 or 1)
+                local prefix = line_state:getline():sub(offset - 1, offset)
+                if prefix:match("[ \t][ \t]") then
+                    return false
+                end
+            end
+        else
+            local offset = line_state:getcommandoffset()
+            if line_state:getline():sub(offset, offset):find("[ \t]") then
+                return false
+            end
         end
     end
 
@@ -93,7 +103,7 @@ function exec_generator:generate(line_state, match_builder)
     local match_cwd = settings.get("exec.cwd")
 
     local paths = nil
-    local text, expanded = rl.expandtilde(line_state:getword(1))
+    local text, expanded = rl.expandtilde(endword)
     local text_dir = (path.getdirectory(text) or ""):gsub("/", "\\")
     if #text_dir == 0 then
         -- Add console aliases as matches.
@@ -172,3 +182,12 @@ function exec_generator:generate(line_state, match_builder)
 
     return true
 end
+
+function exec_generator:generate(line_state, match_builder)
+    if line_state:getwordcount() <= 1 then
+        return exec_matches(line_state, match_builder)
+    end
+end
+
+-- So that argmatcher :chaincommand() can use exec completion.
+clink._exec_matches = exec_matches
