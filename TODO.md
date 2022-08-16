@@ -47,7 +47,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - `"cd"` finds the `cd` argmatcher, but that's misleading since `cd` is a built in command in CMD.
 
 ## Mystery
-- Sometimes completion isn't working, but I haven't found consistent repro steps yet.  _[Might be solved now that delayinit coroutines run to completion regardless whether a new prompt generation begins before the delayinit coroutine finishes.]_
 - Mouse input toggling is unreliable in Windows Terminal, and sometimes ends up disallowing mouse input.  _[Might be fixed by bb870fc494?]_
 - `"qq": "QQ"` in `.inputrc`, and then type `qa` --> infinite loop.  _[Was occurring in a 1.3.9 development build; but no longer repros in a later 1.3.9 build, and also does not repro in the 1.3.8 release build.]_
 - Windows 10.0.19042.630 seems to have problems when using WriteConsoleW with ANSI escape codes in a powerline prompt in a git repo.  But Windows 10.0.19041.630 doesn't.
