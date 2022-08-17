@@ -205,7 +205,7 @@ private:
 
 
 //------------------------------------------------------------------------------
-match_type to_match_type(int mode, int attr, const char* path);
+match_type to_match_type(DWORD attr, const char* path, bool symlink=false);
 match_type to_match_type(const char* type_name);
 void match_type_to_string(match_type type, str_base& out);
 

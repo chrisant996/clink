@@ -529,8 +529,8 @@ bool line_editor_impl::notify_matches_ready(int generation_id, matches* matches)
     if (matches && generation_id == m_generation_id)
     {
         assert(&m_matches != matches);
-        m_matches.done_building();
         m_matches.transfer(*(matches_impl*)matches);
+        m_matches.done_building();
         clear_flag(flag_generate);
     }
     else

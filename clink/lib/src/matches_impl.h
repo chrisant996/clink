@@ -132,6 +132,7 @@ private:
     store_impl              m_store;
     infos                   m_infos;
     unsigned short          m_count = 0;
+    bool                    m_any_arg_type = false;
     bool                    m_any_infer_type = false;
     bool                    m_can_infer_type = true;
     bool                    m_coalesced = false;

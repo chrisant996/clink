@@ -246,7 +246,7 @@ static bool has_wildcard(const wchar_t* path)
 }
 
 //------------------------------------------------------------------------------
-DWORD get_file_attributes(const wchar_t* path)
+DWORD get_file_attributes(const wchar_t* path, bool* symlink)
 {
     // FindFirstFileW can handle cases that GetFileAttributesW can't (e.g. files
     // open exclusively, some hidden/system files in the system root directory).
@@ -262,6 +262,8 @@ DWORD get_file_attributes(const wchar_t* path)
             map_errno();
             return INVALID_FILE_ATTRIBUTES;
         }
+        if (symlink)
+            *symlink = false;
         return attr;
     }
 
@@ -273,15 +275,22 @@ DWORD get_file_attributes(const wchar_t* path)
         return INVALID_FILE_ATTRIBUTES;
     }
 
+    if (symlink)
+    {
+        *symlink = ((fd.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) &&
+                    !(fd.dwFileAttributes & FILE_ATTRIBUTE_OFFLINE) &&
+                    (fd.dwReserved0 == IO_REPARSE_TAG_SYMLINK));
+    }
+
     FindClose(h);
     return fd.dwFileAttributes;
 }
 
 //------------------------------------------------------------------------------
-DWORD get_file_attributes(const char* path)
+DWORD get_file_attributes(const char* path, bool* symlink)
 {
     wstr<280> wpath(path);
-    return get_file_attributes(wpath.c_str());
+    return get_file_attributes(wpath.c_str(), symlink);
 }
 
 //------------------------------------------------------------------------------

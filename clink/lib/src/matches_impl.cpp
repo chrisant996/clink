@@ -75,7 +75,7 @@ struct matches_impl::match_lookup_comparator
 
 
 //------------------------------------------------------------------------------
-match_type to_match_type(int mode, int attr, const char* path)
+match_type to_match_type(DWORD attr, const char* path, bool symlink)
 {
     static_assert(int(match_type::none) == MATCH_TYPE_NONE, "match_type enum must match readline constants");
     static_assert(int(match_type::word) == MATCH_TYPE_WORD, "match_type enum must match readline constants");
@@ -92,7 +92,7 @@ match_type to_match_type(int mode, int attr, const char* path)
 
     match_type type;
 
-    if (mode & _S_IFDIR)
+    if (attr & FILE_ATTRIBUTE_DIRECTORY)
         type = match_type::dir;
     else
         type = match_type::file;
@@ -102,20 +102,27 @@ match_type to_match_type(int mode, int attr, const char* path)
     if (attr & FILE_ATTRIBUTE_READONLY)
         type |= match_type::readonly;
 
-#ifdef _S_IFLNK
-    if (mode & _S_IFLNK)
-        type |= match_type::link;
-#endif
-
-    if (int(type & match_type::link))
+    if (symlink)
     {
         wstr<288> wfile(path);
         struct _stat64 st;
         if (_wstat64(wfile.c_str(), &st) < 0)
             type |= match_type::orphaned;
+        type |= match_type::link;
     }
 
     return type;
+}
+
+//------------------------------------------------------------------------------
+match_type backcompat_match_type(const char* path)
+{
+    bool symlink;
+    const DWORD attr = os::get_file_attributes(path, &symlink);
+    if (attr == INVALID_FILE_ATTRIBUTES)
+        return match_type::file;
+
+    return to_match_type(attr, path, symlink);
 }
 
 //------------------------------------------------------------------------------
@@ -800,6 +807,7 @@ void matches_impl::reset()
     m_store.reset();
     m_infos.clear();
     m_count = 0;
+    m_any_arg_type = false;
     m_any_infer_type = false;
     m_can_infer_type = true;
     m_coalesced = false;
@@ -825,6 +833,7 @@ void matches_impl::transfer(matches_impl& from)
     m_store = std::move(from.m_store);
     m_infos = std::move(from.m_infos);
     m_count = from.m_count;
+    m_any_arg_type = from.m_any_arg_type;
     m_any_infer_type = from.m_any_infer_type;
     m_can_infer_type = from.m_can_infer_type;
     m_coalesced = from.m_coalesced;
@@ -932,6 +941,7 @@ bool matches_impl::add_match(const match_desc& desc, bool already_normalized)
     bool translate = (mode > 0 && (mode > 1 || !already_normalized));
 
     str<280> tmp;
+    const bool is_arg = is_match_type(type, match_type::arg);
     const bool is_none = is_match_type(type, match_type::none);
     if (is_match_type(type, match_type::dir) && !ends_with_sep)
     {
@@ -941,7 +951,7 @@ bool matches_impl::add_match(const match_desc& desc, bool already_normalized)
         path::append(tmp, "");
         match = tmp.c_str();
     }
-    else if (translate || is_none)
+    else if (translate || is_arg || is_none)
     {
         tmp = match;
         match = tmp.c_str();
@@ -967,7 +977,7 @@ bool matches_impl::add_match(const match_desc& desc, bool already_normalized)
     if (m_dedup->find({ match, type }) != m_dedup->end())
         return false;
 
-    if (is_none)
+    if (is_none || is_arg)
     {
         // Make room for a trailing path separator in case it's needed later.
         assert(tmp.c_str() == match);
@@ -979,14 +989,17 @@ bool matches_impl::add_match(const match_desc& desc, bool already_normalized)
     if (!store_match)
         return false;
 
-    if (is_none)
+    if (is_none || is_arg)
     {
         // Remove the placeholder character added earlier.  There is now room
         // reserved to add it again later, in done_building(), if needed.
         assert(tmp.length() > 0);
         assert(strcmp(store_match, tmp.c_str()) == 0);
         const_cast<char*>(store_match)[tmp.length() - 1] = '\0';
-        m_any_infer_type = true;
+        if (is_arg)
+            m_any_arg_type = true;
+        else if (is_none)
+            m_any_infer_type = true;
     }
 
     const char* store_display = (desc.display && *desc.display) ? m_store.store_front(desc.display) : nullptr;
@@ -1016,8 +1029,9 @@ void matches_impl::done_building()
     // If there were any `none` type matches and file completion has not been
     // explicitly disabled, then it's necessary to post-process the matches to
     // identify which are directories, or files, or neither.
-    if (m_any_infer_type && (m_filename_completion_desired.get() ||
-                             (m_can_infer_type && !m_filename_completion_desired.is_explicit())))
+    const bool arg_infer = (m_any_arg_type && m_filename_completion_desired.get() && m_filename_completion_desired.is_explicit());
+    const bool none_infer = (m_any_infer_type && (m_filename_completion_desired.get() || (m_can_infer_type && !m_filename_completion_desired.is_explicit())));
+    if (arg_infer || none_infer)
     {
         char sep = rl_preferred_path_separator;
         if (s_slash_translation == 2)
@@ -1027,41 +1041,37 @@ void matches_impl::done_building()
 
         for (unsigned int i = m_count; i--;)
         {
-            if (m_infos[i].infer_type)
+            const bool back_compat = (arg_infer && is_match_type(m_infos[i].type, match_type::arg));
+            if (back_compat || m_infos[i].infer_type)
             {
                 // If matches are relative, but not relative to the current
                 // directory, then get_path_type() might yield unexpected
                 // results.  But that will interfere with many things, so no
                 // effort is invested here to compensate.
                 match_lookup lookup = { m_infos[i].match, m_infos[i].type };
-                switch (os::get_path_type(m_infos[i].match))
+                DWORD attr = os::get_file_attributes(m_infos[i].match);
+                if (attr == INVALID_FILE_ATTRIBUTES)
                 {
-                case os::path_type_dir:
-                    {
-                        // Remove it from the dup map before modifying it.
-                        m_dedup->erase(lookup);
-                        // It's a directory, so update the type and add a
-                        // trailing path separator.
-                        const size_t len = strlen(m_infos[i].match);
-                        const_cast<char*>(m_infos[i].match)[len] = sep;
-                        m_infos[i].type &= ~match_type::mask;
-                        m_infos[i].type |= match_type::dir;
-                        assert(m_infos[i].match[len + 1] == '\0');
-                    }
-                    break;
-                case os::path_type_file:
-                    {
-                        // Remove it from the dup map before modifying it.
-                        m_dedup->erase(lookup);
-                        // It's a file, so update the type.
-                        lookup.type &= ~match_type::mask;
-                        lookup.type |= match_type::file;
-                        m_infos[i].type &= ~match_type::mask;
-                        m_infos[i].type |= lookup.type;
-                    }
-                    break;
-                default:
-                    continue;
+                    if (!back_compat)
+                        continue;
+                    // A deprecated parser said it wants filename completion.
+                    // Pretend anything that doesn't exist is a file.
+                    attr = 0;
+                }
+
+                // Remove it from the dup map before modifying it.
+                m_dedup->erase(lookup);
+
+                // Apply backward compatibility logic to the match type.
+                lookup.type = backcompat_match_type(lookup.match);
+                m_infos[i].type = lookup.type;
+
+                // If it's a directory, add a trailing path separator.
+                if (is_match_type(lookup.type, match_type::dir))
+                {
+                    const size_t len = strlen(m_infos[i].match);
+                    const_cast<char*>(m_infos[i].match)[len] = sep;
+                    assert(m_infos[i].match[len + 1] == '\0');
                 }
 
                 // Check if it has become a duplicate.
