@@ -630,7 +630,7 @@
 - Now `clink set cl*` lists all settings that begin with `cl` (the star wildcard is only supported at the end of the string).
 - Documentation includes a link to the new [clink-flex-prompt](https://github.com/chrisant996/clink-flex-prompt).
 - Fixed the Lua debugger to support printing UTF8 text, and to escape string variable contents to avoid escape code side effects.
-- Fixed [#154](https://github.com/chrisant996/clink/issues/154); crash when `settings.set("some_setting", false) is used.
+- Fixed [#154](https://github.com/chrisant996/clink/issues/154); crash when `settings.set("some_setting", false)` is used.
 - Fixed [#153](https://github.com/chrisant996/clink/issues/153); ESC key problem.  Clink migrated the old `esc_clears_line` setting backwards, causing <kbd>Esc</kbd> to behave opposite from what was expected.
 - Fixed [#152](https://github.com/chrisant996/clink/issues/152); LUA debugger breaks on the wrong line, and fails to execute expressions.
 
