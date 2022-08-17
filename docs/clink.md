@@ -511,21 +511,21 @@ This is where Clink stores command history.  See <a href="#saved-command-history
 <p>
 <dt>clink.log</dt>
 <dd>
-The log file is written in the profile directory.  Clink writes diagnostic information to the log file while Clink is running.  Use `clink info` to find where it is located.
+The log file is written in the profile directory.  Clink writes diagnostic information to the log file while Clink is running.  Use <code>clink info</code> to find where it is located.
 </dd></p>
 
 <p>
 <dt>default_settings</dt>
 <dd>
-This is an optional file.  When Clink loads its settings, it first tries to load default values for settings from a `default_settings` file in either the profile directory or the binaries directory.  Then it loads the `clink_settings` file from the profile directory.
+This is an optional file.  When Clink loads its settings, it first tries to load default values for settings from a <code>default_settings</code> file in either the profile directory or the binaries directory.  Then it loads the <code>clink_settings</code> file from the profile directory.
 
-The `default_settings` file can be useful for portable installations or when sharing your favorite Clink configuration with friends.
+The <code>default_settings</code> file can be useful for portable installations or when sharing your favorite Clink configuration with friends.
 </dd></p>
 
 <p>
 <dt>default_inputrc</dt>
 <dd>
-This is an optional file.  When Clink loads the <a href="#init-file">Readline Init File</a>, it first tries to load default values from a `default_inputrc` file in either the profile directory or the binaries directory.  Then it loads the `.inputrc` file.
+This is an optional file.  When Clink loads the <a href="#init-file">Readline Init File</a>, it first tries to load default values from a <code>default_inputrc</code> file in either the profile directory or the binaries directory.  Then it loads the <code>.inputrc</code> file.
 
 The `default_inputrc` file can be useful for portable installations or when sharing your favorite Clink configuration with friends.
 </dd></p>
@@ -545,7 +545,7 @@ Injects Clink into a CMD.EXE process.<br/>
 See <code>clink inject --help</code> for more information.</dd>
 </p>
 
-> **Note:** The `clink inject --If the path begins with `~\` then it is replaced with the current user's home directory (`%HOMEDRIVE%%HOMEPATH%` or `%USERPROFILE%`).
+> **Note:** If the `--profile` path begins with `~\` then it is replaced with the current user's home directory (`%HOMEDRIVE%%HOMEPATH%` or `%USERPROFILE%`).
 
 <p>
 <dt>clink autorun</dt>
@@ -577,7 +577,7 @@ See <code>clink installscripts --help</code> for more information.</dd>
 <p>
 <dt>clink uninstallscripts</dt>
 <dd>
-Removes a path added by `clink installscripts`.</br>
+Removes a path added by <code>clink installscripts</code>.</br>
 See <code>clink uninstallscripts --help</code> for more information.</dd>
 </p>
 

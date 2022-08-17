@@ -732,12 +732,12 @@ end
 --- The function may be used only once, and it closes the read file handle, so
 --- if the function is used then do not use <code>file:close()</code>.  Or, if
 --- the second return value is not a function, then the exit status may be
---- retrieved from calling `file:close()` on the returned file handle.
+--- retrieved from calling <code>file:close()</code> on the returned file handle.
 ---
---- <strong>Compatibility Note:</strong> when `io.popen()` is used in a
---- coroutine, it is automatically redirected to `io.popenyield()`.  This means
---- on success the second return value from `io.popen()` in a coroutine may not
---- be nil as callers might normally expect.
+--- <strong>Compatibility Note:</strong> when <code>io.popen()</code> is used in
+--- a coroutine, it is automatically redirected to <code>io.popenyield()</code>.
+--- This means on success the second return value from <code>io.popen()</code>
+--- in a coroutine may not be nil as callers might normally expect.
 ---
 --- <strong>Note:</strong> if the <code>prompt.async</code> setting is disabled,
 --- or while a <a href="#transientprompts">transient prompt filter</a> is

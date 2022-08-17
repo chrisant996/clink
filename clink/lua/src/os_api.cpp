@@ -1261,9 +1261,9 @@ static int get_net_connection_name(lua_State *state)
 /// -ver:   1.2.20
 /// -arg:   ...
 /// This works like <code>print()</code> but writes the output via the OS
-/// `OutputDebugString()` API.
+/// <code>OutputDebugString()</code> API.
 ///
-/// This function has no effect if the `lua.debug` Clink setting is off.
+/// This function has no effect if the <code>lua.debug</code> Clink setting is off.
 /// -show:  clink.debugprint("my variable = "..myvar)
 static int debug_print(lua_State *state)
 {

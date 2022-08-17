@@ -1072,21 +1072,44 @@ end
 --- -name:  _argmatcher:chaincommand
 --- -ver:   1.3.13
 --- -ret:   self
---- This makes the rest of the line be parsed as a separate command.  You can
---- use it to "chain" from one parser to another.
+--- This makes the rest of the line be parsed as a separate command, after the
+--- argmatcher reaches the end of its defined argument positions.  You can use
+--- it to "chain" from one parser to another.
 ---
---- For example, `cmd.exe program arg` is example of a line where one command
---- can have another command within it.  `:chaincommand()` enables `program arg`
---- to be parsed separately.  If `program` has an argmatcher, then it takes over
---- and parses the rest of the input line.
+--- For example, <code>cmd.exe program arg</code> is example of a line where one
+--- command can have another command within it.  <code>:chaincommand()</code>
+--- enables <code>program arg</code> to be parsed separately.  If
+--- <code>program</code> has an argmatcher, then it takes over and parses the
+--- rest of the input line.
+---
+--- An example that chains in a linked argmatcher:
 --- -show:  clink.argmatcher("program"):addflags("/x", "/y")
---- -show:  clink.argmatcher("cmd"):addflags("/c", "/k"):chaincommand()
+--- -show:  clink.argmatcher("cmd"):addflags(
+--- -show:  &nbsp;   "/c" .. clink.argmatcher():chaincommand(),
+--- -show:  &nbsp;   "/k" .. clink.argmatcher():chaincommand()
+--- -show:  ):nofiles()
 --- -show:  -- Consider the following input:
 --- -show:  --    cmd /c program /
 --- -show:  -- "cmd" is colored as an argmatcher.
 --- -show:  -- "/c" is colored as a flag (by the "cmd" argmatcher).
 --- -show:  -- "program" is colored as an argmatcher.
 --- -show:  -- "/" generates completions "/x" and "/y".
+---
+--- Examples that chain at the end of their argument positions:
+--- -show:  clink.argmatcher("program"):addflags("-x", "-y")
+--- -show:  clink.argmatcher("sometool"):addarg(
+--- -show:  &nbsp;   "exec" .. clink.argmatcher()
+--- -show:  &nbsp;               :addflags("-a", "-b")
+--- -show:  &nbsp;               :addarg("profile1", "profile2")
+--- -show:  &nbsp;               :chaincommand()
+--- -show:  )
+--- -show:  -- Consider the following input:
+--- -show:  --    sometool exec profile1 program -
+--- -show:  -- "sometool" is colored as an argmatcher.
+--- -show:  -- "exec" is colored as an argument (for "sometool").
+--- -show:  -- "profile1" is colored as an argument (for "exec").
+--- -show:  -- "program" is colored as an argmatcher.
+--- -show:  -- "-" generates completions "-x" and "-y".
 function _argmatcher:chaincommand()
     self._chain_command = true
     return self
