@@ -1112,6 +1112,7 @@ end
 --- -show:  -- "-" generates completions "-x" and "-y".
 function _argmatcher:chaincommand()
     self._chain_command = true
+    self._no_file_generation = true -- So that pop() doesn't interfere.
     return self
 end
 
