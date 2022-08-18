@@ -6,7 +6,7 @@
 
 - Fixed command word completion after `:chaincommand()`.  Now <code>cmd /c&nbsp;</code><kbd>Tab</kbd> works properly.
 - Fixed `cmd` argmatcher to only chain after the `/c` and `/k` flags, to more accurately match actual cmd.exe syntax.
-- Fixed backward compatibility with argmatchers that use functions to generate matches (regression introduced in v1.2.7).
+- Fixed backward compatibility for argmatchers using the old v0.4.9 APIs with [functions as argument options](#argmatcher_functions) (regression introduced in v1.2.7).
 
 #### v1.3.39
 
