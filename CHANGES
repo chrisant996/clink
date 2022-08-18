@@ -5,6 +5,7 @@
 #### v1.3.40
 
 - Fixed command word completion after `:chaincommand()`.  Now <code>cmd /c&nbsp;</code><kbd>Tab</kbd> works properly.
+- Fixed `:chaincommand()` to work properly in a nested argmatcher; it should imply `:nofiles()` otherwise it can pop out to the previous argmatcher instead of chaining.
 - Fixed `cmd` argmatcher to only chain after the `/c` and `/k` flags, to more accurately match actual cmd.exe syntax.
 - Fixed backward compatibility for argmatchers using the old v0.4.9 APIs with [functions as argument options](#argmatcher_functions) (regression introduced in v1.2.7).
 
