@@ -11,6 +11,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Some way to push keys?  (Push keys to Clink; not to other processes.)
 
 ## Low Priority
+- Don't highlight directory names as having an argmatcher (e.g. `\repos\clink`)?
 - Once in a while raw mouse input sequences spuriously show up in the edit line; have only noticed it when the CMD window did not have focus at the time.  _[Not fixed by bb870fc494.]_
 - `console.readinput()` changes the console state, and can interfere with proper line wrapping behavior.
 - Collecting words currently happens in update_internal, but probably it also belongs in alternative_matches and/or update_matches:
@@ -20,7 +21,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Follow Up
 - Update other repos:
   - [ ] Add command and flag descriptions in clink-completions?
-  - [ ] Push update to clink-completions repo.
   - [ ] Push update to z.lua repo.
 
 ## Argmatcher syntax
