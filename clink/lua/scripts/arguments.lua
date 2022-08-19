@@ -742,12 +742,14 @@ end
 --- -ver:   1.0.0
 --- -arg:   choices...:string|table
 --- -ret:   self
---- This adds argument matches.  Arguments can be a string, a string linked to
---- another parser by the concatenation operator, a table of arguments, or a
---- function that returns a table of arguments.  See
+--- This adds a new argument position with the matches given by
+--- <span class="arg">choices</span>.  Arguments can be a string, a string
+--- linked to another parser by the concatenation operator, a table of
+--- arguments, or a function that returns a table of arguments.  See
 --- <a href="#argumentcompletion">Argument Completion</a> for more information.
---- -show:  local my_parser = clink.argmatcher("git")
---- -show:  :addarg("add", "status", "commit", "checkout")
+--- -show:  local my_parser = clink.argmatcher("make_color_shape")
+--- -show:  :addarg("red", "green", "blue")             -- 1st argument is a color
+--- -show:  :addarg("circle", "square", "triangle")     -- 2nd argument is a shape
 --- When providing a table of arguments, the table can contain some special
 --- entries:
 --- <p><table>
@@ -758,6 +760,9 @@ end
 --- <tr><td><code>nosort=true</code></td><td>See <a href="#addarg_nosort">Disable Sorting Matches</a>.</td><td class="version">v1.3.3 and newer</td></tr>
 --- <tr><td><code>onarg=<span class="arg">function</span></code></td><td>See <a href="#responsive-argmatchers">Responding to Arguments in Argmatchers</a>.</td><td class="version">v1.3.13 and newer</td></tr>
 --- </table></p>
+--- <strong>Note:</strong>  Arguments are positional in an argmatcher.  Using
+--- <code>:addarg()</code> multiple times adds multiple argument positions, in
+--- the order they are specified.
 function _argmatcher:addarg(...)
     local list = self._args[self._nextargindex]
     if not list then
@@ -807,6 +812,9 @@ end
 --- <tr><td><code>nosort=true</code></td><td>See <a href="#addarg_nosort">Disable Sorting Matches</a>.</td><td class="version">v1.3.3 and newer</td></tr>
 --- <tr><td><code>onarg=<span class="arg">function</span></code></td><td>See <a href="#responsive-argmatchers">Responding to Arguments in Argmatchers</a>.</td><td class="version">v1.3.13 and newer</td></tr>
 --- </table></p>
+--- <strong>Note:</strong>  Flags are not positional in an argmatcher.  Using
+--- <code>:addarg()</code> multiple times with different flags is the same as
+--- using <code>:addarg()</code> once with all of the flags.
 function _argmatcher:addflags(...)
     local flag_matcher = self._flags or _argmatcher()
     local list = flag_matcher._args[1] or { _links = {} }
