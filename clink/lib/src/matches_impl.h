@@ -22,7 +22,6 @@ struct match_info
     char            suppress_append;    // Negative means not specified.
     bool            append_display;
     bool            select;
-    bool            infer_type;
 };
 
 //------------------------------------------------------------------------------
@@ -132,9 +131,8 @@ private:
     store_impl              m_store;
     infos                   m_infos;
     unsigned short          m_count = 0;
-    bool                    m_any_arg_type = false;
-    bool                    m_any_infer_type = false;
-    bool                    m_can_infer_type = true;
+    bool                    m_any_none_type = false;
+    bool                    m_deprecated_mode = false;
     bool                    m_coalesced = false;
     char                    m_append_character = '\0';
     bool                    m_suppress_append = false;

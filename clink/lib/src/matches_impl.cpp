@@ -807,9 +807,8 @@ void matches_impl::reset()
     m_store.reset();
     m_infos.clear();
     m_count = 0;
-    m_any_arg_type = false;
-    m_any_infer_type = false;
-    m_can_infer_type = true;
+    m_any_none_type = false;
+    m_deprecated_mode = false;
     m_coalesced = false;
     m_append_character = '\0';
     m_suppress_append = false;
@@ -833,9 +832,8 @@ void matches_impl::transfer(matches_impl& from)
     m_store = std::move(from.m_store);
     m_infos = std::move(from.m_infos);
     m_count = from.m_count;
-    m_any_arg_type = from.m_any_arg_type;
-    m_any_infer_type = from.m_any_infer_type;
-    m_can_infer_type = from.m_can_infer_type;
+    m_any_none_type = from.m_any_none_type;
+    m_deprecated_mode = from.m_deprecated_mode;
     m_coalesced = from.m_coalesced;
     m_append_character = from.m_append_character;
     m_suppress_append = from.m_suppress_append;
@@ -892,7 +890,7 @@ void matches_impl::set_regen_blocked()
 //------------------------------------------------------------------------------
 void matches_impl::set_deprecated_mode()
 {
-    m_can_infer_type = false;
+    m_deprecated_mode = true;
 }
 
 //------------------------------------------------------------------------------
@@ -941,7 +939,6 @@ bool matches_impl::add_match(const match_desc& desc, bool already_normalized)
     bool translate = (mode > 0 && (mode > 1 || !already_normalized));
 
     str<280> tmp;
-    const bool is_arg = is_match_type(type, match_type::arg);
     const bool is_none = is_match_type(type, match_type::none);
     if (is_match_type(type, match_type::dir) && !ends_with_sep)
     {
@@ -951,7 +948,7 @@ bool matches_impl::add_match(const match_desc& desc, bool already_normalized)
         path::append(tmp, "");
         match = tmp.c_str();
     }
-    else if (translate || is_arg || is_none)
+    else if (translate || is_none)
     {
         tmp = match;
         match = tmp.c_str();
@@ -977,7 +974,7 @@ bool matches_impl::add_match(const match_desc& desc, bool already_normalized)
     if (m_dedup->find({ match, type }) != m_dedup->end())
         return false;
 
-    if (is_none || is_arg)
+    if (is_none)
     {
         // Make room for a trailing path separator in case it's needed later.
         assert(tmp.c_str() == match);
@@ -989,17 +986,15 @@ bool matches_impl::add_match(const match_desc& desc, bool already_normalized)
     if (!store_match)
         return false;
 
-    if (is_none || is_arg)
+    if (is_none)
     {
         // Remove the placeholder character added earlier.  There is now room
         // reserved to add it again later, in done_building(), if needed.
         assert(tmp.length() > 0);
         assert(strcmp(store_match, tmp.c_str()) == 0);
         const_cast<char*>(store_match)[tmp.length() - 1] = '\0';
-        if (is_arg)
-            m_any_arg_type = true;
-        else if (is_none)
-            m_any_infer_type = true;
+        if (is_none)
+            m_any_none_type = true;
     }
 
     const char* store_display = (desc.display && *desc.display) ? m_store.store_front(desc.display) : nullptr;
@@ -1010,7 +1005,7 @@ bool matches_impl::add_match(const match_desc& desc, bool already_normalized)
     m_dedup->emplace(std::move(lookup));
 
     unsigned int ordinal = static_cast<unsigned int>(m_infos.size());
-    match_info info = { store_match, store_display, store_description, ordinal, type, desc.append_char, desc.suppress_append, append_display, false/*select*/, is_none/*infer_type*/ };
+    match_info info = { store_match, store_display, store_description, ordinal, type, desc.append_char, desc.suppress_append, append_display, false/*select*/ };
     m_infos.emplace_back(std::move(info));
     ++m_count;
 
@@ -1029,9 +1024,9 @@ void matches_impl::done_building()
     // If there were any `none` type matches and file completion has not been
     // explicitly disabled, then it's necessary to post-process the matches to
     // identify which are directories, or files, or neither.
-    const bool arg_infer = (m_any_arg_type && m_filename_completion_desired.get() && m_filename_completion_desired.is_explicit());
-    const bool none_infer = (m_any_infer_type && (m_filename_completion_desired.get() || (m_can_infer_type && !m_filename_completion_desired.is_explicit())));
-    if (arg_infer || none_infer)
+    if (m_any_none_type && (m_deprecated_mode ?
+                            (m_filename_completion_desired.get() && m_filename_completion_desired.is_explicit()) :
+                            (m_filename_completion_desired.get() || !m_filename_completion_desired.is_explicit())))
     {
         char sep = rl_preferred_path_separator;
         if (s_slash_translation == 2)
@@ -1041,23 +1036,13 @@ void matches_impl::done_building()
 
         for (unsigned int i = m_count; i--;)
         {
-            const bool back_compat = (arg_infer && is_match_type(m_infos[i].type, match_type::arg));
-            if (back_compat || m_infos[i].infer_type)
+            if (is_match_type(m_infos[i].type, match_type::none))
             {
                 // If matches are relative, but not relative to the current
                 // directory, then get_path_type() might yield unexpected
                 // results.  But that will interfere with many things, so no
                 // effort is invested here to compensate.
                 match_lookup lookup = { m_infos[i].match, m_infos[i].type };
-                DWORD attr = os::get_file_attributes(m_infos[i].match);
-                if (attr == INVALID_FILE_ATTRIBUTES)
-                {
-                    if (!back_compat)
-                        continue;
-                    // A deprecated parser said it wants filename completion.
-                    // Pretend anything that doesn't exist is a file.
-                    attr = 0;
-                }
 
                 // Remove it from the dup map before modifying it.
                 m_dedup->erase(lookup);

@@ -1484,6 +1484,12 @@ function _argmatcher:_generate(line_state, match_builder, extra_words)
             return m
         end
 
+        if matcher._deprecated then
+            -- Mark the build as deprecated, so it can infer match types the
+            -- old way.
+            match_builder:deprecated_addmatch()
+        end
+
         apply_options_to_builder(reader, arg, match_builder)
         for _, i in ipairs(arg) do
             local t = type(i)
@@ -1537,7 +1543,7 @@ function _argmatcher:_generate(line_state, match_builder, extra_words)
         return true
     elseif reader._phantomposition then
         -- Generate file matches for phantom positions, i.e. any flag ending
-        -- with : or = that does explicitly link to another matcher.
+        -- with : or = that does not explicitly link to another matcher.
         match_builder:addmatches(clink.filematches(line_state:getendword()))
         return true
     else
