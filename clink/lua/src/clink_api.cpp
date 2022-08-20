@@ -27,6 +27,7 @@
 #include <lib/word_collector.h>
 #include <lib/cmd_tokenisers.h>
 #include <lib/reclassify.h>
+#include <lib/matches_lookaside.h>
 #include <terminal/terminal_helpers.h>
 #include <terminal/printer.h>
 #include <terminal/screen_buffer.h>

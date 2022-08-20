@@ -1511,29 +1511,12 @@ static char** alternative_matches(const char* text, int start, int end)
         const char* const match = iter.get_match();
         const char* const display = iter.get_match_display();
         const char* const description = iter.get_match_description();
-        const int match_len = strlen(match);
-        const int match_display_len = display ? strlen(display) : 0;
-        const int match_description_len = description ? strlen(description) : 0;
-        const int match_size = match_len + 1 + 1/*type*/ + 1/*append_char*/ + 1/*flags*/ + match_display_len + 1 + match_description_len + 1;
-        char* ptr = (char*)malloc(match_size);
+        const size_t packed_size = calc_packed_size(match, display, description);
+        char* ptr = (char*)malloc(packed_size);
 
         matches[count] = ptr;
 
-        memcpy(ptr, match, match_len);
-        ptr += match_len;
-        *(ptr++) = '\0';
-
-        *(ptr++) = (char)type;
-        *(ptr++) = (char)iter.get_match_append_char();
-        *(ptr++) = (char)flags;
-
-        memcpy(ptr, display, match_display_len);
-        ptr += match_display_len;
-        *(ptr++) = '\0';
-
-        memcpy(ptr, description, match_description_len);
-        ptr += match_description_len;
-        *(ptr++) = '\0';
+        pack_match(ptr, packed_size, match, type, display, description, iter.get_match_append_char(), flags, nullptr, false);
 
 #ifdef DEBUG
         // Set DEBUG_MATCHES=-5 to print the first 5 matches.

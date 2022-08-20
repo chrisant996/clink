@@ -1037,10 +1037,12 @@ void selectcomplete_impl::update_matches(bool restrict)
             for (unsigned int i = 0; i < count; i++)
             {
                 const char* text = m_matches.get_match(i);
-                const size_t len = strlen(text);
-                char* match = static_cast<char*>(malloc(len + 1));
-                memcpy(match, text, len + 1);
-                matches.emplace_back(match);
+                const char* disp = m_matches.get_match_display(i);
+                const char* desc = m_matches.get_match_description(i);
+                const size_t packed_size = calc_packed_size(text, disp, desc);
+                char* buffer = static_cast<char*>(malloc(packed_size));
+                pack_match(buffer, packed_size, text, m_matches.get_match_type(i), disp, desc, m_matches.get_match_append_char(i), m_matches.get_match_flags(i), nullptr, false);
+                matches.emplace_back(buffer);
             }
             matches.emplace_back(nullptr);
 

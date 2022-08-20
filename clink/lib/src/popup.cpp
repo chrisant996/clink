@@ -918,18 +918,3 @@ popup_result do_popup_list(
     out = s_items[current];
     return s_result;
 }
-
-//------------------------------------------------------------------------------
-const char* append_string_into_buffer(char*& buffer, const char* match, bool allow_tabs)
-{
-    const char* ret = buffer;
-    if (match)
-        while (char c = *(match++))
-        {
-            if (c == '\r' || c == '\n' || (c == '\t' && !allow_tabs))
-                c = ' ';
-            *(buffer++) = c;
-        }
-    *(buffer++) = '\0';
-    return ret;
-}

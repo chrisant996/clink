@@ -14,7 +14,7 @@ struct match_display_filter_entry
     unsigned char type;         // Match type.
     char append_char;           // Append character.
     unsigned char flags;        // Match flags.
-    char buffer[1];             // Variable length buffer containing match, display, and description.
+    char buffer[1];             // Variable length buffer containing the PACKED MATCH FORMAT.
 };
 typedef struct match_display_filter_entry match_display_filter_entry;
 

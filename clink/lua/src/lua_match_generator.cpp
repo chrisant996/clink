@@ -19,7 +19,6 @@
 #include <lib/matches_lookaside.h>
 #include <lib/popup.h>
 #include <lib/display_matches.h>
-#include <terminal/ecma48_iter.h>
 
 extern "C" {
 #include <lua.h>
@@ -97,47 +96,6 @@ void lua_match_generator::get_word_break_info(const line_state& line, word_break
 
     info.truncate = int(lua_tointeger(state, -2));
     info.keep = int(lua_tointeger(state, -1));
-}
-
-//------------------------------------------------------------------------------
-// Parse ANSI escape codes to determine the visible character length of the
-// string (which gets used for column alignment).  When a strip out parameter is
-// supplied, this also strips ANSI escape codes and the strip out parameter
-// receives a pointer to the next character past the nul terminator.
-static int plainify(const char* s, char** strip)
-{
-    int visible_len = 0;
-
-    // TODO:  This does not handle BEL, OSC title codes, or envvar substitution.
-    // Use ecma48_processor() if that becomes necessary, but then s cannot be
-    // in/out since envvar substitutions could make the output string be longer
-    // than the input string.
-
-    ecma48_state state;
-    ecma48_iter iter(s, state);
-    char* plain = const_cast<char *>(s);
-    while (const ecma48_code& code = iter.next())
-        if (code.get_type() == ecma48_code::type_chars)
-        {
-            str_iter inner_iter(code.get_pointer(), code.get_length());
-            while (int c = inner_iter.next())
-                visible_len += clink_wcwidth(c);
-
-            if (strip)
-            {
-                const char *ptr = code.get_pointer();
-                for (int i = code.get_length(); i--;)
-                    *(plain++) = *(ptr++);
-            }
-        }
-
-    if (strip)
-    {
-        *(plain++) = '\0';
-        *strip = plain;
-    }
-
-    return visible_len;
 }
 
 //------------------------------------------------------------------------------
@@ -393,10 +351,8 @@ done:
                         lcd.truncate(matching);
                 }
 
-                size_t alloc_size = sizeof(match_display_filter_entry) + 2;
-                if (match) alloc_size += strlen(match);
-                if (display) alloc_size += strlen(display);
-                if (description) alloc_size += strlen(description);
+                const size_t packed_size = calc_packed_size(match, display, description);
+                const size_t alloc_size = sizeof(match_display_filter_entry) - 1 + packed_size;
 
                 match_display_filter_entry *new_match;
                 new_match = (match_display_filter_entry *)malloc(alloc_size);
@@ -410,40 +366,15 @@ done:
                 j++;
 
                 // Fill in buffer with PACKED MATCH FORMAT.
-                new_match->match = append_string_into_buffer(buffer, match);
-                if (match && !new_match->match[0])
+                if (!display[0] || !pack_match(buffer, packed_size, match, type, display, description, append_char, flags, new_match, strip_markup))
                 {
-discard:
                     free(new_match);
                     j--;
                     break;
                 }
 
-                if (!display[0])
-                    goto discard;
-                *(buffer++) = (char)type;   // match type
-                *(buffer++) = append_char;  // append char
-                *(buffer++) = flags;        // match flags
-                new_match->display = append_string_into_buffer(buffer, display);
-                new_match->visible_display = plainify(new_match->display, strip_markup ? &buffer : nullptr);
-                if (new_match->visible_display <= 0)
-                    goto discard;
-
                 if (description)
-                {
                     one_column = true;
-                    new_match->description = append_string_into_buffer(buffer, description);
-                    new_match->visible_description = plainify(new_match->description, strip_markup ? &buffer : nullptr);
-                }
-                else
-                {
-                    // Must append empty string even when no description,
-                    // because do_popup_list expects 3 nul terminated strings.
-                    // Leave new_match->description nullptr to signal there is
-                    // no description (subtly different than having an empty
-                    // description).
-                    append_string_into_buffer(buffer, description);
-                }
 
                 if (max_visible_display < new_match->visible_display)
                     max_visible_display = new_match->visible_display;
@@ -467,15 +398,10 @@ next:
     //  - visible_description can be 0 when visible_display is negative; this
     //    means there are descriptions (use one column) but they are all blank.
     {
-        new_matches[0] = (match_display_filter_entry*)malloc(sizeof(match_display_filter_entry) + lcd.length() + 2);
+        const size_t packed_size = calc_packed_size(lcd.c_str(), "", nullptr);
+        new_matches[0] = (match_display_filter_entry*)malloc(sizeof(match_display_filter_entry) - 1 + packed_size);
         memset(new_matches[0], 0, sizeof(*new_matches[0]));
-        char* buffer = new_matches[0]->buffer;
-        new_matches[0]->match = append_string_into_buffer(buffer, lcd.c_str());
-        *(buffer++) = 0;    // match type
-        *(buffer++) = 0;    // append char
-        *(buffer++) = 0;    // match flags
-        new_matches[0]->display = append_string_into_buffer(buffer, nullptr);
-        append_string_into_buffer(buffer, nullptr); // Be consistent and add empty description field even in the lcd entry.
+        pack_match(new_matches[0]->buffer, packed_size, lcd.c_str(), match_type::none, "", nullptr, 0, 0, new_matches[0], false);
 
         if (one_column)
             new_matches[0]->visible_display = 0 - max_visible_display;

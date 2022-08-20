@@ -42,6 +42,15 @@ int destroy_matches_lookaside(char** matches);
 void set_matches_lookaside_oneoff(const char* match, match_type type, char append_char, unsigned char flags);
 void clear_matches_lookaside_oneoff();
 
+const char* append_string_into_buffer(char*& buffer, const char* match, bool allow_tabs=false);
+size_t calc_packed_size(const char* match, const char* display, const char* description);
+bool pack_match(char* buffer, size_t packed_size,
+                const char* match, match_type type,
+                const char* display, const char* description,
+                char append_char, unsigned char flags,
+                match_display_filter_entry* entry,
+                bool strip_markup);
+
 extern "C" int lookup_match_type(const char* match);
 extern "C" void override_match_append(const char* match);
 #ifdef DEBUG

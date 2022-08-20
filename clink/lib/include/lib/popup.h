@@ -45,6 +45,3 @@ popup_result do_popup_list(
     int& current,
     const char*& out,
     popup_items_mode mode=popup_items_mode::simple);
-
-//------------------------------------------------------------------------------
-const char* append_string_into_buffer(char*& buffer, const char* match, bool allow_tabs=false);
