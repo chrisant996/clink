@@ -293,7 +293,7 @@ static bool append_match_color_indicator(const char *f, match_type type)
                 linkok = linkstat.st_mode != 0;
             else
                 linkok = stat(name, &linkstat) == 0;
-            if (linkok && strncmp(_rl_color_indicator[C_LINK].string, "target", 6) == 0)
+            if (linkok && _strnicmp(_rl_color_indicator[C_LINK].string, "target", 6) == 0)
                 mode = linkstat.st_mode;
         }
         else
@@ -357,7 +357,7 @@ static bool append_match_color_indicator(const char *f, match_type type)
 #endif
         }
 #if defined(S_ISLNK)
-        else if (S_ISLNK(mode) && strncmp(_rl_color_indicator[C_LINK].string, "target", 6) != 0)
+        else if (S_ISLNK(mode) && _strnicmp(_rl_color_indicator[C_LINK].string, "target", 6) != 0)
             colored_filetype = C_LINK;
 #endif
         else if (S_ISFIFO(mode))
@@ -423,8 +423,8 @@ static bool append_match_color_indicator(const char *f, match_type type)
         name += len; // Pointer to final \0.
         for (ext = _rl_color_ext_list; ext != nullptr; ext = ext->next)
         {
-            if (ext->ext.len <= len && strncmp(name - ext->ext.len, ext->ext.string,
-                                               ext->ext.len) == 0)
+            if (ext->ext.len <= len && _strnicmp(name - ext->ext.len, ext->ext.string,
+                                                 ext->ext.len) == 0)
                 break;
         }
     }
