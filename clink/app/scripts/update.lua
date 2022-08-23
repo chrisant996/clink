@@ -21,8 +21,8 @@ local function concat_error(specific, general)
 end
 
 --------------------------------------------------------------------------------
-settings.add("clink.autoupdate", true, "Auto-update the Clink program files", "When enabled, periodically checks for updates for the Clink program files.")
-settings.add("clink.update_interval", 5, "Days between update checks", "The Clink autoupdater will wait this many days between update checks.")
+settings.add("clink.autoupdate", true, "Auto-update the Clink program files", "When enabled, periodically checks for updates for the Clink program files.") -- luacheck: no max line length
+settings.add("clink.update_interval", 5, "Days between update checks", "The Clink autoupdater will wait this many days between update checks.") -- luacheck: no max line length
 
 --------------------------------------------------------------------------------
 local powershell_exe
@@ -130,7 +130,7 @@ local function get_update_dir()
 
     target = path.join(target, "clink\\updater")
     if not os.isdir(target) then
-        local ok, err = os.mkdir(target)
+        local ok, err = os.mkdir(target) -- luacheck: no unused
         if not ok then
             return nil, log_info("unable to create temp path '" .. target .. "'.")
         end
@@ -208,8 +208,8 @@ local function unzip(zip, out)
 
     local success_tag = "CLINK-UNZIP-SUCCEEDED"
     local failure_tag = "CLINK-UNZIP-FAILED"
-    local expand_archive = string.format([[$ProgressPreference='SilentlyContinue' ; Expand-Archive -Force -LiteralPath \"%s\" -DestinationPath \"%s\"]], zip, out)
-    local powershell_command = string.format([[try { %s ; echo "%s" } catch { echo "%s" ; echo $_.Exception.Message ; echo "`nALL ERRORS:`n" ; echo $error }]], expand_archive, success_tag, failure_tag)
+    local expand_archive = string.format([[$ProgressPreference='SilentlyContinue' ; Expand-Archive -Force -LiteralPath \"%s\" -DestinationPath \"%s\"]], zip, out) -- luacheck: no max line length
+    local powershell_command = string.format([[try { %s ; echo "%s" } catch { echo "%s" ; echo $_.Exception.Message ; echo "`nALL ERRORS:`n" ; echo $error }]], expand_archive, success_tag, failure_tag) -- luacheck: no max line length
     local cmd = string.format([[2>&1 %s -Command "%s"]], powershell_exe, powershell_command)
     local f, err = io.popen(cmd)
     if not f then
@@ -271,14 +271,14 @@ local function install_file(from_dir, to_dir, name)
     os.remove(tmp)
 
     -- Rename away.
-    ok, err2, code2 = os.move(dst, tmp)
+    ok, err2, code2 = os.move(dst, tmp) -- luacheck: no unused
     if not ok then
         os.remove(tmp)
         return nil, err, code
     end
 
     -- Retry copy.
-    ok, err2, code2 = os.copy(src, dst)
+    ok, err2, code2 = os.copy(src, dst) -- luacheck: no unused
     if ok then
         return true
     end
@@ -299,7 +299,7 @@ local function has_update_file()
         return nil
     end
 
-    local latest, lmaj, lmin, lpat
+    local latest
     local files = os.globfiles(path.join(update_dir, "*." .. install_type), 2)
     for _, f in ipairs(files) do
         if f.size > 0 and f.type:find("file") then
@@ -335,7 +335,7 @@ local function can_check_for_update(force)
         return false, log_info("autoupdate is disabled for local build directories.")
     end
 
-    local tagfile, err = get_update_dir()
+    local tagfile, err = get_update_dir() -- luacheck: ignore 411
     if not tagfile then
         return false, err
     end
@@ -358,7 +358,7 @@ local function can_check_for_update(force)
                 interval_days = 1
             end
             if tonumber(local_lastcheck) + (interval_days * 24*60*60) > now then
-                return false, log_info("too soon to check for updates (" .. tonumber(local_lastcheck) .. " vs " .. now .. ").")
+                return false, log_info("too soon to check for updates (" .. tonumber(local_lastcheck) .. " vs " .. now .. ").") -- luacheck: no max line length
             end
         end
     end
@@ -380,7 +380,7 @@ local function internal_check_for_update(force)
         print("Checking latest version...")
     end
     local cloud_tag
-    local api = string.format([[2>&1 ]] .. powershell_exe .. [[ -Command "$ProgressPreference='SilentlyContinue' ; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12 ; Invoke-WebRequest -Headers @{\"cache-control\"=\"no-cache\"} -UseBasicParsing https://api.github.com/repos/%s/releases/latest | Select-Object -ExpandProperty Content"]], github_repo)
+    local api = string.format([[2>&1 ]] .. powershell_exe .. [[ -Command "$ProgressPreference='SilentlyContinue' ; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12 ; Invoke-WebRequest -Headers @{\"cache-control\"=\"no-cache\"} -UseBasicParsing https://api.github.com/repos/%s/releases/latest | Select-Object -ExpandProperty Content"]], github_repo) -- luacheck: no max line length
     local f, err = io.popen(api)
     if not f then
         log_info(api)
@@ -414,7 +414,7 @@ local function internal_check_for_update(force)
     -- Compare versions.
     log_info("latest release is " .. cloud_tag .. ".")
     if not is_rhs_version_newer(local_tag, cloud_tag) then
-        return nil, log_info("no update available; local version " .. local_tag .. " is not older than latest release " .. cloud_tag .. ".")
+        return nil, log_info("no update available; local version " .. local_tag .. " is not older than latest release " .. cloud_tag .. ".") -- luacheck: no max line length
     end
 
     -- Check if already downloaded.
@@ -438,14 +438,14 @@ local function internal_check_for_update(force)
         return nil, err
     end
     log_info("downloading " .. latest_update_file .. " to " .. local_update_file .. ".")
-    local cmd = string.format([[2>&1 ]] .. powershell_exe .. [[ -Command "$ProgressPreference='SilentlyContinue' ; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12 ; Invoke-WebRequest '%s' -OutFile '%s'"]], latest_update_file, local_update_file)
+    local cmd = string.format([[2>&1 ]] .. powershell_exe .. [[ -Command "$ProgressPreference='SilentlyContinue' ; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12 ; Invoke-WebRequest '%s' -OutFile '%s'"]], latest_update_file, local_update_file) -- luacheck: no max line length
     f, err = io.popen(cmd)
     if not f then
         log_info(cmd)
         os.remove(local_update_file)
         return nil, concat_error(err, log_info("failed to download " .. install_type .. " file."))
     end
-    local output = {}
+    output = {}
     for line in f:lines() do
         local utf8 = unicode.fromcodepage(line)
         line = utf8 or line
@@ -487,13 +487,13 @@ local function check_for_update(force)
 
     -- Protect against concurrent updates.
     local guardfile = path.join(update_dir, "updating")
-    local g, err = io.sopen(guardfile, "w", "w")
+    local g, err = io.sopen(guardfile, "w", "w") -- luacheck: ignore 411
     if not g then
         return nil, log_info("unable to update because another update may be in progress; " .. err)
     end
 
     -- Attempt to update.
-    local ret, err, cloud_tag = internal_check_for_update(force)
+    local ret, err, cloud_tag = internal_check_for_update(force) -- luacheck: ignore 411
 
     -- Record last update time.
     update_lastcheck(update_dir)
@@ -510,17 +510,15 @@ local function is_update_ready(force)
         return nil, err
     end
 
-    local update_dir, err = get_update_dir()
+    local update_dir, err = get_update_dir() -- luacheck: ignore 411
     if not update_dir then
         return nil, err
     end
 
-    local ok, err = find_prereqs()
+    local ok, err = find_prereqs() -- luacheck: ignore 411
     if not ok then
         return nil, concat_error(err, log_info("autoupdate requires PowerShell v5."))
     end
-
-    local tagfile = path.join(update_dir, tag_filename)
 
     -- Download latest update file, or use update file that's already been
     -- downloaded.
@@ -548,7 +546,7 @@ local function is_update_ready(force)
     local local_tag = get_local_tag()
     local cloud_tag = latest_cloud_tag or path.getbasename(update_file)
     if not is_rhs_version_newer(get_local_tag(), cloud_tag) then
-        return nil, log_info("no update available; local version " .. local_tag .. " is not older than latest release " .. cloud_tag .. ".")
+        return nil, log_info("no update available; local version " .. local_tag .. " is not older than latest release " .. cloud_tag .. ".") -- luacheck: no max line length
     end
 
     -- Update is ready.
@@ -562,7 +560,7 @@ local function apply_zip_update(zip_file, force)
         return nil, err
     end
 
-    local update_dir, err = get_update_dir()
+    local update_dir, err = get_update_dir() -- luacheck: ignore 411
     if not update_dir then
         return nil, err
     end
@@ -581,13 +579,13 @@ local function apply_zip_update(zip_file, force)
     if os.isdir(expand_dir) then
         return nil, log_info("temp path '" .. expand_dir .. "' already exists.")
     end
-    local ok, err = os.mkdir(expand_dir)
+    local ok, err = os.mkdir(expand_dir) -- luacheck: no unused, ignore 411
     if not ok then
         return nil, log_info("unable to create temp path '" .. expand_dir .. "'.")
     end
 
     -- Expand the zip file.
-    local ok, err = unzip(zip_file, expand_dir)
+    local ok, err = unzip(zip_file, expand_dir) -- luacheck: ignore 411
     if not ok then
         local nope = log_info("failed to unzip the latest release.")
         return nil, concat_error(nope, err)
@@ -596,6 +594,7 @@ local function apply_zip_update(zip_file, force)
     -- Apply expanded files.
     local t = os.globfiles(path.join(expand_dir, "*"))
     for _, f in ipairs(t) do
+        local code
         ok, err, code = install_file(expand_dir, bin_dir, f)
         if not ok then
             local ret = nil
@@ -627,7 +626,7 @@ local function run_exe_installer(setup_exe)
         return nil, err
     end
 
-    local update_dir, err = get_update_dir()
+    local update_dir, err = get_update_dir() -- luacheck: ignore 411
     if not update_dir then
         return nil, err
     end
@@ -637,7 +636,7 @@ local function run_exe_installer(setup_exe)
     local command = setup_exe .. " /S /D=" .. bin_dir
     log_info("launching setup program '" .. command .. "'")
 -- PROBLEM:  This gets blocked by malware protection.
-    local ok, what, code = os.execute(command)
+    local ok, what, code = os.execute(command) -- luacheck: no unused
     if not ok or code ~= 0 then
         return nil, log_info(string.format("setup program %s.", ok and "canceled" or "failed"))
     end
