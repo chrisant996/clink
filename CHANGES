@@ -5,6 +5,7 @@
 #### v1.3.40
 
 - Clink now has an icon, and also includes some colored icons for color-coding your shortcut files, terminal tabs, and etc.
+- Avoid mis-coloring a directory name as though it is an argmatcher (uses a background thread to stay responsive).
 - Fixed command word completion after `:chaincommand()`.  Now <code>cmd /c&nbsp;</code><kbd>Tab</kbd> works properly.
 - Fixed `:chaincommand()` to work properly in a nested argmatcher; it should imply `:nofiles()` otherwise it can pop out to the previous argmatcher instead of chaining.
 - Fixed `cmd` argmatcher to only chain after the `/c` and `/k` flags, to more accurately match actual cmd.exe syntax.
