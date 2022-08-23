@@ -4,6 +4,7 @@
 #include "pch.h"
 #include "lua_input_idle.h"
 #include "lua_state.h"
+#include "async_lua_task.h"
 
 #include <core/base.h>
 #include <lib/reclassify.h>
@@ -132,6 +133,12 @@ void lua_input_idle::on_idle()
         s_signaled_reclassify = false;
         host_reclassify(reclassify_reason::force);
     }
+}
+
+//------------------------------------------------------------------------------
+void lua_input_idle::on_task_manager()
+{
+    task_manager_on_idle(m_state);
 }
 
 //------------------------------------------------------------------------------

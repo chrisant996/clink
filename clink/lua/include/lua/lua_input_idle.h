@@ -18,6 +18,7 @@ public:
     unsigned        get_timeout() override;
     void*           get_waitevent() override;
     void            on_idle() override;
+    void            on_task_manager() override;
 
     void            kick();
 

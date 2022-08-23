@@ -12,4 +12,5 @@ public:
     virtual unsigned    get_timeout() = 0;
     virtual void*       get_waitevent() = 0;
     virtual void        on_idle() = 0;
+    virtual void        on_task_manager() = 0;
 };

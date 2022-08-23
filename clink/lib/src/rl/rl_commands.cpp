@@ -2055,6 +2055,9 @@ int clink_diagnostics(int count, int invoking_key)
 
     host_call_lua_rl_global_function("clink._diagnostics");
 
+    extern void task_manager_diagnostics();
+    task_manager_diagnostics();
+
     rl_forced_update_display();
     return 0;
 }

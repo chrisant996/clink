@@ -86,6 +86,9 @@ private:
 };
 
 //------------------------------------------------------------------------------
+void get_lua_srcinfo(lua_State* L, str_base& out);
+
+//------------------------------------------------------------------------------
 // Dumps from pos to top of stack (use negative pos for relative position, use
 // positive pos for absolute position, or use 0 for entire stack).
 #ifdef DEBUG

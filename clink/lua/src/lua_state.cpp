@@ -703,6 +703,20 @@ save_stack_top::~save_stack_top()
 
 
 //------------------------------------------------------------------------------
+void get_lua_srcinfo(lua_State* L, str_base& out)
+{
+    lua_Debug ar = {};
+    lua_getstack(L, 1, &ar);
+    lua_getinfo(L, "Sl", &ar);
+    const char* source = ar.source ? ar.source : "?";
+
+    out.clear();
+    out.format("%s:%d", source, ar.currentline);
+}
+
+
+
+//------------------------------------------------------------------------------
 #ifdef USE_MEMORY_TRACKING
 extern "C" DECLALLOCATOR DECLRESTRICT void* __cdecl dbgluarealloc(void* pv, size_t size)
 {

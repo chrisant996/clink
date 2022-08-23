@@ -68,6 +68,8 @@ extern setting_enum g_default_bindings;
 extern "C" void reset_wcwidths();
 extern "C" int is_locked_cursor();
 extern HANDLE get_recognizer_event();
+extern HANDLE get_task_manager_event();
+extern void task_manager_on_idle();
 extern void host_refresh_recognizer();
 
 //------------------------------------------------------------------------------
@@ -706,8 +708,9 @@ void win_terminal_in::read_console(input_idle* callback)
         while (true)
         {
             unsigned count = 1;
-            HANDLE handles[4] = { m_stdin };
+            HANDLE handles[5] = { m_stdin };
             DWORD recognizer_waited = WAIT_FAILED;
+            DWORD task_manager_waited = WAIT_FAILED;
 
             if (s_interrupt)
                 handles[count++] = s_interrupt;
@@ -719,9 +722,16 @@ void win_terminal_in::read_console(input_idle* callback)
                     recognizer_waited = WAIT_OBJECT_0 + count;
                     handles[count++] = event;
                 }
+                if (void* event = get_task_manager_event())
+                {
+                    task_manager_waited = WAIT_OBJECT_0 + count;
+                    handles[count++] = event;
+                }
                 if (void* event = callback->get_waitevent())
                     handles[count++] = event;
             }
+
+            assert(count <= sizeof_array(handles));
 
             fix_console_input_mode();
 
@@ -744,6 +754,8 @@ void win_terminal_in::read_console(input_idle* callback)
             {
                 if (waited == recognizer_waited)
                     host_refresh_recognizer();
+                else if (waited == task_manager_waited)
+                    callback->on_task_manager();
                 else
                     callback->on_idle();
             }

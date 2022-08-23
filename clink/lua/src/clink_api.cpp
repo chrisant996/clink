@@ -926,6 +926,120 @@ static int recognize_command(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+static str_unordered_map<int> s_cached_path_type;
+static linear_allocator s_cached_path_store(2048);
+static std::recursive_mutex s_cached_path_type_mutex;
+void clear_path_type_cache()
+{
+    std::lock_guard<std::recursive_mutex> lock(s_cached_path_type_mutex);
+    s_cached_path_type.clear();
+    s_cached_path_store.clear();
+}
+void add_cached_path_type(const char* full, int type)
+{
+    std::lock_guard<std::recursive_mutex> lock(s_cached_path_type_mutex);
+    dbg_ignore_scope(snapshot, "add_cached_path_type");
+    unsigned int size = static_cast<unsigned int>(strlen(full) + 1);
+    char* key = static_cast<char*>(s_cached_path_store.alloc(size));
+    memcpy(key, full, size);
+    s_cached_path_type.emplace(key, type);
+}
+bool get_cached_path_type(const char* full, int& type)
+{
+    std::lock_guard<std::recursive_mutex> lock(s_cached_path_type_mutex);
+    auto& iter = s_cached_path_type.find(full);
+    if (iter == s_cached_path_type.end())
+        return false;
+    type = iter->second;
+    return true;
+}
+
+//------------------------------------------------------------------------------
+class path_type_async_lua_task : public async_lua_task
+{
+public:
+    path_type_async_lua_task(const char* key, const char* src, const char* path)
+    : async_lua_task(key, src)
+    , m_path(path)
+    {}
+
+    int get_path_type() const { return m_type; }
+
+protected:
+    void do_work() override
+    {
+        m_type = os::get_path_type(m_path.c_str());
+        add_cached_path_type(m_path.c_str(), m_type);
+    }
+
+private:
+    str_moveable m_path;
+    int m_type = os::path_type_invalid;
+};
+
+//------------------------------------------------------------------------------
+// UNDOCUMENTED; internal use only.
+static int async_path_type(lua_State* state)
+{
+    const char* path = checkstring(state, 1);
+    int timeout = optinteger(state, 2, 0);
+    if (!path || !*path)
+        return 0;
+
+    str<280> full;
+    os::get_full_path_name(path, full);
+
+    int type;
+    if (!get_cached_path_type(full.c_str(), type))
+    {
+        str_moveable key;
+        key.format("async||%s", full.c_str());
+        std::shared_ptr<async_lua_task> task = find_async_lua_task(key.c_str());
+        bool created = !task;
+        if (!task)
+        {
+            str<> src;
+            get_lua_srcinfo(state, src);
+
+            task = std::make_shared<path_type_async_lua_task>(key.c_str(), src.c_str(), full.c_str());
+            if (task && lua_isfunction(state, 3))
+            {
+                lua_pushvalue(state, 3);
+                int ref = luaL_ref(state, LUA_REGISTRYINDEX);
+                task->set_callback(std::make_shared<callback_ref>(ref));
+            }
+
+            add_async_lua_task(task);
+        }
+
+        if (timeout)
+            WaitForSingleObject(task->get_wait_handle(), timeout);
+
+        if (!task->is_complete())
+            return 0;
+
+        std::shared_ptr<path_type_async_lua_task> pt_task = std::dynamic_pointer_cast<path_type_async_lua_task>(task);
+        if (!pt_task)
+            return 0;
+
+        pt_task->disable_callback();
+
+        type = pt_task->get_path_type();
+    }
+
+    const char* ret = nullptr;
+    switch (type)
+    {
+    case os::path_type_file:    ret = "file"; break;
+    case os::path_type_dir:     ret = "dir"; break;
+    default:                    return 0;
+    }
+
+    lua_pushstring(state, ret);
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 /// -name:  clink.recognizecommand
 /// -ver:   1.3.38
 /// -arg:   [line:string]
@@ -1301,6 +1415,7 @@ void clink_lua_initialise(lua_state& lua)
         { "kick_idle",              &kick_idle },
         { "matches_ready",          &matches_ready },
         { "_recognize_command",     &recognize_command },
+        { "_async_path_type",       &async_path_type },
         { "_generate_from_history", &generate_from_history },
         { "_reset_generate_matches", &api_reset_generate_matches },
         { "_mark_deprecated_argmatcher", &mark_deprecated_argmatcher },

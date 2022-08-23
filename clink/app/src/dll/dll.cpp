@@ -124,6 +124,9 @@ static void shutdown_clink()
         g_host = nullptr;
     }
 
+    extern void shutdown_task_manager();
+    shutdown_task_manager();
+
     extern void shutdown_recognizer();
     shutdown_recognizer();
 
