@@ -1628,23 +1628,25 @@ Here is an example of a simple parser for the command `foobar`;
 
 ```lua
 clink.argmatcher("foobar")
-:addflags("-foo", "-bar")          -- Flags.
-:addarg({ "hello", "hi" })         -- Completions for arg #1.
-:addarg({ "world", "wombles" })    -- Completions for arg #2.
+:addflags("-foo", "-bar")                   -- Flags.
+:addarg({ "hello", "hi" })                  -- Completions for arg #1.
+:addarg({ "world", "wombles", "xyzzy" })    -- Completions for arg #2.
 ```
 
-This parser describes a command that has two positional arguments each with two possible completions. It also has two flags which the parser considers to be position independent, meaning that provided the word being completed starts with the prefix character (in this example `-`) then the parser will attempt to match the word from the set of flags.
+This parser describes a command that has two positional arguments; the first has two possible completions and the second has three possible completions. It also has two flags which the parser considers to be position independent, meaning that provided the word being completed starts with the prefix character (in this example `-`) then the parser will attempt to match the word from the set of flags.
 
 On the command line completion would look something like this:
 
 <pre style="border-radius:initial;border:initial"><code class="plaintext" style="background-color:black;color:#cccccc">C:\&gt;foobar hello -foo wo
-wombles  wonder  world
+wombles  world
 C:\&gt;foobar hello -foo wo<span style="color:#ffffff">_</span>
 </code></pre>
 
 When displaying possible completions, flag matches are only shown if the flag character has been input (so `command ` and <kbd>Alt</kbd>-<kbd>=</kbd> would list only non-flag matches, or `command -` and <kbd>Alt</kbd>-<kbd>=</kbd> would list only flag matches).
 
 If a command doesn't have an argmatcher but is a doskey macro, Clink automatically expands the doskey macro and looks for an argmatcher for the expanded command.  A macro like `gco=git checkout $*` automatically reuses a `git` argmatcher and produces completions for its `checkout` argument.  However, it only expands the doskey macro up to the first `$`, so complex aliases like `foo=app 2$gnul text $*` or `foo=$2 $1` might behave strangely.
+
+Also see [clink.argmatcher()](#clink.argmatcher), [:addflags()](#_argmatcher:addflags) and [:addarg()](#_argmatcher:addarg).
 
 <a name="argmatcher_autofiles"></a>
 
@@ -1772,7 +1774,7 @@ the_parser:addarg({ "zippy", "bungle", "george" })
 the_parser:addarg({ rainbow_function, "yellow", "green" })
 ```
 
-The functions are passed five arguments, and should return a table of potential matches.
+The functions are passed five arguments, and should return a table of potential matches (strings).  The table may optionally also contain tables that describe the matches; the format is the same as in [builder:addmatches()](#builder:addmatches).
 
 - `word` is a partial string for the word under the cursor, corresponding to the argument for which matches are being generated:  it is an empty string, or if a filename is being entered then it will be the path portion (e.g. for "dir1\dir2\pre" `word` will be "dir1\dir2\").
 - `word_index` is the word index in `line_state`, corresponding to the argument for which matches are being generated.
