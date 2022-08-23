@@ -39,7 +39,7 @@ local function _do_filter_prompt(type, prompt, rprompt, line, cursor, final)
     local right_filter_func_name = type.."rightfilter"
 
     -- Protected call to prompt filters.
-    local impl = function(prompt, rprompt)
+    local impl = function(prompt, rprompt) -- luacheck: ignore 432
         local filtered, onwards
         for _, filter in ipairs(prompt_filters) do
             set_current_prompt_filter(filter)
@@ -166,7 +166,7 @@ end
 clink.prompt = clink.prompt or {}
 function clink.prompt.register_filter(filter, priority)
     local o = clink.promptfilter(priority)
-    function o:filter(the_prompt)
+    function o:filter(the_prompt) -- luacheck: no self
         clink.prompt.value = the_prompt
         local stop = filter(the_prompt)
         return clink.prompt.value, not stop
@@ -278,12 +278,10 @@ function clink.promptcoroutine(func)
     local entry = prompt_filter_coroutines[prompt_filter_current]
     if entry == nil then
         local info = debug.getinfo(func, 'S')
-        src=info.short_src..":"..info.linedefined
+        local src=info.short_src..":"..info.linedefined
 
         entry = { done=false, refilter=false, result=nil, src=src }
         prompt_filter_coroutines[prompt_filter_current] = entry
-
-        local async = settings.get("prompt.async")
 
         -- Wrap the supplied function to track completion and end result.
         coroutine.override_src(func)
@@ -296,6 +294,8 @@ function clink.promptcoroutine(func)
             entry.refilter = true
             entry.result = o
         end)
+
+        local async = settings.get("prompt.async")
 
         if async then
             -- Add the coroutine.

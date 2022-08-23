@@ -10,7 +10,6 @@ clink._event_callbacks = clink._event_callbacks or {}
 function clink._send_event(event, ...)
     local callbacks = clink._event_callbacks[event]
     if callbacks ~= nil then
-        local _, func
         for _, func in ipairs(callbacks) do
             func(...)
         end
@@ -23,9 +22,8 @@ end
 function clink._send_event_string_out(event, ...)
     local callbacks = clink._event_callbacks[event]
     if callbacks ~= nil then
-        local _, func, s
         for _, func in ipairs(callbacks) do
-            s = func(...)
+            local s = func(...)
             if type(s) == "string" then
                 return s
             end
@@ -40,7 +38,6 @@ end
 function clink._send_event_cancelable(event, ...)
     local callbacks = clink._event_callbacks[event]
     if callbacks ~= nil then
-        local _, func
         for _, func in ipairs(callbacks) do
             if func(...) == false then
                 return
@@ -57,7 +54,6 @@ end
 function clink._send_event_cancelable_string_inout(event, string)
     local callbacks = clink._event_callbacks[event]
     if callbacks ~= nil then
-        local _, func
         for _, func in ipairs(callbacks) do
             local s,continue = func(string)
             if s then
@@ -286,7 +282,6 @@ function clink._send_onfiltermatches_event(matches, completion_type, filename_co
     local ret = nil
     local callbacks = clink._event_callbacks["onfiltermatches"]
     if callbacks ~= nil then
-        local _, func
         for _, func in ipairs(callbacks) do
             local m = func(matches, completion_type, filename_completion_desired)
             if m ~= nil then

@@ -19,7 +19,7 @@ end
 
 --------------------------------------------------------------------------------
 function clink._menu_complete_numbers()
-    local last_rl_func, last_lua_func = rl.getlastcommand()
+    local _, last_lua_func = rl.getlastcommand()
     if last_lua_func ~= "clink._menu_complete_numbers" and
             last_lua_func ~= "clink._menu_complete_numbers_backward" then
         collect_number_matches()
@@ -29,7 +29,7 @@ end
 
 --------------------------------------------------------------------------------
 function clink._menu_complete_numbers_backward()
-    local last_rl_func, last_lua_func = rl.getlastcommand()
+    local _, last_lua_func = rl.getlastcommand()
     if last_lua_func ~= "clink._menu_complete_numbers" and
             last_lua_func ~= "clink._menu_complete_numbers_backward" then
         collect_number_matches()
@@ -39,7 +39,7 @@ end
 
 --------------------------------------------------------------------------------
 function clink._old_menu_complete_numbers()
-    local last_rl_func, last_lua_func = rl.getlastcommand()
+    local _, last_lua_func = rl.getlastcommand()
     if last_lua_func ~= "clink._old_menu_complete_numbers" and
             last_lua_func ~= "clink._old_menu_complete_numbers_backward" then
         collect_number_matches()
@@ -49,7 +49,7 @@ end
 
 --------------------------------------------------------------------------------
 function clink._old_menu_complete_numbers_backward()
-    local last_rl_func, last_lua_func = rl.getlastcommand()
+    local _, last_lua_func = rl.getlastcommand()
     if last_lua_func ~= "clink._old_menu_complete_numbers" and
             last_lua_func ~= "clink._old_menu_complete_numbers_backward" then
         collect_number_matches()
@@ -71,14 +71,12 @@ function clink._popup_show_help(rl_buffer)
         return
     end
 
-    local arg = rl_buffer:getargument()
-
     local items = {}
     for _,kb in ipairs(bindings) do
         table.insert(items, { value=kb.binding, display=kb.key, description=kb.binding.."\t"..kb.desc })
     end
 
-    local binding, _, index = clink.popuplist("Key Bindings", items)
+    local binding = clink.popuplist("Key Bindings", items)
     rl_buffer:refreshline()
     if binding then
         rl_buffer:setargument()

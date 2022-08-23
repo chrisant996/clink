@@ -35,7 +35,7 @@ local function parse_percents(word)
 end
 
 --------------------------------------------------------------------------------
-function envvar_generator:generate(line_state, match_builder)
+function envvar_generator:generate(line_state, match_builder) -- luacheck: no self
     -- Does the word end with a percent sign?
     local word = line_state:getendword()
     if word:sub(-1) ~= "%" then
@@ -44,7 +44,7 @@ function envvar_generator:generate(line_state, match_builder)
 
     -- If expanding envvars, test whether there's an unterminated envvar.
     if settings.get("match.expand_envvars") then
-        local in_out, index = parse_percents(word)
+        local in_out = parse_percents(word)
         if not in_out then
             return false
         end
@@ -66,7 +66,7 @@ function envvar_generator:generate(line_state, match_builder)
 end
 
 --------------------------------------------------------------------------------
-function envvar_generator:getwordbreakinfo(line_state)
+function envvar_generator:getwordbreakinfo(line_state) -- luacheck: no self
     local word = line_state:getendword()
     local in_out, index = parse_percents(word)
 

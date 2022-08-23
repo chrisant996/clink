@@ -15,12 +15,12 @@ end
 
 --------------------------------------------------------------------------------
 -- Returns true when canceled; otherwise nil.
-local function _do_suggest(line, lines, matches)
+local function _do_suggest(line, lines, matches) -- luacheck: no unused
     -- Reset cancel flag.
     _cancel = nil
 
     -- Protected call to suggesters.
-    local impl = function(line, matches)
+    local impl = function(line, matches) -- luacheck: ignore 432
         local suggestion, offset
         local strategy = settings.get("autosuggest.strategy"):explode()
         for _, name in ipairs(strategy) do
@@ -218,7 +218,7 @@ end
 
 
 --------------------------------------------------------------------------------
-local function suffix(line, suggestion, minlen)
+local function suffix(line, suggestion, minlen) -- luacheck: no unused
     if suggestion then
         local info = line:getwordinfo(line:getwordcount())
         local endword = line:getline():sub(info.offset, line:getcursor())
@@ -231,19 +231,19 @@ end
 
 --------------------------------------------------------------------------------
 local history_suggester = clink.suggester("history")
-function history_suggester:suggest(line, matches)
+function history_suggester:suggest(line, matches) -- luacheck: no unused
     return clink.history_suggester(line:getline(), false)
 end
 
 --------------------------------------------------------------------------------
 local prevcmd_suggester = clink.suggester("match_prev_cmd")
-function prevcmd_suggester:suggest(line, matches)
+function prevcmd_suggester:suggest(line, matches) -- luacheck: no unused
     return clink.history_suggester(line:getline(), true)
 end
 
 --------------------------------------------------------------------------------
 local completion_suggester = clink.suggester("completion")
-function completion_suggester:suggest(line, matches)
+function completion_suggester:suggest(line, matches) -- luacheck: no unused
     local count = line:getwordcount()
     if count > 0 then
         local info = line:getwordinfo(count)

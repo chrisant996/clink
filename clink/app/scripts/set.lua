@@ -8,7 +8,7 @@
 local set_generator = clink.generator(41)
 
 --------------------------------------------------------------------------------
-function set_generator:generate(line_state, match_builder)
+function set_generator:generate(line_state, match_builder) -- luacheck: no unused
     if line_state:getwordcount() ~= 2 then
         return false
     end

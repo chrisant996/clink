@@ -21,7 +21,7 @@ end
 
 --------------------------------------------------------------------------------
 -- This returns the file and line for the top stack frame, starting at start.
-function _get_top_frame(start, max)
+local function _get_top_frame(start, max)
     if not start or type(start) ~= "number" or start < 1 then
         start = 1
     end
@@ -33,7 +33,7 @@ function _get_top_frame(start, max)
 
     local file, line
     for f = start, max, 1 do
-        t = debug.getinfo(f, "Sl")
+        local t = debug.getinfo(f, "Sl")
         if not t then
             if file and line then
                 return file, line
@@ -89,8 +89,6 @@ end
 --------------------------------------------------------------------------------
 -- This is the error handler used for reporting coroutine errors.
 function _co_error_handler(co, message)
-    local trc = settings.get("lua.traceback_on_error")
-    local brk = _can_pause and settings.get("lua.break_on_error")
     if settings.get("lua.traceback_on_error") or
             (_can_pause and settings.get("lua.break_on_error")) then
         print(debug.traceback(co, message))
@@ -110,7 +108,7 @@ function _compat_warning(message, suffix)
     suffix = suffix or ""
 
     local compat = os.getenv("CLINK_COMPAT_WARNINGS")
-    compact = compat and tonumber(compat) or 1
+    compat = compat and tonumber(compat) or 1
 
     log.info(debug.traceback(message..suffix, 2)) -- 2 omits this function.
 
@@ -135,7 +133,7 @@ end
 --- -arg:   ql:string
 --- -arg:   qr:string
 --- -ret:   table
-function clink.quote_split(str, ql, qr)
+function clink.quote_split(str, ql, qr) -- luacheck: no unused
     _compat_warning("clink.quote_split() is not supported.")
     return {}
 end

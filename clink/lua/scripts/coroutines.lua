@@ -1,10 +1,11 @@
 -- Copyright (c) 2021 Christopher Antos
 -- License: http://opensource.org/licenses/MIT
 
+-- luacheck: max line length 150
+
 --------------------------------------------------------------------------------
 clink = clink or {}
 local _coroutines = {}
-local _coroutines_created = {}          -- Remembers creation info for each coroutine, for use by clink.addcoroutine.
 local _after_coroutines = {}            -- Funcs to run after a pass resuming coroutines.
 local _coroutines_resumable = false     -- When false, coroutines will no longer run.
 local _coroutine_yieldguard = {}        -- Which coroutine is yielding inside popenyield, for a given category of coroutines.
@@ -60,7 +61,6 @@ local function clear_coroutines()
     end
 
     _coroutines = {}
-    _coroutines_created = {}
     _after_coroutines = {}
     _coroutines_resumable = false
     -- Don't touch _coroutine_yieldguard; it only gets cleared when the thread finishes.
@@ -89,9 +89,9 @@ local function release_coroutine_yieldguard()
                 table.insert(nil_cats, category)
                 -- TODO: This is an arbitrary order, but the dequeue order
                 -- should ideally be FIFO.
-                for _,entry in pairs(_coroutines) do
-                    if entry.queued and entry.category == category then
-                        entry.queued = nil
+                for _,e in pairs(_coroutines) do
+                    if e.queued and e.category == category then
+                        e.queued = nil
                         break
                     end
                 end
@@ -207,7 +207,7 @@ function clink._wait_duration()
         release_coroutine_yieldguard()  -- Dequeue next if necessary.
         for _,entry in pairs(_coroutines) do
             local this_target = next_entry_target(entry, now)
-            if entry.yieldguard or entry.queued then
+            if entry.yieldguard or entry.queued then -- luacheck: ignore 542
                 -- Yield until output is ready; don't influence the timeout.
             elseif not target or target > this_target then
                 target = this_target
@@ -233,8 +233,10 @@ function clink._resume_coroutines()
 
     -- Protected call to resume coroutines.
     local remove = {}
+    local co
     local impl = function()
         for c,entry in pairs(_coroutines) do
+            co = c
             if coroutine.status(c) == "dead" then
                 table.insert(remove, c)
             elseif not check_generation(c) and not entry.yieldguard then
@@ -285,7 +287,7 @@ function clink._resume_coroutines()
     if not ok then
         print("")
         print("coroutine failed:")
-        _co_error_handler(c, ret)
+        _co_error_handler(co, ret)
         -- Don't return yet!  Need to do cleanup.
     end
 
@@ -375,7 +377,7 @@ end
 --------------------------------------------------------------------------------
 local function table_has_elements(t)
     if t then
-        for _ in pairs(t) do
+        for _ in pairs(t) do -- luacheck: ignore 512
             return true
         end
     end
@@ -418,8 +420,6 @@ function clink._diag_coroutines()
 
     local mixed_gen = false
     local show_gen = false
-    local threads = {}
-    local deadthreads = {}
     local max_resumed_len = 0
     local max_freq_len = 0
 
@@ -460,7 +460,7 @@ function clink._diag_coroutines()
             end
             if t.entry.canceled then
                 status = status..cyan.."canceled"..plain.."  "
-            else
+            else -- luacheck: ignore 542
                 -- TODO: Show when throttled.
             end
             local res = "resumed "..str_rpad(t.resumed, max_resumed_len)
@@ -473,6 +473,9 @@ function clink._diag_coroutines()
             end
         end
     end
+
+    local threads = {}
+    local deadthreads = {}
 
     collect_diag(_coroutines, threads)
     if _dead then
@@ -614,7 +617,7 @@ function clink.removecoroutine(c)
         end
         _coroutines[c] = nil
         _coroutines_resumable = false
-        for _ in pairs(_coroutines) do
+        for _ in pairs(_coroutines) do -- luacheck: ignore 512
             _coroutines_resumable = true
             break
         end
@@ -918,7 +921,7 @@ end
 
 --------------------------------------------------------------------------------
 local orig_coroutine_create = coroutine.create
-function coroutine.create(func)
+function coroutine.create(func) -- luacheck: ignore 122
     -- Get src of func.
     local src = override_coroutine_src_func or func
     if src then
@@ -962,7 +965,7 @@ end
 
 --------------------------------------------------------------------------------
 local orig_coroutine_resume = coroutine.resume
-function coroutine.resume(co, ...)
+function coroutine.resume(co, ...) -- luacheck: ignore 122
     local entry = _coroutines[co]
     restore_coroutine_state(entry, co)
 

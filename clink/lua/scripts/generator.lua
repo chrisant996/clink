@@ -82,7 +82,7 @@ local function is_dots(word)
 end
 
 --------------------------------------------------------------------------------
-function file_match_generator:generate(line_state, match_builder)
+function file_match_generator:generate(line_state, match_builder) -- luacheck: no self
     local root = line_state:getendword()
     if root == "~" then
         root = path.join(root, "")
@@ -92,12 +92,12 @@ function file_match_generator:generate(line_state, match_builder)
 end
 
 --------------------------------------------------------------------------------
-function file_match_generator:getwordbreakinfo(line_state)
+function file_match_generator:getwordbreakinfo(line_state) -- luacheck: no self
     local endword = line_state:getendword()
     local keep = #endword
-    if endword == "~" then
+    if endword == "~" then -- luacheck: ignore 542
         -- Tilde by itself should be expanded, so keep the whole word.
-    elseif is_dots(endword) then
+    elseif is_dots(endword) then -- luacheck: ignore 542
         -- `.` or `..` should be kept so that matches can include `.` or
         -- `..` directories.  Bash includes `.` and `..` but only when those
         -- match typed text (i.e. when there's no input text, they are not
@@ -130,7 +130,7 @@ local function cancel_match_generate_coroutine()
 end
 
 --------------------------------------------------------------------------------
-function clink._make_match_generate_coroutine(line, lines, matches, builder, generation_id)
+function clink._make_match_generate_coroutine(line, lines, matches, builder, generation_id) -- luacheck: no unused
     -- Bail if there's already a match generator coroutine running.
     if _match_generate_state.coroutine then
         return
@@ -409,9 +409,9 @@ function clink.match_files(pattern, full_path, find_func)
 
     -- Get glob's base.
     local base = ""
-    local i = pattern:find("[\\:][^\\:]*$")
-    if i and full_path then
-        base = pattern:sub(1, i)
+    local pos = pattern:find("[\\:][^\\:]*$")
+    if pos and full_path then
+        base = pattern:sub(1, pos)
     end
 
     -- Match them.
@@ -558,7 +558,7 @@ end
 --- -show:  end
 function clink.register_match_generator(func, priority)
     local g = clink.generator(priority)
-    function g:generate(line_state, match_builder)
+    function g:generate(line_state, match_builder) -- luacheck: no unused
         local text = line_state:getendword()
         local info = line_state:getwordinfo(line_state:getwordcount())
         local first = info.offset

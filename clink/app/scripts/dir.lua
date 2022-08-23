@@ -5,7 +5,7 @@
 -- NOTE: If you add any settings here update set.cpp to load (lua, app, dir).
 
 --------------------------------------------------------------------------------
-local function get_dir_arg(word, word_index, line_state)
+local function get_dir_arg(word, word_index, line_state) -- luacheck: no unused
     local info = line_state:getwordinfo(word_index)
     if info and info.offset + info.length < line_state:getcursor() then
         local ws = info.offset
@@ -19,7 +19,7 @@ local function get_dir_arg(word, word_index, line_state)
 end
 
 --------------------------------------------------------------------------------
-local function onarg_cd(arg_index, word, word_index, line_state)
+local function onarg_cd(arg_index, word, word_index, line_state) -- luacheck: no unused
     -- Match generation after this may be relative to the new directory.
     local dir = get_dir_arg(word, word_index, line_state)
     if dir then
@@ -37,7 +37,7 @@ local function onarg_cd(arg_index, word, word_index, line_state)
 end
 
 --------------------------------------------------------------------------------
-local function onarg_pushd(arg_index, word, word_index, line_state)
+local function onarg_pushd(arg_index, word, word_index, line_state) -- luacheck: no unused
     -- Match generation after this is relative to the new directory.
     local dir = get_dir_arg(word, word_index, line_state)
     if dir then

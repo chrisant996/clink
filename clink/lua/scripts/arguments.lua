@@ -4,6 +4,8 @@
 ------------------------------------------------------------------------------
 -- NOTE: If you add any settings here update set.cpp to load (lua, lib, arguments).
 
+-- luacheck: no max line length
+
 --------------------------------------------------------------------------------
 local _arglink = {}
 _arglink.__index = _arglink
@@ -235,7 +237,7 @@ end
 -- NEXT word in the line.
 --
 -- Returns TRUE when chaining due to chaincommand().
-function _argreader:update(word, word_index, skip_last)
+function _argreader:update(word, word_index, skip_last) -- luacheck: no unused
     local arg_match_type = "a" --arg
     local line_state = self._line_state
 
@@ -406,7 +408,7 @@ function _argreader:update(word, word_index, skip_last)
 
     -- Parse the word type.
     if self._word_classifier and word_index >= 0 then
-        if matcher._classify_func and matcher._classify_func(arg_index, word, word_index, line_state, self._word_classifier) then
+        if matcher._classify_func and matcher._classify_func(arg_index, word, word_index, line_state, self._word_classifier) then -- luacheck: ignore 542
             -- The classifier function says it handled the word.
         else
             -- Use the argmatcher's data to classify the word.
@@ -474,7 +476,7 @@ function _argreader:update(word, word_index, skip_last)
                             end
                             t = nil
                         else
-                            t, matched = is_word_present(word, arg, t, arg_match_type)
+                            t, matched = is_word_present(word, arg, t, arg_match_type) -- luacheck: no unused
                         end
                     end
                 end
@@ -1446,9 +1448,8 @@ function _argmatcher:_generate(line_state, match_builder, extra_words)
 
     -- Are we left with a valid argument that can provide matches?
     local add_matches -- Separate decl and init to enable recursion.
-    add_matches = function(arg, match_type)
+    add_matches = function(arg, match_type) -- luacheck: ignore 431
         local descs = matcher._descriptions
-        local is_arg_type = match_type == "arg"
         local make_match = function(key)
             local m = {}
             local t = type(key)
@@ -1925,6 +1926,7 @@ local function attempt_load_argmatcher(command_word)
 
     -- What to look for.
     local primary = path.getname(command_word)..".lua"
+    local secondary
     if path.isexecext(command_word) then
         secondary = path.getbasename(command_word)
         if secondary == "" then
@@ -1979,7 +1981,7 @@ local function _has_argmatcher(command_word)
     -- that could be excessively expensive (could queue thousands of lookups).
     if not (clink.co_state._argmatcher_fromhistory and clink.co_state._argmatcher_fromhistory.argmatcher) then
         -- Pass true because argmatcher lookups always treat ^ literally.
-        local _, ready, file = clink.recognizecommand(command_word, true)
+        local _, _, file = clink.recognizecommand(command_word, true)
         if file then
             command_word = file
         end
@@ -2110,7 +2112,7 @@ local function _find_argmatcher(line_state, check_existence, lookup)
     -- that could be excessively expensive (could queue thousands of lookups).
     if not (clink.co_state._argmatcher_fromhistory and clink.co_state._argmatcher_fromhistory.argmatcher) then
         -- Pass true because argmatcher lookups always treat ^ literally.
-        local _, ready, file = clink.recognizecommand(command_word, true)
+        local _, _, file = clink.recognizecommand(command_word, true)
         if file then
             command_word = file
         end
@@ -2156,7 +2158,7 @@ end
 function clink._generate_from_historyline(line_state)
     local lookup
 ::do_command::
-    local argmatcher, has_argmatcher, extra_words = _find_argmatcher(line_state, nil, lookup)
+    local argmatcher, has_argmatcher, extra_words = _find_argmatcher(line_state, nil, lookup) -- luacheck: no unused
     if not argmatcher or argmatcher ~= clink.co_state._argmatcher_fromhistory_root then
         return
     end
@@ -2201,8 +2203,8 @@ local argmatcher_classifier = clink.classifier(clink.argmatcher_generator_priori
 local function do_generate(line_state, match_builder)
     local lookup
 ::do_command::
-    local argmatcher, has_argmatcher, extra_words = _find_argmatcher(line_state, nil, lookup)
-    lookup = nil
+    local argmatcher, has_argmatcher, extra_words = _find_argmatcher(line_state, nil, lookup) -- luacheck: no unused
+    lookup = nil -- luacheck: ignore 311
     if argmatcher then
         clink.co_state._argmatcher_fromhistory = {}
         clink.co_state._argmatcher_fromhistory_root = argmatcher
@@ -2221,7 +2223,7 @@ local function do_generate(line_state, match_builder)
 end
 
 --------------------------------------------------------------------------------
-function argmatcher_generator:generate(line_state, match_builder)
+function argmatcher_generator:generate(line_state, match_builder) -- luacheck: no unused
     if clink.co_state.argmatcher_line_states then
         local num = #clink.co_state.argmatcher_line_states - 1
         for i = 1, num do
@@ -2234,10 +2236,10 @@ function argmatcher_generator:generate(line_state, match_builder)
 end
 
 --------------------------------------------------------------------------------
-function argmatcher_generator:getwordbreakinfo(line_state)
+function argmatcher_generator:getwordbreakinfo(line_state) -- luacheck: no self
     local lookup
 ::do_command::
-    local argmatcher, has_argmatcher, extra_words = _find_argmatcher(line_state, nil, lookup)
+    local argmatcher, has_argmatcher, extra_words = _find_argmatcher(line_state, nil, lookup) -- luacheck: no unused
     lookup = nil
     if argmatcher then
         local reader = _argreader(argmatcher, line_state)
@@ -2303,7 +2305,7 @@ function argmatcher_generator:getwordbreakinfo(line_state)
 end
 
 --------------------------------------------------------------------------------
-function argmatcher_classifier:classify(commands)
+function argmatcher_classifier:classify(commands) -- luacheck: no self
     local unrecognized_color = settings.get("color.unrecognized") ~= ""
     local executable_color = settings.get("color.executable") ~= ""
     for _,command in ipairs(commands) do
@@ -2405,7 +2407,7 @@ function clink._diag_argmatchers()
     clink.print(bold.."argmatchers:"..norm)
 
     local width = 0
-    for k,v in pairs(_argmatchers) do
+    for k,_ in pairs(_argmatchers) do
         if width < #k then
             width = #k
         end

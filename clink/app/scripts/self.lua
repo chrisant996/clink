@@ -178,7 +178,8 @@ local function color_handler(word_index, line_state, classify)
                 break
             end
             include_underline = false
-        elseif is_prefix3(word, "default", "normal", "black", "red", "green", "yellow", "blue", "cyan", "magenta", "white") then
+        elseif is_prefix3(word, "default", "normal", "black", "red", "green",
+                          "yellow", "blue", "cyan", "magenta", "white") then
             if not include_color then
                 invalid = true
                 break
@@ -256,19 +257,18 @@ local function color_handler(word_index, line_state, classify)
 end
 
 --------------------------------------------------------------------------------
-local function set_handler(match_word, word_index, line_state)
+local function set_handler(match_word, word_index, line_state) -- luacheck: no unused
     return settings.list()
 end
 
 --------------------------------------------------------------------------------
-local function value_handler(match_word, word_index, line_state, builder, classify)
-    local name = ""
+local function value_handler(match_word, word_index, line_state, builder, classify) -- luacheck: no unused
     if word_index <= 3 then
         return
     end
 
     -- Use relative positioning to get the word, in case flags were used.
-    name = line_state:getword(word_index - 1)
+    local name = line_state:getword(word_index - 1)
     local info = settings.list(name)
     if not info then
         return
@@ -390,7 +390,7 @@ local installscripts = clink.argmatcher()
 :nofiles()
 
 --------------------------------------------------------------------------------
-local function uninstall_handler(match_word, word_index, line_state)
+local function uninstall_handler(match_word, word_index, line_state) -- luacheck: no unused
     local ret = {}
     for line in io.popen('"'..CLINK_EXE..'" uninstallscripts --list', "r"):lines() do
         table.insert(ret, line)
@@ -446,7 +446,7 @@ clink.argmatcher(
 --------------------------------------------------------------------------------
 local set_generator = clink.generator(clink.argmatcher_generator_priority - 1)
 
-function set_generator:generate(line_state, match_builder)
+function set_generator:generate(line_state, match_builder) -- luacheck: no self
     local first_word = clink.lower(path.getname(line_state:getword(1)))
     if path.getbasename(first_word) ~= "clink" and first_word ~= "clink_x64.exe" and first_word ~= "clink_x86.exe" then
         return
@@ -455,8 +455,8 @@ function set_generator:generate(line_state, match_builder)
     local index = 2
     while index < line_state:getwordcount() do
         local word = line_state:getword(index)
-        if word == "--help" then
-        elseif word == "--version" then
+        if word == "--help" then -- luacheck: ignore 542
+        elseif word == "--version" then -- luacheck: ignore 542
         elseif word == "--profile" then
             index = index + 1
         else

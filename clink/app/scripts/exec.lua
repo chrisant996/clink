@@ -46,19 +46,6 @@ local function get_environment_paths()
 end
 
 --------------------------------------------------------------------------------
-local function exec_find_dirs(pattern, case_map)
-    local ret = {}
-
-    for _, dir in ipairs(clink.find_dirs(pattern, case_map)) do
-        if dir ~= "." and dir ~= ".." then
-            table.insert(ret, dir)
-        end
-    end
-
-    return ret
-end
-
---------------------------------------------------------------------------------
 local exec_generator = clink.generator(50)
 
 local function exec_matches(line_state, match_builder, chained)
@@ -127,7 +114,7 @@ local function exec_matches(line_state, match_builder, chained)
         paths = {}
     end
 
-    local co, ismain = coroutine.running()
+    local _, ismain = coroutine.running()
 
     local add_files = function(pattern, rooted)
         local any_added = false
@@ -147,6 +134,8 @@ local function exec_matches(line_state, match_builder, chained)
         return any_added
     end
 
+    local added = false
+
     -- Include files.
     if settings.get("exec.files") then
         match_cwd = false
@@ -154,7 +143,6 @@ local function exec_matches(line_state, match_builder, chained)
     end
 
     -- Search 'paths' for files ending in 'suffices' and look for matches.
-    local added = false
     local suffices = (os.getenv("pathext") or ""):explode(";")
     for _, suffix in ipairs(suffices) do
         for _, dir in ipairs(paths) do
@@ -183,7 +171,7 @@ local function exec_matches(line_state, match_builder, chained)
     return true
 end
 
-function exec_generator:generate(line_state, match_builder)
+function exec_generator:generate(line_state, match_builder) -- luacheck: no self
     if line_state:getwordcount() <= 1 then
         return exec_matches(line_state, match_builder)
     end
