@@ -1277,10 +1277,9 @@ local function merge_parsers(lhs, rhs)
     local rlinks = rhs_arg_1._links or {}
     for _, rarg in ipairs(rhs_arg_1) do
         local key
-        if type(key) == "table" then
-            key = key.match
-        end
-        if not key then
+        if type(rarg) == "table" then
+            key = rarg.match or rarg
+        else
             key = rarg
         end
 
