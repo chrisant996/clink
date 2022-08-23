@@ -4,6 +4,7 @@
 
 #### v1.3.40
 
+- Clink now includes `clink_icons.dll` with a custom designed icon in 8 colors (including gray) for color-coding your shortcut files, terminal tabs, and etc.
 - Fixed command word completion after `:chaincommand()`.  Now <code>cmd /c&nbsp;</code><kbd>Tab</kbd> works properly.
 - Fixed `:chaincommand()` to work properly in a nested argmatcher; it should imply `:nofiles()` otherwise it can pop out to the previous argmatcher instead of chaining.
 - Fixed `cmd` argmatcher to only chain after the `/c` and `/k` flags, to more accurately match actual cmd.exe syntax.
