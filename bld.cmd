@@ -77,6 +77,33 @@ if exist *.sln (
 :gotsln
 goto :doarg
 
+:findsln
+if exist %__SLN% (
+	set __SLN="%__SLN%"
+	goto :nextarg
+) else if exist %__SLN%.sln (
+	set __SLN="%__SLN%.sln"
+	goto :nextarg
+) else if exist .build\vs2019\%__SLN% (
+	set __SLN=".build\vs2019\%__SLN%"
+	set __MSBUILD="%ProgramFiles(x86)%\Microsoft Visual Studio\2019\Enterprise\MSBuild\Current\Bin\MSBuild.exe"
+	goto :nextarg
+) else if exist .build\vs2019\%__SLN%.sln (
+	set __SLN=".build\vs2019\%__SLN%.sln"
+	set __MSBUILD="%ProgramFiles(x86)%\Microsoft Visual Studio\2019\Enterprise\MSBuild\Current\Bin\MSBuild.exe"
+	goto :nextarg
+) else if exist .build\vs2017\%__SLN% (
+	set __SLN=".build\vs2017\%__SLN%"
+	set __MSBUILD="%ProgramFiles(x86)%\Microsoft Visual Studio\2019\Enterprise\MSBuild\15.0\Bin\MSBuild.exe"
+	goto :nextarg
+) else if exist .build\vs2017\%__SLN%.sln (
+	set __SLN=".build\vs2017\%__SLN%.sln"
+	set __MSBUILD="%ProgramFiles(x86)%\Microsoft Visual Studio\2019\Enterprise\MSBuild\15.0\Bin\MSBuild.exe"
+	goto :nextarg
+)
+echo Unable to find solution '%__SLN%'.
+exit /b 1
+
 rem -- Get next arg.
 
 :nextarg
@@ -114,6 +141,8 @@ if "%1" == "/t" ( set __TARGETS=%__TARGETS% -t:%2&shift&goto :nextarg )
 if "%1" == "-t" ( set __TARGETS=%__TARGETS% -t:%2&shift&goto :nextarg )
 if "%1" == "/target" ( set __TARGETS=%__TARGETS% -t:%2&shift&goto :nextarg )
 if "%1" == "--target" ( set __TARGETS=%__TARGETS% -t:%2&shift&goto :nextarg )
+if "%1" == "/sln" ( set __SLN=%2&shift&goto :findsln )
+if "%1" == "--sln" ( set __SLN=%2&shift&goto :findsln )
 :notminus
 
 set __ARGS=

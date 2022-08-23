@@ -1,0 +1,15 @@
+These are the hue shifts that were applied to produce color variation icons.
+
+             HUE     SAT     BRI
+
+BLUE.ICO
+
+Red         +166     0       0
+Green       -110     0       0
+Cyan        -15      0      +20
+Orange      -156     0       0
+
+GOLD.ICO
+
+Purple      -120     0       0
+Gray         0      -100    -5

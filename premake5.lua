@@ -139,6 +139,30 @@ end
 
 
 --------------------------------------------------------------------------------
+workspace("icons")
+    configurations({"debug", "release", "final"})
+    platforms({"x64"})
+    location(to)
+
+    configuration("debug")
+        targetdir(to.."/bin/debug")
+        objdir(to.."/obj/")
+
+    configuration("release")
+        targetdir(to.."/bin/release")
+        objdir(to.."/obj/")
+
+    configuration("final")
+        targetdir(to.."/bin/final")
+        objdir(to.."/obj/")
+
+    project("clink_icons_dll")
+        kind("sharedlib")
+        targetname("clink_icons")
+        linkoptions("/noentry")
+        files("clink/app/resources/icons.rc")
+
+--------------------------------------------------------------------------------
 workspace("clink")
     configurations({"debug", "release", "final"})
     platforms({"x32", "x64"})
@@ -410,6 +434,7 @@ clink_exe("clink_app_exe")
     links("clink_app_dll")
     files("clink/app/src/loader/main.cpp")
     files("clink/app/src/version.rc")
+    --files("clink/app/resources/icon.rc")
 
     configuration("final")
         postbuild_copy("CHANGES", "final")

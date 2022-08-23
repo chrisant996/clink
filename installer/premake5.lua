@@ -149,6 +149,7 @@ newaction {
         -- Build the code.
         local x86_ok = true
         local x64_ok = true
+        local icons_ok = true
         local toolchain = "ERROR"
         local build_code = function (target)
             target = target or "build"
@@ -158,6 +159,7 @@ newaction {
 
             x86_ok = exec(have_msbuild .. " /m /v:q /p:configuration=" .. config .. " /p:platform=win32 clink.sln /t:" .. target)
             x64_ok = exec(have_msbuild .. " /m /v:q /p:configuration=" .. config .. " /p:platform=x64 clink.sln /t:" .. target)
+            icons_ok = exec(have_msbuild .. " /m /v:q /p:configuration=" .. config .. " /p:platform=x64 icons.sln /t:" .. target)
 
             os.chdir("../..")
         end
@@ -225,6 +227,7 @@ newaction {
         if not nsis_ok then     warn("INSTALLER PACKAGE FAILED") end
         if not x86_ok then      failed("x86 BUILD FAILED") end
         if not x64_ok then      failed("x64 BUILD FAILED") end
+        if not icons_ok then    failed("icons BUILD FAILED") end
     end
 }
 
@@ -256,6 +259,7 @@ newaction {
         -- Build the code.
         local x86_ok = true
         local x64_ok = true
+        local icons_ok
         local toolchain = "ERROR"
         local build_code = function (target)
             if have_msbuild then
@@ -267,6 +271,7 @@ newaction {
 
                 x86_ok = exec(have_msbuild .. " /m /v:q /p:configuration=final /p:platform=win32 clink.sln /t:" .. target)
                 x64_ok = exec(have_msbuild .. " /m /v:q /p:configuration=final /p:platform=x64 clink.sln /t:" .. target)
+                icons_ok = exec(have_msbuild .. " /m /v:q /p:configuration=final /p:platform=x64 icons.sln /t:" .. target)
 
                 os.chdir("../..")
             elseif have_mingw then
@@ -390,6 +395,7 @@ newaction {
         if not nsis_ok then     warn("INSTALLER PACKAGE FAILED") end
         if not x86_ok then      failed("x86 BUILD FAILED") end
         if not x64_ok then      failed("x64 BUILD FAILED") end
+        if icons_ok == false then failed("icons BUILD FAILED") end
         if not any_warnings_or_failures then
             print("\x1b[0;32;1mRelease "..version.." built successfully.\x1b[m")
         end
