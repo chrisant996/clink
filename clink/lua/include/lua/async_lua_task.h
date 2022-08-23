@@ -60,7 +60,6 @@ private:
 std::shared_ptr<async_lua_task> find_async_lua_task(const char* key);
 bool add_async_lua_task(std::shared_ptr<async_lua_task>& task);
 void task_manager_on_idle(lua_state& lua);
-void clear_task_manager();
 extern "C" void end_task_manager();
 void shutdown_task_manager();
 void task_manager_diagnostics();

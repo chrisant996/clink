@@ -21,7 +21,6 @@ class task_manager
 public:
                             task_manager();
     void                    shutdown();
-    void                    clear();
     std::shared_ptr<async_lua_task> find(const char* key) const;
     bool                    add(const std::shared_ptr<async_lua_task>& task);
     void                    on_idle(lua_state& lua);
@@ -57,14 +56,6 @@ task_manager::task_manager()
 #endif
 
     s_manager.s_event = CreateEvent(nullptr, false, false, nullptr);
-}
-
-//------------------------------------------------------------------------------
-void task_manager::clear()
-{
-    for (auto &iter : m_map)
-        iter.second->detach();
-    m_map.clear();
 }
 
 //------------------------------------------------------------------------------
@@ -202,7 +193,14 @@ void task_manager::shutdown()
         return;
 
     m_zombie = true;
-    clear();
+
+    for (auto &iter : m_map)
+    {
+        iter.second->detach();
+        // Shutting down, so don't need to worry about Lua leaks.
+        (void)iter.second->take_callback();
+    }
+    m_map.clear();
 }
 
 
@@ -326,12 +324,6 @@ void task_manager_on_idle(lua_state& lua)
 extern "C" void end_task_manager()
 {
     return s_manager.end_line();
-}
-
-//------------------------------------------------------------------------------
-void clear_task_manager()
-{
-    return s_manager.clear();
 }
 
 //------------------------------------------------------------------------------

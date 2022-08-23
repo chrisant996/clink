@@ -106,6 +106,9 @@ int main(int argc, char** argv)
     extern void shutdown_recognizer();
     shutdown_recognizer();
 
+    extern void shutdown_task_manager();
+    shutdown_task_manager();
+
     if (timer)
     {
         DWORD elapsed = GetTickCount() - start;
