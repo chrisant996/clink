@@ -10,6 +10,7 @@ local release_manifest = {
     "clink.lua",
     "clink_x*.exe",
     "clink*.dll",
+    "clink*.ico",
     "CHANGES",
     "LICENSE",
     "clink_x*.pdb",
@@ -149,7 +150,6 @@ newaction {
         -- Build the code.
         local x86_ok = true
         local x64_ok = true
-        local icons_ok = true
         local toolchain = "ERROR"
         local build_code = function (target)
             target = target or "build"
@@ -159,7 +159,6 @@ newaction {
 
             x86_ok = exec(have_msbuild .. " /m /v:q /p:configuration=" .. config .. " /p:platform=win32 clink.sln /t:" .. target)
             x64_ok = exec(have_msbuild .. " /m /v:q /p:configuration=" .. config .. " /p:platform=x64 clink.sln /t:" .. target)
-            icons_ok = exec(have_msbuild .. " /m /v:q /p:configuration=" .. config .. " /p:platform=x64 icons.sln /t:" .. target)
 
             os.chdir("../..")
         end
@@ -195,6 +194,8 @@ newaction {
             local from = src
             if mask == "CHANGES" or mask == "LICENSE" or mask == "_default_settings" or mask == "_default_inputrc" then
                 from = code_dir
+            elseif mask == "clink*.ico" then
+                from = code_dir.."clink/app/resources/"
             elseif mask:sub(-4) == ".pdb" then
                 from = nil
             end
@@ -227,7 +228,6 @@ newaction {
         if not nsis_ok then     warn("INSTALLER PACKAGE FAILED") end
         if not x86_ok then      failed("x86 BUILD FAILED") end
         if not x64_ok then      failed("x64 BUILD FAILED") end
-        if not icons_ok then    failed("icons BUILD FAILED") end
     end
 }
 
@@ -259,7 +259,6 @@ newaction {
         -- Build the code.
         local x86_ok = true
         local x64_ok = true
-        local icons_ok
         local toolchain = "ERROR"
         local build_code = function (target)
             if have_msbuild then
@@ -271,7 +270,6 @@ newaction {
 
                 x86_ok = exec(have_msbuild .. " /m /v:q /p:configuration=final /p:platform=win32 clink.sln /t:" .. target)
                 x64_ok = exec(have_msbuild .. " /m /v:q /p:configuration=final /p:platform=x64 clink.sln /t:" .. target)
-                icons_ok = exec(have_msbuild .. " /m /v:q /p:configuration=final /p:platform=x64 icons.sln /t:" .. target)
 
                 os.chdir("../..")
             elseif have_mingw then
@@ -343,6 +341,8 @@ newaction {
             local from = src
             if mask == "_default_settings" or mask == "_default_inputrc" then
                 from = code_dir
+            elseif mask:match("clink.*%.ico") then
+                from = code_dir.."clink/app/resources/"
             end
             copy(from .. mask, dest)
         end
@@ -395,7 +395,6 @@ newaction {
         if not nsis_ok then     warn("INSTALLER PACKAGE FAILED") end
         if not x86_ok then      failed("x86 BUILD FAILED") end
         if not x64_ok then      failed("x64 BUILD FAILED") end
-        if icons_ok == false then failed("icons BUILD FAILED") end
         if not any_warnings_or_failures then
             print("\x1b[0;32;1mRelease "..version.." built successfully.\x1b[m")
         end
