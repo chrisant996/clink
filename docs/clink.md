@@ -1628,21 +1628,31 @@ Here is an example of a simple parser for the command `foobar`;
 
 ```lua
 clink.argmatcher("foobar")
-:addflags("-foo", "-bar")                   -- Flags.
-:addarg({ "hello", "hi" })                  -- Completions for arg #1.
-:addarg({ "world", "wombles", "xyzzy" })    -- Completions for arg #2.
+:addarg({ "hello", "hi" })               -- Completions for arg #1.
+:addarg({ "world", "wombles", "xyzzy" }) -- Completions for arg #2.
+:addflags("-foo", "-bar")                -- Flags.
 ```
 
-This parser describes a command that has two positional arguments; the first has two possible completions and the second has three possible completions. It also has two flags which the parser considers to be position independent, meaning that provided the word being completed starts with the prefix character (in this example `-`) then the parser will attempt to match the word from the set of flags.
+This parser describes a command that has two arguments, and some flags.
 
-On the command line completion would look something like this:
+Arguments are positional.  Each `:addarg()` adds a new argument position and defines the possible completions for that argument position.
 
-<pre style="border-radius:initial;border:initial"><code class="plaintext" style="background-color:black;color:#cccccc">C:\&gt;foobar hello -foo wo
+Flags are position independent.  Any `:addflags()` add to the set of possible flag completions.  Any word that begins with the flag prefix character (in this example `-`) is considered to be a flag, even if it is not listed as a possible completion.  The flags may be input at any position; before arguments, between arguments, and after arguments.
+
+On the command line completion would look something like this, if <kbd>Alt</kbd>-<kbd>=</kbd> were pressed at the end of each input line below:
+
+<pre style="border-radius:initial;border:initial"><code class="plaintext" style="background-color:black;color:#cccccc">C:\&gt;foobar -
+-bar  -foo
+C:\&gt;foobar -bar hello
+wombles  world  xyzzy
+C:\&gt;foobar -bar hello wo
 wombles  world
-C:\&gt;foobar hello -foo wo<span style="color:#ffffff">_</span>
+C:\&gt;foobar -bar hello wombles -
+-bar -foo
+C:\&gt;foobar -bar hello wombles -foo <span style="color:#ffffff">_</span>
 </code></pre>
 
-When displaying possible completions, flag matches are only shown if the flag character has been input (so `command ` and <kbd>Alt</kbd>-<kbd>=</kbd> would list only non-flag matches, or `command -` and <kbd>Alt</kbd>-<kbd>=</kbd> would list only flag matches).
+When displaying possible completions, flag matches are only shown if the flag character has been input.  So `foobar ` and <kbd>Alt</kbd>-<kbd>=</kbd> would list matches for the first argument position, or `foobar some_word ` and <kbd>Alt</kbd>-<kbd>=</kbd> would list matches for the second argument position, or  `foobar -` and <kbd>Alt</kbd>-<kbd>=</kbd> would list only flag matches.
 
 If a command doesn't have an argmatcher but is a doskey macro, Clink automatically expands the doskey macro and looks for an argmatcher for the expanded command.  A macro like `gco=git checkout $*` automatically reuses a `git` argmatcher and produces completions for its `checkout` argument.  However, it only expands the doskey macro up to the first `$`, so complex aliases like `foo=app 2$gnul text $*` or `foo=$2 $1` might behave strangely.
 
@@ -1655,16 +1665,16 @@ Also see [clink.argmatcher()](#clink.argmatcher), [:addflags()](#_argmatcher:add
 A fresh, empty argmatcher provides no completions.
 
 ```lua
-clink.argmatcher("foobar")         -- The "foobar" command provides no completions.
+clink.argmatcher("foobar")               -- The "foobar" command provides no completions.
 ```
 
 Once any flags or argument positions have been added to an argmatcher, then the argmatcher will provide completions.
 
 ```lua
 clink.argmatcher("foobar")
-:addflags("-foo", "-bar")          -- Flags.
-:addarg({ "hello", "hi" })         -- Completions for arg #1.
-:addarg({ "world", "wombles" })    -- Completions for arg #2.
+:addarg({ "hello", "hi" })               -- Completions for arg #1.
+:addarg({ "world", "wombles", "xyzzy" }) -- Completions for arg #2.
+:addflags("-foo", "-bar")                -- Flags.
 ```
 
 When completing a word that doesn't have a corresponding argument position the argmatcher will automatically use filename completion.  For example, the `foobar` argmatcher has two argument positions, and completing a third word uses filename completion.
@@ -1674,14 +1684,14 @@ Program Files\  Program Files(x86)\  ProgramData\
 C:\&gt;foobar hello world pro<span style="color:#ffffff">_</span>
 </code></pre>
 
-Use [_argmatcher:nofiles()](#_argmatcher:nofiles) if you want to disable the automatic filename completion and "dead end" an argmatcher for extra words.
+Use [_argmatcher:nofiles()](#_argmatcher:nofiles) if you want to disable the automatic filename completion and "dead end" an argmatcher for extra words.  This stops all further parsing for the command.
 
 ```lua
 clink.argmatcher("foobar")
-:addflags("-foo", "-bar")          -- Flags
-:addarg({ "hello", "hi" })         -- Completions for arg #1
-:addarg({ "world", "wombles" })    -- Completions for arg #2
-:nofiles()                         -- Using :nofiles() prevents further completions.
+:addarg({ "hello", "hi" })               -- Completions for arg #1
+:addarg({ "world", "wombles", "xyzzy" }) -- Completions for arg #2
+:addflags("-foo", "-bar")                -- Flags
+:nofiles()                               -- Using :nofiles() prevents further completions.
 ```
 
 <a name="argmatcher_descriptions"></a>
@@ -1727,7 +1737,7 @@ c_parser:addarg({ b_parser })               -- Arg #2 is "abc" or "123".
 
 As the example above shows, it is also possible to use a parser without concatenating it to a word.
 
-When Clink follows a link to a parser it will only return to the previous parser when the linked parser runs out of arguments.
+When Clink follows a link to a parser it will only return to the previous parser when the linked parser runs out of arguments.  Using `:nofiles()` prevents returning to the previous parser.
 
 ##### Flags With Arguments
 
