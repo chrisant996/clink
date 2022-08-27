@@ -661,6 +661,47 @@ static int io_sopen(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  io.truncate
+/// -ver:   1.3.41
+/// -arg:   file:file
+/// -ret:   integer
+/// This function truncates the <span class="arg">file</span> previously opened
+/// by <code>io.open</code> or <code>io.sopen</code>.  When used on a pipe or
+/// other file handle that doesn't refer to an actual file, the behavior is
+/// undefined.
+///
+/// If successful, the return value is the position at which the file was
+/// truncated.  If an error occurs, the return values are nil, an error message,
+/// and an error code.
+static int io_truncate(lua_State* state)
+{
+    luaL_Stream* file = ((luaL_Stream *)luaL_checkudata(state, 1, LUA_FILEHANDLE));
+    assert(file);
+    if (!file)
+        return 0;
+
+    int stat = fflush(file->f);
+    if (stat)
+    {
+failed:
+        return luaL_fileresult(state, false, NULL);
+    }
+
+    int fd = _fileno(file->f);
+    HANDLE h = reinterpret_cast<HANDLE>(_get_osfhandle(fd));
+
+    LARGE_INTEGER liSize;
+    LARGE_INTEGER liZero = {};
+    if (!SetFilePointerEx(h, liZero, &liSize, FILE_CURRENT))
+        goto failed;
+
+    if (_chsize_s(fd, liSize.QuadPart))
+        goto failed;
+
+    return luaL_fileresult(state, true, NULL);
+}
+
+//------------------------------------------------------------------------------
 void io_lua_initialise(lua_state& lua)
 {
     struct {
@@ -670,6 +711,7 @@ void io_lua_initialise(lua_state& lua)
         { "popenrw",                    &io_popenrw },
         { "popenyield_internal",        &io_popenyield },
         { "sopen",                      &io_sopen },
+        { "truncate",                   &io_truncate },
     };
 
     lua_State* state = lua.get_state();
