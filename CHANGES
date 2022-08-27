@@ -2,6 +2,10 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.3.41
+
+- Added `io.truncate()` to truncate a file.
+
 #### v1.3.40
 
 - Clink now has an icon, and also includes some colored icons for color-coding your shortcut files, terminal tabs, and etc.
