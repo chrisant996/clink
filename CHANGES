@@ -5,6 +5,7 @@
 #### v1.3.41
 
 - Added `io.truncate()` to truncate a file.
+- Added `string.comparematches()` to compare two matches; this is normally not needed because Clink automatically sorts matches, but some match generators may prefer to disable the automatic sorting and perform custom sorting.
 
 #### v1.3.40
 
