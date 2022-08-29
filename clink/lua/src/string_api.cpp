@@ -7,6 +7,7 @@
 #include <core/str_hash.h>
 #include <core/str_tokeniser.h>
 #include <core/str_compare.h>
+#include <lib/matches.h>
 
 //------------------------------------------------------------------------------
 /// -name:  string.equalsi
@@ -111,6 +112,80 @@ static int match_len(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  string.comparematches
+/// -ver:   1.3.41
+/// -arg:   a:string
+/// -arg:   [a_type:string]
+/// -arg:   b:string
+/// -arg:   [b_type:string]
+/// -ret:   boolean
+/// Returns true if <span class="arg">a</code> sorts as "less than"
+/// <span class="arg">b</code>.
+///
+/// The <span class="arg">a_type</code> and <span class="arg">b_type</code> are
+/// optional, and affect the sort order accordingly when present.
+///
+/// This produces the same sort order as normally used for displaying matches.
+/// This can be used for manually sorting a subset of matches when a match
+/// builder has been told not to sort the list of matches.
+/// -show:  local files = {
+/// -show:  &nbsp;   { match="xyzFile", type="file" },
+/// -show:  &nbsp;   { match="abcFile", type="file" },
+/// -show:  }
+/// -show:  local other = {
+/// -show:  &nbsp;   { match="abc_branch", type="arg" },
+/// -show:  &nbsp;   { match="xyz_branch", type="arg" },
+/// -show:  &nbsp;   { match="mno_tag", type="alias" },
+/// -show:  }
+/// -show:
+/// -show:  local function comparator(a, b)
+/// -show:  &nbsp;   return string.comparematches(a.match, a.type, b.match, b.type)
+/// -show:  end
+/// -show:
+/// -show:  -- Sort files.
+/// -show:  table.sort(files, comparator)
+/// -show:
+/// -show:  -- Sort branches and tags together.
+/// -show:  table.sort(other, comparator)
+/// -show:
+/// -show:  match_builder:setnosort()           -- Disable automatic sorting.
+/// -show:  match_builder:addmatches(files)     -- Add the sorted files.
+/// -show:  match_builder:addmatches(other)     -- Add the branches and tags files.
+/// -show:
+/// -show:  -- The overall sort order ends up listing all the files in sorted
+/// -show:  -- order, followed by branches and tags sorted together.
+static int api_compare_matches(lua_State* state)
+{
+    const bool has_types = lua_isstring(state, 3);
+    const char* l = checkstring(state, 1);
+    const char* r = checkstring(state, has_types ? 3 : 2);
+    if (!l || !r)
+        return 0;
+
+    match_type lt;
+    match_type rt;
+    if (has_types)
+    {
+        const char* l_type = checkstring(state, 2);
+        const char* r_type = checkstring(state, 4);
+        if (!l_type || !r_type)
+            return 0;
+        lt = to_match_type(l_type);
+        rt = to_match_type(r_type);
+    }
+    else
+    {
+        lt = match_type::none;
+        rt = match_type::none;
+    }
+
+    const bool less_than = compare_matches(l, lt, r, rt);
+
+    lua_pushboolean(state, less_than);
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 void string_lua_initialise(lua_state& lua)
 {
     struct {
@@ -121,6 +196,7 @@ void string_lua_initialise(lua_state& lua)
         { "explode",    &explode },
         { "hash",       &hash },
         { "matchlen",   &match_len },
+        { "comparematches", &api_compare_matches },
     };
 
     lua_State* state = lua.get_state();

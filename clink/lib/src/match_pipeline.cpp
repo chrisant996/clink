@@ -167,6 +167,16 @@ inline bool sort_worker(wstr_base& l, match_type l_type,
 }
 
 //------------------------------------------------------------------------------
+bool compare_matches(const char* l, match_type l_type, const char* r, match_type r_type)
+{
+    wstr<> ltmp;
+    wstr<> rtmp;
+    to_utf16(ltmp, l);
+    to_utf16(rtmp, r);
+    return sort_worker(ltmp, l_type, rtmp, r_type, g_sort_dirs.get());
+}
+
+//------------------------------------------------------------------------------
 static void alpha_sorter(match_info* infos, int count)
 {
     int order = g_sort_dirs.get();

@@ -208,6 +208,7 @@ private:
 match_type to_match_type(DWORD attr, const char* path, bool symlink=false);
 match_type to_match_type(const char* type_name);
 void match_type_to_string(match_type type, str_base& out);
+bool compare_matches(const char* l, match_type l_type, const char* r, match_type r_type);
 
 //------------------------------------------------------------------------------
 struct match_desc
