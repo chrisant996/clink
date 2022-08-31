@@ -29,11 +29,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 # APPENDICES
 
-## Manual Test Verifications
-- <kbd>Alt</kbd>+<kbd>Up</kbd> to scroll up a line.
-- `git add ` in Cmder.
-- `git checkout `<kbd>Alt</kbd>+<kbd>=</kbd> in Cmder.
-
 ## Known Issues
 - Readline's `expand_tilde()` doesn't handle embedded `{space}{tilde}{pathsep}` correctly in strings; `rl.expandtilde()` does, and has an optional parameter to use Readline's original style of tilde expansion.
 - Readline 8.1 has slight bug in `update_line`; type `c` then `l`, and it now identifies **2** chars (`cl`) as needing to be displayed; seems like the diff routine has a bug with respect to the new faces capability; it used to only identify `l` as needing to be displayed.
