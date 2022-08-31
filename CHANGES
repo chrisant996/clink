@@ -7,6 +7,7 @@
 - Added `io.truncate()` to truncate a file.
 - Added `string.comparematches()` to compare two matches; this is normally not needed because Clink automatically sorts matches, but some match generators may prefer to disable the automatic sorting and perform custom sorting.
 - Added `rl.describemacro()` to associate descriptions with `luafunc:` macros (or any macro), to be shown in the `clink-show-help` and `clink-what-is` commands.
+- The `clink.popuplist()` function now accepts a callback function to be invoked when <kbd>Del</kbd> is pressed.
 - The `colored-completion-prefix` configuration variable now works with match display filtering, provided the display strings only prepend or append to the match strings.
 - Fixed the `completion-prefix-display-length` configuration variable in various cases.
 
