@@ -115,20 +115,16 @@ void match_adapter::get_lcd(str_base& out) const
     {
         if (!m_filtered_cached.m_has_lcd)
         {
+            unsigned int i = 1; // 1 based indexing.
             m_filtered_cached.m_has_lcd = true;
             m_filtered_cached.m_lcd.clear();
-            for (unsigned int i = 0; i++ < m_filtered_cached.m_count;)
+            if (i <= m_filtered_cached.m_count)
+                m_filtered_cached.m_lcd = m_filtered_matches[i++]->match;
+            while (i <= m_filtered_cached.m_count)
             {
-                const char* match = m_filtered_matches[i]->match;
-                if (i == 1) // 1 based indexing!
-                {
-                    m_filtered_cached.m_lcd = match;
-                }
-                else
-                {
-                    int matching = str_compare<char, true/*compute_lcd*/>(m_filtered_cached.m_lcd.c_str(), match);
-                    m_filtered_cached.m_lcd.truncate(matching);
-                }
+                const char* match = m_filtered_matches[i++]->match;
+                int matching = str_compare<char, true/*compute_lcd*/>(m_filtered_cached.m_lcd.c_str(), match);
+                m_filtered_cached.m_lcd.truncate(matching);
             }
         }
 
@@ -138,20 +134,16 @@ void match_adapter::get_lcd(str_base& out) const
     {
         if (!m_alt_cached.m_has_lcd)
         {
+            unsigned int i = 1; // 1 based indexing.
             m_alt_cached.m_has_lcd = true;
             m_alt_cached.m_lcd.clear();
-            for (unsigned int i = 0; i++ < m_alt_cached.m_count;)
+            if (i <= m_alt_cached.m_count)
+                m_alt_cached.m_lcd = m_alt_matches[i++];
+            while (i <= m_alt_cached.m_count)
             {
-                const char *match = m_alt_matches[i];
-                if (i == 1) // 1 based indexing!
-                {
-                    m_alt_cached.m_lcd = match;
-                }
-                else
-                {
-                    int matching = str_compare<char, true/*compute_lcd*/>(m_alt_cached.m_lcd.c_str(), match);
-                    m_alt_cached.m_lcd.truncate(matching);
-                }
+                const char *match = m_alt_matches[i++];
+                int matching = str_compare<char, true/*compute_lcd*/>(m_alt_cached.m_lcd.c_str(), match);
+                m_alt_cached.m_lcd.truncate(matching);
             }
         }
 
