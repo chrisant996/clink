@@ -787,6 +787,20 @@ static Keyentry* collect_functions(
         ++(*offset);
     }
 
+    for (auto& macro_desc : s_macro_descriptions)
+    {
+
+        Keyentry& out = collector[*offset];
+        memset(&out, 0, sizeof(out));
+        out.sort = MAKELONG(999, 999);
+        out.key_name = (char*)calloc(1, 1);
+        out.func_name = macro_desc.first;
+        out.func_desc = macro_desc.second.c_str();
+        out.cat = categories ? keycat_macros : 0;
+
+        ++(*offset);
+    }
+
     return collector;
 }
 
