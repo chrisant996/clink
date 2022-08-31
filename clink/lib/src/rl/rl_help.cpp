@@ -8,6 +8,7 @@
 #include <core/str.h>
 #include <core/str_unordered_set.h>
 #include <core/debugheap.h>
+#include <core/linear_allocator.h>
 #include <terminal/printer.h>
 #include <terminal/terminal.h>
 #include <terminal/terminal_helpers.h>
@@ -34,6 +35,49 @@ extern setting_bool g_terminal_raw_esc;
 extern int ellipsify(const char* in, int limit, str_base& out, bool expand_ctrl);
 extern int read_key_direct(bool wait);
 extern int clink_is_signaled();
+
+//------------------------------------------------------------------------------
+static linear_allocator s_macro_name_store(4096);
+static str_unordered_map<str_moveable> s_macro_descriptions;
+
+//------------------------------------------------------------------------------
+void clear_macro_descriptions()
+{
+    s_macro_descriptions.clear();
+    s_macro_name_store.reset();
+}
+
+//------------------------------------------------------------------------------
+void add_macro_description(const char* macro, const char* desc)
+{
+    dbg_ignore_scope(snapshot, "macro descriptions");
+
+    const auto iter = s_macro_descriptions.find(macro);
+    if (iter == s_macro_descriptions.end())
+    {
+        macro = s_macro_name_store.store(macro);
+        if (!macro)
+            return;
+    }
+    else
+    {
+        macro = iter->first;
+    }
+
+    s_macro_descriptions.emplace(macro, desc);
+}
+
+//------------------------------------------------------------------------------
+const char* lookup_macro_description(const char* macro)
+{
+    str<> tmp;
+    tmp << "\"" << macro << "\"";
+
+    const auto iter = s_macro_descriptions.find(tmp.c_str());
+    if (iter == s_macro_descriptions.end())
+        return nullptr;
+    return iter->second.c_str();
+}
 
 //------------------------------------------------------------------------------
 struct Keyentry
@@ -617,7 +661,10 @@ static Keyentry* collect_keymap(
             Keyentry& out = collector[*offset];
             out.sort = sort;
             if (entry.type == ISMACR)
+            {
                 out.macro_text = _rl_untranslate_macro_value((char *)entry.function, 0);
+                desc = lookup_macro_description(out.macro_text);
+            }
             else
                 out.macro_text = nullptr;
             out.warning = false;
@@ -805,7 +852,7 @@ static void pad_with_spaces(str_base& str, unsigned int pad_to)
 }
 
 //------------------------------------------------------------------------------
-static void append_key_macro(str_base& s, const char* macro)
+static void append_key_macro(str_base& s, const char* macro, const int limit)
 {
 #ifdef USE_ASCII_ELLIPSIS
     static const char ellipsis[] = "...";
@@ -817,7 +864,6 @@ static void append_key_macro(str_base& s, const char* macro)
     const int ellipsis_cells = 1;
 #endif
 
-    const int limit = 30;
     const int limit_ellipsis = limit - ellipsis_cells;
     int truncate_len = 0;
     unsigned int count = 0;
@@ -928,6 +974,7 @@ void show_key_bindings(bool friendly, int mode, std::vector<key_binding_info>* o
     unsigned int longest_key[keycat_MAX] = {};
     unsigned int longest_func[keycat_MAX] = {};
     unsigned int desc_pad = show_descriptions ? 1 : 0;
+    const int macro_limit = _rl_screenwidth * 4 / 10;
     for (int i = 1; i < offset; ++i)
     {
         const Keyentry& entry = collector[i];
@@ -937,7 +984,7 @@ void show_key_bindings(bool friendly, int mode, std::vector<key_binding_info>* o
         if (entry.func_name)
             f = (unsigned int)strlen(entry.func_name);
         else if (entry.macro_text)
-            f = min(2 + (int)strlen(entry.macro_text), 32);
+            f = 2 + min<int>(strlen(entry.macro_text), macro_limit);
         f += desc_pad;
         if (cat)
         {
@@ -1114,7 +1161,7 @@ void show_key_bindings(bool friendly, int mode, std::vector<key_binding_info>* o
                 if (entry.macro_text)
                 {
                     str << "\"";
-                    append_key_macro(str, entry.macro_text);
+                    append_key_macro(str, entry.macro_text, macro_limit);
                     str << "\"";
                 }
                 const int len_name_binding = longest(cat);
@@ -1297,10 +1344,13 @@ int clink_what_is(int, int)
             else
             {
                 char* macro = _rl_untranslate_macro_value((char*)func, 0);
+                const char* desc = lookup_macro_description(macro);
                 if (macro)
                     s << "\"" << macro << "\"";
                 else
                     s << "unknown macro";
+                if (desc)
+                    s << " -- " << desc;
                 free(macro);
             }
 

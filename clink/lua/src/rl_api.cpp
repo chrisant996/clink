@@ -1062,6 +1062,45 @@ static int get_history_items(lua_State* state)
     return 1;
 }
 
+//------------------------------------------------------------------------------
+/// -name:  rl.describemacro
+/// -ver:   1.3.41
+/// -arg:   macro:string
+/// -arg:   description:string
+/// This associates <span class="arg">description</span> with
+/// <span class="arg">macro</span>, to be displayed in the
+/// <code>clink-show-help</code> and <code>clink-what-is</code> commands.
+///
+/// This may be used to add a description for a <code>luafunc:</code> macro, or
+/// for a keyboard macro.
+///
+/// The <span class="arg">macro</span> string should include quotes, just like
+/// in <code>rl.setbinding()</code>.  If quotes are not present, they are added
+/// automatically.
+/// -show:  rl.describemacro([["luafunc:mycommand"]], "Does whatever mycommand does")
+/// -show:  rl.describemacro([["\e[Hrem "]], "Insert 'rem ' at the beginning of the line")
+/// -show:  rl.setbinding([["\C-o"]], [["luafunc:mycommand"]])
+/// -show:  rl.setbinding([["\C-r"]], [["\e[Hrem "]])
+/// -show:  -- Press Alt-H to see the list of key bindings and descriptions.
+static int describe_macro(lua_State* state)
+{
+    const char* macro = checkstring(state, 1);
+    const char* description = checkstring(state, 2);
+    if (macro && description)
+    {
+        str<> tmp;
+        if (macro[0] != '\"' || (macro[0] && macro[strlen(macro) - 1] != '\"'))
+        {
+            tmp << "\"" << macro << "\"";
+            macro = tmp.c_str();
+        }
+
+        extern void add_macro_description(const char* macro, const char* desc);
+        add_macro_description(macro, description);
+    }
+    return 0;
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -1088,6 +1127,7 @@ void rl_lua_initialise(lua_state& lua)
         { "getmatchcolor",          &get_match_color },
         { "gethistorycount",        &get_history_count },
         { "gethistoryitems",        &get_history_items },
+        { "describemacro",          &describe_macro },
     };
 
     lua_State* state = lua.get_state();

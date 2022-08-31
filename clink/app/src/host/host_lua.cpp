@@ -24,6 +24,7 @@ extern "C" {
 //------------------------------------------------------------------------------
 extern bool is_force_reload_scripts();
 extern void clear_force_reload_scripts();
+extern void clear_macro_descriptions();
 
 //------------------------------------------------------------------------------
 host_lua::host_lua()
@@ -31,6 +32,8 @@ host_lua::host_lua()
 , m_classifier(m_state)
 , m_idle(m_state)
 {
+    clear_macro_descriptions();
+
     str<280> bin_path;
     app_context::get()->get_binaries_dir(bin_path);
 
