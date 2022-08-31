@@ -45,3 +45,18 @@ popup_result do_popup_list(
     int& current,
     const char*& out,
     popup_items_mode mode=popup_items_mode::simple);
+
+//------------------------------------------------------------------------------
+typedef bool (*del_callback_t)(int index);
+
+//------------------------------------------------------------------------------
+struct entry_info
+{
+    int             index;
+    bool            marked;
+};
+
+//------------------------------------------------------------------------------
+extern popup_results activate_directories_text_list(const char** dirs, int count);
+extern popup_results activate_history_text_list(const char** history, int count, int index, entry_info* infos, bool win_history);
+extern popup_results activate_text_list(const char* title, const char** entries, int count, int current, bool has_columns, del_callback_t del_callback=nullptr);

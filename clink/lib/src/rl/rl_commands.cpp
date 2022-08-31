@@ -708,7 +708,6 @@ int clink_selectall_conhost(int count, int invoking_key)
 
 //------------------------------------------------------------------------------
 extern const char** host_copy_dir_history(int* total);
-extern popup_results activate_directories_text_list(const char** dirs, int count);
 int clink_popup_directories(int count, int invoking_key)
 {
     // Copy the directory list (just a shallow copy of the dir pointers).

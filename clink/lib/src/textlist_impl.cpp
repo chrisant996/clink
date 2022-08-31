@@ -289,7 +289,7 @@ textlist_impl::textlist_impl(input_dispatcher& dispatcher)
 }
 
 //------------------------------------------------------------------------------
-popup_results textlist_impl::activate(const char* title, const char** entries, int count, int index, bool reverse, textlist_mode mode, entry_info* infos, bool has_columns)
+popup_results textlist_impl::activate(const char* title, const char** entries, int count, int index, bool reverse, textlist_mode mode, entry_info* infos, bool has_columns, del_callback_t del_callback)
 {
     reset();
     m_results.clear();
@@ -315,6 +315,7 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
     m_mode = mode;
     m_history_mode = is_history_mode(mode);
     m_win_history = (mode == textlist_mode::win_history);
+    m_del_callback = del_callback;
     update_layout();
     if (m_visible_rows <= 0)
     {
@@ -656,6 +657,14 @@ find:
             else if (m_mode == textlist_mode::directories)
             {
                 if (!host_remove_dir_history(external_index))
+                {
+                    rl_ding();
+                    break;
+                }
+            }
+            else if (m_del_callback)
+            {
+                if (!m_del_callback(external_index))
                 {
                     rl_ding();
                     break;
@@ -1322,7 +1331,7 @@ void textlist_impl::update_display()
             {
                 rl_crlf();
                 up++;
-                const bool show_del = (m_history_mode || m_mode == textlist_mode::directories);
+                const bool show_del = (m_history_mode || m_mode == textlist_mode::directories || m_del_callback);
                 make_horz_border(show_del ? "Del=Delete" : nullptr, col_width - 2, true/*bars*/, horzline);
                 m_printer->print(left.c_str(), left.length());
                 m_printer->print(color.c_str(), color.length());
@@ -1419,6 +1428,7 @@ void textlist_impl::reset()
     m_history_mode = false;
     m_win_history = false;
     m_has_columns = false;
+    m_del_callback = nullptr;
 
     m_top = 0;
     m_index = 0;
@@ -1475,12 +1485,12 @@ void textlist_impl::item_store::clear()
 
 
 //------------------------------------------------------------------------------
-popup_results activate_text_list(const char* title, const char** entries, int count, int current, bool has_columns)
+popup_results activate_text_list(const char* title, const char** entries, int count, int current, bool has_columns, del_callback_t del_callback)
 {
     if (!s_textlist)
         return popup_result::error;
 
-    return s_textlist->activate(title, entries, count, current, false/*reverse*/, textlist_mode::general, nullptr, has_columns);
+    return s_textlist->activate(title, entries, count, current, false/*reverse*/, textlist_mode::general, nullptr, has_columns, del_callback);
 }
 
 //------------------------------------------------------------------------------

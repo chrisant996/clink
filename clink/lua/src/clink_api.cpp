@@ -368,11 +368,58 @@ static int to_uppercase(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+static struct popup_del_callback_info
+{
+    lua_State*      m_state = nullptr;
+    int             m_ref = LUA_REFNIL;
+
+    bool empty() const
+    {
+        return !m_state || m_ref == LUA_REFNIL;
+    }
+
+    bool init(lua_State* state, int idx)
+    {
+        assert(!m_state);
+        m_ref = luaL_ref(state, LUA_REGISTRYINDEX);
+        if (m_ref != LUA_REFNIL)
+            m_state = state;
+        return !empty();
+    }
+
+    void clear()
+    {
+        if (m_state && m_ref != LUA_REFNIL)
+            luaL_unref(m_state, LUA_REGISTRYINDEX, m_ref);
+        m_state = nullptr;
+        m_ref = LUA_REFNIL;
+    }
+
+    bool call(int index)
+    {
+        if (empty())
+            return false;
+        lua_rawgeti(m_state, LUA_REGISTRYINDEX, m_ref);
+        lua_pushinteger(m_state, index + 1);
+        if (lua_state::pcall(m_state, 1, 1) != 0)
+            return false;
+        return lua_toboolean(m_state, -1);
+    }
+} s_del_callback_info;
+
+//------------------------------------------------------------------------------
+static bool popup_del_callback(int index)
+{
+    return s_del_callback_info.call(index);
+}
+
+//------------------------------------------------------------------------------
 /// -name:  clink.popuplist
 /// -ver:   1.2.17
 /// -arg:   title:string
 /// -arg:   items:table
 /// -arg:   [index:integer]
+/// -arg:   [del_callback:function]
 /// -ret:   string, boolean, integer
 /// Displays a popup list and returns the selected item.  May only be used
 /// within a <a href="#luakeybindings">luafunc: key binding</a>.
@@ -383,6 +430,11 @@ static int to_uppercase(lua_State* state)
 ///
 /// <span class="arg">index</span> optionally specifies the default item (or 1
 /// if omitted).
+///
+/// <span class="arg">del_callback</span> optionally specifies a callback
+/// function to be called when <kbd>Del</kbd> is pressed.  The function receives
+/// the index of the selected item.  If the function returns true then the item
+/// is deleted from the popup list.  This requires Clink v1.3.41 or higher.
 ///
 /// The function returns one of the following:
 /// <ul>
@@ -429,7 +481,7 @@ static int popup_list(lua_State* state)
     if (!lua_state::is_in_luafunc())
         return luaL_error(state, "clink.popuplist may only be used in a " LUA_QL("luafunc:") " key binding");
 
-    enum arg_indices { makevaluesonebased, argTitle, argItems, argIndex};
+    enum arg_indices { makevaluesonebased, argTitle, argItems, argIndex, argDelCallback};
 
     const char* title = checkstring(state, argTitle);
     int index = optinteger(state, argIndex, 1) - 1;
@@ -444,7 +496,9 @@ static int popup_list(lua_State* state)
     int top = lua_gettop(state);
 #endif
 
-    std::vector<autoptr<const char>> items;
+    std::vector<autoptr<const char>> free_items;
+    std::vector<const char*> items;
+    free_items.reserve(num_items);
     items.reserve(num_items);
     for (int i = 1; i <= num_items; ++i)
     {
@@ -501,7 +555,9 @@ static int popup_list(lua_State* state)
             append_string_into_buffer(p, description, true/*allow_tabs*/);
         }
 
-        items.emplace_back(s.detach());
+        const char* p = s.detach();
+        free_items.emplace_back(p);
+        items.emplace_back(p);
 
         lua_pop(state, 1);
     }
@@ -515,11 +571,18 @@ static int popup_list(lua_State* state)
     if (index > items.size()) index = items.size();
     if (index < 0) index = 0;
 
+    del_callback_t del_callback = nullptr;
+    if (lua_isfunction(state, argDelCallback))
+    {
+        lua_pushvalue(state, argDelCallback);
+        if (s_del_callback_info.init(state, -1))
+            del_callback = popup_del_callback;
+    }
+
     popup_result result;
     if (!g_gui_popups.get())
     {
-        popup_results activate_text_list(const char* title, const char** entries, int count, int current, bool has_columns);
-        popup_results results = activate_text_list(title, &*items.begin(), int(items.size()), index, true/*has_columns*/);
+        popup_results results = activate_text_list(title, &*items.begin(), int(items.size()), index, true/*has_columns*/, del_callback);
         result = results.m_result;
         index = results.m_index;
         choice = results.m_text.c_str();
@@ -528,6 +591,8 @@ static int popup_list(lua_State* state)
     {
         result = do_popup_list(title, &*items.begin(), items.size(), 0, false, false, false, index, choice, popup_items_mode::display_filter);
     }
+
+    s_del_callback_info.clear();
 
     switch (result)
     {

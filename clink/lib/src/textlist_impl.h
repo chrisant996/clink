@@ -16,9 +16,6 @@ class printer;
 enum class mouse_input_type : unsigned char;
 
 //------------------------------------------------------------------------------
-typedef const char* (*textlist_line_getter_t)(int index);
-
-//------------------------------------------------------------------------------
 enum class textlist_mode
 {
     general,
@@ -28,13 +25,6 @@ enum class textlist_mode
 };
 
 inline bool is_history_mode(textlist_mode mode) { return mode == textlist_mode::history || mode == textlist_mode::win_history; }
-
-//------------------------------------------------------------------------------
-struct entry_info
-{
-    int             index;
-    bool            marked;
-};
 
 //------------------------------------------------------------------------------
 class textlist_impl
@@ -67,7 +57,7 @@ class textlist_impl
 public:
                     textlist_impl(input_dispatcher& dispatcher);
 
-    popup_results   activate(const char* title, const char** entries, int count, int index, bool reverse, textlist_mode mode, entry_info* infos, bool columns);
+    popup_results   activate(const char* title, const char** entries, int count, int index, bool reverse, textlist_mode mode, entry_info* infos, bool columns, del_callback_t del_callback=nullptr);
     bool            is_active() const;
     bool            accepts_mouse_input(mouse_input_type type) const;
 
@@ -100,6 +90,7 @@ private:
     line_buffer*    m_buffer = nullptr;
     printer*        m_printer = nullptr;
     int             m_bind_group = -1;
+    del_callback_t  m_del_callback = nullptr;
 
     // Layout.
     int             m_screen_cols = 0;
@@ -160,6 +151,3 @@ private:
     };
     item_store      m_store;
 };
-
-//------------------------------------------------------------------------------
-popup_results activate_history_text_list(const char** history, int count, int index, entry_info* infos, bool win_history);
