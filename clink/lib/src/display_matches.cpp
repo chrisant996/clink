@@ -876,6 +876,173 @@ bool get_match_color(const char* filename, match_type type, str_base& out)
 
 
 //------------------------------------------------------------------------------
+inline bool exact_match(const char* match, const char* text, unsigned int len)
+{
+    while (len--)
+    {
+        if (*match != *text)
+            return false;
+        ++match;
+        ++text;
+    }
+    return !*match;
+}
+
+//------------------------------------------------------------------------------
+enum { bit_prefix = 0x01, bit_suffix = 0x02 };
+static int calc_prefix_or_suffix(const char* match, const char* display)
+{
+    const unsigned int match_len = static_cast<unsigned int>(strlen(match));
+
+    bool pre = false;
+    bool suf = false;
+    int visible_len = 0;
+
+    ecma48_state state;
+    ecma48_iter iter(display, state);
+    while (const ecma48_code& code = iter.next())
+        if (code.get_type() == ecma48_code::type_chars)
+        {
+            assert(code.get_length());
+            suf = false;
+
+            if (match_len <= code.get_length())
+            {
+                if (!visible_len)
+                    pre = exact_match(match, code.get_pointer(), code.get_length());
+                suf = exact_match(match, code.get_pointer() + code.get_length() - match_len, match_len);
+            }
+
+            str_iter inner_iter(code.get_pointer(), code.get_length());
+            while (int c = inner_iter.next())
+                visible_len += clink_wcwidth(c);
+        }
+
+    return (pre ? bit_prefix : 0) + (suf ? bit_suffix : 0);
+}
+
+//------------------------------------------------------------------------------
+int append_tmpbuf_with_visible_len(const char* s, int len)
+{
+    append_tmpbuf_string(s, len);
+
+    int visible_len = 0;
+
+    ecma48_state state;
+    ecma48_iter iter(s, state, len);
+    while (const ecma48_code& code = iter.next())
+        if (code.get_type() == ecma48_code::type_chars)
+        {
+            str_iter inner_iter(code.get_pointer(), code.get_length());
+            while (int c = inner_iter.next())
+                visible_len += clink_wcwidth(c);
+        }
+
+    return visible_len;
+}
+
+//------------------------------------------------------------------------------
+static int append_prefix_complex(const char* text, int len, const char* leading, int prefix_bytes, int condense)
+{
+    int visible_len = 0;
+
+    // Prefix.
+    append_colored_prefix_start();
+    if (condense && prefix_bytes < len)
+    {
+        const char ellipsis = (text[prefix_bytes] == '.') ? '_' : '.';
+        for (int i = ELLIPSIS_LEN; i--;)
+            append_tmpbuf_char(ellipsis);
+        visible_len += ELLIPSIS_LEN;
+    }
+    else
+    {
+        visible_len += append_tmpbuf_with_visible_len(text, prefix_bytes);
+    }
+
+    // Restore color.
+    append_default_color();
+    if (_rl_filtered_color)
+        append_tmpbuf_string(_rl_filtered_color, -1);
+    append_tmpbuf_string(leading, -1);
+
+    // Rest of text.
+    visible_len += append_tmpbuf_with_visible_len(text + prefix_bytes, len - prefix_bytes);
+
+    return visible_len;
+
+}
+
+
+
+//------------------------------------------------------------------------------
+unsigned int append_display_with_presuf(const char* match, const char* display, int presuf, int prefix_bytes, int condense, match_type type)
+{
+    assert(presuf);
+    bool pre = !!(presuf & bit_prefix);
+    bool suf = !pre && (presuf & bit_suffix);
+    const int skip_cells = suf ? cell_count(display) - cell_count(match) : 0;
+
+    int visible_len = 0;
+    str<> leading;
+
+    ecma48_state state;
+    ecma48_iter iter(display, state);
+    while (const ecma48_code& code = iter.next())
+        if (code.get_type() == ecma48_code::type_chars)
+        {
+            assert(code.get_length());
+
+            if (pre)
+            {
+                pre = false;
+                assert(!suf);
+                if (prefix_bytes <= code.get_length())
+                {
+                    visible_len += append_prefix_complex(code.get_pointer(), code.get_length(), leading.c_str(), prefix_bytes, condense);
+                    continue;
+                }
+            }
+
+            bool did = false;
+            str_iter inner_iter(code.get_pointer(), code.get_length());
+            while (true)
+            {
+                if (suf && visible_len == skip_cells)
+                {
+                    const unsigned int rest_len = inner_iter.length();
+                    if (prefix_bytes <= rest_len)
+                    {
+                        suf = false;
+                        did = true;
+                        // Already counted in visible_len.
+                        append_tmpbuf_string(code.get_pointer(), static_cast<unsigned int>(inner_iter.get_pointer() - code.get_pointer()));
+                        visible_len += append_prefix_complex(inner_iter.get_pointer(), rest_len, leading.c_str(), prefix_bytes, condense);
+                        break;
+                    }
+                }
+
+                const int c = inner_iter.next();
+                if (!c)
+                    break;
+                visible_len += clink_wcwidth(c);
+            }
+
+            if (!did)
+                append_tmpbuf_string(code.get_pointer(), code.get_length());
+        }
+        else
+        {
+            append_tmpbuf_string(code.get_pointer(), code.get_length());
+            leading.concat(code.get_pointer(), code.get_length());
+        }
+
+    return visible_len;
+}
+
+
+
+//------------------------------------------------------------------------------
 int ellipsify_to_callback(const char* in, int limit, int expand_ctrl, vstrlen_func_t callback)
 {
     str<> s;
@@ -957,7 +1124,7 @@ int ellipsify(const char* in, int limit, str_base& out, bool expand_ctrl)
 
 
 //------------------------------------------------------------------------------
-static int display_match_list_internal(match_adapter* adapter, const column_widths& widths, bool only_measure)
+static int display_match_list_internal(match_adapter* adapter, const column_widths& widths, bool only_measure, int presuf)
 {
     const int count = adapter->get_match_count();
     int printed_len;
@@ -1027,9 +1194,18 @@ static int display_match_list_internal(match_adapter* adapter, const column_widt
                 {
                     char* temp = __printable_part((char*)match);
                     printed_len = append_filename(temp, match, widths.m_sind, widths.m_can_condense, type, 0, nullptr);
+                    append_display(display, 0, _rl_arginfo_color);
+                    printed_len += adapter->get_match_visible_display(l);
                 }
-                append_display(display, 0, append ? _rl_arginfo_color : _rl_filtered_color);
-                printed_len += adapter->get_match_visible_display(l);
+                else if (presuf)
+                {
+                    printed_len += append_display_with_presuf(match, display, presuf, widths.m_sind, widths.m_can_condense, type);
+                }
+                else
+                {
+                    append_display(display, 0, _rl_filtered_color);
+                    printed_len += adapter->get_match_visible_display(l);
+                }
             }
             else
             {
@@ -1182,23 +1358,46 @@ extern "C" void display_matches(char** matches)
         adapter->set_alt_matches(matches);
     }
 
+    int presuf = 0;
+    str<32> lcd;
+    adapter->get_lcd(lcd);
+    if (*__printable_part(const_cast<char*>(lcd.c_str())))
+    {
+        presuf = bit_prefix|bit_suffix;
+        for (int l = adapter->get_match_count(); presuf && l--;)
+        {
+            if (adapter->is_append_display(l))
+                continue;
+
+            const match_type type = adapter->get_match_type(l);
+            if (!adapter->use_display(l, type, false))
+                continue;
+
+            const char* const match = adapter->get_match(l);
+            const char* const display = adapter->get_match_display(l);
+            const char* const visible = __printable_part(const_cast<char*>(match));
+            const int bits = calc_prefix_or_suffix(visible, display);
+            presuf &= bits;
+        }
+    }
+
     const int count = adapter->get_match_count();
     const bool best_fit = g_match_best_fit.get();
     const int limit_fit = g_match_limit_fitted.get();
     const bool one_column = adapter->has_descriptions() && count <= DESC_ONE_COLUMN_THRESHOLD;
-    const column_widths widths = calculate_columns(adapter, best_fit ? limit_fit : -1, one_column);
+    const column_widths widths = calculate_columns(adapter, best_fit ? limit_fit : -1, one_column, false, 0, presuf);
 
     // If there are many items, then ask the user if she really wants to see
     // them all.
     if ((rl_completion_auto_query_items && _rl_screenheight > 0) ?
-        display_match_list_internal(adapter, widths, 1) >= (_rl_screenheight - (_rl_vis_botlin + 1)) :
+        display_match_list_internal(adapter, widths, 1, presuf) >= (_rl_screenheight - (_rl_vis_botlin + 1)) :
         rl_completion_query_items > 0 && count >= rl_completion_query_items)
     {
         if (!prompt_display_matches(count))
             goto done;
     }
 
-    display_match_list_internal(adapter, widths, 0);
+    display_match_list_internal(adapter, widths, 0, presuf);
 
 done:
     destroy_matches_lookaside(rebuilt);

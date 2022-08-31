@@ -1165,6 +1165,7 @@ force_desc_below:
         const int limit_fit = g_match_limit_fitted.get();
         const bool desc_inline = !m_desc_below && m_matches.has_descriptions();
         const bool one_column = desc_inline && m_matches.get_match_count() <= DESC_ONE_COLUMN_THRESHOLD;
+        rollback<int> rcpdl(_rl_completion_prefix_display_length, 0);
         m_widths = calculate_columns(&m_matches, best_fit ? limit_fit : -1, one_column, m_desc_below, col_extra);
         m_calc_widths = false;
     }

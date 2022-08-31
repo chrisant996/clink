@@ -41,4 +41,5 @@ column_widths calculate_columns(
     int max_matches=0,
     bool one_column=false,
     bool omit_desc=false,
-    width_t extra=0);
+    width_t extra=0,
+    int presuf=0);
