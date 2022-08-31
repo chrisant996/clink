@@ -15,12 +15,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Collecting words currently happens in update_internal, but probably it also belongs in alternative_matches and/or update_matches:
   - If a `luafunc:` macro first does anything that alters the line buffer, and then invokes a completion command, then the collected words will be inaccurate.
 - Should coroutines really be able to make Readline redraw immediately?  Should instead set a flag that the main coroutine responds to when it gains control again?
-- Support prefix coloring with match display filtering:
-  - Loop and check all entries for whether the actual match is a prefix/suffix of the display match.
-  - If all are a prefix, then do prefix coloring.
-  - If all are a suffix, then do suffix-based prefix coloring.
-  - Otherwise give up.
-  - When applying color, be sure to preserve colors that precede the rest of the match text.
 
 ## Follow Up
 - Update other repos:
