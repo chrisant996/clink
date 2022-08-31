@@ -6,6 +6,8 @@
 
 - Added `io.truncate()` to truncate a file.
 - Added `string.comparematches()` to compare two matches; this is normally not needed because Clink automatically sorts matches, but some match generators may prefer to disable the automatic sorting and perform custom sorting.
+- The `colored-completion-prefix` configuration variable now works with match display filtering, provided the display strings only prepend or append to the match strings.
+- Fixed the `completion-prefix-display-length` configuration variable in various cases.
 
 #### v1.3.40
 
