@@ -42,7 +42,6 @@ extern int force_reload_scripts();
 extern void host_signal_delayed_init();
 extern void host_mark_deprecated_argmatcher(const char* name);
 extern void set_suggestion(const char* line, unsigned int endword_offset, const char* suggestion, unsigned int offset);
-extern setting_bool g_gui_popups;
 extern setting_enum g_dupe_mode;
 
 #ifdef _WIN64
@@ -567,7 +566,6 @@ static int popup_list(lua_State* state)
     assert(num_items == items.size());
 #endif
 
-    const char* choice;
     if (index > items.size()) index = items.size();
     if (index < 0) index = 0;
 
@@ -579,28 +577,17 @@ static int popup_list(lua_State* state)
             del_callback = popup_del_callback;
     }
 
-    popup_result result;
-    if (!g_gui_popups.get())
-    {
-        popup_results results = activate_text_list(title, &*items.begin(), int(items.size()), index, true/*has_columns*/, del_callback);
-        result = results.m_result;
-        index = results.m_index;
-        choice = results.m_text.c_str();
-    }
-    else
-    {
-        result = do_popup_list(title, &*items.begin(), items.size(), 0, false, false, false, index, choice, popup_items_mode::display_filter);
-    }
+    const popup_results results = activate_text_list(title, &*items.begin(), int(items.size()), index, true/*has_columns*/, del_callback);
 
     s_del_callback_info.clear();
 
-    switch (result)
+    switch (results.m_result)
     {
     case popup_result::select:
     case popup_result::use:
-        lua_pushstring(state, choice);
-        lua_pushboolean(state, (result == popup_result::select));
-        lua_pushinteger(state, index + 1);
+        lua_pushlstring(state, results.m_text.c_str(), results.m_text.length());
+        lua_pushboolean(state, (results.m_result == popup_result::select));
+        lua_pushinteger(state, results.m_index + 1);
         return 3;
     }
 

@@ -67,15 +67,6 @@ static setting_enum g_paste_crlf(
     "delete,space,ampersand,crlf",
     paste_crlf_crlf);
 
-setting_bool g_gui_popups(
-    "clink.gui_popups",
-    "Use GUI popup windows",
-    "Enable this to use GUI popup windows for various commands in Clink.  Clink\n"
-    "defaults to using popup console text, but GUI popup windows can be used for\n"
-    "some popup commands.  The 'color.popup' settings have no effect on GUI popup\n"
-    "windows.",
-    false);
-
 extern setting_bool g_adjust_cursor_style;
 extern setting_color g_color_popup;
 extern setting_color g_color_popup_desc;
@@ -721,22 +712,7 @@ int clink_popup_directories(int count, int invoking_key)
     }
 
     // Popup list.
-    popup_results results;
-    if (!g_gui_popups.get())
-    {
-        results = activate_directories_text_list(history, total);
-    }
-    else
-    {
-        const char* choice;
-        int current = total - 1;
-        results.m_result = do_popup_list("Directories",
-            (const char **)history, total, 0,
-            false/*completing*/, false/*auto_complete*/, false/*reverse_find*/,
-            current, choice);
-        results.m_index = current;
-        results.m_text = choice;
-    }
+    const popup_results results = activate_directories_text_list(history, total);
 
     // Handle results.
     switch (results.m_result)

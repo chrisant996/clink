@@ -334,7 +334,6 @@ setting_enum g_default_bindings(
     0);
 
 extern setting_bool g_terminal_raw_esc;
-extern setting_bool g_gui_popups;
 
 
 
@@ -1582,114 +1581,6 @@ static int maybe_strlen(const char* s)
 }
 
 //------------------------------------------------------------------------------
-int clink_popup_complete(int count, int invoking_key)
-{
-    if (!g_gui_popups.get())
-        return clink_select_complete(count, invoking_key);
-
-    if (!s_matches)
-    {
-        rl_ding();
-        return 0;
-    }
-
-    rl_completion_invoking_key = invoking_key;
-
-    // Collect completions.
-    int match_count;
-    char* orig_text;
-    int orig_start;
-    int orig_end;
-    int delimiter;
-    char quote_char;
-    bool completing = true;
-    bool free_match_strings = true;
-    rollback<bool> popup_scope(s_is_popup, true);
-    char** matches = rl_get_completions('?', &match_count, &orig_text, &orig_start, &orig_end, &delimiter, &quote_char);
-    if (!matches)
-        return 0;
-
-    // Identify common prefix.
-    char* end_prefix = rl_last_path_separator(orig_text);
-    if (end_prefix)
-        end_prefix++;
-    else if (ISALPHA((unsigned char)orig_text[0]) && orig_text[1] == ':')
-        end_prefix = (char*)orig_text + 2;
-    int len_prefix = end_prefix ? end_prefix - orig_text : 0;
-
-    // Match display filter.
-    bool display_filtered = false;
-    const display_filter_flags flags = (display_filter_flags::selectable | display_filter_flags::plainify);
-    match_display_filter_entry** filtered_matches = match_display_filter(s_needle.c_str(), matches, flags);
-    if (filtered_matches && filtered_matches[0] && filtered_matches[1])
-    {
-        display_filtered = true;
-        _rl_free_match_list(matches);
-        free_match_strings = false;
-        matches = nullptr;
-
-        completing = false; // Has intentional side effect of disabling auto_complete.
-
-        match_count = 0;
-        for (int i = 1; filtered_matches[i]; i++)
-            match_count += !!filtered_matches[i]->match[0]; // Count non-empty matches.
-
-        if (match_count)
-        {
-            matches = (char**)calloc(match_count + 1, sizeof(*matches));
-            if (matches)
-            {
-                int j = 0;
-                for (int i = 1; filtered_matches[i]; i++)
-                {
-                    if (filtered_matches[i]->match[0]) // Count non-empty matches.
-                        matches[j++] = filtered_matches[i]->buffer;
-                }
-                assert(j == match_count);
-                matches[match_count] = nullptr;
-            }
-        }
-    }
-
-    create_matches_lookaside(matches);
-
-    // Popup list.
-    int current = 0;
-    const char* choice;
-    switch (do_popup_list("Completions", (const char **)matches, match_count,
-                          len_prefix, completing,
-                          true/*auto_complete*/, false/*reverse_find*/,
-                          current, choice, display_filtered ? popup_items_mode::display_filter : popup_items_mode::descriptions))
-    {
-    case popup_result::cancel:
-        break;
-    case popup_result::error:
-        rl_ding();
-        break;
-    case popup_result::select:
-    case popup_result::use:
-        rl_insert_match(choice, orig_text, orig_start, delimiter, quote_char);
-        break;
-    }
-
-    _rl_reset_completion_state();
-
-    free(orig_text);
-    if (free_match_strings)
-    {
-        _rl_free_match_list(matches);
-    }
-    else
-    {
-        destroy_matches_lookaside(matches);
-        free(matches);
-    }
-    free_filtered_matches(filtered_matches);
-
-    return 0;
-}
-
-//------------------------------------------------------------------------------
 int clink_popup_history(int count, int invoking_key)
 {
     HIST_ENTRY** list = history_list();
@@ -1731,23 +1622,9 @@ int clink_popup_history(int count, int invoking_key)
         current = total - 1;
 
     // Popup list.
-    popup_result result;
-    if (!g_gui_popups.get())
-    {
-        popup_results results = activate_history_text_list(const_cast<const char**>(history), total, current, infos, false/*win_history*/);
-        result = results.m_result;
-        current = results.m_index;
-    }
-    else
-    {
-        const char* choice;
-        result = do_popup_list("History",
-            const_cast<const char**>(history), total, 0,
-            false/*completing*/, false/*auto_complete*/, true/*reverse_find*/,
-            current, choice);
-    }
+    const popup_results results = activate_history_text_list(const_cast<const char**>(history), total, current, infos, false/*win_history*/);
 
-    switch (result)
+    switch (results.m_result)
     {
     case popup_result::cancel:
         break;
@@ -1760,15 +1637,15 @@ int clink_popup_history(int count, int invoking_key)
             rl_maybe_save_line();
             rl_maybe_replace_line();
 
-            current = infos[current].index;
-            history_set_pos(current);
+            const int pos = infos[results.m_index].index;
+            history_set_pos(pos);
             rl_replace_from_history(current_history(), 0);
 
             bool point_at_end = (!search_len || _rl_history_point_at_end_of_anchored_search);
             rl_point = point_at_end ? rl_end : search_len;
             rl_mark = point_at_end ? search_len : rl_end;
 
-            if (result == popup_result::use)
+            if (results.m_result == popup_result::use)
             {
                 (*rl_redisplay_function)();
                 rl_newline(1, invoking_key);
@@ -1956,8 +1833,8 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
         clink_add_funmap_entry("clink-old-menu-complete-numbers", clink_old_menu_complete_numbers, keycat_completion, "Like 'old-menu-complete' using numbers from the current screen");
         clink_add_funmap_entry("clink-old-menu-complete-numbers-backward", clink_old_menu_complete_numbers_backward, keycat_completion, "Like 'old-menu-complete-backward' using numbers from the current screen");
         clink_add_funmap_entry("clink-paste", clink_paste, keycat_basic, "Pastes text from the clipboard");
-        clink_add_funmap_entry("clink-popup-complete", clink_popup_complete, keycat_completion, "Perform completion with a popup list of possible completions");
-        clink_add_funmap_entry("clink-popup-complete-numbers", clink_popup_complete_numbers, keycat_completion, "Perform completion with a popup list of numbers from the current screen");
+        clink_add_funmap_entry("clink-popup-complete", clink_select_complete, keycat_completion, "Perform completion by selecting from an interactive list of possible completions; if there is only one match, insert it");
+        clink_add_funmap_entry("clink-popup-complete-numbers", clink_popup_complete_numbers, keycat_completion, "Perform interactive completion from a list of numbers from the current screen");
         clink_add_funmap_entry("clink-popup-directories", clink_popup_directories, keycat_misc, "Show recent directories in a popup list and 'cd /d' to a selected directory");
         clink_add_funmap_entry("clink-popup-history", clink_popup_history, keycat_history, "Show history entries in a popup list.  Filters using any text before the cursor point.  Executes or inserts a selected history entry");
         clink_add_funmap_entry("clink-popup-show-help", clink_popup_show_help, keycat_misc, "Show all key bindings in a searching popup list and execute a selected key binding");
