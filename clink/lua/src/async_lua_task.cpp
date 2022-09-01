@@ -288,9 +288,9 @@ void async_lua_task::proc(async_lua_task* task)
 {
     task->do_work();
     task->m_is_complete = true;
+    task->detach();
     SetEvent(task->m_event);
     SetEvent(get_task_manager_event());
-    task->detach();
 }
 
 
