@@ -2524,21 +2524,7 @@ void rl_module::on_begin_line(const context& context)
     // Readline only detects terminal size changes while its line editor is
     // active.  If the terminal size isn't what Readline thought, then update
     // it now.
-    {
-        CONSOLE_SCREEN_BUFFER_INFO csbi;
-        HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-        GetConsoleScreenBufferInfo(h, &csbi);
-
-        const int width = csbi.dwSize.X;
-        const int height = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
-
-        if (_rl_screenheight != height || _rl_screenwidth != width)
-        {
-            rl_set_screen_size(height, width);
-            if (log_terminal)
-                LOG("terminal size %u x %u", _rl_screenwidth, _rl_screenheight);
-        }
-    }
+    refresh_terminal_size();
 
     {
         // Remind if logging is on.
@@ -3002,6 +2988,13 @@ void rl_module::on_terminal_resize(int columns, int rows, const context& context
     // line of the input area, so that Readline's rl_resize_terminal() function
     // can start a new prompt and overwrite the old one.
 
+#ifndef USE_READLINE_RESIZE_TERMINAL
+    refresh_terminal_size();
+    // The console size may have changed asynchronously, so reset columns to
+    // ensure consistent measurements.
+    columns = _rl_screenwidth;
+#endif
+
     int remaining = columns;
     int line_count = 1;
 
@@ -3052,19 +3045,31 @@ void rl_module::on_terminal_resize(int columns, int rows, const context& context
     };
 
     // Measure the new number of lines to the cursor position.
+#ifdef USE_READLINE_RESIZE_TERMINAL
+    const char* last_prompt_line = strrchr(context.prompt, '\n');
+    if (last_prompt_line)
+        ++last_prompt_line;
+    else
+        last_prompt_line = context.prompt;
+    measure(last_prompt_line, -1);
+#else
     measure(context.prompt, -1);
-    line_count = 1; // Keep only the X component from the prompt, since Readline only redisplays the last line of the prompt.
+#endif
     const line_buffer& buffer = context.buffer;
     const char* buffer_ptr = buffer.get_buffer();
     measure(buffer_ptr, buffer.get_cursor());
     int cursor_line = line_count - 1;
-    int delta = _rl_last_v_pos - cursor_line;
 
     // Move cursor to where the top line should be.
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
     GetConsoleScreenBufferInfo(h, &csbi);
-    COORD new_pos = { 0, SHORT(clamp(csbi.dwCursorPosition.Y + delta, 0, csbi.dwSize.Y - 1)) };
+#ifdef USE_READLINE_RESIZE_TERMINAL
+    int delta = _rl_last_v_pos - cursor_line;
+    COORD new_pos = { 0, SHORT(clamp(csbi.dwCursorPosition.Y - delta, 0, csbi.dwSize.Y - 1)) };
+#else
+    COORD new_pos = { 0, SHORT(clamp(csbi.dwCursorPosition.Y - cursor_line, 0, csbi.dwSize.Y - 1)) };
+#endif
     SetConsoleCursorPosition(h, new_pos);
     if (new_pos.Y < csbi.srWindow.Top)
         ScrollConsoleRelative(h, new_pos.Y, SCR_ABSOLUTE);
@@ -3073,14 +3078,40 @@ void rl_module::on_terminal_resize(int columns, int rows, const context& context
     static const char* const termcap_cd = tgetstr("cd", nullptr);
     context.printer.print(termcap_cd, strlen(termcap_cd));
 
+#ifdef USE_READLINE_RESIZE_TERMINAL
     // Let Readline update its display.
     rl_resize_terminal();
 
     if (g_debug_log_terminal.get())
         LOG("terminal size %u x %u", _rl_screenwidth, _rl_screenheight);
+#else
+    // Readline (even in bash on Ubuntu in WSL in Windows Terminal) doesn't do
+    // very well at responding to terminal resize events.  Apparently Clink must
+    // take care of it manually.
+    g_prompt_redisplay++;
+    rl_forced_update_display();
+#endif
 }
 
 //------------------------------------------------------------------------------
 void rl_module::on_signal(int sig)
 {
+}
+
+//------------------------------------------------------------------------------
+void rl_module::refresh_terminal_size()
+{
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+    GetConsoleScreenBufferInfo(h, &csbi);
+
+    const int width = csbi.dwSize.X;
+    const int height = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
+
+    if (_rl_screenheight != height || _rl_screenwidth != width)
+    {
+        rl_set_screen_size(height, width);
+        if (g_debug_log_terminal.get())
+            LOG("terminal size %u x %u", _rl_screenwidth, _rl_screenheight);
+    }
 }
