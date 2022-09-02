@@ -60,7 +60,7 @@ end
 --------------------------------------------------------------------------------
 function clink._popup_complete_numbers()
     collect_number_matches()
-    rl.invokecommand("clink-popup-complete")
+    rl.invokecommand("clink-select-complete")
 end
 
 --------------------------------------------------------------------------------
