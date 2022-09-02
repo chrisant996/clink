@@ -11,7 +11,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Some way to push keys?  (Push keys to Clink; not to other processes.)
 
 ## Low Priority
-- `console.readinput()` changes the console state, and can interfere with proper line wrapping behavior.
 - Collecting words currently happens in update_internal, but probably it also belongs in alternative_matches and/or update_matches:
   - If a `luafunc:` macro first does anything that alters the line buffer, and then invokes a completion command, then the collected words will be inaccurate.
 - Should coroutines really be able to make Readline redraw immediately?  Should instead set a flag that the main coroutine responds to when it gains control again?
