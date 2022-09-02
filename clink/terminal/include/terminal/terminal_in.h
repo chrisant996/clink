@@ -12,7 +12,6 @@ class terminal_in
 public:
     enum : int {
         input_none              = int(0x80000000),
-        input_timeout,
         input_abort,
         input_terminal_resize,
         input_exit,

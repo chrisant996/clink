@@ -609,7 +609,6 @@ static int read_input(lua_State* state)
             break;
 
         if (k == terminal_in::input_terminal_resize ||
-            k == terminal_in::input_timeout ||
             k == terminal_in::input_exit)
             continue;
 

@@ -546,8 +546,7 @@ enum : unsigned char
 
     input_abort_byte    = 0xff,
     input_none_byte     = 0xfe,
-    input_timeout_byte  = 0xfd,
-    input_exit_byte     = 0xfc,
+    input_exit_byte     = 0xfd,
 };
 
 
@@ -618,7 +617,6 @@ int win_terminal_in::read()
     switch (c)
     {
     case input_none_byte:       return terminal_in::input_none;
-    case input_timeout_byte:    return terminal_in::input_timeout;
     case input_abort_byte:      return terminal_in::input_abort;
     case input_exit_byte:       return terminal_in::input_exit;
     default:                    return c;
