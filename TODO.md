@@ -18,7 +18,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## Follow Up
 - Update other repos:
-  - [ ] Add command and flag descriptions in clink-completions?
   - [ ] Push update to z.lua repo.
 
 ## Argmatcher syntax
