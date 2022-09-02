@@ -640,6 +640,46 @@ static int read_input(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  console.checkinput
+/// -ver:   1.3.42
+/// -arg:   [timeout:number]
+/// -ret:   boolean
+/// Checks whether input is available.
+///
+/// The optional <span class="arg">timeout</span> is the number of seconds to
+/// wait for input to be available (use a floating point number for fractional
+/// seconds).  The default is 0 seconds, which returns immediately if input is
+/// not available.
+///
+/// If input is available before the <span class="arg">timeout</span> is
+/// reached, the return value is true.  Use
+/// <a href="#console.readinput">console.readinput()</a> to read the available
+/// input.
+///
+/// <strong>Note:</strong> Mouse input is not supported.
+/// -show:  if console.checkinput() then
+/// -show:  &nbsp;   local key = console.readinput() -- Returns immediately since input is available.
+/// -show:  &nbsp;   if key == "\x03" or key == "\x1b[27;27~" or key == "\x1b" then
+/// -show:  &nbsp;       -- Ctrl-C or ESC was pressed.
+/// -show:  &nbsp;   end
+/// -show:  end
+static int check_input(lua_State* state)
+{
+    const DWORD timeout = static_cast<DWORD>(optnumber(state, 1, 0) * 1000);
+
+    terminal term = terminal_create(nullptr, false);
+    term.in->begin();
+
+    const bool available = term.in->available(timeout);
+
+    term.in->end();
+    terminal_destroy(term);
+
+    lua_pushboolean(state, available);
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 void console_lua_initialise(lua_state& lua)
 {
     struct {
@@ -661,6 +701,7 @@ void console_lua_initialise(lua_state& lua)
         { "findprevline",           &find_prev_line },
         { "findnextline",           &find_next_line },
         { "readinput",              &read_input },
+        { "checkinput",             &check_input },
     };
 
     lua_State* state = lua.get_state();

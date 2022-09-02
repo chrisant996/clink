@@ -16,6 +16,7 @@ public:
                     win_terminal_in(bool cursor_visibility=true);
     virtual void    begin() override;
     virtual void    end() override;
+    virtual bool    available(unsigned int timeout) override;
     virtual void    select(input_idle* callback=nullptr) override;
     virtual int     read() override;
     virtual key_tester* set_key_tester(key_tester* keys) override;
@@ -23,14 +24,15 @@ public:
 private:
     unsigned int    get_dimensions();
     void            fix_console_input_mode();
-    void            read_console(input_idle* callback=nullptr);
+    void            read_console(input_idle* callback=nullptr, DWORD timeout=INFINITE, bool peek=false);
     void            process_input(const KEY_EVENT_RECORD& key_event);
     void            process_input(const MOUSE_EVENT_RECORD& mouse_event);
     void            filter_unbound_input(unsigned int buffer_count);
     void            push(unsigned int value);
     void            push(const char* seq);
     unsigned char   pop();
-    key_tester*     m_keys;
+    unsigned char   peek();
+    key_tester*     m_keys = nullptr;
     void*           m_stdin = nullptr;
     void*           m_stdout = nullptr;
     unsigned int    m_dimensions = 0;

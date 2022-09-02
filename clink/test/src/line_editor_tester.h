@@ -24,6 +24,7 @@ public:
     void                    set_input(const char* input) { m_input = m_read = input; }
     virtual void            begin() override {}
     virtual void            end() override {}
+    virtual bool            available(unsigned int timeout) override { return false; }
     virtual void            select(input_idle*) override {}
     virtual int             read() override { return *(unsigned char*)m_read++; }
     virtual key_tester*     set_key_tester(key_tester*) override { return nullptr; }

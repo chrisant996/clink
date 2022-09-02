@@ -20,6 +20,7 @@ public:
     virtual         ~terminal_in() = default;
     virtual void    begin() = 0;
     virtual void    end() = 0;
+    virtual bool    available(unsigned int timeout) = 0;
     virtual void    select(input_idle* callback=nullptr) = 0;
     virtual int     read() = 0;
     virtual key_tester* set_key_tester(key_tester* keys) = 0;

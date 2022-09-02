@@ -602,6 +602,35 @@ void win_terminal_in::end()
 }
 
 //------------------------------------------------------------------------------
+bool win_terminal_in::available(unsigned int _timeout)
+{
+    const DWORD stop = GetTickCount() + _timeout;
+    while (!m_buffer_count)
+    {
+        DWORD timeout = stop - GetTickCount();
+        if (timeout > _timeout)
+            timeout = 0;
+
+        // Read console input.  This is necessary to filter out OS events that
+        // Clink does not process as input.
+        read_console(nullptr, timeout, true/*peek*/);
+
+        // If real input is available, break out.
+        const unsigned char k = peek();
+        if (k != input_none_byte &&
+            k != input_exit_byte)
+            break;
+
+        // Eat the input.
+        read();
+
+        if (!timeout)
+            break;
+    }
+    return m_buffer_count > 0;
+}
+
+//------------------------------------------------------------------------------
 void win_terminal_in::select(input_idle* callback)
 {
     if (!m_buffer_count)
@@ -680,7 +709,7 @@ static void fix_console_output_mode(HANDLE h, DWORD modeExpected)
 }
 
 //------------------------------------------------------------------------------
-void win_terminal_in::read_console(input_idle* callback)
+void win_terminal_in::read_console(input_idle* callback, DWORD _timeout, bool peek)
 {
     // Hide the cursor unless we're accepting input so we don't have to see it
     // jump around as the screen's drawn.
@@ -705,6 +734,7 @@ void win_terminal_in::read_console(input_idle* callback)
 
     // Read input records sent from the terminal (aka conhost) until some
     // input has been buffered.
+    const DWORD started = GetTickCount();
     const unsigned int buffer_count = m_buffer_count;
     while (buffer_count == m_buffer_count)
     {
@@ -743,7 +773,17 @@ void win_terminal_in::read_console(input_idle* callback)
 
             fix_console_input_mode();
 
-            const DWORD timeout = callback ? callback->get_timeout() : INFINITE;
+            DWORD timeout = callback ? callback->get_timeout() : INFINITE;
+            if (_timeout != INFINITE)
+            {
+                const DWORD now = GetTickCount();
+                const DWORD elapsed = now - started;
+                if (elapsed < _timeout)
+                    timeout = _timeout - elapsed;
+                else
+                    timeout = 0;
+            }
+
             const DWORD waited = WaitForMultipleObjects(count, handles, false, timeout);
             if (waited != WAIT_TIMEOUT)
             {
@@ -770,6 +810,9 @@ void win_terminal_in::read_console(input_idle* callback)
 
             if (has_mode)
                 fix_console_output_mode(m_stdout, modeExpected);
+
+            if (!callback && waited == WAIT_TIMEOUT)
+                return;
         }
 
         if (has_mode)
@@ -777,7 +820,9 @@ void win_terminal_in::read_console(input_idle* callback)
 
         DWORD count;
         INPUT_RECORD record;
-        if (!ReadConsoleInputW(m_stdin, &record, 1, &count))
+        if (!(peek ?
+              PeekConsoleInputW(m_stdin, &record, 1, &count) :
+              ReadConsoleInputW(m_stdin, &record, 1, &count)))
         {
             // Handle's probably invalid if ReadConsoleInput() failed.
             m_buffer_head = 0;
@@ -786,6 +831,7 @@ void win_terminal_in::read_console(input_idle* callback)
             return;
         }
 
+        bool ret = false;
         switch (record.EventType)
         {
         case KEY_EVENT:
@@ -807,11 +853,19 @@ void win_terminal_in::read_console(input_idle* callback)
                 CONSOLE_SCREEN_BUFFER_INFO csbiNew;
                 GetConsoleScreenBufferInfo(m_stdout, &csbiNew);
                 if (csbi.dwSize.X != csbiNew.dwSize.X)
-                    return;
-                csbi = csbiNew; // Update for next time.
+                    ret = true;
+                else
+                    csbi = csbiNew; // Update for next time.
             }
             break;
         }
+
+        // Eat records that don't result in available input.
+        if (peek && buffer_count == m_buffer_count)
+            ReadConsoleInputW(m_stdin, &record, 1, &count);
+
+        if (ret)
+            return;
     }
 }
 
@@ -1447,4 +1501,13 @@ unsigned char win_terminal_in::pop()
     m_buffer_head = (m_buffer_head + 1) & (sizeof_array(m_buffer) - 1);
 
     return value;
+}
+
+//------------------------------------------------------------------------------
+unsigned char win_terminal_in::peek()
+{
+    if (!m_buffer_count)
+        return input_none_byte;
+
+    return m_buffer[m_buffer_head];
 }
