@@ -2,6 +2,11 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.3.42
+
+- Added `console.checkinput()` to check whether input is available.
+- Changed `console.readinput()` to accept an optional <span class="arg">no_cursor</span> argument to avoid changing cursor visibility or position.
+
 #### v1.3.41
 
 - Added `io.truncate()` to truncate a file.
