@@ -574,22 +574,32 @@ static int find_next_line(lua_State* state)
 //------------------------------------------------------------------------------
 /// -name:  console.readinput
 /// -ver:   1.2.29
+/// -arg:   no_cursor:boolean
 /// -ret:   string | nil
 /// Reads one key sequence from the console input.  If no input is available, it
 /// waits until input becomes available.
 ///
 /// This returns the full key sequence string for the pressed key.
 /// For example, <kbd>A</kbd> is <code>"A"</code> and <kbd>Home</kbd> is
-/// <code>"\027[A"</code>, etc.
+/// <code>"\027[A"</code>, etc.  Nil is returned when an interrupt occurs by
+/// pressing <kbd>Ctrl</kbd>-<kbd>Break</kbd>.
 ///
 /// See <a href="#discoverkeysequences">Discovering Key Sequences</a> for
 /// information on how to find the key sequence for a key.
+///
+/// In Clink v1.3.42 and higher, passing true for
+/// <span class="arg">no_cursor</span> avoids modifying the cursor visibility or
+/// position.
+///
+/// <strong>Note:</strong> Mouse input is not supported.
 static int read_input(lua_State* state)
 {
     bool select = true;
     str<> key;
 
-    terminal term = terminal_create();
+    const bool no_cursor = (lua_isboolean(state, 1) && lua_toboolean(state, 1));
+
+    terminal term = terminal_create(nullptr, !no_cursor);
     term.in->begin();
 
     // Get one full input key sequence.

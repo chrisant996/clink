@@ -564,6 +564,12 @@ unsigned int win_terminal_in::get_dimensions()
 
 
 //------------------------------------------------------------------------------
+win_terminal_in::win_terminal_in(bool cursor_visibility)
+: m_cursor_visibility(cursor_visibility)
+{
+}
+
+//------------------------------------------------------------------------------
 void win_terminal_in::begin()
 {
     if (!s_interrupt)
@@ -575,7 +581,8 @@ void win_terminal_in::begin()
     m_stdout = GetStdHandle(STD_OUTPUT_HANDLE);
     m_dimensions = get_dimensions();
     GetConsoleMode(m_stdin, &m_prev_mode);
-    show_cursor(false);
+    if (m_cursor_visibility)
+        show_cursor(false);
 
     m_prev_mouse_button_state = 0;
     if (GetKeyState(VK_LBUTTON) < 0)
@@ -587,7 +594,8 @@ void win_terminal_in::begin()
 //------------------------------------------------------------------------------
 void win_terminal_in::end()
 {
-    show_cursor(true);
+    if (m_cursor_visibility)
+        show_cursor(true);
     SetConsoleMode(m_stdin, m_prev_mode);
     m_stdin = nullptr;
     m_stdout = nullptr;
@@ -677,16 +685,18 @@ void win_terminal_in::read_console(input_idle* callback)
     // Hide the cursor unless we're accepting input so we don't have to see it
     // jump around as the screen's drawn.
     struct cursor_scope {
-        cursor_scope()  { show_cursor(true); }
-        ~cursor_scope() { show_cursor(false); }
-    } _cs;
+        cursor_scope(bool doit) : m_doit(doit) { if (m_doit) show_cursor(true); }
+        ~cursor_scope() { if (m_doit) show_cursor(false); }
+    private:
+        const bool m_doit;
+    } _cs(m_cursor_visibility);
 
     // Conhost restarts the cursor blink when writing to the console. It restarts
     // hidden which means that if you type faster than the blink the cursor turns
     // invisible. Fortunately, moving the cursor restarts the blink on visible.
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     GetConsoleScreenBufferInfo(m_stdout, &csbi);
-    if (!is_scroll_mode())
+    if (m_cursor_visibility && !is_scroll_mode())
         SetConsoleCursorPosition(m_stdout, csbi.dwCursorPosition);
 
     // Reset interrupt detection (allow Ctrl+Break to cancel input).

@@ -13,6 +13,7 @@ class win_terminal_in
     : public terminal_in
 {
 public:
+                    win_terminal_in(bool cursor_visibility=true);
     virtual void    begin() override;
     virtual void    end() override;
     virtual void    select(input_idle* callback=nullptr) override;
@@ -39,4 +40,5 @@ private:
     unsigned char   m_buffer_count = 0;
     wchar_t         m_lead_surrogate = 0;
     unsigned char   m_buffer[16]; // must be power of two.
+    const bool      m_cursor_visibility = true;
 };

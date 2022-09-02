@@ -17,7 +17,7 @@ struct terminal
 };
 
 //------------------------------------------------------------------------------
-terminal            terminal_create(screen_buffer* screen=nullptr);
+terminal            terminal_create(screen_buffer* screen=nullptr, bool cursor_visibility=true);
 void                terminal_destroy(const terminal& terminal);
 
 //------------------------------------------------------------------------------

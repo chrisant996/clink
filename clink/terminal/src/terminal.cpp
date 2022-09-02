@@ -10,13 +10,13 @@
 #include <core/base.h>
 
 //------------------------------------------------------------------------------
-terminal terminal_create(screen_buffer* screen)
+terminal terminal_create(screen_buffer* screen, bool cursor_visibility)
 {
 #if defined(PLATFORM_WINDOWS)
     terminal term;
     term.screen_owned = (screen == nullptr);
     term.screen = screen ? screen : new win_screen_buffer();
-    term.in = new win_terminal_in();
+    term.in = new win_terminal_in(cursor_visibility);
     term.out = new ecma48_terminal_out(*term.screen);
     return term;
 #else
