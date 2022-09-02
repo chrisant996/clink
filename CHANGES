@@ -6,6 +6,7 @@
 
 - Added `console.checkinput()` to check whether input is available.
 - Changed `console.readinput()` to accept an optional <span class="arg">no_cursor</span> argument to avoid changing cursor visibility or position.
+- Fixed [#320](https://github.com/chrisant996/clink/issues/320); resizing the terminal can garble the prompt (bash has the same problem, so Clink now uses custom code to handle resizing the terminal).
 
 #### v1.3.41
 
