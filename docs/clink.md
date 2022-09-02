@@ -1023,7 +1023,7 @@ Here is a sample `.inputrc` file with some of the variables and key bindings tha
 <span class="hljs-comment"># Completion key bindings.</span>
 <span class="hljs-string">"\t"</span>:               old-menu-complete               <span class="hljs-comment"># Tab</span>
 <span class="hljs-string">"\e[Z"</span>:             old-menu-complete-backward      <span class="hljs-comment"># Shift-Tab</span>
-<span class="hljs-string">"\e[27;5;9~"</span>:       clink-popup-complete            <span class="hljs-comment"># Ctrl-Tab</span>
+<span class="hljs-string">"\e[27;5;32~"</span>:      clink-select-complete           <span class="hljs-comment"># Ctrl-Space</span>
 
 <span class="hljs-comment"># Some key bindings I got used to from 4Dos/4NT/Take Command.</span>
 C-b:                                                <span class="hljs-comment"># Ctrl-B (cleared because I redefined Ctrl-F)</span>
@@ -1234,8 +1234,8 @@ Command | Key | Description
 `clink-old-menu-complete-numbers` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>n</kbd> | Like `old-menu-complete`, but for numbers from the console screen (3 digits or more, up to hexadecimal).
 `clink-old-menu-complete-numbers-backward` | | Like `old-menu-complete-backward`, but for numbers from the console screen (3 digits or more, up to hexadecimal).
 `clink-paste` | <kbd>Ctrl</kbd>-<kbd>v</kbd> | Paste the clipboard at the cursor.
-`clink-popup-complete` | | Show a [popup window](#popupwindow) that lists the available completions.
-`clink-popup-complete-numbers` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>N</kbd> | Like `clink-popup-complete`, but for numbers from the console screen (3 digits or more, up to hexadecimal).
+`clink-popup-complete` | | A synonym for `clink-select-complete`.
+`clink-popup-complete-numbers` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>N</kbd> | Like `clink-select-complete`, but for numbers from the console screen (3 digits or more, up to hexadecimal).
 `clink-popup-directories` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>PgUp</kbd> | Show a [popup window](#popupwindow) of recent current working directories.  In the popup, use <kbd>Enter</kbd> to `cd /d` to the highlighted directory.
 `clink-popup-history` | | Show a [popup window](#popupwindow) that lists the command history (if any text precedes the cursor then it uses an anchored search to filter the list).  In the popup, use <kbd>Enter</kbd> to execute the highlighted command.
 `clink-popup-show-help` | | Show a [popup window](#popupwindow) that lists the currently active key bindings, and can invoke a selected key binding.  The default key binding for this is <kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>H</kbd>.
