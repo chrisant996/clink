@@ -1994,7 +1994,7 @@ local function _has_argmatcher(command_word)
         argmatcher = attempt_load_argmatcher(command_word)
     end
 
-    if argmatcher then
+    if argmatcher and not (clink.co_state._argmatcher_fromhistory and clink.co_state._argmatcher_fromhistory.argmatcher) then
         -- Avoid coloring directories as having argmatchers.
         if clink._async_path_type(command_word, 15, clink.reclassifyline) == "dir" then
             return
