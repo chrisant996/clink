@@ -5,19 +5,20 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
+- Something may still be not right when resizing the terminal; run `clink drawtest`.
 
 ## Normal Priority
-- Show time stamps in history popup?
-- Some way to push keys?  (Push keys to Clink; not to other processes.)
+- Match filtering e.g. by `clink.onfiltermatches()` is skipped if the input matches only one completion.
 
 ## Low Priority
 - Collecting words currently happens in update_internal, but probably it also belongs in alternative_matches and/or update_matches:
   - If a `luafunc:` macro first does anything that alters the line buffer, and then invokes a completion command, then the collected words will be inaccurate.
+- Show time stamps in history popup?
+- Some way to push keys?  (Push keys to Clink; not to other processes.)
 - Should coroutines really be able to make Readline redraw immediately?  Should instead set a flag that the main coroutine responds to when it gains control again?
 
 ## Follow Up
-- Update other repos:
-  - [ ] Push update to z.lua repo.
+- Push update to z.lua repo.
 
 ## Argmatcher syntax
 - See the argmatcher_syntax branch.
