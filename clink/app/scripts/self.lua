@@ -5,7 +5,9 @@
 -- NOTE: If you add any settings here update set.cpp to load (lua, app, self).
 
 --------------------------------------------------------------------------------
-local nothing = clink.argmatcher()
+local nothing = clink.argmatcher():nofiles()
+local empty_arg = clink.argmatcher():addarg()
+local empty_arg_nothing = clink.argmatcher():addarg():nofiles()
 local file_loop = clink.argmatcher():addarg(clink.filematches):loop()
 
 --------------------------------------------------------------------------------
@@ -14,9 +16,11 @@ local dir_matcher = clink.argmatcher():addarg(clink.dirmatches)
 --------------------------------------------------------------------------------
 local function make_inject_parser()
     local inject = clink.argmatcher()
+    :addflags("-h", "-d"..empty_arg, "-p"..dir_matcher, "-q", "-l", "-s"..dir_matcher, "-?")
+    :hideflags("-h", "-d", "-p", "-q", "-l", "-s", "-?")
     :addflags(
         "--help",
-        "--pid",
+        "--pid"..empty_arg,
         "--profile"..dir_matcher,
         "--quiet",
         "--nolog",
@@ -37,6 +41,8 @@ local autorun_dashdash = clink.argmatcher()
 :addarg("--" .. make_inject_parser():addarg(clink.filematches):loop())
 
 local autorun = clink.argmatcher()
+:addflags("-h", "-a", "-?")
+:hideflags("-h", "-a", "-?")
 :addflags(
     "--allusers",
     "--help")
@@ -56,6 +62,8 @@ local autorun = clink.argmatcher()
 
 --------------------------------------------------------------------------------
 local echo = clink.argmatcher()
+:addflags("-h", "-v", "-?")
+:hideflags("-h", "-v", "-?")
 :addflags(
     "--help",
     "--verbose")
@@ -335,6 +343,8 @@ end
 
 --------------------------------------------------------------------------------
 local set = clink.argmatcher()
+:addflags("-h", "-d", "-?")
+:hideflags("-h", "-d", "-?")
 :addflags("--help", "--describe")
 :adddescriptions({["--help"] = "Show help"})
 :adddescriptions({["--describe"] = "Show descriptions of settings (instead of values)"})
@@ -344,11 +354,13 @@ local set = clink.argmatcher()
 
 --------------------------------------------------------------------------------
 local history = clink.argmatcher("history")
+:addflags("-h", "-c"..nothing, "-d"..empty_arg_nothing, "-p"..file_loop, "-s"..file_loop)
+:hideflags("-h", "-c", "-d", "-p", "-s")
 :addflags(
     "--help",
     "--bare",
     "--show-time",
-    "--time-format"..clink.argmatcher():addarg(),
+    "--time-format"..empty_arg,
     "--unique")
 :adddescriptions({
     ["--help"]      = "Show help",
@@ -365,12 +377,14 @@ local history = clink.argmatcher("history")
     "add"       .. file_loop,
     "clear"     .. nothing,
     "compact"   .. nothing,
-    "delete"    .. nothing,
+    "delete"    .. empty_arg_nothing,
     "expand"    .. file_loop)
 :nofiles()
 
 --------------------------------------------------------------------------------
 local update = clink.argmatcher()
+:addflags("-h", "-a", "-A", "-D", "-?")
+:hideflags("-h", "-a", "-A", "-D", "-?")
 :addflags("--help", "--allusers", "--allow-automatic", "--disallow-automatic")
 :adddescriptions({
     ["--help"]      = "Show help",
@@ -381,6 +395,8 @@ local update = clink.argmatcher()
 
 --------------------------------------------------------------------------------
 local installscripts = clink.argmatcher()
+:addflags("-h", "-l", "-?")
+:hideflags("-h", "-l", "-?")
 :addflags("--help", "--list")
 :adddescriptions({
     ["--help"] = "Show help",
@@ -400,6 +416,8 @@ end
 
 --------------------------------------------------------------------------------
 local uninstallscripts = clink.argmatcher()
+:addflags("-h", "-?", "-l", "-a")
+:hideflags("-h", "-?", "-l", "-a")
 :addflags("--help", "--list", "--all")
 :adddescriptions({
     ["--help"] = "Show help",
@@ -424,13 +442,17 @@ clink.argmatcher(
     "installscripts" .. installscripts,
     "uninstallscripts" .. uninstallscripts,
     "set"       .. set)
+:addflags("-h", "-p"..dir_matcher, "-~"..empty_arg, "-v", "-?")
+:hideflags("-h", "-p", "-~", "-v", "-?")
 :addflags(
     "--help",
     "--profile"..dir_matcher,
+    "--session"..empty_arg,
     "--version")
 :adddescriptions({
     ["--help"]      = "Show help",
     ["--profile"]   = { " dir", "Override the profile directory" },
+    ["--session"]   = { " id", "Override the session id (for history and info)" },
     ["--version"]   = "Print Clink's version",
     ["autorun"]     = "Manage Clink's entry in cmd.exe's autorun",
     ["echo"]        = "Echo key sequences for use in .inputrc files",
@@ -455,9 +477,9 @@ function set_generator:generate(line_state, match_builder) -- luacheck: no self
     local index = 2
     while index < line_state:getwordcount() do
         local word = line_state:getword(index)
-        if word == "--help" then -- luacheck: ignore 542
-        elseif word == "--version" then -- luacheck: ignore 542
-        elseif word == "--profile" then
+        if word == "--help" or word == "-h" or word == "-?" then -- luacheck: ignore 542
+        elseif word == "--version" or word == "-v" then -- luacheck: ignore 542
+        elseif word == "--profile" or word == "-p" then
             index = index + 1
         else
             break
@@ -470,7 +492,11 @@ function set_generator:generate(line_state, match_builder) -- luacheck: no self
     end
 
     index = index + 1
-    if line_state:getword(index) == "--help" then
+    while true do
+        local word = line_state:getword(index)
+        if word ~= "--help" and word ~= "-h" and word ~= "-?" and word ~= "--describe" and word ~= "-d" then
+            break
+        end
         index = index + 1
     end
 
