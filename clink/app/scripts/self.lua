@@ -428,6 +428,42 @@ local uninstallscripts = clink.argmatcher()
 :nofiles()
 
 --------------------------------------------------------------------------------
+local speed_parser = clink.argmatcher():addarg({fromhistory=true})
+local width_parser = clink.argmatcher():addarg({fromhistory=true})
+local drawtest = clink.argmatcher()
+:addflags(
+    "-p", "--pause",
+    "-s" .. speed_parser, "--speed" .. speed_parser,
+    "-w" .. width_parser, "--width" .. width_parser,
+    "-h", "--help", "-?")
+:hideflags("-p", "-s", "-w", "-h", "-?")
+:nofiles()
+
+--------------------------------------------------------------------------------
+local testbed = clink.argmatcher()
+:addflags(
+    "-d", "--hook",
+    "-s" .. dir_matcher, "--scripts" .. dir_matcher,
+    "-p" .. dir_matcher, "--profile" .. dir_matcher,
+    "-h", "--help", "-?")
+:hideflags("-d", "-s", "-p", "-h", "-?")
+:nofiles()
+
+--------------------------------------------------------------------------------
+local function hide_tests()
+    clink.onfiltermatches(function(matches)
+        local keep = {}
+        for i, m in ipairs(matches) do
+            if m.match ~= "drawtest" and m.match ~= "testbed" then
+                table.insert(keep, m)
+            end
+        end
+        return keep
+    end)
+    return {}
+end
+
+--------------------------------------------------------------------------------
 clink.argmatcher(
     "clink",
     "clink_x86.exe",
@@ -441,7 +477,10 @@ clink.argmatcher(
     "update"    .. update,
     "installscripts" .. installscripts,
     "uninstallscripts" .. uninstallscripts,
-    "set"       .. set)
+    "set"       .. set,
+    "drawtest"  .. drawtest,
+    "testbed"   .. testbed,
+    hide_tests)
 :addflags("-h", "-p"..dir_matcher, "-~"..empty_arg, "-v", "-?")
 :hideflags("-h", "-p", "-~", "-v", "-?")
 :addflags(

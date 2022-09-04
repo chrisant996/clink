@@ -11,8 +11,17 @@
 #include <terminal/terminal_out.h>
 #include <terminal/terminal_helpers.h>
 #include <terminal/printer.h>
+#if 0
+#include <utils/app_context.h>
+#endif
 
+#include <getopt.h>
 #include <xmmintrin.h>
+
+//------------------------------------------------------------------------------
+void puts_help(const char* const* help_pairs, const char* const* other_pairs=nullptr);
+
+
 
 //------------------------------------------------------------------------------
 struct handle
@@ -37,6 +46,7 @@ public:
     void            start(const char* prompt);
     void            end();
     void            press_keys(const char* keys);
+    bool            done() { return m_done; }
 
 private:
     static DWORD WINAPI thread_proc(void* param);
@@ -45,6 +55,7 @@ private:
     printer*        m_printer;
     line_editor*    m_editor;
     handle          m_thread;
+    volatile bool   m_done = true;
 
     printer_context* m_printer_context;
     console_config* m_cc;
@@ -56,6 +67,7 @@ DWORD WINAPI test_editor::thread_proc(void* param)
     auto* self = (test_editor*)param;
     str<> tmp;
     self->m_editor->edit(tmp);
+    self->m_done = true;
     return 0;
 }
 
@@ -71,17 +83,29 @@ void test_editor::start(const char* prompt)
     m_printer_context = new printer_context(m_terminal.out, m_printer);
     m_cc = new console_config();
 
+#if 0
+    // initialise_readline() needs the printer_context.
+    str_moveable bin_dir;
+    str_moveable state_dir;
+    app_context::get()->get_binaries_dir(bin_dir);
+    app_context::get()->get_state_dir(state_dir);
+    extern void initialise_readline(const char* shell_name, const char* state_dir, const char* bin_dir);
+    initialise_readline("clink", state_dir.c_str(), bin_dir.c_str());
+#endif
+
     line_editor::desc desc(m_terminal.in, m_terminal.out, m_printer, nullptr);
     desc.prompt = prompt;
     m_editor = line_editor_create(desc);
 
+    m_done = false;
     m_thread = CreateThread(nullptr, 0, thread_proc, this, 0, nullptr);
 }
 
 //------------------------------------------------------------------------------
 void test_editor::end()
 {
-    press_keys("\n");
+    if (!m_done)
+        press_keys("\n");
     WaitForSingleObject(m_thread, INFINITE);
     line_editor_destroy(m_editor);
     delete m_cc;
@@ -174,6 +198,9 @@ class stepper
 public:
                     stepper(int timeout_ms);
                     ~stepper();
+    void            init(bool pause=false);
+    void            reset();
+    bool            paused();
     bool            step();
 
 private:
@@ -202,22 +229,42 @@ DWORD WINAPI stepper::thunk(void* param)
 
 //------------------------------------------------------------------------------
 stepper::stepper(int timeout_ms)
-: m_state(state_running)
+: m_input_thread(nullptr)
+, m_state(state_running)
 , m_timeout_ms(timeout_ms)
 {
-    m_input_thread = CreateThread(nullptr, 0, thunk, this, 0, nullptr);
 }
 
 //------------------------------------------------------------------------------
 stepper::~stepper()
 {
-    TerminateThread(m_input_thread, 0);
+    reset();
+}
+
+//------------------------------------------------------------------------------
+void stepper::init(bool pause)
+{
+    if (!m_input_thread)
+    {
+        m_state = pause ? state_paused : state_running;
+        m_input_thread = CreateThread(nullptr, 0, thunk, this, 0, nullptr);
+    }
+}
+
+//------------------------------------------------------------------------------
+void stepper::reset()
+{
+    if (m_input_thread)
+    {
+        TerminateThread(m_input_thread, 0);
+        m_input_thread = nullptr;
+        m_state = state_running;
+    }
 }
 
 //------------------------------------------------------------------------------
 void stepper::run_input_thread()
 {
-/*
     HANDLE stdin_handle = GetStdHandle(STD_INPUT_HANDLE);
     while (true)
     {
@@ -238,11 +285,21 @@ void stepper::run_input_thread()
 
         switch (key_event.wVirtualKeyCode)
         {
-        case VK_ESCAPE: m_state = state_quit; break;
-        case VK_SPACE:  m_state = state_step; break;
+        case VK_ESCAPE:
+        case VK_RETURN:
+            m_state = state_quit;
+            break;
+        case VK_SPACE:
+            m_state = state_step;
+            break;
         }
     }
-*/
+}
+
+//------------------------------------------------------------------------------
+bool stepper::paused()
+{
+    return m_state == state_paused;
 }
 
 //------------------------------------------------------------------------------
@@ -252,8 +309,10 @@ bool stepper::step()
     {
     case state_paused:  while (m_state == state_paused) Sleep(10); break;
     case state_running: Sleep(m_timeout_ms); break;
-    case state_step:    m_state = state_paused; break;
     }
+
+    if (m_state == state_step)
+        m_state = state_paused;
 
     return (m_state != state_quit);
 }
@@ -264,30 +323,38 @@ bool stepper::step()
 class runner
 {
 public:
-                        runner();
-    void                go();
+                        runner(int width=0, int timeout_ms=0);
+    void                go(bool pause=false);
 
 private:
     bool                step();
-    void                ecma48_test();
-    void                line_test();
+    bool                ecma48_test();
+    bool                line_test();
     test_console        m_console;
     stepper             m_stepper;
 };
 
 //------------------------------------------------------------------------------
-runner::runner()
-: m_stepper(200)
+runner::runner(int width, int timeout_ms)
+: m_stepper((timeout_ms <= 0) ? 200 : timeout_ms)
 {
     srand(0xa9e);
-    m_console.resize(80, 25);
+    width = (width <= 0) ? 80 : min<int>(max<int>(width, 20), 80);
+    m_console.resize(width, 25);
 }
 
 //------------------------------------------------------------------------------
-void runner::go()
+void runner::go(bool pause)
 {
-    ecma48_test();
-    line_test();
+    m_stepper.init(pause);
+
+    if (!ecma48_test())
+        return;
+
+    m_stepper.reset();
+
+    if (!line_test())
+        return;
 }
 
 //------------------------------------------------------------------------------
@@ -297,59 +364,72 @@ bool runner::step()
 }
 
 //------------------------------------------------------------------------------
-void runner::ecma48_test()
+bool runner::ecma48_test()
 {
 #define CSI(x) "\x1b[" #x
     terminal terminal = terminal_create();
     terminal_out& output = *terminal.out;
     output.begin();
 
-    // Clear screen after
-    output.write(CSI(41m) CSI(3;3H) "X" CSI(J), -1);
+    if (m_stepper.paused())
+        output.write(CSI(7m) "SPC" CSI(0m) "=continue, ");
+    output.write(CSI(7m) "RET" CSI(0m) "=stop");
+
     if (!step())
-        return;
+        return false;
+
+    // Clear screen after
+    output.write(CSI(3;3H) "CSI J -> " CSI(97;41m) "X" CSI(J), -1);
+    if (!step())
+        return false;
 
     // Clear screen before
-    output.write(CSI(42m) CSI(5;3H) "X\b\b" CSI(1J), -1);
+    output.write(CSI(97;42m) CSI(5;3H) "X\b\b" CSI(1J) CSI(2C) " <- CSI 1J", -1);
     if (!step())
-        return;
+        return false;
 
     // Clear screen all
-    output.write(CSI(43m) CSI(2J), -1);
+    output.write(CSI(30;43m) CSI(2J) CSI(2;4H) "CSI 2J", -1);
     if (!step())
-        return;
+        return false;
 
     // Clear line after
-    output.write(CSI(44m) CSI(4;4H) "X" CSI(K), -1);
+    output.write(CSI(4;4H) "CSI K -> " CSI(97;44m) "X" CSI(K), -1);
     if (!step())
-        return;
+        return false;
 
     // Clear line before
-    output.write(CSI(45m) CSI(5;4H) "X\b\b" CSI(1K), -1);
+    output.write(CSI(97;45m) CSI(5;4H) "X\b\b" CSI(1K) CSI(2C) " <- CSI 1K", -1);
     if (!step())
-        return;
+        return false;
 
     // All line
-    output.write("\n" CSI(46m) CSI(2K), -1);
+    output.write(CSI(0m) "\n\n" CSI(30;43m) CSI(4G) "CSI 2K (next line)\n" CSI(30;46m) CSI(2K), -1);
     if (!step())
-        return;
+        return false;
 
     output.write(CSI(0m) CSI(1;1H) CSI(J), -1);
     output.end();
     terminal_destroy(terminal);
+    return true;
 #undef CSI
 }
 
 //------------------------------------------------------------------------------
-void runner::line_test()
+bool runner::line_test()
 {
+    if (!step())
+        return false;
+
     test_editor editor;
 
-#if 1
-    editor.start("prompt\n->$ ");
-#else
-    editor.start("prompt$ ");
-#endif // 0
+    editor.start("\x1b[m\n"
+                 "\x1b[32;7mprompt\x1b[27m "
+                 "\x1b[44;96mcontext\x1b[m "
+                 "\x1b[1m\xe2\x80\xa2\x1b[m "
+                 "\x1b[3;35minformation\x1b[m "
+                 "\x1b[1;7m$\x1b[m ");
+
     const char word[] = "9876543210";
     for (int i = 0; i < 100;)
     {
@@ -360,21 +440,91 @@ void runner::line_test()
     }
 
     int columns = m_console.get_columns();
-    for (; columns > 16 && step(); --columns)
+    for (; columns > 16 && !editor.done() && step(); --columns)
         m_console.resize(columns);
 
-    for (; columns < 60 && step(); ++columns)
+    for (; columns < 60 && !editor.done() && step(); ++columns)
         m_console.resize(columns);
 
-    step();
+    bool ret = !editor.done() && step();
+
     editor.end();
+    return ret;
 }
 
 
 
 //------------------------------------------------------------------------------
-int draw_test(int, char**)
+int draw_test(int argc, char** argv)
 {
-    runner().go();
-    return 0;
+    static const char* help_usage = "Usage: drawtest [options]\n";
+
+    static const struct option options[] = {
+        { "pause",      no_argument,        nullptr, 'p' },
+        { "speed",      required_argument,  nullptr, 's' },
+        { "width",      required_argument,  nullptr, 'w' },
+        { "help",       no_argument,        nullptr, 'h' },
+        {}
+    };
+
+    static const char* const help[] = {
+        "-p, --pause",          "Pause before starting.",
+        "-s, --speed <ms>",     "Specifies step speed in milliseconds.",
+        "-w, --width <cols>",   "Specifies initial width for the terminal.",
+        "-h, --help",           "Shows this help text.",
+        nullptr
+    };
+
+    extern void puts_clink_header();
+
+    bool pause = false;
+    int timeout_ms = 0;
+    int width = 0;
+
+    int i;
+    int ret = 1;
+    while ((i = getopt_long(argc, argv, "?hps.w.", options, nullptr)) != -1)
+    {
+        switch (i)
+        {
+        case 'p':
+            pause = true;
+            break;
+
+        case 's':
+            timeout_ms = atoi(optarg);
+            break;
+
+        case 'w':
+            width = atoi(optarg);
+            break;
+
+        case '?':
+        case 'h':
+            ret = 0;
+            // fall through
+        default:
+            puts_clink_header();
+            puts(help_usage);
+            puts("Options:");
+            puts_help(help);
+            puts("This starts some drawing tests.");
+            return ret;
+        }
+    }
+
+    ret = 0;
+
+#if 0
+    str_moveable settings_file;
+    str_moveable default_settings_file;
+    app_context::get()->get_settings_path(settings_file);
+    app_context::get()->get_default_settings_file(default_settings_file);
+    settings::load(settings_file.c_str(), default_settings_file.c_str());
+#endif
+
+    settings::find("terminal.emulation")->set("emulate");
+
+    runner(width, timeout_ms).go(pause);
+    return ret;
 }
