@@ -736,14 +736,20 @@ int touch(lua_State* state)
 ///
 /// <table>
 /// <tr><th>Name</th><th>Special Behavior</th></tr>
-/// <tr><td><code>"HOME"</code></td><td>If %HOME% is not set then a return value
-///     is synthesized from %HOMEDRIVE% and %HOMEPATH%, or from
-///     %USERPROFILE%.</td></tr>
-/// <tr><td><code>"ERRORLEVEL"</code></td><td>When the
+/// <tr><td><code>"CD"</code></td><td>If %CD% is not set then a return value
+///     is synthesized from the current working directory path name.</td></tr>
+/// <tr><td><code>"CMDCMDLINE"</code></td><td>If %CMDCMDLINE% is not set then
+///     this returns the command line that started the CMD process.</td></tr>
+/// <tr><td><code>"ERRORLEVEL"</code></td><td>If %ERRORLEVEL% is not set and the
 ///     <code>cmd.get_errorlevel</code> setting is enabled (it is off by
 ///     default) this returns the most recent exit code, just like the
 ///     <code>echo %ERRORLEVEL%</code> command displays.  Otherwise this returns
 ///     0.</td></tr>
+/// <tr><td><code>"HOME"</code></td><td>If %HOME% is not set then a return value
+///     is synthesized from %HOMEDRIVE% and %HOMEPATH%, or from
+///     %USERPROFILE%.</td></tr>
+/// <tr><td><code>"RANDOM"</code></td><td>If %RANDOM% is not set then this
+///     returns a random integer.</td></tr>
 /// </table>
 int get_env(lua_State* state)
 {

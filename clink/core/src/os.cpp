@@ -652,6 +652,22 @@ bool get_env(const char* name, str_base& out)
             out.format("%d", os::get_errorlevel());
             return true;
         }
+        else if (stricmp(name, "CD") == 0)
+        {
+            os::get_current_dir(out);
+            return true;
+        }
+        else if (stricmp(name, "RANDOM") == 0)
+        {
+            out.clear();
+            out.format("%d", rand());
+            return true;
+        }
+        else if (stricmp(name, "CMDCMDLINE") == 0)
+        {
+            out = GetCommandLineW();
+            return true;
+        }
 
         map_errno();
         return false;
