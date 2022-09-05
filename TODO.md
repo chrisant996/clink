@@ -6,6 +6,9 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## High Priority
 - Something may still be not right when resizing the terminal; run `clink drawtest`.
+  - UTF8 characters seem to throw off line width calculations.
+  - A prompt exactly the width of the terminal seems to add a newline, which might result from a missing _rl_term_autowrap test.
+  - The ecma48 terminal emulation behaves a little differently during `clink drawtest` than native terminal output does.
 
 ## Normal Priority
 - Match filtering e.g. by `clink.onfiltermatches()` is skipped if the input matches only one completion.
