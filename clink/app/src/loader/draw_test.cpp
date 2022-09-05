@@ -11,15 +11,25 @@
 #include <terminal/terminal_out.h>
 #include <terminal/terminal_helpers.h>
 #include <terminal/printer.h>
-#if 0
-#include <utils/app_context.h>
-#endif
 
 #include <getopt.h>
 #include <xmmintrin.h>
 
+//#define INIT_READLINE
+//#define LOAD_SETTINGS
+
+#if defined(INIT_READLINE) || defined(LOAD_SETTINGS)
+#include <utils/app_context.h>
+#endif
+
 //------------------------------------------------------------------------------
 void puts_help(const char* const* help_pairs, const char* const* other_pairs=nullptr);
+
+//------------------------------------------------------------------------------
+#define CSI(x) "\x1b[" #x
+static const char SPC_msg[] = CSI(0;7m) "SPC" CSI(0m) "=continue, ";
+static const char RET_msg[] = CSI(0;7m) "RET" CSI(0m) "=stop";
+#undef CSI
 
 
 
@@ -83,7 +93,7 @@ void test_editor::start(const char* prompt)
     m_printer_context = new printer_context(m_terminal.out, m_printer);
     m_cc = new console_config();
 
-#if 0
+#ifdef INIT_READLINE
     // initialise_readline() needs the printer_context.
     str_moveable bin_dir;
     str_moveable state_dir;
@@ -96,6 +106,10 @@ void test_editor::start(const char* prompt)
     line_editor::desc desc(m_terminal.in, m_terminal.out, m_printer, nullptr);
     desc.prompt = prompt;
     m_editor = line_editor_create(desc);
+
+    assert(g_printer);
+    g_printer->print(RET_msg);
+    g_printer->print("\n");
 
     m_done = false;
     m_thread = CreateThread(nullptr, 0, thread_proc, this, 0, nullptr);
@@ -201,6 +215,7 @@ public:
     void            init(bool pause=false);
     void            reset();
     bool            paused();
+    bool            done();
     bool            step();
 
 private:
@@ -303,6 +318,12 @@ bool stepper::paused()
 }
 
 //------------------------------------------------------------------------------
+bool stepper::done()
+{
+    return m_state == state_quit;
+}
+
+//------------------------------------------------------------------------------
 bool stepper::step()
 {
     switch (m_state)
@@ -372,43 +393,43 @@ bool runner::ecma48_test()
     output.begin();
 
     if (m_stepper.paused())
-        output.write(CSI(7m) "SPC" CSI(0m) "=continue, ");
-    output.write(CSI(7m) "RET" CSI(0m) "=stop");
+        output.write(SPC_msg);
+    output.write(RET_msg);
 
     if (!step())
         return false;
 
     // Clear screen after
-    output.write(CSI(3;3H) "CSI J -> " CSI(97;41m) "X" CSI(J), -1);
+    output.write(CSI(3;3H) "CSI J -> " CSI(97;41m) "X" CSI(J));
     if (!step())
         return false;
 
     // Clear screen before
-    output.write(CSI(97;42m) CSI(5;3H) "X\b\b" CSI(1J) CSI(2C) " <- CSI 1J", -1);
+    output.write(CSI(97;42m) CSI(5;3H) "X\b\b" CSI(1J) CSI(2C) " <- CSI 1J");
     if (!step())
         return false;
 
     // Clear screen all
-    output.write(CSI(30;43m) CSI(2J) CSI(2;4H) "CSI 2J", -1);
+    output.write(CSI(30;43m) CSI(2J) CSI(2;4H) "CSI 2J");
     if (!step())
         return false;
 
     // Clear line after
-    output.write(CSI(4;4H) "CSI K -> " CSI(97;44m) "X" CSI(K), -1);
+    output.write(CSI(4;4H) "CSI K -> " CSI(97;44m) "X" CSI(K));
     if (!step())
         return false;
 
     // Clear line before
-    output.write(CSI(97;45m) CSI(5;4H) "X\b\b" CSI(1K) CSI(2C) " <- CSI 1K", -1);
+    output.write(CSI(97;45m) CSI(5;4H) "X\b\b" CSI(1K) CSI(2C) " <- CSI 1K");
     if (!step())
         return false;
 
     // All line
-    output.write(CSI(0m) "\n\n" CSI(30;43m) CSI(4G) "CSI 2K (next line)\n" CSI(30;46m) CSI(2K), -1);
+    output.write(CSI(0m) "\n\n" CSI(30;43m) CSI(4G) "CSI 2K (next line)\n" CSI(30;46m) CSI(2K));
     if (!step())
         return false;
 
-    output.write(CSI(0m) CSI(1;1H) CSI(J), -1);
+    output.write(CSI(0m) CSI(1;1H) CSI(J));
     output.end();
     terminal_destroy(terminal);
     return true;
@@ -418,9 +439,6 @@ bool runner::ecma48_test()
 //------------------------------------------------------------------------------
 bool runner::line_test()
 {
-    if (!step())
-        return false;
-
     test_editor editor;
 
     editor.start("\x1b[m\n"
@@ -463,15 +481,17 @@ int draw_test(int argc, char** argv)
         { "pause",      no_argument,        nullptr, 'p' },
         { "speed",      required_argument,  nullptr, 's' },
         { "width",      required_argument,  nullptr, 'w' },
+        { "emulation",  required_argument,  nullptr, 'e' },
         { "help",       no_argument,        nullptr, 'h' },
         {}
     };
 
     static const char* const help[] = {
-        "-p, --pause",          "Pause before starting.",
-        "-s, --speed <ms>",     "Specifies step speed in milliseconds.",
-        "-w, --width <cols>",   "Specifies initial width for the terminal.",
-        "-h, --help",           "Shows this help text.",
+        "-p, --pause",              "Pause before starting.",
+        "-s, --speed <ms>",         "Step speed in milliseconds.",
+        "-w, --width <cols>",       "Initial width for the terminal.",
+        "-e, --emulation <mode>",   "Emulation mode (native, emulate, auto).",
+        "-h, --help",               "Shows this help text.",
         nullptr
     };
 
@@ -480,10 +500,11 @@ int draw_test(int argc, char** argv)
     bool pause = false;
     int timeout_ms = 0;
     int width = 0;
+    str_moveable emulation("emulate");
 
     int i;
     int ret = 1;
-    while ((i = getopt_long(argc, argv, "?hps.w.", options, nullptr)) != -1)
+    while ((i = getopt_long(argc, argv, "?hps.w.e.", options, nullptr)) != -1)
     {
         switch (i)
         {
@@ -497,6 +518,10 @@ int draw_test(int argc, char** argv)
 
         case 'w':
             width = atoi(optarg);
+            break;
+
+        case 'e':
+            emulation = optarg;
             break;
 
         case '?':
@@ -515,7 +540,7 @@ int draw_test(int argc, char** argv)
 
     ret = 0;
 
-#if 0
+#ifdef LOAD_SETTINGS
     str_moveable settings_file;
     str_moveable default_settings_file;
     app_context::get()->get_settings_path(settings_file);
@@ -523,7 +548,8 @@ int draw_test(int argc, char** argv)
     settings::load(settings_file.c_str(), default_settings_file.c_str());
 #endif
 
-    settings::find("terminal.emulation")->set("emulate");
+    settings::find("terminal.emulation")->set("auto");
+    settings::find("terminal.emulation")->set(emulation.c_str());
 
     runner(width, timeout_ms).go(pause);
     return ret;

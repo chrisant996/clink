@@ -3087,7 +3087,10 @@ void rl_module::on_terminal_resize(int columns, int rows, const context& context
 #else
     // Readline (even in bash on Ubuntu in WSL in Windows Terminal) doesn't do
     // very well at responding to terminal resize events.  Apparently Clink must
-    // take care of it manually.
+    // take care of it manually.  Calling rl_set_prompt() recalculates the
+    // prompt line breaks.
+    rl_set_prompt(m_rl_prompt.c_str());
+    rl_set_rprompt(m_rl_rprompt.length() ? m_rl_rprompt.c_str() : nullptr);
     g_prompt_redisplay++;
     rl_forced_update_display();
 #endif

@@ -430,13 +430,15 @@ local uninstallscripts = clink.argmatcher()
 --------------------------------------------------------------------------------
 local speed_parser = clink.argmatcher():addarg({fromhistory=true})
 local width_parser = clink.argmatcher():addarg({fromhistory=true})
+local emulation_parser = clink.argmatcher():addarg("native", "emulate", "auto")
 local drawtest = clink.argmatcher()
 :addflags(
     "-p", "--pause",
     "-s" .. speed_parser, "--speed" .. speed_parser,
     "-w" .. width_parser, "--width" .. width_parser,
+    "-e" .. emulation_parser, "--emulation" .. emulation_parser,
     "-h", "--help", "-?")
-:hideflags("-p", "-s", "-w", "-h", "-?")
+:hideflags("-p", "-s", "-w", "-e", "-h", "-?")
 :nofiles()
 
 --------------------------------------------------------------------------------
