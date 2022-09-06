@@ -94,6 +94,7 @@ static void _rl_move_cursor_relative PARAMS((int, const char *, const char *));
 /* begin_clink_change */
 //static char *expand_prompt PARAMS((char *, int, int *, int *, int *, int *));
 static char *expand_prompt PARAMS((const char *, int, int *, int *, int *, int *));
+#define line_state __rl_line_state__ /* Disambiguate to help debuggers. */
 /* end_clink_change */
 
 #define DEFAULT_LINE_BUFFER_SIZE	1024
