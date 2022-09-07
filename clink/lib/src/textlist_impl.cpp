@@ -210,6 +210,24 @@ static bool strstr_compare(const str_base& needle, const char* haystack)
 
 
 //------------------------------------------------------------------------------
+popup_results::popup_results(popup_result result, int index, const char* text)
+    : m_result(result)
+    , m_index(index)
+    , m_text(text)
+{
+}
+
+//------------------------------------------------------------------------------
+void popup_results::clear()
+{
+    m_result = popup_result::cancel;
+    m_index = -1;
+    m_text.free();
+}
+
+
+
+//------------------------------------------------------------------------------
 textlist_impl::addl_columns::addl_columns(textlist_impl::item_store& store)
     : m_store(store)
 {
