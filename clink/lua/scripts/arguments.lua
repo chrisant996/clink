@@ -1974,7 +1974,7 @@ local function _has_argmatcher(command_word)
         return
     end
 
-    command_word = path.normalise(clink.lower(command_word))
+    command_word = clink.lower(command_word:gsub("/", "\\"))
 
     -- Don't invoke the recognizer while generating matches from history, as
     -- that could be excessively expensive (could queue thousands of lookups).
@@ -1995,9 +1995,12 @@ local function _has_argmatcher(command_word)
     end
 
     if argmatcher and not (clink.co_state._argmatcher_fromhistory and clink.co_state._argmatcher_fromhistory.argmatcher) then
-        -- Avoid coloring directories as having argmatchers.
-        if clink._async_path_type(command_word, 15, clink.reclassifyline) == "dir" then
-            return
+        local alias = os.getalias(command_word)
+        if not alias or alias == "" then
+            -- Avoid coloring directories as having argmatchers.
+            if clink._async_path_type(command_word, 15, clink.reclassifyline) == "dir" then
+                return
+            end
         end
     end
 
