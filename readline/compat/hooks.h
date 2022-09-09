@@ -3,6 +3,17 @@
 
 #pragma once
 
+// Define this to omit Readline's default display routines for the Readline input buffer.
+//#define OMIT_DEFAULT_DISPLAY_READLINE
+
+// Define this to include Clink's custom display routines for the Readline input buffer.
+#ifdef DEBUG
+#define INCLUDE_CLINK_DISPLAY_READLINE
+#endif
+
+// Define this to disable Readline's sigwinch terminal resize, which goes haywire.
+#define NO_READLINE_RESIZE_TERMINAL
+
 #if !defined(S_IFLNK)
 static_assert((_S_IFMT & ~0xF000) == 0, "_S_IFMT has bits outside 0xF000");
 static_assert(_S_IFMT == S_IFMT, "_S_IFMT is not equal to S_IFMT");

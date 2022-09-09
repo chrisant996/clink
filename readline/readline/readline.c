@@ -456,6 +456,7 @@ readline_internal_setup (void)
     if (_rl_show_mode_in_prompt)
       _rl_reset_prompt ();
 
+#if !defined (OMIT_DEFAULT_DISPLAY_READLINE)
   /* If we're not echoing, we still want to at least print a prompt, because
      rl_redisplay will not do it for us.  If the calling application has a
      custom redisplay function, though, let that function handle it. */
@@ -470,6 +471,7 @@ readline_internal_setup (void)
 	}
     }
   else
+#endif
     {
       if (rl_prompt && rl_already_prompted)
 	rl_on_new_line_with_prompt ();

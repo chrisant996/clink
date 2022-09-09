@@ -14,6 +14,7 @@
 #include "popup.h"
 #include "textlist_impl.h"
 #include "display_matches.h"
+#include "display_readline.h"
 
 #include "rl_suggestions.h"
 
@@ -1051,7 +1052,7 @@ void hook_display()
 
     if (!s_suggestion.more() || rl_point != rl_end)
     {
-        rl_redisplay();
+        display_readline();
         return;
     }
 
@@ -1068,7 +1069,7 @@ void hook_display()
         rl_end = tmp.length();
     }
 
-    rl_redisplay();
+    display_readline();
 }
 
 //------------------------------------------------------------------------------
@@ -2988,7 +2989,7 @@ void rl_module::on_terminal_resize(int columns, int rows, const context& context
     // line of the input area, so that Readline's rl_resize_terminal() function
     // can start a new prompt and overwrite the old one.
 
-#ifndef USE_READLINE_RESIZE_TERMINAL
+#ifdef NO_READLINE_RESIZE_TERMINAL
     refresh_terminal_size();
     // The console size may have changed asynchronously, so reset columns to
     // ensure consistent measurements.
@@ -3045,7 +3046,7 @@ void rl_module::on_terminal_resize(int columns, int rows, const context& context
     };
 
     // Measure the new number of lines to the cursor position.
-#ifdef USE_READLINE_RESIZE_TERMINAL
+#ifndef NO_READLINE_RESIZE_TERMINAL
     const char* last_prompt_line = strrchr(context.prompt, '\n');
     if (last_prompt_line)
         ++last_prompt_line;
@@ -3064,7 +3065,7 @@ void rl_module::on_terminal_resize(int columns, int rows, const context& context
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
     GetConsoleScreenBufferInfo(h, &csbi);
-#ifdef USE_READLINE_RESIZE_TERMINAL
+#ifndef NO_READLINE_RESIZE_TERMINAL
     int delta = _rl_last_v_pos - cursor_line;
     COORD new_pos = { 0, SHORT(clamp(csbi.dwCursorPosition.Y - delta, 0, csbi.dwSize.Y - 1)) };
 #else
@@ -3078,7 +3079,7 @@ void rl_module::on_terminal_resize(int columns, int rows, const context& context
     static const char* const termcap_cd = tgetstr("cd", nullptr);
     context.printer.print(termcap_cd, strlen(termcap_cd));
 
-#ifdef USE_READLINE_RESIZE_TERMINAL
+#ifndef NO_READLINE_RESIZE_TERMINAL
     // Let Readline update its display.
     rl_resize_terminal();
 

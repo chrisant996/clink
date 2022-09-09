@@ -326,6 +326,7 @@ extern int rl_expand_prompt PARAMS((char *));
 /* begin_clink_change */
 extern const char *rl_get_local_prompt PARAMS((void));
 extern const char *rl_get_local_prompt_prefix PARAMS((void));
+extern const char *rl_get_message_buffer PARAMS((void));
 extern int rl_set_rprompt PARAMS((const char *));
 /* end_clink_change */
 
@@ -416,7 +417,9 @@ extern int rl_end_undo_group PARAMS((void));
 extern int rl_modifying PARAMS((int, int));
 
 /* Functions for redisplay. */
+#if !defined (OMIT_DEFAULT_DISPLAY_READLINE)
 extern void rl_redisplay PARAMS((void));
+#endif /* OMIT_DEFAULT_DISPLAY_READLINE */
 extern int rl_on_new_line PARAMS((void));
 extern int rl_on_new_line_with_prompt PARAMS((void));
 extern int rl_forced_update_display PARAMS((void));
