@@ -5,22 +5,34 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- [#320](https://github.com/chrisant996/clink/issues/320); Clink will need to provide a custom display routine to get away from the edge case mistakes in Readline.
+- [#340](https://github.com/chrisant996/clink/issues/340); Clink will need to provide a custom display routine to get away from the edge case mistakes in Readline.
   - A prompt exactly the width of the terminal seems to add a newline between the prompt and the input line, which might result from a missing `_rl_term_autowrap` test.
     - `_rl_vis_botlin` ends up with an incorrect value.
     - Could commit d4f48721ea22258b7239748d0d78d843ba2820f1 be related to that, or maybe it didn't fully fix the problem?
     - Run `clink drawtest --width 31 --emulation emulate` to observe.
     - Maybe Readline doesn't emit `SPC CR` if the prompt ends exactly at the screen width?
   - Readline is trying to use simple arithmetic to figure out how to convert byte position to absolute position, but the arithmetic is wrong and the data structures don't facilitate solving the issues.
-    - E.g. a prompt whose last line wraps TWICE and has one UTF8 multibyte character in the FIRST wrapped segment; cursor position on the final line is offset by the total UTF8 multibyte excess, without regarding in which wrapped line the UTF8 multibyte characters exist.
+    - E.g. a prompt whose last line wraps TWICE and has one UTF8 multibyte character in the FIRST wrapped segment; cursor position on the final line is offset wrongly.
       - It looks like this line `nleft = cpos_buffer_position - pos;` is trying to reset `nleft` to only include positions on the current screen row, which then throws off the `woff` arithmetic.  It could maybe use modulus on the overall position, but that wouldn't account for double-wide characters that don't fit at the end of a screen row and wrap "early".
-      - **Yikes:**  `_rl_move_cursor_relative()` calls `_rl_col_width()` on the prompt prefix.  But that can contain escape sequences, and `_rl_col_width()` assumes there are no escape sequences.
+      - This code might be relevant:
+          ```c
+          /* This assumes that all the invisible characters are split
+             between the first and last lines of the prompt, if the
+             prompt consumes more than two lines. It's usually right */
+          /* XXX - not sure this is ever executed */
+          _rl_last_c_pos -= (wrap_offset-prompt_invis_chars_first_line);
+          ```
     - E.g. a prompt whose last line wraps AT the screen width and contains multibyte UTF8 characters; cursor position near the beginning of the input line gets positioned incorrectly.
+      - `_rl_last_c_pos` is negative on entry to `rl_redisplay()`.
+      - Because the "yet another special case" logic is triggered incorrectly, and adjusts cpos incorrectly, which carries forward to future calls.
+      - After disabling that logic, then the cursor still goes wrong when crossing the `woff` boundary.
+        - Need another iDNA for that...
 
 ## Normal Priority
 - Match filtering e.g. by `clink.onfiltermatches()` is skipped if the input matches only one completion.
 
 ## Low Priority
+- <kbd>Ctrl</kbd>-<kbd>Q</kbd> then <kbd>Esc</kbd> or <kbd>Ctrl</kbd>-<kbd>M</kbd> each behave incorrectly (but <kbd>Ctrl</kbd>-<kbd>J</kbd> or <kbd>Enter</kbd> behave correctly).
 - Collecting words currently happens in update_internal, but probably it also belongs in alternative_matches and/or update_matches:
   - If a `luafunc:` macro first does anything that alters the line buffer, and then invokes a completion command, then the collected words will be inaccurate.
 - Show time stamps in history popup?
