@@ -371,7 +371,9 @@ char* tgetstr(const char* name, char** out)
     case 'ch': str = CSI(%dG); break;
     case 'cr': str = "\x0d"; break;
     case 'le': str = "\x08"; break;
+    case 'LE': str = CSI(%dD); break;
     case 'nd': str = CSI(C); break;
+    case 'ND': str = CSI(%dC); break;
     case 'up': str = CSI(A); break;
 
     // Cursor style
@@ -395,7 +397,7 @@ char* tgetstr(const char* name, char** out)
 }
 
 //------------------------------------------------------------------------------
-char* tgoto(char* base, int x, int y)
+char* tgoto(const char* base, int x, int y)
 {
     str_base(gt_termcap_buffer).format(base, y);
     return gt_termcap_buffer;

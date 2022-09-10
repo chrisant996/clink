@@ -197,6 +197,7 @@ rl_voidfunc_t *rl_redisplay_function = NULL;
 /* Application-specific function to be called before displaying the
    input line. */
 rl_voidfunc_t *rl_before_display_function = (rl_voidfunc_t *)NULL;
+extern void host_on_new_line();
 /* end_clink_change */
 
 /* begin_clink_change */
@@ -2851,6 +2852,10 @@ clear_rest_of_line:
 int
 rl_on_new_line (void)
 {
+/* begin_clink_change */
+  host_on_new_line();
+/* end_clink_change */
+
   if (visible_line)
     visible_line[0] = '\0';
 
@@ -2901,6 +2906,10 @@ rl_on_new_line_with_prompt (void)
 {
   int prompt_size, i, l, real_screenwidth, newlines;
   char *prompt_last_line, *lprompt;
+
+/* begin_clink_change */
+  host_on_new_line();
+/* end_clink_change */
 
   /* Initialize visible_line and invisible_line to ensure that they can hold
      the already-displayed prompt. */

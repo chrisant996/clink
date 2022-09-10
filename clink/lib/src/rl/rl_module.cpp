@@ -65,7 +65,6 @@ static FILE*        null_stream = (FILE*)1;
 static FILE*        in_stream = (FILE*)2;
 static FILE*        out_stream = (FILE*)3;
 extern "C" int      mk_wcwidth(char32_t);
-extern "C" char*    tgetstr(const char*, char**);
 const int RL_MORE_INPUT_STATES = ~(RL_STATE_CALLBACK|
                                    RL_STATE_INITIALIZED|
                                    RL_STATE_OVERWRITE|
@@ -2719,6 +2718,8 @@ bool translate_xy_to_readline(unsigned int x, unsigned int y, int& pos, bool cli
         v_pos = _rl_vis_botlin;
     }
 
+    v_pos += get_readline_display_top();
+
     const int prefix = rl_get_prompt_prefix_visible();
     int point = 0;
 
@@ -3079,8 +3080,7 @@ void rl_module::on_terminal_resize(int columns, int rows, const context& context
         ScrollConsoleRelative(h, new_pos.Y, SCR_ABSOLUTE);
 
     // Clear to end of screen.
-    static const char* const termcap_cd = tgetstr("cd", nullptr);
-    context.printer.print(termcap_cd, strlen(termcap_cd));
+    reset_readline_display();
 
 #ifndef NO_READLINE_RESIZE_TERMINAL
     // Let Readline update its display.

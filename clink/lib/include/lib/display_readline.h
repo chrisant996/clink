@@ -1,3 +1,5 @@
 #pragma once
 
-extern "C" void display_readline(void);
+extern void reset_readline_display();
+extern void display_readline();
+extern unsigned int get_readline_display_top();

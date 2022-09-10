@@ -30,6 +30,7 @@ extern "C" {
 
 /* Some standard library routines. */
 #include "readline/readline.h"
+#include "readline/history.h"
 #include "readline/xmalloc.h"
 #include "readline/rlprivate.h"
 
@@ -44,8 +45,9 @@ unsigned int cell_count(const char* in);
 extern void (*rl_fwrite_function)(FILE*, const char*, int);
 extern void (*rl_fflush_function)(FILE*);
 
+extern char* tgetstr(const char*, char**);
 extern int tputs(const char* str, int affcnt, int (*putc_func)(int));
-extern char* tgoto(char* base, int x, int y);
+extern char* tgoto(const char* base, int x, int y);
 extern void tputs_rprompt(const char *s);
 
 extern int rl_get_forced_display(void);
@@ -64,6 +66,16 @@ extern int _rl_rprompt_shown_len;
 #ifndef HANDLE_MULTIBYTE
 #error HANDLE_MULTIBYTE is required.
 #endif
+
+//------------------------------------------------------------------------------
+static setting_int g_input_rows(
+    "clink.max_input_rows",
+    "Maximum rows for the input line",
+    "This limits how many rows the input line can use, up to the terminal height.\n"
+    "When this is 0, the terminal height is the limit.",
+    0);
+
+
 
 //------------------------------------------------------------------------------
 #define FACE_NORMAL     '0'
@@ -198,6 +210,7 @@ public:
                         ~display_lines() = default;
 
     void                parse(unsigned int col, const char* buffer, unsigned int len);
+    void                apply_scroll_indicators(unsigned int top, unsigned int bottom);
     void                swap(display_lines& d);
     void                clear();
 
@@ -205,8 +218,8 @@ public:
     unsigned int        count() const;
     bool                can_show_rprompt() const;
 
-    unsigned int        vpos() const;
-    unsigned int        cpos() const;
+    unsigned int        vpos() const { return m_vpos; }
+    unsigned int        cpos() const { return m_cpos; }
 
 private:
     display_line*       next_line(unsigned int start);
@@ -300,12 +313,10 @@ void display_lines::parse(unsigned int col, const char* buffer, unsigned int len
             {
                 d->m_lastcol = col;
                 d->m_end = static_cast<unsigned int>(chars - buffer);
-// TODO-DISPLAY: _rl_wrapped_multicolumn = 0;
 
                 while (col < _rl_screenwidth)
                 {
                     d->appendspace();
-// TODO-DISPLAY: _rl_wrapped_multicolumn++;
                     ++col;
                 }
                 d->appendnul();
@@ -399,10 +410,102 @@ void display_lines::parse(unsigned int col, const char* buffer, unsigned int len
 }
 
 //------------------------------------------------------------------------------
+void display_lines::apply_scroll_indicators(unsigned int top, unsigned int bottom)
+{
+    assert(top <= bottom);
+    assert(top < m_count);
+    assert(bottom < m_count);
+
+    int c;
+
+    if (top > 0)
+    {
+        display_line& d = m_lines[top];
+
+        if (!d.m_len)
+        {
+            d.append('<', '<');
+            d.appendnul();
+        }
+        else
+        {
+            str_iter iter_top(d.m_chars, d.m_len);
+            c = iter_top.next();
+            if (c)
+            {
+another:
+                int wc = clink_wcwidth(c);
+                if (!wc)
+                {
+                    c = iter_top.next();
+                    if (!c)
+                        goto no_backward_indicator;
+                    goto another;
+                }
+
+                int bytes = static_cast<int>(iter_top.get_pointer() - d.m_chars);
+                assert(bytes >= wc);
+                if (bytes < wc)
+                    goto no_backward_indicator;
+
+                unsigned int i = 0;
+                d.m_chars[i] = '<';
+                d.m_faces[i] = '<';
+                bytes--;
+                i++;
+                while (--wc > 0)
+                {
+                    d.m_chars[i] = ' ';
+                    d.m_faces[i] = '<';
+                    bytes--;
+                    i++;
+                }
+                if (bytes > 0)
+                {
+                    memmove(d.m_chars + i, d.m_chars + i + bytes, d.m_len - (i + bytes));
+                    d.m_len -= bytes;
+                    d.appendnul();
+                }
+
+no_backward_indicator:
+                ;
+            }
+        }
+    }
+
+    if (bottom + 1 < m_count)
+    {
+        display_line& d = m_lines[bottom];
+
+        if (d.m_lastcol - d.m_x > 2)
+        {
+            d.m_len -= d.m_trail;
+            while (d.m_x + d.m_lastcol >= _rl_screenwidth - 1)
+            {
+// TODO-DISPLAY: UTF8 awareness and clink_wcwidth awareness...
+                d.m_len--;
+                d.m_lastcol--;
+            }
+
+            while (d.m_x + d.m_lastcol + 2 < _rl_screenwidth)
+            {
+                d.append(' ', FACE_NORMAL);
+                d.m_lastcol++;
+            }
+            d.append('>', '<');
+            d.m_lastcol++;
+            d.appendnul();
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
 void display_lines::swap(display_lines& d)
 {
     m_lines.swap(d.m_lines);
     std::swap(m_count, d.m_count);
+    std::swap(m_vpos, d.m_vpos);
+    std::swap(m_cpos, d.m_cpos);
 }
 
 //------------------------------------------------------------------------------
@@ -440,18 +543,6 @@ bool display_lines::can_show_rprompt() const
 }
 
 //------------------------------------------------------------------------------
-unsigned int display_lines::vpos() const
-{
-    return m_vpos;
-}
-
-//------------------------------------------------------------------------------
-unsigned int display_lines::cpos() const
-{
-    return m_cpos;
-}
-
-//------------------------------------------------------------------------------
 display_line* display_lines::next_line(unsigned int start)
 {
     if (m_count >= m_lines.size())
@@ -467,33 +558,33 @@ display_line* display_lines::next_line(unsigned int start)
 
 
 //------------------------------------------------------------------------------
-static void move_horz(int cpos)
+static void move_to_column(unsigned int cpos)
 {
-    assert(cpos < _rl_screenwidth);
-    assert(_rl_term_forward_char);
+    assert(_rl_term_ch && *_rl_term_ch);
 
+    assert(cpos < _rl_screenwidth);
     if (cpos == _rl_last_c_pos)
         return;
 
-    int delta = cpos - _rl_last_c_pos;
-    if ((delta < -5 || delta > 5) && _rl_term_ch && *_rl_term_ch)
-    {
-        char* buffer = tgoto(_rl_term_ch, 0, cpos + 1);
-        tputs(buffer, 1, _rl_output_character_function);
-    }
-    else if (delta < 0)
-    {
-        // TODO-DISPLAY: some characters use more than 1 column, so this isn't accurate yet.
-        _rl_backspace(-delta);
-    }
-    else
-    {
-        // TODO-DISPLAY: some characters use more than 1 column, so this isn't accurate yet.
-        while (delta-- > 0)
-            tputs(_rl_term_forward_char, 1, _rl_output_character_function);
-    }
+    char *buffer = tgoto(_rl_term_ch, 0, cpos + 1);
+    tputs(buffer, 1, _rl_output_character_function);
 
     _rl_last_c_pos = cpos;
+}
+
+//------------------------------------------------------------------------------
+static unsigned int measure_cols(const char* s, unsigned int len)
+{
+    unsigned int cols = 0;
+
+    str_iter iter(s, len);
+    while (const int c = iter.next())
+    {
+        const int w = clink_wcwidth(c);
+        cols += w;
+    }
+
+    return cols;
 }
 
 
@@ -503,15 +594,21 @@ class display_manager
 {
 public:
                         display_manager();
+    void                clear();
+    void                on_new_line();
     void                end_prompt_lf();
     void                display();
+    unsigned int        top() const { return m_top; }
 
 private:
     void                update_line(int i, const display_line* o, const display_line* d);
 
     display_lines       m_next;
     display_lines       m_curr;
-    // TODO-DISPLAY: How to refresh input line display without needing to refresh prompt display?
+    unsigned int        m_top = 0;      // Vertical scrolling; index to top displayed line.
+    str_moveable        m_last_prompt_line;
+    int                 m_last_prompt_line_width = -1;
+    bool                m_last_modmark = false;
 };
 
 //------------------------------------------------------------------------------
@@ -521,6 +618,23 @@ static display_manager s_display_manager;
 display_manager::display_manager()
 {
     rl_on_new_line();
+}
+
+//------------------------------------------------------------------------------
+void display_manager::clear()
+{
+    m_next.clear();
+    m_curr.clear();
+    m_last_prompt_line.clear();
+    m_last_prompt_line_width = -1;
+    m_last_modmark = false;
+}
+
+//------------------------------------------------------------------------------
+void display_manager::on_new_line()
+{
+    clear();
+    m_top = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -557,6 +671,10 @@ void display_manager::display()
     if (!_rl_echoing_p)
         return;
 
+    // NOTE:  This implementation doesn't use _rl_quick_redisplay.  I'm not
+    // clear on what practical benefit it would provide, or why it would be
+    // worth adding that complexity.
+
     // Block keyboard interrupts because this function manipulates global data
     // structures.
     _rl_block_sigint();
@@ -565,29 +683,30 @@ void display_manager::display()
     if (!rl_display_prompt)
         rl_display_prompt = "";
 
-    // TODO-DISPLAY: _rl_quick_redisplay.
-    // TODO-DISPLAY: how to clear m_curr on resize terminal?
+    // Max number of rows to use when displaying the input line.
+    unsigned int max_rows = g_input_rows.get();
+    if (!max_rows)
+        max_rows = _rl_screenheight;
+    max_rows = min<unsigned int>(max_rows, _rl_screenheight);
+    max_rows = max<unsigned int>(max_rows, 1);
 
     // TODO-DISPLAY: _rl_horizontal_scroll_mode.
 
-    // TODO-DISPLAY: modmark.
-    // TODO-DISPLAY: _rl_display_fixed: there's a cryptic check that might be attempting to look at modmark, but if so
-    // then it looks inaccurate (overly simplistic `visible_line[0] != invisible_line[0]`; should track modmark).
-
-    // TODO-DISPLAY: how to tell when the prompt needs to be re-analyzed; wasteful when prompt hasn't changed and screen width hasn't changed.
+    // FUTURE: Support defining a region in which to display the input line;
+    // configurable left starting column, configurable right ending column, and
+    // configurable max row count (with vertical scrolling and optional scroll
+    // bar).
 
     const char* prompt = rl_get_local_prompt();
     const char* prompt_prefix = rl_get_local_prompt_prefix();
 
-    const bool forced_display = rl_get_forced_display();
+    bool forced_display = rl_get_forced_display();
     rl_set_forced_display(false);
 
     if (prompt || rl_display_prompt == rl_prompt)
     {
         if (prompt_prefix && forced_display)
-        {
             rl_fwrite_function(_rl_out_stream, prompt_prefix, strlen(prompt_prefix));
-        }
     }
     else
     {
@@ -603,8 +722,8 @@ void display_manager::display()
             if (forced_display)
             {
                 rl_fwrite_function(_rl_out_stream, rl_display_prompt, pmtlen);
-                /* Make sure we are at column zero even after a newline,
-                   regardless of the state of terminal output processing. */
+                // Make sure we are at column zero even after a newline,
+                // regardless of the state of terminal output processing.
                 if (pmtlen < 2 || prompt[-2] != '\r')
                     _rl_cr();
             }
@@ -616,11 +735,78 @@ void display_manager::display()
     if (rl_before_display_function)
         rl_before_display_function();
 
-    // Display the last line of the prompt.
+    // Modmark.
     const bool is_message = (rl_display_prompt == rl_get_message_buffer());
+    const bool modmark = (!is_message && _rl_mark_modified_lines && current_history() && rl_undo_list);
+
+    // If someone thought that the redisplay was handled, but the currently
+    // visible line has a different modification state than the one about to
+    // become visible, then correct the caller's misconception.
+    if (modmark != m_last_modmark)
+        rl_display_fixed = 0;
+
+    // Is update needed?
+    forced_display |= (m_last_prompt_line_width < 0 ||
+                       modmark != m_last_modmark ||
+                       !m_last_prompt_line.equals(prompt));
+
+    // Calculate ending column, accounting for wrapping (including double width
+    // characters that don't fit).
     if (forced_display)
     {
+        ecma48_state state;
+        ecma48_iter iter(prompt, state);
+        unsigned int col = 0;
+        if (modmark)
+            ++col;
+        while (const ecma48_code &code = iter.next())
+        {
+            if (code.get_type() != ecma48_code::type_chars)
+                continue;
+
+            str_iter inner_iter(code.get_pointer(), code.get_length());
+            while (int c = inner_iter.next())
+            {
+                const int w = clink_wcwidth(c);
+                col += w;
+                if (col > _rl_screenwidth)
+                    col = 0;
+            }
+        }
+        m_last_prompt_line_width = col;
+    }
+
+    // Optimization:  can skip updating the display if someone said it's already
+    // updated, unless someone is forcing an update.
+    const bool need_update = (!rl_display_fixed || forced_display);
+
+    // Prepare data structures for displaying the input line.
+    int new_botlin = _rl_vis_botlin;
+    if (need_update)
+        m_next.parse(m_last_prompt_line_width, rl_line_buffer, rl_end);
+    new_botlin = max<int>(0, m_next.count() - 1);
+    new_botlin = min<int>(new_botlin, max_rows - 1);
+
+    // Scroll to keep cursor in view.
+    const unsigned int old_top = m_top;
+    if (m_next.vpos() < m_top)
+        m_top = m_next.vpos();
+    if (m_next.vpos() > m_top + new_botlin)
+        m_top = m_next.vpos() - new_botlin;
+// TODO-DISPLAY: also scroll if cursor is on an indicator...!
+    m_next.apply_scroll_indicators(m_top, m_top + new_botlin);
+
+    // Display the last line of the prompt.
+    if (m_top == 0 && (forced_display || old_top != m_top))
+    {
+        _rl_move_vert(0);
         _rl_cr();
+
+        if (modmark)
+        {
+            rl_fwrite_function(_rl_out_stream, _rl_display_modmark_color, strlen(_rl_display_modmark_color));
+            rl_fwrite_function(_rl_out_stream, "*\x1b[m", 4);
+        }
 
         if (is_message)
             rl_fwrite_function(_rl_out_stream, _rl_display_message_color, strlen(_rl_display_message_color));
@@ -629,71 +815,59 @@ void display_manager::display()
 
         if (is_message)
             rl_fwrite_function(_rl_out_stream, "\x1b[m", 3);
+
+        _rl_last_c_pos = m_last_prompt_line_width;
+
+        dbg_ignore_scope(snapshot, "display_readline");
+
+        m_last_prompt_line = prompt;
+        m_last_modmark = modmark;
     }
 
-    unsigned int col = 0;
-
-    // Calculate ending column, accounting for wrapping (including double
-    // width characters that don't fit).
-    ecma48_state state;
-    ecma48_iter iter(prompt, state);
-    while (const ecma48_code &code = iter.next())
+    // Optimization:  can skip updating the display if someone said it's already
+    // updated, unless someone is forcing an update.
+    bool can_show_rprompt = false;
+    if (!rl_display_fixed || forced_display)
     {
-        if (code.get_type() != ecma48_code::type_chars)
-            continue;
-
-        str_iter inner_iter(code.get_pointer(), code.get_length());
-        while (int c = inner_iter.next())
+        // If the right side prompt is shown but shouldn't be, erase it.
+        can_show_rprompt = m_next.can_show_rprompt();
+        if (_rl_rprompt_shown_len && !can_show_rprompt)
         {
-            const int w = clink_wcwidth(c);
-            col += w;
-            if (col > _rl_screenwidth)
-                col = 0;
+            assert(_rl_last_v_pos == 0);
+            tputs_rprompt(0);
         }
+
+        // Update each display line for the line buffer.
+        unsigned int rows = 0;
+        for (unsigned int i = m_top; auto d = m_next.get(i); ++i)
+        {
+            if (rows++ > new_botlin)
+                break;
+
+            auto o = m_curr.get(i - m_top + old_top);
+            update_line(i, o, d);
+        }
+
+        // Erase any surplus lines and update the bottom line counter.
+        for (int i = new_botlin; i++ < _rl_vis_botlin;)
+        {
+            _rl_move_vert(i);
+            _rl_cr();
+            // BUGBUG: assumes _rl_term_clreol.
+            _rl_clear_to_eol(_rl_screenwidth);
+            _rl_last_c_pos = 0;
+        }
+
+        // Update current cursor position.
+        assert(_rl_last_c_pos < _rl_screenwidth);
+
+        // Finally update the bottom line counter.
+        _rl_vis_botlin = new_botlin;
     }
-
-    if (forced_display)
-        _rl_last_c_pos = col;
-
-    // Prepare data structures for displaying the input line.
-    m_next.parse(col, rl_line_buffer, rl_end);
-
-    // If the right side prompt is shown but shouldn't be, erase it.
-    const bool can_show_rprompt = m_next.can_show_rprompt();
-    if (_rl_rprompt_shown_len && !can_show_rprompt)
-    {
-        assert(_rl_last_v_pos == 0);
-        tputs_rprompt(0);
-    }
-
-    // TODO-DISPLAY: remove faces for anything that's going to be off the top of the display.
-
-    for (unsigned int i = 0; auto d = m_next.get(i); ++i)
-    {
-        auto o = m_curr.get(i);
-        update_line(i, o, d);
-    }
-
-    // Erase any surplus lines and update the bottom line counter.
-    const int new_botlin = max<int>(0, m_next.count() - 1);
-    for (int i = new_botlin; i++ < _rl_vis_botlin;)
-    {
-        _rl_move_vert(i);
-        _rl_cr();
-        // BUGBUG: assumes _rl_term_clreol.
-        _rl_clear_to_eol(_rl_screenwidth);
-        _rl_last_c_pos = 0;
-    }
-
-    // Update current cursor position.
-    assert(_rl_last_c_pos < _rl_screenwidth);
-
-    // Finally update the bottom line counter.
-    _rl_vis_botlin = new_botlin;
 
     // Move cursor to the rl_point position.
-    _rl_move_vert(m_next.vpos());
-    move_horz(m_next.cpos());
+    _rl_move_vert(m_next.vpos() - m_top);
+    move_to_column(m_next.cpos());
 
     rl_fflush_function(_rl_out_stream);
 
@@ -713,25 +887,156 @@ void display_manager::display()
 //------------------------------------------------------------------------------
 void display_manager::update_line(int i, const display_line* o, const display_line* d)
 {
-    unsigned int cpos = d->m_x;
+    unsigned int lcol = d->m_x;
+    unsigned int rcol = d->m_lastcol + d->m_trail;
+    unsigned int lind = 0;
+    unsigned int rind = d->m_len;
+    int delta = 0;
 
-    // TODO-DISPLAY: optimize by finding differences between o and d.
-    if (o &&
-        o->m_len == d->m_len &&
-        !memcmp(o->m_chars, d->m_chars, d->m_len) &&
-        !memcmp(o->m_faces, d->m_faces, d->m_len))
-        return;
+    if (o)
+    {
+        // If the old and new lines are identical, there's nothing to do.
+        if (o->m_x == d->m_x &&
+            o->m_len == d->m_len &&
+            !memcmp(o->m_chars, d->m_chars, d->m_len) &&
+            !memcmp(o->m_faces, d->m_faces, d->m_len))
+            return;
 
-    if (i != _rl_last_v_pos)
-        _rl_move_vert(i);
+        const char* oc = o->m_chars;
+        const char* of = o->m_faces;
+        const char* dc = d->m_chars;
+        const char* df = d->m_faces;
+        unsigned int stop = min<unsigned int>(o->m_len, d->m_len);
 
-    move_horz(d->m_x);
+        // Find left index of difference.
+        str_iter iter(dc, stop);
+        const char* p = dc;
+        while (const int c = iter.next())
+        {
+            const char* q = iter.get_pointer();
+            const char* walk = p;
+test_left:
+            if (*oc != *dc || *of != *df)
+                break;
+            oc++;
+            dc++;
+            of++;
+            df++;
+            if (++walk < q)
+                goto test_left;
+            lcol += clink_wcwidth(c);
+            p = q;
+        }
+        lind = static_cast<unsigned int>(p - d->m_chars);
 
-    rl_puts_face_func(d->m_chars, d->m_faces, d->m_len);
+        oc = o->m_chars + lind;
+        of = o->m_faces + lind;
+        dc = d->m_chars + lind;
+        df = d->m_faces + lind;
+        const char* oc2 = o->m_chars + o->m_len;
+        const char* of2 = o->m_faces + o->m_len;
+        const char* dc2 = d->m_chars + d->m_len;
+        const char* df2 = d->m_faces + d->m_len;
+
+        // Ignore trailing spaces with FACE_NORMAL.
+        while (oc2 > oc && oc2[-1] == ' ' && of2[-1] == FACE_NORMAL)
+            --oc2, --of2;
+        while (dc2 > dc && dc2[-1] == ' ' && df2[-1] == FACE_NORMAL)
+            --dc2, --df2;
+        if (oc == oc2 && dc == dc2)
+            return;
+
+        // Find right index of difference.
+// TODO-DISPLAY: UTF8 awareness...
+        while (oc2 > oc && dc2 > dc && oc2[-1] == dc2[-1] && of2[-1] == df2[-1])
+            --oc2, --dc2, --of2, --df2;
+        const unsigned int olen = static_cast<unsigned int>(oc2 - oc);
+        const unsigned int dlen = static_cast<unsigned int>(dc2 - dc);
+        assert(oc2 - oc == of2 - of);
+        assert(dc2 - dc == df2 - df);
+        rind = lind + dlen;
+
+        // Measure columns, to find whether to delete characters or open spaces.
+// TODO-DISPLAY: need to do it at the beginning as well, if m_x are different, e.g. when add/remove modmark!
+        unsigned int dcols = measure_cols(dc, dlen);
+        rcol = lcol + dcols;
+        if (oc2 < o->m_chars + o->m_len)
+        {
+            unsigned int ocols = measure_cols(oc, olen);
+            delta = dcols - ocols;
+        }
+
+#ifdef DEBUG
+        if (dbg_get_env_int("DEBUG_DISPLAY"))
+        {
+            dbg_printf_row(-1, "delta %d; len %d/%d; col %d/%d; ind %d/%d\r\n", delta, olen, dlen, lcol, rcol, lind, rind);
+            dbg_printf_row(-1, "old=[%*s]\toface='[%*s]'\r\n", olen, oc, olen, of);
+            dbg_printf_row(-1, "new=[%*s]\tdface=='[%*s]'\r\n", dlen, dc, dlen, df);
+        }
+#endif
+    }
+
+    assert(i >= m_top);
+    const unsigned int row = i - m_top;
+    if (row != _rl_last_v_pos)
+        _rl_move_vert(row);
+    move_to_column(lcol);
+
+    if (delta > 0)
+    {
+        assert(delta < _rl_screenwidth - lcol);
+        if (_rl_term_IC)
+        {
+            char* buffer = tgoto(_rl_term_IC, 0, delta);
+            tputs(buffer, 1, _rl_output_character_function);
+        }
+#if 0
+        else if (_rl_term_im && *_rl_term_im && _rl_term_ei && *_rl_term_ei)
+        {
+            tputs(_rl_term_im, 1, _rl_output_character_function);
+            for (int i = delta; i--;)
+                _rl_output_character_function(' ');
+            tputs(_rl_term_ei, 1, _rl_output_character_function);
+        }
+        else if (_rl_term_ic && *_rl_term_ic)
+        {
+            for (int i = delta; i--;)
+                tputs(_rl_term_ic, 1, _rl_output_character_function);
+        }
+#endif
+        else
+            assert(false);
+
+        move_to_column(lcol);
+    }
+    else if (delta < 0)
+    {
+        assert(-delta < _rl_screenwidth - lcol);
+        if (_rl_term_DC && *_rl_term_DC)
+        {
+            char *buffer = tgoto(_rl_term_DC, -delta, -delta);
+            tputs(buffer, 1, _rl_output_character_function);
+        }
+#if 0
+        else if (_rl_term_dc && *_rl_term_dc)
+        {
+            for (int i = -delta; i--;)
+                tputs(_rl_term_dc, 1, _rl_output_character_function);
+        }
+#endif
+        else
+            assert(false);
+
+        move_to_column(lcol);
+    }
+
+    rl_puts_face_func(d->m_chars + lind, d->m_faces + lind, rind - lind);
     rl_fwrite_function(_rl_out_stream, "\x1b[m", 3);
-    _rl_last_c_pos = d->m_lastcol + d->m_trail;
 
-    if (o && d->m_lastcol < o->m_lastcol)
+    _rl_last_c_pos = rcol;
+
+    // Clear anything leftover from o.
+    if (o && rind == d->m_len && d->m_lastcol < o->m_lastcol)
     {
         // m_lastcol does not include filler spaces; and that's fine since
         // the spaces use FACE_NORMAL.
@@ -758,7 +1063,6 @@ void display_manager::update_line(int i, const display_line* o, const display_li
         }
         else
         {
-            // TODO-DISPLAY: test with/without _rl_term_autowrap.
             rl_crlf();
         }
         _rl_last_v_pos++;
@@ -785,6 +1089,13 @@ extern "C" int use_display_manager()
 }
 
 //------------------------------------------------------------------------------
+extern "C" void host_on_new_line()
+{
+    if (use_display_manager())
+        s_display_manager.on_new_line();
+}
+
+//------------------------------------------------------------------------------
 #if defined (INCLUDE_CLINK_DISPLAY_READLINE)
 extern "C" void end_prompt_lf()
 {
@@ -794,7 +1105,16 @@ extern "C" void end_prompt_lf()
 #endif
 
 //------------------------------------------------------------------------------
-extern "C" void display_readline()
+void reset_readline_display()
+{
+    static const char* const termcap_cd = tgetstr("cd", nullptr);
+    rl_fwrite_function(_rl_out_stream, termcap_cd, strlen(termcap_cd));
+    if (use_display_manager())
+        s_display_manager.clear();
+}
+
+//------------------------------------------------------------------------------
+void display_readline()
 {
 #if defined (OMIT_DEFAULT_DISPLAY_READLINE) && !defined (INCLUDE_CLINK_DISPLAY_READLINE)
 #error Must have at least one display implementation defined.
@@ -814,4 +1134,12 @@ extern "C" void display_readline()
 #if !defined (OMIT_DEFAULT_DISPLAY_READLINE)
     rl_redisplay();
 #endif
+}
+
+//------------------------------------------------------------------------------
+unsigned int get_readline_display_top()
+{
+    if (use_display_manager())
+        return s_display_manager.top();
+    return 0;
 }
