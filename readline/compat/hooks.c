@@ -113,7 +113,7 @@ int hooked_fwrite(const void* data, int size, int count, FILE* stream)
     else
     {
         size_t characters;
-    
+
         characters = MultiByteToWideChar(
             CP_UTF8, 0,
             (const char*)data, size,
@@ -279,19 +279,6 @@ int hooked_fstat(int fid, struct hooked_stat* out)
 }
 
 //------------------------------------------------------------------------------
-static void end_prompt_lf()
-{
-    // TODO-DISPLAY: When the last input line is empty (just the cursor), then eat the blank line.
-
-    // TODO-DISPLAY: _rl_update_final: If we've wrapped lines, remove the final xterm line-wrap flag.
-
-    // TODO-DISPLAY: _rl_update_final: `if (botline_length > 0 || _rl_last_c_pos > 0)` but is that entirely correct?
-    // It's about eating blank lines, and it looks like it might eat TWO blank lines if the input line ends with
-    // multiple newline characters?  I'm not sure how that will work.
-    rl_crlf();
-}
-
-//------------------------------------------------------------------------------
 void end_prompt(int crlf)
 {
     host_clear_suggestion();
@@ -306,15 +293,14 @@ void end_prompt(int crlf)
 
     _rl_move_vert(_rl_vis_botlin);
     if (crlf > 0)
-        end_prompt_lf();
+    {
+        rl_crlf();
+        _rl_last_c_pos = 0;
+    }
 
 #ifdef INCLUDE_CLINK_DISPLAY_READLINE
-    extern int use_display_manager();
-    if (crlf < 0 && use_display_manager())
-    {
+    extern void end_prompt_lf();
+    if (crlf < 0)
         end_prompt_lf();
-        fflush(rl_outstream);
-        rl_display_fixed++;
-    }
 #endif
 }

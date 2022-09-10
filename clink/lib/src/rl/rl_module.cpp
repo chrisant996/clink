@@ -358,8 +358,11 @@ static int clink_event_hook()
         rl_callback_sigcleanup();
         rl_echo_signal_char(SIGBREAK);
     }
+
     _rl_move_vert(_rl_vis_botlin);
     rl_crlf();
+    _rl_last_c_pos = 0;
+
     host_cleanup_after_signal();
     clink_reset_event_hook();
     return 0;

@@ -503,6 +503,7 @@ class display_manager
 {
 public:
                         display_manager();
+    void                end_prompt_lf();
     void                display();
 
 private:
@@ -523,9 +524,32 @@ display_manager::display_manager()
 }
 
 //------------------------------------------------------------------------------
+void display_manager::end_prompt_lf()
+{
+    // TODO-DISPLAY: _rl_update_final: If we've wrapped lines, remove the final xterm line-wrap flag.
 
-// TODO-DISPLAY: display.c has some other functions that are always called, but
-// make assumptions about rl_redisplay() being used for displaying the line.
+    if (_rl_last_c_pos > 0)
+    {
+do_crlf:
+        rl_crlf();
+        _rl_last_c_pos = 0;
+        rl_fflush_function(_rl_out_stream);
+        rl_display_fixed++;
+        return;
+    }
+
+    if (!m_curr.count())
+        return;
+
+    if (m_top + _rl_vis_botlin + 1 < m_curr.count())
+    {
+        on_new_line();
+        goto do_crlf;
+    }
+
+    if (m_curr.get(m_curr.count() - 1)->m_len > 0)
+        goto do_crlf;
+}
 
 //------------------------------------------------------------------------------
 void display_manager::display()
@@ -759,6 +783,15 @@ extern "C" int use_display_manager()
 #endif
     return s_use_display_manager;
 }
+
+//------------------------------------------------------------------------------
+#if defined (INCLUDE_CLINK_DISPLAY_READLINE)
+extern "C" void end_prompt_lf()
+{
+    if (use_display_manager())
+        s_display_manager.end_prompt_lf();
+}
+#endif
 
 //------------------------------------------------------------------------------
 extern "C" void display_readline()
