@@ -57,16 +57,14 @@ static bool search_for_extension(str_base& full, const char* word, str_base& out
                 }
             }
         }
-        else
+
+        full.truncate(trunc);
+        path::append(full, word);
+        full.concat(start, length);
+        if (os::get_path_type(full.c_str()) == os::path_type_file)
         {
-            full.truncate(trunc);
-            path::append(full, word);
-            full.concat(start, length);
-            if (os::get_path_type(full.c_str()) == os::path_type_file)
-            {
-                out = full.c_str();
-                return true;
-            }
+            out = full.c_str();
+            return true;
         }
     }
 
