@@ -1129,11 +1129,11 @@ HANDLE dup_handle(HANDLE process_handle, HANDLE h, bool inherit)
 #if defined(DEBUG)
 
 //------------------------------------------------------------------------------
-int dbg_get_env_int(const char* name)
+int dbg_get_env_int(const char* name, int default)
 {
     char tmp[32];
     int len = GetEnvironmentVariableA(name, tmp, sizeof(tmp));
-    int val = (len > 0 && len < sizeof(tmp)) ? atoi(tmp) : 0;
+    int val = (len > 0 && len < sizeof(tmp)) ? atoi(tmp) : default;
     return val;
 }
 
