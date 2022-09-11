@@ -299,6 +299,7 @@ public:
 
     void                parse(unsigned int col, const char* buffer, unsigned int len);
     void                apply_scroll_indicators(unsigned int top, unsigned int bottom);
+    void                compensate_force_wrap();
     void                swap(display_lines& d);
     void                clear();
 
@@ -545,6 +546,7 @@ another:
                 if (bytes > 0)
                 {
                     memmove(d.m_chars + i, d.m_chars + i + bytes, d.m_len - (i + bytes));
+                    memmove(d.m_faces + i, d.m_faces + i + bytes, d.m_len - (i + bytes));
                     d.m_len -= bytes;
                 }
                 while (--wc > 0)
@@ -582,6 +584,36 @@ no_backward_indicator:
             d.appendnul();
         }
     }
+}
+
+//------------------------------------------------------------------------------
+void display_lines::compensate_force_wrap()
+{
+    if (!m_count)
+        return;
+
+    display_line& d = m_lines[0];
+    str_iter iter(d.m_chars, d.m_len);
+    unsigned int cols = 0;
+    while (const int c = iter.next())
+    {
+        const int wc = clink_wcwidth(c);
+        cols += wc;
+        if (wc)
+            break;
+    }
+
+    unsigned int bytes = static_cast<unsigned int>(iter.get_pointer() - d.m_chars);
+    assert(bytes >= cols);
+
+    memmove(d.m_chars, d.m_chars + bytes - cols, d.m_len - (bytes - cols));
+    memmove(d.m_faces, d.m_faces + bytes - cols, d.m_len - (bytes - cols));
+    while (cols--)
+    {
+        d.m_chars[cols] = ' ';
+        d.m_faces[cols] = FACE_NORMAL;
+    }
+    d.m_len -= (bytes - cols);
 }
 
 //------------------------------------------------------------------------------
@@ -711,7 +743,8 @@ void display_manager::end_prompt_lf()
     // If we've wrapped lines, remove the final xterm line-wrap flag.
     // BUGBUG:  The Windows console is not smart enough to recognize that this
     // means it should not merge the line and the next line when resizing the
-    // terminal width.
+    // terminal width.  But, Windows Terminal gets the line breaks correct when
+    // copy/pasting.  Let's call it a win.
     if (unwrap && _rl_term_autowrap)
     {
         const display_line* d = m_curr.get(count - 2);
@@ -820,6 +853,7 @@ void display_manager::display()
 
     // Calculate ending column, accounting for wrapping (including double width
     // characters that don't fit).
+    bool force_wrap = false;
     if (forced_display)
     {
         ecma48_state state;
@@ -838,8 +872,13 @@ void display_manager::display()
                 const int w = clink_wcwidth(c);
                 col += w;
                 if (col > _rl_screenwidth)
-                    col = 0;
+                    col = w;
             }
+        }
+        if (col == _rl_screenwidth)
+        {
+            force_wrap = true;
+            col = 0;
         }
         m_last_prompt_line_width = col;
     }
@@ -879,6 +918,7 @@ void display_manager::display()
     // Display the last line of the prompt.
     if (m_top == 0 && (forced_display || old_top != m_top))
     {
+// TODO-DISPLAY: wrapping the last line of the prompt confuses the vertical positioning (repro Alt-1 then ESC).
         _rl_move_vert(0);
         _rl_cr();
 
@@ -909,6 +949,12 @@ void display_manager::display()
     bool can_show_rprompt = false;
     if (!rl_display_fixed || forced_display)
     {
+        if (force_wrap)
+        {
+            rl_fwrite_function(_rl_out_stream, "\x1b[m \b", 5);
+            m_curr.compensate_force_wrap();
+        }
+
         // If the right side prompt is shown but shouldn't be, erase it.
         can_show_rprompt = m_next.can_show_rprompt();
         if (_rl_rprompt_shown_len && !can_show_rprompt)
@@ -1069,7 +1115,7 @@ test_left:
         {
             dbg_printf_row(-1, "delta %d; len %d/%d; col %d/%d; ind %d/%d\r\n", delta, olen, dlen, lcol, rcol, lind, rind);
             dbg_printf_row(-1, "old=[%*s]\toface='[%*s]'\r\n", olen, oc, olen, of);
-            dbg_printf_row(-1, "new=[%*s]\tdface=='[%*s]'\r\n", dlen, dc, dlen, df);
+            dbg_printf_row(-1, "new=[%*s]\tdface='[%*s]'\r\n", dlen, dc, dlen, df);
         }
 #endif
     }
