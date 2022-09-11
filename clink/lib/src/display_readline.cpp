@@ -687,7 +687,8 @@ void display_manager::clear()
 void display_manager::on_new_line()
 {
     clear();
-    m_top = 0;
+    if (!rl_end)
+        m_top = 0;
 }
 
 //------------------------------------------------------------------------------
