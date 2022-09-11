@@ -75,6 +75,90 @@ static setting_int g_input_rows(
     "When this is 0, the terminal height is the limit.",
     0);
 
+//------------------------------------------------------------------------------
+static void move_to_column(unsigned int cpos)
+{
+    assert(_rl_term_ch && *_rl_term_ch);
+
+    assert(cpos < _rl_screenwidth);
+    if (cpos == _rl_last_c_pos)
+        return;
+
+    char *buffer = tgoto(_rl_term_ch, 0, cpos + 1);
+    tputs(buffer, 1, _rl_output_character_function);
+
+    _rl_last_c_pos = cpos;
+}
+
+//------------------------------------------------------------------------------
+static unsigned int measure_cols(const char* s, unsigned int len)
+{
+    unsigned int cols = 0;
+
+    str_iter iter(s, len);
+    while (const int c = iter.next())
+    {
+        const int w = clink_wcwidth(c);
+        cols += w;
+    }
+
+    return cols;
+}
+
+//------------------------------------------------------------------------------
+static void shift_cols(unsigned int col, int delta)
+{
+    assert(col == _rl_last_c_pos);
+
+    if (delta > 0)
+    {
+        assert(delta < _rl_screenwidth - col);
+        if (_rl_term_IC)
+        {
+            char* buffer = tgoto(_rl_term_IC, 0, delta);
+            tputs(buffer, 1, _rl_output_character_function);
+        }
+#if 0
+        else if (_rl_term_im && *_rl_term_im && _rl_term_ei && *_rl_term_ei)
+        {
+            tputs(_rl_term_im, 1, _rl_output_character_function);
+            for (int i = delta; i--;)
+                _rl_output_character_function(' ');
+            tputs(_rl_term_ei, 1, _rl_output_character_function);
+        }
+        else if (_rl_term_ic && *_rl_term_ic)
+        {
+            for (int i = delta; i--;)
+                tputs(_rl_term_ic, 1, _rl_output_character_function);
+        }
+#endif
+        else
+            assert(false);
+
+        move_to_column(col);
+    }
+    else if (delta < 0)
+    {
+        assert(-delta < _rl_screenwidth - col);
+        if (_rl_term_DC && *_rl_term_DC)
+        {
+            char *buffer = tgoto(_rl_term_DC, -delta, -delta);
+            tputs(buffer, 1, _rl_output_character_function);
+        }
+#if 0
+        else if (_rl_term_dc && *_rl_term_dc)
+        {
+            for (int i = -delta; i--;)
+                tputs(_rl_term_dc, 1, _rl_output_character_function);
+        }
+#endif
+        else
+            assert(false);
+
+        move_to_column(col);
+    }
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -558,38 +642,6 @@ display_line* display_lines::next_line(unsigned int start)
 
 
 //------------------------------------------------------------------------------
-static void move_to_column(unsigned int cpos)
-{
-    assert(_rl_term_ch && *_rl_term_ch);
-
-    assert(cpos < _rl_screenwidth);
-    if (cpos == _rl_last_c_pos)
-        return;
-
-    char *buffer = tgoto(_rl_term_ch, 0, cpos + 1);
-    tputs(buffer, 1, _rl_output_character_function);
-
-    _rl_last_c_pos = cpos;
-}
-
-//------------------------------------------------------------------------------
-static unsigned int measure_cols(const char* s, unsigned int len)
-{
-    unsigned int cols = 0;
-
-    str_iter iter(s, len);
-    while (const int c = iter.next())
-    {
-        const int w = clink_wcwidth(c);
-        cols += w;
-    }
-
-    return cols;
-}
-
-
-
-//------------------------------------------------------------------------------
 class display_manager
 {
 public:
@@ -893,15 +945,19 @@ void display_manager::update_line(int i, const display_line* o, const display_li
     unsigned int rind = d->m_len;
     int delta = 0;
 
-    if (o)
-    {
-        // If the old and new lines are identical, there's nothing to do.
-        if (o->m_x == d->m_x &&
-            o->m_len == d->m_len &&
-            !memcmp(o->m_chars, d->m_chars, d->m_len) &&
-            !memcmp(o->m_faces, d->m_faces, d->m_len))
-            return;
+    // If the old and new lines are identical, there's nothing to do.
+    if (o &&
+        o->m_x == d->m_x &&
+        o->m_len == d->m_len &&
+        !memcmp(o->m_chars, d->m_chars, d->m_len) &&
+        !memcmp(o->m_faces, d->m_faces, d->m_len))
+        return;
 
+    // Optimize updating when the new starting column is less than or equal to
+    // the old starting column.  Can't optimize in the other direction unless
+    // update_line(0) happens before displaying the prompt string.
+    if (o && d->m_x <= o->m_x)
+    {
         const char* oc = o->m_chars;
         const char* of = o->m_faces;
         const char* dc = d->m_chars;
@@ -957,7 +1013,6 @@ test_left:
         rind = lind + dlen;
 
         // Measure columns, to find whether to delete characters or open spaces.
-// TODO-DISPLAY: need to do it at the beginning as well, if m_x are different, e.g. when add/remove modmark!
         unsigned int dcols = measure_cols(dc, dlen);
         rcol = lcol + dcols;
         if (oc2 < o->m_chars + o->m_len)
@@ -980,55 +1035,15 @@ test_left:
     const unsigned int row = i - m_top;
     if (row != _rl_last_v_pos)
         _rl_move_vert(row);
+
+    if (o && o->m_x > d->m_x)
+    {
+        move_to_column(d->m_x);
+        shift_cols(d->m_x, d->m_x - o->m_x);
+    }
+
     move_to_column(lcol);
-
-    if (delta > 0)
-    {
-        assert(delta < _rl_screenwidth - lcol);
-        if (_rl_term_IC)
-        {
-            char* buffer = tgoto(_rl_term_IC, 0, delta);
-            tputs(buffer, 1, _rl_output_character_function);
-        }
-#if 0
-        else if (_rl_term_im && *_rl_term_im && _rl_term_ei && *_rl_term_ei)
-        {
-            tputs(_rl_term_im, 1, _rl_output_character_function);
-            for (int i = delta; i--;)
-                _rl_output_character_function(' ');
-            tputs(_rl_term_ei, 1, _rl_output_character_function);
-        }
-        else if (_rl_term_ic && *_rl_term_ic)
-        {
-            for (int i = delta; i--;)
-                tputs(_rl_term_ic, 1, _rl_output_character_function);
-        }
-#endif
-        else
-            assert(false);
-
-        move_to_column(lcol);
-    }
-    else if (delta < 0)
-    {
-        assert(-delta < _rl_screenwidth - lcol);
-        if (_rl_term_DC && *_rl_term_DC)
-        {
-            char *buffer = tgoto(_rl_term_DC, -delta, -delta);
-            tputs(buffer, 1, _rl_output_character_function);
-        }
-#if 0
-        else if (_rl_term_dc && *_rl_term_dc)
-        {
-            for (int i = -delta; i--;)
-                tputs(_rl_term_dc, 1, _rl_output_character_function);
-        }
-#endif
-        else
-            assert(false);
-
-        move_to_column(lcol);
-    }
+    shift_cols(lcol, delta);
 
     rl_puts_face_func(d->m_chars + lind, d->m_faces + lind, rind - lind);
     rl_fwrite_function(_rl_out_stream, "\x1b[m", 3);
