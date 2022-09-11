@@ -694,29 +694,43 @@ void display_manager::on_new_line()
 //------------------------------------------------------------------------------
 void display_manager::end_prompt_lf()
 {
-    // TODO-DISPLAY: _rl_update_final: If we've wrapped lines, remove the final xterm line-wrap flag.
-
-    if (_rl_last_c_pos > 0)
+    // If the cursor is the only thing on an otherwise-blank last line,
+    // compensate so we don't print an extra CRLF.
+    bool unwrap = false;
+    const unsigned int count = m_curr.count();
+    if (_rl_vis_botlin &&
+        m_top + _rl_vis_botlin + 1 == count &&
+        m_curr.get(count - 1)->m_len == 0)
     {
-do_crlf:
-        rl_crlf();
-        _rl_last_c_pos = 0;
-        rl_fflush_function(_rl_out_stream);
-        rl_display_fixed++;
-        return;
+        assert(count >= 2);
+        _rl_vis_botlin--;
+        unwrap = true;
+    }
+    _rl_move_vert(_rl_vis_botlin);
+
+    // If we've wrapped lines, remove the final xterm line-wrap flag.
+    // BUGBUG:  The Windows console is not smart enough to recognize that this
+    // means it should not merge the line and the next line when resizing the
+    // terminal width.
+    if (unwrap && _rl_term_autowrap)
+    {
+        const display_line* d = m_curr.get(count - 2);
+        if (d->m_lastcol + d->m_trail == _rl_screenwidth)
+        {
+            const int index = _rl_find_prev_mbchar(d->m_chars, d->m_len, MB_FIND_NONZERO);
+            const unsigned int len = d->m_len - index;
+            const unsigned int wc = measure_cols(d->m_chars + index, len);
+            move_to_column(_rl_screenwidth - wc);
+            _rl_clear_to_eol(0);
+            rl_puts_face_func(d->m_chars + index, d->m_faces + index, len);
+        }
     }
 
-    if (!m_curr.count())
-        return;
-
-    if (m_top + _rl_vis_botlin + 1 < m_curr.count())
-    {
-        on_new_line();
-        goto do_crlf;
-    }
-
-    if (m_curr.get(m_curr.count() - 1)->m_len > 0)
-        goto do_crlf;
+    // Print CRLF to end the prompt.
+    rl_crlf();
+    _rl_last_c_pos = 0;
+    rl_fflush_function(_rl_out_stream);
+    rl_display_fixed++;
 }
 
 //------------------------------------------------------------------------------

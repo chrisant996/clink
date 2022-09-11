@@ -281,6 +281,8 @@ int hooked_fstat(int fid, struct hooked_stat* out)
 //------------------------------------------------------------------------------
 void end_prompt(int crlf)
 {
+    extern void end_prompt_lf();
+
     host_clear_suggestion();
 
     if (crlf < 0)
@@ -294,12 +296,15 @@ void end_prompt(int crlf)
     _rl_move_vert(_rl_vis_botlin);
     if (crlf > 0)
     {
+#ifdef INCLUDE_CLINK_DISPLAY_READLINE
+        end_prompt_lf();
+#else
         rl_crlf();
+#endif
         _rl_last_c_pos = 0;
     }
 
 #ifdef INCLUDE_CLINK_DISPLAY_READLINE
-    extern void end_prompt_lf();
     if (crlf < 0)
         end_prompt_lf();
 #endif
