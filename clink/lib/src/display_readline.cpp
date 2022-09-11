@@ -192,6 +192,7 @@ struct display_line
     unsigned int        m_trail = 0;        // Number of trailing columns of spaces past m_lastcol.
 
     bool                m_newline = false;  // Line ends with LF.
+    signed char         m_scroll_mark = 0;  // Number of columns for scrolling indicator (positive at left, negative at right).
 
 private:
     void                appendinternal(char c, char face);
@@ -230,6 +231,9 @@ void display_line::clear()
     m_lastcol = 0;
     m_lead = 0;
     m_trail = 0;
+
+    m_newline = false;
+    m_scroll_mark = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -537,19 +541,15 @@ another:
                 d.m_faces[i] = '<';
                 bytes--;
                 i++;
-                while (--wc > 0)
-                {
-                    d.m_chars[i] = ' ';
-                    d.m_faces[i] = '<';
-                    bytes--;
-                    i++;
-                }
+                d.m_scroll_mark = 1;
                 if (bytes > 0)
                 {
                     memmove(d.m_chars + i, d.m_chars + i + bytes, d.m_len - (i + bytes));
                     d.m_len -= bytes;
-                    d.appendnul();
                 }
+                while (--wc > 0)
+                    d.appendspace();
+                d.appendnul();
 
 no_backward_indicator:
                 ;
@@ -564,11 +564,11 @@ no_backward_indicator:
         if (d.m_lastcol - d.m_x > 2)
         {
             d.m_len -= d.m_trail;
-            while (d.m_x + d.m_lastcol >= _rl_screenwidth - 1)
+            while (d.m_x + d.m_lastcol >= _rl_screenwidth)
             {
-// TODO-DISPLAY: UTF8 awareness and clink_wcwidth awareness...
-                d.m_len--;
-                d.m_lastcol--;
+                const int bytes = _rl_find_prev_mbchar(d.m_chars, d.m_len, MB_FIND_NONZERO);
+                d.m_lastcol -= measure_cols(d.m_chars + bytes, d.m_len - bytes);
+                d.m_len = bytes;
             }
 
             while (d.m_x + d.m_lastcol + 2 < _rl_screenwidth)
@@ -577,6 +577,7 @@ no_backward_indicator:
                 d.m_lastcol++;
             }
             d.append('>', '<');
+            d.m_scroll_mark = -1;
             d.m_lastcol++;
             d.appendnul();
         }
@@ -653,7 +654,7 @@ public:
     unsigned int        top() const { return m_top; }
 
 private:
-    void                update_line(int i, const display_line* o, const display_line* d);
+    bool                update_line(int i, const display_line* o, const display_line* d, bool wrapped);
 
     display_lines       m_next;
     display_lines       m_curr;
@@ -845,7 +846,19 @@ void display_manager::display()
         m_top = m_next.vpos();
     if (m_next.vpos() > m_top + new_botlin)
         m_top = m_next.vpos() - new_botlin;
-// TODO-DISPLAY: also scroll if cursor is on an indicator...!
+    if (m_top + new_botlin + 1 > m_next.count())
+        m_top = m_next.count() - 1 - new_botlin;
+    if (m_top > 0 && m_top == m_next.vpos())
+    {
+        const display_line* d = m_next.get(m_top);
+        if (m_next.cpos() == d->m_x)
+            m_top--;
+    }
+    else if (m_top + new_botlin + 1 < m_next.count() && m_top + new_botlin == m_next.vpos())
+    {
+        if (m_next.cpos() + 1 == _rl_screenwidth)
+            m_top++;
+    }
     m_next.apply_scroll_indicators(m_top, m_top + new_botlin);
 
     // Display the last line of the prompt.
@@ -890,6 +903,7 @@ void display_manager::display()
         }
 
         // Update each display line for the line buffer.
+        bool wrapped = false;
         unsigned int rows = 0;
         for (unsigned int i = m_top; auto d = m_next.get(i); ++i)
         {
@@ -897,17 +911,18 @@ void display_manager::display()
                 break;
 
             auto o = m_curr.get(i - m_top + old_top);
-            update_line(i, o, d);
+            wrapped = update_line(i, o, d, wrapped);
         }
+
+        _rl_cr();
+        _rl_last_c_pos = 0;
 
         // Erase any surplus lines and update the bottom line counter.
         for (int i = new_botlin; i++ < _rl_vis_botlin;)
         {
             _rl_move_vert(i);
-            _rl_cr();
             // BUGBUG: assumes _rl_term_clreol.
             _rl_clear_to_eol(_rl_screenwidth);
-            _rl_last_c_pos = 0;
         }
 
         // Update current cursor position.
@@ -937,7 +952,7 @@ void display_manager::display()
 }
 
 //------------------------------------------------------------------------------
-void display_manager::update_line(int i, const display_line* o, const display_line* d)
+bool display_manager::update_line(int i, const display_line* o, const display_line* d, bool wrapped)
 {
     unsigned int lcol = d->m_x;
     unsigned int rcol = d->m_lastcol + d->m_trail;
@@ -951,7 +966,7 @@ void display_manager::update_line(int i, const display_line* o, const display_li
         o->m_len == d->m_len &&
         !memcmp(o->m_chars, d->m_chars, d->m_len) &&
         !memcmp(o->m_faces, d->m_faces, d->m_len))
-        return;
+        return false;
 
     // Optimize updating when the new starting column is less than or equal to
     // the old starting column.  Can't optimize in the other direction unless
@@ -1000,12 +1015,25 @@ test_left:
         while (dc2 > dc && dc2[-1] == ' ' && df2[-1] == FACE_NORMAL)
             --dc2, --df2;
         if (oc == oc2 && dc == dc2)
-            return;
+            return false;
 
         // Find right index of difference.
-// TODO-DISPLAY: UTF8 awareness...
-        while (oc2 > oc && dc2 > dc && oc2[-1] == dc2[-1] && of2[-1] == df2[-1])
-            --oc2, --dc2, --of2, --df2;
+        while (oc2 > oc && dc2 > dc)
+        {
+            const char* oback = oc + _rl_find_prev_mbchar(const_cast<char*>(oc), oc2 - oc, MB_FIND_ANY);
+            const char* dback = dc + _rl_find_prev_mbchar(const_cast<char*>(dc), dc2 - dc, MB_FIND_ANY);
+            if (oc2 - oback != dc2 - dback)
+                break;
+            const size_t bytes = dc2 - dback;
+            if (memcmp(oback, dback, bytes) ||
+                memcmp(of2 - bytes, df2 - bytes, bytes))
+                break;
+            oc2 = oback;
+            dc2 = dback;
+            of2 -= bytes;
+            df2 -= bytes;
+        }
+
         const unsigned int olen = static_cast<unsigned int>(oc2 - oc);
         const unsigned int dlen = static_cast<unsigned int>(dc2 - dc);
         assert(oc2 - oc == of2 - of);
@@ -1033,17 +1061,34 @@ test_left:
 
     assert(i >= m_top);
     const unsigned int row = i - m_top;
-    if (row != _rl_last_v_pos)
-        _rl_move_vert(row);
-
-    if (o && o->m_x > d->m_x)
+    if (wrapped && !delta && lcol == 0 && row == _rl_last_v_pos + 1)
     {
-        move_to_column(d->m_x);
-        shift_cols(d->m_x, d->m_x - o->m_x);
+        if (_rl_term_autowrap)
+        {
+            rl_fwrite_function(_rl_out_stream, " ", 1);
+            _rl_cr();
+        }
+        else
+        {
+            rl_crlf();
+        }
+        _rl_last_v_pos++;
+        _rl_last_c_pos = 0;
     }
+    else
+    {
+        if (row != _rl_last_v_pos)
+            _rl_move_vert(row);
 
-    move_to_column(lcol);
-    shift_cols(lcol, delta);
+        if (o && o->m_x > d->m_x)
+        {
+            move_to_column(d->m_x);
+            shift_cols(d->m_x, d->m_x - o->m_x);
+        }
+
+        move_to_column(lcol);
+        shift_cols(lcol, delta);
+    }
 
     rl_puts_face_func(d->m_chars + lind, d->m_faces + lind, rind - lind);
     rl_fwrite_function(_rl_out_stream, "\x1b[m", 3);
@@ -1071,18 +1116,14 @@ test_left:
     // Update cursor position and deal with autowrap.
     if (_rl_last_c_pos == _rl_screenwidth)
     {
-        if (_rl_term_autowrap)
+        if (d->m_scroll_mark < 0)
         {
-            rl_fwrite_function(_rl_out_stream, " ", 1);
             _rl_cr();
+            _rl_last_c_pos = 0;
         }
-        else
-        {
-            rl_crlf();
-        }
-        _rl_last_v_pos++;
-        _rl_last_c_pos = 0;
     }
+
+    return (_rl_last_c_pos == _rl_screenwidth);
 }
 
 #endif // INCLUDE_CLINK_DISPLAY_READLINE
