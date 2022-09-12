@@ -889,6 +889,7 @@ void display_manager::display()
     forced_display |= (m_last_prompt_line_width < 0 ||
                        modmark != m_last_modmark ||
                        !m_last_prompt_line.equals(prompt));
+// TODO-DISPLAY: isn't reprinting correctly when message changes.
 
     // Calculate ending row and column, accounting for wrapping (including
     // double width characters that don't fit).
@@ -1252,7 +1253,12 @@ extern "C" int use_display_manager()
 #if defined (OMIT_DEFAULT_DISPLAY_READLINE)
     s_use_display_manager = true;
 #elif defined (INCLUDE_CLINK_DISPLAY_READLINE)
-    s_use_display_manager = dbg_get_env_int("USE_DISPLAY_MANAGER", true);
+# ifdef DEBUG
+    const default_state = true;
+# else
+    const default_state = true;
+# endif
+    s_use_display_manager = dbg_get_env_int("USE_DISPLAY_MANAGER", default_state);
 #endif
     return s_use_display_manager;
 }
