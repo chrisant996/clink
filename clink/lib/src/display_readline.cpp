@@ -76,6 +76,13 @@ static setting_int g_input_rows(
     0);
 
 //------------------------------------------------------------------------------
+static void clear_to_end_of_screen()
+{
+    static const char* const termcap_cd = tgetstr("cd", nullptr);
+    rl_fwrite_function(_rl_out_stream, termcap_cd, strlen(termcap_cd));
+}
+
+//------------------------------------------------------------------------------
 static void move_to_column(unsigned int cpos)
 {
     assert(_rl_term_ch && *_rl_term_ch);
@@ -297,8 +304,8 @@ public:
                         display_lines() = default;
                         ~display_lines() = default;
 
-    void                parse(unsigned int col, const char* buffer, unsigned int len);
-    void                apply_scroll_indicators(unsigned int top, unsigned int bottom);
+    void                parse(unsigned int prompt_botlin, unsigned int col, const char* buffer, unsigned int len);
+    void                apply_scroll_markers(unsigned int top, unsigned int bottom);
     void                compensate_force_wrap();
     void                swap(display_lines& d);
     void                clear();
@@ -315,17 +322,22 @@ private:
 
     std::vector<display_line> m_lines;
     unsigned int        m_count = 0;
+    unsigned int        m_prompt_botlin;
     unsigned int        m_vpos = 0;
     unsigned int        m_cpos = 0;
 };
 
 //------------------------------------------------------------------------------
-void display_lines::parse(unsigned int col, const char* buffer, unsigned int len)
+void display_lines::parse(unsigned int prompt_botlin, unsigned int col, const char* buffer, unsigned int len)
 {
     assert(col < _rl_screenwidth);
     dbg_ignore_scope(snapshot, "display_readline");
 
     clear();
+
+    m_prompt_botlin = prompt_botlin;
+    while (prompt_botlin--)
+        next_line(0);
 
     display_line* d = next_line(0);
     d->m_x = col;
@@ -499,15 +511,15 @@ void display_lines::parse(unsigned int col, const char* buffer, unsigned int len
 }
 
 //------------------------------------------------------------------------------
-void display_lines::apply_scroll_indicators(unsigned int top, unsigned int bottom)
+void display_lines::apply_scroll_markers(unsigned int top, unsigned int bottom)
 {
+    assert(top >= m_prompt_botlin);
     assert(top <= bottom);
     assert(top < m_count);
-    assert(bottom < m_count);
 
     int c;
 
-    if (top > 0)
+    if (top > m_prompt_botlin)
     {
         display_line& d = m_lines[top];
 
@@ -561,6 +573,9 @@ no_backward_indicator:
 
     if (bottom + 1 < m_count)
     {
+        // The approach here doesn't support horizontal scroll mode.
+        assert(top != bottom);
+
         display_line& d = m_lines[bottom];
 
         if (d.m_lastcol - d.m_x > 2)
@@ -621,6 +636,7 @@ void display_lines::swap(display_lines& d)
 {
     m_lines.swap(d.m_lines);
     std::swap(m_count, d.m_count);
+    std::swap(m_prompt_botlin, d.m_prompt_botlin);
     std::swap(m_vpos, d.m_vpos);
     std::swap(m_cpos, d.m_cpos);
 }
@@ -631,6 +647,7 @@ void display_lines::clear()
     for (unsigned int i = m_count; i--;)
         m_lines[i].clear();
     m_count = 0;
+    m_prompt_botlin = 0;
     m_vpos = 0;
     m_cpos = 0;
 }
@@ -693,6 +710,7 @@ private:
     unsigned int        m_top = 0;      // Vertical scrolling; index to top displayed line.
     str_moveable        m_last_prompt_line;
     int                 m_last_prompt_line_width = -1;
+    int                 m_last_prompt_line_botlin = -1;
     bool                m_last_modmark = false;
 };
 
@@ -712,6 +730,7 @@ void display_manager::clear()
     m_curr.clear();
     m_last_prompt_line.clear();
     m_last_prompt_line_width = -1;
+    m_last_prompt_line_botlin = -1;
     m_last_modmark = false;
 }
 
@@ -726,15 +745,17 @@ void display_manager::on_new_line()
 //------------------------------------------------------------------------------
 void display_manager::end_prompt_lf()
 {
+    // FUTURE: When in a scrolling mode (vert or horz), reprint the entire
+    // prompt and input line without the scroll constraints?
+
     // If the cursor is the only thing on an otherwise-blank last line,
     // compensate so we don't print an extra CRLF.
     bool unwrap = false;
     const unsigned int count = m_curr.count();
     if (_rl_vis_botlin &&
-        m_top + _rl_vis_botlin + 1 == count &&
+        m_top - m_last_prompt_line_botlin + _rl_vis_botlin + 1 == count &&
         m_curr.get(count - 1)->m_len == 0)
     {
-        assert(count >= 2);
         _rl_vis_botlin--;
         unwrap = true;
     }
@@ -748,14 +769,31 @@ void display_manager::end_prompt_lf()
     if (unwrap && _rl_term_autowrap)
     {
         const display_line* d = m_curr.get(count - 2);
-        if (d->m_lastcol + d->m_trail == _rl_screenwidth)
+        if (d && d->m_chars &&
+            _rl_vis_botlin - m_last_prompt_line_botlin >= 2 &&
+            d->m_lastcol + d->m_trail == _rl_screenwidth)
         {
+            // Reprint end of the previous row if at least 2 rows are visible.
             const int index = _rl_find_prev_mbchar(d->m_chars, d->m_len, MB_FIND_NONZERO);
             const unsigned int len = d->m_len - index;
             const unsigned int wc = measure_cols(d->m_chars + index, len);
             move_to_column(_rl_screenwidth - wc);
             _rl_clear_to_eol(0);
             rl_puts_face_func(d->m_chars + index, d->m_faces + index, len);
+        }
+        else if (m_top == m_last_prompt_line_botlin)
+        {
+            assert(count <= 1);
+            // When there is no previous row (input line is empty but starts at
+            // col 0), reprint the last prompt line to clear the line-wrap flag.
+            _rl_move_vert(0);
+            clear_to_end_of_screen();
+            rl_fwrite_function(_rl_out_stream, m_last_prompt_line.c_str(), m_last_prompt_line.length());
+            _rl_vis_botlin = m_last_prompt_line_botlin;
+        }
+        else
+        {
+            // Degenerate case; just give up.
         }
     }
 
@@ -791,7 +829,8 @@ void display_manager::display()
     max_rows = min<unsigned int>(max_rows, _rl_screenheight);
     max_rows = max<unsigned int>(max_rows, 1);
 
-    // TODO-DISPLAY: _rl_horizontal_scroll_mode.
+// TODO-DISPLAY: _rl_horizontal_scroll_mode.
+// TODO-DISPLAY: when _rl_horizontal_scroll_mode has less than some threshold of columns, then ... what?
 
     // FUTURE: Support defining a region in which to display the input line;
     // configurable left starting column, configurable right ending column, and
@@ -851,14 +890,15 @@ void display_manager::display()
                        modmark != m_last_modmark ||
                        !m_last_prompt_line.equals(prompt));
 
-    // Calculate ending column, accounting for wrapping (including double width
-    // characters that don't fit).
+    // Calculate ending row and column, accounting for wrapping (including
+    // double width characters that don't fit).
     bool force_wrap = false;
     if (forced_display)
     {
         ecma48_state state;
         ecma48_iter iter(prompt, state);
         unsigned int col = 0;
+        unsigned int row = 0;
         if (modmark)
             ++col;
         while (const ecma48_code &code = iter.next())
@@ -872,53 +912,64 @@ void display_manager::display()
                 const int w = clink_wcwidth(c);
                 col += w;
                 if (col > _rl_screenwidth)
+                {
                     col = w;
+                    row++;
+                }
             }
         }
         if (col == _rl_screenwidth)
         {
             force_wrap = true;
             col = 0;
+            row++;
         }
         m_last_prompt_line_width = col;
+        m_last_prompt_line_botlin = row;
     }
 
     // Optimization:  can skip updating the display if someone said it's already
     // updated, unless someone is forcing an update.
-    const bool need_update = (!rl_display_fixed || forced_display);
+    const bool need_update = true || (!rl_display_fixed || forced_display);
 
     // Prepare data structures for displaying the input line.
-    int new_botlin = _rl_vis_botlin;
     if (need_update)
-        m_next.parse(m_last_prompt_line_width, rl_line_buffer, rl_end);
-    new_botlin = max<int>(0, m_next.count() - 1);
-    new_botlin = min<int>(new_botlin, max_rows - 1);
+        m_next.parse(m_last_prompt_line_botlin, m_last_prompt_line_width, rl_line_buffer, rl_end);
+    assert(m_next.count() > 0);
+    const int input_botlin_offset = max<int>(0,
+        min<int>(min<int>(m_next.count() - 1 - m_last_prompt_line_botlin, max_rows - 1), _rl_screenheight - 1));
+    const int new_botlin = m_last_prompt_line_botlin + input_botlin_offset;
+// TODO-DISPLAY: force _rl_horizontal_scroll_mode if 1 or fewer input rows are visible.
 
     // Scroll to keep cursor in view.
     const unsigned int old_top = m_top;
-    if (m_next.vpos() < m_top)
-        m_top = m_next.vpos();
-    if (m_next.vpos() > m_top + new_botlin)
-        m_top = m_next.vpos() - new_botlin;
-    if (m_top + new_botlin + 1 > m_next.count())
-        m_top = m_next.count() - 1 - new_botlin;
-    if (m_top > 0 && m_top == m_next.vpos())
+    if (m_top < m_last_prompt_line_botlin)
+        m_top = m_last_prompt_line_botlin;
+    if (m_last_prompt_line_botlin + m_next.vpos() < m_top)
+        m_top = m_last_prompt_line_botlin + m_next.vpos();
+    if (m_last_prompt_line_botlin + m_next.vpos() > m_top + input_botlin_offset)
+        m_top = m_next.vpos() - input_botlin_offset;
+    if (m_top + input_botlin_offset + 1 > m_next.count())
+        m_top = m_next.count() - 1 - input_botlin_offset;
+    // Scroll when cursor is on a scroll marker.
+    if (m_top > m_last_prompt_line_botlin && m_top == m_last_prompt_line_botlin + m_next.vpos())
     {
         const display_line* d = m_next.get(m_top);
         if (m_next.cpos() == d->m_x)
             m_top--;
     }
-    else if (m_top + new_botlin + 1 < m_next.count() && m_top + new_botlin == m_next.vpos())
+    else if (m_top + input_botlin_offset < m_next.count() - 1 && m_top + input_botlin_offset == m_next.vpos())
     {
         if (m_next.cpos() + 1 == _rl_screenwidth)
             m_top++;
     }
-    m_next.apply_scroll_indicators(m_top, m_top + new_botlin);
+    assert(m_top >= m_last_prompt_line_botlin);
+    // Apply scroll markers.
+    m_next.apply_scroll_markers(m_top, m_top + input_botlin_offset);
 
     // Display the last line of the prompt.
-    if (m_top == 0 && (forced_display || old_top != m_top))
+    if (m_top == m_last_prompt_line_botlin && (forced_display || old_top != m_top))
     {
-// TODO-DISPLAY: wrapping the last line of the prompt confuses the vertical positioning (repro Alt-1 then ESC).
         _rl_move_vert(0);
         _rl_cr();
 
@@ -937,6 +988,7 @@ void display_manager::display()
             rl_fwrite_function(_rl_out_stream, "\x1b[m", 3);
 
         _rl_last_c_pos = m_last_prompt_line_width;
+        _rl_last_v_pos = m_last_prompt_line_botlin;
 
         dbg_ignore_scope(snapshot, "display_readline");
 
@@ -965,7 +1017,7 @@ void display_manager::display()
 
         // Update each display line for the line buffer.
         bool wrapped = false;
-        unsigned int rows = 0;
+        unsigned int rows = m_last_prompt_line_botlin;
         for (unsigned int i = m_top; auto d = m_next.get(i); ++i)
         {
             if (rows++ > new_botlin)
@@ -994,7 +1046,7 @@ void display_manager::display()
     }
 
     // Move cursor to the rl_point position.
-    _rl_move_vert(m_next.vpos() - m_top);
+    _rl_move_vert(m_last_prompt_line_botlin + m_next.vpos() - m_top);
     move_to_column(m_next.cpos());
 
     rl_fflush_function(_rl_out_stream);
@@ -1121,7 +1173,7 @@ test_left:
     }
 
     assert(i >= m_top);
-    const unsigned int row = i - m_top;
+    const unsigned int row = m_last_prompt_line_botlin + i - m_top;
     if (wrapped && !delta && lcol == 0 && row == _rl_last_v_pos + 1)
     {
         if (_rl_term_autowrap)
@@ -1224,8 +1276,7 @@ extern "C" void end_prompt_lf()
 //------------------------------------------------------------------------------
 void reset_readline_display()
 {
-    static const char* const termcap_cd = tgetstr("cd", nullptr);
-    rl_fwrite_function(_rl_out_stream, termcap_cd, strlen(termcap_cd));
+    clear_to_end_of_screen();
     if (use_display_manager())
         s_display_manager.clear();
 }
