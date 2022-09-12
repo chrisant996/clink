@@ -27,6 +27,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
       - Because the "yet another special case" logic is triggered incorrectly, and adjusts cpos incorrectly, which carries forward to future calls.
       - After disabling that logic, then the cursor still goes wrong when crossing the `woff` boundary.
         - Need another iDNA for that...
+  - `horizontal-scroll-mode` seems to be broken in Readline; does not seem to repro in bash.
+  - Quickly change width ==> display goes crazy -- maybe a side effect of scrolling versus predicting wrapped cursor position?
 
 ## Normal Priority
 - Match filtering e.g. by `clink.onfiltermatches()` is skipped if the input matches only one completion.
