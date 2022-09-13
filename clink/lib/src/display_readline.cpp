@@ -361,8 +361,6 @@ void display_lines::parse(unsigned int prompt_botlin, unsigned int col, const ch
     str<16> tmp;
     unsigned int index = 0;
 
-// TODO-DISPLAY: when rl_byte_oriented == 0.
-
     str_iter iter(buffer, len);
     const char* chars = buffer;
     const char* end = nullptr;
@@ -1264,7 +1262,9 @@ extern "C" int use_display_manager()
         s_use_display_manager = false;
 # endif
 #endif
-    return s_use_display_manager;
+    // The display rewrite does not support rl_byte_oriented; use Readline when
+    // the user has selected byte oriented mode.
+    return s_use_display_manager && !rl_byte_oriented;
 }
 
 //------------------------------------------------------------------------------
