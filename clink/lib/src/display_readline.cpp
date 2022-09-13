@@ -1254,9 +1254,9 @@ extern "C" int use_display_manager()
     s_use_display_manager = true;
 #elif defined (INCLUDE_CLINK_DISPLAY_READLINE)
 # ifdef DEBUG
-    const default_state = true;
+    const bool default_state = true;
 # else
-    const default_state = true;
+    const bool default_state = true;
 # endif
     s_use_display_manager = dbg_get_env_int("USE_DISPLAY_MANAGER", default_state);
 #endif
