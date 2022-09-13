@@ -3062,6 +3062,7 @@ void rl_module::on_terminal_resize(int columns, int rows, const context& context
 #endif
     const line_buffer& buffer = context.buffer;
     const char* buffer_ptr = buffer.get_buffer();
+// TODO-DISPLAY: this doesn't understand about scrolling constraints.
     measure(buffer_ptr, buffer.get_cursor());
     int cursor_line = line_count - 1;
 
