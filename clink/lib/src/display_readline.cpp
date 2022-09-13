@@ -11,6 +11,7 @@
 #include "display_readline.h"
 
 #include <core/base.h>
+#include <core/os.h>
 #include <core/settings.h>
 #include <core/debugheap.h>
 #include <terminal/ecma48_iter.h>
@@ -1253,12 +1254,15 @@ extern "C" int use_display_manager()
 #if defined (OMIT_DEFAULT_DISPLAY_READLINE)
     s_use_display_manager = true;
 #elif defined (INCLUDE_CLINK_DISPLAY_READLINE)
+    str<> env;
+    if (os::get_env("USE_DISPLAY_MANAGER", env))
+        s_use_display_manager = !!atoi(env.c_str());
+    else
 # ifdef DEBUG
-    const bool default_state = true;
+        s_use_display_manager = true;
 # else
-    const bool default_state = true;
+        s_use_display_manager = false;
 # endif
-    s_use_display_manager = dbg_get_env_int("USE_DISPLAY_MANAGER", default_state);
 #endif
     return s_use_display_manager;
 }
