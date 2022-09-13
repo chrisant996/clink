@@ -5,30 +5,10 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- [#340](https://github.com/chrisant996/clink/issues/340); Clink will need to provide a custom display routine to get away from the edge case mistakes in Readline.
-  - A prompt exactly the width of the terminal seems to add a newline between the prompt and the input line, which might result from a missing `_rl_term_autowrap` test.
-    - `_rl_vis_botlin` ends up with an incorrect value.
-    - Could commit d4f48721ea22258b7239748d0d78d843ba2820f1 be related to that, or maybe it didn't fully fix the problem?
-    - Run `clink drawtest --width 31 --emulation emulate` to observe.
-    - Maybe Readline doesn't emit `SPC CR` if the prompt ends exactly at the screen width?
-  - Readline is trying to use simple arithmetic to figure out how to convert byte position to absolute position, but the arithmetic is wrong and the data structures don't facilitate solving the issues.
-    - E.g. a prompt whose last line wraps TWICE and has one UTF8 multibyte character in the FIRST wrapped segment; cursor position on the final line is offset wrongly.
-      - It looks like this line `nleft = cpos_buffer_position - pos;` is trying to reset `nleft` to only include positions on the current screen row, which then throws off the `woff` arithmetic.  It could maybe use modulus on the overall position, but that wouldn't account for double-wide characters that don't fit at the end of a screen row and wrap "early".
-      - This code might be relevant:
-          ```c
-          /* This assumes that all the invisible characters are split
-             between the first and last lines of the prompt, if the
-             prompt consumes more than two lines. It's usually right */
-          /* XXX - not sure this is ever executed */
-          _rl_last_c_pos -= (wrap_offset-prompt_invis_chars_first_line);
-          ```
-    - E.g. a prompt whose last line wraps AT the screen width and contains multibyte UTF8 characters; cursor position near the beginning of the input line gets positioned incorrectly.
-      - `_rl_last_c_pos` is negative on entry to `rl_redisplay()`.
-      - Because the "yet another special case" logic is triggered incorrectly, and adjusts cpos incorrectly, which carries forward to future calls.
-      - After disabling that logic, then the cursor still goes wrong when crossing the `woff` boundary.
-        - Need another iDNA for that...
-  - `horizontal-scroll-mode` seems to be broken in Readline; does not seem to repro in bash.
-  - Quickly change width ==> display goes crazy -- maybe a side effect of scrolling versus predicting wrapped cursor position?
+- `horizontal-scroll-mode` seems to be broken in Readline; does not seem to repro in bash.
+- [#340](https://github.com/chrisant996/clink/issues/340); custom display routine for Clink.
+  - [ ] support for horizontal scrolling mode.
+  - [ ] Quickly change width ==> display goes crazy -- maybe a side effect of scrolling versus predicting wrapped cursor position?
 
 ## Normal Priority
 - Match filtering e.g. by `clink.onfiltermatches()` is skipped if the input matches only one completion.
@@ -70,6 +50,28 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Windows Terminal crashes on exit after `clink inject`.  The current release version was crashing (1.6.10571.0).  Older versions don't crash, and a locally built version from the terminal repo's HEAD doesn't crash.  I think the crash is probably a bug in Windows Terminal, not related to Clink.  And after I built it locally, then it stopped crashing with 1.6.10571.0 as well.  Mysterious...
 
 ## Punt
+- Readline doesn't handle certain display cases correctly.  Rather than try to fix the Readline display, I've built an alternative display implementation.  Here are some notes on the Readline issues:
+  - A prompt exactly the width of the terminal seems to add a newline between the prompt and the input line, which might result from a missing `_rl_term_autowrap` test.
+    - `_rl_vis_botlin` ends up with an incorrect value.
+    - Could commit d4f48721ea22258b7239748d0d78d843ba2820f1 be related to that, or maybe it didn't fully fix the problem?
+    - Run `clink drawtest --width 31 --emulation emulate` to observe.
+    - Maybe Readline doesn't emit `SPC CR` if the prompt ends exactly at the screen width?
+  - Readline is trying to use simple arithmetic to figure out how to convert byte position to absolute position, but the arithmetic is wrong and the data structures don't facilitate solving the issues.
+    - E.g. a prompt whose last line wraps TWICE and has one UTF8 multibyte character in the FIRST wrapped segment; cursor position on the final line is offset wrongly.
+      - It looks like this line `nleft = cpos_buffer_position - pos;` is trying to reset `nleft` to only include positions on the current screen row, which then throws off the `woff` arithmetic.  It could maybe use modulus on the overall position, but that wouldn't account for double-wide characters that don't fit at the end of a screen row and wrap "early".
+      - This code might be relevant:
+          ```c
+          /* This assumes that all the invisible characters are split
+             between the first and last lines of the prompt, if the
+             prompt consumes more than two lines. It's usually right */
+          /* XXX - not sure this is ever executed */
+          _rl_last_c_pos -= (wrap_offset-prompt_invis_chars_first_line);
+          ```
+    - E.g. a prompt whose last line wraps AT the screen width and contains multibyte UTF8 characters; cursor position near the beginning of the input line gets positioned incorrectly.
+      - `_rl_last_c_pos` is negative on entry to `rl_redisplay()`.
+      - Because the "yet another special case" logic is triggered incorrectly, and adjusts cpos incorrectly, which carries forward to future calls.
+      - After disabling that logic, then the cursor still goes wrong when crossing the `woff` boundary.
+        - Need another iDNA for that...
 - Optional feature to simplify auto-path-separator after completion, like in `zsh`:  highlight `\` in a color, and if <kbd>Space</kbd> is the next input then replace the `"\"` with `" "`.  _[Not worth it; there is very little value, and there are many side effects, e.g. wrt autosuggest.  I got excited at first, but then I realized what I really need is a better way to signal for `menu-complete` to accept a directory it's inserted and start a new completion.  And then I realized, since completions are normalized as of commit 9ec9eb1b69 in v1.1.24, typing <kbd>\</kbd><kbd>Tab</kbd> goes from `foo\` to `foo\\` to `foo\bar`, so the scenario I had in mind is already fully solved in a simple and reliable way.]_
 - Postpone:  Ideally the updater could have a way to run an embedded script in the newly installed version, to do any needed finalization.  But there isn't really a way to reliably determine whether it needs to run, nor to handle errors that may occur.  And a more reliable mechanism is to do upgrade steps on the next inject.
 - Include `wildmatch()` and an `fnmatch()` wrapper for it.  But should first update it to support UTF8.  _[Not worth the effort; and recursive match generation doesn't make much sense anyway.  Could potentially be useful in globbing purposes other than match generation, though.]_

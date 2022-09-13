@@ -890,7 +890,6 @@ void display_manager::display()
     forced_display |= (m_last_prompt_line_width < 0 ||
                        modmark != m_last_modmark ||
                        !m_last_prompt_line.equals(prompt));
-// TODO-DISPLAY: isn't reprinting correctly when message changes.
 
     // Calculate ending row and column, accounting for wrapping (including
     // double width characters that don't fit).
