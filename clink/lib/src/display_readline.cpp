@@ -58,6 +58,15 @@ extern int _rl_rprompt_shown_len;
 
 } // extern "C"
 
+//------------------------------------------------------------------------------
+static void clear_to_end_of_screen()
+{
+    static const char* const termcap_cd = tgetstr("cd", nullptr);
+    rl_fwrite_function(_rl_out_stream, termcap_cd, strlen(termcap_cd));
+}
+
+
+
 #ifdef INCLUDE_CLINK_DISPLAY_READLINE
 
 #ifndef DISPLAY_TABS
@@ -74,13 +83,6 @@ static setting_int g_input_rows(
     "This limits how many rows the input line can use, up to the terminal height.\n"
     "When this is 0, the terminal height is the limit.",
     0);
-
-//------------------------------------------------------------------------------
-static void clear_to_end_of_screen()
-{
-    static const char* const termcap_cd = tgetstr("cd", nullptr);
-    rl_fwrite_function(_rl_out_stream, termcap_cd, strlen(termcap_cd));
-}
 
 //------------------------------------------------------------------------------
 static void move_to_column(unsigned int cpos)
@@ -1266,8 +1268,10 @@ extern "C" int use_display_manager()
 //------------------------------------------------------------------------------
 extern "C" void host_on_new_line()
 {
+#if defined (INCLUDE_CLINK_DISPLAY_READLINE)
     if (use_display_manager())
         s_display_manager.on_new_line();
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -1283,8 +1287,10 @@ extern "C" void end_prompt_lf()
 void reset_readline_display()
 {
     clear_to_end_of_screen();
+#if defined (INCLUDE_CLINK_DISPLAY_READLINE)
     if (use_display_manager())
         s_display_manager.clear();
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -1313,7 +1319,9 @@ void display_readline()
 //------------------------------------------------------------------------------
 unsigned int get_readline_display_top()
 {
+#if defined (INCLUDE_CLINK_DISPLAY_READLINE)
     if (use_display_manager())
         return s_display_manager.top();
+#endif
     return 0;
 }
