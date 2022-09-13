@@ -1130,8 +1130,6 @@ test_left:
             --oc2, --of2;
         while (dc2 > dc && dc2[-1] == ' ' && df2[-1] == FACE_NORMAL)
             --dc2, --df2;
-        if (oc == oc2 && dc == dc2)
-            return false;
 
         // Find right index of difference.
         while (oc2 > oc && dc2 > dc)
