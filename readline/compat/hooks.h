@@ -7,9 +7,7 @@
 //#define OMIT_DEFAULT_DISPLAY_READLINE
 
 // Define this to include Clink's custom display routines for the Readline input buffer.
-#ifdef DEBUG
 #define INCLUDE_CLINK_DISPLAY_READLINE
-#endif
 
 // Define this to disable Readline's sigwinch terminal resize, which goes haywire.
 #define NO_READLINE_RESIZE_TERMINAL
