@@ -206,7 +206,13 @@ extern int _rl_colored_completion_prefix;
 extern int rl_line_buffer_len;
 extern int rl_arg_sign;
 extern int rl_visible_prompt_length;
+/* begin_clink_change */
+#if 0
+/* end_clink_change */
 extern int rl_byte_oriented;
+/* begin_clink_change */
+#endif
+/* end_clink_change */
 
 /* display.c */
 extern int rl_display_fixed;

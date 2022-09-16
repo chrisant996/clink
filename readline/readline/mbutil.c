@@ -58,11 +58,17 @@
 
 /* Declared here so it can be shared between the readline and history
    libraries. */
+/* begin_clink_change */
+#if 0
+/* end_clink_change */
 #if defined (HANDLE_MULTIBYTE)
 int rl_byte_oriented = 0;
 #else
 int rl_byte_oriented = 1;
 #endif
+/* begin_clink_change */
+#endif
+/* end_clink_change */
 
 /* Ditto */
 int _rl_utf8locale = 0;

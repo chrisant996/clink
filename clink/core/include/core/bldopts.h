@@ -33,3 +33,8 @@
 //#define DEBUG_RESOLVEIMPL
 //#define USE_OS_UTF_CONVERSION
 #endif
+
+//------------------------------------------------------------------------------
+// Clink doesn't support rl_byte_oriented mode.  Defining it to 0 lets the
+// compiler optimize away any code specific to that mode.
+#define rl_byte_oriented    (0)

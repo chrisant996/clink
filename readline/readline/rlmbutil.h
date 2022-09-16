@@ -227,6 +227,12 @@ _rl_wcwidth (WCHAR_T wc)
 
 #endif /* !HANDLE_MULTIBYTE */
 
+/* begin_clink_change */
+#if 0
+/* end_clink_change */
 extern int rl_byte_oriented;
+/* begin_clink_change */
+#endif
+/* end_clink_change */
 
 #endif /* _RL_MBUTIL_H_ */

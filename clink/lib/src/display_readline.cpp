@@ -372,12 +372,21 @@ void display_lines::parse(unsigned int prompt_botlin, unsigned int col, const ch
 
         end = iter.get_pointer();
 
-        if (META_CHAR(*chars) && !_rl_output_meta_chars)
+        if (CTRL_CHAR(*chars) || *chars == RUBOUT)
+        {
+            // Display control characters as ^X.
+            assert(end == chars + 1);
+            tmp.clear();
+            tmp.format("^%c", CTRL_CHAR(*chars) ? UNCTRL(*chars) : '?');
+        }
+#if 0 // Clink forces _rl_output_meta_chars to be on.
+        else if (META_CHAR(*chars) && !_rl_output_meta_chars)
         {
             // When output-meta is off, display 0x80-0xff as octal (\ooo).
             for (tmp.clear(); chars < end; ++chars)
                 tmp.format("\\%o", *chars);
         }
+#endif
 #ifdef DISPLAY_TABS
         else if (c == '\t')
         {
@@ -398,13 +407,6 @@ void display_lines::parse(unsigned int prompt_botlin, unsigned int col, const ch
             d = next_line(index);
             col = 0;
             continue;
-        }
-        else if (CTRL_CHAR(*chars) || *chars == RUBOUT)
-        {
-            // Display control characters as ^X.
-            assert(end == chars + 1);
-            tmp.clear();
-            tmp.format("^%c", CTRL_CHAR(*chars) ? UNCTRL(*chars) : '?');
         }
         else
         {
@@ -1261,9 +1263,7 @@ extern "C" int use_display_manager()
         s_use_display_manager = false;
 # endif
 #endif
-    // The display rewrite does not support rl_byte_oriented; use Readline when
-    // the user has selected byte oriented mode.
-    return s_use_display_manager && !rl_byte_oriented;
+    return s_use_display_manager;
 }
 
 //------------------------------------------------------------------------------

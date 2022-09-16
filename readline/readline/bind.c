@@ -74,6 +74,9 @@ Keymap rl_binding_keymap;
 
 /* begin_clink_change */
 const char *_rl_default_init_file = NULL;
+int fake_byte_oriented = 0;
+#undef rl_byte_oriented
+#define rl_byte_oriented fake_byte_oriented
 /* end_clink_change */
 
 static int _rl_skip_to_delim PARAMS((char *, int, int));
