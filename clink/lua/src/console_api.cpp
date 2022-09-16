@@ -680,6 +680,49 @@ static int check_input(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+// UNDOCUMENTED; internal use only.
+static int set_width(lua_State* state)
+{
+    static bool s_fudge_verified = false;
+    static bool s_fudge_needed = false;
+
+    const int width = checkinteger(state, 1);
+    if (width <= 0)
+        return 0;
+
+    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+    CONSOLE_SCREEN_BUFFER_INFOEX csbix = { sizeof(csbix) };
+    if (!GetConsoleScreenBufferInfoEx(h, &csbix))
+        return 0;
+
+again:
+    csbix.dwSize.X = width;
+    csbix.srWindow.Right = width;
+    if (s_fudge_needed)
+        csbix.srWindow.Bottom++;
+    if (!SetConsoleScreenBufferInfoEx(h, &csbix))
+        return 0;
+
+    if (!s_fudge_verified)
+    {
+        CONSOLE_SCREEN_BUFFER_INFOEX verify = { sizeof(verify) };
+        if (GetConsoleScreenBufferInfoEx(h, &verify))
+        {
+            if (verify.srWindow.Bottom + 1 == csbix.srWindow.Bottom)
+            {
+                s_fudge_verified = true;
+                s_fudge_needed = true;
+                goto again;
+            }
+        }
+        s_fudge_verified = true;
+    }
+
+    lua_pushboolean(state, true);
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 void console_lua_initialise(lua_state& lua)
 {
     struct {
@@ -702,6 +745,8 @@ void console_lua_initialise(lua_state& lua)
         { "findnextline",           &find_next_line },
         { "readinput",              &read_input },
         { "checkinput",             &check_input },
+        // UNDOCUMENTED; internal use only.
+        { "__set_width",            &set_width },
     };
 
     lua_State* state = lua.get_state();
