@@ -379,14 +379,6 @@ void display_lines::parse(unsigned int prompt_botlin, unsigned int col, const ch
             tmp.clear();
             tmp.format("^%c", CTRL_CHAR(*chars) ? UNCTRL(*chars) : '?');
         }
-#if 0 // Clink forces _rl_output_meta_chars to be on.
-        else if (META_CHAR(*chars) && !_rl_output_meta_chars)
-        {
-            // When output-meta is off, display 0x80-0xff as octal (\ooo).
-            for (tmp.clear(); chars < end; ++chars)
-                tmp.format("\\%o", *chars);
-        }
-#endif
 #ifdef DISPLAY_TABS
         else if (c == '\t')
         {
