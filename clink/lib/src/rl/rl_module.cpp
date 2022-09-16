@@ -52,6 +52,9 @@ extern "C" {
 extern int find_streqn (const char *a, const char *b, int n);
 extern void rl_replace_from_history(HIST_ENTRY *entry, int flags);
 extern int _rl_get_inserted_char(void);
+extern char* tgetstr(const char*, char**);
+extern int tputs(const char* str, int affcnt, int (*putc_func)(int));
+extern char* tgoto(const char* base, int x, int y);
 extern Keymap _rl_dispatching_keymap;
 #define HIDDEN_FILE(fn) ((fn)[0] == '.')
 #if defined (COLOR_SUPPORT)
@@ -750,13 +753,14 @@ static void terminal_write_thunk(FILE* stream, const char* chars, int char_count
 }
 
 //------------------------------------------------------------------------------
+static int s_puts_face = 0;
 static void terminal_log_write(FILE* stream, const char* chars, int char_count)
 {
     if (stream == out_stream)
     {
         assert(g_printer);
         LOGCURSORPOS();
-        LOG("RL_OUTSTREAM \"%.*s\", %d", char_count, chars, char_count);
+        LOG("%s \"%.*s\", %d", s_puts_face ? "PUTSFACE" : "RL_OUTSTREAM", char_count, chars, char_count);
         g_printer->print(chars, char_count);
         return;
     }
@@ -1010,13 +1014,9 @@ other:
     if (cur_face != '0')
         out.concat(c_normal);
 
-    if (g_debug_log_terminal.get())
-    {
-        LOGCURSORPOS();
-        LOG("PUTSFACE \"%.*s\", %d", out.length(), out.c_str(), out.length());
-    }
-
-    g_printer->print(out.c_str(), out.length());
+    ++s_puts_face;
+    rl_fwrite_function(_rl_out_stream, out.c_str(), out.length());
+    --s_puts_face;
 }
 
 
@@ -2994,11 +2994,16 @@ void rl_module::on_terminal_resize(int columns, int rows, const context& context
     // can start a new prompt and overwrite the old one.
 
 #ifdef NO_READLINE_RESIZE_TERMINAL
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+    GetConsoleScreenBufferInfo(h, &csbi);
     refresh_terminal_size();
     // The console size may have changed asynchronously, so reset columns to
     // ensure consistent measurements.
     columns = _rl_screenwidth;
 #endif
+
+    display_accumulator coalesce;
 
     int remaining = columns;
     int line_count = 1;
@@ -3013,14 +3018,32 @@ void rl_module::on_terminal_resize(int columns, int rows, const context& context
             case ecma48_code::type_chars:
                 for (str_iter i(code.get_pointer(), code.get_length()); i.more(); )
                 {
-                    int n = clink_wcwidth(i.next());
-                    remaining -= n;
-                    if (remaining > 0)
-                        continue;
-
-                    ++line_count;
-
-                    remaining = columns - ((remaining < 0) << 1);
+                    int n;
+                    const char* chars = code.get_pointer();
+                    const int c = i.next();
+                    if (CTRL_CHAR(*chars) || *chars == RUBOUT)
+                    {
+                        // Control characters.
+                        n = 2;
+                        remaining -= n;
+                        while (remaining <= 0)
+                        {
+                            remaining += columns;
+                            ++line_count;
+                        }
+                    }
+                    else
+                    {
+                        n = clink_wcwidth(c);
+                        remaining -= n;
+                        if (remaining <= 0)
+                        {
+                            if (remaining == 0)
+                                n = 0;
+                            remaining = columns - n;
+                            ++line_count;
+                        }
+                    }
                 }
                 break;
 
@@ -3067,9 +3090,7 @@ void rl_module::on_terminal_resize(int columns, int rows, const context& context
     int cursor_line = line_count - 1;
 
     // Move cursor to where the top line should be.
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-    GetConsoleScreenBufferInfo(h, &csbi);
+#if 0
 #ifndef NO_READLINE_RESIZE_TERMINAL
     int delta = _rl_last_v_pos - cursor_line;
     COORD new_pos = { 0, SHORT(clamp(csbi.dwCursorPosition.Y - delta, 0, csbi.dwSize.Y - 1)) };
@@ -3079,6 +3100,16 @@ void rl_module::on_terminal_resize(int columns, int rows, const context& context
     SetConsoleCursorPosition(h, new_pos);
     if (new_pos.Y < csbi.srWindow.Top)
         ScrollConsoleRelative(h, new_pos.Y, SCR_ABSOLUTE);
+#else
+    if (cursor_line > 0)
+    {
+        char *tmp = tgoto(tgetstr("UP", nullptr), 0, cursor_line);
+        tputs(tmp, 1, _rl_output_character_function);
+    }
+    _rl_cr();
+#endif
+    _rl_last_v_pos = 0;
+    _rl_last_c_pos = 0;
 
     // Clear to end of screen.
     reset_readline_display();

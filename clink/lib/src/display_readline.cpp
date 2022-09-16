@@ -687,6 +687,85 @@ display_line* display_lines::next_line(unsigned int start)
 
 
 //------------------------------------------------------------------------------
+int display_accumulator::s_nested = 0;
+static str_moveable s_buf;
+
+//------------------------------------------------------------------------------
+display_accumulator::display_accumulator()
+{
+    assert(!m_saved_fwrite);
+    assert(!m_saved_fflush);
+    assert(rl_fwrite_function);
+    assert(rl_fflush_function);
+    assert(s_nested || s_buf.empty());
+    m_saved_fwrite = rl_fwrite_function;
+    m_saved_fflush = rl_fflush_function;
+    m_active = true;
+    rl_fwrite_function = fwrite_proc;
+    rl_fflush_function = fflush_proc;
+    ++s_nested;
+}
+
+//------------------------------------------------------------------------------
+display_accumulator::~display_accumulator()
+{
+    if (m_active)
+    {
+        if (s_nested > 1)
+            restore();
+        else
+            flush();
+        assert(!m_active);
+    }
+    --s_nested;
+}
+
+//------------------------------------------------------------------------------
+void display_accumulator::flush()
+{
+    if (s_nested > 1)
+        return;
+
+    restore();
+
+    if (s_buf.length())
+    {
+        rl_fwrite_function(_rl_out_stream, s_buf.c_str(), s_buf.length());
+        rl_fflush_function(_rl_out_stream);
+        s_buf.clear();
+    }
+}
+
+//------------------------------------------------------------------------------
+void display_accumulator::restore()
+{
+    assert(m_active);
+    assert(m_saved_fwrite);
+    assert(m_saved_fflush);
+    rl_fwrite_function = m_saved_fwrite;
+    rl_fflush_function = m_saved_fflush;
+    m_saved_fwrite = nullptr;
+    m_saved_fflush = nullptr;
+    m_active = false;
+}
+
+//------------------------------------------------------------------------------
+void display_accumulator::fwrite_proc(FILE* out, const char* text, int len)
+{
+    assert(out == _rl_out_stream);
+    dbg_ignore_scope(snapshot, "display_readline");
+    s_buf.concat(text, len);
+}
+
+//------------------------------------------------------------------------------
+void display_accumulator::fflush_proc(FILE*)
+{
+    // No-op, since the destructor automatically flushes.
+}
+
+
+
+//------------------------------------------------------------------------------
 class display_manager
 {
 public:
@@ -813,6 +892,8 @@ void display_manager::display()
     // structures.
     _rl_block_sigint();
     RL_SETSTATE(RL_STATE_REDISPLAYING);
+
+    display_accumulator coalesce;
 
     if (!rl_display_prompt)
         rl_display_prompt = "";
@@ -1054,6 +1135,8 @@ void display_manager::display()
     // If the right side prompt is not shown and should be, display it.
     if (!_rl_rprompt_shown_len && can_show_rprompt)
         tputs_rprompt(rl_rprompt);
+
+    coalesce.flush();
 
     RL_UNSETSTATE(RL_STATE_REDISPLAYING);
     _rl_release_sigint();
