@@ -98,7 +98,7 @@ static void print_history_item(HANDLE hout, const char* utf8, wstr_base* utf16)
         for (const char* walk = utf8; *walk;)
         {
             const char* begin = walk;
-            while (*walk >= 0x20 || *walk == 0x09)
+            while (static_cast<unsigned char>(*walk) >= 0x20 || *walk == 0x09)
                 walk++;
             if (walk > begin)
             {
