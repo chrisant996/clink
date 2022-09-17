@@ -8,10 +8,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - `horizontal-scroll-mode` seems to be broken in Readline; does not seem to repro in bash.
 - [#340](https://github.com/chrisant996/clink/issues/340); custom display routine for Clink.
   - [ ] support for horizontal scrolling mode.
-  - [x] Quickly change width ==> display goes crazy -- maybe a side effect of scrolling versus predicting wrapped cursor position?
-    - [x] Validate wrapping calculations.
-    - [x] Buffer and coalesce all output in response to terminal resize.
-    - [x] The display is stable even when rapidly changing the terminal width -- _unless_ the input line ends with a space and the space wraps onto a new line by itself.  _UPDATE:  it's an OS bug; the wrapping code throws the trailing `{space}{cursor}` onto a separate line and then wraps the preceding text, which hits the right edge and wraps, which inserts an extra blank line._
 
 ## Normal Priority
 - Match filtering e.g. by `clink.onfiltermatches()` is skipped if the input matches only one completion.
