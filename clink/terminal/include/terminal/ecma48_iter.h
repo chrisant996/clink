@@ -158,6 +158,7 @@ class ecma48_iter
 public:
                         ecma48_iter(const char* s, ecma48_state& state, int len=-1);
     const ecma48_code&  next();
+    const char*         get_pointer() const { return m_iter.get_pointer(); }
 
 private:
     bool                next_c1();

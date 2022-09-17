@@ -103,7 +103,7 @@ static void move_to_column(unsigned int cpos)
 }
 
 //------------------------------------------------------------------------------
-static unsigned int measure_cols(const char* s, unsigned int len)
+static unsigned int raw_measure_cols(const char* s, unsigned int len)
 {
     unsigned int cols = 0;
 
@@ -588,7 +588,7 @@ no_backward_indicator:
             while (d.m_x + d.m_lastcol >= _rl_screenwidth)
             {
                 const int bytes = _rl_find_prev_mbchar(d.m_chars, d.m_len, MB_FIND_NONZERO);
-                d.m_lastcol -= measure_cols(d.m_chars + bytes, d.m_len - bytes);
+                d.m_lastcol -= raw_measure_cols(d.m_chars + bytes, d.m_len - bytes);
                 d.m_len = bytes;
             }
 
@@ -691,6 +691,121 @@ display_line* display_lines::next_line(unsigned int start)
     assert(!d->m_len);
     d->m_start = start;
     return d;
+}
+
+
+
+//------------------------------------------------------------------------------
+class measure_columns
+{
+public:
+    void            measure(const char* text, unsigned int len, bool is_prompt);
+    void            measure(const char* text, bool is_prompt);
+    void            reset_column() { m_col = 0; }
+    int             get_column() const { return m_col; }
+    int             get_line_count() const { return m_line_count; }
+    bool            get_forced_wrap() const { return m_forced_wrap; }
+private:
+    int             m_col = 0;
+    int             m_line_count = 1;
+    bool            m_forced_wrap = false;
+};
+
+//------------------------------------------------------------------------------
+void measure_columns::measure(const char* text, unsigned int length, bool is_prompt)
+{
+    ecma48_state state;
+    ecma48_iter iter(text, state, length);
+    const char* last_lf = nullptr;
+    while (const ecma48_code &code = iter.next())
+    {
+        switch (code.get_type())
+        {
+        case ecma48_code::type_chars:
+            for (str_iter i(code.get_pointer(), code.get_length()); i.more();)
+            {
+                const char *chars = code.get_pointer();
+                const int c = i.next();
+                assert(c != '\n');          // See ecma48_code::c0_lf below.
+                assert(!CTRL_CHAR(*chars)); // See ecma48_code::type_c0 below.
+                if (CTRL_CHAR(*chars) || *chars == RUBOUT)
+                {
+                    // Control characters.
+                    goto ctrl_char;
+                }
+                else
+                {
+                    int n = clink_wcwidth(c);
+                    m_col += n;
+                    if (m_col >= _rl_screenwidth)
+                    {
+                        m_col = (m_col > _rl_screenwidth) ? n : 0;
+                        ++m_line_count;
+                    }
+                }
+            }
+            break;
+
+        case ecma48_code::type_c0:
+            if (!is_prompt)
+            {
+#if defined(DISPLAY_TABS)
+                if (code.get_code() != ecma48_code::c0_ht)
+#endif
+                {
+ctrl_char:
+                    m_col += 2;
+                    while (m_col >= _rl_screenwidth)
+                    {
+                        m_col -= _rl_screenwidth;
+                        ++m_line_count;
+                    }
+                    break;
+                }
+            }
+            switch (code.get_code())
+            {
+            case ecma48_code::c0_lf:
+                last_lf = iter.get_pointer();
+                ++m_line_count;
+                // fall through
+            case ecma48_code::c0_cr:
+                m_col = 0;
+                break;
+
+            case ecma48_code::c0_ht:
+#if !defined(DISPLAY_TABS)
+                if (!is_prompt)
+                {
+                    // BUGBUG:  This case should instead count the spaces that
+                    // were actually previously printed.
+                    goto ctrl_char;
+                }
+#endif
+                if (int n = 8 - (m_col & 7))
+                {
+                    m_col = min(m_col + n, _rl_screenwidth);
+// TODO-DISPLAY:  Does TAB drop to the next line when it hits the edge of the screen?
+                }
+                break;
+
+            case ecma48_code::c0_bs:
+                // Doesn't consider full-width.
+                if (m_col > 0)
+                    --m_col;
+                break;
+            }
+            break;
+        }
+    }
+
+    m_forced_wrap = (m_col == 0 && m_line_count > 1 && last_lf != iter.get_pointer());
+}
+
+//------------------------------------------------------------------------------
+void measure_columns::measure(const char* text, bool is_prompt)
+{
+    return measure(text, -1, is_prompt);
 }
 
 
@@ -877,7 +992,7 @@ void display_manager::end_prompt_lf()
             // Reprint end of the previous row if at least 2 rows are visible.
             const int index = _rl_find_prev_mbchar(d->m_chars, d->m_len, MB_FIND_NONZERO);
             const unsigned int len = d->m_len - index;
-            const unsigned int wc = measure_cols(d->m_chars + index, len);
+            const unsigned int wc = raw_measure_cols(d->m_chars + index, len);
             move_to_column(_rl_screenwidth - wc);
             _rl_clear_to_eol(0);
             rl_puts_face_func(d->m_chars + index, d->m_faces + index, len);
@@ -998,37 +1113,13 @@ void display_manager::display()
     bool force_wrap = false;
     if (forced_display)
     {
-        ecma48_state state;
-        ecma48_iter iter(prompt, state);
-        unsigned int col = 0;
-        unsigned int row = 0;
+        measure_columns mc;
         if (modmark)
-            ++col;
-        while (const ecma48_code &code = iter.next())
-        {
-            if (code.get_type() != ecma48_code::type_chars)
-                continue;
-
-            str_iter inner_iter(code.get_pointer(), code.get_length());
-            while (int c = inner_iter.next())
-            {
-                const int w = clink_wcwidth(c);
-                col += w;
-                if (col > _rl_screenwidth)
-                {
-                    col = w;
-                    row++;
-                }
-            }
-        }
-        if (col == _rl_screenwidth)
-        {
-            force_wrap = true;
-            col = 0;
-            row++;
-        }
-        m_last_prompt_line_width = col;
-        m_last_prompt_line_botlin = row;
+            mc.measure("*", true);
+        mc.measure(prompt, true);
+        force_wrap = mc.get_forced_wrap();
+        m_last_prompt_line_width = mc.get_column();
+        m_last_prompt_line_botlin = mc.get_line_count() - 1;
     }
 
     // Optimization:  can skip updating the display if someone said it's already
@@ -1257,11 +1348,11 @@ test_left:
         rind = lind + dlen;
 
         // Measure columns, to find whether to delete characters or open spaces.
-        unsigned int dcols = measure_cols(dc, dlen);
+        unsigned int dcols = raw_measure_cols(dc, dlen);
         rcol = lcol + dcols;
         if (oc2 < o->m_chars + o->m_len)
         {
-            unsigned int ocols = measure_cols(oc, olen);
+            unsigned int ocols = raw_measure_cols(oc, olen);
             delta = dcols - ocols;
         }
 
@@ -1464,108 +1555,17 @@ void resize_readline_display(const char* prompt, const line_buffer& buffer, cons
     refresh_terminal_size();
 #endif
 
-    int remaining = _rl_screenwidth;
-    int line_count = 1;
-
-    auto measure = [&] (const char* input, int length, bool is_prompt) {
-        ecma48_state state;
-        ecma48_iter iter(input, state, length);
-        while (const ecma48_code& code = iter.next())
-        {
-            switch (code.get_type())
-            {
-            case ecma48_code::type_chars:
-                for (str_iter i(code.get_pointer(), code.get_length()); i.more(); )
-                {
-                    const char* chars = code.get_pointer();
-                    const int c = i.next();
-                    assert(c != '\n');          // See ecma48_code::c0_lf below.
-                    assert(!CTRL_CHAR(*chars)); // See ecma48_code::type_c0 below.
-                    if (CTRL_CHAR(*chars) || *chars == RUBOUT)
-                    {
-                        // Control characters.
-                        goto ctrl_char;
-                    }
-                    else
-                    {
-                        int n = clink_wcwidth(c);
-                        remaining -= n;
-                        if (remaining <= 0)
-                        {
-                            if (remaining == 0)
-                                n = 0;
-                            remaining = _rl_screenwidth - n;
-                            ++line_count;
-                        }
-                    }
-                }
-                break;
-
-            case ecma48_code::type_c0:
-                if (!is_prompt)
-                {
-#if defined(DISPLAY_TABS)
-                    if (code.get_code() != ecma48_code::c0_ht)
-#endif
-                    {
-ctrl_char:
-                        remaining -= 2;
-                        while (remaining <= 0)
-                        {
-                            remaining += _rl_screenwidth;
-                            ++line_count;
-                        }
-                        break;
-                    }
-                }
-                switch (code.get_code())
-                {
-                case ecma48_code::c0_lf:
-                    remaining = _rl_screenwidth;
-                    ++line_count;
-                    break;
-
-                case ecma48_code::c0_cr:
-                    remaining = _rl_screenwidth;
-                    break;
-
-                case ecma48_code::c0_ht:
-#if !defined(DISPLAY_TABS)
-                    if (!is_prompt)
-                    {
-                        // BUGBUG:  This case should instead count the spaces
-                        // that were actually previously printed.
-                        goto ctrl_char;
-                    }
-#endif
-                    if (int n = 8 - ((_rl_screenwidth - remaining) & 7))
-                    {
-                        remaining = max(remaining - n, 0);
-                        // REVIEW:  Does this drop to the next line when it hits
-                        // the edge of the screen?
-                    }
-                    break;
-
-                case ecma48_code::c0_bs:
-                    // Doesn't consider full-width.
-                    remaining = min(remaining + 1, _rl_screenwidth);
-                    break;
-                }
-                break;
-            }
-        }
-    };
-
     // Measure the lines for the prompt segment.
+    measure_columns mc;
 #if defined(NO_READLINE_RESIZE_TERMINAL)
-    measure(prompt, -1, true);
+    mc.measure(prompt, true);
 #else
     const char* last_prompt_line = strrchr(prompt, '\n');
     if (last_prompt_line)
         ++last_prompt_line;
     else
         last_prompt_line = prompt;
-    measure(last_prompt_line, -1);
+    mc.measure(last_prompt_line, true);
 #endif
 
     // Measure the new number of lines to the cursor position.
@@ -1581,18 +1581,18 @@ ctrl_char:
         if (buffer.get_cursor() >= start)
         {
             if (start > 0)
-                remaining = _rl_screenwidth;
-            measure(buffer_ptr + start, buffer.get_cursor() - start, false);
+                mc.reset_column();
+            mc.measure(buffer_ptr + start, buffer.get_cursor() - start, false);
         }
         measured_buffer = true;
     }
 #endif
     if (!measured_buffer)
     {
-        measure(buffer_ptr, buffer.get_cursor(), false);
+        mc.measure(buffer_ptr, buffer.get_cursor(), false);
         measured_buffer = true;
     }
-    int cursor_line = line_count - 1;
+    int cursor_line = mc.get_line_count() - 1;
 
     // WORKAROUND FOR OS ISSUE:  If the buffer ends with one trailing space and
     // the cursor is at the end of the, then the OS can wrap the line strangely
