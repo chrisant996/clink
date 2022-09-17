@@ -63,9 +63,6 @@ extern int _rl_rprompt_shown_len;
 
 #ifdef INCLUDE_CLINK_DISPLAY_READLINE
 
-#ifndef DISPLAY_TABS
-#error DISPLAY_TABS is required.
-#endif
 #ifndef HANDLE_MULTIBYTE
 #error HANDLE_MULTIBYTE is required.
 #endif
@@ -377,12 +374,23 @@ void display_lines::parse(unsigned int prompt_botlin, unsigned int col, const ch
 
         end = iter.get_pointer();
 
-        if (CTRL_CHAR(*chars) || *chars == RUBOUT)
+        if (c == '\n' && !_rl_horizontal_scroll_mode && _rl_term_up && *_rl_term_up)
         {
-            // Display control characters as ^X.
-            assert(end == chars + 1);
-            tmp.clear();
-            tmp.format("^%c", CTRL_CHAR(*chars) ? UNCTRL(*chars) : '?');
+            d->m_lastcol = col;
+            d->m_end = static_cast<unsigned int>(index);
+            d->appendnul();
+            d->m_newline = true;
+
+            if (index == rl_point)
+            {
+                m_vpos = m_count - 1;
+                m_cpos = col;
+            }
+
+            ++index;
+            d = next_line(index);
+            col = 0;
+            continue;
         }
 #ifdef DISPLAY_TABS
         else if (c == '\t')
@@ -393,17 +401,12 @@ void display_lines::parse(unsigned int prompt_botlin, unsigned int col, const ch
                 tmp.concat(" ", 1);
         }
 #endif
-        else if (c == '\n' && !_rl_horizontal_scroll_mode && _rl_term_up && *_rl_term_up)
+        else if (CTRL_CHAR(*chars) || *chars == RUBOUT)
         {
-            d->m_lastcol = col;
-            d->m_end = static_cast<unsigned int>(index);
-            d->appendnul();
-            d->m_newline = true;
-
-            ++index;
-            d = next_line(index);
-            col = 0;
-            continue;
+            // Display control characters as ^X.
+            assert(end == chars + 1);
+            tmp.clear();
+            tmp.format("^%c", CTRL_CHAR(*chars) ? UNCTRL(*chars) : '?');
         }
         else
         {
@@ -444,13 +447,14 @@ void display_lines::parse(unsigned int prompt_botlin, unsigned int col, const ch
         bool wrapped = false;
         const char* add = tmp.c_str();
         const char face = rl_get_face_func(static_cast<unsigned int>(chars - buffer), hl_begin, hl_end);
-        index = static_cast<unsigned int>(end - buffer);
 
         if (index == rl_point)
         {
             m_vpos = m_count - 1;
             m_cpos = col;
         }
+
+        index = static_cast<unsigned int>(end - buffer);
 
         for (unsigned int x = tmp.length(); x--; ++add)
         {
@@ -1463,7 +1467,7 @@ void resize_readline_display(const char* prompt, const line_buffer& buffer, cons
     int remaining = _rl_screenwidth;
     int line_count = 1;
 
-    auto measure = [&] (const char* input, int length) {
+    auto measure = [&] (const char* input, int length, bool is_prompt) {
         ecma48_state state;
         ecma48_iter iter(input, state, length);
         while (const ecma48_code& code = iter.next())
@@ -1473,23 +1477,18 @@ void resize_readline_display(const char* prompt, const line_buffer& buffer, cons
             case ecma48_code::type_chars:
                 for (str_iter i(code.get_pointer(), code.get_length()); i.more(); )
                 {
-                    int n;
                     const char* chars = code.get_pointer();
                     const int c = i.next();
+                    assert(c != '\n');          // See ecma48_code::c0_lf below.
+                    assert(!CTRL_CHAR(*chars)); // See ecma48_code::type_c0 below.
                     if (CTRL_CHAR(*chars) || *chars == RUBOUT)
                     {
                         // Control characters.
-                        n = 2;
-                        remaining -= n;
-                        while (remaining <= 0)
-                        {
-                            remaining += _rl_screenwidth;
-                            ++line_count;
-                        }
+                        goto ctrl_char;
                     }
                     else
                     {
-                        n = clink_wcwidth(c);
+                        int n = clink_wcwidth(c);
                         remaining -= n;
                         if (remaining <= 0)
                         {
@@ -1503,19 +1502,48 @@ void resize_readline_display(const char* prompt, const line_buffer& buffer, cons
                 break;
 
             case ecma48_code::type_c0:
+                if (!is_prompt)
+                {
+#if defined(DISPLAY_TABS)
+                    if (code.get_code() != ecma48_code::c0_ht)
+#endif
+                    {
+ctrl_char:
+                        remaining -= 2;
+                        while (remaining <= 0)
+                        {
+                            remaining += _rl_screenwidth;
+                            ++line_count;
+                        }
+                        break;
+                    }
+                }
                 switch (code.get_code())
                 {
                 case ecma48_code::c0_lf:
+                    remaining = _rl_screenwidth;
                     ++line_count;
-                    /* fallthrough */
+                    break;
 
                 case ecma48_code::c0_cr:
                     remaining = _rl_screenwidth;
                     break;
 
                 case ecma48_code::c0_ht:
+#if !defined(DISPLAY_TABS)
+                    if (!is_prompt)
+                    {
+                        // BUGBUG:  This case should instead count the spaces
+                        // that were actually previously printed.
+                        goto ctrl_char;
+                    }
+#endif
                     if (int n = 8 - ((_rl_screenwidth - remaining) & 7))
+                    {
                         remaining = max(remaining - n, 0);
+                        // REVIEW:  Does this drop to the next line when it hits
+                        // the edge of the screen?
+                    }
                     break;
 
                 case ecma48_code::c0_bs:
@@ -1530,7 +1558,7 @@ void resize_readline_display(const char* prompt, const line_buffer& buffer, cons
 
     // Measure the lines for the prompt segment.
 #if defined(NO_READLINE_RESIZE_TERMINAL)
-    measure(prompt, -1);
+    measure(prompt, -1, true);
 #else
     const char* last_prompt_line = strrchr(prompt, '\n');
     if (last_prompt_line)
@@ -1554,14 +1582,14 @@ void resize_readline_display(const char* prompt, const line_buffer& buffer, cons
         {
             if (start > 0)
                 remaining = _rl_screenwidth;
-            measure(buffer_ptr + start, buffer.get_cursor() - start);
+            measure(buffer_ptr + start, buffer.get_cursor() - start, false);
         }
         measured_buffer = true;
     }
 #endif
     if (!measured_buffer)
     {
-        measure(buffer_ptr, buffer.get_cursor());
+        measure(buffer_ptr, buffer.get_cursor(), false);
         measured_buffer = true;
     }
     int cursor_line = line_count - 1;

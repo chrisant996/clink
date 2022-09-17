@@ -46,7 +46,7 @@
 #define SYS_INPUTRC "/etc/inputrc"
 
 /* If defined, expand tabs to spaces. */
-#define DISPLAY_TABS
+//#define DISPLAY_TABS  // CMD.EXE can't accept tabs as inupt, so don't make them look nice.
 
 /* If defined, use the terminal escape sequence to move the cursor forward
    over a character when updating the line rather than rewriting it. */
