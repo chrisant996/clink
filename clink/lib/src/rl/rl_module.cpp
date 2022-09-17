@@ -319,7 +319,7 @@ static setting_bool g_rl_hide_stderr(
     "Suppress stderr from the Readline library",
     false);
 
-static setting_bool g_debug_log_terminal(
+setting_bool g_debug_log_terminal(
     "debug.log_terminal",
     "Log Readline terminal input and output",
     "WARNING:  Only turn this on for diagnostic purposes, and only temporarily!\n"
@@ -2718,7 +2718,7 @@ bool translate_xy_to_readline(unsigned int x, unsigned int y, int& pos, bool cli
         v_pos = _rl_vis_botlin;
     }
 
-    v_pos += get_readline_display_top();
+    v_pos += get_readline_display_top_offset();
 
     const int prefix = rl_get_prompt_prefix_visible();
     int point = 0;
@@ -2981,176 +2981,12 @@ void rl_module::done(const char* line)
 }
 
 //------------------------------------------------------------------------------
-void rl_module::on_terminal_resize(int columns, int rows, const context& context)
+void rl_module::on_terminal_resize(int, int, const context& context)
 {
-    // Windows internally captures various details about output it received in
-    // order to improve its line wrapping behavior.  Those supplemental details
-    // are not available outside conhost itself, so there's no good way for
-    // Clink to predict the actual exact wrapping that will occur.
-    //
-    // So instead Clink uses a simple heuristic that works well most of the
-    // time:  Clink tries to put the cursor on the same row as the original top
-    // line of the input area, so that Readline's rl_resize_terminal() function
-    // can start a new prompt and overwrite the old one.
-
-#ifdef NO_READLINE_RESIZE_TERMINAL
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-    GetConsoleScreenBufferInfo(h, &csbi);
-    refresh_terminal_size();
-    // The console size may have changed asynchronously, so reset columns to
-    // ensure consistent measurements.
-    columns = _rl_screenwidth;
-#endif
-
-    display_accumulator coalesce;
-
-    int remaining = columns;
-    int line_count = 1;
-
-    auto measure = [&] (const char* input, int length) {
-        ecma48_state state;
-        ecma48_iter iter(input, state, length);
-        while (const ecma48_code& code = iter.next())
-        {
-            switch (code.get_type())
-            {
-            case ecma48_code::type_chars:
-                for (str_iter i(code.get_pointer(), code.get_length()); i.more(); )
-                {
-                    int n;
-                    const char* chars = code.get_pointer();
-                    const int c = i.next();
-                    if (CTRL_CHAR(*chars) || *chars == RUBOUT)
-                    {
-                        // Control characters.
-                        n = 2;
-                        remaining -= n;
-                        while (remaining <= 0)
-                        {
-                            remaining += columns;
-                            ++line_count;
-                        }
-                    }
-                    else
-                    {
-                        n = clink_wcwidth(c);
-                        remaining -= n;
-                        if (remaining <= 0)
-                        {
-                            if (remaining == 0)
-                                n = 0;
-                            remaining = columns - n;
-                            ++line_count;
-                        }
-                    }
-                }
-                break;
-
-            case ecma48_code::type_c0:
-                switch (code.get_code())
-                {
-                case ecma48_code::c0_lf:
-                    ++line_count;
-                    /* fallthrough */
-
-                case ecma48_code::c0_cr:
-                    remaining = columns;
-                    break;
-
-                case ecma48_code::c0_ht:
-                    if (int n = 8 - ((columns - remaining) & 7))
-                        remaining = max(remaining - n, 0);
-                    break;
-
-                case ecma48_code::c0_bs:
-                    remaining = min(remaining + 1, columns); // doesn't consider full-width
-                    break;
-                }
-                break;
-            }
-        }
-    };
-
-    // Measure the new number of lines to the cursor position.
-#ifndef NO_READLINE_RESIZE_TERMINAL
-    const char* last_prompt_line = strrchr(context.prompt, '\n');
-    if (last_prompt_line)
-        ++last_prompt_line;
-    else
-        last_prompt_line = context.prompt;
-    measure(last_prompt_line, -1);
-#else
-    measure(context.prompt, -1);
-#endif
-    const line_buffer& buffer = context.buffer;
-    const char* buffer_ptr = buffer.get_buffer();
-// TODO-DISPLAY: this doesn't understand about scrolling constraints.
-    measure(buffer_ptr, buffer.get_cursor());
-    int cursor_line = line_count - 1;
-
-    // Move cursor to where the top line should be.
-#if 0
-#ifndef NO_READLINE_RESIZE_TERMINAL
-    int delta = _rl_last_v_pos - cursor_line;
-    COORD new_pos = { 0, SHORT(clamp(csbi.dwCursorPosition.Y - delta, 0, csbi.dwSize.Y - 1)) };
-#else
-    COORD new_pos = { 0, SHORT(clamp(csbi.dwCursorPosition.Y - cursor_line, 0, csbi.dwSize.Y - 1)) };
-#endif
-    SetConsoleCursorPosition(h, new_pos);
-    if (new_pos.Y < csbi.srWindow.Top)
-        ScrollConsoleRelative(h, new_pos.Y, SCR_ABSOLUTE);
-#else
-    if (cursor_line > 0)
-    {
-        char *tmp = tgoto(tgetstr("UP", nullptr), 0, cursor_line);
-        tputs(tmp, 1, _rl_output_character_function);
-    }
-    _rl_cr();
-#endif
-    _rl_last_v_pos = 0;
-    _rl_last_c_pos = 0;
-
-    // Clear to end of screen.
-    reset_readline_display();
-
-#ifndef NO_READLINE_RESIZE_TERMINAL
-    // Let Readline update its display.
-    rl_resize_terminal();
-
-    if (g_debug_log_terminal.get())
-        LOG("terminal size %u x %u", _rl_screenwidth, _rl_screenheight);
-#else
-    // Readline (even in bash on Ubuntu in WSL in Windows Terminal) doesn't do
-    // very well at responding to terminal resize events.  Apparently Clink must
-    // take care of it manually.  Calling rl_set_prompt() recalculates the
-    // prompt line breaks.
-    rl_set_prompt(m_rl_prompt.c_str());
-    rl_set_rprompt(m_rl_rprompt.length() ? m_rl_rprompt.c_str() : nullptr);
-    g_prompt_redisplay++;
-    rl_forced_update_display();
-#endif
+    resize_readline_display(context.prompt, context.buffer, m_rl_prompt.c_str(), m_rl_rprompt.c_str());
 }
 
 //------------------------------------------------------------------------------
 void rl_module::on_signal(int sig)
 {
-}
-
-//------------------------------------------------------------------------------
-void rl_module::refresh_terminal_size()
-{
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-    GetConsoleScreenBufferInfo(h, &csbi);
-
-    const int width = csbi.dwSize.X;
-    const int height = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
-
-    if (_rl_screenheight != height || _rl_screenwidth != width)
-    {
-        rl_set_screen_size(height, width);
-        if (g_debug_log_terminal.get())
-            LOG("terminal size %u x %u", _rl_screenwidth, _rl_screenheight);
-    }
 }

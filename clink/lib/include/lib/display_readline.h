@@ -1,8 +1,12 @@
 #pragma once
 
+class line_buffer;
+
 extern void reset_readline_display();
+extern void refresh_terminal_size();
 extern void display_readline();
-extern unsigned int get_readline_display_top();
+extern void resize_readline_display(const char* prompt, const line_buffer& buffer, const char* _prompt, const char* _rprompt);
+extern unsigned int get_readline_display_top_offset();
 
 //------------------------------------------------------------------------------
 class display_accumulator

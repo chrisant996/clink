@@ -9,9 +9,11 @@
 #include <assert.h>
 
 #include "display_readline.h"
+#include "line_buffer.h"
 
 #include <core/base.h>
 #include <core/os.h>
+#include <core/log.h>
 #include <core/settings.h>
 #include <core/debugheap.h>
 #include <terminal/ecma48_iter.h>
@@ -59,15 +61,6 @@ extern int _rl_rprompt_shown_len;
 
 } // extern "C"
 
-//------------------------------------------------------------------------------
-static void clear_to_end_of_screen()
-{
-    static const char* const termcap_cd = tgetstr("cd", nullptr);
-    rl_fwrite_function(_rl_out_stream, termcap_cd, strlen(termcap_cd));
-}
-
-
-
 #ifdef INCLUDE_CLINK_DISPLAY_READLINE
 
 #ifndef DISPLAY_TABS
@@ -78,12 +71,24 @@ static void clear_to_end_of_screen()
 #endif
 
 //------------------------------------------------------------------------------
+extern int g_prompt_redisplay;
+
+//------------------------------------------------------------------------------
 static setting_int g_input_rows(
     "clink.max_input_rows",
     "Maximum rows for the input line",
     "This limits how many rows the input line can use, up to the terminal height.\n"
     "When this is 0, the terminal height is the limit.",
     0);
+
+extern setting_bool g_debug_log_terminal;
+
+//------------------------------------------------------------------------------
+static void clear_to_end_of_screen()
+{
+    static const char* const termcap_cd = tgetstr("cd", nullptr);
+    rl_fwrite_function(_rl_out_stream, termcap_cd, strlen(termcap_cd));
+}
 
 //------------------------------------------------------------------------------
 static void move_to_column(unsigned int cpos)
@@ -771,10 +776,11 @@ class display_manager
 public:
                         display_manager();
     void                clear();
+    unsigned int        top_offset() const;
+    unsigned int        top_buffer_start() const;
     void                on_new_line();
     void                end_prompt_lf();
     void                display();
-    unsigned int        top() const { return m_top; }
 
 private:
     bool                update_line(int i, const display_line* o, const display_line* d, bool wrapped);
@@ -806,6 +812,23 @@ void display_manager::clear()
     m_last_prompt_line_width = -1;
     m_last_prompt_line_botlin = -1;
     m_last_modmark = false;
+}
+
+//------------------------------------------------------------------------------
+unsigned int display_manager::top_offset() const
+{
+    if (m_last_prompt_line_botlin < 0)
+        return 0;
+    assert(m_top >= m_last_prompt_line_botlin);
+    return m_top - m_last_prompt_line_botlin;
+}
+
+//------------------------------------------------------------------------------
+unsigned int display_manager::top_buffer_start() const
+{
+    const display_line* d = m_curr.get(m_top);
+    assert(d);
+    return d ? d->m_start : 0;
 }
 
 //------------------------------------------------------------------------------
@@ -1370,6 +1393,24 @@ void reset_readline_display()
 }
 
 //------------------------------------------------------------------------------
+void refresh_terminal_size()
+{
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+    GetConsoleScreenBufferInfo(h, &csbi);
+
+    const int width = csbi.dwSize.X;
+    const int height = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
+
+    if (_rl_screenheight != height || _rl_screenwidth != width)
+    {
+        rl_set_screen_size(height, width);
+        if (g_debug_log_terminal.get())
+            LOG("terminal size %u x %u", _rl_screenwidth, _rl_screenheight);
+    }
+}
+
+//------------------------------------------------------------------------------
 void display_readline()
 {
 #if defined (OMIT_DEFAULT_DISPLAY_READLINE) && !defined (INCLUDE_CLINK_DISPLAY_READLINE)
@@ -1393,11 +1434,193 @@ void display_readline()
 }
 
 //------------------------------------------------------------------------------
-unsigned int get_readline_display_top()
+void resize_readline_display(const char* prompt, const line_buffer& buffer, const char* _prompt, const char* _rprompt)
+{
+    // Clink tries to put the cursor on the original top row, compensating for
+    // terminal wrapping behavior, and redisplay the prompt and input buffer.
+    //
+    // DISCLAIMER:  Windows captures various details about output it received in
+    // order to improve its line wrapping behavior.  Those supplemental details
+    // are not available outside conhost itself, and its wrapping algorithm is
+    // complex and inconsistent, so there's no reliable way for Clink to predict
+    // the actual exact wrapping that will occur.
+
+    // Coalesce all Readline output in this scope into a single WriteConsoleW
+    // call.  This avoids the vast majority of race conditions that can occur
+    // between the OS async terminal resize and cursor movement while refreshing
+    // the Readline display.  The result is near-perfect resize behavior; but
+    // perfection is beyond reach, due to the inherent async execution.
+    display_accumulator coalesce;
+
+#if defined(NO_READLINE_RESIZE_TERMINAL)
+    // Update Readline's perception of the terminal dimensions.
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+    GetConsoleScreenBufferInfo(h, &csbi);
+    refresh_terminal_size();
+#endif
+
+    int remaining = _rl_screenwidth;
+    int line_count = 1;
+
+    auto measure = [&] (const char* input, int length) {
+        ecma48_state state;
+        ecma48_iter iter(input, state, length);
+        while (const ecma48_code& code = iter.next())
+        {
+            switch (code.get_type())
+            {
+            case ecma48_code::type_chars:
+                for (str_iter i(code.get_pointer(), code.get_length()); i.more(); )
+                {
+                    int n;
+                    const char* chars = code.get_pointer();
+                    const int c = i.next();
+                    if (CTRL_CHAR(*chars) || *chars == RUBOUT)
+                    {
+                        // Control characters.
+                        n = 2;
+                        remaining -= n;
+                        while (remaining <= 0)
+                        {
+                            remaining += _rl_screenwidth;
+                            ++line_count;
+                        }
+                    }
+                    else
+                    {
+                        n = clink_wcwidth(c);
+                        remaining -= n;
+                        if (remaining <= 0)
+                        {
+                            if (remaining == 0)
+                                n = 0;
+                            remaining = _rl_screenwidth - n;
+                            ++line_count;
+                        }
+                    }
+                }
+                break;
+
+            case ecma48_code::type_c0:
+                switch (code.get_code())
+                {
+                case ecma48_code::c0_lf:
+                    ++line_count;
+                    /* fallthrough */
+
+                case ecma48_code::c0_cr:
+                    remaining = _rl_screenwidth;
+                    break;
+
+                case ecma48_code::c0_ht:
+                    if (int n = 8 - ((_rl_screenwidth - remaining) & 7))
+                        remaining = max(remaining - n, 0);
+                    break;
+
+                case ecma48_code::c0_bs:
+                    // Doesn't consider full-width.
+                    remaining = min(remaining + 1, _rl_screenwidth);
+                    break;
+                }
+                break;
+            }
+        }
+    };
+
+    // Measure the lines for the prompt segment.
+#if defined(NO_READLINE_RESIZE_TERMINAL)
+    measure(prompt, -1);
+#else
+    const char* last_prompt_line = strrchr(prompt, '\n');
+    if (last_prompt_line)
+        ++last_prompt_line;
+    else
+        last_prompt_line = prompt;
+    measure(last_prompt_line, -1);
+#endif
+
+    // Measure the new number of lines to the cursor position.
+    // BUGBUG:  This doesn't understand about horizontal scroll mode.
+    bool measured_buffer = false;
+    const char* buffer_ptr = buffer.get_buffer();
+#if defined (INCLUDE_CLINK_DISPLAY_READLINE)
+    if (use_display_manager())
+    {
+        // FUTURE:  This uses the current buffer content, but technically it
+        // should measure the previously displayed content.
+        const unsigned int start = s_display_manager.top_buffer_start();
+        if (buffer.get_cursor() >= start)
+        {
+            if (start > 0)
+                remaining = _rl_screenwidth;
+            measure(buffer_ptr + start, buffer.get_cursor() - start);
+        }
+        measured_buffer = true;
+    }
+#endif
+    if (!measured_buffer)
+    {
+        measure(buffer_ptr, buffer.get_cursor());
+        measured_buffer = true;
+    }
+    int cursor_line = line_count - 1;
+
+    // WORKAROUND FOR OS ISSUE:  If the buffer ends with one trailing space and
+    // the cursor is at the end of the, then the OS can wrap the line strangely
+    // and end up inserting an extra blank line between the cursor and the
+    // preceding text.  Test for a blank line above the cursor, and increment
+    // cursor_line to compensate.
+    if (cursor_line > 0 && csbi.dwCursorPosition.X == 1)
+    {
+        const unsigned int cur = buffer.get_cursor();
+        const unsigned int len = buffer.get_length();
+        if (len > 0 &&
+            cur == len &&
+            buffer_ptr[len - 1] == ' ' &&
+            (len == 1 || buffer_ptr[len - 2] != ' '))
+        {
+            ++cursor_line;
+        }
+    }
+
+    // Move cursor to where the top line should be.
+    if (cursor_line > 0)
+    {
+        char *tmp = tgoto(tgetstr("UP", nullptr), 0, cursor_line);
+        tputs(tmp, 1, _rl_output_character_function);
+    }
+    _rl_cr();
+    _rl_last_v_pos = 0;
+    _rl_last_c_pos = 0;
+
+    // Clear to end of screen.
+    reset_readline_display();
+
+#if defined(NO_READLINE_RESIZE_TERMINAL)
+    // Readline (even in bash on Ubuntu in WSL in Windows Terminal) doesn't do
+    // very well at responding to terminal resize events.  Apparently Clink must
+    // take care of it manually.  Calling rl_set_prompt() recalculates the
+    // prompt line breaks.
+    rl_set_prompt(_prompt);
+    rl_set_rprompt(_rprompt && *_rprompt ? _rprompt : nullptr);
+    g_prompt_redisplay++;
+    rl_forced_update_display();
+#else
+    // Let Readline update its display.
+    rl_resize_terminal();
+
+    if (g_debug_log_terminal.get())
+        LOG("terminal size %u x %u", _rl_screenwidth, _rl_screenheight);
+#endif
+}
+
+//------------------------------------------------------------------------------
+unsigned int get_readline_display_top_offset()
 {
 #if defined (INCLUDE_CLINK_DISPLAY_READLINE)
     if (use_display_manager())
-        return s_display_manager.top();
+        return s_display_manager.top_offset();
 #endif
     return 0;
 }
