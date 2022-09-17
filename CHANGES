@@ -5,6 +5,8 @@
 #### v1.3.43
 
 - Fixed the input line color when the command word is an alias _and_ a directory _and_ has an argmatcher (regression introduced in v1.3.40).
+- Fixed [#344](https://github.com/chrisant996/clink/issues/344); `history` prints UTF8 text incorrectly.
+- Fixed [#342](https://github.com/chrisant996/clink/issues/342); typing `foo.abc` doesn't recognize `foo.abc.cmd`.
 - Fixed [#339](https://github.com/chrisant996/clink/issues/339); `%CD%` doesn't expand.
 
 #### v1.3.42
