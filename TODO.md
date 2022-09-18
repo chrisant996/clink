@@ -5,9 +5,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- `horizontal-scroll-mode` seems to be broken in Readline; does not seem to repro in bash.
-- [#340](https://github.com/chrisant996/clink/issues/340); custom display routine for Clink.
-  - [ ] support for horizontal scrolling mode.
 
 ## Normal Priority
 - Match filtering e.g. by `clink.onfiltermatches()` is skipped if the input matches only one completion.
