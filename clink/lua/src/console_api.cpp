@@ -695,28 +695,14 @@ static int set_width(lua_State* state)
     if (!GetConsoleScreenBufferInfoEx(h, &csbix))
         return 0;
 
-again:
     csbix.dwSize.X = width;
     csbix.srWindow.Right = width;
-    if (s_fudge_needed)
-        csbix.srWindow.Bottom++;
     if (!SetConsoleScreenBufferInfoEx(h, &csbix))
         return 0;
 
-    if (!s_fudge_verified)
-    {
-        CONSOLE_SCREEN_BUFFER_INFOEX verify = { sizeof(verify) };
-        if (GetConsoleScreenBufferInfoEx(h, &verify))
-        {
-            if (verify.srWindow.Bottom + 1 == csbix.srWindow.Bottom)
-            {
-                s_fudge_verified = true;
-                s_fudge_needed = true;
-                goto again;
-            }
-        }
-        s_fudge_verified = true;
-    }
+// BUGBUG:  SetConsoleScreenBufferInfoEx isn't working correctly; sometimes it
+// shrinks the height by 1, but sometimes adding 1 overcompensates and increases
+// the height.
 
     lua_pushboolean(state, true);
     return 1;
