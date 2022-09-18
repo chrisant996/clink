@@ -909,16 +909,19 @@ bool display_lines::adjust_columns(unsigned int& index, int delta, const char* b
 class measure_columns
 {
 public:
+    enum measure_mode { print, resize };
+                    measure_columns(measure_mode mode) : m_mode(mode) {}
     void            measure(const char* text, unsigned int len, bool is_prompt);
     void            measure(const char* text, bool is_prompt);
     void            reset_column() { m_col = 0; }
     int             get_column() const { return m_col; }
     int             get_line_count() const { return m_line_count; }
-    bool            get_forced_wrap() const { return m_forced_wrap; }
+    bool            get_force_wrap() const { return m_force_wrap; }
 private:
+    const measure_mode m_mode;
     int             m_col = 0;
     int             m_line_count = 1;
-    bool            m_forced_wrap = false;
+    bool            m_force_wrap = false;
 };
 
 //------------------------------------------------------------------------------
@@ -927,8 +930,10 @@ void measure_columns::measure(const char* text, unsigned int length, bool is_pro
     ecma48_state state;
     ecma48_iter iter(text, state, length);
     const char* last_lf = nullptr;
+    bool wrapped = false;
     while (const ecma48_code &code = iter.next())
     {
+// TODO-DISPLAY:  Predict unwrapping more accurately when resizing the terminal wider.
         switch (code.get_type())
         {
         case ecma48_code::type_chars:
@@ -938,19 +943,27 @@ void measure_columns::measure(const char* text, unsigned int length, bool is_pro
                 const int c = i.next();
                 assert(c != '\n');          // See ecma48_code::c0_lf below.
                 assert(!CTRL_CHAR(*chars)); // See ecma48_code::type_c0 below.
-                if (CTRL_CHAR(*chars) || *chars == RUBOUT)
+                if (!is_prompt && (CTRL_CHAR(*chars) || *chars == RUBOUT))
                 {
                     // Control characters.
                     goto ctrl_char;
                 }
                 else
                 {
+                    if (wrapped)
+                    {
+                        wrapped = false;
+                        ++m_line_count;
+                    }
                     int n = clink_wcwidth(c);
                     m_col += n;
                     if (m_col >= _rl_screenwidth)
                     {
+                        if (is_prompt && m_mode == print && m_col == _rl_screenwidth)
+                            wrapped = true; // Defer, for accurate measurement.
+                        else
+                            ++m_line_count;
                         m_col = (m_col > _rl_screenwidth) ? n : 0;
-                        ++m_line_count;
                     }
                 }
             }
@@ -964,6 +977,7 @@ void measure_columns::measure(const char* text, unsigned int length, bool is_pro
 #endif
                 {
 ctrl_char:
+                    assert(!is_prompt);
                     m_col += 2;
                     while (m_col >= _rl_screenwidth)
                     {
@@ -980,6 +994,7 @@ ctrl_char:
                 ++m_line_count;
                 // fall through
             case ecma48_code::c0_cr:
+                wrapped = false;
                 m_col = 0;
                 break;
 
@@ -992,10 +1007,16 @@ ctrl_char:
                     goto ctrl_char;
                 }
 #endif
+                if (wrapped)
+                {
+                    wrapped = false;
+                    ++m_line_count;
+                }
                 if (int n = 8 - (m_col & 7))
                 {
                     m_col = min(m_col + n, _rl_screenwidth);
-// TODO-DISPLAY:  Does TAB drop to the next line when it hits the edge of the screen?
+                    m_col = min(m_col + n, _rl_screenwidth);
+                    // BUGBUG:  What wrapping behavior does TAB ellicit?
                 }
                 break;
 
@@ -1009,7 +1030,13 @@ ctrl_char:
         }
     }
 
-    m_forced_wrap = (m_col == 0 && m_line_count > 1 && last_lf != iter.get_pointer());
+    if (wrapped)
+    {
+        wrapped = false;
+        ++m_line_count;
+    }
+
+    m_force_wrap = (m_col == 0 && m_line_count > 1 && last_lf != iter.get_pointer());
 }
 
 //------------------------------------------------------------------------------
@@ -1110,6 +1137,7 @@ public:
     void                on_new_line();
     void                end_prompt_lf();
     void                display();
+    void                measure(measure_columns& mc);
 
 private:
     bool                update_line(int i, const display_line* o, const display_line* d, bool wrapped);
@@ -1322,11 +1350,11 @@ void display_manager::display()
     bool force_wrap = false;
     if (forced_display)
     {
-        measure_columns mc;
+        measure_columns mc(measure_columns::print);
         if (modmark)
             mc.measure("*", true);
         mc.measure(prompt, true);
-        force_wrap = mc.get_forced_wrap();
+        force_wrap = mc.get_force_wrap();
         m_last_prompt_line_width = mc.get_column();
         m_last_prompt_line_botlin = mc.get_line_count() - 1;
     }
@@ -1494,6 +1522,45 @@ void display_manager::display()
 
     RL_UNSETSTATE(RL_STATE_REDISPLAYING);
     _rl_release_sigint();
+}
+
+//------------------------------------------------------------------------------
+void display_manager::measure(measure_columns& mc)
+{
+    // FUTURE:  Ideally this would remember what prompt it displayed and use
+    // that here, rather than using whatever is the current prompt content.
+    const char* prompt = rl_get_local_prompt();
+    const char* prompt_prefix = rl_get_local_prompt_prefix();
+    assert(prompt);
+
+    // Measure the prompt.
+    if (prompt_prefix)
+        mc.measure(prompt_prefix, true);
+    if (prompt)
+        mc.measure(prompt, true);
+
+    // Measure the input buffer that was previously displayed.
+    // FUTURE:  Ideally this would remember the cursor point and use that here,
+    // rather than using whatever is the current cursor point.
+    unsigned int rows = m_last_prompt_line_botlin;
+    for (unsigned int i = m_top; auto d = m_curr.get(i); ++i)
+    {
+        if (rows++ > _rl_vis_botlin)
+            break;
+
+        // Reset the column if the first display line starts at column 0, which
+        // happens when scrolling (vert or horz) is active.
+        if (i == m_top && d->m_x == 0)
+            mc.reset_column();
+
+        if (rl_point < d->m_start)
+            break;
+
+        unsigned int len = d->m_len;
+        if (rl_point >= d->m_start && rl_point < d->m_end)
+            len = d->m_lead + rl_point - d->m_start;
+        mc.measure(d->m_chars, len, false);
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -1787,54 +1854,44 @@ void resize_readline_display(const char* prompt, const line_buffer& buffer, cons
     refresh_terminal_size();
 #endif
 
-    // Measure the lines for the prompt segment.
-    measure_columns mc;
-#if defined(NO_READLINE_RESIZE_TERMINAL)
-    mc.measure(prompt, true);
-#else
-    const char* last_prompt_line = strrchr(prompt, '\n');
-    if (last_prompt_line)
-        ++last_prompt_line;
-    else
-        last_prompt_line = prompt;
-    mc.measure(last_prompt_line, true);
-#endif
-
-    // Measure the new number of lines to the cursor position.
-    bool measured_buffer = false;
-    const char* buffer_ptr = buffer.get_buffer();
+    // Measure what was previously displayed.
+    measure_columns mc(measure_columns::resize);
 #if defined (INCLUDE_CLINK_DISPLAY_READLINE)
     if (use_display_manager())
     {
-        // FUTURE:  This uses the current buffer content, but technically it
-        // should measure the previously displayed content.
-// TODO-DISPLAY:  And that will be necessary to support horizontal scroll mode.
-        const unsigned int start = s_display_manager.top_buffer_start();
-        if (buffer.get_cursor() >= start)
-        {
-            if (start > 0)
-                mc.reset_column();
-            mc.measure(buffer_ptr + start, buffer.get_cursor() - start, false);
-        }
-        measured_buffer = true;
+        s_display_manager.measure(mc);
     }
+    else
 #endif
-    if (!measured_buffer)
     {
+        // Measure the lines for the prompt segment.
+#if defined(NO_READLINE_RESIZE_TERMINAL)
+        mc.measure(prompt, true);
+#else
+        const char* last_prompt_line = strrchr(prompt, '\n');
+        if (last_prompt_line)
+            ++last_prompt_line;
+        else
+            last_prompt_line = prompt;
+        mc.measure(last_prompt_line, true);
+#endif
+
+        // Measure the new number of lines to the cursor position.
+        const char* buffer_ptr = buffer.get_buffer();
         mc.measure(buffer_ptr, buffer.get_cursor(), false);
-        measured_buffer = true;
     }
     int cursor_line = mc.get_line_count() - 1;
 
     // WORKAROUND FOR OS ISSUE:  If the buffer ends with one trailing space and
-    // the cursor is at the end of the, then the OS can wrap the line strangely
-    // and end up inserting an extra blank line between the cursor and the
-    // preceding text.  Test for a blank line above the cursor, and increment
-    // cursor_line to compensate.
+    // the cursor is at the end of the input line, then the OS can wrap the line
+    // strangely and end up inserting an extra blank line between the cursor and
+    // the preceding text.  Test for a blank line above the cursor, and
+    // increment cursor_line to compensate.
     if (cursor_line > 0 && csbi.dwCursorPosition.X == 1)
     {
         const unsigned int cur = buffer.get_cursor();
         const unsigned int len = buffer.get_length();
+        const char* buffer_ptr = buffer.get_buffer();
         if (len > 0 &&
             cur == len &&
             buffer_ptr[len - 1] == ' ' &&
