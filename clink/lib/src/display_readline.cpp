@@ -310,6 +310,7 @@ public:
                         ~display_lines() = default;
 
     void                parse(unsigned int prompt_botlin, unsigned int col, const char* buffer, unsigned int len);
+    void                horz_parse(unsigned int prompt_botlin, unsigned int col, const char* buffer, unsigned int point, unsigned int len, const display_lines& ref);
     void                apply_scroll_markers(unsigned int top, unsigned int bottom);
     void                compensate_force_wrap();
     void                swap(display_lines& d);
@@ -318,18 +319,22 @@ public:
     const display_line* get(unsigned int index) const;
     unsigned int        count() const;
     bool                can_show_rprompt() const;
+    bool                is_horz_scrolled() const;
 
     unsigned int        vpos() const { return m_vpos; }
     unsigned int        cpos() const { return m_cpos; }
 
 private:
     display_line*       next_line(unsigned int start);
+    bool                adjust_columns(unsigned int& point, int delta, const char* buffer, unsigned int len) const;
 
     std::vector<display_line> m_lines;
     unsigned int        m_count = 0;
     unsigned int        m_prompt_botlin;
     unsigned int        m_vpos = 0;
     unsigned int        m_cpos = 0;
+    unsigned int        m_horz_start = 0;
+    bool                m_horz_scroll = false;
 };
 
 //------------------------------------------------------------------------------
@@ -363,9 +368,9 @@ void display_lines::parse(unsigned int prompt_botlin, unsigned int col, const ch
     str<16> tmp;
     unsigned int index = 0;
 
-    str_iter iter(buffer, len);
     const char* chars = buffer;
     const char* end = nullptr;
+    str_iter iter(chars, len);
     for (; true; chars = end)
     {
         const int c = iter.next();
@@ -515,6 +520,153 @@ void display_lines::parse(unsigned int prompt_botlin, unsigned int col, const ch
 }
 
 //------------------------------------------------------------------------------
+void display_lines::horz_parse(unsigned int prompt_botlin, unsigned int col, const char* buffer, unsigned int point, unsigned int len, const display_lines& ref)
+{
+    assert(col < _rl_screenwidth);
+    dbg_ignore_scope(snapshot, "display_readline");
+
+    clear();
+    m_horz_start = ref.m_horz_start;
+
+    m_prompt_botlin = prompt_botlin;
+    while (prompt_botlin--)
+        next_line(0);
+
+    const int scroll_stride = _rl_screenwidth / 3;
+    const int limit = _rl_screenwidth - 2; // -1 for `>` marker, -1 for space.
+
+    // Adjust horizontal scroll offset to ensure point is visible.
+    if (point < m_horz_start)
+    {
+        m_horz_start = point;
+        adjust_columns(m_horz_start, 0 - scroll_stride, buffer, len);
+    }
+    else
+    {
+        const int range = limit - (m_horz_start ? 1 : col);
+        unsigned int end = m_horz_start;
+        if (adjust_columns(end, range, buffer, len) && point >= end)
+        {
+            m_horz_start = point;
+            if (!adjust_columns(m_horz_start, 0 - scroll_stride*2, buffer, len))
+                m_horz_start++;
+        }
+    }
+
+    display_line* d = next_line(0);
+    d->m_start = m_horz_start;
+    m_horz_scroll = true;
+
+    if (m_horz_start)
+    {
+        d->m_x = 0;
+        d->m_lead = 1;
+        d->append('<', '<');
+        d->appendnul();
+        col = 1;
+    }
+    else
+    {
+        d->m_x = col;
+    }
+    m_vpos = m_prompt_botlin;
+    m_cpos = col;
+
+    int hl_begin = -1;
+    int hl_end = -1;
+
+    if (rl_mark_active_p())
+    {
+        if (rl_point >= 0 && rl_point <= rl_end && rl_mark >= 0 && rl_mark <= rl_end)
+        {
+            hl_begin = (rl_mark < rl_point) ? rl_mark : rl_point;
+            hl_end = (rl_mark < rl_point) ? rl_point : rl_mark;
+        }
+    }
+
+    str<16> tmp;
+    unsigned int index = m_horz_start;
+
+    bool overflow = false;
+    const char* chars = buffer + m_horz_start;
+    const char* end = nullptr;
+    str_iter iter(chars, len - m_horz_start);
+    for (; true; chars = end)
+    {
+        const int c = iter.next();
+        if (!c)
+            break;
+
+        end = iter.get_pointer();
+
+        if (CTRL_CHAR(*chars) || *chars == RUBOUT)
+        {
+            // Display control characters as ^X.
+            assert(end == chars + 1);
+            tmp.clear();
+            tmp.format("^%c", CTRL_CHAR(*chars) ? UNCTRL(*chars) : '?');
+        }
+        else
+        {
+            const unsigned int chars_len = static_cast<unsigned int>(end - chars);
+            const unsigned int wc_width = clink_wcwidth(c);
+
+            if (col + wc_width > limit)
+            {
+                overflow = true;
+                break;
+            }
+
+            if (index <= rl_point && rl_point < index + chars_len)
+                m_cpos = col;
+
+            for (; chars < end; ++chars, ++index)
+                d->append(*chars, rl_get_face_func(index, hl_begin, hl_end));
+            col += wc_width;
+            continue;
+        }
+
+        const char* add = tmp.c_str();
+        const char face = rl_get_face_func(static_cast<unsigned int>(chars - buffer), hl_begin, hl_end);
+
+        if (index == rl_point)
+            m_cpos = col;
+
+        index = static_cast<unsigned int>(end - buffer);
+
+        for (unsigned int x = tmp.length(); x--; ++add)
+        {
+            if (col >= limit)
+                break;
+
+            assert(*add >= 0 && *add <= 0x7f); // Only ASCII characters are generated.
+            d->append(*add, face);
+            ++col;
+        }
+
+        if (col >= limit)
+            break;
+    }
+
+    d->m_lastcol = col;
+    d->m_end = static_cast<unsigned int>(chars - buffer);
+
+    if (iter.more() || overflow)
+    {
+        d->append('>', '<');
+        d->m_lastcol++;
+    }
+
+    d->appendnul();
+
+    if (index == rl_point)
+    {
+        m_vpos = m_count - 1;
+        m_cpos = col;
+    }
+}
+
+//------------------------------------------------------------------------------
 void display_lines::apply_scroll_markers(unsigned int top, unsigned int bottom)
 {
     assert(top >= m_prompt_botlin);
@@ -643,6 +795,8 @@ void display_lines::swap(display_lines& d)
     std::swap(m_prompt_botlin, d.m_prompt_botlin);
     std::swap(m_vpos, d.m_vpos);
     std::swap(m_cpos, d.m_cpos);
+    std::swap(m_horz_start, d.m_horz_start);
+    std::swap(m_horz_scroll, d.m_horz_scroll);
 }
 
 //------------------------------------------------------------------------------
@@ -654,6 +808,8 @@ void display_lines::clear()
     m_prompt_botlin = 0;
     m_vpos = 0;
     m_cpos = 0;
+    m_horz_start = 0;
+    m_horz_scroll = false;
 }
 
 //------------------------------------------------------------------------------
@@ -681,8 +837,16 @@ bool display_lines::can_show_rprompt() const
 }
 
 //------------------------------------------------------------------------------
+bool display_lines::is_horz_scrolled() const
+{
+    return (m_horz_scroll && m_horz_start > 0);
+}
+
+//------------------------------------------------------------------------------
 display_line* display_lines::next_line(unsigned int start)
 {
+    assert(!m_horz_scroll);
+
     if (m_count >= m_lines.size())
         m_lines.emplace_back();
 
@@ -691,6 +855,52 @@ display_line* display_lines::next_line(unsigned int start)
     assert(!d->m_len);
     d->m_start = start;
     return d;
+}
+
+//------------------------------------------------------------------------------
+bool display_lines::adjust_columns(unsigned int& index, int delta, const char* buffer, unsigned int len) const
+{
+    assert(delta != 0);
+    assert(len >= index);
+
+    const char* walk = buffer + index;
+    bool first = true;
+
+    if (delta < 0)
+    {
+        delta *= -1;
+        while (delta > 0)
+        {
+            if (!index)
+                return false;
+            const int i = _rl_find_prev_mbchar(const_cast<char*>(buffer), index, MB_FIND_NONZERO);
+            const int bytes = index - i;
+            const int width = (bytes == 1 && (CTRL_CHAR(buffer[-1]) || buffer[-1] == RUBOUT)) ? 2 : raw_measure_cols(buffer - bytes, bytes);
+            if (first || delta >= width)
+                index -= bytes;
+            first = false;
+            delta -= width;
+        }
+    }
+    else
+    {
+        str_iter iter(buffer + index, len - index);
+        while (delta > 0)
+        {
+            const char* prev = iter.get_pointer();
+            const int c = iter.next();
+            if (!c)
+                return false;
+            const int bytes = static_cast<int>(iter.get_pointer() - prev);
+            const int width = ((c >= 0 && c <= 0x1f) || c == RUBOUT) ? 2 : clink_wcwidth(c);
+            if (first || delta >= width)
+                index += bytes;
+            first = false;
+            delta -= width;
+        }
+    }
+
+    return index;
 }
 
 
@@ -911,6 +1121,7 @@ private:
     int                 m_last_prompt_line_width = -1;
     int                 m_last_prompt_line_botlin = -1;
     bool                m_last_modmark = false;
+    bool                m_horz_scroll = false;
 };
 
 //------------------------------------------------------------------------------
@@ -931,6 +1142,7 @@ void display_manager::clear()
     m_last_prompt_line_width = -1;
     m_last_prompt_line_botlin = -1;
     m_last_modmark = false;
+    m_horz_scroll = false;
 }
 
 //------------------------------------------------------------------------------
@@ -1047,13 +1259,10 @@ void display_manager::display()
     max_rows = min<unsigned int>(max_rows, _rl_screenheight);
     max_rows = max<unsigned int>(max_rows, 1);
 
-// TODO-DISPLAY: _rl_horizontal_scroll_mode.
-// TODO-DISPLAY: when _rl_horizontal_scroll_mode has less than some threshold of columns, then ... what?
-
-    // FUTURE: Support defining a region in which to display the input line;
-    // configurable left starting column, configurable right ending column, and
-    // configurable max row count (with vertical scrolling and optional scroll
-    // bar).
+    // FUTURE:  Maybe support defining a region in which to display the input
+    // line; configurable left starting column, configurable right ending
+    // column, and configurable max row count (with vertical scrolling and
+    // optional scroll bar).
 
     const char* prompt = rl_get_local_prompt();
     const char* prompt_prefix = rl_get_local_prompt_prefix();
@@ -1122,47 +1331,69 @@ void display_manager::display()
         m_last_prompt_line_botlin = mc.get_line_count() - 1;
     }
 
+    // Activate horizontal scroll mode when requested or when necessary.
+    const bool was_horz_scroll = m_horz_scroll;
+    m_horz_scroll = (_rl_horizontal_scroll_mode || max_rows <= 1 || m_last_prompt_line_botlin + max_rows > _rl_screenheight);
+
     // Optimization:  can skip updating the display if someone said it's already
     // updated, unless someone is forcing an update.
-    const bool need_update = true || (!rl_display_fixed || forced_display);
+    const bool need_update = (!rl_display_fixed || forced_display || was_horz_scroll != m_horz_scroll);
 
     // Prepare data structures for displaying the input line.
+    const display_lines* next = &m_curr;
     if (need_update)
-        m_next.parse(m_last_prompt_line_botlin, m_last_prompt_line_width, rl_line_buffer, rl_end);
-    assert(m_next.count() > 0);
+    {
+        next = &m_next;
+        if (m_horz_scroll)
+            m_next.horz_parse(m_last_prompt_line_botlin, m_last_prompt_line_width, rl_line_buffer, rl_point, rl_end, m_curr);
+        else
+            m_next.parse(m_last_prompt_line_botlin, m_last_prompt_line_width, rl_line_buffer, rl_end);
+        assert(m_next.count() > 0);
+    }
+#define m_next __use_next_instead__
     const int input_botlin_offset = max<int>(0,
-        min<int>(min<int>(m_next.count() - 1 - m_last_prompt_line_botlin, max_rows - 1), _rl_screenheight - 1));
+        min<int>(min<int>(next->count() - 1 - m_last_prompt_line_botlin, max_rows - 1), _rl_screenheight - 1));
     const int new_botlin = m_last_prompt_line_botlin + input_botlin_offset;
-// TODO-DISPLAY: force _rl_horizontal_scroll_mode if 1 or fewer input rows are visible.
 
     // Scroll to keep cursor in view.
     const unsigned int old_top = m_top;
     if (m_top < m_last_prompt_line_botlin)
         m_top = m_last_prompt_line_botlin;
-    if (m_last_prompt_line_botlin + m_next.vpos() < m_top)
-        m_top = m_last_prompt_line_botlin + m_next.vpos();
-    if (m_last_prompt_line_botlin + m_next.vpos() > m_top + input_botlin_offset)
-        m_top = m_next.vpos() - input_botlin_offset;
-    if (m_top + input_botlin_offset + 1 > m_next.count())
-        m_top = m_next.count() - 1 - input_botlin_offset;
+    if (m_last_prompt_line_botlin + next->vpos() < m_top)
+        m_top = m_last_prompt_line_botlin + next->vpos();
+    if (m_last_prompt_line_botlin + next->vpos() > m_top + input_botlin_offset)
+        m_top = next->vpos() - input_botlin_offset;
+    if (m_top + input_botlin_offset + 1 > next->count())
+        m_top = next->count() - 1 - input_botlin_offset;
+
     // Scroll when cursor is on a scroll marker.
-    if (m_top > m_last_prompt_line_botlin && m_top == m_last_prompt_line_botlin + m_next.vpos())
+    if (m_top > m_last_prompt_line_botlin && m_top == m_last_prompt_line_botlin + next->vpos())
     {
-        const display_line* d = m_next.get(m_top);
-        if (m_next.cpos() == d->m_x)
+        const display_line* d = next->get(m_top);
+        if (next->cpos() == d->m_x)
             m_top--;
     }
-    else if (m_top + input_botlin_offset < m_next.count() - 1 && m_top + input_botlin_offset == m_next.vpos())
+    else if (m_top + input_botlin_offset < next->count() - 1 && m_top + input_botlin_offset == next->vpos())
     {
-        if (m_next.cpos() + 1 == _rl_screenwidth)
+        if (next->cpos() + 1 == _rl_screenwidth)
             m_top++;
     }
     assert(m_top >= m_last_prompt_line_botlin);
+
     // Apply scroll markers.
-    m_next.apply_scroll_markers(m_top, m_top + input_botlin_offset);
+    if (need_update && !m_horz_scroll)
+    {
+#undef m_next
+        m_next.apply_scroll_markers(m_top, m_top + input_botlin_offset);
+#define m_next __use_next_instead__
+    }
 
     // Display the last line of the prompt.
-    if (m_top == m_last_prompt_line_botlin && (forced_display || old_top != m_top))
+    const bool old_horz_scrolled = m_curr.is_horz_scrolled();
+    const bool is_horz_scrolled = next->is_horz_scrolled();
+    if (m_top == m_last_prompt_line_botlin && (forced_display ||
+                                               old_top != m_top ||
+                                               old_horz_scrolled != is_horz_scrolled))
     {
         _rl_move_vert(0);
         _rl_cr();
@@ -1193,7 +1424,7 @@ void display_manager::display()
     // Optimization:  can skip updating the display if someone said it's already
     // updated, unless someone is forcing an update.
     bool can_show_rprompt = false;
-    if (!rl_display_fixed || forced_display)
+    if (need_update)
     {
         if (force_wrap)
         {
@@ -1202,7 +1433,7 @@ void display_manager::display()
         }
 
         // If the right side prompt is shown but shouldn't be, erase it.
-        can_show_rprompt = m_next.can_show_rprompt();
+        can_show_rprompt = next->can_show_rprompt();
         if (_rl_rprompt_shown_len && !can_show_rprompt)
         {
             assert(_rl_last_v_pos == 0);
@@ -1212,7 +1443,7 @@ void display_manager::display()
         // Update each display line for the line buffer.
         bool wrapped = false;
         unsigned int rows = m_last_prompt_line_botlin;
-        for (unsigned int i = m_top; auto d = m_next.get(i); ++i)
+        for (unsigned int i = m_top; auto d = next->get(i); ++i)
         {
             if (rows++ > new_botlin)
                 break;
@@ -1240,13 +1471,18 @@ void display_manager::display()
     }
 
     // Move cursor to the rl_point position.
-    _rl_move_vert(m_last_prompt_line_botlin + m_next.vpos() - m_top);
-    move_to_column(m_next.cpos());
+    _rl_move_vert(m_last_prompt_line_botlin + next->vpos() - m_top);
+    move_to_column(next->cpos());
 
     rl_fflush_function(_rl_out_stream);
 
-    m_next.swap(m_curr);
-    m_next.clear();
+#undef m_next
+
+    if (need_update)
+    {
+        m_next.swap(m_curr);
+        m_next.clear();
+    }
 
     rl_display_fixed = 0;
 
@@ -1569,7 +1805,6 @@ void resize_readline_display(const char* prompt, const line_buffer& buffer, cons
 #endif
 
     // Measure the new number of lines to the cursor position.
-    // BUGBUG:  This doesn't understand about horizontal scroll mode.
     bool measured_buffer = false;
     const char* buffer_ptr = buffer.get_buffer();
 #if defined (INCLUDE_CLINK_DISPLAY_READLINE)
@@ -1577,6 +1812,7 @@ void resize_readline_display(const char* prompt, const line_buffer& buffer, cons
     {
         // FUTURE:  This uses the current buffer content, but technically it
         // should measure the previously displayed content.
+// TODO-DISPLAY:  And that will be necessary to support horizontal scroll mode.
         const unsigned int start = s_display_manager.top_buffer_start();
         if (buffer.get_cursor() >= start)
         {
