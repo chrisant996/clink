@@ -1686,11 +1686,7 @@ extern "C" int use_display_manager()
     if (os::get_env("USE_DISPLAY_MANAGER", env))
         s_use_display_manager = !!atoi(env.c_str());
     else
-# ifdef DEBUG
         s_use_display_manager = true;
-# else
-        s_use_display_manager = false;
-# endif
 #endif
     return s_use_display_manager;
 }
