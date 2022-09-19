@@ -318,6 +318,7 @@ public:
 
     const display_line* get(unsigned int index) const;
     unsigned int        count() const;
+    unsigned int        width() const;
     bool                can_show_rprompt() const;
     bool                is_horz_scrolled() const;
 
@@ -329,6 +330,7 @@ private:
     bool                adjust_columns(unsigned int& point, int delta, const char* buffer, unsigned int len) const;
 
     std::vector<display_line> m_lines;
+    unsigned int        m_width = 0;
     unsigned int        m_count = 0;
     unsigned int        m_prompt_botlin;
     unsigned int        m_vpos = 0;
@@ -344,6 +346,7 @@ void display_lines::parse(unsigned int prompt_botlin, unsigned int col, const ch
     dbg_ignore_scope(snapshot, "display_readline");
 
     clear();
+    m_width = _rl_screenwidth;
 
     m_prompt_botlin = prompt_botlin;
     while (prompt_botlin--)
@@ -526,6 +529,7 @@ void display_lines::horz_parse(unsigned int prompt_botlin, unsigned int col, con
     dbg_ignore_scope(snapshot, "display_readline");
 
     clear();
+    m_width = _rl_screenwidth;
     m_horz_start = ref.m_horz_start;
 
     m_prompt_botlin = prompt_botlin;
@@ -791,6 +795,7 @@ void display_lines::compensate_force_wrap()
 void display_lines::swap(display_lines& d)
 {
     m_lines.swap(d.m_lines);
+    std::swap(m_width, d.m_width);
     std::swap(m_count, d.m_count);
     std::swap(m_prompt_botlin, d.m_prompt_botlin);
     std::swap(m_vpos, d.m_vpos);
@@ -804,6 +809,7 @@ void display_lines::clear()
 {
     for (unsigned int i = m_count; i--;)
         m_lines[i].clear();
+    m_width = 0;
     m_count = 0;
     m_prompt_botlin = 0;
     m_vpos = 0;
@@ -824,6 +830,12 @@ const display_line* display_lines::get(unsigned int index) const
 unsigned int display_lines::count() const
 {
     return m_count;
+}
+
+//------------------------------------------------------------------------------
+unsigned int display_lines::width() const
+{
+    return m_width;
 }
 
 //------------------------------------------------------------------------------
@@ -910,19 +922,29 @@ class measure_columns
 {
 public:
     enum measure_mode { print, resize };
-                    measure_columns(measure_mode mode) : m_mode(mode) {}
+                    measure_columns(measure_mode mode, unsigned int width=0);
     void            measure(const char* text, unsigned int len, bool is_prompt);
     void            measure(const char* text, bool is_prompt);
+    void            apply_join_count(const measure_columns& mc);
     void            reset_column() { m_col = 0; }
     int             get_column() const { return m_col; }
-    int             get_line_count() const { return m_line_count; }
+    int             get_line_count() const { return m_line_count - m_join_count; }
     bool            get_force_wrap() const { return m_force_wrap; }
 private:
     const measure_mode m_mode;
+    const unsigned int m_width;
     int             m_col = 0;
     int             m_line_count = 1;
+    int             m_join_count = 0;
     bool            m_force_wrap = false;
 };
+
+//------------------------------------------------------------------------------
+measure_columns::measure_columns(measure_mode mode, unsigned int width)
+: m_mode(mode)
+, m_width(width ? width : _rl_screenwidth)
+{
+}
 
 //------------------------------------------------------------------------------
 void measure_columns::measure(const char* text, unsigned int length, bool is_prompt)
@@ -933,7 +955,6 @@ void measure_columns::measure(const char* text, unsigned int length, bool is_pro
     bool wrapped = false;
     while (const ecma48_code &code = iter.next())
     {
-// TODO-DISPLAY:  Predict unwrapping more accurately when resizing the terminal wider.
         switch (code.get_type())
         {
         case ecma48_code::type_chars:
@@ -957,13 +978,13 @@ void measure_columns::measure(const char* text, unsigned int length, bool is_pro
                     }
                     int n = clink_wcwidth(c);
                     m_col += n;
-                    if (m_col >= _rl_screenwidth)
+                    if (m_col >= m_width)
                     {
-                        if (is_prompt && m_mode == print && m_col == _rl_screenwidth)
+                        if (is_prompt && m_mode == print && m_col == m_width)
                             wrapped = true; // Defer, for accurate measurement.
                         else
                             ++m_line_count;
-                        m_col = (m_col > _rl_screenwidth) ? n : 0;
+                        m_col = (m_col > m_width) ? n : 0;
                     }
                 }
             }
@@ -979,9 +1000,9 @@ void measure_columns::measure(const char* text, unsigned int length, bool is_pro
 ctrl_char:
                     assert(!is_prompt);
                     m_col += 2;
-                    while (m_col >= _rl_screenwidth)
+                    while (m_col >= m_width)
                     {
-                        m_col -= _rl_screenwidth;
+                        m_col -= m_width;
                         ++m_line_count;
                     }
                     break;
@@ -994,18 +1015,19 @@ ctrl_char:
                 ++m_line_count;
                 // fall through
             case ecma48_code::c0_cr:
-                wrapped = false;
                 m_col = 0;
+                if (wrapped)
+                {
+                    if (m_mode == print)
+                        ++m_join_count;
+                    wrapped = false;
+                }
                 break;
 
             case ecma48_code::c0_ht:
 #if !defined(DISPLAY_TABS)
                 if (!is_prompt)
-                {
-                    // BUGBUG:  This case should instead count the spaces that
-                    // were actually previously printed.
                     goto ctrl_char;
-                }
 #endif
                 if (wrapped)
                 {
@@ -1014,8 +1036,8 @@ ctrl_char:
                 }
                 if (int n = 8 - (m_col & 7))
                 {
-                    m_col = min(m_col + n, _rl_screenwidth);
-                    m_col = min(m_col + n, _rl_screenwidth);
+                    m_col = min<int>(m_col + n, m_width);
+                    m_col = min<int>(m_col + n, m_width);
                     // BUGBUG:  What wrapping behavior does TAB ellicit?
                 }
                 break;
@@ -1043,6 +1065,12 @@ ctrl_char:
 void measure_columns::measure(const char* text, bool is_prompt)
 {
     return measure(text, -1, is_prompt);
+}
+
+//------------------------------------------------------------------------------
+void measure_columns::apply_join_count(const measure_columns& mc)
+{
+    m_join_count = mc.m_join_count;
 }
 
 
@@ -1539,6 +1567,23 @@ void display_manager::measure(measure_columns& mc)
     const char* prompt = rl_get_local_prompt();
     const char* prompt_prefix = rl_get_local_prompt_prefix();
     assert(prompt);
+
+    // When the OS resizes a terminal wider, the line un-wrapping logic doesn't
+    // seem to know about explicit line feeds, and joins lines if the right edge
+    // contains text.  So, attempt to account for that.
+    if (m_curr.width() && m_curr.width() > _rl_screenwidth)
+    {
+        // This is a simplistic approach; it does NOT fully accurately account
+        // for the difference, but it's 95% effective for 5% the cost of trying
+        // to do it accurately (which still wouldn't really be accurate because
+        // resizing the terminal happens asynchronously).
+        measure_columns jc(measure_columns::print, m_curr.width());
+        if (prompt_prefix)
+            jc.measure(prompt_prefix, true);
+        if (prompt)
+            jc.measure(prompt, true);
+        mc.apply_join_count(jc);
+    }
 
     // Measure the prompt.
     if (prompt_prefix)
