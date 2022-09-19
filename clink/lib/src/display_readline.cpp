@@ -1726,19 +1726,21 @@ test_left:
     {
         if (_rl_term_autowrap)
         {
-            // NOTE:  Readline prints SPC,CR at the end of a display line.
+            // BUGBUG:  Readline prints SPC,CR at the end of a display line.
             // But the CR can cause garbled display when resizing the terminal
             // rapidly.  This is because the OS has no way to synchronize
             // resizes the terminal versus printing display updates, so the
             // terminal may not actually be the expected width, in which case
             // the SPC may not wrap to a new line, and then the CR will cause
-            // the next display line to overwrite the previous one.  And on
-            // Windows the SPC,CR has no beneficial effects anyway.  The best
-            // thing to do on Windows is simply suppress the SPC,CR.
-#if 0
+            // the next display line to overwrite the previous one.
+            //
+            // Skipping the SPC,CR isn't sufficient, and results in the cursor
+            // staying on the same line (_rl_last_v_pos gets out of sync,
+            // because the cursor hasn't actually wrapped to the next line yet).
+            // I've reached my limit, for now, of what I'm willing to invest in
+            // attempting to work around.
             rl_fwrite_function(_rl_out_stream, " ", 1);
             _rl_cr();
-#endif
         }
         else
         {
