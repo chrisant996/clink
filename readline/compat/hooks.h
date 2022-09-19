@@ -4,7 +4,9 @@
 #pragma once
 
 // Define this to omit Readline's default display routines for the Readline input buffer.
-//#define OMIT_DEFAULT_DISPLAY_READLINE
+#ifndef DEBUG
+#define OMIT_DEFAULT_DISPLAY_READLINE
+#endif
 
 // Define this to include Clink's custom display routines for the Readline input buffer.
 #define INCLUDE_CLINK_DISPLAY_READLINE
