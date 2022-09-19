@@ -17,7 +17,6 @@
 #include <core/settings.h>
 #include <core/debugheap.h>
 #include <terminal/ecma48_iter.h>
-//#include <terminal/terminal_helpers.h>
 
 #include <memory>
 
@@ -1727,8 +1726,19 @@ test_left:
     {
         if (_rl_term_autowrap)
         {
+            // NOTE:  Readline prints SPC,CR at the end of a display line.
+            // But the CR can cause garbled display when resizing the terminal
+            // rapidly.  This is because the OS has no way to synchronize
+            // resizes the terminal versus printing display updates, so the
+            // terminal may not actually be the expected width, in which case
+            // the SPC may not wrap to a new line, and then the CR will cause
+            // the next display line to overwrite the previous one.  And on
+            // Windows the SPC,CR has no beneficial effects anyway.  The best
+            // thing to do on Windows is simply suppress the SPC,CR.
+#if 0
             rl_fwrite_function(_rl_out_stream, " ", 1);
             _rl_cr();
+#endif
         }
         else
         {
