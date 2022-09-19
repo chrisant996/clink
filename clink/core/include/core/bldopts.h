@@ -35,6 +35,10 @@
 #endif
 
 //------------------------------------------------------------------------------
+// Define this to add callstacks with `debug.log_terminal`.
+//#define LOG_OUTPUT_CALLSTACKS
+
+//------------------------------------------------------------------------------
 // Clink doesn't support rl_byte_oriented mode.  Defining it to 0 lets the
 // compiler optimize away any code specific to that mode.
 #define rl_byte_oriented    (0)

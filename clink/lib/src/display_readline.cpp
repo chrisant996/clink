@@ -1275,7 +1275,9 @@ void display_manager::display()
     _rl_block_sigint();
     RL_SETSTATE(RL_STATE_REDISPLAYING);
 
+#ifndef LOG_OUTPUT_CALLSTACKS
     display_accumulator coalesce;
+#endif
 
     if (!rl_display_prompt)
         rl_display_prompt = "";
@@ -1521,7 +1523,9 @@ void display_manager::display()
     if (!_rl_rprompt_shown_len && can_show_rprompt)
         tputs_rprompt(rl_rprompt);
 
+#ifndef LOG_OUTPUT_CALLSTACKS
     coalesce.flush();
+#endif
 
     RL_UNSETSTATE(RL_STATE_REDISPLAYING);
     _rl_release_sigint();
@@ -1847,7 +1851,9 @@ void resize_readline_display(const char* prompt, const line_buffer& buffer, cons
     // between the OS async terminal resize and cursor movement while refreshing
     // the Readline display.  The result is near-perfect resize behavior; but
     // perfection is beyond reach, due to the inherent async execution.
+#ifndef LOG_OUTPUT_CALLSTACKS
     display_accumulator coalesce;
+#endif
 
 #if defined(NO_READLINE_RESIZE_TERMINAL)
     // Update Readline's perception of the terminal dimensions.

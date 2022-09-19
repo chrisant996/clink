@@ -35,6 +35,10 @@
 #include <terminal/screen_buffer.h>
 #include <terminal/scroll.h>
 
+#ifdef LOG_OUTPUT_CALLSTACKS
+#include <core/callstack.h>
+#endif
+
 #include <signal.h>
 #include <unordered_set>
 
@@ -760,7 +764,13 @@ static void terminal_log_write(FILE* stream, const char* chars, int char_count)
     {
         assert(g_printer);
         LOGCURSORPOS();
+#ifdef LOG_OUTPUT_CALLSTACKS
+        char stk[8192];
+        format_callstack(2, 20, stk, sizeof(stk), false);
+        LOG("%s \"%.*s\", %d -- %s", s_puts_face ? "PUTSFACE" : "RL_OUTSTREAM", char_count, chars, char_count, stk);
+#else
         LOG("%s \"%.*s\", %d", s_puts_face ? "PUTSFACE" : "RL_OUTSTREAM", char_count, chars, char_count);
+#endif
         g_printer->print(chars, char_count);
         return;
     }

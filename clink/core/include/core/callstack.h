@@ -20,7 +20,7 @@
 
 // Formats buffer (capacity is size of buffer) with up to total_frames, skipping
 // the first skip_frames.  The frames are delimited with newlines.
-CALLSTACK_EXTERN_C size_t format_callstack(int skip_frames, int total_frames, char* buffer, size_t capacity);
+CALLSTACK_EXTERN_C size_t format_callstack(int skip_frames, int total_frames, char* buffer, size_t capacity, int newlines);
 
 // Copies stack frame pointers.  They can can formatted later with
 // format_frames().
