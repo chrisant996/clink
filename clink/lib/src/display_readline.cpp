@@ -874,11 +874,11 @@ bool display_lines::adjust_columns(unsigned int& index, int delta, const char* b
     assert(delta != 0);
     assert(len >= index);
 
-    const char* walk = buffer + index;
     bool first = true;
 
     if (delta < 0)
     {
+        const char* walk = buffer + index;
         delta *= -1;
         while (delta > 0)
         {
@@ -886,7 +886,8 @@ bool display_lines::adjust_columns(unsigned int& index, int delta, const char* b
                 return false;
             const int i = _rl_find_prev_mbchar(const_cast<char*>(buffer), index, MB_FIND_NONZERO);
             const int bytes = index - i;
-            const int width = (bytes == 1 && (CTRL_CHAR(buffer[-1]) || buffer[-1] == RUBOUT)) ? 2 : raw_measure_cols(buffer - bytes, bytes);
+            walk -= bytes;
+            const int width = (bytes == 1 && (CTRL_CHAR(*walk) || *walk == RUBOUT)) ? 2 : raw_measure_cols(walk, bytes);
             if (first || delta >= width)
                 index -= bytes;
             first = false;
