@@ -1480,15 +1480,18 @@ void display_manager::display()
             wrapped = update_line(i, o, d, wrapped);
         }
 
-        _rl_cr();
-        _rl_last_c_pos = 0;
-
         // Erase any surplus lines and update the bottom line counter.
-        for (int i = new_botlin; i++ < _rl_vis_botlin;)
+        //if (new_botlin < _rl_vis_botlin)
         {
-            _rl_move_vert(i);
-            // BUGBUG: assumes _rl_term_clreol.
-            _rl_clear_to_eol(_rl_screenwidth);
+            _rl_cr();
+            _rl_last_c_pos = 0;
+
+            for (int i = new_botlin; i++ < _rl_vis_botlin;)
+            {
+                _rl_move_vert(i);
+                // BUGBUG: assumes _rl_term_clreol.
+                _rl_clear_to_eol(_rl_screenwidth);
+            }
         }
 
         // Update current cursor position.
