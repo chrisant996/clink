@@ -1168,7 +1168,7 @@ public:
     void                measure(measure_columns& mc);
 
 private:
-    bool                update_line(int i, const display_line* o, const display_line* d, bool wrapped);
+    bool                update_line(int i, const display_line* o, const display_line* d, bool wrapped, bool has_rprompt);
 
     display_lines       m_next;
     display_lines       m_curr;
@@ -1507,7 +1507,7 @@ void display_manager::display()
                 break;
 
             auto o = m_curr.get(i - m_top + old_top);
-            wrapped = update_line(i, o, d, wrapped);
+            wrapped = update_line(i, o, d, wrapped, _rl_rprompt_shown_len > 0);
         }
 
         // Erase any surplus lines and update the bottom line counter.
@@ -1616,7 +1616,7 @@ void display_manager::measure(measure_columns& mc)
 }
 
 //------------------------------------------------------------------------------
-bool display_manager::update_line(int i, const display_line* o, const display_line* d, bool wrapped)
+bool display_manager::update_line(int i, const display_line* o, const display_line* d, bool wrapped, bool has_rprompt)
 {
     unsigned int lcol = d->m_x;
     unsigned int rcol = d->m_lastcol + d->m_trail;
@@ -1679,21 +1679,25 @@ test_left:
         while (dc2 > dc && dc2[-1] == ' ' && df2[-1] == FACE_NORMAL)
             --dc2, --df2;
 
-        // Find right index of difference.
-        while (oc2 > oc && dc2 > dc)
+        // Find right index of difference.  But not if there is a right side
+        // prompt on this line.
+        if (!has_rprompt)
         {
-            const char* oback = oc + _rl_find_prev_mbchar(const_cast<char*>(oc), oc2 - oc, MB_FIND_ANY);
-            const char* dback = dc + _rl_find_prev_mbchar(const_cast<char*>(dc), dc2 - dc, MB_FIND_ANY);
-            if (oc2 - oback != dc2 - dback)
-                break;
-            const size_t bytes = dc2 - dback;
-            if (memcmp(oback, dback, bytes) ||
-                memcmp(of2 - bytes, df2 - bytes, bytes))
-                break;
-            oc2 = oback;
-            dc2 = dback;
-            of2 -= bytes;
-            df2 -= bytes;
+            while (oc2 > oc && dc2 > dc)
+            {
+                const char* oback = oc + _rl_find_prev_mbchar(const_cast<char*>(oc), oc2 - oc, MB_FIND_ANY);
+                const char* dback = dc + _rl_find_prev_mbchar(const_cast<char*>(dc), dc2 - dc, MB_FIND_ANY);
+                if (oc2 - oback != dc2 - dback)
+                    break;
+                const size_t bytes = dc2 - dback;
+                if (memcmp(oback, dback, bytes) ||
+                    memcmp(of2 - bytes, df2 - bytes, bytes))
+                    break;
+                oc2 = oback;
+                dc2 = dback;
+                of2 -= bytes;
+                df2 -= bytes;
+            }
         }
 
         const unsigned int olen = static_cast<unsigned int>(oc2 - oc);
