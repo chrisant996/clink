@@ -94,6 +94,9 @@ function _co_error_handler(co, message)
         print(debug.traceback(co, message))
     else
         print(message)
+        if settings.get("lua.debug") then
+            log.info(debug.traceback(co, message))
+        end
     end
 end
 
