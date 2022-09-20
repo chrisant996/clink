@@ -2810,9 +2810,9 @@ or edit, the word or words selected from the history event.
     Any character may be used as the delimiter in place of <code>/</code>.  The
     delimiter may be quoted in <em>old</em> and <em>new</em> with a single backslash.  If
     <code>&</code> appears in <em>new</em>, it is replaced by <em>old</em>.  A single backslash will
-    quote the <code>&</code>.  If <em>old</em> is null, it is set to the last <em>old</em>
+    quote the <code>&</code>.  If <em>old</em> is empty, it is set to the last <em>old</em>
     substituted, or, if no previous history substitutions took place,
-    the last <em>string</em> in a <code>!?<em>string</em>?</code> search.  If <em>new</em> is is null, each
+    the last <em>string</em> in a <code>!?<em>string</em>?</code> search.  If <em>new</em> is empty, each
     matching <em>old</em> is deleted.  The final delimiter is optional if it is
     the last character on the input line.
 </td></tr>
