@@ -568,8 +568,8 @@ void lua_match_generator::filter_matches(char** matches, char completion_type, b
 
     // Discard other matches.
     bool discarded = false;
-    char** read = &matches[1];
-    char** write = &matches[1];
+    char** read = &matches[!only_lcd];
+    char** write = &matches[!only_lcd];
     while (*read)
     {
         if (keep_typeless.find(*read) == keep_typeless.end())
