@@ -39,7 +39,7 @@ private:
     // Internal methods.
     void            cancel(editor_module::result& result, bool can_reactivate=false);
     void            update_matches(bool restrict=false);
-    void            update_len();
+    void            update_len(unsigned int needle_len);
     void            update_layout();
     void            update_top();
     void            update_display();

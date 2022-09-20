@@ -920,7 +920,7 @@ void selectcomplete_impl::on_matches_changed(const context& context, const line_
     // matches were initially expanded with "g" matching ".git" and "getopt\"
     // but only an explicit wildcard (e.g. "*g") should accept ".git".
     m_needle = needle;
-    update_len();
+    update_len(m_needle.length());
 }
 
 //------------------------------------------------------------------------------
@@ -1164,15 +1164,15 @@ void selectcomplete_impl::update_matches(bool restrict)
 }
 
 //------------------------------------------------------------------------------
-void selectcomplete_impl::update_len()
+void selectcomplete_impl::update_len(unsigned int needle_len)
 {
     m_len = 0;
 
     if (m_index < m_matches.get_match_count())
     {
         size_t len = strlen(m_matches.get_match(m_index));
-        if (len > m_needle.length())
-            m_len = len - m_needle.length();
+        if (len > needle_len)
+            m_len = len - needle_len;
     }
 }
 
@@ -1690,6 +1690,7 @@ void selectcomplete_impl::insert_match(int final)
         }
     }
 
+    unsigned int needle_len = 0;
     if (final)
     {
         int nontrivial_lcd = __compare_match(const_cast<char*>(m_needle.c_str()), match);
@@ -1763,13 +1764,18 @@ void selectcomplete_impl::insert_match(int final)
     else
     {
         m_buffer->insert(qs);
-        m_point = m_anchor + strlen(qs) + m_needle.length();
+        m_point = m_anchor + strlen(qs);
+        const int cmp_len = str_compare(str_iter(m_needle), str_iter(m_buffer->get_buffer() + m_point, m_buffer->get_length() - m_point));
+        if (cmp_len == m_needle.length())
+            needle_len = cmp_len;
     }
+
+    m_point += needle_len;
 
     m_buffer->set_cursor(m_point);
     m_buffer->end_undo_group();
 
-    update_len();
+    update_len(needle_len);
     m_inserted = true;
 
     const int botlin = _rl_vis_botlin;
