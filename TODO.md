@@ -7,7 +7,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
-- Match filtering e.g. by `clink.onfiltermatches()` is skipped if the input matches only one completion.
 
 ## Low Priority
 - <kbd>Ctrl</kbd>-<kbd>Q</kbd> then <kbd>Esc</kbd> or <kbd>Ctrl</kbd>-<kbd>M</kbd> each behave incorrectly (but <kbd>Ctrl</kbd>-<kbd>J</kbd> or <kbd>Enter</kbd> behave correctly).
