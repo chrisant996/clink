@@ -78,6 +78,7 @@ public:
     virtual int             get_suppress_quoting() const override;
     virtual int             get_word_break_position() const override;
     virtual bool            match_display_filter(const char* needle, char** matches, match_display_filter_entry*** filtered_matches, display_filter_flags flags, bool* old_filtering=nullptr) const override;
+    virtual bool            filter_matches(char** matches, char completion_type, bool filename_completion_desired) const override;
 
     void                    set_word_break_position(int position);
     void                    set_regen_blocked();

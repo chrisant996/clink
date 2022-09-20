@@ -977,6 +977,8 @@ void selectcomplete_impl::cancel(editor_module::result& result, bool can_reactiv
     reset_generate_matches();
 
     update_display();
+
+    m_matches.reset();
 }
 
 //------------------------------------------------------------------------------
@@ -989,6 +991,7 @@ void selectcomplete_impl::update_matches(bool restrict)
     if (restrict)
     {
         __set_completion_defaults('%');
+        rl_completion_type = '!';
 
         int found_quote = 0;
         int quote_char = 0;
@@ -1007,6 +1010,7 @@ void selectcomplete_impl::update_matches(bool restrict)
     // Update matches.
     ::update_matches();
 
+    bool filtered = false;
     if (restrict)
     {
         // Update Readline modes based on the available completions.
@@ -1021,9 +1025,9 @@ void selectcomplete_impl::update_matches(bool restrict)
         m_matches.init_has_descriptions();
     }
 
-    // Perform match display filtering.
+    // Perform match display filtering (match_display_filter or the
+    // ondisplaymatches event).
     const display_filter_flags flags = display_filter_flags::selectable;
-    bool filtered = false;
     if (m_matches.get_matches()->match_display_filter(nullptr, nullptr, nullptr, flags))
     {
         if (matches* regen = maybe_regenerate_matches(m_needle.c_str(), flags))
@@ -1062,7 +1066,7 @@ void selectcomplete_impl::update_matches(bool restrict)
                 puts("-- SELECTCOMPLETE MATCH_DISPLAY_FILTER");
                 if (filtered_matches && filtered_matches[0])
                 {
-                    // Skip [0]; Readline's expects matches start at [1].
+                    // Skip [0]; Readline expects matches start at [1].
                     str<> tmp;
                     while (*(++filtered_matches))
                     {
@@ -1077,6 +1081,45 @@ void selectcomplete_impl::update_matches(bool restrict)
             }
 #endif
         }
+    }
+
+    // Perform match filtering (the onfiltermatches event).
+    if (m_matches.get_match_count() &&
+        m_matches.get_matches()->filter_matches(nullptr, rl_completion_type, rl_filename_completion_desired))
+    {
+        // Build char** array for filtering.
+        const unsigned int count = m_matches.get_match_count();
+        char** matches = (char**)malloc((count + 2) * sizeof(char*));
+        matches[0] = _rl_savestring(""); // Placeholder for lcd; required so that _rl_free_match_list frees the real matches.
+        for (unsigned int i = 0; i < count;)
+        {
+            const char* text = m_matches.get_match(i);
+            const char* disp = m_matches.get_match_display(i);
+            const char* desc = m_matches.get_match_description(i);
+            const size_t packed_size = calc_packed_size(text, disp, desc);
+            char* buffer = static_cast<char*>(malloc(packed_size));
+            pack_match(buffer, packed_size, text, m_matches.get_match_type(i), disp, desc, m_matches.get_match_append_char(i), m_matches.get_match_flags(i), nullptr, false);
+            matches[++i] = buffer;
+        }
+        matches[count + 1] = nullptr;
+
+        // Get filtered matches.
+        create_matches_lookaside(matches);
+        m_matches.get_matches()->filter_matches(matches, rl_completion_type, rl_filename_completion_desired);
+
+        // Use filtered matches.
+        m_matches.set_alt_matches(matches, true);
+        filtered = true;
+
+#ifdef DEBUG
+        if (dbg_get_env_int("DEBUG_FILTER"))
+        {
+            puts("-- SELECTCOMPLETE FILTER_MATCHES");
+            for (unsigned int i = 1; i <= count; ++i)
+                printf("match '%s'\n", matches[i]);
+            puts("-- DONE");
+        }
+#endif
     }
 
     // Determine the lcd.

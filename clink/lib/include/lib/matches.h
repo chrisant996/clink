@@ -190,6 +190,7 @@ public:
     virtual int             get_suppress_quoting() const = 0;
     virtual int             get_word_break_position() const = 0;
     virtual bool            match_display_filter(const char* needle, char** matches, match_display_filter_entry*** filtered_matches, display_filter_flags flags, bool* old_filtering=nullptr) const = 0;
+    virtual bool            filter_matches(char** matches, char completion_type, bool filename_completion_desired) const = 0;
 
 private:
     friend class matches_iter;

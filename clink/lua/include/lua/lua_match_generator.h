@@ -15,7 +15,7 @@ public:
                     lua_match_generator(lua_state& state);
     virtual         ~lua_match_generator();
 
-    void            filter_matches(char** matches, char completion_type, bool filename_completion_desired);
+    virtual bool    filter_matches(char** matches, char completion_type, bool filename_completion_desired) override;
 
 private:
     virtual bool    generate(const line_states& lines, match_builder& builder, bool old_filtering=false) override;

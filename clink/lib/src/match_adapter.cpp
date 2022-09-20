@@ -11,6 +11,12 @@
 #include <core/str_compare.h>
 #include <terminal/ecma48_iter.h>
 
+extern "C" {
+#include <readline/readline.h>
+#include <readline/rldefs.h>
+#include <readline/rlprivate.h>
+};
+
 //------------------------------------------------------------------------------
 extern "C" char* __printable_part(char* text);
 
@@ -27,6 +33,7 @@ void match_adapter::cached_info::clear()
 match_adapter::~match_adapter()
 {
     free_filtered();
+    clear_alt();
 }
 
 //------------------------------------------------------------------------------
@@ -54,11 +61,13 @@ void match_adapter::set_regen_matches(const matches* matches)
 }
 
 //------------------------------------------------------------------------------
-void match_adapter::set_alt_matches(char** matches)
+void match_adapter::set_alt_matches(char** matches, bool own)
 {
+    free_filtered();
     clear_alt();
 
     m_alt_matches = matches;
+    m_alt_own = own;
 
     // Skip first alt match when counting.
     if (matches && matches[1])
@@ -97,6 +106,13 @@ void match_adapter::set_filtered_matches(match_display_filter_entry** filtered_m
 void match_adapter::init_has_descriptions()
 {
     m_cached.clear();
+}
+
+//------------------------------------------------------------------------------
+void match_adapter::reset()
+{
+    free_filtered();
+    clear_alt();
 }
 
 //------------------------------------------------------------------------------
@@ -412,6 +428,11 @@ void match_adapter::free_filtered()
 //------------------------------------------------------------------------------
 void match_adapter::clear_alt()
 {
+    if (m_alt_own)
+    {
+        _rl_free_match_list(m_alt_matches);
+        m_alt_own = false;
+    }
     m_alt_matches = nullptr;
     m_alt_cached.clear();
 }

@@ -1355,7 +1355,7 @@ extern "C" void display_matches(char** matches)
         }
 
         adapter = new match_adapter;
-        adapter->set_alt_matches(matches);
+        adapter->set_alt_matches(matches, false);
     }
 
     int presuf = 0;

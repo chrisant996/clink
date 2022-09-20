@@ -454,7 +454,7 @@ next:
 }
 
 //------------------------------------------------------------------------------
-void lua_match_generator::filter_matches(char** matches, char completion_type, bool filename_completion_desired)
+bool lua_match_generator::filter_matches(char** matches, char completion_type, bool filename_completion_desired)
 {
     lua_State* state = m_state.get_state();
     save_stack_top ss(state);
@@ -468,25 +468,30 @@ void lua_match_generator::filter_matches(char** matches, char completion_type, b
     lua_pushliteral(state, "onfiltermatches");
 
     if (m_state.pcall(1, 1) != 0)
-        return;
+        return false;
 
     bool onfiltermatches = (!lua_isnil(state, -1) && lua_toboolean(state, -1) != false);
     if (!onfiltermatches)
-        return;
+        return false;
+
+    // If the caller just wants to know whether onfiltermatches is active, then
+    // short circuit.
+    if (!matches)
+        return true;
 
     // Count matches; bail if 0.
     const bool only_lcd = matches[0] && !matches[1];
     int match_count = only_lcd ? 1 : 0;
     for (int i = 1; matches[i]; ++i, ++match_count);
     if (match_count <= 0)
-        return;
+        return false;
 
     // Get ready to call the filter function.
     lua_getglobal(state, "clink");
     lua_pushliteral(state, "_send_onfiltermatches_event");
     lua_rawget(state, -2);
     if (lua_isnil(state, -1))
-        return;
+        return false;
 
     // Convert matches to a Lua table (arg 1).
     str<> tmp;
@@ -520,11 +525,11 @@ void lua_match_generator::filter_matches(char** matches, char completion_type, b
 
     // Call the filter.
     if (m_state.pcall(3, 1) != 0)
-        return;
+        return false;
 
     // If nil is returned then no filtering occurred.
     if (lua_isnil(state, -1))
-        return;
+        return false;
 
     // Hash the filtered matches to be kept.
     str_unordered_set keep_typeless;
@@ -588,7 +593,7 @@ void lua_match_generator::filter_matches(char** matches, char completion_type, b
     *write = nullptr;
 
     if (!discarded)
-        return;
+        return false;
 
     extern void reset_generate_matches();
     reset_generate_matches();
@@ -599,4 +604,6 @@ void lua_match_generator::filter_matches(char** matches, char completion_type, b
         free(matches[0]);
         matches[0] = nullptr;
     }
+
+    return true;
 }

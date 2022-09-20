@@ -18,9 +18,10 @@ public:
     const matches*  get_matches() const;
     void            set_matches(const matches* matches);
     void            set_regen_matches(const matches* matches);
-    void            set_alt_matches(char** matches);
+    void            set_alt_matches(char** matches, bool own);
     void            set_filtered_matches(match_display_filter_entry** filtered_matches);
     void            init_has_descriptions();
+    void            reset();
 
     matches_iter    get_iter();
     void            get_lcd(str_base& out) const;
@@ -57,6 +58,7 @@ private:
     const matches*  m_matches = nullptr;
     const matches*  m_real_matches = nullptr;
     char**          m_alt_matches = nullptr;
+    bool            m_alt_own = false;
     match_display_filter_entry** m_filtered_matches = nullptr;
     mutable cached_info m_cached;
     mutable cached_info m_alt_cached;

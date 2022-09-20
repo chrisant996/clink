@@ -799,6 +799,19 @@ bool matches_impl::match_display_filter(const char* needle, char** matches, matc
 }
 
 //------------------------------------------------------------------------------
+bool matches_impl::filter_matches(char** matches, char completion_type, bool filename_completion_desired) const
+{
+    // TODO:  This doesn't really belong here.  But it's a convenient point to
+    // cobble together Lua (via the generators) and the matches.  It's strange
+    // to pass 'matches' into matches_impl, but the caller already has it and
+    // this way we don't have to figure out how to reproduce 'matches'
+    // accurately (it might have been produced by a pattern iterator) in order
+    // to generate an array to pass to onfiltermatches event callbacks.
+
+    return m_generator && m_generator->filter_matches(matches, completion_type, filename_completion_desired);
+}
+
+//------------------------------------------------------------------------------
 void matches_impl::reset()
 {
     delete m_dedup;

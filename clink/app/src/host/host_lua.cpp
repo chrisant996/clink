@@ -230,9 +230,9 @@ bool host_lua::call_lua_rl_global_function(const char* func_name, line_state* li
 }
 
 //------------------------------------------------------------------------------
-void host_lua::call_lua_filter_matches(char** matches, int completion_type, int filename_completion_desired)
+bool host_lua::call_lua_filter_matches(char** matches, int completion_type, int filename_completion_desired)
 {
-    m_generator.filter_matches(matches, char(completion_type), !!filename_completion_desired);
+    return m_generator.filter_matches(matches, char(completion_type), !!filename_completion_desired);
 }
 
 //------------------------------------------------------------------------------

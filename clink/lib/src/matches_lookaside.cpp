@@ -272,9 +272,9 @@ assert(false);
 //------------------------------------------------------------------------------
 int create_matches_lookaside(char** matches)
 {
-    // Bail if no list, or if list has no entries.
-    // Ignore lcd (the [0] entry); list is always >= 2 entries.
-    if (!matches || !matches[1])
+    // Bail if no list.
+    // Ignore lcd (the [0] entry).
+    if (!matches)
         return false;
 
 #ifdef DEBUG
