@@ -978,7 +978,8 @@ function coroutine.resume(co, ...) -- luacheck: ignore 122
         local err = tostring(ret[2])
         entry.error = err
         if settings.get("lua.debug") then
-            log.info("error in coroutine:  "..err)
+            local full_err = debug.traceback(co, err)
+            log.info("error in coroutine:  "..full_err)
         end
     end
 
