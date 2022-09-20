@@ -5,6 +5,7 @@
 #### v1.3.43
 
 - Added `clink.max_input_rows` setting that limits the number of screen rows to use for displaying the input line, scrolling as appropriate if the input line exceeds the limit.
+- When a coroutine error happens, write a Lua traceback to the log file.
 - Fixed the input line color when the command word is an alias _and_ a directory _and_ has an argmatcher (regression introduced in v1.3.40).
 - Fixed [#344](https://github.com/chrisant996/clink/issues/344); `history` prints UTF8 text incorrectly.
 - Fixed [#342](https://github.com/chrisant996/clink/issues/342); typing `foo.abc` doesn't recognize `foo.abc.cmd`.
