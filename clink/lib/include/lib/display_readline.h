@@ -9,6 +9,11 @@ extern void resize_readline_display(const char* prompt, const line_buffer& buffe
 extern unsigned int get_readline_display_top_offset();
 
 //------------------------------------------------------------------------------
+#define FACE_NORMAL     '0'
+#define FACE_STANDOUT   '1'
+#define FACE_INVALID    ((char)1)
+
+//------------------------------------------------------------------------------
 class display_accumulator
 {
 public:

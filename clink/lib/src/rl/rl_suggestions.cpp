@@ -80,6 +80,14 @@ bool suggestion_manager::can_suggest(const line_state& line)
     if (m_paused)
         return false;
 
+    if (RL_ISSTATE(RL_STATE_NSEARCH))
+    {
+        clear();
+        g_rl_buffer->set_need_draw();
+        g_rl_buffer->draw();
+        return false;
+    }
+
     assert(line.get_cursor() == g_rl_buffer->get_cursor());
     assert(line.get_length() == g_rl_buffer->get_length());
     assert(strncmp(line.get_line(), g_rl_buffer->get_buffer(), line.get_length()) == 0);

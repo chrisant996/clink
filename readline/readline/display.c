@@ -3434,6 +3434,10 @@ _rl_make_prompt_for_search (int pchar)
 {
   int len;
   char *pmt, *p;
+/* begin_clink_change */
+  const char* color;
+  int extra;
+/* end_clink_change */
 
   rl_save_prompt ();
 
@@ -3444,22 +3448,51 @@ _rl_make_prompt_for_search (int pchar)
   if (p == 0)
     {
       len = (rl_prompt && *rl_prompt) ? strlen (rl_prompt) : 0;
-      pmt = (char *)xmalloc (len + 2);
-      if (len)
-	strcpy (pmt, rl_prompt);
-      pmt[len] = pchar;
-      pmt[len+1] = '\0';
+/* begin_clink_change */
+      // pmt = (char *)xmalloc (len + 2);
+      // if (len)
+	// strcpy (pmt, rl_prompt);
+      // pmt[len] = pchar;
+      // pmt[len+1] = '\0';
+/* end_clink_change */
     }
   else
     {
       p++;
       len = strlen (p);
-      pmt = (char *)xmalloc (len + 2);
+/* begin_clink_change */
+      // pmt = (char *)xmalloc (len + 2);
+      // if (len)
+	// strcpy (pmt, p);
+      // pmt[len] = pchar;
+      // pmt[len+1] = '\0';
+/* end_clink_change */
+    }  
+
+/* begin_clink_change */
+  color = (_rl_display_message_color && 
+           *_rl_display_message_color) ? _rl_display_message_color : _normal_color;
+  extra = color ? _normal_color_len + strlen(color) + _normal_color_len : 0;
+  pmt = (char *)xmalloc (len + extra + 2);
+  if (extra)
+    {
       if (len)
-	strcpy (pmt, p);
+        {
+          strcpy (pmt, _normal_color);
+          strcpy (pmt + _normal_color_len, p ? p : rl_prompt);
+        }
+      strcpy (pmt + _normal_color_len + len, color);
+      pmt[extra + len - _normal_color_len] = pchar;
+      strcpy (pmt + extra + len + 1 - _normal_color_len, _normal_color);
+    }
+  else
+    {
+      if (len)
+        strcpy (pmt, p ? p : rl_prompt);
       pmt[len] = pchar;
       pmt[len+1] = '\0';
-    }  
+    }
+/* end_clink_change */
 
   /* will be overwritten by expand_prompt, called from rl_message */
   prompt_physical_chars = saved_physical_chars + 1;

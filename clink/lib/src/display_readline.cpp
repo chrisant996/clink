@@ -173,11 +173,6 @@ static void shift_cols(unsigned int col, int delta)
 
 
 //------------------------------------------------------------------------------
-#define FACE_NORMAL     '0'
-#define FACE_STANDOUT   '1'
-#define FACE_INVALID    ((char)1)
-
-//------------------------------------------------------------------------------
 struct display_line
 {
                         display_line() = default;

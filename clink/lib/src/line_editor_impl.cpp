@@ -12,6 +12,7 @@
 #include "reclassify.h"
 #include "cmd_tokenisers.h"
 #include "doskey.h"
+#include "display_readline.h"
 
 #include <core/base.h>
 #include <core/os.h>
@@ -984,10 +985,18 @@ void line_editor_impl::classify()
     word_classifications old_classifications(std::move(m_classifications));
     m_classifications.init(m_buffer.get_length(), &old_classifications);
 
-    // Use the full line; don't stop at the cursor.
-    commands commands = collect_commands();
-    m_classifier->classify(commands.get_linestates(m_buffer), m_classifications);
-    m_classifications.finish(is_showing_argmatchers());
+    if (RL_ISSTATE(RL_STATE_NSEARCH))
+    {
+        m_classifications.apply_face(0, m_buffer.get_length(), FACE_NORMAL);
+        m_classifications.finish(is_showing_argmatchers());
+    }
+    else
+    {
+        // Use the full line; don't stop at the cursor.
+        commands commands = collect_commands();
+        m_classifier->classify(commands.get_linestates(m_buffer), m_classifications);
+        m_classifications.finish(is_showing_argmatchers());
+    }
 
 #ifdef DEBUG
     if (dbg_get_env_int("DEBUG_CLASSIFY"))
