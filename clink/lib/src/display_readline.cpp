@@ -1355,6 +1355,9 @@ void display_manager::display()
         }
     }
 
+    if (!prompt)
+        prompt = "";
+
     // Let the application have a chance to do processing; for example to parse
     // the input line and update font faces for the line.
     if (rl_before_display_function)
