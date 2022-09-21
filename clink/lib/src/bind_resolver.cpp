@@ -158,8 +158,6 @@ void bind_resolver::reset()
     m_group = group;
     m_node_index = m_group;
 
-    m_key_len = 0;
-
     m_params.clear();
     m_param_accumulator = 0;
     m_param_len = 0;
@@ -204,8 +202,6 @@ bool bind_resolver::step_impl(unsigned char key)
         m_param_len = 0;
         m_pending_param = false;
     }
-
-    m_key_len++;
 
     m_node_index = next;
     return (node.child == 0);

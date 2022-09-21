@@ -739,7 +739,9 @@ bool line_editor_impl::update_input()
         if (key < 0)
             return true;
 
-        if (!m_bind_resolver.step(key))
+        // `quoted-insert` should always behave as though the key resolved a
+        // binding, to ensure that Readline gets to handle the key (even Esc).
+        if (!m_bind_resolver.step(key) && !rl_is_insert_next_callback_pending())
             return false;
     }
 

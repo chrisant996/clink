@@ -67,7 +67,6 @@ private:
     unsigned short      m_group = 1;
     bool                m_pending_input = false;
     unsigned char       m_tail = 0;
-    unsigned char       m_key_len = 0;
     bind_params         m_params;
     unsigned short      m_param_accumulator = 0;
     unsigned char       m_param_len = 0;

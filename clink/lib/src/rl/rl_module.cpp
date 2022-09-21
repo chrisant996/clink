@@ -2937,15 +2937,6 @@ void rl_module::on_input(const input& input, result& result, const context& cont
             ++len;
             is_inc_searching = 0;
         }
-
-        // Don't end quoted insert on an ESC unless terminal.raw_esc is enabled.
-        if (is_quoted_insert &&
-            !rl_is_insert_next_callback_pending() &&
-            _rl_get_inserted_char() == '\x1b' &&
-            !g_terminal_raw_esc.get())
-        {
-            rl_quoted_insert(1, 0);
-        }
     }
 
     g_result = nullptr;
