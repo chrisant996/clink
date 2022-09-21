@@ -257,6 +257,7 @@ rl_digit_argument (int ignore, int key)
 /* begin_clink_change */
       if (_rl_arg_overflow ())
         return 0;
+      if (RL_ISSTATE (RL_STATE_NUMERICARG))
 /* end_clink_change */
       rl_message ("(arg: %d) ", rl_arg_sign * rl_numeric_arg);
       return 0;
