@@ -242,6 +242,10 @@ rl_digit_argument (int ignore, int key)
   if (RL_ISSTATE (RL_STATE_CALLBACK))
     {
       _rl_arg_dispatch (_rl_argcxt, key);
+/* begin_clink_change */
+      if (_rl_arg_overflow ())
+        return 0;
+/* end_clink_change */
       rl_message ("(arg: %d) ", rl_arg_sign * rl_numeric_arg);
       return 0;
     }
@@ -286,6 +290,12 @@ _rl_arg_callback (_rl_arg_cxt cxt)
   r = _rl_arg_dispatch (cxt, c);
   if (r > 0)
     rl_message ("(arg: %d) ", rl_arg_sign * rl_numeric_arg);
+
+/* begin_clink_change */
+  if (_rl_arg_overflow ())
+    return (1);		/* EOF */
+/* end_clink_change */
+
   return (r != 1);
 }
 
