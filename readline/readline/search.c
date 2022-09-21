@@ -269,6 +269,12 @@ noninc_dosearch (char *string, int dir, int flags)
       rl_mark = rl_end;
     }
 
+/* begin_clink_change */
+  /* Unset the nsearch state before redisplay, so that the host knows the
+     accurate state for applying faces. */
+  RL_UNSETSTATE (RL_STATE_NSEARCH);
+/* end_clink_change */
+
   rl_clear_message ();
   return 1;
 }
