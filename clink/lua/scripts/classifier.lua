@@ -40,17 +40,38 @@ local function prepare()
 end
 
 --------------------------------------------------------------------------------
+local function log_cost(tick, classifier)
+    local elapsed = (os.clock() - tick) * 1000
+    local cost = classifier.cost
+    if not cost then
+        cost = { last=0, total=0, num=0, peak=0 }
+        classifier.cost = cost
+    end
+
+    cost.last = elapsed
+    cost.total = cost.total + elapsed
+    cost.num = cost.num + 1
+    if cost.peak < elapsed then
+        cost.peak = elapsed
+    end
+end
+
+--------------------------------------------------------------------------------
 -- Receives a table of line_state_lua/lua_word_classifications pairs.
 function clink._classify(commands)
     local impl = function ()
         clink.classifier_stopped = nil
 
         for _, classifier in ipairs(_classifiers) do
-            local ret = classifier:classify(commands)
-            if ret == true then
-                -- Remember the classifier function that stopped.
-                clink.classifier_stopped = classifier.classify
-                return true
+            if classifier.classify then
+                local tick = os.clock()
+                local ret = classifier:classify(commands)
+                log_cost(tick, classifier)
+                if ret == true then
+                    -- Remember the classifier function that stopped.
+                    clink.classifier_stopped = classifier.classify
+                    return true
+                end
             end
         end
 
@@ -91,6 +112,14 @@ function clink.classifier(priority)
 end
 
 --------------------------------------------------------------------------------
+local function pad_string(s, len)
+    if #s < len then
+        s = s..string.rep(" ", len - #s)
+    end
+    return s
+end
+
+--------------------------------------------------------------------------------
 function clink._diag_classifiers()
     if not settings.get("lua.debug") then
         return
@@ -99,16 +128,39 @@ function clink._diag_classifiers()
     local bold = "\x1b[1m"          -- Bold (bright).
     local norm = "\x1b[m"           -- Normal.
 
-    local any = false
+    local any_cost
+    local t = {}
+    local longest = 0
     for _,classifier in ipairs (_classifiers) do
         if classifier.classify then
             local info = debug.getinfo(classifier.classify, 'S')
             if info.short_src ~= "?" then
-                if not any then
-                    clink.print(bold.."classifiers:"..norm)
-                    any = true
+                local src = info.short_src..":"..info.linedefined
+                table.insert(t, { src=src, cost=classifier.cost })
+                if longest < #src then
+                    longest = #src
                 end
-                clink.print("  "..info.short_src..":"..info.linedefined)
+                if not any_cost and classifier.cost then
+                    any_cost = true
+                end
+            end
+        end
+    end
+
+    if t[1] then
+        if any_cost then
+            clink.print(string.format("%s%s%s      \x1b[36mlast      avg       peak%s",
+                    bold, pad_string("classifiers:", longest + 2), norm, norm))
+        else
+            clink.print(bold.."classifiers:"..norm)
+        end
+        for _,entry in ipairs (t) do
+            if entry.cost then
+                clink.print(string.format("  %s  %5u ms  %5u ms  %5u ms",
+                        pad_string(entry.src, longest),
+                        entry.cost.last, entry.cost.total / entry.cost.num, entry.cost.peak))
+            else
+                clink.print(string.format("  %s", entry.src))
             end
         end
     end
