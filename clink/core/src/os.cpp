@@ -13,6 +13,10 @@
 #include <assert.h>
 #include <share.h>
 
+#ifndef _MSC_VER
+#define USE_PORTABLE
+#endif
+
 //------------------------------------------------------------------------------
 #ifdef _MSC_VER
 extern "C" void __cdecl __acrt_errno_map_os_error(unsigned long const oserrno);

@@ -404,6 +404,7 @@ clink_dll("clink_app_dll")
         buildoptions("-fpermissive")
         buildoptions("-std=c++17")
         links("gdi32")
+        links("ole32")
 
 --------------------------------------------------------------------------------
 clink_exe("clink_app_exe")
@@ -471,6 +472,7 @@ clink_exe("clink_test")
         buildoptions("-fpermissive")
         buildoptions("-std=c++17")
         links("gdi32")
+        links("ole32")
         linkgroups("on")
 
 --------------------------------------------------------------------------------

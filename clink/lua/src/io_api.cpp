@@ -20,10 +20,6 @@
 #include <memory>
 #include <assert.h>
 
-#ifndef _MSC_VER
-#define USE_PORTABLE
-#endif
-
 //------------------------------------------------------------------------------
 struct popenrw_info;
 static popenrw_info* s_head = nullptr;
