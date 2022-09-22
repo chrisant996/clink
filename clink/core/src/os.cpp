@@ -115,7 +115,7 @@ static bool search_path(wstr_base& out, const wchar_t* file)
         if (len)
         {
             wpath.reserve(len);
-            len = GetEnvironmentVariableW(L"COMSPEC", wpath.data(), wpath.size());
+            len = GetEnvironmentVariableW(L"PATH", wpath.data(), wpath.size());
         }
     }
 
