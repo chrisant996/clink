@@ -686,22 +686,19 @@ void display_lines::apply_scroll_markers(unsigned int top, unsigned int bottom)
         {
             str_iter iter_top(d.m_chars, d.m_len);
             c = iter_top.next();
-            if (c)
+            while (c)
             {
-another:
                 int wc = clink_wcwidth(c);
                 if (!wc)
                 {
                     c = iter_top.next();
-                    if (!c)
-                        goto no_backward_indicator;
-                    goto another;
+                    continue;
                 }
 
                 int bytes = static_cast<int>(iter_top.get_pointer() - d.m_chars);
                 assert(bytes >= wc);
                 if (bytes < wc)
-                    goto no_backward_indicator;
+                    break;
 
                 unsigned int i = 0;
                 d.m_chars[i] = '<';
@@ -718,9 +715,7 @@ another:
                 while (--wc > 0)
                     d.appendspace();
                 d.appendnul();
-
-no_backward_indicator:
-                ;
+                break;
             }
         }
     }
@@ -1303,7 +1298,10 @@ void display_manager::display()
 #endif
 
     if (!rl_display_prompt)
-        rl_display_prompt = "";
+    {
+        // This assignment technically isn't safe, but Readline does it.
+        rl_display_prompt = const_cast<char *>("");
+    }
 
     // Max number of rows to use when displaying the input line.
     unsigned int max_rows = g_input_rows.get();

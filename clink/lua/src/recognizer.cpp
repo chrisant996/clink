@@ -16,6 +16,8 @@
 #include <lib/intercept.h>
 #include <lib/reclassify.h>
 
+#include <memory>
+#include <thread>
 #include <mutex>
 #include <shlwapi.h>
 

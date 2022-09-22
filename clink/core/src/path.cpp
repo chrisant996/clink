@@ -154,6 +154,11 @@ void normalise(str_base& in_out, int sep)
 }
 
 //------------------------------------------------------------------------------
+#if defined(__MINGW32__) || defined(__MINGW64__)
+# define RESTRICT
+#else
+# define RESTRICT __restrict
+#endif
 void normalise(char* in_out, int sep)
 {
     if (!sep)
@@ -172,7 +177,7 @@ void normalise(char* in_out, int sep)
         eat_extra_dots = (past > in_out && is_separator(in_out[0]) && is_separator(in_out[1]) && in_out[2] == '?');
         if (past >= in_out + 1 && is_separator(in_out[0]) && is_separator(in_out[1]))
             in_out += 2; // Preserve the 2 leading separators.
-        char* __restrict write = in_out;
+        char* RESTRICT write = in_out;
         while (in_out < past)
         {
             char c = *in_out;
@@ -195,7 +200,7 @@ void normalise(char* in_out, int sep)
 
     unsigned int piece_count = 0;
 
-    char* __restrict write = in_out;
+    char* RESTRICT write = in_out;
     int unc_offset = 0;
     if (is_separator(*write))
     {
@@ -205,9 +210,9 @@ void normalise(char* in_out, int sep)
             ++unc_offset;
     }
 
-    const char* const __restrict start = write - unc_offset;
-    const char* __restrict read = write;
-    for (; const char* __restrict next = next_element(read); read = next)
+    const char* const RESTRICT start = write - unc_offset;
+    const char* RESTRICT read = write;
+    for (; const char* RESTRICT next = next_element(read); read = next)
     {
         skip_sep(read);
 

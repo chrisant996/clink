@@ -12,7 +12,7 @@
 class terminal_in;
 class line_buffer;
 enum class mouse_input_type : unsigned char;
-typedef void (_cdecl sig_func_t)(int);
+typedef void (__cdecl sig_func_t)(int);
 
 extern line_buffer& buffer;
 

@@ -9,7 +9,7 @@ struct object
     virtual ~object() {}
 
 #if defined(USE_MEMORY_TRACKING) && defined(USE_RTTI)
-    void* _cdecl object::operator new(size_t size);
+    void* __cdecl object::operator new(size_t size);
 #endif
 };
 

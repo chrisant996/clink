@@ -454,7 +454,7 @@ void clink_shutdown_ctrlevent()
 }
 
 //------------------------------------------------------------------------------
-static void _cdecl dummy_display_matches_hook(char**, int, int)
+static void __cdecl dummy_display_matches_hook(char**, int, int)
 {
     // This exists purely to prevent rl_complete_internal from setting up
     // _rl_complete_sigcleanup and freeing matches out from under Clink code.

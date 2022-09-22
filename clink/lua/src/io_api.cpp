@@ -15,6 +15,7 @@
 #include <io.h>
 #include <stdio.h>
 #include <process.h>
+#include <share.h>
 #include <list>
 #include <memory>
 #include <assert.h>

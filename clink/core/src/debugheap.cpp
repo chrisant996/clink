@@ -958,31 +958,31 @@ extern "C" void dbgcheckfinal()
 #endif // USE_HEAP_STATS
 
 _Ret_notnull_ _Post_writable_byte_size_(size) DECLALLOCATOR
-void* _cdecl operator new(size_t size)
+void* __cdecl operator new(size_t size)
 {
     return dbgalloc_(size, memNew|memSkipOneFrame);
 }
 
-void _cdecl operator delete(void* pv)
+void __cdecl operator delete(void* pv)
 {
     if (pv)
         dbgfree_(pv _MEM_NEW);
 }
 
 _Ret_notnull_ _Post_writable_byte_size_(size) DECLALLOCATOR
-void* _cdecl operator new[](size_t size)
+void* __cdecl operator new[](size_t size)
 {
     return dbgalloc_(size, memNewArray|memSkipOneFrame);
 }
 
-void _cdecl operator delete[](void* pv)
+void __cdecl operator delete[](void* pv)
 {
     if (pv)
         dbgfree_(pv _MEM_NEWARRAY);
 }
 
 #ifdef USE_RTTI
-void* _cdecl object::operator new(size_t size)
+void* __cdecl object::operator new(size_t size)
 {
     return dbgalloc_(size, memObject|memNew);
 }

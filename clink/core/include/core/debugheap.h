@@ -19,19 +19,19 @@
 #ifdef __cplusplus
 
 _Ret_notnull_ _Post_writable_byte_size_(size) DECLALLOCATOR
-void* _cdecl operator new(size_t size);
-void _cdecl operator delete(void* size);
+void* __cdecl operator new(size_t size);
+void __cdecl operator delete(void* size);
 
 _Ret_notnull_ _Post_writable_byte_size_(size) DECLALLOCATOR
-void* _cdecl operator new[](size_t size);
-void _cdecl operator delete[](void* size);
+void* __cdecl operator new[](size_t size);
+void __cdecl operator delete[](void* size);
 
 #ifndef __PLACEMENT_NEW_INLINE
 #   define __PLACEMENT_NEW_INLINE
-inline void* _cdecl operator new(size_t, void* size) { return size; }
+inline void* __cdecl operator new(size_t, void* size) { return size; }
 #   if defined(_MSC_VER)
 #       if _MSC_VER >= 1200
-inline void _cdecl operator delete(void*, void*) { return; }
+inline void __cdecl operator delete(void*, void*) { return; }
 #       endif
 #   endif
 #endif

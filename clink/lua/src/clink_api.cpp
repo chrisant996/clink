@@ -33,6 +33,7 @@ extern "C" {
 #include <readline/history.h>
 }
 
+#include <share.h>
 #include <mutex>
 
 
@@ -999,7 +1000,7 @@ void add_cached_path_type(const char* full, int type)
 bool get_cached_path_type(const char* full, int& type)
 {
     std::lock_guard<std::recursive_mutex> lock(s_cached_path_type_mutex);
-    auto& iter = s_cached_path_type.find(full);
+    const auto& iter = s_cached_path_type.find(full);
     if (iter == s_cached_path_type.end())
         return false;
     type = iter->second;
@@ -1385,7 +1386,7 @@ static int set_install_version(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-#ifdef DEBUG
+#if defined(DEBUG) && defined(_MSC_VER)
 static int last_allocation_number(lua_State* state)
 {
     lua_pushinteger(state, dbggetallocnumber());
@@ -1475,7 +1476,7 @@ void clink_lua_initialise(lua_state& lua)
         { "is_cmd_command",         &is_cmd_command },
         { "_get_installation_type", &get_installation_type },
         { "_set_install_version",   &set_install_version },
-#ifdef DEBUG
+#if defined(DEBUG) && defined(_MSC_VER)
         { "last_allocation_number", &last_allocation_number },
 #endif
 #ifdef TRACK_LOADED_LUA_FILES

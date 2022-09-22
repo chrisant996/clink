@@ -40,7 +40,7 @@ static input_type get_input_type(int c)
 
 //------------------------------------------------------------------------------
 // State machine for finding command breaks.
-enum tokeniser_state  { sTxt, sSpc, sDig, sIn, sOut, sIn2, sOut2, sDIn, sDOut, sDIn2, sDOut2, sReAm, sAmDi, sBREAK, sARG, sVALID, sBAD, sMAX };
+enum tokeniser_state : int { sTxt, sSpc, sDig, sIn, sOut, sIn2, sOut2, sDIn, sDOut, sDIn2, sDOut2, sReAm, sAmDi, sBREAK, sARG, sVALID, sBAD, sMAX };
 static const tokeniser_state c_transition[][input_type::iMAX] =
 {   //                  iTxt,   iSpc,   iDig,   iIn,    iOut,   iAmp,   sPipe,
     /* sTxt */        { sTxt,   sSpc,   sTxt,   sIn,    sOut,   sBREAK, sBREAK, },
