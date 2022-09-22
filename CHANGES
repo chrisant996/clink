@@ -6,6 +6,7 @@
 
 - Added `clink.max_input_rows` setting that limits the number of screen rows to use for displaying the input line, scrolling as appropriate if the input line exceeds the limit.
 - When a coroutine error happens, write a Lua traceback to the log file.
+- The `clink-diagnostics` command now reports input line coloring classification costs when a numeric arg is given (e.g. <kbd>Alt</kbd>-<kbd>1</kbd>,<kbd>Ctrl</kbd>-<kbd>x</kbd>,<kbd>Ctrl</kbd>-<kbd>z</kbd>).
 - Fixed the input line color when the command word is an alias _and_ a directory _and_ has an argmatcher (regression introduced in v1.3.40).
 - Fixed how the inserted completion is highlighted while using `clink-select-complete` with the `match.substring` setting enabled.
 - Fixed Readline bugs in the numeric arg input state;
@@ -72,7 +73,7 @@
 - Added `clink.parseline()` to parse a string into one or more `line_state` objects.
 - Added `os.getdrivetype()` to get the drive type for a path; especially useful if your code needs to skip network paths.
 - Added `match_builder:setvolatile()` to force the matches to be used only once.  This makes it possible for match generators to produce different kinds of matches based on what has been typed, e.g. an email address match generator could list user names until `@` is typed, and then list domain names.
-- The `clink-diagnostics` command now lists registered argmatchers when the numeric arg > 1 (<kbd>Alt</kbd>-<kbd>2</kbd>,<kbd>Ctrl</kbd>-<kbd>x</kbd>,<kbd>Ctrl</kbd>-<kbd>r</kbd>).
+- The `clink-diagnostics` command now lists registered argmatchers when the numeric arg > 1 (<kbd>Alt</kbd>-<kbd>2</kbd>,<kbd>Ctrl</kbd>-<kbd>x</kbd>,<kbd>Ctrl</kbd>-<kbd>z</kbd>).
 - Rewrote the path parsing routines to properly respect UNC paths and `\\?\` syntax and `\\?\UNC\` syntax.
 - Fixed `clink.print(NONL, etc)` to not print a TAB character after a `NONL` that is the first argument.
 - Fixed [#329](https://github.com/chrisant996/clink/issues/329); file completions may be mistakenly marked as directories (regression introduced in v1.2.36; affects only backward compatibility mode).
