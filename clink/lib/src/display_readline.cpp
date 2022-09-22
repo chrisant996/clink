@@ -1514,7 +1514,7 @@ void display_manager::display()
         }
 
         // Erase any surplus lines and update the bottom line counter.
-        //if (new_botlin < _rl_vis_botlin)
+        if (new_botlin < _rl_vis_botlin)
         {
             _rl_cr();
             _rl_last_c_pos = 0;
