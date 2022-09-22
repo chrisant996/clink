@@ -1456,16 +1456,21 @@ void display_manager::display()
 
         if (modmark)
         {
-            rl_fwrite_function(_rl_out_stream, _rl_display_modmark_color, strlen(_rl_display_modmark_color));
-            rl_fwrite_function(_rl_out_stream, "*\x1b[m", 4);
+            if (_rl_display_modmark_color)
+                rl_fwrite_function(_rl_out_stream, _rl_display_modmark_color, strlen(_rl_display_modmark_color));
+
+            rl_fwrite_function(_rl_out_stream, "*", 1);
+
+            if (_rl_display_modmark_color)
+                rl_fwrite_function(_rl_out_stream, "\x1b[m", 3);
         }
 
-        if (is_message)
+        if (is_message && _rl_display_message_color)
             rl_fwrite_function(_rl_out_stream, _rl_display_message_color, strlen(_rl_display_message_color));
 
         rl_fwrite_function(_rl_out_stream, prompt, strlen(prompt));
 
-        if (is_message)
+        if (is_message && _rl_display_message_color)
             rl_fwrite_function(_rl_out_stream, "\x1b[m", 3);
 
         _rl_last_c_pos = m_last_prompt_line_width;
