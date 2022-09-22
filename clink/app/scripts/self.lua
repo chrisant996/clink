@@ -455,7 +455,7 @@ local testbed = clink.argmatcher()
 local function hide_tests()
     clink.onfiltermatches(function(matches)
         local keep = {}
-        for i, m in ipairs(matches) do
+        for _, m in ipairs(matches) do
             if m.match ~= "drawtest" and m.match ~= "testbed" then
                 table.insert(keep, m)
             end
