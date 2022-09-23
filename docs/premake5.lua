@@ -67,7 +67,7 @@ local function generate_file(source_path, out, weblinks)
 
                 local n, hopen, hclose
                 if weblinks then
-                    n = line:match('<a name="([^"]+)"')
+                    n = line:match('^<p><a name="([^"]+)"')
                     hopen, hclose = line:match('^( *<h[0-9][^>]*>)(.+)$')
                     if n then
                         last_name = n
