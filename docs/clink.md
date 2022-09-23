@@ -353,13 +353,14 @@ Name                         | Default [*](#alternatedefault) | Description
 <a name="color_cmd"></a>`color.cmd` | `bold` [*](#alternatedefault) | Used when displaying shell (CMD.EXE) command completions, and in the input line when `clink.colorize_input` is enabled.
 <a name="color_cmdredir"></a>`color.cmdredir` | `bold` [*](#alternatedefault) | The color for redirection symbols (`<`, `>`, `>&`) in the input line when `clink.colorize_input` is enabled.
 <a name="color_cmdsep"><a/>`color.cmdsep` | `bold` [*](#alternatedefault) | The color for command separators (`&`, `\|`) in the input line when `clink.colorize_input` is enabled.
-`color.comment_row`          | `bright white on cyan` [*](#alternatedefault) | The color for the comment row in the `clink-select-complete` command.  The comment row shows the "and <em>N</em> more matches" or "rows <em>X</em> to <em>Y</em> of <em>Z</em>" messages.
+`color.comment_row`          | `bright white on cyan` [*](#alternatedefault) | The color for the comment row.  During `clink-select-complete` the comment row shows the "and <em>N</em> more matches" or "rows <em>X</em> to <em>Y</em> of <em>Z</em>" messages.  It can also show how history expansion will be applied at the cursor.
 `color.description`          | `bright cyan` [*](#alternatedefault) | Used when displaying descriptions for match completions.
 <a name="color_doskey"></a>`color.doskey` | `bright cyan` [*](#alternatedefault) | Used when displaying doskey alias completions, and in the input line when `clink.colorize_input` is enabled.
 <a name="color_executable"></a>`color.executable` | [*](#alternatedefault) | When set, this is the color in the input line for a command word that is recognized as an executable file when `clink.colorize_input` is enabled.
 <a name="color_filtered"></a>`color.filtered` | `bold` [*](#alternatedefault) | The default color for filtered completions (see [Filtering the Match Display](#filteringthematchdisplay)).
 <a name="color_flag"></a>`color.flag` | `default` [*](#alternatedefault) | The color for flags in the input line when `clink.colorize_input` is enabled.
 <a name="color_hidden"></a>`color.hidden` | [*](#alternatedefault) | Used when displaying file completions with the "hidden" attribute.
+`color.histexpand`           | [*](#alternatedefault) | The color for history expansions in the input line when `clink.colorize_input` is enabled.  If this color is not set or `history.auto_expand` is disabled or `history.expand_mode` is off, then history expansions are not colored.
 `color.horizscroll`          | [*](#alternatedefault) | The color for the `<` or `>` horizontal scroll indicators when Readline's `horizontal-scroll-mode` variable is set.
 <a name="color_input"></a>`color.input` | [*](#alternatedefault) | The color for input line text. Note that when `clink.colorize_input` is disabled, the entire input line is displayed using `color.input`.
 `color.interact`             | `bold`  | The color for prompts such as a pager's `--More?--` prompt.
@@ -385,6 +386,7 @@ Name                         | Default [*](#alternatedefault) | Description
 `exec.space_prefix`          | True    | If the line begins with whitespace then Clink bypasses executable matching (`exec.path`) and will do normal files matching instead.
 `files.hidden`               | True    | Includes or excludes files with the "hidden" attribute set when generating file lists.
 `files.system`               | False   | Includes or excludes files with the "system" attribute set when generating file lists.
+`history.auto_expand`        | True    | When enabled, history expansion is automatically performed when a command line is accepted (by pressing <kbd>Enter</kbd>).  When disabled, history expansion is performed only when a corresponding expansion command is used (such as `clink-expand-history` <kbd>Alt</kbd>-<kbd>^</kbd>, or `clink-expand-line` <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>E</kbd>).
 `history.dont_add_to_history_cmds` | `exit history` | List of commands that aren't automatically added to the history. Commands are separated by spaces, commas, or semicolons. Default is `exit history`, to exclude both of those commands.
 `history.dupe_mode`          | `erase_prev` | If a line is a duplicate of an existing history entry Clink will erase the duplicate when this is set to `erase_prev`. Setting it to `ignore` will not add duplicates to the history, and setting it to `add` will always add lines (except when overridden by `history.sticky_search`).
 `history.expand_mode`        | `not_quoted` | The `!` character in an entered line can be interpreted to introduce words from the history. This can be enabled and disable by setting this value to `on` or `off`. Values of `not_squoted`, `not_dquoted`, or `not_quoted` will skip any `!` character quoted in single, double, or both quotes respectively.
@@ -2567,7 +2569,7 @@ Specifier | Expands To
 
 Clink uses Readline's [History library](https://tiswww.cwru.edu/php/chet/readline/history.html) to
 add history expansion capabilities.  If these are undesirable, they can be turned off by running
-`clink set history.expand_mode off`.
+`clink set history.auto_expand off` or `clink set history.expand_mode off`.
 
 The History library provides a history expansion feature that is similar
 to the history expansion provided by `csh`.  This section describes the
