@@ -18,12 +18,35 @@ local prompt_filter_current = nil       -- Current running prompt filter.
 local prompt_filter_coroutines = {}     -- Up to one coroutine per prompt filter, with cached return value.
 
 --------------------------------------------------------------------------------
+local bold = "\x1b[1m"                  -- Bold (bright).
+local header = "\x1b[36m"               -- Cyan.
+local norm = "\x1b[m"                   -- Normal.
+
+--------------------------------------------------------------------------------
 local function set_current_prompt_filter(filter)
     prompt_filter_current = filter
     clink._set_coroutine_context(filter)
 end
 
 
+
+--------------------------------------------------------------------------------
+local function log_cost(tick, filter, func_name)
+    local elapsed = (os.clock() - tick) * 1000
+    local tname = "cost"..func_name
+    local cost = filter[tname]
+    if not cost then
+        cost = { last=0, total=0, num=0, peak=0 }
+        filter[tname] = cost
+    end
+
+    cost.last = elapsed
+    cost.total = cost.total + elapsed
+    cost.num = cost.num + 1
+    if cost.peak < elapsed then
+        cost.peak = elapsed
+    end
+end
 
 --------------------------------------------------------------------------------
 local function _do_filter_prompt(type, prompt, rprompt, line, cursor, final)
@@ -51,7 +74,9 @@ local function _do_filter_prompt(type, prompt, rprompt, line, cursor, final)
             local func
             func = filter[filter_func_name]
             if func or #type == 0 then
+                local tick = os.clock()
                 filtered, onwards = func(filter, prompt)
+                log_cost(tick, filter, filter_func_name)
                 if filtered ~= nil then
                     prompt = filtered
                     if onwards == false then return prompt, rprompt end
@@ -60,7 +85,9 @@ local function _do_filter_prompt(type, prompt, rprompt, line, cursor, final)
 
             func = filter[right_filter_func_name]
             if func then
+                local tick = os.clock()
                 filtered, onwards = func(filter, rprompt)
+                log_cost(tick, filter, right_filter_func_name)
                 if filtered ~= nil then
                     rprompt = filtered
                     if onwards == false then return prompt, rprompt end
@@ -174,22 +201,71 @@ function clink.prompt.register_filter(filter, priority)
 end
 
 --------------------------------------------------------------------------------
-local function print_filter_src(type)
-    local any = false
+local function pad_string(s, len)
+    if #s < len then
+        s = s..string.rep(" ", len - #s)
+    end
+    return s
+end
+
+--------------------------------------------------------------------------------
+local function max_len(a, b)
+    a = a or b or 0
+    b = b or a or 0
+    return a > b and a or b
+end
+
+--------------------------------------------------------------------------------
+local function collect_filter_src(t, type)
+    local tsub = {}
+    t[type] = tsub
+
+    local any_cost
+    local longest = longest or 24
     for _,prompt in ipairs (prompt_filters) do
         local func = prompt[type]
         if func then
             local info = debug.getinfo(func, 'S')
             if info.short_src ~= "?" then
-                if not any then
-                    clink.print("  "..type..":")
-                    any = true
+                local src = info.short_src..":"..info.linedefined
+                local cost = prompt["cost"..type]
+                table.insert(tsub, { src=src, cost=cost })
+                if longest < #src then
+                    longest = #src
                 end
-                clink.print("", info.short_src..":"..info.linedefined)
+                if not any_cost and cost then
+                    any_cost = true
+                end
             end
         end
     end
-    return any
+    tsub.any_cost = any_cost
+    t.longest = max_len(t.longest, longest)
+end
+
+--------------------------------------------------------------------------------
+local function print_filter_src(t, type)
+    local tsub = t[type]
+
+    if tsub[1] then
+        local longest = t.longest
+        if tsub.any_cost then
+            clink.print(string.format("  %s           %slast    avg     peak%s",
+                    pad_string(type..":", longest), header, norm))
+        else
+            clink.print("  "..type..":")
+        end
+        for _,entry in ipairs (tsub) do
+            if entry.cost then
+                clink.print(string.format("        %s  %4u ms %4u ms %4u ms",
+                        pad_string(entry.src, longest),
+                        entry.cost.last, entry.cost.total / entry.cost.num, entry.cost.peak))
+            else
+                clink.print(string.format("        %s", entry.src))
+            end
+        end
+        return true
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -198,16 +274,19 @@ function clink._diag_prompts()
         return
     end
 
-    local bold = "\x1b[1m"          -- Bold (bright).
-    local norm = "\x1b[m"           -- Normal.
-
     clink.print(bold.."prompt filters:"..norm)
 
+    local t = {}
+    collect_filter_src(t, "filter")
+    collect_filter_src(t, "rightfilter")
+    collect_filter_src(t, "transientfilter")
+    collect_filter_src(t, "transientrightfilter")
+
     local any = false
-    any = print_filter_src("filter") or any
-    any = print_filter_src("rightfilter") or any
-    any = print_filter_src("transientfilter") or any
-    any = print_filter_src("transientrightfilter") or any
+    any = print_filter_src(t, "filter") or any
+    any = print_filter_src(t, "rightfilter") or any
+    any = print_filter_src(t, "transientfilter") or any
+    any = print_filter_src(t, "transientrightfilter") or any
 
     if not any then
         clink.print("  no prompt filters registered")

@@ -126,11 +126,12 @@ function clink._diag_classifiers()
     end
 
     local bold = "\x1b[1m"          -- Bold (bright).
+    local header = "\x1b[36m"       -- Cyan.
     local norm = "\x1b[m"           -- Normal.
 
     local any_cost
     local t = {}
-    local longest = 0
+    local longest = 24
     for _,classifier in ipairs (_classifiers) do
         if classifier.classify then
             local info = debug.getinfo(classifier.classify, 'S')
@@ -149,14 +150,15 @@ function clink._diag_classifiers()
 
     if t[1] then
         if any_cost then
-            clink.print(string.format("%s%s%s      \x1b[36mlast      avg       peak%s",
-                    bold, pad_string("classifiers:", longest + 2), norm, norm))
+            clink.print(string.format("%s%s%s     %slast    avg     peak%s",
+                    bold, pad_string("classifiers:", longest + 2), norm,
+                    header, norm))
         else
             clink.print(bold.."classifiers:"..norm)
         end
         for _,entry in ipairs (t) do
             if entry.cost then
-                clink.print(string.format("  %s  %5u ms  %5u ms  %5u ms",
+                clink.print(string.format("  %s  %4u ms %4u ms %4u ms",
                         pad_string(entry.src, longest),
                         entry.cost.last, entry.cost.total / entry.cost.num, entry.cost.peak))
             else
