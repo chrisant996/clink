@@ -322,7 +322,7 @@ local function classify_handler(arg_index, word, word_index, line_state, classif
             -- show up in a uniform color.
             classify_to_end(idx, line_state, classify, "o") --other
             return true
-        elseif info.type == "integer" then
+        elseif info.type == "int" then
             classify:classifyword(idx, "o") --other
         else
             local t = "n" --none
