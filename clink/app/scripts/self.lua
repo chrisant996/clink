@@ -152,10 +152,11 @@ local function color_handler(word_index, line_state, classify)
     while i <= line_state:getwordcount() do
         local word = line_state:getword(i)
 
-        include_clear = false
-
-        if word ~= "" and word ~= "sgr" then
-            include_sgr = false
+        if word ~= "" then
+            include_clear = false
+            if word ~= "sgr" then
+                include_sgr = false
+            end
         end
 
         if word == "on" then
