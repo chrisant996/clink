@@ -1771,7 +1771,6 @@ test_left:
     }
 
     rl_puts_face_func(d->m_chars + lind, d->m_faces + lind, rind - lind);
-    rl_fwrite_function(_rl_out_stream, "\x1b[m", 3);
 
     _rl_last_c_pos = rcol;
 
