@@ -174,6 +174,15 @@ static setting_str g_exclude_from_history_cmds(
     "\"exit history\", to exclude both of those commands.",
     "exit history");
 
+setting_bool g_history_autoexpand(
+    "history.auto_expand",
+    "Perform history expansion automatically",
+    "When enabled, history expansion is automatically performed when a command\n"
+    "line is accepted (by pressing Enter).  When disabled, history expansion is\n"
+    "performed only when a corresponding expansion command is used (such as\n"
+    "'clink-expand-history' Alt-^, or 'clink-expand-line' Alt-Ctrl-E).",
+    true);
+
 static setting_bool g_reload_scripts(
     "lua.reload_scripts",
     "Reload scripts on every prompt",
@@ -1075,7 +1084,8 @@ skip_errorlevel:
 
         // Handle history event expansion.  expand() is a static method,
         // so can call it even when m_history is nullptr.
-        if (history->expand(out.c_str(), out) == history_db::expand_print)
+        if (g_history_autoexpand.get() &&
+            history->expand(out.c_str(), out) == history_db::expand_print)
         {
             puts(out.c_str());
             out.clear();
