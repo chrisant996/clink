@@ -868,7 +868,7 @@ In addition to command names, Readline allows keys to be bound to a string that 
 
 <p>
 <dt>Key names</dt>
-Key names can be a _name_ or a _sequence_.  Names are not quoted, and sequences are quoted.
+Key names can be a <em>name</em> or a <em>sequence</em>.  Names are not quoted, and sequences are quoted.
 </p>
 
 _Names_ can be used to refer to simple keys like `Space`, `Return`, `Tab`, letters and digits (`A`, `b`, `1`, ...), and most punctuation (`!`, `@`, `.`, `_`, ...).  Names can also include modifier prefixes `C-` or `Control-` for the <kbd>Ctrl</kbd> key, or `M-` or `Meta-` for the Meta or <kbd>Alt</kbd> key.  However, modifier prefixes don't work with simple key names; you can't use `C-Space`, instead a _sequence_ is needed for special keys like that.
