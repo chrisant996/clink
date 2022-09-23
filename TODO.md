@@ -9,10 +9,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Normal Priority
 
 ## Low Priority
-- Show history expansion under cursor?
-  - `history_expand_internal()` indicates the subtring that's been expanded.  But those details are not bubbled out yet.
-  - Need to stay responsive while expanding -- certain expansions can loop through the history list.
-- Option to only perform history expansion when explicitly invoked?
 - Collecting words currently happens in update_internal, but probably it also belongs in alternative_matches and/or update_matches:
   - If a `luafunc:` macro first does anything that alters the line buffer, and then invokes a completion command, then the collected words will be inaccurate.
 - Show time stamps in history popup?
