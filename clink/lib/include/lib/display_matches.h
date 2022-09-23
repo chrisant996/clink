@@ -43,10 +43,6 @@ int append_filename(char* to_print, const char* full_pathname, int prefix_bytes,
 void pad_filename(int len, int pad_to_width, int selected);
 bool get_match_color(const char *f, match_type type, str_base& out);
 
-typedef void (*vstrlen_func_t)(const char* s, int len);
-int ellipsify_to_callback(const char* in, int limit, int expand_ctrl, vstrlen_func_t callback);
-int ellipsify(const char* in, int limit, str_base& out, bool expand_ctrl);
-
 void free_filtered_matches(match_display_filter_entry** filtered_matches);
 int printable_len(const char* match, match_type type);
 

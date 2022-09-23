@@ -11,6 +11,7 @@
 #include "doskey.h"
 #include "textlist_impl.h"
 #include "history_db.h"
+#include "ellipsify.h"
 
 #include "rl_suggestions.h"
 
@@ -83,7 +84,6 @@ extern editor_module::result* g_result;
 extern void host_cmd_enqueue_lines(std::list<str_moveable>& lines, bool hide_prompt, bool show_line);
 extern void host_get_app_context(int& id, str_base& binaries, str_base& profile, str_base& scripts);
 extern "C" int show_cursor(int visible);
-extern int ellipsify(const char* in, int limit, str_base& out, bool expand_ctrl);
 extern void set_suggestion(const char* line, unsigned int endword_offset, const char* suggestion, unsigned int offset);
 extern "C" void host_clear_suggestion();
 

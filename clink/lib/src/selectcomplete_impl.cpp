@@ -12,6 +12,7 @@
 #include "matches_lookaside.h"
 #include "display_matches.h"
 #include "column_widths.h"
+#include "ellipsify.h"
 #include "match_adapter.h"
 
 #include <core/base.h>

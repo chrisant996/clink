@@ -16,6 +16,7 @@
 #include "rl_commands.h"
 #include "editor_module.h"
 #include "pager.h"
+#include "ellipsify.h"
 
 extern "C" {
 #include <compat/config.h>
@@ -32,7 +33,6 @@ extern int __complete_get_screenwidth(void);
 extern pager* g_pager;
 extern editor_module::result* g_result;
 extern setting_bool g_terminal_raw_esc;
-extern int ellipsify(const char* in, int limit, str_base& out, bool expand_ctrl);
 extern int read_key_direct(bool wait);
 extern int clink_is_signaled();
 
@@ -868,16 +868,6 @@ static void pad_with_spaces(str_base& str, unsigned int pad_to)
 //------------------------------------------------------------------------------
 static void append_key_macro(str_base& s, const char* macro, const int limit)
 {
-#ifdef USE_ASCII_ELLIPSIS
-    static const char ellipsis[] = "...";
-    const int ellipsis_len = 3;
-    const int ellipsis_cells = 3;
-#else
-    static const char ellipsis[] = "\xe2\x80\xa6";
-    const int ellipsis_len = 3;
-    const int ellipsis_cells = 1;
-#endif
-
     const int limit_ellipsis = limit - ellipsis_cells;
     int truncate_len = 0;
     unsigned int count = 0;

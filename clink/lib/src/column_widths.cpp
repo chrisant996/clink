@@ -9,6 +9,7 @@
 #include "matches_lookaside.h"
 #include "match_adapter.h"
 #include "column_widths.h"
+#include "ellipsify.h"
 
 #include <core/base.h>
 #include <core/debugheap.h>
@@ -26,10 +27,7 @@ int __stat_char(const char *filename, char match_type);
 #include <vector>
 #include <assert.h>
 
-#define ELLIPSIS_LEN 3
-
-typedef void (*vstrlen_func_t)(const char* s, int len);
-int ellipsify_to_callback(const char* in, int limit, int expand_ctrl, vstrlen_func_t callback);
+#define ELLIPSIS_LEN ellipsis_len
 
 //------------------------------------------------------------------------------
 /* Information about filling a column.  */
