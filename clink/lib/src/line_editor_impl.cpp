@@ -28,11 +28,14 @@ extern "C" {
 #include <compat/config.h>
 #include <readline/readline.h>
 #include <readline/rlprivate.h>
+#include <readline/history.h>
 }
 
 //------------------------------------------------------------------------------
 extern setting_bool g_classify_words;
 extern setting_bool g_autosuggest_async;
+extern setting_bool g_history_autoexpand;
+extern setting_color g_color_histexpand;
 extern int g_suggestion_offset;
 
 extern "C" void host_clear_suggestion();
@@ -148,6 +151,40 @@ void set_prompt(const char* prompt, const char* rprompt, bool redisplay)
         return;
 
     s_editor->set_prompt(prompt, rprompt, redisplay);
+}
+
+//------------------------------------------------------------------------------
+static void classify_history_expansions(const line_buffer& buffer, word_classifications& classifications)
+{
+    history_expansion* list = nullptr;
+    const char* color = g_color_histexpand.get();
+    if (color && *color && g_history_autoexpand.get())
+    {
+        // Counteract auto-suggestion, but restore it afterwards.
+        char* p = const_cast<char*>(buffer.get_buffer());
+        rollback<char> rb(p[buffer.get_length()], '\0');
+
+        {
+            // The history expansion library can have side effects on the global
+            // history variables.  Must save and restore them.
+            save_history_expansion_state();
+            // Reset history offset, for consistency with history_db::expand().
+            // BUGBUG: neither of them should reset the history offset...!
+            using_history();
+            // Perform history expansion.
+            char* output = nullptr;
+            history_return_expansions = true;
+            history_expand(p, &output);
+            restore_history_expansion_state();
+        }
+
+        list = history_expansions;
+        history_expansions = nullptr;
+
+        for (const history_expansion* e = list; e; e = e->next)
+            classifications.apply_face(e->start, e->len, FACE_HISTEXPAND, true);
+    }
+    set_history_expansions(list);
 }
 
 
@@ -997,6 +1034,7 @@ void line_editor_impl::classify()
         // Use the full line; don't stop at the cursor.
         commands commands = collect_commands();
         m_classifier->classify(commands.get_linestates(m_buffer), m_classifications);
+        classify_history_expansions(m_buffer, m_classifications);
         m_classifications.finish(is_showing_argmatchers());
     }
 

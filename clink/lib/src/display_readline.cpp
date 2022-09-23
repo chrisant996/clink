@@ -10,6 +10,7 @@
 
 #include "display_readline.h"
 #include "line_buffer.h"
+#include "ellipsify.h"
 
 #include <core/base.h>
 #include <core/os.h>
@@ -78,6 +79,9 @@ static setting_int g_input_rows(
     0);
 
 extern setting_bool g_debug_log_terminal;
+extern setting_bool g_history_autoexpand;
+extern setting_color g_color_comment_row;
+extern setting_color g_color_histexpand;
 
 //------------------------------------------------------------------------------
 static void clear_to_end_of_screen()
@@ -307,6 +311,8 @@ public:
     void                horz_parse(unsigned int prompt_botlin, unsigned int col, const char* buffer, unsigned int point, unsigned int len, const display_lines& ref);
     void                apply_scroll_markers(unsigned int top, unsigned int bottom);
     void                compensate_force_wrap();
+    void                set_comment_row(str_moveable&& s);
+    void                clear_comment_row();
     void                swap(display_lines& d);
     void                clear();
 
@@ -315,6 +321,7 @@ public:
     unsigned int        width() const;
     bool                can_show_rprompt() const;
     bool                is_horz_scrolled() const;
+    const char*         comment_row() const;
 
     unsigned int        vpos() const { return m_vpos; }
     unsigned int        cpos() const { return m_cpos; }
@@ -331,6 +338,7 @@ private:
     unsigned int        m_cpos = 0;
     unsigned int        m_horz_start = 0;
     bool                m_horz_scroll = false;
+    str_moveable        m_comment_row;
 };
 
 //------------------------------------------------------------------------------
@@ -781,6 +789,18 @@ void display_lines::compensate_force_wrap()
 }
 
 //------------------------------------------------------------------------------
+void display_lines::set_comment_row(str_moveable&& s)
+{
+    m_comment_row = std::move(s);
+}
+
+//------------------------------------------------------------------------------
+void display_lines::clear_comment_row()
+{
+    m_comment_row.clear();
+}
+
+//------------------------------------------------------------------------------
 void display_lines::swap(display_lines& d)
 {
     m_lines.swap(d.m_lines);
@@ -791,6 +811,7 @@ void display_lines::swap(display_lines& d)
     std::swap(m_cpos, d.m_cpos);
     std::swap(m_horz_start, d.m_horz_start);
     std::swap(m_horz_scroll, d.m_horz_scroll);
+    std::swap(m_comment_row, d.m_comment_row);
 }
 
 //------------------------------------------------------------------------------
@@ -805,6 +826,7 @@ void display_lines::clear()
     m_cpos = 0;
     m_horz_start = 0;
     m_horz_scroll = false;
+    m_comment_row.clear();
 }
 
 //------------------------------------------------------------------------------
@@ -841,6 +863,12 @@ bool display_lines::can_show_rprompt() const
 bool display_lines::is_horz_scrolled() const
 {
     return (m_horz_scroll && m_horz_start > 0);
+}
+
+//------------------------------------------------------------------------------
+const char* display_lines::comment_row() const
+{
+    return m_comment_row.c_str();
 }
 
 //------------------------------------------------------------------------------
@@ -1155,6 +1183,7 @@ public:
     void                on_new_line();
     void                end_prompt_lf();
     void                display();
+    void                set_history_expansions(history_expansion* list=nullptr);
     void                measure(measure_columns& mc);
 
 private:
@@ -1162,6 +1191,7 @@ private:
 
     display_lines       m_next;
     display_lines       m_curr;
+    history_expansion*  m_histexpand = nullptr;
     unsigned int        m_top = 0;      // Vertical scrolling; index to top displayed line.
     str_moveable        m_last_prompt_line;
     int                 m_last_prompt_line_width = -1;
@@ -1184,6 +1214,8 @@ void display_manager::clear()
 {
     m_next.clear();
     m_curr.clear();
+    // m_histexpand is only cleared in on_new_line().
+    // m_top is only cleared in on_new_line().
     m_last_prompt_line.clear();
     m_last_prompt_line_width = -1;
     m_last_prompt_line_botlin = -1;
@@ -1213,7 +1245,10 @@ void display_manager::on_new_line()
 {
     clear();
     if (!rl_end)
+    {
         m_top = 0;
+        history_free_expansions(&m_histexpand);
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -1221,6 +1256,16 @@ void display_manager::end_prompt_lf()
 {
     // FUTURE: When in a scrolling mode (vert or horz), reprint the entire
     // prompt and input line without the scroll constraints?
+
+    // Erase comment row if present.
+    if (m_curr.comment_row())
+    {
+        _rl_move_vert(_rl_vis_botlin + 1);
+        _rl_cr();
+        _rl_last_c_pos = 0;
+        _rl_clear_to_eol(0);
+        m_curr.clear_comment_row();
+    }
 
     // If the cursor is the only thing on an otherwise-blank last line,
     // compensate so we don't print an extra CRLF.
@@ -1303,11 +1348,15 @@ void display_manager::display()
         rl_display_prompt = const_cast<char *>("");
     }
 
+    // Is history expansion preview desired?
+    const char* const color_histexpand = g_color_histexpand.get();
+    const bool want_histexpand_preview = (color_histexpand && *color_histexpand && g_history_autoexpand.get());
+
     // Max number of rows to use when displaying the input line.
     unsigned int max_rows = g_input_rows.get();
     if (!max_rows)
-        max_rows = _rl_screenheight;
-    max_rows = min<unsigned int>(max_rows, _rl_screenheight);
+        max_rows = 999999;
+    max_rows = min<unsigned int>(max_rows, _rl_screenheight - (want_histexpand_preview && _rl_screenheight > 1));
     max_rows = max<unsigned int>(max_rows, 1);
 
     // FUTURE:  Maybe support defining a region in which to display the input
@@ -1388,6 +1437,10 @@ void display_manager::display()
     // Activate horizontal scroll mode when requested or when necessary.
     const bool was_horz_scroll = m_horz_scroll;
     m_horz_scroll = (_rl_horizontal_scroll_mode || max_rows <= 1 || m_last_prompt_line_botlin + max_rows > _rl_screenheight);
+
+    // Can we show history expansion?
+    const bool can_show_histexpand = (want_histexpand_preview &&
+                                      m_last_prompt_line_botlin + max_rows + 1 <= _rl_screenheight);
 
     // Optimization:  can skip updating the display if someone said it's already
     // updated, unless someone is forcing an update.
@@ -1517,6 +1570,8 @@ void display_manager::display()
             _rl_cr();
             _rl_last_c_pos = 0;
 
+            // BUGBUG: This probably will garble the display if the terminal
+            // height has shrunk and no longer fits _rl_vis_botlin.
             for (int i = new_botlin; i++ < _rl_vis_botlin;)
             {
                 _rl_move_vert(i);
@@ -1530,6 +1585,74 @@ void display_manager::display()
 
         // Finally update the bottom line counter.
         _rl_vis_botlin = new_botlin;
+    }
+
+    // Maybe show history expansion.
+    if (can_show_histexpand && _rl_vis_botlin < _rl_screenheight)
+    {
+        const char* expanded = nullptr;
+        for (const history_expansion* e = m_histexpand; e; e = e->next)
+        {
+            if (e->start <= rl_point && rl_point <= e->start + e->len)
+            {
+                expanded = e->result;
+                if (!expanded || !*expanded)
+                    expanded = "(empty)";
+                break;
+            }
+        }
+
+        if (expanded)
+        {
+            dbg_ignore_scope(snapshot, "display_readline");
+
+            str_moveable in;
+            in << "History expansion: ";
+            for (const char* walk = expanded; *walk; ++walk)
+            {
+                if (CTRL_CHAR(*walk) || *walk == RUBOUT)
+                {
+                    char sz[3] = "^?";
+                    if (*walk != RUBOUT)
+                        sz[1] = UNCTRL(*walk);
+                    in.concat(sz, 2);
+                }
+                else
+                {
+                    in.concat(walk, 1);
+                }
+            }
+
+#undef m_next
+            m_next.set_comment_row(std::move(in));
+#define m_next __use_next_instead__
+        }
+    }
+
+    if (strcmp(m_curr.comment_row(), next->comment_row()))
+    {
+        _rl_move_vert(_rl_vis_botlin + 1);
+        if (_rl_last_c_pos > 0)
+        {
+            _rl_cr();
+            _rl_last_c_pos = 0;
+        }
+
+        if (*next->comment_row())
+        {
+            str<> out;
+            const int limit = _rl_screenwidth - 1;
+            ellipsify(next->comment_row(), limit, out, false);
+
+            str<16> color;
+            const char* const color_comment_row = g_color_comment_row.get();
+            color << "\x1b[" << color_comment_row << "m";
+
+            rl_fwrite_function(_rl_out_stream, color.c_str(), color.length());
+            rl_fwrite_function(_rl_out_stream, out.c_str(), out.length());
+        }
+
+        rl_fwrite_function(_rl_out_stream, "\x1b[m\x1b[K", 6);
     }
 
     // Move cursor to the rl_point position.
@@ -1558,6 +1681,13 @@ void display_manager::display()
 
     RL_UNSETSTATE(RL_STATE_REDISPLAYING);
     _rl_release_sigint();
+}
+
+//------------------------------------------------------------------------------
+void display_manager::set_history_expansions(history_expansion* list)
+{
+    history_free_expansions(&m_histexpand);
+    m_histexpand = list;
 }
 
 //------------------------------------------------------------------------------
@@ -1894,6 +2024,15 @@ void display_readline()
 #if !defined (OMIT_DEFAULT_DISPLAY_READLINE)
     rl_redisplay();
 #endif
+}
+
+//------------------------------------------------------------------------------
+void set_history_expansions(history_expansion* list)
+{
+    if (use_display_manager())
+        s_display_manager.set_history_expansions(list);
+    else
+        history_free_expansions(&list);
 }
 
 //------------------------------------------------------------------------------

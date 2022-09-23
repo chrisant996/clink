@@ -84,6 +84,7 @@ private:
     str<16>         m_arginfo_color;
     str<16>         m_selected_color;
     str<16>         m_suggestion_color;
+    str<16>         m_histexpand_color;
     str<16>         m_arg_color;
     str<16>         m_argmatcher_color;
     str<16>         m_flag_color;

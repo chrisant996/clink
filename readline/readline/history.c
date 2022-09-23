@@ -630,4 +630,9 @@ clear_history (void)
 
   history_offset = history_length = 0;
   history_base = 1;		/* reset history base to default */
+
+/* begin_clink_change */
+  xfree (history_event_lookup_cache.search_string);
+  memset (&history_event_lookup_cache, 0, sizeof (history_event_lookup_cache));
+/* end_clink_change */
 }

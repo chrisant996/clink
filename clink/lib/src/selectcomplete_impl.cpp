@@ -68,11 +68,12 @@ static setting_int g_max_rows(
     "is 0, the limit is the terminal height.",
     0);
 
-static setting_color g_color_comment_row(
+setting_color g_color_comment_row(
     "color.comment_row",
     "Color for comment row",
-    "The color for the comment row during 'clink-select-complete'.  The comment row\n"
-    "shows the \"and N more matches\" or \"rows X to Y of Z\" messages.",
+    "The color for the comment row.  During 'clink-select-complete' the comment\n"
+    "row shows the \"and N more matches\" or \"rows X to Y of Z\" messages.  It\n"
+    "can also show how history expansion will be applied at the cursor.",
     "bright white on cyan");
 
 setting_bool g_match_best_fit(

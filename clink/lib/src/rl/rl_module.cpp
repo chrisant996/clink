@@ -144,8 +144,7 @@ setting_bool g_ctrld_exits(
 static setting_color g_color_arg(
     "color.arg",
     "Argument color",
-    "The color for arguments in the input line.  Only used when\n"
-    "clink.colorize_input is set.",
+    "The color for arguments in the input line.",
     "bold");
 
 static setting_color g_color_arginfo(
@@ -159,10 +158,9 @@ static setting_color g_color_arginfo(
 static setting_color g_color_argmatcher(
     "color.argmatcher",
     "Argmatcher color",
-    "The color for a command name that has an argmatcher.  Only used when\n"
-    "clink.colorize_input is set.  If a command name has an argmatcher available,\n"
-    "then this color will be used for the command name, otherwise the doskey, cmd,\n"
-    "or input color will be used.",
+    "The color for a command name that has an argmatcher.  If a command name has\n"
+    "an argmatcher available, then this color will be used for the command name,\n"
+    "otherwise the doskey, cmd, or input color will be used.",
     "");
 
 static setting_color g_color_cmd(
@@ -199,14 +197,20 @@ static setting_color g_color_filtered(
 static setting_color g_color_flag(
     "color.flag",
     "Flag color",
-    "The color for flags in the input line.  Only used when clink.colorize_input is\n"
-    "set.",
+    "The color for flags in the input line.",
     "default");
 
 static setting_color g_color_hidden(
     "color.hidden",
     "Hidden file completions",
     "Used when Clink displays file completions with the hidden attribute.",
+    "");
+
+setting_color g_color_histexpand(
+    "color.histexpand",
+    "History expansion color",
+    "The color for history expansions in the input line.  When this is not set,\n"
+    "history expansions are not colored.",
     "");
 
 static setting_color g_color_horizscroll(
@@ -232,7 +236,7 @@ static setting_color g_color_modmark(
     "color.modmark",
     "Modified history line mark color",
     "Used when Clink displays the * mark on modified history lines when\n"
-    "mark-modified-lines is set and color.input is set.",
+    "mark-modified-lines is set.",
     "");
 
 setting_color g_color_popup(
@@ -284,11 +288,9 @@ static setting_color g_color_suggestion(
 static setting_color g_color_unexpected(
     "color.unexpected",
     "Unexpected argument color",
-    "The color for unexpected arguments in the input line.  Only used when\n"
-    "clink.colorize_input is set.  An argument is unexpected if an argument matcher\n"
-    "expected there to be no more arguments in the input line or if the word\n"
-    "doesn't match any expected\n"
-    "values.",
+    "The color for unexpected arguments in the input line.  An argument is\n"
+    "unexpected if an argument matcher expected there to be no more arguments\n"
+    "in the input line or if the word doesn't match any expected values.",
     "default");
 
 setting_color g_color_unrecognized(
@@ -828,6 +830,7 @@ static const char* s_flag_color = nullptr;
 static const char* s_unrecognized_color = nullptr;
 static const char* s_none_color = nullptr;
 static const char* s_suggestion_color = nullptr;
+static const char* s_histexpand_color = nullptr;
 int g_suggestion_offset = -1;
 
 //------------------------------------------------------------------------------
@@ -933,6 +936,9 @@ inline const char* fallback_color(const char* preferred, const char* fallback)
 static void puts_face_func(const char* s, const char* face, int n)
 {
     static const char c_normal[] = "\x1b[m";
+    static const char c_hyperlink[] = "\x1b]8;;";
+    static const char c_doc_histexpand[] = "https://chrisant996.github.io/clink/clink.html#using-history-expansion";
+    static const char c_BEL[] = "\a";
 
     str<280> out;
     const char* const other_color = fallback_color(s_input_color, c_normal);
@@ -943,6 +949,9 @@ static void puts_face_func(const char* s, const char* face, int n)
         // Append face string if face changed.
         if (cur_face != *face)
         {
+            if (cur_face == FACE_HISTEXPAND)
+                out << c_hyperlink << c_BEL;
+
             cur_face = *face;
             switch (cur_face)
             {
@@ -969,6 +978,8 @@ static void puts_face_func(const char* s, const char* face, int n)
             case FACE_SCROLL:       out << fallback_color(_rl_display_horizscroll_color, c_normal); break;
             case FACE_SELECTION:    out << fallback_color(s_selection_color, "\x1b[0;7m"); break;
             case FACE_SUGGESTION:   out << fallback_color(s_suggestion_color, "\x1b[0;90m"); break;
+            case FACE_HISTEXPAND:   out << fallback_color(s_histexpand_color, "\x1b[0;97;45m")
+                                        << c_hyperlink << c_doc_histexpand << c_BEL; break;
 
             case FACE_OTHER:        out << other_color; break;
             case FACE_UNRECOGNIZED: out << fallback_color(s_unrecognized_color, other_color); break;
@@ -1011,6 +1022,8 @@ static void puts_face_func(const char* s, const char* face, int n)
         out.concat(s_concat, len);
     }
 
+    if (cur_face == FACE_HISTEXPAND)
+        out << c_hyperlink << c_BEL;
     if (cur_face != FACE_NORMAL)
         out << c_normal;
 
@@ -2587,6 +2600,7 @@ void rl_module::on_begin_line(const context& context)
     _rl_arginfo_color = build_color_sequence(g_color_arginfo, m_arginfo_color, true);
     _rl_selected_color = build_color_sequence(g_color_selected, m_selected_color);
     s_suggestion_color = build_color_sequence(g_color_suggestion, m_suggestion_color, true);
+    s_histexpand_color = build_color_sequence(g_color_histexpand, m_histexpand_color, true);
 
     if (!s_selection_color && s_input_color)
     {

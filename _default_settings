@@ -19,6 +19,7 @@ color.executable                  = sgr 1;38;5;33
 color.filtered                    = sgr 38;5;231
 color.flag                        = sgr 38;5;117
 color.hidden                      = sgr 38;5;160
+color.histexpand                  = sgr 97;48;5;55
 color.horizscroll                 = sgr 38;5;16;48;5;30
 color.input                       = sgr 38;5;222
 color.readonly                    = sgr 38;5;28

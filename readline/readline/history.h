@@ -264,6 +264,21 @@ extern char *history_search_delimiter_chars;
 
 /* begin_clink_change */
 extern int history_host_backslash_escape;
+
+typedef struct _history_expansion {
+  int start;
+  int len;
+  const char *result;
+  struct _history_expansion *next;
+} history_expansion;
+extern history_expansion* history_expansions;
+
+extern void history_free_expansions PARAMS((history_expansion **));
+extern void save_history_expansion_state PARAMS((void));
+extern void restore_history_expansion_state PARAMS((void));
+
+extern int history_return_expansions;
+extern int history_search_time_limit;
 /* end_clink_change */
 
 extern int history_quotes_inhibit_expansion;

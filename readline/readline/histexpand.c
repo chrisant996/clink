@@ -113,6 +113,13 @@ rl_linebuf_func_t *history_inhibit_expansion_function;
 /* begin_clink_change */
 /* Indicates whether backslash is an escape character in the host. */
 int history_host_backslash_escape = 1;
+
+/* Optionally returns the history expansions. */
+history_expansion* history_expansions = NULL;
+int history_return_expansions = 0;
+
+/* Cache the most recent history event lookup. */
+history_event_lookup_cache_t history_event_lookup_cache = { 0 };
 /* end_clink_change */
 
 int history_quoting_state = 0;
@@ -130,6 +137,71 @@ int history_quoting_state = 0;
 static char *search_string;
 /* The last string matched by a !?string? search. */
 static char *search_match;
+
+/* begin_clink_change */
+void
+history_free_expansions (history_expansion** list)
+{
+  if (list)
+    {
+      for (history_expansion* p = *list; p;)
+	{
+	  history_expansion* next = p->next;
+	  xfree (p->result);
+	  xfree (p);
+	  p = next;
+	}
+      *list = NULL;
+    }
+}
+
+static int saved_history_offset = -1;
+static int saved_history_prev_use_curr = 0;
+static char *saved_search_string = NULL;
+static char *saved_search_match = NULL;
+
+void
+save_history_expansion_state (void)
+{
+  xfree (saved_search_string);
+  xfree (saved_search_match);
+  saved_history_offset = history_offset;
+  saved_history_prev_use_curr = history_prev_use_curr;
+  saved_search_string = search_string ? savestring (search_string) : NULL;
+  saved_search_match = search_match ? savestring (search_match) : NULL;
+}
+
+void
+restore_history_expansion_state (void)
+{
+  xfree (search_string);
+  xfree (search_match);
+  history_offset = saved_history_offset;
+  history_prev_use_curr = saved_history_prev_use_curr;
+  search_string = saved_search_string;
+  search_match = saved_search_match;
+  saved_history_offset = -1;
+  saved_history_prev_use_curr = 0;
+  saved_search_string = NULL;
+  saved_search_match = NULL;
+}
+
+static history_expansion**
+add_expansion (history_expansion** next, int start, int end, const char* result)
+{
+  *next = (history_expansion *)xmalloc (sizeof (history_expansion));
+
+  (*next)->start = start;
+  (*next)->len = end + 1 - start;
+  (*next)->result = NULL;
+  (*next)->next = NULL;
+
+  if (result)
+    (*next)->result = savestring (result);
+
+  return &(*next)->next;
+}
+/* end_clink_change */
 
 /* Return the event specified at TEXT + OFFSET modifying OFFSET to
    point to after the event specifier.  Just a pointer to the history
@@ -280,6 +352,29 @@ get_history_event (const char *string, int *caller_index, int delimiting_quote)
     }
 
   search_func = substring_okay ? history_search : history_search_prefix;
+/* begin_clink_change */
+  {
+    /* Optimize repeated searches.  A host may call this while the input
+       input line editor is active, in order to show what the history
+       expansion result would be. */
+    if (search_func == history_event_lookup_cache.func &&
+	history_offset == history_event_lookup_cache.start_index &&
+	history_event_lookup_cache.search_string &&
+	strcmp (temp, history_event_lookup_cache.search_string) == 0)
+      {
+	if (!history_event_lookup_cache.successful)
+	  FAIL_SEARCH ();
+	local_index = history_event_lookup_cache.local_index;
+	history_offset = history_event_lookup_cache.result_index;
+	goto return_found_event;
+      }
+    xfree (history_event_lookup_cache.search_string);
+    memset (&history_event_lookup_cache, 0, sizeof (history_event_lookup_cache));
+    history_event_lookup_cache.func = search_func;
+    history_event_lookup_cache.search_string = savestring (temp);
+    history_event_lookup_cache.start_index = history_offset;
+  }
+/* end_clink_change */
   while (1)
     {
       local_index = (*search_func) (temp, -1);
@@ -289,10 +384,16 @@ get_history_event (const char *string, int *caller_index, int delimiting_quote)
 
       if (local_index == 0 || substring_okay)
 	{
+/* begin_clink_change */
+return_found_event:
+/* end_clink_change */
 	  entry = current_history ();
 	  if (entry == 0)
 	    FAIL_SEARCH ();
 /* begin_clink_change */
+	  history_event_lookup_cache.result_index = history_offset;
+	  history_event_lookup_cache.local_index = local_index;
+	  history_event_lookup_cache.successful = 1;
 	  history_prev_use_curr = 0;
 /* end_clink_change */
 	  history_offset = history_length;
@@ -934,6 +1035,14 @@ history_expand (char *hstring, char **output)
   /* Used when adding the string. */
   char *temp;
 
+/* begin_clink_change */
+  int ioffset = 0;
+  int return_expansions = history_return_expansions;
+  history_expansion** next_expansion = history_return_expansions ? &history_expansions : NULL;
+  history_free_expansions (next_expansion);
+  history_return_expansions = 0;
+/* end_clink_change */
+
   if (output == 0)
     return 0;
 
@@ -970,6 +1079,9 @@ history_expand (char *hstring, char **output)
       string[3] = 's';
       strcpy (string + 4, hstring);
       l += 4;
+/* begin_clink_change */
+      ioffset = 4;
+/* end_clink_change */
     }
   else
     {
@@ -1257,10 +1369,22 @@ history_expand (char *hstring, char **output)
 	      xfree (result);
 	      if (string != hstring)
 		xfree (string);
+/* begin_clink_change */
+	      if (return_expansions)
+		history_free_expansions (&history_expansions);
+/* end_clink_change */
 	      return -1;
 	    }
 	  else
 	    {
+/* begin_clink_change */
+	      if (return_expansions)
+		{
+		  int start = i ? i - ioffset : i;
+		  int end = eindex - ioffset;
+		  next_expansion = add_expansion (next_expansion, start, end, temp);
+		}
+/* end_clink_change */
 	      if (temp)
 		{
 		  modified++;

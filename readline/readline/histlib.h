@@ -82,4 +82,17 @@ extern char *strchr ();
 /* histsearch.c */
 extern int _hs_history_patsearch PARAMS((const char *, int, int));
 
+/* begin_clink_change */
+typedef int _hist_search_func_t PARAMS((const char *, int));
+typedef struct {
+  _hist_search_func_t *func;
+  int start_index;
+  int result_index;
+  int local_index;
+  const char* search_string;
+  int successful;
+} history_event_lookup_cache_t;
+extern history_event_lookup_cache_t history_event_lookup_cache;
+/* end_clink_change */
+
 #endif /* !_HISTLIB_H_ */

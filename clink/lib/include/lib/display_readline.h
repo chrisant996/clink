@@ -1,10 +1,12 @@
 #pragma once
 
 class line_buffer;
+typedef struct _history_expansion history_expansion;
 
 extern void reset_readline_display();
 extern void refresh_terminal_size();
 extern void display_readline();
+extern void set_history_expansions(history_expansion* list=nullptr);
 extern void resize_readline_display(const char* prompt, const line_buffer& buffer, const char* _prompt, const char* _rprompt);
 extern unsigned int get_readline_display_top_offset();
 
@@ -20,6 +22,7 @@ extern unsigned int get_readline_display_top_offset();
 #define FACE_SCROLL         '<'
 #define FACE_SELECTION      '#'
 #define FACE_SUGGESTION     '-'
+#define FACE_HISTEXPAND     '!'
 
 #define FACE_OTHER          'o'
 #define FACE_UNRECOGNIZED   'u'
