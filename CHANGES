@@ -8,7 +8,7 @@
 - Added `color.histexpand` setting.  When this is configured with a color, then Clink highlights history expansions in the input line and shows a preview of the expansion that will be applied near the current cursor position.
 - Added `history.auto_expand` setting.  When this is set to false, history expansions will not be performed automatically upon <kbd>Enter</kbd>, but they may still be performed by invoking expansion commands such as `clink-expand-history` <kbd>Alt</kbd>-<kbd>^</kbd>, or `clink-expand-line` <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>E</kbd>.
 - When a coroutine error happens, write a Lua traceback to the log file.
-- The `clink-diagnostics` command now reports input line coloring classification costs when a numeric arg is given (e.g. <kbd>Alt</kbd>-<kbd>1</kbd>,<kbd>Ctrl</kbd>-<kbd>x</kbd>,<kbd>Ctrl</kbd>-<kbd>z</kbd>).
+- The `clink-diagnostics` command now reports costs for prompt filters and input line coloring classifiers when a numeric arg is given (e.g. <kbd>Alt</kbd>-<kbd>1</kbd>,<kbd>Ctrl</kbd>-<kbd>x</kbd>,<kbd>Ctrl</kbd>-<kbd>z</kbd>).
 - Fixed the input line color when the command word is an alias _and_ a directory _and_ has an argmatcher (regression introduced in v1.3.40).
 - Fixed how the inserted completion is highlighted while using `clink-select-complete` with the `match.substring` setting enabled.
 - Fixed Readline bugs in the numeric arg input state;
