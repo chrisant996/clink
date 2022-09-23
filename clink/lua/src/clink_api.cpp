@@ -1142,7 +1142,7 @@ static int async_path_type(lua_State* state)
 /// path to the found executable file, if any, or nil.
 ///
 /// <strong>Note:</strong>  This always returns immediately, and it uses a
-/// background thread to analyze the <span class="arg">word</a> asynchronously.
+/// background thread to analyze the <span class="arg">word</span> asynchronously.
 /// When the background thread finishes analyzing the word, Clink automatically
 /// redisplays the input line, giving classifiers a chance to call this function
 /// again and get the final <span class="arg">word_class</span> result.
