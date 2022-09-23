@@ -9,6 +9,7 @@
 
 #include <lib/line_state.h>
 #include <lib/word_classifications.h>
+#include <lib/display_readline.h>
 
 extern "C" {
 #include <lua.h>
@@ -88,19 +89,15 @@ int lua_word_classifications::classify_word(lua_State* state)
     char wc;
     switch (*s)
     {
-    case 'o':
-    case 'u':
-    case 'x':
-    case 'c':
-    case 'd':
-    case 'a':
-    case 'f':
-    case 'n':
-        wc = *s;
-        break;
-    default:
-        wc = 'o';
-        break;
+    case 'o':   wc = FACE_OTHER; break;
+    case 'u':   wc = FACE_UNRECOGNIZED; break;
+    case 'x':   wc = FACE_EXECUTABLE; break;
+    case 'c':   wc = FACE_COMMAND; break;
+    case 'd':   wc = FACE_ALIAS; break;
+    case 'a':   wc = FACE_ARGUMENT; break;
+    case 'f':   wc = FACE_FLAG; break;
+    case 'n':   wc = FACE_NONE; break;
+    default:    wc = FACE_OTHER; break;
     }
 
     m_classifications.classify_word(m_index_offset + index, wc, overwrite);

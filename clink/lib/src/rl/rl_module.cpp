@@ -935,7 +935,8 @@ static void puts_face_func(const char* s, const char* face, int n)
     static const char c_normal[] = "\x1b[m";
 
     str<280> out;
-    char cur_face = '0';
+    const char* const other_color = fallback_color(s_input_color, c_normal);
+    char cur_face = FACE_NORMAL;
 
     while (n)
     {
@@ -959,50 +960,39 @@ static void puts_face_func(const char* s, const char* face, int n)
                     }
                 }
                 // fall through
-            case '0':   out << c_normal; break;
-            case '1':   out << "\x1b[0;7m"; break;
+            case FACE_NORMAL:       out << c_normal; break;
+            case FACE_STANDOUT:     out << "\x1b[0;7m"; break;
 
-            case '2':   out << fallback_color(s_input_color, c_normal); break;
-            case '*':   out << fallback_color(_rl_display_modmark_color, c_normal); break;
-            case '(':   out << fallback_color(_rl_display_message_color, c_normal); break;
-            case '<':   out << fallback_color(_rl_display_horizscroll_color, c_normal); break;
-            case '#':   out << fallback_color(s_selection_color, "\x1b[0;7m"); break;
-            case '-':   out << fallback_color(s_suggestion_color, "\x1b[0;90m"); break;
+            case FACE_INPUT:        out << fallback_color(s_input_color, c_normal); break;
+            case FACE_MODMARK:      out << fallback_color(_rl_display_modmark_color, c_normal); break;
+            case FACE_MESSAGE:      out << fallback_color(_rl_display_message_color, c_normal); break;
+            case FACE_SCROLL:       out << fallback_color(_rl_display_horizscroll_color, c_normal); break;
+            case FACE_SELECTION:    out << fallback_color(s_selection_color, "\x1b[0;7m"); break;
+            case FACE_SUGGESTION:   out << fallback_color(s_suggestion_color, "\x1b[0;90m"); break;
 
-            case 'o':
-other:
-                out << fallback_color(s_input_color, c_normal);
-                break;
-            case 'u':
-                if (!s_unrecognized_color)
-                    goto other;
-                out << s_unrecognized_color;
-                break;
-            case 'x':
-                if (!s_executable_color)
-                    goto other;
-                out << s_executable_color;
-                break;
-            case 'c':
+            case FACE_OTHER:        out << other_color; break;
+            case FACE_UNRECOGNIZED: out << fallback_color(s_unrecognized_color, other_color); break;
+            case FACE_EXECUTABLE:   out << fallback_color(s_executable_color, other_color); break;
+            case FACE_COMMAND:
                 if (_rl_command_color)
                     out << "\x1b[" << _rl_command_color << "m";
                 else
                     out << c_normal;
                 break;
-            case 'd':
+            case FACE_ALIAS:
                 if (_rl_alias_color)
                     out << "\x1b[" << _rl_alias_color << "m";
                 else
                     out << c_normal;
                 break;
-            case 'm':
+            case FACE_ARGMATCHER:
                 assert(s_argmatcher_color); // Shouldn't reach here otherwise.
                 if (s_argmatcher_color) // But avoid crashing, just in case.
                     out << s_argmatcher_color;
                 break;
-            case 'a':   out << fallback_color(s_arg_color, fallback_color(s_input_color, c_normal)); break;
-            case 'f':   out << fallback_color(s_flag_color, c_normal); break;
-            case 'n':   out << fallback_color(s_none_color, c_normal); break;
+            case FACE_ARGUMENT:     out << fallback_color(s_arg_color, fallback_color(s_input_color, c_normal)); break;
+            case FACE_FLAG:         out << fallback_color(s_flag_color, c_normal); break;
+            case FACE_NONE:         out << fallback_color(s_none_color, c_normal); break;
             }
         }
 
@@ -1021,8 +1011,8 @@ other:
         out.concat(s_concat, len);
     }
 
-    if (cur_face != '0')
-        out.concat(c_normal);
+    if (cur_face != FACE_NORMAL)
+        out << c_normal;
 
     ++s_puts_face;
     rl_fwrite_function(_rl_out_stream, out.c_str(), out.length());
@@ -2572,11 +2562,11 @@ void rl_module::on_begin_line(const context& context)
         s_classifications = &context.classifications;
     g_prompt_refilter = g_prompt_redisplay = 0; // Used only by diagnostic output.
 
-    _rl_face_modmark = '*';
+    _rl_face_modmark = FACE_MODMARK;
     _rl_display_modmark_color = build_color_sequence(g_color_modmark, m_modmark_color, true);
 
-    _rl_face_horizscroll = '<';
-    _rl_face_message = '(';
+    _rl_face_horizscroll = FACE_SCROLL;
+    _rl_face_message = FACE_MESSAGE;
     s_input_color = build_color_sequence(g_color_input, m_input_color, true);
     s_selection_color = build_color_sequence(g_color_selection, m_selection_color, true);
     s_arg_color = build_color_sequence(g_color_arg, m_arg_color, true);

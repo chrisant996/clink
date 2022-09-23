@@ -559,7 +559,7 @@ void display_lines::horz_parse(unsigned int prompt_botlin, unsigned int col, con
     {
         d->m_x = 0;
         d->m_lead = 1;
-        d->append('<', '<');
+        d->append('<', FACE_SCROLL);
         d->appendnul();
         col = 1;
     }
@@ -651,7 +651,7 @@ void display_lines::horz_parse(unsigned int prompt_botlin, unsigned int col, con
 
     if (iter.more() || overflow)
     {
-        d->append('>', '<');
+        d->append('>', FACE_SCROLL);
         d->m_lastcol++;
     }
 
@@ -679,7 +679,7 @@ void display_lines::apply_scroll_markers(unsigned int top, unsigned int bottom)
 
         if (!d.m_len)
         {
-            d.append('<', '<');
+            d.append('<', FACE_SCROLL);
             d.appendnul();
         }
         else
@@ -702,7 +702,7 @@ void display_lines::apply_scroll_markers(unsigned int top, unsigned int bottom)
 
                 unsigned int i = 0;
                 d.m_chars[i] = '<';
-                d.m_faces[i] = '<';
+                d.m_faces[i] = FACE_SCROLL;
                 bytes--;
                 i++;
                 d.m_scroll_mark = 1;
@@ -742,7 +742,7 @@ void display_lines::apply_scroll_markers(unsigned int top, unsigned int bottom)
                 d.append(' ', FACE_NORMAL);
                 d.m_lastcol++;
             }
-            d.append('>', '<');
+            d.append('>', FACE_SCROLL);
             d.m_scroll_mark = -1;
             d.m_lastcol++;
             d.appendnul();

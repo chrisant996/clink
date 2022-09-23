@@ -4,6 +4,7 @@
 #include "pch.h"
 #include "line_state.h"
 #include "word_classifications.h"
+#include "display_readline.h"
 
 #include <core/base.h>
 #include <core/str.h>
@@ -67,7 +68,7 @@ void word_classifications::init(size_t line_length, const word_classifications* 
         {
             m_length = static_cast<unsigned int>(line_length);
             // Space means not classified; use default color.
-            memset(m_faces, ' ', line_length);
+            memset(m_faces, FACE_SPACE, line_length);
         }
     }
 }
@@ -103,14 +104,14 @@ void word_classifications::finish(bool show_argmatchers)
 {
     static const char c_faces[] =
     {
-        'o',    // other
-        'u',    // unrecognized
-        'x',    // executable
-        'c',    // command
-        'd',    // doskey
-        'a',    // arg
-        'f',    // flag
-        'n',    // none
+        FACE_OTHER,         // other
+        FACE_UNRECOGNIZED,  // unrecognized
+        FACE_EXECUTABLE,    // executable
+        FACE_COMMAND,       // command
+        FACE_ALIAS,         // doskey
+        FACE_ARGUMENT,      // arg
+        FACE_FLAG,          // flag
+        FACE_NONE,          // none
     };
     static_assert(_countof(c_faces) == int(word_class::max), "c_faces and word_class don't agree!");
 
@@ -119,10 +120,10 @@ void word_classifications::finish(bool show_argmatchers)
         const size_t end = min<unsigned int>(info.end, m_length);
         for (size_t pos = info.start; pos < end; ++pos)
         {
-            if (m_faces[pos] == ' ')
+            if (m_faces[pos] == FACE_SPACE)
             {
                 if (info.argmatcher && show_argmatchers)
-                    m_faces[pos] = 'm';
+                    m_faces[pos] = FACE_ARGMATCHER;
                 else if (info.word_class < word_class::max)
                     m_faces[pos] = c_faces[int(info.word_class)];
             }
