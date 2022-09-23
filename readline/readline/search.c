@@ -334,9 +334,11 @@ _rl_nsearch_abort (_rl_search_cxt *cxt)
 {
   rl_maybe_unsave_line ();
 /* begin_clink_change
- * Call rl_restore_prompt before rl_clear_message so that the prompt has been
- * restored before the redisplay call inside rl_clear_message. */
+ * Call rl_restore_prompt and clear RL_STATE_NSEARCH before rl_clear_message
+ * so that the prompt has been restored before the redisplay call inside
+ * rl_clear_message. */
   rl_restore_prompt ();
+  RL_UNSETSTATE (RL_STATE_NSEARCH);
 /* end_clink_change */
   rl_clear_message ();
   rl_point = cxt->save_point;
@@ -345,11 +347,14 @@ _rl_nsearch_abort (_rl_search_cxt *cxt)
 /* begin_clink_change
  * This is too late to call rl_restore_prompt, because rl_clear_message isn't
  * called again after the above call. Everyone else calls rl_restore_prompt
- * before rl_clear_message. */
+ * before rl_clear_message.
+ * And likewise too late to clear RL_STATE_NSEARCH, because rl_clear_message
+ * triggers a redisplay, which needs the state cleared so faces can be applied
+ * accurately. */
   //rl_restore_prompt ();
+  //
+  //RL_UNSETSTATE (RL_STATE_NSEARCH);
 /* end_clink_change */
-
-  RL_UNSETSTATE (RL_STATE_NSEARCH);
 }
 
 /* Process just-read character C according to search context CXT.  Return -1
