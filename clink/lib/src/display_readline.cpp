@@ -738,7 +738,7 @@ void display_lines::apply_scroll_markers(unsigned int top, unsigned int bottom)
         if (d.m_lastcol - d.m_x > 2)
         {
             d.m_len -= d.m_trail;
-            while (d.m_x + d.m_lastcol >= _rl_screenwidth)
+            while (d.m_x + d.m_lastcol + 1 >= _rl_screenwidth)
             {
                 const int bytes = _rl_find_prev_mbchar(d.m_chars, d.m_len, MB_FIND_NONZERO);
                 d.m_lastcol -= raw_measure_cols(d.m_chars + bytes, d.m_len - bytes);
