@@ -17,6 +17,7 @@
   - Numeric arg input state accidentally continued showing the arg input message after using <kbd>Alt</kbd>-<kbd>-</kbd> while already in numeric arg input state.
 - Fixed some minor input line coloring and completion mistakes for `clink set`.
 - Fixed `quoted-insert` followed by <kbd>Esc</kbd>, so that it inserts the raw ESC character.
+- Fixed how <kbd>Esc</kbd> is handled in isearch mode (e.g. <kbd>Ctrl</kbd>-<kbd>r</kbd>); it should terminate isearch without reverting the input line.
 - Fixed [#344](https://github.com/chrisant996/clink/issues/344); `history` prints UTF8 text incorrectly.
 - Fixed [#342](https://github.com/chrisant996/clink/issues/342); typing `foo.abc` doesn't recognize `foo.abc.cmd`.
 - Fixed [#340](https://github.com/chrisant996/clink/issues/340); various display glitches in the Readline library (Clink now uses custom display routines instead of the Readline display routines).
