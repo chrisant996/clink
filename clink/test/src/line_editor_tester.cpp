@@ -154,6 +154,30 @@ void line_editor_tester::set_expected_output(const char* expected)
 }
 
 //------------------------------------------------------------------------------
+static const char* sanitize(const char* text)
+{
+    static str<280> s_s;
+    s_s.clear();
+    for (const char* p = text; *p; ++p)
+    {
+        if (CTRL_CHAR(*p) || *p == RUBOUT)
+        {
+            char tmp[3] = "^?";
+            if (*p != RUBOUT)
+                tmp[1] = UNCTRL(*p);
+            s_s.concat("\x1b[7m");
+            s_s.concat(tmp, 2);
+            s_s.concat("\x1b[27m");
+        }
+        else
+        {
+            s_s.concat(p, 1);
+        }
+    }
+    return s_s.c_str();
+}
+
+//------------------------------------------------------------------------------
 void line_editor_tester::run()
 {
     bool has_expectations = m_has_matches || m_has_classifications || (m_expected_output != nullptr);
@@ -185,19 +209,19 @@ void line_editor_tester::run()
 
         unsigned int match_count = matches->get_match_count();
         REQUIRE(m_expected_matches.size() == match_count, [&] () {
-            printf(" input; %s#\n", m_input);
+            printf(" input; %s#\n", sanitize(m_input));
 
             str<> line;
             get_line(line);
-            printf("output; %s#\n", line.c_str());
+            printf("output; %s#\n", sanitize(line.c_str()));
 
             puts("\nexpected;");
             for (const char* match : m_expected_matches)
-                printf("  %s\n", match);
+                printf("  %s\n", sanitize(match));
 
             puts("\ngot;");
             for (matches_iter iter = matches->get_iter(); iter.next();)
-                printf("  %s\n", iter.get_match());
+                printf("  %s\n", sanitize(iter.get_match()));
         });
 
         for (const char* expected : m_expected_matches)
@@ -209,11 +233,11 @@ void line_editor_tester::run()
                     break;
 
             REQUIRE(match_found, [&] () {
-                printf("match '%s' not found\n", expected);
+                printf("match '%s' not found\n", sanitize(expected));
 
                 puts("\ngot;");
                 for (matches_iter iter = matches->get_iter(); iter.next();)
-                    printf("  %s\n", iter.get_match());
+                    printf("  %s\n", sanitize(iter.get_match()));
             });
         }
     }
@@ -222,7 +246,7 @@ void line_editor_tester::run()
     {
         const word_classifications* classifications = match_catch.get_classifications();
         REQUIRE(classifications, [&]() {
-            printf(" input; %s\n", m_input);
+            printf(" input; %s\n", sanitize(m_input));
 
             puts("expected classifications but got none");
         });
@@ -249,7 +273,7 @@ void line_editor_tester::run()
         }
 
         REQUIRE(m_expected_classifications.equals(c.c_str()), [&] () {
-            printf(" input; %s#\n", m_input);
+            printf(" input; %s#\n", sanitize(m_input));
 
             puts("\nexpected classifications;");
             printf("  %s\n", m_expected_classifications.c_str());
@@ -265,9 +289,9 @@ void line_editor_tester::run()
         str<> line;
         REQUIRE(get_line(line));
         REQUIRE(strcmp(m_expected_output, line.c_str()) == 0, [&] () {
-            printf("       input; %s#\n", m_input);
-            printf("out expected; %s#\n", m_expected_output);
-            printf("     out got; %s#\n", line.c_str());
+            printf("       input; %s#\n", sanitize(m_input));
+            printf("out expected; %s#\n", sanitize(m_expected_output));
+            printf("     out got; %s#\n", sanitize(line.c_str()));
         });
     }
 
