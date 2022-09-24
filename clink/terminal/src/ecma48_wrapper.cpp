@@ -7,7 +7,7 @@
 //------------------------------------------------------------------------------
 ecma48_wrapper::ecma48_wrapper(const char* in, unsigned int wrap)
 {
-    // WARNING:  This assumes `in` contains no TAB characters!
+    // WARNING:  This assumes `in` contains no TAB or CR or LF characters!
 
     while (*in == ' ')
         in++;
@@ -69,6 +69,10 @@ ecma48_wrapper::ecma48_wrapper(const char* in, unsigned int wrap)
                 if (c != ' ')
                     end_word = inner_iter.get_pointer();
             }
+        }
+        else
+        {
+            end_fits += code.get_length();
         }
     }
 
