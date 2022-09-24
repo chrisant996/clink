@@ -148,7 +148,6 @@ private:
     selectcomplete_impl m_selectcomplete;
     textlist_impl       m_textlist;
     key_t               m_prev_key;
-    unsigned char       m_keys_size;
     unsigned char       m_flags = 0;
     int                 m_generation_id = 0;
     str<64>             m_needle;

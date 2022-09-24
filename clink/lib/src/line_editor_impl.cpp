@@ -367,7 +367,6 @@ void line_editor_impl::begin_line()
 
     m_bind_resolver.reset();
     m_command_offset = 0;
-    m_keys_size = 0;
     m_prev_key.reset();
 
     assert(!s_editor);
