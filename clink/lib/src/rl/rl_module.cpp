@@ -623,6 +623,19 @@ public:
 private:
     const char* bindableEsc = get_bindable_esc();
 };
+
+//------------------------------------------------------------------------------
+extern "C" int input_available_hook(void)
+{
+    assert(s_direct_input);
+    if (!s_direct_input)
+        return 0;
+
+// BUGBUG: Readline neglects to pass the timeout into the hook.
+    return s_direct_input->available(0);
+}
+
+//------------------------------------------------------------------------------
 extern "C" int read_key_hook(void)
 {
     assert(s_direct_input);
@@ -1758,6 +1771,7 @@ static void init_readline_hooks()
     rl_puts_face_func = puts_face_func;
 
     // Input event hooks.
+    rl_input_available_hook = input_available_hook;
     rl_read_key_hook = read_key_hook;
     rl_buffer_changing_hook = buffer_changing;
     rl_selection_event_hook = cua_selection_event_hook;
@@ -2365,18 +2379,18 @@ bool rl_module::translate(const char* seq, int len, str_base& out)
                 return true;
         }
     }
-    else if (RL_ISSTATE(RL_STATE_ISEARCH|RL_STATE_NSEARCH))
+    else if (RL_ISSTATE(RL_STATE_NSEARCH))
     {
         if (strcmp(seq, bindableEsc) == 0)
         {
-            // These modes have hard-coded handlers that abort on Ctrl+G, so
-            // redirect ESC to Ctrl+G.
+            // Non-incremental search mode has a hard-coded handler that aborts
+            // on Ctrl+G, so redirect ESC to Ctrl+G.
             char tmp[2] = { ABORT_CHAR };
             out = tmp;
             return true;
         }
     }
-    else if (RL_ISSTATE(RL_SIMPLE_INPUT_STATES) ||
+    else if (RL_ISSTATE(RL_SIMPLE_INPUT_STATES|RL_STATE_ISEARCH) ||
              rl_is_insert_next_callback_pending() ||
              win_fn_callback_pending())
     {
@@ -2868,7 +2882,10 @@ void rl_module::on_input(const input& input, result& result, const context& cont
     s_matches = &context.matches;
 
     // Call Readline's until there's no characters left.
+//#define USE_RESEND_HACK
+#ifdef USE_RESEND_HACK
     int is_inc_searching = rl_readline_state & RL_STATE_ISEARCH;
+#endif
     unsigned int len = input.len;
     while (len && !m_done)
     {
@@ -2934,6 +2951,7 @@ void rl_module::on_input(const input& input, result& result, const context& cont
 
         // Internally Readline tries to resend escape characters but it doesn't
         // work with how Clink uses Readline. So we do it here instead.
+#ifdef USE_RESEND_HACK
         if (term_in.data[-1] == 0x1b && is_inc_searching)
         {
             assert(!is_quoted_insert);
@@ -2941,6 +2959,7 @@ void rl_module::on_input(const input& input, result& result, const context& cont
             ++len;
             is_inc_searching = 0;
         }
+#endif
     }
 
     g_result = nullptr;
