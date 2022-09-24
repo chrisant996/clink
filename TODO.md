@@ -5,8 +5,12 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
+- Readline should pass the timeout into the `rl_input_available_hook` callback function.
+- Fix order that isearch executes the extra pending command in Callback Mode.
+  - REPRO:  `^R` x `Right` p ==> "p" is inserted, _THEN_ `Right` is executed.
 
 ## Normal Priority
+- In `_rl_dispatch_subseq()` there is a Clink change to not use timeouts for deducing the meaning of keyboard input.  But I suspect that it may be beneficial to turn those back on, now that Clink supports `_rl_input_available()`.
 
 ## Low Priority
 - Collecting words currently happens in update_internal, but probably it also belongs in alternative_matches and/or update_matches:
