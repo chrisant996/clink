@@ -1227,42 +1227,49 @@ skip_errorlevel:
 }
 
 //------------------------------------------------------------------------------
+bool g_filtering_in_progress = false;
 const char* host::filter_prompt(const char** rprompt, bool transient, bool final)
 {
     dbg_ignore_scope(snapshot, "Prompt filter");
 
-    m_filtered_prompt.clear();
-    m_filtered_rprompt.clear();
-    if (g_filter_prompt.get() && m_prompt_filter)
+    if (!g_filtering_in_progress)
     {
-        str_moveable tmp;
-        str_moveable rtmp;
-        const char* p;
-        const char* rp;
-        if (transient)
+        rollback<bool> rg_fip(g_filtering_in_progress, true);
+
+        m_filtered_prompt.clear();
+        m_filtered_rprompt.clear();
+        if (g_filter_prompt.get() && m_prompt_filter)
         {
-            prompt_utils::get_transient_prompt(tmp);
-            prompt_utils::get_transient_rprompt(rtmp);
-            p = tmp.c_str();
-            rp = rtmp.c_str();
+            str_moveable tmp;
+            str_moveable rtmp;
+            const char* p;
+            const char* rp;
+            if (transient)
+            {
+                prompt_utils::get_transient_prompt(tmp);
+                prompt_utils::get_transient_rprompt(rtmp);
+                p = tmp.c_str();
+                rp = rtmp.c_str();
+            }
+            else
+            {
+                p = m_prompt ? m_prompt : "";
+                rp = m_rprompt ? m_rprompt : "";
+            }
+            m_prompt_filter->filter(p,
+                                    rp,
+                                    m_filtered_prompt,
+                                    m_filtered_rprompt,
+                                    transient,
+                                    final);
         }
         else
         {
-            p = m_prompt ? m_prompt : "";
-            rp = m_rprompt ? m_rprompt : "";
+            m_filtered_prompt = m_prompt;
+            m_filtered_rprompt = m_rprompt;
         }
-        m_prompt_filter->filter(p,
-                                rp,
-                                m_filtered_prompt,
-                                m_filtered_rprompt,
-                                transient,
-                                final);
     }
-    else
-    {
-        m_filtered_prompt = m_prompt;
-        m_filtered_rprompt = m_rprompt;
-    }
+
     if (rprompt)
         *rprompt = m_filtered_rprompt.length() ? m_filtered_rprompt.c_str() : nullptr;
     return m_filtered_prompt.c_str();

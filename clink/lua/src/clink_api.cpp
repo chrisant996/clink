@@ -785,9 +785,13 @@ static int reclassify_line(lua_State* state)
 /// Invoke the prompt filters again and refresh the prompt.
 ///
 /// Note: this can potentially be expensive; call this only infrequently.
+extern bool g_filtering_in_progress;
 int g_prompt_refilter = 0;
 static int refilter_prompt(lua_State* state)
 {
+    if (g_filtering_in_progress)
+        return luaL_error(state, "clink.refilterprompt may not be used within a prompt filter.");
+
     g_prompt_refilter++;
     void host_filter_prompt();
     host_filter_prompt();
