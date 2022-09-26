@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.3.42</title>
+<title>Clink v1.3.43</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -854,7 +854,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.3.42</div>
+                <div id="title">Clink v1.3.43</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -1236,6 +1236,11 @@ supersedes the <code>terminal.mouse_modifier</code> setting.  In Windows Termina
 <td>Controls what startup logo to show when Clink is injected.  <code>full</code> = show full copyright logo, <code>short</code> = show abbreviated version info, <code>none</code> = omit the logo.</td>
 </tr>
 <tr>
+<td align="center"><code>clink.max_input_rows</code></td>
+<td align="center"><code>0</code></td>
+<td>Limits how many rows the input line can use, up to the terminal height.  When this is <code>0</code> (the default), the terminal height is the limit.</td>
+</tr>
+<tr>
 <td align="center"><code>clink.paste_crlf</code></td>
 <td align="center"><code>crlf</code></td>
 <td>What to do with CR and LF characters on paste. Setting this to <code>delete</code> deletes them, <code>space</code> replaces them with spaces, <code>ampersand</code> replaces them with ampersands, and <code>crlf</code> pastes them as-is (executing commands that end with a newline).</td>
@@ -1313,7 +1318,7 @@ supersedes the <code>terminal.mouse_modifier</code> setting.  In Windows Termina
 <tr>
 <td align="center"><code>color.comment_row</code></td>
 <td align="center"><code>bright white on cyan</code> <a href="#alternatedefault">*</a></td>
-<td>The color for the comment row in the <code>clink-select-complete</code> command.  The comment row shows the &quot;and <em>N</em> more matches&quot; or &quot;rows <em>X</em> to <em>Y</em> of <em>Z</em>&quot; messages.</td>
+<td>The color for the comment row.  During <code>clink-select-complete</code> the comment row shows the &quot;and <em>N</em> more matches&quot; or &quot;rows <em>X</em> to <em>Y</em> of <em>Z</em>&quot; messages.  It can also show how history expansion will be applied at the cursor.</td>
 </tr>
 <tr>
 <td align="center"><code>color.description</code></td>
@@ -1344,6 +1349,11 @@ supersedes the <code>terminal.mouse_modifier</code> setting.  In Windows Termina
 <td align="center"><a name="color_hidden"></a><code>color.hidden</code></td>
 <td align="center"><a href="#alternatedefault">*</a></td>
 <td>Used when displaying file completions with the &quot;hidden&quot; attribute.</td>
+</tr>
+<tr>
+<td align="center"><code>color.histexpand</code></td>
+<td align="center"><a href="#alternatedefault">*</a></td>
+<td>The color for history expansions in the input line when <code>clink.colorize_input</code> is enabled.  If this color is not set or <code>history.auto_expand</code> is disabled or <code>history.expand_mode</code> is off, then history expansions are not colored.</td>
 </tr>
 <tr>
 <td align="center"><code>color.horizscroll</code></td>
@@ -1469,6 +1479,11 @@ supersedes the <code>terminal.mouse_modifier</code> setting.  In Windows Termina
 <td align="center"><code>files.system</code></td>
 <td align="center">False</td>
 <td>Includes or excludes files with the &quot;system&quot; attribute set when generating file lists.</td>
+</tr>
+<tr>
+<td align="center"><code>history.auto_expand</code></td>
+<td align="center">True</td>
+<td>When enabled, history expansion is automatically performed when a command line is accepted (by pressing <kbd>Enter</kbd>).  When disabled, history expansion is performed only when a corresponding expansion command is used (such as <code>clink-expand-history</code> <kbd>Alt</kbd>-<kbd>^</kbd>, or <code>clink-expand-line</code> <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>E</kbd>).</td>
 </tr>
 <tr>
 <td align="center"><code>history.dont_add_to_history_cmds</code></td>
@@ -1842,7 +1857,7 @@ Echos key sequences to use in the .inputrc files for binding keys to Clink comma
 Checks for an updated version of Clink.  If one is available, it is downloaded and will be installed the next time Clink is injected.</dd>
 </p>
 
-<h2 id="automatic-updates"><div class="wlink"><a href="#clinksetcommand"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Automatic Updates</h2>
+<h2 id="automatic-updates"><div class="wlink"><a href="#automatic-updates"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Automatic Updates</h2>
 <p>By default, Clink periodically and automatically checks for new versions.  When an update is available, Clink prints a message on startup.  To apply an update, run <code>clink update</code> when convenient to do so.</p>
 <p>You can control the frequency of update checks with <code>clink set clink.update_interval <span class="arg">days</span></code>, where <span class="arg">days</span> is the minimum number of days between checking for updates.</p>
 <p>You can turn update checks off with <code>clink set clink.autoupdate false</code>, or turn them on with <code>clink set clink.autoupdate true</code>.</p>
@@ -2081,7 +2096,7 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 <td>The length in characters of the common prefix of a list of possible completions that is displayed without modification. When set to a value greater than zero, common prefixes longer than this value are replaced with an ellipsis when displaying possible completions.</td>
 </tr>
 <tr>
-<td><a namme="configcompletionqueryitems"></a><code>completion-query-items</code></td>
+<td><a name="configcompletionqueryitems"></a><code>completion-query-items</code></td>
 <td>The number of possible completions that determines when the user is asked whether the list of possibilities should be displayed. If the number of possible completions is greater than or equal to this value, Readline will ask whether or not the user wishes to view them; otherwise, they are simply listed. This variable must be set to an integer value greater than or equal to 0. A negative value means Readline should never ask. The default limit is 100.</td>
 </tr>
 <tr>
@@ -2251,7 +2266,7 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 <td>Clink always reverts all in-memory changes to history lines each time a new input prompt starts.</td>
 </tr>
 </tbody></table>
-<h4 id="readline-key-bindings"><div class="wlink"><a href="#configcompletiondisplaywidth"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Readline key bindings</h4>
+<h4 id="readline-key-bindings"><div class="wlink"><a href="#readline-key-bindings"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Readline key bindings</h4>
 <p>The syntax for controlling key bindings in the init file is simple. First you need to find the name of the command that you want to change. The following sections contain tables of the command name, the default keybinding, if any, and a short description of what the command does (see <a href="#bindable-commands">Bindable Commands</a>).</p>
 <p>Once you know the name of the command, simply place on a line in the init file the name of the key you wish to bind the command to, a colon, and then the name of the command. There can be no space between the key name and the colon (any space will be interpreted as part of the key name). The name of the key can be expressed in different ways, depending on what you find most comfortable.</p>
 <p>In addition to command names, Readline allows keys to be bound to a string that is inserted when the key is pressed (a <em>macro</em>).</p>
@@ -2264,7 +2279,7 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 
 <p>
 <dt>Key names</dt>
-Key names can be a _name_ or a _sequence_.  Names are not quoted, and sequences are quoted.
+Key names can be a <em>name</em> or a <em>sequence</em>.  Names are not quoted, and sequences are quoted.
 </p>
 
 <p><em>Names</em> can be used to refer to simple keys like <code>Space</code>, <code>Return</code>, <code>Tab</code>, letters and digits (<code>A</code>, <code>b</code>, <code>1</code>, ...), and most punctuation (<code>!</code>, <code>@</code>, <code>.</code>, <code>_</code>, ...).  Names can also include modifier prefixes <code>C-</code> or <code>Control-</code> for the <kbd>Ctrl</kbd> key, or <code>M-</code> or <code>Meta-</code> for the Meta or <kbd>Alt</kbd> key.  However, modifier prefixes don&#39;t work with simple key names; you can&#39;t use <code>C-Space</code>, instead a <em>sequence</em> is needed for special keys like that.</p>
@@ -5554,7 +5569,7 @@ end
 <h2 id="using-history-expansion"><div class="wlink"><a href="#using-history-expansion"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Using History Expansion</h2>
 <p>Clink uses Readline&#39;s <a href="https://tiswww.cwru.edu/php/chet/readline/history.html">History library</a> to
 add history expansion capabilities.  If these are undesirable, they can be turned off by running
-<code>clink set history.expand_mode off</code>.</p>
+<code>clink set history.auto_expand off</code> or <code>clink set history.expand_mode off</code>.</p>
 <p>The History library provides a history expansion feature that is similar
 to the history expansion provided by <code>csh</code>.  This section describes the
 syntax used to manipulate the history information.</p>
@@ -5783,9 +5798,9 @@ or edit, the word or words selected from the history event.</p>
     Any character may be used as the delimiter in place of <code>/</code>.  The
     delimiter may be quoted in <em>old</em> and <em>new</em> with a single backslash.  If
     <code>&</code> appears in <em>new</em>, it is replaced by <em>old</em>.  A single backslash will
-    quote the <code>&</code>.  If <em>old</em> is null, it is set to the last <em>old</em>
+    quote the <code>&</code>.  If <em>old</em> is empty, it is set to the last <em>old</em>
     substituted, or, if no previous history substitutions took place,
-    the last <em>string</em> in a <code>!?<em>string</em>?</code> search.  If <em>new</em> is is null, each
+    the last <em>string</em> in a <code>!?<em>string</em>?</code> search.  If <em>new</em> is empty, each
     matching <em>old</em> is deleted.  The final delimiter is optional if it is
     the last character on the input line.
 </td></tr>
@@ -5911,7 +5926,7 @@ set CLINK_TERM_VS=\e[?12l
         This section describes the Clink Lua API extensions.
         Also see <a href="https://www.lua.org/docs.html">Lua Documentation</a> and the <a href="https://www.lua.org/manual/5.2/">Lua 5.2 Manual</a> for more information about the Lua programming language.
         <div class="section" id="api">
-<h3 id="lua-api-groups"><div class="wlink"><a href="#_argmatcher"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>API groups</h3><svg style="display:none" xmlns="http://www.w3.org/2000/svg"><defs><symbol id="wicon" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1.002 1.002 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4.018 4.018 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243L6.586 4.672z"/></symbol></defs></svg><p/><div class="toc"><div class="H1"><a href="#_argmatcher">_argmatcher</a></div><div class="H1"><a href="#builder">builder</a></div><div class="H1"><a href="#clink">clink</a></div><div class="H1"><a href="#console">console</a></div><div class="H1"><a href="#io">io</a></div><div class="H1"><a href="#line_state">line_state</a></div><div class="H1"><a href="#log">log</a></div><div class="H1"><a href="#matches">matches</a></div><div class="H1"><a href="#matches_lua">matches_lua</a></div><div class="H1"><a href="#os">os</a></div><div class="H1"><a href="#path">path</a></div><div class="H1"><a href="#rl">rl</a></div><div class="H1"><a href="#rl_buffer">rl_buffer</a></div><div class="H1"><a href="#settings">settings</a></div><div class="H1"><a href="#string">string</a></div><div class="H1"><a href="#unicode">unicode</a></div><div class="H1"><a href="#word_classifications">word_classifications</a></div><div class="H1"><a href="#[other]">[other]</a></div></div><div class="group"><h5 class="group_name"><a name="_argmatcher">_argmatcher</a></h5><div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#_argmatcher:addarg"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="_argmatcher:addarg">_argmatcher:addarg</a></div> <div class="signature">( <span class="arg_name">choices...</span>:string|table ) : self<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">This adds a new argument position with the matches given by <span class="arg">choices</span>.  Arguments can be a string, a string linked to another parser by the concatenation operator, a table of arguments, or a function that returns a table of arguments.  See <a href="#argumentcompletion">Argument Completion</a> for more information.</p><pre class="language-lua"><code>local my_parser = clink.argmatcher("make_color_shape")
+<h3 id="lua-api-groups"><div class="wlink"><a href="#lua-api-groups"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>API groups</h3><svg style="display:none" xmlns="http://www.w3.org/2000/svg"><defs><symbol id="wicon" viewBox="0 0 16 16" fill="currentColor"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1.002 1.002 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4.018 4.018 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243L6.586 4.672z"/></symbol></defs></svg><p/><div class="toc"><div class="H1"><a href="#_argmatcher">_argmatcher</a></div><div class="H1"><a href="#builder">builder</a></div><div class="H1"><a href="#clink">clink</a></div><div class="H1"><a href="#console">console</a></div><div class="H1"><a href="#io">io</a></div><div class="H1"><a href="#line_state">line_state</a></div><div class="H1"><a href="#log">log</a></div><div class="H1"><a href="#matches">matches</a></div><div class="H1"><a href="#matches_lua">matches_lua</a></div><div class="H1"><a href="#os">os</a></div><div class="H1"><a href="#path">path</a></div><div class="H1"><a href="#rl">rl</a></div><div class="H1"><a href="#rl_buffer">rl_buffer</a></div><div class="H1"><a href="#settings">settings</a></div><div class="H1"><a href="#string">string</a></div><div class="H1"><a href="#unicode">unicode</a></div><div class="H1"><a href="#word_classifications">word_classifications</a></div><div class="H1"><a href="#[other]">[other]</a></div></div><div class="group"><h5 class="group_name"><a name="_argmatcher">_argmatcher</a></h5><div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#_argmatcher:addarg"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="_argmatcher:addarg">_argmatcher:addarg</a></div> <div class="signature">( <span class="arg_name">choices...</span>:string|table ) : self<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">This adds a new argument position with the matches given by <span class="arg">choices</span>.  Arguments can be a string, a string linked to another parser by the concatenation operator, a table of arguments, or a function that returns a table of arguments.  See <a href="#argumentcompletion">Argument Completion</a> for more information.</p><pre class="language-lua"><code>local my_parser = clink.argmatcher("make_color_shape")
 :addarg("red", "green", "blue")             -- 1st argument is a color
 :addarg("circle", "square", "triangle")     -- 2nd argument is a shape</code></pre><p class="desc">When providing a table of arguments, the table can contain some special entries: <p><table> <tr><th>Entry</th><th>More Info</th><th>Version</th></tr> <tr><td><code>delayinit=<span class="arg">function</span></code></td><td>See <a href="#addarg_delayinit">Delayed initialization for an argument position</a>.</td><td class="version">v1.3.10 and newer</td></tr> <tr><td><code>fromhistory=true</code></td><td>See <a href="#addarg_fromhistory">Generate Matches From History</a>.</td><td class="version">v1.3.9 and newer</td></tr> <tr><td><code>loopchars="<span class="arg">characters</span>"</code></td><td>See <a href="#addarg_loopchars">Delimited Arguments</a>.</td><td class="version">v1.3.37 and newer</td></tr> <tr><td><code>nosort=true</code></td><td>See <a href="#addarg_nosort">Disable Sorting Matches</a>.</td><td class="version">v1.3.3 and newer</td></tr> <tr><td><code>onarg=<span class="arg">function</span></code></td><td>See <a href="#responsive-argmatchers">Responding to Arguments in Argmatchers</a>.</td><td class="version">v1.3.13 and newer</td></tr> </table></p> <strong>Note:</strong>  Arguments are positional in an argmatcher.  Using <code>:addarg()</code> multiple times adds multiple argument positions, in the order they are specified.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#_argmatcher:addargunsorted"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="_argmatcher:addargunsorted">_argmatcher:addargunsorted</a></div> <div class="signature">( <span class="arg_name">choices...</span>:string|table ) : self<br/><div class="version">v1.3.3 and newer</div></div></div><div class="body"><p class="desc">This is the same as <a href="#_argmatcher:addarg">_argmatcher:addarg</a> except that this disables sorting the matches.</p></div></div><hr/>
@@ -6108,7 +6123,7 @@ function foo_prompt:filter(prompt)
 &nbsp;   return os.date("%a %H:%M").." "..prompt
 end</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#clink.reclassifyline"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="clink.reclassifyline">clink.reclassifyline</a></div> <div class="signature">() : nil<br/><div class="version">v1.3.9 and newer</div></div></div><div class="body"><p class="desc">Reclassify the input line text again and refresh the input line display.</p></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#clink.recognizecommand"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="clink.recognizecommand">clink.recognizecommand</a></div> <div class="signature">( [<span class="arg_name">line</span>:string], <span class="arg_name">word</span>:string, [<span class="arg_name">quoted</span>:boolean] ) : word_class:string, ready:boolean, file:string<br/><div class="version">v1.3.38 and newer</div></div></div><div class="body"><p class="desc">This reports the input line coloring word classification to use for a command word.  The return value can be passed into <a href="#word_classifications:classifyword">word_classifications:classifyword()</a> as its <span class="arg">word_class</span> argument.</p><p class="desc"> This is intended for advanced input line coloring purposes.  For example if a script uses <a href="#clink.onfilterinput">clink.onfilterinput()</a> to modify the input text, then it can use this function inside a custom <a href="#classifier_override_line">classifier</a> to look up the color appropriate for the modified input text.</p><p class="desc"> The <span class="arg">line</span> is optional and may be an empty string or omitted.  When present, it is parsed to check if it would be processed as a <a href="#directory-shortcuts">directory shortcut</a>.</p><p class="desc"> The <span class="arg">word</span> is a string indicating the word to be analyzed.</p><p class="desc"> The <span class="arg">quoted</span> is optional.  When true, it indicates the word is quoted and any <code>^</code> characters are taken as-is, rather than treating them as the usual CMD escape character.</p><p class="desc"> The possible return values for <span class="arg">word_class</span> are:</p><p class="desc"> <table> <tr><th>Code</th><th>Classification</th><th>Clink Color Setting</th></tr> <tr><td><code>"x"</code></td><td>Executable; used for the first word when it is not a command or doskey alias, but is an executable name that exists.</td><td><code>color.executable</code></td></tr> <tr><td><code>"u"</code></td><td>Unrecognized; used for the first word when it is not a command, doskey alias, or recognized executable name.</td><td><code>color.unrecognized</code></td></tr> <tr><td><code>"o"</code></td><td>Other; used for file names and words that don't fit any of the other classifications.</td><td><code>color.input</code></td></tr> </table></p><p class="desc"> The possible return values for <span class="arg">ready</span> are:</p><p class="desc"> <ul> <li>True if the analysis has completed.</li> <li>False if the analysis has not yet completed (and the returned word class may be a temporary placeholder).</li> </ul></p><p class="desc"> The return value for <span class="arg">file</span> is the fully qualified path to the found executable file, if any, or nil.</p><p class="desc"> <strong>Note:</strong>  This always returns immediately, and it uses a background thread to analyze the <span class="arg">word</a> asynchronously. When the background thread finishes analyzing the word, Clink automatically redisplays the input line, giving classifiers a chance to call this function again and get the final <span class="arg">word_class</span> result.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#clink.recognizecommand"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="clink.recognizecommand">clink.recognizecommand</a></div> <div class="signature">( [<span class="arg_name">line</span>:string], <span class="arg_name">word</span>:string, [<span class="arg_name">quoted</span>:boolean] ) : word_class:string, ready:boolean, file:string<br/><div class="version">v1.3.38 and newer</div></div></div><div class="body"><p class="desc">This reports the input line coloring word classification to use for a command word.  The return value can be passed into <a href="#word_classifications:classifyword">word_classifications:classifyword()</a> as its <span class="arg">word_class</span> argument.</p><p class="desc"> This is intended for advanced input line coloring purposes.  For example if a script uses <a href="#clink.onfilterinput">clink.onfilterinput()</a> to modify the input text, then it can use this function inside a custom <a href="#classifier_override_line">classifier</a> to look up the color appropriate for the modified input text.</p><p class="desc"> The <span class="arg">line</span> is optional and may be an empty string or omitted.  When present, it is parsed to check if it would be processed as a <a href="#directory-shortcuts">directory shortcut</a>.</p><p class="desc"> The <span class="arg">word</span> is a string indicating the word to be analyzed.</p><p class="desc"> The <span class="arg">quoted</span> is optional.  When true, it indicates the word is quoted and any <code>^</code> characters are taken as-is, rather than treating them as the usual CMD escape character.</p><p class="desc"> The possible return values for <span class="arg">word_class</span> are:</p><p class="desc"> <table> <tr><th>Code</th><th>Classification</th><th>Clink Color Setting</th></tr> <tr><td><code>"x"</code></td><td>Executable; used for the first word when it is not a command or doskey alias, but is an executable name that exists.</td><td><code>color.executable</code></td></tr> <tr><td><code>"u"</code></td><td>Unrecognized; used for the first word when it is not a command, doskey alias, or recognized executable name.</td><td><code>color.unrecognized</code></td></tr> <tr><td><code>"o"</code></td><td>Other; used for file names and words that don't fit any of the other classifications.</td><td><code>color.input</code></td></tr> </table></p><p class="desc"> The possible return values for <span class="arg">ready</span> are:</p><p class="desc"> <ul> <li>True if the analysis has completed.</li> <li>False if the analysis has not yet completed (and the returned word class may be a temporary placeholder).</li> </ul></p><p class="desc"> The return value for <span class="arg">file</span> is the fully qualified path to the found executable file, if any, or nil.</p><p class="desc"> <strong>Note:</strong>  This always returns immediately, and it uses a background thread to analyze the <span class="arg">word</span> asynchronously. When the background thread finishes analyzing the word, Clink automatically redisplays the input line, giving classifiers a chance to call this function again and get the final <span class="arg">word_class</span> result.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#clink.refilterprompt"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="clink.refilterprompt">clink.refilterprompt</a></div> <div class="signature">() : nil<br/><div class="version">v1.2.46 and newer</div></div></div><div class="body"><p class="desc">Invoke the prompt filters again and refresh the prompt.</p><p class="desc"> Note: this can potentially be expensive; call this only infrequently.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#clink.reload"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="clink.reload">clink.reload</a></div> <div class="signature">() : nil<br/><div class="version">v1.2.29 and newer</div></div></div><div class="body"><p class="desc">Reloads Lua scripts and Readline config file at the next prompt.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#clink.runcoroutineuntilcomplete"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="clink.runcoroutineuntilcomplete">clink.runcoroutineuntilcomplete</a></div> <div class="signature">( <span class="arg_name">coroutine</span>:coroutine ) : nil<br/><div class="version">v1.3.5 and newer</div></div></div><div class="body"><p class="desc">By default, a coroutine is canceled if it doesn't complete before an edit line ends.  In some cases it may be necessary for a coroutine to run until it completes, even if it spans multiple edit lines.</p><p class="desc"> <strong>Note:</strong>  Use with caution.  This can potentially cause performance problems or cause prompt filtering to experience delays.</p></div></div><hr/>
@@ -6243,7 +6258,7 @@ line_state:getcommandwordindex() == 2</code></pre></div></div><hr/>
 if t == "remote" then
 &nbsp;   -- Network paths are often slow, and code may want to detect and skip them.
 end</code></pre></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#os.getenv"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="os.getenv">os.getenv</a></div> <div class="signature">( <span class="arg_name">name</span>:string ) : string | nil<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Returns the value of the named environment variable, or nil if it doesn't exist.</p><p class="desc"> Note: Certain environment variable names receive special treatment:</p><p class="desc"> <table> <tr><th>Name</th><th>Special Behavior</th></tr> <tr><td><code>"HOME"</code></td><td>If %HOME% is not set then a return value is synthesized from %HOMEDRIVE% and %HOMEPATH%, or from %USERPROFILE%.</td></tr> <tr><td><code>"ERRORLEVEL"</code></td><td>When the <code>cmd.get_errorlevel</code> setting is enabled (it is off by default) this returns the most recent exit code, just like the <code>echo %ERRORLEVEL%</code> command displays.  Otherwise this returns 0.</td></tr> </table></p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#os.getenv"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="os.getenv">os.getenv</a></div> <div class="signature">( <span class="arg_name">name</span>:string ) : string | nil<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Returns the value of the named environment variable, or nil if it doesn't exist.</p><p class="desc"> Note: Certain environment variable names receive special treatment:</p><p class="desc"> <table> <tr><th>Name</th><th>Special Behavior</th></tr> <tr><td><code>"CD"</code></td><td>If %CD% is not set then a return value is synthesized from the current working directory path name.</td></tr> <tr><td><code>"CMDCMDLINE"</code></td><td>If %CMDCMDLINE% is not set then this returns the command line that started the CMD process.</td></tr> <tr><td><code>"ERRORLEVEL"</code></td><td>If %ERRORLEVEL% is not set and the <code>cmd.get_errorlevel</code> setting is enabled (it is off by default) this returns the most recent exit code, just like the <code>echo %ERRORLEVEL%</code> command displays.  Otherwise this returns 0.</td></tr> <tr><td><code>"HOME"</code></td><td>If %HOME% is not set then a return value is synthesized from %HOMEDRIVE% and %HOMEPATH%, or from %USERPROFILE%.</td></tr> <tr><td><code>"RANDOM"</code></td><td>If %RANDOM% is not set then this returns a random integer.</td></tr> </table></p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#os.getenvnames"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="os.getenvnames">os.getenvnames</a></div> <div class="signature">() : table<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Returns all environment variables in a table with the following scheme:</p><pre class="language-lua"><code>local t = os.getenvnames()
 -- t[index].name        [string] The environment variable's name.
 -- t[index].value       [string] The environment variable's value.</code></pre></div></div><hr/>
@@ -6658,13 +6673,39 @@ end</code></pre></div></div><hr/>
 </div>
         </div>
         <div class="section" id="changes">
-<h1 id="changes"><div class="wlink"><a href="#rl_state"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Changes</h1>
+<h1 id="changes"><div class="wlink"><a href="#changes"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork"><div class="wlink"><a href="#releases-from-chrisant996clink-fork"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1343"><div class="wlink"><a href="#v1343"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>v1.3.43</h4>
+<ul>
+<li>Added <code>clink.max_input_rows</code> setting that limits the number of screen rows to use for displaying the input line, scrolling as appropriate if the input line exceeds the limit.</li>
+<li>Added <code>color.histexpand</code> setting.  When this is configured with a color, then Clink highlights history expansions in the input line and shows a preview of the expansion that will be applied near the current cursor position.</li>
+<li>Added <code>history.auto_expand</code> setting.  When this is set to false, history expansions will not be performed automatically upon <kbd>Enter</kbd>, but they may still be performed by invoking expansion commands such as <code>clink-expand-history</code> <kbd>Alt</kbd>-<kbd>^</kbd>, or <code>clink-expand-line</code> <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>E</kbd>.</li>
+<li>When a coroutine error happens, write a Lua traceback to the log file.</li>
+<li>The <code>clink-diagnostics</code> command now reports costs for prompt filters and input line coloring classifiers when a numeric arg is given (e.g. <kbd>Alt</kbd>-<kbd>1</kbd>,<kbd>Ctrl</kbd>-<kbd>x</kbd>,<kbd>Ctrl</kbd>-<kbd>z</kbd>).</li>
+<li>Fixed the input line color when the command word is an alias <em>and</em> a directory <em>and</em> has an argmatcher (regression introduced in v1.3.40).</li>
+<li>Fixed how the inserted completion is highlighted while using <code>clink-select-complete</code> with the <code>match.substring</code> setting enabled.</li>
+<li>Fixed Readline bugs in the numeric arg input state;<ul>
+<li>Numeric arg overflow check was missing in certain cases.</li>
+<li>Numeric arg input state could accidentally empty the prompt string.</li>
+<li>Numeric arg input state accidentally continued showing the arg input message after using <kbd>Alt</kbd>-<kbd>-</kbd> while already in numeric arg input state.</li>
+</ul>
+</li>
+<li>Fixed some minor input line coloring and completion mistakes for <code>clink set</code>.</li>
+<li>Fixed <code>quoted-insert</code> followed by <kbd>Esc</kbd>, so that it inserts the raw ESC character.</li>
+<li>Fixed how <kbd>Esc</kbd> is handled in isearch mode (e.g. <kbd>Ctrl</kbd>-<kbd>r</kbd>); it should terminate isearch without reverting the input line.</li>
+<li>Fixed <code>what-is</code> to consistently reset the color afterward.</li>
+<li>Fixed vi insertion mode when <code>terminal.raw_esc</code> is enabled, so that <kbd>Esc</kbd> changes to vi command mode.</li>
+<li>Fixed <code>clink.refilterprompt()</code> to report an error upon invalid usage (it cannot be used inside a prompt filter, as that could cause infinite recursion and a crash).</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/344">#344</a>; <code>history</code> prints UTF8 text incorrectly.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/342">#342</a>; typing <code>foo.abc</code> doesn&#39;t recognize <code>foo.abc.cmd</code>.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/340">#340</a>; various display glitches in the Readline library (Clink now uses custom display routines instead of the Readline display routines).</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/339">#339</a>; <code>%CD%</code> doesn&#39;t expand.</li>
+</ul>
 <h4 id="v1342"><div class="wlink"><a href="#v1342"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>v1.3.42</h4>
 <ul>
 <li>Added <code>console.checkinput()</code> to check whether input is available.</li>
 <li>Changed <code>console.readinput()</code> to accept an optional <span class="arg">no_cursor</span> argument to avoid changing cursor visibility or position.</li>
-<li>Fixed <a href="https://github.com/chrisant996/clink/issues/320">#320</a>; resizing the terminal can garble the prompt (bash has the same problem, so Clink now uses custom code to handle resizing the terminal).</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/320">#320</a>; resizing the terminal can garble the prompt (<code>bash</code> has the same problem, so Clink now uses custom code to handle resizing the terminal).</li>
 </ul>
 <h4 id="v1341"><div class="wlink"><a href="#v1341"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>v1.3.41</h4>
 <ul>
@@ -6714,7 +6755,7 @@ end</code></pre></div></div><hr/>
 <li>Added <code>clink.parseline()</code> to parse a string into one or more <code>line_state</code> objects.</li>
 <li>Added <code>os.getdrivetype()</code> to get the drive type for a path; especially useful if your code needs to skip network paths.</li>
 <li>Added <code>match_builder:setvolatile()</code> to force the matches to be used only once.  This makes it possible for match generators to produce different kinds of matches based on what has been typed, e.g. an email address match generator could list user names until <code>@</code> is typed, and then list domain names.</li>
-<li>The <code>clink-diagnostics</code> command now lists registered argmatchers when the numeric arg &gt; 1 (<kbd>Alt</kbd>-<kbd>2</kbd>,<kbd>Ctrl</kbd>-<kbd>x</kbd>,<kbd>Ctrl</kbd>-<kbd>r</kbd>).</li>
+<li>The <code>clink-diagnostics</code> command now lists registered argmatchers when the numeric arg &gt; 1 (<kbd>Alt</kbd>-<kbd>2</kbd>,<kbd>Ctrl</kbd>-<kbd>x</kbd>,<kbd>Ctrl</kbd>-<kbd>z</kbd>).</li>
 <li>Rewrote the path parsing routines to properly respect UNC paths and <code>\\?\</code> syntax and <code>\\?\UNC\</code> syntax.</li>
 <li>Fixed <code>clink.print(NONL, etc)</code> to not print a TAB character after a <code>NONL</code> that is the first argument.</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/329">#329</a>; file completions may be mistakenly marked as directories (regression introduced in v1.2.36; affects only backward compatibility mode).</li>
