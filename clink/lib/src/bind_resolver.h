@@ -58,6 +58,7 @@ public:
     void                reset();
 
     int                 is_bound(const char* seq, int len) const;
+    bool                more_than(unsigned int len) const;
 
 private:
     void                claim(binding& binding);

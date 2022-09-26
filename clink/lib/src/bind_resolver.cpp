@@ -255,6 +255,12 @@ int bind_resolver::is_bound(const char* seq, int len) const
 }
 
 //------------------------------------------------------------------------------
+bool bind_resolver::more_than(unsigned int len) const
+{
+    return m_key_count > m_tail + len;
+}
+
+//------------------------------------------------------------------------------
 void bind_resolver::claim(binding& binding)
 {
     if (binding)

@@ -984,7 +984,7 @@ _rl_dispatch_subseq (register int key, Keymap map, int got_subseq)
  * itself is pressed.  With the bindableEsc approach Clink uses, there's no need
  * to work around that, and in fact trying to work around it creates problems.
  */
-#if 0
+#ifndef MISSING_INPUT_AVAILABLE
 /* end_clink_change */
 #if defined (VI_MODE)
 	  /* The only way this test will be true is if a subsequence has been

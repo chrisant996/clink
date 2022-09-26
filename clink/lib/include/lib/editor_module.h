@@ -31,6 +31,7 @@ public:
         const char*         keys;
         unsigned int        len;    // Because '\0' is C-@ and is a valid input.
         unsigned char       id;
+        bool                more;   // More unresolved input is pending.
         bind_resolver::bind_params params;
     };
 

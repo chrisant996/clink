@@ -625,14 +625,45 @@ private:
 };
 
 //------------------------------------------------------------------------------
+static bool is_readline_input_pending()
+{
+    return (rl_pending_input ||
+            _rl_pushed_input_available() ||
+            RL_ISSTATE(RL_STATE_MACROINPUT) ||
+            rl_executing_macro);
+}
+
+//------------------------------------------------------------------------------
+static unsigned int* s_input_len_ptr = nullptr;
+static bool s_input_more = false;
 extern "C" int input_available_hook(void)
 {
     assert(s_direct_input);
-    if (!s_direct_input)
-        return 0;
+    if (s_direct_input)
+    {
+        // These are in order of next-ness:
 
-// BUGBUG: Readline neglects to pass the timeout into the hook.
-    return s_direct_input->available(0);
+        // Any remaining read-but-not-processed bytes in input chord?
+        if (s_input_len_ptr && *s_input_len_ptr > 0)
+            return true;
+
+        // Any read-but-not-processed bytes not yet in input chord?  The binding
+        // resolver may have more bytes pending.
+        if (s_input_more)
+            return true;
+
+        // Any pending input from Readline?
+        if (is_readline_input_pending())
+            return true;
+
+        // Any unread input available from stdin?
+        // Passing -1 returns the current timeout without changing it.  The
+        // timeout is in microseconds (µsec) so divide by 1000 for milliseconds.
+        const int timeout = rl_set_keyboard_input_timeout(-1);
+        if (s_direct_input->available(timeout > 0 ? timeout / 1000 : 0))
+            return true;
+    }
+    return false;
 }
 
 //------------------------------------------------------------------------------
@@ -2093,7 +2124,16 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
     const char* bindableEsc = get_bindable_esc();
     if (bindableEsc)
     {
-        rl_unbind_key_in_map('\x1b'/*alt-ctrl-[*/, emacs_meta_keymap);
+        // REVIEW: When not using `terminal.raw_esc`, there's no clean way via
+        // just key bindings to make ESC ESC do completion without interfering
+        // with ESC by itself.  But binding bindableEsc,bindableEsc to
+        // `complete` and unbinding bindableEsc would let ESC ESC do completion
+        // as long as it's ok for ESC by itself to have no effect.
+        // NOTE: When using `terminal.raw_esc`, it's expected that ESC doesn't
+        // do anything by itself (except in vi mode, where there's a hack to
+        // make ESC + timeout drop into vi command mode).
+        rl_unbind_key_in_map(27/*alt-ctrl-[*/, emacs_meta_keymap);
+        rl_unbind_key_in_map(27, vi_insertion_keymap);
         rl_bind_keyseq_in_map("\\e[27;7;219~"/*alt-ctrl-[*/, rl_named_function("complete"), emacs_standard_keymap);
         rl_bind_keyseq_in_map(bindableEsc, rl_named_function("clink-reset-line"), emacs_standard_keymap);
         rl_bind_keyseq_in_map(bindableEsc, rl_named_function("vi-movement-mode"), vi_insertion_keymap);
@@ -2106,7 +2146,6 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
     if (g_default_bindings.get() == 1)
         bind_keyseq_list(windows_emacs_key_binds, emacs_standard_keymap);
 
-    rl_unbind_key_in_map(27, vi_insertion_keymap);
     bind_keyseq_list(general_key_binds, vi_insertion_keymap);
     bind_keyseq_list(general_key_binds, vi_movement_keymap);
     bind_keyseq_list(vi_insertion_key_binds, vi_insertion_keymap);
@@ -2507,10 +2546,7 @@ void rl_module::set_prompt(const char* prompt, const char* rprompt, bool redispl
 //------------------------------------------------------------------------------
 bool rl_module::is_input_pending()
 {
-    return (rl_pending_input ||
-            _rl_pushed_input_available() ||
-            RL_ISSTATE(RL_STATE_MACROINPUT) ||
-            rl_executing_macro);
+    return is_readline_input_pending();
 }
 
 //------------------------------------------------------------------------------
@@ -2887,6 +2923,8 @@ void rl_module::on_input(const input& input, result& result, const context& cont
     int is_inc_searching = rl_readline_state & RL_STATE_ISEARCH;
 #endif
     unsigned int len = input.len;
+    rollback<unsigned int*> rb_input_len_ptr(s_input_len_ptr, &len);
+    rollback<bool> rb_input_more(s_input_more, input.more);
     while (len && !m_done)
     {
         bool is_quoted_insert = rl_is_insert_next_callback_pending();

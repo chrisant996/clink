@@ -28,6 +28,7 @@ extern "C" {
 #include <compat/config.h>
 #include <readline/readline.h>
 #include <readline/rlprivate.h>
+#include <readline/rldefs.h>
 #include <readline/history.h>
 }
 
@@ -54,6 +55,34 @@ extern std::shared_ptr<match_builder_toolkit> get_deferred_matches(int generatio
 inline char get_closing_quote(const char* quote_pair)
 {
     return quote_pair[1] ? quote_pair[1] : quote_pair[0];
+}
+
+//------------------------------------------------------------------------------
+static bool rl_vi_insert_mode_esc_special_case(int key)
+{
+    // This mirrors the conditions in the #if defined (VI_MODE) block in
+    // _rl_dispatch_subseq() in readline.c.  This is so when `terminal.raw_esc`
+    // is set the timeout hack can work for ESC in vi insertion mode.
+
+    if (rl_editing_mode == vi_mode &&
+        key == ESC &&
+        _rl_keymap == vi_insertion_keymap &&
+        _rl_keymap[key].type == ISKMAP &&
+        (FUNCTION_TO_KEYMAP(_rl_keymap, key))[ANYOTHERKEY].type == ISFUNC)
+    {
+        if ((RL_ISSTATE(RL_STATE_INPUTPENDING|RL_STATE_MACROINPUT) == 0) &&
+            _rl_pushed_input_available() == 0 &&
+            _rl_input_queued(0) == 0)
+            return true;
+
+        if ((RL_ISSTATE (RL_STATE_INPUTPENDING) == 0) &&
+            (RL_ISSTATE (RL_STATE_MACROINPUT) && _rl_peek_macro_key() == 0) &&
+            _rl_pushed_input_available() == 0 &&
+            _rl_input_queued(0) == 0)
+            return true;
+    }
+
+    return false;
 }
 
 
@@ -777,7 +806,9 @@ bool line_editor_impl::update_input()
 
         // `quoted-insert` should always behave as though the key resolved a
         // binding, to ensure that Readline gets to handle the key (even Esc).
-        if (!m_bind_resolver.step(key) && !rl_is_insert_next_callback_pending())
+        if (!m_bind_resolver.step(key) &&
+            !rl_is_insert_next_callback_pending() &&
+            !rl_vi_insert_mode_esc_special_case(key))
             return false;
     }
 
@@ -817,7 +848,7 @@ bool line_editor_impl::update_input()
             rollback<bind_resolver::binding*> _(m_pending_binding, &binding);
 
             editor_module::context context = get_context();
-            editor_module::input input = { chord.c_str(), chord.length(), id, binding.get_params() };
+            editor_module::input input = { chord.c_str(), chord.length(), id, m_bind_resolver.more_than(chord.length()), binding.get_params() };
             module->on_input(input, result, context);
 
             if (clink_is_signaled())
