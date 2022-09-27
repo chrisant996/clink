@@ -1855,7 +1855,7 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
     _rl_comment_begin = savestring("::");
 
     // Disable _rl_optimize_typeahead for two reasons:
-    //  1.  It is incompatible with Readline's Callback Mode because it calls
+    //  1.  It is incompatible with READLINE_CALLBACKS because it calls
     //      rl_read_key() directly.
     //  2.  Clink's implementation of input_available_hook() can't predict
     //      whether the input will actually reach Readline, and rl_insert's

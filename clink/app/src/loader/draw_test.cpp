@@ -22,6 +22,12 @@
 #include <utils/app_context.h>
 #endif
 
+extern "C" {
+#include <compat/config.h>
+#include <readline/readline.h>
+#include <readline/rlprivate.h>
+};
+
 //------------------------------------------------------------------------------
 void puts_help(const char* const* help_pairs, const char* const* other_pairs=nullptr);
 
@@ -93,8 +99,10 @@ void test_editor::start(const char* prompt)
     m_printer_context = new printer_context(m_terminal.out, m_printer);
     m_cc = new console_config();
 
+    _rl_optimize_typeahead = false;         // Because not compatible with READLINE_CALLBACKS.
+
 #ifdef INIT_READLINE
-    // initialise_readline() needs the printer_context.
+    // initialise_readline() needs a printer_context to be active.
     str_moveable bin_dir;
     str_moveable state_dir;
     app_context::get()->get_binaries_dir(bin_dir);
