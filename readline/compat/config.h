@@ -22,6 +22,7 @@
 #if defined(BUILD_READLINE) && !defined(__cplusplus)
 #include "../../clink/core/include/core/bldopts.h"
 #include "../../clink/core/include/core/debugheap.h"
+#include <assert.h>
 #endif
 
 int     compare_string(const char* s1, const char* s2, int casefold);

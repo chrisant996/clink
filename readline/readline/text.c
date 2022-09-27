@@ -1010,6 +1010,9 @@ rl_insert (int count, int c)
 	break;
     }
 
+/* begin_clink_change */
+  assert(n != 0); /* rl_read_key() must not return 0 after _rl_input_queued() returns non-zero. */
+/* end_clink_change */
   if (n != (unsigned short)-2)		/* -2 = sentinel value for having inserted N */
     {
       /* setting rl_pending_input inhibits setting rl_last_func so we do it
