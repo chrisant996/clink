@@ -1536,6 +1536,7 @@ void display_manager::display()
     // Optimization:  can skip updating the display if someone said it's already
     // updated, unless someone is forcing an update.
     bool can_show_rprompt = false;
+    const int old_botlin = _rl_vis_botlin;
     if (need_update)
     {
         if (force_wrap)
@@ -1552,6 +1553,14 @@ void display_manager::display()
             tputs_rprompt(0);
         }
 
+        // Erase old comment row if its row changes.
+        if (*m_curr.comment_row() && new_botlin != old_botlin)
+        {
+            _rl_move_vert(old_botlin + 1);
+            _rl_last_c_pos = 0;
+            _rl_clear_to_eol(_rl_screenwidth); // BUGBUG: assumes _rl_term_clreol.
+        }
+
         // Update each display line for the line buffer.
         bool wrapped = false;
         unsigned int rows = m_last_prompt_line_botlin;
@@ -1565,18 +1574,17 @@ void display_manager::display()
         }
 
         // Erase any surplus lines and update the bottom line counter.
-        if (new_botlin < _rl_vis_botlin)
+        if (new_botlin < old_botlin)
         {
             _rl_cr();
             _rl_last_c_pos = 0;
 
             // BUGBUG: This probably will garble the display if the terminal
             // height has shrunk and no longer fits _rl_vis_botlin.
-            for (int i = new_botlin; i++ < _rl_vis_botlin;)
+            for (int i = new_botlin; i++ < old_botlin;)
             {
                 _rl_move_vert(i);
-                // BUGBUG: assumes _rl_term_clreol.
-                _rl_clear_to_eol(_rl_screenwidth);
+                _rl_clear_to_eol(_rl_screenwidth); // BUGBUG: assumes _rl_term_clreol.
             }
         }
 
@@ -1629,7 +1637,7 @@ void display_manager::display()
         }
     }
 
-    if (strcmp(m_curr.comment_row(), next->comment_row()))
+    if (strcmp(m_curr.comment_row(), next->comment_row()) || new_botlin != old_botlin)
     {
         _rl_move_vert(_rl_vis_botlin + 1);
         if (_rl_last_c_pos > 0)
