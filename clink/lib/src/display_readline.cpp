@@ -1506,6 +1506,9 @@ void display_manager::display()
         // Erase any surplus lines and update the bottom line counter.
         if (new_botlin < old_botlin)
         {
+            if (m_pending_wrap)
+                finish_pending_wrap();
+
             move_to_column(0);
 
             // BUGBUG: This probably will garble the display if the terminal
@@ -1570,6 +1573,9 @@ void display_manager::display()
     {
         move_to_row(_rl_vis_botlin + 1);
         move_to_column(0);
+
+        if (m_pending_wrap)
+            finish_pending_wrap();
 
         if (*next->comment_row())
         {
@@ -1814,7 +1820,8 @@ test_left:
     move_to_column(lcol);
     shift_cols(lcol, delta);
 
-    m_pending_wrap = false;
+    if (m_pending_wrap)
+        finish_pending_wrap();
 
     rl_puts_face_func(d->m_chars + lind, d->m_faces + lind, rind - lind);
 
@@ -1962,6 +1969,8 @@ void display_manager::finish_pending_wrap()
     assert(m_pending_wrap);
     assert(_rl_last_c_pos == 0);
 
+    unsigned int bytes = 0;
+
     // If there's a display_line, then re-print its first character to force
     // wrapping.  Otherwise, print a placeholder.
     const int index = _rl_last_v_pos - m_curr.top();
@@ -1980,18 +1989,19 @@ void display_manager::finish_pending_wrap()
                 break;
         }
 
-        unsigned int bytes = static_cast<unsigned int>(iter.get_pointer() - d.m_chars);
+        bytes = static_cast<unsigned int>(iter.get_pointer() - d.m_chars);
         rl_puts_face_func(d.m_chars, d.m_faces, bytes);
 
         _rl_last_c_pos = cols;
     }
-    else
+
+    if (!bytes)
     {
-        // If there's no display_line, print a space to force wrapping and a
-        // backspace to move the cursor to the beginning of the line with the
-        // fewest possible side effects (which potentially matters during
-        // terminal resize, which is asynchronous with respect to the console
-        // application).
+        // If there's no display_line or it's empty, print a space to force
+        // wrapping and a backspace to move the cursor to the beginning of the
+        // line with the fewest possible side effects (which potentially matters
+        // during terminal resize, which is asynchronous with respect to the
+        // console application).
         rl_fwrite_function(_rl_out_stream, "\x1b[m \x08", 5);
     }
 
