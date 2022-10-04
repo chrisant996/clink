@@ -221,7 +221,7 @@ local function collect_filter_src(t, type)
     t[type] = tsub
 
     local any_cost
-    local longest = longest or 24
+    local longest = 24
     for _,prompt in ipairs (prompt_filters) do
         local func = prompt[type]
         if func then
