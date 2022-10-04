@@ -47,6 +47,7 @@ end
 
 --------------------------------------------------------------------------------
 clink.argmatcher("cd", "chdir")
+:setcmdcommand()
 :addflags("/d")
 :adddescriptions({
     ["/d"] = "Also change drive"
@@ -56,16 +57,19 @@ clink.argmatcher("cd", "chdir")
 
 --------------------------------------------------------------------------------
 clink.argmatcher("pushd")
+:setcmdcommand()
 :addarg({onarg=onarg_pushd, clink.dirmatches})
 :nofiles()
 
 --------------------------------------------------------------------------------
 clink.argmatcher("md", "mkdir")
+:setcmdcommand()
 :addarg(clink.dirmatches)
 :loop()
 
 --------------------------------------------------------------------------------
 clink.argmatcher("rd", "rmdir")
+:setcmdcommand()
 :addflags("/s", "/q")
 :adddescriptions({
     ["/s"] = "Remove files and directories recursively",

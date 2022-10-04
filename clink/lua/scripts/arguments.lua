@@ -713,6 +713,12 @@ function _argmatcher:getdebugname()
 end
 
 --------------------------------------------------------------------------------
+function _argmatcher:setcmdcommand()
+    self._cmd_command = true
+    return self
+end
+
+--------------------------------------------------------------------------------
 --- -name:  _argmatcher:reset
 --- -ver:   1.3.10
 --- -ret:   self
@@ -1843,26 +1849,39 @@ end
 
 
 --------------------------------------------------------------------------------
-local function _is_argmatcher_loaded(command_word)
-    -- Check for an exact match.
-    local argmatcher = _argmatchers[command_word]
-    if argmatcher then
-        return argmatcher
-    end
-
-    -- Check for a name match.
-    argmatcher = _argmatchers[path.getname(command_word)]
-    if argmatcher then
-        return argmatcher
-    end
-
-    -- If the extension is in PATHEXT then try stripping the extension.
-    if path.isexecext(command_word) then
-        argmatcher = _argmatchers[path.getbasename(command_word)]
+local function _is_argmatcher_loaded(command_word, quoted)
+    repeat
+        -- Check for an exact match.
+        local argmatcher = _argmatchers[command_word]
         if argmatcher then
-            return argmatcher
+            break
         end
+
+        -- Check for a name match.
+        argmatcher = _argmatchers[path.getname(command_word)]
+        if argmatcher then
+            break
+        end
+
+        -- If the extension is in PATHEXT then try stripping the extension.
+        if path.isexecext(command_word) then
+            argmatcher = _argmatchers[path.getbasename(command_word)]
+            if argmatcher and argmatcher._cmd_command then
+                -- CMD commands do not have extensions.
+                argmatcher = nil
+            end
+            if argmatcher then
+                break
+            end
+        end
+    until true
+
+    if quoted and argmatcher and argmatcher._cmd_command then
+        -- CMD commands cannot be quoted.
+        argmatcher = nil
     end
+
+    return argmatcher
 end
 
 --------------------------------------------------------------------------------
@@ -1907,7 +1926,7 @@ local function get_completion_dirs()
 end
 
 --------------------------------------------------------------------------------
-local function attempt_load_argmatcher(command_word)
+local function attempt_load_argmatcher(command_word, quoted)
     if not command_word or command_word == "" then
         return
     end
@@ -1954,7 +1973,7 @@ local function attempt_load_argmatcher(command_word)
                 -- Load the file.
                 dofile(file)
                 -- Check again, and stop if argmatcher is loaded.
-                local argmatcher = _is_argmatcher_loaded(command_word)
+                local argmatcher = _is_argmatcher_loaded(command_word, quoted)
                 if argmatcher then
                     loaded_argmatchers[command_word] = 3 -- Attempted, loaded, and has argmatcher.
                     return argmatcher
@@ -1969,7 +1988,7 @@ end
 -- not, then it looks for a Lua script by that name in one of the completions
 -- directories.  If found, the script is loaded, and it checks again whether an
 -- argmatcher is already loaded for the specified word.
-local function _has_argmatcher(command_word)
+local function _has_argmatcher(command_word, quoted)
     if not command_word or command_word == "" then
         return
     end
@@ -1986,12 +2005,12 @@ local function _has_argmatcher(command_word)
         end
     end
 
-    local argmatcher = _is_argmatcher_loaded(command_word)
+    local argmatcher = _is_argmatcher_loaded(command_word, quoted)
 
     -- If an argmatcher isn't loaded, look for a Lua script by that name in one
     -- of the completions directories.  If found, load it and check again.
     if not argmatcher and not loaded_argmatchers[command_word] then
-        argmatcher = attempt_load_argmatcher(command_word)
+        argmatcher = attempt_load_argmatcher(command_word, quoted)
     end
 
     if argmatcher and not (clink.co_state._argmatcher_fromhistory and clink.co_state._argmatcher_fromhistory.argmatcher) then
@@ -2081,14 +2100,14 @@ local function _find_argmatcher(line_state, check_existence, lookup)
     end
 
     local command_word = lookup or line_state:getword(command_word_index)
+    local info = not lookup and line_state:getwordinfo(command_word_index)
     if not command_word or command_word == "" then
         return
     end
 
-    if command_word_index == 1 and not lookup then
+    if command_word_index == 1 and not lookup and info and not info.quoted then
         local command_offset = line_state:getcommandoffset()
-        local info = line_state:getwordinfo(1)
-        if not info.quoted and not line_state:getline():sub(command_offset, command_offset):find("[ \t]") then
+        if not line_state:getline():sub(command_offset, command_offset):find("[ \t]") then
             local alias = os.getalias(command_word)
             if alias and alias ~= "" then
                 -- This doesn't even try to handle redirection symbols in the alias
@@ -2096,6 +2115,10 @@ local function _find_argmatcher(line_state, check_existence, lookup)
                 alias = alias:gsub("%$.*$", "")
                 local words = string.explode(alias, " \t", '"')
                 if words[1] then
+                    -- FUTURE:  Ideally this could detect whether the word was
+                    -- quoted so that e.g. `"cd"` in an alias doesn't resolve to
+                    -- the built-in CD command argmatcher.  But it's a weird
+                    -- edge case and isn't worth the complexity.
                     local argmatcher = _has_argmatcher(words[1])
                     if argmatcher then
                         if check_existence then
@@ -2117,10 +2140,11 @@ local function _find_argmatcher(line_state, check_existence, lookup)
         local _, _, file = clink.recognizecommand(command_word, true)
         if file then
             command_word = file
+            info = nil
         end
     end
 
-    local argmatcher = _has_argmatcher(command_word)
+    local argmatcher = _has_argmatcher(command_word, info and info.quoted)
     if argmatcher then
         if check_existence then
             argmatcher = nil
@@ -2148,7 +2172,12 @@ end
 function clink.getargmatcher(find)
     local t = type(find)
     if t == "string" then
-        return _has_argmatcher(find)
+        local quoted
+        if find:match('^".*"$') then
+            quoted = true
+            find = find:gsub('^"(.*)"$', '%1')
+        end
+        return _has_argmatcher(find, quoted)
     elseif t == "userdata" then
         return _find_argmatcher(find)
     else
