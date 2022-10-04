@@ -2,6 +2,10 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.3.45
+
+- Fixed [#356](https://github.com/chrisant996/clink/issues/356); input line display garbled on Windows 8.1 (regression introduced in v1.3.43).
+
 #### v1.3.44
 
 - Fixed [#348](https://github.com/chrisant996/clink/issues/348); pasting in ConEmu or Windows Terminal duplicates the 2nd character (regression introduced in v1.3.43).
