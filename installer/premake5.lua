@@ -392,7 +392,7 @@ newaction {
         -- Zip up the source code.
         os.chdir("..")
         local src_dir_name = target_dir..clink_suffix.."_src"
-        if not exec_with_retry("move ~working " .. src_dir_name, 3, 2.0) then
+        if not exec_with_retry("move ~working " .. src_dir_name, 3, 10.0) then
             error("Failed to move ~working to " .. src_dir_name)
         end
 
