@@ -5,6 +5,8 @@
 #### v1.3.46
 
 - Fixed a slight efficiency optimization in the display code, which was getting defeated accidentally.
+- Fixed `"cd"` so it doesn't match the `cd` argmatcher, because CMD commands cannot be quoted.
+- Fixed [#356](https://github.com/chrisant996/clink/issues/356) more thoroughly; some edge cases were missed which caused regressions even on Windows 10 and 11.
 
 #### v1.3.45
 
