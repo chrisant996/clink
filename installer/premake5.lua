@@ -49,7 +49,32 @@ local function exec(cmd, silent)
     local _, _, ret = os.execute(cmd)
     path.normalize = prev_norm
 
+    if ret ~= 0 then
+
+
     return ret == 0
+end
+
+--------------------------------------------------------------------------------
+local function exec_with_retry(cmd, tries, delay, silent)
+    while tries > 0 do
+        if exec(cmd, silent) then
+            return true
+        end
+
+        tries = tries - 1
+
+        if tries > 0 then
+            print("... waiting to retry ...")
+            local target = os.clock() + delay
+            while os.clock() < target do
+                -- Busy wait, but this is such a rare case that it's not worth
+                -- trying to be more efficient.
+            end
+        end
+    end
+
+    return false
 end
 
 --------------------------------------------------------------------------------
@@ -370,7 +395,9 @@ newaction {
         -- Zip up the source code.
         os.chdir("..")
         local src_dir_name = target_dir..clink_suffix.."_src"
-        exec("move ~working " .. src_dir_name)
+        if not exec_with_retry("move ~working " .. src_dir_name, 3, 2.0) then
+            error("Failed to move ~working to " .. src_dir_name)
+        end
 
         if have_7z then
             os.chdir(src_dir_name)
