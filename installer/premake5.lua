@@ -49,9 +49,6 @@ local function exec(cmd, silent)
     local _, _, ret = os.execute(cmd)
     path.normalize = prev_norm
 
-    if ret ~= 0 then
-
-
     return ret == 0
 end
 
