@@ -739,6 +739,7 @@ function _argmatcher:reset()
     self._loop = nil
     self._no_file_generation = nil
     self._hidden = nil
+    self._cmd_command = nil
     self._classify_func = nil
     self._init_coroutine = nil
     self._init_generation = nil
@@ -1850,9 +1851,11 @@ end
 
 --------------------------------------------------------------------------------
 local function _is_argmatcher_loaded(command_word, quoted)
+    local argmatcher
+
     repeat
         -- Check for an exact match.
-        local argmatcher = _argmatchers[command_word]
+        argmatcher = _argmatchers[command_word]
         if argmatcher then
             break
         end
