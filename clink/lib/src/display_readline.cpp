@@ -1880,6 +1880,9 @@ void display_manager::move_to_column(unsigned int col)
 //------------------------------------------------------------------------------
 void display_manager::move_to_row(int row)
 {
+    if (row == _rl_last_v_pos)
+        return;
+
     if (m_pending_wrap)
         finish_pending_wrap();
 
@@ -1891,11 +1894,11 @@ void display_manager::shift_cols(unsigned int col, int delta)
 {
     assert(col == _rl_last_c_pos);
 
-    if (m_pending_wrap)
-        finish_pending_wrap();
-
     if (delta > 0)
     {
+        if (m_pending_wrap)
+            finish_pending_wrap();
+
         assert(delta < _rl_screenwidth - col);
         if (_rl_term_IC)
         {
@@ -1921,6 +1924,9 @@ void display_manager::shift_cols(unsigned int col, int delta)
     }
     else if (delta < 0)
     {
+        if (m_pending_wrap)
+            finish_pending_wrap();
+
         assert(-delta < _rl_screenwidth - col);
         if (_rl_term_DC && *_rl_term_DC)
         {
