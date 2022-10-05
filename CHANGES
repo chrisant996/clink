@@ -4,7 +4,7 @@
 
 #### v1.3.46
 
-- More fixes for [#356](https://github.com/chrisant996/clink/issues/356); input line display garbled on Windows 8.1 (regression introduced in v1.3.43).
+- More fixes for [#356](https://github.com/chrisant996/clink/issues/356); input line display garbled on Windows 8.1 (regression introduced in v1.3.43).  Also, right-side prompts have never worked correctly on Windows 8.1, and this finally fixes them as well.
 
 #### v1.3.45
 
