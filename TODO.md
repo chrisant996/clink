@@ -8,6 +8,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## Normal Priority
 - Coroutines can call `clink.refilterprompt()` and it immediately refilters while in the coroutine.  It should instead set a flag to refilter after the coroutines have yielded.
+- Add a way to specify height and other options for `clink.popuplist()`.
 
 ## Low Priority
 - Collecting words currently happens in update_internal, but probably it also belongs in alternative_matches and/or update_matches:
