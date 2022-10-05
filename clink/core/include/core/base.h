@@ -71,6 +71,19 @@ void dbg_printf(const char* fmt, ...);
 #endif
 
 //------------------------------------------------------------------------------
+#undef assertimplies
+#ifdef NDEBUG
+#define assertimplies(a, b) ((void)0)
+#else
+#define makeassertimpliestext3(x, y, z) x y z
+#define makeassertimpliestext(a, b) makeassertimpliestext3(_CRT_WIDE(#a), _CRT_WIDE(" IMPLIES "), _CRT_WIDE(#b))
+#define assertimplies(a, b) ((void)(    \
+        (!(a) || !!(b)) ||              \
+        (_wassert(makeassertimpliestext(a, b), _CRT_WIDE(__FILE__), (unsigned)(__LINE__)), 0)))
+#endif
+
+
+//------------------------------------------------------------------------------
 struct no_copy
 {
             no_copy() = default;

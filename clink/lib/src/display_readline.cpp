@@ -49,9 +49,7 @@ extern void (*rl_fwrite_function)(FILE*, const char*, int);
 extern void (*rl_fflush_function)(FILE*);
 
 extern char* tgetstr(const char*, char**);
-extern int tputs(const char* str, int affcnt, int (*putc_func)(int));
 extern char* tgoto(const char* base, int x, int y);
-extern void tputs_rprompt(const char *s);
 
 extern int rl_get_forced_display(void);
 extern void rl_set_forced_display(int force);
@@ -84,6 +82,18 @@ extern setting_color g_color_comment_row;
 extern setting_color g_color_histexpand;
 
 //------------------------------------------------------------------------------
+static bool is_autowrap_bug_present()
+{
+#pragma warning(push)
+#pragma warning(disable:4996)
+    OSVERSIONINFO ver = {sizeof(ver)};
+    if (GetVersionEx(&ver))
+        return ver.dwMajorVersion < 10;
+    return false;
+#pragma warning(pop)
+}
+
+//------------------------------------------------------------------------------
 static void clear_to_end_of_screen()
 {
     static const char* const termcap_cd = tgetstr("cd", nullptr);
@@ -103,6 +113,12 @@ static unsigned int raw_measure_cols(const char* s, unsigned int len)
     }
 
     return cols;
+}
+
+//------------------------------------------------------------------------------
+static void tputs(const char* s)
+{
+    rl_fwrite_function(_rl_out_stream, s, strlen(s));
 }
 
 
@@ -1103,6 +1119,8 @@ private:
     void                move_to_row(int row);
     void                shift_cols(unsigned int col, int delta);
     void                print(const char* chars, unsigned int len);
+    void                print_rprompt(const char* s);
+    void                detect_pending_wrap();
     void                finish_pending_wrap();
 
     display_lines       m_next;
@@ -1115,7 +1133,9 @@ private:
     bool                m_last_modmark = false;
     bool                m_horz_scroll = false;
 
+    const bool          m_autowrap_bug;
     bool                m_pending_wrap = false;
+    const display_lines* m_pending_wrap_display = nullptr;
 };
 
 //------------------------------------------------------------------------------
@@ -1123,6 +1143,7 @@ static display_manager s_display_manager;
 
 //------------------------------------------------------------------------------
 display_manager::display_manager()
+: m_autowrap_bug(is_autowrap_bug_present())
 {
     rl_on_new_line();
 }
@@ -1139,6 +1160,9 @@ void display_manager::clear()
     m_last_prompt_line_botlin = -1;
     m_last_modmark = false;
     m_horz_scroll = false;
+
+    m_pending_wrap = false;
+    m_pending_wrap_display = nullptr;
 }
 
 //------------------------------------------------------------------------------
@@ -1368,6 +1392,7 @@ void display_manager::display()
 
     // Prepare data structures for displaying the input line.
     const display_lines* next = &m_curr;
+    m_pending_wrap_display = &m_curr;
     if (need_update)
     {
         next = &m_next;
@@ -1478,11 +1503,7 @@ void display_manager::display()
         // If the right side prompt is shown but shouldn't be, erase it.
         can_show_rprompt = next->can_show_rprompt();
         if (_rl_rprompt_shown_len && !can_show_rprompt)
-        {
-            assert(_rl_last_v_pos == 0);
-            assert(!m_pending_wrap); // By definition; there's only 1 screen row.
-            tputs_rprompt(0);
-        }
+            print_rprompt(nullptr);
 
         // Erase old comment row if its row changes.
         if (*m_curr.comment_row() && new_botlin != old_botlin)
@@ -1502,6 +1523,11 @@ void display_manager::display()
             auto o = m_curr.get(i - m_top + old_top);
             update_line(i, o, d, _rl_rprompt_shown_len > 0);
         }
+
+        // Once the display lines have been printed, the next (pending) state
+        // must be used for finishing pending wraps.  In practice, this affects
+        // only pending wrap caused by printing an rprompt.
+        m_pending_wrap_display = next;
 
         // Erase any surplus lines and update the bottom line counter.
         if (new_botlin < old_botlin)
@@ -1594,6 +1620,10 @@ void display_manager::display()
         print("\x1b[m\x1b[K", 6);
     }
 
+    // If the right side prompt is not shown and should be, display it.
+    if (!_rl_rprompt_shown_len && can_show_rprompt)
+        print_rprompt(rl_rprompt);
+
     // Move cursor to the rl_point position.
     move_to_row(m_last_prompt_line_botlin + next->vpos() - m_top);
     move_to_column(next->cpos());
@@ -1611,6 +1641,8 @@ void display_manager::display()
     assert(!m_pending_wrap);
     rl_fflush_function(_rl_out_stream);
 
+    m_pending_wrap_display = nullptr;
+
 #undef m_next
 
     if (need_update)
@@ -1620,10 +1652,6 @@ void display_manager::display()
     }
 
     rl_display_fixed = 0;
-
-    // If the right side prompt is not shown and should be, display it.
-    if (!_rl_rprompt_shown_len && can_show_rprompt)
-        tputs_rprompt(rl_rprompt);
 
 #ifndef LOG_OUTPUT_CALLSTACKS
     coalesce.flush();
@@ -1845,18 +1873,11 @@ test_left:
         _rl_last_c_pos += erase_cols;
     }
 
+    // Scroll marker should have a trailing space.
+    assertimplies(d->m_scroll_mark < 0, _rl_last_c_pos < _rl_screenwidth);
+
     // Update cursor position and deal with autowrap.
-    if (_rl_last_c_pos == _rl_screenwidth)
-    {
-        assert(!(d->m_scroll_mark < 0)); // Scroll marker should have a trailing space.
-        _rl_last_c_pos = 0;
-        _rl_last_v_pos++;
-        m_pending_wrap = true;
-    }
-    else
-    {
-        m_pending_wrap = false;
-    }
+    detect_pending_wrap();
 }
 
 //------------------------------------------------------------------------------
@@ -1874,7 +1895,7 @@ void display_manager::move_to_column(unsigned int col)
     if (col)
     {
         char *buffer = tgoto(_rl_term_ch, 0, col + 1);
-        tputs(buffer, 1, _rl_output_character_function);
+        tputs(buffer);
     }
     else
     {
@@ -1910,20 +1931,20 @@ void display_manager::shift_cols(unsigned int col, int delta)
         if (_rl_term_IC)
         {
             char* buffer = tgoto(_rl_term_IC, 0, delta);
-            tputs(buffer, 1, _rl_output_character_function);
+            tputs(buffer);
         }
 #if 0
         else if (_rl_term_im && *_rl_term_im && _rl_term_ei && *_rl_term_ei)
         {
-            tputs(_rl_term_im, 1, _rl_output_character_function);
+            tputs(_rl_term_im);
             for (int i = delta; i--;)
                 _rl_output_character_function(' ');
-            tputs(_rl_term_ei, 1, _rl_output_character_function);
+            tputs(_rl_term_ei);
         }
         else if (_rl_term_ic && *_rl_term_ic)
         {
             for (int i = delta; i--;)
-                tputs(_rl_term_ic, 1, _rl_output_character_function);
+                tputs(_rl_term_ic);
         }
 #endif
         else
@@ -1938,13 +1959,13 @@ void display_manager::shift_cols(unsigned int col, int delta)
         if (_rl_term_DC && *_rl_term_DC)
         {
             char *buffer = tgoto(_rl_term_DC, -delta, -delta);
-            tputs(buffer, 1, _rl_output_character_function);
+            tputs(buffer);
         }
 #if 0
         else if (_rl_term_dc && *_rl_term_dc)
         {
             for (int i = -delta; i--;)
-                tputs(_rl_term_dc, 1, _rl_output_character_function);
+                tputs(_rl_term_dc);
         }
 #endif
         else
@@ -1962,22 +1983,68 @@ void display_manager::print(const char* chars, unsigned int len)
 }
 
 //------------------------------------------------------------------------------
+void display_manager::print_rprompt(const char* s)
+{
+    const int col = _rl_screenwidth - (s ? rl_visible_rprompt_length : _rl_rprompt_shown_len);
+    if (col <= 0 || col >= _rl_screenwidth)
+        return;
+
+    move_to_row(0);
+    move_to_column(col);
+
+    if (m_pending_wrap)
+        finish_pending_wrap();
+
+    if (s)
+    {
+        tputs(s);
+        _rl_last_c_pos = _rl_screenwidth;
+    }
+    else
+    {
+        _rl_clear_to_eol(_rl_rprompt_shown_len);
+    }
+
+    _rl_rprompt_shown_len = s ? rl_visible_rprompt_length : 0;
+
+    // Win10 and higher don't need to deal with pending wrap from rprompt.
+    if (m_autowrap_bug)
+        detect_pending_wrap();
+}
+
+//------------------------------------------------------------------------------
+void display_manager::detect_pending_wrap()
+{
+    if (_rl_last_c_pos == _rl_screenwidth)
+    {
+        _rl_last_c_pos = 0;
+        _rl_last_v_pos++;
+        m_pending_wrap = true;
+    }
+    else
+    {
+        m_pending_wrap = false;
+    }
+}
+
+//------------------------------------------------------------------------------
 void display_manager::finish_pending_wrap()
 {
     // This finishes a pending wrap using a technique that works equally well on
     // both Win 8.1 and Win 10.
     assert(m_pending_wrap);
+    assert(m_pending_wrap_display);
     assert(_rl_last_c_pos == 0);
 
     unsigned int bytes = 0;
 
     // If there's a display_line, then re-print its first character to force
     // wrapping.  Otherwise, print a placeholder.
-    const int index = _rl_last_v_pos - m_curr.top();
+    const int index = _rl_last_v_pos - m_pending_wrap_display->top();
     assert(index >= 0);
-    if (index < m_curr.count())
+    if (index < m_pending_wrap_display->count())
     {
-        const display_line& d = *m_curr.get(index);
+        const display_line& d = *m_pending_wrap_display->get(index);
 
         str_iter iter(d.m_chars, d.m_len);
         unsigned int cols = 0;
@@ -1990,9 +2057,11 @@ void display_manager::finish_pending_wrap()
         }
 
         bytes = static_cast<unsigned int>(iter.get_pointer() - d.m_chars);
-        rl_puts_face_func(d.m_chars, d.m_faces, bytes);
-
-        _rl_last_c_pos = cols;
+        if (bytes)
+        {
+            rl_puts_face_func(d.m_chars, d.m_faces, bytes);
+            _rl_cr();
+        }
     }
 
     if (!bytes)
@@ -2188,7 +2257,7 @@ void resize_readline_display(const char* prompt, const line_buffer& buffer, cons
     if (cursor_line > 0)
     {
         char *tmp = tgoto(tgetstr("UP", nullptr), 0, cursor_line);
-        tputs(tmp, 1, _rl_output_character_function);
+        tputs(tmp);
     }
     _rl_cr();
     _rl_last_v_pos = 0;
