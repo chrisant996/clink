@@ -903,7 +903,7 @@ init_line_structures (int minsize)
       if (line_size > minsize)
 	minsize = line_size;
     }
-   realloc_line (minsize); 
+  realloc_line (minsize); 
 
   if (vis_lbreaks == 0)
     {
@@ -3024,6 +3024,7 @@ int
 rl_forced_update_display (void)
 {
   register char *temp;
+  register int tlen;
 
   if (visible_line)
     memset (visible_line, 0, line_size);
