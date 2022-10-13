@@ -5,6 +5,19 @@
 set clink_profile_arg=
 set clink_quiet_arg=
 
+set clink_autorun=0
+set clink_parameters="%*"
+set clink_parameters_nospace="%clink_parameters: =_%"
+if not %clink_parameters_nospace:--autorun=%==x%clink_parameters_nospace% set clink_autorun=1
+
+:: quick exit if CLINK_NOAUTORUN is defined
+if defined CLINK_NOAUTORUN (
+    if %clink_autorun% EQU 1 (
+        echo Clink autorun is disabled by CLINK_NOAUTORUN ^(clink.bat^)
+        goto :end
+    )
+)
+
 :: Mimic cmd.exe's behaviour when starting from the start menu.
 if /i "%1"=="startmenu" (
     cd /d "%userprofile%"
@@ -44,6 +57,8 @@ if /i "%processor_architecture%"=="x86" (
 :end
 set clink_profile_arg=
 set clink_quiet_arg=
+set clink_parameters=
+set clink_autorun=0
 goto :eof
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
