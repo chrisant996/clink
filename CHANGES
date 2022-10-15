@@ -2,9 +2,16 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.3.47
+
+- Removed the message "Clink autorun is disabled by CLINK_NOAUTORUN".
+- Fixed [#361](https://github.com/chrisant996/clink/issues/361); detect `%CLINK_NOAUTORUN%` faster.
+- Fixed another [#356](https://github.com/chrisant996/clink/issues/356) case; end of display line not cleared sometimes (regression introduced in v1.3.43).
+
 #### v1.3.46
 
-- More fixes for [#356](https://github.com/chrisant996/clink/issues/356); input line display garbled on Windows 8.1 (regression introduced in v1.3.43).  Also, right-side prompts have never worked correctly on Windows 8.1, and this finally fixes them as well.
+- Fixed right-side prompts on Windows 8.1 (they never worked correctly on Windows 8.1).
+- More fixes for [#356](https://github.com/chrisant996/clink/issues/356); input line display garbled on Windows 8.1 (regression introduced in v1.3.43).
 
 #### v1.3.45
 
