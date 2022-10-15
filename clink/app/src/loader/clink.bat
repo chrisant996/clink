@@ -34,6 +34,9 @@ if "%1"=="" (
 :: Test for autorun.
 if defined CLINK_NOAUTORUN if /i "%1"=="inject" if /i "%2"=="--autorun" goto :end
 
+:: Endlocal before inject tags the prompt.
+endlocal
+
 :: Pass through to appropriate loader.
 if /i "%processor_architecture%"=="x86" (
         "%~dp0\clink_x86.exe" %*
@@ -46,7 +49,6 @@ if /i "%processor_architecture%"=="x86" (
 )
 
 :end
-endlocal
 goto :eof
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
