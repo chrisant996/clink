@@ -525,12 +525,19 @@ int inject(int argc, char** argv)
     str<32> noautorun;
     if (is_autorun && os::get_env("clink_noautorun", noautorun))
     {
-        // Using WriteConsoleW to suppress the text if output is redirected so
-        // that it doesn't interfere with scripted parsing.
-        static const char c_msg[] = "Clink autorun is disabled by CLINK_NOAUTORUN.\n";
-        wstr<> wmsg(c_msg);
-        DWORD written;
-        WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), wmsg.c_str(), wmsg.length(), &written, nullptr);
+#if 0
+        DWORD dummy;
+        HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+        if (GetConsoleMode(h, &dummy))
+        {
+            // Only output this message when input has not been redirected, so
+            // that this doesn't interfere with scripted usage.
+            static const char c_msg[] = "Clink autorun is disabled by CLINK_NOAUTORUN.\n";
+            wstr<> wmsg(c_msg);
+            DWORD written;
+            WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), wmsg.c_str(), wmsg.length(), &written, nullptr);
+        }
+#endif
         return 1;
     }
 
