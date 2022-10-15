@@ -1856,11 +1856,13 @@ test_left:
     _rl_last_c_pos = rcol;
 
     // Clear anything leftover from o.
-    if (o && rind == d->m_len && d->m_lastcol < o->m_lastcol)
+    if (o && d->m_lastcol < o->m_lastcol)
     {
         // m_lastcol does not include filler spaces; and that's fine since
         // the spaces use FACE_NORMAL.
         const unsigned int erase_cols = o->m_lastcol - d->m_lastcol;
+
+        move_to_column(d->m_lastcol);
 
         str<> tmp;
         while (tmp.length() < erase_cols)
