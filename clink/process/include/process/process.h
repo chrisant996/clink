@@ -28,7 +28,7 @@ struct remote_result
 class process
 {
 public:
-    enum arch { arch_unknown, arch_x86, arch_x64 };
+    enum arch { arch_unknown, arch_x86, arch_x64, arch_arm64 };
     typedef FARPROC funcptr_t;
 
                                 process(int pid=-1);

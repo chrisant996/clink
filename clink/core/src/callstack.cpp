@@ -389,6 +389,14 @@ static DWORD stackframe_from_context(CONTEXT* context, STACKFRAME* stackframe)
     stackframe->AddrFrame.Offset    = context->Rbp;
     stackframe->AddrFrame.Mode      = AddrModeFlat;
     return IMAGE_FILE_MACHINE_AMD64;
+#elif defined(_M_ARM64)
+    stackframe->AddrPC.Offset       = context->Pc;
+    stackframe->AddrPC.Mode         = AddrModeFlat;
+    stackframe->AddrStack.Offset    = context->Sp;
+    stackframe->AddrStack.Mode      = AddrModeFlat;
+    stackframe->AddrFrame.Offset    = context->Fp;
+    stackframe->AddrFrame.Mode      = AddrModeFlat;
+    return IMAGE_FILE_MACHINE_ARM64;
 #else
 #error Unknown Target Machine
 #endif

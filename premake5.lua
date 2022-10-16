@@ -48,6 +48,9 @@ local function setup_cfg(cfg)
 
     configuration({cfg, "x64"})
         targetsuffix("_x64")
+
+    configuration({cfg, "arm64"})
+        targetsuffix("_arm64")
 end
 
 
@@ -141,7 +144,7 @@ end
 --------------------------------------------------------------------------------
 workspace("clink")
     configurations({"debug", "release", "final"})
-    platforms({"x32", "x64"})
+    platforms({"x32", "x64", "arm64"})
     location(to)
 
     characterset("MBCS")

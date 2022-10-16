@@ -88,13 +88,10 @@ bool process::get_file_name(str_base& out) const
 //------------------------------------------------------------------------------
 process::arch process::get_arch() const
 {
-    int is_x64_os;
     SYSTEM_INFO system_info;
     GetNativeSystemInfo(&system_info);
-    is_x64_os = system_info.wProcessorArchitecture;
-    is_x64_os = (is_x64_os == PROCESSOR_ARCHITECTURE_AMD64);
 
-    if (is_x64_os)
+    if (system_info.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64)
     {
         handle handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, m_pid);
         if (!handle)
@@ -105,6 +102,10 @@ process::arch process::get_arch() const
             return arch_unknown;
 
         return is_wow64 ? arch_x86 : arch_x64;
+    }
+    else if (system_info.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM64) 
+    {
+        return arch_arm64;
     }
 
     return arch_x86;
