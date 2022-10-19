@@ -13,9 +13,6 @@
 #include <terminal/printer.h>
 
 #include <getopt.h>
-#if defined(_M_IX86) || defined(_M_X64)
-#include <xmmintrin.h>
-#endif
 
 //#define INIT_READLINE
 //#define LOAD_SETTINGS

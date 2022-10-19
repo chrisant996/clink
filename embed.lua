@@ -103,7 +103,7 @@ local function do_embed(debug_info)
 
                 out:write("#endif // ARCHITECTURE_IS("..name..")\n")
 
-                print("       "..name.." : "..tostring(#bin_data).." bytes")
+                print("      "..name.." : "..tostring(#bin_data).." bytes")
             end
         end
 
