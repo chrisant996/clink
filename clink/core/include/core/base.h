@@ -26,12 +26,19 @@
 #endif
 
 #if defined(_M_AMD64) || defined(__x86_64__)
-#   define ARCHITECTURE     64
+#   define ARCHITECTURE         x64
+#   define ARCHITECTURE_x64     1
 #elif defined(_M_IX86) || defined(__i386)
-#   define ARCHITECTURE     86
+#   define ARCHITECTURE         x86
+#   define ARCHITECTURE_x86     1
+#elif defined(_M_ARM64) || defined(__aarch64__)
+#   define ARCHITECTURE         arm64
+#   define ARCHITECTURE_arm64   1
 #else
 #   error Unknown architecture
 #endif
+
+#define ARCHITECTURE_IS(x)    ARCHITECTURE_##x
 
 #undef min
 template <class A> A min(A a, A b) { return (a < b) ? a : b; }

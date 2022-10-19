@@ -40,6 +40,8 @@ endlocal
 :: Pass through to appropriate loader.
 if /i "%processor_architecture%"=="x86" (
         "%~dp0\clink_x86.exe" %*
+) else if /i "%processor_architecture%"=="arm64" (
+        "%~dp0\clink_arm64.exe" %*
 ) else if /i "%processor_architecture%"=="amd64" (
     if defined processor_architew6432 (
         "%~dp0\clink_x86.exe" %*

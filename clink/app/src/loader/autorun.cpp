@@ -149,8 +149,10 @@ static bool find_clink_entry(const char* value, int* left, int* right)
         "clink\" inject",
         "clink_x64.exe inject",
         "clink_x86.exe inject",
+        "clink_arm64.exe inject",
         "clink_x64.exe\" inject",
         "clink_x86.exe\" inject",
+        "clink_arm64.exe\" inject",
         "clink.bat inject",
         "clink.bat\" inject",
     };

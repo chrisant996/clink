@@ -40,15 +40,16 @@ end
 local function do_embed(debug_info)
     -- Find the Lua compilers.
     local archs = {
-        ["64"] = { luac = os.matchfiles(".build/*/bin/final/luac_x64.exe")[1] },
-        ["86"] = { luac = os.matchfiles(".build/*/bin/final/luac_x86.exe")[1] },
+        ["x64"] = { luac = os.matchfiles(".build/*/bin/final/luac_x64.exe")[1] },
+        ["x86"] = { luac = os.matchfiles(".build/*/bin/final/luac_x86.exe")[1] },
+        ["arm64"] = { luac = os.matchfiles(".build/*/bin/final/luac_arm64.exe")[1] },
     }
 
     debug_info = debug_info and "" or " -s"
 
     for name, arch in spairs(archs) do
         if not arch.luac then
-            error("Unable to find Lua compiler binary (x"..name.." final).")
+            error("Unable to find Lua compiler binary ("..name.." final).")
         end
 
         arch.luac = arch.luac:gsub("/", "\\")
@@ -77,7 +78,7 @@ local function do_embed(debug_info)
             print("   "..file)
 
             for name, arch in spairs(archs) do
-                out:write("#if ARCHITECTURE == "..name.."\n")
+                out:write("#if ARCHITECTURE_IS("..name..")\n")
 
                 -- Compile the input Lua script to binary.
                 exec(arch.luac..debug_info.." -o .build/embed_temp "..file)
@@ -100,9 +101,9 @@ local function do_embed(debug_info)
                 out:write("unsigned char const* "..symbol.." = "..symbol.."_;\n")
                 out:write("int "..symbol.."_len = sizeof("..symbol.."_);\n")
 
-                out:write("#endif // ARCHITECTURE == "..name.."\n")
+                out:write("#endif // ARCHITECTURE_IS("..name..")\n")
 
-                print("      x"..name.." : "..tostring(#bin_data).." bytes")
+                print("       "..name.." : "..tostring(#bin_data).." bytes")
             end
         end
 

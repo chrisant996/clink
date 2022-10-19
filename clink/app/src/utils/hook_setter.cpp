@@ -46,6 +46,9 @@ static void* follow_jump(void* addr)
 #elif defined(_M_IX86)
         // dest = disp32
         dest = (void*)(intptr_t)(*imm);
+#elif defined(_M_ARM64)
+        // FIXME: just a copy / paste from above
+        dest = (void*)(intptr_t)(*imm);
 #else
 #error Processor not supported.
 #endif
