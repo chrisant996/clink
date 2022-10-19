@@ -16,6 +16,7 @@ set __release_config=Release
 set __final_config=Final
 set __x86_platform=Win32
 set __x64_platform=x64
+set __arm64_platform=arm64
 
 set __AMD64=
 set __MULTICPU=-m:4
@@ -125,6 +126,7 @@ if "%1" == "/x86" ( set __PLATFORM=%__x86_platform%&goto :nextarg )
 if "%1" == "/win32" ( set __PLATFORM=%__x86_platform%&goto :nextarg )
 if "%1" == "/x64" ( set __PLATFORM=%__x64_platform%&goto :nextarg )
 if "%1" == "/amd64" ( set __PLATFORM=%__x64_platform%&goto :nextarg )
+if "%1" == "/arm64" ( set __PLATFORM=%__arm64_platform%&goto :nextarg )
 if "%1" == "/dbg" ( set __CONFIG=%__debug_config%&goto :nextarg )
 if "%1" == "/debug" ( set __CONFIG=%__debug_config%&goto :nextarg )
 if "%1" == "/fin" ( set __CONFIG=%__final_config%&goto :nextarg )
@@ -170,22 +172,25 @@ rem -- Print usage info.
 
 set __ISX86DEFAULT=
 set __ISX64DEFAULT=
+set __ISARM64DEFAULT=
 set __ISDEBUGDEFAULT=
 set __ISRELEASEDEFAULT=
 set __ISFINALDEFAULT=
 set __DEFAULTMARKER= %CYAN%(default)%NORM%
 if %__DEFAULTPLATFORM% == %__x86_platform% set __ISX86DEFAULT=%__DEFAULTMARKER%
 if %__DEFAULTPLATFORM% == %__x64_platform% set __ISX64DEFAULT=%__DEFAULTMARKER%
+if %__DEFAULTPLATFORM% == %__arm64_platform% set __ISARM64DEFAULT=%__DEFAULTMARKER%
 if %__DEFAULTCONFIG% == %__debug_config% set __ISDEBUGDEFAULT=%__DEFAULTMARKER%
 if %__DEFAULTCONFIG% == %__release_config% set __ISRELEASEDEFAULT=%__DEFAULTMARKER%
 if %__DEFAULTCONFIG% == %__final_config% set __ISFINALDEFAULT=%__DEFAULTMARKER%
 
-%EC% %BOLD%Usage:%NORM%  BLD [/dbg /rel /fin /x86 /x64 /multi /single] [msbuild_options]
+%EC% %BOLD%Usage:%NORM%  BLD [/dbg /rel /fin /x86 /x64 /arm64 /multi /single] [msbuild_options]
 echo.
 echo Builds %__DEFAULTCONFIG% %__DEFAULTPLATFORM% by default.
 echo.
 echo   /x86          Builds x86%__ISX86DEFAULT%.
 echo   /x64          Builds x64%__ISX64DEFAULT%.
+echo   /arm64        Builds arm64%__ISARM64DEFAULT%.
 echo   /dbg          Builds DEBUG%__ISDEBUGDEFAULT%.
 echo   /rel          Builds RELEASE%__ISRELEASEDEFAULT%.
 echo   /fin          Builds FINAL%__ISFINALDEFAULT%.
