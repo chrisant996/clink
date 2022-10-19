@@ -1782,12 +1782,6 @@ test_left:
         const char* dc2 = d->m_chars + d->m_len;
         const char* df2 = d->m_faces + d->m_len;
 
-        // Ignore trailing spaces with FACE_NORMAL.
-        while (oc2 > oc && oc2[-1] == ' ' && of2[-1] == FACE_NORMAL)
-            --oc2, --of2;
-        while (dc2 > dc && dc2[-1] == ' ' && df2[-1] == FACE_NORMAL)
-            --dc2, --df2;
-
         // Find right index of difference.  But not if there is a right side
         // prompt on this line.
         if (!has_rprompt)
