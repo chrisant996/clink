@@ -238,6 +238,9 @@ local function unzip(zip, out)
 
     if not result then
         log_output(cmd, output)
+        -- Delete the zip file; it might have been damaged, and re-downloading
+        -- it might be necessary.
+        os.remove(zip)
         return nil
     end
 
