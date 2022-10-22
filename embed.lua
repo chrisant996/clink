@@ -42,7 +42,12 @@ local function do_embed(debug_info)
     local archs = {
         ["x64"] = { luac = os.matchfiles(".build/*/bin/final/luac_x64.exe")[1] },
         ["x86"] = { luac = os.matchfiles(".build/*/bin/final/luac_x86.exe")[1] },
-        ["arm64"] = { luac = os.matchfiles(".build/*/bin/final/luac_arm64.exe")[1] },
+        -- ARM64 cannot be included like this because ARM64 executables cannot
+        -- run on x64, which makes it impossible for me to produce any Clink
+        -- release builds without an ARM64 device.  I don't even have an ARM64
+        -- device, but even if I did I would not accept a requirement of only
+        -- building Clink on ARM64 machines.
+        --["arm64"] = { luac = os.matchfiles(".build/*/bin/final/luac_arm64.exe")[1] },
     }
 
     debug_info = debug_info and "" or " -s"
