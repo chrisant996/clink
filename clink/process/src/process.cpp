@@ -6,15 +6,34 @@
 #include "vm.h"
 #include "pe.h"
 
+#include <core/base.h>
 #include <core/log.h>
 #include <core/path.h>
 #include <core/str.h>
 
 #include <PsApi.h>
 #include <TlHelp32.h>
+#include <winternl.h>
 #include <stddef.h>
 
 typedef LONG NTSTATUS;
+
+//------------------------------------------------------------------------------
+static LONG (WINAPI *s_NtQueryInformationProcess)(HANDLE, ULONG, PVOID, ULONG, PULONG) = nullptr;
+static bool __NtQueryInformationProcess(HANDLE h, ULONG ic, PVOID pi, ULONG pilen)
+{
+    if (!s_NtQueryInformationProcess)
+    {
+        *(FARPROC*)&s_NtQueryInformationProcess = GetProcAddress(
+            LoadLibraryA("ntdll.dll"), "NtQueryInformationProcess");
+        if (!s_NtQueryInformationProcess)
+            return false;
+    }
+
+    ULONG size = 0;
+    const LONG ret = s_NtQueryInformationProcess(h, ic, pi, pilen, &size);
+    return (ret >= 0 && size == pilen);
+}
 
 //------------------------------------------------------------------------------
 static const char* get_arch_name(process::arch arch)
@@ -38,24 +57,12 @@ process::process(int pid)
 //------------------------------------------------------------------------------
 int process::get_parent_pid() const
 {
-    LONG (WINAPI *NtQueryInformationProcess)(HANDLE, ULONG, PVOID, ULONG, PULONG);
+    handle handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, m_pid);
+    ULONG_PTR pbi[6];
+    if (!__NtQueryInformationProcess(handle, 0, &pbi, sizeof(pbi)))
+        return 0;
 
-    *(FARPROC*)&NtQueryInformationProcess = GetProcAddress(
-        LoadLibraryA("ntdll.dll"),
-        "NtQueryInformationProcess"
-    );
-
-    if (NtQueryInformationProcess != nullptr)
-    {
-        handle handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, m_pid);
-        ULONG size = 0;
-        ULONG_PTR pbi[6];
-        LONG ret = NtQueryInformationProcess(handle, 0, &pbi, sizeof(pbi), &size);
-        if ((ret >= 0) && (size == sizeof(pbi)))
-            return (DWORD)(pbi[5]);
-    }
-
-    return 0;
+    return (DWORD)(pbi[5]);
 }
 
 //------------------------------------------------------------------------------
@@ -86,8 +93,53 @@ bool process::get_file_name(str_base& out) const
 }
 
 //------------------------------------------------------------------------------
+bool process::get_command_line(wstr_base& out) const
+{
+    if (!is_arch_match())
+        return false;
+
+    handle handle = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_VM_READ, FALSE, m_pid);
+    if (!handle)
+        return false;
+
+    ULONG_PTR pbi[6];
+    if (!__NtQueryInformationProcess(handle, 0, &pbi, sizeof(pbi)))
+        return false;
+
+    SIZE_T size = 0;
+    PPEB ppeb = reinterpret_cast<PPEB>(pbi[1]);
+    PPEB ppebCopy = static_cast<PPEB>(malloc(sizeof(*ppebCopy)));
+    BOOL res = ReadProcessMemory(handle, ppeb, ppebCopy, sizeof(*ppebCopy), &size);
+    if (!res || size != sizeof(*ppebCopy))
+        return false;
+
+    PRTL_USER_PROCESS_PARAMETERS pProcParam = ppebCopy->ProcessParameters;
+    PRTL_USER_PROCESS_PARAMETERS pProcParamCopy = static_cast<PRTL_USER_PROCESS_PARAMETERS>(malloc(sizeof(*pProcParamCopy)));
+    res = ReadProcessMemory(handle, pProcParam, pProcParamCopy, sizeof(*pProcParamCopy), &size);
+    if (!res || size != sizeof(*pProcParamCopy))
+        return false;
+
+    PWSTR wBuffer = pProcParamCopy->CommandLine.Buffer;
+    USHORT len = min<USHORT>(pProcParamCopy->CommandLine.Length, 280);
+    out.clear();
+    out.reserve(len);
+    res = ReadProcessMemory(handle, wBuffer, out.data(), len, &size);
+    if (!res || size != len)
+        return false;
+
+    out.data()[len] = '\0';
+    return true;
+}
+
+//------------------------------------------------------------------------------
 process::arch process::get_arch() const
 {
+    if (m_arch >= 0)
+    {
+ret:
+        return static_cast<process::arch>(m_arch);
+    }
+
     SYSTEM_INFO system_info;
     GetNativeSystemInfo(&system_info);
 
@@ -95,20 +147,30 @@ process::arch process::get_arch() const
     {
         handle handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, m_pid);
         if (!handle)
-            return arch_unknown;
+        {
+            m_arch = arch_unknown;
+            goto ret;
+        }
 
         BOOL is_wow64;
         if (IsWow64Process(handle, &is_wow64) == FALSE)
-            return arch_unknown;
+        {
+            m_arch = arch_unknown;
+            goto ret;
+        }
 
-        return is_wow64 ? arch_x86 : arch_x64;
+        m_arch = is_wow64 ? arch_x86 : arch_x64;
     }
     else if (system_info.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM64) 
     {
-        return arch_arm64;
+        m_arch = arch_arm64;
+    }
+    else
+    {
+        m_arch = arch_x86;
     }
 
-    return arch_x86;
+    goto ret;
 }
 
 //------------------------------------------------------------------------------
@@ -171,17 +233,34 @@ void process::pause(bool suspend)
 }
 
 //------------------------------------------------------------------------------
+bool process::is_arch_match() const
+{
+#if defined(_M_IX86)
+    const process::arch process_arch = arch_x86;
+#elif defined(_M_AMD64)
+    const process::arch process_arch = arch_x64;
+#elif defined(_M_ARM64)
+    const process::arch process_arch = arch_arm64;
+#else
+#error Unknown Target Machine
+#endif
+
+    const process::arch this_arch = get_arch();
+
+    if (process_arch == this_arch)
+        return true;
+
+    LOG("Architecture mismatch; unable to inject %s module into %s host process.",
+        get_arch_name(this_arch), get_arch_name(process_arch));
+    return false;
+}
+
+//------------------------------------------------------------------------------
 remote_result process::inject_module(const char* dll_path, process_wait_callback* callback)
 {
     // Check we can inject into the target.
-    process::arch process_arch = process().get_arch();
-    process::arch this_arch = get_arch();
-    if (process_arch != this_arch)
-    {
-        LOG("Architecture mismatch; unable to inject %s module into %s host process.",
-            get_arch_name(this_arch), get_arch_name(process_arch));
+    if (!is_arch_match())
         return {};
-    }
 
     // Get the address to LoadLibrary. Note that we get LoadLibrary address
     // directly from kernel32.dll's export table. If our import table has had

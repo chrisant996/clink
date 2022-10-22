@@ -4,6 +4,7 @@
 #pragma once
 
 class str_base;
+class wstr_base;
 
 //------------------------------------------------------------------------------
 struct process_wait_callback
@@ -34,7 +35,9 @@ public:
                                 process(int pid=-1);
     int                         get_pid() const;
     bool                        get_file_name(str_base& out) const;
+    bool                        get_command_line(wstr_base& out) const;
     arch                        get_arch() const;
+    bool                        is_arch_match() const;
     int                         get_parent_pid() const;
     remote_result               inject_module(const char* dll, process_wait_callback* callback);
     template <typename T> remote_result remote_call(funcptr_t function, T const& param);
@@ -50,6 +53,7 @@ private:
     DWORD                       wait(process_wait_callback* callback, HANDLE remote_thread);
     void                        pause(bool suspend);
     int                         m_pid;
+    mutable int                 m_arch = -1;
 
     struct handle
     {

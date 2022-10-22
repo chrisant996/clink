@@ -316,6 +316,35 @@ static remote_result inject_dll(DWORD target_pid, bool is_autorun, bool force_ho
             if (!force_host)
                 return {};
         }
+
+        // Can't inject (or get the command line) if the architecture doesn't
+        // match.
+        if (!cmd_process.is_arch_match())
+            return {};
+
+        // Parse cmd.exe command line for /c or /k to determine whether the host
+        // is interactive.  Don't waste time injecting a remote thread if Clink
+        // will cancel the inject anyway.  This helps make autorun more
+        // reasonable to use.
+        wstr<> command_line;
+        if (!cmd_process.get_command_line(command_line))
+        {
+            ERR("Unable to get host command line.");
+            return {};
+        }
+        for (const wchar_t* args = command_line.c_str(); args && (args = wcschr(args, '/'));)
+        {
+            ++args;
+            switch (tolower(*args))
+            {
+            case 'c':
+                LOG("Host is not interactive; cancelling inject.");
+                return { -1 };
+            case 'k':
+                args = nullptr;
+                break;
+            }
+        }
     }
 
     // Inject Clink DLL.
