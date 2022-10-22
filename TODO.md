@@ -8,7 +8,10 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## Normal Priority
 - Coroutines can call `clink.refilterprompt()` and it immediately refilters while in the coroutine.  It should instead set a flag to refilter after the coroutines have yielded.
-- Add a way to specify height and other options for `clink.popuplist()`.
+- Make the _`items`_ table in `clink.popuplist()` accept fields to request special behaviors:
+  - `height` = preferred height; the popup list will try to show this many items per page.
+  - `width` = preferred width; the popup list will try to show this many characters per item.
+  - ...what else?
 
 ## Low Priority
 - Collecting words currently happens in update_internal, but probably it also belongs in alternative_matches and/or update_matches:
