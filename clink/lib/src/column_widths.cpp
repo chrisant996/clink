@@ -12,6 +12,7 @@
 #include "ellipsify.h"
 
 #include <core/base.h>
+#include <core/path.h>
 #include <core/debugheap.h>
 
 extern "C" {
@@ -178,9 +179,12 @@ column_widths calculate_columns(match_adapter* adapter, int max_matches, bool on
     {
         str<32> lcd;
         adapter->get_lcd(lcd);
-        const char* t = __printable_part(const_cast<char*>(lcd.c_str()));
-        common_length = __fnwidth(t);
-        sind = strlen(t);
+        if (lcd.length() > 0 && !path::is_separator(lcd.c_str()[lcd.length() - 1]))
+        {
+            const char* t = __printable_part(const_cast<char*>(lcd.c_str()));
+            common_length = __fnwidth(t);
+            sind = strlen(t);
+        }
 
         can_condense = (common_length > _rl_completion_prefix_display_length && common_length > ELLIPSIS_LEN);
         if (can_condense)
@@ -194,9 +198,12 @@ column_widths calculate_columns(match_adapter* adapter, int max_matches, bool on
     {
         str<32> lcd;
         adapter->get_lcd(lcd);
-        const char* t = __printable_part(const_cast<char*>(lcd.c_str()));
-        common_length = __fnwidth(t);
-        sind = strlen(t);
+        if (lcd.length() > 0 && !path::is_separator(lcd.c_str()[lcd.length() - 1]))
+        {
+            const char* t = __printable_part(const_cast<char*>(lcd.c_str()));
+            common_length = __fnwidth(t);
+            sind = strlen(t);
+        }
     }
 #endif
 
