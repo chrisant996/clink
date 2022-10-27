@@ -94,7 +94,7 @@ match_builder_lua::~match_builder_lua()
 /// <tr><th>Type</th><th>Description</th></tr>
 /// <tr><td>"word"</td><td>Shows the whole word even if it contains slashes.</td></tr>
 /// <tr><td>"arg"</td><td>Avoids appending a space if the match ends with a colon or equal sign.</td></tr>
-/// <tr><td>"command"</td><td>Displays the match using <a href="#color_cmd">color.cmd</a>.</td></tr>
+/// <tr><td>"cmd"</td><td>Displays the match using <a href="#color_cmd">color.cmd</a>.</td></tr>
 /// <tr><td>"alias"</td><td>Displays the match using <a href="#color_doskey">color.doskey</a>.</td></tr>
 /// <tr><td>"file"</td><td>Shows only the last path component, with appropriate file coloring.</td></tr>
 /// <tr><td>"dir"</td><td>Shows only the last path component and adds a trailing path separator, with appropriate directory coloring.</td></tr>
