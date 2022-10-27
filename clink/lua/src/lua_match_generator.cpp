@@ -175,7 +175,7 @@ done:
     const int needle_len = int(strlen(needle));
 
     // Count matches.
-    const bool only_lcd = matches[0] && !matches[1];
+    const bool only_lcd = matches[0] && *matches[0] && !matches[1];
     int match_count = only_lcd ? 1 : 0;
     for (i = 1; matches[i]; ++i, ++match_count);
 
@@ -401,7 +401,13 @@ next:
         const size_t packed_size = calc_packed_size(lcd.c_str(), "", nullptr);
         new_matches[0] = (match_display_filter_entry*)malloc(sizeof(match_display_filter_entry) - 1 + packed_size);
         memset(new_matches[0], 0, sizeof(*new_matches[0]));
-        pack_match(new_matches[0]->buffer, packed_size, lcd.c_str(), match_type::none, "", nullptr, 0, 0, new_matches[0], false);
+#ifdef DEBUG
+        const bool packed =
+#endif
+        pack_match(new_matches[0]->buffer, packed_size, lcd.c_str(), match_type::none, nullptr, nullptr, 0, 0, new_matches[0], false, true/*lcd*/);
+#ifdef DEBUG
+        assert(packed); // pack_match guarantees success for the lcd case.
+#endif
 
         if (one_column)
             new_matches[0]->visible_display = 0 - max_visible_display;

@@ -206,24 +206,41 @@ const char* match_adapter::get_match(unsigned int index) const
 }
 
 //------------------------------------------------------------------------------
-const char* match_adapter::get_match_display(unsigned int index) const
+const char* match_adapter::get_match_display_internal(unsigned int index) const
 {
     if (m_filtered_matches)
         return m_filtered_matches[index + 1]->display;
-
-    const char* display;
     if (m_alt_matches)
-        display = lookup_match(m_alt_matches[index + 1]).get_display();
+        return lookup_match(m_alt_matches[index + 1]).get_display();
     else if (m_matches)
-        display = m_matches->get_match_display(index);
-    else
-        return nullptr;
+        return m_matches->get_match_display(index);
+    return nullptr;
+}
+
+//------------------------------------------------------------------------------
+const char* match_adapter::get_match_display(unsigned int index) const
+{
+    const char* const display = get_match_display_internal(index);
 
     // Don't use __printable_part(), because append_filename() needs to know
     // both the raw match and the printable part.
     if (display && *display)
         return display;
+
     return get_match(index);
+}
+
+//------------------------------------------------------------------------------
+const char* match_adapter::get_match_display_raw(unsigned int index) const
+{
+    const char* const display = get_match_display_internal(index);
+
+    // Don't use __printable_part(), because append_filename() needs to know
+    // both the raw match and the printable part.
+    if (display && *display)
+        return display;
+
+    return nullptr;
 }
 
 //------------------------------------------------------------------------------

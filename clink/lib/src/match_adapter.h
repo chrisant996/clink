@@ -29,6 +29,7 @@ public:
     const char*     get_match(unsigned int index) const;
     match_type      get_match_type(unsigned int index) const;
     const char*     get_match_display(unsigned int index) const;
+    const char*     get_match_display_raw(unsigned int index) const;
     unsigned int    get_match_visible_display(unsigned int index) const;
     const char*     get_match_description(unsigned int index) const;
     unsigned int    get_match_visible_description(unsigned int index) const;
@@ -42,6 +43,7 @@ public:
     bool            has_descriptions() const;
 
 private:
+    const char*     get_match_display_internal(unsigned int index) const;
     void            free_filtered();
     void            clear_alt();
 

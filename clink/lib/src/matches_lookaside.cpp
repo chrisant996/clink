@@ -94,15 +94,16 @@ bool pack_match(char* buffer, size_t packed_size,
                 const char* display, const char* description,
                 char append_char, unsigned char flags,
                 match_display_filter_entry* entry,
-                bool strip_markup)
+                bool strip_markup, bool lcd)
 {
 #ifdef DEBUG
     assert(match || display);
     const char* const orig_buffer = buffer;
 #endif
 
-    // No match is ok (because display is required), but empty match is not.
-    if (match && !*match)
+    // No match is ok (because display is required), but empty match is not
+    // (unless this is the lcd).
+    if (match && !*match && !lcd)
         return false;
 
     // Match.
@@ -110,7 +111,7 @@ bool pack_match(char* buffer, size_t packed_size,
     if (entry)
         entry->match = appended;
 
-    if (display && !display[0])
+    if (display && !display[0] && !lcd)
         return false;
 
     *(buffer++) = (char)type;   // Match type.
@@ -119,8 +120,8 @@ bool pack_match(char* buffer, size_t packed_size,
 
 #ifdef DEBUG
     *(buffer++) = ':';
-    *(buffer++) = 'L';
-    *(buffer++) = 'A';
+    *(buffer++) = 'L';  // Look
+    *(buffer++) = 'A';  // Aside
     *(buffer++) = ':';
 #endif
 
@@ -130,7 +131,7 @@ bool pack_match(char* buffer, size_t packed_size,
     {
         entry->display = appended;
         entry->visible_display = plainify(entry->display, strip_markup ? &buffer : nullptr);
-        if (entry->visible_display <= 0)
+        if (entry->visible_display <= 0 && !lcd)
             return false;
     }
 

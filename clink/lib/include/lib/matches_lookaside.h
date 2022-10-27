@@ -49,7 +49,7 @@ bool pack_match(char* buffer, size_t packed_size,
                 const char* display, const char* description,
                 char append_char, unsigned char flags,
                 match_display_filter_entry* entry,
-                bool strip_markup);
+                bool strip_markup, bool lcd=false);
 
 extern "C" int lookup_match_type(const char* match);
 extern "C" void override_match_append(const char* match);

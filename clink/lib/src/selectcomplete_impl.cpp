@@ -1043,12 +1043,14 @@ void selectcomplete_impl::update_matches(bool restrict)
             for (unsigned int i = 0; i < count; i++)
             {
                 const char* text = m_matches.get_match(i);
-                const char* disp = m_matches.get_match_display(i);
+                const char* disp = m_matches.get_match_display_raw(i);
                 const char* desc = m_matches.get_match_description(i);
                 const size_t packed_size = calc_packed_size(text, disp, desc);
                 char* buffer = static_cast<char*>(malloc(packed_size));
-                pack_match(buffer, packed_size, text, m_matches.get_match_type(i), disp, desc, m_matches.get_match_append_char(i), m_matches.get_match_flags(i), nullptr, false);
-                matches.emplace_back(buffer);
+                if (pack_match(buffer, packed_size, text, m_matches.get_match_type(i), disp, desc, m_matches.get_match_append_char(i), m_matches.get_match_flags(i), nullptr, false))
+                    matches.emplace_back(buffer);
+                else
+                    free(buffer);
             }
             matches.emplace_back(nullptr);
 
@@ -1093,17 +1095,20 @@ void selectcomplete_impl::update_matches(bool restrict)
         const unsigned int count = m_matches.get_match_count();
         char** matches = (char**)malloc((count + 2) * sizeof(char*));
         matches[0] = _rl_savestring(""); // Placeholder for lcd; required so that _rl_free_match_list frees the real matches.
-        for (unsigned int i = 0; i < count;)
+        unsigned int num = 0;
+        for (unsigned int i = 0; i < count; ++i)
         {
             const char* text = m_matches.get_match(i);
-            const char* disp = m_matches.get_match_display(i);
+            const char* disp = m_matches.get_match_display_raw(i);
             const char* desc = m_matches.get_match_description(i);
             const size_t packed_size = calc_packed_size(text, disp, desc);
             char* buffer = static_cast<char*>(malloc(packed_size));
-            pack_match(buffer, packed_size, text, m_matches.get_match_type(i), disp, desc, m_matches.get_match_append_char(i), m_matches.get_match_flags(i), nullptr, false);
-            matches[++i] = buffer;
+            if (pack_match(buffer, packed_size, text, m_matches.get_match_type(i), disp, desc, m_matches.get_match_append_char(i), m_matches.get_match_flags(i), nullptr, false))
+                matches[++num] = buffer;
+            else
+                free(buffer);
         }
-        matches[count + 1] = nullptr;
+        matches[num + 1] = nullptr;
 
         // Get filtered matches.
         create_matches_lookaside(matches);
@@ -1117,7 +1122,7 @@ void selectcomplete_impl::update_matches(bool restrict)
         if (dbg_get_env_int("DEBUG_FILTER"))
         {
             puts("-- SELECTCOMPLETE FILTER_MATCHES");
-            for (unsigned int i = 1; i <= count; ++i)
+            for (unsigned int i = 1; i <= num; ++i)
                 printf("match '%s'\n", matches[i]);
             puts("-- DONE");
         }

@@ -1575,7 +1575,12 @@ static char** alternative_matches(const char* text, int start, int end)
 
         matches[count] = ptr;
 
-        pack_match(ptr, packed_size, match, type, display, description, iter.get_match_append_char(), flags, nullptr, false);
+        if (!pack_match(ptr, packed_size, match, type, display, description, iter.get_match_append_char(), flags, nullptr, false))
+        {
+            --count;
+            free(ptr);
+            continue;
+        }
 
 #ifdef DEBUG
         // Set DEBUG_MATCHES=-5 to print the first 5 matches.
