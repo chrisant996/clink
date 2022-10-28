@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.3.50</title>
+<title>Clink v1.3.51</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -854,7 +854,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.3.50</div>
+                <div id="title">Clink v1.3.51</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -6675,6 +6675,11 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes"><div class="wlink"><a href="#changes"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork"><div class="wlink"><a href="#releases-from-chrisant996clink-fork"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1351"><div class="wlink"><a href="#v1351"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>v1.3.51</h4>
+<ul>
+<li>Fixed <code>:setendofflags()</code>; it made <code>--</code> work correctly for input line coloring, but it didn&#39;t work correctly when generating match completions.</li>
+<li>Fixed obscure edge cases where matches returned by Lua scripts could display incorrectly in <code>clink-select-complete</code>, or could potentially even crash if Lua scripts returned invalid results from the <code>ondisplaymatches</code> or <code>onfiltermatches</code> events.</li>
+</ul>
 <h4 id="v1350"><div class="wlink"><a href="#v1350"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>v1.3.50</h4>
 <ul>
 <li>Fixed the prefix highlighting when displaying matches.</li>
