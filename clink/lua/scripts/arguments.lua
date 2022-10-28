@@ -1540,7 +1540,7 @@ function _argmatcher:_generate(line_state, match_builder, extra_words)
         -- matches.
         match_builder:addmatches(clink.filematches(line_state:getendword()))
         return true
-    elseif matcher._flags and matcher:_is_flag(line_state:getendword()) then
+    elseif not reader._noflags and matcher._flags and matcher:_is_flag(line_state:getendword()) then
         -- Flags are always "arg" type, which helps differentiate them from
         -- filename completions even when using _deprecated matcher mode, so
         -- that path normalization can avoid affecting flags like "/c", etc.
@@ -2320,7 +2320,7 @@ function argmatcher_generator:getwordbreakinfo(line_state) -- luacheck: no self
 
         -- There should always be a matcher left on the stack, but the arg_index
         -- could be well out of range.
-        if argmatcher and argmatcher._flags then
+        if not reader._noflags and argmatcher and argmatcher._flags then
             local word = line_state:getendword()
             if argmatcher:_is_flag(word) then
                 -- Accommodate `-flag:text` and `-flag=text` (with or without
