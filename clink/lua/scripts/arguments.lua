@@ -1231,10 +1231,9 @@ function _argmatcher:_is_flag(word)
         return false
     end
 
-    for i, num in pairs(self._flagprefix) do
-        if first_char == i then
-            return num > 0
-        end
+    local num = self._flagprefix[first_char]
+    if num ~= nil then
+        return num > 0
     end
 
     return false
