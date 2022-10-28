@@ -4,6 +4,7 @@
 
 #### v1.3.51
 
+- Fixed `:setendofflags()`; it made `--` work correctly for input line coloring, but it didn't work correctly when generating match completions.
 - Fixed obscure edge cases where matches returned by Lua scripts could display incorrectly in `clink-select-complete`, or could potentially even crash if Lua scripts returned invalid results from the `ondisplaymatches` or `onfiltermatches` events.
 
 #### v1.3.50
