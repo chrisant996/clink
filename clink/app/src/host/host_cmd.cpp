@@ -45,6 +45,8 @@ extern int clink_is_signaled();
 extern bool clink_maybe_handle_signal();
 extern bool is_force_reload_scripts();
 extern "C" void reset_wcwidths();
+extern void set_ctrl_wakeup_mask(UINT mask);
+extern void strip_wakeup_chars(wchar_t* chars, unsigned int max_chars);
 extern printer* g_printer;
 extern str<> g_last_prompt;
 
@@ -553,10 +555,24 @@ BOOL WINAPI host_cmd::read_console(
 
     s_answered = 0;
 
+    // Mimic ReadConsole when nInitialChars is out of range; ReadConsole doesn't
+    // use SetLastError(), so neither will we.
+    if (control && control->nInitialChars >= max_chars)
+        return false;
+
     // Initialize the output buffer.
     wstr_base line(chars, max_chars);
     if (max_chars)
-        chars[0] = '\0';
+    {
+        // Already verified in range, further above.
+        assert(!control || control->nInitialChars < max_chars);
+        if (control)
+            chars[control->nInitialChars] = '\0';
+        else
+            chars[0] = '\0';
+    }
+
+    set_ctrl_wakeup_mask(control ? control->dwCtrlWakeupMask : 0);
 
     // Cmd.exe can want line input for reasons other than command entry.
     const wchar_t* prompt = host_cmd::get()->m_prompt.get();
@@ -631,6 +647,10 @@ BOOL WINAPI host_cmd::read_console(
             console_config cc(input, true/*accept_mouse_input*/);
             reset_wcwidths();
             hc->edit_line(chars, max_chars, check_dequeue_flag(flags, dequeue_flags::edit_line));
+
+            // Strip any wake characters, since Clink handles completion itself
+            // and isn't designed to support wake characters.
+            strip_wakeup_chars(chars, max_chars);
         }
 
         // There's a race condition where this assert can fire, and that's fine.

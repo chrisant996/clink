@@ -94,6 +94,55 @@ extern "C" void host_clear_suggestion();
 extern bool expand_history(const char* in, str_base& out);
 
 //------------------------------------------------------------------------------
+static UINT s_dwCtrlWakeupMask = 0;
+void set_ctrl_wakeup_mask(UINT mask)
+{
+    s_dwCtrlWakeupMask = mask;
+}
+
+//------------------------------------------------------------------------------
+template<class T> void strip_wakeup_chars_worker(T* chars, unsigned int max_chars)
+{
+    if (!max_chars)
+        return;
+
+    T* read = chars;
+    T* write = chars;
+
+    while (max_chars--)
+    {
+        const T c = *read;
+        if (!c)
+            break;
+
+        if (c < 0 || c >= 32 || !(s_dwCtrlWakeupMask & 1 << c))
+        {
+            if (write != read)
+                *write = c;
+            ++write;
+        }
+
+        ++read;
+    }
+
+    if (write != read)
+        *write = '\0';
+}
+
+//------------------------------------------------------------------------------
+void strip_wakeup_chars(wchar_t* chars, unsigned int max_chars)
+{
+    strip_wakeup_chars_worker(chars, max_chars);
+}
+
+//------------------------------------------------------------------------------
+void strip_wakeup_chars(str_base& out)
+{
+    unsigned int max_chars = out.length();
+    strip_wakeup_chars_worker(out.data(), max_chars);
+}
+
+//------------------------------------------------------------------------------
 static void strip_crlf(char* line, std::list<str_moveable>& overflow, int setting, bool* _done)
 {
     bool has_overflow = false;
@@ -341,6 +390,7 @@ int clink_paste(int count, int invoking_key)
     bool sel = (s_cua_anchor >= 0);
     std::list<str_moveable> overflow;
     strip_crlf(utf8.data(), overflow, g_paste_crlf.get(), &done);
+    strip_wakeup_chars(utf8);
     if (sel)
     {
         g_rl_buffer->begin_undo_group();
@@ -1906,6 +1956,7 @@ LUnlinkFile:
     // Split into multiple lines.
     std::list<str_moveable> overflow;
     strip_crlf(line.data(), overflow, paste_crlf_crlf, nullptr);
+    strip_wakeup_chars(line);
 
     // Replace the input line with the content from the temp file.
     g_rl_buffer->begin_undo_group();
