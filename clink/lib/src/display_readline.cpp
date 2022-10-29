@@ -2036,7 +2036,7 @@ void display_manager::finish_pending_wrap()
 
     // If there's a display_line, then re-print its first character to force
     // wrapping.  Otherwise, print a placeholder.
-    const int index = _rl_last_v_pos - m_pending_wrap_display->top();
+    const int index = m_pending_wrap_display->top() +  _rl_last_v_pos;
     assert(index >= 0);
     if (index < m_pending_wrap_display->count())
     {
