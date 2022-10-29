@@ -307,7 +307,7 @@ textlist_impl::textlist_impl(input_dispatcher& dispatcher)
 }
 
 //------------------------------------------------------------------------------
-popup_results textlist_impl::activate(const char* title, const char** entries, int count, int index, bool reverse, textlist_mode mode, entry_info* infos, bool has_columns, del_callback_t del_callback)
+popup_results textlist_impl::activate(const char* title, const char** entries, int count, int index, bool reverse, textlist_mode mode, entry_info* infos, bool has_columns, const popup_config* config)
 {
     reset();
     m_results.clear();
@@ -329,12 +329,14 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
     m_count = count;
 
     // Make sure there's room.
-    m_reverse = reverse;
+    m_reverse = config ? config->reverse : reverse;
+    m_pref_height = config ? config->height : 0;
+    m_pref_width = config ? config->width : 0;
     m_mode = mode;
     m_history_mode = is_history_mode(mode);
     m_show_numbers = m_history_mode;
     m_win_history = (mode == textlist_mode::win_history);
-    m_del_callback = del_callback;
+    m_del_callback = config ? config->del_callback : nullptr;
     update_layout();
     if (m_visible_rows <= 0)
     {
@@ -349,17 +351,7 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
     }
 
     // Initialize colors.
-    const char *const popup = get_popup_colors();
-    const char *const popupdesc = get_popup_desc_colors();
-    m_color.items.format("\x1b[%sm", popup);
-    m_color.desc.format("\x1b[%sm", popupdesc);
-    m_color.border = m_color.items.c_str();
-    m_color.header = m_color.items.c_str();
-    m_color.footer = m_color.items.c_str();
-    m_color.select.format("\x1b[0;%s;7m", popup);
-    m_color.selectdesc.clear();
-    m_color.mark = m_color.desc.c_str();
-    m_color.selectmark.clear();
+    init_colors(config);
 
     // Gather the items.
     str<> tmp;
@@ -1455,6 +1447,53 @@ void textlist_impl::adjust_horz_offset(int delta)
 }
 
 //------------------------------------------------------------------------------
+static void init_color(const str_base* first, const str_base& second, str_base& out)
+{
+    if (first && first->length())
+        out.format("\x1b[0;%sm", first->c_str());
+    else
+        out = second.c_str();
+}
+
+//------------------------------------------------------------------------------
+void textlist_impl::init_colors(const popup_config* config)
+{
+    str<32> popup;
+    str<32> popupdesc;
+
+    if (config && config->colors.items.length())
+        popup.format("0;%s", config->colors.items.c_str());
+    else
+        popup = get_popup_colors();
+    if (config && config->colors.desc.length())
+        popupdesc.format("0;%s", config->colors.desc.c_str());
+    else
+        popupdesc = get_popup_desc_colors();
+
+    m_color.items.format("\x1b[%sm", popup.c_str());
+    m_color.desc.format("\x1b[%sm", popupdesc.c_str());
+
+    init_color(config ? &config->colors.border : nullptr, m_color.items, m_color.border);
+    init_color(config ? &config->colors.header : nullptr, m_color.border, m_color.header);
+    init_color(config ? &config->colors.footer : nullptr, m_color.border, m_color.footer);
+
+    init_color(config ? &config->colors.mark : nullptr, m_color.desc, m_color.mark);
+
+    if (config && config->colors.select.length())
+        m_color.select.format("\x1b[0;%sm", config->colors.select.c_str());
+    else
+        m_color.select.format("\x1b[0;%s;7m", popup.c_str());
+
+    if (config && config->colors.selectdesc.length())
+        m_color.selectdesc.format("\x1b[0;%sm", config->colors.selectdesc.c_str());
+    else
+        m_color.selectdesc.clear();
+
+    // Not supported yet; the mark is only used internally.
+    m_color.selectmark.clear();
+}
+
+//------------------------------------------------------------------------------
 void textlist_impl::reset()
 {
     std::vector<const char*> zap_items;
@@ -1542,12 +1581,12 @@ void textlist_impl::item_store::clear()
 
 
 //------------------------------------------------------------------------------
-popup_results activate_text_list(const char* title, const char** entries, int count, int current, bool has_columns, del_callback_t del_callback)
+popup_results activate_text_list(const char* title, const char** entries, int count, int current, bool has_columns, const popup_config* config)
 {
     if (!s_textlist)
         return popup_result::error;
 
-    return s_textlist->activate(title, entries, count, current, false/*reverse*/, textlist_mode::general, nullptr, has_columns, del_callback);
+    return s_textlist->activate(title, entries, count, current, false/*reverse*/, textlist_mode::general, nullptr, has_columns, config);
 }
 
 //------------------------------------------------------------------------------

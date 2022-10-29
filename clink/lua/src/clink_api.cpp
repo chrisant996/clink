@@ -43,6 +43,8 @@ extern int force_reload_scripts();
 extern void host_signal_delayed_init();
 extern void host_mark_deprecated_argmatcher(const char* name);
 extern void set_suggestion(const char* line, unsigned int endword_offset, const char* suggestion, unsigned int offset);
+extern const char* get_popup_colors();
+extern const char* get_popup_desc_colors();
 extern setting_enum g_dupe_mode;
 
 #ifdef _WIN64
@@ -476,6 +478,26 @@ static bool popup_del_callback(int index)
 /// Otherwise, the descriptions follow immediately after the display field.
 /// They can be aligned in a column by making all of the display fields be the
 /// same number of character cells.
+///
+/// Starting in v1.3.52, the <span class="arg">items</span> table may optionally
+/// include any of the following fields to customize the popup list.  The color
+/// strings must be
+/// <a href="https://en.wikipedia.org/wiki/ANSI_escape_code#SGR">SGR parameters</a>
+/// and will be automatically converted into the corresponding ANSI escape code.
+/// -show:  {
+/// -show:  &nbsp;   height          = 20,       -- Preferred height, not counting the border.
+/// -show:  &nbsp;   width           = 60,       -- Preferred width, not counting the border.
+/// -show:  &nbsp;   reverse         = true,     -- Start at bottom; search upwards.
+/// -show:  &nbsp;   colors = {                  -- Override the popup colors using any colors in this table.
+/// -show:  &nbsp;       items       = "97;44",  -- The items color (e.g. bright white on blue).
+/// -show:  &nbsp;       desc        = "...",    -- The description color.
+/// -show:  &nbsp;       border      = "...",    -- The border color (defaults to items color).
+/// -show:  &nbsp;       header      = "...",    -- The title color (defaults to border).
+/// -show:  &nbsp;       footer      = "...",    -- The footer message color (defaults to border color).
+/// -show:  &nbsp;       select      = "...",    -- The selected item color (defaults to reverse video of items color).
+/// -show:  &nbsp;       selectdesc  = "...",    -- The selected item description color (defaults to selected item color).
+/// -show:  &nbsp;   }
+/// -show:  }
 static int popup_list(lua_State* state)
 {
     if (!lua_state::is_in_luafunc())
@@ -484,6 +506,7 @@ static int popup_list(lua_State* state)
     enum arg_indices { makevaluesonebased, argTitle, argItems, argIndex, argDelCallback};
 
     const char* title = checkstring(state, argTitle);
+    const bool has_index = !lua_isnoneornil(state, argIndex);
     int index = optinteger(state, argIndex, 1) - 1;
     if (!title || !lua_istable(state, argItems))
         return 0;
@@ -570,15 +593,93 @@ static int popup_list(lua_State* state)
     if (index > items.size()) index = items.size();
     if (index < 0) index = 0;
 
-    del_callback_t del_callback = nullptr;
+    popup_config config;
+
     if (lua_isfunction(state, argDelCallback))
     {
         lua_pushvalue(state, argDelCallback);
         if (s_del_callback_info.init(state, -1))
-            del_callback = popup_del_callback;
+            config.del_callback = popup_del_callback;
     }
 
-    const popup_results results = activate_text_list(title, &*items.begin(), int(items.size()), index, true/*has_columns*/, del_callback);
+    lua_pushliteral(state, "height");
+    lua_rawget(state, argItems);
+    if (lua_isnumber(state, -1))
+    {
+        int n = lua_tointeger(state, -1);
+        if (n > 0)
+            config.height = n;
+    }
+    lua_pop(state, 1);
+
+    lua_pushliteral(state, "width");
+    lua_rawget(state, argItems);
+    if (lua_isnumber(state, -1))
+    {
+        int n = lua_tointeger(state, -1);
+        if (n > 0)
+            config.width = n;
+    }
+    lua_pop(state, 1);
+
+    lua_pushliteral(state, "reverse");
+    lua_rawget(state, argItems);
+    config.reverse = lua_toboolean(state, -1);
+    if (config.reverse && !has_index)
+        index = num_items - 1;
+    lua_pop(state, 1);
+
+    lua_pushliteral(state, "colors");
+    lua_rawget(state, argItems);
+    if (lua_istable(state, -1))
+    {
+        const char* s;
+
+        lua_pushliteral(state, "items");
+        lua_rawget(state, -2);
+        if (s = lua_tostring(state, -1))
+            config.colors.items = s;
+        lua_pop(state, 1);
+
+        lua_pushliteral(state, "desc");
+        lua_rawget(state, -2);
+        if (s = lua_tostring(state, -1))
+            config.colors.desc = s;
+        lua_pop(state, 1);
+
+        lua_pushliteral(state, "border");
+        lua_rawget(state, -2);
+        if (s = lua_tostring(state, -1))
+            config.colors.border = s;
+        lua_pop(state, 1);
+
+        lua_pushliteral(state, "header");
+        lua_rawget(state, -2);
+        if (s = lua_tostring(state, -1))
+            config.colors.header = s;
+        lua_pop(state, 1);
+
+        lua_pushliteral(state, "footer");
+        lua_rawget(state, -2);
+        if (s = lua_tostring(state, -1))
+            config.colors.footer = s;
+        lua_pop(state, 1);
+
+        lua_pushliteral(state, "select");
+        lua_rawget(state, -2);
+        if (s = lua_tostring(state, -1))
+            config.colors.select = s;
+        lua_pop(state, 1);
+
+        lua_pushliteral(state, "selectdesc");
+        lua_rawget(state, -2);
+        if (s = lua_tostring(state, -1))
+            config.colors.selectdesc = s;
+        lua_pop(state, 1);
+    }
+    lua_pop(state, 1);
+
+    const popup_results results = activate_text_list(title, &*items.begin(), int(items.size()), index, true/*has_columns*/, &config);
 
     s_del_callback_info.clear();
 
@@ -593,6 +694,44 @@ static int popup_list(lua_State* state)
     }
 
     return 0;
+}
+
+//------------------------------------------------------------------------------
+/// -name:  clink.getpopuplistcolors
+/// -ver:   1.3.52
+/// -ret:   table
+/// Returns the default popup colors in a table with the following scheme:
+/// -show:  {
+/// -show:      items   = "...",    -- The SGR parameters for the items color.
+/// -show:      desc    = "...",    -- The SGR parameters for the description color.
+/// -show:  }
+static int get_popup_list_colors(lua_State* state)
+{
+    struct table_t {
+        const char* name;
+        const char* value;
+    };
+
+    lua_createtable(state, 0, 4);
+    {
+        struct table_t table[] = {
+            { "items", get_popup_colors() },
+            { "desc", get_popup_desc_colors() },
+        };
+
+        for (unsigned int i = 0; i < sizeof_array(table); ++i)
+        {
+            const char* value = table[i].value;
+            if (value[0] == '0' && value[1] == ';')
+                value += 2;
+            lua_pushstring(state, table[i].name);
+            lua_pushstring(state, value);
+            lua_rawset(state, -3);
+        }
+    }
+
+    return 1;
+
 }
 
 //------------------------------------------------------------------------------
@@ -1436,6 +1575,7 @@ void clink_lua_initialise(lua_state& lua)
         { "print",                  &clink_print },
         { "upper",                  &to_uppercase },
         { "popuplist",              &popup_list },
+        { "getpopuplistcolors",     &get_popup_list_colors },
         { "getsession",             &get_session },
         { "getansihost",            &get_ansi_host },
         { "translateslashes",       &translate_slashes },

@@ -57,7 +57,7 @@ class textlist_impl
 public:
                     textlist_impl(input_dispatcher& dispatcher);
 
-    popup_results   activate(const char* title, const char** entries, int count, int index, bool reverse, textlist_mode mode, entry_info* infos, bool columns, del_callback_t del_callback=nullptr);
+    popup_results   activate(const char* title, const char** entries, int count, int index, bool reverse, textlist_mode mode, entry_info* infos, bool columns, const popup_config* config=nullptr);
     bool            is_active() const;
     bool            accepts_mouse_input(mouse_input_type type) const;
 
@@ -78,6 +78,7 @@ private:
     void            update_display();
     void            set_top(int top);
     void            adjust_horz_offset(int delta);
+    void            init_colors(const popup_config* config);
     void            reset();
 
     // Result.
@@ -136,17 +137,7 @@ private:
     bool            m_horz_scrolling = false;
     bool            m_win_history = false;
     bool            m_has_columns = false;
-    struct {
-        str<32> items;
-        str<32> desc;
-        str<32> border;
-        str<32> header;
-        str<32> footer;
-        str<32> select;
-        str<32> selectdesc;
-        str<32> mark;
-        str<32> selectmark;
-    } m_color;
+    popup_colors    m_color;
 
     // Content store.
     class item_store
