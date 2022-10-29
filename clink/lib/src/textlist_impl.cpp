@@ -344,6 +344,19 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
         return popup_result::error;
     }
 
+    // Initialize colors.
+    const char *const popup = get_popup_colors();
+    const char *const popupdesc = get_popup_desc_colors();
+    m_color.items.format("\x1b[%sm", popup);
+    m_color.desc.format("\x1b[%sm", popupdesc);
+    m_color.border = m_color.items.c_str();
+    m_color.header = m_color.items.c_str();
+    m_color.footer = m_color.items.c_str();
+    m_color.select.format("\x1b[0;%s;7m", popup);
+    m_color.selectdesc.clear();
+    m_color.mark = m_color.desc.c_str();
+    m_color.selectmark.clear();
+
     // Gather the items.
     str<> tmp;
     for (int i = 0; i < count; i++)
@@ -1104,7 +1117,8 @@ void textlist_impl::update_top()
 }
 
 //------------------------------------------------------------------------------
-static void make_horz_border(const char* message, int col_width, bool bars, str_base& out)
+static void make_horz_border(const char* message, int col_width, bool bars, str_base& out,
+                             const char* header_color=nullptr, const char* border_color=nullptr)
 {
     out.clear();
 
@@ -1113,6 +1127,12 @@ static void make_horz_border(const char* message, int col_width, bool bars, str_
         while (col_width-- > 0)
             out.concat("\xe2\x94\x80", 3);
         return;
+    }
+
+    if (!header_color || !border_color || _strcmpi(header_color, border_color) == 0)
+    {
+        header_color = nullptr;
+        border_color = nullptr;
     }
 
     int cells = 0;
@@ -1145,9 +1165,13 @@ static void make_horz_border(const char* message, int col_width, bool bars, str_
     }
 
     x += 1 + cells + 1;
+    if (header_color && border_color)
+        out.concat(header_color);
     out.concat(" ", 1);
     out.concat(message, len);
     out.concat(" ", 1);
+    if (header_color && border_color)
+        out.concat(border_color);
 
     bool cap = bars;
     for (int i = col_width - x; i-- > 0;)
@@ -1234,21 +1258,13 @@ void textlist_impl::update_display()
                 m_mouse_width = col_width - 2;
             }
 
-            str<32> color;
-            color.format("\x1b[%sm", get_popup_colors());
-
-            str<32> desc_color;
-            desc_color.format("\x1b[%sm", get_popup_desc_colors());
-
-            str<32> modmark;
-            modmark.format("%s*%s", desc_color.c_str(), color.c_str());
-
             // Display border.
             if (draw_border)
             {
-                make_horz_border(m_has_override_title ? m_override_title.c_str() : m_default_title.c_str(), col_width - 2, m_has_override_title, horzline);
+                make_horz_border(m_has_override_title ? m_override_title.c_str() : m_default_title.c_str(), col_width - 2, m_has_override_title, horzline,
+                                 m_color.header.c_str(), m_color.border.c_str());
                 m_printer->print(left.c_str(), left.length());
-                m_printer->print(color.c_str(), color.length());
+                m_printer->print(m_color.border.c_str(), m_color.border.length());
                 m_printer->print("\xe2\x94\x8c");                       // ┌
                 m_printer->print(horzline.c_str(), horzline.length());  // ─
                 m_printer->print("\xe2\x94\x90\x1b[m");                 // ┐
@@ -1270,26 +1286,25 @@ void textlist_impl::update_display()
                     i == m_prev_displayed)
                 {
                     m_printer->print(left.c_str(), left.length());
-                    m_printer->print(color.c_str(), color.length());
+                    m_printer->print(m_color.border.c_str(), m_color.border.length());
                     m_printer->print("\xe2\x94\x82");               // │
 
-                    if (i == m_index)
-                        m_printer->print("\x1b[7m");
+                    const str_base& maincolor = (i == m_index) ? m_color.select : m_color.items;
+                    m_printer->print(maincolor.c_str(), maincolor.length());
 
                     int spaces = col_width - 2;
 
                     if (m_history_mode)
                     {
                         const int history_index = m_infos ? m_infos[i].index : i;
-                        const char* mark = (!m_infos || !m_infos[i].marked ? " " :
-                                            i == m_index ? "*" :
-                                            modmark.c_str());
+                        const char ismark = (m_infos && m_infos[i].marked);
+                        const char mark = ismark ? '*' : ' ';
+                        const char* color = !ismark ? "" : (i == m_index) ? m_color.selectmark.c_str() : m_color.mark.c_str();
+                        const char* uncolor = !ismark ? "" : (i == m_index) ? m_color.select.c_str() : m_color.items.c_str();
                         tmp.clear();
-                        tmp.format("%*u:%s", m_max_num_len, history_index + 1, mark);
+                        tmp.format("%*u:%s%c", m_max_num_len, history_index + 1, color, mark);
                         m_printer->print(tmp.c_str(), tmp.length());// history number
-                        spaces -= tmp.length();
-                        if (mark == modmark.c_str())
-                            spaces += modmark.length() - 1;
+                        spaces -= cell_count(tmp.c_str());
                     }
 
                     int cell_len;
@@ -1302,8 +1317,8 @@ void textlist_impl::update_display()
                     {
                         assert(!m_history_mode); // Incompatible with m_horz_offset.
 
-                        if (i != m_index)
-                            m_printer->print(desc_color.c_str(), desc_color.length());
+                        const str_base& desc_color = (i == m_index) ? m_color.selectdesc : m_color.desc;
+                        m_printer->print(desc_color.c_str(), desc_color.length());
 
                         if (m_columns.get_any_tabs())
                         {
@@ -1334,12 +1349,7 @@ void textlist_impl::update_display()
                     make_spaces(spaces, tmp);
                     m_printer->print(tmp.c_str(), tmp.length());    // spaces
 
-                    if (i == m_index)
-                        m_printer->print("\x1b[27m");
-
-                    if (m_has_columns)
-                        m_printer->print(color.c_str(), color.length());
-
+                    m_printer->print(m_color.border.c_str(), m_color.border.length());
                     m_printer->print("\xe2\x94\x82\x1b[m");         // │
                 }
             }
@@ -1350,9 +1360,9 @@ void textlist_impl::update_display()
                 rl_crlf();
                 up++;
                 const bool show_del = (m_history_mode || m_mode == textlist_mode::directories || m_del_callback);
-                make_horz_border(show_del ? "Del=Delete" : nullptr, col_width - 2, true/*bars*/, horzline);
+                make_horz_border(show_del ? "Del=Delete" : nullptr, col_width - 2, true/*bars*/, horzline, m_color.footer.c_str(), m_color.border.c_str());
                 m_printer->print(left.c_str(), left.length());
-                m_printer->print(color.c_str(), color.length());
+                m_printer->print(m_color.border.c_str(), m_color.border.length());
                 m_printer->print("\xe2\x94\x94");                       // └
                 m_printer->print(horzline.c_str(), horzline.length());  // ─
                 m_printer->print("\xe2\x94\x98\x1b[m");                 // ┘

@@ -131,6 +131,19 @@ private:
     bool            m_input_clears_needle = false;
     scroll_helper   m_scroll_helper;
 
+    // Colors.
+    struct {
+        str<32> items;
+        str<32> desc;
+        str<32> border;
+        str<32> header;
+        str<32> footer;
+        str<32> select;
+        str<32> selectdesc;
+        str<32> mark;
+        str<32> selectmark;
+    } m_color;
+
     // Content store.
     class item_store
     {
