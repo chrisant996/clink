@@ -6,6 +6,7 @@
 
 - Fixed `:setendofflags()`; it made `--` work correctly for input line coloring, but it didn't work correctly when generating match completions.
 - Fixed obscure edge cases where matches returned by Lua scripts could display incorrectly in `clink-select-complete`, or could potentially even crash if Lua scripts returned invalid results from the `ondisplaymatches` or `onfiltermatches` events.
+- Fixed [#370](https://github.com/chrisant996/clink/issues/370); <kbd>Tab</kbd> inside `set /p var=` mistakenly discards any previous input.
 
 #### v1.3.50
 
