@@ -114,11 +114,6 @@ private:
     std::vector<const char*> m_items;       // Escaped entries for display.
     int             m_longest = 0;
     addl_columns    m_columns;
-    textlist_mode   m_mode = textlist_mode::general;
-    bool            m_reverse = false;
-    bool            m_history_mode = false;
-    bool            m_win_history = false;
-    bool            m_has_columns = false;
 
     // Current entry.
     int             m_top = 0;
@@ -131,7 +126,16 @@ private:
     bool            m_input_clears_needle = false;
     scroll_helper   m_scroll_helper;
 
-    // Colors.
+    // Configuration.
+    unsigned int    m_pref_height = 0;      // Automatic.
+    unsigned int    m_pref_width = 0;       // Automatic.
+    textlist_mode   m_mode = textlist_mode::general;
+    bool            m_reverse = false;
+    bool            m_history_mode = false;
+    bool            m_show_numbers = false;
+    bool            m_horz_scrolling = false;
+    bool            m_win_history = false;
+    bool            m_has_columns = false;
     struct {
         str<32> items;
         str<32> desc;

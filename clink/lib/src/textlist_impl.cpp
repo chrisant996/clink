@@ -332,14 +332,18 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
     m_reverse = reverse;
     m_mode = mode;
     m_history_mode = is_history_mode(mode);
+    m_show_numbers = m_history_mode;
     m_win_history = (mode == textlist_mode::win_history);
     m_del_callback = del_callback;
     update_layout();
     if (m_visible_rows <= 0)
     {
         m_reverse = false;
+        m_pref_height = 0;
+        m_pref_width = 0;
         m_mode = textlist_mode::general;
         m_history_mode = false;
+        m_show_numbers = false;
         m_win_history = false;
         return popup_result::error;
     }
@@ -370,6 +374,7 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
         m_items.push_back(m_store.add(tmp.c_str()));
     }
     m_has_columns = has_columns;
+    m_horz_scrolling = !m_has_columns;
 
     if (title && *title)
         m_default_title = title;
@@ -1081,15 +1086,23 @@ void textlist_impl::update_layout()
 {
     int slop_rows = 2;
     int border_rows = 2;
-    int target_rows = m_history_mode ? 20 : 10;
+    int target_rows = m_pref_height;
 
-    m_visible_rows = min<int>(target_rows, (m_screen_rows / 2) - border_rows - slop_rows);
+    if (target_rows)
+    {
+        m_visible_rows = min<int>(target_rows, m_screen_rows - border_rows - slop_rows);
+    }
+    else
+    {
+        target_rows = m_history_mode ? 20 : 10;
+        m_visible_rows = min<int>(target_rows, (m_screen_rows / 2) - border_rows - slop_rows);
+    }
 
     if (m_screen_cols <= min_screen_cols)
         m_visible_rows = 0;
 
     m_max_num_len = 0;
-    if (m_history_mode && m_count > 0)
+    if (m_show_numbers && m_count > 0)
     {
         str<> tmp;
         tmp.format("%u", m_infos ? m_infos[m_count - 1].index + 1 : m_count);
@@ -1217,21 +1230,31 @@ void textlist_impl::update_display()
             const bool draw_border = (m_prev_displayed < 0) || m_override_title.length() || m_has_override_title;
             m_has_override_title = !m_override_title.empty();
 
-            int longest = m_longest + (m_max_num_len ? m_max_num_len + 2 : 0); // +2 for ": ".
-            if (m_has_columns)
+            int longest;
+            if (m_pref_width)
             {
-                for (int i = 0; i < max_columns; i++)
-                {
-                    const int x = m_columns.get_col_width(i);
-                    if (x)
-                        longest += 2 + x;
-                }
+                longest = m_pref_width;
+                longest = max<int>(longest, 10); // Too narrow doesn't draw well.
             }
-            longest = max<int>(longest, 40);
+            else
+            {
+                longest = m_longest + (m_max_num_len ? m_max_num_len + 2 : 0); // +2 for ": ".
+                if (m_has_columns)
+                {
+                    for (int i = 0; i < max_columns; i++)
+                    {
+                        const int x = m_columns.get_col_width(i);
+                        if (x)
+                            longest += 2 + x;
+                    }
+                }
+                longest = max<int>(longest, 40);
+            }
 
             str<> tmp;
             if (m_history_mode && m_prev_displayed < 0)
             {
+                // Expand control characters to "^A" etc.
                 m_longest_visible = 0;
                 const int rows = min<int>(m_count, m_visible_rows);
                 for (int row = 0; row < rows; ++row)
@@ -1294,7 +1317,7 @@ void textlist_impl::update_display()
 
                     int spaces = col_width - 2;
 
-                    if (m_history_mode)
+                    if (m_show_numbers)
                     {
                         const int history_index = m_infos ? m_infos[i].index : i;
                         const char ismark = (m_infos && m_infos[i].marked);
@@ -1315,7 +1338,7 @@ void textlist_impl::update_display()
 
                     if (m_has_columns)
                     {
-                        assert(!m_history_mode); // Incompatible with m_horz_offset.
+                        assert(!m_horz_scrolling); // Columns are incompatible with m_horz_offset.
 
                         const str_base& desc_color = (i == m_index) ? m_color.selectdesc : m_color.desc;
                         m_printer->print(desc_color.c_str(), desc_color.length());
@@ -1415,7 +1438,7 @@ void textlist_impl::set_top(int top)
 //------------------------------------------------------------------------------
 void textlist_impl::adjust_horz_offset(int delta)
 {
-    if (m_history_mode)
+    if (m_horz_scrolling)
     {
         const int was = m_horz_offset;
 
@@ -1453,7 +1476,13 @@ void textlist_impl::reset()
     m_items = std::move(zap_items);
     m_longest = 0;
     m_columns.clear();
+
+    m_mode = textlist_mode::general;
+    m_pref_height = 0;
+    m_pref_width = 0;
     m_history_mode = false;
+    m_show_numbers = false;
+    m_horz_scrolling = false;
     m_win_history = false;
     m_has_columns = false;
     m_del_callback = nullptr;
