@@ -391,8 +391,8 @@ Name                         | Default [*](#alternatedefault) | Description
 `history.dupe_mode`          | `erase_prev` | If a line is a duplicate of an existing history entry Clink will erase the duplicate when this is set to `erase_prev`. Setting it to `ignore` will not add duplicates to the history, and setting it to `add` will always add lines (except when overridden by `history.sticky_search`).
 `history.expand_mode`        | `not_quoted` | The `!` character in an entered line can be interpreted to introduce words from the history. This can be enabled and disable by setting this value to `on` or `off`. Values of `not_squoted`, `not_dquoted`, or `not_quoted` will skip any `!` character quoted in single, double, or both quotes respectively.
 `history.ignore_space`       | True    | Ignore lines that begin with whitespace when adding lines in to the history.
-<a name="history_max_lines"></a>`history.max_lines` | 10000 [*](#alternatedefault) | The number of history lines to save if `history.save` is enabled (1 to 50000).
-`history.save`               | True    | Saves history between sessions. When disabled, history is neither read from nor written to a master history list; history for each session exists only in memory until the session ends.
+<a name="history_max_lines"></a>`history.max_lines` | 10000 [*](#alternatedefault) | The number of history lines to save if `history.save` is enabled (or 0 for unlimited).
+`history.save`               | True    | Saves history between sessions. When disabled, history is neither read from nor written to a master history list; history for each session is written to a temporary file during the session, but is not added to the master history list.
 `history.shared`             | False   | When history is shared, all instances of Clink update the master history list after each command and reload the master history list on each prompt.  When history is not shared, each instance updates the master history list on exit.
 `history.sticky_search`      | False   | When enabled, reusing a history line does not add the reused line to the end of the history, and it leaves the history search position on the reused line so next/prev history can continue from there (e.g. replaying commands via <kbd>Up</kbd> several times then <kbd>Enter</kbd>, <kbd>Down</kbd>, <kbd>Enter</kbd>, etc).
 `history.time_format`        | <code>%F %T &nbsp</code> | This specifies a time format string for showing timestamps for history items.  For a list of format specifiers see `clink set history.time_format` or [History Timestamps](#history-timestamps).
@@ -2507,7 +2507,7 @@ There are several settings that control how history works.  Run `clink set histo
 
 ### The master history file
 
-When the `history.saved` setting is enabled, then the command history is loaded and saved as follows (or when the setting is disabled, then it isn't saved between sessions).
+When the `history.save` setting is enabled, then the command history is loaded and saved as follows (or when the setting is disabled, then it isn't saved between sessions).
 
 Every time a new input line starts, Clink reloads the master history list and prunes it not to exceed the `history.max_lines` setting.
 
