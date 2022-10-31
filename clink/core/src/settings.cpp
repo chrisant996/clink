@@ -619,6 +619,17 @@ const char* setting::get_custom_default() const
 //------------------------------------------------------------------------------
 template <> bool setting_impl<bool>::parse(const char* value, store<bool>& out)
 {
+    // In issue 372 someone tried to manually modify the clink_settings file,
+    // and they accidentally added a trailing space, which Clink did not expect.
+    // Manually modifying the clink_settings file is not supported.  However,
+    // this particular usage mistake is easy to accommodate by trimming
+    // whitespace, and it is less costly to make a change that it is to
+    // investigate support questions caused by an invisible character which is
+    // present due to a side effect of CMD batch script syntax.
+    str<16> tmp(value);
+    tmp.trim();
+    value = tmp.c_str();
+
     if (stricmp(value, "true") == 0)  { out.value = 1; return true; }
     if (stricmp(value, "false") == 0) { out.value = 0; return true; }
 
