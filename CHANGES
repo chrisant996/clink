@@ -6,6 +6,7 @@
 
 - Added `clink.getpopuplistcolors()` to get the default popup list colors.
 - The `clink.popuplist()` function allows the `items` table to include fields to override the height, width, colors, and direction of the list.
+- The `clink_settings` file format has been relaxed slightly to accept trailing whitespace after a Boolean setting's value.  Note that manually modifying the `clink_settings` file is not supported; always use `clink set` to query or change Clink settings.
 - Fixed [#370](https://github.com/chrisant996/clink/issues/370); <kbd>Tab</kbd> inside `set /p var=` mistakenly discards any previous input.
 
 #### v1.3.51
