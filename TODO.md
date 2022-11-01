@@ -21,6 +21,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - If a `luafunc:` macro first does anything that alters the line buffer, and then invokes a completion command, then the collected words will be inaccurate.
 - Show time stamps in history popup?
 - Some way to push keys?  (Push keys to Clink; not to other processes.)
+- Some way for `history.save false` to not do any disk IO for history, but still enable `clink history` to show the session's history (probably using Shared Memory).
 
 ## Follow Up
 - Push update to z.lua repo.
