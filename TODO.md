@@ -7,6 +7,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
+- Some way for a prompt filter to respond to terminal resize?  Flexprompt would like to adjust its segments when the terminal width changes, without rerunning the modules.  Maybe simply a `clink.onterminalresize()` and flexprompt could call `clink.refilterprompt()`?
 - Allow removing event handlers, e.g. `clink.onbeginedit(func)` to add an event handler, and something like `clink.onbeginedit(func, false)` or `clink.removebeginedit(func)` to remove one?  Or maybe return a function that can be called to remove it, e.g. like this (but make sure repeated calls become no-ops):
     ```
     local remove = clink.onbeginedit(func) -- add func
@@ -16,12 +17,15 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - Need a simple and reliable trigger for clearing the comment row later; maybe `clink.onaftercommand()` is enough?
 
 ## Low Priority
+- Completion could try to expand abbreviated paths?
+  - Or have a way to hook completion and preprocess the input?
 - Coroutines can call `clink.refilterprompt()` and it immediately refilters while in the coroutine.  It should instead set a flag to refilter after the coroutines have yielded.
 - Collecting words currently happens in update_internal, but probably it also belongs in alternative_matches and/or update_matches:
   - If a `luafunc:` macro first does anything that alters the line buffer, and then invokes a completion command, then the collected words will be inaccurate.
 - Show time stamps in history popup?
 - Some way to push keys?  (Push keys to Clink; not to other processes.)
 - Some way for `history.save false` to not do any disk IO for history, but still enable `clink history` to show the session's history (probably using Shared Memory).
+- Some way for `os.globfiles()` and `os.globdirs()` to override the `files.hidden` and `files.system` settings?
 
 ## Follow Up
 - Push update to z.lua repo.
