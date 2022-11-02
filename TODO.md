@@ -5,6 +5,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
+- With `history.save` off and other settings at their default values, ASSERT when running `clink set`:
+  - `!m_bank_handles[bank_session].m_handle_lines` in c:\repos\clink\clink\lib\src\history_db.cpp, line 1284.
 
 ## Normal Priority
 - Some way for a prompt filter to respond to terminal resize?  Flexprompt would like to adjust its segments when the terminal width changes, without rerunning the modules.  Maybe simply a `clink.onterminalresize()` and flexprompt could call `clink.refilterprompt()`?
