@@ -10,7 +10,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## Normal Priority
 - Some way for a prompt filter to respond to terminal resize?  Flexprompt would like to adjust its segments when the terminal width changes, without rerunning the modules.  Maybe simply a `clink.onterminalresize()` and flexprompt could call `clink.refilterprompt()`?
-- Allow removing event handlers, e.g. `clink.onbeginedit(func)` to add an event handler, and something like `clink.onbeginedit(func, false)` or `clink.removebeginedit(func)` to remove one?  Or maybe return a function that can be called to remove it, e.g. like this (but make sure repeated calls become no-ops):
+- Allow removing event handlers, e.g. `clink.onbeginedit(func)` to add an event handler, and something like `clink.onbeginedit(func, false)` or `clink.removebeginedit(func)` to remove one?  Or maybe return a function that can be called to remove it, e.g. like this (but make sure repeated calls become no-ops):  _[However, removing events could make diagnostics and auditing very difficult.]_
     ```
     local remove = clink.onbeginedit(func) -- add func
     remove()                               -- remove func
