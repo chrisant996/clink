@@ -572,6 +572,11 @@ readline_internal_char (void)
 readline_internal_charloop (void)
 #endif
 {
+/* begin_clink_change */
+#if defined (READLINE_CALLBACKS)
+  static procenv_t olevel;
+#endif
+/* end_clink_change */
   static int lastc, eof_found;
   int c, code, lk, r;
 
@@ -584,6 +589,18 @@ readline_internal_charloop (void)
 #endif
       lk = _rl_last_command_was_kill;
 
+/* begin_clink_change */
+#if defined (READLINE_CALLBACKS)
+      /* Preserve and restore _rl_top_level, because in
+         rl_callback_read_char() the `eof = readline_internal_char ();` line
+         can end up making a reentrant call into readline_internal_char(), and
+         overwrites the _rl_top_level.  After returning, _rl_top_level can
+         still be used.  Repro: Ctrl-R (reverse-search-history), Ctrl-X (first
+         key in multikey binding), Esc (or any key that isn't a bound second
+         key in any multikey binding starting with Ctrl-X). */
+      memcpy ((void *)olevel, (void *)_rl_top_level, sizeof (procenv_t));
+#endif
+/* end_clink_change */
 #if defined (HAVE_POSIX_SIGSETJMP)
       code = sigsetjmp (_rl_top_level, 0);
 #else
@@ -598,6 +615,12 @@ readline_internal_charloop (void)
 	     from _rl_callback_read_char(), which sets up its own value of
 	     _rl_top_level (saving and restoring the old, of course), so
 	     we can just return here. */
+/* begin_clink_change */
+#if defined (READLINE_CALLBACKS)
+	  if (RL_ISSTATE (RL_STATE_CALLBACK))
+	    memcpy ((void *)_rl_top_level, (void *)olevel, sizeof (procenv_t));
+#endif
+/* end_clink_change */
 	  if (RL_ISSTATE (RL_STATE_CALLBACK))
 	    return (0);
 	}
@@ -621,6 +644,9 @@ readline_internal_charloop (void)
 	{
 #if defined (READLINE_CALLBACKS)
 	  RL_SETSTATE(RL_STATE_DONE);
+/* begin_clink_change */
+	  memcpy ((void *)_rl_top_level, (void *)olevel, sizeof (procenv_t));
+/* end_clink_change */
 	  return (rl_done = 1);
 #else
 	  eof_found = 1;
@@ -661,6 +687,9 @@ readline_internal_charloop (void)
 	{
 #if defined (READLINE_CALLBACKS)
 	  RL_SETSTATE(RL_STATE_DONE);
+/* begin_clink_change */
+	  memcpy ((void *)_rl_top_level, (void *)olevel, sizeof (procenv_t));
+/* end_clink_change */
 	  return (rl_done = 1);
 #else
 	  eof_found = 1;
@@ -708,6 +737,9 @@ readline_internal_charloop (void)
       _rl_internal_char_cleanup ();
 
 #if defined (READLINE_CALLBACKS)
+/* begin_clink_change */
+      memcpy ((void *)_rl_top_level, (void *)olevel, sizeof (procenv_t));
+/* end_clink_change */
       return 0;
 #else
     }
