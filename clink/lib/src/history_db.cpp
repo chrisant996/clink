@@ -1226,7 +1226,7 @@ void history_db::reap()
 //------------------------------------------------------------------------------
 void history_db::initialise(str_base* error_message)
 {
-    if (m_bank_handles[bank_master] || !is_valid())
+    if (m_bank_handles[bank_master] || m_bank_handles[bank_session] || !is_valid())
         return;
 
     str<280> path;
