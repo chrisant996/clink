@@ -5,25 +5,30 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- With `history.save` off and other settings at their default values, ASSERT when running `clink set`:
-  - `!m_bank_handles[bank_session].m_handle_lines` in c:\repos\clink\clink\lib\src\history_db.cpp, line 1284.
 
 ## Normal Priority
-- Some way for a prompt filter to respond to terminal resize?  Flexprompt would like to adjust its segments when the terminal width changes, without rerunning the modules.  Maybe simply a `clink.onterminalresize()` and flexprompt could call `clink.refilterprompt()`?
-- Allow removing event handlers, e.g. `clink.onbeginedit(func)` to add an event handler, and something like `clink.onbeginedit(func, false)` or `clink.removebeginedit(func)` to remove one?  Or maybe return a function that can be called to remove it, e.g. like this (but make sure repeated calls become no-ops):  _[However, removing events could make diagnostics and auditing very difficult.]_
-    ```
-    local remove = clink.onbeginedit(func) -- add func
-    remove()                               -- remove func
-    ```
+- Completion could try to expand abbreviated paths?
+  - Or have a way to hook completion and preprocess the input?
+  - Maybe something like this, after completions have been generated:
+    - If expand abbreviated paths is disabled, no further action is needed.
+    - If filename completion is not requested, no further action is needed.
+    - If the input word is empty or is a full prefix of a generated match, no further action is needed.
+    - If there are no path separators before the cursor, no further action is needed.
+    - Iterate over path components (accept any drive as-is), up to and including the last path separator;
+      - If FindFirstFile("components\so\far*") is unambiguous, insert the unambiguous expansion and continue iterating with the next path component.
+      - Else stop iterating, insert the resolved text, put the cursor at the point where the ambiguity exists, and regenerate completions.
 - Allow Lua to set the comment row for the input line?
   - Need a simple and reliable trigger for clearing the comment row later; maybe `clink.onaftercommand()` is enough?
 
 ## Low Priority
-- Completion could try to expand abbreviated paths?
-  - Or have a way to hook completion and preprocess the input?
-- Coroutines can call `clink.refilterprompt()` and it immediately refilters while in the coroutine.  It should instead set a flag to refilter after the coroutines have yielded.
 - Collecting words currently happens in update_internal, but probably it also belongs in alternative_matches and/or update_matches:
   - If a `luafunc:` macro first does anything that alters the line buffer, and then invokes a completion command, then the collected words will be inaccurate.
+- Allow removing event handlers, e.g. `clink.onbeginedit(func)` to add an event handler, and something like `clink.onbeginedit(func, false)` or `clink.removebeginedit(func)` to remove one?  Or maybe return a function that can be called to remove it, e.g. like below (but make sure repeated calls become no-ops).  The `clink-diagnostics` command would need to still show any removed event handlers until the next beginedit.
+    ```
+    local remove = clink.onbeginedit(func) -- add func
+    remove()                               -- remove func
+    ```
+- Coroutines can call `clink.refilterprompt()` and it immediately refilters while in the coroutine.  Should it instead set a flag to refilter after the coroutines have yielded?
 - Show time stamps in history popup?
 - Some way to push keys?  (Push keys to Clink; not to other processes.)
 - Some way for `history.save false` to not do any disk IO for history, but still enable `clink history` to show the session's history (probably using Shared Memory).
