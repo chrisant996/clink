@@ -19,6 +19,9 @@ TEST_CASE("Lua word classification")
 {
     wchar_t* host = const_cast<wchar_t*>(os::get_shellname());
 
+    const char* empty_fs[] = { nullptr };
+    fs_fixture fs(empty_fs);
+
     lua_state lua;
     lua_match_generator lua_generator(lua); // This loads the required lua scripts.
     lua_load_script(lua, app, cmd);
