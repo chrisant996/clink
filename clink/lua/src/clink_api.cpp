@@ -479,7 +479,7 @@ static bool popup_del_callback(int index)
 /// They can be aligned in a column by making all of the display fields be the
 /// same number of character cells.
 ///
-/// Starting in v1.3.52, the <span class="arg">items</span> table may optionally
+/// Starting in v1.4.0, the <span class="arg">items</span> table may optionally
 /// include any of the following fields to customize the popup list.  The color
 /// strings must be
 /// <a href="https://en.wikipedia.org/wiki/ANSI_escape_code#SGR">SGR parameters</a>
@@ -698,7 +698,7 @@ static int popup_list(lua_State* state)
 
 //------------------------------------------------------------------------------
 /// -name:  clink.getpopuplistcolors
-/// -ver:   1.3.52
+/// -ver:   1.4.0
 /// -ret:   table
 /// Returns the default popup colors in a table with the following scheme:
 /// -show:  {
