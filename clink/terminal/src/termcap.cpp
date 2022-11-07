@@ -377,7 +377,11 @@ char* tgetstr(const char* name, char** out)
     case 'up': str = CSI(A); break;
     case 'UP': str = CSI(%dA); break;
 
-    // Cursor style
+    // Saved cursor position.
+    case 'sc': str = CSI(s); break;
+    case 'rc': str = CSI(u); break;
+
+    // Cursor style.
     case 've': str = c_default_term_ve; break;
     case 'vs': str = c_default_term_vs; break;
 
