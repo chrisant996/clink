@@ -43,6 +43,7 @@ extern int force_reload_scripts();
 extern void host_signal_delayed_init();
 extern void host_mark_deprecated_argmatcher(const char* name);
 extern void set_suggestion(const char* line, unsigned int endword_offset, const char* suggestion, unsigned int offset);
+extern void set_refilter_after_resize(bool refilter);
 extern const char* get_popup_colors();
 extern const char* get_popup_desc_colors();
 extern setting_enum g_dupe_mode;
@@ -938,6 +939,36 @@ static int refilter_prompt(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  clink.refilterafterterminalresize
+/// -ver:   1.4.0
+/// -arg:   refilter:boolean
+/// -ret:   boolean
+/// Call this with <span class="arg">refilter</span> either nil or true to make
+/// Clink automatically rerun prompt filters after the terminal is resized.  The
+/// previous value is returned.
+///
+/// On Windows the terminal is resized while the console program in the terminal
+/// (such as CMD) continues to run.  If a console program writes to the terminal
+/// while the resize is happening, then the terminal display can become garbled.
+/// So Clink waits until the terminal has stayed the same size for at least 1.5
+/// seconds, and then it reruns the prompt filters.
+///
+/// <strong>Use this with caution:</strong>  if the prompt filters have not been
+/// designed efficiently, then rerunning them after resizing the terminal could
+/// cause responsiveness problems.  Also, if the terminal is resized again while
+/// the prompt filters are being rerun, then the terminal display may become
+/// garbled.
+static int refilter_after_terminal_resize(lua_State* state)
+{
+    bool refilter = true;
+    if (!lua_isnoneornil(state, 1))
+        refilter = lua_toboolean(state, 1);
+
+    set_refilter_after_resize(refilter);
+    return 0;
+}
+
+//------------------------------------------------------------------------------
 /// -name:  clink.parseline
 /// -ver:   1.3.37
 /// -arg:   line:string
@@ -1582,6 +1613,7 @@ void clink_lua_initialise(lua_state& lua)
         { "reload",                 &reload },
         { "reclassifyline",         &reclassify_line },
         { "refilterprompt",         &refilter_prompt },
+        { "refilterafterterminalresize", &refilter_after_terminal_resize },
         { "parseline",              &parse_line },
         { "recognizecommand",       &api_recognize_command },
         // Backward compatibility with the Clink 0.4.8 API.  Clink 1.0.0a1 had

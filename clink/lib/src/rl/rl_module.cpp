@@ -102,6 +102,7 @@ extern void update_matches();
 extern void reset_generate_matches();
 extern void force_update_internal(bool restrict);
 extern matches* maybe_regenerate_matches(const char* needle, display_filter_flags flags);
+extern void signal_terminal_resized();
 extern setting_color g_color_interact;
 extern int g_prompt_refilter;
 extern int g_prompt_redisplay;
@@ -3059,6 +3060,7 @@ void rl_module::done(const char* line)
 //------------------------------------------------------------------------------
 void rl_module::on_terminal_resize(int, int, const context& context)
 {
+    signal_terminal_resized();
     resize_readline_display(context.prompt, context.buffer, m_rl_prompt.c_str(), m_rl_rprompt.c_str());
 }
 
