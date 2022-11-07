@@ -2,12 +2,14 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
-#### v1.3.52
+#### v1.4.0
 
 - Added `clink.getpopuplistcolors()` to get the default popup list colors.
+- Added `clink.refilterafterterminalresize()` to enable automatic prompt refilter after terminal resize.  Prompt filters should only enable this if they're designed to refilter very quickly, otherwise they may cause responsiveness problems.
 - The `clink.popuplist()` function allows the `items` table to include fields to override the height, width, colors, and direction of the list.
 - The `clink_settings` file format has been relaxed slightly to accept trailing whitespace after a Boolean setting's value.  Note that manually modifying the `clink_settings` file is not supported; always use `clink set` to query or change Clink settings.
 - Fixed an obscure crash in the Readline library inside the `reverse-search-history` command when pressing the first key of a multikey binding (e.g. <kbd>Ctrl</kbd>-<kbd>X</kbd>) and then pressing any key that does not follow the first key in any of the corresponding multikey bindings (e.g. <kbd>Esc</kbd>).
+- Fixed leaked file handle when `history.save` is False.
 - Fixed [#370](https://github.com/chrisant996/clink/issues/370); <kbd>Tab</kbd> inside `set /p var=` mistakenly discards any previous input.
 
 #### v1.3.51
