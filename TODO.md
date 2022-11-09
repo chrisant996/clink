@@ -9,14 +9,9 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Normal Priority
 - Completion could try to expand abbreviated paths?
   - Or have a way to hook completion and preprocess the input?
-  - Maybe something like this, after completions have been generated:
-    - If expand abbreviated paths is disabled, no further action is needed.
-    - If filename completion is not requested, no further action is needed.
-    - If the input word is empty or is a full prefix of a generated match, no further action is needed.
-    - If there are no path separators before the cursor, no further action is needed.
-    - Iterate over path components (accept any drive as-is), up to and including the last path separator;
-      - If FindFirstFile("components\so\far*") is unambiguous, insert the unambiguous expansion and continue iterating with the next path component.
-      - Else stop iterating, insert the resolved text, put the cursor at the point where the ambiguity exists, and regenerate completions.
+  - [ ] If the abbreviated directories expand fully, then generate matches accordingly.
+  - [ ] How can resolving ambiguity go more smoothly?  `\r\c\c\l_`<kbd>Tab</kbd> --> `\re_\c\c\l`<kbd>Tab</kbd> --> `\Recycle\_\c\c\l` :(
+- Make a reusable wrapper mechanism to create coroutine-friendly threaded async operations in Lua?
 - Allow Lua to set the comment row for the input line?
   - Need a simple and reliable trigger for clearing the comment row later; maybe `clink.onaftercommand()` is enough?
 
