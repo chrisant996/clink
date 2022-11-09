@@ -1485,6 +1485,50 @@ static char** alternative_matches(const char* text, int start, int end)
     if (rl_completion_type == '?' && strcmp(text, "~") == 0)
         return nullptr;
 
+    // Expand an abbreviated path.
+#if 0//def DEBUG
+    if (s_matches->is_filename_completion_desired() || !s_matches->get_match_count())
+    {
+        str_moveable tmp;
+        concat_strip_quotes(tmp, text);
+        const char* in = tmp.c_str();
+        str_moveable expanded;
+        const bool disambiguated = os::disambiguate_abbreviated_path(in, expanded);
+        if (expanded.length())
+        {
+            printf("\x1b[s\x1b[H\x1b[97;42mEXPANDED:  \"%s\" + \"%s\" (%s)\x1b[m\x1b[K\x1b[u", expanded.c_str(), in, disambiguated ? "UNIQUE" : "ambiguous");
+            if (!disambiguated)
+            {
+                assert(g_rl_buffer);
+                g_rl_buffer->begin_undo_group();
+                g_rl_buffer->remove(start, start + in - tmp.c_str());
+                g_rl_buffer->set_cursor(start);
+                g_rl_buffer->insert(expanded.c_str());
+                g_rl_buffer->end_undo_group();
+                // Force the menu-complete family of commands to regenerate
+                // matches, otherwise they'll have no matches.
+                override_rl_last_func(nullptr, true/*force_when_null*/);
+                return nullptr;
+            }
+            else
+            {
+// TODO: update and generate matches as though disambiguate+in is the input.
+// TODO: maybe use rollback<> to save/alter/restore rl_line_buffer, but that's
+// dangerous since Readline has other data structures that integrate with it,
+// such as the undo list.
+                // Perform completion again after the expansion.
+                update_matches();
+                if (matches* regen = maybe_regenerate_matches(text, flags))
+                {
+                    // It's ok to redirect s_matches here because s_matches is reset in
+                    // every rl_module::on_input() call.
+                    s_matches = regen;
+                }
+            }
+        }
+    }
+#endif
+
     str_moveable tmp;
     const char* pattern = nullptr;
     if (is_complete_with_wild())
