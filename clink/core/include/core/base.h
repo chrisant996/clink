@@ -52,8 +52,10 @@ template <class A> A clamp(A v, A m, A M) { return min(max(v, m), M); }
 //------------------------------------------------------------------------------
 #if defined(PLATFORM_WINDOWS)
 #   define PATH_SEP "\\"
+#   define PATH_SEP_CHAR '\\'
 #else
 #   define PATH_SEP "/"
+#   define PATH_SEP_CHAR '/'
 #endif
 
 //------------------------------------------------------------------------------

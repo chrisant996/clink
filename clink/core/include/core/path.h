@@ -45,4 +45,25 @@ bool        is_unc(const wchar_t* path, const wchar_t** past_unc=nullptr);
 bool        is_incomplete_unc(const char* path);
 bool        is_executable_extension(const char* in);
 
+template<typename TYPE> static void skip_sep(const TYPE*& path)
+{
+    while (path::is_separator(*path))
+        ++path;
+}
+
+template<typename TYPE> static unsigned int past_ssqs(const TYPE* path)
+{
+    const TYPE* p = path;
+    if (!path::is_separator(*(p++)))
+        return 0;
+    if (!path::is_separator(*(p++)))
+        return 0;
+    if (*(p++) != '?')
+        return 0;
+    if (!path::is_separator(*(p++)))
+        return 0;
+    skip_sep(p);
+    return static_cast<unsigned int>(p - path);
+}
+
 }; // namespace path

@@ -6,6 +6,7 @@
 #include "path.h"
 #include "str.h"
 #include "str_iter.h"
+#include "str_compare.h"
 #include <locale.h>
 #include <io.h>
 #include <fcntl.h>
@@ -1124,6 +1125,197 @@ HANDLE dup_handle(HANDLE process_handle, HANDLE h, bool inherit)
         return 0;
     }
     return new_h;
+}
+
+//------------------------------------------------------------------------------
+bool disambiguate_abbreviated_path(const char*& in, str_base& out)
+{
+    out.clear();
+
+    // Strip quotes.  This may seem surprising, but it's what CMD does and it
+    // works well.
+    str_moveable tmp;
+    concat_strip_quotes(tmp, in);
+
+    // Find the last path separator.
+    const char* last_sep = nullptr;
+    for (const char* walk = tmp.c_str() + tmp.length(); walk-- > tmp.c_str();)
+    {
+        if (path::is_separator(*walk))
+        {
+            last_sep = walk;
+            break;
+        }
+    }
+
+    // If there are no path separators then there's nothing to disambiguate.
+    if (!last_sep || last_sep == tmp.c_str())
+        return false;
+
+    // Don't operate on UNC paths, for performance reasons.
+    if (path::is_unc(tmp.c_str()) || path::is_incomplete_unc(tmp.c_str()))
+        return false;
+
+    str<280> next;
+    str<280> parse;
+    wstr_moveable wnext;
+    wstr_moveable wadd;
+
+    // Any \\?\ segment should be kept as-is.
+    const unsigned int ssqs = path::past_ssqs(tmp.c_str());
+    parse.concat(tmp.c_str(), ssqs);
+
+    // Don't operate on remote drives, for performance reasons.
+    str<16> tmp2;
+    if (path::get_drive(tmp.c_str() + ssqs, tmp2))
+    {
+        switch (os::get_drive_type(tmp2.c_str()))
+        {
+        case os::drive_type_invalid:
+        case os::drive_type_remote:
+            return false;
+        }
+    }
+    parse << tmp2;
+
+    // Identify the range to be parsed, up to but not including the last path
+    // separator character.
+    unsigned int parse_len = static_cast<unsigned int>(last_sep - tmp.c_str());
+    wstr_moveable disambiguated;
+    disambiguated = parse.c_str();
+
+    while (parse.length() < parse_len)
+    {
+        // Get next path component (e.g. "\dir").
+        next.clear();
+        while (parse.length() < parse_len)
+        {
+            const char ch = tmp.c_str()[parse.length()];
+            if (!path::is_separator(ch))
+                break;
+            next.concat(&ch, 1);
+            parse.concat(&ch, 1);
+        }
+        while (parse.length() < parse_len)
+        {
+            const char ch = tmp.c_str()[parse.length()];
+            if (path::is_separator(ch))
+                break;
+            next.concat(&ch, 1);
+            parse.concat(&ch, 1);
+        }
+
+        // Convert to UTF16.
+        wnext.clear();
+        to_utf16(wnext, next.c_str());
+
+        // Append star to check for ambiguous matches.
+        const unsigned int committed = disambiguated.length();
+        disambiguated << wnext << L"*";
+
+        // Lookup in file system.
+        WIN32_FIND_DATAW fd;
+        HANDLE h = FindFirstFileW(disambiguated.c_str(), &fd);
+        if (h == INVALID_HANDLE_VALUE)
+            return false;
+
+        // Skip past the leading separator, if any, in the directory component.
+        const wchar_t *dir = wnext.c_str();
+        while (path::is_separator(*dir))
+            ++dir;
+        const unsigned int dir_len = static_cast<unsigned int>(wcslen(dir));
+
+        // Copy file name because FindNextFileW will overwrite it.
+        wadd = fd.cFileName;
+
+        // Check for an exact or unique match.
+        bool unique = wadd.iequals(dir);
+        if (!unique)
+        {
+            wstr_moveable best;
+            bool have_best = false;
+
+            if (wcsncmp(dir, fd.cFileName, dir_len) == 0)
+            {
+                best = fd.cFileName;
+                have_best = true;
+            }
+
+            unique = !FindNextFileW(h, &fd);
+            if (!unique)
+            {
+                // Find lcd.
+                int match_len = str_compare<wchar_t, true/*compute_lcd*/>(wadd.c_str(), fd.cFileName);
+                if (match_len >= 0)
+                    wadd.truncate(match_len);
+
+                // Find best match for the case of the original input.
+                if (!have_best && wcsncmp(fd.cFileName, dir, dir_len) == 0)
+                {
+                    best = fd.cFileName;
+                    have_best = true;
+                }
+            }
+
+            if (have_best)
+            {
+                int match_len = str_compare<wchar_t, true/*compute_lcd*/>(best.c_str(), wadd.c_str());
+                if (match_len >= 0)
+                    best.truncate(match_len);
+                wadd = std::move(best);
+            }
+        }
+        FindClose(h);
+
+        // Append the directory component to the disambiguated output string.
+        disambiguated.truncate(committed);
+        if (path::is_separator(wnext.c_str()[0]) ||
+            (disambiguated.length() &&
+                !path::is_separator(disambiguated.c_str()[disambiguated.length() - 1])))
+        {
+            const wchar_t ch = PATH_SEP_CHAR;
+            disambiguated.concat(&ch, 1);
+        }
+        disambiguated << wadd;
+
+        // If it's not an exact or unique match, then it's been disambiguated
+        // as much as possible.
+        if (!unique)
+        {
+            // disambiguated contains the disambiguated part.
+            // parsed contains the corresponding ambiguous part.
+
+            // FUTURE: Use the rest of the directory components to do further
+            // deductive disambiguation, instead of stopping?  Zsh even
+            // restricts the completions accordingly...  But that seems
+            // prohibitively complex in Clink due to how much control it
+            // grants to match generators.
+
+            break;
+        }
+    }
+
+    // If parsing didn't reach the end of the range, then the result is still
+    // ambiguous.
+    const bool ambiguous = (parse.length() < parse_len);
+
+    // Return the disambiguated string.
+    out.clear();
+    to_utf8(out, disambiguated.c_str());
+
+    // If the input is unambiguous and is already disambiguated then report that
+    // disambiguation wasn't possible.
+    if (!ambiguous && memcmp(out.c_str(), tmp.c_str(), out.length()) == 0)
+    {
+        out.clear();
+        return false;
+    }
+
+    // Return how much of the input was disambiguated.
+    in += parse.length();
+
+    // Return whether the input has been fully disambiguated.
+    return !ambiguous;
 }
 
 }; // namespace os

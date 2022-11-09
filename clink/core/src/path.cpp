@@ -29,12 +29,7 @@ struct ext_comparer
 static bool s_have_pathexts = false;
 static std::map<std::wstring, bool, ext_comparer> s_pathexts;
 
-//------------------------------------------------------------------------------
-template<typename TYPE> static void skip_sep(const TYPE*& path)
-{
-    while (path::is_separator(*path))
-        ++path;
-}
+namespace path {
 
 //------------------------------------------------------------------------------
 template<typename TYPE> static void skip_sep(TYPE*& path)
@@ -48,22 +43,6 @@ template<typename TYPE> static void skip_nonsep(const TYPE*& path)
 {
     while (*path && !path::is_separator(*path))
         ++path;
-}
-
-//------------------------------------------------------------------------------
-template<typename TYPE> static unsigned int past_ssqs(const TYPE* path)
-{
-    const TYPE* p = path;
-    if (!path::is_separator(*(p++)))
-        return 0;
-    if (!path::is_separator(*(p++)))
-        return 0;
-    if (*(p++) != '?')
-        return 0;
-    if (!path::is_separator(*(p++)))
-        return 0;
-    skip_sep(p);
-    return static_cast<unsigned int>(p - path);
 }
 
 //------------------------------------------------------------------------------
@@ -134,9 +113,6 @@ static int get_directory_end(const char* path)
 }
 
 
-
-namespace path
-{
 
 //------------------------------------------------------------------------------
 void refresh_pathext()
