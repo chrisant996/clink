@@ -1184,6 +1184,7 @@ bool disambiguate_abbreviated_path(const char*& in, str_base& out)
     wstr_moveable disambiguated;
     disambiguated = parse.c_str();
 
+    bool unique = false;
     while (parse.length() < parse_len)
     {
         // Get next path component (e.g. "\dir").
@@ -1206,8 +1207,19 @@ bool disambiguate_abbreviated_path(const char*& in, str_base& out)
         }
 
         // Convert to UTF16.
+        assert(next.length());
         wnext.clear();
         to_utf16(wnext, next.c_str());
+
+        // Handle trailing path separators.
+        assert(wnext.length());
+        if (path::is_separator(wnext[wnext.length() - 1]))
+        {
+            const wchar_t ch = PATH_SEP_CHAR;
+            disambiguated.concat(&ch, 1);
+            assert(unique);
+            break;
+        }
 
         // Append star to check for ambiguous matches.
         const unsigned int committed = disambiguated.length();
@@ -1229,7 +1241,7 @@ bool disambiguate_abbreviated_path(const char*& in, str_base& out)
         wadd = fd.cFileName;
 
         // Check for an exact or unique match.
-        bool unique = wadd.iequals(dir);
+        unique = wadd.iequals(dir);
         if (!unique)
         {
             wstr_moveable best;
@@ -1250,11 +1262,15 @@ bool disambiguate_abbreviated_path(const char*& in, str_base& out)
                     wadd.truncate(match_len);
 
                 // Find best match for the case of the original input.
-                if (!have_best && wcsncmp(fd.cFileName, dir, dir_len) == 0)
+                do
                 {
-                    best = fd.cFileName;
-                    have_best = true;
+                    if (!have_best && wcsncmp(fd.cFileName, dir, dir_len) == 0)
+                    {
+                        best = fd.cFileName;
+                        have_best = true;
+                    }
                 }
+                while (FindNextFileW(h, &fd));
             }
 
             if (have_best)
@@ -1295,17 +1311,13 @@ bool disambiguate_abbreviated_path(const char*& in, str_base& out)
         }
     }
 
-    // If parsing didn't reach the end of the range, then the result is still
-    // ambiguous.
-    const bool ambiguous = (parse.length() < parse_len);
-
     // Return the disambiguated string.
     out.clear();
     to_utf8(out, disambiguated.c_str());
 
     // If the input is unambiguous and is already disambiguated then report that
     // disambiguation wasn't possible.
-    if (!ambiguous && memcmp(out.c_str(), tmp.c_str(), out.length()) == 0)
+    if (unique && memcmp(out.c_str(), tmp.c_str(), out.length()) == 0)
     {
         out.clear();
         return false;
@@ -1315,7 +1327,7 @@ bool disambiguate_abbreviated_path(const char*& in, str_base& out)
     in += parse.length();
 
     // Return whether the input has been fully disambiguated.
-    return !ambiguous;
+    return unique;
 }
 
 }; // namespace os
