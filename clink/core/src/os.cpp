@@ -1304,9 +1304,7 @@ bool disambiguate_abbreviated_path(const char*& in, str_base& out)
 
         // Append the directory component to the disambiguated output string.
         disambiguated.truncate(committed);
-        if (path::is_separator(wnext.c_str()[0]) ||
-            (disambiguated.length() &&
-                !path::is_separator(disambiguated.c_str()[disambiguated.length() - 1])))
+        if (path::is_separator(wnext.c_str()[0]))
         {
             const wchar_t ch = PATH_SEP_CHAR;
             disambiguated.concat(&ch, 1);
