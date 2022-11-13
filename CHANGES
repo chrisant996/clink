@@ -2,6 +2,11 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.4.1
+
+- Added `os.abbreviatepath()` and `os.expandabbreviatedpath()`.
+- Invoking completion expands abbreviated paths when the new `match.expand_abbrev` setting is enabled.
+
 #### v1.4.0
 
 - Added `clink.getpopuplistcolors()` to get the default popup list colors.
