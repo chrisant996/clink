@@ -55,8 +55,12 @@ public:
     virtual void        set_prompt(const char* prompt, const char* rprompt, bool redisplay) = 0;
     virtual bool        get_line(str_base& out) = 0;
     virtual bool        edit(str_base& out, bool edit=true) = 0;
+    virtual void        override_line(const char* line, const char* needle, int point) = 0;
     virtual bool        update() = 0;
     virtual void        update_matches() = 0;
+#ifdef DEBUG
+    virtual bool        is_line_overridden() = 0;
+#endif
 };
 
 

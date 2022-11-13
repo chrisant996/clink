@@ -302,6 +302,13 @@ setting_color g_color_unrecognized(
     "file.",
     "");
 
+setting_bool g_match_expand_abbrev(
+    "match.expand_abbrev",
+    "Expand abbreviated paths when completing",
+    "Expands unambiguously abbreviated directories in a path when performing\n"
+    "completion.",
+    true);
+
 setting_bool g_match_expand_envvars(
     "match.expand_envvars",
     "Expand envvars when completing",
@@ -1485,18 +1492,33 @@ static char** alternative_matches(const char* text, int start, int end)
     if (rl_completion_type == '?' && strcmp(text, "~") == 0)
         return nullptr;
 
-    // Expand an abbreviated path.
-#if 0//def DEBUG
-    if (s_matches->is_filename_completion_desired() || !s_matches->get_match_count())
+    // Strip quotes so `"foo\"ba` can complete to `"foo\bar"`.  Stripping
+    // quotes may seem surprising, but it's what CMD does and it works well.
+    str_moveable tmp;
+    concat_strip_quotes(tmp, text);
+
+    // Handle tilde expansion.
+    bool just_tilde = false;
+    if (rl_complete_with_tilde_expansion && tmp.c_str()[0] == '~')
     {
-        str_moveable tmp;
-        concat_strip_quotes(tmp, text);
+        just_tilde = !tmp.c_str()[1];
+        if (!path::tilde_expand(tmp))
+            just_tilde = false;
+    }
+
+    // Expand an abbreviated path.
+    override_match_line_state omls;
+    if (g_match_expand_abbrev.get() && !s_matches->get_match_count())
+    {
         const char* in = tmp.c_str();
         str_moveable expanded;
         const bool disambiguated = os::disambiguate_abbreviated_path(in, expanded);
         if (expanded.length())
         {
-            printf("\x1b[s\x1b[H\x1b[97;42mEXPANDED:  \"%s\" + \"%s\" (%s)\x1b[m\x1b[K\x1b[u", expanded.c_str(), in, disambiguated ? "UNIQUE" : "ambiguous");
+#ifdef DEBUG
+            if (dbg_get_env_int("DEBUG_EXPANDABBREV"))
+                printf("\x1b[s\x1b[H\x1b[97;48;5;22mEXPANDED:  \"%s\" + \"%s\" (%s)\x1b[m\x1b[K\x1b[u", expanded.c_str(), in, disambiguated ? "UNIQUE" : "ambiguous");
+#endif
             if (!disambiguated)
             {
                 assert(g_rl_buffer);
@@ -1512,13 +1534,17 @@ static char** alternative_matches(const char* text, int start, int end)
             }
             else
             {
-// TODO: update and generate matches as though disambiguate+in is the input.
-// TODO: maybe use rollback<> to save/alter/restore rl_line_buffer, but that's
-// dangerous since Readline has other data structures that integrate with it,
-// such as the undo list.
+                expanded.concat(in);
+                tmp = std::move(expanded);
+                // Override the input editor's line state info to generate
+                // matches using the expanded path, without actually modifying
+                // the Readline line buffer (since we're inside a Readline
+                // callback and Readline isn't prepared for the buffer to
+                // change out from under it).
+                omls.override(start, end, tmp.c_str());
                 // Perform completion again after the expansion.
                 update_matches();
-                if (matches* regen = maybe_regenerate_matches(text, flags))
+                if (matches* regen = maybe_regenerate_matches(tmp.c_str(), flags))
                 {
                     // It's ok to redirect s_matches here because s_matches is reset in
                     // every rl_module::on_input() call.
@@ -1527,24 +1553,11 @@ static char** alternative_matches(const char* text, int start, int end)
             }
         }
     }
-#endif
 
-    str_moveable tmp;
+    // Handle the match.wild setting.
     const char* pattern = nullptr;
     if (is_complete_with_wild())
     {
-        // Strip quotes so `"foo\"ba` can complete to `"foo\bar"`.  Stripping
-        // quotes may seem surprising, but it's what CMD does and it works well.
-        concat_strip_quotes(tmp, text);
-
-        bool just_tilde = false;
-        if (rl_complete_with_tilde_expansion && tmp.c_str()[0] == '~')
-        {
-            just_tilde = !tmp.c_str()[1];
-            if (!path::tilde_expand(tmp))
-                just_tilde = false;
-        }
-
         if (!is_literal_wild() && !just_tilde)
             tmp.concat("*");
         pattern = tmp.c_str();

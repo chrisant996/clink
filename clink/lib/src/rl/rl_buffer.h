@@ -28,7 +28,14 @@ public:
     virtual void            end_undo_group() override;
     virtual bool            undo() override;
 
+    bool                    has_override() const;
+    void                    clear_override();
+    void                    override(const char* line, int pos);
+
 private:
     bool                    m_attached = false;
     bool                    m_need_draw = false;
+    const char*             m_override_line = nullptr;
+    unsigned int            m_override_len = 0;
+    int                     m_override_pos = 0;
 };

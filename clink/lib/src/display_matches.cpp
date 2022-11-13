@@ -17,6 +17,7 @@
 #include "match_adapter.h"
 #include "column_widths.h"
 #include "ellipsify.h"
+#include "line_buffer.h"
 
 #include <core/base.h>
 #include <core/settings.h>
@@ -95,6 +96,7 @@ unsigned int cell_count(const char* in);
 //------------------------------------------------------------------------------
 extern setting_bool g_match_best_fit;
 extern setting_int g_match_limit_fitted;
+extern line_buffer* g_rl_buffer;
 rl_match_display_filter_func_t *rl_match_display_filter_func = nullptr;
 const char *_rl_description_color = nullptr;
 const char *_rl_filtered_color = nullptr;
@@ -1324,4 +1326,16 @@ done:
     delete adapter;
     rl_forced_update_display();
     rl_display_fixed = 1;
+}
+
+//------------------------------------------------------------------------------
+void override_match_line_state::override(int start, int end, const char* needle)
+{
+    assert(g_rl_buffer);
+    m_line.clear();
+    m_line.concat(g_rl_buffer->get_buffer(), start);
+    m_line.concat(needle);
+    int point = m_line.length();
+    m_line.concat(g_rl_buffer->get_buffer() + end);
+    override_line_state(m_line.c_str(), needle, point);
 }

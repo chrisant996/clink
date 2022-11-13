@@ -91,6 +91,8 @@ setting_int g_match_limit_fitted(
     "Depending on the screen width and CPU speed, setting a limit may avoid delays.",
     0);
 
+extern setting_bool g_match_expand_abbrev;
+
 
 
 //------------------------------------------------------------------------------
@@ -1012,6 +1014,56 @@ void selectcomplete_impl::update_matches(bool restrict)
     // Update matches.
     ::update_matches();
 
+    // Expand an abbreviated path.
+    str_moveable tmp;
+    override_match_line_state omls;
+    const char* needle = m_needle.c_str();
+    if (g_match_expand_abbrev.get() && !m_matches.get_match_count())
+    {
+        tmp.concat(m_buffer->get_buffer() + m_anchor, m_point - m_anchor);
+        const char* in = tmp.c_str();
+        str_moveable expanded;
+        const bool disambiguated = os::disambiguate_abbreviated_path(in, expanded);
+        if (expanded.length())
+        {
+#ifdef DEBUG
+            if (dbg_get_env_int("DEBUG_EXPANDABBREV"))
+                printf("\x1b[s\x1b[H\x1b[97;48;5;22mEXPANDED:  \"%s\" + \"%s\" (%s)\x1b[m\x1b[K\x1b[u", expanded.c_str(), in, disambiguated ? "UNIQUE" : "ambiguous");
+#endif
+            if (!disambiguated)
+            {
+                m_buffer->begin_undo_group();
+                m_buffer->remove(m_anchor, m_anchor + in - tmp.c_str());
+                m_buffer->set_cursor(m_anchor);
+                m_buffer->insert(expanded.c_str());
+                m_buffer->end_undo_group();
+                // Force the menu-complete family of commands to regenerate
+                // matches, otherwise they'll have no matches.
+                override_rl_last_func(nullptr, true/*force_when_null*/);
+                // Since there are no matches, selectcomplete will be canceled
+                // after returning.
+                return;
+            }
+            else
+            {
+                expanded.concat(in);
+                tmp = std::move(expanded);
+                // Override the input editor's line state info to generate
+                // matches using the expanded path, without actually modifying
+                // the Readline line buffer (since we're inside a Readline
+                // callback and Readline isn't prepared for the buffer to
+                // change out from under it).
+                needle = tmp.c_str();
+                omls.override(m_anchor, m_anchor + m_needle.length(), needle);
+                // Perform completion again after the expansion.
+                ::update_matches();
+            }
+        }
+    }
+
+#define m_needle __use_needle_instead__
+
+    // Restrict matches.
     bool filtered = false;
     if (restrict)
     {
@@ -1030,61 +1082,58 @@ void selectcomplete_impl::update_matches(bool restrict)
     // Perform match display filtering (match_display_filter or the
     // ondisplaymatches event).
     const display_filter_flags flags = display_filter_flags::selectable;
-    if (m_matches.get_matches()->match_display_filter(nullptr, nullptr, nullptr, flags))
+    if (matches* regen = maybe_regenerate_matches(needle, flags))
     {
-        if (matches* regen = maybe_regenerate_matches(m_needle.c_str(), flags))
+        m_matches.set_regen_matches(regen);
+
+        // Build char** array for filtering.
+        std::vector<autoptr<char>> matches;
+        const unsigned int count = m_matches.get_match_count();
+        matches.emplace_back(nullptr); // Placeholder for lcd.
+        for (unsigned int i = 0; i < count; i++)
         {
-            m_matches.set_regen_matches(regen);
+            const char* text = m_matches.get_match(i);
+            const char* disp = m_matches.get_match_display_raw(i);
+            const char* desc = m_matches.get_match_description(i);
+            const size_t packed_size = calc_packed_size(text, disp, desc);
+            char* buffer = static_cast<char*>(malloc(packed_size));
+            if (pack_match(buffer, packed_size, text, m_matches.get_match_type(i), disp, desc, m_matches.get_match_append_char(i), m_matches.get_match_flags(i), nullptr, false))
+                matches.emplace_back(buffer);
+            else
+                free(buffer);
+        }
+        matches.emplace_back(nullptr);
 
-            // Build char** array for filtering.
-            std::vector<autoptr<char>> matches;
-            const unsigned int count = m_matches.get_match_count();
-            matches.emplace_back(nullptr); // Placeholder for lcd.
-            for (unsigned int i = 0; i < count; i++)
-            {
-                const char* text = m_matches.get_match(i);
-                const char* disp = m_matches.get_match_display_raw(i);
-                const char* desc = m_matches.get_match_description(i);
-                const size_t packed_size = calc_packed_size(text, disp, desc);
-                char* buffer = static_cast<char*>(malloc(packed_size));
-                if (pack_match(buffer, packed_size, text, m_matches.get_match_type(i), disp, desc, m_matches.get_match_append_char(i), m_matches.get_match_flags(i), nullptr, false))
-                    matches.emplace_back(buffer);
-                else
-                    free(buffer);
-            }
-            matches.emplace_back(nullptr);
+        // Get filtered matches.
+        match_display_filter_entry** filtered_matches = nullptr;
+        create_matches_lookaside(&*matches.begin());
+        m_matches.get_matches()->match_display_filter(needle, &*matches.begin(), &filtered_matches, flags);
+        destroy_matches_lookaside(&*matches.begin());
 
-            // Get filtered matches.
-            match_display_filter_entry** filtered_matches = nullptr;
-            create_matches_lookaside(&*matches.begin());
-            m_matches.get_matches()->match_display_filter(m_needle.c_str(), &*matches.begin(), &filtered_matches, flags);
-            destroy_matches_lookaside(&*matches.begin());
-
-            // Use filtered matches.
-            m_matches.set_filtered_matches(filtered_matches);
-            filtered = true;
+        // Use filtered matches.
+        m_matches.set_filtered_matches(filtered_matches);
+        filtered = true;
 
 #ifdef DEBUG
-            if (dbg_get_env_int("DEBUG_FILTER"))
+        if (dbg_get_env_int("DEBUG_FILTER"))
+        {
+            puts("-- SELECTCOMPLETE MATCH_DISPLAY_FILTER");
+            if (filtered_matches && filtered_matches[0])
             {
-                puts("-- SELECTCOMPLETE MATCH_DISPLAY_FILTER");
-                if (filtered_matches && filtered_matches[0])
+                // Skip [0]; Readline expects matches start at [1].
+                str<> tmp;
+                while (*(++filtered_matches))
                 {
-                    // Skip [0]; Readline expects matches start at [1].
-                    str<> tmp;
-                    while (*(++filtered_matches))
-                    {
-                        match_type_to_string(static_cast<match_type>(filtered_matches[0]->type), tmp);
-                        printf("type '%s', match '%s', display '%s'\n",
-                                tmp.c_str(),
-                                filtered_matches[0]->match,
-                                filtered_matches[0]->display);
-                    }
+                    match_type_to_string(static_cast<match_type>(filtered_matches[0]->type), tmp);
+                    printf("type '%s', match '%s', display '%s'\n",
+                            tmp.c_str(),
+                            filtered_matches[0]->match,
+                            filtered_matches[0]->display);
                 }
-                puts("-- DONE");
             }
-#endif
+            puts("-- DONE");
         }
+#endif
     }
 
     // Perform match filtering (the onfiltermatches event).
@@ -1128,6 +1177,8 @@ void selectcomplete_impl::update_matches(bool restrict)
         }
 #endif
     }
+
+#undef m_needle
 
     // Determine the lcd.
     if (restrict)

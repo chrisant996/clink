@@ -174,6 +174,24 @@ bool notify_matches_ready(int generation_id)
 }
 
 //------------------------------------------------------------------------------
+void override_line_state(const char* line, const char* needle, int point)
+{
+    assert(s_editor);
+    if (!s_editor)
+        return;
+
+    s_editor->override_line(line, needle, point);
+}
+
+//------------------------------------------------------------------------------
+#ifdef DEBUG
+bool is_line_state_overridden()
+{
+    return s_editor && s_editor->is_line_overridden();
+}
+#endif
+
+//------------------------------------------------------------------------------
 void set_prompt(const char* prompt, const char* rprompt, bool redisplay)
 {
     if (!s_editor)
@@ -420,6 +438,10 @@ void line_editor_impl::begin_line()
     m_commands.clear();
     m_classify_words.clear();
 
+    m_override_needle = nullptr;
+    m_override_words.clear();
+    m_override_commands.clear();
+
     rl_before_display_function = before_display;
 
     editor_module::context context = get_context();
@@ -456,6 +478,7 @@ void line_editor_impl::end_line()
     clear_flag(flag_editing);
 
     assert(!m_in_matches_ready);
+    assert(!m_buffer.has_override());
 }
 
 //------------------------------------------------------------------------------
@@ -531,6 +554,33 @@ bool line_editor_impl::edit(str_base& out, bool edit)
 
     return get_line(out);
 }
+
+//------------------------------------------------------------------------------
+void line_editor_impl::override_line(const char* line, const char* needle, int point)
+{
+    assert(!line || !m_buffer.has_override());
+    assert(!line || point >= 0);
+    assert(!line || point <= strlen(line));
+
+    m_buffer.override(line, point);
+    m_override_needle = line ? needle : nullptr;
+
+    m_override_words.clear();
+    m_override_commands.clear();
+    if (line)
+    {
+        collect_words(m_override_words, &m_matches, collect_words_mode::stop_at_cursor, m_override_commands);
+        set_flag(flag_generate);
+    }
+}
+
+//------------------------------------------------------------------------------
+#ifdef DEBUG
+bool line_editor_impl::is_line_overridden()
+{
+    return m_buffer.has_override();
+}
+#endif
 
 //------------------------------------------------------------------------------
 bool line_editor_impl::update()
@@ -632,13 +682,15 @@ void line_editor_impl::update_matches()
 
     if (generate)
     {
-        const auto linestates = m_commands.get_linestates(m_buffer);
+        const auto linestates = (m_buffer.has_override() ?
+                                 m_override_commands.get_linestates(m_buffer) :
+                                 m_commands.get_linestates(m_buffer));
         match_pipeline pipeline(m_matches);
         pipeline.reset();
         pipeline.generate(linestates, m_generator);
     }
 
-    if (restrict)
+    if (restrict && !m_buffer.has_override())
     {
         match_pipeline pipeline(m_matches);
 
@@ -663,18 +715,20 @@ void line_editor_impl::update_matches()
 
     if (select)
     {
+        const char* needle = m_buffer.has_override() ? m_override_needle : m_needle.c_str();
         match_pipeline pipeline(m_matches);
-        pipeline.select(m_needle.c_str());
+        pipeline.select(needle);
         pipeline.sort();
     }
 
     // Tell all the modules that the matches changed.
     if (generate || restrict || select)
     {
+        const char* needle = m_buffer.has_override() ? m_override_needle : m_needle.c_str();
         line_state line = get_linestate();
         editor_module::context context = get_context();
         for (auto module : m_modules)
-            module->on_matches_changed(context, line, m_needle.c_str());
+            module->on_matches_changed(context, line, needle);
     }
 }
 
@@ -1202,6 +1256,9 @@ void host_refresh_recognizer()
 //------------------------------------------------------------------------------
 line_state line_editor_impl::get_linestate() const
 {
+    if (m_buffer.has_override())
+        return m_override_commands.get_linestate(m_buffer);
+
     return m_commands.get_linestate(m_buffer);
 }
 
