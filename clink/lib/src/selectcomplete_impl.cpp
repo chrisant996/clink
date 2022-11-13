@@ -1021,6 +1021,16 @@ void selectcomplete_impl::update_matches(bool restrict)
     if (g_match_expand_abbrev.get() && !m_matches.get_match_count())
     {
         tmp.concat(m_buffer->get_buffer() + m_anchor, m_point - m_anchor);
+
+        // bool just_tilde = false;
+        if (rl_complete_with_tilde_expansion && tmp.c_str()[0] == '~')
+        {
+            // just_tilde = !tmp.c_str()[1];
+            // if (!path::tilde_expand(tmp))
+            //     just_tilde = false;
+            path::tilde_expand(tmp);
+        }
+
         const char* in = tmp.c_str();
         str_moveable expanded;
         const bool disambiguated = os::disambiguate_abbreviated_path(in, expanded);
@@ -1054,7 +1064,8 @@ void selectcomplete_impl::update_matches(bool restrict)
                 // callback and Readline isn't prepared for the buffer to
                 // change out from under it).
                 needle = tmp.c_str();
-                omls.override(m_anchor, m_anchor + m_needle.length(), needle);
+                const char qc = need_leading_quote(tmp.c_str(), true);
+                omls.override(m_anchor, m_anchor + m_needle.length(), needle, qc);
                 // Perform completion again after the expansion.
                 ::update_matches();
             }

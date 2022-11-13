@@ -73,7 +73,9 @@ class override_match_line_state
 public:
     override_match_line_state() { assert(!is_line_state_overridden()); }
     ~override_match_line_state() { override_line_state(nullptr, nullptr, 0); }
-    void override(int start, int end, const char* needle);
+    void override(int start, int end, const char* needle, char quote_char=0);
 private:
     str_moveable m_line;
 };
+
+char need_leading_quote(const char* match, bool force_filename_completion_desired=false);

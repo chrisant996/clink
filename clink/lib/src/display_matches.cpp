@@ -1329,13 +1329,31 @@ done:
 }
 
 //------------------------------------------------------------------------------
-void override_match_line_state::override(int start, int end, const char* needle)
+void override_match_line_state::override(int start, int end, const char* needle, char quote_char)
 {
     assert(g_rl_buffer);
     m_line.clear();
     m_line.concat(g_rl_buffer->get_buffer(), start);
+    if (quote_char)
+        m_line.concat(&quote_char, 1);
     m_line.concat(needle);
     int point = m_line.length();
     m_line.concat(g_rl_buffer->get_buffer() + end);
     override_line_state(m_line.c_str(), needle, point);
+}
+
+//------------------------------------------------------------------------------
+char need_leading_quote(const char* match, bool force_filename_completion_desired)
+{
+    if (!rl_completion_found_quote &&
+        rl_completer_quote_characters &&
+        rl_completer_quote_characters[0] &&
+        (rl_filename_completion_desired || force_filename_completion_desired) &&
+        rl_filename_quoting_desired &&
+        rl_filename_quote_characters &&
+        _rl_strpbrk(match, rl_filename_quote_characters) != 0)
+    {
+        return rl_completer_quote_characters[0];
+    }
+    return 0;
 }
