@@ -1231,6 +1231,15 @@ bool disambiguate_abbreviated_path(const char*& in, str_base& out)
         if (h == INVALID_HANDLE_VALUE)
             return false;
 
+        while (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+        {
+            if (!FindNextFileW(h, &fd))
+            {
+                FindClose(h);
+                return false;
+            }
+        }
+
         // Skip past the leading separator, if any, in the directory component.
         const wchar_t *dir = wnext.c_str();
         while (path::is_separator(*dir))
@@ -1253,7 +1262,12 @@ bool disambiguate_abbreviated_path(const char*& in, str_base& out)
                 have_best = true;
             }
 
-            unique = !FindNextFileW(h, &fd);
+            do
+            {
+                unique = !FindNextFileW(h, &fd);
+            }
+            while (!unique && !(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY));
+
             if (!unique)
             {
                 // Find lcd.
@@ -1282,6 +1296,11 @@ bool disambiguate_abbreviated_path(const char*& in, str_base& out)
             }
         }
         FindClose(h);
+
+        // If lcd is empty, use the name from the input string (e.g. a leading
+        // wildcard can cause this to happen).
+        if (!wadd.length())
+            wadd = dir;
 
         // Append the directory component to the disambiguated output string.
         disambiguated.truncate(committed);
@@ -1325,6 +1344,11 @@ bool disambiguate_abbreviated_path(const char*& in, str_base& out)
 
     // Return how much of the input was disambiguated.
     in += parse.length();
+    if (out.length() && path::is_separator(out[out.length() - 1]))
+    {
+        while (path::is_separator(*in))
+            ++in;
+    }
 
     // Return whether the input has been fully disambiguated.
     return unique;
