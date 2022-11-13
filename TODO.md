@@ -5,7 +5,10 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- Unit tests for `os.abbreviatepath()` and `os.expandabbreviatedpath()`.
+- Should expanding abbreviated paths when completing immediately continue with completion?  Or should it insert the expanded path and stop?  The latter would give a way to simply expand, without actually doing completion.  Zsh only continues if the input did not end with a path separator.
+- Unit tests for `os.abbreviatepath()`.
+- `c:fon\` `Alt-=` lists matches `Fonts\Dirname\` and `Filename` ==> is not displaying filenames correctly.
+- Weird case: `git checkout a/b/c` will try to expand `a/b/c` as an abbreviated path, but ideally it wouldn't since the matches are never files.  This is a case that Clink can't really get perfectly right anymore, because of the automatic deduction of whether to use file matches.  Overall, this seems acceptable.
 
 ## Normal Priority
 - Allow Lua to set the comment row for the input line?
