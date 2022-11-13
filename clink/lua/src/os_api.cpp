@@ -1421,6 +1421,72 @@ static int sleep(lua_State *state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  os.expandabbreviatedpath
+/// -ver:   1.4.1
+/// -arg:   path:string
+/// -ret:   nil | string, string, boolean
+/// This expands any abbreviated directory components in
+/// <span class="arg">path</span>.
+///
+/// The return value is nil if <span class="arg">path</span> couldn't be
+/// expanded.  It can't be expanded if it is a UNC path or a remote drive, or if
+/// it is already expanded, or if there are no matches for one of the directory
+/// components.
+///
+/// Otherwise three values are returned.  First, a string containing the
+/// expanded part of <span class="arg">path</span>.  Second, a string containing
+/// the rest of <span class="arg">path</span> that wasn't expanded.  Third, a
+/// boolean indicating whether <span class="arg">path</span> was able to expand
+/// uniquely.
+/// -show:  -- Suppose only the following directories exist in the D: drive:
+/// -show:  --  - D:\bag
+/// -show:  --  - D:\bookkeeper
+/// -show:  --  - D:\bookkeeping
+/// -show:  --  - D:\box
+/// -show:  --  - D:\boxes
+/// -show:
+/// -show:  expanded, remaining, unique = os.expandabbreviatedpath("d:\\b\\file")
+/// -show:  -- returns "d:\\b", "\\file", false         -- Ambiguous.
+/// -show:
+/// -show:  expanded, remaining, unique = os.expandabbreviatedpath("d:\\ba\\file")
+/// -show:  -- returns "d:\\bag", "\\file", true        -- Unique; only "bag" can match "ba".
+/// -show:
+/// -show:  expanded, remaining, unique = os.expandabbreviatedpath("d:\\bo\\file")
+/// -show:  -- returns "d:\\bo", "\\file", false        -- Ambiguous.
+/// -show:
+/// -show:  expanded, remaining, unique = os.expandabbreviatedpath("d:\\boo\\file")
+/// -show:  -- returns "d:\\bookkeep", "\\file", false  -- Ambiguous; "bookkeep" is longest common part matching "boo".
+/// -show:
+/// -show:  expanded, remaining, unique = os.expandabbreviatedpath("d:\\box\\file")
+/// -show:  -- returns "d:\\box", "\\file", false       -- Ambiguous; "box" is an exact match.
+/// -show:
+/// -show:  expanded, remaining, unique = os.expandabbreviatedpath("d:\\boxe\\file")
+/// -show:  -- returns "d:\\boxes", "\\file", true      -- Unique; only "boxes" can match "boxe".
+/// -show:
+/// -show:  expanded, remaining, unique = os.expandabbreviatedpath("d:\\boxes\\file")
+/// -show:  -- returns nil                              -- Is already expanded.
+static int expand_abbreviated_path(lua_State *state)
+{
+    const char* path = checkstring(state, 1);
+    if (!path)
+        return 0;
+
+    str<> expanded;
+    const bool unique = os::disambiguate_abbreviated_path(path, expanded);
+
+    if (!expanded.length())
+    {
+        lua_pushnil(state);
+        return 1;
+    }
+
+    lua_pushlstring(state, expanded.c_str(), expanded.length());
+    lua_pushstring(state, path);
+    lua_pushboolean(state, unique);
+    return 3;
+}
+
+//------------------------------------------------------------------------------
 void os_lua_initialise(lua_state& lua)
 {
     struct {
@@ -1464,6 +1530,7 @@ void os_lua_initialise(lua_state& lua)
         { "executeyield_internal", &os_executeyield_internal },
         { "issignaled",  &is_signaled },
         { "sleep",       &sleep },
+        { "expandabbreviatedpath", &expand_abbreviated_path },
         // UNDOCUMENTED; internal use only.
         { "_globdirs",   &glob_dirs },  // Public os.globdirs method is in core.lua.
         { "_globfiles",  &glob_files }, // Public os.globfiles method is in core.lua.
