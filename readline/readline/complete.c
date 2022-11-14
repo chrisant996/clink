@@ -1071,12 +1071,7 @@ printable_part (char *pathname)
 
   temp = rl_last_path_separator (pathname);
 #if defined (__MSDOS__) || defined (_WIN32)
-/* begin_clink_change
-   Clink includes a trailing slash in dir matches, so the logic here must
-   accommodate that. */
-  //if (temp == 0 && ISALPHA ((unsigned char)pathname[0]) && pathname[1] == ':')
-  if ((temp == 0 || temp[1] == '\0') && ISALPHA ((unsigned char)pathname[0]) && pathname[1] == ':' && !rl_is_path_separator (pathname[2]))
-/* end_clink_change */
+  if (temp == 0 && ISALPHA ((unsigned char)pathname[0]) && pathname[1] == ':')
     temp = pathname + 1;
 #endif
 
@@ -1093,6 +1088,12 @@ printable_part (char *pathname)
       for (x = temp - 1; x > pathname; x--)
         if (rl_is_path_separator (*x))
           break;
+/* begin_clink_change
+   Clink includes a trailing slash in dir matches, so the logic here must
+   accommodate that. */
+      if (ISALPHA ((unsigned char)pathname[0]) && pathname[1] == ':')
+        pathname += 2;
+/* end_clink_change */
       return (rl_is_path_separator (*x) ? x + 1 : pathname);
     }
   else
