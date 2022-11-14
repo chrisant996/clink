@@ -6,6 +6,7 @@
 
 - Added `os.abbreviatepath()` and `os.expandabbreviatedpath()`.
 - Invoking completion expands abbreviated paths when the new `match.expand_abbrev` setting is enabled.
+- Fixed displayed matches for `c:` or `c:dir\`.
 
 #### v1.4.0
 
