@@ -9,18 +9,73 @@
 #include <core/str.h>
 #include <core/str_compare.h>
 #include <core/os.h>
-#include <lua/lua_match_generator.h>
 #include <lua/lua_script_loader.h>
 #include <lua/lua_state.h>
 
+extern "C" {
+#include <lua.h>
+}
+
 //------------------------------------------------------------------------------
-struct testcase
+struct testcase_abbrev
 {
     const char* in;
-    const char* expanded;
-    const char* remaining;
-    bool unique;
+    const char* expected;
+    bool all;
+    bool git;
 };
+
+//------------------------------------------------------------------------------
+static bool verify_abbrev(lua_state& lua, const testcase_abbrev& t, str_base& out)
+{
+    lua_State *state = lua.get_state();
+
+    str<> msg;
+    if (!lua.push_named_function(state, "os.abbreviatepath", &msg))
+    {
+put_msg:
+        puts("");
+        puts(msg.c_str());
+        return false;
+    }
+
+    lua_pushstring(state, t.in);
+
+    const char* func_name = nullptr;
+    if (t.all && t.git)
+        func_name = "abbrev_all_git";
+    else if (t.all)
+        func_name = "abbrev_all";
+    else if (t.git)
+        func_name = "abbrev_git";
+    if (!func_name)
+        lua_pushnil(state);
+    else if (!lua.push_named_function(state, func_name, &msg))
+        goto put_msg;
+
+// TODO: test `transform` callback.
+    bool success = (lua.pcall_silent(2, 1) == LUA_OK);
+    if (!success)
+    {
+        if (const char* error = lua_tostring(state, -1))
+        {
+            puts("");
+            puts("error executing function 'os.abbreviatepath':");
+            puts(error);
+        }
+        return false;
+    }
+
+    const char* result = lua_tostring(state, -1);
+    if (!result)
+    {
+        out.clear();
+        return false;
+    }
+
+    out = result;
+    return strcmp(out.c_str(), t.expected) == 0;
+}
 
 //------------------------------------------------------------------------------
 TEST_CASE("Abbreviated paths.")
@@ -43,8 +98,16 @@ TEST_CASE("Abbreviated paths.")
 
     str<> tmp;
     str<> out;
-    SECTION("Expand abbreviated paths")
+    SECTION("Expand")
     {
+        struct testcase
+        {
+            const char* in;
+            const char* expanded;
+            const char* remaining;
+            bool unique;
+        };
+
         static const testcase c_testcases[] =
         {
             { "x/b/",                   "xyz\\b", "/", false },
@@ -67,7 +130,7 @@ TEST_CASE("Abbreviated paths.")
                                  out.equals(t.expanded));
 
                 REQUIRE(ok, [&] () {
-                    printf("       in:  \t\"%s\"\n      out:  \"%s\", \"%s\", %s\nexpected:  \"%s\", \"%s\", %s",
+                    printf("      in:  \"%s\"\n     out:  \"%s\", \"%s\", %s\nexpected:  \"%s\", \"%s\", %s",
                            t.in,
                            out.c_str(), in, unique ? "unique" : "ambiguous",
                            t.expanded, t.remaining, t.unique ? "unique" : "ambiguous");
@@ -107,7 +170,7 @@ TEST_CASE("Abbreviated paths.")
                                     out.equals(expect.c_str()));
 
                     REQUIRE(ok, [&] () {
-                        printf("      in:  \"%s\"\n     out:  \"%s\", \"%s\", %s\nexpected:  \"%s\", \"%s\", %s",
+                        printf("     in:  \"%s\"\n    out:  \"%s\", \"%s\", %s\nexpected:  \"%s\", \"%s\", %s",
                             tmp.c_str(),
                             out.c_str(), in, unique ? "unique" : "ambiguous",
                             expect.c_str(), remaining, t.unique ? "unique" : "ambiguous");
@@ -115,6 +178,58 @@ TEST_CASE("Abbreviated paths.")
 
                 }
             }
+        }
+    }
+
+    SECTION("Abbreviate")
+    {
+        const char* script = "\
+            function abbrev_all_git(dir) \
+                return not os.isdir(path.join(dir, '.git')) \
+            end \
+            \
+            function abbrev_all(dir) \
+                return true \
+            end \
+            \
+            function abbrev_git(dir) \
+                if os.isdir(path.join(dir, '.git')) then \
+                    return false \
+                end \
+            end \
+        ";
+
+        REQUIRE(lua.do_string(script));
+
+        static const testcase_abbrev c_testcases[] =
+        {
+            { "xyz/bag/foo",            "xyz\\ba\\foo" },
+            { "xyz/bookkeeper/foo",     "xyz\\bookkeepe\\foo" },
+            { "xyz/bookkeeping/foo",    "xyz\\bookkeepi\\foo" },
+            { "xyz/box/foo",            "xyz\\box\\foo" },
+            { "xyz/boxes/foo",          "xyz\\boxe\\foo" },
+            { "xyz/repo/foo",           "xyz\\r\\foo" },
+            { "xyz/repo/foo",           "xyz\\repo\\foo",       false/*all*/,   true/*git*/ },
+            { "xyz/notrepo/foo",        "xyz\\n\\foo" },
+
+            { "xyz/bag/foo",            "x\\ba\\f",             true/*all*/ },
+            { "xyz/bookkeeper/foo",     "x\\bookkeepe\\f",      true/*all*/ },
+            { "xyz/bookkeeping/foo",    "x\\bookkeepi\\f",      true/*all*/ },
+            { "xyz/box/foo",            "x\\box\\f",            true/*all*/ },
+            { "xyz/boxes/foo",          "x\\boxe\\f",           true/*all*/ },
+            { "xyz/repo/foo",           "x\\r\\f",              true/*all*/ },
+            { "xyz/repo/foo",           "x\\repo\\f",           true/*all*/,    true/*git*/ },
+            { "xyz/notrepo/foo",        "x\\n\\f",              true/*all*/ },
+        };
+
+        for (auto const& t : c_testcases)
+        {
+            const bool ok = verify_abbrev(lua, t, out);
+
+            REQUIRE(ok, [&] () {
+                printf("      in:  \"%s\"\n     out:  \"%s\"\nexpected:  \"%s\"",
+                        t.in, out.c_str(), t.expected);
+            });
         }
     }
 }
