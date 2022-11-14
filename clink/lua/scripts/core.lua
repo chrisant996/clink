@@ -216,11 +216,11 @@ local function abbrev_child(parent, child)
         return dir, false
     end
 
-    local lcd = -1
+    local lcd = 0
     local dirs = os.globdirs(path.join(parent, letter .. "*"))
     for _, x in ipairs(dirs) do
         local m = string.matchlen(child, x)
-        if m >= 0 and (lcd < 0 or lcd > m) then
+        if lcd < m then
             lcd = m
         end
     end
