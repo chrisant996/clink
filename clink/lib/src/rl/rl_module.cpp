@@ -1521,6 +1521,7 @@ static char** alternative_matches(const char* text, int start, int end)
 #endif
             if (!disambiguated)
             {
+stop:
                 assert(g_rl_buffer);
                 g_rl_buffer->begin_undo_group();
                 g_rl_buffer->remove(start, start + in - tmp.c_str());
@@ -1535,6 +1536,10 @@ static char** alternative_matches(const char* text, int start, int end)
             else
             {
                 expanded.concat(in);
+                assert(in + strlen(in) == tmp.c_str() + tmp.length());
+                in = tmp.c_str() + tmp.length();
+                if (path::is_separator(expanded[expanded.length() - 1]))
+                    goto stop;
                 tmp = std::move(expanded);
                 // Override the input editor's line state info to generate
                 // matches using the expanded path, without actually modifying

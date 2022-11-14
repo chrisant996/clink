@@ -1042,6 +1042,7 @@ void selectcomplete_impl::update_matches(bool restrict)
 #endif
             if (!disambiguated)
             {
+stop:
                 m_buffer->begin_undo_group();
                 m_buffer->remove(m_anchor, m_anchor + in - tmp.c_str());
                 m_buffer->set_cursor(m_anchor);
@@ -1057,6 +1058,10 @@ void selectcomplete_impl::update_matches(bool restrict)
             else
             {
                 expanded.concat(in);
+                assert(in + strlen(in) == tmp.c_str() + tmp.length());
+                in = tmp.c_str() + tmp.length();
+                if (path::is_separator(expanded[expanded.length() - 1]))
+                    goto stop;
                 tmp = std::move(expanded);
                 // Override the input editor's line state info to generate
                 // matches using the expanded path, without actually modifying
