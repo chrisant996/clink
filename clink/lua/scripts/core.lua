@@ -310,7 +310,7 @@ end
 --- -show:  &nbsp;   if abbrev then
 --- -show:  &nbsp;       return "\027[8m"..name.."\027[m" -- Use dark gray text.
 --- -show:  &nbsp;   else
---- -show:  &nbsp;       return abbrev
+--- -show:  &nbsp;       return name
 --- -show:  &nbsp;   end
 --- -show:  end
 --- -show:
