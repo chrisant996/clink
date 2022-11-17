@@ -26,7 +26,7 @@ struct testcase_abbrev
 };
 
 //------------------------------------------------------------------------------
-static bool verify_abbrev(lua_state& lua, const testcase_abbrev& t, str_base& out)
+static bool verify_abbrev(lua_state& lua, const testcase_abbrev& t, str_base& out, bool transform)
 {
     lua_State *state = lua.get_state();
 
@@ -36,25 +36,28 @@ static bool verify_abbrev(lua_state& lua, const testcase_abbrev& t, str_base& ou
 put_msg:
         puts("");
         puts(msg.c_str());
+        REQUIRE(false);
         return false;
     }
 
     lua_pushstring(state, t.in);
 
-    const char* func_name = nullptr;
+    const char* decide_name = nullptr;
     if (t.all && t.git)
-        func_name = "abbrev_all_git";
+        decide_name = "abbrev_all_git";
     else if (t.all)
-        func_name = "abbrev_all";
+        decide_name = "abbrev_all";
     else if (t.git)
-        func_name = "abbrev_git";
-    if (!func_name)
+        decide_name = "abbrev_git";
+    if (!decide_name)
         lua_pushnil(state);
-    else if (!lua.push_named_function(state, func_name, &msg))
+    else if (!lua.push_named_function(state, decide_name, &msg))
         goto put_msg;
 
-// TODO: test `transform` callback.
-    bool success = (lua.pcall_silent(2, 1) == LUA_OK);
+    if (transform && !lua.push_named_function(state, "abbrev_transform", &msg))
+        goto put_msg;
+
+    bool success = (lua.pcall_silent(transform ? 3 : 2, 1) == LUA_OK);
     if (!success)
     {
         if (const char* error = lua_tostring(state, -1))
@@ -63,6 +66,7 @@ put_msg:
             puts("error executing function 'os.abbreviatepath':");
             puts(error);
         }
+        REQUIRE(false);
         return false;
     }
 
@@ -70,11 +74,30 @@ put_msg:
     if (!result)
     {
         out.clear();
+        REQUIRE(false);
         return false;
     }
 
+    str<> expected;
+    if (transform)
+        expected = t.expected;
+    else
+    {
+        const size_t len = strlen(t.expected);
+        for (size_t ii = 0; ii < len; ++ii)
+        {
+            if (t.expected[ii] != '<' && t.expected[ii] != '>')
+                expected.concat(t.expected + ii, 1);
+        }
+    }
+
     out = result;
-    return strcmp(out.c_str(), t.expected) == 0;
+    REQUIRE(strcmp(out.c_str(), expected.c_str()) == 0, [&] () {
+        printf("      in:  \"%s\"\n     out:  \"%s\"\nexpected:  \"%s\"",
+                t.in, out.c_str(), expected.c_str());
+    });
+
+    return true;
 }
 
 //------------------------------------------------------------------------------
@@ -197,39 +220,47 @@ TEST_CASE("Abbreviated paths.")
                     return false \
                 end \
             end \
+            \
+            function abbrev_transform(name, abbrev) \
+                if abbrev then \
+                    return '<'..name..'>' \
+                end \
+            end \
         ";
 
         REQUIRE(lua.do_string(script));
 
         static const testcase_abbrev c_testcases[] =
         {
-            { "xyz/bag/foo",            "xyz\\ba\\foo" },
-            { "xyz/bookkeeper/foo",     "xyz\\bookkeepe\\foo" },
-            { "xyz/bookkeeping/foo",    "xyz\\bookkeepi\\foo" },
+            { "xyz/bag/foo",            "xyz\\<ba>\\foo" },
+            { "xyz/bookkeeper/foo",     "xyz\\<bookkeepe>\\foo" },
+            { "xyz/bookkeeping/foo",    "xyz\\<bookkeepi>\\foo" },
             { "xyz/box/foo",            "xyz\\box\\foo" },
-            { "xyz/boxes/foo",          "xyz\\boxe\\foo" },
-            { "xyz/repo/foo",           "xyz\\r\\foo" },
-            { "xyz/repo/foo",           "xyz\\repo\\foo",       false/*all*/,   true/*git*/ },
-            { "xyz/notrepo/foo",        "xyz\\n\\foo" },
+            { "xyz/boxes/foo",          "xyz\\<boxe>\\foo" },
+            { "xyz/repo/foo",           "xyz\\<r>\\foo" },
+            { "xyz/repo/foo",           "xyz\\repo\\foo",           false/*all*/,   true/*git*/ },
+            { "xyz/notrepo/foo",        "xyz\\<n>\\foo" },
 
-            { "xyz/bag/foo",            "x\\ba\\f",             true/*all*/ },
-            { "xyz/bookkeeper/foo",     "x\\bookkeepe\\f",      true/*all*/ },
-            { "xyz/bookkeeping/foo",    "x\\bookkeepi\\f",      true/*all*/ },
-            { "xyz/box/foo",            "x\\box\\f",            true/*all*/ },
-            { "xyz/boxes/foo",          "x\\boxe\\f",           true/*all*/ },
-            { "xyz/repo/foo",           "x\\r\\f",              true/*all*/ },
-            { "xyz/repo/foo",           "x\\repo\\f",           true/*all*/,    true/*git*/ },
-            { "xyz/notrepo/foo",        "x\\n\\f",              true/*all*/ },
+            { "xyz/bag/foo",            "<x>\\<ba>\\<f>",           true/*all*/ },
+            { "xyz/bookkeeper/foo",     "<x>\\<bookkeepe>\\<f>",    true/*all*/ },
+            { "xyz/bookkeeping/foo",    "<x>\\<bookkeepi>\\<f>",    true/*all*/ },
+            { "xyz/box/foo",            "<x>\\box\\<f>",            true/*all*/ },
+            { "xyz/boxes/foo",          "<x>\\<boxe>\\<f>",         true/*all*/ },
+            { "xyz/repo/foo",           "<x>\\<r>\\<f>",            true/*all*/ },
+            { "xyz/repo/foo",           "<x>\\repo\\<f>",           true/*all*/,        true/*git*/ },
+            { "xyz/notrepo/foo",        "<x>\\<n>\\<f>",            true/*all*/ },
         };
 
-        for (auto const& t : c_testcases)
+        SECTION("Normal")
         {
-            const bool ok = verify_abbrev(lua, t, out);
+            for (auto const& t : c_testcases)
+                verify_abbrev(lua, t, out, false/*transform*/);
+        }
 
-            REQUIRE(ok, [&] () {
-                printf("      in:  \"%s\"\n     out:  \"%s\"\nexpected:  \"%s\"",
-                        t.in, out.c_str(), t.expected);
-            });
+        SECTION("Transform")
+        {
+            for (auto const& t : c_testcases)
+                verify_abbrev(lua, t, out, true/*transform*/);
         }
     }
 }
