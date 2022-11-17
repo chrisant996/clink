@@ -5,14 +5,10 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- Weird case: `git checkout a/b/c` will try to expand `a/b/c` as an abbreviated path, but ideally it wouldn't since the matches are never files.  This is a case that Clink can't really get perfectly right anymore, because of the automatic deduction of whether to use file matches.  Overall, this seems acceptable.
 
 ## Normal Priority
-- Allow Lua to set the comment row for the input line?
-  - Need a simple and reliable trigger for clearing the comment row later; maybe `clink.onaftercommand()` is enough?
 
 ## Low Priority
-- Oops; many of the API doc examples (e.g. for `path.` functions) show invalid Lua strings like `"c:\foo"` which should be either `"c:/foo"` or `"c:\\foo"` or `[[c:\foo]]`.
 - Collecting words currently happens in update_internal, but probably it also belongs in alternative_matches and/or update_matches:
   - If a `luafunc:` macro first does anything that alters the line buffer, and then invokes a completion command, then the collected words will be inaccurate.
 - Allow removing event handlers, e.g. `clink.onbeginedit(func)` to add an event handler, and something like `clink.onbeginedit(func, false)` or `clink.removebeginedit(func)` to remove one?  Or maybe return a function that can be called to remove it, e.g. like below (but make sure repeated calls become no-ops).  The `clink-diagnostics` command would need to still show any removed event handlers until the next beginedit.
@@ -21,7 +17,10 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
     remove()                               -- remove func
     ```
 - Coroutines can call `clink.refilterprompt()` and it immediately refilters while in the coroutine.  Should it instead set a flag to refilter after the coroutines have yielded?
-- Show time stamps in history popup?
+- Allow Lua to set the comment row for the input line?
+  - Need a simple and reliable trigger for clearing the comment row later; maybe `clink.onaftercommand()` is enough?
+  - Don't add this ability unless there is a way to ensure comment rows don't get "leaked" and continue showing up past when they were relevant.
+- Show time stamps in history popup?  _[Gets complicated because of horizontal scrolling.]_
 - Some way to push keys?  (Push keys to Clink; not to other processes.)
 - Some way for `history.save false` to not do any disk IO for history, but still enable `clink history` to show the session's history (probably using Shared Memory).
 - Some way for `os.globfiles()` and `os.globdirs()` to override the `files.hidden` and `files.system` settings?
@@ -39,6 +38,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # APPENDICES
 
 ## Known Issues
+- `foo bar a/b/c` will try to expand `a/b/c` as an abbreviated path even if `foo bar` never generates filename matches.  This is a case that Clink can't really get perfectly right anymore, because of the automatic deduction of whether to use file matches.  Overall, this seems acceptable.
 - Readline's `expand_tilde()` doesn't handle embedded `{space}{tilde}{pathsep}` correctly in strings; `rl.expandtilde()` does, and has an optional parameter to use Readline's original style of tilde expansion.
 - Cursor style may behave unexpectedly in a new console window launched from a Windows Terminal console, or in a console window that gets attached to Windows Terminal.  This is because there's no reliable way for Clink to know whether it is running inside Windows Terminal.  Related to [Terminal #7434](https://github.com/microsoft/terminal/issues/7434).
 - Perturbed PROMPT envvar is visible in child processes (e.g. piped shell in various file editors).
