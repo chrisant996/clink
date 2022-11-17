@@ -19,7 +19,7 @@
 /// "." and ".." elements.  If <span class="arg">separator</span> is provided it
 /// is used to delimit path elements, otherwise a system-specific delimiter is
 /// used.
-/// -show:  path.normalise("a////b/\\/c/")  -- returns "a\b\c\"
+/// -show:  path.normalise("a////b/\\/c/")  -- returns "a\\b\\c\\"
 /// -show:  path.normalise("")              -- returns ""
 static int normalise(lua_State* state)
 {
@@ -68,18 +68,18 @@ static int get_base_name(lua_State* state)
 /// the recommended API for parsing a path into its component pieces, but is not
 /// recommended for walking up through parent directories.
 /// -show:  path.getdirectory("foo")                -- returns nil
-/// -show:  path.getdirectory("\foo")               -- returns "\"
+/// -show:  path.getdirectory("\\foo")              -- returns "\\"
 /// -show:  path.getdirectory("c:foo")              -- returns "c:"
-/// -show:  path.getdirectory([[c:\]])              -- returns "c:\"
-/// -show:  path.getdirectory("c:\foo")             -- returns "c:\"
-/// -show:  path.getdirectory("c:\foo\bar")         -- returns "c:\foo"
-/// -show:  path.getdirectory("\\foo\bar")          -- returns "\\foo\bar"
-/// -show:  path.getdirectory("\\foo\bar\dir")      -- returns "\\foo\bar"
+/// -show:  path.getdirectory("c:\\")               -- returns "c:\\"
+/// -show:  path.getdirectory("c:\\foo")            -- returns "c:\\"
+/// -show:  path.getdirectory("c:\\foo\\bar")       -- returns "c:\\foo"
+/// -show:  path.getdirectory("\\\\foo\\bar")       -- returns "\\\\foo\\bar"
+/// -show:  path.getdirectory("\\\\foo\\bar\\dir")  -- returns "\\\\foo\\bar"
 /// -show:  path.getdirectory("")                   -- returns nil
 /// -show:
 /// -show:  -- These split the path components differently than path.toparent().
-/// -show:  path.getdirectory([[c:\foo\bar\]])      -- returns "c:\foo\bar"
-/// -show:  path.getdirectory([[\\foo\bar\dir\]])   -- returns "\\foo\bar\dir"
+/// -show:  path.getdirectory("c:\\foo\\bar\\")         -- returns "c:\\foo\\bar"
+/// -show:  path.getdirectory("\\\\foo\\bar\\dir\\"")   -- returns "\\\\foo\\bar\\dir"
 static int get_directory(lua_State* state)
 {
     const char* path = checkstring(state, 1);
@@ -172,9 +172,9 @@ static int get_name(lua_State* state)
 ///
 /// If <span class="arg">right</span> is not a relative path, this returns
 /// <span class="arg">right</span>.
-/// -show:  path.join("/foo", "bar")        -- returns "/foo\bar"
+/// -show:  path.join("/foo", "bar")        -- returns "/foo\\bar"
 /// -show:  path.join("", "bar")            -- returns "bar"
-/// -show:  path.join("/foo", "")           -- returns "/foo\"
+/// -show:  path.join("/foo", "")           -- returns "/foo\\"
 /// -show:  path.join("/foo", "/bar/xyz")   -- returns "/bar/xyz"
 static int join(lua_State* state)
 {
@@ -223,19 +223,19 @@ static int is_exec_ext(lua_State* state)
 /// can behave differently when the input path ends with a path separator.  This
 /// is the recommended API for walking up through parent directories.
 /// -show:  local parent,child
-/// -show:  parent,child = path.toparent("foo")             -- returns "", "foo"
-/// -show:  parent,child = path.toparent("\foo")            -- returns "\", "foo"
-/// -show:  parent,child = path.toparent("c:foo")           -- returns "c:", "foo"
-/// -show:  parent,child = path.toparent([[c:\]])           -- returns "c:\", ""
-/// -show:  parent,child = path.toparent("c:\foo")          -- returns "c:\", "foo"
-/// -show:  parent,child = path.toparent("c:\foo\bar")      -- returns "c:\foo", "bar"
-/// -show:  parent,child = path.toparent("\\foo\bar")       -- returns "\\foo\bar", ""
-/// -show:  parent,child = path.toparent("\\foo\bar\dir")   -- returns "\\foo\bar", "dir"
-/// -show:  parent,child = path.toparent("")                -- returns "", ""
+/// -show:  parent,child = path.toparent("foo")                 -- returns "", "foo"
+/// -show:  parent,child = path.toparent("\\foo")               -- returns "\\", "foo"
+/// -show:  parent,child = path.toparent("c:foo")               -- returns "c:", "foo"
+/// -show:  parent,child = path.toparent("c:\\"])               -- returns "c:\\", ""
+/// -show:  parent,child = path.toparent("c:\\foo")             -- returns "c:\\", "foo"
+/// -show:  parent,child = path.toparent("c:\\foo\\bar")        -- returns "c:\\foo", "bar"
+/// -show:  parent,child = path.toparent("\\\\foo\\bar")        -- returns "\\\\foo\\bar", ""
+/// -show:  parent,child = path.toparent("\\\\foo\\bar\\dir")   -- returns "\\\\foo\\bar", "dir"
+/// -show:  parent,child = path.toparent("")                    -- returns "", ""
 /// -show:
 /// -show:  -- These split the path components differently than path.getdirectory().
-/// -show:  parent,child = path.toparent([[c:\foo\bar\]])   -- returns "c:\foo", "bar"
-/// -show:  parent,child = path.toparent([[\\foo\bar\dir\]])-- returns "\\foo\bar", "dir"
+/// -show:  parent,child = path.toparent("c:\\foo\\bar\\"")     -- returns "c:\\foo", "bar"
+/// -show:  parent,child = path.toparent("\\\\foo\\bar\\dir\\") -- returns "\\\\foo\\bar", "dir"
 static int to_parent(lua_State* state)
 {
     const char* path = checkstring(state, 1);

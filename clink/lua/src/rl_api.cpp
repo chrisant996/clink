@@ -87,11 +87,11 @@ static void unquote_keys(const char* in, str_base& out)
 /// -ret:   string
 /// Undoes Readline tilde expansion.  See
 /// <a href="#rl.expandtilde">rl.expandtilde()</a> for more information.
-/// -show:  rl.collapsetilde("C:\Users\yourusername\Documents")
+/// -show:  rl.collapsetilde("C:\\Users\\yourusername\\Documents")
 /// -show:  &nbsp;
 /// -show:  -- The return value depends on the expand-tilde configuration variable:
-/// -show:  -- When "on", the function returns "C:\Users\yourusername\Documents".
-/// -show:  -- When "off", the function returns "~\Documents".
+/// -show:  -- When "on", the function returns "C:\\Users\\yourusername\\Documents".
+/// -show:  -- When "off", the function returns "~\\Documents".
 /// -show:  &nbsp;
 /// -show:  -- Or when <span class="arg">force</span> is true, the function returns "~\Documents".
 static int collapse_tilde(lua_State* state)
@@ -133,8 +133,8 @@ static int collapse_tilde(lua_State* state)
 /// <a href="#os.globfiles">os.globfiles()</a>).  If it indicates that it expanded
 /// the string, then use <a href="#rl.collapsetilde">rl.collapsetilde()</a> to put
 /// back the tilde before returning a match.
-/// -show:  local result, expanded = rl.expandtilde("~\Documents")
-/// -show:  -- result is "C:\Users\yourusername\Documents"
+/// -show:  local result, expanded = rl.expandtilde("~\\Documents")
+/// -show:  -- result is "C:\\Users\\yourusername\\Documents"
 /// -show:  -- expanded is true
 /// -show:
 /// -show:  -- This dir_matches function demonstrates efficient use of rl.expandtilde()
