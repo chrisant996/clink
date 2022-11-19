@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.4.0</title>
+<title>Clink v1.4.1</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -854,7 +854,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.4.0</div>
+                <div id="title">Clink v1.4.1</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -1569,6 +1569,11 @@ supersedes the <code>terminal.mouse_modifier</code> setting.  In Windows Termina
 <td align="center"><code>lua.traceback_on_error</code></td>
 <td align="center">False</td>
 <td>Prints stack trace on Lua errors.</td>
+</tr>
+<tr>
+<td align="center"><a name="match_expand_abbrev"></a><code>match.expand_abbrev</code></td>
+<td align="center">True</td>
+<td>Expands an abbreviated path before performing completion.  In an abbreviated path, directory names may be shortened to the minimum number of characters to unambiguously refer to a directory.  For example, &quot;c:\Users\chris\Documents&quot; could be abbreviated as &quot;c:\U\c\Do&quot;, depending on what directories exist in the file system.</td>
 </tr>
 <tr>
 <td align="center"><a name="match_expand_envvars"></a><code>match.expand_envvars</code></td>
@@ -6257,11 +6262,88 @@ line_state:getcommandwordindex() == 2</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#matches:getmatch"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="matches:getmatch">matches:getmatch</a></div> <div class="signature">( <span class="arg_name">index</span>:integer ) : string<br/><div class="version">v1.2.47 and newer</div></div></div><div class="body"><p class="desc">Returns the match text for the <span class="arg">index</span> match.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#matches:getprefix"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="matches:getprefix">matches:getprefix</a></div> <div class="signature">() : string<br/><div class="version">v1.2.47 and newer</div></div></div><div class="body"><p class="desc">Returns the longest common prefix of the available matches.</p></div></div><hr/>
 </div><div class="group"><h5 class="group_name"><a name="matches_lua">matches_lua</a></h5><div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#matches_lua:gettype"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="matches_lua:gettype">matches_lua:gettype</a></div> <div class="signature">( <span class="arg_name">index</span>:integer ) : string<br/><div class="version">v1.2.47 and newer</div></div></div><div class="body"><p class="desc">Returns the match type for the <span class="arg">index</span> match.</p></div></div><hr/>
-</div><div class="group"><h5 class="group_name"><a name="os">os</a></h5><div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#os.chdir"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="os.chdir">os.chdir</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Changes the current directory to <span class="arg">path</span> and returns whether it was successful. If unsuccessful it returns false, an error message, and the error number.</p></div></div><hr/>
+</div><div class="group"><h5 class="group_name"><a name="os">os</a></h5><div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#os.abbreviatepath"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="os.abbreviatepath">os.abbreviatepath</a></div> <div class="signature">( <span class="arg_name">path</span>:string, [<span class="arg_name">decide</span>:function], [<span class="arg_name">transform</span>:function] ) : string<br/><div class="version">v1.4.1 and newer</div></div></div><div class="body"><p class="desc">This abbreviates parent directories in <span class="arg">path</span> to the shortest string that uniquely identifies the directory.  The drive, if present, is never abbreviated.  By default, the first and last names in the string are not abbreviated.</p><p class="desc"> For performance reasons, UNC paths and paths on remote or removeable drives are never abbreviated.</p><p class="desc"> The return value is the resulting path after abbreviation.</p><p class="desc"> If an optional <span class="arg">decide</span> function is provided then it is called once for each directory name in <span class="arg">path</span>, and it can control which directories get abbreviated.  The <span class="arg">decide</span> function receives one argument: the path to the directory that may be abbreviated.  The function can return true to try to abbreviate the directory, or false to prevent abbreviating the directory, or nil to allow the default behavior (don't abbreviate the first or last directory names).</p><p class="desc"> If an optional <span class="arg">transform</span> function is provided then it is called once for each directory name in the resulting string.  The <span class="arg">transform</span> function receives two arguments: the string to be appended, and a boolean indicating whether it has been abbreviated.  The function can adjust the string, and should return a string to appended.  If it returns nil, the string is appended as-is.  This is intended to be able to apply ANSI escape color codes, for example to highlight special directories or to show which directory names have been abbreviated.</p><p class="desc"> This function can potentially take some time to complete, but it can be called in a coroutine and yields appropriately.  It is the caller's responsibility to ensure that any <span class="arg">decide</span> or <span class="arg">transform</span> functions are either very fast, yield appropriately, or are not used from a coroutine.</p><pre class="language-lua"><code>-- Suppose only the following directories exist in the D:\xyz directory:
+--  - D:\xyz\bag
+--  - D:\xyz\bookkeeper
+--  - D:\xyz\bookkeeping
+--  - D:\xyz\box
+--  - D:\xyz\boxes
+--  - D:\xyz\nonrepo
+--  - D:\xyz\repo
+
+os.abbreviatepath("d:\\xyz")                        -- returns "d:\\xyz"
+os.abbreviatepath("d:\\xyz\\bag")                   -- returns "d:\\xyz\\bag"
+os.abbreviatepath("d:\\xyz\\bag\\subdir")           -- returns "d:\\xyz\\ba\\subdir"
+os.abbreviatepath("d:\\xyz\\bookkeeper")            -- returns "d:\\xyz\\bookkeeper"
+os.abbreviatepath("d:\\xyz\\bookkeeper\\subdir")    -- returns "d:\\xyz\\bookkeepe\\subdir"
+os.abbreviatepath("d:\\xyz\\bookkeeping\\file")     -- returns "d:\\xyz\\bookkeepi\\file"
+os.abbreviatepath("d:\\xyz\\box\\subdir")           -- returns "d:\\xyz\\box\\subdir"
+os.abbreviatepath("d:\\xyz\\boxes\\file")           -- returns "d:\\xyz\\boxe\\file"
+
+-- Examples with a `decide` function.
+
+local function not_git_dir(dir)
+&nbsp;   if os.isdir(path.join(dir, ".git")) then
+&nbsp;       return false -- Don't abbreviate git repo directories.
+&nbsp;   end
+end
+
+os.abbreviatepath("d:\\xyz\\nonrepo\\subdir", not_git_dir)  -- returns "d:\\xyz\\n\\subdir"
+os.abbreviatepath("d:\\xyz\\repo\\subdir", not_git_dir)     -- returns "d:\\xyz\\repo\\subdir"
+
+-- Example with a `decide` function and a `transform` function.
+
+local function do_all(dir)
+&nbsp;   return true
+end
+
+local function dim_abbrev(name, abbrev)
+&nbsp;   if abbrev then
+&nbsp;       return "\027[8m"..name.."\027[m" -- Use dark gray text.
+&nbsp;   else
+&nbsp;       return name
+&nbsp;   end
+end
+
+os.abbreviatepath("d:\\xyz\\bag", do_all, dim_abbrev)
+-- returns "c:\\\027[8mx\027[m\\\027[8mba\027[m"
+
+-- Relative paths work as well.
+
+os.chdir("d:\\xyz")
+os.abbreviatesetcurrentdir("bag\\subdir", true)     -- returns "ba\\s" (if "subdir" is unique)</code></pre></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#os.chdir"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="os.chdir">os.chdir</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Changes the current directory to <span class="arg">path</span> and returns whether it was successful. If unsuccessful it returns false, an error message, and the error number.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#os.clock"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="os.clock">os.clock</a></div> <div class="signature">() : number<br/><div class="version">v1.2.30 and newer</div></div></div><div class="body"><p class="desc">This returns the number of seconds since the program started.</p><p class="desc"> Normally, Lua's os.clock() has millisecond precision until the program has been running for almost 25 days, and then it suddenly breaks and starts always returning -0.001 seconds.</p><p class="desc"> Clink's version of os.clock() has microsecond precision until the program has been running for many weeks.  It maintains at least millisecond precision until the program has been running for many years.</p><p class="desc"> It was necessary to replace os.clock() in order for <a href="#asyncpromptfiltering">asynchronous prompt filtering</a> to continue working when CMD has been running for more than 25 days.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#os.copy"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="os.copy">os.copy</a></div> <div class="signature">( <span class="arg_name">src</span>:string, <span class="arg_name">dest</span>:string ) : boolean<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Copies the <span class="arg">src</span> file to the <span class="arg">dest</span> file. If unsuccessful it returns false, an error message, and the error number.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#os.createtmpfile"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="os.createtmpfile">os.createtmpfile</a></div> <div class="signature">( [<span class="arg_name">prefix</span>:string], [<span class="arg_name">ext</span>:string], [<span class="arg_name">path</span>:string], [<span class="arg_name">mode</span>:string] ) : file, string<br/><div class="version">v1.1.42 and newer</div></div></div><div class="body"><p class="desc">Creates a uniquely named file, intended for use as a temporary file.  The name pattern is "<em>location</em> <code>\</code> <em>prefix</em> <code>_</code> <em>processId</em> <code>_</code> <em>uniqueNum</em> <em>extension</em>".</p><p class="desc"> <span class="arg">prefix</span> optionally specifies a prefix for the file name and defaults to "tmp".</p><p class="desc"> <span class="arg">ext</span> optionally specifies a suffix for the file name and defaults to "" (if <span class="arg">ext</span> starts with a period "." then it is a filename extension).</p><p class="desc"> <span class="arg">path</span> optionally specifies a path location in which to create the file.  The default is the system TEMP directory.</p><p class="desc"> <span class="arg">mode</span> optionally specifies "t" for text mode (line endings are translated) or "b" for binary mode (untranslated IO).  The default is "t".</p><p class="desc"> When successful, the function returns a file handle and the file name. If unsuccessful it returns nil, an error message, and the error number.</p><p class="desc"> <strong>Note:</strong> Be sure to delete the file when finished, or it will be leaked.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#os.debugprint"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="os.debugprint">os.debugprint</a></div> <div class="signature">( ... ) : nil<br/><div class="version">v1.2.20 and newer</div></div></div><div class="body"><p class="desc">This works like <code>print()</code> but writes the output via the OS <code>OutputDebugString()</code> API.</p><p class="desc"> This function has no effect if the <code>lua.debug</code> Clink setting is off.</p><pre class="language-lua"><code>clink.debugprint("my variable = "..myvar)</code></pre></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#os.expandabbreviatedpath"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="os.expandabbreviatedpath">os.expandabbreviatedpath</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : nil | string, string, boolean<br/><div class="version">v1.4.1 and newer</div></div></div><div class="body"><p class="desc">This expands any abbreviated directory components in <span class="arg">path</span>.</p><p class="desc"> The return value is nil if <span class="arg">path</span> couldn't be expanded.  It can't be expanded if it is a UNC path or a remote drive, or if it is already expanded, or if there are no matches for one of the directory components.</p><p class="desc"> Otherwise three values are returned.  First, a string containing the expanded part of <span class="arg">path</span>.  Second, a string containing the rest of <span class="arg">path</span> that wasn't expanded.  Third, a boolean indicating whether <span class="arg">path</span> was able to expand uniquely.</p><pre class="language-lua"><code>-- Suppose only the following directories exist in the D: drive:
+--  - D:\bag
+--  - D:\bookkeeper
+--  - D:\bookkeeping
+--  - D:\box
+--  - D:\boxes
+
+expanded, remaining, unique = os.expandabbreviatedpath("d:\\b\\file")
+-- returns "d:\\b", "\\file", false         -- Ambiguous.
+
+expanded, remaining, unique = os.expandabbreviatedpath("d:\\ba\\file")
+-- returns "d:\\bag", "\\file", true        -- Unique; only "bag" can match "ba".
+
+expanded, remaining, unique = os.expandabbreviatedpath("d:\\bo\\file")
+-- returns "d:\\bo", "\\file", false        -- Ambiguous.
+
+expanded, remaining, unique = os.expandabbreviatedpath("d:\\boo\\file")
+-- returns "d:\\bookkeep", "\\file", false  -- Ambiguous; "bookkeep" is longest common part matching "boo".
+
+expanded, remaining, unique = os.expandabbreviatedpath("d:\\box\\file")
+-- returns "d:\\box", "\\file", false       -- Ambiguous; "box" is an exact match.
+
+expanded, remaining, unique = os.expandabbreviatedpath("d:\\boxe\\file")
+-- returns "d:\\boxes", "\\file", true      -- Unique; only "boxes" can match "boxe".
+
+expanded, remaining, unique = os.expandabbreviatedpath("d:\\boxes\\file")
+-- returns nil                              -- Is already expanded.</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#os.expandenv"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="os.expandenv">os.expandenv</a></div> <div class="signature">( <span class="arg_name">value</span>:string ) : string<br/><div class="version">v1.2.5 and newer</div></div></div><div class="body"><p class="desc">Returns <span class="arg">value</span> with any <code>%name%</code> environment variables expanded.  Names are case insensitive.  Special CMD syntax is not supported (e.g. <code>%name:str1=str2%</code> or <code>%name:~offset,length%</code>).</p><p class="desc"> Note: See <a href="#os.getenv">os.getenv()</a> for a list of special variable names.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#os.getalias"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="os.getalias">os.getalias</a></div> <div class="signature">( <span class="arg_name">name</span>:string ) : string | nil<br/><div class="version">v1.1.4 and newer</div></div></div><div class="body"><p class="desc">Returns command string for doskey alias <span class="arg">name</span>, or nil if the named alias does not exist.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#os.getaliases"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="os.getaliases">os.getaliases</a></div> <div class="signature">() : table<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Returns doskey alias names in a table of strings.</p></div></div><hr/>
@@ -6326,18 +6408,18 @@ end</code></pre></div></div><hr/>
 </div><div class="group"><h5 class="group_name"><a name="path">path</a></h5><div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#path.getbasename"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="path.getbasename">path.getbasename</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : string<br/><div class="version">v1.1.0 and newer</div></div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.getbasename("/foo/bar.ext")    -- returns "bar"
 path.getbasename("")                -- returns ""</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#path.getdirectory"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="path.getdirectory">path.getdirectory</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : nil or string<br/><div class="version">v1.1.0 and newer</div></div></div><div class="body"><p class="desc">This is similar to <a href="#path.toparent">path.toparent()</a> but can behave differently when the input path ends with a path separator.  This is the recommended API for parsing a path into its component pieces, but is not recommended for walking up through parent directories.</p><pre class="language-lua"><code>path.getdirectory("foo")                -- returns nil
-path.getdirectory("\foo")               -- returns "\"
+path.getdirectory("\\foo")              -- returns "\\"
 path.getdirectory("c:foo")              -- returns "c:"
-path.getdirectory([[c:\]])              -- returns "c:\"
-path.getdirectory("c:\foo")             -- returns "c:\"
-path.getdirectory("c:\foo\bar")         -- returns "c:\foo"
-path.getdirectory("\\foo\bar")          -- returns "\\foo\bar"
-path.getdirectory("\\foo\bar\dir")      -- returns "\\foo\bar"
+path.getdirectory("c:\\")               -- returns "c:\\"
+path.getdirectory("c:\\foo")            -- returns "c:\\"
+path.getdirectory("c:\\foo\\bar")       -- returns "c:\\foo"
+path.getdirectory("\\\\foo\\bar")       -- returns "\\\\foo\\bar"
+path.getdirectory("\\\\foo\\bar\\dir")  -- returns "\\\\foo\\bar"
 path.getdirectory("")                   -- returns nil
 
 -- These split the path components differently than path.toparent().
-path.getdirectory([[c:\foo\bar\]])      -- returns "c:\foo\bar"
-path.getdirectory([[\\foo\bar\dir\]])   -- returns "\\foo\bar\dir"</code></pre></div></div><hr/>
+path.getdirectory("c:\\foo\\bar\\")         -- returns "c:\\foo\\bar"
+path.getdirectory("\\\\foo\\bar\\dir\\"")   -- returns "\\\\foo\\bar\\dir"</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#path.getdrive"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="path.getdrive">path.getdrive</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : nil or string<br/><div class="version">v1.1.0 and newer</div></div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.getdrive("e:/foo/bar")     -- returns "e:"
 path.getdrive("foo/bar")        -- returns nil
 path.getdrive("")               -- returns nil</code></pre></div></div><hr/>
@@ -6349,31 +6431,31 @@ path.getname("")                -- returns ""</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#path.isexecext"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="path.isexecext">path.isexecext</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean<br/><div class="version">v1.1.5 and newer</div></div></div><div class="body"><p class="desc">Examines the extension of the path name.  Returns true if the extension is listed in %PATHEXT%.  This caches the extensions in a map so that it's more efficient than getting and parsing %PATHEXT% each time.</p><pre class="language-lua"><code>path.isexecext("program.exe")   -- returns true
 path.isexecext("file.doc")      -- returns false
 path.isexecext("")              -- returns false</code></pre></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#path.join"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="path.join">path.join</a></div> <div class="signature">( <span class="arg_name">left</span>:string, <span class="arg_name">right</span>:string ) : string<br/><div class="version">v1.1.0 and newer</div></div></div><div class="body"><p class="desc">If <span class="arg">right</span> is a relative path, this joins <span class="arg">left</span> and <span class="arg">right</span>.</p><p class="desc"> If <span class="arg">right</span> is not a relative path, this returns <span class="arg">right</span>.</p><pre class="language-lua"><code>path.join("/foo", "bar")        -- returns "/foo\bar"
+<div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#path.join"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="path.join">path.join</a></div> <div class="signature">( <span class="arg_name">left</span>:string, <span class="arg_name">right</span>:string ) : string<br/><div class="version">v1.1.0 and newer</div></div></div><div class="body"><p class="desc">If <span class="arg">right</span> is a relative path, this joins <span class="arg">left</span> and <span class="arg">right</span>.</p><p class="desc"> If <span class="arg">right</span> is not a relative path, this returns <span class="arg">right</span>.</p><pre class="language-lua"><code>path.join("/foo", "bar")        -- returns "/foo\\bar"
 path.join("", "bar")            -- returns "bar"
-path.join("/foo", "")           -- returns "/foo\"
+path.join("/foo", "")           -- returns "/foo\\"
 path.join("/foo", "/bar/xyz")   -- returns "/bar/xyz"</code></pre></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#path.normalise"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="path.normalise">path.normalise</a></div> <div class="signature">( <span class="arg_name">path</span>:string, [<span class="arg_name">separator</span>:string] ) : string<br/><div class="version">v1.1.0 and newer</div></div></div><div class="body"><p class="desc">Cleans <span class="arg">path</span> by normalising separators and removing "." and ".." elements.  If <span class="arg">separator</span> is provided it is used to delimit path elements, otherwise a system-specific delimiter is used.</p><pre class="language-lua"><code>path.normalise("a////b/\\/c/")  -- returns "a\b\c\"
+<div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#path.normalise"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="path.normalise">path.normalise</a></div> <div class="signature">( <span class="arg_name">path</span>:string, [<span class="arg_name">separator</span>:string] ) : string<br/><div class="version">v1.1.0 and newer</div></div></div><div class="body"><p class="desc">Cleans <span class="arg">path</span> by normalising separators and removing "." and ".." elements.  If <span class="arg">separator</span> is provided it is used to delimit path elements, otherwise a system-specific delimiter is used.</p><pre class="language-lua"><code>path.normalise("a////b/\\/c/")  -- returns "a\\b\\c\\"
 path.normalise("")              -- returns ""</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#path.toparent"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="path.toparent">path.toparent</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : parent:string, child:string<br/><div class="version">v1.1.20 and newer</div></div></div><div class="body"><p class="desc">Splits the last path component from <span class="arg">path</span>, if possible. Returns the result and the component that was split, if any.</p><p class="desc"> This is similar to <a href="#path.getdirectory">path.getdirectory()</a> but can behave differently when the input path ends with a path separator.  This is the recommended API for walking up through parent directories.</p><pre class="language-lua"><code>local parent,child
-parent,child = path.toparent("foo")             -- returns "", "foo"
-parent,child = path.toparent("\foo")            -- returns "\", "foo"
-parent,child = path.toparent("c:foo")           -- returns "c:", "foo"
-parent,child = path.toparent([[c:\]])           -- returns "c:\", ""
-parent,child = path.toparent("c:\foo")          -- returns "c:\", "foo"
-parent,child = path.toparent("c:\foo\bar")      -- returns "c:\foo", "bar"
-parent,child = path.toparent("\\foo\bar")       -- returns "\\foo\bar", ""
-parent,child = path.toparent("\\foo\bar\dir")   -- returns "\\foo\bar", "dir"
-parent,child = path.toparent("")                -- returns "", ""
+parent,child = path.toparent("foo")                 -- returns "", "foo"
+parent,child = path.toparent("\\foo")               -- returns "\\", "foo"
+parent,child = path.toparent("c:foo")               -- returns "c:", "foo"
+parent,child = path.toparent("c:\\"])               -- returns "c:\\", ""
+parent,child = path.toparent("c:\\foo")             -- returns "c:\\", "foo"
+parent,child = path.toparent("c:\\foo\\bar")        -- returns "c:\\foo", "bar"
+parent,child = path.toparent("\\\\foo\\bar")        -- returns "\\\\foo\\bar", ""
+parent,child = path.toparent("\\\\foo\\bar\\dir")   -- returns "\\\\foo\\bar", "dir"
+parent,child = path.toparent("")                    -- returns "", ""
 
 -- These split the path components differently than path.getdirectory().
-parent,child = path.toparent([[c:\foo\bar\]])   -- returns "c:\foo", "bar"
-parent,child = path.toparent([[\\foo\bar\dir\]])-- returns "\\foo\bar", "dir"</code></pre></div></div><hr/>
-</div><div class="group"><h5 class="group_name"><a name="rl">rl</a></h5><div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#rl.collapsetilde"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="rl.collapsetilde">rl.collapsetilde</a></div> <div class="signature">( <span class="arg_name">path</span>:string, [<span class="arg_name">force</span>:boolean] ) : string<br/><div class="version">v1.1.6 and newer</div></div></div><div class="body"><p class="desc">Undoes Readline tilde expansion.  See <a href="#rl.expandtilde">rl.expandtilde()</a> for more information.</p><pre class="language-lua"><code>rl.collapsetilde("C:\Users\yourusername\Documents")
+parent,child = path.toparent("c:\\foo\\bar\\"")     -- returns "c:\\foo", "bar"
+parent,child = path.toparent("\\\\foo\\bar\\dir\\") -- returns "\\\\foo\\bar", "dir"</code></pre></div></div><hr/>
+</div><div class="group"><h5 class="group_name"><a name="rl">rl</a></h5><div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#rl.collapsetilde"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="rl.collapsetilde">rl.collapsetilde</a></div> <div class="signature">( <span class="arg_name">path</span>:string, [<span class="arg_name">force</span>:boolean] ) : string<br/><div class="version">v1.1.6 and newer</div></div></div><div class="body"><p class="desc">Undoes Readline tilde expansion.  See <a href="#rl.expandtilde">rl.expandtilde()</a> for more information.</p><pre class="language-lua"><code>rl.collapsetilde("C:\\Users\\yourusername\\Documents")
 &nbsp;
 -- The return value depends on the expand-tilde configuration variable:
--- When "on", the function returns "C:\Users\yourusername\Documents".
--- When "off", the function returns "~\Documents".
+-- When "on", the function returns "C:\\Users\\yourusername\\Documents".
+-- When "off", the function returns "~\\Documents".
 &nbsp;
 -- Or when <span class="arg">force</span> is true, the function returns "~\Documents".</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#rl.describemacro"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="rl.describemacro">rl.describemacro</a></div> <div class="signature">( <span class="arg_name">macro</span>:string, <span class="arg_name">description</span>:string ) : nil<br/><div class="version">v1.3.41 and newer</div></div></div><div class="body"><p class="desc">This associates <span class="arg">description</span> with <span class="arg">macro</span>, to be displayed in the <code>clink-show-help</code> and <code>clink-what-is</code> commands.</p><p class="desc"> This may be used to add a description for a <code>luafunc:</code> macro, or for a keyboard macro.</p><p class="desc"> The <span class="arg">macro</span> string should include quotes, just like in <code>rl.setbinding()</code>.  If quotes are not present, they are added automatically.</p><pre class="language-lua"><code>rl.describemacro([["luafunc:mycommand"]], "Does whatever mycommand does")
@@ -6381,8 +6463,8 @@ rl.describemacro([["\e[Hrem "]], "Insert 'rem ' at the beginning of the line")
 rl.setbinding([["\C-o"]], [["luafunc:mycommand"]])
 rl.setbinding([["\C-r"]], [["\e[Hrem "]])
 -- Press Alt-H to see the list of key bindings and descriptions.</code></pre></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#rl.expandtilde"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="rl.expandtilde">rl.expandtilde</a></div> <div class="signature">( <span class="arg_name">path</span>:string, [<span class="arg_name">whole_line</span>:boolean] ) : string, boolean<br/><div class="version">v1.1.6 and newer</div></div></div><div class="body"><p class="desc">Performs Readline tilde expansion.</p><p class="desc"> When generating filename matches for a word, use the <a href="#rl.expandtilde">rl.expandtilde()</a> and <a href="#rl.collapsetilde">rl.collapsetilde()</a> helper functions to perform tilde completion expansion according to Readline's configuration.</p><p class="desc"> An optional <span class="arg">whole_line</span> argument selects whether to expand tildes everywhere in the input string (pass true), or to expand only a tilde at the beginning of the input string (pass false or omit the second argument).  See the Compatibility Note below for more information.</p><p class="desc"> Use <a href="#rl.expandtilde">rl.expandtilde()</a> to do tilde expansion before collecting file matches (e.g. via <a href="#os.globfiles">os.globfiles()</a>).  If it indicates that it expanded the string, then use <a href="#rl.collapsetilde">rl.collapsetilde()</a> to put back the tilde before returning a match.</p><pre class="language-lua"><code>local result, expanded = rl.expandtilde("~\Documents")
--- result is "C:\Users\yourusername\Documents"
+<div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#rl.expandtilde"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="rl.expandtilde">rl.expandtilde</a></div> <div class="signature">( <span class="arg_name">path</span>:string, [<span class="arg_name">whole_line</span>:boolean] ) : string, boolean<br/><div class="version">v1.1.6 and newer</div></div></div><div class="body"><p class="desc">Performs Readline tilde expansion.</p><p class="desc"> When generating filename matches for a word, use the <a href="#rl.expandtilde">rl.expandtilde()</a> and <a href="#rl.collapsetilde">rl.collapsetilde()</a> helper functions to perform tilde completion expansion according to Readline's configuration.</p><p class="desc"> An optional <span class="arg">whole_line</span> argument selects whether to expand tildes everywhere in the input string (pass true), or to expand only a tilde at the beginning of the input string (pass false or omit the second argument).  See the Compatibility Note below for more information.</p><p class="desc"> Use <a href="#rl.expandtilde">rl.expandtilde()</a> to do tilde expansion before collecting file matches (e.g. via <a href="#os.globfiles">os.globfiles()</a>).  If it indicates that it expanded the string, then use <a href="#rl.collapsetilde">rl.collapsetilde()</a> to put back the tilde before returning a match.</p><pre class="language-lua"><code>local result, expanded = rl.expandtilde("~\\Documents")
+-- result is "C:\\Users\\yourusername\\Documents"
 -- expanded is true
 
 -- This dir_matches function demonstrates efficient use of rl.expandtilde()
@@ -6693,6 +6775,12 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes"><div class="wlink"><a href="#changes"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork"><div class="wlink"><a href="#releases-from-chrisant996clink-fork"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v141"><div class="wlink"><a href="#v141"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>v1.4.1</h4>
+<ul>
+<li>Added <code>os.abbreviatepath()</code> and <code>os.expandabbreviatedpath()</code>.</li>
+<li>Invoking completion expands abbreviated paths when the new <code>match.expand_abbrev</code> setting is enabled.</li>
+<li>Fixed displayed matches for <code>c:</code> or <code>c:dir\</code>.</li>
+</ul>
 <h4 id="v140"><div class="wlink"><a href="#v140"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>v1.4.0</h4>
 <ul>
 <li>Added <code>clink.getpopuplistcolors()</code> to get the default popup list colors.</li>
