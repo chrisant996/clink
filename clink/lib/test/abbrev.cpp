@@ -104,13 +104,14 @@ put_msg:
 TEST_CASE("Abbreviated paths.")
 {
     static const char* dir_fs[] = {
-        "xyz/bag/leaf",
-        "xyz/bookkeeper/leaf",
-        "xyz/bookkeeping/leaf",
-        "xyz/box/leaf",
-        "xyz/boxes/leaf",
+        "xyz/bag/foo/leaf",
+        "xyz/bookkeeper/foo/leaf",
+        "xyz/bookkeeping/foo/leaf",
+        "xyz/box/foo/leaf",
+        "xyz/boxes/foo/leaf",
         "xyz/repo/.git/leaf",
-        "xyz/notrepo/leaf",
+        "xyz/repo/foo/leaf",
+        "xyz/notrepo/foo/leaf",
         nullptr,
     };
 
@@ -247,7 +248,7 @@ TEST_CASE("Abbreviated paths.")
             { "xyz/box/foo",            "<x>\\box\\<f>",            true/*all*/ },
             { "xyz/boxes/foo",          "<x>\\<boxe>\\<f>",         true/*all*/ },
             { "xyz/repo/foo",           "<x>\\<r>\\<f>",            true/*all*/ },
-            { "xyz/repo/foo",           "<x>\\repo\\<f>",           true/*all*/,        true/*git*/ },
+            { "xyz/repo/foo",           "<x>\\repo\\<f>",           true/*all*/,    true/*git*/ },
             { "xyz/notrepo/foo",        "<x>\\<n>\\<f>",            true/*all*/ },
         };
 
