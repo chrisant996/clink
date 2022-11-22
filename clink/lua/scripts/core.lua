@@ -308,14 +308,14 @@ end
 --- -show:
 --- -show:  local function dim_abbrev(name, abbrev)
 --- -show:  &nbsp;   if abbrev then
---- -show:  &nbsp;       return "\027[8m"..name.."\027[m" -- Use dark gray text.
+--- -show:  &nbsp;       return "\027[38m"..name.."\027[m" -- Use dark gray text.
 --- -show:  &nbsp;   else
 --- -show:  &nbsp;       return name
 --- -show:  &nbsp;   end
 --- -show:  end
 --- -show:
 --- -show:  os.abbreviatepath("d:\\xyz\\bag", do_all, dim_abbrev)
---- -show:  -- returns "c:\\\027[8mx\027[m\\\027[8mba\027[m"
+--- -show:  -- returns "c:\\\027[38mx\027[m\\\027[38mba\027[m"
 --- -show:
 --- -show:  -- Relative paths work as well.
 --- -show:
