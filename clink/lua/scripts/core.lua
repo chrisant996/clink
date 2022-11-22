@@ -213,9 +213,10 @@ end
 local function abbrev_child(parent, child)
     local letter = first_letter(child)
     if not letter or letter == "" then
-        return dir, false
+        return child, false
     end
 
+    local any = false
     local lcd = 0
     local dirs = os.globdirs(path.join(parent, letter .. "*"))
     for _, x in ipairs(dirs) do
@@ -223,8 +224,13 @@ local function abbrev_child(parent, child)
         if lcd < m then
             lcd = m
         end
+        any = true
     end
     lcd = (lcd >= 0) and lcd or 0
+
+    if not any then
+        return child, false
+    end
 
     local abbr = child:sub(1, lcd) .. first_letter(child:sub(lcd + 1))
     return abbr, abbr ~= child
@@ -334,7 +340,7 @@ function os.abbreviatepath(dir, decide, transform)
         parent = os.getenv("HOME")
         drive = path.getdrive(parent) or ""
         drivetype = os.getdrivetype(drive)
-        s = "~\\"
+        s = "~"
         parse = dir:sub(tilde_len + 1)
     elseif drive ~= "" then
         local seps
@@ -343,6 +349,7 @@ function os.abbreviatepath(dir, decide, transform)
         seps, parse = dir:match("^([/\\]*)(.*)$", #drive + 1)
         s = drive
         if #seps > 0 then
+            parent = parent .. "\\"
             s = s .. "\\"
         end
     else
@@ -373,8 +380,6 @@ function os.abbreviatepath(dir, decide, transform)
 
     local first = #components
     if tilde then
-        s = "~"
-        parent = os.getenv("HOME")
         first = first - 1
     end
 
