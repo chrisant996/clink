@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.4.1</title>
+<title>Clink v1.4.2</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -854,7 +854,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.4.1</div>
+                <div id="title">Clink v1.4.2</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -6299,14 +6299,14 @@ end
 
 local function dim_abbrev(name, abbrev)
 &nbsp;   if abbrev then
-&nbsp;       return "\027[8m"..name.."\027[m" -- Use dark gray text.
+&nbsp;       return "\027[38m"..name.."\027[m" -- Use dark gray text.
 &nbsp;   else
 &nbsp;       return name
 &nbsp;   end
 end
 
 os.abbreviatepath("d:\\xyz\\bag", do_all, dim_abbrev)
--- returns "c:\\\027[8mx\027[m\\\027[8mba\027[m"
+-- returns "c:\\\027[38mx\027[m\\\027[38mba\027[m"
 
 -- Relative paths work as well.
 
@@ -6775,6 +6775,10 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes"><div class="wlink"><a href="#changes"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork"><div class="wlink"><a href="#releases-from-chrisant996clink-fork"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v142"><div class="wlink"><a href="#v142"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>v1.4.2</h4>
+<ul>
+<li>Fixed path abbreviation in some cases.</li>
+</ul>
 <h4 id="v141"><div class="wlink"><a href="#v141"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>v1.4.1</h4>
 <ul>
 <li>Added <code>os.abbreviatepath()</code> and <code>os.expandabbreviatedpath()</code>.</li>
