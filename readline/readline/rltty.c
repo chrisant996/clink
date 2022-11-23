@@ -729,7 +729,7 @@ rl_tty_set_echoing (int u)
   _rl_echoing_p = u;
   return o;
 }
-
+
 /* **************************************************************** */
 /*								    */
 /*			Bogus Flow Control      		    */

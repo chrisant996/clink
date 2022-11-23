@@ -40,11 +40,7 @@
 #  if defined (HAVE_TERMIO_H)
 #    define TERMIO_TTY_DRIVER
 #  else
-/* begin_clink_change
- * Ensure NO_TTY_DRIVER is defined
- */
-#    if !defined (__MINGW32__) && 0
-/* end_clink_change */
+#    if !defined (__MINGW32__) && !defined (_WIN32)
 #      define NEW_TTY_DRIVER
 #    else
 #      define NO_TTY_DRIVER

@@ -265,6 +265,7 @@ rl_digit_argument (int ignore, int key)
   else
     {
       rl_execute_next (key);
+      _rl_del_executing_keyseq ();
       return (rl_digit_loop ());
     }
 }
@@ -774,10 +775,7 @@ static int saved_history_logical_offset = -1;
 #define HISTORY_FULL() (history_is_stifled () && history_length >= history_max_entries)
 
 static int
-/* begin_clink_change */
-//set_saved_history ()
 set_saved_history (void)
-/* end_clink_change */
 {
   int absolute_offset, count;
 

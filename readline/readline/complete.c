@@ -1,6 +1,6 @@
 /* complete.c -- filename completion for readline. */
 
-/* Copyright (C) 1987-2021 Free Software Foundation, Inc.
+/* Copyright (C) 1987-2022 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.
@@ -2495,8 +2495,13 @@ make_quoted_replacement (char *match, int mtype, char *qc)
 			//? (_rl_strpbrk (match, rl_filename_quote_characters) != 0)
 			//: 0;
       const char *quotable_match = match + (!rl_complete_with_tilde_expansion && match[0] == '~');
-      should_quote = force_quoting || rl_need_match_quoting (match);
+      should_quote |= force_quoting || rl_need_match_quoting (quotable_match);
 /* end_clink_change PRIVATE */
+      /* If we saw a quote in the original word, but readline thinks the
+	 match doesn't need to be quoted, and the application has a filename
+	 quoting function, give the application a chance to quote it if
+	 needed so we don't second-guess the user. */
+      should_quote |= *qc == 0 && rl_completion_found_quote && mtype != NO_MATCH && rl_filename_quoting_function;
 
       do_replace = should_quote ? mtype : NO_MATCH;
       /* Quote the replacement, since we found an embedded
@@ -2504,6 +2509,7 @@ make_quoted_replacement (char *match, int mtype, char *qc)
       if (do_replace != NO_MATCH && rl_filename_quoting_function)
 	replacement = (*rl_filename_quoting_function) (match, do_replace, qc);
     }
+
   return (replacement);
 }
 
@@ -3207,14 +3213,9 @@ rl_completion_matches (const char *text, rl_compentry_func_t *entry_function)
 char *
 rl_username_completion_function (const char *text, int state)
 {
-/*
- * begin_clink_change
- * Disable username completion.
- */
-#if defined (__WIN32__) || defined (__OPENNT) || 1
-/* end_clink_change */
+#if defined (_WIN32) || defined (__OPENNT)
   return (char *)NULL;
-#else /* !__WIN32__ && !__OPENNT) */
+#else /* !_WIN32 && !__OPENNT) */
   static char *username = (char *)NULL;
   static struct passwd *entry;
   static int namelen, first_char, first_char_loc;
@@ -3266,7 +3267,7 @@ rl_username_completion_function (const char *text, int state)
 
       return (value);
     }
-#endif /* !__WIN32__ && !__OPENNT */
+#endif /* !_WIN32 && !__OPENNT */
 }
 
 /* Return non-zero if CONVFN matches FILENAME up to the length of FILENAME
@@ -3476,7 +3477,8 @@ rl_filename_completion_function (const char *text, int state)
 	  temp = tilde_expand (dirname);
 	  xfree (dirname);
 	  dirname = temp;
-	  tilde_dirname = 1;
+	  if (*dirname != '~')
+	    tilde_dirname = 1;	/* indicate successful tilde expansion */
 	}
 
       /* We have saved the possibly-dequoted version of the directory name
@@ -3495,11 +3497,16 @@ rl_filename_completion_function (const char *text, int state)
 	  xfree (users_dirname);
 	  users_dirname = savestring (dirname);
 	}
-      else if (tilde_dirname == 0 && rl_completion_found_quote && rl_filename_dequoting_function)
+      else if (rl_completion_found_quote && rl_filename_dequoting_function)
 	{
-	  /* delete single and double quotes */
+	  /* We already ran users_dirname through the dequoting function.
+	     If tilde_dirname == 1, we successfully performed tilde expansion
+	     on dirname. Now we need to reconcile those results. We either
+	     just copy the already-dequoted users_dirname or tilde expand it
+	     if we tilde-expanded dirname. */
+	  temp = tilde_dirname ? tilde_expand (users_dirname) : savestring (users_dirname);
 	  xfree (dirname);
-	  dirname = savestring (users_dirname);
+	  dirname = temp;
 	}
       directory = opendir (dirname);
 

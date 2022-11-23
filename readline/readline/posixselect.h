@@ -27,7 +27,7 @@
 
 #if defined (HAVE_SELECT)
 #  if !defined (HAVE_SYS_SELECT_H) || !defined (M_UNIX)
-#    include <sys/time.h>
+#    include "posixtime.h"
 #  endif
 #endif /* HAVE_SELECT */
 #if defined (HAVE_SYS_SELECT_H)
