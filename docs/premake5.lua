@@ -271,9 +271,16 @@ local function do_docs()
     api_html:write('</symbol></defs></svg>')
     api_html:write('<p/><div class="toc">')
     for _, group in ipairs(groups) do
-        if group.name ~= "Deprecated" then
-            api_html:write('<div class="H1"><a href="#'..group.name..'">'..group.name..'</a></div>')
+        local italon = ""
+        local italoff = ""
+        if group.name == "Deprecated" then
+            italon = "<em>"
+            italoff = "</em>"
+            api_html:write('<p/>')
         end
+        api_html:write('<div class="H1"><a href="#'..group.name..'">')
+        api_html:write(italon..group.name..italoff)
+        api_html:write('</a></div>')
     end
     api_html:write('</div>')
     for _, group in ipairs(groups) do
