@@ -211,32 +211,73 @@ extern "C" {
 extern int              get_clink_setting(lua_State* state);
 extern int              glob_impl(lua_State* state, bool dirs_only, bool back_compat);
 extern int              lua_execute(lua_State* state);
+extern int              get_screen_info_impl(lua_State* state, bool back_compat);
 
 //------------------------------------------------------------------------------
+/// -name:  clink.get_console_aliases
+/// -deprecated: os.getaliases
+
+//------------------------------------------------------------------------------
+/// -name:  clink.get_cwd
+/// -deprecated: os.getcwd
+
+//------------------------------------------------------------------------------
+/// -name:  clink.get_env
+/// -deprecated: os.getenv
+
+//------------------------------------------------------------------------------
+/// -name:  clink.get_env_var_names
+/// -deprecated: os.getenvnames
+
+//------------------------------------------------------------------------------
+/// -name:  clink.find_dirs
+/// -deprecated: os.globdirs
+/// -arg:   mask:string
+/// -arg:   [case_map:boolean]
+/// The <span class="arg">case_map</span> argument is ignored, because match
+/// generators are no longer responsible for filtering matches.  The match
+/// pipeline itself handles that internally now.
 int old_glob_dirs(lua_State* state)
 {
     return glob_impl(state, true, true/*back_compat*/);
 }
 
 //------------------------------------------------------------------------------
+/// -name:  clink.find_files
+/// -deprecated: os.globfiles
+/// -arg:   mask:string
+/// -arg:   [case_map:boolean]
+/// The <span class="arg">case_map</span> argument is ignored, because match
+/// generators are no longer responsible for filtering matches.  The match
+/// pipeline itself handles that internally now.
 int old_glob_files(lua_State* state)
 {
     return glob_impl(state, false, true/*back_compat*/);
 }
 
 //------------------------------------------------------------------------------
+/// -name:  clink.get_setting_str
+/// -deprecated: settings.get
 static int get_setting_str(lua_State* state)
 {
     return get_clink_setting(state);
 }
 
 //------------------------------------------------------------------------------
+/// -name:  clink.get_setting_int
+/// -deprecated: settings.get
 static int get_setting_int(lua_State* state)
 {
     return get_clink_setting(state);
 }
 
 //------------------------------------------------------------------------------
+/// -name:  clink.is_dir
+/// -deprecated: os.isdir
+
+//------------------------------------------------------------------------------
+/// -name:  clink.get_rl_variable
+/// -deprecated: rl.getvariable
 static int get_rl_variable(lua_State* state)
 {
     // Check we've got at least one string argument.
@@ -253,6 +294,8 @@ static int get_rl_variable(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  clink.is_rl_variable_true
+/// -deprecated: rl.isvariabletrue
 static int is_rl_variable_true(lua_State* state)
 {
     int i;
@@ -273,6 +316,10 @@ static int is_rl_variable_true(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  clink.get_host_process
+/// -deprecated:
+/// Always returns "clink"; this corresponds to the "clink" word in the
+/// <code>$if clink</code> directives in Readline's .inputrc file.
 static int get_host_process(lua_State* state)
 {
     lua_pushstring(state, rl_readline_name);
@@ -280,27 +327,20 @@ static int get_host_process(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-/// -name:  clink.split
-/// -deprecated: string.explode
-/// -arg:   str:string
-/// -arg:   sep:string
-/// -ret:   table
+/// -name:  clink.get_screen_info
+/// -deprecated: os.getscreeninfo
+/// Note: The field names are different between <code>os.getscreeninfo()</scan>
+/// and the v0.4.9 implementation of <code>clink.get_screen_info</code>.
+static int get_screen_info(lua_State* state)
+{
+    return get_screen_info_impl(state, true/*back_compat*/);
+}
 
 
 
 // END -- Clink 0.4.8 API compatibility ----------------------------------------
 
 
-
-//------------------------------------------------------------------------------
-/// -name:  clink.match_display_filter
-/// -deprecated: builder:addmatch
-/// -var:   function
-/// This is no longer used.
-/// -show:  clink.match_display_filter = function(matches)
-/// -show:  &nbsp; -- Transform matches.
-/// -show:  &nbsp; return matches
-/// -show:  end
 
 //------------------------------------------------------------------------------
 static int map_string(lua_State* state, transform_mode mode)
@@ -352,6 +392,7 @@ static int map_string(lua_State* state, transform_mode mode)
 /// This API correctly converts UTF8 strings to lowercase, with international
 /// linguistic awareness.
 /// -show:  clink.lower("Hello World") -- returns "hello world"
+/// -show:  clink.lower("ÁÈÏõû")       -- returns "áèïõû"
 static int to_lowercase(lua_State* state)
 {
     return map_string(state, transform_mode::lower);
@@ -365,6 +406,7 @@ static int to_lowercase(lua_State* state)
 /// This API correctly converts UTF8 strings to uppercase, with international
 /// linguistic awareness.
 /// -show:  clink.upper("Hello World") -- returns "HELLO WORLD"
+/// -show:  clink.lower("áèïÕÛ")       -- returns "ÁÈÏÕÛ"
 static int to_uppercase(lua_State* state)
 {
     return map_string(state, transform_mode::upper);
@@ -872,10 +914,12 @@ static int translate_slashes(lua_State* state)
 /// -deprecated: clink.translateslashes
 /// -arg:   type:integer
 /// Controls how Clink will translate the path separating slashes for the
-/// current path being completed. Values for <span class="arg">type</span> are;</br>
-/// -1 - no translation</br>
-/// 0 - to backslashes</br>
-/// 1 - to forward slashes
+/// current path being completed. Values for <span class="arg">type</span> are;
+/// <ul>
+/// <li>-1 - no translation</li>
+/// <li>0 - to backslashes</li>
+/// <li>1 - to forward slashes</li>
+/// </ul>
 static int slash_translation(lua_State* state)
 {
     if (lua_gettop(state) == 0)
@@ -1576,7 +1620,6 @@ extern int get_aliases(lua_State* state);
 extern int get_current_dir(lua_State* state);
 extern int get_env(lua_State* state);
 extern int get_env_names(lua_State* state);
-extern int get_screen_info(lua_State* state);
 extern int is_dir(lua_State* state);
 extern int explode(lua_State* state);
 

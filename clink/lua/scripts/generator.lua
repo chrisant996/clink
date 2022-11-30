@@ -382,6 +382,16 @@ end
 --- -arg:   pattern:string
 --- -arg:   [full_path:boolean]
 --- -arg:   [find_func:function]
+--- Globs files using <span class="arg">pattern</span> and adds results as
+--- matches. If <span class="arg">full_path</span> is true then the path from
+--- <span class="arg">pattern</span> is prefixed to the results (otherwise only
+--- the file names are included). The last argument
+--- <span class="arg">find_func</span> is the function to use to do the
+--- globbing. If it's unspecified (or nil) Clink falls back to
+--- <a href="#clink.find_files">clink.find_files</a>.
+---
+--- Note: This exists for backward compatibility but malfunctions with some
+--- inputs, in the same ways it did in v0.4.9.
 function clink.match_files(pattern, full_path, find_func)
     -- This is ported from Clink v0.4.9 as identically as possible to minimize
     -- behavioral differences.  However, that was NOT a good implementation of
@@ -450,6 +460,10 @@ end
 --- -arg:   matches:table
 --- -ret:   string
 --- This is no longer supported, and always returns an empty string.
+---
+--- Returning an empty string works because in Clink v1.x and higher match
+--- generators are no longer responsible for filtering matches.  The match
+--- pipeline itself handles that internally now.
 function clink.compute_lcd()
     _compat_warning("clink.compute_lcd() is no longer supported.")
     return ""
@@ -476,7 +490,7 @@ end
 --- <span class="arg">candidate</span> with a case insensitive comparison.
 ---
 --- Normally in Clink v1.x and higher the <span class="arg">needle</span> will
---- be an empty string because the generators are no longer responsible for
+--- be an empty string because match generators are no longer responsible for
 --- filtering matches.  The match pipeline itself handles that internally now.
 function clink.is_match(needle, candidate)
     if needle == nil then
@@ -494,7 +508,7 @@ end
 --- -deprecated: builder:addmatch
 --- -arg:   [files:boolean]
 --- This is only needed when using deprecated APIs.  It's automatically inferred
---- from the match type when using the current APIs.
+--- from the match types when using the current APIs.
 function clink.matches_are_files(files)
     if clink.co_state._current_builder then
         clink.co_state._current_builder:setmatchesarefiles(files)

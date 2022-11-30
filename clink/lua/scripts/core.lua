@@ -133,14 +133,72 @@ end
 
 --------------------------------------------------------------------------------
 --- -name:  clink.quote_split
---- -deprecated:
+--- -deprecated: string.explode
 --- -arg:   str:string
 --- -arg:   ql:string
 --- -arg:   qr:string
 --- -ret:   table
-function clink.quote_split(str, ql, qr) -- luacheck: no unused
-    _compat_warning("clink.quote_split() is not supported.")
-    return {}
+--- This function takes the string <span class="arg">str</span> which is quoted
+--- by <span class="arg">ql</span> (the opening quote character) and
+--- <span class="arg">qr</span> (the closing character) and splits it into parts
+--- as per the quotes. A table of these parts is returned.
+function clink.quote_split(str, ql, qr)
+    if not qr then
+        qr = ql
+    end
+
+    -- First parse in "pre[ql]quote_string[qr]" chunks
+    local insert = table.insert
+    local i = 1
+    local needle = "%b"..ql..qr
+    local parts = {}
+    for l, r, quote in function() return str:find(needle, i) end do
+        -- "pre"
+        if l > 1 then
+            insert(parts, str:sub(i, l - 1))
+        end
+
+        -- "quote_string"
+        insert(parts, str:sub(l, r))
+        i = r + 1
+    end
+
+    -- Second parse what remains as "pre[ql]being_quoted"
+    local l = str:find(ql, i, true)
+    if l then
+        -- "pre"
+        if l > 1 then
+            insert(parts, str:sub(i, l - 1))
+        end
+
+        -- "being_quoted"
+        insert(parts, str:sub(l))
+    elseif i <= #str then
+        -- Finally add whatever remains...
+        insert(parts, str:sub(i))
+    end
+
+    return parts
+end
+
+--------------------------------------------------------------------------------
+--- -name:  clink.split
+--- -deprecated: string.explode
+--- -arg:   str:string
+--- -arg:   sep:string
+--- -ret:   table
+--- Splits the string <span class="arg">str</span> into pieces separated by
+--- <span class="arg">sep</span>, returning a table of the pieces.
+function clink.split(str, sep)
+    local i = 1
+    local ret = {}
+    for _, j in function() return str:find(sep, i, true) end do
+        table.insert(ret, str:sub(i, j - 1))
+        i = j + 1
+    end
+    table.insert(ret, str:sub(i, j))
+
+    return ret
 end
 
 

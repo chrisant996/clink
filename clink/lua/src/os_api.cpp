@@ -215,6 +215,11 @@ int execute_thread::results(lua_State* state)
 /// Changes the current directory to <span class="arg">path</span> and returns
 /// whether it was successful.
 /// If unsuccessful it returns false, an error message, and the error number.
+//------------------------------------------------------------------------------
+/// -name:  clink.chdir
+/// -deprecated: os.chdir
+/// -arg:   path:string
+/// -ret:   boolean
 int set_current_dir(lua_State* state)
 {
     const char* dir = checkstring(state, 1);
@@ -230,6 +235,10 @@ int set_current_dir(lua_State* state)
 /// -ver:   1.0.0
 /// -ret:   string
 /// Returns the current directory.
+//------------------------------------------------------------------------------
+/// -name:  clink.get_cwd
+/// -deprecated: os.getcwd
+/// -ret:   string
 int get_current_dir(lua_State* state)
 {
     str<288> dir;
@@ -1001,6 +1010,51 @@ int resolve_alias(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+int get_screen_info_impl(lua_State* state, bool back_compat)
+{
+    int i;
+    int values[4];
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+
+    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+    values[0] = csbi.dwSize.X;
+    values[1] = csbi.dwSize.Y;
+    values[2] = csbi.srWindow.Right - csbi.srWindow.Left;
+    values[3] = csbi.srWindow.Bottom - csbi.srWindow.Top;
+
+    lua_createtable(state, 0, 4);
+    {
+        static const char* const newnames[] = {
+            "bufwidth",
+            "bufheight",
+            "winwidth",
+            "winheight",
+        };
+
+        static const char* const oldnames[] = {
+            "buffer_width",
+            "buffer_height",
+            "window_width",
+            "window_height",
+        };
+
+        static_assert(sizeof_array(values) == sizeof_array(newnames), "table sizes don't match");
+        static_assert(sizeof_array(values) == sizeof_array(oldnames), "table sizes don't match");
+
+        const char* const* names = back_compat ? oldnames : newnames;
+
+        for (i = 0; i < sizeof_array(values); ++i)
+        {
+            lua_pushstring(state, names[i]);
+            lua_pushinteger(state, values[i]);
+            lua_rawset(state, -3);
+        }
+    }
+
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 /// -name:  os.getscreeninfo
 /// -ver:   1.1.2
 /// -ret:   table
@@ -1011,42 +1065,9 @@ int resolve_alias(lua_State* state)
 /// -show:  -- info.bufheight       [integer] Height of the screen buffer.
 /// -show:  -- info.winwidth        [integer] Width of the visible window.
 /// -show:  -- info.winheight       [integer] Height of the visible window.
-int get_screen_info(lua_State* state)
+static int get_screen_info(lua_State* state)
 {
-    int i;
-    int buffer_width, buffer_height;
-    int window_width, window_height;
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-
-    struct table_t {
-        const char* name;
-        int         value;
-    };
-
-    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
-    buffer_width = csbi.dwSize.X;
-    buffer_height = csbi.dwSize.Y;
-    window_width = csbi.srWindow.Right - csbi.srWindow.Left;
-    window_height = csbi.srWindow.Bottom - csbi.srWindow.Top;
-
-    lua_createtable(state, 0, 4);
-    {
-        struct table_t table[] = {
-            { "bufwidth", buffer_width },
-            { "bufheight", buffer_height },
-            { "winwidth", window_width },
-            { "winheight", window_height },
-        };
-
-        for (i = 0; i < sizeof_array(table); ++i)
-        {
-            lua_pushstring(state, table[i].name);
-            lua_pushinteger(state, table[i].value);
-            lua_rawset(state, -3);
-        }
-    }
-
-    return 1;
+    return get_screen_info_impl(state, false);
 }
 
 //------------------------------------------------------------------------------
