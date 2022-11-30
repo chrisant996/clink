@@ -86,7 +86,7 @@ int matches_lua::get_match(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-/// -name:  matches_lua:gettype
+/// -name:  matches:gettype
 /// -ver:   1.2.47
 /// -arg:   index:integer
 /// -ret:   string
