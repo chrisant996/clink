@@ -329,8 +329,9 @@ static int get_host_process(lua_State* state)
 //------------------------------------------------------------------------------
 /// -name:  clink.get_screen_info
 /// -deprecated: os.getscreeninfo
-/// Note: The field names are different between <code>os.getscreeninfo()</code>
-/// and the v0.4.9 implementation of <code>clink.get_screen_info</code>.
+/// <strong>Note:</strong> The field names are different between
+/// <code>os.getscreeninfo()</code> and the v0.4.9 implementation of
+/// <code>clink.get_screen_info</code>.
 static int get_screen_info(lua_State* state)
 {
     return get_screen_info_impl(state, true/*back_compat*/);

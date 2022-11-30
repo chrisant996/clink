@@ -1648,9 +1648,10 @@ end
 --- -deprecated: _argmatcher:addflags
 --- -arg:   flags...:string
 --- -ret:   self
---- Note:  The new API has no way to remove flags that were previously added, so
---- converting from <code>:set_flags()</code> to <code>:addflags()</code> may
---- require the calling script to reorganize how and when it adds flags.
+--- <strong>Note:</strong>  The new API has no way to remove flags that were
+--- previously added, so converting from <code>:set_flags()</code> to
+--- <code>:addflags()</code> may require the calling script to reorganize how
+--- and when it adds flags.
 function _argmatcher:set_flags(...)
     self._flags = nil
     self:addflags(...)
