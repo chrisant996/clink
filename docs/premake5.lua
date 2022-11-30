@@ -285,7 +285,7 @@ local function do_docs()
         end
 
         api_html:write('<div class="'..group_class..'">')
-        api_html:write('<h5 class="group_name"><a name="'..group.name..'">'..group.name..'</a></h5>')
+        api_html:write('<h5 class="group_name">'..make_weblink(group.name)..'<a name="'..group.name..'">'..group.name..'</a></h5>')
 
         for _, doc_tag in ipairs(group) do
             api_html:write('<div class="function">')
