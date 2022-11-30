@@ -296,7 +296,7 @@ kbd {
 }
 
 #content #api .body {
-    margin-left: 1rem;
+    margin-left: 3rem;
     margin-top: -0.5rem;
 }
 
@@ -305,7 +305,6 @@ kbd {
     float: left;
     width: 40%;
     position: relative;
-    margin-left: -24px;
 }
 
 #content #api .header .name:hover .wlink {
