@@ -4,6 +4,7 @@
 
 #### v1.4.3
 
+- Added backward compatibility for obsolete `clink.quote_split()`, `clink.split()`, and `clink.get_screen_info()`.
 - Fixed empty completion list when typing two letters in rapid succession when both the `autosuggest.enable` and `autosuggest.async` settings are enabled.
 
 #### v1.4.2
