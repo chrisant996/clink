@@ -25,6 +25,7 @@ const match_builder_lua::method match_builder_lua::c_methods[] = {
     { "setmatchesarefiles", &set_matches_are_files },
     // UNDOCUMENTED; internal use only.
     { "clear_toolkit",      &clear_toolkit },
+    { "matches_ready",      &matches_ready },
     {}
 };
 
@@ -272,6 +273,23 @@ int match_builder_lua::clear_toolkit(lua_State* state)
     if (m_toolkit)
         m_toolkit->clear();
     return 0;
+}
+
+//------------------------------------------------------------------------------
+// UNDOCUMENTED; internal use only.
+int match_builder_lua::matches_ready(lua_State* state)
+{
+    if (!m_toolkit)
+        return 0;
+
+    bool isnum;
+    int id = checkinteger(state, 1, &isnum);
+    if (!isnum)
+        return 0;
+
+    extern bool notify_matches_ready(std::shared_ptr<match_builder_toolkit> toolkit, int generation_id);
+    lua_pushboolean(state, notify_matches_ready(m_toolkit, id));
+    return 1;
 }
 
 //------------------------------------------------------------------------------

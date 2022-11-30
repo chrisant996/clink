@@ -30,22 +30,6 @@ extern matches* make_new_matches();
 extern void set_suggestion(const char* line, unsigned int endword_offset, const char* suggestion, unsigned int offset);
 extern setting_enum g_ignore_case;
 extern setting_bool g_fuzzy_accent;
-static std::shared_ptr<match_builder_toolkit> s_toolkit;
-
-//------------------------------------------------------------------------------
-void reset_suggester()
-{
-    s_toolkit.reset();
-}
-
-//------------------------------------------------------------------------------
-std::shared_ptr<match_builder_toolkit> get_deferred_matches(int generation_id)
-{
-    std::shared_ptr<match_builder_toolkit> toolkit = s_toolkit;
-    if (toolkit && toolkit->get_generation_id() == generation_id)
-        return toolkit;
-    return nullptr;
-}
 
 
 
@@ -58,8 +42,6 @@ suggester::suggester(lua_state& lua)
 //------------------------------------------------------------------------------
 bool suggester::suggest(const line_states& lines, matches* matches, int generation_id)
 {
-    s_toolkit.reset();
-
     const line_state& line = lines.back();
 
     if (!line.get_length())
@@ -103,14 +85,14 @@ nosuggest:
     }
     else
     {
-        s_toolkit = make_match_builder_toolkit(generation_id, line.get_end_word_offset());
+        std::shared_ptr<match_builder_toolkit> toolkit = make_match_builder_toolkit(generation_id, line.get_end_word_offset());
 
         // These can't be bound to stack objects because they must stay valid
         // for the duration of the coroutine.
         line_state_lua::make_new(state, make_line_state_copy(line));
         line_states_lua::make_new(state, lines);
-        matches_lua::make_new(state, s_toolkit);
-        match_builder_lua::make_new(state, s_toolkit);
+        matches_lua::make_new(state, toolkit);
+        match_builder_lua::make_new(state, toolkit);
         lua_pushinteger(state, generation_id);
 
         if (m_lua.pcall(state, 5, 1) != 0)

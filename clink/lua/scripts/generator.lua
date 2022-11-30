@@ -158,7 +158,7 @@ function clink._make_match_generate_coroutine(line, lines, matches, builder, gen
         if not clink._is_coroutine_canceled(c) then
             -- PERF: This can potentially take some time, especially in Debug
             -- builds.
-            if clink.matches_ready(generation_id) then
+            if builder:matches_ready(generation_id) then
                 clink._keep_coroutine_events(c)
             end
         else

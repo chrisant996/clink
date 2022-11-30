@@ -1122,20 +1122,6 @@ static int kick_idle(lua_State* state)
 
 //------------------------------------------------------------------------------
 // UNDOCUMENTED; internal use only.
-static int matches_ready(lua_State* state)
-{
-    bool isnum;
-    int id = checkinteger(state, 1, &isnum);
-    if (!isnum)
-        return 0;
-
-    extern bool notify_matches_ready(int generation_id);
-    lua_pushboolean(state, notify_matches_ready(id));
-    return 1;
-}
-
-//------------------------------------------------------------------------------
-// UNDOCUMENTED; internal use only.
 static int recognize_command(lua_State* state)
 {
     const char* line = checkstring(state, 1);
@@ -1642,7 +1628,6 @@ void clink_lua_initialise(lua_state& lua)
         { "history_suggester",      &history_suggester },
         { "set_suggestion_result",  &set_suggestion_result },
         { "kick_idle",              &kick_idle },
-        { "matches_ready",          &matches_ready },
         { "_recognize_command",     &recognize_command },
         { "_async_path_type",       &async_path_type },
         { "_generate_from_history", &generate_from_history },

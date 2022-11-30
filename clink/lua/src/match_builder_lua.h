@@ -32,6 +32,7 @@ public:
     int             set_matches_are_files(lua_State* state);
 
     int             clear_toolkit(lua_State* state);
+    int             matches_ready(lua_State* state);
 
 private:
     bool            add_match_impl(lua_State* state, int stack_index, match_type type);

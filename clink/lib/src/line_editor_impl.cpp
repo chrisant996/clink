@@ -40,7 +40,6 @@ extern setting_color g_color_histexpand;
 extern int g_suggestion_offset;
 
 extern "C" void host_clear_suggestion();
-extern void reset_suggester();
 extern bool check_recognizer_refresh();
 extern bool is_showing_argmatchers();
 extern bool win_fn_callback_pending();
@@ -163,13 +162,12 @@ void update_matches()
 }
 
 //------------------------------------------------------------------------------
-bool notify_matches_ready(int generation_id)
+bool notify_matches_ready(std::shared_ptr<match_builder_toolkit> toolkit, int generation_id)
 {
-    if (!s_editor)
+    if (!s_editor || !toolkit)
         return false;
 
-    auto toolkit = get_deferred_matches(generation_id);
-    matches* matches = toolkit ? toolkit->get_matches() : nullptr;
+    matches* matches = toolkit->get_matches();
     return s_editor->notify_matches_ready(generation_id, matches);
 }
 
@@ -472,8 +470,6 @@ void line_editor_impl::end_line()
     s_editor = nullptr;
     s_callbacks = nullptr;
     g_word_collector = nullptr;
-
-    reset_suggester();
 
     clear_flag(flag_editing);
 
