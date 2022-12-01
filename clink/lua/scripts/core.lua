@@ -152,7 +152,7 @@ function clink.quote_split(str, ql, qr)
     local i = 1
     local needle = "%b"..ql..qr
     local parts = {}
-    for l, r, quote in function() return str:find(needle, i) end do
+    for l, r, quote in function() return str:find(needle, i) end do -- luacheck: no unused
         -- "pre"
         if l > 1 then
             insert(parts, str:sub(i, l - 1))
@@ -196,7 +196,12 @@ function clink.split(str, sep)
         table.insert(ret, str:sub(i, j - 1))
         i = j + 1
     end
-    table.insert(ret, str:sub(i, j))
+
+    -- In Clink v0.4.9 this accidentally accesses j as a global variable, which
+    -- ends up behaving as expected as long as there is no global variable j
+    -- defined.  For safety, that bug is fixed here.
+    --table.insert(ret, str:sub(i, j))
+    table.insert(ret, str:sub(i))
 
     return ret
 end
@@ -449,7 +454,7 @@ function os.abbreviatepath(dir, decide, transform)
             abbrev = decide(this_dir)
         end
         if abbrev == nil then
-            abbrev = (all or not (i == 1 or i == #components))
+            abbrev = not (i == 1 or i == #components)
         end
         if abbrev then
             child, did = abbrev_child(parent, child)
