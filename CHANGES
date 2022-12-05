@@ -2,6 +2,10 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.4.4
+
+- Fixed architecture reported by `clink-diagnostics` <kbd>Ctrl</kbd>-<kbd>X</kbd>,<kbd>Ctrl</kbd>-<kbd>Z</kbd> (regression introduced in v1.3.49).
+
 #### v1.4.3
 
 - Added backward compatibility for obsolete `clink.quote_split()`, `clink.split()`, and `clink.get_screen_info()`.
