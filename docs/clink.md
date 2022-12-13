@@ -486,6 +486,16 @@ You can use `clink info` to find the directories and configuration files for the
 > - Clink performs tilde expansion on the `%CLINK_PROFILE%` environment variable value.  If the path begins with `~\` then it is replaced with the current user's home directory (`%HOMEDRIVE%%HOMEPATH%` or `%USERPROFILE%`).
 > - The `--profile` flag has a quirk for backward compatibility with older versions of Clink: `~\` in `--profile` is expanded to `%LOCALAPPDATA%` instead.
 
+#### Overriding the profile directory when installed for Autorun
+
+If you've installed Clink using the setup program with the "Autorun when cmd.exe starts" box checked, then the profile directory has been explicitly set to `%LOCALAPPDATA%\clink`.  That will take precedence over any other stored configuration.
+
+You can override it via <code>set CLINK_PROFILE=<span class="arg">path</span></code> after starting cmd.exe.
+
+Or you can use <code>clink autorun install -- --profile <span class="arg">path</span></code> to change which profile directory is specified (see `clink autorun --help` and `clink autorun show`).
+
+Or if you want to use Autorun but also override the profile directory any of the usual ways, then run `clink autorun uninstall` and then `clink autorun install`.  That will remove the explicit profile directory specification that was applied by the setup program.
+
 ### Files
 
 <p>
