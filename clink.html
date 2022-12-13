@@ -1738,6 +1738,11 @@ supersedes the <code>terminal.mouse_modifier</code> setting.  In Windows Termina
 <li>The <code>--profile</code> flag has a quirk for backward compatibility with older versions of Clink: <code>~\</code> in <code>--profile</code> is expanded to <code>%LOCALAPPDATA%</code> instead.</li>
 </ul>
 </blockquote>
+<h4 id="overriding-the-profile-directory-when-installed-for-autorun"><div class="wlink"><a href="#overriding-the-profile-directory-when-installed-for-autorun"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Overriding the profile directory when installed for Autorun</h4>
+<p>If you&#39;ve installed Clink using the setup program with the &quot;Autorun when cmd.exe starts&quot; box checked, then the profile directory has been explicitly set to <code>%LOCALAPPDATA%\clink</code>.  That will take precedence over any other stored configuration.</p>
+<p>You can override it via <code>set CLINK_PROFILE=<span class="arg">path</span></code> after starting cmd.exe.</p>
+<p>Or you can use <code>clink autorun install -- --profile <span class="arg">path</span></code> to change which profile directory is specified (see <code>clink autorun --help</code> and <code>clink autorun show</code>).</p>
+<p>Or if you want to use Autorun but also override the profile directory any of the usual ways, then run <code>clink autorun uninstall</code> and then <code>clink autorun install</code>.  That will remove the explicit profile directory specification that was applied by the setup program.</p>
 <h3 id="files"><div class="wlink"><a href="#files"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Files</h3>
 <p>
 <dt>.inputrc</dt>
