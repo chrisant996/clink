@@ -1958,6 +1958,7 @@ local function attempt_load_argmatcher(command_word, quoted)
     end
 
     -- Look for file.
+    local loaded = {}
     for _,d in ipairs(dirs) do
         if d ~= "" then
             local file = path.join(d, primary)
@@ -1971,7 +1972,8 @@ local function attempt_load_argmatcher(command_word, quoted)
                     end
                 end
             end
-            if file then
+            if file and not loaded[file] then
+                loaded[file] = true
                 loaded_argmatchers[command_word] = 2 -- Attempted and Loaded.
                 -- Load the file.
                 dofile(file)
