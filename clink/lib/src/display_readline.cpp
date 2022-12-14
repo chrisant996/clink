@@ -8,6 +8,9 @@
 #include "pch.h"
 #include <assert.h>
 
+#define READLINE_LIBRARY
+#define BUILD_READLINE
+
 #include "display_readline.h"
 #include "line_buffer.h"
 #include "ellipsify.h"
@@ -2135,7 +2138,7 @@ void refresh_terminal_size()
 
     if (_rl_screenheight != height || _rl_screenwidth != width)
     {
-        rl_set_screen_size(height, width);
+        _rl_get_screen_size(0, 0);
         if (g_debug_log_terminal.get())
             LOG("terminal size %u x %u", _rl_screenwidth, _rl_screenheight);
     }
