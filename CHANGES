@@ -4,6 +4,7 @@
 
 #### v1.4.4
 
+- Fixed the screen width in the Help commands and Completion commands (regression introduced in v1.3.43).
 - Fixed to not load the same Lua script more than once from a completions directory when the Lua script doesn't define an argmatcher.
 - Fixed architecture reported by `clink-diagnostics` <kbd>Ctrl</kbd>-<kbd>X</kbd>,<kbd>Ctrl</kbd>-<kbd>Z</kbd> (regression introduced in v1.3.49).
 
