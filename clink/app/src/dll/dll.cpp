@@ -184,13 +184,7 @@ void start_logger()
                     (system_info.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64) ? "x64" : 
                     ((system_info.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM64) ? "arm64" : "x86"));
             }
-#if defined(_M_X64)
-            LOG("Clink version %s (x64)", CLINK_VERSION_STR);
-#elif defined(_M_ARM64)
-            LOG("Clink version %s (arm64)", CLINK_VERSION_STR);
-#else
-            LOG("Clink version %s (x86)", CLINK_VERSION_STR);
-#endif
+            LOG("Clink version %s (%s)", CLINK_VERSION_STR, AS_STR(ARCHITECTURE_NAME));
 #pragma warning(pop)
         }
     }

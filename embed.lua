@@ -40,21 +40,15 @@ end
 local function do_embed(debug_info)
     -- Find the Lua compilers.
     local archs = {
-        ["x64"] = { luac = os.matchfiles(".build/*/bin/final/luac_x64.exe")[1] },
-        ["x86"] = { luac = os.matchfiles(".build/*/bin/final/luac_x86.exe")[1] },
-        -- ARM64 cannot be included like this because ARM64 executables cannot
-        -- run on x64, which makes it impossible for me to produce any Clink
-        -- release builds without an ARM64 device.  I don't even have an ARM64
-        -- device, but even if I did I would not accept a requirement of only
-        -- building Clink on ARM64 machines.
-        --["arm64"] = { luac = os.matchfiles(".build/*/bin/final/luac_arm64.exe")[1] },
+        ["64"] = { luac = os.matchfiles(".build/*/bin/final/luac_x64.exe")[1] },
+        ["86"] = { luac = os.matchfiles(".build/*/bin/final/luac_x86.exe")[1] },
     }
 
     debug_info = debug_info and "" or " -s"
 
     for name, arch in spairs(archs) do
         if not arch.luac then
-            error("Unable to find Lua compiler binary ("..name.." final).")
+            error("Unable to find Lua compiler binary (x"..name.." final).")
         end
 
         arch.luac = arch.luac:gsub("/", "\\")
@@ -83,7 +77,7 @@ local function do_embed(debug_info)
             print("   "..file)
 
             for name, arch in spairs(archs) do
-                out:write("#if ARCHITECTURE_IS("..name..")\n")
+                out:write("#if ARCHITECTURE == "..name.."\n")
 
                 -- Compile the input Lua script to binary.
                 exec(arch.luac..debug_info.." -o .build/embed_temp "..file)
@@ -106,9 +100,9 @@ local function do_embed(debug_info)
                 out:write("unsigned char const* "..symbol.." = "..symbol.."_;\n")
                 out:write("int "..symbol.."_len = sizeof("..symbol.."_);\n")
 
-                out:write("#endif // ARCHITECTURE_IS("..name..")\n")
+                out:write("#endif // ARCHITECTURE == "..name.."\n")
 
-                print("      "..name.." : "..tostring(#bin_data).." bytes")
+                print("      x"..name.." : "..tostring(#bin_data).." bytes")
             end
         end
 

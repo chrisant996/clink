@@ -2032,7 +2032,7 @@ int clink_diagnostics(int count, int invoking_key)
     if (rl_explicit_arg)
     {
         s.clear();
-        s.format("  %-*s  %s\n", spacing, "architecture", AS_STR(ARCHITECTURE));
+        s.format("  %-*s  %s\n", spacing, "architecture", AS_STR(ARCHITECTURE_NAME));
         g_printer->print(s.c_str(), s.length());
     }
 
