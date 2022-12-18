@@ -604,7 +604,7 @@ function clink._diag_generators()
     for _,generator in ipairs (_generators) do
         if generator.generate then
             local info = debug.getinfo(generator.generate, 'S')
-            if info.short_src ~= "?" then
+            if not clink._is_internal_script(info.short_src) then
                 print("  "..info.short_src..":"..info.linedefined)
                 any = true
             end

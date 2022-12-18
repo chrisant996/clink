@@ -204,7 +204,7 @@ function clink._diag_suggesters()
     for _,entry in ipairs(list) do
         if entry.suggest then
             local info = debug.getinfo(entry.suggest, 'S')
-            if info.short_src ~= "?" then
+            if not clink._is_internal_script(info.short_src) then
                 if not any then
                     clink.print(bold.."suggesters:"..norm)
                     any = true

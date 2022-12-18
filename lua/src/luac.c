@@ -180,7 +180,20 @@ static int pmain(lua_State* L)
  for (i=0; i<argc; i++)
  {
   const char* filename=IS("-") ? NULL : argv[i];
-  if (luaL_loadfile(L,filename)!=LUA_OK) fatal(lua_tostring(L,-1));
+/* begin_clink_change */
+  //if (luaL_loadfile(L,filename)!=LUA_OK) fatal(lua_tostring(L,-1));
+  if (stripping) {
+    char name[128];
+    const char* fname = filename;
+    for (const char* ptr = fname; *ptr; ++ptr)
+        if (*ptr == '/' || *ptr == '\\')
+        fname = ptr + 1;
+    sprintf(name, "{%s}", fname);
+    if (luaL_loadfilexname(L,filename,NULL,name)!=LUA_OK) fatal(lua_tostring(L,-1));
+  } else {
+    if (luaL_loadfile(L,filename)!=LUA_OK) fatal(lua_tostring(L,-1));
+  }
+/* end_clink_change */
  }
  f=combine(L,argc);
  if (listing) luaU_print(f,listing>1);

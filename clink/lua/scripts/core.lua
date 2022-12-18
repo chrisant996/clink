@@ -132,6 +132,15 @@ end
 
 
 --------------------------------------------------------------------------------
+-- This returns true if short_src matches "{...}", which means it's an internal
+-- Clink script.
+function clink._is_internal_script(short_src)
+    return string.match(short_src, "^{.*}$")
+end
+
+
+
+--------------------------------------------------------------------------------
 --- -name:  clink.quote_split
 --- -deprecated: string.explode
 --- -arg:   str:string

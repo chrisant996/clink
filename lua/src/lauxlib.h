@@ -77,6 +77,12 @@ LUALIB_API int (luaL_loadfilex) (lua_State *L, const char *filename,
 
 #define luaL_loadfile(L,f)	luaL_loadfilex(L,f,NULL)
 
+/* begin_clink_change */
+LUALIB_API int (luaL_loadfilexname) (lua_State *L, const char *filename,
+                                                   const char *mode,
+                                                   const char *name);
+/* end_clink_change */
+
 LUALIB_API int (luaL_loadbufferx) (lua_State *L, const char *buff, size_t sz,
                                    const char *name, const char *mode);
 LUALIB_API int (luaL_loadstring) (lua_State *L, const char *s);

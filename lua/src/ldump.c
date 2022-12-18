@@ -120,7 +120,15 @@ static void DumpUpvalues(const Proto* f, DumpState* D)
 static void DumpDebug(const Proto* f, DumpState* D)
 {
  int i,n;
- DumpString((D->strip) ? NULL : f->source,D);
+/* begin_clink_change */
+ //DumpString((D->strip) ? NULL : f->source,D);
+ int strip = D->strip;
+ if (strip && f->source) {
+  const char* src = getstr(f->source);
+  strip = !(src[0] == '=' && src[1] == '{');
+ }
+ DumpString(strip ? NULL : f->source,D);
+/* end_clink_change */
  n= (D->strip) ? 0 : f->sizelineinfo;
  DumpVector(f->lineinfo,n,sizeof(int),D);
  n= (D->strip) ? 0 : f->sizelocvars;

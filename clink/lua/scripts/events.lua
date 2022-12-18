@@ -334,7 +334,7 @@ function clink._diag_events(arg)
         local any_callbacks = false
         for _,f in ipairs(callback_table) do
             local info = debug.getinfo(f, 'S')
-            if info.short_src ~= "?" then
+            if not clink._is_internal_script(info.short_src) then
                 local src = info.short_src..":"..info.linedefined
 
                 if not any_callbacks then

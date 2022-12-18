@@ -1694,7 +1694,7 @@ local function get_creation_srcinfo()
         if not info then
             break
         end
-        if info.short_src ~= "?" then
+        if not clink._is_internal_script(info.short_src) then
             return info.short_src..":"..info.currentline
         end
     end
@@ -2453,7 +2453,7 @@ function clink._diag_argmatchers()
     local fmt = "  %-"..width.."s  :  %s"
     for k,v in spairs(_argmatchers) do
         local src = v._srccreated
-        if src and src ~= "?" then
+        if src and not clink._is_internal_script(src) then
             any = true
             clink.print(string.format(fmt, k, src))
         end

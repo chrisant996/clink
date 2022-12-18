@@ -226,7 +226,7 @@ local function collect_filter_src(t, type)
         local func = prompt[type]
         if func then
             local info = debug.getinfo(func, 'S')
-            if info.short_src ~= "?" then
+            if not clink._is_internal_script(info.short_src) then
                 local src = info.short_src..":"..info.linedefined
                 local cost = prompt["cost"..type]
                 table.insert(tsub, { src=src, cost=cost })

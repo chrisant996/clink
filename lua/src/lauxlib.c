@@ -738,6 +738,14 @@ done:
 
 LUALIB_API int luaL_loadfilex (lua_State *L, const char *filename,
                                              const char *mode) {
+/* begin_clink_change */
+ return luaL_loadfilexname(L, filename, mode, NULL);
+}
+
+LUALIB_API int luaL_loadfilexname (lua_State *L, const char *filename,
+                                                 const char *mode,
+                                                 const char *name) {
+/* end_clink_change */
   LoadF lf;
   int status, readstatus;
   int c;
@@ -756,6 +764,12 @@ LUALIB_API int luaL_loadfilex (lua_State *L, const char *filename,
     lf.f = fopen(filename, "r");
     if (lf.f == NULL) return errfile(L, "open", fnameindex);
   }
+/* begin_clink_change */
+  if (name) {
+    lua_pop(L, 1);
+    lua_pushfstring(L, "=%s", name);
+  }
+/* end_clink_change */
   if (skipcomment(&lf, &c))  /* read initial portion */
     lf.buff[lf.n++] = '\n';  /* add line to correct line numbers */
   if (c == LUA_SIGNATURE[0] && filename) {  /* binary file? */
