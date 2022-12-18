@@ -1689,16 +1689,23 @@ end
 
 --------------------------------------------------------------------------------
 local function get_creation_srcinfo()
+    local first, src
     for level = 3, 10 do
         local info = debug.getinfo(level, "Sl")
         if not info then
             break
         end
+        src = info.short_src..":"..info.currentline
+        if not first then
+            first = src
+        end
+        -- Favor returning a user script location.
         if not clink._is_internal_script(info.short_src) then
-            return info.short_src..":"..info.currentline
+            return src
         end
     end
-    return "?"
+    -- If no user script location, return the original internal location.
+    return first or "?"
 end
 
 --------------------------------------------------------------------------------
