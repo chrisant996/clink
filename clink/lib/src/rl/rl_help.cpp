@@ -789,6 +789,11 @@ static Keyentry* collect_functions(
 
     for (auto& macro_desc : s_macro_descriptions)
     {
+        if (*offset >= *max)
+        {
+            *max *= 2;
+            collector = (Keyentry *)realloc(collector, sizeof(collector[0]) * *max);
+        }
 
         Keyentry& out = collector[*offset];
         memset(&out, 0, sizeof(out));
