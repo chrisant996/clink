@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.4.5</title>
+<title>Clink v1.4.6</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -853,7 +853,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.4.5</div>
+                <div id="title">Clink v1.4.6</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -6792,6 +6792,11 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes"><div class="wlink"><a href="#changes"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork"><div class="wlink"><a href="#releases-from-chrisant996clink-fork"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v146"><div class="wlink"><a href="#v146"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>v1.4.6</h4>
+<ul>
+<li>Added a more informative exit code from <code>clink inject</code>.  It returns 0 if successful, 2 if a fatal error occurred, or 1 if a non-fatal error occurred (such as Clink was already present; related to <a href="https://github.com/cmderdev/cmder/issues/2800">cmderdev/cmder#2800</a>).</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/382">#382</a>; <code>%CLINK_PROFILE%</code> doesn&#39;t supersede <code>--profile</code> (regression introduced in v1.0.0).</li>
+</ul>
 <h4 id="v145"><div class="wlink"><a href="#v145"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>v1.4.5</h4>
 <ul>
 <li>Improved debug Lua messages; Clink&#39;s built-in Lua scripts reported &quot;?&quot; as the filename, and now they report &quot;{filename.lua}&quot;.</li>
