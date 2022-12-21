@@ -2,6 +2,11 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.4.6
+
+- Added a more informative exit code from `clink inject`.  It returns 0 if successful, 2 if a fatal error occurred, or 1 if a non-fatal error occurred (such as Clink was already present; related to [cmderdev/cmder#2800](https://github.com/cmderdev/cmder/issues/2800)).
+- Fixed [#382](https://github.com/chrisant996/clink/issues/382); `%CLINK_PROFILE%` doesn't supersede `--profile` (regression introduced in v1.0.0).
+
 #### v1.4.5
 
 - Improved debug Lua messages; Clink's built-in Lua scripts reported "?" as the filename, and now they report "{filename.lua}".
