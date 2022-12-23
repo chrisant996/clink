@@ -22,6 +22,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Some way for `history.save false` to not do any disk IO for history, but still enable `clink history` to show the session's history (probably using Shared Memory).
 - Some way for `os.globfiles()` and `os.globdirs()` to override the `files.hidden` and `files.system` settings?
 - Make a reusable wrapper mechanism to create coroutine-friendly threaded async operations in Lua?
+- Issue #387 is a request to add an option to put the cursor at the end of the search text when using `history-substring-search-backward` (and `-forward`).  But that diverges even more from Readline, and I'm actively trying to instead converge as much as possible.  Maybe if Chet approves?
 
 ## Follow Up
 - Push update to z.lua repo.
