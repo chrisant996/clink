@@ -167,7 +167,11 @@ int rl_buffer_lua::insert(lua_State* state)
 /// -arg:   from:integer
 /// -arg:   to:integer
 /// Removes text from the input line starting at cursor position
-/// <span class="arg">from</span> through <span class="arg">to</span>.
+/// <span class="arg">from</span> up to but not including
+/// <span class="arg">to</span>.
+///
+/// If <span class="arg">from</span> is greater than <span class="arg">to</span>
+/// then the positions are swapped before removing text.
 ///
 /// Note:  the input line is UTF8, and removing only part of a multi-byte
 /// Unicode character may have undesirable results.
