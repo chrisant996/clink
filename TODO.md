@@ -9,8 +9,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## Normal Priority
 
 ## Low Priority
-- Collecting words currently happens in update_internal, but probably it also belongs in alternative_matches and/or update_matches:
-  - If a `luafunc:` macro first does anything that alters the line buffer, and then invokes a completion command, then the collected words will be inaccurate.
 - Allow removing event handlers, e.g. `clink.onbeginedit(func)` to add an event handler, and something like `clink.onbeginedit(func, false)` or `clink.removebeginedit(func)` to remove one?  Or maybe return a function that can be called to remove it, e.g. like below (but make sure repeated calls become no-ops).  The `clink-diagnostics` command would need to still show any removed event handlers until the next beginedit.
     ```
     local remove = clink.onbeginedit(func) -- add func
@@ -19,7 +17,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Allow Lua to set the comment row for the input line?
   - Need a simple and reliable trigger for clearing the comment row later; maybe `clink.onaftercommand()` is enough?
   - Don't add this ability unless there is a way to ensure comment rows don't get "leaked" and continue showing up past when they were relevant.
-- Some way for `history.save false` to not do any disk IO for history, but still enable `clink history` to show the session's history (probably using Shared Memory).
 - Some way for `os.globfiles()` and `os.globdirs()` to override the `files.hidden` and `files.system` settings?
 - Make a reusable wrapper mechanism to create coroutine-friendly threaded async operations in Lua?
 - Issue #387 is a request to add an option to put the cursor at the end of the search text when using `history-substring-search-backward` (and `-forward`).  But that diverges even more from Readline, and I'm actively trying to instead converge as much as possible.  Maybe if Chet approves?
@@ -52,6 +49,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Windows Terminal crashes on exit after `clink inject`.  The current release version was crashing (1.6.10571.0).  Older versions don't crash, and a locally built version from the terminal repo's HEAD doesn't crash.  I think the crash is probably a bug in Windows Terminal, not related to Clink.  And after I built it locally, then it stopped crashing with 1.6.10571.0 as well.  Mysterious...
 
 ## Punt
+- Some way for `history.save false` to not do any disk IO for history, but still enable `clink history` to show the session's history (probably using Shared Memory).  _[Unfavorable cost vs benefit; expensive and complicated, while offering very little benefit beyond what could be achieved by simply applying ACLs and/or encryption to the profile directory, which is something that is best done externally from Clink.]_
 - Coroutines can call `clink.refilterprompt()` and it immediately refilters while in the coroutine.  Should it instead set a flag to refilter after the coroutines have yielded?  _[It should be fine because only `line_editor_impl` has an input idle callback that runs Lua coroutines.]_
 - Show time stamps in history popup?  _[Gets complicated because of horizontal scrolling.  Too many edge cases; the benefit is not worth the cost.]_
 - Some way to push keys?  (Push keys to Clink; not to other processes.)  _[Just use `WScript.Shell.SendKeys` when needed.]_
@@ -84,7 +82,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Readline 8.1 has slight bug in `update_line`; type `c` then `l`, and it now identifies **2** chars (`cl`) as needing to be displayed; seems like the diff routine has a bug with respect to the new faces capability; it used to only identify `l` as needing to be displayed.  _[Moot; Clink no longer uses Readline's display implementation.]_
 - Optional feature to simplify auto-path-separator after completion, like in `zsh`:  highlight `\` in a color, and if <kbd>Space</kbd> is the next input then replace the `"\"` with `" "`.  _[Not worth it; there is very little value, and there are many side effects, e.g. wrt autosuggest.  I got excited at first, but then I realized what I really need is a better way to signal for `menu-complete` to accept a directory it's inserted and start a new completion.  And then I realized, since completions are normalized as of commit 9ec9eb1b69 in v1.1.24, typing <kbd>\</kbd><kbd>Tab</kbd> goes from `foo\` to `foo\\` to `foo\bar`, so the scenario I had in mind is already fully solved in a simple and reliable way.]_
 - Postpone:  Ideally the updater could have a way to run an embedded script in the newly installed version, to do any needed finalization.  But there isn't really a way to reliably determine whether it needs to run, nor to handle errors that may occur.  And a more reliable mechanism is to do upgrade steps on the next inject.
-- Include `wildmatch()` and an `fnmatch()` wrapper for it.  But should first update it to support UTF8.  _[Not worth the effort; and recursive match generation doesn't make much sense anyway.  Could potentially be useful in globbing purposes other than match generation, though.]_
 - There's no straightforward way to let Lua scripts change the current directory and have CMD pick up the changed state.  CMD maintains internal private state about what directory to use when running commands and programs.  Running `cd` is the only way to alter CMD's internal private state.
 - Explore adjusting default colors to have better contrast with white/light backgrounds?  _[No, it is tilting at windmills.  Never mind about Clink; nothing else will work reasonably in light themes, either, at least not the way they're currently defined in Windows Terminal.  If Windows Terminal fixes its themes, then it will become possible to have a single set of color definitions in Clink that work well in both light and dark themes.  Until then, it doesn't make sense to make complicated attempts to overcome the broader external problems.]_
 - Recognizer and argmatcher lookup should support `@` syntax; collecting words should support `@   command` syntax.  _[Not worth the effort; using `@` at the command prompt has no effect anyway.]_
