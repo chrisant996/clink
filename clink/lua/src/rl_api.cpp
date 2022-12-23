@@ -32,6 +32,7 @@ extern int              _rl_last_v_pos;
 }
 
 extern matches* get_mutable_matches(bool nosort=false);
+extern void force_update_internal(bool restrict);
 extern const char* get_last_luafunc();
 extern void override_rl_last_func(rl_command_func_t* func, bool force_when_null=false);
 
@@ -525,6 +526,14 @@ static int invoke_command(lua_State* state)
     const char* command = checkstring(state, 1);
     if (!command)
         return 0;
+
+    // Must force update_internal() in case a completion command is invoked (or
+    // anything uses line_state).  Updating matches in alternative_matches() is
+    // too late, because the word break info needs to have already been updated
+    // before alternative_matches() is reached.  The update_internal() stuff
+    // already is optimized to do nothing if the input line hasn't changed since
+    // the last time update_internal() was called.
+    force_update_internal(false/*restrict*/);
 
     if (*command == '"')
     {
