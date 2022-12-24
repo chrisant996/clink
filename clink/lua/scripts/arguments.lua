@@ -2616,7 +2616,13 @@ end
 function clink.arg.register_parser(cmd, parser)
     cmd = path.normalise(clink.lower(cmd))
 
-    if parser and parser._deprecated then
+    if not parser or getmetatable(parser) ~= _argmatcher then
+        local p = clink.arg.new_parser()
+        p:set_arguments({ parser })
+        parser = p
+    end
+
+    if parser._deprecated then
         clink._mark_deprecated_argmatcher(cmd)
     end
 
