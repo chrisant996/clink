@@ -2,6 +2,10 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.4.7
+
+- Fixed [#393](https://github.com/chrisant996/clink/issues/393); backward compatibility issue when `clink.arg.register_parser()` is passed something that is not a parser at all.
+
 #### v1.4.6
 
 - Added a more informative exit code from `clink inject`.  It returns 0 if successful, 2 if a fatal error occurred, or 1 if a non-fatal error occurred (such as Clink was already present; related to [cmderdev/cmder#2800](https://github.com/cmderdev/cmder/issues/2800)).
