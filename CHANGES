@@ -4,6 +4,7 @@
 
 #### v1.4.7
 
+- Fixed obscure issue when a "luafunc:" macro modifies the input line and then invokes a completion command.
 - Fixed [#393](https://github.com/chrisant996/clink/issues/393); backward compatibility issue when `clink.arg.register_parser()` is passed something that is not a parser at all.
 
 #### v1.4.6
