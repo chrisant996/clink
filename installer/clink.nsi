@@ -25,6 +25,7 @@
 !include "winmessages.nsh"
 !include "Sections.nsh"
 !include "FileFunc.nsh"
+!include "x64.nsh"
 
 ;-------------------------------------------------------------------------------
 Unicode                 true
@@ -136,6 +137,10 @@ Section "!Application files" app_files_id
     File ${CLINK_BUILD}\clink_x*.exe
     File ${CLINK_BUILD}\clink.bat
     File ${CLINK_BUILD}\clink.html
+    ${If} ${IsNativeARM64}
+        File ${CLINK_BUILD}\clink_dll_arm*.dll
+        File ${CLINK_BUILD}\clink_arm*.exe
+    ${EndIf}
 
     ; Create an uninstaller.
     ;

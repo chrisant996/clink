@@ -3,7 +3,7 @@
 
 --------------------------------------------------------------------------------
 local any_warnings_or_failures = nil
-local include_arm64 = nil
+local include_arm64 = true
 
 --------------------------------------------------------------------------------
 local release_manifest = {
