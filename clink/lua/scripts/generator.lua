@@ -33,23 +33,21 @@ clink.match_display_filter = nil
 
 
 --------------------------------------------------------------------------------
-local function advance_ignore_quotes(state)
-    local word = state[1]
-    local seek = #word
-    if seek > 0 then
+local function advance_ignore_quotes(word, seek)
+    if seek > 1 then
+        seek = seek - 1
         while true do
             -- Finding a non-quote is success.
-            if word:sub(seek, 1) ~= '"' then
-                state[1] = word:sub(1, seek - 1)
-                return true
+            if word:sub(seek, seek) ~= '"' then
+                return true, seek
             end
             -- Reaching the beginning is failure.
             if seek <= 1 then
                 break
             end
-            seek = seek -1
+            seek = seek - 1
             -- Finding a `\"` digraph is a failure.
-            if word:sub(seek, 1) == "\\" then
+            if word:sub(seek, seek) == "\\" then
                 break
             end
         end
@@ -59,22 +57,28 @@ end
 
 --------------------------------------------------------------------------------
 local function is_dots(word)
-    local state = { word }
+    local len = #word + 1
+    local ok
 
-    if not advance_ignore_quotes(state) then
+    ok, len = advance_ignore_quotes(word, len)
+    if not ok then
         return false            -- Too short.
-    elseif state[1]:sub(-1) ~= "." then
+    elseif word:sub(len, len) ~= "." then
         return false            -- No dot at end.
     end
 
-    if not advance_ignore_quotes(state) then
+    ok, len = advance_ignore_quotes(word, len)
+    if not ok then
         return true             -- Exactly ".".
-    elseif state[1]:sub(-1) == "." and not advance_ignore_quotes(state) then
-        return true             -- Exactly "..".
+    elseif word:sub(len, len) == "." then
+        ok, len = advance_ignore_quotes(word, len)
+        if not ok then
+            return true         -- Exactly "..".
+        end
     end
 
-    local last = state[1]:sub(-1)
-    if last == "/" or last == "\\" then
+    local sep = word:sub(len, len)
+    if sep == "/" or sep == "\\" then
         return true             -- Ends with "\." or "\..".
     end
 
