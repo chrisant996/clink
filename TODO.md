@@ -7,7 +7,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
-- Somewhere along the way completion for `.` and `..` changed; issue #111 is back.
 - Include `wildmatch()` and an `fnmatch()` wrapper for it.  _[Recursive globbing can make sense in some cases; e.g. `fzf`-like matching or expanding abbreviated paths or etc.]_
   - Start with [davvid/wildmatch](https://github.com/davvid/wildmatch).
   - Update it to support UTF8, if it doesn't already.
