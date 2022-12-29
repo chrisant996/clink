@@ -12,6 +12,9 @@
 #include <vector>
 
 //------------------------------------------------------------------------------
+static bool s_can_strip_quotes = false;
+
+//------------------------------------------------------------------------------
 line_state::line_state(
     const char* line,
     unsigned int length,
@@ -86,13 +89,22 @@ unsigned int line_state::get_word_count() const
 //------------------------------------------------------------------------------
 bool line_state::get_word(unsigned int index, str_base& out) const
 {
-    // STRIPS quotes.
+    // MAY STRIP quotes.
     if (index < m_words.size())
     {
-        // Strip quotes so `"foo\"ba` can complete to `"foo\bar"`.  Stripping
-        // quotes may seem surprising, but it's what CMD does and it works well.
         const word& word = m_words[index];
-        concat_strip_quotes(out, m_line + word.offset, word.length);
+        if (s_can_strip_quotes)
+        {
+            // Strip quotes so `"foo\"ba` can complete to `"foo\bar"`.
+            // Stripping quotes may seem surprising, but it's what CMD does
+            // and it works well.
+            concat_strip_quotes(out, m_line + word.offset, word.length);
+        }
+        else
+        {
+            out.clear();
+            out.concat(m_line + word.offset, word.length);
+        }
         return true;
     }
 
@@ -102,7 +114,7 @@ bool line_state::get_word(unsigned int index, str_base& out) const
 //------------------------------------------------------------------------------
 str_iter line_state::get_word(unsigned int index) const
 {
-    // INCLUDES quotes.
+    // Never strips quotes.
     if (index < m_words.size())
     {
         const word& word = m_words[index];
@@ -115,7 +127,7 @@ str_iter line_state::get_word(unsigned int index) const
 //------------------------------------------------------------------------------
 bool line_state::get_end_word(str_base& out) const
 {
-    // STRIPS quotes.
+    // MAY STRIP quotes.
     int n = get_word_count();
     return (n ? get_word(n - 1, out) : false);
 }
@@ -123,7 +135,13 @@ bool line_state::get_end_word(str_base& out) const
 //------------------------------------------------------------------------------
 str_iter line_state::get_end_word() const
 {
-    // INCLUDES quotes.
+    // Never strips quotes.
     int n = get_word_count();
     return (n ? get_word(n - 1) : str_iter());
+}
+
+//------------------------------------------------------------------------------
+void line_state::set_can_strip_quotes(bool can)
+{
+    s_can_strip_quotes = can;
 }

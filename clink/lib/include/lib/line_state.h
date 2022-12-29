@@ -32,10 +32,12 @@ public:
     unsigned int        get_end_word_offset() const;
     const std::vector<word>& get_words() const;
     unsigned int        get_word_count() const;
-    bool                get_word(unsigned int index, str_base& out) const;  // STRIPS quotes.
-    str_iter            get_word(unsigned int index) const;                 // INCLUDES quotes.
-    bool                get_end_word(str_base& out) const;                  // STRIPS quotes.
-    str_iter            get_end_word() const;                               // INCLUDES quotes.
+    bool                get_word(unsigned int index, str_base& out) const;  // MAY STRIP quotes, except during getworkbreakinfo().
+    str_iter            get_word(unsigned int index) const;                 // Never strips quotes.
+    bool                get_end_word(str_base& out) const;                  // MAY STRIP quotes, except during getworkbreakinfo().
+    str_iter            get_end_word() const;                               // Never strips quotes.
+
+    static void         set_can_strip_quotes(bool can);
 
 private:
     const std::vector<word>& m_words;

@@ -246,13 +246,17 @@ int line_state_lua::get_word_info(lua_State* state)
 /// -ret:   string
 /// Returns the word of the line at <span class="arg">index</span>.
 ///
-/// Note:  The returned word omits any quotes.  This helps generators naturally
-/// complete <code>"foo\"ba</code> to <code>"foo\bar"</code>.  The raw word
-/// including quotes can be obtained using the <code>offset</code> and
-/// <code>length</code> fields from
+/// <strong>Note:</strong>  The returned word omits any quotes.  This helps
+/// generators naturally complete <code>"foo\"ba</code> to
+/// <code>"foo\bar"</code>.  The raw word including quotes can be obtained using
+/// the <code>offset</code> and <code>length</code> fields from
 /// <a href="#line_state:getwordinfo">line_state:getwordinfo()</a> to extract a
 /// substring from the line returned by
 /// <a href="#line_state:getline">line_state:getline()</a>.
+///
+/// <strong>However:</strong>  During <code>generator:getwordbreakinfo()</code>
+/// functions the returned word includes quotes, otherwise word break offsets
+/// could be garbled.
 int line_state_lua::get_word(lua_State* state)
 {
     if (!lua_isnumber(state, 1))
@@ -272,14 +276,18 @@ int line_state_lua::get_word(lua_State* state)
 /// Returns the last word of the line. This is the word that matches are being
 /// generated for.
 ///
-/// Note:  The returned word omits any quotes.  This helps generators naturally
-/// complete <code>"foo\"ba</code> to <code>"foo\bar"</code>.  The raw word
-/// including quotes can be obtained using the <code>offset</code> and
-/// <code>length</code> fields from
+/// <strong>Note:</strong>  The returned word omits any quotes.  This helps
+/// generators naturally complete <code>"foo\"ba</code> to
+/// <code>"foo\bar"</code>.  The raw word including quotes can be obtained using
+/// the <code>offset</code> and <code>length</code> fields from
 /// <a href="#line_state:getwordinfo">line_state:getwordinfo()</a> to extract a
 /// substring from the line returned by
 /// <a href="#line_state:getline">line_state:getline()</a>.
 /// -show:  line_state:getword(line_state:getwordcount()) == line_state:getendword()
+///
+/// <strong>However:</strong>  During <code>generator:getwordbreakinfo()</code>
+/// functions the returned word includes quotes, otherwise word break offsets
+/// could be garbled.
 int line_state_lua::get_end_word(lua_State* state)
 {
     str<32> word;

@@ -88,11 +88,19 @@ void lua_match_generator::get_word_break_info(const line_state& line, word_break
 
     os::cwd_restorer cwd;
 
+    // The getword() and getendword() functions cannot safely strip quotes
+    // during getwordbreakinfo() because it requires exact literal offsets
+    // into the input line buffer.
+    line_state::set_can_strip_quotes(false);
+
     if (m_state.pcall(state, 1, 2) != 0)
     {
+        line_state::set_can_strip_quotes(true);
         info.clear();
         return;
     }
+
+    line_state::set_can_strip_quotes(true);
 
     info.truncate = int(lua_tointeger(state, -2));
     info.keep = int(lua_tointeger(state, -1));
