@@ -6,6 +6,7 @@
 
 - Clink now supports ARM64.
 - Fixed obscure issue when a "luafunc:" macro modifies the input line and then invokes a completion command.
+- Fixed `line_state:getword()` and `line_state:getendword()` to not strip quotes during `generator:getwordbreakinfo()` functions (regression introduced in v1.1.24).
 - Fixed [#393](https://github.com/chrisant996/clink/issues/393); backward compatibility issue when `clink.arg.register_parser()` is passed something that is not a parser at all.
 - Fixed [#111](https://github.com/chrisant996/clink/issues/111) again; `cd ..`<kbd>Tab</kbd> didn't complete to `..\` (regression introduced in v1.3.1).
 
