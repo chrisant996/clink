@@ -170,7 +170,7 @@ extern wcswidth_t *wcswidth;
 /* #undef HAVE_FCNTL */
 
 /* Define if you have the fnmatch function. */
-/* #undef HAVE_FNMATCH */
+#define HAVE_FNMATCH 1
 
 /* Define if you have the getpwent function. */
 /* #undef HAVE_GETPWENT */

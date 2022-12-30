@@ -124,11 +124,129 @@ local function do_embed(debug_info)
 end
 
 --------------------------------------------------------------------------------
+local function escape_cpp(text)
+    return text:gsub("([\"\\])", "\\%1")
+end
+
+--------------------------------------------------------------------------------
+local function write_case(out, line, count, note)
+    local s = "\"" .. escape_cpp(line) .. "\",  "
+    local pad = 56 - #s
+    if pad > 0 then
+        s = s .. string.rep(" ", pad)
+    end
+    note = note and ("  **" .. note .. "**") or ""
+    out:write(s .. "// case #" .. count .. note .. "\n")
+end
+
+--------------------------------------------------------------------------------
+local function do_wildmatch()
+    local expected = 219
+    local count = 0
+
+    local out = "wildmatch/tests/t3070-wildmatch.i"
+    local special1 = [==[match 1 1 '\' '[\\]']==]
+    local special2 = [==[match 1 1 '\' '[\\,]']==]
+    local special3 = [==[match 1 1 '\' '[[-\]]']==]
+
+    print("\n"..out)
+
+    local file = io.open("wildmatch/tests/t3070-wildmatch.sh", "r")
+    out = io.open(out, "w")
+
+    local header = {
+        "// Generated from t3070-wildmatch.sh by 'premake5 embed'.",
+        "",
+        "// Test case format:",
+        "//",
+        "//  <x>match <wmode> <fnmode> <string> <pattern>",
+        "//  <x>imatch <wmode> <string> <pattern>",
+        "//  <x>pathmatch <wmode> <string> <pattern>",
+        "//",
+        "// match        Tests with wildmatch() and fnmatch(), and with slashes and backslashes.",
+        "// imatch       Tests with wildmatch() ignoring case, with slashes and backslashes.",
+        "// pathmatch    Tests with wildmatch() without WM_PATHNAME, with slashes and backslashes.",
+        "//",
+        "// <x>          / to run the test only with the verbatim <string>,",
+        "//              \\ to run the test only with slashes in <string> converted to backslashes,",
+        "//              or leave off <x> to run the test once each way.",
+        "//",
+        "// <wmode>      1 if the test is expected to match with wildmatch(),",
+        "//              0 if the test is expected to fail,",
+        "//              or any other value to skip running the test with wildmatch().",
+        "//",
+        "// <fnmode>     1 if the test is expected to match with fnmatch(),",
+        "//              0 if the test is expected to fail,",
+        "//              or any other value to skip running the test with fnmatch().",
+        "",
+        "static const char* const c_cases[] = {",
+        "",
+    }
+
+    for _,line in ipairs(header) do
+        out:write(line)
+        out:write("\n")
+    end
+
+    local keep_blank
+    for line in file:lines() do
+        if line:find("^#") then
+            local comment = line:match("^#([^!].+)$")
+            if comment then
+                keep_blank = true
+                out:write("//" .. comment .. "\n")
+            end
+        elseif keep_blank and line == "" then
+            out:write("\n")
+        else
+            local op = line:match("^(%w+) ")
+            if op then
+                local note
+                if line == special1 or line == special2 or line == special3 then
+                    note = "MODIFIED"
+                    line = "/" .. line
+                elseif line == "match 1 0 'deep/foo/bar/baz/x' 'deep/**/***/****/*****'" then
+                    note = "MODIFIED"
+                    line = "match 1 0 'deep/foo/bar/baz/x' 'deep/**/***/****'"
+                end
+                count = count + 1
+                write_case(out, line, count, note)
+            end
+
+            if line == "match 0 0 'foo/bar' 'foo[/]bar'" then
+                count = count + 1
+                write_case(out, "match 0 0 'foo/bar' 'foo[^a-z]bar'", count, "ADDITIONAL")
+            elseif line == "pathmatch 1 foo/bar 'foo[/]bar'" then
+                count = count + 1
+                write_case(out, "pathmatch 1 foo/bar 'foo[^a-z]bar'", count, "ADDITIONAL")
+            elseif line == "match 1 0 'deep/foo/bar/baz/x' 'deep/**/***/****'" then
+                count = count + 1
+                write_case(out, "match 1 1 'deep/foo/bar/baz/x' 'deep/**/***/****/*****'", count, "ADDITIONAL")
+            end
+        end
+    end
+
+    out:write("};\n")
+    out:write("\n")
+    out:write("static const int c_expected_count = " .. expected .. ";\n")
+
+    file:close()
+    out:close()
+
+    print("   " .. count .. " test cases")
+
+    if count ~= expected then
+        error("\x1b[0;31;1mFAILED: expected " .. expected .. " tests; found " .. count .. " instead.")
+    end
+end
+
+--------------------------------------------------------------------------------
 newaction {
     trigger = "embed",
     description = "Clink: Update embedded scripts for Clink",
     execute = function ()
         do_embed()
+        do_wildmatch()
     end
 }
 
@@ -138,5 +256,6 @@ newaction {
     description = "Clink: Update embedded scripts for Clink with debugging info",
     execute = function ()
         do_embed(true--[[debug_info]])
+        do_wildmatch()
     end
 }

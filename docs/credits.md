@@ -22,6 +22,10 @@ Lua 5.2 (https://www.lua.org).
 getopt library.<br/>
 Copyright (c) 1997 Gregory Pietsch, placed in the public domain.
 
+WildMatch library (https://github.com/davvid/wildmatch).<br/>
+Licensed under the [BSD License](https://github.com/davvid/wildmatch/blob/master/LICENSE).<br/>
+Includes test cases copied from git's wildmatch implementation, licensed under the terms of the [GNU General Public License, version 2](https://github.com/git/git/blob/master/LGPL-2.1).
+
 Detours library version 4.0.1 (https://github.com/microsoft/detours).<br/>
 Copyright (c) Microsoft Corporation. All rights reserved.<br/>
 Licensed under the [MIT License](https://github.com/microsoft/Detours/blob/e5400b4ec59478cb0f435cf3b1338226bcbe28f6/LICENSE.txt).
