@@ -8,12 +8,12 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## Normal Priority
 - Include `wildmatch()` and an `fnmatch()` wrapper for it.  _[Recursive globbing can make sense in some cases; e.g. `fzf`-like matching or expanding abbreviated paths or etc.]_
-  - Start with [davvid/wildmatch](https://github.com/davvid/wildmatch).
-  - Update it to support UTF8, if it doesn't already.
-  - Include my changes for "the full test suite passes now".
-  - Enable Readline usage of fnmatch as well.
-  - Include the tests.  The wildmatch repo license is BSD, but the tests included in it are from git which uses GPLv2.  Either way, the licensing is compatible with Clink (GPLv3).
-  - Provide a recursive globbing function.  Maybe look for an implementation that optimizes away recursive paths that cannot match?
+  - [x] Ignore that `fnmatch()` doesn't really support UTF8 properly (e.g. upper/lower case for non-ASCII characters); that's just how `fnmatch()` works, and typically it's good enough.
+  - [x] Include my changes for "the full test suite passes now".
+  - [x] Enable Readline usage of fnmatch as well.
+  - [x] Include the tests.  The wildmatch repo license is BSD, but the tests included in it are from git which uses GPLv2.  Either way, the licensing is compatible with Clink (GPLv3).
+  - [ ] Provide Lua APIs for `wildmatch()` and `fnmatch()`.  The flags may be a little tricky to handle reasonably.
+  - [ ] Provide a recursive globbing function.  Maybe look for an implementation that optimizes away recursive paths that cannot match?
 
 ## Low Priority
 - Allow removing event handlers, e.g. `clink.onbeginedit(func)` to add an event handler, and something like `clink.onbeginedit(func, false)` or `clink.removebeginedit(func)` to remove one?  Or maybe return a function that can be called to remove it, e.g. like below (but make sure repeated calls become no-ops).  The `clink-diagnostics` command would need to still show any removed event handlers until the next beginedit.  But it gets tricky if `func` is already registered -- should the new redundant registration's removal function be able to remove the pre-existing event handler?
