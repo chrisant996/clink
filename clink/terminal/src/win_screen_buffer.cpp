@@ -105,8 +105,9 @@ static setting_enum g_terminal_color_emoji(
     "to display the input line properly when it contains emoji characters.\n"
     "When set to 'off' Clink assumes emoji are rendered using 1 character cell.\n"
     "When set to 'on' Clink assumes emoji are rendered using 2 character cells.\n"
-    "When set to 'auto' Clink assumes emoji are rendered using 2 character cells\n"
-    "when using Windows Terminal, or otherwise using 1 character cell.",
+    "When set to 'auto' (the default) Clink assumes emoji are rendered using 2\n"
+    "character cells when using Windows Terminal, or otherwise using 1 character\n"
+    "cell.",
     "off,on,auto",
     2);
 
