@@ -822,6 +822,7 @@ static int get_session(lua_State* state)
 /// <tr><td>"ansicon"</td><td>Clink thinks ANSI escape codes will be handled by ANSICON.</td></tr>
 /// <tr><td>"winterminal"</td><td>Clink thinks ANSI escape codes will be handled by Windows
 ///     Terminal.</td></tr>
+/// <tr><td>"wezterm"</td><td>Clink thinks ANSI escape codes will be handled by WezTerm.</td></tr>
 /// <tr><td>"winconsole"</td><td>Clink thinks ANSI escape codes will be handled by the default
 ///     console support in Windows, but Clink detected a terminal replacement that won't support 256
 ///     color or 24 bit color.</td></tr>
@@ -838,6 +839,7 @@ static int get_ansi_host(lua_State* state)
         "conemu",
         "ansicon",
         "winterminal",
+        "wezterm",
         "winconsolev2",
         "winconsole",
     };

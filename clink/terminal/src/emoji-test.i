@@ -153,4 +153,5 @@ static const struct interval emojis[] = {
 { 0x1FACE, 0x1FADB },
 { 0x1FAE0, 0x1FAE8 },
 { 0x1FAF0, 0x1FAF8 },
+
 };

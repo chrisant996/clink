@@ -210,7 +210,8 @@ DWORD select_mouse_input(DWORD mode)
         default:
             if (s_mouse_alt || s_mouse_ctrl || s_mouse_shift)
                 mode |= ENABLE_MOUSE_INPUT;
-            else if (get_native_ansi_handler() == ansi_handler::winterminal)
+            else if (get_native_ansi_handler() == ansi_handler::winterminal ||
+                     get_native_ansi_handler() == ansi_handler::wezterm)
                 mode &= ~ENABLE_MOUSE_INPUT;
             else if (!(mode & ENABLE_QUICK_EDIT_MODE))
                 mode |= ENABLE_MOUSE_INPUT;
@@ -283,6 +284,7 @@ void console_config::fix_quick_edit_mode(DWORD& mode)
         break;
 
     case ansi_handler::winterminal:
+    case ansi_handler::wezterm:
         if ((s_mouse_alt || s_mouse_ctrl || s_mouse_shift) && is_mouse_modifier())
         {
             mode &= ~ENABLE_QUICK_EDIT_MODE;

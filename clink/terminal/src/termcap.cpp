@@ -48,7 +48,8 @@ extern "C" int show_cursor(int visible)
 
         // Windows Terminal doesn't support using SetConsoleCursorInfo to change
         // the cursor size, so use termcap strings instead.
-        if (get_native_ansi_handler() == ansi_handler::winterminal)
+        if (get_native_ansi_handler() == ansi_handler::winterminal ||
+            get_native_ansi_handler() == ansi_handler::wezterm)
         {
             if (!str[0])
             {

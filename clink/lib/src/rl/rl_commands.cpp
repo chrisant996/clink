@@ -2071,6 +2071,7 @@ int clink_diagnostics(int count, int invoking_key)
         case ansi_handler::conemu:          term = "ConEmu"; break;
         case ansi_handler::ansicon:         term = "ANSICON"; break;
         case ansi_handler::winterminal:     term = "Windows Terminal"; break;
+        case ansi_handler::wezterm:         term = "WezTerm"; break;
         case ansi_handler::winconsolev2:    term = "Console V2 (with 24 bit color)"; break;
         case ansi_handler::winconsole:      term = "Default console (16 bit color only)"; break;
         }

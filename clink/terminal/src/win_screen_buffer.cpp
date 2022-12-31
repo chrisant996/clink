@@ -93,7 +93,7 @@ static setting_enum g_terminal_emulation(
     "ANSI escape codes.  When 'native' then Clink passes output directly to the\n"
     "console.  Or when 'auto' then Clink performs VT emulation unless native\n"
     "terminal support is detected (such as when hosted inside ConEmu, Windows\n"
-    "Terminal, or Windows 10 new console, or when using ANSICON).",
+    "Terminal, WezTerm, or Windows 10 new console, or when using ANSICON).",
     "native,emulate,auto",
     2);
 
@@ -106,8 +106,8 @@ static setting_enum g_terminal_color_emoji(
     "When set to 'off' Clink assumes emoji are rendered using 1 character cell.\n"
     "When set to 'on' Clink assumes emoji are rendered using 2 character cells.\n"
     "When set to 'auto' (the default) Clink assumes emoji are rendered using 2\n"
-    "character cells when using Windows Terminal, or otherwise using 1 character\n"
-    "cell.",
+    "character cells when using Windows Terminal or WezTerm, or otherwise using 1\n"
+    "character cell.",
     "off,on,auto",
     2);
 
@@ -158,6 +158,16 @@ void win_screen_buffer::begin()
             {
                 s_found_what = "WT_SESSION";
                 s_native_ansi_handler = ansi_handler::winterminal;
+                break;
+            }
+
+            // Check for WezTerm.
+            str<16> wez;
+            if (os::get_env("WEZTERM_EXECUTABLE", wez) &&
+                os::get_env("WEZTERM_PANE", wez))
+            {
+                s_found_what = "WEZTERM_EXECUTABLE and WEZTERM_PANE";
+                s_native_ansi_handler = ansi_handler::wezterm;
                 break;
             }
 
@@ -254,7 +264,8 @@ void win_screen_buffer::begin()
     {
     case 0: g_color_emoji = false; break;
     case 1: g_color_emoji = true; break;
-    case 2: g_color_emoji = (s_native_ansi_handler == ansi_handler::winterminal); break;
+    case 2: g_color_emoji = (s_native_ansi_handler == ansi_handler::winterminal ||
+                             s_native_ansi_handler == ansi_handler::wezterm); break;
     }
 }
 

@@ -17,6 +17,7 @@ enum class ansi_handler : int
     conemu = first_native,
     ansicon,
     winterminal,
+    wezterm,
     winconsolev2,
     winconsole,
     max
