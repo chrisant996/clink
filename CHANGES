@@ -5,7 +5,8 @@
 #### v1.4.7
 
 - Clink now supports ARM64.
-- Clink now supports color emoji in Windows Terminal, according to the Unicode v15.0 standard.  The new `terminal.color_emoji` setting controls when Clink assumes the terminal supports color emoji (color emoji are rendered using double-width characters, which can interfere with cursor positioning math, so Clink needs to know whether the terminal supports color emoji).
+- Clink now recognizes when the terminal host is WezTerm.
+- Clink now supports color emoji in Windows Terminal and WezTerm, according to the Unicode v15.0 standard.  The new `terminal.color_emoji` setting controls when Clink assumes the terminal supports color emoji (color emoji are rendered using double-width characters, which can interfere with cursor positioning math, so Clink needs to know whether the terminal supports color emoji).
 - Enabled Readline's support for non-incremental vi-mode search (<kbd>N</kbd>, <kbd>n</kbd>) to search for a shell pattern using `fnmatch()`, as Posix specifies.
 - Fixed obscure issue when a "luafunc:" macro modifies the input line and then invokes a completion command.
 - Fixed `line_state:getword()` and `line_state:getendword()` to not strip quotes during `generator:getwordbreakinfo()` functions (regression introduced in v1.1.24).
