@@ -226,6 +226,8 @@ local function do_wildmatch()
         end
     end
 
+    -- Don't need to force an extra blank line at the end, because
+    -- t3070-wildmatch.sh itself includes an extra blank line at the end.
     out:write("};\n")
     out:write("\n")
     out:write("static const int c_expected_count = " .. expected .. ";\n")
@@ -241,12 +243,84 @@ local function do_wildmatch()
 end
 
 --------------------------------------------------------------------------------
+local function do_emojis()
+    local out = "clink/terminal/src/emoji-test.i"
+
+    print("\n"..out)
+
+    local file = io.open("clink/terminal/src/emoji-test.txt", "r")
+    out = io.open(out, "w")
+
+    local header = {
+        "// Generated from emoji-test.txt by 'premake5 embed'.",
+        "",
+        "static const struct interval emojis[] = {",
+        "",
+    }
+
+    for _,line in ipairs(header) do
+        out:write(line)
+        out:write("\n")
+    end
+
+    -- Collect the emoji characters.
+    --
+    -- This uses a simplistic approach of taking the first codepoint from each
+    -- line in the input file.
+    local indexed = {}
+    for line in file:lines() do
+        local x = line:match("^([0-9A-Fa-f]+) ")
+        if x then
+            local d = tonumber(x, 16)
+            if d then
+                indexed[d] = true
+            end
+        end
+    end
+
+    -- Build sorted array of emoji characters.
+    local emojis = {}
+    for d, _ in pairs(indexed) do
+        table.insert(emojis, d)
+    end
+    table.sort(emojis)
+
+    -- Optimize the set of emoji characters into ranges.
+    local count_ranges = 0
+    local first
+    local last
+    for _, d in ipairs(emojis) do
+        if last and last + 1 ~= d then
+            count_ranges = count_ranges + 1
+            out:write(string.format("{ 0x%X, 0x%X },\n", first, last))
+            first = nil
+        end
+        if not first then
+            first = d
+        end
+        last = d
+    end
+    if first then
+        count_ranges = count_ranges + 1
+        out:write(string.format("{ 0x%X, 0x%X },\n", first, last))
+    end
+
+    out:write("\n};\n")
+
+    file:close()
+    out:close()
+
+    print("   " .. #emojis .. " emojis; " .. count_ranges .. " ranges")
+end
+
+--------------------------------------------------------------------------------
 newaction {
     trigger = "embed",
     description = "Clink: Update embedded scripts for Clink",
     execute = function ()
         do_embed()
         do_wildmatch()
+        do_emojis()
     end
 }
 
@@ -257,5 +331,6 @@ newaction {
     execute = function ()
         do_embed(true--[[debug_info]])
         do_wildmatch()
+        do_emojis()
     end
 }

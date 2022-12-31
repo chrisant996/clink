@@ -62,6 +62,8 @@
 #include <pch.h>
 #include <wchar.h>
 
+extern bool g_color_emoji;
+
 #if defined(__cplusplus)
 extern "C" {
 #endif
@@ -93,6 +95,7 @@ static int bisearch(char32_t ucs, const struct interval *table, int max) {
   return 0;
 }
 
+#include "emoji-test.i"
 
 static const struct interval combining[] = {
   { 0x0300, 0x036F }, { 0x0483, 0x0486 }, { 0x0488, 0x0489 },
@@ -193,6 +196,10 @@ int mk_wcwidth(char32_t ucs)
     return 0;
 
   /* if we arrive here, ucs is not a combining or C0/C1 control character */
+
+  if (g_color_emoji &&
+      bisearch(ucs, emojis, sizeof(emojis) / sizeof(struct interval) - 1))
+    return 2;
 
   return 1 + 
     (ucs >= 0x1100 &&

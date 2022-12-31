@@ -29,6 +29,7 @@ static ansi_handler s_native_ansi_handler = ansi_handler::unknown;
 static ansi_handler s_current_ansi_handler = ansi_handler::unknown;
 static const char* s_consolez_dll = nullptr;
 static const char* s_found_what = nullptr;
+bool g_color_emoji = false; // Global for performance, since it's accessed in tight loops.
 
 ansi_handler get_native_ansi_handler()
 {
@@ -94,6 +95,19 @@ static setting_enum g_terminal_emulation(
     "terminal support is detected (such as when hosted inside ConEmu, Windows\n"
     "Terminal, or Windows 10 new console, or when using ANSICON).",
     "native,emulate,auto",
+    2);
+
+static setting_enum g_terminal_color_emoji(
+    "terminal.color_emoji",
+    "Color emoji support in terminal",
+    "Set this to indicate whether the terminal program draws emoji using colored\n"
+    "double width characters.  This needs to be set accurately in order for Clink\n"
+    "to display the input line properly when it contains emoji characters.\n"
+    "When set to 'off' Clink assumes emoji are rendered using 1 character cell.\n"
+    "When set to 'on' Clink assumes emoji are rendered using 2 character cells.\n"
+    "When set to 'auto' Clink assumes emoji are rendered using 2 character cells\n"
+    "when using Windows Terminal, or otherwise using 1 character cell.",
+    "off,on,auto",
     2);
 
 //------------------------------------------------------------------------------
@@ -234,6 +248,13 @@ void win_screen_buffer::begin()
 
     if (m_native_vt)
         SetConsoleMode(m_handle, m_prev_mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+
+    switch (g_terminal_color_emoji.get())
+    {
+    case 0: g_color_emoji = false; break;
+    case 1: g_color_emoji = true; break;
+    case 2: g_color_emoji = (s_native_ansi_handler == ansi_handler::winterminal); break;
+    }
 }
 
 //------------------------------------------------------------------------------
