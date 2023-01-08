@@ -7,12 +7,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
-- Include `wildmatch()` and an `fnmatch()` wrapper for it.  _[Recursive globbing can make sense in some cases; e.g. `fzf`-like matching or expanding abbreviated paths or etc.]_
-  - [x] Ignore that `fnmatch()` doesn't really support UTF8 properly (e.g. upper/lower case for non-ASCII characters); that's just how `fnmatch()` works, and typically it's good enough.
-  - [x] Include my changes for "the full test suite passes now".
-  - [x] Enable Readline usage of fnmatch as well.
-  - [x] Include the tests.  The wildmatch repo license is BSD, but the tests included in it are from git which uses GPLv2.  Either way, the licensing is compatible with Clink (GPLv3).
-  - [ ] Provide Lua APIs for `wildmatch()` and `fnmatch()`.  The flags may be a little tricky to handle reasonably.
+- Provide Lua APIs for `wildmatch()` and `fnmatch()`.
+  - [ ] The flags may be a little tricky to handle reasonably.
   - [ ] Provide a recursive globbing function.  Maybe look for an implementation that optimizes away recursive paths that cannot match?
 
 ## Low Priority
