@@ -27,6 +27,7 @@
 //------------------------------------------------------------------------------
 static ansi_handler s_native_ansi_handler = ansi_handler::unknown;
 static ansi_handler s_current_ansi_handler = ansi_handler::unknown;
+static bool s_has_consolev2 = false;
 static const char* s_consolez_dll = nullptr;
 static const char* s_found_what = nullptr;
 bool g_color_emoji = false; // Global for performance, since it's accessed in tight loops.
@@ -141,6 +142,41 @@ void win_screen_buffer::begin()
     {
         detect_native_ansi_handler = false;
 
+        // Check for native virtual terminal support in Windows.
+#pragma warning(push)
+#pragma warning(disable:4996)
+        OSVERSIONINFO ver = { sizeof(ver) };
+        if (GetVersionEx(&ver) && ver.dwBuildNumber >= 15063)
+        {
+            DWORD type;
+            DWORD data;
+            DWORD size;
+            LSTATUS status = RegGetValue(HKEY_CURRENT_USER, "Console", "ForceV2", RRF_RT_REG_DWORD, &type, &data, &size);
+            s_has_consolev2 = (status != ERROR_SUCCESS ||
+                               type != REG_DWORD ||
+                               size != sizeof(data) ||
+                               data != 0);
+        }
+#pragma warning(pop)
+
+        // Check for color emoji width handling.
+        switch (g_terminal_color_emoji.get())
+        {
+        default:
+        case 0:
+            g_color_emoji = false;
+            break;
+        case 1:
+            g_color_emoji = true;
+            break;
+        case 2:
+            // g_color_emoji = (s_native_ansi_handler == ansi_handler::winterminal ||
+            //                  s_native_ansi_handler == ansi_handler::wezterm);
+            // g_color_emoji = s_has_consolev2;
+            g_color_emoji = true;
+            break;
+        }
+
         do
         {
             // Check for ConEmu.
@@ -181,28 +217,13 @@ void win_screen_buffer::begin()
             }
 
             // Check for native virtual terminal support in Windows.
-#pragma warning(push)
-#pragma warning(disable:4996)
-            OSVERSIONINFO ver = { sizeof(ver) };
-            if (GetVersionEx(&ver) && ver.dwBuildNumber >= 15063)
+            if (s_has_consolev2)
             {
-                DWORD type;
-                DWORD data;
-                DWORD size;
-                LSTATUS status = RegGetValue(HKEY_CURRENT_USER, "Console", "ForceV2", RRF_RT_REG_DWORD, &type, &data, &size);
-                if (status != ERROR_SUCCESS ||
-                    type != REG_DWORD ||
-                    size != sizeof(data) ||
-                    data != 0)
-                {
-                    s_found_what = "Windows build >= 15063, console V2";
-                    s_native_ansi_handler = ansi_handler::winconsolev2;
-                    // DON'T BREAK; CONTINUE DETECTING -- because ConsoleZ
-                    // doesn't provide ANSI handling, but it also defeats
-                    // ConsoleV2 ANSI handling.
-                }
+                s_found_what = "Windows build >= 15063, console V2";
+                s_native_ansi_handler = ansi_handler::winconsolev2;
+                // DON'T BREAK; CONTINUE DETECTING -- because ConsoleZ doesn't
+                // provide ANSI handling, but defeats ConsoleV2 ANSI handling.
             }
-#pragma warning(pop)
 
             // Check for ConsoleZ dlls loaded.
             s_consolez_dll = is_dll_loaded(consolez_dll_names);
@@ -259,14 +280,6 @@ void win_screen_buffer::begin()
 
     if (m_native_vt)
         SetConsoleMode(m_handle, m_prev_mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
-
-    switch (g_terminal_color_emoji.get())
-    {
-    case 0: g_color_emoji = false; break;
-    case 1: g_color_emoji = true; break;
-    case 2: g_color_emoji = (s_native_ansi_handler == ansi_handler::winterminal ||
-                             s_native_ansi_handler == ansi_handler::wezterm); break;
-    }
 }
 
 //------------------------------------------------------------------------------
