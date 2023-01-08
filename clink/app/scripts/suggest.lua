@@ -249,11 +249,11 @@ function completion_suggester:suggest(line, matches) -- luacheck: no unused
         local info = line:getwordinfo(count)
         if info.offset < line:getcursor() then
             local typed = line:getline():sub(info.offset, line:getcursor())
-            for i = 1, 5, 1 do
+            for i = 1, 10, 1 do
                 local m = matches:getmatch(i)
                 if not m then
                     break
-                elseif m ~= typed then
+                elseif m ~= typed and (info.quoted or not rl.needquotes(m)) then
                     return m, info.offset
                 end
             end
