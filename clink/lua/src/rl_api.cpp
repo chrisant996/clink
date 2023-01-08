@@ -1110,6 +1110,23 @@ static int describe_macro(lua_State* state)
     return 0;
 }
 
+//------------------------------------------------------------------------------
+/// -name:  rl.needquotes
+/// -ver:   1.4.8
+/// -arg:   text:string
+/// -ret:   boolean
+/// Returns whether the <span class="arg">text</span> needs quotes to be parsed
+/// correctly in a command line.
+static int need_quotes(lua_State* state)
+{
+    const char* text = checkstring(state, 1);
+    const bool need = (text &&
+                       //rl_filename_quote_characters &&
+                       _rl_strpbrk(text, rl_filename_quote_characters) != 0);
+    lua_pushboolean(state, need);
+    return 1;
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -1137,6 +1154,7 @@ void rl_lua_initialise(lua_state& lua)
         { "gethistorycount",        &get_history_count },
         { "gethistoryitems",        &get_history_items },
         { "describemacro",          &describe_macro },
+        { "needquotes",             &need_quotes },
     };
 
     lua_State* state = lua.get_state();
