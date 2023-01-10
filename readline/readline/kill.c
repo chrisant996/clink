@@ -1,6 +1,6 @@
 /* kill.c -- kill ring management. */
 
-/* Copyright (C) 1994-2021 Free Software Foundation, Inc.
+/* Copyright (C) 1994-2023 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -781,8 +781,8 @@ _rl_bracketed_text (size_t *lenp)
 int
 rl_bracketed_paste_begin (int count, int key)
 {
-  int retval, c;
-  size_t len, cap;
+  int retval;
+  size_t len;
   char *buf;
 
   buf = _rl_bracketed_text (&len);
@@ -799,7 +799,7 @@ int
 _rl_read_bracketed_paste_prefix (int c)
 {
   char pbuf[BRACK_PASTE_SLEN+1], *pbpref;
-  int key, ind, j;
+  int key, ind;
 
   pbpref = BRACK_PASTE_PREF;		/* XXX - debugging */
   if (c != pbpref[0])
@@ -871,7 +871,7 @@ _rl_bracketed_read_key ()
 int
 _rl_bracketed_read_mbstring (char *mb, int mlen)
 {
-  int c, r;
+  int c;
 
   c = _rl_bracketed_read_key ();
   if (c < 0)

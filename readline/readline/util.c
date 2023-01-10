@@ -371,7 +371,8 @@ _rl_errmsg (format, arg1, arg2)
 char *
 _rl_strindex (const char *s1, const char *s2)
 {
-  register int i, l, len;
+  int i;
+  size_t l, len;
 
   for (i = 0, l = strlen (s2), len = strlen (s1); (len - i) >= l; i++)
     if (_rl_strnicmp (s1 + i, s2, l) == 0)

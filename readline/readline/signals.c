@@ -646,7 +646,6 @@ rl_check_signals (void)
 /* **************************************************************** */
 
 #if defined (HAVE_POSIX_SIGNALS)
-static sigset_t sigint_set, sigint_oset;
 static sigset_t sigwinch_set, sigwinch_oset;
 #else /* !HAVE_POSIX_SIGNALS */
 #  if defined (HAVE_BSD_SIGNALS)

@@ -1,6 +1,6 @@
 /* tilde.c -- Tilde expansion code (~/foo := $HOME/foo). */
 
-/* Copyright (C) 1988-2020 Free Software Foundation, Inc.
+/* Copyright (C) 1988-2020,2023 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.
@@ -161,8 +161,9 @@ tilde_find_prefix (const char *string, int *len)
 static int
 tilde_find_suffix (const char *string)
 {
-  register int i, j, string_len;
-  register char **suffixes;
+  int i, j;
+  size_t string_len;
+  char **suffixes;
 
   suffixes = tilde_additional_suffixes;
   string_len = strlen (string);
@@ -186,7 +187,7 @@ char *
 tilde_expand (const char *string)
 {
   char *result;
-  int result_size, result_index;
+  size_t result_size, result_index;
 
   result_index = result_size = 0;
   if (result = strchr (string, '~'))
@@ -197,7 +198,7 @@ tilde_expand (const char *string)
   /* Scan through STRING expanding tildes as we come to them. */
   while (1)
     {
-      register int start, end;
+      int start, end;
       char *tilde_word, *expansion;
       int len;
 
@@ -311,7 +312,7 @@ static char *
 glue_prefix_and_suffix (char *prefix, const char *suffix, int suffind)
 {
   char *ret;
-  int plen, slen;
+  size_t plen, slen;
 
   plen = (prefix && *prefix) ? strlen (prefix) : 0;
   slen = strlen (suffix + suffind);

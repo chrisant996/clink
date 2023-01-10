@@ -2921,9 +2921,25 @@ rl_complete_internal (int what_to_do)
 
   text = rl_copy_text (start, end);
   matches = gen_completion_matches (text, start, end, our_func, found_quote, quote_char);
+  /* If TEXT contains quote characters, it will be dequoted as part of
+     generating the matches, and the matches will not contain any quote
+     characters. We need to dequote TEXT before performing the comparison.
+     Since compare_match performs the dequoting, and we only want to do it
+     once, we don't call compare_matches after dequoting TEXT; we call
+     strcmp directly. */
   /* nontrivial_lcd is set if the common prefix adds something to the word
      being completed. */
-  nontrivial_lcd = matches && compare_match (text, matches[0]) != 0;
+  if (rl_filename_completion_desired && rl_filename_quoting_desired &&
+      rl_completion_found_quote && rl_filename_dequoting_function)
+    {
+      char *t;
+      t = (*rl_filename_dequoting_function) (text, rl_completion_quote_character);
+      xfree (text);
+      text = t;
+      nontrivial_lcd = matches && strcmp (text, matches[0]) != 0;
+    }
+  else
+    nontrivial_lcd = matches && strcmp (text, matches[0]) != 0;
   if (what_to_do == '!' || what_to_do == '@')
     tlen = strlen (text);
   xfree (text);
@@ -3138,7 +3154,7 @@ rl_completion_matches (const char *text, rl_compentry_func_t *entry_function)
   register int i;
 
   /* Number of slots in match_list. */
-  int match_list_size;
+  size_t match_list_size;
 
   /* The list of matches. */
   char **match_list;
@@ -3412,7 +3428,8 @@ rl_filename_completion_function (const char *text, int state)
   static char *users_dirname = (char *)NULL;
   static int filename_len;
   char *temp, *dentry, *convfn;
-  int dirlen, dentlen, convlen;
+  size_t dirlen;
+  int dentlen, convlen;
   int tilde_dirname;
   struct dirent *entry;
 
@@ -3536,6 +3553,7 @@ rl_filename_completion_function (const char *text, int state)
   /* Now that we have some state, we can read the directory. */
 
   entry = (struct dirent *)NULL;
+  convfn = dentry = 0;
   while (directory && (entry = readdir (directory)))
     {
       convfn = dentry = entry->d_name;
@@ -3907,7 +3925,7 @@ rl_menu_complete (int count, int ignore)
   static int full_completion = 0;	/* set to 1 if menu completion should reinitialize on next call */
   static int orig_start, orig_end;
   static char quote_char;
-  static int delimiter, cstate;
+  static int delimiter;
 
   /* The first time through, we generate the list of matches and set things
      up to insert them. */

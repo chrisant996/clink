@@ -40,7 +40,7 @@
 #  if defined (HAVE_TERMIO_H)
 #    define TERMIO_TTY_DRIVER
 #  else
-#    if !defined (__MINGW32__) && !defined (_WIN32)
+#    if !defined (__MINGW32__) && !defined (_MSC_VER)
 #      define NEW_TTY_DRIVER
 #    else
 #      define NO_TTY_DRIVER

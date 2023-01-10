@@ -73,10 +73,11 @@ static int history_search_internal (const char *, int, int);
 static int
 history_search_internal (const char *string, int direction, int flags)
 {
-  register int i, reverse;
-  register char *line;
-  register int line_index;
-  int string_len, anchored, patsearch;
+  int i, reverse;
+  char *line;
+  int line_index;
+  size_t string_len;
+  int anchored, patsearch;
   HIST_ENTRY **the_history; 	/* local */
 
   i = history_offset;

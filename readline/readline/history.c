@@ -306,8 +306,6 @@ add_history (const char *string)
 
   if (history_stifled && (history_length == history_max_entries))
     {
-      register int i;
-
       /* If the history is stifled, and history_length is zero,
 	 and it equals history_max_entries, we don't save items. */
       if (history_length == 0)

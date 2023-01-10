@@ -1168,7 +1168,7 @@ struct readline_state {
   char *prompt;
 
   /* global state */
-  int rlstate;
+  int rlstate;		/* XXX -- needs to be unsigned long */
   int done;
   Keymap kmap;
 

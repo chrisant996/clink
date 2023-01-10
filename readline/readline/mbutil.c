@@ -1,6 +1,6 @@
 /* mbutil.c -- readline multibyte character utility functions */
 
-/* Copyright (C) 2001-2021 Free Software Foundation, Inc.
+/* Copyright (C) 2001-2021,2023 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -154,7 +154,7 @@ _rl_utf8_mblen (const char *s, size_t n)
 }
 
 static int
-_rl_find_next_mbchar_internal (char *string, int seed, int count, int find_non_zero)
+_rl_find_next_mbchar_internal (const char *string, int seed, int count, int find_non_zero)
 {
   size_t tmp, len;
   mbstate_t ps;
@@ -234,7 +234,7 @@ _rl_find_next_mbchar_internal (char *string, int seed, int count, int find_non_z
 }
 
 static inline int
-_rl_test_nonzero (char *string, int ind, int len)
+_rl_test_nonzero (const char *string, int ind, int len)
 {
   size_t tmp;
   WCHAR_T wc;
@@ -248,9 +248,8 @@ _rl_test_nonzero (char *string, int ind, int len)
 
 /* experimental -- needs to handle zero-width characters better */
 static int
-_rl_find_prev_utf8char (char *string, int seed, int find_non_zero)
+_rl_find_prev_utf8char (const char *string, int seed, int find_non_zero)
 {
-  char *s;
   unsigned char b;
   int save, prev;
   size_t len;
@@ -294,7 +293,7 @@ _rl_find_prev_utf8char (char *string, int seed, int find_non_zero)
 }  
 
 /*static*/ int
-_rl_find_prev_mbchar_internal (char *string, int seed, int find_non_zero)
+_rl_find_prev_mbchar_internal (const char *string, int seed, int find_non_zero)
 {
   mbstate_t ps;
   int prev, non_zero_prev, point, length;
@@ -362,7 +361,7 @@ _rl_find_prev_mbchar_internal (char *string, int seed, int find_non_zero)
    if an invalid multibyte sequence was encountered. It returns (size_t)(-2) 
    if it couldn't parse a complete  multibyte character.  */
 int
-_rl_get_char_len (char *src, mbstate_t *ps)
+_rl_get_char_len (const char *src, mbstate_t *ps)
 {
   size_t tmp, l;
   int mb_cur_max;
@@ -374,7 +373,7 @@ _rl_get_char_len (char *src, mbstate_t *ps)
   else
     {
       mb_cur_max = MB_CUR_MAX;
-      tmp = mbrlen((const char *)src, (l < mb_cur_max) ? l : mb_cur_max, ps);
+      tmp = mbrlen(src, (l < mb_cur_max) ? l : mb_cur_max, ps);
     }
   if (tmp == (size_t)(-2))
     {
@@ -400,7 +399,7 @@ _rl_get_char_len (char *src, mbstate_t *ps)
 /* compare the specified two characters. If the characters matched,
    return 1. Otherwise return 0. */
 int
-_rl_compare_chars (char *buf1, int pos1, mbstate_t *ps1, char *buf2, int pos2, mbstate_t *ps2)
+_rl_compare_chars (const char *buf1, int pos1, mbstate_t *ps1, const char *buf2, int pos2, mbstate_t *ps2)
 {
   int i, w1, w2;
 
@@ -423,7 +422,7 @@ _rl_compare_chars (char *buf1, int pos1, mbstate_t *ps1, char *buf2, int pos2, m
    if point is invalid (point < 0 || more than string length),
    it returns -1 */
 int
-_rl_adjust_point (char *string, int point, mbstate_t *ps)
+_rl_adjust_point (const char *string, int point, mbstate_t *ps)
 {
   size_t tmp;
   int length, pos;
@@ -463,7 +462,7 @@ _rl_adjust_point (char *string, int point, mbstate_t *ps)
 }
 
 int
-_rl_is_mbchar_matched (char *string, int seed, int end, char *mbchar, int length)
+_rl_is_mbchar_matched (const char *string, int seed, int end, char *mbchar, int length)
 {
   int i;
 
@@ -477,12 +476,12 @@ _rl_is_mbchar_matched (char *string, int seed, int end, char *mbchar, int length
 }
 
 WCHAR_T
-_rl_char_value (char *buf, int ind)
+_rl_char_value (const char *buf, int ind)
 {
   size_t tmp;
   WCHAR_T wc;
   mbstate_t ps;
-  int l;
+  size_t l;
 
   if (MB_LEN_MAX == 1 || rl_byte_oriented)
     return ((WCHAR_T) buf[ind]);
@@ -506,7 +505,7 @@ _rl_char_value (char *buf, int ind)
    characters. */
 #undef _rl_find_next_mbchar
 int
-_rl_find_next_mbchar (char *string, int seed, int count, int flags)
+_rl_find_next_mbchar (const char *string, int seed, int count, int flags)
 {
 #if defined (HANDLE_MULTIBYTE)
   return _rl_find_next_mbchar_internal (string, seed, count, flags);
@@ -520,7 +519,7 @@ _rl_find_next_mbchar (char *string, int seed, int count, int flags)
    we look for non-zero-width multibyte characters. */
 #undef _rl_find_prev_mbchar
 int
-_rl_find_prev_mbchar (char *string, int seed, int flags)
+_rl_find_prev_mbchar (const char *string, int seed, int flags)
 {
 #if defined (HANDLE_MULTIBYTE)
   return _rl_find_prev_mbchar_internal (string, seed, flags);

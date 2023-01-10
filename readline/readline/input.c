@@ -168,7 +168,7 @@ int rl_set_timeout (unsigned int, unsigned int);
 int rl_timeout_remaining (unsigned int *, unsigned int *);
 
 int _rl_timeout_init (void);
-int _rl_timeout_sigalrm_handler (void);
+int _rl_timeout_handle_sigalrm (void);
 #if defined (RL_TIMEOUT_USE_SELECT)
 int _rl_timeout_select (int, fd_set *, fd_set *, fd_set *, const struct timeval *, const sigset_t *);
 #endif

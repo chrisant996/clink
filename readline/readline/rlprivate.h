@@ -598,7 +598,7 @@ extern procenv_t _rl_top_level;
 extern _rl_keyseq_cxt *_rl_kscxt;
 extern int _rl_keyseq_timeout;
 
-extern int _rl_executing_keyseq_size;
+extern size_t _rl_executing_keyseq_size;
 
 extern rl_hook_func_t *_rl_internal_startup_hook;
 

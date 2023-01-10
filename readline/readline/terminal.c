@@ -85,9 +85,7 @@
 #undef CUSTOM_REDISPLAY_FUNC
 #define CUSTOM_REDISPLAY_FUNC() (0)
 
-//#if defined (__MINGW32__)
-#if defined (__MINGW32__) || defined (_WIN32)
-/* end_clink_change */
+#if defined (_WIN32)
 #  include <windows.h>
 #  include <wincon.h>
 
@@ -250,10 +248,7 @@ _emx_get_screensize (int *swp, int *shp)
 }
 #endif
 
-/* begin_clink_change */
-//#if defined (__MINGW32__)
-#if defined (__MINGW32__) || defined (_WIN32)
-/* end_clink_change */
+#if defined (_WIN32)
 static void
 _win_get_screensize (int *swp, int *shp)
 {
@@ -296,10 +291,7 @@ _rl_get_screen_size (int tty, int ignore_env)
 
 #if defined (__EMX__)
   _emx_get_screensize (&wc, &wr);
-/* begin_clink_change */
-//#elif defined (__MINGW32__)
-#elif defined (__MINGW32__) || defined (_WIN32)
-/* end_clink_change */
+#elif defined (_WIN32) && !defined (__CYGWIN__)
   _win_get_screensize (&wc, &wr);
 #endif
 

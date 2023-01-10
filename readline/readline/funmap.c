@@ -49,7 +49,7 @@ typedef int QSFUNC ();
 extern int _rl_qsort_string_compare (char **, char **);
 
 FUNMAP **funmap;
-static int funmap_size;
+static size_t funmap_size;
 static int funmap_entry;
 
 /* After initializing the function map, this is the index of the first
@@ -273,7 +273,7 @@ const char **
 rl_funmap_names (void)
 {
   const char **result;
-  int result_size, result_index;
+  size_t result_size, result_index;
 
   /* Make sure that the function map has been initialized. */
   rl_initialize_funmap ();

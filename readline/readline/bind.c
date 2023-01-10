@@ -1,6 +1,6 @@
 /* bind.c -- key binding and startup file support for the readline library. */
 
-/* Copyright (C) 1987-2022 Free Software Foundation, Inc.
+/* Copyright (C) 1987-2023 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.
@@ -1282,7 +1282,7 @@ const char *rl_readline_name = "other";
 /* Stack of previous values of parsing_conditionalized_out. */
 static unsigned char *if_stack = (unsigned char *)NULL;
 static int if_stack_depth;
-static int if_stack_size;
+static size_t if_stack_size;
 
 /* Push _rl_parsing_conditionalized_out, and set parser state based
    on ARGS. */
@@ -1818,7 +1818,6 @@ rl_parse_and_bind (char *string)
 /* end_clink_change */
     {
       char *var, *value, *e;
-      int s;
 
       var = string + i;
       /* Make VAR point to start of variable name. */
@@ -2014,7 +2013,7 @@ rl_parse_and_bind (char *string)
       //char useq[2];
       char* useq = keyseq;
 /* end_clink_change */
-      int fl = strlen (funname);
+      size_t fl = strlen (funname);
 
 /* begin_clink_change */
       //useq[0] = key; useq[1] = '\0';
@@ -2945,7 +2944,7 @@ rl_invoking_keyseqs_in_map (rl_command_func_t *function, Keymap map)
 {
   register int key;
   char **result;
-  int result_index, result_size;
+  size_t result_index, result_size;
 
   result = (char **)NULL;
   result_index = result_size = 0;
@@ -3148,9 +3147,9 @@ rl_dump_functions (int count, int key)
 static void
 _rl_macro_dumper_internal (int print_readably, Keymap map, char *prefix)
 {
-  register int key;
+  int key;
   char *keyname, *out;
-  int prefix_len;
+  size_t prefix_len;
 
   for (key = 0; key < KEYMAP_SIZE; key++)
     {

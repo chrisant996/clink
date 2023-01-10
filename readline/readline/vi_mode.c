@@ -1,7 +1,7 @@
 /* vi_mode.c -- A vi emulation mode for Bash.
    Derived from code written by Jeff Sparkes (jsparkes@bnr.ca).  */
 
-/* Copyright (C) 1987-2021 Free Software Foundation, Inc.
+/* Copyright (C) 1987-2021,2023 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -105,9 +105,8 @@ static int vi_replace_count;
 /* If non-zero, we have text inserted after a c[motion] command that put
    us implicitly into insert mode.  Some people want this text to be
    attached to the command so that it is `redoable' with `.'. */
-static int vi_continued_command;
 static char *vi_insert_buffer;
-static int vi_insert_buffer_size;
+static size_t vi_insert_buffer_size;
 
 static int _rl_vi_last_repeat = 1;
 static int _rl_vi_last_arg_sign = 1;
@@ -1369,7 +1368,6 @@ _rl_vi_domove_callback (_rl_vimotion_cxt *m)
 int
 rl_vi_domove (int x, int *ignore)
 {
-  int r;
   _rl_vimotion_cxt *m;
 
   m = _rl_vimvcxt;

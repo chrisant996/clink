@@ -1,7 +1,7 @@
 /* readline.c -- a general facility for reading lines of input
    with emacs style editing and completion. */
 
-/* Copyright (C) 1987-2022 Free Software Foundation, Inc.
+/* Copyright (C) 1987-2023 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -280,7 +280,7 @@ _rl_keyseq_cxt *_rl_kscxt = 0;
 
 int rl_executing_key;
 char *rl_executing_keyseq = 0;
-int _rl_executing_keyseq_size = 0;
+size_t _rl_executing_keyseq_size = 0;
 
 struct _rl_cmd _rl_pending_command;
 struct _rl_cmd *_rl_command_to_execute = (struct _rl_cmd *)NULL;
@@ -664,7 +664,8 @@ readline_internal_charloop (void)
 	  ++s_displayed;
 /* end_clink_change */
 	  _rl_want_redisplay = 0;
-	  memcpy ((void *)_rl_top_level, (void *)olevel, sizeof (procenv_t));
+	  if (RL_ISSTATE (RL_STATE_CALLBACK))
+	    memcpy ((void *)_rl_top_level, (void *)olevel, sizeof (procenv_t));
 
 	  /* If we longjmped because of a timeout, handle it here. */
 	  if (RL_ISSTATE (RL_STATE_TIMEOUT))

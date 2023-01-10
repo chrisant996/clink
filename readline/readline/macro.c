@@ -69,7 +69,7 @@ static int executing_macro_index;
 static char *current_macro = (char *)NULL;
 
 /* The size of the buffer allocated to current_macro. */
-static int current_macro_size;
+static size_t current_macro_size;
 
 /* The index at which characters are being added to current_macro. */
 static int current_macro_index;

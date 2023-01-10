@@ -883,8 +883,8 @@ rl_set_forced_display (int force)
 static void
 realloc_line (int minsize)
 {
-  int minimum_size;
-  int newsize, delta;
+  size_t minimum_size;
+  size_t newsize, delta;
 
   minimum_size = DEFAULT_LINE_BUFFER_SIZE;
   if (minsize < minimum_size)
@@ -1035,7 +1035,7 @@ rl_redisplay (void)
 {
   int in, out, c, linenum, cursor_linenum;
   int inv_botlin, lb_botlin, lb_linenum, o_cpos;
-  int newlines, lpos, temp, n0, num, prompt_lines_estimate;
+  int newlines, lpos, temp, num, prompt_lines_estimate;
   char *prompt_this_line;
   char cur_face;
   int hl_begin, hl_end;
@@ -3075,7 +3075,6 @@ int
 rl_forced_update_display (void)
 {
   register char *temp;
-  register int tlen;
 
   if (visible_line)
     memset (visible_line, 0, line_size);
