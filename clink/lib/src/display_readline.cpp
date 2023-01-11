@@ -1118,7 +1118,7 @@ public:
 
 private:
     void                update_line(int i, const display_line* o, const display_line* d, bool has_rprompt);
-    void                move_to_column(unsigned int col);
+    void                move_to_column(unsigned int col, bool force=false);
     void                move_to_row(int row);
     void                shift_cols(unsigned int col, int delta);
     void                print(const char* chars, unsigned int len);
@@ -1456,7 +1456,7 @@ void display_manager::display()
                                                old_horz_scrolled != is_horz_scrolled))
     {
         move_to_row(0);
-        move_to_column(0);
+        move_to_column(0, true/*force*/);
 
         if (modmark)
         {
@@ -1481,6 +1481,8 @@ void display_manager::display()
 
         _rl_last_c_pos = m_last_prompt_line_width;
         _rl_last_v_pos = m_last_prompt_line_botlin;
+
+        move_to_column(_rl_last_c_pos, true/*force*/);
 
         dbg_ignore_scope(snapshot, "display_readline");
 
@@ -1880,12 +1882,12 @@ test_left:
 }
 
 //------------------------------------------------------------------------------
-void display_manager::move_to_column(unsigned int col)
+void display_manager::move_to_column(unsigned int col, bool force)
 {
     assert(_rl_term_ch && *_rl_term_ch);
 
     assert(col < _rl_screenwidth);
-    if (col == _rl_last_c_pos)
+    if (col == _rl_last_c_pos && !force)
         return;
 
     if (m_pending_wrap)
