@@ -5,6 +5,7 @@
 #include "settings.h"
 #include "str.h"
 #include "str_tokeniser.h"
+#include "str_compare.h"
 #include "path.h"
 #include "os.h"
 
@@ -734,8 +735,16 @@ bool setting_enum::parse(const char* value, store<int>& out)
         if (*next)
             --option_len;
 
-        if ((by_int == 0) ||
-            (by_int < 0 && _strnicmp(option, value, option_len) == 0))
+        bool match = (by_int == 0);
+        if (!match)
+        {
+            str_compare_scope _(str_compare_scope::caseless, false);
+            str_iter oi(option, option_len);
+            str_iter vi(value);
+            match = (str_compare(oi, vi) < 0);
+        }
+
+        if (match)
         {
             out.value = i;
             return true;
