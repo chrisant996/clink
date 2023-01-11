@@ -158,25 +158,28 @@ void win_screen_buffer::begin()
                                data != 0);
         }
 #pragma warning(pop)
+    }
 
-        // Check for color emoji width handling.
-        switch (g_terminal_color_emoji.get())
-        {
-        default:
-        case 0:
-            g_color_emoji = false;
-            break;
-        case 1:
-            g_color_emoji = true;
-            break;
-        case 2:
-            // g_color_emoji = (s_native_ansi_handler == ansi_handler::winterminal ||
-            //                  s_native_ansi_handler == ansi_handler::wezterm);
-            // g_color_emoji = s_has_consolev2;
-            g_color_emoji = true;
-            break;
-        }
+    // Check for color emoji width handling.
+    switch (g_terminal_color_emoji.get())
+    {
+    default:
+    case 0:
+        g_color_emoji = false;
+        break;
+    case 1:
+        g_color_emoji = true;
+        break;
+    case 2:
+        // g_color_emoji = (s_native_ansi_handler == ansi_handler::winterminal ||
+        //                  s_native_ansi_handler == ansi_handler::wezterm);
+        // g_color_emoji = s_has_consolev2;
+        g_color_emoji = true;
+        break;
+    }
 
+    if (detect_native_ansi_handler)
+    {
         do
         {
             // Check for ConEmu.
