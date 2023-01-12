@@ -2001,40 +2001,58 @@ int magic_space(int count, int invoking_key)
 
 
 //------------------------------------------------------------------------------
-static void list_ambiguous_codepoints(const char* tag, const std::vector<char32_t>& chars)
+struct alert_char
 {
+    char32_t        ucs;
+    const char*     text;
+    unsigned int    len;
+};
+
+//------------------------------------------------------------------------------
+static void list_ambiguous_codepoints(const char* tag, const std::vector<alert_char>& chars)
+{
+    static const char red[] = "\x1b[1;31;40m";
+    static const char norm[] = "\x1b[m";
+
     str<> s;
     str<> hex;
-    bool first = true;
 
-    s << "  " << tag << ":\n        ";
-    for (char32_t c : chars)
-    {
-        if (first)
-            first = false;
-        else
-            s << ", ";
-        hex.format("\x1b[1;31;40m0x%X\x1b[m", c);
-        s.concat(hex.c_str(), hex.length());
-    }
-    s << "\n";
-
+    s << "  " << tag << ":\n";
     g_printer->print(s.c_str(), s.length());
+
+    for (alert_char ac : chars)
+    {
+        s.format("        Unicode: %s0x%X%s,  UTF8", red, ac.ucs, norm);
+        for (unsigned int i = 0; i < ac.len; ++i)
+        {
+            hex.format(" %s0x%02.2X%s", red, static_cast<unsigned char>(ac.text[i]), norm);
+            s.concat(hex.c_str(), hex.length());
+        }
+        s << ",  text \"" << red;
+        s.concat(ac.text, ac.len);
+        s << norm << "\"\n";
+        g_printer->print(s.c_str(), s.length());
+    }
 }
 
 //------------------------------------------------------------------------------
 static void analyze_char_widths(const char* s,
-                                std::vector<char32_t>& cjk,
-                                std::vector<char32_t>& emoji,
-                                std::vector<char32_t>& qualified)
+                                std::vector<alert_char>& cjk,
+                                std::vector<alert_char>& emoji,
+                                std::vector<alert_char>& qualified)
 {
     if (!s)
         return;
 
     bool ignoring = false;
     str_iter iter(s);
-    while (int c = iter.next())
+    while (true)
     {
+        const char* const text = iter.get_pointer();
+        const int c = iter.next();
+        if (!c)
+            break;
+
         if (c == RL_PROMPT_START_IGNORE && !ignoring)
             ignoring = true;
         else if (c == RL_PROMPT_END_IGNORE && ignoring)
@@ -2042,11 +2060,19 @@ static void analyze_char_widths(const char* s,
         else if (!ignoring)
         {
             const int kind = test_ambiguous_width_char(c);
-            switch (kind)
+            if (kind)
             {
-            case 1: cjk.push_back(c); break;
-            case 2: emoji.push_back(c); break;
-            case 3: qualified.push_back(c); break;
+                alert_char ac = {};
+                ac.ucs = c;
+                ac.text = text;
+                ac.len = static_cast<unsigned int>(iter.get_pointer() - text);
+
+                switch (kind)
+                {
+                case 1: cjk.push_back(ac); break;
+                case 2: emoji.push_back(ac); break;
+                case 3: qualified.push_back(ac); break;
+                }
             }
         }
     }
@@ -2144,9 +2170,9 @@ int clink_diagnostics(int count, int invoking_key)
         else
             prompt++;
 
-        std::vector<char32_t> cjk;
-        std::vector<char32_t> emoji;
-        std::vector<char32_t> qualified;
+        std::vector<alert_char> cjk;
+        std::vector<alert_char> emoji;
+        std::vector<alert_char> qualified;
 
         analyze_char_widths(prompt, cjk, emoji, qualified);
         analyze_char_widths(rl_rprompt, cjk, emoji, qualified);
@@ -2160,7 +2186,7 @@ int clink_diagnostics(int count, int invoking_key)
             if (cjk.size())
             {
                 list_ambiguous_codepoints("CJK ambiguous characters", cjk);
-                puts("    Running 'chcp 65001' can often fix width problems with these.\n"
+                puts("    Running 'chcp 65001' can often fix width problems with these characters.\n"
                      "    Or you can use a different character.");
             }
 
