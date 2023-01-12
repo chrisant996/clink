@@ -6,7 +6,9 @@
 
 - Added `rl.needquotes()` function to check whether text needs quotes in a command line.
 - Changed the `terminal.color_emoji` setting `auto` mode to more broadly support accurate width measurements for color emoji (regardless whether the terminal program is capable of actually drawing the color emoji).
+- Now `clink-diagnostics` <kbd>Ctrl</kbd>-<kbd>X</kbd>,<kbd>Ctrl</kbd>-<kbd>Z</kbd> automatically analyzes the prompt text for problematic characters, reports them, and offers suggestions for how to solve problems they might be causing.
 - Fixed the `completion` autosuggest strategy so it doesn't provide a suggestion that requires quoting if the command line input is not currently quoted.
+- Fixed overly aggressive detection of color emoji (regression introduced in v1.4.7).
 
 #### v1.4.7
 
