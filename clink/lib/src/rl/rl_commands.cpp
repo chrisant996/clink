@@ -86,6 +86,7 @@ extern void host_get_app_context(int& id, str_base& binaries, str_base& profile,
 extern "C" int show_cursor(int visible);
 extern void set_suggestion(const char* line, unsigned int endword_offset, const char* suggestion, unsigned int offset);
 extern "C" void host_clear_suggestion();
+extern "C" int test_ambiguous_width_char(char32_t ucs);
 
 // This is implemented in the app layer, which makes it inaccessible to lower
 // layers.  But Readline and History are siblings, so history_db and rl_module
@@ -2000,6 +2001,55 @@ int magic_space(int count, int invoking_key)
 
 
 //------------------------------------------------------------------------------
+static void list_ambiguous_codepoints(const char* tag, const std::vector<char32_t>& chars)
+{
+    str<> s;
+    str<> hex;
+    bool first = true;
+
+    s << "  " << tag << ":\n        ";
+    for (char32_t c : chars)
+    {
+        if (first)
+            first = false;
+        else
+            s << ", ";
+        hex.format("\x1b[1;31;40m0x%X\x1b[m", c);
+        s.concat(hex.c_str(), hex.length());
+    }
+    s << "\n";
+
+    g_printer->print(s.c_str(), s.length());
+}
+
+//------------------------------------------------------------------------------
+static void analyze_char_widths(const char* s,
+                                std::vector<char32_t>& cjk,
+                                std::vector<char32_t>& emoji,
+                                std::vector<char32_t>& qualified)
+{
+    bool ignoring = false;
+    str_iter iter(s);
+    while (int c = iter.next())
+    {
+        if (c == RL_PROMPT_START_IGNORE && !ignoring)
+            ignoring = true;
+        else if (c == RL_PROMPT_END_IGNORE && ignoring)
+            ignoring = false;
+        else if (!ignoring)
+        {
+            const int kind = test_ambiguous_width_char(c);
+            switch (kind)
+            {
+            case 1: cjk.push_back(c); break;
+            case 2: emoji.push_back(c); break;
+            case 3: qualified.push_back(c); break;
+            }
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
 int clink_diagnostics(int count, int invoking_key)
 {
     end_prompt(true/*crlf*/);
@@ -2081,6 +2131,54 @@ int clink_diagnostics(int count, int invoking_key)
     }
 
     host_call_lua_rl_global_function("clink._diagnostics");
+
+    // Check for known potential ambiguous character width issues.
+
+    {
+        const char* prompt = strrchr(rl_display_prompt, '\n');
+        if (!prompt)
+            prompt = rl_display_prompt;
+        else
+            prompt++;
+
+        std::vector<char32_t> cjk;
+        std::vector<char32_t> emoji;
+        std::vector<char32_t> qualified;
+
+        analyze_char_widths(prompt, cjk, emoji, qualified);
+        analyze_char_widths(rl_rprompt, cjk, emoji, qualified);
+
+        if (cjk.size() || emoji.size() || qualified.size())
+        {
+            s.clear();
+            s << bold << "ambiguous width characters in prompt:" << norm << lf;
+            g_printer->print(s.c_str(), s.length());
+
+            if (cjk.size())
+            {
+                list_ambiguous_codepoints("CJK ambiguous characters", cjk);
+                puts("    Running 'chcp 65001' can often fix width problems with these.\n"
+                     "    Or you can use a different character.")
+            }
+
+            if (emoji.size())
+            {
+                list_ambiguous_codepoints("color emoji", emoji);
+                puts("    To fix problems with these, try using a different symbol or a different\n"
+                     "    terminal program.  Or sometimes using a different font can help.");
+            }
+
+            if (qualified.size())
+            {
+                list_ambiguous_codepoints("qualified emoji", qualified);
+                puts("    To fix problems with these, try using a different symbol or a different\n"
+                     "    terminal program.  Or sometimes using a different font can help.");
+                puts("    The fully-qualified forms of these symbols often encounter problems,\n"
+                     "    but the unqualified forms often work.  For a table of emoji and their\n"
+                     "    forms see https://www.unicode.org/Public/emoji/15.0/emoji-test.txt");
+            }
+        }
+    }
 
     extern void task_manager_diagnostics();
     task_manager_diagnostics();
