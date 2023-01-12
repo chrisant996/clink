@@ -6,12 +6,13 @@
 #include <core/str_iter.h>
 
 //------------------------------------------------------------------------------
-extern "C" int mk_wcwidth(char32_t);
+typedef int wcwidth_t (char32_t);
+extern "C" wcwidth_t *wcwidth;
 inline int clink_wcwidth(char32_t c)
 {
     if (c >= ' ' && c <= '~')
         return 1;
-    int w = mk_wcwidth(c);
+    int w = wcwidth(c);
     return (w >= 0) ? w : 1;
 }
 

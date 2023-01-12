@@ -71,7 +71,6 @@ extern Keymap _rl_dispatching_keymap;
 static FILE*        null_stream = (FILE*)1;
 static FILE*        in_stream = (FILE*)2;
 static FILE*        out_stream = (FILE*)3;
-extern "C" int      mk_wcwidth(char32_t);
 const int RL_MORE_INPUT_STATES = ~(RL_STATE_CALLBACK|
                                    RL_STATE_INITIALIZED|
                                    RL_STATE_OVERWRITE|
