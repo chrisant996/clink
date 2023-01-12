@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.4.7</title>
+<title>Clink v1.4.8</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -853,7 +853,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.4.7</div>
+                <div id="title">Clink v1.4.8</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -6591,6 +6591,7 @@ end
 clink.onbeginedit(modmark_reset)
 clink.onaftercommand(modmark_refilter)</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#rl.isvariabletrue"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="rl.isvariabletrue">rl.isvariabletrue</a></div> <div class="signature">( <span class="arg_name">name</span>:string ) : boolean | nil<br/><div class="version">v1.1.6 and newer</div></div></div><div class="body"><p class="desc">Returns a boolean value indicating whether the named Readline configuration variable is set to true (on), or nil if the variable name is not recognized.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#rl.needquotes"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="rl.needquotes">rl.needquotes</a></div> <div class="signature">( <span class="arg_name">text</span>:string ) : boolean<br/><div class="version">v1.4.8 and newer</div></div></div><div class="body"><p class="desc">Returns whether the <span class="arg">text</span> needs quotes to be parsed correctly in a command line.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#rl.setbinding"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="rl.setbinding">rl.setbinding</a></div> <div class="signature">( <span class="arg_name">key</span>:string, <span class="arg_name">binding</span>:string | nil, [<span class="arg_name">keymap</span>:string] ) : boolean<br/><div class="version">v1.2.46 and newer</div></div></div><div class="body"><p class="desc">Binds <span class="arg">key</span> to invoke <span class="arg">binding</span>, and returns whether it was successful.</p><p class="desc"> The <span class="arg">key</span> sequence string is the same format as from <code>clink echo</code>.  See <a href="#discoverkeysequences">Discovering Clink key sindings</a> for more information.</p><p class="desc"> The <span class="arg">binding</span> is either the name of a Readline command, a quoted macro string (just like in the .inputrc config file), or nil to clear the key binding.</p><p class="desc"> An optional <span class="arg">keymap</span> may be specified as well.  If it is omitted or nil, then the current keymap is searched.  Otherwise it may refer to one of the three built in keymaps: <table> <tr><th>Keymap</th><th>Description</th></tr> <tr><td><code>"emacs"</code></td><td>The Emacs keymap, which is the default keymap.</td></tr> <tr><td><code>"vi"</code>, <code>"vi-move"</code>, or <code>"vi-command"</code></td><td>The VI command mode keymap.</td></tr> <tr><td><code>"vi-insert"</code></td><td>The VI insertion mode keymap.</td></tr> </table></p><p class="desc"> Using Lua's <code>[[</code>..<code>]]</code> string syntax conveniently lets you simply copy the key string exactly from the <code>clink echo</code> output, without needing to translate the quotes or backslashes.</p><p class="desc"> <strong>Note:</strong> This does not write the value into a config file. Instead it updates the key binding in memory, temporarily overriding whatever is present in any config files.  When config files are reloaded, they may replace the key binding again.</p><pre class="language-lua"><code>local old_space = rl.getbinding('" "')
 function hijack_space(rl_buffer)
 &nbsp;   rl.invokecommand("clink-expand-line")   -- Expand envvars, etc in the line.
@@ -6797,6 +6798,14 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes"><div class="wlink"><a href="#changes"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork"><div class="wlink"><a href="#releases-from-chrisant996clink-fork"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v148"><div class="wlink"><a href="#v148"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>v1.4.8</h4>
+<ul>
+<li>Added <code>rl.needquotes()</code> function to check whether text needs quotes in a command line.</li>
+<li>Changed the <code>terminal.color_emoji</code> setting <code>auto</code> mode to more broadly support accurate width measurements for color emoji (regardless whether the terminal program is capable of actually drawing the color emoji).</li>
+<li>Now <code>clink-diagnostics</code> <kbd>Ctrl</kbd>-<kbd>X</kbd>,<kbd>Ctrl</kbd>-<kbd>Z</kbd> automatically analyzes the prompt text for problematic characters, reports them, and offers suggestions for how to solve problems they might be causing.</li>
+<li>Fixed the <code>completion</code> autosuggest strategy so it doesn&#39;t provide a suggestion that requires quoting if the command line input is not currently quoted.</li>
+<li>Fixed overly aggressive detection of color emoji (regression introduced in v1.4.7).</li>
+</ul>
 <h4 id="v147"><div class="wlink"><a href="#v147"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>v1.4.7</h4>
 <ul>
 <li>Clink now supports ARM64.</li>
