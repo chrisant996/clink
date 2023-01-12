@@ -137,10 +137,12 @@ void win_screen_buffer::begin()
     if (m_ready > 1)
         return;
 
-    static bool detect_native_ansi_handler = true;
+    static bool s_detect_native_ansi_handler = true;
+    const bool detect_native_ansi_handler = s_detect_native_ansi_handler;
+
     if (detect_native_ansi_handler)
     {
-        detect_native_ansi_handler = false;
+        s_detect_native_ansi_handler = false;
 
         // Check for native virtual terminal support in Windows.
 #pragma warning(push)
