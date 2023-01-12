@@ -2028,6 +2028,9 @@ static void analyze_char_widths(const char* s,
                                 std::vector<char32_t>& emoji,
                                 std::vector<char32_t>& qualified)
 {
+    if (!s)
+        return;
+
     bool ignoring = false;
     str_iter iter(s);
     while (int c = iter.next())
