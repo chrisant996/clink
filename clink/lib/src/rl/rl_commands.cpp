@@ -2158,7 +2158,7 @@ int clink_diagnostics(int count, int invoking_key)
             {
                 list_ambiguous_codepoints("CJK ambiguous characters", cjk);
                 puts("    Running 'chcp 65001' can often fix width problems with these.\n"
-                     "    Or you can use a different character.")
+                     "    Or you can use a different character.");
             }
 
             if (emoji.size())
