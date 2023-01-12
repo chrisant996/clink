@@ -243,26 +243,7 @@ local function do_wildmatch()
 end
 
 --------------------------------------------------------------------------------
-local function do_emojis()
-    local out = "clink/terminal/src/emoji-test.i"
-
-    print("\n"..out)
-
-    local file = io.open("clink/terminal/src/emoji-test.txt", "r")
-    out = io.open(out, "w")
-
-    local header = {
-        "// Generated from emoji-test.txt by 'premake5 embed'.",
-        "",
-        "static const struct interval emojis[] = {",
-        "",
-    }
-
-    for _,line in ipairs(header) do
-        out:write(line)
-        out:write("\n")
-    end
-
+local function load_indexed_emoji_table(file)
     -- Collect the emoji characters.
     --
     -- This uses a simplistic approach of taking the first codepoint from each
@@ -277,19 +258,28 @@ local function do_emojis()
             end
         end
     end
+    return indexed
+end
 
-    -- Build sorted array of emoji characters.
-    local emojis = {}
+--------------------------------------------------------------------------------
+local function output_character_ranges(out, tag, indexed, filtered)
+
+    out:write("\nstatic const struct interval " .. tag .. "[] = {\n\n")
+
+    -- Build sorted array of characters.
+    local chars = {}
     for d, _ in pairs(indexed) do
-        table.insert(emojis, d)
+        if not (filtered and filtered[d]) then
+            table.insert(chars, d)
+        end
     end
-    table.sort(emojis)
+    table.sort(chars)
 
-    -- Optimize the set of emoji characters into ranges.
+    -- Optimize the set of characters into ranges.
     local count_ranges = 0
     local first
     local last
-    for _, d in ipairs(emojis) do
+    for _, d in ipairs(chars) do
         if last and last + 1 ~= d then
             count_ranges = count_ranges + 1
             out:write(string.format("{ 0x%X, 0x%X },\n", first, last))
@@ -307,10 +297,58 @@ local function do_emojis()
 
     out:write("\n};\n")
 
+    return chars, count_ranges
+end
+
+--------------------------------------------------------------------------------
+local function do_emojis()
+    local out = "clink/terminal/src/emoji-test.i"
+
+    print("\n"..out)
+
+    local file = io.open("clink/terminal/src/emoji-test.txt", "r")
+    local filter = io.open("clink/terminal/src/emoji-filter.txt", "r")
+    out = io.open(out, "w")
+
+    local header = {
+        "// Generated from emoji-test.txt by 'premake5 embed'.",
+    }
+
+    for _,line in ipairs(header) do
+        out:write(line)
+        out:write("\n")
+    end
+
+    -- Collect the emoji characters.
+    local indexed = load_indexed_emoji_table(file)
+    local filtered = load_indexed_emoji_table(filter)
     file:close()
+    filter:close()
+
+    -- Output ranges of double-width emoji characters.
+    local emojis, count_ranges = output_character_ranges(out, "emojis", indexed, filtered)
+
+    -- Output ranges of ambiguous emoji characters.
+    local ignored = {
+        [0x0023] = true,
+        [0x002A] = true,
+        [0x0030] = true,
+        [0x0031] = true,
+        [0x0032] = true,
+        [0x0033] = true,
+        [0x0034] = true,
+        [0x0035] = true,
+        [0x0036] = true,
+        [0x0037] = true,
+        [0x0038] = true,
+        [0x0039] = true,
+    }
+    local ambiguous = output_character_ranges(out, "ambiguous_emojis", filtered, ignored)
+
     out:close()
 
     print("   " .. #emojis .. " emojis; " .. count_ranges .. " ranges")
+    print("   " .. #ambiguous .. " ambiguous emojis")
 end
 
 --------------------------------------------------------------------------------
