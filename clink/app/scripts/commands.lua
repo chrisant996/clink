@@ -103,8 +103,4 @@ function clink._diagnostics(rl_buffer)
     if clink._diag_custom then
         clink._diag_custom(arg)
     end
-
-    if not arg then
-        clink.print("\n(Use a numeric argument for additional diagnostics; e.g. press Alt+1 first.)")
-    end
 end

@@ -2085,6 +2085,9 @@ int clink_diagnostics(int count, int invoking_key)
     extern void task_manager_diagnostics();
     task_manager_diagnostics();
 
+    if (!rl_explicit_arg)
+        g_printer->print("\n(Use a numeric argument for additional diagnostics; e.g. press Alt+1 first.)\n");
+
     rl_forced_update_display();
     return 0;
 }
