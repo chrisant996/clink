@@ -672,8 +672,7 @@ local function autoupdate()
             clink.print("\x1b[1mClink " .. tag .. " is available.\x1b[m")
             print("- To apply the update, run 'clink update'.")
             print("- To stop checking for updates, run 'clink set clink.autoupdate false'.")
-            print("- To view the release notes, visit the Releases page:")
-            print(string.format("  https://github.com/%s/releases", github_repo))
+            clink.printreleasesurl("- ")
             print("")
         end
     end
@@ -686,6 +685,13 @@ local function autoupdate()
 end
 
 clink.oninject(autoupdate)
+
+--------------------------------------------------------------------------------
+function clink.printreleasesurl(tag)
+    tag = tag or "\n"
+    print(tag .. "To view the release notes, visit the Releases page:")
+    print(string.format("  https://github.com/%s/releases", github_repo))
+end
 
 --------------------------------------------------------------------------------
 function clink.updatenow(elevated)

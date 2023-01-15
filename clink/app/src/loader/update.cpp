@@ -167,6 +167,12 @@ static bool call_updater(lua_state& lua)
         tmp = msg;
         tmp.data()[0] = toupper(tmp.data()[0]);
         fprintf(ok ? stdout : stderr, "%s\n", tmp.c_str());
+
+        if (ok)
+        {
+            lua.push_named_function(state, "clink.printreleasesurl");
+            lua.pcall_silent(state, 0, 0);
+        }
     }
 
     if (g_elevated)
