@@ -74,7 +74,7 @@ extern "C" {
  * and are compatible in behavior to fnmatch(3) in the absence of WM_WILDSTAR.
  */
 
-int wildmatch(const char *string, const char *pattern, int flags);
+int wildmatch(const char *pattern, const char *string, int flags);
 
 
 #ifdef __cplusplus
