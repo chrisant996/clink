@@ -6,7 +6,7 @@ local tag_filename = "clink_updater_tag"
 
 --------------------------------------------------------------------------------
 local function log_info(message)
-    log.info("Clink updater: " .. message)
+    log.info("Clink updater: " .. message, 2--[[stack level; our caller]])
     return message
 end
 
