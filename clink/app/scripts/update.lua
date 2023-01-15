@@ -417,7 +417,7 @@ local function internal_check_for_update(force)
     -- Compare versions.
     log_info("latest release is " .. cloud_tag .. ".")
     if not is_rhs_version_newer(local_tag, cloud_tag) then
-        return nil, log_info("no update available; local version " .. local_tag .. " is not older than latest release " .. cloud_tag .. ".") -- luacheck: no max line length
+        return nil, log_info("no update available; local version " .. local_tag .. " is not older than latest release " .. cloud_tag .. "."), true -- luacheck: no max line length
     end
 
     -- Check if already downloaded.
@@ -492,11 +492,11 @@ local function check_for_update(force)
     local guardfile = path.join(update_dir, "updating")
     local g, err = io.sopen(guardfile, "w", "w") -- luacheck: ignore 411
     if not g then
-        return nil, log_info("unable to update because another update may be in progress; " .. err)
+        return nil, log_info("unable to update because another update may be in progress; " .. err), true -- luacheck: no max line length
     end
 
     -- Attempt to update.
-    local ret, err, cloud_tag = internal_check_for_update(force) -- luacheck: ignore 411
+    local ret, err, stop = internal_check_for_update(force) -- luacheck: ignore 411
 
     -- Record last update time.
     update_lastcheck(update_dir)
@@ -504,7 +504,7 @@ local function check_for_update(force)
     -- Dispose of the concurrency protection.
     g:close()
     os.remove(guardfile)
-    return ret, err, cloud_tag
+    return ret, err, stop
 end
 
 local function is_update_ready(force)
@@ -525,7 +525,7 @@ local function is_update_ready(force)
 
     -- Download latest update file, or use update file that's already been
     -- downloaded.
-    local update_file
+    local update_file, stop
     if force then
         local can
         can, err = can_check_for_update(force)
@@ -533,11 +533,14 @@ local function is_update_ready(force)
             return nil, err
         end
     end
-    update_file, err = check_for_update(force)
+    update_file, err, stop = check_for_update(force)
     if not update_file then
-        -- If an update is already downloaded, then ignore any error that may
-        -- have occurred while attempting to check/download a new update.
-        update_file = has_update_file()
+        -- If an update is already downloaded, then ignore transient errors
+        -- that may have occurred while attempting to check or download a new
+        -- update.
+        if not stop then
+            update_file = has_update_file()
+        end
         if not update_file then
             -- If no update file is already downloaded, then report the error
             -- from the earlier check_for_update().
