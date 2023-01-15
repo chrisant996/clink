@@ -17,4 +17,4 @@
 #define FNM_IGNORECASE FNM_CASEFOLD
 #define FNM_FILE_NAME FNM_PATHNAME
 
-int fnmatch(const char *string, const char *pattern, int flags);
+int fnmatch(const char *pattern, const char *string, int flags);

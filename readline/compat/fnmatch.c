@@ -8,7 +8,7 @@
 #include "fnmatch.h"
 
 //------------------------------------------------------------------------------
-int fnmatch(const char *string, const char* pattern, int flags)
+int fnmatch(const char *pattern, const char *string, int flags)
 {
     return wildmatch(pattern, string, flags);
 }
