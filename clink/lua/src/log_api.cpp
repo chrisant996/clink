@@ -12,13 +12,20 @@
 /// -name:  log.info
 /// -ver:   1.1.3
 /// -arg:   message:string
+/// -arg:   [level:integer]
 /// Writes info <span class="arg">message</span> to the Clink log file.  Use
 /// this sparingly, or it could cause performance problems or disk space
 /// problems.
+///
+/// In v1.4.10 and higher, the optional <span class="arg">level</span> number
+/// tells which stack level to log as the source of the log message (default is
+/// 1, the function calling <code>log.info</code>).
 int log_info(lua_State* state)
 {
+    const int level = optinteger(state, 2, 1);
+
     lua_Debug ar = {};
-    lua_getstack(state, 1, &ar);
+    lua_getstack(state, level, &ar);
     lua_getinfo(state, "Sl", &ar);
     const char* source = ar.source ? ar.source : "?";
     int line = ar.currentline;
