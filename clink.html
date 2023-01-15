@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.4.9</title>
+<title>Clink v1.4.10</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -853,7 +853,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.4.9</div>
+                <div id="title">Clink v1.4.10</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -6268,7 +6268,7 @@ line_state:getcommandwordindex() == 2</code></pre></div></div><hr/>
 -- t.delim      [string] The delimiter character, or an empty string.
 -- t.alias      [boolean | nil] true if the word is a doskey alias, otherwise nil.
 -- t.redir      [boolean | nil] true if the word is a redirection arg, otherwise nil.</code></pre></div></div><hr/>
-</div><div class="group"><h5 class="group_name"><span class="wlink"><a href="#log"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="log">log</a></h5><div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#log.info"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="log.info">log.info</a></div> <div class="signature">( <span class="arg_name">message</span>:string ) : nil<br/><div class="version">v1.1.3 and newer</div></div></div><div class="body"><p class="desc">Writes info <span class="arg">message</span> to the Clink log file.  Use this sparingly, or it could cause performance problems or disk space problems.</p></div></div><hr/>
+</div><div class="group"><h5 class="group_name"><span class="wlink"><a href="#log"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="log">log</a></h5><div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#log.info"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="log.info">log.info</a></div> <div class="signature">( <span class="arg_name">message</span>:string, [<span class="arg_name">level</span>:integer] ) : nil<br/><div class="version">v1.1.3 and newer</div></div></div><div class="body"><p class="desc">Writes info <span class="arg">message</span> to the Clink log file.  Use this sparingly, or it could cause performance problems or disk space problems.</p><p class="desc"> In v1.4.10 and higher, the optional <span class="arg">level</span> number tells which stack level to log as the source of the log message (default is 1, the function calling <code>log.info</code>).</p></div></div><hr/>
 </div><div class="group"><h5 class="group_name"><span class="wlink"><a href="#matches"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="matches">matches</a></h5><div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#matches:getcount"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="matches:getcount">matches:getcount</a></div> <div class="signature">() : integer<br/><div class="version">v1.2.47 and newer</div></div></div><div class="body"><p class="desc">Returns the number of available matches.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#matches:getmatch"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="matches:getmatch">matches:getmatch</a></div> <div class="signature">( <span class="arg_name">index</span>:integer ) : string<br/><div class="version">v1.2.47 and newer</div></div></div><div class="body"><p class="desc">Returns the match text for the <span class="arg">index</span> match.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#matches:getprefix"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="matches:getprefix">matches:getprefix</a></div> <div class="signature">() : string<br/><div class="version">v1.2.47 and newer</div></div></div><div class="body"><p class="desc">Returns the longest common prefix of the available matches.</p></div></div><hr/>
@@ -6798,6 +6798,13 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes"><div class="wlink"><a href="#changes"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork"><div class="wlink"><a href="#releases-from-chrisant996clink-fork"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1410"><div class="wlink"><a href="#v1410"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>v1.4.10</h4>
+<ul>
+<li>Added optional <code>level</code> argument to <code>log.info()</code> to facilitate more accurate reporting about the calling code.</li>
+<li>Fixed extra duplicate log entry when the updater finds that Clink is already up to date.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/405">#405</a>; vi search gives unexpected results (regression introduced in v1.4.7).</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/402">#402</a>; for convenience, print the Clink Releases page URL after a successful update (takes effect on the next upgrade <em>after</em> v1.4.10).</li>
+</ul>
 <h4 id="v149"><div class="wlink"><a href="#v149"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>v1.4.9</h4>
 <ul>
 <li>Improved the problematic character reporting in the <code>clink-diagnostics</code> command.</li>
@@ -8750,7 +8757,7 @@ also hook cmd.exe (ConEmu, ANSICon, etc.).</li>
 <p>Clink was originally built by Martin Ridgers (<a href="https://github.com/mridgers/clink">https://github.com/mridgers/clink</a>).<br/>
 Copyright (c) 2012-2018 by Martin Ridgers.</p>
 <p>Clink has been forked and renovated by Christopher Antos (<a href="https://github.com/chrisant996/clink">https://github.com/chrisant996/clink</a>).<br/>
-Portions Copyright (c) 2020-2022 by Christopher Antos.</p>
+Portions Copyright (c) 2020-2023 by Christopher Antos.</p>
 <h3><div class="wlink"><svg width=16 height=16 style="display:none"/></div>Libraries</h3>
 
 <p>GNU Readline library version 8.1 (<a href="https://tiswww.case.edu/php/chet/readline/rltop.html">https://tiswww.case.edu/php/chet/readline/rltop.html</a>).<br/>
