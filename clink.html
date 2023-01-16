@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.4.10</title>
+<title>Clink v1.4.11</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -853,7 +853,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.4.10</div>
+                <div id="title">Clink v1.4.11</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -6798,6 +6798,10 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes"><div class="wlink"><a href="#changes"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork"><div class="wlink"><a href="#releases-from-chrisant996clink-fork"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1411"><div class="wlink"><a href="#v1411"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>v1.4.11</h4>
+<ul>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/406">#406</a>; the &quot;lambdagenerated.omp.json&quot; theme for Oh-My-Posh has problems in CJK codepages.  The <a href="https://www.unicode.org/reports/tr11-2/#:~:text=East%20Asian%20Ambiguous%20%28A%29%20-%20Characters%20that%20occur,sets%2C%20but%20also%20some%20of%20the%20mathematical%20symbols%29.">East Asian Ambiguous</a> support has been rewritten to solve multiple subtle issues; the fix in v1.4.9 exposed other inaccuracies.</li>
+</ul>
 <h4 id="v1410"><div class="wlink"><a href="#v1410"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>v1.4.10</h4>
 <ul>
 <li>Added optional <code>level</code> argument to <code>log.info()</code> to facilitate more accurate reporting about the calling code.</li>
