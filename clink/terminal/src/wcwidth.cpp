@@ -62,6 +62,9 @@
 #include <pch.h>
 #include <wchar.h>
 
+#include <core/os.h>
+#include <core/log.h>
+
 extern bool g_color_emoji;
 
 #if defined(__cplusplus)
@@ -361,25 +364,70 @@ static HDC s_hdc = NULL;
 static HFONT s_hfont = NULL;
 static std::map<char32_t, int> s_map_ambiguous;
 static int s_cell = 0;
+static int s_cell_rounding = 0;
 static int s_resolve = EAA_auto;
 
 #if defined(__cplusplus)
 extern "C" {
 #endif
 
-static int get_wcwidth_from_font(char32_t ucs)
+static int get_wcwidth_from_font(const char32_t ucs)
 {
   if (s_hdc && s_hfont && s_cell)
   {
-    ABC abc;
-    if (GetCharABCWidths(s_hdc, ucs, ucs, &abc))
-      return abc.abcB / s_cell;
+    if (ucs < 0x10000)
+    {
+      ABC abc;
+      if (GetCharABCWidthsW(s_hdc, ucs, ucs, &abc))
+      {
+#ifdef DEBUG
+        LOG("ABC:  0x%X => A %d, B %d, C %d, cell %d", (unsigned int)ucs, abc.abcA, abc.abcB, abc.abcC, s_cell);
+#endif
+        int width = (abc.abcA + abc.abcB + abc.abcC);
+        if (width > 0)
+        {
+          width = (width + s_cell_rounding) / s_cell;
+          return width ? width : 1;
+        }
+      }
 
-    INT width;
-    if (GetCharWidth32(s_hdc, ucs, ucs, &width))
-      return width / s_cell;
+      INT width;
+      if (GetCharWidth32W(s_hdc, ucs, ucs, &width))
+      {
+#ifdef DEBUG
+        LOG("Char:  0x%X => width %d, cell %d", (unsigned int)ucs, width, s_cell);
+#endif
+        return width / s_cell;
+      }
+    }
+
+    wchar_t tmp[3];
+    wchar_t *p = tmp;
+    const char32_t orig_ucs = ucs;
+
+    if (ucs < 0x10000)
+    {
+      *(p++) = (ucs & 0xffff);
+    }
+    else
+    {
+      const UINT x = ucs - 0x10000;
+      *(p++) = ((x << 12) >> 22) + 0xD800;
+      *(p++) = ((x << 22) >> 22) + 0xDC00;
+    }
+    *p = '\0';
+
+    SIZE size;
+    if (GetTextExtentPoint32W(s_hdc, tmp, int(p - tmp), &size))
+    {
+#ifdef DEBUG
+      LOG("Extent:  0x%X => cx %d, cell %d", (unsigned int)ucs, size.cx, s_cell);
+#endif
+      return size.cx / s_cell;
+    }
   }
 
+  LOG("ambiguous width resolution failed for 0x%X\n", (unsigned int)ucs);
   return -1;
 }
 
@@ -425,21 +473,53 @@ static void reset_cached_font()
     s_hfont = NULL;
   }
   s_cell = 0;
+  s_cell_rounding = 0;
 }
 
 static void init_cached_font()
 {
   CONSOLE_FONT_INFOEX info = { sizeof(info) };
-  if (GetCurrentConsoleFontEx(GetStdHandle(STD_OUTPUT_HANDLE), false, &info))
+  if (!GetCurrentConsoleFontEx(GetStdHandle(STD_OUTPUT_HANDLE), false, &info))
   {
-    s_hdc = CreateCompatibleDC(NULL);
-    s_cell = info.dwFontSize.X;
+    ERR("unable to get console font");
+    return;
+  }
 
-    LOGFONTW lf = {};
-    wcscpy(lf.lfFaceName, info.FaceName);
-    lf.lfPitchAndFamily = info.FontFamily;
-    lf.lfWeight = info.FontWeight;
-    s_hfont = CreateFontIndirectW(&lf);
+  s_hdc = CreateCompatibleDC(NULL);
+  if (!s_hdc)
+  {
+    ERR("unable to get device context");
+    return;
+  }
+
+  SaveDC(s_hdc);
+
+  LOGFONTW lf = {};
+  wcscpy(lf.lfFaceName, info.FaceName);
+  lf.lfPitchAndFamily = info.FontFamily;
+  lf.lfWeight = info.FontWeight;
+  s_hfont = CreateFontIndirectW(&lf);
+  if (!s_hfont)
+  {
+    ERR("unable to create console font");
+    return;
+  }
+
+  s_cell = info.dwFontSize.X;
+
+  SelectObject(s_hdc, s_hfont);
+  if (s_cell <= 0)
+  {
+      TEXTMETRICW tm;
+      if (!GetTextMetricsW(s_hdc, &tm))
+      {
+        ERR("unable to get font metrics");
+        s_cell = 0;
+        return;
+      }
+
+      s_cell = tm.tmAveCharWidth;
+      s_cell_rounding = tm.tmAveCharWidth / 2;
   }
 }
 
