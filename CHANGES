@@ -2,6 +2,10 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.4.11
+
+- Fixed [#406](https://github.com/chrisant996/clink/issues/406); the "lambdagenerated.omp.json" theme for Oh-My-Posh has problems in CJK codepages.  The [East Asian Ambiguous](https://www.unicode.org/reports/tr11-2/#:~:text=East%20Asian%20Ambiguous%20%28A%29%20-%20Characters%20that%20occur,sets%2C%20but%20also%20some%20of%20the%20mathematical%20symbols%29.) support has been rewritten to solve multiple subtle issues; the fix in v1.4.9 exposed other inaccuracies.
+
 #### v1.4.10
 
 - Added optional `level` argument to `log.info()` to facilitate more accurate reporting about the calling code.
