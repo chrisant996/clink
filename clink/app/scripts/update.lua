@@ -33,6 +33,7 @@ local this_install_type
 local this_install_key
 local latest_cloud_tag
 
+local is_build_dir = false
 local can_use_setup_exe = false
 
 local function parse_version_tag(tag)
@@ -335,7 +336,12 @@ local function can_check_for_update(force)
 
     local lib = path.join(bin_dir, path.getbasename(t[1].name) .. ".lib")
     if os.isfile(lib) then
-        return false, log_info("autoupdate is disabled for local build directories.")
+        local reason = "autoupdate is disabled for local build directories."
+        if not is_build_dir then
+            log_info(reason)
+            is_build_dir = true
+        end
+        return false, reason
     end
 
     local tagfile, err = get_update_dir() -- luacheck: ignore 411
