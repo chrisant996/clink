@@ -64,6 +64,7 @@
 
 #include <core/os.h>
 #include <core/log.h>
+#include <core/debugheap.h>
 
 extern bool g_color_emoji;
 
@@ -380,9 +381,7 @@ static int get_wcwidth_from_font(const char32_t ucs)
       ABC abc;
       if (GetCharABCWidthsW(s_hdc, ucs, ucs, &abc))
       {
-#ifdef DEBUG
         LOG("ABC:  0x%X => A %d, B %d, C %d, cell %d", (unsigned int)ucs, abc.abcA, abc.abcB, abc.abcC, s_cell);
-#endif
         int width = (abc.abcA + abc.abcB + abc.abcC);
         if (width > 0)
         {
@@ -394,9 +393,7 @@ static int get_wcwidth_from_font(const char32_t ucs)
       INT width;
       if (GetCharWidth32W(s_hdc, ucs, ucs, &width))
       {
-#ifdef DEBUG
         LOG("Char:  0x%X => width %d, cell %d", (unsigned int)ucs, width, s_cell);
-#endif
         return width / s_cell;
       }
     }
@@ -420,9 +417,7 @@ static int get_wcwidth_from_font(const char32_t ucs)
     SIZE size;
     if (GetTextExtentPoint32W(s_hdc, tmp, int(p - tmp), &size))
     {
-#ifdef DEBUG
       LOG("Extent:  0x%X => cx %d, cell %d", (unsigned int)ucs, size.cx, s_cell);
-#endif
       return size.cx / s_cell;
     }
   }
@@ -446,6 +441,8 @@ static int resolve_ambiguous_wcwidth(char32_t ucs)
       int width = get_wcwidth_from_font(ucs);
       if (width < 0)
         width = 2;
+
+      dbg_ignore_scope(snapshot, "East Asian Ambiguous width map");
       s_map_ambiguous[ucs] = width;
       return width;
     }
@@ -459,8 +456,11 @@ static int resolve_ambiguous_wcwidth(char32_t ucs)
   }
 }
 
-static void reset_cached_font()
+void reset_cached_font()
 {
+  if (s_hdc || s_hfont || s_cell || !s_map_ambiguous.empty())
+    LOG("resetting cached font info");
+
   if (s_hdc)
   {
     RestoreDC(s_hdc, -1);
@@ -474,6 +474,7 @@ static void reset_cached_font()
   }
   s_cell = 0;
   s_cell_rounding = 0;
+  s_map_ambiguous.clear();
 }
 
 static void init_cached_font()
@@ -485,19 +486,33 @@ static void init_cached_font()
     return;
   }
 
-  s_hdc = CreateCompatibleDC(NULL);
-  if (!s_hdc)
+  // Don't reset the cached font info unless the face name has changed.
+  if (s_hdc && s_hfont)
   {
-    ERR("unable to get device context");
-    return;
+    LOGFONTW lf = {};
+    if (GetObjectW(s_hfont, sizeof(lf), &lf) &&
+        !str_cmp(lf.lfFaceName, info.FaceName))
+      return;
   }
 
-  SaveDC(s_hdc);
+  reset_cached_font();
+
+  if (!s_hdc)
+  {
+    s_hdc = CreateCompatibleDC(NULL);
+    if (!s_hdc)
+    {
+      ERR("unable to get device context");
+      return;
+    }
+    SaveDC(s_hdc);
+  }
 
   LOGFONTW lf = {};
   wcscpy(lf.lfFaceName, info.FaceName);
   lf.lfPitchAndFamily = info.FontFamily;
   lf.lfWeight = info.FontWeight;
+
   s_hfont = CreateFontIndirectW(&lf);
   if (!s_hfont)
   {
@@ -521,13 +536,14 @@ static void init_cached_font()
       s_cell = tm.tmAveCharWidth;
       s_cell_rounding = tm.tmAveCharWidth / 2;
   }
+
+  str<> name(info.FaceName);
+  LOG("console font \"%s\", cell width %d, pitch and family 0x%x", name.c_str(), s_cell, info.FontFamily);
+  LOG("East Asian Ambiguous mode %d", s_resolve);
 }
 
 void reset_wcwidths()
 {
-  s_map_ambiguous.clear();
-  reset_cached_font();
-
   bool use_cjk = true;
 
   s_resolve = g_terminal_east_asian_ambiguous.get();
@@ -559,6 +575,7 @@ void reset_wcwidths()
   {
     wcwidth = mk_wcwidth;
     wcswidth = mk_wcswidth;
+    reset_cached_font();
   }
 }
 

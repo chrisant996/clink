@@ -86,6 +86,7 @@ extern void host_get_app_context(int& id, str_base& binaries, str_base& profile,
 extern "C" int show_cursor(int visible);
 extern void set_suggestion(const char* line, unsigned int endword_offset, const char* suggestion, unsigned int offset);
 extern "C" void host_clear_suggestion();
+extern "C" void reset_cached_font();
 extern "C" int test_ambiguous_width_char(char32_t ucs);
 
 // This is implemented in the app layer, which makes it inaccessible to lower
@@ -2015,20 +2016,21 @@ static void list_ambiguous_codepoints(const char* tag, const std::vector<alert_c
     static const char norm[] = "\x1b[m";
 
     str<> s;
-    str<> hex;
+    str<> tmp;
 
     s << "  " << tag << ":\n";
     g_printer->print(s.c_str(), s.length());
 
     for (alert_char ac : chars)
     {
-        s.format("        Unicode: %s0x%X%s,  UTF8", red, ac.ucs, norm);
+        s.format("        Unicode: %s0x%04X%s, UTF8", red, ac.ucs, norm);
         for (unsigned int i = 0; i < ac.len; ++i)
         {
-            hex.format(" %s0x%02.2X%s", red, static_cast<unsigned char>(ac.text[i]), norm);
-            s.concat(hex.c_str(), hex.length());
+            tmp.format(" %s0x%02.2X%s", red, static_cast<unsigned char>(ac.text[i]), norm);
+            s.concat(tmp.c_str(), tmp.length());
         }
-        s << ",  text \"" << red;
+        tmp.format(", reported width %s%d%s", red, wcwidth(ac.ucs), norm);
+        s << tmp << ", text \"" << red;
         s.concat(ac.text, ac.len);
         s << norm << "\"\n";
         g_printer->print(s.c_str(), s.length());
@@ -2280,6 +2282,7 @@ int force_reload_scripts()
     s_force_reload_scripts = true;
     if (g_result)
         g_result->done(true); // Force a new edit line so scripts can be reloaded.
+    reset_cached_font(); // Force discarding cached font info.
     readline_internal_teardown(true);
     return rl_re_read_init_file(0, 0);
 }
