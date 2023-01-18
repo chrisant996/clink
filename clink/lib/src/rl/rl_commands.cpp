@@ -24,6 +24,7 @@
 #include <terminal/scroll.h>
 #include <terminal/screen_buffer.h>
 #include <terminal/terminal_helpers.h>
+#include <terminal/ecma48_iter.h>
 
 extern "C" {
 #include <readline/readline.h>
@@ -2023,6 +2024,8 @@ static void list_ambiguous_codepoints(const char* tag, const std::vector<alert_c
 
     for (alert_char ac : chars)
     {
+        // Print formatted string.
+
         s.format("        Unicode: %s0x%04X%s, UTF8", red, ac.ucs, norm);
         for (unsigned int i = 0; i < ac.len; ++i)
         {
@@ -2034,6 +2037,20 @@ static void list_ambiguous_codepoints(const char* tag, const std::vector<alert_c
         s.concat(ac.text, ac.len);
         s << norm << "\"\n";
         g_printer->print(s.c_str(), s.length());
+
+        // Log plain text string.
+
+        ecma48_state state;
+        ecma48_iter iter(s.c_str(), state);
+        tmp.clear();
+
+        while (const ecma48_code& code = iter.next())
+            if (code.get_type() == ecma48_code::type_chars)
+                tmp.concat(code.get_pointer(), code.get_length());
+
+        tmp.trim();
+
+        LOG("%s", tmp.c_str());
     }
 }
 
