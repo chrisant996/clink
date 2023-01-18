@@ -197,6 +197,8 @@ INT_PTR WINAPI initialise_clink(const app_context::desc& app_desc)
         static bool s_initialized = false;
         if (s_initialized)
         {
+            // In this weird case, the logger doesn't need to be started,
+            // because Clink is already injected and already started the logger.
             LOG("Clink is already installed in the target process.  An antivirus tool might be blocking Clink from inspecting the target process.");
             return false;
         }

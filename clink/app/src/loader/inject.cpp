@@ -162,7 +162,7 @@ static int check_dll_version(const char* clink_dll)
         return 0;
     }
 
-    LOG("DLL version: %08x %08x",
+    DEFER_LOG("DLL version: %08x %08x",
         file_info->dwFileVersionMS,
         file_info->dwFileVersionLS
     );
@@ -255,7 +255,7 @@ static remote_result inject_dll(DWORD target_pid, bool is_autorun, bool force_ho
     osvi.dwOSVersionInfoSize = sizeof(osvi);
     GetVersionEx((OSVERSIONINFO*)&osvi);
 
-    LOG("System: ver=%d.%d %d.%d arch=%d cpus=%d cpu_type=%d page_size=%d",
+    DEFER_LOG("System: ver=%d.%d %d.%d arch=%d cpus=%d cpu_type=%d page_size=%d",
         osvi.dwMajorVersion,
         osvi.dwMinorVersion,
         osvi.wServicePackMajor,
@@ -266,11 +266,11 @@ static remote_result inject_dll(DWORD target_pid, bool is_autorun, bool force_ho
         sys_info.dwPageSize
     );
 #endif
-    LOG("Version: %s", CLINK_VERSION_STR);
-    LOG("Arch: %s", AS_STR(ARCHITECTURE_NAME));
-    LOG("DLL: %s", dll_path.c_str());
+    DEFER_LOG("Version: %s", CLINK_VERSION_STR);
+    DEFER_LOG("Arch: %s", AS_STR(ARCHITECTURE_NAME));
+    DEFER_LOG("DLL: %s", dll_path.c_str());
 
-    LOG("Parent pid: %d", target_pid);
+    DEFER_LOG("Parent pid: %d", target_pid);
 
     // Check Dll's version.
     if (!check_dll_version(dll_path.c_str()))
@@ -338,7 +338,11 @@ static remote_result inject_dll(DWORD target_pid, bool is_autorun, bool force_ho
             switch (tolower(*args))
             {
             case 'c':
-                LOG("Host is not interactive; cancelling inject.");
+                // Only log this is something else has already gotten logged.
+                // The intent is to avoid filling a log file with a ton of these
+                // when Clink is configured in the CMD AutoRun regkey.
+                if (!logger::can_defer())
+                    LOG("Host is not interactive; cancelling inject.");
                 return { -1 };
             case 'k':
                 args = nullptr;
@@ -597,18 +601,16 @@ int inject(int argc, char** argv)
             path::append(log_path, log_name.c_str());
         }
 
-        // Restart the log file on every inject.  The DLL also restarts the log
-        // file on successful inject.  So the beginning of any log file contains
-        // EITHER info about a failed inject, or info from a successful inject.
-        unlink(log_path.c_str());
+        // Don't restart the log file; append to whatever log file may already
+        // exist.  The DLL code restarts the log file on a successful inject.
         new file_logger(log_path.c_str());
 
         SYSTEMTIME now;
         GetLocalTime(&now);
-        LOG("---- %04u/%02u/%02u %02u:%02u:%02u.%03u -------------------------------------------------",
+        DEFER_LOG("---- %04u/%02u/%02u %02u:%02u:%02u.%03u -------------------------------------------------",
             now.wYear, now.wMonth, now.wDay,
             now.wHour, now.wMinute, now.wSecond, now.wMilliseconds);
-        LOG("Injecting Clink...");
+        DEFER_LOG("Injecting Clink...");
     }
 
     injection_error_reporter errrep(target_pid, app_desc.log ? log_path.c_str() : nullptr);
@@ -692,7 +694,7 @@ int inject(int argc, char** argv)
         return ret;
     }
 
-    LOG("Initializing Clink...");
+    DEFER_LOG("Initializing Clink...");
 
     // Remotely call Clink's initialisation function.
     void* our_dll_base = vm().get_alloc_base((void*)"");

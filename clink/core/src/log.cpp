@@ -18,6 +18,11 @@ void logger::info(const char* function, int line, const char* fmt, ...)
     if (instance == nullptr)
         return;
 
+    if (!instance->m_deferred.empty())
+        instance->emit_deferred();
+    if (instance->m_can_defer)
+        instance->m_can_defer = false;
+
     va_list args;
     va_start(args, fmt);
     instance->emit(function, line, fmt, args);
@@ -33,6 +38,11 @@ void logger::error(const char* function, int line, const char* fmt, ...)
 
     DWORD last_error = GetLastError();
 
+    if (!instance->m_deferred.empty())
+        instance->emit_deferred();
+    if (instance->m_can_defer)
+        instance->m_can_defer = false;
+
     va_list args;
     va_start(args, fmt);
 
@@ -41,6 +51,44 @@ void logger::error(const char* function, int line, const char* fmt, ...)
     logger::info(function, line, "(last error = %d)", last_error);
 
     va_end(args);
+}
+
+//------------------------------------------------------------------------------
+bool logger::can_defer()
+{
+    logger* instance = logger::get();
+    return (instance && instance->m_can_defer);
+}
+
+//------------------------------------------------------------------------------
+void logger::defer_info(const char* function, int line, const char* fmt, ...)
+{
+    logger* instance = logger::get();
+    if (instance == nullptr)
+        return;
+
+    deferred d;
+
+    va_list args;
+    va_start(args, fmt);
+    d.function = function;
+    d.line = line;
+    d.msg.vformat(fmt, args);
+    va_end(args);
+
+    if (instance->m_can_defer)
+        instance->m_deferred.emplace_back(std::move(d));
+    else
+        info(d.function.c_str(), d.line, "%s", d.msg.c_str());
+}
+
+//------------------------------------------------------------------------------
+void logger::emit_deferred()
+{
+    std::vector<deferred> deferred;
+    deferred.swap(m_deferred);
+    for (const auto& d : deferred)
+        info(d.function.c_str(), d.line, "%s", d.msg.c_str());
 }
 
 
