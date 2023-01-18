@@ -5,6 +5,7 @@
 #### v1.4.12
 
 - Improved logging for East Asian ambiguous width characters.
+- Running `clink inject` no longer empties the log file, so that AutoRun doesn't result in the log file being cleared over and over, which interferes with diagnostic efforts.
 
 #### v1.4.11
 
