@@ -681,12 +681,10 @@ void line_editor_impl::update_matches()
     if (m_matches.is_volatile())
         reset_generate_matches();
 
-    // const bool windows_dot_prefix = (rl_completion_type == '%' && g_default_bindings.get() == 1);
-
     // Get flag states because we're about to clear them.
     bool generate = check_flag(flag_generate);
     bool restrict = check_flag(flag_restrict);
-    bool select = generate || restrict || /*windows_dot_prefix ||*/ check_flag(flag_select);
+    bool select = generate || restrict || check_flag(flag_select);
 
     // Clear flag states before running generators, so that generators can use
     // reset_generate_matches().
