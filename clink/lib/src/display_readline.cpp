@@ -1798,6 +1798,8 @@ void display_manager::update_line(int i, const display_line* o, const display_li
         !memcmp(o->m_faces, d->m_faces, d->m_len))
         return;
 
+    bool use_eol_opt = !has_rprompt && d->m_toeol && s_use_eol_optimization;
+
     // Optimize updating when the new starting column is less than or equal to
     // the old starting column.  Can't optimize in the other direction unless
     // update_line(0) happens before displaying the prompt string.
@@ -1843,6 +1845,8 @@ test_left:
         // prompt on this line.
         if (!has_rprompt)
         {
+            const char* dcend = dc2;
+
             while (oc2 > oc && dc2 > dc)
             {
                 const char* oback = oc + _rl_find_prev_mbchar(const_cast<char*>(oc), oc2 - oc, MB_FIND_ANY);
@@ -1857,6 +1861,23 @@ test_left:
                 dc2 = dback;
                 of2 -= bytes;
                 df2 -= bytes;
+            }
+
+            if (use_eol_opt)
+            {
+                const char* ec = dc2;
+                const char* ef = df2;
+                size_t elen = d->m_len - (dc2 - d->m_chars);
+                while (elen--)
+                {
+                    if (*ec != ' ' || *ef != FACE_NORMAL)
+                    {
+                        use_eol_opt = false;
+                        break;
+                    }
+                    --ec;
+                    --ef;
+                }
             }
         }
 
@@ -1909,7 +1930,7 @@ test_left:
     // Clear anything leftover from o.
     if (o && d->m_lastcol < o->m_lastcol)
     {
-        if (d->m_toeol && s_use_eol_optimization)
+        if (use_eol_opt)
         {
             rl_fwrite_function(_rl_out_stream, "\x1b[K", 3);
         }
