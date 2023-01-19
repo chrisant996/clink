@@ -51,6 +51,7 @@ static setting_bool g_substring(
 );
 
 extern setting_bool g_match_wild;
+extern setting_enum g_default_bindings;
 
 
 
@@ -392,6 +393,8 @@ bool matches_iter::next()
 {
     if (m_has_pattern)
     {
+        const bool dot_prefix = (rl_completion_type == '%' && g_default_bindings.get() == 1);
+
         while (true)
         {
             m_index = m_next;
@@ -411,7 +414,7 @@ bool matches_iter::next()
                 match_len--;
 
             const path::star_matches_everything flag = is_pathish(get_match_type()) ? path::at_end : path::yes;
-            if (path::match_wild(m_pattern, str_iter(match, match_len), flag))
+            if (path::match_wild(m_pattern, str_iter(match, match_len), dot_prefix, flag))
                 goto found;
         }
     }
@@ -433,56 +436,42 @@ found:
 //------------------------------------------------------------------------------
 const char* matches_iter::get_match() const
 {
-    if (m_has_pattern)
-        return has_match() ? m_matches.get_unfiltered_match(m_index) : nullptr;
     return has_match() ? m_matches.get_match(m_index) : nullptr;
 }
 
 //------------------------------------------------------------------------------
 match_type matches_iter::get_match_type() const
 {
-    if (m_has_pattern)
-        return has_match() ? m_matches.get_unfiltered_match_type(m_index) : match_type::none;
     return has_match() ? m_matches.get_match_type(m_index) : match_type::none;
 }
 
 //------------------------------------------------------------------------------
 const char* matches_iter::get_match_display() const
 {
-    if (m_has_pattern)
-        return has_match() ? m_matches.get_unfiltered_match_display(m_index) : nullptr;
     return has_match() ? m_matches.get_match_display(m_index) : nullptr;
 }
 
 //------------------------------------------------------------------------------
 const char* matches_iter::get_match_description() const
 {
-    if (m_has_pattern)
-        return has_match() ? m_matches.get_unfiltered_match_description(m_index) : nullptr;
     return has_match() ? m_matches.get_match_description(m_index) : nullptr;
 }
 
 //------------------------------------------------------------------------------
 char matches_iter::get_match_append_char() const
 {
-    if (m_has_pattern)
-        return has_match() ? m_matches.get_unfiltered_match_append_char(m_index) : 0;
     return has_match() ? m_matches.get_match_append_char(m_index) : 0;
 }
 
 //------------------------------------------------------------------------------
 shadow_bool matches_iter::get_match_suppress_append() const
 {
-    if (m_has_pattern)
-        return has_match() ? m_matches.get_unfiltered_match_suppress_append(m_index) : shadow_bool(false);
     return has_match() ? m_matches.get_match_suppress_append(m_index) : shadow_bool(false);
 }
 
 //------------------------------------------------------------------------------
 bool matches_iter::get_match_append_display() const
 {
-    if (m_has_pattern)
-        return has_match() ? m_matches.get_unfiltered_match_append_display(m_index) : false;
     return has_match() ? m_matches.get_match_append_display(m_index) : false;
 }
 

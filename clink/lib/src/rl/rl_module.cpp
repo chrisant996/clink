@@ -99,6 +99,7 @@ extern int host_filter_matches(char** matches);
 extern void interrupt_input();
 extern void update_matches();
 extern void reset_generate_matches();
+extern void reselect_matches();
 extern void force_update_internal(bool restrict);
 extern matches* maybe_regenerate_matches(const char* needle, display_filter_flags flags);
 extern void signal_terminal_resized();
@@ -1274,51 +1275,62 @@ static int complete_fncmp(const char *convfn, int convlen, const char *filename,
 //------------------------------------------------------------------------------
 static void adjust_completion_defaults()
 {
-    if (!s_matches || !g_rl_buffer || !g_match_expand_envvars.get())
+    if (!s_matches || !g_rl_buffer)
         return;
 
-    const int word_break = s_matches->get_word_break_position();
-    const int word_len = g_rl_buffer->get_cursor() - word_break;
-    const char* buffer = g_rl_buffer->get_buffer();
+    if (g_match_expand_envvars.get())
+    {
+        const int word_break = s_matches->get_word_break_position();
+        const int word_len = g_rl_buffer->get_cursor() - word_break;
+        const char* buffer = g_rl_buffer->get_buffer();
 
 #ifdef DEBUG
-    const int dbg_row = dbg_get_env_int("DEBUG_EXPANDENVVARS");
-    if (dbg_row > 0)
-    {
-        str<> tmp;
-        tmp.format("\x1b[s\x1b[%dHexpand envvars in:  ", dbg_row);
-        g_printer->print(tmp.c_str(), tmp.length());
-        tmp.format("\x1b[0;37;7m%.*s\x1b[m", word_len, buffer + word_break);
-        g_printer->print(tmp.c_str(), tmp.length());
-        g_printer->print("\x1b[K\x1b[u");
-    }
+        const int dbg_row = dbg_get_env_int("DEBUG_EXPANDENVVARS");
+        if (dbg_row > 0)
+        {
+            str<> tmp;
+            tmp.format("\x1b[s\x1b[%dHexpand envvars in:  ", dbg_row);
+            g_printer->print(tmp.c_str(), tmp.length());
+            tmp.format("\x1b[0;37;7m%.*s\x1b[m", word_len, buffer + word_break);
+            g_printer->print(tmp.c_str(), tmp.length());
+            g_printer->print("\x1b[K\x1b[u");
+        }
 #endif
 
-    str<> out;
-    if (os::expand_env(buffer + word_break, word_len, out))
+        str<> out;
+        if (os::expand_env(buffer + word_break, word_len, out))
+        {
+            const bool quoted = (rl_filename_quote_characters &&
+                                rl_completer_quote_characters &&
+                                *rl_completer_quote_characters &&
+                                word_break > 0 &&
+                                buffer[word_break - 1] == *rl_completer_quote_characters);
+            const bool need_quote = !quoted && _rl_strpbrk(out.c_str(), rl_filename_quote_characters);
+            const char qc = need_quote ? *rl_completer_quote_characters : '\0';
+            const char qs[2] = { qc };
+            bool close_quote = qc && buffer[word_break + word_len] != qc;
+
+            g_rl_buffer->begin_undo_group();
+            g_rl_buffer->set_cursor(word_break);
+            g_rl_buffer->remove(word_break, word_break + word_len);
+            if (qc)
+                g_rl_buffer->insert(qs);
+            g_rl_buffer->insert(out.c_str());
+            if (close_quote)
+                g_rl_buffer->insert(qs);
+            g_rl_buffer->end_undo_group();
+
+            force_update_internal(false); // Update needle since line changed.
+            reset_generate_matches();
+            return;
+        }
+    }
+
+    if (rl_completion_type == '%' && g_default_bindings.get() == 1)
     {
-        const bool quoted = (rl_filename_quote_characters &&
-                             rl_completer_quote_characters &&
-                             *rl_completer_quote_characters &&
-                             word_break > 0 &&
-                             buffer[word_break - 1] == *rl_completer_quote_characters);
-        const bool need_quote = !quoted && _rl_strpbrk(out.c_str(), rl_filename_quote_characters);
-        const char qc = need_quote ? *rl_completer_quote_characters : '\0';
-        const char qs[2] = { qc };
-        bool close_quote = qc && buffer[word_break + word_len] != qc;
-
-        g_rl_buffer->begin_undo_group();
-        g_rl_buffer->set_cursor(word_break);
-        g_rl_buffer->remove(word_break, word_break + word_len);
-        if (qc)
-            g_rl_buffer->insert(qs);
-        g_rl_buffer->insert(out.c_str());
-        if (close_quote)
-            g_rl_buffer->insert(qs);
-        g_rl_buffer->end_undo_group();
-
-        force_update_internal(false); // Update needle since line changed.
-        reset_generate_matches();
+        // Give a chance to apply a match selection filter that accepts '.'
+        // prefix like Windows normally does.
+        reselect_matches();
     }
 }
 

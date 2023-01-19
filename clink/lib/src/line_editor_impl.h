@@ -77,6 +77,7 @@ public:
     virtual void        set_keyseq_len(int len) override;
 
     void                reset_generate_matches();
+    void                reselect_matches();
     void                reclassify(reclassify_reason why);
     void                try_suggest();
     void                force_update_internal(bool restrict=false);

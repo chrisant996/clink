@@ -49,7 +49,7 @@ bool match_char_impl(int pc, int fc)
 
 //------------------------------------------------------------------------------
 template <class T, int MODE, bool fuzzy_accents>
-bool match_wild_impl(const str_iter_impl<T>& _pattern, const str_iter_impl<T>& _file, star_matches_everything match_everything=no)
+bool match_wild_impl(const str_iter_impl<T>& _pattern, const str_iter_impl<T>& _file, bool dot_prefix=false, star_matches_everything match_everything=no)
 {
     str_iter_impl<T> pattern(_pattern);
     str_iter_impl<T> file(_file);
@@ -150,7 +150,7 @@ back_track:
                 break;
             if (path::is_separator(d))
                 start_of_path_component = true;
-            else if (d == '.' && start_of_path_component)
+            else if (dot_prefix && d == '.' && start_of_path_component)
             {
                 if (!final_file_component)
                 {
@@ -209,39 +209,39 @@ back_track:
 
 //------------------------------------------------------------------------------
 template <class T>
-bool match_wild(const str_iter_impl<T>& pattern, const str_iter_impl<T>& file, star_matches_everything match_everything=no)
+bool match_wild(const str_iter_impl<T>& pattern, const str_iter_impl<T>& file, bool dot_prefix=false, star_matches_everything match_everything=no)
 {
     bool fuzzy_accents = str_compare_scope::current_fuzzy_accents();
     switch (str_compare_scope::current())
     {
     case str_compare_scope::relaxed:
-        if (fuzzy_accents)  return match_wild_impl<T, 2, true>(pattern, file, match_everything);
-        else                return match_wild_impl<T, 2, false>(pattern, file, match_everything);
+        if (fuzzy_accents)  return match_wild_impl<T, 2, true>(pattern, file, dot_prefix, match_everything);
+        else                return match_wild_impl<T, 2, false>(pattern, file, dot_prefix, match_everything);
     case str_compare_scope::caseless:
-        if (fuzzy_accents)  return match_wild_impl<T, 1, true>(pattern, file, match_everything);
-        else                return match_wild_impl<T, 1, false>(pattern, file, match_everything);
+        if (fuzzy_accents)  return match_wild_impl<T, 1, true>(pattern, file, dot_prefix, match_everything);
+        else                return match_wild_impl<T, 1, false>(pattern, file, dot_prefix, match_everything);
     default:
-        if (fuzzy_accents)  return match_wild_impl<T, 0, true>(pattern, file, match_everything);
-        else                return match_wild_impl<T, 0, false>(pattern, file, match_everything);
+        if (fuzzy_accents)  return match_wild_impl<T, 0, true>(pattern, file, dot_prefix, match_everything);
+        else                return match_wild_impl<T, 0, false>(pattern, file, dot_prefix, match_everything);
     }
 }
 
 //------------------------------------------------------------------------------
 template <class T>
-bool match_wild(const T* pattern, const T* file, star_matches_everything match_everything=no)
+bool match_wild(const T* pattern, const T* file, bool dot_prefix=false, star_matches_everything match_everything=no)
 {
     str_iter_impl<T> pattern_iter(pattern);
     str_iter_impl<T> file_iter(file);
-    return match_wild(pattern_iter, file_iter, match_everything);
+    return match_wild(pattern_iter, file_iter, dot_prefix, match_everything);
 }
 
 //------------------------------------------------------------------------------
 template <class T>
-bool match_wild(const str_impl<T>& pattern, const str_impl<T>& file, star_matches_everything match_everything=no)
+bool match_wild(const str_impl<T>& pattern, const str_impl<T>& file, bool dot_prefix=false, star_matches_everything match_everything=no)
 {
     str_iter_impl<T> pattern_iter(pattern);
     str_iter_impl<T> file_iter(file);
-    return match_wild(pattern_iter, file_iter, match_everything);
+    return match_wild(pattern_iter, file_iter, dot_prefix, match_everything);
 }
 
 }; // namespace path

@@ -32,6 +32,8 @@ static setting_enum g_sort_dirs(
     "before,with,after",
     1);
 
+extern setting_enum g_default_bindings;
+
 
 
 //------------------------------------------------------------------------------
@@ -57,7 +59,8 @@ static unsigned int prefix_selector(
 static unsigned int pattern_selector(
     const char* needle,
     match_info* infos,
-    int count)
+    int count,
+    bool dot_prefix)
 {
     const int needle_len = strlen(needle);
     int select_count = 0;
@@ -69,12 +72,35 @@ static unsigned int pattern_selector(
             match_len--;
 
         const path::star_matches_everything flag = (is_pathish(infos[i].type) ? path::at_end : path::yes);
-        const bool select = path::match_wild(str_iter(needle, needle_len), str_iter(match, match_len), flag);
+        const bool select = path::match_wild(str_iter(needle, needle_len), str_iter(match, match_len), dot_prefix, flag);
         infos[i].select = select;
         if (select)
             ++select_count;
     }
     return select_count;
+}
+
+//------------------------------------------------------------------------------
+static void apply_selector(
+    const char* needle,
+    match_info* infos,
+    int count)
+{
+    const bool dot_prefix = (rl_completion_type == '%' && g_default_bindings.get() == 1);
+
+    const bool found = (dot_prefix ?
+                        pattern_selector(needle, infos, count, dot_prefix) :
+                        prefix_selector(needle, infos, count));
+
+    if (!found && can_try_substring_pattern(needle))
+    {
+        char* sub = make_substring_pattern(needle, "*");
+        if (sub)
+        {
+            pattern_selector(sub, infos, count, dot_prefix);
+            free(sub);
+        }
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -276,18 +302,7 @@ void match_pipeline::restrict(str_base& needle) const
     }
 
     if (count)
-    {
-        if (!pattern_selector(needle.c_str(), m_matches.get_infos(), count) &&
-            can_try_substring_pattern(needle.c_str()))
-        {
-            char* sub = make_substring_pattern(needle.c_str());
-            if (sub)
-            {
-                pattern_selector(sub, m_matches.get_infos(), count);
-                free(sub);
-            }
-        }
-    }
+        apply_selector(needle.c_str(), m_matches.get_infos(), count);
 
     m_matches.coalesce(count, true/*restrict*/);
 
@@ -318,18 +333,7 @@ void match_pipeline::select(const char* needle) const
     }
 
     if (count)
-    {
-        if (!prefix_selector(needle, m_matches.get_infos(), count) &&
-            can_try_substring_pattern(needle))
-        {
-            char* sub = make_substring_pattern(needle, "*");
-            if (sub)
-            {
-                pattern_selector(sub, m_matches.get_infos(), count);
-                free(sub);
-            }
-        }
-    }
+        apply_selector(needle, m_matches.get_infos(), count);
 
     m_matches.coalesce(count);
 

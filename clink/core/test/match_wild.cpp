@@ -32,18 +32,28 @@ TEST_CASE("path::match_wild()")
 
     SECTION("Period")
     {
-        REQUIRE(path::match_wild("bu*", "build"));
-        REQUIRE(path::match_wild("bu*", ".build"));
-        REQUIRE(path::match_wild("bu*", "..build"));
+        REQUIRE(path::match_wild("bu*", "build", true));
+        REQUIRE(path::match_wild("bu*", "build", false));
+        REQUIRE(path::match_wild("bu*", ".build", true));
+        REQUIRE(!path::match_wild("bu*", ".build", false));
+        REQUIRE(path::match_wild("bu*", "..build", true));
+        REQUIRE(!path::match_wild("bu*", "..build", false));
 
-        REQUIRE(!path::match_wild(".bu*", "build"));
-        REQUIRE(path::match_wild(".bu*", ".build"));
-        REQUIRE(!path::match_wild(".bu*", "..build"));
+        REQUIRE(!path::match_wild(".bu*", "build", true));
+        REQUIRE(!path::match_wild(".bu*", "build", false));
+        REQUIRE(path::match_wild(".bu*", ".build", true));
+        REQUIRE(path::match_wild(".bu*", ".build", false));
+        REQUIRE(!path::match_wild(".bu*", "..build", true));
+        REQUIRE(!path::match_wild(".bu*", "..build", false));
 
-        REQUIRE(!path::match_wild("abc/bu*", "build"));
-        REQUIRE(path::match_wild("abc/bu*", "abc/build"));
-        REQUIRE(!path::match_wild("abc/bu*", ".build"));
-        REQUIRE(path::match_wild("abc/bu*", "abc/.build"));
+        REQUIRE(!path::match_wild("abc/bu*", "build", true));
+        REQUIRE(!path::match_wild("abc/bu*", "build", false));
+        REQUIRE(path::match_wild("abc/bu*", "abc/build", true));
+        REQUIRE(path::match_wild("abc/bu*", "abc/build", false));
+        REQUIRE(!path::match_wild("abc/bu*", ".build", true));
+        REQUIRE(!path::match_wild("abc/bu*", ".build", false));
+        REQUIRE(path::match_wild("abc/bu*", "abc/.build", true));
+        REQUIRE(!path::match_wild("abc/bu*", "abc/.build", false));
     }
 
     SECTION("Components")
@@ -73,16 +83,16 @@ TEST_CASE("path::match_wild()")
 
     SECTION("Star")
     {
-        REQUIRE(!path::match_wild("ori*", "origin/master", path::star_matches_everything::no));
-        REQUIRE(path::match_wild("ori*", "origin/master", path::star_matches_everything::yes));
-        REQUIRE(path::match_wild("ori*", "origin/master", path::star_matches_everything::at_end));
+        REQUIRE(!path::match_wild("ori*", "origin/master", false, path::star_matches_everything::no));
+        REQUIRE(path::match_wild("ori*", "origin/master", false, path::star_matches_everything::yes));
+        REQUIRE(path::match_wild("ori*", "origin/master", false, path::star_matches_everything::at_end));
 
-        REQUIRE(!path::match_wild("or*st*", "origin/master", path::star_matches_everything::no));
-        REQUIRE(path::match_wild("or*st*", "origin/master", path::star_matches_everything::yes));
-        REQUIRE(!path::match_wild("or*st*", "origin/master", path::star_matches_everything::at_end));
+        REQUIRE(!path::match_wild("or*st*", "origin/master", false, path::star_matches_everything::no));
+        REQUIRE(path::match_wild("or*st*", "origin/master", false, path::star_matches_everything::yes));
+        REQUIRE(!path::match_wild("or*st*", "origin/master", false, path::star_matches_everything::at_end));
 
-        REQUIRE(!path::match_wild("*st*", "origin/master", path::star_matches_everything::no));
-        REQUIRE(path::match_wild("*st*", "origin/master", path::star_matches_everything::yes));
-        REQUIRE(!path::match_wild("*st*", "origin/master", path::star_matches_everything::at_end));
+        REQUIRE(!path::match_wild("*st*", "origin/master", false, path::star_matches_everything::no));
+        REQUIRE(path::match_wild("*st*", "origin/master", false, path::star_matches_everything::yes));
+        REQUIRE(!path::match_wild("*st*", "origin/master", false, path::star_matches_everything::at_end));
     }
 }

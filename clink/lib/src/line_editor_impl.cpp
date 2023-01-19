@@ -36,6 +36,7 @@ extern "C" {
 extern setting_bool g_classify_words;
 extern setting_bool g_autosuggest_async;
 extern setting_bool g_history_autoexpand;
+extern setting_enum g_default_bindings;
 extern setting_color g_color_histexpand;
 extern int g_suggestion_offset;
 
@@ -135,6 +136,15 @@ void reset_generate_matches()
         return;
 
     s_editor->reset_generate_matches();
+}
+
+//------------------------------------------------------------------------------
+void reselect_matches()
+{
+    if (!s_editor)
+        return;
+
+    s_editor->reselect_matches();
 }
 
 //------------------------------------------------------------------------------
@@ -622,6 +632,12 @@ void line_editor_impl::reset_generate_matches()
 }
 
 //------------------------------------------------------------------------------
+void line_editor_impl::reselect_matches()
+{
+    set_flag(flag_select);
+}
+
+//------------------------------------------------------------------------------
 void line_editor_impl::force_update_internal(bool restrict)
 {
     update_internal();
@@ -665,10 +681,12 @@ void line_editor_impl::update_matches()
     if (m_matches.is_volatile())
         reset_generate_matches();
 
+    // const bool windows_dot_prefix = (rl_completion_type == '%' && g_default_bindings.get() == 1);
+
     // Get flag states because we're about to clear them.
     bool generate = check_flag(flag_generate);
     bool restrict = check_flag(flag_restrict);
-    bool select = generate || restrict || check_flag(flag_select);
+    bool select = generate || restrict || /*windows_dot_prefix ||*/ check_flag(flag_select);
 
     // Clear flag states before running generators, so that generators can use
     // reset_generate_matches().
