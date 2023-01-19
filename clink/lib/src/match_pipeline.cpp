@@ -81,29 +81,6 @@ static unsigned int pattern_selector(
 }
 
 //------------------------------------------------------------------------------
-static void apply_selector(
-    const char* needle,
-    match_info* infos,
-    int count)
-{
-    const bool dot_prefix = (rl_completion_type == '%' && g_default_bindings.get() == 1);
-
-    const bool found = (dot_prefix ?
-                        pattern_selector(needle, infos, count, dot_prefix) :
-                        prefix_selector(needle, infos, count));
-
-    if (!found && can_try_substring_pattern(needle))
-    {
-        char* sub = make_substring_pattern(needle, "*");
-        if (sub)
-        {
-            pattern_selector(sub, infos, count, dot_prefix);
-            free(sub);
-        }
-    }
-}
-
-//------------------------------------------------------------------------------
 static bool is_dir_match(const wstr_base& match, match_type type)
 {
     if (is_match_type(type, match_type::dir))
@@ -302,7 +279,20 @@ void match_pipeline::restrict(str_base& needle) const
     }
 
     if (count)
-        apply_selector(needle.c_str(), m_matches.get_infos(), count);
+    {
+        const bool dot_prefix = (rl_completion_type == '%' && g_default_bindings.get() == 1);
+
+        if (!pattern_selector(needle.c_str(), m_matches.get_infos(), count, dot_prefix) &&
+            can_try_substring_pattern(needle.c_str()))
+        {
+            char* sub = make_substring_pattern(needle.c_str());
+            if (sub)
+            {
+                pattern_selector(sub, m_matches.get_infos(), count, dot_prefix);
+                free(sub);
+            }
+        }
+    }
 
     m_matches.coalesce(count, true/*restrict*/);
 
@@ -333,7 +323,32 @@ void match_pipeline::select(const char* needle) const
     }
 
     if (count)
-        apply_selector(needle, m_matches.get_infos(), count);
+    {
+        const bool dot_prefix = (rl_completion_type == '%' && g_default_bindings.get() == 1);
+        match_info* infos = m_matches.get_infos();
+
+        bool found = false;
+        if (dot_prefix)
+        {
+            str<> pat(needle);
+            pat << "*";
+            found = pattern_selector(pat.c_str(), infos, count, dot_prefix);
+        }
+        else
+        {
+            found = prefix_selector(needle, infos, count);
+        }
+
+        if (!found && can_try_substring_pattern(needle))
+        {
+            char* sub = make_substring_pattern(needle, "*");
+            if (sub)
+            {
+                pattern_selector(sub, infos, count, dot_prefix);
+                free(sub);
+            }
+        }
+    }
 
     m_matches.coalesce(count);
 
