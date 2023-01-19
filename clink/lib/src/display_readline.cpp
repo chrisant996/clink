@@ -1520,7 +1520,7 @@ void display_manager::display()
         _rl_last_c_pos = m_last_prompt_line_width;
         _rl_last_v_pos = m_last_prompt_line_botlin;
 
-        // move_to_column(_rl_last_c_pos, true/*force*/);
+        move_to_column(_rl_last_c_pos, true/*force*/);
 
         dbg_ignore_scope(snapshot, "display_readline");
 
