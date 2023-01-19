@@ -5,6 +5,11 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
+- Fix completion issue #407:
+  - The `.` prefix support is broken; the list of selected matches doesn't include e.g. `.test`, but the match iterator loops over even the unselected matches.
+    - The order of matches is wrong; `.test` should come before `test`.  This is because the pattern matching iteration is implemented wrongly.
+    - The longest common prefix for `complete` is wrong; that command should not use the `.` prefix support.
+  - Really matches need to be **selected** differently (not generated differently) based on whether `complete` and other prefix-based completion commands are used, versus `menu-complete` or `possible-completions` etc.
 
 ## Normal Priority
 - Provide Lua APIs for `wildmatch()` and `fnmatch()`.
@@ -12,6 +17,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - [ ] Provide a recursive globbing function.  Maybe look for an implementation that optimizes away recursive paths that cannot match?
 
 ## Low Priority
+- Consider not redrawing while resizing the terminal, if there is no RPROMPT?  Maybe just flag that a full redraw needs to happen, and defer it until the next time a redraw is normally requested?
 - Allow removing event handlers, e.g. `clink.onbeginedit(func)` to add an event handler, and something like `clink.onbeginedit(func, false)` or `clink.removebeginedit(func)` to remove one?  Or maybe return a function that can be called to remove it, e.g. like below (but make sure repeated calls become no-ops).  The `clink-diagnostics` command would need to still show any removed event handlers until the next beginedit.  But it gets tricky if `func` is already registered -- should the new redundant registration's removal function be able to remove the pre-existing event handler?
     ```
     local remove = clink.onbeginedit(func) -- add func
