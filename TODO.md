@@ -5,11 +5,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- Fix completion issue #407:
-  - The `.` prefix support is broken; the list of selected matches doesn't include e.g. `.test`, but the match iterator loops over even the unselected matches.
-    - The order of matches is wrong; `.test` should come before `test`.  This is because the pattern matching iteration is implemented wrongly.
-    - The longest common prefix for `complete` is wrong; that command should not use the `.` prefix support.
-  - Really matches need to be **selected** differently (not generated differently) based on whether `complete` and other prefix-based completion commands are used, versus `menu-complete` or `possible-completions` etc.
 
 ## Normal Priority
 - Provide Lua APIs for `wildmatch()` and `fnmatch()`.
