@@ -86,6 +86,9 @@ extern setting_color g_color_comment_row;
 extern setting_color g_color_histexpand;
 
 //------------------------------------------------------------------------------
+static bool s_use_eol_optimization = false;
+
+//------------------------------------------------------------------------------
 static bool is_autowrap_bug_present()
 {
 #pragma warning(push)
@@ -160,6 +163,7 @@ struct display_line
     unsigned int        m_trail = 0;        // Number of trailing columns of spaces past m_lastcol.
 
     bool                m_newline = false;  // Line ends with LF.
+    bool                m_toeol = false;    // Line extends to right edge of terminal (an optimization for clearing spaces).
     signed char         m_scroll_mark = 0;  // Number of columns for scrolling indicator (positive at left, negative at right).
 
 private:
@@ -201,6 +205,7 @@ void display_line::clear()
     m_trail = 0;
 
     m_newline = false;
+    m_toeol = false;
     m_scroll_mark = 0;
 }
 
@@ -623,6 +628,7 @@ void display_lines::horz_parse(unsigned int prompt_botlin, unsigned int col, con
     {
         d->append('>', FACE_SCROLL);
         d->m_lastcol++;
+        d->m_toeol = false;
     }
 
     d->appendnul();
@@ -715,6 +721,7 @@ void display_lines::apply_scroll_markers(unsigned int top, unsigned int bottom)
             d.append('>', FACE_SCROLL);
             d.m_scroll_mark = -1;
             d.m_lastcol++;
+            d.m_toeol = false;
             d.appendnul();
         }
     }
@@ -817,12 +824,16 @@ display_line* display_lines::next_line(unsigned int start)
     assert(!m_horz_scroll);
 
     if (m_count >= m_lines.size())
+    {
         m_lines.emplace_back();
+        m_lines.back().m_toeol = (m_width == _rl_screenwidth);
+    }
 
     display_line* d = &m_lines[m_count++];
     assert(!d->m_x);
     assert(!d->m_len);
     d->m_start = start;
+    d->m_toeol = (m_width == _rl_screenwidth);
     return d;
 }
 
@@ -1215,6 +1226,9 @@ void display_manager::on_new_line()
         m_top = 0;
         history_free_expansions(&m_histexpand);
     }
+
+    str<> env;
+    s_use_eol_optimization = (os::get_env("CLINK_USE_EOL_OPTIMIZATION", env) && atoi(env.c_str()));
 }
 
 //------------------------------------------------------------------------------
@@ -1895,21 +1909,28 @@ test_left:
     // Clear anything leftover from o.
     if (o && d->m_lastcol < o->m_lastcol)
     {
-        // m_lastcol does not include filler spaces; and that's fine since
-        // the spaces use FACE_NORMAL.
-        const unsigned int erase_cols = o->m_lastcol - d->m_lastcol;
-
-        move_to_column(d->m_lastcol);
-
-        str<> tmp;
-        while (tmp.length() < erase_cols)
+        if (d->m_toeol && s_use_eol_optimization)
         {
-            const unsigned int c = min<unsigned int>(32, erase_cols - tmp.length());
-            tmp.concat("                                ", c);
+            rl_fwrite_function(_rl_out_stream, "\x1b[K", 3);
         }
+        else
+        {
+            // m_lastcol does not include filler spaces; and that's fine since
+            // the spaces use FACE_NORMAL.
+            const unsigned int erase_cols = o->m_lastcol - d->m_lastcol;
 
-        rl_fwrite_function(_rl_out_stream, tmp.c_str(), tmp.length());
-        _rl_last_c_pos += erase_cols;
+            move_to_column(d->m_lastcol);
+
+            str<> tmp;
+            while (tmp.length() < erase_cols)
+            {
+                const unsigned int c = min<unsigned int>(32, erase_cols - tmp.length());
+                tmp.concat("                                ", c);
+            }
+
+            rl_fwrite_function(_rl_out_stream, tmp.c_str(), tmp.length());
+            _rl_last_c_pos += erase_cols;
+        }
     }
 
     // Scroll marker should have a trailing space.
