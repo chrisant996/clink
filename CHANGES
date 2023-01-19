@@ -6,6 +6,7 @@
 
 - Additional improvements and logging for East Asian ambiguous width characters.
 - Running `clink inject` no longer empties the log file, so that AutoRun doesn't result in the log file being cleared over and over, which interferes with diagnostic efforts.
+- Fixed [#407](https://github.com/chrisant996/clink/issues/407); the `complete` command gets confused by `.` prefix on files.
 
 #### v1.4.11
 
