@@ -66,6 +66,8 @@
 #include <core/log.h>
 #include <core/debugheap.h>
 
+#include "screen_buffer.h"
+
 extern bool g_color_emoji;
 
 #if defined(__cplusplus)
@@ -342,7 +344,7 @@ wcswidth_t *wcswidth = mk_wcswidth;
 #include <core/settings.h>
 #include <map>
 
-enum { EAA_font, EAA_one, EAA_two, EAA_auto };
+enum { EAA_font, EAA_one, EAA_two, EAA_auto, EAA_MAX };
 
 static setting_enum g_terminal_east_asian_ambiguous(
   "terminal.east_asian_ambiguous",
@@ -355,9 +357,11 @@ static setting_enum g_terminal_east_asian_ambiguous(
   "Setting this to 'font' measures the East Asian Ambiguous character widths\n"
   "using the current font.  Setting it to 'one' uses 1 as the width, or 'two'\n"
   "uses 2 as the width.  When this is 'auto' (the default) and the current code\n"
-  "page is 932, 936, 949, or 950 then the current font is used to measure the\n"
-  "widths, or for any other code pages (including UTF8) the East Asian Ambiguous\n"
-  "character widths are assumed to be 1.",
+  "page is 932, 936, 949, or 950 then it tries to automatically measure the width\n"
+  "based on which terminal host and font are used, or for any other code pages\n"
+  "(including UTF8) it uses 1 as the width.\n"
+  "\n"
+  "The %CLINK_EAST_ASIAN_AMBIGUOUS% environment variable overrides this setting.",
   "font,one,two,auto",
   EAA_auto);
 
@@ -430,10 +434,9 @@ static int resolve_ambiguous_wcwidth(char32_t ucs)
 {
   switch (s_resolve)
   {
-  default:
-  case EAA_auto:
   case EAA_font:
     {
+use_font:
       auto i = s_map_ambiguous.find(ucs);
       if (i != s_map_ambiguous.end())
         return i->second;
@@ -446,13 +449,22 @@ static int resolve_ambiguous_wcwidth(char32_t ucs)
       s_map_ambiguous[ucs] = width;
       return width;
     }
-    break;
 
   case EAA_one:
     return 1;
 
   case EAA_two:
     return 2;
+
+  default:
+  case EAA_auto:
+    {
+      const ansi_handler term = get_current_ansi_handler();
+      if (term == ansi_handler::winconsolev2 ||
+          term == ansi_handler::winconsole)
+        goto use_font;
+    }
+    return 1;
   }
 }
 
@@ -542,52 +554,61 @@ static void init_cached_font()
   LOG("East Asian Ambiguous mode %d", s_resolve);
 }
 
+int is_CJK_codepage(UINT cp)
+{
+    return (cp == 932 || cp == 936 || cp == 949 || cp == 950);
+}
+
 void reset_wcwidths()
 {
-  bool use_cjk = true;
+    int use_cjk = true;
 
-  s_resolve = g_terminal_east_asian_ambiguous.get();
-  if (s_resolve == EAA_auto)
-  {
-    static UINT s_cp = 0; // Static so that it's visible in heap dumps.
-    s_cp = GetConsoleOutputCP();
-    switch (s_cp)
+    s_resolve = g_terminal_east_asian_ambiguous.get();
+
+    str<> env;
+    if (os::get_env("CLINK_EAST_ASIAN_AMBIGUOUS", env))
     {
-    case 932:
-    case 936:
-    case 949:
-    case 950:
-      use_cjk = true;
-      break;
-    default:
-      use_cjk = false;
-      break;
+        int value = -1;
+        env.trim();
+        if (env.c_str()[0] >= '0' && env.c_str()[0] <= '9')
+            value = atoi(env.c_str());
+        if (value < 0 || value >= EAA_MAX)
+        {
+            if (env.iequals("font"))        value = EAA_font;
+            else if (env.iequals("one"))    value = EAA_one;
+            else if (env.iequals("two"))    value = EAA_two;
+            else if (env.iequals("auto"))   value = EAA_auto;
+        }
+        if (value >= 0 && value < EAA_MAX)
+            s_resolve = value;
     }
-  }
 
-  if (use_cjk)
-  {
-    wcwidth = mk_wcwidth_cjk;
-    wcswidth = mk_wcswidth_cjk;
-    init_cached_font();
-  }
-  else
-  {
-    wcwidth = mk_wcwidth;
-    wcswidth = mk_wcswidth;
-    reset_cached_font();
-  }
+    if (s_resolve == EAA_auto)
+    {
+        static UINT s_cp = 0; // Static so that it's visible in heap dumps.
+        s_cp = GetConsoleOutputCP();
+        use_cjk = is_CJK_codepage(s_cp);
+    }
+
+    if (use_cjk)
+    {
+        wcwidth = mk_wcwidth_cjk;
+        wcswidth = mk_wcswidth_cjk;
+        init_cached_font();
+    }
+    else
+    {
+        wcwidth = mk_wcwidth;
+        wcswidth = mk_wcswidth;
+        reset_cached_font();
+    }
 }
 
 int test_ambiguous_width_char(char32_t ucs)
 {
     UINT cp = GetConsoleOutputCP();
-    switch (cp)
+    if (is_CJK_codepage(cp))
     {
-    case 932:
-    case 936:
-    case 949:
-    case 950:
         if (bisearch(ucs, ambiguous,
             sizeof(ambiguous) / sizeof(struct interval) - 1))
             return 1; // CJK ambiguous width char.

@@ -69,6 +69,7 @@ extern int _rl_rprompt_shown_len;
 #endif
 
 //------------------------------------------------------------------------------
+extern "C" int is_CJK_codepage(UINT cp);
 extern int g_prompt_redisplay;
 
 //------------------------------------------------------------------------------
@@ -122,6 +123,13 @@ static unsigned int raw_measure_cols(const char* s, unsigned int len)
 static void tputs(const char* s)
 {
     rl_fwrite_function(_rl_out_stream, s, strlen(s));
+}
+
+//------------------------------------------------------------------------------
+static bool get_console_screen_buffer_info(CONSOLE_SCREEN_BUFFER_INFO* info)
+{
+    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+    return !!GetConsoleScreenBufferInfo(h, info);
 }
 
 
@@ -276,6 +284,8 @@ public:
     unsigned int        vpos() const { return m_vpos; }
     unsigned int        cpos() const { return m_cpos; }
     unsigned int        top() const { return m_top; }
+
+    void                shift_CJK_cursor(int cpos);
 
 private:
     display_line*       next_line(unsigned int start);
@@ -1058,6 +1068,17 @@ display_accumulator::~display_accumulator()
 }
 
 //------------------------------------------------------------------------------
+void display_accumulator::split()
+{
+    if (m_active && s_buf.length())
+    {
+        m_saved_fwrite(_rl_out_stream, s_buf.c_str(), s_buf.length());
+        m_saved_fflush(_rl_out_stream);
+        s_buf.clear();
+    }
+}
+
+//------------------------------------------------------------------------------
 void display_accumulator::flush()
 {
     if (s_nested > 1)
@@ -1479,10 +1500,27 @@ void display_manager::display()
 
         m_pending_wrap = force_wrap;
 
+        if (is_CJK_codepage(GetConsoleOutputCP()))
+        {
+            CONSOLE_SCREEN_BUFFER_INFO csbi;
+            coalesce.split();
+            if (get_console_screen_buffer_info(&csbi) &&
+                m_last_prompt_line_width != csbi.dwCursorPosition.X)
+            {
+                m_last_prompt_line_width = csbi.dwCursorPosition.X;
+#undef m_next
+                if (m_horz_scroll)
+                    m_next.horz_parse(m_last_prompt_line_botlin, m_last_prompt_line_width, rl_line_buffer, rl_point, rl_end, m_curr);
+                else
+                    m_next.parse(m_last_prompt_line_botlin, m_last_prompt_line_width, rl_line_buffer, rl_end);
+#define m_next __use_next_instead__
+            }
+        }
+
         _rl_last_c_pos = m_last_prompt_line_width;
         _rl_last_v_pos = m_last_prompt_line_botlin;
 
-        move_to_column(_rl_last_c_pos, true/*force*/);
+        // move_to_column(_rl_last_c_pos, true/*force*/);
 
         dbg_ignore_scope(snapshot, "display_readline");
 
@@ -2132,8 +2170,7 @@ void reset_readline_display()
 void refresh_terminal_size()
 {
     CONSOLE_SCREEN_BUFFER_INFO csbi;
-    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-    GetConsoleScreenBufferInfo(h, &csbi);
+    get_console_screen_buffer_info(&csbi);
 
     const int width = csbi.dwSize.X;
     const int height = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
@@ -2202,8 +2239,7 @@ void resize_readline_display(const char* prompt, const line_buffer& buffer, cons
 #if defined(NO_READLINE_RESIZE_TERMINAL)
     // Update Readline's perception of the terminal dimensions.
     CONSOLE_SCREEN_BUFFER_INFO csbi;
-    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-    GetConsoleScreenBufferInfo(h, &csbi);
+    get_console_screen_buffer_info(&csbi);
     refresh_terminal_size();
 #endif
 

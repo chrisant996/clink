@@ -40,6 +40,7 @@ class display_accumulator
 public:
                     display_accumulator();
                     ~display_accumulator();
+    void            split();
     void            flush();
 private:
     void            restore();

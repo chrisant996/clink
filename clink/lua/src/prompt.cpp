@@ -21,6 +21,7 @@ extern "C" {
 #include <algorithm>
 
 //------------------------------------------------------------------------------
+extern "C" int is_CJK_codepage(UINT cp);
 extern line_buffer* g_rl_buffer;
 
 //------------------------------------------------------------------------------
@@ -236,7 +237,7 @@ fallback:
         out.clear();
         // East Asian multibyte code pages put the weekday last.
         const UINT cp = GetConsoleOutputCP();
-        if (cp == 932 || cp == 936 || cp == 949 || cp == 950)
+        if (is_CJK_codepage(cp))
             out << tmp.c_str() << " " << m_weekdays[systime.wDayOfWeek].c_str();
         else
             out << m_weekdays[systime.wDayOfWeek].c_str() << " " << tmp.c_str();
