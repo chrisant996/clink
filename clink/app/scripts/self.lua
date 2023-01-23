@@ -11,6 +11,7 @@ local empty_arg_nothing = clink.argmatcher():addarg():nofiles()
 local file_loop = clink.argmatcher():addarg(clink.filematches):loop()
 
 --------------------------------------------------------------------------------
+local file_matcher = clink.argmatcher():addarg(clink.filematches)
 local dir_matcher = clink.argmatcher():addarg(clink.dirmatches)
 
 --------------------------------------------------------------------------------
@@ -453,11 +454,43 @@ local testbed = clink.argmatcher()
 :nofiles()
 
 --------------------------------------------------------------------------------
-local function hide_tests()
+local lua = clink.argmatcher()
+:addarg(clink.filematches)
+:addflags(
+    "-e" .. empty_arg,
+    "-i",
+    "-l" .. empty_arg, -- TODO
+    "-v",
+    "-D",
+    "-DD",
+    "-E",
+    "-L" .. file_matcher,
+    "--version",
+    "--debug",
+    "--log" .. file_matcher,
+    "-h", "--help", "-?")
+:hideflags("-?")
+:adddescriptions({
+    ["-e"] = { " stat", "Execute string 'stat'" },
+    ["-i"] = "Enter interactive mode after executing script",
+    ["-l"] = { " name", "Require module 'name'" },
+    ["-v"] = "Show Lua version information",
+    ["-D"] = "Enable Lua debugging",
+    ["-DD"] = "Enable Lua debugging and break on errors",
+    ["-E"] = "Ignore environment variables",
+    ["-L"] = { " file", "Write log output to 'file'" },
+    ["-h"] = "Show help text",
+})
+:nofiles()
+
+--------------------------------------------------------------------------------
+local function filter_hidden()
     clink.onfiltermatches(function(matches)
         local keep = {}
         for _, m in ipairs(matches) do
-            if m.match ~= "drawtest" and m.match ~= "testbed" then
+            if m.match ~= "drawtest" and
+                    m.match ~= "testbed" and
+                    m.match ~= "lua" then
                 table.insert(keep, m)
             end
         end
@@ -483,7 +516,8 @@ clink.argmatcher(
     "set"       .. set,
     "drawtest"  .. drawtest,
     "testbed"   .. testbed,
-    hide_tests)
+    "lua"       .. lua,
+    filter_hidden)
 :addflags("-h", "-p"..dir_matcher, "-~"..empty_arg, "-v", "-?")
 :hideflags("-h", "-p", "-~", "-v", "-?")
 :addflags(
