@@ -76,7 +76,7 @@ setting_bool g_lua_strict(
 
 
 //------------------------------------------------------------------------------
-void clink_lua_initialise(lua_state&);
+void clink_lua_initialise(lua_state&, bool lua_interpreter=false);
 void os_lua_initialise(lua_state&);
 void io_lua_initialise(lua_state&);
 void console_lua_initialise(lua_state&);
@@ -175,12 +175,13 @@ const char* optstring(lua_State* state, int index, const char* default_value)
 
 //------------------------------------------------------------------------------
 bool lua_state::s_in_luafunc = false;
+bool lua_state::s_interpreter = false;
 
 //------------------------------------------------------------------------------
-lua_state::lua_state()
+lua_state::lua_state(lua_state_flags flags)
 : m_state(nullptr)
 {
-    initialise();
+    initialise(flags);
 }
 
 //------------------------------------------------------------------------------
@@ -190,12 +191,29 @@ lua_state::~lua_state()
 }
 
 //------------------------------------------------------------------------------
-void lua_state::initialise()
+void lua_state::initialise(lua_state_flags flags)
 {
     shutdown();
 
+    const bool interpreter = !!int(flags & lua_state_flags::interpreter);
+    const bool no_env = !!int(flags & lua_state_flags::no_env);
+
+    s_interpreter = interpreter;
+
     // Create a new Lua state.
     m_state = luaL_newstate();
+
+    // Suspend collection during initialization.
+    lua_gc(m_state, LUA_GCSTOP, 0);
+
+    if (no_env)
+    {
+        // Signal for libraries to ignore env. vars.
+        lua_pushboolean(m_state, 1);
+        lua_setfield(m_state, LUA_REGISTRYINDEX, "LUA_NOENV");
+    }
+
+    // Open the standard Lua libraries.
     luaL_openlibs(m_state);
 
     // Set up the package.path value for require() statements.
@@ -223,12 +241,13 @@ void lua_state::initialise()
     lua_state& self = *this;
 
     // Initialize API namespaces.
-    clink_lua_initialise(self);
+    clink_lua_initialise(self, interpreter);
     os_lua_initialise(self);
     io_lua_initialise(self);
     console_lua_initialise(self);
     path_lua_initialise(self);
-    rl_lua_initialise(self);
+    if (!interpreter)
+        rl_lua_initialise(self);
     settings_lua_initialise(self);
     string_lua_initialise(self);
     unicode_lua_initialise(self);
@@ -240,14 +259,22 @@ void lua_state::initialise()
 
     // Load core scripts.
     lua_load_script(self, lib, core);
-    lua_load_script(self, lib, events);
     lua_load_script(self, lib, console);
-    lua_load_script(self, lib, coroutines);
+    if (!interpreter)
+    {
+        lua_load_script(self, lib, events);
+        lua_load_script(self, lib, coroutines);
+    }
 
     // Load match generator scripts.
-    lua_load_script(self, lib, generator);
-    lua_load_script(self, lib, classifier);
-    lua_load_script(self, lib, arguments);
+    if (!interpreter)
+    {
+        lua_load_script(self, lib, generator);
+        lua_load_script(self, lib, classifier);
+        lua_load_script(self, lib, arguments);
+    }
+
+    lua_gc(m_state, LUA_GCRESTART, 0);  // Resume collection.
 }
 
 //------------------------------------------------------------------------------
@@ -258,6 +285,8 @@ void lua_state::shutdown()
 
     lua_close(m_state);
     m_state = nullptr;
+
+    s_interpreter = false;
 }
 
 //------------------------------------------------------------------------------

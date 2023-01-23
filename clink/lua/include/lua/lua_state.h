@@ -30,12 +30,21 @@ const char* checkstring(lua_State* state, int index);
 const char* optstring(lua_State* state, int index, const char* default_value);
 
 //------------------------------------------------------------------------------
+enum class lua_state_flags : int
+{
+    none            = 0x00,
+    interpreter     = 0x01,
+    no_env          = 0x02,
+};
+DEFINE_ENUM_FLAG_OPERATORS(lua_state_flags);
+
+//------------------------------------------------------------------------------
 class lua_state
 {
 public:
-                    lua_state();
+                    lua_state(lua_state_flags flags=lua_state_flags::none);
                     ~lua_state();
-    void            initialise();
+    void            initialise(lua_state_flags flags=lua_state_flags::none);
     void            shutdown();
     bool            do_string(const char* string, int length=-1);
     bool            do_file(const char* path);
@@ -60,12 +69,14 @@ public:
 #endif
 
     static bool     is_in_luafunc() { return s_in_luafunc; }
+    static bool     is_interpreter() { return s_interpreter; }
 
 private:
     bool            send_event_internal(const char* event_name, const char* event_mechanism, int nargs=0, int nret=0);
     lua_State*      m_state;
 
     static bool     s_in_luafunc;
+    static bool     s_interpreter;
 };
 
 //------------------------------------------------------------------------------

@@ -27,6 +27,7 @@ int update(int, char**);
 int installscripts(int, char**);
 int uninstallscripts(int, char**);
 int testbed(int, char**);
+int interpreter(int, char**);
 
 //------------------------------------------------------------------------------
 bool g_elevated = false;
@@ -132,6 +133,7 @@ static int dispatch_verb(const char* verb, int argc, char** argv)
         "installscripts",       installscripts,
         "uninstallscripts",     uninstallscripts,
         "testbed",              testbed,
+        "lua",                  interpreter,
     };
 
     for (int i = 0; i < sizeof_array(handlers); ++i)

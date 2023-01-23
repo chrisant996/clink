@@ -544,7 +544,7 @@ static bool popup_del_callback(int index)
 /// -show:  }
 static int popup_list(lua_State* state)
 {
-    if (!lua_state::is_in_luafunc())
+    if (!lua_state::is_in_luafunc() && !lua_state::is_interpreter())
         return luaL_error(state, "clink.popuplist may only be used in a " LUA_QL("luafunc:") " key binding");
 
     enum arg_indices { makevaluesonebased, argTitle, argItems, argIndex, argDelCallback};
@@ -1627,67 +1627,68 @@ extern int is_dir(lua_State* state);
 extern int explode(lua_State* state);
 
 //------------------------------------------------------------------------------
-void clink_lua_initialise(lua_state& lua)
+void clink_lua_initialise(lua_state& lua, bool lua_interpreter)
 {
-    struct {
+    static const struct {
+        bool        always;
         const char* name;
         int         (*method)(lua_State*);
     } methods[] = {
         // APIs in the "clink." namespace.
-        { "lower",                  &to_lowercase },
-        { "print",                  &clink_print },
-        { "upper",                  &to_uppercase },
-        { "popuplist",              &popup_list },
-        { "getpopuplistcolors",     &get_popup_list_colors },
-        { "getsession",             &get_session },
-        { "getansihost",            &get_ansi_host },
-        { "translateslashes",       &translate_slashes },
-        { "reload",                 &reload },
-        { "reclassifyline",         &reclassify_line },
-        { "refilterprompt",         &refilter_prompt },
-        { "refilterafterterminalresize", &refilter_after_terminal_resize },
-        { "parseline",              &parse_line },
-        { "recognizecommand",       &api_recognize_command },
+        { 1,    "lower",                  &to_lowercase },
+        { 1,    "print",                  &clink_print },
+        { 1,    "upper",                  &to_uppercase },
+        { 0,    "popuplist",              &popup_list },
+        { 1,    "getpopuplistcolors",     &get_popup_list_colors },
+        { 0,    "getsession",             &get_session },
+        { 1,    "getansihost",            &get_ansi_host },
+        { 0,    "translateslashes",       &translate_slashes },
+        { 0,    "reload",                 &reload },
+        { 0,    "reclassifyline",         &reclassify_line },
+        { 0,    "refilterprompt",         &refilter_prompt },
+        { 0,    "refilterafterterminalresize", &refilter_after_terminal_resize },
+        { 0,    "parseline",              &parse_line },
+        { 0,    "recognizecommand",       &api_recognize_command },
         // Backward compatibility with the Clink 0.4.8 API.  Clink 1.0.0a1 had
         // moved these APIs away from "clink.", but backward compatibility
         // requires them here as well.
-        { "chdir",                  &set_current_dir },
-        { "execute",                &lua_execute },
-        { "find_dirs",              &old_glob_dirs },
-        { "find_files",             &old_glob_files },
-        { "get_console_aliases",    &get_aliases },
-        { "get_cwd",                &get_current_dir },
-        { "get_env",                &get_env },
-        { "get_env_var_names",      &get_env_names },
-        { "get_host_process",       &get_host_process },
-        { "get_rl_variable",        &get_rl_variable },
-        { "get_screen_info",        &get_screen_info },
-        { "get_setting_int",        &get_setting_int },
-        { "get_setting_str",        &get_setting_str },
-        { "is_dir",                 &is_dir },
-        { "is_rl_variable_true",    &is_rl_variable_true },
-        { "slash_translation",      &slash_translation },
-        { "split",                  &explode },
+        { 1,    "chdir",                  &set_current_dir },
+        { 1,    "execute",                &lua_execute },
+        { 1,    "find_dirs",              &old_glob_dirs },
+        { 1,    "find_files",             &old_glob_files },
+        { 1,    "get_console_aliases",    &get_aliases },
+        { 1,    "get_cwd",                &get_current_dir },
+        { 1,    "get_env",                &get_env },
+        { 1,    "get_env_var_names",      &get_env_names },
+        { 0,    "get_host_process",       &get_host_process },
+        { 0,    "get_rl_variable",        &get_rl_variable },
+        { 1,    "get_screen_info",        &get_screen_info },
+        { 0,    "get_setting_int",        &get_setting_int },
+        { 0,    "get_setting_str",        &get_setting_str },
+        { 1,    "is_dir",                 &is_dir },
+        { 0,    "is_rl_variable_true",    &is_rl_variable_true },
+        { 0,    "slash_translation",      &slash_translation },
+        { 1,    "split",                  &explode },
         // UNDOCUMENTED; internal use only.
-        { "istransientpromptfilter", &is_transient_prompt_filter },
-        { "get_refilter_redisplay_count", &get_refilter_redisplay_count },
-        { "history_suggester",      &history_suggester },
-        { "set_suggestion_result",  &set_suggestion_result },
-        { "kick_idle",              &kick_idle },
-        { "_recognize_command",     &recognize_command },
-        { "_async_path_type",       &async_path_type },
-        { "_generate_from_history", &generate_from_history },
-        { "_reset_generate_matches", &api_reset_generate_matches },
-        { "_mark_deprecated_argmatcher", &mark_deprecated_argmatcher },
-        { "_signal_delayed_init",   &signal_delayed_init },
-        { "is_cmd_command",         &is_cmd_command },
-        { "_get_installation_type", &get_installation_type },
-        { "_set_install_version",   &set_install_version },
+        { 0,    "istransientpromptfilter", &is_transient_prompt_filter },
+        { 0,    "get_refilter_redisplay_count", &get_refilter_redisplay_count },
+        { 0,    "history_suggester",      &history_suggester },
+        { 0,    "set_suggestion_result",  &set_suggestion_result },
+        { 0,    "kick_idle",              &kick_idle },
+        { 0,    "_recognize_command",     &recognize_command },
+        { 0,    "_async_path_type",       &async_path_type },
+        { 0,    "_generate_from_history", &generate_from_history },
+        { 0,    "_reset_generate_matches", &api_reset_generate_matches },
+        { 0,    "_mark_deprecated_argmatcher", &mark_deprecated_argmatcher },
+        { 0,    "_signal_delayed_init",   &signal_delayed_init },
+        { 0,    "is_cmd_command",         &is_cmd_command },
+        { 0,    "_get_installation_type", &get_installation_type },
+        { 0,    "_set_install_version",   &set_install_version },
 #if defined(DEBUG) && defined(_MSC_VER)
-        { "last_allocation_number", &last_allocation_number },
+        { 0,    "last_allocation_number", &last_allocation_number },
 #endif
 #ifdef TRACK_LOADED_LUA_FILES
-        { "is_lua_file_loaded",     &clink_is_lua_file_loaded },
+        { 1,    "is_lua_file_loaded",     &clink_is_lua_file_loaded },
 #endif
     };
 
@@ -1697,9 +1698,12 @@ void clink_lua_initialise(lua_state& lua)
 
     for (const auto& method : methods)
     {
-        lua_pushstring(state, method.name);
-        lua_pushcfunction(state, method.method);
-        lua_rawset(state, -3);
+        if (method.always || !lua_interpreter)
+        {
+            lua_pushstring(state, method.name);
+            lua_pushcfunction(state, method.method);
+            lua_rawset(state, -3);
+        }
     }
 
     lua_pushliteral(state, "version_encoded");
