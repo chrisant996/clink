@@ -93,7 +93,7 @@ static int docall (lua_State *L, int narg, int nres) {
 //------------------------------------------------------------------------------
 int interpreter(int argc, char** argv)
 {
-    static const char* help_usage = "Usage: interpreter [???]\n";
+    static const char* help_usage = "Usage: interpreter [options] [script]\n";
 
     static const struct option options[] = {
         { "debug",      required_argument,  nullptr, 'D' },
