@@ -256,6 +256,7 @@ int interpreter(int argc, char** argv)
 
     if (status == LUA_OK)
     {
+        ret = 0;
         if (go_interactive)
             dotty(L);
         else if (!script && !execute_string && !show_version)
