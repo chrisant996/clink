@@ -216,9 +216,14 @@ int interpreter(int argc, char** argv)
     lua_State *L = lua.get_state();
 
     if (show_version)
+    {
         printf("Clink version %s (%s)", CLINK_VERSION_STR, AS_STR(ARCHITECTURE_NAME));
+        puts("");
+    }
     if (show_version || go_interactive)
+    {
         print_version();
+    }
 
     if (!ignore_env)
         status = handle_luainit(L);
