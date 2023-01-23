@@ -7,6 +7,16 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
+- Hidden file inclusion is a mess:
+  - Config var `_rl_match_hidden_files` should only affect the final completion matches list.
+  - In v0.4.9 `_rl_match_hidden_files` affected `clink.find_dirs()` which is too low-level, and breaks `git.lua` and any other scripts looking for hidden git directories or etc.
+  - In current versions, `_rl_match_hidden_files` has no effect at all, but it should affect the final completion matches list.
+  - Setting `files.hidden` creates a conflict with `_rl_match_hidden_files`; how should they combine, if that's even possible?
+  - Setting `files.hidden` affects the low level globbing API, and breaks `git.lua` and any other scripts looking for hidden git directories or etc.
+  - SOLVE BY:
+    - Adding some way for Lua scripts to use the various globbing APIs and directly specify whether to include hidden or system files; by default it should exclude system files and include hidden files.
+    - Making the final completion matches list filter out `file` and `dir` type matches that are `hidden` when either `_rl_match_hidden_files` is true or `files.hidden` is false.
+    - Making the final completion matches list filter out `file` and `dir` type matches that are `system` when `files.system` is false.
 - Provide Lua APIs for `wildmatch()` and `fnmatch()`.
   - [ ] The flags may be a little tricky to handle reasonably.
   - [ ] Provide a recursive globbing function.  Maybe look for an implementation that optimizes away recursive paths that cannot match?
@@ -21,7 +31,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Allow Lua to set the comment row for the input line?
   - Need a simple and reliable trigger for clearing the comment row later; maybe `clink.onaftercommand()` is enough?
   - Don't add this ability unless there is a way to ensure comment rows don't get "leaked" and continue showing up past when they were relevant.
-- Some way for `os.globfiles()` and `os.globdirs()` to override the `files.hidden` and `files.system` settings?
 - Make a reusable wrapper mechanism to create coroutine-friendly threaded async operations in Lua?
 - Issue #387 is a request to add an option to put the cursor at the end of the search text when using `history-substring-search-backward` (and `-forward`).  But that diverges even more from Readline, and I'm actively trying to instead converge as much as possible.  Maybe if Chet approves?
 
