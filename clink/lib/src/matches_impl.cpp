@@ -1113,6 +1113,20 @@ void matches_impl::coalesce(unsigned int count_hint, bool restrict)
 }
 
 //------------------------------------------------------------------------------
+ignore_volatile_matches::ignore_volatile_matches(matches_impl& matches)
+: m_matches(matches)
+, m_volatile(matches.m_volatile)
+{
+    m_matches.m_volatile = false;
+}
+
+//------------------------------------------------------------------------------
+ignore_volatile_matches::~ignore_volatile_matches()
+{
+    m_matches.m_volatile |= m_volatile;
+}
+
+//------------------------------------------------------------------------------
 bool can_try_substring_pattern(const char* pattern)
 {
     // Can try substring when no prefix matches, unless:

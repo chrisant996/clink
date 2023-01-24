@@ -52,6 +52,7 @@ class matches_impl
 {
     struct match_lookup_hasher;
     struct match_lookup_comparator;
+    friend class ignore_volatile_matches;
 
 public:
     typedef std::unordered_set<match_lookup, match_lookup_hasher, match_lookup_comparator> match_lookup_unordered_set;
@@ -146,6 +147,17 @@ private:
     shadow_bool             m_filename_display_desired;
 
     match_lookup_unordered_set* m_dedup = nullptr;
+};
+
+//------------------------------------------------------------------------------
+class ignore_volatile_matches
+{
+public:
+                            ignore_volatile_matches(matches_impl& matches);
+                            ~ignore_volatile_matches();
+private:
+    matches_impl&           m_matches;
+    const bool              m_volatile;
 };
 
 //------------------------------------------------------------------------------

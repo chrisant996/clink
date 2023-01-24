@@ -671,7 +671,15 @@ bool line_editor_impl::notify_matches_ready(int generation_id, matches* matches)
     }
 
     // Trigger generating suggestion again.
-    try_suggest();
+    {
+        // Don't generate matches again; notify_matches_ready() is called when
+        // matches become available, but try_suggest() invokes match generation
+        // when needed.  Volatile matches create an infinite cycle of notifying
+        // and regenerating.
+        ignore_volatile_matches ignore(m_matches);
+        try_suggest();
+    }
+
     return true;
 }
 
@@ -1514,7 +1522,8 @@ void line_editor_impl::try_suggest()
 
         // Never generate matches here; let it be deferred and happen on demand
         // in a coroutine.
-        if (!empty_matches && (!check_flag(flag_generate) || !g_autosuggest_async.get()))
+        if (!empty_matches && (!g_autosuggest_async.get() ||
+                               (!check_flag(flag_generate) && !m_matches.is_volatile())))
         {
             update_matches();
             matches = &m_matches;
