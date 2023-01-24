@@ -2,6 +2,10 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.4.13
+
+- Fixed a CPU busy-loop after `match_builder:setvolatile()` was called during an auto-suggest strategy.
+
 #### v1.4.12
 
 - Additional improvements and logging for East Asian ambiguous width characters.
