@@ -7,6 +7,11 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
+- The `match.substring` setting really doesn't work for `possible-completions` or `complete`, because of lcd highlighting and lcd insertion (deletion).
+  - Must restrict it to the `menu-complete` family and `clink-select-complete`.
+- Quoting is a mess:
+  - Quoting currently only works for filename completion.
+  - So any match list with no `"file"` or `"dir"` type matches disables quoting.
 - Hidden file inclusion is a mess:
   - Config var `_rl_match_hidden_files` should only affect the final completion matches list.
   - In v0.4.9 `_rl_match_hidden_files` affected `clink.find_dirs()` which is too low-level, and breaks `git.lua` and any other scripts looking for hidden git directories or etc.
