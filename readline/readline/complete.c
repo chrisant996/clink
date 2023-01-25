@@ -2696,6 +2696,9 @@ insert_all_matches (char **matches, int point, char *qc)
 {
   int i;
   char *rp;
+/* begin_clink_change */
+  char qs[2] = { '\0', '\0' };
+/* end_clink_change */
 
   rl_begin_undo_group ();
   /* remove any opening quote character; make_quoted_replacement will add
@@ -2705,12 +2708,24 @@ insert_all_matches (char **matches, int point, char *qc)
   rl_delete_text (point, rl_point);
   rl_point = point;
 
+/* begin_clink_change */
+  qc = qs;
+  *qc = '\0';
+/* end_clink_change */
+
   if (matches[1])
     {
       for (i = 1; matches[i]; i++)
 	{
 	  rp = make_quoted_replacement (matches[i], SINGLE_MATCH, qc);
 	  rl_insert_text (rp);
+/* begin_clink_change */
+	  if (*qc)
+	    {
+	      rl_insert_text (qs);
+	      *qc = '\0';
+	    }
+/* end_clink_change */
 	  rl_insert_text (" ");
 	  if (rp != matches[i])
 	    xfree (rp);
@@ -2720,6 +2735,13 @@ insert_all_matches (char **matches, int point, char *qc)
     {
       rp = make_quoted_replacement (matches[0], SINGLE_MATCH, qc);
       rl_insert_text (rp);
+/* begin_clink_change */
+      if (*qc)
+	{
+	  rl_insert_text (qs);
+	  *qc = '\0';
+	}
+/* end_clink_change */
       rl_insert_text (" ");
       if (rp != matches[0])
 	xfree (rp);

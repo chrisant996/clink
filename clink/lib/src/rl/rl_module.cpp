@@ -1715,20 +1715,6 @@ static void postprocess_lcd(char* lcd, const char* text)
 }
 
 //------------------------------------------------------------------------------
-static char* quote_filename(char* s, int rtype, char* qcp)
-{
-    const size_t len = strlen(s);
-    char *r = (char*)xmalloc(1 + len + 1 + 1);
-    r[0] = *rl_completer_quote_characters;
-    strcpy(r + 1, s);
-    r[1 + len] = *rl_completer_quote_characters;
-    r[1 + len + 1] = '\0';
-    if (qcp)
-        *qcp = *rl_completer_quote_characters;
-    return r;
-}
-
-//------------------------------------------------------------------------------
 static int maybe_strlen(const char* s)
 {
     return s ? strlen(s) : 0;
@@ -1917,7 +1903,6 @@ static void init_readline_hooks()
     rl_match_display_filter_func = match_display_filter_callback;
     rl_compare_lcd_func = compare_lcd;
     rl_postprocess_lcd_func = postprocess_lcd;
-    rl_filename_quoting_function = quote_filename;
 
     // Match display.
     rl_completion_display_matches_func = display_matches;
