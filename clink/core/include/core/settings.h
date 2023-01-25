@@ -37,6 +37,7 @@ setting*            find(const char* name);
 bool                load(const char* file, const char* default_file=nullptr);
 bool                save(const char* file);
 
+void                get_settings_file(str_base& out);
 bool                sandboxed_set_setting(const char* name, const char* value);
 
 struct setting_name_value

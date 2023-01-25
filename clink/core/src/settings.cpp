@@ -33,7 +33,6 @@ static setting_map* g_setting_map = nullptr;
 static loaded_settings_map* g_loaded_settings = nullptr;
 static loaded_settings_map* g_custom_defaults = nullptr;
 static str_moveable* g_last_file = nullptr;
-static str_moveable s_binaries_dir;
 
 #ifdef DEBUG
 static bool s_ever_loaded = false;
@@ -507,6 +506,7 @@ bool save(const char* file)
     return save_internal(file, false/*migrating*/);
 }
 
+//------------------------------------------------------------------------------
 #ifdef DEBUG
 bool get_ever_loaded()
 {
@@ -520,9 +520,11 @@ void TEST_set_ever_loaded()
 #endif
 
 //------------------------------------------------------------------------------
-void use_default_settings(const char* binaries)
+void get_settings_file(str_base& out)
 {
-    s_binaries_dir = binaries;
+    out.clear();
+    if (g_last_file)
+        out.concat(g_last_file->c_str(), g_last_file->length());
 }
 
 //------------------------------------------------------------------------------

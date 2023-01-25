@@ -378,6 +378,9 @@ extern void rl_variable_dumper PARAMS((int));
 
 extern int rl_read_init_file PARAMS((const char *));
 extern int rl_parse_and_bind PARAMS((char *));
+/* begin_clink_change */
+extern const char *rl_get_last_init_file PARAMS((void));
+/* end_clink_change */
 
 /* Functions for manipulating keymaps. */
 extern Keymap rl_make_bare_keymap PARAMS((void));

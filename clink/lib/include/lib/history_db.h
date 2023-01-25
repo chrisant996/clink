@@ -130,6 +130,7 @@ public:
     void                        enable_diagnostic_output() { m_diagnostic = true; }
     bool                        has_bank(unsigned char bank) const;
     bool                        is_stale_name(const char* path) const;
+    void                        get_history_path(str_base& out) const;
 
     static expand_result        expand(const char* line, str_base& out);
 

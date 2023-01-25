@@ -313,12 +313,12 @@ const char** host_copy_dir_history(int* total)
 }
 
 //------------------------------------------------------------------------------
-void host_get_app_context(int& id, str_base& binaries, str_base& profile, str_base& scripts)
+void host_get_app_context(int& id, host_context& context)
 {
     if (!s_callbacks)
         return;
 
-    s_callbacks->get_app_context(id, binaries, profile, scripts);
+    s_callbacks->get_app_context(id, context);
 }
 
 

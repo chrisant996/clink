@@ -10,6 +10,16 @@ class matches;
 enum class recognition : char;
 
 //------------------------------------------------------------------------------
+struct host_context
+{
+    str_moveable    binaries;
+    str_moveable    profile;
+    str_moveable    default_settings;
+    str_moveable    default_inputrc;
+    str_moveable    scripts;
+};
+
+//------------------------------------------------------------------------------
 class host_callbacks
 {
 public:
@@ -23,5 +33,5 @@ public:
     virtual void send_event(const char* event_name) = 0;
     virtual void send_oncommand_event(line_state& line, const char* command, bool quoted, recognition recog, const char* file) = 0;
     virtual bool has_event_handler(const char* event_name) = 0;
-    virtual void get_app_context(int& id, str_base& binaries, str_base& profile, str_base& scripts) = 0;
+    virtual void get_app_context(int& id, host_context& context) = 0;
 };

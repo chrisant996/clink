@@ -1870,6 +1870,12 @@ history_db::expand_result history_db::expand(const char* line, str_base& out)
 }
 
 //------------------------------------------------------------------------------
+void history_db::get_history_path(str_base& out) const
+{
+    get_file_path(out, false);
+}
+
+//------------------------------------------------------------------------------
 history_db::iter history_db::read_lines(char* buffer, unsigned int size)
 {
     iter ret;

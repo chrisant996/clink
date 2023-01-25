@@ -70,7 +70,7 @@ public:
     void            send_event(const char* event_name) override;
     void            send_oncommand_event(line_state& line, const char* command, bool quoted, recognition recog, const char* file) override;
     bool            has_event_handler(const char* event_name) override;
-    void            get_app_context(int& id, str_base& binaries, str_base& profile, str_base& scripts) override;
+    void            get_app_context(int& id, host_context& context) override;
 
 protected:
     std::unique_ptr<printer_context> make_printer_context();

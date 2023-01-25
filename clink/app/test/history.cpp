@@ -45,7 +45,7 @@ struct test_history_db
     : public history_db
 {
     test_history_db()
-    : history_db(get_history_path(), app_context::get()->get_id(), true/*use_master_bank*/)
+    : history_db(::get_history_path(), app_context::get()->get_id(), true/*use_master_bank*/)
     {
         initialise();
     }

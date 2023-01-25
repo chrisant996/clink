@@ -12,6 +12,7 @@
 #include "textlist_impl.h"
 #include "history_db.h"
 #include "ellipsify.h"
+#include "host_callbacks.h"
 
 #include "rl_suggestions.h"
 
@@ -83,7 +84,7 @@ extern line_buffer* g_rl_buffer;
 extern word_collector* g_word_collector;
 extern editor_module::result* g_result;
 extern void host_cmd_enqueue_lines(std::list<str_moveable>& lines, bool hide_prompt, bool show_line);
-extern void host_get_app_context(int& id, str_base& binaries, str_base& profile, str_base& scripts);
+extern void host_get_app_context(int& id, host_context& context);
 extern "C" int show_cursor(int visible);
 extern void set_suggestion(const char* line, unsigned int endword_offset, const char* suggestion, unsigned int offset);
 extern "C" void host_clear_suggestion();
@@ -2107,59 +2108,70 @@ int clink_diagnostics(int count, int invoking_key)
     static char lf[] = "\n";
 
     str<> s;
-    const int spacing = 12;
+    str<> t;
+    const char* p;
+    const int spacing = 16;
 
     int id = 0;
-    str<> binaries;
-    str<> profile;
-    str<> scripts;
-    host_get_app_context(id, binaries, profile, scripts);
+    host_context context;
+    host_get_app_context(id, context);
+
+    auto print_heading = [&](const char* text)
+    {
+        s.clear();
+        s << bold << text << ":" << norm << lf;
+        g_printer->print(s.c_str(), s.length());
+    };
+
+    auto print_value = [&](const char* name, const char* value)
+    {
+        if (value && *value)
+        {
+            s.clear();
+            s.format("  %-*s  %s\n", spacing, name, value);
+            g_printer->print(s.c_str(), s.length());
+        }
+    };
 
     // Version and binaries dir.
 
-    s.clear();
-    s << bold << "version:" << norm << lf;
-    g_printer->print(s.c_str(), s.length());
+    print_heading("version");
 
-    printf("  %-*s  %s\n", spacing, "version", CLINK_VERSION_STR);
-
-    s.clear();
-    s.format("  %-*s  %s\n", spacing, "binaries", binaries.c_str());
-    g_printer->print(s.c_str(), s.length());
+    print_value("version", CLINK_VERSION_STR);
+    print_value("binaries", context.binaries.c_str());
 
     if (rl_explicit_arg)
-    {
-        s.clear();
-        s.format("  %-*s  %s\n", spacing, "architecture", AS_STR(ARCHITECTURE_NAME));
-        g_printer->print(s.c_str(), s.length());
-    }
+        print_value("architecture", AS_STR(ARCHITECTURE_NAME));
 
     // Session info.
 
-    s.clear();
-    s << bold << "session:" << norm << lf;
-    g_printer->print(s.c_str(), s.length());
+    print_heading("session");
 
     printf("  %-*s  %d\n", spacing, "session", id);
 
-    s.clear();
-    s.format("  %-*s  %s\n", spacing, "profile", profile.c_str());
-    g_printer->print(s.c_str(), s.length());
+    print_value("profile", context.profile.c_str());
+    print_value("log", file_logger::get_path());    // ACTUAL FILE IN USE.
+    print_value("default_settings", context.default_settings.c_str());
 
-    if (scripts.length())
+    settings::get_settings_file(t);
+    print_value("settings", t.c_str());             // ACTUAL FILE IN USE.
+
+    history_database* history = history_database::get();
+    if (history)
     {
-        s.clear();
-        s.format("  %-*s  %s\n", spacing, "scripts", scripts.c_str());
-        g_printer->print(s.c_str(), s.length());
+        history->get_history_path(t);
+        print_value("history", t.c_str());          // ACTUAL FILE IN USE.
     }
+
+    print_value("scripts", context.scripts.c_str());
+    print_value("default_inputrc", context.default_inputrc.c_str());
+    print_value("inputrc", rl_get_last_init_file());    // ACTUAL FILE IN USE.
 
     // Terminal info.
 
     if (rl_explicit_arg)
     {
-        s.clear();
-        s << bold << "terminal:" << norm << lf;
-        g_printer->print(s.c_str(), s.length());
+        print_heading("terminal");
 
         const char* term = nullptr;
         switch (get_current_ansi_handler())
@@ -2173,9 +2185,8 @@ int clink_diagnostics(int count, int invoking_key)
         case ansi_handler::winconsolev2:    term = "Console V2 (with 24 bit color)"; break;
         case ansi_handler::winconsole:      term = "Default console (16 bit color only)"; break;
         }
-        s.clear();
-        s.format("  %-*s  %s\n", spacing, "terminal", term);
-        g_printer->print(s.c_str(), s.length());
+
+        print_value("terminal", term);
     }
 
     host_call_lua_rl_global_function("clink._diagnostics");
@@ -2198,9 +2209,7 @@ int clink_diagnostics(int count, int invoking_key)
 
         if (cjk.size() || emoji.size() || qualified.size())
         {
-            s.clear();
-            s << bold << "ambiguous width characters in prompt:" << norm << lf;
-            g_printer->print(s.c_str(), s.length());
+            print_heading("ambiguous width characters in prompt");
 
             if (cjk.size())
             {

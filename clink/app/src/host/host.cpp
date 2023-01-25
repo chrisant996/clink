@@ -701,14 +701,16 @@ bool host::has_event_handler(const char* event_name)
 }
 
 //------------------------------------------------------------------------------
-void host::get_app_context(int& id, str_base& binaries, str_base& profile, str_base& scripts)
+void host::get_app_context(int& id, host_context& context)
 {
-    const auto* context = app_context::get();
+    const auto* app = app_context::get();
 
-    id = context->get_id();
-    context->get_binaries_dir(binaries);
-    context->get_state_dir(profile);
-    context->get_script_path_readable(scripts);
+    id = app->get_id();
+    app->get_binaries_dir(context.binaries);
+    app->get_state_dir(context.profile);
+    app->get_default_settings_file(context.default_settings);
+    app->get_default_init_file(context.default_inputrc);
+    app->get_script_path_readable(context.scripts);
 }
 
 //------------------------------------------------------------------------------

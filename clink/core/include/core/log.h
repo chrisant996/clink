@@ -48,8 +48,13 @@ class file_logger
 {
 public:
                     file_logger(const char* log_path);
+                    ~file_logger();
     virtual void    emit(const char* function, int line, const char* fmt, va_list args) override;
+
+    static const char* get_path() { return s_this ? s_this->m_log_path.c_str() : nullptr; }
 
 private:
     str<256>        m_log_path;
+
+    static const file_logger* s_this;
 };

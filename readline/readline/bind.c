@@ -105,6 +105,10 @@ static int substring_member_of_array PARAMS((const char *, const char * const *)
 static int _rl_get_keymap_by_name PARAMS((const char *));
 static int _rl_get_keymap_by_map PARAMS((Keymap));
 
+/* begin_clink_change */
+const char *rl_get_last_init_file PARAMS((void));
+/* end_clink_change */
+
 static int currently_reading_init_file;
 
 /* used only in this file */
@@ -3056,6 +3060,14 @@ rl_dump_variables (int count, int key)
 /* end_clink_change */
   return (0);
 }
+
+/* begin_clink_change */
+const char *
+rl_get_last_init_file (void)
+{
+  return last_readline_init_file;
+}
+/* end_clink_change */
 
 /* Return non-zero if any members of ARRAY are a substring in STRING. */
 static int
