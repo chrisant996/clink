@@ -953,12 +953,16 @@ skip_errorlevel:
     history_database* history = history_database::get();
     if (init_history)
     {
-        if (history &&
-            ((g_save_history.get() != history->has_bank(bank_master)) ||
-             history->is_stale_name()))
+        if (history)
         {
-            delete history;
-            history = nullptr;
+            str<> history_path;
+            app->get_history_path(history_path);
+            if (g_save_history.get() != history->has_bank(bank_master) ||
+                history->is_stale_name(history_path.c_str()))
+            {
+                delete history;
+                history = nullptr;
+            }
         }
 
         if (!history)

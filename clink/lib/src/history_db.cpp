@@ -1887,14 +1887,12 @@ bool history_db::has_bank(unsigned char bank) const
 }
 
 //------------------------------------------------------------------------------
-bool history_db::is_stale_name() const
+bool history_db::is_stale_name(const char* path) const
 {
     if (!is_valid())
         return false;
 
-    str<280> path;
-    get_file_path(path, false);
-    return !path.equals(m_bank_filenames[bank_master].c_str());
+    return str_cmp(path, m_bank_filenames[bank_master].c_str()) != 0;
 }
 
 
