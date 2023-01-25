@@ -4,6 +4,7 @@
 
 #### v1.4.13
 
+- Fixed quoting in the `insert-completions` <kbd>Alt</kbd>-<kbd>*</kbd> command.
 - Fixed quoting for non-filename completions.
 - Fixed a CPU busy-loop after `match_builder:setvolatile()` was called during an auto-suggest strategy.
 
