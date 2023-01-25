@@ -2405,7 +2405,11 @@ make_quoted_replacement (char *match, int mtype, char *qc)
   replacement = match;
 
   should_quote = match && rl_completer_quote_characters &&
-			rl_filename_completion_desired &&
+/* begin_clink_change
+ * On Windows, quoting is also needed for non-filename completion, so
+ * rl_filename_quoting_desired alone says whether quoting is desired. */
+			//rl_filename_completion_desired &&
+/* end_clink_change */
 			rl_filename_quoting_desired;
 
   if (should_quote)

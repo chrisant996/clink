@@ -78,4 +78,4 @@ private:
     str_moveable m_line;
 };
 
-char need_leading_quote(const char* match, bool force_filename_completion_desired=false);
+char need_leading_quote(const char* match);

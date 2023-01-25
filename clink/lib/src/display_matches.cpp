@@ -1343,12 +1343,14 @@ void override_match_line_state::override(int start, int end, const char* needle,
 }
 
 //------------------------------------------------------------------------------
-char need_leading_quote(const char* match, bool force_filename_completion_desired)
+char need_leading_quote(const char* match)
 {
     if (!rl_completion_found_quote &&
         rl_completer_quote_characters &&
         rl_completer_quote_characters[0] &&
-        (rl_filename_completion_desired || force_filename_completion_desired) &&
+        // On Windows, quoting is also needed for non-filename completion, so
+        // rl_filename_quoting_desired alone says whether quoting is desired.
+        //rl_filename_completion_desired &&
         rl_filename_quoting_desired &&
         rl_filename_quote_characters &&
         _rl_strpbrk(match, rl_filename_quote_characters) != 0)

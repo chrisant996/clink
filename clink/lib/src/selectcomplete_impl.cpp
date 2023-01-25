@@ -1069,7 +1069,7 @@ stop:
                 // callback and Readline isn't prepared for the buffer to
                 // change out from under it).
                 needle = tmp.c_str();
-                const char qc = need_leading_quote(tmp.c_str(), true);
+                const char qc = need_leading_quote(tmp.c_str());
                 omls.override(m_anchor, m_anchor + m_needle.length(), needle, qc);
                 // Perform completion again after the expansion.
                 ::update_matches();
@@ -1688,7 +1688,9 @@ void selectcomplete_impl::insert_needle()
         !rl_completion_found_quote &&
         rl_completer_quote_characters &&
         rl_completer_quote_characters[0] &&
-        rl_filename_completion_desired &&
+        // On Windows, quoting is also needed for non-filename completion, so
+        // rl_filename_quoting_desired alone says whether quoting is desired.
+        //rl_filename_completion_desired &&
         rl_filename_quoting_desired &&
         rl_filename_quote_characters &&
         _rl_strpbrk(match, rl_filename_quote_characters) != 0)
@@ -1734,7 +1736,9 @@ void selectcomplete_impl::insert_match(int final)
         !rl_completion_found_quote &&
         rl_completer_quote_characters &&
         rl_completer_quote_characters[0] &&
-        rl_filename_completion_desired &&
+        // On Windows, quoting is also needed for non-filename completion, so
+        // rl_filename_quoting_desired alone says whether quoting is desired.
+        //rl_filename_completion_desired &&
         rl_filename_quoting_desired &&
         rl_filename_quote_characters &&
         _rl_strpbrk(match, rl_filename_quote_characters) != 0)

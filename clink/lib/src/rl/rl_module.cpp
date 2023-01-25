@@ -1557,7 +1557,7 @@ stop:
                 // the Readline line buffer (since we're inside a Readline
                 // callback and Readline isn't prepared for the buffer to
                 // change out from under it).
-                const char qc = need_leading_quote(tmp.c_str(), true);
+                const char qc = need_leading_quote(tmp.c_str());
                 omls.override(start, end, tmp.c_str(), qc);
                 // Perform completion again after the expansion.
                 update_matches();
