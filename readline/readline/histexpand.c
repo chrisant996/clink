@@ -1017,7 +1017,7 @@ history_expand_internal (const char *string, int start, int qc, int *end_index_p
 	while (0)
 
 int
-history_expand (char *hstring, char **output)
+history_expand (const char *hstring, char **output)
 {
   int j;
   int i, r, passc, cc, modified, eindex, only_printing, dquote, squote, flag;
@@ -1090,7 +1090,7 @@ history_expand (char *hstring, char **output)
       memset (&ps, 0, sizeof (mbstate_t));
 #endif
 
-      string = hstring;
+      string = (char *)hstring;
       /* If not quick substitution, still maybe have to do expansion. */
 
       /* `!' followed by one of the characters in history_no_expand_chars

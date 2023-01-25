@@ -476,6 +476,8 @@ The default hook checks @code{rl_instream}; if an application is using a
 different input source, it should set the hook appropriately.
 Readline queries for available input when implementing intra-key-sequence
 timeouts during input and incremental searches.
+This function must return zero if there is no input available, and non-zero
+if input is available.
 This may use an application-specific timeout before returning a value;
 Readline uses the value passed to @code{rl_set_keyboard_input_timeout()}
 or the value of the user-settable @var{keyseq-timeout} variable.

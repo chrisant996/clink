@@ -143,26 +143,7 @@ win32_isatty (int fd)
 
 /* Readline timeouts */
 
-/* I don't know how to set a timeout for _getch() in MinGW32, so we use
-   SIGALRM. */
-/* begin_clink_change */
-//#if (defined (HAVE_PSELECT) || defined (HAVE_SELECT)) && !defined (__MINGW32__)
-//#  define RL_TIMEOUT_USE_SELECT
-//#else
-//#  define RL_TIMEOUT_USE_SIGALRM
-//#endif
-#if defined (__MINGW32__)
-#  define RL_TIMEOUT_USE_SIGALRM
-#elif defined (HAVE_PSELECT) || defined (HAVE_SELECT)
-#  define RL_TIMEOUT_USE_SELECT
-#elif defined (_MSC_VER)
-/* MSVC doesn't have select or pselect, so rl_set_timeout() isn't supported
-   there.  A host can provide their own timeout implementation in custom
-   rl_getc_function and rl_input_available_hook functions. */
-#else
-#  define RL_TIMEOUT_USE_SIGALRM
-#endif
-/* end_clink_change */
+/* We now define RL_TIMEOUT_USE_SELECT or RL_TIMEOUT_USE_SIGALRM in rlprivate.h */
 
 int rl_set_timeout (unsigned int, unsigned int);
 int rl_timeout_remaining (unsigned int *, unsigned int *);
@@ -277,37 +258,44 @@ rl_gather_tyi (void)
   input = 0;
   tty = fileno (rl_instream);
 
-#if defined (HAVE_PSELECT) || defined (HAVE_SELECT)
-  FD_ZERO (&readfds);
-  FD_ZERO (&exceptfds);
-  FD_SET (tty, &readfds);
-  FD_SET (tty, &exceptfds);
-  USEC_TO_TIMEVAL (_keyboard_input_timeout, timeout);
-#if defined (RL_TIMEOUT_USE_SELECT)
-  result = _rl_timeout_select (tty + 1, &readfds, (fd_set *)NULL, &exceptfds, &timeout, NULL);
-#else
-  result = select (tty + 1, &readfds, (fd_set *)NULL, &exceptfds, &timeout);
-#endif
-  if (result <= 0)
-    return 0;	/* Nothing to read. */
-#endif
-
-  result = -1;
-  errno = 0;
-#if defined (FIONREAD)
-  result = ioctl (tty, FIONREAD, &chars_avail);
-  if (result == -1 && errno == EIO)
-    return -1;
-  if (result == -1)
-    chars_avail = 0;
-#endif
-
-  if (result == -1 && rl_input_available_hook)
+  /* Move this up here to give it first shot, but it can't set chars_avail */
+  /* XXX - need rl_chars_available_hook? */
+  if (rl_input_available_hook)
     {
       result = (*rl_input_available_hook) ();
       if (result == 0)
         result = -1;
     }
+
+#if defined (HAVE_PSELECT) || defined (HAVE_SELECT)
+  if (result == -1)
+    {
+      FD_ZERO (&readfds);
+      FD_ZERO (&exceptfds);
+      FD_SET (tty, &readfds);
+      FD_SET (tty, &exceptfds);
+      USEC_TO_TIMEVAL (_keyboard_input_timeout, timeout);
+#if defined (RL_TIMEOUT_USE_SELECT)
+      result = _rl_timeout_select (tty + 1, &readfds, (fd_set *)NULL, &exceptfds, &timeout, NULL);
+#else
+      result = select (tty + 1, &readfds, (fd_set *)NULL, &exceptfds, &timeout);
+#endif
+      if (result <= 0)
+	return 0;	/* Nothing to read. */
+    }
+#endif
+
+#if defined (FIONREAD)
+  if (result == -1)
+    {
+      errno = 0;
+      result = ioctl (tty, FIONREAD, &chars_avail);
+      if (result == -1 && errno == EIO)
+	return -1;
+      if (result == -1)
+	chars_avail = 0;
+    }
+#endif
 
 #if defined (O_NDELAY)
   if (result == -1)
@@ -333,8 +321,11 @@ rl_gather_tyi (void)
 #if defined (__MINGW32__)
   /* Use getch/_kbhit to check for available console input, in the same way
      that we read it normally. */
-   chars_avail = isatty (tty) ? _kbhit () : 0;
-   result = 0;
+   if (result == -1)
+     {
+       chars_avail = isatty (tty) ? _kbhit () : 0;
+       result = 0;
+     }
 #endif
 
   /* If there's nothing available, don't waste time trying to read
@@ -676,7 +667,7 @@ rl_timeout_remaining (unsigned int *secs, unsigned int *usecs)
 
 /* This should only be called if RL_TIMEOUT_USE_SELECT is defined. */
 
-#if defined (HAVE_PSELECT) || defined (HAVE_SELECT)
+#if defined (RL_TIMEOUT_USE_SELECT)
 int
 _rl_timeout_select (int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, const struct timeval *timeout, const sigset_t *sigmask)
 {

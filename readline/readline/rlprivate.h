@@ -318,9 +318,24 @@ extern int _rl_timeout_init (void);
 extern int _rl_timeout_handle_sigalrm (void);
 /* begin_clink_change */
 //#if defined (_POSIXSELECT_H_) && !defined (__MINGW32__) && (defined (HAVE_SELECT) || defined (HAVE_PSELECT))
-#if defined (_POSIXSELECT_H_) && (defined (HAVE_SELECT) || defined (HAVE_PSELECT))
+//#if defined (_POSIXSELECT_H_) && (defined (HAVE_SELECT) || defined (HAVE_PSELECT))
 /* end_clink_change */
+
+#if defined (_POSIXSELECT_H_)
 /* use as a sentinel for fd_set, struct timeval,  and sigset_t definitions */
+
+#if defined (__MINGW32__)
+#  define RL_TIMEOUT_USE_SIGALRM
+#elif defined (HAVE_SELECT) || defined (HAVE_PSELECT)
+#  define RL_TIMEOUT_USE_SELECT
+#elif defined (_MSC_VER)
+/* can't use select/pselect or SIGALRM, so no timeouts */
+#else
+#  define RL_TIMEOUT_USE_SIGALRM
+#endif
+
+#endif
+#if defined (RL_TIMEOUT_USE_SELECT)
 extern int _rl_timeout_select (int, fd_set *, fd_set *, fd_set *, const struct timeval *, const sigset_t *);
 #endif
 

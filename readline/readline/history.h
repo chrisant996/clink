@@ -232,7 +232,7 @@ extern int history_truncate_file (const char *, int);
 
   If an error occurred in expansion, then OUTPUT contains a descriptive
   error message. */
-extern int history_expand (char *, char **);
+extern int history_expand (const char *, char **);
 
 /* Extract a string segment consisting of the FIRST through LAST
    arguments present in STRING.  Arguments are broken up as in
