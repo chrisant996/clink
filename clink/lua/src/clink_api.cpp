@@ -1647,7 +1647,7 @@ void clink_lua_initialise(lua_state& lua, bool lua_interpreter)
         { 0,    "reclassifyline",         &reclassify_line },
         { 0,    "refilterprompt",         &refilter_prompt },
         { 0,    "refilterafterterminalresize", &refilter_after_terminal_resize },
-        { 0,    "parseline",              &parse_line },
+        { 1,    "parseline",              &parse_line },
         { 0,    "recognizecommand",       &api_recognize_command },
         // Backward compatibility with the Clink 0.4.8 API.  Clink 1.0.0a1 had
         // moved these APIs away from "clink.", but backward compatibility
