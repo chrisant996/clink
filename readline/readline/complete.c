@@ -2887,6 +2887,9 @@ rl_complete_internal (int what_to_do)
 /* begin_clink_change */
 	  end_undo_group = 1;
 	  rl_begin_undo_group();
+	  force_quoting = quote_lcd;
+	  if (force_quoting && rl_completer_quote_characters)
+	    quote_char = *rl_completer_quote_characters;
 /* end_clink_change */
 	  /* should we perform the check only if there are multiple matches? */
 	  insert_match (matches[0], start, matches[1] ? MULT_MATCH : SINGLE_MATCH, &quote_char);
@@ -2899,6 +2902,9 @@ rl_complete_internal (int what_to_do)
 /* begin_clink_change */
 	      end_undo_group = 1;
 	      rl_begin_undo_group();
+	      force_quoting = quote_lcd;
+	      if (force_quoting && rl_completer_quote_characters)
+		quote_char = *rl_completer_quote_characters;
 /* end_clink_change */
 	      insert_match (matches[0], start, matches[1] ? MULT_MATCH : SINGLE_MATCH, &quote_char);
 	    }
@@ -2945,6 +2951,13 @@ rl_complete_internal (int what_to_do)
 	 but this attempt returned a single match. */
       if (saved_last_completion_failed && matches[0] && *matches[0] && matches[1] == 0)
 	{
+/* begin_clink_change */
+	  end_undo_group = 1;
+	  rl_begin_undo_group();
+	  force_quoting = quote_lcd;
+	  if (force_quoting && rl_completer_quote_characters)
+	    quote_char = *rl_completer_quote_characters;
+/* end_clink_change */
 	  insert_match (matches[0], start, matches[1] ? MULT_MATCH : SINGLE_MATCH, &quote_char);
 /* begin_clink_change */
 	  //append_to_match (matches[0], delimiter, quote_char, nontrivial_lcd);
