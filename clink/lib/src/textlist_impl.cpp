@@ -15,8 +15,12 @@
 #include <rl/rl_commands.h>
 #include <terminal/printer.h>
 #include <terminal/ecma48_iter.h>
+#include <terminal/terminal.h>
+#include <terminal/terminal_in.h>
+#include <terminal/terminal_out.h>
 #include <terminal/terminal_helpers.h>
 #include <terminal/key_tester.h>
+#include <signal.h>
 
 extern "C" {
 #include <readline/readline.h>
@@ -68,9 +72,11 @@ extern int host_remove_history(int rl_history_index, const char* line);
 extern bool host_remove_dir_history(int index);
 extern int clink_is_signaled();
 extern void force_signaled_redisplay();
+extern void interrupt_input();
 
 //------------------------------------------------------------------------------
 static textlist_impl* s_textlist = nullptr;
+static bool s_standalone = false;
 const int min_screen_cols = 20;
 
 //------------------------------------------------------------------------------
@@ -210,6 +216,47 @@ static bool strstr_compare(const str_base& needle, const char* haystack)
 
 
 //------------------------------------------------------------------------------
+static int s_standalone_signal = 0;
+
+//------------------------------------------------------------------------------
+static BOOL WINAPI standalone_textlist_ctrlevent_handler(DWORD ctrl_type)
+{
+    if (ctrl_type == CTRL_C_EVENT || ctrl_type == CTRL_BREAK_EVENT)
+    {
+        s_standalone_signal = (ctrl_type == CTRL_C_EVENT) ? SIGINT : SIGBREAK;
+        interrupt_input();
+    }
+    else if (ctrl_type == CTRL_CLOSE_EVENT)
+    {
+        // Prevent the OS from showing a dialog box:  the C runtime treats
+        // CTRL_CLOSE_EVENT the same as CTRL_BREAK_EVENT.  Since the
+        // CTRL_CLOSE_EVENT should result in guaranteed termination, there's
+        // no need to preserve installed signal handlers.  So, by removing the
+        // SIGBREAK handler, it allows the C runtime to return TRUE and allow
+        // the OS to continue.  (Note that this is contrary to the MSDN docs,
+        // and might only be a problem with certain antivirus suites.)
+        signal(SIGBREAK, nullptr);
+    }
+    return false;
+}
+
+//------------------------------------------------------------------------------
+static void standalone_textlist_sighandler(int sig)
+{
+    // raise() clears the signal handler, so set it again.
+    signal(sig, standalone_textlist_sighandler);
+    s_standalone_signal = sig;
+}
+
+//------------------------------------------------------------------------------
+static int is_signaled()
+{
+    return s_standalone ? s_standalone_signal : clink_is_signaled();
+}
+
+
+
+//------------------------------------------------------------------------------
 popup_results::popup_results(popup_result result, int index, const char* text)
     : m_result(result)
     , m_index(index)
@@ -312,15 +359,18 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
     reset();
     m_results.clear();
 
-    assert(m_buffer);
-    if (!m_buffer)
-        return popup_result::error;
+    if (!s_standalone)
+    {
+        assert(m_buffer);
+        if (!m_buffer)
+            return popup_result::error;
+
+        // Doesn't make sense to record macro with a popup list.
+        if (RL_ISSTATE(RL_STATE_MACRODEF) != 0)
+            return popup_result::error;
+    }
 
     if (!entries || count <= 0)
-        return popup_result::error;
-
-    // Doesn't make sense to record macro with a popup list.
-    if (RL_ISSTATE(RL_STATE_MACRODEF) != 0)
         return popup_result::error;
 
     // Attach to list of items.
@@ -348,6 +398,17 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
         m_show_numbers = false;
         m_win_history = false;
         return popup_result::error;
+    }
+
+    // Signal handler when standalone, so Ctrl-Break can erase the popup list.
+    typedef void (__cdecl sig_func_t)(int);
+    sig_func_t* old_int = nullptr;
+    sig_func_t* old_break = nullptr;
+    if (s_standalone)
+    {
+        old_int = signal(SIGINT, standalone_textlist_sighandler);
+        old_break = signal(SIGBREAK, standalone_textlist_sighandler);
+        SetConsoleCtrlHandler(standalone_textlist_ctrlevent_handler, true);
     }
 
     // Initialize colors.
@@ -400,7 +461,7 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
     assert(!m_active);
     update_display();
 
-    if (!clink_is_signaled())
+    if (!s_standalone && !is_signaled())
     {
         _rl_refresh_line();
         rl_display_fixed = 1;
@@ -416,6 +477,16 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
 
     reset();
     m_results.clear();
+
+    if (s_standalone)
+    {
+        SetConsoleCtrlHandler(standalone_textlist_ctrlevent_handler, false);
+        signal(SIGBREAK, old_break);
+        signal(SIGINT, old_int);
+        // Re-raise the signal so the interpreter's signal handler can respond.
+        if (s_standalone_signal)
+            raise(s_standalone_signal);
+    }
 
     return results;
 }
@@ -526,7 +597,7 @@ static void advance_index(int& i, int direction, int max_count)
 }
 
 //------------------------------------------------------------------------------
-void textlist_impl::on_input(const input& _input, result& result, const context& context)
+void textlist_impl::on_input(const input& _input, result& result, const context& /*context*/)
 {
     assert(m_active);
 
@@ -607,6 +678,7 @@ navigated:
 find:
         if (m_win_history)
         {
+            assert(!s_standalone);
             lock_cursor(false);
             show_cursor(true);
             rl_ding();
@@ -1040,9 +1112,12 @@ void textlist_impl::on_signal(int sig)
         rollback<volatile int> rb_sig(_rl_caught_signal, 0);
         m_active = false;
         update_display();
-        force_signaled_redisplay();
-        _rl_refresh_line();
-        rl_display_fixed = 1;
+        if (!s_standalone)
+        {
+            force_signaled_redisplay();
+            _rl_refresh_line();
+            rl_display_fixed = 1;
+        }
         m_active = true;
     }
 }
@@ -1063,7 +1138,7 @@ void textlist_impl::cancel(popup_result result)
         }
     }
 
-    if (m_reset_history_index)
+    if (!s_standalone && m_reset_history_index)
     {
         rl_replace_line("", 1);
         using_history();
@@ -1206,13 +1281,17 @@ void textlist_impl::update_display()
         COORD restore = csbi.dwCursorPosition;
         const int vpos = _rl_last_v_pos;
         const int cpos = _rl_last_c_pos;
+        int up = 0;
 
         // Move cursor to next line.  I.e. the list goes immediately below the
         // cursor line and may overlay some lines of input.
-        m_printer->print("\n");
+        if (!s_standalone || restore.X > 0)
+        {
+            m_printer->print("\n");
+            up++;
+        }
 
         // Display list.
-        int up = 1;
         bool move_to_end = true;
         const int count = m_count;
         if (m_active && count > 0)
@@ -1406,10 +1485,14 @@ void textlist_impl::update_display()
             m_printer->print(s.c_str(), s.length());
         }
         GetConsoleScreenBufferInfo(h, &csbi);
-        m_mouse_offset = csbi.dwCursorPosition.Y + 1/*to border*/ + 1/*to top item*/;
-        _rl_move_vert(vpos);
-        _rl_last_c_pos = cpos;
-        GetConsoleScreenBufferInfo(h, &csbi);
+        m_mouse_offset = csbi.dwCursorPosition.Y + 1/*to top item*/;
+        if (!s_standalone)
+        {
+            m_mouse_offset += 1/*to border*/;
+            _rl_move_vert(vpos);
+            _rl_last_c_pos = cpos;
+            GetConsoleScreenBufferInfo(h, &csbi);
+        }
         restore.Y = csbi.dwCursorPosition.Y;
         SetConsoleCursorPosition(h, restore);
     }
@@ -1608,4 +1691,321 @@ popup_results activate_history_text_list(const char** history, int count, int cu
     assert(current < count);
     textlist_mode mode = win_history ? textlist_mode::win_history : textlist_mode::history;
     return s_textlist->activate("History", history, count, current, true/*reverse*/, mode, infos, false);
+}
+
+
+
+//------------------------------------------------------------------------------
+class standalone_input : public input_dispatcher, public key_tester
+{
+    typedef editor_module                       module;
+    typedef fixed_array<editor_module*, 16>     modules;
+
+public:
+                        standalone_input(terminal& term);
+
+    // input_dispatcher
+    void                dispatch(int bind_group) override;
+
+    // key_tester
+    bool                is_bound(const char* seq, int len);
+    bool                accepts_mouse_input(mouse_input_type type);
+    bool                translate(const char* seq, int len, str_base& out);
+    void                set_keyseq_len(int len);
+
+private:
+    module::context     get_context();
+    bool                update_input();
+
+    terminal&           m_terminal;
+    modules             m_modules;
+    binder              m_binder;
+    bind_resolver       m_bind_resolver = { m_binder };
+    textlist_impl       m_textlist;
+
+    // State for dispatch().
+    unsigned char       m_dispatching = 0;
+    bool                m_invalid_dispatch = false;
+    bind_resolver::binding* m_pending_binding = nullptr;
+};
+
+//------------------------------------------------------------------------------
+standalone_input::standalone_input(terminal& term)
+: m_terminal(term)
+, m_textlist(*this)
+{
+    *m_modules.push_back() = &m_textlist;
+
+    struct : public module::binder {
+        virtual int get_group(const char* name) const override
+        {
+            return binder->get_group(name);
+        }
+
+        virtual int create_group(const char* name) override
+        {
+            return binder->create_group(name);
+        }
+
+        virtual bool bind(unsigned int group, const char* chord, unsigned char key, bool has_params=false) override
+        {
+            return binder->bind(group, chord, *module, key, has_params);
+        }
+
+        ::binder*       binder;
+        module*         module;
+    } binder_impl;
+
+    binder_impl.binder = &m_binder;
+    for (auto* module : m_modules)
+    {
+        binder_impl.module = module;
+        module->bind_input(binder_impl);
+    }
+
+    module::context context = get_context();
+    for (auto* module : m_modules)
+        module->on_begin_line(context);
+}
+
+//------------------------------------------------------------------------------
+void standalone_input::dispatch(int bind_group)
+{
+    // Claim any pending binding, otherwise we'll try to dispatch it again.
+
+    if (m_pending_binding)
+        m_pending_binding->claim();
+
+    // Handle one input.
+
+    const int prev_bind_group = m_bind_resolver.get_group();
+    m_bind_resolver.set_group(bind_group);
+
+    const bool was_signaled = is_signaled();
+
+    m_dispatching++;
+
+    key_tester* const old_key_tester = m_terminal.in->set_key_tester(this);
+
+    do
+    {
+        m_terminal.in->select();
+        m_invalid_dispatch = false;
+    }
+    while (!update_input() || m_invalid_dispatch);
+
+    m_terminal.in->set_key_tester(old_key_tester);
+
+    m_dispatching--;
+
+    m_bind_resolver.set_group(prev_bind_group);
+}
+
+//------------------------------------------------------------------------------
+editor_module::context standalone_input::get_context()
+{
+    assert(g_printer);
+    module::context context = { nullptr, nullptr, *g_printer, *(pager*)nullptr, *(line_buffer*)nullptr, *(matches*)nullptr, *(word_classifications*)nullptr };
+    return context;
+}
+
+//------------------------------------------------------------------------------
+// Returns false when a chord is in progress, otherwise returns true.  This is
+// to help dispatch() be able to dispatch an entire chord.
+bool standalone_input::update_input()
+{
+    // Signal handler is not installed when standalone.
+    if (is_signaled())
+    {
+        const int sig = is_signaled();
+        for (auto* module : m_modules)
+            module->on_signal(sig);
+        if (!m_dispatching)
+            exit(-1);
+        return true;
+    }
+
+    int key = m_terminal.in->read();
+
+    if (key == terminal_in::input_terminal_resize)
+    {
+        int columns = m_terminal.out->get_columns();
+        int rows = m_terminal.out->get_rows();
+        module::context context = get_context();
+        for (auto* module : m_modules)
+            module->on_terminal_resize(columns, rows, context);
+    }
+
+    if (key == terminal_in::input_abort)
+    {
+#if 0
+        if (!m_dispatching)
+        {
+            m_buffer.reset();
+            end_line();
+        }
+#endif
+        return true;
+    }
+
+    if (key == terminal_in::input_exit)
+    {
+#if 0
+        if (!m_dispatching)
+        {
+            m_buffer.reset();
+            m_buffer.insert("exit");
+            end_line();
+        }
+#endif
+        return true;
+    }
+
+    if (key < 0)
+        return true;
+
+    if (!m_bind_resolver.step(key))
+        return false;
+
+    struct result_impl : public module::result
+    {
+        enum
+        {
+            flag_pass       = 1 << 0,
+            flag_invalid    = 1 << 1,
+            flag_done       = 1 << 2,
+            flag_eof        = 1 << 3,
+            flag_redraw     = 1 << 4,
+        };
+
+        virtual void    pass() override                           { flags |= flag_pass; }
+        virtual void    loop() override                           { flags |= flag_invalid; }
+        virtual void    done(bool eof) override                   { flags |= flag_done|(eof ? flag_eof : 0); }
+        virtual void    redraw() override                         { flags |= flag_redraw; }
+        virtual int     set_bind_group(int id) override           { int t = group; group = id; return t; }
+        unsigned short  group;  //        <! MSVC bugs; see connect
+        unsigned char   flags;  // = 0;   <! issues about C2905
+    };
+
+    while (auto binding = m_bind_resolver.next())
+    {
+        // Binding found, dispatch it off to the module.
+        result_impl result;
+        result.flags = 0;
+        result.group = m_bind_resolver.get_group();
+
+        str<16> chord;
+        module* module = binding.get_module();
+        unsigned char id = binding.get_id();
+        binding.get_chord(chord);
+
+        {
+            rollback<bind_resolver::binding*> _(m_pending_binding, &binding);
+
+            module::context context = get_context();
+            module::input input = { chord.c_str(), chord.length(), id, m_bind_resolver.more_than(chord.length()), binding.get_params() };
+            module->on_input(input, result, context);
+
+            if (is_signaled())
+                return true;
+        }
+
+        m_bind_resolver.set_group(result.group);
+
+        // Process what result_impl has collected.
+
+        if (binding) // May have been claimed already by dispatch() inside on_input().
+        {
+            if (result.flags & result_impl::flag_pass)
+            {
+                // win_terminal_in avoids producing input that won't be handled.
+                // But it can't predict when result.pass() might be used, so the
+                // onus is on the pass() caller to make sure passing the binding
+                // upstream won't leave it unhandled.  If it's unhandled, then
+                // the key sequence gets split at the point of mismatch, and the
+                // rest gets interpreted as a separate key sequence.
+                //
+                // For example, mouse input can be especially susceptible.
+                continue;
+            }
+            binding.claim();
+        }
+
+        if (m_dispatching)
+        {
+            if (result.flags & result_impl::flag_invalid)
+                m_invalid_dispatch = true;
+        }
+        else
+        {
+            // There's no "done".
+#if 0
+            if (result.flags & result_impl::flag_done)
+            {
+                end_line();
+
+                if (result.flags & result_impl::flag_eof)
+                    set_flag(flag_eof);
+            }
+#endif
+
+            // There's no editing.
+#if 0
+            if (!check_flag(flag_editing))
+                return true;
+#endif
+        }
+
+        // There's nothing to draw.
+#if 0
+        if (result.flags & result_impl::flag_redraw)
+            m_buffer.redraw();
+#endif
+    }
+
+    // There's nothing to draw.
+#if 0
+    m_buffer.draw();
+#endif
+    return true;
+}
+
+//------------------------------------------------------------------------------
+bool standalone_input::is_bound(const char* seq, int len)
+{
+    int bound = m_bind_resolver.is_bound(seq, len);
+    if (bound != 0)
+        return (bound > 0);
+
+    return false;
+}
+
+//------------------------------------------------------------------------------
+bool standalone_input::accepts_mouse_input(mouse_input_type type)
+{
+    if (m_textlist.is_active())
+        return m_textlist.accepts_mouse_input(type);
+    return false;
+}
+
+//------------------------------------------------------------------------------
+bool standalone_input::translate(const char* seq, int len, str_base& out)
+{
+    return false;
+}
+
+//------------------------------------------------------------------------------
+void standalone_input::set_keyseq_len(int len)
+{
+}
+
+//------------------------------------------------------------------------------
+void init_standalone_textlist(terminal& term)
+{
+    // This initializes s_textlist.
+    s_standalone = true;
+    new standalone_input(term);
+
+    // Since there is no inputrc file in standalone mode, set some defaults.
+    _rl_menu_complete_wraparound = false;   // Affects textlist_impl.
 }

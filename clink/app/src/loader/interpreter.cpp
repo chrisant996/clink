@@ -8,6 +8,7 @@
 #include <core/settings.h>
 #include <lua/lua_state.h>
 #include <terminal/terminal.h>
+#include <terminal/terminal_in.h>
 #include <terminal/terminal_helpers.h>
 #include <terminal/printer.h>
 #include <getopt.h>
@@ -204,9 +205,15 @@ int interpreter(int argc, char** argv)
             settings::find("lua.break_on_error")->set("true");
     }
 
-    terminal term = terminal_create();
+    settings::load("nul");
+
+    terminal term = terminal_create(nullptr, false/*cursor_visibility*/);
     printer printer(*term.out);
     printer_context prt(term.out, &printer);
+    term.in->begin();
+
+    extern void init_standalone_textlist(terminal& term);
+    init_standalone_textlist(term);
 
     int status = LUA_OK;
     lua_state_flags flags = lua_state_flags::interpreter;

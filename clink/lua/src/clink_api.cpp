@@ -1638,7 +1638,7 @@ void clink_lua_initialise(lua_state& lua, bool lua_interpreter)
         { 1,    "lower",                  &to_lowercase },
         { 1,    "print",                  &clink_print },
         { 1,    "upper",                  &to_uppercase },
-        { 0,    "popuplist",              &popup_list },
+        { 1,    "popuplist",              &popup_list },
         { 1,    "getpopuplistcolors",     &get_popup_list_colors },
         { 0,    "getsession",             &get_session },
         { 1,    "getansihost",            &get_ansi_host },

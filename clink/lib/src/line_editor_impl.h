@@ -181,6 +181,6 @@ private:
 
     // State for dispatch().
     unsigned char       m_dispatching = 0;
-    bool                m_invalid_dispatch;
+    bool                m_invalid_dispatch = false;
     bind_resolver::binding* m_pending_binding = nullptr;
 };
