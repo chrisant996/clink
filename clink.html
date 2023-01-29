@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.4.13</title>
+<title>Clink v1.4.14</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -853,7 +853,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.4.13</div>
+                <div id="title">Clink v1.4.14</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -6552,6 +6552,37 @@ end</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#rl.getvariable"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="rl.getvariable">rl.getvariable</a></div> <div class="signature">( <span class="arg_name">name</span>:string ) : string | nil<br/><div class="version">v1.1.6 and newer</div></div></div><div class="body"><p class="desc">Returns the value of the named Readline configuration variable as a string, or nil if the variable name is not recognized.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#rl.insertmode"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="rl.insertmode">rl.insertmode</a></div> <div class="signature">( [<span class="arg_name">insert</span>:boolean] ) : boolean<br/><div class="version">v1.2.50 and newer</div></div></div><div class="body"><p class="desc">Returns true when typing insertion mode is on.</p><p class="desc"> When the optional <span class="arg">insert</span> argument is passed, this also sets typing insertion mode on or off accordingly.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#rl.invokecommand"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="rl.invokecommand">rl.invokecommand</a></div> <div class="signature">( <span class="arg_name">command</span>:string, [<span class="arg_name">count</span>:integer] ) : boolean | nil<br/><div class="version">v1.1.26 and newer</div></div></div><div class="body"><p class="desc">Invokes a Readline command named <span class="arg">command</span>.  May only be used within a <a href="#luakeybindings">luafunc: key binding</a>.</p><p class="desc"> <span class="arg">count</span> is optional and defaults to 1 if omitted.</p><p class="desc"> Returns true if the named command succeeds, false if the named command fails, or nil if the named command doesn't exist.</p><p class="desc"> Warning:  Invoking more than one Readline command in a luafunc: key binding could have unexpected results, depending on which commands are invoked.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#rl.islineequal"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="rl.islineequal">rl.islineequal</a></div> <div class="signature">( <span class="arg_name">text</span>:string, [<span class="arg_name">to_cursor</span>:boolean] ) : boolean<br/><div class="version">v1.4.14 and newer</div></div></div><div class="body"><p class="desc">Returns whether the current input line exactly matches <span class="arg">text</span>.  This can be useful in a coroutine that wants to know whether the current input line has already changed, before it starts a potentially slow operation to generate matches. If the optional <span class="arg">to_cursor</span> is true, then only the line up to the current cursor position is compared.</p><pre class="language-lua"><code>local function matches_func(word, index, line_state, builder)
+&nbsp;    -- Delay match generation briefly, to allow coalescing typed letters into
+&nbsp;    -- a single query.  This can make auto-suggestions more responsive if the
+&nbsp;    -- match generation operation is slow, such as doing a network query.
+&nbsp;    local co, ismain = coroutine.running()
+&nbsp;    if not ismain then
+&nbsp;        local orig_line = line_state:getline()
+&nbsp;        orig_line = orig_line:sub(1, line_state:getcursor() - 1)
+&nbsp;        -- Yield for 0.2 seconds.
+&nbsp;        clink.setcoroutineinterval(co, 0.2)
+&nbsp;        coroutine.yield()
+&nbsp;        -- Reset the interval back to normal.
+&nbsp;        clink.setcoroutineinterval(co, 0)
+&nbsp;        -- If the input line changed during the 0.2 seconds, then don't generate
+&nbsp;        -- matches, and mark the matches as needing to be regenerated.
+&nbsp;        if not rl.islineequal(orig_line, true) then
+&nbsp;            builder:setvolatile()
+&nbsp;            return {}
+&nbsp;        end
+&nbsp;    end
+
+&nbsp;    -- Do something slow that generates matches.
+&nbsp;    local matches = {}
+&nbsp;    local f = io.popen("slow_operation.exe")
+&nbsp;    if f then
+&nbsp;        for l in f:lines() do
+&nbsp;            table.insert(matches, l)
+&nbsp;        end
+&nbsp;    end
+&nbsp;    return matches
+end</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#rl.ismodifiedline"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="rl.ismodifiedline">rl.ismodifiedline</a></div> <div class="signature">() : boolean<br/><div class="version">v1.2.51 and newer</div></div></div><div class="body"><p class="desc">Returns true when the current input line is a history entry that has been modified (i.e. has an undo list).</p><p class="desc"> This enables prompt filters to show a "modmark" of their own, as an alternative to the modmark shown when the <code>mark-modified-lines</code> Readline config setting is enabled.</p><p class="desc"> The following sample illustrates a prompt filter that shows a "modified line" indicator when the current line is a history entry and has been modified.</p><pre class="language-lua"><code>local p = clink.promptfilter(10)
 local normal = "\x1b[m"
 
@@ -6798,12 +6829,16 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes"><div class="wlink"><a href="#changes"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork"><div class="wlink"><a href="#releases-from-chrisant996clink-fork"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1414"><div class="wlink"><a href="#v1414"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>v1.4.14</h4>
+<ul>
+<li>Fixed autosuggest to update again if matches are marked as volatile and the input line changed while matches were generated in the background (related to <a href="https://github.com/vladimir-kotikov/clink-completions/issues/164">clink-completions#164</a>).</li>
+</ul>
 <h4 id="v1413"><div class="wlink"><a href="#v1413"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>v1.4.13</h4>
 <ul>
 <li>Added more status information in <code>clink-diagnostics</code> <kbd>Ctrl</kbd>-<kbd>X</kbd>,<kbd>Ctrl</kbd>-<kbd>Z</kbd>.</li>
 <li>Fixed quoting in the <code>insert-completions</code> <kbd>Alt</kbd>-<kbd>*</kbd> command.</li>
 <li>Fixed quoting for non-filename completions.</li>
-<li>Fixed a CPU busy-loop after <code>match_builder:setvolatile()</code> was called during an auto-suggest strategy.</li>
+<li>Fixed a CPU busy-loop after <code>match_builder:setvolatile()</code> was called during an autosuggest strategy.</li>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/411">#411</a>; setting <code>%CLINK_HISTORY_LABEL%</code> after Clink started didn&#39;t take effect (regression introduced in v1.3.18).</li>
 </ul>
 <h4 id="v1412"><div class="wlink"><a href="#v1412"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>v1.4.12</h4>
