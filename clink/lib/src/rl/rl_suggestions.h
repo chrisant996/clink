@@ -19,7 +19,9 @@ public:
     bool            get_visible(str_base& out) const;
     void            clear();
     bool            can_suggest(const line_state& line);
+    bool            can_update_matches();
     bool            accepted_whole_suggestion() const { return m_accepted_whole; }
+    void            set_started(const char* line);
     void            set(const char* line, unsigned int endword_offset, const char* suggestion, unsigned int offset);
     bool            insert(suggestion_action action);
     bool            pause(bool pause);
@@ -29,6 +31,7 @@ private:
     str_iter        m_iter;
     str_moveable    m_suggestion;
     str_moveable    m_line;         // Input line that generated the suggestion.
+    str_moveable    m_started;      // Input line that started generating a suggestion.
     unsigned int    m_suggestion_offset = -1;
     unsigned int    m_endword_offset = -1;
     bool            m_paused = false;

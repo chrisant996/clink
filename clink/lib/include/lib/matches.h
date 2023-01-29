@@ -241,6 +241,7 @@ public:
 
     void                    set_deprecated_mode();
     void                    set_matches_are_files(bool files=true);
+    void                    set_input_line(const char* text);
 
 private:
     matches&                m_matches;

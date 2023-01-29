@@ -672,10 +672,10 @@ bool line_editor_impl::notify_matches_ready(int generation_id, matches* matches)
 
     // Trigger generating suggestion again.
     {
-        // Don't generate matches again; notify_matches_ready() is called when
-        // matches become available, but try_suggest() invokes match generation
-        // when needed.  Volatile matches create an infinite cycle of notifying
-        // and regenerating.
+        // Don't generate matches again unless the input line has changed;
+        // notify_matches_ready() is called when matches become available, but
+        // try_suggest() invokes match generation when needed.  Volatile
+        // matches can create an infinite cycle of notifying and regenerating.
         ignore_volatile_matches ignore(m_matches);
         try_suggest();
     }

@@ -263,6 +263,10 @@ function clink._generate(line_state, line_states, match_builder, old_filtering)
         return
     end
 
+    if not clink._is_coroutine_canceled(coroutine.running()) then
+        match_builder:set_input_line(line_state:getline())
+    end
+
     clink.co_state._current_builder = nil
     clink.co_state.use_old_filtering = nil
     clink.co_state.argmatcher_line_states = nil

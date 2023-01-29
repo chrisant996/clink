@@ -1127,6 +1127,61 @@ static int need_quotes(lua_State* state)
     return 1;
 }
 
+//------------------------------------------------------------------------------
+/// -name:  rl.islineequal
+/// -ver:   1.4.14
+/// -arg:   text:string
+/// -arg:   [to_cursor:boolean]
+/// -ret:   boolean
+/// Returns whether the current input line exactly matches
+/// <span class="arg">text</span>.  This can be useful in a coroutine that wants
+/// to know whether the current input line has already changed, before it starts
+/// a potentially slow operation to generate matches.
+/// If the optional <span class="arg">to_cursor</span> is true, then only the
+/// line up to the current cursor position is compared.
+/// -show:  local function matches_func(word, index, line_state, builder)
+/// -show:  &nbsp;    -- Delay match generation briefly, to allow coalescing typed letters into
+/// -show:  &nbsp;    -- a single query.  This can make auto-suggestions more responsive if the
+/// -show:  &nbsp;    -- match generation operation is slow, such as doing a network query.
+/// -show:  &nbsp;    local co, ismain = coroutine.running()
+/// -show:  &nbsp;    if not ismain then
+/// -show:  &nbsp;        local orig_line = line_state:getline()
+/// -show:  &nbsp;        orig_line = orig_line:sub(1, line_state:getcursor() - 1)
+/// -show:  &nbsp;        -- Yield for 0.2 seconds.
+/// -show:  &nbsp;        clink.setcoroutineinterval(co, 0.2)
+/// -show:  &nbsp;        coroutine.yield()
+/// -show:  &nbsp;        -- Reset the interval back to normal.
+/// -show:  &nbsp;        clink.setcoroutineinterval(co, 0)
+/// -show:  &nbsp;        -- If the input line changed during the 0.2 seconds, then don't generate
+/// -show:  &nbsp;        -- matches, and mark the matches as needing to be regenerated.
+/// -show:  &nbsp;        if not rl.islineequal(orig_line, true) then
+/// -show:  &nbsp;            builder:setvolatile()
+/// -show:  &nbsp;            return {}
+/// -show:  &nbsp;        end
+/// -show:  &nbsp;    end
+/// -show:
+/// -show:  &nbsp;    -- Do something slow that generates matches.
+/// -show:  &nbsp;    local matches = {}
+/// -show:  &nbsp;    local f = io.popen("slow_operation.exe")
+/// -show:  &nbsp;    if f then
+/// -show:  &nbsp;        for l in f:lines() do
+/// -show:  &nbsp;            table.insert(matches, l)
+/// -show:  &nbsp;        end
+/// -show:  &nbsp;    end
+/// -show:  &nbsp;    return matches
+/// -show:  end
+static int is_line_equal(lua_State* state)
+{
+    const char* text = checkstring(state, 1);
+    const bool to_cursor = lua_toboolean(state, 2);
+    const int len = to_cursor ? rl_point : rl_end;
+    const bool equal = (text &&
+                        strlen(text) == len &&
+                        strncmp(text, rl_line_buffer, len) == 0);
+    lua_pushboolean(state, equal);
+    return 1;
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -1155,6 +1210,7 @@ void rl_lua_initialise(lua_state& lua)
         { "gethistoryitems",        &get_history_items },
         { "describemacro",          &describe_macro },
         { "needquotes",             &need_quotes },
+        { "islineequal",            &is_line_equal },
     };
 
     lua_State* state = lua.get_state();

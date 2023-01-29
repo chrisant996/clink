@@ -64,6 +64,9 @@ local function deferred_generate(line, lines, matches, builder, generation_id)
     -- Cancel the current _do_suggest.
     _cancel = true
 
+    -- Make sure volatile matches don't cause an infinite cycle.
+    clink.set_suggestion_started(line:getline())
+
     -- Start coroutine for match generation.
     clink._make_match_generate_coroutine(line, lines, matches, builder, generation_id)
 end

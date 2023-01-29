@@ -25,6 +25,7 @@ const match_builder_lua::method match_builder_lua::c_methods[] = {
     { "setmatchesarefiles", &set_matches_are_files },
     // UNDOCUMENTED; internal use only.
     { "clear_toolkit",      &clear_toolkit },
+    { "set_input_line",     &set_input_line },
     { "matches_ready",      &matches_ready },
     {}
 };
@@ -272,6 +273,18 @@ int match_builder_lua::clear_toolkit(lua_State* state)
 {
     if (m_toolkit)
         m_toolkit->clear();
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+// UNDOCUMENTED; internal use only.
+int match_builder_lua::set_input_line(lua_State* state)
+{
+    const char* text = checkstring(state, 1);
+    if (!text)
+        return 0;
+
+    m_builder->set_input_line(text);
     return 0;
 }
 

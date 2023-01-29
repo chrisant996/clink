@@ -299,6 +299,12 @@ void match_builder::set_volatile()
 }
 
 //------------------------------------------------------------------------------
+void match_builder::set_input_line(const char* text)
+{
+    return ((matches_impl&)m_matches).set_input_line(text);
+}
+
+//------------------------------------------------------------------------------
 void match_builder::set_deprecated_mode()
 {
     ((matches_impl&)m_matches).set_deprecated_mode();
@@ -817,6 +823,7 @@ void matches_impl::reset()
     m_regen_blocked = false;
     m_nosort = false;
     m_volatile = false;
+    m_input_line.clear();
     m_suppress_quoting = 0;
     m_word_break_position = -1;
     m_filename_completion_desired.reset();
@@ -842,6 +849,7 @@ void matches_impl::transfer(matches_impl& from)
     m_regen_blocked = from.m_regen_blocked;
     m_nosort = from.m_nosort;
     m_volatile = from.m_volatile;
+    m_input_line = std::move(from.m_input_line);
     m_suppress_quoting = from.m_suppress_quoting;
     m_word_break_position = from.m_word_break_position;
     m_filename_completion_desired = from.m_filename_completion_desired;
@@ -912,6 +920,20 @@ void matches_impl::set_no_sort()
 void matches_impl::set_volatile()
 {
     m_volatile = true;
+}
+
+//------------------------------------------------------------------------------
+void matches_impl::set_input_line(const char* text)
+{
+    m_input_line = text;
+}
+
+//------------------------------------------------------------------------------
+bool matches_impl::is_from_current_input_line()
+{
+    const bool diff = (m_input_line.length() != rl_end ||
+                       strncmp(m_input_line.c_str(), rl_line_buffer, rl_end) != 0);
+    return !diff;
 }
 
 //------------------------------------------------------------------------------
@@ -1110,20 +1132,6 @@ void matches_impl::coalesce(unsigned int count_hint, bool restrict)
 
     if (restrict)
         m_infos.resize(j);
-}
-
-//------------------------------------------------------------------------------
-ignore_volatile_matches::ignore_volatile_matches(matches_impl& matches)
-: m_matches(matches)
-, m_volatile(matches.m_volatile)
-{
-    m_matches.m_volatile = false;
-}
-
-//------------------------------------------------------------------------------
-ignore_volatile_matches::~ignore_volatile_matches()
-{
-    m_matches.m_volatile |= m_volatile;
 }
 
 //------------------------------------------------------------------------------

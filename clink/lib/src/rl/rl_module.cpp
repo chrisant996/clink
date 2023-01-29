@@ -568,6 +568,26 @@ void override_rl_last_func(rl_command_func_t* func, bool force_when_null)
 
 
 //------------------------------------------------------------------------------
+ignore_volatile_matches::ignore_volatile_matches(matches_impl& matches)
+: m_matches(matches)
+, m_volatile(matches.m_volatile)
+{
+    if (!s_suggestion.can_update_matches() &&
+        matches.is_from_current_input_line())
+    {
+        m_matches.m_volatile = false;
+    }
+}
+
+//------------------------------------------------------------------------------
+ignore_volatile_matches::~ignore_volatile_matches()
+{
+    m_matches.m_volatile |= m_volatile;
+}
+
+
+
+//------------------------------------------------------------------------------
 extern "C" const char* host_get_env(const char* name)
 {
     static int rotate = 0;
@@ -1085,6 +1105,12 @@ static void puts_face_func(const char* s, const char* face, int n)
 }
 
 
+
+//------------------------------------------------------------------------------
+void set_suggestion_started(const char* line)
+{
+    s_suggestion.set_started(line);
+}
 
 //------------------------------------------------------------------------------
 void set_suggestion(const char* line, unsigned int endword_offset, const char* suggestion, unsigned int offset)

@@ -5,6 +5,7 @@
 #include "line_buffer.h"
 #include "line_state.h"
 
+#include "matches_impl.h"
 #include "rl_suggestions.h"
 
 #include <core/base.h>
@@ -66,6 +67,7 @@ void suggestion_manager::clear()
     new (&m_iter) str_iter();
     m_suggestion.free();
     m_line.free();
+    m_started.free();
     m_suggestion_offset = -1;
     m_endword_offset = -1;
     m_accepted_whole = false;
@@ -123,6 +125,24 @@ bool suggestion_manager::can_suggest(const line_state& line)
 }
 
 //------------------------------------------------------------------------------
+bool suggestion_manager::can_update_matches()
+{
+    const bool diff = (m_started.length() != g_rl_buffer->get_length() ||
+                       strncmp(m_started.c_str(), g_rl_buffer->get_buffer(), m_started.length()) != 0);
+    return diff;
+}
+
+//------------------------------------------------------------------------------
+void suggestion_manager::set_started(const char* line)
+{
+    m_started = line;
+
+#ifdef DEBUG_SUGGEST
+    printf("\x1b[s\x1b[2Hstarted:  \"%s\"\x1b[K\x1b[u", m_started.c_str());
+#endif
+}
+
+//------------------------------------------------------------------------------
 void suggestion_manager::set(const char* line, unsigned int endword_offset, const char* suggestion, unsigned int offset)
 {
 #ifdef DEBUG_SUGGEST
@@ -145,6 +165,7 @@ void suggestion_manager::set(const char* line, unsigned int endword_offset, cons
 malformed:
         clear();
         m_line = line;
+        m_started = line;
         if (g_rl_buffer)
             g_rl_buffer->draw();
         return;
@@ -177,9 +198,10 @@ malformed:
     m_endword_offset = endword_offset;
 
     m_line = line;
+    m_started = line;
 
 #ifdef DEBUG_SUGGEST
-    printf("\x1b[s\x1b[2Hline:  \"%s\"\x1b[K\x1b[u", m_line.c_str());
+    printf("\x1b[s\x1b[2Hline:     \"%s\"\x1b[K\x1b[u", m_line.c_str());
 #endif
 
     if (g_rl_buffer)
@@ -237,6 +259,7 @@ bool suggestion_manager::insert(suggestion_action action)
         }
         clear();
         m_line.concat(g_rl_buffer->get_buffer(), g_rl_buffer->get_length());
+        m_started.concat(g_rl_buffer->get_buffer(), g_rl_buffer->get_length());
         m_accepted_whole = true;
         return !orig_iter.more();
     }
@@ -356,6 +379,7 @@ bool suggestion_manager::insert(suggestion_action action)
 
     m_line.clear();
     m_line.concat(g_rl_buffer->get_buffer(), g_rl_buffer->get_length());
+    m_started.concat(g_rl_buffer->get_buffer(), g_rl_buffer->get_length());
 
     return true;
 }

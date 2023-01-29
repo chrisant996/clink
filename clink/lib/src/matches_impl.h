@@ -111,6 +111,8 @@ private:
     void                    set_matches_are_files(bool files);
     void                    set_no_sort();
     void                    set_volatile();
+    void                    set_input_line(const char* text);
+    bool                    is_from_current_input_line();
     bool                    add_match(const match_desc& desc, bool already_normalised=false);
     unsigned int            get_info_count() const;
     const match_info*       get_infos() const;
@@ -145,6 +147,7 @@ private:
     int                     m_word_break_position = -1;
     shadow_bool             m_filename_completion_desired;
     shadow_bool             m_filename_display_desired;
+    str_moveable            m_input_line;   // The line the generators were given.
 
     match_lookup_unordered_set* m_dedup = nullptr;
 };

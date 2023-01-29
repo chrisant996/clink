@@ -42,6 +42,7 @@ extern "C" {
 extern int force_reload_scripts();
 extern void host_signal_delayed_init();
 extern void host_mark_deprecated_argmatcher(const char* name);
+extern void set_suggestion_started(const char* line);
 extern void set_suggestion(const char* line, unsigned int endword_offset, const char* suggestion, unsigned int offset);
 extern void set_refilter_after_resize(bool refilter);
 extern const char* get_popup_colors();
@@ -1137,11 +1138,23 @@ static int history_suggester(lua_State* state)
 
 //------------------------------------------------------------------------------
 // UNDOCUMENTED; internal use only.
+static int set_suggestion_started(lua_State* state)
+{
+    const char* line = checkstring(state, 1);
+    if (!line)
+        return 0;
+
+    set_suggestion_started(line);
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+// UNDOCUMENTED; internal use only.
 static int set_suggestion_result(lua_State* state)
 {
     bool isnum;
-    const char* line = checkstring(state, -4);
-    int endword_offset = checkinteger(state, -3, &isnum) - 1;
+    const char* line = checkstring(state, 1);
+    int endword_offset = checkinteger(state, 2, &isnum) - 1;
     if (!line || !isnum)
         return 0;
 
@@ -1149,8 +1162,8 @@ static int set_suggestion_result(lua_State* state)
     if (endword_offset < 0 || endword_offset > line_len)
         return 0;
 
-    const char* suggestion = optstring(state, -2, nullptr);
-    int offset = optinteger(state, -1, 0, &isnum) - 1;
+    const char* suggestion = optstring(state, 3, nullptr);
+    int offset = optinteger(state, 4, 0, &isnum) - 1;
     if (!isnum || offset < 0 || offset > line_len)
         offset = line_len;
 
@@ -1673,6 +1686,7 @@ void clink_lua_initialise(lua_state& lua, bool lua_interpreter)
         { 0,    "istransientpromptfilter", &is_transient_prompt_filter },
         { 0,    "get_refilter_redisplay_count", &get_refilter_redisplay_count },
         { 0,    "history_suggester",      &history_suggester },
+        { 0,    "set_suggestion_started", &set_suggestion_started },
         { 0,    "set_suggestion_result",  &set_suggestion_result },
         { 0,    "kick_idle",              &kick_idle },
         { 0,    "_recognize_command",     &recognize_command },
