@@ -1359,8 +1359,11 @@ void selectcomplete_impl::update_display()
         static char s_chGen = '0';
 #endif
 
-        const char* description_color = "\x1b[m";
-        int description_color_len = 3;
+        const char* normal_color = "\x1b[m";
+        int normal_color_len = 3;
+
+        const char* description_color = normal_color;
+        int description_color_len = normal_color_len;
         if (_rl_description_color)
         {
             description_color = _rl_description_color;
@@ -1547,6 +1550,8 @@ void selectcomplete_impl::update_display()
                                 printed_len += ellipsify_to_callback(desc, col_max - printed_len, false/*expand_ctrl*/, append_tmpbuf_string);
                                 if (parens)
                                     append_tmpbuf_string(")", 1);
+                                if (!selected || !right_justify)
+                                    append_tmpbuf_string(normal_color, normal_color_len);
                             }
                         }
 

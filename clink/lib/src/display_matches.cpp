@@ -662,6 +662,9 @@ void append_display(const char* to_print, int selected, const char* color)
     }
 
     append_tmpbuf_string(to_print, -1);
+
+    if (!selected)
+        append_default_color();
 }
 
 //------------------------------------------------------------------------------
@@ -987,6 +990,7 @@ unsigned int append_display_with_presuf(const char* match, const char* display, 
     const int skip_cells = suf ? cell_count(display) - cell_count(match) : 0;
 
     int visible_len = 0;
+    bool reset_default_color = false;
     str<> leading;
 
     ecma48_state state;
@@ -1038,7 +1042,11 @@ unsigned int append_display_with_presuf(const char* match, const char* display, 
         {
             append_tmpbuf_string(code.get_pointer(), code.get_length());
             leading.concat(code.get_pointer(), code.get_length());
+            reset_default_color = true;
         }
+
+    if (reset_default_color)
+        append_tmpbuf_string(_normal_color, _normal_color_len);
 
     return visible_len;
 }
