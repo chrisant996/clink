@@ -2,6 +2,10 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.4.15
+
+- Fixed [#414](https://github.com/chrisant996/clink/issues/414); argument color doesn't reset for values in multi-column layout when `colored-stats` is `off`.
+
 #### v1.4.14
 
 - Fixed autosuggest to update again if matches are marked as volatile and the input line changed while matches were generated in the background (related to [clink-completions#164](https://github.com/vladimir-kotikov/clink-completions/issues/164)).
