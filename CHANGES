@@ -4,6 +4,7 @@
 
 #### v1.4.15
 
+- Fixed the `clink-select-complete` command to preserve escape codes for italics and underline in the `color.arginfo` and `color.description` settings, if present, when a match is selected.
 - Fixed [#414](https://github.com/chrisant996/clink/issues/414); argument color doesn't reset for values in multi-column layout when `colored-stats` is `off`.
 
 #### v1.4.14
