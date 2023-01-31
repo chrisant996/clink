@@ -655,6 +655,12 @@ void append_display(const char* to_print, int selected, const char* color)
         append_selection_color();
         if (color)
         {
+            while (*to_print == ' ')
+            {
+                append_tmpbuf_string(to_print, 1);
+                to_print++;
+            }
+
             str<> tmp;
             ecma48_processor(color, &tmp, nullptr, ecma48_processor_flags::colorless);
             append_tmpbuf_string(tmp.c_str(), tmp.length());
@@ -664,7 +670,15 @@ void append_display(const char* to_print, int selected, const char* color)
     {
         append_default_color();
         if (color)
+        {
+            while (*to_print == ' ')
+            {
+                append_tmpbuf_string(to_print, 1);
+                to_print++;
+            }
+
             append_tmpbuf_string(color, -1);
+        }
     }
 
     append_tmpbuf_string(to_print, -1);
