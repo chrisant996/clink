@@ -137,7 +137,7 @@ setting_str g_history_timeformat(
     "This specifies a format string to override the default string (\"%F %T  \")\n"
     "for showing timestamps for history items.  Timestamps are shown when the\n"
     "'history.show_time' setting is enabled.  This can be overridden by flags in\n"
-    "the 'history' command."
+    "the 'history' command.\n"
     "\n"
     "The format string may contain regular characters and special format\n"
     "specifiers.  Format specifiers begin with a percent sign (%), and are expanded\n"
