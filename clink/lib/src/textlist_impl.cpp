@@ -1412,7 +1412,6 @@ void textlist_impl::update_display()
                         assert(!m_horz_scrolling); // Columns are incompatible with m_horz_offset.
 
                         const str_base& desc_color = (i == m_index) ? m_color.selectdesc : m_color.desc;
-                        m_printer->print(desc_color.c_str(), desc_color.length());
 
                         if (m_columns.get_any_tabs())
                         {
@@ -1426,8 +1425,17 @@ void textlist_impl::update_display()
                             tmp.clear();
                             tmp.concat("  ", 2);
                             tmp.concat(m_columns.get_col_text(i, col));
-                            const int col_len = limit_cells(tmp.c_str(), spaces, cell_len);
-                            m_printer->print(tmp.c_str(), col_len); // column text
+                            int col_len = limit_cells(tmp.c_str(), spaces, cell_len);
+                            const char* col_text = tmp.c_str();
+
+                            if (!col && col_len >= 2 && !desc_color.empty())
+                            {
+                                m_printer->print(col_text, 2);
+                                m_printer->print(desc_color.c_str(), desc_color.length());
+                                col_text += 2;
+                                col_len -= 2;
+                            }
+                            m_printer->print(col_text, col_len); // column text
                             spaces -= cell_len;
 
                             int pad = min<int>(spaces, m_columns.get_col_width(col) - (cell_len - 2));
@@ -1570,7 +1578,7 @@ void textlist_impl::init_colors(const popup_config* config)
     if (config && config->colors.selectdesc.length())
         m_color.selectdesc.format("\x1b[0;%sm", config->colors.selectdesc.c_str());
     else
-        m_color.selectdesc.clear();
+        ecma48_processor(m_color.desc.c_str(), &m_color.selectdesc, nullptr, ecma48_processor_flags::colorless);
 
     // Not supported yet; the mark is only used internally.
     m_color.selectmark.clear();

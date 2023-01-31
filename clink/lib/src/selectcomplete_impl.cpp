@@ -1370,6 +1370,9 @@ void selectcomplete_impl::update_display()
             description_color_len = strlen(description_color);
         }
 
+        str<16> desc_select_color;
+        ecma48_processor(description_color, &desc_select_color, nullptr, ecma48_processor_flags::colorless);
+
         // Display matches.
         int up = 0;
         const int count = m_matches.get_match_count();
@@ -1496,7 +1499,7 @@ void selectcomplete_impl::update_display()
                                 }
                                 if (selected)
                                 {
-                                    ecma48_processor(temp, &tmp, nullptr, ecma48_processor_flags::plaintext);
+                                    ecma48_processor(temp, &tmp, nullptr, ecma48_processor_flags::colorless);
                                     temp = tmp.c_str();
                                 }
 
@@ -1545,6 +1548,8 @@ void selectcomplete_impl::update_display()
                                 printed_len = pad_to + parens;
                                 if (!selected || !right_justify)
                                     append_tmpbuf_string(description_color, description_color_len);
+                                else
+                                    append_tmpbuf_string(desc_select_color.c_str(), desc_select_color.length());
                                 if (parens)
                                     append_tmpbuf_string("(", 1);
                                 printed_len += ellipsify_to_callback(desc, col_max - printed_len, false/*expand_ctrl*/, append_tmpbuf_string);

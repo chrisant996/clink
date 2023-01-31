@@ -540,6 +540,7 @@ void ecma48_processor(const char* in, str_base* out, unsigned int* cell_count, e
     bool bracket = !!int(flags & ecma48_processor_flags::bracket);
     bool apply_title = !!int(flags & ecma48_processor_flags::apply_title);
     bool plaintext = !!int(flags & ecma48_processor_flags::plaintext);
+    bool colorless = !!int(flags & ecma48_processor_flags::colorless);
 
     ecma48_state state;
     ecma48_iter iter(in, state);
@@ -573,11 +574,47 @@ void ecma48_processor(const char* in, str_base* out, unsigned int* cell_count, e
             else
             {
 concat_verbatim:
-                if (out && !plaintext)
+                if (out)
                 {
-                    if (bracket) out->concat("\x01", 1);
-                    out->concat(code.get_pointer(), code.get_length());
-                    if (bracket) out->concat("\x02", 1);
+                    if (plaintext)
+                    {
+                    }
+                    else if (colorless && code.get_code() == ecma48_code::c1_csi)
+                    {
+                        ecma48_code::csi<32> csi;
+                        if (code.decode_csi(csi) && csi.final == 'm')
+                        {
+                            str<> tmp;
+                            for (int i = 0, n = csi.param_count; i < csi.param_count; ++i, --n)
+                            {
+                                switch (csi.params[i])
+                                {
+                                case 0:     tmp.concat(";23;24;29"); break;
+                                case 3:     tmp.concat(";3"); break;
+                                case 4:     tmp.concat(";4"); break;
+                                case 9:     tmp.concat(";9"); break;
+                                case 23:    tmp.concat(";23"); break;
+                                case 24:    tmp.concat(";24"); break;
+                                case 29:    tmp.concat(";29"); break;
+                                }
+                            }
+
+                            if (!tmp.empty())
+                            {
+                                if (bracket) out->concat("\x01", 1);
+                                out->concat("\x1b[");
+                                out->concat(tmp.c_str() + 1);   // Skip leading ";".
+                                out->concat("m");
+                                if (bracket) out->concat("\x02", 1);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (bracket) out->concat("\x01", 1);
+                        out->concat(code.get_pointer(), code.get_length());
+                        if (bracket) out->concat("\x02", 1);
+                    }
                 }
             }
         }

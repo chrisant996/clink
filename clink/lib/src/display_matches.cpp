@@ -653,6 +653,12 @@ void append_display(const char* to_print, int selected, const char* color)
     if (selected)
     {
         append_selection_color();
+        if (color)
+        {
+            str<> tmp;
+            ecma48_processor(color, &tmp, nullptr, ecma48_processor_flags::colorless);
+            append_tmpbuf_string(tmp.c_str(), tmp.length());
+        }
     }
     else
     {

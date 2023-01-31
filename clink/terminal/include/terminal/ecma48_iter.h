@@ -17,7 +17,7 @@ inline int clink_wcwidth(char32_t c)
 }
 
 //------------------------------------------------------------------------------
-enum class ecma48_processor_flags { none = 0, bracket = 1<<0, apply_title = 1<<1, plaintext = 1<<2 };
+enum class ecma48_processor_flags { none = 0, bracket = 1<<0, apply_title = 1<<1, plaintext = 1<<2, colorless = 1<<3 };
 DEFINE_ENUM_FLAG_OPERATORS(ecma48_processor_flags);
 void ecma48_processor(const char* in, str_base* out, unsigned int* cell_count, ecma48_processor_flags flags=ecma48_processor_flags::none);
 extern "C" unsigned int cell_count(const char*);
