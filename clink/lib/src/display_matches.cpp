@@ -648,6 +648,24 @@ static int fnappend(const char *to_print, int prefix_bytes, int condense, const 
 }
 
 //------------------------------------------------------------------------------
+static void handle_leading_display_space(const char*& to_print, int selected)
+{
+    if (*to_print == ' ')
+    {
+        if (selected)
+            append_tmpbuf_string("\x1b[23;24;29m", 11);
+        else
+            append_tmpbuf_string(_normal_color, _normal_color_len);
+
+        while (*to_print == ' ')
+        {
+            append_tmpbuf_string(to_print, 1);
+            to_print++;
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
 void append_display(const char* to_print, int selected, const char* color)
 {
     if (selected)
@@ -655,14 +673,9 @@ void append_display(const char* to_print, int selected, const char* color)
         append_selection_color();
         if (color)
         {
-            while (*to_print == ' ')
-            {
-                append_tmpbuf_string(to_print, 1);
-                to_print++;
-            }
-
-            str<> tmp;
+            str<16> tmp;
             ecma48_processor(color, &tmp, nullptr, ecma48_processor_flags::colorless);
+            handle_leading_display_space(to_print, selected);
             append_tmpbuf_string(tmp.c_str(), tmp.length());
         }
     }
@@ -671,19 +684,16 @@ void append_display(const char* to_print, int selected, const char* color)
         append_default_color();
         if (color)
         {
-            while (*to_print == ' ')
-            {
-                append_tmpbuf_string(to_print, 1);
-                to_print++;
-            }
-
+            handle_leading_display_space(to_print, selected);
             append_tmpbuf_string(color, -1);
         }
     }
 
     append_tmpbuf_string(to_print, -1);
 
-    if (!selected)
+    if (selected)
+        append_tmpbuf_string("\x1b[23;24;29m", 11);
+    else
         append_default_color();
 }
 
