@@ -101,12 +101,10 @@ void task_manager::on_idle(lua_state& lua)
         }
         else
         {
-            auto next(iter);
-            ++next;
             iter->second->run_callback(lua);
+            iter->second->detach();
             m_unref_callbacks.push_back(iter->second->take_callback());
-            m_map.erase(iter);
-            iter = next;
+            iter = m_map.erase(iter);
         }
     }
 
@@ -130,13 +128,10 @@ void task_manager::end_line()
         }
         else
         {
-            auto next(iter);
-            ++next;
             iter->second->detach();
             m_unref_callbacks.push_back(iter->second->take_callback());
             unref = true;
-            m_map.erase(iter);
-            iter = next;
+            iter = m_map.erase(iter);
         }
     }
 
