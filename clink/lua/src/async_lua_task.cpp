@@ -104,6 +104,7 @@ void task_manager::on_idle(lua_state& lua)
             auto next(iter);
             ++next;
             iter->second->run_callback(lua);
+            iter->second->detach();
             m_unref_callbacks.push_back(iter->second->take_callback());
             m_map.erase(iter);
             iter = next;
