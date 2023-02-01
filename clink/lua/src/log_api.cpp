@@ -38,6 +38,21 @@ int log_info(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  log.getfile
+/// -ver:   1.4.15
+/// -ret:   string
+/// Returns the file name of the current session's log file.
+int get_file(lua_State* state)
+{
+    const char* name = file_logger::get_path();
+    if (name)
+        lua_pushstring(state, name);
+    else
+        lua_pushnil(state);
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 void log_lua_initialise(lua_state& lua)
 {
     struct {
@@ -45,6 +60,7 @@ void log_lua_initialise(lua_state& lua)
         int         (*method)(lua_State*);
     } methods[] = {
         { "info",        &log_info },
+        { "getfile",     &get_file },
     };
 
     lua_State* state = lua.get_state();
