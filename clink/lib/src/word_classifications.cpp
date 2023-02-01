@@ -141,7 +141,7 @@ bool word_classifications::equals(const word_classifications& other) const
 
     if (m_face_definitions.size() != other.m_face_definitions.size())
         return false;
-    if (strcmp(m_faces, other.m_faces) != 0)
+    if (strncmp(m_faces, other.m_faces, m_length) != 0)
         return false;
 
     for (size_t ii = m_face_definitions.size(); ii--;)
