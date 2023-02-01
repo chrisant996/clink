@@ -4,6 +4,7 @@
 
 #### v1.4.15
 
+- Added `log.getfile()` to get the current log file path.
 - Fixed match display to better accommodate escape codes for italics and underline, if present and supported by the terminal.
 - Fixed [#414](https://github.com/chrisant996/clink/issues/414); argument color doesn't reset for values in multi-column layout when `colored-stats` is `off`.
 
