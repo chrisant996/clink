@@ -7,6 +7,10 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
+- `clink.ondisplaymatches()` mishandles the `display` field.  Because I made poor decisions way back when, and the `display` field is used in two different ways.  The two ways collide during an `ondisplaymatches` event.
+  - It's easy enough for an `ondisplaymatches` callback function to append the `match` and `display` fields together.  But it's messy and requires manual color handling, and manually separating any spaces that prefix the `display` field.
+  - There really needed to have been a separate `arginfo` field, so that `match` and `arginfo` could get concatenated if there's no `display` field.
+  - Not sure if there's a way to fix it, even.
 - Hidden file inclusion is a mess:
   - Config var `_rl_match_hidden_files` should only affect the final completion matches list.
   - In v0.4.9 `_rl_match_hidden_files` affected `clink.find_dirs()` which is too low-level, and breaks `git.lua` and any other scripts looking for hidden git directories or etc.
