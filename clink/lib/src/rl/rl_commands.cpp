@@ -2316,6 +2316,9 @@ int clink_diagnostics(int count, int invoking_key)
         {
             print_heading("problematic codes in prompt");
             list_problem_codes(problems);
+            puts("    These characters in the prompt string can cause problems.  Clink will try\n"
+                 "    to compensate as much as it can, but for best results you may need to fix\n"
+                 "    the prompt string by removing the characters.");
         }
     }
 
