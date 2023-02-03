@@ -1,0 +1,12 @@
+diff --git a/TODO.md b/TODO.md
+index f52bc96e..5e0862b1 100644
+--- a/TODO.md
++++ b/TODO.md
+@@ -7,7 +7,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
+ ## High Priority
+ 
+ ## Normal Priority
+-- Need a way to specify priority for event callbacks.  E.g. `cwdhistory`'s `onbeginedit` needs to run _after_ `history_labels`'s `onbeginedit`.
+ - `clink.ondisplaymatches()` mishandles the `display` field.  Because I made poor decisions way back when, and the `display` field is used in two different ways.  The two ways collide during an `ondisplaymatches` event.
+   - It's easy enough for an `ondisplaymatches` callback function to append the `match` and `display` fields together.  But it's messy and requires manual color handling, and manually separating any spaces that prefix the `display` field.
+   - There really needed to have been a separate `arginfo` field, so that `match` and `arginfo` could get concatenated if there's no `display` field.
