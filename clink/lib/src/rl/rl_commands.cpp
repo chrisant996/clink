@@ -13,6 +13,7 @@
 #include "history_db.h"
 #include "ellipsify.h"
 #include "host_callbacks.h"
+#include "display_readline.h"
 
 #include "rl_suggestions.h"
 
@@ -2014,7 +2015,7 @@ struct alert_char
 //------------------------------------------------------------------------------
 static void list_ambiguous_codepoints(const char* tag, const std::vector<alert_char>& chars)
 {
-    static const char red[] = "\x1b[1;31;40m";
+    static const char red[] = "\x1b[1;91;40m";
     static const char norm[] = "\x1b[m";
 
     str<> s;
@@ -2051,6 +2052,71 @@ static void list_ambiguous_codepoints(const char* tag, const std::vector<alert_c
 
         tmp.trim();
 
+        LOG("%s", tmp.c_str());
+    }
+}
+
+//------------------------------------------------------------------------------
+static void list_problem_codes(const std::vector<prompt_problem_details>& problems)
+{
+    static const char err[] = "\x1b[1;91;40m";
+    static const char wrn[] = "\x1b[1;93;40m";
+    static const char norm[] = "\x1b[m";
+
+    str<> s;
+    str<> tmp;
+
+    for (auto const& problem : problems)
+    {
+        // Print formatted string.
+
+        const char* color = (problem.type & BIT_PROMPT_PROBLEM) ? err : wrn;
+
+        s.clear();
+        s << "        " << color;
+        if (problem.type & BIT_PROMPT_PROBLEM)
+            s << "Problem:";
+        else
+            s << "Warning:";
+        s << norm << " at offset ";
+
+        tmp.format("%d", problem.offset);
+        s << tmp.c_str() << ", text \"" << color;
+
+        {
+            str_iter iter(problem.code.c_str());
+            const char* seq = iter.get_pointer();
+            while (int c = iter.next())
+            {
+                if (c < 0x20)
+                {
+                    char ctrl[2] = { '^', char(c + 0x40) };
+                    s.concat(ctrl, 2);
+                }
+                else
+                {
+                    s.concat(seq, int(iter.get_pointer() - seq));
+                }
+                seq = iter.get_pointer();
+            }
+        }
+
+        s << norm << "\"\n";
+        g_printer->print(s.c_str(), s.length());
+
+        // Log plain text string.
+
+        {
+            ecma48_state state;
+            ecma48_iter iter(s.c_str(), state);
+            tmp.clear();
+
+            while (const ecma48_code& code = iter.next())
+                if (code.get_type() == ecma48_code::type_chars)
+                    tmp.concat(code.get_pointer(), code.get_length());
+        }
+
+        tmp.trim();
         LOG("%s", tmp.c_str());
     }
 }
@@ -2191,6 +2257,9 @@ int clink_diagnostics(int count, int invoking_key)
 
     host_call_lua_rl_global_function("clink._diagnostics");
 
+    extern void task_manager_diagnostics();
+    task_manager_diagnostics();
+
     // Check for known potential ambiguous character width issues.
 
     {
@@ -2237,8 +2306,18 @@ int clink_diagnostics(int count, int invoking_key)
         }
     }
 
-    extern void task_manager_diagnostics();
-    task_manager_diagnostics();
+    // Check for problem escape codes and characters in prompt string.
+
+    {
+        std::vector<prompt_problem_details> problems;
+        prompt_contains_problem_codes(rl_display_prompt, &problems);
+
+        if (!problems.empty())
+        {
+            print_heading("problematic codes in prompt");
+            list_problem_codes(problems);
+        }
+    }
 
     if (!rl_explicit_arg)
         g_printer->print("\n(Use a numeric argument for additional diagnostics; e.g. press Alt+1 first.)\n");

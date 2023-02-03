@@ -135,6 +135,108 @@ static bool get_console_screen_buffer_info(CONSOLE_SCREEN_BUFFER_INFO* info)
     return !!GetConsoleScreenBufferInfo(h, info);
 }
 
+//------------------------------------------------------------------------------
+int prompt_contains_problem_codes(const char* prompt, std::vector<prompt_problem_details>* out)
+{
+    const char* const lf = strrchr(prompt, '\n');
+    const char* const last_line = lf ? lf + 1 : prompt;
+
+    int ret = 0;
+    ecma48_state state;
+    ecma48_iter iter(prompt, state);
+    const char* begin = prompt;
+    while (const ecma48_code& code = iter.next())
+    {
+        if (code.get_type() == ecma48_code::type_c1 &&
+            code.get_code() == ecma48_code::c1_csi)
+        {
+            ecma48_code::csi<32> csi;
+            if (code.decode_csi(csi))
+            {
+                int problem = 0;
+                switch (csi.final)
+                {
+                case 'A':               // CUU  Cursor Up
+                case 'B':               // CUD  Cursor Down
+                case 'C':               // CUF  Cursor Forward
+                case 'D':               // CUB  Cursor Back
+                case 'E':               // CNL  Cursor Next Line
+                case 'F':               // CPL  Cursor Previous Line
+                case 'G':               // CHA  Cursor Horizontal Absolute
+                case 'H':               // CUP  Cursor Position
+                case 'd':               // VPA  Vertical Line Position Absolute
+                case 'f':               // HVP  Horizontal Vertical Position
+                case 's':               // SCP  Save Cursor Position
+                case 'u':               // RCP  Restore Cursor Position
+                    problem = BIT_PROMPT_MAYBE_PROBLEM;
+                    break;
+                case 'S':               // SU   Scroll Up
+                case 'T':               // SD   Scroll Down
+                    problem = BIT_PROMPT_PROBLEM;
+                    break;
+                case 'J':               // ED   Erase In Display
+                case 'K':               // EL   Erase In Line
+                case 'L':               // IL   Insert Line
+                case 'M':               // DL   Delete Line
+                case 'P':               // DCH  Delete Character
+                case 'X':               // ECH  Erase Character
+                    if (begin >= last_line)
+                        problem = BIT_PROMPT_PROBLEM;
+                    else
+                        problem = BIT_PROMPT_MAYBE_PROBLEM;
+                    break;
+                }
+
+                if (problem)
+                {
+                    ret |= problem;
+                    if (!out)
+                        goto done;
+
+                    prompt_problem_details details;
+                    details.type = problem;
+                    details.code.concat(code.get_pointer(), code.get_length());
+                    details.offset = int(begin - prompt);
+                    out->emplace_back(std::move(details));
+                }
+            }
+        }
+        else if (code.get_type() == ecma48_code::type_c0)
+        {
+            if (begin >= last_line)
+            {
+                int problem = 0;
+                switch (code.get_code())
+                {
+                case '\x08':    // BS   Backspace
+                case '\x09':    // HT   Tab
+                case '\x0c':    // FF   Form Feed
+                    problem = BIT_PROMPT_PROBLEM;
+                    break;
+                }
+
+                if (problem)
+                {
+                    ret |= problem;
+                    if (!out)
+                        goto done;
+
+                    prompt_problem_details details;
+                    details.type = problem;
+                    details.code.concat(code.get_pointer(), code.get_length());
+                    details.offset = int(begin - prompt);
+                    out->emplace_back(std::move(details));
+                }
+            }
+        }
+
+        begin = iter.get_pointer();
+    }
+
+done:
+    return ret;
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -1506,6 +1608,9 @@ void display_manager::display()
 
         if (is_message && _rl_display_message_color)
             rl_fwrite_function(_rl_out_stream, _rl_display_message_color, strlen(_rl_display_message_color));
+
+        if (prompt_contains_problem_codes(prompt) & BIT_PROMPT_PROBLEM)
+            m_curr.clear();
 
         rl_fwrite_function(_rl_out_stream, prompt, strlen(prompt));
 
