@@ -898,7 +898,8 @@ static int getset_insert_mode(lua_State* state)
 /// modified (i.e. has an undo list).
 ///
 /// This enables prompt filters to show a "modmark" of their own, as an
-/// alternative to the modmark shown when the <code>mark-modified-lines</code>
+/// alternative to the modmark shown when the
+/// <code><a href="#configmarkmodifiedlines">mark-modified-lines</a></code>
 /// Readline config setting is enabled.
 ///
 /// The following sample illustrates a prompt filter that shows a "modified

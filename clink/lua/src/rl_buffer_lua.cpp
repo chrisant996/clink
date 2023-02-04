@@ -286,7 +286,8 @@ int rl_buffer_lua::set_argument(lua_State* state)
 //------------------------------------------------------------------------------
 /// -name:  rl_buffer:ding
 /// -ver:   1.1.20
-/// Dings the bell.  If the <code>bell-style</code> Readline variable is
+/// Dings the bell.  If the
+/// <code><a href="#configbellstyle">bell-style</a></code> Readline variable is
 /// <code>visible</code> then it flashes the cursor instead.
 int rl_buffer_lua::ding(lua_State* state)
 {

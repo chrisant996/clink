@@ -956,8 +956,9 @@ static int get_host(lua_State* state)
 /// -name:  os.geterrorlevel
 /// -ver:   1.2.14
 /// -ret:   integer
-/// Returns the last command's exit code, if the <code>cmd.get_errorlevel</code>
-/// setting is enabled (it is disabled by default).  Otherwise it returns 0.
+/// Returns the last command's exit code, if the
+/// <code><a href="#cmd_get_errorlevel">cmd.get_errorlevel</a></code> setting is
+/// enabled.  Otherwise it returns 0.
 static int get_errorlevel(lua_State* state)
 {
     lua_pushinteger(state, os::get_errorlevel());
