@@ -807,9 +807,10 @@ static int get_session(lua_State* state)
 /// -ver:   1.1.48
 /// -ret:   string
 /// Returns a string indicating who Clink thinks will currently handle ANSI
-/// escape codes.  This can change based on the <code>terminal.emulation</code>
-/// setting.  This always returns <code>"unknown"</code> until the first edit
-/// prompt (see <a href="#clink.onbeginedit">clink.onbeginedit()</a>).
+/// escape codes.  This can change based on the
+/// <code><a href="#terminal_emulation">terminal.emulation</a></code> setting.
+/// This always returns <code>"unknown"</code> until the first edit prompt
+/// (see <a href="#clink.onbeginedit">clink.onbeginedit()</a>).
 ///
 /// This can be useful in choosing what kind of ANSI escape codes to use, but it
 /// is a best guess and is not necessarily 100% reliable.
@@ -858,7 +859,9 @@ static int get_ansi_host(lua_State* state)
 /// -arg:   [mode:integer]
 /// -ret:   integer
 /// This overrides how Clink translates slashes in completion matches, which is
-/// normally determined by the <code>match.translate_slashes</code> setting.
+/// normally determined by the
+/// <code><a href="#match_translate_slashes">match.translate_slashes</a></code>
+/// setting.
 ///
 /// This is reset every time match generation is invoked, so use a generator to
 /// set this.
@@ -1345,9 +1348,9 @@ static int async_path_type(lua_State* state)
 ///
 /// <table>
 /// <tr><th>Code</th><th>Classification</th><th>Clink Color Setting</th></tr>
-/// <tr><td><code>"x"</code></td><td>Executable; used for the first word when it is not a command or doskey alias, but is an executable name that exists.</td><td><code>color.executable</code></td></tr>
-/// <tr><td><code>"u"</code></td><td>Unrecognized; used for the first word when it is not a command, doskey alias, or recognized executable name.</td><td><code>color.unrecognized</code></td></tr>
-/// <tr><td><code>"o"</code></td><td>Other; used for file names and words that don't fit any of the other classifications.</td><td><code>color.input</code></td></tr>
+/// <tr><td><code>"x"</code></td><td>Executable; used for the first word when it is not a command or doskey alias, but is an executable name that exists.</td><td><code><a href="#color_executable">color.executable</a></code></td></tr>
+/// <tr><td><code>"u"</code></td><td>Unrecognized; used for the first word when it is not a command, doskey alias, or recognized executable name.</td><td><code><a href="#color_unrecognized">color.unrecognized</a></code></td></tr>
+/// <tr><td><code>"o"</code></td><td>Other; used for file names and words that don't fit any of the other classifications.</td><td><code><a href="#color_input">color.input</a></code></td></tr>
 /// </table>
 ///
 /// The possible return values for <span class="arg">ready</span> are:

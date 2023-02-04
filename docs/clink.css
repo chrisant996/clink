@@ -11,6 +11,18 @@ body {
     margin: 0 auto;
 }
 
+code a {
+    text-decoration: none;
+}
+
+code a:hover {
+    text-decoration: underline;
+}
+
+a code:hover {
+    text-decoration: underline;
+}
+
 .wlink {
     opacity: 0%;
     width: 100px;

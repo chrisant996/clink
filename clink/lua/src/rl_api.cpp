@@ -1084,8 +1084,8 @@ static int get_history_items(lua_State* state)
 /// for a keyboard macro.
 ///
 /// The <span class="arg">macro</span> string should include quotes, just like
-/// in <code>rl.setbinding()</code>.  If quotes are not present, they are added
-/// automatically.
+/// in <a href="#rl.setbinding">rl.setbinding()</a>.  If quotes are not present,
+/// they are added automatically.
 /// -show:  rl.describemacro([["luafunc:mycommand"]], "Does whatever mycommand does")
 /// -show:  rl.describemacro([["\e[Hrem "]], "Insert 'rem ' at the beginning of the line")
 /// -show:  rl.setbinding([["\C-o"]], [["luafunc:mycommand"]])

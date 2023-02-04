@@ -338,11 +338,12 @@ end
 --- <span class="arg">func</span> function returned.  The API returns one value;
 --- if multiple return values are needed, return them in a table.
 ---
---- If the <code>prompt.async</code> setting is disabled, then the coroutine
---- runs to completion immediately before returning.  Otherwise, the coroutine
---- runs during idle while editing the input line.  The
---- <span class="arg">func</span> function receives one argument: true if it's
---- running in the background, or false if it's running immediately.
+--- If the <code><a href="#prompt_async">prompt.async</a></code> setting is
+--- disabled, then the coroutine runs to completion immediately before
+--- returning.  Otherwise, the coroutine runs during idle while editing the
+--- input line.  The <span class="arg">func</span> function receives one
+--- argument: true if it's running in the background, or false if it's running
+--- immediately.
 ---
 --- See <a href="#asyncpromptfiltering">Asynchronous Prompt Filtering</a> for
 --- more information.

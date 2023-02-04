@@ -52,15 +52,15 @@ lua_word_classifications::lua_word_classifications(word_classifications& classif
 ///
 /// <table>
 /// <tr><th>Code</th><th>Classification</th><th>Clink Color Setting</th></tr>
-/// <tr><td><code>"a"</code></td><td>Argument; used for words that match a list of preset argument matches.</td><td><code>color.arg</code> or <code>color.input</code></td></tr>
-/// <tr><td><code>"c"</code></td><td>Shell command; used for CMD command names.</td><td><code>color.cmd</code></td></tr>
-/// <tr><td><code>"d"</code></td><td>Doskey alias.</td><td><code>color.doskey</code></td></tr>
-/// <tr><td><code>"f"</code></td><td>Flag; used for flags that match a list of preset flag matches.</td><td><code>color.flag</code></td></tr>
-/// <tr><td><code>"x"</code></td><td>Executable; used for the first word when it is not a command or doskey alias, but is an executable name that exists.</td><td><code>color.executable</code></td></tr>
-/// <tr><td><code>"u"</code></td><td>Unrecognized; used for the first word when it is not a command, doskey alias, or recognized executable name.</td><td><code>color.unrecognized</code></td></tr>
-/// <tr><td><code>"o"</code></td><td>Other; used for file names and words that don't fit any of the other classifications.</td><td><code>color.input</code></td></tr>
-/// <tr><td><code>"n"</code></td><td>None; used for words that aren't recognized as part of the expected input syntax.</td><td><code>color.unexpected</code></td></tr>
-/// <tr><td><code>"m"</code></td><td>Prefix that can be combined with another code (for the first word) to indicate the command has an argmatcher (e.g. <code>"mc"</code> or <code>"md"</code>).</td><td><code>color.argmatcher</code> or the other code's color</td></tr>
+/// <tr><td><code>"a"</code></td><td>Argument; used for words that match a list of preset argument matches.</td><td><code><a href="#color_arg">color.arg</a></code> or <code><a href="#color_input">color.input</a></code></td></tr>
+/// <tr><td><code>"c"</code></td><td>Shell command; used for CMD command names.</td><td><code><a href="#color_cmd">color.cmd</a></code></td></tr>
+/// <tr><td><code>"d"</code></td><td>Doskey alias.</td><td><code><a href="#color_doskey">color.doskey</a></code></td></tr>
+/// <tr><td><code>"f"</code></td><td>Flag; used for flags that match a list of preset flag matches.</td><td><code><a href="#color_flag">color.flag</a></code></td></tr>
+/// <tr><td><code>"x"</code></td><td>Executable; used for the first word when it is not a command or doskey alias, but is an executable name that exists.</td><td><code><a href="#color_executable">color.executable</a></code></td></tr>
+/// <tr><td><code>"u"</code></td><td>Unrecognized; used for the first word when it is not a command, doskey alias, or recognized executable name.</td><td><code><a href="#color_unrecognized">color.unrecognized</a></code></td></tr>
+/// <tr><td><code>"o"</code></td><td>Other; used for file names and words that don't fit any of the other classifications.</td><td><code><a href="#color_input">color.input</a></code></td></tr>
+/// <tr><td><code>"n"</code></td><td>None; used for words that aren't recognized as part of the expected input syntax.</td><td><code><a href="#color_unexpected">color.unexpected</a></code></td></tr>
+/// <tr><td><code>"m"</code></td><td>Prefix that can be combined with another code (for the first word) to indicate the command has an argmatcher (e.g. <code>"mc"</code> or <code>"md"</code>).</td><td><code><a href="#color_argmatcher">color.argmatcher</a></code> or the other code's color</td></tr>
 /// </table>
 ///
 /// By default the classification is applied to the word even if the word has

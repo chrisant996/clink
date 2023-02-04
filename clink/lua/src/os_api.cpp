@@ -812,8 +812,8 @@ int touch(lua_State* state)
 /// <tr><td><code>"CMDCMDLINE"</code></td><td>If %CMDCMDLINE% is not set then
 ///     this returns the command line that started the CMD process.</td></tr>
 /// <tr><td><code>"ERRORLEVEL"</code></td><td>If %ERRORLEVEL% is not set and the
-///     <code>cmd.get_errorlevel</code> setting is enabled (it is off by
-///     default) this returns the most recent exit code, just like the
+///     <code><a href="#cmd_get_errorlevel">cmd.get_errorlevel</a></code>
+///     setting is enabled this returns the most recent exit code, just like the
 ///     <code>echo %ERRORLEVEL%</code> command displays.  Otherwise this returns
 ///     0.</td></tr>
 /// <tr><td><code>"HOME"</code></td><td>If %HOME% is not set then a return value
@@ -1352,7 +1352,8 @@ static int get_net_connection_name(lua_State *state)
 /// This works like <code>print()</code> but writes the output via the OS
 /// <code>OutputDebugString()</code> API.
 ///
-/// This function has no effect if the <code>lua.debug</code> Clink setting is off.
+/// This function has no effect if the
+/// <code><a href="#lua_debug">lua.debug</a></code> Clink setting is off.
 /// -show:  clink.debugprint("my variable = "..myvar)
 static int debug_print(lua_State *state)
 {
