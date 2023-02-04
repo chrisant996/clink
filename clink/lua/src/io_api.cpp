@@ -339,9 +339,9 @@ private:
 /// -arg:   command:string
 /// -arg:   [mode:string]
 /// -ret:   file, file
-/// Runs <code>command</code> and returns two file handles:  a file handle for
-/// reading output from the command, and a file handle for writing input to the
-/// command.
+/// Runs <span class="arg">command</span> and returns two file handles:  a file
+/// handle for reading output from the command, and a file handle for writing
+/// input to the command.
 ///
 /// <span class="arg">mode</span> can be "t" for text mode (the default if
 /// omitted) or "b" for binary mode.
@@ -663,9 +663,9 @@ static int io_sopen(lua_State* state)
 /// -arg:   file:file
 /// -ret:   integer
 /// This function truncates the <span class="arg">file</span> previously opened
-/// by <code>io.open</code> or <code>io.sopen</code>.  When used on a pipe or
-/// other file handle that doesn't refer to an actual file, the behavior is
-/// undefined.
+/// by <a href="#io.open">io.open()</a> or <a href="#io.sopen">io.sopen()</a>.
+/// When used on a pipe or other file handle that doesn't refer to an actual
+/// file, the behavior is undefined.
 ///
 /// If successful, the return value is the position at which the file was
 /// truncated.  If an error occurs, the return values are nil, an error message,

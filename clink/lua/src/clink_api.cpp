@@ -74,21 +74,22 @@ extern "C" int is_lua_file_loaded(lua_State* state, const char* filename);
 /// <strong>Note:</strong>  In Clink versions before v1.2.11 the
 /// <code>clink.print()</code> API exists (undocumented) but accepts exactly one
 /// string argument and is therefore not fully compatible with normal
-/// <code>print()</code> syntax.  If you use fewer or more than 1 argument or if
-/// the argument is not a string, then first checking the Clink version (e.g.
+/// <a href="https://www.lua.org/manual/5.2/manual.html#pdf-print">print()</a>
+/// syntax.  If you use fewer or more than 1 argument or if the argument is not
+/// a string, then first checking the Clink version (e.g.
 /// <a href="#clink.version_encoded">clink.version_encoded</a>) can avoid
 /// runtime errors.
 /// -show:  clink.print("\x1b[32mgreen\x1b[m \x1b[35mmagenta\x1b[m")
-/// -show:  -- Outputs <code>green</code> in green, a space, and <code>magenta</code> in magenta.
+/// -show:  -- Outputs "green" in green, a space, and "magenta" in magenta.
 /// -show:
 /// -show:  local a = "hello"
 /// -show:  local world = 73
 /// -show:  clink.print("a", a, "world", world)
-/// -show:  -- Outputs <code>a       hello   world   73</code>.
+/// -show:  -- Outputs "a       hello   world   73".
 /// -show:
 /// -show:  clink.print("hello", NONL)
 /// -show:  clink.print("world")
-/// -show:  -- Outputs <code>helloworld</code>.
+/// -show:  -- Outputs "helloworld".
 static int clink_print(lua_State* state)
 {
     str<> out;
@@ -786,7 +787,7 @@ static int get_popup_list_colors(lua_State* state)
 /// Returns the current Clink session id.
 ///
 /// This is needed when using
-/// <code><span class="hljs-built_in">io</span>.<span class="hljs-built_in">popen</span>()</code>
+/// <a href="https://www.lua.org/manual/5.2/manual.html#pdf-io.popen">io.popen()</a>
 /// (or similar functions) to invoke <code>clink history</code> or <code>clink
 /// info</code> while Clink is installed for autorun.  The popen API spawns a
 /// new CMD.exe, which gets a new Clink instance injected, so the history or

@@ -742,10 +742,11 @@ end
 --- This means on success the second return value from <code>io.popen()</code>
 --- in a coroutine may not be nil as callers might normally expect.
 ---
---- <strong>Note:</strong> if the <code>prompt.async</code> setting is disabled,
+--- <strong>Note:</strong> if the
+--- <code><a href="#prompt_async">prompt.async</a></code> setting is disabled,
 --- or while a <a href="#transientprompts">transient prompt filter</a> is
 --- executing, or if used outside of a coroutine, then this behaves like
---- <code><a href="https://www.lua.org/manual/5.2/manual.html#pdf-io.popen">io.popen()</a></code>
+--- <a href="https://www.lua.org/manual/5.2/manual.html#pdf-io.popen">io.popen()</a>
 --- instead.
 --- -show:  local file = io.popenyield("git status")
 --- -show:

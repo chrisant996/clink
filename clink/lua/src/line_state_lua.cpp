@@ -254,7 +254,8 @@ int line_state_lua::get_word_info(lua_State* state)
 /// substring from the line returned by
 /// <a href="#line_state:getline">line_state:getline()</a>.
 ///
-/// <strong>However:</strong>  During <code>generator:getwordbreakinfo()</code>
+/// <strong>However:</strong>  During
+/// <code><a href="#the-getwordbreakinfo-function">generator:getwordbreakinfo()</a></code>
 /// functions the returned word includes quotes, otherwise word break offsets
 /// could be garbled.
 int line_state_lua::get_word(lua_State* state)
@@ -285,7 +286,8 @@ int line_state_lua::get_word(lua_State* state)
 /// <a href="#line_state:getline">line_state:getline()</a>.
 /// -show:  line_state:getword(line_state:getwordcount()) == line_state:getendword()
 ///
-/// <strong>However:</strong>  During <code>generator:getwordbreakinfo()</code>
+/// <strong>However:</strong>  During
+/// <code><a href="#the-getwordbreakinfo-function">generator:getwordbreakinfo()</a></code>
 /// functions the returned word includes quotes, otherwise word break offsets
 /// could be garbled.
 int line_state_lua::get_end_word(lua_State* state)

@@ -622,9 +622,6 @@ static int get_last_command(lua_State* state)
 /// until any action that normally resets the matches (such as moving the cursor
 /// or editing the input line).
 ///
-/// May only be used within a
-/// <a href="#luakeybindings">luafunc: key binding</a>.
-///
 /// The syntax is the same as for
 /// <a href="#builder:addmatches()">builder:addmatches()</a> with one addition:
 /// You can add a <code>"nosort"</code> key to the
@@ -632,7 +629,7 @@ static int get_last_command(lua_State* state)
 ///
 /// <pre><code class="lua">local matches = {}<br/>matches["nosort"] = true<br/>rl.setmatches(matches)</code></pre>
 ///
-/// This function can be used by a
+/// This function may (only) be used by a
 /// <a href="#luakeybindings">luafunc: key binding</a> to provide matches based
 /// on some special criteria.  For example, a key binding could collect numbers
 /// from the current screen buffer (such as issue numbers, commit hashes, line
@@ -800,8 +797,9 @@ int get_key_bindings(lua_State* state)
 ///
 /// Note: the <span class="arg">promptline</span> and
 /// <span class="arg">inputline</span> fields may be skewed if any additional
-/// terminal output has occurred (for example if any <code>print()</code> calls
-/// have happened, or if <code>rl.getpromptinfo()</code> is used inside a
+/// terminal output has occurred (for example if any
+/// <a href="#https://www.lua.org/manual/5.2/manual.html#pdf-print">print()</a>
+/// calls have happened, or if <code>rl.getpromptinfo()</code> is used inside a
 /// <a href="#clink_onendedit">clink.onendedit()</a> event handler, or any other
 /// output that the Readline library wouldn't know about).
 ///
@@ -1079,10 +1077,12 @@ static int get_history_items(lua_State* state)
 /// -arg:   description:string
 /// This associates <span class="arg">description</span> with
 /// <span class="arg">macro</span>, to be displayed in the
-/// <code>clink-show-help</code> and <code>clink-what-is</code> commands.
+/// <code><a href="#rlcmd-clink-show-help">clink-show-help</a></code> and
+/// <code><a href="#rlcmd-clink-what-is">clink-what-is</a></code> commands.
 ///
-/// This may be used to add a description for a <code>luafunc:</code> macro, or
-/// for a keyboard macro.
+/// This may be used to add a description for a
+/// <a href="#luakeybindings">luafunc: key binding</a> macro, or for a keyboard
+/// macro.
 ///
 /// The <span class="arg">macro</span> string should include quotes, just like
 /// in <a href="#rl.setbinding">rl.setbinding()</a>.  If quotes are not present,

@@ -762,7 +762,8 @@ int make_file_globber(lua_State* state)
 ///
 /// The second argument is <span class="arg">atime</span> and is a time to set
 /// as the file's access time.  If omitted, the current time is used.  If
-/// present, the value must use the same format as <code>os.time()</code>.
+/// present, the value must use the same format as
+/// <code><a href="https://www.lua.org/manual/5.2/manual.html#pdf-os.time">os.time()</a></code>.
 ///
 /// The third argument is <span class="arg">mtime</span> and is a time to set as
 /// the file's modified time.  If omitted, the <span class="arg">atime</span>
@@ -1350,8 +1351,9 @@ static int get_net_connection_name(lua_State *state)
 /// -name:  os.debugprint
 /// -ver:   1.2.20
 /// -arg:   ...
-/// This works like <code>print()</code> but writes the output via the OS
-/// <code>OutputDebugString()</code> API.
+/// This works like
+/// <a href="https://www.lua.org/manual/5.2/manual.html#pdf-print">print()</a>
+/// but writes the output via the OS <code>OutputDebugString()</code> API.
 ///
 /// This function has no effect if the
 /// <code><a href="#lua_debug">lua.debug</a></code> Clink setting is off.

@@ -401,7 +401,7 @@ Name                         | Default [*](#alternatedefault) | Description
 <a name="lua_break_on_error"></a>`lua.break_on_error` | False | Breaks into Lua debugger on Lua errors.
 <a name="lua_break_on_traceback"></a>`lua.break_on_traceback` | False | Breaks into Lua debugger on `traceback()`.
 <a name="lua_debug"></a>`lua.debug` | False | Loads a simple embedded command line debugger when enabled. Breakpoints can be added by calling [pause()](#pause).
-<a name="lua_path"></a>`lua.path` | | Value to append to the `package.path` Lua variable. Used to search for Lua scripts specified in `require()` statements.
+<a name="lua_path"></a>`lua.path` | | Value to append to the [`package.path`](https://www.lua.org/manual/5.2/manual.html#pdf-package.path) Lua variable. Used to search for Lua scripts specified in `require()` statements.
 <a name="lua_reload_scripts"></a>`lua.reload_scripts` | False | When false, Lua scripts are loaded once and are only reloaded if forced (see [The Location of Lua Scripts](#lua-scripts-location) for details).  When true, Lua scripts are loaded each time the edit prompt is activated.
 <a name="lua_strict"></a>`lua.strict` | True | When enabled, argument errors cause Lua scripts to fail.  This may expose bugs in some older scripts, causing them to fail where they used to succeed. In that case you can try turning this off, but please alert the script owner about the issue so they can fix the script.
 <a name="lua_traceback_on_error"></a>`lua.traceback_on_error` | False | Prints stack trace on Lua errors.
@@ -2948,7 +2948,7 @@ Windows programs generally don't need to worry about terminal support.  But the 
 
 Clink's keyboard driver generally produces VT220 style key sequences, but it also includes many extensions from Xterm and other sources.  Use `clink echo` to find key sequences for specific inputs.
 
-Clink's terminal output driver is designed for use with Windows and its console subsystem.  Clink can optionally handle output itself instead, and emulate terminal output support when the `terminal.emulation` setting is `emulate`, or when `auto` and Clink is running on an older version of Windows that doesn't support ANSI escape codes.  In emulation mode, 8 bit and 24 bit color escape codes are mapped to the nearest 4 bit colors.
+Clink's terminal output driver is designed for use with Windows and its console subsystem.  Clink can optionally handle output itself instead, and emulate terminal output support when the [`terminal.emulation`](#terminal_emulation) setting is `emulate`, or when `auto` and Clink is running on an older version of Windows that doesn't support ANSI escape codes.  In emulation mode, 8 bit and 24 bit color escape codes are mapped to the nearest 4 bit colors.
 
 By default Clink sets the cursor style to a blinking horizontal partial-height block, or to a blink full-height solid block.  Some terminals support escape codes to select alternative cursor styles.  Clink provides environment variables where you may optionally provide escape codes to override the cursor style.  `%CLINK_TERM_VE%` selects the style for the normal cursor (insert mode), `%CLINK_TERM_VS%` selects the style for the enhanced cursor (overwrite mode).
 
