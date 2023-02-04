@@ -9,7 +9,7 @@
 
 class match_builder;
 struct lua_State;
-enum class match_type : unsigned char;
+enum class match_type : unsigned short;
 
 //------------------------------------------------------------------------------
 class match_builder_lua

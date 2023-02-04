@@ -21,24 +21,14 @@
 
 extern "C" {
 #include <lstate.h>
+extern int _rl_match_hidden_files;
 }
 
 #include <memory>
 
 //------------------------------------------------------------------------------
-static setting_bool g_glob_hidden(
-    "files.hidden",
-    "Include hidden files",
-    "Includes or excludes files with the 'hidden' attribute set when generating\n"
-    "file lists.",
-    true);
-
-static setting_bool g_glob_system(
-    "files.system",
-    "Include system files",
-    "Includes or excludes files with the 'system' attribute set when generating\n"
-    "file lists.",
-    false);
+extern setting_bool g_files_hidden;
+extern setting_bool g_files_system;
 
 //------------------------------------------------------------------------------
 extern int clink_is_signaled();
@@ -103,11 +93,18 @@ static int close_file(lua_State *state)
 
 
 //------------------------------------------------------------------------------
+struct glob_flags
+{
+    bool hidden = true;
+    bool system = false;
+};
+
+//------------------------------------------------------------------------------
 class globber_lua
     : public lua_bindable<globber_lua>
 {
 public:
-                        globber_lua(const char* pattern, int extrainfo, bool dirs_only, bool back_compat=false);
+                        globber_lua(const char* pattern, int extrainfo, const glob_flags& flags, bool dirs_only, bool back_compat=false);
     int                 next(lua_State* state);
     int                 close(lua_State* state);
 
@@ -131,7 +128,7 @@ const globber_lua::method globber_lua::c_methods[] = {
 };
 
 //------------------------------------------------------------------------------
-globber_lua::globber_lua(const char* pattern, int extrainfo, bool dirs_only, bool back_compat)
+globber_lua::globber_lua(const char* pattern, int extrainfo, const glob_flags& flags, bool dirs_only, bool back_compat)
 : m_globber(pattern)
 , m_parent(pattern)
 , m_extrainfo(extrainfo)
@@ -139,8 +136,8 @@ globber_lua::globber_lua(const char* pattern, int extrainfo, bool dirs_only, boo
     path::to_parent(m_parent, nullptr);
 
     m_globber.files(!dirs_only);
-    m_globber.hidden(g_glob_hidden.get());
-    m_globber.system(g_glob_system.get());
+    m_globber.hidden(flags.hidden);
+    m_globber.system(flags.system);
     if (back_compat)
         m_globber.suffix_dirs(false);
 }
@@ -161,7 +158,7 @@ int globber_lua::next(lua_State* state)
         ret = glob_next(state, m_globber, m_parent, m_index, m_extrainfo);
         if (!ret)
             break;
-        if (c % 5 == 0 && GetTickCount() - tick > ms_max)
+        if (GetTickCount() - tick > ms_max)
             break;
     }
 
@@ -503,6 +500,8 @@ static bool glob_next(lua_State* state, globber& globber, str_base& parent, int&
 #endif
         if (info.attr & FILE_ATTRIBUTE_HIDDEN)
             add_type_tag(type, "hidden");
+        if (info.attr & FILE_ATTRIBUTE_SYSTEM)
+            add_type_tag(type, "system");
         if (info.attr & FILE_ATTRIBUTE_READONLY)
             add_type_tag(type, "readonly");
 
@@ -535,6 +534,42 @@ static bool glob_next(lua_State* state, globber& globber, str_base& parent, int&
 }
 
 //------------------------------------------------------------------------------
+static void get_glob_flags(lua_State* state, int index, glob_flags& out, bool back_compat)
+{
+    if (back_compat)
+    {
+        out.hidden = g_files_hidden.get() && _rl_match_hidden_files;
+        out.system = g_files_system.get();
+    }
+    else if (lua_istable(state, index))
+    {
+#ifdef DEBUG
+        int top = lua_gettop(state);
+#endif
+
+        lua_pushvalue(state, index);
+
+        lua_pushliteral(state, "hidden");
+        lua_rawget(state, -2);
+        if (!lua_isnoneornil(state, -1))
+            out.hidden = !!lua_toboolean(state, -1);
+        lua_pop(state, 1);
+
+        lua_pushliteral(state, "system");
+        lua_rawget(state, -2);
+        if (!lua_isnoneornil(state, -1))
+            out.system = !!lua_toboolean(state, -1);
+        lua_pop(state, 1);
+
+        lua_pop(state, 1);
+
+#ifdef DEBUG
+        assert(lua_gettop(state) == top);
+#endif
+    }
+}
+
+//------------------------------------------------------------------------------
 int glob_impl(lua_State* state, bool dirs_only, bool back_compat=false)
 {
     const char* mask = checkstring(state, 1);
@@ -549,12 +584,15 @@ int glob_impl(lua_State* state, bool dirs_only, bool back_compat=false)
     else
         extrainfo = optinteger(state, 2, 0);
 
+    glob_flags flags;
+    get_glob_flags(state, 3, flags, back_compat);
+
     lua_createtable(state, 0, 0);
 
     globber globber(mask);
     globber.files(!dirs_only);
-    globber.hidden(g_glob_hidden.get());
-    globber.system(g_glob_system.get());
+    globber.hidden(flags.hidden);
+    globber.system(flags.system);
     if (back_compat)
         globber.suffix_dirs(false);
 
@@ -597,7 +635,10 @@ int globber_impl(lua_State* state, bool dirs_only, bool back_compat=false)
     else
         extrainfo = optinteger(state, 2, 0);
 
-    if (!globber_lua::make_new(state, mask, extrainfo, dirs_only, back_compat))
+    glob_flags flags;
+    get_glob_flags(state, 3, flags, back_compat);
+
+    if (!globber_lua::make_new(state, mask, extrainfo, flags, dirs_only, back_compat))
         return 0;
 
     return 1;
@@ -608,6 +649,7 @@ int globber_impl(lua_State* state, bool dirs_only, bool back_compat=false)
 /// -ver:   1.0.0
 /// -arg:   globpattern:string
 /// -arg:   [extrainfo:integer|boolean]
+/// -arg:   [flags:table]
 /// -ret:   table
 /// Collects directories matching <span class="arg">globpattern</span> and
 /// returns them in a table of strings.
@@ -629,11 +671,21 @@ int globber_impl(lua_State* state, bool dirs_only, bool back_compat=false)
 /// attributes (making it usable as a match type for
 /// <a href="#builder:addmatch">builder:addmatch()</a>).
 ///
+/// Note: any quotation marks (<code>"</code>) in
+/// <span class="arg">globpattern</span> are stripped.
+///
 /// Starting in v1.3.1, when this is used in a coroutine it automatically yields
 /// periodically.
 ///
-/// Note: any quotation marks (<code>"</code>) in
-/// <span class="arg">globpattern</span> are stripped.
+/// Starting in v1.4.16, the optional <span class="arg">flags</span> argument
+/// can be a table with fields that select how directory globbing should behave.
+/// By default hidden directories are included and system directories are
+/// omitted.
+/// -show:  local flags = {
+/// -show:      hidden = false,     // True includes hidden directories, or false omits them.
+/// -show:      system = true,      // True includes system directories, or false omits them.
+/// -show:  }
+/// -show:  local t = os.globdirs("*", true, flags)
 int glob_dirs(lua_State* state)
 {
     return glob_impl(state, true);
@@ -644,6 +696,7 @@ int glob_dirs(lua_State* state)
 /// -ver:   1.0.0
 /// -arg:   globpattern:string
 /// -arg:   [extrainfo:integer|boolean]
+/// -arg:   [flags:table]
 /// -ret:   table
 /// Collects files and/or directories matching
 /// <span class="arg">globpattern</span> and returns them in a table of strings.
@@ -665,11 +718,20 @@ int glob_dirs(lua_State* state)
 /// on the attributes (making it usable as a match type for
 /// <a href="#builder:addmatch">builder:addmatch()</a>).
 ///
+/// Note: any quotation marks (<code>"</code>) in
+/// <span class="arg">globpattern</span> are stripped.
+///
 /// Starting in v1.3.1, when this is used in a coroutine it automatically yields
 /// periodically.
 ///
-/// Note: any quotation marks (<code>"</code>) in
-/// <span class="arg">globpattern</span> are stripped.
+/// Starting in v1.4.16, the optional <span class="arg">flags</span> argument
+/// can be a table with fields that select how file globbing should behave.  By
+/// default hidden files are included and system files are omitted.
+/// -show:  local flags = {
+/// -show:      hidden = false,     // True includes hidden files, or false omits them.
+/// -show:      system = true,      // True includes system files, or false omits them.
+/// -show:  }
+/// -show:  local t = os.globfiles("*", true, flags)
 int glob_files(lua_State* state)
 {
     return glob_impl(state, false);

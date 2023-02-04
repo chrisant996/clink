@@ -12,7 +12,7 @@
 class str_base;
 
 //------------------------------------------------------------------------------
-typedef unsigned char match_type_intrinsic;
+typedef unsigned short match_type_intrinsic;
 enum class match_type : match_type_intrinsic
 {
     do_not_use,     // complete.c relies on the type never being 0, so it can use savestring().
@@ -25,12 +25,13 @@ enum class match_type : match_type_intrinsic
     dir,            // Displays match using the directory color, only displays the last path component, and adds a trailing path separator.
     END,
 
-    mask        = 0x07,
+    mask        = 0x0007,
 
-    link        = 0x10, // Displays match using the symlink color and only displays the last path component.
-    orphaned    = 0x20, // Displays link matches using the orphaned color.
-    hidden      = 0x40, // Displays file/dir/link matches using the hidden color.
-    readonly    = 0x80, // Displays file/dir/link matches using the readonly color.
+    link        = 0x0010, // Displays match using the symlink color and only displays the last path component.
+    orphaned    = 0x0020, // Displays link matches using the orphaned color.
+    hidden      = 0x0040, // Displays file/dir/link matches using the hidden color.
+    readonly    = 0x0080, // Displays file/dir/link matches using the readonly color.
+    system      = 0x0100, // May filter the file/dir/link depending on the `files.system` setting.
 };
 
 DEFINE_ENUM_FLAG_OPERATORS(match_type);
@@ -71,6 +72,13 @@ inline bool is_match_type_hidden(match_type type)
 {
     type &= match_type::hidden;
     return type == match_type::hidden;
+}
+
+//------------------------------------------------------------------------------
+inline bool is_match_type_system(match_type type)
+{
+    type &= match_type::system;
+    return type == match_type::system;
 }
 
 //------------------------------------------------------------------------------

@@ -8,7 +8,7 @@
 struct match_display_filter_entry;
 class matches;
 class matches_iter;
-enum class match_type : unsigned char;
+enum class match_type : unsigned short;
 
 //------------------------------------------------------------------------------
 class match_adapter

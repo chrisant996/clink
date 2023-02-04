@@ -2,7 +2,7 @@
 
 #include <core/str.h>
 
-enum class match_type : unsigned char;
+enum class match_type : unsigned short;
 
 struct match_display_filter_entry
 {

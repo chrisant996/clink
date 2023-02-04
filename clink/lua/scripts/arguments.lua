@@ -1800,8 +1800,13 @@ function clink.dirmatches(match_word)
 
     local _, ismain = coroutine.running()
 
+    local flags = {
+        hidden=settings.get("files.hidden") and rl.isvariabletrue("match-hidden-files"),
+        system=settings.get("files.system"),
+    }
+
     local matches = {}
-    for _, i in ipairs(os.globdirs(word.."*", true)) do
+    for _, i in ipairs(os.globdirs(word.."*", true, flags)) do
         local m = path.join(root, i.name)
         table.insert(matches, { match = m, type = i.type })
         if not ismain and _ % 250 == 0 then
@@ -1843,11 +1848,16 @@ function clink.filematches(match_word)
 
     local _, ismain = coroutine.running()
 
+    local flags = {
+        hidden=settings.get("files.hidden") and rl.isvariabletrue("match-hidden-files"),
+        system=settings.get("files.system"),
+    }
+
     local matches = {}
-    for _, i in ipairs(os.globfiles(word.."*", true)) do
+    for _, i in ipairs(os.globfiles(word.."*", true, flags)) do
         local m = path.join(root, i.name)
         table.insert(matches, { match = m, type = i.type })
-        if not ismain and _ % 250 == 0 then
+        if not ismain and _ % 100 == 0 then
             coroutine.yield()
         end
     end

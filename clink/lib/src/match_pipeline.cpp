@@ -32,9 +32,33 @@ static setting_enum g_sort_dirs(
     "before,with,after",
     1);
 
+setting_bool g_files_hidden(
+    "files.hidden",
+    "Include hidden files",
+    "Includes or excludes files with the 'hidden' attribute set when generating\n"
+    "file lists.",
+    true);
+
+setting_bool g_files_system(
+    "files.system",
+    "Include system files",
+    "Includes or excludes files with the 'system' attribute set when generating\n"
+    "file lists.",
+    false);
+
 extern setting_enum g_default_bindings;
 
 
+
+//------------------------------------------------------------------------------
+static bool include_match_type(match_type type)
+{
+    if (is_match_type_system(type))
+        return g_files_system.get();
+    if (is_match_type_hidden(type))
+        return _rl_match_hidden_files && g_files_hidden.get();
+    return true;
+}
 
 //------------------------------------------------------------------------------
 static unsigned int prefix_selector(
@@ -47,7 +71,9 @@ static unsigned int prefix_selector(
     {
         const char* const name = infos[i].match;
         const int j = str_compare(needle, name);
-        const bool select = (j < 0 || !needle[j]);
+        const bool select = ((j < 0 || !needle[j]) &&
+                             (_rl_match_hidden_files || name[0] != '.') &&
+                             include_match_type(infos[i].type));
         infos[i].select = select;
         if (select)
             ++select_count;
@@ -72,7 +98,9 @@ static unsigned int pattern_selector(
             match_len--;
 
         const path::star_matches_everything flag = (is_pathish(infos[i].type) ? path::at_end : path::yes);
-        const bool select = path::match_wild(str_iter(needle, needle_len), str_iter(match, match_len), dot_prefix, flag);
+        const bool select = ((_rl_match_hidden_files || match[0] != '.') &&
+                             include_match_type(infos[i].type) &&
+                             path::match_wild(str_iter(needle, needle_len), str_iter(match, match_len), dot_prefix, flag));
         infos[i].select = select;
         if (select)
             ++select_count;

@@ -90,6 +90,7 @@ match_type to_match_type(DWORD attr, const char* path, bool symlink)
     static_assert(int(match_type::orphaned) == MATCH_TYPE_ORPHANED, "match_type enum must match readline constants");
     static_assert(int(match_type::hidden) == MATCH_TYPE_HIDDEN, "match_type enum must match readline constants");
     static_assert(int(match_type::readonly) == MATCH_TYPE_READONLY, "match_type enum must match readline constants");
+    static_assert(int(match_type::system) == MATCH_TYPE_SYSTEM, "match_type enum must match readline constants");
 
     match_type type;
 
@@ -100,6 +101,8 @@ match_type to_match_type(DWORD attr, const char* path, bool symlink)
 
     if (attr & FILE_ATTRIBUTE_HIDDEN)
         type |= match_type::hidden;
+    if (attr & FILE_ATTRIBUTE_SYSTEM)
+        type |= match_type::system;
     if (attr & FILE_ATTRIBUTE_READONLY)
         type |= match_type::readonly;
 
@@ -165,6 +168,8 @@ match_type to_match_type(const char* type_name)
             type |= match_type::link;
         else if (_strnicmp(t, "hidden", l) == 0)
             type |= match_type::hidden;
+        else if (_strnicmp(t, "system", l) == 0)
+            type |= match_type::system;
         else if (_strnicmp(t, "readonly", l) == 0)
             type |= match_type::readonly;
         else if (_strnicmp(t, "orphaned", l) == 0)
@@ -208,6 +213,8 @@ void match_type_to_string(match_type type, str_base& out)
         out.concat(",orphaned");
     if (int(type & match_type::hidden))
         out.concat(",hidden");
+    if (int(type & match_type::system))
+        out.concat(",system");
     if (int(type & match_type::readonly))
         out.concat(",readonly");
 }

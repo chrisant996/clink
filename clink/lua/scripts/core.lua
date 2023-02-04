@@ -218,17 +218,22 @@ end
 
 
 --------------------------------------------------------------------------------
-function os.globdirs(pattern, extrainfo)
+function os.globdirs(pattern, extrainfo, flags)
+    if flags == nil and type(extrainfo) == "table" then
+        flags = extrainfo
+        extrainfo = nil
+    end
+
     local c, ismain = coroutine.running()
     if ismain then
         -- Use a fully native implementation for higher performance.
-        return os._globdirs(pattern, extrainfo)
+        return os._globdirs(pattern, extrainfo, flags)
     elseif clink._is_coroutine_canceled(c) then
         return {}
     else
         -- Yield periodically.
         local t = {}
-        local g = os._makedirglobber(pattern, extrainfo)
+        local g = os._makedirglobber(pattern, extrainfo, flags)
         while g:next(t) do
             coroutine.yield()
             if clink._is_coroutine_canceled(c) then
@@ -242,17 +247,22 @@ function os.globdirs(pattern, extrainfo)
 end
 
 --------------------------------------------------------------------------------
-function os.globfiles(pattern, extrainfo)
+function os.globfiles(pattern, extrainfo, flags)
+    if flags == nil and type(extrainfo) == "table" then
+        flags = extrainfo
+        extrainfo = nil
+    end
+
     local c, ismain = coroutine.running()
     if ismain then
         -- Use a fully native implementation for higher performance.
-        return os._globfiles(pattern, extrainfo)
+        return os._globfiles(pattern, extrainfo, flags)
     elseif clink._is_coroutine_canceled(c) then
         return {}
     else
         -- Yield periodically.
         local t = {}
-        local g = os._makefileglobber(pattern, extrainfo)
+        local g = os._makefileglobber(pattern, extrainfo, flags)
         while g:next(t) do
             coroutine.yield()
             if clink._is_coroutine_canceled(c) then
