@@ -353,14 +353,14 @@ Name                         | Default [*](#alternatedefault) | Description
 <a name="color_cmd"></a>`color.cmd` | `bold` [*](#alternatedefault) | Used when displaying shell (CMD.EXE) command completions, and in the input line when `clink.colorize_input` is enabled.
 <a name="color_cmdredir"></a>`color.cmdredir` | `bold` [*](#alternatedefault) | The color for redirection symbols (`<`, `>`, `>&`) in the input line when `clink.colorize_input` is enabled.
 <a name="color_cmdsep"><a/>`color.cmdsep` | `bold` [*](#alternatedefault) | The color for command separators (`&`, `\|`) in the input line when `clink.colorize_input` is enabled.
-`color.comment_row`          | `bright white on cyan` [*](#alternatedefault) | The color for the comment row.  During `clink-select-complete` the comment row shows the "and <em>N</em> more matches" or "rows <em>X</em> to <em>Y</em> of <em>Z</em>" messages.  It can also show how history expansion will be applied at the cursor.
+<a name="color_comment_row"></a>`color.comment_row` | `bright white on cyan` [*](#alternatedefault) | The color for the comment row.  During `clink-select-complete` the comment row shows the "and <em>N</em> more matches" or "rows <em>X</em> to <em>Y</em> of <em>Z</em>" messages.  It can also show how history expansion will be applied at the cursor.
 `color.description`          | `bright cyan` [*](#alternatedefault) | Used when displaying descriptions for match completions.
 <a name="color_doskey"></a>`color.doskey` | `bright cyan` [*](#alternatedefault) | Used when displaying doskey alias completions, and in the input line when `clink.colorize_input` is enabled.
 <a name="color_executable"></a>`color.executable` | [*](#alternatedefault) | When set, this is the color in the input line for a command word that is recognized as an executable file when `clink.colorize_input` is enabled.
 <a name="color_filtered"></a>`color.filtered` | `bold` [*](#alternatedefault) | The default color for filtered completions (see [Filtering the Match Display](#filteringthematchdisplay)).
 <a name="color_flag"></a>`color.flag` | `default` [*](#alternatedefault) | The color for flags in the input line when `clink.colorize_input` is enabled.
 <a name="color_hidden"></a>`color.hidden` | [*](#alternatedefault) | Used when displaying file completions with the "hidden" attribute.
-`color.histexpand`           | [*](#alternatedefault) | The color for history expansions in the input line when `clink.colorize_input` is enabled.  If this color is not set or `history.auto_expand` is disabled or `history.expand_mode` is off, then history expansions are not colored.
+<a name="color_histexpand"></a>`color.histexpand` | [*](#alternatedefault) | The color for history expansions in the input line when `clink.colorize_input` is enabled.  If this color is not set or `history.auto_expand` is disabled or `history.expand_mode` is off, then history expansions are not colored.
 `color.horizscroll`          | [*](#alternatedefault) | The color for the `<` or `>` horizontal scroll indicators when Readline's `horizontal-scroll-mode` variable is set.
 <a name="color_input"></a>`color.input` | [*](#alternatedefault) | The color for input line text. Note that when `clink.colorize_input` is disabled, the entire input line is displayed using `color.input`.
 `color.interact`             | `bold`  | The color for prompts such as a pager's `--More?--` prompt.
@@ -2584,6 +2584,13 @@ Clink uses Readline's [History library](https://tiswww.cwru.edu/php/chet/readlin
 add history expansion capabilities.  If these are undesirable, they can be turned off by running
 `clink set history.auto_expand off` or `clink set history.expand_mode off`.
 
+When enabled, history expansion is automatically performed when a command line
+is accepted (by pressing <kbd>Enter</kbd>).  When disabled, history expansion
+is performed only when a corresponding expansion command is used (such as
+`clink-expand-history` <kbd>Alt</kbd>-<kbd>^</kbd>, or `clink-expand-line`
+<kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>E</kbd>).  Expansion commands also work
+when history expansion is enabled.
+
 The History library provides a history expansion feature that is similar
 to the history expansion provided by `csh`.  This section describes the
 syntax used to manipulate the history information.
@@ -2611,6 +2618,11 @@ can be used to inhibit history expansion; and characters enclosed within
 double quotes may be subject to history expansion, since backslash can
 escape the history expansion character, but single quotes may not, since
 they are not treated specially within double quotes.
+
+The [`color.histexpand`](#color_histexpand) setting controls highlighting when
+text under the cursor is subject to history expansion.  When it's set, a
+preview of the expanded text is show below the input line using the
+[`color.comment_row`](#color_comment_row) setting.
 
 <table class="linkmenu">
 <tr><td><a href="#event-designators">Event Designators</a></td><td>How to specify which history line to use.</td></tr>
