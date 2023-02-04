@@ -989,8 +989,9 @@ end
 --- -ret:   self
 --- Adds descriptions for arg matches and/or flag matches.  Descriptions are
 --- displayed for their associated args or flags whenever possible completions
---- are listed, for example by the <code>complete</code> or
---- <code>clink-select-complete</code> or <code>possible-completions</code>
+--- are listed, for example by the <code><a href="#rlcmd-complete">complete</a></code>
+--- or <code><a href="#rlcmd-clink-select-complete">clink-select-complete</a></code>
+--- or <code><a href="#rlcmd-possible-completions">possible-completions</a></code>
 --- commands.
 ---
 --- Any number of descriptions tables may be passed to the function, and each
