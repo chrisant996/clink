@@ -7,32 +7,32 @@ set clink_profile_arg=
 set clink_quiet_arg=
 
 :: Mimic cmd.exe's behaviour when starting from the start menu.
-if /i "%1"=="startmenu" (
+if /i "%~1"=="startmenu" (
     cd /d "%userprofile%"
     shift
 )
 
 :: Check for the --profile option.
-if /i "%1"=="--profile" (
+if /i "%~1"=="--profile" (
     set clink_profile_arg=--profile "%~2"
     shift
     shift
 )
 
 :: Check for the --quiet option.
-if /i "%1"=="--quiet" (
+if /i "%~1"=="--quiet" (
     set clink_quiet_arg= --quiet
     shift
 )
 
 :: If the .bat is run without any arguments, then start a cmd.exe instance.
-if "%1"=="" (
+if _%1==_ (
     call :launch
     goto :end
 )
 
 :: Test for autorun.
-if defined CLINK_NOAUTORUN if /i "%1"=="inject" if /i "%2"=="--autorun" goto :end
+if defined CLINK_NOAUTORUN if /i "%~1"=="inject" if /i "%~2"=="--autorun" goto :end
 
 :: Endlocal before inject tags the prompt.
 endlocal
