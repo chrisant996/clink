@@ -13,6 +13,8 @@
 #include <sys/stat.h>
 #include <assert.h>
 #include <share.h>
+#include <Shellapi.h>
+#include <shlwapi.h>
 
 #ifndef _MSC_VER
 #define USE_PORTABLE
@@ -54,7 +56,6 @@ public:
 private:
     bool                m_initialized = false;
     bool                m_ok = false;
-    HMODULE             m_hlib = 0;
     union
     {
         FARPROC         proc[1];
@@ -77,9 +78,9 @@ bool delay_load_mpr::init()
     if (!m_initialized)
     {
         m_initialized = true;
-        m_hlib = LoadLibrary("mpr.dll");
-        if (m_hlib)
-            m_procs.proc[0] = GetProcAddress(m_hlib, "WNetGetConnectionW");
+        HMODULE hlib = LoadLibrary("mpr.dll");
+        if (hlib)
+            m_procs.proc[0] = GetProcAddress(hlib, "WNetGetConnectionW");
         m_ok = !!m_procs.WNetGetConnectionW;
     }
 
@@ -92,6 +93,92 @@ DWORD delay_load_mpr::WNetGetConnectionW(LPCWSTR lpLocalName, LPWSTR lpRemoteNam
     if (init() && !m_procs.WNetGetConnectionW)
         return ERROR_NOT_SUPPORTED;
     return m_procs.WNetGetConnectionW(lpLocalName, lpRemoteName, lpnLength);
+}
+
+
+
+//------------------------------------------------------------------------------
+static class delay_load_shell32
+{
+public:
+                        delay_load_shell32();
+    bool                init();
+    BOOL                IsUserAnAdmin();
+    BOOL                ShellExecuteExW(SHELLEXECUTEINFOW* pExecInfo);
+private:
+    bool                m_initialized = false;
+    bool                m_ok = false;
+    union
+    {
+        FARPROC         proc[2];
+        struct {
+            BOOL (WINAPI* IsUserAnAdmin)();
+            BOOL (WINAPI* ShellExecuteExW)(SHELLEXECUTEINFOW* pExecInfo);
+        };
+    } m_procs;
+} s_shell32;
+
+//------------------------------------------------------------------------------
+delay_load_shell32::delay_load_shell32()
+{
+    ZeroMemory(&m_procs, sizeof(m_procs));
+}
+
+//------------------------------------------------------------------------------
+bool delay_load_shell32::init()
+{
+    if (!m_initialized)
+    {
+        m_initialized = true;
+        HMODULE hlib = LoadLibrary("shell32.dll");
+        if (hlib)
+        {
+            do
+            {
+                DLLGETVERSIONPROC pDllGetVersion;
+                pDllGetVersion = DLLGETVERSIONPROC(GetProcAddress(hlib, "DllGetVersion"));
+                if (!pDllGetVersion)
+                    break;
+
+                DLLVERSIONINFO dvi = { sizeof(dvi) };
+                HRESULT hr = (*pDllGetVersion)(&dvi);
+                if (FAILED(hr))
+                    break;
+
+                const DWORD dwVersion = MAKELONG(dvi.dwMinorVersion, dvi.dwMajorVersion);
+                if (dwVersion < MAKELONG(0, 5))
+                    break;
+
+                m_procs.proc[0] = GetProcAddress(hlib, "IsUserAnAdmin");
+                m_procs.proc[1] = GetProcAddress(hlib, "ShellExecuteExW");
+            }
+            while (false);
+        }
+
+        m_ok = true;
+        for (auto const& proc : m_procs.proc)
+        {
+            if (!proc)
+            {
+                m_ok = false;
+                break;
+            }
+        }
+    }
+
+    return m_ok;
+}
+
+//------------------------------------------------------------------------------
+BOOL delay_load_shell32::IsUserAnAdmin()
+{
+    return init() && m_procs.IsUserAnAdmin();
+}
+
+//------------------------------------------------------------------------------
+BOOL delay_load_shell32::ShellExecuteExW(SHELLEXECUTEINFOW* pExecInfo)
+{
+    return init() && m_procs.ShellExecuteExW(pExecInfo);
 }
 
 
@@ -1350,6 +1437,36 @@ bool disambiguate_abbreviated_path(const char*& in, str_base& out)
 
     // Return whether the input has been fully disambiguated.
     return unique;
+}
+
+//------------------------------------------------------------------------------
+bool is_user_admin()
+{
+    return s_shell32.IsUserAnAdmin();
+}
+
+//------------------------------------------------------------------------------
+bool run_as_admin(HWND hwnd, const wchar_t* file, const wchar_t* args)
+{
+    SHELLEXECUTEINFOW sei = { sizeof(sei) };
+    sei.hwnd = hwnd;
+    sei.fMask = SEE_MASK_FLAG_DDEWAIT|SEE_MASK_FLAG_NO_UI|SEE_MASK_NOCLOSEPROCESS;
+    sei.lpVerb = L"runas";
+    sei.lpFile = file;
+    sei.lpParameters = args;
+    sei.nShow = SW_SHOWNORMAL;
+
+    if (!s_shell32.ShellExecuteExW(&sei) || !sei.hProcess)
+        return false;
+
+    WaitForSingleObject(sei.hProcess, INFINITE);
+
+    DWORD exitcode = 999;
+    if (!GetExitCodeProcess(sei.hProcess, &exitcode))
+        exitcode = 1;
+    CloseHandle(sei.hProcess);
+
+    return exitcode == 0;
 }
 
 }; // namespace os

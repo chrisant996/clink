@@ -1574,6 +1574,18 @@ static int expand_abbreviated_path(lua_State *state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  os.isuseradmin
+/// -ver:   1.4.17
+/// -ret:   boolean
+/// Returns true if running as an administrator account.
+static int is_user_admin(lua_State *state)
+{
+    const bool is = os::is_user_admin();
+    lua_pushboolean(state, is);
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 void os_lua_initialise(lua_state& lua)
 {
     struct {
@@ -1618,6 +1630,7 @@ void os_lua_initialise(lua_state& lua)
         { "issignaled",  &is_signaled },
         { "sleep",       &sleep },
         { "expandabbreviatedpath", &expand_abbreviated_path },
+        { "isuseradmin", &is_user_admin },
         // UNDOCUMENTED; internal use only.
         { "_globdirs",   &glob_dirs },  // Public os.globdirs method is in core.lua.
         { "_globfiles",  &glob_files }, // Public os.globfiles method is in core.lua.

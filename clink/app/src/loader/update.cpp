@@ -17,71 +17,11 @@ extern "C" {
 }
 
 #include <getopt.h>
-#include <shlwapi.h>
 
 //------------------------------------------------------------------------------
 extern void host_load_app_scripts(lua_state& lua);
 void puts_help(const char* const* help_pairs, const char* const* other_pairs=nullptr);
 extern bool g_elevated;
-
-//------------------------------------------------------------------------------
-static union {
-    FARPROC proc[2];
-    struct {
-        BOOL (WINAPI* IsUserAnAdmin)();
-        BOOL (WINAPI* ShellExecuteExW)(SHELLEXECUTEINFOW* pExecInfo);
-    };
-} s_shell32;
-
-//------------------------------------------------------------------------------
-static bool is_elevation_needed()
-{
-    HMODULE const hlib = LoadLibrary("shell32.dll");
-    if (!hlib)
-        return false;
-
-    DLLGETVERSIONPROC pDllGetVersion;
-    pDllGetVersion = DLLGETVERSIONPROC(GetProcAddress(hlib, "DllGetVersion"));
-    if (!pDllGetVersion)
-        return false;
-
-    DLLVERSIONINFO dvi = { sizeof(dvi) };
-    HRESULT hr = (*pDllGetVersion)(&dvi);
-    if (FAILED(hr))
-        return false;
-
-    const DWORD dwVersion = MAKELONG(dvi.dwMinorVersion, dvi.dwMajorVersion);
-    if (dwVersion < MAKELONG(0, 5))
-        return false;
-
-    s_shell32.proc[0] = GetProcAddress(hlib, "IsUserAnAdmin");
-    s_shell32.proc[1] = GetProcAddress(hlib, "ShellExecuteExW");
-    return s_shell32.proc[0] && s_shell32.proc[1] && !s_shell32.IsUserAnAdmin();
-}
-
-//------------------------------------------------------------------------------
-static bool run_as_admin(HWND hwnd, const wchar_t* file, const wchar_t* args)
-{
-    SHELLEXECUTEINFOW sei = { sizeof(sei) };
-    sei.hwnd = hwnd;
-    sei.fMask = SEE_MASK_FLAG_DDEWAIT|SEE_MASK_FLAG_NO_UI|SEE_MASK_NOCLOSEPROCESS;
-    sei.lpVerb = L"runas";
-    sei.lpFile = file;
-    sei.lpParameters = args;
-    sei.nShow = SW_SHOWNORMAL;
-
-    if (!s_shell32.ShellExecuteExW(&sei) || !sei.hProcess)
-        return false;
-
-    WaitForSingleObject(sei.hProcess, INFINITE);
-
-    DWORD exitcode = 999;
-    if (!GetExitCodeProcess(sei.hProcess, &exitcode))
-        exitcode = 1;
-    CloseHandle(sei.hProcess);
-
-    return exitcode == 0;
-}
 
 //------------------------------------------------------------------------------
 static wchar_t* get_wargs()
@@ -122,7 +62,7 @@ static wchar_t* get_wargs()
 //------------------------------------------------------------------------------
 static bool call_updater(lua_state& lua)
 {
-    const bool elevated = !is_elevation_needed();
+    const bool elevated = os::is_user_admin();
 
     auto app_ctx = app_context::get();
     app_ctx->update_env(); // Set %=clink.bin% so the Lua code can find the exe.
@@ -153,7 +93,7 @@ static bool call_updater(lua_state& lua)
             wstr_moveable wargs(s.c_str());
             wargs << get_wargs();
             puts("Requesting administrator access to install update...");
-            ok = (len < _countof(file) - 1 && run_as_admin(NULL, file, wargs.c_str()));
+            ok = (len < _countof(file) - 1 && os::run_as_admin(NULL, file, wargs.c_str()));
             msg = ok ? "updated Clink." : "update failed; see log file for details.";
         }
     }

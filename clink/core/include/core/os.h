@@ -91,6 +91,8 @@ time_t  filetime_to_time_t(const FILETIME& ft);
 bool    get_clipboard_text(str_base& out);
 bool    set_clipboard_text(const char* text, int length);
 bool    disambiguate_abbreviated_path(const char*& in, str_base& out);
+bool    is_user_admin();
+bool    run_as_admin(HWND hwnd, const wchar_t* file, const wchar_t* args);
 
 #if 0
 void    append_argv(str_base& out, const char* arg, argv_quote_mode mode);
