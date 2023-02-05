@@ -12,6 +12,8 @@
 #include <assert.h>
 
 //------------------------------------------------------------------------------
+inline bool is_null_or_empty(const char* s)                          { return !s || !*s; }
+inline bool is_null_or_empty(const wchar_t* s)                       { return !s || !*s; }
 inline int  str_len(const char* s)                                   { return int(strlen(s)); }
 inline int  str_len(const wchar_t* s)                                { return int(wcslen(s)); }
 inline void str_ncat(char* d, const char* s, size_t n)               { strncat(d, s, n); }

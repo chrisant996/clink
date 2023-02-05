@@ -214,6 +214,13 @@ static void calc_history_expansions(const line_buffer& buffer, history_expansion
 {
     list = nullptr;
 
+    if (!g_history_autoexpand.get())
+        return;
+
+    const char* color = g_color_histexpand.get();
+    if (!g_history_show_preview.get() && !(color && (*color)))
+        return;
+
     // Counteract auto-suggestion, but restore it afterwards.
     char* p = const_cast<char*>(buffer.get_buffer());
     rollback<char> rb(p[buffer.get_length()], '\0');
@@ -239,11 +246,14 @@ static void calc_history_expansions(const line_buffer& buffer, history_expansion
 //------------------------------------------------------------------------------
 static void classify_history_expansions(const history_expansion* list, word_classifications& classifications)
 {
-    if (list)
-    {
-        for (const history_expansion* e = list; e; e = e->next)
-            classifications.apply_face(e->start, e->len, FACE_HISTEXPAND, true);
-    }
+    if (!list)
+        return;
+
+    if (is_null_or_empty(g_color_histexpand.get()))
+        return;
+
+    for (const history_expansion* e = list; e; e = e->next)
+        classifications.apply_face(e->start, e->len, FACE_HISTEXPAND, true);
 }
 
 
@@ -1148,11 +1158,16 @@ void line_editor_impl::classify()
     {
         // Use the full line; don't stop at the cursor.
         commands commands = collect_commands();
-        history_expansion* list = nullptr;
         m_classifier->classify(commands.get_linestates(m_buffer), m_classifications);
-        calc_history_expansions(m_buffer, list);
-        classify_history_expansions(list, m_classifications);
-        set_history_expansions(list);
+        if (g_history_autoexpand.get() &&
+            (g_history_show_preview.get() ||
+             !is_null_or_empty(g_color_histexpand.get())))
+        {
+            history_expansion* list = nullptr;
+            calc_history_expansions(m_buffer, list);
+            classify_history_expansions(list, m_classifications);
+            set_history_expansions(list);
+        }
         m_classifications.finish(is_showing_argmatchers());
     }
 
