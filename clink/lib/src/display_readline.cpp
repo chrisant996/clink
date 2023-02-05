@@ -80,10 +80,16 @@ static setting_int g_input_rows(
     "When this is 0, the terminal height is the limit.",
     0);
 
+setting_bool g_history_show_preview(
+    "history.show_preview",
+    "Show preview of history expansion at cursor",
+    "When the text at the cursor is subject to history expansion, this shows a\n"
+    "preview of the expanded result below the input line.",
+    true);
+
 extern setting_bool g_debug_log_terminal;
 extern setting_bool g_history_autoexpand;
 extern setting_color g_color_comment_row;
-extern setting_color g_color_histexpand;
 
 //------------------------------------------------------------------------------
 static bool s_use_eol_optimization = false;
@@ -133,6 +139,25 @@ static bool get_console_screen_buffer_info(CONSOLE_SCREEN_BUFFER_INFO* info)
 {
     HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
     return !!GetConsoleScreenBufferInfo(h, info);
+}
+
+//------------------------------------------------------------------------------
+static void append_expand_ctrl(str_base& out, const char* in, unsigned int len=-1)
+{
+    for (const char* walk = in; len-- && *walk; ++walk)
+    {
+        if (CTRL_CHAR(*walk) || *walk == RUBOUT)
+        {
+            char sz[3] = "^?";
+            if (*walk != RUBOUT)
+                sz[1] = UNCTRL(*walk);
+            out.concat(sz, 2);
+        }
+        else
+        {
+            out.concat(walk, 1);
+        }
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -1433,8 +1458,7 @@ void display_manager::display()
     }
 
     // Is history expansion preview desired?
-    const char* const color_histexpand = g_color_histexpand.get();
-    const bool want_histexpand_preview = (color_histexpand && *color_histexpand && g_history_autoexpand.get());
+    const bool want_histexpand_preview = (g_history_show_preview.get() && g_history_autoexpand.get());
 
     // Max number of rows to use when displaying the input line.
     unsigned int max_rows = g_input_rows.get();
@@ -1719,7 +1743,8 @@ void display_manager::display()
     if (can_show_histexpand && _rl_vis_botlin < _rl_screenheight)
     {
         const char* expanded = nullptr;
-        for (const history_expansion* e = m_histexpand; e; e = e->next)
+        const history_expansion* e;
+        for (e = m_histexpand; e; e = e->next)
         {
             if (e->start <= rl_point && rl_point <= e->start + e->len)
             {
@@ -1735,21 +1760,10 @@ void display_manager::display()
             dbg_ignore_scope(snapshot, "display_readline");
 
             str_moveable in;
-            in << "History expansion: ";
-            for (const char* walk = expanded; *walk; ++walk)
-            {
-                if (CTRL_CHAR(*walk) || *walk == RUBOUT)
-                {
-                    char sz[3] = "^?";
-                    if (*walk != RUBOUT)
-                        sz[1] = UNCTRL(*walk);
-                    in.concat(sz, 2);
-                }
-                else
-                {
-                    in.concat(walk, 1);
-                }
-            }
+            in << "History expansion for \"";
+            append_expand_ctrl(in, rl_line_buffer + e->start, e->len);
+            in << "\": ";
+            append_expand_ctrl(in, expanded);
 
 #undef m_next
             m_next.set_comment_row(std::move(in));
