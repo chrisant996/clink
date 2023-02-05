@@ -2,6 +2,10 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.4.17
+
+- Added `os.isuseradmin()` to get whether CMD is running as an admin account.
+
 #### v1.4.16
 
 - Added `history.show_preview` setting that controls whether to show a preview of history expansions (previously it was inferred by whether `color.histexpand` was set).
