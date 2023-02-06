@@ -5,6 +5,7 @@
 #### v1.4.17
 
 - Added `os.isuseradmin()` to get whether CMD is running as an admin account.
+- Added `clink.oninputlinechanged()` to register a function to be called whenever the input line is changed.
 
 #### v1.4.16
 
