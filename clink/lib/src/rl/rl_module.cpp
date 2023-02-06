@@ -93,6 +93,7 @@ extern int          _rl_last_v_pos;
 extern int clink_diagnostics(int, int);
 
 extern void host_send_event(const char* event_name);
+extern void host_send_oninputlinechanged_event(const char* line);
 extern void host_cleanup_after_signal();
 extern int macro_hook_func(const char* macro);
 extern int host_filter_matches(char** matches);
@@ -123,6 +124,7 @@ static rl_command_func_t* s_override_rl_last_func = nullptr;
 static int          s_init_history_pos = -1;    // Sticky history position from previous edit line.
 static int          s_history_search_pos = -1;  // Most recent history search position during current edit line.
 static str_moveable s_needle;
+static str_moveable s_prev_inputline;
 
 static suggestion_manager s_suggestion;
 
@@ -549,6 +551,13 @@ static void last_func_hook_func()
 
     cua_after_command();
     s_last_luafunc.clear();
+
+    if (s_prev_inputline.length() != rl_end || memcmp(s_prev_inputline.c_str(), rl_line_buffer, rl_end))
+    {
+        s_prev_inputline.clear();
+        s_prev_inputline.concat(rl_line_buffer, rl_end);
+        host_send_oninputlinechanged_event(s_prev_inputline.c_str());
+    }
 
     host_send_event("onaftercommand");
 }
@@ -2736,6 +2745,8 @@ void rl_module::on_begin_line(const context& context)
     g_pager = &context.pager;
     set_prompt(context.prompt, context.rprompt, false/*redisplay*/);
     g_rl_buffer = &context.buffer;
+    s_prev_inputline.clear();
+    s_prev_inputline.concat(context.buffer.get_buffer(), context.buffer.get_length());
     if (g_classify_words.get())
         s_classifications = &context.classifications;
     g_prompt_refilter = g_prompt_redisplay = 0; // Used only by diagnostic output.
@@ -2865,6 +2876,8 @@ void rl_module::on_end_line()
 
     g_rl_buffer = nullptr;
     g_pager = nullptr;
+
+    s_prev_inputline.free();
 
     SetConsoleCtrlHandler(clink_ctrlevent_handler, false);
 #ifdef SIGBREAK

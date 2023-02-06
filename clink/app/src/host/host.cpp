@@ -678,6 +678,13 @@ void host::send_oncommand_event(line_state& line, const char* command, bool quot
 }
 
 //------------------------------------------------------------------------------
+void host::send_oninputlinechanged_event(const char* line)
+{
+    if (m_lua)
+        m_lua->send_oninputlinechanged_event(line);
+}
+
+//------------------------------------------------------------------------------
 bool host::has_event_handler(const char* event_name)
 {
     if (!m_lua)

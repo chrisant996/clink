@@ -268,6 +268,48 @@ function clink.onfiltermatches(func)
 end
 
 --------------------------------------------------------------------------------
+--- -name:  clink.oninputlinechanged
+--- -ver:   1.4.17
+--- -arg:   func:function
+--- Registers <span class="arg">func</span> to be called after an editing
+--- command (key binding) makes changes in the input line.
+---
+--- The function receives one argument, a <span class="arg">line</span> string
+--- which contains the new contents of the input line.
+---
+--- The function has no return values.
+---
+--- Here is a script that demonstrates a lighthearted example of how this could
+--- be used.  Any time the input line contains "marco" it replaces the prompt
+--- with "POLO!".
+--- -show:  local has_marco
+--- -show:  local polo = clink.promptfilter(-1)
+--- -show:
+--- -show:  function polo:filter()
+--- -show:  &nbsp;   if has_marco then
+--- -show:  &nbsp;       return "\x1b[44;96mPOLO!\x1b[m ", false
+--- -show:  &nbsp;   end
+--- -show:  end
+--- -show:
+--- -show:  local function onbeginedit()
+--- -show:  &nbsp;   has_marco = nil
+--- -show:  end
+--- -show:
+--- -show:  local function oninputlinechanged(line)
+--- -show:  &nbsp;   local new_marco = line:find("marco") and true
+--- -show:  &nbsp;   if has_marco ~= new_marco then
+--- -show:  &nbsp;       has_marco = new_marco
+--- -show:  &nbsp;       clink.refilterprompt()
+--- -show:  &nbsp;   end
+--- -show:  end
+--- -show:
+--- -show:  clink.onbeginedit(onbeginedit)
+--- -show:  clink.oninputlinechanged(oninputlinechanged)
+--- -show:
+--- -show:  function clink.oninputlinechanged(func)
+--- -show:  &nbsp;   _add_event_callback("oninputlinechanged", func)
+--- -show:  end
+--------------------------------------------------------------------------------
 --- -name:  clink.onaftercommand
 --- -ver:   1.2.50
 --- -arg:   func:function

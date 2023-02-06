@@ -312,6 +312,15 @@ void host_send_event(const char* event_name)
 }
 
 //------------------------------------------------------------------------------
+void host_send_oninputlinechanged_event(const char* line)
+{
+    if (!s_callbacks)
+        return;
+
+    s_callbacks->send_oninputlinechanged_event(line);
+}
+
+//------------------------------------------------------------------------------
 bool host_call_lua_rl_global_function(const char* func_name)
 {
     return s_editor && s_editor->call_lua_rl_global_function(func_name);

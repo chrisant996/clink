@@ -662,6 +662,14 @@ bool lua_state::send_oncommand_event(line_state& line, const char* command, bool
 }
 
 //------------------------------------------------------------------------------
+bool lua_state::send_oninputlinechanged_event(const char* line)
+{
+    lua_State* state = get_state();
+    lua_pushstring(state, line);
+    return send_event("oninputlinechanged", 1);
+}
+
+//------------------------------------------------------------------------------
 bool lua_state::call_lua_rl_global_function(const char* func_name, line_state* line)
 {
     lua_State* state = get_state();

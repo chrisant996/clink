@@ -69,6 +69,7 @@ public:
     const char**    copy_dir_history(int* total) override;
     void            send_event(const char* event_name) override;
     void            send_oncommand_event(line_state& line, const char* command, bool quoted, recognition recog, const char* file) override;
+    void            send_oninputlinechanged_event(const char* line) override;
     bool            has_event_handler(const char* event_name) override;
     void            get_app_context(int& id, host_context& context) override;
 
