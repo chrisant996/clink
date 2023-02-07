@@ -11,6 +11,7 @@ local _generators_unsorted = false
 local file_match_generator = {}
 
 if settings.get("lua.debug") or clink.DEBUG then
+    -- Make it possible to inspect these locals in the debugger.
     clink.debug = clink.debug or {}
     clink.debug._generators = _generators
     clink.debug._file_match_generator = file_match_generator
@@ -597,8 +598,9 @@ function clink.register_match_generator(func, priority)
 end
 
 --------------------------------------------------------------------------------
-function clink._diag_generators()
-    if not settings.get("lua.debug") then
+function clink._diag_generators(arg)
+    arg = (arg and arg >= 3)
+    if not arg and not settings.get("lua.debug") then
         return
     end
 

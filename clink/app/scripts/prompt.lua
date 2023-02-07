@@ -7,6 +7,7 @@ local prompt_filters = {}
 local prompt_filters_unsorted = false
 
 if settings.get("lua.debug") or clink.DEBUG then
+    -- Make it possible to inspect these locals in the debugger.
     clink.debug = clink.debug or {}
     clink.debug._prompt_filters = prompt_filters
 end
@@ -133,7 +134,7 @@ function clink._filter_transient_prompt(prompt, rprompt, line, cursor, final)
 end
 
 --------------------------------------------------------------------------------
-function clink._diag_refilter()
+function clink._diag_refilter(arg) -- luacheck: no unused
     local refilter,redisplay = clink.get_refilter_redisplay_count()
     if refilter > 0 or redisplay > 0 then
         clink.print("\x1b[1mprompt refilter:\x1b[m")
@@ -269,8 +270,9 @@ local function print_filter_src(t, type)
 end
 
 --------------------------------------------------------------------------------
-function clink._diag_prompts()
-    if not settings.get("lua.debug") then
+function clink._diag_prompts(arg)
+    arg = (arg and arg >= 1)
+    if not arg and not settings.get("lua.debug") then
         return
     end
 

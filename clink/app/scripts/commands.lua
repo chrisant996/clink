@@ -87,18 +87,16 @@ end
 --------------------------------------------------------------------------------
 function clink._diagnostics(rl_buffer)
     local arg = rl_buffer:getargument()
-    clink._diag_coroutines()
+    clink._diag_coroutines(arg)
     clink._diag_refilter()
     clink._diag_events(arg)
     if arg then
-        if arg > 1 then
-            clink._diag_argmatchers()
-        end
-        clink._diag_prompts()
-        clink._diag_generators()
-        clink._diag_classifiers()
-        clink._diag_suggesters()
-        clink._diag_completions_dirs()
+        clink._diag_argmatchers(arg)
+        clink._diag_prompts(arg)
+        clink._diag_generators(arg)
+        clink._diag_classifiers(arg)
+        clink._diag_suggesters(arg)
+        clink._diag_completions_dirs(arg)
     end
     if clink._diag_custom then
         clink._diag_custom(arg)

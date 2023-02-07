@@ -6,12 +6,38 @@ clink = clink or {}
 clink._event_callbacks = clink._event_callbacks or {}
 
 --------------------------------------------------------------------------------
+local bold = "\x1b[1m"                  -- Bold (bright).
+local header = "\x1b[36m"               -- Cyan.
+local norm = "\x1b[m"                   -- Normal.
+
+--------------------------------------------------------------------------------
+local function log_cost(tick, c)
+    local elapsed = (os.clock() - tick) * 1000
+    local cost = c.cost
+    if not cost then
+        cost = { last=0, total=0, num=0, peak=0 }
+        c.cost = cost
+    end
+
+    cost.last = elapsed
+    cost.total = cost.total + elapsed
+    cost.num = cost.num + 1
+    if cost.peak < elapsed then
+        cost.peak = elapsed
+    end
+end
+
+--------------------------------------------------------------------------------
 -- Sends a named event to all registered callback handlers for it.
 function clink._send_event(event, ...)
     local callbacks = clink._event_callbacks[event]
     if callbacks ~= nil then
-        for _, func in ipairs(callbacks) do
-            func(...)
+        for _, c in ipairs(callbacks) do
+            if c.func then
+                local tick = os.clock()
+                c.func(...)
+                log_cost(tick, c)
+            end
         end
     end
 end
@@ -22,10 +48,14 @@ end
 function clink._send_event_string_out(event, ...)
     local callbacks = clink._event_callbacks[event]
     if callbacks ~= nil then
-        for _, func in ipairs(callbacks) do
-            local s = func(...)
-            if type(s) == "string" then
-                return s
+        for _, c in ipairs(callbacks) do
+            if c.func then
+                local tick = os.clock()
+                local s = c.func(...)
+                log_cost(tick, c)
+                if type(s) == "string" then
+                    return s
+                end
             end
         end
     end
@@ -38,9 +68,14 @@ end
 function clink._send_event_cancelable(event, ...)
     local callbacks = clink._event_callbacks[event]
     if callbacks ~= nil then
-        for _, func in ipairs(callbacks) do
-            if func(...) == false then
-                return
+        for _, c in ipairs(callbacks) do
+            if c.func then
+                local tick = os.clock()
+                local cancel = (c.func(...) == false)
+                log_cost(tick, c)
+                if cancel then
+                    return
+                end
             end
         end
     end
@@ -54,13 +89,17 @@ end
 function clink._send_event_cancelable_string_inout(event, string)
     local callbacks = clink._event_callbacks[event]
     if callbacks ~= nil then
-        for _, func in ipairs(callbacks) do
-            local s,continue = func(string)
-            if s then
-                string = s
-            end
-            if continue == false then
-                break
+        for _, c in ipairs(callbacks) do
+            if c.func then
+                local tick = os.clock()
+                local s,continue = c.func(string)
+                log_cost(tick, c)
+                if s then
+                    string = s
+                end
+                if continue == false then
+                    break
+                end
             end
         end
         return string;
@@ -89,7 +128,7 @@ local function _add_event_callback(event, func)
 
     if callbacks[func] == nil then
         callbacks[func] = true -- This prevents duplicates.
-        table.insert(callbacks, func)
+        table.insert(callbacks, { func=func })
     end
 end
 
@@ -248,9 +287,12 @@ end
 function clink._send_ondisplaymatches_event(matches, popup)
     local callbacks = clink._event_callbacks["ondisplaymatches"]
     if callbacks ~= nil then
-        local func = callbacks[1]
-        if func then
-            return func(matches, popup)
+        local c = callbacks[1]
+        if c and c.func then
+            local tick = os.clock()
+            local ret = c.func(matches, popup)
+            log_cost(tick, c)
+            return ret
         end
     end
     return matches
@@ -324,11 +366,15 @@ function clink._send_onfiltermatches_event(matches, completion_type, filename_co
     local ret = nil
     local callbacks = clink._event_callbacks["onfiltermatches"]
     if callbacks ~= nil then
-        for _, func in ipairs(callbacks) do
-            local m = func(matches, completion_type, filename_completion_desired)
-            if m ~= nil then
-                matches = m
-                ret = matches
+        for _, c in ipairs(callbacks) do
+            if c and c.func then
+                local tick = os.clock()
+                local m = c.func(matches, completion_type, filename_completion_desired)
+                log_cost(tick, c)
+                if m ~= nil then
+                    matches = m
+                    ret = matches
+                end
             end
         end
     end
@@ -352,17 +398,83 @@ function clink._set_coroutine_events(new_events)
 end
 
 --------------------------------------------------------------------------------
-function clink._diag_events(arg)
-    arg = (arg and arg > 0)
-    if not arg and not settings.get("lua.debug") then
+local function pad_string(s, len)
+    if #s < len then
+        s = s..string.rep(" ", len - #s)
+    end
+    return s
+end
+
+--------------------------------------------------------------------------------
+local function max_len(a, b)
+    a = a or b or 0
+    b = b or a or 0
+    return a > b and a or b
+end
+
+--------------------------------------------------------------------------------
+local function collect_event_src(t, event)
+    local callbacks = clink._event_callbacks[event]
+    if not callbacks[1] then
         return
     end
 
-    local bold = "\x1b[1m"          -- Bold (bright).
-    local norm = "\x1b[m"           -- Normal.
-    local print = clink.print
+    local tsub = {}
+    t[event] = tsub
 
-    local any_events = false
+    local any_cost
+    local longest = 24
+    for _,c in ipairs(callbacks) do
+        if c.func then
+            local info = debug.getinfo(c.func, 'S')
+            if not clink._is_internal_script(info.short_src) then
+                local src = info.short_src..":"..info.linedefined
+                local entry = { src=src, cost=c.cost }
+                table.insert(tsub, entry)
+                if longest < #src then
+                    longest = #src
+                end
+                if not any_cost and entry.cost then
+                    any_cost = true
+                end
+            end
+        end
+    end
+    tsub.any_cost = any_cost
+    t.longest = max_len(t.longest, longest)
+end
+
+--------------------------------------------------------------------------------
+local function print_event_src(t, event)
+    local tsub = t[event]
+
+    if tsub[1] then
+        local longest = t.longest
+        if tsub.any_cost then
+            clink.print(string.format("  %s           %slast    avg     peak%s",
+                    pad_string(event..":", longest), header, norm))
+        else
+            clink.print("  "..event..":")
+        end
+        for _,entry in ipairs(tsub) do
+            if entry.cost then
+                clink.print("", string.format("%s  %4u ms %4u ms %4u ms",
+                        pad_string(entry.src, longest),
+                        entry.cost.last, entry.cost.total / entry.cost.num, entry.cost.peak))
+            else
+                clink.print("", string.format("%s", entry.src))
+            end
+        end
+        return true
+    end
+end
+
+--------------------------------------------------------------------------------
+function clink._diag_events(arg)
+    arg = (arg and arg >= 1)
+    if not arg and not settings.get("lua.debug") then
+        return
+    end
 
     local sorted_events = {}
     for event_name in pairs(clink._event_callbacks) do
@@ -370,27 +482,17 @@ function clink._diag_events(arg)
     end
     table.sort(sorted_events, function(a, b) return a < b end)
 
-    clink.print(bold.."events:"..norm)
+    local t = {}
     for _,event_name in ipairs(sorted_events) do
-        local callback_table = clink._event_callbacks[event_name]
-        local any_callbacks = false
-        for _,f in ipairs(callback_table) do
-            local info = debug.getinfo(f, 'S')
-            if not clink._is_internal_script(info.short_src) then
-                local src = info.short_src..":"..info.linedefined
-
-                if not any_callbacks then
-                    clink.print("  "..event_name..":")
-                    any_callbacks = true
-                    any_events = true
-                end
-
-                print("", src)
-            end
-        end
+        collect_event_src(t, event_name)
     end
 
-    if not any_events then
+    if t.longest then
+        clink.print(bold.."events:"..norm)
+        for _,event_name in ipairs(sorted_events) do
+            print_event_src(t, event_name)
+        end
+    else
         print("  no event callbacks registered")
     end
 end

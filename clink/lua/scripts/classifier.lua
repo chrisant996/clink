@@ -10,6 +10,7 @@ local _classifiers = {}
 local _classifiers_unsorted = false
 
 if settings.get("lua.debug") or clink.DEBUG then
+    -- Make it possible to inspect these locals in the debugger.
     clink.debug = clink.debug or {}
     clink.debug._classifiers = _classifiers
 end
@@ -120,8 +121,9 @@ local function pad_string(s, len)
 end
 
 --------------------------------------------------------------------------------
-function clink._diag_classifiers()
-    if not settings.get("lua.debug") then
+function clink._diag_classifiers(arg)
+    arg = (arg and arg >= 2)
+    if not arg and not settings.get("lua.debug") then
         return
     end
 

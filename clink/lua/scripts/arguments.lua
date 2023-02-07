@@ -1684,6 +1684,7 @@ clink = clink or {}
 local _argmatchers = {}
 
 if settings.get("lua.debug") or clink.DEBUG then
+    -- Make it possible to inspect these locals in the debugger.
     clink.debug = clink.debug or {}
     clink.debug._argmatchers = _argmatchers
 end
@@ -2454,7 +2455,12 @@ local function spairs(t, order)
 end
 
 --------------------------------------------------------------------------------
-function clink._diag_argmatchers()
+function clink._diag_argmatchers(arg)
+    arg = (arg and arg >= 2)
+    if not arg then
+        return
+    end
+
     local bold = "\x1b[1m"          -- Bold (bright).
     local norm = "\x1b[m"           -- Normal.
 
@@ -2482,7 +2488,12 @@ function clink._diag_argmatchers()
 end
 
 --------------------------------------------------------------------------------
-function clink._diag_completions_dirs()
+function clink._diag_completions_dirs(arg)
+    arg = (arg and arg >= 1)
+    if not arg and not settings.get("lua.debug") then
+        return
+    end
+
     local bold = "\x1b[1m"          -- Bold (bright).
     local norm = "\x1b[m"           -- Normal.
 
