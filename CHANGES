@@ -5,6 +5,7 @@
 #### v1.4.17
 
 - Added `os.isuseradmin()` to get whether CMD is running as an admin account.
+- Added `os.getfileversion()` to get a table with version information if the file contains a Windows version info resource.
 - Added `clink.oninputlinechanged()` to register a function to be called whenever the input line is changed.
 - The `clink-diagnostics` command now reports costs for Lua event callback functions when a numeric arg is given (e.g. <kbd>Alt</kbd>-<kbd>1</kbd>,<kbd>Ctrl</kbd>-<kbd>x</kbd>,<kbd>Ctrl</kbd>-<kbd>z</kbd>) or when the `lua.debug` setting is enabled.
 
