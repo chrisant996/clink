@@ -138,6 +138,7 @@ template <class T> struct autoptr
     ~autoptr() { free(const_cast<remove_const_t<T>*>(m_p)); }
     autoptr<T>& operator=(const autoptr<T>& other) = delete;
     autoptr<T>& operator=(autoptr<T>&& other) { m_p = other.m_p; other.m_p = nullptr; }
+    T* get() const { return m_p; }
     T** operator&() const { return const_cast<T**>(&m_p); }
 private:
     T* m_p;

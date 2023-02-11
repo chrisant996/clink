@@ -205,6 +205,85 @@ int execute_thread::results(lua_State* state)
 
 
 //------------------------------------------------------------------------------
+static class delay_load_version
+{
+public:
+                        delay_load_version();
+    bool                init();
+    DWORD               GetFileVersionInfoSizeW(LPCWSTR lpstrFilename, LPDWORD lpdwHandle);
+    BOOL                GetFileVersionInfoW(LPCWSTR lpstrFilename, DWORD dwHandle, DWORD dwLen, LPVOID lpData);
+    BOOL                VerQueryValueW(LPCVOID pBlock, LPCWSTR lpSubBlock, LPVOID* lplpBuffer, PUINT puLen);
+private:
+    bool                m_initialized = false;
+    bool                m_ok = false;
+    union
+    {
+        FARPROC         proc[3];
+        struct {
+            DWORD (WINAPI* GetFileVersionInfoSizeW)(LPCWSTR lpstrFilename, LPDWORD lpdwHandle);
+            BOOL (WINAPI* GetFileVersionInfoW)(LPCWSTR lpstrFilename, DWORD dwHandle, DWORD dwLen, LPVOID lpData);
+            BOOL (WINAPI* VerQueryValueW)(LPCVOID pBlock, LPCWSTR lpSubBlock, LPVOID* lplpBuffer, PUINT puLen);
+        };
+    } m_procs;
+} s_version;
+
+//------------------------------------------------------------------------------
+delay_load_version::delay_load_version()
+{
+    ZeroMemory(&m_procs, sizeof(m_procs));
+}
+
+//------------------------------------------------------------------------------
+bool delay_load_version::init()
+{
+    if (!m_initialized)
+    {
+        m_initialized = true;
+        HMODULE hlib = LoadLibrary("version.dll");
+        if (hlib)
+        {
+            m_procs.proc[0] = GetProcAddress(hlib, "GetFileVersionInfoSizeW");
+            m_procs.proc[1] = GetProcAddress(hlib, "GetFileVersionInfoW");
+            m_procs.proc[2] = GetProcAddress(hlib, "VerQueryValueW");
+        }
+
+        m_ok = true;
+        for (auto const& proc : m_procs.proc)
+        {
+            if (!proc)
+            {
+                m_ok = false;
+                break;
+            }
+        }
+    }
+
+    return m_ok;
+}
+
+//------------------------------------------------------------------------------
+DWORD delay_load_version::GetFileVersionInfoSizeW(LPCWSTR lptstrFilename, LPDWORD lpdwHandle)
+{
+    if (!init())
+        return 0;
+    return m_procs.GetFileVersionInfoSizeW(lptstrFilename, lpdwHandle);
+}
+
+//------------------------------------------------------------------------------
+BOOL delay_load_version::GetFileVersionInfoW(LPCWSTR lpstrFilename, DWORD dwHandle, DWORD dwLen, LPVOID lpData)
+{
+    return init() && m_procs.GetFileVersionInfoW(lpstrFilename, dwHandle, dwLen, lpData);
+}
+
+//------------------------------------------------------------------------------
+BOOL delay_load_version::VerQueryValueW(LPCVOID pBlock, LPCWSTR lpSubBlock, LPVOID* lplpBuffer, PUINT puLen)
+{
+    return init() && m_procs.VerQueryValueW(pBlock, lpSubBlock, lplpBuffer, puLen);
+}
+
+
+
+//------------------------------------------------------------------------------
 /// -name:  os.chdir
 /// -ver:   1.0.0
 /// -arg:   path:string
@@ -1586,6 +1665,316 @@ static int is_user_admin(lua_State *state)
 }
 
 //------------------------------------------------------------------------------
+static bool maybe_rawset(lua_State *state, const char* name, const char* value)
+{
+    if (!value || !*value)
+        return false;
+
+    lua_pushstring(state, name);
+    lua_pushstring(state, value);
+    lua_rawset(state, -3);
+    return true;
+}
+
+//------------------------------------------------------------------------------
+/// -name:  os.getfileversion
+/// -ver:   1.4.17
+/// -arg:   file:string
+/// -ret:   table | nil
+/// This tries to get a Windows file version info resource from the specified
+/// file.  It tries to get translated strings in the closest available language
+/// to the current user language configured in the OS.
+///
+/// If successful, the returned table contains as many of the following fields
+/// as were available in the file's version info resource.
+/// -show:  local info = os.getfileversion("c:/windows/notepad.exe")
+/// -show:  -- info.filename            c:\windows\notepad.exe
+/// -show:  -- info.filevernum          10.0.19041.1865
+/// -show:  -- info.productvernum       10.0.19041.1865
+/// -show:  -- info.fileflags
+/// -show:  -- info.osplatform          Windows NT
+/// -show:  -- info.osqualifier
+/// -show:  -- info.comments
+/// -show:  -- info.companyname         Microsoft Corporation
+/// -show:  -- info.filedescription     Notepad
+/// -show:  -- info.fileversion         10.0.19041.1 (WinBuild.160101.0800)
+/// -show:  -- info.internalname        Notepad
+/// -show:  -- info.legalcopyright      © Microsoft Corporation. All rights reserved.
+/// -show:  -- info.legaltrademarks
+/// -show:  -- info.originalfilename    NOTEPAD.EXE.MUI
+/// -show:  -- info.productname         Microsoft® Windows® Operating System
+/// -show:  -- info.productversion      10.0.19041.1
+/// -show:  -- info.privatebuild
+/// -show:  -- info.specialbuild
+/// Note:  The <span class="arg">fileflags</span> field may be nil (omitted),
+/// or it may contain a table with additional fields.
+/// -show:  if info.fileflags then
+/// -show:  -- info.fileflags.debug
+/// -show:  -- info.fileflags.prerelease
+/// -show:  -- info.fileflags.patched
+/// -show:  -- info.fileflags.privatebuild
+/// -show:  -- info.fileflags.specialbuild
+/// -show:  end
+static int get_file_version(lua_State *state)
+{
+    const char* file = checkstring(state, 1);
+    if (!file)
+        return 0;
+
+    if (!s_version.init())
+        return 0;
+
+    str<> full_file;
+    str<> tmp;
+    void* pv;
+    UINT cb;
+
+    os::get_full_path_name(file, full_file);
+
+    globber globber(full_file.c_str());
+    globber.directories(false);
+    globber.hidden(true);
+    globber.system(true);
+
+    globber::extrainfo extra;
+    if (!globber.next(tmp, true, &extra))
+    {
+os_error:
+        map_errno();
+os_stringresult:
+        return lua_osstringresult(state, nullptr, false);
+    }
+
+    DWORD dwErr = 0;
+    DWORD dwHandle;
+    wstr<> wfile(full_file.c_str());
+    const DWORD dwSize = s_version.GetFileVersionInfoSizeW(wfile.c_str(), &dwHandle);
+    if (!dwSize)
+    {
+        dwErr = GetLastError();
+        if (dwErr == ERROR_RESOURCE_DATA_NOT_FOUND ||
+            dwErr == ERROR_RESOURCE_TYPE_NOT_FOUND ||
+            dwErr == ERROR_RESOURCE_NAME_NOT_FOUND ||
+            dwErr == ERROR_RESOURCE_LANG_NOT_FOUND)
+            dwErr = ERROR_FILE_NOT_FOUND;
+        map_errno(dwErr);
+        goto os_stringresult;
+    }
+
+    autoptr<BYTE> verinfo(static_cast<BYTE*>(malloc(dwSize)));
+    if (!verinfo.get())
+    {
+        map_errno(ERROR_OUTOFMEMORY);
+        goto os_stringresult;
+    }
+
+    if (!s_version.GetFileVersionInfoW(wfile.c_str(), dwHandle, dwSize, verinfo.get()))
+        goto os_error;
+
+    lua_createtable(state, 0, 10);
+
+    maybe_rawset(state, "filename", full_file.c_str());
+
+    pv = nullptr;
+    cb = 0;
+    if (s_version.VerQueryValueW(verinfo.get(), L"\\", &pv, &cb) && pv && cb)
+    {
+        const VS_FIXEDFILEINFO* const pffi = reinterpret_cast<const VS_FIXEDFILEINFO*>(pv);
+
+        tmp.format("%u.%u.%u.%u",
+            HIWORD(pffi->dwFileVersionMS),
+            LOWORD(pffi->dwFileVersionMS),
+            HIWORD(pffi->dwFileVersionLS),
+            LOWORD(pffi->dwFileVersionLS));
+        maybe_rawset(state, "filevernum", tmp.c_str());
+
+        tmp.format("%u.%u.%u.%u",
+            HIWORD(pffi->dwProductVersionMS),
+            LOWORD(pffi->dwProductVersionMS),
+            HIWORD(pffi->dwProductVersionLS),
+            LOWORD(pffi->dwProductVersionLS));
+            maybe_rawset(state, "productvernum", tmp.c_str());
+
+        struct FlagEntry
+        {
+            DWORD dw;
+            const char* psz;
+        };
+
+        {
+            static const FlagEntry c_file_flags[] =
+            {
+                { VS_FF_DEBUG, "debug" },
+                { VS_FF_PRERELEASE, "prerelease" },
+                { VS_FF_PATCHED, "patched" },
+                { VS_FF_PRIVATEBUILD, "privatebuild" },
+                { VS_FF_SPECIALBUILD, "specialbuild" },
+            };
+
+            lua_pushliteral(state, "fileflags");
+            lua_createtable(state, 0, 5);
+
+            bool any = false;
+            for (unsigned int ii = 0; ii < _countof(c_file_flags); ++ii)
+            {
+                if ((c_file_flags[ii].dw & pffi->dwFileFlagsMask) &&
+                    (c_file_flags[ii].dw & pffi->dwFileFlags))
+                {
+                    lua_pushstring(state, c_file_flags[ii].psz);
+                    lua_pushboolean(state, true);
+                    lua_rawset(state, -3);
+                    any = true;
+                }
+            }
+
+            if (any)
+                lua_rawset(state, -3);
+            else
+                lua_pop(state, 2);
+        }
+
+        {
+            static const FlagEntry c_platforms[] =
+            {
+                { VOS_DOS, "MSDOS" },
+                { VOS_OS216, "16-bit OS/2" },
+                { VOS_OS232, "32-bit OS/2" },
+                { VOS_NT, "Windows NT" },
+                { VOS_WINCE, "Windows CE" },
+            };
+
+            static const FlagEntry c_qualifiers[] =
+            {
+                { VOS__WINDOWS16, "16-bit Windows" },
+                { VOS__PM16, "16-bit Presentation Manager" },
+                { VOS__PM32, "32-bit Presentation Manager" },
+                { VOS__WINDOWS32, "32-bit Windows" },
+            };
+
+            DWORD dwFileOS = pffi->dwFileOS;
+            if (dwFileOS == VOS_NT_WINDOWS32)
+                dwFileOS = VOS_NT;
+
+            for (unsigned int ii = 0; ii < _countof(c_platforms); ++ii)
+            {
+                if (c_platforms[ii].dw == (dwFileOS & 0xffff0000))
+                {
+                    lua_pushliteral(state, "osplatform");
+                    lua_pushstring(state, c_platforms[ii].psz);
+                    lua_rawset(state, -3);
+                    break;
+                }
+            }
+            for (unsigned int ii = 0; ii < _countof(c_qualifiers); ++ii)
+            {
+                if (c_qualifiers[ii].dw == LOWORD(dwFileOS))
+                {
+                    lua_pushlightuserdata(state, "osqualifier");
+                    lua_pushstring(state, c_qualifiers[ii].psz);
+                    lua_rawset(state, -3);
+                    break;
+                }
+            }
+        }
+    }
+
+    // Get other predefined strings from translation string tables.  Yuck, what
+    // a heuristic mess.
+
+    struct LANGANDCODEPAGE
+    {
+        WORD wLanguage;
+        WORD wCodePage;
+    };
+
+    UINT dwTranslationsSize;
+    LANGANDCODEPAGE* pTranslations;
+    if (s_version.VerQueryValueW(verinfo.get(), L"\\VarFileInfo\\Translation", (void**)&pTranslations, &dwTranslationsSize))
+    {
+        // If there are multiple codepage for a language ID, favor the first
+        // codepage found, unless 1200 (UTF16) is found.
+        const LANGID userLang = GetUserDefaultLangID();
+        const LANGID systemLang = GetSystemDefaultLangID();
+        const LANGID englishLang = 0x409;
+        const WORD cpUnicode = 0x4b0;
+
+        const LANGANDCODEPAGE* userBest = nullptr;
+        const LANGANDCODEPAGE* systemBest = nullptr;
+        const LANGANDCODEPAGE* englishBest = nullptr;
+        const LANGANDCODEPAGE* neutralBest = nullptr;
+        for (unsigned int cTranslations = dwTranslationsSize / sizeof(LANGANDCODEPAGE); cTranslations--; pTranslations++)
+        {
+            if (pTranslations->wLanguage == userLang)
+            {
+                if (!userBest || pTranslations->wCodePage == cpUnicode)
+                    userBest = pTranslations;
+            }
+            else if (pTranslations->wLanguage == systemLang)
+            {
+                if (!systemBest || pTranslations->wCodePage == cpUnicode)
+                    systemBest = pTranslations;
+            }
+            else if (pTranslations->wLanguage == englishLang)
+            {
+                if (!englishBest || pTranslations->wCodePage == cpUnicode)
+                    englishBest = pTranslations;
+            }
+            else if (pTranslations->wLanguage == 0)
+            {
+                if (!neutralBest || pTranslations->wCodePage == cpUnicode)
+                    neutralBest = pTranslations;
+            }
+        }
+
+        const LANGANDCODEPAGE* const bestBest = (userBest ? userBest :
+                                                    systemBest ? systemBest :
+                                                    englishBest ? englishBest :
+                                                    neutralBest);
+
+        if (bestBest)
+        {
+            wstr<> translationPath;
+            translationPath.format(L"\\StringFileInfo\\%04x%04x\\", bestBest->wLanguage, bestBest->wCodePage);
+            const unsigned int len_translationPath = translationPath.length();
+
+            static const struct {
+                const WCHAR* stringName;
+                const char* fieldName;
+                DWORD requiredFlag;
+            } c_info[] = {
+                { L"Comments", "comments" },
+                { L"CompanyName", "companyname" },
+                { L"FileDescription", "filedescription" },
+                { L"FileVersion", "fileversion" },
+                { L"InternalName", "internalname" },
+                { L"LegalCopyright", "legalcopyright" },
+                { L"LegalTrademarks", "legaltrademarks" },
+                { L"OriginalFilename", "originalfilename" },
+                { L"PrivateBuild", "privatebuild", VS_FF_PRIVATEBUILD },
+                { L"ProductName", "productname" },
+                { L"ProductVersion", "productversion" },
+                { L"SpecialBuild", "specialbuild", VS_FF_SPECIALBUILD },
+            };
+
+            for (const auto& info : c_info)
+            {
+                pv = nullptr;
+                cb = 0;
+                translationPath.truncate(len_translationPath);
+                translationPath.concat(info.stringName);
+                if (s_version.VerQueryValueW(verinfo.get(), translationPath.c_str(), &pv, &cb) && pv && cb)
+                {
+                    tmp = static_cast<WCHAR*>(pv);
+                    maybe_rawset(state, info.fieldName, tmp.c_str());
+                }
+            }
+        }
+    }
+
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 void os_lua_initialise(lua_state& lua)
 {
     struct {
@@ -1631,6 +2020,7 @@ void os_lua_initialise(lua_state& lua)
         { "sleep",       &sleep },
         { "expandabbreviatedpath", &expand_abbreviated_path },
         { "isuseradmin", &is_user_admin },
+        { "getfileversion", &get_file_version },
         // UNDOCUMENTED; internal use only.
         { "_globdirs",   &glob_dirs },  // Public os.globdirs method is in core.lua.
         { "_globfiles",  &glob_files }, // Public os.globfiles method is in core.lua.
