@@ -1887,9 +1887,10 @@ An argmatcher can define a "delayed initialization" callback function that gets 
 
 ##### Delayed initialization for the argmatcher
 
-You can use [_argmatcher:setdelayinit()](#_argmatcher:setdelayinit) to set a function that performs delayed initialization for the argmatcher.  The function receives one parameter:
+You can use [_argmatcher:setdelayinit()](#_argmatcher:setdelayinit) to set a function that performs delayed initialization for the argmatcher.  The function receives one or two parameters:
 
 - `argmatcher` is the argmatcher to be initialized.
+- In Clink v1.3.12 and higher, `command_word` is the word in the command line that matched this argmatcher.
 
 If the definition needs to adapt based on the current directory or other criteria, then the callback function should first test whether the definition needs to change.  If so, first reset the argmatcher and then initialize it.  To reset the argmatcher, use [_argmatcher:reset()](#_argmatcher:reset) which resets it back to an empty, freshly created state.
 
@@ -1910,12 +1911,12 @@ local function init(argmatcher, command_word)
 end
 
 -- This function has the opportunity to reset and (re)initialize the argmatcher.
-local function ondelayinit(argmatcher)
+local function ondelayinit(argmatcher, command_word)
     local dir = os.getcwd()
-    if prev_dir ~= dir then  -- When current directory has changed,
-        prev_dir = dir      -- Remember the new current directory,
-        argmatcher:reset()  -- Reset the argmatcher,
-        init(argmatcher)    -- And re-initialize it.
+    if prev_dir ~= dir then             -- When current directory has changed,
+        prev_dir = dir                  -- Remember the new current directory,
+        argmatcher:reset()              -- Reset the argmatcher,
+        init(argmatcher, command_word)  -- And re-initialize it.
     end
 end
 
