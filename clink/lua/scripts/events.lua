@@ -311,7 +311,7 @@ end
 
 --------------------------------------------------------------------------------
 --- -name:  clink.oninputlinechanged
---- -ver:   1.4.17
+--- -ver:   1.4.18
 --- -arg:   func:function
 --- Registers <span class="arg">func</span> to be called after an editing
 --- command (key binding) makes changes in the input line.
@@ -351,6 +351,10 @@ end
 --- -show:  function clink.oninputlinechanged(func)
 --- -show:  &nbsp;   _add_event_callback("oninputlinechanged", func)
 --- -show:  end
+function clink.oninputlinechanged(func)
+    _add_event_callback("oninputlinechanged", func)
+end
+
 --------------------------------------------------------------------------------
 --- -name:  clink.onaftercommand
 --- -ver:   1.2.50
