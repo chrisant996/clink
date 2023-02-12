@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.4.17</title>
+<title>Clink v1.4.18</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -865,7 +865,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.4.17</div>
+                <div id="title">Clink v1.4.18</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -6148,7 +6148,7 @@ end</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#clink.onfilterinput"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="clink.onfilterinput">clink.onfilterinput</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil<br/><div class="version">v1.2.16 and newer</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called after Clink's edit prompt ends (it is called after the <a href="#clink.onendedit">onendedit</a> event).  The function receives a string argument containing the input text from the edit prompt.  The function returns up to two values.  If the first is not nil then it's a string that replaces the edit prompt text.  If the second is not nil and is false then it stops further onfilterinput handlers from running.</p><p class="desc"> Starting in v1.3.13 <span class="arg">func</span> may return a table of strings, and each is executed as a command line.</p><p class="desc"> <strong>Note:</strong>  Be very careful if you replace the text; this has the potential to interfere with or even ruin the user's ability to enter command lines for CMD to process.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#clink.onfiltermatches"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="clink.onfiltermatches">clink.onfiltermatches</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil<br/><div class="version">v1.1.41 and newer</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called after Clink generates matches for completion.  See <a href="#filteringmatchcompletions"> Filtering Match Completions</a> for more information.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#clink.oninject"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="clink.oninject">clink.oninject</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil<br/><div class="version">v1.1.21 and newer</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called when Clink is injected into a CMD process.  The function is called only once per session.</p></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#clink.oninputlinechanged"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="clink.oninputlinechanged">clink.oninputlinechanged</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil<br/><div class="version">v1.4.17 and newer</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called after an editing command (key binding) makes changes in the input line.</p><p class="desc"> The function receives one argument, a <span class="arg">line</span> string which contains the new contents of the input line.</p><p class="desc"> The function has no return values.</p><p class="desc"> Here is a script that demonstrates a lighthearted example of how this could be used.  Any time the input line contains "marco" it replaces the prompt with "POLO!".</p><pre class="language-lua"><code>local has_marco
+<div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#clink.oninputlinechanged"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="clink.oninputlinechanged">clink.oninputlinechanged</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil<br/><div class="version">v1.4.18 and newer</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called after an editing command (key binding) makes changes in the input line.</p><p class="desc"> The function receives one argument, a <span class="arg">line</span> string which contains the new contents of the input line.</p><p class="desc"> The function has no return values.</p><p class="desc"> Here is a script that demonstrates a lighthearted example of how this could be used.  Any time the input line contains "marco" it replaces the prompt with "POLO!".</p><pre class="language-lua"><code>local has_marco
 local polo = clink.promptfilter(-1)
 
 function polo:filter()
@@ -6927,11 +6927,14 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes"><div class="wlink"><a href="#changes"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork"><div class="wlink"><a href="#releases-from-chrisant996clink-fork"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1418"><div class="wlink"><a href="#v1418"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>v1.4.18</h4>
+<ul>
+<li>Added <code>clink.oninputlinechanged()</code> to register a function to be called whenever the input line is changed.</li>
+</ul>
 <h4 id="v1417"><div class="wlink"><a href="#v1417"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>v1.4.17</h4>
 <ul>
 <li>Added <code>os.isuseradmin()</code> to get whether CMD is running as an admin account.</li>
 <li>Added <code>os.getfileversion()</code> to get a table with version information if the file contains a Windows version info resource.</li>
-<li>Added <code>clink.oninputlinechanged()</code> to register a function to be called whenever the input line is changed.</li>
 <li>The <code>clink-diagnostics</code> command now reports costs for Lua event callback functions when a numeric arg is given (e.g. <kbd>Alt</kbd>-<kbd>1</kbd>,<kbd>Ctrl</kbd>-<kbd>x</kbd>,<kbd>Ctrl</kbd>-<kbd>z</kbd>) or when the <code>lua.debug</code> setting is enabled.</li>
 </ul>
 <h4 id="v1416"><div class="wlink"><a href="#v1416"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>v1.4.16</h4>
