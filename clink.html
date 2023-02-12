@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.4.16</title>
+<title>Clink v1.4.17</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -865,7 +865,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.4.16</div>
+                <div id="title">Clink v1.4.17</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -4174,9 +4174,10 @@ clink.argmatcher(&quot;foo&quot;)
 <p>An argmatcher can define a &quot;delayed initialization&quot; callback function that gets calls when the argmatcher gets used, allowing it to defer potentially expensive initialization work until it&#39;s actually needed.  An argmatcher can also define a separate &quot;delayed initialization&quot; function for each argument position.</p>
 <p><a name="argmatcher_setdelayinit"></a></p>
 <h5 id="delayed-initialization-for-the-argmatcher"><div class="wlink"><a href="#argmatcher_setdelayinit"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Delayed initialization for the argmatcher</h5>
-<p>You can use <a href="#_argmatcher:setdelayinit">_argmatcher:setdelayinit()</a> to set a function that performs delayed initialization for the argmatcher.  The function receives one parameter:</p>
+<p>You can use <a href="#_argmatcher:setdelayinit">_argmatcher:setdelayinit()</a> to set a function that performs delayed initialization for the argmatcher.  The function receives one or two parameters:</p>
 <ul>
 <li><code>argmatcher</code> is the argmatcher to be initialized.</li>
+<li>In Clink v1.3.12 and higher, <code>command_word</code> is the word in the command line that matched this argmatcher.</li>
 </ul>
 <p>If the definition needs to adapt based on the current directory or other criteria, then the callback function should first test whether the definition needs to change.  If so, first reset the argmatcher and then initialize it.  To reset the argmatcher, use <a href="#_argmatcher:reset">_argmatcher:reset()</a> which resets it back to an empty, freshly created state.</p>
 <pre><code class="language-lua">local prev_dir = &quot;&quot;
@@ -4195,12 +4196,12 @@ local function init(argmatcher, command_word)
 end
 
 -- This function has the opportunity to reset and (re)initialize the argmatcher.
-local function ondelayinit(argmatcher)
+local function ondelayinit(argmatcher, command_word)
     local dir = os.getcwd()
-    if prev_dir ~= dir then  -- When current directory has changed,
-        prev_dir = dir      -- Remember the new current directory,
-        argmatcher:reset()  -- Reset the argmatcher,
-        init(argmatcher)    -- And re-initialize it.
+    if prev_dir ~= dir then             -- When current directory has changed,
+        prev_dir = dir                  -- Remember the new current directory,
+        argmatcher:reset()              -- Reset the argmatcher,
+        init(argmatcher, command_word)  -- And re-initialize it.
     end
 end
 
@@ -6147,6 +6148,33 @@ end</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#clink.onfilterinput"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="clink.onfilterinput">clink.onfilterinput</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil<br/><div class="version">v1.2.16 and newer</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called after Clink's edit prompt ends (it is called after the <a href="#clink.onendedit">onendedit</a> event).  The function receives a string argument containing the input text from the edit prompt.  The function returns up to two values.  If the first is not nil then it's a string that replaces the edit prompt text.  If the second is not nil and is false then it stops further onfilterinput handlers from running.</p><p class="desc"> Starting in v1.3.13 <span class="arg">func</span> may return a table of strings, and each is executed as a command line.</p><p class="desc"> <strong>Note:</strong>  Be very careful if you replace the text; this has the potential to interfere with or even ruin the user's ability to enter command lines for CMD to process.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#clink.onfiltermatches"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="clink.onfiltermatches">clink.onfiltermatches</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil<br/><div class="version">v1.1.41 and newer</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called after Clink generates matches for completion.  See <a href="#filteringmatchcompletions"> Filtering Match Completions</a> for more information.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#clink.oninject"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="clink.oninject">clink.oninject</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil<br/><div class="version">v1.1.21 and newer</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called when Clink is injected into a CMD process.  The function is called only once per session.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#clink.oninputlinechanged"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="clink.oninputlinechanged">clink.oninputlinechanged</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil<br/><div class="version">v1.4.17 and newer</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called after an editing command (key binding) makes changes in the input line.</p><p class="desc"> The function receives one argument, a <span class="arg">line</span> string which contains the new contents of the input line.</p><p class="desc"> The function has no return values.</p><p class="desc"> Here is a script that demonstrates a lighthearted example of how this could be used.  Any time the input line contains "marco" it replaces the prompt with "POLO!".</p><pre class="language-lua"><code>local has_marco
+local polo = clink.promptfilter(-1)
+
+function polo:filter()
+&nbsp;   if has_marco then
+&nbsp;       return "\x1b[44;96mPOLO!\x1b[m ", false
+&nbsp;   end
+end
+
+local function onbeginedit()
+&nbsp;   has_marco = nil
+end
+
+local function oninputlinechanged(line)
+&nbsp;   local new_marco = line:find("marco") and true
+&nbsp;   if has_marco ~= new_marco then
+&nbsp;       has_marco = new_marco
+&nbsp;       clink.refilterprompt()
+&nbsp;   end
+end
+
+clink.onbeginedit(onbeginedit)
+clink.oninputlinechanged(oninputlinechanged)
+
+function clink.oninputlinechanged(func)
+&nbsp;   _add_event_callback("oninputlinechanged", func)
+end</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#clink.onprovideline"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="clink.onprovideline">clink.onprovideline</a></div> <div class="signature">( <span class="arg_name">func</span>:function ) : nil | string<br/><div class="version">v1.3.18 and newer</div></div></div><div class="body"><p class="desc">Registers <span class="arg">func</span> to be called after the <a href="#clink.onbeginedit">onbeginedit</a> event but before the input line editor starts.  If <span class="arg">func</span> returns a string, it is executed as a command line without showing a prompt.  The input line editor is skipped, and the <a href="#clink.onendedit">onendedit</a> and <a href="#clink.onfilterinput">onfilterinput</a> events happen immediately.</p><p class="desc"> <strong>Note:</strong>  Be very careful when returning a string; this can interfere with the user's ability to use CMD.  Mistakes in the command string can have potential to cause damage to the system very quickly.  It is also possible for a script to cause an infinite loop, and therefore <kbd>Ctrl</kbd>-<kbd>Break</kbd> skips the next <a href="#clink.onprovideline">onprovideline</a> event, allowing the user to regain control.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#clink.parseline"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="clink.parseline">clink.parseline</a></div> <div class="signature">( <span class="arg_name">line</span>:string ) : table<br/><div class="version">v1.3.37 and newer</div></div></div><div class="body"><p class="desc">This parses the <span class="arg">line</span> string into a table of commands, with one <a href="#line_state">line_state</a> for each command parsed from the line string.</p><p class="desc"> The returned table of tables has the following scheme:</p><pre class="language-lua"><code>local commands = clink.parseline("echo hello & echo world")
 -- commands[1].line_state corresponds to "echo hello".
@@ -6410,6 +6438,31 @@ end</code></pre></div></div><hr/>
 -- t[index].name        [string] The environment variable's name.
 -- t[index].value       [string] The environment variable's value.</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#os.geterrorlevel"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="os.geterrorlevel">os.geterrorlevel</a></div> <div class="signature">() : integer<br/><div class="version">v1.2.14 and newer</div></div></div><div class="body"><p class="desc">Returns the last command's exit code, if the <code><a href="#cmd_get_errorlevel">cmd.get_errorlevel</a></code> setting is enabled.  Otherwise it returns 0.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#os.getfileversion"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="os.getfileversion">os.getfileversion</a></div> <div class="signature">( <span class="arg_name">file</span>:string ) : table | nil<br/><div class="version">v1.4.17 and newer</div></div></div><div class="body"><p class="desc">This tries to get a Windows file version info resource from the specified file.  It tries to get translated strings in the closest available language to the current user language configured in the OS.</p><p class="desc"> If successful, the returned table contains as many of the following fields as were available in the file's version info resource.</p><pre class="language-lua"><code>local info = os.getfileversion("c:/windows/notepad.exe")
+-- info.filename            c:\windows\notepad.exe
+-- info.filevernum          10.0.19041.1865
+-- info.productvernum       10.0.19041.1865
+-- info.fileflags
+-- info.osplatform          Windows NT
+-- info.osqualifier
+-- info.comments
+-- info.companyname         Microsoft Corporation
+-- info.filedescription     Notepad
+-- info.fileversion         10.0.19041.1 (WinBuild.160101.0800)
+-- info.internalname        Notepad
+-- info.legalcopyright      © Microsoft Corporation. All rights reserved.
+-- info.legaltrademarks
+-- info.originalfilename    NOTEPAD.EXE.MUI
+-- info.productname         Microsoft® Windows® Operating System
+-- info.productversion      10.0.19041.1
+-- info.privatebuild
+-- info.specialbuild</code></pre><p class="desc">Note:  The <span class="arg">fileflags</span> field may be nil (omitted), or it may contain a table with additional fields.</p><pre class="language-lua"><code>if info.fileflags then
+-- info.fileflags.debug
+-- info.fileflags.prerelease
+-- info.fileflags.patched
+-- info.fileflags.privatebuild
+-- info.fileflags.specialbuild
+end</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#os.getfullpathname"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="os.getfullpathname">os.getfullpathname</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : string<br/><div class="version">v1.1.42 and newer</div></div></div><div class="body"><p class="desc">Returns the full path name for <span class="arg">path</span>. If unsuccessful it returns nil, an error message, and the error number.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#os.gethost"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="os.gethost">os.gethost</a></div> <div class="signature">() : string<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Returns the fully qualified file name of the host process.  Currently only CMD.EXE can host Clink.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#os.getlongpathname"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="os.getlongpathname">os.getlongpathname</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : string<br/><div class="version">v1.1.42 and newer</div></div></div><div class="body"><p class="desc">Returns the long path name for <span class="arg">path</span>. If unsuccessful it returns nil, an error message, and the error number.</p></div></div><hr/>
@@ -6451,6 +6504,7 @@ local t = os.globfiles("*", true, flags)</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#os.isdir"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="os.isdir">os.isdir</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Returns whether <span class="arg">path</span> is a directory.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#os.isfile"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="os.isfile">os.isfile</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Returns whether <span class="arg">path</span> is a file.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#os.issignaled"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="os.issignaled">os.issignaled</a></div> <div class="signature">() : boolean<br/><div class="version">v1.3.14 and newer</div></div></div><div class="body"><p class="desc">Returns whether a <kbb>Ctrl</kbd>+<kbd>Break</kbd> has been received. Scripts may use this to decide when to end work early.</p></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#os.isuseradmin"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="os.isuseradmin">os.isuseradmin</a></div> <div class="signature">() : boolean<br/><div class="version">v1.4.17 and newer</div></div></div><div class="body"><p class="desc">Returns true if running as an administrator account.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#os.mkdir"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="os.mkdir">os.mkdir</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : boolean<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Creates the directory <span class="arg">path</span> and returns whether it was successful. If unsuccessful it returns false, an error message, and the error number.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#os.move"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="os.move">os.move</a></div> <div class="signature">( <span class="arg_name">src</span>:string, <span class="arg_name">dest</span>:string ) : boolean<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Moves the <span class="arg">src</span> file to the <span class="arg">dest</span> file. If unsuccessful it returns false, an error message, and the error number.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#os.resolvealias"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="os.resolvealias">os.resolvealias</a></div> <div class="signature">( <span class="arg_name">text</span>:string ) : table|nil<br/><div class="version">v1.3.12 and newer</div></div></div><div class="body"><p class="desc">Identifies whether <span class="arg">text</span> begins with a doskey alias, and expands the doskey alias.</p><p class="desc"> Returns a table of strings, or nil if there is no associated doskey alias. The return type is a table of strings because doskey aliases can be defined to expand into multiple command lines:  one entry in the table per resolved command line.  Most commonly, the table will contain one string.</p></div></div><hr/>
@@ -6873,6 +6927,13 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes"><div class="wlink"><a href="#changes"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork"><div class="wlink"><a href="#releases-from-chrisant996clink-fork"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1417"><div class="wlink"><a href="#v1417"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>v1.4.17</h4>
+<ul>
+<li>Added <code>os.isuseradmin()</code> to get whether CMD is running as an admin account.</li>
+<li>Added <code>os.getfileversion()</code> to get a table with version information if the file contains a Windows version info resource.</li>
+<li>Added <code>clink.oninputlinechanged()</code> to register a function to be called whenever the input line is changed.</li>
+<li>The <code>clink-diagnostics</code> command now reports costs for Lua event callback functions when a numeric arg is given (e.g. <kbd>Alt</kbd>-<kbd>1</kbd>,<kbd>Ctrl</kbd>-<kbd>x</kbd>,<kbd>Ctrl</kbd>-<kbd>z</kbd>) or when the <code>lua.debug</code> setting is enabled.</li>
+</ul>
 <h4 id="v1416"><div class="wlink"><a href="#v1416"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>v1.4.16</h4>
 <ul>
 <li>Added <code>history.show_preview</code> setting that controls whether to show a preview of history expansions (previously it was inferred by whether <code>color.histexpand</code> was set).</li>
