@@ -939,21 +939,21 @@ TEST_CASE("Lua arg parsers")
         {
             lua.send_event("onbeginedit");
             tester.set_input("adapt x \x1b*");
-            tester.set_expected_output("adapt x ma \"mb1(2)\" ");
+            tester.set_expected_output("adapt x ma mb1(2) ");
             tester.run();
             lua_pushlstring(lua.get_state(), "adapt", 5);
             lua.send_event("onendedit", 1);
 
             lua.send_event("onbeginedit");
             tester.set_input("adapt x \x1b*");
-            tester.set_expected_output("adapt x ma \"mb1(2)\" ");
+            tester.set_expected_output("adapt x ma mb1(2) ");
             tester.run();
             lua_pushlstring(lua.get_state(), "reset", 5);
             lua.send_event("onendedit", 1);
 
             lua.send_event("onbeginedit");
             tester.set_input("adapt x \x1b*");
-            tester.set_expected_output("adapt x ma \"mb3(2)\" ");
+            tester.set_expected_output("adapt x ma mb3(2) ");
             tester.run();
             lua_pushlstring(lua.get_state(), "adapt", 5);
             lua.send_event("onendedit", 1);
