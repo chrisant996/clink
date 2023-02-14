@@ -4,7 +4,7 @@
 
 #### v1.4.19
 
-- Added `builder:setforcequoting()` to force quoting rules to be applied to matches even if they aren't filenames.  This also reverts "quoting for non-filename completions" in v1.4.13; there isn't a safe and backward-compatible way to automatically deduce when non-filenames matches need quoting, so the match generator needs to turn it on explicitly when appropriate.
+- Added `builder:setforcequoting()` to force quoting rules to be applied to matches even if they aren't filenames.  This also reverts "quoting for non-filename completions" in v1.4.13; there isn't a safe and backward-compatible way to automatically deduce when non-filenames matches need quoting, so a match generator needs to turn it on explicitly when desired.
 
 #### v1.4.18
 
