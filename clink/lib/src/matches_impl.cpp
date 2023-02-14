@@ -294,6 +294,12 @@ void match_builder::set_suppress_quoting(int suppress)
 }
 
 //------------------------------------------------------------------------------
+void match_builder::set_force_quoting()
+{
+    return ((matches_impl&)m_matches).set_force_quoting();
+}
+
+//------------------------------------------------------------------------------
 void match_builder::set_no_sort()
 {
     return ((matches_impl&)m_matches).set_no_sort();
@@ -782,6 +788,12 @@ int matches_impl::get_suppress_quoting() const
 }
 
 //------------------------------------------------------------------------------
+bool matches_impl::get_force_quoting() const
+{
+    return m_force_quoting;
+}
+
+//------------------------------------------------------------------------------
 int matches_impl::get_word_break_position() const
 {
     return m_word_break_position;
@@ -827,6 +839,7 @@ void matches_impl::reset()
     m_coalesced = false;
     m_append_character = '\0';
     m_suppress_append = false;
+    m_force_quoting = false;
     m_regen_blocked = false;
     m_nosort = false;
     m_volatile = false;
@@ -853,6 +866,7 @@ void matches_impl::transfer(matches_impl& from)
     m_coalesced = from.m_coalesced;
     m_append_character = from.m_append_character;
     m_suppress_append = from.m_suppress_append;
+    m_force_quoting = from.m_force_quoting;
     m_regen_blocked = from.m_regen_blocked;
     m_nosort = from.m_nosort;
     m_volatile = from.m_volatile;
@@ -890,6 +904,14 @@ void matches_impl::set_suppress_append(bool suppress)
 void matches_impl::set_suppress_quoting(int suppress)
 {
     m_suppress_quoting = suppress;
+    m_force_quoting = false;
+}
+
+//------------------------------------------------------------------------------
+void matches_impl::set_force_quoting()
+{
+    m_suppress_quoting = 0;
+    m_force_quoting = true;
 }
 
 //------------------------------------------------------------------------------

@@ -196,6 +196,7 @@ public:
     virtual shadow_bool     is_filename_display_desired() const = 0;
     virtual char            get_append_character() const = 0;
     virtual int             get_suppress_quoting() const = 0;
+    virtual bool            get_force_quoting() const = 0;
     virtual int             get_word_break_position() const = 0;
     virtual bool            match_display_filter(const char* needle, char** matches, match_display_filter_entry*** filtered_matches, display_filter_flags flags, bool* old_filtering=nullptr) const = 0;
     virtual bool            filter_matches(char** matches, char completion_type, bool filename_completion_desired) const = 0;
@@ -244,6 +245,7 @@ public:
     void                    set_append_character(char append);
     void                    set_suppress_append(bool suppress=true);
     void                    set_suppress_quoting(int suppress=1); //0=no, 1=yes, 2=suppress end quote
+    void                    set_force_quoting();
     void                    set_no_sort();
     void                    set_volatile();
 

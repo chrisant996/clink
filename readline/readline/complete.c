@@ -1798,6 +1798,22 @@ remove_duplicate_matches (char **matches)
   return (temp_array);
 }
 
+/* begin_clink_change PRIVATE */
+int
+rl_need_match_quoting (const char *match)
+{
+#if !defined (_WIN32)
+  // On Windows, quoting is also needed for non-filename completion.
+  if (!rl_filename_completion_desired)
+    return 0;
+#endif
+
+  return (rl_filename_quoting_desired &&
+	  rl_filename_quote_characters &&
+	  _rl_strpbrk (match, rl_filename_quote_characters) != 0);
+}
+/* end_clink_change PRIVATE */
+
 /* Find the common prefix of the list of matches, and put it into
    matches[0]. */
 static int
@@ -1814,11 +1830,11 @@ compute_lcd_of_matches (char **match_list, int matches, const char *text)
   WCHAR_T wc1, wc2;
 #endif
 
-/* begin_clink_change */
-  int test_for_quoting = rl_completer_quote_characters && rl_filename_quote_characters;
+/* begin_clink_change PRIVATE */
+  int test_for_quoting = rl_completer_quote_characters && (rl_filename_quote_characters || rl_completer_word_break_characters);
   int any_need_quoting = 0;
   quote_lcd = 0;
-/* end_clink_change */
+/* end_clink_change PRIVATE */
 
   /* If only one match, just use that.  Otherwise, compare each
      member of the list with the next, finding out where they
@@ -1834,14 +1850,14 @@ compute_lcd_of_matches (char **match_list, int matches, const char *text)
       return 1;
     }
 
-/* begin_clink_change */
+/* begin_clink_change PRIVATE */
   if (test_for_quoting && matches > 1)
     {
-      any_need_quoting = _rl_strpbrk (match_list[1], rl_filename_quote_characters) != 0;
+      any_need_quoting = rl_need_match_quoting (match_list[1]);
       if (any_need_quoting)
 	test_for_quoting = 0;
     }
-/* end_clink_change */
+/* end_clink_change PRIVATE */
 
   for (i = 1, low = 100000; i < matches; i++)
     {
@@ -1905,14 +1921,14 @@ compute_lcd_of_matches (char **match_list, int matches, const char *text)
 	      break;
 	  }
 
-/* begin_clink_change */
+/* begin_clink_change PRIVATE */
       if (test_for_quoting)
 	{
-	  any_need_quoting = _rl_strpbrk (match_list[i+1], rl_filename_quote_characters) != 0;
+	  any_need_quoting = rl_need_match_quoting (match_list[i+1]);
 	  if (any_need_quoting)
 	    test_for_quoting = 0;
 	}
-/* end_clink_change */
+/* end_clink_change PRIVATE */
 
       if (low > si)
 	low = si;
@@ -1981,18 +1997,22 @@ compute_lcd_of_matches (char **match_list, int matches, const char *text)
       else
         strncpy (match_list[0], match_list[1], low);
 
-/* begin_clink_change */
+/* begin_clink_change PRIVATE */
       if (any_need_quoting)
-	for (i = 1; i <= matches; i++)
-	  {
-	    char c1 = match_list[i][low];
-	    if (c1 && strchr (rl_filename_quote_characters, c1))
-	      {
-		quote_lcd = 1;
-		break;
-	      }
+	{
+	  char c1[2];
+	  c1[1] = '\0';
+	  for (i = 1; i <= matches; i++)
+	    {
+	      c1[0] = match_list[i][low];
+	      if (c1[0] && rl_need_match_quoting (c1))
+		{
+		  quote_lcd = 1;
+		  break;
+		}
+	    }
 	  }
-/* end_clink_change */
+/* end_clink_change PRIVATE */
 
       match_list[0][low] = '\0';
     }
@@ -2010,11 +2030,10 @@ postprocess_matches (char ***matchesp, int matching_filenames)
   char *t, **matches, **temp_matches;
   int nmatch, i;
 
-/* begin_clink_change
- * Always postprocess matches even if they're not filenames.
- */
+/* begin_clink_change PRIVATE */
+  /* Always postprocess matches even if they're not filenames. */
   matching_filenames = 1;
-/* end_clink_change */
+/* end_clink_change PRIVATE */
 
   matches = *matchesp;
 
@@ -2405,11 +2424,11 @@ make_quoted_replacement (char *match, int mtype, char *qc)
   replacement = match;
 
   should_quote = match && rl_completer_quote_characters &&
-/* begin_clink_change
- * On Windows, quoting is also needed for non-filename completion, so
- * rl_filename_quoting_desired alone says whether quoting is desired. */
+/* begin_clink_change PRIVATE */
+  /* On Windows, quoting is also needed for non-filename completion, so
+   * rl_need_match_quoting(match) says whether quoting is desired. */
 			//rl_filename_completion_desired &&
-/* end_clink_change */
+/* end_clink_change PRIVATE */
 			rl_filename_quoting_desired;
 
   if (should_quote)
@@ -2421,14 +2440,13 @@ make_quoted_replacement (char *match, int mtype, char *qc)
       /* If there is a single match, see if we need to quote it.
          This also checks whether the common prefix of several
 	 matches needs to be quoted. */
-/* begin_clink_change */
-      const char *quotable_match = match + (!rl_complete_with_tilde_expansion && match[0] == '~');
-      should_quote = rl_filename_quote_characters
+/* begin_clink_change PRIVATE */
+      //should_quote = rl_filename_quote_characters
 			//? (_rl_strpbrk (match, rl_filename_quote_characters) != 0)
-			? (_rl_strpbrk (quotable_match, rl_filename_quote_characters) != 0)
-			: 0;
-      should_quote |= force_quoting;
-/* end_clink_change */
+			//: 0;
+      const char *quotable_match = match + (!rl_complete_with_tilde_expansion && match[0] == '~');
+      should_quote = force_quoting || rl_need_match_quoting (match);
+/* end_clink_change PRIVATE */
 
       do_replace = should_quote ? mtype : NO_MATCH;
       /* Quote the replacement, since we found an embedded

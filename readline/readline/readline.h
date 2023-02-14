@@ -539,6 +539,10 @@ extern int rl_is_path_separator PARAMS((char c));
 extern char *rl_last_path_separator PARAMS((const char *string));
 /* end_clink_change */
 
+/* begin_clink_change PRIVATE */
+extern int rl_need_match_quoting PARAMS((const char *match));
+/* end_clink_change PRIVATE */
+
 #if 0
 /* Backwards compatibility (compat.c).  These will go away sometime. */
 extern void free_undo_list PARAMS((void));

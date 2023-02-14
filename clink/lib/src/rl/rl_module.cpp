@@ -1492,6 +1492,9 @@ void update_rl_modes_from_matches(const matches* matches, const matches_iter& it
     rl_filename_completion_desired = iter.is_filename_completion_desired();
     rl_filename_display_desired = iter.is_filename_display_desired();
 
+    if (!rl_filename_completion_desired && !matches->get_force_quoting())
+        rl_filename_quoting_desired = 0;
+
 #ifdef DEBUG
     if (dbg_get_env_int("DEBUG_MATCHES"))
     {
@@ -1502,6 +1505,7 @@ void update_rl_modes_from_matches(const matches* matches, const matches_iter& it
         printf("is suppress append = %d\n", matches->is_suppress_append());
         printf("get append character = %u\n", (unsigned char)matches->get_append_character());
         printf("get suppress quoting = %d\n", matches->get_suppress_quoting());
+        printf("get force quoting = %d\n", matches->get_force_quoting());
     }
 #endif
 }

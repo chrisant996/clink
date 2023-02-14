@@ -1698,12 +1698,7 @@ void selectcomplete_impl::insert_needle()
         !rl_completion_found_quote &&
         rl_completer_quote_characters &&
         rl_completer_quote_characters[0] &&
-        // On Windows, quoting is also needed for non-filename completion, so
-        // rl_filename_quoting_desired alone says whether quoting is desired.
-        //rl_filename_completion_desired &&
-        rl_filename_quoting_desired &&
-        rl_filename_quote_characters &&
-        _rl_strpbrk(match, rl_filename_quote_characters) != 0)
+        rl_need_match_quoting(match))
     {
         qs[0] = rl_completer_quote_characters[0];
         m_quoted = true;
@@ -1746,12 +1741,7 @@ void selectcomplete_impl::insert_match(int final)
         !rl_completion_found_quote &&
         rl_completer_quote_characters &&
         rl_completer_quote_characters[0] &&
-        // On Windows, quoting is also needed for non-filename completion, so
-        // rl_filename_quoting_desired alone says whether quoting is desired.
-        //rl_filename_completion_desired &&
-        rl_filename_quoting_desired &&
-        rl_filename_quote_characters &&
-        _rl_strpbrk(match, rl_filename_quote_characters) != 0)
+        rl_need_match_quoting(match))
     {
         qs[0] = rl_completer_quote_characters[0];
         m_quoted = true;

@@ -18,6 +18,7 @@ const match_builder_lua::method match_builder_lua::c_methods[] = {
     { "setappendcharacter", &set_append_character },
     { "setsuppressappend",  &set_suppress_append },
     { "setsuppressquoting", &set_suppress_quoting },
+    { "setforcequoting",    &set_force_quoting },
     { "setnosort",          &set_no_sort },
     { "setvolatile",        &set_volatile },
     // Only for backward compatibility:
@@ -206,6 +207,16 @@ int match_builder_lua::set_suppress_quoting(lua_State* state)
 
     m_builder->set_suppress_quoting(suppress);
 
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+/// -name:  builder:setforcequoting
+/// -ver:   1.4.19
+/// Forces quoting rules to be applied to matches even if they aren't filenames.
+int match_builder_lua::set_force_quoting(lua_State* state)
+{
+    m_builder->set_force_quoting();
     return 0;
 }
 

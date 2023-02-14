@@ -77,6 +77,7 @@ public:
     virtual shadow_bool     is_filename_display_desired() const override;
     virtual char            get_append_character() const override;
     virtual int             get_suppress_quoting() const override;
+    virtual bool            get_force_quoting() const override;
     virtual int             get_word_break_position() const override;
     virtual bool            match_display_filter(const char* needle, char** matches, match_display_filter_entry*** filtered_matches, display_filter_flags flags, bool* old_filtering=nullptr) const override;
     virtual bool            filter_matches(char** matches, char completion_type, bool filename_completion_desired) const override;
@@ -107,6 +108,7 @@ private:
     void                    set_append_character(char append);
     void                    set_suppress_append(bool suppress);
     void                    set_suppress_quoting(int suppress);
+    void                    set_force_quoting();
     void                    set_deprecated_mode();
     void                    set_matches_are_files(bool files);
     void                    set_no_sort();
@@ -140,6 +142,7 @@ private:
     bool                    m_coalesced = false;
     char                    m_append_character = '\0';
     bool                    m_suppress_append = false;
+    bool                    m_force_quoting = false;
     bool                    m_regen_blocked = false;
     bool                    m_nosort = false;
     bool                    m_volatile = false;

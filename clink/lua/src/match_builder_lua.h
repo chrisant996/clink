@@ -25,6 +25,7 @@ public:
     int             set_append_character(lua_State* state);
     int             set_suppress_append(lua_State* state);
     int             set_suppress_quoting(lua_State* state);
+    int             set_force_quoting(lua_State* state);
     int             set_no_sort(lua_State* state);
     int             set_volatile(lua_State* state);
 
