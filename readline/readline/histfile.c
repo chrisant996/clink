@@ -630,10 +630,10 @@ history_truncate_file (const char *fname, int lines)
       if (write (file, bp, chars_read - (bp - buffer)) < 0)
 	rv = errno;
 
-      if (fstat (file, &nfinfo) < 0 && rv == 0)
+      if (rv == 0 && fstat (file, &nfinfo) < 0)
 	rv = errno;
 
-      if (close (file) < 0 && rv == 0)
+      if (rv == 0 && close (file) < 0)
 	rv = errno;
     }
   else
@@ -668,6 +668,38 @@ history_truncate_file (const char *fname, int lines)
   FREE (tempname);
 
   return rv;
+}
+
+/* Use stdio to write the history file after mmap or malloc fails, on the
+   assumption that the stdio library can allocate the smaller buffers it uses. */
+static int
+history_write_slow (int fd, HIST_ENTRY **the_history, int nelements, int overwrite)
+{
+  FILE *fp;
+  int i, j, e;
+
+  fp = fdopen (fd, overwrite ? "w" : "a");
+  if (fp == 0)
+    return -1;
+
+  for (j = 0, i = history_length - nelements; i < history_length; i++)
+    {
+      if (history_write_timestamps && the_history[i]->timestamp && the_history[i]->timestamp[0])
+	fprintf (fp, "%s\n", the_history[i]->timestamp);
+      if (fprintf (fp, "%s\n", the_history[i]->line) < 0)
+	goto slow_write_error;
+    }
+  if (fflush (fp) < 0)
+    {
+slow_write_error:
+      e = errno;
+      fclose (fp);
+      errno = e;
+      return -1;
+    }
+  if (fclose (fp) < 0)
+    return -1;
+  return 0;
 }
 
 /* Workhorse function for writing history.  Writes the last NELEMENT entries
@@ -738,6 +770,8 @@ history_do_write (const char *filename, int nelements, int overwrite)
     if ((void *)buffer == MAP_FAILED)
       {
 mmap_error:
+	if ((rv = history_write_slow (file, the_history, nelements, overwrite)) == 0)
+	  goto write_success;
 	rv = errno;
 	close (file);
 	if (tempname)
@@ -750,6 +784,8 @@ mmap_error:
     buffer = (char *)malloc (buffer_size);
     if (buffer == 0)
       {
+	if ((rv = history_write_slow (file, the_history, nelements, overwrite)) == 0)
+	  goto write_success;
       	rv = errno;
 	close (file);
 	if (tempname)
@@ -788,6 +824,7 @@ mmap_error:
   if (close (file) < 0 && rv == 0)
     rv = errno;
 
+write_success:
   if (rv == 0 && histname && tempname)
     rv = histfile_restore (tempname, histname);
 

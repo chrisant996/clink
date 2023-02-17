@@ -1,6 +1,6 @@
 /* rlmbutil.h -- utility functions for multibyte characters. */
 
-/* Copyright (C) 2001-2021 Free Software Foundation, Inc.
+/* Copyright (C) 2001-2021,2023 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -136,6 +136,9 @@ extern int _rl_is_mbchar_matched (const char *, int, int, char *, int);
 
 extern WCHAR_T _rl_char_value (const char *, int);
 extern int _rl_walphabetic (WCHAR_T);
+
+extern int _rl_mb_strcaseeqn (const char *, size_t, const char *, size_t, size_t, int);
+extern int _rl_mb_charcasecmp (const char *, mbstate_t *, const char *, mbstate_t *, int);
 
 #define _rl_to_wupper(wc)	(iswlower (wc) ? towupper (wc) : (wc))
 #define _rl_to_wlower(wc)	(iswupper (wc) ? towlower (wc) : (wc))

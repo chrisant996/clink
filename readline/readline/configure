@@ -7421,7 +7421,7 @@ fi
 ac_fn_c_check_func "$LINENO" "mbscasecmp" "ac_cv_func_mbscasecmp"
 if test "x$ac_cv_func_mbscasecmp" = xyes
 then :
-  printf "%s\n" "#define HAVE_MBSCMP 1" >>confdefs.h
+  printf "%s\n" "#define HAVE_MBSCASECMP 1" >>confdefs.h
 
 fi
 
@@ -7429,6 +7429,13 @@ ac_fn_c_check_func "$LINENO" "mbscmp" "ac_cv_func_mbscmp"
 if test "x$ac_cv_func_mbscmp" = xyes
 then :
   printf "%s\n" "#define HAVE_MBSCMP 1" >>confdefs.h
+
+fi
+
+ac_fn_c_check_func "$LINENO" "mbsncmp" "ac_cv_func_mbsncmp"
+if test "x$ac_cv_func_mbsncmp" = xyes
+then :
+  printf "%s\n" "#define HAVE_MBSNCMP 1" >>confdefs.h
 
 fi
 
@@ -7494,6 +7501,13 @@ ac_fn_c_check_func "$LINENO" "wctype" "ac_cv_func_wctype"
 if test "x$ac_cv_func_wctype" = xyes
 then :
   printf "%s\n" "#define HAVE_WCTYPE 1" >>confdefs.h
+
+fi
+
+ac_fn_c_check_func "$LINENO" "wcsnrtombs" "ac_cv_func_wcsnrtombs"
+if test "x$ac_cv_func_wcsnrtombs" = xyes
+then :
+  printf "%s\n" "#define HAVE_WCSNRTOMBS 1" >>confdefs.h
 
 fi
 

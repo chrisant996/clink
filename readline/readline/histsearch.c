@@ -1,6 +1,6 @@
 /* histsearch.c -- searching the history list. */
 
-/* Copyright (C) 1989, 1992-2009,2017,2021 Free Software Foundation, Inc.
+/* Copyright (C) 1989, 1992-2009,2017,2021,2023 Free Software Foundation, Inc.
 
    This file contains the GNU History Library (History), a set of
    routines for managing the text of previously typed lines.
@@ -47,12 +47,7 @@
 #include "histlib.h"
 #include "xmalloc.h"
 
-/* begin_clink_change */
-/* Enable case insensitive history search, based on runtime config. */
-extern int find_streqn (const char *a, const char *b, int n);
-#undef STREQN
-#define STREQN(a, b, n) (find_streqn(a, b, n))
-/* end_clink_change */
+#include "rlmbutil.h"
 
 /* The list of alternate characters that can delimit a history search
    string. */
@@ -64,7 +59,10 @@ static int history_search_internal (const char *, int, int);
    If DIRECTION < 0, then the search is through previous entries, else
    through subsequent.  If ANCHORED is non-zero, the string must
    appear at the beginning of a history line, otherwise, the string
-   may appear anywhere in the line.  If the string is found, then
+   may appear anywhere in the line.  If PATSEARCH is non-zero, and fnmatch(3)
+   is available, fnmatch is used to match the string instead of a simple
+   string comparison. If IGNORECASE is set, the string comparison is
+   performed case-insensitively. If the string is found, then
    current_history () is the history entry, and the value of this
    function is the offset in the line of that history entry that the
    string was found in.  Otherwise, nothing is changed, and a -1 is
@@ -75,9 +73,10 @@ history_search_internal (const char *string, int direction, int flags)
 {
   int i, reverse;
   char *line;
-  int line_index;
-  size_t string_len;
-  int anchored, patsearch;
+  size_t string_len, line_len;
+  int line_index;		/* can't be unsigned */
+  int anchored, patsearch, igncase;
+  int found, mb_cur_max;
   HIST_ENTRY **the_history; 	/* local */
 
   i = history_offset;
@@ -88,6 +87,7 @@ history_search_internal (const char *string, int direction, int flags)
 #else
   patsearch = 0;
 #endif
+  igncase = (flags & CASEFOLD_SEARCH);
 
   /* Take care of trivial cases first. */
   if (string == 0 || *string == '\0')
@@ -98,6 +98,8 @@ history_search_internal (const char *string, int direction, int flags)
 
   if (reverse && (i >= history_length))
     i = history_length - 1;
+
+  mb_cur_max = MB_CUR_MAX;
 
 #define NEXT_LINE() do { if (reverse) i--; else i++; } while (0)
 
@@ -112,7 +114,7 @@ history_search_internal (const char *string, int direction, int flags)
 	return (-1);
 
       line = the_history[i]->line;
-      line_index = strlen (line);
+      line_len = line_index = strlen (line);
 
       /* If STRING is longer than line, no match. */
       if (patsearch == 0 && (string_len > line_index))
@@ -124,18 +126,27 @@ history_search_internal (const char *string, int direction, int flags)
       /* Handle anchored searches first. */
       if (anchored == ANCHORED_SEARCH)
 	{
+	  found = 0;
 #if defined (HAVE_FNMATCH)
 	  if (patsearch)
-	    {
-	      if (fnmatch (string, line, 0) == 0)
-		{
-		  history_offset = i;
-		  return (0);
-		}
-	    }
+	    found = fnmatch (string, line, 0) == 0;
 	  else
 #endif
-	  if (STREQN (string, line, string_len))
+	  if (igncase)
+	    {
+#if defined (HANDLE_MULTIBYTE)
+	      if (mb_cur_max > 1)	/* no rl_byte_oriented equivalent */
+		found = _rl_mb_strcaseeqn (string, string_len,
+					   line, line_len,
+					   string_len, 0);
+	      else
+#endif
+		found = strncasecmp (string, line, string_len) == 0;
+	    }
+	  else
+	    found = STREQN (string, line, string_len);
+
+	  if (found)
 	    {
 	      history_offset = i;
 	      return (0);
@@ -148,55 +159,80 @@ history_search_internal (const char *string, int direction, int flags)
       /* Do substring search. */
       if (reverse)
 	{
-	  line_index -= (patsearch == 0) ? string_len : 1;
+	  size_t ll;
+
+	  ll = (patsearch == 0) ? string_len : 1;
+	  line_index -= ll;
+	  found = 0;
 
 	  while (line_index >= 0)
 	    {
 #if defined (HAVE_FNMATCH)
 	      if (patsearch)
-		{
-		  if (fnmatch (string, line + line_index, 0) == 0)
-		    {
-		      history_offset = i;
-		      return (line_index);
-		    }
-		}
+		found = fnmatch (string, line + line_index, 0) == 0;
 	      else
 #endif
-	      if (STREQN (string, line + line_index, string_len))
+	      if (igncase)
+		{
+#if defined (HANDLE_MULTIBYTE)
+		  if (mb_cur_max > 1)	/* no rl_byte_oriented equivalent */
+		    found = _rl_mb_strcaseeqn (string, string_len,
+					       line + line_index, ll,
+					       string_len, 0);
+		  else
+#endif
+		  found = strncasecmp (string, line + line_index, string_len) == 0;
+		}
+	      else
+	        found = STREQN (string, line + line_index, string_len);
+
+	      if (found)
 		{
 		  history_offset = i;
 		  return (line_index);
 		}
 	      line_index--;
+	      ll++;
 	    }
 	}
       else
 	{
 	  register int limit;
+	  size_t ll;
 
+	  ll = line_len;
 	  limit = line_index - string_len + 1;
 	  line_index = 0;
+	  found = 0;
 
 	  while (line_index < limit)
 	    {
 #if defined (HAVE_FNMATCH)
 	      if (patsearch)
-		{
-		  if (fnmatch (string, line + line_index, 0) == 0)
-		    {
-		      history_offset = i;
-		      return (line_index);
-		    }
-		}
+		found = fnmatch (string, line + line_index, 0) == 0;
 	      else
 #endif
-	      if (STREQN (string, line + line_index, string_len))
+	      if (igncase)
+		{
+#if defined (HANDLE_MULTIBYTE)
+		  if (mb_cur_max > 1)	/* no rl_byte_oriented equivalent */
+		    found = _rl_mb_strcaseeqn (string, string_len,
+					       line + line_index, ll,
+					       string_len, 0);
+		  else
+#endif
+		  found = strncasecmp (string, line + line_index, string_len) == 0;
+		}
+	      else
+		found = STREQN (string, line + line_index, string_len);
+
+	      if (found)
 		{
 		  history_offset = i;
 		  return (line_index);
 		}
 	      line_index++;
+	      ll--;
 	    }
 	}
       NEXT_LINE ();
@@ -275,6 +311,13 @@ int
 history_search_prefix (const char *string, int direction)
 {
   return (history_search_internal (string, direction, ANCHORED_SEARCH));
+}
+
+/* At some point, make this public for users of the history library. */
+int
+_hs_history_search (const char *string, int direction, int flags)
+{
+  return (history_search_internal (string, direction, flags));
 }
 
 /* Search for STRING in the history list.  DIR is < 0 for searching

@@ -6,9 +6,9 @@
 .\"	Case Western Reserve University
 .\"	chet.ramey@case.edu
 .\"
-.\"	Last Change: Mon Sep 19 11:11:22 EDT 2022
+.\"	Last Change: Fri Feb 17 10:59:58 EST 2023
 .\"
-.TH READLINE 3 "2022 September 19" "GNU Readline 8.2"
+.TH READLINE 3 "2023 February 17" "GNU Readline 8.2"
 .\"
 .\" File Name macro.  This used to be `.PN', for Path Name,
 .\" but Sun doesn't seem to like that very much.
@@ -34,8 +34,8 @@ readline \- get a line from a user with editing
 \fBreadline\fP (\fIconst char *prompt\fP);
 .fi
 .SH COPYRIGHT
-.if n Readline is Copyright (C) 1989\-2020 Free Software Foundation,  Inc.
-.if t Readline is Copyright \(co 1989\-2020 Free Software Foundation, Inc.
+.if n Readline is Copyright (C) 1989\-2023 Free Software Foundation,  Inc.
+.if t Readline is Copyright \(co 1989\-2023 Free Software Foundation, Inc.
 .SH DESCRIPTION
 .LP
 .B readline
@@ -621,6 +621,10 @@ If set to \fBOn\fP, readline will undo all changes to history lines
 before returning when \fBaccept\-line\fP is executed.  By default,
 history lines may be modified and retain individual undo lists across
 calls to \fBreadline\fP.
+.TP
+.B search\-ignore\-case (Off)
+If set to \fBOn\fP, readline performs incremental and non-incremental
+history list searches in a case\-insensitive fashion.
 .TP
 .B show\-all\-if\-ambiguous (Off)
 This alters the default behavior of the completion functions.  If

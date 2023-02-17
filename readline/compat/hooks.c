@@ -136,7 +136,7 @@ int hooked_fwrite(const void* data, int size, int count, FILE* stream)
 }
 
 //------------------------------------------------------------------------------
-void hooked_fprintf(FILE* stream, const char* format, ...)
+int hooked_fprintf(FILE* stream, const char* format, ...)
 {
     char buffer[2048];
     va_list v;
@@ -147,6 +147,7 @@ void hooked_fprintf(FILE* stream, const char* format, ...)
 
     buffer[sizeof_array(buffer) - 1] = '\0';
     hooked_fwrite(buffer, (int)strlen(buffer), 1, stream);
+    return 0;
 }
 
 //------------------------------------------------------------------------------
@@ -158,10 +159,11 @@ int hooked_putc(int c, FILE* stream)
 }
 
 //------------------------------------------------------------------------------
-void hooked_fflush(FILE* stream)
+int hooked_fflush(FILE* stream)
 {
     if (rl_fflush_function != NULL)
         (*rl_fflush_function)(stream);
+    return 0;
 }
 
 //------------------------------------------------------------------------------

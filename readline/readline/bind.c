@@ -2165,9 +2165,7 @@ static const struct {
   { "prefer-visible-bell",	&_rl_prefer_visible_bell,	V_SPECIAL },
   { "print-completions-horizontally", &_rl_print_completions_horizontally, 0 },
   { "revert-all-at-newline",	&_rl_revert_all_at_newline,	0 },
-/* begin_clink_change */
   { "search-ignore-case",	&_rl_search_case_fold,		0 },
-/* end_clink_change */
   { "show-all-if-ambiguous",	&_rl_complete_show_all,		0 },
   { "show-all-if-unmodified",	&_rl_complete_show_unmodified,	0 },
   { "show-mode-in-prompt",	&_rl_show_mode_in_prompt,	0 },

@@ -1,6 +1,6 @@
 /* complete.c -- filename completion for readline. */
 
-/* Copyright (C) 1987-2022 Free Software Foundation, Inc.
+/* Copyright (C) 1987-2022,2023 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.
@@ -3294,18 +3294,7 @@ rl_username_completion_function (const char *text, int state)
 static int
 complete_fncmp (const char *convfn, int convlen, const char *filename, int filename_len)
 {
-  register char *s1, *s2;
-  int d, len;
-#if defined (HANDLE_MULTIBYTE)
-  size_t v1, v2;
-  mbstate_t ps1, ps2;
-  WCHAR_T wc1, wc2;
-#endif
-
-#if defined (HANDLE_MULTIBYTE)
-  memset (&ps1, 0, sizeof (mbstate_t));
-  memset (&ps2, 0, sizeof (mbstate_t));
-#endif
+  size_t len;
 
   if (filename_len == 0)
     return 1;
@@ -3313,100 +3302,26 @@ complete_fncmp (const char *convfn, int convlen, const char *filename, int filen
     return 0;
 
   len = filename_len;
-  s1 = (char *)convfn;
-  s2 = (char *)filename;
 
   /* Otherwise, if these match up to the length of filename, then
      it is a match. */
-  if (_rl_completion_case_fold && _rl_completion_case_map)
+  if (_rl_completion_case_fold)
     {
-      /* Case-insensitive comparison treating _ and - as equivalent */
+      /* Case-insensitive comparison treating _ and - as equivalent if
+	 _rl_completion_case_map is non-zero */
 #if defined (HANDLE_MULTIBYTE)
       if (MB_CUR_MAX > 1 && rl_byte_oriented == 0)
-	{
-	  do
-	    {
-	      v1 = MBRTOWC (&wc1, s1, convlen, &ps1);
-	      v2 = MBRTOWC (&wc2, s2, filename_len, &ps2);
-	      if (v1 == 0 && v2 == 0)
-		return 1;
-	      else if (MB_INVALIDCH (v1) || MB_INVALIDCH (v2))
-		{
-		  if (*s1 != *s2)		/* do byte comparison */
-		    return 0;
-		  else if ((*s1 == '-' || *s1 == '_') && (*s2 == '-' || *s2 == '_'))
-		    return 0;
-		  s1++; s2++; len--;
-		  continue;
-		}
-	      wc1 = towlower (wc1);
-	      wc2 = towlower (wc2);
-	      s1 += v1;
-	      s2 += v1;
-	      len -= v1;
-	      if ((wc1 == L'-' || wc1 == L'_') && (wc2 == L'-' || wc2 == L'_'))
-	        continue;
-	      if (wc1 != wc2)
-		return 0;
-	    }
-	  while (len != 0);
-	}
-      else
-#endif
-	{
-	do
-	  {
-	    d = _rl_to_lower (*s1) - _rl_to_lower (*s2);
-	    /* *s1 == [-_] && *s2 == [-_] */
-	    if ((*s1 == '-' || *s1 == '_') && (*s2 == '-' || *s2 == '_'))
-	      d = 0;
-	    if (d != 0)
-	      return 0;
-	    s1++; s2++;	/* already checked convlen >= filename_len */
-	  }
-	while (--len != 0);
-	}
-
-      return 1;
-    }
-  else if (_rl_completion_case_fold)
-    {
-#if defined (HANDLE_MULTIBYTE)
-      if (MB_CUR_MAX > 1 && rl_byte_oriented == 0)
-	{
-	  do
-	    {
-	      v1 = MBRTOWC (&wc1, s1, convlen, &ps1);
-	      v2 = MBRTOWC (&wc2, s2, filename_len, &ps2);
-	      if (v1 == 0 && v2 == 0)
-		return 1;
-	      else if (MB_INVALIDCH (v1) || MB_INVALIDCH (v2))
-		{
-		  if (*s1 != *s2)		/* do byte comparison */
-		    return 0;
-		  s1++; s2++; len--;
-		  continue;
-		}
-	      wc1 = towlower (wc1);
-	      wc2 = towlower (wc2);
-	      if (wc1 != wc2)
-		return 0;
-	      s1 += v1;
-	      s2 += v1;
-	      len -= v1;
-	    }
-	  while (len != 0);
-	  return 1;
-	}
+	return (_rl_mb_strcaseeqn (convfn, convlen, filename, filename_len, len, _rl_completion_case_map));
       else
 #endif
       if ((_rl_to_lower (convfn[0]) == _rl_to_lower (filename[0])) &&
-	  (convlen >= filename_len) &&
-	  (_rl_strnicmp (filename, convfn, filename_len) == 0))
-	return 1;
+	  (convlen >= filename_len))
+	return (_rl_strcaseeqn (convfn, filename, len, _rl_completion_case_map));
     }
   else
     {
+      /* XXX - add new _rl_mb_streqn function (like mbsncmp) instead of
+	 relying on byte equivalence? */
       if ((convfn[0] == filename[0]) &&
 	  (convlen >= filename_len) &&
 	  (strncmp (filename, convfn, filename_len) == 0))

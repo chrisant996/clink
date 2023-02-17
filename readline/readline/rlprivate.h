@@ -497,6 +497,8 @@ extern int _rl_tropen (void);
 extern int _rl_abort_internal (void);
 extern int _rl_null_function (int, int);
 extern char *_rl_strindex (const char *, const char *);
+extern int _rl_strcaseeqn (const char *, const char *, size_t, int);
+extern int _rl_charcasecmp (int, int, int);
 extern int _rl_qsort_string_compare (char **, char **);
 extern int (_rl_uppercase_p) (int);
 extern int (_rl_lowercase_p) (int);
@@ -570,6 +572,7 @@ extern int _rl_vi_cmd_modestr_len;
 extern char *_rl_isearch_terminators;
 
 extern _rl_search_cxt *_rl_iscxt;
+extern int _rl_search_case_fold;
 
 /* macro.c */
 extern char *_rl_executing_macro;
@@ -622,7 +625,6 @@ extern _rl_search_cxt *_rl_nscxt;
 extern int _rl_history_search_pos;
 /* begin_clink_change */
 extern int _rl_history_point_at_end_of_anchored_search;
-extern int _rl_search_case_fold;
 /* end_clink_change */
 
 /* signals.c */

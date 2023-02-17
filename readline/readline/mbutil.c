@@ -527,3 +527,84 @@ _rl_find_prev_mbchar (const char *string, int seed, int flags)
   return ((seed == 0) ? seed : seed - 1);
 #endif
 }
+
+/* Compare the first N characters of S1 and S2 without regard to case. If
+   FLAGS&1, apply the mapping specified by completion-map-case and make
+   `-' and `_' equivalent. Returns 1 if the strings are equal. */
+int
+_rl_mb_strcaseeqn (const char *s1, size_t l1, const char *s2, size_t l2, size_t n, int flags)
+{
+  size_t v1, v2;
+  mbstate_t ps1, ps2;
+/* begin_clink_change */
+  //wchar_t wc1, wc2;
+  WCHAR_T wc1, wc2;
+/* end_clink_change */
+
+  memset (&ps1, 0, sizeof (mbstate_t));
+  memset (&ps2, 0, sizeof (mbstate_t));
+
+  do
+    {
+      v1 = MBRTOWC(&wc1, s1, l1, &ps1);
+      v2 = MBRTOWC(&wc2, s2, l2, &ps2);
+      if (v1 == 0 && v2 == 0)
+	return 1;
+      else if (MB_INVALIDCH(v1) || MB_INVALIDCH(v2))
+ 	{
+ 	  int d;
+ 	  d = _rl_to_lower (*s1) - _rl_to_lower (*s2);	/* do byte comparison */
+	  if ((flags & 1) && (*s1 == '-' || *s1 == '_') && (*s2 == '-' || *s2 == '_'))
+	    d = 0;		/* case insensitive character mapping */
+	  if (d != 0)
+	    return 0;
+	  s1++;
+	  s2++;
+	  n--;
+	  continue;
+ 	}
+      wc1 = towlower(wc1);
+      wc2 = towlower(wc2);
+      s1 += v1;
+      s2 += v1;
+      n -= v1;
+      if ((flags & 1) && (wc1 == L'-' || wc1 == L'_') && (wc2 == L'-' || wc2 == L'_'))
+        continue;
+      if (wc1 != wc2)
+	return 0;
+    }
+  while (n != 0);
+
+  return 1;
+}
+
+/* Return 1 if the multibyte characters pointed to by S1 and S2 are equal
+   without regard to case. If FLAGS&1, apply the mapping specified by
+   completion-map-case and make `-' and `_' equivalent. */
+int
+_rl_mb_charcasecmp (const char *s1, mbstate_t *ps1, const char *s2, mbstate_t *ps2, int flags)
+{
+  int d;
+  size_t v1, v2;
+/* begin_clink_change */
+  //wchar_t wc1, wc2;
+  WCHAR_T wc1, wc2;
+/* end_clink_change */
+
+  d = MB_CUR_MAX;
+  v1 = MBRTOWC(&wc1, s1, d, ps1);
+  v2 = MBRTOWC(&wc2, s2, d, ps2);
+  if (v1 == 0 && v2 == 0)
+    return 1;
+  else if (MB_INVALIDCH(v1) || MB_INVALIDCH(v2))
+    {
+      if ((flags & 1) && (*s1 == '-' || *s1 == '_') && (*s2 == '-' || *s2 == '_'))
+	return 1;
+      return (_rl_to_lower (*s1) == _rl_to_lower (*s2));
+    }
+  wc1 = towlower(wc1);
+  wc2 = towlower(wc2);
+  if ((flags & 1) && (wc1 == L'-' || wc1 == L'_') && (wc2 == L'-' || wc2 == L'_'))
+    return 1;
+  return (wc1 == wc2);
+}

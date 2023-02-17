@@ -34,6 +34,11 @@
 				    : ((a)[0] == (b)[0]) && (strncmp ((a), (b), (n)) == 0))
 #endif
 
+#if !defined (HAVE_STRCASECMP)
+#define strcasecmp(a,b)	strcmp ((a), (b))
+#define strncasecmp(a, b, n)	strncmp ((a), (b), (n))
+#endif
+
 #ifndef savestring
 #define savestring(x) strcpy (xmalloc (1 + strlen (x)), (x))
 #endif
@@ -72,6 +77,7 @@ extern char *strchr ();
 #define NON_ANCHORED_SEARCH	0
 #define ANCHORED_SEARCH		0x01
 #define PATTERN_SEARCH		0x02
+#define CASEFOLD_SEARCH		0x04
 
 /* Possible definitions for what style of writing the history file we want. */
 #define HISTORY_APPEND 0
@@ -81,6 +87,7 @@ extern char *strchr ();
 
 /* histsearch.c */
 extern int _hs_history_patsearch (const char *, int, int);
+extern int _hs_history_search (const char *, int, int);
 
 /* begin_clink_change */
 typedef int _hist_search_func_t (const char *, int);

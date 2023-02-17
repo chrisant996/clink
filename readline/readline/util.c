@@ -468,6 +468,48 @@ _rl_stricmp (const char *string1, const char *string2)
 }
 #endif /* !HAVE_STRCASECMP */
 
+/* Compare the first N characters of S1 and S2 without regard to case. If
+   FLAGS&1, apply the mapping specified by completion-map-case and make
+   `-' and `_' equivalent. Returns 1 if the strings are equal. */
+int
+_rl_strcaseeqn(const char *s1, const char *s2, size_t n, int flags)
+{
+  int c1, c2;
+  int d;
+
+  if ((flags & 1) == 0)
+    return (_rl_strnicmp (s1, s2, n) == 0);
+
+  do
+    {
+      c1 = _rl_to_lower (*s1);
+      c2 = _rl_to_lower (*s2);
+
+      d = c1 - c2;
+      if ((*s1 == '-' || *s1 == '_') && (*s2 == '-' || *s2 == '_'))
+	d = 0;		/* case insensitive character mapping */
+      if (d != 0)
+	return 0;
+      s1++;
+      s2++;
+      n--;
+    }
+  while (n != 0);
+
+  return 1;
+}
+
+/* Return 1 if the characters C1 and C2 are equal without regard to case.
+   If FLAGS&1, apply the mapping specified by completion-map-case and make
+   `-' and `_' equivalent. */
+int
+_rl_charcasecmp (int c1, int c2, int flags)
+{
+  if ((flags & 1) && (c1 == '-' || c1 == '_') && (c2 == '-' || c2 == '_'))
+    return 1;
+  return ( _rl_to_lower (c1) == _rl_to_lower (c2));
+}
+
 /* Stupid comparison routine for qsort () ing strings. */
 int
 _rl_qsort_string_compare (char **s1, char **s2)

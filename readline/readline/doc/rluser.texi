@@ -9,7 +9,7 @@ use these features.  There is a document entitled "readline.texinfo"
 which contains both end-user and programmer documentation for the
 GNU Readline Library.
 
-Copyright (C) 1988--2022 Free Software Foundation, Inc.
+Copyright (C) 1988--2023 Free Software Foundation, Inc.
 
 Authored by Brian Fox and Chet Ramey.
 
@@ -756,6 +756,12 @@ If set to @samp{on}, Readline will undo all changes to history lines
 before returning when @code{accept-line} is executed.  By default,
 history lines may be modified and retain individual undo lists across
 calls to @code{readline()}.  The default is @samp{off}.
+
+@item search-ignore-case
+@vindex search-ignore-case
+If set to @samp{on}, Readline performs incremental and non-incremental
+history list searches in a case-insensitive fashion.
+The default value is @samp{off}.
 
 @item show-all-if-ambiguous
 @vindex show-all-if-ambiguous

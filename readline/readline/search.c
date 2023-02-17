@@ -66,11 +66,6 @@ static int _rl_history_search_flags;
 
 /* begin_clink_change */
 int _rl_history_point_at_end_of_anchored_search = 0;
-#if (defined (__MSDOS__) && !defined (__DJGPP__)) || (defined (_WIN32) && !defined (__CYGWIN__))
-int _rl_search_case_fold = 1;
-#else
-int _rl_search_case_fold = 0;
-#endif
 /* end_clink_change */
 
 static char *history_search_string;
@@ -211,21 +206,23 @@ noninc_search_from_pos (char *string, int pos, int dir, int flags, int *ncp)
   RL_SETSTATE(RL_STATE_SEARCH);
   /* These functions return the match offset in the line; history_offset gives
      the matching line in the history list */
-  if (flags & SF_PATTERN)
+
+  sflags = 0;		/* Non-anchored search */
+  s = string;
+  if (*s == '^')
     {
-      s = string;
-      sflags = 0;		/* Non-anchored search */
-      if (*s == '^')
-	{
-	  sflags |= ANCHORED_SEARCH;
-	  s++;
-	}
-      ret = _hs_history_patsearch (s, dir, sflags);
+      sflags |= ANCHORED_SEARCH;
+      s++;
     }
-  else if (*string == '^')
-    ret = history_search_prefix (string + 1, dir);
+
+  if (flags & SF_PATTERN)
+    ret = _hs_history_patsearch (s, dir, sflags);
   else
-    ret = history_search (string, dir);
+    {
+      if (_rl_search_case_fold)
+	sflags |= CASEFOLD_SEARCH;
+      ret = _hs_history_search (s, dir, sflags);
+    }
   RL_UNSETSTATE(RL_STATE_SEARCH);
 
   if (ncp)
@@ -277,7 +274,7 @@ noninc_dosearch (char *string, int dir, int flags)
 
   make_history_line_current (entry);
 
-  if (_rl_enable_active_region && ((flags & SF_PATTERN) == 0) && ind > 0 && ind < rl_end)
+  if (_rl_enable_active_region && ((flags & SF_PATTERN) == 0) && ind >= 0 && ind < rl_end)
     {
       rl_point = ind;
       rl_mark = ind + strlen (string);

@@ -1,6 +1,6 @@
 /* tcap.h -- termcap library functions and variables. */
 
-/* Copyright (C) 1996-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2015,2023 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -46,14 +46,14 @@ extern char *UP, *BC;
 
 extern short ospeed;
 
-extern int tgetent ();
-extern int tgetflag ();
-extern int tgetnum ();
-extern char *tgetstr ();
+extern int tgetent (char *, const char *);
+extern int tgetflag (const char *);
+extern int tgetnum (const char *);
+extern char *tgetstr (const char *, char **);
 
-extern int tputs ();
+extern int tputs (const char *, int, int (*)(int));
 
-extern char *tgoto ();
+extern char *tgoto (const char *, int, int);
 
 #endif /* HAVE_TERMCAP_H */
 

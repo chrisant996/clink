@@ -31,9 +31,9 @@ int     compare_string(const char* s1, const char* s2, int casefold);
 //
 //
 int     hooked_fwrite(const void*, int, int, FILE*);
-void    hooked_fprintf(FILE*, const char*, ...);
+int     hooked_fprintf(FILE*, const char*, ...);
 int     hooked_putc(int, FILE*);
-void    hooked_fflush(FILE*);
+int     hooked_fflush(FILE*);
 int     hooked_fileno(FILE*);
 int     hooked_stat(const char*, struct hooked_stat*);
 int     hooked_lstat(const char*, struct hooked_stat*);

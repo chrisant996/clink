@@ -59,6 +59,15 @@ char *_rl_isearch_terminators = (char *)NULL;
 
 _rl_search_cxt *_rl_iscxt = 0;
 
+/* begin_clink_change */
+//int _rl_search_case_fold = 0;
+#if (defined (__MSDOS__) && !defined (__DJGPP__)) || (defined (_WIN32) && !defined (__CYGWIN__))
+int _rl_search_case_fold = 1;
+#else
+int _rl_search_case_fold = 0;
+#endif
+/* end_clink_change */
+
 static int rl_search_history (int, int);
 
 static _rl_search_cxt *_rl_isearch_init (int);
@@ -770,7 +779,27 @@ opcode_dispatch:
       /* Search the current line. */
       while ((cxt->sflags & SF_REVERSE) ? (cxt->sline_index >= 0) : (cxt->sline_index < limit))
 	{
-	  if (STREQN (cxt->search_string, cxt->sline + cxt->sline_index, cxt->search_string_index))
+	  int found;
+
+	  if (_rl_search_case_fold)
+	    {
+#if defined (HANDLE_MULTIBYTE)
+	      if (MB_CUR_MAX > 1 && rl_byte_oriented == 0)
+		found = _rl_mb_strcaseeqn (cxt->search_string,
+					   cxt->search_string_index,
+					   cxt->sline + cxt->sline_index,
+					   limit,
+					   cxt->search_string_index, 0);
+	      else
+		found = _rl_strnicmp (cxt->search_string,
+				      cxt->sline + cxt->sline_index,
+				      cxt->search_string_index) == 0;
+#endif
+	    }
+	  else
+	    found = STREQN (cxt->search_string, cxt->sline + cxt->sline_index, cxt->search_string_index);
+
+	  if (found)
 	    {
 	      cxt->sflags |= SF_FOUND;
 	      break;
