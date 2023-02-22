@@ -168,7 +168,6 @@ end
 --- -name:  clink.onprovideline
 --- -ver:   1.3.18
 --- -arg:   func:function
---- -ret:   nil | string
 ---
 --- Registers <span class="arg">func</span> to be called after the
 --- <a href="#clink.onbeginedit">onbeginedit</a> event but before the input line
