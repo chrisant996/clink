@@ -509,8 +509,7 @@ static int find_line(lua_State* state, int direction)
 /// -arg:   starting_line:integer
 /// -arg:   [text:string]
 /// -arg:   [mode:string]
-/// -arg:   [attr:integer]
-/// -arg:   [attrs:table of integers]
+/// -arg:   [attr:integer | table of integers]
 /// -arg:   [mask:string]
 /// -ret:   integer
 /// Searches upwards (backwards) for a line containing the specified text and/or
@@ -555,8 +554,7 @@ static int find_prev_line(lua_State* state)
 /// -arg:   starting_line:integer
 /// -arg:   [text:string]
 /// -arg:   [mode:string]
-/// -arg:   [attr:integer]
-/// -arg:   [attrs:table of integers]
+/// -arg:   [attr:integer | table of integers]
 /// -arg:   [mask:string]
 /// -ret:   integer
 /// Searches downwards (forwards) for a line containing the specified text
