@@ -21,9 +21,9 @@ extern setting_bool g_lua_strict;
 /// -ver:   1.0.0
 /// -arg:   name:string
 /// -arg:   [descriptive:boolean]
-/// -ret:   boolean or string or integer
+/// -ret:   boolean | string | integer | nil
 /// Returns the current value of the <span class="arg">name</span> Clink
-/// setting.
+/// setting or nil if the setting does not exist.
 ///
 /// If it's a color setting and the optional
 /// <span class="arg">descriptive</span> parameter is true then the user
