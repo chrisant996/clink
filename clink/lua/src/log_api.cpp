@@ -40,7 +40,7 @@ int log_info(lua_State* state)
 //------------------------------------------------------------------------------
 /// -name:  log.getfile
 /// -ver:   1.4.15
-/// -ret:   string
+/// -ret:   string | nil
 /// Returns the file name of the current session's log file.
 int get_file(lua_State* state)
 {
