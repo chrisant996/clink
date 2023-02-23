@@ -74,11 +74,13 @@ static int get(lua_State* state)
 /// -name:  settings.set
 /// -ver:   1.0.0
 /// -arg:   name:string
-/// -arg:   value:string
+/// -arg:   value:boolean | string | integer
 /// -ret:   boolean
 /// Sets the <span class="arg">name</span> Clink setting to
 /// <span class="arg">value</span> and returns whether it was successful.
-///
+/// If the value is an integer and the setting was defined as an enum, the integer
+/// selects the n-th entry from the 0-index based possible list of enum values.
+/// 
 /// Note: Beginning in Clink v1.2.31 this updates the settings file.  Prior to
 /// that, it was necessary to separately use <code>clink set</code> to update
 /// the settings file.
