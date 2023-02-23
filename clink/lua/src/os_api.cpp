@@ -1518,6 +1518,7 @@ static int get_clipboard_text(lua_State *state)
 
 //------------------------------------------------------------------------------
 /// -name:  os.setclipboardtext
+/// -arg:   string
 /// -ver:   1.2.32
 /// -ret:   boolean
 /// This sets the text onto the system clipboard, and returns whether it was
