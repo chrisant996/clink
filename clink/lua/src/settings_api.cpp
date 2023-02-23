@@ -25,9 +25,22 @@ extern setting_bool g_lua_strict;
 /// Returns the current value of the <span class="arg">name</span> Clink
 /// setting or nil if the setting does not exist.
 ///
-/// If it's a color setting and the optional
-/// <span class="arg">descriptive</span> parameter is true then the user
-/// friendly color name is returned.
+/// The return type corresponds to the setting type:
+/// <ul>
+/// <li>Boolean settings return a boolean value.
+/// <li>Integer settings return an integer value.
+/// <li>Enum settings return an integer value corresponding to a position in the
+/// setting's table of accepted values.  The first position is 0, the second
+/// position is 1, etc.
+/// <li>String settings return a string.
+/// <li>Color settings return a string.
+/// </ul>
+///
+/// Color settings normally return the ANSI color code, suitable for use in an
+/// ANSI escape sequence.  If the optional <span class="arg">descriptive</span>
+/// parameter is true then the friendly color name is returned.
+/// -show:  print(settings.get("color.doskey"))         -- Can print "1;36"
+/// -show:  print(settings.get("color.doskey", true))   -- Can print "bold cyan"
 static int get(lua_State* state)
 {
     const char* key = checkstring(state, 1);
@@ -74,10 +87,32 @@ static int get(lua_State* state)
 /// -name:  settings.set
 /// -ver:   1.0.0
 /// -arg:   name:string
-/// -arg:   value:string
+/// -arg:   value:...
 /// -ret:   boolean
 /// Sets the <span class="arg">name</span> Clink setting to
 /// <span class="arg">value</span> and returns whether it was successful.
+///
+/// The type of <span class="arg">value</span> depends on the type of the
+/// setting.  Some automatic type conversions are performed when appropriate.
+///
+/// <ul>
+/// <li>Boolean settings convert string values
+/// <code>"true"</code>/<code>"false"</code>,
+/// <code>"yes"</code>/<code>"no"</code>, and
+/// <code>"on"</code>/<code>"off"</code> into a boolean
+/// <code>true</code>/<code>false</code>.  Any numeric values are converted to
+/// <code>true</code>, even <code>0</code> (Lua considers 0 to be true, unlike
+/// some other languages).
+/// <li>Integer settings convert string values starting with a digit or minus
+/// sign into an integer value.
+/// <li>Enum settings convert the allowed string values into an integer value
+/// corresponding to the position in the table of allowed values.  The first
+/// position is 0, the second position is 1, etc.
+/// <li>String settings convert boolean or number values into a corresponding
+/// string value.
+/// <li>Color settings convert boolean or number values into a corresponding
+/// string value.
+/// </ul>
 ///
 /// Note: Beginning in Clink v1.2.31 this updates the settings file.  Prior to
 /// that, it was necessary to separately use <code>clink set</code> to update
@@ -153,11 +188,18 @@ template <typename S, typename... V> void add_impl(lua_State* state, V... value)
 /// <span class="arg">default</span> when the setting isn't explicitly set.
 ///
 /// The type of <span class="arg">default</span> determines what kind of setting
-/// is added:  boolean, integer, and string values add the corresponding setting
-/// type.  Or if the type is table then an enum setting is added:  the table
-/// defines the accepted values, and the first value is the default value.  Or
-/// if it's a string type and the name starts with "color." then a color setting
-/// is added.
+/// is added:
+/// <ul>
+/// <li>Boolean; a boolean value adds a boolean setting.
+/// <li>Integer; an integer value adds an integer setting.
+/// <li>Enum; a table adds an enum setting.  The table defines the accepted
+/// string values, and the first value is the default value.  The setting has an
+/// integer value which corresponds to the position in the table of accepted
+/// values.  The first position is 0, the second position is 1, etc.
+/// <li>String; a string value adds a string setting.
+/// <li>Color; when <span class="arg">name</span> begins with
+/// <code>"color."</code> then a string value adds a color setting.
+/// </ul>
 ///
 /// <span class="arg">name</span> can't be more than 32 characters.
 ///
