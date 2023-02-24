@@ -1995,7 +1995,16 @@ local function attempt_load_argmatcher(command_word, quoted)
                 loaded[file] = true
                 loaded_argmatchers[command_word] = 2 -- Attempted and Loaded.
                 -- Load the file.
-                dofile(file)
+                local impl = function ()
+                    dofile(file)
+                end
+                local ok, ret = xpcall(impl, _error_handler_ret)
+                if not ok then
+                    print("")
+                    print("loading completion script failed:")
+                    print(ret)
+                    return
+                end
                 -- Check again, and stop if argmatcher is loaded.
                 local argmatcher = _is_argmatcher_loaded(command_word, quoted)
                 if argmatcher then
