@@ -2,6 +2,10 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.4.20
+
+- Fixed `os.isfile()` and `os.isdir()` when the specified name contains `<` or `>` or `"`, which are special wildcard characters for MS-DOS compatibility.  This caused an error when typing `"<`, which then mistakenly thought a completion script named `<.lua` existed.
+
 #### v1.4.19
 
 - Added `builder:setforcequoting()` to force quoting rules to be applied to matches even if they aren't filenames.  This also reverts "quoting for non-filename completions" in v1.4.13; there isn't a safe and backward-compatible way to automatically deduce when non-filenames matches need quoting, so a match generator needs to turn it on explicitly when desired.
