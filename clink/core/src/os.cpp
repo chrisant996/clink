@@ -325,14 +325,53 @@ void set_shellname(const wchar_t* shell_name) { s_shell_name = shell_name; }
 const wchar_t* get_shellname() { return s_shell_name; }
 
 //------------------------------------------------------------------------------
+// Everyone knows about '*' and '?'.  But there are FIVE wildcard characters!
+//
+//  * (asterisk)
+//      Matches zero or more characters.
+//
+//  ? (question mark)
+//      Matches a single character.
+//
+//  DOS_STAR (less than)
+//      Matches zero or more characters until encountering and matching the
+//      final period in the name.
+//
+//  DOS_QM (greater than)
+//      Matches any single character or, upon encountering a period or end
+//      of name string, advances the expression to the end of the set of
+//      contiguous DOS_QMs.
+//
+//  DOS_DOT (double quote)
+//      Matches either a period or zero characters beyond the name string.
+//
+// The last three are for MS-DOS compatibility, and they follow the MS-DOS
+// semantics.  For example, MS-DOS filenames can contain spaces, but not
+// immediately before or after the dot.
+//
+// https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/ntifs/nf-ntifs-_fsrtl_advanced_fcb_header-fsrtlisnameinexpression
+// https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/ntifs/nf-ntifs-_fsrtl_advanced_fcb_header-fsrtldoesnamecontainwildcards
+//
+// #define ANSI_DOS_STAR   ('<')
+// #define ANSI_DOS_QM     ('>')
+// #define ANSI_DOS_DOT    ('"')
+// #define DOS_STAR        (L'<')
+// #define DOS_QM          (L'>')
+// #define DOS_DOT         (L'"')
 static bool has_wildcard(const wchar_t* path)
 {
     if (!path)
         return false;
     for (; *path; ++path)
     {
-        if (*path == '*' || *path == '?')
+        if (*path == '*' ||
+            *path == '?' ||
+            *path == '<' ||
+            *path == '>' ||
+            *path == '"')
+        {
             return true;
+        }
     }
     return false;
 }
