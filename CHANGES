@@ -5,6 +5,7 @@
 #### v1.4.20
 
 - Fixed `os.isfile()` and `os.isdir()` when the specified name contains `<` or `>` or `"`, which are special wildcard characters for MS-DOS compatibility.  This caused an error when typing `"<`, which then mistakenly thought a completion script named `<.lua` existed.
+- Fixed `rl.expandtilde()` to omit a trailing backslash when expanding `~` by itself.  This is to avoid running afoul of the [`\"` parsing rules](https://learn.microsoft.com/en-us/windows/win32/api/shellapi/nf-shellapi-commandlinetoargvw) for `argv[]` for programs.
 
 #### v1.4.19
 
