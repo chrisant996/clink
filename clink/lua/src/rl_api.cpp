@@ -203,27 +203,45 @@ static int expand_tilde(lua_State* state)
     else
     {
         // Strip all quotes.
-        const bool quote = (in[0] == '"');
+        const bool beginquote = (in[0] == '"');
+        bool endquote = false;
         str<> tmp;
         for (const char* walk = in; *walk; ++walk)
         {
             if (*walk != '"')
                 tmp.concat(walk, 1);
+            else if (!walk[1])
+                endquote = true;
         }
 
         // Expand the input as a single word.
         str<> expanded_path;
         bool expanded = tmp.c_str()[0] == '~' && path::tilde_expand(tmp.c_str(), expanded_path);
 
-        // Add quotes again if the input originally started with a quote.
-        str<> out;
-        if (quote)
-            out << "\"";
-        out << (expanded ? expanded_path.c_str() : tmp.c_str());
-        if (quote)
-            out << "\"";
+        if (expanded)
+        {
+            // Avoid adding \ at the end if it's just `~` by itself, to avoid
+            // running afoul of argv quoting rules for `\"`.
+            if (tmp.c_str()[0] == '~' && tmp.length() == 1)
+            {
+                while (expanded_path.length() && expanded_path.c_str()[expanded_path.length() - 1] == '\\')
+                    expanded_path.truncate(expanded_path.length() - 1);
+            }
 
-        lua_pushstring(state, out.c_str());
+            // Add quotes again if the input was originally quoted.
+            str<> out;
+            if (beginquote)
+                out << "\"";
+            out << expanded_path.c_str();
+            if (endquote)
+                out << "\"";
+            lua_pushstring(state, out.c_str());
+        }
+        else
+        {
+            lua_pushstring(state, in);
+        }
+
         lua_pushboolean(state, expanded);
         return 2;
     }
