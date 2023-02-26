@@ -235,12 +235,26 @@ int loader(int argc, char** argv)
 int loader_main_impl()
 {
     int argc = 0;
-    LPWSTR* argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+    LPWSTR* argvw = CommandLineToArgvW(GetCommandLineW(), &argc);
+
+    char** argv = static_cast<char**>(calloc(argc + 1, sizeof(char*)));
     for (int i = 0; i < argc; ++i)
-        to_utf8((char*)argv[i], 0xffff, argv[i]);
+    {
+        const int needed = WideCharToMultiByte(CP_UTF8, 0, argvw[i], -1, nullptr, 0, nullptr, nullptr);
+        if (!needed)
+            return 1;
+        argv[i] = static_cast<char*>(malloc(needed));
+        WideCharToMultiByte(CP_UTF8, 0, argvw[i], -1, argv[i], needed, nullptr, nullptr);
+    }
+    assert(argv[argc] == nullptr);
 
-    int ret = loader(argc, (char**)argv);
+    LocalFree(argvw);
 
-    LocalFree(argv);
+    int ret = loader(argc, argv);
+
+    for (int i = 0; i < argc; ++i)
+        free(argv[i]);
+    free(argv);
+
     return ret;
 }
