@@ -149,7 +149,7 @@ Section "!Application files" app_files_id
 
     ; Add to "add/remove programs" or "programs and features"
     ;
-    StrCpy $0 "Software\Microsoft\Windows\CurrentVersion\Uninstall\clink_${CLINK_VERSION}"
+    StrCpy $0 "Software\Microsoft\Windows\CurrentVersion\Uninstall\clink"
     WriteRegStr HKLM $0 "DisplayName"       "Clink v${CLINK_VERSION}"
     WriteRegStr HKLM $0 "UninstallString"   "$INSTDIR\$uninstallerExe"
     WriteRegStr HKLM $0 "Publisher"         "Christopher Antos"
