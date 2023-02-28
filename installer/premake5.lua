@@ -209,6 +209,9 @@ newaction {
         local ver_cmd = src:gsub("/", "\\")..clink_exe.." --version"
         for line in io.popen(ver_cmd):lines() do
             version = line
+            -- gsub will match everything until a period is seen and discards the rest of the string
+            -- Since it is greedy, it has the effect of finding only the last period
+            version_tag = version:gsub("(.*)%..*$","%1")
         end
         if not version then
             error("Failed to extract version from build executables")
@@ -245,7 +248,7 @@ newaction {
         if have_nsis then
             local nsis_cmd = have_nsis
             nsis_cmd = nsis_cmd .. " /DCLINK_BUILD=" .. dest
-            nsis_cmd = nsis_cmd .. " /DCLINK_VERSION=" .. version
+            nsis_cmd = nsis_cmd .. " /DCLINK_VERSION_TAG=" .. version_tag
             nsis_cmd = nsis_cmd .. " /DCLINK_SOURCE=" .. code_dir
             nsis_cmd = nsis_cmd .. " " .. code_dir .. "/installer/clink.nsi"
             nsis_ok = exec(nsis_cmd)
@@ -395,7 +398,7 @@ newaction {
         if have_nsis then
             local nsis_cmd = have_nsis
             nsis_cmd = nsis_cmd .. " /DCLINK_BUILD=" .. path.getabsolute(dest)
-            nsis_cmd = nsis_cmd .. " /DCLINK_VERSION=" .. version
+            nsis_cmd = nsis_cmd .. " /DCLINK_VERSION_TAG=" .. version_tag
             nsis_cmd = nsis_cmd .. " /DCLINK_SOURCE=" .. code_dir
             nsis_cmd = nsis_cmd .. " " .. code_dir .. "/installer/clink.nsi"
             nsis_ok = exec(nsis_cmd)

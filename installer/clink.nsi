@@ -29,7 +29,7 @@
 
 ;-------------------------------------------------------------------------------
 Unicode                 true
-Name                    "clink v${CLINK_VERSION}"
+Name                    "clink v${CLINK_VERSION_TAG}"
 ; InstallDir and InstallDirRegKey are omitted so that /D= usage can be detected.
 ; The .onInit function handles providing a default value when /D= is omitted,
 ; reading the InstallDir regkey when appropriate.  The "-" section handles
@@ -99,8 +99,9 @@ Function cleanPreviousInstalls
         StrCmp $2 "" EnumUninstallKeysEnd
 
         ; Skip installs of ourself over an existing installation.
+        ; Starting with v1.4.21 clink will always install overtop itself, so this will only run when upgrading from an older version
         ;
-        StrCmp $2 "clink_${CLINK_VERSION}" EndIfClinkUninstallEntry 0
+        StrCmp $2 "clink" EndIfClinkUninstallEntry 0
             ; Check for uninstaller entries that start "clink_"
             ;
             StrCpy $3 $2 6
@@ -144,20 +145,20 @@ Section "!Application files" app_files_id
 
     ; Create an uninstaller.
     ;
-    StrCpy $uninstallerExe "clink_uninstall_${CLINK_VERSION}.exe"
+    StrCpy $uninstallerExe "clink_uninstall.exe"
     WriteUninstaller "$INSTDIR\$uninstallerExe"
 
     ; Add to "add/remove programs" or "programs and features"
     ;
-    StrCpy $0 "Software\Microsoft\Windows\CurrentVersion\Uninstall\clink_${CLINK_VERSION}"
-    WriteRegStr HKLM $0 "DisplayName"       "Clink v${CLINK_VERSION}"
+    StrCpy $0 "Software\Microsoft\Windows\CurrentVersion\Uninstall\clink"
+    WriteRegStr HKLM $0 "DisplayName"       "Clink v${CLINK_VERSION_TAG}"
     WriteRegStr HKLM $0 "UninstallString"   "$INSTDIR\$uninstallerExe"
     WriteRegStr HKLM $0 "Publisher"         "Christopher Antos"
     WriteRegStr HKLM $0 "DisplayIcon"       "$SYSDIR\cmd.exe,0"
     WriteRegStr HKLM $0 "URLInfoAbout"      "http://chrisant996.github.io/clink"
     WriteRegStr HKLM $0 "HelpLink"          "http://chrisant996.github.io/clink"
     WriteRegStr HKLM $0 "InstallLocation"   "$INSTDIR"
-    WriteRegStr HKLM $0 "DisplayVersion"    "${CLINK_VERSION}"
+    WriteRegStr HKLM $0 "DisplayVersion"    "${CLINK_VERSION_TAG}"
 
     SectionGetSize ${app_files_id} $1
     WriteRegDWORD HKLM $0 "EstimatedSize"   $1
@@ -183,17 +184,17 @@ Section "Add shortcuts to Start menu" section_add_shortcuts
 
     ; Create start menu folder.
     ;
-    StrCpy $0 "$SMPROGRAMS\clink\${CLINK_VERSION}"
+    StrCpy $0 "$SMPROGRAMS\clink"
     CreateDirectory $0
 
     ; Add shortcuts to the program and documentation.
     ;
-    CreateShortcut "$0\Clink v${CLINK_VERSION}.lnk" "$INSTDIR\clink.bat" 'startmenu --profile ~\clink' "$INSTDIR\clink.ico" 0 SW_SHOWMINIMIZED
-    CreateShortcut "$0\Clink v${CLINK_VERSION} Documentation.lnk" "$INSTDIR\clink.html"
+    CreateShortcut "$0\Clink.lnk" "$INSTDIR\clink.bat" 'startmenu --profile ~\clink' "$INSTDIR\clink.ico" 0 SW_SHOWMINIMIZED
+    CreateShortcut "$0\Clink Documentation.lnk" "$INSTDIR\clink.html"
 
     ; Add a shortcut to the uninstaller.
     ;
-    CreateShortcut "$0\Uninstall Clink v${CLINK_VERSION}.lnk" "$INSTDIR\$uninstallerExe"
+    CreateShortcut "$0\Uninstall Clink.lnk" "$INSTDIR\$uninstallerExe"
 SectionEnd
 
 ;-------------------------------------------------------------------------------
@@ -337,10 +338,10 @@ Section "!un.Application files" section_un_app_files
     RMDir /REBOOTOK $INSTDIR\..
 
     ; Remove start menu items and uninstall registry entries.
-    RMDir /r $SMPROGRAMS\clink\${CLINK_VERSION}
+    RMDir /r $SMPROGRAMS\clink
     RMDir $SMPROGRAMS\clink
     DeleteRegKey HKLM Software\Clink
-    DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\clink_${CLINK_VERSION}"
+    DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\clink"
     DeleteRegValue HKLM "System\CurrentControlSet\Control\Session Manager\Environment" "CLINK_DIR"
 
     SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment" /TIMEOUT=1000
