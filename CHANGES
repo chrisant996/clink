@@ -5,6 +5,7 @@
 #### v1.4.21
 
 - The `clink-diagnostics` command can report merged argmatchers.  When a numeric arg of 2 or greater is given (e.g. <kbd>Alt</kbd>-<kbd>2</kbd>,<kbd>Ctrl</kbd>-<kbd>x</kbd>,<kbd>Ctrl</kbd>-<kbd>z</kbd>) then it includes a list of defined argmatchers.  The list now also reports any merging of argmatchers that occurred.
+- Fixed `clink update` so `winget` doesn't get confused about whether an update is available for Clink.  Once `winget update clink` performs an update, or once a Clink v1.4.21 or greater .exe installer is run, then `winget` should stop getting confused.
 
 #### v1.4.20
 
