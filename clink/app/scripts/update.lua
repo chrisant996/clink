@@ -421,7 +421,7 @@ local function internal_check_for_update(force)
     latest_cloud_tag = cloud_tag
 
     -- Compare versions.
-    log_info("latest release is " .. cloud_tag .. ".")
+    log_info("latest release is " .. cloud_tag .. "; install type is " .. install_type .. ".")
     if not is_rhs_version_newer(local_tag, cloud_tag) then
         return nil, log_info("no update available; local version " .. local_tag .. " is not older than latest release " .. cloud_tag .. "."), true -- luacheck: no max line length
     end
