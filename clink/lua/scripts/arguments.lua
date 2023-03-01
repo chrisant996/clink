@@ -1252,6 +1252,14 @@ local function get_sub_parser(argument, str)
 end
 
 --------------------------------------------------------------------------------
+local function add_merge_source(matcher, src)
+    if src then
+        matcher._srcmerged = matcher._srcmerged or {}
+        table.insert(matcher._srcmerged, src)
+    end
+end
+
+--------------------------------------------------------------------------------
 local function merge_parsers(lhs, rhs)
     -- Merging parsers is not a trivial matter and this implementation is far
     -- from correct.  It behaves reasonably for common cases.
@@ -1260,6 +1268,9 @@ local function merge_parsers(lhs, rhs)
     if lhs == rhs then
         return
     end
+
+    -- Keep track of the merge sources.
+    add_merge_source(lhs, rhs._srccreated)
 
     -- Merge flags.
     if rhs._flags then
@@ -1775,7 +1786,11 @@ function clink.argmatcher(...)
     end
 
     if matcher then
-        matcher._srccreated = get_creation_srcinfo()
+        if matcher._srccreated then
+            add_merge_source(matcher, get_creation_srcinfo())
+        else
+            matcher._srccreated = get_creation_srcinfo()
+        end
     end
 
     return matcher
@@ -2472,13 +2487,17 @@ function clink._diag_argmatchers(arg)
 
     local bold = "\x1b[1m"          -- Bold (bright).
     local norm = "\x1b[m"           -- Normal.
+    local merged_with = "  merged with"
 
     clink.print(bold.."argmatchers:"..norm)
 
     local width = 0
-    for k,_ in pairs(_argmatchers) do
+    for k,v in pairs(_argmatchers) do
         if width < #k then
             width = #k
+        end
+        if v._srcmerged and width < #merged_with then
+            width = #merged_with
         end
     end
 
@@ -2486,9 +2505,14 @@ function clink._diag_argmatchers(arg)
     local fmt = "  %-"..width.."s  :  %s"
     for k,v in spairs(_argmatchers) do
         local src = v._srccreated
-        if src and not clink._is_internal_script(src) then
+        if src and (not clink._is_internal_script(src) or v._srcmerged) then
             any = true
             clink.print(string.format(fmt, k, src))
+            if v._srcmerged then
+                for _,sm in ipairs(v._srcmerged) do
+                    clink.print(string.format(fmt, merged_with, sm))
+                end
+            end
         end
     end
     if not any then
