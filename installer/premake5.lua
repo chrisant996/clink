@@ -246,6 +246,7 @@ newaction {
             local nsis_cmd = have_nsis
             nsis_cmd = nsis_cmd .. " /DCLINK_BUILD=" .. dest
             nsis_cmd = nsis_cmd .. " /DCLINK_VERSION=" .. version
+            nsis_cmd = nsis_cmd .. " /DCLINK_TAGVERSION=" .. docversion
             nsis_cmd = nsis_cmd .. " /DCLINK_SOURCE=" .. code_dir
             nsis_cmd = nsis_cmd .. " " .. code_dir .. "/installer/clink.nsi"
             nsis_ok = exec(nsis_cmd)
@@ -396,6 +397,7 @@ newaction {
             local nsis_cmd = have_nsis
             nsis_cmd = nsis_cmd .. " /DCLINK_BUILD=" .. path.getabsolute(dest)
             nsis_cmd = nsis_cmd .. " /DCLINK_VERSION=" .. version
+            nsis_cmd = nsis_cmd .. " /DCLINK_TAGVERSION=" .. docversion
             nsis_cmd = nsis_cmd .. " /DCLINK_SOURCE=" .. code_dir
             nsis_cmd = nsis_cmd .. " " .. code_dir .. "/installer/clink.nsi"
             nsis_ok = exec(nsis_cmd)

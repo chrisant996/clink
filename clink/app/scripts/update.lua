@@ -34,7 +34,7 @@ local this_install_key
 local latest_cloud_tag
 
 local is_build_dir = false
-local can_use_setup_exe = false
+local can_use_setup_exe = false -- Always use zip updater, because exe gets blocked sometimes by malware protection.
 
 local function parse_version_tag(tag)
     local maj, min, pat
