@@ -13,15 +13,14 @@ jobs:
     name: Publish winget package
     runs-on: windows-latest
     steps:
-      - name: Submit package to Windows Package Manager Community Repository
+      - name: Submit package to winget-pkgs
         run: |
           
           $wingetPackage = "chrisant996.Clink"
           $gitToken = "${{ secrets.WINGET_PAT }}"
           
-          $github = Invoke-RestMethod -uri "https://api.github.com/repos/chrisant996/clink/releases" 
+          $targetRelease = Invoke-RestMethod -uri "https://api.github.com/repos/chrisant996/clink/releases/latest"
           
-          $targetRelease = $github | Where-Object -Property name -match 'Release'| Select -First 1
           $installerUrl = $targetRelease | Select -ExpandProperty assets -First 1 | Where-Object -Property name -match 'clink.*.exe' | Select -ExpandProperty browser_download_url
           $ver = $targetRelease.tag_name.Trim("v")
           
