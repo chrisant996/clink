@@ -319,6 +319,11 @@ Function .onInit
 FunctionEnd
 
 ;-------------------------------------------------------------------------------
+Function .onInstSuccess
+    SetErrorLevel 0
+FunctionEnd
+
+;-------------------------------------------------------------------------------
 Section "!un.Application files" section_un_app_files
     SectionIn RO
     SetShellVarContext all
