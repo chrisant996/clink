@@ -1983,7 +1983,7 @@ Argmatchers can be more involved in parsing the command line, if they wish.
 
 An argmatcher can supply an "on arg" function to be called when the argmatcher parses an argument position.  The function can influence parsing the rest of the input line.  For example, the presence of a flag `--only-dirs` might change what match completions should be provided somewhere else in the input line.
 
-Supply an "on arg" function by including <code>onarg=<span class="arg">function</span></code> in the argument table with [_argmatcher:addarg()](#_argmatcher:addarg).  The function is passed five arguments, and it doesn't return anything (the function receives the same arguments as [Functions As Argument Options](#functions-as-argument-options)).
+Supply an "on arg" function by including <code>onarg=<span class="arg">function</span></code> in the argument table with [_argmatcher:addarg()](#_argmatcher:addarg).  The function is passed five arguments, and it doesn't return anything.
 
 - `arg_index` is the argument index in the argmatcher, corresponding to the argument being parsed.  0 means it is a flag, rather than an argument.
 - `word` is a partial string for the word under the cursor, corresponding to the argument being parsed:  it is an empty string, or if a filename is being entered then it will be the path portion (e.g. for "dir1\dir2\pre" `word` will be "dir1\dir2\").
