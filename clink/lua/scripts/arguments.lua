@@ -666,13 +666,13 @@ local function apply_options_to_builder(reader, arg, builder)
             -- and clear other references to facilitate garbage collection.
             clink.co_state._argmatcher_fromhistory = {}
         else
-            -- This can take a long time, depending on the size of the history.
-            -- So it isn't suitable to run in a suggestions coroutine.  However,
-            -- the menu-complete family of completion commands reuse available
-            -- match results, which then sees no matches.  So, the match
-            -- pipeline needs to be informed that matches will need to be
-            -- regenerated.
-            clink._reset_generate_matches()
+            -- Generating from history can take a long time, depending on the
+            -- size of the history.  It isn't suitable to run in a suggestions
+            -- coroutine.  However, the menu-complete family of completion
+            -- commands reuse available match results, which then sees no
+            -- matches.  So, the match pipeline needs to be informed that the
+            -- matches are not reusable.
+            builder:setvolatile()
         end
     end
 end
