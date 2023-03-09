@@ -6,7 +6,7 @@
 
 - Fixed `clink-select-complete` to use per-match `appendchar` when present.
 - Fixed repetitive unnecessary work in the background when the `completion` auto-suggest strategy encounters a `fromhistory` argument slot in an argmatcher.
-- Fixed the installer `/S` flag (silent install) so it returns exit code 1 on success.
+- Fixed the installer `/S` flag (silent install) so it returns exit code 0 on success.
 
 #### v1.4.21
 
