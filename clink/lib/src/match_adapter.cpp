@@ -310,7 +310,7 @@ char match_adapter::get_match_append_char(unsigned int index) const
     if (m_alt_matches)
         return lookup_match(m_alt_matches[index + 1]).get_append_char();
     if (m_matches)
-        return m_matches->get_append_character();
+        return m_matches->get_match_append_char(index);
     return 0;
 }
 
