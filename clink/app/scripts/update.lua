@@ -663,6 +663,22 @@ local function try_autoupdate()
     is_update_ready(false)
 end
 
+local function report_if_update_available(manual)
+    local update_file = has_update_file()
+    if update_file and can_check_for_update(true) then
+        local tag = path.getbasename(update_file)
+        if is_rhs_version_newer(get_local_tag(), tag) then
+            clink.print("\x1b[1mClink " .. tag .. " is available.\x1b[m")
+            print("- To apply the update, run 'clink update'.")
+            if not manual then
+                print("- To stop checking for updates, run 'clink set clink.autoupdate false'.")
+            end
+            clink.printreleasesurl("- ")
+            return true
+        end
+    end
+end
+
 --------------------------------------------------------------------------------
 local function autoupdate()
     if not settings.get("clink.autoupdate") then
@@ -671,16 +687,8 @@ local function autoupdate()
     end
 
     -- Report if an update is downloaded already.
-    local update_file = has_update_file()
-    if update_file and can_check_for_update(true) then
-        local tag = path.getbasename(update_file)
-        if is_rhs_version_newer(get_local_tag(), tag) then
-            clink.print("\x1b[1mClink " .. tag .. " is available.\x1b[m")
-            print("- To apply the update, run 'clink update'.")
-            print("- To stop checking for updates, run 'clink set clink.autoupdate false'.")
-            clink.printreleasesurl("- ")
-            print("")
-        end
+    if report_if_update_available(false) then
+        print("")
     end
 
     -- Possibly check for a new update.
@@ -723,5 +731,25 @@ function clink.updatenow(elevated)
         return run_exe_installer(update_file)
     else
         return nil, log_info("unable to determine update type from '" .. update_file .. "'.")
+    end
+end
+
+--------------------------------------------------------------------------------
+function clink.checkupdate()
+    local can, err = can_check_for_update(true)
+    if can then
+        is_update_ready(false)
+        if report_if_update_available(true) then
+            return true
+        end
+        print("An update is not available at this time.")
+    elseif err then
+        local letter = ""
+        for codepoint, _, _ in unicode.iter(unicode.normalize(1, err)) do
+            letter = codepoint
+            break
+        end
+        err = clink.upper(letter) .. err:sub(#letter + 1)
+        print(err)
     end
 end

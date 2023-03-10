@@ -60,7 +60,7 @@ static wchar_t* get_wargs()
 }
 
 //------------------------------------------------------------------------------
-static bool call_updater(lua_state& lua)
+static bool call_updater(lua_state& lua, bool do_nothing)
 {
     const bool elevated = os::is_user_admin();
 
@@ -69,6 +69,16 @@ static bool call_updater(lua_state& lua)
 
     lua_State *state = lua.get_state();
     save_stack_top ss(state);
+
+    if (do_nothing)
+    {
+        lua.push_named_function(state, "clink.checkupdate");
+        lua.pcall_silent(state, 0, 1);
+
+        bool available = lua_toboolean(state, -1);
+        return available;
+    }
+
     lua.push_named_function(state, "clink.updatenow");
     lua_pushboolean(state, elevated);
     lua.pcall_silent(state, 1, 2);
@@ -140,11 +150,14 @@ int update(int argc, char** argv)
 
     static const struct option options[] = {
         { "help",               no_argument,        nullptr, 'h' },
+        { "check",              no_argument,        nullptr, 'n' },
+        { "nothing",            no_argument,        nullptr, 'n' },
         { nullptr, 0, nullptr, 0 }
     };
 
     static const char* const help[] = {
         "-h, --help",               "Shows this help text.",
+        "-n, --check",              "Do nothing; check for an update, but don't install it.",
         nullptr
     };
 
@@ -156,10 +169,14 @@ int update(int argc, char** argv)
     int i;
     int ret = 1;
     bool is_autorun = false;
-    while ((i = getopt_long(argc, argv, "?h", options, nullptr)) != -1)
+    bool do_nothing = false;
+    while ((i = getopt_long(argc, argv, "?hn", options, nullptr)) != -1)
     {
         switch (i)
         {
+        case 'n':
+            do_nothing = true;
+            break;
         case '?':
         case 'h':
             ret = 0;
@@ -191,7 +208,7 @@ int update(int argc, char** argv)
     host_load_app_scripts(lua);
 
     // Call the updater.
-    const bool ok = call_updater(lua);
+    const bool ok = call_updater(lua, do_nothing);
     ret = !ok; // Return 0 on success.
 
     return ret;
