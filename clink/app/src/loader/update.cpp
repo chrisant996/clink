@@ -140,17 +140,11 @@ int update(int argc, char** argv)
 
     static const struct option options[] = {
         { "help",               no_argument,        nullptr, 'h' },
-        { "allow-automatic",    no_argument,        nullptr, 'A' },
-        { "disallow-automatic", no_argument,        nullptr, 'D' },
-        { "allusers",           no_argument,        nullptr, 'a' },
         { nullptr, 0, nullptr, 0 }
     };
 
     static const char* const help[] = {
         "-h, --help",               "Shows this help text.",
-        "-a, --allusers",           "Modifies automatic updates for all users (requires admin rights).",
-        "-A, --allow-automatic",    "Clear registry key that disallows automatic updates.",
-        "-D, --disallow-automatic", "Set registry key that disallows automatic updates.",
         nullptr
     };
 
@@ -162,21 +156,10 @@ int update(int argc, char** argv)
     int i;
     int ret = 1;
     bool is_autorun = false;
-    bool all_users = false;
-    int modify_allow = 0;
     while ((i = getopt_long(argc, argv, "?h", options, nullptr)) != -1)
     {
         switch (i)
         {
-        case 'a':
-            all_users = true;
-            break;
-        case 'A':
-            modify_allow = 1;
-            break;
-        case 'D':
-            modify_allow = -1;
-            break;
         case '?':
         case 'h':
             ret = 0;
@@ -187,39 +170,11 @@ int update(int argc, char** argv)
             puts("Options:");
             puts_help(help);
             printf(
-                "Checks for an updated version of Clink.  If one is available, it is downloaded\n"
-                "and will be installed the next time Clink is injected.\n"
-                "\n"
-                "The --disallow-automatic flag disables automatic updates for all profiles,\n"
-                "overriding the 'clink.autoupdate' setting.  Adding the --allusers flag affects\n"
-                "all users, but requires admin rights.  'clink info' reports when automatic\n"
-                "updates are disallowed.\n"
+                "Checks for an updated version of Clink and installs it.\n"
                 "\n"
                 "The updater requires PowerShell.\n");
             return ret;
         }
-    }
-
-    if (modify_allow)
-    {
-        HKEY hkeyRoot = all_users ? HKEY_LOCAL_MACHINE : HKEY_CURRENT_USER;
-        HKEY hkey;
-        DWORD dwDisposition;
-        LSTATUS status = RegCreateKeyExW(hkeyRoot, L"Software\\Clink", 0, nullptr, REG_OPTION_NON_VOLATILE, KEY_CREATE_SUB_KEY|KEY_SET_VALUE, nullptr, &hkey, &dwDisposition);
-        if (status == ERROR_SUCCESS)
-        {
-            DWORD value = (modify_allow < 0);
-            status = RegSetValueExW(hkey, L"DisallowAutoUpdate", 0, REG_DWORD, reinterpret_cast<const BYTE*>(&value), sizeof(value));
-            if (status == ERROR_SUCCESS)
-            {
-                printf("Automatic updates %s for %s.\n",
-                       value ? "disallowed" : "allowed",
-                       all_users ? "all users" : "the current user");
-                return 0;
-            }
-        }
-        puts("You must have administrator rights to use the --allusers flag.");
-        return 1;
     }
 
     // Start logger; but only append, don't reset the log.
