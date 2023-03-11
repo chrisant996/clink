@@ -385,14 +385,13 @@ local history = clink.argmatcher("history")
 
 --------------------------------------------------------------------------------
 local update = clink.argmatcher()
-:addflags("-h", "-a", "-A", "-D", "-?")
-:hideflags("-h", "-a", "-A", "-D", "-?")
-:addflags("--help", "--allusers", "--allow-automatic", "--disallow-automatic")
+:addflags("-h", "-n", "-?")
+:hideflags("-h", "-n", "-?")
+:addflags("--help", "--check")
 :adddescriptions({
     ["--help"]      = "Show help",
-    ["--allusers"]  = "Modify automatic updates for all users",
-    ["--allow-automatic"] = "Clear regkey that disallows automatic updates",
-    ["--disallow-automatic"] = "Set regkey that disallows automatic updates"})
+    ["--check"]     = "Do nothing; check for an update, but don't install it",
+})
 :nofiles()
 
 --------------------------------------------------------------------------------
