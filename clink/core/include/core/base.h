@@ -3,7 +3,12 @@
 
 #pragma once
 
+#if defined(_MSC_VER)
+#define sizeof_array(x)     _countof(x)
+#else
 #define sizeof_array(x)     (sizeof(x) / sizeof(x[0]))
+#endif
+
 #define AS_STR(x)           AS_STR_IMPL(x)
 #define AS_STR_IMPL(x)      #x
 
