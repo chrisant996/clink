@@ -4,6 +4,7 @@
 
 #### v1.4.23
 
+- Added help message in `clink-select-complete`: when descriptions are shown below the matches, this adds text to mention that <kbd>F1</kbd> toggles showing descriptions inline with the matches.
 - Added `clink update --check` to only check for an update without installing it.
 
 #### v1.4.22
