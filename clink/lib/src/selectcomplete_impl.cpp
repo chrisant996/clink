@@ -1624,18 +1624,32 @@ void selectcomplete_impl::update_display()
                 m_printer->print("\x1b[m\x1b[J");
                 rl_crlf();
                 up += 2;
+
+                static const char c_footer[] = "\x1b[7mF1\x1b[27m-InlineDescs";
+                int footer_cols = cell_count(c_footer);
+                if (footer_cols + 2 > m_screen_cols / 2)
+                    footer_cols = 0;
+
+                const int fit_cols = m_screen_cols - 1 - (footer_cols ? footer_cols + 2 : 0);
+
+                str<> s;
                 if (m_index >= 0 && m_index < m_matches.get_match_count())
                 {
                     const char* desc = m_matches.get_match_description(m_index);
                     if (desc && *desc)
-                    {
-                        str<> s;
-                        ellipsify(desc, m_screen_cols - 1, s, false);
-                        m_printer->print(description_color, description_color_len);
-                        m_printer->print(s.c_str(), s.length());
-                        m_printer->print("\x1b[m");
-                    }
+                        ellipsify(desc, fit_cols, s, false);
                 }
+
+                m_printer->print(description_color, description_color_len);
+                m_printer->print(s.c_str(), s.length());
+                if (footer_cols)
+                {
+                    s.format("\x1b[%uG", m_screen_cols - footer_cols);
+                    m_printer->print(description_color, description_color_len);
+                    m_printer->print(s.c_str(), s.length());
+                    m_printer->print(c_footer);
+                }
+                m_printer->print("\x1b[m");
             }
         }
         else
