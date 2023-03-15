@@ -11,6 +11,40 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - [ ] The flags may be a little tricky to handle reasonably.  _Use a table with named fields, like in `os.globfiles()`._
   - [ ] Provide a recursive globbing function.  Maybe look for an implementation that optimizes away recursive paths that cannot match?
 
+## Argmatcher syntax
+- [ ] Easier argmatcher syntax for defining flags + display + description strings.
+- `{ flag="-x", display="NUM", description="Does a thing with NUM", withflag="-y", withprev=true, hide=true }`
+- `{ "-x" }` -> one is flag.
+- `{ "-x", "Does a thing" }` -> two are flag, description.
+- `{ "-x", "NUM", "Does a thing" }` -> three are flag, display, description.
+- `{ "-x", display="text" }` -> first is flag, etc.
+- `withflag` groups with named flag; the description for all is taken from the first with a description.
+- `withprev` groups with preceding flag; the description for all is taken from the first with a description.
+- `hide` hides the flag, but still recognizes it (for linked argmatchers, and when coloring the input line).
+- Grouping flags lists them on the same line.
+  - Hard limit?
+  - Drop extras that "don't fit"?
+- Requires a new method (and shim).
+  - Has to be a method, so that shimming is possible.
+  - Maybe `addflagtable` or `addflagsinfo` or `addextendedflags`?
+  - And `addargtable`?
+  - `:addargunsorted()` makes less sense now...
+- [ ] Define help-like layout format that groups multiple flags into one entry?
+  - [ ] Only use grouping format when a single flag character is typed (`-` but not `--`).
+  - [ ] Always insert the first flag listed in a line.
+  - [ ] How many flags, or what combined width, should disable the grouping format?
+- Future-proofing:
+  - [ ] How to ignore future-version entries that won't be interpreted properly by the current version?
+  - [ ] Provide shim so scripts can use new syntax and still be compatible with older Clink.
+
+```lua
+:addflagtable({
+  { "-x"..numparser, "NUM", "Does a thing with NUM" },
+  { "--do-x"..numparser, " NUM", withprev=true },
+  { "-?", hide=true },
+})
+```
+
 ## Low Priority
 - Consider not redrawing while resizing the terminal, if there is no RPROMPT?  Maybe just flag that a full redraw needs to happen, and defer it until the next time a redraw is normally requested?
 - Allow removing event handlers, e.g. `clink.onbeginedit(func)` to add an event handler, and something like `clink.onbeginedit(func, false)` or `clink.removebeginedit(func)` to remove one?  Or maybe return a function that can be called to remove it, e.g. like below (but make sure repeated calls become no-ops).  The `clink-diagnostics` command would need to still show any removed event handlers until the next beginedit.  But it gets tricky if `func` is already registered -- should the new redundant registration's removal function be able to remove the pre-existing event handler?
@@ -30,9 +64,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## Follow Up
 - Push update to z.lua repo.
-
-## Argmatcher syntax
-- See the argmatcher_syntax branch.
 
 <br/>
 <br/>
