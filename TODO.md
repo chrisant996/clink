@@ -7,6 +7,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
+- Some way to push keys?  (Push keys to Clink; not to other processes.)  _[It's possible to use `WScript.Shell.SendKeys`, but it's inconvenient, inefficient, and complicated to use.]_
 - Provide Lua APIs for `wildmatch()` and `fnmatch()`.
   - [ ] The flags may be a little tricky to handle reasonably.  _Use a table with named fields, like in `os.globfiles()`._
   - [ ] Provide a recursive globbing function.  Maybe look for an implementation that optimizes away recursive paths that cannot match?
@@ -59,7 +60,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Some way for `history.save false` to not do any disk IO for history, but still enable `clink history` to show the session's history (probably using Shared Memory).  _[Unfavorable cost vs benefit; expensive and complicated, while offering very little benefit beyond what could be achieved by simply applying ACLs and/or encryption to the profile directory, which is something that is best done externally from Clink.]_
 - Coroutines can call `clink.refilterprompt()` and it immediately refilters while in the coroutine.  Should it instead set a flag to refilter after the coroutines have yielded?  _[It should be fine because only `line_editor_impl` has an input idle callback that runs Lua coroutines.]_
 - Show time stamps in history popup?  _[Gets complicated because of horizontal scrolling.  Too many edge cases; the benefit is not worth the cost.]_
-- Some way to push keys?  (Push keys to Clink; not to other processes.)  _[Just use `WScript.Shell.SendKeys` when needed.]_
 - Should coroutines really be able to make Readline redraw immediately?  Should instead set a flag that the main coroutine responds to when it gains control again?  _[For now it seems fine; coroutines run during idle when waiting for input, so it should be safe to let the display code run.]_
 - Readline should pass the timeout into the `rl_input_available_hook` callback function.  _[Not needed; the timeout is only for systems that need to use `select()`, and we don't need to.]_
 - Fix order that isearch executes the extra pending command in Callback Mode.  REPRO: `^R` x `Right` p ==> "p" is inserted, _THEN_ `Right` is executed.  _[Readline Callback Mode bug that only malfunctions when `isearch-terminators` omits ESC; not worth tracking down.]_
