@@ -276,6 +276,65 @@ function os.globfiles(pattern, extrainfo, flags)
 end
 
 --------------------------------------------------------------------------------
+-- TODO: flags?  `.` and `c` could potentially make sense.  Also system and
+-- hidden, so it should be a table rather than a string.
+function os.globmatch(pattern, extrainfo)
+    local matches = {}
+    local stack = {}
+    local stack_count = 0
+-- TODO: os.globdirmatches and os.globfilematches?
+
+    -- Seed initial search pattern.
+    local initial = pattern:match("^[^*?[]+") or ""
+    local rest = pattern:sub(#initial + 1)
+    table.insert(stack, { pattern=initial, rest=rest, parent="" })
+    stack_count = stack_count + 1
+
+    -- Process the directory stack.
+    while stack_count > 0 do
+        local entry = stack:remove(stack_count)
+        stack_count = stack_count - 1
+
+        -- Find the longest non-wild pattern prefix, to optimize away
+        -- recursion that cannot match.
+        local nonwild = entry.rest:match("^[^*?[]+") or ""
+        local parent = nonwild:match("^(.*)/[^/]*$") or ""
+        parent = path.join(entry.parent, parent)
+
+        -- Collect directories for recursion.
+        if entry.rest:find("**", #nonwild + 1, true) or entry.rest:find("/", #nonwild + 1, true) then
+            local dir = nonwild.."*"
+-- TODO: Globber flags.
+            local t = {}
+            local dg = os._makedirglobber(nonwild.."*", true)
+            while dg:next(t) do
+                coroutine.yield()
+                if clink._is_coroutine_canceled(c) then
+                    dg:close()
+                    return {}
+                end
+            end
+            dg:close()
+
+            -- Add them in reverse order, to make popping simple and efficient.
+-- TODO: Figure out what REST and PARENT should be.
+            for _, d in ipairs(t) do
+                table.insert(stack, { pattern=path.join(parent, d), rest=nil, parent=parent })
+            end
+        end
+
+-- TODO: Figure out whether to enumerate files.
+-- TODO: Figure out what pattern to pass to _makefileglobber.
+-- TODO: os._makefileglobber(__pattern__, extrainfo, __globberflags__)
+-- TODO: For each file, use path.fnmatch(pattern, file, "*")
+    end
+
+    return matches
+end
+
+
+
+--------------------------------------------------------------------------------
 local function first_letter(s)
     -- This handles combining marks, but does not yet handle ZWJ (0x200d) such
     -- as in emoji sequences.
