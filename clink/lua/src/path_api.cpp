@@ -8,6 +8,7 @@
 #include <core/os.h>
 #include <core/path.h>
 #include <core/str.h>
+#include <wildmatch/wildmatch.h>
 
 //------------------------------------------------------------------------------
 /// -name:  path.normalise
@@ -253,6 +254,87 @@ static int to_parent(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  path.fnmatch
+/// -ver:   1.4.24
+/// -arg:   pattern:string
+/// -arg:   string:string
+/// -arg:   [flags:string]
+/// -ret:   boolean
+/// This compares the two strings <span class="arg">pattern</span> and
+/// <span class="arg">string</span> and returns whether they are considered to
+/// match.  This is like the Linux <code>fnmatch</code> function, with an
+/// additional optional mode that can allow matching <code>**</code> patterns
+/// the same as git does.
+///
+/// The optional <span class="arg">flags</span> string may contain any of the
+/// following characters to modify the behavior accordingly:
+/// <ul>
+/// <tr><th>Flag</th><th>Mnemonic</th><th>Description</th></tr>
+/// <tr><td>"<code>e</code>"</td><td>NoEscape</td><td>Treat backslash in <span class="arg">pattern</span> as a normal character, rather than as an escape character.</td></tr>
+/// <tr><td>"<code>n</code>"</td><td>PathName</td><td>Path separators in <span class="arg">string</span> are matched only by a slash <code>/</code> in <span class="arg">pattern</span> (unless the <code>*</code> flag is used; see below).</td></tr>
+/// <tr><td>"<code>.</code>"</td><td>Period</td><td>A leading period <code>.</code> in <span class="arg">string</span> is matched only by a period <code>.</code> in <span class="arg">pattern</span>.  A leading period is one at the beginning of <span class="arg">string</span>, or immediately following a path separator when the <code>n</code> flag is used.</td></tr>
+/// <tr><td>"<code>l</code>"</td><td>LeadingDir</td><td>Consider <span class="arg">pattern</span> to be matched if it completely matches <span class="arg">string</span>, or if it matches <span class="arg">string</span> up to a path separator.</td></tr>
+/// <tr><td>"<code>c</code>"</td><td>NoCaseFold</td><td>Match with case sensitivity. By default it matches case-insensitively, because Windows is case-insensitive.</td></tr>
+/// <tr><td>"<code>*</code>"</td><td>WildStar</td><td>Treat double-asterisks in <span class="arg">pattern</span> as matching path separators as well, the same as how git does (implies the <code>n</code> flag).</td></tr>
+/// <tr><td>"<code>s</code>"</td><td>NoSlashFold</td><td>Treat slashes <code>/</code> in <span class="arg">pattern</span> as only matching slashes in <span class="arg">string</span>. By default slashes in <span class="arg">pattern</span> match both slash <code>/</code> and backslash <code>\</code> because Windows recognizes both as path separators.</td></tr>
+/// </ul>
+///
+/// The <span class="arg">pattern</span> supports wildcards (<code>?</code> and
+/// <code>*</code>), character classes (<code>[</code>...<code>]</code>), ranges
+/// (<code>[</code>.<code>-</code>.<code>]</code>), and complementation
+/// (<code>[!</code>...<code>]</code> and
+/// <code>[!</code>.<code>-</code>.<code>]</code>).
+///
+/// The <span class="arg">pattern</span> also supports the following character
+/// classes:
+/// <ul>
+/// <li>"<code>[[:alnum:]]</code>": Matches any alphabetic character or digit a - z, or A - Z, or 0 - 9.
+/// <li>"<code>[[:alpha:]]</code>": Matches any alphabetic character a - z or A - Z.
+/// <li>"<code>[[:blank:]]</code>": Matches 0x20 (space) or 0x09 (tab).
+/// <li>"<code>[[:cntrl:]]</code>": Matches 0x00 - 0x1F or 0x7F.
+/// <li>"<code>[[:digit:]]</code>": Matches any of the digits 0 - 9.
+/// <li>"<code>[[:graph:]]</code>": Matches any character that matches <code>[[:print:]]</code> but does not match <code>[[:space:]]</code>.
+/// <li>"<code>[[:lower:]]</code>": Matches any lower case ASCII letter a - z.
+/// <li>"<code>[[:print:]]</code>": Matches any printable character (e.g. 0x20 - 0x7E).
+/// <li>"<code>[[:punct:]]</code>": Matches any character that matches <code>[[:print:]]</code> but does not match <code>[[:alnum:]]</code>, <code>[[:space:]]</code>, or <code>[[:alnum:]]</code>.
+/// <li>"<code>[[:space:]]</code>": Matches 0x20 (space) or 0x09 - 0x0D (tab, linefeed, carriage return, etc).
+/// <li>"<code>[[:xdigit:]]</code>": Matches any of the hexadecimal digits 0 - 9, A - F, or a - f.
+/// <li>"<code>[[:upper:]]</code>": Matches any upper case ASCII letter A - Z.
+/// </ul>
+///
+/// <strong>Note:</strong> At this time the character classes and
+/// case-insensitivity operate on one byte at a time, so they do not fully
+/// work as expected with non-ASCII characters.
+static int api_fnmatch(lua_State* state)
+{
+    const char* pattern = checkstring(state, 1);
+    const char* string = checkstring(state, 2);
+    const char* flags = optstring(state, 3, "");
+// TODO: flags should probably be a table instead (like in os.globfiles).
+
+    int bits = WM_CASEFOLD|WM_SLASHFOLD;
+    for (; *flags; ++flags)
+    {
+        switch (*flags)
+        {
+        case 'e':   bits |= WM_NOESCAPE; break;
+        case 'n':   bits |= WM_PATHNAME; break;
+        case '.':   bits |= WM_PERIOD; break;
+        case 'l':   bits |= WM_LEADING_DIR; break;
+        case 'c':   bits &= ~WM_CASEFOLD; break;
+        case '*':   bits |= WM_WILDSTAR; break;
+        case 's':   bits &= ~WM_SLASHFOLD; break;
+        default:
+            return luaL_argerror(state, 3, "invalid flags");
+        }
+    }
+
+    bool match = (wildmatch(pattern, string, bits) == WM_MATCH);
+    lua_pushboolean(state, match);
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 // UNDOCUMENTED; internal use only.
 static int is_device(lua_State* state)
 {
@@ -280,6 +362,7 @@ void path_lua_initialise(lua_state& lua)
         { "join",          &join },
         { "isexecext",     &is_exec_ext },
         { "toparent",      &to_parent },
+        { "fnmatch",       &api_fnmatch },
         // UNDOCUMENTED; internal use only.
         { "isdevice",      &is_device },
     };
