@@ -745,7 +745,7 @@ function clink.checkupdate()
         print("An update is not available at this time.")
     elseif err then
         local letter = ""
-        for codepoint, _, _ in unicode.iter(unicode.normalize(1, err)) do
+        for codepoint, _, _ in unicode.iter(unicode.normalize(1, err)) do -- luacheck: ignore 512
             letter = codepoint
             break
         end
