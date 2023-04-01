@@ -280,13 +280,30 @@ end
 -- hidden, so it should be a table rather than a string.
 -- TODO: unit tests...
 function os.globmatch(pattern, extrainfo)
-    local _, ismain = coroutine.running()
+    local c, ismain = coroutine.running()
     local matches = {}
     local stack = {}
     local stack_count = 0
 
 -- TODO: os.globdirmatches and os.globfilematches?
     local need_files = true
+
+    local last_yield = os.clock()
+    local function test_yield_bail(force)
+        if ismain then
+            if os.issignaled() then
+                return true
+            end
+        else
+            if force or (os.clock() - last_yield > 0.001) then
+                coroutine.yield()
+                last_yield = os.clock()
+            end
+            if clink._is_coroutine_canceled(c) then
+                return true
+            end
+        end
+    end
 
     if pattern:sub(1, 2) == "//" then
         pattern = "//" .. pattern:sub(3):gsub("//+", "/")
@@ -300,7 +317,10 @@ function os.globmatch(pattern, extrainfo)
 
     -- Process the directory stack.
     while stack_count > 0 do
--- TODO: explicitly yield periodically; the globber :next() calls might never be reached or might never return true.
+        if test_yield_bail() then
+            return {}
+        end
+
         local entry = table.remove(stack, stack_count)
         stack_count = stack_count - 1
 
@@ -321,10 +341,7 @@ print("POP", entry.pattern, entry.rest, "("..parent..")")
             local dg = os._makedirglobber(wild, extrainfo)
 print("  RECURSE", wild)
             while dg:next(t) do
-                if not ismain then
-                    coroutine.yield()
-                end
-                if clink._is_coroutine_canceled(c) then
+                if test_yield_bail(true) then
                     dg:close()
                     return {}
                 end
@@ -341,7 +358,10 @@ print("  RECURSE", wild)
 
             -- Add them in reverse order, to make popping simple and efficient.
             for _, d in ipairs(t) do
-                -- FUTURE: Is yielding necessary?
+                if test_yield_bail() then
+                    return {}
+                end
+
                 local name = extrainfo and d.name or d
                 local _pattern = path.join(parent, name:gsub("\\", "/"))
 print("    ADD ".._pattern..", ".._rest)
@@ -360,10 +380,7 @@ print("    ADD ".._pattern..", ".._rest)
                 local t = {}
                 local fg = os._makefileglobber(wild, extrainfo)
                 while fg:next(t) do
-                    if not ismain then
-                        coroutine.yield()
-                    end
-                    if clink._is_coroutine_canceled(c) then
+                    if test_yield_bail(true) then
                         fg:close()
                         return {}
                     end
@@ -375,7 +392,10 @@ print("    ADD ".._pattern..", ".._rest)
 
 print("  FILES", wild, "(".._parent..")")
                 for _, f in ipairs(t) do
-                    -- FUTURE: Is yielding necessary?
+                    if test_yield_bail() then
+                        return {}
+                    end
+
                     local name = extrainfo and f.name or f
                     name = path.join(_parent, name)
                     if not name:find("\\$") and path.fnmatch(pattern, name, "*") then
