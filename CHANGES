@@ -2,6 +2,10 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.4.24
+
+- Fixed `~` by itself to change directories, the same as `~\`.
+
 #### v1.4.23
 
 - Added help message in `clink-select-complete`: when descriptions are shown below the matches, this adds text to mention that <kbd>F1</kbd> toggles showing descriptions inline with the matches.
