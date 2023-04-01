@@ -208,7 +208,7 @@ intercept_result intercept_directory(const char* line, str_base* out, bool only_
     // If the input doesn't end with a separator, don't handle it.  Otherwise
     // it would interfere with launching something found on the PATH but with
     // the same name as a subdirectory of the current working directory.
-    if (!path::is_separator(tmp.c_str()[tmp.length() - 1]))
+    if (!tmp.equals("~") && !path::is_separator(tmp.c_str()[tmp.length() - 1]))
     {
         // But allow a special case for "..\.." and "..\..\..", etc.
         const char* p = tmp.c_str();
