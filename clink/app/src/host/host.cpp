@@ -1070,6 +1070,7 @@ skip_errorlevel:
         // Give the directory history queue a crack at the current directory.
         update_dir_history();
 
+        // Call the editor to accept a line of input.
         ret = skip_editor || (editor && editor->edit(out, edit));
         if (!ret)
             break;
