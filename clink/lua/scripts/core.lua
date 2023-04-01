@@ -280,6 +280,7 @@ end
 -- hidden, so it should be a table rather than a string.
 -- TODO: unit tests...
 function os.globmatch(pattern, extrainfo)
+    local _, ismain = coroutine.running()
     local matches = {}
     local stack = {}
     local stack_count = 0
@@ -294,12 +295,7 @@ function os.globmatch(pattern, extrainfo)
     end
 
     -- Seed initial search pattern.
-    local initial = pattern:match("^[^*?[]+") or ""
-    local rest = pattern:sub(#initial + 1)
-print("GLOBMATCH:")
-print("  initial", initial)
-print("  rest   ", rest)
-    table.insert(stack, { pattern=initial, rest=rest })
+    table.insert(stack, { pattern="", rest=pattern })
     stack_count = stack_count + 1
 
     -- Process the directory stack.
@@ -312,12 +308,8 @@ print("  rest   ", rest)
         -- recursion that cannot match.
         local nonwild = entry.rest:match("^[^*?[]+") or ""
         local parent = entry.pattern
-        rest = entry.rest:sub(#nonwild +1)
-print("POP:")
-print("  { "..entry.pattern..", "..entry.rest.." }")
-print("  nonwild", nonwild)
-print("  parent ", parent)
-print("  rest   ", rest)
+        local rest = entry.rest:sub(#nonwild +1)
+print("POP", entry.pattern, entry.rest, "("..parent..")")
 
         -- Collect directories for recursion.
         local rest_star = rest:find("**", 1, true)
@@ -329,7 +321,9 @@ print("  rest   ", rest)
             local dg = os._makedirglobber(wild, extrainfo)
 print("  RECURSE", wild)
             while dg:next(t) do
-                coroutine.yield()
+                if not ismain then
+                    coroutine.yield()
+                end
                 if clink._is_coroutine_canceled(c) then
                     dg:close()
                     return {}
@@ -346,12 +340,11 @@ print("  RECURSE", wild)
             end
 
             -- Add them in reverse order, to make popping simple and efficient.
-print("  ADD:")
             for _, d in ipairs(t) do
                 -- FUTURE: Is yielding necessary?
                 local name = extrainfo and d.name or d
                 local _pattern = path.join(parent, name:gsub("\\", "/"))
-print("    { ".._pattern..", ".._rest.." }")
+print("    ADD ".._pattern..", ".._rest)
                 table.insert(stack, { pattern=_pattern, rest=_rest })
                 stack_count = stack_count + 1
             end
@@ -366,9 +359,10 @@ print("    { ".._pattern..", ".._rest.." }")
 -- TODO: Globber flags.
                 local t = {}
                 local fg = os._makefileglobber(wild, extrainfo)
-print("  FILES", wild)
                 while fg:next(t) do
-                    coroutine.yield()
+                    if not ismain then
+                        coroutine.yield()
+                    end
                     if clink._is_coroutine_canceled(c) then
                         fg:close()
                         return {}
@@ -376,10 +370,14 @@ print("  FILES", wild)
                 end
                 fg:close()
 
+                local _parent = nonwild:match("^(.*)/") or ""
+                _parent = path.join(parent, _parent)
+
+print("  FILES", wild, "(".._parent..")")
                 for _, f in ipairs(t) do
                     -- FUTURE: Is yielding necessary?
                     local name = extrainfo and f.name or f
-                    name = path.join(path.join(parent, nonwild:match("^(.*)/") or nonwild), name)
+                    name = path.join(_parent, name)
                     if not name:find("\\$") and path.fnmatch(pattern, name, "*") then
 print("    YES!", name)
                         if extrainfo then
@@ -388,8 +386,6 @@ print("    YES!", name)
                         else
                             table.insert(matches, name)
                         end
-else
-print("    NO  ", name)
                     end
                 end
             end
