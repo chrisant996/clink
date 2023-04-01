@@ -278,35 +278,56 @@ end
 --------------------------------------------------------------------------------
 -- TODO: flags?  `.` and `c` could potentially make sense.  Also system and
 -- hidden, so it should be a table rather than a string.
+-- TODO: unit tests...
 function os.globmatch(pattern, extrainfo)
     local matches = {}
     local stack = {}
     local stack_count = 0
+
 -- TODO: os.globdirmatches and os.globfilematches?
+    local need_files = true
+
+    if pattern:sub(1, 2) == "//" then
+        pattern = "//" .. pattern:sub(3):gsub("//+", "/")
+    else
+        pattern = pattern:gsub("//+", "/")
+    end
 
     -- Seed initial search pattern.
     local initial = pattern:match("^[^*?[]+") or ""
     local rest = pattern:sub(#initial + 1)
-    table.insert(stack, { pattern=initial, rest=rest, parent="" })
+print("GLOBMATCH:")
+print("  initial", initial)
+print("  rest   ", rest)
+    table.insert(stack, { pattern=initial, rest=rest })
     stack_count = stack_count + 1
 
     -- Process the directory stack.
     while stack_count > 0 do
-        local entry = stack:remove(stack_count)
+-- TODO: explicitly yield periodically; the globber :next() calls might never be reached or might never return true.
+        local entry = table.remove(stack, stack_count)
         stack_count = stack_count - 1
 
         -- Find the longest non-wild pattern prefix, to optimize away
         -- recursion that cannot match.
         local nonwild = entry.rest:match("^[^*?[]+") or ""
-        local parent = nonwild:match("^(.*)/[^/]*$") or ""
-        parent = path.join(entry.parent, parent)
+        local parent = entry.pattern
+        rest = entry.rest:sub(#nonwild +1)
+print("POP:")
+print("  { "..entry.pattern..", "..entry.rest.." }")
+print("  nonwild", nonwild)
+print("  parent ", parent)
+print("  rest   ", rest)
 
         -- Collect directories for recursion.
-        if entry.rest:find("**", #nonwild + 1, true) or entry.rest:find("/", #nonwild + 1, true) then
-            local dir = nonwild.."*"
+        local rest_star = rest:find("**", 1, true)
+        local rest_slash = rest:find("/", 1, true)
+        if rest_star or rest_slash then
+            local wild = path.join(parent, nonwild.."*")
 -- TODO: Globber flags.
             local t = {}
-            local dg = os._makedirglobber(nonwild.."*", true)
+            local dg = os._makedirglobber(wild, extrainfo)
+print("  RECURSE", wild)
             while dg:next(t) do
                 coroutine.yield()
                 if clink._is_coroutine_canceled(c) then
@@ -316,17 +337,63 @@ function os.globmatch(pattern, extrainfo)
             end
             dg:close()
 
+            -- Trim leading subdir from rest, if possible.
+            local _rest
+            if rest_slash and (not rest_star or rest_slash < rest_star) then
+                _rest = rest:match("^[^/]+/(.*)$")
+            else
+                _rest = rest
+            end
+
             -- Add them in reverse order, to make popping simple and efficient.
--- TODO: Figure out what REST and PARENT should be.
+print("  ADD:")
             for _, d in ipairs(t) do
-                table.insert(stack, { pattern=path.join(parent, d), rest=nil, parent=parent })
+                -- FUTURE: Is yielding necessary?
+                local name = extrainfo and d.name or d
+                local _pattern = path.join(parent, name:gsub("\\", "/"))
+print("    { ".._pattern..", ".._rest.." }")
+                table.insert(stack, { pattern=_pattern, rest=_rest })
+                stack_count = stack_count + 1
             end
         end
 
--- TODO: Figure out whether to enumerate files.
--- TODO: Figure out what pattern to pass to _makefileglobber.
--- TODO: os._makefileglobber(__pattern__, extrainfo, __globberflags__)
--- TODO: For each file, use path.fnmatch(pattern, file, "*")
+        if need_files then
+            local rest_star = rest:find("**", 1, true)
+            local rest_slash = rest:find("/", 1, true)
+            local leaf = not rest_slash or (rest_star and rest_star < rest_slash)
+            if leaf then
+                local wild = path.join(parent, nonwild.."*")
+-- TODO: Globber flags.
+                local t = {}
+                local fg = os._makefileglobber(wild, extrainfo)
+print("  FILES", wild)
+                while fg:next(t) do
+                    coroutine.yield()
+                    if clink._is_coroutine_canceled(c) then
+                        fg:close()
+                        return {}
+                    end
+                end
+                fg:close()
+
+                for _, f in ipairs(t) do
+                    -- FUTURE: Is yielding necessary?
+                    local name = extrainfo and f.name or f
+                    name = path.join(path.join(parent, nonwild:match("^(.*)/") or nonwild), name)
+                    if not name:find("\\$") and path.fnmatch(pattern, name, "*") then
+print("    YES!", name)
+                        if extrainfo then
+                            t.name = name
+                            table.insert(matches, t)
+                        else
+                            table.insert(matches, name)
+                        end
+else
+print("    NO  ", name)
+                    end
+                end
+            end
+        end
     end
 
     return matches
