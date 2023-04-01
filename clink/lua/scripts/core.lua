@@ -340,6 +340,7 @@ print("POP", entry.pattern, entry.rest, "("..parent..")")
             local t = {}
             local dg = os._makedirglobber(wild, extrainfo)
 print("  RECURSE", wild)
+-- TODO: maybe use a single _makefileglobber(wild, true) and conditionally handle dirs and files appropriately.
             while dg:next(t) do
                 if test_yield_bail(true) then
                     dg:close()
