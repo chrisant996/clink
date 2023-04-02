@@ -398,7 +398,7 @@ print("  FILES", wild, "(".._parent..")")
                     end
 
                     local name = extrainfo and f.name or f
-                    name = path.join(_parent, name)
+                    name = path.join(_parent, name):gsub("/", "\\")
                     if not name:find("\\$") and path.fnmatch(pattern, name, fnmatch_flags) then
 print("    YES!", name)
                         if extrainfo then
