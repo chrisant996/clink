@@ -301,10 +301,56 @@ local function normalize_stars(s)
 end
 
 --------------------------------------------------------------------------------
--- DOC: When pattern ends with / it collects dirs, otherwise it collects files.
--- DOC: Flags are same as os.globfiles(), plus .period and .nocasefold.
--- DOC: Pre-order traversal.
--- TODO: unit tests...
+--- -name:  os.globmatch
+--- -ver:   1.4.24
+--- -arg:   pattern:string
+--- -arg:   [extrainfo:integer|boolean]
+--- -arg:   [flags:table]
+--- -ret:   table
+--- Collects files or directories matching <span class="arg">pattern</span> and
+--- returns them in a table of strings.  This matches <code>**</code> patterns
+--- <a href="https://git-scm.com/docs/gitignore#_pattern_format">the same as git
+--- does</a>.  When <span class="arg">pattern</span> ends with <code>/</code>
+--- this collects directories, otherwise it collects files.
+---
+--- <strong>Note:</strong> any quotation marks (<code>"</code>) in
+--- <span class="arg">pattern</span> are stripped.
+---
+--- When this is used in a coroutine it automatically yields periodically.
+---
+--- The optional <span class="arg">extrainfo</span> argument can return a table
+--- of tables instead, where each sub-table corresponds to one file or directory
+--- and has the following scheme:
+--- -show:  local t = os.globmatch(pattern, extrainfo)
+--- -show:  -- Included when extrainfo is true or >= 1:
+--- -show:  --   t[index].name      -- [string] The file or directory name.
+--- -show:  --   t[index].type      -- [string] The match type (see below).
+--- -show:  -- Included when extrainfo is 2:
+--- -show:  --   t[index].size      -- [number] The file size, in bytes.
+--- -show:  --   t[index].atime     -- [number] The access time, compatible with os.time().
+--- -show:  --   t[index].mtime     -- [number] The modified time, compatible with os.time().
+--- -show:  --   t[index].ctime     -- [number] The creation time, compatible with os.time().
+--- The <span class="tablescheme">type</span> string can be "file" or "dir", and
+--- may also contain ",hidden", ",readonly", ",link", and ",orphaned" depending
+--- on the attributes (making it usable as a match type for
+--- <a href="#builder:addmatch">builder:addmatch()</a>).
+---
+--- The optional <span class="arg">flags</span> argument can be a table with
+--- fields that select how the globbing should behave.  By default hidden files
+--- are included, system files are omitted, and comparisons are case
+--- insensitive.
+--- -show:  local flags = {
+--- -show:  &nbsp;   hidden = true,      -- True includes hidden files (default), or false omits them.
+--- -show:  &nbsp;   system = false,     -- True includes system files, or false omits them (default).
+--- -show:  &nbsp;   period = false,     -- True matches files beginning with period (.) only if pattern has a
+--- -show:  &nbsp;                       -- corresponding period, or false doesn't require a corresponding period (default).
+--- -show:  &nbsp;   nocasefold = false, -- True is case-sensitive, or false is case-insensitive (default).
+--- -show:  }
+--- -show:  local t = os.globmatch("docs/**/*.md", true, flags)
+---
+--- <strong>Note:</strong> The returned table is built using a pre-order
+--- traversal, so files in a directory are listed before recursing into its
+--- subdirectories ("dir\xyzfile" precedes "dir\abcdir\abcfile").
 function os.globmatch(pattern, extrainfo, flags)
     if flags == nil and type(extrainfo) == "table" then
         flags = extrainfo
