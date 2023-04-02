@@ -276,10 +276,8 @@ function os.globfiles(pattern, extrainfo, flags)
 end
 
 --------------------------------------------------------------------------------
--- TODO: flags?  `.` and `c` could potentially make sense.  Also system and
--- hidden, so it should be a table rather than a string.
 -- TODO: unit tests...
-function os.globmatch(pattern, extrainfo)
+function os.globmatch(pattern, extrainfo, flags)
     local c, ismain = coroutine.running()
     local matches = {}
     local stack = {}
@@ -339,11 +337,11 @@ print("POP", entry.pattern, entry.rest, "("..parent..")")
         local rest_slash = rest:find("/", 1, true)
         if rest_star or rest_slash then
             local wild = path.join(parent, nonwild.."*")
--- TODO: Globber flags.
             local t = {}
-            local dg = os._makedirglobber(wild, extrainfo)
+            local dg = os._makedirglobber(wild, extrainfo, flags)
 print("  RECURSE", wild)
--- TODO: maybe use a single _makefileglobber(wild, true) and conditionally handle dirs and files appropriately.
+-- TODO: Use a single _makefileglobber(wild, true, flags).
+-- TODO: Use do_files to consider files or dirs as matches.
             while dg:next(t) do
                 if test_yield_bail(true) then
                     dg:close()
@@ -374,15 +372,14 @@ print("    ADD ".._pattern..", ".._rest)
             end
         end
 
-        if need_files then
+        if true then
             local rest_star = rest:find("**", 1, true)
             local rest_slash = rest:find("/", 1, true)
             local leaf = not rest_slash or (rest_star and rest_star < rest_slash)
             if leaf then
                 local wild = path.join(parent, nonwild.."*")
--- TODO: Globber flags.
                 local t = {}
-                local fg = os._makefileglobber(wild, extrainfo)
+                local fg = os._makefileglobber(wild, extrainfo, flags)
                 while fg:next(t) do
                     if test_yield_bail(true) then
                         fg:close()
@@ -402,7 +399,7 @@ print("  FILES", wild, "(".._parent..")")
 
                     local name = extrainfo and f.name or f
                     name = path.join(_parent, name)
-                    if not name:find("\\$") and path.fnmatch(pattern, name, "*") then
+                    if not name:find("\\$") and path.fnmatch(pattern, name, fnmatch_flags) then
 print("    YES!", name)
                         if extrainfo then
                             t.name = name
