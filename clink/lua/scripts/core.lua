@@ -276,6 +276,31 @@ function os.globfiles(pattern, extrainfo, flags)
 end
 
 --------------------------------------------------------------------------------
+local function normalize_stars(s)
+    local start = 1
+    while true do
+        local sa, sz = s:find("%*%*+", start)
+        if not sa then
+            return s
+        end
+
+        local wildstar = true
+        if sa > 1 and s:sub(sa - 1, sa - 1) ~= "/" then
+            wildstar = false
+        else
+            local ch = s:sub(sz + 1, sz + 1)
+            if ch ~= "" and ch ~= "/" then
+                wildstar = false
+            end
+        end
+
+        local replace = wildstar and "**" or "*"
+        s = s:sub(1, sa - 1) .. replace .. s:sub(sz + 1)
+        start = sa + #replace
+    end
+end
+
+--------------------------------------------------------------------------------
 -- DOC: When pattern ends with / it collects dirs, otherwise it collects files.
 -- DOC: Flags are same as os.globfiles(), plus .period and .nocasefold.
 -- DOC: Pre-order traversal.
@@ -289,6 +314,8 @@ function os.globmatch(pattern, extrainfo, flags)
     if not pattern or pattern == "" or pattern == "/" then
         return {}
     end
+
+    pattern = normalize_stars(pattern)
 
     local fnmatch_flags = "*"
     if flags then
