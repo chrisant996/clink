@@ -289,12 +289,15 @@ function os.globmatch(pattern, extrainfo)
     local need_files = true
 
     local last_yield = os.clock()
-    local function test_yield_bail(force)
-        if ismain then
+    local test_yield_bail
+    if ismain then
+        test_yield_bail = function ()
             if os.issignaled() then
                 return true
             end
-        else
+        end
+    else
+        test_yield_bail = function (force)
             if force or (os.clock() - last_yield > 0.001) then
                 coroutine.yield()
                 last_yield = os.clock()
