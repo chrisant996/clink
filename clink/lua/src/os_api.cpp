@@ -761,8 +761,8 @@ int globber_impl(lua_State* state, bool dirs_only, bool back_compat=false)
 /// By default hidden directories are included and system directories are
 /// omitted.
 /// -show:  local flags = {
-/// -show:      hidden = false,     // True includes hidden directories, or false omits them.
-/// -show:      system = true,      // True includes system directories, or false omits them.
+/// -show:  &nbsp;   hidden = false,     -- True includes hidden directories, or false omits them.
+/// -show:  &nbsp;   system = true,      -- True includes system directories, or false omits them.
 /// -show:  }
 /// -show:  local t = os.globdirs("*", true, flags)
 int glob_dirs(lua_State* state)
@@ -807,8 +807,8 @@ int glob_dirs(lua_State* state)
 /// can be a table with fields that select how file globbing should behave.  By
 /// default hidden files are included and system files are omitted.
 /// -show:  local flags = {
-/// -show:      hidden = false,     // True includes hidden files, or false omits them.
-/// -show:      system = true,      // True includes system files, or false omits them.
+/// -show:  &nbsp;   hidden = false,     -- True includes hidden files, or false omits them.
+/// -show:  &nbsp;   system = true,      -- True includes system files, or false omits them.
 /// -show:  }
 /// -show:  local t = os.globfiles("*", true, flags)
 int glob_files(lua_State* state)
