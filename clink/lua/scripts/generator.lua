@@ -399,8 +399,8 @@ end
 --- globbing. If it's unspecified (or nil) Clink falls back to
 --- <a href="#clink.find_files">clink.find_files</a>.
 ---
---- Note: This exists for backward compatibility but malfunctions with some
---- inputs, in the same ways it did in v0.4.9.
+--- <strong>Note:</strong> This exists for backward compatibility but
+--- malfunctions with some inputs, in the same ways it did in v0.4.9.
 function clink.match_files(pattern, full_path, find_func)
     -- This is ported from Clink v0.4.9 as identically as possible to minimize
     -- behavioral differences.  However, that was NOT a good implementation of

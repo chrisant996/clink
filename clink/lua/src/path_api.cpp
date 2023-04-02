@@ -264,7 +264,8 @@ static int to_parent(lua_State* state)
 /// <span class="arg">string</span> and returns whether they are considered to
 /// match.  This is like the Linux <code>fnmatch</code> function, with an
 /// additional optional mode that can allow matching <code>**</code> patterns
-/// the same as git does.
+/// <a href="https://git-scm.com/docs/gitignore#_pattern_format">the same as git
+/// does</a>.
 ///
 /// The optional <span class="arg">flags</span> string may contain any of the
 /// following characters to modify the behavior accordingly:

@@ -733,6 +733,12 @@ int globber_impl(lua_State* state, bool dirs_only, bool back_compat=false)
 /// Collects directories matching <span class="arg">globpattern</span> and
 /// returns them in a table of strings.
 ///
+/// <strong>Note:</strong> any quotation marks (<code>"</code>) in
+/// <span class="arg">globpattern</span> are stripped.
+///
+/// Starting in v1.3.1, when this is used in a coroutine it automatically yields
+/// periodically.
+///
 /// The optional <span class="arg">extrainfo</span> argument can return a table
 /// of tables instead, where each sub-table corresponds to one directory and has
 /// the following scheme:
@@ -750,19 +756,13 @@ int globber_impl(lua_State* state, bool dirs_only, bool back_compat=false)
 /// attributes (making it usable as a match type for
 /// <a href="#builder:addmatch">builder:addmatch()</a>).
 ///
-/// Note: any quotation marks (<code>"</code>) in
-/// <span class="arg">globpattern</span> are stripped.
-///
-/// Starting in v1.3.1, when this is used in a coroutine it automatically yields
-/// periodically.
-///
 /// Starting in v1.4.16, the optional <span class="arg">flags</span> argument
 /// can be a table with fields that select how directory globbing should behave.
 /// By default hidden directories are included and system directories are
 /// omitted.
 /// -show:  local flags = {
-/// -show:  &nbsp;   hidden = false,     -- True includes hidden directories, or false omits them.
-/// -show:  &nbsp;   system = true,      -- True includes system directories, or false omits them.
+/// -show:  &nbsp;   hidden = true,      -- True includes hidden directories (default), or false omits them.
+/// -show:  &nbsp;   system = false,     -- True includes system directories, or false omits them (default).
 /// -show:  }
 /// -show:  local t = os.globdirs("*", true, flags)
 int glob_dirs(lua_State* state)
@@ -779,6 +779,12 @@ int glob_dirs(lua_State* state)
 /// -ret:   table
 /// Collects files and/or directories matching
 /// <span class="arg">globpattern</span> and returns them in a table of strings.
+///
+/// <strong>Note:</strong> any quotation marks (<code>"</code>) in
+/// <span class="arg">globpattern</span> are stripped.
+///
+/// Starting in v1.3.1, when this is used in a coroutine it automatically yields
+/// periodically.
 ///
 /// The optional <span class="arg">extrainfo</span> argument can return a table
 /// of tables instead, where each sub-table corresponds to one file or directory
@@ -797,18 +803,12 @@ int glob_dirs(lua_State* state)
 /// on the attributes (making it usable as a match type for
 /// <a href="#builder:addmatch">builder:addmatch()</a>).
 ///
-/// Note: any quotation marks (<code>"</code>) in
-/// <span class="arg">globpattern</span> are stripped.
-///
-/// Starting in v1.3.1, when this is used in a coroutine it automatically yields
-/// periodically.
-///
 /// Starting in v1.4.16, the optional <span class="arg">flags</span> argument
 /// can be a table with fields that select how file globbing should behave.  By
 /// default hidden files are included and system files are omitted.
 /// -show:  local flags = {
-/// -show:  &nbsp;   hidden = false,     -- True includes hidden files, or false omits them.
-/// -show:  &nbsp;   system = true,      -- True includes system files, or false omits them.
+/// -show:  &nbsp;   hidden = true,      -- True includes hidden files (default), or false omits them.
+/// -show:  &nbsp;   system = false,     -- True includes system files, or false omits them (default).
 /// -show:  }
 /// -show:  local t = os.globfiles("*", true, flags)
 int glob_files(lua_State* state)
