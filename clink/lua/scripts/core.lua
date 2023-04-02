@@ -319,10 +319,13 @@ function os.globmatch(pattern, extrainfo, flags)
     local stack = {}
     local stack_count = 0
 
-    if not pattern or pattern == "" or pattern == "/" then
+    if not pattern then
         return {}
     end
-
+    pattern = pattern:gsub('"', '')
+    if pattern == "" or pattern == "/" then
+        return {}
+    end
     pattern = normalize_stars(pattern)
 
     local fnmatch_flags = "*"
