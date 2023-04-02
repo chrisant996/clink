@@ -306,6 +306,14 @@ end
 -- DOC: Pre-order traversal.
 -- TODO: unit tests...
 function os.globmatch(pattern, extrainfo, flags)
+    if flags == nil and type(extrainfo) == "table" then
+        flags = extrainfo
+        extrainfo = nil
+    end
+    if type(extrainfo) == "number" and extrainfo < 1 then
+        extrainfo = nil
+    end
+
     local c, ismain = coroutine.running()
     local matches = {}
     local stack = {}
