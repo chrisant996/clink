@@ -7,9 +7,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
-- Provide Lua APIs for `wildmatch()` and `fnmatch()`.
-  - [ ] The flags may be a little tricky to handle reasonably.  _Use a table with named fields, like in `os.globfiles()`._
-  - [ ] Provide a recursive globbing function.  Maybe look for an implementation that optimizes away recursive paths that cannot match?
 - Provide some kind of "line editor tester" in the `clink lua` interpreter to facilitate writing unit tests for argmatchers?
 
 ## Low Priority

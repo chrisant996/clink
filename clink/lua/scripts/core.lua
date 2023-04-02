@@ -276,6 +276,238 @@ function os.globfiles(pattern, extrainfo, flags)
 end
 
 --------------------------------------------------------------------------------
+local function normalize_stars(s)
+    local start = 1
+    while true do
+        local sa, sz = s:find("%*%*+", start)
+        if not sa then
+            return s
+        end
+
+        local wildstar = true
+        if sa > 1 and s:sub(sa - 1, sa - 1) ~= "/" then
+            wildstar = false
+        else
+            local ch = s:sub(sz + 1, sz + 1)
+            if ch ~= "" and ch ~= "/" then
+                wildstar = false
+            end
+        end
+
+        local replace = wildstar and "**" or "*"
+        s = s:sub(1, sa - 1) .. replace .. s:sub(sz + 1)
+        start = sa + #replace
+    end
+end
+
+--------------------------------------------------------------------------------
+--- -name:  os.globmatch
+--- -ver:   1.4.24
+--- -arg:   pattern:string
+--- -arg:   [extrainfo:integer|boolean]
+--- -arg:   [flags:table]
+--- -ret:   table
+--- Collects files or directories matching <span class="arg">pattern</span> and
+--- returns them in a table of strings.  This matches <code>**</code> patterns
+--- <a href="https://git-scm.com/docs/gitignore#_pattern_format">the same as git
+--- does</a>.  When <span class="arg">pattern</span> ends with <code>/</code>
+--- this collects directories, otherwise it collects files.
+---
+--- <strong>Note:</strong> any quotation marks (<code>"</code>) in
+--- <span class="arg">pattern</span> are stripped.
+---
+--- When this is used in a coroutine it automatically yields periodically.
+---
+--- The optional <span class="arg">extrainfo</span> argument can return a table
+--- of tables instead, where each sub-table corresponds to one file or directory
+--- and has the following scheme:
+--- -show:  local t = os.globmatch(pattern, extrainfo)
+--- -show:  -- Included when extrainfo is true or >= 1:
+--- -show:  --   t[index].name      -- [string] The file or directory name.
+--- -show:  --   t[index].type      -- [string] The match type (see below).
+--- -show:  -- Included when extrainfo is 2:
+--- -show:  --   t[index].size      -- [number] The file size, in bytes.
+--- -show:  --   t[index].atime     -- [number] The access time, compatible with os.time().
+--- -show:  --   t[index].mtime     -- [number] The modified time, compatible with os.time().
+--- -show:  --   t[index].ctime     -- [number] The creation time, compatible with os.time().
+--- The <span class="tablescheme">type</span> string can be "file" or "dir", and
+--- may also contain ",hidden", ",readonly", ",link", and ",orphaned" depending
+--- on the attributes (making it usable as a match type for
+--- <a href="#builder:addmatch">builder:addmatch()</a>).
+---
+--- The optional <span class="arg">flags</span> argument can be a table with
+--- fields that select how the globbing should behave.  By default hidden files
+--- are included, system files are omitted, and comparisons are case
+--- insensitive.
+--- -show:  local flags = {
+--- -show:  &nbsp;   hidden = true,      -- True includes hidden files (default), or false omits them.
+--- -show:  &nbsp;   system = false,     -- True includes system files, or false omits them (default).
+--- -show:  &nbsp;   period = false,     -- True matches files beginning with period (.) only if pattern has a
+--- -show:  &nbsp;                       -- corresponding period, or false doesn't require a corresponding period (default).
+--- -show:  &nbsp;   nocasefold = false, -- True is case-sensitive, or false is case-insensitive (default).
+--- -show:  }
+--- -show:  local t = os.globmatch("docs/**/*.md", true, flags)
+---
+--- <strong>Note:</strong> The returned table is built using a pre-order
+--- traversal, so files in a directory are listed before recursing into its
+--- subdirectories ("dir\xyzfile" precedes "dir\abcdir\abcfile").
+function os.globmatch(pattern, extrainfo, flags)
+    if flags == nil and type(extrainfo) == "table" then
+        flags = extrainfo
+        extrainfo = nil
+    end
+    if type(extrainfo) == "number" and extrainfo < 1 then
+        extrainfo = nil
+    end
+
+    local c, ismain = coroutine.running()
+    local matches = {}
+    local stack = {}
+    local stack_count = 0
+
+    if not pattern then
+        return {}
+    end
+    pattern = pattern:gsub('"', '')
+    if pattern == "" or pattern == "/" then
+        return {}
+    end
+    pattern = normalize_stars(pattern)
+
+    local fnmatch_flags = "*"
+    if flags then
+        if flags.period then
+            fnmatch_flags = fnmatch_flags .. "."
+        end
+        if flags.nocasefold then
+            fnmatch_flags = fnmatch_flags .. "c"
+        end
+    end
+
+    local last_yield = os.clock()
+    local test_yield_bail
+    if ismain then
+        test_yield_bail = function ()
+            if os.issignaled() then
+                return true
+            end
+        end
+    else
+        test_yield_bail = function (force)
+            if force or (os.clock() - last_yield > 0.001) then
+                coroutine.yield()
+                last_yield = os.clock()
+            end
+            if clink._is_coroutine_canceled(c) then
+                return true
+            end
+        end
+    end
+
+    if pattern:sub(1, 2) == "//" then
+        pattern = "//" .. pattern:sub(3):gsub("//+", "/")
+    else
+        pattern = pattern:gsub("//+", "/")
+    end
+
+    local do_dirs = pattern:find("/$") and true
+
+    -- Seed initial search pattern.
+    table.insert(stack, { pattern="", rest=pattern:gsub("/$", "") })
+    stack_count = stack_count + 1
+
+    -- Process the directory stack.
+    while stack_count > 0 do
+        if test_yield_bail() then
+            return {}
+        end
+
+        -- Pop next directory from stack.
+        local entry = table.remove(stack, stack_count)
+        stack_count = stack_count - 1
+
+        -- Find the longest non-wild pattern prefix, to optimize away
+        -- recursion that cannot match.
+        local parent = entry.pattern
+        local nonwild = entry.rest:match("^[^*?[]+") or ""
+        local wild = path.join(parent, nonwild.."*")
+        local rest = entry.rest:sub(#nonwild +1)
+        local rest_star = rest:find("**", 1, true)
+        local rest_slash = rest:find("/", 1, true)
+        local glob_parent = path.join(parent, nonwild:match("^(.*)/") or "")
+
+        -- Trim leading subdir from rest, if possible.
+        local next_rest
+        if rest_slash and (not rest_star or rest_slash < rest_star) then
+            next_rest = rest:match("^[^/]+/(.*)$")
+        else
+            next_rest = rest
+        end
+
+        -- Enumerate directories and files.
+        local t = {}
+        local globber = os._makefileglobber(wild, extrainfo, flags)
+        while globber:next(t) do
+            if test_yield_bail(true) then
+                globber:close()
+                return {}
+            end
+        end
+        globber:close()
+
+        -- Process the enumerated results.
+        local dirs = {}
+        for _, g in ipairs(t) do
+            if test_yield_bail() then
+                return {}
+            end
+
+            -- Get name.
+            local name = extrainfo and g.name or g
+            local fullname
+
+            -- Collect directories for recursion.
+            local is_dir = name:find("\\$") and true
+            if is_dir and (rest_star or rest_slash) then
+                fullname = path.join(glob_parent, name)
+                -- Needs pattern path separator (/).
+                table.insert(dirs, { pattern=fullname:gsub("\\", "/"), rest=next_rest })
+            end
+
+            -- Add matching directories or files.
+            local leaf = not rest_slash or (rest_star and rest_star < rest_slash)
+            if leaf then
+                if do_dirs == is_dir then
+                    if not fullname then
+                        fullname = path.join(glob_parent, name)
+                    end
+                    fullname = fullname:gsub("/", "\\") -- Needs file system path separator (\).
+                    if path.fnmatch(pattern, fullname, fnmatch_flags) then
+                        if extrainfo then
+                            g.name = fullname
+                            table.insert(matches, g)
+                        else
+                            table.insert(matches, fullname)
+                        end
+                    end
+                end
+            end
+        end
+
+        -- Add recursion directories in reverse order, to make popping simple
+        -- and efficient.
+        for idx = #dirs, 1, -1 do
+            table.insert(stack, dirs[idx])
+            stack_count = stack_count + 1
+        end
+    end
+
+    return matches
+end
+
+
+
+--------------------------------------------------------------------------------
 local function first_letter(s)
     -- This handles combining marks, but does not yet handle ZWJ (0x200d) such
     -- as in emoji sequences.
