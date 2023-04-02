@@ -272,11 +272,11 @@ static int to_parent(lua_State* state)
 /// <ul>
 /// <tr><th>Flag</th><th>Mnemonic</th><th>Description</th></tr>
 /// <tr><td>"<code>e</code>"</td><td>NoEscape</td><td>Treat backslash in <span class="arg">pattern</span> as a normal character, rather than as an escape character.</td></tr>
-/// <tr><td>"<code>n</code>"</td><td>PathName</td><td>Path separators in <span class="arg">string</span> are matched only by a slash <code>/</code> in <span class="arg">pattern</span> (unless the <code>*</code> flag is used; see below).</td></tr>
-/// <tr><td>"<code>.</code>"</td><td>Period</td><td>A leading period <code>.</code> in <span class="arg">string</span> is matched only by a period <code>.</code> in <span class="arg">pattern</span>.  A leading period is one at the beginning of <span class="arg">string</span>, or immediately following a path separator when the <code>n</code> flag is used.</td></tr>
+/// <tr><td>"<code>p</code>"</td><td>PathName</td><td>Path separators in <span class="arg">string</span> are matched only by a slash <code>/</code> in <span class="arg">pattern</span> (unless the <code>*</code> flag is used; see below).</td></tr>
+/// <tr><td>"<code>.</code>"</td><td>Period</td><td>A leading period <code>.</code> in <span class="arg">string</span> is matched only by a period <code>.</code> in <span class="arg">pattern</span>.  A leading period is one at the beginning of <span class="arg">string</span>, or immediately following a path separator when the <code>p</code> flag is used.</td></tr>
 /// <tr><td>"<code>l</code>"</td><td>LeadingDir</td><td>Consider <span class="arg">pattern</span> to be matched if it completely matches <span class="arg">string</span>, or if it matches <span class="arg">string</span> up to a path separator.</td></tr>
 /// <tr><td>"<code>c</code>"</td><td>NoCaseFold</td><td>Match with case sensitivity. By default it matches case-insensitively, because Windows is case-insensitive.</td></tr>
-/// <tr><td>"<code>*</code>"</td><td>WildStar</td><td>Treat double-asterisks in <span class="arg">pattern</span> as matching path separators as well, the same as how git does (implies the <code>n</code> flag).</td></tr>
+/// <tr><td>"<code>*</code>"</td><td>WildStar</td><td>Treat double-asterisks in <span class="arg">pattern</span> as matching path separators as well, the same as how git does (implies the <code>p</code> flag).</td></tr>
 /// <tr><td>"<code>s</code>"</td><td>NoSlashFold</td><td>Treat slashes <code>/</code> in <span class="arg">pattern</span> as only matching slashes in <span class="arg">string</span>. By default slashes in <span class="arg">pattern</span> match both slash <code>/</code> and backslash <code>\</code> because Windows recognizes both as path separators.</td></tr>
 /// </ul>
 ///
@@ -311,7 +311,6 @@ static int api_fnmatch(lua_State* state)
     const char* pattern = checkstring(state, 1);
     const char* string = checkstring(state, 2);
     const char* flags = optstring(state, 3, "");
-// TODO: flags should probably be a table instead (like in os.globfiles).
 
     int bits = WM_CASEFOLD|WM_SLASHFOLD;
     for (; *flags; ++flags)
@@ -319,7 +318,7 @@ static int api_fnmatch(lua_State* state)
         switch (*flags)
         {
         case 'e':   bits |= WM_NOESCAPE; break;
-        case 'n':   bits |= WM_PATHNAME; break;
+        case 'p':   bits |= WM_PATHNAME; break;
         case '.':   bits |= WM_PERIOD; break;
         case 'l':   bits |= WM_LEADING_DIR; break;
         case 'c':   bits &= ~WM_CASEFOLD; break;
