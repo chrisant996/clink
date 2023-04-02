@@ -284,7 +284,15 @@ function os.globmatch(pattern, extrainfo, flags)
     local stack_count = 0
 
 -- TODO: os.globdirmatches and os.globfilematches?
-    local need_files = true
+    local fnmatch_flags = "*"
+    if flags then
+        if flags.period then
+            fnmatch_flags = fnmatch_flags .. "."
+        end
+        if flags.nocasefold then
+            fnmatch_flags = fnmatch_flags .. "c"
+        end
+    end
 
     local last_yield = os.clock()
     local test_yield_bail
