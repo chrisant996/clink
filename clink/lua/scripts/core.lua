@@ -276,6 +276,9 @@ function os.globfiles(pattern, extrainfo, flags)
 end
 
 --------------------------------------------------------------------------------
+-- DOC: When pattern ends with / it collects dirs, otherwise it collects files.
+-- DOC: Flags are same as os.globfiles(), plus .period and .nocasefold.
+-- DOC: Pre-order traversal.
 -- TODO: unit tests...
 function os.globmatch(pattern, extrainfo, flags)
     local c, ismain = coroutine.running()
@@ -283,7 +286,10 @@ function os.globmatch(pattern, extrainfo, flags)
     local stack = {}
     local stack_count = 0
 
--- TODO: os.globdirmatches and os.globfilematches?
+    if not pattern or pattern == "" or pattern == "/" then
+        return {}
+    end
+
     local fnmatch_flags = "*"
     if flags then
         if flags.period then
@@ -320,8 +326,10 @@ function os.globmatch(pattern, extrainfo, flags)
         pattern = pattern:gsub("//+", "/")
     end
 
+    local do_dirs = pattern:find("/$") and true
+
     -- Seed initial search pattern.
-    table.insert(stack, { pattern="", rest=pattern })
+    table.insert(stack, { pattern="", rest=pattern:gsub("/$", "") })
     stack_count = stack_count + 1
 
     -- Process the directory stack.
@@ -330,94 +338,86 @@ function os.globmatch(pattern, extrainfo, flags)
             return {}
         end
 
+        -- Pop next directory from stack.
         local entry = table.remove(stack, stack_count)
         stack_count = stack_count - 1
 
         -- Find the longest non-wild pattern prefix, to optimize away
         -- recursion that cannot match.
-        local nonwild = entry.rest:match("^[^*?[]+") or ""
         local parent = entry.pattern
+        local nonwild = entry.rest:match("^[^*?[]+") or ""
+        local wild = path.join(parent, nonwild.."*")
         local rest = entry.rest:sub(#nonwild +1)
-print("POP", entry.pattern, entry.rest, "("..parent..")")
-
-        -- Collect directories for recursion.
         local rest_star = rest:find("**", 1, true)
         local rest_slash = rest:find("/", 1, true)
-        if rest_star or rest_slash then
-            local wild = path.join(parent, nonwild.."*")
-            local t = {}
-            local dg = os._makedirglobber(wild, extrainfo, flags)
-print("  RECURSE", wild)
--- TODO: Use a single _makefileglobber(wild, true, flags).
--- TODO: Use do_files to consider files or dirs as matches.
-            while dg:next(t) do
-                if test_yield_bail(true) then
-                    dg:close()
-                    return {}
-                end
-            end
-            dg:close()
+        local glob_parent = path.join(parent, nonwild:match("^(.*)/") or "")
+print("POP:  pattern="..entry.pattern..",  rest="..entry.rest..",  parent="..parent..",  wild="..wild)
 
-            -- Trim leading subdir from rest, if possible.
-            local _rest
-            if rest_slash and (not rest_star or rest_slash < rest_star) then
-                _rest = rest:match("^[^/]+/(.*)$")
-            else
-                _rest = rest
-            end
-
-            -- Add them in reverse order, to make popping simple and efficient.
-            for _, d in ipairs(t) do
-                if test_yield_bail() then
-                    return {}
-                end
-
-                local name = extrainfo and d.name or d
-                local _pattern = path.join(parent, name:gsub("\\", "/"))
-print("    ADD ".._pattern..", ".._rest)
-                table.insert(stack, { pattern=_pattern, rest=_rest })
-                stack_count = stack_count + 1
-            end
+        -- Trim leading subdir from rest, if possible.
+        local next_rest
+        if rest_slash and (not rest_star or rest_slash < rest_star) then
+            next_rest = rest:match("^[^/]+/(.*)$")
+        else
+            next_rest = rest
         end
 
-        if true then
-            local rest_star = rest:find("**", 1, true)
-            local rest_slash = rest:find("/", 1, true)
+        -- Enumerate directories and files.
+        local t = {}
+        local globber = os._makefileglobber(wild, extrainfo, flags)
+        while globber:next(t) do
+            if test_yield_bail(true) then
+                globber:close()
+                return {}
+            end
+        end
+        globber:close()
+
+        -- Process the enumerated results.
+        local dirs = {}
+        for _, g in ipairs(t) do
+            if test_yield_bail() then
+                return {}
+            end
+
+            -- Get name.
+            local name = extrainfo and g.name or g
+            local fullname
+
+            -- Collect directories for recursion.
+            local is_dir = name:find("\\$") and true
+            if is_dir and (rest_star or rest_slash) then
+                if not fullname then
+                    fullname = path.join(glob_parent, name):gsub("\\", "/")
+                end
+print("  RECURSE:  "..fullname..",  "..next_rest)
+                table.insert(dirs, { pattern=fullname, rest=next_rest })
+            end
+
+            -- Add matching directories or files.
             local leaf = not rest_slash or (rest_star and rest_star < rest_slash)
             if leaf then
-                local wild = path.join(parent, nonwild.."*")
-                local t = {}
-                local fg = os._makefileglobber(wild, extrainfo, flags)
-                while fg:next(t) do
-                    if test_yield_bail(true) then
-                        fg:close()
-                        return {}
+                if do_dirs == is_dir then
+                    if not fullname then
+                        fullname = path.join(glob_parent, name):gsub("/", "\\")
                     end
-                end
-                fg:close()
-
-                local _parent = nonwild:match("^(.*)/") or ""
-                _parent = path.join(parent, _parent)
-
-print("  FILES", wild, "(".._parent..")")
-                for _, f in ipairs(t) do
-                    if test_yield_bail() then
-                        return {}
-                    end
-
-                    local name = extrainfo and f.name or f
-                    name = path.join(_parent, name):gsub("/", "\\")
-                    if not name:find("\\$") and path.fnmatch(pattern, name, fnmatch_flags) then
-print("    YES!", name)
+                    if path.fnmatch(pattern, fullname, fnmatch_flags) then
+print("    match:  "..fullname)
                         if extrainfo then
-                            t.name = name
-                            table.insert(matches, t)
+                            g.name = fullname
+                            table.insert(matches, g)
                         else
-                            table.insert(matches, name)
+                            table.insert(matches, fullname)
                         end
                     end
                 end
             end
+        end
+
+        -- Add recursion directories in reverse order, to make popping simple
+        -- and efficient.
+        for idx = #dirs, 1, -1 do
+            table.insert(stack, dirs[idx])
+            stack_count = stack_count + 1
         end
     end
 
