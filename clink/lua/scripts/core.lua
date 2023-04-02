@@ -342,8 +342,8 @@ end
 --- -show:  local flags = {
 --- -show:  &nbsp;   hidden = true,      -- True includes hidden files (default), or false omits them.
 --- -show:  &nbsp;   system = false,     -- True includes system files, or false omits them (default).
---- -show:  &nbsp;   period = false,     -- True matches files beginning with period (.) only if pattern has a
---- -show:  &nbsp;                       -- corresponding period, or false doesn't require a corresponding period (default).
+--- -show:  &nbsp;   period = false,     -- True matches files beginning with period (.) if pattern has a corresponding
+--- -show:  &nbsp;                       -- period, or false matches even without a corresponding period (default).
 --- -show:  &nbsp;   nocasefold = false, -- True is case-sensitive, or false is case-insensitive (default).
 --- -show:  }
 --- -show:  local t = os.globmatch("docs/**/*.md", true, flags)
