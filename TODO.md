@@ -7,7 +7,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
-- Provide a recursive globbing function that uses `path.fnmatch()`, implemented in Lua.  Optimize away recursive paths that cannot match the initial non-wildcard pattern prefix.
+- Unit tests for `path.fnmatch()`.
+- Unit tests for `os.globmatch()`.
 - Provide some kind of "line editor tester" in the `clink lua` interpreter to facilitate writing unit tests for argmatchers?
 
 ## Low Priority
