@@ -435,7 +435,6 @@ function os.globmatch(pattern, extrainfo, flags)
         local rest_star = rest:find("**", 1, true)
         local rest_slash = rest:find("/", 1, true)
         local glob_parent = path.join(parent, nonwild:match("^(.*)/") or "")
-print("POP:  pattern="..entry.pattern..",  rest="..entry.rest..",  parent="..parent..",  wild="..wild)
 
         -- Trim leading subdir from rest, if possible.
         local next_rest
@@ -470,11 +469,9 @@ print("POP:  pattern="..entry.pattern..",  rest="..entry.rest..",  parent="..par
             -- Collect directories for recursion.
             local is_dir = name:find("\\$") and true
             if is_dir and (rest_star or rest_slash) then
-                if not fullname then
-                    fullname = path.join(glob_parent, name):gsub("\\", "/")
-                end
-print("  RECURSE:  "..fullname..",  "..next_rest)
-                table.insert(dirs, { pattern=fullname, rest=next_rest })
+                fullname = path.join(glob_parent, name)
+                -- Needs pattern path separator (/).
+                table.insert(dirs, { pattern=fullname:gsub("\\", "/"), rest=next_rest })
             end
 
             -- Add matching directories or files.
@@ -482,10 +479,10 @@ print("  RECURSE:  "..fullname..",  "..next_rest)
             if leaf then
                 if do_dirs == is_dir then
                     if not fullname then
-                        fullname = path.join(glob_parent, name):gsub("/", "\\")
+                        fullname = path.join(glob_parent, name)
                     end
+                    fullname = fullname:gsub("/", "\\") -- Needs file system path separator (\).
                     if path.fnmatch(pattern, fullname, fnmatch_flags) then
-print("    match:  "..fullname)
                         if extrainfo then
                             g.name = fullname
                             table.insert(matches, g)
