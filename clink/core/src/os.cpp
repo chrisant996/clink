@@ -1357,13 +1357,29 @@ bool disambiguate_abbreviated_path(const char*& in, str_base& out)
         if (h == INVALID_HANDLE_VALUE)
             return false;
 
+        // Skip "." and/or ".." if they weren't explicitly requested.
+        if (wcscmp(fd.cFileName, L".") == 0)
+        {
+            if (!disambiguated.equals(L"."))
+            {
+                if (!FindNextFileW(h, &fd))
+                {
+close_bail:
+                    FindClose(h);
+                    return false;
+                }
+            }
+            if (!disambiguated.equals(L".."))
+            {
+                if (!FindNextFileW(h, &fd))
+                    goto close_bail;
+            }
+        }
+
         while (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
         {
             if (!FindNextFileW(h, &fd))
-            {
-                FindClose(h);
-                return false;
-            }
+                goto close_bail;
         }
 
         // Skip past the leading separator, if any, in the directory component.
