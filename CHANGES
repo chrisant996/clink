@@ -7,7 +7,8 @@
 - Added `path.fnmatch()` which behaves like the Linux `fnmatch(3)` function.
 - Added `os.globmatch()` which performs recursive file pattern globbing [the same as git does](https://git-scm.com/docs/gitignore#_pattern_format).
 - Fixed `~` by itself to change directories, the same as `~\`.
-- Fixed [#448](https://github.com/chrisant996/clink/issues/448); completion malfunction with `..\does_not_exist`.
+- Fixed [#452](https://github.com/chrisant996/clink/issues/452); `history delete #` doesn't work (regression introduced in v1.1.43).
+- Fixed [#448](https://github.com/chrisant996/clink/issues/448); completion malfunction with `..\does_not_exist` (regression introduced in v1.4.1).
 
 #### v1.4.23
 
