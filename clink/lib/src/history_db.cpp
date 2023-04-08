@@ -871,14 +871,14 @@ bool read_line_iter::next_bank()
 //------------------------------------------------------------------------------
 history_db::line_id read_line_iter::next(str_iter& out, str_base* timestamp)
 {
-    if (m_bank_index > sizeof_array(m_db.m_bank_handles))
+    if (m_bank_index >= sizeof_array(m_db.m_bank_handles))
         return 0;
 
     do
     {
         if (line_id_impl ret = m_line_iter.next(out, timestamp))
         {
-            ret.bank_index = m_bank_index - 1;
+            ret.bank_index = m_bank_index;
             return ret.outer;
         }
     }
