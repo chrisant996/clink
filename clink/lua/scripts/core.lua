@@ -364,13 +364,16 @@ function os.globmatch(pattern, extrainfo, flags)
     local matches = {}
     local stack = {}
     local stack_count = 0
+    local recursion_list = flags and flags.diagnostics and {}
 
-    if not pattern then
-        return {}
-    end
+    pattern = pattern or ""
     pattern = pattern:gsub('"', '')
     if pattern == "" or pattern == "/" then
-        return {}
+        if recursion_list then
+            return {}, recursion_list
+        else
+            return {}
+        end
     end
     pattern = normalize_stars(pattern)
 
@@ -419,7 +422,11 @@ function os.globmatch(pattern, extrainfo, flags)
     -- Process the directory stack.
     while stack_count > 0 do
         if test_yield_bail() then
-            return {}
+            if recursion_list then
+                return {}, recursion_list
+            else
+                return {}
+            end
         end
 
         -- Pop next directory from stack.
@@ -450,7 +457,11 @@ function os.globmatch(pattern, extrainfo, flags)
         while globber:next(t) do
             if test_yield_bail(true) then
                 globber:close()
-                return {}
+                if recursion_list then
+                    return {}, recursion_list
+                else
+                    return {}
+                end
             end
         end
         globber:close()
@@ -459,7 +470,11 @@ function os.globmatch(pattern, extrainfo, flags)
         local dirs = {}
         for _, g in ipairs(t) do
             if test_yield_bail() then
-                return {}
+                if recursion_list then
+                    return {}, recursion_list
+                else
+                    return {}
+                end
             end
 
             -- Get name.
@@ -500,9 +515,18 @@ function os.globmatch(pattern, extrainfo, flags)
             table.insert(stack, dirs[idx])
             stack_count = stack_count + 1
         end
+        if recursion_list then
+            for _, entry in ipairs(dirs) do
+                table.insert(recursion_list, entry.pattern)
+            end
+        end
     end
 
-    return matches
+    if recursion_list then
+        return matches, recursion_list
+    else
+        return matches
+    end
 end
 
 

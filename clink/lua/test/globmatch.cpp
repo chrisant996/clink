@@ -13,7 +13,7 @@ extern "C" {
 }
 
 //------------------------------------------------------------------------------
-static bool run_test(lua_state& lua, const char** data)
+static bool run_test(lua_state& lua, const char** data, const char** expected_recursion=nullptr)
 {
     lua_State* state = lua.get_state();
 
@@ -28,11 +28,19 @@ static bool run_test(lua_state& lua, const char** data)
         for (unsigned int i = tmp.length(); i--;)
             if (tmp.c_str()[i] == '/')
                 tmp.data()[i] = '\\';
-        s << "[[" << tmp.c_str() << "]],";
+        s << "[=[" << tmp.c_str() << "]=],";
     }
     s << "}\n";
 
-    s << "local result = do_test([[" << pattern << "]], expected)\n";
+    if (expected_recursion)
+    {
+        s << "local expected_recursion = {";
+        while (*expected_recursion)
+            s << "[=[" << *(expected_recursion++) << "]=],";
+        s << "}\n";
+    }
+
+    s << "local result = do_test([=[" << pattern << "]=], expected, expected_recursion)\n";
     s << "return result\n";
 
     save_stack_top ss(state);
@@ -91,40 +99,47 @@ TEST_CASE("Lua globmatch")
     str_moveable s;
 
     static const char* main_script = "\
-        local function print_expected_actual(expected, actual)\
+        local function print_expected_actual(kind, expected, actual)\
             print('')\
             table.sort(expected)\
             table.sort(actual)\
-            print('expected:')\
+            print('expected '..kind..':')\
             for _, f in ipairs(expected) do\
                 print('', f)\
             end\
-            print('actual:')\
+            print('actual '..kind..':')\
             for _, f in ipairs(actual) do\
                 print('', f)\
             end\
         end\
         \
-        function do_test(pattern, expected)\
-            local files = os.globmatch(pattern)\
-            local index = {}\
-            for _, f in ipairs(expected) do\
-                index[f] = true\
+        local function compare_actual_expected(kind, expected, actual)\
+            if not expected then\
+                return true\
             end\
-            \
-            for _, f in ipairs(files) do\
-                if not index[f] then\
-                    print_expected_actual(expected, files)\
+            local index = {}\
+            for _, x in ipairs(expected) do\
+                index[x] = true\
+            end\
+            for _, x in ipairs(actual) do\
+                if not index[x] then\
+                    print_expected_actual(kind, expected, actual)\
                     return false\
                 end\
-                index[f] = nil\
+                index[x] = nil\
             end\
-            for f, _ in pairs(index) do\
-                print_expected_actual(expected, files)\
+            for x, _ in pairs(index) do\
+                print_expected_actual(kind, expected, actual)\
                 return false\
             end\
-            \
             return true\
+        end\
+        \
+        function do_test(pattern, expected_matches, expected_recursion)\
+            local flags = expected_recursion and {diagnostics=true}\
+            local files, recursed = os.globmatch(pattern, flags)\
+            return compare_actual_expected('matches', expected_matches, files) and\
+                compare_actual_expected('recursion', expected_recursion, recursed)\
         end\
     ";
 
@@ -164,4 +179,30 @@ TEST_CASE("Lua globmatch")
 
         REQUIRE(run_test(lua, data));
     }
+
+    SECTION("Wild nonwild wild")
+    {
+        static const char* data[] = {
+            "*_[[:digit:]]/cubby_2/*x*",
+            "cubby_1/cubby_2/abc.txt",
+            "cubby_1/cubby_2/xyz.txt",
+            nullptr
+        };
+
+        static const char* expected_recursion[] = {
+            // Ideally it would only recurse into nest_1/ and cubby_1/, but
+            // that would require specialized parsing logic.  The important
+            // part is that it doesn't recurse into nest_1/nest_2a/ or
+            // cubby_1/cubby_2/cubby_3/.
+            "one_dir/",
+            "two_dir/",
+            "three_dir/",
+            "nest_1/",
+            "cubby_1/",
+            nullptr
+        };
+
+        REQUIRE(run_test(lua, data, expected_recursion));
+    }
+
 }
