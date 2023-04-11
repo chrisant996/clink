@@ -69,14 +69,6 @@ extern struct passwd *getpwnam (const char *);
 #define savestring(x) strcpy ((char *)xmalloc (1 + strlen (x)), (x))
 #endif /* !savestring */
 
-#if !defined (NULL)
-#  if defined (__STDC__)
-#    define NULL ((void *) 0)
-#  else
-#    define NULL 0x0
-#  endif /* !__STDC__ */
-#endif /* !NULL */
-
 /* If being compiled as part of bash, these will be satisfied from
    variables.o.  If being compiled as part of readline, they will
    be satisfied from shell.o. */

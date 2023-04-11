@@ -1859,8 +1859,7 @@ _rl_char_search (int count, int fdir, int bdir)
 
 #if defined (READLINE_CALLBACKS)
 static int
-_rl_char_search_callback (data)
-     _rl_callback_generic_arg *data;
+_rl_char_search_callback (_rl_callback_generic_arg *data)
 {
   _rl_callback_func = 0;
   _rl_want_redisplay = 1;

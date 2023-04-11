@@ -2,7 +2,7 @@
 /* A minimal stdlib.h containing extern declarations for those functions
    that bash uses. */
 
-/* Copyright (C) 1993 Free Software Foundation, Inc.
+/* Copyright (C) 1993,2023 Free Software Foundation, Inc.
 
    This file is part of GNU Bash, the Bourne Again SHell.
 
@@ -32,13 +32,7 @@ extern double strtod ();
 /* Memory allocation functions. */
 /* Generic pointer type. */
 #ifndef PTR_T
-
-#if defined (__STDC__)
 #  define PTR_T	void *
-#else
-#  define PTR_T char *
-#endif
-
 #endif /* PTR_T */
 
 extern PTR_T malloc ();

@@ -3,7 +3,7 @@ dnl Bash specific tests
 dnl
 dnl Some derived from PDKSH 5.1.3 autoconf tests
 dnl
-dnl Copyright (C) 1987-2021 Free Software Foundation, Inc.
+dnl Copyright (C) 1987-2023 Free Software Foundation, Inc.
 dnl
 
 dnl
@@ -69,11 +69,7 @@ AC_DEFUN(BASH_DECL_PRINTF,
 AC_CACHE_VAL(bash_cv_printf_declared,
 [AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <stdio.h>
-#ifdef __STDC__
 typedef int (*_bashfunc)(const char *, ...);
-#else
-typedef int (*_bashfunc)();
-#endif
 #include <stdlib.h>
 int
 main()
@@ -238,6 +234,9 @@ AC_CACHE_VAL(bash_cv_dup2_broken,
 #include <sys/types.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif /* HAVE_UNISTD_H */
 int
 main()
 {
@@ -432,6 +431,7 @@ AC_CACHE_VAL(bash_cv_sizeof_rlim_cur,
 #endif
 #include <stdlib.h>
 #include <sys/resource.h>
+int
 main()
 {
 struct rlimit r;
@@ -457,6 +457,7 @@ AC_CACHE_VAL(bash_cv_sizeof_quad_t,
 #include <stdint.h>
 #endif
 
+int
 main()
 {
 #if HAVE_QUAD_T
@@ -558,18 +559,8 @@ AC_CACHE_VAL(bash_cv_getenv_redef,
 #  include <unistd.h>
 #endif
 #include <stdlib.h>
-#ifndef __STDC__
-#  ifndef const
-#    define const
-#  endif
-#endif
 char *
-getenv (name)
-#if defined (__linux__) || defined (__bsdi__) || defined (convex)
-     const char *name;
-#else
-     char const *name;
-#endif /* !__linux__ && !__bsdi__ && !convex */
+getenv (const char *name)
 {
 return "42";
 }
@@ -599,7 +590,6 @@ fi
 # We should check for putenv before calling this
 AC_DEFUN(BASH_FUNC_STD_PUTENV,
 [
-AC_REQUIRE([AC_C_PROTOTYPES])
 AC_CACHE_CHECK([for standard-conformant putenv declaration], bash_cv_std_putenv,
 [AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 #if HAVE_STDLIB_H
@@ -608,16 +598,7 @@ AC_CACHE_CHECK([for standard-conformant putenv declaration], bash_cv_std_putenv,
 #if HAVE_STDDEF_H
 #include <stddef.h>
 #endif
-#ifndef __STDC__
-#  ifndef const
-#    define const
-#  endif
-#endif
-#ifdef PROTOTYPES
 extern int putenv (char *);
-#else
-extern int putenv ();
-#endif
 ]], [[return (putenv == 0);]] )],
 [bash_cv_std_putenv=yes], [bash_cv_std_putenv=no]
 )])
@@ -629,7 +610,6 @@ fi
 # We should check for unsetenv before calling this
 AC_DEFUN(BASH_FUNC_STD_UNSETENV,
 [
-AC_REQUIRE([AC_C_PROTOTYPES])
 AC_CACHE_CHECK([for standard-conformant unsetenv declaration], bash_cv_std_unsetenv,
 [AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 #if HAVE_STDLIB_H
@@ -638,16 +618,7 @@ AC_CACHE_CHECK([for standard-conformant unsetenv declaration], bash_cv_std_unset
 #if HAVE_STDDEF_H
 #include <stddef.h>
 #endif
-#ifndef __STDC__
-#  ifndef const
-#    define const
-#  endif
-#endif
-#ifdef PROTOTYPES
 extern int unsetenv (const char *);
-#else
-extern int unsetenv ();
-#endif
 ]], [[return (unsetenv == 0);]] )],
 [bash_cv_std_unsetenv=yes], [bash_cv_std_unsetenv=no]
 )])
@@ -841,9 +812,7 @@ AC_CACHE_VAL(bash_cv_func_strcoll_broken,
 #include <stdlib.h>
 
 int
-main(c, v)
-int     c;
-char    *v[];
+main(int c, char **v)
 {
         int     r1, r2;
         char    *deflocale, *defcoll;
@@ -1345,15 +1314,13 @@ AC_CACHE_VAL(bash_cv_must_reinstall_sighandlers,
 #endif
 #include <stdlib.h>
 
-typedef void sigfunc();
+typedef void sigfunc(int);
 
 volatile int nsigint;
 
 #ifdef HAVE_POSIX_SIGNALS
 sigfunc *
-set_signal_handler(sig, handler)
-     int sig;
-     sigfunc *handler;
+set_signal_handler(int sig, sigfunc *handler)
 {
   struct sigaction act, oact;
   act.sa_handler = handler;
@@ -1368,8 +1335,7 @@ set_signal_handler(sig, handler)
 #endif
 
 void
-sigint(s)
-int s;
+sigint(int s)
 {
   nsigint++;
 }
@@ -1836,9 +1802,7 @@ bash_cv_wcwidth_broken,
 #include <wchar.h>
 
 int
-main(c, v)
-int     c;
-char    **v;
+main(int c, char **v)
 {
         int     w;
 
@@ -2095,31 +2059,17 @@ AC_DEFUN([BASH_FUNC_VSNPRINTF],
   if test X$ac_cv_func_vsnprintf = Xyes; then
     AC_CACHE_CHECK([for standard-conformant vsnprintf], [bash_cv_func_vsnprintf],
       [AC_RUN_IFELSE([AC_LANG_SOURCE([[
-#if HAVE_STDARG_H
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 #include <stdio.h>
 #include <stdlib.h>
 
 static int
-#if HAVE_STDARG_H
 foo(const char *fmt, ...)
-#else
-foo(format, va_alist)
-     const char *format;
-     va_dcl
-#endif
 {
   va_list args;
   int n;
 
-#if HAVE_STDARG_H
   va_start(args, fmt);
-#else
-  va_start(args);
-#endif
   n = vsnprintf(0, 0, fmt, args);
   va_end (args);
   return n;
@@ -2156,9 +2106,7 @@ AC_CACHE_VAL(bash_cv_wexitstatus_offset,
 #include <sys/wait.h>
 
 int
-main(c, v)
-     int c;
-     char **v;
+main(int c, char **v)
 {
   pid_t pid, p;
   int s, i, n;

@@ -32,9 +32,7 @@
 #include <string.h>
 
 int
-main (argc, argv)
-     int argc;
-     char **argv;
+main (int argc, char **argv)
 {
   char line[1024], *t;
   int len, done;
@@ -91,6 +89,7 @@ main (argc, argv)
 	  register HIST_ENTRY **the_list;
 	  register int i;
 	  time_t tt;
+	  struct tm *tm;
 	  char timestr[128];
 
 	  the_list = history_list ();
@@ -98,8 +97,9 @@ main (argc, argv)
 	    for (i = 0; the_list[i]; i++)
 	      {
 	      	tt = history_get_time (the_list[i]);
-		if (tt)
-		  strftime (timestr, sizeof (timestr), "%a %R", localtime(&tt));
+	      	tm = tt ? localtime (&tt) : 0;
+		if (tm)
+		  strftime (timestr, sizeof (timestr), "%a %R", tm);
 		else
 		  strcpy (timestr, "??");
 	        printf ("%d: %s: %s\n", i + history_base, timestr, the_list[i]->line);

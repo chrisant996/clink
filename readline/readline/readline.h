@@ -1,6 +1,6 @@
 /* Readline.h -- the names of functions callable from within readline. */
 
-/* Copyright (C) 1987-2022 Free Software Foundation, Inc.
+/* Copyright (C) 1987-2023 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -448,11 +448,7 @@ extern void rl_activate_mark (void);
 extern void rl_deactivate_mark (void);
 extern int rl_mark_active_p (void);
 
-#if defined (USE_VARARGS) && defined (PREFER_STDARG)
 extern int rl_message (const char *, ...)  __attribute__((__format__ (printf, 1, 2)));
-#else
-extern int rl_message ();
-#endif
 
 extern int rl_show_char (int);
 

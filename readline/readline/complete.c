@@ -77,11 +77,7 @@ extern int errno;
 #  include "colors.h"
 #endif
 
-#ifdef __STDC__
 typedef int QSFUNC (const void *, const void *);
-#else
-typedef int QSFUNC ();
-#endif
 
 #ifdef HAVE_LSTAT
 #  define LSTAT lstat
@@ -2277,7 +2273,7 @@ rl_display_match_list (char **matches, int len, int max)
 	  if (_rl_page_completions && lines >= (_rl_screenheight - 1) && i < count)
 	    {
 	      lines = _rl_internal_pager (lines);
-	      if (lines < 0)
+	      if (lines < 0 || _rl_complete_display_matches_interrupt)
 		return;
 	    }
 	}
@@ -2305,7 +2301,7 @@ rl_display_match_list (char **matches, int len, int max)
 		  if (_rl_page_completions && lines >= _rl_screenheight - 1)
 		    {
 		      lines = _rl_internal_pager (lines);
-		      if (lines < 0)
+		      if (lines < 0 || _rl_complete_display_matches_interrupt)
 			return;
 		    }
 		}
@@ -2447,7 +2443,9 @@ display_matches (char **matches)
 	}
     }
 
-  rl_display_match_list (matches, len, max);
+  /* We rely on the caller to set MATCHES to 0 when this returns. */
+  if (_rl_complete_display_matches_interrupt == 0)
+    rl_display_match_list (matches, len, max);
 
   rl_forced_update_display ();
   rl_display_fixed = 1;

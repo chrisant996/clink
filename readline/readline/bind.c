@@ -65,10 +65,6 @@ extern int errno;
 #include "rlshell.h"
 #include "xmalloc.h"
 
-#if !defined (strchr) && !defined (__STDC__)
-extern char *strchr (), *strrchr ();
-#endif /* !strchr && !__STDC__ */
-
 /* Variables exported by this file. */
 Keymap rl_binding_keymap;
 
@@ -84,11 +80,7 @@ static int fake_byte_oriented = 0;
 
 static int _rl_skip_to_delim (char *, int, int);
 
-#if defined (USE_VARARGS) && defined (PREFER_STDARG)
 static void _rl_init_file_error (const char *, ...)  __attribute__((__format__ (printf, 1, 2)));
-#else
-static void _rl_init_file_error ();
-#endif
 
 static rl_command_func_t *_rl_function_of_keyseq_internal (const char *, size_t, Keymap, int *);
 
@@ -1164,25 +1156,11 @@ _rl_read_init_file (const char *filename, int include_level)
 }
 
 static void
-#if defined (PREFER_STDARG)
 _rl_init_file_error (const char *format, ...)
-#else
-_rl_init_file_error (va_alist)
-     va_dcl
-#endif
 {
   va_list args;
-#if defined (PREFER_VARARGS)
-  char *format;
-#endif
 
-#if defined (PREFER_STDARG)
   va_start (args, format);
-#else
-  va_start (args);
-  format = va_arg (args, char *);
-#endif
-
   fprintf (stderr, "readline: ");
   if (currently_reading_init_file)
     fprintf (stderr, "%s: line %d: ", current_readline_init_file,
@@ -1202,9 +1180,7 @@ _rl_init_file_error (va_alist)
 /* **************************************************************** */
 
 static int
-parse_comparison_op (s, indp)
-     const char *s;
-     int *indp;
+parse_comparison_op (const char *s, int *indp)
 {
   int i, peekc, op;
 

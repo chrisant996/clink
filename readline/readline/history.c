@@ -42,6 +42,7 @@
 #  endif
 #  include <unistd.h>
 #endif
+#include "posixtime.h"
 
 #include <errno.h>
 
@@ -279,7 +280,7 @@ hist_inittime (void)
   time_t t;
   char ts[64], *ret;
 
-  t = (time_t) time ((time_t *)0);
+  t = getnow ();
 #if defined (HAVE_VSNPRINTF)		/* assume snprintf if vsnprintf exists */
   snprintf (ts, sizeof (ts) - 1, "X%lu", (unsigned long) t);
 #else

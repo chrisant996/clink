@@ -488,7 +488,7 @@ _rl_char_value (const char *buf, int ind)
   if (_rl_utf8locale && UTF8_SINGLEBYTE(buf[ind]))
     return ((WCHAR_T) buf[ind]);
   l = strlen (buf);
-  if (ind >= l - 1)
+  if (ind + 1 >= l)
     return ((WCHAR_T) buf[ind]);
   if (l < ind)			/* Sanity check */
     l = strlen (buf+ind);

@@ -622,7 +622,7 @@ postproc_subst_rhs (void)
 	  /* a single backslash protects the `&' from lhs interpolation */
 	  if (subst_rhs[i] == '\\' && subst_rhs[i + 1] == '&')
 	    i++;
-	  if (j >= new_size)
+	  if (j + 1 >= new_size)
 	    new = (char *)xrealloc (new, new_size *= 2);
 	  new[j++] = subst_rhs[i];
 	}
@@ -1009,7 +1009,7 @@ history_expand_internal (const char *string, int start, int qc, int *end_index_p
 #define ADD_CHAR(c) \
 	do \
 	  { \
-	    if (j >= result_len - 1) \
+	    if ((j + 1) >= result_len) \
 	      result = (char *)xrealloc (result, result_len += 64); \
 	    result[j++] = c; \
 	    result[j] = '\0'; \
@@ -1751,6 +1751,8 @@ get_word:
       if (nestdelim == 0 && delimiter == 0 && member (string[i], "<>$!@?+*") && string[i+1] == '(') /*)*/
 	{
 	  i += 2;
+	  if (string[i] == 0)
+	    break;		/* could just return i here */
 	  delimopen = '(';
 	  delimiter = ')';
 	  nestdelim = 1;

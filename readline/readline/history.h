@@ -36,11 +36,7 @@ extern "C" {
 #  include <readline/rltypedefs.h>
 #endif
 
-#ifdef __STDC__
 typedef void *histdata_t;
-#else
-typedef char *histdata_t;
-#endif
 
 /* Let's not step on anyone else's define for now, since we don't use this yet. */
 #ifndef HS_HISTORY_VERSION

@@ -1,7 +1,7 @@
 /* rltty.c -- functions to prepare and restore the terminal for readline's
    use. */
 
-/* Copyright (C) 1992-2022 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2023 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.
@@ -80,8 +80,7 @@ static int ksrflow;
 /* Dummy call to force a backgrounded readline to stop before it tries
    to get the tty settings. */
 static void
-set_winsize (tty)
-     int tty;
+set_winsize (int tty)
 {
 #if defined (TIOCGWINSZ)
   struct winsize w;

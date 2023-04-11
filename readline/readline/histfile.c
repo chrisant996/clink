@@ -1,6 +1,6 @@
 /* histfile.c - functions to manipulate the history file. */
 
-/* Copyright (C) 1989-2019 Free Software Foundation, Inc.
+/* Copyright (C) 1989-2019,2023 Free Software Foundation, Inc.
 
    This file contains the GNU History Library (History), a set of
    routines for managing the text of previously typed lines.
@@ -578,6 +578,15 @@ history_truncate_file (const char *fname, int lines)
       goto truncate_exit;
     }
 
+  /* Don't bother with any of this if we're truncating to zero length. */
+  if (lines == 0)
+    {
+      close (file);
+      buffer[chars_read = 0] = '\0';
+      bp = buffer;
+      goto truncate_write;
+    }
+
   chars_read = read (file, buffer, file_size);
   close (file);
 
@@ -586,30 +595,38 @@ history_truncate_file (const char *fname, int lines)
       rv = (chars_read < 0) ? errno : 0;
       goto truncate_exit;
     }
+  buffer[chars_read] = '\0';	/* for the initial check of bp1[1] */
 
   /* Count backwards from the end of buffer until we have passed
      LINES lines.  bp1 is set funny initially.  But since bp[1] can't
      be a comment character (since it's off the end) and *bp can't be
-     both a newline and the history comment character, it should be OK. */
-  for (bp1 = bp = buffer + chars_read - 1; lines && bp > buffer; bp--)
+     both a newline and the history comment character, it should be OK.
+     If we are writing history timestamps, we need to add one to LINES
+     because we decrement it one extra time the first time through the loop
+     and we need the final timestamp line. */
+  lines += history_write_timestamps;
+  for (bp1 = bp = buffer + chars_read - 1; lines > 0 && bp > buffer; bp--)
     {
       if (*bp == '\n' && HIST_TIMESTAMP_START(bp1) == 0)
 	lines--;
       bp1 = bp;
     }
 
-  /* If this is the first line, then the file contains exactly the
+  /* This is the right line, so move to its start. If we're writing history
+     timestamps, we want to go back until *bp == '\n' and bp1 starts a
+     history timestamp. If we're not, just move back to *bp == '\n'.
+     If this is the first line, then the file contains exactly the
      number of lines we want to truncate to, so we don't need to do
-     anything.  It's the first line if we don't find a newline between
-     the current value of i and 0.  Otherwise, write from the start of
-     this line until the end of the buffer. */
+     anything, and we'll end up with bp == buffer.
+     Otherwise, write from the start of this line until the end of the
+     buffer. */
   for ( ; bp > buffer; bp--)
     {
-      if (*bp == '\n' && HIST_TIMESTAMP_START(bp1) == 0)
-        {
+      if (*bp == '\n' && (history_write_timestamps == 0 || HIST_TIMESTAMP_START(bp1)))
+	{
 	  bp++;
 	  break;
-        }
+	}
       bp1 = bp;
     }
 
@@ -623,15 +640,22 @@ history_truncate_file (const char *fname, int lines)
       goto truncate_exit;
     }
 
+truncate_write:
   tempname = history_tempfile (filename);
 
   if ((file = open (tempname, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, 0600)) != -1)
     {
       if (write (file, bp, chars_read - (bp - buffer)) < 0)
-	rv = errno;
+	{
+	  rv = errno;
+	  close (file);
+	}
 
       if (rv == 0 && fstat (file, &nfinfo) < 0)
-	rv = errno;
+	{
+	  rv = errno;
+	  close (file);
+	}
 
       if (rv == 0 && close (file) < 0)
 	rv = errno;

@@ -40,11 +40,7 @@
 
 #include "xmalloc.h"
 
-#ifdef __STDC__
 typedef int QSFUNC (const void *, const void *);
-#else
-typedef int QSFUNC ();
-#endif
 
 extern int _rl_qsort_string_compare (char **, char **);
 

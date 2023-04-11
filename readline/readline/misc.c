@@ -393,9 +393,14 @@ rl_maybe_replace_line (void)
       xfree (temp->line);
       FREE (temp->timestamp);
       xfree (temp);
-      /* XXX - what about _rl_saved_line_for_history? if the saved undo list
-	 is rl_undo_list, and we just put that into a history entry, should
+      /* What about _rl_saved_line_for_history? if the saved undo list is
+	 rl_undo_list, and we just put that into a history entry, should
 	 we set the saved undo list to NULL? */
+      if (_rl_saved_line_for_history && (UNDO_LIST *)_rl_saved_line_for_history->data == rl_undo_list)
+	_rl_saved_line_for_history->data = 0;
+      /* Do we want to set rl_undo_list = 0 here since we just saved it into
+	 a history entry? */
+      rl_undo_list = 0;
     }
   return 0;
 }

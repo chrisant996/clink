@@ -47,10 +47,6 @@
 #  include <strings.h>
 #endif /* !HAVE_STRING_H */
 
-#if !defined (strchr) && !defined (__STDC__)
-extern char *strchr (), *strrchr ();
-#endif /* !strchr && !__STDC__ */
-
 #include "readline.h"
 #include "rlprivate.h"
 

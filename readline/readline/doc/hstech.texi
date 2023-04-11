@@ -517,9 +517,8 @@ The following program demonstrates simple use of the @sc{gnu} History Library.
 #include <stdio.h>
 #include <readline/history.h>
 
-main (argc, argv)
-     int argc;
-     char **argv;
+int
+main (int argc, char **argv)
 @{
   char line[1024], *t;
   int len, done = 0;

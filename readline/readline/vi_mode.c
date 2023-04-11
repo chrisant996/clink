@@ -1171,6 +1171,23 @@ _rl_mvcxt_dispose (_rl_vimotion_cxt *m)
   xfree (m);
 }
 
+static inline int
+vi_charsearch_command (int c)
+{
+  switch (c)
+    {
+    case 'f':
+    case 'F':
+    case 't':
+    case 'T':
+    case ';':
+    case ',':
+      return 1;
+    default:
+      return 0;
+    }
+}
+
 static int
 rl_domove_motion_callback (_rl_vimotion_cxt *m)
 {
@@ -1191,7 +1208,7 @@ rl_domove_motion_callback (_rl_vimotion_cxt *m)
   /* Note in the context that the motion command failed. Right now we only do
      this for unsuccessful searches (ones where _rl_dispatch returns non-zero
      and point doesn't move). */
-  if (r != 0 && rl_point == opoint && (c == 'f' || c == 'F'))
+  if (r != 0 && rl_point == opoint && vi_charsearch_command (c))
     m->flags |= MOVE_FAILED;
 
 #if defined (READLINE_CALLBACKS)
@@ -1228,6 +1245,14 @@ _rl_vi_domove_motion_cleanup (int c, _rl_vimotion_cxt *m)
       /* 'c' and 'C' enter insert mode after the delete even if the motion
 	 didn't delete anything, as long as the motion command is valid. */
       if (_rl_to_upper (m->key) == 'C' && _rl_vi_motion_command (c) && (m->flags & MOVE_FAILED) == 0)
+	return (vidomove_dispatch (m));
+      /* 'd' and 'D' must delete at least one character even if the motion
+	 command doesn't move the cursor. */
+      if (_rl_to_upper (m->key) == 'D' && _rl_vi_motion_command (c) && (m->flags & MOVE_FAILED) == 0)
+	return (vidomove_dispatch (m));
+      /* 'y' and 'Y' must yank at least one character even if the motion
+      	 command doean't move the cursor. */
+      if (_rl_to_upper (m->key) == 'Y' && _rl_vi_motion_command (c) && (m->flags & MOVE_FAILED) == 0)
 	return (vidomove_dispatch (m));
       RL_UNSETSTATE (RL_STATE_VIMOTION);
       return (-1);

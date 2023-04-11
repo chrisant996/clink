@@ -63,17 +63,7 @@
 #  include <strings.h>
 #endif /* !HAVE_STRING_H */
 
-#if !defined (strchr) && !defined (__STDC__)
-extern char *strchr (), *strrchr ();
-#endif /* !strchr && !__STDC__ */
-
-#if defined (PREFER_STDARG)
-#  include <stdarg.h>
-#else
-#  if defined (PREFER_VARARGS)
-#    include <varargs.h>
-#  endif
-#endif
+#include <stdarg.h>
 
 #if defined (HAVE_STRCASECMP)
 #define _rl_stricmp strcasecmp

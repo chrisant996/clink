@@ -1864,9 +1864,11 @@ pathname expansion.
 Display version information about the current instance of Bash.
 
 @item shell-expand-line (M-C-e)
-Expand the line as the shell does.
-This performs alias and history expansion as well as all of the shell
-word expansions (@pxref{Shell Expansions}).
+Expand the line by performing shell word expansions.  
+This performs alias and history expansion,
+$'@var{string}' and $"@var{string}" quoting,
+tilde expansion, parameter and variable expansion, arithmetic expansion,  
+word splitting, and quote removal.  
 
 @item history-expand-line (M-^)
 Perform history expansion on the current line.

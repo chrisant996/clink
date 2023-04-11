@@ -52,6 +52,15 @@ struct timeval
 extern int gettimeofday (struct timeval * restrict, void * restrict);
 #endif
 
+/* consistently use gettimeofday for time information */
+static inline time_t
+getnow(void)
+{
+  struct timeval now;
+  gettimeofday (&now, 0);
+  return now.tv_sec;
+}
+
 /* These exist on BSD systems, at least. */
 #if !defined (timerclear)
 #  define timerclear(tvp)	do { (tvp)->tv_sec = 0; (tvp)->tv_usec = 0; } while (0)
