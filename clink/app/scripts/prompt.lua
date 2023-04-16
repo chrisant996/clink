@@ -62,6 +62,8 @@ local function _do_filter_prompt(type, prompt, rprompt, line, cursor, final)
     local filter_func_name = type.."filter"
     local right_filter_func_name = type.."rightfilter"
 
+    local pre,suf,rpre,rsuf = "","","",""
+
     -- Protected call to prompt filters.
     local impl = function(prompt, rprompt) -- luacheck: ignore 432
         local filtered, onwards
@@ -80,19 +82,33 @@ local function _do_filter_prompt(type, prompt, rprompt, line, cursor, final)
                 log_cost(tick, filter, filter_func_name)
                 if filtered ~= nil then
                     prompt = filtered
-                    if onwards == false then return prompt, rprompt end
                 end
             end
 
-            func = filter[right_filter_func_name]
-            if func then
-                local tick = os.clock()
-                filtered, onwards = func(filter, rprompt)
-                log_cost(tick, filter, right_filter_func_name)
-                if filtered ~= nil then
-                    rprompt = filtered
-                    if onwards == false then return prompt, rprompt end
+            if onwards ~= false then
+                func = filter[right_filter_func_name]
+                if func then
+                    local tick = os.clock()
+                    filtered, onwards = func(filter, rprompt)
+                    log_cost(tick, filter, right_filter_func_name)
+                    if filtered ~= nil then
+                        rprompt = filtered
+                    end
                 end
+            end
+
+            func = filter.surround
+            if func then
+                local a,b,c,d = func(filter)
+                -- Earlier prompt filters take precedence
+                if a then pre = pre .. a end
+                if b then suf = b .. suf end
+                if c then rpre = rpre .. c end
+                if d then rsuf = d .. rsuf end
+            end
+
+            if onwards == false then
+                break
             end
         end
 
@@ -118,6 +134,13 @@ local function _do_filter_prompt(type, prompt, rprompt, line, cursor, final)
         print("prompt filter failed:")
         print(ret)
         return false
+    end
+
+    if ret then
+        ret = pre .. ret .. suf
+    end
+    if rret and rret ~= "" then
+        rret = rpre .. rret .. rsuf
     end
 
     return ret, rret
