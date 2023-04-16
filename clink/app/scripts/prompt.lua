@@ -62,7 +62,10 @@ local function _do_filter_prompt(type, prompt, rprompt, line, cursor, final)
     local filter_func_name = type.."filter"
     local right_filter_func_name = type.."rightfilter"
 
-    local pre,suf,rpre,rsuf = "","","",""
+    local pre = os.getenv("CLINK_PROMPT_PREFIX") or ""
+    local suf = os.getenv("CLINK_PROMPT_SUFFIX") or ""
+    local rpre = os.getenv("CLINK_RPROMPT_PREFIX") or ""
+    local rsuf = os.getenv("CLINK_RPROMPT_SUFFIX") or ""
 
     -- Protected call to prompt filters.
     local impl = function(prompt, rprompt) -- luacheck: ignore 432
