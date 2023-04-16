@@ -6,6 +6,7 @@
 
 - Added `path.fnmatch()` which behaves like the Linux `fnmatch(3)` function.
 - Added `os.globmatch()` which performs recursive file pattern globbing [the same as git does](https://git-scm.com/docs/gitignore#_pattern_format).
+- Added support for `%CLINK_PROMPT_PREFIX%`, `%CLINK_PROMPT_SUFFIX%`, `%CLINK_RPROMPT_PREFIX%`, and `%CLINK_RPROMPT_SUFFIX%` to provide prefix/suffix strings to surround the prompt strings, and for prompt filters to define a `:surround()` function to add their own prefix/suffix strings if needed.
 - Fixed `~` by itself to change directories, the same as `~\`.
 - Fixed horizontal scrolling in popup lists (is possible whenever the item doesn't fit and no items contain control codes).
 - Fixed [#452](https://github.com/chrisant996/clink/issues/452); `history delete #` doesn't work (regression introduced in v1.1.43).
