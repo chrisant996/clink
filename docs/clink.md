@@ -2302,6 +2302,18 @@ The next example shows how to make a prompt that shows:
 #INCLUDE [docs\examples\ex_transient_prompt.lua]
 ```
 
+#### Prefix and Suffix Escape Codes
+
+A prompt filter may want to wrap the final prompt (and/or final right side prompt) with escape codes, after all prompt filters have finished.  For example, some file editors with integrated terminals want to receive additional escape codes surrounding the prompt strings.
+
+To do that, the prompt filter can additionally define a `:surround()` function which returns the prefix and suffix strings:
+
+```lua
+#INCLUDE [docs\examples\ex_surround_prompt.lua]
+```
+
+> **Note:** The surround function should return only escape code strings.  Any printable text in the strings could have unintended effects on displaying the prompt.
+
 <a name="customisingsuggestions"></a>
 
 ## Customizing Suggestions
