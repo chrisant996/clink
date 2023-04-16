@@ -32,7 +32,11 @@ class textlist_impl
 {
     class item_store;
 
-    enum { max_columns = 3 };
+    enum
+    {
+        max_columns = 3,
+        col_padding = 2,
+    };
 
     struct column_text
     {
@@ -100,9 +104,10 @@ private:
     int             m_mouse_left = 0;
     int             m_mouse_width = 0;
     int             m_visible_rows = 0;
-    int             m_max_num_len = 0;
+    int             m_max_num_cells = 0;
     int             m_horz_offset = 0;
     int             m_longest_visible = 0;
+    int             m_horz_scroll_range = 0;
     str<32>         m_default_title;
     str<32>         m_override_title;
     bool            m_has_override_title = false;
