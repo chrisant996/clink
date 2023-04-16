@@ -516,8 +516,8 @@ function os.globmatch(pattern, extrainfo, flags)
             stack_count = stack_count + 1
         end
         if recursion_list then
-            for _, entry in ipairs(dirs) do
-                table.insert(recursion_list, entry.pattern)
+            for _, dir_entry in ipairs(dirs) do
+                table.insert(recursion_list, dir_entry.pattern)
             end
         end
     end
