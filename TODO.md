@@ -11,8 +11,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Provide some kind of "line editor tester" in the `clink lua` interpreter to facilitate writing unit tests for argmatchers?
 
 ## Low Priority
-- Detect `%TERM_PROGRAM%` == `vscode` and automatically fill in defaults for `%CLINK_PROMPT_PREFIX%` / etc escape codes?
-  - This belongs as a separate Lua script, not built into Clink itself.  If VSCode changed its escape codes, that would break Clink itself within VSCode.  So any VSCode integration should be in a separate Lua script; probably in the `clink-gizmos` repo.
 - Consider not redrawing while resizing the terminal, if there is no RPROMPT?  Maybe just flag that a full redraw needs to happen, and defer it until the next time a redraw is normally requested?
 - Allow removing event handlers, e.g. `clink.onbeginedit(func)` to add an event handler, and something like `clink.onbeginedit(func, false)` or `clink.removebeginedit(func)` to remove one?  Or maybe return a function that can be called to remove it, e.g. like below (but make sure repeated calls become no-ops).  The `clink-diagnostics` command would need to still show any removed event handlers until the next beginedit.  But it gets tricky if `func` is already registered -- should the new redundant registration's removal function be able to remove the pre-existing event handler?
     ```
