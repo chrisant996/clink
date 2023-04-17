@@ -2302,6 +2302,8 @@ The next example shows how to make a prompt that shows:
 #INCLUDE [docs\examples\ex_transient_prompt.lua]
 ```
 
+<a name="pfxsfxesccodes"></a>
+
 #### Prefix and Suffix Escape Codes
 
 In some cases the prompt and/or right side prompt might need to be surrounded with special escape codes.  For example, some file editors with integrated terminals want to receive additional escape codes surrounding the prompt strings.
