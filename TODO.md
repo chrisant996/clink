@@ -7,6 +7,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
+- Detect `%TERM_PROGRAM%` == `vscode` and automatically fill in defaults for `%CLINK_PROMPT_PREFIX%` / etc escape codes?
 - Provide some kind of "line editor tester" in the `clink lua` interpreter to facilitate writing unit tests for argmatchers?
 
 ## Low Priority
