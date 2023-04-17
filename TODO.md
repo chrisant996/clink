@@ -8,11 +8,11 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## Normal Priority
 - Ctrl-Break does not affect `os.issignaled()` after `onendline` i.e. during `onfilterinput`.
-  - It should be able to affect Lua scripts even when Readline's signal handling is not enabled.
-- Detect `%TERM_PROGRAM%` == `vscode` and automatically fill in defaults for `%CLINK_PROMPT_PREFIX%` / etc escape codes?
 - Provide some kind of "line editor tester" in the `clink lua` interpreter to facilitate writing unit tests for argmatchers?
 
 ## Low Priority
+- Detect `%TERM_PROGRAM%` == `vscode` and automatically fill in defaults for `%CLINK_PROMPT_PREFIX%` / etc escape codes?
+  - This belongs as a separate Lua script, not built into Clink itself.  If VSCode changed its escape codes, that would break Clink itself within VSCode.  So any VSCode integration should be in a separate Lua script; probably in the `clink-gizmos` repo.
 - Consider not redrawing while resizing the terminal, if there is no RPROMPT?  Maybe just flag that a full redraw needs to happen, and defer it until the next time a redraw is normally requested?
 - Allow removing event handlers, e.g. `clink.onbeginedit(func)` to add an event handler, and something like `clink.onbeginedit(func, false)` or `clink.removebeginedit(func)` to remove one?  Or maybe return a function that can be called to remove it, e.g. like below (but make sure repeated calls become no-ops).  The `clink-diagnostics` command would need to still show any removed event handlers until the next beginedit.  But it gets tricky if `func` is already registered -- should the new redundant registration's removal function be able to remove the pre-existing event handler?
     ```
@@ -57,6 +57,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Windows Terminal crashes on exit after `clink inject`.  The current release version was crashing (1.6.10571.0).  Older versions don't crash, and a locally built version from the terminal repo's HEAD doesn't crash.  I think the crash is probably a bug in Windows Terminal, not related to Clink.  And after I built it locally, then it stopped crashing with 1.6.10571.0 as well.  Mysterious...
 
 ## Punt
+- Ctrl-Break does not interrupt Lua scripts during `onendline` or `onfilterinput`.  The Lua engine doesn't support being interrupted; it only supports the application being terminated.  The engine could be modified to check for a `volatile` flag, but that would need to be done carefully to ensure it doesn't interrupt Clink's own internal Lua scripts.  _[Not needed; it's very rare, and hooking up `os.issignaled()` should be sufficient, though it does require scripts to explicitly support being interrupted.]_
 - Some way for `history.save false` to not do any disk IO for history, but still enable `clink history` to show the session's history (probably using Shared Memory).  _[Unfavorable cost vs benefit; expensive and complicated, while offering very little benefit beyond what could be achieved by simply applying ACLs and/or encryption to the profile directory, which is something that is best done externally from Clink.]_
 - Coroutines can call `clink.refilterprompt()` and it immediately refilters while in the coroutine.  Should it instead set a flag to refilter after the coroutines have yielded?  _[It should be fine because only `line_editor_impl` has an input idle callback that runs Lua coroutines.]_
 - Show time stamps in history popup?  _[Gets complicated because of horizontal scrolling.  Too many edge cases; the benefit is not worth the cost.]_
