@@ -1610,6 +1610,21 @@ static int set_install_version(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+static int expand_prompt_codes(lua_State* state)
+{
+    const char* in = checkstring(state, 1);
+    const bool rprompt = lua_toboolean(state, 2);
+    if (!in)
+        return 0;
+
+    str<> out;
+    prompt_utils::expand_prompt_codes(in, out, rprompt);
+
+    lua_pushlstring(state, out.c_str(), out.length());
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 #if defined(DEBUG) && defined(_MSC_VER)
 static int last_allocation_number(lua_State* state)
 {
@@ -1702,6 +1717,7 @@ void clink_lua_initialise(lua_state& lua, bool lua_interpreter)
         { 0,    "is_cmd_command",         &is_cmd_command },
         { 0,    "_get_installation_type", &get_installation_type },
         { 0,    "_set_install_version",   &set_install_version },
+        { 0,    "_expand_prompt_codes",   &expand_prompt_codes },
 #if defined(DEBUG) && defined(_MSC_VER)
         { 0,    "last_allocation_number", &last_allocation_number },
 #endif

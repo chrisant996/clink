@@ -140,10 +140,10 @@ local function _do_filter_prompt(type, prompt, rprompt, line, cursor, final)
     end
 
     if ret then
-        ret = pre .. ret .. suf
+        ret = clink._expand_prompt_codes(pre) .. ret .. clink._expand_prompt_codes(suf)
     end
     if rret and rret ~= "" then
-        rret = rpre .. rret .. rsuf
+        rret = clink._expand_prompt_codes(rpre, true) .. rret .. clink._expand_prompt_codes(rsuf, true)
     end
 
     return ret, rret
