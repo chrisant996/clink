@@ -133,7 +133,7 @@ int interpreter(int argc, char** argv)
     const char* log_file = nullptr;
     int i;
     int ret = 1;
-    while ((i = getopt_long(argc, argv, "?hDEL:ive:l:", options, nullptr)) != -1)
+    while ((i = getopt_long(argc, argv, "+?hDEL:ive:l:", options, nullptr)) != -1)
     {
         if (i == '\0')
         {

@@ -480,7 +480,8 @@ local lua = clink.argmatcher()
     ["-L"] = { " file", "Write log output to 'file'" },
     ["-h"] = "Show help text",
 })
-:nofiles()
+:loop()
+:setflagsanywhere(false)
 
 --------------------------------------------------------------------------------
 local function filter_hidden()
