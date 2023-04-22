@@ -7,7 +7,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
-- Ctrl-Break does not affect `os.issignaled()` after `onendline` i.e. during `onfilterinput`.
 - Provide some kind of "line editor tester" in the `clink lua` interpreter to facilitate writing unit tests for argmatchers?
 
 ## Low Priority
