@@ -22,6 +22,7 @@
 #include <lib/match_generator.h>
 #include <lib/line_editor.h>
 #include <lib/intercept.h>
+#include <lib/clink_ctrlevent.h>
 #include <lua/lua_script_loader.h>
 #include <lua/lua_state.h>
 #include <lua/lua_match_generator.h>
@@ -1158,16 +1159,24 @@ skip_errorlevel:
     const bool was_signaled = clink_is_signaled();
 #endif
 
-    if (send_event)
-    {
-        lua_state& state = lua;
-        lua_pushlstring(state.get_state(), out.c_str(), out.length());
-        lua.send_event("onendedit", 1);
-    }
-
     std::list<str_moveable> more_out;
-    if (send_event)
-        lua.send_event_cancelable_string_inout("onfilterinput", out.c_str(), out, &more_out);
+    {
+        // Temporarily install ctrlevent handler so Lua scripts have the option
+        // to detect Ctrl-Break with os.issignaled() and respond accordingly.
+        clink_install_ctrlevent();
+
+        if (send_event)
+        {
+            lua_state& state = lua;
+            lua_pushlstring(state.get_state(), out.c_str(), out.length());
+            lua.send_event("onendedit", 1);
+        }
+
+        if (send_event)
+            lua.send_event_cancelable_string_inout("onfilterinput", out.c_str(), out, &more_out);
+
+        clink_shutdown_ctrlevent();
+    }
 
     std::list<queued_line> queue;
 
