@@ -15,6 +15,7 @@
 #include "textlist_impl.h"
 #include "display_matches.h"
 #include "display_readline.h"
+#include "clink_ctrlevent.h"
 
 #include "rl_suggestions.h"
 
@@ -97,7 +98,6 @@ extern void host_send_oninputlinechanged_event(const char* line);
 extern void host_cleanup_after_signal();
 extern int macro_hook_func(const char* macro);
 extern int host_filter_matches(char** matches);
-extern void interrupt_input();
 extern void update_matches();
 extern void reset_generate_matches();
 extern void reselect_matches();
@@ -357,14 +357,13 @@ extern setting_bool g_terminal_raw_esc;
 
 
 //------------------------------------------------------------------------------
-static volatile int clink_signal = 0;
 static bool clink_rl_cleanup_needed = false;
 
 //------------------------------------------------------------------------------
 static void clink_reset_event_hook()
 {
     rl_signal_event_hook = nullptr;
-    clink_signal = 0;
+    clink_set_signaled(0);
     clink_rl_cleanup_needed = false;
 }
 
@@ -393,56 +392,13 @@ static void clink_set_event_hook()
 }
 
 //------------------------------------------------------------------------------
-static BOOL WINAPI clink_ctrlevent_handler(DWORD ctrl_type)
-{
-    if (ctrl_type == CTRL_C_EVENT || ctrl_type == CTRL_BREAK_EVENT)
-    {
-        clink_signal = (ctrl_type == CTRL_C_EVENT) ? SIGINT : SIGBREAK;
-        interrupt_input();
-    }
-    else if (ctrl_type == CTRL_CLOSE_EVENT)
-    {
-        // Issue 296 reported that on some computers the addition of signal
-        // handling caused the OS to show a dialog box because CMD takes too
-        // long to exit.  I have no idea how the signal handler could cause
-        // that; docs for SetConsoleCtrlHandler state that regardless what the
-        // handler returns for CTRL_CLOSE_EVENT, the OS will terminate the
-        // process.  But on at least one computer that is not proving to be
-        // true for some unknown reason.  I think there has to be external
-        // software involved somehow.  The issue was reported on a work computer
-        // that has antivirus and other software installed by policy, so it is a
-        // plausible hypothesis.
-        //
-        // Surprisingly, the C runtime treats CTRL_CLOSE_EVENT the same as
-        // CTRL_BREAK_EVENT.  So, there is effectively a signal handler
-        // installed for CTRL_CLOSE_EVENT, even though there is no intent to
-        // do anything in response to CTRL_CLOSE_EVENT, and it ends up returning
-        // TRUE instead of FALSE.  That shouldn't have any effect, but it's the
-        // only observable difference within Clink, so maybe it's somehow
-        // interfering with some other software that participates in system
-        // operations.  Since the CTRL_CLOSE_EVENT should result in guaranteed
-        // termination, there's no need to preserve installed signal handlers.
-        // So, by removing the SIGBREAK handler, it should remove the TRUE vs
-        // FALSE difference and restore the previous behavior.
-        signal(SIGBREAK, nullptr);
-    }
-    return false;
-}
-
-//------------------------------------------------------------------------------
 void clink_sighandler(int sig)
 {
     // raise() clears the signal handler, so set it again.
     signal(sig, clink_sighandler);
     clink_set_event_hook();
-    clink_signal = sig;
+    clink_set_signaled(sig);
     clink_rl_cleanup_needed = !RL_ISSTATE(RL_STATE_SIGHANDLER);
-}
-
-//------------------------------------------------------------------------------
-int clink_is_signaled()
-{
-    return clink_signal;
 }
 
 //------------------------------------------------------------------------------
@@ -457,12 +413,6 @@ bool clink_maybe_handle_signal()
             clink_reset_event_hook();
     }
     return signaled;
-}
-
-//------------------------------------------------------------------------------
-void clink_shutdown_ctrlevent()
-{
-    SetConsoleCtrlHandler(clink_ctrlevent_handler, false);
 }
 
 //------------------------------------------------------------------------------
@@ -2713,7 +2663,7 @@ void rl_module::on_begin_line(const context& context)
 #ifdef SIGBREAK
     m_old_break = signal(SIGBREAK, clink_sighandler);
 #endif
-    SetConsoleCtrlHandler(clink_ctrlevent_handler, true);
+    clink_install_ctrlevent();
 
     // Readline only detects terminal size changes while its line editor is
     // active.  If the terminal size isn't what Readline thought, then update
@@ -2883,7 +2833,7 @@ void rl_module::on_end_line()
 
     s_prev_inputline.free();
 
-    SetConsoleCtrlHandler(clink_ctrlevent_handler, false);
+    clink_shutdown_ctrlevent();
 #ifdef SIGBREAK
     signal(SIGBREAK, m_old_break);
     m_old_break = SIG_DFL;

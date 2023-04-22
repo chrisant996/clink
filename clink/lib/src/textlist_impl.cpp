@@ -8,6 +8,7 @@
 #include "editor_module.h"
 #include "line_buffer.h"
 #include "ellipsify.h"
+#include "clink_ctrlevent.h"
 
 #include <core/base.h>
 #include <core/settings.h>
@@ -71,7 +72,6 @@ extern const char* get_popup_colors();
 extern const char* get_popup_desc_colors();
 extern int host_remove_history(int rl_history_index, const char* line);
 extern bool host_remove_dir_history(int index);
-extern int clink_is_signaled();
 extern void force_signaled_redisplay();
 extern void interrupt_input();
 
@@ -277,42 +277,11 @@ static bool strstr_compare(const str_base& needle, const char* haystack)
 
 
 //------------------------------------------------------------------------------
-static int s_standalone_signal = 0;
-
-//------------------------------------------------------------------------------
-static BOOL WINAPI standalone_textlist_ctrlevent_handler(DWORD ctrl_type)
-{
-    if (ctrl_type == CTRL_C_EVENT || ctrl_type == CTRL_BREAK_EVENT)
-    {
-        s_standalone_signal = (ctrl_type == CTRL_C_EVENT) ? SIGINT : SIGBREAK;
-        interrupt_input();
-    }
-    else if (ctrl_type == CTRL_CLOSE_EVENT)
-    {
-        // Prevent the OS from showing a dialog box:  the C runtime treats
-        // CTRL_CLOSE_EVENT the same as CTRL_BREAK_EVENT.  Since the
-        // CTRL_CLOSE_EVENT should result in guaranteed termination, there's
-        // no need to preserve installed signal handlers.  So, by removing the
-        // SIGBREAK handler, it allows the C runtime to return TRUE and allow
-        // the OS to continue.  (Note that this is contrary to the MSDN docs,
-        // and might only be a problem with certain antivirus suites.)
-        signal(SIGBREAK, nullptr);
-    }
-    return false;
-}
-
-//------------------------------------------------------------------------------
 static void standalone_textlist_sighandler(int sig)
 {
     // raise() clears the signal handler, so set it again.
     signal(sig, standalone_textlist_sighandler);
-    s_standalone_signal = sig;
-}
-
-//------------------------------------------------------------------------------
-static int is_signaled()
-{
-    return s_standalone ? s_standalone_signal : clink_is_signaled();
+    clink_set_signaled(sig);
 }
 
 
@@ -469,7 +438,7 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
     {
         old_int = signal(SIGINT, standalone_textlist_sighandler);
         old_break = signal(SIGBREAK, standalone_textlist_sighandler);
-        SetConsoleCtrlHandler(standalone_textlist_ctrlevent_handler, true);
+        clink_install_ctrlevent();
     }
 
     // Initialize colors.
@@ -523,7 +492,7 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
     assert(!m_active);
     update_display();
 
-    if (!s_standalone && !is_signaled())
+    if (!s_standalone && !clink_is_signaled())
     {
         _rl_refresh_line();
         rl_display_fixed = 1;
@@ -542,12 +511,13 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
 
     if (s_standalone)
     {
-        SetConsoleCtrlHandler(standalone_textlist_ctrlevent_handler, false);
+        clink_shutdown_ctrlevent();
         signal(SIGBREAK, old_break);
         signal(SIGINT, old_int);
         // Re-raise the signal so the interpreter's signal handler can respond.
-        if (s_standalone_signal)
-            raise(s_standalone_signal);
+        const int sig = clink_is_signaled();
+        if (sig)
+            raise(sig);
     }
 
     return results;
@@ -1885,7 +1855,7 @@ void standalone_input::dispatch(int bind_group)
     const int prev_bind_group = m_bind_resolver.get_group();
     m_bind_resolver.set_group(bind_group);
 
-    const bool was_signaled = is_signaled();
+    const bool was_signaled = clink_is_signaled();
 
     m_dispatching++;
 
@@ -1919,9 +1889,9 @@ editor_module::context standalone_input::get_context()
 bool standalone_input::update_input()
 {
     // Signal handler is not installed when standalone.
-    if (is_signaled())
+    const int sig = clink_is_signaled();
+    if (sig)
     {
-        const int sig = is_signaled();
         for (auto* module : m_modules)
             module->on_signal(sig);
         if (!m_dispatching)
@@ -2010,7 +1980,7 @@ bool standalone_input::update_input()
             module::input input = { chord.c_str(), chord.length(), id, m_bind_resolver.more_than(chord.length()), binding.get_params() };
             module->on_input(input, result, context);
 
-            if (is_signaled())
+            if (clink_is_signaled())
                 return true;
         }
 
