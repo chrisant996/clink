@@ -7,7 +7,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
-- Provide some kind of "line editor tester" in the `clink lua` interpreter to facilitate writing unit tests for argmatchers?
 
 ## Low Priority
 - Allow removing event handlers, e.g. `clink.onbeginedit(func)` to add an event handler, and something like `clink.onbeginedit(func, false)` or `clink.removebeginedit(func)` to remove one?  Or maybe return a function that can be called to remove it, e.g. like below (but make sure repeated calls become no-ops).  The `clink-diagnostics` command would need to still show any removed event handlers until the next beginedit.  But it gets tricky if `func` is already registered -- should the new redundant registration's removal function be able to remove the pre-existing event handler?
@@ -52,6 +51,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Windows Terminal crashes on exit after `clink inject`.  The current release version was crashing (1.6.10571.0).  Older versions don't crash, and a locally built version from the terminal repo's HEAD doesn't crash.  I think the crash is probably a bug in Windows Terminal, not related to Clink.  And after I built it locally, then it stopped crashing with 1.6.10571.0 as well.  Mysterious...
 
 ## Punt
+- Provide some kind of "line editor tester" in the `clink lua` interpreter to facilitate writing unit tests for argmatchers?  _[No.  Too many fundamental incompatibilities with the rest of the code.  Completion script authors can do unit testing of their own code, but trying to do end-to-end testing of Clink itself from within Clink itself with being integrated with CMD?  Hard no.]_
 - Issue #387 is a request to add an option to put the cursor at the end of the search text when using `history-substring-search-backward` (and `-forward`).  But that diverges even more from Readline, and I'm actively trying to instead converge as much as possible.  _[The request should be made against bash/Readline.  If it gets implemented there, Clink will be able to pick up the change.]_
 - Consider not redrawing while resizing the terminal, if there is no RPROMPT?  Maybe just flag that a full redraw needs to happen, and defer it until the next time a redraw is normally requested?  _[Defer any further changes to terminal resize behavior until there is further feedback.]_
 - Ctrl-Break does not interrupt Lua scripts during `onendline` or `onfilterinput`.  The Lua engine doesn't support being interrupted; it only supports the application being terminated.  The engine could be modified to check for a `volatile` flag, but that would need to be done carefully to ensure it doesn't interrupt Clink's own internal Lua scripts.  _[Not needed; it's very rare, and hooking up `os.issignaled()` should be sufficient, though it does require scripts to explicitly support being interrupted.]_
