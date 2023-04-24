@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include "input_params.h"
+
 class binder;
 class editor_module;
 class str_base;
@@ -13,19 +15,10 @@ class bind_resolver
 public:
     class binding;
 
-    class bind_params
+    class bind_params : public input_params
     {
-    public:
-        bool            get(unsigned int param, unsigned int& value) const;
-        unsigned int    count() const;
-    private:
         friend class    bind_resolver;
         friend class    bind_resolver::binding;
-        bool            add(unsigned short value, unsigned char len);
-        void            clear();
-        unsigned short  m_params[4];
-        unsigned char   m_num = 0;
-        short           m_len = 0;
     };
 
     class binding
@@ -35,7 +28,7 @@ public:
         editor_module*  get_module() const;
         unsigned char   get_id() const;
         void            get_chord(str_base& chord) const;
-        const bind_params& get_params() const;
+        const input_params& get_params() const;
         void            claim();
 
     private:

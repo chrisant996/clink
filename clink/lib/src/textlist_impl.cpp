@@ -6,6 +6,7 @@
 #include "textlist_impl.h"
 #include "binder.h"
 #include "editor_module.h"
+#include "bind_resolver.h"
 #include "line_buffer.h"
 #include "ellipsify.h"
 #include "clink_ctrlevent.h"

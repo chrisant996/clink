@@ -4,7 +4,7 @@
 #pragma once
 
 #include <core/base.h>
-#include "bind_resolver.h"
+#include "input_params.h"
 
 class printer;
 class pager;
@@ -32,7 +32,7 @@ public:
         unsigned int        len;    // Because '\0' is C-@ and is a valid input.
         unsigned char       id;
         bool                more;   // More unresolved input is pending.
-        bind_resolver::bind_params params;
+        input_params        params;
     };
 
     struct context

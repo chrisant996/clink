@@ -12,47 +12,6 @@
 #include <new>
 
 //------------------------------------------------------------------------------
-bool bind_resolver::bind_params::get(unsigned int param, unsigned int& value) const
-{
-    if (param >= m_num)
-    {
-        value = 0;
-        return false;
-    }
-
-    value = m_params[param];
-    return true;
-}
-
-//------------------------------------------------------------------------------
-unsigned int bind_resolver::bind_params::count() const
-{
-    return m_num;
-}
-
-//------------------------------------------------------------------------------
-bool bind_resolver::bind_params::add(unsigned short value, unsigned char len)
-{
-    if (m_num >= sizeof_array(m_params))
-        return false;
-
-    m_params[m_num++] = value;
-    m_len += len;
-
-    // Offset the '*' key, so that depth + len is always the key sequence
-    // length, even when the param is empty (no digits).
-    m_len--;
-    return true;
-}
-
-//------------------------------------------------------------------------------
-void bind_resolver::bind_params::clear()
-{
-    m_num = 0;
-    m_len = 0;
-}
-
-//------------------------------------------------------------------------------
 bind_resolver::binding::binding(bind_resolver* resolver, int node_index, const bind_params& params)
 : m_outer(resolver)
 , m_node_index(node_index)
@@ -62,7 +21,7 @@ bind_resolver::binding::binding(bind_resolver* resolver, int node_index, const b
     const auto& node = binder.get_node(m_node_index);
 
     m_module = node.module;
-    m_len = max<unsigned char>(1, node.depth) + params.m_len;
+    m_len = max<unsigned char>(1, node.depth) + params.length();
     m_id = node.id;
     assert(m_len > 0);
 }
@@ -103,7 +62,7 @@ void bind_resolver::binding::get_chord(str_base& chord) const
 }
 
 //------------------------------------------------------------------------------
-const bind_resolver::bind_params& bind_resolver::binding::get_params() const
+const input_params& bind_resolver::binding::get_params() const
 {
     return m_params;
 }
@@ -238,7 +197,7 @@ bind_resolver::binding bind_resolver::next()
 
         // Check to see if where we're currently at a node in the tree that is
         // a valid bind (at the point of call).
-        int key_index = m_tail + node.depth + m_params.m_len - 1;
+        int key_index = m_tail + node.depth + m_params.length() - 1;
         if (node.bound && (!node.key || node.key == m_keys[key_index]))
             return binding(this, node_index, m_params);
     }
