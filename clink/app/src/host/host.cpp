@@ -25,7 +25,6 @@
 #include <lib/clink_ctrlevent.h>
 #include <lua/lua_script_loader.h>
 #include <lua/lua_state.h>
-#include <lua/lua_match_generator.h>
 #include <lua/prompt.h>
 #include <lua/suggest.h>
 #include <terminal/printer.h>
