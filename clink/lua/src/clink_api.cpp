@@ -11,6 +11,10 @@
 #include "async_lua_task.h"
 #include "../../app/src/version.h" // Ugh.
 
+#ifdef CLINK_USE_LUA_EDITOR_TESTER
+#include "lua_editor_tester.h"
+#endif
+
 #include <core/base.h>
 #include <core/os.h>
 #include <core/str_compare.h>
@@ -1647,6 +1651,79 @@ static int clink_is_lua_file_loaded(lua_State* state)
 }
 #endif
 
+//------------------------------------------------------------------------------
+// This prototype was abandoned, but is kept in case parts of it might be useful
+// in the future.  The match generator layer is too dependent on CMD and threads
+// and things that don't make sense in a standalone Lua interpreter.  And how to
+// initialize textlist_impl or Readline or various other things differs based on
+// whether they're needed for normal usage or for the lua_editor_tester.
+// There's very little value in this niche mode, and the cost and compatibility
+// conflicts make it not worth pursing further.
+#ifdef CLINK_USE_LUA_EDITOR_TESTER
+static int run_editor_test(lua_State* state)
+{
+    // Arg 1 is input line text.
+    const char* input = checkstring(state, 1);
+    if (!input)
+        return 0;
+
+    // Arg 2 is table of expectations.
+    if (!lua_istable(state, 2))
+    {
+        const char* expected = lua_typename(state, LUA_TTABLE);
+        const char* got = luaL_typename(state, 2);
+        const char* msg = lua_pushfstring(state, "%s expected, got %s", expected, got);
+        return luaL_argerror(state, 2, msg);
+    }
+
+    rollback<printer*> rb_printer(g_printer, nullptr);
+    os::cwd_restorer cwd;
+
+    str_moveable message;
+    lua_editor_tester tester(state);
+    tester.set_input(input);
+
+    // Expected output.
+    lua_getfield(state, 2, "output");
+    tester.set_expected_output(lua_tostring(state, -1));
+    lua_pop(state, 1);
+
+    // Expected matches.
+    lua_getfield(state, 2, "matches");
+    if (lua_istable(state, -1))
+    {
+        std::vector<str_moveable> matches;
+        const int len = int(lua_rawlen(state, -1));
+        for (int idx = 1; idx <= len; ++idx)
+        {
+            lua_rawgeti(state, -1, idx);
+            if (const char* s = lua_tostring(state, -1))
+                matches.emplace_back(s);
+            lua_pop(state, 1);
+        }
+        tester.set_expected_matches(matches);
+    }
+    lua_pop(state, 1);
+
+    // Expected classifications.
+    lua_getfield(state, 2, "classifications");
+    tester.set_expected_classifications(lua_tostring(state, -1));
+    lua_pop(state, 1);
+
+    // Run test.
+    const bool ok = tester.run(message);
+
+    lua_pushboolean(state, ok);
+    if (!ok)
+    {
+        lua_pushlstring(state, message.c_str(), message.length());
+        return 2;
+    }
+
+    return 1;
+}
+#endif // CLINK_USE_LUA_EDITOR_TESTER
+
 
 
 //------------------------------------------------------------------------------
@@ -1661,11 +1738,13 @@ extern int explode(lua_State* state);
 //------------------------------------------------------------------------------
 void clink_lua_initialise(lua_state& lua, bool lua_interpreter)
 {
-    static const struct {
+    struct method_def {
         bool        always;
         const char* name;
         int         (*method)(lua_State*);
-    } methods[] = {
+    };
+
+    static const method_def methods[] = {
         // APIs in the "clink." namespace.
         { 1,    "lower",                  &to_lowercase },
         { 1,    "print",                  &clink_print },
@@ -1726,6 +1805,12 @@ void clink_lua_initialise(lua_state& lua, bool lua_interpreter)
 #endif
     };
 
+#ifdef CLINK_USE_LUA_EDITOR_TESTER
+    static const method_def standalone_methods[] = {
+        { 1,    "runeditortest",          &run_editor_test },
+    };
+#endif
+
     lua_State* state = lua.get_state();
 
     lua_createtable(state, sizeof_array(methods), 0);
@@ -1739,6 +1824,18 @@ void clink_lua_initialise(lua_state& lua, bool lua_interpreter)
             lua_rawset(state, -3);
         }
     }
+
+#ifdef CLINK_USE_LUA_EDITOR_TESTER
+    if (lua_interpreter)
+    {
+        for (const auto& method : standalone_methods)
+        {
+            lua_pushstring(state, method.name);
+            lua_pushcfunction(state, method.method);
+            lua_rawset(state, -3);
+        }
+    }
+#endif
 
     lua_pushliteral(state, "version_encoded");
     lua_pushinteger(state, CLINK_VERSION_MAJOR * 10000000 +

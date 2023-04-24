@@ -32,6 +32,12 @@ char* __printable_part (char* pathname);
 
 //------------------------------------------------------------------------------
 lua_match_generator::lua_match_generator(lua_state& state)
+: m_state(state.get_state())
+{
+}
+
+//------------------------------------------------------------------------------
+lua_match_generator::lua_match_generator(lua_State* state)
 : m_state(state)
 {
 }
@@ -44,7 +50,7 @@ lua_match_generator::~lua_match_generator()
 //------------------------------------------------------------------------------
 bool lua_match_generator::generate(const line_states& lines, match_builder& builder, bool old_filtering)
 {
-    lua_State* state = m_state.get_state();
+    lua_State* state = m_state;
     save_stack_top ss(state);
 
     // Call to Lua to generate matches.
@@ -65,7 +71,7 @@ bool lua_match_generator::generate(const line_states& lines, match_builder& buil
 
     os::cwd_restorer cwd;
 
-    if (m_state.pcall(state, 4, 1) != 0)
+    if (lua_state::pcall(state, 4, 1) != 0)
         return false;
 
     int use_matches = lua_toboolean(state, -1);
@@ -75,7 +81,7 @@ bool lua_match_generator::generate(const line_states& lines, match_builder& buil
 //------------------------------------------------------------------------------
 void lua_match_generator::get_word_break_info(const line_state& line, word_break_info& info) const
 {
-    lua_State* state = m_state.get_state();
+    lua_State* state = m_state;
     save_stack_top ss(state);
 
     // Call to Lua to calculate prefix length.
@@ -93,7 +99,7 @@ void lua_match_generator::get_word_break_info(const line_state& line, word_break
     // into the input line buffer.
     line_state::set_can_strip_quotes(false);
 
-    if (m_state.pcall(state, 1, 2) != 0)
+    if (lua_state::pcall(state, 1, 2) != 0)
     {
         line_state::set_can_strip_quotes(true);
         info.clear();
@@ -110,7 +116,7 @@ void lua_match_generator::get_word_break_info(const line_state& line, word_break
 bool lua_match_generator::match_display_filter(const char* needle, char** matches, match_display_filter_entry*** filtered_matches, display_filter_flags flags, bool nosort, bool* old_filtering)
 {
     bool ret = false;
-    lua_State* state = m_state.get_state();
+    lua_State* state = m_state;
     str<> lcd;
     bool lcd_initialized = false;
     const bool selectable = (flags & display_filter_flags::selectable) == display_filter_flags::selectable;
@@ -135,7 +141,7 @@ bool lua_match_generator::match_display_filter(const char* needle, char** matche
 
         lua_pushliteral(state, "ondisplaymatches");
 
-        if (m_state.pcall(1, 1) != 0)
+        if (lua_state::pcall(state, 1, 1) != 0)
             goto done;
 
         ondisplaymatches = (!lua_isnil(state, -1) && lua_toboolean(state, -1) != false);
@@ -258,7 +264,7 @@ done:
     }
 
     // Call the filter.
-    if (m_state.pcall(ondisplaymatches ? 2 : 1, 1) != 0)
+    if (lua_state::pcall(state, ondisplaymatches ? 2 : 1, 1) != 0)
         goto done;
 
     // Bail out if filter function didn't return a table.
@@ -470,7 +476,7 @@ next:
 //------------------------------------------------------------------------------
 bool lua_match_generator::filter_matches(char** matches, char completion_type, bool filename_completion_desired)
 {
-    lua_State* state = m_state.get_state();
+    lua_State* state = m_state;
     save_stack_top ss(state);
 
     // Check there's a match filter set.
@@ -481,7 +487,7 @@ bool lua_match_generator::filter_matches(char** matches, char completion_type, b
 
     lua_pushliteral(state, "onfiltermatches");
 
-    if (m_state.pcall(1, 1) != 0)
+    if (lua_state::pcall(state, 1, 1) != 0)
         return false;
 
     bool onfiltermatches = (!lua_isnil(state, -1) && lua_toboolean(state, -1) != false);
@@ -538,7 +544,7 @@ bool lua_match_generator::filter_matches(char** matches, char completion_type, b
     lua_pushboolean(state, filename_completion_desired);
 
     // Call the filter.
-    if (m_state.pcall(3, 1) != 0)
+    if (lua_state::pcall(state, 3, 1) != 0)
         return false;
 
     // If nil is returned then no filtering occurred.

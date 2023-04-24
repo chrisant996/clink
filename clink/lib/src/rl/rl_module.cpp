@@ -2230,7 +2230,10 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
     bind_keyseq_list(vi_movement_key_binds, vi_movement_keymap);
 
     // Finally, load the inputrc file.
-    load_user_inputrc(state_dir);
+#ifdef CLINK_USE_LUA_EDITOR_TESTER
+    if (state_dir)
+#endif
+        load_user_inputrc(state_dir);
 
     // Override the effect of any 'set keymap' assignments in the inputrc file.
     // This mimics what rl_initialize() does.

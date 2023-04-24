@@ -1,4 +1,5 @@
 -- Copyright (c) 2012 Martin Ridgers
+-- Portions Copyright (c) 2020-2023 Christopher Antos
 -- License: http://opensource.org/licenses/MIT
 
 local to = ".build/"..(_ACTION or "nullaction")
@@ -298,6 +299,7 @@ clink_lib("clink_lua")
     files("clink/lua/src/**")
     files("clink/lua/include/**")
     files("clink/lua/scripts/**")
+    excludes("clink/lua/src/lua_editor_tester.cpp")
 
     includedirs("clink/lua/src")
     configuration("vs*")
