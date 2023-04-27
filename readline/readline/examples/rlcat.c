@@ -4,7 +4,7 @@
  * usage: rlcat
  */
 
-/* Copyright (C) 1987-2009 Free Software Foundation, Inc.
+/* Copyright (C) 1987-2009,2023 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library for
    reading lines of text with interactive input and history editing.
@@ -64,21 +64,20 @@ extern int errno;
 extern int optind;
 extern char *optarg;
 
-static int stdcat();
+static int fcopy(FILE *);
+static int stdcat(int, char **);
 
 static char *progname;
 static int vflag;
 
 static void
-usage()
+usage(void)
 {
   fprintf (stderr, "%s: usage: %s [-vEVN] [filename]\n", progname, progname);
 }
 
 int
-main (argc, argv)
-     int argc;
-     char **argv;
+main (int argc, char **argv)
 {
   char *temp;
   int opt, Vflag, Nflag;
@@ -133,8 +132,7 @@ main (argc, argv)
 }
 
 static int
-fcopy(fp)
-     FILE *fp;
+fcopy(FILE *fp)
 {
   int c;
   char *x;
@@ -154,9 +152,7 @@ fcopy(fp)
 }
 
 int
-stdcat (argc, argv)
-     int argc;
-     char **argv;
+stdcat (int argc, char **argv)
 {
   int  i, fd, r;
   char *s;

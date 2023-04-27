@@ -59,7 +59,7 @@ static char *progname;
 static char *deftext;
 
 static int
-set_deftext ()
+set_deftext (void)
 {
   if (deftext)
     {
@@ -71,16 +71,14 @@ set_deftext ()
 }
 
 static void
-usage()
+usage(void)
 {
   fprintf (stderr, "%s: usage: %s [-p prompt] [-u unit] [-d default] [-n nchars]\n",
 		progname, progname);
 }
 
 int
-main (argc, argv)
-     int argc;
-     char **argv;
+main (int argc, char **argv)
 {
   char *temp, *prompt;
   struct stat sb;

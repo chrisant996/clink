@@ -56,7 +56,7 @@ const char *prompt = "rl-timeout$ ";
 /* **************************************************************** */
 
 void
-rltest_timeout_readline1 ()
+rltest_timeout_readline1 (void)
 {
   const char *temp;
 
@@ -78,14 +78,14 @@ rltest_timeout_readline1 ()
 /* **************************************************************** */
 
 static int
-timeout_handler ()
+timeout_handler (void)
 {
   printf ("timeout\n");
   return READERR;
 }
 
 void
-rltest_timeout_readline2 ()
+rltest_timeout_readline2 (void)
 {
   const char *temp;
 
@@ -134,7 +134,7 @@ cb_linehandler (char *line)
 }
 
 void
-rltest_timeout_callback1 ()
+rltest_timeout_callback1 (void)
 {
   fd_set fds;
   int r;
@@ -180,7 +180,7 @@ rltest_timeout_callback1 ()
 /* **************************************************************** */
 
 static int
-cb_timeouthandler ()
+cb_timeouthandler (void)
 {
   printf ("timeout\n");
   rl_callback_handler_remove ();
@@ -189,7 +189,7 @@ cb_timeouthandler ()
 }
 
 void
-rltest_timeout_callback2 ()
+rltest_timeout_callback2 (void)
 {
   int r;
 

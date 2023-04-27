@@ -1,6 +1,6 @@
 /* history.h -- the names of functions that you can call in history. */
 
-/* Copyright (C) 1989-2022 Free Software Foundation, Inc.
+/* Copyright (C) 1989-2023 Free Software Foundation, Inc.
 
    This file contains the GNU History Library (History), a set of
    routines for managing the text of previously typed lines.
@@ -49,6 +49,10 @@ typedef struct _hist_entry {
   char *timestamp;		/* char * rather than time_t for read/write */
   histdata_t data;
 } HIST_ENTRY;
+
+#ifndef HIST_ENTRY_DEFINED
+#  define HIST_ENTRY_DEFINED
+#endif
 
 /* Size of the history-library-managed space in history entry HS. */
 #define HISTENT_BYTES(hs)	(strlen ((hs)->line) + strlen ((hs)->timestamp))

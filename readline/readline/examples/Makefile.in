@@ -164,6 +164,7 @@ distclean maintainer-clean: clean
 	$(RM) Makefile
 
 fileman.o: fileman.c
+manexamp.o: manexamp.c
 rltest.o: rltest.c
 rltest2.o: rltest2.c
 rl.o: rl.c
@@ -179,6 +180,7 @@ rl-callbacktest.o: rl-callbacktest.c
 rl-timeout.o: rl-timeout.c
 
 fileman.o: $(top_srcdir)/readline.h
+manexamp.o: $(top_srcdir)/readline.h
 rltest.o: $(top_srcdir)/readline.h
 rltest2.o: $(top_srcdir)/readline.h $(top_srcdir)/history.h
 rl.o: $(top_srcdir)/readline.h

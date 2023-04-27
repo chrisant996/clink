@@ -1,7 +1,7 @@
 /* hist_purgecmd -- remove all instances of command or pattern from history
    file */
 
-/* Copyright (C) 2011 Free Software Foundation, Inc.
+/* Copyright (C) 2011,2023 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library for
    reading lines of text with interactive input and history editing.
@@ -46,16 +46,14 @@
 int hist_purgecmd (char *, int);
 
 static void
-usage()
+usage(void)
 {
   fprintf (stderr, "hist_purgecmd: usage: hist_purgecmd [-r] [-t] [-f filename] command-spec\n");
   exit (2);
 }
 
 int
-main (argc, argv)
-     int argc;
-     char **argv;
+main (int argc, char **argv)
 {
   char *fn;
   int r, flags;
@@ -109,9 +107,7 @@ main (argc, argv)
 }
 
 int
-hist_purgecmd (cmd, flags)
-     char *cmd;
-     int flags;
+hist_purgecmd (char *cmd, int flags)
 {
   int r, n, rflags;
   HIST_ENTRY *temp;

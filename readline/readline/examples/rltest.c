@@ -4,7 +4,7 @@
 /*								    */
 /* **************************************************************** */
 
-/* Copyright (C) 1987-2009 Free Software Foundation, Inc.
+/* Copyright (C) 1987-2009,2023 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library for
    reading lines of text with interactive input and history editing.
@@ -48,10 +48,8 @@ extern void exit();
 #  include <readline/history.h>
 #endif
 
-extern HIST_ENTRY **history_list ();
-
 int
-main ()
+main (int c, char **v)
 {
   char *temp, *prompt;
   int done;

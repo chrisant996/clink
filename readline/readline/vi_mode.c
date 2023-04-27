@@ -371,12 +371,12 @@ rl_vi_search (int count, int key)
   switch (key)
     {
     case '?':
-      _rl_free_saved_history_line ();
+      _rl_free_saved_search_line ();		/* just in case */
       rl_noninc_forward_search (count, key);
       break;
 
     case '/':
-      _rl_free_saved_history_line ();
+      _rl_free_saved_search_line ();
       rl_noninc_reverse_search (count, key);
       break;
 
@@ -1108,6 +1108,7 @@ _rl_vi_arg_dispatch (int c)
     }
   else
     {
+      rl_restore_prompt ();
       rl_clear_message ();
       rl_stuff_char (key);
       return 0;		/* done */
@@ -1338,7 +1339,7 @@ rl_domove_read_callback (_rl_vimotion_cxt *m)
   /* Readine vi motion char starting numeric argument */
   else if (_rl_digit_p (c) && RL_ISSTATE (RL_STATE_CALLBACK) && RL_ISSTATE (RL_STATE_VIMOTION) && (RL_ISSTATE (RL_STATE_NUMERICARG) == 0))
     {
-      RL_SETSTATE (RL_STATE_NUMERICARG);
+      _rl_arg_init ();
       return (_rl_vi_arg_dispatch (c));
     }
 #endif
@@ -1348,7 +1349,7 @@ rl_domove_read_callback (_rl_vimotion_cxt *m)
       save = rl_numeric_arg;
       rl_numeric_arg = _rl_digit_value (c);
       rl_explicit_arg = 1;
-      RL_SETSTATE (RL_STATE_NUMERICARG);
+      _rl_arg_init ();
       rl_digit_loop1 ();
       rl_numeric_arg *= save;
       c = rl_vi_domove_getchar (m);
@@ -1357,6 +1358,13 @@ rl_domove_read_callback (_rl_vimotion_cxt *m)
 	  m->motion = 0;
 	  return -1;
 	}
+      else if (member (c, vi_motion) == 0)
+	{
+	  m->motion = 0;
+	  RL_UNSETSTATE (RL_STATE_VIMOTION);
+	  RL_UNSETSTATE (RL_STATE_NUMERICARG);
+	  return (1);
+	}  
       m->motion = c;
       return (rl_domove_motion_callback (m));
     }
@@ -1381,6 +1389,7 @@ _rl_vi_domove_callback (_rl_vimotion_cxt *m)
   int c, r;
 
   m->motion = c = rl_vi_domove_getchar (m);
+
   if (c < 0)
     return 1;		/* EOF */
   r = rl_domove_read_callback (m);

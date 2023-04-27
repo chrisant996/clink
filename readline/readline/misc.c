@@ -1,6 +1,6 @@
 /* misc.c -- miscellaneous bindable readline functions. */
 
-/* Copyright (C) 1987-2022 Free Software Foundation, Inc.
+/* Copyright (C) 1987-2023 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -346,20 +346,7 @@ void
 _rl_start_using_history (void)
 {
   using_history ();
-/* begin_clink_change */
-#ifdef REPORT_READLINE_UNDO_LIST_LEAKS
-  if (_rl_saved_line_for_history && _rl_saved_line_for_history->data)
-    {
-      int not_leaked = 0;
-      for (UNDO_LIST* walk = rl_undo_list; walk; walk = walk->next)
-	not_leaked |= (walk == _rl_saved_line_for_history->data);
-      assert (not_leaked);
-    }
-#endif
-/* end_clink_change */
-  if (_rl_saved_line_for_history)
-    _rl_free_saved_history_line ();
-  _rl_saved_line_for_history = (HIST_ENTRY *)NULL;
+  _rl_free_saved_history_line ();
   _rl_history_search_pos = -99;		/* some random invalid history position */
 }
 
@@ -405,25 +392,46 @@ rl_maybe_replace_line (void)
   return 0;
 }
 
+void
+_rl_unsave_line (HIST_ENTRY *entry)
+{
+  /* Can't call with `1' because rl_undo_list might point to an undo
+     list from a history entry, as in rl_replace_from_history() below. */
+  rl_replace_line (entry->line, 0);
+  rl_undo_list = (UNDO_LIST *)entry->data;
+
+  /* Doesn't free `data'. */
+  _rl_free_history_entry (entry);
+
+  rl_point = rl_end;	/* rl_replace_line sets rl_end */
+}
+
 /* Restore the _rl_saved_line_for_history if there is one. */
 int
 rl_maybe_unsave_line (void)
 {
   if (_rl_saved_line_for_history)
     {
-      /* Can't call with `1' because rl_undo_list might point to an undo
-	 list from a history entry, as in rl_replace_from_history() below. */
-      rl_replace_line (_rl_saved_line_for_history->line, 0);
-      rl_undo_list = (UNDO_LIST *)_rl_saved_line_for_history->data;
-
-      /* Doesn't free `data'. */
-      _rl_free_history_entry (_rl_saved_line_for_history);
+      _rl_unsave_line (_rl_saved_line_for_history);
       _rl_saved_line_for_history = (HIST_ENTRY *)NULL;
-      rl_point = rl_end;	/* rl_replace_line sets rl_end */
     }
   else
     rl_ding ();
   return 0;
+}
+
+HIST_ENTRY *
+_rl_alloc_saved_line (void)
+{
+  HIST_ENTRY *ret;
+
+  ret = (HIST_ENTRY *)xmalloc (sizeof (HIST_ENTRY));
+
+  ret->line = savestring (rl_line_buffer);
+  ret->timestamp = (char *)NULL;
+  ret->data = (char *)rl_undo_list;
+
+  return ret;
 }
 
 /* Save the current line in _rl_saved_line_for_history. */
@@ -431,34 +439,24 @@ int
 rl_maybe_save_line (void)
 {
   if (_rl_saved_line_for_history == 0)
-    {
-      _rl_saved_line_for_history = (HIST_ENTRY *)xmalloc (sizeof (HIST_ENTRY));
-      _rl_saved_line_for_history->line = savestring (rl_line_buffer);
-      _rl_saved_line_for_history->timestamp = (char *)NULL;
-      _rl_saved_line_for_history->data = (char *)rl_undo_list;
-    }
+    _rl_saved_line_for_history = _rl_alloc_saved_line ();
 
   return 0;
+}
+
+/* Just a wrapper, any self-respecting compiler will inline it. */
+void
+_rl_free_saved_line (HIST_ENTRY *entry)
+{
+  _rl_free_history_entry (entry);
 }
 
 int
 _rl_free_saved_history_line (void)
 {
-  if (_rl_saved_line_for_history)
-    {
-      UNDO_LIST *sentinel;
+  _rl_free_saved_line (_rl_saved_line_for_history);
+  _rl_saved_line_for_history = (HIST_ENTRY *)NULL;
 
-      sentinel = (UNDO_LIST *)_rl_saved_line_for_history->data;
-
-      /* We should only free `data' if it's not the current rl_undo_list and
-	 it's not the `data' member in a history entry somewhere. We have to
-	 free it separately because only the callers know it's an undo list. */
-      if (sentinel && sentinel != rl_undo_list && _hs_search_history_data ((histdata_t *)sentinel) < 0)
-	_rl_free_undo_list (sentinel);
-
-      _rl_free_history_entry (_rl_saved_line_for_history);
-      _rl_saved_line_for_history = (HIST_ENTRY *)NULL;
-    }
   return 0;
 }
 
@@ -625,23 +623,14 @@ rl_end_of_history (int count, int key)
   return 0;
 }
 
-/* Move down to the next history line. */
 int
-rl_get_next_history (int count, int key)
+_rl_next_history_internal (int count)
 {
   HIST_ENTRY *temp;
-
-  if (count < 0)
-    return (rl_get_previous_history (-count, key));
 
 /* begin_clink_change */
   history_prev_use_curr = 0;
 /* end_clink_change */
-
-  if (count == 0)
-    return 0;
-
-  rl_maybe_replace_line ();
 
   /* either not saved by rl_newline or at end of line, so set appropriately. */
   if (_rl_history_saved_point == -1 && (rl_point || rl_end))
@@ -657,45 +646,52 @@ rl_get_next_history (int count, int key)
     }
 
   if (temp == 0)
-    rl_maybe_unsave_line ();
+    return 0;
   else
     {
       rl_replace_from_history (temp, 0);
       _rl_history_set_point ();
+      return 1;
     }
+}
+
+/* Move down to the next history line. */
+int
+rl_get_next_history (int count, int key)
+{
+  int r;
+
+  if (count < 0)
+    return (rl_get_previous_history (-count, key));
+
+  if (count == 0)
+    return 0;
+
+  rl_maybe_replace_line ();
+
+  r = _rl_next_history_internal (count);
+
+  if (r == 0)
+    rl_maybe_unsave_line ();
+
   return 0;
 }
 
-/* Get the previous item out of our interactive history, making it the current
-   line.  If there is no previous history, just ding. */
 int
-rl_get_previous_history (int count, int key)
+_rl_previous_history_internal (int count)
 {
   HIST_ENTRY *old_temp, *temp;
-  int had_saved_line;
 /* begin_clink_change */
   int prev_use_curr = history_prev_use_curr;
   history_prev_use_curr = 0;
 /* end_clink_change */
 
-  if (count < 0)
-    return (rl_get_next_history (-count, key));
-
-  if (count == 0 || history_list () == 0)
-    return 0;
+  temp = old_temp = (HIST_ENTRY *)NULL;
 
   /* either not saved by rl_newline or at end of line, so set appropriately. */
   if (_rl_history_saved_point == -1 && (rl_point || rl_end))
     _rl_history_saved_point = (rl_point == rl_end) ? -1 : rl_point;
 
-  /* If we don't have a line saved, then save this one. */
-  had_saved_line = _rl_saved_line_for_history != 0;
-  rl_maybe_save_line ();
-
-  /* If the current line has changed, save the changes. */
-  rl_maybe_replace_line ();
-
-  temp = old_temp = (HIST_ENTRY *)NULL;
   while (count)
     {
 /* begin_clink_change */
@@ -721,15 +717,41 @@ rl_get_previous_history (int count, int key)
 
   if (temp == 0)
     {
-      if (had_saved_line == 0)
-	_rl_free_saved_history_line ();
       rl_ding ();
+      return 0;
     }
   else
     {
       rl_replace_from_history (temp, 0);
       _rl_history_set_point ();
+      return 1;
     }
+}
+	
+/* Get the previous item out of our interactive history, making it the current
+   line.  If there is no previous history, just ding. */
+int
+rl_get_previous_history (int count, int key)
+{
+  int had_saved_line, r;
+
+  if (count < 0)
+    return (rl_get_next_history (-count, key));
+
+  if (count == 0 || history_list () == 0)
+    return 0;
+
+  /* If we don't have a line saved, then save this one. */
+  had_saved_line = _rl_saved_line_for_history != 0;
+  rl_maybe_save_line ();
+
+  /* If the current line has changed, save the changes. */
+  rl_maybe_replace_line ();
+
+  r = _rl_previous_history_internal (count);
+
+  if (r == 0 && had_saved_line == 0)	/* failed to find previous history */
+    _rl_free_saved_history_line ();
 
   return 0;
 }

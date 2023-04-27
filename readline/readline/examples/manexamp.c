@@ -1,6 +1,6 @@
 /* manexamp.c -- The examples which appear in the documentation are here. */
 
-/* Copyright (C) 1987-2009 Free Software Foundation, Inc.
+/* Copyright (C) 1987-2009,2023 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library for
    reading lines of text with interactive input and history editing.
@@ -18,9 +18,35 @@
    You should have received a copy of the GNU General Public License
    along with Readline.  If not, see <http://www.gnu.org/licenses/>.
 */
+#if defined (HAVE_CONFIG_H)
+#  include <config.h>
+#endif
 
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
+
+
+#include <stdlib.h>
 #include <stdio.h>
-#include <readline/readline.h>
+
+#include <ctype.h>
+#include <string.h>
+#include <errno.h>
+   
+#include <locale.h>
+
+#ifndef errno
+extern int errno;
+#endif
+
+#if defined (READLINE_LIBRARY)
+#  include "readline.h"
+#  include "history.h"
+#else
+#  include <readline/readline.h>
+#  include <readline/history.h>
+#endif
 
 /* **************************************************************** */
 /*                                                                  */
@@ -33,7 +59,7 @@ static char *line_read = (char *)NULL;
 
 /* Read a string, and return a pointer to it.  Returns NULL on EOF. */
 char *
-rl_gets ()
+rl_gets (void)
 {
   /* If the buffer has already been allocated, return the memory
      to the free pool. */
@@ -60,10 +86,11 @@ rl_gets ()
 /* **************************************************************** */
 
 /* Invert the case of the COUNT following characters. */
-invert_case_line (count, key)
-     int count, key;
+int
+invert_case_line (int count, int key)
 {
-  register int start, end;
+  int start, end;
+  int direction;
 
   start = rl_point;
 
@@ -92,7 +119,7 @@ invert_case_line (count, key)
     }
 
   if (start == end)
-    return;
+    return 0;
 
   /* Tell readline that we are modifying the line, so save the undo
      information. */
@@ -108,4 +135,5 @@ invert_case_line (count, key)
 
   /* Move point to on top of the last character changed. */
   rl_point = end - direction;
+  return 0;
 }

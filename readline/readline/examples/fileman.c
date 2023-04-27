@@ -1,6 +1,6 @@
 /* fileman.c - file manager example for readline library. */
 
-/* Copyright (C) 1987-2009 Free Software Foundation, Inc.
+/* Copyright (C) 1987-2009,2023 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library for
    reading lines of text with interactive input and history editing.
@@ -61,24 +61,24 @@
 #  include <readline/history.h>
 #endif
 
-extern char *xmalloc PARAMS((size_t));
+extern char *xmalloc (size_t);
 
-void initialize_readline PARAMS((void));
-void too_dangerous PARAMS((char *));
+void initialize_readline (void);
+void too_dangerous (char *);
 
-int execute_line PARAMS((char *));
-int valid_argument PARAMS((char *, char *));
+int execute_line (char *);
+int valid_argument (char *, char *);
 
 /* The names of functions that actually do the manipulation. */
-int com_list PARAMS((char *));
-int com_view PARAMS((char *));
-int com_rename PARAMS((char *));
-int com_stat PARAMS((char *));
-int com_pwd PARAMS((char *));
-int com_delete PARAMS((char *));
-int com_help PARAMS((char *));
-int com_cd PARAMS((char *));
-int com_quit PARAMS((char *));
+int com_list (char *);
+int com_view (char *);
+int com_rename (char *);
+int com_stat (char *);
+int com_pwd (char *);
+int com_delete (char *);
+int com_help (char *);
+int com_cd (char *);
+int com_quit (char *);
 
 /* A structure which contains information on the commands this program
    can understand. */
@@ -105,8 +105,11 @@ COMMAND commands[] = {
 };
 
 /* Forward declarations. */
-char *stripwhite ();
-COMMAND *find_command ();
+char *dupstr (char *);
+int execute_line (char *);
+char *stripwhite (char *);
+
+COMMAND *find_command (char *);
 
 /* The name of this program, as taken from argv[0]. */
 char *progname;
@@ -115,8 +118,7 @@ char *progname;
 int done;
 
 char *
-dupstr (s)
-     char *s;
+dupstr (char *s)
 {
   char *r;
 
@@ -125,45 +127,9 @@ dupstr (s)
   return (r);
 }
 
-int
-main (argc, argv)
-     int argc;
-     char **argv;
-{
-  char *line, *s;
-
-  progname = argv[0];
-
-  initialize_readline ();	/* Bind our completer. */
-
-  /* Loop reading and executing lines until the user quits. */
-  for ( ; done == 0; )
-    {
-      line = readline ("FileMan: ");
-
-      if (!line)
-        break;
-
-      /* Remove leading and trailing whitespace from the line.
-         Then, if there is anything left, add it to the history list
-         and execute it. */
-      s = stripwhite (line);
-
-      if (*s)
-        {
-          add_history (s);
-          execute_line (s);
-        }
-
-      free (line);
-    }
-  exit (0);
-}
-
 /* Execute a command line. */
 int
-execute_line (line)
-     char *line;
+execute_line (char *line)
 {
   register int i;
   COMMAND *command;
@@ -202,8 +168,7 @@ execute_line (line)
 /* Look up NAME as the name of a command, and return a pointer to that
    command.  Return a NULL pointer if NAME isn't a command name. */
 COMMAND *
-find_command (name)
-     char *name;
+find_command (char *name)
 {
   register int i;
 
@@ -217,8 +182,7 @@ find_command (name)
 /* Strip whitespace from the start and end of STRING.  Return a pointer
    into STRING. */
 char *
-stripwhite (string)
-     char *string;
+stripwhite (char *string)
 {
   register char *s, *t;
 
@@ -242,14 +206,14 @@ stripwhite (string)
 /*                                                                  */
 /* **************************************************************** */
 
-char *command_generator PARAMS((const char *, int));
-char **fileman_completion PARAMS((const char *, int, int));
+char *command_generator (const char *, int);
+char **fileman_completion (const char *, int, int);
 
 /* Tell the GNU Readline library how to complete.  We want to try to complete
    on command names if this is the first word in the line, or on filenames
    if not. */
 void
-initialize_readline ()
+initialize_readline (void)
 {
   /* Allow conditional parsing of the ~/.inputrc file. */
   rl_readline_name = "FileMan";
@@ -264,9 +228,7 @@ initialize_readline ()
    in case we want to do some simple parsing.  Return the array of matches,
    or NULL if there aren't any. */
 char **
-fileman_completion (text, start, end)
-     const char *text;
-     int start, end;
+fileman_completion (const char *text, int start, int end)
 {
   char **matches;
 
@@ -285,9 +247,7 @@ fileman_completion (text, start, end)
    to start from scratch; without any state (i.e. STATE == 0), then we
    start at the top of the list. */
 char *
-command_generator (text, state)
-     const char *text;
-     int state;
+command_generator (const char *text, int state)
 {
   static int list_index, len;
   char *name;
@@ -332,7 +292,7 @@ com_list (arg)
   if (!arg)
     arg = "";
 
-  sprintf (syscom, "ls -FClg %s", arg);
+  snprintf (syscom, sizeof (syscom), "ls -FClg %s", arg);
   return (system (syscom));
 }
 
@@ -345,9 +305,9 @@ com_view (arg)
 
 #if defined (__MSDOS__)
   /* more.com doesn't grok slashes in pathnames */
-  sprintf (syscom, "less %s", arg);
+  snprintf (syscom, sizeof (syscom), "less %s", arg);
 #else
-  sprintf (syscom, "more %s", arg);
+  snprintf (syscom, sizeof (syscom), "more %s", arg);
 #endif
   return (system (syscom));
 }
@@ -503,4 +463,37 @@ valid_argument (caller, arg)
     }
 
   return (1);
+}
+
+int
+main (int argc, char **argv)
+{
+  char *line, *s;
+
+  progname = argv[0];
+
+  initialize_readline ();	/* Bind our completer. */
+
+  /* Loop reading and executing lines until the user quits. */
+  for ( ; done == 0; )
+    {
+      line = readline ("FileMan: ");
+
+      if (!line)
+        break;
+
+      /* Remove leading and trailing whitespace from the line.
+         Then, if there is anything left, add it to the history list
+         and execute it. */
+      s = stripwhite (line);
+
+      if (*s)
+        {
+          add_history (s);
+          execute_line (s);
+        }
+
+      free (line);
+    }
+  exit (0);
 }

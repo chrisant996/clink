@@ -7,7 +7,7 @@ This document describes the GNU Readline Library, a utility for aiding
 in the consistency of user interface across discrete programs that need
 to provide a command line interface.
 
-Copyright (C) 1988--2022 Free Software Foundation, Inc.
+Copyright (C) 1988--2023 Free Software Foundation, Inc.
 
 Permission is granted to make and distribute verbatim copies of
 this manual provided the copyright notice and this permission notice
@@ -2643,7 +2643,7 @@ com_list (char *arg)
   if (!arg)
     arg = "";
 
-  sprintf (syscom, "ls -FClg %s", arg);
+  snprintf (syscom, sizeof (syscom), "ls -FClg %s", arg);
   return (system (syscom));
 @}
 
@@ -2655,9 +2655,9 @@ com_view (char *arg)
 
 #if defined (__MSDOS__)
   /* more.com doesn't grok slashes in pathnames */
-  sprintf (syscom, "less %s", arg);
+  snprintf (syscom, sizeof (syscom), "less %s", arg);
 #else
-  sprintf (syscom, "more %s", arg);
+  snprintf (syscom, sizeof (syscom), "more %s", arg);
 #endif
   return (system (syscom));
 @}

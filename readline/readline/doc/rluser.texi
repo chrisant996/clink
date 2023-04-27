@@ -2106,14 +2106,25 @@ be completed, and two to modify the completion as it is happening.
 @item compgen
 @btindex compgen
 @example
-@code{compgen [@var{option}] [@var{word}]}
+@code{compgen [-V @var{varname}] [@var{option}] [@var{word}]}
 @end example
 
 Generate possible completion matches for @var{word} according to
 the @var{option}s, which may be any option accepted by the
 @code{complete}
-builtin with the exception of @option{-p} and @option{-r}, and write
-the matches to the standard output.
+builtin with the exceptions of
+@option{-p},
+@option{-r},
+@option{-D},
+@option{-E},
+and
+@option{-I},
+and write the matches to the standard output.
+
+If the @option{-V} option is supplied, @code{compgen} stores the generated
+completions into the indexed array variable @var{varname} instead of writing
+them to the standard output.
+
 When using the @option{-F} or @option{-C} options, the various shell variables
 set by the programmable completion facilities, while available, will not
 have useful values.
@@ -2130,9 +2141,9 @@ matches were generated.
 @item complete
 @btindex complete
 @example
-@code{complete [-abcdefgjksuv] [-o @var{comp-option}] [-DEI] [-A @var{action}] [-G @var{globpat}]
-[-W @var{wordlist}] [-F @var{function}] [-C @var{command}] [-X @var{filterpat}]
-[-P @var{prefix}] [-S @var{suffix}] @var{name} [@var{name} @dots{}]}
+@code{complete [-abcdefgjksuv] [-o @var{comp-option}] [-DEI] [-A @var{action}]
+[-G @var{globpat}] [-W @var{wordlist}] [-F @var{function}] [-C @var{command}]
+[-X @var{filterpat}] [-P @var{prefix}] [-S @var{suffix}] @var{name} [@var{name} @dots{}]}
 @code{complete -pr [-DEI] [@var{name} @dots{}]}
 @end example
 
@@ -2338,7 +2349,14 @@ case, any completion not matching @var{filterpat} is removed.
 @end table
 
 The return value is true unless an invalid option is supplied, an option
-other than @option{-p} or @option{-r} is supplied without a @var{name}
+other than
+@option{-p},
+@option{-r},
+@option{-D},
+@option{-E},
+or
+@option{-I}
+is supplied without a @var{name}
 argument, an attempt is made to remove a completion specification for
 a @var{name} for which no specification exists, or
 an error occurs adding a completion specification.

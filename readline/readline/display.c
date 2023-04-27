@@ -1369,19 +1369,6 @@ rl_redisplay (void)
 
 	      olen = sprintf (obuf, "\\%o", c);
 	  
-	      if (lpos + olen >= _rl_screenwidth)
-		{
-		  temp = _rl_screenwidth - lpos;
-		  CHECK_INV_LBREAKS ();
-		  inv_lbreaks[++newlines] = out + temp;
-#if defined (HANDLE_MULTIBYTE)
-		  line_state_invisible->wrapped_line[newlines] = _rl_wrapped_multicolumn;
-#endif
-		  lpos = olen - temp;
-		}
-	      else
-		lpos += olen;
-
 	      for (temp = 0; temp < olen; temp++)
 		{
 		  invis_addc (&out, obuf[temp], cur_face);
@@ -2342,6 +2329,8 @@ update_line (char *old, char *old_face, char *new, char *new_face, int current_l
 #if defined (HANDLE_MULTIBYTE)
   /* Find the last character that is the same between the two lines.  This
      bounds the region that needs to change. */
+  /* In this case, `last character' means the one farthest from the end of
+     the line. */
   if (mb_cur_max > 1 && rl_byte_oriented == 0)
     {
       ols = old + _rl_find_prev_mbchar (old, oe - old, MB_FIND_ANY);
@@ -2358,7 +2347,7 @@ update_line (char *old, char *old_face, char *new, char *new_face, int current_l
 		*olsf != *nlsf)
 	    break;
 
-	  if (*ols == ' ')
+	  if (*ols != ' ')
 	    wsatend = 0;
 
 	  ols = old + _rl_find_prev_mbchar (old, ols - old, MB_FIND_ANY);
@@ -2427,7 +2416,23 @@ update_line (char *old, char *old_face, char *new, char *new_face, int current_l
       /* We have moved up to a new screen line.  This line may or may not have
          invisible characters on it, but we do our best to recalculate
          visible_wrap_offset based on what we know. */
-      if (current_line == 0)
+       /* This first clause handles the case where the prompt has been
+	  recalculated (e.g., by rl_message) but the old prompt is still on
+	  the visible line because we haven't overwritten it yet. We want
+	  to somehow use the old prompt information, but we only want to do
+	  this once. */
+      if (current_line == 0 && saved_local_prompt && old[0] == saved_local_prompt[0] && memcmp (old, saved_local_prompt, saved_local_length) == 0)
+	visible_wrap_offset = saved_invis_chars_first_line;
+      /* This clause handles the opposite: the prompt has been restored (e.g.,
+	 by rl_clear_message) but the old saved_local_prompt (now NULL, so we
+	 can't directly check it) is still on the visible line because we
+	 haven't overwritten it yet. We guess that there aren't any invisible
+	 characters in any of the prompts we put in with rl_message */
+      else if (current_line == 0 && local_prompt && new[0] == local_prompt[0] &&
+		 (memcmp (new, local_prompt, local_prompt_len) == 0) &&
+		 (memcmp (old, local_prompt, local_prompt_len) != 0))
+	visible_wrap_offset = 0;
+      else if (current_line == 0)
 	visible_wrap_offset = prompt_invis_chars_first_line;	/* XXX */
 #if 0		/* XXX - not yet */
       else if (current_line == prompt_last_screen_line && wrap_offset > prompt_invis_chars_first_line)
@@ -3154,7 +3159,7 @@ _rl_move_cursor_relative (int new, const char *data, const char *dataf)
 	 (prompt_last_invisible) in the last line.  IN_INVISLINE is the
 	 offset of DATA in invisible_line */
       in_invisline = 0;
-      if (data > invisible_line && data < invisible_line+inv_lbreaks[_rl_inv_botlin+1])
+      if (data > invisible_line && _rl_inv_botlin < inv_lbsize && data < invisible_line+inv_lbreaks[_rl_inv_botlin+1])
 	in_invisline = data - invisible_line;
 
       /* Use NEW when comparing against the last invisible character in the

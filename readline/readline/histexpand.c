@@ -843,7 +843,7 @@ history_expand_internal (const char *string, int start, int qc, int *end_index_p
 
 		/* If `&' appears in the rhs, it's supposed to be replaced
 		   with the lhs. */
-		if (member ('&', subst_rhs))
+		if (subst_lhs && member ('&', subst_rhs))
 		  postproc_subst_rhs ();
 	      }
 	    else

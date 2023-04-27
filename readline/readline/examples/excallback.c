@@ -102,7 +102,7 @@ cc_t     old_vtime;
 struct termios term;
 
 int 
-main()
+main(int c, char **v)
 {
     fd_set fds;
 

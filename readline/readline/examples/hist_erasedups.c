@@ -1,6 +1,6 @@
 /* hist_erasedups -- remove all duplicate entries from history file */
 
-/* Copyright (C) 2011 Free Software Foundation, Inc.
+/* Copyright (C) 2011,2023 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library for
    reading lines of text with interactive input and history editing.
@@ -41,16 +41,14 @@
 int hist_erasedups (void);
 
 static void
-usage()
+usage(void)
 {
   fprintf (stderr, "hist_erasedups: usage: hist_erasedups [-t] [filename]\n");
   exit (2);
 }
 
 int
-main (argc, argv)
-     int argc;
-     char **argv;
+main (int argc, char **argv)
 {
   char *fn;
   int r;
@@ -94,7 +92,7 @@ main (argc, argv)
 }
 
 int
-hist_erasedups ()
+hist_erasedups (void)
 {
   int r, n;
   HIST_ENTRY *h, *temp;
