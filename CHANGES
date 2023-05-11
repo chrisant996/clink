@@ -4,6 +4,7 @@
 
 #### v1.4.25
 - Now `os.issignaled()` works during `onendedit` and `onfilterinput` events.
+- Fixed [#457](https://github.com/chrisant996/clink/issues/457); unrecognized OSC escape codes accidentally stripped from prompt string.
 
 #### v1.4.24
 
