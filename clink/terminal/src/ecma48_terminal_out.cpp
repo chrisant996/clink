@@ -145,20 +145,21 @@ void ecma48_terminal_out::write_c1(const ecma48_code& code)
     else if (code.get_code() == ecma48_code::c1_osc)
     {
         ecma48_code::osc osc;
-        code.decode_osc(osc);
-
-        switch (osc.command)
+        if (code.decode_osc(osc))
         {
-        case '0':
-        case '1':
-        case '2':
-            set_console_title(osc.param.c_str());
-            break;
+            switch (osc.command)
+            {
+            case '0':
+            case '1':
+            case '2':
+                set_console_title(osc.param.c_str());
+                break;
 
-        case '9':
-            if (osc.output.length())
-                write(osc.output.c_str(), osc.output.length());
-            break;
+            case '9':
+                if (osc.output.length())
+                    write(osc.output.c_str(), osc.output.length());
+                break;
+            }
         }
     }
 }

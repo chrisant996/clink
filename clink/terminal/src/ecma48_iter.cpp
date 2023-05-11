@@ -172,6 +172,7 @@ bool ecma48_code::decode_osc(osc& out) const
                     out.param.concat(code.get_pointer(), code.get_length());
                 }
             }
+            return true;
         }
         break;
 
@@ -211,13 +212,14 @@ bool ecma48_code::decode_osc(osc& out) const
                         break;
                     }
                 }
+                return true;
             }
             break;
         }
         break;
     }
 
-    return true;
+    return false;
 }
 
 //------------------------------------------------------------------------------
