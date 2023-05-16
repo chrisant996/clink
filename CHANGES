@@ -4,6 +4,8 @@
 
 #### v1.4.25
 - Now `os.issignaled()` works during `onendedit` and `onfilterinput` events.
+- Improve emulation for <kbd>F7</kbd> history popup (the `win-history-popup` command); <kbd>Left</kbd> or <kbd>Right</kbd> replace the input text with the selected line.
+- Transient prompt filters can suppress the transient prompt on a case by case basis by returning `nil, false`.
 - Fixed typo in `clink set --help` text.
 - Fixed [#457](https://github.com/chrisant996/clink/issues/457); unrecognized OSC escape codes accidentally stripped from prompt string.
 
