@@ -2318,7 +2318,7 @@ Additionally, individual prompt filters may want to add escape codes surrounding
 #INCLUDE [docs\examples\ex_surround_prompt.lua]
 ```
 
-> **Note:** The prefix and suffix strings should only escape code strings.  Any printable text in the prefix and suffix strings could have unintended effects on displaying the prompt.
+> **Note:** The prefix and suffix strings should only contain escape code strings.  Any printable text in the prefix and suffix strings could have unintended effects on displaying the prompt.
 
 <a name="customisingsuggestions"></a>
 
