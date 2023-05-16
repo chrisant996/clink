@@ -42,8 +42,8 @@ class prompt_filter
 {
 public:
                     prompt_filter(lua_state& lua);
-    void            filter(const char* in, str_base& out); // For unit tests.
-    void            filter(const char* in, const char* rin, str_base& out, str_base& rout, bool transient=false, bool final=false);
+    bool            filter(const char* in, str_base& out); // For unit tests.
+    bool            filter(const char* in, const char* rin, str_base& out, str_base& rout, bool transient=false, bool final=false);
 
     static bool     is_filtering() { return s_filtering; }
 

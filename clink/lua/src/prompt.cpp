@@ -389,14 +389,14 @@ prompt_filter::prompt_filter(lua_state& lua)
 
 //------------------------------------------------------------------------------
 // For unit tests.
-void prompt_filter::filter(const char* in, str_base& out)
+bool prompt_filter::filter(const char* in, str_base& out)
 {
     str<16> dummy;
-    filter(in, "", out, dummy);
+    return filter(in, "", out, dummy);
 }
 
 //------------------------------------------------------------------------------
-void prompt_filter::filter(const char* in, const char* rin, str_base& out, str_base& rout, bool transient, bool final)
+bool prompt_filter::filter(const char* in, const char* rin, str_base& out, str_base& rout, bool transient, bool final)
 {
     lua_State* state = m_lua.get_state();
 
@@ -429,7 +429,7 @@ void prompt_filter::filter(const char* in, const char* rin, str_base& out, str_b
     if (m_lua.pcall(state, 5, 2) != 0)
     {
         lua_pop(state, 2);
-        return;
+        return !transient;
     }
 
     // Collect the filtered prompt.
@@ -439,6 +439,7 @@ void prompt_filter::filter(const char* in, const char* rin, str_base& out, str_b
     rout = rprompt;
 
     lua_settop(state, top);
+    return !transient || (prompt && rprompt);
 }
 
 

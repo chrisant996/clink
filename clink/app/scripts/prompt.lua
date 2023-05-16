@@ -59,6 +59,7 @@ local function _do_filter_prompt(type, prompt, rprompt, line, cursor, final)
         prompt_filters_unsorted = false
     end
 
+    local transient = (type == "transient")
     local filter_func_name = type.."filter"
     local right_filter_func_name = type.."rightfilter"
 
@@ -85,6 +86,10 @@ local function _do_filter_prompt(type, prompt, rprompt, line, cursor, final)
                 log_cost(tick, filter, filter_func_name)
                 if filtered ~= nil then
                     prompt = filtered
+                elseif transient and onwards == false then
+                    -- Transient filter can disable transient prompt by
+                    -- returning nil, false.
+                    return nil, nil
                 end
             end
 
@@ -96,6 +101,10 @@ local function _do_filter_prompt(type, prompt, rprompt, line, cursor, final)
                     log_cost(tick, filter, right_filter_func_name)
                     if filtered ~= nil then
                         rprompt = filtered
+                    elseif transient and onwards == false then
+                        -- Transient filter can disable transient prompt by
+                        -- returning nil, false.
+                        return nil, nil
                     end
                 end
             end

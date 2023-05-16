@@ -583,6 +583,7 @@ void host::filter_transient_prompt(bool final)
 {
     if (!m_can_transient)
     {
+cant:
         update_last_cwd();
         return;
     }
@@ -593,6 +594,9 @@ void host::filter_transient_prompt(bool final)
     // Replace old prompt with transient prompt.
     rprompt = nullptr;
     prompt = filter_prompt(&rprompt, true/*transient*/, final);
+    if (!prompt)
+        goto cant;
+
     {
         // Make sure no mode strings in the transient prompt.
         rollback<char*> ems(_rl_emacs_mode_str, const_cast<char*>(""));
@@ -1278,12 +1282,17 @@ const char* host::filter_prompt(const char** rprompt, bool transient, bool final
                 p = m_prompt ? m_prompt : "";
                 rp = m_rprompt ? m_rprompt : "";
             }
-            m_prompt_filter->filter(p,
-                                    rp,
-                                    m_filtered_prompt,
-                                    m_filtered_rprompt,
-                                    transient,
-                                    final);
+
+            const bool ok = m_prompt_filter->filter(p, rp,
+                                                    m_filtered_prompt, m_filtered_rprompt,
+                                                    transient, final);
+
+            if (transient && !ok)
+            {
+                if (rprompt)
+                    *rprompt = nullptr;
+                return nullptr;
+            }
         }
         else
         {
