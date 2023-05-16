@@ -867,6 +867,7 @@ find:
         return;
 
     case bind_id_textlist_insert:
+do_insert:
         cancel(popup_result::select);
         return;
 
@@ -939,9 +940,13 @@ find:
         break;
 
     case bind_id_textlist_left:
+        if (m_win_history)
+            goto do_insert;
         adjust_horz_offset(-1);
         break;
     case bind_id_textlist_right:
+        if (m_win_history)
+            goto do_insert;
         adjust_horz_offset(+1);
         break;
     case bind_id_textlist_ctrlleft:
