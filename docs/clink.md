@@ -2310,7 +2310,7 @@ The next example shows how to make a prompt that shows:
 
 In some cases the prompt and/or right side prompt might need to be surrounded with special escape codes.  For example, some file editors with integrated terminals want to receive additional escape codes surrounding the prompt strings.
 
-After all prompt filters have finished, the final prompt string is automatically surrounded with the values of the `%CLINK_PROMPT_PREFIX%` and `%CLINK_PROMPT_SUFFIX%` environment variables, and the final right side prompt is automatically surrounded with the values of the `%CLINK_RPROMPT_PREFIX%` and `%CLINK_RPROMPT_SUFFIX%` environment variables.
+After all prompt filters have finished, the last line of the final prompt string is automatically surrounded with the values of the `%CLINK_PROMPT_PREFIX%` and `%CLINK_PROMPT_SUFFIX%` environment variables, and the final right side prompt is automatically surrounded with the values of the `%CLINK_RPROMPT_PREFIX%` and `%CLINK_RPROMPT_SUFFIX%` environment variables.
 
 The prompt prefix and suffix strings expand CMD prompt `$` codes (run `prompt /?` for more info).  So, for example, `$p` could be combined with escape codes to set the terminal window title to the current working directory.  Consult documentation for your terminal program for information about what escape codes may be available.
 
@@ -2320,7 +2320,9 @@ Additionally, individual prompt filters may want to add escape codes surrounding
 #INCLUDE [docs\examples\ex_surround_prompt.lua]
 ```
 
-> **Note:** The prefix and suffix strings should only contain escape code strings.  Any printable text in the prefix and suffix strings could have unintended effects on displaying the prompt.
+> **Notes:**
+> - The prefix and suffix strings should only contain escape code strings.  Any printable text in the prefix and suffix strings could have unintended effects on displaying the prompt.
+> - Only the last line of the final prompt string is surrounded with the prefix and suffix.  This is intended to help shell integration escape codes work properly.
 
 <a name="customisingsuggestions"></a>
 
