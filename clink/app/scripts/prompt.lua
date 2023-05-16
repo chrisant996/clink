@@ -149,7 +149,8 @@ local function _do_filter_prompt(type, prompt, rprompt, line, cursor, final)
     end
 
     if ret then
-        ret = clink._expand_prompt_codes(pre) .. ret .. clink._expand_prompt_codes(suf)
+        local leading, trailing = ret:match("^(.*\n)([^\n]+)$")
+        ret = (leading or "") .. clink._expand_prompt_codes(pre) .. (trailing or ret) .. clink._expand_prompt_codes(suf)
     end
     if rret and rret ~= "" then
         rret = clink._expand_prompt_codes(rpre, true) .. rret .. clink._expand_prompt_codes(rsuf, true)
