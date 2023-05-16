@@ -2302,6 +2302,8 @@ The next example shows how to make a prompt that shows:
 #INCLUDE [docs\examples\ex_transient_prompt.lua]
 ```
 
+> **Note:**  In v1.4.25 and higher, the `:transientfilter()` or `:transientrightfilter()` functions can suppress the transient prompt on a case by case basis by returning `nil, false`.
+
 <a name="pfxsfxesccodes"></a>
 
 #### Prefix and Suffix Escape Codes
