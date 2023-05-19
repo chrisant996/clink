@@ -1352,6 +1352,9 @@ Key | Description
 <kbd>Shift</kbd>-<kbd>Enter</kbd>|Inserts the highlighted completion, inserts the highlighted directory, or jumps to the highlighted command history entry without executing it.
 <kbd>Ctrl</kbd>-<kbd>Enter</kbd>|Same as <kbd>Shift</kbd>-<kbd>Enter</kbd>.
 <kbd>Del</kbd>|In a command history popup, <kbd>Del</kbd> deletes the selected history entry.
+<kbd>Left</kbd>/<kbd>Right</kbd>|Scroll horizontally if possible.
+<kbd>Ctrl</kbd>-<kbd>Left</kbd>/<kbd>Right</kbd>|Scroll faster horizontally if possible.
+<kbd>Ctrl</kbd>-<kbd>Home</kbd>/<kbd>End</kbd>|Scroll horizontally to far left/right if possible.
 
 Most of the popup windows also have incremental search:
 
@@ -1363,7 +1366,9 @@ Typing|Typing does an incremental search.
 <kbd>Shift</kbd>-<kbd>F3</kbd>|Go to the previous match.
 <kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>L</kbd>|Go to the previous match.
 
-The [`win-history-list`](#rlcmd-win-history-list) command has a different search feature.  Typing digits `0`-`9` jumps to the numbered history entry, or typing a letter jumps to the preceding history entry that begins with the typed letter.  This is for compatibility with the <kbd>F7</kbd> behavior built into Windows console prompts.  Use the [`clink-popup-history`](#rlcmd-clink-popup-history) command instead if you prefer for typing to do an incremental search.
+The [`win-history-list`](#rlcmd-win-history-list) command has a different search feature.  Typing digits `0`-`9` jumps to the numbered history entry, or typing a letter jumps to the preceding history entry that begins with the typed letter.  <kbd>Left</kbd>/<kbd>Right</kbd> inserts the highlighted command history entry without executing it.  These are for compatibility with the <kbd>F7</kbd> behavior built into Windows console prompts.
+
+Use the [`clink-popup-history`](#rlcmd-clink-popup-history) command instead if you prefer for typing to do an incremental search.
 
 <a name="extending-clink"></a>
 
