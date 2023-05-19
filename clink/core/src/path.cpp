@@ -307,11 +307,11 @@ bool get_drive(const char* in, str_base& out)
     in += past_ssqs(in);
 
     // If not 'X:' then there's no drive.
-    if ((in[1] != ':') || (unsigned(tolower(in[0]) - 'a') > ('z' - 'a')))
+    const char c = in[0];
+    if ((!c) || (in[1] != ':') || (unsigned(tolower(c) - 'a') > ('z' - 'a')))
         return false;
 
     // Return the drive.
-    const char c = in[0];
     out.clear();
     return out.format("%c:", c);
 #else
