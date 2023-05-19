@@ -80,7 +80,7 @@ static int get_base_name(lua_State* state)
 /// -show:
 /// -show:  -- These split the path components differently than path.toparent().
 /// -show:  path.getdirectory("c:\\foo\\bar\\")         -- returns "c:\\foo\\bar"
-/// -show:  path.getdirectory("\\\\foo\\bar\\dir\\"")   -- returns "\\\\foo\\bar\\dir"
+/// -show:  path.getdirectory("\\\\foo\\bar\\dir\\")    -- returns "\\\\foo\\bar\\dir"
 static int get_directory(lua_State* state)
 {
     const char* path = checkstring(state, 1);
