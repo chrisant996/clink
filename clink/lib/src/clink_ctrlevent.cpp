@@ -12,10 +12,7 @@ extern void interrupt_input();
 
 //------------------------------------------------------------------------------
 static volatile int clink_signal = 0;
-
-#ifdef DEBUG
 static int s_ctrlevent_install_count = 0;
-#endif
 
 //------------------------------------------------------------------------------
 int clink_is_signaled()
@@ -69,10 +66,8 @@ static BOOL WINAPI clink_ctrlevent_handler(DWORD ctrl_type)
 //------------------------------------------------------------------------------
 void clink_install_ctrlevent()
 {
-#ifdef DEBUG
     assert(s_ctrlevent_install_count == 0);
     s_ctrlevent_install_count++;
-#endif
 
     SetConsoleCtrlHandler(clink_ctrlevent_handler, true);
 }
@@ -80,10 +75,11 @@ void clink_install_ctrlevent()
 //------------------------------------------------------------------------------
 void clink_shutdown_ctrlevent()
 {
-#ifdef DEBUG
-    assert(s_ctrlevent_install_count == 1);
-    s_ctrlevent_install_count--;
-#endif
+    if (s_ctrlevent_install_count)
+    {
+        assert(s_ctrlevent_install_count == 1);
+        s_ctrlevent_install_count--;
 
-    SetConsoleCtrlHandler(clink_ctrlevent_handler, false);
+        SetConsoleCtrlHandler(clink_ctrlevent_handler, false);
+    }
 }
