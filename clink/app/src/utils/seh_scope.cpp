@@ -31,12 +31,14 @@ static LONG WINAPI exception_filter(EXCEPTION_POINTERS* info)
 
     wstr<> wpath(buffer.c_str());
 
+    const DWORD pid = GetCurrentProcessId();
     fputs("\n!!! CLINK'S CRASHED!", stderr);
 #ifdef _WIN64
     fputs("\n!!! v" CLINK_VERSION_STR " (x64)", stderr);
 #else
     fputs("\n!!! v" CLINK_VERSION_STR " (x86)", stderr);
 #endif
+    fprintf(stderr, "\n!!! process id %u (0x%x)", pid, pid);
     fputs("\n!!!", stderr);
     fputs("\n!!! Writing core dump", stderr);
     fputs("\n!!! ", stderr);
