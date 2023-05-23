@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.4.24</title>
+<title>Clink v1.4.25</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -865,7 +865,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.4.24</div>
+                <div id="title">Clink v1.4.25</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -3592,6 +3592,18 @@ C-_:                kill-line                       <span class="hljs-comment">#
 <td align="center"><kbd>Del</kbd></td>
 <td>In a command history popup, <kbd>Del</kbd> deletes the selected history entry.</td>
 </tr>
+<tr>
+<td align="center"><kbd>Left</kbd>/<kbd>Right</kbd></td>
+<td>Scroll horizontally if possible.</td>
+</tr>
+<tr>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>Left</kbd>/<kbd>Right</kbd></td>
+<td>Scroll faster horizontally if possible.</td>
+</tr>
+<tr>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>Home</kbd>/<kbd>End</kbd></td>
+<td>Scroll horizontally to far left/right if possible.</td>
+</tr>
 </tbody></table>
 <p>Most of the popup windows also have incremental search:</p>
 <table>
@@ -3622,7 +3634,8 @@ C-_:                kill-line                       <span class="hljs-comment">#
 <td>Go to the previous match.</td>
 </tr>
 </tbody></table>
-<p>The <a href="#rlcmd-win-history-list"><code>win-history-list</code></a> command has a different search feature.  Typing digits <code>0</code>-<code>9</code> jumps to the numbered history entry, or typing a letter jumps to the preceding history entry that begins with the typed letter.  This is for compatibility with the <kbd>F7</kbd> behavior built into Windows console prompts.  Use the <a href="#rlcmd-clink-popup-history"><code>clink-popup-history</code></a> command instead if you prefer for typing to do an incremental search.</p>
+<p>The <a href="#rlcmd-win-history-list"><code>win-history-list</code></a> command has a different search feature.  Typing digits <code>0</code>-<code>9</code> jumps to the numbered history entry, or typing a letter jumps to the preceding history entry that begins with the typed letter.  <kbd>Left</kbd>/<kbd>Right</kbd> inserts the highlighted command history entry without executing it.  These are for compatibility with the <kbd>F7</kbd> behavior built into Windows console prompts.</p>
+<p>Use the <a href="#rlcmd-clink-popup-history"><code>clink-popup-history</code></a> command instead if you prefer for typing to do an incremental search.</p>
 <p><a name="extending-clink"></a></p>
 <h1 id="extending-clink-with-lua"><div class="wlink"><a href="#extending-clink"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Extending Clink With Lua</h1>
 <p>Clink can be extended with <a href="https://www.lua.org/docs.html">Lua</a> scripts to customize startup actions, create completion matches, customize the prompt, and more.  The following sections describe these in more detail and show some examples.</p>
@@ -4782,10 +4795,13 @@ if settings.get(&quot;prompt.transient&quot;) == &quot;off&quot; then
     print(&quot;Use &#39;clink set prompt.transient same_dir&#39; to enable the transient prompt.&quot;)
 end
 </code></pre>
+<blockquote>
+<p><strong>Note:</strong>  In v1.4.25 and higher, the <code>:transientfilter()</code> or <code>:transientrightfilter()</code> functions can suppress the transient prompt on a case by case basis by returning <code>nil, false</code>.</p>
+</blockquote>
 <p><a name="pfxsfxesccodes"></a></p>
 <h4 id="prefix-and-suffix-escape-codes"><div class="wlink"><a href="#pfxsfxesccodes"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Prefix and Suffix Escape Codes</h4>
 <p>In some cases the prompt and/or right side prompt might need to be surrounded with special escape codes.  For example, some file editors with integrated terminals want to receive additional escape codes surrounding the prompt strings.</p>
-<p>After all prompt filters have finished, the final prompt string is automatically surrounded with the values of the <code>%CLINK_PROMPT_PREFIX%</code> and <code>%CLINK_PROMPT_SUFFIX%</code> environment variables, and the final right side prompt is automatically surrounded with the values of the <code>%CLINK_RPROMPT_PREFIX%</code> and <code>%CLINK_RPROMPT_SUFFIX%</code> environment variables.</p>
+<p>After all prompt filters have finished, the last line of the final prompt string is automatically surrounded with the values of the <code>%CLINK_PROMPT_PREFIX%</code> and <code>%CLINK_PROMPT_SUFFIX%</code> environment variables, and the final right side prompt is automatically surrounded with the values of the <code>%CLINK_RPROMPT_PREFIX%</code> and <code>%CLINK_RPROMPT_SUFFIX%</code> environment variables.</p>
 <p>The prompt prefix and suffix strings expand CMD prompt <code>$</code> codes (run <code>prompt /?</code> for more info).  So, for example, <code>$p</code> could be combined with escape codes to set the terminal window title to the current working directory.  Consult documentation for your terminal program for information about what escape codes may be available.</p>
 <p>Additionally, individual prompt filters may want to add escape codes surrounding the prompt strings.  To do that, a prompt filter can define a <code>:surround()</code> function which returns prefix and suffix strings.</p>
 <pre><code class="language-lua">local p = clink.promptfilter(-100) -- Negative number so it runs early.
@@ -4805,7 +4821,11 @@ function p:surround()
 end
 </code></pre>
 <blockquote>
-<p><strong>Note:</strong> The prefix and suffix strings should only escape code strings.  Any printable text in the prefix and suffix strings could have unintended effects on displaying the prompt.</p>
+<p><strong>Notes:</strong></p>
+<ul>
+<li>The prefix and suffix strings should only contain escape code strings.  Any printable text in the prefix and suffix strings could have unintended effects on displaying the prompt.</li>
+<li>Only the last line of the final prompt string is surrounded with the prefix and suffix.  This is intended to help shell integration escape codes work properly.</li>
+</ul>
 </blockquote>
 <p><a name="customisingsuggestions"></a></p>
 <h2 id="customizing-suggestions"><div class="wlink"><a href="#customisingsuggestions"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Customizing Suggestions</h2>
@@ -6571,7 +6591,7 @@ path.getdirectory("")                   -- returns nil
 
 -- These split the path components differently than path.toparent().
 path.getdirectory("c:\\foo\\bar\\")         -- returns "c:\\foo\\bar"
-path.getdirectory("\\\\foo\\bar\\dir\\"")   -- returns "\\\\foo\\bar\\dir"</code></pre></div></div><hr/>
+path.getdirectory("\\\\foo\\bar\\dir\\")    -- returns "\\\\foo\\bar\\dir"</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#path.getdrive"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="path.getdrive">path.getdrive</a></div> <div class="signature">( <span class="arg_name">path</span>:string ) : nil or string<br/><div class="version">v1.1.0 and newer</div></div></div><div class="body"><p class="desc"></p><pre class="language-lua"><code>path.getdrive("e:/foo/bar")     -- returns "e:"
 path.getdrive("foo/bar")        -- returns nil
 path.getdrive("")               -- returns nil</code></pre></div></div><hr/>
@@ -6971,6 +6991,15 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes"><div class="wlink"><a href="#changes"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork"><div class="wlink"><a href="#releases-from-chrisant996clink-fork"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1425"><div class="wlink"><a href="#v1425"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>v1.4.25</h4>
+<ul>
+<li>Now <code>os.issignaled()</code> works during <code>onendedit</code> and <code>onfilterinput</code> events.</li>
+<li>Improve emulation for <kbd>F7</kbd> history popup (the <code>win-history-popup</code> command); <kbd>Left</kbd> or <kbd>Right</kbd> replace the input text with the selected line.</li>
+<li>Transient prompt filters can suppress the transient prompt on a case by case basis by returning <code>nil, false</code>.</li>
+<li>Fixed typo in <code>clink set --help</code> text.</li>
+<li>Fixed where the prompt prefix (from v1.4.24) is inserted in the prompt string, so that shell integration escape codes can work properly.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/457">#457</a>; unrecognized OSC escape codes accidentally stripped from prompt string.</li>
+</ul>
 <h4 id="v1424"><div class="wlink"><a href="#v1424"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>v1.4.24</h4>
 <ul>
 <li>Added <code>path.fnmatch()</code> which behaves like the Linux <code>fnmatch(3)</code> function.</li>
