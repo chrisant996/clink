@@ -346,6 +346,10 @@ void
 _rl_start_using_history (void)
 {
   using_history ();
+#if 1
+  if (_rl_saved_line_for_history && _rl_saved_line_for_history->data)
+    _rl_free_undo_list ((UNDO_LIST *)_rl_saved_line_for_history->data);
+#endif
   _rl_free_saved_history_line ();
   _rl_history_search_pos = -99;		/* some random invalid history position */
 }

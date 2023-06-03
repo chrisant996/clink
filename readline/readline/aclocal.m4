@@ -1573,13 +1573,15 @@ AC_DEFUN(BASH_CHECK_DEV_FD,
 [AC_MSG_CHECKING(whether /dev/fd is available)
 AC_CACHE_VAL(bash_cv_dev_fd,
 [bash_cv_dev_fd=""
-if test -d /dev/fd  && (exec test -r /dev/fd/0 < /dev/null) ; then
+if test -d /dev/fd && (exec test -r /dev/fd/0 < /dev/null) ; then
 # check for systems like FreeBSD 5 that only provide /dev/fd/[012]
    if (exec test -r /dev/fd/3 3</dev/null) ; then
      bash_cv_dev_fd=standard
    else
      bash_cv_dev_fd=absent
    fi
+elif test "$host_os" = "openedition" && (exec test -r /dev/fd0 < /dev/null); then
+  bash_cv_dev_fd=nodir		# /dev/fdN via character device
 fi
 if test -z "$bash_cv_dev_fd" ; then 
   if test -d /proc/self/fd && (exec test -r /proc/self/fd/0 < /dev/null) ; then
@@ -1596,6 +1598,9 @@ if test $bash_cv_dev_fd = "standard"; then
 elif test $bash_cv_dev_fd = "whacky"; then
   AC_DEFINE(HAVE_DEV_FD)
   AC_DEFINE(DEV_FD_PREFIX, "/proc/self/fd/")
+elif test $bash_cv_dev_fd = "nodir"; then
+  AC_DEFINE(HAVE_DEV_FD)
+  AC_DEFINE(DEV_FD_PREFIX, "/dev/fd")
 fi
 ])
 

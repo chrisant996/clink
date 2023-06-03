@@ -943,6 +943,13 @@ _rl_isearch_callback (_rl_search_cxt *cxt)
   int c, r;
 
   c = _rl_search_getchar (cxt);
+
+  if (c < 0)					/* EOF */
+    return 1;
+
+  if (RL_ISSTATE (RL_STATE_ISEARCH) == 0)	/* signal could turn it off */
+    return 1;
+
   /* We might want to handle EOF here */
   r = _rl_isearch_dispatch (cxt, cxt->lastc);
 

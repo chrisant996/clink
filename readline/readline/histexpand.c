@@ -1245,7 +1245,7 @@ history_expand (const char *hstring, char **output)
 
 	  c = tchar;
 	  memset (mb, 0, sizeof (mb));
-	  for (k = 0; k < MB_LEN_MAX; k++)
+	  for (k = 0; k < MB_LEN_MAX && i < l; k++)
 	    {
 	      mb[k] = (char)c;
 	      memset (&ps, 0, sizeof (mbstate_t));

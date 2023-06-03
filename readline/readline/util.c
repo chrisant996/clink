@@ -331,9 +331,10 @@ _rl_strindex (const char *s1, const char *s2)
   return ((char *)NULL);
 }
 
-#ifndef HAVE_STRPBRK
+#if !defined (HAVE_STRPBRK) || defined (HANDLE_MULTIBYTE)
 /* Find the first occurrence in STRING1 of any character from STRING2.
-   Return a pointer to the character in STRING1. */
+   Return a pointer to the character in STRING1. Understands multibyte
+   characters. */
 char *
 _rl_strpbrk (const char *string1, const char *string2)
 {
