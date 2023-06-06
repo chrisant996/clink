@@ -18,6 +18,8 @@ extern "C" int cursor_style(HANDLE handle, int style, int visible);
 extern "C" void use_host_input_mode(void);
 extern "C" void use_clink_input_mode(void);
 extern "C" DWORD select_mouse_input(DWORD mode);
+extern "C" void terminal_begin_command();
+extern "C" void terminal_end_command();
 
 //------------------------------------------------------------------------------
 // Scoped configuration of console mode.

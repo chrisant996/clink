@@ -21,6 +21,7 @@
 #include <core/settings.h>
 #include <core/debugheap.h>
 #include <terminal/ecma48_iter.h>
+#include <terminal/terminal_helpers.h>
 
 #include <memory>
 
@@ -2306,6 +2307,9 @@ extern "C" void host_on_new_line()
     if (use_display_manager())
         s_display_manager.on_new_line();
 #endif
+
+    // Terminal shell integration.
+    terminal_end_command();
 }
 
 //------------------------------------------------------------------------------

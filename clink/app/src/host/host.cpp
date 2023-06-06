@@ -912,7 +912,13 @@ skip_errorlevel:
 
     // Send onbeginedit event.
     if (send_event)
+    {
         lua.send_event("onbeginedit");
+
+        // Terminal shell integration.  Happens after any Lua scripts so that
+        // it corresponds most cleanly to end of command output.
+        terminal_end_command();
+    }
 
     // Send onprovideline event.
     bool skip_editor = false;
@@ -1164,6 +1170,13 @@ skip_errorlevel:
 
     std::list<str_moveable> more_out;
     {
+        if (send_event)
+        {
+            // Terminal shell integration.  Happens before any Lua scripts so
+            // that it corresponds most cleanly to beginning of command output.
+            terminal_begin_command();
+        }
+
         // Temporarily install ctrlevent handler so Lua scripts have the option
         // to detect Ctrl-Break with os.issignaled() and respond accordingly.
         clink_install_ctrlevent();

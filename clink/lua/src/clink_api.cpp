@@ -811,14 +811,22 @@ static int get_session(lua_State* state)
 /// -name:  clink.getansihost
 /// -ver:   1.1.48
 /// -ret:   string
-/// Returns a string indicating who Clink thinks will currently handle ANSI
-/// escape codes.  This can change based on the
-/// <code><a href="#terminal_emulation">terminal.emulation</a></code> setting.
-/// This always returns <code>"unknown"</code> until the first edit prompt
-/// (see <a href="#clink.onbeginedit">clink.onbeginedit()</a>).
+/// Returns up to two strings indicating who Clink thinks will currently handle
+/// ANSI escape codes.
 ///
-/// This can be useful in choosing what kind of ANSI escape codes to use, but it
-/// is a best guess and is not necessarily 100% reliable.
+/// The first returned string is the "current" handler.  This can change based
+/// on the <code><a href="#terminal_emulation">terminal.emulation</a></code>
+/// setting.
+///
+/// Starting in v1.4.26 a second string can be returned which indicating the
+/// "native" handler.  This is what Clink has detected as the terminal host and
+/// is not affected by the `terminal.emulation` setting.
+///
+/// The returned strings will always be <code>"unknown"</code> until the first
+/// edit prompt (see <a href="#clink.onbeginedit">clink.onbeginedit()</a>).
+///
+/// These can be useful in choosing what kind of ANSI escape codes to use, but
+/// are a best guess and are not necessarily 100% reliable.
 ///
 /// <table>
 /// <tr><th>Return</th><th>Description</th></tr>
@@ -853,9 +861,13 @@ static int get_ansi_host(lua_State* state)
 
     static_assert(sizeof_array(s_handlers) == size_t(ansi_handler::max), "must match ansi_handler enum");
 
-    size_t handler = size_t(get_current_ansi_handler());
-    lua_pushstring(state, s_handlers[handler]);
-    return 1;
+    size_t current_handler = size_t(get_current_ansi_handler());
+    lua_pushstring(state, s_handlers[current_handler]);
+
+    size_t native_handler = size_t(get_native_ansi_handler());
+    lua_pushstring(state, s_handlers[native_handler]);
+
+    return 2;
 }
 
 //------------------------------------------------------------------------------

@@ -148,6 +148,13 @@ local function _do_filter_prompt(type, prompt, rprompt, line, cursor, final)
         return false
     end
 
+    -- Windows Terminal built-in shell integration (WT v1.18).
+    local _, native_host = clink.getansihost()
+    if native_host == "winterminal" then
+        pre = "\x1b]133;A\a" .. pre
+        suf = suf .. "\x1b]133;B\a"
+    end
+
     if ret then
         local leading, trailing = ret:match("^(.*\n)([^\n]+)$")
         ret = (leading or "") .. clink._expand_prompt_codes(pre) .. (trailing or ret) .. clink._expand_prompt_codes(suf)
