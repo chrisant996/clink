@@ -2,6 +2,9 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.4.26
+- Built-in support for shell integration with Windows Terminal v1.18 and higher.
+
 #### v1.4.25
 - Now `os.issignaled()` works during `onendedit` and `onfilterinput` events.
 - Improve emulation for <kbd>F7</kbd> history popup (the `win-history-popup` command); <kbd>Left</kbd> or <kbd>Right</kbd> replace the input text with the selected line.
