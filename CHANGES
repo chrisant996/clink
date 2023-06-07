@@ -5,6 +5,8 @@
 #### v1.4.26
 - Added built-in support for shell integration with Windows Terminal v1.18 and higher.  _Note: Windows Terminal gets confused about the command line text when the transient prompt is enabled._
 - Changed `clink.getansihost()` to return two strings; the first string is the mode in use, and the new second string is what Clink detected (and will use when the `terminal.emulation` setting is `auto`).
+- Fixed to use terminal emulation when the `terminal.emulate` setting is `auto` and ANSICON is present.  Clink's output is no longer able to be intercepted by ANSICON, so bypass it and use Clink's own terminal emulation.
+- Fixed [#461](https://github.com/chrisant996/clink/issues/461); crash due to invalid RVA in ANSI32.DLL or ANSI64.DLL (ANSICON).
 
 #### v1.4.25
 - Now `os.issignaled()` works during `onendedit` and `onfilterinput` events.
