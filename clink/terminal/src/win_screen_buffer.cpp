@@ -105,7 +105,7 @@ static setting_enum g_terminal_emulation(
     "ANSI escape codes.  When 'native' then Clink passes output directly to the\n"
     "console.  Or when 'auto' then Clink performs VT emulation unless native\n"
     "terminal support is detected (such as when hosted inside ConEmu, Windows\n"
-    "Terminal, WezTerm, or Windows 10 new console, or when using ANSICON).",
+    "Terminal, WezTerm, or Windows 10 new console).",
     "native,emulate,auto",
     2);
 
