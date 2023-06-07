@@ -30,11 +30,22 @@ static ansi_handler s_current_ansi_handler = ansi_handler::unknown;
 static bool s_has_consolev2 = false;
 static const char* s_consolez_dll = nullptr;
 static const char* s_found_what = nullptr;
+static char s_mode_ansi_handler = 1; // 1 is "emulate"
 bool g_color_emoji = false; // Global for performance, since it's accessed in tight loops.
 
 ansi_handler get_native_ansi_handler()
 {
     return s_native_ansi_handler;
+}
+
+const char* get_found_ansi_handler()
+{
+    return s_found_what;
+}
+
+bool get_is_auto_ansi_handler()
+{
+    return s_mode_ansi_handler == 2; // 2 is "auto"
 }
 
 ansi_handler get_current_ansi_handler()
@@ -180,7 +191,8 @@ void win_screen_buffer::begin()
         break;
     }
 
-    if (detect_native_ansi_handler)
+    // Always recheck the native terminal mode.  For example, it's possible
+    // for ANSICON to be loaded or unloaded after Clink is initialized.
     {
         do
         {
@@ -252,36 +264,42 @@ void win_screen_buffer::begin()
     m_bold = !!(m_default_attr & attr_mask_bold);
     m_reverse = false;
 
-    bool native_vt = m_native_vt;
-    switch (g_terminal_emulation.get())
+    char native_vt = m_native_vt;
+    ansi_handler new_handler = s_current_ansi_handler;
+    const int mode = g_terminal_emulation.get();
+    switch (mode)
     {
     case 0:
         native_vt = true;
-        s_current_ansi_handler = s_native_ansi_handler;
+        new_handler = s_native_ansi_handler;
         break;
 
     case 1:
         native_vt = false;
-        s_current_ansi_handler = ansi_handler::clink;
+        new_handler = ansi_handler::clink;
         break;
 
     case 2:
-        native_vt = s_native_ansi_handler >= ansi_handler::first_native;
-        s_current_ansi_handler = native_vt ? s_native_ansi_handler : ansi_handler::clink;
+        // ANSICON isn't able to successfully intercept Clink output anymore,
+        // so use Clink's terminal emulation when ANSICON is detected.
+        native_vt = (s_native_ansi_handler != ansi_handler::clink &&
+                     s_native_ansi_handler != ansi_handler::ansicon);
+        new_handler = native_vt ? s_native_ansi_handler : ansi_handler::clink;
         break;
     }
 
-    if (m_native_vt != native_vt)
+    if (m_native_vt != native_vt || s_current_ansi_handler != new_handler)
     {
-        if (!native_vt)
-            LOG("Using emulated terminal support.");
-        else if (s_found_what)
-            LOG("Using native terminal support; found '%s'.", s_found_what);
+        const char* which = native_vt ? "native" : "emulated";
+        if (s_found_what && mode == 2)
+            LOG("Using %s terminal support (auto mode found '%s').", which, s_found_what);
         else
-            LOG("Using native terminal support.");
+            LOG("Using %s terminal support.", which);
     }
 
     m_native_vt = native_vt;
+    s_current_ansi_handler = new_handler;
+    s_mode_ansi_handler = mode;
 
     if (m_native_vt)
         SetConsoleMode(m_handle, m_prev_mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
@@ -390,7 +408,7 @@ bool win_screen_buffer::get_line_text(int line, str_base& out) const
 //------------------------------------------------------------------------------
 bool win_screen_buffer::has_native_vt_processing() const
 {
-    return m_native_vt;
+    return m_native_vt > 0;
 }
 
 //------------------------------------------------------------------------------

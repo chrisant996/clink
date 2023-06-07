@@ -84,6 +84,8 @@ static bool s_force_reload_scripts = false;
 extern line_buffer* g_rl_buffer;
 extern word_collector* g_word_collector;
 extern editor_module::result* g_result;
+extern const char* get_found_ansi_handler();
+extern bool get_is_auto_ansi_handler();
 extern void host_cmd_enqueue_lines(std::list<str_moveable>& lines, bool hide_prompt, bool show_line);
 extern void host_get_app_context(int& id, host_context& context);
 extern "C" int show_cursor(int visible);
@@ -2252,7 +2254,12 @@ int clink_diagnostics(int count, int invoking_key)
         case ansi_handler::winconsole:      term = "Default console (16 bit color only)"; break;
         }
 
-        print_value("terminal", term);
+        if (get_is_auto_ansi_handler())
+            t.format("%s (auto mode found '%s')", term, get_found_ansi_handler());
+        else
+            t = term;
+
+        print_value("terminal", t.c_str());
     }
 
     host_call_lua_rl_global_function("clink._diagnostics");

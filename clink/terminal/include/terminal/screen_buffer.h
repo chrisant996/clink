@@ -13,8 +13,7 @@ enum class ansi_handler : int
 {
     unknown,
     clink,
-    first_native,
-    conemu = first_native,
+    conemu,
     ansicon,
     winterminal,
     wezterm,
