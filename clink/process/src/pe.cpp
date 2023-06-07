@@ -68,24 +68,47 @@ pe_info::funcptr_t* pe_info::import_by_name(IMAGE_IMPORT_DESCRIPTOR* iid, const 
 {
     void** at = (void**)rva_to_addr(iid->FirstThunk);
     intptr_t* nt = (intptr_t*)rva_to_addr(iid->OriginalFirstThunk);
+    funcptr_t* ret = nullptr;
+
+    // Validation to avoid crashing; e.g. ANSICON begins with an invalid RVA.
+    size_t entry_index = 0;
+    size_t num_badrva = 0;
+    const uintptr_t sizeOfImage = get_nt_headers()->OptionalHeader.SizeOfImage;
+
     while (*at != 0 && *nt != 0)
     {
         // Check that this import is imported by name (MSB not set)
         if (*nt > 0)
         {
-            unsigned rva = (unsigned)(*nt & 0x7fffffff);
-            IMAGE_IMPORT_BY_NAME* iin;
-            iin = (IMAGE_IMPORT_BY_NAME*)rva_to_addr(rva);
+            if (uintptr_t(*nt) >= sizeOfImage)
+            {
+                if (!num_badrva)
+                    LOG("Skipping bad RVA 0x%p in import entry %zu; exceeds sizeOfImage 0x%p for '%s'.", *nt, entry_index, sizeOfImage, m_image ? m_image : "<unknown>");
+                ++num_badrva;
+            }
+            else
+            {
+                unsigned rva = (unsigned)(*nt & 0x7fffffff);
+                IMAGE_IMPORT_BY_NAME* iin;
+                iin = (IMAGE_IMPORT_BY_NAME*)rva_to_addr(rva);
 
-            if (_stricmp((const char*)(iin->Name), (const char*)func_name) == 0)
-                return (funcptr_t*)at;
+                if (_stricmp((const char*)(iin->Name), (const char*)func_name) == 0)
+                {
+                    ret = (funcptr_t*)at;
+                    break;
+                }
+            }
         }
 
         ++at;
         ++nt;
+        ++entry_index;
     }
 
-    return nullptr;
+    if (num_badrva > 1)
+        LOG("... (%zu bad RVAs total)", num_badrva);
+
+    return ret;
 }
 
 //------------------------------------------------------------------------------
@@ -154,12 +177,15 @@ pe_info::funcptr_t* pe_info::iterate_imports(
         name = (char*)rva_to_addr(iid->Name);
         if (dll == nullptr || _strnicmp(name, dll, len) == 0)
         {
+            m_image = name;
             if (funcptr_t* ret = (this->*iter_func)(iid, param))
             {
                 LOG("Found import in '%s'", name);
+                m_image = nullptr;
                 return ret;
             }
             checked_imports.emplace_back(name);
+            m_image = nullptr;
         }
 
         ++iid;
