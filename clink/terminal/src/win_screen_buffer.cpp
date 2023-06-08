@@ -194,6 +194,10 @@ void win_screen_buffer::begin()
     // Always recheck the native terminal mode.  For example, it's possible
     // for ANSICON to be loaded or unloaded after Clink is initialized.
     {
+        // Start with Unknown.
+        s_found_what = nullptr;
+        s_native_ansi_handler = ansi_handler::unknown;
+
         do
         {
             // Check for ConEmu.
@@ -279,11 +283,9 @@ void win_screen_buffer::begin()
         new_handler = ansi_handler::clink;
         break;
 
+    default:
     case 2:
-        // ANSICON isn't able to successfully intercept Clink output anymore,
-        // so use Clink's terminal emulation when ANSICON is detected.
-        native_vt = (s_native_ansi_handler != ansi_handler::clink &&
-                     s_native_ansi_handler != ansi_handler::ansicon);
+        native_vt = s_native_ansi_handler >= ansi_handler::first_native;
         new_handler = native_vt ? s_native_ansi_handler : ansi_handler::clink;
         break;
     }

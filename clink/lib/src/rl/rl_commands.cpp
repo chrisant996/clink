@@ -2246,16 +2246,17 @@ int clink_diagnostics(int count, int invoking_key)
         {
         default:                            term = "Unknown"; break;
         case ansi_handler::clink:           term = "Clink terminal emulation"; break;
-        case ansi_handler::conemu:          term = "ConEmu"; break;
         case ansi_handler::ansicon:         term = "ANSICON"; break;
+        case ansi_handler::conemu:          term = "ConEmu"; break;
         case ansi_handler::winterminal:     term = "Windows Terminal"; break;
         case ansi_handler::wezterm:         term = "WezTerm"; break;
         case ansi_handler::winconsolev2:    term = "Console V2 (with 24 bit color)"; break;
         case ansi_handler::winconsole:      term = "Default console (16 bit color only)"; break;
         }
 
-        if (get_is_auto_ansi_handler())
-            t.format("%s (auto mode found '%s')", term, get_found_ansi_handler());
+        const char* found = get_found_ansi_handler();
+        if (get_is_auto_ansi_handler() && found)
+            t.format("%s (auto mode found '%s')", term, found);
         else
             t = term;
 

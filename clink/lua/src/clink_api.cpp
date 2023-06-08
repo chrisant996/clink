@@ -851,8 +851,8 @@ static int get_ansi_host(lua_State* state)
     {
         "unknown",
         "clink",
-        "conemu",
         "ansicon",
+        "conemu",
         "winterminal",
         "wezterm",
         "winconsolev2",

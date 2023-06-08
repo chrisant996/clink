@@ -13,8 +13,9 @@ enum class ansi_handler : int
 {
     unknown,
     clink,
-    conemu,
-    ansicon,
+    ansicon,    // Use emulation with ANSICON due to compatibility problems.
+    first_native,
+    conemu = first_native,
     winterminal,
     wezterm,
     winconsolev2,
