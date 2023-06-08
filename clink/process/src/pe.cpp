@@ -25,6 +25,9 @@ void* pe_info::rva_to_addr(unsigned int rva) const
 IMAGE_NT_HEADERS* pe_info::get_nt_headers() const
 {
     IMAGE_DOS_HEADER* dos_header = (IMAGE_DOS_HEADER*)m_base;
+    if (dos_header->e_magic != IMAGE_DOS_SIGNATURE)
+        return nullptr;
+
     return (IMAGE_NT_HEADERS*)((char*)m_base + dos_header->e_lfanew);
 }
 
@@ -32,6 +35,12 @@ IMAGE_NT_HEADERS* pe_info::get_nt_headers() const
 void* pe_info::get_data_directory(int index, int* size) const
 {
     IMAGE_NT_HEADERS* nt = get_nt_headers();
+    if (nt == nullptr)
+        return nullptr;
+
+    if (nt->Signature != IMAGE_NT_SIGNATURE)
+        return nullptr;
+
     IMAGE_DATA_DIRECTORY* data_dir = nt->OptionalHeader.DataDirectory + index;
     if (data_dir == nullptr)
         return nullptr;
@@ -73,7 +82,10 @@ pe_info::funcptr_t* pe_info::import_by_name(IMAGE_IMPORT_DESCRIPTOR* iid, const 
     // Validation to avoid crashing; e.g. ANSICON begins with an invalid RVA.
     size_t entry_index = 0;
     size_t num_badrva = 0;
-    const uintptr_t sizeOfImage = get_nt_headers()->OptionalHeader.SizeOfImage;
+    IMAGE_NT_HEADERS* headers = get_nt_headers();
+    if (headers == nullptr)
+        return nullptr;
+    const uintptr_t sizeOfImage = headers->OptionalHeader.SizeOfImage;
 
     while (*at != 0 && *nt != 0)
     {
