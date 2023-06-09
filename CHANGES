@@ -2,6 +2,10 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.4.28
+- Added `console.getcursorpos()` to get the cursor position.
+- Updated `os.getscreeninfo()` to include the cursor position.
+
 #### v1.4.27
 - Fixed when the `terminal.emulate` setting is `auto` on Windows 8.1 and earlier (regression introduced in v1.4.26).
 
