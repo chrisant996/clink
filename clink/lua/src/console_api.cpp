@@ -192,6 +192,26 @@ static int get_top(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  console.getcursorpos
+/// -ver:   1.4.28
+/// -ret:   integer, integer
+/// Returns the current cursor column and row in the console screen buffer.
+/// The row is between 1 and <a href="#console.getnumlines">console.getnumlines()</a>.
+/// The column is between 1 and <a href="#console.getwidth">console.getwidth()</a>.
+/// -show:  local x, y = console.getcursorpos()
+static int get_cursor_pos(lua_State* state)
+{
+    CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
+    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (!GetConsoleScreenBufferInfo(h, &csbiInfo))
+        return 0;
+
+    lua_pushinteger(state, csbiInfo.dwCursorPosition.X + 1);
+    lua_pushinteger(state, csbiInfo.dwCursorPosition.Y + 1);
+    return 2;
+}
+
+//------------------------------------------------------------------------------
 /// -name:  console.getlinetext
 /// -ver:   1.1.20
 /// -arg:   line:integer
@@ -504,6 +524,7 @@ static int find_line(lua_State* state, int direction)
     return 1;
 }
 
+//------------------------------------------------------------------------------
 /// -name:  console.findprevline
 /// -ver:   1.1.21
 /// -arg:   starting_line:integer
@@ -720,6 +741,7 @@ void console_lua_initialise(lua_state& lua)
         { "getheight",              &get_height },
         { "getnumlines",            &get_num_lines },
         { "gettop",                 &get_top },
+        { "getcursorpos",           &get_cursor_pos },
         { "getlinetext",            &get_line_text },
         { "gettitle",               &get_title },
         { "settitle",               &set_title },

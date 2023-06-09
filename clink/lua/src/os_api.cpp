@@ -1192,6 +1192,17 @@ int get_screen_info_impl(lua_State* state, bool back_compat)
             lua_pushinteger(state, values[i]);
             lua_rawset(state, -3);
         }
+
+        if (!back_compat)
+        {
+            lua_pushstring(state, "x");
+            lua_pushinteger(state, csbi.dwCursorPosition.X);
+            lua_rawset(state, -3);
+
+            lua_pushstring(state, "y");
+            lua_pushinteger(state, csbi.dwCursorPosition.Y);
+            lua_rawset(state, -3);
+        }
     }
 
     return 1;
@@ -1208,6 +1219,10 @@ int get_screen_info_impl(lua_State* state, bool back_compat)
 /// -show:  -- info.bufheight       [integer] Height of the screen buffer.
 /// -show:  -- info.winwidth        [integer] Width of the visible window.
 /// -show:  -- info.winheight       [integer] Height of the visible window.
+/// -show:
+/// -show:  -- v1.4.28 and higher include the cursor position:
+/// -show:  -- info.x               [integer] Current cursor column (from 1 to bufwidth).
+/// -show:  -- info.y               [integer] Current cursor row (from 1 to bufheight).
 static int get_screen_info(lua_State* state)
 {
     return get_screen_info_impl(state, false);
