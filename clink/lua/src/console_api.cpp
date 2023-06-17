@@ -470,10 +470,12 @@ static int32 find_line(lua_State* state, int32 direction)
             str<32> token;
             str_tokeniser modes(mode_string, " ,;");
             while (modes.next(token))
-            if (token.equals("regex"))
-                mode |= find_line_mode::use_regex;
-            else if (token.equals("icase"))
-                mode |= find_line_mode::ignore_case;
+            {
+                if (token.equals("regex"))
+                    mode |= find_line_mode::use_regex;
+                else if (token.equals("icase"))
+                    mode |= find_line_mode::ignore_case;
+            }
         }
     }
 
