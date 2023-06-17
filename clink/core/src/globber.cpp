@@ -160,7 +160,7 @@ bool globber::next(str_base& out, bool rooted, extrainfo* extrainfo)
 
     path::append(out, file_name.c_str());
 
-    if (attr & FILE_ATTRIBUTE_DIRECTORY && m_dir_suffix)
+    if ((attr & FILE_ATTRIBUTE_DIRECTORY) && m_dir_suffix)
         out << PATH_SEP;
 
     if (extrainfo)

@@ -35,6 +35,57 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 <br/>
 <br/>
 
+# "New" commits from Martin
+
+- **str_tokeniser tests got broken by the delim change...**
+
+## Yes, Soon
+- [More succint types](https://github.com/mridgers/clink/commit/15a47583f693fd7fde234ffc25539684de8b635d) -- Changes from `unsigned char` to `uint8`, and tons of similar type name changes.
+
+## To Be Considered
+- `io.popen2()` -- Why was this done?  If this is just trying to support UTF8, then that's been solved already by setting the C runtime locale to `".utf8"`.
+  - [Added io.popen2() that directly uses Windows' API](https://github.com/mridgers/clink/commit/bd69fe219501e050dd1b92c13fd9b842c497885d)
+  - [Make sure there's a valid stderr handle](https://github.com/mridgers/clink/commit/795c371cfc0cf00888322d68791c99f670210bfe)
+  - [Use the parent process' console](https://github.com/mridgers/clink/commit/2c505bd29c2c9493836e6b2bce29a2cc4e88182b)
+  - [Up-values will always exist so there's no need for a null check](https://github.com/mridgers/clink/commit/8dcb97025af170afe5f357c6ac2ff7101a758b3d)
+  - [Put io.popen2() processes in a different Ctrl-C group](https://github.com/mridgers/clink/commit/6bd9d2c4ca346adfad8ca413776f417cadfca693)
+  - [Corrected a spelling mistake](https://github.com/mridgers/clink/commit/d0a6e8708032c3f08a776953cc59c90e660bc684)
+- `builder:addmatches()` accepts a function; related to the `os.globfiles()` iterator change.
+  - [builder::addmatches() now also accepts a function](https://github.com/mridgers/clink/commit/6a2b818efd84377b3a625bb1ecdeffe89da20cd6)
+- `os.globfiles()` work like an iterator instead returning a table
+  - [Made Lua's os.glob*() work like an iterator instead of building a table](https://github.com/mridgers/clink/commit/13fc3b68046d2cee0f2188b9c8d54fa0cbc18718)
+  - [os.glob*() tests](https://github.com/mridgers/clink/commit/5cfacee2a2b8230968854bc94bc3e1adf6b56bf9)
+  - [Fixed "cd \\" Lua error](https://github.com/mridgers/clink/commit/d2ffed58f75597cec08d85e8abf4fafc0b60a067)
+  - [Fixed globbing getting a bit too recursive](https://github.com/mridgers/clink/commit/b3023c5960b91a0e2b4e5b7c7ff6368970d9cba5)
+- Ctrl-W changes.  While I agree in principle, this kind of change upsets people who are used to bash.  Maybe it should only apply when `clink.default_bindings` == `windows`?
+  - [Ctrl-W is more useful if it kills on more granular word boundaries](https://github.com/mridgers/clink/commit/5ee004074e0869273ac42006edef4bcdcfd0e24f)
+  - [Smarter Ctrl-W word deletion](https://github.com/mridgers/clink/commit/a385a1695bb425d6f48aae4e587c9c06af8515f6)
+- [Type name style change](https://github.com/mridgers/clink/commit/e6baa31badb8854413dd34988cc33b7aeb68b7e0) -- Huge; renames types from `foo_bar` to `FooBar`.
+- [Changed member style](https://github.com/mridgers/clink/commit/fd5041a34ba162fd3adc1b7b0c5910438e343235) -- Huge; renames members from `m_foo` to `_foo`.
+
+## Leaning Towards No
+- [Don't expect the user to account for a null terminator](https://github.com/mridgers/clink/commit/4583281d464933d9ce021aedcdf3edc5e3fdc189) -- This still requires the user to account for a null terminator, by removing the space for the null terminator, otherwise the block gets sized differently than expected (and can have extra slop allocated).
+- [Use AppData/Local for a the DLL cache as temp can get cleaned](https://github.com/mridgers/clink/commit/8ed3cb0b427970c8082acb238071b26d5e788057) -- Isn't getting cleaned desirable?  Otherwise DLL versions accumulate without bound.
+- Removing all copyright dates seems problematic.  Isn't it required in copyright notices?  And in the program logo header it provides date context for the program version being used.
+  - [Removed date from header](https://github.com/mridgers/clink/commit/7ca14e8d4c82b4a6e6801af4b702329d8de29eef)
+  - [Removed years](https://github.com/mridgers/clink/commit/b732e873fc337671fabc62659a0a578cf617028c)
+- [Option to remap ESC to; raw, ctrl-c, or revert-line (line Windows)](https://github.com/mridgers/clink/commit/295a9e4a3628e94b8b889286ae96c9355dc0ad77) -- Conflicts with `terminal.raw_esc` and the chrisant996/clink approach for differentiating <kbd>Esc</kbd> input from the `ESC` character, which allows binding <kbd>Esc</kbd> to anything the user wishes.
+
+## No
+- [Hand-rolled remote-call thunks. Previous approach was assuming that the compiler won't do what it eventually did; add complex prologue/epilogue.](https://github.com/mridgers/clink/commit/76aee60e5cdad911a0b478765499f8fbdd848619) -- That was resolved in chrisant996/clink by turning off certain compiler features in the relevant files (462a985e66, 7ba05ea77e, e0750b173d, 03320a2069, 3dd4f49e72), which also makes ARM64 work without special custom assembly.
+- [Only log inputrc information once](https://github.com/mridgers/clink/commit/f2228b9d64e30852f415969f5a0409e252df3c01) -- That was only annoying because Lua was recreated on each prompt, which had to be removed because (1) it broke `z`, (2) it bogs down performance, and (3) chrisant996/clink uses coroutines which is incompatible with recreate Lua on each prompt.  The logging change would also miss when the user makes a configuration change that results in a different inputrc file getting loaded.
+- [Better implementation of non-ASCII compatible lua_state::do_file()](https://github.com/mridgers/clink/commit/c7105d12a9c35b45d2eef7760df323317bb15d87) -- This was solved in chrisant996/clink by setting the C runtime locale to `".utf8"`.
+- Jmp hooking -- Not needed in chrisant996 because (1) Detours is available and (2) IAT hooking is used exclusively.
+  - [Very simple and incomplete x86/x64 length disassembler](https://github.com/mridgers/clink/commit/2355aafd2914f2e7af997ae75eac2d9cc3aaa313)
+  - [New jmp-style hooking mechanism that is Win11 compatible](https://github.com/mridgers/clink/commit/7ed4c8f0215c45e96f757dd2ea9d4e44b689cf58)
+  - [Branch displacement was back-to-front](https://github.com/mridgers/clink/commit/3047b9b91e75131db0243bd6cde4a36fffe42b92)
+- [Use Windows 10's virtual terminal if available](https://github.com/mridgers/clink/commit/530196af81f9981d18888e1326ff37d0bd249d7e) -- SetConsoleMode does not validate flags, so the approach here will not detect when `ENABLE_VIRTUAL_TERMINAL_PROCESSING` is not available.  This was solved in chrisant996/clink by checking the OS version and the ConsoleV2 regkey and etc.
+- [unix-filename-rubout uses forward slashes too](https://github.com/mridgers/clink/commit/d82ad89cb0e353ece72f0ddf399632ca21fdcd5c) -- This was solved in chrisant996/clink by refactoring how Readline handles path separators, and the changes were ratified by Chet Ramey and incorporated into the official Readline distribution.
+- [Let's try a different default colour scheme (white on red was too angry)](https://github.com/mridgers/clink/commit/dd5aeb00b1fed954ec12af8e76598e4c74453b88) -- The color scheme in chrisant996/clink already made similarly-motivated changes.
+
+<br/>
+<br/>
+
 # APPENDICES
 
 ## Known Issues

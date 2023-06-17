@@ -178,9 +178,10 @@ static const char* sanitize(const char* text)
 }
 
 //------------------------------------------------------------------------------
-void line_editor_tester::run()
+void line_editor_tester::run(bool expectationless)
 {
-    bool has_expectations = m_has_matches || m_has_classifications || (m_expected_output != nullptr);
+    bool has_expectations = expectationless;
+    has_expectations |= m_has_matches || m_has_classifications || (m_expected_output != nullptr);
     REQUIRE(has_expectations);
 
     REQUIRE(m_input != nullptr);

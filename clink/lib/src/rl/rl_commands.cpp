@@ -361,7 +361,7 @@ int clink_reset_line(int count, int invoking_key)
 int clink_exit(int count, int invoking_key)
 {
     clink_reset_line(1, 0);
-    g_rl_buffer->insert("exit");
+    g_rl_buffer->insert("exit 0");
     rl_newline(1, invoking_key);
 
     return 0;

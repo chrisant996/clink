@@ -96,14 +96,14 @@ template <typename T>
 str_token str_tokeniser_impl<T>::next_impl(const T*& out_start, int& out_length)
 {
     // Skip initial delimiters.
-    const char* max_delim = nullptr;
+    char delim = 0;
     while (int c = m_iter.peek())
     {
-        const char* delim = strchr(m_delims, c);
-        if (delim == nullptr)
+        const char* candidate = strchr(m_delims, c);
+        if (candidate == nullptr)
             break;
 
-        max_delim = max(max_delim, delim);
+        delim = *candidate;
         m_iter.next();
     }
 
@@ -137,5 +137,5 @@ str_token str_tokeniser_impl<T>::next_impl(const T*& out_start, int& out_length)
     if (start == end)
         return str_token::invalid_delim;
 
-    return max_delim ? *max_delim : 0;
+    return delim;
 }

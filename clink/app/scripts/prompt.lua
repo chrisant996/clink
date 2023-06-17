@@ -145,7 +145,7 @@ local function _do_filter_prompt(type, prompt, rprompt, line, cursor, final)
         print("")
         print("prompt filter failed:")
         print(ret)
-        return false
+        return "\nERROR_LUA_PROMPT>"
     end
 
     -- Windows Terminal built-in shell integration (WT v1.18).

@@ -391,7 +391,7 @@ bool win_screen_buffer::get_line_text(int line, str_base& out) const
     if (!ensure_chars_buffer(csbi.dwSize.X))
         return false;
 
-    COORD coord = { 0, SHORT(line) };
+    COORD coord = { 0, short(line) };
     DWORD len = 0;
     if (!ReadConsoleOutputCharacterW(m_handle, m_chars, csbi.dwSize.X, coord, &len))
         return false;
@@ -495,7 +495,7 @@ void win_screen_buffer::set_horiz_cursor(int column)
 
     column = clamp(column, 0, width - 1);
 
-    COORD xy = { static_cast<SHORT>(window.Left + column), csbi.dwCursorPosition.Y };
+    COORD xy = { short(window.Left + column), csbi.dwCursorPosition.Y };
     SetConsoleCursorPosition(m_handle, xy);
 }
 
@@ -512,7 +512,7 @@ void win_screen_buffer::set_cursor(int column, int row)
     column = clamp(column, 0, width - 1);
     row = clamp(row, 0, height - 1);
 
-    COORD xy = { static_cast<SHORT>(window.Left + column), static_cast<SHORT>(window.Top + row) };
+    COORD xy = { short(window.Left + column), short(window.Top + row) };
     SetConsoleCursorPosition(m_handle, xy);
 }
 
@@ -523,8 +523,8 @@ void win_screen_buffer::move_cursor(int dx, int dy)
     GetConsoleScreenBufferInfo(m_handle, &csbi);
 
     COORD xy = {
-        SHORT(clamp(csbi.dwCursorPosition.X + dx, 0, csbi.dwSize.X - 1)),
-        SHORT(clamp(csbi.dwCursorPosition.Y + dy, 0, csbi.dwSize.Y - 1)),
+        short(clamp(csbi.dwCursorPosition.X + dx, 0, csbi.dwSize.X - 1)),
+        short(clamp(csbi.dwCursorPosition.Y + dy, 0, csbi.dwSize.Y - 1)),
     };
     SetConsoleCursorPosition(m_handle, xy);
 }
@@ -540,8 +540,8 @@ void win_screen_buffer::save_cursor()
     int height = (window.Bottom - window.Top) + 1;
 
     m_saved_cursor = {
-        SHORT(clamp(csbi.dwCursorPosition.X - window.Left, 0, width)),
-        SHORT(clamp(csbi.dwCursorPosition.Y - window.Top, 0, height)),
+        short(clamp(csbi.dwCursorPosition.X - window.Left, 0, width)),
+        short(clamp(csbi.dwCursorPosition.Y - window.Top, 0, height)),
     };
 }
 
@@ -783,7 +783,7 @@ int win_screen_buffer::is_line_default_color(int line) const
         return -1;
 
     int ret = true;
-    COORD coord = { 0, SHORT(line) };
+    COORD coord = { 0, short(line) };
     DWORD len = 0;
     if (!ReadConsoleOutputAttribute(m_handle, m_attrs, csbi.dwSize.X, coord, &len))
         return -1;
@@ -808,7 +808,7 @@ int win_screen_buffer::line_has_color(int line, const BYTE* attrs, int num_attrs
         return -1;
 
     int ret = true;
-    COORD coord = { 0, SHORT(line) };
+    COORD coord = { 0, short(line) };
     DWORD len = 0;
     if (!ReadConsoleOutputAttribute(m_handle, m_attrs, csbi.dwSize.X, coord, &len))
         return -1;

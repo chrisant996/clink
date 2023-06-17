@@ -395,8 +395,8 @@ static DWORD WINAPI stdcall_thunk2(thunk2_data& data)
 remote_result process::remote_call_internal(pe_info::funcptr_t function, process_wait_callback* callback, const void* param1, int param1_size, const void* param2, int param2_size)
 {
     // Open the process so we can operate on it.
-    handle process_handle = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_CREATE_THREAD,
-        FALSE, m_pid);
+    unsigned int flags = PROCESS_QUERY_INFORMATION|PROCESS_CREATE_THREAD;
+    handle process_handle = OpenProcess(flags, FALSE, m_pid);
     if (!process_handle)
     {
         ERR("Unable to open process %d.", m_pid);

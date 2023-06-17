@@ -69,7 +69,7 @@ public:
     void                        set_expected_matches_list(const char* const* expected); // The list must be terminated with nullptr.
     void                        set_expected_classifications(const char* classifications);
     void                        set_expected_output(const char* expected);
-    void                        run();
+    void                        run(bool expectationless=false);
 
 private:
     void                        create_line_editor(const line_editor::desc* desc=nullptr);
