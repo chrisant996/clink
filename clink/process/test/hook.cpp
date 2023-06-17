@@ -89,13 +89,15 @@ funcptr_t hook_iat(void* /*base*/, const char* /*dll*/, const char* name, funcpt
 
 
 //------------------------------------------------------------------------------
-TEST_CASE("Hooks")
+__declspec(noinline) void apply_hooks()
 {
+    // The compiler can cache the IAT lookup into a register before the IAT is
+    // patched causing later calls in the same to bypass the hook. To workaround
+    // this the hooks are applied in a no-inlined function
+
     void* base = GetModuleHandle(nullptr);
 
     funcptr_t original;
-
-    // Attach hooks.
 
     g_originals.set_env_var = SetEnvironmentVariableW;
     original = hook_iat(base, nullptr, "SetEnvironmentVariableW", funcptr_t(set_env_var), 1);
@@ -116,8 +118,12 @@ TEST_CASE("Hooks")
     g_originals.set_title = SetConsoleTitleW;
     original = hook_iat(base, nullptr, "SetConsoleTitleW", funcptr_t(set_title), 1);
     REQUIRE(original == funcptr_t(g_originals.set_title));
+}
 
-    // Verify hooks.
+//------------------------------------------------------------------------------
+TEST_CASE("Hooks")
+{
+    apply_hooks();
 
     g_visited_bits = 0;
 
@@ -138,7 +144,6 @@ TEST_CASE("Hooks")
     REQUIRE(g_visited_bits & visitor_set_title);
 
     // Detach hooks so they don't affect subsequent tests.
-
     hook_setter hooks;
     hooks.detach(hook_type::iat, nullptr, "SetEnvironmentVariableW", &g_originals.set_env_var, set_env_var);
     hooks.detach(hook_type::iat, nullptr, "WriteConsoleW", &g_originals.write_console, write_console);
