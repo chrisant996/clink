@@ -892,7 +892,7 @@ bool line_editor_impl::update_input()
             if (!m_dispatching)
             {
                 m_buffer.reset();
-                m_buffer.insert("exit");
+                m_buffer.insert("exit 0");
                 end_line();
             }
             return true;
