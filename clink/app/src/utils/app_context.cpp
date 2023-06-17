@@ -370,10 +370,10 @@ void app_context::init_binaries_dir()
     {
         DWORD read;
         int size = GetFileSize(origin, nullptr);
-        m_binaries.reserve(size + 1);
+        m_binaries.reserve(size);
         ReadFile(origin, m_binaries.data(), size, &read, nullptr);
-        m_binaries.data()[size] = '\0';
         CloseHandle(origin);
+        m_binaries.truncate(size);
     }
     else
     {
