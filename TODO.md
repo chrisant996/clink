@@ -37,13 +37,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 # "New" commits from Martin
 
-- **str_tokeniser tests got broken by the delim change...**
-
-## Yes, Soon
-- [More succint types](https://github.com/mridgers/clink/commit/15a47583f693fd7fde234ffc25539684de8b635d) -- Changes from `unsigned char` to `uint8`, and tons of similar type name changes.
-
 ## To Be Considered
-- `io.popen2()` -- Why was this done?  If this is just trying to support UTF8, then that's been solved already by setting the C runtime locale to `".utf8"`.
+- `io.popen2()` -- Why was this done?  If this is just trying to support UTF8, then chrisant996/clink solved that by setting the C runtime locale to `".utf8"`.
   - [Added io.popen2() that directly uses Windows' API](https://github.com/mridgers/clink/commit/bd69fe219501e050dd1b92c13fd9b842c497885d)
   - [Make sure there's a valid stderr handle](https://github.com/mridgers/clink/commit/795c371cfc0cf00888322d68791c99f670210bfe)
   - [Use the parent process' console](https://github.com/mridgers/clink/commit/2c505bd29c2c9493836e6b2bce29a2cc4e88182b)
@@ -52,7 +47,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - [Corrected a spelling mistake](https://github.com/mridgers/clink/commit/d0a6e8708032c3f08a776953cc59c90e660bc684)
 - `builder:addmatches()` accepts a function; related to the `os.globfiles()` iterator change.
   - [builder::addmatches() now also accepts a function](https://github.com/mridgers/clink/commit/6a2b818efd84377b3a625bb1ecdeffe89da20cd6)
-- `os.globfiles()` work like an iterator instead returning a table
+- `os.globfiles()` work like an iterator instead of returning a table
   - [Made Lua's os.glob*() work like an iterator instead of building a table](https://github.com/mridgers/clink/commit/13fc3b68046d2cee0f2188b9c8d54fa0cbc18718)
   - [os.glob*() tests](https://github.com/mridgers/clink/commit/5cfacee2a2b8230968854bc94bc3e1adf6b56bf9)
   - [Fixed "cd \\" Lua error](https://github.com/mridgers/clink/commit/d2ffed58f75597cec08d85e8abf4fafc0b60a067)
