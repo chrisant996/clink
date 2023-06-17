@@ -276,7 +276,11 @@ unsigned int word_collector::collect_words(const char* line_buffer, unsigned int
     word* end_word = words.empty() ? nullptr : &words.back();
     if (!end_word || (stop_at_cursor && end_word->offset + end_word->length < line_cursor))
     {
-        words.push_back({line_cursor, 0, first});
+        unsigned char delim = 0;
+        if (line_cursor)
+            delim = line_buffer[line_cursor - 1];
+
+        words.push_back({line_cursor, 0, first, false, false, false, delim});
     }
 
     // Adjust for quotes.
