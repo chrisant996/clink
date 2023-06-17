@@ -186,7 +186,7 @@ static void check_more_continuation(const wchar_t* prompt, DWORD len)
 }
 
 //------------------------------------------------------------------------------
-void tag_prompt()
+static void tag_prompt()
 {
     // Tag the prompt so we can detect when cmd.exe writes to the terminal.
     wchar_t buffer[256];
