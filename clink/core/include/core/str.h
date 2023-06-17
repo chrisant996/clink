@@ -495,7 +495,7 @@ str_impl<TYPE>& str_impl<TYPE>::operator << (const TYPE* rhs)
 template <typename TYPE> template <int I>
 str_impl<TYPE>& str_impl<TYPE>::operator << (const TYPE (&rhs)[I])
 {
-    concat(rhs, I);
+    concat(rhs, I - 1);
     return *this;
 }
 
@@ -567,7 +567,7 @@ int to_utf16(wchar_t* out, int max_count, str_iter_impl<char>& iter);
 class str_base : public str_impl<char>
 {
 public:
-    template <int I> str_base(char (&data)[I]) : str_impl<char>(data, I) {}
+    template <int I> str_base(char (&data)[I]) : str_impl<char>(data, I - 1) {}
                      str_base(char* data, int size) : str_impl<char>(data, size) {}
                      str_base(const str_base&)         = delete;
     int              from_utf16(const wchar_t* utf16)  { clear(); return to_utf8(*this, utf16); }
@@ -583,7 +583,7 @@ protected:
 class wstr_base : public str_impl<wchar_t>
 {
 public:
-    template <int I> wstr_base(wchar_t (&data)[I]) : str_impl<wchar_t>(data, I) {}
+    template <int I> wstr_base(wchar_t (&data)[I]) : str_impl<wchar_t>(data, I - 1) {}
                      wstr_base(wchar_t* data, int size) : str_impl<wchar_t>(data, size) {}
                      wstr_base(const wstr_base&)        = delete;
     int              from_utf8(const char* utf8)        { clear(); return to_utf16(*this, utf8); }
