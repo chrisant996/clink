@@ -157,7 +157,7 @@ newaction {
     trigger = "nsis",
     description = "Clink: Creates a pre-release installer for Clink (reltype is debug by default)",
     execute = function()
-        local premake = _PREMAKE_COMMAND
+        local premake = '"'.._PREMAKE_COMMAND..'"'
         local root_dir = path.getabsolute(".build/vs2019/bin").."/"
         local code_dir = path.getabsolute(".").."/"
         local config = _OPTIONS["config"] or "debug"
@@ -269,7 +269,7 @@ newaction {
     trigger = "release",
     description = "Clink: Creates a release of Clink",
     execute = function ()
-        local premake = _PREMAKE_COMMAND
+        local premake = '"'.._PREMAKE_COMMAND..'"'
         local root_dir = path.getabsolute(".build/release").."/"
 
         -- Check we have the tools we need.
