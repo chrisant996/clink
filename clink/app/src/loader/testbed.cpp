@@ -22,7 +22,7 @@ extern void get_profile_path(const char* in, str_base& out);
 extern void puts_help(const char* const* help_pairs, const char* const* other_pairs=nullptr);
 
 //------------------------------------------------------------------------------
-static int editline()
+static int32 editline()
 {
     str_compare_scope _(str_compare_scope::relaxed, false/*fuzzy_accent*/);
 
@@ -56,7 +56,7 @@ static int editline()
 }
 
 //------------------------------------------------------------------------------
-static int hookline(app_context::desc& app_desc)
+static int32 hookline(app_context::desc& app_desc)
 {
     // Get function in host exe.
     FARPROC worker = GetProcAddress(nullptr, "testbed_hook_loop");
@@ -80,7 +80,7 @@ static int hookline(app_context::desc& app_desc)
 }
 
 //------------------------------------------------------------------------------
-int testbed(int argc, char** argv)
+int32 testbed(int32 argc, char** argv)
 {
     static const char* help_usage = "Usage: testbed [options]\n";
 
@@ -105,8 +105,8 @@ int testbed(int argc, char** argv)
     // Parse arguments
     bool hook = false;
     app_context::desc app_desc;
-    int i;
-    int ret = 1;
+    int32 i;
+    int32 ret = 1;
     while ((i = getopt_long(argc, argv, "?hp:s:d", options, nullptr)) != -1)
     {
         switch (i)

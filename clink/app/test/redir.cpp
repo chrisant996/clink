@@ -19,14 +19,14 @@ public:
                                                       collector_tokeniser* word_tokeniser,
                                                       const char* quote_pair=nullptr);
     void                        set_input(const char* input) { m_input = input; }
-    template <class ...T> void  set_expected_words(unsigned int command_offset, T... t); // T must be const char*
+    template <class ...T> void  set_expected_words(uint32 command_offset, T... t); // T must be const char*
     void                        run();
 private:
-    void                        expected_words_impl(unsigned int command_offset, ...);
+    void                        expected_words_impl(uint32 command_offset, ...);
     word_collector              m_collector;
     const char*                 m_input = nullptr;
     std::vector<const char*>    m_expected_words;
-    unsigned int                m_expected_command_offset;
+    uint32                      m_expected_command_offset;
     bool                        m_has_words = false;
 };
 
@@ -40,7 +40,7 @@ word_collector_tester::word_collector_tester(collector_tokeniser* command_tokeni
 
 //------------------------------------------------------------------------------
 template <class ...T>
-void word_collector_tester::set_expected_words(unsigned int command_offset, T... t)
+void word_collector_tester::set_expected_words(uint32 command_offset, T... t)
 {
     expected_words_impl(command_offset, t..., nullptr);
 }
@@ -54,8 +54,8 @@ void word_collector_tester::run()
     // Collect words.
     std::vector<word> all_words;
     collect_words_mode mode = collect_words_mode::stop_at_cursor;
-    const unsigned int len = static_cast<unsigned int>(strlen(m_input));
-    const unsigned int command_offset = m_collector.collect_words(m_input, len, len, all_words, mode);
+    const uint32 len = uint32(strlen(m_input));
+    const uint32 command_offset = m_collector.collect_words(m_input, len, len, all_words, mode);
 
     commands commands;
     commands.set(m_input, len, len, all_words);
@@ -89,7 +89,7 @@ void word_collector_tester::run()
     REQUIRE(command_offset == m_expected_command_offset, report);
     REQUIRE(words.size() == m_expected_words.size() + 1, report);
 
-    for (int i = 0; i < int(m_expected_words.size()); i++)
+    for (int32 i = 0; i < int32(m_expected_words.size()); i++)
     {
         REQUIRE(words[i].offset <= len);
         REQUIRE(words[i].offset + words[i].length <= len);
@@ -113,7 +113,7 @@ void word_collector_tester::run()
 }
 
 //------------------------------------------------------------------------------
-void word_collector_tester::expected_words_impl(unsigned int command_offset, ...)
+void word_collector_tester::expected_words_impl(uint32 command_offset, ...)
 {
     m_expected_words.clear();
     m_expected_command_offset = command_offset;

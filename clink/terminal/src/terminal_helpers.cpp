@@ -70,13 +70,13 @@ static setting_str g_mouse_modifier(
 
 //------------------------------------------------------------------------------
 static bool s_locked_cursor_visibility = false;
-extern "C" int is_locked_cursor()
+extern "C" int32 is_locked_cursor()
 {
     return s_locked_cursor_visibility;
 }
 
 //------------------------------------------------------------------------------
-extern "C" int lock_cursor(int lock)
+extern "C" int32 lock_cursor(int32 lock)
 {
     assert(!lock || !s_locked_cursor_visibility);
     bool was_locked = s_locked_cursor_visibility;
@@ -85,19 +85,19 @@ extern "C" int lock_cursor(int lock)
 }
 
 //------------------------------------------------------------------------------
-extern "C" int cursor_style(HANDLE handle, int style, int visible)
+extern "C" int32 cursor_style(HANDLE handle, int32 style, int32 visible)
 {
     if (!handle)
         handle = GetStdHandle(STD_OUTPUT_HANDLE);
 
     CONSOLE_CURSOR_INFO ci;
     GetConsoleCursorInfo(handle, &ci);
-    int was_visible = !!ci.bVisible;
+    int32 was_visible = !!ci.bVisible;
 
     // Assume first encounter of cursor size is the default size.  This only
     // works for Use Legacy Style; the newer cursor shapes all report 25.
-    static int g_default_cursor_size = -1;
-    static int g_alternate_cursor_size = 100;
+    static int32 g_default_cursor_size = -1;
+    static int32 g_alternate_cursor_size = 100;
     if (g_default_cursor_size < 0)
     {
         g_default_cursor_size = ci.dwSize;

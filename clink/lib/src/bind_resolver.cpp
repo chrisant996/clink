@@ -12,7 +12,7 @@
 #include <new>
 
 //------------------------------------------------------------------------------
-bind_resolver::binding::binding(bind_resolver* resolver, int node_index, const bind_params& params)
+bind_resolver::binding::binding(bind_resolver* resolver, int32 node_index, const bind_params& params)
 : m_outer(resolver)
 , m_node_index(node_index)
 , m_params(params)
@@ -21,7 +21,7 @@ bind_resolver::binding::binding(bind_resolver* resolver, int node_index, const b
     const auto& node = binder.get_node(m_node_index);
 
     m_module = node.module;
-    m_len = max<unsigned char>(1, node.depth) + params.length();
+    m_len = max<uint8>(1, node.depth) + params.length();
     m_id = node.id;
     assert(m_len > 0);
 }
@@ -43,7 +43,7 @@ editor_module* bind_resolver::binding::get_module() const
 }
 
 //------------------------------------------------------------------------------
-unsigned char bind_resolver::binding::get_id() const
+uint8 bind_resolver::binding::get_id() const
 {
     if (m_outer == nullptr)
         return 0xff;
@@ -83,7 +83,7 @@ bind_resolver::bind_resolver(const binder& binder)
 }
 
 //------------------------------------------------------------------------------
-void bind_resolver::set_group(int group)
+void bind_resolver::set_group(int32 group)
 {
     if (unsigned(group) - 1 >= sizeof_array(m_binder.m_nodes) - 1)
         return;
@@ -102,7 +102,7 @@ void bind_resolver::set_group(int group)
 }
 
 //------------------------------------------------------------------------------
-int bind_resolver::get_group() const
+int32 bind_resolver::get_group() const
 {
     return m_group;
 }
@@ -110,7 +110,7 @@ int bind_resolver::get_group() const
 //------------------------------------------------------------------------------
 void bind_resolver::reset()
 {
-    int group = m_group;
+    int32 group = m_group;
 
     new (this) bind_resolver(m_binder);
 
@@ -124,7 +124,7 @@ void bind_resolver::reset()
 }
 
 //------------------------------------------------------------------------------
-bool bind_resolver::step(unsigned char key)
+bool bind_resolver::step(uint8 key)
 {
     if (m_key_count >= sizeof_array(m_keys))
     {
@@ -139,9 +139,9 @@ bool bind_resolver::step(unsigned char key)
 }
 
 //------------------------------------------------------------------------------
-bool bind_resolver::step_impl(unsigned char key)
+bool bind_resolver::step_impl(uint8 key)
 {
-    int next = m_binder.find_child(m_node_index, key);
+    int32 next = m_binder.find_child(m_node_index, key);
     if (!next)
         return true;
 
@@ -174,14 +174,14 @@ bind_resolver::binding bind_resolver::next()
     {
         m_pending_input = false;
 
-        unsigned int keys_remaining = m_key_count - m_tail;
+        uint32 keys_remaining = m_key_count - m_tail;
         if (!keys_remaining || keys_remaining >= sizeof_array(m_keys))
         {
             reset();
             return binding();
         }
 
-        for (int i = m_tail, n = m_key_count; i < n; ++i)
+        for (int32 i = m_tail, n = m_key_count; i < n; ++i)
             if (step_impl(m_keys[i]))
                 break;
     }
@@ -192,12 +192,12 @@ bind_resolver::binding bind_resolver::next()
         const binder::node& node = m_binder.get_node(m_node_index);
 
         // Move iteration along to the next node.
-        int node_index = m_node_index;
+        int32 node_index = m_node_index;
         m_node_index = node.next;
 
         // Check to see if where we're currently at a node in the tree that is
         // a valid bind (at the point of call).
-        int key_index = m_tail + node.depth + m_params.length() - 1;
+        int32 key_index = m_tail + node.depth + m_params.length() - 1;
         if (node.bound && (!node.key || node.key == m_keys[key_index]))
             return binding(this, node_index, m_params);
     }
@@ -208,13 +208,13 @@ bind_resolver::binding bind_resolver::next()
 }
 
 //------------------------------------------------------------------------------
-int bind_resolver::is_bound(const char* seq, int len) const
+int32 bind_resolver::is_bound(const char* seq, int32 len) const
 {
     return m_binder.is_bound(m_group, seq, len);
 }
 
 //------------------------------------------------------------------------------
-bool bind_resolver::more_than(unsigned int len) const
+bool bind_resolver::more_than(uint32 len) const
 {
     return m_key_count > m_tail + len;
 }

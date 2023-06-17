@@ -24,9 +24,9 @@ struct yield_thread : public std::enable_shared_from_this<yield_thread>
     virtual HANDLE  get_ready_event();
     virtual void    set_need_completion();
 
-    void            wait(unsigned int timeout);
+    void            wait(uint32 timeout);
 
-    virtual int     results(lua_State* state) = 0;
+    virtual int32   results(lua_State* state) = 0;
 
 protected:
     bool            is_canceled() const;
@@ -60,13 +60,13 @@ protected:
     const char* get_command() const;
 
 private:
-    static int ready(lua_State* state);
-    static int command(lua_State* state);
-    static int set_need_completion(lua_State* state);
-    static int results(lua_State* state);
-    static int wait(lua_State* state);
-    static int __gc(lua_State* state);
-    static int __tostring(lua_State* state);
+    static int32 ready(lua_State* state);
+    static int32 command(lua_State* state);
+    static int32 set_need_completion(lua_State* state);
+    static int32 results(lua_State* state);
+    static int32 wait(lua_State* state);
+    static int32 __gc(lua_State* state);
+    static int32 __tostring(lua_State* state);
 
     std::shared_ptr<yield_thread> m_thread;
     str_moveable m_command;

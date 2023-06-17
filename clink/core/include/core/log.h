@@ -20,20 +20,20 @@ class logger
     struct deferred
     {
         str_moveable function;
-        int line;
+        int32 line;
         str_moveable msg;
     };
 
 public:
     virtual         ~logger();
-    static void     info(const char* function, int line, const char* fmt, ...);
-    static void     error(const char* function, int line, const char* fmt, ...);
+    static void     info(const char* function, int32 line, const char* fmt, ...);
+    static void     error(const char* function, int32 line, const char* fmt, ...);
 
     static bool     can_defer();
-    static void     defer_info(const char* function, int line, const char* fmt, ...);
+    static void     defer_info(const char* function, int32 line, const char* fmt, ...);
 
 protected:
-    virtual void    emit(const char* function, int line, const char* fmt, va_list args) = 0;
+    virtual void    emit(const char* function, int32 line, const char* fmt, va_list args) = 0;
 
     void            emit_deferred();
 
@@ -49,7 +49,7 @@ class file_logger
 public:
                     file_logger(const char* log_path);
                     ~file_logger();
-    virtual void    emit(const char* function, int line, const char* fmt, va_list args) override;
+    virtual void    emit(const char* function, int32 line, const char* fmt, va_list args) override;
 
     static const char* get_path() { return s_this ? s_this->m_log_path.c_str() : nullptr; }
 

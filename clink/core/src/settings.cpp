@@ -89,7 +89,7 @@ static bool load_internal(FILE* in, std::function<void(const char* name, const c
 
     // Buffer the file.
     fseek(in, 0, SEEK_END);
-    int size = ftell(in);
+    int32 size = ftell(in);
     fseek(in, 0, SEEK_SET);
 
     if (size == 0)
@@ -249,7 +249,7 @@ bool migrate_setting(const char* name, const char* value, std::vector<setting_na
 
     if (stricmp(name, "exec_match_style") == 0)
     {
-        int x = value ? atoi(value) : 2;
+        int32 x = value ? atoi(value) : 2;
         out.emplace_back("exec.enable", (x>=0) ? "1" : "0");
         if (x >= 0)
         {
@@ -261,7 +261,7 @@ bool migrate_setting(const char* name, const char* value, std::vector<setting_na
     }
     else if (stricmp(name, "prompt_colour") == 0)
     {
-        int attr = value ? atoi(value) : -1;
+        int32 attr = value ? atoi(value) : -1;
         if (attr < 0)
         {
             if (!value)
@@ -301,7 +301,7 @@ bool migrate_setting(const char* name, const char* value, std::vector<setting_na
     }
     else if (stricmp(name, "history_file_lines") == 0)
     {
-        int x = value ? atoi(value) : 2500;
+        int32 x = value ? atoi(value) : 2500;
         bool disable = x < 0;
         out.emplace_back("history.save", disable ? "0" : "1");
         if (!disable)
@@ -455,7 +455,7 @@ static bool save_internal(const char* file, bool migrating)
         fprintf(out, "# name: %s\n", iter->get_short_desc());
 
         // Write out the setting's type.
-        int type = iter->get_type();
+        int32 type = iter->get_type();
         const char* type_name = nullptr;
         switch (type)
         {
@@ -652,7 +652,7 @@ template <> bool setting_impl<bool>::parse(const char* value, store<bool>& out)
 }
 
 //------------------------------------------------------------------------------
-template <> bool setting_impl<int>::parse(const char* value, store<int>& out)
+template <> bool setting_impl<int32>::parse(const char* value, store<int32>& out)
 {
     if ((*value < '0' || *value > '9') && *value != '-')
         return false;
@@ -677,7 +677,7 @@ template <> void setting_impl<bool>::get(str_base& out) const
 }
 
 //------------------------------------------------------------------------------
-template <> void setting_impl<int>::get(str_base& out) const
+template <> void setting_impl<int32>::get(str_base& out) const
 {
     out.format("%d", m_store.value);
 }
@@ -695,7 +695,7 @@ setting_enum::setting_enum(
     const char* name,
     const char* short_desc,
     const char* options,
-    int default_value)
+    int32 default_value)
 : setting_enum(name, short_desc, nullptr, options, default_value)
 {
 }
@@ -706,17 +706,17 @@ setting_enum::setting_enum(
     const char* short_desc,
     const char* long_desc,
     const char* options,
-    int default_value)
-: setting_impl<int>(name, short_desc, long_desc, default_value)
+    int32 default_value)
+: setting_impl<int32>(name, short_desc, long_desc, default_value)
 , m_options(options)
 {
     m_type = type_enum;
 }
 
 //------------------------------------------------------------------------------
-bool setting_enum::parse(const char* value, store<int>& out)
+bool setting_enum::parse(const char* value, store<int32>& out)
 {
-    int by_int = -1;
+    int32 by_int = -1;
     if (*value >= '0' && *value <= '9')
     {
         by_int = atoi(value);
@@ -728,12 +728,12 @@ bool setting_enum::parse(const char* value, store<int>& out)
             }
     }
 
-    int i = 0;
+    int32 i = 0;
     for (const char* option = m_options.c_str(); *option; ++i)
     {
         const char* next = next_option(option);
 
-        int option_len = int(next - option);
+        int32 option_len = int32(next - option);
         if (*next)
             --option_len;
 
@@ -763,12 +763,12 @@ bool setting_enum::parse(const char* value, store<int>& out)
 //------------------------------------------------------------------------------
 void setting_enum::get(str_base& out) const
 {
-    int index = m_store.value;
+    int32 index = m_store.value;
     if (index < 0)
         return;
 
     const char* option = m_options.c_str();
-    for (int i = 0; i < index && *option; ++i)
+    for (int32 i = 0; i < index && *option; ++i)
         option = next_option(option);
 
     if (*option)
@@ -778,7 +778,7 @@ void setting_enum::get(str_base& out) const
             --next;
 
         out.clear();
-        out.concat(option, int(next - option));
+        out.concat(option, int32(next - option));
     }
 }
 
@@ -834,12 +834,12 @@ bool setting_color::parse(const char* value, store<const char*>& out)
 
     str<> code;
     str<16> token;
-    int fg = -1;
-    int bg = -1;
-    int bold = -1;
-    int bright = -1;
-    int underline = -1;
-    int* pcolor = &fg;
+    int32 fg = -1;
+    int32 bg = -1;
+    int32 bold = -1;
+    int32 bright = -1;
+    int32 underline = -1;
+    int32* pcolor = &fg;
     bool saw_default = false;
     bool first_part = true;
 
@@ -906,7 +906,7 @@ bool setting_color::parse(const char* value, store<const char*>& out)
             continue;
         }
 
-        int i;
+        int32 i;
         for (i = 0; i < sizeof_array(color_names); i++)
             if (_strnicmp(token.c_str(), color_names[i], 3) == 0)
             {
@@ -967,10 +967,10 @@ bool setting_color::parse(const char* value, store<const char*>& out)
 }
 
 //------------------------------------------------------------------------------
-static int int_from_str_iter(const str_iter& iter)
+static int32 int_from_str_iter(const str_iter& iter)
 {
-    int x = 0;
-    int c = iter.length();
+    int32 x = 0;
+    int32 c = iter.length();
     for (const char* p = iter.get_pointer(); c--; p++)
     {
         if (*p < '0' || *p > '9')
@@ -982,7 +982,7 @@ static int int_from_str_iter(const str_iter& iter)
 }
 
 //------------------------------------------------------------------------------
-static bool strip_if_ends_with(str_base& s, const char* suffix, unsigned int len)
+static bool strip_if_ends_with(str_base& s, const char* suffix, uint32 len)
 {
     if (s.length() > len && strcmp(s.c_str() + s.length() - len, suffix) == 0)
     {
@@ -1012,13 +1012,13 @@ void setting_color::get_descriptive(str_base& out) const
         return;
 
     enum { reset_token, bold_token, underline_token, fg_token, bg_token, nomore_tokens };
-    int expected = reset_token;
+    int32 expected = reset_token;
     str_iter part;
     str_tokeniser parts(tmp.c_str(), ";");
 
     while (parts.next(part))
     {
-        int x = int_from_str_iter(part);
+        int32 x = int_from_str_iter(part);
         if (x < 0)
         {
 nope:

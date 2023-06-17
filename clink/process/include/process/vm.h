@@ -21,20 +21,20 @@ public:
     struct region
     {
         void*           base;
-        unsigned int    page_count;
+        uint32          page_count;
     };
 
-                        vm(int pid=-1);
+                        vm(int32 pid=-1);
                         ~vm();
     static size_t       get_block_granularity();
     static size_t       get_page_size();
     void*               get_alloc_base(void* address);
     region              get_region(void* address);
     void*               get_page(void* address);
-    region              alloc_region(unsigned int page_count, unsigned int access=access_read|access_write);
+    region              alloc_region(uint32 page_count, uint32 access=access_read|access_write);
     void                free_region(const region& region);
-    int                 get_access(const region& region);
-    bool                set_access(const region& region, unsigned int access);
+    int32               get_access(const region& region);
+    bool                set_access(const region& region, uint32 access);
     bool                read(void* dest, const void* src, size_t size);
     bool                write(void* dest, const void* src, size_t size);
     void                flush_icache(const region& region={});

@@ -20,8 +20,8 @@ struct ext_comparer
     {
         return (CompareStringW(LOCALE_USER_DEFAULT,
                                NORM_IGNORECASE|NORM_LINGUISTIC_CASING,
-                               a.c_str(), int(a.length()),
-                               b.c_str(), int(b.length())) == CSTR_LESS_THAN);
+                               a.c_str(), int32(a.length()),
+                               b.c_str(), int32(b.length())) == CSTR_LESS_THAN);
     }
 };
 
@@ -51,7 +51,7 @@ template<typename TYPE> static const TYPE* past_drive(const TYPE* path)
     if (!path::is_unc(path, &path))
     {
         path += past_ssqs(path);
-        if (iswalpha(static_cast<unsigned int>(path[0])) && path[1] == ':')
+        if (iswalpha(uint32(path[0])) && path[1] == ':')
             path += 2;
     }
     return path;
@@ -60,7 +60,7 @@ template<typename TYPE> static const TYPE* past_drive(const TYPE* path)
 //------------------------------------------------------------------------------
 static const char* get_last_separator(const char* in)
 {
-    for (int i = int(strlen(in)) - 1; i >= 0; --i)
+    for (int32 i = int32(strlen(in)) - 1; i >= 0; --i)
         if (path::is_separator(in[i]))
             return in + i;
 
@@ -70,7 +70,7 @@ static const char* get_last_separator(const char* in)
 //------------------------------------------------------------------------------
 static const wchar_t* get_last_separator(const wchar_t* in)
 {
-    for (int i = int(wcslen(in)) - 1; i >= 0; --i)
+    for (int32 i = int32(wcslen(in)) - 1; i >= 0; --i)
         if (path::is_separator(in[i]))
             return in + i;
 
@@ -78,7 +78,7 @@ static const wchar_t* get_last_separator(const wchar_t* in)
 }
 
 //------------------------------------------------------------------------------
-static int get_directory_end(const char* path)
+static int32 get_directory_end(const char* path)
 {
     const char* p = path;
 
@@ -93,7 +93,7 @@ static int get_directory_end(const char* path)
 
     const char* slash = get_last_separator(p);
     if (!slash)
-        return int(p - path);
+        return int32(p - path);
 
     // Trim consecutive slashes unless they're leading ones.
     const char* first_slash = slash;
@@ -109,7 +109,7 @@ static int get_directory_end(const char* path)
     if (first_slash != p)
         slash = first_slash;
 
-    return int(slash - path);
+    return int32(slash - path);
 }
 
 
@@ -124,7 +124,7 @@ void refresh_pathext()
 
 
 //------------------------------------------------------------------------------
-void normalise(str_base& in_out, int sep)
+void normalise(str_base& in_out, int32 sep)
 {
     normalise(in_out.data(), sep);
 }
@@ -135,7 +135,7 @@ void normalise(str_base& in_out, int sep)
 #else
 # define RESTRICT __restrict
 #endif
-void normalise(char* in_out, int sep)
+void normalise(char* in_out, int32 sep)
 {
     if (!sep)
         sep = PATH_SEP[0];
@@ -174,10 +174,10 @@ void normalise(char* in_out, int sep)
     //
     // Maybe there should be a parameter, so that the caller can choose.
 
-    unsigned int piece_count = 0;
+    uint32 piece_count = 0;
 
     char* RESTRICT write = in_out;
-    int unc_offset = 0;
+    int32 unc_offset = 0;
     if (is_separator(*write))
     {
         *write++ = char(sep);
@@ -234,13 +234,13 @@ void normalise(char* in_out, int sep)
 }
 
 //------------------------------------------------------------------------------
-void normalise_separators(str_base& in_out, int sep)
+void normalise_separators(str_base& in_out, int32 sep)
 {
     normalise_separators(in_out.data(), sep);
 }
 
 //------------------------------------------------------------------------------
-void normalise_separators(char* in_out, int sep)
+void normalise_separators(char* in_out, int32 sep)
 {
     if (!sep)
         sep = PATH_SEP[0];
@@ -251,7 +251,7 @@ void normalise_separators(char* in_out, int sep)
 }
 
 //------------------------------------------------------------------------------
-bool is_separator(int c)
+bool is_separator(int32 c)
 {
 #if defined(PLATFORM_WINDOWS)
     return (c == '/' || c == '\\');
@@ -277,7 +277,7 @@ bool get_base_name(const char* in, str_base& out)
     if (!get_name(in, out))
         return false;
 
-    int dot = out.last_of('.');
+    int32 dot = out.last_of('.');
     if (dot >= 0)
         out.truncate(dot);
 
@@ -287,14 +287,14 @@ bool get_base_name(const char* in, str_base& out)
 //------------------------------------------------------------------------------
 bool get_directory(const char* in, str_base& out)
 {
-    int end = get_directory_end(in);
+    int32 end = get_directory_end(in);
     return out.concat(in, end);
 }
 
 //------------------------------------------------------------------------------
 bool get_directory(str_base& in_out)
 {
-    int end = get_directory_end(in_out.c_str());
+    int32 end = get_directory_end(in_out.c_str());
     in_out.truncate(end);
     return true;
 }
@@ -502,7 +502,7 @@ bool is_device(const char* _path)
     {
         char* truncate = strpbrk(child.data(), ":.");
         if (truncate)
-            child.truncate(static_cast<unsigned int>(truncate - child.c_str()));
+            child.truncate(uint32(truncate - child.c_str()));
 
         const char* name = child.c_str();
         while (*name == ' ')
@@ -541,7 +541,7 @@ bool append(str_base& out, const char* rhs)
 
     bool add_separator = true;
 
-    int last = int(out.length() - 1);
+    int32 last = int32(out.length() - 1);
     if (last >= 0)
     {
         add_separator &= !is_separator(out[last]);
@@ -551,7 +551,7 @@ bool append(str_base& out, const char* rhs)
         if (!is_unc(in, &in))
         {
             in += past_ssqs(in);
-            add_separator &= !(isalpha((unsigned char)in[0]) && in[1] == ':' && in[2] == '\0');
+            add_separator &= !(isalpha(uint8(in[0])) && in[1] == ':' && in[2] == '\0');
         }
 #endif
     }
@@ -569,7 +569,7 @@ bool append(str_base& out, const char* rhs)
 // letter or UNC root, and doesn't strip an initial (root) separator.
 void maybe_strip_last_separator(str_base& out)
 {
-    unsigned int start = static_cast<unsigned int>(past_drive(out.c_str()) - out.c_str());
+    uint32 start = uint32(past_drive(out.c_str()) - out.c_str());
 
     if (is_separator(out[start]))
         start++;
@@ -579,7 +579,7 @@ void maybe_strip_last_separator(str_base& out)
 }
 void maybe_strip_last_separator(wstr_base& out)
 {
-    unsigned int start = static_cast<unsigned int>(past_drive(out.c_str()) - out.c_str());
+    uint32 start = uint32(past_drive(out.c_str()) - out.c_str());
 
     if (is_separator(out[start]))
         ++start;
@@ -593,10 +593,10 @@ void maybe_strip_last_separator(wstr_base& out)
 // non-zero if out changed, or zero if out didn't change.
 bool to_parent(str_base& out, str_base* child)
 {
-    unsigned int orig_len = out.length();
+    uint32 orig_len = out.length();
 
     // Find end of drive or UNC root plus separator(s).
-    unsigned int start = static_cast<unsigned int>(past_drive(out.c_str()) - out.c_str());
+    uint32 start = uint32(past_drive(out.c_str()) - out.c_str());
     if (start && out[start - 1] == ':')
     {
         while (is_separator(out[start]))
@@ -604,12 +604,12 @@ bool to_parent(str_base& out, str_base* child)
     }
 
     // Trim separators at the end.
-    unsigned int end = out.length();
+    uint32 end = out.length();
     while (end > 0 && is_separator(out[end - 1]))
         end--;
 
     // Trim the last path component.
-    int child_end = end;
+    int32 child_end = end;
     while (end > 0 && !is_separator(out[end - 1]))
         end--;
     if (end < start)
@@ -641,7 +641,7 @@ bool is_unc(const T* path, const T** past_unc)
 
     const T* const in = path;
     skip_sep(path);
-    unsigned int leading = static_cast<unsigned int>(path - in);
+    uint32 leading = uint32(path - in);
 
     // Check for device namespace.
     if (path[0] == '.' && (!path[1] || is_separator(path[1])))
@@ -720,7 +720,7 @@ bool is_incomplete_unc(const char* path)
     skip_sep(path);
 
     // Server name.
-    if (isspace((unsigned char)*path))
+    if (isspace(uint8(*path)))
         return true;
     skip_nonsep(path);
 
@@ -730,7 +730,7 @@ bool is_incomplete_unc(const char* path)
     skip_sep(path);
 
     // Share name.
-    if (isspace((unsigned char)*path))
+    if (isspace(uint8(*path)))
         return true;
     skip_nonsep(path);
 
@@ -758,7 +758,7 @@ bool is_executable_extension(const char* in)
 
         str_tokeniser tokens(pathext.c_str(), ";");
         const char *start;
-        int length;
+        int32 length;
 
         wstr<> wtoken;
         while (str_token token = tokens.next(start, length))

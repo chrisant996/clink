@@ -145,7 +145,7 @@ void test_editor::press_keys(const char* keys)
     INPUT_RECORD input_record = { KEY_EVENT };
     KEY_EVENT_RECORD& key_event = input_record.Event.KeyEvent;
     key_event.bKeyDown = TRUE;
-    while (int c = *keys++)
+    while (int32 c = *keys++)
     {
         key_event.uChar.UnicodeChar = wchar_t(c);
         WriteConsoleInput(handle, &input_record, 1, &written);
@@ -160,16 +160,16 @@ class test_console
 public:
             test_console();
             ~test_console();
-    void    resize(int columns) { resize(columns, m_rows); }
-    void    resize(int columns, int rows);
-    int     get_columns() const { return m_columns; }
-    int     get_rows() const    { return m_rows; }
+    void    resize(int32 columns) { resize(columns, m_rows); }
+    void    resize(int32 columns, int32 rows);
+    int32   get_columns() const { return m_columns; }
+    int32   get_rows() const    { return m_rows; }
 
 private:
     handle  m_handle;
     HANDLE  m_prev_handle;
-    int     m_columns;
-    int     m_rows;
+    int32   m_columns;
+    int32   m_rows;
 };
 
 //------------------------------------------------------------------------------
@@ -198,7 +198,7 @@ test_console::~test_console()
 }
 
 //------------------------------------------------------------------------------
-void test_console::resize(int columns, int rows)
+void test_console::resize(int32 columns, int32 rows)
 {
     SMALL_RECT rect = { 0, 0, short(columns - 1), short(rows - 1) };
     COORD size = { short(columns), short(rows) };
@@ -217,7 +217,7 @@ void test_console::resize(int columns, int rows)
 class stepper
 {
 public:
-                    stepper(int timeout_ms);
+                    stepper(int32 timeout_ms);
                     ~stepper();
     void            init(bool pause=false);
     void            reset();
@@ -238,7 +238,7 @@ private:
     void            run_input_thread();
     handle          m_input_thread;
     volatile state  m_state;
-    int             m_timeout_ms;
+    int32           m_timeout_ms;
 };
 
 //------------------------------------------------------------------------------
@@ -250,7 +250,7 @@ DWORD WINAPI stepper::thunk(void* param)
 }
 
 //------------------------------------------------------------------------------
-stepper::stepper(int timeout_ms)
+stepper::stepper(int32 timeout_ms)
 : m_input_thread(nullptr)
 , m_state(state_running)
 , m_timeout_ms(timeout_ms)
@@ -351,7 +351,7 @@ bool stepper::step()
 class runner
 {
 public:
-                        runner(int width=0, int timeout_ms=0);
+                        runner(int32 width=0, int32 timeout_ms=0);
     void                go(bool pause=false);
 
 private:
@@ -363,11 +363,11 @@ private:
 };
 
 //------------------------------------------------------------------------------
-runner::runner(int width, int timeout_ms)
+runner::runner(int32 width, int32 timeout_ms)
 : m_stepper((timeout_ms <= 0) ? 200 : timeout_ms)
 {
     srand(0xa9e);
-    width = (width <= 0) ? 80 : min<int>(max<int>(width, 20), 80);
+    width = (width <= 0) ? 80 : min<int32>(max<int32>(width, 20), 80);
     m_console.resize(width, 25);
 }
 
@@ -456,15 +456,15 @@ bool runner::line_test()
                  "\x1b[1;7m$\x1b[m ");
 
     const char word[] = "9876543210";
-    for (int i = 0; i < 100;)
+    for (int32 i = 0; i < 100;)
     {
         editor.press_keys("_");
-        int j = rand() % (sizeof(word) - 2);
+        int32 j = rand() % (sizeof(word) - 2);
         editor.press_keys(word + j);
         i += sizeof(word) - j;
     }
 
-    int columns = m_console.get_columns();
+    int32 columns = m_console.get_columns();
     for (; columns > 16 && !editor.done() && step(); --columns)
         m_console.resize(columns);
 
@@ -480,7 +480,7 @@ bool runner::line_test()
 
 
 //------------------------------------------------------------------------------
-int draw_test(int argc, char** argv)
+int32 draw_test(int32 argc, char** argv)
 {
     static const char* help_usage = "Usage: drawtest [options]\n";
 
@@ -505,12 +505,12 @@ int draw_test(int argc, char** argv)
     extern void puts_clink_header();
 
     bool pause = false;
-    int timeout_ms = 0;
-    int width = 0;
+    int32 timeout_ms = 0;
+    int32 width = 0;
     str_moveable emulation("emulate");
 
-    int i;
-    int ret = 1;
+    int32 i;
+    int32 ret = 1;
     while ((i = getopt_long(argc, argv, "?hps.w.e.", options, nullptr)) != -1)
     {
         switch (i)

@@ -194,19 +194,19 @@ bool host_lua::is_script_path_changed() const
 }
 
 //------------------------------------------------------------------------------
-bool host_lua::send_event(const char* event_name, int nargs)
+bool host_lua::send_event(const char* event_name, int32 nargs)
 {
     return m_state.send_event(event_name, nargs);
 }
 
 //------------------------------------------------------------------------------
-bool host_lua::send_event_string_out(const char* event_name, str_base& out, int nargs)
+bool host_lua::send_event_string_out(const char* event_name, str_base& out, int32 nargs)
 {
     return m_state.send_event_string_out(event_name, out, nargs);
 }
 
 //------------------------------------------------------------------------------
-bool host_lua::send_event_cancelable(const char* event_name, int nargs)
+bool host_lua::send_event_cancelable(const char* event_name, int32 nargs)
 {
     return m_state.send_event_cancelable(event_name, nargs);
 }
@@ -236,7 +236,7 @@ bool host_lua::call_lua_rl_global_function(const char* func_name, line_state* li
 }
 
 //------------------------------------------------------------------------------
-bool host_lua::call_lua_filter_matches(char** matches, int completion_type, int filename_completion_desired)
+bool host_lua::call_lua_filter_matches(char** matches, int32 completion_type, int32 filename_completion_desired)
 {
     return m_generator.filter_matches(matches, char(completion_type), !!filename_completion_desired);
 }

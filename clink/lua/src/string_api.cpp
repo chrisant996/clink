@@ -18,7 +18,7 @@
 /// Performs a case insensitive comparison of the strings with international
 /// linguistic awareness.  This is more efficient than converting both strings
 /// to lowercase and comparing the results.
-static int equalsi(lua_State* state)
+static int32 equalsi(lua_State* state)
 {
     const char* a = checkstring(state, 1);
     const char* b = checkstring(state, 2);
@@ -26,7 +26,7 @@ static int equalsi(lua_State* state)
         return 0;
 
     str_compare_scope _(str_compare_scope::caseless, false/*fuzzy_accent*/);
-    int result = str_compare(a, b);
+    int32 result = str_compare(a, b);
 
     lua_pushboolean(state, result == -1);
     return 1;
@@ -46,7 +46,7 @@ static int equalsi(lua_State* state)
 /// The optional <span class="arg">quote_pair</span> can provide a beginning
 /// quote character and an ending quote character.  If only one character is
 /// provided it is used as both a beginning and ending quote character.
-int explode(lua_State* state)
+int32 explode(lua_State* state)
 {
     const char* in = checkstring(state, 1);
     const char* delims = optstring(state, 2, " ");
@@ -59,9 +59,9 @@ int explode(lua_State* state)
 
     lua_createtable(state, 16, 0);
 
-    int count = 0;
+    int32 count = 0;
     const char* start;
-    int length;
+    int32 length;
     while (str_token token = tokens.next(start, length))
     {
         lua_pushlstring(state, start, length);
@@ -77,7 +77,7 @@ int explode(lua_State* state)
 /// -arg:   text:string
 /// -ret:   integer
 /// Returns a hash of the input <span class="arg">text</span>.
-static int hash(lua_State* state)
+static int32 hash(lua_State* state)
 {
     const char* in = checkstring(state, 1);
     if (!in)
@@ -101,14 +101,14 @@ static int hash(lua_State* state)
 /// -show:  string.matchlen("abx", "a")         -- returns 1
 /// -show:  string.matchlen("abx", "aby")       -- returns 2
 /// -show:  string.matchlen("abx", "abx")       -- returns -1
-static int match_len(lua_State* state)
+static int32 match_len(lua_State* state)
 {
     const char* a = checkstring(state, 1);
     const char* b = checkstring(state, 2);
     if (!a || !b)
         return 0;
 
-    int result = str_compare(a, b);
+    int32 result = str_compare(a, b);
     lua_pushinteger(state, result);
     return 1;
 }
@@ -156,7 +156,7 @@ static int match_len(lua_State* state)
 /// -show:
 /// -show:  -- The overall sort order ends up listing all the files in sorted
 /// -show:  -- order, followed by branches and tags sorted together.
-static int api_compare_matches(lua_State* state)
+static int32 api_compare_matches(lua_State* state)
 {
     const bool has_types = lua_isstring(state, 3);
     const char* l = checkstring(state, 1);
@@ -192,7 +192,7 @@ void string_lua_initialise(lua_state& lua)
 {
     struct {
         const char* name;
-        int         (*method)(lua_State*);
+        int32       (*method)(lua_State*);
     } methods[] = {
         { "equalsi",    &equalsi },
         { "explode",    &explode },

@@ -7,7 +7,7 @@
 #include <assert.h>
 
 //------------------------------------------------------------------------------
-bool input_params::get(unsigned int param, unsigned int& value) const
+bool input_params::get(uint32 param, uint32& value) const
 {
     if (param >= m_num)
     {
@@ -20,7 +20,7 @@ bool input_params::get(unsigned int param, unsigned int& value) const
 }
 
 //------------------------------------------------------------------------------
-unsigned int input_params::count() const
+uint32 input_params::count() const
 {
     return m_num;
 }
@@ -32,7 +32,7 @@ short input_params::length() const
 }
 
 //------------------------------------------------------------------------------
-bool input_params::add(unsigned short value, unsigned char len)
+bool input_params::add(unsigned short value, uint8 len)
 {
     if (m_num >= sizeof_array(m_params))
         return false;

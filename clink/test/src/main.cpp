@@ -53,7 +53,7 @@ void start_logger()
 }
 
 //------------------------------------------------------------------------------
-int main(int argc, char** argv)
+int32 main(int32 argc, char** argv)
 {
     argc--, argv++;
 
@@ -102,7 +102,7 @@ int main(int argc, char** argv)
     clatch::colors::initialize();
 
     const char* prefix = (argc > 0) ? argv[0] : "";
-    int result = (clatch::run(prefix) != true);
+    int32 result = (clatch::run(prefix) != true);
 
     extern void shutdown_recognizer();
     shutdown_recognizer();

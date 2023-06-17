@@ -6,10 +6,10 @@
 #include "attributes.h"
 
 class str_base;
-enum find_line_mode : int;
+enum find_line_mode : int32;
 
 //------------------------------------------------------------------------------
-enum class ansi_handler : int
+enum class ansi_handler : int32
 {
     unknown,
     clink,
@@ -41,26 +41,26 @@ public:
     virtual void    begin() = 0;
     virtual void    end() = 0;
     virtual void    close() = 0;
-    virtual void    write(const char* data, int length) = 0;
+    virtual void    write(const char* data, int32 length) = 0;
     virtual void    flush() = 0;
-    virtual int     get_columns() const = 0;
-    virtual int     get_rows() const = 0;
-    virtual bool    get_line_text(int line, str_base& out) const = 0;
+    virtual int32   get_columns() const = 0;
+    virtual int32   get_rows() const = 0;
+    virtual bool    get_line_text(int32 line, str_base& out) const = 0;
     virtual bool    has_native_vt_processing() const = 0;
     virtual void    clear(clear_type type) = 0;
     virtual void    clear_line(clear_type type) = 0;
-    virtual void    set_horiz_cursor(int column) = 0;
-    virtual void    set_cursor(int column, int row) = 0;
-    virtual void    move_cursor(int dx, int dy) = 0;
+    virtual void    set_horiz_cursor(int32 column) = 0;
+    virtual void    set_cursor(int32 column, int32 row) = 0;
+    virtual void    move_cursor(int32 dx, int32 dy) = 0;
     virtual void    save_cursor() = 0;
     virtual void    restore_cursor() = 0;
-    virtual void    insert_chars(int count) = 0;
-    virtual void    delete_chars(int count) = 0;
+    virtual void    insert_chars(int32 count) = 0;
+    virtual void    delete_chars(int32 count) = 0;
     virtual void    set_attributes(const attributes attr) = 0;
     virtual bool    get_nearest_color(attributes& attr) const = 0;
-    virtual int     is_line_default_color(int line) const = 0;
-    virtual int     line_has_color(int line, const BYTE* attrs, int num_attrs, BYTE mask=0xff) const = 0;
-    virtual int     find_line(int starting_line, int distance, const char* text, find_line_mode mode, const BYTE* attrs=nullptr, int num_attrs=0, BYTE mask=0xff) const = 0;
+    virtual int32   is_line_default_color(int32 line) const = 0;
+    virtual int32   line_has_color(int32 line, const BYTE* attrs, int32 num_attrs, BYTE mask=0xff) const = 0;
+    virtual int32   find_line(int32 starting_line, int32 distance, const char* text, find_line_mode mode, const BYTE* attrs=nullptr, int32 num_attrs=0, BYTE mask=0xff) const = 0;
 };
 
 //------------------------------------------------------------------------------

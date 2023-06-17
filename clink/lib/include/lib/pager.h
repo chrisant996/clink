@@ -12,5 +12,5 @@ class pager
 {
 public:
     virtual void    start_pager(printer& printer) = 0;
-    virtual bool    on_print_lines(printer& printer, int lines) = 0;
+    virtual bool    on_print_lines(printer& printer, int32 lines) = 0;
 };

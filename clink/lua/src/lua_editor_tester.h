@@ -30,9 +30,9 @@ public:
     void                    set_input(const char* input) { m_input = m_read = input; }
     virtual void            begin() override {}
     virtual void            end() override {}
-    virtual bool            available(unsigned int timeout) override { return has_input(); }
+    virtual bool            available(uint32 timeout) override { return has_input(); }
     virtual void            select(input_idle*) override {}
-    virtual int             read() override { return *(unsigned char*)m_read++; }
+    virtual int32           read() override { return *(uint8*)m_read++; }
     virtual key_tester*     set_key_tester(key_tester*) override { return nullptr; }
 
 private:
@@ -49,14 +49,14 @@ public:
     virtual void            begin() override {}
     virtual void            end() override {}
     virtual void            close() override {}
-    virtual void            write(const char* chars, int length) override {}
+    virtual void            write(const char* chars, int32 length) override {}
     virtual void            flush() override {}
-    virtual int             get_columns() const override { return 80; }
-    virtual int             get_rows() const override { return 25; }
-    virtual bool            get_line_text(int line, str_base& out) const { return false; }
-    virtual int             is_line_default_color(int line) const { return true; }
-    virtual int             line_has_color(int line, const BYTE* attrs, int num_attrs, BYTE mask=0xff) const { return false; }
-    virtual int             find_line(int starting_line, int distance, const char* text, find_line_mode mode, const BYTE* attrs=nullptr, int num_attrs=0, BYTE mask=0xff) const { return 0; }
+    virtual int32           get_columns() const override { return 80; }
+    virtual int32           get_rows() const override { return 25; }
+    virtual bool            get_line_text(int32 line, str_base& out) const { return false; }
+    virtual int32           is_line_default_color(int32 line) const { return true; }
+    virtual int32           line_has_color(int32 line, const BYTE* attrs, int32 num_attrs, BYTE mask=0xff) const { return false; }
+    virtual int32           find_line(int32 starting_line, int32 distance, const char* text, find_line_mode mode, const BYTE* attrs=nullptr, int32 num_attrs=0, BYTE mask=0xff) const { return 0; }
     virtual void            set_attributes(const attributes attr) {}
 };
 

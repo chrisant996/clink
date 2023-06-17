@@ -10,17 +10,17 @@ template <typename T>
 class str_iter_impl
 {
 public:
-    explicit        str_iter_impl(const T* s=(const T*)L"", int len=-1);
-    explicit        str_iter_impl(const str_impl<T>& s, int len=-1);
+    explicit        str_iter_impl(const T* s=(const T*)L"", int32 len=-1);
+    explicit        str_iter_impl(const str_impl<T>& s, int32 len=-1);
                     str_iter_impl(const str_iter_impl<T>& i);
     const T*        get_pointer() const;
     const T*        get_next_pointer();
     void            reset_pointer(const T* ptr);
-    void            truncate(unsigned int len);
-    int             peek();
-    int             next();
+    void            truncate(uint32 len);
+    int32           peek();
+    int32           next();
     bool            more() const;
-    unsigned int    length() const;
+    uint32          length() const;
 
 private:
     const T*        m_ptr;
@@ -28,14 +28,14 @@ private:
 };
 
 //------------------------------------------------------------------------------
-template <typename T> str_iter_impl<T>::str_iter_impl(const T* s, int len)
+template <typename T> str_iter_impl<T>::str_iter_impl(const T* s, int32 len)
 : m_ptr(s)
 , m_end(m_ptr + len)
 {
 }
 
 //------------------------------------------------------------------------------
-template <typename T> str_iter_impl<T>::str_iter_impl(const str_impl<T>& s, int len)
+template <typename T> str_iter_impl<T>::str_iter_impl(const str_impl<T>& s, int32 len)
 : m_ptr(s.c_str())
 , m_end(m_ptr + len)
 {
@@ -73,7 +73,7 @@ template <typename T> void str_iter_impl<T>::reset_pointer(const T* ptr)
 }
 
 //------------------------------------------------------------------------------
-template <typename T> void str_iter_impl<T>::truncate(unsigned int len)
+template <typename T> void str_iter_impl<T>::truncate(uint32 len)
 {
     assert(m_ptr);
     assert(len <= length());
@@ -81,10 +81,10 @@ template <typename T> void str_iter_impl<T>::truncate(unsigned int len)
 }
 
 //------------------------------------------------------------------------------
-template <typename T> int str_iter_impl<T>::peek()
+template <typename T> int32 str_iter_impl<T>::peek()
 {
     const T* ptr = m_ptr;
-    int ret = next();
+    int32 ret = next();
     m_ptr = ptr;
     return ret;
 }

@@ -4,7 +4,7 @@
 #pragma once
 
 //------------------------------------------------------------------------------
-enum class suggestion_action : unsigned char
+enum class suggestion_action : uint8
 {
     insert_to_end,
     insert_next_word,
@@ -22,18 +22,18 @@ public:
     bool            can_update_matches();
     bool            accepted_whole_suggestion() const { return m_accepted_whole; }
     void            set_started(const char* line);
-    void            set(const char* line, unsigned int endword_offset, const char* suggestion, unsigned int offset);
+    void            set(const char* line, uint32 endword_offset, const char* suggestion, uint32 offset);
     bool            insert(suggestion_action action);
     bool            pause(bool pause);
 
 private:
-    void            resync_suggestion_iterator(unsigned int old_cursor);
+    void            resync_suggestion_iterator(uint32 old_cursor);
     str_iter        m_iter;
     str_moveable    m_suggestion;
     str_moveable    m_line;         // Input line that generated the suggestion.
     str_moveable    m_started;      // Input line that started generating a suggestion.
-    unsigned int    m_suggestion_offset = -1;
-    unsigned int    m_endword_offset = -1;
+    uint32          m_suggestion_offset = -1;
+    uint32          m_endword_offset = -1;
     bool            m_paused = false;
     bool            m_accepted_whole = false;
 };

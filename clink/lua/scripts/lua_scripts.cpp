@@ -2374,7 +2374,7 @@ const unsigned char lib_arguments_lua_script_[] = {
 0x00, 0x3d, 0x7b, 0x61, 0x72, 0x67, 0x75, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x2e, 0x6c, 0x75, 0x61, 0x7d, 
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, };
 unsigned char const* lib_arguments_lua_script = lib_arguments_lua_script_;
-int lib_arguments_lua_script_len = sizeof(lib_arguments_lua_script_);
+int32 lib_arguments_lua_script_len = sizeof(lib_arguments_lua_script_);
 #endif // ARCHITECTURE == 64
 #if ARCHITECTURE == 86
 const unsigned char lib_arguments_lua_script_[] = {
@@ -4530,7 +4530,7 @@ const unsigned char lib_arguments_lua_script_[] = {
 0x6e, 0x74, 0x73, 0x2e, 0x6c, 0x75, 0x61, 0x7d, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
 0x00, 0x00, 0x00, 0x00, };
 unsigned char const* lib_arguments_lua_script = lib_arguments_lua_script_;
-int lib_arguments_lua_script_len = sizeof(lib_arguments_lua_script_);
+int32 lib_arguments_lua_script_len = sizeof(lib_arguments_lua_script_);
 #endif // ARCHITECTURE == 86
 #if ARCHITECTURE == 64
 const unsigned char lib_classifier_lua_script_[] = {
@@ -4728,7 +4728,7 @@ const unsigned char lib_classifier_lua_script_[] = {
 0x61, 0x73, 0x73, 0x69, 0x66, 0x69, 0x65, 0x72, 0x2e, 0x6c, 0x75, 0x61, 0x7d, 0x00, 0x00, 0x00, 0x00, 
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, };
 unsigned char const* lib_classifier_lua_script = lib_classifier_lua_script_;
-int lib_classifier_lua_script_len = sizeof(lib_classifier_lua_script_);
+int32 lib_classifier_lua_script_len = sizeof(lib_classifier_lua_script_);
 #endif // ARCHITECTURE == 64
 #if ARCHITECTURE == 86
 const unsigned char lib_classifier_lua_script_[] = {
@@ -4907,7 +4907,7 @@ const unsigned char lib_classifier_lua_script_[] = {
 0x69, 0x65, 0x72, 0x2e, 0x6c, 0x75, 0x61, 0x7d, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
 0x00, 0x00, 0x00, 0x00, };
 unsigned char const* lib_classifier_lua_script = lib_classifier_lua_script_;
-int lib_classifier_lua_script_len = sizeof(lib_classifier_lua_script_);
+int32 lib_classifier_lua_script_len = sizeof(lib_classifier_lua_script_);
 #endif // ARCHITECTURE == 86
 #if ARCHITECTURE == 64
 const unsigned char lib_console_lua_script_[] = {
@@ -4948,7 +4948,7 @@ const unsigned char lib_console_lua_script_[] = {
 0x3d, 0x7b, 0x63, 0x6f, 0x6e, 0x73, 0x6f, 0x6c, 0x65, 0x2e, 0x6c, 0x75, 0x61, 0x7d, 0x00, 0x00, 0x00, 
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, };
 unsigned char const* lib_console_lua_script = lib_console_lua_script_;
-int lib_console_lua_script_len = sizeof(lib_console_lua_script_);
+int32 lib_console_lua_script_len = sizeof(lib_console_lua_script_);
 #endif // ARCHITECTURE == 64
 #if ARCHITECTURE == 86
 const unsigned char lib_console_lua_script_[] = {
@@ -4986,7 +4986,7 @@ const unsigned char lib_console_lua_script_[] = {
 0x7b, 0x63, 0x6f, 0x6e, 0x73, 0x6f, 0x6c, 0x65, 0x2e, 0x6c, 0x75, 0x61, 0x7d, 0x00, 0x00, 0x00, 0x00, 
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, };
 unsigned char const* lib_console_lua_script = lib_console_lua_script_;
-int lib_console_lua_script_len = sizeof(lib_console_lua_script_);
+int32 lib_console_lua_script_len = sizeof(lib_console_lua_script_);
 #endif // ARCHITECTURE == 86
 #if ARCHITECTURE == 64
 const unsigned char lib_core_lua_script_[] = {
@@ -5564,7 +5564,7 @@ const unsigned char lib_core_lua_script_[] = {
 0x00, 0x00, 0x00, 0x00, 0x3d, 0x7b, 0x63, 0x6f, 0x72, 0x65, 0x2e, 0x6c, 0x75, 0x61, 0x7d, 0x00, 0x00, 
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, };
 unsigned char const* lib_core_lua_script = lib_core_lua_script_;
-int lib_core_lua_script_len = sizeof(lib_core_lua_script_);
+int32 lib_core_lua_script_len = sizeof(lib_core_lua_script_);
 #endif // ARCHITECTURE == 64
 #if ARCHITECTURE == 86
 const unsigned char lib_core_lua_script_[] = {
@@ -6091,7 +6091,7 @@ const unsigned char lib_core_lua_script_[] = {
 0x00, 0x00, 0x00, 0x3d, 0x7b, 0x63, 0x6f, 0x72, 0x65, 0x2e, 0x6c, 0x75, 0x61, 0x7d, 0x00, 0x00, 0x00, 
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, };
 unsigned char const* lib_core_lua_script = lib_core_lua_script_;
-int lib_core_lua_script_len = sizeof(lib_core_lua_script_);
+int32 lib_core_lua_script_len = sizeof(lib_core_lua_script_);
 #endif // ARCHITECTURE == 86
 #if ARCHITECTURE == 64
 const unsigned char lib_coroutines_lua_script_[] = {
@@ -7110,7 +7110,7 @@ const unsigned char lib_coroutines_lua_script_[] = {
 0x72, 0x6f, 0x75, 0x74, 0x69, 0x6e, 0x65, 0x73, 0x2e, 0x6c, 0x75, 0x61, 0x7d, 0x00, 0x00, 0x00, 0x00, 
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, };
 unsigned char const* lib_coroutines_lua_script = lib_coroutines_lua_script_;
-int lib_coroutines_lua_script_len = sizeof(lib_coroutines_lua_script_);
+int32 lib_coroutines_lua_script_len = sizeof(lib_coroutines_lua_script_);
 #endif // ARCHITECTURE == 64
 #if ARCHITECTURE == 86
 const unsigned char lib_coroutines_lua_script_[] = {
@@ -8032,7 +8032,7 @@ const unsigned char lib_coroutines_lua_script_[] = {
 0x6f, 0x72, 0x6f, 0x75, 0x74, 0x69, 0x6e, 0x65, 0x73, 0x2e, 0x6c, 0x75, 0x61, 0x7d, 0x00, 0x00, 0x00, 
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, };
 unsigned char const* lib_coroutines_lua_script = lib_coroutines_lua_script_;
-int lib_coroutines_lua_script_len = sizeof(lib_coroutines_lua_script_);
+int32 lib_coroutines_lua_script_len = sizeof(lib_coroutines_lua_script_);
 #endif // ARCHITECTURE == 86
 #if ARCHITECTURE == 64
 const unsigned char lib_debugger_lua_script_[] = {
@@ -9787,7 +9787,7 @@ const unsigned char lib_debugger_lua_script_[] = {
 0x00, 0x00, 0x00, 0x00, 0x00, 0x3d, 0x7b, 0x64, 0x65, 0x62, 0x75, 0x67, 0x67, 0x65, 0x72, 0x2e, 0x6c, 
 0x75, 0x61, 0x7d, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, };
 unsigned char const* lib_debugger_lua_script = lib_debugger_lua_script_;
-int lib_debugger_lua_script_len = sizeof(lib_debugger_lua_script_);
+int32 lib_debugger_lua_script_len = sizeof(lib_debugger_lua_script_);
 #endif // ARCHITECTURE == 64
 #if ARCHITECTURE == 86
 const unsigned char lib_debugger_lua_script_[] = {
@@ -11410,7 +11410,7 @@ const unsigned char lib_debugger_lua_script_[] = {
 0x00, 0x3d, 0x7b, 0x64, 0x65, 0x62, 0x75, 0x67, 0x67, 0x65, 0x72, 0x2e, 0x6c, 0x75, 0x61, 0x7d, 0x00, 
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, };
 unsigned char const* lib_debugger_lua_script = lib_debugger_lua_script_;
-int lib_debugger_lua_script_len = sizeof(lib_debugger_lua_script_);
+int32 lib_debugger_lua_script_len = sizeof(lib_debugger_lua_script_);
 #endif // ARCHITECTURE == 86
 #if ARCHITECTURE == 64
 const unsigned char lib_events_lua_script_[] = {
@@ -11846,7 +11846,7 @@ const unsigned char lib_events_lua_script_[] = {
 0x00, 0x00, 0x00, 0x3d, 0x7b, 0x65, 0x76, 0x65, 0x6e, 0x74, 0x73, 0x2e, 0x6c, 0x75, 0x61, 0x7d, 0x00, 
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, };
 unsigned char const* lib_events_lua_script = lib_events_lua_script_;
-int lib_events_lua_script_len = sizeof(lib_events_lua_script_);
+int32 lib_events_lua_script_len = sizeof(lib_events_lua_script_);
 #endif // ARCHITECTURE == 64
 #if ARCHITECTURE == 86
 const unsigned char lib_events_lua_script_[] = {
@@ -12240,7 +12240,7 @@ const unsigned char lib_events_lua_script_[] = {
 0x00, 0x0e, 0x00, 0x00, 0x00, 0x3d, 0x7b, 0x65, 0x76, 0x65, 0x6e, 0x74, 0x73, 0x2e, 0x6c, 0x75, 0x61, 
 0x7d, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, };
 unsigned char const* lib_events_lua_script = lib_events_lua_script_;
-int lib_events_lua_script_len = sizeof(lib_events_lua_script_);
+int32 lib_events_lua_script_len = sizeof(lib_events_lua_script_);
 #endif // ARCHITECTURE == 86
 #if ARCHITECTURE == 64
 const unsigned char lib_generator_lua_script_[] = {
@@ -12842,7 +12842,7 @@ const unsigned char lib_generator_lua_script_[] = {
 0x72, 0x2e, 0x6c, 0x75, 0x61, 0x7d, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
 0x00, 0x00, };
 unsigned char const* lib_generator_lua_script = lib_generator_lua_script_;
-int lib_generator_lua_script_len = sizeof(lib_generator_lua_script_);
+int32 lib_generator_lua_script_len = sizeof(lib_generator_lua_script_);
 #endif // ARCHITECTURE == 64
 #if ARCHITECTURE == 86
 const unsigned char lib_generator_lua_script_[] = {
@@ -13386,7 +13386,7 @@ const unsigned char lib_generator_lua_script_[] = {
 0x3d, 0x7b, 0x67, 0x65, 0x6e, 0x65, 0x72, 0x61, 0x74, 0x6f, 0x72, 0x2e, 0x6c, 0x75, 0x61, 0x7d, 0x00, 
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, };
 unsigned char const* lib_generator_lua_script = lib_generator_lua_script_;
-int lib_generator_lua_script_len = sizeof(lib_generator_lua_script_);
+int32 lib_generator_lua_script_len = sizeof(lib_generator_lua_script_);
 #endif // ARCHITECTURE == 86
 #else
 const char* lib_arguments_lua_file = CLINK_BUILD_ROOT "/../../clink/lua/scripts/arguments.lua";

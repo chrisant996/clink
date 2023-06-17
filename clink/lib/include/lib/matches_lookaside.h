@@ -12,7 +12,7 @@ struct match_extra
     unsigned short  description_offset;
     match_type      type;
     char            append_char;
-    unsigned char   flags;
+    uint8           flags;
 };
 
 //------------------------------------------------------------------------------
@@ -26,7 +26,7 @@ public:
     const char*             get_display() const { return m_match ? m_match + m_extra->display_offset : nullptr; }
     const char*             get_description() const { return m_match ? m_match + m_extra->description_offset : nullptr; }
     char                    get_append_char() const { return m_extra->append_char; }
-    unsigned char           get_flags() const { return m_extra->flags; }
+    uint8                   get_flags() const { return m_extra->flags; }
 private:
     const char*             m_match;
     const match_extra*      m_extra;
@@ -37,9 +37,9 @@ private:
 // Each match in 'matches' must conform to the PACKED MATCH FORMAT (except the
 // lcd entry in [0], which is omitted from the lookaside table).
 match_details lookup_match(const char* match);
-int create_matches_lookaside(char** matches);
-int destroy_matches_lookaside(char** matches);
-void set_matches_lookaside_oneoff(const char* match, match_type type, char append_char, unsigned char flags);
+int32 create_matches_lookaside(char** matches);
+int32 destroy_matches_lookaside(char** matches);
+void set_matches_lookaside_oneoff(const char* match, match_type type, char append_char, uint8 flags);
 void clear_matches_lookaside_oneoff();
 
 const char* append_string_into_buffer(char*& buffer, const char* match, bool allow_tabs=false);
@@ -47,12 +47,12 @@ size_t calc_packed_size(const char* match, const char* display, const char* desc
 bool pack_match(char* buffer, size_t packed_size,
                 const char* match, match_type type,
                 const char* display, const char* description,
-                char append_char, unsigned char flags,
+                char append_char, uint8 flags,
                 match_display_filter_entry* entry,
                 bool strip_markup, bool lcd=false);
 
-extern "C" int lookup_match_type(const char* match);
+extern "C" int32 lookup_match_type(const char* match);
 extern "C" void override_match_append(const char* match);
 #ifdef DEBUG
-extern "C" int has_matches_lookaside(char** matches);
+extern "C" int32 has_matches_lookaside(char** matches);
 #endif

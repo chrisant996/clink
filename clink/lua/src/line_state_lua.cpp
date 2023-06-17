@@ -80,7 +80,7 @@ line_state_lua::~line_state_lua()
 /// -ver:   1.0.0
 /// -ret:   string
 /// Returns the current line in its entirety.
-int line_state_lua::get_line(lua_State* state)
+int32 line_state_lua::get_line(lua_State* state)
 {
     lua_pushlstring(state, m_line->get_line(), m_line->get_length());
     return 1;
@@ -91,7 +91,7 @@ int line_state_lua::get_line(lua_State* state)
 /// -ver:   1.0.0
 /// -ret:   integer
 /// Returns the position of the cursor.
-int line_state_lua::get_cursor(lua_State* state)
+int32 line_state_lua::get_cursor(lua_State* state)
 {
     lua_pushinteger(state, m_line->get_cursor() + 1);
     return 1;
@@ -116,9 +116,9 @@ int line_state_lua::get_cursor(lua_State* state)
 /// -show:  -- Given the following line; abc&  123
 /// -show:  -- where commands are separated by & symbols.
 /// -show:  line_state:getcommandoffset() == 6
-int line_state_lua::get_command_offset(lua_State* state)
+int32 line_state_lua::get_command_offset(lua_State* state)
 {
-    unsigned int offset = m_line->get_command_offset();
+    uint32 offset = m_line->get_command_offset();
     if (m_shift)
     {
         const auto& words = m_line->get_words();
@@ -144,13 +144,13 @@ int line_state_lua::get_command_offset(lua_State* state)
 /// -show:  -- the first word is "x" and is an argument to the redirection symbol,
 /// -show:  -- and the second word is "abc" and is the command word.
 /// -show:  line_state:getcommandwordindex() == 2
-int line_state_lua::get_command_word_index(lua_State* state)
+int32 line_state_lua::get_command_word_index(lua_State* state)
 {
-    unsigned int index = m_line->get_command_word_index();
+    uint32 index = m_line->get_command_word_index();
     if (m_shift)
     {
         const auto& words = m_line->get_words();
-        const unsigned int count = m_line->get_word_count();
+        const uint32 count = m_line->get_word_count();
         while (index < count && words[index].is_redir_arg)
             index++;
     }
@@ -164,7 +164,7 @@ int line_state_lua::get_command_word_index(lua_State* state)
 /// -ver:   1.0.0
 /// -ret:   integer
 /// Returns the number of words in the current line.
-int line_state_lua::get_word_count(lua_State* state)
+int32 line_state_lua::get_word_count(lua_State* state)
 {
     lua_pushinteger(state, m_line->get_word_count() - m_shift);
     return 1;
@@ -191,13 +191,13 @@ int line_state_lua::get_word_count(lua_State* state)
 /// -show:  -- t.delim      [string] The delimiter character, or an empty string.
 /// -show:  -- t.alias      [boolean | nil] true if the word is a doskey alias, otherwise nil.
 /// -show:  -- t.redir      [boolean | nil] true if the word is a redirection arg, otherwise nil.
-int line_state_lua::get_word_info(lua_State* state)
+int32 line_state_lua::get_word_info(lua_State* state)
 {
     if (!lua_isnumber(state, 1))
         return 0;
 
     const std::vector<word>& words = m_line->get_words();
-    unsigned int index = int(lua_tointeger(state, 1)) - 1 + m_shift;
+    uint32 index = int32(lua_tointeger(state, 1)) - 1 + m_shift;
     if (index >= words.size())
         return 0;
 
@@ -258,13 +258,13 @@ int line_state_lua::get_word_info(lua_State* state)
 /// <code><a href="#the-getwordbreakinfo-function">generator:getwordbreakinfo()</a></code>
 /// functions the returned word includes quotes, otherwise word break offsets
 /// could be garbled.
-int line_state_lua::get_word(lua_State* state)
+int32 line_state_lua::get_word(lua_State* state)
 {
     if (!lua_isnumber(state, 1))
         return 0;
 
     str<32> word;
-    unsigned int index = int(lua_tointeger(state, 1)) - 1;
+    uint32 index = int32(lua_tointeger(state, 1)) - 1;
     m_line->get_word(m_shift + index, word);
     lua_pushlstring(state, word.c_str(), word.length());
     return 1;
@@ -290,7 +290,7 @@ int line_state_lua::get_word(lua_State* state)
 /// <code><a href="#the-getwordbreakinfo-function">generator:getwordbreakinfo()</a></code>
 /// functions the returned word includes quotes, otherwise word break offsets
 /// could be garbled.
-int line_state_lua::get_end_word(lua_State* state)
+int32 line_state_lua::get_end_word(lua_State* state)
 {
     str<32> word;
     m_line->get_end_word(word);
@@ -300,9 +300,9 @@ int line_state_lua::get_end_word(lua_State* state)
 
 //------------------------------------------------------------------------------
 // UNDOCUMENTED; internal use only.
-int line_state_lua::shift(lua_State* state)
+int32 line_state_lua::shift(lua_State* state)
 {
-    unsigned int num = optinteger(state, 1, 0);
+    uint32 num = optinteger(state, 1, 0);
 
     if (num > 0)
     {

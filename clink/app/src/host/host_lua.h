@@ -22,15 +22,15 @@ public:
     void                load_scripts();
     bool                is_script_path_changed() const;
 
-    bool                send_event(const char* event_name, int nargs=0);
-    bool                send_event_string_out(const char* event_name, str_base& out, int nargs=0);
-    bool                send_event_cancelable(const char* event_name, int nargs=0);
+    bool                send_event(const char* event_name, int32 nargs=0);
+    bool                send_event_string_out(const char* event_name, str_base& out, int32 nargs=0);
+    bool                send_event_cancelable(const char* event_name, int32 nargs=0);
     bool                send_event_cancelable_string_inout(const char* event_name, const char* string, str_base& out, std::list<str_moveable>* more_out=nullptr);
     bool                send_oncommand_event(line_state& line, const char* command, bool quoted, recognition recog, const char* file);
     bool                send_oninputlinechanged_event(const char* line);
 
     bool                call_lua_rl_global_function(const char* func_name, line_state* line);
-    bool                call_lua_filter_matches(char** matches, int completion_type, int filename_completion_desired);
+    bool                call_lua_filter_matches(char** matches, int32 completion_type, int32 filename_completion_desired);
 
 #ifdef DEBUG
     void                force_gc();

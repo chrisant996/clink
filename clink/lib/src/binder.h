@@ -14,17 +14,17 @@ public:
     // key==0 + id==0xff is special:  it tells is_bound() that control codes and
     // extended keys not explicitly bound will be eaten (i.e. will not cancel
     // the binding group and will not be re-dispatched).
-    static constexpr unsigned char id_catchall_only_printable = 0xff;
+    static constexpr uint8 id_catchall_only_printable = 0xff;
 
                         binder();
-    int                 get_group(const char* name=nullptr);
-    int                 create_group(const char* name);
-    bool                bind(unsigned int group, const char* chord, editor_module& module, unsigned char id, bool has_params=false);
-    int                 is_bound(unsigned int group, const char* seq, int len) const;
+    int32               get_group(const char* name=nullptr);
+    int32               create_group(const char* name);
+    bool                bind(uint32 group, const char* chord, editor_module& module, uint8 id, bool has_params=false);
+    int32               is_bound(uint32 group, const char* seq, int32 len) const;
 
 private:
-    static const int    link_bits = 9;
-    static const int    module_bits = 5;
+    static const int32  link_bits = 9;
+    static const int32  module_bits = 5;
 
     struct node
     {
@@ -38,8 +38,8 @@ private:
         unsigned short  bound       : 1;
         unsigned short              : 2;
 
-        unsigned char   key;
-        unsigned char   id;
+        uint8           key;
+        uint8           id;
     };
 
     struct group_node
@@ -53,17 +53,17 @@ private:
     typedef fixed_array<editor_module*, (1 << module_bits)> modules;
 
     friend class        bind_resolver;
-    int                 insert_child(int parent, unsigned char key, bool has_params);
-    int                 find_child(int parent, unsigned char key) const;
-    int                 add_child(int parent, unsigned char key, bool has_params);
-    int                 find_tail(int head);
-    int                 append(int head, unsigned char key);
-    const node&         get_node(unsigned int index) const;
-    group_node*         get_group_node(unsigned int index);
-    int                 alloc_nodes(unsigned int count=1);
-    int                 add_module(editor_module& module);
-    editor_module*      get_module(unsigned int index) const;
+    int32               insert_child(int32 parent, uint8 key, bool has_params);
+    int32               find_child(int32 parent, uint8 key) const;
+    int32               add_child(int32 parent, uint8 key, bool has_params);
+    int32               find_tail(int32 head);
+    int32               append(int32 head, uint8 key);
+    const node&         get_node(uint32 index) const;
+    group_node*         get_group_node(uint32 index);
+    int32               alloc_nodes(uint32 count=1);
+    int32               add_module(editor_module& module);
+    editor_module*      get_module(uint32 index) const;
     modules             m_modules;
     node                m_nodes[1 << link_bits];
-    unsigned int        m_next_node;
+    uint32              m_next_node;
 };

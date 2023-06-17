@@ -11,8 +11,8 @@ class globber
 public:
     struct extrainfo
     {
-        int                 st_mode;
-        int                 attr;
+        int32               st_mode;
+        int32               attr;
         unsigned long long  size;
         FILETIME            accessed;
         FILETIME            modified;
@@ -27,7 +27,7 @@ public:
     void                hidden(bool state)      { m_hidden = state; }
     void                system(bool state)      { m_system = state; }
     void                dots(bool state)        { m_dots = state; }
-    bool                older_than(int seconds);
+    bool                older_than(int32 seconds);
     bool                next(str_base& out, bool rooted=true, extrainfo* extrainfo=nullptr);
     void                close();
 

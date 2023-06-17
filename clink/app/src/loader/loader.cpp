@@ -16,24 +16,24 @@ extern "C" {
 }
 
 //------------------------------------------------------------------------------
-int autorun(int, char**);
-int clink_info(int, char**);
-int draw_test(int, char**);
-int history(int, char**);
-int inject(int, char**);
-int input_echo(int, char**);
-int set(int, char**);
-int update(int, char**);
-int installscripts(int, char**);
-int uninstallscripts(int, char**);
-int testbed(int, char**);
-int interpreter(int, char**);
+int32 autorun(int32, char**);
+int32 clink_info(int32, char**);
+int32 draw_test(int32, char**);
+int32 history(int32, char**);
+int32 inject(int32, char**);
+int32 input_echo(int32, char**);
+int32 set(int32, char**);
+int32 update(int32, char**);
+int32 installscripts(int32, char**);
+int32 uninstallscripts(int32, char**);
+int32 testbed(int32, char**);
+int32 interpreter(int32, char**);
 
 //------------------------------------------------------------------------------
 bool g_elevated = false;
 
 //------------------------------------------------------------------------------
-static void print_with_wrapping(int max_len, const char* arg, const char* desc, unsigned int wrap)
+static void print_with_wrapping(int32 max_len, const char* arg, const char* desc, uint32 wrap)
 {
     str<128> buf;
     ecma48_wrapper wrapper(desc, wrap);
@@ -47,12 +47,12 @@ static void print_with_wrapping(int max_len, const char* arg, const char* desc, 
 //------------------------------------------------------------------------------
 void puts_help(const char* const* help_pairs, const char* const* other_pairs=nullptr)
 {
-    int max_len = -1;
-    for (int i = 0; help_pairs[i]; i += 2)
-        max_len = max((int)strlen(help_pairs[i]), max_len);
+    int32 max_len = -1;
+    for (int32 i = 0; help_pairs[i]; i += 2)
+        max_len = max((int32)strlen(help_pairs[i]), max_len);
     if (other_pairs)
-        for (int i = 0; other_pairs[i]; i += 2)
-            max_len = max((int)strlen(other_pairs[i]), max_len);
+        for (int32 i = 0; other_pairs[i]; i += 2)
+            max_len = max((int32)strlen(other_pairs[i]), max_len);
 
     DWORD wrap = 78;
 #if 0
@@ -69,7 +69,7 @@ void puts_help(const char* const* help_pairs, const char* const* other_pairs=nul
     if (wrap)
         wrap -= 2 + max_len + 2;
 
-    for (int i = 0; help_pairs[i]; i += 2)
+    for (int32 i = 0; help_pairs[i]; i += 2)
     {
         const char* arg = help_pairs[i];
         const char* desc = help_pairs[i + 1];
@@ -116,11 +116,11 @@ static void show_usage()
 }
 
 //------------------------------------------------------------------------------
-static int dispatch_verb(const char* verb, int argc, char** argv)
+static int32 dispatch_verb(const char* verb, int32 argc, char** argv)
 {
     struct {
         const char* verb;
-        int (*handler)(int, char**);
+        int32 (*handler)(int32, char**);
     } handlers[] = {
         "autorun",              autorun,
         "drawtest",             draw_test,
@@ -136,12 +136,12 @@ static int dispatch_verb(const char* verb, int argc, char** argv)
         "lua",                  interpreter,
     };
 
-    for (int i = 0; i < sizeof_array(handlers); ++i)
+    for (int32 i = 0; i < sizeof_array(handlers); ++i)
     {
         if (strcmp(verb, handlers[i].verb) == 0)
         {
-            int ret;
-            int t;
+            int32 ret;
+            int32 t;
 
             t = optind;
             optind = 1;
@@ -159,11 +159,11 @@ static int dispatch_verb(const char* verb, int argc, char** argv)
 }
 
 //------------------------------------------------------------------------------
-int loader(int argc, char** argv)
+int32 loader(int32 argc, char** argv)
 {
     seh_scope seh;
 
-    int session = 0;
+    int32 session = 0;
 
     struct option options[] = {
         { "help",     no_argument,       nullptr, 'h' },
@@ -186,7 +186,7 @@ int loader(int argc, char** argv)
     app_desc.inherit_id = true;
 
     // Parse arguments
-    int arg;
+    int32 arg;
     while ((arg = getopt_long(argc, argv, "+?hp:", options, nullptr)) != -1)
     {
         switch (arg)
@@ -216,7 +216,7 @@ int loader(int argc, char** argv)
     }
 
     // Dispatch the verb if one was found.
-    int ret = 0;
+    int32 ret = 0;
     if (optind < argc)
     {
         // Allocate app_context from the heap (not stack) so testbed can replace
@@ -232,15 +232,15 @@ int loader(int argc, char** argv)
 }
 
 //------------------------------------------------------------------------------
-int loader_main_impl()
+int32 loader_main_impl()
 {
-    int argc = 0;
+    int32 argc = 0;
     LPWSTR* argvw = CommandLineToArgvW(GetCommandLineW(), &argc);
 
     char** argv = static_cast<char**>(calloc(argc + 1, sizeof(char*)));
-    for (int i = 0; i < argc; ++i)
+    for (int32 i = 0; i < argc; ++i)
     {
-        const int needed = WideCharToMultiByte(CP_UTF8, 0, argvw[i], -1, nullptr, 0, nullptr, nullptr);
+        const int32 needed = WideCharToMultiByte(CP_UTF8, 0, argvw[i], -1, nullptr, 0, nullptr, nullptr);
         if (!needed)
             return 1;
         argv[i] = static_cast<char*>(malloc(needed));
@@ -250,9 +250,9 @@ int loader_main_impl()
 
     LocalFree(argvw);
 
-    int ret = loader(argc, argv);
+    int32 ret = loader(argc, argv);
 
-    for (int i = 0; i < argc; ++i)
+    for (int32 i = 0; i < argc; ++i)
         free(argv[i]);
     free(argv);
 

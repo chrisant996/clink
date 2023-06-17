@@ -23,7 +23,7 @@ extern setting_enum g_history_timestamp;
 extern setting_str g_history_timeformat;
 
 //------------------------------------------------------------------------------
-extern "C" unsigned int cell_count(const char* in);
+extern "C" uint32 cell_count(const char* in);
 void puts_help(const char* const* help_pairs, const char* const* other_pairs=nullptr);
 
 //------------------------------------------------------------------------------
@@ -98,11 +98,11 @@ static void print_history_item(HANDLE hout, const char* utf8, wstr_base* utf16)
         for (const char* walk = utf8; *walk;)
         {
             const char* begin = walk;
-            while (static_cast<unsigned char>(*walk) >= 0x20 || *walk == 0x09)
+            while (uint8(*walk) >= 0x20 || *walk == 0x09)
                 walk++;
             if (walk > begin)
             {
-                str_iter tmpi(begin, int(walk - begin));
+                str_iter tmpi(begin, int32(walk - begin));
                 to_utf16(*utf16, tmpi);
             }
             if (!*walk)
@@ -122,15 +122,15 @@ static void print_history_item(HANDLE hout, const char* utf8, wstr_base* utf16)
 }
 
 //------------------------------------------------------------------------------
-static void print_history(unsigned int tail_count, bool bare)
+static void print_history(uint32 tail_count, bool bare)
 {
     history_scope history;
 
     str_iter line;
     history_read_buffer buffer;
 
-    unsigned int count = 0;
-    unsigned int skip = 0;
+    uint32 count = 0;
+    uint32 skip = 0;
     if (tail_count != UINT_MAX)
     {
         history_db::iter iter = history->read_lines(buffer.data(), buffer.size());
@@ -140,10 +140,10 @@ static void print_history(unsigned int tail_count, bool bare)
             skip = count - tail_count;
     }
 
-    unsigned int index = 1;
+    uint32 index = 1;
     history_db::iter iter = history->read_lines(buffer.data(), buffer.size());
 
-    for (unsigned int i = 0; i < skip; ++i, ++index, iter.next(line));
+    for (uint32 i = 0; i < skip; ++i, ++index, iter.next(line));
 
     char timebuf[128];
     str<> utf8;
@@ -151,7 +151,7 @@ static void print_history(unsigned int tail_count, bool bare)
     HANDLE hout = GetStdHandle(STD_OUTPUT_HANDLE);
     bool translate = is_console(hout);
 
-    unsigned int timelen = 0;
+    uint32 timelen = 0;
     struct tm tm = {};
     if (s_showtime)
     {
@@ -167,7 +167,7 @@ static void print_history(unsigned int tail_count, bool bare)
     }
 
     str<32> timestamp;
-    unsigned int num_from[2] = {};
+    uint32 num_from[2] = {};
     for (; iter.next(line, &timestamp); ++index)
     {
         if (s_diag)
@@ -218,13 +218,13 @@ static bool print_history(const char* arg, bool bare)
     }
 
     // Check the argument is just digits.
-    unsigned int tail_count = 0;
+    uint32 tail_count = 0;
     for (const char* c = arg; *c; ++c)
     {
         if (*c < '0' || *c > '9')
             return false;
         tail_count *= 10;
-        tail_count += (unsigned char)*c - '0';
+        tail_count += uint8(*c) - '0';
     }
 
     print_history(tail_count, bare);
@@ -232,7 +232,7 @@ static bool print_history(const char* arg, bool bare)
 }
 
 //------------------------------------------------------------------------------
-static int add(const char* line)
+static int32 add(const char* line)
 {
     history_scope history;
     history->add(line);
@@ -242,7 +242,7 @@ static int add(const char* line)
 }
 
 //------------------------------------------------------------------------------
-static int remove(int index)
+static int32 remove(int32 index)
 {
     history_scope history;
 
@@ -254,7 +254,7 @@ static int remove(int index)
     {
         str_iter line;
         history_db::iter iter = history->read_lines(buffer.data(), buffer.size());
-        for (int i = index - 1; i > 0 && iter.next(line); --i);
+        for (int32 i = index - 1; i > 0 && iter.next(line); --i);
 
         line_id = iter.next(line);
     }
@@ -267,7 +267,7 @@ static int remove(int index)
 }
 
 //------------------------------------------------------------------------------
-static int clear()
+static int32 clear()
 {
     history_scope history;
     history->clear();
@@ -277,7 +277,7 @@ static int clear()
 }
 
 //------------------------------------------------------------------------------
-static int compact(bool uniq, int limit)
+static int32 compact(bool uniq, int32 limit)
 {
     history_scope history;
     if (history->has_bank(bank_master))
@@ -293,7 +293,7 @@ static int compact(bool uniq, int limit)
 }
 
 //------------------------------------------------------------------------------
-static int print_expansion(const char* line)
+static int32 print_expansion(const char* line)
 {
     history_scope history;
     history->load_rl_history(false/*can_clean*/);
@@ -305,7 +305,7 @@ static int print_expansion(const char* line)
 }
 
 //------------------------------------------------------------------------------
-static int print_help()
+static int32 print_help()
 {
     extern void puts_clink_header();
 
@@ -348,9 +348,9 @@ static int print_help()
 }
 
 //------------------------------------------------------------------------------
-static void get_line(int start, int end, char** argv, str_base& out)
+static void get_line(int32 start, int32 end, char** argv, str_base& out)
 {
-    for (int j = start; j < end; ++j)
+    for (int32 j = start; j < end; ++j)
     {
         if (!out.empty())
             out << " ";
@@ -360,9 +360,9 @@ static void get_line(int start, int end, char** argv, str_base& out)
 }
 
 //------------------------------------------------------------------------------
-static int history_bash(int argc, char** argv)
+static int32 history_bash(int32 argc, char** argv)
 {
-    int i;
+    int32 i;
     while ((i = getopt(argc, argv, "+?cd:ps")) != -1)
     {
         switch (i)
@@ -398,9 +398,9 @@ static int history_bash(int argc, char** argv)
 }
 
 //------------------------------------------------------------------------------
-static bool is_flag(const char* arg, const char* flag, unsigned int min_len=-1)
+static bool is_flag(const char* arg, const char* flag, uint32 min_len=-1)
 {
-    unsigned int matched_len = 0;
+    uint32 matched_len = 0;
     while (*arg && *arg == *flag)
     {
         ++arg;
@@ -418,17 +418,17 @@ static bool is_flag(const char* arg, const char* flag, unsigned int min_len=-1)
 }
 
 //------------------------------------------------------------------------------
-int history(int argc, char** argv)
+int32 history(int32 argc, char** argv)
 {
     // Check to see if the user asked from some help!
     bool bare = false;
     bool uniq = false;
-    for (int i = 1; i < argc; ++i)
+    for (int32 i = 1; i < argc; ++i)
     {
         if (is_flag(argv[i], "--help", 3) || is_flag(argv[i], "-h"))
             return print_help();
 
-        int remove = 1;
+        int32 remove = 1;
         if (is_flag(argv[i], "--bare", 3))
             bare = true;
         else if (is_flag(argv[i], "--diag", 3))
@@ -448,7 +448,7 @@ int history(int argc, char** argv)
 
         while (remove--)
         {
-            for (int j = i; j < argc; ++j)
+            for (int32 j = i; j < argc; ++j)
                 argv[j] = argv[j + 1];
             argc--;
             i--;
@@ -465,7 +465,7 @@ int history(int argc, char** argv)
     }
 
     // Try Bash-style arguments first...
-    int bash_ret = history_bash(argc, argv);
+    int32 bash_ret = history_bash(argc, argv);
     if (optind != 1)
         return bash_ret;
 
@@ -481,7 +481,7 @@ int history(int argc, char** argv)
         // 'compact' command
         if (_stricmp(verb, "compact") == 0)
         {
-            int limit = -1;
+            int32 limit = -1;
             if (argc >= 3 && argv[2][0])
             {
                 if (argv[2][0] < '0' || argv[2][0] > '9')

@@ -7,5 +7,5 @@
 class input_dispatcher
 {
 public:
-    virtual void    dispatch(int bind_group) = 0;
+    virtual void    dispatch(int32 bind_group) = 0;
 };

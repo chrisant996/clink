@@ -41,13 +41,13 @@ void simple_word_tokeniser::start(const str_iter& iter, const char* quote_pair, 
 }
 
 //------------------------------------------------------------------------------
-word_token simple_word_tokeniser::next(unsigned int& offset, unsigned int& length)
+word_token simple_word_tokeniser::next(uint32& offset, uint32& length)
 {
     const char* ptr;
-    int len;
+    int32 len;
     str_token token = m_tokeniser->next(ptr, len);
 
-    offset = static_cast<unsigned int>(ptr - m_start);
+    offset = uint32(ptr - m_start);
     length = len;
 
     if (!token)
@@ -99,10 +99,10 @@ char word_collector::get_closing_quote() const
 }
 
 //------------------------------------------------------------------------------
-void word_collector::find_command_bounds(const char* buffer, unsigned int length, unsigned int cursor,
+void word_collector::find_command_bounds(const char* buffer, uint32 length, uint32 cursor,
                                          std::vector<command>& commands, bool stop_at_cursor) const
 {
-    unsigned int line_stop = stop_at_cursor ? cursor : length;
+    uint32 line_stop = stop_at_cursor ? cursor : length;
 
     commands.clear();
 
@@ -113,8 +113,8 @@ void word_collector::find_command_bounds(const char* buffer, unsigned int length
     }
 
     m_command_tokeniser->start(str_iter(buffer, line_stop), m_quote_pair);
-    unsigned int command_start;
-    unsigned int command_length;
+    uint32 command_start;
+    uint32 command_length;
     while (m_command_tokeniser->next(command_start, command_length))
     {
         commands.push_back({ command_start, command_length });
@@ -143,7 +143,7 @@ bool word_collector::get_alias(const char* name, str_base& out) const
 }
 
 //------------------------------------------------------------------------------
-unsigned int word_collector::collect_words(const char* line_buffer, unsigned int line_length, unsigned int line_cursor,
+uint32 word_collector::collect_words(const char* line_buffer, uint32 line_length, uint32 line_cursor,
                                            std::vector<word>& words, collect_words_mode mode) const
 {
     words.clear();
@@ -153,21 +153,21 @@ unsigned int word_collector::collect_words(const char* line_buffer, unsigned int
     const bool stop_at_cursor = (mode == collect_words_mode::stop_at_cursor);
     find_command_bounds(line_buffer, line_length, line_cursor, commands, stop_at_cursor);
 
-    unsigned int command_offset = 0;
+    uint32 command_offset = 0;
 
     bool first = true;
     for (auto& command : commands)
     {
         first = true;
 
-        unsigned int doskey_len = 0;
+        uint32 doskey_len = 0;
         bool deprecated_argmatcher = false;
 
         if (line_cursor >= command.offset)
             command_offset = command.offset;
 
         {
-            unsigned int first_word_len = 0;
+            uint32 first_word_len = 0;
             while (first_word_len < command.length &&
                     line_buffer[command.offset + first_word_len] != ' ' &&
                     line_buffer[command.offset + first_word_len] != '\t')
@@ -180,7 +180,7 @@ unsigned int word_collector::collect_words(const char* line_buffer, unsigned int
                 lookup.concat(line_buffer + command.offset, first_word_len);
                 if (get_alias(lookup.c_str(), alias))
                 {
-                    unsigned char delim = (doskey_len < command.length) ? line_buffer[command.offset + doskey_len] : 0;
+                    uint8 delim = (doskey_len < command.length) ? line_buffer[command.offset + doskey_len] : 0;
                     doskey_len = first_word_len;
                     words.push_back({command.offset, doskey_len, first, true/*is_alias*/, false/*is_redir_arg*/, 0, delim});
                     first = false;
@@ -194,8 +194,8 @@ unsigned int word_collector::collect_words(const char* line_buffer, unsigned int
         m_word_tokeniser->start(str_iter(line_buffer + command.offset + doskey_len, command.length - doskey_len), m_quote_pair, first);
         while (1)
         {
-            unsigned int word_offset = 0;
-            unsigned int word_length = 0;
+            uint32 word_offset = 0;
+            uint32 word_length = 0;
             word_token token = m_word_tokeniser->next(word_offset, word_length);
             if (!token)
                 break;
@@ -242,11 +242,11 @@ unsigned int word_collector::collect_words(const char* line_buffer, unsigned int
                 strchr("-/", *word_start))
             {
                 str_iter split_iter(word_start, word_length);
-                while (int c = split_iter.next())
+                while (int32 c = split_iter.next())
                 {
                     if (c == ':')
                     {
-                        const unsigned int split_len = unsigned(split_iter.get_pointer() - word_start);
+                        const uint32 split_len = unsigned(split_iter.get_pointer() - word_start);
                         words.push_back({word_offset, split_len, first, false/*is_alias*/, false/*is_redir_arg*/, 0, ':'});
                         word_offset += split_len;
                         word_length -= split_len;
@@ -276,7 +276,7 @@ unsigned int word_collector::collect_words(const char* line_buffer, unsigned int
     word* end_word = words.empty() ? nullptr : &words.back();
     if (!end_word || (stop_at_cursor && end_word->offset + end_word->length < line_cursor))
     {
-        unsigned char delim = 0;
+        uint8 delim = 0;
         if (line_cursor)
             delim = line_buffer[line_cursor - 1];
 
@@ -291,8 +291,8 @@ unsigned int word_collector::collect_words(const char* line_buffer, unsigned int
 
         const char* start = line_buffer + word.offset;
 
-        int start_quoted = (start[0] == get_opening_quote());
-        int end_quoted = 0;
+        int32 start_quoted = (start[0] == get_opening_quote());
+        int32 end_quoted = 0;
         if (word.length > 1)
             end_quoted = (start[word.length - 1] == get_closing_quote());
 
@@ -304,7 +304,7 @@ unsigned int word_collector::collect_words(const char* line_buffer, unsigned int
 #ifdef DEBUG
     if (dbg_get_env_int("DEBUG_COLLECTWORDS") < 0)
     {
-        int i = 0;
+        int32 i = 0;
         for (const word& word : words)
         {
             str<> tmp;
@@ -320,20 +320,20 @@ unsigned int word_collector::collect_words(const char* line_buffer, unsigned int
 }
 
 //------------------------------------------------------------------------------
-unsigned int word_collector::collect_words(const line_buffer& buffer, std::vector<word>& words, collect_words_mode mode) const
+uint32 word_collector::collect_words(const line_buffer& buffer, std::vector<word>& words, collect_words_mode mode) const
 {
     return collect_words(buffer.get_buffer(), buffer.get_length(), buffer.get_cursor(), words, mode);
 }
 
 //------------------------------------------------------------------------------
-void commands::set(const char* line_buffer, unsigned int line_length, unsigned int line_cursor, const std::vector<word>& words)
+void commands::set(const char* line_buffer, uint32 line_length, uint32 line_cursor, const std::vector<word>& words)
 {
     clear_internal();
 
     // Count number of commands so we can pre-allocate words_storage so that
     // emplace_back() doesn't invalidate pointers (references) stored in
     // linestates.
-    unsigned int num_commands = 0;
+    uint32 num_commands = 0;
     for (const auto& word : words)
     {
         if (word.command_word)
@@ -352,7 +352,7 @@ void commands::set(const char* line_buffer, unsigned int line_length, unsigned i
             // Make sure classifiers can tell whether the word has a space
             // before it, so that ` doskeyalias` gets classified as NOT a doskey
             // alias, since doskey::resolve() won't expand it as a doskey alias.
-            int command_char_offset = tmp[0].offset;
+            int32 command_char_offset = tmp[0].offset;
             if (tmp[0].quoted)
                 command_char_offset--;
             if (command_char_offset == 1 && line_buffer[0] == ' ')
@@ -397,7 +397,7 @@ void commands::set(const line_buffer& buffer, const std::vector<word>& words)
 }
 
 //------------------------------------------------------------------------------
-unsigned int commands::break_end_word(unsigned int truncate, unsigned int keep)
+uint32 commands::break_end_word(uint32 truncate, uint32 keep)
 {
 #ifdef DEBUG
     assert(!m_broke_end_word);
@@ -407,7 +407,7 @@ unsigned int commands::break_end_word(unsigned int truncate, unsigned int keep)
     word* end_word = const_cast<word*>(&m_linestates.back().get_words().back());
     if (truncate)
     {
-        truncate = min<unsigned int>(truncate, end_word->length);
+        truncate = min<uint32>(truncate, end_word->length);
 
         word split_word;
         split_word.offset = end_word->offset + truncate;
@@ -424,7 +424,7 @@ unsigned int commands::break_end_word(unsigned int truncate, unsigned int keep)
         end_word = &words->back();
     }
 
-    keep = min<unsigned int>(keep, end_word->length);
+    keep = min<uint32>(keep, end_word->length);
     end_word->length = keep;
     return end_word->offset;
 }
@@ -455,7 +455,7 @@ void commands::clear_internal()
 }
 
 //------------------------------------------------------------------------------
-const line_states& commands::get_linestates(const char* buffer, unsigned int len) const
+const line_states& commands::get_linestates(const char* buffer, uint32 len) const
 {
     assert(m_linestates.size());
     const auto& front = m_linestates.front();
@@ -480,7 +480,7 @@ const line_states& commands::get_linestates(const line_buffer& buffer) const
 }
 
 //------------------------------------------------------------------------------
-const line_state& commands::get_linestate(const char* buffer, unsigned int len) const
+const line_state& commands::get_linestate(const char* buffer, uint32 len) const
 {
     assert(m_linestates.size());
     const auto& back = m_linestates.back();

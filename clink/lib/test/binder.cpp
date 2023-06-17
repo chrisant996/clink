@@ -18,7 +18,7 @@ TEST_CASE("Binder")
 
         REQUIRE(binder.get_group() == 1);
 
-        int groups[] = {
+        int32 groups[] = {
             binder.create_group("group1"),
             binder.create_group("group2"),
         };
@@ -32,7 +32,7 @@ TEST_CASE("Binder")
 
     SECTION("Overflow : group")
     {
-        for (int i = 1; i < 256; ++i)
+        for (int32 i = 1; i < 256; ++i)
             REQUIRE(binder.create_group("group") == (i * 2) + 1);
 
         REQUIRE(binder.create_group("group") == -1);
@@ -40,8 +40,8 @@ TEST_CASE("Binder")
 
     SECTION("Overflow : module")
     {
-        int group = binder.get_group();
-        for (int i = 0; i < 32; ++i)
+        int32 group = binder.get_group();
+        for (int32 i = 0; i < 32; ++i)
             REQUIRE(binder.bind(group, "", ((editor_module*)0)[i], char(i)));
 
         auto& module = ((editor_module*)0)[0xff];
@@ -51,9 +51,9 @@ TEST_CASE("Binder")
     SECTION("Overflow : bind")
     {
         auto& null_module = *(editor_module*)0;
-        int default_group = binder.get_group();
+        int32 default_group = binder.get_group();
 
-        for (int i = 0; i < 508; ++i)
+        for (int32 i = 0; i < 508; ++i)
         {
             char chord[] = { char((i > 0xff) + 1), char((i % 0xfe) + 1), 0 };
             REQUIRE(binder.bind(default_group, chord, null_module, 0x12));
@@ -84,7 +84,7 @@ TEST_CASE("Binder")
             "",         "z",
         };
 
-        int group = binder.get_group();
+        int32 group = binder.get_group();
         for (const auto& chord : chords)
         {
             auto& module = *(editor_module*)(&chord);
@@ -110,7 +110,7 @@ TEST_CASE("Binder")
                                "\\M-C-",
         };
 
-        int group = binder.get_group();
+        int32 group = binder.get_group();
         for (const char* chord : chords)
         {
             REQUIRE(!binder.bind(group, chord, *(editor_module*)0, 234));
@@ -122,8 +122,8 @@ TEST_CASE("Binder")
         struct {
             const char* input;
             bool match;
-            unsigned int param0;
-            unsigned int param1;
+            uint32 param0;
+            uint32 param1;
         } chords[] = {
             "$!1;1~",     true,   1,    1,
             "$!23;1~",    true,   23,   1,
@@ -137,7 +137,7 @@ TEST_CASE("Binder")
             "$!1;2;3~",   false,  0,    0,
         };
 
-        int group = binder.get_group();
+        int32 group = binder.get_group();
         auto& module = *(editor_module*)(&chords);
         REQUIRE(binder.bind(group, "$!*;*~", module, 123, true/*has_params*/));
 
@@ -159,7 +159,7 @@ TEST_CASE("Binder")
                 REQUIRE(binding.get_id() == 123);
                 REQUIRE(binding.get_module() == &module);
 
-                unsigned int value;
+                uint32 value;
                 REQUIRE(binding.get_params().get(0, value), [&] () {
                     printf("input '%s' first param not found\n", chord.input);
                 });

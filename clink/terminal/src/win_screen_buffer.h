@@ -6,7 +6,7 @@
 #include "screen_buffer.h"
 
 class str_base;
-enum find_line_mode : int;
+enum find_line_mode : int32;
 
 //------------------------------------------------------------------------------
 class win_screen_buffer
@@ -18,30 +18,30 @@ public:
     virtual void    begin() override;
     virtual void    end() override;
     virtual void    close() override;
-    virtual void    write(const char* data, int length) override;
+    virtual void    write(const char* data, int32 length) override;
     virtual void    flush() override;
-    virtual int     get_columns() const override;
-    virtual int     get_rows() const override;
-    virtual bool    get_line_text(int line, str_base& out) const override;
+    virtual int32   get_columns() const override;
+    virtual int32   get_rows() const override;
+    virtual bool    get_line_text(int32 line, str_base& out) const override;
     virtual bool    has_native_vt_processing() const override;
     virtual void    clear(clear_type type) override;
     virtual void    clear_line(clear_type type) override;
-    virtual void    set_horiz_cursor(int column) override;
-    virtual void    set_cursor(int column, int row) override;
-    virtual void    move_cursor(int dx, int dy) override;
+    virtual void    set_horiz_cursor(int32 column) override;
+    virtual void    set_cursor(int32 column, int32 row) override;
+    virtual void    move_cursor(int32 dx, int32 dy) override;
     virtual void    save_cursor() override;
     virtual void    restore_cursor() override;
-    virtual void    insert_chars(int count) override;
-    virtual void    delete_chars(int count) override;
+    virtual void    insert_chars(int32 count) override;
+    virtual void    delete_chars(int32 count) override;
     virtual void    set_attributes(const attributes attr) override;
     virtual bool    get_nearest_color(attributes& attr) const override;
-    virtual int     is_line_default_color(int line) const override;
-    virtual int     line_has_color(int line, const BYTE* attrs, int num_attrs, BYTE mask=0xff) const override;
-    virtual int     find_line(int starting_line, int distance, const char* text, find_line_mode mode, const BYTE* attrs=nullptr, int num_attrs=0, BYTE mask=0xff) const override;
+    virtual int32   is_line_default_color(int32 line) const override;
+    virtual int32   line_has_color(int32 line, const BYTE* attrs, int32 num_attrs, BYTE mask=0xff) const override;
+    virtual int32   find_line(int32 starting_line, int32 distance, const char* text, find_line_mode mode, const BYTE* attrs=nullptr, int32 num_attrs=0, BYTE mask=0xff) const override;
 
 private:
-    bool            ensure_chars_buffer(int width) const;
-    bool            ensure_attrs_buffer(int width) const;
+    bool            ensure_chars_buffer(int32 width) const;
+    bool            ensure_attrs_buffer(int32 width) const;
 
     enum : unsigned short
     {

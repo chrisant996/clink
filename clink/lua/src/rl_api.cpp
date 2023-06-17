@@ -26,9 +26,9 @@ extern "C" {
 #include <readline/history.h>
 #include <readline/rldefs.h>
 #include <readline/rlprivate.h>
-extern int              _rl_completion_case_map;
+extern int32            _rl_completion_case_map;
 extern const char*      rl_readline_name;
-extern int              _rl_last_v_pos;
+extern int32            _rl_last_v_pos;
 }
 
 extern matches* get_mutable_matches(bool nosort=false);
@@ -36,7 +36,7 @@ extern void force_update_internal(bool restrict);
 extern const char* get_last_luafunc();
 extern void override_rl_last_func(rl_command_func_t* func, bool force_when_null=false);
 
-extern int count_prompt_lines(const char* prompt_prefix);
+extern int32 count_prompt_lines(const char* prompt_prefix);
 
 
 
@@ -54,7 +54,7 @@ bool collapse_tilde(const char* in, str_base& out, bool force)
 
     str_iter in_iter(in);
     str_iter tilde_iter(tilde.c_str());
-    int j = str_compare(in_iter, tilde_iter);
+    int32 j = str_compare(in_iter, tilde_iter);
     if (j >= 0 && in_iter.more())
         return false;
 
@@ -95,13 +95,13 @@ static void unquote_keys(const char* in, str_base& out)
 /// -show:  -- When "off", the function returns "~\\Documents".
 /// -show:  &nbsp;
 /// -show:  -- Or when <span class="arg">force</span> is true, the function returns "~\Documents".
-static int collapse_tilde(lua_State* state)
+static int32 collapse_tilde(lua_State* state)
 {
     const char* path = checkstring(state, 1);
     if (!path)
         return 0;
 
-    int force = lua_toboolean(state, 2);
+    int32 force = lua_toboolean(state, 2);
 
     str<> collapsed;
     if (collapse_tilde(path, collapsed, !!force))
@@ -184,7 +184,7 @@ static int collapse_tilde(lua_State* state)
 /// Passing true for the second argument causes any version of Clink (except
 /// v1.3.36) to expand the input as a whole command line.
 /// </fieldset>
-static int expand_tilde(lua_State* state)
+static int32 expand_tilde(lua_State* state)
 {
     const char* in = checkstring(state, 1);
     bool whole_line = lua_toboolean(state, 2);
@@ -254,7 +254,7 @@ static int expand_tilde(lua_State* state)
 /// -ret:   string | nil
 /// Returns the value of the named Readline configuration variable as a string,
 /// or nil if the variable name is not recognized.
-static int get_rl_variable(lua_State* state)
+static int32 get_rl_variable(lua_State* state)
 {
     const char* name = checkstring(state, 1);
     if (!name)
@@ -282,7 +282,7 @@ static int get_rl_variable(lua_State* state)
 /// Instead it updates the variable in memory, temporarily overriding whatever
 /// is present in any config files.  When config files are reloaded, they may
 /// replace the value again.
-static int set_rl_variable(lua_State* state)
+static int32 set_rl_variable(lua_State* state)
 {
     const char* name = checkstring(state, 1);
     const char* value = checkstring(state, 2);
@@ -293,7 +293,7 @@ static int set_rl_variable(lua_State* state)
     if (rl_cvar == nullptr)
         return 0;
 
-    int failed = rl_variable_bind(name, value);
+    int32 failed = rl_variable_bind(name, value);
     lua_pushboolean(state, !failed);
     return 1;
 }
@@ -305,7 +305,7 @@ static int set_rl_variable(lua_State* state)
 /// -ret:   boolean | nil
 /// Returns a boolean value indicating whether the named Readline configuration
 /// variable is set to true (on), or nil if the variable name is not recognized.
-static int is_rl_variable_true(lua_State* state)
+static int32 is_rl_variable_true(lua_State* state)
 {
     if (!get_rl_variable(state))
         return 0;
@@ -360,7 +360,7 @@ static int is_rl_variable_true(lua_State* state)
 /// -show:  else
 /// -show:  &nbsp;   print("Home is not bound in emacs mode.")
 /// -show:  end
-static int get_rl_binding(lua_State* state)
+static int32 get_rl_binding(lua_State* state)
 {
     if (!funmap)
         return 0;
@@ -372,14 +372,14 @@ static int get_rl_binding(lua_State* state)
 
     Keymap map = keymap ? rl_get_keymap_by_name(keymap) : rl_get_keymap();
 
-    int type;
+    int32 type;
     rl_command_func_t* func = nullptr;
 
     {
         str<> keys;
         unquote_keys(_key, keys);
 
-        int keylen = 0;
+        int32 keylen = 0;
         char* keyseq = static_cast<char*>(malloc(keys.length() * 2 + 1));
         if (rl_translate_keyseq(keys.c_str(), keyseq, &keylen))
         {
@@ -478,7 +478,7 @@ static int get_rl_binding(lua_State* state)
 /// -show:  -- The [[]] string syntax lets you copy key strings directly from 'clink echo'.
 /// -show:  -- [["\e[H"]] is much easier than translating to "\"\\e[H\"", for example.
 /// -show:  rl.setbinding([["\e[H"]], [[beginning-of-line]])
-static int set_rl_binding(lua_State* state)
+static int32 set_rl_binding(lua_State* state)
 {
     if (!funmap)
         return 0;
@@ -494,7 +494,7 @@ static int set_rl_binding(lua_State* state)
     str<> keys;
     unquote_keys(_key, keys);
 
-    int result = -1;
+    int32 result = -1;
     if (!binding)
     {
         result = rl_bind_keyseq_in_map(keys.c_str(), nullptr, map);
@@ -536,7 +536,7 @@ static int set_rl_binding(lua_State* state)
 ///
 /// Warning:  Invoking more than one Readline command in a luafunc: key binding
 /// could have unexpected results, depending on which commands are invoked.
-static int invoke_command(lua_State* state)
+static int32 invoke_command(lua_State* state)
 {
     if (!lua_state::is_in_luafunc())
         return luaL_error(state, "rl.invokecommand may only be used in a " LUA_QL("luafunc:") " key binding");
@@ -559,10 +559,10 @@ static int invoke_command(lua_State* state)
         if (tmp.length() && tmp[tmp.length() - 1] == '"')
             tmp.truncate(tmp.length() - 1);
 
-        extern int macro_hook_func(const char* macro);
+        extern int32 macro_hook_func(const char* macro);
         if (!macro_hook_func(tmp.c_str()))
         {
-            int len = 0;
+            int32 len = 0;
             char* macro = static_cast<char*>(malloc(tmp.length() * 2 + 1));
             if (rl_translate_keyseq(tmp.c_str(), macro, &len))
             {
@@ -580,10 +580,10 @@ static int invoke_command(lua_State* state)
     if (func == nullptr)
         return 0;
 
-    int isnum;
-    int count = int(lua_tointegerx(state, 2, &isnum));
-    int self_insert = (func == rl_insert);
-    int err = func(isnum ? count : 1, self_insert ? rl_executing_key : 0);
+    int32 isnum;
+    int32 count = int32(lua_tointegerx(state, 2, &isnum));
+    int32 self_insert = (func == rl_insert);
+    int32 err = func(isnum ? count : 1, self_insert ? rl_executing_key : 0);
 
     override_rl_last_func(func);
 
@@ -608,7 +608,7 @@ static int invoke_command(lua_State* state)
 /// If the last key binding did not invoke a Lua function, then the second
 /// return value is an empty string.
 /// -show:  local last_rl_func, last_lua_func = rl.getlastcommand()
-static int get_last_command(lua_State* state)
+static int32 get_last_command(lua_State* state)
 {
     const char* last_rl_func_name = "";
     if (rl_last_func)
@@ -675,7 +675,7 @@ static int get_last_command(lua_State* state)
 /// -show:
 /// -show:  &nbsp;   rl.invokecommand("old-menu-complete")
 /// -show:  end
-static int set_matches(lua_State* state)
+static int32 set_matches(lua_State* state)
 {
     bool nosort = false;
     if (lua_istable(state, 1))
@@ -764,21 +764,21 @@ static int set_matches(lua_State* state)
 /// -show:  &nbsp;   end
 /// -show:  end
 struct key_binding_info { str_moveable name; str_moveable binding; const char* desc; const char* cat; };
-int get_key_bindings(lua_State* state)
+int32 get_key_bindings(lua_State* state)
 {
     bool raw = lua_toboolean(state, 1);
-    int mode = lua_tointeger(state, 2);
+    int32 mode = lua_tointeger(state, 2);
 
     // Get the key bindings.
-    void show_key_bindings(bool friendly, int mode, std::vector<key_binding_info>* out);
+    void show_key_bindings(bool friendly, int32 mode, std::vector<key_binding_info>* out);
     std::vector<key_binding_info> bindings;
     show_key_bindings(!raw, mode, &bindings);
 
     // Copy the result into a lua table.
-    lua_createtable(state, int(bindings.size()), 0);
+    lua_createtable(state, int32(bindings.size()), 0);
 
     str<> out;
-    int i = 1;
+    int32 i = 1;
     for (auto const& info : bindings)
     {
         lua_createtable(state, 0, 4);
@@ -830,7 +830,7 @@ int get_key_bindings(lua_State* state)
 /// -show:  -- info.promptline                [integer] Console line on which the prompt starts.
 /// -show:  -- info.inputline                 [integer] Console line on which the input text starts.
 /// -show:  -- info.inputlinecount            [integer] Number of lines in the input text.
-static int get_prompt_info(lua_State* state)
+static int32 get_prompt_info(lua_State* state)
 {
     if (prompt_filter::is_filtering())
         return luaL_error(state, "rl.getpromptinfo cannot be used during prompt filtering");
@@ -840,8 +840,8 @@ static int get_prompt_info(lua_State* state)
     const char* prefix = rl_get_local_prompt_prefix();
     const char* prompt = rl_get_local_prompt();
 
-    int prefix_lines = count_prompt_lines(prefix);
-    int prompt_lines = count_prompt_lines(prompt);
+    int32 prefix_lines = count_prompt_lines(prefix);
+    int32 prompt_lines = count_prompt_lines(prompt);
 
     lua_pushliteral(state, "promptprefix");
     lua_pushstring(state, prefix);
@@ -865,9 +865,9 @@ static int get_prompt_info(lua_State* state)
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi))
     {
-        int anchor = csbi.dwCursorPosition.Y - _rl_last_v_pos;
-        int prompt_line = anchor - prefix_lines;
-        int input_line = anchor + prompt_lines;
+        int32 anchor = csbi.dwCursorPosition.Y - _rl_last_v_pos;
+        int32 prompt_line = anchor - prefix_lines;
+        int32 input_line = anchor + prompt_lines;
 
         lua_pushliteral(state, "promptline");
         lua_pushinteger(state, 1 + prompt_line);
@@ -894,7 +894,7 @@ static int get_prompt_info(lua_State* state)
 ///
 /// When the optional <span class="arg">insert</span> argument is passed, this
 /// also sets typing insertion mode on or off accordingly.
-static int getset_insert_mode(lua_State* state)
+static int32 getset_insert_mode(lua_State* state)
 {
     if (lua_gettop(state) > 0)
     {
@@ -959,7 +959,7 @@ static int getset_insert_mode(lua_State* state)
 /// -show:
 /// -show:  clink.onbeginedit(modmark_reset)
 /// -show:  clink.onaftercommand(modmark_refilter)
-static int is_modified_line(lua_State* state)
+static int32 is_modified_line(lua_State* state)
 {
     lua_pushboolean(state, current_history() && rl_undo_list);
     return 1;
@@ -975,7 +975,7 @@ static int is_modified_line(lua_State* state)
 ///
 /// The arguments are the same as in
 /// <a href="#builder:addmatch">builder:addmatch()</a>.
-static int get_match_color(lua_State* state)
+static int32 get_match_color(lua_State* state)
 {
     const char* match;
     match_type type = match_type::none;
@@ -1021,7 +1021,7 @@ static int get_match_color(lua_State* state)
 /// -ver:   1.3.18
 /// -ret:   integer
 /// Returns the number of history items.
-static int get_history_count(lua_State* state)
+static int32 get_history_count(lua_State* state)
 {
     lua_pushinteger(state, history_length);
     return 1;
@@ -1047,13 +1047,13 @@ static int get_history_count(lua_State* state)
 ///
 /// <strong>Note:</strong> the time field is omitted if the history item does
 /// not have an associated time.
-static int get_history_items(lua_State* state)
+static int32 get_history_items(lua_State* state)
 {
     bool isnum;
-    int start = checkinteger(state, 1, &isnum) - 1;
+    int32 start = checkinteger(state, 1, &isnum) - 1;
     if (!isnum)
         return 0;
-    int end = checkinteger(state, 2, &isnum);
+    int32 end = checkinteger(state, 2, &isnum);
     if (!isnum)
         return 0;
 
@@ -1067,8 +1067,8 @@ static int get_history_items(lua_State* state)
     lua_createtable(state, (end - start) - 1, 0);
 
     HIST_ENTRY const* const* const items = history_list();
-    int index = 0;
-    for (int i = start; i < end; ++i)
+    int32 index = 0;
+    for (int32 i = start; i < end; ++i)
     {
         lua_createtable(state, 0, 2);
 
@@ -1110,7 +1110,7 @@ static int get_history_items(lua_State* state)
 /// -show:  rl.setbinding([["\C-o"]], [["luafunc:mycommand"]])
 /// -show:  rl.setbinding([["\C-r"]], [["\e[Hrem "]])
 /// -show:  -- Press Alt-H to see the list of key bindings and descriptions.
-static int describe_macro(lua_State* state)
+static int32 describe_macro(lua_State* state)
 {
     const char* macro = checkstring(state, 1);
     const char* description = checkstring(state, 2);
@@ -1136,7 +1136,7 @@ static int describe_macro(lua_State* state)
 /// -ret:   boolean
 /// Returns whether the <span class="arg">text</span> needs quotes to be parsed
 /// correctly in a command line.
-static int need_quotes(lua_State* state)
+static int32 need_quotes(lua_State* state)
 {
     const char* text = checkstring(state, 1);
     const bool need = (text &&
@@ -1189,11 +1189,11 @@ static int need_quotes(lua_State* state)
 /// -show:  &nbsp;    end
 /// -show:  &nbsp;    return matches
 /// -show:  end
-static int is_line_equal(lua_State* state)
+static int32 is_line_equal(lua_State* state)
 {
     const char* text = checkstring(state, 1);
     const bool to_cursor = lua_toboolean(state, 2);
-    const int len = to_cursor ? rl_point : rl_end;
+    const int32 len = to_cursor ? rl_point : rl_end;
     const bool equal = (text &&
                         strlen(text) == len &&
                         strncmp(text, rl_line_buffer, len) == 0);
@@ -1208,7 +1208,7 @@ void rl_lua_initialise(lua_state& lua)
 {
     struct {
         const char* name;
-        int         (*method)(lua_State*);
+        int32       (*method)(lua_State*);
     } methods[] = {
         { "collapsetilde",          &collapse_tilde },
         { "expandtilde",            &expand_tilde },

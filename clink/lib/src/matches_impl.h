@@ -38,7 +38,7 @@ class match_store
 {
 protected:
     char*                   m_ptr;
-    unsigned int            m_size;
+    uint32                  m_size;
 };
 
 
@@ -57,32 +57,32 @@ class matches_impl
 public:
     typedef std::unordered_set<match_lookup, match_lookup_hasher, match_lookup_comparator> match_lookup_unordered_set;
 
-                            matches_impl(unsigned int store_size=0x10000);
+                            matches_impl(uint32 store_size=0x10000);
                             ~matches_impl();
     matches_iter            get_iter() const;
     matches_iter            get_iter(const char* pattern) const;
 
     virtual void            get_lcd(str_base& out) const override;
-    virtual unsigned int    get_match_count() const override;
-    virtual const char*     get_match(unsigned int index) const override;
-    virtual match_type      get_match_type(unsigned int index) const override;
-    virtual const char*     get_match_display(unsigned int index) const override;
-    virtual const char*     get_match_description(unsigned int index) const override;
-    virtual unsigned int    get_match_ordinal(unsigned int index) const override;
-    virtual char            get_match_append_char(unsigned int index) const override;
-    virtual shadow_bool     get_match_suppress_append(unsigned int index) const override;
-    virtual bool            get_match_append_display(unsigned int index) const override;
+    virtual uint32          get_match_count() const override;
+    virtual const char*     get_match(uint32 index) const override;
+    virtual match_type      get_match_type(uint32 index) const override;
+    virtual const char*     get_match_display(uint32 index) const override;
+    virtual const char*     get_match_description(uint32 index) const override;
+    virtual uint32          get_match_ordinal(uint32 index) const override;
+    virtual char            get_match_append_char(uint32 index) const override;
+    virtual shadow_bool     get_match_suppress_append(uint32 index) const override;
+    virtual bool            get_match_append_display(uint32 index) const override;
     virtual bool            is_suppress_append() const override;
     virtual shadow_bool     is_filename_completion_desired() const override;
     virtual shadow_bool     is_filename_display_desired() const override;
     virtual char            get_append_character() const override;
-    virtual int             get_suppress_quoting() const override;
+    virtual int32           get_suppress_quoting() const override;
     virtual bool            get_force_quoting() const override;
-    virtual int             get_word_break_position() const override;
+    virtual int32           get_word_break_position() const override;
     virtual bool            match_display_filter(const char* needle, char** matches, match_display_filter_entry*** filtered_matches, display_filter_flags flags, bool* old_filtering=nullptr) const override;
     virtual bool            filter_matches(char** matches, char completion_type, bool filename_completion_desired) const override;
 
-    void                    set_word_break_position(int position);
+    void                    set_word_break_position(int32 position);
     void                    set_regen_blocked();
     bool                    is_regen_blocked() const { return m_regen_blocked; }
     bool                    is_volatile() const { return m_volatile; }
@@ -94,20 +94,20 @@ public:
     void                    clear();
 
 private:
-    virtual const char*     get_unfiltered_match(unsigned int index) const override;
-    virtual match_type      get_unfiltered_match_type(unsigned int index) const override;
-    virtual const char*     get_unfiltered_match_display(unsigned int index) const override;
-    virtual const char*     get_unfiltered_match_description(unsigned int index) const override;
-    virtual char            get_unfiltered_match_append_char(unsigned int index) const override;
-    virtual shadow_bool     get_unfiltered_match_suppress_append(unsigned int index) const override;
-    virtual bool            get_unfiltered_match_append_display(unsigned int index) const override;
+    virtual const char*     get_unfiltered_match(uint32 index) const override;
+    virtual match_type      get_unfiltered_match_type(uint32 index) const override;
+    virtual const char*     get_unfiltered_match_display(uint32 index) const override;
+    virtual const char*     get_unfiltered_match_description(uint32 index) const override;
+    virtual char            get_unfiltered_match_append_char(uint32 index) const override;
+    virtual shadow_bool     get_unfiltered_match_suppress_append(uint32 index) const override;
+    virtual bool            get_unfiltered_match_append_display(uint32 index) const override;
 
     friend class            match_pipeline;
     friend class            match_builder;
     friend class            matches_iter;
     void                    set_append_character(char append);
     void                    set_suppress_append(bool suppress);
-    void                    set_suppress_quoting(int suppress);
+    void                    set_suppress_quoting(int32 suppress);
     void                    set_force_quoting();
     void                    set_deprecated_mode();
     void                    set_matches_are_files(bool files);
@@ -116,17 +116,17 @@ private:
     void                    set_input_line(const char* text);
     bool                    is_from_current_input_line();
     bool                    add_match(const match_desc& desc, bool already_normalised=false);
-    unsigned int            get_info_count() const;
+    uint32                  get_info_count() const;
     const match_info*       get_infos() const;
     match_info*             get_infos();
     void                    reset();
-    void                    coalesce(unsigned int count_hint, bool restrict=false);
+    void                    coalesce(uint32 count_hint, bool restrict=false);
 
 private:
     class store_impl : public linear_allocator
     {
     public:
-                            store_impl(unsigned int size);
+                            store_impl(uint32 size);
         const char*         store_front(const char* str) { return store(str); }
     };
 
@@ -146,8 +146,8 @@ private:
     bool                    m_regen_blocked = false;
     bool                    m_nosort = false;
     bool                    m_volatile = false;
-    int                     m_suppress_quoting = 0;
-    int                     m_word_break_position = -1;
+    int32                   m_suppress_quoting = 0;
+    int32                   m_word_break_position = -1;
     shadow_bool             m_filename_completion_desired;
     shadow_bool             m_filename_display_desired;
     str_moveable            m_input_line;   // The line the generators were given.

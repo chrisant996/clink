@@ -97,8 +97,8 @@ static LONG WINAPI exception_filter(EXCEPTION_POINTERS* info)
     fputs("\n!!! Backtrace:", stderr);
     bool skip = true;
     void* backtrace[48];
-    int bt_length = CaptureStackBackTrace(0, sizeof_array(backtrace), backtrace, nullptr);
-    for (int i = 0; i < bt_length; ++i)
+    int32 bt_length = CaptureStackBackTrace(0, sizeof_array(backtrace), backtrace, nullptr);
+    for (int32 i = 0; i < bt_length; ++i)
     {
         if (skip &= (backtrace[i] != record.ExceptionAddress))
             continue;

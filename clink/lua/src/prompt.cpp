@@ -21,7 +21,7 @@ extern "C" {
 #include <algorithm>
 
 //------------------------------------------------------------------------------
-extern "C" int is_CJK_codepage(UINT cp);
+extern "C" int32 is_CJK_codepage(UINT cp);
 extern line_buffer* g_rl_buffer;
 
 //------------------------------------------------------------------------------
@@ -31,7 +31,7 @@ static const wchar_t g_prompt_tag_hidden[]  = MR("C") MR("L") MR("I") MR("N") MR
 struct prompt_tag
 {
     const wchar_t*  tag;
-    int             len;
+    int32           len;
 };
 static const prompt_tag g_prompt_tags[] =
 {
@@ -150,7 +150,7 @@ void locale_info::init()
                 {
                     const char ch = *p;
                     const char* const start = p;
-                    int c = 0;
+                    int32 c = 0;
                     while (*p == ch)
                         c++, p++;
                     if (c == 1)
@@ -206,7 +206,7 @@ void locale_info::format_date(const SYSTEMTIME& systime, str_base& out)
     else
     {
 fallback:
-        int a, b, c;
+        int32 a, b, c;
         switch (m_date_order)
         {
         default:    // month, day, year
@@ -303,7 +303,7 @@ const wchar_t* prompt::get() const
 }
 
 //------------------------------------------------------------------------------
-void prompt::set(const wchar_t* chars, int char_count)
+void prompt::set(const wchar_t* chars, int32 char_count)
 {
     clear();
 
@@ -311,7 +311,7 @@ void prompt::set(const wchar_t* chars, int char_count)
         return;
 
     if (char_count <= 0)
-        char_count = int(wcslen(chars));
+        char_count = int32(wcslen(chars));
 
     m_data = (wchar_t*)malloc(sizeof(*m_data) * (char_count + 1));
     wcsncpy(m_data, chars, char_count);
@@ -327,11 +327,11 @@ bool prompt::is_set() const
 
 
 //------------------------------------------------------------------------------
-void tagged_prompt::set(const wchar_t* chars, int char_count)
+void tagged_prompt::set(const wchar_t* chars, int32 char_count)
 {
     clear();
 
-    if (int tag_length = is_tagged(chars, char_count))
+    if (int32 tag_length = is_tagged(chars, char_count))
         prompt::set(chars + tag_length, char_count - tag_length);
 }
 
@@ -347,8 +347,8 @@ void tagged_prompt::tag(const wchar_t* value)
         return;
     }
 
-    int length = int(wcslen(value));
-    length += int(wcslen(g_prompt_tag_hidden));
+    int32 length = int32(wcslen(value));
+    length += int32(wcslen(g_prompt_tag_hidden));
 
     m_data = (wchar_t*)malloc(sizeof(*m_data) * (length + 1));
     wcscpy(m_data, g_prompt_tag_hidden);
@@ -356,13 +356,13 @@ void tagged_prompt::tag(const wchar_t* value)
 }
 
 //------------------------------------------------------------------------------
-int tagged_prompt::is_tagged(const wchar_t* chars, int char_count)
+int32 tagged_prompt::is_tagged(const wchar_t* chars, int32 char_count)
 {
     if (char_count <= 0)
-        char_count = int(wcslen(chars));
+        char_count = int32(wcslen(chars));
 
     // For each accepted tag...
-    for (int i = 0; i < sizeof_array(g_prompt_tags); ++i)
+    for (int32 i = 0; i < sizeof_array(g_prompt_tags); ++i)
     {
         const prompt_tag& tag = g_prompt_tags[i];
         if (tag.len > char_count)
@@ -400,7 +400,7 @@ bool prompt_filter::filter(const char* in, const char* rin, str_base& out, str_b
 {
     lua_State* state = m_lua.get_state();
 
-    int top = lua_gettop(state);
+    int32 top = lua_gettop(state);
 
     // Call Lua to filter prompt
     lua_getglobal(state, "clink");
@@ -455,7 +455,7 @@ prompt prompt_utils::extract_from_console()
 
     // Work out prompt length.
     COORD cursorXy = csbi.dwCursorPosition;
-    unsigned int length = cursorXy.X;
+    uint32 length = cursorXy.X;
     cursorXy.X = 0;
 
     wchar_t buffer[256] = {};
@@ -515,7 +515,7 @@ void prompt_utils::expand_prompt_codes(const char* in, str_base& out, bool singl
     while (iter.more())
     {
         const char* ptr = iter.get_pointer();
-        unsigned int c = iter.next();
+        uint32 c = iter.next();
 
         if (single_line && (c == '\r' || c == '\n'))
             break;
@@ -524,7 +524,7 @@ void prompt_utils::expand_prompt_codes(const char* in, str_base& out, bool singl
 
         if (c != '$')
         {
-            out.concat(ptr, int(iter.get_pointer() - ptr));
+            out.concat(ptr, int32(iter.get_pointer() - ptr));
             continue;
         }
 
@@ -573,7 +573,7 @@ void prompt_utils::expand_prompt_codes(const char* in, str_base& out, bool singl
                     end = trim.get_pointer();
                     trim.next();
                 }
-                out.truncate(static_cast<unsigned int>(end - out.c_str()));
+                out.truncate(uint32(end - out.c_str()));
             }
             break;
         case 'M':   case 'm':
@@ -621,7 +621,7 @@ void prompt_utils::expand_prompt_codes(const char* in, str_base& out, bool singl
     {
         while (true)
         {
-            unsigned int len = out.length();
+            uint32 len = out.length();
             if (!len)
                 break;
             len--;

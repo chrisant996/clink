@@ -162,7 +162,7 @@ void task_manager::diagnostics()
     for (auto iter : m_map)
     {
         std::shared_ptr<callback_ref> callback(iter.second->m_callback_ref);
-        const int ref = callback ? callback->m_ref : LUA_REFNIL;
+        const int32 ref = callback ? callback->m_ref : LUA_REFNIL;
         const bool pending = callback && iter.second->m_run_callback;
         s.clear();
         states.clear();

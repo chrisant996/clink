@@ -58,6 +58,13 @@ template <class A> A max(A a, A b) { return (a > b) ? a : b; }
 template <class A> A clamp(A v, A m, A M) { return min(max(v, m), M); }
 
 //------------------------------------------------------------------------------
+#include <cstdint>
+using int8  = int8_t;  using uint8  = uint8_t;
+using int16 = int16_t; using uint16 = uint16_t;
+using int32 = int32_t; using uint32 = uint32_t;
+using int64 = int64_t; using uint64 = uint64_t;
+
+//------------------------------------------------------------------------------
 #if defined(PLATFORM_WINDOWS)
 #   define PATH_SEP "\\"
 #   define PATH_SEP_CHAR '\\'
@@ -82,8 +89,8 @@ extern const char* get_bindable_esc();
 
 //------------------------------------------------------------------------------
 #if defined(DEBUG)
-int dbg_get_env_int(const char* name, int default_value=0);
-void dbg_printf_row(int row, const char* fmt, ...);
+int32 dbg_get_env_int(const char* name, int32 default_value=0);
+void dbg_printf_row(int32 row, const char* fmt, ...);
 void dbg_printf(const char* fmt, ...);
 #endif
 

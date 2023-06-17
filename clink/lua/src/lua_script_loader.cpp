@@ -8,7 +8,7 @@
 #if defined(CLINK_USE_EMBEDDED_SCRIPTS)
 
 //------------------------------------------------------------------------------
-void lua_load_script_impl(lua_state& state, const char* script, int length)
+void lua_load_script_impl(lua_state& state, const char* script, int32 length)
 {
     state.do_string(script, length);
 }
@@ -16,7 +16,7 @@ void lua_load_script_impl(lua_state& state, const char* script, int length)
 #else // CLINK_USE_EMBEDDED_SCRIPTS
 
 //------------------------------------------------------------------------------
-void lua_load_script_impl(lua_state& state, const char* path, int length)
+void lua_load_script_impl(lua_state& state, const char* path, int32 length)
 {
     state.do_file(path);
 }

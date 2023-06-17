@@ -50,7 +50,7 @@ private:
 
 private:
     hook_desc                   m_descs[5];
-    int                         m_desc_count = 0;
+    int32                       m_desc_count = 0;
     bool                        m_pending = false;
 };
 

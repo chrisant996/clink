@@ -9,14 +9,14 @@
 
 //------------------------------------------------------------------------------
 #if defined(__MINGW32__) || defined(__MINGW64__)
-inline int __ascii_towlower(int c)
+inline int32 __ascii_towlower(int32 c)
 {
     if (c >= 0 && c <= 127)
         return tolower(c);
     return c;
 }
 
-inline int __ascii_towupper(int c)
+inline int32 __ascii_towupper(int32 c)
 {
     if (c >= 0 && c <= 127)
         return toupper(c);
@@ -25,7 +25,7 @@ inline int __ascii_towupper(int c)
 #endif
 
 //------------------------------------------------------------------------------
-void str_transform(const wchar_t* in, unsigned int len, wstr_base& out, transform_mode mode)
+void str_transform(const wchar_t* in, uint32 len, wstr_base& out, transform_mode mode)
 {
     DWORD mapflags;
 
@@ -37,8 +37,8 @@ void str_transform(const wchar_t* in, unsigned int len, wstr_base& out, transfor
     default:                        assert(false); return;
     }
 
-    out.reserve(len + max<unsigned int>(len / 10, 10));
-    int cch = LCMapStringW(LOCALE_USER_DEFAULT, mapflags, in, len, out.data(), out.size());
+    out.reserve(len + max<uint32>(len / 10, 10));
+    int32 cch = LCMapStringW(LOCALE_USER_DEFAULT, mapflags, in, len, out.data(), out.size());
     if (!cch)
     {
         cch = LCMapStringW(LOCALE_USER_DEFAULT, mapflags, in, len, nullptr, 0);
@@ -48,7 +48,7 @@ void str_transform(const wchar_t* in, unsigned int len, wstr_base& out, transfor
         {
             out.clear();
             bool title_char = true;
-            for (unsigned int i = 0; i < len; ++i)
+            for (uint32 i = 0; i < len; ++i)
             {
                 WCHAR c = in[i];
 

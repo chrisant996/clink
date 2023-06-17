@@ -270,7 +270,7 @@ void win_screen_buffer::begin()
 
     char native_vt = m_native_vt;
     ansi_handler new_handler = s_current_ansi_handler;
-    const int mode = g_terminal_emulation.get();
+    const int32 mode = g_terminal_emulation.get();
     switch (mode)
     {
     case 0:
@@ -328,7 +328,7 @@ void win_screen_buffer::close()
 }
 
 //------------------------------------------------------------------------------
-void win_screen_buffer::write(const char* data, int length)
+void win_screen_buffer::write(const char* data, int32 length)
 {
     assert(m_ready);
 
@@ -336,7 +336,7 @@ void win_screen_buffer::write(const char* data, int length)
     while (length > 0)
     {
         wchar_t wbuf[384];
-        int n = min<int>(sizeof_array(wbuf), length + 1);
+        int32 n = min<int32>(sizeof_array(wbuf), length + 1);
         n = to_utf16(wbuf, n, iter);
         if (!n && !*iter.get_pointer())
         {
@@ -348,7 +348,7 @@ void win_screen_buffer::write(const char* data, int length)
         DWORD written;
         WriteConsoleW(m_handle, wbuf, n, &written, nullptr);
 
-        n = int(iter.get_pointer() - data);
+        n = int32(iter.get_pointer() - data);
         length -= n;
         data += n;
     }
@@ -366,7 +366,7 @@ void win_screen_buffer::flush()
 }
 
 //------------------------------------------------------------------------------
-int win_screen_buffer::get_columns() const
+int32 win_screen_buffer::get_columns() const
 {
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     GetConsoleScreenBufferInfo(m_handle, &csbi);
@@ -374,7 +374,7 @@ int win_screen_buffer::get_columns() const
 }
 
 //------------------------------------------------------------------------------
-int win_screen_buffer::get_rows() const
+int32 win_screen_buffer::get_rows() const
 {
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     GetConsoleScreenBufferInfo(m_handle, &csbi);
@@ -382,7 +382,7 @@ int win_screen_buffer::get_rows() const
 }
 
 //------------------------------------------------------------------------------
-bool win_screen_buffer::get_line_text(int line, str_base& out) const
+bool win_screen_buffer::get_line_text(int32 line, str_base& out) const
 {
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     if (!GetConsoleScreenBufferInfo(m_handle, &csbi))
@@ -419,7 +419,7 @@ void win_screen_buffer::clear(clear_type type)
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     GetConsoleScreenBufferInfo(m_handle, &csbi);
 
-    int width, height, count = 0;
+    int32 width, height, count = 0;
     COORD xy;
 
     switch (type)
@@ -458,7 +458,7 @@ void win_screen_buffer::clear_line(clear_type type)
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     GetConsoleScreenBufferInfo(m_handle, &csbi);
 
-    int width;
+    int32 width;
     COORD xy;
     switch (type)
     {
@@ -484,14 +484,14 @@ void win_screen_buffer::clear_line(clear_type type)
 }
 
 //------------------------------------------------------------------------------
-void win_screen_buffer::set_horiz_cursor(int column)
+void win_screen_buffer::set_horiz_cursor(int32 column)
 {
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     GetConsoleScreenBufferInfo(m_handle, &csbi);
 
     const SMALL_RECT& window = csbi.srWindow;
-    int width = (window.Right - window.Left) + 1;
-    int height = (window.Bottom - window.Top) + 1;
+    int32 width = (window.Right - window.Left) + 1;
+    int32 height = (window.Bottom - window.Top) + 1;
 
     column = clamp(column, 0, width - 1);
 
@@ -500,14 +500,14 @@ void win_screen_buffer::set_horiz_cursor(int column)
 }
 
 //------------------------------------------------------------------------------
-void win_screen_buffer::set_cursor(int column, int row)
+void win_screen_buffer::set_cursor(int32 column, int32 row)
 {
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     GetConsoleScreenBufferInfo(m_handle, &csbi);
 
     const SMALL_RECT& window = csbi.srWindow;
-    int width = (window.Right - window.Left) + 1;
-    int height = (window.Bottom - window.Top) + 1;
+    int32 width = (window.Right - window.Left) + 1;
+    int32 height = (window.Bottom - window.Top) + 1;
 
     column = clamp(column, 0, width - 1);
     row = clamp(row, 0, height - 1);
@@ -517,7 +517,7 @@ void win_screen_buffer::set_cursor(int column, int row)
 }
 
 //------------------------------------------------------------------------------
-void win_screen_buffer::move_cursor(int dx, int dy)
+void win_screen_buffer::move_cursor(int32 dx, int32 dy)
 {
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     GetConsoleScreenBufferInfo(m_handle, &csbi);
@@ -536,8 +536,8 @@ void win_screen_buffer::save_cursor()
     GetConsoleScreenBufferInfo(m_handle, &csbi);
 
     const SMALL_RECT& window = csbi.srWindow;
-    int width = (window.Right - window.Left) + 1;
-    int height = (window.Bottom - window.Top) + 1;
+    int32 width = (window.Right - window.Left) + 1;
+    int32 height = (window.Bottom - window.Top) + 1;
 
     m_saved_cursor = {
         short(clamp(csbi.dwCursorPosition.X - window.Left, 0, width)),
@@ -552,7 +552,7 @@ void win_screen_buffer::restore_cursor()
 }
 
 //------------------------------------------------------------------------------
-void win_screen_buffer::insert_chars(int count)
+void win_screen_buffer::insert_chars(int32 count)
 {
     if (count <= 0)
         return;
@@ -575,7 +575,7 @@ void win_screen_buffer::insert_chars(int count)
 }
 
 //------------------------------------------------------------------------------
-void win_screen_buffer::delete_chars(int count)
+void win_screen_buffer::delete_chars(int32 count)
 {
     if (count <= 0)
         return;
@@ -594,7 +594,7 @@ void win_screen_buffer::delete_chars(int count)
 
     ScrollConsoleScreenBuffer(m_handle, &rect, NULL, csbi.dwCursorPosition, &fill);
 
-    int chars_moved = rect.Right - rect.Left + 1;
+    int32 chars_moved = rect.Right - rect.Left + 1;
     if (chars_moved < count)
     {
         COORD xy = csbi.dwCursorPosition;
@@ -614,19 +614,19 @@ void win_screen_buffer::set_attributes(attributes attr)
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     GetConsoleScreenBufferInfo(m_handle, &csbi);
 
-    int out_attr = csbi.wAttributes & attr_mask_all;
+    int32 out_attr = csbi.wAttributes & attr_mask_all;
 
     // Un-reverse so processing can operate on normalized attributes.
     if (m_reverse)
     {
-        int fg = (out_attr & ~attr_mask_bg);
-        int bg = (out_attr & attr_mask_bg);
+        int32 fg = (out_attr & ~attr_mask_bg);
+        int32 bg = (out_attr & attr_mask_bg);
         out_attr = (fg << 4) | (bg >> 4);
     }
 
     // Note to self; lookup table is probably much faster.
-    auto swizzle = [] (int rgbi) {
-        int b_r_ = ((rgbi & 0x01) << 2) | !!(rgbi & 0x04);
+    auto swizzle = [] (int32 rgbi) {
+        int32 b_r_ = ((rgbi & 0x01) << 2) | !!(rgbi & 0x04);
         return (rgbi & 0x0a) | b_r_;
     };
 
@@ -655,7 +655,7 @@ void win_screen_buffer::set_attributes(attributes attr)
     bool bold = m_bold;
     if (auto fg = attr.get_fg())
     {
-        int value = fg.is_default ? m_default_attr : swizzle(fg->value);
+        int32 value = fg.is_default ? m_default_attr : swizzle(fg->value);
         value &= attr_mask_fg;
         out_attr = (out_attr & ~attr_mask_fg) | value;
         bold |= (value > 7);
@@ -689,7 +689,7 @@ void win_screen_buffer::set_attributes(attributes attr)
     // Background color
     if (auto bg = attr.get_bg())
     {
-        int value = bg.is_default ? m_default_attr : (swizzle(bg->value) << 4);
+        int32 value = bg.is_default ? m_default_attr : (swizzle(bg->value) << 4);
         out_attr = (out_attr & ~attr_mask_bg) | (value & attr_mask_bg);
     }
 
@@ -700,8 +700,8 @@ void win_screen_buffer::set_attributes(attributes attr)
     // Apply reverse video
     if (m_reverse)
     {
-        int fg = (out_attr & ~attr_mask_bg);
-        int bg = (out_attr & attr_mask_bg);
+        int32 fg = (out_attr & ~attr_mask_bg);
+        int32 bg = (out_attr & attr_mask_bg);
         out_attr = (fg << 4) | (bg >> 4);
     }
 
@@ -710,7 +710,7 @@ void win_screen_buffer::set_attributes(attributes attr)
 }
 
 //------------------------------------------------------------------------------
-static bool get_nearest_color(void* handle, const unsigned char (&rgb)[3], unsigned char& attr)
+static bool get_nearest_color(void* handle, const uint8 (&rgb)[3], uint8& attr)
 {
     static HMODULE hmod = GetModuleHandle("kernel32.dll");
     static FARPROC proc = GetProcAddress(hmod, "GetConsoleScreenBufferInfoEx");
@@ -725,9 +725,9 @@ static bool get_nearest_color(void* handle, const unsigned char (&rgb)[3], unsig
 
     cie::lab target(RGB(rgb[0], rgb[1], rgb[2]));
     double best_deltaE = 0;
-    int best_idx = -1;
+    int32 best_idx = -1;
 
-    for (int i = sizeof_array(infoex.ColorTable); i--;)
+    for (int32 i = sizeof_array(infoex.ColorTable); i--;)
     {
         cie::lab candidate(infoex.ColorTable[i]);
         double deltaE = cie::deltaE_2(target, candidate);
@@ -741,7 +741,7 @@ static bool get_nearest_color(void* handle, const unsigned char (&rgb)[3], unsig
     if (best_idx < 0)
         return false;
 
-    static const int dos_to_ansi_order[] = { 0, 4, 2, 6, 1, 5, 3, 7 };
+    static const int32 dos_to_ansi_order[] = { 0, 4, 2, 6, 1, 5, 3, 7 };
     attr = (best_idx & 0x08) + dos_to_ansi_order[best_idx & 0x07];
     return true;
 }
@@ -753,8 +753,8 @@ bool win_screen_buffer::get_nearest_color(attributes& attr) const
     const attributes::color bg = attr.get_bg().value;
     if (fg.is_rgb)
     {
-        unsigned char val;
-        unsigned char rgb[3];
+        uint8 val;
+        uint8 rgb[3];
         fg.as_888(rgb);
         if (!::get_nearest_color(m_handle, rgb, val))
             return false;
@@ -762,8 +762,8 @@ bool win_screen_buffer::get_nearest_color(attributes& attr) const
     }
     if (bg.is_rgb)
     {
-        unsigned char val;
-        unsigned char rgb[3];
+        uint8 val;
+        uint8 rgb[3];
         bg.as_888(rgb);
         if (!::get_nearest_color(m_handle, rgb, val))
             return false;
@@ -773,7 +773,7 @@ bool win_screen_buffer::get_nearest_color(attributes& attr) const
 }
 
 //------------------------------------------------------------------------------
-int win_screen_buffer::is_line_default_color(int line) const
+int32 win_screen_buffer::is_line_default_color(int32 line) const
 {
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     if (!GetConsoleScreenBufferInfo(m_handle, &csbi))
@@ -782,7 +782,7 @@ int win_screen_buffer::is_line_default_color(int line) const
     if (!ensure_attrs_buffer(csbi.dwSize.X))
         return -1;
 
-    int ret = true;
+    int32 ret = true;
     COORD coord = { 0, short(line) };
     DWORD len = 0;
     if (!ReadConsoleOutputAttribute(m_handle, m_attrs, csbi.dwSize.X, coord, &len))
@@ -798,7 +798,7 @@ int win_screen_buffer::is_line_default_color(int line) const
 }
 
 //------------------------------------------------------------------------------
-int win_screen_buffer::line_has_color(int line, const BYTE* attrs, int num_attrs, BYTE mask) const
+int32 win_screen_buffer::line_has_color(int32 line, const BYTE* attrs, int32 num_attrs, BYTE mask) const
 {
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     if (!GetConsoleScreenBufferInfo(m_handle, &csbi))
@@ -807,7 +807,7 @@ int win_screen_buffer::line_has_color(int line, const BYTE* attrs, int num_attrs
     if (!ensure_attrs_buffer(csbi.dwSize.X))
         return -1;
 
-    int ret = true;
+    int32 ret = true;
     COORD coord = { 0, short(line) };
     DWORD len = 0;
     if (!ReadConsoleOutputAttribute(m_handle, m_attrs, csbi.dwSize.X, coord, &len))
@@ -827,7 +827,7 @@ int win_screen_buffer::line_has_color(int line, const BYTE* attrs, int num_attrs
 }
 
 //------------------------------------------------------------------------------
-int win_screen_buffer::find_line(int starting_line, int distance, const char* text, find_line_mode mode, const BYTE* attrs, int num_attrs, BYTE mask) const
+int32 win_screen_buffer::find_line(int32 starting_line, int32 distance, const char* text, find_line_mode mode, const BYTE* attrs, int32 num_attrs, BYTE mask) const
 {
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     if (!GetConsoleScreenBufferInfo(m_handle, &csbi))
@@ -847,7 +847,7 @@ int win_screen_buffer::find_line(int starting_line, int distance, const char* te
 }
 
 //------------------------------------------------------------------------------
-bool win_screen_buffer::ensure_chars_buffer(int width) const
+bool win_screen_buffer::ensure_chars_buffer(int32 width) const
 {
     if (width > m_chars_capacity)
     {
@@ -865,7 +865,7 @@ bool win_screen_buffer::ensure_chars_buffer(int width) const
 }
 
 //------------------------------------------------------------------------------
-bool win_screen_buffer::ensure_attrs_buffer(int width) const
+bool win_screen_buffer::ensure_attrs_buffer(int32 width) const
 {
     if (width > m_attrs_capacity)
     {

@@ -29,8 +29,8 @@ private:
 namespace settings
 {
 
-const unsigned int c_max_len_name = 32;
-const unsigned int c_max_len_short_desc = 48;
+const uint32 c_max_len_name = 32;
+const uint32 c_max_len_short_desc = 48;
 
 setting_iter        first();
 setting*            find(const char* name);
@@ -69,7 +69,7 @@ class setting
     friend void load_custom_defaults(const char* file);
 
 public:
-    enum type_e : unsigned char {
+    enum type_e : uint8 {
         type_unknown,
         type_int,
         type_bool,
@@ -211,28 +211,28 @@ template <typename T> void setting_impl<T>::deferred_load()
 
 //------------------------------------------------------------------------------
 template <> struct setting_impl<bool>::type        { enum { id = setting::type_bool }; };
-template <> struct setting_impl<int>::type         { enum { id = setting::type_int }; };
+template <> struct setting_impl<int32>::type       { enum { id = setting::type_int }; };
 template <> struct setting_impl<const char*>::type { enum { id = setting::type_string }; };
 
 //------------------------------------------------------------------------------
 typedef setting_impl<bool>         setting_bool;
-typedef setting_impl<int>          setting_int;
+typedef setting_impl<int32>        setting_int;
 typedef setting_impl<const char*>  setting_str;
 
 //------------------------------------------------------------------------------
 class setting_enum
-    : public setting_impl<int>
+    : public setting_impl<int32>
 {
 public:
-                       setting_enum(const char* name, const char* short_desc, const char* values, int default_value);
-                       setting_enum(const char* name, const char* short_desc, const char* long_desc, const char* values, int default_value);
+                       setting_enum(const char* name, const char* short_desc, const char* values, int32 default_value);
+                       setting_enum(const char* name, const char* short_desc, const char* long_desc, const char* values, int32 default_value);
     virtual void       get(str_base& out) const override;
     const char*        get_options() const;
 
-    using setting_impl<int>::get;
+    using setting_impl<int32>::get;
 
 protected:
-    virtual bool       parse(const char* value, store<int>& out) override;
+    virtual bool       parse(const char* value, store<int32>& out) override;
     static const char* next_option(const char* option);
     str<48>            m_options;
 };

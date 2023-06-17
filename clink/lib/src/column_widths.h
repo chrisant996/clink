@@ -38,8 +38,8 @@ struct column_widths
 // MAX_MATCHES == 0 is unlimited.
 column_widths calculate_columns(
     match_adapter* adapter,
-    int max_matches=0,
+    int32 max_matches=0,
     bool one_column=false,
     bool omit_desc=false,
     width_t extra=0,
-    int presuf=0);
+    int32 presuf=0);

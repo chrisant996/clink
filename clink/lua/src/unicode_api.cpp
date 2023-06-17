@@ -15,8 +15,8 @@ static class delay_load_normaliz
 public:
                         delay_load_normaliz();
     bool                init();
-    int                 NormalizeString(NORM_FORM NormForm, LPCWSTR lpSrcString, int cwSrcLength, LPWSTR lpDstString, int cwDstLength);
-    BOOL                IsNormalizedString(NORM_FORM NormForm, LPCWSTR lpString, int cwLength);
+    int32               NormalizeString(NORM_FORM NormForm, LPCWSTR lpSrcString, int32 cwSrcLength, LPWSTR lpDstString, int32 cwDstLength);
+    BOOL                IsNormalizedString(NORM_FORM NormForm, LPCWSTR lpString, int32 cwLength);
 private:
     bool                m_initialized = false;
     bool                m_ok = false;
@@ -26,8 +26,8 @@ private:
         FARPROC         proc[2];
         struct
         {
-            int (WINAPI* NormalizeString)(NORM_FORM NormForm, LPCWSTR lpSrcString, int cwSrcLength, LPWSTR lpDstString, int cwDstLength);
-            BOOL (WINAPI* IsNormalizedString)(NORM_FORM NormForm, LPCWSTR lpString, int cwLength);
+            int32 (WINAPI* NormalizeString)(NORM_FORM NormForm, LPCWSTR lpSrcString, int32 cwSrcLength, LPWSTR lpDstString, int32 cwDstLength);
+            BOOL (WINAPI* IsNormalizedString)(NORM_FORM NormForm, LPCWSTR lpString, int32 cwLength);
         };
     } m_procs;
 } s_normaliz;
@@ -57,7 +57,7 @@ bool delay_load_normaliz::init()
 }
 
 //------------------------------------------------------------------------------
-int delay_load_normaliz::NormalizeString(NORM_FORM NormForm, LPCWSTR lpSrcString, int cwSrcLength, LPWSTR lpDstString, int cwDstLength)
+int32 delay_load_normaliz::NormalizeString(NORM_FORM NormForm, LPCWSTR lpSrcString, int32 cwSrcLength, LPWSTR lpDstString, int32 cwDstLength)
 {
     if (init() && !m_procs.NormalizeString)
     {
@@ -68,7 +68,7 @@ int delay_load_normaliz::NormalizeString(NORM_FORM NormForm, LPCWSTR lpSrcString
 }
 
 //------------------------------------------------------------------------------
-BOOL delay_load_normaliz::IsNormalizedString(NORM_FORM NormForm, LPCWSTR lpString, int cwLength)
+BOOL delay_load_normaliz::IsNormalizedString(NORM_FORM NormForm, LPCWSTR lpString, int32 cwLength)
 {
     if (init() && !m_procs.IsNormalizedString)
     {
@@ -84,7 +84,7 @@ BOOL delay_load_normaliz::IsNormalizedString(NORM_FORM NormForm, LPCWSTR lpStrin
 #define in_range(lo, c, hi)     ((unsigned)((c) - (lo)) <= unsigned((hi) - (lo)))
 
 //------------------------------------------------------------------------------
-static bool is_combining_mark(int c)
+static bool is_combining_mark(int32 c)
 {
     return (in_range(0x0300, c, 0x36f) ||
             in_range(0x20d0, c, 0x20ef) ||
@@ -122,10 +122,10 @@ static bool is_combining_mark(int c)
 /// If successful, the resulting string is returned.
 ///
 /// If unsuccessful, both the original string and an error code are returned.
-static int normalize(lua_State* state)
+static int32 normalize(lua_State* state)
 {
     bool isnum;
-    int form = checkinteger(state, 1, &isnum);
+    int32 form = checkinteger(state, 1, &isnum);
     const char* text = checkstring(state, 2);
     if (!isnum || !text)
         return 0;
@@ -155,7 +155,7 @@ static int normalize(lua_State* state)
     wstr_moveable in(text);
     wstr_moveable tmp;
 
-    int estimate = s_normaliz.NormalizeString(norm, in.c_str(), -1, nullptr, 0);
+    int32 estimate = s_normaliz.NormalizeString(norm, in.c_str(), -1, nullptr, 0);
     if (estimate <= 0)
     {
 failed:
@@ -218,10 +218,10 @@ failed:
 /// If successful, true or false is returned.
 ///
 /// If unsuccessful, false and an error code are returned.
-static int isnormalized(lua_State* state)
+static int32 isnormalized(lua_State* state)
 {
     bool isnum;
-    int form = checkinteger(state, 1, &isnum);
+    int32 form = checkinteger(state, 1, &isnum);
     const char* text = checkstring(state, 2);
     if (!isnum || !text)
         return 0;
@@ -283,20 +283,20 @@ static int isnormalized(lua_State* state)
 /// -show:  --      ᴆ       7430    false   \xe1\xb4\x86
 /// -show:  --      õ       245     false   \xc3\xb5
 /// -show:  --      û       373     false   \xc3\xbb
-static int iter_aux (lua_State* state)
+static int32 iter_aux (lua_State* state)
 {
     const char* text = lua_tolstring(state, lua_upvalueindex(1), nullptr);
-    const int pos = int(lua_tointeger(state, lua_upvalueindex(2)));
+    const int32 pos = int32(lua_tointeger(state, lua_upvalueindex(2)));
     const char* s = text + pos;
 
     str_iter iter(s);
-    const int c = iter.next();
+    const int32 c = iter.next();
     if (!c)
         return 0;
 
     const char* e = iter.get_pointer();
 
-    lua_pushinteger(state, int(e - text));
+    lua_pushinteger(state, int32(e - text));
     lua_replace(state, lua_upvalueindex(2));
 
     lua_pushlstring(state, s, size_t(e - s));
@@ -304,7 +304,7 @@ static int iter_aux (lua_State* state)
     lua_pushboolean(state, is_combining_mark(c));
     return 3;
 }
-static int iter(lua_State* state)
+static int32 iter(lua_State* state)
 {
     const char* s = checkstring(state, 1);
     if (!s)
@@ -333,14 +333,14 @@ static int iter(lua_State* state)
 /// <strong>Note:</strong>  Clink uses UTF8 internally, and conversion to/from
 /// other encodings is intended for use with file input/output or network
 /// input/output.
-static int from_codepage(lua_State* state)
+static int32 from_codepage(lua_State* state)
 {
     const char* s = checkstring(state, 1);
-    int cp = optinteger(state, 2, CP_ACP);
+    int32 cp = optinteger(state, 2, CP_ACP);
     if (!s)
         return 0;
 
-    int len = MultiByteToWideChar(cp, 0, s, -1, nullptr, 0);
+    int32 len = MultiByteToWideChar(cp, 0, s, -1, nullptr, 0);
     if (len <= 0)
         return 0;
 
@@ -373,16 +373,16 @@ static int from_codepage(lua_State* state)
 /// <strong>Note:</strong>  Clink uses UTF8 internally, and conversion to/from
 /// other encodings is intended for use with file input/output or network
 /// input/output.
-static int to_codepage(lua_State* state)
+static int32 to_codepage(lua_State* state)
 {
     const char* s = checkstring(state, 1);
-    int cp = optinteger(state, 2, CP_ACP);
+    int32 cp = optinteger(state, 2, CP_ACP);
     if (!s)
         return 0;
 
     wstr_moveable tmp(s);
 
-    int len = WideCharToMultiByte(cp, 0, tmp.c_str(), -1, nullptr, 0, nullptr, nullptr);
+    int32 len = WideCharToMultiByte(cp, 0, tmp.c_str(), -1, nullptr, 0, nullptr, nullptr);
     if (len <= 0)
         return 0;
 
@@ -402,7 +402,7 @@ void unicode_lua_initialise(lua_state& lua)
 {
     struct {
         const char* name;
-        int         (*method)(lua_State*);
+        int32       (*method)(lua_State*);
     } methods[] = {
         { "normalize",      &normalize },
         { "isnormalized",   &isnormalized },

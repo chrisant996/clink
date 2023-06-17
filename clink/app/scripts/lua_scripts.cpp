@@ -219,7 +219,7 @@ const unsigned char app_cmd_lua_script_[] = {
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x3d, 0x7b, 0x63, 0x6d, 0x64, 0x2e, 0x6c, 0x75, 0x61, 0x7d, 0x00, 
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, };
 unsigned char const* app_cmd_lua_script = app_cmd_lua_script_;
-int app_cmd_lua_script_len = sizeof(app_cmd_lua_script_);
+int32 app_cmd_lua_script_len = sizeof(app_cmd_lua_script_);
 #endif // ARCHITECTURE == 64
 #if ARCHITECTURE == 86
 const unsigned char app_cmd_lua_script_[] = {
@@ -407,7 +407,7 @@ const unsigned char app_cmd_lua_script_[] = {
 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x0b, 0x00, 0x00, 0x00, 0x3d, 0x7b, 0x63, 0x6d, 0x64, 0x2e, 0x6c, 
 0x75, 0x61, 0x7d, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, };
 unsigned char const* app_cmd_lua_script = app_cmd_lua_script_;
-int app_cmd_lua_script_len = sizeof(app_cmd_lua_script_);
+int32 app_cmd_lua_script_len = sizeof(app_cmd_lua_script_);
 #endif // ARCHITECTURE == 86
 #if ARCHITECTURE == 64
 const unsigned char app_commands_lua_script_[] = {
@@ -611,7 +611,7 @@ const unsigned char app_commands_lua_script_[] = {
 0x00, 0x00, 0x00, 0x00, 0x00, 0x3d, 0x7b, 0x63, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x73, 0x2e, 0x6c, 
 0x75, 0x61, 0x7d, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, };
 unsigned char const* app_commands_lua_script = app_commands_lua_script_;
-int app_commands_lua_script_len = sizeof(app_commands_lua_script_);
+int32 app_commands_lua_script_len = sizeof(app_commands_lua_script_);
 #endif // ARCHITECTURE == 64
 #if ARCHITECTURE == 86
 const unsigned char app_commands_lua_script_[] = {
@@ -795,7 +795,7 @@ const unsigned char app_commands_lua_script_[] = {
 0x6e, 0x64, 0x73, 0x2e, 0x6c, 0x75, 0x61, 0x7d, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
 0x00, 0x00, 0x00, 0x00, };
 unsigned char const* app_commands_lua_script = app_commands_lua_script_;
-int app_commands_lua_script_len = sizeof(app_commands_lua_script_);
+int32 app_commands_lua_script_len = sizeof(app_commands_lua_script_);
 #endif // ARCHITECTURE == 86
 #if ARCHITECTURE == 64
 const unsigned char app_dir_lua_script_[] = {
@@ -897,7 +897,7 @@ const unsigned char app_dir_lua_script_[] = {
 0x7b, 0x64, 0x69, 0x72, 0x2e, 0x6c, 0x75, 0x61, 0x7d, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
 0x00, 0x00, 0x00, 0x00, 0x00, };
 unsigned char const* app_dir_lua_script = app_dir_lua_script_;
-int app_dir_lua_script_len = sizeof(app_dir_lua_script_);
+int32 app_dir_lua_script_len = sizeof(app_dir_lua_script_);
 #endif // ARCHITECTURE == 64
 #if ARCHITECTURE == 86
 const unsigned char app_dir_lua_script_[] = {
@@ -988,7 +988,7 @@ const unsigned char app_dir_lua_script_[] = {
 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x0b, 0x00, 0x00, 0x00, 0x3d, 0x7b, 0x64, 0x69, 0x72, 0x2e, 0x6c, 
 0x75, 0x61, 0x7d, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, };
 unsigned char const* app_dir_lua_script = app_dir_lua_script_;
-int app_dir_lua_script_len = sizeof(app_dir_lua_script_);
+int32 app_dir_lua_script_len = sizeof(app_dir_lua_script_);
 #endif // ARCHITECTURE == 86
 #if ARCHITECTURE == 64
 const unsigned char app_env_lua_script_[] = {
@@ -1079,7 +1079,7 @@ const unsigned char app_env_lua_script_[] = {
 0x2e, 0x6c, 0x75, 0x61, 0x7d, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
 0x00, };
 unsigned char const* app_env_lua_script = app_env_lua_script_;
-int app_env_lua_script_len = sizeof(app_env_lua_script_);
+int32 app_env_lua_script_len = sizeof(app_env_lua_script_);
 #endif // ARCHITECTURE == 64
 #if ARCHITECTURE == 86
 const unsigned char app_env_lua_script_[] = {
@@ -1161,7 +1161,7 @@ const unsigned char app_env_lua_script_[] = {
 0x3d, 0x7b, 0x65, 0x6e, 0x76, 0x2e, 0x6c, 0x75, 0x61, 0x7d, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, };
 unsigned char const* app_env_lua_script = app_env_lua_script_;
-int app_env_lua_script_len = sizeof(app_env_lua_script_);
+int32 app_env_lua_script_len = sizeof(app_env_lua_script_);
 #endif // ARCHITECTURE == 86
 #if ARCHITECTURE == 64
 const unsigned char app_exec_lua_script_[] = {
@@ -1445,7 +1445,7 @@ const unsigned char app_exec_lua_script_[] = {
 0x00, 0x00, 0x00, 0x00, 0x3d, 0x7b, 0x65, 0x78, 0x65, 0x63, 0x2e, 0x6c, 0x75, 0x61, 0x7d, 0x00, 0x00, 
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, };
 unsigned char const* app_exec_lua_script = app_exec_lua_script_;
-int app_exec_lua_script_len = sizeof(app_exec_lua_script_);
+int32 app_exec_lua_script_len = sizeof(app_exec_lua_script_);
 #endif // ARCHITECTURE == 64
 #if ARCHITECTURE == 86
 const unsigned char app_exec_lua_script_[] = {
@@ -1703,7 +1703,7 @@ const unsigned char app_exec_lua_script_[] = {
 0x65, 0x78, 0x65, 0x63, 0x2e, 0x6c, 0x75, 0x61, 0x7d, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
 0x00, 0x00, 0x00, 0x00, 0x00, };
 unsigned char const* app_exec_lua_script = app_exec_lua_script_;
-int app_exec_lua_script_len = sizeof(app_exec_lua_script_);
+int32 app_exec_lua_script_len = sizeof(app_exec_lua_script_);
 #endif // ARCHITECTURE == 86
 #if ARCHITECTURE == 64
 const unsigned char app_prompt_lua_script_[] = {
@@ -2160,7 +2160,7 @@ const unsigned char app_prompt_lua_script_[] = {
 0x2e, 0x6c, 0x75, 0x61, 0x7d, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
 0x00, };
 unsigned char const* app_prompt_lua_script = app_prompt_lua_script_;
-int app_prompt_lua_script_len = sizeof(app_prompt_lua_script_);
+int32 app_prompt_lua_script_len = sizeof(app_prompt_lua_script_);
 #endif // ARCHITECTURE == 64
 #if ARCHITECTURE == 86
 const unsigned char app_prompt_lua_script_[] = {
@@ -2574,7 +2574,7 @@ const unsigned char app_prompt_lua_script_[] = {
 0x00, 0x00, 0x00, 0x3d, 0x7b, 0x70, 0x72, 0x6f, 0x6d, 0x70, 0x74, 0x2e, 0x6c, 0x75, 0x61, 0x7d, 0x00, 
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, };
 unsigned char const* app_prompt_lua_script = app_prompt_lua_script_;
-int app_prompt_lua_script_len = sizeof(app_prompt_lua_script_);
+int32 app_prompt_lua_script_len = sizeof(app_prompt_lua_script_);
 #endif // ARCHITECTURE == 86
 #if ARCHITECTURE == 64
 const unsigned char app_self_lua_script_[] = {
@@ -3294,7 +3294,7 @@ const unsigned char app_self_lua_script_[] = {
 0x00, 0x00, 0x00, 0x00, 0x00, 0x3d, 0x7b, 0x73, 0x65, 0x6c, 0x66, 0x2e, 0x6c, 0x75, 0x61, 0x7d, 0x00, 
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, };
 unsigned char const* app_self_lua_script = app_self_lua_script_;
-int app_self_lua_script_len = sizeof(app_self_lua_script_);
+int32 app_self_lua_script_len = sizeof(app_self_lua_script_);
 #endif // ARCHITECTURE == 64
 #if ARCHITECTURE == 86
 const unsigned char app_self_lua_script_[] = {
@@ -3946,7 +3946,7 @@ const unsigned char app_self_lua_script_[] = {
 0x00, 0x3d, 0x7b, 0x73, 0x65, 0x6c, 0x66, 0x2e, 0x6c, 0x75, 0x61, 0x7d, 0x00, 0x00, 0x00, 0x00, 0x00, 
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, };
 unsigned char const* app_self_lua_script = app_self_lua_script_;
-int app_self_lua_script_len = sizeof(app_self_lua_script_);
+int32 app_self_lua_script_len = sizeof(app_self_lua_script_);
 #endif // ARCHITECTURE == 86
 #if ARCHITECTURE == 64
 const unsigned char app_set_lua_script_[] = {
@@ -3981,7 +3981,7 @@ const unsigned char app_set_lua_script_[] = {
 0x00, 0x00, 0x00, 0x00, 0x3d, 0x7b, 0x73, 0x65, 0x74, 0x2e, 0x6c, 0x75, 0x61, 0x7d, 0x00, 0x00, 0x00, 
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, };
 unsigned char const* app_set_lua_script = app_set_lua_script_;
-int app_set_lua_script_len = sizeof(app_set_lua_script_);
+int32 app_set_lua_script_len = sizeof(app_set_lua_script_);
 #endif // ARCHITECTURE == 64
 #if ARCHITECTURE == 86
 const unsigned char app_set_lua_script_[] = {
@@ -4013,7 +4013,7 @@ const unsigned char app_set_lua_script_[] = {
 0x7b, 0x73, 0x65, 0x74, 0x2e, 0x6c, 0x75, 0x61, 0x7d, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
 0x00, 0x00, 0x00, 0x00, 0x00, };
 unsigned char const* app_set_lua_script = app_set_lua_script_;
-int app_set_lua_script_len = sizeof(app_set_lua_script_);
+int32 app_set_lua_script_len = sizeof(app_set_lua_script_);
 #endif // ARCHITECTURE == 86
 #if ARCHITECTURE == 64
 const unsigned char app_suggest_lua_script_[] = {
@@ -4347,7 +4347,7 @@ const unsigned char app_suggest_lua_script_[] = {
 0x65, 0x73, 0x74, 0x2e, 0x6c, 0x75, 0x61, 0x7d, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
 0x00, 0x00, 0x00, 0x00, };
 unsigned char const* app_suggest_lua_script = app_suggest_lua_script_;
-int app_suggest_lua_script_len = sizeof(app_suggest_lua_script_);
+int32 app_suggest_lua_script_len = sizeof(app_suggest_lua_script_);
 #endif // ARCHITECTURE == 64
 #if ARCHITECTURE == 86
 const unsigned char app_suggest_lua_script_[] = {
@@ -4648,7 +4648,7 @@ const unsigned char app_suggest_lua_script_[] = {
 0x67, 0x65, 0x73, 0x74, 0x2e, 0x6c, 0x75, 0x61, 0x7d, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
 0x00, 0x00, 0x00, 0x00, 0x00, };
 unsigned char const* app_suggest_lua_script = app_suggest_lua_script_;
-int app_suggest_lua_script_len = sizeof(app_suggest_lua_script_);
+int32 app_suggest_lua_script_len = sizeof(app_suggest_lua_script_);
 #endif // ARCHITECTURE == 86
 #if ARCHITECTURE == 64
 const unsigned char app_update_lua_script_[] = {
@@ -5628,7 +5628,7 @@ const unsigned char app_update_lua_script_[] = {
 0x00, 0x00, 0x00, 0x00, 0x00, 0x3d, 0x7b, 0x75, 0x70, 0x64, 0x61, 0x74, 0x65, 0x2e, 0x6c, 0x75, 0x61, 
 0x7d, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, };
 unsigned char const* app_update_lua_script = app_update_lua_script_;
-int app_update_lua_script_len = sizeof(app_update_lua_script_);
+int32 app_update_lua_script_len = sizeof(app_update_lua_script_);
 #endif // ARCHITECTURE == 64
 #if ARCHITECTURE == 86
 const unsigned char app_update_lua_script_[] = {
@@ -6525,7 +6525,7 @@ const unsigned char app_update_lua_script_[] = {
 0x2e, 0x6c, 0x75, 0x61, 0x7d, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
 0x00, };
 unsigned char const* app_update_lua_script = app_update_lua_script_;
-int app_update_lua_script_len = sizeof(app_update_lua_script_);
+int32 app_update_lua_script_len = sizeof(app_update_lua_script_);
 #endif // ARCHITECTURE == 86
 #else
 const char* app_cmd_lua_file = CLINK_BUILD_ROOT "/../../clink/app/scripts/cmd.lua";

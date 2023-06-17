@@ -472,7 +472,7 @@ TEST_CASE("path::join(get_dir(), get_name())")
 }
 
 //------------------------------------------------------------------------------
-static void adjust_path(str_base& inout, int mode)
+static void adjust_path(str_base& inout, int32 mode)
 {
     if (mode)
     {
@@ -499,7 +499,7 @@ TEST_CASE("path::to_parent()")
     const char* kid;
     const char* rejoined;
 
-    for (int i = 0; i < 2; ++i)
+    for (int32 i = 0; i < 2; ++i)
     {
         SECTION("Normal")
         {

@@ -50,7 +50,7 @@ const char* rl_buffer::get_buffer() const
 }
 
 //------------------------------------------------------------------------------
-unsigned int rl_buffer::get_length() const
+uint32 rl_buffer::get_length() const
 {
     assert(m_attached);
     if (m_override_line)
@@ -59,7 +59,7 @@ unsigned int rl_buffer::get_length() const
 }
 
 //------------------------------------------------------------------------------
-unsigned int rl_buffer::get_cursor() const
+uint32 rl_buffer::get_cursor() const
 {
     assert(m_attached);
     if (m_override_line)
@@ -68,7 +68,7 @@ unsigned int rl_buffer::get_cursor() const
 }
 
 //------------------------------------------------------------------------------
-int rl_buffer::get_anchor() const
+int32 rl_buffer::get_anchor() const
 {
     assert(m_attached);
     assert(!m_override_pos || cua_get_anchor() < 0);
@@ -76,21 +76,21 @@ int rl_buffer::get_anchor() const
 }
 
 //------------------------------------------------------------------------------
-unsigned int rl_buffer::set_cursor(unsigned int pos)
+uint32 rl_buffer::set_cursor(uint32 pos)
 {
     assert(m_attached);
     if (m_override_line)
     {
         assert(cua_get_anchor() < 0);
-        return m_override_pos = min<unsigned int>(pos, m_override_len);
+        return m_override_pos = min<uint32>(pos, m_override_len);
     }
     if (cua_clear_selection())
         m_need_draw = true;
-    return rl_point = min<unsigned int>(pos, rl_end);
+    return rl_point = min<uint32>(pos, rl_end);
 }
 
 //------------------------------------------------------------------------------
-void rl_buffer::set_selection(unsigned int anchor, unsigned int pos)
+void rl_buffer::set_selection(uint32 anchor, uint32 pos)
 {
     assert(m_attached);
     assert(!m_override_line);
@@ -111,7 +111,7 @@ bool rl_buffer::insert(const char* text)
 }
 
 //------------------------------------------------------------------------------
-bool rl_buffer::remove(unsigned int from, unsigned int to)
+bool rl_buffer::remove(uint32 from, uint32 to)
 {
     assert(m_attached);
     assert(!m_override_line);
@@ -203,7 +203,7 @@ void rl_buffer::clear_override()
 }
 
 //------------------------------------------------------------------------------
-void rl_buffer::override(const char* line, int pos)
+void rl_buffer::override(const char* line, int32 pos)
 {
     if (!line)
     {
@@ -212,6 +212,6 @@ void rl_buffer::override(const char* line, int pos)
     }
     assert(!m_override_line);
     m_override_line = line;
-    m_override_len = static_cast<unsigned int>(strlen(line));
-    m_override_pos = min<unsigned int>(pos, m_override_len);
+    m_override_len = uint32(strlen(line));
+    m_override_pos = min<uint32>(pos, m_override_len);
 }

@@ -14,18 +14,18 @@ TEST_CASE("linear_allocator: basic")
     REQUIRE(!allocator.fits(9));
     REQUIRE(allocator.alloc(0) == nullptr);
 
-    unsigned int a_size = 7;
+    uint32 a_size = 7;
     void* a = allocator.alloc(a_size);
     REQUIRE(a != nullptr);
     REQUIRE(allocator.unittest_at_end(a, a_size));
 
-    unsigned int b_size = 1;
+    uint32 b_size = 1;
     void* b = allocator.alloc(b_size);
     REQUIRE(b != nullptr);
     REQUIRE(allocator.unittest_at_end(b, b_size));
     REQUIRE(!allocator.unittest_in_prev_page(a, a_size));
 
-    unsigned int c_size = 1;
+    uint32 c_size = 1;
     void* c = allocator.alloc(c_size);
     REQUIRE(c != nullptr);
     REQUIRE(allocator.unittest_at_end(c, c_size));
@@ -38,7 +38,7 @@ TEST_CASE("linear_allocator: oversize")
 {
     linear_allocator allocator(8 + sizeof(void*));
 
-    unsigned int oversize = 9;
+    uint32 oversize = 9;
     void* o = allocator.alloc(oversize);
     REQUIRE(o != nullptr);
     REQUIRE(!allocator.unittest_at_end(o, oversize));
@@ -50,15 +50,15 @@ TEST_CASE("linear_allocator: oversize")
 //------------------------------------------------------------------------------
 TEST_CASE("linear_allocator: calloc")
 {
-    linear_allocator allocator(sizeof(int) * 8 + sizeof(void*));
-    REQUIRE(allocator.calloc<int>(0) == nullptr);
+    linear_allocator allocator(sizeof(int32) * 8 + sizeof(void*));
+    REQUIRE(allocator.calloc<int32>(0) == nullptr);
 
-    REQUIRE(allocator.calloc<int>() != nullptr);
-    REQUIRE(allocator.fits(sizeof(int) * 7));
-    REQUIRE(allocator.calloc<int>(7) != nullptr);
+    REQUIRE(allocator.calloc<int32>() != nullptr);
+    REQUIRE(allocator.fits(sizeof(int32) * 7));
+    REQUIRE(allocator.calloc<int32>(7) != nullptr);
     REQUIRE(!allocator.fits(1));
 
-    REQUIRE(allocator.calloc<int>(1) != nullptr);
-    REQUIRE(allocator.fits(sizeof(int) * 7));
-    REQUIRE(!allocator.fits(sizeof(int) * 7 + 1));
+    REQUIRE(allocator.calloc<int32>(1) != nullptr);
+    REQUIRE(allocator.fits(sizeof(int32) * 7));
+    REQUIRE(!allocator.fits(sizeof(int32) * 7 + 1));
 }

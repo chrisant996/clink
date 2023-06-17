@@ -11,9 +11,9 @@
 #include <assert.h>
 
 //------------------------------------------------------------------------------
-extern "C" unsigned int cell_count(const char* in)
+extern "C" uint32 cell_count(const char* in)
 {
-    unsigned int count = 0;
+    uint32 count = 0;
 
     ecma48_state state;
     ecma48_iter iter(in, state);
@@ -23,7 +23,7 @@ extern "C" unsigned int cell_count(const char* in)
             continue;
 
         str_iter inner_iter(code.get_pointer(), code.get_length());
-        while (int c = inner_iter.next())
+        while (int32 c = inner_iter.next())
             count += clink_wcwidth(c);
     }
 
@@ -31,13 +31,13 @@ extern "C" unsigned int cell_count(const char* in)
 }
 
 //------------------------------------------------------------------------------
-static bool in_range(int value, int left, int right)
+static bool in_range(int32 value, int32 left, int32 right)
 {
     return (unsigned(right - value) <= unsigned(right - left));
 }
 
 //------------------------------------------------------------------------------
-static void strip_code_terminator(const char*& ptr, int& len)
+static void strip_code_terminator(const char*& ptr, int32& len)
 {
     if (len <= 0)
         return;
@@ -49,7 +49,7 @@ static void strip_code_terminator(const char*& ptr, int& len)
 }
 
 //------------------------------------------------------------------------------
-static void strip_code_quotes(const char*& ptr, int& len)
+static void strip_code_quotes(const char*& ptr, int32& len)
 {
     if (len < 2)
         return;
@@ -73,7 +73,7 @@ void ecma48_state::reset()
 
 
 //------------------------------------------------------------------------------
-bool ecma48_code::decode_csi(csi_base& base, int* params, unsigned int max_params) const
+bool ecma48_code::decode_csi(csi_base& base, int32* params, uint32 max_params) const
 {
     if (get_type() != type_c1 || get_code() != c1_csi)
         return false;
@@ -92,10 +92,10 @@ bool ecma48_code::decode_csi(csi_base& base, int* params, unsigned int max_param
     // Extract parameters.
     base.intermediate = 0;
     base.final = 0;
-    int param = 0;
-    unsigned int count = 0;
+    int32 param = 0;
+    uint32 count = 0;
     bool trailing_param = false;
-    while (int c = iter.next())
+    while (int32 c = iter.next())
     {
         if (in_range(c, 0x30, 0x3b))
         {
@@ -150,7 +150,7 @@ bool ecma48_code::decode_osc(osc& out) const
         {
             // Strip the terminator and optional quotes.
             const char* ptr = iter.get_pointer();
-            int len = iter.length();
+            int32 len = iter.length();
             strip_code_terminator(ptr, len);
             strip_code_quotes(ptr, len);
 
@@ -189,10 +189,10 @@ bool ecma48_code::decode_osc(osc& out) const
                 while (true)
                 {
                     const char* end = iter.get_pointer();
-                    int c = iter.next();
+                    int32 c = iter.next();
                     if (!c || c == 0x07 || (c == 0x1b && iter.peek() == 0x5c))
                     {
-                        int len = int(end - ptr);
+                        int32 len = int32(end - ptr);
                         strip_code_quotes(ptr, len);
 
                         wstr<> name;
@@ -237,7 +237,7 @@ bool ecma48_code::get_c1_str(str_base& out) const
     const char* start = iter.get_pointer();
 
     // Skip until terminator
-    while (int c = iter.peek())
+    while (int32 c = iter.peek())
     {
         if (c == 0x9c || c == 0x1b)
             break;
@@ -246,14 +246,14 @@ bool ecma48_code::get_c1_str(str_base& out) const
     }
 
     out.clear();
-    out.concat(start, int(iter.get_pointer() - start));
+    out.concat(start, int32(iter.get_pointer() - start));
     return true;
 }
 
 
 
 //------------------------------------------------------------------------------
-ecma48_iter::ecma48_iter(const char* s, ecma48_state& state, int len)
+ecma48_iter::ecma48_iter(const char* s, ecma48_state& state, int32 len)
 : m_iter(s, len)
 , m_code(state.code)
 , m_state(state)
@@ -270,7 +270,7 @@ const ecma48_code& ecma48_iter::next()
     bool done = true;
     while (1)
     {
-        int c = m_iter.peek();
+        int32 c = m_iter.peek();
         if (!c)
         {
             if (m_state.state != ecma48_state_char)
@@ -303,7 +303,7 @@ const ecma48_code& ecma48_iter::next()
                 m_state.clear_buffer = false;
                 m_state.buffer.clear();
             }
-            const int len = int(m_iter.get_pointer() - copy);
+            const int32 len = int32(m_iter.get_pointer() - copy);
             m_state.buffer.concat(copy, len);
             copy += len;
         }
@@ -318,7 +318,7 @@ const ecma48_code& ecma48_iter::next()
         m_code.m_length = m_state.buffer.length();
     }
     else
-        m_code.m_length = int(m_iter.get_pointer() - m_code.get_pointer());
+        m_code.m_length = int32(m_iter.get_pointer() - m_code.get_pointer());
 
     m_state.reset();
 
@@ -356,7 +356,7 @@ bool ecma48_iter::next_c1()
 }
 
 //------------------------------------------------------------------------------
-bool ecma48_iter::next_char(int c)
+bool ecma48_iter::next_char(int32 c)
 {
     if (in_range(c, 0x00, 0x1f))
     {
@@ -369,7 +369,7 @@ bool ecma48_iter::next_char(int c)
 }
 
 //------------------------------------------------------------------------------
-bool ecma48_iter::next_char_str(int c)
+bool ecma48_iter::next_char_str(int32 c)
 {
     m_iter.next();
 
@@ -383,12 +383,12 @@ bool ecma48_iter::next_char_str(int c)
 }
 
 //------------------------------------------------------------------------------
-bool ecma48_iter::next_cmd_str(int c)
+bool ecma48_iter::next_cmd_str(int32 c)
 {
     if (c == 0x1b)
     {
         m_iter.next();
-        int d = m_iter.peek();
+        int32 d = m_iter.peek();
         if (d == 0x5d)
             m_nested_cmd_str++;
         else if (d == 0x5c && m_nested_cmd_str > 0)
@@ -421,7 +421,7 @@ bool ecma48_iter::next_cmd_str(int c)
 }
 
 //------------------------------------------------------------------------------
-bool ecma48_iter::next_csi_f(int c)
+bool ecma48_iter::next_csi_f(int32 c)
 {
     if (in_range(c, 0x20, 0x2f))
     {
@@ -442,7 +442,7 @@ bool ecma48_iter::next_csi_f(int c)
 }
 
 //------------------------------------------------------------------------------
-bool ecma48_iter::next_csi_p(int c)
+bool ecma48_iter::next_csi_p(int32 c)
 {
     if (in_range(c, 0x30, 0x3f))
     {
@@ -455,7 +455,7 @@ bool ecma48_iter::next_csi_p(int c)
 }
 
 //------------------------------------------------------------------------------
-bool ecma48_iter::next_esc(int c)
+bool ecma48_iter::next_esc(int32 c)
 {
     m_iter.next();
 
@@ -477,7 +477,7 @@ bool ecma48_iter::next_esc(int c)
 }
 
 //------------------------------------------------------------------------------
-bool ecma48_iter::next_esc_st(int c)
+bool ecma48_iter::next_esc_st(int32 c)
 {
     if (c == 0x5c)
     {
@@ -494,7 +494,7 @@ bool ecma48_iter::next_esc_st(int c)
 }
 
 //------------------------------------------------------------------------------
-bool ecma48_iter::next_unknown(int c)
+bool ecma48_iter::next_unknown(int32 c)
 {
     m_iter.next();
 
@@ -524,25 +524,25 @@ bool ecma48_iter::next_unknown(int c)
 
 
 //------------------------------------------------------------------------------
-static unsigned int clink_wcwidth(const char* s, unsigned int len)
+static uint32 clink_wcwidth(const char* s, uint32 len)
 {
-    unsigned int count = 0;
+    uint32 count = 0;
 
     str_iter inner_iter(s, len);
-    while (int c = inner_iter.next())
+    while (int32 c = inner_iter.next())
         count += clink_wcwidth(c);
 
     return count;
 }
 
 //------------------------------------------------------------------------------
-void ecma48_processor(const char* in, str_base* out, unsigned int* cell_count, ecma48_processor_flags flags)
+void ecma48_processor(const char* in, str_base* out, uint32* cell_count, ecma48_processor_flags flags)
 {
-    unsigned int cells = 0;
-    bool bracket = !!int(flags & ecma48_processor_flags::bracket);
-    bool apply_title = !!int(flags & ecma48_processor_flags::apply_title);
-    bool plaintext = !!int(flags & ecma48_processor_flags::plaintext);
-    bool colorless = !!int(flags & ecma48_processor_flags::colorless);
+    uint32 cells = 0;
+    bool bracket = !!int32(flags & ecma48_processor_flags::bracket);
+    bool apply_title = !!int32(flags & ecma48_processor_flags::apply_title);
+    bool plaintext = !!int32(flags & ecma48_processor_flags::plaintext);
+    bool colorless = !!int32(flags & ecma48_processor_flags::colorless);
 
     ecma48_state state;
     ecma48_iter iter(in, state);
@@ -587,7 +587,7 @@ concat_verbatim:
                         if (code.decode_csi(csi) && csi.final == 'm')
                         {
                             str<> tmp;
-                            for (int i = 0, n = csi.param_count; i < csi.param_count; ++i, --n)
+                            for (int32 i = 0, n = csi.param_count; i < csi.param_count; ++i, --n)
                             {
                                 switch (csi.params[i])
                                 {
@@ -622,7 +622,7 @@ concat_verbatim:
         }
         else
         {
-            int index = 0;
+            int32 index = 0;
             const char* seq = code.get_pointer();
             const char* end = seq + code.get_length();
             do
@@ -633,7 +633,7 @@ concat_verbatim:
 
                 if (walk > seq)
                 {
-                    unsigned int seq_len = static_cast<unsigned int>(walk - seq);
+                    uint32 seq_len = uint32(walk - seq);
                     if (out)
                         out->concat(seq, seq_len);
                     if (cell_count)

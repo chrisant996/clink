@@ -147,7 +147,7 @@ app_context::app_context(const desc& desc)
 }
 
 //-----------------------------------------------------------------------------
-int app_context::get_id() const
+int32 app_context::get_id() const
 {
     return m_desc.id;
 }
@@ -241,17 +241,17 @@ void app_context::get_history_path(str_base& out) const
 
     label.trim();
 
-    unsigned int label_len = 0;
+    uint32 label_len = 0;
     str_iter iter(label);
     while (iter.more())
     {
         const char* ptr = iter.get_pointer();
-        unsigned int c = iter.next();
+        uint32 c = iter.next();
         if (iswalnum(c))
         {
             if (!label_len)
                 out.concat("-", 1);
-            out.concat(ptr, static_cast<unsigned int>(iter.get_pointer() - ptr));
+            out.concat(ptr, uint32(iter.get_pointer() - ptr));
             label_len++;
             if (label_len >= 32)
                 break;
@@ -362,14 +362,14 @@ void app_context::init_binaries_dir()
         return;
 
     // Check for a .origin suffix indicating that we're using a copied DLL.
-    int out_length = wout_len;
+    int32 out_length = wout_len;
     wout << L".origin";
     HANDLE origin = CreateFileW(wout.c_str(), GENERIC_READ, 0, nullptr,
         OPEN_EXISTING, 0, nullptr);
     if (origin != INVALID_HANDLE_VALUE)
     {
         DWORD read;
-        int size = GetFileSize(origin, nullptr);
+        int32 size = GetFileSize(origin, nullptr);
         m_binaries.reserve(size);
         ReadFile(origin, m_binaries.data(), size, &read, nullptr);
         CloseHandle(origin);

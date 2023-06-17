@@ -63,7 +63,7 @@ rl_buffer_lua::~rl_buffer_lua()
 /// -ver:   1.0.0
 /// -ret:   string
 /// Returns the current input line.
-int rl_buffer_lua::get_buffer(lua_State* state)
+int32 rl_buffer_lua::get_buffer(lua_State* state)
 {
     lua_pushlstring(state, m_rl_buffer.get_buffer(), m_rl_buffer.get_length());
     return 1;
@@ -74,7 +74,7 @@ int rl_buffer_lua::get_buffer(lua_State* state)
 /// -ver:   1.1.20
 /// -ret:   integer
 /// Returns the length of the input line.
-int rl_buffer_lua::get_length(lua_State* state)
+int32 rl_buffer_lua::get_length(lua_State* state)
 {
     lua_pushinteger(state, m_rl_buffer.get_length());
     return 1;
@@ -91,7 +91,7 @@ int rl_buffer_lua::get_length(lua_State* state)
 /// <strong>Note:</strong> In v1.1.20 through v1.2.31 this accidentally returned
 /// 1 less than the actual cursor position.  In v1.2.32 and higher it returns
 /// the correct cursor position.
-int rl_buffer_lua::get_cursor(lua_State* state)
+int32 rl_buffer_lua::get_cursor(lua_State* state)
 {
     lua_pushinteger(state, m_rl_buffer.get_cursor() + 1);
     return 1;
@@ -105,9 +105,9 @@ int rl_buffer_lua::get_cursor(lua_State* state)
 /// line, or nil if there is no selection.  The value can be from 1 to
 /// rl_buffer:getlength() + 1.  It can exceed the length of the input line
 /// because the anchor can be positioned just past the end of the input line.
-int rl_buffer_lua::get_anchor(lua_State* state)
+int32 rl_buffer_lua::get_anchor(lua_State* state)
 {
-    int anchor = m_rl_buffer.get_anchor();
+    int32 anchor = m_rl_buffer.get_anchor();
     if (anchor < 0)
         lua_pushnil(state);
     else
@@ -131,11 +131,11 @@ int rl_buffer_lua::get_anchor(lua_State* state)
 /// <strong>Note:</strong> In v1.1.20 through v1.2.31 this accidentally returned
 /// 1 less than the actual cursor position.  In v1.2.32 and higher it returns
 /// the correct cursor position.
-int rl_buffer_lua::set_cursor(lua_State* state)
+int32 rl_buffer_lua::set_cursor(lua_State* state)
 {
     bool isnum;
-    unsigned int old = m_rl_buffer.get_cursor() + 1;
-    unsigned int set = checkinteger(state, 1, &isnum) - 1;
+    uint32 old = m_rl_buffer.get_cursor() + 1;
+    uint32 set = checkinteger(state, 1, &isnum) - 1;
     if (!isnum)
         return 0;
 
@@ -151,7 +151,7 @@ int rl_buffer_lua::set_cursor(lua_State* state)
 /// -arg:   text:string
 /// Inserts <span class="arg">text</span> at the cursor position in the input
 /// line.
-int rl_buffer_lua::insert(lua_State* state)
+int32 rl_buffer_lua::insert(lua_State* state)
 {
     const char* text = checkstring(state, 1);
     if (!text)
@@ -175,11 +175,11 @@ int rl_buffer_lua::insert(lua_State* state)
 ///
 /// Note:  the input line is UTF8, and removing only part of a multi-byte
 /// Unicode character may have undesirable results.
-int rl_buffer_lua::remove(lua_State* state)
+int32 rl_buffer_lua::remove(lua_State* state)
 {
     bool isnum1, isnum2;
-    unsigned int from = checkinteger(state, 1, &isnum1) - 1;
-    unsigned int to = checkinteger(state, 2, &isnum2) - 1;
+    uint32 from = checkinteger(state, 1, &isnum1) - 1;
+    uint32 to = checkinteger(state, 2, &isnum2) - 1;
     if (!isnum1 || !isnum2)
         return 0;
 
@@ -192,7 +192,7 @@ int rl_buffer_lua::remove(lua_State* state)
 /// -ver:   1.1.20
 /// Starts a new undo group.  This is useful for grouping together multiple
 /// editing actions into a single undo operation.
-int rl_buffer_lua::begin_undo_group(lua_State* state)
+int32 rl_buffer_lua::begin_undo_group(lua_State* state)
 {
     m_num_undo++;
     m_rl_buffer.begin_undo_group();
@@ -208,7 +208,7 @@ int rl_buffer_lua::begin_undo_group(lua_State* state)
 /// Note:  all undo groups are automatically ended when a key binding finishes
 /// execution, so this function is only needed if a key binding needs to create
 /// more than one undo group.
-int rl_buffer_lua::end_undo_group(lua_State* state)
+int32 rl_buffer_lua::end_undo_group(lua_State* state)
 {
     if (m_num_undo > 0)
     {
@@ -223,7 +223,7 @@ int rl_buffer_lua::end_undo_group(lua_State* state)
 /// -ver:   1.1.20
 /// Advances the output cursor to the next line after the Readline input buffer
 /// so that subsequent output doesn't overwrite the input buffer display.
-int rl_buffer_lua::begin_output(lua_State* state)
+int32 rl_buffer_lua::begin_output(lua_State* state)
 {
     if (!m_began_output)
     {
@@ -237,7 +237,7 @@ int rl_buffer_lua::begin_output(lua_State* state)
 /// -name:  rl_buffer:refreshline
 /// -ver:   1.1.41
 /// Redraws the input line.
-int rl_buffer_lua::refresh_line(lua_State* state)
+int32 rl_buffer_lua::refresh_line(lua_State* state)
 {
     rl_refresh_line(0, 0);
     return 0;
@@ -249,7 +249,7 @@ int rl_buffer_lua::refresh_line(lua_State* state)
 /// -ret:   integer | nil
 /// Returns any accumulated numeric argument (<kbd>Alt</kbd>+Digits, etc), or
 /// nil if no numeric argument has been entered.
-int rl_buffer_lua::get_argument(lua_State* state)
+int32 rl_buffer_lua::get_argument(lua_State* state)
 {
     if (rl_explicit_arg)
     {
@@ -268,10 +268,10 @@ int rl_buffer_lua::get_argument(lua_State* state)
 /// <kbd>Alt</kbd>+Digits, etc).  When <span class="arg">argument</span> is nil,
 /// the numeric argument is cleared (having no numeric argument is different
 /// from having 0 as the numeric argument).
-int rl_buffer_lua::set_argument(lua_State* state)
+int32 rl_buffer_lua::set_argument(lua_State* state)
 {
     bool isnum;
-    int arg = optinteger(state, 1, 0, &isnum);
+    int32 arg = optinteger(state, 1, 0, &isnum);
 
     _rl_reset_argument();
     if (isnum)
@@ -289,7 +289,7 @@ int rl_buffer_lua::set_argument(lua_State* state)
 /// Dings the bell.  If the
 /// <code><a href="#configbellstyle">bell-style</a></code> Readline variable is
 /// <code>visible</code> then it flashes the cursor instead.
-int rl_buffer_lua::ding(lua_State* state)
+int32 rl_buffer_lua::ding(lua_State* state)
 {
     rl_ding();
     return 0;

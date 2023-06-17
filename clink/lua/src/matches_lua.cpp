@@ -42,7 +42,7 @@ matches_lua::~matches_lua()
 /// -ver:   1.2.47
 /// -ret:   string
 /// Returns the longest common prefix of the available matches.
-int matches_lua::get_prefix(lua_State* state)
+int32 matches_lua::get_prefix(lua_State* state)
 {
     if (!m_has_prefix)
     {
@@ -59,7 +59,7 @@ int matches_lua::get_prefix(lua_State* state)
 /// -ver:   1.2.47
 /// -ret:   integer
 /// Returns the number of available matches.
-int matches_lua::get_count(lua_State* state)
+int32 matches_lua::get_count(lua_State* state)
 {
     lua_pushinteger(state, m_matches->get_match_count());
     return 1;
@@ -71,10 +71,10 @@ int matches_lua::get_count(lua_State* state)
 /// -arg:   index:integer
 /// -ret:   string
 /// Returns the match text for the <span class="arg">index</span> match.
-int matches_lua::get_match(lua_State* state)
+int32 matches_lua::get_match(lua_State* state)
 {
     bool isnum;
-    unsigned int index = checkinteger(state, 1, &isnum) - 1;
+    uint32 index = checkinteger(state, 1, &isnum) - 1;
     if (!isnum)
         return 0;
 
@@ -91,10 +91,10 @@ int matches_lua::get_match(lua_State* state)
 /// -arg:   index:integer
 /// -ret:   string
 /// Returns the match type for the <span class="arg">index</span> match.
-int matches_lua::get_type(lua_State* state)
+int32 matches_lua::get_type(lua_State* state)
 {
     bool isnum;
-    unsigned int index = checkinteger(state, 1, &isnum) - 1;
+    uint32 index = checkinteger(state, 1, &isnum) - 1;
     if (!isnum)
         return 0;
 

@@ -185,7 +185,7 @@ intercept_result intercept_directory(const char* line, str_base* out, bool only_
     // Examples:
     //  - "..." becomes "..\..\"
     //  - "...." becomes "..\..\..\"
-    int num_dots = 0;
+    int32 num_dots = 0;
     for (const char* p = tmp.c_str(); *p; ++p, ++num_dots)
     {
         if (*p != '.')

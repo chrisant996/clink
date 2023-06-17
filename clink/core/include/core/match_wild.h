@@ -16,13 +16,13 @@ namespace path
 enum star_matches_everything { no, yes, at_end };
 
 //------------------------------------------------------------------------------
-template <class T, int MODE, bool fuzzy_accents>
-bool match_char_impl(int pc, int fc)
+template <class T, int32 MODE, bool fuzzy_accents>
+bool match_char_impl(int32 pc, int32 fc)
 {
     if (MODE > 0)
     {
-        pc = (pc > 0xffff) ? pc : int(uintptr_t(CharLowerW(LPWSTR(uintptr_t(pc)))));
-        fc = (fc > 0xffff) ? fc : int(uintptr_t(CharLowerW(LPWSTR(uintptr_t(fc)))));
+        pc = (pc > 0xffff) ? pc : int32(uintptr_t(CharLowerW(LPWSTR(uintptr_t(pc)))));
+        fc = (fc > 0xffff) ? fc : int32(uintptr_t(CharLowerW(LPWSTR(uintptr_t(fc)))));
     }
 
     if (MODE > 1)
@@ -48,7 +48,7 @@ bool match_char_impl(int pc, int fc)
 }
 
 //------------------------------------------------------------------------------
-template <class T, int MODE, bool fuzzy_accents>
+template <class T, int32 MODE, bool fuzzy_accents>
 bool match_wild_impl(const str_iter_impl<T>& _pattern, const str_iter_impl<T>& _file, bool dot_prefix=false, star_matches_everything match_everything=no)
 {
     str_iter_impl<T> pattern(_pattern);
@@ -67,8 +67,8 @@ bool match_wild_impl(const str_iter_impl<T>& _pattern, const str_iter_impl<T>& _
 
     while (true)
     {
-        int c = pattern.peek();
-        int d = file.peek();
+        int32 c = pattern.peek();
+        int32 d = file.peek();
         if (!c)
         {
             // Consumed pattern, so it's a match iff file was consumed.
@@ -154,7 +154,7 @@ back_track:
             {
                 if (!final_file_component)
                 {
-                    int x;
+                    int32 x;
                     for (str_iter tmp(_pattern); x = tmp.peek(); tmp.next())
                         if (path::is_separator(x))
                         {

@@ -47,7 +47,7 @@ static const char* get_arch_name(process::arch arch)
 }
 
 //------------------------------------------------------------------------------
-process::process(int pid)
+process::process(int32 pid)
 : m_pid(pid)
 {
     if (m_pid == -1)
@@ -55,7 +55,7 @@ process::process(int pid)
 }
 
 //------------------------------------------------------------------------------
-int process::get_parent_pid() const
+int32 process::get_parent_pid() const
 {
     handle handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, m_pid);
     ULONG_PTR pbi[6];
@@ -178,7 +178,7 @@ typedef LONG(NTAPI *NtSuspendProcessFunc)(IN HANDLE ProcessHandle);
 typedef LONG(NTAPI *NtResumeProcessFunc)(IN HANDLE ProcessHandle);
 void process::pause(bool suspend)
 {
-    static int s_initialized = 0;
+    static int32 s_initialized = 0;
     static NtSuspendProcessFunc ntSuspendProcess = nullptr;
     static NtResumeProcessFunc ntResumeProcess = nullptr;
     if (!s_initialized)
@@ -296,7 +296,7 @@ static DWORD WINAPI stdcall_thunk(thunk_data& data)
 }
 
 //------------------------------------------------------------------------------
-remote_result process::remote_call_internal(pe_info::funcptr_t function, process_wait_callback* callback, const void* param, int param_size)
+remote_result process::remote_call_internal(pe_info::funcptr_t function, process_wait_callback* callback, const void* param, int32 param_size)
 {
     // Open the process so we can operate on it.
     handle process_handle = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_CREATE_THREAD,
@@ -309,9 +309,9 @@ remote_result process::remote_call_internal(pe_info::funcptr_t function, process
 
     // Scanning for 0xc3 works on 64 bit, but not on 32 bit.  I gave up and just
     // imposed a max size of 64 bytes, since the emited code is around 40 bytes.
-    static int thunk_size = 0;
+    static int32 thunk_size = 0;
     if (!thunk_size)
-        for (const auto* c = (unsigned char*)stdcall_thunk; thunk_size < 64 && ++thunk_size, *c++ != 0xc3;);
+        for (const auto* c = (uint8*)stdcall_thunk; thunk_size < 64 && ++thunk_size, *c++ != 0xc3;);
 
     vm vm(m_pid);
     vm::region region = vm.alloc_region(1, vm::access_write);
@@ -321,8 +321,8 @@ remote_result process::remote_call_internal(pe_info::funcptr_t function, process
         return {};
     }
 
-    int write_offset = 0;
-    const auto& vm_write = [&] (const void* data, int size) {
+    int32 write_offset = 0;
+    const auto& vm_write = [&] (const void* data, int32 size) {
         void* addr = (char*)region.base + write_offset;
         vm.write(addr, data, size);
         write_offset = (write_offset + size + 7) & ~7;
@@ -392,10 +392,10 @@ static DWORD WINAPI stdcall_thunk2(thunk2_data& data)
 }
 
 //------------------------------------------------------------------------------
-remote_result process::remote_call_internal(pe_info::funcptr_t function, process_wait_callback* callback, const void* param1, int param1_size, const void* param2, int param2_size)
+remote_result process::remote_call_internal(pe_info::funcptr_t function, process_wait_callback* callback, const void* param1, int32 param1_size, const void* param2, int32 param2_size)
 {
     // Open the process so we can operate on it.
-    unsigned int flags = PROCESS_QUERY_INFORMATION|PROCESS_CREATE_THREAD;
+    uint32 flags = PROCESS_QUERY_INFORMATION|PROCESS_CREATE_THREAD;
     handle process_handle = OpenProcess(flags, FALSE, m_pid);
     if (!process_handle)
     {
@@ -405,9 +405,9 @@ remote_result process::remote_call_internal(pe_info::funcptr_t function, process
 
     // Scanning for 0xc3 works on 64 bit, but not on 32 bit.  I gave up and just
     // imposed a max size of 64 bytes, since the emited code is around 40 bytes.
-    static int thunk_size;
+    static int32 thunk_size;
     if (!thunk_size)
-        for (const auto* c = (unsigned char*)stdcall_thunk2; thunk_size < 64 && ++thunk_size, *c++ != 0xc3;);
+        for (const auto* c = (uint8*)stdcall_thunk2; thunk_size < 64 && ++thunk_size, *c++ != 0xc3;);
 
     vm vm(m_pid);
     vm::region region = vm.alloc_region(1, vm::access_write);
@@ -417,8 +417,8 @@ remote_result process::remote_call_internal(pe_info::funcptr_t function, process
         return {};
     }
 
-    int write_offset = 0;
-    const auto& vm_write = [&] (const void* data, int size) {
+    int32 write_offset = 0;
+    const auto& vm_write = [&] (const void* data, int32 size) {
         void* addr = (char*)region.base + write_offset;
         vm.write(addr, data, size);
         write_offset = (write_offset + size + 7) & ~7;
@@ -427,7 +427,7 @@ remote_result process::remote_call_internal(pe_info::funcptr_t function, process
 
     vm_write((void*)stdcall_thunk2, thunk_size);
 
-    int offset_ptrs = write_offset;
+    int32 offset_ptrs = write_offset;
     void* thunk_ptrs[4] = { (void*)function }; // func, out, in1, in2
     char* remote_thunk_data = (char*)vm_write(thunk_ptrs, sizeof(thunk_ptrs));
 

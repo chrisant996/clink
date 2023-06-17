@@ -44,7 +44,7 @@ bool suggestion_manager::get_visible(str_base& out) const
 
     // Do not allow relaxed comparison for suggestions, as it is too confusing,
     // as a result of the logic to respect original case.
-    int scope = g_ignore_case.get() ? str_compare_scope::caseless : str_compare_scope::exact;
+    int32 scope = g_ignore_case.get() ? str_compare_scope::caseless : str_compare_scope::exact;
     str_compare_scope compare(scope, g_fuzzy_accent.get());
 
     str_iter orig(g_rl_buffer->get_buffer() + m_suggestion_offset);
@@ -53,7 +53,7 @@ bool suggestion_manager::get_visible(str_base& out) const
     if (orig.more())
         return false;
 
-    out.concat(g_rl_buffer->get_buffer(), static_cast<unsigned int>(orig.get_pointer() - g_rl_buffer->get_buffer()));
+    out.concat(g_rl_buffer->get_buffer(), uint32(orig.get_pointer() - g_rl_buffer->get_buffer()));
     out.concat(sugg.get_pointer(), sugg.length());
     return true;
 }
@@ -143,10 +143,10 @@ void suggestion_manager::set_started(const char* line)
 }
 
 //------------------------------------------------------------------------------
-void suggestion_manager::set(const char* line, unsigned int endword_offset, const char* suggestion, unsigned int offset)
+void suggestion_manager::set(const char* line, uint32 endword_offset, const char* suggestion, uint32 offset)
 {
 #ifdef DEBUG_SUGGEST
-    static int s_suggnum = 0;
+    static int32 s_suggnum = 0;
     printf("\x1b[s\x1b[H#%u:  set suggestion:  \"%s\", offset %d, endword ofs %d\x1b[K\x1b[u",
            ++s_suggnum, suggestion, offset, endword_offset);
 #endif
@@ -171,7 +171,7 @@ malformed:
         return;
     }
 
-    const unsigned int line_len = static_cast<unsigned int>(strlen(line));
+    const uint32 line_len = uint32(strlen(line));
     if (line_len < offset)
     {
         assert(false);
@@ -184,11 +184,11 @@ malformed:
     // Do not allow relaxed comparison for suggestions, as it is too confusing,
     // as a result of the logic to respect original case.
     {
-        int scope = g_ignore_case.get() ? str_compare_scope::caseless : str_compare_scope::exact;
+        int32 scope = g_ignore_case.get() ? str_compare_scope::caseless : str_compare_scope::exact;
         str_compare_scope compare(scope, g_fuzzy_accent.get());
 
         str_iter orig(line + offset);
-        const int matchlen = str_compare<char, false/*compute_lcd*/, true/*exact_slash*/>(orig, m_iter);
+        const int32 matchlen = str_compare<char, false/*compute_lcd*/, true/*exact_slash*/>(orig, m_iter);
 
         if (orig.more())
             goto malformed;
@@ -212,19 +212,19 @@ malformed:
 }
 
 //------------------------------------------------------------------------------
-static bool is_suggestion_word_break(int c)
+static bool is_suggestion_word_break(int32 c)
 {
     return c == ' ' || c == '\t';
 }
 
 //------------------------------------------------------------------------------
-void suggestion_manager::resync_suggestion_iterator(unsigned int old_cursor)
+void suggestion_manager::resync_suggestion_iterator(uint32 old_cursor)
 {
-    const int consume = g_rl_buffer->get_cursor() - old_cursor;
+    const int32 consume = g_rl_buffer->get_cursor() - old_cursor;
     assert(consume >= 0);
 
     const char* const start = m_iter.get_pointer();
-    while (int(m_iter.get_pointer() - start) < consume)
+    while (int32(m_iter.get_pointer() - start) < consume)
         m_iter.next();
 }
 
@@ -236,7 +236,7 @@ bool suggestion_manager::insert(suggestion_action action)
 
     // Do not allow relaxed comparison for suggestions, as it is too confusing,
     // as a result of the logic to respect original case.
-    int scope = g_ignore_case.get() ? str_compare_scope::caseless : str_compare_scope::exact;
+    int32 scope = g_ignore_case.get() ? str_compare_scope::caseless : str_compare_scope::exact;
     str_compare_scope compare(scope, g_fuzzy_accent.get());
 
     const bool original_case = g_original_case.get();
@@ -282,13 +282,13 @@ bool suggestion_manager::insert(suggestion_action action)
     }
 
     // Find the offset at which to replace with suggestion text.
-    unsigned int replace_offset = m_endword_offset;
+    uint32 replace_offset = m_endword_offset;
     const char* insert = m_iter.get_pointer();
 
     // Track quotes between end word offset and cursor (end of line).
     bool quote = false;
     {
-        const unsigned int len = g_rl_buffer->get_length();
+        const uint32 len = g_rl_buffer->get_length();
         if (replace_offset > 0)
             quote = (g_rl_buffer->get_buffer()[replace_offset - 1] == '"');
         if (replace_offset < len)
@@ -298,7 +298,7 @@ bool suggestion_manager::insert(suggestion_action action)
             const char* const target = g_rl_buffer->get_buffer() + len;
             while (orig_iter.get_pointer() < target)
             {
-                int c = orig_iter.next();
+                int32 c = orig_iter.next();
                 if (orig_iter.get_pointer() > inflection)
                     m_iter.next();
                 if (c == '"')
@@ -310,7 +310,7 @@ bool suggestion_manager::insert(suggestion_action action)
     unsigned end_offset = g_rl_buffer->get_length();
     if (original_case)
     {
-        end_offset = m_suggestion_offset + int(m_iter.get_pointer() - m_suggestion.c_str());
+        end_offset = m_suggestion_offset + int32(m_iter.get_pointer() - m_suggestion.c_str());
     }
     else
     {
@@ -334,7 +334,7 @@ bool suggestion_manager::insert(suggestion_action action)
             const char* const insert = m_iter.get_pointer();
 
             // Skip spaces.
-            while (int c = m_iter.peek())
+            while (int32 c = m_iter.peek())
             {
                 if (!is_suggestion_word_break(c))
                     break;
@@ -342,7 +342,7 @@ bool suggestion_manager::insert(suggestion_action action)
             }
 
             // Skip non-spaces.
-            while (int c = m_iter.peek())
+            while (int32 c = m_iter.peek())
             {
                 if (c == '"')
                     quote = !quote;
@@ -351,7 +351,7 @@ bool suggestion_manager::insert(suggestion_action action)
                 m_iter.next();
             }
 
-            const int len = int(m_iter.get_pointer() - insert);
+            const int32 len = int32(m_iter.get_pointer() - insert);
             g_rl_buffer->set_cursor(g_rl_buffer->get_cursor() + len);
         }
         else if (action == suggestion_action::insert_next_word)

@@ -25,7 +25,7 @@ static bool run_test(lua_state& lua, const char** data, const char** expected_re
     while (*data)
     {
         tmp = *(data++);
-        for (unsigned int i = tmp.length(); i--;)
+        for (uint32 i = tmp.length(); i--;)
             if (tmp.c_str()[i] == '/')
                 tmp.data()[i] = '\\';
         s << "[=[" << tmp.c_str() << "]=],";
@@ -45,7 +45,7 @@ static bool run_test(lua_state& lua, const char** data, const char** expected_re
 
     save_stack_top ss(state);
 
-    int err = luaL_loadbuffer(state, s.c_str(), s.length(), s.c_str());
+    int32 err = luaL_loadbuffer(state, s.c_str(), s.length(), s.c_str());
     if (!err)
         err = lua.pcall(0, LUA_MULTRET);
     if (err)

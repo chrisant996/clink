@@ -42,7 +42,7 @@ TEST_CASE("File match generator")
         "set mark-directories off",     "mark-dir=off",
         nullptr
     };
-    for (int v = 0; inputrc_vars[v]; v += 2)
+    for (int32 v = 0; inputrc_vars[v]; v += 2)
     {
         const char* mode = inputrc_vars[v + 1];
         str<> setvar(inputrc_vars[v]);

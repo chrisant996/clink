@@ -19,14 +19,14 @@ public:
     const char*     get() const { return m_tag.c_str(); }
     void            set(const char* tag);
 
-    unsigned int    size() const { return m_tag.length() + 1; }
+    uint32          size() const { return m_tag.length() + 1; }
 
 private:
     str<64,false>   m_tag;
 };
 
 //------------------------------------------------------------------------------
-enum : char
+enum bank_t : char
 {
     bank_none       = -1,
     bank_master,
@@ -69,14 +69,14 @@ class history_read_buffer
     // fits in one Natural Page regardless of the underlying memory allocator's
     // internal design (control structures embedded as prologue/epiloque in the
     // memory block, or control structures stored separately in memory).
-    static const unsigned int buffer_size = 64000;
+    static const uint32 buffer_size = 64000;
 
 public:
     history_read_buffer() : m_buffer((char*)malloc(buffer_size)) {}
     ~history_read_buffer() { free(m_buffer); }
 
     char*           data() { return m_buffer; }
-    unsigned int    size() const { return buffer_size; }
+    uint32          size() const { return buffer_size; }
 
 private:
     char*           m_buffer;
@@ -97,7 +97,7 @@ public:
         expand_print            = 2,
     };
 
-    typedef unsigned int        line_id;
+    typedef uint32              line_id;
 
     class iter
     {
@@ -105,7 +105,7 @@ public:
                                 iter(iter&& other);
                                 ~iter();
         line_id                 next(str_iter& out, str_base* timestamp=nullptr);
-        unsigned int            get_bank() const;
+        uint32                  get_bank() const;
 
     private:
                                 iter() = default;
@@ -113,22 +113,22 @@ public:
         uintptr_t               impl = 0;
     };
 
-                                history_db(const char* path, int id, bool use_master_bank);
+                                history_db(const char* path, int32 id, bool use_master_bank);
                                 ~history_db();
     void                        initialise(str_base* error_message=nullptr);
     void                        load_rl_history(bool can_clean=true);
     void                        clear();
-    void                        compact(bool force=false, bool uniq=false, int limit=-1);
+    void                        compact(bool force=false, bool uniq=false, int32 limit=-1);
     bool                        add(const char* line);
-    int                         remove(const char* line);
+    int32                       remove(const char* line);
     bool                        remove(line_id id) { return remove_internal(id, true); }
-    bool                        remove(int rl_history_index, const char* line);
+    bool                        remove(int32 rl_history_index, const char* line);
     line_id                     find(const char* line) const;
-    template <int S> iter       read_lines(char (&buffer)[S]);
-    iter                        read_lines(char* buffer, unsigned int buffer_size);
+    template <int32 S> iter     read_lines(char (&buffer)[S]);
+    iter                        read_lines(char* buffer, uint32 buffer_size);
 
     void                        enable_diagnostic_output() { m_diagnostic = true; }
-    bool                        has_bank(unsigned char bank) const;
+    bool                        has_bank(bank_t bank) const;
     bool                        is_stale_name(const char* path) const;
     void                        get_history_path(str_base& out) const;
 
@@ -143,13 +143,13 @@ private:
     template <typename T> void  for_each_bank(T&& callback);
     template <typename T> void  for_each_bank(T&& callback) const;
     template <typename T> void  for_each_session(T&& callback) const;
-    unsigned int                get_active_bank() const;
-    bank_handles                get_bank(unsigned int index) const;
+    bank_t                      get_active_bank() const;
+    bank_handles                get_bank(uint32 index) const;
     bool                        remove_internal(line_id id, bool guard_ctag);
-    void                        make_open_error(str_base* error_message, unsigned char bank) const;
+    void                        make_open_error(str_base* error_message, bank_t bank) const;
     void*                       m_alive_file = nullptr;
     str_moveable                m_path;
-    int                         m_id;
+    int32                       m_id;
     bank_handles                m_bank_handles[bank_count];
     str<32>                     m_bank_filenames[bank_count];
     DWORD                       m_bank_error[bank_count];
@@ -165,7 +165,7 @@ private:
 };
 
 //------------------------------------------------------------------------------
-template <int S> history_db::iter history_db::read_lines(char (&buffer)[S])
+template <int32 S> history_db::iter history_db::read_lines(char (&buffer)[S])
 {
     return read_lines(buffer, S);
 }
@@ -174,7 +174,7 @@ template <int S> history_db::iter history_db::read_lines(char (&buffer)[S])
 class history_database : public history_db, public singleton<history_database>
 {
 public:
-    history_database(const char* path, int id, bool use_master_bank);
+    history_database(const char* path, int32 id, bool use_master_bank);
 };
 
 #define DIAG(fmt, ...)          do { if (m_diagnostic) fprintf(stderr, fmt, ##__VA_ARGS__); } while (false)

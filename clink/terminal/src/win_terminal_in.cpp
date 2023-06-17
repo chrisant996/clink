@@ -66,7 +66,7 @@ extern setting_enum g_default_bindings;
 
 //------------------------------------------------------------------------------
 extern "C" void reset_wcwidths();
-extern "C" int is_locked_cursor();
+extern "C" int32 is_locked_cursor();
 extern HANDLE get_recognizer_event();
 extern HANDLE get_task_manager_event();
 extern void task_manager_on_idle();
@@ -76,8 +76,8 @@ extern void host_refresh_recognizer();
 static HANDLE s_interrupt = NULL;
 
 //------------------------------------------------------------------------------
-static const int CTRL_PRESSED = LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED;
-static const int ALT_PRESSED = LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED;
+static const int32 CTRL_PRESSED = LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED;
+static const int32 ALT_PRESSED = LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED;
 
 // TODO: 0.4.8 keyboard compatibility mode
 #define CSI(x) "\x1b[" #x
@@ -147,27 +147,27 @@ static const char* const kfx[]   = {
 static const char* const ktab[]  = { "\t",    CSI(Z), MOK(5;9),   MOK(6;9),   "",   "",      "",         ""         }; // TAB
 static const char* const kspc[]  = { " ",  MOK(2;32), MOK(5;32),  MOK(6;32),  "",   "",      MOK(7;32),  MOK(8;32)  }; // SPC
 
-static int xterm_modifier(int key_flags)
+static int32 xterm_modifier(int32 key_flags)
 {
     // Calculate Xterm's modifier number.
-    int i = 0;
+    int32 i = 0;
     i |= !!(key_flags & SHIFT_PRESSED);
     i |= !!(key_flags & ALT_PRESSED) << 1;
     i |= !!(key_flags & CTRL_PRESSED) << 2;
     return i + 1;
 }
 
-static int keymod_index(int key_flags)
+static int32 keymod_index(int32 key_flags)
 {
     // Calculate key sequence table modifier index.
-    int i = 0;
+    int32 i = 0;
     i |= !!(key_flags & SHIFT_PRESSED);
     i |= !!(key_flags & CTRL_PRESSED) << 1;
     i |= !!(key_flags & ALT_PRESSED) << 2;
     return i;
 }
 
-static bool is_vk_recognized(int key_vk)
+static bool is_vk_recognized(int32 key_vk)
 {
     switch (key_vk)
     {
@@ -221,13 +221,13 @@ const char* get_bindable_esc()
 //------------------------------------------------------------------------------
 // Use unsigned; WCHAR and unsigned short can give wrong results.
 #define IN_RANGE(n1, b, n2)     ((unsigned)((b) - (n1)) <= unsigned((n2) - (n1)))
-inline bool is_lead_surrogate(unsigned int ch) { return IN_RANGE(0xD800, ch, 0xDBFF); }
+inline bool is_lead_surrogate(uint32 ch) { return IN_RANGE(0xD800, ch, 0xDBFF); }
 
 
 
 //------------------------------------------------------------------------------
 static char s_verbose_input = false;
-void set_verbose_input(int verbose)
+void set_verbose_input(int32 verbose)
 {
     s_verbose_input = char(verbose);
 }
@@ -244,25 +244,25 @@ void interrupt_input()
 //------------------------------------------------------------------------------
 struct keyseq_name : public no_copy
 {
-    keyseq_name(char* p, short int eqclass, short int order) { s = p; eq = eqclass; o = order; }
+    keyseq_name(char* p, int16 eqclass, int16 order) { s = p; eq = eqclass; o = order; }
     keyseq_name(keyseq_name&& a) { s = a.s; eq = a.eq; o = a.o; a.s = nullptr; }
     ~keyseq_name() { free(s); }
     keyseq_name& operator=(keyseq_name&& a) { s = a.s; eq = a.eq; o = a.o; a.s = nullptr; return *this; }
 
     char* s;
-    short int eq;
-    short int o;
+    int16 eq;
+    int16 o;
 };
 
 //------------------------------------------------------------------------------
 struct keyseq_key : public no_copy
 {
-    keyseq_key(const char* p, unsigned int find_len=0) { this->s = p; this->find_len = find_len; }
+    keyseq_key(const char* p, uint32 find_len=0) { this->s = p; this->find_len = find_len; }
     keyseq_key(keyseq_key&& a) { s = a.s; find_len = a.find_len; a.s = nullptr; }
     keyseq_key& operator=(keyseq_key&& a) { s = a.s; find_len = a.find_len; a.s = nullptr; return *this; }
 
     const char* s;
-    unsigned int find_len;
+    uint32 find_len;
 };
 
 //------------------------------------------------------------------------------
@@ -270,9 +270,9 @@ struct keyseq_hasher
 {
     size_t operator()(const keyseq_key& lookup) const
     {
-        unsigned int find_len = lookup.find_len;
+        uint32 find_len = lookup.find_len;
         if (!find_len)
-            find_len = static_cast<unsigned int>(strlen(lookup.s));
+            find_len = uint32(strlen(lookup.s));
         return str_hash(lookup.s, find_len);
     }
 };
@@ -286,10 +286,10 @@ struct map_cmp_str
         {
             assert(!b.find_len);
             const char* bs = b.s;
-            unsigned int len = a.find_len;
+            uint32 len = a.find_len;
             for (const char* as = a.s; len--; as++, bs++)
             {
-                int cmp = int((unsigned char)*as) - int((unsigned char)*bs);
+                int32 cmp = int32(uint8(*as)) - int32(uint8(*bs));
                 if (cmp)
                     return false;
             }
@@ -298,10 +298,10 @@ struct map_cmp_str
         {
             assert(!a.find_len);
             const char* as = a.s;
-            unsigned int len = b.find_len;
+            uint32 len = b.find_len;
             for (const char* bs = b.s; len--; as++, bs++)
             {
-                int cmp = int((unsigned char)*as) - int((unsigned char)*bs);
+                int32 cmp = int32(uint8(*as)) - int32(uint8(*bs));
                 if (cmp)
                     return false;
             }
@@ -312,7 +312,7 @@ struct map_cmp_str
             const char* bs = b.s;
             while (true)
             {
-                int cmp = int((unsigned char)*as) - int((unsigned char)*bs);
+                int32 cmp = int32(uint8(*as)) - int32(uint8(*bs));
                 if (cmp)
                     return false;
                 if (!*as)
@@ -326,19 +326,19 @@ struct map_cmp_str
 };
 static std::unordered_map<keyseq_key, keyseq_name, keyseq_hasher, map_cmp_str> map_keyseq_to_name;
 static char map_keyseq_differentiate = -1;
-static int map_default_bindings = -1;
+static int32 map_default_bindings = -1;
 
 //------------------------------------------------------------------------------
-static void add_keyseq_to_name(const char* keyseq, const char* name, str<32>& builder, short int modifier)
+static void add_keyseq_to_name(const char* keyseq, const char* name, str<32>& builder, int16 modifier)
 {
     if (!keyseq || !*keyseq)
         return;
 
-    int old_len = builder.length();
+    int32 old_len = builder.length();
     builder.concat(name);
 
-    int alloc = builder.length() + 1;
-    keyseq_name second((char*)malloc(alloc), modifier, (short int)map_keyseq_to_name.size());
+    int32 alloc = builder.length() + 1;
+    keyseq_name second((char*)malloc(alloc), modifier, (int16)map_keyseq_to_name.size());
     if (second.s)
     {
         memcpy(second.s, builder.c_str(), alloc);
@@ -381,7 +381,7 @@ static void ensure_keyseqs_to_names()
     if (bindableEsc)
         add_keyseq_to_name(bindableEsc, "Esc", builder, 0);
 
-    for (int m = 0; m < sizeof_array(terminfo::kcuu1); m++)
+    for (int32 m = 0; m < sizeof_array(terminfo::kcuu1); m++)
     {
         builder = mods[m];
         add_keyseq_to_name(terminfo::kcuu1[m], "Up", builder, m);
@@ -421,11 +421,11 @@ static void ensure_keyseqs_to_names()
     }
 
     str<32> fn;
-    for (int i = 0; i < sizeof_array(terminfo::kfx); )
+    for (int32 i = 0; i < sizeof_array(terminfo::kfx); )
     {
-        int m = i / 12;
+        int32 m = i / 12;
         builder = mods[m];
-        for (int j = 0; j < 12; j++, i++)
+        for (int32 j = 0; j < 12; j++, i++)
         {
             fn.format("F%u", j + 1);
             add_keyseq_to_name(terminfo::kfx[i], fn.c_str(), builder, m);
@@ -442,7 +442,7 @@ void reset_keyseq_to_name_map()
 }
 
 //------------------------------------------------------------------------------
-static bool key_name_from_vk(int key_vk, str_base& out, int scan=0)
+static bool key_name_from_vk(int32 key_vk, str_base& out, int32 scan=0)
 {
     UINT key_scan = scan ? scan : MapVirtualKeyW(key_vk, MAPVK_VK_TO_VSC);
     if (key_scan)
@@ -460,7 +460,7 @@ static bool key_name_from_vk(int key_vk, str_base& out, int scan=0)
 }
 
 //------------------------------------------------------------------------------
-const char* find_key_name(const char* keyseq, int& len, int& eqclass, int& order)
+const char* find_key_name(const char* keyseq, int32& len, int32& eqclass, int32& order)
 {
     // '\x00' (Ctrl-@) isn't in the map, so rejecting a seemingly empty string
     // avoids needing to receive the keyseq length.
@@ -470,15 +470,15 @@ const char* find_key_name(const char* keyseq, int& len, int& eqclass, int& order
     // Look up the sequence in the special key names map.  Finds the longest
     // matching key name (in case of non-unique names existing).
     ensure_keyseqs_to_names();
-    for (unsigned int find_len = min<unsigned int>(16, static_cast<unsigned int>(strlen(keyseq))); find_len; --find_len)
+    for (uint32 find_len = min<uint32>(16, uint32(strlen(keyseq))); find_len; --find_len)
     {
         keyseq_key lookup(keyseq, find_len);
         auto const& iter = map_keyseq_to_name.find(lookup);
         if (iter != map_keyseq_to_name.end())
         {
-            len = (int)strlen(iter->first.s);
+            len = (int32)strlen(iter->first.s);
             eqclass = iter->second.eq;
-            order = iter->second.o - (int)map_keyseq_to_name.size();
+            order = iter->second.o - (int32)map_keyseq_to_name.size();
             return iter->second.s;
         }
     }
@@ -492,8 +492,8 @@ const char* find_key_name(const char* keyseq, int& len, int& eqclass, int& order
         str_base out(static_buffer);
         out.clear();
 
-        int i = 5;
-        int mod = 0;
+        int32 i = 5;
+        int32 mod = 0;
         if (keyseq[i] >= '2' && keyseq[i] <= '8' && keyseq[i+1] == ';')
         {
             mod = keyseq[i] - '0' - 1;
@@ -509,7 +509,7 @@ const char* find_key_name(const char* keyseq, int& len, int& eqclass, int& order
             out << c_mod_names[mod];
         }
 
-        int key_vk = 0;
+        int32 key_vk = 0;
         if (keyseq[i] >= '1' && keyseq[i] <= '9') // Leading '0' not allowed.
         {
             key_vk = keyseq[i++] - '0';
@@ -535,7 +535,7 @@ const char* find_key_name(const char* keyseq, int& len, int& eqclass, int& order
 
 
 //------------------------------------------------------------------------------
-enum : unsigned char
+enum : uint8
 {
     // Currently, the first byte in UTF8 cannot have the high 5 bits all 1.
     // That gives us room to define some magic characters:
@@ -552,7 +552,7 @@ enum : unsigned char
 
 
 //------------------------------------------------------------------------------
-unsigned int win_terminal_in::get_dimensions()
+uint32 win_terminal_in::get_dimensions()
 {
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     GetConsoleScreenBufferInfo(m_stdout, &csbi);
@@ -602,7 +602,7 @@ void win_terminal_in::end()
 }
 
 //------------------------------------------------------------------------------
-bool win_terminal_in::available(unsigned int _timeout)
+bool win_terminal_in::available(uint32 _timeout)
 {
     const DWORD stop = GetTickCount() + _timeout;
     while (!m_buffer_count)
@@ -616,7 +616,7 @@ bool win_terminal_in::available(unsigned int _timeout)
         read_console(nullptr, timeout, true/*peek*/);
 
         // If real input is available, break out.
-        const unsigned char k = peek();
+        const uint8 k = peek();
         if (k != input_none_byte &&
             k != input_exit_byte)
             break;
@@ -638,9 +638,9 @@ void win_terminal_in::select(input_idle* callback)
 }
 
 //------------------------------------------------------------------------------
-int win_terminal_in::read()
+int32 win_terminal_in::read()
 {
-    unsigned int dimensions = get_dimensions();
+    uint32 dimensions = get_dimensions();
     if (dimensions != m_dimensions)
     {
         m_dimensions = dimensions;
@@ -650,7 +650,7 @@ int win_terminal_in::read()
     if (!m_buffer_count)
         return terminal_in::input_none;
 
-    unsigned char c = pop();
+    uint8 c = pop();
     switch (c)
     {
     case input_none_byte:       return terminal_in::input_none;
@@ -735,7 +735,7 @@ void win_terminal_in::read_console(input_idle* callback, DWORD _timeout, bool pe
     // Read input records sent from the terminal (aka conhost) until some
     // input has been buffered.
     const DWORD started = GetTickCount();
-    const unsigned int buffer_count = m_buffer_count;
+    const uint32 buffer_count = m_buffer_count;
     while (buffer_count == m_buffer_count)
     {
         DWORD modeExpected;
@@ -872,10 +872,10 @@ void win_terminal_in::read_console(input_idle* callback, DWORD _timeout, bool pe
 //------------------------------------------------------------------------------
 static void verbose_input(KEY_EVENT_RECORD const& record)
 {
-    int key_char = record.uChar.UnicodeChar;
-    int key_vk = record.wVirtualKeyCode;
-    int key_sc = record.wVirtualScanCode;
-    int key_flags = record.dwControlKeyState;
+    int32 key_char = record.uChar.UnicodeChar;
+    int32 key_vk = record.wVirtualKeyCode;
+    int32 key_sc = record.wVirtualScanCode;
+    int32 key_flags = record.dwControlKeyState;
 
     char buf[32];
     buf[0] = 0;
@@ -889,7 +889,7 @@ static void verbose_input(KEY_EVENT_RECORD const& record)
     //  - It doesn't detect dead keys anyway.
     str<> tmp;
     static const char* const maybe_newline = "";
-    int tu = 0;
+    int32 tu = 0;
     char tmp2[33];
     WCHAR wbuf[33];
     BYTE keystate[256];
@@ -950,7 +950,7 @@ static void verbose_input(KEY_EVENT_RECORD const& record)
 //------------------------------------------------------------------------------
 // Try to handle Alt-Ctrl-[, Alt-Ctrl-], Alt-Ctrl-\ better, at least in keyboard
 // layouts where the [, ], or \ is the regular (unshifted) name of the key.
-static bool translate_ctrl_bracket(int& key_vk, int key_sc)
+static bool translate_ctrl_bracket(int32& key_vk, int32 key_sc)
 {
     char buf[32];
     buf[0] = 0;
@@ -988,10 +988,10 @@ static bool translate_ctrl_bracket(int& key_vk, int key_sc)
 //------------------------------------------------------------------------------
 void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
 {
-    int key_char = record.uChar.UnicodeChar;
-    int key_vk = record.wVirtualKeyCode;
-    int key_sc = record.wVirtualScanCode;
-    int key_flags = record.dwControlKeyState;
+    int32 key_char = record.uChar.UnicodeChar;
+    int32 key_vk = record.wVirtualKeyCode;
+    int32 key_sc = record.wVirtualScanCode;
+    int32 key_flags = record.dwControlKeyState;
 
     // Only respond to key down events.
     if (!record.bKeyDown)
@@ -1083,7 +1083,7 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
     unsigned key_func = key_vk - VK_F1;
     if (key_func <= (VK_F12 - VK_F1))
     {
-        int kfx_group = terminfo::keymod_index(key_flags);
+        int32 kfx_group = terminfo::keymod_index(key_flags);
         if (kfx_group == 4 && key_func == 3 && g_altf4_exits.get())
         {
             m_buffer_head = 0;
@@ -1234,7 +1234,7 @@ not_ctrl:
     if (terminfo::is_vk_recognized(key_vk))
     {
         str<> key_seq;
-        int mod = terminfo::xterm_modifier(key_flags);
+        int32 mod = terminfo::xterm_modifier(key_flags);
         if (mod >= 2)
             key_seq.format("\x1b[27;%u;%u~", mod, key_vk);
         else
@@ -1316,10 +1316,10 @@ void win_terminal_in::process_input(MOUSE_EVENT_RECORD const& record)
             {
                 // Windows Terminal does NOT support programmatic scrolling.
                 // ConEmu and plain Conhost DO support programmatic scrolling.
-                int direction = (0 - short(HIWORD(record.dwButtonState))) / 120;
+                int32 direction = (0 - short(HIWORD(record.dwButtonState))) / 120;
                 UINT wheel_scroll_lines = 3;
                 SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 0, &wheel_scroll_lines, false);
-                ScrollConsoleRelative(m_stdout, direction * int(wheel_scroll_lines), SCR_BYLINE);
+                ScrollConsoleRelative(m_stdout, direction * int32(wheel_scroll_lines), SCR_BYLINE);
             }
         }
         return;
@@ -1345,7 +1345,7 @@ void win_terminal_in::process_input(MOUSE_EVENT_RECORD const& record)
     {
         // Windows Terminal does NOT support programmatic scrolling.
         // ConEmu and plain Conhost DO support programmatic scrolling.
-        int direction = (0 - short(HIWORD(record.dwButtonState))) / 120;
+        int32 direction = (0 - short(HIWORD(record.dwButtonState))) / 120;
         UINT wheel_scroll_lines = 3;
         SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 0, &wheel_scroll_lines, false);
 
@@ -1353,7 +1353,7 @@ void win_terminal_in::process_input(MOUSE_EVENT_RECORD const& record)
         const char code = (direction < 0 ? 'A' : 'B');
         if (direction < 0)
             direction = 0 - direction;
-        tmp.format("\x1b[$%u%c", direction * int(wheel_scroll_lines), code);
+        tmp.format("\x1b[$%u%c", direction * int32(wheel_scroll_lines), code);
         push(tmp.c_str());
         return;
     }
@@ -1361,21 +1361,21 @@ void win_terminal_in::process_input(MOUSE_EVENT_RECORD const& record)
     // Mouse horizontal wheel.
     if (hwheel)
     {
-        int direction = (short(HIWORD(record.dwButtonState))) / 32;
+        int32 direction = (short(HIWORD(record.dwButtonState))) / 32;
         UINT hwheel_distance = 1;
 
         str<16> tmp;
         const char code = (direction < 0 ? '<' : '>');
         if (direction < 0)
             direction = 0 - direction;
-        tmp.format("\x1b[$%u%c", direction * int(hwheel_distance), code);
+        tmp.format("\x1b[$%u%c", direction * int32(hwheel_distance), code);
         push(tmp.c_str());
         return;
     }
 }
 
 //------------------------------------------------------------------------------
-void win_terminal_in::filter_unbound_input(unsigned int buffer_count)
+void win_terminal_in::filter_unbound_input(uint32 buffer_count)
 {
     // If the processed input chord isn't bound, discard it.  Otherwise unbound
     // keys can have the tail part of their sequence show up as though it were
@@ -1389,7 +1389,7 @@ void win_terminal_in::filter_unbound_input(unsigned int buffer_count)
     // whether the key sequence is bound to anything.
     assert(buffer_count == 0);
 
-    const int len = m_buffer_count - buffer_count;
+    const int32 len = m_buffer_count - buffer_count;
     if (len <= 0)
         return;
 
@@ -1398,8 +1398,8 @@ void win_terminal_in::filter_unbound_input(unsigned int buffer_count)
     // that looks for nul termination even though it's supposed to use a length
     // instead; copying to a separate buffer makes that easier to mitigate.
     char chord[sizeof_array(m_buffer) + 1];
-    static const unsigned int mask = sizeof_array(m_buffer) - 1;
-    for (int i = 0; i < len; ++i)
+    static const uint32 mask = sizeof_array(m_buffer) - 1;
+    for (int32 i = 0; i < len; ++i)
         chord[i] = m_buffer[(m_buffer_head + i) & mask];
     chord[len] = '\0'; // Word around rl_function_of_keyseq_len bug.
 
@@ -1408,8 +1408,8 @@ void win_terminal_in::filter_unbound_input(unsigned int buffer_count)
     {
         // Reset buffer and push translated chord.
         m_buffer_count = buffer_count;
-        for (unsigned int i = 0; i < new_chord.length(); ++i)
-            push((unsigned int)new_chord.c_str()[i]);
+        for (uint32 i = 0; i < new_chord.length(); ++i)
+            push((uint32)new_chord.c_str()[i]);
     }
     else if (!m_keys->is_bound(chord, len))
     {
@@ -1423,12 +1423,12 @@ void win_terminal_in::filter_unbound_input(unsigned int buffer_count)
 //------------------------------------------------------------------------------
 void win_terminal_in::push(const char* seq)
 {
-    static const unsigned int mask = sizeof_array(m_buffer) - 1;
+    static const uint32 mask = sizeof_array(m_buffer) - 1;
 
     assert(!m_lead_surrogate);
     m_lead_surrogate = 0;
 
-    int index = m_buffer_head + m_buffer_count;
+    int32 index = m_buffer_head + m_buffer_count;
     for (; m_buffer_count <= mask && *seq; ++m_buffer_count, ++index, ++seq)
     {
         assert(m_buffer_count < sizeof_array(m_buffer));
@@ -1440,11 +1440,11 @@ void win_terminal_in::push(const char* seq)
 }
 
 //------------------------------------------------------------------------------
-void win_terminal_in::push(unsigned int value)
+void win_terminal_in::push(uint32 value)
 {
-    static const unsigned int mask = sizeof_array(m_buffer) - 1;
+    static const uint32 mask = sizeof_array(m_buffer) - 1;
 
-    int index = m_buffer_head + m_buffer_count;
+    int32 index = m_buffer_head + m_buffer_count;
 
     if (value < 0x80)
     {
@@ -1467,7 +1467,7 @@ void win_terminal_in::push(unsigned int value)
     }
 
     wchar_t wc[3];
-    unsigned int len = 0;
+    uint32 len = 0;
     if (m_lead_surrogate)
     {
         wc[len++] = m_lead_surrogate;
@@ -1477,8 +1477,8 @@ void win_terminal_in::push(unsigned int value)
     wc[len] = 0;
 
     char utf8[mask + 1];
-    unsigned int n = to_utf8(utf8, sizeof_array(utf8), wc);
-    for (unsigned int i = 0; i < n; ++i, ++index)
+    uint32 n = to_utf8(utf8, sizeof_array(utf8), wc);
+    for (uint32 i = 0; i < n; ++i, ++index)
     {
         assert(m_buffer_count < sizeof_array(m_buffer));
         if (m_buffer_count < sizeof_array(m_buffer))
@@ -1490,12 +1490,12 @@ void win_terminal_in::push(unsigned int value)
 }
 
 //------------------------------------------------------------------------------
-unsigned char win_terminal_in::pop()
+uint8 win_terminal_in::pop()
 {
     if (!m_buffer_count)
         return input_none_byte;
 
-    unsigned char value = m_buffer[m_buffer_head];
+    uint8 value = m_buffer[m_buffer_head];
 
     --m_buffer_count;
     m_buffer_head = (m_buffer_head + 1) & (sizeof_array(m_buffer) - 1);
@@ -1504,7 +1504,7 @@ unsigned char win_terminal_in::pop()
 }
 
 //------------------------------------------------------------------------------
-unsigned char win_terminal_in::peek()
+uint8 win_terminal_in::peek()
 {
     if (!m_buffer_count)
         return input_none_byte;

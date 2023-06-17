@@ -49,7 +49,7 @@ class host : public host_callbacks
 public:
                     host(const char* name);
     virtual         ~host();
-    virtual int     validate() = 0;
+    virtual int32   validate() = 0;
     virtual bool    initialise() = 0;
     virtual void    shutdown() = 0;
 
@@ -63,15 +63,15 @@ public:
     void            filter_prompt() override;
     void            filter_transient_prompt(bool final) override;
     bool            can_suggest(const line_state& line) override;
-    bool            suggest(const line_states& lines, matches* matches, int generation_id) override;
+    bool            suggest(const line_states& lines, matches* matches, int32 generation_id) override;
     void            filter_matches(char** matches) override;
     bool            call_lua_rl_global_function(const char* func_name, line_state* line) override;
-    const char**    copy_dir_history(int* total) override;
+    const char**    copy_dir_history(int32* total) override;
     void            send_event(const char* event_name) override;
     void            send_oncommand_event(line_state& line, const char* command, bool quoted, recognition recog, const char* file) override;
     void            send_oninputlinechanged_event(const char* line) override;
     bool            has_event_handler(const char* event_name) override;
-    void            get_app_context(int& id, host_context& context) override;
+    void            get_app_context(int32& id, host_context& context) override;
 
 protected:
     std::unique_ptr<printer_context> make_printer_context();
@@ -98,7 +98,7 @@ private:
     str<256>        m_filtered_rprompt;
     str_moveable    m_pending_command;
     std::list<queued_line> m_queued_lines;
-    unsigned int    m_char_cursor = 0;
+    uint32          m_char_cursor = 0;
     wstr_moveable   m_last_cwd;
     bool            m_can_transient = false;
     bool            m_skip_provide_line = false;

@@ -5,8 +5,8 @@
 #include "vm.h"
 
 //------------------------------------------------------------------------------
-static unsigned int g_alloc_granularity = 0;
-static unsigned int g_page_size         = 0;
+static uint32 g_alloc_granularity = 0;
+static uint32 g_page_size         = 0;
 
 //------------------------------------------------------------------------------
 static void initialise_page_constants()
@@ -18,9 +18,9 @@ static void initialise_page_constants()
 }
 
 //------------------------------------------------------------------------------
-static unsigned int to_access_flags(unsigned int ms_flags)
+static uint32 to_access_flags(uint32 ms_flags)
 {
-    unsigned int ret = 0;
+    uint32 ret = 0;
     if (ms_flags & 0x22) ret |= vm::access_read;
     if (ms_flags & 0x44) ret |= vm::access_write|vm::access_read;
     if (ms_flags & 0x88) ret |= vm::access_cow|vm::access_write|vm::access_read;
@@ -29,9 +29,9 @@ static unsigned int to_access_flags(unsigned int ms_flags)
 }
 
 //------------------------------------------------------------------------------
-static unsigned int to_ms_flags(unsigned int access_flags)
+static uint32 to_ms_flags(uint32 access_flags)
 {
-    unsigned int ret = PAGE_NOACCESS;
+    uint32 ret = PAGE_NOACCESS;
     if (access_flags & vm::access_cow)          ret = PAGE_WRITECOPY;
     else if (access_flags & vm::access_write)   ret = PAGE_READWRITE;
     else if (access_flags & vm::access_read)    ret = PAGE_READONLY;
@@ -42,7 +42,7 @@ static unsigned int to_ms_flags(unsigned int access_flags)
 
 
 //------------------------------------------------------------------------------
-vm::vm(int pid)
+vm::vm(int32 pid)
 {
     if (pid > 0)
         m_handle = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_VM_OPERATION|
@@ -109,12 +109,12 @@ void* vm::get_page(void* address)
 }
 
 //------------------------------------------------------------------------------
-vm::region vm::alloc_region(unsigned int page_count, unsigned int access)
+vm::region vm::alloc_region(uint32 page_count, uint32 access)
 {
     if (m_handle == nullptr)
         return {};
 
-    int ms_access = to_ms_flags(access);
+    int32 ms_access = to_ms_flags(access);
     size_t size = page_count * get_page_size();
     if (void* base = VirtualAllocEx(m_handle, nullptr, size, MEM_COMMIT, ms_access))
         return {base, page_count};
@@ -133,7 +133,7 @@ void vm::free_region(const region& region)
 }
 
 //------------------------------------------------------------------------------
-int vm::get_access(const region& region)
+int32 vm::get_access(const region& region)
 {
     if (m_handle == nullptr)
         return -1;
@@ -146,7 +146,7 @@ int vm::get_access(const region& region)
 }
 
 //------------------------------------------------------------------------------
-bool vm::set_access(const region& region, unsigned int access)
+bool vm::set_access(const region& region, uint32 access)
 {
     if (m_handle == nullptr)
         return false;

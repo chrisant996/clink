@@ -14,7 +14,7 @@
 #include <core/str_iter.h>
 #include <terminal/printer.h>
 
-extern int clink_is_signaled();
+extern int32 clink_is_signaled();
 
 setting_color g_color_interact(
     "color.interact",
@@ -90,12 +90,12 @@ void pager_impl::on_matches_changed(const context& context, const line_state& li
 }
 
 //------------------------------------------------------------------------------
-void pager_impl::on_terminal_resize(int columns, int rows, const context& context)
+void pager_impl::on_terminal_resize(int32 columns, int32 rows, const context& context)
 {
 }
 
 //------------------------------------------------------------------------------
-void pager_impl::on_signal(int sig)
+void pager_impl::on_signal(int32 sig)
 {
 }
 
@@ -106,7 +106,7 @@ void pager_impl::start_pager(printer& printer)
 }
 
 //------------------------------------------------------------------------------
-bool pager_impl::on_print_lines(printer& printer, int lines)
+bool pager_impl::on_print_lines(printer& printer, int32 lines)
 {
     if (m_max < 0)
     {
@@ -142,8 +142,8 @@ void pager_impl::set_limit(printer& printer, pager_amount amount)
     {
     case unlimited:     m_max = 0; break;
     case line:          m_max = 1; break;
-    case half_page:     m_max = max<int>(printer.get_rows() / 2, 0); break;
-    case page:          m_max = max<int>(printer.get_rows() - 2, 0); break;
-    case first_page:    m_max = max<int>(printer.get_rows() - 1, 0); break;
+    case half_page:     m_max = max<int32>(printer.get_rows() / 2, 0); break;
+    case page:          m_max = max<int32>(printer.get_rows() - 2, 0); break;
+    case first_page:    m_max = max<int32>(printer.get_rows() - 1, 0); break;
     }
 }

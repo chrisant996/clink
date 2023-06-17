@@ -14,12 +14,12 @@
 #include <regex>
 
 //------------------------------------------------------------------------------
-int find_line(HANDLE h, const CONSOLE_SCREEN_BUFFER_INFO& csbi,
-              wchar_t* chars_buffer, int chars_capacity,
-              WORD* attrs_buffer, int attrs_capacity,
-              int starting_line, int distance,
+int32 find_line(HANDLE h, const CONSOLE_SCREEN_BUFFER_INFO& csbi,
+              wchar_t* chars_buffer, int32 chars_capacity,
+              WORD* attrs_buffer, int32 attrs_capacity,
+              int32 starting_line, int32 distance,
               const char* text, find_line_mode mode,
-              const BYTE* attrs, int num_attrs, BYTE mask)
+              const BYTE* attrs, int32 num_attrs, BYTE mask)
 {
     assert(!text || chars_capacity >= csbi.dwSize.X);
     if (!(!text || chars_capacity >= csbi.dwSize.X))
@@ -62,8 +62,8 @@ int find_line(HANDLE h, const CONSOLE_SCREEN_BUFFER_INFO& csbi,
         }
     }
 
-    int start_found = 0;
-    int len_found = csbi.dwSize.X;
+    int32 start_found = 0;
+    int32 len_found = csbi.dwSize.X;
 
     while (distance != 0)
     {
@@ -107,8 +107,8 @@ int find_line(HANDLE h, const CONSOLE_SCREEN_BUFFER_INFO& csbi,
                 found_text = matches.size() > 0;
                 if (found_text)
                 {
-                    start_found = static_cast<int>(matches.position(0));
-                    len_found = static_cast<int>(matches.length(0));
+                    start_found = int32(matches.position(0));
+                    len_found = int32(matches.length(0));
                 }
             }
             else
@@ -117,7 +117,7 @@ int find_line(HANDLE h, const CONSOLE_SCREEN_BUFFER_INFO& csbi,
                 // text and attributes.
                 const wchar_t* found = wcsstr(chars_buffer, find.c_str());
                 found_text = !!found;
-                start_found = static_cast<int>(found - chars_buffer);
+                start_found = int32(found - chars_buffer);
                 len_found = find.length();
             }
         }

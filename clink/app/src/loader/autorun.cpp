@@ -9,16 +9,16 @@
 #include <getopt.h>
 
 //------------------------------------------------------------------------------
-typedef bool    (dispatch_func_t)(const char*, int);
+typedef bool    (dispatch_func_t)(const char*, int32);
 str<>           g_clink_args;
-int             g_all_users  = 0;
+int32           g_all_users  = 0;
 static bool     s_was_installed = false;
 void            puts_help(const char* const* help_pairs, const char* const* other_pairs=nullptr);
 
 
 
 //------------------------------------------------------------------------------
-static HKEY open_software_key(int all_users, const char* _key, int wow64, int writable)
+static HKEY open_software_key(int32 all_users, const char* _key, int32 wow64, int32 writable)
 {
     wstr<> key;
     key << L"Software\\";
@@ -56,7 +56,7 @@ static bool set_value(HKEY key, const char* _name, const char* _value)
 }
 
 //------------------------------------------------------------------------------
-static int get_value(HKEY key, const char* _name, char** _buffer)
+static int32 get_value(HKEY key, const char* _name, char** _buffer)
 {
     *_buffer = nullptr;
 
@@ -64,7 +64,7 @@ static int get_value(HKEY key, const char* _name, char** _buffer)
 
     DWORD type = 0;
     DWORD req_size = 0;
-    int i = RegQueryValueExW(key, name.c_str(), nullptr, &type, nullptr, &req_size);
+    int32 i = RegQueryValueExW(key, name.c_str(), nullptr, &type, nullptr, &req_size);
     if (i != ERROR_SUCCESS && i != ERROR_MORE_DATA)
         return 0;
     if (type != REG_SZ && type != REG_EXPAND_SZ)
@@ -78,7 +78,7 @@ static int get_value(HKEY key, const char* _name, char** _buffer)
     RegQueryValueExW(key, name.c_str(), nullptr, nullptr, (BYTE*)buffer, &req_size);
     assert(wcslen(buffer) <= req_size / sizeof(*buffer));
 
-    int len = WideCharToMultiByte(CP_UTF8, 0, buffer, -1, nullptr, 0, nullptr, nullptr);
+    int32 len = WideCharToMultiByte(CP_UTF8, 0, buffer, -1, nullptr, 0, nullptr, nullptr);
     if (len)
     {
         char* out = static_cast<char*>(malloc(len));
@@ -86,7 +86,7 @@ static int get_value(HKEY key, const char* _name, char** _buffer)
         if (len)
         {
             // len is the buffer size, so find the string length.
-            len = int(strlen(out));
+            len = int32(strlen(out));
             assert(len);
             *_buffer = out;
             out = nullptr;
@@ -112,7 +112,7 @@ static bool delete_value(HKEY key, const char* _name)
 
 
 //------------------------------------------------------------------------------
-static HKEY open_cmd_proc_key(int all_users, int wow64, int writable)
+static HKEY open_cmd_proc_key(int32 all_users, int32 wow64, int32 writable)
 {
     return open_software_key(all_users, "Microsoft\\Command Processor", wow64, writable);
 }
@@ -137,10 +137,10 @@ static bool check_registry_access()
 }
 
 //------------------------------------------------------------------------------
-static bool find_clink_entry(const char* value, int* left, int* right)
+static bool find_clink_entry(const char* value, int32* left, int32* right)
 {
-    int quoted;
-    int i;
+    int32 quoted;
+    int32 i;
     const char* tag;
     const char* c;
 
@@ -171,9 +171,9 @@ static bool find_clink_entry(const char* value, int* left, int* right)
     // Find right most extents of clink's entry.
     c = strchr(tag, '&');
     if (c != nullptr)
-        *right = (int)(c - value);
+        *right = (int32)(c - value);
     else
-        *right = (int)strlen(value);
+        *right = (int32)strlen(value);
 
     // Is clink's path quoted?
     c = strchr(tag, ' ');
@@ -199,7 +199,7 @@ static bool find_clink_entry(const char* value, int* left, int* right)
 
         --c;
     }
-    *left = (int)(c - value);
+    *left = (int32)(c - value);
 
     return true;
 }
@@ -216,11 +216,11 @@ static const char* get_cmd_start(const char* cmd)
 }
 
 //------------------------------------------------------------------------------
-static bool uninstall_autorun(const char* clink_path, int wow64)
+static bool uninstall_autorun(const char* clink_path, int32 wow64)
 {
     HKEY cmd_proc_key;
     char* key_value;
-    int left, right;
+    int32 left, right;
 
     cmd_proc_key = open_cmd_proc_key(g_all_users, wow64, 1);
     if (cmd_proc_key == nullptr)
@@ -237,13 +237,13 @@ static bool uninstall_autorun(const char* clink_path, int wow64)
     {
         const char* read;
         char* write;
-        int i, n;
+        int32 i, n;
 
         s_was_installed = true;
 
         // Copy the key value into itself, skipping clink's entry.
         read = write = key_value;
-        for (i = 0, n = (int)strlen(key_value); i <= n; ++i)
+        for (i = 0, n = (int32)strlen(key_value); i <= n; ++i)
         {
             if (i < left || i >= right)
             {
@@ -277,12 +277,12 @@ static bool uninstall_autorun(const char* clink_path, int wow64)
 }
 
 //------------------------------------------------------------------------------
-static bool install_autorun(const char* clink_path, int wow64)
+static bool install_autorun(const char* clink_path, int32 wow64)
 {
     HKEY cmd_proc_key;
     const char* value;
     char* key_value;
-    int i;
+    int32 i;
 
     // Remove any previous autorun entries so we never have more than one. We
     // could just check for an exisiting entry, but by always uninstalling and
@@ -300,7 +300,7 @@ static bool install_autorun(const char* clink_path, int wow64)
     key_value = nullptr;
     get_value(cmd_proc_key, "AutoRun", &key_value);
 
-    i = key_value ? (int)strlen(key_value) : 0;
+    i = key_value ? (int32)strlen(key_value) : 0;
     i += 2048;
     str_base new_value((char*)malloc(i), i);
     new_value.clear();
@@ -327,13 +327,13 @@ static bool install_autorun(const char* clink_path, int wow64)
 //------------------------------------------------------------------------------
 static bool show_autorun()
 {
-    int all_users;
+    int32 all_users;
 
     puts("Current AutoRun values");
 
     for (all_users = 0; all_users < 2; ++all_users)
     {
-        int wow64;
+        int32 wow64;
 
         printf("\n  %s:\n", all_users ? "All users" : "Current user");
 
@@ -369,7 +369,7 @@ static bool show_autorun()
 }
 
 //------------------------------------------------------------------------------
-static bool set_autorun_value(const char* value, int wow64)
+static bool set_autorun_value(const char* value, int32 wow64)
 {
     HKEY cmd_proc_key = open_cmd_proc_key(g_all_users, wow64, 1);
     if (cmd_proc_key == nullptr)
@@ -391,8 +391,8 @@ static bool set_autorun_value(const char* value, int wow64)
 //------------------------------------------------------------------------------
 static bool dispatch(dispatch_func_t* function, const char* clink_path)
 {
-    int wow64;
-    int is_x64_os;
+    int32 wow64;
+    int32 is_x64_os;
     SYSTEM_INFO system_info;
 
     GetNativeSystemInfo(&system_info);
@@ -458,7 +458,7 @@ static void success_message(const char* message)
 }
 
 //------------------------------------------------------------------------------
-int autorun(int argc, char** argv)
+int32 autorun(int32 argc, char** argv)
 {
     // Parse command line arguments.
     struct option options[] = {
@@ -469,8 +469,8 @@ int autorun(int argc, char** argv)
 
     str<MAX_PATH> clink_path;
 
-    int i;
-    int ret = 0;
+    int32 i;
+    int32 ret = 0;
     while ((i = getopt_long(argc, argv, "?ha", options, nullptr)) != -1)
     {
         switch (i)

@@ -14,13 +14,13 @@ public:
     virtual void            begin_line() override;
     virtual void            end_line() override;
     virtual const char*     get_buffer() const override;
-    virtual unsigned int    get_length() const override;
-    virtual unsigned int    get_cursor() const override;
-    virtual int             get_anchor() const override;
-    virtual unsigned int    set_cursor(unsigned int pos) override;
-    virtual void            set_selection(unsigned int anchor, unsigned int pos) override;
+    virtual uint32          get_length() const override;
+    virtual uint32          get_cursor() const override;
+    virtual int32           get_anchor() const override;
+    virtual uint32          set_cursor(uint32 pos) override;
+    virtual void            set_selection(uint32 anchor, uint32 pos) override;
     virtual bool            insert(const char* text) override;
-    virtual bool            remove(unsigned int from, unsigned int to) override;
+    virtual bool            remove(uint32 from, uint32 to) override;
     virtual void            draw() override;
     virtual void            redraw() override;
     virtual void            set_need_draw() override;
@@ -30,12 +30,12 @@ public:
 
     bool                    has_override() const;
     void                    clear_override();
-    void                    override(const char* line, int pos);
+    void                    override(const char* line, int32 pos);
 
 private:
     bool                    m_attached = false;
     bool                    m_need_draw = false;
     const char*             m_override_line = nullptr;
-    unsigned int            m_override_len = 0;
-    int                     m_override_pos = 0;
+    uint32                  m_override_len = 0;
+    int32                   m_override_pos = 0;
 };

@@ -5,7 +5,7 @@
 #include "ecma48_wrapper.h"
 
 //------------------------------------------------------------------------------
-ecma48_wrapper::ecma48_wrapper(const char* in, unsigned int wrap)
+ecma48_wrapper::ecma48_wrapper(const char* in, uint32 wrap)
 {
     // WARNING:  This assumes `in` contains no TAB or CR or LF characters!
 
@@ -19,7 +19,7 @@ ecma48_wrapper::ecma48_wrapper(const char* in, unsigned int wrap)
     const char* end_fits = s;
     const char* end_word = s;
     const char* next_word = s;
-    unsigned int cells = 0;
+    uint32 cells = 0;
 
     while (true)
     {
@@ -32,7 +32,7 @@ ecma48_wrapper::ecma48_wrapper(const char* in, unsigned int wrap)
             str_iter inner_iter(code.get_pointer(), code.get_length());
             while (true)
             {
-                const int c = inner_iter.next();
+                const int32 c = inner_iter.next();
 
                 if (!c || c == ' ')
                 {
@@ -42,7 +42,7 @@ ecma48_wrapper::ecma48_wrapper(const char* in, unsigned int wrap)
                 if (!c)
                     break;
 
-                const int w = clink_wcwidth(c);
+                const int32 w = clink_wcwidth(c);
                 if (wrap && cells + w > wrap)
                 {
                     if (end_fits <= s) // Must fit at least one segment!
@@ -52,7 +52,7 @@ ecma48_wrapper::ecma48_wrapper(const char* in, unsigned int wrap)
                     }
 
                     assert(end_fits > s);
-                    m_lines.emplace_back(s, int(end_fits - s));
+                    m_lines.emplace_back(s, int32(end_fits - s));
 
                     s = next_word;
                     while (*s == ' ')
@@ -77,7 +77,7 @@ ecma48_wrapper::ecma48_wrapper(const char* in, unsigned int wrap)
     }
 
     if (end_fits > s)
-        m_lines.emplace_back(s, int(end_fits - s));
+        m_lines.emplace_back(s, int32(end_fits - s));
 
     if (m_lines.empty())
         m_lines.emplace_back(in, 0);

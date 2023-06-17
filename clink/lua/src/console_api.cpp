@@ -18,7 +18,7 @@
 
 extern "C" {
 #include <readline/readline.h>
-extern "C" int _rl_last_v_pos;
+extern "C" int32 _rl_last_v_pos;
 };
 
 //------------------------------------------------------------------------------
@@ -54,11 +54,11 @@ static SHORT GetConsoleNumLines(const CONSOLE_SCREEN_BUFFER_INFO& csbi)
 /// <tr><td>"absolute"</td><td>Scrolls to line <span class="arg">amount</span>,
 /// from 1 to <a href="#console.getnumlines">console.getnumlines()</a>.</td></tr>
 /// </table>
-static int scroll(lua_State* state)
+static int32 scroll(lua_State* state)
 {
     bool isnum;
     const char* mode = checkstring(state, 1);
-    int amount = checkinteger(state, 2, &isnum);
+    int32 amount = checkinteger(state, 2, &isnum);
     if (!mode || !isnum)
         return 0;
 
@@ -74,7 +74,7 @@ static int scroll(lua_State* state)
     }
 
     HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-    int scrolled = ScrollConsoleRelative(h, amount, scrmode);
+    int32 scrolled = ScrollConsoleRelative(h, amount, scrmode);
     lua_pushinteger(state, scrolled);
     return 1;
 }
@@ -90,13 +90,13 @@ static int scroll(lua_State* state)
 ///
 /// Note: backspace characters and line endings are counted as visible character
 /// cells and will skew the resulting count.
-static int get_cell_count(lua_State* state)
+static int32 get_cell_count(lua_State* state)
 {
     const char* in = checkstring(state, 1);
     if (!in)
         return 0;
 
-    unsigned int cells = 0;
+    uint32 cells = 0;
     ecma48_processor(in, nullptr/*out*/, &cells);
     lua_pushinteger(state, cells);
     return 1;
@@ -113,14 +113,14 @@ static int get_cell_count(lua_State* state)
 ///
 /// Note: backspace characters and line endings are counted as visible character
 /// cells and will skew the resulting count.
-static int get_plain_text(lua_State* state)
+static int32 get_plain_text(lua_State* state)
 {
     const char* in = checkstring(state, 1);
     if (!in)
         return 0;
 
     str<> out;
-    unsigned int cells = 0;
+    uint32 cells = 0;
     ecma48_processor(in, &out, &cells, ecma48_processor_flags::plaintext);
     lua_pushlstring(state, out.c_str(), out.length());
     lua_pushinteger(state, cells);
@@ -132,7 +132,7 @@ static int get_plain_text(lua_State* state)
 /// -ver:   1.1.20
 /// -ret:   integer
 /// Returns the width of the console screen buffer in characters.
-static int get_width(lua_State* state)
+static int32 get_width(lua_State* state)
 {
     CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
     HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -148,7 +148,7 @@ static int get_width(lua_State* state)
 /// -ver:   1.1.20
 /// -ret:   integer
 /// Returns the number of visible lines of the console screen buffer.
-static int get_height(lua_State* state)
+static int32 get_height(lua_State* state)
 {
     CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
     HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -164,7 +164,7 @@ static int get_height(lua_State* state)
 /// -ver:   1.1.20
 /// -ret:   integer
 /// Returns the total number of lines in the console screen buffer.
-static int get_num_lines(lua_State* state)
+static int32 get_num_lines(lua_State* state)
 {
     CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
     HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -180,7 +180,7 @@ static int get_num_lines(lua_State* state)
 /// -ver:   1.1.20
 /// -ret:   integer
 /// Returns the current top line (scroll position) in the console screen buffer.
-static int get_top(lua_State* state)
+static int32 get_top(lua_State* state)
 {
     CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
     HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -199,7 +199,7 @@ static int get_top(lua_State* state)
 /// The row is between 1 and <a href="#console.getnumlines">console.getnumlines()</a>.
 /// The column is between 1 and <a href="#console.getwidth">console.getwidth()</a>.
 /// -show:  local x, y = console.getcursorpos()
-static int get_cursor_pos(lua_State* state)
+static int32 get_cursor_pos(lua_State* state)
 {
     CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
     HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -220,7 +220,7 @@ static int get_cursor_pos(lua_State* state)
 /// <a href="#console.getnumlines">console.getnumlines()</a>.
 ///
 /// Any trailing whitespace is stripped before returning the text.
-static int get_line_text(lua_State* state)
+static int32 get_line_text(lua_State* state)
 {
     if (!g_printer)
         return 0;
@@ -235,8 +235,8 @@ static int get_line_text(lua_State* state)
     if (!GetConsoleScreenBufferInfo(h, &csbi))
         return 0;
 
-    line = min<int>(line, GetConsoleNumLines(csbi));
-    line = max<int>(line, 0);
+    line = min<int32>(line, GetConsoleNumLines(csbi));
+    line = max<int32>(line, 0);
 
     str_moveable out;
     if (!g_printer->get_line_text(line, out))
@@ -251,7 +251,7 @@ static int get_line_text(lua_State* state)
 /// -ver:   1.1.32
 /// -ret:   string
 /// Returns the console title text.
-static int get_title(lua_State* state)
+static int32 get_title(lua_State* state)
 {
     wstr<16> title;
     title.reserve(4096);
@@ -274,7 +274,7 @@ static int get_title(lua_State* state)
 /// -ver:   1.1.32
 /// -arg:   title:string
 /// Sets the console title text.
-static int set_title(lua_State* state)
+static int32 set_title(lua_State* state)
 {
     const char* title = checkstring(state, 1);
     if (!title)
@@ -291,7 +291,7 @@ static int set_title(lua_State* state)
 /// -ret:   boolean
 /// Returns whether line number <span class="arg">line</span> uses only the
 /// default text color.
-static int is_line_default_color(lua_State* state)
+static int32 is_line_default_color(lua_State* state)
 {
     if (!g_printer)
         return 0;
@@ -306,10 +306,10 @@ static int is_line_default_color(lua_State* state)
     if (!GetConsoleScreenBufferInfo(h, &csbi))
         return 0;
 
-    line = min<int>(line, GetConsoleNumLines(csbi));
-    line = max<int>(line, 0);
+    line = min<int32>(line, GetConsoleNumLines(csbi));
+    line = max<int32>(line, 0);
 
-    int result = g_printer->is_line_default_color(line);
+    int32 result = g_printer->is_line_default_color(line);
 
     if (result < 0)
         return 0;
@@ -359,7 +359,7 @@ static int is_line_default_color(lua_State* state)
 /// <tr><td align="center">14</td><td align="center">224</td><td><div class="colorsample" style="background-color:#ffff00">&nbsp;</div> Bright Yellow</td></tr>
 /// <tr><td align="center">15</td><td align="center">240</td><td><div class="colorsample" style="background-color:#ffffff">&nbsp;</div> White</td></tr>
 /// </table>
-static int line_has_color(lua_State* state)
+static int32 line_has_color(lua_State* state)
 {
     if (!g_printer)
         return 0;
@@ -378,8 +378,8 @@ static int line_has_color(lua_State* state)
     if (!GetConsoleScreenBufferInfo(h, &csbi))
         return 0;
 
-    line = min<int>(line, GetConsoleNumLines(csbi));
-    line = max<int>(line, 0);
+    line = min<int32>(line, GetConsoleNumLines(csbi));
+    line = max<int32>(line, 0);
 
     BYTE mask = 0xff;
     if (mask_name && *mask_name)
@@ -389,7 +389,7 @@ static int line_has_color(lua_State* state)
         else if (strcmp(mask_name, "both") == 0)    mask = 0xff;
     }
 
-    int result;
+    int32 result;
 
     if (lua_isnumber(state, 2))
     {
@@ -399,9 +399,9 @@ static int line_has_color(lua_State* state)
     else
     {
         BYTE attrs[32];
-        int num_attrs = 0;
+        int32 num_attrs = 0;
 
-        for (int i = 1; num_attrs <= sizeof_array(attrs); i++)
+        for (int32 i = 1; num_attrs <= sizeof_array(attrs); i++)
         {
             lua_rawgeti(state, 2, i);
             if (lua_isnil(state, -1))
@@ -424,12 +424,12 @@ static int line_has_color(lua_State* state)
     return 1;
 }
 
-static int find_line(lua_State* state, int direction)
+static int32 find_line(lua_State* state, int32 direction)
 {
     if (!g_printer)
         return 0;
 
-    int arg = 1;
+    int32 arg = 1;
 
     // Starting line number is required.
     bool isnum;
@@ -444,11 +444,11 @@ static int find_line(lua_State* state, int direction)
 
     SHORT num_lines = GetConsoleNumLines(csbi);
 
-    starting_line = min<int>(starting_line, num_lines);
-    starting_line = max<int>(starting_line, 0);
+    starting_line = min<int32>(starting_line, num_lines);
+    starting_line = max<int32>(starting_line, 0);
     arg++;
 
-    int distance;
+    int32 distance;
     if (direction > 0)
         distance = num_lines - starting_line + 1;
     else
@@ -479,7 +479,7 @@ static int find_line(lua_State* state, int direction)
 
     // Attr? Attrs?
     BYTE attrs[32];
-    int num_attrs = 0;
+    int32 num_attrs = 0;
     if (lua_isnumber(state, arg))
     {
         attrs[0] = BYTE(lua_tointeger(state, arg));
@@ -488,7 +488,7 @@ static int find_line(lua_State* state, int direction)
     }
     else if (lua_istable(state, arg))
     {
-        for (int i = 1; num_attrs <= sizeof_array(attrs); i++)
+        for (int32 i = 1; num_attrs <= sizeof_array(attrs); i++)
         {
             lua_rawgeti(state, arg, i);
             if (lua_isnil(state, -1))
@@ -518,7 +518,7 @@ static int find_line(lua_State* state, int direction)
         }
     }
 
-    int line_found = g_printer->find_line(starting_line, distance, text, mode, attrs, num_attrs, mask);
+    int32 line_found = g_printer->find_line(starting_line, distance, text, mode, attrs, num_attrs, mask);
 
     lua_pushinteger(state, line_found + 1);
     return 1;
@@ -564,7 +564,7 @@ static int find_line(lua_State* state, int direction)
 ///
 /// For more information, see <a href="#findlineexample">this example</a> of
 /// using this in some <a href="#luakeybindings">luafunc: macros</a>.
-static int find_prev_line(lua_State* state)
+static int32 find_prev_line(lua_State* state)
 {
     return find_line(state, -1);
 }
@@ -585,7 +585,7 @@ static int find_prev_line(lua_State* state)
 /// This behaves the same as
 /// <a href="#console.findprevline">console.findprevline()</a> except that it
 /// searches in the opposite direction.
-static int find_next_line(lua_State* state)
+static int32 find_next_line(lua_State* state)
 {
     return find_line(state, +1);
 }
@@ -611,7 +611,7 @@ static int find_next_line(lua_State* state)
 /// position.
 ///
 /// <strong>Note:</strong> Mouse input is not supported.
-static int read_input(lua_State* state)
+static int32 read_input(lua_State* state)
 {
     bool select = true;
     str<> key;
@@ -624,7 +624,7 @@ static int read_input(lua_State* state)
     // Get one full input key sequence.
     while (true)
     {
-        int k = term.in->read();
+        int32 k = term.in->read();
         if (k == terminal_in::input_none)
         {
             if (!select)
@@ -682,7 +682,7 @@ static int read_input(lua_State* state)
 /// -show:  &nbsp;       -- Ctrl-C or ESC was pressed.
 /// -show:  &nbsp;   end
 /// -show:  end
-static int check_input(lua_State* state)
+static int32 check_input(lua_State* state)
 {
     const DWORD timeout = static_cast<DWORD>(optnumber(state, 1, 0) * 1000);
 
@@ -700,12 +700,12 @@ static int check_input(lua_State* state)
 
 //------------------------------------------------------------------------------
 // UNDOCUMENTED; internal use only.
-static int set_width(lua_State* state)
+static int32 set_width(lua_State* state)
 {
     static bool s_fudge_verified = false;
     static bool s_fudge_needed = false;
 
-    const int width = checkinteger(state, 1);
+    const int32 width = checkinteger(state, 1);
     if (width <= 0)
         return 0;
 
@@ -732,7 +732,7 @@ void console_lua_initialise(lua_state& lua)
 {
     struct {
         const char* name;
-        int         (*method)(lua_State*);
+        int32       (*method)(lua_State*);
     } methods[] = {
         { "scroll",                 &scroll },
         { "cellcount",              &get_cell_count },

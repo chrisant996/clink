@@ -68,15 +68,15 @@ static void lstop (lua_State *L, lua_Debug *ar) {
   luaL_error(L, "interrupted!");
 }
 
-static void laction (int i) {
+static void laction (int32 i) {
   signal(i, SIG_DFL); /* if another SIGINT happens before lstop,
                               terminate process (default action) */
   lua_sethook(globalL, lstop, LUA_MASKCALL | LUA_MASKRET | LUA_MASKCOUNT, 1);
 }
 
-static int docall (lua_State *L, int narg, int nres) {
-  int status;
-  int base = lua_gettop(L) - narg;  /* function index */
+static int32 docall (lua_State *L, int32 narg, int32 nres) {
+  int32 status;
+  int32 base = lua_gettop(L) - narg;  /* function index */
   lua_getglobal(L, "_error_handler");
   lua_insert(L, base);  /* put it under chunk and args */
   globalL = L;  /* to be available to 'laction' */
@@ -92,7 +92,7 @@ static int docall (lua_State *L, int narg, int nres) {
 #include "interpreter_lua_c.h"
 
 //------------------------------------------------------------------------------
-int interpreter(int argc, char** argv)
+int32 interpreter(int32 argc, char** argv)
 {
     static const char* help_usage = "Usage: interpreter [options] [script]\n";
 
@@ -119,20 +119,20 @@ int interpreter(int argc, char** argv)
     extern void puts_clink_header();
 
     struct run_arg {
-        int opt;
+        int32 opt;
         const char* arg;
     };
     std::vector<run_arg> run_args;
 
     // Parse arguments
-    int enable_debugging = 0;
+    int32 enable_debugging = 0;
     bool ignore_env = false;
     bool go_interactive = false;
     bool show_version = false;
     bool execute_string = false;
     const char* log_file = nullptr;
-    int i;
-    int ret = 1;
+    int32 i;
+    int32 ret = 1;
     while ((i = getopt_long(argc, argv, "+?hDEL:ive:l:", options, nullptr)) != -1)
     {
         if (i == '\0')
@@ -215,7 +215,7 @@ int interpreter(int argc, char** argv)
     extern void init_standalone_textlist(terminal& term);
     init_standalone_textlist(term);
 
-    int status = LUA_OK;
+    int32 status = LUA_OK;
     lua_state_flags flags = lua_state_flags::interpreter;
     if (ignore_env)
         flags |= lua_state_flags::no_env;
@@ -245,13 +245,13 @@ int interpreter(int argc, char** argv)
             status = dolibrary(L, r.arg);
     }
 
-    const int script = (argv[optind]) ? optind : 0;
+    const int32 script = (argv[optind]) ? optind : 0;
     if (status == LUA_OK)
     {
         if (script)
         {
             const char *fname;
-            int narg = getargs(L, argv, script); /* collect arguments */
+            int32 narg = getargs(L, argv, script); /* collect arguments */
             lua_setglobal(L, "arg");
             fname = argv[script];
             if (strcmp(fname, "-") == 0 && strcmp(argv[script - 1], "--") != 0)

@@ -10,30 +10,30 @@
 //------------------------------------------------------------------------------
 struct word
 {
-    unsigned int        offset : 16;
-    unsigned int        length : 16;
+    uint32              offset : 16;
+    uint32              length : 16;
     bool                command_word : 1;
     bool                is_alias : 1;
     bool                is_redir_arg : 1;
     bool                quoted;
-    unsigned char       delim;
+    uint8               delim;
 };
 
 //------------------------------------------------------------------------------
 class line_state
 {
 public:
-                        line_state(const char* line, unsigned int length, unsigned int cursor, unsigned int command_offset, const std::vector<word>& words);
+                        line_state(const char* line, uint32 length, uint32 cursor, uint32 command_offset, const std::vector<word>& words);
     const char*         get_line() const;
-    unsigned int        get_length() const;
-    unsigned int        get_cursor() const;
-    unsigned int        get_command_offset() const;
-    unsigned int        get_command_word_index() const;
-    unsigned int        get_end_word_offset() const;
+    uint32              get_length() const;
+    uint32              get_cursor() const;
+    uint32              get_command_offset() const;
+    uint32              get_command_word_index() const;
+    uint32              get_end_word_offset() const;
     const std::vector<word>& get_words() const;
-    unsigned int        get_word_count() const;
-    bool                get_word(unsigned int index, str_base& out) const;  // MAY STRIP quotes, except during getworkbreakinfo().
-    str_iter            get_word(unsigned int index) const;                 // Never strips quotes.
+    uint32              get_word_count() const;
+    bool                get_word(uint32 index, str_base& out) const;  // MAY STRIP quotes, except during getworkbreakinfo().
+    str_iter            get_word(uint32 index) const;                 // Never strips quotes.
     bool                get_end_word(str_base& out) const;                  // MAY STRIP quotes, except during getworkbreakinfo().
     str_iter            get_end_word() const;                               // Never strips quotes.
 
@@ -42,9 +42,9 @@ public:
 private:
     const std::vector<word>& m_words;
     const char*         m_line;
-    unsigned int        m_length;
-    unsigned int        m_cursor;
-    unsigned int        m_command_offset;
+    uint32              m_length;
+    uint32              m_cursor;
+    uint32              m_command_offset;
 };
 
 //------------------------------------------------------------------------------

@@ -44,7 +44,7 @@ line_states_lua::line_states_lua(const line_states& lines, word_classifications&
 void line_states_lua::push(lua_State* state)
 {
     // Package the lua objects into a table.
-    lua_createtable(state, int(m_lines.size()), 0);
+    lua_createtable(state, int32(m_lines.size()), 0);
     for (size_t ii = 0; ii < m_lines.size();)
     {
         lua_createtable(state, 0, 2);
@@ -60,7 +60,7 @@ void line_states_lua::push(lua_State* state)
             lua_rawset(state, -3);
         }
 
-        lua_rawseti(state, -2, int(++ii));
+        lua_rawseti(state, -2, int32(++ii));
     }
 }
 
@@ -68,7 +68,7 @@ void line_states_lua::push(lua_State* state)
 void line_states_lua::make_new(lua_State* state, const line_states& lines)
 {
     // Package the lua objects into a table.
-    lua_createtable(state, int(lines.size()), 0);
+    lua_createtable(state, int32(lines.size()), 0);
     for (size_t ii = 0; ii < lines.size();)
     {
         lua_createtable(state, 0, 2);
@@ -77,6 +77,6 @@ void line_states_lua::make_new(lua_State* state, const line_states& lines)
         line_state_lua::make_new(state, make_line_state_copy(lines[ii]));
         lua_rawset(state, -3);
 
-        lua_rawseti(state, -2, int(++ii));
+        lua_rawseti(state, -2, int32(++ii));
     }
 }

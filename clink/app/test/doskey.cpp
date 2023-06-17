@@ -19,7 +19,7 @@ static void use_enhanced(bool state)
 //------------------------------------------------------------------------------
 TEST_CASE("Doskey add/remove")
 {
-    for (int i = 0; i < 2; ++i)
+    for (int32 i = 0; i < 2; ++i)
     {
         use_enhanced(i != 0);
 
@@ -33,7 +33,7 @@ TEST_CASE("Doskey add/remove")
 //------------------------------------------------------------------------------
 TEST_CASE("Doskey expand : simple")
 {
-    for (int i = 0; i < 2; ++i)
+    for (int32 i = 0; i < 2; ++i)
     {
         use_enhanced(i != 0);
 
@@ -57,7 +57,7 @@ TEST_CASE("Doskey expand : simple")
 //------------------------------------------------------------------------------
 TEST_CASE("Doskey expand : leading")
 {
-    for (int i = 0; i < 2; ++i)
+    for (int32 i = 0; i < 2; ++i)
     {
         use_enhanced(i != 0);
 
@@ -77,7 +77,7 @@ TEST_CASE("Doskey expand : leading")
 //------------------------------------------------------------------------------
 TEST_CASE("Doskey expand : punctuation")
 {
-    for (int i = 0; i < 2; ++i)
+    for (int32 i = 0; i < 2; ++i)
     {
         const char* name = (i == 0) ? "alias" : "\"alias";
 
@@ -97,7 +97,7 @@ TEST_CASE("Doskey expand : punctuation")
 //------------------------------------------------------------------------------
 TEST_CASE("Doskey args $1-9")
 {
-    for (int i = 0; i < 2; ++i)
+    for (int32 i = 0; i < 2; ++i)
     {
         use_enhanced(i != 0);
 
@@ -130,7 +130,7 @@ TEST_CASE("Doskey args $1-9")
 //------------------------------------------------------------------------------
 TEST_CASE("Doskey args $*")
 {
-    for (int i = 0; i < 2; ++i)
+    for (int32 i = 0; i < 2; ++i)
     {
         use_enhanced(i != 0);
 
@@ -158,7 +158,7 @@ TEST_CASE("Doskey args $*")
 
         str<> line;
         line << "alias ";
-        for (int i = 0; i < 12; ++i)
+        for (int32 i = 0; i < 12; ++i)
             line << "0123456789abcdef";
 
         doskey_alias alias;
@@ -169,7 +169,7 @@ TEST_CASE("Doskey args $*")
 //------------------------------------------------------------------------------
 TEST_CASE("Doskey $? chars")
 {
-    for (int i = 0; i < 2; ++i)
+    for (int32 i = 0; i < 2; ++i)
     {
         use_enhanced(i != 0);
 
@@ -193,7 +193,7 @@ TEST_CASE("Doskey $? chars")
 //------------------------------------------------------------------------------
 TEST_CASE("Doskey multi-command")
 {
-    for (int i = 0; i < 2; ++i)
+    for (int32 i = 0; i < 2; ++i)
     {
         use_enhanced(i != 0);
 
@@ -299,7 +299,7 @@ TEST_CASE("Doskey pipe/redirect : new")
 //------------------------------------------------------------------------------
 TEST_CASE("Doskey cursor point")
 {
-    for (int i = 0; i < 2; ++i)
+    for (int32 i = 0; i < 2; ++i)
     {
         use_enhanced(i != 0);
 
@@ -307,7 +307,7 @@ TEST_CASE("Doskey cursor point")
         doskey doskey("shell");
 
         {
-            static const int c_points[] =
+            static const int32 c_points[] =
             {
                 0,  0,
                 2,  2,
@@ -328,11 +328,11 @@ TEST_CASE("Doskey cursor point")
             //                     11111111
             //           012345678901234567
             //          "qq hello world   "
-            for (int j = 0; j < sizeof_array(c_points); j += 2)
+            for (int32 j = 0; j < sizeof_array(c_points); j += 2)
             {
-                const int from = c_points[j + 0];
-                const int expected = c_points[j + 1];
-                int point = from;
+                const int32 from = c_points[j + 0];
+                const int32 expected = c_points[j + 1];
+                int32 point = from;
                 doskey_alias alias;
                 doskey.resolve(line.c_str(), alias, &point);
                 REQUIRE(point == expected, [&] () {
@@ -343,7 +343,7 @@ TEST_CASE("Doskey cursor point")
         }
 
         {
-            static const int c_points[] =
+            static const int32 c_points[] =
             {
                 0,  0,
                 3,  5,
@@ -367,11 +367,11 @@ TEST_CASE("Doskey cursor point")
             //                     111111111
             //           0123456789012345678
             //          "world blah abc xyz"
-            for (int j = 0; j < sizeof_array(c_points); j += 2)
+            for (int32 j = 0; j < sizeof_array(c_points); j += 2)
             {
-                const int from = c_points[j + 0];
-                const int expected = c_points[j + 1];
-                int point = from;
+                const int32 from = c_points[j + 0];
+                const int32 expected = c_points[j + 1];
+                int32 point = from;
                 doskey_alias alias;
                 doskey.resolve(line.c_str(), alias, &point);
                 REQUIRE(point == expected, [&] () {
@@ -393,11 +393,11 @@ TEST_CASE("Doskey cursor point : multiple commands")
 
     static const char prolog[] = "abc & ";
     static const char epilog[] = " & xyz";
-    const int prolog_len = int(strlen(prolog));
-    const int epilog_len = int(strlen(epilog));
+    const int32 prolog_len = int32(strlen(prolog));
+    const int32 epilog_len = int32(strlen(epilog));
 
     {
-        static const int c_points[] =
+        static const int32 c_points[] =
         {
             0,  0,
             2,  2,
@@ -417,11 +417,11 @@ TEST_CASE("Doskey cursor point : multiple commands")
         //                       11111111
         //             012345678901234567
         //            "qq hello world   "
-        for (int j = 0; j < sizeof_array(c_points); j += 2)
+        for (int32 j = 0; j < sizeof_array(c_points); j += 2)
         {
-            const int from = prolog_len + c_points[j + 0];
-            const int expected = prolog_len + c_points[j + 1];
-            int point = from;
+            const int32 from = prolog_len + c_points[j + 0];
+            const int32 expected = prolog_len + c_points[j + 1];
+            int32 point = from;
             doskey_alias alias;
             doskey.resolve(line.c_str(), alias, &point);
             REQUIRE(point == expected, [&] () {
@@ -429,24 +429,24 @@ TEST_CASE("Doskey cursor point : multiple commands")
             });
         }
 
-        for (int j = 0; j < prolog_len; j++)
+        for (int32 j = 0; j < prolog_len; j++)
         {
-            const int from = j;
-            const int expected = j;
-            int point = from;
+            const int32 from = j;
+            const int32 expected = j;
+            int32 point = from;
             doskey_alias alias;
             doskey.resolve(line.c_str(), alias, &point);
             REQUIRE(point == expected, [&] () {
                 printf("(prolog)\nFROM %d:\nexpected: %d\nactual:   %d", from, expected, point);
             });
         }
-        for (int j = 0; j < epilog_len; j++)
+        for (int32 j = 0; j < epilog_len; j++)
         {
-            const int from = line.length() - j;
-            int point = from;
+            const int32 from = line.length() - j;
+            int32 point = from;
             doskey_alias alias;
             doskey.resolve(line.c_str(), alias, &point);
-            const int expected = alias.UNITTEST_get_stream().length() - j;
+            const int32 expected = alias.UNITTEST_get_stream().length() - j;
             REQUIRE(point == expected, [&] () {
                 printf("(epilog)\nFROM %d:\nexpected: %d\nactual:   %d", from, expected, point);
             });
@@ -456,7 +456,7 @@ TEST_CASE("Doskey cursor point : multiple commands")
     }
 
     {
-        static const int c_points[] =
+        static const int32 c_points[] =
         {
             0,  0,
             3,  5,
@@ -479,11 +479,11 @@ TEST_CASE("Doskey cursor point : multiple commands")
         //                       111111111
         //             0123456789012345678
         //            "world blah abc xyz"
-        for (int j = 0; j < sizeof_array(c_points); j += 2)
+        for (int32 j = 0; j < sizeof_array(c_points); j += 2)
         {
-            const int from = prolog_len + c_points[j + 0];
-            const int expected = prolog_len + c_points[j + 1];
-            int point = from;
+            const int32 from = prolog_len + c_points[j + 0];
+            const int32 expected = prolog_len + c_points[j + 1];
+            int32 point = from;
             doskey_alias alias;
             doskey.resolve(line.c_str(), alias, &point);
             REQUIRE(point == expected, [&] () {
@@ -491,24 +491,24 @@ TEST_CASE("Doskey cursor point : multiple commands")
             });
         }
 
-        for (int j = 0; j < prolog_len; j++)
+        for (int32 j = 0; j < prolog_len; j++)
         {
-            const int from = j;
-            const int expected = j;
-            int point = from;
+            const int32 from = j;
+            const int32 expected = j;
+            int32 point = from;
             doskey_alias alias;
             doskey.resolve(line.c_str(), alias, &point);
             REQUIRE(point == expected, [&] () {
                 printf("(prolog)\nFROM %d:\nexpected: %d\nactual:   %d", from, expected, point);
             });
         }
-        for (int j = 0; j < epilog_len; j++)
+        for (int32 j = 0; j < epilog_len; j++)
         {
-            const int from = line.length() - j;
-            int point = from;
+            const int32 from = line.length() - j;
+            int32 point = from;
             doskey_alias alias;
             doskey.resolve(line.c_str(), alias, &point);
-            const int expected = alias.UNITTEST_get_stream().length() - j;
+            const int32 expected = alias.UNITTEST_get_stream().length() - j;
             REQUIRE(point == expected, [&] () {
                 printf("(epilog)\nFROM %d:\nexpected: %d\nactual:   %d", from, expected, point);
             });
@@ -524,12 +524,12 @@ TEST_CASE("Doskey cursor point : grouping parens")
     str<> line;
     doskey doskey("shell");
 
-    for (int i = 0; i < 2; ++i)
+    for (int32 i = 0; i < 2; ++i)
     {
         const bool enhanced = (i != 0);
         use_enhanced(enhanced);
 
-        static const int c_points[] =
+        static const int32 c_points[] =
         {
             0,  0,
             2,  2,
@@ -559,11 +559,11 @@ TEST_CASE("Doskey cursor point : grouping parens")
         //                111111111122222222
         //      0123456789012345678901234567
         //     "( qq hello ) & ( qq world )"
-        for (int j = 0; j < sizeof_array(c_points); j += 2)
+        for (int32 j = 0; j < sizeof_array(c_points); j += 2)
         {
-            const int from = c_points[j + 0];
-            const int expected = (enhanced || from <= 20) ? c_points[j + 1] : from - 3;
-            int point = from;
+            const int32 from = c_points[j + 0];
+            const int32 expected = (enhanced || from <= 20) ? c_points[j + 1] : from - 3;
+            int32 point = from;
             doskey_alias alias;
             doskey.resolve(line.c_str(), alias, &point);
             REQUIRE(point == expected, [&] () {

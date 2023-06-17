@@ -20,15 +20,15 @@
 /// In v1.4.10 and higher, the optional <span class="arg">level</span> number
 /// tells which stack level to log as the source of the log message (default is
 /// 1, the function calling <code>log.info</code>).
-int log_info(lua_State* state)
+int32 log_info(lua_State* state)
 {
-    const int level = optinteger(state, 2, 1);
+    const int32 level = optinteger(state, 2, 1);
 
     lua_Debug ar = {};
     lua_getstack(state, level, &ar);
     lua_getinfo(state, "Sl", &ar);
     const char* source = ar.source ? ar.source : "?";
-    int line = ar.currentline;
+    int32 line = ar.currentline;
 
     const char* message = checkstring(state, 1);
     if (message)
@@ -42,7 +42,7 @@ int log_info(lua_State* state)
 /// -ver:   1.4.15
 /// -ret:   string | nil
 /// Returns the file name of the current session's log file.
-int get_file(lua_State* state)
+int32 get_file(lua_State* state)
 {
     const char* name = file_logger::get_path();
     if (name)
@@ -57,7 +57,7 @@ void log_lua_initialise(lua_state& lua)
 {
     struct {
         const char* name;
-        int         (*method)(lua_State*);
+        int32       (*method)(lua_State*);
     } methods[] = {
         { "info",        &log_info },
         { "getfile",     &get_file },

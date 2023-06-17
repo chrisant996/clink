@@ -3,7 +3,7 @@ static void l_message (const char *pname, const char *msg) {
   luai_writestringerror("%s\n", msg);
 }
 
-static int report (lua_State *L, int status) {
+static int32 report (lua_State *L, int32 status) {
   if (status != LUA_OK && !lua_isnil(L, -1)) {
     const char *msg = lua_tostring(L, -1);
     if (msg == NULL) msg = "(error object is not a string)";
@@ -20,10 +20,10 @@ static void print_version (void) {
   luai_writeline();
 }
 
-static int getargs (lua_State *L, char **argv, int n) {
-  int narg;
-  int i;
-  int argc = 0;
+static int32 getargs (lua_State *L, char **argv, int32 n) {
+  int32 narg;
+  int32 i;
+  int32 argc = 0;
   while (argv[argc]) argc++;  /* count total number of arguments */
   narg = argc - (n + 1);  /* number of arguments to the script */
   luaL_checkstack(L, narg + 3, "too many arguments to script");
@@ -37,20 +37,20 @@ static int getargs (lua_State *L, char **argv, int n) {
   return narg;
 }
 
-static int dofile (lua_State *L, const char *name) {
-  int status = luaL_loadfile(L, name);
+static int32 dofile (lua_State *L, const char *name) {
+  int32 status = luaL_loadfile(L, name);
   if (status == LUA_OK) status = docall(L, 0, 0);
   return report(L, status);
 }
 
-static int dostring (lua_State *L, const char *s, const char *name) {
-  int status = luaL_loadbuffer(L, s, strlen(s), name);
+static int32 dostring (lua_State *L, const char *s, const char *name) {
+  int32 status = luaL_loadbuffer(L, s, strlen(s), name);
   if (status == LUA_OK) status = docall(L, 0, 0);
   return report(L, status);
 }
 
-static int dolibrary (lua_State *L, const char *name) {
-  int status;
+static int32 dolibrary (lua_State *L, const char *name) {
+  int32 status;
   lua_getglobal(L, "require");
   lua_pushstring(L, name);
   status = docall(L, 1, 1);  /* call 'require(name)' */
@@ -59,7 +59,7 @@ static int dolibrary (lua_State *L, const char *name) {
   return report(L, status);
 }
 
-static int handle_luainit (lua_State *L) {
+static int32 handle_luainit (lua_State *L) {
   const char *name = "=" LUA_INITVERSION;
   const char *init = getenv(name + 1);
   if (init == NULL) {
@@ -73,7 +73,7 @@ static int handle_luainit (lua_State *L) {
     return dostring(L, init, name);
 }
 
-static const char *get_prompt (lua_State *L, int firstline) {
+static const char *get_prompt (lua_State *L, int32 firstline) {
   const char *p;
   lua_getglobal(L, firstline ? "_PROMPT" : "_PROMPT2");
   p = lua_tostring(L, -1);
@@ -85,7 +85,7 @@ static const char *get_prompt (lua_State *L, int firstline) {
 #define EOFMARK		"<eof>"
 #define marklen		(sizeof(EOFMARK)/sizeof(char) - 1)
 
-static int incomplete (lua_State *L, int status) {
+static int32 incomplete (lua_State *L, int32 status) {
   if (status == LUA_ERRSYNTAX) {
     size_t lmsg;
     const char *msg = lua_tolstring(L, -1, &lmsg);
@@ -97,12 +97,12 @@ static int incomplete (lua_State *L, int status) {
   return 0;  /* else... */
 }
 
-static int pushline (lua_State *L, int firstline) {
+static int32 pushline (lua_State *L, int32 firstline) {
   char buffer[LUA_MAXINPUT];
   char *b = buffer;
   size_t l;
   const char *prmt = get_prompt(L, firstline);
-  int readstatus = lua_readline(L, b, prmt);
+  int32 readstatus = lua_readline(L, b, prmt);
   lua_pop(L, 1);  /* remove result from 'get_prompt' */
   if (readstatus == 0)
     return 0;  /* no input */
@@ -117,8 +117,8 @@ static int pushline (lua_State *L, int firstline) {
   return 1;
 }
 
-static int loadline (lua_State *L) {
-  int status;
+static int32 loadline (lua_State *L) {
+  int32 status;
   lua_settop(L, 0);
   if (!pushline(L, 1))
     return -1;  /* no input */
@@ -139,7 +139,7 @@ static int loadline (lua_State *L) {
 }
 
 static void dotty (lua_State *L) {
-  int status;
+  int32 status;
   const char *oldprogname = progname;
   progname = NULL;
   while ((status = loadline(L)) != -1) {

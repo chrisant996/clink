@@ -40,7 +40,7 @@ TEST_CASE("Directory match generation.")
     tester.get_editor()->set_generator(lua_generator);
 
     const char* dir_cmds[] = { "cd", "rd", "rmdir", "md", "mkdir", "pushd" };
-    for (int i = 0; i < sizeof_array(dir_cmds); ++i)
+    for (int32 i = 0; i < sizeof_array(dir_cmds); ++i)
     {
         const char* dir_cmd = dir_cmds[i];
 

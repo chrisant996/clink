@@ -11,18 +11,18 @@ extern void refresh_terminal_size();
 extern void display_readline();
 extern void set_history_expansions(history_expansion* list=nullptr);
 extern void resize_readline_display(const char* prompt, const line_buffer& buffer, const char* _prompt, const char* _rprompt);
-extern unsigned int get_readline_display_top_offset();
+extern uint32 get_readline_display_top_offset();
 
 //------------------------------------------------------------------------------
 #define BIT_PROMPT_PROBLEM          (0x01)
 #define BIT_PROMPT_MAYBE_PROBLEM    (0x02)
 struct prompt_problem_details
 {
-    int             type;
+    int32           type;
     str_moveable    code;
-    int             offset;
+    int32           offset;
 };
-extern int prompt_contains_problem_codes(const char* prompt, std::vector<prompt_problem_details>* out=nullptr);
+extern int32 prompt_contains_problem_codes(const char* prompt, std::vector<prompt_problem_details>* out=nullptr);
 
 //------------------------------------------------------------------------------
 #define FACE_INVALID        ((char)1)
@@ -58,10 +58,10 @@ public:
     void            flush();
 private:
     void            restore();
-    static void     fwrite_proc(FILE*, const char*, int);
+    static void     fwrite_proc(FILE*, const char*, int32);
     static void     fflush_proc(FILE*);
-    void (*m_saved_fwrite)(FILE*, const char*, int) = nullptr;
+    void (*m_saved_fwrite)(FILE*, const char*, int32) = nullptr;
     void (*m_saved_fflush)(FILE*) = nullptr;
     bool            m_active = false;
-    static int      s_nested;
+    static int32    s_nested;
 };

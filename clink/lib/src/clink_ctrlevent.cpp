@@ -11,17 +11,17 @@
 extern void interrupt_input();
 
 //------------------------------------------------------------------------------
-static volatile int clink_signal = 0;
-static int s_ctrlevent_install_count = 0;
+static volatile int32 clink_signal = 0;
+static int32 s_ctrlevent_install_count = 0;
 
 //------------------------------------------------------------------------------
-int clink_is_signaled()
+int32 clink_is_signaled()
 {
     return clink_signal;
 }
 
 //------------------------------------------------------------------------------
-void clink_set_signaled(int sig)
+void clink_set_signaled(int32 sig)
 {
     clink_signal = sig;
 }

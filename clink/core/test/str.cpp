@@ -41,7 +41,7 @@ TEST_CASE("Strings" NAME_SUFFIX)
     SECTION("Concatenation (growable)")
     {
         str<4> s;
-        int ones = ~0;
+        int32 ones = ~0;
 
         REQUIRE(s.copy(STR("123")) == true);
         REQUIRE(s.equals(STR("123")) == true);
@@ -78,7 +78,7 @@ TEST_CASE("Strings" NAME_SUFFIX)
     SECTION("Concatenation (fixed)")
     {
         str<4, false> s;
-        int ones = ~0;
+        int32 ones = ~0;
 
         REQUIRE(s.copy(STR("123")) == true);
         REQUIRE(s.equals(STR("123")) == true);

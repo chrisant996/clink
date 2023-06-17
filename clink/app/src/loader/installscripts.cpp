@@ -18,7 +18,7 @@ void get_installed_scripts(str_base& out);
 bool set_installed_scripts(char const* in);
 
 //------------------------------------------------------------------------------
-static bool change_value(bool install, char** argv=nullptr, int argc=0)
+static bool change_value(bool install, char** argv=nullptr, int32 argc=0)
 {
     if (!argc)
     {
@@ -27,7 +27,7 @@ static bool change_value(bool install, char** argv=nullptr, int argc=0)
     }
 
     str<> value;
-    for (int c = argc; c--;)
+    for (int32 c = argc; c--;)
     {
         if (value.length())
             value << " ";
@@ -149,7 +149,7 @@ void list_installed_scripts()
 }
 
 //------------------------------------------------------------------------------
-int installscripts(int argc, char** argv)
+int32 installscripts(int32 argc, char** argv)
 {
     // Parse command line arguments.
     struct option options[] = {
@@ -158,7 +158,7 @@ int installscripts(int argc, char** argv)
         {}
     };
 
-    int i;
+    int32 i;
     while ((i = getopt_long(argc, argv, "+?hl", options, nullptr)) != -1)
     {
         switch (i)
@@ -178,7 +178,7 @@ int installscripts(int argc, char** argv)
 }
 
 //------------------------------------------------------------------------------
-int uninstallscripts(int argc, char** argv)
+int32 uninstallscripts(int32 argc, char** argv)
 {
     // Parse command line arguments.
     struct option options[] = {
@@ -189,7 +189,7 @@ int uninstallscripts(int argc, char** argv)
     };
 
     bool delete_all = false;
-    int i;
+    int32 i;
     while ((i = getopt_long(argc, argv, "+?ahl", options, nullptr)) != -1)
     {
         switch (i)

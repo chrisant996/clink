@@ -58,11 +58,11 @@ typedef struct
 {
    PROCESS_INFORMATION  pi;
    HANDLE               job;
-   int                  timeout;
+   int32                timeout;
 } exec_state_t;
 
 //------------------------------------------------------------------------------
-int create_pipe(int flags, pipe_t* pipe)
+int32 create_pipe(int32 flags, pipe_t* pipe)
 {
     BOOL ok;
     SECURITY_ATTRIBUTES sa;
@@ -172,12 +172,12 @@ static char* next_line(char* str)
 }
 
 //------------------------------------------------------------------------------
-int lua_execute(lua_State* state)
+int32 lua_execute(lua_State* state)
 {
     static const DWORD process_flags = NORMAL_PRIORITY_CLASS|CREATE_NO_WINDOW;
 
     const char* cmd;
-    int arg_count;
+    int32 arg_count;
     BOOL ok;
     STARTUPINFO si = { sizeof(si) };
     pipe_t pipe_stdout;
@@ -199,7 +199,7 @@ int lua_execute(lua_State* state)
     // Get the execution timeout.
     if (arg_count > 1 && lua_isnumber(state, 2))
     {
-        exec_state.timeout = (int)lua_tointeger(state, 2);
+        exec_state.timeout = (int32)lua_tointeger(state, 2);
     }
     else
     {
@@ -270,12 +270,12 @@ int lua_execute(lua_State* state)
 
     // Read process' stdout, adding completed lines to Lua.
     {
-        static const unsigned int RESERVE = 4 * 1024 * 1024;
+        static const uint32 RESERVE = 4 * 1024 * 1024;
 
         void* buffer;
         char* write;
-        int remaining;
-        int page_size;
+        int32 remaining;
+        int32 page_size;
         SYSTEM_INFO sys_info;
 
         GetSystemInfo(&sys_info);
@@ -314,7 +314,7 @@ int lua_execute(lua_State* state)
 
         // Extract lines from the process's output.
         {
-            int line_count = 0;
+            int32 line_count = 0;
             char* line = (char*)buffer;
             char* next = nullptr;
 

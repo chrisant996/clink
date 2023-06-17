@@ -58,7 +58,7 @@ static void list_options(lua_state& lua, const char* key)
             const char* options = ((const setting_enum*)setting)->get_options();
             str_tokeniser tokens(options, ",");
             const char* start;
-            int length;
+            int32 length;
             while (tokens.next(start, length))
                 printf("%.*s\n", length, start);
         }
@@ -89,11 +89,11 @@ static bool print_keys(bool describe, const char* prefix=nullptr)
 {
     size_t prefix_len = prefix ? strlen(prefix) : 0;
 
-    int longest = 0;
+    int32 longest = 0;
     for (auto iter = settings::first(); auto* next = iter.next();)
     {
         if (!prefix || !_strnicmp(next->get_name(), prefix, prefix_len))
-            longest = max(longest, int(strlen(next->get_name())));
+            longest = max(longest, int32(strlen(next->get_name())));
     }
 
     str<> value;
@@ -213,13 +213,13 @@ static bool set_value_impl(const char* key, const char* value)
 }
 
 //------------------------------------------------------------------------------
-static bool set_value(const char* key, char** argv=nullptr, int argc=0)
+static bool set_value(const char* key, char** argv=nullptr, int32 argc=0)
 {
     if (!argc)
         return set_value_impl(key, nullptr);
 
     str<> value;
-    for (int c = argc; c--;)
+    for (int32 c = argc; c--;)
     {
         if (value.length())
             value << " ";
@@ -257,7 +257,7 @@ static void print_help()
 }
 
 //------------------------------------------------------------------------------
-int set(int argc, char** argv)
+int32 set(int32 argc, char** argv)
 {
     // Parse command line arguments.
     struct option options[] = {
@@ -269,7 +269,7 @@ int set(int argc, char** argv)
 
     bool complete = false;
     bool describe = false;
-    int i;
+    int32 i;
     while ((i = getopt_long(argc, argv, "+?hld", options, nullptr)) != -1)
     {
         switch (i)

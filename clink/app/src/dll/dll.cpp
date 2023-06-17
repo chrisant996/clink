@@ -63,7 +63,7 @@ static void success()
     app->get_settings_path(settings_file);
     app->get_default_settings_file(default_settings_file);
     settings::load(settings_file.c_str(), default_settings_file.c_str());
-    const int logo = s_clink_logo.get();
+    const int32 logo = s_clink_logo.get();
     if (!logo)
         return;
 
@@ -268,7 +268,7 @@ INT_PTR WINAPI initialise_clink(const app_context::desc& app_desc)
         { "cmd.exe", []() -> host* { return new host_cmd(); } },
     };
 
-    for (int i = 0; i < sizeof_array(hosts); ++i)
+    for (int32 i = 0; i < sizeof_array(hosts); ++i)
         if (stricmp(host_name.c_str(), hosts[i].name) == 0)
             if (g_host = (hosts[i].creator)())
                 break;
@@ -282,7 +282,7 @@ INT_PTR WINAPI initialise_clink(const app_context::desc& app_desc)
 
     // Validate and initialise.  Negative means an ignorable error that should
     // not be reported.
-    int validate = g_host->validate();
+    int32 validate = g_host->validate();
     if (validate <= 0)
         return validate;
 

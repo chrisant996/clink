@@ -4,11 +4,11 @@
 #include "pch.h"
 #include "str_compare.h"
 
-threadlocal int str_compare_scope::ts_mode = str_compare_scope::exact;
+threadlocal int32 str_compare_scope::ts_mode = str_compare_scope::exact;
 threadlocal bool str_compare_scope::ts_fuzzy_accents = false;
 
 //------------------------------------------------------------------------------
-str_compare_scope::str_compare_scope(int mode, bool fuzzy_accents)
+str_compare_scope::str_compare_scope(int32 mode, bool fuzzy_accents)
 {
     m_prev_mode = ts_mode;
     m_prev_fuzzy_accents = ts_fuzzy_accents;
@@ -28,7 +28,7 @@ str_compare_scope::~str_compare_scope()
 }
 
 //------------------------------------------------------------------------------
-int str_compare_scope::current()
+int32 str_compare_scope::current()
 {
     return ts_mode;
 }
@@ -40,7 +40,7 @@ bool str_compare_scope::current_fuzzy_accents()
 }
 
 //------------------------------------------------------------------------------
-int normalize_accent(int c)
+int32 normalize_accent(int32 c)
 {
     // Dipthongs are not supported in fuzzy accent matching.
 #if 0
@@ -372,18 +372,18 @@ int normalize_accent(int c)
     if (!verified_order)
     {
         verified_order = true;
-        for (int i = 1; i < sizeof_array(fuzzy_accent_map); i++)
+        for (int32 i = 1; i < sizeof_array(fuzzy_accent_map); i++)
             assert(fuzzy_accent_map[i-1].accent < fuzzy_accent_map[i].accent);
     }
 #endif
 
-    int lo = 0;
-    int hi = sizeof_array(fuzzy_accent_map);
+    int32 lo = 0;
+    int32 hi = sizeof_array(fuzzy_accent_map);
 
     while (lo < hi)
     {
-        int mid = (lo + hi) / 2;
-        int a = fuzzy_accent_map[mid].accent;
+        int32 mid = (lo + hi) / 2;
+        int32 a = fuzzy_accent_map[mid].accent;
 
         if (c == a)
             return fuzzy_accent_map[mid].normal;

@@ -33,7 +33,7 @@ extern "C" {
 #include <readline/rldefs.h>
 #include <readline/rlprivate.h>
 #include <readline/history.h>
-extern void rl_replace_from_history(HIST_ENTRY *entry, int flags);
+extern void rl_replace_from_history(HIST_ENTRY *entry, int32 flags);
 }
 
 #include <list>
@@ -87,12 +87,12 @@ extern editor_module::result* g_result;
 extern const char* get_found_ansi_handler();
 extern bool get_is_auto_ansi_handler();
 extern void host_cmd_enqueue_lines(std::list<str_moveable>& lines, bool hide_prompt, bool show_line);
-extern void host_get_app_context(int& id, host_context& context);
-extern "C" int show_cursor(int visible);
-extern void set_suggestion(const char* line, unsigned int endword_offset, const char* suggestion, unsigned int offset);
+extern void host_get_app_context(int32& id, host_context& context);
+extern "C" int32 show_cursor(int32 visible);
+extern void set_suggestion(const char* line, uint32 endword_offset, const char* suggestion, uint32 offset);
 extern "C" void host_clear_suggestion();
 extern "C" void reset_cached_font();
-extern "C" int test_ambiguous_width_char(char32_t ucs);
+extern "C" int32 test_ambiguous_width_char(char32_t ucs);
 
 // This is implemented in the app layer, which makes it inaccessible to lower
 // layers.  But Readline and History are siblings, so history_db and rl_module
@@ -108,7 +108,7 @@ void set_ctrl_wakeup_mask(UINT mask)
 }
 
 //------------------------------------------------------------------------------
-template<class T> void strip_wakeup_chars_worker(T* chars, unsigned int max_chars)
+template<class T> void strip_wakeup_chars_worker(T* chars, uint32 max_chars)
 {
     if (!max_chars)
         return;
@@ -137,7 +137,7 @@ template<class T> void strip_wakeup_chars_worker(T* chars, unsigned int max_char
 }
 
 //------------------------------------------------------------------------------
-void strip_wakeup_chars(wchar_t* chars, unsigned int max_chars)
+void strip_wakeup_chars(wchar_t* chars, uint32 max_chars)
 {
     strip_wakeup_chars_worker(chars, max_chars);
 }
@@ -145,15 +145,15 @@ void strip_wakeup_chars(wchar_t* chars, unsigned int max_chars)
 //------------------------------------------------------------------------------
 void strip_wakeup_chars(str_base& out)
 {
-    unsigned int max_chars = out.length();
+    uint32 max_chars = out.length();
     strip_wakeup_chars_worker(out.data(), max_chars);
 }
 
 //------------------------------------------------------------------------------
-static void strip_crlf(char* line, std::list<str_moveable>& overflow, int setting, bool* _done)
+static void strip_crlf(char* line, std::list<str_moveable>& overflow, int32 setting, bool* _done)
 {
     bool has_overflow = false;
-    int prev_was_crlf = 0;
+    int32 prev_was_crlf = 0;
     char* write = line;
     const char* read = line;
     bool done = false;
@@ -227,7 +227,7 @@ static void strip_crlf(char* line, std::list<str_moveable>& overflow, int settin
             }
             else
             {
-                unsigned int len = (unsigned int)(end - start);
+                uint32 len = (uint32)(end - start);
                 overflow.emplace_back();
                 str_moveable& back = overflow.back();
                 back.reserve(len);
@@ -243,14 +243,14 @@ static void strip_crlf(char* line, std::list<str_moveable>& overflow, int settin
 }
 
 //------------------------------------------------------------------------------
-static void get_word_bounds(const line_buffer& buffer, int* left, int* right)
+static void get_word_bounds(const line_buffer& buffer, int32* left, int32* right)
 {
     const char* str = buffer.get_buffer();
-    unsigned int cursor = buffer.get_cursor();
+    uint32 cursor = buffer.get_cursor();
 
     // Determine the word delimiter depending on whether the word's quoted.
-    int delim = 0;
-    for (unsigned int i = 0; i < cursor; ++i)
+    int32 delim = 0;
+    for (uint32 i = 0; i < cursor; ++i)
     {
         char c = str[i];
         delim += (c == '\"');
@@ -259,7 +259,7 @@ static void get_word_bounds(const line_buffer& buffer, int* left, int* right)
     // Search outwards from the cursor for the delimiter.
     delim = (delim & 1) ? '\"' : ' ';
     *left = 0;
-    for (int i = cursor - 1; i >= 0; --i)
+    for (int32 i = cursor - 1; i >= 0; --i)
     {
         char c = str[i];
         if (c == delim)
@@ -271,22 +271,22 @@ static void get_word_bounds(const line_buffer& buffer, int* left, int* right)
 
     const char* post = strchr(str + cursor, delim);
     if (post != nullptr)
-        *right = int(post - str);
+        *right = int32(post - str);
     else
-        *right = int(strlen(str));
+        *right = int32(strlen(str));
 }
 
 
 
 //------------------------------------------------------------------------------
-int host_add_history(int, const char* line)
+int32 host_add_history(int32, const char* line)
 {
     history_database* h = history_database::get();
     return h && h->add(line);
 }
 
 //------------------------------------------------------------------------------
-int host_remove_history(int rl_history_index, const char* line)
+int32 host_remove_history(int32 rl_history_index, const char* line)
 {
     history_database* h = history_database::get();
     return h && h->remove(rl_history_index, line);
@@ -295,7 +295,7 @@ int host_remove_history(int rl_history_index, const char* line)
 
 
 //------------------------------------------------------------------------------
-static int s_cua_anchor = -1;
+static int32 s_cua_anchor = -1;
 
 //------------------------------------------------------------------------------
 class cua_selection_manager
@@ -318,8 +318,8 @@ public:
     }
 
 private:
-    int m_anchor;
-    int m_point;
+    int32 m_anchor;
+    int32 m_point;
 };
 
 //------------------------------------------------------------------------------
@@ -341,14 +341,14 @@ static void cua_delete()
 
 
 //------------------------------------------------------------------------------
-int clink_reload(int count, int invoking_key)
+int32 clink_reload(int32 count, int32 invoking_key)
 {
     assert(g_result);
     return force_reload_scripts();
 }
 
 //------------------------------------------------------------------------------
-int clink_reset_line(int count, int invoking_key)
+int32 clink_reset_line(int32 count, int32 invoking_key)
 {
     using_history();
     g_rl_buffer->remove(0, rl_end);
@@ -358,7 +358,7 @@ int clink_reset_line(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
-int clink_exit(int count, int invoking_key)
+int32 clink_exit(int32 count, int32 invoking_key)
 {
     clink_reset_line(1, 0);
     g_rl_buffer->insert("exit 0");
@@ -368,7 +368,7 @@ int clink_exit(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
-int clink_ctrl_c(int count, int invoking_key)
+int32 clink_ctrl_c(int32 count, int32 invoking_key)
 {
     if (s_cua_anchor >= 0)
     {
@@ -378,14 +378,14 @@ int clink_ctrl_c(int count, int invoking_key)
         return 0;
     }
 
-    extern void clink_sighandler(int sig);
+    extern void clink_sighandler(int32 sig);
     clink_sighandler(SIGINT);
 
     return 0;
 }
 
 //------------------------------------------------------------------------------
-int clink_paste(int count, int invoking_key)
+int32 clink_paste(int32 count, int32 invoking_key)
 {
     str<1024> utf8;
     if (!os::get_clipboard_text(utf8))
@@ -418,7 +418,7 @@ int clink_paste(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
-int clink_copy_line(int count, int invoking_key)
+int32 clink_copy_line(int32 count, int32 invoking_key)
 {
     os::set_clipboard_text(g_rl_buffer->get_buffer(), g_rl_buffer->get_length());
 
@@ -426,7 +426,7 @@ int clink_copy_line(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
-int clink_copy_word(int count, int invoking_key)
+int32 clink_copy_word(int32 count, int32 invoking_key)
 {
     if (count < 0 || !g_rl_buffer || !g_word_collector)
     {
@@ -443,7 +443,7 @@ Nope:
 
     if (!rl_explicit_arg)
     {
-        unsigned int line_cursor = g_rl_buffer->get_cursor();
+        uint32 line_cursor = g_rl_buffer->get_cursor();
         for (auto const& word : words)
         {
             if (line_cursor >= word.offset &&
@@ -470,10 +470,10 @@ Nope:
 }
 
 //------------------------------------------------------------------------------
-int clink_copy_cwd(int count, int invoking_key)
+int32 clink_copy_cwd(int32 count, int32 invoking_key)
 {
     wstr<270> cwd;
-    unsigned int length = GetCurrentDirectoryW(cwd.size(), cwd.data());
+    uint32 length = GetCurrentDirectoryW(cwd.size(), cwd.data());
     if (length < cwd.size())
     {
         str<> tmp;
@@ -487,10 +487,10 @@ int clink_copy_cwd(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
-int clink_expand_env_var(int count, int invoking_key)
+int32 clink_expand_env_var(int32 count, int32 invoking_key)
 {
     // Extract the word under the cursor.
-    int word_left, word_right;
+    int32 word_left, word_right;
     get_word_bounds(*g_rl_buffer, &word_left, &word_right);
 
     str<1024> in;
@@ -511,12 +511,12 @@ int clink_expand_env_var(int count, int invoking_key)
 
 //------------------------------------------------------------------------------
 enum { el_alias = 1, el_envvar = 2, el_history = 4 };
-static int do_expand_line(int flags)
+static int32 do_expand_line(int32 flags)
 {
     bool expanded = false;
     str<> in;
     str<> out;
-    int point = rl_point;
+    int32 point = rl_point;
 
     in = g_rl_buffer->get_buffer();
 
@@ -572,34 +572,34 @@ static int do_expand_line(int flags)
 
 //------------------------------------------------------------------------------
 // Expands a doskey alias (but only the first line, if $T is present).
-int clink_expand_doskey_alias(int count, int invoking_key)
+int32 clink_expand_doskey_alias(int32 count, int32 invoking_key)
 {
     return do_expand_line(el_alias);
 }
 
 //------------------------------------------------------------------------------
 // Performs history expansion.
-int clink_expand_history(int count, int invoking_key)
+int32 clink_expand_history(int32 count, int32 invoking_key)
 {
     return do_expand_line(el_history);
 }
 
 //------------------------------------------------------------------------------
 // Performs history and doskey alias expansion.
-int clink_expand_history_and_alias(int count, int invoking_key)
+int32 clink_expand_history_and_alias(int32 count, int32 invoking_key)
 {
     return do_expand_line(el_history|el_alias);
 }
 
 //------------------------------------------------------------------------------
 // Performs history, doskey alias, and environment variable expansion.
-int clink_expand_line(int count, int invoking_key)
+int32 clink_expand_line(int32 count, int32 invoking_key)
 {
     return do_expand_line(el_history|el_alias|el_envvar);
 }
 
 //------------------------------------------------------------------------------
-int clink_up_directory(int count, int invoking_key)
+int32 clink_up_directory(int32 count, int32 invoking_key)
 {
     g_rl_buffer->begin_undo_group();
     g_rl_buffer->remove(0, ~0u);
@@ -611,11 +611,11 @@ int clink_up_directory(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
-int clink_insert_dot_dot(int count, int invoking_key)
+int32 clink_insert_dot_dot(int32 count, int32 invoking_key)
 {
     str<> str;
 
-    if (unsigned int cursor = g_rl_buffer->get_cursor())
+    if (uint32 cursor = g_rl_buffer->get_cursor())
     {
         char last_char = g_rl_buffer->get_buffer()[cursor - 1];
         if (last_char != ' ' && !path::is_separator(last_char))
@@ -630,13 +630,13 @@ int clink_insert_dot_dot(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
-int clink_shift_space(int count, int invoking_key)
+int32 clink_shift_space(int32 count, int32 invoking_key)
 {
     return _rl_dispatch(' ', _rl_keymap);
 }
 
 //------------------------------------------------------------------------------
-int clink_magic_suggest_space(int count, int invoking_key)
+int32 clink_magic_suggest_space(int32 count, int32 invoking_key)
 {
     insert_suggestion(suggestion_action::insert_next_full_word);
     g_rl_buffer->insert(" ");
@@ -646,42 +646,42 @@ int clink_magic_suggest_space(int count, int invoking_key)
 
 
 //------------------------------------------------------------------------------
-int clink_scroll_line_up(int count, int invoking_key)
+int32 clink_scroll_line_up(int32 count, int32 invoking_key)
 {
     ScrollConsoleRelative(GetStdHandle(STD_OUTPUT_HANDLE), -1, SCR_BYLINE);
     return 0;
 }
 
 //------------------------------------------------------------------------------
-int clink_scroll_line_down(int count, int invoking_key)
+int32 clink_scroll_line_down(int32 count, int32 invoking_key)
 {
     ScrollConsoleRelative(GetStdHandle(STD_OUTPUT_HANDLE), 1, SCR_BYLINE);
     return 0;
 }
 
 //------------------------------------------------------------------------------
-int clink_scroll_page_up(int count, int invoking_key)
+int32 clink_scroll_page_up(int32 count, int32 invoking_key)
 {
     ScrollConsoleRelative(GetStdHandle(STD_OUTPUT_HANDLE), -1, SCR_BYPAGE);
     return 0;
 }
 
 //------------------------------------------------------------------------------
-int clink_scroll_page_down(int count, int invoking_key)
+int32 clink_scroll_page_down(int32 count, int32 invoking_key)
 {
     ScrollConsoleRelative(GetStdHandle(STD_OUTPUT_HANDLE), 1, SCR_BYPAGE);
     return 0;
 }
 
 //------------------------------------------------------------------------------
-int clink_scroll_top(int count, int invoking_key)
+int32 clink_scroll_top(int32 count, int32 invoking_key)
 {
     ScrollConsoleRelative(GetStdHandle(STD_OUTPUT_HANDLE), -1, SCR_TOEND);
     return 0;
 }
 
 //------------------------------------------------------------------------------
-int clink_scroll_bottom(int count, int invoking_key)
+int32 clink_scroll_bottom(int32 count, int32 invoking_key)
 {
     ScrollConsoleRelative(GetStdHandle(STD_OUTPUT_HANDLE), 1, SCR_TOEND);
     return 0;
@@ -690,7 +690,7 @@ int clink_scroll_bottom(int count, int invoking_key)
 
 
 //------------------------------------------------------------------------------
-int clink_find_conhost(int count, int invoking_key)
+int32 clink_find_conhost(int32 count, int32 invoking_key)
 {
     HWND hwndConsole = GetConsoleWindow();
     if (!hwndConsole)
@@ -705,7 +705,7 @@ int clink_find_conhost(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
-int clink_mark_conhost(int count, int invoking_key)
+int32 clink_mark_conhost(int32 count, int32 invoking_key)
 {
     HWND hwndConsole = GetConsoleWindow();
     if (!hwndConsole)
@@ -726,7 +726,7 @@ int clink_mark_conhost(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
-int clink_selectall_conhost(int count, int invoking_key)
+int32 clink_selectall_conhost(int32 count, int32 invoking_key)
 {
     bool has_begin = (s_cua_anchor == 0 || rl_point == 0);
     bool has_end = (s_cua_anchor == rl_end || rl_point == rl_end);
@@ -755,11 +755,11 @@ int clink_selectall_conhost(int count, int invoking_key)
 
 
 //------------------------------------------------------------------------------
-extern const char** host_copy_dir_history(int* total);
-int clink_popup_directories(int count, int invoking_key)
+extern const char** host_copy_dir_history(int32* total);
+int32 clink_popup_directories(int32 count, int32 invoking_key)
 {
     // Copy the directory list (just a shallow copy of the dir pointers).
-    int total = 0;
+    int32 total = 0;
     const char** history = host_copy_dir_history(&total);
     if (!history || !total)
     {
@@ -829,7 +829,7 @@ int clink_popup_directories(int count, int invoking_key)
 extern bool host_call_lua_rl_global_function(const char* func_name);
 
 //------------------------------------------------------------------------------
-int clink_complete_numbers(int count, int invoking_key)
+int32 clink_complete_numbers(int32 count, int32 invoking_key)
 {
     if (!host_call_lua_rl_global_function("clink._complete_numbers"))
         rl_ding();
@@ -837,7 +837,7 @@ int clink_complete_numbers(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
-int clink_menu_complete_numbers(int count, int invoking_key)
+int32 clink_menu_complete_numbers(int32 count, int32 invoking_key)
 {
     if (!host_call_lua_rl_global_function("clink._menu_complete_numbers"))
         rl_ding();
@@ -845,7 +845,7 @@ int clink_menu_complete_numbers(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
-int clink_menu_complete_numbers_backward(int count, int invoking_key)
+int32 clink_menu_complete_numbers_backward(int32 count, int32 invoking_key)
 {
     if (!host_call_lua_rl_global_function("clink._menu_complete_numbers_backward"))
         rl_ding();
@@ -853,7 +853,7 @@ int clink_menu_complete_numbers_backward(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
-int clink_old_menu_complete_numbers(int count, int invoking_key)
+int32 clink_old_menu_complete_numbers(int32 count, int32 invoking_key)
 {
     if (!host_call_lua_rl_global_function("clink._old_menu_complete_numbers"))
         rl_ding();
@@ -861,7 +861,7 @@ int clink_old_menu_complete_numbers(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
-int clink_old_menu_complete_numbers_backward(int count, int invoking_key)
+int32 clink_old_menu_complete_numbers_backward(int32 count, int32 invoking_key)
 {
     if (!host_call_lua_rl_global_function("clink._old_menu_complete_numbers_backward"))
         rl_ding();
@@ -869,7 +869,7 @@ int clink_old_menu_complete_numbers_backward(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
-int clink_popup_complete_numbers(int count, int invoking_key)
+int32 clink_popup_complete_numbers(int32 count, int32 invoking_key)
 {
     if (!host_call_lua_rl_global_function("clink._popup_complete_numbers"))
         rl_ding();
@@ -877,7 +877,7 @@ int clink_popup_complete_numbers(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
-int clink_popup_show_help(int count, int invoking_key)
+int32 clink_popup_show_help(int32 count, int32 invoking_key)
 {
     if (!host_call_lua_rl_global_function("clink._popup_show_help"))
         rl_ding();
@@ -887,7 +887,7 @@ int clink_popup_show_help(int count, int invoking_key)
 
 
 //------------------------------------------------------------------------------
-int clink_select_complete(int count, int invoking_key)
+int32 clink_select_complete(int32 count, int32 invoking_key)
 {
     if (RL_ISSTATE(RL_STATE_MACRODEF) != 0)
     {
@@ -914,10 +914,10 @@ bool cua_clear_selection()
 }
 
 //------------------------------------------------------------------------------
-bool cua_set_selection(int anchor, int point)
+bool cua_set_selection(int32 anchor, int32 point)
 {
-    const int new_anchor = min<int>(rl_end, anchor);
-    const int new_point = max<int>(0, min<int>(rl_end, point));
+    const int32 new_anchor = min<int32>(rl_end, anchor);
+    const int32 new_point = max<int32>(0, min<int32>(rl_end, point));
     if (new_anchor == s_cua_anchor && new_point == rl_point)
         return false;
     s_cua_anchor = new_anchor;
@@ -926,13 +926,13 @@ bool cua_set_selection(int anchor, int point)
 }
 
 //------------------------------------------------------------------------------
-int cua_get_anchor()
+int32 cua_get_anchor()
 {
     return s_cua_anchor;
 }
 
 //------------------------------------------------------------------------------
-bool cua_point_in_selection(int in)
+bool cua_point_in_selection(int32 in)
 {
     if (s_cua_anchor < 0)
         return false;
@@ -943,7 +943,7 @@ bool cua_point_in_selection(int in)
 }
 
 //------------------------------------------------------------------------------
-int cua_selection_event_hook(int event)
+int32 cua_selection_event_hook(int32 event)
 {
     if (!g_rl_buffer)
         return 0;
@@ -1018,28 +1018,28 @@ void cua_after_command(bool force_clear)
 }
 
 //------------------------------------------------------------------------------
-int cua_previous_screen_line(int count, int invoking_key)
+int32 cua_previous_screen_line(int32 count, int32 invoking_key)
 {
     cua_selection_manager mgr;
     return rl_previous_screen_line(count, invoking_key);
 }
 
 //------------------------------------------------------------------------------
-int cua_next_screen_line(int count, int invoking_key)
+int32 cua_next_screen_line(int32 count, int32 invoking_key)
 {
     cua_selection_manager mgr;
     return rl_next_screen_line(count, invoking_key);
 }
 
 //------------------------------------------------------------------------------
-int cua_backward_char(int count, int invoking_key)
+int32 cua_backward_char(int32 count, int32 invoking_key)
 {
     cua_selection_manager mgr;
     return rl_backward_char(count, invoking_key);
 }
 
 //------------------------------------------------------------------------------
-int cua_forward_char(int count, int invoking_key)
+int32 cua_forward_char(int32 count, int32 invoking_key)
 {
     if (count != 0)
     {
@@ -1058,39 +1058,39 @@ another_word:
 }
 
 //------------------------------------------------------------------------------
-int cua_backward_word(int count, int invoking_key)
+int32 cua_backward_word(int32 count, int32 invoking_key)
 {
     cua_selection_manager mgr;
     return rl_backward_word(count, invoking_key);
 }
 
 //------------------------------------------------------------------------------
-int cua_forward_word(int count, int invoking_key)
+int32 cua_forward_word(int32 count, int32 invoking_key)
 {
     cua_selection_manager mgr;
     return rl_forward_word(count, invoking_key);
 }
 
 //------------------------------------------------------------------------------
-int cua_select_word(int count, int invoking_key)
+int32 cua_select_word(int32 count, int32 invoking_key)
 {
     cua_selection_manager mgr;
 
-    const int orig_point = rl_point;
+    const int32 orig_point = rl_point;
 
     // Look forward for a word.
     rl_forward_word(1, 0);
-    int end = rl_point;
+    int32 end = rl_point;
     rl_backward_word(1, 0);
-    const int high_mid = rl_point;
+    const int32 high_mid = rl_point;
 
     rl_point = orig_point;
 
     // Look backward for a word.
     rl_backward_word(1, 0);
-    int begin = rl_point;
+    int32 begin = rl_point;
     rl_forward_word(1, 0);
-    const int low_mid = rl_point;
+    const int32 low_mid = rl_point;
 
     if (high_mid <= orig_point)
     {
@@ -1115,21 +1115,21 @@ int cua_select_word(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
-int cua_beg_of_line(int count, int invoking_key)
+int32 cua_beg_of_line(int32 count, int32 invoking_key)
 {
     cua_selection_manager mgr;
     return rl_beg_of_line(count, invoking_key);
 }
 
 //------------------------------------------------------------------------------
-int cua_end_of_line(int count, int invoking_key)
+int32 cua_end_of_line(int32 count, int32 invoking_key)
 {
     cua_selection_manager mgr;
     return rl_end_of_line(count, invoking_key);
 }
 
 //------------------------------------------------------------------------------
-int cua_select_all(int count, int invoking_key)
+int32 cua_select_all(int32 count, int32 invoking_key)
 {
     cua_selection_manager mgr;
     s_cua_anchor = 0;
@@ -1138,14 +1138,14 @@ int cua_select_all(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
-int cua_copy(int count, int invoking_key)
+int32 cua_copy(int32 count, int32 invoking_key)
 {
     if (g_rl_buffer)
     {
         bool has_sel = (s_cua_anchor >= 0);
-        unsigned int len = g_rl_buffer->get_length();
-        unsigned int beg = has_sel ? min<unsigned int>(len, s_cua_anchor) : 0;
-        unsigned int end = has_sel ? min<unsigned int>(len, rl_point) : len;
+        uint32 len = g_rl_buffer->get_length();
+        uint32 beg = has_sel ? min<uint32>(len, s_cua_anchor) : 0;
+        uint32 end = has_sel ? min<uint32>(len, rl_point) : len;
         if (beg > end)
             SWAP(beg, end);
         if (beg < end)
@@ -1155,7 +1155,7 @@ int cua_copy(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
-int cua_cut(int count, int invoking_key)
+int32 cua_cut(int32 count, int32 invoking_key)
 {
     cua_copy(0, 0);
     cua_delete();
@@ -1165,7 +1165,7 @@ int cua_cut(int count, int invoking_key)
 
 
 //------------------------------------------------------------------------------
-static constexpr unsigned char c_colors[] = { 30, 34, 32, 36, 31, 35, 33, 37, 90, 94, 92, 96, 91, 95, 93, 97 };
+static constexpr uint8 c_colors[] = { 30, 34, 32, 36, 31, 35, 33, 37, 90, 94, 92, 96, 91, 95, 93, 97 };
 const char* get_popup_colors()
 {
     static str<32> s_popup;
@@ -1204,7 +1204,7 @@ const char* get_popup_desc_colors()
     if (!GetConsoleScreenBufferInfoEx(GetStdHandle(STD_OUTPUT_HANDLE), &csbiex))
         return "0;90;47";
 
-    int dim = 30;
+    int32 dim = 30;
     WORD attr = csbiex.wPopupAttributes;
     if ((attr & 0xf0) == 0x00 || (attr & 0xf0) == 0x10 || (attr & 0xf0) == 0x90)
         dim = 90;
@@ -1213,12 +1213,12 @@ const char* get_popup_desc_colors()
 }
 
 //------------------------------------------------------------------------------
-static int adjust_point_delta(int& point, int delta, char* buffer)
+static int32 adjust_point_delta(int32& point, int32 delta, char* buffer)
 {
     if (delta <= 0)
         return 0;
 
-    const int length = int(strlen(buffer));
+    const int32 length = int32(strlen(buffer));
     if (point == length)
         return 0;
 
@@ -1231,8 +1231,8 @@ static int adjust_point_delta(int& point, int delta, char* buffer)
     if (delta > length - point)
         delta = length - point;
 
-    int tmp = point;
-    int count = 0;
+    int32 tmp = point;
+    int32 count = 0;
 
 #if defined (HANDLE_MULTIBYTE)
     if (MB_CUR_MAX == 1 || rl_byte_oriented)
@@ -1246,7 +1246,7 @@ static int adjust_point_delta(int& point, int delta, char* buffer)
     {
         while (delta)
         {
-            int was = tmp;
+            int32 was = tmp;
             tmp = _rl_find_next_mbchar(buffer, tmp, 1, MB_FIND_NONZERO);
             if (tmp <= was)
                 break;
@@ -1261,12 +1261,12 @@ static int adjust_point_delta(int& point, int delta, char* buffer)
 }
 
 //------------------------------------------------------------------------------
-static int adjust_point_point(int& point, int target, char* buffer)
+static int32 adjust_point_point(int32& point, int32 target, char* buffer)
 {
     if (target <= point)
         return 0;
 
-    const int length = int(strlen(buffer));
+    const int32 length = int32(strlen(buffer));
     if (point == length)
         return 0;
 
@@ -1279,8 +1279,8 @@ static int adjust_point_point(int& point, int target, char* buffer)
     if (target > length)
         target = length;
 
-    int tmp = point;
-    int count = 0;
+    int32 tmp = point;
+    int32 count = 0;
 
 #if defined (HANDLE_MULTIBYTE)
     if (MB_CUR_MAX == 1 || rl_byte_oriented)
@@ -1294,7 +1294,7 @@ static int adjust_point_point(int& point, int target, char* buffer)
     {
         while (tmp < target)
         {
-            int was = tmp;
+            int32 was = tmp;
             tmp = _rl_find_next_mbchar(buffer, tmp, 1, MB_FIND_NONZERO);
             if (tmp <= was)
                 break;
@@ -1308,12 +1308,12 @@ static int adjust_point_point(int& point, int target, char* buffer)
 }
 
 //------------------------------------------------------------------------------
-static int adjust_point_keyseq(int& point, const char* keyseq, char* buffer)
+static int32 adjust_point_keyseq(int32& point, const char* keyseq, char* buffer)
 {
     if (!keyseq || !*keyseq)
         return 0;
 
-    const int length = int(strlen(buffer));
+    const int32 length = int32(strlen(buffer));
     if (point == length)
         return 0;
 
@@ -1323,22 +1323,22 @@ static int adjust_point_keyseq(int& point, const char* keyseq, char* buffer)
         return 0;
     }
 
-    int tmp = point;
-    int count = 0;
+    int32 tmp = point;
+    int32 count = 0;
 
 #if defined (HANDLE_MULTIBYTE)
     if (MB_CUR_MAX == 1 || rl_byte_oriented)
 #endif
     {
         const char* found = strstr(buffer + tmp, keyseq);
-        int delta = found ? int(found - (buffer + tmp)) : length - tmp;
+        int32 delta = found ? int32(found - (buffer + tmp)) : length - tmp;
         tmp += delta;
         count += delta;
     }
 #if defined (HANDLE_MULTIBYTE)
     else
     {
-        int keyseq_len = int(strlen(keyseq));
+        int32 keyseq_len = int32(strlen(keyseq));
         while (buffer[tmp] && strncmp(buffer + tmp, keyseq, keyseq_len) != 0)
         {
             tmp = _rl_find_next_mbchar(buffer, tmp, 1, MB_FIND_NONZERO);
@@ -1358,7 +1358,7 @@ static int adjust_point_keyseq(int& point, const char* keyseq, char* buffer)
 static str<16, false> s_win_fn_input_buffer;
 static bool read_win_fn_input_char()
 {
-    int c;
+    int32 c;
 
     RL_SETSTATE(RL_STATE_MOREINPUT);
     c = rl_read_key();
@@ -1396,7 +1396,7 @@ nope:
 }
 
 //------------------------------------------------------------------------------
-static char* get_history(int item)
+static char* get_history(int32 item)
 {
     HIST_ENTRY** list = history_list();
     if (!list || !history_length)
@@ -1413,12 +1413,12 @@ static char* get_history(int item)
 //------------------------------------------------------------------------------
 static char* get_previous_command()
 {
-    int previous = where_history();
+    int32 previous = where_history();
     return get_history(previous);
 }
 
 //------------------------------------------------------------------------------
-int win_f1(int count, int invoking_key)
+int32 win_f1(int32 count, int32 invoking_key)
 {
     const bool had_selection = (cua_get_anchor() >= 0);
 
@@ -1448,12 +1448,12 @@ ding:
         return 0;
     }
 
-    int old_point = 0;
+    int32 old_point = 0;
     adjust_point_point(old_point, rl_point, prev_buffer);
     if (!prev_buffer[old_point])
         goto ding;
 
-    int end_point = old_point;
+    int32 end_point = old_point;
     adjust_point_delta(end_point, count, prev_buffer);
     if (end_point <= old_point)
         goto ding;
@@ -1471,7 +1471,7 @@ ding:
 }
 
 //------------------------------------------------------------------------------
-static int finish_win_f2()
+static int32 finish_win_f2()
 {
 #if defined (HANDLE_SIGNALS)
     if (RL_ISSTATE(RL_STATE_CALLBACK) == 0)
@@ -1490,16 +1490,16 @@ static int finish_win_f2()
     if (s_win_fn_input_buffer.empty())
         return 0;
 
-    int old_point = 0;
+    int32 old_point = 0;
     adjust_point_point(old_point, rl_point, prev_buffer);
     if (prev_buffer[old_point])
     {
-        int end_point = old_point;
-        int count = adjust_point_keyseq(end_point, s_win_fn_input_buffer.c_str(), prev_buffer);
+        int32 end_point = old_point;
+        int32 count = adjust_point_keyseq(end_point, s_win_fn_input_buffer.c_str(), prev_buffer);
         if (end_point > old_point)
         {
             // How much to delete.
-            int del_point = rl_point;
+            int32 del_point = rl_point;
             adjust_point_delta(del_point, count, rl_line_buffer);
 
             // What to insert.
@@ -1518,7 +1518,7 @@ static int finish_win_f2()
 
 //------------------------------------------------------------------------------
 #if defined (READLINE_CALLBACKS)
-int _win_f2_callback(_rl_callback_generic_arg *data)
+int32 _win_f2_callback(_rl_callback_generic_arg *data)
 {
     if (!read_win_fn_input_char())
         return 0;
@@ -1533,7 +1533,7 @@ int _win_f2_callback(_rl_callback_generic_arg *data)
 
 //------------------------------------------------------------------------------
 static const char c_normal[] = "\001\x1b[m\002";
-int win_f2(int count, int invoking_key)
+int32 win_f2(int32 count, int32 invoking_key)
 {
     s_win_fn_input_buffer.clear();
     rl_message("\x01\x1b[%sm\x02(enter char to copy up to: )%s ", get_popup_colors(), c_normal);
@@ -1559,13 +1559,13 @@ int win_f2(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
-int win_f3(int count, int invoking_key)
+int32 win_f3(int32 count, int32 invoking_key)
 {
     return win_f1(999999, invoking_key);
 }
 
 //------------------------------------------------------------------------------
-static int finish_win_f4()
+static int32 finish_win_f4()
 {
 #if defined (HANDLE_SIGNALS)
     if (RL_ISSTATE(RL_STATE_CALLBACK) == 0)
@@ -1577,7 +1577,7 @@ static int finish_win_f4()
     if (s_win_fn_input_buffer.empty())
         return 0;
 
-    int end_point = rl_point;
+    int32 end_point = rl_point;
     adjust_point_keyseq(end_point, s_win_fn_input_buffer.c_str(), rl_line_buffer);
     if (end_point > rl_point)
         rl_delete_text(rl_point, end_point);
@@ -1587,7 +1587,7 @@ static int finish_win_f4()
 
 //------------------------------------------------------------------------------
 #if defined (READLINE_CALLBACKS)
-int _win_f4_callback(_rl_callback_generic_arg *data)
+int32 _win_f4_callback(_rl_callback_generic_arg *data)
 {
     if (!read_win_fn_input_char())
         return 0;
@@ -1601,7 +1601,7 @@ int _win_f4_callback(_rl_callback_generic_arg *data)
 #endif
 
 //------------------------------------------------------------------------------
-int win_f4(int count, int invoking_key)
+int32 win_f4(int32 count, int32 invoking_key)
 {
     s_win_fn_input_buffer.clear();
     rl_message("\x01\x1b[%sm\x02(enter char to delete up to: )%s ", get_popup_colors(), c_normal);
@@ -1627,14 +1627,14 @@ int win_f4(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
-int win_f6(int count, int invoking_key)
+int32 win_f6(int32 count, int32 invoking_key)
 {
     rl_insert_text("\x1a");
     return 0;
 }
 
 //------------------------------------------------------------------------------
-int win_f7(int count, int invoking_key)
+int32 win_f7(int32 count, int32 invoking_key)
 {
     if (RL_ISSTATE(RL_STATE_MACRODEF) != 0)
     {
@@ -1653,14 +1653,14 @@ ding:
 
 #define ding __cant_goto__must_free_local__
 
-    for (int i = 0; i < history_length; i++)
+    for (int32 i = 0; i < history_length; i++)
     {
         const char* p = list[i]->line;
         assert(p);
         history[i] = p ? p : "";
     }
 
-    const popup_results results = activate_history_text_list(history, history_length, min<int>(where_history(), history_length - 1), nullptr, true/*win_history*/);
+    const popup_results results = activate_history_text_list(history, history_length, min<int32>(where_history(), history_length - 1), nullptr, true/*win_history*/);
 
     switch (results.m_result)
     {
@@ -1687,8 +1687,8 @@ ding:
 }
 
 //------------------------------------------------------------------------------
-static int s_history_number = -1;
-static int finish_win_f9()
+static int32 s_history_number = -1;
+static int32 finish_win_f9()
 {
 #if defined (HANDLE_SIGNALS)
     if (RL_ISSTATE(RL_STATE_CALLBACK) == 0)
@@ -1726,7 +1726,7 @@ static void set_f9_message()
 //------------------------------------------------------------------------------
 static bool read_history_digit()
 {
-    int c;
+    int32 c;
 
     RL_SETSTATE(RL_STATE_MOREINPUT);
     c = rl_read_key();
@@ -1775,7 +1775,7 @@ static bool read_history_digit()
 
 //------------------------------------------------------------------------------
 #if defined (READLINE_CALLBACKS)
-int _win_f9_callback(_rl_callback_generic_arg *data)
+int32 _win_f9_callback(_rl_callback_generic_arg *data)
 {
     if (!read_history_digit())
         return 0;
@@ -1789,7 +1789,7 @@ int _win_f9_callback(_rl_callback_generic_arg *data)
 #endif
 
 //------------------------------------------------------------------------------
-int win_f9(int count, int invoking_key)
+int32 win_f9(int32 count, int32 invoking_key)
 {
     s_history_number = -1;
     set_f9_message();
@@ -1831,7 +1831,7 @@ bool is_globbing_wild() { return s_globbing_wild; }
 bool is_literal_wild() { return s_literal_wild; }
 
 //------------------------------------------------------------------------------
-static int glob_completion_internal(int what_to_do)
+static int32 glob_completion_internal(int32 what_to_do)
 {
     s_globbing_wild = true;
     if (!rl_explicit_arg)
@@ -1841,7 +1841,7 @@ static int glob_completion_internal(int what_to_do)
 }
 
 //------------------------------------------------------------------------------
-int glob_complete_word(int count, int invoking_key)
+int32 glob_complete_word(int32 count, int32 invoking_key)
 {
     if (rl_editing_mode == emacs_mode)
         rl_explicit_arg = 1; /* force `*' append */
@@ -1850,13 +1850,13 @@ int glob_complete_word(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
-int glob_expand_word(int count, int invoking_key)
+int32 glob_expand_word(int32 count, int32 invoking_key)
 {
     return glob_completion_internal('*');
 }
 
 //------------------------------------------------------------------------------
-int glob_list_expansions(int count, int invoking_key)
+int32 glob_list_expansions(int32 count, int32 invoking_key)
 {
     return glob_completion_internal('?');
 }
@@ -1864,7 +1864,7 @@ int glob_list_expansions(int count, int invoking_key)
 
 
 //------------------------------------------------------------------------------
-int edit_and_execute_command(int count, int invoking_key)
+int32 edit_and_execute_command(int32 count, int32 invoking_key)
 {
     str<> line;
     if (rl_explicit_arg)
@@ -1926,7 +1926,7 @@ LUnlinkFile:
 
     // Execute editor command.
     wstr_moveable wcommand(command.c_str());
-    const int exit_code = _wsystem(wcommand.c_str());
+    const int32 exit_code = _wsystem(wcommand.c_str());
 
     // Restore console state.
     show_cursor(was_visible);
@@ -1947,7 +1947,7 @@ LUnlinkFile:
     char buffer[4096];
     while (true)
     {
-        const int len = fread(buffer, 1, sizeof(buffer), file);
+        const int32 len = fread(buffer, 1, sizeof(buffer), file);
         if (len <= 0)
             break;
         line.concat(buffer, len);
@@ -1984,7 +1984,7 @@ LUnlinkFile:
 }
 
 //------------------------------------------------------------------------------
-int magic_space(int count, int invoking_key)
+int32 magic_space(int32 count, int32 invoking_key)
 {
     str<> in;
     str<> out;
@@ -2011,7 +2011,7 @@ struct alert_char
 {
     char32_t        ucs;
     const char*     text;
-    unsigned int    len;
+    uint32          len;
 };
 
 //------------------------------------------------------------------------------
@@ -2031,9 +2031,9 @@ static void list_ambiguous_codepoints(const char* tag, const std::vector<alert_c
         // Print formatted string.
 
         s.format("        Unicode: %s0x%04X%s, UTF8", red, ac.ucs, norm);
-        for (unsigned int i = 0; i < ac.len; ++i)
+        for (uint32 i = 0; i < ac.len; ++i)
         {
-            tmp.format(" %s0x%02.2X%s", red, static_cast<unsigned char>(ac.text[i]), norm);
+            tmp.format(" %s0x%02.2X%s", red, uint8(ac.text[i]), norm);
             s.concat(tmp.c_str(), tmp.length());
         }
         tmp.format(", reported width %s%d%s", red, wcwidth(ac.ucs), norm);
@@ -2088,7 +2088,7 @@ static void list_problem_codes(const std::vector<prompt_problem_details>& proble
         {
             str_iter iter(problem.code.c_str());
             const char* seq = iter.get_pointer();
-            while (int c = iter.next())
+            while (int32 c = iter.next())
             {
                 if (c < 0x20)
                 {
@@ -2097,7 +2097,7 @@ static void list_problem_codes(const std::vector<prompt_problem_details>& proble
                 }
                 else
                 {
-                    s.concat(seq, int(iter.get_pointer() - seq));
+                    s.concat(seq, int32(iter.get_pointer() - seq));
                 }
                 seq = iter.get_pointer();
             }
@@ -2137,7 +2137,7 @@ static void analyze_char_widths(const char* s,
     while (true)
     {
         const char* const text = iter.get_pointer();
-        const int c = iter.next();
+        const int32 c = iter.next();
         if (!c)
             break;
 
@@ -2147,13 +2147,13 @@ static void analyze_char_widths(const char* s,
             ignoring = false;
         else if (!ignoring)
         {
-            const int kind = test_ambiguous_width_char(c);
+            const int32 kind = test_ambiguous_width_char(c);
             if (kind)
             {
                 alert_char ac = {};
                 ac.ucs = c;
                 ac.text = text;
-                ac.len = static_cast<unsigned int>(iter.get_pointer() - text);
+                ac.len = uint32(iter.get_pointer() - text);
 
                 switch (kind)
                 {
@@ -2167,7 +2167,7 @@ static void analyze_char_widths(const char* s,
 }
 
 //------------------------------------------------------------------------------
-int clink_diagnostics(int count, int invoking_key)
+int32 clink_diagnostics(int32 count, int32 invoking_key)
 {
     end_prompt(true/*crlf*/);
 
@@ -2178,9 +2178,9 @@ int clink_diagnostics(int count, int invoking_key)
     str<> s;
     str<> t;
     const char* p;
-    const int spacing = 16;
+    const int32 spacing = 16;
 
-    int id = 0;
+    int32 id = 0;
     host_context context;
     host_get_app_context(id, context);
 
@@ -2340,7 +2340,7 @@ int clink_diagnostics(int count, int invoking_key)
 
 
 //------------------------------------------------------------------------------
-int macro_hook_func(const char* macro)
+int32 macro_hook_func(const char* macro)
 {
     bool is_luafunc = (macro && strnicmp(macro, "luafunc:", 8) == 0);
 
@@ -2393,7 +2393,7 @@ void clear_force_reload_scripts()
 }
 
 //------------------------------------------------------------------------------
-int force_reload_scripts()
+int32 force_reload_scripts()
 {
     s_force_reload_scripts = true;
     if (g_result)

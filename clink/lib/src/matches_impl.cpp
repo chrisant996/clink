@@ -25,9 +25,9 @@ extern "C" {
 #include <assert.h>
 
 //------------------------------------------------------------------------------
-static int s_slash_translation = 0;
-void set_slash_translation(int mode) { s_slash_translation = mode; }
-int get_slash_translation() { return s_slash_translation; }
+static int32 s_slash_translation = 0;
+void set_slash_translation(int32 mode) { s_slash_translation = mode; }
+int32 get_slash_translation() { return s_slash_translation; }
 
 //------------------------------------------------------------------------------
 static setting_enum g_translate_slashes(
@@ -78,19 +78,19 @@ struct matches_impl::match_lookup_comparator
 //------------------------------------------------------------------------------
 match_type to_match_type(DWORD attr, const char* path, bool symlink)
 {
-    static_assert(int(match_type::none) == MATCH_TYPE_NONE, "match_type enum must match readline constants");
-    static_assert(int(match_type::word) == MATCH_TYPE_WORD, "match_type enum must match readline constants");
-    static_assert(int(match_type::arg) == MATCH_TYPE_ARG, "match_type enum must match readline constants");
-    static_assert(int(match_type::cmd) == MATCH_TYPE_COMMAND, "match_type enum must match readline constants");
-    static_assert(int(match_type::alias) == MATCH_TYPE_ALIAS, "match_type enum must match readline constants");
-    static_assert(int(match_type::file) == MATCH_TYPE_FILE, "match_type enum must match readline constants");
-    static_assert(int(match_type::dir) == MATCH_TYPE_DIR, "match_type enum must match readline constants");
-    static_assert(int(match_type::mask) == MATCH_TYPE_MASK, "match_type enum must match readline constants");
-    static_assert(int(match_type::link) == MATCH_TYPE_LINK, "match_type enum must match readline constants");
-    static_assert(int(match_type::orphaned) == MATCH_TYPE_ORPHANED, "match_type enum must match readline constants");
-    static_assert(int(match_type::hidden) == MATCH_TYPE_HIDDEN, "match_type enum must match readline constants");
-    static_assert(int(match_type::readonly) == MATCH_TYPE_READONLY, "match_type enum must match readline constants");
-    static_assert(int(match_type::system) == MATCH_TYPE_SYSTEM, "match_type enum must match readline constants");
+    static_assert(int32(match_type::none) == MATCH_TYPE_NONE, "match_type enum must match readline constants");
+    static_assert(int32(match_type::word) == MATCH_TYPE_WORD, "match_type enum must match readline constants");
+    static_assert(int32(match_type::arg) == MATCH_TYPE_ARG, "match_type enum must match readline constants");
+    static_assert(int32(match_type::cmd) == MATCH_TYPE_COMMAND, "match_type enum must match readline constants");
+    static_assert(int32(match_type::alias) == MATCH_TYPE_ALIAS, "match_type enum must match readline constants");
+    static_assert(int32(match_type::file) == MATCH_TYPE_FILE, "match_type enum must match readline constants");
+    static_assert(int32(match_type::dir) == MATCH_TYPE_DIR, "match_type enum must match readline constants");
+    static_assert(int32(match_type::mask) == MATCH_TYPE_MASK, "match_type enum must match readline constants");
+    static_assert(int32(match_type::link) == MATCH_TYPE_LINK, "match_type enum must match readline constants");
+    static_assert(int32(match_type::orphaned) == MATCH_TYPE_ORPHANED, "match_type enum must match readline constants");
+    static_assert(int32(match_type::hidden) == MATCH_TYPE_HIDDEN, "match_type enum must match readline constants");
+    static_assert(int32(match_type::readonly) == MATCH_TYPE_READONLY, "match_type enum must match readline constants");
+    static_assert(int32(match_type::system) == MATCH_TYPE_SYSTEM, "match_type enum must match readline constants");
 
     match_type type;
 
@@ -140,12 +140,12 @@ match_type to_match_type(const char* type_name)
     while (tokens.next(token))
     {
         const char* t = token.get_pointer();
-        int l = token.length();
+        int32 l = token.length();
 
         // Trim whitespace.
-        while (l && isspace((unsigned char)*t))
+        while (l && isspace(uint8(*t)))
             t++, l--;
-        while (l && isspace((unsigned char)t[l-1]))
+        while (l && isspace(uint8(t[l-1])))
             l--;
         if (!l)
             continue;
@@ -177,7 +177,7 @@ match_type to_match_type(const char* type_name)
     }
 
     // Only files and dirs can be links.
-    if (int(type & match_type::link) && !is_match_type(type, match_type::file) && !is_match_type(type, match_type::dir))
+    if (int32(type & match_type::link) && !is_match_type(type, match_type::file) && !is_match_type(type, match_type::dir))
         type &= ~match_type::link;
 
     // Only links can be orphaned.
@@ -205,17 +205,17 @@ void match_type_to_string(match_type type, str_base& out)
     };
 
     out.clear();
-    out.concat(type_names[int(base)]);
+    out.concat(type_names[int32(base)]);
 
-    if (int(type & match_type::link))
+    if (int32(type & match_type::link))
         out.concat(",link");
-    if (int(type & match_type::orphaned))
+    if (int32(type & match_type::orphaned))
         out.concat(",orphaned");
-    if (int(type & match_type::hidden))
+    if (int32(type & match_type::hidden))
         out.concat(",hidden");
-    if (int(type & match_type::system))
+    if (int32(type & match_type::system))
         out.concat(",system");
-    if (int(type & match_type::readonly))
+    if (int32(type & match_type::readonly))
         out.concat(",readonly");
 }
 
@@ -288,7 +288,7 @@ void match_builder::set_suppress_append(bool suppress)
 }
 
 //------------------------------------------------------------------------------
-void match_builder::set_suppress_quoting(int suppress)
+void match_builder::set_suppress_quoting(int32 suppress)
 {
     return ((matches_impl&)m_matches).set_suppress_quoting(suppress);
 }
@@ -335,21 +335,21 @@ void match_builder::set_matches_are_files(bool files)
 class match_builder_toolkit_impl : public match_builder_toolkit
 {
 public:
-                            match_builder_toolkit_impl(int generation_id, unsigned int end_word_offset);
+                            match_builder_toolkit_impl(int32 generation_id, uint32 end_word_offset);
                             ~match_builder_toolkit_impl();
-    int                     get_generation_id() const override { return m_generation_id; }
+    int32                   get_generation_id() const override { return m_generation_id; }
     matches*                get_matches() const override { return m_matches; }
     match_builder*          get_builder() const override { return m_builder; }
     void                    clear() override;
 
 private:
-    const int               m_generation_id;
+    const int32             m_generation_id;
     matches_impl*           m_matches;
     match_builder*          m_builder;
 };
 
 //------------------------------------------------------------------------------
-match_builder_toolkit_impl::match_builder_toolkit_impl(int generation_id, unsigned int end_word_offset)
+match_builder_toolkit_impl::match_builder_toolkit_impl(int32 generation_id, uint32 end_word_offset)
 : m_generation_id(generation_id)
 {
     matches_impl* matches = new matches_impl();
@@ -373,7 +373,7 @@ void match_builder_toolkit_impl::clear()
 }
 
 //------------------------------------------------------------------------------
-std::shared_ptr<match_builder_toolkit> make_match_builder_toolkit(int generation_id, unsigned int end_word_offset)
+std::shared_ptr<match_builder_toolkit> make_match_builder_toolkit(int32 generation_id, uint32 end_word_offset)
 {
     return std::make_shared<match_builder_toolkit_impl>(generation_id, end_word_offset);
 }
@@ -428,8 +428,8 @@ bool matches_iter::next()
                 return false;
             }
 
-            int match_len = int(strlen(match));
-            while (match_len && path::is_separator((unsigned char)match[match_len - 1]))
+            int32 match_len = int32(strlen(match));
+            while (match_len && path::is_separator(uint8(match[match_len - 1])))
                 match_len--;
 
             const path::star_matches_everything flag = is_pathish(get_match_type()) ? path::at_end : path::yes;
@@ -533,15 +533,15 @@ bool matches_iter::try_substring()
 
 
 //------------------------------------------------------------------------------
-matches_impl::store_impl::store_impl(unsigned int size)
-: linear_allocator(max<unsigned int>(4096, size))
+matches_impl::store_impl::store_impl(uint32 size)
+: linear_allocator(max<uint32>(4096, size))
 {
 }
 
 
 
 //------------------------------------------------------------------------------
-matches_impl::matches_impl(unsigned int store_size)
+matches_impl::matches_impl(uint32 store_size)
 : m_store(min(store_size, 0x10000u))
 , m_filename_completion_desired(false)
 , m_filename_display_desired(false)
@@ -567,9 +567,9 @@ matches_iter matches_impl::get_iter(const char* pattern) const
 }
 
 //------------------------------------------------------------------------------
-unsigned int matches_impl::get_info_count() const
+uint32 matches_impl::get_info_count() const
 {
-    return int(m_infos.size());
+    return int32(m_infos.size());
 }
 
 //------------------------------------------------------------------------------
@@ -587,7 +587,7 @@ match_info* matches_impl::get_infos()
 //------------------------------------------------------------------------------
 void matches_impl::get_lcd(str_base& out) const
 {
-    for (unsigned int i = 0; i < m_count; i++)
+    for (uint32 i = 0; i < m_count; i++)
     {
         const char *match = m_infos[i].match;
         if (!i)
@@ -596,20 +596,20 @@ void matches_impl::get_lcd(str_base& out) const
         }
         else
         {
-            int matching = str_compare<char, true/*compute_lcd*/>(out.c_str(), match);
+            int32 matching = str_compare<char, true/*compute_lcd*/>(out.c_str(), match);
             out.truncate(matching);
         }
     }
 }
 
 //------------------------------------------------------------------------------
-unsigned int matches_impl::get_match_count() const
+uint32 matches_impl::get_match_count() const
 {
     return m_count;
 }
 
 //------------------------------------------------------------------------------
-const char* matches_impl::get_match(unsigned int index) const
+const char* matches_impl::get_match(uint32 index) const
 {
     if (index >= get_match_count())
         return nullptr;
@@ -618,7 +618,7 @@ const char* matches_impl::get_match(unsigned int index) const
 }
 
 //------------------------------------------------------------------------------
-match_type matches_impl::get_match_type(unsigned int index) const
+match_type matches_impl::get_match_type(uint32 index) const
 {
     if (index >= get_match_count())
         return match_type::none;
@@ -627,7 +627,7 @@ match_type matches_impl::get_match_type(unsigned int index) const
 }
 
 //------------------------------------------------------------------------------
-const char* matches_impl::get_match_display(unsigned int index) const
+const char* matches_impl::get_match_display(uint32 index) const
 {
     if (index >= get_match_count())
         return nullptr;
@@ -636,7 +636,7 @@ const char* matches_impl::get_match_display(unsigned int index) const
 }
 
 //------------------------------------------------------------------------------
-const char* matches_impl::get_match_description(unsigned int index) const
+const char* matches_impl::get_match_description(uint32 index) const
 {
     if (index >= get_match_count())
         return nullptr;
@@ -645,7 +645,7 @@ const char* matches_impl::get_match_description(unsigned int index) const
 }
 
 //------------------------------------------------------------------------------
-unsigned int matches_impl::get_match_ordinal(unsigned int index) const
+uint32 matches_impl::get_match_ordinal(uint32 index) const
 {
     if (index >= get_match_count())
         return 0;
@@ -654,7 +654,7 @@ unsigned int matches_impl::get_match_ordinal(unsigned int index) const
 }
 
 //------------------------------------------------------------------------------
-char matches_impl::get_match_append_char(unsigned int index) const
+char matches_impl::get_match_append_char(uint32 index) const
 {
     if (index >= get_match_count())
         return 0;
@@ -663,7 +663,7 @@ char matches_impl::get_match_append_char(unsigned int index) const
 }
 
 //------------------------------------------------------------------------------
-shadow_bool matches_impl::get_match_suppress_append(unsigned int index) const
+shadow_bool matches_impl::get_match_suppress_append(uint32 index) const
 {
     shadow_bool tmp(false);
     if (index < get_match_count())
@@ -676,7 +676,7 @@ shadow_bool matches_impl::get_match_suppress_append(unsigned int index) const
 }
 
 //------------------------------------------------------------------------------
-bool matches_impl::get_match_append_display(unsigned int index) const
+bool matches_impl::get_match_append_display(uint32 index) const
 {
     if (index >= get_match_count())
         return false;
@@ -685,7 +685,7 @@ bool matches_impl::get_match_append_display(unsigned int index) const
 }
 
 //------------------------------------------------------------------------------
-const char* matches_impl::get_unfiltered_match(unsigned int index) const
+const char* matches_impl::get_unfiltered_match(uint32 index) const
 {
     if (index >= get_info_count())
         return nullptr;
@@ -694,7 +694,7 @@ const char* matches_impl::get_unfiltered_match(unsigned int index) const
 }
 
 //------------------------------------------------------------------------------
-match_type matches_impl::get_unfiltered_match_type(unsigned int index) const
+match_type matches_impl::get_unfiltered_match_type(uint32 index) const
 {
     if (index >= get_info_count())
         return match_type::none;
@@ -703,7 +703,7 @@ match_type matches_impl::get_unfiltered_match_type(unsigned int index) const
 }
 
 //------------------------------------------------------------------------------
-const char* matches_impl::get_unfiltered_match_display(unsigned int index) const
+const char* matches_impl::get_unfiltered_match_display(uint32 index) const
 {
     if (index >= get_info_count())
         return nullptr;
@@ -712,7 +712,7 @@ const char* matches_impl::get_unfiltered_match_display(unsigned int index) const
 }
 
 //------------------------------------------------------------------------------
-const char* matches_impl::get_unfiltered_match_description(unsigned int index) const
+const char* matches_impl::get_unfiltered_match_description(uint32 index) const
 {
     if (index >= get_info_count())
         return nullptr;
@@ -721,7 +721,7 @@ const char* matches_impl::get_unfiltered_match_description(unsigned int index) c
 }
 
 //------------------------------------------------------------------------------
-char matches_impl::get_unfiltered_match_append_char(unsigned int index) const
+char matches_impl::get_unfiltered_match_append_char(uint32 index) const
 {
     if (index >= get_info_count())
         return 0;
@@ -730,7 +730,7 @@ char matches_impl::get_unfiltered_match_append_char(unsigned int index) const
 }
 
 //------------------------------------------------------------------------------
-shadow_bool matches_impl::get_unfiltered_match_suppress_append(unsigned int index) const
+shadow_bool matches_impl::get_unfiltered_match_suppress_append(uint32 index) const
 {
     shadow_bool tmp(false);
     if (index < get_info_count())
@@ -743,7 +743,7 @@ shadow_bool matches_impl::get_unfiltered_match_suppress_append(unsigned int inde
 }
 
 //------------------------------------------------------------------------------
-bool matches_impl::get_unfiltered_match_append_display(unsigned int index) const
+bool matches_impl::get_unfiltered_match_append_display(uint32 index) const
 {
     if (index >= get_info_count())
         return false;
@@ -782,7 +782,7 @@ char matches_impl::get_append_character() const
 }
 
 //------------------------------------------------------------------------------
-int matches_impl::get_suppress_quoting() const
+int32 matches_impl::get_suppress_quoting() const
 {
     return m_suppress_quoting;
 }
@@ -794,7 +794,7 @@ bool matches_impl::get_force_quoting() const
 }
 
 //------------------------------------------------------------------------------
-int matches_impl::get_word_break_position() const
+int32 matches_impl::get_word_break_position() const
 {
     return m_word_break_position;
 }
@@ -901,7 +901,7 @@ void matches_impl::set_suppress_append(bool suppress)
 }
 
 //------------------------------------------------------------------------------
-void matches_impl::set_suppress_quoting(int suppress)
+void matches_impl::set_suppress_quoting(int32 suppress)
 {
     m_suppress_quoting = suppress;
     m_force_quoting = false;
@@ -915,7 +915,7 @@ void matches_impl::set_force_quoting()
 }
 
 //------------------------------------------------------------------------------
-void matches_impl::set_word_break_position(int position)
+void matches_impl::set_word_break_position(int32 position)
 {
     m_word_break_position = position;
 }
@@ -984,7 +984,7 @@ bool matches_impl::add_match(const match_desc& desc, bool already_normalized)
     // only when `clink.slash_translation` is enabled.  already_normalized means
     // desc has already been normalized to system format, and a performance
     // optimization can skip translation if system format is configured.
-    int mode = (s_slash_translation &&
+    int32 mode = (s_slash_translation &&
                 (is_match_type(type, match_type::dir) ||
                  is_match_type(type, match_type::file) ||
                  (is_match_type(type, match_type::none) &&
@@ -1010,7 +1010,7 @@ bool matches_impl::add_match(const match_desc& desc, bool already_normalized)
     if (translate)
     {
         assert(mode > 0);
-        int sep;
+        int32 sep;
         switch (mode)
         {
         default:    sep = 0; break;
@@ -1057,7 +1057,7 @@ bool matches_impl::add_match(const match_desc& desc, bool already_normalized)
     match_lookup lookup = { store_match, type };
     m_dedup->emplace(std::move(lookup));
 
-    unsigned int ordinal = static_cast<unsigned int>(m_infos.size());
+    uint32 ordinal = uint32(m_infos.size());
     match_info info = { store_match, store_display, store_description, ordinal, type, desc.append_char, desc.suppress_append, append_display, false/*select*/ };
     m_infos.emplace_back(std::move(info));
     ++m_count;
@@ -1087,7 +1087,7 @@ void matches_impl::done_building()
         else if (s_slash_translation == 3)
             sep = '\\';
 
-        for (unsigned int i = m_count; i--;)
+        for (uint32 i = m_count; i--;)
         {
             if (is_match_type(m_infos[i].type, match_type::none))
             {
@@ -1126,15 +1126,15 @@ void matches_impl::done_building()
 }
 
 //------------------------------------------------------------------------------
-void matches_impl::coalesce(unsigned int count_hint, bool restrict)
+void matches_impl::coalesce(uint32 count_hint, bool restrict)
 {
     match_info* infos = get_infos();
 
     bool any_pathish = false;
     bool all_pathish = true;
 
-    unsigned int j = 0;
-    for (unsigned int i = 0, n = m_infos.size(); i < n && j < count_hint; ++i)
+    uint32 j = 0;
+    for (uint32 i = 0, n = m_infos.size(); i < n && j < count_hint; ++i)
     {
         if (!infos[i].select)
             continue;
@@ -1198,7 +1198,7 @@ char* make_substring_pattern(const char* pattern, const char* append)
         last = first;
 
     str<> tmp;
-    tmp.concat(pattern, int(last - first));
+    tmp.concat(pattern, int32(last - first));
     tmp.concat("*", 1);
     tmp.concat(last);
     tmp.concat(append);

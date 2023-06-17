@@ -27,7 +27,7 @@ class host_cmd
 {
 public:
                         host_cmd();
-    virtual int         validate() override;
+    virtual int32       validate() override;
     virtual bool        initialise() override;
     virtual void        shutdown() override;
 
@@ -42,8 +42,8 @@ private:
     virtual void        initialise_editor_desc(line_editor::desc& desc) override;
     void                make_aliases(str_base& clink, str_base& history);
     void                add_aliases(bool force);
-    void                edit_line(wchar_t* chars, int max_chars, bool edit=true);
-    bool                capture_prompt(const wchar_t* chars, int char_count);
+    void                edit_line(wchar_t* chars, int32 max_chars, bool edit=true);
+    bool                capture_prompt(const wchar_t* chars, int32 char_count);
     bool                is_interactive() const;
     tagged_prompt       m_prompt;
     doskey              m_doskey;

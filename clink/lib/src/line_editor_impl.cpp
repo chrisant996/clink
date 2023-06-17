@@ -39,16 +39,16 @@ extern setting_bool g_history_autoexpand;
 extern setting_bool g_history_show_preview;
 extern setting_enum g_default_bindings;
 extern setting_color g_color_histexpand;
-extern int g_suggestion_offset;
+extern int32 g_suggestion_offset;
 
 extern "C" void host_clear_suggestion();
 extern bool check_recognizer_refresh();
 extern bool is_showing_argmatchers();
 extern bool win_fn_callback_pending();
-extern int clink_is_signaled();
+extern int32 clink_is_signaled();
 extern bool clink_maybe_handle_signal();
 extern recognition recognize_command(const char* line, const char* word, bool quoted, bool& ready, str_base* file=nullptr);
-extern std::shared_ptr<match_builder_toolkit> get_deferred_matches(int generation_id);
+extern std::shared_ptr<match_builder_toolkit> get_deferred_matches(int32 generation_id);
 
 
 
@@ -59,7 +59,7 @@ inline char get_closing_quote(const char* quote_pair)
 }
 
 //------------------------------------------------------------------------------
-static bool rl_vi_insert_mode_esc_special_case(int key)
+static bool rl_vi_insert_mode_esc_special_case(int32 key)
 {
     // This mirrors the conditions in the #if defined (VI_MODE) block in
     // _rl_dispatch_subseq() in readline.c.  This is so when `terminal.raw_esc`
@@ -107,7 +107,7 @@ void line_editor_destroy(line_editor* editor)
 
 
 //------------------------------------------------------------------------------
-void prev_buffer::set(const char* s, int len)
+void prev_buffer::set(const char* s, int32 len)
 {
     free(m_ptr);
 
@@ -118,9 +118,9 @@ void prev_buffer::set(const char* s, int len)
 }
 
 //------------------------------------------------------------------------------
-bool prev_buffer::equals(const char* s, int len) const
+bool prev_buffer::equals(const char* s, int32 len) const
 {
-    return m_ptr && m_len == static_cast<unsigned int>(len) && memcmp(s, m_ptr, len) == 0 && !m_ptr[len];
+    return m_ptr && m_len == uint32(len) && memcmp(s, m_ptr, len) == 0 && !m_ptr[len];
 }
 
 
@@ -173,7 +173,7 @@ void update_matches()
 }
 
 //------------------------------------------------------------------------------
-bool notify_matches_ready(std::shared_ptr<match_builder_toolkit> toolkit, int generation_id)
+bool notify_matches_ready(std::shared_ptr<match_builder_toolkit> toolkit, int32 generation_id)
 {
     if (!s_editor || !toolkit)
         return false;
@@ -183,7 +183,7 @@ bool notify_matches_ready(std::shared_ptr<match_builder_toolkit> toolkit, int ge
 }
 
 //------------------------------------------------------------------------------
-void override_line_state(const char* line, const char* needle, int point)
+void override_line_state(const char* line, const char* needle, int32 point)
 {
     assert(s_editor);
     if (!s_editor)
@@ -268,7 +268,7 @@ void host_filter_prompt()
 }
 
 //------------------------------------------------------------------------------
-extern "C" void host_filter_transient_prompt(int crlf)
+extern "C" void host_filter_transient_prompt(int32 crlf)
 {
     if (!s_callbacks)
         return;
@@ -286,7 +286,7 @@ bool host_can_suggest(const line_state& line)
 }
 
 //------------------------------------------------------------------------------
-int host_filter_matches(char** matches)
+int32 host_filter_matches(char** matches)
 {
     if (s_callbacks)
         s_callbacks->filter_matches(matches);
@@ -327,7 +327,7 @@ bool host_call_lua_rl_global_function(const char* func_name)
 }
 
 //------------------------------------------------------------------------------
-const char** host_copy_dir_history(int* total)
+const char** host_copy_dir_history(int32* total)
 {
     if (!s_callbacks)
         return nullptr;
@@ -336,7 +336,7 @@ const char** host_copy_dir_history(int* total)
 }
 
 //------------------------------------------------------------------------------
-void host_get_app_context(int& id, host_context& context)
+void host_get_app_context(int32& id, host_context& context)
 {
     if (!s_callbacks)
         return;
@@ -362,7 +362,7 @@ static bool is_endword_tilde(const line_state& line)
     // completions can work.
 
     bool tilde = false;
-    for (unsigned int offset = line.get_end_word_offset(); true; ++offset)
+    for (uint32 offset = line.get_end_word_offset(); true; ++offset)
     {
         if (offset > line.get_cursor())
             break;
@@ -408,17 +408,17 @@ void line_editor_impl::initialise()
         return;
 
     struct : public editor_module::binder {
-        virtual int get_group(const char* name) const override
+        virtual int32 get_group(const char* name) const override
         {
             return binder->get_group(name);
         }
 
-        virtual int create_group(const char* name) override
+        virtual int32 create_group(const char* name) override
         {
             return binder->create_group(name);
         }
 
-        virtual bool bind(unsigned int group, const char* chord, unsigned char key, bool has_params=false) override
+        virtual bool bind(uint32 group, const char* chord, uint8 key, bool has_params=false) override
         {
             return binder->bind(group, chord, *module, key, has_params);
         }
@@ -585,7 +585,7 @@ bool line_editor_impl::edit(str_base& out, bool edit)
 }
 
 //------------------------------------------------------------------------------
-void line_editor_impl::override_line(const char* line, const char* needle, int point)
+void line_editor_impl::override_line(const char* line, const char* needle, int32 point)
 {
     assert(!line || !m_buffer.has_override());
     assert(!line || point >= 0);
@@ -669,7 +669,7 @@ void line_editor_impl::force_update_internal(bool restrict)
 }
 
 //------------------------------------------------------------------------------
-bool line_editor_impl::notify_matches_ready(int generation_id, matches* matches)
+bool line_editor_impl::notify_matches_ready(int32 generation_id, matches* matches)
 {
 #ifdef DEBUG
     assert(!m_in_matches_ready);
@@ -776,7 +776,7 @@ void line_editor_impl::update_matches()
 }
 
 //------------------------------------------------------------------------------
-void line_editor_impl::dispatch(int bind_group)
+void line_editor_impl::dispatch(int32 bind_group)
 {
     assert(check_flag(flag_init));
     assert(check_flag(flag_editing));
@@ -788,7 +788,7 @@ void line_editor_impl::dispatch(int bind_group)
 
     // Handle one input.
 
-    const int prev_bind_group = m_bind_resolver.get_group();
+    const int32 prev_bind_group = m_bind_resolver.get_group();
     m_bind_resolver.set_group(bind_group);
 
     const bool was_signaled = clink_is_signaled();
@@ -810,10 +810,10 @@ void line_editor_impl::dispatch(int bind_group)
 }
 
 //------------------------------------------------------------------------------
-bool line_editor_impl::is_bound(const char* seq, int len)
+bool line_editor_impl::is_bound(const char* seq, int32 len)
 {
     // Check if clink has a binding; these override Readline.
-    int bound = m_bind_resolver.is_bound(seq, len);
+    int32 bound = m_bind_resolver.is_bound(seq, len);
     if (bound != 0)
         return (bound > 0);
 
@@ -834,13 +834,13 @@ bool line_editor_impl::accepts_mouse_input(mouse_input_type type)
 }
 
 //------------------------------------------------------------------------------
-bool line_editor_impl::translate(const char* seq, int len, str_base& out)
+bool line_editor_impl::translate(const char* seq, int32 len, str_base& out)
 {
     return m_module.translate(seq, len, out);
 }
 
 //------------------------------------------------------------------------------
-void line_editor_impl::set_keyseq_len(int len)
+void line_editor_impl::set_keyseq_len(int32 len)
 {
     m_module.set_keyseq_len(len);
 }
@@ -852,7 +852,7 @@ bool line_editor_impl::update_input()
 {
     if (clink_is_signaled())
     {
-        const int sig = clink_is_signaled();
+        const int32 sig = clink_is_signaled();
         for (auto* module : m_modules)
             module->on_signal(sig);
         m_buffer.reset();
@@ -866,12 +866,12 @@ bool line_editor_impl::update_input()
 
     if (!m_module.is_input_pending())
     {
-        int key = m_desc.input->read();
+        int32 key = m_desc.input->read();
 
         if (key == terminal_in::input_terminal_resize)
         {
-            int columns = m_desc.output->get_columns();
-            int rows = m_desc.output->get_rows();
+            int32 columns = m_desc.output->get_columns();
+            int32 rows = m_desc.output->get_rows();
             editor_module::context context = get_context();
             for (auto* module : m_modules)
                 module->on_terminal_resize(columns, rows, context);
@@ -924,9 +924,9 @@ bool line_editor_impl::update_input()
         virtual void    loop() override                           { flags |= flag_invalid; }
         virtual void    done(bool eof) override                   { flags |= flag_done|(eof ? flag_eof : 0); }
         virtual void    redraw() override                         { flags |= flag_redraw; }
-        virtual int     set_bind_group(int id) override           { int t = group; group = id; return t; }
+        virtual int32   set_bind_group(int32 id) override         { int32 t = group; group = id; return t; }
         unsigned short  group;  //        <! MSVC bugs; see connect
-        unsigned char   flags;  // = 0;   <! issues about C2905
+        uint8           flags;  // = 0;   <! issues about C2905
     };
 
     while (auto binding = m_bind_resolver.next())
@@ -938,7 +938,7 @@ bool line_editor_impl::update_input()
 
         str<16> chord;
         editor_module* module = binding.get_module();
-        unsigned char id = binding.get_id();
+        uint8 id = binding.get_id();
         binding.get_chord(chord);
 
         {
@@ -1017,13 +1017,13 @@ commands line_editor_impl::collect_commands()
 }
 
 //------------------------------------------------------------------------------
-unsigned int line_editor_impl::collect_words(words& words, matches_impl* matches, collect_words_mode mode, commands& commands)
+uint32 line_editor_impl::collect_words(words& words, matches_impl* matches, collect_words_mode mode, commands& commands)
 {
-    unsigned int command_offset = m_collector.collect_words(m_buffer, words, mode);
+    uint32 command_offset = m_collector.collect_words(m_buffer, words, mode);
     commands.set(m_buffer, words);
 
 #ifdef DEBUG
-    const int dbg_row = dbg_get_env_int("DEBUG_COLLECTWORDS");
+    const int32 dbg_row = dbg_get_env_int("DEBUG_COLLECTWORDS");
     str<> tmp1;
     str<> tmp2;
     if (dbg_row > 0)
@@ -1073,13 +1073,13 @@ unsigned int line_editor_impl::collect_words(words& words, matches_impl* matches
         word_break_info break_info;
         if (m_generator)
             m_generator->get_word_break_info(commands.get_linestate(m_buffer), break_info);
-        const unsigned int end_word_offset = commands.break_end_word(break_info.truncate, break_info.keep);
+        const uint32 end_word_offset = commands.break_end_word(break_info.truncate, break_info.keep);
 
 #ifdef DEBUG
         if (dbg_row > 0)
         {
             bool command = true;
-            int i_word = 1;
+            int32 i_word = 1;
             tmp2.format("\x1b[s\x1b[%dHafter word break info:  ", dbg_row + 1);
             m_printer.print(tmp2.c_str(), tmp2.length());
             auto const& after_break_words = commands.get_linestate(m_buffer).get_words();
@@ -1146,7 +1146,7 @@ void line_editor_impl::classify()
         return;
     }
 
-    rollback<int> rb_end(rl_end);
+    rollback<int32> rb_end(rl_end);
     if (g_suggestion_offset >= 0)
         rl_end = g_suggestion_offset;
 
@@ -1184,13 +1184,13 @@ void line_editor_impl::classify()
     if (dbg_get_env_int("DEBUG_CLASSIFY"))
     {
         static const char *const word_class_name[] = {"other", "unrecognized", "executable", "command", "doskey", "arg", "flag", "none"};
-        static_assert(sizeof_array(word_class_name) == int(word_class::max), "word_class flag count mismatch");
+        static_assert(sizeof_array(word_class_name) == int32(word_class::max), "word_class flag count mismatch");
         printf("CLASSIFIED '%s' -- ", m_buffer.get_buffer());
         word_class wc;
-        for (unsigned int i = 0; i < m_classifications.size(); ++i)
+        for (uint32 i = 0; i < m_classifications.size(); ++i)
         {
             if (m_classifications.get_word_class(i, wc))
-                printf(" %d:%s", i, word_class_name[int(wc)]);
+                printf(" %d:%s", i, word_class_name[int32(wc)]);
         }
         printf("\n");
     }
@@ -1233,7 +1233,7 @@ void line_editor_impl::maybe_send_oncommand_event()
         return;
 
     str<> first_word;
-    unsigned int offset = info.offset;
+    uint32 offset = info.offset;
     bool quoted = info.quoted;
     first_word.concat(line.get_line() + info.offset, info.length);
 
@@ -1252,7 +1252,7 @@ void line_editor_impl::maybe_send_oncommand_event()
             tokens.add_quote_pair("\"");
 
             const char *start;
-            int length;
+            int32 length;
             str_token token = tokens.next(start, length);
             if (token)
             {
@@ -1330,29 +1330,29 @@ editor_module::context line_editor_impl::get_context() const
 }
 
 //------------------------------------------------------------------------------
-void line_editor_impl::set_flag(unsigned char flag)
+void line_editor_impl::set_flag(uint8 flag)
 {
     m_flags |= flag;
 
     if (flag & flag_generate)
-        m_generation_id = max<int>(m_generation_id + 1, 1);
+        m_generation_id = max<int32>(m_generation_id + 1, 1);
 }
 
 //------------------------------------------------------------------------------
-void line_editor_impl::clear_flag(unsigned char flag)
+void line_editor_impl::clear_flag(uint8 flag)
 {
     m_flags &= ~flag;
 }
 
 //------------------------------------------------------------------------------
-bool line_editor_impl::check_flag(unsigned char flag) const
+bool line_editor_impl::check_flag(uint8 flag) const
 {
     return ((m_flags & flag) != 0);
 }
 
 //------------------------------------------------------------------------------
-bool line_editor_impl::is_key_same(const key_t& prev_key, const char* prev_line, int prev_length,
-                                   const key_t& next_key, const char* next_line, int next_length,
+bool line_editor_impl::is_key_same(const key_t& prev_key, const char* prev_line, int32 prev_length,
+                                   const key_t& next_key, const char* next_line, int32 next_length,
                                    bool compare_cursor)
 {
     // If the word indices are different, the keys are different.  Argmatchers
@@ -1379,9 +1379,9 @@ bool line_editor_impl::is_key_same(const key_t& prev_key, const char* prev_line,
     // If the key contents are different, the keys are different.  This can
     // occur in various situations.  For example when `menu-complete` replaces
     // `dir\sub1\` with `dir\sub2\`.
-    str_iter prev(prev_line + prev_key.word_offset, min(int(prev_key.word_length), max(0, int(prev_length - prev_key.word_offset))));
-    str_iter next(next_line + next_key.word_offset, min(int(next_key.word_length), max(0, int(next_length - next_key.word_offset))));
-    for (int i = prev.length(); i--;)
+    str_iter prev(prev_line + prev_key.word_offset, min(int32(prev_key.word_length), max(0, int32(prev_length - prev_key.word_offset))));
+    str_iter next(next_line + next_key.word_offset, min(int32(next_key.word_length), max(0, int32(next_length - next_key.word_offset))));
+    for (int32 i = prev.length(); i--;)
         if (prev.get_pointer()[i] != next.get_pointer()[i])
             return false;
 
@@ -1404,7 +1404,7 @@ matches* line_editor_impl::get_mutable_matches(bool nosort)
 
     assert(m_words.size() > 0);
     const word& end_word = m_words.back();
-    const key_t next_key = { (unsigned int)m_words.size() - 1, end_word.offset, end_word.length, m_buffer.get_cursor() };
+    const key_t next_key = { (uint32)m_words.size() - 1, end_word.offset, end_word.length, m_buffer.get_cursor() };
 
     m_prev_key = next_key;
     m_prev_generate.set(m_buffer.get_buffer(), end_word.offset + end_word.length);
@@ -1447,21 +1447,21 @@ void line_editor_impl::update_internal()
     assert(m_words.size() > 0);
     const word& end_word = m_words.back();
 
-    const key_t next_key = { (unsigned int)m_words.size() - 1, end_word.offset, end_word.length, m_buffer.get_cursor() };
+    const key_t next_key = { (uint32)m_words.size() - 1, end_word.offset, end_word.length, m_buffer.get_cursor() };
     const key_t prev_key = m_prev_key;
 
     // Should we generate new matches?  Matches are generated for the end word
     // position.  If the end word hasn't changed, then don't generate matches.
     // Since the end word is empty, don't compare the cursor position, so the
     // matches are only collected once for the word position.
-    int update_prev_generate = -1;
+    int32 update_prev_generate = -1;
     if (!is_key_same(prev_key, m_prev_generate.get(), m_prev_generate.length(),
                      next_key, m_buffer.get_buffer(), m_buffer.get_length(),
                      false/*compare_cursor*/))
     {
         line_state line = get_linestate();
         str_iter end_word = line.get_end_word();
-        int len = int(end_word.get_pointer() + end_word.length() - line.get_line());
+        int32 len = int32(end_word.get_pointer() + end_word.length() - line.get_line());
         if (!m_prev_generate.equals(line.get_line(), len))
         {
             // While clink-select-complete is active, generating must be blocked
@@ -1487,7 +1487,7 @@ void line_editor_impl::update_internal()
                      next_key, m_buffer.get_buffer(), m_buffer.get_length(),
                      true/*compare_cursor*/))
     {
-        int needle_start = end_word.offset;
+        int32 needle_start = end_word.offset;
         const char* buf_ptr = m_buffer.get_buffer();
 
         // Strip quotes so `"foo\"ba` can complete to `"foo\bar"`.  Stripping
@@ -1497,7 +1497,7 @@ void line_editor_impl::update_internal()
 
         if (!m_needle.empty() && end_word.quoted)
         {
-            int i = m_needle.length();
+            int32 i = m_needle.length();
             if (m_needle[i - 1] == get_closing_quote(m_desc.get_quote_pair()))
                 m_needle.truncate(i - 1);
         }
@@ -1605,13 +1605,13 @@ matches* maybe_regenerate_matches(const char* needle, display_filter_flags flags
         return nullptr;
 
 #ifdef DEBUG
-    int debug_filter = dbg_get_env_int("DEBUG_FILTER");
+    int32 debug_filter = dbg_get_env_int("DEBUG_FILTER");
     if (debug_filter) puts("REGENERATE_MATCHES");
 #endif
 
     commands commands;
     std::vector<word> words;
-    unsigned int command_offset = s_editor->collect_words(words, &regen, collect_words_mode::stop_at_cursor, commands);
+    uint32 command_offset = s_editor->collect_words(words, &regen, collect_words_mode::stop_at_cursor, commands);
 
     match_pipeline pipeline(regen);
     pipeline.reset();

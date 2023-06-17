@@ -12,7 +12,7 @@
 class line_state;
 
 //------------------------------------------------------------------------------
-enum class word_class : unsigned char
+enum class word_class : uint8
 {
     other = 0,
     unrecognized,   // 'u'
@@ -32,8 +32,8 @@ word_class to_word_class(char wc);
 //------------------------------------------------------------------------------
 struct word_class_info
 {
-    unsigned int    start : 16;
-    unsigned int    end : 16;
+    uint32          start : 16;
+    uint32          end : 16;
     word_class      word_class;
     bool            argmatcher;
 };
@@ -50,27 +50,27 @@ public:
 
     void            clear();
     void            init(size_t line_length, const word_classifications* face_defs);
-    unsigned int    add_command(const line_state& line);
-    void            set_word_has_argmatcher(unsigned int index);
+    uint32          add_command(const line_state& line);
+    void            set_word_has_argmatcher(uint32 index);
     void            finish(bool show_argmatchers);
 
-    unsigned int    size() const { return static_cast<unsigned int>(m_info.size()); }
-    const word_class_info* operator[](unsigned int index) const { return &m_info[index]; }
+    uint32          size() const { return uint32(m_info.size()); }
+    const word_class_info* operator[](uint32 index) const { return &m_info[index]; }
     bool            equals(const word_classifications& other) const;
 
-    bool            get_word_class(unsigned int index, word_class& wc) const;
-    char            get_face(unsigned int pos) const;
+    bool            get_word_class(uint32 index, word_class& wc) const;
+    char            get_face(uint32 pos) const;
     const char*     get_face_output(char face) const;
 
     char            ensure_face(const char* sgr);
-    void            apply_face(unsigned int start, unsigned int len, char face, bool overwrite=true);
-    void            classify_word(unsigned int index, char wc, bool overwrite=true);
-    bool            is_word_classified(unsigned int index);
+    void            apply_face(uint32 start, uint32 len, char face, bool overwrite=true);
+    void            classify_word(uint32 index, char wc, bool overwrite=true);
+    bool            is_word_classified(uint32 index);
 
 private:
     std::vector<word_class_info> m_info;
     std::vector<str_moveable> m_face_definitions;
     char*           m_faces = nullptr;
-    unsigned int    m_length = 0;
+    uint32          m_length = 0;
     faces_map       m_face_map;             // Points into m_face_definitions.
 };

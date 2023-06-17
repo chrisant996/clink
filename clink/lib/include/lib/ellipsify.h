@@ -5,16 +5,16 @@
 
 class str_base;
 
-typedef void (*vstrlen_func_t)(const char* s, int len);
+typedef void (*vstrlen_func_t)(const char* s, int32 len);
 
-int ellipsify(const char* in, int limit, str_base& out, bool expand_ctrl);
-int ellipsify_to_callback(const char* in, int limit, int expand_ctrl, vstrlen_func_t callback);
+int32 ellipsify(const char* in, int32 limit, str_base& out, bool expand_ctrl);
+int32 ellipsify_to_callback(const char* in, int32 limit, int32 expand_ctrl, vstrlen_func_t callback);
 
 extern const char* const ellipsis;
 #ifdef USE_ASCII_ELLIPSIS
-const int ellipsis_len = 3;
-const int ellipsis_cells = 3;
+const int32 ellipsis_len = 3;
+const int32 ellipsis_cells = 3;
 #else
-const int ellipsis_len = 3;
-const int ellipsis_cells = 1;
+const int32 ellipsis_len = 3;
+const int32 ellipsis_cells = 1;
 #endif

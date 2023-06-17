@@ -35,7 +35,7 @@ template <class T>
 class lua_bindable _DBGOBJECT
 {
 public:
-    typedef int         (T::*method_t)(lua_State*);
+    typedef int32       (T::*method_t)(lua_State*);
 
     struct method
     {
@@ -49,14 +49,14 @@ public:
     void                push(lua_State* state);
 
 private:
-    static int          call(lua_State* state);
-    static int          __gc(lua_State* state);
-    static int          __tostring(lua_State* state);
+    static int32        call(lua_State* state);
+    static int32        __gc(lua_State* state);
+    static int32        __tostring(lua_State* state);
     void                make_metatable(lua_State* state);
     void                bind(lua_State* state);
     void                unbind();
     lua_State*          m_state = nullptr;
-    int                 m_registry_ref = LUA_NOREF;
+    int32               m_registry_ref = LUA_NOREF;
     bool                m_owned = false;
 #ifdef DEBUG
     bool                m_deleteable = true;
@@ -132,7 +132,7 @@ void lua_bindable<T>::bind(lua_State* state)
     assert(m_registry_ref == LUA_NOREF);
 
 #ifdef DEBUG
-    int oldtop = lua_gettop(state);
+    int32 oldtop = lua_gettop(state);
 #endif
 
     auto** self = (T**)lua_newuserdata(state, sizeof(void*));
@@ -178,7 +178,7 @@ template <typename... Args>
 T* lua_bindable<T>::make_new(lua_State* state, Args... args)
 {
 #ifdef DEBUG
-    int oldtop = lua_gettop(state);
+    int32 oldtop = lua_gettop(state);
 #endif
 
     auto** self = (T**)lua_newuserdata(state, sizeof(T*));
@@ -195,7 +195,7 @@ T* lua_bindable<T>::make_new(lua_State* state, Args... args)
     (*self)->make_metatable(state);
 
 #ifdef DEBUG
-    int newtop = lua_gettop(state);
+    int32 newtop = lua_gettop(state);
     assert(oldtop + 1 == newtop);
     auto* const* test = (T* const*)luaL_checkudata(state, -1, T::c_name);
     assert(test == self);
@@ -210,7 +210,7 @@ template <class T>
 void lua_bindable<T>::push(lua_State* state)
 {
 #ifdef DEBUG
-    int top = lua_gettop(state);
+    int32 top = lua_gettop(state);
 #endif
 
     if (m_registry_ref == LUA_NOREF)
@@ -225,7 +225,7 @@ void lua_bindable<T>::push(lua_State* state)
 
 //------------------------------------------------------------------------------
 template <class T>
-int lua_bindable<T>::call(lua_State* state)
+int32 lua_bindable<T>::call(lua_State* state)
 {
     auto* const* self = (T* const*)lua_touserdata(state, 2);
     if (self == nullptr || *self == nullptr)
@@ -243,7 +243,7 @@ int lua_bindable<T>::call(lua_State* state)
 
 //------------------------------------------------------------------------------
 template <class T>
-int lua_bindable<T>::__gc(lua_State* state)
+int32 lua_bindable<T>::__gc(lua_State* state)
 {
     auto* const* self = (T* const*)luaL_checkudata(state, 1, T::c_name);
     if (self && *self && (*self)->m_owned)
@@ -258,7 +258,7 @@ int lua_bindable<T>::__gc(lua_State* state)
 
 //------------------------------------------------------------------------------
 template <class T>
-int lua_bindable<T>::__tostring(lua_State* state)
+int32 lua_bindable<T>::__tostring(lua_State* state)
 {
     auto* const* self = (T* const*)luaL_checkudata(state, 1, T::c_name);
     lua_pushfstring(state, "%s (%p %p)", T::c_name, self, self ? *self : nullptr);

@@ -11,10 +11,10 @@ class terminal_out;
 extern printer* g_printer;
 
 //------------------------------------------------------------------------------
-extern "C" int is_locked_cursor();
-extern "C" int lock_cursor(int lock);
-extern "C" int show_cursor(int visible);
-extern "C" int cursor_style(HANDLE handle, int style, int visible);
+extern "C" int32 is_locked_cursor();
+extern "C" int32 lock_cursor(int32 lock);
+extern "C" int32 show_cursor(int32 visible);
+extern "C" int32 cursor_style(HANDLE handle, int32 style, int32 visible);
 extern "C" void use_host_input_mode(void);
 extern "C" void use_clink_input_mode(void);
 extern "C" DWORD select_mouse_input(DWORD mode);

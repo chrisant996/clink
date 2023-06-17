@@ -25,26 +25,26 @@ bool scroll_helper::can_scroll() const
 }
 
 //------------------------------------------------------------------------------
-unsigned int scroll_helper::scroll_speed() const
+uint32 scroll_helper::scroll_speed() const
 {
     return m_scroll_speed;
 }
 
 //------------------------------------------------------------------------------
-unsigned int scroll_helper::on_input()
+uint32 scroll_helper::on_input()
 {
-    const unsigned int now = GetTickCount();
+    const uint32 now = GetTickCount();
     m_can_scroll = (now - m_scroll_tick) > 15;
     if (now - m_scroll_tick > 250)
         m_accelerate_tick = now;
-    const unsigned int accelerate_duration = (now - m_accelerate_tick);
+    const uint32 accelerate_duration = (now - m_accelerate_tick);
     m_scroll_speed = ((accelerate_duration > 2000) ? 10 :
                       (accelerate_duration > 1000) ? 3 : 1);
     return now;
 }
 
 //------------------------------------------------------------------------------
-void scroll_helper::on_scroll(unsigned int now)
+void scroll_helper::on_scroll(uint32 now)
 {
     m_scroll_tick = now;
 }

@@ -12,7 +12,7 @@ logger::~logger()
 }
 
 //------------------------------------------------------------------------------
-void logger::info(const char* function, int line, const char* fmt, ...)
+void logger::info(const char* function, int32 line, const char* fmt, ...)
 {
     logger* instance = logger::get();
     if (instance == nullptr)
@@ -30,7 +30,7 @@ void logger::info(const char* function, int line, const char* fmt, ...)
 }
 
 //------------------------------------------------------------------------------
-void logger::error(const char* function, int line, const char* fmt, ...)
+void logger::error(const char* function, int32 line, const char* fmt, ...)
 {
     logger* instance = logger::get();
     if (instance == nullptr)
@@ -61,7 +61,7 @@ bool logger::can_defer()
 }
 
 //------------------------------------------------------------------------------
-void logger::defer_info(const char* function, int line, const char* fmt, ...)
+void logger::defer_info(const char* function, int32 line, const char* fmt, ...)
 {
     logger* instance = logger::get();
     if (instance == nullptr)
@@ -110,7 +110,7 @@ file_logger::~file_logger()
 }
 
 //------------------------------------------------------------------------------
-void file_logger::emit(const char* function, int line, const char* fmt, va_list args)
+void file_logger::emit(const char* function, int32 line, const char* fmt, va_list args)
 {
     FILE* file;
 

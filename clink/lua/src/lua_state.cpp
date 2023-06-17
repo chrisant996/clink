@@ -90,23 +90,23 @@ void log_lua_initialise(lua_state&);
 
 
 //------------------------------------------------------------------------------
-int checkinteger(lua_State* state, int index, bool* pisnum)
+int32 checkinteger(lua_State* state, int32 index, bool* pisnum)
 {
-    int isnum;
+    int32 isnum;
     lua_Integer d = lua_tointegerx(state, index, &isnum);
     if (pisnum)
         *pisnum = !!isnum;
     if (isnum)
-        return int(d);
+        return int32(d);
 
     if (g_lua_strict.get())
-        return int(luaL_checkinteger(state, index));
+        return int32(luaL_checkinteger(state, index));
 
     return 0;
 }
 
 //------------------------------------------------------------------------------
-int optinteger(lua_State* state, int index, int default_value, bool* pisnum)
+int32 optinteger(lua_State* state, int32 index, int32 default_value, bool* pisnum)
 {
     if (lua_isnoneornil(state, index))
     {
@@ -119,9 +119,9 @@ int optinteger(lua_State* state, int index, int default_value, bool* pisnum)
 }
 
 //------------------------------------------------------------------------------
-lua_Number checknumber(lua_State* state, int index, bool* pisnum)
+lua_Number checknumber(lua_State* state, int32 index, bool* pisnum)
 {
-    int isnum;
+    int32 isnum;
     lua_Number d = lua_tonumberx(state, index, &isnum);
     if (pisnum)
         *pisnum = !!isnum;
@@ -135,7 +135,7 @@ lua_Number checknumber(lua_State* state, int index, bool* pisnum)
 }
 
 //------------------------------------------------------------------------------
-lua_Number optnumber(lua_State* state, int index, lua_Number default_value, bool* pisnum)
+lua_Number optnumber(lua_State* state, int32 index, lua_Number default_value, bool* pisnum)
 {
     if (lua_isnoneornil(state, index))
     {
@@ -148,7 +148,7 @@ lua_Number optnumber(lua_State* state, int index, lua_Number default_value, bool
 }
 
 //------------------------------------------------------------------------------
-const char* checkstring(lua_State* state, int index)
+const char* checkstring(lua_State* state, int32 index)
 {
     if (g_lua_strict.get())
         return luaL_checkstring(state, index);
@@ -160,7 +160,7 @@ const char* checkstring(lua_State* state, int index)
 }
 
 //------------------------------------------------------------------------------
-const char* optstring(lua_State* state, int index, const char* default_value)
+const char* optstring(lua_State* state, int32 index, const char* default_value)
 {
     if (g_lua_strict.get())
         return luaL_optstring(state, index, default_value);
@@ -195,8 +195,8 @@ void lua_state::initialise(lua_state_flags flags)
 {
     shutdown();
 
-    const bool interpreter = !!int(flags & lua_state_flags::interpreter);
-    const bool no_env = !!int(flags & lua_state_flags::no_env);
+    const bool interpreter = !!int32(flags & lua_state_flags::interpreter);
+    const bool no_env = !!int32(flags & lua_state_flags::no_env);
 
     s_interpreter = interpreter;
 
@@ -290,14 +290,14 @@ void lua_state::shutdown()
 }
 
 //------------------------------------------------------------------------------
-bool lua_state::do_string(const char* string, int length)
+bool lua_state::do_string(const char* string, int32 length)
 {
     save_stack_top ss(m_state);
 
     if (length < 0)
-        length = int(strlen(string));
+        length = int32(strlen(string));
 
-    int err = luaL_loadbuffer(m_state, string, length, string);
+    int32 err = luaL_loadbuffer(m_state, string, length, string);
     if (err)
     {
         if (g_lua_debug.get())
@@ -320,7 +320,7 @@ bool lua_state::do_file(const char* path)
 {
     save_stack_top ss(m_state);
 
-    int err = luaL_loadfile(m_state, path);
+    int32 err = luaL_loadfile(m_state, path);
     if (err)
     {
         if (g_lua_debug.get())
@@ -383,7 +383,7 @@ report_error:
             lua_rawget(state, -2);
 
             global.clear();
-            global.concat(func_name, int(part.get_pointer() - func_name + part.length()));
+            global.concat(func_name, int32(part.get_pointer() - func_name + part.length()));
         }
     }
 
@@ -400,7 +400,7 @@ report_error:
 }
 
 //------------------------------------------------------------------------------
-int lua_state::pcall_silent(lua_State* L, int nargs, int nresults)
+int32 lua_state::pcall_silent(lua_State* L, int32 nargs, int32 nresults)
 {
     // Lua scripts can have a side effect of changing the console mode (e.g. if
     // they spawn another process, such as in a prompt filter), so always
@@ -412,7 +412,7 @@ int lua_state::pcall_silent(lua_State* L, int nargs, int nresults)
     GetConsoleMode(hOut, &modeOut);
 
     // Calculate stack position for message handler.
-    int hpos = lua_gettop(L) - nargs;
+    int32 hpos = lua_gettop(L) - nargs;
 
     // Push our error message handler.
     lua_getglobal(L, "_error_handler");
@@ -421,7 +421,7 @@ int lua_state::pcall_silent(lua_State* L, int nargs, int nresults)
     lua_insert(L, hpos);
 
     // Call lua_pcall with custom handler.
-    int ret = lua_pcall(L, nargs, nresults, hpos);
+    int32 ret = lua_pcall(L, nargs, nresults, hpos);
 
     // Remove custom error message handler from stack.
     lua_remove(L, hpos);
@@ -433,9 +433,9 @@ int lua_state::pcall_silent(lua_State* L, int nargs, int nresults)
 }
 
 //------------------------------------------------------------------------------
-int lua_state::pcall(lua_State* L, int nargs, int nresults)
+int32 lua_state::pcall(lua_State* L, int32 nargs, int32 nresults)
 {
-    const int ret = pcall_silent(L, nargs, nresults);
+    const int32 ret = pcall_silent(L, nargs, nresults);
     if (ret != 0)
     {
         if (const char* error = lua_tostring(L, -1))
@@ -449,7 +449,7 @@ int lua_state::pcall(lua_State* L, int nargs, int nresults)
 
 //------------------------------------------------------------------------------
 #ifdef DEBUG
-void dump_lua_stack(lua_State* state, int pos)
+void dump_lua_stack(lua_State* state, int32 pos)
 {
     static const char *const lua_type_names[] =
     {
@@ -465,14 +465,14 @@ void dump_lua_stack(lua_State* state, int pos)
         "LUA_TTHREAD",
     };
 
-    int top = lua_gettop(state);
+    int32 top = lua_gettop(state);
     if (pos >= 0)
         pos -= top;
 
     printf("LUA_STACK from %d to %d:\n", top + pos, top);
     while (pos < 0)
     {
-        int type = lua_type(state, pos);
+        int32 type = lua_type(state, pos);
         const char* type_name = lua_type_names[type + 1];
 
         printf("[%d] type %s ", pos, type_name);
@@ -514,13 +514,13 @@ void dump_lua_stack(lua_State* state, int pos)
 // passed by passing nargs equal to the number of pushed arguments.  On success,
 // the stack is left with nret return values.  On error, the stack is popped to
 // the original level and then nargs are popped.
-bool lua_state::send_event_internal(const char* event_name, const char* event_mechanism, int nargs, int nret)
+bool lua_state::send_event_internal(const char* event_name, const char* event_mechanism, int32 nargs, int32 nret)
 {
     bool ret = false;
     lua_State* state = get_state();
 
-    int top = lua_gettop(state);
-    int pos = top - nargs;
+    int32 top = lua_gettop(state);
+    int32 pos = top - nargs;
     assert(pos >= 0);
 
     // Push the global _send_event function.
@@ -542,7 +542,7 @@ bool lua_state::send_event_internal(const char* event_name, const char* event_me
     // Move event name and mechanism (e.g. "_send_event") before nargs.
     if (pos < top)
     {
-        int ins = pos - lua_gettop(state);
+        int32 ins = pos - lua_gettop(state);
         lua_insert(state, ins);
         lua_insert(state, ins);
     }
@@ -556,14 +556,14 @@ bool lua_state::send_event_internal(const char* event_name, const char* event_me
 
 //------------------------------------------------------------------------------
 // Calls any event_name callbacks registered by scripts.
-bool lua_state::send_event(const char* event_name, int nargs)
+bool lua_state::send_event(const char* event_name, int32 nargs)
 {
     return send_event_internal(event_name, "_send_event", nargs);
 }
 
 //------------------------------------------------------------------------------
 // Calls any event_name callbacks registered by scripts.
-bool lua_state::send_event_string_out(const char* event_name, str_base& out, int nargs)
+bool lua_state::send_event_string_out(const char* event_name, str_base& out, int32 nargs)
 {
     if (!send_event_internal(event_name, "_send_event_string_out", nargs, 1))
         return false;
@@ -576,7 +576,7 @@ bool lua_state::send_event_string_out(const char* event_name, str_base& out, int
 
 //------------------------------------------------------------------------------
 // Calls any event_name callbacks registered by scripts.
-bool lua_state::send_event_cancelable(const char* event_name, int nargs)
+bool lua_state::send_event_cancelable(const char* event_name, int32 nargs)
 {
     return send_event_internal(event_name, "_send_event_cancelable", nargs);
 }
@@ -602,7 +602,7 @@ bool lua_state::send_event_cancelable_string_inout(const char* event_name, const
         out.clear();
 
         const size_t len = lua_rawlen(m_state, -1);
-        for (unsigned int i = 1; i <= len; ++i)
+        for (uint32 i = 1; i <= len; ++i)
         {
             lua_rawgeti(m_state, -1, i);
             if (lua_isstring(m_state, -1))
@@ -715,7 +715,7 @@ bool lua_state::call_lua_rl_global_function(const char* func_name, line_state* l
 
 //------------------------------------------------------------------------------
 #ifdef DEBUG
-void lua_state::dump_stack(int pos)
+void lua_state::dump_stack(int32 pos)
 {
     dump_lua_stack(get_state(), pos);
 }

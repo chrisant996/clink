@@ -17,9 +17,9 @@ static bool s_can_strip_quotes = false;
 //------------------------------------------------------------------------------
 line_state::line_state(
     const char* line,
-    unsigned int length,
-    unsigned int cursor,
-    unsigned int command_offset,
+    uint32 length,
+    uint32 cursor,
+    uint32 command_offset,
     const std::vector<word>& words)
 : m_words(words)
 , m_line(line)
@@ -36,27 +36,27 @@ const char* line_state::get_line() const
 }
 
 //------------------------------------------------------------------------------
-unsigned int line_state::get_length() const
+uint32 line_state::get_length() const
 {
     return m_length;
 }
 
 //------------------------------------------------------------------------------
-unsigned int line_state::get_cursor() const
+uint32 line_state::get_cursor() const
 {
     return m_cursor;
 }
 
 //------------------------------------------------------------------------------
-unsigned int line_state::get_command_offset() const
+uint32 line_state::get_command_offset() const
 {
     return m_command_offset;
 }
 
 //------------------------------------------------------------------------------
-unsigned int line_state::get_command_word_index() const
+uint32 line_state::get_command_word_index() const
 {
-    unsigned int i = 0;
+    uint32 i = 0;
     while (i < m_words.size())
     {
         if (!m_words[i].is_redir_arg)
@@ -67,7 +67,7 @@ unsigned int line_state::get_command_word_index() const
 }
 
 //------------------------------------------------------------------------------
-unsigned int line_state::get_end_word_offset() const
+uint32 line_state::get_end_word_offset() const
 {
     if (m_words.size() > 0)
         return m_words.back().offset;
@@ -81,13 +81,13 @@ const std::vector<word>& line_state::get_words() const
 }
 
 //------------------------------------------------------------------------------
-unsigned int line_state::get_word_count() const
+uint32 line_state::get_word_count() const
 {
-    return (unsigned int)m_words.size();
+    return (uint32)m_words.size();
 }
 
 //------------------------------------------------------------------------------
-bool line_state::get_word(unsigned int index, str_base& out) const
+bool line_state::get_word(uint32 index, str_base& out) const
 {
     // MAY STRIP quotes.
     if (index < m_words.size())
@@ -112,7 +112,7 @@ bool line_state::get_word(unsigned int index, str_base& out) const
 }
 
 //------------------------------------------------------------------------------
-str_iter line_state::get_word(unsigned int index) const
+str_iter line_state::get_word(uint32 index) const
 {
     // Never strips quotes.
     if (index < m_words.size())
@@ -128,7 +128,7 @@ str_iter line_state::get_word(unsigned int index) const
 bool line_state::get_end_word(str_base& out) const
 {
     // MAY STRIP quotes.
-    int n = get_word_count();
+    int32 n = get_word_count();
     return (n ? get_word(n - 1, out) : false);
 }
 
@@ -136,7 +136,7 @@ bool line_state::get_end_word(str_base& out) const
 str_iter line_state::get_end_word() const
 {
     // Never strips quotes.
-    int n = get_word_count();
+    int32 n = get_word_count();
     return (n ? get_word(n - 1) : str_iter());
 }
 

@@ -9,7 +9,7 @@
 #include <assert.h>
 
 //------------------------------------------------------------------------------
-linear_allocator::linear_allocator(unsigned int size)
+linear_allocator::linear_allocator(uint32 size)
 : m_used(size)
 , m_max(size)
 {
@@ -38,7 +38,7 @@ linear_allocator& linear_allocator::operator = (linear_allocator&& o)
 }
 
 //------------------------------------------------------------------------------
-void* linear_allocator::alloc(unsigned int size)
+void* linear_allocator::alloc(uint32 size)
 {
     if (size == 0)
         return nullptr;
@@ -68,7 +68,7 @@ void* linear_allocator::alloc(unsigned int size)
 //------------------------------------------------------------------------------
 const char* linear_allocator::store(const char* str)
 {
-    const unsigned int size = static_cast<unsigned int>(str ? strlen(str) + 1 : 1);
+    const uint32 size = uint32(str ? strlen(str) + 1 : 1);
     char* ret = (char*)alloc(size);
     if (!ret)
         return nullptr;

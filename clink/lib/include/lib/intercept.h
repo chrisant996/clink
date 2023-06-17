@@ -6,7 +6,7 @@
 class str_base;
 
 //------------------------------------------------------------------------------
-enum class intercept_result : unsigned char
+enum class intercept_result : uint8
 {
     none,
     prev_dir,

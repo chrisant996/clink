@@ -19,25 +19,25 @@ public:
                     match_builder_lua(match_builder& builder);
                     match_builder_lua(std::shared_ptr<match_builder_toolkit>& toolkit);
                     ~match_builder_lua();
-    int             add_match(lua_State* state);
-    int             add_matches(lua_State* state);
-    int             is_empty(lua_State* state);
-    int             set_append_character(lua_State* state);
-    int             set_suppress_append(lua_State* state);
-    int             set_suppress_quoting(lua_State* state);
-    int             set_force_quoting(lua_State* state);
-    int             set_no_sort(lua_State* state);
-    int             set_volatile(lua_State* state);
+    int32           add_match(lua_State* state);
+    int32           add_matches(lua_State* state);
+    int32           is_empty(lua_State* state);
+    int32           set_append_character(lua_State* state);
+    int32           set_suppress_append(lua_State* state);
+    int32           set_suppress_quoting(lua_State* state);
+    int32           set_force_quoting(lua_State* state);
+    int32           set_no_sort(lua_State* state);
+    int32           set_volatile(lua_State* state);
 
-    int             deprecated_add_match(lua_State* state);
-    int             set_matches_are_files(lua_State* state);
+    int32           deprecated_add_match(lua_State* state);
+    int32           set_matches_are_files(lua_State* state);
 
-    int             clear_toolkit(lua_State* state);
-    int             set_input_line(lua_State* state);
-    int             matches_ready(lua_State* state);
+    int32           clear_toolkit(lua_State* state);
+    int32           set_input_line(lua_State* state);
+    int32           matches_ready(lua_State* state);
 
 private:
-    bool            add_match_impl(lua_State* state, int stack_index, match_type type);
+    bool            add_match_impl(lua_State* state, int32 stack_index, match_type type);
     match_builder*  m_builder;
     std::shared_ptr<match_builder_toolkit> m_toolkit;
 

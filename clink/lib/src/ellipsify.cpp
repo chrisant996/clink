@@ -24,10 +24,10 @@ static_assert(ellipsis_cells == 1, "Ellipsis column width is inaccurate.");
 #endif
 
 //------------------------------------------------------------------------------
-int ellipsify_to_callback(const char* in, int limit, int expand_ctrl, vstrlen_func_t callback)
+int32 ellipsify_to_callback(const char* in, int32 limit, int32 expand_ctrl, vstrlen_func_t callback)
 {
     str<> s;
-    int visible_len = ellipsify(in, limit, s, !!expand_ctrl);
+    int32 visible_len = ellipsify(in, limit, s, !!expand_ctrl);
     callback(s.c_str(), s.length());
     return visible_len;
 }
@@ -41,11 +41,11 @@ int ellipsify_to_callback(const char* in, int limit, int expand_ctrl, vstrlen_fu
 //
 // Pass true for expand_ctrl if control characters will end up being displayed
 // as two characters, e.g. "^C" or "^[".
-int ellipsify(const char* in, int limit, str_base& out, bool expand_ctrl)
+int32 ellipsify(const char* in, int32 limit, str_base& out, bool expand_ctrl)
 {
-    int visible_len = 0;
-    int truncate_visible = -1;
-    int truncate_bytes = -1;
+    int32 visible_len = 0;
+    int32 truncate_visible = -1;
+    int32 truncate_bytes = -1;
 
     out.clear();
 
@@ -60,9 +60,9 @@ int ellipsify(const char* in, int limit, str_base& out, bool expand_ctrl)
         {
             const char* prev = code.get_pointer();
             str_iter inner_iter(code.get_pointer(), code.get_length());
-            while (const int c = inner_iter.next())
+            while (const int32 c = inner_iter.next())
             {
-                const int clen = (expand_ctrl && (CTRL_CHAR(c) || c == RUBOUT)) ? 2 : clink_wcwidth(c);
+                const int32 clen = (expand_ctrl && (CTRL_CHAR(c) || c == RUBOUT)) ? 2 : clink_wcwidth(c);
                 if (truncate_visible < 0 && visible_len + clen > limit - ellipsis_cells)
                 {
                     truncate_visible = visible_len;
@@ -73,7 +73,7 @@ int ellipsify(const char* in, int limit, str_base& out, bool expand_ctrl)
                     out.truncate(truncate_bytes);
                     visible_len = truncate_visible;
 #ifdef USE_ASCII_ELLIPSIS
-                    out.concat(ellipsis, min<int>(ellipsis_len, max<int>(0, limit - truncate_visible)));
+                    out.concat(ellipsis, min<int32>(ellipsis_len, max<int32>(0, limit - truncate_visible)));
 #else
                     static_assert(ellipsis_cells == 1, "Ellipsis must be exactly 1 cell.");
                     assert(cell_count(ellipsis) == 1);
@@ -83,7 +83,7 @@ int ellipsify(const char* in, int limit, str_base& out, bool expand_ctrl)
                     return visible_len;
                 }
                 visible_len += clen;
-                out.concat(prev, static_cast<int>(inner_iter.get_pointer() - prev));
+                out.concat(prev, int32(inner_iter.get_pointer() - prev));
                 prev = inner_iter.get_pointer();
             }
         }

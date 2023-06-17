@@ -11,7 +11,7 @@
 class ecma48_wrapper
 {
 public:
-                            ecma48_wrapper(const char* in, unsigned int wrap);
+                            ecma48_wrapper(const char* in, uint32 wrap);
     bool                    next(str_base& out);
 private:
     std::vector<str_iter>   m_lines;

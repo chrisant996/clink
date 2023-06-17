@@ -29,7 +29,7 @@ extern "C" {
 #include <readline/readline.h>
 #include <readline/rlprivate.h>
 #include <readline/history.h>
-extern int _rl_last_v_pos;
+extern int32 _rl_last_v_pos;
 };
 
 
@@ -71,24 +71,24 @@ extern setting_enum g_ignore_case;
 extern setting_bool g_fuzzy_accent;
 extern const char* get_popup_colors();
 extern const char* get_popup_desc_colors();
-extern int host_remove_history(int rl_history_index, const char* line);
-extern bool host_remove_dir_history(int index);
+extern int32 host_remove_history(int32 rl_history_index, const char* line);
+extern bool host_remove_dir_history(int32 index);
 extern void force_signaled_redisplay();
 extern void interrupt_input();
 
 //------------------------------------------------------------------------------
 static textlist_impl* s_textlist = nullptr;
 static bool s_standalone = false;
-const int min_screen_cols = 20;
+const int32 min_screen_cols = 20;
 
 //------------------------------------------------------------------------------
-static int make_item(const char* in, str_base& out, bool* any_ctrl=nullptr)
+static int32 make_item(const char* in, str_base& out, bool* any_ctrl=nullptr)
 {
     bool ac = false;
     out.clear();
 
-    int cells = 0;
-    for (str_iter iter(in, strlen(in)); int c = iter.next(); in = iter.get_pointer())
+    int32 cells = 0;
+    for (str_iter iter(in, strlen(in)); int32 c = iter.next(); in = iter.get_pointer())
     {
         if (unsigned(c) < ' ')
         {
@@ -100,7 +100,7 @@ static int make_item(const char* in, str_base& out, bool* any_ctrl=nullptr)
         }
         else
         {
-            out.concat(in, int(iter.get_pointer() - in));
+            out.concat(in, int32(iter.get_pointer() - in));
             cells += clink_wcwidth(c);
         }
     }
@@ -111,20 +111,20 @@ static int make_item(const char* in, str_base& out, bool* any_ctrl=nullptr)
 }
 
 //------------------------------------------------------------------------------
-static int make_column(const char* in, const char* end, str_base& out)
+static int32 make_column(const char* in, const char* end, str_base& out)
 {
     out.clear();
 
-    int cells = 0;
+    int32 cells = 0;
 
     ecma48_state state;
-    ecma48_iter iter(in, state, end ? int(end - in) : -1);
+    ecma48_iter iter(in, state, end ? int32(end - in) : -1);
     while (const ecma48_code& code = iter.next())
         if (code.get_type() == ecma48_code::type_chars)
         {
             const char* p = code.get_pointer();
             for (str_iter inner_iter(code.get_pointer(), code.get_length());
-                 int c = inner_iter.next();
+                 int32 c = inner_iter.next();
                  p = inner_iter.get_pointer())
             {
                 if (c == '\r' || c == '\n')
@@ -141,7 +141,7 @@ static int make_column(const char* in, const char* end, str_base& out)
                 }
                 else
                 {
-                    out.concat(p, int(inner_iter.get_pointer() - p));
+                    out.concat(p, int32(inner_iter.get_pointer() - p));
                     cells += clink_wcwidth(c);
                 }
             }
@@ -151,19 +151,19 @@ static int make_column(const char* in, const char* end, str_base& out)
 }
 
 //------------------------------------------------------------------------------
-static void make_spaces(int num, str_base& out)
+static void make_spaces(int32 num, str_base& out)
 {
     out.clear();
     while (num > 0)
     {
-        int chunk = min<int>(32, num);
+        int32 chunk = min<int32>(32, num);
         out.concat("                                ", chunk);
         num -= chunk;
     }
 }
 
 //------------------------------------------------------------------------------
-static int limit_cells(const char* in, int limit, int& cells, int horz_offset=0, str_base* out=nullptr, const char** text_ptr=nullptr)
+static int32 limit_cells(const char* in, int32 limit, int32& cells, int32 horz_offset=0, str_base* out=nullptr, const char** text_ptr=nullptr)
 {
     if (out)
         out->clear();
@@ -175,14 +175,14 @@ static int limit_cells(const char* in, int limit, int& cells, int horz_offset=0,
 
     if (horz_offset)
     {
-        int skip = horz_offset;
+        int32 skip = horz_offset;
         const char* const orig = in;
         while (skip > 0)
         {
-            const int c = iter.next();
+            const int32 c = iter.next();
             if (!c)
                 break;
-            const int width = clink_wcwidth(c);
+            const int32 width = clink_wcwidth(c);
             if (width > 0)
             {
                 skip -= width;
@@ -196,10 +196,10 @@ static int limit_cells(const char* in, int limit, int& cells, int horz_offset=0,
             cells += ellipsis_cells;
             for (skip = ellipsis_cells; skip > 0;)
             {
-                const int c = iter.next();
+                const int32 c = iter.next();
                 if (!c)
                     break;
-                const int width = clink_wcwidth(c);
+                const int32 width = clink_wcwidth(c);
                 if (width > 0)
                 {
                     skip -= width;
@@ -211,16 +211,16 @@ static int limit_cells(const char* in, int limit, int& cells, int horz_offset=0,
 
     const char* end = in;
     const char* end_truncate = nullptr;
-    int cells_truncate = 0;
+    int32 cells_truncate = 0;
     bool limited = false;
-    const int reserve = out ? ellipsis_cells : 0;
+    const int32 reserve = out ? ellipsis_cells : 0;
     while (true)
     {
         end = iter.get_pointer();
-        const int c = iter.next();
+        const int32 c = iter.next();
         if (!c)
             break;
-        const int width = clink_wcwidth(c);
+        const int32 width = clink_wcwidth(c);
         if (cells + width > limit - reserve)
         {
             if (!end_truncate)
@@ -241,7 +241,7 @@ static int limit_cells(const char* in, int limit, int& cells, int horz_offset=0,
 
     if (out && (out->length() || limited))
     {
-        out->concat(in, int(end - in));
+        out->concat(in, int32(end - in));
         if (limited && cells + ellipsis_cells <= limit)
         {
             out->concat(ellipsis, ellipsis_len);
@@ -254,7 +254,7 @@ static int limit_cells(const char* in, int limit, int& cells, int horz_offset=0,
 
     if (text_ptr)
         *text_ptr = in;
-    return int(end - in);
+    return int32(end - in);
 }
 
 //------------------------------------------------------------------------------
@@ -265,7 +265,7 @@ static bool strstr_compare(const str_base& needle, const char* haystack)
         str_iter sift(haystack);
         while (sift.more())
         {
-            int cmp = str_compare(needle.c_str(), sift.get_pointer());
+            int32 cmp = str_compare(needle.c_str(), sift.get_pointer());
             if (cmp == -1 || cmp == needle.length())
                 return true;
             sift.next();
@@ -278,7 +278,7 @@ static bool strstr_compare(const str_base& needle, const char* haystack)
 
 
 //------------------------------------------------------------------------------
-static void standalone_textlist_sighandler(int sig)
+static void standalone_textlist_sighandler(int32 sig)
 {
     // raise() clears the signal handler, so set it again.
     signal(sig, standalone_textlist_sighandler);
@@ -288,7 +288,7 @@ static void standalone_textlist_sighandler(int sig)
 
 
 //------------------------------------------------------------------------------
-popup_results::popup_results(popup_result result, int index, const char* text)
+popup_results::popup_results(popup_result result, int32 index, const char* text)
     : m_result(result)
     , m_index(index)
     , m_text(text)
@@ -312,13 +312,13 @@ textlist_impl::addl_columns::addl_columns(textlist_impl::item_store& store)
 }
 
 //------------------------------------------------------------------------------
-const char* textlist_impl::addl_columns::get_col_text(int row, int col) const
+const char* textlist_impl::addl_columns::get_col_text(int32 row, int32 col) const
 {
     return m_rows[row].column[col];
 }
 
 //------------------------------------------------------------------------------
-int textlist_impl::addl_columns::get_col_width(int col) const
+int32 textlist_impl::addl_columns::get_col_width(int32 col) const
 {
     return m_longest[col];
 }
@@ -337,14 +337,14 @@ const char* textlist_impl::addl_columns::add_entry(const char* ptr)
     if (*ptr)
     {
         str<> tmp;
-        int col = 0;
+        int32 col = 0;
         bool any_tabs = false;
         while (col < sizeof_array(column_text.column))
         {
             const char* tab = strchr(ptr, '\t');
-            const int cells = make_column(ptr, tab, tmp);
+            const int32 cells = make_column(ptr, tab, tmp);
             column_text.column[col] = m_store.add(tmp.c_str());
-            m_longest[col] = max<int>(m_longest[col], cells);
+            m_longest[col] = max<int32>(m_longest[col], cells);
             ptr = tab;
             if (!ptr)
                 break;
@@ -385,7 +385,7 @@ textlist_impl::textlist_impl(input_dispatcher& dispatcher)
 }
 
 //------------------------------------------------------------------------------
-popup_results textlist_impl::activate(const char* title, const char** entries, int count, int index, bool reverse, textlist_mode mode, entry_info* infos, bool has_columns, const popup_config* config)
+popup_results textlist_impl::activate(const char* title, const char** entries, int32 count, int32 index, bool reverse, textlist_mode mode, entry_info* infos, bool has_columns, const popup_config* config)
 {
     reset();
     m_results.clear();
@@ -432,7 +432,7 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
     }
 
     // Signal handler when standalone, so Ctrl-Break can erase the popup list.
-    typedef void (__cdecl sig_func_t)(int);
+    typedef void (__cdecl sig_func_t)(int32);
     sig_func_t* old_int = nullptr;
     sig_func_t* old_break = nullptr;
     if (s_standalone)
@@ -448,14 +448,14 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
     // Gather the items.
     str<> tmp;
     bool any_ctrl = false;
-    for (int i = 0; i < count; i++)
+    for (int32 i = 0; i < count; i++)
     {
         const char* text;
         if (has_columns)
             text = m_columns.add_entry(m_entries[i]);
         else
             text = m_entries[i];
-        m_longest = max<int>(m_longest, make_item(text, tmp, &any_ctrl));
+        m_longest = max<int32>(m_longest, make_item(text, tmp, &any_ctrl));
         m_items.push_back(m_store.add(tmp.c_str()));
     }
     m_has_columns = has_columns;
@@ -468,12 +468,12 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
     if (index < 0)
     {
         m_index = m_count - 1;
-        m_top = max<int>(0, m_count - m_visible_rows);
+        m_top = max<int32>(0, m_count - m_visible_rows);
     }
     else
     {
         m_index = index;
-        m_top = max<int>(0, min<int>(m_index - (m_visible_rows / 2), m_count - m_visible_rows));
+        m_top = max<int32>(0, min<int32>(m_index - (m_visible_rows / 2), m_count - m_visible_rows));
     }
 
     show_cursor(false);
@@ -516,7 +516,7 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
         signal(SIGBREAK, old_break);
         signal(SIGINT, old_int);
         // Re-raise the signal so the interpreter's signal handler can respond.
-        const int sig = clink_is_signaled();
+        const int32 sig = clink_is_signaled();
         if (sig)
             raise(sig);
     }
@@ -614,7 +614,7 @@ void textlist_impl::on_end_line()
 }
 
 //------------------------------------------------------------------------------
-static void advance_index(int& i, int direction, int max_count)
+static void advance_index(int32& i, int32 direction, int32 max_count)
 {
     i += direction;
     if (direction < 0)
@@ -671,8 +671,8 @@ navigated:
     case bind_id_textlist_pgup:
     case bind_id_textlist_pgdn:
         {
-            const int y = m_index;
-            const int rows = min<int>(m_count, m_visible_rows);
+            const int32 y = m_index;
+            const int32 rows = min<int32>(m_count, m_visible_rows);
 
             // Use rows as the page size (vs the more common rows-1) for
             // compatibility with Conhost's F7 popup list behavior.
@@ -680,7 +680,7 @@ navigated:
             {
                 if (y > 0)
                 {
-                    int new_y = max<int>(0, (y == m_top) ? y - rows : m_top);
+                    int32 new_y = max<int32>(0, (y == m_top) ? y - rows : m_top);
                     m_index += (new_y - y);
                     goto navigated;
                 }
@@ -689,12 +689,12 @@ navigated:
             {
                 if (y < m_count - 1)
                 {
-                    int bottom_y = m_top + rows - 1;
-                    int new_y = min<int>(m_count - 1, (y == bottom_y) ? y + rows : bottom_y);
+                    int32 bottom_y = m_top + rows - 1;
+                    int32 new_y = min<int32>(m_count - 1, (y == bottom_y) ? y + rows : bottom_y);
                     m_index += (new_y - y);
                     if (m_index > m_count - 1)
                     {
-                        set_top(max<int>(0, m_count - m_visible_rows));
+                        set_top(max<int32>(0, m_count - m_visible_rows));
                         m_index = m_count - 1;
                     }
                     goto navigated;
@@ -720,29 +720,29 @@ find:
         }
         else
         {
-            int direction = (input.id == bind_id_textlist_findprev) ? -1 : 1;
+            int32 direction = (input.id == bind_id_textlist_findprev) ? -1 : 1;
             if (m_reverse)
                 direction = 0 - direction;
 
-            int mode = g_ignore_case.get();
+            int32 mode = g_ignore_case.get();
             if (mode < 0 || mode >= str_compare_scope::num_scope_values)
                 mode = str_compare_scope::exact;
             str_compare_scope _(mode, g_fuzzy_accent.get());
 
-            int i = m_index;
+            int32 i = m_index;
             if (from_begin)
                 i = m_reverse ? m_count - 1 : 0;
 
             if (input.id == bind_id_textlist_findnext || input.id == bind_id_textlist_findprev)
                 advance_index(i, direction, m_count);
 
-            int original = i;
+            int32 original = i;
             while (true)
             {
                 bool match = strstr_compare(m_needle, m_items[i]);
                 if (m_has_columns)
                 {
-                    for (int col = 0; !match && col < max_columns; col++)
+                    for (int32 col = 0; !match && col < max_columns; col++)
                         match = strstr_compare(m_needle, m_columns.get_col_text(i, col));
                 }
 
@@ -750,7 +750,7 @@ find:
                 {
                     m_index = i;
                     if (m_index < m_top || m_index >= m_top + m_visible_rows)
-                        m_top = max<int>(0, min<int>(m_index - (m_visible_rows / 2), m_count - m_visible_rows));
+                        m_top = max<int32>(0, min<int32>(m_index - (m_visible_rows / 2), m_count - m_visible_rows));
                     m_prev_displayed = -1;
                     need_display = true;
                     break;
@@ -769,7 +769,7 @@ find:
     case bind_id_textlist_copy:
         {
             const char* text = m_entries[m_index];
-            os::set_clipboard_text(text, int(strlen(text)));
+            os::set_clipboard_text(text, int32(strlen(text)));
             set_input_clears_needle = false;
         }
         break;
@@ -777,7 +777,7 @@ find:
     case bind_id_textlist_delete:
         {
             // Remove the entry.
-            const int external_index = m_infos ? m_infos[m_index].index : m_index;
+            const int32 external_index = m_infos ? m_infos[m_index].index : m_index;
             if (m_history_mode)
             {
                 m_reset_history_index = true;
@@ -809,8 +809,8 @@ find:
             }
 
             // Remove the item from the popup list.
-            const int old_rows = min<int>(m_visible_rows, m_count);
-            int move_count = (m_count - 1) - m_index;
+            const int32 old_rows = min<int32>(m_visible_rows, m_count);
+            int32 move_count = (m_count - 1) - m_index;
             memmove(m_entries + m_index, m_entries + m_index + 1, move_count * sizeof(m_entries[0]));
             m_items.erase(m_items.begin() + m_index);
             if (m_infos)
@@ -832,13 +832,13 @@ find:
 
             // Redisplay.
             {
-                const int new_rows = min<int>(m_visible_rows, m_count);
+                const int32 new_rows = min<int32>(m_visible_rows, m_count);
                 if (new_rows < old_rows)
                     m_force_clear = true;
 
                 update_layout();
 
-                int delta = m_index - m_top;
+                int32 delta = m_index - m_top;
                 if (delta >= m_visible_rows - 1)
                     delta = m_visible_rows - 2;
                 if (delta <= 0)
@@ -846,8 +846,8 @@ find:
                 if (delta >= m_visible_rows)
                     delta = 0;
 
-                int top = max<int>(0, m_index - delta);
-                const int max_top = max<int>(0, m_count - m_visible_rows);
+                int32 top = max<int32>(0, m_index - delta);
+                const int32 max_top = max<int32>(0, m_count - m_visible_rows);
                 if (top > max_top)
                     top = max_top;
                 set_top(top);
@@ -875,15 +875,15 @@ do_insert:
     case bind_id_textlist_doubleclick:
     case bind_id_textlist_drag:
         {
-            const unsigned int now = m_scroll_helper.on_input();
+            const uint32 now = m_scroll_helper.on_input();
 
-            unsigned int p0, p1;
+            uint32 p0, p1;
             input.params.get(0, p0);
             input.params.get(1, p1);
-            const unsigned int rows = min<int>(m_count, m_visible_rows);
+            const uint32 rows = min<int32>(m_count, m_visible_rows);
             if (input.id != bind_id_textlist_drag)
             {
-                if (int(p1) < m_mouse_offset - 1 || p1 >= m_mouse_offset - 1 + rows + 2/*border*/)
+                if (int32(p1) < m_mouse_offset - 1 || p1 >= m_mouse_offset - 1 + rows + 2/*border*/)
                 {
                     cancel(popup_result::cancel);
                     return;
@@ -904,11 +904,11 @@ do_insert:
             }
             else if (input.id == bind_id_textlist_drag && m_scroll_helper.can_scroll())
             {
-                if (int(p1) < 0)
+                if (int32(p1) < 0)
                 {
                     if (m_top > 0)
                     {
-                        set_top(max<int>(0, m_top - m_scroll_helper.scroll_speed()));
+                        set_top(max<int32>(0, m_top - m_scroll_helper.scroll_speed()));
                         m_index = m_top;
                         update_display();
                     }
@@ -917,7 +917,7 @@ do_insert:
                 {
                     if (m_top + rows < m_count)
                     {
-                        set_top(min<int>(m_count - rows, m_top + m_scroll_helper.scroll_speed()));
+                        set_top(min<int32>(m_count - rows, m_top + m_scroll_helper.scroll_speed()));
                         m_index = m_top + rows - 1;
                         update_display();
                     }
@@ -929,12 +929,12 @@ do_insert:
     case bind_id_textlist_wheelup:
     case bind_id_textlist_wheeldown:
         {
-            unsigned int p0;
+            uint32 p0;
             input.params.get(0, p0);
             if (input.id == bind_id_textlist_wheelup)
-                m_index -= min<unsigned int>(m_index, p0);
+                m_index -= min<uint32>(m_index, p0);
             else
-                m_index += min<unsigned int>(m_count - 1 - m_index, p0);
+                m_index += min<uint32>(m_count - 1 - m_index, p0);
             update_display();
         }
         break;
@@ -973,7 +973,7 @@ do_insert:
             {
                 if (!m_needle.length())
                     break;
-                int point = _rl_find_prev_mbchar(const_cast<char*>(m_needle.c_str()), m_needle.length(), MB_FIND_NONZERO);
+                int32 point = _rl_find_prev_mbchar(const_cast<char*>(m_needle.c_str()), m_needle.length(), MB_FIND_NONZERO);
                 m_needle.truncate(point);
                 need_display = true;
                 from_begin = !m_win_history;
@@ -995,12 +995,12 @@ do_insert:
                 const char* seq = iter.get_pointer();
                 while (iter.more())
                 {
-                    unsigned int c = iter.next();
+                    uint32 c = iter.next();
                     if (!m_win_history)
                     {
                         refresh = m_has_override_title;
                         m_override_title.clear();
-                        m_needle.concat(seq, int(iter.get_pointer() - seq));
+                        m_needle.concat(seq, int32(iter.get_pointer() - seq));
                         need_display = true;
                     }
                     else if (c >= '0' && c <= '9')
@@ -1023,7 +1023,7 @@ do_insert:
                         refresh = m_has_override_title;
                         m_override_title.clear();
                         m_needle.clear();
-                        m_needle.concat(seq, int(iter.get_pointer() - seq));
+                        m_needle.concat(seq, int32(iter.get_pointer() - seq));
                         m_needle_is_number = false;
                     }
                     seq = iter.get_pointer();
@@ -1047,14 +1047,14 @@ update_needle:
                     refresh = true;
                     m_override_title.clear();
                     m_override_title.format("enter history number: %-6s", m_needle.c_str());
-                    int i = atoi(m_needle.c_str());
+                    int32 i = atoi(m_needle.c_str());
                     if (m_infos)
                     {
-                        int lookup = 0;
+                        int32 lookup = 0;
                         char lookupstr[16];
                         char needlestr[16];
                         _itoa_s(i, needlestr, 10);
-                        const int needlestr_len = int(strlen(needlestr));
+                        const int32 needlestr_len = int32(strlen(needlestr));
                         while (lookup < m_count)
                         {
                             _itoa_s(m_infos[lookup].index + 1, lookupstr, 10);
@@ -1077,7 +1077,7 @@ update_needle:
                     {
                         m_index = i;
                         if (m_index < m_top || m_index >= m_top + m_visible_rows)
-                            m_top = max<int>(0, min<int>(m_index - (m_visible_rows / 2), m_count - m_visible_rows));
+                            m_top = max<int32>(0, min<int32>(m_index - (m_visible_rows / 2), m_count - m_visible_rows));
                         m_prev_displayed = -1;
                         refresh = true;
                     }
@@ -1092,7 +1092,7 @@ update_needle:
             {
                 str_compare_scope _(str_compare_scope::caseless, true/*fuzzy_accent*/);
 
-                int i = m_index;
+                int32 i = m_index;
                 while (true)
                 {
                     i--;
@@ -1101,12 +1101,12 @@ update_needle:
                     if (i == m_index)
                         break;
 
-                    int cmp = str_compare(m_needle.c_str(), m_items[i]);
+                    int32 cmp = str_compare(m_needle.c_str(), m_items[i]);
                     if (cmp == -1 || cmp == m_needle.length())
                     {
                         m_index = i;
                         if (m_index < m_top || m_index >= m_top + m_visible_rows)
-                            m_top = max<int>(0, min<int>(m_index, m_count - m_visible_rows));
+                            m_top = max<int32>(0, min<int32>(m_index, m_count - m_visible_rows));
                         m_prev_displayed = -1;
                         refresh = true;
                         break;
@@ -1133,7 +1133,7 @@ void textlist_impl::on_matches_changed(const context& context, const line_state&
 }
 
 //------------------------------------------------------------------------------
-void textlist_impl::on_terminal_resize(int columns, int rows, const context& context)
+void textlist_impl::on_terminal_resize(int32 columns, int32 rows, const context& context)
 {
     m_screen_cols = columns;
     m_screen_rows = rows;
@@ -1143,11 +1143,11 @@ void textlist_impl::on_terminal_resize(int columns, int rows, const context& con
 }
 
 //------------------------------------------------------------------------------
-void textlist_impl::on_signal(int sig)
+void textlist_impl::on_signal(int32 sig)
 {
     if (m_active)
     {
-        rollback<volatile int> rb_sig(_rl_caught_signal, 0);
+        rollback<volatile int32> rb_sig(_rl_caught_signal, 0);
         m_active = false;
         update_display();
         if (!s_standalone)
@@ -1189,18 +1189,18 @@ void textlist_impl::cancel(popup_result result)
 //------------------------------------------------------------------------------
 void textlist_impl::update_layout()
 {
-    int slop_rows = 2;
-    int border_rows = 2;
-    int target_rows = m_pref_height;
+    int32 slop_rows = 2;
+    int32 border_rows = 2;
+    int32 target_rows = m_pref_height;
 
     if (target_rows)
     {
-        m_visible_rows = min<int>(target_rows, m_screen_rows - border_rows - slop_rows);
+        m_visible_rows = min<int32>(target_rows, m_screen_rows - border_rows - slop_rows);
     }
     else
     {
         target_rows = m_history_mode ? 20 : 10;
-        m_visible_rows = min<int>(target_rows, (m_screen_rows / 2) - border_rows - slop_rows);
+        m_visible_rows = min<int32>(target_rows, (m_screen_rows / 2) - border_rows - slop_rows);
     }
 
     if (m_screen_cols <= min_screen_cols)
@@ -1218,24 +1218,24 @@ void textlist_impl::update_layout()
 //------------------------------------------------------------------------------
 void textlist_impl::update_top()
 {
-    const int y = m_index;
+    const int32 y = m_index;
     if (m_top > y)
     {
         set_top(y);
     }
     else
     {
-        const int rows = min<int>(m_count, m_visible_rows);
-        int top = max<int>(0, y - (rows - 1));
+        const int32 rows = min<int32>(m_count, m_visible_rows);
+        int32 top = max<int32>(0, y - (rows - 1));
         if (m_top < top)
             set_top(top);
     }
     assert(m_top >= 0);
-    assert(m_top <= max<int>(0, m_count - m_visible_rows));
+    assert(m_top <= max<int32>(0, m_count - m_visible_rows));
 }
 
 //------------------------------------------------------------------------------
-static void make_horz_border(const char* message, int col_width, bool bars, str_base& out,
+static void make_horz_border(const char* message, int32 col_width, bool bars, str_base& out,
                              const char* header_color=nullptr, const char* border_color=nullptr)
 {
     out.clear();
@@ -1253,16 +1253,16 @@ static void make_horz_border(const char* message, int col_width, bool bars, str_
         border_color = nullptr;
     }
 
-    int cells = 0;
-    int len = 0;
+    int32 cells = 0;
+    int32 len = 0;
 
     {
         const char* walk = message;
-        int remaining = col_width - (2 + 2); // Bars, spaces.
+        int32 remaining = col_width - (2 + 2); // Bars, spaces.
         str_iter iter(message);
-        while (int c = iter.next())
+        while (int32 c = iter.next())
         {
-            const int width = clink_wcwidth(c);
+            const int32 width = clink_wcwidth(c);
             if (width > remaining)
                 break;
             cells += width;
@@ -1271,10 +1271,10 @@ static void make_horz_border(const char* message, int col_width, bool bars, str_
         }
     }
 
-    int x = (col_width - cells) / 2;
+    int32 x = (col_width - cells) / 2;
     x--;
 
-    for (int i = x; i-- > 0;)
+    for (int32 i = x; i-- > 0;)
     {
         if (i == 0 && bars)
             out.concat("\xe2\x94\xa4", 3);
@@ -1292,7 +1292,7 @@ static void make_horz_border(const char* message, int col_width, bool bars, str_
         out.concat(border_color);
 
     bool cap = bars;
-    for (int i = col_width - x; i-- > 0;)
+    for (int32 i = col_width - x; i-- > 0;)
     {
         if (cap)
         {
@@ -1317,9 +1317,9 @@ void textlist_impl::update_display()
         const HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
         GetConsoleScreenBufferInfo(h, &csbi);
         COORD restore = csbi.dwCursorPosition;
-        const int vpos = _rl_last_v_pos;
-        const int cpos = _rl_last_c_pos;
-        int up = 0;
+        const int32 vpos = _rl_last_v_pos;
+        const int32 cpos = _rl_last_c_pos;
+        int32 up = 0;
 
         // Move cursor to next line.  I.e. the list goes immediately below the
         // cursor line and may overlay some lines of input.
@@ -1331,7 +1331,7 @@ void textlist_impl::update_display()
 
         // Display list.
         bool move_to_end = true;
-        const int count = m_count;
+        const int32 count = m_count;
         if (m_active && count > 0)
         {
             update_top();
@@ -1339,29 +1339,29 @@ void textlist_impl::update_display()
             const bool draw_border = (m_prev_displayed < 0) || m_override_title.length() || m_has_override_title;
             m_has_override_title = !m_override_title.empty();
 
-            int longest;
+            int32 longest;
             if (m_pref_width)
             {
                 longest = m_pref_width;
-                longest = max<int>(longest, 10); // Too narrow doesn't draw well.
+                longest = max<int32>(longest, 10); // Too narrow doesn't draw well.
             }
             else
             {
                 longest = m_longest + m_max_num_cells;
                 if (m_has_columns)
                 {
-                    for (int i = 0; i < max_columns; i++)
+                    for (int32 i = 0; i < max_columns; i++)
                     {
-                        const int x = m_columns.get_col_width(i);
+                        const int32 x = m_columns.get_col_width(i);
                         if (x)
                             longest += 2 + x;
                     }
                 }
-                longest = max<int>(longest, 40);
+                longest = max<int32>(longest, 40);
             }
 
-            const int effective_screen_cols = (m_screen_cols < 40) ? m_screen_cols : max<int>(40, m_screen_cols - 4);
-            const int col_width = min<int>(longest + 2, effective_screen_cols); // +2 for borders.
+            const int32 effective_screen_cols = (m_screen_cols < 40) ? m_screen_cols : max<int32>(40, m_screen_cols - 4);
+            const int32 col_width = min<int32>(longest + 2, effective_screen_cols); // +2 for borders.
 
             str<> noescape;
             str<> left;
@@ -1369,8 +1369,8 @@ void textlist_impl::update_display()
             str<> tmp;
 
             {
-                int x = csbi.dwCursorPosition.X - ((col_width + 1) / 2);
-                int center_x = (m_screen_cols - effective_screen_cols) / 2;
+                int32 x = csbi.dwCursorPosition.X - ((col_width + 1) / 2);
+                int32 center_x = (m_screen_cols - effective_screen_cols) / 2;
                 if (x + col_width > center_x + effective_screen_cols)
                     x = m_screen_cols - center_x - col_width;
                 if (x < center_x)
@@ -1381,13 +1381,13 @@ void textlist_impl::update_display()
                 m_mouse_width = col_width - 2;
             }
 
-            int limit_item_cells = 0;
+            int32 limit_item_cells = 0;
             if (m_horz_scrolling)
             {
-                unsigned int columns_visible = 0;
-                for (int col = max_columns; col--;)
+                uint32 columns_visible = 0;
+                for (int32 col = max_columns; col--;)
                 {
-                    const unsigned int cx = m_columns.get_col_width(col);
+                    const uint32 cx = m_columns.get_col_width(col);
                     if (columns_visible || cx)
                         columns_visible += col_padding + cx;
                 }
@@ -1395,7 +1395,7 @@ void textlist_impl::update_display()
                 if (m_max_num_cells + m_longest > m_mouse_width / 2 &&
                     m_max_num_cells + m_longest + columns_visible > m_mouse_width)
                 {
-                    columns_visible = min<int>(columns_visible, m_mouse_width - (m_mouse_width / 2));
+                    columns_visible = min<int32>(columns_visible, m_mouse_width - (m_mouse_width / 2));
                     limit_item_cells = m_mouse_width - (m_max_num_cells + columns_visible);
                 }
 
@@ -1406,11 +1406,11 @@ void textlist_impl::update_display()
                     if (limit_item_cells)
                     {
                         // Expand control characters to "^A" etc.
-                        unsigned int longest_visible = 0;
-                        const int rows = min<int>(m_count, m_visible_rows);
-                        for (int row = 0; row < rows; ++row)
-                            longest_visible = max<int>(longest_visible, make_item(m_items[m_top + row], tmp));
-                        m_horz_scroll_range = max<int>(0, longest_visible - limit_item_cells);
+                        uint32 longest_visible = 0;
+                        const int32 rows = min<int32>(m_count, m_visible_rows);
+                        for (int32 row = 0; row < rows; ++row)
+                            longest_visible = max<int32>(longest_visible, make_item(m_items[m_top + row], tmp));
+                        m_horz_scroll_range = max<int32>(0, longest_visible - limit_item_cells);
                     }
                 }
             }
@@ -1428,9 +1428,9 @@ void textlist_impl::update_display()
             }
 
             // Display items.
-            for (int row = 0; row < m_visible_rows; row++)
+            for (int32 row = 0; row < m_visible_rows; row++)
             {
-                const int i = m_top + row;
+                const int32 i = m_top + row;
                 if (i >= count)
                     break;
 
@@ -1449,12 +1449,12 @@ void textlist_impl::update_display()
                     const str_base& maincolor = (i == m_index) ? m_color.select : m_color.items;
                     m_printer->print(maincolor.c_str(), maincolor.length());
 
-                    int spaces = col_width - 2;
-                    int item_spaces = limit_item_cells ? limit_item_cells : spaces;
+                    int32 spaces = col_width - 2;
+                    int32 item_spaces = limit_item_cells ? limit_item_cells : spaces;
 
                     if (m_show_numbers)
                     {
-                        const int history_index = m_infos ? m_infos[i].index : i;
+                        const int32 history_index = m_infos ? m_infos[i].index : i;
                         const char ismark = (m_infos && m_infos[i].marked);
                         const char mark = ismark ? '*' : ' ';
                         const char* color = !ismark ? "" : (i == m_index) ? m_color.selectmark.c_str() : m_color.mark.c_str();
@@ -1462,7 +1462,7 @@ void textlist_impl::update_display()
                         tmp.clear();
                         tmp.format("%*u:%s%c", max<>(0, m_max_num_cells - 2), history_index + 1, color, mark);
                         m_printer->print(tmp.c_str(), tmp.length());// history number
-                        const unsigned int number_cells = cell_count(tmp.c_str());
+                        const uint32 number_cells = cell_count(tmp.c_str());
                         if (spaces > number_cells)
                             spaces -= number_cells;
                         else
@@ -1470,9 +1470,9 @@ void textlist_impl::update_display()
                         // NOTE: item_spaces already accounts for m_max_num_cells.
                     }
 
-                    int cell_len;
+                    int32 cell_len;
                     const char* item_text;
-                    const int char_len = limit_cells(m_items[i], item_spaces, cell_len, m_horz_offset, &tmp, &item_text);
+                    const int32 char_len = limit_cells(m_items[i], item_spaces, cell_len, m_horz_offset, &tmp, &item_text);
                     m_printer->print(item_text, char_len);// main text
                     spaces -= cell_len;
 
@@ -1482,21 +1482,21 @@ void textlist_impl::update_display()
 
                         if (m_columns.get_any_tabs())
                         {
-                            unsigned int pad_to = (limit_item_cells ?
+                            uint32 pad_to = (limit_item_cells ?
                                                    limit_item_cells :
                                                    m_longest) - cell_len;
-                            make_spaces(min<int>(spaces, pad_to), tmp);
+                            make_spaces(min<int32>(spaces, pad_to), tmp);
                             m_printer->print(tmp.c_str(), tmp.length()); // spaces
                             spaces -= tmp.length();
                         }
 
-                        for (int col = 0; col < max_columns && spaces > 0; col++)
+                        for (int32 col = 0; col < max_columns && spaces > 0; col++)
                         {
                             tmp.clear();
                             static_assert(col_padding <= 2, "col_padding is wider than the static spaces string");
                             tmp.concat("  ", col_padding);
                             tmp.concat(m_columns.get_col_text(i, col));
-                            int col_len = limit_cells(tmp.c_str(), spaces, cell_len);
+                            int32 col_len = limit_cells(tmp.c_str(), spaces, cell_len);
                             const char* col_text = tmp.c_str();
 
                             if (!col && col_len >= col_padding && !desc_color.empty())
@@ -1509,7 +1509,7 @@ void textlist_impl::update_display()
                             m_printer->print(col_text, col_len); // column text
                             spaces -= cell_len;
 
-                            int pad = min<int>(spaces, m_columns.get_col_width(col) - (cell_len - col_padding));
+                            int32 pad = min<int32>(spaces, m_columns.get_col_width(col) - (cell_len - col_padding));
                             if (pad > 0)
                             {
                                 make_spaces(pad, tmp);
@@ -1578,10 +1578,10 @@ void textlist_impl::update_display()
 }
 
 //------------------------------------------------------------------------------
-void textlist_impl::set_top(int top)
+void textlist_impl::set_top(int32 top)
 {
     assert(top >= 0);
-    assert(top <= max<int>(0, m_count - m_visible_rows));
+    assert(top <= max<int32>(0, m_count - m_visible_rows));
     if (top != m_top)
     {
         m_top = top;
@@ -1590,15 +1590,15 @@ void textlist_impl::set_top(int top)
 }
 
 //------------------------------------------------------------------------------
-void textlist_impl::adjust_horz_offset(int delta)
+void textlist_impl::adjust_horz_offset(int32 delta)
 {
     if (m_horz_scrolling)
     {
-        const int was = m_horz_offset;
+        const int32 was = m_horz_offset;
 
         m_horz_offset += delta;
-        m_horz_offset = min<int>(m_horz_offset, m_horz_scroll_range);
-        m_horz_offset = max<int>(m_horz_offset, 0);
+        m_horz_offset = min<int32>(m_horz_offset, m_horz_scroll_range);
+        m_horz_offset = max<int32>(m_horz_offset, 0);
 
         if (was != m_horz_offset)
         {
@@ -1744,7 +1744,7 @@ void textlist_impl::item_store::clear()
 
 
 //------------------------------------------------------------------------------
-popup_results activate_text_list(const char* title, const char** entries, int count, int current, bool has_columns, const popup_config* config)
+popup_results activate_text_list(const char* title, const char** entries, int32 count, int32 current, bool has_columns, const popup_config* config)
 {
     if (!s_textlist)
         return popup_result::error;
@@ -1753,7 +1753,7 @@ popup_results activate_text_list(const char* title, const char** entries, int co
 }
 
 //------------------------------------------------------------------------------
-popup_results activate_directories_text_list(const char** dirs, int count)
+popup_results activate_directories_text_list(const char** dirs, int32 count)
 {
     if (!s_textlist)
         return popup_result::error;
@@ -1762,7 +1762,7 @@ popup_results activate_directories_text_list(const char** dirs, int count)
 }
 
 //------------------------------------------------------------------------------
-popup_results activate_history_text_list(const char** history, int count, int current, entry_info* infos, bool win_history)
+popup_results activate_history_text_list(const char** history, int32 count, int32 current, entry_info* infos, bool win_history)
 {
     if (!s_textlist)
         return popup_result::error;
@@ -1785,13 +1785,13 @@ public:
                         standalone_input(terminal& term);
 
     // input_dispatcher
-    void                dispatch(int bind_group) override;
+    void                dispatch(int32 bind_group) override;
 
     // key_tester
-    bool                is_bound(const char* seq, int len);
+    bool                is_bound(const char* seq, int32 len);
     bool                accepts_mouse_input(mouse_input_type type);
-    bool                translate(const char* seq, int len, str_base& out);
-    void                set_keyseq_len(int len);
+    bool                translate(const char* seq, int32 len, str_base& out);
+    void                set_keyseq_len(int32 len);
 
 private:
     module::context     get_context();
@@ -1804,7 +1804,7 @@ private:
     textlist_impl       m_textlist;
 
     // State for dispatch().
-    unsigned char       m_dispatching = 0;
+    uint8               m_dispatching = 0;
     bool                m_invalid_dispatch = false;
     bind_resolver::binding* m_pending_binding = nullptr;
 };
@@ -1817,17 +1817,17 @@ standalone_input::standalone_input(terminal& term)
     *m_modules.push_back() = &m_textlist;
 
     struct : public module::binder {
-        virtual int get_group(const char* name) const override
+        virtual int32 get_group(const char* name) const override
         {
             return binder->get_group(name);
         }
 
-        virtual int create_group(const char* name) override
+        virtual int32 create_group(const char* name) override
         {
             return binder->create_group(name);
         }
 
-        virtual bool bind(unsigned int group, const char* chord, unsigned char key, bool has_params=false) override
+        virtual bool bind(uint32 group, const char* chord, uint8 key, bool has_params=false) override
         {
             return binder->bind(group, chord, *module, key, has_params);
         }
@@ -1849,7 +1849,7 @@ standalone_input::standalone_input(terminal& term)
 }
 
 //------------------------------------------------------------------------------
-void standalone_input::dispatch(int bind_group)
+void standalone_input::dispatch(int32 bind_group)
 {
     // Claim any pending binding, otherwise we'll try to dispatch it again.
 
@@ -1858,7 +1858,7 @@ void standalone_input::dispatch(int bind_group)
 
     // Handle one input.
 
-    const int prev_bind_group = m_bind_resolver.get_group();
+    const int32 prev_bind_group = m_bind_resolver.get_group();
     m_bind_resolver.set_group(bind_group);
 
     const bool was_signaled = clink_is_signaled();
@@ -1895,7 +1895,7 @@ editor_module::context standalone_input::get_context()
 bool standalone_input::update_input()
 {
     // Signal handler is not installed when standalone.
-    const int sig = clink_is_signaled();
+    const int32 sig = clink_is_signaled();
     if (sig)
     {
         for (auto* module : m_modules)
@@ -1905,12 +1905,12 @@ bool standalone_input::update_input()
         return true;
     }
 
-    int key = m_terminal.in->read();
+    int32 key = m_terminal.in->read();
 
     if (key == terminal_in::input_terminal_resize)
     {
-        int columns = m_terminal.out->get_columns();
-        int rows = m_terminal.out->get_rows();
+        int32 columns = m_terminal.out->get_columns();
+        int32 rows = m_terminal.out->get_rows();
         module::context context = get_context();
         for (auto* module : m_modules)
             module->on_terminal_resize(columns, rows, context);
@@ -1962,9 +1962,9 @@ bool standalone_input::update_input()
         virtual void    loop() override                           { flags |= flag_invalid; }
         virtual void    done(bool eof) override                   { flags |= flag_done|(eof ? flag_eof : 0); }
         virtual void    redraw() override                         { flags |= flag_redraw; }
-        virtual int     set_bind_group(int id) override           { int t = group; group = id; return t; }
+        virtual int32   set_bind_group(int32 id) override         { int32 t = group; group = id; return t; }
         unsigned short  group;  //        <! MSVC bugs; see connect
-        unsigned char   flags;  // = 0;   <! issues about C2905
+        uint8           flags;  // = 0;   <! issues about C2905
     };
 
     while (auto binding = m_bind_resolver.next())
@@ -1976,7 +1976,7 @@ bool standalone_input::update_input()
 
         str<16> chord;
         module* module = binding.get_module();
-        unsigned char id = binding.get_id();
+        uint8 id = binding.get_id();
         binding.get_chord(chord);
 
         {
@@ -2051,9 +2051,9 @@ bool standalone_input::update_input()
 }
 
 //------------------------------------------------------------------------------
-bool standalone_input::is_bound(const char* seq, int len)
+bool standalone_input::is_bound(const char* seq, int32 len)
 {
-    int bound = m_bind_resolver.is_bound(seq, len);
+    int32 bound = m_bind_resolver.is_bound(seq, len);
     if (bound != 0)
         return (bound > 0);
 
@@ -2069,13 +2069,13 @@ bool standalone_input::accepts_mouse_input(mouse_input_type type)
 }
 
 //------------------------------------------------------------------------------
-bool standalone_input::translate(const char* seq, int len, str_base& out)
+bool standalone_input::translate(const char* seq, int32 len, str_base& out)
 {
     return false;
 }
 
 //------------------------------------------------------------------------------
-void standalone_input::set_keyseq_len(int len)
+void standalone_input::set_keyseq_len(int32 len)
 {
 }
 

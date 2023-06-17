@@ -89,7 +89,7 @@ TEST_CASE("Match type : simple")
 
     lua_state lua;
     lua_match_generator lua_generator(lua);
-    lua.do_string(script, int(strlen(script)));
+    lua.do_string(script, int32(strlen(script)));
 
     line_editor_tester tester;
     tester.get_editor()->set_generator(lua_generator);
@@ -130,7 +130,7 @@ TEST_CASE("Match type : slash")
 
     lua_state lua;
     lua_match_generator lua_generator(lua);
-    lua.do_string(script, int(strlen(script)));
+    lua.do_string(script, int32(strlen(script)));
 
     line_editor_tester tester;
     tester.get_editor()->set_generator(lua_generator);
@@ -171,7 +171,7 @@ TEST_CASE("Match type : compound")
 
     lua_state lua;
     lua_match_generator lua_generator(lua);
-    lua.do_string(script, int(strlen(script)));
+    lua.do_string(script, int32(strlen(script)));
 
     line_editor_tester tester;
     tester.get_editor()->set_generator(lua_generator);
@@ -212,7 +212,7 @@ TEST_CASE("Match type : lcd")
 
     lua_state lua;
     lua_match_generator lua_generator(lua);
-    lua.do_string(script, int(strlen(script)));
+    lua.do_string(script, int32(strlen(script)));
 
     line_editor_tester tester;
     tester.get_editor()->set_generator(lua_generator);
@@ -243,7 +243,7 @@ TEST_CASE("Match type : files")
 
     lua_state lua;
     lua_match_generator lua_generator(lua);
-    lua.do_string(script, int(strlen(script)));
+    lua.do_string(script, int32(strlen(script)));
 
     line_editor_tester tester;
     tester.get_editor()->set_generator(lua_generator);

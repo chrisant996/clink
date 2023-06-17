@@ -10,7 +10,7 @@
 class wstr_base;
 
 //------------------------------------------------------------------------------
-enum transform_mode : int
+enum transform_mode : int32
 {
     lower,
     upper,
@@ -18,4 +18,4 @@ enum transform_mode : int
 };
 
 //------------------------------------------------------------------------------
-void str_transform(const wchar_t* in, unsigned int len, wstr_base& out, transform_mode mode);
+void str_transform(const wchar_t* in, uint32 len, wstr_base& out, transform_mode mode);

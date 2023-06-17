@@ -14,7 +14,7 @@ public:
     struct desc
     {
                 desc();
-        int     id = 0;             // 0 auto-detects id.
+        int32   id = 0;             // 0 auto-detects id.
         bool    quiet = false;
         bool    log = true;
         bool    inherit_id = false; // Allow auto-detecting id from environment.
@@ -25,7 +25,7 @@ public:
     };
 
                 app_context(const desc& desc);
-    int         get_id() const;
+    int32       get_id() const;
     bool        is_logging_enabled() const;
     bool        is_quiet() const;
     bool        is_detours() const;
@@ -41,7 +41,7 @@ public:
     void        get_default_init_file(str_base& out) const;
     bool        update_env() const;
 
-    static void override_id(int id);
+    static void override_id(int32 id);
 
 private:
     void        get_script_path(str_base& out, bool readable) const;

@@ -6,7 +6,7 @@
 #include "word_collector.h"
 
 //------------------------------------------------------------------------------
-enum tokeniser_state : int;
+enum tokeniser_state : int32;
 
 //------------------------------------------------------------------------------
 enum state_flag
@@ -23,7 +23,7 @@ public:
     cmd_state(bool only_rem=false) : m_only_rem(only_rem) {}
     void clear();
     void next_word();
-    bool test(int c, tokeniser_state new_state);
+    bool test(int32 c, tokeniser_state new_state);
     bool is_first() const { return m_first; }
     void cancel() { m_failed = true; }
 private:
@@ -59,7 +59,7 @@ protected:
 class cmd_command_tokeniser : public cmd_tokeniser_impl
 {
 public:
-    word_token next(unsigned int& offset, unsigned int& length) override;
+    word_token next(uint32& offset, uint32& length) override;
     bool has_deprecated_argmatcher(char const* command) override;
 };
 
@@ -69,7 +69,7 @@ class cmd_word_tokeniser : public cmd_tokeniser_impl
     typedef cmd_tokeniser_impl base;
 public:
     void start(const str_iter& iter, const char* quote_pair, bool at_beginning=true) override;
-    word_token next(unsigned int& offset, unsigned int& length) override;
+    word_token next(uint32& offset, uint32& length) override;
 private:
     cmd_state m_cmd_state;
     bool m_command_word;
@@ -77,5 +77,5 @@ private:
 
 //------------------------------------------------------------------------------
 bool is_cmd_command(const char* word, state_flag* flag=nullptr);
-int skip_leading_parens(str_iter& iter, bool& first, alias_cache* alias_cache=nullptr);
-unsigned int trim_trailing_parens(const char* start, unsigned int offset, unsigned int length, int parens);
+int32 skip_leading_parens(str_iter& iter, bool& first, alias_cache* alias_cache=nullptr);
+uint32 trim_trailing_parens(const char* start, uint32 offset, uint32 length, int32 parens);

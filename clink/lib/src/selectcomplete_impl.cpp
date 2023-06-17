@@ -31,12 +31,12 @@ extern "C" {
 #include <readline/rlprivate.h>
 #include <readline/rldefs.h>
 #include <readline/colors.h>
-int __compare_match(char* text, const char* match);
-int __append_to_match(char* text, int orig_start, int delimiter, int quote_char, int nontrivial_match);
+int32 __compare_match(char* text, const char* match);
+int32 __append_to_match(char* text, int32 orig_start, int32 delimiter, int32 quote_char, int32 nontrivial_match);
 char* __printable_part(char* text);
-void __set_completion_defaults(int what_to_do);
-int __get_y_or_n(int for_pager);
-extern int _rl_last_v_pos;
+void __set_completion_defaults(int32 what_to_do);
+int32 __get_y_or_n(int32 for_pager);
+extern int32 _rl_last_v_pos;
 };
 
 extern void reset_generate_matches();
@@ -44,7 +44,7 @@ extern bool is_regen_blocked();
 extern matches* maybe_regenerate_matches(const char* needle, display_filter_flags flags);
 extern void force_update_internal(bool restrict=false);
 extern void update_matches();
-extern void update_rl_modes_from_matches(const matches* matches, const matches_iter& iter, int count);
+extern void update_rl_modes_from_matches(const matches* matches, const matches_iter& iter, int32 count);
 extern void override_rl_last_func(rl_command_func_t* func, bool force_when_null=false);
 
 
@@ -132,7 +132,7 @@ enum {
 //------------------------------------------------------------------------------
 #ifdef FISH_ARROW_KEYS
 
-static void move_selection_lower(int& index, int& major, int& minor, const int count)
+static void move_selection_lower(int32& index, int32& major, int32& minor, const int32 count)
 {
     if (!index)
     {
@@ -153,7 +153,7 @@ find_wrapped_end:
     }
 }
 
-static bool move_selection_higher(int& index, int& major, int& minor, const int count, bool& latched)
+static bool move_selection_higher(int32& index, int32& major, int32& minor, const int32 count, bool& latched)
 {
     if (latched)
         return false;
@@ -201,7 +201,7 @@ bool selectcomplete_impl::activate(editor_module::result& result, bool reactivat
     if (reactivate && m_point >= 0 && m_len >= 0 && m_point + m_len <= m_buffer->get_length() && m_inserted)
     {
 #ifdef DEBUG
-        rollback<int> rb(m_prev_bind_group, 999999); // Dummy to make assertion happy in insert_needle().
+        rollback<int32> rb(m_prev_bind_group, 999999); // Dummy to make assertion happy in insert_needle().
 #endif
         insert_needle();
     }
@@ -274,7 +274,7 @@ cant_activate:
         COORD restore = csbi.dwCursorPosition;
 
         // Move cursor after the input line.
-        int vpos = _rl_last_v_pos;
+        int32 vpos = _rl_last_v_pos;
         _rl_move_vert(_rl_vis_botlin);
         rl_crlf();
 
@@ -331,7 +331,7 @@ cant_activate:
 }
 
 //------------------------------------------------------------------------------
-bool selectcomplete_impl::point_within(int in) const
+bool selectcomplete_impl::point_within(int32 in) const
 {
     return is_active() && m_point >= 0 && in >= m_point && in < m_point + m_len;
 }
@@ -428,7 +428,7 @@ void selectcomplete_impl::on_input(const input& _input, result& result, const co
     input input = _input;
 
 #ifdef FISH_ARROW_KEYS
-    const unsigned char prev_input_id = m_prev_input_id;
+    const uint8 prev_input_id = m_prev_input_id;
     if (m_prev_input_id != input.id)
     {
         if (input.id != bind_id_selectcomplete_down && input.id != bind_id_selectcomplete_right)
@@ -453,7 +453,7 @@ revert:
     }
 
     // Cancel if no matches (which shouldn't be able to happen here).
-    int count = m_matches.get_match_count();
+    int32 count = m_matches.get_match_count();
     if (!count)
     {
         assert(count);
@@ -592,8 +592,8 @@ arrow_next:
     case bind_id_selectcomplete_pgup:
     case bind_id_selectcomplete_pgdn:
         {
-            const int y = get_match_row(m_index);
-            const int rows = min<int>(m_match_rows, m_visible_rows);
+            const int32 y = get_match_row(m_index);
+            const int32 rows = min<int32>(m_match_rows, m_visible_rows);
             if (input.id == bind_id_selectcomplete_pgup)
             {
                 if (!y)
@@ -602,8 +602,8 @@ arrow_next:
                 }
                 else
                 {
-                    int new_y = max<int>(0, (y == m_top) ? y - (rows - 1) : m_top);
-                    int stride = _rl_print_completions_horizontally ? m_match_cols : 1;
+                    int32 new_y = max<int32>(0, (y == m_top) ? y - (rows - 1) : m_top);
+                    int32 stride = _rl_print_completions_horizontally ? m_match_cols : 1;
                     m_index += (new_y - y) * stride;
                 }
                 goto navigated;
@@ -616,10 +616,10 @@ arrow_next:
                 }
                 else
                 {
-                    int stride = _rl_print_completions_horizontally ? m_match_cols : 1;
-                    int new_y = min<int>(m_match_rows - 1, (y == m_top + rows - 1) ? y + (rows - 1) : m_top + (rows - 1));
-                    int new_index = m_index + (new_y - y) * stride;
-                    int new_top = m_top;
+                    int32 stride = _rl_print_completions_horizontally ? m_match_cols : 1;
+                    int32 new_y = min<int32>(m_match_rows - 1, (y == m_top + rows - 1) ? y + (rows - 1) : m_top + (rows - 1));
+                    int32 new_index = m_index + (new_y - y) * stride;
+                    int32 new_top = m_top;
                     if (new_index >= count)
                     {
                         if (_rl_print_completions_horizontally)
@@ -639,12 +639,12 @@ arrow_next:
                         {
                             new_index = count - 1;
                             if (get_match_row(new_index) >= m_top + rows)
-                                new_top = min<int>(get_match_row(new_index),
-                                                   m_match_rows - rows);
+                                new_top = min<int32>(get_match_row(new_index),
+                                                     m_match_rows - rows);
                         }
                     }
                     m_index = new_index;
-                    set_top(max<int>(0, new_top));
+                    set_top(max<int32>(0, new_top));
                 }
                 goto navigated;
             }
@@ -658,11 +658,11 @@ arrow_next:
         if (count > 0)
         {
             m_index = count - 1;
-            const int rows = min<int>(m_match_rows, m_visible_rows);
-            int row = get_match_row(m_index);
+            const int32 rows = min<int32>(m_match_rows, m_visible_rows);
+            int32 row = get_match_row(m_index);
             if (row + 1 < m_match_rows)
                 row++;
-            set_top(max<int>(0, row - (rows - 1)));
+            set_top(max<int32>(0, row - (rows - 1)));
             goto navigated;
         }
         break;
@@ -671,24 +671,24 @@ arrow_next:
     case bind_id_selectcomplete_doubleclick:
     case bind_id_selectcomplete_drag:
         {
-            const unsigned int now = m_scroll_helper.on_input();
+            const uint32 now = m_scroll_helper.on_input();
 
-            unsigned int p0, p1;
+            uint32 p0, p1;
             input.params.get(0, p0);
             input.params.get(1, p1);
             p1 -= m_mouse_offset;
-            const unsigned int rows = m_displayed_rows;
+            const uint32 rows = m_displayed_rows;
             bool scrolling = false;
-            int row = p1 + m_top;
-            const int revert_top = m_top;
+            int32 row = p1 + m_top;
+            const int32 revert_top = m_top;
             if (p1 < rows)
             {
 do_mouse_position:
-                const int major_stride = _rl_print_completions_horizontally ? m_match_cols : 1;
-                const int minor_stride = _rl_print_completions_horizontally ? 1 : m_match_rows;
-                int index = major_stride * row;
-                unsigned int x1 = 0;
-                for (int i = 0; i < m_widths.num_columns(); ++i)
+                const int32 major_stride = _rl_print_completions_horizontally ? m_match_cols : 1;
+                const int32 minor_stride = _rl_print_completions_horizontally ? 1 : m_match_rows;
+                int32 index = major_stride * row;
+                uint32 x1 = 0;
+                for (int32 i = 0; i < m_widths.num_columns(); ++i)
                 {
                     width_t col_width = m_widths.column_width(i);
                     if (i + 1 >= m_widths.num_columns())
@@ -702,7 +702,7 @@ do_mouse_position:
                             m_scroll_helper.on_scroll(now);
                         if (m_index >= m_matches.get_match_count())
                         {
-                            set_top(max<int>(revert_top, get_match_row(m_matches.get_match_count()) - (rows - 1)));
+                            set_top(max<int32>(revert_top, get_match_row(m_matches.get_match_count()) - (rows - 1)));
                             m_index = m_matches.get_match_count() - 1;
                         }
                         insert_match();
@@ -716,13 +716,13 @@ do_mouse_position:
                     index += minor_stride;
                 }
             }
-            else if (int(p1) < 0)
+            else if (int32(p1) < 0)
             {
                 if (input.id == bind_id_selectcomplete_drag)
                 {
                     if (m_scroll_helper.can_scroll() && m_top > 0)
                     {
-                        set_top(max<int>(0, m_top - m_scroll_helper.scroll_speed()));
+                        set_top(max<int32>(0, m_top - m_scroll_helper.scroll_speed()));
                         row = m_top;
                         scrolling = true;
                         goto do_mouse_position;
@@ -749,7 +749,7 @@ do_mouse_position:
                     if (m_scroll_helper.can_scroll() && m_top + rows < m_match_rows)
                     {
                         row = m_top + rows;
-                        set_top(min<int>(m_match_rows - rows, m_top + m_scroll_helper.scroll_speed()));
+                        set_top(min<int32>(m_match_rows - rows, m_top + m_scroll_helper.scroll_speed()));
                         scrolling = true;
                         goto do_mouse_position;
                     }
@@ -761,25 +761,25 @@ do_mouse_position:
     case bind_id_selectcomplete_wheelup:
     case bind_id_selectcomplete_wheeldown:
         {
-            unsigned int p0;
+            uint32 p0;
             input.params.get(0, p0);
-            const int major_stride = _rl_print_completions_horizontally ? m_match_cols : 1;
-            const int match_row = get_match_row(m_index);
-            const int prev_index = m_index;
-            const int prev_top = m_top;
+            const int32 major_stride = _rl_print_completions_horizontally ? m_match_cols : 1;
+            const int32 match_row = get_match_row(m_index);
+            const int32 prev_index = m_index;
+            const int32 prev_top = m_top;
             if (input.id == bind_id_selectcomplete_wheelup)
-                m_index -= min<unsigned int>(match_row, p0) * major_stride;
+                m_index -= min<uint32>(match_row, p0) * major_stride;
             else
-                m_index += min<unsigned int>(m_match_rows - 1 - match_row, p0) * major_stride;
-            const int count = m_matches.get_match_count();
+                m_index += min<uint32>(m_match_rows - 1 - match_row, p0) * major_stride;
+            const int32 count = m_matches.get_match_count();
             if (m_index >= count)
             {
                 m_index = count - 1;
-                const int rows = min<int>(m_match_rows, m_visible_rows);
+                const int32 rows = min<int32>(m_match_rows, m_visible_rows);
                 if (m_top + rows - 1 == get_match_row(m_index))
                 {
-                    const int max_top = max<int>(0, m_match_rows - rows);
-                    set_top(min<int>(max_top, m_top + 1));
+                    const int32 max_top = max<int32>(0, m_match_rows - rows);
+                    set_top(min<int32>(max_top, m_top + 1));
                 }
             }
             if (m_index != prev_index || m_top != prev_top)
@@ -794,7 +794,7 @@ do_mouse_position:
         }
         else if (m_needle.length())
         {
-            int point = _rl_find_prev_mbchar(const_cast<char*>(m_needle.c_str()), m_needle.length(), MB_FIND_NONZERO);
+            int32 point = _rl_find_prev_mbchar(const_cast<char*>(m_needle.c_str()), m_needle.length(), MB_FIND_NONZERO);
             m_needle.truncate(point);
             goto update_needle;
         }
@@ -858,14 +858,14 @@ append_not_dup:
     case bind_id_selectcomplete_f1:
         if (m_matches.has_descriptions())
         {
-            const int delta = get_match_row(m_index) - m_top;
+            const int32 delta = get_match_row(m_index) - m_top;
 
             m_desc_below = !m_desc_below;
             m_calc_widths = true;
             update_layout();
 
-            int top = max<int>(0, get_match_row(m_index) - delta);
-            const int max_top = max<int>(0, m_match_rows - m_visible_rows);
+            int32 top = max<int32>(0, get_match_row(m_index) - delta);
+            const int32 max_top = max<int32>(0, m_match_rows - m_visible_rows);
             if (top > max_top)
                 top = max_top;
             set_top(top);
@@ -885,7 +885,7 @@ append_not_dup:
                 str_iter iter(input.keys, input.len);
                 while (iter.more())
                 {
-                    unsigned int c = iter.next();
+                    uint32 c = iter.next();
                     if (c < ' ' || c == 0x7f)
                     {
                         cancel(result, true/*can_reactivate*/);
@@ -928,7 +928,7 @@ void selectcomplete_impl::on_matches_changed(const context& context, const line_
 }
 
 //------------------------------------------------------------------------------
-void selectcomplete_impl::on_terminal_resize(int columns, int rows, const context& context)
+void selectcomplete_impl::on_terminal_resize(int32 columns, int32 rows, const context& context)
 {
     m_screen_cols = columns;
     m_screen_rows = rows;
@@ -942,7 +942,7 @@ void selectcomplete_impl::on_terminal_resize(int columns, int rows, const contex
 }
 
 //------------------------------------------------------------------------------
-void selectcomplete_impl::on_signal(int sig)
+void selectcomplete_impl::on_signal(int32 sig)
 {
     if (is_active())
     {
@@ -952,7 +952,7 @@ void selectcomplete_impl::on_signal(int sig)
             virtual void    loop() override {}
             virtual void    done(bool eof) override {}
             virtual void    redraw() override {}
-            virtual int     set_bind_group(int id) override { return 0; }
+            virtual int32   set_bind_group(int32 id) override { return 0; }
         };
 
         dummy_result result;
@@ -997,12 +997,12 @@ void selectcomplete_impl::update_matches(bool restrict)
         __set_completion_defaults('%');
         rl_completion_type = '!';
 
-        int found_quote = 0;
-        int quote_char = 0;
+        int32 found_quote = 0;
+        int32 quote_char = 0;
 
         if (m_buffer->get_cursor())
         {
-            int tmp = m_buffer->get_cursor();
+            int32 tmp = m_buffer->get_cursor();
             quote_char = _rl_find_completion_word(&found_quote, &m_delimiter);
             m_buffer->set_cursor(tmp);
         }
@@ -1104,9 +1104,9 @@ stop:
 
         // Build char** array for filtering.
         std::vector<autoptr<char>> matches;
-        const unsigned int count = m_matches.get_match_count();
+        const uint32 count = m_matches.get_match_count();
         matches.emplace_back(nullptr); // Placeholder for lcd.
-        for (unsigned int i = 0; i < count; i++)
+        for (uint32 i = 0; i < count; i++)
         {
             const char* text = m_matches.get_match(i);
             const char* disp = m_matches.get_match_display_raw(i);
@@ -1157,11 +1157,11 @@ stop:
         m_matches.get_matches()->filter_matches(nullptr, rl_completion_type, rl_filename_completion_desired))
     {
         // Build char** array for filtering.
-        const unsigned int count = m_matches.get_match_count();
+        const uint32 count = m_matches.get_match_count();
         char** matches = (char**)malloc((count + 2) * sizeof(char*));
         matches[0] = _rl_savestring(""); // Placeholder for lcd; required so that _rl_free_match_list frees the real matches.
-        unsigned int num = 0;
-        for (unsigned int i = 0; i < count; ++i)
+        uint32 num = 0;
+        for (uint32 i = 0; i < count; ++i)
         {
             const char* text = m_matches.get_match(i);
             const char* disp = m_matches.get_match_display_raw(i);
@@ -1187,7 +1187,7 @@ stop:
         if (dbg_get_env_int("DEBUG_FILTER"))
         {
             puts("-- SELECTCOMPLETE FILTER_MATCHES");
-            for (unsigned int i = 1; i <= num; ++i)
+            for (uint32 i = 1; i <= num; ++i)
                 printf("match '%s'\n", matches[i]);
             puts("-- DONE");
         }
@@ -1209,10 +1209,10 @@ stop:
         if (restrict)
             m_match_longest = 0;
 
-        const unsigned int count = m_matches.get_match_count();
-        for (unsigned int i = 0; i < count; i++)
+        const uint32 count = m_matches.get_match_count();
+        for (uint32 i = 0; i < count; i++)
         {
-            int len = 0;
+            int32 len = 0;
 
             match_type type = m_matches.get_match_type(i);
             const char* match = m_matches.get_match(i);
@@ -1238,7 +1238,7 @@ stop:
 }
 
 //------------------------------------------------------------------------------
-void selectcomplete_impl::update_len(unsigned int needle_len)
+void selectcomplete_impl::update_len(uint32 needle_len)
 {
     m_len = 0;
 
@@ -1279,16 +1279,16 @@ force_desc_below:
         const width_t col_extra = 0;
 #endif
         const bool best_fit = g_match_best_fit.get();
-        const int limit_fit = g_match_limit_fitted.get();
+        const int32 limit_fit = g_match_limit_fitted.get();
         const bool desc_inline = !m_desc_below && m_matches.has_descriptions();
         const bool one_column = desc_inline && m_matches.get_match_count() <= DESC_ONE_COLUMN_THRESHOLD;
-        rollback<int> rcpdl(_rl_completion_prefix_display_length, 0);
+        rollback<int32> rcpdl(_rl_completion_prefix_display_length, 0);
         m_widths = calculate_columns(&m_matches, best_fit ? limit_fit : -1, one_column, m_desc_below, col_extra);
         m_calc_widths = false;
     }
 
-    const int cols_that_fit = m_widths.num_columns();
-    m_match_cols = max<int>(1, cols_that_fit);
+    const int32 cols_that_fit = m_widths.num_columns();
+    m_match_cols = max<int32>(1, cols_that_fit);
     m_match_rows = (m_matches.get_match_count() + (m_match_cols - 1)) / m_match_cols;
 
     // If initializing where to display descriptions, and they don't fit inline
@@ -1300,11 +1300,11 @@ force_desc_below:
     }
 
     // +3 for quotes and append character (e.g. space).
-    const int input_height = (_rl_vis_botlin + 1) + (m_match_longest + 3 + m_screen_cols - 1) / m_screen_cols;
+    const int32 input_height = (_rl_vis_botlin + 1) + (m_match_longest + 3 + m_screen_cols - 1) / m_screen_cols;
     m_visible_rows = m_screen_rows - input_height;
-    m_visible_rows -= min<int>(2, m_screen_rows / 10);
+    m_visible_rows -= min<int32>(2, m_screen_rows / 10);
 
-    const int max_rows = g_max_rows.get();
+    const int32 max_rows = g_max_rows.get();
     if (max_rows > 0 && m_visible_rows > max_rows)
         m_visible_rows = max_rows;
 
@@ -1322,20 +1322,20 @@ force_desc_below:
 //------------------------------------------------------------------------------
 void selectcomplete_impl::update_top()
 {
-    const int y = get_match_row(m_index);
+    const int32 y = get_match_row(m_index);
     if (m_top > y)
     {
         set_top(y);
     }
     else
     {
-        const int rows = min<int>(m_match_rows, m_visible_rows);
-        int top = max<int>(0, y - (rows - 1));
+        const int32 rows = min<int32>(m_match_rows, m_visible_rows);
+        int32 top = max<int32>(0, y - (rows - 1));
         if (m_top < top)
             set_top(top);
     }
     assert(m_top >= 0);
-    assert(m_top <= max<int>(0, m_match_rows - m_visible_rows));
+    assert(m_top <= max<int32>(0, m_match_rows - m_visible_rows));
 }
 
 //------------------------------------------------------------------------------
@@ -1349,8 +1349,8 @@ void selectcomplete_impl::update_display()
         HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
         GetConsoleScreenBufferInfo(h, &csbi);
         COORD restore = csbi.dwCursorPosition;
-        const int vpos = _rl_last_v_pos;
-        const int cpos = _rl_last_c_pos;
+        const int32 vpos = _rl_last_v_pos;
+        const int32 cpos = _rl_last_c_pos;
 
         // Move cursor after the input line.
         _rl_move_vert(_rl_vis_botlin);
@@ -1360,10 +1360,10 @@ void selectcomplete_impl::update_display()
 #endif
 
         const char* normal_color = "\x1b[m";
-        int normal_color_len = 3;
+        int32 normal_color_len = 3;
 
         const char* description_color = normal_color;
-        int description_color_len = normal_color_len;
+        int32 description_color_len = normal_color_len;
         if (_rl_description_color)
         {
             description_color = _rl_description_color;
@@ -1374,13 +1374,13 @@ void selectcomplete_impl::update_display()
         ecma48_processor(description_color, &desc_select_color, nullptr, ecma48_processor_flags::colorless);
 
         // Display matches.
-        int up = 0;
-        const int count = m_matches.get_match_count();
+        int32 up = 0;
+        const int32 count = m_matches.get_match_count();
         if (is_active() && count > 0)
         {
             update_top();
 
-            const int preview_rows = g_preview_rows.get();
+            const int32 preview_rows = g_preview_rows.get();
             if (!m_expanded)
             {
                 if (preview_rows <= 0 || preview_rows + 1 >= m_visible_rows)
@@ -1403,21 +1403,21 @@ void selectcomplete_impl::update_display()
 
             const bool show_descriptions = !m_desc_below && m_matches.has_descriptions();
             const bool show_more_comment_row = !m_expanded && (preview_rows + 1 < m_match_rows);
-            const int rows = min<int>(m_visible_rows, show_more_comment_row ? preview_rows : m_match_rows);
+            const int32 rows = min<int32>(m_visible_rows, show_more_comment_row ? preview_rows : m_match_rows);
             m_displayed_rows = rows;
 
-            const int major_stride = _rl_print_completions_horizontally ? m_match_cols : 1;
-            const int minor_stride = _rl_print_completions_horizontally ? 1 : m_match_rows;
+            const int32 major_stride = _rl_print_completions_horizontally ? m_match_cols : 1;
+            const int32 minor_stride = _rl_print_completions_horizontally ? 1 : m_match_rows;
 #ifdef DEBUG
-            const int col_extra = m_col_extra;
+            const int32 col_extra = m_col_extra;
 #else
-            const int col_extra = 0;
+            const int32 col_extra = 0;
 #endif
 
-            int shown = 0;
-            for (int row = 0; row < rows; row++)
+            int32 shown = 0;
+            for (int32 row = 0; row < rows; row++)
             {
-                int i = (m_top + row) * major_stride;
+                int32 i = (m_top + row) * major_stride;
                 if (i >= count)
                     break;
 
@@ -1436,8 +1436,8 @@ void selectcomplete_impl::update_display()
                 if (show_more_comment_row)
                 {
                     assert(m_top == 0);
-                    int t = i;
-                    for (int col = 0; col < m_match_cols; col++)
+                    int32 t = i;
+                    for (int32 col = 0; col < m_match_cols; col++)
                     {
                         if (t >= count)
                             break;
@@ -1457,23 +1457,23 @@ void selectcomplete_impl::update_display()
 #ifdef SHOW_DISPLAY_GENERATION
                     append_tmpbuf_char(s_chGen);
 #endif
-                    for (int col = 0; col < m_match_cols; col++)
+                    for (int32 col = 0; col < m_match_cols; col++)
                     {
                         if (i >= count)
                             break;
 
                         const bool right_justify = m_widths.m_right_justify;
-                        const int col_max = ((show_descriptions && !right_justify) ?
-                                             m_screen_cols - 1 :
-                                             min<int>(m_screen_cols - 1, m_widths.column_width(col))) - col_extra;
+                        const int32 col_max = ((show_descriptions && !right_justify) ?
+                                               m_screen_cols - 1 :
+                                               min<int32>(m_screen_cols - 1, m_widths.column_width(col))) - col_extra;
 
-                        const int selected = (i == m_index);
+                        const int32 selected = (i == m_index);
                         const char* const display = m_matches.get_match_display(i);
                         const match_type type = m_matches.get_match_type(i);
                         const bool append = m_matches.is_append_display(i);
 
                         mark_tmpbuf();
-                        int printed_len;
+                        int32 printed_len;
                         if (use_display(append, type, i))
                         {
                             printed_len = 0;
@@ -1509,7 +1509,7 @@ void selectcomplete_impl::update_display()
                         }
                         else
                         {
-                            int vis_stat_char;
+                            int32 vis_stat_char;
                             char* temp = m_matches.is_display_filtered() ? const_cast<char*>(display) : __printable_part(const_cast<char*>(display));
                             printed_len = append_filename(temp, display, 0, 0, type, selected, &vis_stat_char);
                             if (printed_len > col_max)
@@ -1521,7 +1521,7 @@ void selectcomplete_impl::update_display()
                             }
                         }
 
-                        const int next = i + minor_stride;
+                        const int32 next = i + minor_stride;
 
                         if (show_descriptions && !right_justify)
                         {
@@ -1535,12 +1535,12 @@ void selectcomplete_impl::update_display()
                             // Leave at least one space at end of line, or else
                             // "\x1b[K" can erase part of the intended output.
 #ifdef USE_DESC_PARENS
-                            const int parens = right_justify ? 2 : 0;
+                            const int32 parens = right_justify ? 2 : 0;
 #else
-                            const int parens = 0;
+                            const int32 parens = 0;
 #endif
-                            const int pad_to = (right_justify ?
-                                max<int>(printed_len + m_widths.m_desc_padding, col_max - (m_matches.get_match_visible_description(i) + parens)) :
+                            const int32 pad_to = (right_justify ?
+                                max<int32>(printed_len + m_widths.m_desc_padding, col_max - (m_matches.get_match_visible_description(i) + parens)) :
                                 m_widths.m_max_match + 4);
                             if (pad_to < m_screen_cols - 1)
                             {
@@ -1601,7 +1601,7 @@ void selectcomplete_impl::update_display()
                     str<> tmp;
                     if (!m_expanded)
                     {
-                        const int more = m_matches.get_match_count() - shown;
+                        const int32 more = m_matches.get_match_count() - shown;
                         tmp.format("\x1b[%sm... and %u more matches ...\x1b[m\x1b[K", g_color_comment_row.get(), more);
                     }
                     else
@@ -1626,11 +1626,11 @@ void selectcomplete_impl::update_display()
                 up += 2;
 
                 static const char c_footer[] = "\x1b[7mF1\x1b[27m-InlineDescs";
-                int footer_cols = cell_count(c_footer);
+                int32 footer_cols = cell_count(c_footer);
                 if (footer_cols + 2 > m_screen_cols / 2)
                     footer_cols = 0;
 
-                const int fit_cols = m_screen_cols - 1 - (footer_cols ? footer_cols + 2 : 0);
+                const int32 fit_cols = m_screen_cols - 1 - (footer_cols ? footer_cols + 2 : 0);
 
                 str<> s;
                 if (m_index >= 0 && m_index < m_matches.get_match_count())
@@ -1731,7 +1731,7 @@ void selectcomplete_impl::insert_needle()
 }
 
 //------------------------------------------------------------------------------
-void selectcomplete_impl::insert_match(int final)
+void selectcomplete_impl::insert_match(int32 final)
 {
     assert(is_active());
 
@@ -1748,7 +1748,7 @@ void selectcomplete_impl::insert_match(int final)
     const char* match = m_matches.get_match(m_index);
     match_type type = m_matches.get_match_type(m_index);
     char append_char = m_matches.get_match_append_char(m_index);
-    unsigned char flags = m_matches.get_match_flags(m_index);
+    uint8 flags = m_matches.get_match_flags(m_index);
 
     char qs[2] = {};
     if (match &&
@@ -1770,7 +1770,7 @@ void selectcomplete_impl::insert_match(int final)
     bool removed_dir_mark = false;
     if (is_match_type(type, match_type::dir) && !_rl_complete_mark_directories)
     {
-        int cursor = m_buffer->get_cursor();
+        int32 cursor = m_buffer->get_cursor();
         if (cursor >= 2 &&
             m_buffer->get_buffer()[cursor - 1] == '\\' &&
             m_buffer->get_buffer()[cursor - 2] != ':')
@@ -1782,10 +1782,10 @@ void selectcomplete_impl::insert_match(int final)
         }
     }
 
-    unsigned int needle_len = 0;
+    uint32 needle_len = 0;
     if (final)
     {
-        int nontrivial_lcd = __compare_match(const_cast<char*>(m_needle.c_str()), match);
+        int32 nontrivial_lcd = __compare_match(const_cast<char*>(m_needle.c_str()), match);
 
         bool append_space = false;
         // UGLY: __append_to_match() circumvents the m_buffer abstraction.
@@ -1801,7 +1801,7 @@ void selectcomplete_impl::insert_match(int final)
             // A space may or may not be present.  Delete it if one is.
             bool have_space = (m_buffer->get_buffer()[m_point - 1] == ' ');
             bool append_space = (final == 2);
-            int cursor = m_buffer->get_cursor();
+            int32 cursor = m_buffer->get_cursor();
             if (have_space)
             {
                 append_space = true;
@@ -1859,7 +1859,7 @@ void selectcomplete_impl::insert_match(int final)
         m_point = m_anchor + strlen(qs);
         str_iter lhs(m_needle);
         str_iter rhs(m_buffer->get_buffer() + m_point, m_buffer->get_length() - m_point);
-        const int cmp_len = str_compare(lhs, rhs);
+        const int32 cmp_len = str_compare(lhs, rhs);
         if (cmp_len == m_needle.length())
             needle_len = cmp_len;
     }
@@ -1872,12 +1872,12 @@ void selectcomplete_impl::insert_match(int final)
     update_len(needle_len);
     m_inserted = true;
 
-    const int botlin = _rl_vis_botlin;
+    const int32 botlin = _rl_vis_botlin;
     m_buffer->draw();
     if (botlin != _rl_vis_botlin)
     {
         // Coax the cursor to the end of the input line.
-        const int cursor = m_buffer->get_cursor();
+        const int32 cursor = m_buffer->get_cursor();
         m_buffer->set_cursor(m_buffer->get_length());
         m_buffer->set_need_draw();
         m_buffer->draw();
@@ -1895,22 +1895,22 @@ void selectcomplete_impl::insert_match(int final)
 }
 
 //------------------------------------------------------------------------------
-int selectcomplete_impl::get_match_row(int index) const
+int32 selectcomplete_impl::get_match_row(int32 index) const
 {
     return _rl_print_completions_horizontally ? (index / m_match_cols) : (index % m_match_rows);
 }
 
 //------------------------------------------------------------------------------
-bool selectcomplete_impl::use_display(bool append, match_type type, int index) const
+bool selectcomplete_impl::use_display(bool append, match_type type, int32 index) const
 {
     return m_matches.use_display(index, type, append);
 }
 
 //------------------------------------------------------------------------------
-void selectcomplete_impl::set_top(int top)
+void selectcomplete_impl::set_top(int32 top)
 {
     assert(top >= 0);
-    assert(top <= max<int>(0, m_match_rows - m_visible_rows));
+    assert(top <= max<int32>(0, m_match_rows - m_visible_rows));
     if (top != m_top)
     {
         m_top = top;
@@ -1962,7 +1962,7 @@ bool activate_select_complete(editor_module::result& result, bool reactivate)
 }
 
 //------------------------------------------------------------------------------
-bool point_in_select_complete(int in)
+bool point_in_select_complete(int32 in)
 {
     if (!s_selectcomplete)
         return false;

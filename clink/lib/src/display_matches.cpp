@@ -51,7 +51,7 @@ extern "C" {
 
 #include <errno.h>
 #if !defined (errno)
-extern int errno;
+extern int32 errno;
 #endif /* !errno */
 
 #include "readline/posixdir.h"
@@ -70,13 +70,13 @@ extern int errno;
 #  include "readline/colors.h"
 #endif
 
-int __complete_get_screenwidth (void);
-int __fnwidth (const char *string);
-int __get_y_or_n (int for_pager);
+int32 __complete_get_screenwidth (void);
+int32 __fnwidth (const char *string);
+int32 __get_y_or_n (int32 for_pager);
 char* __printable_part (char* pathname);
-int __stat_char (const char *filename, char match_type);
-int ___rl_internal_pager (int lines);
-unsigned int cell_count(const char* in);
+int32 __stat_char (const char *filename, char match_type);
+int32 ___rl_internal_pager (int32 lines);
+uint32 cell_count(const char* in);
 
 } // extern "C"
 
@@ -108,11 +108,11 @@ const char *_rl_selected_color = nullptr;
 //------------------------------------------------------------------------------
 static char* tmpbuf_allocated = nullptr;
 static char* tmpbuf_ptr = nullptr;
-static int tmpbuf_length = 0;
-static int tmpbuf_capacity = 0;
-static int tmpbuf_rollback_length = 0;
+static int32 tmpbuf_length = 0;
+static int32 tmpbuf_capacity = 0;
+static int32 tmpbuf_rollback_length = 0;
 static const char* const _normal_color = "\x1b[m";
-static const int _normal_color_len = 3;
+static const int32 _normal_color_len = 3;
 
 //------------------------------------------------------------------------------
 void mark_tmpbuf (void)
@@ -136,14 +136,14 @@ void rollback_tmpbuf (void)
 }
 
 //------------------------------------------------------------------------------
-static void grow_tmpbuf (int growby)
+static void grow_tmpbuf (int32 growby)
 {
-    int needsize = tmpbuf_length + growby + 1;
+    int32 needsize = tmpbuf_length + growby + 1;
     if (needsize <= tmpbuf_capacity)
         return;
 
-    int oldsize = tmpbuf_capacity;
-    int newsize;
+    int32 oldsize = tmpbuf_capacity;
+    int32 newsize;
     char* newbuf;
 
     if (!oldsize)
@@ -168,7 +168,7 @@ void append_tmpbuf_char(char c)
 }
 
 //------------------------------------------------------------------------------
-void append_tmpbuf_string(const char* s, int len)
+void append_tmpbuf_string(const char* s, int32 len)
 {
     if (len < 0)
         len = strlen(s);
@@ -260,8 +260,8 @@ static bool append_match_color_indicator(const char *f, match_type type)
     char *filename;
     struct stat astat, linkstat;
     mode_t mode;
-    int linkok; // 1 == ok, 0 == dangling symlink, -1 == missing.
-    int stat_ok;
+    int32 linkok; // 1 == ok, 0 == dangling symlink, -1 == missing.
+    int32 stat_ok;
 
     name = f;
 
@@ -496,7 +496,7 @@ static void append_selection_color(void)
 #endif
 
 //------------------------------------------------------------------------------
-static int
+static int32
 path_isdir(match_type type, const char *filename)
 {
     if (!is_zero(type) && !is_match_type(type, match_type::none))
@@ -509,16 +509,16 @@ path_isdir(match_type type, const char *filename)
 
 
 //------------------------------------------------------------------------------
-static int fnappend(const char *to_print, int prefix_bytes, int condense, const char *real_pathname, match_type match_type, int selected)
+static int32 fnappend(const char *to_print, int32 prefix_bytes, int32 condense, const char *real_pathname, match_type match_type, int32 selected)
 {
-    int printed_len, w;
+    int32 printed_len, w;
     const char *s;
-    int common_prefix_len, print_len;
+    int32 common_prefix_len, print_len;
 #if defined(HANDLE_MULTIBYTE)
     mbstate_t ps;
     const char *end;
     size_t tlen;
-    int width;
+    int32 width;
     WCHAR_T wc;
 
     print_len = strlen(to_print);
@@ -551,7 +551,7 @@ static int fnappend(const char *to_print, int prefix_bytes, int condense, const 
         if (!selected)
             append_colored_prefix_start();
 #endif
-        for (int i = ELLIPSIS_LEN; i--;)
+        for (int32 i = ELLIPSIS_LEN; i--;)
             append_tmpbuf_char(ellipsis);
 #if defined(COLOR_SUPPORT)
         if (!selected)
@@ -648,7 +648,7 @@ static int fnappend(const char *to_print, int prefix_bytes, int condense, const 
 }
 
 //------------------------------------------------------------------------------
-static void handle_leading_display_space(const char*& to_print, int selected)
+static void handle_leading_display_space(const char*& to_print, int32 selected)
 {
     if (*to_print == ' ')
     {
@@ -666,7 +666,7 @@ static void handle_leading_display_space(const char*& to_print, int selected)
 }
 
 //------------------------------------------------------------------------------
-void append_display(const char* to_print, int selected, const char* color)
+void append_display(const char* to_print, int32 selected, const char* color)
 {
     if (selected)
     {
@@ -703,14 +703,14 @@ void append_display(const char* to_print, int selected, const char* color)
 // characters we output.
 // The optional VIS_STAT_CHAR receives the visual stat char.  This is to allow
 // the visual stat char to show up correctly even after an ellipsis.
-int append_filename(char* to_print, const char* full_pathname, int prefix_bytes, int condense, match_type type, int selected, int* vis_stat_char)
+int32 append_filename(char* to_print, const char* full_pathname, int32 prefix_bytes, int32 condense, match_type type, int32 selected, int32* vis_stat_char)
 {
-    int printed_len, extension_char, slen, tlen;
+    int32 printed_len, extension_char, slen, tlen;
     char *s, c, *new_full_pathname;
     const char *dn;
     char tmp_slash[3];
 
-    int filename_display_desired = rl_filename_display_desired || is_match_type(type, match_type::dir);
+    int32 filename_display_desired = rl_filename_display_desired || is_match_type(type, match_type::dir);
 
     extension_char = 0;
 #if defined(COLOR_SUPPORT)
@@ -870,10 +870,10 @@ int append_filename(char* to_print, const char* full_pathname, int prefix_bytes,
 // SELECTED > 0     : pad exactly, reset color at end.
 // SELECTED == 0    : reset color first, pad at least 1 char.
 // SELECTED == -1   : pad exactly, do not set color.
-void pad_filename(int len, int pad_to_width, int selected)
+void pad_filename(int32 len, int32 pad_to_width, int32 selected)
 {
     const bool exact = selected || pad_to_width < 0;
-    int num_spaces = 0;
+    int32 num_spaces = 0;
     if (pad_to_width < 0)
         pad_to_width = -pad_to_width;
     if (pad_to_width <= len)
@@ -890,8 +890,8 @@ void pad_filename(int len, int pad_to_width, int selected)
     {
         //static const char spaces[] = "................................................";
         static const char spaces[] = "                                                ";
-        const int spaces_bytes = sizeof(spaces) - sizeof(spaces[0]);
-        const int chunk_len = (num_spaces < spaces_bytes) ? num_spaces : spaces_bytes;
+        const int32 spaces_bytes = sizeof(spaces) - sizeof(spaces[0]);
+        const int32 chunk_len = (num_spaces < spaces_bytes) ? num_spaces : spaces_bytes;
         append_tmpbuf_string(spaces, chunk_len);
         num_spaces -= spaces_bytes;
     }
@@ -912,7 +912,7 @@ bool get_match_color(const char* filename, match_type type, str_base& out)
 
 
 //------------------------------------------------------------------------------
-inline bool exact_match(const char* match, const char* text, unsigned int len)
+inline bool exact_match(const char* match, const char* text, uint32 len)
 {
     while (len--)
     {
@@ -926,13 +926,13 @@ inline bool exact_match(const char* match, const char* text, unsigned int len)
 
 //------------------------------------------------------------------------------
 enum { bit_prefix = 0x01, bit_suffix = 0x02 };
-static int calc_prefix_or_suffix(const char* match, const char* display)
+static int32 calc_prefix_or_suffix(const char* match, const char* display)
 {
-    const unsigned int match_len = static_cast<unsigned int>(strlen(match));
+    const uint32 match_len = uint32(strlen(match));
 
     bool pre = false;
     bool suf = false;
-    int visible_len = 0;
+    int32 visible_len = 0;
 
     ecma48_state state;
     ecma48_iter iter(display, state);
@@ -950,7 +950,7 @@ static int calc_prefix_or_suffix(const char* match, const char* display)
             }
 
             str_iter inner_iter(code.get_pointer(), code.get_length());
-            while (int c = inner_iter.next())
+            while (int32 c = inner_iter.next())
                 visible_len += clink_wcwidth(c);
         }
 
@@ -958,11 +958,11 @@ static int calc_prefix_or_suffix(const char* match, const char* display)
 }
 
 //------------------------------------------------------------------------------
-int append_tmpbuf_with_visible_len(const char* s, int len)
+int32 append_tmpbuf_with_visible_len(const char* s, int32 len)
 {
     append_tmpbuf_string(s, len);
 
-    int visible_len = 0;
+    int32 visible_len = 0;
 
     ecma48_state state;
     ecma48_iter iter(s, state, len);
@@ -970,7 +970,7 @@ int append_tmpbuf_with_visible_len(const char* s, int len)
         if (code.get_type() == ecma48_code::type_chars)
         {
             str_iter inner_iter(code.get_pointer(), code.get_length());
-            while (int c = inner_iter.next())
+            while (int32 c = inner_iter.next())
                 visible_len += clink_wcwidth(c);
         }
 
@@ -978,16 +978,16 @@ int append_tmpbuf_with_visible_len(const char* s, int len)
 }
 
 //------------------------------------------------------------------------------
-static int append_prefix_complex(const char* text, int len, const char* leading, int prefix_bytes, int condense)
+static int32 append_prefix_complex(const char* text, int32 len, const char* leading, int32 prefix_bytes, int32 condense)
 {
-    int visible_len = 0;
+    int32 visible_len = 0;
 
     // Prefix.
     append_colored_prefix_start();
     if (condense && prefix_bytes < len)
     {
         const char ellipsis = (text[prefix_bytes] == '.') ? '_' : '.';
-        for (int i = ELLIPSIS_LEN; i--;)
+        for (int32 i = ELLIPSIS_LEN; i--;)
             append_tmpbuf_char(ellipsis);
         visible_len += ELLIPSIS_LEN;
     }
@@ -1012,14 +1012,14 @@ static int append_prefix_complex(const char* text, int len, const char* leading,
 
 
 //------------------------------------------------------------------------------
-unsigned int append_display_with_presuf(const char* match, const char* display, int presuf, int prefix_bytes, int condense, match_type type)
+uint32 append_display_with_presuf(const char* match, const char* display, int32 presuf, int32 prefix_bytes, int32 condense, match_type type)
 {
     assert(presuf);
     bool pre = !!(presuf & bit_prefix);
     bool suf = !pre && (presuf & bit_suffix);
-    const int skip_cells = suf ? cell_count(display) - cell_count(match) : 0;
+    const int32 skip_cells = suf ? cell_count(display) - cell_count(match) : 0;
 
-    int visible_len = 0;
+    int32 visible_len = 0;
     bool reset_default_color = false;
     str<> leading;
 
@@ -1047,19 +1047,19 @@ unsigned int append_display_with_presuf(const char* match, const char* display, 
             {
                 if (suf && visible_len == skip_cells)
                 {
-                    const unsigned int rest_len = inner_iter.length();
+                    const uint32 rest_len = inner_iter.length();
                     if (prefix_bytes <= rest_len)
                     {
                         suf = false;
                         did = true;
                         // Already counted in visible_len.
-                        append_tmpbuf_string(code.get_pointer(), static_cast<unsigned int>(inner_iter.get_pointer() - code.get_pointer()));
+                        append_tmpbuf_string(code.get_pointer(), uint32(inner_iter.get_pointer() - code.get_pointer()));
                         visible_len += append_prefix_complex(inner_iter.get_pointer(), rest_len, leading.c_str(), prefix_bytes, condense);
                         break;
                     }
                 }
 
-                const int c = inner_iter.next();
+                const int32 c = inner_iter.next();
                 if (!c)
                     break;
                 visible_len += clink_wcwidth(c);
@@ -1084,22 +1084,22 @@ unsigned int append_display_with_presuf(const char* match, const char* display, 
 
 
 //------------------------------------------------------------------------------
-static int display_match_list_internal(match_adapter* adapter, const column_widths& widths, bool only_measure, int presuf)
+static int32 display_match_list_internal(match_adapter* adapter, const column_widths& widths, bool only_measure, int32 presuf)
 {
-    const int count = adapter->get_match_count();
-    int printed_len;
+    const int32 count = adapter->get_match_count();
+    int32 printed_len;
     const char* filtered_color = "\x1b[m";
     const char* description_color = "\x1b[m";
-    int filtered_color_len = 3;
-    int description_color_len = 3;
+    int32 filtered_color_len = 3;
+    int32 description_color_len = 3;
 
-    const int cols = __complete_get_screenwidth();
-    const int show_descriptions = adapter->has_descriptions();
-    const int limit = widths.num_columns();
+    const int32 cols = __complete_get_screenwidth();
+    const int32 show_descriptions = adapter->has_descriptions();
+    const int32 limit = widths.num_columns();
     assert(limit > 0);
 
     // How many iterations of the printing loop?
-    const int rows = (count + (limit - 1)) / limit;
+    const int32 rows = (count + (limit - 1)) / limit;
 
     // If only measuring, short circuit without printing anything.
     if (only_measure)
@@ -1114,8 +1114,8 @@ static int display_match_list_internal(match_adapter* adapter, const column_widt
 
     // Horizontally means across alphabetically, like ls -x.
     // Vertically means up-and-down alphabetically, like ls.
-    const int major_stride = _rl_print_completions_horizontally ? limit : 1;
-    const int minor_stride = _rl_print_completions_horizontally ? 1 : rows;
+    const int32 major_stride = _rl_print_completions_horizontally ? limit : 1;
+    const int32 minor_stride = _rl_print_completions_horizontally ? 1 : rows;
 
     if (_rl_filtered_color)
     {
@@ -1129,16 +1129,16 @@ static int display_match_list_internal(match_adapter* adapter, const column_widt
         description_color_len = strlen(description_color);
     }
 
-    int lines = 0;
-    for (int i = 0; i < rows; i++)
+    int32 lines = 0;
+    for (int32 i = 0; i < rows; i++)
     {
         reset_tmpbuf();
-        for (int j = 0, l = i * major_stride; j < limit; j++)
+        for (int32 j = 0, l = i * major_stride; j < limit; j++)
         {
             if (l >= count)
                 break;
 
-            const int col_max = ((show_descriptions && !widths.m_right_justify) ?
+            const int32 col_max = ((show_descriptions && !widths.m_right_justify) ?
                                  cols - 1 :
                                  widths.column_width(j));
 
@@ -1180,12 +1180,12 @@ static int display_match_list_internal(match_adapter* adapter, const column_widt
                 {
                     const bool right_justify = widths.m_right_justify;
 #ifdef USE_DESC_PARENS
-                    const int parens = right_justify ? 2 : 0;
+                    const int32 parens = right_justify ? 2 : 0;
 #else
-                    const int parens = 0;
+                    const int32 parens = 0;
 #endif
-                    const int pad_to = (right_justify ?
-                        max<int>(printed_len + widths.m_desc_padding, col_max - (adapter->get_match_visible_description(l) + parens)) :
+                    const int32 pad_to = (right_justify ?
+                        max<int32>(printed_len + widths.m_desc_padding, col_max - (adapter->get_match_visible_description(l) + parens)) :
                         widths.m_max_match + 4);
                     if (pad_to < cols - 1)
                     {
@@ -1216,7 +1216,7 @@ static int display_match_list_internal(match_adapter* adapter, const column_widt
 #endif
 
         {
-            int lines_for_row = 1;
+            int32 lines_for_row = 1;
             if (printed_len)
                 lines_for_row += (printed_len - 1) / _rl_screenwidth;
             if (_rl_page_completions && lines > 0 && lines + lines_for_row >= _rl_screenheight)
@@ -1253,7 +1253,7 @@ void free_filtered_matches(match_display_filter_entry** filtered_matches)
 }
 
 //------------------------------------------------------------------------------
-static int prompt_display_matches(int len)
+static int32 prompt_display_matches(int32 len)
 {
     end_prompt(1/*crlf*/);
 
@@ -1318,13 +1318,13 @@ extern "C" void display_matches(char** matches)
         adapter->set_alt_matches(matches, false);
     }
 
-    int presuf = 0;
+    int32 presuf = 0;
     str<32> lcd;
     adapter->get_lcd(lcd);
     if (*__printable_part(const_cast<char*>(lcd.c_str())))
     {
         presuf = bit_prefix|bit_suffix;
-        for (int l = adapter->get_match_count(); presuf && l--;)
+        for (int32 l = adapter->get_match_count(); presuf && l--;)
         {
             if (adapter->is_append_display(l))
                 continue;
@@ -1336,14 +1336,14 @@ extern "C" void display_matches(char** matches)
             const char* const match = adapter->get_match(l);
             const char* const display = adapter->get_match_display(l);
             const char* const visible = __printable_part(const_cast<char*>(match));
-            const int bits = calc_prefix_or_suffix(visible, display);
+            const int32 bits = calc_prefix_or_suffix(visible, display);
             presuf &= bits;
         }
     }
 
-    const int count = adapter->get_match_count();
+    const int32 count = adapter->get_match_count();
     const bool best_fit = g_match_best_fit.get();
-    const int limit_fit = g_match_limit_fitted.get();
+    const int32 limit_fit = g_match_limit_fitted.get();
     const bool one_column = adapter->has_descriptions() && count <= DESC_ONE_COLUMN_THRESHOLD;
     const column_widths widths = calculate_columns(adapter, best_fit ? limit_fit : -1, one_column, false, 0, presuf);
 
@@ -1367,7 +1367,7 @@ done:
 }
 
 //------------------------------------------------------------------------------
-void override_match_line_state::override(int start, int end, const char* needle, char quote_char)
+void override_match_line_state::override(int32 start, int32 end, const char* needle, char quote_char)
 {
     assert(g_rl_buffer);
     m_line.clear();
@@ -1375,7 +1375,7 @@ void override_match_line_state::override(int start, int end, const char* needle,
     if (quote_char)
         m_line.concat(&quote_char, 1);
     m_line.concat(needle);
-    int point = m_line.length();
+    int32 point = m_line.length();
     m_line.concat(g_rl_buffer->get_buffer() + end);
     override_line_state(m_line.c_str(), needle, point);
 }

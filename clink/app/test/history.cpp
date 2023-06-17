@@ -50,14 +50,14 @@ struct test_history_db
         initialise();
     }
 
-    unsigned int get_master_length() const
+    uint32 get_master_length() const
     {
-        return (unsigned int)m_master_len;
+        return (uint32)m_master_len;
     }
 
-    unsigned int get_master_deleted_count() const
+    uint32 get_master_deleted_count() const
     {
-        return (unsigned int)m_master_deleted_count;
+        return (uint32)m_master_deleted_count;
     }
 
     const char* get_master_tag() const
@@ -65,7 +65,7 @@ struct test_history_db
         return m_master_ctag.get();
     }
 
-    unsigned int get_master_tag_size() const
+    uint32 get_master_tag_size() const
     {
         return m_master_ctag.size();
     }
@@ -75,7 +75,7 @@ struct test_history_db
         m_min_compact_threshold = threshold;
     }
 
-    bool remove_by_index(int index)
+    bool remove_by_index(int32 index)
     {
         return remove(m_index_map[index]);
     }
@@ -103,12 +103,12 @@ static void strip_lf(char* line)
 }
 
 //------------------------------------------------------------------------------
-int count_files()
+int32 count_files()
 {
     globber file_iter("*");
     file_iter.hidden(true);
 
-    int file_count = 0;
+    int32 file_count = 0;
     for (str<1, false> unused; file_iter.next(unused); ++file_count);
 
     return file_count;
@@ -189,7 +189,7 @@ TEST_CASE("history db")
         settings::find("history.shared")->set("true");
         settings::find("history.dupe_mode")->set("add");
 
-        int line_bytes = 0;
+        int32 line_bytes = 0;
 
         // Write a lot of lines, check it only goes to main file.
         {
@@ -201,7 +201,7 @@ TEST_CASE("history db")
                 for (const char* line : line_set0)
                 {
                     REQUIRE(history.add(line));
-                    line_bytes += int(strlen(line)) + 1; // +1 for \n
+                    line_bytes += int32(strlen(line)) + 1; // +1 for \n
                 }
             }
 
@@ -223,13 +223,13 @@ TEST_CASE("history db")
         settings::find("history.shared")->set("false");
         settings::find("history.dupe_mode")->set("add");
 
-        int line_bytes = 0;
+        int32 line_bytes = 0;
         {
             test_history_db history;
             REQUIRE(count_files() == 3);
 
             REQUIRE(history.add(line_set0[0]));
-            line_bytes += int(strlen(line_set0[0])) + 1;
+            line_bytes += int32(strlen(line_set0[0])) + 1;
 
             REQUIRE(count_files() == 3);
             REQUIRE(os::get_file_size(session_path) == line_bytes);
@@ -247,13 +247,13 @@ TEST_CASE("history db")
         settings::find("history.shared")->set("false");
         settings::find("history.dupe_mode")->set("erase_prev");
 
-        int line_bytes = 0;
+        int32 line_bytes = 0;
         {
             test_history_db history;
             REQUIRE(count_files() == 4);
 
             REQUIRE(history.add(line_set0[0]));
-            line_bytes += int(strlen(line_set0[0])) + 1;
+            line_bytes += int32(strlen(line_set0[0])) + 1;
 
             REQUIRE(count_files() == 4);
             REQUIRE(os::get_file_size(session_path) == line_bytes);
@@ -267,13 +267,13 @@ TEST_CASE("history db")
         REQUIRE(os::get_file_size(master_path) == line_bytes);
 
         {
-            int session_bytes = 0;
+            int32 session_bytes = 0;
 
             test_history_db history;
             REQUIRE(count_files() == 4);
 
             REQUIRE(history.add(line_set0[0]));
-            session_bytes += int(strlen(line_set0[0])) + 1;
+            session_bytes += int32(strlen(line_set0[0])) + 1;
 
             REQUIRE(count_files() == 4);
             REQUIRE(os::get_file_size(session_path) == session_bytes);
@@ -306,14 +306,14 @@ TEST_CASE("history db")
 
         char buffer[256];
         str_iter line;
-        int j = 0;
-        for (int i = 0; i < sizeof_array(buffer); ++i)
+        int32 j = 0;
+        for (int32 i = 0; i < sizeof_array(buffer); ++i)
         {
             history_db::iter iter = history.read_lines(buffer, i);
             char c = 'a';
             while (iter.next(line))
             {
-                int line_length = line.length();
+                int32 line_length = line.length();
                 REQUIRE(line_length == 1 || line_length == 2);
 
                 REQUIRE(line.get_pointer()[0] == c++);
@@ -853,7 +853,7 @@ TEST_CASE("history removals ctag")
                 REQUIRE(file != nullptr);
                 REQUIRE(fgets(buffer, sizeof_array(buffer), file));
                 REQUIRE(strncmp(buffer, "|CTAG", 5) == 0);
-                const int expected_offset = int(strlen(buffer) + strlen(history_lines[0]) + 1);
+                const int32 expected_offset = int32(strlen(buffer) + strlen(history_lines[0]) + 1);
                 REQUIRE(fgets(buffer, sizeof_array(buffer), file));
                 REQUIRE(atoi(buffer) == expected_offset);
                 fclose(file);
@@ -867,7 +867,7 @@ TEST_CASE("history removals ctag")
                 REQUIRE(file != nullptr);
                 REQUIRE(fgets(buffer, sizeof_array(buffer), file));
                 REQUIRE(strncmp(buffer, "|CTAG", 5) == 0);
-                const int expected_offset = int(strlen(buffer));
+                const int32 expected_offset = int32(strlen(buffer));
                 REQUIRE(fgets(buffer, sizeof_array(buffer), file));
                 REQUIRE(atoi(buffer) == expected_offset);
                 fclose(file);

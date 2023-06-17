@@ -6,7 +6,7 @@
 #include "lua_bindable.h"
 
 struct lua_State;
-enum class word_class : unsigned char;
+enum class word_class : uint8;
 class word_classifications;
 
 //------------------------------------------------------------------------------
@@ -17,19 +17,19 @@ class lua_word_classifications
     : public lua_bindable<lua_word_classifications>
 {
 public:
-                            lua_word_classifications(word_classifications& classifications, unsigned int index_offset, unsigned int command_word_index, unsigned int num_words);
-    int                     classify_word(lua_State* state);
-    int                     apply_color(lua_State* state);
-    int                     shift(lua_State* state);
+                            lua_word_classifications(word_classifications& classifications, uint32 index_offset, uint32 command_word_index, uint32 num_words);
+    int32                   classify_word(lua_State* state);
+    int32                   apply_color(lua_State* state);
+    int32                   shift(lua_State* state);
 
-    bool                    get_word_class(int word_index_zero_based, word_class& wc) const;
+    bool                    get_word_class(int32 word_index_zero_based, word_class& wc) const;
 
 private:
     word_classifications&   m_classifications;
-    const unsigned int      m_index_offset;
-    const unsigned int      m_num_words;
-    unsigned int            m_command_word_index;
-    unsigned int            m_shift = 0;
+    const uint32            m_index_offset;
+    const uint32            m_num_words;
+    uint32                  m_command_word_index;
+    uint32                  m_shift = 0;
 
     friend class lua_bindable<lua_word_classifications>;
     static const char* const c_name;

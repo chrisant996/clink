@@ -7,27 +7,27 @@
 class linear_allocator
 {
 public:
-                            linear_allocator(unsigned int size);
+                            linear_allocator(uint32 size);
                             linear_allocator(linear_allocator&& o) = delete;
                             ~linear_allocator();
     linear_allocator&       operator = (linear_allocator&& o);
     void                    reset();
     void                    clear();
-    void*                   alloc(unsigned int size);
+    void*                   alloc(uint32 size);
     const char*             store(const char* str);
-    template <class T> T*   calloc(unsigned int count=1);
-    bool                    fits(unsigned int) const;
-    bool                    oversized(unsigned int) const;
+    template <class T> T*   calloc(uint32 count=1);
+    bool                    fits(uint32) const;
+    bool                    oversized(uint32) const;
 
-    bool                    unittest_at_end(void* ptr, unsigned int size) const;
-    bool                    unittest_in_prev_page(void* ptr, unsigned int size) const;
+    bool                    unittest_at_end(void* ptr, uint32 size) const;
+    bool                    unittest_in_prev_page(void* ptr, uint32 size) const;
 
 private:
     bool                    new_page();
     void                    free_chain(bool keep_one=false);
     char*                   m_ptr = nullptr;
-    unsigned int            m_used;
-    unsigned int            m_max;
+    uint32                  m_used;
+    uint32                  m_max;
 };
 
 //------------------------------------------------------------------------------
@@ -43,7 +43,7 @@ inline void linear_allocator::clear()
 }
 
 //------------------------------------------------------------------------------
-template <class T> T* linear_allocator::calloc(unsigned int count)
+template <class T> T* linear_allocator::calloc(uint32 count)
 {
     void* p = alloc(sizeof(T) * count);
     if (p)
@@ -52,13 +52,13 @@ template <class T> T* linear_allocator::calloc(unsigned int count)
 }
 
 //------------------------------------------------------------------------------
-inline bool linear_allocator::fits(unsigned int size) const
+inline bool linear_allocator::fits(uint32 size) const
 {
     return m_used + size <= m_max;
 }
 
 //------------------------------------------------------------------------------
-inline bool linear_allocator::oversized(unsigned int size) const
+inline bool linear_allocator::oversized(uint32 size) const
 {
     return size + sizeof(m_ptr) > m_max;
 }
@@ -66,13 +66,13 @@ inline bool linear_allocator::oversized(unsigned int size) const
 
 
 //------------------------------------------------------------------------------
-inline bool linear_allocator::unittest_at_end(void* ptr, unsigned int size) const
+inline bool linear_allocator::unittest_at_end(void* ptr, uint32 size) const
 {
     return ptr == m_ptr + m_used - size;
 }
 
 //------------------------------------------------------------------------------
-inline bool linear_allocator::unittest_in_prev_page(void* _ptr, unsigned int size) const
+inline bool linear_allocator::unittest_in_prev_page(void* _ptr, uint32 size) const
 {
     char* ptr = (char*)_ptr;
     char* prev_page = *reinterpret_cast<char**>(m_ptr);

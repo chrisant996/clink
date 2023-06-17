@@ -74,7 +74,7 @@ bool lua_match_generator::generate(const line_states& lines, match_builder& buil
     if (lua_state::pcall(state, 4, 1) != 0)
         return false;
 
-    int use_matches = lua_toboolean(state, -1);
+    int32 use_matches = lua_toboolean(state, -1);
     return !!use_matches;
 }
 
@@ -108,8 +108,8 @@ void lua_match_generator::get_word_break_info(const line_state& line, word_break
 
     line_state::set_can_strip_quotes(true);
 
-    info.truncate = int(lua_tointeger(state, -2));
-    info.keep = int(lua_tointeger(state, -1));
+    info.truncate = int32(lua_tointeger(state, -2));
+    info.keep = int32(lua_tointeger(state, -1));
 }
 
 //------------------------------------------------------------------------------
@@ -127,8 +127,8 @@ bool lua_match_generator::match_display_filter(const char* needle, char** matche
     // displaying the matches. So matches[1...n] are useful.
 
     match_display_filter_entry** new_matches = nullptr;
-    int top = lua_gettop(state);
-    int i;
+    int32 top = lua_gettop(state);
+    int32 i;
 
     // Check there's a display filter set.
     bool ondisplaymatches = false;
@@ -186,11 +186,11 @@ done:
     }
 
     needle = __printable_part(const_cast<char*>(needle));
-    const int needle_len = int(strlen(needle));
+    const int32 needle_len = int32(strlen(needle));
 
     // Count matches.
     const bool only_lcd = matches[0] && *matches[0] && !matches[1];
-    int match_count = only_lcd ? 1 : 0;
+    int32 match_count = only_lcd ? 1 : 0;
     for (i = 1; matches[i]; ++i, ++match_count);
 
     // Convert matches to a Lua table.
@@ -199,7 +199,7 @@ done:
     {
         str<> tmp;
 
-        int mi = only_lcd ? 0 : 1;
+        int32 mi = only_lcd ? 0 : 1;
         for (i = 1; i <= match_count; ++i)
         {
             const char* match = matches[mi++];
@@ -240,7 +240,7 @@ done:
                 lua_rawset(state, -3);
             }
 
-            unsigned char flags = details.get_flags();
+            uint8 flags = details.get_flags();
             if (flags & MATCH_FLAG_HAS_SUPPRESS_APPEND)
             {
                 lua_pushliteral(state, "suppressappend");
@@ -255,7 +255,7 @@ done:
     }
     else
     {
-        int mi = only_lcd ? 0 : 1;
+        int32 mi = only_lcd ? 0 : 1;
         for (i = 1; i < match_count; ++i)
         {
             lua_pushstring(state, matches[mi++]);
@@ -272,11 +272,11 @@ done:
         goto done;
 
     // Convert table returned by the Lua filter function to C.
-    int j = 1;
+    int32 j = 1;
     bool one_column = false;
-    int max_visible_display = 0;
-    int max_visible_description = 0;
-    int new_len = int(lua_rawlen(state, -1));
+    int32 max_visible_display = 0;
+    int32 max_visible_description = 0;
+    int32 new_len = int32(lua_rawlen(state, -1));
     new_matches = (match_display_filter_entry**)calloc(1 + new_len + 1, sizeof(*new_matches));
     for (i = 1; i <= new_len; ++i)
     {
@@ -288,7 +288,7 @@ done:
             const char* description = nullptr;
             match_type type = match_type::none;
             char append_char = 0;
-            unsigned char flags = 0;
+            uint8 flags = 0;
 
             if (lua_istable(state, -1))
             {
@@ -301,7 +301,7 @@ done:
                 if (match)
                 {
                     // Discard matches that don't match the needle.
-                    int cmp = str_compare(needle, match);
+                    int32 cmp = str_compare(needle, match);
                     if (cmp < 0) cmp = needle_len;
                     if (cmp < needle_len)
                         goto next;
@@ -360,7 +360,7 @@ done:
                 }
                 else
                 {
-                    unsigned int matching = match ? str_compare(match, lcd.c_str()) : 0;
+                    uint32 matching = match ? str_compare(match, lcd.c_str()) : 0;
                     if (lcd.length() > matching)
                         lcd.truncate(matching);
                 }
@@ -371,7 +371,7 @@ done:
                 match_display_filter_entry *new_match;
                 new_match = (match_display_filter_entry *)malloc(alloc_size);
                 memset(new_match, 0, sizeof(*new_match));
-                new_match->type = (unsigned char)type;
+                new_match->type = uint8(type);
                 new_match->append_char = append_char;
                 new_match->flags = flags;
                 new_matches[j] = new_match;
@@ -434,12 +434,12 @@ next:
     if (true)
     {
 #ifdef DEBUG
-        const int debug_filter = dbg_get_env_int("DEBUG_FILTER");
+        const int32 debug_filter = dbg_get_env_int("DEBUG_FILTER");
 #endif
 
         str_unordered_set seen;
-        unsigned int tortoise = 1;
-        unsigned int hare = 1;
+        uint32 tortoise = 1;
+        uint32 hare = 1;
         while (new_matches[hare])
         {
             const char* display = new_matches[hare]->display;
@@ -501,8 +501,8 @@ bool lua_match_generator::filter_matches(char** matches, char completion_type, b
 
     // Count matches; bail if 0.
     const bool only_lcd = matches[0] && !matches[1];
-    int match_count = only_lcd ? 1 : 0;
-    for (int i = 1; matches[i]; ++i, ++match_count);
+    int32 match_count = only_lcd ? 1 : 0;
+    for (int32 i = 1; matches[i]; ++i, ++match_count);
     if (match_count <= 0)
         return false;
 
@@ -515,9 +515,9 @@ bool lua_match_generator::filter_matches(char** matches, char completion_type, b
 
     // Convert matches to a Lua table (arg 1).
     str<> tmp;
-    int mi = only_lcd ? 0 : 1;
+    int32 mi = only_lcd ? 0 : 1;
     lua_createtable(state, match_count, 0);
-    for (int i = 1; i <= match_count; ++i)
+    for (int32 i = 1; i <= match_count; ++i)
     {
         const char* match = matches[mi++];
         match_type type = (match_type)lookup_match_type(match);
@@ -553,8 +553,8 @@ bool lua_match_generator::filter_matches(char** matches, char completion_type, b
 
     // Hash the filtered matches to be kept.
     str_unordered_set keep_typeless;
-    int num_matches = int(lua_rawlen(state, -1));
-    for (int i = 1; i <= num_matches; ++i)
+    int32 num_matches = int32(lua_rawlen(state, -1));
+    for (int32 i = 1; i <= num_matches; ++i)
     {
         save_stack_top ss(state);
 

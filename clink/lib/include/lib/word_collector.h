@@ -21,10 +21,10 @@ enum class collect_words_mode { stop_at_cursor, whole_command };
 class word_token
 {
 public:
-    enum : unsigned char { invalid_delim = 0xff };
+    enum : uint8 { invalid_delim = 0xff };
                         word_token(char c, bool arg=false) : delim(c), redir_arg(arg) {}
     explicit            operator bool () const { return (delim != invalid_delim); }
-    unsigned char       delim;          // Preceding delimiter.
+    uint8               delim;          // Preceding delimiter.
     bool                redir_arg;      // Word is the argument of a redirection symbol.
 };
 
@@ -33,7 +33,7 @@ class collector_tokeniser
 {
 public:
     virtual void start(const str_iter& iter, const char* quote_pair, bool at_beginning=true) = 0;
-    virtual word_token next(unsigned int& offset, unsigned int& length) = 0;
+    virtual word_token next(uint32& offset, uint32& length) = 0;
     virtual bool has_deprecated_argmatcher(const char* command) { return false; }
 };
 
@@ -42,8 +42,8 @@ class word_collector
 {
     struct command
     {
-        unsigned int        offset;
-        unsigned int        length;
+        uint32          offset;
+        uint32          length;
     };
 
 public:
@@ -52,15 +52,15 @@ public:
 
     void init_alias_cache();
 
-    unsigned int collect_words(const char* buffer, unsigned int length, unsigned int cursor,
-                               std::vector<word>& words, collect_words_mode mode) const;
-    unsigned int collect_words(const line_buffer& buffer,
-                               std::vector<word>& words, collect_words_mode mode) const;
+    uint32 collect_words(const char* buffer, uint32 length, uint32 cursor,
+                         std::vector<word>& words, collect_words_mode mode) const;
+    uint32 collect_words(const line_buffer& buffer,
+                         std::vector<word>& words, collect_words_mode mode) const;
 
 private:
     char get_opening_quote() const;
     char get_closing_quote() const;
-    void find_command_bounds(const char* buffer, unsigned int length, unsigned int cursor,
+    void find_command_bounds(const char* buffer, uint32 length, uint32 cursor,
                              std::vector<command>& commands, bool stop_at_cursor) const;
     bool get_alias(const char* name, str_base& out) const;
 
@@ -80,7 +80,7 @@ public:
     ~simple_word_tokeniser();
 
     void start(const str_iter& iter, const char* quote_pair, bool at_beginning=true) override;
-    word_token next(unsigned int& offset, unsigned int& length) override;
+    word_token next(uint32& offset, uint32& length) override;
 
 private:
     const char* m_delims;
@@ -93,13 +93,13 @@ class commands
 {
 public:
     commands() { clear(); }
-    void set(const char* line_buffer, unsigned int line_length, unsigned int line_cursor, const std::vector<word>& words);
+    void set(const char* line_buffer, uint32 line_length, uint32 line_cursor, const std::vector<word>& words);
     void set(const line_buffer& buffer, const std::vector<word>& words);
-    unsigned int break_end_word(unsigned int truncate, unsigned int keep);
+    uint32 break_end_word(uint32 truncate, uint32 keep);
     void clear();
-    const line_states& get_linestates(const char* buffer, unsigned int len) const;
+    const line_states& get_linestates(const char* buffer, uint32 len) const;
     const line_states& get_linestates(const line_buffer& buffer) const;
-    const line_state& get_linestate(const char* buffer, unsigned int len) const;
+    const line_state& get_linestate(const char* buffer, uint32 len) const;
     const line_state& get_linestate(const line_buffer& buffer) const;
 private:
     void clear_internal();

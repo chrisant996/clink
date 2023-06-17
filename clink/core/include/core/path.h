@@ -13,11 +13,11 @@ namespace path
 
 void        refresh_pathext();
 
-void        normalise(str_base& in_out, int sep=0);
-void        normalise(char* in_out, int sep=0);
-void        normalise_separators(str_base& in_out, int sep=0);
-void        normalise_separators(char* in_out, int sep=0);
-bool        is_separator(int c);
+void        normalise(str_base& in_out, int32 sep=0);
+void        normalise(char* in_out, int32 sep=0);
+void        normalise_separators(str_base& in_out, int32 sep=0);
+void        normalise_separators(char* in_out, int32 sep=0);
+bool        is_separator(int32 c);
 const char* next_element(const char* in);
 bool        get_base_name(const char* in, str_base& out);
 bool        get_directory(const char* in, str_base& out);
@@ -51,7 +51,7 @@ template<typename TYPE> static void skip_sep(const TYPE*& path)
         ++path;
 }
 
-template<typename TYPE> static unsigned int past_ssqs(const TYPE* path)
+template<typename TYPE> static uint32 past_ssqs(const TYPE* path)
 {
     const TYPE* p = path;
     if (!path::is_separator(*(p++)))
@@ -63,7 +63,7 @@ template<typename TYPE> static unsigned int past_ssqs(const TYPE* path)
     if (!path::is_separator(*(p++)))
         return 0;
     skip_sep(p);
-    return static_cast<unsigned int>(p - path);
+    return uint32(p - path);
 }
 
 }; // namespace path

@@ -12,25 +12,25 @@
 #include <assert.h>
 
 //------------------------------------------------------------------------------
-inline bool is_null_or_empty(const char* s)                          { return !s || !*s; }
-inline bool is_null_or_empty(const wchar_t* s)                       { return !s || !*s; }
-inline int  str_len(const char* s)                                   { return int(strlen(s)); }
-inline int  str_len(const wchar_t* s)                                { return int(wcslen(s)); }
-inline void str_ncat(char* d, const char* s, size_t n)               { strncat(d, s, n); }
-inline void str_ncat(wchar_t* d, const wchar_t* s, size_t n)         { wcsncat(d, s, n); }
-inline int  str_cmp(const char* l, const char* r)                    { return strcmp(r, l); }
-inline int  str_cmp(const wchar_t* l, const wchar_t* r)              { return wcscmp(r, l); }
-inline int  str_icmp(const char* l, const char* r)                   { return stricmp(r, l); }
-inline int  str_icmp(const wchar_t* l, const wchar_t* r)             { return wcsicmp(r, l); }
-inline int  vsnprint(char* d, int n, const char* f, va_list a)       { return vsnprintf(d, n, f, a); }
-inline int  vsnprint(wchar_t* d, int n, const wchar_t* f, va_list a) { return _vsnwprintf(d, n, f, a); }
-inline const char*    str_chr(const char* s, int c)                  { return strchr(s, c); }
-inline const wchar_t* str_chr(const wchar_t* s, int c)               { return wcschr(s, wchar_t(c)); }
-inline const char*    str_rchr(const char* s, int c)                 { return strrchr(s, c); }
-inline const wchar_t* str_rchr(const wchar_t* s, int c)              { return wcsrchr(s, wchar_t(c)); }
+inline bool     is_null_or_empty(const char* s)                        { return !s || !*s; }
+inline bool     is_null_or_empty(const wchar_t* s)                     { return !s || !*s; }
+inline int32    str_len(const char* s)                                 { return int32(strlen(s)); }
+inline int32    str_len(const wchar_t* s)                              { return int32(wcslen(s)); }
+inline void     str_ncat(char* d, const char* s, size_t n)             { strncat(d, s, n); }
+inline void     str_ncat(wchar_t* d, const wchar_t* s, size_t n)       { wcsncat(d, s, n); }
+inline int32    str_cmp(const char* l, const char* r)                  { return strcmp(r, l); }
+inline int32    str_cmp(const wchar_t* l, const wchar_t* r)            { return wcscmp(r, l); }
+inline int32    str_icmp(const char* l, const char* r)                 { return stricmp(r, l); }
+inline int32    str_icmp(const wchar_t* l, const wchar_t* r)           { return wcsicmp(r, l); }
+inline int32    vsnprint(char* d, int32 n, const char* f, va_list a)        { return vsnprintf(d, n, f, a); }
+inline int32    vsnprint(wchar_t* d, int32 n, const wchar_t* f, va_list a)  { return _vsnwprintf(d, n, f, a); }
+inline const char*    str_chr(const char* s, int32 c)                  { return strchr(s, c); }
+inline const wchar_t* str_chr(const wchar_t* s, int32 c)               { return wcschr(s, wchar_t(c)); }
+inline const char*    str_rchr(const char* s, int32 c)                 { return strrchr(s, c); }
+inline const wchar_t* str_rchr(const wchar_t* s, int32 c)              { return wcsrchr(s, wchar_t(c)); }
 
-unsigned int char_count(const char*);
-unsigned int char_count(const wchar_t*);
+uint32 char_count(const char*);
+uint32 char_count(const wchar_t*);
 
 //------------------------------------------------------------------------------
 template <typename TYPE>
@@ -39,33 +39,33 @@ class str_impl
 public:
     typedef TYPE        char_t;
 
-                        str_impl(TYPE* data, unsigned int size);
+                        str_impl(TYPE* data, uint32 size);
                         str_impl(const str_impl&) = delete;
                         ~str_impl();
-    void                attach(TYPE* data, unsigned int size);
-    bool                reserve(unsigned int size, bool exact = false);
+    void                attach(TYPE* data, uint32 size);
+    bool                reserve(uint32 size, bool exact = false);
     TYPE*               data();
     const TYPE*         c_str() const;
-    unsigned int        size() const;
+    uint32              size() const;
     bool                is_growable() const;
-    unsigned int        length() const;
-    unsigned int        char_count() const;
+    uint32              length() const;
+    uint32              char_count() const;
     void                clear();
     bool                empty() const;
-    void                truncate(unsigned int length);
+    void                truncate(uint32 length);
     void                trim();
-    int                 first_of(int c) const;
-    int                 last_of(int c) const;
+    int32               first_of(int32 c) const;
+    int32               last_of(int32 c) const;
     bool                equals(const TYPE* rhs) const;
     bool                iequals(const TYPE* rhs) const;
     bool                copy(const TYPE* src);
-    bool                concat(const TYPE* src, int n=-1);
-    bool                concat_no_truncate(const TYPE* src, int n);
+    bool                concat(const TYPE* src, int32 n=-1);
+    bool                concat_no_truncate(const TYPE* src, int32 n);
     bool                format(const TYPE* format, ...);
     bool                vformat(const TYPE* format, va_list args);
-    TYPE                operator [] (unsigned int i) const;
+    TYPE                operator [] (uint32 i) const;
     str_impl&           operator << (const TYPE* rhs);
-    template <int I>
+    template <int32 I>
     str_impl&           operator << (const TYPE (&rhs)[I]);
     str_impl&           operator << (const str_impl& rhs);
     void                operator = (const str_impl&) = delete;
@@ -75,7 +75,7 @@ protected:
     void                set_growable(bool state=true);
     str_impl&           operator = (str_impl&&);
     bool                owns_ptr() const;
-    void                reset_not_owned(TYPE* data, unsigned int size);
+    void                reset_not_owned(TYPE* data, uint32 size);
     void                free_data();
 
 private:
@@ -90,7 +90,7 @@ private:
 
 //------------------------------------------------------------------------------
 template <typename TYPE>
-str_impl<TYPE>::str_impl(TYPE* data, unsigned int size)
+str_impl<TYPE>::str_impl(TYPE* data, uint32 size)
 : m_data(data)
 , m_size(size)
 , m_growable(0)
@@ -115,7 +115,7 @@ str_impl<TYPE>::str_impl(str_impl&& s)
 
 //------------------------------------------------------------------------------
 template <typename TYPE>
-void str_impl<TYPE>::attach(TYPE* data, unsigned int size)
+void str_impl<TYPE>::attach(TYPE* data, uint32 size)
 {
     if (is_growable())
     {
@@ -142,7 +142,7 @@ void str_impl<TYPE>::set_growable(bool state)
 
 //------------------------------------------------------------------------------
 template <typename TYPE>
-bool str_impl<TYPE>::reserve(unsigned int new_size, bool exact)
+bool str_impl<TYPE>::reserve(uint32 new_size, bool exact)
 {
     if (!exact)
         new_size++;
@@ -156,7 +156,7 @@ bool str_impl<TYPE>::reserve(unsigned int new_size, bool exact)
     if (!exact)
         new_size = (new_size + 63) & ~63;
 
-    const int old_size = m_size;
+    const int32 old_size = m_size;
     m_size = new_size;
     if (m_size != new_size)
     {
@@ -209,7 +209,7 @@ const TYPE* str_impl<TYPE>::c_str() const
 
 //------------------------------------------------------------------------------
 template <typename TYPE>
-unsigned int str_impl<TYPE>::size() const
+uint32 str_impl<TYPE>::size() const
 {
     return m_size;
 }
@@ -223,7 +223,7 @@ bool str_impl<TYPE>::is_growable() const
 
 //------------------------------------------------------------------------------
 template <typename TYPE>
-unsigned int str_impl<TYPE>::length() const
+uint32 str_impl<TYPE>::length() const
 {
     if (!m_length)
         m_length = str_len(c_str());
@@ -233,7 +233,7 @@ unsigned int str_impl<TYPE>::length() const
 
 //------------------------------------------------------------------------------
 template <typename TYPE>
-unsigned int str_impl<TYPE>::char_count() const
+uint32 str_impl<TYPE>::char_count() const
 {
     return ::char_count(c_str());
 }
@@ -255,7 +255,7 @@ bool str_impl<TYPE>::empty() const
 
 //------------------------------------------------------------------------------
 template <typename TYPE>
-void str_impl<TYPE>::truncate(unsigned int pos)
+void str_impl<TYPE>::truncate(uint32 pos)
 {
     if (pos >= m_size)
         return;
@@ -300,18 +300,18 @@ void str_impl<TYPE>::trim()
 
 //------------------------------------------------------------------------------
 template <typename TYPE>
-int str_impl<TYPE>::first_of(int c) const
+int32 str_impl<TYPE>::first_of(int32 c) const
 {
     const TYPE* r = str_chr(c_str(), c);
-    return r ? int(r - c_str()) : -1;
+    return r ? int32(r - c_str()) : -1;
 }
 
 //------------------------------------------------------------------------------
 template <typename TYPE>
-int str_impl<TYPE>::last_of(int c) const
+int32 str_impl<TYPE>::last_of(int32 c) const
 {
     const TYPE* r = str_rchr(c_str(), c);
-    return r ? int(r - c_str()) : -1;
+    return r ? int32(r - c_str()) : -1;
 }
 
 //------------------------------------------------------------------------------
@@ -338,7 +338,7 @@ bool str_impl<TYPE>::copy(const TYPE* src)
 
 //------------------------------------------------------------------------------
 template <typename TYPE>
-bool str_impl<TYPE>::concat(const TYPE* src, int n)
+bool str_impl<TYPE>::concat(const TYPE* src, int32 n)
 {
     if (src == nullptr)
         return false;
@@ -346,10 +346,10 @@ bool str_impl<TYPE>::concat(const TYPE* src, int n)
     if (n < 0)
         n = str_len(src);
 
-    int len = length();
+    int32 len = length();
     reserve(len + n);
 
-    int remaining = m_size - len - 1;
+    int32 remaining = m_size - len - 1;
 
     bool truncated = (remaining < n);
     if (!truncated)
@@ -367,7 +367,7 @@ bool str_impl<TYPE>::concat(const TYPE* src, int n)
         TYPE* dst = m_data + len;
         while (remaining-- && *src)
             *(dst++) = *(src++);
-        m_length = static_cast<unsigned int>(dst - m_data);
+        m_length = uint32(dst - m_data);
         m_data[m_length] = '\0';
     }
 
@@ -376,7 +376,7 @@ bool str_impl<TYPE>::concat(const TYPE* src, int n)
 
 //------------------------------------------------------------------------------
 template <typename TYPE>
-bool str_impl<TYPE>::concat_no_truncate(const TYPE* src, int n)
+bool str_impl<TYPE>::concat_no_truncate(const TYPE* src, int32 n)
 {
     if (src == nullptr)
         return false;
@@ -385,10 +385,10 @@ bool str_impl<TYPE>::concat_no_truncate(const TYPE* src, int n)
     if (n == 0)
         return true;
 
-    int len = length();
+    int32 len = length();
     reserve(len + n);
 
-    int remaining = m_size - len - 1;
+    int32 remaining = m_size - len - 1;
     if (remaining < n)
         return false;
 
@@ -405,31 +405,31 @@ inline bool str_impl<char>::format(const char* format, ...)
     va_list args;
     va_start(args, format);
 
-    int len = vsnprint(m_data, m_size, format, args);
+    int32 len = vsnprint(m_data, m_size, format, args);
     assert(len >= 0); // Compiler should comply with spec.
-    if (len >= int(m_size) && reserve(len))
+    if (len >= int32(m_size) && reserve(len))
         len = vsnprint(m_data, m_size, format, args);
     va_end(args);
 
     m_data[m_size - 1] = '\0';
     m_length = 0;
 
-    return ((unsigned int)len <= m_size);
+    return ((uint32)len <= m_size);
 }
 
 //------------------------------------------------------------------------------
 template <>
 inline bool str_impl<char>::vformat(const char* format, va_list args)
 {
-    int len = vsnprint(m_data, m_size, format, args);
+    int32 len = vsnprint(m_data, m_size, format, args);
     assert(len >= 0); // Compiler should comply with spec.
-    if (len >= int(m_size) && reserve(len))
+    if (len >= int32(m_size) && reserve(len))
         len = vsnprint(m_data, m_size, format, args);
 
     m_data[m_size - 1] = '\0';
     m_length = 0;
 
-    return ((unsigned int)len <= m_size);
+    return ((uint32)len <= m_size);
 }
 
 //------------------------------------------------------------------------------
@@ -439,7 +439,7 @@ inline bool str_impl<wchar_t>::format(const wchar_t* format, ...)
     va_list args;
     va_start(args, format);
 
-    int len = vsnprint(m_data, m_size - 1, format, args);
+    int32 len = vsnprint(m_data, m_size - 1, format, args);
     if (len < 0 && is_growable())
     {
         // _vsnwprintf works differently and only indicates how much space is
@@ -453,14 +453,14 @@ inline bool str_impl<wchar_t>::format(const wchar_t* format, ...)
     m_data[m_size - 1] = '\0';
     m_length = 0;
 
-    return ((unsigned int)len <= m_size);
+    return ((uint32)len <= m_size);
 }
 
 //------------------------------------------------------------------------------
 template <>
 inline bool str_impl<wchar_t>::vformat(const wchar_t* format, va_list args)
 {
-    int len = vsnprint(m_data, m_size - 1, format, args);
+    int32 len = vsnprint(m_data, m_size - 1, format, args);
     if (len < 0 && is_growable())
     {
         // _vsnwprintf works differently and only indicates how much space is
@@ -473,12 +473,12 @@ inline bool str_impl<wchar_t>::vformat(const wchar_t* format, va_list args)
     m_data[m_size - 1] = '\0';
     m_length = 0;
 
-    return ((unsigned int)len <= m_size);
+    return ((uint32)len <= m_size);
 }
 
 //------------------------------------------------------------------------------
 template <typename TYPE>
-TYPE str_impl<TYPE>::operator [] (unsigned int i) const
+TYPE str_impl<TYPE>::operator [] (uint32 i) const
 {
     return (i < length()) ? c_str()[i] : 0;
 }
@@ -492,7 +492,7 @@ str_impl<TYPE>& str_impl<TYPE>::operator << (const TYPE* rhs)
 }
 
 //------------------------------------------------------------------------------
-template <typename TYPE> template <int I>
+template <typename TYPE> template <int32 I>
 str_impl<TYPE>& str_impl<TYPE>::operator << (const TYPE (&rhs)[I])
 {
     concat(rhs, I - 1);
@@ -536,7 +536,7 @@ bool str_impl<TYPE>::owns_ptr() const
 
 //------------------------------------------------------------------------------
 template <typename TYPE>
-void str_impl<TYPE>::reset_not_owned(TYPE* data, unsigned int size)
+void str_impl<TYPE>::reset_not_owned(TYPE* data, uint32 size)
 {
     // reset_data() can be used to repair this back into a reusable state after
     // invoking operator=(str_impl&&).
@@ -551,15 +551,15 @@ void str_impl<TYPE>::reset_not_owned(TYPE* data, unsigned int size)
 //------------------------------------------------------------------------------
 template <typename T> class str_iter_impl;
 
-int to_utf8(class str_base& out, const wchar_t* utf16);
-int to_utf8(class str_base& out, str_iter_impl<wchar_t>& iter);
-int to_utf8(char* out, int max_count, const wchar_t* utf16);
-int to_utf8(char* out, int max_count, str_iter_impl<wchar_t>& iter);
+int32 to_utf8(class str_base& out, const wchar_t* utf16);
+int32 to_utf8(class str_base& out, str_iter_impl<wchar_t>& iter);
+int32 to_utf8(char* out, int32 max_count, const wchar_t* utf16);
+int32 to_utf8(char* out, int32 max_count, str_iter_impl<wchar_t>& iter);
 
-int to_utf16(class wstr_base& out, const char* utf8);
-int to_utf16(class wstr_base& out, str_iter_impl<char>& iter);
-int to_utf16(wchar_t* out, int max_count, const char* utf8);
-int to_utf16(wchar_t* out, int max_count, str_iter_impl<char>& iter);
+int32 to_utf16(class wstr_base& out, const char* utf8);
+int32 to_utf16(class wstr_base& out, str_iter_impl<char>& iter);
+int32 to_utf16(wchar_t* out, int32 max_count, const char* utf8);
+int32 to_utf16(wchar_t* out, int32 max_count, str_iter_impl<char>& iter);
 
 
 
@@ -567,40 +567,40 @@ int to_utf16(wchar_t* out, int max_count, str_iter_impl<char>& iter);
 class str_base : public str_impl<char>
 {
 public:
-    template <int I> str_base(char (&data)[I]) : str_impl<char>(data, I - 1) {}
-                     str_base(char* data, int size) : str_impl<char>(data, size) {}
-                     str_base(const str_base&)         = delete;
-    int              from_utf16(const wchar_t* utf16)  { clear(); return to_utf8(*this, utf16); }
-    void             operator = (const char* value)    { copy(value); }
-    void             operator = (const wchar_t* value) { from_utf16(value); }
-    void             operator = (const str_base& rhs)  = delete;
-    str_base&        operator = (str_base&& rhs)       { str_impl<char>::operator=(std::move(rhs)); return *this; }
+    template <int32 I>  str_base(char (&data)[I]) : str_impl<char>(data, I - 1) {}
+                        str_base(char* data, int32 size) : str_impl<char>(data, size) {}
+                        str_base(const str_base&)         = delete;
+    int32               from_utf16(const wchar_t* utf16)  { clear(); return to_utf8(*this, utf16); }
+    void                operator = (const char* value)    { copy(value); }
+    void                operator = (const wchar_t* value) { from_utf16(value); }
+    void                operator = (const str_base& rhs)  = delete;
+    str_base&           operator = (str_base&& rhs)       { str_impl<char>::operator=(std::move(rhs)); return *this; }
 
 protected:
-                     str_base(str_base&&)              = default;
+                        str_base(str_base&&)              = default;
 };
 
 class wstr_base : public str_impl<wchar_t>
 {
 public:
-    template <int I> wstr_base(wchar_t (&data)[I]) : str_impl<wchar_t>(data, I - 1) {}
-                     wstr_base(wchar_t* data, int size) : str_impl<wchar_t>(data, size) {}
-                     wstr_base(const wstr_base&)        = delete;
-    int              from_utf8(const char* utf8)        { clear(); return to_utf16(*this, utf8); }
-    using            str_impl<wchar_t>::operator =;
-    void             operator = (const wchar_t* value)  { copy(value); }
-    void             operator = (const char* value)     { from_utf8(value); }
-    void             operator = (const wstr_base&)      = delete;
-    wstr_base&       operator = (wstr_base&& rhs)       { str_impl<wchar_t>::operator=(std::move(rhs)); return *this; }
+    template <int32 I>  wstr_base(wchar_t (&data)[I]) : str_impl<wchar_t>(data, I - 1) {}
+                        wstr_base(wchar_t* data, int32 size) : str_impl<wchar_t>(data, size) {}
+                        wstr_base(const wstr_base&)       = delete;
+    int32               from_utf8(const char* utf8)       { clear(); return to_utf16(*this, utf8); }
+    using               str_impl<wchar_t>::operator =;
+    void                operator = (const wchar_t* value) { copy(value); }
+    void                operator = (const char* value)    { from_utf8(value); }
+    void                operator = (const wstr_base&)     = delete;
+    wstr_base&          operator = (wstr_base&& rhs)      { str_impl<wchar_t>::operator=(std::move(rhs)); return *this; }
 
 protected:
-                     wstr_base(wstr_base&&)             = default;
+                        wstr_base(wstr_base&&)            = default;
 };
 
 
 
 //------------------------------------------------------------------------------
-template <int COUNT=128, bool GROWABLE=true>
+template <int32 COUNT=128, bool GROWABLE=true>
 class str : public str_base
 {
 public:
@@ -615,7 +615,7 @@ private:
     char        m_data[COUNT];
 };
 
-template <int COUNT=128, bool GROWABLE=true>
+template <int32 COUNT=128, bool GROWABLE=true>
 class wstr : public wstr_base
 {
 public:
@@ -737,10 +737,10 @@ inline void wstr_moveable::free()
 
 
 //------------------------------------------------------------------------------
-template <typename T> void concat_strip_quotes(str_impl<T>& out, const T* in, unsigned int len=-1)
+template <typename T> void concat_strip_quotes(str_impl<T>& out, const T* in, uint32 len=-1)
 {
-    if (len == static_cast<unsigned int>(-1))
-        len = static_cast<unsigned int>(strlen(in));
+    if (len == uint32(-1))
+        len = uint32(strlen(in));
 
     // Strip quotes while concatenating.  This may seem surprising, but it's a
     // technique lifted from CMD, and it works well.
@@ -756,7 +756,7 @@ template <typename T> void concat_strip_quotes(str_impl<T>& out, const T* in, un
             len--;
         }
 
-        out.concat(append, static_cast<unsigned int>(in - append));
+        out.concat(append, uint32(in - append));
 
         while (len && *in == '"')
         {
@@ -767,19 +767,19 @@ template <typename T> void concat_strip_quotes(str_impl<T>& out, const T* in, un
 }
 
 //------------------------------------------------------------------------------
-inline unsigned int char_count(const char* ptr)
+inline uint32 char_count(const char* ptr)
 {
-    unsigned int count = 0;
-    while (int c = *ptr++)
+    uint32 count = 0;
+    while (int32 c = *ptr++)
         // 'count' is increased if the top two MSBs of c are not 10xxxxxx
         count += (c & 0xc0) != 0x80;
 
     return count;
 }
 
-inline unsigned int char_count(const wchar_t* ptr)
+inline uint32 char_count(const wchar_t* ptr)
 {
-    unsigned int count = 0;
+    uint32 count = 0;
     while (unsigned short c = *ptr++)
     {
         ++count;

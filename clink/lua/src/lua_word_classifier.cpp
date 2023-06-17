@@ -34,7 +34,7 @@ word_class to_word_class(char ch)
         { 'f', word_class::flag },
         { 'n', word_class::none },
     };
-    static_assert(sizeof_array(c_lookup) == int(word_class::max), "c_lookup does not match size of word_class enumeration");
+    static_assert(sizeof_array(c_lookup) == int32(word_class::max), "c_lookup does not match size of word_class enumeration");
 
     word_class wc = word_class::other;
     for (const auto& lookup : c_lookup)

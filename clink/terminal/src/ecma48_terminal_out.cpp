@@ -17,7 +17,7 @@ extern setting_bool g_adjust_cursor_style;
 extern "C" char *tgetstr(const char* name, char** out);
 
 //------------------------------------------------------------------------------
-static unsigned char s_rgb_cube[] = { 0x00, 0x5f, 0x87, 0xaf, 0xd7, 0xff };
+static uint8 s_rgb_cube[] = { 0x00, 0x5f, 0x87, 0xaf, 0xd7, 0xff };
 
 //------------------------------------------------------------------------------
 void set_console_title(const char* title)
@@ -70,37 +70,37 @@ void ecma48_terminal_out::flush()
 }
 
 //------------------------------------------------------------------------------
-int ecma48_terminal_out::get_columns() const
+int32 ecma48_terminal_out::get_columns() const
 {
     return m_screen.get_columns();
 }
 
 //------------------------------------------------------------------------------
-int ecma48_terminal_out::get_rows() const
+int32 ecma48_terminal_out::get_rows() const
 {
     return m_screen.get_rows();
 }
 
 //------------------------------------------------------------------------------
-bool ecma48_terminal_out::get_line_text(int line, str_base& out) const
+bool ecma48_terminal_out::get_line_text(int32 line, str_base& out) const
 {
     return m_screen.get_line_text(line, out);
 }
 
 //------------------------------------------------------------------------------
-int ecma48_terminal_out::is_line_default_color(int line) const
+int32 ecma48_terminal_out::is_line_default_color(int32 line) const
 {
     return m_screen.is_line_default_color(line);
 }
 
 //------------------------------------------------------------------------------
-int ecma48_terminal_out::line_has_color(int line, const BYTE* attrs, int num_attrs, BYTE mask) const
+int32 ecma48_terminal_out::line_has_color(int32 line, const BYTE* attrs, int32 num_attrs, BYTE mask) const
 {
     return m_screen.line_has_color(line, attrs, num_attrs, mask);
 }
 
 //------------------------------------------------------------------------------
-int ecma48_terminal_out::find_line(int starting_line, int distance, const char* text, find_line_mode mode, const BYTE* attrs, int num_attrs, BYTE mask) const
+int32 ecma48_terminal_out::find_line(int32 starting_line, int32 distance, const char* text, find_line_mode mode, const BYTE* attrs, int32 num_attrs, BYTE mask) const
 {
     return m_screen.find_line(starting_line, distance, text, mode, attrs, num_attrs, mask);
 }
@@ -165,7 +165,7 @@ void ecma48_terminal_out::write_c1(const ecma48_code& code)
 }
 
 //------------------------------------------------------------------------------
-void ecma48_terminal_out::write_c0(int c0)
+void ecma48_terminal_out::write_c0(int32 c0)
 {
     switch (c0)
     {
@@ -201,7 +201,7 @@ void ecma48_terminal_out::write_icf(const ecma48_code& code)
 }
 
 //------------------------------------------------------------------------------
-void ecma48_terminal_out::write(const char* chars, int length)
+void ecma48_terminal_out::write(const char* chars, int32 length)
 {
     if (length == 1 || (length < 0 && (chars[0] && !chars[1])))
     {
@@ -224,7 +224,7 @@ void ecma48_terminal_out::write(const char* chars, int length)
         return;
     }
 
-    int need_next = (length == 1 || (chars[0] && !chars[1]));
+    int32 need_next = (length == 1 || (chars[0] && !chars[1]));
     ecma48_iter iter(chars, m_state, length);
     while (const ecma48_code& code = iter.next())
     {
@@ -260,9 +260,9 @@ void ecma48_terminal_out::set_attributes(const ecma48_code::csi_base& csi)
 
     // Process each code that is supported.
     attributes attr;
-    for (int i = 0, n = csi.param_count; i < csi.param_count; ++i, --n)
+    for (int32 i = 0, n = csi.param_count; i < csi.param_count; ++i, --n)
     {
-        unsigned int param = csi.params[i];
+        uint32 param = csi.params[i];
 
         switch (param)
         {
@@ -324,7 +324,7 @@ void ecma48_terminal_out::set_attributes(const ecma48_code::csi_base& csi)
                 i++;
                 n--;
                 bool is_fg = (param == 38);
-                unsigned int type = csi.params[i];
+                uint32 type = csi.params[i];
                 if (type == 2)
                 {
                     // RGB 24-bit color
@@ -343,7 +343,7 @@ void ecma48_terminal_out::set_attributes(const ecma48_code::csi_base& csi)
                     // XTerm256 color
                     if (n > 1)
                     {
-                        unsigned char idx = csi.params[i + 1];
+                        uint8 idx = csi.params[i + 1];
                         if (idx < 16)
                         {
                             if (is_fg)
@@ -353,7 +353,7 @@ void ecma48_terminal_out::set_attributes(const ecma48_code::csi_base& csi)
                         }
                         else if (idx >= 232)
                         {
-                            unsigned char gray = 0x08 + (int(idx) - 232) * 10;
+                            uint8 gray = 0x08 + (int32(idx) - 232) * 10;
                             if (is_fg)
                                 attr.set_fg(gray, gray, gray);
                             else
@@ -362,11 +362,11 @@ void ecma48_terminal_out::set_attributes(const ecma48_code::csi_base& csi)
                         else
                         {
                             idx -= 16;
-                            unsigned char b = idx % 6;
+                            uint8 b = idx % 6;
                             idx /= 6;
-                            unsigned char g = idx % 6;
+                            uint8 g = idx % 6;
                             idx /= 6;
-                            unsigned char r = idx;
+                            uint8 r = idx;
                             if (is_fg)
                                 attr.set_fg(s_rgb_cube[r], s_rgb_cube[g], s_rgb_cube[b]);
                             else
@@ -421,7 +421,7 @@ void ecma48_terminal_out::erase_in_line(const ecma48_code::csi_base& csi)
 void ecma48_terminal_out::set_horiz_cursor(const ecma48_code::csi_base& csi)
 {
     /* CSI Ps G : Cursor Horizontal Absolute [column] (default = 1) (CHA). */
-    int column = csi.get_param(0, 1);
+    int32 column = csi.get_param(0, 1);
     m_screen.set_horiz_cursor(column - 1);
 }
 
@@ -429,8 +429,8 @@ void ecma48_terminal_out::set_horiz_cursor(const ecma48_code::csi_base& csi)
 void ecma48_terminal_out::set_cursor(const ecma48_code::csi_base& csi)
 {
     /* CSI Ps ; Ps H : Cursor Position [row;column] (default = [1,1]) (CUP). */
-    int row = csi.get_param(0, 1);
-    int column = csi.get_param(1, 1);
+    int32 row = csi.get_param(0, 1);
+    int32 column = csi.get_param(1, 1);
     m_screen.set_cursor(column - 1, row - 1);
 }
 
@@ -452,7 +452,7 @@ void ecma48_terminal_out::restore_cursor()
 void ecma48_terminal_out::insert_chars(const ecma48_code::csi_base& csi)
 {
     /* CSI Ps @  Insert Ps (Blank) Character(s) (default = 1) (ICH). */
-    int count = csi.get_param(0, 1);
+    int32 count = csi.get_param(0, 1);
     m_screen.insert_chars(count);
 }
 
@@ -460,7 +460,7 @@ void ecma48_terminal_out::insert_chars(const ecma48_code::csi_base& csi)
 void ecma48_terminal_out::delete_chars(const ecma48_code::csi_base& csi)
 {
     /* CSI Ps P : Delete Ps Character(s) (default = 1) (DCH). */
-    int count = csi.get_param(0, 1);
+    int32 count = csi.get_param(0, 1);
     m_screen.delete_chars(count);
 }
 
@@ -471,7 +471,7 @@ void ecma48_terminal_out::set_private_mode(const ecma48_code::csi_base& csi)
             Ps = 5  -> Reverse Video (DECSCNM).
             Ps = 12 -> Start Blinking Cursor (att610).
             Ps = 25 -> Show Cursor (DECTCEM). */
-    for (int i = 0; i < csi.param_count; ++i)
+    for (int32 i = 0; i < csi.param_count; ++i)
     {
         switch (csi.params[i])
         {
@@ -492,7 +492,7 @@ void ecma48_terminal_out::reset_private_mode(const ecma48_code::csi_base& csi)
             Ps = 5  -> Normal Video (DECSCNM).
             Ps = 12 -> Stop Blinking Cursor (att610).
             Ps = 25 -> Hide Cursor (DECTCEM). */
-    for (int i = 0; i < csi.param_count; ++i)
+    for (int32 i = 0; i < csi.param_count; ++i)
     {
         switch (csi.params[i])
         {
@@ -507,7 +507,7 @@ void ecma48_terminal_out::reset_private_mode(const ecma48_code::csi_base& csi)
 }
 
 //------------------------------------------------------------------------------
-int ecma48_terminal_out::build_pending(char c)
+int32 ecma48_terminal_out::build_pending(char c)
 {
     if (!m_pending)
     {

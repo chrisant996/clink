@@ -28,15 +28,15 @@ extern "C" {
 //      class foo_lua : public lua_makeable<foo_lua>
 //      {
 //      public:
-//          foo_lua(int x);
+//          foo_lua(int32 x);
 //          ~foo_lua();
 //      private:
 //          friend class lua_makeable<foo_lua>;
 //          static const char* const c_name;
 //          static const method c_methods[];
-//          int getx(lua_State* state);
-//          int setx(lua_State* state);
-//          int m_x;
+//          int32 getx(lua_State* state);
+//          int32 setx(lua_State* state);
+//          int32 m_x;
 //      }
 //
 //      const char* const foo_lua::c_name = "foo_lua";
@@ -47,17 +47,17 @@ extern "C" {
 //          {}
 //      }
 //
-//      foo_lua::foo_lua(int x) : m_x(x) {}
+//      foo_lua::foo_lua(int32 x) : m_x(x) {}
 //
 //      foo_lua::~foo_lua() {}
 //
-//      int foo_lua::getx(lua_State* state)
+//      int32 foo_lua::getx(lua_State* state)
 //      {
 //          lua_pushinteger(state, m_x);
 //          return 1;
 //      }
 //
-//      int foo_lua::setx(lua_State* state)
+//      int32 foo_lua::setx(lua_State* state)
 //      {
 //          m_x = lua_tointeger(state, 1);
 //          return 0;
@@ -66,7 +66,7 @@ template <class T>
 class lua_makeable _DBGOBJECT
 {
 public:
-    typedef int         (T::*method_t)(lua_State*);
+    typedef int32       (T::*method_t)(lua_State*);
 
     struct method
     {
@@ -79,9 +79,9 @@ public:
 private:
                         lua_makeable();
                         ~lua_makeable();
-    static int          call(lua_State* state);
-    static int          __gc(lua_State* state);
-    static int          __tostring(lua_State* state);
+    static int32        call(lua_State* state);
+    static int32        __gc(lua_State* state);
+    static int32        __tostring(lua_State* state);
     void                make_metatable(lua_State* state);
 };
 
@@ -146,7 +146,7 @@ template <typename... Args>
 T* lua_makeable<T>::make_new(lua_State* state, Args... args)
 {
 #ifdef DEBUG
-    int oldtop = lua_gettop(state);
+    int32 oldtop = lua_gettop(state);
 #endif
 
     T* self = (T*)lua_newuserdata(state, sizeof(T));
@@ -159,7 +159,7 @@ T* lua_makeable<T>::make_new(lua_State* state, Args... args)
     self->make_metatable(state);
 
 #ifdef DEBUG
-    int newtop = lua_gettop(state);
+    int32 newtop = lua_gettop(state);
     assert(oldtop + 1 == newtop);
     T* test = (T*)luaL_checkudata(state, -1, T::c_name);
     assert(test == self);
@@ -170,7 +170,7 @@ T* lua_makeable<T>::make_new(lua_State* state, Args... args)
 
 //------------------------------------------------------------------------------
 template <class T>
-int lua_makeable<T>::call(lua_State* state)
+int32 lua_makeable<T>::call(lua_State* state)
 {
     T* self = (T*)lua_touserdata(state, 2);
     if (self == nullptr)
@@ -188,7 +188,7 @@ int lua_makeable<T>::call(lua_State* state)
 
 //------------------------------------------------------------------------------
 template <class T>
-int lua_makeable<T>::__gc(lua_State* state)
+int32 lua_makeable<T>::__gc(lua_State* state)
 {
     T* self = (T*)luaL_checkudata(state, 1, T::c_name);
     self->~T();
@@ -197,7 +197,7 @@ int lua_makeable<T>::__gc(lua_State* state)
 
 //------------------------------------------------------------------------------
 template <class T>
-int lua_makeable<T>::__tostring(lua_State* state)
+int32 lua_makeable<T>::__tostring(lua_State* state)
 {
     T* self = (T*)luaL_checkudata(state, 1, T::c_name);
     lua_pushfstring(state, "%s (%p)", T::c_name, self);

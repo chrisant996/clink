@@ -32,7 +32,7 @@ const lua_word_classifications::method lua_word_classifications::c_methods[] = {
 
 
 //------------------------------------------------------------------------------
-lua_word_classifications::lua_word_classifications(word_classifications& classifications, unsigned int index_offset, unsigned int command_word_index, unsigned int num_words)
+lua_word_classifications::lua_word_classifications(word_classifications& classifications, uint32 index_offset, uint32 command_word_index, uint32 num_words)
 : m_classifications(classifications)
 , m_index_offset(index_offset)
 , m_command_word_index(command_word_index)
@@ -69,12 +69,12 @@ lua_word_classifications::lua_word_classifications(word_classifications& classif
 ///
 /// See <a href="#classifywords">Coloring the Input Text</a> for more
 /// information.
-int lua_word_classifications::classify_word(lua_State* state)
+int32 lua_word_classifications::classify_word(lua_State* state)
 {
     if (!lua_isnumber(state, 1) || !lua_isstring(state, 2))
         return 0;
 
-    const unsigned int index = static_cast<unsigned int>(int(lua_tointeger(state, 1)) - 1) + m_shift;
+    const uint32 index = uint32(int32(lua_tointeger(state, 1)) - 1) + m_shift;
     const char* s = lua_tostring(state, 2);
     bool overwrite = !lua_isboolean(state, 3) || lua_toboolean(state, 3);
     if (!s)
@@ -132,13 +132,13 @@ int lua_word_classifications::classify_word(lua_State* state)
 /// Note: an input line can have up to 100 different unique color strings
 /// applied, and then this stops applying new colors.  The counter gets reset
 /// when the onbeginedit event is sent.
-int lua_word_classifications::apply_color(lua_State* state)
+int32 lua_word_classifications::apply_color(lua_State* state)
 {
     if (!lua_isnumber(state, 1) || !lua_isnumber(state, 2) || !lua_isstring(state, 3))
         return 0;
 
-    unsigned int start = (unsigned int)(lua_tointeger(state, 1)) - 1;
-    unsigned int length = (unsigned int)(lua_tointeger(state, 2));
+    uint32 start = (uint32)(lua_tointeger(state, 1)) - 1;
+    uint32 length = (uint32)(lua_tointeger(state, 2));
     const char* color = lua_tostring(state, 3);
     bool overwrite = !lua_isboolean(state, 4) || lua_toboolean(state, 4);
     if (!color)
@@ -154,10 +154,10 @@ int lua_word_classifications::apply_color(lua_State* state)
 
 //------------------------------------------------------------------------------
 // UNDOCUMENTED; internal use only.
-int lua_word_classifications::shift(lua_State* state)
+int32 lua_word_classifications::shift(lua_State* state)
 {
-    unsigned int num = optinteger(state, 1, 0);
-    unsigned int cmd = optinteger(state, 2, 1);
+    uint32 num = optinteger(state, 1, 0);
+    uint32 cmd = optinteger(state, 2, 1);
 
     if (num > 0)
     {

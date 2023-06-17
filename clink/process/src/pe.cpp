@@ -16,7 +16,7 @@ pe_info::pe_info(void* base)
 }
 
 //------------------------------------------------------------------------------
-void* pe_info::rva_to_addr(unsigned int rva) const
+void* pe_info::rva_to_addr(uint32 rva) const
 {
     return (char*)(uintptr_t)rva + (uintptr_t)m_base;
 }
@@ -32,7 +32,7 @@ IMAGE_NT_HEADERS* pe_info::get_nt_headers() const
 }
 
 //------------------------------------------------------------------------------
-void* pe_info::get_data_directory(int index, int* size) const
+void* pe_info::get_data_directory(int32 index, int32* size) const
 {
     IMAGE_NT_HEADERS* nt = get_nt_headers();
     if (nt == nullptr)
@@ -152,7 +152,7 @@ pe_info::funcptr_t pe_info::get_export(const char* func_name) const
     WORD* ordinals = (WORD*)rva_to_addr(ied->AddressOfNameOrdinals);
     DWORD* addresses = (DWORD*)rva_to_addr(ied->AddressOfFunctions);
 
-    for (int i = 0; i < int(ied->NumberOfNames); ++i)
+    for (int32 i = 0; i < int32(ied->NumberOfNames); ++i)
     {
         const char* export_name = (const char*)rva_to_addr(names[i]);
         if (_stricmp(export_name, func_name))

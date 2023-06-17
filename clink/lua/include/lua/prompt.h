@@ -18,7 +18,7 @@ public:
     prompt&         operator = (const prompt& rhs) = delete;
     void            clear();
     const wchar_t*  get() const;
-    void            set(const wchar_t* chars, int char_count=0);
+    void            set(const wchar_t* chars, int32 char_count=0);
     bool            is_set() const;
 
 protected:
@@ -30,11 +30,11 @@ class tagged_prompt
     : public prompt
 {
 public:
-    void            set(const wchar_t* chars, int char_count=0);
+    void            set(const wchar_t* chars, int32 char_count=0);
     void            tag(const wchar_t* value);
 
 private:
-    int             is_tagged(const wchar_t* chars, int char_count=0);
+    int32           is_tagged(const wchar_t* chars, int32 char_count=0);
 };
 
 //------------------------------------------------------------------------------

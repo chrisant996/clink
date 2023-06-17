@@ -7,14 +7,14 @@
 class input_params
 {
 public:
-    bool            get(unsigned int param, unsigned int& value) const;
-    unsigned int    count() const;
+    bool            get(uint32 param, uint32& value) const;
+    uint32          count() const;
     short           length() const;
 protected:
-    bool            add(unsigned short value, unsigned char len);
+    bool            add(unsigned short value, uint8 len);
     void            clear();
 private:
     unsigned short  m_params[4];
-    unsigned char   m_num = 0;
+    uint8           m_num = 0;
     short           m_len = 0;
 };

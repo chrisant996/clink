@@ -27,7 +27,7 @@ setting_bool g_enhanced_doskey(
 
 
 //------------------------------------------------------------------------------
-static bool get_alias(const wchar_t* shell_name, str_iter& in, unsigned int& skipped, str_base& alias, str_base& text, int& parens, bool relaxed=false)
+static bool get_alias(const wchar_t* shell_name, str_iter& in, uint32& skipped, str_base& alias, str_base& text, int32& parens, bool relaxed=false)
 {
     alias.clear();
     text.clear();
@@ -36,7 +36,7 @@ static bool get_alias(const wchar_t* shell_name, str_iter& in, unsigned int& ski
     bool first = true;
     const char* orig = in.get_pointer();
     parens = skip_leading_parens(in, first);
-    skipped = static_cast<unsigned int>(in.get_pointer() - orig);
+    skipped = uint32(in.get_pointer() - orig);
 
     // Legacy doskey doesn't allow macros that begin with whitespace.
     const char* start = in.get_pointer();
@@ -48,7 +48,7 @@ static bool get_alias(const wchar_t* shell_name, str_iter& in, unsigned int& ski
 
     while (true)
     {
-        const int c = in.peek();
+        const int32 c = in.peek();
 
         if (c == '>')
         {
@@ -60,7 +60,7 @@ static bool get_alias(const wchar_t* shell_name, str_iter& in, unsigned int& ski
 
         if (c == '\0' || c == ' ' || (relaxed && (c == '|' || c == '&')))
         {
-            unsigned int len = static_cast<unsigned int>(in.get_pointer() - start);
+            uint32 len = uint32(in.get_pointer() - start);
             len = trim_trailing_parens(start, 0, len, parens);
             alias.concat(start, len);
             break;
@@ -98,14 +98,14 @@ fallback:
 }
 
 //------------------------------------------------------------------------------
-static const char* find_command_end(const char* command, int len)
+static const char* find_command_end(const char* command, int32 len)
 {
     bool quote = false;
     str_iter eat(command, len);
     while (eat.more())
     {
         const char *const ptr = eat.get_pointer();
-        const int c = eat.next();
+        const int32 c = eat.next();
         if (c == '\"')
         {
             quote = !quote;
@@ -143,21 +143,21 @@ public:
     struct range_desc
     {
         const TYPE* const   ptr;
-        unsigned int        count;
+        uint32              count;
     };
 
                             str_stream();
                             ~str_stream();
     void                    operator << (TYPE c);
     void                    operator << (const range_desc desc);
-    unsigned int            length() const;
-    unsigned int            trimmed_length() const;
+    uint32                  length() const;
+    uint32                  trimmed_length() const;
     void                    collect(str_impl<TYPE>& out);
-    static range_desc       range(TYPE const* ptr, unsigned int count);
+    static range_desc       range(TYPE const* ptr, uint32 count);
     static range_desc       range(const str_iter_impl<TYPE>& iter);
 
 private:
-    void                    grow(unsigned int hint=128);
+    void                    grow(uint32 hint=128);
     char* __restrict        m_start;
     char* __restrict        m_end;
     char* __restrict        m_cursor;
@@ -192,12 +192,12 @@ void str_stream::operator << (const range_desc desc)
     if (m_cursor + desc.count >= m_end)
         grow(desc.count);
 
-    for (unsigned int i = 0; i < desc.count; ++i, ++m_cursor)
+    for (uint32 i = 0; i < desc.count; ++i, ++m_cursor)
         *m_cursor = desc.ptr[i];
 }
 
 //------------------------------------------------------------------------------
-str_stream::range_desc str_stream::range(const TYPE* ptr, unsigned int count)
+str_stream::range_desc str_stream::range(const TYPE* ptr, uint32 count)
 {
     return { ptr, count };
 }
@@ -209,15 +209,15 @@ str_stream::range_desc str_stream::range(const str_iter_impl<TYPE>& iter)
 }
 
 //------------------------------------------------------------------------------
-unsigned int str_stream::length() const
+uint32 str_stream::length() const
 {
-    return static_cast<unsigned int>(m_cursor - m_start);
+    return uint32(m_cursor - m_start);
 }
 
 //------------------------------------------------------------------------------
-unsigned int str_stream::trimmed_length() const
+uint32 str_stream::trimmed_length() const
 {
-    unsigned int len = length();
+    uint32 len = length();
     while (len && m_start[len - 1] == ' ')
         len--;
     return len;
@@ -226,15 +226,15 @@ unsigned int str_stream::trimmed_length() const
 //------------------------------------------------------------------------------
 void str_stream::collect(str_impl<TYPE>& out)
 {
-    out.attach(m_start, int(m_cursor - m_start));
+    out.attach(m_start, int32(m_cursor - m_start));
     m_start = m_end = m_cursor = nullptr;
 }
 
 //------------------------------------------------------------------------------
-void str_stream::grow(unsigned int hint)
+void str_stream::grow(uint32 hint)
 {
     hint = (hint + 127) & ~127;
-    unsigned int size = int(m_end - m_start) + hint;
+    uint32 size = int32(m_end - m_start) + hint;
     TYPE* next = (TYPE*)realloc(m_start, size * sizeof(TYPE));
     m_cursor = next + (m_cursor - m_start);
     m_end = next + size;
@@ -311,30 +311,30 @@ bool doskey::remove_alias(const char* alias)
 
 //------------------------------------------------------------------------------
 //#define DEBUG_RESOLVEIMPL
-bool doskey::resolve_impl(str_iter& s, str_stream& out, int* _point)
+bool doskey::resolve_impl(str_iter& s, str_stream& out, int32* _point)
 {
-    const int out_len = out.length();
+    const int32 out_len = out.length();
     str_iter command = s;
     str_iter in = s;
 
     // Get alias and macro text.
     str<32> alias;
     str<32> text;
-    unsigned int skipped;
-    int parens;
+    uint32 skipped;
+    int32 parens;
     if (!get_alias(m_shell_name.data(), in, skipped, alias, text, parens))
         return false;
     out << str_stream::range(s.get_pointer(), skipped);
 
     // Find the point range for the alias name.
-    int point_arg = -1;
-    int point_ofs = -1;
+    int32 point_arg = -1;
+    int32 point_ofs = -1;
     bool point_arg_star = false;
-    int point_ofs_star = -1;
+    int32 point_ofs_star = -1;
     if (_point)
     {
-        const int alias_start = out.length();
-        const int alias_end = alias_start + int(in.get_pointer() - s.get_pointer());
+        const int32 alias_start = out.length();
+        const int32 alias_end = alias_start + int32(in.get_pointer() - s.get_pointer());
         if (*_point >= alias_start && *_point < alias_end)
         {
             // Put point at beginning of whitespace before arg 1.
@@ -344,10 +344,10 @@ bool doskey::resolve_impl(str_iter& s, str_stream& out, int* _point)
     }
 
     // Point at beginning stays there.
-    int* point = (_point && static_cast<unsigned int>(*_point) <= out.length()) ? nullptr : _point;
+    int32* point = (_point && uint32(*_point) <= out.length()) ? nullptr : _point;
 
 #ifdef DEBUG_RESOLVEIMPL
-    int dbg_row = 0;
+    int32 dbg_row = 0;
     str<> tmp;
     if (g_printer)
     {
@@ -368,13 +368,13 @@ bool doskey::resolve_impl(str_iter& s, str_stream& out, int* _point)
         str_iter macro(text.c_str(), text.length());
         while (macro.more())
         {
-            const int c = macro.next();
+            const int32 c = macro.next();
             if (c == '\"')
                 quote = !quote;
             if (c != '$')
                 continue;
 
-            const int tag = macro.peek();
+            const int32 tag = macro.peek();
             if ((tag == '*') || (tag >= '1' && tag <= '9'))
             {
                 // $* or $1..9 exists inside quotes:  don't split.
@@ -398,14 +398,14 @@ bool doskey::resolve_impl(str_iter& s, str_stream& out, int* _point)
         // Restrict to resolve only up to the command separator.
         const char* start = in.get_pointer();
         const char* end = in.get_pointer() + in.length();
-        const char* ptr = find_command_end(start, int(end - start));
-        unsigned int len = static_cast<unsigned int>(ptr - in.get_pointer());
+        const char* ptr = find_command_end(start, int32(end - start));
+        uint32 len = uint32(ptr - in.get_pointer());
         len = trim_trailing_parens(start, 0, len, parens);
-        command.truncate(int(ptr - command.get_pointer()));
+        command.truncate(int32(ptr - command.get_pointer()));
         in.truncate(len);
 
         // Consume the input up to the command separator.
-        new (&s) str_iter(ptr, int(end - ptr));
+        new (&s) str_iter(ptr, int32(end - ptr));
     }
     else
     {
@@ -414,7 +414,7 @@ bool doskey::resolve_impl(str_iter& s, str_stream& out, int* _point)
     }
 
     // Don't do point processing if the point is outside the input.
-    const bool point_in_command = (point && *point >= out_len && *point <= int(out_len + command.length()));
+    const bool point_in_command = (point && *point >= out_len && *point <= int32(out_len + command.length()));
     if (point && !point_in_command)
         point = nullptr;
 
@@ -424,7 +424,7 @@ bool doskey::resolve_impl(str_iter& s, str_stream& out, int* _point)
     if (g_enhanced_doskey.get())
         tokens.add_quote_pair("\"");
 
-    struct arg_desc { const char* ptr; int length; };
+    struct arg_desc { const char* ptr; int32 length; };
     fixed_array<arg_desc, 10> args;
     arg_desc* desc;
     while (tokens.next(token) && (desc = args.push_back()))
@@ -435,11 +435,11 @@ bool doskey::resolve_impl(str_iter& s, str_stream& out, int* _point)
         // Find the point range for the arg.
         if (point)
         {
-            const int token_start = out_len + int(desc->ptr - command.get_pointer());
+            const int32 token_start = out_len + int32(desc->ptr - command.get_pointer());
             if (*point >= token_start)
             {
-                const int delim_len = tokens.peek_delims();
-                const int token_end = token_start + desc->length;
+                const int32 delim_len = tokens.peek_delims();
+                const int32 token_end = token_start + desc->length;
                 if (*point < token_end)
                 {
                     point_arg = args.size() - 1;
@@ -456,17 +456,17 @@ bool doskey::resolve_impl(str_iter& s, str_stream& out, int* _point)
 
     if (point && args.size())
     {
-        if (point_arg == int(args.size()))
+        if (point_arg == int32(args.size()))
             point_arg = -1;
         point_arg_star = true;
         if (*point < out_len + args.front()->ptr - command.get_pointer())
             point_ofs_star = -1;
         else
-            point_ofs_star = *point - int(out_len + args.front()->ptr - command.get_pointer());
+            point_ofs_star = *point - int32(out_len + args.front()->ptr - command.get_pointer());
 #ifdef DEBUG_RESOLVEIMPL
         if (g_printer)
         {
-            tmp.format("size\t%d\targ begin\t%d\targ end\t%d\tparg\t%d\tin_cmd\t%d\tofs_star %d\t", int(args.size()), int(out_len + args.front()->ptr - command.get_pointer()), int(out_len + args.back()->ptr - command.get_pointer() + args.back()->length), point_arg, point_arg_star, point_ofs_star);
+            tmp.format("size\t%d\targ begin\t%d\targ end\t%d\tparg\t%d\tin_cmd\t%d\tofs_star %d\t", int32(args.size()), int32(out_len + args.front()->ptr - command.get_pointer()), int32(out_len + args.back()->ptr - command.get_pointer() + args.back()->length), point_arg, point_arg_star, point_ofs_star);
             g_printer->print(tmp.c_str(), tmp.length());
         }
 #endif
@@ -485,8 +485,8 @@ bool doskey::resolve_impl(str_iter& s, str_stream& out, int* _point)
     bool set_point = !!point;
     str_stream& stream = out;
     const char* read = text.c_str();
-    int last_arg_resolved = -1;
-    for (int c = *read; c = *read; ++read)
+    int32 last_arg_resolved = -1;
+    for (int32 c = *read; c = *read; ++read)
     {
         if (c != '$')
         {
@@ -526,7 +526,7 @@ bool doskey::resolve_impl(str_iter& s, str_stream& out, int* _point)
             continue;
         }
 
-        int arg_count = args.size();
+        int32 arg_count = args.size();
         if (!arg_count)
             continue;
 
@@ -593,7 +593,7 @@ bool doskey::resolve_impl(str_iter& s, str_stream& out, int* _point)
         {
             const char* end = command.get_pointer() + command.length();
             const char* start = args.front()->ptr;
-            stream << str_stream::range(start, int(end - start));
+            stream << str_stream::range(start, int32(end - start));
         }
         else if (c < arg_count)
         {
@@ -612,11 +612,11 @@ bool doskey::resolve_impl(str_iter& s, str_stream& out, int* _point)
             g_printer->print(tmp.c_str(), tmp.length());
         }
 #endif
-        *point = max<int>(out_len, stream.trimmed_length());
+        *point = max<int32>(out_len, stream.trimmed_length());
     }
 
     // If the point is still ahead, adjust it by the current command delta.
-    if (_point && !point_in_command && *_point >= int(out_len + command.length()))
+    if (_point && !point_in_command && *_point >= int32(out_len + command.length()))
     {
         *_point -= command.length();
         *_point += out.length() - out_len;
@@ -631,7 +631,7 @@ bool doskey::resolve_impl(str_iter& s, str_stream& out, int* _point)
 }
 
 //------------------------------------------------------------------------------
-void doskey::resolve(const char* chars, doskey_alias& out, int* point)
+void doskey::resolve(const char* chars, doskey_alias& out, int32* point)
 {
     dbg_ignore_scope(snapshot, "Doskey");
 
@@ -640,7 +640,7 @@ void doskey::resolve(const char* chars, doskey_alias& out, int* point)
     str_stream stream;
 
     bool resolves = false;
-    str_iter text(chars, int(strlen(chars)));
+    str_iter text(chars, int32(strlen(chars)));
     while (text.more())
     {
         if (resolve_impl(text, stream, point))
@@ -652,7 +652,7 @@ void doskey::resolve(const char* chars, doskey_alias& out, int* point)
             if (!g_enhanced_doskey.get())
                 break;
             const char* ptr = find_command_end(text.get_pointer(), text.length());
-            const int len = int(ptr - text.get_pointer());
+            const int32 len = int32(ptr - text.get_pointer());
             stream << str_stream::range(text.get_pointer(), len);
             new (&text) str_iter(ptr, text.length() - len);
         }
@@ -660,7 +660,7 @@ void doskey::resolve(const char* chars, doskey_alias& out, int* point)
         // Copy delimiters into the output buffer verbatim.
         while (text.more())
         {
-            const int c = *text.get_pointer();
+            const int32 c = *text.get_pointer();
             if (c != '|' && c != '&')
                 break;
             stream << str_stream::range(text.get_pointer(), 1);

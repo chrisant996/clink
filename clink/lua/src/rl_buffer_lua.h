@@ -18,24 +18,24 @@ public:
                             rl_buffer_lua(line_buffer& buffer);
                             ~rl_buffer_lua();
 
-    int                     get_buffer(lua_State* state);
-    int                     get_length(lua_State* state);
-    int                     get_cursor(lua_State* state);
-    int                     get_anchor(lua_State* state);
-    int                     set_cursor(lua_State* state);
-    int                     insert(lua_State* state);
-    int                     remove(lua_State* state);
-    int                     begin_undo_group(lua_State* state);
-    int                     end_undo_group(lua_State* state);
-    int                     begin_output(lua_State* state);
-    int                     refresh_line(lua_State* state);
-    int                     get_argument(lua_State* state);
-    int                     set_argument(lua_State* state);
-    int                     ding(lua_State* state);
+    int32                   get_buffer(lua_State* state);
+    int32                   get_length(lua_State* state);
+    int32                   get_cursor(lua_State* state);
+    int32                   get_anchor(lua_State* state);
+    int32                   set_cursor(lua_State* state);
+    int32                   insert(lua_State* state);
+    int32                   remove(lua_State* state);
+    int32                   begin_undo_group(lua_State* state);
+    int32                   end_undo_group(lua_State* state);
+    int32                   begin_output(lua_State* state);
+    int32                   refresh_line(lua_State* state);
+    int32                   get_argument(lua_State* state);
+    int32                   set_argument(lua_State* state);
+    int32                   ding(lua_State* state);
 
 private:
     line_buffer&            m_rl_buffer;
-    int                     m_num_undo = 0;
+    int32                   m_num_undo = 0;
     bool                    m_began_output = false;
 
     friend class lua_bindable<rl_buffer_lua>;

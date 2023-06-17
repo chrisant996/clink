@@ -10,7 +10,7 @@ class array
     /* This class is really rather poor */
 
 public:
-    template <int D, typename U>
+    template <int32 D, typename U>
     class iter_impl
     {
     public:
@@ -29,7 +29,7 @@ public:
     typedef iter_impl<-1, T>        riter;
     typedef iter_impl<-1, T const>  rciter;
 
-                    array(T* ptr, unsigned int size, unsigned int capacity=0);
+                    array(T* ptr, uint32 size, uint32 capacity=0);
     iter            begin()          { return m_ptr; }
     iter            end()            { return m_ptr + m_size; }
     citer           begin() const    { return m_ptr; }
@@ -38,8 +38,8 @@ public:
     riter           rend()           { return m_ptr - 1; }
     rciter          rbegin() const   { return m_ptr + m_size - 1; }
     rciter          rend() const     { return m_ptr - 1; }
-    unsigned int    size() const     { return m_size; }
-    unsigned int    capacity() const { return m_capacity; }
+    uint32          size() const     { return m_size; }
+    uint32          capacity() const { return m_capacity; }
     bool            empty() const    { return !m_size; }
     bool            full() const     { return (m_size == m_capacity); }
     T const*        front() const    { return m_ptr; }
@@ -48,18 +48,18 @@ public:
     T*              back()           { return empty() ? nullptr : (m_ptr + m_size - 1); }
     T*              push_back()      { return full() ? nullptr : (m_ptr + m_size++); }
     void            clear();
-    T const*        operator [] (unsigned int index) const;
-    T*              operator [] (unsigned int index);
+    T const*        operator [] (uint32 index) const;
+    T*              operator [] (uint32 index);
 
 protected:
     T*              m_ptr;
-    unsigned int    m_size;
-    unsigned int    m_capacity;
+    uint32          m_size;
+    uint32          m_capacity;
 };
 
 //------------------------------------------------------------------------------
 template <typename T>
-array<T>::array(T* ptr, unsigned int size, unsigned int capacity)
+array<T>::array(T* ptr, uint32 size, uint32 capacity)
 : m_ptr(ptr)
 , m_size(size)
 , m_capacity(capacity ? capacity : size)
@@ -68,14 +68,14 @@ array<T>::array(T* ptr, unsigned int size, unsigned int capacity)
 
 //------------------------------------------------------------------------------
 template <typename T>
-T const* array<T>::operator [] (unsigned int index) const
+T const* array<T>::operator [] (uint32 index) const
 {
     return (index >= capacity()) ? nullptr : (m_ptr + index);
 }
 
 //------------------------------------------------------------------------------
 template <typename T>
-T* array<T>::operator [] (unsigned int index)
+T* array<T>::operator [] (uint32 index)
 {
     return (index >= capacity()) ? nullptr : (m_ptr + index);
 }
@@ -93,7 +93,7 @@ void array<T>::clear()
 
 
 //------------------------------------------------------------------------------
-template <typename T, unsigned int SIZE>
+template <typename T, uint32 SIZE>
 class fixed_array
     : public array<T>
 {

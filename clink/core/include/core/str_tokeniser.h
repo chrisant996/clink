@@ -11,12 +11,12 @@
 class str_token
 {
 public:
-    enum : unsigned char {
+    enum : uint8 {
         invalid_delim   = 0xff,
     };
                         str_token(char c) : delim(c) {}
     explicit            operator bool () const       { return (delim != invalid_delim); }
-    unsigned char       delim;
+    uint8               delim;
 };
 
 
@@ -30,9 +30,9 @@ public:
                         str_tokeniser_impl(const str_iter_impl<T>& in, const char* delims=" ");
     bool                add_quote_pair(const char* pair);
     str_token           next(str_impl<T>& out);
-    str_token           next(const T*& start, int& length);
+    str_token           next(const T*& start, int32& length);
     str_token           next(str_iter_impl<T>& out);
-    int                 peek_delims() const;
+    int32               peek_delims() const;
     const T*            get_pointer() const;
 
 private:
@@ -44,8 +44,8 @@ private:
 
     typedef fixed_array<quote, 4> quotes;
 
-    int                 get_right_quote(int left) const;
-    str_token           next_impl(const T*& out_start, int& out_length);
+    int32               get_right_quote(int32 left) const;
+    str_token           next_impl(const T*& out_start, int32& out_length);
     quotes              m_quotes;
     str_iter_impl<T>    m_iter;
     const char*         m_delims;
@@ -84,12 +84,12 @@ bool str_tokeniser_impl<T>::add_quote_pair(const char* pair)
 
 //------------------------------------------------------------------------------
 template <typename T>
-int str_tokeniser_impl<T>::peek_delims() const
+int32 str_tokeniser_impl<T>::peek_delims() const
 {
     str_iter iter = m_iter;
 
     // Skip initial delimiters.
-    while (int c = iter.peek())
+    while (int32 c = iter.peek())
     {
         const char* delim = strchr(m_delims, c);
         if (delim == nullptr)
@@ -98,7 +98,7 @@ int str_tokeniser_impl<T>::peek_delims() const
         iter.next();
     }
 
-    return int(iter.get_pointer() - m_iter.get_pointer());
+    return int32(iter.get_pointer() - m_iter.get_pointer());
 }
 
 //------------------------------------------------------------------------------

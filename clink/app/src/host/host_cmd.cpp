@@ -41,12 +41,12 @@ func_SetConsoleTitleW_t __Real_SetConsoleTitleW = SetConsoleTitleW;
 
 //------------------------------------------------------------------------------
 extern void clink_shutdown_ctrlevent();
-extern int clink_is_signaled();
+extern int32 clink_is_signaled();
 extern bool clink_maybe_handle_signal();
 extern bool is_force_reload_scripts();
 extern "C" void reset_wcwidths();
 extern void set_ctrl_wakeup_mask(UINT mask);
-extern void strip_wakeup_chars(wchar_t* chars, unsigned int max_chars);
+extern void strip_wakeup_chars(wchar_t* chars, uint32 max_chars);
 extern printer* g_printer;
 extern str<> g_last_prompt;
 
@@ -82,7 +82,7 @@ static const char* get_kernel_module()
 
 
 //------------------------------------------------------------------------------
-static bool get_mui_string(int id, wstr_base& out)
+static bool get_mui_string(int32 id, wstr_base& out)
 {
     DWORD flags = FORMAT_MESSAGE_FROM_HMODULE|FORMAT_MESSAGE_IGNORE_INSERTS;
     return !!FormatMessageW(flags, nullptr, id, 0, out.data(), out.size(), nullptr);
@@ -90,7 +90,7 @@ static bool get_mui_string(int id, wstr_base& out)
 
 //------------------------------------------------------------------------------
 static char s_answered = 0;
-static int check_auto_answer()
+static int32 check_auto_answer()
 {
     static wstr<72> target_prompt;
     static wstr<16> no_yes;
@@ -100,7 +100,7 @@ static int check_auto_answer()
         return 0;
 
     // Skip the feature if it's not enabled.
-    int setting = g_autoanswer.get();
+    int32 setting = g_autoanswer.get();
     if (setting <= 0)
         return 0;
 
@@ -299,7 +299,7 @@ host_cmd::host_cmd()
 }
 
 //------------------------------------------------------------------------------
-int host_cmd::validate()
+int32 host_cmd::validate()
 {
     if (!is_interactive())
     {
@@ -431,7 +431,7 @@ void host_cmd::add_aliases(bool force)
 }
 
 //------------------------------------------------------------------------------
-void host_cmd::edit_line(wchar_t* chars, int max_chars, bool edit)
+void host_cmd::edit_line(wchar_t* chars, int32 max_chars, bool edit)
 {
     // Exiting a nested CMD will remove the aliases, so re-add them if missing.
     // But don't overwrite them if they already exist: let the user override
@@ -534,7 +534,7 @@ BOOL WINAPI host_cmd::read_console(
     // case for readline.
     if (max_chars == 1)
     {
-        int reply;
+        int32 reply;
 
         if (reply = check_auto_answer())
         {
@@ -707,7 +707,7 @@ BOOL WINAPI host_cmd::write_console(
 }
 
 //------------------------------------------------------------------------------
-bool host_cmd::capture_prompt(const wchar_t* chars, int char_count)
+bool host_cmd::capture_prompt(const wchar_t* chars, int32 char_count)
 {
     // Clink tags the prompt so that it can be detected when cmd.exe
     // writes it to the console.
@@ -785,7 +785,7 @@ BOOL WINAPI host_cmd::set_console_title(LPCWSTR lpConsoleTitle)
                     lpConsoleTitle += clink_prefix.length();
                 for (auto& old : s_old_prefixes)
                 {
-                    const int len = str_compare(lpConsoleTitle, old);
+                    const int32 len = str_compare(lpConsoleTitle, old);
                     if (len > 0 && old[len] == '\0')
                         lpConsoleTitle += len;
                 }
@@ -796,7 +796,7 @@ BOOL WINAPI host_cmd::set_console_title(LPCWSTR lpConsoleTitle)
             // Remember prefix.
             if (clink_prefix.length() && s_old_prefixes.find(clink_prefix.c_str()) == s_old_prefixes.end())
             {
-                const unsigned int cb = (clink_prefix.length() + 1) * sizeof(*clink_prefix.c_str());
+                const uint32 cb = (clink_prefix.length() + 1) * sizeof(*clink_prefix.c_str());
                 wchar_t* ptr = (wchar_t*)s_old_prefix_store.alloc(cb);
                 memcpy(ptr, clink_prefix.c_str(), cb);
                 s_old_prefixes.emplace(ptr);

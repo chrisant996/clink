@@ -14,7 +14,7 @@ extern setting_bool g_enhanced_doskey;
 
 //------------------------------------------------------------------------------
 enum input_type { iTxt, iSpc, iDig, iIn, iOut, iAmp, iPipe, iMAX };
-static input_type get_input_type(int c)
+static input_type get_input_type(int32 c)
 {
     switch (c)
     {
@@ -40,7 +40,7 @@ static input_type get_input_type(int c)
 
 //------------------------------------------------------------------------------
 // State machine for finding command breaks.
-enum tokeniser_state : int { sTxt, sSpc, sDig, sIn, sOut, sIn2, sOut2, sDIn, sDOut, sDIn2, sDOut2, sReAm, sAmDi, sBREAK, sARG, sVALID, sBAD, sMAX };
+enum tokeniser_state : int32 { sTxt, sSpc, sDig, sIn, sOut, sIn2, sOut2, sDIn, sDOut, sDIn2, sDOut2, sReAm, sAmDi, sBREAK, sARG, sVALID, sBAD, sMAX };
 static const tokeniser_state c_transition[][input_type::iMAX] =
 {   //                  iTxt,   iSpc,   iDig,   iIn,    iOut,   iAmp,   sPipe,
     /* sTxt */        { sTxt,   sSpc,   sTxt,   sIn,    sOut,   sBREAK, sBREAK, },
@@ -166,7 +166,7 @@ void cmd_state::next_word()
 }
 
 //------------------------------------------------------------------------------
-bool cmd_state::test(const int c, const tokeniser_state new_state)
+bool cmd_state::test(const int32 c, const tokeniser_state new_state)
 {
     // Not a command.
     if (m_failed)
@@ -188,7 +188,7 @@ bool cmd_state::test(const int c, const tokeniser_state new_state)
     // delimiter?
     if (m_match)
     {
-        if (strchr(c_delimit, static_cast<unsigned char>(c)))
+        if (strchr(c_delimit, uint8(c)))
         {
             cancel();
             return true;
@@ -221,9 +221,9 @@ bool cmd_state::test(const int c, const tokeniser_state new_state)
 
 
 //------------------------------------------------------------------------------
-int skip_leading_parens(str_iter& iter, bool& first, alias_cache* alias_cache)
+int32 skip_leading_parens(str_iter& iter, bool& first, alias_cache* alias_cache)
 {
-    int parens = 0;
+    int32 parens = 0;
     bool do_parens = true;
 
     if ((first || g_enhanced_doskey.get()) && iter.more() && iter.peek() == '(')
@@ -233,12 +233,12 @@ int skip_leading_parens(str_iter& iter, bool& first, alias_cache* alias_cache)
         const char* orig = iter.get_pointer();
         while (iter.more())
         {
-            const int c = iter.peek();
+            const int32 c = iter.peek();
             if (c == ' ' || c == '\t')
                 break;
             iter.next();
         }
-        tmp.concat(orig, static_cast<unsigned int>(iter.get_pointer() - orig));
+        tmp.concat(orig, uint32(iter.get_pointer() - orig));
         do_parens = (alias_cache ?
                      !alias_cache->get_alias(tmp.c_str(), tmp2) :
                      !os::get_alias(tmp.c_str(), tmp2));
@@ -250,7 +250,7 @@ int skip_leading_parens(str_iter& iter, bool& first, alias_cache* alias_cache)
         const char* orig = iter.get_pointer();
         while (iter.more())
         {
-            const int c = iter.peek();
+            const int32 c = iter.peek();
             if (c != ' ' && c != '(')
                 break;
             iter.next();
@@ -270,9 +270,9 @@ int skip_leading_parens(str_iter& iter, bool& first, alias_cache* alias_cache)
 }
 
 //------------------------------------------------------------------------------
-unsigned int trim_trailing_parens(const char* start, unsigned int offset, unsigned int length, int parens)
+uint32 trim_trailing_parens(const char* start, uint32 offset, uint32 length, int32 parens)
 {
-    unsigned int ret = length;
+    uint32 ret = length;
 
     // Skip trailing parens to match skipped leading parens.
     while (parens > 0 && length > offset)
@@ -291,11 +291,11 @@ unsigned int trim_trailing_parens(const char* start, unsigned int offset, unsign
 }
 
 //------------------------------------------------------------------------------
-word_token cmd_command_tokeniser::next(unsigned int& offset, unsigned int& length)
+word_token cmd_command_tokeniser::next(uint32& offset, uint32& length)
 {
     if (!m_iter.more())
     {
-        offset = static_cast<unsigned int>(m_iter.get_pointer() - m_start);
+        offset = uint32(m_iter.get_pointer() - m_start);
         length = 0;
         return word_token(word_token::invalid_delim);
     }
@@ -306,22 +306,22 @@ word_token cmd_command_tokeniser::next(unsigned int& offset, unsigned int& lengt
     // Skip past any separators.
     while (m_iter.more())
     {
-        const int c = m_iter.peek();
+        const int32 c = m_iter.peek();
         if (c != '&' && c != '|')
             break;
         m_iter.next();
     }
 
     bool first = (m_iter.get_pointer() == m_start);
-    int parens = skip_leading_parens(m_iter, first, m_alias_cache);
+    int32 parens = skip_leading_parens(m_iter, first, m_alias_cache);
 
     // Eat padding space after command separate or open paren.
     if (!first && !parens && m_iter.more() && m_iter.peek() == ' ')
         m_iter.next();
 
-    offset = static_cast<unsigned int>(m_iter.get_pointer() - m_start);
+    offset = uint32(m_iter.get_pointer() - m_start);
 
-    int c = 0;
+    int32 c = 0;
     bool in_quote = false;
     bool is_break = false;
     bool is_arg = false;
@@ -387,7 +387,7 @@ word_token cmd_command_tokeniser::next(unsigned int& offset, unsigned int& lengt
         }
     }
 
-    length = static_cast<unsigned int>(m_iter.get_pointer() - m_start) - is_break;
+    length = uint32(m_iter.get_pointer() - m_start) - is_break;
     length = trim_trailing_parens(m_start, offset, length, parens);
     assert(length >= offset);
     length -= offset;
@@ -413,7 +413,7 @@ void cmd_word_tokeniser::start(const str_iter& iter, const char* quote_pair, boo
 }
 
 //------------------------------------------------------------------------------
-word_token cmd_word_tokeniser::next(unsigned int& offset, unsigned int& length)
+word_token cmd_word_tokeniser::next(uint32& offset, uint32& length)
 {
     if (!m_iter.more())
         return word_token(word_token::invalid_delim);
@@ -439,19 +439,19 @@ word_token cmd_word_tokeniser::next(unsigned int& offset, unsigned int& length)
         // Skip past any separators.
         while (m_iter.more())
         {
-            const int c = m_iter.peek();
+            const int32 c = m_iter.peek();
             if ((c & ~0xff) || !strchr((command_word || redir_arg) ? c_name_delims : c_word_delims, c))
                 break;
             m_iter.next();
         }
         // Set offset and end of word.
         start_word = end_word = m_iter.get_pointer();
-        offset = static_cast<unsigned int>(end_word - m_start);
+        offset = uint32(end_word - m_start);
     };
 
     start_new_word();
 
-    int c = 0;
+    int32 c = 0;
     bool in_quote = false;
     tokeniser_state state = sSpc;
     while (true)
@@ -541,7 +541,7 @@ word_token cmd_word_tokeniser::next(unsigned int& offset, unsigned int& length)
         }
     }
 
-    length = static_cast<unsigned int>(end_word - start_word);
+    length = uint32(end_word - start_word);
 
     if (!redir_arg)
         m_command_word = false;

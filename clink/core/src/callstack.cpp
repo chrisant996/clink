@@ -282,7 +282,7 @@ static void get_symbol_info(void* frame, symbol_info& info)
     {
         dbgcchcopy(info.module, _countof(info.module), mi.ModuleName);
         for (char *upper = info.module; *upper; ++upper)
-            *upper = (char)toupper(static_cast<unsigned char>(*upper));
+            *upper = (char)toupper(uint8(*upper));
     }
     else
     {
@@ -332,7 +332,7 @@ static size_t format_frame(void* frame, char* buffer, size_t max, bool condense)
     symbol_info info;
     get_symbol_info(frame, info);
 
-    int out = 0;
+    int32 out = 0;
     if (frame && condense && info.symbol[0])
     {
         static const char c_fmt[] = "%s + 0x%zX";
@@ -449,18 +449,18 @@ static DWORD_PTR WINAPI get_module_base(HANDLE process, DWORD_PTR addr)
     return load_module_symbols(reinterpret_cast<void*>(addr));
 }
 
-CALLSTACK_EXTERN_C size_t format_callstack(int skip_frames, int total_frames, char* buffer, size_t capacity, int newlines)
+CALLSTACK_EXTERN_C size_t format_callstack(int32 skip_frames, int32 total_frames, char* buffer, size_t capacity, int32 newlines)
 {
     void* frames[40];
     if (total_frames > _countof(frames))
         total_frames = _countof(frames);
 
     DWORD hash;
-    const int captured = get_callstack_frames(skip_frames, total_frames, frames, &hash);
+    const int32 captured = get_callstack_frames(skip_frames, total_frames, frames, &hash);
     return format_frames(captured, frames, hash, buffer, capacity, newlines);
 }
 
-CALLSTACK_EXTERN_C int get_callstack_frames(int skip_frames, int total_frames, void** frames, DWORD* hash)
+CALLSTACK_EXTERN_C int32 get_callstack_frames(int32 skip_frames, int32 total_frames, void** frames, DWORD* hash)
 {
     memset(frames, 0, total_frames * sizeof(*frames));
     if (hash)
@@ -476,8 +476,8 @@ CALLSTACK_EXTERN_C int get_callstack_frames(int skip_frames, int total_frames, v
         // if it fails both times.
         static volatile LONG s_total_attempts = 0;
         static volatile LONG s_failed_attempts = 0;
-        unsigned int captured = 0;
-        for (unsigned int attempts = 2; !captured && attempts--;)
+        uint32 captured = 0;
+        for (uint32 attempts = 2; !captured && attempts--;)
         {
             InterlockedIncrement(&s_total_attempts);
             captured = s_functions.RtlCaptureStackBackTrace(skip_frames + 1, total_frames, frames, hash);
@@ -511,8 +511,8 @@ CALLSTACK_EXTERN_C int get_callstack_frames(int skip_frames, int total_frames, v
     if (hash)
         *hash = 0;
 
-    int captured = 0;
-    for (int i = 0; i < skip_frames + total_frames; ++i)
+    int32 captured = 0;
+    for (int32 i = 0; i < skip_frames + total_frames; ++i)
     {
         lock_dbghelp();
         const bool walked = !!s_functions.StackWalk(
@@ -549,7 +549,7 @@ CALLSTACK_EXTERN_C int get_callstack_frames(int skip_frames, int total_frames, v
     return captured;
 }
 
-CALLSTACK_EXTERN_C size_t format_frames(int total_frames, void* const* frames, DWORD hash, char* buffer, size_t max, int newlines)
+CALLSTACK_EXTERN_C size_t format_frames(int32 total_frames, void* const* frames, DWORD hash, char* buffer, size_t max, int32 newlines)
 {
     if (!max)
         return 0;
@@ -572,7 +572,7 @@ CALLSTACK_EXTERN_C size_t format_frames(int total_frames, void* const* frames, D
     }
 
     char tmp[MAX_FRAME_LEN];
-    for (int i = 0; i < total_frames && frames[i]; i++)
+    for (int32 i = 0; i < total_frames && frames[i]; i++)
     {
         char* s = tmp;
         size_t used = 0;
@@ -675,7 +675,7 @@ CALLSTACK_EXTERN_C void dbgtracef(const char* fmt, ...)
 
     char buffer[8192];
     size_t size = _countof(buffer) - 4;
-    int used = _snprintf_s(buffer, size, _TRUNCATE, "%u\t", GetCurrentThreadId());
+    int32 used = _snprintf_s(buffer, size, _TRUNCATE, "%u\t", GetCurrentThreadId());
     used += vsnprintf_s(buffer + used, size - used, _TRUNCATE, fmt, args);
     buffer[_countof(buffer) - 5] = '\0';
     dbgcchcat(buffer + used, size - used, "\r\n");

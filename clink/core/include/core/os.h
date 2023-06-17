@@ -65,9 +65,9 @@ struct cwd_restorer
 
 DWORD   get_file_attributes(const wchar_t* path, bool* symlink=nullptr);
 DWORD   get_file_attributes(const char* path, bool* symlink=nullptr);
-int     get_path_type(const char* path);
-int     get_drive_type(const char* path, unsigned int len=-1);
-int     get_file_size(const char* path);
+int32   get_path_type(const char* path);
+int32   get_drive_type(const char* path, uint32 len=-1);
+int32   get_file_size(const char* path);
 bool    is_hidden(const char* path);
 void    get_current_dir(str_base& out);
 bool    set_current_dir(const char* dir);
@@ -78,18 +78,18 @@ bool    move(const char* src_path, const char* dest_path);
 bool    copy(const char* src_path, const char* dest_path);
 bool    get_temp_dir(str_base& out);
 FILE*   create_temp_file(str_base* out=nullptr, const char* prefix=nullptr, const char* ext=nullptr, temp_file_mode mode=normal, const char* path=nullptr);
-bool    expand_env(const char* in, unsigned int in_len, str_base& out, int* point=nullptr);
+bool    expand_env(const char* in, uint32 in_len, str_base& out, int32* point=nullptr);
 bool    get_env(const char* name, str_base& out);
 bool    set_env(const char* name, const char* value);
 bool    get_alias(const char* name, str_base& out);
 bool    get_short_path_name(const char* path, str_base& out);
 bool    get_long_path_name(const char* path, str_base& out);
-bool    get_full_path_name(const char* path, str_base& out, unsigned int len=-1);
+bool    get_full_path_name(const char* path, str_base& out, uint32 len=-1);
 bool    get_net_connection_name(const char* path, str_base& out);
 double  clock();
 time_t  filetime_to_time_t(const FILETIME& ft);
 bool    get_clipboard_text(str_base& out);
-bool    set_clipboard_text(const char* text, int length);
+bool    set_clipboard_text(const char* text, int32 length);
 bool    disambiguate_abbreviated_path(const char*& in, str_base& out);
 bool    is_user_admin();
 bool    run_as_admin(HWND hwnd, const wchar_t* file, const wchar_t* args);
@@ -101,13 +101,13 @@ void    append_argv(str_base& out, const char* arg, argv_quote_mode mode);
 void    map_errno();
 void    map_errno(unsigned long const oserrno);
 
-void    set_errorlevel(int errorlevel);
-int     get_errorlevel();
+void    set_errorlevel(int32 errorlevel);
+int32   get_errorlevel();
 
 void    set_shellname(const wchar_t* shell_name);
 const wchar_t* get_shellname();
 
-int     system(const char* command, const char* cwd);
+int32   system(const char* command, const char* cwd);
 HANDLE  spawn_internal(const char* command, const char* cwd, HANDLE hin, HANDLE hout);
 
 HANDLE  dup_handle(HANDLE process_handle, HANDLE h, bool inherit=false);

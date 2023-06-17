@@ -19,10 +19,10 @@ extern "C" {
 #include <readline/readline.h>
 #include <readline/rldefs.h>
 #include <readline/rlprivate.h>
-int __complete_get_screenwidth(void);
-int __fnwidth(const char *string);
+int32 __complete_get_screenwidth(void);
+int32 __fnwidth(const char *string);
 char* __printable_part(char* pathname);
-int __stat_char(const char *filename, char match_type);
+int32 __stat_char(const char *filename, char match_type);
 }
 
 #include <vector>
@@ -46,14 +46,14 @@ static struct column_info *s_column_info = nullptr;
 
 
 //------------------------------------------------------------------------------
-int printable_len(const char* match, match_type type)
+int32 printable_len(const char* match, match_type type)
 {
     const char* temp = __printable_part((char*)match);
-    int len = __fnwidth(temp);
+    int32 len = __fnwidth(temp);
 
     // Use the match type to determine whether there will be a visible stat
     // character, and include it in the max length calculation.
-    int vis_stat = -1;
+    int32 vis_stat = -1;
     if (is_match_type(type, match_type::dir) && (
 #if defined (VISIBLE_STATS)
         rl_visible_stats ||
@@ -80,7 +80,7 @@ int printable_len(const char* match, match_type type)
 /* Allocate enough column info suitable for the current number of
    files and display columns, and initialize the info to represent the
    narrowest possible columns.  */
-static bool init_column_info(int max_matches, size_t& max_cols, size_t count, width_t col_padding)
+static bool init_column_info(int32 max_matches, size_t& max_cols, size_t count, width_t col_padding)
 {
     size_t i;
 
@@ -147,7 +147,7 @@ static bool init_column_info(int max_matches, size_t& max_cols, size_t count, wi
 //------------------------------------------------------------------------------
 // Calculate the number of columns needed to represent the current set of
 // matches in the current display width.
-column_widths calculate_columns(match_adapter* adapter, int max_matches, bool one_column, bool omit_desc, width_t extra, int presuf)
+column_widths calculate_columns(match_adapter* adapter, int32 max_matches, bool one_column, bool omit_desc, width_t extra, int32 presuf)
 {
     column_widths widths;
 
@@ -171,9 +171,9 @@ column_widths calculate_columns(match_adapter* adapter, int max_matches, bool on
 
     // Find the length of the prefix common to all items: length as displayed
     // characters (common_length) and as a byte index into the matches (sind).
-    int sind = 0;
-    int common_length = 0;
-    int condense_delta = 0;
+    int32 sind = 0;
+    int32 common_length = 0;
+    int32 condense_delta = 0;
     bool can_condense = false;
     if (_rl_completion_prefix_display_length > 0)
     {
@@ -208,15 +208,15 @@ column_widths calculate_columns(match_adapter* adapter, int max_matches, bool on
 #endif
 
     /* Compute the maximum number of possible columns.  */
-    int max_match = 0;  // Longest match width in cells.
-    int max_desc = 0;   // Longest description width in cells.
-    int max_len = 0;    // Longest combined match and desc width in cells.
-    int i = 0;
+    int32 max_match = 0;    // Longest match width in cells.
+    int32 max_desc = 0;     // Longest description width in cells.
+    int32 max_len = 0;      // Longest combined match and desc width in cells.
+    int32 i = 0;
     for (size_t filesno = 0; filesno < count; ++filesno, ++i)
     {
         size_t len = extra;
 
-        int cdelta = condense_delta;
+        int32 cdelta = condense_delta;
         match_type type = adapter->get_match_type(i);
         const char *match = adapter->get_match(i);
         bool append = adapter->is_append_display(i);
@@ -257,7 +257,7 @@ column_widths calculate_columns(match_adapter* adapter, int max_matches, bool on
 
         if (has_descriptions)
         {
-            const unsigned int desc_cells = adapter->get_match_visible_description(i);
+            const uint32 desc_cells = adapter->get_match_visible_description(i);
             if (desc_cells)
             {
                 len += desc_padding + desc_cells;

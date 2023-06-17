@@ -54,12 +54,12 @@ extern "C" {
 #include <compat/dirent.h>
 #include <readline/posixdir.h>
 #include <readline/history.h>
-extern int find_streqn (const char *a, const char *b, int n);
-extern void rl_replace_from_history(HIST_ENTRY *entry, int flags);
-extern int _rl_get_inserted_char(void);
+extern int32 find_streqn (const char *a, const char *b, int32 n);
+extern void rl_replace_from_history(HIST_ENTRY *entry, int32 flags);
+extern int32 _rl_get_inserted_char(void);
 extern char* tgetstr(const char*, char**);
-extern int tputs(const char* str, int affcnt, int (*putc_func)(int));
-extern char* tgoto(const char* base, int x, int y);
+extern int32 tputs(const char* str, int32 affcnt, int32 (*putc_func)(int32));
+extern char* tgoto(const char* base, int32 x, int32 y);
 extern Keymap _rl_dispatching_keymap;
 #define HIDDEN_FILE(fn) ((fn)[0] == '.')
 #if defined (COLOR_SUPPORT)
@@ -72,32 +72,32 @@ extern Keymap _rl_dispatching_keymap;
 static FILE*        null_stream = (FILE*)1;
 static FILE*        in_stream = (FILE*)2;
 static FILE*        out_stream = (FILE*)3;
-const int RL_MORE_INPUT_STATES = ~(RL_STATE_CALLBACK|
-                                   RL_STATE_INITIALIZED|
-                                   RL_STATE_OVERWRITE|
-                                   RL_STATE_VICMDONCE);
-const int RL_SIMPLE_INPUT_STATES = (RL_STATE_MOREINPUT|
-                                    RL_STATE_NSEARCH|
-                                    RL_STATE_CHARSEARCH);
+const int32 RL_MORE_INPUT_STATES = ~(RL_STATE_CALLBACK|
+                                     RL_STATE_INITIALIZED|
+                                     RL_STATE_OVERWRITE|
+                                     RL_STATE_VICMDONCE);
+const int32 RL_SIMPLE_INPUT_STATES = (RL_STATE_MOREINPUT|
+                                      RL_STATE_NSEARCH|
+                                      RL_STATE_CHARSEARCH);
 
 extern "C" {
-extern void         (*rl_fwrite_function)(FILE*, const char*, int);
+extern void         (*rl_fwrite_function)(FILE*, const char*, int32);
 extern void         (*rl_fflush_function)(FILE*);
 extern char*        _rl_comment_begin;
-extern int          _rl_convert_meta_chars_to_ascii;
-extern int          _rl_output_meta_chars;
+extern int32        _rl_convert_meta_chars_to_ascii;
+extern int32        _rl_output_meta_chars;
 #if defined(PLATFORM_WINDOWS)
-extern int          _rl_last_v_pos;
+extern int32        _rl_last_v_pos;
 #endif
 } // extern "C"
 
-extern int clink_diagnostics(int, int);
+extern int32 clink_diagnostics(int32, int32);
 
 extern void host_send_event(const char* event_name);
 extern void host_send_oninputlinechanged_event(const char* line);
 extern void host_cleanup_after_signal();
-extern int macro_hook_func(const char* macro);
-extern int host_filter_matches(char** matches);
+extern int32 macro_hook_func(const char* macro);
+extern int32 host_filter_matches(char** matches);
 extern void update_matches();
 extern void reset_generate_matches();
 extern void reselect_matches();
@@ -105,8 +105,8 @@ extern void force_update_internal(bool restrict);
 extern matches* maybe_regenerate_matches(const char* needle, display_filter_flags flags);
 extern void signal_terminal_resized();
 extern setting_color g_color_interact;
-extern int g_prompt_refilter;
-extern int g_prompt_redisplay;
+extern int32 g_prompt_refilter;
+extern int32 g_prompt_redisplay;
 
 terminal_in*        s_direct_input = nullptr;       // for read_key_hook
 terminal_in*        s_processed_input = nullptr;    // for read thunk
@@ -121,8 +121,8 @@ static str_moveable s_pending_luafunc;
 static bool         s_has_pending_luafunc = false;
 static bool         s_has_override_rl_last_func = false;
 static rl_command_func_t* s_override_rl_last_func = nullptr;
-static int          s_init_history_pos = -1;    // Sticky history position from previous edit line.
-static int          s_history_search_pos = -1;  // Most recent history search position during current edit line.
+static int32        s_init_history_pos = -1;    // Sticky history position from previous edit line.
+static int32        s_history_search_pos = -1;  // Most recent history search position during current edit line.
 static str_moveable s_needle;
 static str_moveable s_prev_inputline;
 
@@ -368,7 +368,7 @@ static void clink_reset_event_hook()
 }
 
 //------------------------------------------------------------------------------
-static int clink_event_hook()
+static int32 clink_event_hook()
 {
     if (clink_rl_cleanup_needed)
     {
@@ -392,7 +392,7 @@ static void clink_set_event_hook()
 }
 
 //------------------------------------------------------------------------------
-void clink_sighandler(int sig)
+void clink_sighandler(int32 sig)
 {
     // raise() clears the signal handler, so set it again.
     signal(sig, clink_sighandler);
@@ -416,7 +416,7 @@ bool clink_maybe_handle_signal()
 }
 
 //------------------------------------------------------------------------------
-static void __cdecl dummy_display_matches_hook(char**, int, int)
+static void __cdecl dummy_display_matches_hook(char**, int32, int32)
 {
     // This exists purely to prevent rl_complete_internal from setting up
     // _rl_complete_sigcleanup and freeing matches out from under Clink code.
@@ -434,7 +434,7 @@ bool has_sticky_search_position() { return s_init_history_pos >= 0; }
 void clear_sticky_search_position() { s_init_history_pos = -1; history_prev_use_curr = 0; }
 
 //------------------------------------------------------------------------------
-static bool history_line_differs(int history_pos, const char* line)
+static bool history_line_differs(int32 history_pos, const char* line)
 {
     const HIST_ENTRY* entry = history_get(history_pos + history_base);
     return (!entry || strcmp(entry->line, line) != 0);
@@ -444,7 +444,7 @@ static bool history_line_differs(int history_pos, const char* line)
 bool get_sticky_search_add_history(const char* line)
 {
     // Add the line to history if history was not searched.
-    int history_pos = s_init_history_pos;
+    int32 history_pos = s_init_history_pos;
     if (history_pos < 0)
         return true;
 
@@ -549,7 +549,7 @@ ignore_volatile_matches::~ignore_volatile_matches()
 //------------------------------------------------------------------------------
 extern "C" const char* host_get_env(const char* name)
 {
-    static int rotate = 0;
+    static int32 rotate = 0;
     static str<> rotating_tmp[10];
 
     str<>& s = rotating_tmp[rotate];
@@ -589,7 +589,7 @@ static const char* build_color_sequence(const setting_color& setting, str_base& 
 class rl_more_key_tester : public key_tester
 {
 public:
-    virtual bool    is_bound(const char* seq, int len) override
+    virtual bool    is_bound(const char* seq, int32 len) override
                     {
                         if (len <= 1)
                             return true;
@@ -598,7 +598,7 @@ public:
                         rl_ding();
                         return false;
                     }
-    virtual bool    translate(const char* seq, int len, str_base& out) override
+    virtual bool    translate(const char* seq, int32 len, str_base& out) override
                     {
                         if (bindableEsc && strcmp(seq, bindableEsc) == 0)
                         {
@@ -621,9 +621,9 @@ static bool is_readline_input_pending()
 }
 
 //------------------------------------------------------------------------------
-static unsigned int* s_input_len_ptr = nullptr;
+static uint32* s_input_len_ptr = nullptr;
 static bool s_input_more = false;
-extern "C" int input_available_hook(void)
+extern "C" int32 input_available_hook(void)
 {
     assert(s_direct_input);
     if (s_direct_input)
@@ -646,7 +646,7 @@ extern "C" int input_available_hook(void)
         // Any unread input available from stdin?
         // Passing -1 returns the current timeout without changing it.  The
         // timeout is in microseconds (µsec) so divide by 1000 for milliseconds.
-        const int timeout = rl_set_keyboard_input_timeout(-1);
+        const int32 timeout = rl_set_keyboard_input_timeout(-1);
         if (s_direct_input->available(timeout > 0 ? timeout / 1000 : 0))
             return true;
     }
@@ -654,7 +654,7 @@ extern "C" int input_available_hook(void)
 }
 
 //------------------------------------------------------------------------------
-extern "C" int read_key_hook(void)
+extern "C" int32 read_key_hook(void)
 {
     assert(s_direct_input);
     if (!s_direct_input)
@@ -664,14 +664,14 @@ extern "C" int read_key_hook(void)
     key_tester* old = s_direct_input->set_key_tester(&tester);
 
     s_direct_input->select();
-    int key = s_direct_input->read();
+    int32 key = s_direct_input->read();
 
     s_direct_input->set_key_tester(old);
     return key;
 }
 
 //------------------------------------------------------------------------------
-int read_key_direct(bool wait)
+int32 read_key_direct(bool wait)
 {
     if (!s_direct_input)
     {
@@ -683,7 +683,7 @@ int read_key_direct(bool wait)
 
     if (wait)
         s_direct_input->select();
-    int key = s_direct_input->read();
+    int32 key = s_direct_input->read();
 
     s_direct_input->set_key_tester(old);
     return key;
@@ -692,7 +692,7 @@ int read_key_direct(bool wait)
 //------------------------------------------------------------------------------
 static bool find_func_in_keymap(str_base& out, rl_command_func_t *func, Keymap map)
 {
-    for (int key = 0; key < KEYMAP_SIZE; key++)
+    for (int32 key = 0; key < KEYMAP_SIZE; key++)
     {
         switch (map[key].type)
         {
@@ -701,15 +701,15 @@ static bool find_func_in_keymap(str_base& out, rl_command_func_t *func, Keymap m
         case ISFUNC:
             if (map[key].function == func)
             {
-                char ch = char((unsigned char)key);
+                char ch = char(uint8(key));
                 out.concat_no_truncate(&ch, 1);
                 return true;
             }
             break;
         case ISKMAP:
             {
-                unsigned int old_len = out.length();
-                char ch = char((unsigned char)key);
+                uint32 old_len = out.length();
+                char ch = char(uint8(key));
                 out.concat_no_truncate(&ch, 1);
                 if (find_func_in_keymap(out, func, FUNCTION_TO_KEYMAP(map, key)))
                     return true;
@@ -798,7 +798,7 @@ extern "C" void terminal_end_command()
     }
 }
 
-static int terminal_read_thunk(FILE* stream)
+static int32 terminal_read_thunk(FILE* stream)
 {
     if (stream == in_stream)
     {
@@ -814,7 +814,7 @@ static int terminal_read_thunk(FILE* stream)
 }
 
 //------------------------------------------------------------------------------
-static void terminal_write_thunk(FILE* stream, const char* chars, int char_count)
+static void terminal_write_thunk(FILE* stream, const char* chars, int32 char_count)
 {
     if (stream == out_stream)
     {
@@ -852,8 +852,8 @@ static void terminal_write_thunk(FILE* stream, const char* chars, int char_count
 }
 
 //------------------------------------------------------------------------------
-static int s_puts_face = 0;
-static void terminal_log_write(FILE* stream, const char* chars, int char_count)
+static int32 s_puts_face = 0;
+static void terminal_log_write(FILE* stream, const char* chars, int32 char_count)
 {
     if (stream == out_stream)
     {
@@ -924,7 +924,7 @@ static const char* s_unrecognized_color = nullptr;
 static const char* s_none_color = nullptr;
 static const char* s_suggestion_color = nullptr;
 static const char* s_histexpand_color = nullptr;
-int g_suggestion_offset = -1;
+int32 g_suggestion_offset = -1;
 
 //------------------------------------------------------------------------------
 bool is_showing_argmatchers()
@@ -942,16 +942,16 @@ bool is_showing_argmatchers()
 // up to reach the beginning of the prompt prefix.
 //
 // Note:  This only counts whole lines; i.e. caused by newline or wrapping.
-int count_prompt_lines(const char* prompt_prefix)
+int32 count_prompt_lines(const char* prompt_prefix)
 {
     if (!prompt_prefix || !*prompt_prefix)
         return 0;
 
     assert(_rl_screenwidth > 0);
-    int width = _rl_screenwidth;
+    int32 width = _rl_screenwidth;
 
-    int lines = 0;
-    int cells = 0;
+    int32 lines = 0;
+    int32 cells = 0;
     bool ignore = false;
 
     str<> bracketed;
@@ -959,7 +959,7 @@ int count_prompt_lines(const char* prompt_prefix)
     ecma48_processor(prompt_prefix, &bracketed, nullptr/*cell_count*/, flags);
 
     str_iter iter(bracketed.c_str(), bracketed.length());
-    while (int c = iter.next())
+    while (int32 c = iter.next())
     {
         if (ignore)
         {
@@ -985,7 +985,7 @@ int count_prompt_lines(const char* prompt_prefix)
             continue;
         }
 
-        int w = clink_wcwidth(c);
+        int32 w = clink_wcwidth(c);
         if (cells + w > width)
         {
             lines++;
@@ -998,7 +998,7 @@ int count_prompt_lines(const char* prompt_prefix)
 }
 
 //------------------------------------------------------------------------------
-static char get_face_func(int in, int active_begin, int active_end)
+static char get_face_func(int32 in, int32 active_begin, int32 active_end)
 {
     if (0 <= g_suggestion_offset && g_suggestion_offset <= in)
         return '-';
@@ -1026,7 +1026,7 @@ inline const char* fallback_color(const char* preferred, const char* fallback)
 }
 
 //------------------------------------------------------------------------------
-static void puts_face_func(const char* s, const char* face, int n)
+static void puts_face_func(const char* s, const char* face, int32 n)
 {
     static const char c_normal[] = "\x1b[m";
     static const char c_hyperlink[] = "\x1b]8;;";
@@ -1111,7 +1111,7 @@ static void puts_face_func(const char* s, const char* face, int n)
         }
 
         // Append the characters.
-        int len = int(s - s_concat);
+        int32 len = int32(s - s_concat);
         out.concat(s_concat, len);
     }
 
@@ -1134,7 +1134,7 @@ void set_suggestion_started(const char* line)
 }
 
 //------------------------------------------------------------------------------
-void set_suggestion(const char* line, unsigned int endword_offset, const char* suggestion, unsigned int offset)
+void set_suggestion(const char* line, uint32 endword_offset, const char* suggestion, uint32 offset)
 {
     s_suggestion.set(line, endword_offset, suggestion, offset);
 }
@@ -1170,10 +1170,10 @@ void hook_display()
         return;
     }
 
-    rollback<int> rb_suggestion(g_suggestion_offset, rl_end);
+    rollback<int32> rb_suggestion(g_suggestion_offset, rl_end);
     rollback<char*> rb_buf(rl_line_buffer);
-    rollback<int> rb_len(rl_line_buffer_len);
-    rollback<int> rb_end(rl_end);
+    rollback<int32> rb_len(rl_line_buffer_len);
+    rollback<int32> rb_end(rl_end);
 
     str_moveable tmp;
     if (s_suggestion.get_visible(tmp))
@@ -1219,7 +1219,7 @@ extern "C" void host_clear_suggestion()
 }
 
 //------------------------------------------------------------------------------
-int clink_forward_word(int count, int invoking_key)
+int32 clink_forward_word(int32 count, int32 invoking_key)
 {
     if (count != 0)
     {
@@ -1236,7 +1236,7 @@ another_word:
 }
 
 //------------------------------------------------------------------------------
-int clink_forward_char(int count, int invoking_key)
+int32 clink_forward_char(int32 count, int32 invoking_key)
 {
     if (insert_suggestion(suggestion_action::insert_to_end))
         return 0;
@@ -1245,7 +1245,7 @@ int clink_forward_char(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
-int clink_forward_byte(int count, int invoking_key)
+int32 clink_forward_byte(int32 count, int32 invoking_key)
 {
     if (insert_suggestion(suggestion_action::insert_to_end))
         return 0;
@@ -1254,7 +1254,7 @@ int clink_forward_byte(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
-int clink_end_of_line(int count, int invoking_key)
+int32 clink_end_of_line(int32 count, int32 invoking_key)
 {
     if (insert_suggestion(suggestion_action::insert_to_end))
         return 0;
@@ -1263,7 +1263,7 @@ int clink_end_of_line(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
-int clink_insert_suggested_line(int count, int invoking_key)
+int32 clink_insert_suggested_line(int32 count, int32 invoking_key)
 {
     if (!insert_suggestion(suggestion_action::insert_to_end))
         rl_ding();
@@ -1272,7 +1272,7 @@ int clink_insert_suggested_line(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
-int clink_insert_suggested_full_word(int count, int invoking_key)
+int32 clink_insert_suggested_full_word(int32 count, int32 invoking_key)
 {
     if (!insert_suggestion(suggestion_action::insert_next_full_word))
         rl_ding();
@@ -1281,7 +1281,7 @@ int clink_insert_suggested_full_word(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
-int clink_insert_suggested_word(int count, int invoking_key)
+int32 clink_insert_suggested_word(int32 count, int32 invoking_key)
 {
     if (!insert_suggestion(suggestion_action::insert_next_word))
         rl_ding();
@@ -1290,7 +1290,7 @@ int clink_insert_suggested_word(int count, int invoking_key)
 }
 
 //------------------------------------------------------------------------------
-int clink_accept_suggested_line(int count, int invoking_key)
+int32 clink_accept_suggested_line(int32 count, int32 invoking_key)
 {
     if (insert_suggestion(suggestion_action::insert_to_end))
         return rl_newline(count, invoking_key);
@@ -1311,7 +1311,7 @@ extern "C" void free_match_list_hook(char** matches)
 }
 
 //------------------------------------------------------------------------------
-static int complete_fncmp(const char *convfn, int convlen, const char *filename, int filename_len)
+static int32 complete_fncmp(const char *convfn, int32 convlen, const char *filename, int32 filename_len)
 {
     // We let the OS handle wildcards, so not much to do here.  And we ignore
     // _rl_completion_case_fold because (1) this is Windows and (2) the
@@ -1327,12 +1327,12 @@ static void adjust_completion_defaults()
 
     if (g_match_expand_envvars.get())
     {
-        const int word_break = s_matches->get_word_break_position();
-        const int word_len = g_rl_buffer->get_cursor() - word_break;
+        const int32 word_break = s_matches->get_word_break_position();
+        const int32 word_len = g_rl_buffer->get_cursor() - word_break;
         const char* buffer = g_rl_buffer->get_buffer();
 
 #ifdef DEBUG
-        const int dbg_row = dbg_get_env_int("DEBUG_EXPANDENVVARS");
+        const int32 dbg_row = dbg_get_env_int("DEBUG_EXPANDENVVARS");
         if (dbg_row > 0)
         {
             str<> tmp;
@@ -1382,7 +1382,7 @@ static void adjust_completion_defaults()
 }
 
 //------------------------------------------------------------------------------
-static char adjust_completion_word(char quote_char, int *found_quote, int *delimiter)
+static char adjust_completion_word(char quote_char, int32 *found_quote, int32 *delimiter)
 {
     if (s_matches)
     {
@@ -1393,7 +1393,7 @@ static char adjust_completion_word(char quote_char, int *found_quote, int *delim
         assert(s_matches->get_word_break_position() >= 0);
         if (s_matches->get_word_break_position() >= 0)
         {
-            int old_point = rl_point;
+            int32 old_point = rl_point;
             rl_point = min(s_matches->get_word_break_position(), rl_end);
 
             const char* pqc = nullptr;
@@ -1435,13 +1435,13 @@ static char adjust_completion_word(char quote_char, int *found_quote, int *delim
 }
 
 //------------------------------------------------------------------------------
-extern "C" int is_exec_ext(const char* ext)
+extern "C" int32 is_exec_ext(const char* ext)
 {
     return path::is_executable_extension(ext);
 }
 
 //------------------------------------------------------------------------------
-static char* filename_menu_completion_function(const char *text, int state)
+static char* filename_menu_completion_function(const char *text, int32 state)
 {
     // This function should be unreachable.
     assert(false);
@@ -1449,15 +1449,15 @@ static char* filename_menu_completion_function(const char *text, int state)
 }
 
 //------------------------------------------------------------------------------
-static bool ensure_matches_size(char**& matches, int count, int& reserved)
+static bool ensure_matches_size(char**& matches, int32 count, int32& reserved)
 {
     count += 2;
     if (count > reserved)
     {
-        int new_reserve = 64;
+        int32 new_reserve = 64;
         while (new_reserve < count)
         {
-            int prev = new_reserve;
+            int32 prev = new_reserve;
             new_reserve <<= 1;
             if (new_reserve < prev)
                 return false;
@@ -1489,7 +1489,7 @@ static void buffer_changing()
 }
 
 //------------------------------------------------------------------------------
-void update_rl_modes_from_matches(const matches* matches, const matches_iter& iter, int count)
+void update_rl_modes_from_matches(const matches* matches, const matches_iter& iter, int32 count)
 {
     switch (matches->get_suppress_quoting())
     {
@@ -1515,7 +1515,7 @@ void update_rl_modes_from_matches(const matches* matches, const matches_iter& it
         printf("filename display desired = %d (%s)\n", rl_filename_display_desired, iter.is_filename_display_desired().is_explicit() ? "explicit" : "implicit");
         printf("get word break position = %d\n", matches->get_word_break_position());
         printf("is suppress append = %d\n", matches->is_suppress_append());
-        printf("get append character = %u\n", (unsigned char)matches->get_append_character());
+        printf("get append character = %u\n", uint8(matches->get_append_character()));
         printf("get suppress quoting = %d\n", matches->get_suppress_quoting());
         printf("get force quoting = %d\n", matches->get_force_quoting());
     }
@@ -1529,7 +1529,7 @@ static bool is_complete_with_wild()
 }
 
 //------------------------------------------------------------------------------
-static char** alternative_matches(const char* text, int start, int end)
+static char** alternative_matches(const char* text, int32 start, int32 end)
 {
     rl_attempted_completion_over = 1;
 
@@ -1636,22 +1636,22 @@ stop:
         return nullptr;
 
 #ifdef DEBUG
-    const int debug_matches = dbg_get_env_int("DEBUG_MATCHES");
+    const int32 debug_matches = dbg_get_env_int("DEBUG_MATCHES");
 #endif
 
     // Identify common prefix.
     char* end_prefix = rl_last_path_separator(text);
     if (end_prefix)
         end_prefix++;
-    else if (ISALPHA((unsigned char)text[0]) && text[1] == ':')
+    else if (ISALPHA(uint8(text[0])) && text[1] == ':')
         end_prefix = (char*)text + 2;
-    int len_prefix = end_prefix ? end_prefix - text : 0;
+    int32 len_prefix = end_prefix ? end_prefix - text : 0;
 
     // Deep copy of the generated matches.  Inefficient, but this is how
     // readline wants them.
     str<32> lcd;
-    int count = 0;
-    int reserved = 0;
+    int32 count = 0;
+    int32 reserved = 0;
     char** matches = nullptr;
     if (!ensure_matches_size(matches, s_matches->get_match_count(), reserved))
         return nullptr;
@@ -1671,9 +1671,9 @@ stop:
 
         // PACKED MATCH FORMAT is:
         //  - N bytes:  MATCH (nul terminated char string)
-        //  - 1 byte:   TYPE (unsigned char)
+        //  - 1 byte:   TYPE (uint8)
         //  - 1 byte:   APPEND CHAR (char)
-        //  - 1 byte:   FLAGS (unsigned char)
+        //  - 1 byte:   FLAGS (uint8)
         //  - N bytes:  DISPLAY (nul terminated char string)
         //  - N bytes:  DESCRIPTION (nul terminated char string)
         //
@@ -1681,7 +1681,7 @@ stop:
         // display_match_list_internal, matches_lookaside, and
         // match_display_filter.
 
-        unsigned char flags = 0;
+        uint8 flags = 0;
         if (iter.get_match_append_display())
             flags |= MATCH_FLAG_APPEND_DISPLAY;
 
@@ -1743,7 +1743,7 @@ static match_display_filter_entry** match_display_filter_callback(char** matches
 }
 
 //------------------------------------------------------------------------------
-static int compare_lcd(const char* a, const char* b)
+static int32 compare_lcd(const char* a, const char* b)
 {
     return str_compare<char, true/*compute_lcd*/>(a, b);
 }
@@ -1766,13 +1766,13 @@ static void postprocess_lcd(char* lcd, const char* text)
 }
 
 //------------------------------------------------------------------------------
-static int maybe_strlen(const char* s)
+static int32 maybe_strlen(const char* s)
 {
     return s ? strlen(s) : 0;
 }
 
 //------------------------------------------------------------------------------
-int clink_popup_history(int count, int invoking_key)
+int32 clink_popup_history(int32 count, int32 invoking_key)
 {
     HIST_ENTRY** list = history_list();
     if (!list || !history_length)
@@ -1783,15 +1783,15 @@ int clink_popup_history(int count, int invoking_key)
 
     rl_completion_invoking_key = invoking_key;
 
-    int current = -1;
-    int orig_pos = where_history();
-    int search_len = rl_point;
+    int32 current = -1;
+    int32 orig_pos = where_history();
+    int32 search_len = rl_point;
 
     // Copy the history list (just a shallow copy of the line pointers).
     char** history = (char**)malloc(sizeof(*history) * history_length);
     entry_info* infos = (entry_info*)malloc(sizeof(*infos) * history_length);
-    int total = 0;
-    for (int i = 0; i < history_length; i++)
+    int32 total = 0;
+    for (int32 i = 0; i < history_length; i++)
     {
         if (!find_streqn(g_rl_buffer->get_buffer(), list[i]->line, search_len))
             continue;
@@ -1828,7 +1828,7 @@ int clink_popup_history(int count, int invoking_key)
             rl_maybe_save_line();
             rl_maybe_replace_line();
 
-            const int pos = infos[results.m_index].index;
+            const int32 pos = infos[results.m_index].index;
             history_set_pos(pos);
             rl_replace_from_history(current_history(), 0);
 
@@ -1880,9 +1880,9 @@ static void load_user_inputrc(const char* state_dir)
         else if (!*env_var || !os::get_env(env_var, path))
             continue;
 
-        int base_len = path.length();
+        int32 base_len = path.length();
 
-        for (int j = 0; j < sizeof_array(file_names); ++j)
+        for (int32 j = 0; j < sizeof_array(file_names); ++j)
         {
             path.truncate(base_len);
             path::append(path, file_names[j]);
@@ -1901,7 +1901,7 @@ static void load_user_inputrc(const char* state_dir)
 typedef const char* two_strings[2];
 static void bind_keyseq_list(const two_strings* list, Keymap map)
 {
-    for (int i = 0; list[i][0]; ++i)
+    for (int32 i = 0; list[i][0]; ++i)
         rl_bind_keyseq_in_map(list[i][0], rl_named_function(list[i][1]), map);
 }
 
@@ -2325,7 +2325,7 @@ void mouse_info::clear()
 }
 
 //------------------------------------------------------------------------------
-int mouse_info::on_click(const unsigned int x, const unsigned int y, const bool dblclk)
+int32 mouse_info::on_click(const uint32 x, const uint32 y, const bool dblclk)
 {
     const DWORD now = GetTickCount();
 
@@ -2344,20 +2344,20 @@ int mouse_info::on_click(const unsigned int x, const unsigned int y, const bool 
 }
 
 //------------------------------------------------------------------------------
-int mouse_info::clicked() const
+int32 mouse_info::clicked() const
 {
     return m_clicks;
 }
 
 //------------------------------------------------------------------------------
-void mouse_info::set_anchor(int anchor1, int anchor2)
+void mouse_info::set_anchor(int32 anchor1, int32 anchor2)
 {
     m_anchor1 = anchor1;
     m_anchor2 = anchor2;
 }
 
 //------------------------------------------------------------------------------
-bool mouse_info::get_anchor(int point, int& anchor, int& pos) const
+bool mouse_info::get_anchor(int32 point, int32& anchor, int32& pos) const
 {
     if (point < m_anchor1)
     {
@@ -2451,7 +2451,7 @@ rl_module::~rl_module()
 // So we have to reverse engineer how Readline responds when a key sequence is
 // terminated by invalid input, and that seems to consist of clearing the
 // RL_STATE_MULTIKEY state and disposing of the key sequence chain.
-bool rl_module::is_bound(const char* seq, int len)
+bool rl_module::is_bound(const char* seq, int32 len)
 {
     if (!len)
     {
@@ -2494,7 +2494,7 @@ LNope:
 
     // The intent here is to accept all UTF8 input (not sure why readline
     // reports them as not bound, but this seems good enough for now).
-    if (len > 1 && (unsigned char)seq[0] >= ' ')
+    if (len > 1 && uint8(seq[0]) >= ' ')
         return true;
 
     // NOTE:  Checking readline's keymap is incorrect when a special bind group
@@ -2545,7 +2545,7 @@ bool rl_module::accepts_mouse_input(mouse_input_type type)
 }
 
 //------------------------------------------------------------------------------
-bool rl_module::translate(const char* seq, int len, str_base& out)
+bool rl_module::translate(const char* seq, int32 len, str_base& out)
 {
     const char* bindableEsc = get_bindable_esc();
     if (!bindableEsc)
@@ -2587,7 +2587,7 @@ bool rl_module::translate(const char* seq, int len, str_base& out)
 }
 
 //------------------------------------------------------------------------------
-void rl_module::set_keyseq_len(int len)
+void rl_module::set_keyseq_len(int32 len)
 {
     // TODO:  This may be dead code, and may be removable.
 }
@@ -2648,14 +2648,14 @@ void rl_module::set_prompt(const char* prompt, const char* rprompt, bool redispl
         return;
 
     // Erase the existing prompt.
-    int was_visible = false;
+    int32 was_visible = false;
     if (redisplay)
     {
         was_visible = show_cursor(false);
         lock_cursor(true);
 
         // Count the number of lines the prompt takes to display.
-        int lines = count_prompt_lines(rl_get_local_prompt_prefix());
+        int32 lines = count_prompt_lines(rl_get_local_prompt_prefix());
 
         // Clear the input line and the prompt prefix.
         rl_clear_visible_line();
@@ -2709,7 +2709,7 @@ bool rl_module::next_line(str_base& out)
 //------------------------------------------------------------------------------
 void rl_module::bind_input(binder& binder)
 {
-    int default_group = binder.get_group();
+    int32 default_group = binder.get_group();
     binder.bind(default_group, "\x1b[$*;*L", bind_id_left_click, true/*has_params*/);
     binder.bind(default_group, "\x1b[$*;*D", bind_id_double_click, true/*has_params*/);
     binder.bind(default_group, "\x1b[$*;*M", bind_id_drag, true/*has_params*/);
@@ -2858,7 +2858,7 @@ void rl_module::on_end_line()
         // search position.  If the search position is invalid or the input line
         // doesn't match the search position, then it works out ok because the
         // search position gets ignored.
-        int history_pos = where_history();
+        int32 history_pos = where_history();
         if (history_pos >= 0 && history_pos < history_length)
             s_init_history_pos = history_pos;
         else if (s_history_search_pos >= 0 && s_history_search_pos < history_length)
@@ -2908,13 +2908,13 @@ void rl_module::on_end_line()
 }
 
 //------------------------------------------------------------------------------
-bool translate_xy_to_readline(unsigned int x, unsigned int y, int& pos, bool clip=false)
+bool translate_xy_to_readline(uint32 x, uint32 y, int32& pos, bool clip=false)
 {
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
 
-    const int v_begin_line_y = max<int>(0, csbi.dwCursorPosition.Y - _rl_last_v_pos);
-    int v_pos = y - v_begin_line_y;
+    const int32 v_begin_line_y = max<int32>(0, csbi.dwCursorPosition.Y - _rl_last_v_pos);
+    int32 v_pos = y - v_begin_line_y;
 
     if (v_pos < 0)
     {
@@ -2931,21 +2931,21 @@ bool translate_xy_to_readline(unsigned int x, unsigned int y, int& pos, bool cli
 
     v_pos += get_readline_display_top_offset();
 
-    const int prefix = rl_get_prompt_prefix_visible();
-    int point = 0;
+    const int32 prefix = rl_get_prompt_prefix_visible();
+    int32 point = 0;
 
     str_iter iter(g_rl_buffer->get_buffer(), g_rl_buffer->get_length());
-    for (unsigned int i = 0; i <= v_pos; i++)
+    for (uint32 i = 0; i <= v_pos; i++)
     {
-        const int target = (i == v_pos ? x : _rl_screenwidth);
-        int consumed = i ? 0 : prefix;
+        const int32 target = (i == v_pos ? x : _rl_screenwidth);
+        int32 consumed = i ? 0 : prefix;
 
         const char* ptr = iter.get_pointer();
         while (iter.more())
         {
             const char* prev = iter.get_pointer();
-            const int c = iter.next();
-            const int w = clink_wcwidth(c);
+            const int32 c = iter.next();
+            const int32 w = clink_wcwidth(c);
             if (consumed + w > target)
             {
                 iter.reset_pointer(prev);
@@ -2954,7 +2954,7 @@ bool translate_xy_to_readline(unsigned int x, unsigned int y, int& pos, bool cli
             consumed += w;
         }
 
-        point += int(iter.get_pointer() - ptr);
+        point += int32(iter.get_pointer() - ptr);
     }
 
     assert(point <= g_rl_buffer->get_length());
@@ -2977,14 +2977,14 @@ void rl_module::on_input(const input& input, result& result, const context& cont
     case bind_id_double_click:
     case bind_id_drag:
         {
-            unsigned int p0, p1;
+            uint32 p0, p1;
             input.params.get(0, p0);
             input.params.get(1, p1);
-            int pos;
+            int32 pos;
             const bool drag = (input.id == bind_id_drag);
             if (translate_xy_to_readline(p0, p1, pos, drag && m_mouse.clicked()))
             {
-                const int clicks = drag ? m_mouse.clicked() : m_mouse.on_click(p0, p1, input.id == bind_id_double_click);
+                const int32 clicks = drag ? m_mouse.clicked() : m_mouse.on_click(p0, p1, input.id == bind_id_double_click);
                 if (clicks == 3)
                 {
                     cua_select_all(0, 0);
@@ -2993,10 +2993,10 @@ void rl_module::on_input(const input& input, result& result, const context& cont
                 {
                     if (drag)
                     {
-                        int anchor;
+                        int32 anchor;
                         if (m_mouse.get_anchor(pos, anchor, pos) && clicks == 2)
                         {
-                            rollback<int> rb(rl_point, pos);
+                            rollback<int32> rb(rl_point, pos);
                             if (pos < anchor)
                             {
                                 rl_forward_word(1, 0);
@@ -3049,11 +3049,11 @@ void rl_module::on_input(const input& input, result& result, const context& cont
     // Setup the terminal.
     struct : public terminal_in
     {
-        virtual void begin() override   {}
-        virtual void end() override     {}
-        virtual bool available(unsigned int timeout) override { return false; }
-        virtual void select(input_idle*) override {}
-        virtual int  read() override    { return *(unsigned char*)(data++); }
+        virtual void    begin() override                    {}
+        virtual void    end() override                      {}
+        virtual bool    available(uint32 timeout) override  { return false; }
+        virtual void    select(input_idle*) override        {}
+        virtual int32   read() override                     { return *(uint8*)(data++); }
         virtual key_tester* set_key_tester(key_tester* keys) override { return nullptr; }
         const char*  data;
     } term_in;
@@ -3067,10 +3067,10 @@ void rl_module::on_input(const input& input, result& result, const context& cont
     // Call Readline's until there's no characters left.
 //#define USE_RESEND_HACK
 #ifdef USE_RESEND_HACK
-    int is_inc_searching = rl_readline_state & RL_STATE_ISEARCH;
+    int32 is_inc_searching = rl_readline_state & RL_STATE_ISEARCH;
 #endif
-    unsigned int len = input.len;
-    rollback<unsigned int*> rb_input_len_ptr(s_input_len_ptr, &len);
+    uint32 len = input.len;
+    rollback<uint32*> rb_input_len_ptr(s_input_len_ptr, &len);
     rollback<bool> rb_input_more(s_input_more, input.more);
     while (len && !m_done)
     {
@@ -3095,7 +3095,7 @@ void rl_module::on_input(const input& input, result& result, const context& cont
             // has been invalidated afterwards by aborting search and/or editing
             // the input line:  because if the input line doesn't match the
             // history search position line, then sticky search doesn't apply.
-            int pos = rl_get_history_search_pos();
+            int32 pos = rl_get_history_search_pos();
             if (pos >= 0)
                 s_history_search_pos = pos;
         }
@@ -3161,7 +3161,7 @@ void rl_module::on_input(const input& input, result& result, const context& cont
     if (rl_readline_state & RL_MORE_INPUT_STATES)
     {
         assert(m_prev_group >= 0);
-        int group = result.set_bind_group(m_catch_group);
+        int32 group = result.set_bind_group(m_catch_group);
         assert(group == m_prev_group || group == m_catch_group);
         suppress_unused_var(group);
     }
@@ -3190,13 +3190,13 @@ void rl_module::done(const char* line)
 }
 
 //------------------------------------------------------------------------------
-void rl_module::on_terminal_resize(int, int, const context& context)
+void rl_module::on_terminal_resize(int32, int32, const context& context)
 {
     signal_terminal_resized();
     resize_readline_display(context.prompt, context.buffer, m_rl_prompt.c_str(), m_rl_rprompt.c_str());
 }
 
 //------------------------------------------------------------------------------
-void rl_module::on_signal(int sig)
+void rl_module::on_signal(int32 sig)
 {
 }

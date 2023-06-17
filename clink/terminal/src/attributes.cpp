@@ -15,7 +15,7 @@ enum
 
 
 //------------------------------------------------------------------------------
-void attributes::color::as_888(unsigned char (&out)[3]) const
+void attributes::color::as_888(uint8 (&out)[3]) const
 {
     out[0] = (r << 3) | (r & 7);
     out[1] = (g << 3) | (g & 7);
@@ -44,7 +44,7 @@ attributes::attributes(default_e)
 //------------------------------------------------------------------------------
 bool attributes::operator == (const attributes rhs)
 {
-    int cmp = 1;
+    int32 cmp = 1;
     #define CMP_IMPL(x) (m_flags.x & rhs.m_flags.x) ? (m_##x == rhs.m_##x) : 1;
     cmp &= CMP_IMPL(fg);
     cmp &= CMP_IMPL(bg);
@@ -104,7 +104,7 @@ void attributes::reset_bg()
 }
 
 //------------------------------------------------------------------------------
-void attributes::set_fg(unsigned char value)
+void attributes::set_fg(uint8 value)
 {
     if (value == default_code)
         value = 15;
@@ -114,7 +114,7 @@ void attributes::set_fg(unsigned char value)
 }
 
 //------------------------------------------------------------------------------
-void attributes::set_bg(unsigned char value)
+void attributes::set_bg(uint8 value)
 {
     if (value == default_code)
         value = 15;
@@ -124,7 +124,7 @@ void attributes::set_bg(unsigned char value)
 }
 
 //------------------------------------------------------------------------------
-void attributes::set_fg(unsigned char r, unsigned char g, unsigned char b)
+void attributes::set_fg(uint8 r, uint8 g, uint8 b)
 {
     m_flags.fg = 1;
     m_fg.r = r >> 3;
@@ -134,7 +134,7 @@ void attributes::set_fg(unsigned char r, unsigned char g, unsigned char b)
 }
 
 //------------------------------------------------------------------------------
-void attributes::set_bg(unsigned char r, unsigned char g, unsigned char b)
+void attributes::set_bg(uint8 r, uint8 g, uint8 b)
 {
     m_flags.bg = 1;
     m_bg.r = r >> 3;

@@ -87,7 +87,7 @@ local function do_embed(debug_info)
                 os.remove(".build/embed_temp")
 
                 local crlf_counter = 0
-                out:write("const unsigned char " .. symbol .. "_[] = {\n")
+                out:write("const uint8 " .. symbol .. "_[] = {\n")
                 for byte in string.gmatch(bin_data, ".") do
                     out:write(string.format("0x%02x, ", byte:byte()))
                     crlf_counter = crlf_counter + 1
@@ -97,7 +97,7 @@ local function do_embed(debug_info)
                     end
                 end
                 out:write("};\n")
-                out:write("unsigned char const* "..symbol.." = "..symbol.."_;\n")
+                out:write("const uint8 const* "..symbol.." = "..symbol.."_;\n")
                 out:write("int "..symbol.."_len = sizeof("..symbol.."_);\n")
 
                 out:write("#endif // ARCHITECTURE == "..name.."\n")

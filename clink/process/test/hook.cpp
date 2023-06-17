@@ -28,7 +28,7 @@ struct originals
 };
 
 static originals    g_originals;
-static unsigned int g_visited_bits;
+static uint32       g_visited_bits;
 
 //------------------------------------------------------------------------------
 BOOL WINAPI set_env_var(const wchar_t* name, const wchar_t* value)
@@ -73,7 +73,7 @@ BOOL WINAPI set_title(const wchar_t*)
 
 
 //------------------------------------------------------------------------------
-funcptr_t hook_iat(void* /*base*/, const char* /*dll*/, const char* name, funcptr_t func, int /*find_by_name*/)
+funcptr_t hook_iat(void* /*base*/, const char* /*dll*/, const char* name, funcptr_t func, int32 /*find_by_name*/)
 {
     funcptr_t original;
 

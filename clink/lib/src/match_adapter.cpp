@@ -74,7 +74,7 @@ void match_adapter::set_alt_matches(char** matches, bool own)
     {
         assert(has_matches_lookaside(matches));
 
-        unsigned int count = 0;
+        uint32 count = 0;
         while (*(++matches))
             count++;
         m_alt_cached.m_count = count;
@@ -95,7 +95,7 @@ void match_adapter::set_filtered_matches(match_display_filter_entry** filtered_m
     {
         m_filtered_cached.m_has_descriptions = (filtered_matches[0]->visible_display < 0);
 
-        unsigned int count = 0;
+        uint32 count = 0;
         while (*(++filtered_matches))
             count++;
         m_filtered_cached.m_count = count;
@@ -131,7 +131,7 @@ void match_adapter::get_lcd(str_base& out) const
     {
         if (!m_filtered_cached.m_has_lcd)
         {
-            unsigned int i = 1; // 1 based indexing.
+            uint32 i = 1; // 1 based indexing.
             m_filtered_cached.m_has_lcd = true;
             m_filtered_cached.m_lcd.clear();
             if (i <= m_filtered_cached.m_count)
@@ -139,7 +139,7 @@ void match_adapter::get_lcd(str_base& out) const
             while (i <= m_filtered_cached.m_count)
             {
                 const char* match = m_filtered_matches[i++]->match;
-                int matching = str_compare<char, true/*compute_lcd*/>(m_filtered_cached.m_lcd.c_str(), match);
+                int32 matching = str_compare<char, true/*compute_lcd*/>(m_filtered_cached.m_lcd.c_str(), match);
                 m_filtered_cached.m_lcd.truncate(matching);
             }
         }
@@ -150,7 +150,7 @@ void match_adapter::get_lcd(str_base& out) const
     {
         if (!m_alt_cached.m_has_lcd)
         {
-            unsigned int i = 1; // 1 based indexing.
+            uint32 i = 1; // 1 based indexing.
             m_alt_cached.m_has_lcd = true;
             m_alt_cached.m_lcd.clear();
             if (i <= m_alt_cached.m_count)
@@ -158,7 +158,7 @@ void match_adapter::get_lcd(str_base& out) const
             while (i <= m_alt_cached.m_count)
             {
                 const char *match = m_alt_matches[i++];
-                int matching = str_compare<char, true/*compute_lcd*/>(m_alt_cached.m_lcd.c_str(), match);
+                int32 matching = str_compare<char, true/*compute_lcd*/>(m_alt_cached.m_lcd.c_str(), match);
                 m_alt_cached.m_lcd.truncate(matching);
             }
         }
@@ -182,7 +182,7 @@ void match_adapter::get_lcd(str_base& out) const
 }
 
 //------------------------------------------------------------------------------
-unsigned int match_adapter::get_match_count() const
+uint32 match_adapter::get_match_count() const
 {
     if (m_filtered_matches)
         return m_filtered_cached.m_count;
@@ -194,7 +194,7 @@ unsigned int match_adapter::get_match_count() const
 }
 
 //------------------------------------------------------------------------------
-const char* match_adapter::get_match(unsigned int index) const
+const char* match_adapter::get_match(uint32 index) const
 {
     if (m_filtered_matches)
         return m_filtered_matches[index + 1]->match;
@@ -206,7 +206,7 @@ const char* match_adapter::get_match(unsigned int index) const
 }
 
 //------------------------------------------------------------------------------
-const char* match_adapter::get_match_display_internal(unsigned int index) const
+const char* match_adapter::get_match_display_internal(uint32 index) const
 {
     if (m_filtered_matches)
         return m_filtered_matches[index + 1]->display;
@@ -218,7 +218,7 @@ const char* match_adapter::get_match_display_internal(unsigned int index) const
 }
 
 //------------------------------------------------------------------------------
-const char* match_adapter::get_match_display(unsigned int index) const
+const char* match_adapter::get_match_display(uint32 index) const
 {
     const char* const display = get_match_display_internal(index);
 
@@ -231,7 +231,7 @@ const char* match_adapter::get_match_display(unsigned int index) const
 }
 
 //------------------------------------------------------------------------------
-const char* match_adapter::get_match_display_raw(unsigned int index) const
+const char* match_adapter::get_match_display_raw(uint32 index) const
 {
     const char* const display = get_match_display_internal(index);
 
@@ -244,7 +244,7 @@ const char* match_adapter::get_match_display_raw(unsigned int index) const
 }
 
 //------------------------------------------------------------------------------
-unsigned int match_adapter::get_match_visible_display(unsigned int index) const
+uint32 match_adapter::get_match_visible_display(uint32 index) const
 {
     if (m_filtered_matches)
         return m_filtered_matches[index + 1]->visible_display;
@@ -265,7 +265,7 @@ unsigned int match_adapter::get_match_visible_display(unsigned int index) const
 }
 
 //------------------------------------------------------------------------------
-const char* match_adapter::get_match_description(unsigned int index) const
+const char* match_adapter::get_match_description(uint32 index) const
 {
     if (m_filtered_matches)
         return m_filtered_matches[index + 1]->description;
@@ -281,7 +281,7 @@ const char* match_adapter::get_match_description(unsigned int index) const
 }
 
 //------------------------------------------------------------------------------
-unsigned int match_adapter::get_match_visible_description(unsigned int index) const
+uint32 match_adapter::get_match_visible_description(uint32 index) const
 {
     if (m_filtered_matches)
         return m_filtered_matches[index + 1]->visible_description;
@@ -291,7 +291,7 @@ unsigned int match_adapter::get_match_visible_description(unsigned int index) co
 }
 
 //------------------------------------------------------------------------------
-match_type match_adapter::get_match_type(unsigned int index) const
+match_type match_adapter::get_match_type(uint32 index) const
 {
     if (m_filtered_matches)
         return static_cast<match_type>(m_filtered_matches[index + 1]->type);
@@ -303,7 +303,7 @@ match_type match_adapter::get_match_type(unsigned int index) const
 }
 
 //------------------------------------------------------------------------------
-char match_adapter::get_match_append_char(unsigned int index) const
+char match_adapter::get_match_append_char(uint32 index) const
 {
     if (m_filtered_matches)
         return m_filtered_matches[index + 1]->append_char;
@@ -315,7 +315,7 @@ char match_adapter::get_match_append_char(unsigned int index) const
 }
 
 //------------------------------------------------------------------------------
-unsigned char match_adapter::get_match_flags(unsigned int index) const
+uint8 match_adapter::get_match_flags(uint32 index) const
 {
     if (m_filtered_matches)
         return m_filtered_matches[index + 1]->flags;
@@ -323,7 +323,7 @@ unsigned char match_adapter::get_match_flags(unsigned int index) const
         return lookup_match(m_alt_matches[index + 1]).get_flags();
     if (m_matches)
     {
-        unsigned char flags = 0;
+        uint8 flags = 0;
         shadow_bool suppress = m_matches->get_match_suppress_append(index);
         if (suppress.is_explicit())
         {
@@ -339,7 +339,7 @@ unsigned char match_adapter::get_match_flags(unsigned int index) const
 }
 
 //------------------------------------------------------------------------------
-bool match_adapter::is_custom_display(unsigned int index) const
+bool match_adapter::is_custom_display(uint32 index) const
 {
     if (m_filtered_matches)
     {
@@ -363,13 +363,13 @@ bool match_adapter::is_custom_display(unsigned int index) const
 }
 
 //------------------------------------------------------------------------------
-bool match_adapter::is_append_display(unsigned int index) const
+bool match_adapter::is_append_display(uint32 index) const
 {
     return !!(get_match_flags(index) & MATCH_FLAG_APPEND_DISPLAY);
 }
 
 //------------------------------------------------------------------------------
-bool match_adapter::use_display(unsigned int index, match_type type, bool append) const
+bool match_adapter::use_display(uint32 index, match_type type, bool append) const
 {
     return ((append) ||
             (is_display_filtered() && is_match_type(type, match_type::none)) ||
@@ -417,7 +417,7 @@ bool match_adapter::has_descriptions() const
         if (m_cached.m_has_descriptions < 0)
         {
             m_cached.m_has_descriptions = false;
-            for (unsigned int i = m_matches ? m_matches->get_match_count() : 0; i--;)
+            for (uint32 i = m_matches ? m_matches->get_match_count() : 0; i--;)
             {
                 if (m_matches->get_match_description(i))
                 {

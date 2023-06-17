@@ -17,10 +17,10 @@ public:
                         matches_lua(const matches& matches);
                         matches_lua(std::shared_ptr<match_builder_toolkit>& toolkit);
                         ~matches_lua();
-    int                 get_prefix(lua_State* state);
-    int                 get_count(lua_State* state);
-    int                 get_match(lua_State* state);
-    int                 get_type(lua_State* state);
+    int32               get_prefix(lua_State* state);
+    int32               get_count(lua_State* state);
+    int32               get_match(lua_State* state);
+    int32               get_type(lua_State* state);
 
 private:
     const matches*      m_matches;

@@ -29,7 +29,7 @@ extern setting_color g_color_executable;
 static bool search_for_extension(str_base& full, const char* word, str_base& out)
 {
     path::append(full, "");
-    const unsigned int trunc = full.length();
+    const uint32 trunc = full.length();
 
     str<> pathext;
     if (!os::get_env("pathext", pathext))
@@ -37,7 +37,7 @@ static bool search_for_extension(str_base& full, const char* word, str_base& out
 
     str_tokeniser tokens(pathext.c_str(), ";");
     const char *start;
-    int length;
+    int32 length;
 
     const char* ext = path::get_extension(word);
     str<16> token_ext;
@@ -177,7 +177,7 @@ public:
                             ~recognizer() { assert(!m_thread); }
     void                    shutdown();
     void                    clear();
-    int                     find(const char* key, recognition& cached, str_base* file) const;
+    int32                   find(const char* key, recognition& cached, str_base* file) const;
     bool                    enqueue(const char* key, const char* word, const char* cwd, recognition* cached=nullptr);
     bool                    need_refresh();
     void                    end_line();
@@ -243,7 +243,7 @@ void recognizer::clear()
 }
 
 //------------------------------------------------------------------------------
-int recognizer::find(const char* key, recognition& cached, str_base* file) const
+int32 recognizer::find(const char* key, recognition& cached, str_base* file) const
 {
     std::lock_guard<std::recursive_mutex> lock(m_mutex);
 
@@ -345,7 +345,7 @@ void recognizer::end_line()
         while (true)
         {
             const volatile DWORD tick_now = GetTickCount();
-            const int timeout = int(tick_begin) + 2500 - int(tick_now);
+            const int32 timeout = int32(tick_begin) + 2500 - int32(tick_now);
             if (timeout < 0)
                 break;
 
@@ -582,14 +582,14 @@ recognition recognize_command(const char* line, const char* word, bool quoted, b
         while (iter.more())
         {
             const char* ptr = iter.get_pointer();
-            const int c = iter.next();
+            const int32 c = iter.next();
             if (!caret && c == '^' && iter.peek())
             {
                 caret = true;
             }
             else
             {
-                tmp.concat(ptr, static_cast<int>(iter.get_pointer() - ptr));
+                tmp.concat(ptr, int32(iter.get_pointer() - ptr));
                 caret = false;
             }
         }
@@ -617,14 +617,14 @@ recognition recognize_command(const char* line, const char* word, bool quoted, b
     // Check for drive letter.
     if (word[0] && word[1] == ':' && !word[2])
     {
-        int type = os::get_drive_type(word);
+        int32 type = os::get_drive_type(word);
         if (type > os::drive_type_invalid)
             return recognition::navigate;
     }
 
     // Check for cached result.
     recognition cached;
-    const int found = s_recognizer.find(word, cached, file);
+    const int32 found = s_recognizer.find(word, cached, file);
     if (found)
     {
         ready = (found > 0);
@@ -634,7 +634,7 @@ recognition recognize_command(const char* line, const char* word, bool quoted, b
     // Expand environment variables.
     str<32> expanded;
     const char* orig_word = word;
-    unsigned int len = static_cast<unsigned int>(strlen(word));
+    uint32 len = uint32(strlen(word));
     if (os::expand_env(word, len, expanded))
     {
         word = expanded.c_str();

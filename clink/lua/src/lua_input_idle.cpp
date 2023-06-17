@@ -109,7 +109,7 @@ unsigned lua_input_idle::get_timeout()
     if (m_state.pcall(state, 0, 1) != 0)
         return INFINITE;
 
-    int isnum;
+    int32 isnum;
     double sec = lua_tonumberx(state, -1, &isnum);
     if (!isnum)
         return INFINITE;

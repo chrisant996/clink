@@ -4,7 +4,7 @@
 #pragma once
 
 //------------------------------------------------------------------------------
-enum class reclassify_reason : unsigned char
+enum class reclassify_reason : uint8
 {
     recognizer,
     force,

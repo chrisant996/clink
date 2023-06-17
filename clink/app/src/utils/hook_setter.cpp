@@ -21,7 +21,7 @@ extern "C" void* __imp_ReadConsoleW;
 //------------------------------------------------------------------------------
 static void* follow_jump(void* addr)
 {
-    unsigned char* t = (unsigned char*)addr;
+    uint8* t = (uint8*)addr;
 
     // Check the opcode.
     if ((t[0] & 0xf0) == 0x40) // REX prefix.
@@ -34,7 +34,7 @@ static void* follow_jump(void* addr)
     if ((t[1] & 070) != 040)
         return addr;
 
-    int* imm = (int*)(t + 2);
+    int32* imm = (int32*)(t + 2);
 
     void* dest = addr;
     switch (t[1] & 007)
@@ -63,7 +63,7 @@ static void write_addr(hookptr_t* where, hookptr_t to_write)
 {
     vm vm;
     vm::region region = { vm.get_page(where), 1 };
-    unsigned int prev_access = vm.get_access(region);
+    uint32 prev_access = vm.get_access(region);
     if (!vm.set_access(region, vm::access_write))
         LOG("VM set write access to %p failed (err = %d)", where, GetLastError());
 
@@ -173,7 +173,7 @@ hook_setter::~hook_setter()
 //------------------------------------------------------------------------------
 bool hook_setter::commit()
 {
-    const int count = m_desc_count;
+    const int32 count = m_desc_count;
 
     m_pending = false;
     m_desc_count = 0;
@@ -191,8 +191,8 @@ nope:
     }
 
     // Apply any IAT hooks.
-    int failed = 0;
-    for (int i = 0; i < count; ++i)
+    int32 failed = 0;
+    for (int32 i = 0; i < count; ++i)
     {
         const hook_desc& desc = m_descs[i];
         if (desc.type == iat && !commit_iat(desc))

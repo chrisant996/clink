@@ -224,7 +224,7 @@ extern void clear_sticky_search_position();
 extern void reset_keyseq_to_name_map();
 extern void set_prompt(const char* prompt, const char* rprompt, bool redisplay);
 extern bool can_suggest(const line_state& line);
-extern int clink_is_signaled();
+extern int32 clink_is_signaled();
 
 #ifdef DEBUG
 extern bool g_suppress_signal_assert;
@@ -278,7 +278,7 @@ dir_history_entry::dir_history_entry(const char* s)
 }
 
 //------------------------------------------------------------------------------
-const int c_max_dir_history = 100;
+const int32 c_max_dir_history = 100;
 static std::list<dir_history_entry> s_dir_history;
 
 //------------------------------------------------------------------------------
@@ -337,7 +337,7 @@ static void prev_dir_history(str_base& inout)
 }
 
 //------------------------------------------------------------------------------
-bool host_remove_dir_history(int index)
+bool host_remove_dir_history(int32 index)
 {
     for (auto iter = s_dir_history.begin(); iter != s_dir_history.end(); ++iter, --index)
     {
@@ -602,10 +602,10 @@ cant:
         rollback<char*> ems(_rl_emacs_mode_str, const_cast<char*>(""));
         rollback<char*> vims(_rl_vi_ins_mode_str, const_cast<char*>(""));
         rollback<char*> vcms(_rl_vi_cmd_mode_str, const_cast<char*>(""));
-        rollback<int> eml(_rl_emacs_modestr_len, 0);
-        rollback<int> viml(_rl_vi_ins_modestr_len, 0);
-        rollback<int> vcml(_rl_vi_cmd_modestr_len, 0);
-        rollback<int> mml(_rl_mark_modified_lines, 0);
+        rollback<int32> eml(_rl_emacs_modestr_len, 0);
+        rollback<int32> viml(_rl_vi_ins_modestr_len, 0);
+        rollback<int32> vcml(_rl_vi_cmd_modestr_len, 0);
+        rollback<int32> mml(_rl_mark_modified_lines, 0);
 
         set_prompt(prompt, rprompt, true/*redisplay*/);
     }
@@ -630,7 +630,7 @@ bool host::can_suggest(const line_state& line)
 }
 
 //------------------------------------------------------------------------------
-bool host::suggest(const line_states& lines, matches* matches, int generation_id)
+bool host::suggest(const line_states& lines, matches* matches, int32 generation_id)
 {
     if (m_suggester && g_autosuggest_enable.get())
         return m_suggester->suggest(lines, matches, generation_id);
@@ -652,14 +652,14 @@ bool host::call_lua_rl_global_function(const char* func_name, line_state* line)
 }
 
 //------------------------------------------------------------------------------
-const char** host::copy_dir_history(int* total)
+const char** host::copy_dir_history(int32* total)
 {
     if (!s_dir_history.size())
         return nullptr;
 
     // Copy the directory list (just a shallow copy of the dir pointers).
     const char** history = (const char**)malloc(sizeof(*history) * s_dir_history.size());
-    int i = 0;
+    int32 i = 0;
     for (auto const& it : s_dir_history)
         history[i++] = it.get();
 
@@ -712,7 +712,7 @@ bool host::has_event_handler(const char* event_name)
 }
 
 //------------------------------------------------------------------------------
-void host::get_app_context(int& id, host_context& context)
+void host::get_app_context(int32& id, host_context& context)
 {
     const auto* app = app_context::get();
 
@@ -1135,7 +1135,7 @@ skip_errorlevel:
             {
                 if (token.length() &&
                     _strnicmp(c, token.c_str(), token.length()) == 0 &&
-                    !isalnum((unsigned char)c[token.length()]) &&
+                    !isalnum(uint8(c[token.length()])) &&
                     !path::is_separator(c[token.length()]))
                 {
                     add_history = false;
@@ -1326,7 +1326,7 @@ void host::purge_old_files()
     get_errorlevel_tmp_name(tmp, true/*wild*/);
 
     // Purge orphaned clink_errorlevel temporary files older than 30 minutes.
-    const int seconds = 30 * 60/*seconds per minute*/;
+    const int32 seconds = 30 * 60/*seconds per minute*/;
 
     globber i(tmp.c_str());
     i.older_than(seconds);
@@ -1337,7 +1337,7 @@ void host::purge_old_files()
 //------------------------------------------------------------------------------
 void host::update_last_cwd()
 {
-    int when = s_prompt_transient.get();
+    int32 when = s_prompt_transient.get();
 
     str<> cwd;
     os::get_current_dir(cwd);

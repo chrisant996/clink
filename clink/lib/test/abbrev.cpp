@@ -163,7 +163,7 @@ TEST_CASE("Abbreviated paths.")
             }
         }
 
-        for (int pass = 2; pass--;)
+        for (int32 pass = 2; pass--;)
         {
             SECTION(pass ? "Absolute" : "Drive")
             {

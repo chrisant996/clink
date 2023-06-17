@@ -11,8 +11,8 @@ class lua_state;
 //------------------------------------------------------------------------------
 struct callback_ref
 {
-    callback_ref(int ref) : m_ref(ref) {}
-    int m_ref;
+    callback_ref(int32 ref) : m_ref(ref) {}
+    int32 m_ref;
 };
 
 //------------------------------------------------------------------------------

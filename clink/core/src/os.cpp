@@ -199,7 +199,7 @@ static bool search_path(wstr_base& out, const wchar_t* file)
 
     wstr_moveable wpath;
     {
-        int len = GetEnvironmentVariableW(L"PATH", nullptr, 0);
+        int32 len = GetEnvironmentVariableW(L"PATH", nullptr, 0);
         if (len)
         {
             wpath.reserve(len);
@@ -216,7 +216,7 @@ static bool search_path(wstr_base& out, const wchar_t* file)
     const wchar_t* current = wpath.c_str();
     while ((current = __acrt_wgetpath(current, buffer.data(), buffer.size() - 1)) != 0)
     {
-        unsigned int len = buffer.length();
+        uint32 len = buffer.length();
         if (len && !path::is_separator(buffer.c_str()[len - 1]))
         {
             if (!buffer.concat(L"\\"))
@@ -315,9 +315,9 @@ void map_errno() { __acrt_errno_map_os_error(GetLastError()); }
 void map_errno(unsigned long const oserrno) { __acrt_errno_map_os_error(oserrno); }
 
 //------------------------------------------------------------------------------
-static int s_errorlevel = 0;
-void set_errorlevel(int errorlevel) { s_errorlevel = errorlevel; }
-int get_errorlevel() { return s_errorlevel; }
+static int32 s_errorlevel = 0;
+void set_errorlevel(int32 errorlevel) { s_errorlevel = errorlevel; }
+int32 get_errorlevel() { return s_errorlevel; }
 
 //------------------------------------------------------------------------------
 static const wchar_t* s_shell_name = L"cmd.exe";
@@ -425,7 +425,7 @@ DWORD get_file_attributes(const char* path, bool* symlink)
 }
 
 //------------------------------------------------------------------------------
-int get_path_type(const char* path)
+int32 get_path_type(const char* path)
 {
     DWORD attr = get_file_attributes(path);
     if (attr == INVALID_FILE_ATTRIBUTES)
@@ -438,7 +438,7 @@ int get_path_type(const char* path)
 }
 
 //------------------------------------------------------------------------------
-int get_drive_type(const char* _path, unsigned int len)
+int32 get_drive_type(const char* _path, uint32 len)
 {
     wstr<280> wpath;
     str_iter path(_path, len);
@@ -464,7 +464,7 @@ bool is_hidden(const char* path)
 }
 
 //------------------------------------------------------------------------------
-int get_file_size(const char* path)
+int32 get_file_size(const char* path)
 {
     wstr<280> wpath(path);
     void* handle = CreateFileW(wpath.c_str(), 0, 0, nullptr, OPEN_EXISTING, 0, nullptr);
@@ -474,7 +474,7 @@ int get_file_size(const char* path)
         return -1;
     }
 
-    int ret = GetFileSize(handle, nullptr); // 2Gb max I suppose...
+    int32 ret = GetFileSize(handle, nullptr); // 2Gb max I suppose...
     if (ret == INVALID_FILE_SIZE)
         map_errno();
     CloseHandle(handle);
@@ -503,7 +503,7 @@ bool set_current_dir(const char* dir)
 //------------------------------------------------------------------------------
 bool make_dir(const char* dir)
 {
-    int type = get_path_type(dir);
+    int32 type = get_path_type(dir);
     if (type == path_type_dir)
         return true;
 
@@ -575,7 +575,7 @@ bool copy(const char* src_path, const char* dest_path)
 bool get_temp_dir(str_base& out)
 {
     wstr<280> wout;
-    unsigned int size = GetTempPathW(wout.size(), wout.data());
+    uint32 size = GetTempPathW(wout.size(), wout.data());
     if (!size)
     {
 error:
@@ -608,8 +608,8 @@ FILE* create_temp_file(str_base* out, const char* _prefix, const char* _ext, tem
     // Append up to 8 UTF32 characters from prefix.
     str<> prefix(_prefix);
     str_iter iter(prefix);
-    for (int i = 8; i--; iter.next());
-    prefix.truncate(static_cast<unsigned int>(iter.get_pointer() - prefix.c_str()));
+    for (int32 i = 8; i--; iter.next());
+    prefix.truncate(uint32(iter.get_pointer() - prefix.c_str()));
     if (!prefix.length())
         prefix.copy("tmp");
     path::append(path, prefix.c_str());
@@ -620,11 +620,11 @@ FILE* create_temp_file(str_base* out, const char* _prefix, const char* _ext, tem
 
     // Remember the base path and prefix length.
     wstr<> wpath(path.c_str());
-    unsigned int base_len = wpath.length();
+    uint32 base_len = wpath.length();
 
     // Open mode.
     str<16> mode("w+");
-    int oflag = _O_CREAT| _O_RDWR|_O_EXCL|_O_SHORT_LIVED;
+    int32 oflag = _O_CREAT| _O_RDWR|_O_EXCL|_O_SHORT_LIVED;
     if (_mode & os::binary) { oflag |= _O_BINARY; mode << "b"; }
     if (_mode & os::delete_on_close) oflag |= _O_TEMPORARY;
 
@@ -643,7 +643,7 @@ FILE* create_temp_file(str_base* out, const char* _prefix, const char* _ext, tem
 
         // Do a little dance to work around MinGW not supporting the "x" mode
         // flag in _wsfopen.
-        int fd = _wsopen(wpath.c_str(), oflag, _SH_DENYNO, _S_IREAD|_S_IWRITE);
+        int32 fd = _wsopen(wpath.c_str(), oflag, _SH_DENYNO, _S_IREAD|_S_IWRITE);
         if (fd != -1)
         {
             f = _fdopen(fd, mode.c_str());
@@ -690,7 +690,7 @@ FILE* create_temp_file(str_base* out, const char* _prefix, const char* _ext, tem
 }
 
 //------------------------------------------------------------------------------
-bool expand_env(const char* in, unsigned int in_len, str_base& out, int* point)
+bool expand_env(const char* in, uint32 in_len, str_base& out, int32* point)
 {
     bool expanded = false;
 
@@ -704,12 +704,12 @@ bool expand_env(const char* in, unsigned int in_len, str_base& out, int* point)
             iter.next();
         const char* end = iter.get_pointer();
         if (start < end)
-            out.concat(start, int(end - start));
+            out.concat(start, int32(end - start));
 
         if (iter.more())
         {
             start = iter.get_pointer();
-            const int offset = int(start - in);
+            const int32 offset = int32(start - in);
             assert(iter.peek() == '%');
             iter.next();
 
@@ -718,7 +718,7 @@ bool expand_env(const char* in, unsigned int in_len, str_base& out, int* point)
                 iter.next();
 
             str<> var;
-            var.concat(name, int(iter.get_pointer() - name));
+            var.concat(name, int32(iter.get_pointer() - name));
             end = iter.get_pointer();
 
             if (iter.more() && iter.peek() == '%' && !var.empty())
@@ -736,7 +736,7 @@ bool expand_env(const char* in, unsigned int in_len, str_base& out, int* point)
 
                 if (point && *point > offset)
                 {
-                    const int replaced_end = int(iter.get_pointer() - in);
+                    const int32 replaced_end = int32(iter.get_pointer() - in);
                     if (*point <= replaced_end)
                         *point = offset + value.length();
                     else
@@ -746,7 +746,7 @@ bool expand_env(const char* in, unsigned int in_len, str_base& out, int* point)
             else
             {
 LLiteral:
-                out.concat(start, int(end - start));
+                out.concat(start, int32(end - start));
             }
         }
     }
@@ -759,7 +759,7 @@ bool get_env(const char* name, str_base& out)
 {
     wstr<32> wname(name);
 
-    int len = GetEnvironmentVariableW(wname.c_str(), nullptr, 0);
+    int32 len = GetEnvironmentVariableW(wname.c_str(), nullptr, 0);
     if (!len)
     {
         if (stricmp(name, "HOME") == 0)
@@ -876,7 +876,7 @@ bool get_short_path_name(const char* path, str_base& out)
 
     out.clear();
 
-    unsigned int len = GetShortPathNameW(wpath.c_str(), nullptr, 0);
+    uint32 len = GetShortPathNameW(wpath.c_str(), nullptr, 0);
     if (len)
     {
         wstr<> wout;
@@ -905,7 +905,7 @@ bool get_long_path_name(const char* path, str_base& out)
 
     out.clear();
 
-    unsigned int len = GetLongPathNameW(wpath.c_str(), nullptr, 0);
+    uint32 len = GetLongPathNameW(wpath.c_str(), nullptr, 0);
     if (len)
     {
         wstr<> wout;
@@ -928,7 +928,7 @@ bool get_long_path_name(const char* path, str_base& out)
 }
 
 //------------------------------------------------------------------------------
-bool get_full_path_name(const char* _path, str_base& out, unsigned int len)
+bool get_full_path_name(const char* _path, str_base& out, uint32 len)
 {
     wstr<> wpath;
     str_iter path(_path, len);
@@ -1045,9 +1045,9 @@ bool get_clipboard_text(str_base& out)
 }
 
 //------------------------------------------------------------------------------
-bool set_clipboard_text(const char* text, int length)
+bool set_clipboard_text(const char* text, int32 length)
 {
-    int size = 0;
+    int32 size = 0;
     if (length)
     {
         size = MultiByteToWideChar(CP_UTF8, 0, text, length, nullptr, 0) * sizeof(wchar_t);
@@ -1137,9 +1137,9 @@ void append_argv(str_base& out, const char* arg, argv_quote_mode mode)
 #endif
 
 //------------------------------------------------------------------------------
-int system(const char* command, const char* cwd)
+int32 system(const char* command, const char* cwd)
 {
-    int ret = -1;
+    int32 ret = -1;
 
     if (command)
     {
@@ -1148,7 +1148,7 @@ int system(const char* command, const char* cwd)
         {
             DWORD code;
             if (WaitForSingleObject(h, INFINITE) == WAIT_OBJECT_0 && GetExitCodeProcess(h, &code))
-                ret = static_cast<int>(code);
+                ret = int32(code);
             else
                 map_errno();
             CloseHandle(h);
@@ -1166,7 +1166,7 @@ HANDLE spawn_internal(const char* command, const char* cwd, HANDLE hStdin, HANDL
     wstr_moveable comspec;
     const wchar_t* cmd_exe = default_cmd_exe;
     {
-        int len = GetEnvironmentVariableW(L"COMSPEC", nullptr, 0);
+        int32 len = GetEnvironmentVariableW(L"COMSPEC", nullptr, 0);
         if (len)
         {
             comspec.reserve(len);
@@ -1288,7 +1288,7 @@ bool disambiguate_abbreviated_path(const char*& in, str_base& out)
     wstr_moveable wadd;
 
     // Any \\?\ segment should be kept as-is.
-    const unsigned int ssqs = path::past_ssqs(tmp.c_str());
+    const uint32 ssqs = path::past_ssqs(tmp.c_str());
     parse.concat(tmp.c_str(), ssqs);
 
     // Don't operate on remote drives, for performance reasons.
@@ -1306,7 +1306,7 @@ bool disambiguate_abbreviated_path(const char*& in, str_base& out)
 
     // Identify the range to be parsed, up to but not including the last path
     // separator character.
-    unsigned int parse_len = static_cast<unsigned int>(last_sep - tmp.c_str());
+    uint32 parse_len = uint32(last_sep - tmp.c_str());
     wstr_moveable disambiguated;
     disambiguated = parse.c_str();
 
@@ -1348,7 +1348,7 @@ bool disambiguate_abbreviated_path(const char*& in, str_base& out)
         }
 
         // Append star to check for ambiguous matches.
-        const unsigned int committed = disambiguated.length();
+        const uint32 committed = disambiguated.length();
         disambiguated << wnext << L"*";
 
         // Lookup in file system.
@@ -1386,7 +1386,7 @@ close_bail:
         const wchar_t *dir = wnext.c_str();
         while (path::is_separator(*dir))
             ++dir;
-        const unsigned int dir_len = static_cast<unsigned int>(wcslen(dir));
+        const uint32 dir_len = uint32(wcslen(dir));
 
         // Copy file name because FindNextFileW will overwrite it.
         wadd = fd.cFileName;
@@ -1413,7 +1413,7 @@ close_bail:
             if (!unique)
             {
                 // Find lcd.
-                int match_len = str_compare<wchar_t, true/*compute_lcd*/>(wadd.c_str(), fd.cFileName);
+                int32 match_len = str_compare<wchar_t, true/*compute_lcd*/>(wadd.c_str(), fd.cFileName);
                 if (match_len >= 0)
                     wadd.truncate(match_len);
 
@@ -1431,7 +1431,7 @@ close_bail:
 
             if (have_best)
             {
-                int match_len = str_compare<wchar_t, true/*compute_lcd*/>(best.c_str(), wadd.c_str());
+                int32 match_len = str_compare<wchar_t, true/*compute_lcd*/>(best.c_str(), wadd.c_str());
                 if (match_len >= 0)
                     best.truncate(match_len);
                 wadd = std::move(best);
@@ -1531,16 +1531,16 @@ bool run_as_admin(HWND hwnd, const wchar_t* file, const wchar_t* args)
 #if defined(DEBUG)
 
 //------------------------------------------------------------------------------
-int dbg_get_env_int(const char* name, int default_value)
+int32 dbg_get_env_int(const char* name, int32 default_value)
 {
     char tmp[32];
-    int len = GetEnvironmentVariableA(name, tmp, sizeof(tmp));
-    int val = (len > 0 && len < sizeof(tmp)) ? atoi(tmp) : default_value;
+    int32 len = GetEnvironmentVariableA(name, tmp, sizeof(tmp));
+    int32 val = (len > 0 && len < sizeof(tmp)) ? atoi(tmp) : default_value;
     return val;
 }
 
 //------------------------------------------------------------------------------
-static void dbg_vprintf_row(int row, const char* fmt, va_list args)
+static void dbg_vprintf_row(int32 row, const char* fmt, va_list args)
 {
     str<> tmp;
     if (row < 0)
@@ -1562,7 +1562,7 @@ static void dbg_vprintf_row(int row, const char* fmt, va_list args)
 }
 
 //------------------------------------------------------------------------------
-void dbg_printf_row(int row, const char* fmt, ...)
+void dbg_printf_row(int32 row, const char* fmt, ...)
 {
     va_list args;
     va_start(args, fmt);

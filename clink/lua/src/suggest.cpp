@@ -27,7 +27,7 @@ extern "C" {
 
 //------------------------------------------------------------------------------
 extern matches* make_new_matches();
-extern void set_suggestion(const char* line, unsigned int endword_offset, const char* suggestion, unsigned int offset);
+extern void set_suggestion(const char* line, uint32 endword_offset, const char* suggestion, uint32 offset);
 extern setting_enum g_ignore_case;
 extern setting_bool g_fuzzy_accent;
 
@@ -40,7 +40,7 @@ suggester::suggester(lua_state& lua)
 }
 
 //------------------------------------------------------------------------------
-bool suggester::suggest(const line_states& lines, matches* matches, int generation_id)
+bool suggester::suggest(const line_states& lines, matches* matches, int32 generation_id)
 {
     const line_state& line = lines.back();
 
@@ -56,7 +56,7 @@ nosuggest:
 
     // Do not allow relaxed comparison for suggestions, as it is too confusing,
     // as a result of the logic to respect original case.
-    int scope = g_ignore_case.get() ? str_compare_scope::caseless : str_compare_scope::exact;
+    int32 scope = g_ignore_case.get() ? str_compare_scope::caseless : str_compare_scope::exact;
     str_compare_scope compare(scope, g_fuzzy_accent.get());
 
     // Call Lua to filter prompt

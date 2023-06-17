@@ -86,7 +86,7 @@ static void copy_dll(str_base& dll_path)
 #endif
 
     // Write out origin path to a file so we can backtrack from the cached DLL.
-    int target_length = target_path.length();
+    int32 target_length = target_path.length();
     target_path << ".origin";
     if (always || os::get_path_type(target_path.c_str()) != os::path_type_file)
     {
@@ -145,7 +145,7 @@ static void copy_dll(str_base& dll_path)
 }
 
 //------------------------------------------------------------------------------
-static int check_dll_version(const char* clink_dll)
+static int32 check_dll_version(const char* clink_dll)
 {
     wstr<> wclink_dll(clink_dll);
     char buffer[1024];
@@ -167,7 +167,7 @@ static int check_dll_version(const char* clink_dll)
         file_info->dwFileVersionLS
     );
 
-    int error = 0;
+    int32 error = 0;
     error = (HIWORD(file_info->dwFileVersionMS) != CLINK_VERSION_MAJOR);
     error = (LOWORD(file_info->dwFileVersionMS) != CLINK_VERSION_MINOR);
     error = (HIWORD(file_info->dwFileVersionLS) != CLINK_VERSION_PATCH);
@@ -390,7 +390,7 @@ static bool is_clink_present(DWORD target_pid)
 static DWORD find_inject_target()
 {
     str<512, false> buffer;
-    for (int pid = process().get_parent_pid(); pid;)
+    for (int32 pid = process().get_parent_pid(); pid;)
     {
         process process(pid);
         process.get_file_name(buffer);
@@ -417,7 +417,7 @@ void get_profile_path(const char* in, str_base& out)
         const char* quote = strchr(in, '"');
         if (quote && quote[1] == '\0')
         {
-            _in.concat(in, static_cast<unsigned int>(quote - in));
+            _in.concat(in, uint32(quote - in));
             in = _in.c_str();
         }
     }
@@ -440,7 +440,7 @@ void get_profile_path(const char* in, str_base& out)
 class injection_error_reporter
 {
 public:
-    injection_error_reporter(int target_pid, const char* log_path)
+    injection_error_reporter(int32 target_pid, const char* log_path)
         : m_target_pid(target_pid), m_log_path(log_path)
     {
     }
@@ -463,17 +463,17 @@ public:
 
 private:
     bool m_ok = false;
-    int m_target_pid = 0;
+    int32 m_target_pid = 0;
     const char* m_log_path = nullptr;
 };
 
 //------------------------------------------------------------------------------
-const int exit_code_success = 0;
-const int exit_code_nonfatal = 1;
-const int exit_code_fatal = 2;
+const int32 exit_code_success = 0;
+const int32 exit_code_nonfatal = 1;
+const int32 exit_code_fatal = 2;
 
 //------------------------------------------------------------------------------
-int inject(int argc, char** argv)
+int32 inject(int32 argc, char** argv)
 {
     // Autorun injection must always return success otherwise it interferes with
     // other scripts (e.g. VS postbuild steps, which causes CMake to be unable
@@ -510,8 +510,8 @@ int inject(int argc, char** argv)
     // Parse arguments
     DWORD target_pid = 0;
     app_context::desc app_desc;
-    int i;
-    int ret = exit_code_fatal;
+    int32 i;
+    int32 ret = exit_code_fatal;
     bool is_autorun = false;
     while ((i = getopt_long(argc, argv, "?lqhp:s:d:|", options, nullptr)) != -1)
     {

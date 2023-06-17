@@ -66,7 +66,7 @@ void word_classifications::init(size_t line_length, const word_classifications* 
         m_faces = static_cast<char*>(malloc(line_length));
         if (m_faces)
         {
-            m_length = static_cast<unsigned int>(line_length);
+            m_length = uint32(line_length);
             // Space means not classified; use default color.
             memset(m_faces, FACE_SPACE, line_length);
         }
@@ -74,9 +74,9 @@ void word_classifications::init(size_t line_length, const word_classifications* 
 }
 
 //------------------------------------------------------------------------------
-unsigned int word_classifications::add_command(const line_state& line)
+uint32 word_classifications::add_command(const line_state& line)
 {
-    unsigned int index = static_cast<unsigned int>(m_info.size());
+    uint32 index = uint32(m_info.size());
 
     const std::vector<word>& words = line.get_words();
     for (const auto& word : words)
@@ -93,7 +93,7 @@ unsigned int word_classifications::add_command(const line_state& line)
 }
 
 //------------------------------------------------------------------------------
-void word_classifications::set_word_has_argmatcher(unsigned int index)
+void word_classifications::set_word_has_argmatcher(uint32 index)
 {
     if (index < m_info.size())
         m_info[index].argmatcher = true;
@@ -113,11 +113,11 @@ void word_classifications::finish(bool show_argmatchers)
         FACE_FLAG,          // flag
         FACE_NONE,          // none
     };
-    static_assert(_countof(c_faces) == int(word_class::max), "c_faces and word_class don't agree!");
+    static_assert(_countof(c_faces) == int32(word_class::max), "c_faces and word_class don't agree!");
 
     for (const auto& info : m_info)
     {
-        const size_t end = min<unsigned int>(info.end, m_length);
+        const size_t end = min<uint32>(info.end, m_length);
         for (size_t pos = info.start; pos < end; ++pos)
         {
             if (m_faces[pos] == FACE_SPACE)
@@ -125,7 +125,7 @@ void word_classifications::finish(bool show_argmatchers)
                 if (info.argmatcher && show_argmatchers)
                     m_faces[pos] = FACE_ARGMATCHER;
                 else if (info.word_class < word_class::max)
-                    m_faces[pos] = c_faces[int(info.word_class)];
+                    m_faces[pos] = c_faces[int32(info.word_class)];
             }
         }
     }
@@ -156,7 +156,7 @@ bool word_classifications::equals(const word_classifications& other) const
 }
 
 //------------------------------------------------------------------------------
-bool word_classifications::get_word_class(unsigned int index, word_class& wc) const
+bool word_classifications::get_word_class(uint32 index, word_class& wc) const
 {
     if (index >= m_info.size())
         return false;
@@ -166,7 +166,7 @@ bool word_classifications::get_word_class(unsigned int index, word_class& wc) co
 }
 
 //------------------------------------------------------------------------------
-char word_classifications::get_face(unsigned int pos) const
+char word_classifications::get_face(uint32 pos) const
 {
     if (pos < 0 || pos >= m_length)
         return ' ';
@@ -176,7 +176,7 @@ char word_classifications::get_face(unsigned int pos) const
 //------------------------------------------------------------------------------
 const char* word_classifications::get_face_output(char face) const
 {
-    unsigned int index = static_cast<unsigned char>(face) - 128;
+    uint32 index = uint8(face) - 128;
     if (index >= m_face_definitions.size())
         return nullptr;
     return m_face_definitions[index].c_str();
@@ -201,7 +201,7 @@ char word_classifications::ensure_face(const char* sgr)
 }
 
 //------------------------------------------------------------------------------
-void word_classifications::apply_face(unsigned int start, unsigned int length, char face, bool overwrite)
+void word_classifications::apply_face(uint32 start, uint32 length, char face, bool overwrite)
 {
     while (length > 0 && start < m_length)
     {
@@ -213,7 +213,7 @@ void word_classifications::apply_face(unsigned int start, unsigned int length, c
 }
 
 //------------------------------------------------------------------------------
-void word_classifications::classify_word(unsigned int index, char wc, bool overwrite)
+void word_classifications::classify_word(uint32 index, char wc, bool overwrite)
 {
     assert(index < m_info.size());
     if (overwrite || !is_word_classified(index))
@@ -221,7 +221,7 @@ void word_classifications::classify_word(unsigned int index, char wc, bool overw
 }
 
 //------------------------------------------------------------------------------
-bool word_classifications::is_word_classified(unsigned int word_index)
+bool word_classifications::is_word_classified(uint32 word_index)
 {
     return (word_index < m_info.size() && m_info[word_index].word_class < word_class::max);
 }

@@ -6,8 +6,8 @@
 
 //------------------------------------------------------------------------------
 // Terminal can't #include from Readline.
-extern "C" int _rl_vis_botlin;
-extern "C" int _rl_last_v_pos;
+extern "C" int32 _rl_vis_botlin;
+extern "C" int32 _rl_last_v_pos;
 
 //------------------------------------------------------------------------------
 static bool s_scroll_mode = false;
@@ -25,7 +25,7 @@ void reset_scroll_mode()
 }
 
 //------------------------------------------------------------------------------
-int ScrollConsoleRelative(HANDLE h, int direction, SCRMODE mode)
+int32 ScrollConsoleRelative(HANDLE h, int32 direction, SCRMODE mode)
 {
     // Get the current screen buffer window position.
     CONSOLE_SCREEN_BUFFER_INFO csbiInfo;

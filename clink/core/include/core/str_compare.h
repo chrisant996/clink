@@ -23,42 +23,42 @@ public:
         num_scope_values
     };
 
-                str_compare_scope(int mode, bool fuzzy_accent);
-                ~str_compare_scope();
-    static int  current();
-    static bool current_fuzzy_accents();
+                    str_compare_scope(int32 mode, bool fuzzy_accent);
+                    ~str_compare_scope();
+    static int32    current();
+    static bool     current_fuzzy_accents();
 
 private:
-    int         m_prev_mode;
-    bool        m_prev_fuzzy_accents;
-    threadlocal static int ts_mode;
+    int32           m_prev_mode;
+    bool            m_prev_fuzzy_accents;
+    threadlocal static int32 ts_mode;
     threadlocal static bool ts_fuzzy_accents;
 };
 
 
 
 //------------------------------------------------------------------------------
-int normalize_accent(int c);
+int32 normalize_accent(int32 c);
 
 //------------------------------------------------------------------------------
 // Returns how many characters match at the beginning of the strings.
 // If the entire strings match and compute_lcd is false, it returns -1.
-template <class T, int MODE, bool fuzzy_accents, bool compute_lcd, bool exact_slash>
-int str_compare_impl(str_iter_impl<T>& lhs, str_iter_impl<T>& rhs)
+template <class T, int32 MODE, bool fuzzy_accents, bool compute_lcd, bool exact_slash>
+int32 str_compare_impl(str_iter_impl<T>& lhs, str_iter_impl<T>& rhs)
 {
     const T* start = lhs.get_pointer();
 
     while (1)
     {
-        int c = lhs.peek();
-        int d = rhs.peek();
+        int32 c = lhs.peek();
+        int32 d = rhs.peek();
         if (!c || !d)
             break;
 
         if (MODE > 0)
         {
-            c = (c > 0xffff) ? c : int(uintptr_t(CharLowerW(LPWSTR(uintptr_t(c)))));
-            d = (d > 0xffff) ? d : int(uintptr_t(CharLowerW(LPWSTR(uintptr_t(d)))));
+            c = (c > 0xffff) ? c : int32(uintptr_t(CharLowerW(LPWSTR(uintptr_t(c)))));
+            d = (d > 0xffff) ? d : int32(uintptr_t(CharLowerW(LPWSTR(uintptr_t(d)))));
         }
 
         if (MODE > 1)
@@ -98,14 +98,14 @@ int str_compare_impl(str_iter_impl<T>& lhs, str_iter_impl<T>& rhs)
     }
 
     if (compute_lcd || lhs.more() || rhs.more())
-        return int(lhs.get_pointer() - start);
+        return int32(lhs.get_pointer() - start);
 
     return -1;
 }
 
 //------------------------------------------------------------------------------
 template <class T, bool compute_lcd=false, bool exact_slash=false>
-int str_compare(str_iter_impl<T>& lhs, str_iter_impl<T>& rhs)
+int32 str_compare(str_iter_impl<T>& lhs, str_iter_impl<T>& rhs)
 {
     bool fuzzy_accents = str_compare_scope::current_fuzzy_accents();
     switch (str_compare_scope::current())
@@ -124,7 +124,7 @@ int str_compare(str_iter_impl<T>& lhs, str_iter_impl<T>& rhs)
 
 //------------------------------------------------------------------------------
 template <class T, bool compute_lcd=false, bool exact_slash=false>
-int str_compare(const T* lhs, const T* rhs)
+int32 str_compare(const T* lhs, const T* rhs)
 {
     str_iter_impl<T> lhs_iter(lhs);
     str_iter_impl<T> rhs_iter(rhs);
@@ -133,7 +133,7 @@ int str_compare(const T* lhs, const T* rhs)
 
 //------------------------------------------------------------------------------
 template <class T, bool compute_lcd=false, bool exact_slash=false>
-int str_compare(const str_impl<T>& lhs, const str_impl<T>& rhs)
+int32 str_compare(const str_impl<T>& lhs, const str_impl<T>& rhs)
 {
     str_iter_impl<T> lhs_iter(lhs);
     str_iter_impl<T> rhs_iter(rhs);

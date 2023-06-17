@@ -11,8 +11,8 @@
 
 class terminal_in;
 class line_buffer;
-enum class mouse_input_type : unsigned char;
-typedef void (__cdecl sig_func_t)(int);
+enum class mouse_input_type : uint8;
+typedef void (__cdecl sig_func_t)(int32);
 
 extern line_buffer& buffer;
 
@@ -21,17 +21,17 @@ class mouse_info
 {
 public:
     void            clear();
-    int             on_click(unsigned int x, unsigned int y, bool dblclk);
-    int             clicked() const;
-    void            set_anchor(int anchor1, int anchor2);
-    bool            get_anchor(int point, int& anchor, int& pos) const;
+    int32           on_click(uint32 x, uint32 y, bool dblclk);
+    int32           clicked() const;
+    void            set_anchor(int32 anchor1, int32 anchor2);
+    bool            get_anchor(int32 point, int32& anchor, int32& pos) const;
 private:
     unsigned short  m_x;
     unsigned short  m_y;
-    unsigned int    m_tick;
-    unsigned char   m_clicks;
-    int             m_anchor1;
-    int             m_anchor2;
+    uint32          m_tick;
+    uint8           m_clicks;
+    int32           m_anchor1;
+    int32           m_anchor2;
 };
 
 //------------------------------------------------------------------------------
@@ -43,10 +43,10 @@ public:
                     rl_module(terminal_in* input);
                     ~rl_module();
 
-    bool            is_bound(const char* seq, int len);
+    bool            is_bound(const char* seq, int32 len);
     bool            accepts_mouse_input(mouse_input_type type);
-    bool            translate(const char* seq, int len, str_base& out);
-    void            set_keyseq_len(int len);
+    bool            translate(const char* seq, int32 len, str_base& out);
+    void            set_keyseq_len(int32 len);
     void            set_prompt(const char* prompt, const char* rprompt, bool redisplay);
 
     bool            is_input_pending();
@@ -58,11 +58,11 @@ private:
     virtual void    on_end_line() override;
     virtual void    on_input(const input& input, result& result, const context& context) override;
     virtual void    on_matches_changed(const context& context, const line_state& line, const char* needle) override;
-    virtual void    on_terminal_resize(int columns, int rows, const context& context) override;
-    virtual void    on_signal(int sig) override;
+    virtual void    on_terminal_resize(int32 columns, int32 rows, const context& context) override;
+    virtual void    on_signal(int32 sig) override;
     void            done(const char* line);
-    int             m_prev_group;
-    int             m_catch_group;
+    int32           m_prev_group;
+    int32           m_catch_group;
     bool            m_done;
     bool            m_eof;
     mouse_info      m_mouse;

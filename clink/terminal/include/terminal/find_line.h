@@ -4,7 +4,7 @@
 #pragma once
 
 //------------------------------------------------------------------------------
-enum find_line_mode : int
+enum find_line_mode : int32
 {
     none                    = 0x00,
     use_regex               = 0x01,
@@ -13,9 +13,9 @@ enum find_line_mode : int
 DEFINE_ENUM_FLAG_OPERATORS(find_line_mode);
 
 //------------------------------------------------------------------------------
-int find_line(HANDLE h, const CONSOLE_SCREEN_BUFFER_INFO& csbi,
-              wchar_t* chars_buffer, int chars_capacity,
-              WORD* attrs_buffer, int attrs_capacity,
-              int starting_line, int distance,
+int32 find_line(HANDLE h, const CONSOLE_SCREEN_BUFFER_INFO& csbi,
+              wchar_t* chars_buffer, int32 chars_capacity,
+              WORD* attrs_buffer, int32 attrs_capacity,
+              int32 starting_line, int32 distance,
               const char* text, find_line_mode mode,
-              const BYTE* attrs=nullptr, int num_attrs=0, BYTE mask=0xff);
+              const BYTE* attrs=nullptr, int32 num_attrs=0, BYTE mask=0xff);

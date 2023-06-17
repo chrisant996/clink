@@ -57,13 +57,13 @@ extern "C" __crt_lowio_handle_data* __pioinfo[1];
 #endif
 
 //------------------------------------------------------------------------------
-extern "C" int __cdecl __acrt_lowio_set_os_handle(int const fh, intptr_t const value);
-extern "C" int __cdecl _free_osfhnd(int const fh);
+extern "C" int32 __cdecl __acrt_lowio_set_os_handle(int32 const fh, intptr_t const value);
+extern "C" int32 __cdecl _free_osfhnd(int32 const fh);
 
 //------------------------------------------------------------------------------
 // Reset one lowio handle.  If the expected state is not found, then it halts
 // any further attempts to reset handles.
-static void reset_handle(intptr_t& h, int fh)
+static void reset_handle(intptr_t& h, int32 fh)
 {
     static const char* const c_handle_name[] = { "stdin", "stdout", "stderr" };
 

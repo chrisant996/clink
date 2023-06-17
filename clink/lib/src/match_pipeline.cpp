@@ -61,16 +61,16 @@ static bool include_match_type(match_type type)
 }
 
 //------------------------------------------------------------------------------
-static unsigned int prefix_selector(
+static uint32 prefix_selector(
     const char* needle,
     match_info* infos,
-    int count)
+    int32 count)
 {
-    int select_count = 0;
-    for (int i = 0; i < count; ++i)
+    int32 select_count = 0;
+    for (int32 i = 0; i < count; ++i)
     {
         const char* const name = infos[i].match;
-        const int j = str_compare(needle, name);
+        const int32 j = str_compare(needle, name);
         const bool select = ((j < 0 || !needle[j]) &&
                              (_rl_match_hidden_files || name[0] != '.') &&
                              include_match_type(infos[i].type));
@@ -82,19 +82,19 @@ static unsigned int prefix_selector(
 }
 
 //------------------------------------------------------------------------------
-static unsigned int pattern_selector(
+static uint32 pattern_selector(
     const char* needle,
     match_info* infos,
-    int count,
+    int32 count,
     bool dot_prefix)
 {
-    const int needle_len = strlen(needle);
-    int select_count = 0;
-    for (int i = 0; i < count; ++i)
+    const int32 needle_len = strlen(needle);
+    int32 select_count = 0;
+    for (int32 i = 0; i < count; ++i)
     {
         const char* const match = infos[i].match;
-        int match_len = int(strlen(match));
-        while (match_len && path::is_separator((unsigned char)match[match_len - 1]))
+        int32 match_len = int32(strlen(match));
+        while (match_len && path::is_separator(uint8(match[match_len - 1])))
             match_len--;
 
         const path::star_matches_everything flag = (is_pathish(infos[i].type) ? path::at_end : path::yes);
@@ -123,7 +123,7 @@ static bool is_dir_match(const wstr_base& match, match_type type)
 //------------------------------------------------------------------------------
 inline bool sort_worker(wstr_base& l, match_type l_type,
                         wstr_base& r, match_type r_type,
-                        int order)
+                        int32 order)
 {
     bool l_dir = is_dir_match(l, l_type);
     bool r_dir = is_dir_match(r, r_type);
@@ -136,7 +136,7 @@ inline bool sort_worker(wstr_base& l, match_type l_type,
     if (r_dir)
         path::maybe_strip_last_separator(r);
 
-    int cmp;
+    int32 cmp;
     DWORD flags = SORT_DIGITSASNUMBERS|NORM_LINGUISTIC_CASING;
     if (true/*casefold*/)
         flags |= LINGUISTIC_IGNORECASE;
@@ -147,8 +147,8 @@ inline bool sort_worker(wstr_base& l, match_type l_type,
     // `-` flags precede `--` flags.
     if (*l_str == '-' || *r_str == '-')
     {
-        int l_minus = 0;
-        int r_minus = 0;
+        int32 l_minus = 0;
+        int32 r_minus = 0;
         for (const wchar_t* l_walk = l_str; *l_walk == '-'; ++l_walk)
             l_minus++;
         for (const wchar_t* r_walk = r_str; *r_walk == '-'; ++r_walk)
@@ -173,25 +173,25 @@ inline bool sort_worker(wstr_base& l, match_type l_type,
     }
 
     // Finally sort by type (dir, alias, command, word, arg, file).
-    unsigned char t1 = ((unsigned char)l_type) & MATCH_TYPE_MASK;
-    unsigned char t2 = ((unsigned char)r_type) & MATCH_TYPE_MASK;
+    const uint8 t1 = uint8(l_type) & MATCH_TYPE_MASK;
+    const uint8 t2 = uint8(r_type) & MATCH_TYPE_MASK;
 
-    cmp = int(t1 == MATCH_TYPE_DIR) - int(t2 == MATCH_TYPE_DIR);
+    cmp = int32(t1 == MATCH_TYPE_DIR) - int32(t2 == MATCH_TYPE_DIR);
     if (cmp) return (cmp < 0);
 
-    cmp = int(t1 == MATCH_TYPE_ALIAS) - int(t2 == MATCH_TYPE_ALIAS);
+    cmp = int32(t1 == MATCH_TYPE_ALIAS) - int32(t2 == MATCH_TYPE_ALIAS);
     if (cmp) return (cmp < 0);
 
-    cmp = int(t1 == MATCH_TYPE_COMMAND) - int(t2 == MATCH_TYPE_COMMAND);
+    cmp = int32(t1 == MATCH_TYPE_COMMAND) - int32(t2 == MATCH_TYPE_COMMAND);
     if (cmp) return (cmp < 0);
 
-    cmp = int(t1 == MATCH_TYPE_WORD) - int(t2 == MATCH_TYPE_WORD);
+    cmp = int32(t1 == MATCH_TYPE_WORD) - int32(t2 == MATCH_TYPE_WORD);
     if (cmp) return (cmp < 0);
 
-    cmp = int(t1 == MATCH_TYPE_ARG) - int(t2 == MATCH_TYPE_ARG);
+    cmp = int32(t1 == MATCH_TYPE_ARG) - int32(t2 == MATCH_TYPE_ARG);
     if (cmp) return (cmp < 0);
 
-    cmp = int(t1 == MATCH_TYPE_FILE) - int(t2 == MATCH_TYPE_FILE);
+    cmp = int32(t1 == MATCH_TYPE_FILE) - int32(t2 == MATCH_TYPE_FILE);
     if (cmp) return (cmp < 0);
 
     return (cmp < 0);
@@ -208,9 +208,9 @@ bool compare_matches(const char* l, match_type l_type, const char* r, match_type
 }
 
 //------------------------------------------------------------------------------
-static void alpha_sorter(match_info* infos, int count)
+static void alpha_sorter(match_info* infos, int32 count)
 {
-    int order = g_sort_dirs.get();
+    int32 order = g_sort_dirs.get();
     wstr<> ltmp;
     wstr<> rtmp;
 
@@ -226,7 +226,7 @@ static void alpha_sorter(match_info* infos, int count)
 }
 
 //------------------------------------------------------------------------------
-static void ordinal_sorter(match_info* infos, int count)
+static void ordinal_sorter(match_info* infos, int32 count)
 {
     auto predicate = [&] (const match_info& lhs, const match_info& rhs) {
         return lhs.ordinal < rhs.ordinal;
@@ -281,7 +281,7 @@ void match_pipeline::generate(
                m_matches.is_filename_completion_desired().is_explicit() ? "(exp)" : "(imp)",
                m_matches.get_match_count() ? "" : " <none>");
 
-        int i = 0;
+        int32 i = 0;
         for (matches_iter iter = m_matches.get_iter(); i < 21 && iter.next(); i++)
         {
             if (i == 20)
@@ -297,7 +297,7 @@ void match_pipeline::generate(
 //------------------------------------------------------------------------------
 void match_pipeline::restrict(str_base& needle) const
 {
-    const int count = m_matches.get_info_count();
+    const int32 count = m_matches.get_info_count();
 
     str<> expanded;
     if (rl_complete_with_tilde_expansion && needle.c_str()[0] == '~')
@@ -329,10 +329,10 @@ void match_pipeline::restrict(str_base& needle) const
     while (iter.more())
     {
         const char* ptr = iter.get_pointer();
-        int c = iter.next();
+        int32 c = iter.next();
         if (c == '*' || c == '?')
         {
-            needle.truncate(int(ptr - needle.c_str()));
+            needle.truncate(int32(ptr - needle.c_str()));
             break;
         }
     }
@@ -341,7 +341,7 @@ void match_pipeline::restrict(str_base& needle) const
 //------------------------------------------------------------------------------
 void match_pipeline::select(const char* needle) const
 {
-    const int count = m_matches.get_info_count();
+    const int32 count = m_matches.get_info_count();
 
     str<> expanded;
     if (rl_complete_with_tilde_expansion && needle[0] == '~')
@@ -399,7 +399,7 @@ void match_pipeline::sort() const
     // internal sorting.  However, Clink's Lua API allows generators to disable
     // sorting.
 
-    int count = m_matches.get_match_count();
+    int32 count = m_matches.get_match_count();
     if (!count)
         return;
 

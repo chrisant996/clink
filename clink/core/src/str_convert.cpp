@@ -13,11 +13,11 @@
 template <typename TYPE>
 struct builder
 {
-                builder(TYPE* data, int max_length);
+                builder(TYPE* data, int32 max_length);
                 ~builder()                            { if (start && start <= end) *write = '\0'; }
     bool        truncated() const                     { return (start && write >= end); }
-    int         get_written() const                   { return int(write - start); }
-    builder&    operator << (int value);
+    int32       get_written() const                   { return int32(write - start); }
+    builder&    operator << (int32 value);
     TYPE*       write;
     const TYPE* start;
     const TYPE* end;
@@ -25,7 +25,7 @@ struct builder
 
 //------------------------------------------------------------------------------
 template <typename TYPE>
-builder<TYPE>::builder(TYPE* data, int max_length)
+builder<TYPE>::builder(TYPE* data, int32 max_length)
 : write(data)
 , start(data)
 , end(data + max_length - 1)
@@ -34,7 +34,7 @@ builder<TYPE>::builder(TYPE* data, int max_length)
 
 //------------------------------------------------------------------------------
 template <>
-builder<wchar_t>& builder<wchar_t>::operator << (int value)
+builder<wchar_t>& builder<wchar_t>::operator << (int32 value)
 {
     // For code points that don't fit in wchar_t there is 'surrogate pairs'.
     if (value > 0xffff)
@@ -50,7 +50,7 @@ builder<wchar_t>& builder<wchar_t>::operator << (int value)
 
 //------------------------------------------------------------------------------
 template <>
-builder<char>& builder<char>::operator << (int value)
+builder<char>& builder<char>::operator << (int32 value)
 {
     if (!start)
         write++;
@@ -63,7 +63,7 @@ builder<char>& builder<char>::operator << (int value)
 
 
 //------------------------------------------------------------------------------
-int to_utf8(char* out, int max_count, wstr_iter& iter)
+int32 to_utf8(char* out, int32 max_count, wstr_iter& iter)
 {
     // See to_utf16() for explanation about the disabled WideCharToMultiByte
     // implementation below.
@@ -71,7 +71,7 @@ int to_utf8(char* out, int max_count, wstr_iter& iter)
     // First try to use the OS function because it's fast.  Leave room to
     // terminate the string.
 
-    int len = WideCharToMultiByte(CP_UTF8, 0, iter.get_pointer(), iter.length(), out, max<int>(max_count - 1, 0), nullptr, nullptr);
+    int32 len = WideCharToMultiByte(CP_UTF8, 0, iter.get_pointer(), iter.length(), out, max<int32>(max_count - 1, 0), nullptr, nullptr);
     if (!out || !max_count)
     {
         iter.reset_pointer(iter.get_pointer() + iter.length());
@@ -97,7 +97,7 @@ int to_utf8(char* out, int max_count, wstr_iter& iter)
 
     builder<char> builder(out, max_count);
 
-    int c;
+    int32 c;
     while (!builder.truncated() && (c = iter.next()))
     {
         if (c < 0x80)
@@ -107,7 +107,7 @@ int to_utf8(char* out, int max_count, wstr_iter& iter)
         }
 
         // How long is this encoding?
-        int n = 2;
+        int32 n = 2;
         n += c >= (1 << 11);
         n += c >= (1 << 16);
 
@@ -121,7 +121,7 @@ int to_utf8(char* out, int max_count, wstr_iter& iter)
                 out_chars[0] = (c & 0x1f) | char(0xfc0 >> (n - 2));
         }
 
-        for (int i = 0; i < n; ++i)
+        for (int32 i = 0; i < n; ++i)
             builder << (out_chars[i] | 0x80);
     }
 
@@ -129,21 +129,21 @@ int to_utf8(char* out, int max_count, wstr_iter& iter)
 }
 
 //------------------------------------------------------------------------------
-int to_utf8(char* out, int max_count, const wchar_t* utf16)
+int32 to_utf8(char* out, int32 max_count, const wchar_t* utf16)
 {
     wstr_iter iter(utf16);
     return to_utf8(out, max_count, iter);
 }
 
 //------------------------------------------------------------------------------
-int to_utf8(str_base& out, str_iter_impl<wchar_t>& utf16)
+int32 to_utf8(str_base& out, str_iter_impl<wchar_t>& utf16)
 {
-    int length = out.length();
+    int32 length = out.length();
 
     if (out.is_growable())
     {
         str_iter_impl<wchar_t> calc_needed(utf16.get_pointer(), utf16.length());
-        int needed = to_utf8(nullptr, 0, calc_needed);
+        int32 needed = to_utf8(nullptr, 0, calc_needed);
         out.reserve(length + needed);
     }
 
@@ -151,7 +151,7 @@ int to_utf8(str_base& out, str_iter_impl<wchar_t>& utf16)
 }
 
 //------------------------------------------------------------------------------
-int to_utf8(str_base& out, const wchar_t* utf16)
+int32 to_utf8(str_base& out, const wchar_t* utf16)
 {
     wstr_iter iter(utf16);
     return to_utf8(out, iter);
@@ -160,7 +160,7 @@ int to_utf8(str_base& out, const wchar_t* utf16)
 
 
 //------------------------------------------------------------------------------
-int to_utf16(wchar_t* out, int max_count, str_iter& iter)
+int32 to_utf16(wchar_t* out, int32 max_count, str_iter& iter)
 {
     // This function was making the test program very slow in debug builds.  But
     // that was because the match pipeline was sorting during generation even
@@ -172,7 +172,7 @@ int to_utf16(wchar_t* out, int max_count, str_iter& iter)
     // First try to use the OS function because it's faster.  Leave room to
     // terminate the string.
 
-    int len = MultiByteToWideChar(CP_UTF8, 0, iter.get_pointer(), iter.length(), out, max<int>(max_count - 1, 0));
+    int32 len = MultiByteToWideChar(CP_UTF8, 0, iter.get_pointer(), iter.length(), out, max<int32>(max_count - 1, 0));
     if (!out || !max_count)
     {
         iter.reset_pointer(iter.get_pointer() + iter.length());
@@ -198,7 +198,7 @@ int to_utf16(wchar_t* out, int max_count, str_iter& iter)
 
     builder<wchar_t> builder(out, max_count);
 
-    int c;
+    int32 c;
     while (!builder.truncated() && (c = iter.next()))
         builder << c;
 
@@ -206,21 +206,21 @@ int to_utf16(wchar_t* out, int max_count, str_iter& iter)
 }
 
 //------------------------------------------------------------------------------
-int to_utf16(wchar_t* out, int max_count, const char* utf8)
+int32 to_utf16(wchar_t* out, int32 max_count, const char* utf8)
 {
     str_iter iter(utf8);
     return to_utf16(out, max_count, iter);
 }
 
 //------------------------------------------------------------------------------
-int to_utf16(wstr_base& out, str_iter_impl<char>& utf8)
+int32 to_utf16(wstr_base& out, str_iter_impl<char>& utf8)
 {
-    int length = out.length();
+    int32 length = out.length();
 
     if (out.is_growable())
     {
         str_iter_impl<char> calc_needed(utf8.get_pointer(), utf8.length());
-        int needed = to_utf16(nullptr, 0, calc_needed);
+        int32 needed = to_utf16(nullptr, 0, calc_needed);
         out.reserve(length + needed);
     }
 
@@ -228,7 +228,7 @@ int to_utf16(wstr_base& out, str_iter_impl<char>& utf8)
 }
 
 //------------------------------------------------------------------------------
-int to_utf16(wstr_base& out, const char* utf8)
+int32 to_utf16(wstr_base& out, const char* utf8)
 {
     str_iter iter(utf8);
     return to_utf16(out, iter);

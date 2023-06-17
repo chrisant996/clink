@@ -14,11 +14,11 @@
 extern setting_bool g_altf4_exits;
 
 //------------------------------------------------------------------------------
-int input_echo(int argc, char** argv)
+int32 input_echo(int32 argc, char** argv)
 {
     bool verbose_input = false;
 
-    for (int i = 1; i < argc; ++i)
+    for (int32 i = 1; i < argc; ++i)
     {
         const char* arg = argv[i];
         if (_stricmp(arg, "--help") == 0 || _stricmp(arg, "-h") == 0 || _stricmp(arg, "-?") == 0)
@@ -64,7 +64,7 @@ int input_echo(int argc, char** argv)
         bool need_quote = true;
         while (1)
         {
-            int c = input.read();
+            int32 c = input.read();
             if (c < 0)
                 break;
 

@@ -36,7 +36,7 @@ enum class match_type : match_type_intrinsic
 
 DEFINE_ENUM_FLAG_OPERATORS(match_type);
 
-static_assert(((int(match_type::END) - 1) | int(match_type::mask)) <= int(match_type::mask), "match_type overflowed mask bits!");
+static_assert(((int32(match_type::END) - 1) | int32(match_type::mask)) <= int32(match_type::mask), "match_type overflowed mask bits!");
 
 //------------------------------------------------------------------------------
 inline bool is_pathish(match_type type)
@@ -48,7 +48,7 @@ inline bool is_pathish(match_type type)
 //------------------------------------------------------------------------------
 inline bool is_match_type(match_type type, match_type test)
 {
-    assert((int(test) & ~int(match_type::mask)) == 0);
+    assert((int32(test) & ~int32(match_type::mask)) == 0);
     type &= match_type::mask;
     return type == test;
 }
@@ -91,7 +91,7 @@ inline bool is_match_type_readonly(match_type type)
 //------------------------------------------------------------------------------
 inline bool is_zero(match_type type)
 {
-    return int(type) == 0;
+    return int32(type) == 0;
 }
 
 
@@ -154,8 +154,8 @@ private:
     str_iter                m_pattern;
     bool                    m_has_pattern = false;
     bool                    m_can_try_substring = false;
-    unsigned int            m_index = 0;
-    unsigned int            m_next = 0;
+    uint32                  m_index = 0;
+    uint32                  m_next = 0;
 
     mutable shadow_bool     m_filename_completion_desired;
     mutable shadow_bool     m_filename_display_desired;
@@ -182,34 +182,34 @@ class matches
 public:
     virtual matches_iter    get_iter(const char* pattern = nullptr) const = 0;
     virtual void            get_lcd(str_base& out) const = 0;
-    virtual unsigned int    get_match_count() const = 0;
-    virtual const char*     get_match(unsigned int index) const = 0;
-    virtual match_type      get_match_type(unsigned int index) const = 0;
-    virtual const char*     get_match_display(unsigned int index) const = 0;
-    virtual const char*     get_match_description(unsigned int index) const = 0;
-    virtual unsigned int    get_match_ordinal(unsigned int index) const = 0;
-    virtual char            get_match_append_char(unsigned int index) const = 0;
-    virtual shadow_bool     get_match_suppress_append(unsigned int index) const = 0;
-    virtual bool            get_match_append_display(unsigned int index) const = 0;
+    virtual uint32          get_match_count() const = 0;
+    virtual const char*     get_match(uint32 index) const = 0;
+    virtual match_type      get_match_type(uint32 index) const = 0;
+    virtual const char*     get_match_display(uint32 index) const = 0;
+    virtual const char*     get_match_description(uint32 index) const = 0;
+    virtual uint32          get_match_ordinal(uint32 index) const = 0;
+    virtual char            get_match_append_char(uint32 index) const = 0;
+    virtual shadow_bool     get_match_suppress_append(uint32 index) const = 0;
+    virtual bool            get_match_append_display(uint32 index) const = 0;
     virtual bool            is_suppress_append() const = 0;
     virtual shadow_bool     is_filename_completion_desired() const = 0;
     virtual shadow_bool     is_filename_display_desired() const = 0;
     virtual char            get_append_character() const = 0;
-    virtual int             get_suppress_quoting() const = 0;
+    virtual int32           get_suppress_quoting() const = 0;
     virtual bool            get_force_quoting() const = 0;
-    virtual int             get_word_break_position() const = 0;
+    virtual int32           get_word_break_position() const = 0;
     virtual bool            match_display_filter(const char* needle, char** matches, match_display_filter_entry*** filtered_matches, display_filter_flags flags, bool* old_filtering=nullptr) const = 0;
     virtual bool            filter_matches(char** matches, char completion_type, bool filename_completion_desired) const = 0;
 
 private:
     friend class matches_iter;
-    virtual const char*     get_unfiltered_match(unsigned int index) const { return nullptr; }
-    virtual match_type      get_unfiltered_match_type(unsigned int index) const { return match_type::none; }
-    virtual const char*     get_unfiltered_match_display(unsigned int index) const { return nullptr; }
-    virtual const char*     get_unfiltered_match_description(unsigned int index) const { return nullptr; }
-    virtual char            get_unfiltered_match_append_char(unsigned int index) const { return 0; }
-    virtual shadow_bool     get_unfiltered_match_suppress_append(unsigned int index) const { return shadow_bool(false); }
-    virtual bool            get_unfiltered_match_append_display(unsigned int index) const { return false; }
+    virtual const char*     get_unfiltered_match(uint32 index) const { return nullptr; }
+    virtual match_type      get_unfiltered_match_type(uint32 index) const { return match_type::none; }
+    virtual const char*     get_unfiltered_match_display(uint32 index) const { return nullptr; }
+    virtual const char*     get_unfiltered_match_description(uint32 index) const { return nullptr; }
+    virtual char            get_unfiltered_match_append_char(uint32 index) const { return 0; }
+    virtual shadow_bool     get_unfiltered_match_suppress_append(uint32 index) const { return shadow_bool(false); }
+    virtual bool            get_unfiltered_match_append_display(uint32 index) const { return false; }
 };
 
 
@@ -244,7 +244,7 @@ public:
     bool                    is_empty();
     void                    set_append_character(char append);
     void                    set_suppress_append(bool suppress=true);
-    void                    set_suppress_quoting(int suppress=1); //0=no, 1=yes, 2=suppress end quote
+    void                    set_suppress_quoting(int32 suppress=1); //0=no, 1=yes, 2=suppress end quote
     void                    set_force_quoting();
     void                    set_no_sort();
     void                    set_volatile();
@@ -261,11 +261,11 @@ private:
 class match_builder_toolkit _DBGOBJECT
 {
 public:
-    virtual int             get_generation_id() const = 0;
+    virtual int32           get_generation_id() const = 0;
     virtual matches*        get_matches() const = 0;
     virtual match_builder*  get_builder() const = 0;
     virtual void            clear() = 0;
 };
 
 //------------------------------------------------------------------------------
-std::shared_ptr<match_builder_toolkit> make_match_builder_toolkit(int generation_id, unsigned int end_word_offset);
+std::shared_ptr<match_builder_toolkit> make_match_builder_toolkit(int32 generation_id, uint32 end_word_offset);

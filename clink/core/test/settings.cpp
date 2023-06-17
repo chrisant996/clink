@@ -23,14 +23,14 @@ TEST_CASE("settings : list")
     auto* first = settings::first().next();
 
     auto count_settings = [] () {
-        int count = 0;
+        int32 count = 0;
         for (auto i = settings::first(); i.next();)
             ++count;
 
         return count;
     };
 
-    int initial_count = count_settings();
+    int32 initial_count = count_settings();
 
     // Create a few settings.
     const char* names[] = {
@@ -39,7 +39,7 @@ TEST_CASE("settings : list")
         "quis", "nostrud", "exercitation", "ullamco", "laboris"
     };
 
-    for (int i = 0, n = sizeof_array(names); i < n; ++i)
+    for (int32 i = 0, n = sizeof_array(names); i < n; ++i)
         new setting_int(names[i], "", nullptr, i);
 
     // Check they're in the order we expect.
@@ -57,7 +57,7 @@ TEST_CASE("settings : list")
     REQUIRE(count_settings() - initial_count == sizeof_array(names));
 
     // Delete this tests' settings
-    for (int i = 0, n = sizeof_array(names); i < n; ++i)
+    for (int32 i = 0, n = sizeof_array(names); i < n; ++i)
     {
         auto* s = settings::find(names[i]);
         REQUIRE(s != nullptr);
@@ -138,7 +138,7 @@ TEST_CASE("settings : enum")
 
     str<> out;
     const char* options[] = { "zero", "one", "two" };
-    for (int i = 0; i < sizeof_array(options); ++i)
+    for (int32 i = 0; i < sizeof_array(options); ++i)
     {
         REQUIRE(test.set(options[i]));
         REQUIRE(test.get() == i);

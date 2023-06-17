@@ -36,9 +36,9 @@ const char* append_string_into_buffer(char*& buffer, const char* match, bool all
 // string (which gets used for column alignment).  When a strip out parameter is
 // supplied, this also strips ANSI escape codes and the strip out parameter
 // receives a pointer to the next character past the nul terminator.
-static int plainify(const char* s, char** strip)
+static int32 plainify(const char* s, char** strip)
 {
-    int visible_len = 0;
+    int32 visible_len = 0;
 
     // TODO:  This does not handle BEL, OSC title codes, or envvar substitution.
     // Use ecma48_processor() if that becomes necessary, but then s cannot be
@@ -52,13 +52,13 @@ static int plainify(const char* s, char** strip)
         if (code.get_type() == ecma48_code::type_chars)
         {
             str_iter inner_iter(code.get_pointer(), code.get_length());
-            while (int c = inner_iter.next())
+            while (int32 c = inner_iter.next())
                 visible_len += clink_wcwidth(c);
 
             if (strip)
             {
                 const char *ptr = code.get_pointer();
-                for (int i = code.get_length(); i--;)
+                for (int32 i = code.get_length(); i--;)
                     *(plain++) = *(ptr++);
             }
         }
@@ -92,7 +92,7 @@ size_t calc_packed_size(const char* match, const char* display, const char* desc
 bool pack_match(char* buffer, size_t packed_size,
                 const char* match, match_type type,
                 const char* display, const char* description,
-                char append_char, unsigned char flags,
+                char append_char, uint8 flags,
                 match_display_filter_entry* entry,
                 bool strip_markup, bool lcd)
 {
@@ -235,7 +235,7 @@ bool matches_lookaside::add(const char* match)
     size_t len = strlen(match) + 1;
     extra->type = static_cast<match_type>(match[len++]);
     extra->append_char = match[len++];
-    extra->flags = static_cast<unsigned char>(match[len++]);
+    extra->flags = uint8(match[len++]);
 #ifdef DEBUG
     const bool is_magic = (strnicmp(match + len, ":LA:", 4) == 0);
     assert(is_magic);
@@ -271,7 +271,7 @@ assert(false);
 }
 
 //------------------------------------------------------------------------------
-int create_matches_lookaside(char** matches)
+int32 create_matches_lookaside(char** matches)
 {
     // Bail if no list.
     // Ignore lcd (the [0] entry).
@@ -292,7 +292,7 @@ int create_matches_lookaside(char** matches)
 }
 
 //------------------------------------------------------------------------------
-int destroy_matches_lookaside(char** matches)
+int32 destroy_matches_lookaside(char** matches)
 {
     if (!matches)
         return false;
@@ -312,7 +312,7 @@ int destroy_matches_lookaside(char** matches)
 }
 
 //------------------------------------------------------------------------------
-void set_matches_lookaside_oneoff(const char* match, match_type type, char append_char, unsigned char flags)
+void set_matches_lookaside_oneoff(const char* match, match_type type, char append_char, uint8 flags)
 {
     s_match = match;
     s_extra.type = type;
@@ -330,10 +330,10 @@ void clear_matches_lookaside_oneoff()
 
 
 //------------------------------------------------------------------------------
-extern "C" int lookup_match_type(const char* match)
+extern "C" int32 lookup_match_type(const char* match)
 {
     match_details details = lookup_match(match);
-    return static_cast<int>(details.get_type());
+    return int32(details.get_type());
 }
 
 //------------------------------------------------------------------------------
@@ -341,7 +341,7 @@ extern "C" void override_match_append(const char* match)
 {
     match_details details = lookup_match(match);
     if (details.get_append_char())
-        rl_completion_append_character = (unsigned char)details.get_append_char();
+        rl_completion_append_character = uint8(details.get_append_char());
     if (details.get_flags() & MATCH_FLAG_HAS_SUPPRESS_APPEND)
         rl_completion_suppress_append = !!(details.get_flags() & MATCH_FLAG_SUPPRESS_APPEND);
     if (rl_filename_completion_desired)
@@ -349,7 +349,7 @@ extern "C" void override_match_append(const char* match)
 }
 
 //------------------------------------------------------------------------------
-extern "C" unsigned char lookup_match_flags(const char* match)
+extern "C" uint8 lookup_match_flags(const char* match)
 {
     match_details details = lookup_match(match);
     return details.get_flags();
@@ -371,7 +371,7 @@ extern "C" const char* lookup_match_description(const char* match)
 
 //------------------------------------------------------------------------------
 #ifdef DEBUG
-extern "C" int has_matches_lookaside(char** matches)
+extern "C" int32 has_matches_lookaside(char** matches)
 {
     if (matches)
     {

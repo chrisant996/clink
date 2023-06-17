@@ -16,4 +16,4 @@ enum SCRMODE
     SCR_TOEND,
     SCR_ABSOLUTE,
 };
-int ScrollConsoleRelative(HANDLE h, int direction, SCRMODE mode);
+int32 ScrollConsoleRelative(HANDLE h, int32 direction, SCRMODE mode);

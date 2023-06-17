@@ -34,9 +34,9 @@ public:
                     doskey(const wchar_t* shell_name);
     bool            add_alias(const char* alias, const char* text);
     bool            remove_alias(const char* alias);
-    void            resolve(const char* chars, doskey_alias& out, int* point=nullptr);
+    void            resolve(const char* chars, doskey_alias& out, int32* point=nullptr);
 
 private:
-    bool            resolve_impl(str_iter& s, class str_stream& out, int* point);
+    bool            resolve_impl(str_iter& s, class str_stream& out, int32* point);
     wstr<16>        m_shell_name;
 };

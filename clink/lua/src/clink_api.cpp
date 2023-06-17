@@ -43,11 +43,11 @@ extern "C" {
 
 
 //------------------------------------------------------------------------------
-extern int force_reload_scripts();
+extern int32 force_reload_scripts();
 extern void host_signal_delayed_init();
 extern void host_mark_deprecated_argmatcher(const char* name);
 extern void set_suggestion_started(const char* line);
-extern void set_suggestion(const char* line, unsigned int endword_offset, const char* suggestion, unsigned int offset);
+extern void set_suggestion(const char* line, uint32 endword_offset, const char* suggestion, uint32 offset);
 extern void set_refilter_after_resize(bool refilter);
 extern const char* get_popup_colors();
 extern const char* get_popup_desc_colors();
@@ -60,7 +60,7 @@ static const char c_uninstall_key[] = "SOFTWARE\\Microsoft\\Windows\\CurrentVers
 #endif
 
 #ifdef TRACK_LOADED_LUA_FILES
-extern "C" int is_lua_file_loaded(lua_State* state, const char* filename);
+extern "C" int32 is_lua_file_loaded(lua_State* state, const char* filename);
 #endif
 
 //------------------------------------------------------------------------------
@@ -94,18 +94,18 @@ extern "C" int is_lua_file_loaded(lua_State* state, const char* filename);
 /// -show:  clink.print("hello", NONL)
 /// -show:  clink.print("world")
 /// -show:  -- Outputs "helloworld".
-static int clink_print(lua_State* state)
+static int32 clink_print(lua_State* state)
 {
     str<> out;
     bool nl = true;
     bool err = false;
 
-    int n = lua_gettop(state);              // Number of arguments.
+    int32 n = lua_gettop(state);            // Number of arguments.
     lua_getglobal(state, "NONL");           // Special value `NONL`.
     lua_getglobal(state, "tostring");       // Function to convert to string (reused each loop iteration).
 
-    int printed = 0;
-    for (int i = 1; i <= n; i++)
+    int32 printed = 0;
+    for (int32 i = 1; i <= n; i++)
     {
         // Check for magic `NONL` value.
         if (lua_compare(state, -2, i, LUA_OPEQ))
@@ -142,7 +142,7 @@ static int clink_print(lua_State* state)
             out << "\t";
 
         // Add string result to the output.
-        out.concat(s, int(l));
+        out.concat(s, int32(l));
     }
 
     if (g_printer)
@@ -214,10 +214,10 @@ extern "C" {
 #include <readline/rlprivate.h>
 }
 
-extern int              get_clink_setting(lua_State* state);
-extern int              glob_impl(lua_State* state, bool dirs_only, bool back_compat);
-extern int              lua_execute(lua_State* state);
-extern int              get_screen_info_impl(lua_State* state, bool back_compat);
+extern int32 get_clink_setting(lua_State* state);
+extern int32 glob_impl(lua_State* state, bool dirs_only, bool back_compat);
+extern int32 lua_execute(lua_State* state);
+extern int32 get_screen_info_impl(lua_State* state, bool back_compat);
 
 //------------------------------------------------------------------------------
 /// -name:  clink.get_console_aliases
@@ -243,7 +243,7 @@ extern int              get_screen_info_impl(lua_State* state, bool back_compat)
 /// The <span class="arg">case_map</span> argument is ignored, because match
 /// generators are no longer responsible for filtering matches.  The match
 /// pipeline itself handles that internally now.
-int old_glob_dirs(lua_State* state)
+int32 old_glob_dirs(lua_State* state)
 {
     return glob_impl(state, true, true/*back_compat*/);
 }
@@ -256,7 +256,7 @@ int old_glob_dirs(lua_State* state)
 /// The <span class="arg">case_map</span> argument is ignored, because match
 /// generators are no longer responsible for filtering matches.  The match
 /// pipeline itself handles that internally now.
-int old_glob_files(lua_State* state)
+int32 old_glob_files(lua_State* state)
 {
     return glob_impl(state, false, true/*back_compat*/);
 }
@@ -264,7 +264,7 @@ int old_glob_files(lua_State* state)
 //------------------------------------------------------------------------------
 /// -name:  clink.get_setting_str
 /// -deprecated: settings.get
-static int get_setting_str(lua_State* state)
+static int32 get_setting_str(lua_State* state)
 {
     return get_clink_setting(state);
 }
@@ -272,7 +272,7 @@ static int get_setting_str(lua_State* state)
 //------------------------------------------------------------------------------
 /// -name:  clink.get_setting_int
 /// -deprecated: settings.get
-static int get_setting_int(lua_State* state)
+static int32 get_setting_int(lua_State* state)
 {
     return get_clink_setting(state);
 }
@@ -284,7 +284,7 @@ static int get_setting_int(lua_State* state)
 //------------------------------------------------------------------------------
 /// -name:  clink.get_rl_variable
 /// -deprecated: rl.getvariable
-static int get_rl_variable(lua_State* state)
+static int32 get_rl_variable(lua_State* state)
 {
     // Check we've got at least one string argument.
     if (lua_gettop(state) == 0 || !lua_isstring(state, 1))
@@ -302,9 +302,9 @@ static int get_rl_variable(lua_State* state)
 //------------------------------------------------------------------------------
 /// -name:  clink.is_rl_variable_true
 /// -deprecated: rl.isvariabletrue
-static int is_rl_variable_true(lua_State* state)
+static int32 is_rl_variable_true(lua_State* state)
 {
-    int i;
+    int32 i;
     const char* cvar_value;
 
     i = get_rl_variable(state);
@@ -326,7 +326,7 @@ static int is_rl_variable_true(lua_State* state)
 /// -deprecated:
 /// Always returns "clink"; this corresponds to the "clink" word in the
 /// <code>$if clink</code> directives in Readline's .inputrc file.
-static int get_host_process(lua_State* state)
+static int32 get_host_process(lua_State* state)
 {
     lua_pushstring(state, rl_readline_name);
     return 1;
@@ -338,7 +338,7 @@ static int get_host_process(lua_State* state)
 /// <strong>Note:</strong> The field names are different between
 /// <code>os.getscreeninfo()</code> and the v0.4.9 implementation of
 /// <code>clink.get_screen_info</code>.
-static int get_screen_info(lua_State* state)
+static int32 get_screen_info(lua_State* state)
 {
     return get_screen_info_impl(state, true/*back_compat*/);
 }
@@ -350,10 +350,10 @@ static int get_screen_info(lua_State* state)
 
 
 //------------------------------------------------------------------------------
-static int map_string(lua_State* state, transform_mode mode)
+static int32 map_string(lua_State* state, transform_mode mode)
 {
     const char* string;
-    int length;
+    int32 length;
 
     // Check we've got at least one argument...
     if (lua_gettop(state) == 0)
@@ -364,7 +364,7 @@ static int map_string(lua_State* state, transform_mode mode)
         return 0;
 
     string = lua_tostring(state, 1);
-    length = (int)strlen(string);
+    length = (int32)strlen(string);
 
     wstr<> out;
     if (length)
@@ -375,7 +375,7 @@ static int map_string(lua_State* state, transform_mode mode)
 
     if (_rl_completion_case_map)
     {
-        for (unsigned int i = 0; i < out.length(); ++i)
+        for (uint32 i = 0; i < out.length(); ++i)
         {
             if (out[i] == '-' && (mode != transform_mode::upper))
                 out.data()[i] = '_';
@@ -400,7 +400,7 @@ static int map_string(lua_State* state, transform_mode mode)
 /// linguistic awareness.
 /// -show:  clink.lower("Hello World") -- returns "hello world"
 /// -show:  clink.lower("ÁÈÏõû")       -- returns "áèïõû"
-static int to_lowercase(lua_State* state)
+static int32 to_lowercase(lua_State* state)
 {
     return map_string(state, transform_mode::lower);
 }
@@ -414,7 +414,7 @@ static int to_lowercase(lua_State* state)
 /// linguistic awareness.
 /// -show:  clink.upper("Hello World") -- returns "HELLO WORLD"
 /// -show:  clink.lower("áèïÕÛ")       -- returns "ÁÈÏÕÛ"
-static int to_uppercase(lua_State* state)
+static int32 to_uppercase(lua_State* state)
 {
     return map_string(state, transform_mode::upper);
 }
@@ -423,14 +423,14 @@ static int to_uppercase(lua_State* state)
 static struct popup_del_callback_info
 {
     lua_State*      m_state = nullptr;
-    int             m_ref = LUA_REFNIL;
+    int32           m_ref = LUA_REFNIL;
 
     bool empty() const
     {
         return !m_state || m_ref == LUA_REFNIL;
     }
 
-    bool init(lua_State* state, int idx)
+    bool init(lua_State* state, int32 idx)
     {
         assert(!m_state);
         m_ref = luaL_ref(state, LUA_REGISTRYINDEX);
@@ -447,7 +447,7 @@ static struct popup_del_callback_info
         m_ref = LUA_REFNIL;
     }
 
-    bool call(int index)
+    bool call(int32 index)
     {
         if (empty())
             return false;
@@ -460,7 +460,7 @@ static struct popup_del_callback_info
 } s_del_callback_info;
 
 //------------------------------------------------------------------------------
-static bool popup_del_callback(int index)
+static bool popup_del_callback(int32 index)
 {
     return s_del_callback_info.call(index);
 }
@@ -548,7 +548,7 @@ static bool popup_del_callback(int index)
 /// -show:  &nbsp;       selectdesc  = "...",    -- The selected item description color (defaults to selected item color).
 /// -show:  &nbsp;   }
 /// -show:  }
-static int popup_list(lua_State* state)
+static int32 popup_list(lua_State* state)
 {
     if (!lua_state::is_in_luafunc() && !lua_state::is_interpreter())
         return luaL_error(state, "clink.popuplist may only be used in a " LUA_QL("luafunc:") " key binding");
@@ -557,23 +557,23 @@ static int popup_list(lua_State* state)
 
     const char* title = checkstring(state, argTitle);
     const bool has_index = !lua_isnoneornil(state, argIndex);
-    int index = optinteger(state, argIndex, 1) - 1;
+    int32 index = optinteger(state, argIndex, 1) - 1;
     if (!title || !lua_istable(state, argItems))
         return 0;
 
-    int num_items = int(lua_rawlen(state, argItems));
+    int32 num_items = int32(lua_rawlen(state, argItems));
     if (!num_items)
         return 0;
 
 #ifdef DEBUG
-    int top = lua_gettop(state);
+    int32 top = lua_gettop(state);
 #endif
 
     std::vector<autoptr<const char>> free_items;
     std::vector<const char*> items;
     free_items.reserve(num_items);
     items.reserve(num_items);
-    for (int i = 1; i <= num_items; ++i)
+    for (int32 i = 1; i <= num_items; ++i)
     {
         lua_rawgeti(state, argItems, i);
 
@@ -656,7 +656,7 @@ static int popup_list(lua_State* state)
     lua_rawget(state, argItems);
     if (lua_isnumber(state, -1))
     {
-        int n = lua_tointeger(state, -1);
+        int32 n = lua_tointeger(state, -1);
         if (n > 0)
             config.height = n;
     }
@@ -666,7 +666,7 @@ static int popup_list(lua_State* state)
     lua_rawget(state, argItems);
     if (lua_isnumber(state, -1))
     {
-        int n = lua_tointeger(state, -1);
+        int32 n = lua_tointeger(state, -1);
         if (n > 0)
             config.width = n;
     }
@@ -729,7 +729,7 @@ static int popup_list(lua_State* state)
     }
     lua_pop(state, 1);
 
-    const popup_results results = activate_text_list(title, &*items.begin(), int(items.size()), index, true/*has_columns*/, &config);
+    const popup_results results = activate_text_list(title, &*items.begin(), int32(items.size()), index, true/*has_columns*/, &config);
 
     s_del_callback_info.clear();
 
@@ -755,7 +755,7 @@ static int popup_list(lua_State* state)
 /// -show:      items   = "...",    -- The SGR parameters for the items color.
 /// -show:      desc    = "...",    -- The SGR parameters for the description color.
 /// -show:  }
-static int get_popup_list_colors(lua_State* state)
+static int32 get_popup_list_colors(lua_State* state)
 {
     struct table_t {
         const char* name;
@@ -769,7 +769,7 @@ static int get_popup_list_colors(lua_State* state)
             { "desc", get_popup_desc_colors() },
         };
 
-        for (unsigned int i = 0; i < sizeof_array(table); ++i)
+        for (uint32 i = 0; i < sizeof_array(table); ++i)
         {
             const char* value = table[i].value;
             if (value[0] == '0' && value[1] == ';')
@@ -799,7 +799,7 @@ static int get_popup_list_colors(lua_State* state)
 /// calling session.
 /// -show:  local c = os.getalias("clink")
 /// -show:  local r = io.popen(c.." --session "..clink.getsession().." history")
-static int get_session(lua_State* state)
+static int32 get_session(lua_State* state)
 {
     str<32> session;
     session.format("%d", GetCurrentProcessId());
@@ -845,7 +845,7 @@ static int get_session(lua_State* state)
 ///     console support in Windows, or it might be handled by a terminal replacement that Clink
 ///     wasn't able to detect.</td></tr>
 /// </table>
-static int get_ansi_host(lua_State* state)
+static int32 get_ansi_host(lua_State* state)
 {
     static const char* const s_handlers[] =
     {
@@ -910,10 +910,10 @@ static int get_ansi_host(lua_State* state)
 /// -show:  &nbsp;   clink.translateslashes(2)  -- Convert to slashes.
 /// -show:  &nbsp;   return false               -- Allow generators to continue.
 /// -show:  end
-static int translate_slashes(lua_State* state)
+static int32 translate_slashes(lua_State* state)
 {
-    extern void set_slash_translation(int mode);
-    extern int get_slash_translation();
+    extern void set_slash_translation(int32 mode);
+    extern int32 get_slash_translation();
 
     if (lua_isnoneornil(state, 1))
     {
@@ -922,7 +922,7 @@ static int translate_slashes(lua_State* state)
     }
 
     bool isnum;
-    int mode = checkinteger(state, 1, &isnum);
+    int32 mode = checkinteger(state, 1, &isnum);
     if (!isnum)
         return 0;
 
@@ -944,7 +944,7 @@ static int translate_slashes(lua_State* state)
 /// <li>0 - to backslashes</li>
 /// <li>1 - to forward slashes</li>
 /// </ul>
-static int slash_translation(lua_State* state)
+static int32 slash_translation(lua_State* state)
 {
     if (lua_gettop(state) == 0)
         return 0;
@@ -952,13 +952,13 @@ static int slash_translation(lua_State* state)
     if (!lua_isnumber(state, 1))
         return 0;
 
-    int mode = int(lua_tointeger(state, 1));
+    int32 mode = int32(lua_tointeger(state, 1));
     if (mode < 0)           mode = 0;
     else if (mode == 0)     mode = 3;
     else if (mode == 1)     mode = 2;
     else                    mode = 1;
 
-    extern void set_slash_translation(int mode);
+    extern void set_slash_translation(int32 mode);
     set_slash_translation(mode);
     return 0;
 }
@@ -967,7 +967,7 @@ static int slash_translation(lua_State* state)
 /// -name:  clink.reload
 /// -ver:   1.2.29
 /// Reloads Lua scripts and Readline config file at the next prompt.
-static int reload(lua_State* state)
+static int32 reload(lua_State* state)
 {
     force_reload_scripts();
     return 0;
@@ -977,7 +977,7 @@ static int reload(lua_State* state)
 /// -name:  clink.reclassifyline
 /// -ver:   1.3.9
 /// Reclassify the input line text again and refresh the input line display.
-static int reclassify_line(lua_State* state)
+static int32 reclassify_line(lua_State* state)
 {
     const bool ismain = (G(state)->mainthread == state);
     if (ismain)
@@ -994,8 +994,8 @@ static int reclassify_line(lua_State* state)
 ///
 /// Note: this can potentially be expensive; call this only infrequently.
 extern bool g_filtering_in_progress;
-int g_prompt_refilter = 0;
-static int refilter_prompt(lua_State* state)
+int32 g_prompt_refilter = 0;
+static int32 refilter_prompt(lua_State* state)
 {
     if (g_filtering_in_progress)
         return luaL_error(state, "clink.refilterprompt may not be used within a prompt filter.");
@@ -1026,7 +1026,7 @@ static int refilter_prompt(lua_State* state)
 /// cause responsiveness problems.  Also, if the terminal is resized again while
 /// the prompt filters are being rerun, then the terminal display may become
 /// garbled.
-static int refilter_after_terminal_resize(lua_State* state)
+static int32 refilter_after_terminal_resize(lua_State* state)
 {
     bool refilter = true;
     if (!lua_isnoneornil(state, 1))
@@ -1049,7 +1049,7 @@ static int refilter_after_terminal_resize(lua_State* state)
 /// -show:  local commands = clink.parseline("echo hello & echo world")
 /// -show:  -- commands[1].line_state corresponds to "echo hello".
 /// -show:  -- commands[2].line_state corresponds to "echo world".
-static int parse_line(lua_State* state)
+static int32 parse_line(lua_State* state)
 {
     const char* line = checkstring(state, 1);
     if (!line)
@@ -1064,7 +1064,7 @@ static int parse_line(lua_State* state)
 
     // Collect words from the whole line.
     std::vector<word> tmp_words;
-    unsigned int len = static_cast<unsigned int>(strlen(line));
+    uint32 len = uint32(strlen(line));
     collector.collect_words(line, len, 0, tmp_words, collect_words_mode::whole_command);
 
     // Group words into one line_state per command.
@@ -1079,8 +1079,8 @@ static int parse_line(lua_State* state)
 
 //------------------------------------------------------------------------------
 // UNDOCUMENTED; internal use only.
-int g_prompt_redisplay = 0;
-static int get_refilter_redisplay_count(lua_State* state)
+int32 g_prompt_redisplay = 0;
+static int32 get_refilter_redisplay_count(lua_State* state)
 {
     lua_pushinteger(state, g_prompt_refilter);
     lua_pushinteger(state, g_prompt_redisplay);
@@ -1089,7 +1089,7 @@ static int get_refilter_redisplay_count(lua_State* state)
 
 //------------------------------------------------------------------------------
 // UNDOCUMENTED; internal use only.
-static int is_transient_prompt_filter(lua_State* state)
+static int32 is_transient_prompt_filter(lua_State* state)
 {
     lua_pushboolean(state, prompt_filter::is_filtering());
     return 1;
@@ -1097,10 +1097,10 @@ static int is_transient_prompt_filter(lua_State* state)
 
 //------------------------------------------------------------------------------
 // UNDOCUMENTED; internal use only.
-static int history_suggester(lua_State* state)
+static int32 history_suggester(lua_State* state)
 {
     const char* line = checkstring(state, 1);
-    const int match_prev_cmd = lua_toboolean(state, 2);
+    const int32 match_prev_cmd = lua_toboolean(state, 2);
     if (!line)
         return 0;
 
@@ -1112,14 +1112,14 @@ static int history_suggester(lua_State* state)
     if (match_prev_cmd && g_dupe_mode.get() != 0)
         return 0;
 
-    int scanned = 0;
+    int32 scanned = 0;
     const DWORD tick = GetTickCount();
 
-    const int scan_min = 200;
+    const int32 scan_min = 200;
     const DWORD ms_max = 50;
 
     const char* prev_cmd = (match_prev_cmd && history_length > 0) ? history[history_length - 1]->line : nullptr;
-    for (int i = history_length; --i >= 0;)
+    for (int32 i = history_length; --i >= 0;)
     {
         // Search at least SCAN_MIN entries.  But after that don't keep going
         // unless it's been less than MS_MAX milliseconds.
@@ -1129,7 +1129,7 @@ static int history_suggester(lua_State* state)
 
         str_iter lhs(line);
         str_iter rhs(history[i]->line);
-        int matchlen = str_compare<char, false/*compute_lcd*/, true/*exact_slash*/>(lhs, rhs);
+        int32 matchlen = str_compare<char, false/*compute_lcd*/, true/*exact_slash*/>(lhs, rhs);
 
         // lhs isn't exhausted, or rhs is exhausted?  Continue searching.
         if (lhs.more() || !rhs.more())
@@ -1158,7 +1158,7 @@ static int history_suggester(lua_State* state)
 
 //------------------------------------------------------------------------------
 // UNDOCUMENTED; internal use only.
-static int set_suggestion_started(lua_State* state)
+static int32 set_suggestion_started(lua_State* state)
 {
     const char* line = checkstring(state, 1);
     if (!line)
@@ -1170,20 +1170,20 @@ static int set_suggestion_started(lua_State* state)
 
 //------------------------------------------------------------------------------
 // UNDOCUMENTED; internal use only.
-static int set_suggestion_result(lua_State* state)
+static int32 set_suggestion_result(lua_State* state)
 {
     bool isnum;
     const char* line = checkstring(state, 1);
-    int endword_offset = checkinteger(state, 2, &isnum) - 1;
+    int32 endword_offset = checkinteger(state, 2, &isnum) - 1;
     if (!line || !isnum)
         return 0;
 
-    const int line_len = strlen(line);
+    const int32 line_len = strlen(line);
     if (endword_offset < 0 || endword_offset > line_len)
         return 0;
 
     const char* suggestion = optstring(state, 3, nullptr);
-    int offset = optinteger(state, 4, 0, &isnum) - 1;
+    int32 offset = optinteger(state, 4, 0, &isnum) - 1;
     if (!isnum || offset < 0 || offset > line_len)
         offset = line_len;
 
@@ -1193,7 +1193,7 @@ static int set_suggestion_result(lua_State* state)
 
 //------------------------------------------------------------------------------
 // UNDOCUMENTED; internal use only.
-static int kick_idle(lua_State* state)
+static int32 kick_idle(lua_State* state)
 {
     extern void kick_idle();
     kick_idle();
@@ -1202,7 +1202,7 @@ static int kick_idle(lua_State* state)
 
 //------------------------------------------------------------------------------
 // UNDOCUMENTED; internal use only.
-static int recognize_command(lua_State* state)
+static int32 recognize_command(lua_State* state)
 {
     const char* line = checkstring(state, 1);
     const char* word = checkstring(state, 2);
@@ -1214,12 +1214,12 @@ static int recognize_command(lua_State* state)
 
     bool ready;
     const recognition recognized = recognize_command(line, word, quoted, ready, nullptr/*file*/);
-    lua_pushinteger(state, int(recognized));
+    lua_pushinteger(state, int32(recognized));
     return 1;
 }
 
 //------------------------------------------------------------------------------
-static str_unordered_map<int> s_cached_path_type;
+static str_unordered_map<int32> s_cached_path_type;
 static linear_allocator s_cached_path_store(2048);
 static std::recursive_mutex s_cached_path_type_mutex;
 void clear_path_type_cache()
@@ -1228,16 +1228,16 @@ void clear_path_type_cache()
     s_cached_path_type.clear();
     s_cached_path_store.clear();
 }
-void add_cached_path_type(const char* full, int type)
+void add_cached_path_type(const char* full, int32 type)
 {
     std::lock_guard<std::recursive_mutex> lock(s_cached_path_type_mutex);
     dbg_ignore_scope(snapshot, "add_cached_path_type");
-    unsigned int size = static_cast<unsigned int>(strlen(full) + 1);
+    uint32 size = uint32(strlen(full) + 1);
     char* key = static_cast<char*>(s_cached_path_store.alloc(size));
     memcpy(key, full, size);
     s_cached_path_type.emplace(key, type);
 }
-bool get_cached_path_type(const char* full, int& type)
+bool get_cached_path_type(const char* full, int32& type)
 {
     std::lock_guard<std::recursive_mutex> lock(s_cached_path_type_mutex);
     const auto& iter = s_cached_path_type.find(full);
@@ -1256,7 +1256,7 @@ public:
     , m_path(path)
     {}
 
-    int get_path_type() const { return m_type; }
+    int32 get_path_type() const { return m_type; }
 
 protected:
     void do_work() override
@@ -1267,22 +1267,22 @@ protected:
 
 private:
     str_moveable m_path;
-    int m_type = os::path_type_invalid;
+    int32 m_type = os::path_type_invalid;
 };
 
 //------------------------------------------------------------------------------
 // UNDOCUMENTED; internal use only.
-static int async_path_type(lua_State* state)
+static int32 async_path_type(lua_State* state)
 {
     const char* path = checkstring(state, 1);
-    int timeout = optinteger(state, 2, 0);
+    int32 timeout = optinteger(state, 2, 0);
     if (!path || !*path)
         return 0;
 
     str<280> full;
     os::get_full_path_name(path, full);
 
-    int type;
+    int32 type;
     if (!get_cached_path_type(full.c_str(), type))
     {
         str_moveable key;
@@ -1298,7 +1298,7 @@ static int async_path_type(lua_State* state)
             if (task && lua_isfunction(state, 3))
             {
                 lua_pushvalue(state, 3);
-                int ref = luaL_ref(state, LUA_REGISTRYINDEX);
+                int32 ref = luaL_ref(state, LUA_REGISTRYINDEX);
                 task->set_callback(std::make_shared<callback_ref>(ref));
             }
 
@@ -1386,10 +1386,10 @@ static int async_path_type(lua_State* state)
 /// When the background thread finishes analyzing the word, Clink automatically
 /// redisplays the input line, giving classifiers a chance to call this function
 /// again and get the final <span class="arg">word_class</span> result.
-static int api_recognize_command(lua_State* state)
+static int32 api_recognize_command(lua_State* state)
 {
-    int iword = lua_isstring(state, 2) ? 2 : 1;
-    int iline = iword - 1;
+    int32 iword = lua_isstring(state, 2) ? 2 : 1;
+    int32 iline = iword - 1;
     const char* line = (iline < 1 || lua_isnil(state, iline)) ? "" : checkstring(state, iline);
     const char* word = checkstring(state, iword);
     const bool quoted = lua_toboolean(state, iword + 1);
@@ -1403,9 +1403,9 @@ static int api_recognize_command(lua_State* state)
     const recognition recognized = recognize_command(line, word, quoted, ready, &file);
 
     char cl = 'o';
-    if (int(recognized) < 0)
+    if (int32(recognized) < 0)
         cl = 'u';
-    else if (int(recognized) > 0)
+    else if (int32(recognized) > 0)
         cl = 'x';
     lua_pushlstring(state, &cl, 1);
     lua_pushboolean(state, ready);
@@ -1417,7 +1417,7 @@ static int api_recognize_command(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-static int generate_from_history(lua_State* state)
+static int32 generate_from_history(lua_State* state)
 {
     HIST_ENTRY** list = history_list();
     if (!list)
@@ -1437,7 +1437,7 @@ static int generate_from_history(lua_State* state)
     while (*list)
     {
         const char* buffer = (*list)->line;
-        unsigned int len = static_cast<unsigned int>(strlen(buffer));
+        uint32 len = uint32(strlen(buffer));
 
         // Collect one line_state for each command in the line.
         std::vector<word> words;
@@ -1465,7 +1465,7 @@ static int generate_from_history(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-static int api_reset_generate_matches(lua_State* state)
+static int32 api_reset_generate_matches(lua_State* state)
 {
     extern void reset_generate_matches();
     reset_generate_matches();
@@ -1473,7 +1473,7 @@ static int api_reset_generate_matches(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-static int mark_deprecated_argmatcher(lua_State* state)
+static int32 mark_deprecated_argmatcher(lua_State* state)
 {
     const char* name = checkstring(state, 1);
     if (name)
@@ -1482,14 +1482,14 @@ static int mark_deprecated_argmatcher(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-static int signal_delayed_init(lua_State* state)
+static int32 signal_delayed_init(lua_State* state)
 {
     lua_input_idle::signal_delayed_init();
     return 0;
 }
 
 //------------------------------------------------------------------------------
-static int is_cmd_command(lua_State* state)
+static int32 is_cmd_command(lua_State* state)
 {
     const char* word = checkstring(state, 1);
     if (!word)
@@ -1500,7 +1500,7 @@ static int is_cmd_command(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-static int get_installation_type(lua_State* state)
+static int32 get_installation_type(lua_State* state)
 {
     // Open the Uninstall key.
 
@@ -1590,7 +1590,7 @@ failed:
 }
 
 //------------------------------------------------------------------------------
-static int set_install_version(lua_State* state)
+static int32 set_install_version(lua_State* state)
 {
     const char* key = checkstring(state, 1);
     const char* ver = checkstring(state, 2);
@@ -1626,7 +1626,7 @@ static int set_install_version(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-static int expand_prompt_codes(lua_State* state)
+static int32 expand_prompt_codes(lua_State* state)
 {
     const char* in = checkstring(state, 1);
     const bool rprompt = lua_toboolean(state, 2);
@@ -1642,7 +1642,7 @@ static int expand_prompt_codes(lua_State* state)
 
 //------------------------------------------------------------------------------
 #if defined(DEBUG) && defined(_MSC_VER)
-static int last_allocation_number(lua_State* state)
+static int32 last_allocation_number(lua_State* state)
 {
     lua_pushinteger(state, dbggetallocnumber());
     return 1;
@@ -1651,13 +1651,13 @@ static int last_allocation_number(lua_State* state)
 
 //------------------------------------------------------------------------------
 #ifdef TRACK_LOADED_LUA_FILES
-static int clink_is_lua_file_loaded(lua_State* state)
+static int32 clink_is_lua_file_loaded(lua_State* state)
 {
     const char* filename = checkstring(state, 1);
     if (!filename)
         return 0;
 
-    int loaded = is_lua_file_loaded(state, filename);
+    int32 loaded = is_lua_file_loaded(state, filename);
     lua_pushboolean(state, loaded);
     return 1;
 }
@@ -1672,7 +1672,7 @@ static int clink_is_lua_file_loaded(lua_State* state)
 // There's very little value in this niche mode, and the cost and compatibility
 // conflicts make it not worth pursing further.
 #ifdef CLINK_USE_LUA_EDITOR_TESTER
-static int run_editor_test(lua_State* state)
+static int32 run_editor_test(lua_State* state)
 {
     // Arg 1 is input line text.
     const char* input = checkstring(state, 1);
@@ -1705,8 +1705,8 @@ static int run_editor_test(lua_State* state)
     if (lua_istable(state, -1))
     {
         std::vector<str_moveable> matches;
-        const int len = int(lua_rawlen(state, -1));
-        for (int idx = 1; idx <= len; ++idx)
+        const int32 len = int32(lua_rawlen(state, -1));
+        for (int32 idx = 1; idx <= len; ++idx)
         {
             lua_rawgeti(state, -1, idx);
             if (const char* s = lua_tostring(state, -1))
@@ -1739,13 +1739,13 @@ static int run_editor_test(lua_State* state)
 
 
 //------------------------------------------------------------------------------
-extern int set_current_dir(lua_State* state);
-extern int get_aliases(lua_State* state);
-extern int get_current_dir(lua_State* state);
-extern int get_env(lua_State* state);
-extern int get_env_names(lua_State* state);
-extern int is_dir(lua_State* state);
-extern int explode(lua_State* state);
+extern int32 set_current_dir(lua_State* state);
+extern int32 get_aliases(lua_State* state);
+extern int32 get_current_dir(lua_State* state);
+extern int32 get_env(lua_State* state);
+extern int32 get_env_names(lua_State* state);
+extern int32 is_dir(lua_State* state);
+extern int32 explode(lua_State* state);
 
 //------------------------------------------------------------------------------
 void clink_lua_initialise(lua_state& lua, bool lua_interpreter)
@@ -1753,7 +1753,7 @@ void clink_lua_initialise(lua_state& lua, bool lua_interpreter)
     struct method_def {
         bool        always;
         const char* name;
-        int         (*method)(lua_State*);
+        int32       (*method)(lua_State*);
     };
 
     static const method_def methods[] = {

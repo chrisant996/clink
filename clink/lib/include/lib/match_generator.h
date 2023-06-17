@@ -15,8 +15,8 @@ struct word_break_info
                     word_break_info() { clear(); }
     void            clear() { truncate = 0; keep = 0; }
 
-    int             truncate : 16;
-    int             keep : 16;
+    int32           truncate : 16;
+    int32           keep : 16;
 };
 
 //------------------------------------------------------------------------------

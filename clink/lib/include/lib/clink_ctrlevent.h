@@ -4,6 +4,6 @@
 void clink_install_ctrlevent();
 void clink_shutdown_ctrlevent();
 
-int clink_is_signaled();
+int32 clink_is_signaled();
 
-void clink_set_signaled(int sig);   // SIGINT, etc.
+void clink_set_signaled(int32 sig);   // SIGINT, etc.

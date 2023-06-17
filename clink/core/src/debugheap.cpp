@@ -46,8 +46,8 @@ struct mem_tracking
 
     size_t                  m_alloc_number;
     size_t                  m_requested_size;
-    unsigned int            m_count_realloc;
-    unsigned int            m_flags;
+    uint32                  m_count_realloc;
+    uint32                  m_flags;
     DWORD                   m_thread;
 
 #ifdef INCLUDE_CALLSTACKS
@@ -99,7 +99,7 @@ DECLALLOCATOR DECLRESTRICT void* __cdecl _aligned_recalloc(void* pv, size_t coun
 //  libucrtd.lib(expand.obj) : error LNK2005: _expand already defined in clink_core_x64.lib(debugheap.obj)
 //  libucrtd.lib(new_handler.obj) : error LNK2005: _callnewh already defined in clink_core_x64.lib(debugheap.obj)
 //  bin\debug\clink_test_x64.exe : fatal error LNK1169: one or more multiply defined symbols found
-int __cdecl _callnewh(size_t size) { DebugBreak(); return 0; }
+int32 __cdecl _callnewh(size_t size) { DebugBreak(); return 0; }
 DECLALLOCATOR void* __cdecl _expand(void* pv, size_t size) { DebugBreak(); return nullptr; }
 #endif
 
@@ -141,9 +141,9 @@ namespace debugheap
 {
 
 #ifdef INCLUDE_CALLSTACKS
-int const MAX_STACK_STRING_LENGTH = MAX_FRAME_LEN * MAX_STACK_DEPTH;
+int32 const MAX_STACK_STRING_LENGTH = MAX_FRAME_LEN * MAX_STACK_DEPTH;
 #else
-int const MAX_STACK_STRING_LENGTH = 1;
+int32 const MAX_STACK_STRING_LENGTH = 1;
 #endif
 
 struct config
@@ -514,12 +514,12 @@ extern "C" void dbgsetsanealloc(size_t max_alloc, size_t max_realloc, const size
     config.sane_alloc_exceptions = exceptions;
 }
 
-extern "C" void* dbgalloc_(size_t size, unsigned int flags)
+extern "C" void* dbgalloc_(size_t size, uint32 flags)
 {
 #ifdef INCLUDE_CALLSTACKS
     DWORD hash;
     void* stack[MAX_STACK_DEPTH];
-    const int skip = 1 + !!(flags & memSkipOneFrame) + !!(flags &memSkipAnotherFrame);
+    const int32 skip = 1 + !!(flags & memSkipOneFrame) + !!(flags &memSkipAnotherFrame);
     size_t const levels = (flags & memNoStack) ? 0 : get_callstack_frames(skip, _countof(stack), stack, &hash);
 #endif
 
@@ -570,7 +570,7 @@ extern "C" void* dbgalloc_(size_t size, unsigned int flags)
     return p->to_pv();
 }
 
-void* dbgrealloc_(void* pv, size_t size, unsigned int flags)
+void* dbgrealloc_(void* pv, size_t size, uint32 flags)
 {
     if (!size)
     {
@@ -584,7 +584,7 @@ void* dbgrealloc_(void* pv, size_t size, unsigned int flags)
 #ifdef INCLUDE_CALLSTACKS
     DWORD hash;
     void* stack[MAX_STACK_DEPTH];
-    const int skip = 1 + !!(flags & memSkipOneFrame) + !!(flags &memSkipAnotherFrame);
+    const int32 skip = 1 + !!(flags & memSkipOneFrame) + !!(flags &memSkipAnotherFrame);
     size_t levels = get_callstack_frames(skip, _countof(stack), stack, &hash);
     if (levels < _countof(stack))
     {
@@ -648,7 +648,7 @@ void* dbgrealloc_(void* pv, size_t size, unsigned int flags)
     return p->to_pv();
 }
 
-void dbgfree_(void* pv, unsigned int type)
+void dbgfree_(void* pv, uint32 type)
 {
     if (!pv)
         return;
@@ -821,7 +821,7 @@ static void reset_checker()
     config.reference_tag = nullptr;
 }
 
-extern "C" void dbgsetlabel(const void* pv, char const* label, int copy)
+extern "C" void dbgsetlabel(const void* pv, char const* label, int32 copy)
 {
     auto_lock lock;
 
@@ -848,7 +848,7 @@ extern "C" void dbgverifylabel(const void* pv, char const* label)
         assert(strcmp(label, p->get_label()) == 0);
 }
 
-extern "C" void dbgsetignore(const void* pv, int ignore)
+extern "C" void dbgsetignore(const void* pv, int32 ignore)
 {
     auto_lock lock;
 
@@ -886,7 +886,7 @@ extern "C" void dbgcheck()
     dbgchecksince(0);
 }
 
-extern "C" void dbgchecksince(size_t alloc_number, int include_all)
+extern "C" void dbgchecksince(size_t alloc_number, int32 include_all)
 {
     auto_lock lock;
 
@@ -904,7 +904,7 @@ extern "C" void dbgchecksince(size_t alloc_number, int include_all)
     reset_checker();
 }
 
-extern "C" size_t dbgignoresince(size_t alloc_number, size_t* total_bytes, char const* label, int all_threads)
+extern "C" size_t dbgignoresince(size_t alloc_number, size_t* total_bytes, char const* label, int32 all_threads)
 {
     auto_lock lock;
     auto& config = get_config();

@@ -122,9 +122,9 @@ match_builder_lua::~match_builder_lua()
 /// -show:  builder:addmatch({ match="foo.cpp", type="file" })
 /// -show:  builder:addmatch({ match="bar", type="dir" })
 /// -show:  builder:addmatch({ match=".git", type="dir,hidden" })
-int match_builder_lua::add_match(lua_State* state)
+int32 match_builder_lua::add_match(lua_State* state)
 {
-    int ret = 0;
+    int32 ret = 0;
     if (lua_gettop(state) > 0)
     {
         const char* type_str = optstring(state, 2, "");
@@ -145,7 +145,7 @@ int match_builder_lua::add_match(lua_State* state)
 /// -ret:   boolean
 /// Returns whether the match builder is empty.  It is empty when no matches
 /// have been added yet.
-int match_builder_lua::is_empty(lua_State* state)
+int32 match_builder_lua::is_empty(lua_State* state)
 {
     lua_pushboolean(state, m_builder->is_empty());
     return 1;
@@ -159,7 +159,7 @@ int match_builder_lua::is_empty(lua_State* state)
 /// match generator uses this to append "=" when completing matches, so that
 /// completing <code>set USER</code> becomes <code>set USERDOMAIN=</code>
 /// (rather than <code>set USERDOMAIN&nbsp;</code>).
-int match_builder_lua::set_append_character(lua_State* state)
+int32 match_builder_lua::set_append_character(lua_State* state)
 {
     const char* append = optstring(state, 1, "");
     if (!append)
@@ -176,7 +176,7 @@ int match_builder_lua::set_append_character(lua_State* state)
 /// -arg:   [state:boolean]
 /// Sets whether to suppress appending anything after the match except a
 /// possible closing quote.  For example the env var match generator uses this.
-int match_builder_lua::set_suppress_append(lua_State* state)
+int32 match_builder_lua::set_suppress_append(lua_State* state)
 {
     bool suppress = true;
     if (lua_gettop(state) > 0)
@@ -195,12 +195,12 @@ int match_builder_lua::set_suppress_append(lua_State* state)
 /// quoting, or 1 to suppress quoting, or 2 to suppress end quotes.  For example
 /// the env var match generator sets this to 1 to overcome the quoting that
 /// would normally happen for "%" characters in filenames.
-int match_builder_lua::set_suppress_quoting(lua_State* state)
+int32 match_builder_lua::set_suppress_quoting(lua_State* state)
 {
-    int suppress = 1;
+    int32 suppress = 1;
     if (lua_gettop(state) > 0)
     {
-        int i = int(lua_tointeger(state, 1));
+        int32 i = int32(lua_tointeger(state, 1));
         if (i >= 0 && i <= 2)
             suppress = i;
     }
@@ -214,7 +214,7 @@ int match_builder_lua::set_suppress_quoting(lua_State* state)
 /// -name:  builder:setforcequoting
 /// -ver:   1.4.19
 /// Forces quoting rules to be applied to matches even if they aren't filenames.
-int match_builder_lua::set_force_quoting(lua_State* state)
+int32 match_builder_lua::set_force_quoting(lua_State* state)
 {
     m_builder->set_force_quoting();
     return 0;
@@ -224,7 +224,7 @@ int match_builder_lua::set_force_quoting(lua_State* state)
 /// -name:  builder:setnosort
 /// -ver:   1.3.3
 /// Turns off sorting the matches.
-int match_builder_lua::set_no_sort(lua_State* state)
+int32 match_builder_lua::set_no_sort(lua_State* state)
 {
     m_builder->set_no_sort();
     return 0;
@@ -249,7 +249,7 @@ int match_builder_lua::set_no_sort(lua_State* state)
 ///
 /// Making the generated matches volatile ensures matches are generated anew
 /// each time completion is invoked.
-int match_builder_lua::set_volatile(lua_State* state)
+int32 match_builder_lua::set_volatile(lua_State* state)
 {
     m_builder->set_volatile();
     return 0;
@@ -258,7 +258,7 @@ int match_builder_lua::set_volatile(lua_State* state)
 //------------------------------------------------------------------------------
 // Undocumented because it exists only to enable the clink.add_match backward
 // compatibility.
-int match_builder_lua::deprecated_add_match(lua_State* state)
+int32 match_builder_lua::deprecated_add_match(lua_State* state)
 {
     m_builder->set_deprecated_mode();
     return add_match(state);
@@ -267,20 +267,20 @@ int match_builder_lua::deprecated_add_match(lua_State* state)
 //------------------------------------------------------------------------------
 // Undocumented because it exists only to enable the clink.matches_are_files
 // backward compatibility.
-int match_builder_lua::set_matches_are_files(lua_State* state)
+int32 match_builder_lua::set_matches_are_files(lua_State* state)
 {
     if (lua_gettop(state) <= 0 || lua_isnil(state, 1))
         m_builder->set_matches_are_files(true);
     else if (lua_isboolean(state, 1))
         m_builder->set_matches_are_files(lua_toboolean(state, 1) != 0);
     else
-        m_builder->set_matches_are_files(int(lua_tointeger(state, 1)));
+        m_builder->set_matches_are_files(int32(lua_tointeger(state, 1)));
     return 0;
 }
 
 //------------------------------------------------------------------------------
 // UNDOCUMENTED; internal use only.
-int match_builder_lua::clear_toolkit(lua_State* state)
+int32 match_builder_lua::clear_toolkit(lua_State* state)
 {
     if (m_toolkit)
         m_toolkit->clear();
@@ -289,7 +289,7 @@ int match_builder_lua::clear_toolkit(lua_State* state)
 
 //------------------------------------------------------------------------------
 // UNDOCUMENTED; internal use only.
-int match_builder_lua::set_input_line(lua_State* state)
+int32 match_builder_lua::set_input_line(lua_State* state)
 {
     const char* text = checkstring(state, 1);
     if (!text)
@@ -301,17 +301,17 @@ int match_builder_lua::set_input_line(lua_State* state)
 
 //------------------------------------------------------------------------------
 // UNDOCUMENTED; internal use only.
-int match_builder_lua::matches_ready(lua_State* state)
+int32 match_builder_lua::matches_ready(lua_State* state)
 {
     if (!m_toolkit)
         return 0;
 
     bool isnum;
-    int id = checkinteger(state, 1, &isnum);
+    int32 id = checkinteger(state, 1, &isnum);
     if (!isnum)
         return 0;
 
-    extern bool notify_matches_ready(std::shared_ptr<match_builder_toolkit> toolkit, int generation_id);
+    extern bool notify_matches_ready(std::shared_ptr<match_builder_toolkit> toolkit, int32 generation_id);
     lua_pushboolean(state, notify_matches_ready(m_toolkit, id));
     return 1;
 }
@@ -338,7 +338,7 @@ int match_builder_lua::matches_ready(lua_State* state)
 /// -show:  &nbsp;   { match="remote/origin/master", type="word" },
 /// -show:  &nbsp;   { match="remote/origin/topic", type="word" }
 /// -show:  })
-int match_builder_lua::add_matches(lua_State* state)
+int32 match_builder_lua::add_matches(lua_State* state)
 {
     if (lua_gettop(state) <= 0 || !lua_istable(state, 1))
     {
@@ -353,9 +353,9 @@ int match_builder_lua::add_matches(lua_State* state)
 
     match_type type = to_match_type(type_str);
 
-    int count = 0;
-    int total = int(lua_rawlen(state, 1));
-    for (int i = 1; i <= total; ++i)
+    int32 count = 0;
+    int32 total = int32(lua_rawlen(state, 1));
+    for (int32 i = 1; i <= total; ++i)
     {
         lua_rawgeti(state, 1, i);
         count += !!add_match_impl(state, -1, type);
@@ -368,7 +368,7 @@ int match_builder_lua::add_matches(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-bool match_builder_lua::add_match_impl(lua_State* state, int stack_index, match_type type)
+bool match_builder_lua::add_match_impl(lua_State* state, int32 stack_index, match_type type)
 {
     if (lua_isstring(state, stack_index) || lua_isnumber(state, stack_index))
     {
@@ -377,7 +377,7 @@ bool match_builder_lua::add_match_impl(lua_State* state, int stack_index, match_
     }
     else if (lua_istable(state, stack_index))
     {
-        const int orig_stack_index = stack_index;
+        const int32 orig_stack_index = stack_index;
         if (stack_index < 0)
             --stack_index;
 
@@ -439,11 +439,11 @@ bool match_builder_lua::add_match_impl(lua_State* state, int stack_index, match_
             // The table is not a single match, but it might contain multiple
             // matches.  For backward compatibility with v0.4.9, recursively
             // enumerate elements in the table and add them.
-            const int num = int(lua_rawlen(state, orig_stack_index));
+            const int32 num = int32(lua_rawlen(state, orig_stack_index));
             if (num > 0)
             {
                 bool ret = false;
-                for (int i = 1; i <= num; ++i)
+                for (int32 i = 1; i <= num; ++i)
                 {
                     lua_rawgeti(state, orig_stack_index, i);
                     ret = add_match_impl(state, -1, type) || ret;

@@ -217,7 +217,7 @@ TEST_CASE("ecma48 c1 csi stream")
     const char input[] = "\x1b[1;21m";
 
     ecma48_iter iter_1(input, g_state, 0);
-    for (int i = 0; i < sizeof_array(input) - 1; ++i)
+    for (int32 i = 0; i < sizeof_array(input) - 1; ++i)
     {
         const ecma48_code* code;
 
@@ -277,8 +277,8 @@ TEST_CASE("ecma48 c1 csi private use")
 {
     struct {
         const char* input;
-        int param_count;
-        int params[8];
+        int32 param_count;
+        int32 params[8];
     } tests[] = {
         { "\x1b[?x",               0 },
         { "\x1b[?99x",             1, 99 },
@@ -301,7 +301,7 @@ TEST_CASE("ecma48 c1 csi private use")
         REQUIRE(csi.private_use);
 
         REQUIRE(csi.param_count == test.param_count);
-        for (int i = 0; i < csi.param_count; ++i)
+        for (int32 i = 0; i < csi.param_count; ++i)
             REQUIRE(csi.params[i] == test.params[i]);
     }
 }
@@ -312,7 +312,7 @@ TEST_CASE("ecma48 c1 !csi")
     const ecma48_code* code;
 
     const char* terminators[] = { "\x1b\\", "\xc2\x9c" };
-    for (int i = 0, n = sizeof_array(terminators); i < n; ++i)
+    for (int32 i = 0, n = sizeof_array(terminators); i < n; ++i)
     {
         const char* announcers[] = {
             "\x1b\x5f", "\xc2\x9f",
@@ -321,7 +321,7 @@ TEST_CASE("ecma48 c1 !csi")
             "\x1b\x5e", "\xc2\x9e",
             "\x1b\x58", "\xc2\x98",
         };
-        for (int j = 0, m = sizeof_array(announcers); j < m; ++j)
+        for (int32 j = 0, m = sizeof_array(announcers); j < m; ++j)
         {
             str<> input;
             input << announcers[j];

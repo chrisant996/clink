@@ -9,16 +9,16 @@
 #include <Windows.h>
 
 //------------------------------------------------------------------------------
-__declspec(dllimport) int loader_main_thunk();
+__declspec(dllimport) int32_t loader_main_thunk();
 
 #if defined(_VC_NODEFAULTLIB)
 #pragma runtime_checks("", off)
-int mainCRTStartup(uintptr_t param) // effectively a thread entry point.
+int32_t mainCRTStartup(uintptr_t param) // effectively a thread entry point.
 #else
-int main(int argc, char** argv)
+int32_t main(int32_t argc, char** argv)
 #endif
 {
-    int i = loader_main_thunk();
+    int32_t i = loader_main_thunk();
     ExitProcess(i); // without this Win10 will stall.
     return i;
 }

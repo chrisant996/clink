@@ -25,7 +25,7 @@
 #include <core/str.h>
 #include <terminal/printer.h>
 
-enum class reclassify_reason : unsigned char;
+enum class reclassify_reason : uint8;
 
 //------------------------------------------------------------------------------
 class prev_buffer
@@ -33,14 +33,14 @@ class prev_buffer
 public:
                     ~prev_buffer() { free(m_ptr); }
     void            clear() { free(m_ptr); m_ptr = nullptr; m_len = 0; }
-    bool            equals(const char* s, int len) const;
-    void            set(const char* s, int len);
+    bool            equals(const char* s, int32 len) const;
+    void            set(const char* s, int32 len);
     const char*     get() const { return m_ptr; }
-    unsigned int    length() const { return m_len; }
+    uint32          length() const { return m_len; }
 
 private:
     char*           m_ptr = nullptr;
-    unsigned int    m_len = 0;
+    uint32          m_len = 0;
 };
 
 //------------------------------------------------------------------------------
@@ -60,7 +60,7 @@ public:
     virtual void        set_prompt(const char* prompt, const char* rprompt, bool redisplay) override;
     virtual bool        get_line(str_base& out) override;
     virtual bool        edit(str_base& out, bool edit=true) override;
-    virtual void        override_line(const char* line, const char* needle, int point) override;
+    virtual void        override_line(const char* line, const char* needle, int32 point) override;
     virtual bool        update() override;
     virtual void        update_matches() override;
 #ifdef DEBUG
@@ -68,20 +68,20 @@ public:
 #endif
 
     // input_dispatcher
-    virtual void        dispatch(int bind_group) override;
+    virtual void        dispatch(int32 bind_group) override;
 
     // key_tester
-    virtual bool        is_bound(const char* seq, int len) override;
+    virtual bool        is_bound(const char* seq, int32 len) override;
     virtual bool        accepts_mouse_input(mouse_input_type type) override;
-    virtual bool        translate(const char* seq, int len, str_base& out) override;
-    virtual void        set_keyseq_len(int len) override;
+    virtual bool        translate(const char* seq, int32 len, str_base& out) override;
+    virtual void        set_keyseq_len(int32 len) override;
 
     void                reset_generate_matches();
     void                reselect_matches();
     void                reclassify(reclassify_reason why);
     void                try_suggest();
     void                force_update_internal(bool restrict=false);
-    bool                notify_matches_ready(int generation_id, matches* matches);
+    bool                notify_matches_ready(int32 generation_id, matches* matches);
     bool                call_lua_rl_global_function(const char* func_name);
 
 private:
@@ -93,7 +93,7 @@ private:
     friend matches* maybe_regenerate_matches(const char* needle, display_filter_flags flags);
     friend bool is_regen_blocked();
 
-    enum flags : unsigned char
+    enum flags : uint8
     {
         flag_init           = 1 << 0,
         flag_editing        = 1 << 1,
@@ -107,10 +107,10 @@ private:
     struct key_t
     {
         void            reset() { memset(this, 0xff, sizeof(*this)); }
-        unsigned int    word_index : 16;
-        unsigned int    word_offset : 16;
-        unsigned int    word_length : 16;
-        unsigned int    cursor_pos : 16;
+        uint32          word_index : 16;
+        uint32          word_offset : 16;
+        uint32          word_length : 16;
+        uint32          cursor_pos : 16;
     };
 
     void                initialise();
@@ -118,7 +118,7 @@ private:
     void                end_line();
     void                collect_words();
     commands            collect_commands();
-    unsigned int        collect_words(words& words, matches_impl* matches, collect_words_mode mode, commands& commands);
+    uint32              collect_words(words& words, matches_impl* matches, collect_words_mode mode, commands& commands);
     void                classify();
     void                maybe_send_oncommand_event();
     matches*            get_mutable_matches(bool nosort=false);
@@ -126,12 +126,12 @@ private:
     bool                update_input();
     module::context     get_context() const;
     line_state          get_linestate() const;
-    void                set_flag(unsigned char flag);
-    void                clear_flag(unsigned char flag);
-    bool                check_flag(unsigned char flag) const;
+    void                set_flag(uint8 flag);
+    void                clear_flag(uint8 flag);
+    bool                check_flag(uint8 flag) const;
 
-    static bool         is_key_same(const key_t& prev_key, const char* prev_line, int prev_length,
-                                    const key_t& next_key, const char* next_line, int next_length,
+    static bool         is_key_same(const key_t& prev_key, const char* prev_line, int32 prev_length,
+                                    const key_t& next_key, const char* next_line, int32 next_length,
                                     bool compare_cursor);
     static void         before_display();
 
@@ -153,8 +153,8 @@ private:
     selectcomplete_impl m_selectcomplete;
     textlist_impl       m_textlist;
     key_t               m_prev_key;
-    unsigned char       m_flags = 0;
-    int                 m_generation_id = 0;
+    uint8               m_flags = 0;
+    int32               m_generation_id = 0;
     str<64>             m_needle;
 
     prev_buffer         m_prev_generate;
@@ -166,7 +166,7 @@ private:
     words               m_classify_words;
 
     str<16>             m_prev_command_word;
-    unsigned int        m_prev_command_word_offset;
+    uint32              m_prev_command_word_offset;
     bool                m_prev_command_word_quoted;
 
     const char*         m_override_needle = nullptr;
@@ -180,7 +180,7 @@ private:
     const char*         m_insert_on_begin = nullptr;
 
     // State for dispatch().
-    unsigned char       m_dispatching = 0;
+    uint8               m_dispatching = 0;
     bool                m_invalid_dispatch = false;
     bind_resolver::binding* m_pending_binding = nullptr;
 };

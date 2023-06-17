@@ -33,7 +33,7 @@ void printer::reset()
 }
 
 //------------------------------------------------------------------------------
-void printer::print(const char* data, int bytes)
+void printer::print(const char* data, int32 bytes)
 {
     if (bytes <= 0)
         return;
@@ -59,7 +59,7 @@ void printer::print(const char* data, int bytes)
 }
 
 //------------------------------------------------------------------------------
-void printer::print(const attributes attr, const char* data, int bytes)
+void printer::print(const attributes attr, const char* data, int32 bytes)
 {
     attributes prev_attr = set_attributes(attr);
     print(data, bytes);
@@ -68,7 +68,7 @@ void printer::print(const attributes attr, const char* data, int bytes)
 }
 
 //------------------------------------------------------------------------------
-void printer::print(const char* attr, const char* data, int bytes)
+void printer::print(const char* attr, const char* data, int32 bytes)
 {
     str<> tmp;
     tmp.format("\x1b[%sm", attr);
@@ -82,37 +82,37 @@ void printer::print(const char* attr, const char* data, int bytes)
 }
 
 //------------------------------------------------------------------------------
-unsigned int printer::get_columns() const
+uint32 printer::get_columns() const
 {
     return m_terminal.get_columns();
 }
 
 //------------------------------------------------------------------------------
-unsigned int printer::get_rows() const
+uint32 printer::get_rows() const
 {
     return m_terminal.get_rows();
 }
 
 //------------------------------------------------------------------------------
-bool printer::get_line_text(int line, str_base& out) const
+bool printer::get_line_text(int32 line, str_base& out) const
 {
     return m_terminal.get_line_text(line, out);
 }
 
 //------------------------------------------------------------------------------
-int printer::is_line_default_color(int line) const
+int32 printer::is_line_default_color(int32 line) const
 {
     return m_terminal.is_line_default_color(line);
 }
 
 //------------------------------------------------------------------------------
-int printer::line_has_color(int line, const BYTE* attrs, int num_attrs, BYTE mask) const
+int32 printer::line_has_color(int32 line, const BYTE* attrs, int32 num_attrs, BYTE mask) const
 {
     return m_terminal.line_has_color(line, attrs, num_attrs, mask);
 }
 
 //------------------------------------------------------------------------------
-int printer::find_line(int starting_line, int distance, const char* text, find_line_mode mode, const BYTE* attrs, int num_attrs, BYTE mask) const
+int32 printer::find_line(int32 starting_line, int32 distance, const char* text, find_line_mode mode, const BYTE* attrs, int32 num_attrs, BYTE mask) const
 {
     return m_terminal.find_line(starting_line, distance, text, mode, attrs, num_attrs, mask);
 }
@@ -195,12 +195,12 @@ attributes printer::get_attributes() const
 }
 
 //------------------------------------------------------------------------------
-void printer::insert(int count)
+void printer::insert(int32 count)
 {
 }
 
 //------------------------------------------------------------------------------
-void printer::move_cursor(int dc, int dr)
+void printer::move_cursor(int32 dc, int32 dr)
 {
 }
 

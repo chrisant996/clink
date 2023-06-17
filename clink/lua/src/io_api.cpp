@@ -27,8 +27,8 @@ static popenrw_info* s_head = nullptr;
 //------------------------------------------------------------------------------
 struct popenrw_info
 {
-    friend int io_popenyield(lua_State* state);
-    friend int io_popenrw(lua_State* state);
+    friend int32 io_popenyield(lua_State* state);
+    friend int32 io_popenrw(lua_State* state);
 
     static popenrw_info* find(FILE* f)
     {
@@ -80,9 +80,9 @@ struct popenrw_info
         assert(!process_handle);
     }
 
-    int close(FILE* f)
+    int32 close(FILE* f)
     {
-        int ret = -1;
+        int32 ret = -1;
         if (f)
         {
             assert(f == r || f == w);
@@ -116,14 +116,14 @@ private:
 };
 
 //------------------------------------------------------------------------------
-static int pclosewait(intptr_t process_handle)
+static int32 pclosewait(intptr_t process_handle)
 {
-    int return_value = -1;
+    int32 return_value = -1;
 
     errno_t const saved_errno = errno;
     errno = 0;
 
-    int status = 0;
+    int32 status = 0;
     if (_cwait(&status, process_handle, _WAIT_GRANDCHILD) != -1 || errno == EINTR)
         return_value = status;
 
@@ -133,7 +133,7 @@ static int pclosewait(intptr_t process_handle)
 }
 
 //------------------------------------------------------------------------------
-static int pclosefile(lua_State *state)
+static int32 pclosefile(lua_State *state)
 {
     luaL_Stream* p = ((luaL_Stream*)luaL_checkudata(state, 1, LUA_FILEHANDLE));
     assert(p);
@@ -145,11 +145,11 @@ static int pclosefile(lua_State *state)
     if (!info)
         return luaL_fileresult(state, false, NULL);
 
-    int res = info->close(p->f);
+    int32 res = info->close(p->f);
     intptr_t process_handle = info->get_wait_handle();
     if (process_handle)
     {
-        int stat = 0;
+        int32 stat = 0;
         bool wait = !info->is_async();
         popenrw_info::remove(info);
         delete info;
@@ -174,11 +174,11 @@ struct pipe_pair
 
     bool init(bool write, bool binary)
     {
-        int handles[2] = { -1, -1 };
-        int index_local = write ? 1 : 0;
-        int index_remote = 1 - index_local;
+        int32 handles[2] = { -1, -1 };
+        int32 index_local = write ? 1 : 0;
+        int32 index_remote = 1 - index_local;
 
-        int pipe_mode = _O_NOINHERIT | (binary ? _O_BINARY : _O_TEXT);
+        int32 pipe_mode = _O_NOINHERIT | (binary ? _O_BINARY : _O_TEXT);
         if (_pipe(handles, 1024, pipe_mode) != -1)
         {
             static const wchar_t* const c_mode[2][2] =
@@ -274,7 +274,7 @@ struct popen_buffering : public yield_thread
         m_need_completion = true;
     }
 
-    int results(lua_State* state) override
+    int32 results(lua_State* state) override
     {
         errno = m_errno;
         return luaL_execresult(state, m_stat);
@@ -324,7 +324,7 @@ private:
     HANDLE          m_stat_event = 0;
     HANDLE          m_process_handle = 0;
 
-    int             m_stat = -1;
+    int32           m_stat = -1;
     errno_t         m_errno = 0;
     volatile long   m_need_completion = false;
 
@@ -372,7 +372,7 @@ private:
 /// -show:  &nbsp;   print(line)
 /// -show:  end
 /// -show:  r:close()
-/*static*/ int io_popenrw(lua_State* state) // gcc can't handle 'friend' and 'static'.
+/*static*/ int32 io_popenrw(lua_State* state) // gcc can't handle 'friend' and 'static'.
 {
     const char* command = checkstring(state, 1);
     const char* mode = optstring(state, 2, "t");
@@ -438,7 +438,7 @@ private:
 
 //------------------------------------------------------------------------------
 // UNDOCUMENTED; internal use only.  See io.popenyield in coroutines.lua.
-/*static*/ int io_popenyield(lua_State* state) // gcc can't handle 'friend' and 'static'.
+/*static*/ int32 io_popenyield(lua_State* state) // gcc can't handle 'friend' and 'static'.
 {
     const char* command = checkstring(state, 1);
     const char* mode = optstring(state, 2, "t");
@@ -574,10 +574,10 @@ private:
 /// The <code>'x'</code> modes are Clink extensions to Lua.
 
 //------------------------------------------------------------------------------
-static int io_sclose(lua_State* state)
+static int32 io_sclose(lua_State* state)
 {
     luaL_Stream* p = ((luaL_Stream*)luaL_checkudata(state, 1, LUA_FILEHANDLE));
-    int res = fclose(p->f);
+    int32 res = fclose(p->f);
     return luaL_fileresult(state, (res == 0), NULL);
 }
 
@@ -618,7 +618,7 @@ static int io_sclose(lua_State* state)
 /// <li><code>"rw"</code> denies read and write access;
 /// <li><code>""</code> permits read and write access (the default).
 /// </ul>
-static int io_sopen(lua_State* state)
+static int32 io_sopen(lua_State* state)
 {
     const char* filename = luaL_checkstring(state, 1);
     const char* mode = luaL_optstring(state, 2, "r");
@@ -632,7 +632,7 @@ static int io_sopen(lua_State* state)
     const char *md = mode; /* to traverse/check mode */
     luaL_argcheck(state, lua_checkmode(md), 2, "invalid mode");
 
-    int share = 0;
+    int32 share = 0;
     if (!deny[0])
     {
         share = _SH_DENYNO;
@@ -669,21 +669,21 @@ static int io_sopen(lua_State* state)
 ///
 /// If successful, the return value is true. If an error occurs, the return value 
 /// is false, an error message, and an error code.
-static int io_truncate(lua_State* state)
+static int32 io_truncate(lua_State* state)
 {
     luaL_Stream* file = ((luaL_Stream *)luaL_checkudata(state, 1, LUA_FILEHANDLE));
     assert(file);
     if (!file)
         return 0;
 
-    int stat = fflush(file->f);
+    int32 stat = fflush(file->f);
     if (stat)
     {
 failed:
         return luaL_fileresult(state, false, NULL);
     }
 
-    int fd = _fileno(file->f);
+    int32 fd = _fileno(file->f);
     HANDLE h = reinterpret_cast<HANDLE>(_get_osfhandle(fd));
 
     LARGE_INTEGER liSize;
@@ -702,7 +702,7 @@ void io_lua_initialise(lua_state& lua)
 {
     struct {
         const char* name;
-        int         (*method)(lua_State*);
+        int32       (*method)(lua_State*);
     } methods[] = {
         { "popenrw",                    &io_popenrw },
         { "popenyield_internal",        &io_popenyield },

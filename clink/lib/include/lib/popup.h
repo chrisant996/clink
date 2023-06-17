@@ -17,16 +17,16 @@ enum class popup_result
 //------------------------------------------------------------------------------
 struct popup_results
 {
-                    popup_results(popup_result result=popup_result::cancel, int index=-1, const char* text=nullptr);
+                    popup_results(popup_result result=popup_result::cancel, int32 index=-1, const char* text=nullptr);
     void            clear();
 
     popup_result    m_result;
-    int             m_index;
+    int32           m_index;
     str_moveable    m_text;
 };
 
 //------------------------------------------------------------------------------
-typedef bool (*del_callback_t)(int index);
+typedef bool (*del_callback_t)(int32 index);
 
 //------------------------------------------------------------------------------
 struct popup_colors
@@ -46,8 +46,8 @@ struct popup_colors
 struct popup_config
 {
     del_callback_t  del_callback = nullptr;
-    unsigned int    height = 0;
-    unsigned int    width = 0;
+    uint32          height = 0;
+    uint32          width = 0;
     bool            reverse = false;
     popup_colors    colors;
 };
@@ -55,11 +55,11 @@ struct popup_config
 //------------------------------------------------------------------------------
 struct entry_info
 {
-    int             index;
+    int32           index;
     bool            marked;
 };
 
 //------------------------------------------------------------------------------
-extern popup_results activate_directories_text_list(const char** dirs, int count);
-extern popup_results activate_history_text_list(const char** history, int count, int index, entry_info* infos, bool win_history);
-extern popup_results activate_text_list(const char* title, const char** entries, int count, int current, bool has_columns, const popup_config* config=nullptr);
+extern popup_results activate_directories_text_list(const char** dirs, int32 count);
+extern popup_results activate_history_text_list(const char** history, int32 count, int32 index, entry_info* infos, bool win_history);
+extern popup_results activate_text_list(const char* title, const char** entries, int32 count, int32 current, bool has_columns, const popup_config* config=nullptr);

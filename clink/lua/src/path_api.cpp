@@ -22,13 +22,13 @@
 /// used.
 /// -show:  path.normalise("a////b/\\/c/")  -- returns "a\\b\\c\\"
 /// -show:  path.normalise("")              -- returns ""
-static int normalise(lua_State* state)
+static int32 normalise(lua_State* state)
 {
     const char* path = checkstring(state, 1);
     if (!path)
         return 0;
 
-    int separator = 0;
+    int32 separator = 0;
     if (const char* sep_str = optstring(state, 2, ""))
         separator = sep_str[0];
     else
@@ -47,7 +47,7 @@ static int normalise(lua_State* state)
 /// -ret:   string
 /// -show:  path.getbasename("/foo/bar.ext")    -- returns "bar"
 /// -show:  path.getbasename("")                -- returns ""
-static int get_base_name(lua_State* state)
+static int32 get_base_name(lua_State* state)
 {
     const char* path = checkstring(state, 1);
     if (!path)
@@ -81,7 +81,7 @@ static int get_base_name(lua_State* state)
 /// -show:  -- These split the path components differently than path.toparent().
 /// -show:  path.getdirectory("c:\\foo\\bar\\")         -- returns "c:\\foo\\bar"
 /// -show:  path.getdirectory("\\\\foo\\bar\\dir\\")    -- returns "\\\\foo\\bar\\dir"
-static int get_directory(lua_State* state)
+static int32 get_directory(lua_State* state)
 {
     const char* path = checkstring(state, 1);
     if (!path)
@@ -106,7 +106,7 @@ static int get_directory(lua_State* state)
 /// -show:  path.getdrive("e:/foo/bar")     -- returns "e:"
 /// -show:  path.getdrive("foo/bar")        -- returns nil
 /// -show:  path.getdrive("")               -- returns nil
-static int get_drive(lua_State* state)
+static int32 get_drive(lua_State* state)
 {
     const char* path = checkstring(state, 1);
     if (!path)
@@ -131,7 +131,7 @@ static int get_drive(lua_State* state)
 /// -show:  path.getextension("bar.ext")    -- returns ".ext"
 /// -show:  path.getextension("bar")        -- returns ""
 /// -show:  path.getextension("")           -- returns ""
-static int get_extension(lua_State* state)
+static int32 get_extension(lua_State* state)
 {
     const char* path = checkstring(state, 1);
     if (!path)
@@ -150,7 +150,7 @@ static int get_extension(lua_State* state)
 /// -ret:   string
 /// -show:  path.getname("/foo/bar.ext")    -- returns "bar.ext"
 /// -show:  path.getname("")                -- returns ""
-static int get_name(lua_State* state)
+static int32 get_name(lua_State* state)
 {
     const char* path = checkstring(state, 1);
     if (!path)
@@ -177,7 +177,7 @@ static int get_name(lua_State* state)
 /// -show:  path.join("", "bar")            -- returns "bar"
 /// -show:  path.join("/foo", "")           -- returns "/foo\\"
 /// -show:  path.join("/foo", "/bar/xyz")   -- returns "/bar/xyz"
-static int join(lua_State* state)
+static int32 join(lua_State* state)
 {
     const char* lhs = checkstring(state, 1);
     const char* rhs = checkstring(state, 2);
@@ -201,7 +201,7 @@ static int join(lua_State* state)
 /// -show:  path.isexecext("program.exe")   -- returns true
 /// -show:  path.isexecext("file.doc")      -- returns false
 /// -show:  path.isexecext("")              -- returns false
-static int is_exec_ext(lua_State* state)
+static int32 is_exec_ext(lua_State* state)
 {
     const char* path = checkstring(state, 1);
     if (!path)
@@ -237,7 +237,7 @@ static int is_exec_ext(lua_State* state)
 /// -show:  -- These split the path components differently than path.getdirectory().
 /// -show:  parent,child = path.toparent("c:\\foo\\bar\\"")     -- returns "c:\\foo", "bar"
 /// -show:  parent,child = path.toparent("\\\\foo\\bar\\dir\\") -- returns "\\\\foo\\bar", "dir"
-static int to_parent(lua_State* state)
+static int32 to_parent(lua_State* state)
 {
     const char* path = checkstring(state, 1);
     if (!path)
@@ -306,13 +306,13 @@ static int to_parent(lua_State* state)
 /// <strong>Note:</strong> At this time the character classes and
 /// case-insensitivity operate on one byte at a time, so they do not fully
 /// work as expected with non-ASCII characters.
-static int api_fnmatch(lua_State* state)
+static int32 api_fnmatch(lua_State* state)
 {
     const char* pattern = checkstring(state, 1);
     const char* string = checkstring(state, 2);
     const char* flags = optstring(state, 3, "");
 
-    int bits = WM_CASEFOLD|WM_SLASHFOLD;
+    int32 bits = WM_CASEFOLD|WM_SLASHFOLD;
     for (; *flags; ++flags)
     {
         switch (*flags)
@@ -336,7 +336,7 @@ static int api_fnmatch(lua_State* state)
 
 //------------------------------------------------------------------------------
 // UNDOCUMENTED; internal use only.
-static int is_device(lua_State* state)
+static int32 is_device(lua_State* state)
 {
     const char* path = checkstring(state, 1);
     if (!path)
@@ -351,7 +351,7 @@ void path_lua_initialise(lua_state& lua)
 {
     struct {
         const char* name;
-        int         (*method)(lua_State*);
+        int32       (*method)(lua_State*);
     } methods[] = {
         { "normalise",     &normalise },
         { "getbasename",   &get_base_name },

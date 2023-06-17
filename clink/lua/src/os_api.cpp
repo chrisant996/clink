@@ -21,7 +21,7 @@
 
 extern "C" {
 #include <lstate.h>
-extern int _rl_match_hidden_files;
+extern int32 _rl_match_hidden_files;
 }
 
 #include <memory>
@@ -31,7 +31,7 @@ extern setting_bool g_files_hidden;
 extern setting_bool g_files_system;
 
 //------------------------------------------------------------------------------
-extern int clink_is_signaled();
+extern int32 clink_is_signaled();
 
 //------------------------------------------------------------------------------
 extern "C" void __cdecl __acrt_errno_map_os_error(unsigned long const oserrno);
@@ -39,9 +39,9 @@ static void map_errno() { __acrt_errno_map_os_error(GetLastError()); }
 static void map_errno(unsigned long const oserrno) { __acrt_errno_map_os_error(oserrno); }
 
 //------------------------------------------------------------------------------
-static int lua_osboolresult(lua_State *state, bool stat, const char *tag=nullptr)
+static int32 lua_osboolresult(lua_State *state, bool stat, const char *tag=nullptr)
 {
-    int en = errno;  /* calls to Lua API may change this value */
+    int32 en = errno;  /* calls to Lua API may change this value */
 
     lua_pushboolean(state, stat);
 
@@ -57,9 +57,9 @@ static int lua_osboolresult(lua_State *state, bool stat, const char *tag=nullptr
 }
 
 //------------------------------------------------------------------------------
-static int lua_osstringresult(lua_State *state, const char* result, bool stat, const char *tag=nullptr)
+static int32 lua_osstringresult(lua_State *state, const char* result, bool stat, const char *tag=nullptr)
 {
-    int en = errno;  /* calls to Lua API may change this value */
+    int32 en = errno;  /* calls to Lua API may change this value */
 
     if (stat)
     {
@@ -79,14 +79,14 @@ static int lua_osstringresult(lua_State *state, const char* result, bool stat, c
 
 
 //------------------------------------------------------------------------------
-static int close_file(lua_State *state)
+static int32 close_file(lua_State *state)
 {
     luaL_Stream* p = ((luaL_Stream*)luaL_checkudata(state, 1, LUA_FILEHANDLE));
     assert(p);
     if (!p)
         return 0;
 
-    int res = fclose(p->f);
+    int32 res = fclose(p->f);
     return luaL_fileresult(state, (res == 0), NULL);
 }
 
@@ -104,15 +104,15 @@ class globber_lua
     : public lua_bindable<globber_lua>
 {
 public:
-                        globber_lua(const char* pattern, int extrainfo, const glob_flags& flags, bool dirs_only, bool back_compat=false);
-    int                 next(lua_State* state);
-    int                 close(lua_State* state);
+                        globber_lua(const char* pattern, int32 extrainfo, const glob_flags& flags, bool dirs_only, bool back_compat=false);
+    int32               next(lua_State* state);
+    int32               close(lua_State* state);
 
 private:
     globber             m_globber;
     str<288>            m_parent;
-    int                 m_extrainfo;
-    int                 m_index = 1;
+    int32               m_extrainfo;
+    int32               m_index = 1;
 
     friend class lua_bindable<globber_lua>;
     static const char* const c_name;
@@ -128,7 +128,7 @@ const globber_lua::method globber_lua::c_methods[] = {
 };
 
 //------------------------------------------------------------------------------
-globber_lua::globber_lua(const char* pattern, int extrainfo, const glob_flags& flags, bool dirs_only, bool back_compat)
+globber_lua::globber_lua(const char* pattern, int32 extrainfo, const glob_flags& flags, bool dirs_only, bool back_compat)
 : m_globber(pattern)
 , m_parent(pattern)
 , m_extrainfo(extrainfo)
@@ -143,8 +143,8 @@ globber_lua::globber_lua(const char* pattern, int extrainfo, const glob_flags& f
 }
 
 //------------------------------------------------------------------------------
-static bool glob_next(lua_State* state, globber& globber, str_base& parent, int& index, int extrainfo);
-int globber_lua::next(lua_State* state)
+static bool glob_next(lua_State* state, globber& globber, str_base& parent, int32& index, int32 extrainfo);
+int32 globber_lua::next(lua_State* state)
 {
     // Arg is table into which to glob files/dirs; glob_next appends into it.
 
@@ -167,7 +167,7 @@ int globber_lua::next(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-int globber_lua::close(lua_State* state)
+int32 globber_lua::close(lua_State* state)
 {
     m_globber.close();
     return 0;
@@ -180,11 +180,11 @@ struct execute_thread : public yield_thread
 {
                     execute_thread(const char* command) : m_command(command) {}
                     ~execute_thread() {}
-    int             results(lua_State* state) override;
+    int32           results(lua_State* state) override;
 private:
     void            do_work() override;
     str_moveable    m_command;
-    int             m_stat = -1;
+    int32           m_stat = -1;
     errno_t         m_errno = 0;
 };
 
@@ -196,7 +196,7 @@ void execute_thread::do_work()
 }
 
 //------------------------------------------------------------------------------
-int execute_thread::results(lua_State* state)
+int32 execute_thread::results(lua_State* state)
 {
     errno = m_errno;
     return luaL_execresult(state, m_stat);
@@ -296,7 +296,7 @@ BOOL delay_load_version::VerQueryValueW(LPCVOID pBlock, LPCWSTR lpSubBlock, LPVO
 /// -deprecated: os.chdir
 /// -arg:   path:string
 /// -ret:   boolean
-int set_current_dir(lua_State* state)
+int32 set_current_dir(lua_State* state)
 {
     const char* dir = checkstring(state, 1);
     if (!dir)
@@ -315,7 +315,7 @@ int set_current_dir(lua_State* state)
 /// -name:  clink.get_cwd
 /// -deprecated: os.getcwd
 /// -ret:   string
-int get_current_dir(lua_State* state)
+int32 get_current_dir(lua_State* state)
 {
     str<288> dir;
     os::get_current_dir(dir);
@@ -332,7 +332,7 @@ int get_current_dir(lua_State* state)
 /// Creates the directory <span class="arg">path</span> and returns whether it
 /// was successful.
 /// If unsuccessful it returns false, an error message, and the error number.
-static int make_dir(lua_State* state)
+static int32 make_dir(lua_State* state)
 {
     const char* dir = checkstring(state, 1);
     if (!dir)
@@ -350,7 +350,7 @@ static int make_dir(lua_State* state)
 /// Removes the directory <span class="arg">path</span> and returns whether it
 /// was successful.
 /// If unsuccessful it returns false, an error message, and the error number.
-static int remove_dir(lua_State* state)
+static int32 remove_dir(lua_State* state)
 {
     const char* dir = checkstring(state, 1);
     if (!dir)
@@ -366,7 +366,7 @@ static int remove_dir(lua_State* state)
 /// -arg:   path:string
 /// -ret:   boolean
 /// Returns whether <span class="arg">path</span> is a directory.
-int is_dir(lua_State* state)
+int32 is_dir(lua_State* state)
 {
     const char* path = checkstring(state, 1);
     if (!path)
@@ -382,7 +382,7 @@ int is_dir(lua_State* state)
 /// -arg:   path:string
 /// -ret:   boolean
 /// Returns whether <span class="arg">path</span> is a file.
-static int is_file(lua_State* state)
+static int32 is_file(lua_State* state)
 {
     const char* path = checkstring(state, 1);
     if (!path)
@@ -417,13 +417,13 @@ static int is_file(lua_State* state)
 /// -show:  if t == "remote" then
 /// -show:  &nbsp;   -- Network paths are often slow, and code may want to detect and skip them.
 /// -show:  end
-static int get_drive_type(lua_State* state)
+static int32 get_drive_type(lua_State* state)
 {
     const char* path = checkstring(state, 1);
     if (!path)
         return 0;
 
-    int type = os::drive_type_unknown;
+    int32 type = os::drive_type_unknown;
     if (path::is_unc(path))
     {
         type = os::drive_type_remote;
@@ -463,7 +463,7 @@ static int get_drive_type(lua_State* state)
 /// -arg:   path:string
 /// -ret:   boolean
 /// Returns whether <span class="arg">path</span> has the hidden attribute set.
-static int is_hidden(lua_State* state)
+static int32 is_hidden(lua_State* state)
 {
     const char* path = checkstring(state, 1);
     if (!path)
@@ -481,7 +481,7 @@ static int is_hidden(lua_State* state)
 /// Deletes the file <span class="arg">path</span> and returns whether it was
 /// successful.
 /// If unsuccessful it returns false, an error message, and the error number.
-static int unlink(lua_State* state)
+static int32 unlink(lua_State* state)
 {
     const char* path = checkstring(state, 1);
     if (!path)
@@ -500,7 +500,7 @@ static int unlink(lua_State* state)
 /// Moves the <span class="arg">src</span> file to the
 /// <span class="arg">dest</span> file.
 /// If unsuccessful it returns false, an error message, and the error number.
-static int move(lua_State* state)
+static int32 move(lua_State* state)
 {
     const char* src = checkstring(state, 1);
     const char* dest = checkstring(state, 2);
@@ -520,7 +520,7 @@ static int move(lua_State* state)
 /// Copies the <span class="arg">src</span> file to the
 /// <span class="arg">dest</span> file.
 /// If unsuccessful it returns false, an error message, and the error number.
-static int copy(lua_State* state)
+static int32 copy(lua_State* state)
 {
     const char* src = checkstring(state, 1);
     const char* dest = checkstring(state, 2);
@@ -540,7 +540,7 @@ static void add_type_tag(str_base& out, const char* tag)
 }
 
 //------------------------------------------------------------------------------
-static bool glob_next(lua_State* state, globber& globber, str_base& parent, int& index, int extrainfo)
+static bool glob_next(lua_State* state, globber& globber, str_base& parent, int32& index, int32 extrainfo)
 {
     str<288> file;
     globber::extrainfo info;
@@ -565,7 +565,7 @@ static bool glob_next(lua_State* state, globber& globber, str_base& parent, int&
 #ifdef S_ISLNK
         if (S_ISLNK(info.st_mode))
         {
-            unsigned int len = parent.length();
+            uint32 len = parent.length();
             path::append(parent, file.c_str());
 
             add_type_tag(type, "link");
@@ -613,7 +613,7 @@ static bool glob_next(lua_State* state, globber& globber, str_base& parent, int&
 }
 
 //------------------------------------------------------------------------------
-static void get_glob_flags(lua_State* state, int index, glob_flags& out, bool back_compat)
+static void get_glob_flags(lua_State* state, int32 index, glob_flags& out, bool back_compat)
 {
     if (back_compat)
     {
@@ -623,7 +623,7 @@ static void get_glob_flags(lua_State* state, int index, glob_flags& out, bool ba
     else if (lua_istable(state, index))
     {
 #ifdef DEBUG
-        int top = lua_gettop(state);
+        int32 top = lua_gettop(state);
 #endif
 
         lua_pushvalue(state, index);
@@ -649,13 +649,13 @@ static void get_glob_flags(lua_State* state, int index, glob_flags& out, bool ba
 }
 
 //------------------------------------------------------------------------------
-int glob_impl(lua_State* state, bool dirs_only, bool back_compat=false)
+int32 glob_impl(lua_State* state, bool dirs_only, bool back_compat=false)
 {
     const char* mask = checkstring(state, 1);
     if (!mask)
         return 0;
 
-    int extrainfo;
+    int32 extrainfo;
     if (back_compat)
         extrainfo = 0;
     else if (lua_isboolean(state, 2))
@@ -678,7 +678,7 @@ int glob_impl(lua_State* state, bool dirs_only, bool back_compat=false)
     str_moveable tmp(mask);
     path::to_parent(tmp, nullptr);
 
-    int i = 1;
+    int32 i = 1;
     if (back_compat)
     {
         while (true)
@@ -700,13 +700,13 @@ int glob_impl(lua_State* state, bool dirs_only, bool back_compat=false)
 }
 
 //------------------------------------------------------------------------------
-int globber_impl(lua_State* state, bool dirs_only, bool back_compat=false)
+int32 globber_impl(lua_State* state, bool dirs_only, bool back_compat=false)
 {
     const char* mask = checkstring(state, 1);
     if (!mask)
         return 0;
 
-    int extrainfo;
+    int32 extrainfo;
     if (back_compat)
         extrainfo = 0;
     else if (lua_isboolean(state, 2))
@@ -765,7 +765,7 @@ int globber_impl(lua_State* state, bool dirs_only, bool back_compat=false)
 /// -show:  &nbsp;   system = false,     -- True includes system directories, or false omits them (default).
 /// -show:  }
 /// -show:  local t = os.globdirs("*", true, flags)
-int glob_dirs(lua_State* state)
+int32 glob_dirs(lua_State* state)
 {
     return glob_impl(state, true);
 }
@@ -811,19 +811,19 @@ int glob_dirs(lua_State* state)
 /// -show:  &nbsp;   system = false,     -- True includes system files, or false omits them (default).
 /// -show:  }
 /// -show:  local t = os.globfiles("*", true, flags)
-int glob_files(lua_State* state)
+int32 glob_files(lua_State* state)
 {
     return glob_impl(state, false);
 }
 
 //------------------------------------------------------------------------------
-int make_dir_globber(lua_State* state)
+int32 make_dir_globber(lua_State* state)
 {
     return globber_impl(state, true);
 }
 
 //------------------------------------------------------------------------------
-int make_file_globber(lua_State* state)
+int32 make_file_globber(lua_State* state)
 {
     return globber_impl(state, false);
 }
@@ -850,7 +850,7 @@ int make_file_globber(lua_State* state)
 /// same format as <code>os.time()</code>.  In order to pass
 /// <span class="arg">mtime</span> it is necessary to also pass
 /// <span class="arg">atime</span>.
-int touch(lua_State* state)
+int32 touch(lua_State* state)
 {
     const char* path = checkstring(state, 1);
     if (!path)
@@ -871,7 +871,7 @@ int touch(lua_State* state)
         ptr = &utb;
     }
 
-    int result = utime(path, ptr);
+    int32 result = utime(path, ptr);
     return lua_osboolresult(state, result >= 0, path);
 }
 
@@ -902,7 +902,7 @@ int touch(lua_State* state)
 /// <tr><td><code>"RANDOM"</code></td><td>If %RANDOM% is not set then this
 ///     returns a random integer.</td></tr>
 /// </table>
-int get_env(lua_State* state)
+int32 get_env(lua_State* state)
 {
     // Some cmder-powerline-prompt scripts pass nil.  Allow nil for backward
     // compatibility.
@@ -927,7 +927,7 @@ int get_env(lua_State* state)
 /// Sets the <span class="arg">name</span> environment variable to
 /// <span class="arg">value</span> and returns whether it was successful.
 /// If unsuccessful it returns false, an error message, and the error number.
-int set_env(lua_State* state)
+int32 set_env(lua_State* state)
 {
     const char* name = checkstring(state, 1);
     const char* value = optstring(state, 2, reinterpret_cast<const char*>(-1));
@@ -953,14 +953,14 @@ int set_env(lua_State* state)
 ///
 /// Note: See <a href="#os.getenv">os.getenv()</a> for a list of special
 /// variable names.
-int expand_env(lua_State* state)
+int32 expand_env(lua_State* state)
 {
     const char* in = checkstring(state, 1);
     if (!in)
         return 0;
 
     str<280> out;
-    os::expand_env(in, static_cast<unsigned int>(strlen(in)), out);
+    os::expand_env(in, uint32(strlen(in)), out);
 
     lua_pushlstring(state, out.c_str(), out.length());
     return 1;
@@ -974,7 +974,7 @@ int expand_env(lua_State* state)
 /// -show:  local t = os.getenvnames()
 /// -show:  -- t[index].name        [string] The environment variable's name.
 /// -show:  -- t[index].value       [string] The environment variable's value.
-int get_env_names(lua_State* state)
+int32 get_env_names(lua_State* state)
 {
     lua_createtable(state, 0, 0);
 
@@ -984,7 +984,7 @@ int get_env_names(lua_State* state)
 
     str<128> var;
     WCHAR* strings = root;
-    int i = 1;
+    int32 i = 1;
     while (*strings)
     {
         // Skip env vars that start with a '='. They're hidden ones.
@@ -1018,7 +1018,7 @@ int get_env_names(lua_State* state)
 /// -ret:   string
 /// Returns the fully qualified file name of the host process.  Currently only
 /// CMD.EXE can host Clink.
-static int get_host(lua_State* state)
+static int32 get_host(lua_State* state)
 {
     WCHAR module[280];
     DWORD len = GetModuleFileNameW(nullptr, module, sizeof_array(module));
@@ -1039,7 +1039,7 @@ static int get_host(lua_State* state)
 /// Returns the last command's exit code, if the
 /// <code><a href="#cmd_get_errorlevel">cmd.get_errorlevel</a></code> setting is
 /// enabled.  Otherwise it returns 0.
-static int get_errorlevel(lua_State* state)
+static int32 get_errorlevel(lua_State* state)
 {
     lua_pushinteger(state, os::get_errorlevel());
     return 1;
@@ -1052,7 +1052,7 @@ static int get_errorlevel(lua_State* state)
 /// -ret:   string | nil
 /// Returns command string for doskey alias <span class="arg">name</span>, or
 /// nil if the named alias does not exist.
-int get_alias(lua_State* state)
+int32 get_alias(lua_State* state)
 {
     const char* name = checkstring(state, 1);
     if (!name)
@@ -1071,7 +1071,7 @@ int get_alias(lua_State* state)
 /// -ver:   1.0.0
 /// -ret:   table
 /// Returns doskey alias names in a table of strings.
-int get_aliases(lua_State* state)
+int32 get_aliases(lua_State* state)
 {
     lua_createtable(state, 0, 0);
 
@@ -1079,7 +1079,7 @@ int get_aliases(lua_State* state)
     wchar_t* shell_name = const_cast<wchar_t*>(os::get_shellname());
 
     // Get the aliases (aka. doskey macros).
-    int buffer_size = GetConsoleAliasesLengthW(shell_name);
+    int32 buffer_size = GetConsoleAliasesLengthW(shell_name);
     if (buffer_size == 0)
         return 1;
 
@@ -1096,7 +1096,7 @@ int get_aliases(lua_State* state)
     // Parse the result into a lua table.
     str<> out;
     WCHAR* alias = buffer.get();
-    for (int i = 1; int(alias - buffer.get()) < buffer_size; ++i)
+    for (int32 i = 1; int32(alias - buffer.get()) < buffer_size; ++i)
     {
         WCHAR* c = wcschr(alias, '=');
         if (c == nullptr)
@@ -1127,7 +1127,7 @@ int get_aliases(lua_State* state)
 /// The return type is a table of strings because doskey aliases can be defined
 /// to expand into multiple command lines:  one entry in the table per resolved
 /// command line.  Most commonly, the table will contain one string.
-int resolve_alias(lua_State* state)
+int32 resolve_alias(lua_State* state)
 {
     const char* in = checkstring(state, 1);
     if (!in)
@@ -1143,7 +1143,7 @@ int resolve_alias(lua_State* state)
     lua_createtable(state, 1, 0);
 
     str<> tmp;
-    for (int i = 1; out.next(tmp); ++i)
+    for (int32 i = 1; out.next(tmp); ++i)
     {
         lua_pushlstring(state, tmp.c_str(), tmp.length());
         lua_rawseti(state, -2, i);
@@ -1153,10 +1153,10 @@ int resolve_alias(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-int get_screen_info_impl(lua_State* state, bool back_compat)
+int32 get_screen_info_impl(lua_State* state, bool back_compat)
 {
-    int i;
-    int values[4];
+    int32 i;
+    int32 values[4];
     CONSOLE_SCREEN_BUFFER_INFO csbi;
 
     GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
@@ -1223,7 +1223,7 @@ int get_screen_info_impl(lua_State* state, bool back_compat)
 /// -show:  -- v1.4.28 and higher include the cursor position:
 /// -show:  -- info.x               [integer] Current cursor column (from 1 to bufwidth).
 /// -show:  -- info.y               [integer] Current cursor row (from 1 to bufheight).
-static int get_screen_info(lua_State* state)
+static int32 get_screen_info(lua_State* state)
 {
     return get_screen_info_impl(state, false);
 }
@@ -1239,7 +1239,7 @@ static int get_screen_info(lua_State* state)
 /// -show:  -- t.acpower            [boolean] Whether the device is connected to AC power.
 /// -show:  -- t.charging           [boolean] Whether the battery is charging.
 /// -show:  -- t.batterysaver       [boolean] Whether Battery Saver mode is active.
-int get_battery_status(lua_State* state)
+int32 get_battery_status(lua_State* state)
 {
     SYSTEM_POWER_STATUS status;
     if (!GetSystemPowerStatus(&status))
@@ -1248,7 +1248,7 @@ int get_battery_status(lua_State* state)
         return luaL_fileresult(state, false, nullptr);
     }
 
-    int level = -1;
+    int32 level = -1;
     if (status.BatteryLifePercent <= 100)
         level = status.BatteryLifePercent;
     if (status.BatteryFlag & 128)
@@ -1285,7 +1285,7 @@ int get_battery_status(lua_State* state)
 /// -ret:   integer
 /// Returns the CMD.EXE process ID. This is mainly intended to help with salting
 /// unique resource names (for example named pipes).
-int get_pid(lua_State* state)
+int32 get_pid(lua_State* state)
 {
     DWORD pid = GetCurrentProcessId();
     lua_pushinteger(state, pid);
@@ -1324,7 +1324,7 @@ int get_pid(lua_State* state)
 ///
 /// <strong>Note:</strong> Be sure to delete the file when finished, or it will
 /// be leaked.
-static int create_tmp_file(lua_State *state)
+static int32 create_tmp_file(lua_State *state)
 {
     const char* prefix = optstring(state, 1, "");
     const char* ext = optstring(state, 2, "");
@@ -1362,7 +1362,7 @@ static int create_tmp_file(lua_State *state)
 /// Returns the 8.3 short path name for <span class="arg">path</span>.  This may
 /// return the input path if an 8.3 short path name is not available.
 /// If unsuccessful it returns nil, an error message, and the error number.
-static int get_short_path_name(lua_State *state)
+static int32 get_short_path_name(lua_State *state)
 {
     const char* path = checkstring(state, 1);
     if (!path)
@@ -1380,7 +1380,7 @@ static int get_short_path_name(lua_State *state)
 /// -ret:   string
 /// Returns the long path name for <span class="arg">path</span>.
 /// If unsuccessful it returns nil, an error message, and the error number.
-static int get_long_path_name(lua_State *state)
+static int32 get_long_path_name(lua_State *state)
 {
     const char* path = checkstring(state, 1);
     if (!path)
@@ -1398,7 +1398,7 @@ static int get_long_path_name(lua_State *state)
 /// -ret:   string
 /// Returns the full path name for <span class="arg">path</span>.
 /// If unsuccessful it returns nil, an error message, and the error number.
-static int get_full_path_name(lua_State *state)
+static int32 get_full_path_name(lua_State *state)
 {
     const char* path = checkstring(state, 1);
     if (!path)
@@ -1415,7 +1415,7 @@ static int get_full_path_name(lua_State *state)
 /// -ret:   string
 /// Returns the path of the system temporary directory.
 /// If unsuccessful it returns nil, an error message, and the error number.
-static int get_temp_path(lua_State *state)
+static int32 get_temp_path(lua_State *state)
 {
     str<> out;
     bool ok = os::get_temp_dir(out);
@@ -1430,7 +1430,7 @@ static int get_temp_path(lua_State *state)
 /// Returns the remote name associated with <span class="arg">path</span>, or an
 /// empty string if it's not a network drive.
 /// If unsuccessful it returns nil, an error message, and the error number.
-static int get_net_connection_name(lua_State *state)
+static int32 get_net_connection_name(lua_State *state)
 {
     const char* path = checkstring(state, 1);
     if (!path)
@@ -1452,15 +1452,15 @@ static int get_net_connection_name(lua_State *state)
 /// This function has no effect if the
 /// <code><a href="#lua_debug">lua.debug</a></code> Clink setting is off.
 /// -show:  clink.debugprint("my variable = "..myvar)
-static int debug_print(lua_State *state)
+static int32 debug_print(lua_State *state)
 {
     str<> out;
     bool err = false;
 
-    int n = lua_gettop(state);              // Number of arguments.
+    int32 n = lua_gettop(state);              // Number of arguments.
     lua_getglobal(state, "tostring");       // Function to convert to string (reused each loop iteration).
 
-    for (int i = 1; i <= n; i++)
+    for (int32 i = 1; i <= n; i++)
     {
         // Call function to convert arg to a string.
         lua_pushvalue(state, -1);           // Function to be called (tostring).
@@ -1483,7 +1483,7 @@ static int debug_print(lua_State *state)
             out << "\t";
 
         // Add string result to the output.
-        out.concat(s, int(l));
+        out.concat(s, int32(l));
     }
 
     out.concat("\r\n");
@@ -1508,7 +1508,7 @@ static int debug_print(lua_State *state)
 /// It was necessary to replace os.clock() in order for
 /// <a href="#asyncpromptfiltering">asynchronous prompt filtering</a> to
 /// continue working when CMD has been running for more than 25 days.
-static int double_clock(lua_State *state)
+static int32 double_clock(lua_State *state)
 {
     lua_Number elapsed = os::clock();
     lua_pushnumber(state, elapsed);
@@ -1521,7 +1521,7 @@ static int double_clock(lua_State *state)
 /// -ret:   string | nil
 /// This returns the text from the system clipboard, or nil if there is no text
 /// on the system clipboard.
-static int get_clipboard_text(lua_State *state)
+static int32 get_clipboard_text(lua_State *state)
 {
     str<1024> utf8;
     if (!os::get_clipboard_text(utf8))
@@ -1538,19 +1538,19 @@ static int get_clipboard_text(lua_State *state)
 /// -ret:   boolean
 /// This sets the text onto the system clipboard, and returns whether it was
 /// successful.
-static int set_clipboard_text(lua_State *state)
+static int32 set_clipboard_text(lua_State *state)
 {
     const char* text = checkstring(state, 1);
     if (!text)
         return 0;
 
-    bool ok = os::set_clipboard_text(text, int(strlen(text)));
+    bool ok = os::set_clipboard_text(text, int32(strlen(text)));
     lua_pushboolean(state, ok);
     return 1;
 }
 
 //------------------------------------------------------------------------------
-static int os_executeyield_internal(lua_State *state) // gcc can't handle 'friend' and 'static'.
+static int32 os_executeyield_internal(lua_State *state) // gcc can't handle 'friend' and 'static'.
 {
     bool ismain = (G(state)->mainthread == state);
     const char *command = luaL_optstring(state, 1, NULL);
@@ -1578,7 +1578,7 @@ static int os_executeyield_internal(lua_State *state) // gcc can't handle 'frien
 /// -ret:   boolean
 /// Returns whether a <kbb>Ctrl</kbd>+<kbd>Break</kbd> has been received.
 /// Scripts may use this to decide when to end work early.
-static int is_signaled(lua_State *state)
+static int32 is_signaled(lua_State *state)
 {
     lua_pushboolean(state, clink_is_signaled());
     return 1;
@@ -1590,9 +1590,9 @@ static int is_signaled(lua_State *state)
 /// -arg:   seconds:number
 /// Sleeps for the indicated duration, in seconds, with millisecond granularity.
 /// -show:  os.sleep(0.01)  -- Sleep for 10 milliseconds.
-static int sleep(lua_State *state)
+static int32 sleep(lua_State *state)
 {
-    int isnum;
+    int32 isnum;
     double sec = lua_tonumberx(state, -1, &isnum);
     if (isnum)
     {
@@ -1647,7 +1647,7 @@ static int sleep(lua_State *state)
 /// -show:
 /// -show:  expanded, remaining, unique = os.expandabbreviatedpath("d:\\boxes\\file")
 /// -show:  -- returns nil                              -- Is already expanded.
-static int expand_abbreviated_path(lua_State *state)
+static int32 expand_abbreviated_path(lua_State *state)
 {
     const char* path = checkstring(state, 1);
     if (!path)
@@ -1673,7 +1673,7 @@ static int expand_abbreviated_path(lua_State *state)
 /// -ver:   1.4.17
 /// -ret:   boolean
 /// Returns true if running as an administrator account.
-static int is_user_admin(lua_State *state)
+static int32 is_user_admin(lua_State *state)
 {
     const bool is = os::is_user_admin();
     lua_pushboolean(state, is);
@@ -1731,7 +1731,7 @@ static bool maybe_rawset(lua_State *state, const char* name, const char* value)
 /// -show:  -- info.fileflags.privatebuild
 /// -show:  -- info.fileflags.specialbuild
 /// -show:  end
-static int get_file_version(lua_State *state)
+static int32 get_file_version(lua_State *state)
 {
     const char* file = checkstring(state, 1);
     if (!file)
@@ -1831,7 +1831,7 @@ os_stringresult:
             lua_createtable(state, 0, 5);
 
             bool any = false;
-            for (unsigned int ii = 0; ii < _countof(c_file_flags); ++ii)
+            for (uint32 ii = 0; ii < _countof(c_file_flags); ++ii)
             {
                 if ((c_file_flags[ii].dw & pffi->dwFileFlagsMask) &&
                     (c_file_flags[ii].dw & pffi->dwFileFlags))
@@ -1871,7 +1871,7 @@ os_stringresult:
             if (dwFileOS == VOS_NT_WINDOWS32)
                 dwFileOS = VOS_NT;
 
-            for (unsigned int ii = 0; ii < _countof(c_platforms); ++ii)
+            for (uint32 ii = 0; ii < _countof(c_platforms); ++ii)
             {
                 if (c_platforms[ii].dw == (dwFileOS & 0xffff0000))
                 {
@@ -1881,7 +1881,7 @@ os_stringresult:
                     break;
                 }
             }
-            for (unsigned int ii = 0; ii < _countof(c_qualifiers); ++ii)
+            for (uint32 ii = 0; ii < _countof(c_qualifiers); ++ii)
             {
                 if (c_qualifiers[ii].dw == LOWORD(dwFileOS))
                 {
@@ -1918,7 +1918,7 @@ os_stringresult:
         const LANGANDCODEPAGE* systemBest = nullptr;
         const LANGANDCODEPAGE* englishBest = nullptr;
         const LANGANDCODEPAGE* neutralBest = nullptr;
-        for (unsigned int cTranslations = dwTranslationsSize / sizeof(LANGANDCODEPAGE); cTranslations--; pTranslations++)
+        for (uint32 cTranslations = dwTranslationsSize / sizeof(LANGANDCODEPAGE); cTranslations--; pTranslations++)
         {
             if (pTranslations->wLanguage == userLang)
             {
@@ -1951,7 +1951,7 @@ os_stringresult:
         {
             wstr<> translationPath;
             translationPath.format(L"\\StringFileInfo\\%04x%04x\\", bestBest->wLanguage, bestBest->wCodePage);
-            const unsigned int len_translationPath = translationPath.length();
+            const uint32 len_translationPath = translationPath.length();
 
             static const struct {
                 const WCHAR* stringName;
@@ -1995,7 +1995,7 @@ void os_lua_initialise(lua_state& lua)
 {
     struct {
         const char* name;
-        int         (*method)(lua_State*);
+        int32       (*method)(lua_State*);
     } methods[] = {
         { "chdir",       &set_current_dir },
         { "getcwd",      &get_current_dir },

@@ -91,19 +91,26 @@ extern "C" {
 #define _DEFAULT_ONE
 #endif
 
+#ifndef _CSTDINT_
+typedef char int8;      typedef unsigned char uint8;
+typedef short int16;    typedef unsigned short uint16;
+typedef int int32;      typedef unsigned int uint32;
+typedef __int64 int64;  typedef unsigned __int64 uint64;
+#endif
+
 char const* dbginspectmemory(const void* pv, size_t size);
 
 void dbgsetsanealloc(size_t maxalloc, size_t maxrealloc, size_t const* exceptions);
 
-void* dbgalloc_(size_t size, unsigned int flags);
-void* dbgrealloc_(void* pv, size_t size, unsigned int flags);
-void dbgfree_(void* pv, unsigned int type);
+void* dbgalloc_(size_t size, uint32 flags);
+void* dbgrealloc_(void* pv, size_t size, uint32 flags);
+void dbgfree_(void* pv, uint32 type);
 
-void dbgsetlabel(const void* pv, const char* label, int copy);
+void dbgsetlabel(const void* pv, const char* label, int32 copy);
 void dbgverifylabel(const void* pv, const char* label);
-void dbgsetignore(const void* pv, int ignore _DEFAULT_ONE);
+void dbgsetignore(const void* pv, int32 ignore _DEFAULT_ONE);
 // Caller is responsible for lifetime of label pointer.
-size_t dbgignoresince(size_t alloc_number, size_t* total_bytes, char const* label _DEFAULT_ZERO, int all_threads _DEFAULT_ZERO);
+size_t dbgignoresince(size_t alloc_number, size_t* total_bytes, char const* label _DEFAULT_ZERO, int32 all_threads _DEFAULT_ZERO);
 void dbgmarkmem(const void* pv);
 
 size_t dbggetallocnumber();
@@ -121,7 +128,7 @@ void dbgcheck();
 //  - all = all leaks
 //  - ignored = ignored or marked allocations after ALLOC_NUMBER
 //  - snapshot = leaks after ALLOC_NUMBER
-void dbgchecksince(size_t alloc_number, int all_leaks _DEFAULT_ZERO);
+void dbgchecksince(size_t alloc_number, int32 all_leaks _DEFAULT_ZERO);
 void dbgcheckfinal();
 
 #ifdef USE_HEAP_STATS

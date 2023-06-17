@@ -102,7 +102,7 @@ void yield_thread::set_need_completion()
 }
 
 //------------------------------------------------------------------------------
-void yield_thread::wait(unsigned int timeout)
+void yield_thread::wait(uint32 timeout)
 {
     HANDLE event = get_ready_event();
     if (event)
@@ -153,7 +153,7 @@ unsigned __stdcall yield_thread::threadproc(void *arg)
 luaL_YieldGuard* luaL_YieldGuard::make_new(lua_State* state)
 {
 #ifdef DEBUG
-    int oldtop = lua_gettop(state);
+    int32 oldtop = lua_gettop(state);
 #endif
 
     luaL_YieldGuard* yg = (luaL_YieldGuard*)lua_newuserdata(state, sizeof(luaL_YieldGuard));
@@ -180,7 +180,7 @@ luaL_YieldGuard* luaL_YieldGuard::make_new(lua_State* state)
     lua_setmetatable(state, -2);
 
 #ifdef DEBUG
-    int newtop = lua_gettop(state);
+    int32 newtop = lua_gettop(state);
     assert(oldtop - newtop == -1);
     luaL_YieldGuard* test = (luaL_YieldGuard*)luaL_checkudata(state, -1, LUA_YIELDGUARD);
     assert(test == yg);
@@ -203,7 +203,7 @@ const char* luaL_YieldGuard::get_command() const
 }
 
 //------------------------------------------------------------------------------
-int luaL_YieldGuard::ready(lua_State* state)
+int32 luaL_YieldGuard::ready(lua_State* state)
 {
     luaL_YieldGuard* yg = (luaL_YieldGuard*)luaL_checkudata(state, 1, LUA_YIELDGUARD);
     lua_pushboolean(state, yg && yg->m_thread && yg->m_thread->is_ready());
@@ -211,7 +211,7 @@ int luaL_YieldGuard::ready(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-int luaL_YieldGuard::command(lua_State* state)
+int32 luaL_YieldGuard::command(lua_State* state)
 {
     luaL_YieldGuard* yg = (luaL_YieldGuard*)luaL_checkudata(state, 1, LUA_YIELDGUARD);
     lua_pushstring(state, yg->get_command());
@@ -219,7 +219,7 @@ int luaL_YieldGuard::command(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-int luaL_YieldGuard::set_need_completion(lua_State* state)
+int32 luaL_YieldGuard::set_need_completion(lua_State* state)
 {
     luaL_YieldGuard* yg = (luaL_YieldGuard*)luaL_checkudata(state, 1, LUA_YIELDGUARD);
     if (yg && yg->m_thread)
@@ -228,7 +228,7 @@ int luaL_YieldGuard::set_need_completion(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-int luaL_YieldGuard::results(lua_State* state)
+int32 luaL_YieldGuard::results(lua_State* state)
 {
     luaL_YieldGuard* yg = (luaL_YieldGuard*)luaL_checkudata(state, 1, LUA_YIELDGUARD);
     if (yg && yg->m_thread)
@@ -237,23 +237,23 @@ int luaL_YieldGuard::results(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-int luaL_YieldGuard::wait(lua_State* state)
+int32 luaL_YieldGuard::wait(lua_State* state)
 {
     luaL_YieldGuard* yg = (luaL_YieldGuard*)luaL_checkudata(state, 1, LUA_YIELDGUARD);
     if (yg && yg->m_thread)
     {
-        int isnum;
+        int32 isnum;
         const double sec = lua_tonumberx(state, 2, &isnum);
-        const unsigned int timeout = (!isnum ? INFINITE :
-                                      (sec > 0) ? unsigned(sec * 1000) :
-                                      0);
+        const uint32 timeout = (!isnum ? INFINITE :
+                                (sec > 0) ? unsigned(sec * 1000) :
+                                0);
         yg->m_thread->wait(timeout);
     }
     return 0;
 }
 
 //------------------------------------------------------------------------------
-int luaL_YieldGuard::__gc(lua_State* state)
+int32 luaL_YieldGuard::__gc(lua_State* state)
 {
     luaL_YieldGuard* yg = (luaL_YieldGuard*)luaL_checkudata(state, 1, LUA_YIELDGUARD);
     if (yg)
@@ -262,7 +262,7 @@ int luaL_YieldGuard::__gc(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-int luaL_YieldGuard::__tostring(lua_State* state)
+int32 luaL_YieldGuard::__tostring(lua_State* state)
 {
     luaL_YieldGuard* yg = (luaL_YieldGuard*)luaL_checkudata(state, 1, LUA_YIELDGUARD);
     lua_pushfstring(state, "yieldguard (%p)", yg ? yg->m_thread.get() : nullptr);

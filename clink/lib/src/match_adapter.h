@@ -25,25 +25,25 @@ public:
 
     matches_iter    get_iter();
     void            get_lcd(str_base& out) const;
-    unsigned int    get_match_count() const;
-    const char*     get_match(unsigned int index) const;
-    match_type      get_match_type(unsigned int index) const;
-    const char*     get_match_display(unsigned int index) const;
-    const char*     get_match_display_raw(unsigned int index) const;
-    unsigned int    get_match_visible_display(unsigned int index) const;
-    const char*     get_match_description(unsigned int index) const;
-    unsigned int    get_match_visible_description(unsigned int index) const;
-    char            get_match_append_char(unsigned int index) const;
-    unsigned char   get_match_flags(unsigned int index) const;
-    bool            is_custom_display(unsigned int index) const;
-    bool            is_append_display(unsigned int index) const;
-    bool            use_display(unsigned int index, match_type type, bool append) const;
+    uint32          get_match_count() const;
+    const char*     get_match(uint32 index) const;
+    match_type      get_match_type(uint32 index) const;
+    const char*     get_match_display(uint32 index) const;
+    const char*     get_match_display_raw(uint32 index) const;
+    uint32          get_match_visible_display(uint32 index) const;
+    const char*     get_match_description(uint32 index) const;
+    uint32          get_match_visible_description(uint32 index) const;
+    char            get_match_append_char(uint32 index) const;
+    uint8           get_match_flags(uint32 index) const;
+    bool            is_custom_display(uint32 index) const;
+    bool            is_append_display(uint32 index) const;
+    bool            use_display(uint32 index, match_type type, bool append) const;
 
     bool            is_display_filtered() const;
     bool            has_descriptions() const;
 
 private:
-    const char*     get_match_display_internal(unsigned int index) const;
+    const char*     get_match_display_internal(uint32 index) const;
     void            free_filtered();
     void            clear_alt();
 
@@ -51,7 +51,7 @@ private:
     struct cached_info
     {
         void            clear();
-        unsigned int    m_count;
+        uint32          m_count;
         str<32>         m_lcd;
         char            m_has_descriptions;
         bool            m_has_lcd;

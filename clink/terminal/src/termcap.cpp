@@ -37,14 +37,14 @@ static bool is_cursor_blink_code(const wchar_t* chars)
 }
 
 //------------------------------------------------------------------------------
-extern "C" int show_cursor(int visible)
+extern "C" int32 show_cursor(int32 visible)
 {
     HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
 
     if (visible)
     {
         const wchar_t* str = g_enhanced_cursor ? s_term_vs.c_str() : s_term_ve.c_str();
-        unsigned int len = g_enhanced_cursor ? s_term_vs.length() : s_term_ve.length();
+        uint32 len = g_enhanced_cursor ? s_term_vs.length() : s_term_ve.length();
 
         // Windows Terminal doesn't support using SetConsoleCursorInfo to change
         // the cursor size, so use termcap strings instead.
@@ -84,7 +84,7 @@ common:
     if (get_native_ansi_handler() >= ansi_handler::winterminal)
     {
         DWORD dw;
-        const int was_visible = cursor_style(h, -1, -1);
+        const int32 was_visible = cursor_style(h, -1, -1);
         WriteConsoleW(h, visible ? L"\u001b[?25h" : L"\u001b[?25l", 6, &dw, nullptr);
         return was_visible;
     }
@@ -214,7 +214,7 @@ void terminal_out::visible_bell()
     HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
 
     // Remember the cursor visibility.
-    int was_visible = cursor_style(handle, -1, -1);
+    int32 was_visible = cursor_style(handle, -1, -1);
 
     // Use the opposite cursor style from whatever is currently active.
     if (enhanced)
@@ -248,15 +248,15 @@ void terminal_out::visible_bell()
 
 
 //------------------------------------------------------------------------------
-static int get_cap(const char* name)
+static int32 get_cap(const char* name)
 {
-    int a = int(*name);
-    int b = a ? int(name[1]) : 0;
+    int32 a = int32(*name);
+    int32 b = a ? int32(name[1]) : 0;
     return (a << 8) | b;
 }
 
 //------------------------------------------------------------------------------
-static void get_screen_size(int& width, int& height)
+static void get_screen_size(int32& width, int32& height)
 {
     HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
     if (handle != INVALID_HANDLE_VALUE)
@@ -279,17 +279,17 @@ extern "C" {
 #endif
 
 //------------------------------------------------------------------------------
-int _rl_output_character_function(int); // Terminal can't #include from Readline.
+int32 _rl_output_character_function(int32); // Terminal can't #include from Readline.
 
 //------------------------------------------------------------------------------
-int tputs(const char* str, int affcnt, int (*putc_func)(int))
+int32 tputs(const char* str, int32 affcnt, int32 (*putc_func)(int32))
 {
-    extern int hooked_fwrite(const void* data, int size, int count, FILE* stream);
+    extern int32 hooked_fwrite(const void* data, int32 size, int32 count, FILE* stream);
     extern FILE *_rl_out_stream;
 
     if (putc_func == _rl_output_character_function)
     {
-        hooked_fwrite(str, (int)strlen(str), 1, _rl_out_stream);
+        hooked_fwrite(str, (int32)strlen(str), 1, _rl_out_stream);
         return 0;
     }
 
@@ -301,17 +301,17 @@ int tputs(const char* str, int affcnt, int (*putc_func)(int))
 }
 
 //------------------------------------------------------------------------------
-int tgetent(char* bp, const char* name)
+int32 tgetent(char* bp, const char* name)
 {
     *bp = '\0';
     return 1;
 }
 
 //------------------------------------------------------------------------------
-int tgetnum(char* name)
+int32 tgetnum(char* name)
 {
-    int width, height;
-    int cap = get_cap(name);
+    int32 width, height;
+    int32 cap = get_cap(name);
 
     get_screen_size(width, height);
 
@@ -325,9 +325,9 @@ int tgetnum(char* name)
 }
 
 //------------------------------------------------------------------------------
-int tgetflag(char* name)
+int32 tgetflag(char* name)
 {
-    int cap = get_cap(name);
+    int32 cap = get_cap(name);
 
     switch (cap)
     {
@@ -342,7 +342,7 @@ int tgetflag(char* name)
 //------------------------------------------------------------------------------
 char* tgetstr(const char* name, char** out)
 {
-    int cap = get_cap(name);
+    int32 cap = get_cap(name);
     const char* str = nullptr;
     switch (cap)
     {
@@ -403,7 +403,7 @@ char* tgetstr(const char* name, char** out)
 }
 
 //------------------------------------------------------------------------------
-char* tgoto(const char* base, int x, int y)
+char* tgoto(const char* base, int32 x, int32 y)
 {
     str_base(gt_termcap_buffer).format(base, y);
     return gt_termcap_buffer;

@@ -26,7 +26,7 @@ public:
     public:
         explicit        operator bool () const;
         editor_module*  get_module() const;
-        unsigned char   get_id() const;
+        uint8           get_id() const;
         void            get_chord(str_base& chord) const;
         const input_params& get_params() const;
         void            claim();
@@ -34,37 +34,37 @@ public:
     private:
         friend class    bind_resolver;
                         binding() = default;
-                        binding(bind_resolver* resolver, int node_index, const bind_params& params);
+                        binding(bind_resolver* resolver, int32 node_index, const bind_params& params);
         bind_resolver*  m_outer = nullptr;
         unsigned short  m_node_index;
-        unsigned char   m_module;
-        unsigned char   m_len;
-        unsigned char   m_id;
+        uint8           m_module;
+        uint8           m_len;
+        uint8           m_id;
         bind_params     m_params;
     };
 
                         bind_resolver(const binder& binder);
-    void                set_group(int group);
-    int                 get_group() const;
-    bool                step(unsigned char key);
+    void                set_group(int32 group);
+    int32               get_group() const;
+    bool                step(uint8 key);
     binding             next();
     void                reset();
 
-    int                 is_bound(const char* seq, int len) const;
-    bool                more_than(unsigned int len) const;
+    int32               is_bound(const char* seq, int32 len) const;
+    bool                more_than(uint32 len) const;
 
 private:
     void                claim(binding& binding);
-    bool                step_impl(unsigned char key);
+    bool                step_impl(uint8 key);
     const binder&       m_binder;
     unsigned short      m_node_index = 1;
     unsigned short      m_group = 1;
     bool                m_pending_input = false;
-    unsigned char       m_tail = 0;
+    uint8               m_tail = 0;
     bind_params         m_params;
     unsigned short      m_param_accumulator = 0;
-    unsigned char       m_param_len = 0;
+    uint8               m_param_len = 0;
     bool                m_pending_param = false;
-    unsigned char       m_key_count = 0;
+    uint8               m_key_count = 0;
     char                m_keys[16];
 };

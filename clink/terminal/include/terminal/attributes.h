@@ -23,7 +23,7 @@
     COLOR_X(white)
 
 #define COLOR_X(x) color_##x,
-enum : unsigned char
+enum : uint8
 {
     COLOR_XS
     color_count,
@@ -49,7 +49,7 @@ public:
         };
 
         bool                    operator == (const color& rhs) const { return value == rhs.value; }
-        void                    as_888(unsigned char (&out)[3]) const;
+        void                    as_888(uint8 (&out)[3]) const;
     };
 
     template <typename T>
@@ -58,8 +58,8 @@ public:
         explicit                operator bool () const  { return bool(set); }
         const T*                operator -> () const { return &value; }
         const T                 value;
-        const unsigned char     set : 1;
-        const unsigned char     is_default : 1;
+        const uint8             set : 1;
+        const uint8             is_default : 1;
     };
 
     enum default_e { defaults };
@@ -72,10 +72,10 @@ public:
     static attributes           diff(const attributes from, const attributes to);
     void                        reset_fg();
     void                        reset_bg();
-    void                        set_fg(unsigned char value);
-    void                        set_bg(unsigned char value);
-    void                        set_fg(unsigned char r, unsigned char g, unsigned char b);
-    void                        set_bg(unsigned char r, unsigned char g, unsigned char b);
+    void                        set_fg(uint8 value);
+    void                        set_bg(uint8 value);
+    void                        set_fg(uint8 r, uint8 g, uint8 b);
+    void                        set_bg(uint8 r, uint8 g, uint8 b);
     void                        set_bold(bool state=true);
     void                        set_underline(bool state=true);
     void                        set_reverse(bool state=true);
@@ -90,13 +90,13 @@ private:
     {
         struct
         {
-            unsigned char       fg : 1;
-            unsigned char       bg : 1;
-            unsigned char       bold : 1;
-            unsigned char       underline : 1;
-            unsigned char       reverse : 1;
+            uint8               fg : 1;
+            uint8               bg : 1;
+            uint8               bold : 1;
+            uint8               underline : 1;
+            uint8               reverse : 1;
         };
-        unsigned char           all;
+        uint8                   all;
     };
 
     union
@@ -109,7 +109,7 @@ private:
             unsigned short      m_underline : 1;
             unsigned short      m_reverse : 1;
             flags               m_flags;
-            unsigned char       m_unused;
+            uint8               m_unused;
         };
         unsigned long long      m_state;
     };

@@ -23,7 +23,7 @@ extern "C" {
 #include <readline/readline.h>
 #include <readline/rlprivate.h>
 #include <readline/rldefs.h>
-extern int __complete_get_screenwidth(void);
+extern int32 __complete_get_screenwidth(void);
 }
 
 #include <vector>
@@ -33,8 +33,8 @@ extern int __complete_get_screenwidth(void);
 extern pager* g_pager;
 extern editor_module::result* g_result;
 extern setting_bool g_terminal_raw_esc;
-extern int read_key_direct(bool wait);
-extern int clink_is_signaled();
+extern int32 read_key_direct(bool wait);
+extern int32 clink_is_signaled();
 
 //------------------------------------------------------------------------------
 static linear_allocator s_macro_name_store(4096);
@@ -82,8 +82,8 @@ const char* lookup_macro_description(const char* macro)
 //------------------------------------------------------------------------------
 struct Keyentry
 {
-    int cat;
-    int sort;
+    int32 cat;
+    int32 sort;
     char* key_name;
     char* macro_text;
     const char* func_name;
@@ -95,10 +95,10 @@ struct Keyentry
 //------------------------------------------------------------------------------
 struct Keydesc
 {
-    Keydesc(const char* name, int cat, const char* desc) : name(name), desc(desc), cat(cat) {}
+    Keydesc(const char* name, int32 cat, const char* desc) : name(name), desc(desc), cat(cat) {}
     const char* name;   // command name
     const char* desc;   // command description
-    int cat;            // command category
+    int32 cat;          // command category
 };
 
 //------------------------------------------------------------------------------
@@ -125,7 +125,7 @@ static_assert(sizeof_array(c_headings) == keycat_MAX, "c_headings must have the 
 static const struct {
     const char* name;
     rl_command_func_t* func;
-    int cat;
+    int32 cat;
     const char* desc;
 } c_func_descriptions[] = {
   { "abort", rl_abort, keycat_basic, "Abort the current editing command and ring the terminal's bell (subject to the setting of 'bell-style')" },
@@ -360,7 +360,7 @@ static void ensure_keydesc_map()
 }
 
 //------------------------------------------------------------------------------
-void clink_add_funmap_entry(const char *name, rl_command_func_t *func, int cat, const char* desc)
+void clink_add_funmap_entry(const char *name, rl_command_func_t *func, int32 cat, const char* desc)
 {
     assert(name);
     assert(func);
@@ -389,7 +389,7 @@ void clink_add_funmap_entry(const char *name, rl_command_func_t *func, int cat, 
 }
 
 //------------------------------------------------------------------------------
-static const char* get_function_name(int (*func_addr)(int, int))
+static const char* get_function_name(int32 (*func_addr)(int32, int32))
 {
     auto const& iter = s_pmap_keydesc->find(func_addr);
     if (iter != s_pmap_keydesc->end())
@@ -399,7 +399,7 @@ static const char* get_function_name(int (*func_addr)(int, int))
 }
 
 //------------------------------------------------------------------------------
-static bool get_function_info(int (*func_addr)(int, int), const char** desc, int* cat)
+static bool get_function_info(int32 (*func_addr)(int32, int32), const char** desc, int32* cat)
 {
     auto const& iter = s_pmap_keydesc->find(func_addr);
     if (iter != s_pmap_keydesc->end())
@@ -413,22 +413,22 @@ static bool get_function_info(int (*func_addr)(int, int), const char** desc, int
 }
 
 //------------------------------------------------------------------------------
-static void concat_key_string(int i, str<32>& keyseq)
+static void concat_key_string(int32 i, str<32>& keyseq)
 {
     assert(i >= 0);
     assert(i < 256);
 
-    char c = (unsigned char)i;
+    char c = uint8(i);
     keyseq.concat_no_truncate(&c, 1);
 }
 
 //------------------------------------------------------------------------------
-static bool translate_keyseq(const char* keyseq, unsigned int len, char** key_name, bool friendly, int& sort)
+static bool translate_keyseq(const char* keyseq, uint32 len, char** key_name, bool friendly, int32& sort)
 {
     static const char ctrl_map[] = "@abcdefghijklmnopqrstuvwxyz[\\]^_";
 
     str<> tmp;
-    int order = 0;
+    int32 order = 0;
     sort = 0;
 
     const bool raw_esc = g_terminal_raw_esc.get();
@@ -440,8 +440,8 @@ static bool translate_keyseq(const char* keyseq, unsigned int len, char** key_na
     {
         tmp << "\"";
 
-        unsigned int comma_threshold = 0;
-        for (unsigned int i = 0; i < len; i++)
+        uint32 comma_threshold = 0;
+        for (uint32 i = 0; i < len; i++)
         {
             if (!i && len == 2 && keyseq[0] == 0x1b && keyseq[1] != 0x1b)
             {
@@ -493,12 +493,12 @@ static bool translate_keyseq(const char* keyseq, unsigned int len, char** key_na
     }
     else
     {
-        int need_comma = 0;
+        int32 need_comma = 0;
         const char* keyseq_end = keyseq + len;
         while (keyseq < keyseq_end)
         {
-            int keyseq_len;
-            int eqclass = 0;
+            int32 keyseq_len;
+            int32 eqclass = 0;
             const char* keyname = find_key_name(keyseq, keyseq_len, eqclass, order);
             if (keyname)
             {
@@ -532,7 +532,7 @@ static bool translate_keyseq(const char* keyseq, unsigned int len, char** key_na
                     if (need_comma > 0)
                         tmp.concat(",", 1);
                     tmp.concat("C-", 2);
-                    tmp.concat(&ctrl_map[(unsigned char)*keyseq], 1);
+                    tmp.concat(&ctrl_map[uint8(*keyseq)], 1);
                     eqclass |= 2;
                     need_comma = 1;
                     keyseq++;
@@ -543,7 +543,7 @@ static bool translate_keyseq(const char* keyseq, unsigned int len, char** key_na
                         tmp.concat(",", 1);
                     need_comma = 0;
 
-                    if ((unsigned char)*keyseq == 0x7f)
+                    if (uint8(*keyseq) == 0x7f)
                     {
                         tmp.concat("C-Bkspc");
                         eqclass |= 2;
@@ -601,14 +601,14 @@ static bool maybe_exclude_function(rl_command_func_t func)
 static Keyentry* collect_keymap(
     Keymap map,
     Keyentry* collector,
-    int* offset,
-    int* max,
+    int32* offset,
+    int32* max,
     str<32>& keyseq,
     bool friendly,
     bool categories,
     std::vector<str_moveable>* warnings)
 {
-    int i;
+    int32 i;
 
     ensure_keydesc_map();
 
@@ -622,7 +622,7 @@ static Keyentry* collect_keymap(
         // Recursively chain to another keymap.
         if (entry.type == ISKMAP)
         {
-            unsigned int old_len = keyseq.length();
+            uint32 old_len = keyseq.length();
             concat_key_string(i, keyseq);
             collector = collect_keymap((Keymap)entry.function, collector, offset, max, keyseq, friendly, categories, warnings);
             keyseq.truncate(old_len);
@@ -633,7 +633,7 @@ static Keyentry* collect_keymap(
         if (entry.type == ISFUNC && maybe_exclude_function(entry.function))
             continue;
 
-        int cat = keycat_macros;
+        int32 cat = keycat_macros;
         const char *name = nullptr;
         const char *desc = nullptr;
         char *macro = nullptr;
@@ -645,7 +645,7 @@ static Keyentry* collect_keymap(
             get_function_info(entry.function, &desc, &cat);
         }
 
-        unsigned int old_len = keyseq.length();
+        uint32 old_len = keyseq.length();
         if (!prefix)
             concat_key_string(i, keyseq);
 
@@ -655,7 +655,7 @@ static Keyentry* collect_keymap(
             collector = (Keyentry *)realloc(collector, sizeof(collector[0]) * *max);
         }
 
-        int sort;
+        int32 sort;
         if (translate_keyseq(keyseq.c_str(), keyseq.length(), &collector[*offset].key_name, friendly, sort))
         {
             Keyentry& out = collector[*offset];
@@ -708,13 +708,13 @@ static Keyentry* collect_keymap(
 //------------------------------------------------------------------------------
 static Keyentry* collect_functions(
     Keyentry* collector,
-    int* offset,
-    int* max,
+    int32* offset,
+    int32* max,
     bool categories)
 {
     str_unordered_set seen_name;
     std::unordered_set<rl_command_func_t*> seen_func;
-    for (int i = 1; i < *offset; i++)
+    for (int32 i = 1; i < *offset; i++)
     {
         const Keyentry& e = collector[i];
         const char* name = e.func_name;
@@ -740,7 +740,7 @@ static Keyentry* collect_functions(
 
         // Only add the first name for each function, and the first function for
         // each name.
-        int seen = 0;
+        int32 seen = 0;
         seen += seen_func.find(func) != seen_func.end();
         seen += seen_name.find(found_name) != seen_name.end();
         seen += seen_name.find(name) != seen_name.end();
@@ -767,7 +767,7 @@ static Keyentry* collect_functions(
 #endif /* VI_MODE */
 
         const char* desc;
-        int cat = keycat_misc;
+        int32 cat = keycat_misc;
         get_function_info(func, &desc, &cat);
 
         if (*offset >= *max)
@@ -810,11 +810,11 @@ static Keyentry* collect_functions(
 }
 
 //------------------------------------------------------------------------------
-static int __cdecl cmp_sort_collector(const void* pv1, const void* pv2)
+static int32 __cdecl cmp_sort_collector(const void* pv1, const void* pv2)
 {
     const Keyentry* p1 = (const Keyentry*)pv1;
     const Keyentry* p2 = (const Keyentry*)pv2;
-    int cmp;
+    int32 cmp;
 
     // Sort first by modifier keys.
     cmp = (p1->sort >> 16) - (p2->sort >> 16);
@@ -822,7 +822,7 @@ static int __cdecl cmp_sort_collector(const void* pv1, const void* pv2)
         return cmp;
 
     // Next by named key order.
-    cmp = (short int)p1->sort - (short int)p2->sort;
+    cmp = (int16)p1->sort - (int16)p2->sort;
     if (cmp)
         return cmp;
 
@@ -842,11 +842,11 @@ static int __cdecl cmp_sort_collector(const void* pv1, const void* pv2)
 }
 
 //------------------------------------------------------------------------------
-static int __cdecl cmp_sort_collector_cat(const void* pv1, const void* pv2)
+static int32 __cdecl cmp_sort_collector_cat(const void* pv1, const void* pv2)
 {
     const Keyentry* p1 = (const Keyentry*)pv1;
     const Keyentry* p2 = (const Keyentry*)pv2;
-    int cmp;
+    int32 cmp;
 
     // Sort first by category.
     cmp = (p1->cat) - (p2->cat);
@@ -857,37 +857,37 @@ static int __cdecl cmp_sort_collector_cat(const void* pv1, const void* pv2)
 }
 
 //------------------------------------------------------------------------------
-static void pad_with_spaces(str_base& str, unsigned int pad_to)
+static void pad_with_spaces(str_base& str, uint32 pad_to)
 {
-    unsigned int len = cell_count(str.c_str());
+    uint32 len = cell_count(str.c_str());
     while (len < pad_to)
     {
         const char spaces[] = "                                ";
-        const unsigned int available_spaces = sizeof_array(spaces) - 1;
-        int space_count = min(pad_to - len, available_spaces);
+        const uint32 available_spaces = sizeof_array(spaces) - 1;
+        int32 space_count = min(pad_to - len, available_spaces);
         str.concat(spaces, space_count);
         len += space_count;
     }
 }
 
 //------------------------------------------------------------------------------
-static void append_key_macro(str_base& s, const char* macro, const int limit)
+static void append_key_macro(str_base& s, const char* macro, const int32 limit)
 {
-    const int limit_ellipsis = limit - ellipsis_cells;
-    int truncate_len = 0;
-    unsigned int count = 0;
+    const int32 limit_ellipsis = limit - ellipsis_cells;
+    int32 truncate_len = 0;
+    uint32 count = 0;
 
     str_iter iter(macro);
     const char* p = iter.get_pointer();
-    while (int c = iter.next())
+    while (int32 c = iter.next())
     {
         const char* n = iter.get_pointer();
-        int w = clink_wcwidth(c);
+        int32 w = clink_wcwidth(c);
         if (count <= limit_ellipsis)
             truncate_len = s.length();
         if (count > limit)
             break;
-        s.concat(p, int (n - p));
+        s.concat(p, int32 (n - p));
         count += w;
         p = n;
     }
@@ -900,7 +900,7 @@ static void append_key_macro(str_base& s, const char* macro, const int limit)
 }
 
 //------------------------------------------------------------------------------
-static bool is_keyentry_equivalent(const Keyentry* map, int a, int b)
+static bool is_keyentry_equivalent(const Keyentry* map, int32 a, int32 b)
 {
     const Keyentry& ka = map[a];
     const Keyentry& kb = map[b];
@@ -920,25 +920,25 @@ static bool is_keyentry_equivalent(const Keyentry* map, int a, int b)
 
 //------------------------------------------------------------------------------
 struct key_binding_info { str_moveable name; str_moveable binding; const char* desc; const char* cat; };
-void show_key_bindings(bool friendly, int mode, std::vector<key_binding_info>* out=nullptr)
+void show_key_bindings(bool friendly, int32 mode, std::vector<key_binding_info>* out=nullptr)
 {
     bool show_categories = out || !!(mode & 1);
     bool show_descriptions = out || !!(mode & 2);
 
     struct show_line
     {
-        show_line(const char* heading, const Keyentry* entries, int count, int step)
+        show_line(const char* heading, const Keyentry* entries, int32 count, int32 step)
             : m_heading(heading), m_entries(entries), m_count(count), m_step(step) {}
 
         const char* const m_heading;
         const Keyentry* const m_entries;
-        const int m_count;
-        const int m_step;
+        const int32 m_count;
+        const int32 m_step;
     };
 
     Keymap map = rl_get_keymap();
-    int offset = 1;
-    int max_collect = 64;
+    int32 offset = 1;
+    int32 max_collect = 64;
     Keyentry* collector = (Keyentry*)malloc(sizeof(Keyentry) * max_collect);
     memset(&collector[0], 0, sizeof(collector[0]));
 
@@ -959,8 +959,8 @@ void show_key_bindings(bool friendly, int mode, std::vector<key_binding_info>* o
     {
         Keyentry* tortoise = collector + 1;
         Keyentry* hare = collector + 1;
-        int num = 1;
-        for (int i = 1; i < offset; ++i)
+        int32 num = 1;
+        for (int32 i = 1; i < offset; ++i)
         {
             if (is_keyentry_equivalent(collector, i, i - 1))
             {
@@ -980,20 +980,20 @@ void show_key_bindings(bool friendly, int mode, std::vector<key_binding_info>* o
     }
 
     // Find the longest key name and function name.
-    unsigned int longest_key[keycat_MAX] = {};
-    unsigned int longest_func[keycat_MAX] = {};
-    unsigned int desc_pad = show_descriptions ? 1 : 0;
-    const int macro_limit = _rl_screenwidth * 4 / 10;
-    for (int i = 1; i < offset; ++i)
+    uint32 longest_key[keycat_MAX] = {};
+    uint32 longest_func[keycat_MAX] = {};
+    uint32 desc_pad = show_descriptions ? 1 : 0;
+    const int32 macro_limit = _rl_screenwidth * 4 / 10;
+    for (int32 i = 1; i < offset; ++i)
     {
         const Keyentry& entry = collector[i];
-        int cat = show_categories ? entry.cat : 0;
-        unsigned int k = (unsigned int)strlen(entry.key_name);
-        unsigned int f = 0;
+        int32 cat = show_categories ? entry.cat : 0;
+        uint32 k = (uint32)strlen(entry.key_name);
+        uint32 f = 0;
         if (entry.func_name)
-            f = (unsigned int)strlen(entry.func_name);
+            f = (uint32)strlen(entry.func_name);
         else if (entry.macro_text)
-            f = 2 + min<int>(strlen(entry.macro_text), macro_limit);
+            f = 2 + min<int32>(strlen(entry.macro_text), macro_limit);
         f += desc_pad;
         if (cat)
         {
@@ -1009,32 +1009,32 @@ void show_key_bindings(bool friendly, int mode, std::vector<key_binding_info>* o
     }
 
     // Calculate columns.
-    auto longest = [&longest_key, &longest_func, desc_pad](int cat) { return longest_key[cat] + 3 + longest_func[cat] + 2 + desc_pad; };
-    const int max_width = out ? 0 : __complete_get_screenwidth();
-    const int columns_that_fit = show_descriptions ? 0 : max_width / longest(0);
-    const int columns = max(1, columns_that_fit);
+    auto longest = [&longest_key, &longest_func, desc_pad](int32 cat) { return longest_key[cat] + 3 + longest_func[cat] + 2 + desc_pad; };
+    const int32 max_width = out ? 0 : __complete_get_screenwidth();
+    const int32 columns_that_fit = show_descriptions ? 0 : max_width / longest(0);
+    const int32 columns = max(1, columns_that_fit);
 
     // Calculate rows.
     std::vector<show_line> lines;
     {
         const bool vertical = out ? true : !_rl_print_completions_horizontally;
 
-        int cat = -1;
-        int sub_begin = 1;
-        for (int k = 1; true; ++k)
+        int32 cat = -1;
+        int32 sub_begin = 1;
+        for (int32 k = 1; true; ++k)
         {
             const bool last = (k >= offset);
-            const int this_cat = (last ? -2 :
+            const int32 this_cat = (last ? -2 :
                                   !show_categories ? -1 :
                                   collector[k].cat);
 
             if (this_cat != cat)
             {
-                int sub_count = k - sub_begin;
+                int32 sub_count = k - sub_begin;
                 if (sub_count)
                 {
-                    const int rows = (sub_count + (columns - 1)) / columns;
-                    const int index_step = vertical ? rows : 1;
+                    const int32 rows = (sub_count + (columns - 1)) / columns;
+                    const int32 index_step = vertical ? rows : 1;
 
                     if (show_categories)
                     {
@@ -1044,11 +1044,11 @@ void show_key_bindings(bool friendly, int mode, std::vector<key_binding_info>* o
                         lines.emplace_back(heading, nullptr, 0, 0);
                     }
 
-                    for (int i = 0; i < rows; ++i)
+                    for (int32 i = 0; i < rows; ++i)
                     {
-                        int index = (vertical ? i : (i * columns));
+                        int32 index = (vertical ? i : (i * columns));
                         const Keyentry* entries = collector + index + sub_begin;
-                        const int count = min<int>(sub_count, columns);
+                        const int32 count = min<int32>(sub_count, columns);
                         lines.emplace_back(nullptr, entries, count, index_step);
                         sub_count -= count;
                     }
@@ -1082,13 +1082,13 @@ void show_key_bindings(bool friendly, int mode, std::vector<key_binding_info>* o
             else
                 g_printer->print("\n");
 
-            int num_warnings = stop ? 0 : int(warnings.size());
-            for (int i = 0; i < num_warnings; ++i)
+            int32 num_warnings = stop ? 0 : int32(warnings.size());
+            for (int32 i = 0; i < num_warnings; ++i)
             {
                 str_moveable& s = warnings[i];
 
                 // Ask the pager what to do.
-                int lines = ((s.length() - 14 + max_width - 1) / max_width); // -14 for escape codes.
+                int32 lines = ((s.length() - 14 + max_width - 1) / max_width); // -14 for escape codes.
                 if (!g_pager->on_print_lines(*g_printer, lines))
                 {
                     stop = true;
@@ -1111,27 +1111,27 @@ void show_key_bindings(bool friendly, int mode, std::vector<key_binding_info>* o
     str<> tmp;
     str<> str;
     key_binding_info info;
-    int cat = - 1;
+    int32 cat = - 1;
     for (auto const& line : lines)
     {
-        const int cat = !out && show_categories && show_descriptions && line.m_entries ? line.m_entries->cat : 0;
+        const int32 cat = !out && show_categories && show_descriptions && line.m_entries ? line.m_entries->cat : 0;
 
         // Ask the pager what to do.
         if (!out)
         {
-            int lines = 1;
+            int32 lines = 1;
             if (!columns_that_fit && line.m_entries)
             {
                 const Keyentry& entry = *line.m_entries;
-                int len = longest(cat);
+                int32 len = longest(cat);
                 if (show_descriptions && len + 1 >= max_width)
                 {
                     len = longest_key[cat] + 3;
                     if (entry.func_name)
-                        len += int(strlen(entry.func_name));
+                        len += int32(strlen(entry.func_name));
                     else
                         // TODO: strlen() isn't right; it's UTF8!
-                        len += min(2 + int(strlen(entry.macro_text)), 32);
+                        len += min(2 + int32(strlen(entry.macro_text)), 32);
                 }
                 lines += len / g_printer->get_columns();
             }
@@ -1142,8 +1142,8 @@ void show_key_bindings(bool friendly, int mode, std::vector<key_binding_info>* o
         // Print the row.
         if (line.m_entries)
         {
-            int index = 0;
-            for (int j = line.m_count; j-- > 0;)
+            int32 index = 0;
+            for (int32 j = line.m_count; j-- > 0;)
             {
                 // Key name.
                 const Keyentry& entry = line.m_entries[index];
@@ -1173,7 +1173,7 @@ void show_key_bindings(bool friendly, int mode, std::vector<key_binding_info>* o
                     append_key_macro(str, entry.macro_text, macro_limit);
                     str << "\"";
                 }
-                const int len_name_binding = longest(cat);
+                const int32 len_name_binding = longest(cat);
                 bool show_desc = (show_descriptions && entry.func_desc && len_name_binding + 1 < max_width);
                 if (j || show_desc)
                     pad_with_spaces(str, len_name_binding);
@@ -1237,30 +1237,30 @@ void show_key_bindings(bool friendly, int mode, std::vector<key_binding_info>* o
 }
 
 //------------------------------------------------------------------------------
-int show_rl_help(int, int)
+int32 show_rl_help(int32, int32)
 {
-    int mode = rl_explicit_arg ? rl_numeric_arg : 3;
+    int32 mode = rl_explicit_arg ? rl_numeric_arg : 3;
     show_key_bindings(true/*friendly*/, mode);
     return 0;
 }
 
 //------------------------------------------------------------------------------
-int show_rl_help_raw(int, int)
+int32 show_rl_help_raw(int32, int32)
 {
-    int mode = rl_explicit_arg ? rl_numeric_arg : 3;
+    int32 mode = rl_explicit_arg ? rl_numeric_arg : 3;
     show_key_bindings(false/*friendly*/, mode);
     return 0;
 }
 
 //------------------------------------------------------------------------------
-int clink_what_is(int, int)
+int32 clink_what_is(int32, int32)
 {
     ensure_keydesc_map();
 
     // Move cursor past the input line.
     end_prompt(true/*crlf*/);
 
-    int type;
+    int32 type;
     rl_command_func_t* func = nullptr;
     str<32> keyseq;
     bool not_bound = false;
@@ -1268,9 +1268,9 @@ int clink_what_is(int, int)
     str<> s;
     while (true)
     {
-        int sort = 0;
+        int32 sort = 0;
         char* key_name = nullptr;
-        int key;
+        int32 key;
 
         key = read_key_direct(false/*wait*/);
         if (key < 0)
@@ -1317,7 +1317,7 @@ int clink_what_is(int, int)
 
     if (keyseq.length())
     {
-        int sort = 0;
+        int32 sort = 0;
         char* key_name = nullptr;
         translate_keyseq(keyseq.c_str(), keyseq.length(), &key_name, true, sort);
         if (key_name)

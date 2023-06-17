@@ -83,7 +83,7 @@ static bool call_updater(lua_state& lua, bool do_nothing)
     lua_pushboolean(state, elevated);
     lua.pcall_silent(state, 1, 2);
 
-    int ok = int(lua_tointeger(state, -2));
+    int32 ok = int32(lua_tointeger(state, -2));
     const char* msg = lua_tostring(state, -1);
 
     if (ok < 0)
@@ -144,7 +144,7 @@ static bool call_updater(lua_state& lua, bool do_nothing)
 }
 
 //------------------------------------------------------------------------------
-int update(int argc, char** argv)
+int32 update(int32 argc, char** argv)
 {
     static const char* help_usage = "Usage: update [options]\n";
 
@@ -166,8 +166,8 @@ int update(int argc, char** argv)
     // Parse arguments
     DWORD target_pid = 0;
     app_context::desc app_desc;
-    int i;
-    int ret = 1;
+    int32 i;
+    int32 ret = 1;
     bool is_autorun = false;
     bool do_nothing = false;
     while ((i = getopt_long(argc, argv, "?hn", options, nullptr)) != -1)

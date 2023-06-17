@@ -16,7 +16,7 @@ public:
     enum pager_amount { unlimited, line, half_page, page, first_page };
                     pager_impl(input_dispatcher& dispatcher);
     virtual void    start_pager(printer& printer) override;
-    virtual bool    on_print_lines(printer& printer, int lines) override;
+    virtual bool    on_print_lines(printer& printer, int32 lines) override;
 
 private:
     virtual void    bind_input(binder& binder) override;
@@ -24,10 +24,10 @@ private:
     virtual void    on_end_line() override;
     virtual void    on_input(const input& input, result& result, const context& context) override;
     virtual void    on_matches_changed(const context& context, const line_state& line, const char* needle) override;
-    virtual void    on_terminal_resize(int columns, int rows, const context& context) override;
-    virtual void    on_signal(int sig) override;
+    virtual void    on_terminal_resize(int32 columns, int32 rows, const context& context) override;
+    virtual void    on_signal(int32 sig) override;
     void            set_limit(printer& printer, pager_amount amount);
-    int             m_max = 0;
-    int             m_pager_bind_group = -1;
+    int32           m_max = 0;
+    int32           m_pager_bind_group = -1;
     input_dispatcher& m_dispatcher;
 };

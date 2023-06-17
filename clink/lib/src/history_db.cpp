@@ -87,10 +87,10 @@ static setting_bool g_sticky_search(
 
 extern setting_enum g_history_timestamp;
 
-static constexpr int c_max_max_history_lines = 999999;
-static int get_max_history()
+static constexpr int32 c_max_max_history_lines = 999999;
+static int32 get_max_history()
 {
-    int limit = use_get_max_history_instead::g_max_history.get();
+    int32 limit = use_get_max_history_instead::g_max_history.get();
     if (limit <= 0 || limit > c_max_max_history_lines)
         limit = c_max_max_history_lines;
     return limit;
@@ -104,9 +104,9 @@ bool get_sticky_search_history()
 
 
 //------------------------------------------------------------------------------
-static int history_expand_control(char* line, int marker_pos)
+static int32 history_expand_control(char* line, int32 marker_pos)
 {
-    int setting, in_quote, i;
+    int32 setting, in_quote, i;
 
     setting = g_expand_mode.get();
     if (setting <= 1)
@@ -116,7 +116,7 @@ static int history_expand_control(char* line, int marker_pos)
     in_quote = 0;
     for (i = 0; i < marker_pos && *line; ++i, ++line)
     {
-        int c = *line;
+        int32 c = *line;
         if (c == '\'' || c == '\"')
             in_quote = (c == in_quote) ? 0 : c;
     }
@@ -168,10 +168,10 @@ static void* make_removals_file(const char* path, const char* ctag)
 
 
 //------------------------------------------------------------------------------
-const int max_ctag_size = 6 + 10 + 1 + 10 + 1 + 10 + 1 + 10 + 1 + 1;
+const int32 max_ctag_size = 6 + 10 + 1 + 10 + 1 + 10 + 1 + 10 + 1 + 1;
 void concurrency_tag::generate_new_tag()
 {
-    static unsigned int disambiguate = 0;
+    static uint32 disambiguate = 0;
 
     assert(m_tag.empty());
     time_t now = time(nullptr);
@@ -191,19 +191,19 @@ void concurrency_tag::set(const char* tag)
 //------------------------------------------------------------------------------
 union line_id_impl
 {
-    explicit  line_id_impl()                  { outer = 0; }
-    explicit  line_id_impl(unsigned int o)    { offset = o; bank_index = 0; active = 1; }
-    explicit  operator bool () const          { return !!outer; }
-    operator history_db::line_id () const     { return outer; }
+    explicit  line_id_impl()                { outer = 0; }
+    explicit  line_id_impl(uint32 o)        { offset = o; bank_index = 0; active = 1; }
+    explicit  operator bool () const        { return !!outer; }
+    operator history_db::line_id () const   { return outer; }
     struct {
-        unsigned int    offset : 29;
-        unsigned int    bank_index : 2;
-        unsigned int    active : 1;
+        uint32          offset : 29;
+        uint32          bank_index : 2;
+        uint32          active : 1;
     };
     history_db::line_id outer;
 };
 
-static const line_id_impl c_max_line_id(static_cast<unsigned int>(-1));
+static const line_id_impl c_max_line_id(uint32(-1));
 
 
 
@@ -262,7 +262,7 @@ bank_lock::bank_lock(const bank_handles& handles, bool exclusive)
     // bank_session are not always the same order.
 
     OVERLAPPED overlapped = {};
-    int flags = exclusive ? LOCKFILE_EXCLUSIVE_LOCK : 0;
+    int32 flags = exclusive ? LOCKFILE_EXCLUSIVE_LOCK : 0;
     LockFileEx(m_handle_lines, flags, 0, ~0u, ~0u, &overlapped);
     if (m_handle_removals)
         LockFileEx(m_handle_removals, flags, 0, ~0u, ~0u, &overlapped);
@@ -316,57 +316,57 @@ public:
     {
     public:
                             file_iter() = default;
-                            file_iter(const read_lock& lock, char* buffer, int buffer_size);
-                            file_iter(void* handle, char* buffer, int buffer_size);
-        template <int S>    file_iter(const read_lock& lock, char (&buffer)[S]);
-        template <int S>    file_iter(void* handle, char (&buffer)[S]);
-        unsigned int        next(unsigned int rollback=0);
+                            file_iter(const read_lock& lock, char* buffer, int32 buffer_size);
+                            file_iter(void* handle, char* buffer, int32 buffer_size);
+        template <int32 S>  file_iter(const read_lock& lock, char (&buffer)[S]);
+        template <int32 S>  file_iter(void* handle, char (&buffer)[S]);
+        uint32              next(uint32 rollback=0);
         unsigned __int64    get_buffer_offset() const   { return m_buffer_offset; }
         char*               get_buffer() const          { return m_buffer; }
-        unsigned int        get_buffer_size() const     { return m_buffer_size; }
-        unsigned int        get_remaining() const       { return m_remaining; }
-        void                set_file_offset(unsigned int offset);
+        uint32              get_buffer_size() const     { return m_buffer_size; }
+        uint32              get_remaining() const       { return m_remaining; }
+        void                set_file_offset(uint32 offset);
 
     private:
         char*               m_buffer = nullptr;
         void*               m_handle = nullptr;
         unsigned __int64    m_buffer_offset = 0;
-        unsigned int        m_buffer_size = 0;
-        unsigned int        m_remaining = 0;
+        uint32              m_buffer_size = 0;
+        uint32              m_remaining = 0;
     };
 
     class line_iter : public no_copy
     {
     public:
                             line_iter() = default;
-                            line_iter(const read_lock& lock, char* buffer, int buffer_size);
-                            line_iter(void* handle, char* buffer, int buffer_size);
-        template <int S>    line_iter(const read_lock& lock, char (&buffer)[S]);
-        template <int S>    line_iter(void* handle, char (&buffer)[S]);
+                            line_iter(const read_lock& lock, char* buffer, int32 buffer_size);
+                            line_iter(void* handle, char* buffer, int32 buffer_size);
+        template <int32 S>  line_iter(const read_lock& lock, char (&buffer)[S]);
+        template <int32 S>  line_iter(void* handle, char (&buffer)[S]);
                             ~line_iter() = default;
         line_id_impl        next(str_iter& out, str_base* timestamp=nullptr);
-        void                set_file_offset(unsigned int offset);
-        unsigned int        get_deleted_count() const { return m_deleted; }
+        void                set_file_offset(uint32 offset);
+        uint32              get_deleted_count() const { return m_deleted; }
 
     private:
         bool                provision();
         file_iter           m_file_iter;
-        unsigned int        m_remaining = 0;
-        unsigned int        m_deleted = 0;
+        uint32              m_remaining = 0;
+        uint32              m_deleted = 0;
         bool                m_first_line = true;
         bool                m_eating_ctag = false;
-        std::unordered_set<unsigned int> m_removals;
+        std::unordered_set<uint32> m_removals;
     };
 
     explicit                read_lock() = default;
     explicit                read_lock(const bank_handles& handles, bool exclusive=false);
     line_id_impl            find(const char* line) const;
     template <class T> void find(const char* line, T&& callback) const;
-    int                     apply_removals(write_lock& lock) const;
-    int                     collect_removals(write_lock& lock, std::vector<line_id_impl>& removals) const;
+    int32                   apply_removals(write_lock& lock) const;
+    int32                   collect_removals(write_lock& lock, std::vector<line_id_impl>& removals) const;
 
 private:
-    template <typename T> int for_each_removal(const read_lock& target, T&& callback) const;
+    template <typename T> int32 for_each_removal(const read_lock& target, T&& callback) const;
 };
 
 //------------------------------------------------------------------------------
@@ -383,7 +383,7 @@ public:
 };
 
 //------------------------------------------------------------------------------
-static bool extract_ctag(read_lock::file_iter& iter, char* buffer, int buffer_size, concurrency_tag& tag);
+static bool extract_ctag(read_lock::file_iter& iter, char* buffer, int32 buffer_size, concurrency_tag& tag);
 static bool extract_ctag(const read_lock& lock, concurrency_tag& tag);
 
 
@@ -409,7 +409,7 @@ template <class T> void read_lock::find(const char* line, T&& callback) const
         if (line[read.length()] != '\0')
             continue;
 
-        unsigned int file_ptr = SetFilePointer(m_handle_lines, 0, nullptr, FILE_CURRENT);
+        uint32 file_ptr = SetFilePointer(m_handle_lines, 0, nullptr, FILE_CURRENT);
         bool more = callback(id);
         SetFilePointer(m_handle_lines, file_ptr, nullptr, FILE_BEGIN);
 
@@ -430,9 +430,9 @@ line_id_impl read_lock::find(const char* line) const
 }
 
 //------------------------------------------------------------------------------
-int read_lock::apply_removals(write_lock& lock) const
+int32 read_lock::apply_removals(write_lock& lock) const
 {
-    return for_each_removal(lock, [&] (unsigned int offset)
+    return for_each_removal(lock, [&] (uint32 offset)
     {
         line_id_impl id(offset);
         lock.remove(id);
@@ -440,16 +440,16 @@ int read_lock::apply_removals(write_lock& lock) const
 }
 
 //------------------------------------------------------------------------------
-int read_lock::collect_removals(write_lock& lock, std::vector<line_id_impl>& removals) const
+int32 read_lock::collect_removals(write_lock& lock, std::vector<line_id_impl>& removals) const
 {
-    return for_each_removal(lock, [&] (unsigned int offset)
+    return for_each_removal(lock, [&] (uint32 offset)
     {
         removals.emplace_back(offset);
     });
 }
 
 //------------------------------------------------------------------------------
-template <typename T> int read_lock::for_each_removal(const read_lock& target, T&& callback) const
+template <typename T> int32 read_lock::for_each_removal(const read_lock& target, T&& callback) const
 {
     if (!m_handle_removals)
         return 0;
@@ -463,8 +463,8 @@ template <typename T> int read_lock::for_each_removal(const read_lock& target, T
         verify_handles.m_handle_lines = target.m_handle_lines;
         verify_handles.m_handle_removals = this->m_handle_removals;
 
-        unsigned int lines_ptr = SetFilePointer(verify_handles.m_handle_lines, 0, nullptr, FILE_CURRENT);
-        unsigned int removals_ptr = SetFilePointer(verify_handles.m_handle_removals, 0, nullptr, FILE_CURRENT);
+        uint32 lines_ptr = SetFilePointer(verify_handles.m_handle_lines, 0, nullptr, FILE_CURRENT);
+        uint32 removals_ptr = SetFilePointer(verify_handles.m_handle_removals, 0, nullptr, FILE_CURRENT);
 
 #ifdef DEBUG
         {
@@ -472,7 +472,7 @@ template <typename T> int read_lock::for_each_removal(const read_lock& target, T
             DWORD path_len = GetFinalPathNameByHandle(verify_handles.m_handle_lines, sz, sizeof_array(sz), 0);
             assert(path_len);
             const char* name = path::get_name(sz);
-            const int is_master_history = (strnicmp(name, "clink_history", 13) == 0 && name[13] != '_');
+            const int32 is_master_history = (strnicmp(name, "clink_history", 13) == 0 && name[13] != '_');
             if (!is_master_history)
             {
                 LOG("m_handle_lines is for '%s'; expected master history instead!", sz);
@@ -483,11 +483,11 @@ template <typename T> int read_lock::for_each_removal(const read_lock& target, T
 
         concurrency_tag master_ctag;
         file_iter iter_lines(verify_handles.m_handle_lines, tmp);
-        extract_ctag(iter_lines, tmp, int(sizeof(tmp)), master_ctag);
+        extract_ctag(iter_lines, tmp, int32(sizeof(tmp)), master_ctag);
 
         concurrency_tag removals_ctag;
         file_iter iter_removals(verify_handles.m_handle_removals, tmp);
-        extract_ctag(iter_removals, tmp, int(sizeof(tmp)), removals_ctag);
+        extract_ctag(iter_removals, tmp, int32(sizeof(tmp)), removals_ctag);
 
         SetFilePointer(verify_handles.m_handle_lines, lines_ptr, nullptr, FILE_BEGIN);
         SetFilePointer(verify_handles.m_handle_removals, removals_ptr, nullptr, FILE_BEGIN);
@@ -505,7 +505,7 @@ template <typename T> int read_lock::for_each_removal(const read_lock& target, T
     while (iter.next(value))
     {
         unsigned __int64 offset = 0;
-        unsigned int len = value.length();
+        uint32 len = value.length();
         for (const char *s = value.get_pointer(); len--; s++)
         {
             if (*s < '0' || *s > '9')
@@ -523,7 +523,7 @@ template <typename T> int read_lock::for_each_removal(const read_lock& target, T
         }
         else if (offset > 0)
         {
-            callback(static_cast<unsigned int>(offset));
+            callback(uint32(offset));
         }
     }
 
@@ -533,19 +533,19 @@ template <typename T> int read_lock::for_each_removal(const read_lock& target, T
 
 
 //------------------------------------------------------------------------------
-template <int S> read_lock::file_iter::file_iter(const read_lock& lock, char (&buffer)[S])
+template <int32 S> read_lock::file_iter::file_iter(const read_lock& lock, char (&buffer)[S])
 : file_iter(lock.m_handle_lines, buffer, S)
 {
 }
 
 //------------------------------------------------------------------------------
-template <int S> read_lock::file_iter::file_iter(void* handle, char (&buffer)[S])
+template <int32 S> read_lock::file_iter::file_iter(void* handle, char (&buffer)[S])
 : file_iter(handle, buffer, S)
 {
 }
 
 //------------------------------------------------------------------------------
-read_lock::file_iter::file_iter(const read_lock& lock, char* buffer, int buffer_size)
+read_lock::file_iter::file_iter(const read_lock& lock, char* buffer, int32 buffer_size)
 : m_handle(lock.m_handle_lines)
 , m_buffer(buffer)
 , m_buffer_size(buffer_size)
@@ -554,7 +554,7 @@ read_lock::file_iter::file_iter(const read_lock& lock, char* buffer, int buffer_
 }
 
 //------------------------------------------------------------------------------
-read_lock::file_iter::file_iter(void* handle, char* buffer, int buffer_size)
+read_lock::file_iter::file_iter(void* handle, char* buffer, int32 buffer_size)
 : m_handle(handle)
 , m_buffer(buffer)
 , m_buffer_size(buffer_size)
@@ -563,7 +563,7 @@ read_lock::file_iter::file_iter(void* handle, char* buffer, int buffer_size)
 }
 
 //------------------------------------------------------------------------------
-unsigned int read_lock::file_iter::next(unsigned int rollback)
+uint32 read_lock::file_iter::next(uint32 rollback)
 {
     if (!m_remaining)
     {
@@ -579,7 +579,7 @@ unsigned int read_lock::file_iter::next(unsigned int rollback)
     m_buffer_offset += m_buffer_size - rollback;
 
     char* target = m_buffer + rollback;
-    int needed = min(m_remaining, m_buffer_size - rollback);
+    int32 needed = min(m_remaining, m_buffer_size - rollback);
 
     DWORD read = 0;
     ReadFile(m_handle, target, needed, &read, nullptr);
@@ -590,10 +590,10 @@ unsigned int read_lock::file_iter::next(unsigned int rollback)
 }
 
 //------------------------------------------------------------------------------
-void read_lock::file_iter::set_file_offset(unsigned int offset)
+void read_lock::file_iter::set_file_offset(uint32 offset)
 {
     m_remaining = GetFileSize(m_handle, nullptr);
-    offset = clamp(offset, (unsigned int)0, m_remaining);
+    offset = clamp(offset, (uint32)0, m_remaining);
     m_remaining -= offset;
     // BUGBUG: Should this be `offset - m_buffer_offset`?
     m_buffer_offset = static_cast<unsigned __int64>(0) - m_buffer_size;
@@ -604,29 +604,29 @@ void read_lock::file_iter::set_file_offset(unsigned int offset)
 
 
 //------------------------------------------------------------------------------
-template <int S> read_lock::line_iter::line_iter(const read_lock& lock, char (&buffer)[S])
+template <int32 S> read_lock::line_iter::line_iter(const read_lock& lock, char (&buffer)[S])
 : line_iter(lock.m_handle_lines, buffer, S)
 {
 }
 
 //------------------------------------------------------------------------------
-template <int S> read_lock::line_iter::line_iter(void* handle, char (&buffer)[S])
+template <int32 S> read_lock::line_iter::line_iter(void* handle, char (&buffer)[S])
 : line_iter(handle, buffer, S)
 {
 }
 
 //------------------------------------------------------------------------------
-read_lock::line_iter::line_iter(const read_lock& lock, char* buffer, int buffer_size)
+read_lock::line_iter::line_iter(const read_lock& lock, char* buffer, int32 buffer_size)
 : m_file_iter(lock.m_handle_lines, buffer, buffer_size)
 {
-    lock.for_each_removal(lock, [&] (unsigned int offset)
+    lock.for_each_removal(lock, [&] (uint32 offset)
     {
         m_removals.insert(offset);
     });
 }
 
 //------------------------------------------------------------------------------
-read_lock::line_iter::line_iter(void* handle, char* buffer, int buffer_size)
+read_lock::line_iter::line_iter(void* handle, char* buffer, int32 buffer_size)
 : m_file_iter(handle, buffer, buffer_size)
 {
 }
@@ -638,7 +638,7 @@ bool read_lock::line_iter::provision()
 }
 
 //------------------------------------------------------------------------------
-inline bool is_line_breaker(unsigned char c)
+inline bool is_line_breaker(uint8 c)
 {
     return c == 0x00 || c == 0x0a || c == 0x0d;
 }
@@ -690,17 +690,17 @@ line_id_impl read_lock::line_iter::next(str_iter& out, str_base* timestamp)
             continue;
         }
 
-        int bytes = int(end - start);
+        int32 bytes = int32(end - start);
         m_remaining -= bytes;
 
         bool was_first_line = m_first_line;
         m_first_line = false;
 
-        unsigned int offset_in_buffer = int(start - m_file_iter.get_buffer());
+        uint32 offset_in_buffer = int32(start - m_file_iter.get_buffer());
         const unsigned __int64 real_offset = m_file_iter.get_buffer_offset() + offset_in_buffer;
         const bool too_big = (real_offset >= c_max_line_id.offset);
         assert(!too_big);
-        const unsigned int offset = too_big ? c_max_line_id.offset : static_cast<unsigned int>(real_offset);
+        const uint32 offset = too_big ? c_max_line_id.offset : uint32(real_offset);
 
         // Timestamps precede the line they're associated with, so that the
         // iterator can easily determine whether there's a timestamp and return
@@ -713,7 +713,7 @@ line_id_impl read_lock::line_iter::next(str_iter& out, str_base* timestamp)
                 {
                     start += 7;
                     timestamp->clear();
-                    timestamp->concat(start, int(end - start));
+                    timestamp->concat(start, int32(end - start));
                 }
                 continue;
             }
@@ -730,7 +730,7 @@ line_id_impl read_lock::line_iter::next(str_iter& out, str_base* timestamp)
             continue;
         }
 
-        new (&out) str_iter(start, int(end - start));
+        new (&out) str_iter(start, int32(end - start));
 
         return line_id_impl(offset);
     }
@@ -739,7 +739,7 @@ line_id_impl read_lock::line_iter::next(str_iter& out, str_base* timestamp)
 }
 
 //------------------------------------------------------------------------------
-void read_lock::line_iter::set_file_offset(unsigned int offset)
+void read_lock::line_iter::set_file_offset(uint32 offset)
 {
     m_file_iter.set_file_offset(offset);
     m_eating_ctag = false;
@@ -772,7 +772,7 @@ line_id_impl write_lock::add(const char* line)
     const DWORD offset = SetFilePointer(m_handle_lines, 0, nullptr, FILE_END);
     if (offset == INVALID_SET_FILE_POINTER)
         return line_id_impl();
-    WriteFile(m_handle_lines, line, int(strlen(line)), &written, nullptr);
+    WriteFile(m_handle_lines, line, int32(strlen(line)), &written, nullptr);
     WriteFile(m_handle_lines, "\n", 1, &written, nullptr);
     if (offset >= c_max_line_id.offset)
         return c_max_line_id;
@@ -817,7 +817,7 @@ void write_lock::append(const read_lock& src)
 
     history_read_buffer buffer;
     read_lock::file_iter src_iter(src, buffer.data(), buffer.size());
-    while (int bytes_read = src_iter.next())
+    while (int32 bytes_read = src_iter.next())
         WriteFile(m_handle_lines, buffer.data(), bytes_read, &written, nullptr);
 }
 
@@ -827,21 +827,21 @@ void write_lock::append(const read_lock& src)
 class read_line_iter
 {
 public:
-                            read_line_iter(const history_db& db, unsigned int this_size);
+                            read_line_iter(const history_db& db, uint32 this_size);
     history_db::line_id     next(str_iter& out, str_base* timestamp=nullptr);
-    unsigned int            get_bank() const { return m_bank_index; }
+    uint32                  get_bank() const { return m_bank_index; }
 
 private:
     bool                    next_bank();
     const history_db&       m_db;
     read_lock               m_lock;
     read_lock::line_iter    m_line_iter;
-    unsigned int            m_buffer_size;
-    unsigned int            m_bank_index = bank_none;
+    uint32                  m_buffer_size;
+    uint32                  m_bank_index = bank_none;
 };
 
 //------------------------------------------------------------------------------
-read_line_iter::read_line_iter(const history_db& db, unsigned int this_size)
+read_line_iter::read_line_iter(const history_db& db, uint32 this_size)
 : m_db(db)
 , m_buffer_size(this_size - sizeof(*this))
 {
@@ -910,7 +910,7 @@ history_db::line_id history_db::iter::next(str_iter& out, str_base* timestamp)
 }
 
 //------------------------------------------------------------------------------
-unsigned int history_db::iter::get_bank() const
+uint32 history_db::iter::get_bank() const
 {
     return impl ? ((read_line_iter*)impl)->get_bank() : bank_none;
 }
@@ -918,9 +918,9 @@ unsigned int history_db::iter::get_bank() const
 
 
 //------------------------------------------------------------------------------
-static bool extract_ctag(read_lock::file_iter& iter, char* buffer, int buffer_size, concurrency_tag& tag)
+static bool extract_ctag(read_lock::file_iter& iter, char* buffer, int32 buffer_size, concurrency_tag& tag)
 {
-    int bytes_read = iter.next();
+    int32 bytes_read = iter.next();
     if (bytes_read <= 0)
     {
         LOG("read %d bytes", bytes_read);
@@ -1081,7 +1081,7 @@ static void migrate_history(const char* path, bool m_diagnostic)
             lock.add(tag.get());
 
             // Copy old history.
-            int buffer_size = 8192;
+            int32 buffer_size = 8192;
             char* buffer = static_cast<char*>(malloc(buffer_size));
             while (fgets(buffer, buffer_size, old))
             {
@@ -1106,7 +1106,7 @@ static void migrate_history(const char* path, bool m_diagnostic)
 
 
 //------------------------------------------------------------------------------
-history_db::history_db(const char* path, int id, bool use_master_bank)
+history_db::history_db(const char* path, int32 id, bool use_master_bank)
 : m_path(path)
 , m_id(id)
 , m_use_master_bank(use_master_bank)
@@ -1151,7 +1151,7 @@ history_db::~history_db()
         CloseHandle(m_alive_file);
 
     // Close all but the master bank. We're going to append to the master one.
-    for (int i = 1; i < sizeof_array(m_bank_handles); ++i)
+    for (int32 i = 1; i < sizeof_array(m_bank_handles); ++i)
         m_bank_handles[i].close();
 
     reap();
@@ -1299,13 +1299,13 @@ void history_db::initialise(str_base* error_message)
 }
 
 //------------------------------------------------------------------------------
-unsigned int history_db::get_active_bank() const
+bank_t history_db::get_active_bank() const
 {
     return (m_use_master_bank && !m_bank_handles[bank_session].m_handle_lines) ? bank_master : bank_session;
 }
 
 //------------------------------------------------------------------------------
-bank_handles history_db::get_bank(unsigned int index) const
+bank_handles history_db::get_bank(uint32 index) const
 {
     // Reading master needs master lines and session removals.
     // Reading session needs session lines.
@@ -1325,7 +1325,7 @@ bank_handles history_db::get_bank(unsigned int index) const
 //------------------------------------------------------------------------------
 template <typename T> void history_db::for_each_bank(T&& callback)
 {
-    for (int i = 0; i < sizeof_array(m_bank_handles); ++i)
+    for (int32 i = 0; i < sizeof_array(m_bank_handles); ++i)
     {
         write_lock lock(get_bank(i));
         if (lock && !callback(i, lock))
@@ -1336,7 +1336,7 @@ template <typename T> void history_db::for_each_bank(T&& callback)
 //------------------------------------------------------------------------------
 template <typename T> void history_db::for_each_bank(T&& callback) const
 {
-    for (int i = 0; i < sizeof_array(m_bank_handles); ++i)
+    for (int32 i = 0; i < sizeof_array(m_bank_handles); ++i)
     {
         read_lock lock(get_bank(i));
         if (lock && !callback(i, lock))
@@ -1398,7 +1398,7 @@ void history_db::load_internal()
     DIAG("... loading history\n");
 
     const history_db& const_this = *this;
-    const_this.for_each_bank([&] (unsigned int bank_index, const read_lock& lock)
+    const_this.for_each_bank([&] (uint32 bank_index, const read_lock& lock)
     {
         DIAG("... ... %s bank", bank_index == bank_master ? "master" : "session");
 
@@ -1417,11 +1417,11 @@ void history_db::load_internal()
         str_iter out;
         str<32> time;
         line_id_impl id;
-        unsigned int num_lines = 0;
+        uint32 num_lines = 0;
         while (id = iter.next(out, &time))
         {
             const char* line = out.get_pointer();
-            int buffer_offset = int(line - buffer.data());
+            int32 buffer_offset = int32(line - buffer.data());
             buffer.data()[buffer_offset + out.length()] = '\0';
             add_history(line);
             if (!time.empty())
@@ -1476,7 +1476,7 @@ void history_db::clear()
 
     DIAG("... clearing history\n");
 
-    for_each_bank([&] (unsigned int bank_index, write_lock& lock)
+    for_each_bank([&] (uint32 bank_index, write_lock& lock)
     {
         DIAG("... ... %s bank\n", bank_index == bank_master ? "master" : "session");
 
@@ -1496,7 +1496,7 @@ void history_db::clear()
 }
 
 //------------------------------------------------------------------------------
-void history_db::compact(bool force, bool uniq, int _limit)
+void history_db::compact(bool force, bool uniq, int32 _limit)
 {
     if (!is_valid())
         return;
@@ -1530,7 +1530,7 @@ void history_db::compact(bool force, bool uniq, int _limit)
         // deleted; compacting is a separate operation.
         if (m_master_len > limit)
         {
-            unsigned int removed = 0;
+            uint32 removed = 0;
             while (m_master_len > limit)
             {
                 line_id_impl id;
@@ -1714,10 +1714,10 @@ bool history_db::add(const char* line)
 }
 
 //------------------------------------------------------------------------------
-int history_db::remove(const char* line)
+int32 history_db::remove(const char* line)
 {
-    int count = 0;
-    for_each_bank([line, &count] (unsigned int index, write_lock& lock)
+    int32 count = 0;
+    for_each_bank([line, &count] (uint32 index, write_lock& lock)
     {
         lock.find(line, [&] (line_id_impl id) {
             // The line id was retrieved inside this lock scope, so it's still
@@ -1797,8 +1797,10 @@ bool history_db::remove_internal(line_id id, bool guard_ctag)
 }
 
 //------------------------------------------------------------------------------
-void history_db::make_open_error(str_base* error_message, unsigned char bank) const
+void history_db::make_open_error(str_base* error_message, bank_t bank) const
 {
+    assert(bank == bank_master || bank == bank_session);
+
     const DWORD code = m_bank_error[bank];
     if (code != NOERROR &&
         code != ERROR_FILE_NOT_FOUND &&
@@ -1826,7 +1828,7 @@ void history_db::make_open_error(str_base* error_message, unsigned char bank) co
 }
 
 //------------------------------------------------------------------------------
-bool history_db::remove(int rl_history_index, const char* /*line*/)
+bool history_db::remove(int32 rl_history_index, const char* /*line*/)
 {
     if (rl_history_index < 0)
         return false;
@@ -1845,7 +1847,7 @@ history_db::line_id history_db::find(const char* line) const
 {
     line_id_impl ret;
 
-    for_each_bank([line, &ret] (unsigned int index, const read_lock& lock)
+    for_each_bank([line, &ret] (uint32 index, const read_lock& lock)
     {
         if (ret = lock.find(line))
             ret.bank_index = index;
@@ -1861,7 +1863,7 @@ history_db::expand_result history_db::expand(const char* line, str_base& out)
     using_history();
 
     char* expanded = nullptr;
-    int result = history_expand((char*)line, &expanded);
+    int32 result = history_expand((char*)line, &expanded);
     if (result >= 0 && expanded != nullptr)
         out.copy(expanded);
 
@@ -1876,7 +1878,7 @@ void history_db::get_history_path(str_base& out) const
 }
 
 //------------------------------------------------------------------------------
-history_db::iter history_db::read_lines(char* buffer, unsigned int size)
+history_db::iter history_db::read_lines(char* buffer, uint32 size)
 {
     iter ret;
     if (size > sizeof(read_line_iter))
@@ -1886,9 +1888,9 @@ history_db::iter history_db::read_lines(char* buffer, unsigned int size)
 }
 
 //------------------------------------------------------------------------------
-bool history_db::has_bank(unsigned char bank) const
+bool history_db::has_bank(bank_t bank) const
 {
-    assert(bank < sizeof_array(m_bank_handles));
+    assert(uint8(bank) < sizeof_array(m_bank_handles));
     return !!m_bank_handles[bank].m_handle_lines;
 }
 
@@ -1904,7 +1906,7 @@ bool history_db::is_stale_name(const char* path) const
 
 
 //------------------------------------------------------------------------------
-history_database::history_database(const char* path, int id, bool use_master_bank)
+history_database::history_database(const char* path, int32 id, bool use_master_bank)
 : history_db(path, id, use_master_bank)
 {
 }

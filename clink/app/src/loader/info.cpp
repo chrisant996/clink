@@ -28,7 +28,7 @@ static void print_info_line(HANDLE h, const char* s)
 }
 
 //------------------------------------------------------------------------------
-int clink_info(int argc, char** argv)
+int32 clink_info(int32 argc, char** argv)
 {
     static const struct {
         const char* name;
@@ -64,7 +64,7 @@ int clink_info(int argc, char** argv)
     settings::load(settings_file.c_str(), default_settings_file.c_str());
 
     // Get values to output.
-    int spacing = 8;
+    int32 spacing = 8;
     std::vector<info_output> outputs;
     for (const auto& info : infos)
     {
@@ -73,7 +73,7 @@ int clink_info(int argc, char** argv)
         if (!info.suppress_when_empty || !out.empty())
         {
             outputs.emplace_back(info.name, std::move(out));
-            spacing = max<int>(spacing, int(strlen(info.name)));
+            spacing = max<int32>(spacing, int32(strlen(info.name)));
         }
     }
 
@@ -130,9 +130,9 @@ int clink_info(int argc, char** argv)
             continue;
         }
 
-        int base_len = out.length();
+        int32 base_len = out.length();
 
-        for (int i = 0; i < sizeof_array(file_names); ++i)
+        for (int32 i = 0; i < sizeof_array(file_names); ++i)
         {
             out.truncate(base_len);
             path::append(out, file_names[i]);

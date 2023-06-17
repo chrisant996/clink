@@ -52,7 +52,7 @@ globber::globber(const char* pattern)
         const char* name = path::get_name(pattern);
         if (name && name[0] == '.')
         {
-            unsigned int index = 1;
+            uint32 index = 1;
             if (name[index] == '.')
                 index++;
             if (name[index] == '*')
@@ -78,7 +78,7 @@ globber::~globber()
 }
 
 //------------------------------------------------------------------------------
-bool globber::older_than(int seconds)
+bool globber::older_than(int32 seconds)
 {
     SYSTEMTIME systime;
     GetSystemTime(&systime);
@@ -108,7 +108,7 @@ bool globber::next(str_base& out, bool rooted, extrainfo* extrainfo)
         return false;
 
     str<280> file_name;
-    int attr;
+    int32 attr;
     ULARGE_INTEGER size;
     FILETIME accessed;
     FILETIME modified;
@@ -165,7 +165,7 @@ bool globber::next(str_base& out, bool rooted, extrainfo* extrainfo)
 
     if (extrainfo)
     {
-        int mode = 0;
+        int32 mode = 0;
 #ifdef S_ISLNK
         if (symlink)                                mode |= _S_IFLNK;
 #endif

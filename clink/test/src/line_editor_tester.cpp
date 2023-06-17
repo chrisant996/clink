@@ -27,8 +27,8 @@ public:
     virtual void    on_end_line() override {}
     virtual void    on_input(const input& input, result& result, const context& context) override {}
     virtual void    on_matches_changed(const context& context, const line_state& line, const char* needle) override {}
-    virtual void    on_terminal_resize(int columns, int rows, const context& context) override {}
-    virtual void    on_signal(int sig) override {}
+    virtual void    on_terminal_resize(int32 columns, int32 rows, const context& context) override {}
+    virtual void    on_signal(int32 sig) override {}
 };
 
 
@@ -208,7 +208,7 @@ void line_editor_tester::run(bool expectationless)
         const matches* matches = match_catch.get_matches();
         REQUIRE(matches != nullptr);
 
-        unsigned int match_count = matches->get_match_count();
+        uint32 match_count = matches->get_match_count();
         REQUIRE(m_expected_matches.size() == match_count, [&] () {
             printf(" input; %s#\n", sanitize(m_input));
 
@@ -253,7 +253,7 @@ void line_editor_tester::run(bool expectationless)
         });
 
         str<> c;
-        for (unsigned int i = 0; i < classifications->size(); ++i)
+        for (uint32 i = 0; i < classifications->size(); ++i)
         {
             static const char c_lookup[] =
             {
@@ -266,7 +266,7 @@ void line_editor_tester::run(bool expectationless)
                 'f',    // word_class::flag
                 'n',    // word_class::none
             };
-            static_assert(sizeof_array(c_lookup) == int(word_class::max), "c_lookup size does not match word_class::max");
+            static_assert(sizeof_array(c_lookup) == int32(word_class::max), "c_lookup size does not match word_class::max");
 
             const word_class_info& wc = *(*classifications)[i];
             if (unsigned(wc.word_class) < sizeof_array(c_lookup))
@@ -305,7 +305,7 @@ void line_editor_tester::run(bool expectationless)
 }
 
 //------------------------------------------------------------------------------
-void line_editor_tester::expected_matches_impl(int dummy, ...)
+void line_editor_tester::expected_matches_impl(int32 dummy, ...)
 {
     m_expected_matches.clear();
 

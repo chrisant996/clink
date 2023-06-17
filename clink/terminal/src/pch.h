@@ -6,3 +6,5 @@
 #include <core/bldopts.h>
 
 #include <Windows.h>
+
+#include <core/base.h>

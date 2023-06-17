@@ -23,18 +23,18 @@ auto_free_str& auto_free_str::operator=(auto_free_str&& other)
 }
 
 //------------------------------------------------------------------------------
-void auto_free_str::set(const char* s, int len)
+void auto_free_str::set(const char* s, int32 len)
 {
     if (s == m_ptr)
     {
-        if (len < int(strlen(m_ptr)))
+        if (len < int32(strlen(m_ptr)))
             m_ptr[len] = '\0';
     }
     else
     {
         char* old = m_ptr;
         if (len < 0)
-            len = int(strlen(s));
+            len = int32(strlen(s));
         m_ptr = (char*)malloc(len + 1);
         memcpy(m_ptr, s, len);
         m_ptr[len] = '\0';

@@ -41,7 +41,7 @@ extern setting_bool g_lua_strict;
 /// parameter is true then the friendly color name is returned.
 /// -show:  print(settings.get("color.doskey"))         -- Can print "1;36"
 /// -show:  print(settings.get("color.doskey", true))   -- Can print "bold cyan"
-static int get(lua_State* state)
+static int32 get(lua_State* state)
 {
     const char* key = checkstring(state, 1);
     if (!key)
@@ -51,7 +51,7 @@ static int get(lua_State* state)
     if (setting == nullptr)
         return 0;
 
-    int type = setting->get_type();
+    int32 type = setting->get_type();
     switch (type)
     {
     case setting::type_bool:
@@ -63,7 +63,7 @@ static int get(lua_State* state)
 
     case setting::type_int:
         {
-            int value = ((setting_int*)setting)->get();
+            int32 value = ((setting_int*)setting)->get();
             lua_pushinteger(state, value);
         }
         break;
@@ -117,7 +117,7 @@ static int get(lua_State* state)
 /// Note: Beginning in Clink v1.2.31 this updates the settings file.  Prior to
 /// that, it was necessary to separately use <code>clink set</code> to update
 /// the settings file.
-static int set(lua_State* state)
+static int32 set(lua_State* state)
 {
     const char* key = checkstring(state, 1);
     if (!key)
@@ -162,7 +162,7 @@ template <typename S, typename... V> void add_impl(lua_State* state, V... value)
     if (luaL_newmetatable(state, "settings_mt"))
     {
         lua_pushliteral(state, "__gc");
-        lua_pushcfunction(state, [](lua_State* state) -> int {
+        lua_pushcfunction(state, [](lua_State* state) -> int32 {
             setting* s = (setting*)lua_touserdata(state, -1);
             s->~setting();
             return 0;
@@ -212,7 +212,7 @@ template <typename S, typename... V> void add_impl(lua_State* state, V... value)
 /// -show:  settings.add("myscript.myghi", "abc", "String setting")
 /// -show:  settings.add("myscript.myjkl", {"x","y","z"}, "Enum setting")
 /// -show:  settings.add("color.mymno", "bright magenta", "Color setting")
-static int add(lua_State* state)
+static int32 add(lua_State* state)
 {
     const char* name = checkstring(state, 1);
     if (!name)
@@ -224,7 +224,7 @@ static int add(lua_State* state)
     switch (lua_type(state, 2))
     {
     case LUA_TNUMBER:
-        add_impl<setting_int>(state, int(lua_tointeger(state, 2)));
+        add_impl<setting_int>(state, int32(lua_tointeger(state, 2)));
         break;
 
     case LUA_TBOOLEAN:
@@ -241,7 +241,7 @@ static int add(lua_State* state)
     case LUA_TTABLE:
         {
             str<256> options;
-            for (int i = 0, n = int(lua_rawlen(state, 2)); i < n; ++i)
+            for (int32 i = 0, n = int32(lua_rawlen(state, 2)); i < n; ++i)
             {
                 lua_rawgeti(state, 2, i + 1);
                 if (const char* option = lua_tostring(state, -1))
@@ -269,7 +269,7 @@ static int add(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-static void table_add_string(lua_State* state, const char* s, int& count)
+static void table_add_string(lua_State* state, const char* s, int32& count)
 {
     lua_pushstring(state, s);
     lua_rawseti(state, -2, ++count);
@@ -280,7 +280,7 @@ static void push_setting_values_table(lua_State* state, const setting* setting, 
 {
     lua_createtable(state, 0, 1);
 
-    int count = 0;
+    int32 count = 0;
     switch (setting->get_type())
     {
     case setting::type_int:
@@ -306,7 +306,7 @@ static void push_setting_values_table(lua_State* state, const setting* setting, 
             const char* options = ((const setting_enum*)setting)->get_options();
             str_tokeniser tokens(options, ",");
             const char* start;
-            int length;
+            int32 length;
             str<> tmp;
             while (tokens.next(start, length))
             {
@@ -339,13 +339,13 @@ static void push_setting_values_table(lua_State* state, const setting* setting, 
 
 //------------------------------------------------------------------------------
 // Undocumented, because it's only needed internally.
-static int list(lua_State* state)
+static int32 list(lua_State* state)
 {
     if (lua_gettop(state) < 1)
     {
         lua_createtable(state, 0, 1);
 
-        int count = 0;
+        int32 count = 0;
         for (setting_iter iter = settings::first(); const setting* setting = iter.next();)
         {
             lua_createtable(state, 0, 2);
@@ -367,7 +367,7 @@ static int list(lua_State* state)
     if (lua_isstring(state, 1))
     {
         static const char* const type_names[] = { "unknown", "int", "boolean", "string", "enum", "color" };
-        static_assert(sizeof_array(type_names) == int(setting::type_e::type_max), "type_names and setting::type_e::type_max disagree");
+        static_assert(sizeof_array(type_names) == int32(setting::type_e::type_max), "type_names and setting::type_e::type_max disagree");
 
         const char *name = lua_tostring(state, 1);
         bool classify = lua_isboolean(state, 2) && lua_toboolean(state, 2);
@@ -383,7 +383,7 @@ static int list(lua_State* state)
         lua_rawset(state, -3);
 
         lua_pushliteral(state, "type");
-        lua_pushstring(state, type_names[int(setting->get_type())]);
+        lua_pushstring(state, type_names[int32(setting->get_type())]);
         lua_rawset(state, -3);
 
         lua_pushliteral(state, "values");
@@ -401,7 +401,7 @@ void settings_lua_initialise(lua_state& lua)
 {
     struct {
         const char* name;
-        int         (*method)(lua_State*);
+        int32       (*method)(lua_State*);
     } methods[] = {
         { "get",    &get },
         { "set",    &set },
@@ -425,7 +425,7 @@ void settings_lua_initialise(lua_state& lua)
 
 //----------------------------------------------------------------------------
 // Clink 0.4.8 API compatibility!
-int get_clink_setting(lua_State* state)
+int32 get_clink_setting(lua_State* state)
 {
     return get(state);
 }
