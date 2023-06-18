@@ -104,42 +104,17 @@ bool globber::older_than(int32 seconds)
 //------------------------------------------------------------------------------
 bool globber::next(str_base& out, bool rooted, extrainfo* extrainfo)
 {
-    if (m_handle == nullptr)
-        return false;
-
-    str<280> file_name;
-    int32 attr;
-    ULARGE_INTEGER size;
-    FILETIME accessed;
-    FILETIME modified;
-    FILETIME created;
-    bool symlink;
-
     while (true)
     {
         if (m_handle == nullptr)
             return false;
-
-        file_name = m_data.cFileName;
-        attr = m_data.dwFileAttributes;
-        symlink = ((attr & FILE_ATTRIBUTE_REPARSE_POINT) &&
-                   !(attr & FILE_ATTRIBUTE_OFFLINE) &&
-                   (m_data.dwReserved0 == IO_REPARSE_TAG_SYMLINK));
-
-        if (extrainfo)
-        {
-            size.LowPart = m_data.nFileSizeLow;
-            size.HighPart = m_data.nFileSizeHigh;
-            accessed = m_data.ftLastAccessTime;
-            modified = m_data.ftLastWriteTime;
-            created = m_data.ftCreationTime;
-        }
 
         bool again = false;
 
         const wchar_t* c = m_data.cFileName;
         again |= (c[0] == '.' && (!c[1] || (c[1] == '.' && !c[2])) && !m_dots);
 
+        const uint32 attr = m_data.dwFileAttributes;
         again |= (attr & FILE_ATTRIBUTE_SYSTEM) && !m_system;
         again |= (attr & FILE_ATTRIBUTE_HIDDEN) && !m_hidden;
         again |= (attr & FILE_ATTRIBUTE_DIRECTORY) && !m_directories;
@@ -148,18 +123,20 @@ bool globber::next(str_base& out, bool rooted, extrainfo* extrainfo)
         if (m_onlyolder)
             again |= !(CompareFileTime(&m_data.ftLastWriteTime, &m_olderthan) < 0);
 
-        next_file();
-
         if (!again)
             break;
+
+        next_file();
     }
 
     out.clear();
     if (rooted)
         out << m_root;
 
+    str<280> file_name(m_data.cFileName);
     path::append(out, file_name.c_str());
 
+    const uint32 attr = m_data.dwFileAttributes;
     if ((attr & FILE_ATTRIBUTE_DIRECTORY) && m_dir_suffix)
         out << PATH_SEP;
 
@@ -167,6 +144,9 @@ bool globber::next(str_base& out, bool rooted, extrainfo* extrainfo)
     {
         int32 mode = 0;
 #ifdef S_ISLNK
+        const bool symlink = ((attr & FILE_ATTRIBUTE_REPARSE_POINT) &&
+                              !(attr & FILE_ATTRIBUTE_OFFLINE) &&
+                              (m_data.dwReserved0 == IO_REPARSE_TAG_SYMLINK));
         if (symlink)                                mode |= _S_IFLNK;
 #endif
         if (attr & FILE_ATTRIBUTE_DIRECTORY)        mode |= _S_IFDIR;
@@ -175,13 +155,17 @@ bool globber::next(str_base& out, bool rooted, extrainfo* extrainfo)
 
         extrainfo->attr = attr;
 
+        ULARGE_INTEGER size;
+        size.LowPart = m_data.nFileSizeLow;
+        size.HighPart = m_data.nFileSizeHigh;
         extrainfo->size = size.QuadPart;
 
-        extrainfo->accessed = accessed;
-        extrainfo->modified = modified;
-        extrainfo->created = created;
+        extrainfo->accessed = m_data.ftLastAccessTime;
+        extrainfo->modified = m_data.ftLastWriteTime;
+        extrainfo->created = m_data.ftCreationTime;
     }
 
+    next_file();
     return true;
 }
 
