@@ -52,6 +52,12 @@ static int32 editline()
 
     line_editor_destroy(editor);
 
+    extern void shutdown_recognizer();
+    shutdown_recognizer();
+
+    extern void shutdown_task_manager();
+    shutdown_task_manager();
+
     return 0;
 }
 
