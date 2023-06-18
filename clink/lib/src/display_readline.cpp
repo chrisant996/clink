@@ -1161,12 +1161,22 @@ display_accumulator::display_accumulator()
     assert(rl_fwrite_function);
     assert(rl_fflush_function);
     assert(s_nested || s_buf.empty());
+
+    ++s_nested;
+
+#ifdef DEBUG
+    {
+        str<> value;
+        if (os::get_env("DEBUG_NO_DISPLAY_ACCUMULATOR", value) && atoi(value.c_str()) != 0)
+            return;
+    }
+#endif
+
     m_saved_fwrite = rl_fwrite_function;
     m_saved_fflush = rl_fflush_function;
     m_active = true;
     rl_fwrite_function = fwrite_proc;
     rl_fflush_function = fflush_proc;
-    ++s_nested;
 }
 
 //------------------------------------------------------------------------------
@@ -1197,7 +1207,7 @@ void display_accumulator::split()
 //------------------------------------------------------------------------------
 void display_accumulator::flush()
 {
-    if (s_nested > 1)
+    if (!m_active || s_nested > 1)
         return;
 
     restore();
@@ -1752,27 +1762,40 @@ void display_manager::display()
 
     if (strcmp(m_curr.comment_row(), next->comment_row()) || new_botlin != old_botlin)
     {
-        move_to_row(_rl_vis_botlin + 1);
-        move_to_column(0);
+        bool reset_col = false;
+        const char* comment = next->comment_row();
 
-        if (m_pending_wrap)
-            finish_pending_wrap();
-
-        if (*next->comment_row())
+        if (m_pending_wrap || *comment || *m_curr.comment_row())
         {
-            str<> out;
-            const int32 limit = _rl_screenwidth - 1;
-            ellipsify(next->comment_row(), limit, out, false);
+            move_to_row(_rl_vis_botlin + 1);
+            move_to_column(0);
 
-            str<16> color;
-            const char* const color_comment_row = g_color_comment_row.get();
-            color << "\x1b[" << color_comment_row << "m";
+            if (m_pending_wrap)
+                finish_pending_wrap();
 
-            print(color.c_str(), color.length());
-            print(out.c_str(), out.length());
+            if (*comment)
+            {
+                str<> out;
+                const int32 limit = _rl_screenwidth - 1;
+                ellipsify(comment, limit, out, false);
+
+                str<16> color;
+                const char* const color_comment_row = g_color_comment_row.get();
+                color << "\x1b[" << color_comment_row << "m";
+
+                print(color.c_str(), color.length());
+                print(out.c_str(), out.length());
+                reset_col = true;
+            }
         }
 
         print("\x1b[m\x1b[K", 6);
+
+        if (reset_col)
+        {
+            print("\r", 1);
+            _rl_last_c_pos = 0;
+        }
     }
 
     // If the right side prompt is not shown and should be, display it.
