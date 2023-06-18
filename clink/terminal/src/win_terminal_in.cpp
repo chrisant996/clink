@@ -1034,9 +1034,13 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
 
     // Windows supports an AltGr substitute which we check for here. As it
     // collides with Readline mappings Clink's support can be disabled.
-    if (key_flags & LEFT_ALT_PRESSED)
+    // The On-Screen Keyboard in Windows sends both Left- and Right- Alt flags
+    // when using AltGr (e.g. in the Swedish keyboard layout per issue 467).
+    // When both Left- and Right- Alt are pressed, treat it as real AltGr.  It
+    // makes more sense anyway, and it also lets the OSK input \ successfully.
+    if ((key_flags & (LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED)) == LEFT_ALT_PRESSED)
     {
-        bool altgr_sub = !!(key_flags & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED));
+        bool altgr_sub = !!(key_flags & (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED));
         altgr_sub &= !!key_char;
 
         if (altgr_sub && !g_use_altgr_substitute.get())
@@ -1067,13 +1071,7 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
     // a ctrl key. We can use this and the knowledge that Ctrl-modified keys
     // aren't printable to clear appropriate AltGr flags.
     if ((key_char > 0x1f && key_char != 0x7f) && (key_flags & CTRL_PRESSED))
-    {
-        key_flags &= ~CTRL_PRESSED;
-        if (key_flags & RIGHT_ALT_PRESSED)
-            key_flags &= ~RIGHT_ALT_PRESSED;
-        else
-            key_flags &= ~LEFT_ALT_PRESSED;
-    }
+        key_flags &= ~(CTRL_PRESSED|ALT_PRESSED);
 
     // Special case for ctrl-shift-I (to behave like shift-tab aka. back-tab).
     if (key_char == '\t' && !m_buffer_count && (key_flags & SHIFT_PRESSED) && !g_differentiate_keys.get())
