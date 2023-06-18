@@ -5,6 +5,11 @@
 #### v1.4.28
 - Added `console.getcursorpos()` to get the cursor position.
 - Updated `os.getscreeninfo()` to include the cursor position.
+- Changed character width measurements in Windows Terminal to accommodate certain fully qualified color emoji variants such as "✔️" vs "✔".  The former is U+2714 U+FE0F and Windows Terminal draws a double-width color emoji; the latter is U+2714 and Windows Terminal draws a single-width character in the current font.  Note that Windows Terminal draws the characters; Clink just tries to make the best prediction it can about how Windows Terminal will draw the characters.
+- Fixed `cmd.ctrld_exits` so <kbd>Ctrl</kbd>-<kbd>D</kbd> always exits with return code 0, so that terminal programs allow the shell window to close gracefully.
+- Fixed mouse input when the `horizontal-scroll-mode` inputrc variable is `on`.
+- Fixed missing prompt text when a prompt filter encounters an unhandled Lua error; now a placeholder prompt string is used so it's clear where the prompt is.
+- Internal improvements.
 
 #### v1.4.27
 - Fixed when the `terminal.emulate` setting is `auto` on Windows 8.1 and earlier (regression introduced in v1.4.26).
