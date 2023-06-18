@@ -39,13 +39,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # "New" commits from Martin
 
 ## To Be Considered
-- `io.popen2()` -- Why was this done?  If this is just trying to support UTF8, then chrisant996/clink solved that by setting the C runtime locale to `".utf8"`.
-  - [Added io.popen2() that directly uses Windows' API](https://github.com/mridgers/clink/commit/bd69fe219501e050dd1b92c13fd9b842c497885d)
-  - [Make sure there's a valid stderr handle](https://github.com/mridgers/clink/commit/795c371cfc0cf00888322d68791c99f670210bfe)
-  - [Use the parent process' console](https://github.com/mridgers/clink/commit/2c505bd29c2c9493836e6b2bce29a2cc4e88182b)
-  - [Up-values will always exist so there's no need for a null check](https://github.com/mridgers/clink/commit/8dcb97025af170afe5f357c6ac2ff7101a758b3d)
-  - [Put io.popen2() processes in a different Ctrl-C group](https://github.com/mridgers/clink/commit/6bd9d2c4ca346adfad8ca413776f417cadfca693)
-  - [Corrected a spelling mistake](https://github.com/mridgers/clink/commit/d0a6e8708032c3f08a776953cc59c90e660bc684)
 - `builder:addmatches()` accepts a function; related to the `os.globfiles()` iterator change.
   - [builder::addmatches() now also accepts a function](https://github.com/mridgers/clink/commit/6a2b818efd84377b3a625bb1ecdeffe89da20cd6)
 - `os.globfiles()` work like an iterator instead of returning a table
@@ -69,8 +62,15 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## No
 - [Hand-rolled remote-call thunks. Previous approach was assuming that the compiler won't do what it eventually did; add complex prologue/epilogue.](https://github.com/mridgers/clink/commit/76aee60e5cdad911a0b478765499f8fbdd848619) -- That was resolved in chrisant996/clink by turning off certain compiler features in the relevant files (462a985e66, 7ba05ea77e, e0750b173d, 03320a2069, 3dd4f49e72), which also makes ARM64 work without special custom assembly.
 - [Only log inputrc information once](https://github.com/mridgers/clink/commit/f2228b9d64e30852f415969f5a0409e252df3c01) -- That was only annoying because Lua was recreated on each prompt, which had to be removed because (1) it broke `z`, (2) it bogs down performance, and (3) chrisant996/clink uses coroutines which is incompatible with recreate Lua on each prompt.  The logging change would also miss when the user makes a configuration change that results in a different inputrc file getting loaded.
+- `io.popen2()` -- Why was this done?  If this is just trying to support UTF8, then chrisant996/clink solved that by setting the C runtime locale to `".utf8"`.
+  - [Added io.popen2() that directly uses Windows' API](https://github.com/mridgers/clink/commit/bd69fe219501e050dd1b92c13fd9b842c497885d)
+  - [Make sure there's a valid stderr handle](https://github.com/mridgers/clink/commit/795c371cfc0cf00888322d68791c99f670210bfe)
+  - [Use the parent process' console](https://github.com/mridgers/clink/commit/2c505bd29c2c9493836e6b2bce29a2cc4e88182b)
+  - [Up-values will always exist so there's no need for a null check](https://github.com/mridgers/clink/commit/8dcb97025af170afe5f357c6ac2ff7101a758b3d)
+  - [Put io.popen2() processes in a different Ctrl-C group](https://github.com/mridgers/clink/commit/6bd9d2c4ca346adfad8ca413776f417cadfca693)
+  - [Corrected a spelling mistake](https://github.com/mridgers/clink/commit/d0a6e8708032c3f08a776953cc59c90e660bc684)
 - [Better implementation of non-ASCII compatible lua_state::do_file()](https://github.com/mridgers/clink/commit/c7105d12a9c35b45d2eef7760df323317bb15d87) -- This was solved in chrisant996/clink by setting the C runtime locale to `".utf8"`.
-- Jmp hooking -- Not needed in chrisant996 because (1) Detours is available and (2) IAT hooking is used exclusively.
+- Jmp hooking -- Not needed in chrisant996/clink because (1) Detours is available and (2) IAT hooking is used exclusively.
   - [Very simple and incomplete x86/x64 length disassembler](https://github.com/mridgers/clink/commit/2355aafd2914f2e7af997ae75eac2d9cc3aaa313)
   - [New jmp-style hooking mechanism that is Win11 compatible](https://github.com/mridgers/clink/commit/7ed4c8f0215c45e96f757dd2ea9d4e44b689cf58)
   - [Branch displacement was back-to-front](https://github.com/mridgers/clink/commit/3047b9b91e75131db0243bd6cde4a36fffe42b92)
