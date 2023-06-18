@@ -2913,60 +2913,6 @@ void rl_module::on_end_line()
 }
 
 //------------------------------------------------------------------------------
-bool translate_xy_to_readline(uint32 x, uint32 y, int32& pos, bool clip=false)
-{
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
-
-    const int32 v_begin_line_y = max<int32>(0, csbi.dwCursorPosition.Y - _rl_last_v_pos);
-    int32 v_pos = y - v_begin_line_y;
-
-    if (v_pos < 0)
-    {
-        if (!clip)
-            return false;
-        v_pos = 0;
-    }
-    if (v_pos > _rl_vis_botlin)
-    {
-        if (!clip)
-            return false;
-        v_pos = _rl_vis_botlin;
-    }
-
-    v_pos += get_readline_display_top_offset();
-
-    const int32 prefix = rl_get_prompt_prefix_visible();
-    int32 point = 0;
-
-    wcwidth_iter iter(g_rl_buffer->get_buffer(), g_rl_buffer->get_length());
-    for (uint32 i = 0; i <= v_pos; i++)
-    {
-        const int32 target = (i == v_pos ? x : _rl_screenwidth);
-        int32 consumed = i ? 0 : prefix;
-
-        const char* ptr = iter.character_pointer();
-        while (iter.next())
-        {
-            const int32 w = iter.character_wcwidth_twoctrl();
-            if (consumed + w > target)
-            {
-                iter.unnext();
-                break;
-            }
-            consumed += w;
-        }
-
-        point += int32(iter.character_pointer() - ptr);
-    }
-
-    assert(point <= g_rl_buffer->get_length());
-
-    pos = point;
-    return true;
-}
-
-//------------------------------------------------------------------------------
 void rl_module::on_input(const input& input, result& result, const context& context)
 {
     assert(!g_result);

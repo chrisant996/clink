@@ -12,6 +12,7 @@ extern void display_readline();
 extern void set_history_expansions(history_expansion* list=nullptr);
 extern void resize_readline_display(const char* prompt, const line_buffer& buffer, const char* _prompt, const char* _rprompt);
 extern uint32 get_readline_display_top_offset();
+extern bool translate_xy_to_readline(uint32 x, uint32 y, int32& pos, bool clip=false);
 
 //------------------------------------------------------------------------------
 #define BIT_PROMPT_PROBLEM          (0x01)

@@ -398,6 +398,7 @@ public:
     uint32              width() const;
     bool                can_show_rprompt() const;
     bool                is_horz_scrolled() const;
+    bool                get_horz_offset(int32& bytes, int32& column) const;
     const char*         comment_row() const;
 
     uint32              vpos() const { return m_vpos; }
@@ -909,6 +910,17 @@ bool display_lines::is_horz_scrolled() const
 }
 
 //------------------------------------------------------------------------------
+bool display_lines::get_horz_offset(int32& bytes, int32& column) const
+{
+    if (!is_horz_scrolled())
+        return false;
+    assert(m_count);
+    bytes = m_horz_start;
+    column = 1;
+    return true;
+}
+
+//------------------------------------------------------------------------------
 const char* display_lines::comment_row() const
 {
     return m_comment_row.c_str();
@@ -1240,6 +1252,7 @@ public:
     void                display();
     void                set_history_expansions(history_expansion* list=nullptr);
     void                measure(measure_columns& mc);
+    bool                get_horz_offset(int32& bytes, int32& column) const;
 
 private:
     void                update_line(int32 i, const display_line* o, const display_line* d, bool has_rprompt);
@@ -1867,6 +1880,12 @@ void display_manager::measure(measure_columns& mc)
 }
 
 //------------------------------------------------------------------------------
+bool display_manager::get_horz_offset(int32& bytes, int32& column) const
+{
+    return m_curr.get_horz_offset(bytes, column);
+}
+
+//------------------------------------------------------------------------------
 void display_manager::update_line(int32 i, const display_line* o, const display_line* d, bool has_rprompt)
 {
     uint32 lcol = d->m_x;
@@ -2461,4 +2480,69 @@ uint32 get_readline_display_top_offset()
         return s_display_manager.top_offset();
 #endif
     return 0;
+}
+
+//------------------------------------------------------------------------------
+bool translate_xy_to_readline(uint32 x, uint32 y, int32& pos, bool clip)
+{
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+
+    const int32 v_begin_line_y = max<int32>(0, csbi.dwCursorPosition.Y - _rl_last_v_pos);
+    int32 v_pos = y - v_begin_line_y;
+
+    if (v_pos < 0)
+    {
+        if (!clip)
+            return false;
+        v_pos = 0;
+    }
+    if (v_pos > _rl_vis_botlin)
+    {
+        if (!clip)
+            return false;
+        v_pos = _rl_vis_botlin;
+    }
+
+    v_pos += get_readline_display_top_offset();
+
+    int32 offset = 0;
+    int32 prefix = rl_get_prompt_prefix_visible();
+    int32 point = 0;
+
+#ifdef INCLUDE_CLINK_DISPLAY_READLINE
+    if (use_display_manager())
+    {
+        if (s_display_manager.get_horz_offset(offset, prefix))
+            point = offset;
+    }
+#endif
+
+    wcwidth_iter iter(rl_line_buffer + offset, rl_end);
+    for (uint32 i = 0; i <= v_pos; i++)
+    {
+        const int32 target = (i == v_pos ? x : _rl_screenwidth);
+        int32 consumed = i ? 0 : prefix;
+
+        const char* ptr = iter.character_pointer();
+        while (iter.next())
+        {
+            const int32 w = iter.character_wcwidth_twoctrl();
+            if (consumed + w > target)
+            {
+                iter.unnext();
+                break;
+            }
+            consumed += w;
+        }
+
+        point += int32(iter.character_pointer() - ptr);
+    }
+
+    assert(point <= rl_end);
+    if (point > rl_end)
+        point = rl_end;
+
+    pos = point;
+    return true;
 }
