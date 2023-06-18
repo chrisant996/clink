@@ -11,6 +11,7 @@
 - Fixed `cmd.ctrld_exits` so <kbd>Ctrl</kbd>-<kbd>D</kbd> always exits with return code 0, so that terminal programs allow the shell window to close gracefully.
 - Fixed mouse input when the `horizontal-scroll-mode` inputrc variable is `on`.
 - Fixed missing prompt text when a prompt filter encounters an unhandled Lua error; now a placeholder prompt string is used so it's clear where the prompt is.
+- Fixed [#467](https://github.com/chrisant996/clink/issues/467); On-Screen Keyboard in Swedish keyboard layout can't type `\`.
 - Internal improvements.
 
 #### v1.4.27
