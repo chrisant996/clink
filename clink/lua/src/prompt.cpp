@@ -426,20 +426,21 @@ bool prompt_filter::filter(const char* in, const char* rin, str_base& out, str_b
     }
 
     rollback<bool> rb(s_filtering, true);
-    if (m_lua.pcall(state, 5, 2) != 0)
+    if (m_lua.pcall(state, 5, 3) != 0)
     {
-        lua_pop(state, 2);
+        lua_settop(state, top);
         return !transient;
     }
 
     // Collect the filtered prompt.
-    const char* prompt = lua_tostring(state, -2);
-    const char* rprompt = lua_tostring(state, -1);
+    const char* prompt = lua_tostring(state, -3);
+    const char* rprompt = lua_tostring(state, -2);
+    const bool ok = lua_toboolean(state, -1);
     out = prompt;
     rout = rprompt;
 
     lua_settop(state, top);
-    return !transient || (prompt && rprompt);
+    return ok && (!transient || (prompt && rprompt));
 }
 
 

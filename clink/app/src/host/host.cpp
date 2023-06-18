@@ -573,8 +573,17 @@ void host::filter_prompt()
 
     dbg_ignore_scope(snapshot, "Prompt filter");
 
+    bool ok;
     const char* rprompt = nullptr;
-    const char* prompt = filter_prompt(&rprompt, false/*transient*/);
+    const char* prompt = filter_prompt(&rprompt, ok, false/*transient*/);
+
+    if (!ok)
+    {
+        // Force redisplaying the prompt, since there was a script failure and
+        // the prompt is likely missing.
+        set_prompt("", "", false/*redisplay*/);
+    }
+
     set_prompt(prompt, rprompt, true/*redisplay*/);
 }
 
@@ -590,10 +599,11 @@ cant:
 
     const char* rprompt;
     const char* prompt;
+    bool ok;                    // Not used for transient prompt.
 
     // Replace old prompt with transient prompt.
     rprompt = nullptr;
-    prompt = filter_prompt(&rprompt, true/*transient*/, final);
+    prompt = filter_prompt(&rprompt, ok, true/*transient*/, final);
     if (!prompt)
         goto cant;
 
@@ -617,7 +627,7 @@ cant:
     // again; not what is needed here).  Instead let the prompt get displayed
     // again naturally in due time.
     rprompt = nullptr;
-    prompt = filter_prompt(&rprompt, false/*transient*/);
+    prompt = filter_prompt(&rprompt, ok, false/*transient*/);
     set_prompt(prompt, rprompt, false/*redisplay*/);
 }
 
@@ -1004,9 +1014,10 @@ skip_errorlevel:
     initialise_editor_desc(desc);
     if (init_prompt)
     {
+        bool ok; // Not needed for the initial filter call.
         m_prompt = prompt ? prompt : "";
         m_rprompt = rprompt ? rprompt : "";
-        desc.prompt = filter_prompt(&desc.rprompt);
+        desc.prompt = filter_prompt(&desc.rprompt, ok);
     }
 
     // Create the editor and add components to it.
@@ -1267,9 +1278,11 @@ skip_errorlevel:
 
 //------------------------------------------------------------------------------
 bool g_filtering_in_progress = false;
-const char* host::filter_prompt(const char** rprompt, bool transient, bool final)
+const char* host::filter_prompt(const char** rprompt, bool& ok, bool transient, bool final)
 {
     dbg_ignore_scope(snapshot, "Prompt filter");
+
+    ok = true;
 
     if (!g_filtering_in_progress)
     {
@@ -1296,12 +1309,13 @@ const char* host::filter_prompt(const char** rprompt, bool transient, bool final
                 rp = m_rprompt ? m_rprompt : "";
             }
 
-            const bool ok = m_prompt_filter->filter(p, rp,
-                                                    m_filtered_prompt, m_filtered_rprompt,
-                                                    transient, final);
+            ok = m_prompt_filter->filter(p, rp,
+                                         m_filtered_prompt, m_filtered_rprompt,
+                                         transient, final);
 
             if (transient && !ok)
             {
+                ok = true;
                 if (rprompt)
                     *rprompt = nullptr;
                 return nullptr;

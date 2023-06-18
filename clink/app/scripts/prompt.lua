@@ -145,7 +145,9 @@ local function _do_filter_prompt(type, prompt, rprompt, line, cursor, final)
         print("")
         print("prompt filter failed:")
         print(ret)
-        return "\nERROR_LUA_PROMPT>"
+
+        ret = "\nERROR IN LUA PROMPT FILTER\n" .. os.getcwd() .. ">"
+        rret = nil
     end
 
     -- Windows Terminal built-in shell integration (WT v1.18).
@@ -163,7 +165,7 @@ local function _do_filter_prompt(type, prompt, rprompt, line, cursor, final)
         rret = clink._expand_prompt_codes(rpre, true) .. rret .. clink._expand_prompt_codes(rsuf, true)
     end
 
-    return ret, rret
+    return ret, rret, ok
 end
 
 --------------------------------------------------------------------------------
