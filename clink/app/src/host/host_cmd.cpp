@@ -22,6 +22,7 @@
 #include <lib/line_buffer.h>
 #include <lib/line_editor.h>
 #include <lua/lua_script_loader.h>
+#include <terminal/wcwidth.h>
 #include <terminal/terminal_helpers.h>
 #include <terminal/printer.h>
 
@@ -44,7 +45,6 @@ extern void clink_shutdown_ctrlevent();
 extern int32 clink_is_signaled();
 extern bool clink_maybe_handle_signal();
 extern bool is_force_reload_scripts();
-extern "C" void reset_wcwidths();
 extern void set_ctrl_wakeup_mask(UINT mask);
 extern void strip_wakeup_chars(wchar_t* chars, uint32 max_chars);
 extern printer* g_printer;

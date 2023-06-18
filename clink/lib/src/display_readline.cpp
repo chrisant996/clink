@@ -21,6 +21,7 @@
 #include <core/settings.h>
 #include <core/debugheap.h>
 #include <terminal/ecma48_iter.h>
+#include <terminal/wcwidth.h>
 #include <terminal/terminal_helpers.h>
 
 #include <memory>
@@ -112,21 +113,6 @@ static void clear_to_end_of_screen()
 {
     static const char* const termcap_cd = tgetstr("cd", nullptr);
     rl_fwrite_function(_rl_out_stream, termcap_cd, strlen(termcap_cd));
-}
-
-//------------------------------------------------------------------------------
-static uint32 raw_measure_cols(const char* s, uint32 len)
-{
-    uint32 cols = 0;
-
-    str_iter iter(s, len);
-    while (const int32 c = iter.next())
-    {
-        const int32 w = clink_wcwidth(c);
-        cols += w;
-    }
-
-    return cols;
 }
 
 //------------------------------------------------------------------------------
@@ -468,17 +454,9 @@ void display_lines::parse(uint32 prompt_botlin, uint32 col, const char* buffer, 
     str<16> tmp;
     uint32 index = 0;
 
-    const char* chars = buffer;
-    const char* end = nullptr;
-    str_iter iter(chars, len);
-    for (; true; chars = end)
+    wcwidth_iter iter(buffer, len);
+    while (const uint32 c = iter.next())
     {
-        const int32 c = iter.next();
-        if (!c)
-            break;
-
-        end = iter.get_pointer();
-
         if (c == '\n' && !_rl_horizontal_scroll_mode && _rl_term_up && *_rl_term_up)
         {
             d->m_lastcol = col;
@@ -506,22 +484,21 @@ void display_lines::parse(uint32 prompt_botlin, uint32 col, const char* buffer, 
                 tmp.concat(" ", 1);
         }
 #endif
-        else if (CTRL_CHAR(*chars) || *chars == RUBOUT)
+        else if (CTRL_CHAR(c) || c == RUBOUT)
         {
             // Display control characters as ^X.
-            assert(end == chars + 1);
+            assert(iter.character_length() == 1);
             tmp.clear();
-            tmp.format("^%c", CTRL_CHAR(*chars) ? UNCTRL(*chars) : '?');
+            tmp.format("^%c", (c == RUBOUT) ? '?' : UNCTRL(c));
         }
         else
         {
-            const uint32 chars_len = uint32(end - chars);
-            const uint32 wc_width = clink_wcwidth(c);
+            const uint32 wc_width = iter.character_wcwidth();
 
             if (col + wc_width > _rl_screenwidth)
             {
                 d->m_lastcol = col;
-                d->m_end = uint32(chars - buffer);
+                d->m_end = uint32(iter.character_pointer() - buffer);
 
                 while (col < _rl_screenwidth)
                 {
@@ -533,25 +510,26 @@ void display_lines::parse(uint32 prompt_botlin, uint32 col, const char* buffer, 
                 assert(d->m_lead <= d->m_lastcol);
                 assert(d->m_lastcol + d->m_trail == _rl_screenwidth);
 
-                d = next_line(uint32(chars - buffer));
+                d = next_line(uint32(iter.character_pointer() - buffer));
                 col = 0;
             }
 
-            if (index <= rl_point && rl_point < index + chars_len)
+            if (index <= rl_point && rl_point < index + iter.character_length())
             {
                 m_vpos = m_count - 1;
                 m_cpos = col;
             }
 
-            for (; chars < end; ++chars, ++index)
-                d->append(*chars, rl_get_face_func(index, hl_begin, hl_end));
+            for (const char* ptr = iter.character_pointer(); ptr < iter.get_pointer(); ++ptr, ++index)
+                d->append(*ptr, rl_get_face_func(index, hl_begin, hl_end));
             col += wc_width;
             continue;
         }
 
+        assert(uint32(iter.character_pointer() - buffer) == index);
+
         bool wrapped = false;
-        const char* add = tmp.c_str();
-        const char face = rl_get_face_func(uint32(chars - buffer), hl_begin, hl_end);
+        const char face = rl_get_face_func(index, hl_begin, hl_end);
 
         if (index == rl_point)
         {
@@ -559,9 +537,7 @@ void display_lines::parse(uint32 prompt_botlin, uint32 col, const char* buffer, 
             m_cpos = col;
         }
 
-        index = uint32(end - buffer);
-
-        for (uint32 x = tmp.length(); x--; ++add)
+        for (const char* add = tmp.c_str(); *add; ++add, ++index)
         {
             if (col >= _rl_screenwidth)
             {
@@ -590,6 +566,8 @@ void display_lines::parse(uint32 prompt_botlin, uint32 col, const char* buffer, 
             d->append(*add, face);
             ++col;
         }
+
+        assert(uint32(iter.character_pointer() + iter.character_length() - buffer) == index);
 
         if (wrapped)
             d->m_lead = col;
@@ -689,28 +667,21 @@ void display_lines::horz_parse(uint32 prompt_botlin, uint32 col, const char* buf
     uint32 index = m_horz_start;
 
     bool overflow = false;
-    const char* chars = buffer + m_horz_start;
-    const char* end = nullptr;
-    str_iter iter(chars, len - m_horz_start);
-    for (; true; chars = end)
+    wcwidth_iter iter(buffer + m_horz_start, len - m_horz_start);
+    while (const uint32 c = iter.next())
     {
-        const int32 c = iter.next();
-        if (!c)
-            break;
-
-        end = iter.get_pointer();
-
-        if (CTRL_CHAR(*chars) || *chars == RUBOUT)
+        assert((CTRL_CHAR(c) || c == RUBOUT) == (iter.character_wcwidth() < 0));
+        if (iter.character_wcwidth() < 0)
         {
             // Display control characters as ^X.
-            assert(end == chars + 1);
+            assert(CTRL_CHAR(c) || c == RUBOUT);
+            assert(iter.character_length() == 1);
             tmp.clear();
-            tmp.format("^%c", CTRL_CHAR(*chars) ? UNCTRL(*chars) : '?');
+            tmp.format("^%c", CTRL_CHAR(c) ? UNCTRL(c) : '?');
         }
         else
         {
-            const uint32 chars_len = uint32(end - chars);
-            const uint32 wc_width = clink_wcwidth(c);
+            const uint32 wc_width = iter.character_wcwidth();
 
             if (col + wc_width > limit)
             {
@@ -718,24 +689,21 @@ void display_lines::horz_parse(uint32 prompt_botlin, uint32 col, const char* buf
                 break;
             }
 
-            if (index <= rl_point && rl_point < index + chars_len)
+            if (index <= rl_point && rl_point < index + iter.character_length())
                 m_cpos = col;
 
-            for (; chars < end; ++chars, ++index)
-                d->append(*chars, rl_get_face_func(index, hl_begin, hl_end));
+            for (const char* ptr = iter.character_pointer(); ptr < iter.get_pointer(); ++ptr, ++index)
+                d->append(*ptr, rl_get_face_func(index, hl_begin, hl_end));
             col += wc_width;
             continue;
         }
 
-        const char* add = tmp.c_str();
-        const char face = rl_get_face_func(uint32(chars - buffer), hl_begin, hl_end);
+        const char face = rl_get_face_func(index, hl_begin, hl_end);
 
         if (index == rl_point)
             m_cpos = col;
 
-        index = uint32(end - buffer);
-
-        for (uint32 x = tmp.length(); x--; ++add)
+        for (const char* add = tmp.c_str(); *add; ++add, ++index)
         {
             if (col >= limit)
                 break;
@@ -745,12 +713,16 @@ void display_lines::horz_parse(uint32 prompt_botlin, uint32 col, const char* buf
             ++col;
         }
 
+        assert(uint32(iter.character_pointer() + iter.character_length() - buffer) == index);
+
         if (col >= limit)
             break;
     }
 
+    assert(uint32(iter.character_pointer() - buffer) == index);
+
     d->m_lastcol = col;
-    d->m_end = uint32(chars - buffer);
+    d->m_end = index;
 
     if (iter.more() || overflow)
     {
@@ -788,16 +760,12 @@ void display_lines::apply_scroll_markers(uint32 top, uint32 bottom)
         }
         else
         {
-            str_iter iter_top(d.m_chars, d.m_len);
-            c = iter_top.next();
-            while (c)
+            wcwidth_iter iter_top(d.m_chars, d.m_len);
+            while (iter_top.next())
             {
-                int32 wc = clink_wcwidth(c);
+                int32 wc = iter_top.character_wcwidth_onectrl();
                 if (!wc)
-                {
-                    c = iter_top.next();
                     continue;
-                }
 
                 int32 bytes = int32(iter_top.get_pointer() - d.m_chars);
                 assert(bytes >= wc);
@@ -837,7 +805,7 @@ void display_lines::apply_scroll_markers(uint32 top, uint32 bottom)
             while (d.m_x + d.m_lastcol + 1 >= _rl_screenwidth)
             {
                 const int32 bytes = _rl_find_prev_mbchar(d.m_chars, d.m_len, MB_FIND_NONZERO);
-                d.m_lastcol -= raw_measure_cols(d.m_chars + bytes, d.m_len - bytes);
+                d.m_lastcol -= clink_wcswidth(d.m_chars + bytes, d.m_len - bytes);
                 d.m_len = bytes;
             }
 
@@ -984,7 +952,7 @@ bool display_lines::adjust_columns(uint32& index, int32 delta, const char* buffe
             const int32 i = _rl_find_prev_mbchar(const_cast<char*>(buffer), index, MB_FIND_NONZERO);
             const int32 bytes = index - i;
             walk -= bytes;
-            const int32 width = (bytes == 1 && (CTRL_CHAR(*walk) || *walk == RUBOUT)) ? 2 : raw_measure_cols(walk, bytes);
+            const int32 width = (bytes == 1 && (CTRL_CHAR(*walk) || *walk == RUBOUT)) ? 2 : clink_wcswidth(walk, bytes);
             if (first || delta >= width)
                 index -= bytes;
             first = false;
@@ -993,23 +961,21 @@ bool display_lines::adjust_columns(uint32& index, int32 delta, const char* buffe
     }
     else
     {
-        str_iter iter(buffer + index, len - index);
+        wcwidth_iter iter(buffer + index, len - index);
         while (delta > 0)
         {
-            const char* prev = iter.get_pointer();
-            const int32 c = iter.next();
+            const uint32 c = iter.next();
             if (!c)
                 return false;
-            const int32 bytes = int32(iter.get_pointer() - prev);
-            const int32 width = ((c >= 0 && c <= 0x1f) || c == RUBOUT) ? 2 : clink_wcwidth(c);
+            const int32 width = iter.character_wcwidth_twoctrl();
             if (first || delta >= width)
-                index += bytes;
+                index += iter.character_length();
             first = false;
             delta -= width;
         }
     }
 
-    return index;
+    return index > 0;
 }
 
 
@@ -1055,13 +1021,12 @@ void measure_columns::measure(const char* text, uint32 length, bool is_prompt)
         switch (code.get_type())
         {
         case ecma48_code::type_chars:
-            for (str_iter i(code.get_pointer(), code.get_length()); i.more();)
+            for (wcwidth_iter i(code.get_pointer(), code.get_length()); i.more();)
             {
-                const char *chars = code.get_pointer();
-                const int32 c = i.next();
+                const uint32 c = i.next();
                 assert(c != '\n');          // See ecma48_code::c0_lf below.
-                assert(!CTRL_CHAR(*chars)); // See ecma48_code::type_c0 below.
-                if (!is_prompt && (CTRL_CHAR(*chars) || *chars == RUBOUT))
+                assert(!CTRL_CHAR(c)); // See ecma48_code::type_c0 below.
+                if (!is_prompt && (CTRL_CHAR(c) || c == RUBOUT))
                 {
                     // Control characters.
                     goto ctrl_char;
@@ -1073,7 +1038,7 @@ void measure_columns::measure(const char* text, uint32 length, bool is_prompt)
                         wrapped = false;
                         ++m_line_count;
                     }
-                    int32 n = clink_wcwidth(c);
+                    int32 n = i.character_wcwidth_onectrl();
                     m_col += n;
                     if (m_col >= m_width)
                     {
@@ -1403,7 +1368,7 @@ void display_manager::end_prompt_lf()
             // Reprint end of the previous row if at least 2 rows are visible.
             const int32 index = _rl_find_prev_mbchar(d->m_chars, d->m_len, MB_FIND_NONZERO);
             const uint32 len = d->m_len - index;
-            const uint32 wc = raw_measure_cols(d->m_chars + index, len);
+            const uint32 wc = clink_wcswidth(d->m_chars + index, len);
             move_to_column(_rl_screenwidth - wc);
             _rl_clear_to_eol(0);
             rl_puts_face_func(d->m_chars + index, d->m_faces + index, len);
@@ -1932,25 +1897,27 @@ void display_manager::update_line(int32 i, const display_line* o, const display_
         uint32 stop = min<uint32>(o->m_len, d->m_len);
 
         // Find left index of difference.
-        str_iter iter(dc, stop);
-        const char* p = dc;
-        while (const int32 c = iter.next())
         {
-            const char* q = iter.get_pointer();
-            const char* walk = p;
+            wcwidth_iter iter(dc, stop);
+            const char* p = dc;
+            while (iter.next())
+            {
+                const char* q = iter.get_pointer();
+                const char* walk = p;
 test_left:
-            if (*oc != *dc || *of != *df)
-                break;
-            oc++;
-            dc++;
-            of++;
-            df++;
-            if (++walk < q)
-                goto test_left;
-            lcol += clink_wcwidth(c);
-            p = q;
+                if (*oc != *dc || *of != *df)
+                    break;
+                oc++;
+                dc++;
+                of++;
+                df++;
+                if (++walk < q)
+                    goto test_left;
+                lcol += iter.character_wcwidth_onectrl();
+                p = q;
+            }
+            lind = static_cast<unsigned int>(p - d->m_chars);
         }
-        lind = uint32(p - d->m_chars);
 
         oc = o->m_chars + lind;
         of = o->m_faces + lind;
@@ -2008,11 +1975,11 @@ test_left:
         rind = lind + dlen;
 
         // Measure columns, to find whether to delete characters or open spaces.
-        uint32 dcols = raw_measure_cols(dc, dlen);
+        uint32 dcols = clink_wcswidth(dc, dlen);
         rcol = lcol + dcols;
         if (oc2 < o->m_chars + o->m_len)
         {
-            uint32 ocols = raw_measure_cols(oc, olen);
+            uint32 ocols = clink_wcswidth(oc, olen);
             delta = dcols - ocols;
         }
 
@@ -2247,11 +2214,11 @@ void display_manager::finish_pending_wrap()
     {
         const display_line& d = *m_pending_wrap_display->get(index);
 
-        str_iter iter(d.m_chars, d.m_len);
+        wcwidth_iter iter(d.m_chars, d.m_len);
         uint32 cols = 0;
-        while (const int32 c = iter.next())
+        while (iter.next())
         {
-            const int32 wc = clink_wcwidth(c);
+            const int32 wc = iter.character_wcwidth_onectrl();
             cols += wc;
             if (wc)
                 break;

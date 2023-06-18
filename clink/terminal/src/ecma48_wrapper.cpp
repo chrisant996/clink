@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "ecma48_wrapper.h"
+#include "wcwidth.h"
 
 //------------------------------------------------------------------------------
 ecma48_wrapper::ecma48_wrapper(const char* in, uint32 wrap)
@@ -28,8 +29,7 @@ ecma48_wrapper::ecma48_wrapper(const char* in, uint32 wrap)
             break;
         if (code.get_type() == ecma48_code::type_chars)
         {
-            const char* prev = code.get_pointer();
-            str_iter inner_iter(code.get_pointer(), code.get_length());
+            wcwidth_iter inner_iter(code.get_pointer(), code.get_length());
             while (true)
             {
                 const int32 c = inner_iter.next();
@@ -42,7 +42,7 @@ ecma48_wrapper::ecma48_wrapper(const char* in, uint32 wrap)
                 if (!c)
                     break;
 
-                const int32 w = clink_wcwidth(c);
+                const int32 w = inner_iter.character_wcwidth_onectrl();
                 if (wrap && cells + w > wrap)
                 {
                     if (end_fits <= s) // Must fit at least one segment!
@@ -60,6 +60,7 @@ ecma48_wrapper::ecma48_wrapper(const char* in, uint32 wrap)
                     inner_iter.reset_pointer(s);
                     end_fits = s;
                     end_word = s;
+// REVIEW: next_word is invalid now; is there any code path that can attempt to use it while it's invalid?
                     cells = 0;
                     continue;
                 }

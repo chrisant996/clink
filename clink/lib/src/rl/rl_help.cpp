@@ -10,6 +10,7 @@
 #include <core/debugheap.h>
 #include <core/linear_allocator.h>
 #include <terminal/printer.h>
+#include <terminal/wcwidth.h>
 #include <terminal/terminal.h>
 #include <terminal/terminal_helpers.h>
 #include <terminal/ecma48_wrapper.h>
@@ -877,19 +878,16 @@ static void append_key_macro(str_base& s, const char* macro, const int32 limit)
     int32 truncate_len = 0;
     uint32 count = 0;
 
-    str_iter iter(macro);
-    const char* p = iter.get_pointer();
+    wcwidth_iter iter(macro);
     while (int32 c = iter.next())
     {
-        const char* n = iter.get_pointer();
-        int32 w = clink_wcwidth(c);
+        const int32 w = iter.character_wcwidth();
         if (count <= limit_ellipsis)
             truncate_len = s.length();
         if (count > limit)
             break;
-        s.concat(p, int32 (n - p));
+        s.concat(iter.character_pointer(), iter.character_length());
         count += w;
-        p = n;
     }
 
     if (count > limit)

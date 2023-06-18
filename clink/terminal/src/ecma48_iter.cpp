@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "ecma48_iter.h"
+#include "wcwidth.h"
 #include "screen_buffer.h"
 
 #include <core/base.h>
@@ -22,9 +23,7 @@ extern "C" uint32 cell_count(const char* in)
         if (code.get_type() != ecma48_code::type_chars)
             continue;
 
-        str_iter inner_iter(code.get_pointer(), code.get_length());
-        while (int32 c = inner_iter.next())
-            count += clink_wcwidth(c);
+        count += clink_wcswidth(code.get_pointer(), code.get_length());
     }
 
     return count;
@@ -524,18 +523,6 @@ bool ecma48_iter::next_unknown(int32 c)
 
 
 //------------------------------------------------------------------------------
-static uint32 clink_wcwidth(const char* s, uint32 len)
-{
-    uint32 count = 0;
-
-    str_iter inner_iter(s, len);
-    while (int32 c = inner_iter.next())
-        count += clink_wcwidth(c);
-
-    return count;
-}
-
-//------------------------------------------------------------------------------
 void ecma48_processor(const char* in, str_base* out, uint32* cell_count, ecma48_processor_flags flags)
 {
     uint32 cells = 0;
@@ -564,7 +551,7 @@ void ecma48_processor(const char* in, str_base* out, uint32* cell_count, ecma48_
                     if (out)
                         out->concat(osc.output.c_str(), osc.output.length());
                     if (cell_count)
-                        cells += clink_wcwidth(osc.output.c_str(), osc.output.length());
+                        cells += clink_wcswidth(osc.output.c_str(), osc.output.length());
                 }
                 else if (!apply_title)
                     goto concat_verbatim;
@@ -637,7 +624,7 @@ concat_verbatim:
                     if (out)
                         out->concat(seq, seq_len);
                     if (cell_count)
-                        cells += clink_wcwidth(seq, seq_len);
+                        cells += clink_wcswidth(seq, seq_len);
                     seq = walk;
                 }
                 if (walk < end && *walk == '\007')

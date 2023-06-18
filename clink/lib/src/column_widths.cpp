@@ -20,7 +20,6 @@ extern "C" {
 #include <readline/rldefs.h>
 #include <readline/rlprivate.h>
 int32 __complete_get_screenwidth(void);
-int32 __fnwidth(const char *string);
 char* __printable_part(char* pathname);
 int32 __stat_char(const char *filename, char match_type);
 }

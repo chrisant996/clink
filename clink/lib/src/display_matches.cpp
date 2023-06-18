@@ -22,6 +22,7 @@
 #include <core/base.h>
 #include <core/settings.h>
 #include <terminal/ecma48_iter.h>
+#include <terminal/wcwidth.h>
 
 extern "C" {
 
@@ -71,8 +72,7 @@ extern int32 errno;
 #endif
 
 int32 __complete_get_screenwidth (void);
-int32 __fnwidth (const char *string);
-int32 __get_y_or_n (int32 for_pager);
+int32 __get_y_or_n (int for_pager);
 char* __printable_part (char* pathname);
 int32 __stat_char (const char *filename, char match_type);
 int32 ___rl_internal_pager (int32 lines);
@@ -511,30 +511,14 @@ path_isdir(match_type type, const char *filename)
 //------------------------------------------------------------------------------
 static int32 fnappend(const char *to_print, int32 prefix_bytes, int32 condense, const char *real_pathname, match_type match_type, int32 selected)
 {
-    int32 printed_len, w;
-    const char *s;
-    int32 common_prefix_len, print_len;
-#if defined(HANDLE_MULTIBYTE)
-    mbstate_t ps;
-    const char *end;
-    size_t tlen;
-    int32 width;
-    WCHAR_T wc;
-
-    print_len = strlen(to_print);
-    end = to_print + print_len + 1;
-    memset(&ps, 0, sizeof(mbstate_t));
-#else
-    print_len = strlen(to_print);
-#endif
-
-    printed_len = common_prefix_len = 0;
+    int32 printed_len = 0;
+    int32 common_prefix_len = 0;
 
     // Don't print only the ellipsis if the common prefix is one of the
     // possible completions.  Only cut off prefix_bytes if we're going to be
     // printing the ellipsis, which takes precedence over coloring the
     // completion prefix (see append_filename() below).
-    if (condense && prefix_bytes >= print_len)
+    if (condense && prefix_bytes >= strlen(to_print))
         prefix_bytes = 0;
 
     if (selected)
@@ -574,55 +558,26 @@ static int32 fnappend(const char *to_print, int32 prefix_bytes, int32 condense, 
     }
 #endif
 
-    s = to_print + prefix_bytes;
-    while (*s)
+    wcwidth_iter iter(to_print + prefix_bytes);
+    while (const int c = iter.next())
     {
-        if (CTRL_CHAR(*s))
+        if (CTRL_CHAR(c))
         {
             append_tmpbuf_char('^');
-            append_tmpbuf_char(UNCTRL(*s));
+            append_tmpbuf_char(UNCTRL(c));
             printed_len += 2;
-            s++;
-#if defined(HANDLE_MULTIBYTE)
-            memset(&ps, 0, sizeof(mbstate_t));
-#endif
         }
-        else if (*s == RUBOUT)
+        else if (c == RUBOUT)
         {
             append_tmpbuf_string("^?", 2);
             printed_len += 2;
-            s++;
-#if defined(HANDLE_MULTIBYTE)
-            memset(&ps, 0, sizeof(mbstate_t));
-#endif
         }
         else
         {
-#if defined(HANDLE_MULTIBYTE)
-            tlen = MBRTOWC(&wc, s, end - s, &ps);
-            if (MB_INVALIDCH(tlen))
-            {
-                tlen = 1;
-                width = 1;
-                memset(&ps, 0, sizeof(mbstate_t));
-            }
-            else if (MB_NULLWCH(tlen))
-                break;
-            else
-            {
-                w = WCWIDTH(wc);
-                width = (w >= 0) ? w : 1;
-            }
-            append_tmpbuf_string(s, tlen);
-            s += tlen;
-            printed_len += width;
-#else
-            append_tmpbuf_char(*s);
-            s++;
-            printed_len++;
-#endif
+            append_tmpbuf_string(iter.character_pointer(), iter.character_length());
+            printed_len += iter.character_wcwidth_onectrl();
         }
-        if (common_prefix_len > 0 && (s - to_print) >= common_prefix_len)
+        if (common_prefix_len > 0 && (iter.get_pointer() - to_print) >= common_prefix_len)
         {
 #if defined(COLOR_SUPPORT)
             // printed bytes = s - to_print
@@ -901,6 +856,18 @@ void pad_filename(int32 len, int32 pad_to_width, int32 selected)
 }
 
 //------------------------------------------------------------------------------
+int __fnwidth(const char* string)
+{
+    int width = 0;
+
+    wcwidth_iter iter(string);
+    while (iter.next())
+        width += iter.character_wcwidth_twoctrl();
+
+    return width;
+}
+
+//------------------------------------------------------------------------------
 bool get_match_color(const char* filename, match_type type, str_base& out)
 {
     reset_tmpbuf();
@@ -949,9 +916,7 @@ static int32 calc_prefix_or_suffix(const char* match, const char* display)
                 suf = exact_match(match, code.get_pointer() + code.get_length() - match_len, match_len);
             }
 
-            str_iter inner_iter(code.get_pointer(), code.get_length());
-            while (int32 c = inner_iter.next())
-                visible_len += clink_wcwidth(c);
+            visible_len += clink_wcswidth(code.get_pointer(), code.get_length());
         }
 
     return (pre ? bit_prefix : 0) + (suf ? bit_suffix : 0);
@@ -969,9 +934,7 @@ int32 append_tmpbuf_with_visible_len(const char* s, int32 len)
     while (const ecma48_code& code = iter.next())
         if (code.get_type() == ecma48_code::type_chars)
         {
-            str_iter inner_iter(code.get_pointer(), code.get_length());
-            while (int32 c = inner_iter.next())
-                visible_len += clink_wcwidth(c);
+            visible_len += clink_wcswidth(code.get_pointer(), code.get_length());
         }
 
     return visible_len;
@@ -1042,7 +1005,7 @@ uint32 append_display_with_presuf(const char* match, const char* display, int32 
             }
 
             bool did = false;
-            str_iter inner_iter(code.get_pointer(), code.get_length());
+            wcwidth_iter inner_iter(code.get_pointer(), code.get_length());
             while (true)
             {
                 if (suf && visible_len == skip_cells)
@@ -1059,10 +1022,9 @@ uint32 append_display_with_presuf(const char* match, const char* display, int32 
                     }
                 }
 
-                const int32 c = inner_iter.next();
-                if (!c)
+                if (!inner_iter.next())
                     break;
-                visible_len += clink_wcwidth(c);
+                visible_len += inner_iter.character_wcwidth_onectrl();
             }
 
             if (!did)

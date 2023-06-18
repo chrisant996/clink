@@ -113,7 +113,9 @@ rl_compdisp_func_t *rl_completion_display_matches_hook = (rl_compdisp_func_t *)N
    still loops to measure the length of matches before the hook function is
    called.  rl_completion_display_matches_func is called early enough that the
    host application can override all of the behavior. */
+#if !defined(OMIT_DEFAULT_DISPLAY_MATCHES)
 rl_vcppfunc_t *rl_completion_display_matches_func = (rl_vcppfunc_t *)NULL;
+#endif
 /* If non-zero, then this is the address of a function to call that
    compares the lcd.  It must return the length of the common prefix
    between the two string arguments. */
@@ -159,12 +161,18 @@ static void set_completion_defaults PARAMS((int));
 static int get_y_or_n PARAMS((int));
 static int _rl_internal_pager PARAMS((int));
 static char *printable_part PARAMS((char *));
+/* begin_clink_change */
+#if !defined(OMIT_DEFAULT_DISPLAY_MATCHES)
+/* end_clink_change */
 static int fnwidth PARAMS((const char *));
 /* begin_clink_change */
 //static int fnprint PARAMS((const char *, int, const char *));
 static int fnprint PARAMS((const char *, int, const char *, unsigned char));
 /* end_clink_change */
 static int print_filename PARAMS((char *, char *, int));
+/* begin_clink_change */
+#endif !OMIT_DEFAULT_DISPLAY_MATCHES
+/* end_clink_change */
 
 static char **gen_completion_matches PARAMS((char *, int, int, rl_compentry_func_t *, int, int));
 
@@ -176,7 +184,15 @@ static int append_to_match PARAMS((char *, int, int, int, int));
 /* end_clink_change */
 static void insert_all_matches PARAMS((char **, int, char *));
 static int complete_fncmp PARAMS((const char *, int, const char *, int));
+/* begin_clink_change */
+#if !defined(OMIT_DEFAULT_DISPLAY_MATCHES)
+/* end_clink_change */
 static void display_matches PARAMS((char **));
+/* begin_clink_change */
+#else
+extern void display_matches PARAMS((char **));
+#endif
+/* end_clink_change */
 static int compute_lcd_of_matches PARAMS((char **, int, const char *));
 static int postprocess_matches PARAMS((char ***, int));
 static int compare_match PARAMS((char *, const char *));
@@ -1102,9 +1118,9 @@ printable_part (char *pathname)
 
 /* Compute width of STRING when displayed on screen by print_filename */
 /* begin_clink_change */
-//static int
-int
+#if !defined(OMIT_DEFAULT_DISPLAY_MATCHES)
 /* end_clink_change */
+static int
 fnwidth (const char *string)
 {
   int width, pos;
@@ -1215,6 +1231,10 @@ fnprint (const char *to_print, int prefix_bytes, const char *real_pathname, unsi
     }
 #endif
 
+/* begin_clink_change */
+  begin_wcwidth_loop();
+/* end_clink_change */
+
   s = to_print + prefix_bytes;
   while (*s)
     {
@@ -1280,6 +1300,10 @@ fnprint (const char *to_print, int prefix_bytes, const char *real_pathname, unsi
 	}
     }
 
+/* begin_clink_change */
+  end_wcwidth_loop();
+/* end_clink_change */
+
 #if defined (COLOR_SUPPORT)
   /* XXX - unconditional for now */
   if (_rl_colored_stats)
@@ -1288,11 +1312,17 @@ fnprint (const char *to_print, int prefix_bytes, const char *real_pathname, unsi
 
   return printed_len;
 }
+/* begin_clink_change */
+#endif !OMIT_DEFAULT_DISPLAY_MATCHES
+/* end_clink_change */
 
 /* Output TO_PRINT to rl_outstream.  If VISIBLE_STATS is defined and we
    are using it, check for and output a single character for `special'
    filenames.  Return the number of characters we output. */
 
+/* begin_clink_change */
+#if !defined(OMIT_DEFAULT_DISPLAY_MATCHES)
+/* end_clink_change */
 static int
 print_filename (char *to_print, char *full_pathname, int prefix_bytes)
 {
@@ -1482,6 +1512,9 @@ print_filename (char *to_print, char *full_pathname, int prefix_bytes)
 
   return printed_len;
 }
+/* begin_clink_change */
+#endif !OMIT_DEFAULT_DISPLAY_MATCHES
+/* end_clink_change */
 
 static char *
 rl_quote_filename (char *s, int rtype, char *qcp)
@@ -2127,6 +2160,9 @@ __complete_get_screenwidth (void)
    and MAX is the length of the longest string in MATCHES.
    ONLY_MEASURE measures the number of lines that would be printed,
    without printing them. */
+/* begin_clink_change */
+#if !defined(OMIT_DEFAULT_DISPLAY_MATCHES)
+/* end_clink_change */
 void
 rl_display_match_list (char **matches, int len, int max)
 {
@@ -2278,6 +2314,9 @@ rl_display_match_list (char **matches, int len, int max)
       rl_crlf ();
     }
 }
+/* begin_clink_change */
+#endif !OMIT_DEFAULT_DISPLAY_MATCHES
+/* end_clink_change */
 
 /* Display MATCHES, a list of matching filenames in argv format.  This
    handles the simple case -- a single match -- first.  If there is more
@@ -2290,6 +2329,9 @@ rl_display_match_list (char **matches, int len, int max)
    that the list of matches doesn't exceed the user-settable threshold,
    and ask the user if he wants to see the list if there are more matches
    than RL_COMPLETION_QUERY_ITEMS. */
+/* begin_clink_change */
+#if !defined(OMIT_DEFAULT_DISPLAY_MATCHES)
+/* end_clink_change */
 static void
 display_matches (char **matches)
 {
@@ -2405,6 +2447,9 @@ display_matches (char **matches)
   rl_forced_update_display ();
   rl_display_fixed = 1;
 }
+/* begin_clink_change */
+#endif // !OMIT_DEFAULT_DISPLAY_MATCHES
+/* end_clink_change */
 
 /* qc == pointer to quoting character, if any */
 static char *
@@ -4191,11 +4236,6 @@ int ___rl_internal_pager (int lines)
 char *__printable_part (char* pathname)
 {
   return printable_part (pathname);
-}
-
-int __fnwidth (const char* string)
-{
-  return fnwidth (string);
 }
 
 int __stat_char (const char *filename, char match_type)

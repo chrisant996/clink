@@ -22,6 +22,7 @@
 #include <core/path.h>
 #include <core/settings.h>
 #include <core/debugheap.h>
+#include <terminal/wcwidth.h>
 #include <terminal/printer.h>
 #include <terminal/scroll.h>
 #include <terminal/screen_buffer.h>
@@ -92,7 +93,6 @@ extern "C" int32 show_cursor(int32 visible);
 extern void set_suggestion(const char* line, uint32 endword_offset, const char* suggestion, uint32 offset);
 extern "C" void host_clear_suggestion();
 extern "C" void reset_cached_font();
-extern "C" int32 test_ambiguous_width_char(char32_t ucs);
 
 // This is implemented in the app layer, which makes it inaccessible to lower
 // layers.  But Readline and History are siblings, so history_db and rl_module
@@ -2010,6 +2010,7 @@ int32 magic_space(int32 count, int32 invoking_key)
 struct alert_char
 {
     char32_t        ucs;
+    char32_t        ucs2;
     const char*     text;
     uint32          len;
 };
@@ -2030,13 +2031,16 @@ static void list_ambiguous_codepoints(const char* tag, const std::vector<alert_c
     {
         // Print formatted string.
 
-        s.format("        Unicode: %s0x%04X%s, UTF8", red, ac.ucs, norm);
+        if (ac.ucs2)
+            s.format("        Unicode: %s0x%04X 0x%04X%s, UTF8", red, ac.ucs, ac.ucs2, norm);
+        else
+            s.format("        Unicode: %s0x%04X%s, UTF8", red, ac.ucs, norm);
         for (uint32 i = 0; i < ac.len; ++i)
         {
             tmp.format(" %s0x%02.2X%s", red, uint8(ac.text[i]), norm);
             s.concat(tmp.c_str(), tmp.length());
         }
-        tmp.format(", reported width %s%d%s", red, wcwidth(ac.ucs), norm);
+        tmp.format(", reported width %s%d%s", red, clink_wcswidth(ac.text, ac.len), norm);
         s << tmp << ", text \"" << red;
         s.concat(ac.text, ac.len);
         s << norm << "\"\n";
@@ -2147,11 +2151,13 @@ static void analyze_char_widths(const char* s,
             ignoring = false;
         else if (!ignoring)
         {
-            const int32 kind = test_ambiguous_width_char(c);
+            const int32 kind = test_ambiguous_width_char(c, &iter);
             if (kind)
             {
                 alert_char ac = {};
                 ac.ucs = c;
+                if (kind == 4)
+                    ac.ucs2 = iter.next();
                 ac.text = text;
                 ac.len = uint32(iter.get_pointer() - text);
 
@@ -2160,6 +2166,7 @@ static void analyze_char_widths(const char* s,
                 case 1: cjk.push_back(ac); break;
                 case 2: emoji.push_back(ac); break;
                 case 3: qualified.push_back(ac); break;
+                case 4: emoji.push_back(ac); break;
                 }
             }
         }

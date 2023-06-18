@@ -46,6 +46,7 @@ bool get_match_color(const char *f, match_type type, str_base& out);
 
 void free_filtered_matches(match_display_filter_entry** filtered_matches);
 int32 printable_len(const char* match, match_type type);
+int32 __fnwidth(const char* string);
 
 #define DESC_ONE_COLUMN_THRESHOLD       9
 

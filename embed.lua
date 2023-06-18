@@ -308,6 +308,7 @@ local function do_emojis()
 
     local file = io.open("clink/terminal/src/emoji-test.txt", "r")
     local filter = io.open("clink/terminal/src/emoji-filter.txt", "r")
+    local fe0f = io.open("clink/terminal/src/emoji-fe0f.txt", "r")
     out = io.open(out, "w")
 
     local header = {
@@ -322,8 +323,10 @@ local function do_emojis()
     -- Collect the emoji characters.
     local indexed = load_indexed_emoji_table(file)
     local filtered = load_indexed_emoji_table(filter)
+    local fully_qualified_double_width = load_indexed_emoji_table(fe0f)
     file:close()
     filter:close()
+    fe0f:close()
 
     -- Output ranges of double-width emoji characters.
     local emojis, count_ranges = output_character_ranges(out, "emojis", indexed, filtered)
@@ -345,10 +348,13 @@ local function do_emojis()
     }
     local ambiguous = output_character_ranges(out, "ambiguous_emojis", filtered, ignored)
 
+    local double_width = output_character_ranges(out, "fully_qualified_double_width", fully_qualified_double_width, nil)
+
     out:close()
 
     print("   " .. #emojis .. " emojis; " .. count_ranges .. " ranges")
     print("   " .. #ambiguous .. " ambiguous emojis")
+    print("   " .. #double_width .. " fully qualified double width emojis")
 end
 
 --------------------------------------------------------------------------------

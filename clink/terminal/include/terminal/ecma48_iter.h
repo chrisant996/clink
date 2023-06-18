@@ -6,17 +6,6 @@
 #include <core/str_iter.h>
 
 //------------------------------------------------------------------------------
-typedef int32 wcwidth_t (char32_t);
-extern "C" wcwidth_t *wcwidth;
-inline int32 clink_wcwidth(char32_t c)
-{
-    if (c >= ' ' && c <= '~')
-        return 1;
-    int32 w = wcwidth(c);
-    return (w >= 0) ? w : 1;
-}
-
-//------------------------------------------------------------------------------
 enum class ecma48_processor_flags { none = 0, bracket = 1<<0, apply_title = 1<<1, plaintext = 1<<2, colorless = 1<<3 };
 DEFINE_ENUM_FLAG_OPERATORS(ecma48_processor_flags);
 void ecma48_processor(const char* in, str_base* out, uint32* cell_count, ecma48_processor_flags flags=ecma48_processor_flags::none);

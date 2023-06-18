@@ -6,6 +6,7 @@
 
 #include <core/str.h>
 #include <terminal/ecma48_iter.h>
+#include <terminal/wcwidth.h>
 
 extern "C" {
 #include <readline/readline.h>
@@ -58,11 +59,11 @@ int32 ellipsify(const char* in, int32 limit, str_base& out, bool expand_ctrl)
             break;
         if (code.get_type() == ecma48_code::type_chars)
         {
-            const char* prev = code.get_pointer();
-            str_iter inner_iter(code.get_pointer(), code.get_length());
+            wcwidth_iter inner_iter(code.get_pointer(), code.get_length());
             while (const int32 c = inner_iter.next())
             {
-                const int32 clen = (expand_ctrl && (CTRL_CHAR(c) || c == RUBOUT)) ? 2 : clink_wcwidth(c);
+                const int32 clen = (expand_ctrl && (CTRL_CHAR(c) || c == RUBOUT)) ? 2 : inner_iter.character_wcwidth_onectrl();
+                assert(clen >= 0);
                 if (truncate_visible < 0 && visible_len + clen > limit - ellipsis_cells)
                 {
                     truncate_visible = visible_len;
@@ -83,8 +84,7 @@ int32 ellipsify(const char* in, int32 limit, str_base& out, bool expand_ctrl)
                     return visible_len;
                 }
                 visible_len += clen;
-                out.concat(prev, int32(inner_iter.get_pointer() - prev));
-                prev = inner_iter.get_pointer();
+                out.concat(inner_iter.character_pointer(), inner_iter.character_length());
             }
         }
         else

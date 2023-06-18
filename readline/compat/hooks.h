@@ -3,10 +3,13 @@
 
 #pragma once
 
+//#ifndef DEBUG
 // Define this to omit Readline's default display routines for the Readline input buffer.
-#ifndef DEBUG
 #define OMIT_DEFAULT_DISPLAY_READLINE
-#endif
+//#endif
+
+// Define this to omit Readline's match display routines.
+#define OMIT_DEFAULT_DISPLAY_MATCHES
 
 // Define this to include Clink's custom display routines for the Readline input buffer.
 #define INCLUDE_CLINK_DISPLAY_READLINE
@@ -60,3 +63,6 @@ extern int lookup_match_type(const char* match);
 extern unsigned char lookup_match_flags(const char* match);
 extern const char* lookup_match_display(const char* match);
 extern const char* lookup_match_description(const char* match);
+
+// These are implemented in ecma48_iter.cpp.
+extern unsigned int clink_wcswidth(const char* str, unsigned int len);

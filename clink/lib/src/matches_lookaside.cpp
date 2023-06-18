@@ -51,9 +51,7 @@ static int32 plainify(const char* s, char** strip)
     while (const ecma48_code& code = iter.next())
         if (code.get_type() == ecma48_code::type_chars)
         {
-            str_iter inner_iter(code.get_pointer(), code.get_length());
-            while (int32 c = inner_iter.next())
-                visible_len += clink_wcwidth(c);
+            visible_len += clink_wcswidth(code.get_pointer(), code.get_length());
 
             if (strip)
             {

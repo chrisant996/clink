@@ -6,6 +6,7 @@
 #include "scroll.h"
 #include "input_idle.h"
 #include "key_tester.h"
+#include "wcwidth.h"
 #include "terminal_helpers.h"
 #include "screen_buffer.h"
 
@@ -65,7 +66,6 @@ extern setting_bool g_adjust_cursor_style;
 extern setting_enum g_default_bindings;
 
 //------------------------------------------------------------------------------
-extern "C" void reset_wcwidths();
 extern "C" int32 is_locked_cursor();
 extern HANDLE get_recognizer_event();
 extern HANDLE get_task_manager_event();

@@ -141,8 +141,9 @@ extern int _rl_walphabetic PARAMS((WCHAR_T));
 
 /* Try and shortcut the printable ascii characters to cut down the number of
    calls to a libc wcwidth() */
-static inline int
 /* begin_clink_change */
+#if 0
+static inline int
 //_rl_wcwidth (wc)
 //     WCHAR_T wc;
 _rl_wcwidth (WCHAR_T wc)
@@ -175,6 +176,11 @@ _rl_wcwidth (WCHAR_T wc)
       return wcwidth (wc);
     }
 }
+/* begin_clink_change */
+#else
+#define _rl_wcwidth wcwidth
+#endif
+/* end_clink_change */
 
 /* Unicode combining characters range from U+0300 to U+036F */
 #define UNICODE_COMBINING_CHAR(x) ((x) >= 768 && (x) <= 879)

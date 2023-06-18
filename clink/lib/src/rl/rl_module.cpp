@@ -29,6 +29,7 @@
 #include <core/log.h>
 #include <core/debugheap.h>
 #include <terminal/ecma48_iter.h>
+#include <terminal/wcwidth.h>
 #include <terminal/printer.h>
 #include <terminal/terminal_in.h>
 #include <terminal/terminal_helpers.h>
@@ -416,6 +417,7 @@ bool clink_maybe_handle_signal()
 }
 
 //------------------------------------------------------------------------------
+#if !defined(OMIT_DEFAULT_DISPLAY_MATCHES)
 static void __cdecl dummy_display_matches_hook(char**, int32, int32)
 {
     // This exists purely to prevent rl_complete_internal from setting up
@@ -423,6 +425,7 @@ static void __cdecl dummy_display_matches_hook(char**, int32, int32)
     // Clink uses rl_completion_display_matches_func, which isn't fully
     // integrated into Readline.
 }
+#endif
 
 
 
@@ -958,7 +961,7 @@ int32 count_prompt_lines(const char* prompt_prefix)
     ecma48_processor_flags flags = ecma48_processor_flags::bracket;
     ecma48_processor(prompt_prefix, &bracketed, nullptr/*cell_count*/, flags);
 
-    str_iter iter(bracketed.c_str(), bracketed.length());
+    wcwidth_iter iter(bracketed.c_str(), bracketed.length());
     while (int32 c = iter.next())
     {
         if (ignore)
@@ -985,7 +988,7 @@ int32 count_prompt_lines(const char* prompt_prefix)
             continue;
         }
 
-        int32 w = clink_wcwidth(c);
+        int32 w = iter.character_wcwidth_onectrl();
         if (cells + w > width)
         {
             lines++;
@@ -1956,8 +1959,10 @@ static void init_readline_hooks()
     rl_postprocess_lcd_func = postprocess_lcd;
 
     // Match display.
+#if !defined(OMIT_DEFAULT_DISPLAY_MATCHES)
     rl_completion_display_matches_func = display_matches;
     rl_completion_display_matches_hook = dummy_display_matches_hook;
+#endif
     rl_is_exec_func = is_exec_ext;
 
     // Macro hooks (for "luafunc:" support).
@@ -2934,27 +2939,25 @@ bool translate_xy_to_readline(uint32 x, uint32 y, int32& pos, bool clip=false)
     const int32 prefix = rl_get_prompt_prefix_visible();
     int32 point = 0;
 
-    str_iter iter(g_rl_buffer->get_buffer(), g_rl_buffer->get_length());
+    wcwidth_iter iter(g_rl_buffer->get_buffer(), g_rl_buffer->get_length());
     for (uint32 i = 0; i <= v_pos; i++)
     {
         const int32 target = (i == v_pos ? x : _rl_screenwidth);
         int32 consumed = i ? 0 : prefix;
 
-        const char* ptr = iter.get_pointer();
-        while (iter.more())
+        const char* ptr = iter.character_pointer();
+        while (iter.next())
         {
-            const char* prev = iter.get_pointer();
-            const int32 c = iter.next();
-            const int32 w = clink_wcwidth(c);
+            const int32 w = iter.character_wcwidth_twoctrl();
             if (consumed + w > target)
             {
-                iter.reset_pointer(prev);
+                iter.unnext();
                 break;
             }
             consumed += w;
         }
 
-        point += int32(iter.get_pointer() - ptr);
+        point += int32(iter.character_pointer() - ptr);
     }
 
     assert(point <= g_rl_buffer->get_length());

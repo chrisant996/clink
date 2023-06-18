@@ -18,6 +18,7 @@
 #include <rl/rl_commands.h>
 #include <terminal/printer.h>
 #include <terminal/ecma48_iter.h>
+#include <terminal/wcwidth.h>
 #include <terminal/terminal.h>
 #include <terminal/terminal_in.h>
 #include <terminal/terminal_out.h>
@@ -88,20 +89,21 @@ static int32 make_item(const char* in, str_base& out, bool* any_ctrl=nullptr)
     out.clear();
 
     int32 cells = 0;
-    for (str_iter iter(in, strlen(in)); int32 c = iter.next(); in = iter.get_pointer())
+    for (wcwidth_iter iter(in); int32 c = iter.next();)
     {
-        if (unsigned(c) < ' ')
+        if (iter.character_wcwidth() < 0)
         {
-            char ctrl = char(c) + '@';
-            out.concat("^", 1);
-            out.concat(&ctrl, 1);
+            char ctrl[2];
+            ctrl[0] = '^';
+            ctrl[1] = (c == RUBOUT) ? '?' : UNCTRL(c);
+            out.concat(ctrl, 2);
             cells += 2;
             ac = true;
         }
         else
         {
-            out.concat(in, int32(iter.get_pointer() - in));
-            cells += clink_wcwidth(c);
+            out.concat(iter.character_pointer(), iter.character_length());
+            cells += iter.character_wcwidth();
         }
     }
 
@@ -122,27 +124,27 @@ static int32 make_column(const char* in, const char* end, str_base& out)
     while (const ecma48_code& code = iter.next())
         if (code.get_type() == ecma48_code::type_chars)
         {
-            const char* p = code.get_pointer();
-            for (str_iter inner_iter(code.get_pointer(), code.get_length());
+            for (wcwidth_iter inner_iter(code.get_pointer(), code.get_length());
                  int32 c = inner_iter.next();
-                 p = inner_iter.get_pointer())
+                 )
             {
                 if (c == '\r' || c == '\n')
                 {
                     out.concat(" ", 1);
                     cells++;
                 }
-                else if (unsigned(c) < ' ')
+                else if (inner_iter.character_wcwidth() < 0)
                 {
-                    char ctrl = char(c) + '@';
-                    out.concat("^", 1);
-                    out.concat(&ctrl, 1);
+                    char ctrl[2];
+                    ctrl[0] = '^';
+                    ctrl[1] = (c == RUBOUT) ? '?' : UNCTRL(c);
+                    out.concat(ctrl, 2);
                     cells += 2;
                 }
                 else
                 {
-                    out.concat(p, int32(inner_iter.get_pointer() - p));
-                    cells += clink_wcwidth(c);
+                    out.concat(inner_iter.character_pointer(), inner_iter.character_length());
+                    cells += inner_iter.character_wcwidth();
                 }
             }
         }
@@ -171,22 +173,19 @@ static int32 limit_cells(const char* in, int32 limit, int32& cells, int32 horz_o
         *text_ptr = nullptr;
 
     cells = 0;
-    str_iter iter(in, strlen(in));
+    wcwidth_iter iter(in, strlen(in));
 
     if (horz_offset)
     {
         int32 skip = horz_offset;
         const char* const orig = in;
-        while (skip > 0)
+        while (skip > 0 && iter.next())
         {
-            const int32 c = iter.next();
-            if (!c)
-                break;
-            const int32 width = clink_wcwidth(c);
+            const int32 width = iter.character_wcwidth_onectrl();
             if (width > 0)
             {
                 skip -= width;
-                in = iter.get_pointer();
+                in += iter.character_length();
             }
         }
 
@@ -194,16 +193,13 @@ static int32 limit_cells(const char* in, int32 limit, int32& cells, int32 horz_o
         {
             out->concat(ellipsis, ellipsis_len);
             cells += ellipsis_cells;
-            for (skip = ellipsis_cells; skip > 0;)
+            for (skip = ellipsis_cells; skip > 0 && iter.next();)
             {
-                const int32 c = iter.next();
-                if (!c)
-                    break;
-                const int32 width = clink_wcwidth(c);
+                const int32 width = iter.character_wcwidth_onectrl();
                 if (width > 0)
                 {
                     skip -= width;
-                    in = iter.get_pointer();
+                    in += iter.character_length();
                 }
             }
         }
@@ -220,12 +216,12 @@ static int32 limit_cells(const char* in, int32 limit, int32& cells, int32 horz_o
         const int32 c = iter.next();
         if (!c)
             break;
-        const int32 width = clink_wcwidth(c);
+        const int32 width = iter.character_wcwidth_onectrl();
         if (cells + width > limit - reserve)
         {
             if (!end_truncate)
             {
-                end_truncate = end;
+                end_truncate = iter.character_pointer();
                 cells_truncate = cells;
             }
             if (cells + width > limit)
@@ -236,7 +232,7 @@ static int32 limit_cells(const char* in, int32 limit, int32& cells, int32 horz_o
                 break;
             }
         }
-        cells += clink_wcwidth(c);
+        cells += width;
     }
 
     if (out && (out->length() || limited))
@@ -1259,15 +1255,15 @@ static void make_horz_border(const char* message, int32 col_width, bool bars, st
     {
         const char* walk = message;
         int32 remaining = col_width - (2 + 2); // Bars, spaces.
-        str_iter iter(message);
-        while (int32 c = iter.next())
+        wcwidth_iter iter(message);
+        while (iter.next())
         {
-            const int32 width = clink_wcwidth(c);
+            const int32 width = iter.character_wcwidth_onectrl();
             if (width > remaining)
                 break;
             cells += width;
             remaining -= width;
-            len = iter.get_pointer() - message;
+            len += iter.character_length();
         }
     }
 

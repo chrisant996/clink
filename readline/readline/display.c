@@ -527,7 +527,20 @@ expand_prompt (const char *pmt, int flags, int *lp, int *lip, int *niflp, int *v
 	      ind = _rl_find_next_mbchar (nprompt, pind, 1, MB_FIND_NONZERO);
 	      l = ind - pind;
 	      while (l--)
+/* begin_clink_change */
 	        *r++ = *p++;
+// REVIEW: Is this needed after the 0xFE0F wcwidth changes?
+#if 0
+		{
+		  if (*p == RL_PROMPT_START_IGNORE || *p == RL_PROMPT_END_IGNORE)
+		    {
+		      ind -= (l + 1);
+		      break;
+		    }
+		  *r++ = *p++;
+		}
+#endif
+/* end_clink_change */
 	      if (!ignoring)
 		{
 		  /* rl ends up being assigned to prompt_visible_length,
@@ -574,6 +587,8 @@ expand_prompt (const char *pmt, int flags, int *lp, int *lip, int *niflp, int *v
 #if defined (HANDLE_MULTIBYTE)
 		  *r = '\0';	/* need null-termination for strlen */
 		  if (mb_cur_max > 1 && rl_byte_oriented == 0)
+// REVIEW: What needs to happen here for RL_PROMPT_START_IGNORE and RL_PROMPT_END_IGNORE?
+// REVIEW: It's trying to backtrack, but it would be more robust to remember the preceding position.
 		    new = _rl_find_prev_mbchar (ret, r - ret, MB_FIND_ANY);
 		  else
 #endif
@@ -3866,6 +3881,9 @@ _rl_refresh_line (void)
 static int
 _rl_col_width (const char *str, int start, int end, int flags)
 {
+/* begin_clink_change */
+#if !defined(OMIT_DEFAULT_DISPLAY_MATCHES)
+/* end_clink_change */
   WCHAR_T wc;
   mbstate_t ps;
   int tmp, point, width, max;
@@ -3880,6 +3898,11 @@ _rl_col_width (const char *str, int start, int end, int flags)
 
   point = 0;
   max = end;
+/* begin_clink_change */
+#else
+  int tmp;
+#endif !OMIT_DEFAULT_DISPLAY_MATCHES
+/* end_clink_change */
 
   /* Try to short-circuit common cases.  The adjustment to remove wrap_offset
      is done by the caller. */
@@ -3895,6 +3918,9 @@ _rl_col_width (const char *str, int start, int end, int flags)
       return (tmp);
     }
 
+/* begin_clink_change */
+#if !defined(OMIT_DEFAULT_DISPLAY_MATCHES)
+/* end_clink_change */
   while (point < start)
     {
       if (_rl_utf8locale && UTF8_SINGLEBYTE(str[point]))
@@ -3968,5 +3994,10 @@ _rl_col_width (const char *str, int start, int end, int flags)
   width += point - end;
 
   return width;
+/* begin_clink_change */
+#else
+  return clink_wcswidth(str + start, end - start);
+#endif !OMIT_DEFAULT_DISPLAY_MATCHES
+/* end_clink_change */
 }
 #endif /* HANDLE_MULTIBYTE */
