@@ -1549,6 +1549,8 @@ function pause(x,l,f)
     step_into  = true
     debug.sethook(debug_hook, "crl")         --reset it in case some external agent fiddled with it
   else
+    io_write("\n\x1b[1mStarting Lua debugger; all Lua code runs slower while debugging.\x1b[m\n")
+    io_write("\x1b[1mType 'exit' at the debugger prompt to resume normal execution.\x1b[m\n")
     --set to stop when get out of pause()
     trace_level[current_thread] = 0
     step_level [current_thread] = 0
