@@ -97,8 +97,8 @@ local function do_embed(debug_info)
                     end
                 end
                 out:write("};\n")
-                out:write("const uint8 const* "..symbol.." = "..symbol.."_;\n")
-                out:write("int "..symbol.."_len = sizeof("..symbol.."_);\n")
+                out:write("extern const uint8* const "..symbol.." = "..symbol.."_;\n")
+                out:write("extern const int32 "..symbol.."_len = sizeof("..symbol.."_);\n")
 
                 out:write("#endif // ARCHITECTURE == "..name.."\n")
 
@@ -115,7 +115,7 @@ local function do_embed(debug_info)
             table.insert(symbols, symbol)
 
             file = file:gsub("\\", "/")
-            out:write("const char* " .. symbol .. " = CLINK_BUILD_ROOT \"/../../" .. root .. "/" .. file .. "\";\n")
+            out:write("extern const char* const " .. symbol .. " = CLINK_BUILD_ROOT \"/../../" .. root .. "/" .. file .. "\";\n")
         end
 
         out:write("#endif\n")
