@@ -2,6 +2,9 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v ???
+- Added note after successful `clink update` to clarify that the update will take effect in new Clink windows.
+
 #### v1.4.28
 - Added `console.getcursorpos()` to get the cursor position.
 - Updated `os.getscreeninfo()` to include the cursor position.
