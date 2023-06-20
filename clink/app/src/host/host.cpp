@@ -886,8 +886,8 @@ skip_errorlevel:
         if (reload_settings)
             settings::load(settings_file.c_str(), default_settings_file.c_str());
     }
-    if (!local_lua)
-        init_scripts = !m_lua;
+    if (!local_lua && m_lua)
+        init_scripts = false;
     {
         dbg_ignore_scope(snapshot, "Initialization overhead");
         if (!m_lua)
@@ -914,7 +914,7 @@ skip_errorlevel:
 
     // Send oninject event; one time only.
     static bool s_injected = false;
-    if (!s_injected)
+    if (send_event && !s_injected)
     {
         s_injected = true;
         lua.send_event("oninject");
