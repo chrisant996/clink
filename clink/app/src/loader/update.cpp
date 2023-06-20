@@ -104,7 +104,7 @@ static bool call_updater(lua_state& lua, bool do_nothing)
             wargs << get_wargs();
             puts("Requesting administrator access to install update...");
             ok = (len < _countof(file) - 1 && os::run_as_admin(NULL, file, wargs.c_str()));
-            msg = ok ? "updated Clink." : "update failed; see log file for details.";
+            msg = ok ? "updated Clink; update will take effect in new Clink windows." : "update failed; see log file for details.";
         }
     }
 
