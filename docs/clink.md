@@ -265,7 +265,7 @@ When mouse input is enabled in Clink, then mouse input works a little differentl
 
 ### Startup Cmd Script
 
-When Clink is injected, it looks for a `clink_start.cmd` script in the binaries directory and [profile directory](#filelocations).  Clink automatically runs the script(s), if present, when the first CMD prompt is shown after Clink is injected.  You can set the <code><a href="#clink_autostart">clink.autostart</a></code> setting to run a different command, or set it to "nul" to run no command at all.
+When Clink is injected, it looks for a `clink_start.cmd` script in the binaries directory and [profile directory](#filelocations).  Clink automatically runs the script(s), if present, when the first CMD prompt is shown after Clink is injected and before any Lua scripts run.  You can set the <code><a href="#clink_autostart">clink.autostart</a></code> setting to run a different command, or set it to "nul" to run no command at all.
 
 <a name="gettingstarted_customprompt"></a>
 
