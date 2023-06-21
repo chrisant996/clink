@@ -2,7 +2,7 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
-#### v ???
+#### v1.4.29
 - Added note after successful `clink update` to clarify that the update will take effect in new Clink windows.
 - Fixed order of running the autostart script (from the `clink.autostart` setting) vs loading Lua; the autostart script should run before Lua so that Lua scripts can query environment variables set by it.  Otherwise Lua scripts may behave differently on initial load versus after invoking the `clink-reload` command (e.g. <kbd>Ctrl</kbd>-<kbd>X</kbd>,<kbd>Ctrl</kbd>-<kbd>R</kbd>).
 
