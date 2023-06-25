@@ -831,7 +831,7 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out, boo
                 if (f)
                 {
                     char buffer[32];
-                    memset(buffer, sizeof(buffer), 0);
+                    memset(buffer, 0, sizeof(buffer));
                     fgets(buffer, _countof(buffer) - 1, f);
                     fclose(f);
                     _unlink(tmp_errfile.c_str());
