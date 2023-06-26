@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.4.28</title>
+<title>Clink v1.5.0</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -865,7 +865,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.4.28</div>
+                <div id="title">Clink v1.5.0</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -1149,7 +1149,7 @@ $endif
 </ul>
 <p><a name="gettingstarted_startupcmdscript"></a></p>
 <h3 id="startup-cmd-script"><div class="wlink"><a href="#gettingstarted_startupcmdscript"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Startup Cmd Script</h3>
-<p>When Clink is injected, it looks for a <code>clink_start.cmd</code> script in the binaries directory and <a href="#filelocations">profile directory</a>.  Clink automatically runs the script(s), if present, when the first CMD prompt is shown after Clink is injected.  You can set the <code><a href="#clink_autostart">clink.autostart</a></code> setting to run a different command, or set it to &quot;nul&quot; to run no command at all.</p>
+<p>When Clink is injected, it looks for a <code>clink_start.cmd</code> script in the binaries directory and <a href="#filelocations">profile directory</a>.  Clink automatically runs the script(s), if present, when the first CMD prompt is shown after Clink is injected and before any Lua scripts run.  You can set the <code><a href="#clink_autostart">clink.autostart</a></code> setting to run a different command, or set it to &quot;nul&quot; to run no command at all.</p>
 <p><a name="gettingstarted_customprompt"></a></p>
 <h3 id="custom-prompt"><div class="wlink"><a href="#gettingstarted_customprompt"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Custom Prompt</h3>
 <p>If you want a customizable prompt with a bunch of styles and an easy-to-use configuration wizard, check out <a href="https://github.com/chrisant996/clink-flex-prompt">clink-flex-prompt</a>.  Also, if you&#39;ve been disappointed by git making the prompt slow in other shells, try this prompt -- it makes the prompt appear instantly by running git commands in the background and refreshing the prompt once the background commands complete.</p>
@@ -6996,6 +6996,14 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes"><div class="wlink"><a href="#changes"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork"><div class="wlink"><a href="#releases-from-chrisant996clink-fork"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v150"><div class="wlink"><a href="#v150"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>v1.5.0</h4>
+<ul>
+<li>Added code-signing.</li>
+<li>Added note after successful <code>clink update</code> to clarify that the update will take effect in new Clink windows.</li>
+<li>Fixed order of running the autostart script (from the <code>clink.autostart</code> setting) vs loading Lua; the autostart script should run before Lua so that Lua scripts can query environment variables set by it.  Otherwise Lua scripts may behave differently on initial load versus after invoking the <code>clink-reload</code> command (e.g. <kbd>Ctrl</kbd>-<kbd>X</kbd>,<kbd>Ctrl</kbd>-<kbd>R</kbd>).</li>
+<li>Fixed precedence of match colors; readonly should be lower precedence than executable.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/469">#469</a>; incorrect usage of <code>memset()</code>.</li>
+</ul>
 <h4 id="v1428"><div class="wlink"><a href="#v1428"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>v1.4.28</h4>
 <ul>
 <li>Added <code>console.getcursorpos()</code> to get the cursor position.</li>
