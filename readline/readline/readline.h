@@ -988,6 +988,12 @@ extern int rl_filename_display_desired;
    entry finder function. */
 extern int rl_filename_quoting_desired;
 
+/* Non-zero means we should apply filename-type quoting to all completions
+   even if we are not otherwise treating the matches as filenames. This is
+   ALWAYS zero on entry, and can only be changed within a completion entry
+   finder function. */
+extern int rl_full_quoting_desired;
+
 /* Set to a function to quote a filename in an application-specific fashion.
    Called with the text to quote, the type of match found (single or multiple)
    and a pointer to the quoting character to be used, which the function can

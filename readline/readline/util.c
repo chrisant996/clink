@@ -43,8 +43,8 @@
 #include <ctype.h>
 
 /* System-specific feature definitions and include files. */
-#include "rldefs.h"
 #include "rlmbutil.h"
+#include "rldefs.h"
 
 #if defined (TIOCSTAT_IN_SYS_IOCTL)
 #  include <sys/ioctl.h>

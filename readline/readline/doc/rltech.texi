@@ -2300,6 +2300,16 @@ The quoting is effected via a call to the function pointed to
 by @code{rl_filename_quoting_function}.
 @end deftypevar
 
+@deftypevar int rl_full_quoting_desired
+Non-zero means that Readline should apply filename-style quoting,
+including any application-specified quoting mechanism,
+to all completion matches even if we are not otherwise treating the
+matches as filenames.
+This is @emph{always} zero when completion is attempted, and can only
+be changed within an application-specific completion function.
+The quoting is effected via a call to the function pointed to
+by @code{rl_filename_quoting_function}.
+
 @deftypevar int rl_attempted_completion_over
 If an application-specific completion function assigned to
 @code{rl_attempted_completion_function} sets this variable to a non-zero

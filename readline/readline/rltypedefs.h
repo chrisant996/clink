@@ -1,6 +1,6 @@
 /* rltypedefs.h -- Type declarations for readline functions. */
 
-/* Copyright (C) 2000-2021 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2023 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -28,7 +28,7 @@ extern "C" {
 
 /* Old-style, attempt to mark as deprecated in some way people will notice. */
 
-#if !defined (_FUNCTION_DEF)
+#if !defined (_FUNCTION_DEF) && defined (WANT_OBSOLETE_TYPEDEFS)
 #  define _FUNCTION_DEF
 
 typedef int Function () __attribute__((deprecated));
@@ -36,7 +36,7 @@ typedef void VFunction () __attribute__((deprecated));
 typedef char *CPFunction () __attribute__((deprecated));
 typedef char **CPPFunction () __attribute__((deprecated));
 
-#endif /* _FUNCTION_DEF */
+#endif /* _FUNCTION_DEF && WANT_OBSOLETE_TYPEDEFS */
 
 /* New style. */
 

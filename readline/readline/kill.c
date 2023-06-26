@@ -594,7 +594,7 @@ rl_vi_yank_pop (int count, int key)
     }
 
   l = strlen (rl_kill_ring[rl_kill_index]);
-#if 0 /* TAG:readline-8.3 8/29/2022 matteopaolini1995@gmail.com */
+#if 1
   origpoint = rl_point;
   n = rl_point - l + 1;
 #else
@@ -602,7 +602,7 @@ rl_vi_yank_pop (int count, int key)
 #endif
   if (n >= 0 && STREQN (rl_line_buffer + n, rl_kill_ring[rl_kill_index], l))
     {
-#if 0 /* TAG:readline-8.3 */
+#if 1
       rl_delete_text (n, n + l);		/* remember vi cursor positioning */
       rl_point = origpoint - l;
 #else
@@ -804,7 +804,7 @@ _rl_read_bracketed_paste_prefix (int c)
   pbpref = BRACK_PASTE_PREF;		/* XXX - debugging */
   if (c != pbpref[0])
     return (0);
-  pbuf[ind = 0] = c;
+  pbuf[ind = 0] = key = c;
   while (ind < BRACK_PASTE_SLEN-1 &&
 	 (RL_ISSTATE (RL_STATE_INPUTPENDING|RL_STATE_MACROINPUT) == 0) &&
          _rl_pushed_input_available () == 0 &&

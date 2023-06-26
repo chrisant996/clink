@@ -420,6 +420,27 @@ int rl_filename_display_desired = 0;
    entry finder function. */
 int rl_filename_quoting_desired = 1;
 
+/* Non-zero means we should apply filename-type quoting to all completions
+   even if we are not otherwise treating the matches as filenames. This is
+   ALWAYS zero on entry, and can only be changed within a completion entry
+   finder function. */
+int rl_full_quoting_desired = 0;
+
+/* begin_clink_change PRIVATE */
+  /* On Windows, quoting is also needed for non-filename completion, so
+   * rl_filename_completion_desired isn't a criterion, and instead
+   * rl_need_match_quoting(match) says whether quoting is desired. */
+#if 0
+/* end_clink_change PRIVATE */
+#define QUOTING_DESIRED() \
+  (rl_full_quoting_desired || (rl_filename_completion_desired && rl_filename_quoting_desired))
+/* begin_clink_change PRIVATE */
+#else
+#define QUOTING_DESIRED() \
+  (rl_full_quoting_desired || rl_filename_quoting_desired)
+#endif
+/* end_clink_change PRIVATE */
+
 /* This function, if defined, is called by the completer when real
    filename completion is done, after all the matching names have been
    generated. It is passed a (char**) known as matches in the code below.
@@ -581,6 +602,40 @@ rl_completion_mode (rl_command_func_t *cfunc)
     return TAB;
 }
 
+/********************************************/
+/*					    */
+/*  Completion signal handling and cleanup  */
+/*					    */
+/********************************************/
+
+/* State to clean up and free if completion is interrupted by a signal. */
+typedef struct {
+  char **matches;
+  char *saved_line;
+} complete_sigcleanarg_t;
+
+static void
+_rl_complete_sigcleanup (int sig, void *ptr)
+{
+  complete_sigcleanarg_t *arg;
+
+/* begin_clink_change */
+#if defined (SIGBREAK)
+  if (sig == SIGINT || sig == SIGBREAK)	/* XXX - for now */
+#else
+/* end_clink_change */
+  if (sig == SIGINT)	/* XXX - for now */
+/* begin_clink_change */
+#endif
+/* end_clink_change */
+    {
+      arg = ptr;
+      _rl_free_match_list (arg->matches);
+      FREE (arg->saved_line);
+      _rl_complete_display_matches_interrupt = 1;
+    }
+}
+
 /************************************/
 /*				    */
 /*    Completion utility functions  */
@@ -593,22 +648,6 @@ _rl_reset_completion_state (void)
 {
   rl_completion_found_quote = 0;
   rl_completion_quote_character = 0;
-}
-
-static void
-_rl_complete_sigcleanup (int sig, void *ptr)
-{
-/* begin_clink_change */
-#if defined (SIGBREAK)
-  if (sig == SIGINT || sig == SIGBREAK)	/* XXX - for now */
-#else
-  if (sig == SIGINT)	/* XXX - for now */
-#endif
-/* end_clink_change */
-    {
-      _rl_free_match_list ((char **)ptr);
-      _rl_complete_display_matches_interrupt = 1;
-    }
 }
 
 /* Set default values for readline word completion.  These are the variables
@@ -625,6 +664,7 @@ set_completion_defaults (int what_to_do)
   rl_filename_display_desired = 0;
 /* end_clink_change */
   rl_filename_quoting_desired = 1;
+  rl_full_quoting_desired = 0;
   rl_completion_type = what_to_do;
   rl_completion_suppress_append = rl_completion_suppress_quote = 0;
   rl_completion_append_character = ' ';
@@ -1997,10 +2037,8 @@ compute_lcd_of_matches (char **match_list, int matches, const char *text)
 		   check against the list of matches
 		FI */
 	  dtext = (char *)NULL;
-	  if (rl_filename_completion_desired &&
-	      rl_filename_dequoting_function &&
-	      rl_completion_found_quote &&
-	      rl_filename_quoting_desired)
+	  if (QUOTING_DESIRED() && rl_completion_found_quote &&
+		rl_filename_dequoting_function)
 	    {
 	      dtext = (*rl_filename_dequoting_function) ((char *)text, rl_completion_quote_character);
 	      text = dtext;
@@ -2471,13 +2509,7 @@ make_quoted_replacement (char *match, int mtype, char *qc)
      matches don't require a quoted substring. */
   replacement = match;
 
-  should_quote = match && rl_completer_quote_characters &&
-/* begin_clink_change PRIVATE */
-  /* On Windows, quoting is also needed for non-filename completion, so
-   * rl_need_match_quoting(match) says whether quoting is desired. */
-			//rl_filename_completion_desired &&
-/* end_clink_change PRIVATE */
-			rl_filename_quoting_desired;
+  should_quote = match && rl_completer_quote_characters && QUOTING_DESIRED();
 
   if (should_quote)
     should_quote = should_quote && (!qc || !*qc ||
@@ -2493,7 +2525,12 @@ make_quoted_replacement (char *match, int mtype, char *qc)
 			//? (_rl_strpbrk (match, rl_filename_quote_characters) != 0)
 			//: 0;
       const char *quotable_match = match + (!rl_complete_with_tilde_expansion && match[0] == '~');
-      should_quote |= force_quoting || rl_need_match_quoting (quotable_match);
+      should_quote = rl_full_quoting_desired || force_quoting || rl_need_match_quoting (quotable_match);
+      /* clink: This can clear should_quote, so another "if" is necessary. */
+    }
+
+  if (should_quote)
+    {
 /* end_clink_change PRIVATE */
       /* If we saw a quote in the original word, but readline thinks the
 	 match doesn't need to be quoted, and the application has a filename
@@ -2848,8 +2885,7 @@ compare_match (char *text, const char *match)
   char *temp;
   int r;
 
-  if (rl_filename_completion_desired && rl_filename_quoting_desired && 
-      rl_completion_found_quote && rl_filename_dequoting_function)
+  if (QUOTING_DESIRED() && rl_completion_found_quote && rl_filename_dequoting_function)
     {
       temp = (*rl_filename_dequoting_function) (text, rl_completion_quote_character);
       r = strcmp (temp, match);
@@ -2881,10 +2917,11 @@ rl_complete_internal (int what_to_do)
 {
   char **matches;
   rl_compentry_func_t *our_func;
-  int start, end, delimiter, found_quote, i, nontrivial_lcd;
+  int start, end, delimiter, found_quote, i, nontrivial_lcd, do_display;
   char *text, *saved_line_buffer;
   char quote_char;
   int tlen, mlen, saved_last_completion_failed;
+  complete_sigcleanarg_t cleanarg;	/* state to clean up on signal */
 /* begin_clink_change */
   int end_undo_group = 0;
   force_quoting = 0;
@@ -2927,8 +2964,7 @@ rl_complete_internal (int what_to_do)
      strcmp directly. */
   /* nontrivial_lcd is set if the common prefix adds something to the word
      being completed. */
-  if (rl_filename_completion_desired && rl_filename_quoting_desired &&
-      rl_completion_found_quote && rl_filename_dequoting_function)
+  if (QUOTING_DESIRED() && rl_completion_found_quote && rl_filename_dequoting_function)
     {
       char *t;
       t = (*rl_filename_dequoting_function) (text, rl_completion_quote_character);
@@ -2971,6 +3007,8 @@ rl_complete_internal (int what_to_do)
 
   if (matches && matches[0] && *matches[0])
     last_completion_failed = 0;
+
+  do_display = 0;
 
   switch (what_to_do)
     {
@@ -3032,13 +3070,13 @@ rl_complete_internal (int what_to_do)
 	{
 	  if (what_to_do == '!')
 	    {
-	      display_matches (matches);
+	      do_display = 1;
 	      break;
 	    }
 	  else if (what_to_do == '@')
 	    {
 	      if (nontrivial_lcd == 0)
-		display_matches (matches);
+		do_display = 1;
 	      break;
 	    }
 	  else if (rl_editing_mode != vi_mode)
@@ -3076,22 +3114,7 @@ rl_complete_internal (int what_to_do)
 	  break;
 	}
       
-      if (rl_completion_display_matches_hook == 0)
-	{
-	  _rl_sigcleanup = _rl_complete_sigcleanup;
-	  _rl_sigcleanarg = matches;
-	  _rl_complete_display_matches_interrupt = 0;
-	}
-      display_matches (matches);
-      if (_rl_complete_display_matches_interrupt)
-        {
-          matches = 0;		/* already freed by rl_complete_sigcleanup */
-          _rl_complete_display_matches_interrupt = 0;
-	  if (rl_signal_event_hook)
-	    (*rl_signal_event_hook) ();		/* XXX */
-        }
-      _rl_sigcleanup = 0;
-      _rl_sigcleanarg = 0;
+      do_display = 1;
       break;
 
     default:
@@ -3111,6 +3134,34 @@ rl_complete_internal (int what_to_do)
       rl_end_undo_group();
     }
 /* end_clink_change */
+
+  /* If we need to display the match list, set up to clean it up on receipt of
+     a signal and do it here. If the application has registered a function to
+     display the matches, let it do the work. */
+  if (do_display)
+    {
+      if (rl_completion_display_matches_hook == 0)
+	{
+	  _rl_sigcleanup = _rl_complete_sigcleanup;
+	  cleanarg.matches = matches;
+	  cleanarg.saved_line = saved_line_buffer;
+	  _rl_sigcleanarg = &cleanarg;
+	  _rl_complete_display_matches_interrupt = 0;
+	}
+
+      display_matches (matches);
+
+      if (_rl_complete_display_matches_interrupt)
+	{
+	  matches = 0;		/* Both already freed by _rl_complete_sigcleanup */
+	  saved_line_buffer = 0;
+	  _rl_complete_display_matches_interrupt = 0;
+	  if (rl_signal_event_hook)
+	    (*rl_signal_event_hook) ();
+	}
+      _rl_sigcleanup = 0;
+      _rl_sigcleanarg = 0;
+    }
 
   _rl_free_match_list (matches);
 
@@ -3966,10 +4017,7 @@ rl_menu_complete (int count, int ignore)
 	  if (rl_completion_query_items > 0 && match_list_size >= rl_completion_query_items)
 	    {
 	      rl_ding ();
-/* begin_clink_change */
-	      //FREE (matches);
 	      _rl_free_match_list (matches);
-/* end_clink_change */
 	      matches = (char **)0;
 	      full_completion = 1;
 	      return (0);

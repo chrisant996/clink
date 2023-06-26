@@ -2206,6 +2206,10 @@ quoting special characters, or suppressing trailing spaces).
 This option is intended to be used with shell functions specified
 with @option{-F}.
 
+@item fullquote
+Tell Readline to quote all the completed words even if they are not
+filenames.
+
 @item noquote
 Tell Readline not to quote the completed words if they are filenames
 (quoting filenames is the default).
