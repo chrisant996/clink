@@ -384,11 +384,15 @@ static bool append_match_color_indicator(const char *f, match_type type)
 
     if (!is_zero(type))
     {
-        const char *override_color = 0;
+        const char *override_color = nullptr;
         if (is_pathish(type))
         {
+            // Hidden can override dir and other classifications, but readonly
+            // can only override the C_FILE classification.
             if (_rl_hidden_color && is_match_type_hidden(type))
                 override_color = _rl_hidden_color;
+            else if (colored_filetype != C_FILE)
+                override_color = nullptr;
             else if (_rl_readonly_color && is_match_type_readonly(type))
                 override_color = _rl_readonly_color;
         }
