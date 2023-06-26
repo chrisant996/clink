@@ -10,6 +10,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## Low Priority
 - Efficiency; explore pruning unnecessary calls to `display_manager::display()`.
+- More sophisticated match color definitions?  E.g. would be nice to be able to color executable matches as bold, readonly matches as green, and readonly executable matches as bold green.
 - The `:` and `=` parsing has a side effect that flags like `-f`_`file`_ are ambiguous: since parsing happens independently from argmatchers, `-fc:\file` could be `-f` and `c:\file` or it could be `-fc:` and `\file`.
   - Revisit the possibility of allowing `line_state` to be mutable and argmatchers adjusting it as they parse the input line?  _No; too messy.  E.g. splitting `"-fc:\foo bar"` gets weird because quoting encloses **two adjacent** words._
   - But an important benefit of the current implementation is that `program_with_no_argmatcher --unknown-flag:filename` is able to do filename completion on `filename`.
