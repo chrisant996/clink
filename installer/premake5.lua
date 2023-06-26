@@ -390,41 +390,39 @@ newaction {
         -- Now we can sign the files.
         local sign = not _OPTIONS["nosign"]
         local signed_ok -- nil means unknown, false means failed, true means ok.
-        if sign then
-            local sign_files = function ()
-                local orig_dir = os.getcwd()
-                os.chdir(src)
+        local function sign_files(file_table)
+            local orig_dir = os.getcwd()
+            os.chdir(src)
 
-                local file_table = {
-                    "clink_x86.exe",
-                    "clink_dll_x86.dll",
-                    "clink_x64.exe",
-                    "clink_dll_x64.dll",
-                    "clink_arm64.exe",
-                    "clink_dll_arm64.dll",
-                }
-
-                local files = ""
-                for _, file in ipairs(file_table) do
-                    files = files .. " " .. file
-                end
-
-                -- Sectigo requests to wait 15 seconds between timestamps.
-                -- Digicert and Certum don't mention any delay, so for now
-                -- just let signtool do the signatures and timestamps without
-                -- imposing external delays.
-                signed_ok = (exec('"' .. have_signtool .. sign_command .. files .. '"') and signed ~= false)
-                -- Note: FAILS: cmd.exe /c "program" args "more args"
-                --    SUCCEEDS: cmd.exe /c ""program" args "more args""
-
-                -- Verify the signatures.
-                signed_ok = (exec(have_signtool .. verify_command .. files) and signed ~= false)
-
-                os.chdir(orig_dir)
+            local files = ""
+            for _, file in ipairs(file_table) do
+                files = files .. " " .. file
             end
 
-            print_reverse("Code signing")
-            signed = sign_files()
+            -- Sectigo requests to wait 15 seconds between timestamps.
+            -- Digicert and Certum don't mention any delay, so for now
+            -- just let signtool do the signatures and timestamps without
+            -- imposing external delays.
+            signed_ok = (exec('"' .. have_signtool .. sign_command .. files .. '"') and signed_ok ~= false) or false
+            -- Note: FAILS: cmd.exe /c "program" args "more args"
+            --    SUCCEEDS: cmd.exe /c ""program" args "more args""
+
+            -- Verify the signatures.
+            signed_ok = (exec(have_signtool .. verify_command .. files) and signed_ok ~= false) or false
+
+            os.chdir(orig_dir)
+        end
+
+        if sign then
+            print_reverse("Sign executables")
+            sign_files({
+                "clink_x86.exe",
+                "clink_dll_x86.dll",
+                "clink_x64.exe",
+                "clink_dll_x64.dll",
+                "clink_arm64.exe",
+                "clink_dll_arm64.dll",
+            })
         end
 
         -- Now we can extract the version from the executables.
@@ -477,6 +475,10 @@ newaction {
             nsis_cmd = nsis_cmd .. " " .. code_dir .. "/installer/clink.nsi"
             print_reverse("Build setup program")
             nsis_ok = exec(nsis_cmd)
+            if sign then
+                print_reverse("Sign setup program")
+                sign_files({path.getabsolute(dest) .. "_setup.exe"})
+            end
         end
 
         -- Tidy up code directory.
