@@ -808,6 +808,82 @@ int32 get_key_bindings(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+/// -name:  rl.getcommandbindings
+/// -ver:   1.5.1
+/// -arg:   command:string
+/// -arg:   raw:boolean
+/// -ret:   table | nil
+/// Returns key bindings and info for <span class="arg">command</span> in a
+/// table with the following scheme:
+/// -show:  local t = rl.getcommandbindings("complete")
+/// -show:  -- t.desc               [string] Description of the command.
+/// -show:  -- t.category           [string] Category of the command.
+/// -show:  -- t.keys               [table] Table of strings listing the key names that are bound to the command.
+///
+/// When <span class="arg">raw</span> is true, the key names are the literal key
+/// sequences without being converted to user-friendly key names.
+///
+/// If <span class="arg">command</span> is neither a command nor a macro string,
+/// then nil is returned.
+/// -show:  local command = 'complete'
+/// -show:  -- or for example '"luafunc:my_macro_function"' or '"some macro text"'
+/// -show:  local info = rl.getcommandbindings(command)
+/// -show:  if info then
+/// -show:  &nbsp;   local info = rl.getcommandbindings(command)
+/// -show:  &nbsp;   print("Info for '"..command.."':")
+/// -show:  &nbsp;   print("Description is:  "..info.desc)
+/// -show:  &nbsp;   print("Category is:     "..info.category)
+/// -show:  &nbsp;   if #info.keys > 0 then
+/// -show:  &nbsp;       print("Bound to:")
+/// -show:  &nbsp;       for _,key in ipairs(info.keys) do
+/// -show:  &nbsp;           print("    "..key)
+/// -show:  &nbsp;       end
+/// -show:  &nbsp;   else
+/// -show:  &nbsp;       print("Not bound to any keys.")
+/// -show:  &nbsp;   end
+/// -show:  else
+/// -show:  &nbsp;   print("Command '"..command.."' not recognized.")
+/// -show:  end
+int32 get_command_bindings(lua_State* state)
+{
+    const char* command = checkstring(state, 1);
+    bool raw = lua_toboolean(state, 2);
+    if (!command)
+        return 0;
+
+    // Get the key bindings.
+    str<> desc;
+    str<> category;
+    bool get_command_bindings(const char* command, bool friendly, str_base& desc, str_base& category, std::vector<str_moveable>& keys);
+    std::vector<str_moveable> keys;
+    if (!get_command_bindings(command, !raw, desc, category, keys))
+        return 0;
+
+    // Copy the result into a lua table.
+    lua_createtable(state, 0, 3);
+
+    lua_pushliteral(state, "desc");
+    lua_pushstring(state, desc.c_str());
+    lua_rawset(state, -3);
+
+    lua_pushliteral(state, "category");
+    lua_pushstring(state, category.c_str());
+    lua_rawset(state, -3);
+
+    int32 i = 0;
+    lua_pushliteral(state, "keys");
+    lua_createtable(state, keys.size(), 0);
+    for (auto const& key : keys)
+    {
+        lua_pushlstring(state, key.c_str(), key.length());
+        lua_rawseti(state, -2, ++i);
+    }
+    lua_rawset(state, -3);
+
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 /// -name:  rl.getpromptinfo
 /// -ver:   1.2.28
 /// -ret:   table
@@ -1221,6 +1297,7 @@ void rl_lua_initialise(lua_state& lua)
         { "getlastcommand",         &get_last_command },
         { "setmatches",             &set_matches },
         { "getkeybindings",         &get_key_bindings },
+        { "getcommandbindings",     &get_command_bindings },
         { "getpromptinfo",          &get_prompt_info },
         { "insertmode",             &getset_insert_mode },
         { "ismodifiedline",         &is_modified_line },

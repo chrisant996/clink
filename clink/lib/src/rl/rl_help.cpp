@@ -28,6 +28,7 @@ extern int32 __complete_get_screenwidth(void);
 }
 
 #include <vector>
+#include <algorithm>
 #include <assert.h>
 
 //------------------------------------------------------------------------------
@@ -707,6 +708,68 @@ static Keyentry* collect_keymap(
 }
 
 //------------------------------------------------------------------------------
+struct filter_keymap { rl_command_func_t* command; const char* macro; };
+struct command_binding { str_moveable key; int32 sort; };
+static void collect_command_bindings(Keymap map, const filter_keymap& filter, bool friendly, str<32>& keyseq, std::vector<command_binding>& bindings)
+{
+    for (int32 i = 0; i < KEYMAP_SIZE; ++i)
+    {
+        const bool prefix = (i == ANYOTHERKEY);
+        const KEYMAP_ENTRY& entry = map[i];
+        if (entry.function == nullptr)
+            continue;
+
+        // Recursively chain to another keymap.
+        if (entry.type == ISKMAP)
+        {
+            uint32 old_len = keyseq.length();
+            concat_key_string(i, keyseq);
+            collect_command_bindings((Keymap)entry.function, filter, friendly, keyseq, bindings);
+            keyseq.truncate(old_len);
+            continue;
+        }
+
+        if (entry.type == ISFUNC)
+        {
+            if (!filter.command || filter.command != entry.function)
+                continue;
+        }
+        else if (entry.type == ISMACR)
+        {
+            if (!filter.macro)
+                continue;
+            char* macro_text = _rl_untranslate_macro_value((char *)entry.function, 0);
+            const bool skip = (strcmp(macro_text, filter.macro) != 0);
+            free(macro_text);
+            if (skip)
+                continue;
+        }
+        else
+        {
+            assert(false);
+            continue;
+        }
+
+        uint32 old_len = keyseq.length();
+        if (!prefix)
+            concat_key_string(i, keyseq);
+
+        int32 sort;
+        char* key_name = nullptr;
+        if (translate_keyseq(keyseq.c_str(), keyseq.length(), &key_name, friendly, sort))
+        {
+            command_binding binding;
+            binding.key = key_name;
+            binding.sort = sort;
+            bindings.emplace_back(std::move(binding));
+        }
+        free(key_name);
+
+        keyseq.truncate(old_len);
+    }
+}
+
+//------------------------------------------------------------------------------
 static Keyentry* collect_functions(
     Keyentry* collector,
     int32* offset,
@@ -1232,6 +1295,77 @@ void show_key_bindings(bool friendly, int32 mode, std::vector<key_binding_info>*
         free(collector[offset].macro_text);
     }
     free(collector);
+}
+
+//------------------------------------------------------------------------------
+static bool cmp_sort_command_bindings(const command_binding& a, const command_binding& b)
+{
+    int32 cmp;
+
+    // Sort first by modifier keys.
+    cmp = (a.sort >> 16) - (b.sort >> 16);
+    if (cmp)
+        return cmp < 0;
+
+    // Next by named key order.
+    cmp = (int16)a.sort - (int16)b.sort;
+    if (cmp)
+        return cmp < 0;
+
+    // Finally sort by key name (folding case).
+    cmp = strcmpi(a.key.c_str(), b.key.c_str());
+    if (cmp)
+        return cmp < 0;
+    return strcmp(a.key.c_str(), b.key.c_str());
+}
+
+//------------------------------------------------------------------------------
+bool get_command_bindings(const char* command, bool friendly, str_base& _desc, str_base& _category, std::vector<str_moveable>& keys)
+{
+    ensure_keydesc_map();
+
+    const char* desc = nullptr;
+    int32 cat = keycat_none;
+    rl_command_func_t* func = rl_named_function(command);
+    bool lookup_macro = false;
+    str<> macro;
+
+    if (func)
+    {
+        get_function_info(func, &desc, &cat);
+    }
+    else if (command[0] == '"' && command[1])
+    {
+        const size_t len = strlen(command);
+        if (command[len - 1] == '"')
+        {
+            lookup_macro = true;
+            macro.concat(command + 1, len - 2);
+            desc = lookup_macro_description(macro.c_str());
+            cat = keycat_macros;
+        }
+    }
+    else
+        return false;
+
+    _desc = desc;
+    _category = c_headings[cat];
+
+    filter_keymap filter;
+    filter.command = func;
+    filter.macro = lookup_macro ? macro.c_str() : nullptr;
+
+    str<32> keyseq;
+    Keymap map = rl_get_keymap();
+    std::vector<command_binding> bindings;
+    collect_command_bindings(map, filter, friendly, keyseq, bindings);
+
+    std::sort(bindings.begin(), bindings.end(), cmp_sort_command_bindings);
+
+    for (const auto& binding : bindings)
+        keys.emplace_back(binding.key.c_str());
+
+    return true;
 }
 
 //------------------------------------------------------------------------------
