@@ -2,6 +2,10 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.5.1
+- Changed to also allow `clink.popuplist()` inside a function registered by `clink.onfiltermatches()`.
+- Added `rl.getcommandbindings()` to get info about a command, including the key(s) bound to it.
+
 #### v1.5.0
 - Added code-signing.
 - Added note after successful `clink update` to clarify that the update will take effect in new Clink windows.
