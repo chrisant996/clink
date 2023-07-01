@@ -474,7 +474,9 @@ static bool popup_del_callback(int32 index)
 /// -arg:   [del_callback:function]
 /// -ret:   string, boolean, integer
 /// Displays a popup list and returns the selected item.  May only be used
-/// within a <a href="#luakeybindings">luafunc: key binding</a>.
+/// within a <a href="#luakeybindings">luafunc: key binding</a> or inside a
+/// function registered with
+/// <a href="#clink.onfiltermatches">clink.onfiltermatches()</a>.
 ///
 /// <span class="arg">title</span> is required and captions the popup list.
 ///
@@ -550,8 +552,8 @@ static bool popup_del_callback(int32 index)
 /// -show:  }
 static int32 popup_list(lua_State* state)
 {
-    if (!lua_state::is_in_luafunc() && !lua_state::is_interpreter())
-        return luaL_error(state, "clink.popuplist may only be used in a " LUA_QL("luafunc:") " key binding");
+    if (!lua_state::is_in_luafunc() && !lua_state::is_in_onfiltermatches() && !lua_state::is_interpreter())
+        return luaL_error(state, "use of clink.popuplist is restricted");
 
     enum arg_indices { makevaluesonebased, argTitle, argItems, argIndex, argDelCallback};
 

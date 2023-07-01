@@ -544,7 +544,7 @@ bool lua_match_generator::filter_matches(char** matches, char completion_type, b
     lua_pushboolean(state, filename_completion_desired);
 
     // Call the filter.
-    if (lua_state::pcall(state, 3, 1) != 0)
+    if (lua_state::call_onfiltermatches(state, 3, 1) != 0)
         return false;
 
     // If nil is returned then no filtering occurred.

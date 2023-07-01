@@ -175,6 +175,7 @@ const char* optstring(lua_State* state, int32 index, const char* default_value)
 
 //------------------------------------------------------------------------------
 bool lua_state::s_in_luafunc = false;
+bool lua_state::s_in_onfiltermatches = false;
 bool lua_state::s_interpreter = false;
 
 //------------------------------------------------------------------------------
@@ -711,6 +712,13 @@ bool lua_state::call_lua_rl_global_function(const char* func_name, line_state* l
     }
 
     return true;
+}
+
+//------------------------------------------------------------------------------
+int32 lua_state::call_onfiltermatches(lua_State* L, int32 nargs, int32 nresults)
+{
+    rollback<bool> rb(s_in_onfiltermatches, true);
+    return pcall(L, nargs, nresults);
 }
 
 //------------------------------------------------------------------------------

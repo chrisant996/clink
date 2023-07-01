@@ -64,12 +64,14 @@ public:
     bool            send_oncommand_event(line_state& line, const char* command, bool quoted, recognition recog, const char* file);
     bool            send_oninputlinechanged_event(const char* line);
     bool            call_lua_rl_global_function(const char* func_name, line_state* line);
+    static int32    call_onfiltermatches(lua_State* L, int32 nargs, int32 nresults);
 
 #ifdef DEBUG
     void            dump_stack(int32 pos);
 #endif
 
     static bool     is_in_luafunc() { return s_in_luafunc; }
+    static bool     is_in_onfiltermatches() { return s_in_onfiltermatches; }
     static bool     is_interpreter() { return s_interpreter; }
 
 private:
@@ -77,6 +79,7 @@ private:
     lua_State*      m_state;
 
     static bool     s_in_luafunc;
+    static bool     s_in_onfiltermatches;
     static bool     s_interpreter;
 };
 
