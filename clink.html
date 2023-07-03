@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.5.0</title>
+<title>Clink v1.5.1</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -865,7 +865,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.5.0</div>
+                <div id="title">Clink v1.5.1</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -6225,7 +6225,7 @@ end</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#clink.parseline"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="clink.parseline">clink.parseline</a></div> <div class="signature">( <span class="arg_name">line</span>:string ) : table<br/><div class="version">v1.3.37 and newer</div></div></div><div class="body"><p class="desc">This parses the <span class="arg">line</span> string into a table of commands, with one <a href="#line_state">line_state</a> for each command parsed from the line string.</p><p class="desc"> The returned table of tables has the following scheme:</p><pre class="language-lua"><code>local commands = clink.parseline("echo hello & echo world")
 -- commands[1].line_state corresponds to "echo hello".
 -- commands[2].line_state corresponds to "echo world".</code></pre></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#clink.popuplist"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="clink.popuplist">clink.popuplist</a></div> <div class="signature">( <span class="arg_name">title</span>:string, <span class="arg_name">items</span>:table, [<span class="arg_name">index</span>:integer], [<span class="arg_name">del_callback</span>:function] ) : string, boolean, integer<br/><div class="version">v1.2.17 and newer</div></div></div><div class="body"><p class="desc">Displays a popup list and returns the selected item.  May only be used within a <a href="#luakeybindings">luafunc: key binding</a>.</p><p class="desc"> <span class="arg">title</span> is required and captions the popup list.</p><p class="desc"> <span class="arg">items</span> is a table of strings to display.</p><p class="desc"> <span class="arg">index</span> optionally specifies the default item (or 1 if omitted).</p><p class="desc"> <span class="arg">del_callback</span> optionally specifies a callback function to be called when <kbd>Del</kbd> is pressed.  The function receives the index of the selected item.  If the function returns true then the item is deleted from the popup list.  This requires Clink v1.3.41 or higher.</p><p class="desc"> The function returns one of the following: <ul> <li>nil if the popup is canceled or an error occurs. <li>Three values: <ul> <li>string indicating the <code>value</code> field from the selected item (or the <code>display</code> field if no value field is present). <li>boolean which is true if the item was selected with <kbd>Shift</kbd> or <kbd>Ctrl</kbd> pressed. <li>integer indicating the index of the selected item in the original <span class="arg">items</span> table. </ul> </ul></p><p class="desc"> Alternatively, the <span class="arg">items</span> argument can be a table of tables with the following scheme:</p><pre class="language-lua"><code>{
+<div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#clink.popuplist"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="clink.popuplist">clink.popuplist</a></div> <div class="signature">( <span class="arg_name">title</span>:string, <span class="arg_name">items</span>:table, [<span class="arg_name">index</span>:integer], [<span class="arg_name">del_callback</span>:function] ) : string, boolean, integer<br/><div class="version">v1.2.17 and newer</div></div></div><div class="body"><p class="desc">Displays a popup list and returns the selected item.  May only be used within a <a href="#luakeybindings">luafunc: key binding</a> or inside a function registered with <a href="#clink.onfiltermatches">clink.onfiltermatches()</a>.</p><p class="desc"> <span class="arg">title</span> is required and captions the popup list.</p><p class="desc"> <span class="arg">items</span> is a table of strings to display.</p><p class="desc"> <span class="arg">index</span> optionally specifies the default item (or 1 if omitted).</p><p class="desc"> <span class="arg">del_callback</span> optionally specifies a callback function to be called when <kbd>Del</kbd> is pressed.  The function receives the index of the selected item.  If the function returns true then the item is deleted from the popup list.  This requires Clink v1.3.41 or higher.</p><p class="desc"> The function returns one of the following: <ul> <li>nil if the popup is canceled or an error occurs. <li>Three values: <ul> <li>string indicating the <code>value</code> field from the selected item (or the <code>display</code> field if no value field is present). <li>boolean which is true if the item was selected with <kbd>Shift</kbd> or <kbd>Ctrl</kbd> pressed. <li>integer indicating the index of the selected item in the original <span class="arg">items</span> table. </ul> </ul></p><p class="desc"> Alternatively, the <span class="arg">items</span> argument can be a table of tables with the following scheme:</p><pre class="language-lua"><code>{
 &nbsp;   {
 &nbsp;       value       = "...",   -- Required; this is returned if the item is chosen.
 &nbsp;       display     = "...",   -- Optional; displayed instead of value.
@@ -6673,6 +6673,28 @@ if b then
 else
 &nbsp;   print("Home is not bound in emacs mode.")
 end</code></pre></div></div><hr/>
+<div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#rl.getcommandbindings"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="rl.getcommandbindings">rl.getcommandbindings</a></div> <div class="signature">( <span class="arg_name">command</span>:string, <span class="arg_name">raw</span>:boolean ) : table | nil<br/><div class="version">v1.5.1 and newer</div></div></div><div class="body"><p class="desc">Returns key bindings and info for <span class="arg">command</span> in a table with the following scheme:</p><pre class="language-lua"><code>local t = rl.getcommandbindings("complete")
+-- t.desc               [string] Description of the command.
+-- t.category           [string] Category of the command.
+-- t.keys               [table] Table of strings listing the key names that are bound to the command.</code></pre><p class="desc">When <span class="arg">raw</span> is true, the key names are the literal key sequences without being converted to user-friendly key names.</p><p class="desc"> If <span class="arg">command</span> is neither a command nor a macro string, then nil is returned.</p><pre class="language-lua"><code>local command = 'complete'
+-- or for example '"luafunc:my_macro_function"' or '"some macro text"'
+local info = rl.getcommandbindings(command)
+if info then
+&nbsp;   local info = rl.getcommandbindings(command)
+&nbsp;   print("Info for '"..command.."':")
+&nbsp;   print("Description is:  "..info.desc)
+&nbsp;   print("Category is:     "..info.category)
+&nbsp;   if #info.keys > 0 then
+&nbsp;       print("Bound to:")
+&nbsp;       for _,key in ipairs(info.keys) do
+&nbsp;           print("    "..key)
+&nbsp;       end
+&nbsp;   else
+&nbsp;       print("Not bound to any keys.")
+&nbsp;   end
+else
+&nbsp;   print("Command '"..command.."' not recognized.")
+end</code></pre></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#rl.gethistorycount"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="rl.gethistorycount">rl.gethistorycount</a></div> <div class="signature">() : integer<br/><div class="version">v1.3.18 and newer</div></div></div><div class="body"><p class="desc">Returns the number of history items.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#rl.gethistoryitems"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="rl.gethistoryitems">rl.gethistoryitems</a></div> <div class="signature">() : start:integer<br/><div class="version">v1.3.18 and newer</div></div></div><div class="body"><p class="desc">Returns a table of history items.</p><p class="desc"> The first history item is 1, and the last history item is <a href="#rl.gethistorycount">rl.gethistorycount()</a>.  For best performance, use <span class="arg">start</span> and <span class="arg">end</span> to request only the range of history items that will be needed.</p><p class="desc"> Each history item is a table with the following scheme:</p><pre class="language-lua"><code>local h = rl.gethistoryitems(1, rl.gethistorycount())
 -- h.line       [string] The item's command line string.
@@ -6996,6 +7018,12 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes"><div class="wlink"><a href="#changes"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork"><div class="wlink"><a href="#releases-from-chrisant996clink-fork"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v151"><div class="wlink"><a href="#v151"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>v1.5.1</h4>
+<ul>
+<li>Added <code>rl.getcommandbindings()</code> to get info about a command, including the key(s) bound to it, if any.</li>
+<li>Changed to also allow <code>clink.popuplist()</code> inside a function registered by <code>clink.onfiltermatches()</code>.</li>
+<li>Changed console input mode handling to more aggressively clear <code>ENABLE_VIRTUAL_TERMINAL_INPUT</code> since it interferes with input (especially <kbd>Ctrl</kbd> key combinations) and some console programs set it but accidentally neglect to clear it when they&#39;re finished.</li>
+</ul>
 <h4 id="v150"><div class="wlink"><a href="#v150"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>v1.5.0</h4>
 <ul>
 <li>Added code-signing.</li>
