@@ -3,9 +3,9 @@
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
 #### v1.5.1
-- Added `rl.getcommandbindings()` to get info about a command, including the key(s) bound to it.
+- Added `rl.getcommandbindings()` to get info about a command, including the key(s) bound to it, if any.
 - Changed to also allow `clink.popuplist()` inside a function registered by `clink.onfiltermatches()`.
-- Changed console input mode handling to more aggressively clear `ENABLE_VIRTUAL_TERMINAL_INPUT` since it interferes with input (especially <kbd>Ctrl</kbd> key combinations) and some console programs set it and accidentally neglect to clear it when they're finished.
+- Changed console input mode handling to more aggressively clear `ENABLE_VIRTUAL_TERMINAL_INPUT` since it interferes with input (especially <kbd>Ctrl</kbd> key combinations) and some console programs set it but accidentally neglect to clear it when they're finished.
 
 #### v1.5.0
 - Added code-signing.
