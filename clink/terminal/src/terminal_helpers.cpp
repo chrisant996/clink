@@ -9,6 +9,7 @@
 
 #include <core/settings.h>
 #include <core/os.h>
+#include <core/log.h>
 
 #include <assert.h>
 
@@ -138,6 +139,32 @@ void save_host_input_mode(DWORD mode)
 }
 
 //------------------------------------------------------------------------------
+extern "C" DWORD cleanup_console_input_mode(DWORD mode)
+{
+#ifdef DEBUG
+    if (mode & ENABLE_PROCESSED_INPUT)
+        LOG("CONSOLE MODE: console input mode has ENABLE_PROCESSED_INPUT set (0x%x, bit 0x%x)", mode, ENABLE_PROCESSED_INPUT);
+    if (mode & ENABLE_VIRTUAL_TERMINAL_INPUT)
+        LOG("CONSOLE MODE: console input mode has ENABLE_VIRTUAL_TERMINAL_INPUT set (0x%x, bit 0x%x)", mode, ENABLE_VIRTUAL_TERMINAL_INPUT);
+#endif
+
+    // Clear modes that are incompatible with Clink:
+
+    // ENABLE_PROCESSED_INPUT can happen when Lua code uses io.popen():lines()
+    // and returns without finishing reading the output, or uses os.execute() in
+    // a coroutine.
+    mode &= ~ENABLE_PROCESSED_INPUT;
+
+    // ENABLE_VIRTUAL_TERMINAL_INPUT can happen when console programs change
+    // the input mode and either doesn't clean it up before exiting or continues
+    // running in the background after returning control to its parent process.
+
+    mode &= ~ENABLE_VIRTUAL_TERMINAL_INPUT;
+
+    return mode;
+}
+
+//------------------------------------------------------------------------------
 extern "C" void use_host_input_mode(void)
 {
     HANDLE h = GetStdHandle(STD_INPUT_HANDLE);
@@ -145,7 +172,7 @@ extern "C" void use_host_input_mode(void)
     {
         DWORD mode;
         if (GetConsoleMode(h, &mode))
-            s_clink_input_mode = mode;
+            s_clink_input_mode = cleanup_console_input_mode(mode);
 
         if (s_host_input_mode != -1)
             SetConsoleMode(h, s_host_input_mode);
@@ -262,6 +289,7 @@ console_config::console_config(HANDLE handle, bool accept_mouse_input)
     mode &= ~(ENABLE_PROCESSED_INPUT|ENABLE_LINE_INPUT|ENABLE_ECHO_INPUT|ENABLE_MOUSE_INPUT);
     mode |= ENABLE_WINDOW_INPUT;
     mode = select_mouse_input(mode);
+    mode = cleanup_console_input_mode(mode);
     SetConsoleMode(m_handle, mode);
 }
 

@@ -674,17 +674,8 @@ void win_terminal_in::fix_console_input_mode()
     DWORD modeIn;
     if (GetConsoleMode(m_stdin, &modeIn))
     {
-        DWORD mode = modeIn;
-
         // Compensate when this is reached with the console mode set wrong.
-        // For example, this can happen when Lua code uses io.popen():lines()
-        // and returns without finishing reading the output, or uses
-        // os.execute() in a coroutine.
-        mode &= ~ENABLE_PROCESSED_INPUT;
-#ifdef DEBUG
-        if (modeIn & ENABLE_PROCESSED_INPUT)
-            LOG("CONSOLE MODE: console input is in ENABLE_PROCESSED_INPUT mode (0x%x)", modeIn);
-#endif
+        DWORD mode = cleanup_console_input_mode(modeIn);
 
         mode = select_mouse_input(mode);
         if (mode & ENABLE_MOUSE_INPUT)

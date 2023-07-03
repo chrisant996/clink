@@ -1930,6 +1930,7 @@ LUnlinkFile:
 
     // Restore console state.
     show_cursor(was_visible);
+    prev_mode[0] = cleanup_console_input_mode(prev_mode[0]);
     for (size_t i = 0; i < _countof(std_handles); ++i)
         SetConsoleMode(std_handles[i], prev_mode[i]);
     rl_set_signals();
@@ -2371,6 +2372,7 @@ int32 macro_hook_func(const char* macro)
         if (!host_call_lua_rl_global_function(func_name.c_str()))
             rl_ding();
 
+        prev_mode[0] = cleanup_console_input_mode(prev_mode[0]);
         for (size_t i = 0; i < _countof(std_handles); ++i)
             SetConsoleMode(std_handles[i], prev_mode[i]);
     }

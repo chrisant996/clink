@@ -13,6 +13,7 @@
 #include <core/os.h>
 #include <core/debugheap.h>
 #include <lib/cmd_tokenisers.h>
+#include <terminal/terminal_helpers.h>
 
 #include <memory>
 #include <assert.h>
@@ -411,6 +412,7 @@ int32 lua_state::pcall_silent(lua_State* L, int32 nargs, int32 nresults)
     HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
     GetConsoleMode(hIn, &modeIn);
     GetConsoleMode(hOut, &modeOut);
+    modeIn = cleanup_console_input_mode(modeIn);
 
     // Calculate stack position for message handler.
     int32 hpos = lua_gettop(L) - nargs;
