@@ -439,7 +439,7 @@ static void print_help()
 
     puts("Autorun simplifies making modifications to cmd.exe's autorun registry\n"
         "variables. The value of these variables are read and executed by cmd.exe when\n"
-        "it starts. The 'install/uninstall' verbs add/remove the corrent command to run\n"
+        "it starts. The 'install/uninstall' verbs add/remove the correct command to run\n"
         "Clink when cmd.exe starts. All '<args>' that follow 'install' are passed to\n"
         "Clink - see 'clink inject --help' for reference.\n");
 
