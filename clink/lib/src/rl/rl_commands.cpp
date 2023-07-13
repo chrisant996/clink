@@ -34,7 +34,7 @@ extern "C" {
 #include <readline/rldefs.h>
 #include <readline/rlprivate.h>
 #include <readline/history.h>
-extern void rl_replace_from_history(HIST_ENTRY *entry, int32 flags);
+extern void rl_replace_from_history(HIST_ENTRY *entry, int flags);
 }
 
 #include <list>

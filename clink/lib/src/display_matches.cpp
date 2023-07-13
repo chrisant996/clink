@@ -71,11 +71,11 @@ extern int32 errno;
 #  include "readline/colors.h"
 #endif
 
-int32 __complete_get_screenwidth (void);
-int32 __get_y_or_n (int for_pager);
+int __complete_get_screenwidth (void);
+int __get_y_or_n (int for_pager);
 char* __printable_part (char* pathname);
-int32 __stat_char (const char *filename, char match_type);
-int32 ___rl_internal_pager (int32 lines);
+int __stat_char (const char *filename, char match_type);
+int ___rl_internal_pager (int lines);
 uint32 cell_count(const char* in);
 
 } // extern "C"
@@ -563,7 +563,7 @@ static int32 fnappend(const char *to_print, int32 prefix_bytes, int32 condense, 
 #endif
 
     wcwidth_iter iter(to_print + prefix_bytes);
-    while (const int c = iter.next())
+    while (const uint32 c = iter.next())
     {
         if (CTRL_CHAR(c))
         {
@@ -860,9 +860,9 @@ void pad_filename(int32 len, int32 pad_to_width, int32 selected)
 }
 
 //------------------------------------------------------------------------------
-int __fnwidth(const char* string)
+int32 __fnwidth(const char* string)
 {
-    int width = 0;
+    int32 width = 0;
 
     wcwidth_iter iter(string);
     while (iter.next())

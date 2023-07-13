@@ -19,9 +19,9 @@ extern "C" {
 #include <readline/readline.h>
 #include <readline/rldefs.h>
 #include <readline/rlprivate.h>
-int32 __complete_get_screenwidth(void);
+int __complete_get_screenwidth(void);
 char* __printable_part(char* pathname);
-int32 __stat_char(const char *filename, char match_type);
+int __stat_char(const char *filename, char match_type);
 }
 
 #include <vector>

@@ -31,12 +31,12 @@ extern "C" {
 #include <readline/rlprivate.h>
 #include <readline/rldefs.h>
 #include <readline/colors.h>
-int32 __compare_match(char* text, const char* match);
-int32 __append_to_match(char* text, int32 orig_start, int32 delimiter, int32 quote_char, int32 nontrivial_match);
+int __compare_match(char* text, const char* match);
+int __append_to_match(char* text, int orig_start, int delimiter, int quote_char, int nontrivial_match);
 char* __printable_part(char* text);
-void __set_completion_defaults(int32 what_to_do);
-int32 __get_y_or_n(int32 for_pager);
-extern int32 _rl_last_v_pos;
+void __set_completion_defaults(int what_to_do);
+int __get_y_or_n(int for_pager);
+extern int _rl_last_v_pos;
 };
 
 extern void reset_generate_matches();

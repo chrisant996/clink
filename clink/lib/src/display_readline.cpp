@@ -50,17 +50,17 @@ extern "C" {
 
 uint32 cell_count(const char* in);
 
-extern void (*rl_fwrite_function)(FILE*, const char*, int32);
+extern void (*rl_fwrite_function)(FILE*, const char*, int);
 extern void (*rl_fflush_function)(FILE*);
 
 extern char* tgetstr(const char*, char**);
-extern char* tgoto(const char* base, int32 x, int32 y);
+extern char* tgoto(const char* base, int x, int y);
 
-extern int32 rl_get_forced_display(void);
-extern void rl_set_forced_display(int32 force);
+extern int rl_get_forced_display(void);
+extern void rl_set_forced_display(int force);
 
-extern int32 _rl_last_v_pos;
-extern int32 _rl_rprompt_shown_len;
+extern int _rl_last_v_pos;
+extern int _rl_rprompt_shown_len;
 
 } // extern "C"
 

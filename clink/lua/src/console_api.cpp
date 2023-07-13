@@ -18,7 +18,7 @@
 
 extern "C" {
 #include <readline/readline.h>
-extern "C" int32 _rl_last_v_pos;
+extern "C" int _rl_last_v_pos;
 };
 
 //------------------------------------------------------------------------------

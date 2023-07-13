@@ -26,9 +26,9 @@ extern "C" {
 #include <readline/history.h>
 #include <readline/rldefs.h>
 #include <readline/rlprivate.h>
-extern int32            _rl_completion_case_map;
+extern int              _rl_completion_case_map;
 extern const char*      rl_readline_name;
-extern int32            _rl_last_v_pos;
+extern int              _rl_last_v_pos;
 }
 
 extern matches* get_mutable_matches(bool nosort=false);

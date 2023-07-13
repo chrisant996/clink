@@ -30,7 +30,7 @@ extern "C" {
 #include <readline/readline.h>
 #include <readline/rlprivate.h>
 #include <readline/history.h>
-extern int32 _rl_last_v_pos;
+extern int _rl_last_v_pos;
 };
 
 

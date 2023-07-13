@@ -21,7 +21,7 @@
 
 extern "C" {
 #include <lstate.h>
-extern int32 _rl_match_hidden_files;
+extern int _rl_match_hidden_files;
 }
 
 #include <memory>

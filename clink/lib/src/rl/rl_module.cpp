@@ -82,13 +82,13 @@ const int32 RL_SIMPLE_INPUT_STATES = (RL_STATE_MOREINPUT|
                                       RL_STATE_CHARSEARCH);
 
 extern "C" {
-extern void         (*rl_fwrite_function)(FILE*, const char*, int32);
+extern void         (*rl_fwrite_function)(FILE*, const char*, int);
 extern void         (*rl_fflush_function)(FILE*);
 extern char*        _rl_comment_begin;
-extern int32        _rl_convert_meta_chars_to_ascii;
-extern int32        _rl_output_meta_chars;
+extern int          _rl_convert_meta_chars_to_ascii;
+extern int          _rl_output_meta_chars;
 #if defined(PLATFORM_WINDOWS)
-extern int32        _rl_last_v_pos;
+extern int          _rl_last_v_pos;
 #endif
 } // extern "C"
 

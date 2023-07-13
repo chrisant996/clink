@@ -24,7 +24,7 @@ extern "C" {
 #include <readline/readline.h>
 #include <readline/rlprivate.h>
 #include <readline/rldefs.h>
-extern int32 __complete_get_screenwidth(void);
+extern int __complete_get_screenwidth(void);
 }
 
 #include <vector>
