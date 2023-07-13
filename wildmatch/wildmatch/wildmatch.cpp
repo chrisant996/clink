@@ -3,12 +3,12 @@
 
 namespace wild {
 
-bool match(const char *pattern, const char *string, int flags)
+bool match(const char *pattern, const char *string, int32 flags)
 {
     return wildmatch(pattern, string, flags) == WM_MATCH;
 }
 
-bool match(const std::string& pattern, const std::string& string, int flags)
+bool match(const std::string& pattern, const std::string& string, int32 flags)
 {
     return wildmatch(pattern.c_str(), string.c_str(), flags) == WM_MATCH;
 }

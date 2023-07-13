@@ -1958,7 +1958,7 @@ test_left:
                 lcol += iter.character_wcwidth_onectrl();
                 p = q;
             }
-            lind = static_cast<unsigned int>(p - d->m_chars);
+            lind = uint32(p - d->m_chars);
         }
 
         oc = o->m_chars + lind;

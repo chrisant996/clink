@@ -21,7 +21,7 @@ extern "C" uint32 clink_wcswidth(const char* s, uint32 len)
 
 
 //------------------------------------------------------------------------------
-wcwidth_iter::wcwidth_iter(const char* s, int len)
+wcwidth_iter::wcwidth_iter(const char* s, int32 len)
 : m_iter(s, len)
 {
     m_chr_ptr = m_chr_end = m_iter.get_pointer();
@@ -29,7 +29,7 @@ wcwidth_iter::wcwidth_iter(const char* s, int len)
 }
 
 //------------------------------------------------------------------------------
-wcwidth_iter::wcwidth_iter(const str_impl<char>& s, int len)
+wcwidth_iter::wcwidth_iter(const str_impl<char>& s, int32 len)
 : m_iter(s, len)
 {
     m_chr_ptr = m_chr_end = m_iter.get_pointer();
@@ -91,7 +91,7 @@ char32_t wcwidth_iter::next()
 
     while (m_next)
     {
-        const int w = wcwidth(m_next);
+        const int32 w = wcwidth(m_next);
         if (w != 0)
             break;
         m_chr_end = m_iter.get_pointer();
@@ -130,7 +130,7 @@ bool wcwidth_iter::more() const
 }
 
 //------------------------------------------------------------------------------
-unsigned int wcwidth_iter::length() const
+uint32 wcwidth_iter::length() const
 {
-    return m_iter.length() + static_cast<unsigned int>(m_iter.get_pointer() - m_chr_end);
+    return m_iter.length() + uint32(m_iter.get_pointer() - m_chr_end);
 }

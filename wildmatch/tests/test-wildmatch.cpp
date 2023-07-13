@@ -8,7 +8,7 @@
 
 #include "wildmatch.h"
 
-static void xxx_hack(int caseNum, const char* line, const char*& str)
+static void xxx_hack(int32 caseNum, const char* line, const char*& str)
 {
     REQUIRE(str[0] != '/', [&] () {
         printf("Slash prefix in case #%d; use 'XXX/' instead of '/':\n%s\n", caseNum, line);
@@ -18,7 +18,7 @@ static void xxx_hack(int caseNum, const char* line, const char*& str)
         str += 3;
 }
 
-static int test_line(int caseNum, const char* line, const char* op, const char* string, const char* pattern)
+static int32 test_line(int32 caseNum, const char* line, const char* op, const char* string, const char* pattern)
 {
     xxx_hack(caseNum, line, op);
     xxx_hack(caseNum, line, string);
@@ -26,11 +26,11 @@ static int test_line(int caseNum, const char* line, const char* op, const char* 
 
     //printf("op=\"%s\", str=\"%s\", pat=\"%s\"\n", op, string, pattern);
 
-    const int slashFlag = (op[0] == '\\' ) ? WM_SLASHFOLD : 0;
+    const int32 slashFlag = (op[0] == '\\' ) ? WM_SLASHFOLD : 0;
     if (slashFlag)
         op++;
 
-    int exitCode;
+    int32 exitCode;
     if (!strcmp(op, "wildmatch"))
         exitCode = !!wildmatch(pattern, string, WM_WILDSTAR | slashFlag);
     else if (!strcmp(op, "iwildmatch"))
@@ -51,7 +51,7 @@ static int test_line(int caseNum, const char* line, const char* op, const char* 
     return exitCode;
 }
 
-static int get_arg(char* s, const char** args)
+static int32 get_arg(char* s, const char** args)
 {
     const char* arg = *args;
 
@@ -79,7 +79,7 @@ static int get_arg(char* s, const char** args)
     return 1;
 }
 
-static void for_each_line(int caseNum, const char* line, const char* op, const char* mode, const char* args)
+static void for_each_line(int32 caseNum, const char* line, const char* op, const char* mode, const char* args)
 {
     char desc[1024];
     char pattern[1024];
@@ -102,7 +102,7 @@ static void for_each_line(int caseNum, const char* line, const char* op, const c
 
     sprintf(desc, "%-11s %s match %s %s", op, (*mode == '1') ? "  " : "no", string, pattern);
 
-    int pass;
+    int32 pass;
     if (*mode == '1')
         pass = (test_line(caseNum, line, op, string, pattern) == 0);
     else if (*mode == '0')
@@ -119,7 +119,7 @@ static void for_each_line(int caseNum, const char* line, const char* op, const c
 #include "t3070-wildmatch.i"
 TEST_CASE("wildmatch")
 {
-    int caseNum = 0;
+    int32 caseNum = 0;
     for (const char* line : c_cases)
     {
         caseNum++;

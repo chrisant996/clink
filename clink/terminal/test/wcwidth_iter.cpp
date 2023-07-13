@@ -17,7 +17,7 @@ TEST_CASE("wcwidth_iter")
     {
         struct testcase
         {
-            unsigned int cols;
+            uint32 cols;
             const WCHAR* str;
             bool emoji;
         };
@@ -46,10 +46,10 @@ TEST_CASE("wcwidth_iter")
 
         const bool old = g_color_emoji;
 
-        unsigned int index = 0;
+        uint32 index = 0;
         for (auto const& t : c_testcases)
         {
-            unsigned int cols = 0;
+            uint32 cols = 0;
 
             g_color_emoji = t.emoji;
 

@@ -5,13 +5,13 @@
 namespace wild {
 
 /* Flags */
-constexpr int FNMATCH = 0x00; /* Zero flags for fnmatch(3) behavior. */
-constexpr int NOESCAPE = 0x01; /* Disable backslash escaping. */
-constexpr int PATHNAME = 0x02; /* Slash must be matched by slash. */
-constexpr int PERIOD = 0x04; /* Period must be matched by period. */
-constexpr int LEADING_DIR = 0x08; /* Ignore /<tail> after Imatch. */
-constexpr int CASEFOLD = 0x10; /* Case insensitive search. */
-constexpr int WILDSTAR = 0x40; /* Double-asterisks "**" matches slash too. */
+constexpr int32 FNMATCH = 0x00; /* Zero flags for fnmatch(3) behavior. */
+constexpr int32 NOESCAPE = 0x01; /* Disable backslash escaping. */
+constexpr int32 PATHNAME = 0x02; /* Slash must be matched by slash. */
+constexpr int32 PERIOD = 0x04; /* Period must be matched by period. */
+constexpr int32 LEADING_DIR = 0x08; /* Ignore /<tail> after Imatch. */
+constexpr int32 CASEFOLD = 0x10; /* Case insensitive search. */
+constexpr int32 WILDSTAR = 0x40; /* Double-asterisks "**" matches slash too. */
 /* WILDSTAR implies PATHNAME so that single-asterisks "*" can be used for
  * matching within path components.
  */
@@ -28,7 +28,7 @@ constexpr int WILDSTAR = 0x40; /* Double-asterisks "**" matches slash too. */
  *      // matched
  *  }
  */
-bool match(const char *pattern, const char *string, int flags=WILDSTAR);
-bool match(const std::string& pattern, const std::string& string, int flags=WILDSTAR);
+bool match(const char *pattern, const char *string, int32 flags=WILDSTAR);
+bool match(const std::string& pattern, const std::string& string, int32 flags=WILDSTAR);
 
 } /* wild namespace */
