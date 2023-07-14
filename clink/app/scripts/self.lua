@@ -63,10 +63,11 @@ local autorun = clink.argmatcher()
 
 --------------------------------------------------------------------------------
 local echo = clink.argmatcher()
-:addflags("-h", "-v", "-?")
-:hideflags("-h", "-v", "-?")
+:addflags("-h", "-m", "-v", "-?")
+:hideflags("-h", "-m", "-v", "-?", "--mouse")
 :addflags(
     "--help",
+    "--mouse",
     "--verbose")
 :adddescriptions({
     ["--help"] = "Show help",
