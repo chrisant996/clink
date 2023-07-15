@@ -515,6 +515,7 @@ newaction {
 
         -- Report some facts about what just happened.
         print_reverse("Status")
+        print("")
         if not have_7z then     warn("7-ZIP NOT FOUND -- Packing to .zip files was skipped.") end
         if not have_nsis then   warn("NSIS NOT FOUND -- No installer was created.") end
         if not nsis_ok then     warn("INSTALLER PACKAGE FAILED") end
