@@ -9,9 +9,11 @@
 #include <core/base.h>
 #include <core/log.h>
 #include <core/os.h>
+#include <core/path.h>
 #include <core/settings.h>
 #include <core/str_iter.h>
 #include <core/debugheap.h>
+#include <process/process.h>
 
 #include <assert.h>
 
@@ -30,6 +32,7 @@ static ansi_handler s_current_ansi_handler = ansi_handler::unknown;
 static bool s_has_consolev2 = false;
 static const char* s_consolez_dll = nullptr;
 static const char* s_found_what = nullptr;
+static const char* s_in_windows_terminal = nullptr;
 static char s_mode_ansi_handler = 1; // 1 is "emulate"
 bool g_color_emoji = false; // Global for performance, since it's accessed in tight loops.
 
@@ -94,6 +97,67 @@ static const char* is_dll_loaded(const char* const* dll_names)
     return nullptr;
 }
 
+//------------------------------------------------------------------------------
+static const char* check_for_windows_terminal()
+{
+    // Check if parent is WindowsTerminal.exe.
+    str<> full;
+    int32 parent = process().get_parent_pid();
+    if (parent)
+    {
+        process process(parent);
+        process.get_file_name(full);
+    }
+    const char* name = path::get_name(full.c_str());
+    if (name && _stricmp(name, "WindowsTerminal.exe") == 0)
+        return "WindowsTerminal.exe";
+
+    // Check if a child process conhost.exe has OpenConsoleProxy.dll loaded.
+    std::vector<DWORD> processes;
+    if (__EnumProcesses(processes))
+    {
+        const DWORD me = GetCurrentProcessId();
+        for (const auto& pid : processes)
+        {
+            process process(pid);
+            if (process.get_parent_pid() != me)
+                continue;
+            if (!process.get_file_name(full))
+                continue;
+
+            name = path::get_name(full.c_str());
+            if (_stricmp(name, "conhost.exe") != 0)
+                continue;
+
+            std::vector<HMODULE> modules;
+            if (process.get_modules(modules))
+            {
+                for (const auto& module : modules)
+                {
+                    if (!process.get_file_name(full, module))
+                        continue;
+
+                    name = path::get_name(full.c_str());
+                    if (_stricmp(name, "OpenConsoleProxy.dll") == 0)
+                        return "OpenConsoleProxy.dll";
+                }
+            }
+
+            // Break after one conhost.exe.  If there are multiple conhost.exe
+            // child processes then it's unclear how to interpret the state.
+            break;
+        }
+    }
+
+#if 0
+    str<16> wt_session;
+    if (os::get_env("WT_SESSION", wt_session))
+        return "WT_SESSION";
+#endif
+
+    return nullptr;
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -151,6 +215,7 @@ void win_screen_buffer::begin()
     static bool s_detect_native_ansi_handler = true;
     const bool detect_native_ansi_handler = s_detect_native_ansi_handler;
 
+    // One-time detection.
     if (detect_native_ansi_handler)
     {
         s_detect_native_ansi_handler = false;
@@ -171,6 +236,9 @@ void win_screen_buffer::begin()
                                data != 0);
         }
 #pragma warning(pop)
+
+        // Check whether hosted by Windows Terminal.
+        s_in_windows_terminal = check_for_windows_terminal();
     }
 
     // Check for color emoji width handling.
@@ -184,9 +252,10 @@ void win_screen_buffer::begin()
         g_color_emoji = true;
         break;
     case 2:
-        // g_color_emoji = (s_native_ansi_handler == ansi_handler::winterminal ||
-        //                  s_native_ansi_handler == ansi_handler::wezterm);
-        // g_color_emoji = s_has_consolev2;
+        // Even with HKCU\Console\ForceV2 == 0, the Unicode codepoints for
+        // color emoji are rendered as two character cells.  I don't know for
+        // sure when Windows started doing that, but for now I'll make it the
+        // default assumption.
         g_color_emoji = true;
         break;
     }
@@ -210,10 +279,9 @@ void win_screen_buffer::begin()
             }
 
             // Check for Windows Terminal.
-            str<16> wt_session;
-            if (os::get_env("WT_SESSION", wt_session))
+            if (s_in_windows_terminal)
             {
-                s_found_what = "WT_SESSION";
+                s_found_what = s_in_windows_terminal;
                 s_native_ansi_handler = ansi_handler::winterminal;
                 break;
             }

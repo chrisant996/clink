@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include <vector>
+
 class str_base;
 class wstr_base;
 
@@ -26,6 +28,9 @@ struct remote_result
 };
 
 //------------------------------------------------------------------------------
+bool __EnumProcesses(std::vector<DWORD>& processes);
+
+//------------------------------------------------------------------------------
 class process
 {
 public:
@@ -34,8 +39,9 @@ public:
 
                                 process(int32 pid=-1);
     int32                       get_pid() const;
-    bool                        get_file_name(str_base& out) const;
+    bool                        get_file_name(str_base& out, HMODULE module = nullptr) const;
     bool                        get_command_line(wstr_base& out) const;
+    bool                        get_modules(std::vector<HMODULE>& modules) const;
     arch                        get_arch() const;
     bool                        is_arch_match() const;
     int32                       get_parent_pid() const;

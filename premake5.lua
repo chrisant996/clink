@@ -329,6 +329,7 @@ clink_lib("clink_core")
 clink_lib("clink_terminal")
     includedirs("clink/terminal/include/terminal")
     includedirs("clink/core/include")
+    includedirs("clink/process/include")
     files("clink/terminal/src/**")
     files("clink/terminal/include/**")
 

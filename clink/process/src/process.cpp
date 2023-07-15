@@ -36,6 +36,70 @@ static bool __NtQueryInformationProcess(HANDLE h, ULONG ic, PVOID pi, ULONG pile
 }
 
 //------------------------------------------------------------------------------
+static BOOL (WINAPI *s_EnumProcesses)(DWORD*, DWORD, LPDWORD) = nullptr;
+bool __EnumProcesses(std::vector<DWORD>& processes)
+{
+    if (!s_EnumProcesses)
+    {
+        *(FARPROC*)&s_EnumProcesses = GetProcAddress(
+            LoadLibraryA("psapi.dll"), "EnumProcesses");
+        if (!s_EnumProcesses)
+            return false;
+    }
+
+    processes.resize(512);
+
+    DWORD available = DWORD(processes.size() * sizeof(DWORD));
+    DWORD needed = 0;
+    if (!s_EnumProcesses(processes.data(), available, &needed))
+    {
+        if (needed <= available)
+            return false;
+
+        processes.resize((needed / sizeof(DWORD)) + 512);
+        available = DWORD(processes.size() * sizeof(DWORD));
+
+        if (!s_EnumProcesses(processes.data(), available, &needed))
+            return false;
+    }
+
+    processes.resize(needed / sizeof(DWORD));
+    return true;
+}
+
+//------------------------------------------------------------------------------
+static BOOL (WINAPI *s_EnumProcessModules)(HANDLE hProcess, HMODULE* pidModules, DWORD cb, DWORD* pcbNeeded) = nullptr;
+static bool __EnumProcessModules(HANDLE hProcess, std::vector<HMODULE>& modules)
+{
+    if (!s_EnumProcessModules)
+    {
+        *(FARPROC*)&s_EnumProcessModules = GetProcAddress(
+            LoadLibraryA("psapi.dll"), "EnumProcessModules");
+        if (!s_EnumProcessModules)
+            return false;
+    }
+
+    modules.resize(512);
+
+    DWORD available = DWORD(modules.size() * sizeof(DWORD));
+    DWORD needed = 0;
+    if (!s_EnumProcessModules(hProcess, modules.data(), available, &needed))
+    {
+        if (needed <= available)
+            return false;
+
+        modules.resize((needed / sizeof(DWORD)) + 128);
+        available = DWORD(modules.size() * sizeof(DWORD));
+
+        if (!s_EnumProcessModules(hProcess, modules.data(), available, &needed))
+            return false;
+    }
+
+    modules.resize(needed / sizeof(DWORD));
+    return true;
+}
+
+//------------------------------------------------------------------------------
 static const char* get_arch_name(process::arch arch)
 {
     switch (arch)
@@ -66,7 +130,7 @@ int32 process::get_parent_pid() const
 }
 
 //------------------------------------------------------------------------------
-bool process::get_file_name(str_base& out) const
+bool process::get_file_name(str_base& out, HMODULE module) const
 {
     handle handle = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_VM_READ, FALSE, m_pid);
     if (!handle)
@@ -80,7 +144,7 @@ bool process::get_file_name(str_base& out) const
     if (func != nullptr)
     {
         wstr<280> tmp;
-        DWORD len = func(handle, nullptr, tmp.data(), tmp.size());
+        DWORD len = func(handle, module, tmp.data(), tmp.size());
         if (len && len < tmp.size())
         {
             tmp.truncate(len);
@@ -129,6 +193,13 @@ bool process::get_command_line(wstr_base& out) const
 
     out.data()[len] = '\0';
     return true;
+}
+
+//------------------------------------------------------------------------------
+bool process::get_modules(std::vector<HMODULE>& modules) const
+{
+    handle handle = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_VM_READ, FALSE, m_pid);
+    return __EnumProcessModules(handle, modules);
 }
 
 //------------------------------------------------------------------------------
