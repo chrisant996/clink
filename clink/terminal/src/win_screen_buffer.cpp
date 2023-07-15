@@ -112,7 +112,8 @@ static const char* check_for_windows_terminal()
     if (name && _stricmp(name, "WindowsTerminal.exe") == 0)
         return "WindowsTerminal.exe";
 
-    // Check if a child process conhost.exe has OpenConsoleProxy.dll loaded.
+    // Check if a child process conhost.exe has OpenConsoleProxy.dll loaded,
+    // or if a child process OpenConsole.exe exists.
     std::vector<DWORD> processes;
     if (__EnumProcesses(processes))
     {
@@ -126,26 +127,26 @@ static const char* check_for_windows_terminal()
                 continue;
 
             name = path::get_name(full.c_str());
-            if (_stricmp(name, "conhost.exe") != 0)
-                continue;
-
-            std::vector<HMODULE> modules;
-            if (process.get_modules(modules))
+            if (_stricmp(name, "conhost.exe") == 0)
             {
-                for (const auto& module : modules)
+                std::vector<HMODULE> modules;
+                if (process.get_modules(modules))
                 {
-                    if (!process.get_file_name(full, module))
-                        continue;
+                    for (const auto& module : modules)
+                    {
+                        if (!process.get_file_name(full, module))
+                            continue;
 
-                    name = path::get_name(full.c_str());
-                    if (_stricmp(name, "OpenConsoleProxy.dll") == 0)
-                        return "OpenConsoleProxy.dll";
+                        name = path::get_name(full.c_str());
+                        if (_stricmp(name, "OpenConsoleProxy.dll") == 0)
+                            return "OpenConsoleProxy.dll";
+                    }
                 }
             }
-
-            // Break after one conhost.exe.  If there are multiple conhost.exe
-            // child processes then it's unclear how to interpret the state.
-            break;
+            else if (_stricmp(name, "OpenConsole.exe") == 0)
+            {
+                return "OpenConsole.exe";
+            }
         }
     }
 
