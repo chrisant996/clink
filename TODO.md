@@ -7,6 +7,10 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
+- Open issue in Terminal repo about bugs in the new shell integration in v1.18.
+  - Transient prompt can lead to Terminal getting confused about where prompt markers are.
+  - Can the same thing happen with zsh and powerlevel10k transient prompt?
+  - Provide a sample .txt file that repros the issue.  Maybe multiple .txt files that chain together (or with a pause; is there an escape code for a pause?) to show the UX flow.
 
 ## Low Priority
 - Efficiency; explore pruning unnecessary calls to `display_manager::display()`.
