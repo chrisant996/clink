@@ -5,6 +5,7 @@
 #### v1.5.2
 - Adjusted the colors in "Use enhanced defaults" to have sufficient contrast to be readable in both Dark and Light terminal themes.
 - More reliably detect whether hosted in Windows Terminal, and even when Windows Terminal is set as the default terminal application.
+- Fixed crash in `clink.popuplist()` when the `current` argument is past the end of the list of items.
 - Fixed [#470](https://github.com/chrisant996/clink/issues/470); typo in help text.
 
 #### v1.5.1
