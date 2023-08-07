@@ -461,7 +461,7 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
         m_default_title = title;
 
     // Initialize the view.
-    if (index < 0)
+    if (index < 0 || index >= m_count)
     {
         m_index = m_count - 1;
         m_top = max<int32>(0, m_count - m_visible_rows);
