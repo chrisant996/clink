@@ -5,6 +5,7 @@
 #include "lua_state.h"
 
 #include <core/base.h>
+#include <core/log.h>
 #include <core/settings.h>
 #include <core/str_tokeniser.h>
 #include <core/debugheap.h>
@@ -172,6 +173,19 @@ template <typename S, typename... V> void add_impl(lua_State* state, V... value)
 
     lua_setmetatable(state, -2);
     luaL_ref(state, LUA_REGISTRYINDEX);
+
+    if (strlen(name) > strlen(((setting*)addr)->get_name()))
+    {
+        LOG("Setting \"%\", name too long; truncated from \"%s\".", ((S*)addr)->get_name(), name);
+        if (g_lua_strict.get())
+            luaL_argerror(state, 1, "name for setting is too long");
+    }
+    if (strlen(short_desc) > strlen(((setting*)addr)->get_short_desc()))
+    {
+        LOG("Setting \"%\", short description too long; truncated from \"%s\" to \"%s\".", ((S*)addr)->get_name(), short_desc, ((S*)addr)->get_short_desc());
+        if (g_lua_strict.get())
+            luaL_argerror(state, 3, "short description for setting is too long");
+    }
 }
 
 //------------------------------------------------------------------------------
