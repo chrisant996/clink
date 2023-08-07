@@ -177,14 +177,18 @@ template <typename S, typename... V> void add_impl(lua_State* state, V... value)
     if (strlen(name) > strlen(((setting*)addr)->get_name()))
     {
         LOG("Setting \"%\", name too long; truncated from \"%s\".", ((S*)addr)->get_name(), name);
+#if 0
         if (g_lua_strict.get())
             luaL_argerror(state, 1, "name for setting is too long");
+#endif
     }
     if (strlen(short_desc) > strlen(((setting*)addr)->get_short_desc()))
     {
         LOG("Setting \"%\", short description too long; truncated from \"%s\" to \"%s\".", ((S*)addr)->get_name(), short_desc, ((S*)addr)->get_short_desc());
+#if 0
         if (g_lua_strict.get())
             luaL_argerror(state, 3, "short description for setting is too long");
+#endif
     }
 }
 
