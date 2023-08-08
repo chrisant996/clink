@@ -538,7 +538,7 @@ void display_lines::parse(uint32 prompt_botlin, uint32 col, const char* buffer, 
             m_cpos = col;
         }
 
-        for (const char* add = tmp.c_str(); *add; ++add, ++index)
+        for (const char* add = tmp.c_str(); *add; ++add)
         {
             if (col >= _rl_screenwidth)
             {
@@ -567,6 +567,8 @@ void display_lines::parse(uint32 prompt_botlin, uint32 col, const char* buffer, 
             d->append(*add, face);
             ++col;
         }
+
+        ++index;
 
         assert(uint32(iter.character_pointer() + iter.character_length() - buffer) == index);
 
