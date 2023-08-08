@@ -66,7 +66,6 @@ int32 main(int32 argc, char** argv)
     os::set_shellname(L"clink_test_harness");
 
     _rl_bell_preference = VISIBLE_BELL;     // Because audible is annoying.
-    _rl_optimize_typeahead = false;         // Because not compatible with READLINE_CALLBACKS.
 
     while (argc > 0)
     {

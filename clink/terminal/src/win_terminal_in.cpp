@@ -702,21 +702,26 @@ static void fix_console_output_mode(HANDLE h, DWORD modeExpected)
 //------------------------------------------------------------------------------
 void win_terminal_in::read_console(input_idle* callback, DWORD _timeout, bool peek)
 {
+    // If there's already input buffered, then don't read further.
+    if (m_buffer_count > 0)
+        return;
+
     // Hide the cursor unless we're accepting input so we don't have to see it
     // jump around as the screen's drawn.
+    const bool cursor_visibility = (m_cursor_visibility && !peek);
     struct cursor_scope {
         cursor_scope(bool doit) : m_doit(doit) { if (m_doit) show_cursor(true); }
         ~cursor_scope() { if (m_doit) show_cursor(false); }
     private:
         const bool m_doit;
-    } _cs(m_cursor_visibility);
+    } _cs(cursor_visibility);
 
     // Conhost restarts the cursor blink when writing to the console. It restarts
     // hidden which means that if you type faster than the blink the cursor turns
     // invisible. Fortunately, moving the cursor restarts the blink on visible.
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     GetConsoleScreenBufferInfo(m_stdout, &csbi);
-    if (m_cursor_visibility && !is_scroll_mode())
+    if (cursor_visibility && !is_scroll_mode())
         SetConsoleCursorPosition(m_stdout, csbi.dwCursorPosition);
 
     // Reset interrupt detection (allow Ctrl+Break to cancel input).
@@ -811,9 +816,7 @@ void win_terminal_in::read_console(input_idle* callback, DWORD _timeout, bool pe
 
         DWORD count;
         INPUT_RECORD record;
-        if (!(peek ?
-              PeekConsoleInputW(m_stdin, &record, 1, &count) :
-              ReadConsoleInputW(m_stdin, &record, 1, &count)))
+        if (!ReadConsoleInputW(m_stdin, &record, 1, &count))
         {
             // Handle's probably invalid if ReadConsoleInput() failed.
             m_buffer_head = 0;
@@ -850,10 +853,6 @@ void win_terminal_in::read_console(input_idle* callback, DWORD _timeout, bool pe
             }
             break;
         }
-
-        // Eat records that don't result in available input.
-        if (peek && buffer_count == m_buffer_count)
-            ReadConsoleInputW(m_stdin, &record, 1, &count);
 
         if (ret)
             return;

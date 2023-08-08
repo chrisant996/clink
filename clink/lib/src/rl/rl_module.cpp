@@ -617,9 +617,10 @@ private:
 //------------------------------------------------------------------------------
 static bool is_readline_input_pending()
 {
+    assert(!!rl_pending_input == !!RL_ISSTATE(RL_STATE_INPUTPENDING));
     return (rl_pending_input ||
             _rl_pushed_input_available() ||
-            RL_ISSTATE(RL_STATE_MACROINPUT) ||
+            RL_ISSTATE(RL_STATE_INPUTPENDING|RL_STATE_MACROINPUT) ||
             rl_executing_macro);
 }
 
@@ -1990,15 +1991,6 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
     // would be more functionally correct.
     _rl_comment_begin = savestring("::");
 
-    // Disable _rl_optimize_typeahead for two reasons:
-    //  1.  It is incompatible with READLINE_CALLBACKS because it calls
-    //      rl_read_key() directly.
-    //  2.  Clink's implementation of input_available_hook() can't predict
-    //      whether the input will actually reach Readline, and rl_insert's
-    //      _rl_optimize_typeahead mode assumes that all input will reach
-    //      Readline.
-    _rl_optimize_typeahead = false;
-
     // CMD does not consider backslash to be an escape character (in particular,
     // it cannot escape a space).
     history_host_backslash_escape = 0;
@@ -2996,21 +2988,23 @@ void rl_module::on_input(const input& input, result& result, const context& cont
     g_result = &result;
 
     // Setup the terminal.
-    struct : public terminal_in
+    struct shim_in : public terminal_in
     {
-        virtual void    begin() override                    {}
-        virtual void    end() override                      {}
-        virtual bool    available(uint32 timeout) override  { return false; }
-        virtual void    select(input_idle*) override        {}
-        virtual int32   read() override                     { return *(uint8*)(data++); }
-        virtual key_tester* set_key_tester(key_tester* keys) override { return nullptr; }
+        shim_in(const char* keys, terminal_in* old) : data(keys), old(old) { s_processed_input = this; }
+        ~shim_in() { s_processed_input = old; }
+        virtual void    begin() override                    { assert(false); }
+        virtual void    end() override                      { assert(false); }
+        virtual bool    available(uint32 timeout) override  { assert(false); return false; }
+        virtual void    select(input_idle*) override        { assert(false); }
+        virtual int32   read() override                     { if (*data) return *(uint8*)(data++);
+                                                              else if (old) return old->read();
+                                                              else if (s_direct_input) return s_direct_input->read();
+                                                              else return 0; }
+        virtual key_tester* set_key_tester(key_tester* keys) override { assert(false); return nullptr; }
         const char*  data;
-    } term_in;
+        terminal_in* old;
+    } term_in(input.keys, s_processed_input);
 
-    term_in.data = input.keys;
-
-    terminal_in* old_input = s_processed_input;
-    s_processed_input = &term_in;
     s_matches = &context.matches;
 
     // Call Readline's until there's no characters left.
@@ -3098,7 +3092,6 @@ void rl_module::on_input(const input& input, result& result, const context& cont
 
     g_result = nullptr;
     s_matches = nullptr;
-    s_processed_input = old_input;
 
     if (m_done)
     {

@@ -98,8 +98,6 @@ void test_editor::start(const char* prompt)
     m_printer_context = new printer_context(m_terminal.out, m_printer);
     m_cc = new console_config();
 
-    _rl_optimize_typeahead = false;         // Because not compatible with READLINE_CALLBACKS.
-
 #ifdef INIT_READLINE
     // initialise_readline() needs a printer_context to be active.
     str_moveable bin_dir;
