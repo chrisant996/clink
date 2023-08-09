@@ -1006,22 +1006,22 @@ int32 count_prompt_lines(const char* prompt_prefix)
 static char get_face_func(int32 in, int32 active_begin, int32 active_end)
 {
     if (0 <= g_suggestion_offset && g_suggestion_offset <= in)
-        return '-';
+        return FACE_SUGGESTION;
 
     if (in >= active_begin && in < active_end)
-        return '1';
+        return FACE_STANDOUT;
 
     if (cua_point_in_selection(in) || point_in_select_complete(in))
-        return '#';
+        return FACE_SELECTION;
 
     if (s_classifications)
     {
         char face = s_classifications->get_face(in);
-        if (face != ' ')
+        if (face != FACE_SPACE)
             return face;
     }
 
-    return s_input_color ? '2' : '0';
+    return s_input_color ? FACE_INPUT : FACE_NORMAL;
 }
 
 //------------------------------------------------------------------------------
