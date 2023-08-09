@@ -22,7 +22,7 @@ local cmd_commands = {
 --------------------------------------------------------------------------------
 function cmd_generator:generate(line_state, match_builder) -- luacheck: no self
     -- Cmd commands only apply for the first word of a line.
-    if line_state:getwordcount() > 1 then
+    if line_state:getwordcount() ~= 1 then
         return false
     end
 

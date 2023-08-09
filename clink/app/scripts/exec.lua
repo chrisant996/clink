@@ -172,7 +172,7 @@ local function exec_matches(line_state, match_builder, chained)
 end
 
 function exec_generator:generate(line_state, match_builder) -- luacheck: no self
-    if line_state:getwordcount() <= 1 then
+    if line_state:getwordcount() == 1 then
         return exec_matches(line_state, match_builder)
     end
 end
