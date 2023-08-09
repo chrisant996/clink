@@ -219,7 +219,7 @@ bool lua_editor_tester::run(str_base& message)
     {
         REQUIRE(m_editor->update(), "internal input failure");
     }
-    while (m_terminal_in.has_input());
+    while (rl_pending_input || m_terminal_in.has_input());
 
     m_editor->update_matches();
 

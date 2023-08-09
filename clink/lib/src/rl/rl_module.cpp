@@ -126,6 +126,7 @@ static int32        s_init_history_pos = -1;    // Sticky history position from 
 static int32        s_history_search_pos = -1;  // Most recent history search position during current edit line.
 static str_moveable s_needle;
 static str_moveable s_prev_inputline;
+static bool         s_need_collect_words = false;
 
 static suggestion_manager s_suggestion;
 
@@ -1386,8 +1387,42 @@ static void adjust_completion_defaults()
 }
 
 //------------------------------------------------------------------------------
+void clear_need_collect_words()
+{
+    s_need_collect_words = false;
+}
+
+//------------------------------------------------------------------------------
+static void after_dispatch_hook()
+{
+    s_need_collect_words = true;
+}
+
+//------------------------------------------------------------------------------
+static void maybe_collect_words()
+{
+    if (s_need_collect_words)
+    {
+        s_need_collect_words = false;
+        force_update_internal(false);
+    }
+}
+
+//------------------------------------------------------------------------------
+static char* completion_word_break_hook()
+{
+    // When processing pending input or macro input, adjust_completion_word()
+    // can get called before gen_completion_matches() and end up using stale
+    // word break info.  E.g. macro input "echo %user\t".
+    maybe_collect_words();
+    return nullptr;
+}
+
+//------------------------------------------------------------------------------
 static char adjust_completion_word(char quote_char, int32 *found_quote, int32 *delimiter)
 {
+    // This is too late to call maybe_collect_words(); by the time this is
+    // called, rl_find_completion_word() has already modified rl_point.
     if (s_matches)
     {
         // Override Readline's word break position.  Often it's the same as
@@ -1543,6 +1578,10 @@ static char** alternative_matches(const char* text, int32 start, int32 end)
     const display_filter_flags flags = (s_is_popup ?
         (display_filter_flags::selectable | display_filter_flags::plainify) :
         (display_filter_flags::none));
+
+    // If this assertion fails, the word break info may be out of sync, so a
+    // fix would need to located further upstream.
+    assert(!s_need_collect_words);
 
     update_matches();
     if (matches* regen = maybe_regenerate_matches(text, flags))
@@ -1941,6 +1980,7 @@ static void init_readline_hooks()
     rl_read_key_hook = read_key_hook;
     rl_buffer_changing_hook = buffer_changing;
     rl_selection_event_hook = cua_selection_event_hook;
+    rl_after_dispatch_hook = after_dispatch_hook;
 
     // History hooks.
     rl_add_history_hook = host_add_history;
@@ -1954,6 +1994,7 @@ static void init_readline_hooks()
     rl_attempted_completion_function = alternative_matches;
     rl_menu_completion_entry_function = filename_menu_completion_function;
     rl_adjust_completion_defaults = adjust_completion_defaults;
+    rl_completion_word_break_hook = completion_word_break_hook;
     rl_adjust_completion_word = adjust_completion_word;
     rl_match_display_filter_func = match_display_filter_callback;
     rl_compare_lcd_func = compare_lcd;

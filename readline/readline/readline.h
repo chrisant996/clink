@@ -681,6 +681,8 @@ extern rl_voidfunc_t *rl_buffer_changing_hook;
    non-zero to stop further processing. */
 enum selection_event { SEL_BEFORE_INSERTCHAR, SEL_AFTER_INSERTCHAR, SEL_BEFORE_DELETE };
 extern rl_intfunc_t *rl_selection_event_hook;
+/* Called after a command function is dispatched. */
+extern rl_voidfunc_t *rl_after_dispatch_hook;
 /* end_clink_change */
 
 /* begin_clink_change */

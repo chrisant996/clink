@@ -47,6 +47,7 @@ extern bool is_showing_argmatchers();
 extern bool win_fn_callback_pending();
 extern int32 clink_is_signaled();
 extern bool clink_maybe_handle_signal();
+extern void clear_need_collect_words();
 extern recognition recognize_command(const char* line, const char* word, bool quoted, bool& ready, str_base* file=nullptr);
 extern std::shared_ptr<match_builder_toolkit> get_deferred_matches(int32 generation_id);
 
@@ -725,9 +726,7 @@ void line_editor_impl::update_matches()
 
     if (generate)
     {
-        const auto linestates = (m_buffer.has_override() ?
-                                 m_override_commands.get_linestates(m_buffer) :
-                                 m_commands.get_linestates(m_buffer));
+        const auto linestates = get_linestates();
         match_pipeline pipeline(m_matches);
         pipeline.reset();
         pipeline.generate(linestates, m_generator);
@@ -1005,6 +1004,7 @@ bool line_editor_impl::update_input()
 //------------------------------------------------------------------------------
 void line_editor_impl::collect_words()
 {
+    clear_need_collect_words();
     m_command_offset = collect_words(m_words, &m_matches, collect_words_mode::stop_at_cursor, m_commands);
 }
 
@@ -1318,6 +1318,15 @@ line_state line_editor_impl::get_linestate() const
         return m_override_commands.get_linestate(m_buffer);
 
     return m_commands.get_linestate(m_buffer);
+}
+
+//------------------------------------------------------------------------------
+line_states line_editor_impl::get_linestates() const
+{
+    if (m_buffer.has_override())
+        return m_override_commands.get_linestates(m_buffer);
+
+    return m_commands.get_linestates(m_buffer);
 }
 
 //------------------------------------------------------------------------------

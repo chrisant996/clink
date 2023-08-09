@@ -126,6 +126,7 @@ private:
     bool                update_input();
     module::context     get_context() const;
     line_state          get_linestate() const;
+    line_states         get_linestates() const;
     void                set_flag(uint8 flag);
     void                clear_flag(uint8 flag);
     bool                check_flag(uint8 flag) const;
