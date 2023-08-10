@@ -2045,11 +2045,13 @@ local function _has_argmatcher(command_word, quoted)
 
     -- Don't invoke the recognizer while generating matches from history, as
     -- that could be excessively expensive (could queue thousands of lookups).
+    local recognized
     if not (clink.co_state._argmatcher_fromhistory and clink.co_state._argmatcher_fromhistory.argmatcher) then
         -- Pass true because argmatcher lookups always treat ^ literally.
         local _, _, file = clink.recognizecommand(command_word, true)
         if file then
             command_word = file
+            recognized = file
         end
     end
 
@@ -2057,7 +2059,7 @@ local function _has_argmatcher(command_word, quoted)
 
     -- If an argmatcher isn't loaded, look for a Lua script by that name in one
     -- of the completions directories.  If found, load it and check again.
-    if not argmatcher and not loaded_argmatchers[command_word] then
+    if not argmatcher and not loaded_argmatchers[command_word] and recognized then
         argmatcher = attempt_load_argmatcher(command_word, quoted)
     end
 
