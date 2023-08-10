@@ -1745,7 +1745,7 @@ end
 --- make both programs runnable, or the system PATH might be changed temporarily
 --- while working in a particular context.
 ---
---- <strong>Note:</strong>  Merging <a href="#linked-parsers">linked
+--- <strong>Note:</strong>  Merging <a href="#argmatcher_linking">linked
 --- argmatchers</a> only merges the first argument position.  The merge is
 --- simple, but should be sufficient for common simple cases.
 function clink.argmatcher(...)
