@@ -2011,7 +2011,11 @@ local function attempt_load_argmatcher(command_word, quoted)
                 loaded_argmatchers[command_word] = 2 -- Attempted and Loaded.
                 -- Load the file.
                 local impl = function ()
-                    dofile(file)
+                    local func, message = loadfile(file)
+                    if not func then
+                        error(message)
+                    end
+                    func(command_word)
                 end
                 local ok, ret = xpcall(impl, _error_handler_ret)
                 if not ok then
