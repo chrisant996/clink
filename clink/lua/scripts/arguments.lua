@@ -1808,7 +1808,7 @@ end
 --- -show:  :addflags("/d")
 --- -show:  :addarg({ clink.dirmatches })
 function clink.dirmatches(match_word)
-    local word, expanded = rl.expandtilde(match_word)
+    local word, expanded = rl.expandtilde(match_word or "")
 
     local root = (path.getdirectory(word) or ""):gsub("/", "\\")
     if expanded then
@@ -1856,7 +1856,7 @@ end
 --- -show:  :addarg({ "two", "too" })
 --- -show:  :addarg({ clink.filematches, "$stdin", "$stdout" })
 function clink.filematches(match_word)
-    local word, expanded = rl.expandtilde(match_word)
+    local word, expanded = rl.expandtilde(match_word or "")
 
     local root = (path.getdirectory(word) or ""):gsub("/", "\\")
     if expanded then
