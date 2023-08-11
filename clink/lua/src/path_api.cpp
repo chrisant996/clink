@@ -269,7 +269,7 @@ static int32 to_parent(lua_State* state)
 ///
 /// The optional <span class="arg">flags</span> string may contain any of the
 /// following characters to modify the behavior accordingly:
-/// <ul>
+/// <table>
 /// <tr><th>Flag</th><th>Mnemonic</th><th>Description</th></tr>
 /// <tr><td>"<code>e</code>"</td><td>NoEscape</td><td>Treat backslash in <span class="arg">pattern</span> as a normal character, rather than as an escape character.</td></tr>
 /// <tr><td>"<code>p</code>"</td><td>PathName</td><td>Path separators in <span class="arg">string</span> are matched only by a slash <code>/</code> in <span class="arg">pattern</span> (unless the <code>*</code> flag is used; see below).</td></tr>
@@ -278,7 +278,7 @@ static int32 to_parent(lua_State* state)
 /// <tr><td>"<code>c</code>"</td><td>NoCaseFold</td><td>Match with case sensitivity. By default it matches case-insensitively, because Windows is case-insensitive.</td></tr>
 /// <tr><td>"<code>*</code>"</td><td>WildStar</td><td>Treat double-asterisks in <span class="arg">pattern</span> as matching path separators as well, the same as how git does (implies the <code>p</code> flag).</td></tr>
 /// <tr><td>"<code>s</code>"</td><td>NoSlashFold</td><td>Treat slashes <code>/</code> in <span class="arg">pattern</span> as only matching slashes in <span class="arg">string</span>. By default slashes in <span class="arg">pattern</span> match both slash <code>/</code> and backslash <code>\</code> because Windows recognizes both as path separators.</td></tr>
-/// </ul>
+/// </table>
 ///
 /// The <span class="arg">pattern</span> supports wildcards (<code>?</code> and
 /// <code>*</code>), character classes (<code>[</code>...<code>]</code>), ranges
