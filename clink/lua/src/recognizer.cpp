@@ -184,6 +184,7 @@ public:
 
 private:
     bool                    usable() const;
+    bool                    busy() const;
     bool                    store(const char* word, const char* file, recognition cached, bool pending=false);
     bool                    dequeue(entry& entry);
     bool                    set_result_available(bool available);
@@ -329,7 +330,7 @@ void recognizer::end_line()
     {
         std::lock_guard<std::recursive_mutex> lock(m_mutex);
         ready_event = s_ready_event;
-        processing = m_processing && !m_zombie;
+        processing = busy() && !m_zombie;
         // s_ready_event is never closed, so there is no concurrency concern
         // about it going from non-null to null.
         if (!ready_event)
@@ -342,10 +343,11 @@ void recognizer::end_line()
     if (processing)
     {
         const DWORD tick_begin = GetTickCount();
+        const int32 c_brief_wait = 1250; // 1.25 seconds
         while (true)
         {
             const volatile DWORD tick_now = GetTickCount();
-            const int32 timeout = int32(tick_begin) + 2500 - int32(tick_now);
+            const int32 timeout = int32(tick_begin) + c_brief_wait - int32(tick_now);
             if (timeout < 0)
                 break;
 
@@ -355,7 +357,7 @@ void recognizer::end_line()
             host_reclassify(reclassify_reason::recognizer);
 
             std::lock_guard<std::recursive_mutex> lock(m_mutex);
-            if (!m_processing || !usable())
+            if (!busy() || !usable())
                 break;
         }
     }
@@ -367,6 +369,12 @@ void recognizer::end_line()
 bool recognizer::usable() const
 {
     return !m_zombie && s_ready_event;
+}
+
+//------------------------------------------------------------------------------
+bool recognizer::busy() const
+{
+    return m_processing || !m_pending.empty();
 }
 
 //------------------------------------------------------------------------------
