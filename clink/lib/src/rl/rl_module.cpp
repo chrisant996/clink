@@ -1612,6 +1612,7 @@ static char** alternative_matches(const char* text, int32 start, int32 end)
     }
 
     // Expand an abbreviated path.
+    bool override = false;
     override_match_line_state omls;
     if (g_match_expand_abbrev.get() && !s_matches->get_match_count())
     {
@@ -1651,17 +1652,33 @@ stop:
                 // the Readline line buffer (since we're inside a Readline
                 // callback and Readline isn't prepared for the buffer to
                 // change out from under it).
-                const char qc = need_leading_quote(tmp.c_str());
-                omls.override(start, end, tmp.c_str(), qc);
-                // Perform completion again after the expansion.
-                update_matches();
-                if (matches* regen = maybe_regenerate_matches(tmp.c_str(), flags))
-                {
-                    // It's ok to redirect s_matches here because s_matches is reset in
-                    // every rl_module::on_input() call.
-                    s_matches = regen;
-                }
+                override = true;
             }
+        }
+    }
+
+    if (s_matches->is_fully_qualify())
+    {
+        // Note that this can further adjust an expanded abbreviated path
+        // using it to override the match line state.
+        omls.fully_qualify(start, end, tmp);
+        override = true;
+    }
+    else if (override)
+    {
+        // This applies an expanded abbreviated path.
+        omls.override(start, end, tmp.c_str());
+    }
+
+    // Perform completion again after overriding match line state.
+    if (override)
+    {
+        update_matches();
+        if (matches* regen = maybe_regenerate_matches(tmp.c_str(), flags))
+        {
+            // It's ok to redirect s_matches here because s_matches is reset in
+            // every rl_module::on_input() call.
+            s_matches = regen;
         }
     }
 

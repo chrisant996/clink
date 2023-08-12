@@ -19,6 +19,7 @@ const match_builder_lua::method match_builder_lua::c_methods[] = {
     { "setsuppressappend",  &set_suppress_append },
     { "setsuppressquoting", &set_suppress_quoting },
     { "setforcequoting",    &set_force_quoting },
+    { "setfullyqualify",    &set_fully_qualify },
     { "setnosort",          &set_no_sort },
     { "setvolatile",        &set_volatile },
     // Only for backward compatibility:
@@ -217,6 +218,22 @@ int32 match_builder_lua::set_suppress_quoting(lua_State* state)
 int32 match_builder_lua::set_force_quoting(lua_State* state)
 {
     m_builder->set_force_quoting();
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+/// -name:  builder:setfullyqualify
+/// -ver:   1.5.3
+/// -arg:   [fullyqualify:boolean]
+/// Forces completions to be inserted as fully qualified paths.
+int32 match_builder_lua::set_fully_qualify(lua_State* state)
+{
+    bool fully_qualify = true;
+    if (lua_gettop(state) > 0)
+        fully_qualify = (lua_toboolean(state, 1) != 0);
+
+    m_builder->set_fully_qualify(fully_qualify);
+
     return 0;
 }
 

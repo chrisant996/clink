@@ -20,6 +20,8 @@
 #include "line_buffer.h"
 
 #include <core/base.h>
+#include <core/path.h>
+#include <core/os.h>
 #include <core/settings.h>
 #include <terminal/ecma48_iter.h>
 #include <terminal/wcwidth.h>
@@ -1333,6 +1335,12 @@ done:
 }
 
 //------------------------------------------------------------------------------
+void override_match_line_state::override(int32 start, int32 end, const char* needle)
+{
+    override(start, end, needle, need_leading_quote(needle));
+}
+
+//------------------------------------------------------------------------------
 void override_match_line_state::override(int32 start, int32 end, const char* needle, char quote_char)
 {
     assert(g_rl_buffer);
@@ -1344,6 +1352,38 @@ void override_match_line_state::override(int32 start, int32 end, const char* nee
     int32 point = m_line.length();
     m_line.concat(g_rl_buffer->get_buffer() + end);
     override_line_state(m_line.c_str(), needle, point);
+}
+
+//------------------------------------------------------------------------------
+void override_match_line_state::fully_qualify(int32 start, int32 end, str_base& needle)
+{
+    str_moveable tmp;
+
+    if (path::get_drive(needle.c_str(), tmp))
+        tmp.clear();
+    else
+    {
+        os::get_current_dir(tmp);
+        if (!path::get_drive(tmp))
+            return;
+    }
+
+    if (!tmp.concat(needle.c_str()))
+        return;
+    if (tmp.empty())
+        return;
+
+    str_moveable dir;
+    str_moveable name;
+    if (!path::get_directory(tmp.c_str(), dir) || !path::get_name(tmp.c_str(), name))
+        return;
+
+    path::normalise(dir);
+    os::get_full_path_name(dir.c_str(), tmp);
+    path::append(tmp, name.c_str());
+
+    needle = std::move(tmp);
+    override(start, end, needle.c_str());
 }
 
 //------------------------------------------------------------------------------

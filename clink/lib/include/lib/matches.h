@@ -194,6 +194,7 @@ public:
     virtual bool            is_suppress_append() const = 0;
     virtual shadow_bool     is_filename_completion_desired() const = 0;
     virtual shadow_bool     is_filename_display_desired() const = 0;
+    virtual bool            is_fully_qualify() const = 0;
     virtual char            get_append_character() const = 0;
     virtual int32           get_suppress_quoting() const = 0;
     virtual bool            get_force_quoting() const = 0;
@@ -246,6 +247,7 @@ public:
     void                    set_suppress_append(bool suppress=true);
     void                    set_suppress_quoting(int32 suppress=1); //0=no, 1=yes, 2=suppress end quote
     void                    set_force_quoting();
+    void                    set_fully_qualify(bool fully_qualify=true);
     void                    set_no_sort();
     void                    set_volatile();
 

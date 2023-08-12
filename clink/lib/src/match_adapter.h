@@ -39,6 +39,7 @@ public:
     bool            is_append_display(uint32 index) const;
     bool            use_display(uint32 index, match_type type, bool append) const;
 
+    bool            is_fully_qualify() const;
     bool            is_display_filtered() const;
     bool            has_descriptions() const;
 

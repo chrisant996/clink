@@ -300,6 +300,12 @@ void match_builder::set_force_quoting()
 }
 
 //------------------------------------------------------------------------------
+void match_builder::set_fully_qualify(bool fully_qualify)
+{
+    return ((matches_impl&)m_matches).set_fully_qualify(fully_qualify);
+}
+
+//------------------------------------------------------------------------------
 void match_builder::set_no_sort()
 {
     return ((matches_impl&)m_matches).set_no_sort();
@@ -776,6 +782,12 @@ shadow_bool matches_impl::is_filename_display_desired() const
 }
 
 //------------------------------------------------------------------------------
+bool matches_impl::is_fully_qualify() const
+{
+    return m_fully_qualify;
+}
+
+//------------------------------------------------------------------------------
 char matches_impl::get_append_character() const
 {
     return m_append_character;
@@ -839,6 +851,7 @@ void matches_impl::reset()
     m_coalesced = false;
     m_append_character = '\0';
     m_suppress_append = false;
+    m_fully_qualify = false;
     m_force_quoting = false;
     m_regen_blocked = false;
     m_nosort = false;
@@ -866,6 +879,7 @@ void matches_impl::transfer(matches_impl& from)
     m_coalesced = from.m_coalesced;
     m_append_character = from.m_append_character;
     m_suppress_append = from.m_suppress_append;
+    m_fully_qualify = from.m_fully_qualify;
     m_force_quoting = from.m_force_quoting;
     m_regen_blocked = from.m_regen_blocked;
     m_nosort = from.m_nosort;
@@ -912,6 +926,12 @@ void matches_impl::set_force_quoting()
 {
     m_suppress_quoting = 0;
     m_force_quoting = true;
+}
+
+//------------------------------------------------------------------------------
+void matches_impl::set_fully_qualify(bool fully_qualify)
+{
+    m_fully_qualify = fully_qualify;
 }
 
 //------------------------------------------------------------------------------

@@ -26,6 +26,7 @@ public:
     int32           set_suppress_append(lua_State* state);
     int32           set_suppress_quoting(lua_State* state);
     int32           set_force_quoting(lua_State* state);
+    int32           set_fully_qualify(lua_State* state);
     int32           set_no_sort(lua_State* state);
     int32           set_volatile(lua_State* state);
 

@@ -377,6 +377,12 @@ bool match_adapter::use_display(uint32 index, match_type type, bool append) cons
 }
 
 //------------------------------------------------------------------------------
+bool match_adapter::is_fully_qualify() const
+{
+    return m_matches && m_matches->is_fully_qualify();
+}
+
+//------------------------------------------------------------------------------
 bool match_adapter::is_display_filtered() const
 {
     return !!m_filtered_matches;

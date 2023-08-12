@@ -1016,6 +1016,7 @@ void selectcomplete_impl::update_matches(bool restrict)
 
     // Expand an abbreviated path.
     str_moveable tmp;
+    bool override = false;
     override_match_line_state omls;
     const char* needle = m_needle.c_str();
     if (g_match_expand_abbrev.get() && !m_matches.get_match_count())
@@ -1069,13 +1070,30 @@ stop:
                 // callback and Readline isn't prepared for the buffer to
                 // change out from under it).
                 needle = tmp.c_str();
-                const char qc = need_leading_quote(tmp.c_str());
-                omls.override(m_anchor, m_anchor + m_needle.length(), needle, qc);
-                // Perform completion again after the expansion.
-                ::update_matches();
+                override = true;
             }
         }
     }
+
+    if (m_matches.is_fully_qualify())
+    {
+        // Note that this can further adjust an expanded abbreviated path
+        // using it to override the match line state.
+        if (needle != tmp.c_str())
+            tmp = needle;
+        omls.fully_qualify(m_anchor, m_anchor + m_needle.length(), tmp);
+        needle = tmp.c_str();
+        override = true;
+    }
+    else if (override)
+    {
+        // This applies an expanded abbreviated path.
+        omls.override(m_anchor, m_anchor + m_needle.length(), needle);
+    }
+
+    // Perform completion again after overriding match line state.
+    if (override)
+        ::update_matches();
 
 #define m_needle __use_needle_instead__
 
