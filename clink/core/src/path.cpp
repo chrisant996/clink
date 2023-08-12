@@ -287,7 +287,9 @@ bool get_base_name(const char* in, str_base& out)
 //------------------------------------------------------------------------------
 bool get_directory(const char* in, str_base& out)
 {
+    assert(in < out.c_str() || in > out.c_str() + out.length() + 1);
     int32 end = get_directory_end(in);
+    out.clear();
     return out.concat(in, end);
 }
 
@@ -328,9 +330,11 @@ bool get_drive(str_base& in_out)
 //------------------------------------------------------------------------------
 bool get_extension(const char* in, str_base& out)
 {
+    assert(in < out.c_str() || in > out.c_str() + out.length() + 1);
     const char* ext = get_extension(in);
     if (!ext)
         return false;
+    out.clear();
     return out.concat(get_extension(in));
 }
 
@@ -365,12 +369,16 @@ const char* get_extension(const char* in)
 //------------------------------------------------------------------------------
 bool get_name(const char* in, str_base& out)
 {
+    assert(in < out.c_str() || in > out.c_str() + out.length() + 1);
+    out.clear();
     return out.concat(get_name(in));
 }
 
 //------------------------------------------------------------------------------
 bool get_name(const wchar_t* in, wstr_base& out)
 {
+    assert(in < out.c_str() || in > out.c_str() + out.length() + 1);
+    out.clear();
     return out.concat(get_name(in));
 }
 
@@ -405,6 +413,8 @@ const wchar_t* get_name(const wchar_t* in)
 //------------------------------------------------------------------------------
 bool tilde_expand(const char* in, str_base& out, bool use_appdata_local)
 {
+    assert(in < out.c_str() || in > out.c_str() + out.length() + 1);
+
     if (!in || in[0] != '~' || (in[1] && !is_separator(in[1])))
     {
         out = in;
