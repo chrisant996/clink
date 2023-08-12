@@ -291,6 +291,7 @@ local function value_handler(match_word, word_index, line_state, builder, classi
         if name == "autosuggest.strategy" then
             return clink._list_suggesters()
         else
+            builder:setfullyqualify()
             return clink.filematches(line_state:getendword())
         end
     else
@@ -582,7 +583,7 @@ function set_generator:generate(line_state, match_builder) -- luacheck: no self
     end
 
     index = index + 1
-    local matches = value_handler(line_state:getword(index), index, line_state)
+    local matches = value_handler(line_state:getword(index), index, line_state, match_builder)
     if matches then
         match_builder:addmatches(matches, "arg")
     end
