@@ -2,6 +2,13 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.5.3
+- Added `builder:setfullyqualified()` to force completions to be inserted as fully qualified path names.
+- Completions for <code>clink set <span class="arg">setting_name</span> <span class="arg">input</span></code> use fully qualified path names for <span class="arg">input</span>.  This helps avoid accidentally setting relative paths in global settings; since the current directory changes frequently, setting relative paths usually leads to unintended consequences.
+- Only load a script from a `completions\` directory if the associated command exists in the file system.  Also, pass the fully qualified file name as input to the script (in Lua, use `...` to get script arguments, e.g. `local command = ...`).
+- Fix coloring the command word in the command line when queued keys select and accept a command line instantly (it could accidentally continue without applying the appropriate coloring).
+- Fix script error in `clink.filematches(nil)` and `clink.dirmatches(nil)`; they were meant to behave the same as passing an empty string.
+
 #### v1.5.2
 - Adjusted the colors in "Use enhanced defaults" to have sufficient contrast to be readable in both Dark and Light terminal themes.
 - More reliably detect whether hosted in Windows Terminal, and even when Windows Terminal is set as the default terminal application.
