@@ -7,7 +7,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
-- Some `path::get_*` functions use `concat` without clearing the `out` buffer.  Clearing the `out` buffer can improve safety.  But watch out, because `in` can be `out`!
 - Open issue in Terminal repo about bugs in the new shell integration in v1.18.
   - Transient prompt can lead to Terminal getting confused about where prompt markers are.
   - Can the same thing happen with zsh and powerlevel10k transient prompt?
@@ -15,7 +14,11 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## Low Priority
 - Efficiency; explore pruning unnecessary calls to `display_manager::display()`.
-- More sophisticated match color definitions?  E.g. would be nice to be able to color executable matches as bold, readonly matches as green, and readonly executable matches as bold green.
+- Color improvements:
+  - Color themes.  Some way to import color settings en masse.  Some way to export color settings as well?
+  - More sophisticated match color definitions?
+    - Unify match color settings, e.g. something like `%LS_COLORS%` or `%COLORDIR%` (from 4Dos/4NT/TakeCommand).  The fractured `%LS_COLORS%` + `color.readonly` stuff is awkward and confusing.
+    - Ability to combine conditions, e.g. executable=1, readonly=32, executable _AND_ readonly=1;32.
 - The `:` and `=` parsing has a side effect that flags like `-f`_`file`_ are ambiguous: since parsing happens independently from argmatchers, `-fc:\file` could be `-f` and `c:\file` or it could be `-fc:` and `\file`.
   - Revisit the possibility of allowing `line_state` to be mutable and argmatchers adjusting it as they parse the input line?  _No; too messy.  E.g. splitting `"-fc:\foo bar"` gets weird because quoting encloses **two adjacent** words._
   - But an important benefit of the current implementation is that `program_with_no_argmatcher --unknown-flag:filename` is able to do filename completion on `filename`.
