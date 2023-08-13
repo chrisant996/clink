@@ -13,7 +13,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - Provide a sample .txt file that repros the issue.  Maybe multiple .txt files that chain together (or with a pause; is there an escape code for a pause?) to show the UX flow.
 
 ## Low Priority
-- Efficiency; explore pruning unnecessary calls to `display_manager::display()`.
 - Color improvements:
   - Color themes.  Some way to import color settings en masse.  Some way to export color settings as well?
   - More sophisticated match color definitions?
