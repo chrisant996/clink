@@ -528,6 +528,11 @@ readline_internal_teardown (int eof)
   return (eof ? (char *)NULL : savestring (the_line));
 }
 
+/* begin_clink_change */
+static int s_in_internal_char = 0;
+static int s_displayed = 0;
+/* end_clink_change */
+
 void
 _rl_internal_char_cleanup (void)
 {
@@ -548,13 +553,23 @@ _rl_internal_char_cleanup (void)
   if (rl_num_chars_to_read && rl_end >= rl_num_chars_to_read)
     {
       (*rl_redisplay_function) ();
+/* begin_clink_change */
+      ++s_displayed;
+/* end_clink_change */
       _rl_want_redisplay = 0;
       rl_newline (1, '\n');
     }
 
   if (rl_done == 0)
     {
-      (*rl_redisplay_function) ();
+/* begin_clink_change */
+      //(*rl_redisplay_function) ();
+      if (!s_in_internal_char || (!s_displayed && !RL_ISSTATE (RL_STATE_MULTIKEY)))
+	{
+	  (*rl_redisplay_function) ();
+	  ++s_displayed;
+	}
+/* end_clink_change */
       _rl_want_redisplay = 0;
     }
 
@@ -568,6 +583,20 @@ _rl_internal_char_cleanup (void)
 STATIC_CALLBACK int
 #if defined (READLINE_CALLBACKS)
 readline_internal_char (void)
+/* begin_clink_change */
+{
+  static int readline_internal_char_internal (void);
+  int r;
+  assert(!s_in_internal_char);
+  s_in_internal_char = 1;
+  s_displayed = 0;
+  r = readline_internal_char_internal ();
+  s_in_internal_char = 0;
+  return r;
+}
+static int
+readline_internal_char_internal (void)
+/* end_clink_change */
 #else
 readline_internal_charloop (void)
 #endif
@@ -610,6 +639,9 @@ readline_internal_charloop (void)
       if (code)
 	{
 	  (*rl_redisplay_function) ();
+/* begin_clink_change */
+	  ++s_displayed;
+/* end_clink_change */
 	  _rl_want_redisplay = 0;
 	  /* If we get here, we're not being called from something dispatched
 	     from _rl_callback_read_char(), which sets up its own value of
@@ -704,6 +736,10 @@ readline_internal_charloop (void)
       if (_rl_command_to_execute)
 	{
 	  (*rl_redisplay_function) ();
+/* begin_clink_change */
+	  ++s_displayed;
+	  _rl_want_redisplay = 0;
+/* end_clink_change */
 
 	  rl_executing_keymap = _rl_command_to_execute->map;
 	  rl_executing_key = _rl_command_to_execute->key;

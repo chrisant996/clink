@@ -233,8 +233,15 @@ rl_callback_read_char (void)
 	    eof = _rl_dispatch_callback (_rl_kscxt);
 	  if (RL_ISSTATE (RL_STATE_MULTIKEY) == 0)
 	    {
-	      _rl_internal_char_cleanup ();
+/* begin_clink_change - _rl_internal_char_cleanup can trigger redisplay, so
+   set _rl_want_redisplay beforehand instead of forcing another redisplay by
+   setting _rl_want_redisplay afterwards. */
 	      _rl_want_redisplay = 1;
+/* end_clink_change */
+	      _rl_internal_char_cleanup ();
+/* begin_clink_change */
+//	      _rl_want_redisplay = 1;
+/* end_clink_change */
 	    }
 	}
       else if (_rl_callback_func)

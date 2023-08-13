@@ -1154,6 +1154,8 @@ void force_signaled_redisplay()
 //------------------------------------------------------------------------------
 void hook_display()
 {
+    struct clear_want { ~clear_want() { _rl_want_redisplay = false; } } clear_want;
+
     static bool s_busy = false;
     if (s_busy)
         return;

@@ -14,7 +14,13 @@
 extern "C" {
 #include <readline/history.h>
 #include <readline/readline.h>
+#include <readline/rlprivate.h> // for _rl_want_redisplay
 }
+
+// NOTE:  rl_buffer used to have a m_need_draw member, but it was independent
+// from Readline's own _rl_want_redisplay variable.  That led to redundant
+// display requests, which then got dynamically optimized away at runtime.
+// It's more accurate and efficient to directly use _rl_want_redisplay.
 
 //------------------------------------------------------------------------------
 void rl_buffer::reset()
@@ -29,7 +35,7 @@ void rl_buffer::reset()
 void rl_buffer::begin_line()
 {
     m_attached = true;
-    m_need_draw = true;
+    _rl_want_redisplay = true;
     clear_override();
 }
 
@@ -85,7 +91,7 @@ uint32 rl_buffer::set_cursor(uint32 pos)
         return m_override_pos = min<uint32>(pos, m_override_len);
     }
     if (cua_clear_selection())
-        m_need_draw = true;
+        _rl_want_redisplay = true;
     return rl_point = min<uint32>(pos, rl_end);
 }
 
@@ -97,7 +103,7 @@ void rl_buffer::set_selection(uint32 anchor, uint32 pos)
     if (m_override_line)
         return;
     if (cua_set_selection(anchor, pos))
-        m_need_draw = true;
+        _rl_want_redisplay = true;
 }
 
 //------------------------------------------------------------------------------
@@ -107,7 +113,7 @@ bool rl_buffer::insert(const char* text)
     assert(!m_override_line);
     if (m_override_line)
         return false;
-    return (m_need_draw = (text[rl_insert_text(text)] == '\0'));
+    return (_rl_want_redisplay = (text[rl_insert_text(text)] == '\0'));
 }
 
 //------------------------------------------------------------------------------
@@ -118,9 +124,9 @@ bool rl_buffer::remove(uint32 from, uint32 to)
     if (m_override_line)
         return false;
     to = min(to, get_length());
-    m_need_draw = !!rl_delete_text(from, to);
+    _rl_want_redisplay = !!rl_delete_text(from, to);
     set_cursor(get_cursor());
-    return m_need_draw;
+    return !!_rl_want_redisplay;
 }
 
 //------------------------------------------------------------------------------
@@ -130,10 +136,10 @@ void rl_buffer::draw()
     assert(!m_override_line);
     if (m_override_line)
         return;
-    if (m_need_draw)
+    if (_rl_want_redisplay)
     {
         (*rl_redisplay_function)();
-        m_need_draw = false;
+        _rl_want_redisplay = false;
     }
 }
 
@@ -155,7 +161,7 @@ void rl_buffer::set_need_draw()
     assert(!m_override_line);
     if (m_override_line)
         return;
-    m_need_draw = true;
+    _rl_want_redisplay = true;
 }
 
 //------------------------------------------------------------------------------

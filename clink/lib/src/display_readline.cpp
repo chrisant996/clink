@@ -11,6 +11,13 @@
 #define READLINE_LIBRARY
 #define BUILD_READLINE
 
+#ifdef DEBUG
+// Define REPORT_DISPLAY_STATISTICS to show how many times
+// display_manager::display is called and how many times display of identical
+// lines are dynamically skipped.
+#define REPORT_DISPLAY_STATISTICS
+#endif
+
 #include "display_readline.h"
 #include "line_buffer.h"
 #include "ellipsify.h"
@@ -25,6 +32,10 @@
 #include <terminal/terminal_helpers.h>
 
 #include <memory>
+
+#ifdef REPORT_DISPLAY_STATISTICS
+#include "core/callstack.h"
+#endif
 
 extern "C" {
 
@@ -95,6 +106,12 @@ extern setting_color g_color_comment_row;
 
 //------------------------------------------------------------------------------
 static bool s_use_eol_optimization = false;
+
+#ifdef REPORT_DISPLAY_STATISTICS
+static int32 s_calls = 0;
+static int32 s_lastline = 0;
+static int32 s_identical = 0;
+#endif
 
 //------------------------------------------------------------------------------
 static bool is_autowrap_bug_present()
@@ -1427,6 +1444,10 @@ void display_manager::display()
     if (!_rl_echoing_p)
         return;
 
+#ifdef REPORT_DISPLAY_STATISTICS
+    ++s_calls;
+#endif
+
     // NOTE:  This implementation doesn't use _rl_quick_redisplay.  I'm not
     // clear on what practical benefit it would provide, or why it would be
     // worth adding that complexity.
@@ -1609,6 +1630,10 @@ void display_manager::display()
     {
         move_to_row(0);
         move_to_column(0, true/*force*/);
+
+#ifdef REPORT_DISPLAY_STATISTICS
+        ++s_lastline;
+#endif
 
         if (modmark)
         {
@@ -1837,6 +1862,16 @@ void display_manager::display()
     coalesce.flush();
 #endif
 
+#ifdef REPORT_DISPLAY_STATISTICS
+    char statistics[120];
+    sprintf_s(statistics, _countof(statistics), "\x1b[s\x1b[H\x1b[36mdisplay %d, lastline %d, identical %d\x1b[m\x1b[K\x1b[u", s_calls, s_lastline, s_identical);
+    rl_fwrite_function(_rl_out_stream, statistics, strlen(statistics));
+    char stk[DEFAULT_CALLSTACK_LEN];
+    format_callstack(1, 16, stk, _countof(stk), true);
+    LOG("DISPLAY() CALLSTACK:");
+    LOG("%s", stk);
+#endif
+
     RL_UNSETSTATE(RL_STATE_REDISPLAYING);
     _rl_release_sigint();
 }
@@ -1925,7 +1960,12 @@ void display_manager::update_line(int32 i, const display_line* o, const display_
         o->m_len == d->m_len &&
         !memcmp(o->m_chars, d->m_chars, d->m_len) &&
         !memcmp(o->m_faces, d->m_faces, d->m_len))
+    {
+#ifdef REPORT_DISPLAY_STATISTICS
+        ++s_identical;
+#endif
         return;
+    }
 
     bool use_eol_opt = !has_rprompt && d->m_toeol && s_use_eol_optimization;
 
@@ -2317,6 +2357,12 @@ extern "C" void host_on_new_line()
 #if defined (INCLUDE_CLINK_DISPLAY_READLINE)
     if (use_display_manager())
         s_display_manager.on_new_line();
+#endif
+
+#ifdef REPORT_DISPLAY_STATISTICS
+    s_calls = 0;
+    s_lastline = 0;
+    s_identical = 0;
 #endif
 
     // Terminal shell integration.

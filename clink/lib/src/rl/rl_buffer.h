@@ -34,7 +34,6 @@ public:
 
 private:
     bool                    m_attached = false;
-    bool                    m_need_draw = false;
     const char*             m_override_line = nullptr;
     uint32                  m_override_len = 0;
     int32                   m_override_pos = 0;
