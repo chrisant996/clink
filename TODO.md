@@ -52,21 +52,21 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - [Ctrl-W is more useful if it kills on more granular word boundaries](https://github.com/mridgers/clink/commit/5ee004074e0869273ac42006edef4bcdcfd0e24f)
   - [Smarter Ctrl-W word deletion](https://github.com/mridgers/clink/commit/a385a1695bb425d6f48aae4e587c9c06af8515f6)
 - [Type name style change](https://github.com/mridgers/clink/commit/e6baa31badb8854413dd34988cc33b7aeb68b7e0) -- Huge; renames types from `foo_bar` to `FooBar`.
-- [Changed member style](https://github.com/mridgers/clink/commit/fd5041a34ba162fd3adc1b7b0c5910438e343235) -- Huge; renames members from `m_foo` to `_foo`.
 
 ## Leaning Towards No
-- [Don't expect the user to account for a null terminator](https://github.com/mridgers/clink/commit/4583281d464933d9ce021aedcdf3edc5e3fdc189) -- This still requires the user to account for a null terminator, by removing the space for the null terminator, otherwise the block gets sized differently than expected (and can have extra slop allocated).
+- [Changed member style](https://github.com/mridgers/clink/commit/fd5041a34ba162fd3adc1b7b0c5910438e343235) -- Huge; renames members from `m_foo` to `_foo`.
 - [Use AppData/Local for a the DLL cache as temp can get cleaned](https://github.com/mridgers/clink/commit/8ed3cb0b427970c8082acb238071b26d5e788057) -- Isn't getting cleaned desirable?  Otherwise DLL versions accumulate without bound.
-- Removing all copyright dates seems problematic.  Isn't it required in copyright notices?  And in the program logo header it provides date context for the program version being used.
-  - [Removed date from header](https://github.com/mridgers/clink/commit/7ca14e8d4c82b4a6e6801af4b702329d8de29eef)
-  - [Removed years](https://github.com/mridgers/clink/commit/b732e873fc337671fabc62659a0a578cf617028c)
 - It could be reasonable to add an iterator version of `os.globfiles()`, but replacing it breaks compatibility.
   - [Made Lua's os.glob*() work like an iterator instead of building a table](https://github.com/mridgers/clink/commit/13fc3b68046d2cee0f2188b9c8d54fa0cbc18718)
   - [os.glob*() tests](https://github.com/mridgers/clink/commit/5cfacee2a2b8230968854bc94bc3e1adf6b56bf9)
   - [Fixed "cd \\" Lua error](https://github.com/mridgers/clink/commit/d2ffed58f75597cec08d85e8abf4fafc0b60a067)
-  - [builder::addmatches() now also accepts a function](https://github.com/mridgers/clink/commit/6a2b818efd84377b3a625bb1ecdeffe89da20cd6)
+  - [builder::addmatches() now also accepts a function](https://github.com/mridgers/clink/commit/6a2b818efd84377b3a625bb1ecdeffe89da20cd6) -- This is inconsistent with `argmatcher:addflags()` and `argmatcher:addarg()`, and is generally non-intuitive.
 
 ## No
+- [Don't expect the user to account for a null terminator](https://github.com/mridgers/clink/commit/4583281d464933d9ce021aedcdf3edc5e3fdc189) -- This still requires the user to account for a null terminator, by removing the space for the null terminator, otherwise the block gets sized differently than expected (and can have extra slop allocated).
+- Removing all copyright dates seems problematic.  Isn't it required in copyright notices?  And in the program logo header it provides date context for the program version being used.
+  - [Removed date from header](https://github.com/mridgers/clink/commit/7ca14e8d4c82b4a6e6801af4b702329d8de29eef)
+  - [Removed years](https://github.com/mridgers/clink/commit/b732e873fc337671fabc62659a0a578cf617028c)
 - [Hand-rolled remote-call thunks. Previous approach was assuming that the compiler won't do what it eventually did; add complex prologue/epilogue.](https://github.com/mridgers/clink/commit/76aee60e5cdad911a0b478765499f8fbdd848619) -- That was resolved in chrisant996/clink by turning off certain compiler features in the relevant files (see commits 462a985e66, 7ba05ea77e, e0750b173d, 03320a2069, and 3dd4f49e72), which also makes ARM64 work without special custom assembly.
 - [Only log inputrc information once](https://github.com/mridgers/clink/commit/f2228b9d64e30852f415969f5a0409e252df3c01) -- That was only annoying because Lua was recreated on each prompt, which had to be removed because (1) it broke `z`, (2) it bogs down performance, and (3) chrisant996/clink uses coroutines which is incompatible with recreate Lua on each prompt.  The logging change would also miss when the user makes a configuration change that results in a different inputrc file getting loaded.
 - `io.popen2()` -- Why was this done?  If this is just trying to support UTF8, then chrisant996/clink solved that by setting the C runtime locale to `".utf8"`.
