@@ -12,10 +12,10 @@
 #define BUILD_READLINE
 
 #ifdef DEBUG
-// Define REPORT_DISPLAY_STATISTICS to show how many times
-// display_manager::display is called and how many times display of identical
-// lines are dynamically skipped.
-#define REPORT_DISPLAY_STATISTICS
+// Define REPORT_REDISPLAY to show how many times display_manager::display()
+// is called and how many times update_line() skips identical lines.  To show
+// the statistics, set the envvar DEBUG_REPORT_REDISPLAY=1.
+#define REPORT_REDISPLAY
 #endif
 
 #include "display_readline.h"
@@ -33,7 +33,7 @@
 
 #include <memory>
 
-#ifdef REPORT_DISPLAY_STATISTICS
+#ifdef REPORT_REDISPLAY
 #include "core/callstack.h"
 #endif
 
@@ -107,7 +107,7 @@ extern setting_color g_color_comment_row;
 //------------------------------------------------------------------------------
 static bool s_use_eol_optimization = false;
 
-#ifdef REPORT_DISPLAY_STATISTICS
+#ifdef REPORT_REDISPLAY
 static int32 s_calls = 0;
 static int32 s_lastline = 0;
 static int32 s_identical = 0;
@@ -1444,7 +1444,7 @@ void display_manager::display()
     if (!_rl_echoing_p)
         return;
 
-#ifdef REPORT_DISPLAY_STATISTICS
+#ifdef REPORT_REDISPLAY
     ++s_calls;
 #endif
 
@@ -1631,7 +1631,7 @@ void display_manager::display()
         move_to_row(0);
         move_to_column(0, true/*force*/);
 
-#ifdef REPORT_DISPLAY_STATISTICS
+#ifdef REPORT_REDISPLAY
         ++s_lastline;
 #endif
 
@@ -1862,14 +1862,20 @@ void display_manager::display()
     coalesce.flush();
 #endif
 
-#ifdef REPORT_DISPLAY_STATISTICS
-    char statistics[120];
-    sprintf_s(statistics, _countof(statistics), "\x1b[s\x1b[H\x1b[36mdisplay %d, lastline %d, identical %d\x1b[m\x1b[K\x1b[u", s_calls, s_lastline, s_identical);
-    rl_fwrite_function(_rl_out_stream, statistics, strlen(statistics));
-    char stk[DEFAULT_CALLSTACK_LEN];
-    format_callstack(1, 16, stk, _countof(stk), true);
-    LOG("DISPLAY() CALLSTACK:");
-    LOG("%s", stk);
+#ifdef REPORT_REDISPLAY
+    {
+        str<> value;
+        if (os::get_env("DEBUG_REPORT_REDISPLAY", value) && atoi(value.c_str()) != 0)
+        {
+            char statistics[120];
+            sprintf_s(statistics, _countof(statistics), "\x1b[s\x1b[H\x1b[36mdisplay %d, lastline %d, identical %d\x1b[m\x1b[K\x1b[u", s_calls, s_lastline, s_identical);
+            rl_fwrite_function(_rl_out_stream, statistics, strlen(statistics));
+            char stk[DEFAULT_CALLSTACK_LEN];
+            format_callstack(1, 16, stk, _countof(stk), true);
+            LOG("DISPLAY() CALLSTACK:");
+            LOG("%s", stk);
+        }
+    }
 #endif
 
     RL_UNSETSTATE(RL_STATE_REDISPLAYING);
@@ -1961,7 +1967,7 @@ void display_manager::update_line(int32 i, const display_line* o, const display_
         !memcmp(o->m_chars, d->m_chars, d->m_len) &&
         !memcmp(o->m_faces, d->m_faces, d->m_len))
     {
-#ifdef REPORT_DISPLAY_STATISTICS
+#ifdef REPORT_REDISPLAY
         ++s_identical;
 #endif
         return;
@@ -2359,7 +2365,7 @@ extern "C" void host_on_new_line()
         s_display_manager.on_new_line();
 #endif
 
-#ifdef REPORT_DISPLAY_STATISTICS
+#ifdef REPORT_REDISPLAY
     s_calls = 0;
     s_lastline = 0;
     s_identical = 0;
