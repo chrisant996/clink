@@ -284,7 +284,7 @@ static setting_color g_color_selection(
     "The color for selected text in the input line.",
     "");
 
-static setting_color g_color_suggestion(
+setting_color g_color_suggestion(
     "color.suggestion",
     "Color for suggestion text",
     "The color for suggestion text to be inserted at the end of the input line.",
@@ -1006,7 +1006,15 @@ int32 count_prompt_lines(const char* prompt_prefix)
 static char get_face_func(int32 in, int32 active_begin, int32 active_end)
 {
     if (0 <= g_suggestion_offset && g_suggestion_offset <= in)
+    {
+#ifdef USE_SUGGESTION_HINT_INLINE
+        if (in >= rl_end + IDX_SUGGESTION_LINK_TEXT)
+            return FACE_SUGGESTIONLINK;
+        else if (in >= rl_end + IDX_SUGGESTION_KEY_BEGIN && in < rl_end + IDX_SUGGESTION_KEY_END)
+            return FACE_SUGGESTIONKEY;
+#endif
         return FACE_SUGGESTION;
+    }
 
     if (in >= active_begin && in < active_end)
         return FACE_STANDOUT;
@@ -1035,20 +1043,27 @@ static void puts_face_func(const char* s, const char* face, int32 n)
 {
     static const char c_normal[] = "\x1b[m";
     static const char c_hyperlink[] = "\x1b]8;;";
-    static const char c_doc_histexpand[] = "https://chrisant996.github.io/clink/clink.html#using-history-expansion";
     static const char c_BEL[] = "\a";
+    static const char c_doc_histexpand[] = "https://chrisant996.github.io/clink/clink.html#using-history-expansion";
+#ifdef USE_SUGGESTION_HINT_INLINE
+    static const char c_doc_autosuggest[] = DOC_HYPERLINK_AUTOSUGGEST;
+#endif
 
     str<280> out;
     const char* const other_color = fallback_color(s_input_color, c_normal);
     char cur_face = FACE_NORMAL;
+    bool hyperlink = false;
 
     while (n)
     {
         // Append face string if face changed.
         if (cur_face != *face)
         {
-            if (cur_face == FACE_HISTEXPAND)
+            if (hyperlink)
+            {
                 out << c_hyperlink << c_BEL;
+                hyperlink = false;
+            }
 
             cur_face = *face;
             switch (cur_face)
@@ -1075,9 +1090,20 @@ static void puts_face_func(const char* s, const char* face, int32 n)
             case FACE_MESSAGE:      out << fallback_color(_rl_display_message_color, c_normal); break;
             case FACE_SCROLL:       out << fallback_color(_rl_display_horizscroll_color, c_normal); break;
             case FACE_SELECTION:    out << fallback_color(s_selection_color, "\x1b[0;7m"); break;
+
+            case FACE_HISTEXPAND:
+                out << fallback_color(s_histexpand_color, "\x1b[0;97;45m") << c_hyperlink << c_doc_histexpand << c_BEL;
+                hyperlink = true;
+                break;
+
             case FACE_SUGGESTION:   out << fallback_color(s_suggestion_color, "\x1b[0;90m"); break;
-            case FACE_HISTEXPAND:   out << fallback_color(s_histexpand_color, "\x1b[0;97;45m")
-                                        << c_hyperlink << c_doc_histexpand << c_BEL; break;
+#ifdef USE_SUGGESTION_HINT_INLINE
+            case FACE_SUGGESTIONKEY: out << fallback_color(s_suggestion_color, "\x1b[0;90m") << "\x1b[7m"; break;
+            case FACE_SUGGESTIONLINK:
+                out << fallback_color(s_suggestion_color, "\x1b[0;90m") << c_hyperlink << c_doc_autosuggest << c_BEL;
+                hyperlink = true;
+                break;
+#endif
 
             case FACE_OTHER:        out << other_color; break;
             case FACE_UNRECOGNIZED: out << fallback_color(s_unrecognized_color, other_color); break;
@@ -1120,7 +1146,7 @@ static void puts_face_func(const char* s, const char* face, int32 n)
         out.concat(s_concat, len);
     }
 
-    if (cur_face == FACE_HISTEXPAND)
+    if (hyperlink)
         out << c_hyperlink << c_BEL;
     if (cur_face != FACE_NORMAL)
         out << c_normal;

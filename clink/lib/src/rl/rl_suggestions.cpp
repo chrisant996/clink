@@ -4,6 +4,7 @@
 #include "pch.h"
 #include "line_buffer.h"
 #include "line_state.h"
+#include "display_readline.h"
 
 #include "matches_impl.h"
 #include "rl_suggestions.h"
@@ -55,6 +56,11 @@ bool suggestion_manager::get_visible(str_base& out) const
 
     out.concat(g_rl_buffer->get_buffer(), uint32(orig.get_pointer() - g_rl_buffer->get_buffer()));
     out.concat(sugg.get_pointer(), sugg.length());
+
+#ifdef USE_SUGGESTION_HINT_INLINE
+    out.concat(STR_SUGGESTION_HINT_INLINE);
+#endif
+
     return true;
 }
 
