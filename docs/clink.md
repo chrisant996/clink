@@ -71,6 +71,8 @@ The first word of each command line is the command or program to execute, or a f
 
 See [Completion Commands](#completion-commands) and [Clink Commands](#clink-commands) for more available completion commands.
 
+See also [Auto-suggest](#gettingstarted_autosuggest) for information about auto-suggestions, which by default show up in gray at the end of the input line.  Completions are for words, and Auto-suggestions are for the whole input line (for example, based on history).
+
 ## Common Configuration
 
 The following sections describe some ways to begin customizing Clink to your taste.
@@ -178,6 +180,8 @@ To turn on automatic suggestions, run <code>clink set <a href="#autosuggest_enab
 The [`autosuggest.strategy`](#autosuggest_strategy) setting determines how a suggestion is chosen.
 
 Or, if you use the setup program with "Use enhanced default settings" checked then automatic suggestions are enabled by default.
+
+To turn off automatic suggestions, run <code>clink set <a href="#autosuggest_enable">autosuggest.enable</a> false</code>.
 
 <a name="gettingstarted_colors"></a>
 
