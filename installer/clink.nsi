@@ -186,9 +186,14 @@ Section "Add shortcuts to Start menu" section_add_shortcuts
     StrCpy $0 "$SMPROGRAMS\Clink"
     CreateDirectory $0
 
-    ; Add shortcuts to the program and documentation.
+    ; Add shortcut to the program.
     ;
-    CreateShortcut "$0\Clink.lnk" "$INSTDIR\clink.bat" 'startmenu --profile ~\clink' "$INSTDIR\clink.ico" 0 SW_SHOWMINIMIZED
+    SetOutPath "%USERPROFILE%"
+    CreateShortcut "$0\Clink.lnk" "$INSTDIR\clink.bat" '--profile ~\clink' "$INSTDIR\clink.ico" 0 SW_SHOWMINIMIZED
+    SetOutPath $INSTDIR
+
+    ; Add shortcut to the documentation.
+    ;
     CreateShortcut "$0\Clink Documentation.lnk" "$INSTDIR\clink.html"
 
     ; Add a shortcut to the uninstaller.
