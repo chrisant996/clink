@@ -28,6 +28,76 @@ static void print_info_line(HANDLE h, const char* s)
 }
 
 //------------------------------------------------------------------------------
+static void get_file_version(const WCHAR* file, str_base& version)
+{
+    char buffer[1024];
+    VS_FIXEDFILEINFO* file_info;
+    if (GetFileVersionInfoW(file, 0, sizeof(buffer), buffer) &&
+        VerQueryValue(buffer, "\\", (void**)&file_info, nullptr))
+    {
+        version.format("%u.%u.%u",
+                    HIWORD(file_info->dwFileVersionMS),
+                    LOWORD(file_info->dwFileVersionMS),
+                    HIWORD(file_info->dwFileVersionLS));
+        return;
+    }
+
+    version = "version unknown";
+}
+
+//------------------------------------------------------------------------------
+static bool is_injected(str_base& module, str_base& version)
+{
+    module.clear();
+    version.clear();
+
+    str<16> env_id;
+    if (!os::get_env("=clink.id", env_id))
+        return false;
+
+    const int32 pid = atoi(env_id.c_str());
+    if (!pid || pid == GetCurrentProcessId())
+        return false;
+
+    HANDLE th32 = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, pid);
+    if (th32 == INVALID_HANDLE_VALUE)
+        return false;
+
+    bool injected = false;
+
+    MODULEENTRY32W module_entry = { sizeof(module_entry) };
+    BOOL ok = Module32FirstW(th32, &module_entry);
+    while (ok)
+    {
+        if (_wcsnicmp(module_entry.szModule, L"clink_dll_", 10) == 0)
+        {
+            injected = true;
+
+            get_file_version(module_entry.szExePath, version);
+
+            const uint32 trunc_len = version.length();
+            version.concat(".", 1);
+            if (_strnicmp(CLINK_VERSION_STR, version.c_str(), version.length()) == 0)
+            {
+                module = module_entry.szModule;
+                version.clear();
+            }
+            else
+            {
+                module = module_entry.szExePath;
+                version.truncate(trunc_len);
+            }
+            break;
+        }
+
+        ok = Module32NextW(th32, &module_entry);
+    }
+
+    CloseHandle(th32);
+    return injected;
+}
+
+//------------------------------------------------------------------------------
 int32 clink_info(int32 argc, char** argv)
 {
     static const struct {
@@ -59,8 +129,8 @@ int32 clink_info(int32 argc, char** argv)
     // Load the settings from disk, since script paths are affected by settings.
     str<280> settings_file;
     str<280> default_settings_file;
-    app_context::get()->get_settings_path(settings_file);
-    app_context::get()->get_default_settings_file(default_settings_file);
+    context->get_settings_path(settings_file);
+    context->get_default_settings_file(default_settings_file);
     settings::load(settings_file.c_str(), default_settings_file.c_str());
 
     // Get values to output.
@@ -80,6 +150,17 @@ int32 clink_info(int32 argc, char** argv)
     // Version information.
     printf("%-*s : %s\n", spacing, "version", CLINK_VERSION_STR);
     printf("%-*s : %d\n", spacing, "session", context->get_id());
+
+    // Check whether injected.
+    str<> dll;
+    str<> version;
+    if (is_injected(dll, version))
+    {
+        if (version.empty())
+            printf("%-*s : %s\n", spacing, "injected", dll.c_str());
+        else
+            printf("%-*s : %s (%s)\n", spacing, "injected", dll.c_str(), version.c_str());
+    }
 
     // Output the values.
     str<> s;
@@ -122,7 +203,7 @@ int32 clink_info(int32 argc, char** argv)
         str<280> out;
         if (use_state_dir)
         {
-            app_context::get()->get_state_dir(out);
+            context->get_state_dir(out);
         }
         else if (!os::get_env(env_var, out))
         {
@@ -160,7 +241,7 @@ int32 clink_info(int32 argc, char** argv)
     }
 
     str<> state_dir;
-    app_context::get()->get_state_dir(state_dir);
+    context->get_state_dir(state_dir);
     if (os::get_path_type(state_dir.c_str()) == os::path_type_file)
     {
         fprintf(stderr,
