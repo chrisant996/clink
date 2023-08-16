@@ -1035,6 +1035,7 @@ rl_redisplay (void)
   char *prompt_this_line;
   char cur_face;
   int hl_begin, hl_end;
+  int short_circuit;
   int mb_cur_max = MB_CUR_MAX;
 /* begin_clink_change */
   int can_show_rprompt;
@@ -1566,9 +1567,54 @@ rl_redisplay (void)
 		norm_face (INV_LINE_FACE(linenum), INV_LLEN (linenum));
 	    }
 
+	  /* XXX - experimental new code */
+	  /* Now that _rl_last_v_pos is a logical count, not bounded by the
+	     number of physical screen lines, this is a start at being able
+	     to redisplay lines that consume more than the number of physical
+	     screen lines in more than a simple `move-to-the-next-line' way.
+
+	     If the new line has more lines than there are physical screen
+	     lines, and the cursor would be off the top of the screen if we
+	     displayed all the new lines, clear the screen without killing
+	     the scrollback buffer, clear out the visible line so we do a
+	     complete redraw, and make the loop break when we have displayed
+	     a physical screen full of lines. Do the same if we are going to
+	     move the cursor to a line that's greater than the number of
+	     physical screen lines when we weren't before.
+
+	     SHORT_CIRCUIT says where to break the loop. Pretty simple right now. */
+	  short_circuit = -1;
+	  if (inv_botlin >= _rl_screenheight)
+	    {
+	      int extra;
+
+	      extra = inv_botlin - _rl_screenheight;	/* lines off the top */
+	      /* cursor in portion of line that would be off screen or in
+		 the lines that exceed the number of physical screen lines. */
+	      if (cursor_linenum <= extra || 
+		   (cursor_linenum >= _rl_screenheight && _rl_vis_botlin <= _rl_screenheight))
+		{
+		  if (cursor_linenum <= extra)
+		    short_circuit = _rl_screenheight;
+		  _rl_clear_screen (0);
+		  if (visible_line)
+		    memset (visible_line, 0, line_size);
+		  rl_on_new_line ();
+		}
+	      /* The cursor is beyond the number of lines that would be off
+		 the top, but we still want to display only the first
+		 _RL_SCREENHEIGHT lines starting at the beginning of the line. */
+	      else if (cursor_linenum > extra && cursor_linenum <= _rl_screenheight &&
+			_rl_vis_botlin <= _rl_screenheight)
+		short_circuit = _rl_screenheight;
+	    }
+
 	  /* For each line in the buffer, do the updating display. */
 	  for (linenum = 0; linenum <= inv_botlin; linenum++)
 	    {
+	      if (short_circuit >= 0 && linenum == short_circuit)
+		break;
+
 	      /* This can lead us astray if we execute a program that changes
 		 the locale from a non-multibyte to a multibyte one. */
 	      o_cpos = _rl_last_c_pos;
@@ -1672,7 +1718,7 @@ rl_redisplay (void)
 		    ((linenum == _rl_vis_botlin) ? strlen (tt) : _rl_screenwidth);
 		}
 	    }
-	  _rl_vis_botlin = inv_botlin;
+	  _rl_vis_botlin = (short_circuit >= 0) ? short_circuit : inv_botlin;
 
 	  /* CHANGED_SCREEN_LINE is set to 1 if we have moved to a
 	     different screen line during this redisplay. */
@@ -3075,8 +3121,6 @@ rl_on_new_line_with_prompt (void)
 int
 rl_forced_update_display (void)
 {
-  register char *temp;
-
   if (visible_line)
     memset (visible_line, 0, line_size);
 
@@ -3263,8 +3307,24 @@ _rl_move_vert (int to)
 {
   register int delta, i;
 
-  if (_rl_last_v_pos == to || to > _rl_screenheight)
+  if (_rl_last_v_pos == to)
     return;
+
+#if 0
+  /* If we're being asked to move to a line beyond the screen height, and
+     we're currently at the last physical line, issue a newline and let the
+     terminal take care of scrolling the display. */
+  if (to >= _rl_screenheight)
+    {
+      if (_rl_last_v_pos == _rl_screenheight)
+	{
+	  putc ('\n', rl_outstream);
+	  _rl_cr ();
+	  _rl_last_c_pos = 0;
+	}
+      return;
+    }
+#endif
 
   if ((delta = to - _rl_last_v_pos) > 0)
     {

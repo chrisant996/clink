@@ -57,6 +57,9 @@ typedef int rl_compignore_func_t (char **);
 
 typedef void rl_compdisp_func_t (char **, int, int);
 
+/* Functions for displaying key bindings. Currently only one. */
+typedef void rl_macro_print_func_t (const char *, const char *, int, const char *);
+
 /* Type for input and pre-read hook functions like rl_event_hook */
 typedef int rl_hook_func_t (void);
 

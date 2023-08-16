@@ -6,9 +6,9 @@
 .\"	Case Western Reserve University
 .\"	chet.ramey@case.edu
 .\"
-.\"	Last Change: Fri Feb 17 10:59:58 EST 2023
+.\"	Last Change: Mon Jul 17 16:46:23 EDT 2023
 .\"
-.TH READLINE 3 "2023 February 17" "GNU Readline 8.2"
+.TH READLINE 3 "2023 July 17" "GNU Readline 8.3"
 .\"
 .\" File Name macro.  This used to be `.PN', for Path Name,
 .\" but Sun doesn't seem to like that very much.
@@ -116,7 +116,7 @@ file (the \fIinputrc\fP file).
 The name of this file is taken from the value of the
 .B INPUTRC
 environment variable.  If that variable is unset, the default is
-.IR ~/.inputrc .
+.IR \(ti/.inputrc .
 If that file  does not exist or cannot be read, the ultimate default is
 .IR /etc/inputrc .
 When a program which uses the readline library starts up, the
@@ -215,7 +215,7 @@ are not recognized.
 .br
 "\eC\-x\eC\-r": re\-read\-init\-file
 .br
-"\ee[11~": "Function Key 1"
+"\ee[11\(ti": "Function Key 1"
 .RE
 .PP
 In this example,
@@ -226,7 +226,7 @@ is again bound to the function
 is bound to the function
 .BR re\-read\-init\-file ,
 and
-.I "ESC [ 1 1 ~"
+.I "ESC [ 1 1 \(ti"
 is bound to insert the text
 .if t \f(CWFunction Key 1\fP.
 .if n ``Function Key 1''.
@@ -371,8 +371,12 @@ If set to \fBaudible\fP, readline attempts to ring the terminal's bell.
 .TP
 .B bind\-tty\-special\-chars (On)
 If set to \fBOn\fP (the default), readline attempts to bind the control
-characters   treated specially by the kernel's terminal driver to their
+characters that are
+treated specially by the kernel's terminal driver to their
 readline equivalents.
+These override the default readline bindings described here.
+Type \f(CWstty -a\fP at a bash prompt to see your current terminal settings,
+including the special control characters (usually \fBcchars\fP).
 .TP
 .B blink\-matching\-paren (Off)
 If set to \fBOn\fP, readline attempts to briefly move the cursor to an
@@ -1152,7 +1156,7 @@ The actual completion performed is application-specific.
 .BR Bash ,
 for instance, attempts completion treating the text as a variable
 (if the text begins with \fB$\fP), username (if the text begins with
-\fB~\fP), hostname (if the text begins with \fB@\fP), or
+\fB\(ti\fP), hostname (if the text begins with \fB@\fP), or
 command (including aliases and functions) in turn.  If none
 of these produces a match, filename completion is attempted.
 .BR Gdb ,
@@ -1384,7 +1388,7 @@ Emacs Standard bindings
 "C-_"  undo
 "\^ " to "/"  self-insert
 "0"  to "9"  self-insert
-":"  to "~"  self-insert
+":"  to "\(ti"  self-insert
 "C-?"  backward-delete-char
 .PP
 Emacs Meta bindings
@@ -1431,7 +1435,7 @@ Emacs Meta bindings
 "M-U"  upcase-word
 "M-Y"  yank-pop
 "M-\e"  delete-horizontal-space
-"M-~"  tilde-expand
+"M-\(ti"  tilde-expand
 "M-C-?"  backward-kill-word
 "M-_"  yank-last-arg
 .PP
@@ -1469,7 +1473,7 @@ VI Insert Mode functions
 "C-Y"  yank
 "C-["  vi-movement-mode
 "C-_"  undo
-"\^ " to "~"  self-insert
+"\^ " to "\(ti"  self-insert
 "C-?"  backward-delete-char
 .PP
 VI Command Mode functions
@@ -1527,7 +1531,7 @@ VI Command Mode functions
 "X"  backward-delete-char
 "Y"  vi-yank-to
 "\e"  vi-complete
-"^"  vi-first-print
+"\(ha"  vi-first-print
 "_"  vi-yank-arg
 "`"  vi-goto-mark
 "a"  vi-append-mode
@@ -1552,7 +1556,7 @@ VI Command Mode functions
 "x"  vi-delete
 "y"  vi-yank-to
 "|"  vi-column
-"~"  vi-change-case
+"\(ti"  vi-change-case
 .RE
 .SH "SEE ALSO"
 .PD 0
@@ -1566,7 +1570,7 @@ VI Command Mode functions
 .SH FILES
 .PD 0
 .TP
-.FN ~/.inputrc
+.FN \(ti/.inputrc
 Individual \fBreadline\fP initialization file
 .PD
 .SH AUTHORS

@@ -456,8 +456,12 @@ the terminal's bell.
 @item bind-tty-special-chars
 @vindex bind-tty-special-chars
 If set to @samp{on} (the default), Readline attempts to bind the control
-characters   treated specially by the kernel's terminal driver to their
+characters that are
+treated specially by the kernel's terminal driver to their
 Readline equivalents.
+These override the default Readline bindings described here.
+Type @samp{stty -a} at a Bash prompt to see your current terminal settings,
+including the special control characters (usually @code{cchars}).
 
 @item blink-matching-paren
 @vindex blink-matching-paren
@@ -1464,6 +1468,16 @@ moving point past that word as well.
 If the insertion point is at the end of the line, this transposes
 the last two words on the line.
 
+@ifset BashFeatures
+@item shell-transpose-words (M-C-t)
+Drag the word before point past the word after point,
+moving point past that word as well.
+If the insertion point is at the end of the line, this transposes
+the last two words on the line.
+Word boundaries are the same as @code{shell-forward-word} and
+@code{shell-backward-word}.
+@end ifset
+
 @item upcase-word (M-u)
 Uppercase the current (or following) word.  With a negative argument,
 uppercase the previous word, but do not move the cursor.
@@ -1533,14 +1547,6 @@ Word boundaries are the same as @code{shell-forward-word}.
 Kill the word behind point.
 Word boundaries are the same as @code{shell-backward-word}.
 @end ifset
-
-@item shell-transpose-words (M-C-t)
-Drag the word before point past the word after point,
-moving point past that word as well.
-If the insertion point is at the end of the line, this transposes
-the last two words on the line.
-Word boundaries are the same as @code{shell-forward-word} and
-@code{shell-backward-word}.
 
 @item unix-word-rubout (C-w)
 Kill the word behind point, using white space as a word boundary.

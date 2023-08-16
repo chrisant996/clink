@@ -376,7 +376,9 @@ extern int rl_trim_arg_from_keyseq (const char *, size_t, Keymap);
 extern void rl_list_funmap_names (void);
 extern char **rl_invoking_keyseqs_in_map (rl_command_func_t *, Keymap);
 extern char **rl_invoking_keyseqs (rl_command_func_t *);
- 
+
+extern void rl_print_keybinding (const char *, Keymap, int);
+
 extern void rl_function_dumper (int);
 extern void rl_macro_dumper (int);
 extern void rl_variable_dumper (int);
@@ -788,6 +790,8 @@ extern rl_puts_face_func_t *rl_puts_face_func;
 
 extern rl_vintfunc_t *rl_prep_term_function;
 extern rl_voidfunc_t *rl_deprep_term_function;
+
+extern rl_macro_print_func_t *rl_macro_display_hook;
 
 /* Dispatch variables. */
 extern Keymap rl_executing_keymap;

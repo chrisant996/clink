@@ -286,8 +286,7 @@ static char syscom[1024];
 
 /* List the file(s) named in arg. */
 int
-com_list (arg)
-     char *arg;
+com_list (char *arg)
 {
   if (!arg)
     arg = "";
@@ -297,8 +296,7 @@ com_list (arg)
 }
 
 int
-com_view (arg)
-     char *arg;
+com_view (char *arg)
 {
   if (!valid_argument ("view", arg))
     return 1;
@@ -313,16 +311,14 @@ com_view (arg)
 }
 
 int
-com_rename (arg)
-     char *arg;
+com_rename (char *arg)
 {
   too_dangerous ("rename");
   return (1);
 }
 
 int
-com_stat (arg)
-     char *arg;
+com_stat (char *arg)
 {
   struct stat finfo;
 
@@ -350,8 +346,7 @@ com_stat (arg)
 }
 
 int
-com_delete (arg)
-     char *arg;
+com_delete (char *arg)
 {
   too_dangerous ("delete");
   return (1);
@@ -360,8 +355,7 @@ com_delete (arg)
 /* Print out help for ARG, or for all of the commands if ARG is
    not present. */
 int
-com_help (arg)
-     char *arg;
+com_help (char *arg)
 {
   register int i;
   int printed = 0;
@@ -400,8 +394,7 @@ com_help (arg)
 
 /* Change to the directory ARG. */
 int
-com_cd (arg)
-     char *arg;
+com_cd (char *arg)
 {
   if (chdir (arg) == -1)
     {
@@ -415,8 +408,7 @@ com_cd (arg)
 
 /* Print out the current working directory. */
 int
-com_pwd (ignore)
-     char *ignore;
+com_pwd (char *ignore)
 {
   char dir[1024], *s;
 
@@ -433,8 +425,7 @@ com_pwd (ignore)
 
 /* The user wishes to quit using this program.  Just set DONE non-zero. */
 int
-com_quit (arg)
-     char *arg;
+com_quit (char *arg)
 {
   done = 1;
   return (0);
@@ -442,8 +433,7 @@ com_quit (arg)
 
 /* Function which tells you that you can't do this. */
 void
-too_dangerous (caller)
-     char *caller;
+too_dangerous (char *caller)
 {
   fprintf (stderr,
            "%s: Too dangerous for me to distribute.  Write it yourself.\n",
@@ -453,8 +443,7 @@ too_dangerous (caller)
 /* Return non-zero if ARG is a valid argument for CALLER, else print
    an error message and return zero. */
 int
-valid_argument (caller, arg)
-     char *caller, *arg;
+valid_argument (char *caller, char *arg)
 {
   if (!arg || !*arg)
     {

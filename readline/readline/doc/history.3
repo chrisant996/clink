@@ -119,13 +119,13 @@ is followed immediately by a newline.
 If \fIstring\fP is missing, the string from the most recent search is used;
 it is an error if there is no previous search string.
 .TP
-.B \d\s+2^\s-2\u\fIstring1\fP\d\s+2^\s-2\u\fIstring2\fP\d\s+2^\s-2\u
+.B \d\s+2\(ha\s-2\u\fIstring1\fP\d\s+2\(ha\s-2\u\fIstring2\fP\d\s+2\(ha\s-2\u
 Quick substitution.  Repeat the last command, replacing
 .I string1
 with
 .IR string2 .
 Equivalent to
-``!!:s\d\s+2^\s-2\u\fIstring1\fP\d\s+2^\s-2\u\fIstring2\fP\d\s+2^\s-2\u''
+``!!:s\d\s+2\(ha\s-2\u\fIstring1\fP\d\s+2\(ha\s-2\u\fIstring2\fP\d\s+2\(ha\s-2\u''
 (see \fBModifiers\fP below).
 .TP
 .B !#
@@ -137,7 +137,7 @@ A
 .B :
 separates the event specification from the word designator.
 It may be omitted if the word designator begins with a
-.BR ^ ,
+.BR \(ha ,
 .BR $ ,
 .BR * ,
 .BR \- ,
@@ -156,7 +156,7 @@ word.
 .I n
 The \fIn\fRth word.
 .TP
-.B ^
+.B \(ha
 The first argument.  That is, word 1.
 .TP
 .B $
@@ -497,7 +497,7 @@ This section documents the functions for managing a history file.
 
 .Fn1 int read_history "const char *filename"
 Add the contents of \fIfilename\fP to the history list, a line at a time.
-If \fIfilename\fP is \fBNULL\fP, then read from \fI~/.history\fP.
+If \fIfilename\fP is \fBNULL\fP, then read from \fI\(ti/.history\fP.
 Returns 0 if successful, or \fBerrno\fP if not.
 
 .Fn3 int read_history_range "const char *filename" "int from" "int to"
@@ -505,25 +505,25 @@ Read a range of lines from \fIfilename\fP, adding them to the history list.
 Start reading at line \fIfrom\fP and end at \fIto\fP.
 If \fIfrom\fP is zero, start at the beginning.  If \fIto\fP is less than
 \fIfrom\fP, then read until the end of the file.  If \fIfilename\fP is
-\fBNULL\fP, then read from \fI~/.history\fP.  Returns 0 if successful,
+\fBNULL\fP, then read from \fI\(ti/.history\fP.  Returns 0 if successful,
 or \fBerrno\fP if not.
 
 .Fn1 int write_history "const char *filename"
 Write the current history to \fIfilename\fP, overwriting \fIfilename\fP
 if necessary.
-If \fIfilename\fP is \fBNULL\fP, then write the history list to \fI~/.history\fP.
+If \fIfilename\fP is \fBNULL\fP, then write the history list to \fI\(ti/.history\fP.
 Returns 0 on success, or \fBerrno\fP on a read or write error.
 
 
 .Fn2 int append_history "int nelements" "const char *filename"
 Append the last \fInelements\fP of the history list to \fIfilename\fP.
-If \fIfilename\fP is \fBNULL\fP, then append to \fI~/.history\fP.
+If \fIfilename\fP is \fBNULL\fP, then append to \fI\(ti/.history\fP.
 Returns 0 on success, or \fBerrno\fP on a read or write error.
 
 .Fn2 int history_truncate_file "const char *filename" "int nlines"
 Truncate the history file \fIfilename\fP, leaving only the last
 \fInlines\fP lines.
-If \fIfilename\fP is \fBNULL\fP, then \fI~/.history\fP is truncated.
+If \fIfilename\fP is \fBNULL\fP, then \fI\(ti/.history\fP is truncated.
 Returns 0 on success, or \fBerrno\fP on failure.
 
 .SS History Expansion
@@ -604,7 +604,7 @@ Setting this to 0 inhibits history expansion.
 
 .Vb char history_subst_char
 The character that invokes word substitution if found at the start of
-a line.  The default is \fB^\fP.
+a line.  The default is \fB\(ha\fP.
 
 .Vb char history_comment_char
 During tokenization, if this character is seen as the first character
@@ -643,7 +643,7 @@ By default, this variable is set to \fBNULL\fP.
 .SH FILES
 .PD 0 
 .TP
-.FN ~/.history
+.FN \(ti/.history
 Default filename for reading and writing saved history
 .PD
 .SH "SEE ALSO"

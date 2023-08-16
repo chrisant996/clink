@@ -90,8 +90,8 @@ named by @env{$HISTFILE}.
 If the @code{histappend} shell option is set (@pxref{Bash Builtins}),
 the lines are appended to the history file,
 otherwise the history file is overwritten.
-If @env{HISTFILE}
-is unset, or if the history file is unwritable, the history is not saved.
+If @env{HISTFILE} is unset or null,
+or if the history file is unwritable, the history is not saved.
 After saving the history, the history file is truncated
 to contain no more than @env{$HISTFILESIZE} lines.
 If @env{HISTFILESIZE} is unset, or set to null, a non-numeric value, or
@@ -104,7 +104,7 @@ When the history file is read, lines beginning with the history
 comment character followed immediately by a digit are interpreted
 as timestamps for the following history entry.
 
-The builtin command @code{fc} may be used to list or edit and re-execute
+The @code{fc} builtin command may be used to list or edit and re-execute
 a portion of the history list.
 The @code{history} builtin may be used to display or modify the history
 list and manipulate the history file.
@@ -113,8 +113,9 @@ are available in each editing mode that provide access to the
 history list (@pxref{Commands For History}).
 
 The shell allows control over which commands are saved on the history
-list.  The @env{HISTCONTROL} and @env{HISTIGNORE}
-variables may be set to cause the shell to save only a subset of the
+list.
+The @env{HISTCONTROL} and @env{HISTIGNORE}
+variables are used to cause the shell to save only a subset of the
 commands entered.
 The @code{cmdhist}
 shell option, if enabled, causes the shell to attempt to save each
@@ -250,6 +251,7 @@ If a @var{filename} argument is supplied
 when any of the @option{-w}, @option{-r}, @option{-a}, or @option{-n} options
 is used, Bash uses @var{filename} as the history file.
 If not, then the value of the @env{HISTFILE} variable is used.
+If @env{HISTFILE} is unset or null, these options have no effect.
 
 The return value is 0 unless an invalid option is encountered, an
 error occurs while reading or writing the history file, an invalid
@@ -282,14 +284,21 @@ expansion functions about quoting still in effect from previous lines.
 History expansion takes place in two parts.  The first is to determine
 which line from the history list should be used during substitution.
 The second is to select portions of that line for inclusion into the
-current one.  The line selected from the history is called the
-@dfn{event}, and the portions of that line that are acted upon are
-called @dfn{words}.  Various @dfn{modifiers} are available to manipulate
-the selected words.  The line is broken into words in the same fashion
+current one.
+
+The line selected from the history is called the @dfn{event},
+and the portions of that line that are acted upon are called @dfn{words}.
+The dfn{event designator} selects the event, the optional
+@dfn{word designator} selects words from the event, and
+various optional @dfn{modifiers} are available to manipulate the
+selected words.
+
+The line is broken into words in the same fashion
 that Bash does, so that several words
 surrounded by quotes are considered one word.
 History expansions are introduced by the appearance of the
 history expansion character, which is @samp{!} by default.
+History expansions may appear anywhere in the input, but do not nest.
 
 History expansion implements shell-like quoting conventions:
 a backslash can be used to remove the special handling for the next character;
@@ -347,6 +356,9 @@ An event designator is a reference to a command line entry in the
 history list.
 Unless the reference is absolute, events are relative to the current
 position in the history list.
+The event designator consists of the portion of the word beginning
+with the history expansion character, and ending with the word designator
+if one is present, or the end of the word.
 @cindex history events
 
 @table @asis
@@ -354,8 +366,9 @@ position in the history list.
 @item @code{!}
 @ifset BashFeatures
 Start a history substitution, except when followed by a space, tab,
-the end of the line, @samp{=} or @samp{(} (when the
-@code{extglob} shell option is enabled using the @code{shopt} builtin).
+the end of the line, @samp{=},
+or the rest of the shell metacharacters defined above
+(@pxref{Definitions}).
 @end ifset
 @ifclear BashFeatures
 Start a history substitution, except when followed by a space, tab,
@@ -400,6 +413,8 @@ The entire command line typed so far.
 @subsection Word Designators
 
 Word designators are used to select desired words from the event.
+They are optional; if the word designator isn't supplied, the history
+expansion uses the entire event.
 A @samp{:} separates the event specification from the word designator.  It
 may be omitted if the word designator begins with a @samp{^}, @samp{$},
 @samp{*}, @samp{-}, or @samp{%}.  Words are numbered from the beginning

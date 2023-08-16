@@ -515,6 +515,15 @@ By default, this is set to @code{rl_deprep_terminal}
 (@pxref{Terminal Management}).
 @end deftypevar
 
+@deftypevar {void} rl_macro_display_hook 
+If set, this points to a function that @code{rl_macro_dumper} will call to
+display a key sequence bound to a macro.
+It is called with the key sequence, the "untranslated" macro value (i.e.,
+with backslash escapes included, as when passed to @code{rl_macro_bind}),
+the @code{readable} argument passed to @code{rl_macro_dumper}, and any
+prefix to display before the key sequence.
+@end deftypevar
+
 @deftypevar {Keymap} rl_executing_keymap
 This variable is set to the keymap (@pxref{Keymaps}) in which the
 currently executing Readline function was found.
@@ -917,9 +926,19 @@ Return an array of strings representing the key sequences used to
 invoke @var{function} in the keymap @var{map}.
 @end deftypefun
 
+@deftypefun void rl_print_keybinding (const char *name, Keymap map, int readable)
+Print key sequences bound to Readline function name @var{name} in
+keymap @var{map}.
+If @var{map} is NULL, this uses the current keymap.
+If @var{readable} is non-zero,
+the list is formatted in such a way that it can be made part of an
+@code{inputrc} file and re-read.
+@end deftypefun
+
 @deftypefun void rl_function_dumper (int readable)
 Print the Readline function names and the key sequences currently
-bound to them to @code{rl_outstream}.  If @var{readable} is non-zero,
+bound to them to @code{rl_outstream}.
+If @var{readable} is non-zero,
 the list is formatted in such a way that it can be made part of an
 @code{inputrc} file and re-read.
 @end deftypefun
@@ -1348,14 +1367,17 @@ If @var{c} is a number, return the value it represents.
 Bind the key sequence @var{keyseq} to invoke the macro @var{macro}.
 The binding is performed in @var{map}.  When @var{keyseq} is invoked, the
 @var{macro} will be inserted into the line.  This function is deprecated;
-use @code{rl_generic_bind()} instead.
+use @code{rl_generic_bind} instead.
 @end deftypefun
 
 @deftypefun void rl_macro_dumper (int readable)
 Print the key sequences bound to macros and their values, using
 the current keymap, to @code{rl_outstream}.
-If @var{readable} is non-zero, the list is formatted in such a way
+If the application has assigned a value to @code{rl_macro_display_hook},
+@code{rl_macro_dumper} calls it instead of printing anything.
+If @var{readable} is greater than zero, the list is formatted in such a way
 that it can be made part of an @code{inputrc} file and re-read.
+
 @end deftypefun
 
 @deftypefun int rl_variable_bind (const char *variable, const char *value)

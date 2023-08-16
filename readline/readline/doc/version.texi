@@ -2,10 +2,10 @@
 Copyright (C) 1988-2023 Free Software Foundation, Inc. 
 @end ignore
 
-@set EDITION 8.2
-@set VERSION 8.2
+@set EDITION 8.3
+@set VERSION 8.3
 
-@set UPDATED 15 June 2023
-@set UPDATED-MONTH June 2023
+@set UPDATED 31 July 2023
+@set UPDATED-MONTH July 2023
 
-@set LASTCHANGE Thu Jun 15 14:37:40 EDT 2023
+@set LASTCHANGE Mon Jul 31 10:09:09 EDT 2023
