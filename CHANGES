@@ -8,10 +8,10 @@
 - Only load a script from a `completions\` directory if the associated command exists in the file system.  Also, pass the fully qualified file name as input to the script (in Lua, use `...` to get script arguments, e.g. `local command = ...`).
 - `clink info` now reports whether Clink is injected.
 - Improve efficiency of updating the input line display.  This eliminates some redundant processing in the Readline library and in Clink.
-- Fix input line parsing and coloring when the `doskey.enhanced` setting is off or when doskey macro expansion is suppressed.
-- Fix `line_state:getwordinfo()` to accurately set the `.alias` field when the `doskey.enhanced` setting is off or when doskey macro expansion is suppressed.
-- Fix coloring the command word in the command line when queued keys select and accept a command line from history instantly (it could accidentally continue without applying the appropriate coloring).
-- Fix script error in `clink.filematches(nil)` and `clink.dirmatches(nil)`; they were meant to behave the same as passing an empty string.
+- Fixed input line parsing and coloring when the `doskey.enhanced` setting is off or when doskey macro expansion is suppressed.
+- Fixed `line_state:getwordinfo()` to accurately set the `.alias` field when the `doskey.enhanced` setting is off or when doskey macro expansion is suppressed.
+- Fixed coloring the command word in the command line when queued keys select and accept a command line from history instantly (it could accidentally continue without applying the appropriate coloring).
+- Fixed script error in `clink.filematches(nil)` and `clink.dirmatches(nil)`; they were meant to behave the same as passing an empty string.
 
 #### v1.5.2
 - Adjusted the colors in "Use enhanced defaults" to have sufficient contrast to be readable in both Dark and Light terminal themes.
