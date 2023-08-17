@@ -15,9 +15,12 @@
 #include <core/linear_allocator.h>
 #include <core/auto_free_str.h>
 #include <core/os.h>
+#include <core/settings.h>
 
 #include <vector>
 #include <memory>
+
+extern setting_bool g_enhanced_doskey;
 
 //------------------------------------------------------------------------------
 simple_word_tokeniser::simple_word_tokeniser(const char* delims)
@@ -108,7 +111,7 @@ void word_collector::find_command_bounds(const char* buffer, uint32 length, uint
 
     if (m_command_tokeniser == nullptr)
     {
-        commands.push_back({ 0, line_stop });
+        commands.push_back({ 0, line_stop, false });
         return;
     }
 
@@ -117,7 +120,7 @@ void word_collector::find_command_bounds(const char* buffer, uint32 length, uint
     uint32 command_length;
     while (m_command_tokeniser->next(command_start, command_length))
     {
-        commands.push_back({ command_start, command_length });
+        commands.push_back({ command_start, command_length, is_alias_allowed(buffer, command_start) });
 
         // Have we found the command containing the cursor?
         if (stop_at_cursor && (cursor >= command_start &&
@@ -131,7 +134,7 @@ void word_collector::find_command_bounds(const char* buffer, uint32 length, uint
 
     // Need to provide an empty command, because there's an empty command.  For
     // example exec.enable needs this so it can generate matches appropriately.
-    commands.push_back({ command_start, command_length });
+    commands.push_back({ command_start, command_length, false });
 }
 
 //------------------------------------------------------------------------------
@@ -140,6 +143,36 @@ bool word_collector::get_alias(const char* name, str_base& out) const
     if (m_alias_cache)
         return m_alias_cache->get_alias(name, out);
     return os::get_alias(name, out);
+}
+
+//------------------------------------------------------------------------------
+bool word_collector::is_alias_allowed(const char* buffer, uint32 offset) const
+{
+    if (buffer[offset] == ' ')
+        return false;
+
+    uint32 max_spaces = 0;
+    uint32 spaces = 0;
+
+    while (offset--)
+    {
+        const char ch = buffer[offset];
+
+        if (ch == '&' || ch == '|')
+        {
+            if (!g_enhanced_doskey.get())
+                return false;
+            max_spaces = 1;
+            break;
+        }
+
+        if (ch != ' ')
+            return false;
+
+        ++spaces;
+    }
+
+    return (spaces <= max_spaces);
 }
 
 //------------------------------------------------------------------------------
@@ -156,7 +189,7 @@ uint32 word_collector::collect_words(const char* line_buffer, uint32 line_length
     uint32 command_offset = 0;
 
     bool first = true;
-    for (auto& command : commands)
+    for (const auto& command : commands)
     {
         first = true;
 
@@ -178,7 +211,7 @@ uint32 word_collector::collect_words(const char* line_buffer, uint32 line_length
                 str<32> lookup;
                 str<32> alias;
                 lookup.concat(line_buffer + command.offset, first_word_len);
-                if (get_alias(lookup.c_str(), alias))
+                if (command.is_alias_allowed && get_alias(lookup.c_str(), alias))
                 {
                     uint8 delim = (doskey_len < command.length) ? line_buffer[command.offset + doskey_len] : 0;
                     doskey_len = first_word_len;

@@ -44,6 +44,7 @@ class word_collector
     {
         uint32          offset;
         uint32          length;
+        bool            is_alias_allowed;
     };
 
 public:
@@ -63,6 +64,7 @@ private:
     void find_command_bounds(const char* buffer, uint32 length, uint32 cursor,
                              std::vector<command>& commands, bool stop_at_cursor) const;
     bool get_alias(const char* name, str_base& out) const;
+    bool is_alias_allowed(const char* buffer, uint32 offset) const;
 
 private:
     collector_tokeniser* const m_command_tokeniser;

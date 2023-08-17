@@ -2160,7 +2160,7 @@ local function _find_argmatcher(line_state, check_existence, lookup)
     end
 
     if command_word_index == 1 and not lookup and info and not info.quoted then
-        if line_state:isdoskeyallowed() then
+        if info.alias then
             local alias = os.getalias(command_word)
             if alias and alias ~= "" then
                 -- This doesn't even try to handle redirection symbols in the alias

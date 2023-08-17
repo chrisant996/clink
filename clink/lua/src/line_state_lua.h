@@ -29,7 +29,6 @@ public:
     int32               get_word(lua_State* state);
     int32               get_end_word(lua_State* state);
     int32               shift(lua_State* state);
-    int32               is_doskey_allowed(lua_State* state);
 
 private:
     const line_state*   m_line;

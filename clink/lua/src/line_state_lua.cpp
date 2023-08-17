@@ -21,7 +21,6 @@ const line_state_lua::method line_state_lua::c_methods[] = {
     { "getendword",             &get_end_word },
     // UNDOCUMENTED; internal use only.
     { "shift",                  &shift },
-    { "isdoskeyallowed",        &is_doskey_allowed },
     {}
 };
 
@@ -317,46 +316,5 @@ int32 line_state_lua::shift(lua_State* state)
     }
 
     lua_pushinteger(state, m_shift);
-    return 1;
-}
-
-//------------------------------------------------------------------------------
-// UNDOCUMENTED; internal use only.
-int32 line_state_lua::is_doskey_allowed(lua_State* state)
-{
-    assert(!m_shift);
-
-    uint32 command_offset = m_line->get_command_offset();
-    const char* text = m_line->get_line();
-
-    bool allowed = (text[command_offset] != ' ');
-    if (allowed)
-    {
-        uint32 max_spaces = 0;
-        uint32 spaces = 0;
-
-        while (command_offset--)
-        {
-            const char ch = text[command_offset];
-
-            if (ch == '&' || ch == '|')
-            {
-                max_spaces = 1;
-                break;
-            }
-
-            if (ch != ' ')
-            {
-                allowed = false;
-                break;
-            }
-
-            ++spaces;
-        }
-
-        allowed = allowed && (spaces <= max_spaces);
-    }
-
-    lua_pushboolean(state, allowed);
     return 1;
 }
