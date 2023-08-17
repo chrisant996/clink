@@ -379,7 +379,7 @@ Name                         | Default [*](#alternatedefault) | Description
 <a name="color_unrecognized"></a>`color.unrecognized` | [*](#alternatedefault) | When set, this is the color in the input line for a command word that is not recognized as a command, doskey macro, directory, argmatcher, or executable file.
 <a name="debug_log_terminal"></a>`debug.log_terminal` | False | Logs all terminal input and output to the clink.log file.  This is intended for diagnostic purposes only, and can make the log file grow significantly.
 <a name="directories_dupe_mode"></a>`directories.dupe_mode` | `add` | Controls how the current directory history is updated.  A value of `add` (the default) always adds the current directory to the directory history.  A value of `erase_prev` will erase any previous entries for the current directory and then add it to the directory history.  Note that directory history is not saved between sessions.
-<a name="doskey_enhanced"></a>`doskey.enhanced` | True | Enhanced Doskey adds the expansion of macros that follow `\|` and `&` command separators and respects quotes around words when parsing `$1`...`$9` tags. Note that these features do not apply to Doskey use in Batch files.
+<a name="doskey_enhanced"></a>`doskey.enhanced` | True | Enhanced Doskey adds the expansion of macros that follow `\|` and `&` command separators and respects quotes around words when parsing `$1`...`$9` tags. To suppress macro expansion for an individual command, prefix the command with a space or semicolon (<code>&nbsp;foo</code> or `;foo`). Or following `\|` or `&`, prefix with two spaces or a semicolon (<code>foo\|&nbsp; bar</code> or `foo\|;bar`).
 <a name="exec_aliases"></a>`exec.aliases` | True | When matching executables as the first word ([`exec.enable`](#exec_enable)), include doskey aliases.
 <a name="exec_commands"></a>`exec.commands` | True | When matching executables as the first word ([`exec.enable`](#exec_enable)), include CMD commands (such as `cd`, `copy`, `exit`, `for`, `if`, etc).
 <a name="exec_cwd"></a>`exec.cwd` | True | When matching executables as the first word ([`exec.enable`](#exec_enable)), include executables in the current directory. (This is implicit if the word being completed is a relative path, or if [`exec.files`](#exec_files) is true.)
@@ -2363,7 +2363,8 @@ These sections provide more information about various aspects of Clink:
 <tr><td><a href="#keybindings">Customizing Key Bindings</a></td><td>How to customize key bindings.</td></tr>
 <tr><td><a href="#saved-command-history">Saved Command History</a></td><td>How the saved command history works.</td></tr>
 <tr><td><a href="#using-history-expansion">Using History Expansion</a></td><td>How to use history expansion.</td></tr>
-<tr><td><a href="#directory-shortcuts">Directory Shortcuts</a></td><td>Convenient shortcut for changing the current directory.</td></tr>
+<tr><td><a href="#directory-shortcuts">Directory Shortcuts</a></td><td>Convenient shortcuts for changing the current directory.</td></tr>
+<tr><td><a href="#enhanced-doskey-expansion">Enhanced Doskey Expansion</a></td><td>How enhanced Doskey expansion works.</td></tr>
 <tr><td><a href="#popular-scripts">Popular Scripts</a></td><td>Some popular scripts to enhance Clink.</td></tr>
 <tr><td><a href="#terminal-support">Terminal Support</a></td><td>Information about how Clink's terminal support works.</td></tr>
 <tr><td><a href="#troubleshooting-tips">Troubleshooting Tips</a></td><td>How to troubleshoot and report problems.</td></tr>
@@ -2917,6 +2918,18 @@ Clink provides some typing savers for changing the current directory.
 These shortcuts only work in the interactive command line; they do not work in batch scripts.
 
 <a name="sample-scripts"></a>
+
+## Enhanced Doskey Expansion
+
+Enhanced Doskey expansion is enabled by default.  You can turn it off by running <code>clink set <a href="#doskey_enhanced">doskey.enhanced</a> off</code>.
+
+When enabled, this adds two behaviors:
+- Expansion of Doskey macros that follow `|` and `&` command separators.
+- Respects quotes around words when expanding `$1`...`$9` tags in Doskey macros.
+
+You can suppress macro expansion for an individual command by prefixing the command with a space or semicolon (e.g. <code>&nbsp;foo</code> or `;foo`).  If the command follows a `|` or `&` command separator, you can suppress macro expansion by prefixing the command with two spaces or a semicolon (e.g. <code>foo|&nbsp; bar</code> or `foo|;bar`).
+
+**Note:** Some Doskey macros might be incompatible with the enhanced Doskey expansion feature, especially if they use special or complicated syntax.  If you encounter problems, you might need to turn off enhanced Doskey expansion or adjust the problematic macros.
 
 ## Popular Scripts
 

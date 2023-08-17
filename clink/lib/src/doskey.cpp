@@ -21,7 +21,9 @@ setting_bool g_enhanced_doskey(
     "Add enhancements to Doskey",
     "Enhanced Doskey adds the expansion of macros that follow '|' and '&'\n"
     "command separators and respects quotes around words when parsing $1...9\n"
-    "tags.  Note that these features do not apply to Doskey use in Batch files.",
+    "tags.  To suppress macro expansion for an individual command, prefix the\n"
+    "command with a space or semicolon (' foo' or ';foo').  Or following '|'\n"
+    "or '&', prefix with two spaces or a semicolon ('foo|  bar' or 'foo|;bar').",
     true);
 
 
