@@ -2160,8 +2160,7 @@ local function _find_argmatcher(line_state, check_existence, lookup)
     end
 
     if command_word_index == 1 and not lookup and info and not info.quoted then
-        local command_offset = line_state:getcommandoffset()
-        if not line_state:getline():sub(command_offset, command_offset):find("[ \t]") then
+        if line_state:isdoskeyallowed() then
             local alias = os.getalias(command_word)
             if alias and alias ~= "" then
                 -- This doesn't even try to handle redirection symbols in the alias
