@@ -489,7 +489,7 @@ All of the above locations can be overridden using the <code>--profile <span cla
 You can use `clink info` to find the directories and configuration files for the current Clink session.
 
 > **Notes:**
-> - Clink performs tilde expansion on the `%CLINK_PROFILE%` environment variable value.  If the path begins with `~\` then it is replaced with the current user's home directory (`%HOMEDRIVE%%HOMEPATH%` or `%USERPROFILE%`).
+> - Clink performs tilde expansion on the `%CLINK_PROFILE%` environment variable value.  If the path begins with `~\` then it is replaced with the current user's home directory (`%HOME%` or `%HOMEDRIVE%%HOMEPATH%` or `%USERPROFILE%`).
 > - The `--profile` flag has a quirk for backward compatibility with older versions of Clink: `~\` in `--profile` is expanded to `%LOCALAPPDATA%` instead.
 
 #### Overriding the profile directory when installed for Autorun
@@ -564,7 +564,7 @@ Injects Clink into a CMD.EXE process.<br/>
 See <code>clink inject --help</code> for more information.</dd>
 </p>
 
-> **Note:** If the `--profile` path begins with `~\` then it is replaced with the current user's home directory (`%HOMEDRIVE%%HOMEPATH%` or `%USERPROFILE%`).
+> **Note:** If the `--profile` path begins with `~\` then it is replaced with the current user's home directory (`%HOME%` or `%HOMEDRIVE%%HOMEPATH%` or `%USERPROFILE%`).
 
 <p>
 <dt>clink autorun</dt>
@@ -775,7 +775,7 @@ The Readline init file is named `.inputrc` or `_inputrc`.  Clink searches the di
 - `%USERPROFILE%`
 - `%LOCALAPPDATA%`
 - `%APPDATA%`
-- `%HOME%`
+- `%HOME%` or `%HOMEDRIVE%%HOMEPATH%`
 
 Other software that also uses the Readline library will also look for the `.inputrc` file (and possibly the `_inputrc` file too). To set macros and keybindings intended only for Clink, one can use the Readline init file conditional construct like this; `$if clink [...] $endif`.
 
@@ -1405,7 +1405,7 @@ Run `clink info` to see the script paths for the current session.
 
 > **Notes:**
 > - "completions" is a special reserved directory name:  a "completions" directory under any of the Lua script directories listed in `clink info` has special meaning, and should not contain scripts unless they are specially written to be put in a "completions" directory.  See [Completion directories](#completion-directories) for more information.
-> - Clink performs tilde expansion on the Lua script directory names.  If the path begins with `~\` then it is replaced with the current user's home directory (`%HOMEDRIVE%%HOMEPATH%` or `%USERPROFILE%`).
+> - Clink performs tilde expansion on the Lua script directory names.  If the path begins with `~\` then it is replaced with the current user's home directory (`%HOME%` or `%HOMEDRIVE%%HOMEPATH%` or `%USERPROFILE%`).
 
 ### Completion directories
 
@@ -1418,6 +1418,8 @@ For example, if you type `xyz` and an argmatcher for `xyz` is not yet loaded, th
 Clink looks for completion scripts in these directories:
 1. Any directories listed in the `%CLINK_COMPLETIONS_DIR%` environment variable (multiple directories may be separated by semicolons).
 2. A `completions\` subdirectory under each scripts directory listed by `clink info` (see [Location of Lua Scripts](#lua-scripts-location)).
+
+In v1.5.3 and higher, when a `completions\` script is loaded on demand the script receives as an argument the fully qualified path name to the typed program or file.  The script can access the argument by using `local fullname = ...` (literally three dots).  For example, that can be useful for checking whether it's a supported program, registering different argmatchers for different copies of the program or file, checking whether it's a supported program, and so on.
 
 > **Note:**  If you download scripts, then don't put them in a "completions" directory unless they specifically say they can be put there.
 >
