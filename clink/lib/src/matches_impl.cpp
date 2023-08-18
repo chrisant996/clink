@@ -401,9 +401,9 @@ matches_iter::matches_iter(const matches& matches, const char* pattern)
 , m_pattern((m_expanded_pattern ? m_expanded_pattern : pattern),
             (m_expanded_pattern ? m_expanded_pattern : pattern) ? -1 : 0)
 , m_has_pattern(pattern != nullptr)
+, m_can_try_substring(can_try_substring_pattern(pattern))
 , m_filename_completion_desired(matches.is_filename_completion_desired())
 , m_filename_display_desired(matches.is_filename_display_desired())
-, m_can_try_substring(can_try_substring_pattern(pattern))
 {
 }
 

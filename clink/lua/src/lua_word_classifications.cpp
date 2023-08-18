@@ -35,8 +35,8 @@ const lua_word_classifications::method lua_word_classifications::c_methods[] = {
 lua_word_classifications::lua_word_classifications(word_classifications& classifications, uint32 index_offset, uint32 command_word_index, uint32 num_words)
 : m_classifications(classifications)
 , m_index_offset(index_offset)
-, m_command_word_index(command_word_index)
 , m_num_words(num_words)
+, m_command_word_index(command_word_index)
 {
 }
 

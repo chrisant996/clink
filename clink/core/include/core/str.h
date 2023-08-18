@@ -94,8 +94,8 @@ str_impl<TYPE>::str_impl(TYPE* data, uint32 size)
 : m_data(data)
 , m_size(size)
 , m_growable(0)
-, m_owns_ptr(0)
 , m_length(0)
+, m_owns_ptr(0)
 {
 }
 

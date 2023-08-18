@@ -61,6 +61,10 @@ local function clink_project(name)
     project(name)
     flags("fatalwarnings")
     language("c++")
+
+    configuration("vs*")
+        buildoptions("-FI\""..path.getabsolute("clink/core/warning.h").."\"")
+    configuration()
 end
 
 --------------------------------------------------------------------------------

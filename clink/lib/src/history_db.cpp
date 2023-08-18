@@ -546,8 +546,8 @@ template <int32 S> read_lock::file_iter::file_iter(void* handle, char (&buffer)[
 
 //------------------------------------------------------------------------------
 read_lock::file_iter::file_iter(const read_lock& lock, char* buffer, int32 buffer_size)
-: m_handle(lock.m_handle_lines)
-, m_buffer(buffer)
+: m_buffer(buffer)
+, m_handle(lock.m_handle_lines)
 , m_buffer_size(buffer_size)
 {
     set_file_offset(0);
@@ -555,8 +555,8 @@ read_lock::file_iter::file_iter(const read_lock& lock, char* buffer, int32 buffe
 
 //------------------------------------------------------------------------------
 read_lock::file_iter::file_iter(void* handle, char* buffer, int32 buffer_size)
-: m_handle(handle)
-, m_buffer(buffer)
+: m_buffer(buffer)
+, m_handle(handle)
 , m_buffer_size(buffer_size)
 {
     set_file_offset(0);

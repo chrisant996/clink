@@ -1,0 +1,1 @@
+#pragma warning( 1: 5038 )              // data member 'member1' will be initialized after data member 'member2'

@@ -78,8 +78,8 @@ struct test
     const char*         m_name;
 
     test(const char* name, test_func* func)
-    : m_name(name)
-    , m_func(func)
+    : m_func(func)
+    , m_name(name)
     {
         if (get_head() == nullptr)
             get_head() = this;
