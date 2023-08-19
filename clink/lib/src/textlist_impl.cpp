@@ -153,18 +153,6 @@ static int32 make_column(const char* in, const char* end, str_base& out)
 }
 
 //------------------------------------------------------------------------------
-static void make_spaces(int32 num, str_base& out)
-{
-    out.clear();
-    while (num > 0)
-    {
-        int32 chunk = min<int32>(32, num);
-        out.concat("                                ", chunk);
-        num -= chunk;
-    }
-}
-
-//------------------------------------------------------------------------------
 static int32 limit_cells(const char* in, int32 limit, int32& cells, int32 horz_offset=0, str_base* out=nullptr, const char** text_ptr=nullptr)
 {
     if (out)

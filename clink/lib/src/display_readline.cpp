@@ -1895,14 +1895,8 @@ void display_manager::display()
                     const uint32 cols = cell_count(out.c_str());
                     if (cols < limit)
                     {
-                        int32 pad = limit - cols;
                         str_moveable spaces;
-                        while (pad > 0)
-                        {
-                            const int32 chunk = min<int32>(32, pad);
-                            spaces.concat("                                ", chunk);
-                            pad -= chunk;
-                        }
+                        make_spaces(limit - cols, spaces);
                         print(spaces.c_str(), spaces.size());
                     }
 
@@ -2222,11 +2216,7 @@ test_left:
             move_to_column(d->m_lastcol);
 
             str<> tmp;
-            while (tmp.length() < erase_cols)
-            {
-                const uint32 c = min<uint32>(32, erase_cols - tmp.length());
-                tmp.concat("                                ", c);
-            }
+            make_spaces(erase_cols, tmp);
 
             rl_fwrite_function(_rl_out_stream, tmp.c_str(), tmp.length());
             _rl_last_c_pos += erase_cols;

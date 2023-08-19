@@ -11,6 +11,9 @@
 
 #include <assert.h>
 
+class str_base;
+class wstr_base;
+
 //------------------------------------------------------------------------------
 inline bool     is_null_or_empty(const char* s)                        { return !s || !*s; }
 inline bool     is_null_or_empty(const wchar_t* s)                     { return !s || !*s; }
@@ -31,6 +34,8 @@ inline const wchar_t* str_rchr(const wchar_t* s, int32 c)              { return 
 
 uint32 char_count(const char*);
 uint32 char_count(const wchar_t*);
+
+void make_spaces(uint32 num, str_base& out);
 
 //------------------------------------------------------------------------------
 template <typename TYPE>

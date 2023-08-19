@@ -89,3 +89,15 @@ uint32 char_count(const wchar_t* ptr)
 
     return count;
 }
+
+//------------------------------------------------------------------------------
+void make_spaces(uint32 num, str_base& out)
+{
+    out.clear();
+    while (num)
+    {
+        uint32 chunk = min<uint32>(32, num);
+        out.concat("                                ", chunk);
+        num -= chunk;
+    }
+}
