@@ -1856,7 +1856,6 @@ void display_manager::display()
                 static const char c_BEL[] = "\a";
 
                 str_moveable in;
-//$ todo: check if Right is bound to the usual command.
                 in << c_reverse << "Right" << c_unreverse << "-";
                 in << c_hyperlink << c_doc_autosuggest << c_BEL << "Accept Suggestion" << c_hyperlink << c_BEL;
 
@@ -1918,6 +1917,11 @@ void display_manager::display()
             _rl_last_c_pos = 0;
         }
     }
+
+#ifdef USE_SUGGESTION_HINT_COMMENTROW
+    if (_rl_last_v_pos < _rl_vis_botlin + 1)
+        move_to_row(_rl_vis_botlin + 1);
+#endif
 
     // If the right side prompt is not shown and should be, display it.
     if (!_rl_rprompt_shown_len && can_show_rprompt)
