@@ -1794,9 +1794,6 @@ void display_manager::display()
         // Erase any surplus lines and update the bottom line counter.
         if (new_botlin < old_botlin)
         {
-            if (m_pending_wrap)
-                finish_pending_wrap();
-
             move_to_column(0);
 
             // BUGBUG: This probably will garble the display if the terminal
@@ -1881,9 +1878,6 @@ void display_manager::display()
             move_to_row(_rl_vis_botlin + 1);
             move_to_column(0);
 
-            if (m_pending_wrap)
-                finish_pending_wrap();
-
             if (*comment)
             {
                 str<> out;
@@ -1932,9 +1926,6 @@ void display_manager::display()
     // Move cursor to the rl_point position.
     move_to_row(m_last_prompt_line_botlin + next->vpos() - m_top);
     move_to_column(next->cpos());
-
-    if (m_pending_wrap)
-        finish_pending_wrap();
 
 #undef rl_fwrite_function
 #undef rl_fflush_function
@@ -2197,9 +2188,6 @@ test_left:
     move_to_column(lcol);
     shift_cols(lcol, delta);
 
-    if (m_pending_wrap)
-        finish_pending_wrap();
-
     rl_puts_face_func(d->m_chars + lind, d->m_faces + lind, rind - lind);
 
     _rl_last_c_pos = rcol;
@@ -2238,13 +2226,13 @@ test_left:
 void display_manager::move_to_column(uint32 col, bool force)
 {
     assert(_rl_term_ch && *_rl_term_ch);
-
     assert(col < _rl_screenwidth);
-    if (col == _rl_last_c_pos && !force)
-        return;
 
     if (m_pending_wrap)
         finish_pending_wrap();
+
+    if (col == _rl_last_c_pos && !force)
+        return;
 
     if (col)
     {
@@ -2262,11 +2250,11 @@ void display_manager::move_to_column(uint32 col, bool force)
 //------------------------------------------------------------------------------
 void display_manager::move_to_row(int32 row)
 {
-    if (row == _rl_last_v_pos)
-        return;
-
     if (m_pending_wrap)
         finish_pending_wrap();
+
+    if (row == _rl_last_v_pos)
+        return;
 
     _rl_move_vert(row);
 }
@@ -2332,6 +2320,7 @@ void display_manager::shift_cols(uint32 col, int32 delta)
 //------------------------------------------------------------------------------
 void display_manager::print(const char* chars, uint32 len)
 {
+    assert(!m_pending_wrap);
     m_pending_wrap = false;
     rl_fwrite_function(_rl_out_stream, chars, len);
 }
@@ -2345,9 +2334,6 @@ void display_manager::print_rprompt(const char* s)
 
     move_to_row(0);
     move_to_column(col);
-
-    if (m_pending_wrap)
-        finish_pending_wrap();
 
     if (s)
     {
