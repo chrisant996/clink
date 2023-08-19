@@ -187,6 +187,33 @@ TEST_CASE("Strings" NAME_SUFFIX)
         char buffer[] = "test";
         REQUIRE(str_base(buffer).equals("test") == true);
     }
+
+    SECTION("Moveable")
+    {
+        str_moveable a;
+        str_moveable b;
+        str_moveable z;
+        const auto* a_empty = a.c_str();
+        const auto* b_empty = b.c_str();
+        REQUIRE(z.size() == 1);
+        REQUIRE(z.c_str() != a_empty);
+        REQUIRE(z.c_str() != b_empty);
+
+        a = STR("hello");
+        b = STR("world");
+        REQUIRE(a.c_str() != a_empty);
+        REQUIRE(b.c_str() != b_empty);
+        const auto* raw_a = a.c_str();
+        const auto* raw_b = b.c_str();
+
+        a = std::move(b);
+        REQUIRE(a.c_str() == raw_b);
+        REQUIRE(a.size() > 1);
+        REQUIRE(b.c_str() == b_empty);
+        REQUIRE(b.size() == 1);
+        REQUIRE(z.c_str() != a_empty);
+        REQUIRE(z.c_str() != b_empty);
+    }
 }
 
 #undef STR
