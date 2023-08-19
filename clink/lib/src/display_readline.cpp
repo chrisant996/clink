@@ -884,6 +884,10 @@ void display_lines::set_top(uint32 top)
 //------------------------------------------------------------------------------
 void display_lines::set_comment_row(str_moveable&& s, comment_row_type type)
 {
+#ifdef DEBUG
+    if (!s.empty())
+        dbgsetignore(s.c_str());
+#endif
     m_comment_row = std::move(s);
     m_comment_row_type = type;
 }
