@@ -1000,10 +1000,10 @@ end
 --- <li>One or more string values that are args or flags, and a
 --- <code>description</code> field that is the associated description string.
 --- <li>Key/value pairs where each key is an arg or flag, and its value is
---- either a description string or a table containing an optional arguments
---- string and a description string.  If an arguments string is provided, it is
---- appended to the arg or flag string when listing possible completions.  For
---- example, <code>["--user"] = { " name", "Specify username"}</code> gets
+--- either a description string or a table containing an optional argument info
+--- string and a description string.  If an argument info string is provided, it
+--- is appended to the arg or flag string when listing possible completions.
+--- For example, <code>["--user"] = { " name", "Specify username"}</code> gets
 --- printed as:
 ---
 --- <pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black">

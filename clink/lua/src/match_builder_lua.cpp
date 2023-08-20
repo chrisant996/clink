@@ -70,6 +70,7 @@ match_builder_lua::~match_builder_lua()
 /// -show:  {
 /// -show:  &nbsp;   match           = "..."    -- [string] The match text.
 /// -show:  &nbsp;   display         = "..."    -- [string] OPTIONAL; alternative text to display when listing possible completions.
+/// -show:  &nbsp;   arginfo         = "..."    -- [string] OPTIONAL; an argument info string (requires v1.5.4 or greater).
 /// -show:  &nbsp;   description     = "..."    -- [string] OPTIONAL; a description for the match.
 /// -show:  &nbsp;   type            = "..."    -- [string] OPTIONAL; the match type.
 /// -show:  &nbsp;   appendchar      = "..."    -- [string] OPTIONAL; character to append after the match.
@@ -80,6 +81,11 @@ match_builder_lua::~match_builder_lua()
 /// <li>The <code>display</code> field is optional, and is displayed instead of
 /// the <code>match</code> field when listing possible completions.  It can even
 /// include ANSI escape codes for colors, etc.  (Requires v1.2.38 or greater.)
+/// <li>The <code>arginfo</code> field is optional, and is displayed next to the
+/// <code>match</code> field.  See <a href="#_argmatcher:adddescriptions">_argmatcher:adddescriptions</a>
+/// for more about the argument info string.  The <code>arginfo</code> field is
+/// ignored if the <code>display</code> field is present.  (Requires v1.5.4 or
+/// greater.)
 /// <li>The <code>description</code> field is optional, and is displayed in
 /// addition to <code>match</code> or <code>display</code> when listing possible
 /// completions.  (Requires v1.2.38 or greater.)

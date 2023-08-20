@@ -1646,7 +1646,9 @@ function my_match_generator:generate(line_state, match_builder)
 end
 ```
 
-> **Note:**  In v1.3.1 and higher, the table received by the registered ondisplaymatches function includes all the match fields (such as `display`, `description`, `appendchar`, etc), and the returned table can also include any of these fields.  In other words, in v1.3.1 and higher match filtering supports all the same fields as [builder:addmatch()](#builder:addmatch).
+> **Compatibility Notes:**
+> - In v1.3.1 and higher, the table received by the registered ondisplaymatches function includes all the match fields (such as `display`, `description`, `appendchar`, etc), and the function can include any of these fields in the table it returns.  In other words, in v1.3.1 and higher match filtering supports all the same fields as [builder:addmatch()](#builder:addmatch).
+> - In v1.5.4 and higher, the table received by the registered ondisplaymatches function can include an `arginfo` field, and the function can include `arginfo` in the table it returns.
 
 <a name="argumentcompletion"></a>
 
