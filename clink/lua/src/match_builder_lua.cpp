@@ -422,6 +422,18 @@ bool match_builder_lua::add_match_impl(lua_State* state, int32 stack_index, matc
                 desc.display = lua_tostring(state, -1);
             lua_pop(state, 1);
 
+            if (!desc.display)
+            {
+                lua_pushliteral(state, "arginfo");
+                lua_rawget(state, stack_index);
+                if (lua_isstring(state, -1))
+                {
+                    desc.display = lua_tostring(state, -1);
+                    desc.append_display = true;
+                }
+                lua_pop(state, 1);
+            }
+
             lua_pushliteral(state, "description");
             lua_rawget(state, stack_index);
             if (lua_isstring(state, -1))
@@ -438,13 +450,6 @@ bool match_builder_lua::add_match_impl(lua_State* state, int32 stack_index, matc
             lua_rawget(state, stack_index);
             if (lua_isboolean(state, -1))
                 desc.suppress_append = lua_toboolean(state, -1);
-            lua_pop(state, 1);
-
-            // Undocumented; for internal use only.
-            lua_pushliteral(state, "appenddisplay");
-            lua_rawget(state, stack_index);
-            if (lua_isboolean(state, -1))
-                desc.append_display = lua_toboolean(state, -1);
             lua_pop(state, 1);
 
             // If the table defines a match, add the match.

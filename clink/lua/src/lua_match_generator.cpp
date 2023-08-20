@@ -216,12 +216,25 @@ done:
             lua_pushlstring(state, tmp.c_str(), tmp.length());
             lua_rawset(state, -3);
 
+            // The display field is special:
+            //  - When MATCH_FLAG_APPEND_DISPLAY is set, add it as "arginfo".
+            //  - When display and match are different, add it as "display".
+            //  - Otherwise do nothing with it.
             const char* display = details.get_display();
-            if (display && *display && display != match)
+            if (display && *display)
             {
-                lua_pushliteral(state, "display");
-                lua_pushstring(state, display);
-                lua_rawset(state, -3);
+                if (details.get_flags() & MATCH_FLAG_APPEND_DISPLAY)
+                {
+                    lua_pushliteral(state, "arginfo");
+                    lua_pushstring(state, display);
+                    lua_rawset(state, -3);
+                }
+                else if (strcmp(display, match))
+                {
+                    lua_pushliteral(state, "display");
+                    lua_pushstring(state, display);
+                    lua_rawset(state, -3);
+                }
             }
 
             const char* description = details.get_description();
@@ -317,9 +330,24 @@ done:
                 lua_rawget(state, -2);
                 if (lua_isstring(state, -1))
                     display = lua_tostring(state, -1);
-                else
-                    display = match;
                 lua_pop(state, 1);
+
+                // "display" supersedes "arginfo".
+                if (!display)
+                {
+                    lua_pushliteral(state, "arginfo");
+                    lua_rawget(state, -2);
+                    if (lua_isstring(state, -1))
+                    {
+                        display = lua_tostring(state, -1);
+                        flags |= MATCH_FLAG_APPEND_DISPLAY;
+                    }
+                    else
+                    {
+                        display = match;
+                    }
+                    lua_pop(state, 1);
+                }
 
                 lua_pushliteral(state, "description");
                 lua_rawget(state, -2);
@@ -442,8 +470,10 @@ next:
         uint32 hare = 1;
         while (new_matches[hare])
         {
+            // Dedupe on "display" if present and "arginfo" wasn't present.
+            // Otherwise dedupe on "match".
             const char* display = new_matches[hare]->display;
-            if (!display || !*display)
+            if (!display || !*display || (new_matches[hare]->flags & MATCH_FLAG_APPEND_DISPLAY))
                 display = new_matches[hare]->match;
             if (seen.find(display) != seen.end())
             {

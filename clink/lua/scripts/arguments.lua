@@ -1491,9 +1491,8 @@ function _argmatcher:_generate(line_state, match_builder, extra_words)
                     m.description = m.description or d
                 else
                     if #d > 1 then
-                        m.display = m.display or d[1]
+                        m.arginfo = m.arginfo or d[1]
                         m.description = m.description or d[2]
-                        m.appenddisplay = true
                     else
                         m.description = m.description or d[1]
                     end

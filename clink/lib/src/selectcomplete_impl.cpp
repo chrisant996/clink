@@ -1497,7 +1497,6 @@ void selectcomplete_impl::update_display()
                             printed_len = 0;
                             if (append)
                             {
-                                assert(!m_matches.is_display_filtered());
                                 const char* match = m_matches.get_match(i);
                                 char* temp = __printable_part(const_cast<char*>(match));
                                 printed_len = append_filename(temp, match, 0, 0, type, selected, nullptr);

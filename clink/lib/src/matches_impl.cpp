@@ -1077,8 +1077,16 @@ bool matches_impl::add_match(const match_desc& desc, bool already_normalized)
     match_lookup lookup = { store_match, type };
     m_dedup->emplace(std::move(lookup));
 
-    uint32 ordinal = uint32(m_infos.size());
-    match_info info = { store_match, store_display, store_description, ordinal, type, desc.append_char, desc.suppress_append, append_display, false/*select*/ };
+    match_info info;
+    info.match = store_match;
+    info.display = store_display;
+    info.description = store_description;
+    info.ordinal = uint32(m_infos.size());
+    info.type = type;
+    info.append_char = desc.append_char;
+    info.suppress_append = desc.suppress_append;
+    info.append_display = append_display;
+    info.select = false;
     m_infos.emplace_back(std::move(info));
     ++m_count;
 
