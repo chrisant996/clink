@@ -27,10 +27,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
     local remove = clink.onbeginedit(func) -- add func
     remove()                               -- remove func
     ```
-- `clink.ondisplaymatches()` mishandles the `display` field.  Because I made poor decisions way back when, and the `display` field is used in two different ways.  The two ways collide during an `ondisplaymatches` event.
-  - It's easy enough for an `ondisplaymatches` callback function to append the `match` and `display` fields together.  But it's messy and requires manual color handling, and manually separating any spaces that prefix the `display` field.
-  - There really needed to have been a separate `arginfo` field, so that `match` and `arginfo` could get concatenated if there's no `display` field.
-  - Not sure if there's a way to fix it, even.
 - Allow Lua to set the comment row for the input line?
   - Need a simple and reliable trigger for clearing the comment row later; maybe `clink.onaftercommand()` is enough?
   - Don't add this ability unless there is a way to ensure comment rows don't get "leaked" and continue showing up past when they were relevant.
