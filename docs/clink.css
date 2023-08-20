@@ -190,9 +190,42 @@ kbd {
 
 .console {
     border: none;
+    color: #c0c0c0;
     background-color: transparent;
     margin-left: 0;
     width: 100%;
+}
+
+.color_default { color: #c0c0c0 }
+
+.color_arg { color: #ffffff }
+.color_arginfo { color: #d78700 }
+.color_argmatcher { color: #00d700 }
+.color_cmd { color: #ffffff }
+.color_cmdredir { color: #d78700 }
+.color_cmdsep { color: #af5fff }
+.color_description { color: #00afff }
+.color_doskey { color: #5fafff }
+.color_executable { color: #0087ff }
+.color_flag { color: #87d7ff }
+.color_input { color: #ffaf00 }
+.color_suggestion { color: #808080 }
+.color_unexpected { color: #c0c0c0 }
+.color_unrecognized { color: #ff5f5f }
+
+.right_gray {
+    color: #d7d7d7;
+    text-align:right;
+    font-style:italic;
+}
+
+.cursor {
+    animation: blinker 1s steps(1, end) infinite;
+    color: #ffffff;
+}
+@keyframes blinker {
+    0% { opacity: 1; }
+    50% { opacity: 0; }
 }
 
 .section {

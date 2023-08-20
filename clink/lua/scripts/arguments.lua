@@ -1007,7 +1007,7 @@ end
 --- printed as:
 ---
 --- <pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black">
---- <span style="color:#c0c0c0">--user</span> <span style="color:#808000">name</span>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#00ffff">Specify username</span>
+--- <span class="color_default">--user</span> <span class="color_arginfo">name</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="color_description">Specify username</span>
 --- </code></pre>
 --- </ul>
 ---

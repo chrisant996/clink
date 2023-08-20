@@ -59,15 +59,24 @@ There are three main ways of customizing Clink to your preferences:  the [Readli
 
 ## How Completion Works
 
-Clink can offer possible completions for the word at the cursor, and can insert them for you.  Clink can complete file names, directories, environment variables, and commands.  It also allows you to provide custom completion generators using Lua scripts that execute inside Clink (see [Extending Clink With Lua](#extending-clink-with-lua)).
+Clink can offer possible completions for the word at the cursor, and can insert them for you.
 
-By default, pressing <kbd>Tab</kbd> performs completion the same way that bash does on Unix and Linux.  When you press <kbd>Tab</kbd>, Clink finds matches for how to complete the word at the cursor.  It automatically inserts the longest common prefix shared by the possible completions.  If you press <kbd>Tab</kbd> again, it also lists the possible completions.
+<kbd>Tab</kbd> is the default completion key.
 
-If you install Clink with "Use enhanced defaults" or if you set [`clink.default_bindings`](#clink_default_bindings) to use "windows" defaults, then pressing <kbd>Tab</kbd> cycles through the possible completions, replacing the word with the next possible completion each time.
+- If you install Clink with "Use enhanced defaults" or if you set [`clink.default_bindings`](#clink_default_bindings) to use "windows" defaults, then <kbd>Tab</kbd> cycles through the possible completions, replacing the word with the next possible completion each time.
+- Otherwise, <kbd>Tab</kbd> performs completion the same way that bash does on Unix and Linux:  When you press <kbd>Tab</kbd>, Clink finds matches for how to complete the word at the cursor.  It automatically inserts the longest common prefix shared by the possible completions.  If you press <kbd>Tab</kbd> again, it also lists the possible completions.
 
-Pressing <kbd>Ctrl</kbd>-<kbd>Space</kbd> shows an interactive list of possible completions.  You can use the arrow keys to choose which completion to insert, and you can type to filter the list.  <kbd>Enter</kbd> inserts the selected completion, or <kbd>Space</kbd> inserts the selected completion and makes sure a space follows it to allow typing a next argument.
+<kbd>Ctrl</kbd>-<kbd>Space</kbd> shows an interactive list of possible completions.  You can use the arrow keys to choose which completion to insert, and you can type to filter the list.  <kbd>Enter</kbd> inserts the selected completion, or <kbd>Space</kbd> inserts the selected completion and makes sure a space follows it to allow typing a next argument.
 
-The first word of each command line is the command or program to execute, or a file to open.  By default, Clink provides completions for the first word based on all executable programs on the system PATH and the current directory, but not non-executable files.  You can turn off executable completion by running <code>clink set <a href="#exec_enable">exec.enable</a> false</code>, or you can adjust its behavior by changing the various [`exec.*`](#exec.aliases) settings.
+Some examples of what completions can offer:
+- File names,
+- Directories,
+- Environment variables,
+- Commands,
+- Command [arguments and flags](#argument-completion),
+- You can also provide custom completion generators using Lua scripts that execute inside Clink (see [Extending Clink With Lua](#extending-clink-with-lua) and [Popular Scripts](#popular-scripts)).
+
+Completion has special treatment for the first word of each command line.  By default, Clink provides completions for the first word based on all executable programs on the system PATH and the current directory, but not non-executable files.  You can turn off this "executable completion" behavior by running <code>clink set <a href="#exec_enable">exec.enable</a> false</code>, or you can adjust its behavior by changing the various [`exec.*`](#exec.aliases) settings.
 
 See [Completion Commands](#completion-commands) and [Clink Commands](#clink-commands) for more available completion commands.
 
@@ -175,13 +184,27 @@ Key | Windows | Bash
 
 Clink can suggest commands as you type, based on command history and completions.
 
-To turn on automatic suggestions, run <code>clink set <a href="#autosuggest_enable">autosuggest.enable</a> true</code>.  When the cursor is at the end of the input line, a suggestion may appear in a muted color.  If the suggestion isn't what you want, just ignore it.  Or accept the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, accept the next word of the suggestion with <kbd>Ctrl</kbd>-<kbd>Right</kbd>, or accept the next full word of the suggestion up to a space with <kbd>Shift</kbd>-<kbd>Right</kbd>.
+If you use the setup program with "Use enhanced default settings" checked then automatic suggestions are enabled by default.
+
+You can turn off automatic suggestions with <code>clink set <a href="#autosuggest_enable">autosuggest.enable</a> false</code>, or turn them on with <code>clink set <a href="#autosuggest_enable">autosuggest.enable</a> true</code>.
+
+When automatic suggestions are enabled and the cursor is at the end of the input line, a suggestion may appear in a muted color.  If the suggestion isn't what you want, just ignore it.  Or you can accept the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, accept the next word of the suggestion with <kbd>Ctrl</kbd>-<kbd>Right</kbd>, or accept the next full word of the suggestion up to a space with <kbd>Shift</kbd>-<kbd>Right</kbd>.
 
 The [`autosuggest.strategy`](#autosuggest_strategy) setting determines how a suggestion is chosen.
 
-Or, if you use the setup program with "Use enhanced default settings" checked then automatic suggestions are enabled by default.
+Here's an example of how auto-suggestion works.  Suppose you ran a command, so now it's in your command history:
 
-To turn off automatic suggestions, run <code>clink set <a href="#autosuggest_enable">autosuggest.enable</a> false</code>.
+<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default">C:\dir&gt;<span class="color_executable">findstr</span>&nbsp; <span class="color_input">/s needle haystack\*</span></span>
+</code></pre>
+
+Later, you start to type a new command, and it matches the earlier command from the history:
+
+<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default">C:\dir&gt;<span class="color_executable">findstr</span>&nbsp;<span class="cursor">_</span><span class="color_suggestion">/s needle haystack\*</span></span>
+</code></pre>
+
+The muted text shows a suggestion that might be what you intend to type.  You can accept the muted text into the input line by pressing the <kbd>Right</kbd> key.
+
+If you press <kbd>Tab</kbd> then that invokes [completion](#how-completion-works) instead, which is different from auto-suggestions.
 
 <a name="gettingstarted_colors"></a>
 
@@ -1668,15 +1691,15 @@ Flags are position independent.  Any `:addflags()` add to the set of possible fl
 
 On the command line completion would look something like this, if <kbd>Alt</kbd>-<kbd>=</kbd> were pressed at the end of each input line below:
 
-<pre style="border-radius:initial;border:initial"><code class="plaintext" style="background-color:black;color:#cccccc">C:\&gt;foobar -
+<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default">C:\&gt;<span class="color_argmatcher">foobar</span> <span class="color_input">-</span>
 -bar  -foo
-C:\&gt;foobar -bar hello
+C:\&gt;<span class="color_argmatcher">foobar</span> <span class="color_flag">-bar</span> <span class="color_arg">hello</span>
 wombles  world  xyzzy
-C:\&gt;foobar -bar hello wo
+C:\&gt;<span class="color_argmatcher">foobar</span> <span class="color_flag">-bar</span> <span class="color_arg">hello</span> <span class="color_input">wo</span>
 wombles  world
-C:\&gt;foobar -bar hello wombles -
--bar -foo
-C:\&gt;foobar -bar hello wombles -foo <span style="color:#ffffff">_</span>
+C:\&gt;<span class="color_argmatcher">foobar</span> <span class="color_flag">-bar</span> <span class="color_arg">hello</span> <span class="color_arg">wombles</span> <span class="color_input">-</span>
+-bar  -foo
+C:\&gt;<span class="color_argmatcher">foobar</span> <span class="color_flag">-bar</span> <span class="color_arg">hello</span> <span class="color_arg">wombles</span> <span class="color_flag">-foo</span> <span class="cursor">_</span></span>
 </code></pre>
 
 When displaying possible completions, flag matches are only shown if the flag character has been input.  So `foobar ` and <kbd>Alt</kbd>-<kbd>=</kbd> would list matches for the first argument position, or `foobar some_word ` and <kbd>Alt</kbd>-<kbd>=</kbd> would list matches for the second argument position, or  `foobar -` and <kbd>Alt</kbd>-<kbd>=</kbd> would list only flag matches.
@@ -1706,9 +1729,9 @@ clink.argmatcher("foobar")
 
 When completing a word that doesn't have a corresponding argument position the argmatcher will automatically use filename completion.  For example, the `foobar` argmatcher has two argument positions, and completing a third word uses filename completion.
 
-<pre style="border-radius:initial;border:initial"><code class="plaintext" style="background-color:black;color:#cccccc">C:\&gt;foobar hello world pro
+<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default">C:\&gt;<span class="color_argmatcher">foobar</span> <span class="color_arg">hello</span> <span class="color_arg">world</span> <span class="color_input">pro</span>
 Program Files\  Program Files(x86)\  ProgramData\
-C:\&gt;foobar hello world pro<span style="color:#ffffff">_</span>
+C:\&gt;<span class="color_argmatcher">foobar</span> <span class="color_arg">hello</span> <span class="color_arg">world</span> <span class="color_input">pro</span><span class="cursor">_</span></span>
 </code></pre>
 
 Use [_argmatcher:nofiles()](#_argmatcher:nofiles) if you want to disable the automatic filename completion and "dead end" an argmatcher for extra words.  This stops all further parsing for the command.
@@ -2048,7 +2071,7 @@ With the shorthand form flags are implied rather than declared.  When a shorthan
 
 ## Coloring the Input Text
 
-When the <code><a href="#clink_colorize_input">clink.colorize_input</a></code> setting is disabled, then the entire input line is colored by the <code><a href="#color_input">color.input</a></code> setting.  When the setting is enabled, then [argmatchers](#argumentcompletion) automatically apply colors to the input text as they parse it.
+When the <code><a href="#clink_colorize_input">clink.colorize_input</a></code> setting is enabled, then [argmatchers](#argumentcompletion) automatically apply colors to the input text as they parse it.  When the setting is disabled, then the entire input line is colored by the <code><a href="#color_input">color.input</a></code> setting.
 
 <table class="linkmenu">
 <tr><td><a href="#inputcolor_command">Coloring the Command Word</a></td><td>How the command word is colored.</td></tr>
@@ -2074,13 +2097,13 @@ The command word is colored based on the command type, in priority order:
 
 Here are examples, using the colors from the [Use enhanced defaults](#gettingstarted_enhanceddefaults) installation option:
 
-<pre style="border-radius:initial;border:initial"><code class="plaintext" style="background-color:black"><table class="console" cellpadding=0 cellspacing=0>
-<tr><td><span style="color:#c0c0c0">c:\dir></span><span style="color:#00d700">clink</span></td><td style="color:#d7d7d7;text-align:right"><em>'clink' has an argmatcher</em></td></tr>
-<tr><td><span style="color:#c0c0c0">c:\dir></span><span style="color:#ffffff">attrib</span></td><td style="color:#d7d7d7;text-align:right"><em>'attrib' is a CMD command</em></td></tr>
-<tr><td><span style="color:#c0c0c0">c:\dir></span><span style="color:#5fafff">myalias</span></td><td style="color:#d7d7d7;text-align:right"><em>if 'myalias' is a doskey alias</em></td></tr>
-<tr><td><span style="color:#c0c0c0">c:\dir></span><span style="color:#0087ff">control</span></td><td style="color:#d7d7d7;text-align:right"><em>'control' is an executable</em></td></tr>
-<tr><td><span style="color:#c0c0c0">c:\dir></span><span style="color:#ff5f5f">xyzabc123</span></td><td style="color:#d7d7d7;text-align:right"><em>unrecognized</em></td></tr>
-<tr><td><span style="color:#c0c0c0">c:\dir></span><span style="color:#ffd787">whatever</span></td><td style="color:#d7d7d7;text-align:right"><em>if executable and unrecognized colors are not set</em></td></tr>
+<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><table class="console" cellpadding=0 cellspacing=0>
+<tr><td class="color_default">c:\dir><span class="color_argmatcher">clink</span></td><td class="right_gray">'clink' has an argmatcher</td></tr>
+<tr><td class="color_default">c:\dir><span class="color_cmd">attrib</span></td><td class="right_gray">'attrib' is a CMD command</td></tr>
+<tr><td class="color_default">c:\dir><span class="color_doskey">myalias</span></td><td class="right_gray">if 'myalias' is a doskey alias</td></tr>
+<tr><td class="color_default">c:\dir><span class="color_executable">control</span></td><td class="right_gray">'control' is an executable</td></tr>
+<tr><td class="color_default">c:\dir><span class="color_unrecognized">xyzabc123</span></td><td class="right_gray">unrecognized</td></tr>
+<tr><td class="color_default">c:\dir><span class="color_input">whatever</span></td><td class="right_gray">if executable and unrecognized colors are not set</td></tr>
 </table></code></pre>
 
 <a name="inputcolor_redir"></a>
@@ -2095,9 +2118,9 @@ Command separators and redirection are colored accordingly:
 
 Here are examples, using the colors from the [Use enhanced defaults](#gettingstarted_enhanceddefaults) installation option:
 
-<pre style="border-radius:initial;border:initial"><code class="plaintext" style="background-color:black"><table class="console" cellpadding=0 cellspacing=0>
-<tr><td><span style="color:#c0c0c0">c:\dir></span><span style="color:#ffffff">pushd</span> <span style="color:#ffaf00">&</span> <span style="color:#ffffff">popd</span></td><td style="color:#d7d7d7;text-align:right"><em>'&' is the command separator</em></td></tr>
-<tr><td><span style="color:#c0c0c0">c:\dir></span><span style="color:#ffffff">set</span> <span style="color:#d78700">&gt;</span><span style="color:#ffd787">file</span></td><td style="color:#d7d7d7;text-align:right"><em>redirecting 'set' to 'file'</em></td></tr>
+<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><table class="console" cellpadding=0 cellspacing=0>
+<tr><td class="color_default">c:\dir><span class="color_cmd">pushd</span> <span class="color_cmdsep">&</span> <span class="color_cmd">popd</span></td><td class="right_gray">'&' is the command separator</td></tr>
+<tr><td class="color_default">c:\dir><span class="color_cmd">set</span> <span class="color_cmdredir">&gt;</span><span class="color_input">file</span></td><td class="right_gray">redirecting 'set' to 'file'</td></tr>
 </table></code></pre>
 
 <a name="inputcolor_other"></a>
@@ -2109,16 +2132,18 @@ Other input words are colored based on how argmatchers parse the input text.
 - If an argmatcher isn't defined for a command, then the input text is colored using <code><a href="#color_input">color.input</a></code>.
 - Flags defined by the command's argmatcher use <code><a href="#color_flag">color.flag</a></code>.
 - Arguments defined by the command's argmatcher use <code><a href="#color_arg">color.arg</a></code>.
-- Text the goes past what the command's argmatcher expects uses <code><a href="#color_unexpected">color.unexpected</a></code>.
+- Text that goes past what the command's argmatcher expects uses <code><a href="#color_unexpected">color.unexpected</a></code>.
+- [Auto-suggestion](#gettingstarted_autosuggest) text uses <code><a href="#color_suggestion">color.suggestion</a></code>.
 
 Here are examples, using the colors from the [Use enhanced defaults](#gettingstarted_enhanceddefaults) installation option:
 
-<pre style="border-radius:initial;border:initial"><code class="plaintext" style="background-color:black"><table class="console" cellpadding=0 cellspacing=0>
-<tr><td><span style="color:#c0c0c0">c:\dir></span><span style="color:#00d700">clink</span> <span style="color:#87d7ff">--help</span></td><td style="color:#d7d7d7;text-align:right"><em>'--help' is defined as a flag for 'clink'</em></td></tr>
-<tr><td><span style="color:#c0c0c0">c:\dir></span><span style="color:#00d700">clink</span> <span style="color:#ffffff">set</span></td><td style="color:#d7d7d7;text-align:right"><em>'set' is defined as an argument for 'clink'</em></td></tr>
-<tr><td><span style="color:#c0c0c0">c:\dir></span><span style="color:#00d700">clink</span> <span style="color:#ffffff">set</span> <span style="color:#ffffff">color.arg</span></td><td style="color:#d7d7d7;text-align:right"><em>'color.arg' is defined as an argument for 'clink set'</em></td></tr>
-<tr><td><span style="color:#c0c0c0">c:\dir></span><span style="color:#00d700">clink</span> <span style="color:#ffffff">set</span> <span style="color:#c0c0c0">abc.xyz</span></td><td style="color:#d7d7d7;text-align:right"><em>'abc.xyz' is not a recognized argument for 'clink set'</em></td></tr>
-<tr><td><span style="color:#c0c0c0">c:\dir></span><span style="color:#0087ff">findstr</span> <span style="color:#ffd787">/s needle haystack\*</span></td><td style="color:#d7d7d7;text-align:right"><em>if 'findstr' has no argmatcher, all words use 'color.input'</em></td></tr>
+<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><table class="console" cellpadding=0 cellspacing=0>
+<tr><td class="color_default">c:\dir><span class="color_argmatcher">clink</span> <span class="color_flag">--help</span></td><td class="right_gray">'--help' is defined as a flag for 'clink'</td></tr>
+<tr><td class="color_default">c:\dir><span class="color_argmatcher">clink</span> <span class="color_arg">set</span></td><td class="right_gray">'set' is defined as an argument for 'clink'</td></tr>
+<tr><td class="color_default">c:\dir><span class="color_argmatcher">clink</span> <span class="color_arg">set</span> <span class="color_arg">color.arg</span></td><td class="right_gray">'color.arg' is defined as an argument for 'clink set'</td></tr>
+<tr><td class="color_default">c:\dir><span class="color_argmatcher">clink</span> <span class="color_arg">set</span> <span class="color_unexpected">abc.xyz</span></td><td class="right_gray">'abc.xyz' is not a recognized argument for 'clink set'</td></tr>
+<tr><td class="color_default">c:\dir><span class="color_executable">findstr</span> <span class="color_input">/s needle haystack\*</span></td><td class="right_gray">if 'findstr' has no argmatcher, all words use 'color.input'</td></tr>
+<tr><td class="color_default">c:\dir><span class="color_executable">findstr</span> <span class="color_input">/s</span><span class="cursor">_</span><span class="color_suggestion">needle haystack\*</span></td><td class="right_gray">press RIGHT to accept an auto-suggestion</td></tr>
 </table></code></pre>
 
 ### More Advanced Stuff
@@ -2216,13 +2241,13 @@ The following example illustrates setting the prompt, modifying the prompt, usin
 
 The resulting prompt will look like this:
 
-<pre style="border-radius:initial;border:initial"><code class="plaintext" style="background-color:black"><span style="color:#00ff00">Wed 12:54</span> <span style="color:#ffff00">c:\dir</span> <span style="color:#008080">[master]</span>
-<span style="color:#cccccc">&gt;&nbsp;_</span>
+<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default"><span style="color:#00ff00">Tue 12:54</span> <span style="color:#ffff00">c:\dir</span> <span style="color:#008080">[master]</span>
+&gt;&nbsp;<span class="cursor">_</span></span>
 </code></pre>
 
 ...except on Wednesdays, when it will look like this:
 
-<pre style="border-radius:initial;border:initial"><code class="plaintext" style="background-color:black"><span style="color:#00ff00">Wed 12:54</span> <span style="color:#ffff00">c:\dir</span> <span style="color:#cccccc">HAPPY HUMP DAY!&nbsp;_</span>
+<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default"><span style="color:#00ff00">Wed 12:54</span> <span style="color:#ffff00">c:\dir</span> HAPPY HUMP DAY!&nbsp;<span class="cursor">_</span></span>
 </code></pre>
 
 <p/>
