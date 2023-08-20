@@ -51,6 +51,7 @@ private:
 private:
     struct cached_info
     {
+                        cached_info() { clear(); }
         void            clear();
         uint32          m_count;
         str<32>         m_lcd;
