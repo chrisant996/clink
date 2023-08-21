@@ -505,6 +505,7 @@ static int quote_lcd = 0;
 static int force_quoting = 0;
 static char *orig_text_for_completion = 0;
 static int orig_text_len_for_completion = 0;
+static int menu_complete_inserted = 0;
 /* end_clink_change */
 
 /* Set to the last key used to invoke one of the completion functions */
@@ -3629,6 +3630,12 @@ rl_filename_completion_function (const char *text, int state)
 static int
 advance_match_list_index (int *index, int size, int count, char** matches, int orig_start)
 {
+  if (size == 1 && *index == 0)
+    {
+      /* If there's only one match, only let it be inserted once. */
+      return !menu_complete_inserted;
+    }
+
   if (!_rl_menu_complete_wraparound)
     {
       if (count < 0 && *index + count < 0)
@@ -3640,15 +3647,6 @@ advance_match_list_index (int *index, int size, int count, char** matches, int o
 	}
       else if (count > 0 && *index + count >= size)
 	{
-	  if (size == 1 && *index == 0)
-	    {
-	      /* If there's only one match and it hasn't been inserted yet,
-		 then let it be inserted. */
-	      char *cur_text = rl_copy_text (orig_start, rl_point);
-	      int cmp = strcmp (cur_text, matches[0]);
-	      xfree (cur_text);
-	      return (cmp != 0);
-	    }
 	  if (*index + 1 == size)
 	    return (0);
 	  *index = size - 1;
@@ -3750,6 +3748,7 @@ rl_old_menu_complete (int count, int invoking_key)
 /* begin_clink_change */
       no_compute_lcd = 1;
       remember_orig_text (orig_start, orig_end);
+      menu_complete_inserted = 0;
 /* end_clink_change */
 
       orig_text = rl_copy_text (orig_start, orig_end);
@@ -3834,6 +3833,7 @@ rl_old_menu_complete (int count, int invoking_key)
       rl_ding ();
       return (0);
     }
+  menu_complete_inserted = 1;
 /* end_clink_change */
 
   if (match_list_index == 0 && match_list_size > 1)
@@ -3955,6 +3955,7 @@ rl_menu_complete (int count, int ignore)
 
 /* begin_clink_change */
       remember_orig_text (orig_start, orig_end);
+      menu_complete_inserted = 0;
 /* end_clink_change */
 
       orig_text = rl_copy_text (orig_start, orig_end);
@@ -4085,6 +4086,7 @@ rl_menu_complete (int count, int ignore)
       rl_ding ();
       return (0);
     }
+  menu_complete_inserted = 1;
 /* end_clink_change */
 
   if (match_list_index == 0 && match_list_size > 1)
