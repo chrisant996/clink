@@ -6,10 +6,10 @@
 - Further contrast improvements for default colors to be readable in both Dark and Light terminal themes.
 - Added `arginfo` field in `builder:addmatches()` and in match display filtering.
 - Fixed `old-menu-complete` and `menu-complete` when there's only one match.  The first time it should insert the match, and subsequent times should ding instead of cycling through the same match over and over and requiring an equal number of `undo` to undo.
-- Fixed a problem between match display filtering and the `match.substring` setting.
-- Fixed a problem between match display filtering and the `files.system` setting.
-- Fixed a case where it could require two `undo` to fully undo what `menu-complete` inserted.
-- Fixed an obscure case where the cursor position might be wrong the first time `clink-select-complete` is used.
+- Fixed match display filtering to support the `match.substring` setting.
+- Fixed match display filtering to support the `files.system` setting.
+- Fixed the cursor position if match display filtering happens the first time `clink-select-complete` is used in a session.
+- Fixed a case where two `undo` were required to fully undo what `menu-complete` inserted.
 - Internal changes and optimizations.
 
 #### v1.5.3
