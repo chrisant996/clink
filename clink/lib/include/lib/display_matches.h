@@ -12,7 +12,7 @@ struct match_display_filter_entry
     const char* match;          // Match string (pointer into buffer).
     const char* display;        // Display string (pointer into buffer).
     const char* description;    // Description string (pointer into buffer).
-    uint8 type;                 // Match type.
+    match_type type;            // Match type.
     char append_char;           // Append character.
     uint8 flags;                // Match flags.
     char buffer[1];             // Variable length buffer containing the PACKED MATCH FORMAT.

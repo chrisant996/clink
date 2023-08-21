@@ -294,7 +294,7 @@ uint32 match_adapter::get_match_visible_description(uint32 index) const
 match_type match_adapter::get_match_type(uint32 index) const
 {
     if (m_filtered_matches)
-        return static_cast<match_type>(m_filtered_matches[index + 1]->type);
+        return m_filtered_matches[index + 1]->type;
     if (m_alt_matches)
         return lookup_match(m_alt_matches[index + 1]).get_type();
     if (m_matches)

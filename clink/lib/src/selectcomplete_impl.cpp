@@ -1158,7 +1158,7 @@ stop:
                 str<> tmp;
                 while (*(++filtered_matches))
                 {
-                    match_type_to_string(static_cast<match_type>(filtered_matches[0]->type), tmp);
+                    match_type_to_string(filtered_matches[0]->type, tmp);
                     printf("type '%s', match '%s', display '%s'\n",
                             tmp.c_str(),
                             filtered_matches[0]->match,

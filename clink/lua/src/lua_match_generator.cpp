@@ -399,7 +399,7 @@ done:
                 match_display_filter_entry *new_match;
                 new_match = (match_display_filter_entry *)malloc(alloc_size);
                 memset(new_match, 0, sizeof(*new_match));
-                new_match->type = uint8(type);
+                new_match->type = type;
                 new_match->append_char = append_char;
                 new_match->flags = flags;
                 new_matches[j] = new_match;
