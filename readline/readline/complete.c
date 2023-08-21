@@ -2541,10 +2541,10 @@ insert_match (char *match, int start, int mtype, char *qc)
 	  int origlen = (end + 1) - start;
 	  int repllen = rlen;
 	  /* Shrink orig to omit quotes. */
-	  while (origlen > 0 && strchr (rl_completer_quote_characters, *orig)) orig++;
+	  while (origlen > 0 && strchr (rl_completer_quote_characters, *orig)) { orig++; origlen--; }
 	  while (origlen > 0 && strchr (rl_completer_quote_characters, orig[origlen - 1])) origlen--;
 	  /* Shrink replacement to omit quotes. */
-	  while (repllen > 0 && strchr (rl_completer_quote_characters, *repl)) repl++;
+	  while (repllen > 0 && strchr (rl_completer_quote_characters, *repl)) { repl++; repllen--; }
 	  while (repllen > 0 && strchr (rl_completer_quote_characters, repl[repllen - 1])) repllen--;
 	  /* Determine whether to remove directory mark. */
 	  if (origlen <= 0)
