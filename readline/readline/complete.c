@@ -4005,6 +4005,10 @@ rl_menu_complete (int count, int ignore)
 	 code below should take care of it. */
       if (*matches[0])
 	{
+/* begin_clink_change */
+	  if (match_list_size <= 1)
+	    rl_begin_undo_group ();
+/* end_clink_change */
 	  insert_match (matches[0], orig_start, matches[1] ? MULT_MATCH : SINGLE_MATCH, &quote_char);
 	  orig_end = orig_start + strlen (matches[0]);
 	  completion_changed_buffer = STREQ (orig_text, matches[0]) == 0;
@@ -4038,6 +4042,8 @@ rl_menu_complete (int count, int ignore)
 /* begin_clink_change */
 	  //append_to_match (matches[0], delimiter, quote_char, nontrivial_lcd);
 	  append_to_match (matches[0], orig_start, delimiter, quote_char, nontrivial_lcd);
+	  if (*matches[0])
+	    rl_end_undo_group ();
 /* end_clink_change */
 	  full_completion = 1;
 	  return (0);
