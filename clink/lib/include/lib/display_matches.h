@@ -15,9 +15,12 @@ struct match_display_filter_entry
     match_type type;            // Match type.
     char append_char;           // Append character.
     uint8 flags;                // Match flags.
+    bool select;                // Used by select_filtered_matches().
     char buffer[1];             // Variable length buffer containing the PACKED MATCH FORMAT.
 };
 typedef struct match_display_filter_entry match_display_filter_entry;
+
+uint32 select_filtered_matches(const char* needle, match_display_filter_entry** matches, uint32 count);
 
 // Match display filter entry [0] is a placeholder and is ignored except in two
 // ways:

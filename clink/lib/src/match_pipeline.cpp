@@ -2,11 +2,11 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
-#include "match_pipeline.h"
 #include "line_state.h"
 #include "match_generator.h"
 #include "match_pipeline.h"
 #include "matches_impl.h"
+#include "display_matches.h"
 
 #include <core/array.h>
 #include <core/path.h>
@@ -61,20 +61,42 @@ static bool include_match_type(match_type type)
 }
 
 //------------------------------------------------------------------------------
+class match_info_indexer
+{
+public:
+    match_info_indexer(match_info* infos) : m_infos(infos) {}
+    inline match_info& get_info(int32 i) { return m_infos[i]; }
+private:
+    match_info* const m_infos;
+};
+
+//------------------------------------------------------------------------------
+class match_display_filter_entry_indexer
+{
+public:
+    match_display_filter_entry_indexer(match_display_filter_entry** infos) : m_infos(infos) {}
+    inline match_display_filter_entry& get_info(int32 i) { return *(m_infos[i]); }
+private:
+    match_display_filter_entry** const m_infos;
+};
+
+//------------------------------------------------------------------------------
+template<class INDEXER>
 static uint32 prefix_selector(
     const char* needle,
-    match_info* infos,
+    INDEXER& indexer,
     int32 count)
 {
     int32 select_count = 0;
     for (int32 i = 0; i < count; ++i)
     {
-        const char* const name = infos[i].match;
+        auto& info = indexer.get_info(i);
+        const char* const name = info.match;
         const int32 j = str_compare(needle, name);
         const bool select = ((j < 0 || !needle[j]) &&
                              (_rl_match_hidden_files || name[0] != '.') &&
-                             include_match_type(infos[i].type));
-        infos[i].select = select;
+                             include_match_type(info.type));
+        info.select = select;
         if (select)
             ++select_count;
     }
@@ -82,9 +104,10 @@ static uint32 prefix_selector(
 }
 
 //------------------------------------------------------------------------------
+template<class INDEXER>
 static uint32 pattern_selector(
     const char* needle,
-    match_info* infos,
+    INDEXER& indexer,
     int32 count,
     bool dot_prefix)
 {
@@ -92,20 +115,50 @@ static uint32 pattern_selector(
     int32 select_count = 0;
     for (int32 i = 0; i < count; ++i)
     {
-        const char* const match = infos[i].match;
+        auto& info = indexer.get_info(i);
+        const char* const match = info.match;
         int32 match_len = int32(strlen(match));
         while (match_len && path::is_separator(uint8(match[match_len - 1])))
             match_len--;
 
-        const path::star_matches_everything flag = (is_pathish(infos[i].type) ? path::at_end : path::yes);
+        const path::star_matches_everything flag = (is_pathish(info.type) ? path::at_end : path::yes);
         const bool select = ((_rl_match_hidden_files || match[0] != '.') &&
-                             include_match_type(infos[i].type) &&
+                             include_match_type(info.type) &&
                              path::match_wild(str_iter(needle, needle_len), str_iter(match, match_len), dot_prefix, flag));
-        infos[i].select = select;
+        info.select = select;
         if (select)
             ++select_count;
     }
     return select_count;
+}
+
+//------------------------------------------------------------------------------
+template<class INDEXER>
+static void select_matches(const char* needle, INDEXER& indexer, uint32 count)
+{
+    uint32 found = 0;
+
+    const bool dot_prefix = (rl_completion_type == '%' && g_default_bindings.get() == 1);
+    if (dot_prefix)
+    {
+        str<> pat(needle);
+        pat << "*";
+        found = pattern_selector(pat.c_str(), indexer, count, dot_prefix);
+    }
+    else
+    {
+        found = prefix_selector(needle, indexer, count);
+    }
+
+    if (!found && can_try_substring_pattern(needle))
+    {
+        char* sub = make_substring_pattern(needle, "*");
+        if (sub)
+        {
+            pattern_selector(sub, indexer, count, dot_prefix);
+            free(sub);
+        }
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -308,15 +361,17 @@ void match_pipeline::restrict(str_base& needle) const
 
     if (count)
     {
+        // WARNING:  This is subtly different from select_matches().
         const bool dot_prefix = (rl_completion_type == '%' && g_default_bindings.get() == 1);
 
-        if (!pattern_selector(needle.c_str(), m_matches.get_infos(), count, dot_prefix) &&
+        match_info_indexer indexer(m_matches.get_infos());
+        if (!pattern_selector(needle.c_str(), indexer, count, dot_prefix) &&
             can_try_substring_pattern(needle.c_str()))
         {
             char* sub = make_substring_pattern(needle.c_str());
             if (sub)
             {
-                pattern_selector(sub, m_matches.get_infos(), count, dot_prefix);
+                pattern_selector(sub, indexer, count, dot_prefix);
                 free(sub);
             }
         }
@@ -352,30 +407,8 @@ void match_pipeline::select(const char* needle) const
 
     if (count)
     {
-        const bool dot_prefix = (rl_completion_type == '%' && g_default_bindings.get() == 1);
-        match_info* infos = m_matches.get_infos();
-
-        bool found = false;
-        if (dot_prefix)
-        {
-            str<> pat(needle);
-            pat << "*";
-            found = pattern_selector(pat.c_str(), infos, count, dot_prefix);
-        }
-        else
-        {
-            found = prefix_selector(needle, infos, count);
-        }
-
-        if (!found && can_try_substring_pattern(needle))
-        {
-            char* sub = make_substring_pattern(needle, "*");
-            if (sub)
-            {
-                pattern_selector(sub, infos, count, dot_prefix);
-                free(sub);
-            }
-        }
+        match_info_indexer indexer(m_matches.get_infos());
+        select_matches(needle, indexer, count);
     }
 
     m_matches.coalesce(count);
@@ -407,4 +440,36 @@ void match_pipeline::sort() const
         ordinal_sorter(m_matches.get_infos(), count); // "no sort" means "original order".
     else
         alpha_sorter(m_matches.get_infos(), count);
+}
+
+//------------------------------------------------------------------------------
+uint32 select_filtered_matches(const char* needle, match_display_filter_entry** matches, uint32 count)
+{
+    assert(matches[count] == nullptr);
+
+    // Select matches based on needle.
+    match_display_filter_entry_indexer indexer(matches);
+    select_matches(needle, indexer, count);
+
+    // Coalesce selected matches, freeing any discarded matches.
+    match_display_filter_entry** tortoise = matches;
+    match_display_filter_entry** hare = matches;
+    while (count--)
+    {
+        if ((*hare)->select)
+        {
+            if (tortoise != hare)
+                *tortoise = *hare;
+            ++tortoise;
+        }
+        else
+        {
+            free(*hare);
+        }
+
+        ++hare;
+    }
+
+    *tortoise = nullptr;
+    return uint32(tortoise - matches);
 }

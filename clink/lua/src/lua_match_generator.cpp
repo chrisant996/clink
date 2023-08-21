@@ -117,8 +117,6 @@ bool lua_match_generator::match_display_filter(const char* needle, char** matche
 {
     bool ret = false;
     lua_State* state = m_state;
-    str<> lcd;
-    bool lcd_initialized = false;
     const bool selectable = (flags & display_filter_flags::selectable) == display_filter_flags::selectable;
     const bool strip_markup = (flags & display_filter_flags::plainify) == display_filter_flags::plainify;
 
@@ -311,15 +309,6 @@ done:
                     match = lua_tostring(state, -1);
                 lua_pop(state, 1);
 
-                if (match)
-                {
-                    // Discard matches that don't match the needle.
-                    int32 cmp = str_compare(needle, match);
-                    if (cmp < 0) cmp = needle_len;
-                    if (cmp < needle_len)
-                        goto next;
-                }
-
                 lua_pushliteral(state, "type");
                 lua_rawget(state, -2);
                 if (lua_isstring(state, -1))
@@ -381,18 +370,6 @@ done:
                 if (!display)
                     break;
 
-                if (!lcd_initialized)
-                {
-                    lcd = match;
-                    lcd_initialized = true;
-                }
-                else
-                {
-                    uint32 matching = match ? str_compare(match, lcd.c_str()) : 0;
-                    if (lcd.length() > matching)
-                        lcd.truncate(matching);
-                }
-
                 const size_t packed_size = calc_packed_size(match, display, description);
                 const size_t alloc_size = sizeof(match_display_filter_entry) - 1 + packed_size;
 
@@ -426,10 +403,28 @@ done:
             while (false);
         }
 
-next:
         lua_pop(state, 1);
     }
     new_matches[j] = nullptr;
+
+    // Select matches based on needle.
+    j = select_filtered_matches(needle, new_matches + 1, j - 1) + 1;
+
+    // Compute lcd from selected matches.
+    str<> lcd;
+    if (j > 1)
+    {
+        match_display_filter_entry** entry = new_matches + 1;
+        lcd = (*(entry++))->match;
+        while (*entry)
+        {
+            const char* match = (*entry)->match;
+            uint32 matching = match ? str_compare(match, lcd.c_str()) : 0;
+            if (lcd.length() > matching)
+                lcd.truncate(matching);
+            ++entry;
+        }
+    }
 
     // Fill in entry [0] with PACKED MATCH FORMAT (for consistency).
     // Special meaning of specific fields in the lcd [0] entry:
