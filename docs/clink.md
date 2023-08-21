@@ -226,20 +226,20 @@ See the [Completion Colors](#completion-colors) section for how to configure the
 
 Clink adds color to the input line by highlighting arguments, flags, doskey macros, and more.  If you don't want input line colors, you can turn it off by running <code>clink set <a href="#clink_colorize_input">clink.colorize_input</a> false</code>.
 
-There are also colors for popup lists, and some other things.
+Here are examples, using the colors from the [Use enhanced defaults](#gettingstarted_enhanceddefaults) installation option:
 
-To configure a color, run <code>clink set <span class="arg">colorname</span> <span class="arg">colorvalue</span></code>.
+<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><table class="console" cellpadding=0 cellspacing=0>
+<tr><td class="color_default">c:\dir><span class="color_argmatcher">clink</span> <span class="color_arg">set</span> <span class="color_flag">--help</span></td><td class="right_gray">'clink' has an argmatcher</td></tr>
+<tr><td class="color_default">c:\dir><span class="color_cmd">attrib</span></td><td class="right_gray">'attrib' is a CMD command</td></tr>
+<tr><td class="color_default">c:\dir><span class="color_doskey">myalias</span></td><td class="right_gray">if 'myalias' is a doskey alias</td></tr>
+<tr><td class="color_default">c:\dir><span class="color_executable">control</span></td><td class="right_gray">'control' is an executable</td></tr>
+<tr><td class="color_default">c:\dir><span class="color_unrecognized">xyzabc123</span></td><td class="right_gray">unrecognized</td></tr>
+<tr><td class="color_default">c:\dir><span class="color_input">whatever</span></td><td class="right_gray">if executable and unrecognized colors are not set</td></tr>
+</table></code></pre>
 
-Match completions make it easy to change Clink settings:  type <code>clink set color.</code> and then use completion (e.g. <kbd>Tab</kbd> or <kbd>Ctrl</kbd>-<kbd>Space</kbd>) to see the available color settings, and to fill in a color value.
+To configure a color, run <code>clink set <span class="arg">colorname</span> <span class="arg">colorvalue</span></code>.  Match completions make it easy to change Clink settings:  type <code>clink set color.</code> and then use completion (e.g. <kbd>Tab</kbd> or <kbd>Ctrl</kbd>-<kbd>Space</kbd>) to see the available color settings, and to fill in a color value.
 
-Here are some colors you may want to set up right away:
-
-Color | Description | Recommended
----|---|---
-[`color.executable`](#color_executable) | Apply color when the command is an executable file. | `clink set color.executable sgr 38;5;32`
-[`color.unrecognized`](#color_unexpected) | Apply color when the command is not recognized. | `clink set color.unrecognized sgr 38;5;203`
-
-See the [Clink Settings](#clink-settings), [Color Settings](#color-settings), and [Coloring the Input Text](#classifywords) sections for more information on Clink color settings.
+See the [Coloring the Input Text](#classifywords) and [Color Settings](#color-settings) sections for more information on Clink color settings.
 
 <a name="gettingstarted_keybindings"></a>
 
@@ -470,6 +470,10 @@ Name                         | Default [*](#alternatedefault) | Description
 <a name="colorsettings"></a>
 
 ## Color Settings
+
+This section describes how to set a color.
+
+For information on what color settings are available and how they're used, see the [Coloring the Input Text](#classifywords) section and the [color.*](#color_arg) settings.
 
 ### Friendly Color Names
 

@@ -192,6 +192,7 @@ kbd {
     border: none;
     color: #c0c0c0;
     background-color: transparent;
+    font-size: 0.9rem;
     margin-left: 0;
     width: 100%;
 }
