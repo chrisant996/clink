@@ -4220,7 +4220,10 @@ rl_insert_match (const char* match, char* orig_text, int orig_start, int delimit
 
   rl_begin_undo_group();
   insert_match ((char *)match, orig_start, SINGLE_MATCH, &quote_char);
+/* begin_clink_change */
+  //append_to_match ((char *)match, delimiter, quote_char, nontrivial_match);
   append_to_match ((char *)match, orig_start, delimiter, quote_char, nontrivial_match);
+/* end_clink_change */
   rl_end_undo_group();
 }
 
