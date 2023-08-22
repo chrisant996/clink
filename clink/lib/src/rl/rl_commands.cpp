@@ -34,6 +34,7 @@ extern "C" {
 #include <readline/rldefs.h>
 #include <readline/rlprivate.h>
 #include <readline/history.h>
+extern int32 find_streqn (const char *a, const char *b, int32 n);
 extern void rl_replace_from_history(HIST_ENTRY *entry, int flags);
 }
 
@@ -1159,6 +1160,168 @@ int32 cua_cut(int32 count, int32 invoking_key)
 {
     cua_copy(0, 0);
     cua_delete();
+    return 0;
+}
+
+
+
+//------------------------------------------------------------------------------
+int32 clink_forward_word(int32 count, int32 invoking_key)
+{
+    if (count != 0)
+    {
+another_word:
+        if (insert_suggestion(suggestion_action::insert_next_word))
+        {
+            count--;
+            if (count > 0)
+                goto another_word;
+        }
+    }
+
+    return rl_forward_word(count, invoking_key);
+}
+
+//------------------------------------------------------------------------------
+int32 clink_forward_char(int32 count, int32 invoking_key)
+{
+    if (insert_suggestion(suggestion_action::insert_to_end))
+        return 0;
+
+    return rl_forward_char(count, invoking_key);
+}
+
+//------------------------------------------------------------------------------
+int32 clink_forward_byte(int32 count, int32 invoking_key)
+{
+    if (insert_suggestion(suggestion_action::insert_to_end))
+        return 0;
+
+    return rl_forward_byte(count, invoking_key);
+}
+
+//------------------------------------------------------------------------------
+int32 clink_end_of_line(int32 count, int32 invoking_key)
+{
+    if (insert_suggestion(suggestion_action::insert_to_end))
+        return 0;
+
+    return rl_end_of_line(count, invoking_key);
+}
+
+//------------------------------------------------------------------------------
+int32 clink_insert_suggested_line(int32 count, int32 invoking_key)
+{
+    if (!insert_suggestion(suggestion_action::insert_to_end))
+        rl_ding();
+
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+int32 clink_insert_suggested_full_word(int32 count, int32 invoking_key)
+{
+    if (!insert_suggestion(suggestion_action::insert_next_full_word))
+        rl_ding();
+
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+int32 clink_insert_suggested_word(int32 count, int32 invoking_key)
+{
+    if (!insert_suggestion(suggestion_action::insert_next_word))
+        rl_ding();
+
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+int32 clink_accept_suggested_line(int32 count, int32 invoking_key)
+{
+    if (insert_suggestion(suggestion_action::insert_to_end))
+        return rl_newline(count, invoking_key);
+
+    rl_ding();
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+int32 clink_popup_history(int32 count, int32 invoking_key)
+{
+    HIST_ENTRY** list = history_list();
+    if (!list || !history_length)
+    {
+        rl_ding();
+        return 0;
+    }
+
+    rl_completion_invoking_key = invoking_key;
+
+    int32 current = -1;
+    int32 orig_pos = where_history();
+    int32 search_len = rl_point;
+
+    // Copy the history list (just a shallow copy of the line pointers).
+    char** history = (char**)malloc(sizeof(*history) * history_length);
+    entry_info* infos = (entry_info*)malloc(sizeof(*infos) * history_length);
+    int32 total = 0;
+    for (int32 i = 0; i < history_length; i++)
+    {
+        if (!find_streqn(g_rl_buffer->get_buffer(), list[i]->line, search_len))
+            continue;
+        history[total] = list[i]->line;
+        infos[total].index = i;
+        infos[total].marked = (list[i]->data != nullptr);
+        if (i == orig_pos)
+            current = total;
+        total++;
+    }
+    if (!total)
+    {
+        rl_ding();
+        free(history);
+        free(infos);
+        return 0;
+    }
+    if (current < 0)
+        current = total - 1;
+
+    // Popup list.
+    const popup_results results = activate_history_text_list(const_cast<const char**>(history), total, current, infos, false/*win_history*/);
+
+    switch (results.m_result)
+    {
+    case popup_result::cancel:
+        break;
+    case popup_result::error:
+        rl_ding();
+        break;
+    case popup_result::select:
+    case popup_result::use:
+        {
+            rl_maybe_save_line();
+            rl_maybe_replace_line();
+
+            const int32 pos = infos[results.m_index].index;
+            history_set_pos(pos);
+            rl_replace_from_history(current_history(), 0);
+            suppress_suggestions();
+
+            bool point_at_end = (!search_len || _rl_history_point_at_end_of_anchored_search);
+            rl_point = point_at_end ? rl_end : search_len;
+            rl_mark = point_at_end ? search_len : rl_end;
+
+            (*rl_redisplay_function)();
+            if (results.m_result == popup_result::use)
+                rl_newline(1, invoking_key);
+        }
+        break;
+    }
+
+    free(history);
+    free(infos);
+
     return 0;
 }
 

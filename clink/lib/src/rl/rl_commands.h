@@ -120,6 +120,7 @@ int32   clink_insert_suggested_full_word(int32 count, int32 invoking_key);
 int32   clink_insert_suggested_line(int32 count, int32 invoking_key);
 int32   clink_insert_suggested_word(int32 count, int32 invoking_key);
 int32   clink_accept_suggested_line(int32 count, int32 invoking_key);
+int32   clink_popup_history(int32 count, int32 invoking_key);
 
 //------------------------------------------------------------------------------
 int32   win_f1(int32 count, int32 invoking_key);
