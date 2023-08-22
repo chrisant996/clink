@@ -5,11 +5,15 @@
 #### v1.5.4
 - Further contrast improvements for default colors to be readable in both Dark and Light terminal themes.
 - Added `arginfo` field in `builder:addmatches()` and in match display filtering.
+- Auto-suggestions are no longer shown while searching history; it was too distracting and confusing.
+- Fixed updating the input line display after using `clink-popup-history` or `win-popup-history` (regression introduced in v1.5.3).
 - Fixed `old-menu-complete` and `menu-complete` when there's only one match.  The first time it should insert the match, and subsequent times should ding instead of cycling through the same match over and over and requiring an equal number of `undo` to undo.
 - Fixed match display filtering to support the `match.substring` setting.
 - Fixed match display filtering to support the `files.system` setting.
 - Fixed the cursor position if match display filtering happens the first time `clink-select-complete` is used in a session.
 - Fixed a case where two `undo` were required to fully undo what `menu-complete` inserted.
+- Fixed <kbd>Esc</kbd> during incremental history search mode so it cancels the search.
+- Fixed input line coloring after `non-incremental-reverse-search-history` or `non-incremental-forward-search-history` finds an exact match for the search text (since v1.1.5).
 - Internal changes and optimizations.
 
 #### v1.5.3
