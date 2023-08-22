@@ -1674,6 +1674,7 @@ ding:
         rl_maybe_replace_line();
         history_set_pos(results.m_index);
         rl_replace_from_history(current_history(), 0);
+        (*rl_redisplay_function)();
         if (results.m_result == popup_result::use)
             rl_newline(1, 0);
         break;

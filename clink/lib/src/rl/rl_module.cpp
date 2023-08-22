@@ -1924,11 +1924,9 @@ int32 clink_popup_history(int32 count, int32 invoking_key)
             rl_point = point_at_end ? rl_end : search_len;
             rl_mark = point_at_end ? search_len : rl_end;
 
+            (*rl_redisplay_function)();
             if (results.m_result == popup_result::use)
-            {
-                (*rl_redisplay_function)();
                 rl_newline(1, invoking_key);
-            }
         }
         break;
     }
