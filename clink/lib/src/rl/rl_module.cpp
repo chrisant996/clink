@@ -2642,18 +2642,18 @@ bool rl_module::translate(const char* seq, int32 len, str_base& out)
                 return true;
         }
     }
-    else if (RL_ISSTATE(RL_STATE_NSEARCH))
+    else if (RL_ISSTATE(RL_STATE_ISEARCH|RL_STATE_NSEARCH))
     {
         if (strcmp(seq, bindableEsc) == 0)
         {
-            // Non-incremental search mode has a hard-coded handler that aborts
-            // on Ctrl+G, so redirect ESC to Ctrl+G.
+            // Incremental and non-incremental search modes have hard-coded
+            // handlers that abort on Ctrl+G, so redirect ESC to Ctrl+G.
             char tmp[2] = { ABORT_CHAR };
             out = tmp;
             return true;
         }
     }
-    else if (RL_ISSTATE(RL_SIMPLE_INPUT_STATES|RL_STATE_ISEARCH) ||
+    else if (RL_ISSTATE(RL_SIMPLE_INPUT_STATES) ||
              rl_is_insert_next_callback_pending() ||
              win_fn_callback_pending())
     {
