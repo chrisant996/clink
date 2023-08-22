@@ -20,7 +20,8 @@ public:
     void            clear();
     bool            can_suggest(const line_state& line);
     bool            can_update_matches();
-    bool            accepted_whole_suggestion() const { return m_accepted_whole; }
+    bool            is_suppressing_suggestions() const { return m_suppress; }
+    void            suppress_suggestions();
     void            set_started(const char* line);
     void            set(const char* line, uint32 endword_offset, const char* suggestion, uint32 offset);
     bool            insert(suggestion_action action);
@@ -35,10 +36,11 @@ private:
     uint32          m_suggestion_offset = -1;
     uint32          m_endword_offset = -1;
     bool            m_paused = false;
-    bool            m_accepted_whole = false;
+    bool            m_suppress = false;
 };
 
 //------------------------------------------------------------------------------
 bool pause_suggestions(bool pause);
 bool insert_suggestion(suggestion_action action);
-bool accepted_whole_suggestion();
+void suppress_suggestions();
+bool is_suppressing_suggestions();

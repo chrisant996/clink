@@ -699,6 +699,8 @@ rl_history_search_internal (int count, int dir)
 
 /* begin_clink_change */
   rl_maybe_swap_point_and_mark ();
+  if (rl_on_replace_from_history_hook)
+    (*rl_on_replace_from_history_hook) ();
 /* end_clink_change */
 
   return 0;

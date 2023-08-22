@@ -1422,7 +1422,7 @@ int32 win_f1(int32 count, int32 invoking_key)
 {
     const bool had_selection = (cua_get_anchor() >= 0);
 
-    if (insert_suggestion(suggestion_action::insert_to_end) || accepted_whole_suggestion())
+    if (insert_suggestion(suggestion_action::insert_to_end) || is_suppressing_suggestions())
         return 0;
 
     if (count <= 0)
@@ -1674,6 +1674,7 @@ ding:
         rl_maybe_replace_line();
         history_set_pos(results.m_index);
         rl_replace_from_history(current_history(), 0);
+        suppress_suggestions();
         (*rl_redisplay_function)();
         if (results.m_result == popup_result::use)
             rl_newline(1, 0);

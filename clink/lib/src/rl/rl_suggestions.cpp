@@ -76,7 +76,7 @@ void suggestion_manager::clear()
     m_started.free();
     m_suggestion_offset = -1;
     m_endword_offset = -1;
-    m_accepted_whole = false;
+    m_suppress = false;
 }
 
 //------------------------------------------------------------------------------
@@ -112,7 +112,7 @@ bool suggestion_manager::can_suggest(const line_state& line)
 
     // Must check this AFTER checking cursor at end, so that moving the cursor
     // can clear the flag.
-    if (accepted_whole_suggestion())
+    if (is_suppressing_suggestions())
     {
         if (diff)
             clear();
@@ -136,6 +136,15 @@ bool suggestion_manager::can_update_matches()
     const bool diff = (m_started.length() != g_rl_buffer->get_length() ||
                        strncmp(m_started.c_str(), g_rl_buffer->get_buffer(), m_started.length()) != 0);
     return diff;
+}
+
+//------------------------------------------------------------------------------
+void suggestion_manager::suppress_suggestions()
+{
+    clear();
+    m_line.concat(g_rl_buffer->get_buffer(), g_rl_buffer->get_length());
+    m_started.concat(g_rl_buffer->get_buffer(), g_rl_buffer->get_length());
+    m_suppress = true;
 }
 
 //------------------------------------------------------------------------------
@@ -263,10 +272,7 @@ bool suggestion_manager::insert(suggestion_action action)
             g_rl_buffer->insert(m_suggestion.c_str());
             g_rl_buffer->end_undo_group();
         }
-        clear();
-        m_line.concat(g_rl_buffer->get_buffer(), g_rl_buffer->get_length());
-        m_started.concat(g_rl_buffer->get_buffer(), g_rl_buffer->get_length());
-        m_accepted_whole = true;
+        suppress_suggestions();
         return !orig_iter.more();
     }
 
@@ -379,14 +385,15 @@ bool suggestion_manager::insert(suggestion_action action)
 
     if (!trunc)
     {
-        clear();
-        m_accepted_whole = true;
+        suppress_suggestions();
     }
-
-    m_line.clear();
-    m_line.concat(g_rl_buffer->get_buffer(), g_rl_buffer->get_length());
-    m_started.clear();
-    m_started.concat(g_rl_buffer->get_buffer(), g_rl_buffer->get_length());
+    else
+    {
+        m_line.clear();
+        m_line.concat(g_rl_buffer->get_buffer(), g_rl_buffer->get_length());
+        m_started.clear();
+        m_started.concat(g_rl_buffer->get_buffer(), g_rl_buffer->get_length());
+    }
 
     return true;
 }

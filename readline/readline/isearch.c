@@ -167,6 +167,11 @@ rl_display_search (char *search_string, int flags, int where)
   char *message;
   int msglen, searchlen;
 
+/* begin_clink_change */
+  if (rl_on_replace_from_history_hook)
+    (*rl_on_replace_from_history_hook) ();
+/* end_clink_change */
+
   searchlen = (search_string && *search_string) ? strlen (search_string) : 0;
 
   message = (char *)xmalloc (searchlen + 64);

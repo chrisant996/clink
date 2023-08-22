@@ -1226,9 +1226,15 @@ bool can_suggest(const line_state& line)
 }
 
 //------------------------------------------------------------------------------
-bool accepted_whole_suggestion()
+void suppress_suggestions()
 {
-    return s_suggestion.accepted_whole_suggestion();
+    s_suggestion.suppress_suggestions();
+}
+
+//------------------------------------------------------------------------------
+bool is_suppressing_suggestions()
+{
+    return s_suggestion.is_suppressing_suggestions();
 }
 
 //------------------------------------------------------------------------------
@@ -1919,6 +1925,7 @@ int32 clink_popup_history(int32 count, int32 invoking_key)
             const int32 pos = infos[results.m_index].index;
             history_set_pos(pos);
             rl_replace_from_history(current_history(), 0);
+            suppress_suggestions();
 
             bool point_at_end = (!search_len || _rl_history_point_at_end_of_anchored_search);
             rl_point = point_at_end ? rl_end : search_len;
@@ -2028,6 +2035,7 @@ static void init_readline_hooks()
     // History hooks.
     rl_add_history_hook = host_add_history;
     rl_remove_history_hook = host_remove_history;
+    rl_on_replace_from_history_hook = suppress_suggestions;
 
     // Match completion.
     rl_lookup_match_type = lookup_match_type;

@@ -77,6 +77,8 @@ int _rl_history_saved_point = -1;
 rl_history_hook_func_t *rl_add_history_hook = (rl_history_hook_func_t *)NULL;
 /* If non-null, called when rl_remove_history removes a history line. */
 rl_history_hook_func_t *rl_remove_history_hook = (rl_history_hook_func_t *)NULL;
+/* If non-null, called when the line buffer is replaced from history. */
+rl_voidfunc_t *rl_on_replace_from_history_hook = (rl_voidfunc_t *)NULL;
 /* end_clink_change */
 
 
@@ -443,6 +445,11 @@ _rl_history_set_point (void)
 
   if (rl_editing_mode == emacs_mode)
     rl_mark = (rl_point == rl_end ? 0 : rl_end);
+
+/* begin_clink_change */
+  if (rl_on_replace_from_history_hook)
+    (*rl_on_replace_from_history_hook) ();
+/* end_clink_change */
 }
 
 void
