@@ -163,6 +163,7 @@ private:
     unsigned short      m_command_offset = 0;
     commands            m_commands;
 
+    bool                m_prev_plain = false;
     prev_buffer         m_prev_classify;
     words               m_classify_words;
 

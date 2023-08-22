@@ -461,6 +461,7 @@ void line_editor_impl::begin_line()
     m_desc.output->begin();
     m_buffer.begin_line();
     m_prev_generate.clear();
+    m_prev_plain = false;
     m_prev_classify.clear();
     m_prev_command_word.clear();
     m_prev_command_word_offset = -1;
@@ -1151,14 +1152,15 @@ void line_editor_impl::classify()
         rl_end = g_suggestion_offset;
 
     // Skip parsing if the line buffer hasn't changed.
-    if (m_prev_classify.equals(m_buffer.get_buffer(), m_buffer.get_length()))
+    const bool plain = !!RL_ISSTATE(RL_STATE_NSEARCH);
+    if (m_prev_plain == plain && m_prev_classify.equals(m_buffer.get_buffer(), m_buffer.get_length()))
         return;
 
     // Hang on to the old classifications so it's possible to detect changes.
     word_classifications old_classifications(std::move(m_classifications));
     m_classifications.init(m_buffer.get_length(), &old_classifications);
 
-    if (RL_ISSTATE(RL_STATE_NSEARCH))
+    if (plain)
     {
         m_classifications.apply_face(0, m_buffer.get_length(), FACE_NORMAL);
         m_classifications.finish(is_showing_argmatchers());
@@ -1196,6 +1198,7 @@ void line_editor_impl::classify()
     }
 #endif
 
+    m_prev_plain = plain;
     m_prev_classify.set(m_buffer.get_buffer(), m_buffer.get_length());
 
     if (!old_classifications.equals(m_classifications))
@@ -1291,6 +1294,7 @@ void line_editor_impl::reclassify(reclassify_reason why)
 
     if (refresh || why == reclassify_reason::force)
     {
+        m_prev_plain = false;
         m_prev_classify.clear();
         m_buffer.set_need_draw();
         m_buffer.draw();
