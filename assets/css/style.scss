@@ -96,6 +96,25 @@
     margin-right: -0.5rem;
 }
 
+.main-content {
+    @include large {
+        max-width: 64rem;
+        padding: 2rem 6rem;
+        margin: 0 auto;
+        font-size: 1.1rem;
+    }
+
+    @include medium {
+        padding: 2rem 4rem;
+        font-size: 1.1rem;
+    }
+
+    @include small {
+        padding: 2rem 1rem;
+        font-size: 1rem;
+    }
+}
+
 kbd {
     padding:0.1em 0.3em;
     border-collapse:separate;
@@ -129,12 +148,13 @@ kbd {
     border-radius: 0.2rem;
     padding-left: 1rem;
     padding-right: 1rem;
-    margin-top: 1rem;
-    margin-bottom: 1rem;
 }
 .promo_block p {
     margin-top: 1rem;
     margin-bottom: 1rem;
+}
+.promo_block :first-child {
+    margin-top: 1rem;
 }
 
 .color_default { color: #c0c0c0 }
