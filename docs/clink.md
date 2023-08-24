@@ -70,7 +70,7 @@ See [Popular Scripts](#popular-scripts) and [Colors](#gettingstarted_colors) and
 
 **Command Line Editing Improvements**
 
-Clink supercharges the command line with new input editing commands and configurable key bindings.
+Clink supercharges the command line with new input editing commands and configurable key bindings.  For example,
 
 - <kbd>Alt</kbd>-<kbd>H</kbd> to display all key bindings.
 - <kbd>Tab</kbd> for completion.
