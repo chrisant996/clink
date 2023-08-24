@@ -6,9 +6,9 @@ For details, refer to the [Clink documentation](https://chrisant996.github.io/cl
 
 ### Download
 
-Downloads are available from the [releases](https://github.com/chrisant996/clink/releases) page.
+Downloads are available from the [releases page](https://github.com/chrisant996/clink/releases).
 
-See the [issues](https://github.com/chrisant996/clink/issues) page for known issues or to file new issues.
+See the [issues page](https://github.com/chrisant996/clink/issues) for known issues or to file new issues.
 
 ### Feature Highlights
 
