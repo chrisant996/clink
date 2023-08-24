@@ -14,6 +14,12 @@
     function go()
     {
         // Apply syntax highlighting.
+        const COMMENT=hljs.COMMENT("#", "$");
+        const STRING={className:'string',begin:'"',end:'"',contains:[hljs.BACKSLASH_ESCAPE]};
+        const OPERATOR={className:'name',begin:/\:/};
+        const PREPROCESSOR={className:'meta',begin:/\$[a-z]+\b/,end:/$/,keywords:{keyword:'$if $else $endif $include'},contains:[{begin:/\\\n/,relevance:0},COMMENT]};
+        const INPUTRC={name:"inputrc",case_insensitive:true,keywords:{keyword:"set",literal:"on off true false"},contains:[COMMENT,STRING,OPERATOR,PREPROCESSOR]};
+        hljs.registerLanguage("inputrc",function(){"use strict";return function(e){return INPUTRC}}());
         hljs.initHighlighting();
 
         // Fix hyperlink styling inside highlighted comments.

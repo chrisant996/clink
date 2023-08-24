@@ -87,6 +87,8 @@ See [Key Bindings](#gettingstarted_keybindings) to learn more.
 
 Optional auto-answering of the "[Terminate batch job?](#cmd_auto_answer)" prompt.
 
+[Enhanced doskey expansion](#enhanced-doskey-expansion) even after `&` and `|`.
+
 [Directory shortcuts](#directory-shortcuts):
 - `dirname\` is a shortcut for `cd /d` to that directory.
 - `..` or `...` are shortcuts for `cd ..` or `cd ..\..` (etc).
@@ -205,7 +207,7 @@ notepad %userprofile%\.inputrc
 
 You may want to copy/paste the following sample text into the file as a starting point, and then press <kbd>Ctrl</kbd>-<kbd>S</kbd> to save the file.
 
-```plaintext
+```inputrc
 # Some common Readline config settings.
 
 set colored-stats                 on   # Turn on completion colors.
@@ -1032,14 +1034,14 @@ Key bindings can be either functions or macros (literal text).  Functions are no
 
 When entering the text of a macro, single or double quotes must be used to indicate a macro definition. Unquoted text is assumed to be a function name. In the macro body, the backslash escapes described above are expanded. Backslash will quote any other character in the macro text, including `"` and `'`. For example, the following binding will make pressing <kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>\\</kbd> insert a single `\` into the line:
 
-```plaintext
+```inputrc
 "\C-x\\": "\\"
 ```
 
 <p>
 <dt>Examples</dt>
 
-```plaintext
+```inputrc
 # Using key names.
 C-u: universal-argument         # Bind Ctrl-u to invoke the universal-argument command.
 C-o: "> output"                 # Bind Ctrl-o to insert the text "> output" into the line.
@@ -1064,7 +1066,7 @@ The `$if` construct allows bindings to be made based on the editing mode, the te
 
 The `$if mode=` form of the `$if` directive is used to test whether Readline is in `emacs` or `vi` mode. This may be used in conjunction with the "set keymap" command, for instance, to set bindings in the `emacs-standard` and `emacs-ctlx` keymaps only if Readline is starting out in `emacs` mode. (The directive is only tested during startup.)
 
-```plaintext
+```inputrc
 $if mode == emacs
 set show-mode-in-prompt on
 $endif
@@ -1074,7 +1076,7 @@ The `$if term=` form may be used to include terminal-specific key bindings, perh
 
 The `$if version` test may be used to perform comparisons against specific Readline versions. The `version` expands to the current Readline version. The set of comparison operators includes `=` (and `==`), `!=`, `<=`, `>=`, `<`, and `>`. The version number supplied on the right side of the operator consists of a major version number, an optional decimal point, and an optional minor version (e.g., "7.1"). If the minor version is omitted, it is assumed to be "0". The operator may be separated from the string `version` and from the version number argument by whitespace. The following example sets a variable if the Readline version being used is 7.0 or newer:
 
-```plaintext
+```inputrc
 $if version >= 7.0
 set show-mode-in-prompt on
 $endif
@@ -1082,7 +1084,7 @@ $endif
 
 The `$if application` construct is used to include application-specific settings. Each program using the Readline library sets the _application name_, and you can test for a particular value. This could be used to bind key sequences to functions useful for a specific program. For instance, the following command adds a key sequence that quotes the current or previous word, but only in Clink:
 
-```plaintext
+```inputrc
 $if clink
 # Quote the current or previous word
 "\C-xq": "\eb\"\ef\""
@@ -1091,7 +1093,7 @@ $endif
 
 The `$if variable` construct provides simple equality tests for Readline variables and values. The permitted comparison operators are `=`, `==`, and `!=`. The variable name must be separated from the comparison operator by whitespace; the operator may be separated from the value on the right hand side by whitespace. Both string and boolean variables may be tested. Boolean variables must be tested against the values _on_ and _off_. The following example is equivalent to the `mode=emacs` test described above:
 
-```plaintext
+```inputrc
 $if editing-mode == emacs
 set show-mode-in-prompt on
 $endif
@@ -1112,7 +1114,7 @@ Commands in this branch of the `$if` directive are executed if the test fails.
 
 This directive takes a single filename as an argument and reads commands and bindings from that file. For example, the following directive reads from "c:\dir\inputrc":
 
-```plaintext
+```inputrc
 $include c:\dir\inputrc
 ```
 </dd>
@@ -1121,56 +1123,57 @@ $include c:\dir\inputrc
 
 Here is a sample `.inputrc` file with some of the variables and key bindings that I use:
 
-<pre><code class="plaintext"><span class="hljs-meta">$if clink</span>           <span class="hljs-comment"># begin clink-only section</span>
+```inputrc
+$if clink           # begin clink-only section
 
-<span class="hljs-meta">set colored-completion-prefix                       on</span>
-<span class="hljs-meta">set colored-stats                                   on</span>
-<span class="hljs-meta">set mark-symlinked-directories                      on</span>
-<span class="hljs-meta">set visible-stats                                   off</span>
-<span class="hljs-meta">set completion-auto-query-items                     on</span>
-<span class="hljs-meta">set history-point-at-end-of-anchored-search         on</span>
-<span class="hljs-meta">set menu-complete-wraparound                        off</span>
-<span class="hljs-meta">set search-ignore-case                              on</span>
+set colored-completion-prefix                       on
+set colored-stats                                   on
+set mark-symlinked-directories                      on
+set visible-stats                                   off
+set completion-auto-query-items                     on
+set history-point-at-end-of-anchored-search         on
+set menu-complete-wraparound                        off
+set search-ignore-case                              on
 
-<span class="hljs-comment"># The following key bindings are for emacs mode.</span>
-<span class="hljs-meta">set keymap emacs</span>
+# The following key bindings are for emacs mode.
+set keymap emacs
 
-<span class="hljs-string">"\e[27;8;72~"</span>:      clink-popup-show-help           <span class="hljs-comment"># Alt-Ctrl-Shift-H</span>
+"\e[27;8;72~":      clink-popup-show-help           # Alt-Ctrl-Shift-H
 
-<span class="hljs-comment"># Completion key bindings.</span>
-<span class="hljs-string">"\t"</span>:               old-menu-complete               <span class="hljs-comment"># Tab</span>
-<span class="hljs-string">"\e[Z"</span>:             old-menu-complete-backward      <span class="hljs-comment"># Shift-Tab</span>
-<span class="hljs-string">"\e[27;5;32~"</span>:      clink-select-complete           <span class="hljs-comment"># Ctrl-Space</span>
+# Completion key bindings.
+"\t":               old-menu-complete               # Tab
+"\e[Z":             old-menu-complete-backward      # Shift-Tab
+"\e[27;5;32~":      clink-select-complete           # Ctrl-Space
 
-<span class="hljs-comment"># Some key bindings I got used to from 4Dos/4NT/Take Command.</span>
-C-b:                                                <span class="hljs-comment"># Ctrl-B (cleared because I redefined Ctrl-F)</span>
-C-d:                remove-history                  <span class="hljs-comment"># Ctrl-D (replaces `delete-char`)</span>
-C-f:                clink-expand-doskey-alias       <span class="hljs-comment"># Ctrl-F (replaces `forward-char`)</span>
-C-k:                add-history                     <span class="hljs-comment"># Ctrl-K (replaces `kill-line`)</span>
-<span class="hljs-string">"\e[A"</span>:             history-search-backward         <span class="hljs-comment"># Up (replaces `previous-history`)</span>
-<span class="hljs-string">"\e[B"</span>:             history-search-forward          <span class="hljs-comment"># Down (replaces `next-history`)</span>
-<span class="hljs-string">"\e[5~"</span>:            clink-popup-history             <span class="hljs-comment"># PgUp (replaces `history-search-backward`)</span>
-<span class="hljs-string">"\e[6~"</span>:                                            <span class="hljs-comment"># PgDn (cleared because I redefined PgUp)</span>
-<span class="hljs-string">"\e[1;5F"</span>:          end-of-line                     <span class="hljs-comment"># Ctrl-End (replaces `kill-line`)</span>
-<span class="hljs-string">"\e[1;5H"</span>:          beginning-of-line               <span class="hljs-comment"># Ctrl-Home (replaces `backward-kill-line`)</span>
+# Some key bindings I got used to from 4Dos/4NT/Take Command.
+C-b:                                                # Ctrl-B (cleared because I redefined Ctrl-F)
+C-d:                remove-history                  # Ctrl-D (replaces `delete-char`)
+C-f:                clink-expand-doskey-alias       # Ctrl-F (replaces `forward-char`)
+C-k:                add-history                     # Ctrl-K (replaces `kill-line`)
+"\e[A":             history-search-backward         # Up (replaces `previous-history`)
+"\e[B":             history-search-forward          # Down (replaces `next-history`)
+"\e[5~":            clink-popup-history             # PgUp (replaces `history-search-backward`)
+"\e[6~":                                            # PgDn (cleared because I redefined PgUp)
+"\e[1;5F":          end-of-line                     # Ctrl-End (replaces `kill-line`)
+"\e[1;5H":          beginning-of-line               # Ctrl-Home (replaces `backward-kill-line`)
 
-<span class="hljs-comment"># Some key bindings handy in default (conhost) console windows.</span>
-M-b:                                                <span class="hljs-comment"># Alt-B (cleared because I redefined Alt-F)</span>
-M-f:                clink-find-conhost              <span class="hljs-comment"># Alt-F for "Find..." from the console's system menu</span>
-M-m:                clink-mark-conhost              <span class="hljs-comment"># Alt-M for "Mark" from the console's system menu</span>
+# Some key bindings handy in default (conhost) console windows.
+M-b:                                                # Alt-B (cleared because I redefined Alt-F)
+M-f:                clink-find-conhost              # Alt-F for "Find..." from the console's system menu
+M-m:                clink-mark-conhost              # Alt-M for "Mark" from the console's system menu
 
-<span class="hljs-comment"># Some key bindings for interrogating the Readline configuration.</span>
-<span class="hljs-string">"\C-x\C-f"</span>:         dump-functions                  <span class="hljs-comment"># Ctrl-X, Ctrl-F</span>
-<span class="hljs-string">"\C-x\C-m"</span>:         dump-macros                     <span class="hljs-comment"># Ctrl-X, Ctrl-M</span>
-<span class="hljs-string">"\C-x\C-v"</span>:         dump-variables                  <span class="hljs-comment"># Ctrl-X, Ctrl-V</span>
+# Some key bindings for interrogating the Readline configuration.
+"\C-x\C-f":         dump-functions                  # Ctrl-X, Ctrl-F
+"\C-x\C-m":         dump-macros                     # Ctrl-X, Ctrl-M
+"\C-x\C-v":         dump-variables                  # Ctrl-X, Ctrl-V
 
-<span class="hljs-comment"># Misc other key bindings.</span>
-<span class="hljs-string">"\e[27;2;32~"</span>:      clink-magic-suggest-space       <span class="hljs-comment"># Shift-Space</span>
-<span class="hljs-string">"\e[5;6~"</span>:          clink-popup-directories         <span class="hljs-comment"># Ctrl-Shift-PgUp</span>
-C-_:                kill-line                       <span class="hljs-comment"># Ctrl-- (replaces `undo`)</span>
+# Misc other key bindings.
+"\e[27;2;32~":      clink-magic-suggest-space       # Shift-Space
+"\e[5;6~":          clink-popup-directories         # Ctrl-Shift-PgUp
+C-_:                kill-line                       # Ctrl-- (replaces `undo`)
 
-<span class="hljs-meta">$endif</span>              <span class="hljs-comment"># end clink-only section</span>
-</code></pre>
+$endif              # end clink-only section
+```
 
 ## Bindable Commands
 
