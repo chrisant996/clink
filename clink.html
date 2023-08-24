@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.5.3</title>
+<title>Clink v1.5.4</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -28,6 +28,23 @@ code a:hover {
 
 a code:hover {
     text-decoration: underline;
+}
+
+.promo_box {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 1rem 2rem;
+    width: 100%;
+}
+
+.promo_block {
+    flex:1 1 480px;
+    background-color: #f8f8f8;
+    border: 1px solid #ddd;
+    border-radius: 0.2rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
 }
 
 .wlink {
@@ -178,11 +195,11 @@ kbd {
     white-space:nowrap;
 }
 
-#content table:not(.linkmenu) td:nth-child(1) {
+#content table:not(.linkmenu,.console) td:nth-child(1) {
     white-space: nowrap;
 }
 
-#content table:not(.linkmenu) td:nth-child(1) code {
+#content table:not(.linkmenu,.console) td:nth-child(1) code {
     border: none;
     padding: 0 0 0 0;
     border-radius: 0;
@@ -197,9 +214,43 @@ kbd {
 
 .console {
     border: none;
+    color: #c0c0c0;
     background-color: transparent;
+    font-size: 0.9rem;
     margin-left: 0;
     width: 100%;
+}
+
+.color_default { color: #c0c0c0 }
+
+.color_arg { color: #ffffff }
+.color_arginfo { color: #d78700 }
+.color_argmatcher { color: #00d700 }
+.color_cmd { color: #ffffff }
+.color_cmdredir { color: #d78700 }
+.color_cmdsep { color: #af5fff }
+.color_description { color: #00afff }
+.color_doskey { color: #5fafff }
+.color_executable { color: #0087ff }
+.color_flag { color: #87d7ff }
+.color_input { color: #ffaf00 }
+.color_suggestion { color: #808080 }
+.color_unexpected { color: #c0c0c0 }
+.color_unrecognized { color: #ff5f5f }
+
+.right_gray {
+    color: #d7d7d7;
+    text-align:right;
+    font-style:italic;
+}
+
+.cursor {
+    animation: blinker 1s steps(1, end) infinite;
+    color: #ffffff;
+}
+@keyframes blinker {
+    0% { opacity: 1; }
+    50% { opacity: 0; }
 }
 
 .section {
@@ -248,7 +299,7 @@ kbd {
     background-color: #eee;
 }
 
-#content table:not(.linkmenu) td, #content th {
+#content table:not(.linkmenu,.console) td, #content th {
     vertical-align: text-top;
     padding: 0.2rem 0.5rem;
 }
@@ -804,6 +855,12 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
     function go()
     {
         // Apply syntax highlighting.
+        const COMMENT=hljs.COMMENT("#", "$");
+        const STRING={className:'string',begin:'"',end:'"',contains:[hljs.BACKSLASH_ESCAPE]};
+        const OPERATOR={className:'name',begin:/\:/};
+        const PREPROCESSOR={className:'meta',begin:/\$[a-z]+\b/,end:/$/,keywords:{keyword:'$if $else $endif $include'},contains:[{begin:/\\\n/,relevance:0},COMMENT]};
+        const INPUTRC={name:"inputrc",case_insensitive:true,keywords:{keyword:"set",literal:"on off true false"},contains:[COMMENT,STRING,OPERATOR,PREPROCESSOR]};
+        hljs.registerLanguage("inputrc",function(){"use strict";return function(e){return INPUTRC}}());
         hljs.initHighlighting();
 
         // Fix hyperlink styling inside highlighted comments.
@@ -866,7 +923,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.5.3</div>
+                <div id="title">Clink v1.5.4</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -885,44 +942,82 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         <div class="section" id="documentation">
 <h1 id="what-is-clink"><div class="wlink"><a href="#what-is-clink"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>What is Clink?</h1>
 <p>Clink combines the native Windows shell cmd.exe with the powerful command line editing features of the GNU Readline library, which provides rich completion, history, and line-editing capabilities. Readline is best known for its use in the Unix shell Bash, the standard shell for Mac OS X and many Linux distributions.</p>
-<h3 id="features"><div class="wlink"><a href="#features"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Features</h3>
-<p>Here are some highlights of what Clink provides:</p>
+<p><a name="features"></a></p>
+<h3 id="feature-highlights"><div class="wlink"><a href="#features"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Feature Highlights</h3>
+<div class="promo_box">
+<div class="promo_box">
+<div class="promo_block">
+
+<p><strong>Auto-Suggestions</strong></p>
+<p>Clink offers suggestions as you type based on history, files, and completions.</p>
+<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default">C:\dir></span><span class="color_executable">findstr</span><span class="cursor">_</span><span class="color_suggestion">/s needle haystack\*</span></span>
+</code></pre>
+
+<p>Press <kbd>Right</kbd> or <kbd>End</kbd> to accept a suggestion (shown in a muted color).</p>
+<p>See <a href="#gettingstarted_autosuggest">Auto-Suggest</a> to learn more.</p>
+</div>
+<div class="promo_block">
+
+<p><strong>Completions</strong></p>
+<p>Clink can complete words when you press <kbd>Tab</kbd> or <kbd>Ctrl</kbd>-<kbd>Space</kbd>.</p>
+<p>Built-in completions are available for executables, aliases, command names, directory commands, and environment variables.  You can use Lua scripts to add <a href="#extending-clink">custom completions</a>.</p>
+<p>See <a href="#how-completion-works">How Completion Works</a> to learn more.</p>
+</div>
+</div>
+<div class="promo_box">
+<div class="promo_block">
+
+<p><strong>Persistent History</strong></p>
+<p>Clink stores persistent history between sessions.</p>
 <ul>
-<li>The same line editing as Bash (from the <a href="https://tiswww.case.edu/php/chet/readline/rltop.html">GNU Readline library</a> version 8.1).</li>
-<li>History persistence between sessions.</li>
-<li>Context sensitive completion;<ul>
-<li>Executables (and aliases).</li>
-<li>Directory commands.</li>
-<li>Environment variables.</li>
+<li><kbd>Up</kbd> and <kbd>Down</kbd> cycle through history entries.</li>
+<li><kbd>PgUp</kbd> and <kbd>PgDn</kbd> cycle through history entries matching the typed prefix.</li>
+<li><kbd>F7</kbd> show a popup list of selectable history entries.</li>
+<li><kbd>Ctrl</kbd>-<kbd>R</kbd> and <kbd>Ctrl</kbd>-<kbd>S</kbd> search history incrementally.</li>
 </ul>
-</li>
-<li>Context sensitive colored input text.</li>
-<li>Automatic suggestions from history and completions.</li>
-<li>New keyboard shortcuts;<ul>
-<li>Interactive completion list (<kbd>Ctrl</kbd>-<kbd>Space</kbd>).</li>
-<li>Incremental history search (<kbd>Ctrl</kbd>-<kbd>R</kbd> and <kbd>Ctrl</kbd>-<kbd>S</kbd>).</li>
-<li>Powerful completion (<kbd>Tab</kbd>).</li>
-<li>Undo (<kbd>Ctrl</kbd>-<kbd>Z</kbd>).</li>
-<li>Environment variable expansion (<kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>E</kbd>).</li>
-<li>Doskey alias expansion (<kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>F</kbd>).</li>
-<li>Scroll the screen buffer (<kbd>Alt</kbd>-<kbd>Up</kbd>, etc).</li>
-<li><kbd>Shift</kbd>-Arrow keys to select text, typing replaces selected text, etc.</li>
-<li>(press <kbd>Alt</kbd>-<kbd>H</kbd> for many more...)</li>
+<p>See <a href="#saved-command-history">Saved Command History</a> to learn more.</p>
+</div>
+<div class="promo_block">
+
+<p><strong>Scriptable Prompt and Colored Input</strong></p>
+<p>You can customize the prompt dynamically with Lua scripts -- like in other shells -- but never before possible in cmd.exe!</p>
+<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default"><span style="color:#0087ff">C:\repos\clink</span> <span style="color:#888">git</span> <span style="color:#ff0">main</span><span style="color:#888">-></span><span style="color:#ff0">origin *3</span> <span style="color:#f33">!1</span>
+<span style="color:#0f0">></span> <span class="color_argmatcher">git</span> <span class="color_arg">merge</span> <span class="color_flag">--help</span><span class="cursor">_</span></span>
+</code></pre>
+
+<p>Your input is colored by context sensitive completion scripts.</p>
+<p>See <a href="#popular-scripts">Popular Scripts</a> and <a href="#gettingstarted_colors">Colors</a> and <a href="#customizing-the-prompt">Customizing the Prompt</a> to learn more.</p>
+</div>
+</div>
+<div class="promo_box">
+<div class="promo_block">
+
+<p><strong>Command Line Editing Improvements</strong></p>
+<p>Clink supercharges the command line with new input editing commands and configurable key bindings.  For example,</p>
+<ul>
+<li><kbd>Alt</kbd>-<kbd>H</kbd> to display all key bindings.</li>
+<li><kbd>Tab</kbd> for completion.</li>
+<li><kbd>Ctrl</kbd>-<kbd>Space</kbd> for an interactive completion list.</li>
+<li><kbd>Ctrl</kbd>-<kbd>Z</kbd> to undo input.</li>
+<li><kbd>Shift</kbd>-<kbd>Arrows</kbd> to select text, and type to replace selected text.</li>
 </ul>
-</li>
-<li>Directory shortcuts;<ul>
-<li>Typing a directory name followed by a path separator is a shortcut for <code>cd /d</code> to that directory.</li>
-<li>Typing <code>..</code> or <code>...</code> is a shortcut for <code>cd ..</code> or <code>cd ..\..</code> (each additional <code>.</code> adds another <code>\..</code>).</li>
-<li>Typing <code>-</code> or <code>cd -</code> changes to the previous current working directory.</li>
+<p>See <a href="#gettingstarted_keybindings">Key Bindings</a> to learn more.</p>
+</div>
+<div class="promo_block">
+
+<p><strong>Convenience</strong></p>
+<p>Optional auto-answering of the &quot;<a href="#cmd_auto_answer">Terminate batch job?</a>&quot; prompt.</p>
+<p><a href="#enhanced-doskey-expansion">Enhanced doskey expansion</a> even after <code>&amp;</code> and <code>|</code>.</p>
+<p><a href="#directory-shortcuts">Directory shortcuts</a>:</p>
+<ul>
+<li><code>dirname\</code> is a shortcut for <code>cd /d</code> to that directory.</li>
+<li><code>..</code> or <code>...</code> are shortcuts for <code>cd ..</code> or <code>cd ..\..</code> (etc).</li>
+<li><code>-</code> or <code>cd -</code> changes to the previous current working directory.</li>
 </ul>
-</li>
-<li>Scriptable autosuggest with Lua.</li>
-<li>Scriptable completion with Lua.</li>
-<li>Scriptable key bindings with Lua.</li>
-<li>Colored and scriptable prompt.</li>
-<li>Auto-answering of the &quot;Terminate batch job?&quot; prompt.</li>
-</ul>
-<p>By default Clink binds <kbd>Alt</kbd>-<kbd>H</kbd> to display the current key bindings.</p>
+</div>
+</div>
+</div>
+
 <h1 id="usage"><div class="wlink"><a href="#usage"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Usage</h1>
 <p>There are several ways to start Clink.</p>
 <ol>
@@ -935,19 +1030,41 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 <p>You can use Clink right away without configuring anything:</p>
 <ul>
 <li>Searchable <a href="#saved-command-history">command history</a> will be saved between sessions.</li>
-<li><kbd>Tab</kbd> and <kbd>Ctrl</kbd>-<kbd>Space</kbd> will do match completion two different ways.</li>
+<li><a href="#gettingstarted_autosuggest">Suggestions</a> are automatically offered as you type; press <kbd>Right</kbd> or <kbd>End</kbd> to accept a suggestion.</li>
+<li><kbd>Tab</kbd> and <kbd>Ctrl</kbd>-<kbd>Space</kbd> provide match <a href="#how-completion-works">completion</a> two different ways.</li>
 <li>Press <kbd>Alt</kbd>-<kbd>H</kbd> to see a list of the current key bindings.</li>
 <li>Press <kbd>Alt</kbd>-<kbd>Shift</kbd>-<kbd>/</kbd> followed by another key to see what command is bound to the key.</li>
 </ul>
 <p>There are three main ways of customizing Clink to your preferences:  the <a href="#init-file">Readline init file</a> (the <code>.inputrc</code> file), the <a href="#clink-settings">Clink settings</a> (the <code>clink set</code> command), and <a href="#extending-clink-with-lua">Lua</a> scripts.</p>
+<p><a name="how-completion-works"></a></p>
 <h2 id="how-completion-works"><div class="wlink"><a href="#how-completion-works"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>How Completion Works</h2>
-<p>Clink can offer possible completions for the word at the cursor, and can insert them for you.  Clink can complete file names, directories, environment variables, and commands.  It also allows you to provide custom completion generators using Lua scripts that execute inside Clink (see <a href="#extending-clink-with-lua">Extending Clink With Lua</a>).</p>
-<p>By default, pressing <kbd>Tab</kbd> performs completion the same way that bash does on Unix and Linux.  When you press <kbd>Tab</kbd>, Clink finds matches for how to complete the word at the cursor.  It automatically inserts the longest common prefix shared by the possible completions.  If you press <kbd>Tab</kbd> again, it also lists the possible completions.</p>
-<p>If you install Clink with &quot;Use enhanced defaults&quot; or if you set <a href="#clink_default_bindings"><code>clink.default_bindings</code></a> to use &quot;windows&quot; defaults, then pressing <kbd>Tab</kbd> cycles through the possible completions, replacing the word with the next possible completion each time.</p>
-<p>Pressing <kbd>Ctrl</kbd>-<kbd>Space</kbd> shows an interactive list of possible completions.  You can use the arrow keys to choose which completion to insert, and you can type to filter the list.  <kbd>Enter</kbd> inserts the selected completion, or <kbd>Space</kbd> inserts the selected completion and makes sure a space follows it to allow typing a next argument.</p>
-<p>The first word of each command line is the command or program to execute, or a file to open.  By default, Clink provides completions for the first word based on all executable programs on the system PATH and the current directory, but not non-executable files.  You can turn off executable completion by running <code>clink set <a href="#exec_enable">exec.enable</a> false</code>, or you can adjust its behavior by changing the various <a href="#exec.aliases"><code>exec.*</code></a> settings.</p>
+<p>&quot;Completion&quot; is for the word at the cursor; Clink can complete it for you when you press <kbd>Tab</kbd>.</p>
+<p>&quot;Suggestions&quot; are for the whole command line; Clink offers <a href="#gettingstarted_autosuggest">automatic suggestions</a> for the whole input line, which you can accept by pressing <kbd>Right</kbd> or <kbd>End</kbd>.</p>
+<p>Some examples of what completions can offer:</p>
+<ul>
+<li>File names,</li>
+<li>Directories,</li>
+<li>Environment variables,</li>
+<li>Commands,</li>
+<li>Command <a href="#argument-completion">arguments and flags</a>,</li>
+<li>You can provide custom completion generators using Lua scripts that execute inside Clink (see <a href="#extending-clink-with-lua">Extending Clink With Lua</a> and <a href="#popular-scripts">Popular Scripts</a>).</li>
+</ul>
+<h3 id="completion-keys"><div class="wlink"><a href="#completion-keys"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Completion Keys</h3>
+<p><kbd>Tab</kbd> completes the word at the cursor:</p>
+<ul>
+<li>If you installed Clink with &quot;Use enhanced defaults&quot; or if you set <a href="#clink_default_bindings"><code>clink.default_bindings</code></a> to use &quot;windows&quot; defaults, then <kbd>Tab</kbd> cycles through the possible completions, replacing the word with the next possible completion each time.</li>
+<li>Otherwise, <kbd>Tab</kbd> performs completion the same way that bash does on Unix and Linux:  When you press <kbd>Tab</kbd>, Clink finds matches for how to complete the word at the cursor.  It automatically inserts the longest common prefix shared by the possible completions.  If you press <kbd>Tab</kbd> again, it also lists the possible completions.</li>
+</ul>
+<p><kbd>Ctrl</kbd>-<kbd>Space</kbd> shows an interactive list of possible completions:</p>
+<ul>
+<li>You can use the arrow keys to choose which completion to insert, and you can type to filter the list.</li>
+<li>Pressing <kbd>Enter</kbd> in the list inserts the selected completion.</li>
+<li>Pressing <kbd>Space</kbd> in the list inserts the selected completion and makes sure a space follows it to allow typing a next argument.</li>
+</ul>
 <p>See <a href="#completion-commands">Completion Commands</a> and <a href="#clink-commands">Clink Commands</a> for more available completion commands.</p>
-<p>See also <a href="#gettingstarted_autosuggest">Auto-suggest</a> for information about auto-suggestions, which by default show up in gray at the end of the input line.  Completions are for words, and Auto-suggestions are for the whole input line (for example, based on history).</p>
+<h3 id="executable-completion"><div class="wlink"><a href="#executable-completion"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Executable Completion</h3>
+<p>By default, Clink completes the first word of each command based on all executable programs on the system PATH and the current directory, but not non-executable files.</p>
+<p>You can turn off the &quot;executable completion&quot; behavior by running <code>clink set <a href="#exec_enable">exec.enable</a> false</code>, or you can adjust its behavior by changing the various <a href="#exec.aliases"><code>exec.*</code></a> settings.</p>
 <h2 id="common-configuration"><div class="wlink"><a href="#common-configuration"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Common Configuration</h2>
 <p>The following sections describe some ways to begin customizing Clink to your taste.</p>
 <table class="linkmenu">
@@ -970,7 +1087,6 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 <p>If you install Clink from the .zip file then enhanced default settings are activated when the <code>default_settings</code> and <code>default_inputrc</code> files are present in the binaries directory or in the profile directory.  The .zip file comes with the files, but their names have a <code>_</code> prefix so that enhanced defaults won&#39;t automatically take effect.  You can activate the enhanced default settings by renaming the files to remove the <code>_</code> prefix.</p>
 <p>Here are some of the enhanced defaults.  Review the <code>default_settings</code> and <code>default_inputrc</code> files for the full list.</p>
 <ul>
-<li><a href="#gettingstarted_autosuggest">Automatic suggestions</a> are enabled.</li>
 <li>Many <a href="#gettingstarted_colors">color settings</a> have colorful defaults.</li>
 <li>Uses <a href="#gettingstarted_defaultbindings">Windows key bindings</a> by default.</li>
 <li>The <a href="#saved-command-history">command history</a>&#39;s default <a href="#history_max_lines">limit</a> is increased to 25,000 entries.</li>
@@ -987,7 +1103,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 <pre><code class="language-cmd">notepad %userprofile%\.inputrc
 </code></pre>
 <p>You may want to copy/paste the following sample text into the file as a starting point, and then press <kbd>Ctrl</kbd>-<kbd>S</kbd> to save the file.</p>
-<pre><code class="language-plaintext"># Some common Readline config settings.
+<pre><code class="language-inputrc"># Some common Readline config settings.
 
 set colored-stats                 on   # Turn on completion colors.
 set colored-completion-prefix     on   # Color the typed completion prefix.
@@ -1061,10 +1177,19 @@ $endif
 <p><a name="gettingstarted_autosuggest"></a></p>
 <h3 id="auto-suggest"><div class="wlink"><a href="#gettingstarted_autosuggest"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Auto-suggest</h3>
 <p>Clink can suggest commands as you type, based on command history and completions.</p>
-<p>To turn on automatic suggestions, run <code>clink set <a href="#autosuggest_enable">autosuggest.enable</a> true</code>.  When the cursor is at the end of the input line, a suggestion may appear in a muted color.  If the suggestion isn&#39;t what you want, just ignore it.  Or accept the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, accept the next word of the suggestion with <kbd>Ctrl</kbd>-<kbd>Right</kbd>, or accept the next full word of the suggestion up to a space with <kbd>Shift</kbd>-<kbd>Right</kbd>.</p>
-<p>The <a href="#autosuggest_strategy"><code>autosuggest.strategy</code></a> setting determines how a suggestion is chosen.</p>
-<p>Or, if you use the setup program with &quot;Use enhanced default settings&quot; checked then automatic suggestions are enabled by default.</p>
-<p>To turn off automatic suggestions, run <code>clink set <a href="#autosuggest_enable">autosuggest.enable</a> false</code>.</p>
+<p>You can turn off automatic suggestions with <code>clink set <a href="#autosuggest_enable">autosuggest.enable</a> false</code>, or turn them on with <code>clink set autosuggest.enable true</code>.</p>
+<p>When automatic suggestions are enabled and the cursor is at the end of the input line, a suggestion may appear in a muted color.  If the suggestion isn&#39;t what you want, just ignore it.  Or you can accept the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, accept the next word of the suggestion with <kbd>Ctrl</kbd>-<kbd>Right</kbd>, or accept the next full word of the suggestion up to a space with <kbd>Shift</kbd>-<kbd>Right</kbd>.</p>
+<p>The <a href="#autosuggest_strategy"><code>autosuggest.strategy</code></a> setting determines how suggestions are chosen.</p>
+<p>Here&#39;s an example of how auto-suggestion works.  Suppose you ran a command, so now it&#39;s in your command history:</p>
+<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default">C:\dir&gt;<span class="color_executable">findstr</span>&nbsp; <span class="color_input">/s needle haystack\*</span></span>
+</code></pre>
+
+<p>Later, you start to type a new command, and it matches the earlier command from the history:</p>
+<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default">C:\dir&gt;<span class="color_executable">findstr</span>&nbsp;<span class="cursor">_</span><span class="color_suggestion">/s needle haystack\*</span></span>
+</code></pre>
+
+<p>The muted text shows a suggestion that might be what you intend to type.  You can accept the muted text into the input line by pressing the <kbd>Right</kbd> key.</p>
+<p>If you press <kbd>Tab</kbd> then that invokes <a href="#how-completion-works">completion</a> instead.  Completion is something you manually invoke to offer possible completions for a word or argument position.  Auto-suggestion automatically offers suggestions for a whole input line, and the suggestions can come from the saved command history or from the list of possible completions.</p>
 <p><a name="gettingstarted_colors"></a></p>
 <h3 id="colors"><div class="wlink"><a href="#gettingstarted_colors"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Colors</h3>
 <p>Clink has many configurable colors for match completions, input line coloring, popup lists, and more.</p>
@@ -1075,30 +1200,18 @@ $endif
 <p>See the <a href="#completion-colors">Completion Colors</a> section for how to configure the colors for match completions.</p>
 <h4 id="other-colors"><div class="wlink"><a href="#other-colors"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Other colors</h4>
 <p>Clink adds color to the input line by highlighting arguments, flags, doskey macros, and more.  If you don&#39;t want input line colors, you can turn it off by running <code>clink set <a href="#clink_colorize_input">clink.colorize_input</a> false</code>.</p>
-<p>There are also colors for popup lists, and some other things.</p>
-<p>To configure a color, run <code>clink set <span class="arg">colorname</span> <span class="arg">colorvalue</span></code>.</p>
-<p>Match completions make it easy to change Clink settings:  type <code>clink set color.</code> and then use completion (e.g. <kbd>Tab</kbd> or <kbd>Ctrl</kbd>-<kbd>Space</kbd>) to see the available color settings, and to fill in a color value.</p>
-<p>Here are some colors you may want to set up right away:</p>
-<table>
-<thead>
-<tr>
-<th>Color</th>
-<th>Description</th>
-<th>Recommended</th>
-</tr>
-</thead>
-<tbody><tr>
-<td><a href="#color_executable"><code>color.executable</code></a></td>
-<td>Apply color when the command is an executable file.</td>
-<td><code>clink set color.executable sgr 38;5;32</code></td>
-</tr>
-<tr>
-<td><a href="#color_unexpected"><code>color.unrecognized</code></a></td>
-<td>Apply color when the command is not recognized.</td>
-<td><code>clink set color.unrecognized sgr 38;5;203</code></td>
-</tr>
-</tbody></table>
-<p>See the <a href="#clink-settings">Clink Settings</a>, <a href="#color-settings">Color Settings</a>, and <a href="#classifywords">Coloring the Input Text</a> sections for more information on Clink color settings.</p>
+<p>Here are examples, using the colors from the <a href="#gettingstarted_enhanceddefaults">Use enhanced defaults</a> installation option:</p>
+<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><table class="console" cellpadding=0 cellspacing=0>
+<tr><td class="color_default">c:\dir><span class="color_argmatcher">clink</span> <span class="color_arg">set</span> <span class="color_flag">--help</span></td><td class="right_gray">'clink' has an argmatcher</td></tr>
+<tr><td class="color_default">c:\dir><span class="color_cmd">attrib</span></td><td class="right_gray">'attrib' is a CMD command</td></tr>
+<tr><td class="color_default">c:\dir><span class="color_doskey">myalias</span></td><td class="right_gray">if 'myalias' is a doskey alias</td></tr>
+<tr><td class="color_default">c:\dir><span class="color_executable">control</span></td><td class="right_gray">'control' is an executable</td></tr>
+<tr><td class="color_default">c:\dir><span class="color_unrecognized">xyzabc123</span></td><td class="right_gray">unrecognized</td></tr>
+<tr><td class="color_default">c:\dir><span class="color_input">whatever</span></td><td class="right_gray">if executable and unrecognized colors are not set</td></tr>
+</table></code></pre>
+
+<p>To configure a color, run <code>clink set <span class="arg">colorname</span> <span class="arg">colorvalue</span></code>.  Match completions make it easy to change Clink settings:  type <code>clink set color.</code> and then use completion (e.g. <kbd>Tab</kbd> or <kbd>Ctrl</kbd>-<kbd>Space</kbd>) to see the available color settings, and to fill in a color value.</p>
+<p>See the <a href="#classifywords">Coloring the Input Text</a> and <a href="#color-settings">Color Settings</a> sections for more information on Clink color settings.</p>
 <p><a name="gettingstarted_keybindings"></a></p>
 <h3 id="key-bindings"><div class="wlink"><a href="#gettingstarted_keybindings"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Key Bindings</h3>
 <p>You can customize your key bindings (keyboard shortcuts) by assigning key bindings in the <a href="#gettingstarted_inputrc">.inputrc file</a>.  See <a href="#keybindings">Customizing Key Bindings</a> for more information.</p>
@@ -1193,7 +1306,8 @@ $endif
 
 <p><a name="clinksettings"></a></p>
 <h2 id="clink-settings"><div class="wlink"><a href="#clinksettings"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Clink Settings</h2>
-<p>The easiest way to configure Clink is to use the <code>clink set</code> command.  This can list, query, and set Clink&#39;s settings. Run <code>clink set --help</code> from a Clink-installed cmd.exe process to learn more both about how to use it and to get descriptions for Clink&#39;s various options.</p>
+<p>The easiest way to configure Clink is to use the <code>clink set</code> command to list, query, and set Clink&#39;s settings.</p>
+<p>Run <code>clink set --help</code> from a Clink-installed cmd.exe process to learn more.</p>
 <p>The following table describes the available Clink settings:</p>
 <table>
 <thead>
@@ -1210,7 +1324,7 @@ $endif
 </tr>
 <tr>
 <td align="center"><a name="autosuggest_enable"></a><code>autosuggest.enable</code></td>
-<td align="center">False <a href="#alternatedefault">*</a></td>
+<td align="center">True</td>
 <td>When this is <code>true</code> a suggested command may appear in <a href="#color_suggestion"><code>color.suggestion</code></a> color after the cursor.  If the suggestion isn&#39;t what you want, just ignore it.  Or accept the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, accept the next word of the suggestion with <kbd>Ctrl</kbd>-<kbd>Right</kbd>, or accept the next full word of the suggestion up to a space with <kbd>Shift</kbd>-<kbd>Right</kbd>.  The <a href="#autosuggest_strategy"><code>autosuggest.strategy</code></a> setting determines how a suggestion is chosen.</td>
 </tr>
 <tr>
@@ -1727,6 +1841,8 @@ $endif
 </blockquote>
 <p><a name="colorsettings"></a></p>
 <h2 id="color-settings"><div class="wlink"><a href="#colorsettings"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Color Settings</h2>
+<p>This section describes how to set a color.</p>
+<p>For information on what color settings are available and how they&#39;re used, see the <a href="#classifywords">Coloring the Input Text</a> section and the <a href="#color_arg">color.*</a> settings.</p>
 <h3 id="friendly-color-names"><div class="wlink"><a href="#friendly-color-names"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Friendly Color Names</h3>
 <p>The Clink color <a href="#clinksettings">settings</a> are the ones whose names begin with <code>color.</code>.  Color settings use the following syntax:</p>
 <p><code>[<span class="arg">attributes</span>] [<span class="arg">foreground_color</span>] [on [<span class="arg">background_color</span>]]</code></p>
@@ -2450,12 +2566,12 @@ Key bindings can be either functions or macros (literal text).  Functions are no
 <li><code>&quot;blah-blah&quot;</code> is a macro that inserts the literal text &quot;blah-blah&quot; into the line.</li>
 </ul>
 <p>When entering the text of a macro, single or double quotes must be used to indicate a macro definition. Unquoted text is assumed to be a function name. In the macro body, the backslash escapes described above are expanded. Backslash will quote any other character in the macro text, including <code>&quot;</code> and <code>&#39;</code>. For example, the following binding will make pressing <kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>\</kbd> insert a single <code>\</code> into the line:</p>
-<pre><code class="language-plaintext">&quot;\C-x\\&quot;: &quot;\\&quot;
+<pre><code class="language-inputrc">&quot;\C-x\\&quot;: &quot;\\&quot;
 </code></pre>
 <p>
 <dt>Examples</dt>
 
-<pre><code class="language-plaintext"># Using key names.
+<pre><code class="language-inputrc"># Using key names.
 C-u: universal-argument         # Bind Ctrl-u to invoke the universal-argument command.
 C-o: &quot;&gt; output&quot;                 # Bind Ctrl-o to insert the text &quot;&gt; output&quot; into the line.
 
@@ -2474,24 +2590,24 @@ C-o: &quot;&gt; output&quot;                 # Bind Ctrl-o to insert the text &q
 
 <p>The <code>$if</code> construct allows bindings to be made based on the editing mode, the terminal being used, or the application using Readline. The text of the test, after any comparison operator, extends to the end of the line; unless otherwise noted, no characters are required to isolate it.</p>
 <p>The <code>$if mode=</code> form of the <code>$if</code> directive is used to test whether Readline is in <code>emacs</code> or <code>vi</code> mode. This may be used in conjunction with the &quot;set keymap&quot; command, for instance, to set bindings in the <code>emacs-standard</code> and <code>emacs-ctlx</code> keymaps only if Readline is starting out in <code>emacs</code> mode. (The directive is only tested during startup.)</p>
-<pre><code class="language-plaintext">$if mode == emacs
+<pre><code class="language-inputrc">$if mode == emacs
 set show-mode-in-prompt on
 $endif
 </code></pre>
 <p>The <code>$if term=</code> form may be used to include terminal-specific key bindings, perhaps to bind the key sequences output by the terminal&#39;s function keys. The word on the right side of the &quot;=&quot; is tested against both the full name of the terminal and the portion of the terminal name before the first &quot;-&quot;. This allows <code>sun</code> to match both <code>sun</code> and <code>sun-cmd</code>, for instance. This is not useful with Clink, because Clink has its own terminal driver.</p>
 <p>The <code>$if version</code> test may be used to perform comparisons against specific Readline versions. The <code>version</code> expands to the current Readline version. The set of comparison operators includes <code>=</code> (and <code>==</code>), <code>!=</code>, <code>&lt;=</code>, <code>&gt;=</code>, <code>&lt;</code>, and <code>&gt;</code>. The version number supplied on the right side of the operator consists of a major version number, an optional decimal point, and an optional minor version (e.g., &quot;7.1&quot;). If the minor version is omitted, it is assumed to be &quot;0&quot;. The operator may be separated from the string <code>version</code> and from the version number argument by whitespace. The following example sets a variable if the Readline version being used is 7.0 or newer:</p>
-<pre><code class="language-plaintext">$if version &gt;= 7.0
+<pre><code class="language-inputrc">$if version &gt;= 7.0
 set show-mode-in-prompt on
 $endif
 </code></pre>
 <p>The <code>$if application</code> construct is used to include application-specific settings. Each program using the Readline library sets the <em>application name</em>, and you can test for a particular value. This could be used to bind key sequences to functions useful for a specific program. For instance, the following command adds a key sequence that quotes the current or previous word, but only in Clink:</p>
-<pre><code class="language-plaintext">$if clink
+<pre><code class="language-inputrc">$if clink
 # Quote the current or previous word
 &quot;\C-xq&quot;: &quot;\eb\&quot;\ef\&quot;&quot;
 $endif
 </code></pre>
 <p>The <code>$if variable</code> construct provides simple equality tests for Readline variables and values. The permitted comparison operators are <code>=</code>, <code>==</code>, and <code>!=</code>. The variable name must be separated from the comparison operator by whitespace; the operator may be separated from the value on the right hand side by whitespace. Both string and boolean variables may be tested. Boolean variables must be tested against the values <em>on</em> and <em>off</em>. The following example is equivalent to the <code>mode=emacs</code> test described above:</p>
-<pre><code class="language-plaintext">$if editing-mode == emacs
+<pre><code class="language-inputrc">$if editing-mode == emacs
 set show-mode-in-prompt on
 $endif
 </code></pre>
@@ -2510,63 +2626,62 @@ $endif
 <p><dt class="toppadding">$include</dt></p><dd>
 
 <p>This directive takes a single filename as an argument and reads commands and bindings from that file. For example, the following directive reads from &quot;c:\dir\inputrc&quot;:</p>
-<pre><code class="language-plaintext">$include c:\dir\inputrc
+<pre><code class="language-inputrc">$include c:\dir\inputrc
 </code></pre>
 </dd>
 
 <h4 id="sample-inputrc-file"><div class="wlink"><a href="#sample-inputrc-file"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Sample .inputrc file</h4>
 <p>Here is a sample <code>.inputrc</code> file with some of the variables and key bindings that I use:</p>
-<pre><code class="plaintext"><span class="hljs-meta">$if clink</span>           <span class="hljs-comment"># begin clink-only section</span>
+<pre><code class="language-inputrc">$if clink           # begin clink-only section
 
-<span class="hljs-meta">set colored-completion-prefix                       on</span>
-<span class="hljs-meta">set colored-stats                                   on</span>
-<span class="hljs-meta">set mark-symlinked-directories                      on</span>
-<span class="hljs-meta">set visible-stats                                   off</span>
-<span class="hljs-meta">set completion-auto-query-items                     on</span>
-<span class="hljs-meta">set history-point-at-end-of-anchored-search         on</span>
-<span class="hljs-meta">set menu-complete-wraparound                        off</span>
-<span class="hljs-meta">set search-ignore-case                              on</span>
+set colored-completion-prefix                       on
+set colored-stats                                   on
+set mark-symlinked-directories                      on
+set visible-stats                                   off
+set completion-auto-query-items                     on
+set history-point-at-end-of-anchored-search         on
+set menu-complete-wraparound                        off
+set search-ignore-case                              on
 
-<span class="hljs-comment"># The following key bindings are for emacs mode.</span>
-<span class="hljs-meta">set keymap emacs</span>
+# The following key bindings are for emacs mode.
+set keymap emacs
 
-<span class="hljs-string">"\e[27;8;72~"</span>:      clink-popup-show-help           <span class="hljs-comment"># Alt-Ctrl-Shift-H</span>
+&quot;\e[27;8;72~&quot;:      clink-popup-show-help           # Alt-Ctrl-Shift-H
 
-<span class="hljs-comment"># Completion key bindings.</span>
-<span class="hljs-string">"\t"</span>:               old-menu-complete               <span class="hljs-comment"># Tab</span>
-<span class="hljs-string">"\e[Z"</span>:             old-menu-complete-backward      <span class="hljs-comment"># Shift-Tab</span>
-<span class="hljs-string">"\e[27;5;32~"</span>:      clink-select-complete           <span class="hljs-comment"># Ctrl-Space</span>
+# Completion key bindings.
+&quot;\t&quot;:               old-menu-complete               # Tab
+&quot;\e[Z&quot;:             old-menu-complete-backward      # Shift-Tab
+&quot;\e[27;5;32~&quot;:      clink-select-complete           # Ctrl-Space
 
-<span class="hljs-comment"># Some key bindings I got used to from 4Dos/4NT/Take Command.</span>
-C-b:                                                <span class="hljs-comment"># Ctrl-B (cleared because I redefined Ctrl-F)</span>
-C-d:                remove-history                  <span class="hljs-comment"># Ctrl-D (replaces `delete-char`)</span>
-C-f:                clink-expand-doskey-alias       <span class="hljs-comment"># Ctrl-F (replaces `forward-char`)</span>
-C-k:                add-history                     <span class="hljs-comment"># Ctrl-K (replaces `kill-line`)</span>
-<span class="hljs-string">"\e[A"</span>:             history-search-backward         <span class="hljs-comment"># Up (replaces `previous-history`)</span>
-<span class="hljs-string">"\e[B"</span>:             history-search-forward          <span class="hljs-comment"># Down (replaces `next-history`)</span>
-<span class="hljs-string">"\e[5~"</span>:            clink-popup-history             <span class="hljs-comment"># PgUp (replaces `history-search-backward`)</span>
-<span class="hljs-string">"\e[6~"</span>:                                            <span class="hljs-comment"># PgDn (cleared because I redefined PgUp)</span>
-<span class="hljs-string">"\e[1;5F"</span>:          end-of-line                     <span class="hljs-comment"># Ctrl-End (replaces `kill-line`)</span>
-<span class="hljs-string">"\e[1;5H"</span>:          beginning-of-line               <span class="hljs-comment"># Ctrl-Home (replaces `backward-kill-line`)</span>
+# Some key bindings I got used to from 4Dos/4NT/Take Command.
+C-b:                                                # Ctrl-B (cleared because I redefined Ctrl-F)
+C-d:                remove-history                  # Ctrl-D (replaces `delete-char`)
+C-f:                clink-expand-doskey-alias       # Ctrl-F (replaces `forward-char`)
+C-k:                add-history                     # Ctrl-K (replaces `kill-line`)
+&quot;\e[A&quot;:             history-search-backward         # Up (replaces `previous-history`)
+&quot;\e[B&quot;:             history-search-forward          # Down (replaces `next-history`)
+&quot;\e[5~&quot;:            clink-popup-history             # PgUp (replaces `history-search-backward`)
+&quot;\e[6~&quot;:                                            # PgDn (cleared because I redefined PgUp)
+&quot;\e[1;5F&quot;:          end-of-line                     # Ctrl-End (replaces `kill-line`)
+&quot;\e[1;5H&quot;:          beginning-of-line               # Ctrl-Home (replaces `backward-kill-line`)
 
-<span class="hljs-comment"># Some key bindings handy in default (conhost) console windows.</span>
-M-b:                                                <span class="hljs-comment"># Alt-B (cleared because I redefined Alt-F)</span>
-M-f:                clink-find-conhost              <span class="hljs-comment"># Alt-F for "Find..." from the console's system menu</span>
-M-m:                clink-mark-conhost              <span class="hljs-comment"># Alt-M for "Mark" from the console's system menu</span>
+# Some key bindings handy in default (conhost) console windows.
+M-b:                                                # Alt-B (cleared because I redefined Alt-F)
+M-f:                clink-find-conhost              # Alt-F for &quot;Find...&quot; from the console&#39;s system menu
+M-m:                clink-mark-conhost              # Alt-M for &quot;Mark&quot; from the console&#39;s system menu
 
-<span class="hljs-comment"># Some key bindings for interrogating the Readline configuration.</span>
-<span class="hljs-string">"\C-x\C-f"</span>:         dump-functions                  <span class="hljs-comment"># Ctrl-X, Ctrl-F</span>
-<span class="hljs-string">"\C-x\C-m"</span>:         dump-macros                     <span class="hljs-comment"># Ctrl-X, Ctrl-M</span>
-<span class="hljs-string">"\C-x\C-v"</span>:         dump-variables                  <span class="hljs-comment"># Ctrl-X, Ctrl-V</span>
+# Some key bindings for interrogating the Readline configuration.
+&quot;\C-x\C-f&quot;:         dump-functions                  # Ctrl-X, Ctrl-F
+&quot;\C-x\C-m&quot;:         dump-macros                     # Ctrl-X, Ctrl-M
+&quot;\C-x\C-v&quot;:         dump-variables                  # Ctrl-X, Ctrl-V
 
-<span class="hljs-comment"># Misc other key bindings.</span>
-<span class="hljs-string">"\e[27;2;32~"</span>:      clink-magic-suggest-space       <span class="hljs-comment"># Shift-Space</span>
-<span class="hljs-string">"\e[5;6~"</span>:          clink-popup-directories         <span class="hljs-comment"># Ctrl-Shift-PgUp</span>
-C-_:                kill-line                       <span class="hljs-comment"># Ctrl-- (replaces `undo`)</span>
+# Misc other key bindings.
+&quot;\e[27;2;32~&quot;:      clink-magic-suggest-space       # Shift-Space
+&quot;\e[5;6~&quot;:          clink-popup-directories         # Ctrl-Shift-PgUp
+C-_:                kill-line                       # Ctrl-- (replaces `undo`)
 
-<span class="hljs-meta">$endif</span>              <span class="hljs-comment"># end clink-only section</span>
+$endif              # end clink-only section
 </code></pre>
-
 <h2 id="bindable-commands"><div class="wlink"><a href="#bindable-commands"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Bindable Commands</h2>
 <h3 id="commands-for-moving"><div class="wlink"><a href="#commands-for-moving"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Commands For Moving</h3>
 <table>
@@ -3981,7 +4096,11 @@ function my_match_generator:generate(line_state, match_builder)
 end
 </code></pre>
 <blockquote>
-<p><strong>Note:</strong>  In v1.3.1 and higher, the table received by the registered ondisplaymatches function includes all the match fields (such as <code>display</code>, <code>description</code>, <code>appendchar</code>, etc), and the returned table can also include any of these fields.  In other words, in v1.3.1 and higher match filtering supports all the same fields as <a href="#builder:addmatch">builder:addmatch()</a>.</p>
+<p><strong>Compatibility Notes:</strong></p>
+<ul>
+<li>In v1.3.1 and higher, the table received by the registered ondisplaymatches function includes all the match fields (such as <code>display</code>, <code>description</code>, <code>appendchar</code>, etc), and the function can include any of these fields in the table it returns.  In other words, in v1.3.1 and higher match filtering supports all the same fields as <a href="#builder:addmatch">builder:addmatch()</a>.</li>
+<li>In v1.5.4 and higher, the table received by the registered ondisplaymatches function can include an <code>arginfo</code> field, and the function can include <code>arginfo</code> in the table it returns.</li>
+</ul>
 </blockquote>
 <p><a name="argumentcompletion"></a></p>
 <h2 id="argument-completion"><div class="wlink"><a href="#argumentcompletion"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Argument Completion</h2>
@@ -4014,15 +4133,15 @@ end
 <p>Arguments are positional.  Each <code>:addarg()</code> adds a new argument position and defines the possible completions for that argument position.</p>
 <p>Flags are position independent.  Any <code>:addflags()</code> add to the set of possible flag completions.  Any word that begins with the flag prefix character (in this example <code>-</code>) is considered to be a flag, even if it is not listed as a possible completion.  The flags may be input at any position; before arguments, between arguments, and after arguments.</p>
 <p>On the command line completion would look something like this, if <kbd>Alt</kbd>-<kbd>=</kbd> were pressed at the end of each input line below:</p>
-<pre style="border-radius:initial;border:initial"><code class="plaintext" style="background-color:black;color:#cccccc">C:\&gt;foobar -
+<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default">C:\&gt;<span class="color_argmatcher">foobar</span> <span class="color_input">-</span>
 -bar  -foo
-C:\&gt;foobar -bar hello
+C:\&gt;<span class="color_argmatcher">foobar</span> <span class="color_flag">-bar</span> <span class="color_arg">hello</span>
 wombles  world  xyzzy
-C:\&gt;foobar -bar hello wo
+C:\&gt;<span class="color_argmatcher">foobar</span> <span class="color_flag">-bar</span> <span class="color_arg">hello</span> <span class="color_input">wo</span>
 wombles  world
-C:\&gt;foobar -bar hello wombles -
--bar -foo
-C:\&gt;foobar -bar hello wombles -foo <span style="color:#ffffff">_</span>
+C:\&gt;<span class="color_argmatcher">foobar</span> <span class="color_flag">-bar</span> <span class="color_arg">hello</span> <span class="color_arg">wombles</span> <span class="color_input">-</span>
+-bar  -foo
+C:\&gt;<span class="color_argmatcher">foobar</span> <span class="color_flag">-bar</span> <span class="color_arg">hello</span> <span class="color_arg">wombles</span> <span class="color_flag">-foo</span> <span class="cursor">_</span></span>
 </code></pre>
 
 <p>When displaying possible completions, flag matches are only shown if the flag character has been input.  So <code>foobar </code> and <kbd>Alt</kbd>-<kbd>=</kbd> would list matches for the first argument position, or <code>foobar some_word </code> and <kbd>Alt</kbd>-<kbd>=</kbd> would list matches for the second argument position, or  <code>foobar -</code> and <kbd>Alt</kbd>-<kbd>=</kbd> would list only flag matches.</p>
@@ -4040,9 +4159,9 @@ C:\&gt;foobar -bar hello wombles -foo <span style="color:#ffffff">_</span>
 :addflags(&quot;-foo&quot;, &quot;-bar&quot;)                -- Flags.
 </code></pre>
 <p>When completing a word that doesn&#39;t have a corresponding argument position the argmatcher will automatically use filename completion.  For example, the <code>foobar</code> argmatcher has two argument positions, and completing a third word uses filename completion.</p>
-<pre style="border-radius:initial;border:initial"><code class="plaintext" style="background-color:black;color:#cccccc">C:\&gt;foobar hello world pro
+<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default">C:\&gt;<span class="color_argmatcher">foobar</span> <span class="color_arg">hello</span> <span class="color_arg">world</span> <span class="color_input">pro</span>
 Program Files\  Program Files(x86)\  ProgramData\
-C:\&gt;foobar hello world pro<span style="color:#ffffff">_</span>
+C:\&gt;<span class="color_argmatcher">foobar</span> <span class="color_arg">hello</span> <span class="color_arg">world</span> <span class="color_input">pro</span><span class="cursor">_</span></span>
 </code></pre>
 
 <p>Use <a href="#_argmatcher:nofiles">_argmatcher:nofiles()</a> if you want to disable the automatic filename completion and &quot;dead end&quot; an argmatcher for extra words.  This stops all further parsing for the command.</p>
@@ -4315,7 +4434,7 @@ clink.argmatcher()
 <p>With the shorthand form flags are implied rather than declared.  When a shorthand table&#39;s first value is a string starting with <code>-</code> or <code>/</code> then the table is interpreted as flags.  Note that it&#39;s still possible with shorthand form to mix flag prefixes, and even add additional flag prefixes, such as <code>{ <span class="hljs-string">'-a'</span>, <span class="hljs-string">'/b'</span>, <span class="hljs-string">'=c'</span> }</code>.</p>
 <p><a name="classifywords"></a></p>
 <h2 id="coloring-the-input-text"><div class="wlink"><a href="#classifywords"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Coloring the Input Text</h2>
-<p>When the <code><a href="#clink_colorize_input">clink.colorize_input</a></code> setting is disabled, then the entire input line is colored by the <code><a href="#color_input">color.input</a></code> setting.  When the setting is enabled, then <a href="#argumentcompletion">argmatchers</a> automatically apply colors to the input text as they parse it.</p>
+<p>When the <code><a href="#clink_colorize_input">clink.colorize_input</a></code> setting is enabled, then <a href="#argumentcompletion">argmatchers</a> automatically apply colors to the input text as they parse it.  When the setting is disabled, then the entire input line is colored by the <code><a href="#color_input">color.input</a></code> setting.</p>
 <table class="linkmenu">
 <tr><td><a href="#inputcolor_command">Coloring the Command Word</a></td><td>How the command word is colored.</td></tr>
 <tr><td><a href="#inputcolor_redir">Coloring Command Separators and Redirection</a></td><td>How special characters are colored.</td></tr>
@@ -4337,13 +4456,13 @@ clink.argmatcher()
 <li>If none of the above apply, then <code><a href="#color_input">color.input</a></code> is used.</li>
 </ol>
 <p>Here are examples, using the colors from the <a href="#gettingstarted_enhanceddefaults">Use enhanced defaults</a> installation option:</p>
-<pre style="border-radius:initial;border:initial"><code class="plaintext" style="background-color:black"><table class="console" cellpadding=0 cellspacing=0>
-<tr><td><span style="color:#c0c0c0">c:\dir></span><span style="color:#00d700">clink</span></td><td style="color:#d7d7d7;text-align:right"><em>'clink' has an argmatcher</em></td></tr>
-<tr><td><span style="color:#c0c0c0">c:\dir></span><span style="color:#ffffff">attrib</span></td><td style="color:#d7d7d7;text-align:right"><em>'attrib' is a CMD command</em></td></tr>
-<tr><td><span style="color:#c0c0c0">c:\dir></span><span style="color:#5fafff">myalias</span></td><td style="color:#d7d7d7;text-align:right"><em>if 'myalias' is a doskey alias</em></td></tr>
-<tr><td><span style="color:#c0c0c0">c:\dir></span><span style="color:#0087ff">control</span></td><td style="color:#d7d7d7;text-align:right"><em>'control' is an executable</em></td></tr>
-<tr><td><span style="color:#c0c0c0">c:\dir></span><span style="color:#ff5f5f">xyzabc123</span></td><td style="color:#d7d7d7;text-align:right"><em>unrecognized</em></td></tr>
-<tr><td><span style="color:#c0c0c0">c:\dir></span><span style="color:#ffd787">whatever</span></td><td style="color:#d7d7d7;text-align:right"><em>if executable and unrecognized colors are not set</em></td></tr>
+<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><table class="console" cellpadding=0 cellspacing=0>
+<tr><td class="color_default">c:\dir><span class="color_argmatcher">clink</span></td><td class="right_gray">'clink' has an argmatcher</td></tr>
+<tr><td class="color_default">c:\dir><span class="color_cmd">attrib</span></td><td class="right_gray">'attrib' is a CMD command</td></tr>
+<tr><td class="color_default">c:\dir><span class="color_doskey">myalias</span></td><td class="right_gray">if 'myalias' is a doskey alias</td></tr>
+<tr><td class="color_default">c:\dir><span class="color_executable">control</span></td><td class="right_gray">'control' is an executable</td></tr>
+<tr><td class="color_default">c:\dir><span class="color_unrecognized">xyzabc123</span></td><td class="right_gray">unrecognized</td></tr>
+<tr><td class="color_default">c:\dir><span class="color_input">whatever</span></td><td class="right_gray">if executable and unrecognized colors are not set</td></tr>
 </table></code></pre>
 
 <p><a name="inputcolor_redir"></a></p>
@@ -4355,9 +4474,9 @@ clink.argmatcher()
 <li>Redirected files use <code><a href="#color_input">color.input</a></code>.</li>
 </ul>
 <p>Here are examples, using the colors from the <a href="#gettingstarted_enhanceddefaults">Use enhanced defaults</a> installation option:</p>
-<pre style="border-radius:initial;border:initial"><code class="plaintext" style="background-color:black"><table class="console" cellpadding=0 cellspacing=0>
-<tr><td><span style="color:#c0c0c0">c:\dir></span><span style="color:#ffffff">pushd</span> <span style="color:#ffaf00">&</span> <span style="color:#ffffff">popd</span></td><td style="color:#d7d7d7;text-align:right"><em>'&' is the command separator</em></td></tr>
-<tr><td><span style="color:#c0c0c0">c:\dir></span><span style="color:#ffffff">set</span> <span style="color:#d78700">&gt;</span><span style="color:#ffd787">file</span></td><td style="color:#d7d7d7;text-align:right"><em>redirecting 'set' to 'file'</em></td></tr>
+<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><table class="console" cellpadding=0 cellspacing=0>
+<tr><td class="color_default">c:\dir><span class="color_cmd">pushd</span> <span class="color_cmdsep">&</span> <span class="color_cmd">popd</span></td><td class="right_gray">'&' is the command separator</td></tr>
+<tr><td class="color_default">c:\dir><span class="color_cmd">set</span> <span class="color_cmdredir">&gt;</span><span class="color_input">file</span></td><td class="right_gray">redirecting 'set' to 'file'</td></tr>
 </table></code></pre>
 
 <p><a name="inputcolor_other"></a></p>
@@ -4367,15 +4486,17 @@ clink.argmatcher()
 <li>If an argmatcher isn&#39;t defined for a command, then the input text is colored using <code><a href="#color_input">color.input</a></code>.</li>
 <li>Flags defined by the command&#39;s argmatcher use <code><a href="#color_flag">color.flag</a></code>.</li>
 <li>Arguments defined by the command&#39;s argmatcher use <code><a href="#color_arg">color.arg</a></code>.</li>
-<li>Text the goes past what the command&#39;s argmatcher expects uses <code><a href="#color_unexpected">color.unexpected</a></code>.</li>
+<li>Text that goes past what the command&#39;s argmatcher expects uses <code><a href="#color_unexpected">color.unexpected</a></code>.</li>
+<li><a href="#gettingstarted_autosuggest">Auto-suggestion</a> text uses <code><a href="#color_suggestion">color.suggestion</a></code>.</li>
 </ul>
 <p>Here are examples, using the colors from the <a href="#gettingstarted_enhanceddefaults">Use enhanced defaults</a> installation option:</p>
-<pre style="border-radius:initial;border:initial"><code class="plaintext" style="background-color:black"><table class="console" cellpadding=0 cellspacing=0>
-<tr><td><span style="color:#c0c0c0">c:\dir></span><span style="color:#00d700">clink</span> <span style="color:#87d7ff">--help</span></td><td style="color:#d7d7d7;text-align:right"><em>'--help' is defined as a flag for 'clink'</em></td></tr>
-<tr><td><span style="color:#c0c0c0">c:\dir></span><span style="color:#00d700">clink</span> <span style="color:#ffffff">set</span></td><td style="color:#d7d7d7;text-align:right"><em>'set' is defined as an argument for 'clink'</em></td></tr>
-<tr><td><span style="color:#c0c0c0">c:\dir></span><span style="color:#00d700">clink</span> <span style="color:#ffffff">set</span> <span style="color:#ffffff">color.arg</span></td><td style="color:#d7d7d7;text-align:right"><em>'color.arg' is defined as an argument for 'clink set'</em></td></tr>
-<tr><td><span style="color:#c0c0c0">c:\dir></span><span style="color:#00d700">clink</span> <span style="color:#ffffff">set</span> <span style="color:#c0c0c0">abc.xyz</span></td><td style="color:#d7d7d7;text-align:right"><em>'abc.xyz' is not a recognized argument for 'clink set'</em></td></tr>
-<tr><td><span style="color:#c0c0c0">c:\dir></span><span style="color:#0087ff">findstr</span> <span style="color:#ffd787">/s needle haystack\*</span></td><td style="color:#d7d7d7;text-align:right"><em>if 'findstr' has no argmatcher, all words use 'color.input'</em></td></tr>
+<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><table class="console" cellpadding=0 cellspacing=0>
+<tr><td class="color_default">c:\dir><span class="color_argmatcher">clink</span> <span class="color_flag">--help</span></td><td class="right_gray">'--help' is defined as a flag for 'clink'</td></tr>
+<tr><td class="color_default">c:\dir><span class="color_argmatcher">clink</span> <span class="color_arg">set</span></td><td class="right_gray">'set' is defined as an argument for 'clink'</td></tr>
+<tr><td class="color_default">c:\dir><span class="color_argmatcher">clink</span> <span class="color_arg">set</span> <span class="color_arg">color.arg</span></td><td class="right_gray">'color.arg' is defined as an argument for 'clink set'</td></tr>
+<tr><td class="color_default">c:\dir><span class="color_argmatcher">clink</span> <span class="color_arg">set</span> <span class="color_unexpected">abc.xyz</span></td><td class="right_gray">'abc.xyz' is not a recognized argument for 'clink set'</td></tr>
+<tr><td class="color_default">c:\dir><span class="color_executable">findstr</span> <span class="color_input">/s needle haystack\*</span></td><td class="right_gray">if 'findstr' has no argmatcher, all words use 'color.input'</td></tr>
+<tr><td class="color_default">c:\dir><span class="color_executable">findstr</span> <span class="color_input">/s</span><span class="cursor">_</span><span class="color_suggestion">needle haystack\*</span></td><td class="right_gray">press RIGHT to accept an auto-suggestion</td></tr>
 </table></code></pre>
 
 <h3 id="more-advanced-stuff-2"><div class="wlink"><a href="#more-advanced-stuff-2"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>More Advanced Stuff</h3>
@@ -4572,12 +4693,12 @@ function bracket_prompt:filter(prompt)
 end
 </code></pre>
 <p>The resulting prompt will look like this:</p>
-<pre style="border-radius:initial;border:initial"><code class="plaintext" style="background-color:black"><span style="color:#00ff00">Wed 12:54</span> <span style="color:#ffff00">c:\dir</span> <span style="color:#008080">[master]</span>
-<span style="color:#cccccc">&gt;&nbsp;_</span>
+<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default"><span style="color:#00ff00">Tue 12:54</span> <span style="color:#ffff00">c:\dir</span> <span style="color:#008080">[master]</span>
+&gt;&nbsp;<span class="cursor">_</span></span>
 </code></pre>
 
 <p>...except on Wednesdays, when it will look like this:</p>
-<pre style="border-radius:initial;border:initial"><code class="plaintext" style="background-color:black"><span style="color:#00ff00">Wed 12:54</span> <span style="color:#ffff00">c:\dir</span> <span style="color:#cccccc">HAPPY HUMP DAY!&nbsp;_</span>
+<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default"><span style="color:#00ff00">Wed 12:54</span> <span style="color:#ffff00">c:\dir</span> HAPPY HUMP DAY!&nbsp;<span class="cursor">_</span></span>
 </code></pre>
 
 <p/>
@@ -5523,12 +5644,7 @@ end
 <p>But it might be more convenient to acquire a keyboard that has an <kbd>Alt</kbd> key.</p>
 <h2 id="saved-command-history"><div class="wlink"><a href="#saved-command-history"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Saved Command History</h2>
 <p>Clink has a list of commands from the current session, and it can be saved and loaded across sessions.</p>
-<p>A line won&#39;t be added to history if either of the following are true:</p>
-<ul>
-<li>The first word in the line matches one of the words in the <a href="#history_dont_add_to_history_cmds"><code>history.dont_add_to_history_cmds</code></a> setting.</li>
-<li>The line begins with a space character.</li>
-</ul>
-<p>To prevent doskey alias expansion while still adding the line to history, you can start the line with a semicolon.</p>
+<p>By prefixing the command you can control whether it&#39;s added to history and whether a doskey alias may be expanded.</p>
 <table>
 <thead>
 <tr>
@@ -5538,18 +5654,22 @@ end
 </thead>
 <tbody><tr>
 <td><code>somecmd</code></td>
-<td>Expands doskey alias and adds to history.</td>
+<td>Can expand a doskey alias and adds to history.</td>
 </tr>
 <tr>
 <td><code>&nbsp;somecmd</code></td>
-<td>Doesn&#39;t expand doskey alias and doesn&#39;t add to history.</td>
+<td>Starting with a space doesn&#39;t expand a doskey alias and doesn&#39;t add to history.</td>
 </tr>
 <tr>
 <td><code>;somecmd</code></td>
-<td>Doesn&#39;t expand doskey alias but does add to history.</td>
+<td>Starting with a semicolon doesn&#39;t expand a doskey alias but does add to history.</td>
 </tr>
 </tbody></table>
-<p>There are several settings that control how history works.  Run <code>clink set history*</code> to see them.</p>
+<p>There are several settings that control how history works.  Run <code>clink set history*</code> to see them all.</p>
+<p><strong>Note:</strong> If the first word in the line matches one of the words in the <a href="#history_dont_add_to_history_cmds"><code>history.dont_add_to_history_cmds</code></a> setting then the command is not added to history.  By default, <code>history</code> and <code>exit</code> are not added to history.</p>
+<h3 id="list-the-history"><div class="wlink"><a href="#list-the-history"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>List the history</h3>
+<p>Press <kbd>F7</kbd> for a popup list of selectable history entries.</p>
+<p>You can also list the saved history by running <code>clink history</code> or the <code>history</code> doskey alias that Clink automatically defines.  Use <code>history --help</code> for usage info.</p>
 <h3 id="the-master-history-file"><div class="wlink"><a href="#the-master-history-file"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>The master history file</h3>
 <p>When the <a href="#history_save"><code>history.save</code></a> setting is enabled, then the command history is loaded and saved as follows (or when the setting is disabled, then it isn&#39;t saved between sessions).</p>
 <p>Every time a new input line starts, Clink reloads the master history list and prunes it not to exceed the <a href="#history_max_lines"><code>history.max_lines</code></a> setting.</p>
@@ -6039,7 +6159,7 @@ set CLINK_TERM_VS=\e[?12l
 :addarg("red", "green", "blue")             -- 1st argument is a color
 :addarg("circle", "square", "triangle")     -- 2nd argument is a shape</code></pre><p class="desc">When providing a table of arguments, the table can contain some special entries: <p><table> <tr><th>Entry</th><th>More Info</th><th>Version</th></tr> <tr><td><code>delayinit=<span class="arg">function</span></code></td><td>See <a href="#addarg_delayinit">Delayed initialization for an argument position</a>.</td><td class="version">v1.3.10 and newer</td></tr> <tr><td><code>fromhistory=true</code></td><td>See <a href="#addarg_fromhistory">Generate Matches From History</a>.</td><td class="version">v1.3.9 and newer</td></tr> <tr><td><code>loopchars="<span class="arg">characters</span>"</code></td><td>See <a href="#addarg_loopchars">Delimited Arguments</a>.</td><td class="version">v1.3.37 and newer</td></tr> <tr><td><code>nosort=true</code></td><td>See <a href="#addarg_nosort">Disable Sorting Matches</a>.</td><td class="version">v1.3.3 and newer</td></tr> <tr><td><code>onarg=<span class="arg">function</span></code></td><td>See <a href="#responsive-argmatchers">Responding to Arguments in Argmatchers</a>.</td><td class="version">v1.3.13 and newer</td></tr> </table></p> <strong>Note:</strong>  Arguments are positional in an argmatcher.  Using <code>:addarg()</code> multiple times adds multiple argument positions, in the order they are specified.</p></div></div><hr/>
 <div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#_argmatcher:addargunsorted"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="_argmatcher:addargunsorted">_argmatcher:addargunsorted</a></div> <div class="signature">( <span class="arg_name">choices...</span>:string|table ) : self<br/><div class="version">v1.3.3 and newer</div></div></div><div class="body"><p class="desc">This is the same as <a href="#_argmatcher:addarg">_argmatcher:addarg</a> except that this disables sorting the matches.</p></div></div><hr/>
-<div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#_argmatcher:adddescriptions"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="_argmatcher:adddescriptions">_argmatcher:adddescriptions</a></div> <div class="signature">( [<span class="arg_name">descriptions...</span>:table] ) : self<br/><div class="version">v1.2.38 and newer</div></div></div><div class="body"><p class="desc">Adds descriptions for arg matches and/or flag matches.  Descriptions are displayed for their associated args or flags whenever possible completions are listed, for example by the <code><a href="#rlcmd-complete">complete</a></code> or <code><a href="#rlcmd-clink-select-complete">clink-select-complete</a></code> or <code><a href="#rlcmd-possible-completions">possible-completions</a></code> commands.</p><p class="desc"> Any number of descriptions tables may be passed to the function, and each table must use one of the following schemes: <ul> <li>One or more string values that are args or flags, and a <code>description</code> field that is the associated description string. <li>Key/value pairs where each key is an arg or flag, and its value is either a description string or a table containing an optional arguments string and a description string.  If an arguments string is provided, it is appended to the arg or flag string when listing possible completions.  For example, <code>["--user"] = { " name", "Specify username"}</code> gets printed as:</p><p class="desc"> <pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"> <span style="color:#c0c0c0">--user</span> <span style="color:#808000">name</span>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#00ffff">Specify username</span> </code></pre> </ul></p><p class="desc"></p><pre class="language-lua"><code>local foo = clink.argmatcher("foo")
+<div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#_argmatcher:adddescriptions"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="_argmatcher:adddescriptions">_argmatcher:adddescriptions</a></div> <div class="signature">( [<span class="arg_name">descriptions...</span>:table] ) : self<br/><div class="version">v1.2.38 and newer</div></div></div><div class="body"><p class="desc">Adds descriptions for arg matches and/or flag matches.  Descriptions are displayed for their associated args or flags whenever possible completions are listed, for example by the <code><a href="#rlcmd-complete">complete</a></code> or <code><a href="#rlcmd-clink-select-complete">clink-select-complete</a></code> or <code><a href="#rlcmd-possible-completions">possible-completions</a></code> commands.</p><p class="desc"> Any number of descriptions tables may be passed to the function, and each table must use one of the following schemes: <ul> <li>One or more string values that are args or flags, and a <code>description</code> field that is the associated description string. <li>Key/value pairs where each key is an arg or flag, and its value is either a description string or a table containing an optional argument info string and a description string.  If an argument info string is provided, it is appended to the arg or flag string when listing possible completions. For example, <code>["--user"] = { " name", "Specify username"}</code> gets printed as:</p><p class="desc"> <pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"> <span class="color_default">--user</span> <span class="color_arginfo">name</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="color_description">Specify username</span> </code></pre> </ul></p><p class="desc"></p><pre class="language-lua"><code>local foo = clink.argmatcher("foo")
 foo:addflags("-h", "--help", "--user")
 foo:addarg("info", "set")
 -- Example using first scheme and one table per description:
@@ -6124,11 +6244,12 @@ clink.argmatcher('some_command')
 </div><div class="group"><h5 class="group_name"><span class="wlink"><a href="#builder"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="builder">builder</a></h5><div class="function"><div class="header"> <div class="name"><span class="wlink"><a href="#builder:addmatch"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></span><a name="builder:addmatch">builder:addmatch</a></div> <div class="signature">( <span class="arg_name">match</span>:string|table, [<span class="arg_name">type</span>:string] ) : boolean<br/><div class="version">v1.0.0 and newer</div></div></div><div class="body"><p class="desc">Adds a match.</p><p class="desc"> The <span class="arg">match</span> argument is the match string to add.</p><p class="desc"> The <span class="arg">type</span> argument is the optional match type, or "none" if omitted (see below for the possible match types).</p><p class="desc"> Alternatively, the <span class="arg">match</span> argument can be a table with the following scheme:</p><pre class="language-lua"><code>{
 &nbsp;   match           = "..."    -- [string] The match text.
 &nbsp;   display         = "..."    -- [string] OPTIONAL; alternative text to display when listing possible completions.
+&nbsp;   arginfo         = "..."    -- [string] OPTIONAL; an argument info string (requires v1.5.4 or greater).
 &nbsp;   description     = "..."    -- [string] OPTIONAL; a description for the match.
 &nbsp;   type            = "..."    -- [string] OPTIONAL; the match type.
 &nbsp;   appendchar      = "..."    -- [string] OPTIONAL; character to append after the match.
 &nbsp;   suppressappend  = t_or_f   -- [boolean] OPTIONAL; whether to suppress appending a character after the match.
-}</code></pre><p class="desc"><ul> <li>The <code>display</code> field is optional, and is displayed instead of the <code>match</code> field when listing possible completions.  It can even include ANSI escape codes for colors, etc.  (Requires v1.2.38 or greater.) <li>The <code>description</code> field is optional, and is displayed in addition to <code>match</code> or <code>display</code> when listing possible completions.  (Requires v1.2.38 or greater.) <li>The <code>type</code> field is optional.  If omitted, then the <span class="arg">type</span> argument is used for that element. <li>The <code>appendchar</code> field is optional, and overrides the normal behavior for only this match.  (Requires v1.3.1 or greater.) <li>The <code>suppressappend</code> field is optional, and overrides the normal behavior for only this match.  (Requires v1.3.1 or greater.) </ul></p><p class="desc"> The match type affects how the match is inserted, displayed, and colored. Some type modifiers may be combined with a match type.</p><p class="desc"> <table> <tr><th>Type</th><th>Description</th></tr> <tr><td>"word"</td><td>Shows the whole word even if it contains slashes.</td></tr> <tr><td>"arg"</td><td>Avoids appending a space if the match ends with a colon or equal sign.</td></tr> <tr><td>"cmd"</td><td>Displays the match using <a href="#color_cmd">color.cmd</a>.</td></tr> <tr><td>"alias"</td><td>Displays the match using <a href="#color_doskey">color.doskey</a>.</td></tr> <tr><td>"file"</td><td>Shows only the last path component, with appropriate file coloring.</td></tr> <tr><td>"dir"</td><td>Shows only the last path component and adds a trailing path separator, with appropriate directory coloring.</td></tr> <tr><td>"none"</td><td>For backward compatibility the match is treated like "file", unless it ends with a path separator in which case it's treated like "dir".</td></tr> </table></p><p class="desc"> <table> <tr><th>Modifier</th><th>Description</th></tr> <tr><td>"hidden"</td><td>This can be combined with "file" or "dir" to use <a href="#color_hidden">color.hidden</a> (e.g. "file,hidden").</td></tr> <tr><td>"readonly"</td><td>This can be combined with "file" or "dir" to use <a href="#color_readonly">color.readonly</a> (e.g. "file,readonly").</td></tr> <tr><td>"link"</td><td>This can be combined with "file" or "dir" to appropriate symlink coloring (e.g. "file,link").</td></tr> <tr><td>"orphaned"</td><td>This can be combined with "link" to use appropriate orphaned symlink coloring (e.g. "file,link,orphaned").</td></tr> </table></p><p class="desc"> See <a href="#completioncolors">Completion Colors</a> and <a href="#colorsettings">Color Settings</a> for more information about colors.</p><pre class="language-lua"><code>builder:addmatch("hello") -- type is "none"
+}</code></pre><p class="desc"><ul> <li>The <code>display</code> field is optional, and is displayed instead of the <code>match</code> field when listing possible completions.  It can even include ANSI escape codes for colors, etc.  (Requires v1.2.38 or greater.) <li>The <code>arginfo</code> field is optional, and is displayed next to the <code>match</code> field.  See <a href="#_argmatcher:adddescriptions">_argmatcher:adddescriptions</a> for more about the argument info string.  The <code>arginfo</code> field is ignored if the <code>display</code> field is present.  (Requires v1.5.4 or greater.) <li>The <code>description</code> field is optional, and is displayed in addition to <code>match</code> or <code>display</code> when listing possible completions.  (Requires v1.2.38 or greater.) <li>The <code>type</code> field is optional.  If omitted, then the <span class="arg">type</span> argument is used for that element. <li>The <code>appendchar</code> field is optional, and overrides the normal behavior for only this match.  (Requires v1.3.1 or greater.) <li>The <code>suppressappend</code> field is optional, and overrides the normal behavior for only this match.  (Requires v1.3.1 or greater.) </ul></p><p class="desc"> The match type affects how the match is inserted, displayed, and colored. Some type modifiers may be combined with a match type.</p><p class="desc"> <table> <tr><th>Type</th><th>Description</th></tr> <tr><td>"word"</td><td>Shows the whole word even if it contains slashes.</td></tr> <tr><td>"arg"</td><td>Avoids appending a space if the match ends with a colon or equal sign.</td></tr> <tr><td>"cmd"</td><td>Displays the match using <a href="#color_cmd">color.cmd</a>.</td></tr> <tr><td>"alias"</td><td>Displays the match using <a href="#color_doskey">color.doskey</a>.</td></tr> <tr><td>"file"</td><td>Shows only the last path component, with appropriate file coloring.</td></tr> <tr><td>"dir"</td><td>Shows only the last path component and adds a trailing path separator, with appropriate directory coloring.</td></tr> <tr><td>"none"</td><td>For backward compatibility the match is treated like "file", unless it ends with a path separator in which case it's treated like "dir".</td></tr> </table></p><p class="desc"> <table> <tr><th>Modifier</th><th>Description</th></tr> <tr><td>"hidden"</td><td>This can be combined with "file" or "dir" to use <a href="#color_hidden">color.hidden</a> (e.g. "file,hidden").</td></tr> <tr><td>"readonly"</td><td>This can be combined with "file" or "dir" to use <a href="#color_readonly">color.readonly</a> (e.g. "file,readonly").</td></tr> <tr><td>"link"</td><td>This can be combined with "file" or "dir" to appropriate symlink coloring (e.g. "file,link").</td></tr> <tr><td>"orphaned"</td><td>This can be combined with "link" to use appropriate orphaned symlink coloring (e.g. "file,link,orphaned").</td></tr> </table></p><p class="desc"> See <a href="#completioncolors">Completion Colors</a> and <a href="#colorsettings">Color Settings</a> for more information about colors.</p><pre class="language-lua"><code>builder:addmatch("hello") -- type is "none"
 builder:addmatch("some_word", "word")
 builder:addmatch("/flag", "arg")
 builder:addmatch("abbrev", "alias")
@@ -7033,6 +7154,21 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes"><div class="wlink"><a href="#changes"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork"><div class="wlink"><a href="#releases-from-chrisant996clink-fork"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v154"><div class="wlink"><a href="#v154"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>v1.5.4</h4>
+<ul>
+<li>Further contrast improvements for default colors to be readable in both Dark and Light terminal themes.</li>
+<li>Added <code>arginfo</code> field in <code>builder:addmatches()</code> and in match display filtering.</li>
+<li>Auto-suggestions are no longer shown while searching history; it was too distracting and confusing.</li>
+<li>Fixed updating the input line display after using <code>clink-popup-history</code> or <code>win-popup-history</code> (regression introduced in v1.5.3).</li>
+<li>Fixed <code>old-menu-complete</code> and <code>menu-complete</code> when there&#39;s only one match.  The first time it should insert the match, and subsequent times should ding instead of cycling through the same match over and over and requiring an equal number of <code>undo</code> to undo.</li>
+<li>Fixed match display filtering to support the <code>match.substring</code> setting.</li>
+<li>Fixed match display filtering to support the <code>files.system</code> setting.</li>
+<li>Fixed the cursor position if match display filtering happens the first time <code>clink-select-complete</code> is used in a session.</li>
+<li>Fixed a case where two <code>undo</code> were required to fully undo what <code>menu-complete</code> inserted.</li>
+<li>Fixed <kbd>Esc</kbd> during incremental history search mode so it cancels the search.</li>
+<li>Fixed input line coloring after <code>non-incremental-reverse-search-history</code> or <code>non-incremental-forward-search-history</code> finds an exact match for the search text (since v1.1.5).</li>
+<li>Internal changes and optimizations.</li>
+</ul>
 <h4 id="v153"><div class="wlink"><a href="#v153"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></div>v1.5.3</h4>
 <ul>
 <li>Added <code>builder:setfullyqualified()</code> to force completions to be inserted as fully qualified path names.</li>
