@@ -6,43 +6,20 @@ For details, refer to the [Clink documentation](https://chrisant996.github.io/cl
 
 ### Download
 
-Downloads are available from the [releases](https://github.com/chrisant996/clink/releases) page.
+Downloads are available from the [releases page](https://github.com/chrisant996/clink/releases).
 
-See the [issues](https://github.com/chrisant996/clink/issues) page for known issues or to file new issues.
+See the [issues page](https://github.com/chrisant996/clink/issues) for known issues or to file new issues.
 
-### Features
+### Feature Highlights
 
-Here are some highlights of what Clink provides:
-
-- The same line editing as Bash (from the [GNU Readline library](https://tiswww.case.edu/php/chet/readline/rltop.html) version 8.1).
-- History persistence between sessions.
-- Context sensitive completion;
-  - Executables (and aliases).
-  - Directory commands.
-  - Environment variables.
-- Context sensitive colored input text.
-- Automatic suggestions from history and completions.
-- New keyboard shortcuts;
-  - Interactive completion list (<kbd>Ctrl</kbd>+<kbd>Space</kbd>).
-  - Incremental history search (<kbd>Ctrl</kbd>+<kbd>R</kbd> and <kbd>Ctrl</kbd>+<kbd>S</kbd>).
-  - Powerful completion (<kbd>Tab</kbd>).
-  - Undo (<kbd>Ctrl</kbd>+<kbd>Z</kbd>).
-  - Environment variable expansion (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>E</kbd>).
-  - Doskey alias expansion (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>F</kbd>).
-  - Scroll the screen buffer (<kbd>Alt</kbd>+<kbd>Up</kbd>, etc).
-  - <kbd>Shift</kbd>+Arrow keys to select text, typing replaces selected text, etc.
-  - (press <kbd>Alt</kbd>+<kbd>H</kbd> for many more...)
-- Directory shortcuts;
-  - Typing a directory name followed by a path separator is a shortcut for `cd /d` to that directory.
-  - Typing `..` or `...` is a shortcut for `cd ..` or `cd ..\..` (each additional `.` adds another `\..`).
-  - Typing `-` or `cd -` changes to the previous current working directory.
-- Scriptable autosuggest with Lua.
-- Scriptable completion with Lua.
-- Scriptable key bindings with Lua.
-- Colored and scriptable prompt.
+- [Auto-Suggestions](https://chrisant996.github.io/clink/clink.html#gettingstarted_autosuggest); Clink offers suggestions as you type based on history, files, and completions.
+- [Completions](https://chrisant996.github.io/clink/clink.html#how-completion-works); Clink can complete words when you press <kbd>Tab</kbd> or <kbd>Ctrl</kbd>-<kbd>Space</kbd> (interactive completion list).
+- [Persistent History](https://chrisant996.github.io/clink/clink.html#saved-command-history); Clink stores persistent history between sessions.
+- [Scriptable Prompt](https://chrisant996.github.io/clink/clink.html#customizing-the-prompt); You can customize the prompt dynamically with Lua scripts -- like in other shells -- but never before possible in cmd.exe!
+- [Colored Input Line](https://chrisant996.github.io/clink/clink.html#gettingstarted_colors); Your input is colored by context sensitive completion scripts.
+- [Command Line Editing Improvements](https://chrisant996.github.io/clink/clink.html#gettingstarted_keybindings); Clink supercharges the command line with new input editing commands and configurable key bindings.
 - Auto-answering of the "Terminate batch job?" prompt.
-
-By default Clink binds <kbd>Alt</kbd>+<kbd>H</kbd> to display the current key bindings. More features can also be found in GNU's [Readline](https://tiswww.cwru.edu/php/chet/readline/readline.html).
+- and much more!
 
 ### Usage
 
