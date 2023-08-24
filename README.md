@@ -18,21 +18,21 @@ See the [issues](https://github.com/chrisant996/clink/issues) page for known iss
 
 <p><b>Auto-Suggestions</b></p>
 
-Clink offers suggestions as you type based on history, files, and completions.
+<p>Clink offers suggestions as you type based on history, files, and completions.</p>
 
 <pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default">C:\dir></span><span class="color_executable">findstr</span><span class="cursor">_</span><span class="color_suggestion">/s needle haystack\*</span></span>
 </code></pre>
 
-Press <kbd>Right</kbd> or <kbd>End</kbd> to accept a suggestion (shown in a muted color).
+<p>Press <kbd>Right</kbd> or <kbd>End</kbd> to accept a suggestion (shown in a muted color).</p>
 
 </div>
 <div class="promo_block">
 
 <p><b>Completions</b></p>
 
-Clink can complete words when you press <kbd>Tab</kbd> or <kbd>Ctrl</kbd>-<kbd>Space</kbd>.
+<p>Clink can complete words when you press <kbd>Tab</kbd> or <kbd>Ctrl</kbd>-<kbd>Space</kbd>.</p>
 
-Built-in completions are available for executables, aliases, command names, directory commands, and environment variables.  You can use Lua scripts to add custom completions.
+<p>Built-in completions are available for executables, aliases, command names, directory commands, and environment variables.  You can use Lua scripts to add custom completions.</p>
 
 </div>
 </div>
@@ -89,9 +89,9 @@ Built-in completions are available for executables, aliases, command names, dire
 
 <p>Directory shortcuts:</p>
 <ul>
-<li>`dirname\` is a shortcut for `cd /d` to that directory.</li>
-<li>`..` or `...` are shortcuts for `cd ..` or `cd ..\..` (etc).</li>
-<li>`-` or `cd -` changes to the previous current working directory.</li>
+<li><code>dirname\</code> is a shortcut for <code>cd /d</code> to that directory.</li>
+<li><code>..</code> or <code>...</code> are shortcuts for <code>cd ..</code> or <code>cd ..\..</code> (etc).</li>
+<li><code>-</code> or <code>cd -</code> changes to the previous current working directory.</li>
 </ul>
 
 </div>
