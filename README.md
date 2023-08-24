@@ -1,70 +1,3 @@
-<style>
-.promo_box {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 1rem 2rem;
-    width: 100%;
-}
-.promo_block {
-    flex:1 1 480px;
-    background-color: #f8f8f8;
-    border: 1px solid #ddd;
-    border-radius: 0.2rem;
-    padding-left: 1rem;
-    padding-right: 1rem;
-}
-
-.color_default { color: #c0c0c0 }
-
-.color_arg { color: #ffffff }
-.color_arginfo { color: #d78700 }
-.color_argmatcher { color: #00d700 }
-.color_cmd { color: #ffffff }
-.color_cmdredir { color: #d78700 }
-.color_cmdsep { color: #af5fff }
-.color_description { color: #00afff }
-.color_doskey { color: #5fafff }
-.color_executable { color: #0087ff }
-.color_flag { color: #87d7ff }
-.color_input { color: #ffaf00 }
-.color_suggestion { color: #808080 }
-.color_unexpected { color: #c0c0c0 }
-.color_unrecognized { color: #ff5f5f }
-
-.cursor {
-    animation: blinker 1s steps(1, end) infinite;
-    color: #ffffff;
-}
-@keyframes blinker {
-    0% { opacity: 1; }
-    50% { opacity: 0; }
-}
-
-code {
-    vertical-align: text-top;
-    display: inline-block;
-    font-family: "Fira Mono",monospace;
-    font-size: 0.9rem;
-    padding: 0px 0.2rem;
-    margin: auto 0px;
-    background-color: #eee;
-    border: 1px solid #ddd;
-    border-radius: 0.2rem;
-}
-
-pre {
-    margin: 0.15rem 0.5rem;
-    padding: 0;
-}
-
-pre code {
-    border: none;
-    padding: 8px;
-    border-radius: inherit;
-}
-</style>
-
 ### Overview
 
 Clink combines the native Windows shell cmd.exe with the powerful command line editing features of the GNU Readline library, which provides rich completion, history, and line-editing capabilities. Readline is best known for its use in the Unix shell Bash, the standard shell for Mac OS X and many Linux distributions.
@@ -83,7 +16,7 @@ See the [issues](https://github.com/chrisant996/clink/issues) page for known iss
 <div class="promo_box">
 <div class="promo_block">
 
-**Auto-Suggestions**
+<p><b>Auto-Suggestions</b></p>
 
 Clink offers suggestions as you type based on history, files, and completions.
 
@@ -95,7 +28,7 @@ Press <kbd>Right</kbd> or <kbd>End</kbd> to accept a suggestion (shown in a mute
 </div>
 <div class="promo_block">
 
-**Completions**
+<p><b>Completions</b></p>
 
 Clink can complete words when you press <kbd>Tab</kbd> or <kbd>Ctrl</kbd>-<kbd>Space</kbd>.
 
@@ -106,54 +39,60 @@ Built-in completions are available for executables, aliases, command names, dire
 <div class="promo_box">
 <div class="promo_block">
 
-**Persistent History**
+<p><b>Persistent History</b></p>
 
-Clink stores persistent history between sessions.
+<p>Clink stores persistent history between sessions.</p>
 
-- <kbd>Up</kbd> and <kbd>Down</kbd> cycle through history entries.
-- <kbd>PgUp</kbd> and <kbd>PgDn</kbd> cycle through history entries matching the typed prefix.
-- <kbd>F7</kbd> show a popup list of selectable history entries.
-- <kbd>Ctrl</kbd>-<kbd>R</kbd> and <kbd>Ctrl</kbd>-<kbd>S</kbd> search history incrementally.
+<ul>
+<li><kbd>Up</kbd> and <kbd>Down</kbd> cycle through history entries.</li>
+<li><kbd>PgUp</kbd> and <kbd>PgDn</kbd> cycle through history entries matching the typed prefix.</li>
+<li><kbd>F7</kbd> show a popup list of selectable history entries.</li>
+<li><kbd>Ctrl</kbd>-<kbd>R</kbd> and <kbd>Ctrl</kbd>-<kbd>S</kbd> search history incrementally.</li>
+</ul>
 
 </div>
 <div class="promo_block">
 
-**Scriptable Prompt and Colored Input**
+<p><b>Scriptable Prompt and Colored Input</b></p>
 
-You can customize the prompt dynamically with Lua scripts -- like in other shells -- but never before possible in cmd.exe!
+<p>You can customize the prompt dynamically with Lua scripts -- like in other shells -- but never before possible in cmd.exe!</p>
 
 <pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default"><span style="color:#0087ff">C:\repos\clink</span> <span style="color:#888">git</span> <span style="color:#ff0">main</span><span style="color:#888">-></span><span style="color:#ff0">origin *3</span> <span style="color:#f33">!1</span>
 <span style="color:#0f0">></span> <span class="color_argmatcher">git</span> <span class="color_arg">merge</span> <span class="color_flag">--help</span><span class="cursor">_</span></span>
 </code></pre>
 
-Your input is colored by context sensitive completion scripts.
+<p>Your input is colored by context sensitive completion scripts.</p>
 
 </div>
 </div>
 <div class="promo_box">
 <div class="promo_block">
 
-**Command Line Editing Improvements**
+<p><b>Command Line Editing Improvements</b></p>
 
-Clink supercharges the command line with new input editing commands and configurable key bindings.
+<p>Clink supercharges the command line with new input editing commands and configurable key bindings.</p>
 
-- <kbd>Alt</kbd>-<kbd>H</kbd> to display all key bindings.
-- <kbd>Tab</kbd> for completion.
-- <kbd>Ctrl</kbd>-<kbd>Space</kbd> for an interactive completion list.
-- <kbd>Ctrl</kbd>-<kbd>Z</kbd> to undo input.
-- <kbd>Shift</kbd>-<kbd>Arrows</kbd> to select text, and type to replace selected text.
+<ul>
+<li><kbd>Alt</kbd>-<kbd>H</kbd> to display all key bindings.</li>
+<li><kbd>Tab</kbd> for completion.</li>
+<li><kbd>Ctrl</kbd>-<kbd>Space</kbd> for an interactive completion list.</li>
+<li><kbd>Ctrl</kbd>-<kbd>Z</kbd> to undo input.</li>
+<li><kbd>Shift</kbd>-<kbd>Arrows</kbd> to select text, and type to replace selected text.</li>
+</ul>
 
 </div>
 <div class="promo_block">
 
-**Convenience**
+<p><b>Convenience</b></p>
 
-Optional auto-answering of the "Terminate batch job?" prompt.
+<p>Optional auto-answering of the "Terminate batch job?" prompt.</p>
 
-Directory shortcuts:
-- `dirname\` is a shortcut for `cd /d` to that directory.
-- `..` or `...` are shortcuts for `cd ..` or `cd ..\..` (etc).
-- `-` or `cd -` changes to the previous current working directory.
+<p>Directory shortcuts:</p>
+<ul>
+<li>`dirname\` is a shortcut for `cd /d` to that directory.</li>
+<li>`..` or `...` are shortcuts for `cd ..` or `cd ..\..` (etc).</li>
+<li>`-` or `cd -` changes to the previous current working directory.</li>
+</ul>
 
 </div>
 </div>

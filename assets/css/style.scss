@@ -30,7 +30,7 @@
     flex-wrap: nowrap;
 
     @include large {
-        max-width: 64rem;
+        max-width: 80rem;
         padding-left: 6rem;
         padding-right: 6rem;
         margin: 0 auto;
@@ -113,5 +113,74 @@ kbd {
     margin:0 0.1em;
     vertical-align:middle;
     white-space:nowrap;
+}
+
+.promo_box {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 1rem 2rem;
+    width: 100%;
+}
+.promo_block {
+    flex:1 1 480px;
+    background-color: #f8f8f8;
+    border: 1px solid #ddd;
+    border-radius: 0.2rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+.promo_block p {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+
+.color_default { color: #c0c0c0 }
+
+.color_arg { color: #ffffff }
+.color_arginfo { color: #d78700 }
+.color_argmatcher { color: #00d700 }
+.color_cmd { color: #ffffff }
+.color_cmdredir { color: #d78700 }
+.color_cmdsep { color: #af5fff }
+.color_description { color: #00afff }
+.color_doskey { color: #5fafff }
+.color_executable { color: #0087ff }
+.color_flag { color: #87d7ff }
+.color_input { color: #ffaf00 }
+.color_suggestion { color: #808080 }
+.color_unexpected { color: #c0c0c0 }
+.color_unrecognized { color: #ff5f5f }
+
+.cursor {
+    animation: blinker 1s steps(1, end) infinite;
+    color: #ffffff;
+}
+@keyframes blinker {
+    0% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+code {
+    vertical-align: text-top;
+    display: inline-block;
+    font-family: "Fira Mono",monospace;
+    font-size: 0.9rem;
+    padding: 0px 0.2rem;
+    margin: auto 0px;
+    background-color: #eee;
+    border: 1px solid #ddd;
+    border-radius: 0.2rem;
+}
+
+pre {
+    margin: 0.15rem 0.5rem;
+    padding: 0;
+}
+
+pre code {
+    border: none;
+    padding: 8px;
+    border-radius: inherit;
 }
 
