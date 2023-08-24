@@ -20,7 +20,7 @@ See the [issues](https://github.com/chrisant996/clink/issues) page for known iss
 
 <p>Clink offers suggestions as you type based on history, files, and completions.</p>
 
-<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default">C:\dir></span><span class="color_executable">findstr</span><span class="cursor">_</span><span class="color_suggestion">/s needle haystack\*</span></span>
+<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default">C:\dir><span class="color_executable">findstr</span><span class="cursor">_</span><span class="color_suggestion">/s needle haystack\*</span></span>
 </code></pre>
 
 <p>Press <kbd>Right</kbd> or <kbd>End</kbd> to accept a suggestion (shown in a muted color).</p>
