@@ -2,39 +2,99 @@
 
 Clink combines the native Windows shell cmd.exe with the powerful command line editing features of the GNU Readline library, which provides rich completion, history, and line-editing capabilities. Readline is best known for its use in the Unix shell Bash, the standard shell for Mac OS X and many Linux distributions.
 
-### Features
+<a name="features"></a>
 
-Here are some highlights of what Clink provides:
+### Feature Highlights
 
-- The same line editing as Bash (from the [GNU Readline library](https://tiswww.case.edu/php/chet/readline/rltop.html) version 8.1).
-- History persistence between sessions.
-- Context sensitive completion;
-  - Executables (and aliases).
-  - Directory commands.
-  - Environment variables.
-- Context sensitive colored input text.
-- Automatic suggestions from history and completions.
-- New keyboard shortcuts;
-  - Interactive completion list (<kbd>Ctrl</kbd>-<kbd>Space</kbd>).
-  - Incremental history search (<kbd>Ctrl</kbd>-<kbd>R</kbd> and <kbd>Ctrl</kbd>-<kbd>S</kbd>).
-  - Powerful completion (<kbd>Tab</kbd>).
-  - Undo (<kbd>Ctrl</kbd>-<kbd>Z</kbd>).
-  - Environment variable expansion (<kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>E</kbd>).
-  - Doskey alias expansion (<kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>F</kbd>).
-  - Scroll the screen buffer (<kbd>Alt</kbd>-<kbd>Up</kbd>, etc).
-  - <kbd>Shift</kbd>-Arrow keys to select text, typing replaces selected text, etc.
-  - (press <kbd>Alt</kbd>-<kbd>H</kbd> for many more...)
-- Directory shortcuts;
-  - Typing a directory name followed by a path separator is a shortcut for `cd /d` to that directory.
-  - Typing `..` or `...` is a shortcut for `cd ..` or `cd ..\..` (each additional `.` adds another `\..`).
-  - Typing `-` or `cd -` changes to the previous current working directory.
-- Scriptable autosuggest with Lua.
-- Scriptable completion with Lua.
-- Scriptable key bindings with Lua.
-- Colored and scriptable prompt.
-- Auto-answering of the "Terminate batch job?" prompt.
+<div class="promo_box">
+<div class="promo_box">
+<div class="promo_block">
 
-By default Clink binds <kbd>Alt</kbd>-<kbd>H</kbd> to display the current key bindings.
+**Auto-Suggestions**
+
+Clink offers suggestions as you type based on history, files, and completions.
+
+<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default">C:\dir></span><span class="color_executable">findstr</span><span class="cursor">_</span><span class="color_suggestion">/s needle haystack\*</span></span>
+</code></pre>
+
+Press <kbd>Right</kbd> or <kbd>End</kbd> to accept a suggestion (shown in a muted color).
+
+See [Auto-Suggest](#gettingstarted_autosuggest) to learn more.
+
+</div>
+<div class="promo_block">
+
+**Completions**
+
+Clink can complete words when you press <kbd>Tab</kbd> or <kbd>Ctrl</kbd>-<kbd>Space</kbd>.
+
+Built-in completions are available for executables, aliases, command names, directory commands, and environment variables.  You can use Lua scripts to add [custom completions](#extending-clink).
+
+See [How Completion Works](#how-completion-works) to learn more.
+
+</div>
+</div>
+<div class="promo_box">
+<div class="promo_block">
+
+**Persistent History**
+
+Clink stores persistent history between sessions.
+
+- <kbd>Up</kbd> and <kbd>Down</kbd> cycle through history entries.
+- <kbd>PgUp</kbd> and <kbd>PgDn</kbd> cycle through history entries matching the typed prefix.
+- <kbd>F7</kbd> show a popup list of selectable history entries.
+- <kbd>Ctrl</kbd>-<kbd>R</kbd> and <kbd>Ctrl</kbd>-<kbd>S</kbd> search history incrementally.
+
+See [Saved Command History](#saved-command-history) to learn more.
+
+</div>
+<div class="promo_block">
+
+**Scriptable Prompt and Colored Input**
+
+You can customize the prompt dynamically with Lua scripts -- like in other shells -- but never before possible in cmd.exe!
+
+<pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default"><span style="color:#0087ff">C:\repos\clink</span> <span style="color:#888">git</span> <span style="color:#ff0">main</span><span style="color:#888">-></span><span style="color:#ff0">origin *3</span> <span style="color:#f33">!1</span>
+<span style="color:#0f0">></span> <span class="color_argmatcher">git</span> <span class="color_arg">merge</span> <span class="color_flag">--help</span><span class="cursor">_</span></span>
+</code></pre>
+
+Your input is colored by context sensitive completion scripts.
+
+See [Popular Scripts](#popular-scripts) and [Colors](#gettingstarted_colors) and [Customizing the Prompt](#customizing-the-prompt) to learn more.
+
+</div>
+</div>
+<div class="promo_box">
+<div class="promo_block">
+
+**Command Line Editing Improvements**
+
+Clink supercharges the command line with new input editing commands and configurable key bindings.
+
+- <kbd>Alt</kbd>-<kbd>H</kbd> to display all key bindings.
+- <kbd>Tab</kbd> for completion.
+- <kbd>Ctrl</kbd>-<kbd>Space</kbd> for an interactive completion list.
+- <kbd>Ctrl</kbd>-<kbd>Z</kbd> to undo input.
+- <kbd>Shift</kbd>-<kbd>Arrows</kbd> to select text, and type to replace selected text.
+
+See [Key Bindings](#gettingstarted_keybindings) to learn more.
+
+</div>
+<div class="promo_block">
+
+**Convenience**
+
+Optional auto-answering of the "[Terminate batch job?](#cmd_auto_answer)" prompt.
+
+[Directory shortcuts](#directory-shortcuts):
+- `dirname\` is a shortcut for `cd /d` to that directory.
+- `..` or `...` are shortcuts for `cd ..` or `cd ..\..` (etc).
+- `-` or `cd -` changes to the previous current working directory.
+
+</div>
+</div>
+</div>
 
 # Usage
 
@@ -51,22 +111,20 @@ Starting Clink injects it into a `cmd.exe` process, where it intercepts a handfu
 You can use Clink right away without configuring anything:
 
 - Searchable [command history](#saved-command-history) will be saved between sessions.
-- <kbd>Tab</kbd> and <kbd>Ctrl</kbd>-<kbd>Space</kbd> will do match completion two different ways.
+- [Suggestions](#gettingstarted_autosuggest) are automatically offered as you type; press <kbd>Right</kbd> or <kbd>End</kbd> to accept a suggestion.
+- <kbd>Tab</kbd> and <kbd>Ctrl</kbd>-<kbd>Space</kbd> provide match [completion](#how-completion-works) two different ways.
 - Press <kbd>Alt</kbd>-<kbd>H</kbd> to see a list of the current key bindings.
 - Press <kbd>Alt</kbd>-<kbd>Shift</kbd>-<kbd>/</kbd> followed by another key to see what command is bound to the key.
 
 There are three main ways of customizing Clink to your preferences:  the [Readline init file](#init-file) (the `.inputrc` file), the [Clink settings](#clink-settings) (the `clink set` command), and [Lua](#extending-clink-with-lua) scripts.
 
+<a name="how-completion-works"></a>
+
 ## How Completion Works
 
-Clink can offer possible completions for the word at the cursor, and can insert them for you.
+"Completion" is for the word at the cursor; Clink can complete it for you when you press <kbd>Tab</kbd>.
 
-<kbd>Tab</kbd> is the default completion key.
-
-- If you install Clink with "Use enhanced defaults" or if you set [`clink.default_bindings`](#clink_default_bindings) to use "windows" defaults, then <kbd>Tab</kbd> cycles through the possible completions, replacing the word with the next possible completion each time.
-- Otherwise, <kbd>Tab</kbd> performs completion the same way that bash does on Unix and Linux:  When you press <kbd>Tab</kbd>, Clink finds matches for how to complete the word at the cursor.  It automatically inserts the longest common prefix shared by the possible completions.  If you press <kbd>Tab</kbd> again, it also lists the possible completions.
-
-<kbd>Ctrl</kbd>-<kbd>Space</kbd> shows an interactive list of possible completions.  You can use the arrow keys to choose which completion to insert, and you can type to filter the list.  <kbd>Enter</kbd> inserts the selected completion, or <kbd>Space</kbd> inserts the selected completion and makes sure a space follows it to allow typing a next argument.
+"Suggestions" are for the whole command line; Clink offers [automatic suggestions](#gettingstarted_autosuggest) for the whole input line, which you can accept by pressing <kbd>Right</kbd> or <kbd>End</kbd>.
 
 Some examples of what completions can offer:
 - File names,
@@ -74,13 +132,26 @@ Some examples of what completions can offer:
 - Environment variables,
 - Commands,
 - Command [arguments and flags](#argument-completion),
-- You can also provide custom completion generators using Lua scripts that execute inside Clink (see [Extending Clink With Lua](#extending-clink-with-lua) and [Popular Scripts](#popular-scripts)).
+- You can provide custom completion generators using Lua scripts that execute inside Clink (see [Extending Clink With Lua](#extending-clink-with-lua) and [Popular Scripts](#popular-scripts)).
 
-Completion has special treatment for the first word of each command line.  By default, Clink provides completions for the first word based on all executable programs on the system PATH and the current directory, but not non-executable files.  You can turn off this "executable completion" behavior by running <code>clink set <a href="#exec_enable">exec.enable</a> false</code>, or you can adjust its behavior by changing the various [`exec.*`](#exec.aliases) settings.
+### Completion Keys
+
+<kbd>Tab</kbd> completes the word at the cursor:
+- If you installed Clink with "Use enhanced defaults" or if you set [`clink.default_bindings`](#clink_default_bindings) to use "windows" defaults, then <kbd>Tab</kbd> cycles through the possible completions, replacing the word with the next possible completion each time.
+- Otherwise, <kbd>Tab</kbd> performs completion the same way that bash does on Unix and Linux:  When you press <kbd>Tab</kbd>, Clink finds matches for how to complete the word at the cursor.  It automatically inserts the longest common prefix shared by the possible completions.  If you press <kbd>Tab</kbd> again, it also lists the possible completions.
+
+<kbd>Ctrl</kbd>-<kbd>Space</kbd> shows an interactive list of possible completions:
+- You can use the arrow keys to choose which completion to insert, and you can type to filter the list.
+- Pressing <kbd>Enter</kbd> in the list inserts the selected completion.
+- Pressing <kbd>Space</kbd> in the list inserts the selected completion and makes sure a space follows it to allow typing a next argument.
 
 See [Completion Commands](#completion-commands) and [Clink Commands](#clink-commands) for more available completion commands.
 
-See also [Auto-suggest](#gettingstarted_autosuggest) for information about auto-suggestions, which by default show up in gray at the end of the input line.  Completions are for words, and Auto-suggestions are for the whole input line (for example, based on history).
+### Executable Completion
+
+By default, Clink completes the first word of each command based on all executable programs on the system PATH and the current directory, but not non-executable files.
+
+You can turn off the "executable completion" behavior by running <code>clink set <a href="#exec_enable">exec.enable</a> false</code>, or you can adjust its behavior by changing the various [`exec.*`](#exec.aliases) settings.
 
 ## Common Configuration
 
@@ -110,7 +181,6 @@ If you install Clink with the setup program and "Use enhanced default settings" 
 If you install Clink from the .zip file then enhanced default settings are activated when the `default_settings` and `default_inputrc` files are present in the binaries directory or in the profile directory.  The .zip file comes with the files, but their names have a `_` prefix so that enhanced defaults won't automatically take effect.  You can activate the enhanced default settings by renaming the files to remove the `_` prefix.
 
 Here are some of the enhanced defaults.  Review the `default_settings` and `default_inputrc` files for the full list.
-- [Automatic suggestions](#gettingstarted_autosuggest) are enabled.
 - Many [color settings](#gettingstarted_colors) have colorful defaults.
 - Uses [Windows key bindings](#gettingstarted_defaultbindings) by default.
 - The [command history](#saved-command-history)'s default [limit](#history_max_lines) is increased to 25,000 entries.
@@ -184,13 +254,11 @@ Key | Windows | Bash
 
 Clink can suggest commands as you type, based on command history and completions.
 
-If you use the setup program with "Use enhanced default settings" checked then automatic suggestions are enabled by default.
-
-You can turn off automatic suggestions with <code>clink set <a href="#autosuggest_enable">autosuggest.enable</a> false</code>, or turn them on with <code>clink set <a href="#autosuggest_enable">autosuggest.enable</a> true</code>.
+You can turn off automatic suggestions with <code>clink set <a href="#autosuggest_enable">autosuggest.enable</a> false</code>, or turn them on with <code>clink set autosuggest.enable true</code>.
 
 When automatic suggestions are enabled and the cursor is at the end of the input line, a suggestion may appear in a muted color.  If the suggestion isn't what you want, just ignore it.  Or you can accept the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, accept the next word of the suggestion with <kbd>Ctrl</kbd>-<kbd>Right</kbd>, or accept the next full word of the suggestion up to a space with <kbd>Shift</kbd>-<kbd>Right</kbd>.
 
-The [`autosuggest.strategy`](#autosuggest_strategy) setting determines how a suggestion is chosen.
+The [`autosuggest.strategy`](#autosuggest_strategy) setting determines how suggestions are chosen.
 
 Here's an example of how auto-suggestion works.  Suppose you ran a command, so now it's in your command history:
 
@@ -204,7 +272,7 @@ Later, you start to type a new command, and it matches the earlier command from 
 
 The muted text shows a suggestion that might be what you intend to type.  You can accept the muted text into the input line by pressing the <kbd>Right</kbd> key.
 
-If you press <kbd>Tab</kbd> then that invokes [completion](#how-completion-works) instead, which is different from auto-suggestions.
+If you press <kbd>Tab</kbd> then that invokes [completion](#how-completion-works) instead.  Completion is something you manually invoke to offer possible completions for a word or argument position.  Auto-suggestion automatically offers suggestions for a whole input line, and the suggestions can come from the saved command history or from the list of possible completions.
 
 <a name="gettingstarted_colors"></a>
 
@@ -348,7 +416,9 @@ The following sections describe how to configure Clink itself.  To learn about t
 
 ## Clink Settings
 
-The easiest way to configure Clink is to use the `clink set` command.  This can list, query, and set Clink's settings. Run `clink set --help` from a Clink-installed cmd.exe process to learn more both about how to use it and to get descriptions for Clink's various options.
+The easiest way to configure Clink is to use the `clink set` command to list, query, and set Clink's settings.
+
+Run `clink set --help` from a Clink-installed cmd.exe process to learn more.
 
 The following table describes the available Clink settings:
 
@@ -2571,19 +2641,23 @@ But it might be more convenient to acquire a keyboard that has an <kbd>Alt</kbd>
 
 Clink has a list of commands from the current session, and it can be saved and loaded across sessions.
 
-A line won't be added to history if either of the following are true:
-- The first word in the line matches one of the words in the [`history.dont_add_to_history_cmds`](#history_dont_add_to_history_cmds) setting.
-- The line begins with a space character.
-
-To prevent doskey alias expansion while still adding the line to history, you can start the line with a semicolon.
+By prefixing the command you can control whether it's added to history and whether a doskey alias may be expanded.
 
 Line|Description
 ---|---
-`somecmd`|Expands doskey alias and adds to history.
-<code>&nbsp;somecmd</code>|Doesn't expand doskey alias and doesn't add to history.
-`;somecmd`|Doesn't expand doskey alias but does add to history.
+`somecmd`|Can expand a doskey alias and adds to history.
+<code>&nbsp;somecmd</code>|Starting with a space doesn't expand a doskey alias and doesn't add to history.
+`;somecmd`|Starting with a semicolon doesn't expand a doskey alias but does add to history.
 
-There are several settings that control how history works.  Run `clink set history*` to see them.
+There are several settings that control how history works.  Run `clink set history*` to see them all.
+
+**Note:** If the first word in the line matches one of the words in the [`history.dont_add_to_history_cmds`](#history_dont_add_to_history_cmds) setting then the command is not added to history.  By default, `history` and `exit` are not added to history.
+
+### List the history
+
+Press <kbd>F7</kbd> for a popup list of selectable history entries.
+
+You can also list the saved history by running `clink history` or the `history` doskey alias that Clink automatically defines.  Use `history --help` for usage info.
 
 ### The master history file
 

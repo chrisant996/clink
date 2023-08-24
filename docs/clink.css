@@ -23,6 +23,23 @@ a code:hover {
     text-decoration: underline;
 }
 
+.promo_box {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 1rem 2rem;
+    width: 100%;
+}
+
+.promo_block {
+    flex:1 1 480px;
+    background-color: #f8f8f8;
+    border: 1px solid #ddd;
+    border-radius: 0.2rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
 .wlink {
     opacity: 0%;
     width: 100px;
@@ -171,11 +188,11 @@ kbd {
     white-space:nowrap;
 }
 
-#content table:not(.linkmenu) td:nth-child(1) {
+#content table:not(.linkmenu,.console) td:nth-child(1) {
     white-space: nowrap;
 }
 
-#content table:not(.linkmenu) td:nth-child(1) code {
+#content table:not(.linkmenu,.console) td:nth-child(1) code {
     border: none;
     padding: 0 0 0 0;
     border-radius: 0;
@@ -275,7 +292,7 @@ kbd {
     background-color: #eee;
 }
 
-#content table:not(.linkmenu) td, #content th {
+#content table:not(.linkmenu,.console) td, #content th {
     vertical-align: text-top;
     padding: 0.2rem 0.5rem;
 }
