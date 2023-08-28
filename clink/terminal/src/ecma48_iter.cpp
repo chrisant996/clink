@@ -406,7 +406,7 @@ bool ecma48_iter::next_cmd_str(int32 c)
         }
         return true;
     }
-    else if (in_range(c, 0x08, 0x0d) || in_range(c, 0x20, 0x7e))
+    else if (in_range(c, 0x08, 0x0d) || uint32(c) >= uint32(0x20))
     {
         m_iter.next();
         return false;
