@@ -455,7 +455,10 @@ void _rl_parse_colors(void)
             state = -1;
           /* XXX - recover here as with an unrecognized prefix? */
           if (state == -1 && ext->ext.string)
-	    _rl_errmsg ("LS_COLORS: syntax error: %s", ext->ext.string);
+/* begin_clink_change */
+	    //_rl_errmsg ("LS_COLORS: syntax error: %s", ext->ext.string);
+	    _rl_errmsg ("LS_COLORS: syntax error: %.*s", ext->ext.len, ext->ext.string);
+/* end_clink_change */
           break;
         }
     }
@@ -478,6 +481,7 @@ void _rl_parse_colors(void)
       //  }
       //_rl_color_ext_list = NULL;
       _rl_free_colors ();
+      _rl_colored_completion_prefix = 0; /* can't have colored completion prefix without colors */
 /* end_clink_change */
       _rl_colored_stats = 0;	/* can't have colored stats without colors */
     }

@@ -13,6 +13,7 @@
 #define BUILD_READLINE
 
 #include "display_matches.h"
+#include "match_colors.h"
 #include "matches_lookaside.h"
 #include "match_adapter.h"
 #include "column_widths.h"
@@ -31,34 +32,6 @@ extern "C" {
 #if defined (HAVE_CONFIG_H)
 #  include <config.h>
 #endif
-
-#include <sys/types.h>
-#include <fcntl.h>
-#if defined (HAVE_SYS_FILE_H)
-#  include <sys/file.h>
-#endif
-
-#include <signal.h>
-
-#if defined (HAVE_UNISTD_H)
-#  include <unistd.h>
-#endif /* HAVE_UNISTD_H */
-
-#if defined (HAVE_STDLIB_H)
-#  include <stdlib.h>
-#else
-#  include "readline/ansi_stdlib.h"
-#endif /* HAVE_STDLIB_H */
-
-#include <stdio.h>
-
-#include <errno.h>
-#if !defined (errno)
-extern int32 errno;
-#endif /* !errno */
-
-#include "readline/posixdir.h"
-#include "readline/posixstat.h"
 
 /* System-specific feature definitions and include files. */
 #include "readline/rldefs.h"
@@ -81,12 +54,6 @@ int ___rl_internal_pager (int lines);
 uint32 cell_count(const char* in);
 
 } // extern "C"
-
-#ifdef HAVE_LSTAT
-#  define LSTAT lstat
-#else
-#  define LSTAT stat
-#endif
 
 #define ELLIPSIS_LEN ellipsis_len
 
@@ -216,12 +183,6 @@ static bool is_colored(enum indicator_no colored_filetype)
             || (len == 2 && strncmp (s, "00", 2) == 0));
 }
 
-static void concat_color_indicator(enum indicator_no colored_filetype, str_base& out)
-{
-    const struct bin_str *ind = &_rl_color_indicator[colored_filetype];
-    out.concat(ind->string, ind->len);
-}
-
 static void append_default_color(void)
 {
     append_color_indicator(C_LEFT);
@@ -242,7 +203,6 @@ static void append_prefix_color(void)
 {
     struct bin_str *s;
 
-    // What do we want to use for the prefix? Let's try cyan first, see colors.h.
     s = &_rl_color_indicator[C_PREFIX];
     if (s->string != nullptr)
     {
@@ -254,210 +214,11 @@ static void append_prefix_color(void)
     }
 }
 
-// Returns whether any color sequence was printed.
-static bool append_match_color_indicator(const char *f, match_type type)
+static void append_match_color_indicator(const char *f, match_type type)
 {
-    enum indicator_no colored_filetype;
-    COLOR_EXT_TYPE *ext; // Color extension.
-    size_t len;          // Length of name.
-
-    const char *name;
-    char *filename;
-    struct stat astat, linkstat;
-    mode_t mode;
-    int32 linkok; // 1 == ok, 0 == dangling symlink, -1 == missing.
-    int32 stat_ok;
-
-    name = f;
-
-    // This should already have undergone tilde expansion.
-    filename = 0;
-    if (rl_filename_stat_hook)
-    {
-        filename = savestring(f);
-        (*rl_filename_stat_hook)(&filename);
-        name = filename;
-    }
-
-    if (!is_zero(type))
-#if defined(HAVE_LSTAT)
-        stat_ok = stat_from_match_type(static_cast<match_type_intrinsic>(type), name, &astat, &linkstat);
-#else
-        stat_ok = stat_from_match_type(static_cast<match_type_intrinsic>(type), name, &astat);
-#endif
-    else
-#if defined(HAVE_LSTAT)
-        stat_ok = lstat(name, &astat);
-#else
-        stat_ok = stat(name, &astat);
-#endif
-    if (stat_ok == 0)
-    {
-        mode = astat.st_mode;
-#if defined(HAVE_LSTAT)
-        if (S_ISLNK(mode))
-        {
-            if (!is_zero(type))
-                linkok = linkstat.st_mode != 0;
-            else
-                linkok = stat(name, &linkstat) == 0;
-            if (linkok && _strnicmp(_rl_color_indicator[C_LINK].string, "target", 6) == 0)
-                mode = linkstat.st_mode;
-        }
-        else
-#endif
-            linkok = 1;
-    }
-    else
-        linkok = -1;
-
-    // Is this a nonexistent file?  If so, linkok == -1.
-
-    if (linkok == -1 && _rl_color_indicator[C_MISSING].string != nullptr)
-        colored_filetype = C_MISSING;
-#if defined(S_ISLNK)
-    else if (linkok == 0 && S_ISLNK(mode) && _rl_color_indicator[C_ORPHAN].string != nullptr)
-        colored_filetype = C_ORPHAN; // dangling symlink.
-#endif
-    else if (stat_ok != 0)
-    {
-        static enum indicator_no filetype_indicator[] = FILETYPE_INDICATORS;
-        colored_filetype = filetype_indicator[normal]; //f->filetype];
-    }
-    else
-    {
-        if (S_ISREG(mode))
-        {
-            colored_filetype = C_FILE;
-
-#if defined(S_ISUID)
-            if ((mode & S_ISUID) != 0 && is_colored(C_SETUID))
-                colored_filetype = C_SETUID;
-            else
-#endif
-#if defined(S_ISGID)
-                if ((mode & S_ISGID) != 0 && is_colored(C_SETGID))
-                colored_filetype = C_SETGID;
-            else
-#endif
-                if (is_colored(C_CAP) && 0) //f->has_capability)
-                colored_filetype = C_CAP;
-            else if ((mode & S_IXUGO) != 0 && is_colored(C_EXEC))
-                colored_filetype = C_EXEC;
-            else if ((1 < astat.st_nlink) && is_colored(C_MULTIHARDLINK))
-                colored_filetype = C_MULTIHARDLINK;
-        }
-        else if (S_ISDIR(mode))
-        {
-            colored_filetype = C_DIR;
-
-#if defined (S_ISVTX)
-            if ((mode & S_ISVTX) && (mode & S_IWOTH)
-                && is_colored (C_STICKY_OTHER_WRITABLE))
-                colored_filetype = C_STICKY_OTHER_WRITABLE;
-            else
-#endif
-                if ((mode & S_IWOTH) != 0 && is_colored(C_OTHER_WRITABLE))
-                colored_filetype = C_OTHER_WRITABLE;
-#if defined (S_ISVTX)
-                else if ((mode & S_ISVTX) != 0 && is_colored(C_STICKY))
-                    colored_filetype = C_STICKY;
-#endif
-        }
-#if defined(S_ISLNK)
-        else if (S_ISLNK(mode) && _strnicmp(_rl_color_indicator[C_LINK].string, "target", 6) != 0)
-            colored_filetype = C_LINK;
-#endif
-        else if (S_ISFIFO(mode))
-            colored_filetype = C_FIFO;
-#if defined(S_ISSOCK)
-        else if (S_ISSOCK(mode))
-            colored_filetype = C_SOCK;
-#endif
-#if defined (S_ISBLK)
-        else if (S_ISBLK(mode))
-            colored_filetype = C_BLK;
-#endif
-        else if (S_ISCHR(mode))
-            colored_filetype = C_CHR;
-        else
-        {
-            // Classify a file of some other type as C_ORPHAN.
-            colored_filetype = C_ORPHAN;
-        }
-    }
-
-    if (!is_zero(type))
-    {
-        const char *override_color = nullptr;
-        if (is_pathish(type))
-        {
-            // Hidden can override dir and other classifications, but readonly
-            // can only override the C_FILE classification.
-            if (_rl_hidden_color && is_match_type_hidden(type))
-                override_color = _rl_hidden_color;
-            else if (colored_filetype != C_FILE)
-                override_color = nullptr;
-            else if (_rl_readonly_color && is_match_type_readonly(type))
-                override_color = _rl_readonly_color;
-        }
-        else if (is_match_type(type, match_type::cmd))
-        {
-            override_color = _rl_command_color;
-            colored_filetype = C_NORM;
-        }
-        else if (is_match_type(type, match_type::alias))
-        {
-            override_color = _rl_alias_color;
-            colored_filetype = C_NORM;
-        }
-        else
-            colored_filetype = C_NORM;
-        if (override_color)
-        {
-            free(filename); // nullptr or savestring return value.
-            // Need to reset so not dealing with attribute combinations.
-            if (is_colored(C_NORM))
-                append_default_color();
-            append_color_indicator(C_LEFT);
-            append_tmpbuf_string(override_color, -1);
-            append_color_indicator(C_RIGHT);
-            return 0;
-        }
-    }
-
-    // Check the file's suffix only if still classified as C_FILE.
-    ext = nullptr;
-    if (colored_filetype == C_FILE)
-    {
-        // Test if NAME has a recognized suffix.
-        len = strlen(name);
-        name += len; // Pointer to final \0.
-        for (ext = _rl_color_ext_list; ext != nullptr; ext = ext->next)
-        {
-            if (ext->ext.len <= len && _strnicmp(name - ext->ext.len, ext->ext.string,
-                                                 ext->ext.len) == 0)
-                break;
-        }
-    }
-
-    free(filename); // nullptr or savestring return value.
-
-    {
-        const struct bin_str *const s = ext ? &(ext->seq) : &_rl_color_indicator[colored_filetype];
-        if (s->string != nullptr)
-        {
-            // Need to reset so not dealing with attribute combinations.
-            if (is_colored(C_NORM))
-                append_default_color();
-            append_color_indicator(C_LEFT);
-            append_tmpbuf_string(s->string, s->len);
-            append_color_indicator(C_RIGHT);
-            return (!ext && colored_filetype == C_FILE) ? 1 : 0;
-        }
-        else
-            return 1;
-    }
+    str<32> seq;
+    get_match_color(f, type, seq);
+    append_tmpbuf_string(seq.c_str(), seq.length());
 }
 
 static void prep_non_filename_text(void)
@@ -876,15 +637,6 @@ int32 __fnwidth(const char* string)
     return width;
 }
 
-//------------------------------------------------------------------------------
-bool get_match_color(const char* filename, match_type type, str_base& out)
-{
-    reset_tmpbuf();
-    const bool has = !append_match_color_indicator(filename, type);
-    out = get_tmpbuf_rollback();
-    return has;
-}
-
 
 
 //------------------------------------------------------------------------------
@@ -1232,7 +984,7 @@ static int32 prompt_display_matches(int32 len)
         _rl_print_pager_color();
     fprintf(rl_outstream, "Display all %d possibilities? (y or n)", len);
     if (_rl_pager_color)
-        fprintf(rl_outstream, _normal_color);
+        fwrite(_normal_color, strlen(_normal_color), 1, rl_outstream);
     fflush(rl_outstream);
     if (__get_y_or_n(0) == 0)
     {
@@ -1401,20 +1153,4 @@ char need_leading_quote(const char* match)
         return rl_completer_quote_characters[0];
     }
     return 0;
-}
-
-//------------------------------------------------------------------------------
-extern "C" void _rl_print_pager_color()
-{
-    str<16> s;
-    if (is_colored(C_NORM))
-    {
-        // Need to reset so not dealing with attribute combinations.
-        concat_color_indicator(C_LEFT, s);
-        concat_color_indicator(C_RIGHT, s);
-    }
-    concat_color_indicator(C_LEFT, s);
-    s << _rl_pager_color;
-    concat_color_indicator(C_RIGHT, s);
-    fwrite(s.c_str(), s.length(), 1, rl_outstream);
 }

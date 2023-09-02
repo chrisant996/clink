@@ -13,6 +13,7 @@
 #include "word_classifications.h"
 #include "popup.h"
 #include "textlist_impl.h"
+#include "match_colors.h"
 #include "display_matches.h"
 #include "display_readline.h"
 #include "clink_ctrlevent.h"
@@ -61,10 +62,6 @@ extern char* tgetstr(const char*, char**);
 extern int32 tputs(const char* str, int32 affcnt, int32 (*putc_func)(int32));
 extern char* tgoto(const char* base, int32 x, int32 y);
 extern Keymap _rl_dispatching_keymap;
-#if defined (COLOR_SUPPORT)
-#define PARSE_COLOR_ONLY_FUNCTION_PROTOTYPES
-#include <readline/parse-colors.h>
-#endif
 }
 
 //------------------------------------------------------------------------------
@@ -2651,6 +2648,11 @@ void rl_module::on_begin_line(const context& context)
 #endif
     clink_install_ctrlevent();
 
+    // Parse the match colors before installing the Readline callback handler,
+    // so that any error messages are printed before any prompt display
+    // happens.
+    parse_match_colors();
+
     // Readline only detects terminal size changes while its line editor is
     // active.  If the terminal size isn't what Readline thought, then update
     // it now.
@@ -2746,9 +2748,6 @@ void rl_module::on_begin_line(const context& context)
         history_prev_use_curr = 1;
     }
     s_history_search_pos = -1;
-
-    if (_rl_colored_stats || _rl_colored_completion_prefix)
-        _rl_parse_colors();
 
     m_done = !m_queued_lines.empty();
     m_eof = false;

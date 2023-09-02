@@ -13,7 +13,7 @@
 #include <core/str_iter.h>
 #include <terminal/ecma48_iter.h>
 #include "lib/matches.h"
-#include "lib/display_matches.h"
+#include "lib/match_colors.h"
 #include "match_builder_lua.h"
 #include "prompt.h"
 
@@ -1082,11 +1082,8 @@ static int32 get_match_color(lua_State* state)
             type = to_match_type(tmp);
     }
 
-    const bool else_exe = lua_toboolean(state, 3);
-
     str<16> color;
-    if (!get_match_color(match, type, color) && else_exe)
-        get_match_color(".exe", match_type::file, color);
+    get_match_color(match, type, color);
 
     lua_pushlstring(state, color.c_str(), color.length());
     return 1;

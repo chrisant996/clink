@@ -15,7 +15,7 @@ class str_base;
 typedef unsigned short match_type_intrinsic;
 enum class match_type : match_type_intrinsic
 {
-    do_not_use,     // complete.c relies on the type never being 0, so it can use savestring().
+    invalid,
     none,           // Behaves like dir if match ends with path sep, otherwise like file.
     word,           // Matches and displays the whole word even if it contains slashes.
     arg,            // Prevents appending a space if the match ends with a colon or equal sign.

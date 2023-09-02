@@ -45,7 +45,6 @@ void flush_tmpbuf(void);
 void append_display(const char* to_print, int32 selected, const char* color);
 int32 append_filename(char* to_print, const char* full_pathname, int32 prefix_bytes, int32 can_condense, match_type type, int32 selected, int32* vis_stat_char);
 void pad_filename(int32 len, int32 pad_to_width, int32 selected);
-bool get_match_color(const char *f, match_type type, str_base& out);
 
 void free_filtered_matches(match_display_filter_entry** filtered_matches);
 int32 printable_len(const char* match, match_type type);
