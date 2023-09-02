@@ -88,9 +88,6 @@ uint32 cell_count(const char* in);
 #  define LSTAT stat
 #endif
 
-/* Unix version of a hidden file.  Could be different on other systems. */
-#define HIDDEN_FILE(fname)	((fname)[0] == '.')
-
 #define ELLIPSIS_LEN ellipsis_len
 
 

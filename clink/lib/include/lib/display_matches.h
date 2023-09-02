@@ -86,3 +86,6 @@ private:
 };
 
 char need_leading_quote(const char* match);
+
+// Unix version of a hidden file.  Could be different on other systems.
+#define HIDDEN_FILE(fname)	((fname)[0] == '.')

@@ -61,7 +61,6 @@ extern char* tgetstr(const char*, char**);
 extern int32 tputs(const char* str, int32 affcnt, int32 (*putc_func)(int32));
 extern char* tgoto(const char* base, int32 x, int32 y);
 extern Keymap _rl_dispatching_keymap;
-#define HIDDEN_FILE(fn) ((fn)[0] == '.')
 #if defined (COLOR_SUPPORT)
 #define PARSE_COLOR_ONLY_FUNCTION_PROTOTYPES
 #include <readline/parse-colors.h>
