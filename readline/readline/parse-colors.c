@@ -302,7 +302,7 @@ get_funky_string (char **dest, const char **src, bool equals_end, size_t *output
 #endif /* COLOR_SUPPORT */
 
 /* begin_clink_change */
-static void _rl_free_colors(void)
+void _rl_free_colors(void)
 {
   COLOR_EXT_TYPE *e;
   COLOR_EXT_TYPE *e2;

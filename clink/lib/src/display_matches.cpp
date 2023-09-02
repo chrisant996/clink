@@ -216,6 +216,12 @@ static bool is_colored(enum indicator_no colored_filetype)
             || (len == 2 && strncmp (s, "00", 2) == 0));
 }
 
+static void concat_color_indicator(enum indicator_no colored_filetype, str_base& out)
+{
+    const struct bin_str *ind = &_rl_color_indicator[colored_filetype];
+    out.concat(ind->string, ind->len);
+}
+
 static void append_default_color(void)
 {
     append_color_indicator(C_LEFT);
@@ -1395,4 +1401,20 @@ char need_leading_quote(const char* match)
         return rl_completer_quote_characters[0];
     }
     return 0;
+}
+
+//------------------------------------------------------------------------------
+extern "C" void _rl_print_pager_color()
+{
+    str<16> s;
+    if (is_colored(C_NORM))
+    {
+        // Need to reset so not dealing with attribute combinations.
+        concat_color_indicator(C_LEFT, s);
+        concat_color_indicator(C_RIGHT, s);
+    }
+    concat_color_indicator(C_LEFT, s);
+    s << _rl_pager_color;
+    concat_color_indicator(C_RIGHT, s);
+    fwrite(s.c_str(), s.length(), 1, rl_outstream);
 }

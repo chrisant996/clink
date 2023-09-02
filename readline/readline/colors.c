@@ -73,11 +73,20 @@
 #include "rlprivate.h"
 /* end_clink_change */
 
+/* begin_clink_change */
+#if !defined (EXTERNAL_COLOR_SUPPORT)
+/* end_clink_change */
 static bool is_colored (enum indicator_no type);
 static void restore_default_color (void);
+/* begin_clink_change */
+#endif // !EXTERNAL_COLOR_SUPPORT
+/* end_clink_change */
 
 COLOR_EXT_TYPE *_rl_color_ext_list = 0;
 
+/* begin_clink_change */
+#if !defined (EXTERNAL_COLOR_SUPPORT)
+/* end_clink_change */
 /* Output a color indicator (which may contain nulls).  */
 void
 _rl_put_indicator (const struct bin_str *ind)
@@ -134,11 +143,9 @@ _rl_print_prefix_color (void)
 }
   
 /* begin_clink_change */
-bool
+void
 _rl_print_pager_color (void)
 {
-  struct bin_str *s;
-
   if (_rl_pager_color != NULL)
     {
       if (is_colored (C_NORM))
@@ -146,10 +153,7 @@ _rl_print_pager_color (void)
       _rl_put_indicator (&_rl_color_indicator[C_LEFT]);
       fwrite (_rl_pager_color, strlen(_rl_pager_color), 1, rl_outstream);
       _rl_put_indicator (&_rl_color_indicator[C_RIGHT]);
-      return 0;
     }
-  else
-    return 1;
 }
 /* end_clink_change */
 
@@ -380,4 +384,7 @@ _rl_prep_non_filename_text (void)
       _rl_put_indicator (&_rl_color_indicator[C_RIGHT]);
     }
 }
+/* begin_clink_change */
+#endif // !EXTERNAL_COLOR_SUPPORT
+/* end_clink_change */
 #endif /* COLOR_SUPPORT */

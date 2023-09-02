@@ -1030,6 +1030,9 @@ stat_char (const char *filename, char match_type)
 #endif /* VISIBLE_STATS */
 
 #if defined (COLOR_SUPPORT)
+/* begin_clink_change */
+#if !defined (EXTERNAL_COLOR_SUPPORT)
+/* end_clink_change */
 static int
 /* begin_clink_change */
 //colored_stat_start (const char *filename)
@@ -1062,6 +1065,9 @@ colored_prefix_end (void)
 {
   colored_stat_end ();		/* for now */
 }
+/* begin_clink_change */
+#endif // !EXTERNAL_COLOR_SUPPORT
+/* end_clink_change */
 #endif
 
 /* Return the portion of PATHNAME that should be output when listing

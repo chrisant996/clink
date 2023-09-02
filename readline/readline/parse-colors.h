@@ -34,6 +34,10 @@
 void _rl_parse_colors (void);
 
 /* begin_clink_change */
+void _rl_free_colors (void);
+/* end_clink_change */
+
+/* begin_clink_change */
 #ifndef PARSE_COLOR_ONLY_FUNCTION_PROTOTYPES
 /* end_clink_change */
 

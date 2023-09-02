@@ -93,6 +93,9 @@ enum indicator_no
     C_BLK, C_CHR, C_MISSING, C_ORPHAN, C_EXEC, C_DOOR, C_SETUID, C_SETGID,
     C_STICKY, C_OTHER_WRITABLE, C_STICKY_OTHER_WRITABLE, C_CAP, C_MULTIHARDLINK,
     C_CLR_TO_EOL
+/* begin_clink_change */
+    , C_NUM_INDICATORS
+/* end_clink_change */
   };
 
 
@@ -121,7 +124,7 @@ extern void _rl_put_indicator (const struct bin_str *ind);
 extern void _rl_set_normal_color (void);
 extern bool _rl_print_prefix_color (void);
 /* begin_clink_change */
-extern bool _rl_print_pager_color (void);
+extern void _rl_print_pager_color (void);
 //extern bool _rl_print_color_indicator (const char *f);
 extern bool _rl_print_color_indicator (const char *f, unsigned char match_type);
 /* end_clink_change */
