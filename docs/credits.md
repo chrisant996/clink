@@ -4,7 +4,7 @@ Clink is distributed under the terms of the [GNU General Public License, version
 
 # Credits
 
-<h3>Clink</h3>
+<h3 id="credits_clink">Clink</h3>
 
 Clink was originally built by Martin Ridgers (https://github.com/mridgers/clink).<br/>
 Copyright (c) 2012-2018 by Martin Ridgers.
@@ -12,7 +12,7 @@ Copyright (c) 2012-2018 by Martin Ridgers.
 Clink has been forked and renovated by Christopher Antos (https://github.com/chrisant996/clink).<br/>
 Portions Copyright (c) 2020-2023 by Christopher Antos.
 
-<h3>Libraries</h3>
+<h3 id="credits_libraries">Libraries</h3>
 
 GNU Readline library version 8.1 (https://tiswww.case.edu/php/chet/readline/rltop.html).<br/>
 GNU Readline is distributed under the terms of the [GNU General Public License, version 3](http://www.gnu.org/licenses/gpl.html).

@@ -42,46 +42,31 @@ a code:hover {
 
 .wlink {
     opacity: 0%;
-    width: 100px;
+    width: 24px;
     position: absolute;
-    left: -24px;
+    margin-left: -24px;
+    -webkit-user-select: none;
+    user-select: none;
+    text-decoration: none;
 }
 
 .wfix {
     visibility: hidden;
-    width: 0;
+    display: inline-block;
+    width: 0px;
+    -webkit-user-select: none;
+    user-select: none;
 }
 
-.wlink:hover {
-    opacity: 100%;
-}
+h1:hover .wlink, h2:hover .wlink, h3:hover .wlink, h4:hover .wlink, h5:hover .wlink, h6:hover .wlink { opacity: 100%; }
+h1:focus .wlink, h2:focus .wlink, h3:focus .wlink, h4:focus .wlink, h5:focus .wlink, h6:focus .wlink { opacity: 100%; }
 
-/*
-.wlink a {
-    color: inherit;
-}
-
-.wlink a:link {
-    color: inherit;
-}
-
-.wlink a:visited {
-    color: inherit;
-}
-
-.wlink a:hover {
-    color: inherit;
-}
-
-.wlink a:active {
-    color: inherit;
-}
-*/
+.wlink:hover { opacity: 100%; text-decoration: underline; }
+.wlink:focus { opacity: 100%; text-decoration: underline; }
 
 h1, h2, h3, h4, h5, h6, dt { font-family: Rambla,Roboto,Calibri,Arial,Helvetica,sans-serif }
 
 h1 {
-    width: 100%;
     padding: 2rem 0 0 0;
     border-bottom: 0.15rem #3377cc solid;
     font-size: 2.30rem;
@@ -100,13 +85,6 @@ h6 { font-size: 1.00rem; }
 h1, h2, h3, h4, h5, h6 {
     position: relative;
 }
-
-h1:hover .wlink { opacity: 100% }
-h2:hover .wlink { opacity: 100% }
-h3:hover .wlink { opacity: 100% }
-h4:hover .wlink { opacity: 100% }
-h5:hover .wlink { opacity: 100% }
-h6:hover .wlink { opacity: 100% }
 
 dt {
     font-family: Rambla,Roboto,Calibri,Arial,Helvetica,sans-serif;

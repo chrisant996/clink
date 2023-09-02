@@ -7,13 +7,8 @@ local function starts_with(str, start)
 end
 
 --------------------------------------------------------------------------------
-local function make_weblink(name, div)
-    local tag = div and "div" or "span"
-    if name then
-        return '<'..tag..' class="wlink"><a href="#'..name..'"><svg width=16 height=16><use href="#wicon"/></a><span class="wfix">.</span></'..tag..'>'
-    else
-        return '<'..tag..' class="wlink"><svg width=16 height=16 style="display:none"/></'..tag..'>'
-    end
+local function make_weblink(name)
+    return '<a class="wlink" href="#'..name..'"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>'
 end
 
 --------------------------------------------------------------------------------
@@ -74,11 +69,14 @@ local function generate_file(source_path, out, weblinks)
                     end
                     if hopen and not last_name then
                         last_name = hopen:match('id="([^"]+)"')
+                        if not last_name then
+                            error("missing name and/or id for heading:\n"..line)
+                        end
                     end
                 end
                 if hopen then
                     out:write(hopen)
-                    out:write(make_weblink(last_name, true--[[div]]))
+                    out:write(make_weblink(last_name))
                     out:write(hclose .. "\n")
                 else
                     out:write(line .. "\n")
