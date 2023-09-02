@@ -44,7 +44,7 @@ str_moveable& str_moveable::operator = (str_moveable&& s)
 {
     if (s.owns_ptr())
     {
-        str_base::operator=(std::move(s));
+        str_impl<char>::operator=(std::move(s));
         s.reset_empty();
     }
     else
@@ -72,6 +72,7 @@ void str_moveable::free()
 //------------------------------------------------------------------------------
 void str_moveable::reset_empty()
 {
+    assert(0 == m_reservation);
     reset_not_owned(&m_reservation, 1);
 }
 
@@ -102,7 +103,7 @@ wstr_moveable& wstr_moveable::operator = (wstr_moveable&& s)
 {
     if (s.owns_ptr())
     {
-        wstr_base::operator=(std::move(s));
+        str_impl<wchar_t>::operator=(std::move(s));
         s.reset_empty();
     }
     else
@@ -130,6 +131,7 @@ void wstr_moveable::free()
 //------------------------------------------------------------------------------
 void wstr_moveable::reset_empty()
 {
+    assert(0 == m_reservation);
     reset_not_owned(&m_reservation, 1);
 }
 

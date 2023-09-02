@@ -1357,7 +1357,7 @@ void override_match_line_state::override(int32 start, int32 end, const char* nee
 //------------------------------------------------------------------------------
 void override_match_line_state::fully_qualify(int32 start, int32 end, str_base& needle)
 {
-    str_moveable tmp;
+    str<280> tmp;
 
     if (path::get_drive(needle.c_str(), tmp))
         tmp.clear();
@@ -1382,7 +1382,8 @@ void override_match_line_state::fully_qualify(int32 start, int32 end, str_base& 
     os::get_full_path_name(dir.c_str(), tmp);
     path::append(tmp, name.c_str());
 
-    needle = std::move(tmp);
+    needle.clear();
+    needle.concat(tmp.c_str(), tmp.length());
     override(start, end, needle.c_str());
 }
 

@@ -583,7 +583,7 @@ public:
     void                operator = (const char* value)    { copy(value); }
     void                operator = (const wchar_t* value) { from_utf16(value); }
     void                operator = (const str_base& rhs)  = delete;
-    str_base&           operator = (str_base&& rhs)       { str_impl<char>::operator=(std::move(rhs)); return *this; }
+    str_base&           operator = (str_base&& rhs)       = delete;
 
 protected:
                         str_base(str_base&&)              = default;
@@ -600,7 +600,7 @@ public:
     void                operator = (const wchar_t* value) { copy(value); }
     void                operator = (const char* value)    { from_utf8(value); }
     void                operator = (const wstr_base&)     = delete;
-    wstr_base&          operator = (wstr_base&& rhs)      { str_impl<wchar_t>::operator=(std::move(rhs)); return *this; }
+    wstr_base&          operator = (wstr_base&& rhs)      = delete;
 
 protected:
                         wstr_base(wstr_base&&)            = default;
@@ -616,9 +616,10 @@ public:
                 str() : str_base(m_data, COUNT)     { clear(); set_growable(GROWABLE); }
     explicit    str(const char* value) : str()      { copy(value); }
     explicit    str(const wchar_t* value) : str()   { from_utf16(value); }
+                str(str<COUNT, GROWABLE>&& rhs) : str() { *this = std::move(rhs); };
                 str(const str&) = delete;
-                str(str&&) = delete;
     using       str_base::operator =;
+    str<COUNT, GROWABLE>& operator = (str<COUNT, GROWABLE>&&);
 
 private:
     char        m_data[COUNT];
@@ -631,13 +632,60 @@ public:
                 wstr() : wstr_base(m_data, COUNT)   { clear(); set_growable(GROWABLE); }
     explicit    wstr(const wchar_t* value) : wstr() { copy(value); }
     explicit    wstr(const char* value) : wstr()    { from_utf8(value); }
+                wstr(wstr<COUNT, GROWABLE>&& rhs) : wstr() { *this = std::move(rhs); };
                 wstr(const wstr&) = delete;
-                wstr(wstr&&) = delete;
     using       wstr_base::operator =;
+    wstr<COUNT, GROWABLE>& operator = (wstr<COUNT, GROWABLE>&&);
 
 private:
     wchar_t     m_data[COUNT];
 };
+
+template <int32 COUNT, bool GROWABLE>
+str<COUNT, GROWABLE>& str<COUNT, GROWABLE>::operator = (str<COUNT, GROWABLE>&& rhs)
+{
+    assert(&rhs != this);
+    assert(GROWABLE == is_growable());
+    assert(GROWABLE == rhs.is_growable());
+    if (rhs.owns_ptr())
+    {
+        const int32 len = rhs.length();
+        attach(rhs.data(), rhs.size());
+        rhs.reset_not_owned(rhs.m_data, COUNT);
+        rhs.truncate(0);
+        truncate(len); // Sneaky way to set m_length.
+    }
+    else
+    {
+        free_data();
+        reset_not_owned(m_data, COUNT);
+        copy(rhs.c_str());
+    }
+    return *this;
+}
+
+template <int32 COUNT, bool GROWABLE>
+wstr<COUNT, GROWABLE>& wstr<COUNT, GROWABLE>::operator = (wstr<COUNT, GROWABLE>&& rhs)
+{
+    assert(&rhs != this);
+    assert(GROWABLE == is_growable());
+    assert(GROWABLE == rhs.is_growable());
+    if (rhs.owns_ptr())
+    {
+        const int32 len = rhs.length();
+        attach(rhs.data(), rhs.size());
+        rhs.reset_not_owned(rhs.m_data, COUNT);
+        rhs.truncate(0);
+        truncate(len); // Sneaky way to set m_length.
+    }
+    else
+    {
+        free_data();
+        reset_not_owned(m_data, COUNT);
+        copy(rhs.c_str());
+    }
+    return *this;
+}
 
 
 
