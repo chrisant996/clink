@@ -170,17 +170,9 @@ void flush_tmpbuf(void)
 #if defined (COLOR_SUPPORT)
 static void append_color_indicator(enum indicator_no colored_filetype)
 {
-    const struct bin_str *ind = &_rl_color_indicator[colored_filetype];
-    append_tmpbuf_string(ind->string, ind->len);
-}
-
-static bool is_colored(enum indicator_no colored_filetype)
-{
-  size_t len = _rl_color_indicator[colored_filetype].len;
-  char const *s = _rl_color_indicator[colored_filetype].string;
-  return ! (len == 0
-            || (len == 1 && strncmp (s, "0", 1) == 0)
-            || (len == 2 && strncmp (s, "00", 2) == 0));
+    const char* s = get_indicator_color(colored_filetype);
+    if (s)
+        append_tmpbuf_string(s, -1);
 }
 
 static void append_default_color(void)
@@ -201,15 +193,13 @@ static void append_normal_color(void)
 
 static void append_prefix_color(void)
 {
-    struct bin_str *s;
-
-    s = &_rl_color_indicator[C_PREFIX];
-    if (s->string != nullptr)
+    const char* s = get_indicator_color(C_PREFIX);
+    if (s != nullptr)
     {
         if (is_colored(C_NORM))
             append_default_color();
         append_color_indicator(C_LEFT);
-        append_tmpbuf_string(s->string, s->len);
+        append_tmpbuf_string(s, -1);
         append_color_indicator(C_RIGHT);
     }
 }
@@ -223,7 +213,7 @@ static void append_match_color_indicator(const char *f, match_type type)
 
 static void prep_non_filename_text(void)
 {
-    if (_rl_color_indicator[C_END].string != nullptr)
+    if (get_indicator_color(C_END) != nullptr)
         append_color_indicator(C_END);
     else
     {

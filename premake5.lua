@@ -277,6 +277,7 @@ clink_lib("clink_lib")
     includedirs("clink/terminal/include")
     includedirs("readline")
     includedirs("readline/compat")
+    includedirs("wildmatch")
     files("clink/lib/src/**")
     files("clink/lib/include/**")
 
