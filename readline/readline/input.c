@@ -95,6 +95,11 @@ rl_hook_func_t *rl_input_available_hook = (rl_hook_func_t *)NULL;
 
 rl_getc_func_t *rl_getc_function = rl_getc;
 
+/* begin_clink_change */
+/* A function for logging input. */
+rl_log_read_key_hook_func_t *rl_log_read_key_hook = 0;
+/* end_clink_change */
+
 static int _keyboard_input_timeout = 100000;		/* 0.1 seconds; it's in usec */
 
 static int ibuffer_space PARAMS((void));
@@ -475,8 +480,15 @@ rl_read_key (void)
 {
   int c, r;
 
+/* begin_clink_change */
+  const char* src = NULL;
+/* end_clink_change */
+
   if (rl_pending_input)
     {
+/* begin_clink_change */
+      src = "pending input";
+/* end_clink_change */
       c = rl_pending_input;	/* XXX - cast to unsigned char if > 0? */
       rl_clear_pending_input ();
     }
@@ -484,7 +496,13 @@ rl_read_key (void)
     {
       /* If input is coming from a macro, then use that. */
       if (c = _rl_next_macro_key ())
-	return ((unsigned char)c);
+/* begin_clink_change */
+	//return ((unsigned char)c);
+	{
+	  src = "macro";
+	  goto out;
+	}
+/* end_clink_change */
 
       /* If the user has an event function, then call it periodically. */
       if (rl_event_hook)
@@ -492,7 +510,13 @@ rl_read_key (void)
 	  while (rl_event_hook)
 	    {
 	      if (rl_get_char (&c) != 0)
-		break;
+/* begin_clink_change */
+		//break;
+		{
+  		  src = "popped";
+		  break;
+		}
+/* end_clink_change */
 		
 	      if ((r = rl_gather_tyi ()) < 0)	/* XXX - EIO */
 		{
@@ -512,11 +536,20 @@ rl_read_key (void)
 	{
 	  if (rl_get_char (&c) == 0)
 	    c = (*rl_getc_function) (rl_instream);
+/* begin_clink_change */
+	  else
+	    src = "popped";
+/* end_clink_change */
 /* fprintf(stderr, "rl_read_key: calling RL_CHECK_SIGNALS: _rl_caught_signal = %d\r\n", _rl_caught_signal); */
 	  RL_CHECK_SIGNALS ();
 	}
     }
 
+/* begin_clink_change */
+out:
+  if (rl_log_read_key_hook)
+    (*rl_log_read_key_hook) ((unsigned char)c, src);
+/* end_clink_change */
   return (c);
 }
 

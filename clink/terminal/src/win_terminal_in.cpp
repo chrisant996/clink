@@ -16,10 +16,7 @@
 #include <core/str_hash.h>
 #include <core/settings.h>
 #include <core/debugheap.h>
-
-#ifdef DEBUG
 #include <core/log.h>
-#endif
 
 #include <assert.h>
 #include <unordered_map>
@@ -60,6 +57,14 @@ static setting_bool g_use_altgr_substitute(
     "Windows provides Ctrl-Alt as a substitute for AltGr, historically to\n"
     "support keyboards with no AltGr key.  This may collide with some of\n"
     "Readline's bindings.",
+    false);
+
+setting_bool g_debug_log_terminal(
+    "debug.log_terminal",
+    "Log terminal input and output",
+    "WARNING:  Only turn this on for diagnostic purposes, and only temporarily!\n"
+    "Having this on significantly increases the amount of information written to\n"
+    "the log file.",
     false);
 
 extern setting_bool g_adjust_cursor_style;
@@ -860,7 +865,7 @@ void win_terminal_in::read_console(input_idle* callback, DWORD _timeout, bool pe
 }
 
 //------------------------------------------------------------------------------
-static void verbose_input(KEY_EVENT_RECORD const& record)
+static void verbose_input(KEY_EVENT_RECORD const& record, bool log)
 {
     int32 key_char = record.uChar.UnicodeChar;
     int32 key_vk = record.wVirtualKeyCode;
@@ -918,23 +923,41 @@ static void verbose_input(KEY_EVENT_RECORD const& record)
     dead = tmp.c_str();
 #endif
 
-    const char* pro = (s_verbose_input > 1) ? "\x1b[s\x1b[H" : "";
-    const char* epi = (s_verbose_input > 1) ? "\x1b[K\x1b[u" : "\n";
+    if (log)
+    {
+        LOG("key event:  %c%c%c %c%c  flags=0x%08.8x  char=0x%04.4x  vk=0x%04.4x  scan=0x%04.4x  \"%s\"%s",
+                (key_flags & SHIFT_PRESSED) ? 'S' : '_',
+                (key_flags & LEFT_CTRL_PRESSED) ? 'C' : '_',
+                (key_flags & LEFT_ALT_PRESSED) ? 'A' : '_',
+                (key_flags & RIGHT_ALT_PRESSED) ? 'A' : '_',
+                (key_flags & RIGHT_CTRL_PRESSED) ? 'C' : '_',
+                key_flags,
+                key_char,
+                key_vk,
+                key_sc,
+                key_name,
+                dead);
+    }
+    else
+    {
+        const char* pro = (s_verbose_input > 1) ? "\x1b[s\x1b[H" : "";
+        const char* epi = (s_verbose_input > 1) ? "\x1b[K\x1b[u" : "\n";
 
-    printf("%skey event:  %c%c%c %c%c  flags=0x%08.8x  char=0x%04.4x  vk=0x%04.4x  scan=0x%04.4x  \"%s\"%s%s",
-            pro,
-            (key_flags & SHIFT_PRESSED) ? 'S' : '_',
-            (key_flags & LEFT_CTRL_PRESSED) ? 'C' : '_',
-            (key_flags & LEFT_ALT_PRESSED) ? 'A' : '_',
-            (key_flags & RIGHT_ALT_PRESSED) ? 'A' : '_',
-            (key_flags & RIGHT_CTRL_PRESSED) ? 'C' : '_',
-            key_flags,
-            key_char,
-            key_vk,
-            key_sc,
-            key_name,
-            dead,
-            epi);
+        printf("%skey event:  %c%c%c %c%c  flags=0x%08.8x  char=0x%04.4x  vk=0x%04.4x  scan=0x%04.4x  \"%s\"%s%s",
+                pro,
+                (key_flags & SHIFT_PRESSED) ? 'S' : '_',
+                (key_flags & LEFT_CTRL_PRESSED) ? 'C' : '_',
+                (key_flags & LEFT_ALT_PRESSED) ? 'A' : '_',
+                (key_flags & RIGHT_ALT_PRESSED) ? 'A' : '_',
+                (key_flags & RIGHT_CTRL_PRESSED) ? 'C' : '_',
+                key_flags,
+                key_char,
+                key_vk,
+                key_sc,
+                key_name,
+                dead,
+                epi);
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -1000,7 +1023,9 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
         if (key_char)
         {
             if (s_verbose_input)
-                verbose_input(record);
+                verbose_input(record, false);
+            if (g_debug_log_terminal.get())
+                verbose_input(record, true);
             push(key_char);
         }
 
@@ -1012,7 +1037,9 @@ void win_terminal_in::process_input(KEY_EVENT_RECORD const& record)
         return;
 
     if (s_verbose_input)
-        verbose_input(record);
+        verbose_input(record, false);
+    if (g_debug_log_terminal.get())
+        verbose_input(record, true);
 
     // Special treatment for escape.
     if (key_char == 0x1b && (key_vk == VK_ESCAPE || !g_differentiate_keys.get()))
@@ -1233,21 +1260,38 @@ not_ctrl:
 }
 
 //------------------------------------------------------------------------------
-static void verbose_input(MOUSE_EVENT_RECORD const& record)
+static void verbose_input(MOUSE_EVENT_RECORD const& record, bool log)
 {
     auto key_flags = record.dwControlKeyState;
 
-    printf("mouse event:  %u,%u  %c%c%c %c%c  ctrlkeystate=0x%08.8x  buttonstate=0x%04.4x  eventflags=0x%04.4x\n",
-            record.dwMousePosition.X,
-            record.dwMousePosition.Y,
-            (key_flags & SHIFT_PRESSED) ? 'S' : '_',
-            (key_flags & LEFT_CTRL_PRESSED) ? 'C' : '_',
-            (key_flags & LEFT_ALT_PRESSED) ? 'A' : '_',
-            (key_flags & RIGHT_ALT_PRESSED) ? 'A' : '_',
-            (key_flags & RIGHT_CTRL_PRESSED) ? 'C' : '_',
-            key_flags,
-            record.dwButtonState,
-            record.dwEventFlags);
+    if (log)
+    {
+        LOG("mouse event:  %u,%u  %c%c%c %c%c  ctrlkeystate=0x%08.8x  buttonstate=0x%04.4x  eventflags=0x%04.4x\n",
+                record.dwMousePosition.X,
+                record.dwMousePosition.Y,
+                (key_flags & SHIFT_PRESSED) ? 'S' : '_',
+                (key_flags & LEFT_CTRL_PRESSED) ? 'C' : '_',
+                (key_flags & LEFT_ALT_PRESSED) ? 'A' : '_',
+                (key_flags & RIGHT_ALT_PRESSED) ? 'A' : '_',
+                (key_flags & RIGHT_CTRL_PRESSED) ? 'C' : '_',
+                key_flags,
+                record.dwButtonState,
+                record.dwEventFlags);
+    }
+    else
+    {
+        printf("mouse event:  %u,%u  %c%c%c %c%c  ctrlkeystate=0x%08.8x  buttonstate=0x%04.4x  eventflags=0x%04.4x\n",
+                record.dwMousePosition.X,
+                record.dwMousePosition.Y,
+                (key_flags & SHIFT_PRESSED) ? 'S' : '_',
+                (key_flags & LEFT_CTRL_PRESSED) ? 'C' : '_',
+                (key_flags & LEFT_ALT_PRESSED) ? 'A' : '_',
+                (key_flags & RIGHT_ALT_PRESSED) ? 'A' : '_',
+                (key_flags & RIGHT_CTRL_PRESSED) ? 'C' : '_',
+                key_flags,
+                record.dwButtonState,
+                record.dwEventFlags);
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -1279,7 +1323,9 @@ void win_terminal_in::process_input(MOUSE_EVENT_RECORD const& record)
         return;
 
     if (s_verbose_input)
-        verbose_input(record);
+        verbose_input(record, false);
+    if (g_debug_log_terminal.get())
+        verbose_input(record, true);
 
     // If the caller isn't prepared to handle the mouse input, then handle
     // certain universal behaviors here.

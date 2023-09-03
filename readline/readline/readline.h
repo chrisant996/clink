@@ -1073,6 +1073,10 @@ extern const char* _rl_alias_color;
 /* This callback allows an application to provide keyboard input to readline
    even in modal input situations like the pager. */
 extern rl_read_key_hook_func_t *rl_read_key_hook;
+/* This callback allows an application to log input, regardless whether it's
+   from the keyboard or a redirected stream or a macro or has been pushed
+   programmatically. */
+extern rl_log_read_key_hook_func_t *rl_log_read_key_hook;
 /* end_clink_change */
 
 /* Applications can set this to non-zero to have readline's signal handlers

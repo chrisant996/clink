@@ -332,14 +332,6 @@ static setting_bool g_rl_hide_stderr(
     "Suppress stderr from the Readline library",
     false);
 
-setting_bool g_debug_log_terminal(
-    "debug.log_terminal",
-    "Log Readline terminal input and output",
-    "WARNING:  Only turn this on for diagnostic purposes, and only temporarily!\n"
-    "Having this on significantly increases the amount of information written to\n"
-    "the log file.",
-    false);
-
 setting_enum g_default_bindings(
     "clink.default_bindings",
     "Selects default key bindings",
@@ -349,6 +341,7 @@ setting_enum g_default_bindings(
     "bash,windows",
     0);
 
+extern setting_bool g_debug_log_terminal;
 extern setting_bool g_terminal_raw_esc;
 
 
@@ -901,6 +894,19 @@ static void terminal_log_write(FILE* stream, const char* chars, int32 char_count
     LOGCURSORPOS();
     LOG("FWRITE \"%.*s\", %d", char_count, chars, char_count);
     fwrite(chars, char_count, 1, stream);
+}
+
+//------------------------------------------------------------------------------
+static void terminal_log_read(int c, const char* _src)
+{
+    str<16> src;
+    if (_src)
+        src << "  (" << _src << ")";
+
+    if (c >= 0 && c < 0x80)
+        LOG("INPUT 0x%02x \"%c\"%s", c, c, src.c_str());
+    else
+        LOG("INPUT 0x%02x%s", c, src.c_str());
 }
 
 //------------------------------------------------------------------------------
@@ -1839,8 +1845,12 @@ static void init_readline_hooks()
     // And reset these for each input line because of g_debug_log_terminal.
     rl_getc_function = terminal_read_thunk;
     rl_fwrite_function = terminal_write_thunk;
+    rl_log_read_key_hook = nullptr;
     if (g_debug_log_terminal.get())
+    {
         rl_fwrite_function = terminal_log_write;
+        rl_log_read_key_hook = terminal_log_read;
+    }
     rl_fflush_function = terminal_fflush_thunk;
     rl_instream = in_stream;
     rl_outstream = out_stream;
@@ -2676,6 +2686,7 @@ void rl_module::on_begin_line(const context& context)
 
         // Reset the fwrite function so logging changes can take effect immediately.
         rl_fwrite_function = log_terminal ? terminal_log_write : terminal_write_thunk;
+        rl_log_read_key_hook = log_terminal ? terminal_log_read : nullptr;
     }
 
     // Note:  set_prompt() must happen while g_rl_buffer is nullptr otherwise
@@ -2831,9 +2842,6 @@ void rl_module::on_end_line()
 void rl_module::on_input(const input& input, result& result, const context& context)
 {
     assert(!g_result);
-
-    if (g_debug_log_terminal.get())
-        LOG("INPUT \"%.*s\", %d", input.len, input.keys, input.len);
 
     switch (input.id)
     {
