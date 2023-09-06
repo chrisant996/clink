@@ -513,7 +513,7 @@ int32 inject(int32 argc, char** argv)
     int32 i;
     int32 ret = exit_code_fatal;
     bool is_autorun = false;
-    while ((i = getopt_long(argc, argv, "?lqhp:s:d:|", options, nullptr)) != -1)
+    while ((i = getopt_long(argc, argv, "?lqhp:s:d:", options, nullptr)) != -1)
     {
         switch (i)
         {

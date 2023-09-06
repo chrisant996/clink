@@ -388,8 +388,8 @@ local history = clink.argmatcher("history")
 --------------------------------------------------------------------------------
 local update = clink.argmatcher()
 :addflags("-h", "-n", "-?")
-:hideflags("-h", "-n", "-?")
-:addflags("--help", "--check")
+:hideflags("-h", "-n", "-?", "--prompt")
+:addflags("--help", "--check", "--prompt")
 :adddescriptions({
     ["--help"]      = "Show help",
     ["--check"]     = "Do nothing; check for an update, but don't install it",

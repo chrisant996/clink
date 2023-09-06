@@ -149,6 +149,17 @@ static bool load_internal(FILE* in, std::function<void(const char* name, const c
         while (*value && isspace(*value))
             ++value;
 
+        // Ugh, migrate clink.autoupdate setting from bool to enum.
+        if (_strcmpi(line_data, "clink.autoupdate") == 0)
+        {
+            str<16> tmp(value);
+            tmp.trim();
+            if (tmp.iequals("false") || tmp.iequals("off") || tmp.iequals("no"))
+                value = "0";
+            else if (tmp.iequals("true") || tmp.iequals("on") || tmp.iequals("yes"))
+                value = "1";
+        }
+
         load_setting(line_data, value, comment.c_str());
     }
 

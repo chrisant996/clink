@@ -11,6 +11,10 @@
 #include <core/path.h>
 #include <core/str.h>
 #include <lua/lua_script_loader.h>
+#include <terminal/terminal.h>
+#include <terminal/terminal_out.h>
+#include <terminal/terminal_helpers.h>
+#include <terminal/printer.h>
 
 extern "C" {
 #include <lua.h>
@@ -60,7 +64,7 @@ static wchar_t* get_wargs()
 }
 
 //------------------------------------------------------------------------------
-static bool call_updater(lua_state& lua, bool do_nothing)
+static bool call_updater(lua_state& lua, bool do_nothing, bool force_prompt)
 {
     const bool elevated = os::is_user_admin();
 
@@ -79,9 +83,13 @@ static bool call_updater(lua_state& lua, bool do_nothing)
         return available;
     }
 
+    if (g_elevated)
+        force_prompt = false; // Already prompted; don't prompt again.
+
     lua.push_named_function(state, "clink.updatenow");
     lua_pushboolean(state, elevated);
-    lua.pcall_silent(state, 1, 2);
+    lua_pushboolean(state, force_prompt);
+    lua.pcall_silent(state, 2, 2);
 
     int32 ok = int32(lua_tointeger(state, -2));
     const char* msg = lua_tostring(state, -1);
@@ -113,10 +121,29 @@ static bool call_updater(lua_state& lua, bool do_nothing)
 
     if (msg && *msg)
     {
+        DWORD dummy;
+        HANDLE h = GetStdHandle(ok ? STD_OUTPUT_HANDLE : STD_ERROR_HANDLE);
+        bool use_color = !!GetConsoleMode(h, &dummy);
+
         str<> tmp;
         tmp = msg;
         tmp.data()[0] = toupper(tmp.data()[0]);
-        fprintf(ok ? stdout : stderr, "%s\n", tmp.c_str());
+
+        terminal term = terminal_create();
+        printer printer(*term.out);
+        printer_context printer_context(term.out, &printer);
+
+        if (use_color)
+        {
+            str<> colored_msg(ok ? "\n\x1b[1;32m" : "\n\x1b[1;31m");
+            colored_msg << tmp;
+            colored_msg << "\x1b[m\n";
+            g_printer->print(colored_msg.c_str(), colored_msg.length());
+        }
+        else
+        {
+            fprintf(ok ? stdout : stderr, "%s\n", tmp.c_str());
+        }
 
         if (ok)
         {
@@ -152,6 +179,7 @@ int32 update(int32 argc, char** argv)
         { "help",               no_argument,        nullptr, 'h' },
         { "check",              no_argument,        nullptr, 'n' },
         { "nothing",            no_argument,        nullptr, 'n' },
+        { "prompt",             no_argument,        nullptr, '|' },
         { nullptr, 0, nullptr, 0 }
     };
 
@@ -170,12 +198,16 @@ int32 update(int32 argc, char** argv)
     int32 ret = 1;
     bool is_autorun = false;
     bool do_nothing = false;
+    bool force_prompt = false;
     while ((i = getopt_long(argc, argv, "?hn", options, nullptr)) != -1)
     {
         switch (i)
         {
         case 'n':
             do_nothing = true;
+            break;
+        case '|':
+            force_prompt = true;
             break;
         case '?':
         case 'h':
@@ -208,7 +240,7 @@ int32 update(int32 argc, char** argv)
     host_load_app_scripts(lua);
 
     // Call the updater.
-    const bool ok = call_updater(lua, do_nothing);
+    const bool ok = call_updater(lua, do_nothing, force_prompt);
     ret = !ok; // Return 0 on success.
 
     return ret;

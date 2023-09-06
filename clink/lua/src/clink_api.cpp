@@ -9,6 +9,7 @@
 #include "prompt.h"
 #include "recognizer.h"
 #include "async_lua_task.h"
+#include "command_link_dialog.h"
 #include "../../app/src/version.h" // Ugh.
 
 #ifdef CLINK_USE_LUA_EDITOR_TESTER
@@ -22,6 +23,7 @@
 #include <core/str_unordered_set.h>
 #include <core/settings.h>
 #include <core/linear_allocator.h>
+#include <core/callstack.h>
 #include <core/debugheap.h>
 #include <lib/popup.h>
 #include <lib/cmd_tokenisers.h>
@@ -62,6 +64,207 @@ static const char c_uninstall_key[] = "SOFTWARE\\Microsoft\\Windows\\CurrentVers
 #ifdef TRACK_LOADED_LUA_FILES
 extern "C" int32 is_lua_file_loaded(lua_State* state, const char* filename);
 #endif
+
+//------------------------------------------------------------------------------
+const uint32 c_snooze_duration = 22 * 60 * 60;  // Effectively one day, but avoids the threshold creeping forward over time.
+static HANDLE s_hMutex = 0;
+
+//------------------------------------------------------------------------------
+static bool acquire_updater_mutex()
+{
+    if (s_hMutex)
+        return true;
+
+    wstr<280> mod;
+    const DWORD mod_len = GetModuleFileNameW(nullptr, mod.data(), mod.size());
+    if (!mod_len || mod_len >= mod.size())
+        return false;
+
+    // Only allow the standalone clink exe to acquire the mutex, to avoid
+    // blocking inside cmd.exe.
+    str<16> name(path::get_name(mod.c_str()));
+    if (_strnicmp("clink_", name.c_str(), 6) != 0)
+    {
+        assert(false);
+        return false;
+    }
+
+    // Acquire a shared named mutex to synchronize all update attempts.  Since
+    // this can never happen inside cmd.exe, it's reasonable to "leak" the
+    // mutex so that when this "clink update" process finishes, the next
+    // waiting one can continue.  This greatly simplifies managing the
+    // acquisition and release of the mutex.
+    HANDLE hMutex = CreateMutex(nullptr, false, "clink_autoupdate_global_serializer");
+    if (hMutex)
+    {
+        if (WaitForSingleObject(hMutex, INFINITE) != WAIT_OBJECT_0)
+        {
+            CloseHandle(hMutex);
+            return false;
+        }
+        s_hMutex = hMutex;
+    }
+
+    return true;
+}
+
+//------------------------------------------------------------------------------
+static void release_updater_mutex()
+{
+    if (s_hMutex)
+    {
+        ReleaseMutex(s_hMutex);
+        CloseHandle(s_hMutex);
+        s_hMutex = 0;
+    }
+}
+
+//------------------------------------------------------------------------------
+static bool make_key_value_names(const char* subkey, wstr_base& keyname, wstr_base& valname)
+{
+    str<280> tmp1;
+    if (!os::get_alias("clink", tmp1))
+        return false;
+
+    str<280> tmp2;
+    if (!path::get_directory(tmp1.c_str(), tmp2))
+        return false;
+
+    if (!tmp1.format("Software\\Clink\\%s", subkey))
+        return false;
+
+    keyname = tmp1.c_str();
+    valname = tmp2.c_str();
+    return true;
+}
+
+//------------------------------------------------------------------------------
+static int32 encode_version(const char* str)
+{
+    int32 version = 0;
+    if (str && 'v' == *(str++))
+    {
+        char* end;
+        const int32 major = strtol(str, &end, 10);
+        if (end && *end == '.')
+        {
+            version = major;
+            const int32 minor = strtol(end + 1, &end, 10);
+            if (end && *end == '.')
+            {
+                version *= 1000;
+                version += minor;
+                const int32 patch = strtol(end + 1, &end, 10);
+                if (end && (*end == '.' || !*end))
+                {
+                    version *= 10000;
+                    version += patch;
+                    return version;
+                }
+            }
+        }
+
+    }
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+static bool is_update_skipped(const char* new_ver, str_base* reg_ver=nullptr)
+{
+    const int32 candidate = encode_version(new_ver);
+    if (!candidate)
+        return false;
+
+    wstr<> keyname;
+    wstr<> valname;
+    if (!make_key_value_names("SkipUpdate", keyname, valname))
+        return false;
+
+    DWORD type;
+    WCHAR buffer[280];
+    DWORD size = sizeof(buffer);
+    LSTATUS status = RegGetValueW(HKEY_CURRENT_USER, keyname.c_str(), valname.c_str(), RRF_RT_REG_SZ, &type, buffer, &size);
+    if (status != ERROR_SUCCESS || type != REG_SZ)
+        return false;
+
+    str<16> tmp;
+    if (!reg_ver)
+        reg_ver = &tmp;
+    *reg_ver = buffer;
+
+    const int32 skip = encode_version(reg_ver->c_str());
+    if (!candidate || !skip || skip < candidate)
+        return false;
+
+    return true;
+}
+
+//------------------------------------------------------------------------------
+static bool is_update_prompt_snoozed()
+{
+    wstr<> keyname;
+    wstr<> valname;
+    if (make_key_value_names("SnoozeUpdatePrompt", keyname, valname))
+    {
+        DWORD type;
+        WCHAR buffer[280];
+        DWORD size = sizeof(buffer);
+        LSTATUS status = RegGetValueW(HKEY_CURRENT_USER, keyname.c_str(), valname.c_str(), RRF_RT_REG_SZ, &type, buffer, &size);
+        if (status == ERROR_SUCCESS && type == REG_SZ)
+        {
+            str<16> snooze(buffer);
+            time_t until = atoi(snooze.c_str());
+            time_t now = time(nullptr);
+            if (until > 0 && now > 0 && now < until)
+                return true;
+        }
+    }
+    return false;
+}
+
+//------------------------------------------------------------------------------
+static void snooze_update_prompt()
+{
+    wstr<> keyname;
+    wstr<> valname;
+    if (!make_key_value_names("SnoozeUpdatePrompt", keyname, valname))
+        return;
+
+    HKEY hkey;
+    DWORD dwDisposition;
+    LSTATUS status = RegCreateKeyExW(HKEY_CURRENT_USER, keyname.c_str(), 0, nullptr, REG_OPTION_NON_VOLATILE, KEY_CREATE_SUB_KEY|KEY_SET_VALUE, nullptr, &hkey, &dwDisposition);
+    if (status != ERROR_SUCCESS)
+        return;
+
+    wstr<> snooze;
+    time_t until = time(nullptr) + c_snooze_duration;
+    snooze.format(L"%u", until);
+    status = RegSetValueExW(hkey, valname.c_str(), 0, REG_SZ, reinterpret_cast<const BYTE*>(snooze.c_str()), snooze.length() * sizeof(*snooze.c_str()));
+
+    RegCloseKey(hkey);
+}
+
+//------------------------------------------------------------------------------
+static void skip_update(const char* ver)
+{
+    wstr<> keyname;
+    wstr<> valname;
+    if (!make_key_value_names("SkipUpdate", keyname, valname))
+        return;
+
+    HKEY hkey;
+    DWORD dwDisposition;
+    LSTATUS status = RegCreateKeyExW(HKEY_CURRENT_USER, keyname.c_str(), 0, nullptr, REG_OPTION_NON_VOLATILE, KEY_CREATE_SUB_KEY|KEY_SET_VALUE, nullptr, &hkey, &dwDisposition);
+    if (status != ERROR_SUCCESS)
+        return;
+
+    wstr<> wver(ver);
+    status = RegSetValueExW(hkey, valname.c_str(), 0, REG_SZ, reinterpret_cast<const BYTE*>(wver.c_str()), wver.length() * sizeof(*wver.c_str()));
+
+    RegCloseKey(hkey);
+}
+
+
 
 //------------------------------------------------------------------------------
 /// -name:  clink.print
@@ -1643,10 +1846,141 @@ static int32 expand_prompt_codes(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+static int32 is_skip_update(lua_State* state)
+{
+    const char* new_ver = checkstring(state, 1);
+    if (!new_ver)
+        return 0;
+
+    str<16> reg_ver;
+    if (!is_update_skipped(new_ver, &reg_ver))
+        return 0;
+
+    lua_pushboolean(state, true);
+    lua_pushlstring(state, reg_ver.c_str(), reg_ver.length());
+    return 2;
+}
+
+//------------------------------------------------------------------------------
+static int32 is_snoozed_update(lua_State* state)
+{
+    lua_pushboolean(state, is_update_prompt_snoozed());
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+static int32 reset_update_keys(lua_State* state)
+{
+    wstr<> keyname;
+    wstr<> valname;
+
+    static const char* const c_subkeys[] =
+    {
+        "SnoozeUpdatePrompt",
+        "SkipUpdate",
+    };
+
+    for (const auto subkey : c_subkeys)
+    {
+        if (make_key_value_names(subkey, keyname, valname))
+        {
+            HKEY hkey;
+            LSTATUS status = RegOpenKeyExW(HKEY_CURRENT_USER, keyname.c_str(), 0, KEY_CREATE_SUB_KEY|KEY_SET_VALUE, &hkey);
+            if (status == ERROR_SUCCESS)
+            {
+                status = RegDeleteValueW(hkey, valname.c_str());
+                RegCloseKey(hkey);
+            }
+        }
+    }
+
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+static int32 show_update_prompt(lua_State* state)
+{
+    const char* ver = checkstring(state, 1);
+    if (!ver || !*ver)
+        return 0;
+
+    assert(s_hMutex);
+    if (!s_hMutex)
+        return 0;
+
+    if (is_update_prompt_snoozed() || is_update_skipped(ver))
+    {
+        lua_pushlstring(state, "ignore", 6);
+        return 1;
+    }
+
+    str<> msg;
+    str<> btn1;
+    str<> btn2;
+    msg.format("Clink %s is available.  What would you like to do?", ver);
+    btn1.format("Install the %s update now.", ver);
+    btn2.format("Skip the %s update.", ver);
+
+    enum { btn_cancel, btn_install, btn_skip, btn_later };
+
+    command_link_dialog dlg;
+    dlg.add(btn_install, "&Update now", btn1.c_str());
+    dlg.add(btn_skip, "&Skip this update", btn2.c_str());
+    dlg.add(btn_later, "Wait until &later", "Do nothing now, but ask again later.");
+
+    const char* ret = "cancel";
+    switch (dlg.do_modal(0, 180, "Clink Update", msg.c_str()))
+    {
+    case btn_install:
+        ret = "update";
+        break;
+    case btn_skip:
+        ret = "skip";
+        skip_update(ver);
+        break;
+    case btn_later:
+        ret = "later";
+        snooze_update_prompt();
+        break;
+    }
+
+    lua_pushstring(state, ret);
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+static int32 acquire_updater_mutex(lua_State* state)
+{
+    lua_pushboolean(state, acquire_updater_mutex());
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+static int32 release_updater_mutex(lua_State* state)
+{
+    release_updater_mutex();
+    return 0;
+}
+
+//------------------------------------------------------------------------------
 #if defined(DEBUG) && defined(_MSC_VER)
 static int32 last_allocation_number(lua_State* state)
 {
     lua_pushinteger(state, dbggetallocnumber());
+    return 1;
+}
+#endif
+
+//------------------------------------------------------------------------------
+#if defined(DEBUG) && defined(_MSC_VER)
+static int32 get_c_callstack(lua_State* state)
+{
+    str_moveable stk;
+    int32 skip_frames = optnumber(state, 1, 0);
+    bool new_lines = lua_isnoneornil(state, 2) ? true : lua_toboolean(state, 2);
+    if (stk.reserve(16384))
+        format_callstack(skip_frames, 99, stk.data(), stk.size(), new_lines);
+    lua_pushlstring(state, stk.c_str(), stk.length());
     return 1;
 }
 #endif
@@ -1811,8 +2145,15 @@ void clink_lua_initialise(lua_state& lua, bool lua_interpreter)
         { 0,    "_get_installation_type", &get_installation_type },
         { 0,    "_set_install_version",   &set_install_version },
         { 0,    "_expand_prompt_codes",   &expand_prompt_codes },
+        { 0,    "_is_skip_update",        &is_skip_update },
+        { 0,    "_is_snoozed_update",     &is_snoozed_update },
+        { 0,    "_reset_update_keys",     &reset_update_keys },
+        { 0,    "_show_update_prompt",    &show_update_prompt },
+        { 0,    "_acquire_updater_mutex", &acquire_updater_mutex },
+        { 0,    "_release_updater_mutex", &release_updater_mutex },
 #if defined(DEBUG) && defined(_MSC_VER)
         { 0,    "last_allocation_number", &last_allocation_number },
+        { 0,    "get_c_callstack",        &get_c_callstack },
 #endif
 #ifdef TRACK_LOADED_LUA_FILES
         { 1,    "is_lua_file_loaded",     &clink_is_lua_file_loaded },

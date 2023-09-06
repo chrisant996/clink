@@ -86,9 +86,7 @@ local function clink_exe(name)
 end
 
 --------------------------------------------------------------------------------
--- MinGW's windres tool can't seem to handle string concatenation like rc does,
--- so I gave up and generate it here.
-local function get_version_info(commit)
+local function get_clink_version()
     local clink_version_file_name = "clink/app/src/version.h"
     local maj, min, pat
     local x
@@ -100,11 +98,17 @@ local function get_version_info(commit)
         x = line:match("CLINK_VERSION_PATCH[ \t]+([0-9]+)")
         if x then pat = x end
     end
-
     if not maj or not min or not pat then
         error("Unable to find version number in '"..clink_version_file_name.."'.")
     end
+    return maj, min, pat
+end
 
+--------------------------------------------------------------------------------
+-- MinGW's windres tool can't seem to handle string concatenation like rc does,
+-- so I gave up and generate it here.
+local function get_version_str_defs(commit)
+    local maj, min, pat = get_clink_version()
     local str = '#define CLINK_VERSION_STR "'..maj..'.'..min..'.'..pat..'.'..commit..'"\n'
     local lstr = '#define CLINK_VERSION_LSTR L"'..maj..'.'..min..'.'..pat..'.'..commit..'"\n'
     return str..lstr
@@ -114,7 +118,7 @@ end
 local function write_clink_commit_file(commit)
     local clink_commit_file
     local clink_commit_file_name = ".build/clink_commit.h"
-    local clink_commit_string = "#pragma once\n#define CLINK_COMMIT "..commit.."\n"..get_version_info(commit)
+    local clink_commit_string = "#pragma once\n#define CLINK_COMMIT "..commit.."\n"..get_version_str_defs(commit)
     local old_commit_string = ""
 
     clink_commit_file = io.open(path.getabsolute(clink_commit_file_name), "r")
@@ -135,12 +139,60 @@ local function write_clink_commit_file(commit)
 end
 
 --------------------------------------------------------------------------------
+local function write_clink_manifest_file()
+    local manifest_file = ".build/clink_manifest.xml"
+    local manifest_file_name = ".build/clink_manifest.xml"
+    local maj, min, pat = get_clink_version()
+
+    local manifest_string =
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'..
+        '<assembly xmlns="urn:schemas-microsoft-com:asm.v1" xmlns:asmv3="urn:schemas-microsoft-com:asm.v3" manifestVersion="1.0">'..
+        '<assemblyIdentity version="'..maj..'.'..min..'.'..pat..'.0" processorArchitecture="*" name="Microsoft.Source Depot.SDVDiff" type="win32"/>'..
+        '<description>Clink</description>'..
+        '<asmv3:application><asmv3:windowsSettings>'..
+            --'<dpiAware xmlns="http://schemas.microsoft.com/SMI/2005/WindowsSettings">True</dpiAware>'..
+            --'<dpiAwareness xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">PerMonitorV2, PerMonitor</dpiAwareness>'..
+            '<heapType xmlns="http://schemas.microsoft.com/SMI/2020/WindowsSettings">SegmentHeap</heapType>'..
+        '</asmv3:windowsSettings></asmv3:application>'..
+        '<dependency><dependentAssembly>'..
+            '<assemblyIdentity type="win32" name="Microsoft.Windows.Common-Controls" version="6.0.0.0" processorArchitecture="*" publicKeyToken="6595b64144ccf1df" language="*"/>'..
+        '</dependentAssembly></dependency>'..
+        '<compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1"><application>'..
+            '<supportedOS Id="{8e0f7a12-bfb3-4fe8-b9a5-48fd50a15a9a}"/>'.. -- Windows 10
+            '<supportedOS Id="{1f676c76-80e1-4239-95bb-83d0f6d0da78}"/>'.. -- Windows 8.1
+            '<supportedOS Id="{4a2f28e3-53b9-4441-ba9c-d69d4a4a6e38}"/>'.. -- Windows 8
+            '<supportedOS Id="{35138b9a-5d96-4fbd-8e2d-a2440225f93a}"/>'.. -- Windows 7
+            '<supportedOS Id="{e2011457-1546-43c5-a5fe-008deee3d3f0}"/>'.. -- Windows Vista
+        '</application></compatibility></assembly>'
+
+    local old_manifest_string = ""
+    manifest_file = io.open(path.getabsolute(manifest_file_name), "r")
+    if manifest_file then
+        old_manifest_string = manifest_file:read("*all")
+        manifest_file:close()
+    end
+
+    if old_manifest_string ~= manifest_string then
+        manifest_file = io.open(path.getabsolute(manifest_file_name), "w")
+        if not manifest_file then
+            error("Unable to write '"..manifest_file_name.."'.")
+        end
+        manifest_file:write(manifest_string);
+        manifest_file:close()
+        print("Generated "..manifest_file_name.."...")
+    end
+end
+
+--------------------------------------------------------------------------------
 if _ACTION then
     local workspace = (_ACTION:find("^vs") or _ACTION:find("^gmake"))
     local docs = (_ACTION == "docs")
     if workspace or docs then
         clink_git_name, clink_git_commit = get_git_info()
         write_clink_commit_file(clink_git_commit)
+    end
+    if workspace then
+        write_clink_manifest_file()
     end
 end
 
@@ -417,6 +469,7 @@ clink_dll("clink_app_dll")
     links("rpcrt4")
     files("clink/app/src/dll/main.cpp")
     files("clink/app/src/version.rc")
+    files("clink/app/src/manifest.rc")
 
     configuration("vs*")
         links("dbghelp")
@@ -434,6 +487,7 @@ clink_exe("clink_app_exe")
     links("clink_app_dll")
     files("clink/app/src/loader/main.cpp")
     files("clink/app/src/version.rc")
+    files("clink/app/src/manifest.rc")
 
     configuration("final")
         postbuild_copy("CHANGES", "final")

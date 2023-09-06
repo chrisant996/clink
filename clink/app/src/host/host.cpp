@@ -200,6 +200,28 @@ static setting_bool g_get_errorlevel(
     "default.",
     true);
 
+static setting_enum g_clink_autoupdate(
+    "clink.autoupdate",
+    "Auto-update the Clink program files",
+    "When 'off', Clink does not automatically check for updates, but you can\n"
+    "use 'clink update' to check for updates.\n"
+    "When 'check' (the default), Clink periodically checks for updates and\n"
+    "prints a message when an update is available.\n"
+    "When 'prompt', Clink periodically checks for updates and if one is\n"
+    "available then it shows a window to prompt whether to install the update.\n"
+    "When 'auto', Clink periodically checks for updates and also\n"
+    "attempts to automatically install an update.  If elevation is needed then\n"
+    "it pops up a prompt window, otherwise it automatically installs the update.",
+    "off,check,prompt,auto",
+    1); // WARNING: The default is duplicated in load_internal in settings.cpp.
+
+static setting_int g_clink_update_interval(
+    "clink.update_interval",
+    "Days between update checks",
+    "The Clink autoupdater will wait this many days between update checks.",
+    5);
+
+
 #ifdef DEBUG
 static setting_bool g_debug_heap_stats(
     "debug.heap_stats",

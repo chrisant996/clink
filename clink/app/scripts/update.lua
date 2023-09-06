@@ -21,10 +21,6 @@ local function concat_error(specific, general)
 end
 
 --------------------------------------------------------------------------------
-settings.add("clink.autoupdate", true, "Auto-update the Clink program files", "When enabled, periodically checks for updates for the Clink program files.") -- luacheck: no max line length
-settings.add("clink.update_interval", 5, "Days between update checks", "The Clink autoupdater will wait this many days between update checks.") -- luacheck: no max line length
-
---------------------------------------------------------------------------------
 local powershell_exe
 local checked_prereqs
 local prereq_error
@@ -35,6 +31,7 @@ local latest_cloud_tag
 
 local is_build_dir = false
 local can_use_setup_exe = false -- Always use zip updater, because exe gets blocked sometimes by malware protection.
+local dont_check_for_update
 
 local function parse_version_tag(tag)
     local maj, min, pat
@@ -557,8 +554,14 @@ local function is_update_ready(force)
     -- Verify the update file is newer.
     local local_tag = get_local_tag()
     local cloud_tag = latest_cloud_tag or path.getbasename(update_file)
-    if not is_rhs_version_newer(get_local_tag(), cloud_tag) then
+    if not is_rhs_version_newer(local_tag, cloud_tag) then
         return nil, log_info("no update available; local version " .. local_tag .. " is not older than latest release " .. cloud_tag .. ".") -- luacheck: no max line length
+    end
+
+    -- Skip the update if the user said to.
+    local skip, range = clink._is_skip_update(cloud_tag)
+    if skip then
+        return nil, log_info("no update available; " .. cloud_tag .. " is available but user chose to skip through " .. range .. ".") -- luacheck: no max line length
     end
 
     -- Update is ready.
@@ -566,18 +569,38 @@ local function is_update_ready(force)
     return update_file
 end
 
-local function apply_zip_update(zip_file, force)
+local function prepare_to_update(cloud_tag)
     local bin_dir, err = get_bin_dir()
     if not bin_dir then
-        return nil, err
+        return nil, nil, err
     end
 
     local update_dir, err = get_update_dir() -- luacheck: ignore 411
     if not update_dir then
+        return nil, nil, err
+    end
+
+    if not clink._acquire_updater_mutex() then
+        return
+    end
+
+    -- Must double check that cloud_tag is newer than what's running,
+    -- since an update might have completed while waiting for the mutex.
+    local local_tag = get_local_tag()
+    if not is_rhs_version_newer(local_tag, cloud_tag) then
+        return nil, nil, log_info("already updated; local version " .. local_tag .. " is not older than update candidate " .. cloud_tag .. ".") -- luacheck: no max line length
+    end
+
+    return bin_dir, update_dir
+end
+
+local function apply_zip_update(zip_file, force)
+    local cloud_tag = path.getbasename(zip_file)
+    local bin_dir, update_dir, err = prepare_to_update(cloud_tag)
+    if not bin_dir or not update_dir then
         return nil, err
     end
 
-    local cloud_tag = path.getbasename(zip_file)
     local expand_dir = path.join(update_dir, cloud_tag)
     if force then
         print("Expanding zip file...")
@@ -633,21 +656,18 @@ local function apply_zip_update(zip_file, force)
 end
 
 local function run_exe_installer(setup_exe)
-    local bin_dir, err = get_bin_dir()
-    if not bin_dir then
-        return nil, err
-    end
-
-    local update_dir, err = get_update_dir() -- luacheck: ignore 411
-    if not update_dir then
-        return nil, err
-    end
-
     local cloud_tag = path.getbasename(setup_exe)
+    local bin_dir, update_dir, err = prepare_to_update(cloud_tag)
+    if not bin_dir or not update_dir then
+        return nil, err
+    end
+
     print("Launching the Clink setup program...")
     local command = setup_exe .. " /S /D=" .. bin_dir
     log_info("launching setup program '" .. command .. "'")
--- PROBLEM:  This gets blocked by malware protection.
+
+    -- Run the setup program.
+    -- NOTE:  This can get blocked by malware protection.
     local ok, what, code = os.execute(command) -- luacheck: no unused
     if not ok or code ~= 0 then
         return nil, log_info(string.format("setup program %s.", ok and "canceled" or "failed"))
@@ -659,21 +679,100 @@ local function run_exe_installer(setup_exe)
     return 1, log_info("updated Clink to " .. cloud_tag .. ".")
 end
 
-local function try_autoupdate()
-    is_update_ready(false)
+local function check_need_ui(update_file, mode)
+    if mode == "prompt" then
+        return true
+    elseif mode ~= "auto" then
+        return false
+    elseif path.getextension(update_file):lower() ~= ".zip" then
+        return true
+    else
+        local install_type = get_installation_type()
+        return (install_type == "zip" and this_install_type == "exe")
+    end
+end
+
+local function get_clink_exe()
+    local a = os.getalias("clink")
+    if a then
+        a = a:gsub(" *%$%*$", "")
+        local n = path.getname(a:gsub('^"*', ''):gsub('"*$', ''))
+        if n and n:find("^[cC][lL][iI][nN][kK]_.*%.exe$") then
+            return a
+        end
+    end
+end
+
+local function prun(command)
+    local f = io.popen(command)
+    if f then
+        for _ in f:lines() do
+            -- Silently consume the output; it's a hidden async operation.
+        end
+        f:close()
+    end
+end
+
+local function maybe_trigger_update(update_file)
+    local mode = settings.get("clink.autoupdate")
+    if check_need_ui(update_file, mode) then
+        local exe = get_clink_exe()
+        if not exe then
+            log_info("unable to find Clink program.")
+            return
+        end
+
+        -- Disable checking for update, to mitigate sharing violation between
+        -- try_update() and the `clink update --prompt` process, due to the
+        -- guard file in the temporary update directory.
+        dont_check_for_update = true
+
+        local c = coroutine.create(function()
+            prun("2>nul " .. exe .. " update --prompt")
+        end)
+        clink.runcoroutineuntilcomplete(c)
+    end
+end
+
+local function try_autoupdate(mode)
+    if dont_check_for_update then
+        return
+    end
+
+    local update_file = is_update_ready(false)
+    if not update_file then
+        return
+    end
+
+    if check_need_ui(update_file, mode) then
+        return
+    end
+
+    local exe = get_clink_exe()
+    if not exe then
+        log_info("unable to find Clink program.")
+        return
+    end
+
+    prun("2>nul " .. exe .. " update")
 end
 
 local function report_if_update_available(manual)
     local update_file = has_update_file()
     if update_file and can_check_for_update(true) then
         local tag = path.getbasename(update_file)
-        if is_rhs_version_newer(get_local_tag(), tag) then
+        if is_rhs_version_newer(get_local_tag(), tag) and
+                not clink._is_skip_update(tag) and
+                not clink._is_snoozed_update() then
             clink.print("\x1b[1mClink " .. tag .. " is available.\x1b[m")
             print("- To apply the update, run 'clink update'.")
             if not manual then
-                print("- To stop checking for updates, run 'clink set clink.autoupdate false'.")
+                print("- To stop checking for updates, run 'clink set clink.autoupdate off'.")
             end
             clink.printreleasesurl("- ")
+            if not manual then
+                maybe_trigger_update(update_file)
+            end
             return true
         end
     end
@@ -681,8 +780,9 @@ end
 
 --------------------------------------------------------------------------------
 local function autoupdate()
-    if not settings.get("clink.autoupdate") then
-        log_info("clink.autoupdate is false.")
+    local mode = settings.get("clink.autoupdate")
+    if not mode or mode == "off" then
+        log_info("clink.autoupdate is off.")
         return
     end
 
@@ -692,13 +792,27 @@ local function autoupdate()
     end
 
     -- Possibly check for a new update.
-    if can_check_for_update() then
-        local c = coroutine.create(try_autoupdate)
+    if can_check_for_update() or (mode == "auto" and has_update_file()) then
+        local c = coroutine.create(function()
+            try_autoupdate(mode)
+        end)
         clink.runcoroutineuntilcomplete(c)
     end
 end
 
 clink.oninject(autoupdate)
+
+--------------------------------------------------------------------------------
+local function do_prompt(tag)
+    local action = clink._show_update_prompt(tag)
+    if not action then
+        return -1
+    elseif action == "update" then
+        return 1
+    else
+        return 0
+    end
+end
 
 --------------------------------------------------------------------------------
 function clink.printreleasesurl(tag)
@@ -708,7 +822,7 @@ function clink.printreleasesurl(tag)
 end
 
 --------------------------------------------------------------------------------
-function clink.updatenow(elevated)
+function clink.updatenow(elevated, force_prompt)
     latest_cloud_tag = nil
 
     local update_file, err = is_update_ready(true)
@@ -717,20 +831,50 @@ function clink.updatenow(elevated)
     end
 
     local install_type = get_installation_type()
-    if not elevated and install_type == "zip" and this_install_type == "exe" then
+    local need_elevation = (not elevated and install_type == "zip" and this_install_type == "exe")
+    local ext = path.getextension(update_file):lower():match("^%.(.+)$")
+
+    if not need_elevation and ext ~= install_type then
+        return nil, log_info(string.format("mismatched update type (%s) and update file (%s).", install_type, ext))
+    end
+
+    if ext ~= "zip" and ext ~= "exe" then
+        return nil, log_info("unable to determine update type from '" .. update_file .. "'.")
+    end
+
+    if force_prompt then
+        if not clink._acquire_updater_mutex() then
+            return nil
+        end
+
+        -- Must double check that cloud_tag is newer than what's running,
+        -- since an update might have completed while waiting for the mutex.
+        local local_tag = get_local_tag()
+        local cloud_tag = latest_cloud_tag
+        if not is_rhs_version_newer(local_tag, cloud_tag) then
+            return nil, log_info("already updated; local version " .. local_tag .. " is not older than update candidate " .. cloud_tag .. ".") -- luacheck: no max line length
+        end
+
+        local action = do_prompt(cloud_tag, func)
+        if action < 0 then
+            return nil
+        elseif action == 0 then
+            return 1
+        end
+    end
+
+    if need_elevation then
         log_info("elevation required to update InstallDir in registry.")
+        clink._release_updater_mutex()
         return -1
     end
 
-    local ext = path.getextension(update_file):lower():match("^%.(.+)$")
-    if ext ~= install_type then
-        return nil, log_info(string.format("mismatched update type (%s) and update file (%s).", install_type, ext))
-    elseif ext == "zip" then
+    if ext == "zip" then
         return apply_zip_update(update_file, true)
     elseif ext == "exe" then
         return run_exe_installer(update_file)
     else
-        return nil, log_info("unable to determine update type from '" .. update_file .. "'.")
+        return nil, log_info("unrecognized update file type (" .. ext .. ").")
     end
 end
 
@@ -738,6 +882,7 @@ end
 function clink.checkupdate()
     local can, err = can_check_for_update(true)
     if can then
+        clink._reset_update_keys()
         is_update_ready(false)
         if report_if_update_available(true) then
             return true

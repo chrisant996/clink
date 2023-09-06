@@ -1,0 +1,2 @@
+// Manifest; command_link_dialog.cpp needs this for visual theme support.
+1 24 "clink_manifest.xml"
