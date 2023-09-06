@@ -431,7 +431,7 @@ Name                         | Default [*](#alternatedefault) | Description
 <a name="autosuggest_original_case"></a>`autosuggest.original_case` | True | When this is enabled (the default), accepting a suggestion uses the original capitalization from the suggestion.
 <a name="autosuggest_strategy"></a>`autosuggest.strategy` | `match_prev_cmd history completion` | This determines how suggestions are chosen.  The suggestion generators are tried in the order listed, until one provides a suggestion.  There are three built-in suggestion generators, and scripts can provide new ones.  `history` chooses the most recent matching command from the history.  `completion` chooses the first of the matching completions.  `match_prev_cmd` chooses the most recent matching command whose preceding history entry matches the most recently invoked command, but only when the [`history.dupe_mode`](#history_dupe_mode) setting is `add`.
 <a name="clink_autostart"></a>`clink.autostart` | | This command is automatically run when the first CMD prompt is shown after Clink is injected.  If this is blank (the default), then Clink instead looks for `clink_start.cmd` in the binaries directory and profile directory and runs them.  Set it to "nul" to not run any autostart command.
-<a name="clink_autoupdate"></a>`clink.autoupdate` | True | When enabled, Clink periodically checks for updates for the Clink program files (see [Automatic Updates](#automatic-updates)).
+<a name="clink_autoupdate"></a>`clink.autoupdate` | `check` | Clink can periodically check for updates for the Clink program files (see [Automatic Updates](#automatic-updates)).
 <a name="clink_colorize_input"></a>`clink.colorize_input` | True | Enables context sensitive coloring for the input text (see [Coloring the Input Text](#classifywords)).
 <a name="default_bindings"><a name="clink_default_bindings"></a></a>`clink.default_bindings` | `bash` [*](#alternatedefault) | Clink uses bash key bindings when this is set to `bash` (the default).  When this is set to `windows` Clink overrides some of the bash defaults with familiar Windows key bindings for <kbd>Tab</kbd>, <kbd>Ctrl</kbd>-<kbd>A</kbd>, <kbd>Ctrl</kbd>-<kbd>F</kbd>, <kbd>Ctrl</kbd>-<kbd>M</kbd>, and <kbd>Right</kbd>.
 <a name="clink_logo"></a>`clink.logo` | `full` | Controls what startup logo to show when Clink is injected.  `full` = show full copyright logo, `short` = show abbreviated version info, `none` = omit the logo.
@@ -495,7 +495,7 @@ Name                         | Default [*](#alternatedefault) | Description
 <a name="history_shared"></a>`history.shared` | False | When history is shared, all instances of Clink update the master history list after each command and reload the master history list on each prompt.  When history is not shared, each instance updates the master history list on exit.
 <a name="history_show_preview"></a>`history.show_preview` | True | When enabled, if the text at the cursor is subject to history expansion, then this shows a preview of the expanded result below the input line using the [`color.comment_row`](#color_comment_row) setting.
 <a name="history_sticky_search"></a>`history.sticky_search` | False | When enabled, reusing a history line does not add the reused line to the end of the history, and it leaves the history search position on the reused line so next/prev history can continue from there (e.g. replaying commands via <kbd>Up</kbd> several times then <kbd>Enter</kbd>, <kbd>Down</kbd>, <kbd>Enter</kbd>, etc).
-<a name="history_time_format"></a>`history.time_format` | <code>%F %T &nbsp</code> | This specifies a time format string for showing timestamps for history items.  For a list of format specifiers see <code>clink set <a href="#history_time_format">history.time_format</a></code> or [History Timestamps](#history-timestamps).
+<a name="history_time_format"></a>`history.time_format` | <code>%F %T &nbsp</code> | This specifies a time format string for showing timestamps for history items.  For a list of format specifiers see <code>clink set history.time_format</code> or [History Timestamps](#history-timestamps).
 <a name="history_time_stamp"></a>`history.time_stamp` | `off` | The default is `off`.  When this is `save`, timestamps are saved for each history item but are only shown when the `--show-time` flag is used with the `history` command.  When this is `show`, timestamps are saved for each history item, and timestamps are shown in the `history` command unless the `--bare` flag is used.
 <a name="lua_break_on_error"></a>`lua.break_on_error` | False | Breaks into Lua debugger on Lua errors.
 <a name="lua_break_on_traceback"></a>`lua.break_on_traceback` | False | Breaks into Lua debugger on `traceback()`.
@@ -732,12 +732,19 @@ By default, Clink periodically and automatically checks for new versions.  When 
 
 You can control the frequency of update checks with <code>clink set <a href="#clink_update_interval">clink.update_interval</a> <span class="arg">days</span></code>, where <span class="arg">days</span> is the minimum number of days between checking for updates.
 
-You can turn update checks off with <code>clink set <a href="#clink_autoupdate">clink.autoupdate</a> false</code>, or turn them on with <code>clink set clink.autoupdate true</code>.
+You can control what happens when an update is available by using <code>clink set <a href="#clink_autoupdate">clink.autoupdate</a> <span class="arg">mode</span></code>, where <span class="arg">mode</span> is one of these:
 
-Notes:
-- The auto-updater settings are stored in the profile, so different profiles can be configured differently for automatic updates.
-- The updater does nothing if the Clink program files are readonly.
-- The updater requires PowerShell, which is present by default in Windows 7 and higher.
+Mode | Description
+---|---
+`off` | Clink does not automatically check for updates, but you can use `clink update` or `clink update --check` to check for updates.
+`check` | This is the default; Clink periodically checks for updates and prints a message when an update is available.
+`prompt` | Clink periodically checks for updates and if one is available then it shows a window to prompt whether to install the update.
+`auto` | Clink periodically checks for updates and also attempts to automatically install an update.  If elevation is needed then it pops up a prompt window, otherwise it automatically installs the update.
+
+> **Notes:**
+> - The auto-updater settings are stored in the profile, so different profiles can be configured differently for automatic updates.
+> - The updater does nothing if the Clink program files are readonly.
+> - The updater requires PowerShell, which is present by default in Windows 7 and higher.
 
 ## Portable Configuration
 
@@ -2654,7 +2661,7 @@ Line|Description
 
 There are several settings that control how history works.  Run `clink set history*` to see them all.
 
-**Note:** If the first word in the line matches one of the words in the [`history.dont_add_to_history_cmds`](#history_dont_add_to_history_cmds) setting then the command is not added to history.  By default, `history` and `exit` are not added to history.
+> **Note:** If the first word in the line matches one of the words in the [`history.dont_add_to_history_cmds`](#history_dont_add_to_history_cmds) setting then the command is not added to history.  By default, `history` and `exit` are not added to history.
 
 ### List the history
 
@@ -3039,7 +3046,7 @@ When enabled, this adds two behaviors:
 
 You can suppress macro expansion for an individual command by prefixing the command with a space or semicolon (e.g. <code>&nbsp;foo</code> or `;foo`).  If the command follows a `|` or `&` command separator, you can suppress macro expansion by prefixing the command with two spaces or a semicolon (e.g. <code>foo|&nbsp; bar</code> or `foo|;bar`).
 
-**Note:** Some Doskey macros might be incompatible with the enhanced Doskey expansion feature, especially if they use special or complicated syntax.  If you encounter problems, you might need to turn off enhanced Doskey expansion or adjust the problematic macros.
+> **Note:** Some Doskey macros might be incompatible with the enhanced Doskey expansion feature, especially if they use special or complicated syntax.  If you encounter problems, you might need to turn off enhanced Doskey expansion or adjust the problematic macros.
 
 ## Popular Scripts
 
