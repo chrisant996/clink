@@ -18,6 +18,10 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - More sophisticated match color definitions?
     - Unify match color settings, e.g. something like `%LS_COLORS%` or `%COLORDIR%` (from 4Dos/4NT/TakeCommand).  The fractured `%LS_COLORS%` + `color.readonly` stuff is awkward and confusing.
     - Ability to combine conditions, e.g. executable=1, readonly=32, executable _AND_ readonly=1;32.
+      - Spaces should mean an "or" operator, instead of an "and" operator (like in 4Dos/4NT/TakeCommand etc).
+      - Precedence for "or", "and", "xor" can be simply left to right (like in 4Dos/4NT/TakeCommand etc).
+      - Automatically optimize rule evaluation by processing CFLAG checks before pattern checks in any group of "or" clauses.
+      - If parsing is fast enough, then maybe don't even bother "compiling" the rules, and simply parse for every entry?
 - The `:` and `=` parsing has a side effect that flags like `-f`_`file`_ are ambiguous: since parsing happens independently from argmatchers, `-fc:\file` could be `-f` and `c:\file` or it could be `-fc:` and `\file`.
   - Revisit the possibility of allowing `line_state` to be mutable and argmatchers adjusting it as they parse the input line?  _No; too messy.  E.g. splitting `"-fc:\foo bar"` gets weird because quoting encloses **two adjacent** words._
   - But an important benefit of the current implementation is that `program_with_no_argmatcher --unknown-flag:filename` is able to do filename completion on `filename`.
