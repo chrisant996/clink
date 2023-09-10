@@ -671,10 +671,9 @@ bool host::suggest(const line_states& lines, matches* matches, int32 generation_
 }
 
 //------------------------------------------------------------------------------
-void host::filter_matches(char** matches)
+bool host::filter_matches(char** matches)
 {
-    if (m_lua)
-        m_lua->call_lua_filter_matches(matches, rl_completion_type, rl_filename_completion_desired);
+    return m_lua && m_lua->call_lua_filter_matches(matches, rl_completion_type, rl_filename_completion_desired);
 }
 
 //------------------------------------------------------------------------------

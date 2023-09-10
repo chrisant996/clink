@@ -25,7 +25,7 @@ extern "C" {
 #include <lauxlib.h>
 #include <lualib.h>
 #include <readline/readline.h>
-char* __printable_part (char* pathname);
+char* __printable_part(char* pathname);
 }
 
 #include <unordered_set>
@@ -113,18 +113,20 @@ void lua_match_generator::get_word_break_info(const line_state& line, word_break
 }
 
 //------------------------------------------------------------------------------
-bool lua_match_generator::match_display_filter(const char* needle, char** matches, match_display_filter_entry*** filtered_matches, display_filter_flags flags, bool nosort, bool* old_filtering)
+bool lua_match_generator::match_display_filter(const char* needle, char** matches, match_builder* builder, display_filter_flags flags, bool nosort, bool* old_filtering)
 {
     bool ret = false;
     lua_State* state = m_state;
     const bool selectable = (flags & display_filter_flags::selectable) == display_filter_flags::selectable;
-    const bool strip_markup = (flags & display_filter_flags::plainify) == display_filter_flags::plainify;
 
     // A small note about the contents of 'matches' - the first match isn't
     // really a match, it's the word being completed. Readline ignores it when
     // displaying the matches. So matches[1...n] are useful.
 
-    match_display_filter_entry** new_matches = nullptr;
+    // On input, 'matches' is already narrowed by needle, so the display
+    // filter function receives a filtered list.  However, the function may
+    // return any set of results, so
+
     int32 top = lua_gettop(state);
     int32 i;
 
@@ -169,10 +171,8 @@ bool lua_match_generator::match_display_filter(const char* needle, char** matche
 
     // If the caller just wants to know whether a display filter is active, then
     // short circuit.
-    if (!matches || !filtered_matches)
+    if (!needle || !matches || !builder)
     {
-        if (filtered_matches)
-            *filtered_matches = nullptr;
 success:
         ret = true;
         if (old_filtering)
@@ -267,7 +267,7 @@ done:
     else
     {
         int32 mi = only_lcd ? 0 : 1;
-        for (i = 1; i < match_count; ++i)
+        for (i = 1; i <= match_count; ++i)
         {
             lua_pushstring(state, matches[mi++]);
             lua_rawseti(state, -2, i);
@@ -285,10 +285,7 @@ done:
     // Convert table returned by the Lua filter function to C.
     int32 j = 1;
     bool one_column = false;
-    int32 max_visible_display = 0;
-    int32 max_visible_description = 0;
     int32 new_len = int32(lua_rawlen(state, -1));
-    new_matches = (match_display_filter_entry**)calloc(1 + new_len + 1, sizeof(*new_matches));
     for (i = 1; i <= new_len; ++i)
     {
         lua_rawgeti(state, -1, i);
@@ -367,134 +364,28 @@ done:
 
             do
             {
-                if (!display)
+                if (!display || !display[0])
                     break;
 
-                const size_t packed_size = calc_packed_size(match, display, description);
-                const size_t alloc_size = sizeof(match_display_filter_entry) - 1 + packed_size;
-
-                match_display_filter_entry *new_match;
-                new_match = (match_display_filter_entry *)malloc(alloc_size);
-                memset(new_match, 0, sizeof(*new_match));
-                new_match->type = type;
-                new_match->append_char = append_char;
-                new_match->flags = flags;
-                new_matches[j] = new_match;
-
-                char* buffer = new_match->buffer;
-                j++;
-
-                // Fill in buffer with PACKED MATCH FORMAT.
-                if (!display[0] || !pack_match(buffer, packed_size, match, type, display, description, append_char, flags, new_match, strip_markup))
-                {
-                    free(new_match);
-                    j--;
-                    break;
-                }
+                match_desc md(match ? match : display, display, description, type);
+                md.append_char = append_char;
+                md.suppress_append = (flags & MATCH_FLAG_HAS_SUPPRESS_APPEND) ? !!(flags & MATCH_FLAG_SUPPRESS_APPEND) : -1;
+                md.append_display = (flags & MATCH_FLAG_APPEND_DISPLAY);
+                builder->add_match(md);
 
                 if (description)
                     one_column = true;
-
-                if (max_visible_display < new_match->visible_display)
-                    max_visible_display = new_match->visible_display;
-                if (max_visible_description < new_match->visible_description)
-                    max_visible_description = new_match->visible_description;
             }
             while (false);
         }
 
         lua_pop(state, 1);
     }
-    new_matches[j] = nullptr;
 
-    // Select matches based on needle.
-    j = select_filtered_matches(needle, new_matches + 1, j - 1) + 1;
+    builder->set_no_sort();
+    if (one_column)
+        builder->set_has_descriptions();
 
-    // Compute lcd from selected matches.
-    str<> lcd;
-    if (j > 1)
-    {
-        match_display_filter_entry** entry = new_matches + 1;
-        lcd = (*(entry++))->match;
-        while (*entry)
-        {
-            const char* match = (*entry)->match;
-            uint32 matching = match ? str_compare(match, lcd.c_str()) : 0;
-            if (lcd.length() > matching)
-                lcd.truncate(matching);
-            ++entry;
-        }
-    }
-
-    // Fill in entry [0] with PACKED MATCH FORMAT (for consistency).
-    // Special meaning of specific fields in the lcd [0] entry:
-    //  - match is the lcd of the matches.
-    //  - visible_display is the max visible_display of the entries.
-    //  - visible_display negative means has descriptions (use one column).
-    //  - visible_description is the max visible_description of the entries.
-    //  - visible_description can be 0 when visible_display is negative; this
-    //    means there are descriptions (use one column) but they are all blank.
-    {
-        const size_t packed_size = calc_packed_size(lcd.c_str(), "", nullptr);
-        new_matches[0] = (match_display_filter_entry*)malloc(sizeof(match_display_filter_entry) - 1 + packed_size);
-        memset(new_matches[0], 0, sizeof(*new_matches[0]));
-#ifdef DEBUG
-        const bool packed =
-#endif
-        pack_match(new_matches[0]->buffer, packed_size, lcd.c_str(), match_type::none, nullptr, nullptr, 0, 0, new_matches[0], false, true/*lcd*/);
-#ifdef DEBUG
-        assert(packed); // pack_match guarantees success for the lcd case.
-#endif
-
-        if (one_column)
-            new_matches[0]->visible_display = 0 - max_visible_display;
-        else
-            new_matches[0]->visible_display = max_visible_display;
-        new_matches[0]->visible_description = max_visible_description;
-    }
-
-    // Remove duplicates.
-    if (true)
-    {
-#ifdef DEBUG
-        const int32 debug_filter = dbg_get_env_int("DEBUG_FILTER");
-#endif
-
-        str_unordered_set seen;
-        uint32 tortoise = 1;
-        uint32 hare = 1;
-        while (new_matches[hare])
-        {
-            // Dedupe on "display" if present and "arginfo" wasn't present.
-            // Otherwise dedupe on "match".
-            const char* display = new_matches[hare]->display;
-            if (!display || !*display || (new_matches[hare]->flags & MATCH_FLAG_APPEND_DISPLAY))
-                display = new_matches[hare]->match;
-            if (seen.find(display) != seen.end())
-            {
-#ifdef DEBUG
-                if (debug_filter)
-                    printf("%u dupe: %s\n", hare, display);
-#endif
-                free(new_matches[hare]);
-            }
-            else
-            {
-#ifdef DEBUG
-                if (debug_filter)
-                    printf("%u->%u: %s\n", hare, tortoise, display);
-#endif
-                seen.insert(display);
-                if (hare > tortoise)
-                    new_matches[tortoise] = new_matches[hare];
-                tortoise++;
-            }
-            hare++;
-        }
-        new_matches[tortoise] = nullptr;
-    }
-
-    *filtered_matches = new_matches;
     goto success;
 }
 

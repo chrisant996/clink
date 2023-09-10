@@ -4,6 +4,7 @@
 #include "pch.h"
 #include "matches_impl.h"
 #include "match_generator.h"
+#include "match_pipeline.h"
 
 #include <core/base.h>
 #include <core/os.h>
@@ -20,6 +21,7 @@ extern "C" {
 #include <compat/config.h>
 #include <readline/readline.h>
 #include <readline/rlprivate.h>
+char* __printable_part(char* text);
 };
 
 #include <assert.h>
@@ -231,6 +233,7 @@ match_desc::match_desc(const char* match, const char* display, const char* descr
     append_char = 0;
     suppress_append = -1;
     append_display = false;
+    missing_match = false;
 
     // Do not append a space after an arg type match that ends with a colon or
     // equal sign, because programs typically require flags and args like
@@ -309,6 +312,12 @@ void match_builder::set_fully_qualify(bool fully_qualify)
 void match_builder::set_no_sort()
 {
     return ((matches_impl&)m_matches).set_no_sort();
+}
+
+//------------------------------------------------------------------------------
+void match_builder::set_has_descriptions()
+{
+    return ((matches_impl&)m_matches).set_has_descriptions();
 }
 
 //------------------------------------------------------------------------------
@@ -691,6 +700,20 @@ bool matches_impl::get_match_append_display(uint32 index) const
 }
 
 //------------------------------------------------------------------------------
+bool matches_impl::get_match_custom_display(uint32 index) const
+{
+    auto& info = m_infos[index];
+    if (info.custom_display < 0)
+    {
+        const char* match = info.match;
+        if (!is_match_type(info.type, match_type::none))
+            match = __printable_part(const_cast<char*>(match));
+        return (strcmp(match, info.display) != 0);
+    }
+    return info.custom_display > 0;
+}
+
+//------------------------------------------------------------------------------
 const char* matches_impl::get_unfiltered_match(uint32 index) const
 {
     if (index >= get_info_count())
@@ -812,7 +835,19 @@ int32 matches_impl::get_word_break_position() const
 }
 
 //------------------------------------------------------------------------------
-bool matches_impl::match_display_filter(const char* needle, char** matches, match_display_filter_entry*** filtered_matches, display_filter_flags flags, bool* old_filtering) const
+bool matches_impl::has_descriptions() const
+{
+    return m_has_descriptions;
+}
+
+//------------------------------------------------------------------------------
+bool matches_impl::is_volatile() const
+{
+    return m_volatile;
+}
+
+//------------------------------------------------------------------------------
+bool matches_impl::match_display_filter(const char* needle, char** matches, ::matches* out, display_filter_flags flags, bool* old_filtering) const
 {
     // TODO:  This doesn't really belong here.  But it's a convenient point to
     // cobble together Lua (via the generators) and the matches.  It's strange
@@ -821,7 +856,20 @@ bool matches_impl::match_display_filter(const char* needle, char** matches, matc
     // accurately (it might have been produced by a pattern iterator) in order
     // to generate an array to pass to clink.match_display_filter.
 
-    return m_generator && m_generator->match_display_filter(needle, matches, filtered_matches, flags, m_nosort, old_filtering);
+    bool ret = false;
+    if (m_generator)
+    {
+        match_builder* builder = out ? new match_builder(*out) : nullptr;
+        ret = m_generator->match_display_filter(needle, matches, builder, flags, m_nosort, old_filtering);
+        if (out)
+        {
+            match_pipeline pipeline(*(matches_impl*)out);
+            pipeline.select(needle);
+            // match display filtering uses the provided order; no sorting.
+        }
+        delete builder;
+    }
+    return ret;
 }
 
 //------------------------------------------------------------------------------
@@ -879,20 +927,62 @@ void matches_impl::transfer(matches_impl& from)
     m_coalesced = from.m_coalesced;
     m_append_character = from.m_append_character;
     m_suppress_append = from.m_suppress_append;
+    m_has_descriptions = from.m_has_descriptions;
     m_fully_qualify = from.m_fully_qualify;
     m_force_quoting = from.m_force_quoting;
     m_regen_blocked = from.m_regen_blocked;
     m_nosort = from.m_nosort;
     m_volatile = from.m_volatile;
-    m_input_line = std::move(from.m_input_line);
     m_suppress_quoting = from.m_suppress_quoting;
     m_word_break_position = from.m_word_break_position;
     m_filename_completion_desired = from.m_filename_completion_desired;
     m_filename_display_desired = from.m_filename_display_desired;
+    m_input_line = std::move(from.m_input_line);
+
     m_dedup = from.m_dedup;
 
     from.m_dedup = nullptr;
     from.clear();
+}
+
+//------------------------------------------------------------------------------
+void matches_impl::copy(const matches_impl& from)
+{
+    clear();
+
+    for (const auto& info : from.m_infos)
+    {
+        match_info add;
+        add.match = info.match ? m_store.store_front(info.match) : nullptr;
+        add.display = info.display ? m_store.store_front(info.display) : nullptr;
+        add.description = info.description ? m_store.store_front(info.description) : nullptr;
+        add.ordinal = m_infos.size();
+        add.type = info.type;
+        add.append_char = info.append_char;
+        add.suppress_append = info.suppress_append;
+        add.append_display = info.append_display;
+        add.custom_display = info.custom_display;
+        add.select = false; // (Shouldn't matter.)
+        m_infos.emplace_back(std::move(add));
+    }
+
+    m_count = from.m_count;
+    m_any_none_type = from.m_any_none_type;
+    m_deprecated_mode = from.m_deprecated_mode;
+    m_coalesced = from.m_coalesced;
+    m_append_character = from.m_append_character;
+    m_suppress_append = from.m_suppress_append;
+    m_has_descriptions = from.m_has_descriptions;
+    m_fully_qualify = from.m_fully_qualify;
+    m_force_quoting = from.m_force_quoting;
+    m_regen_blocked = from.m_regen_blocked;
+    m_nosort = from.m_nosort;
+    m_volatile = from.m_volatile;
+    m_suppress_quoting = from.m_suppress_quoting;
+    m_word_break_position = from.m_word_break_position;
+    m_filename_completion_desired = from.m_filename_completion_desired;
+    m_filename_display_desired = from.m_filename_display_desired;
+    m_input_line << from.m_input_line;
 }
 
 //------------------------------------------------------------------------------
@@ -963,6 +1053,12 @@ void matches_impl::set_matches_are_files(bool files)
 void matches_impl::set_no_sort()
 {
     m_nosort = true;
+}
+
+//------------------------------------------------------------------------------
+void matches_impl::set_has_descriptions()
+{
+    m_has_descriptions = true;
 }
 
 //------------------------------------------------------------------------------
@@ -1086,9 +1182,13 @@ bool matches_impl::add_match(const match_desc& desc, bool already_normalized)
     info.append_char = desc.append_char;
     info.suppress_append = desc.suppress_append;
     info.append_display = append_display;
+    info.custom_display = (desc.missing_match ? true : (store_display ? -1 : false));
     info.select = false;
     m_infos.emplace_back(std::move(info));
     ++m_count;
+
+    if (store_description)
+        m_has_descriptions = true;
 
     return true;
 }

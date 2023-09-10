@@ -5,7 +5,6 @@
 
 #include <vector>
 
-class str_base;
 class line_states;
 class match_generator;
 class matches_impl;
@@ -19,6 +18,7 @@ public:
     void                set_no_sort();
     void                generate(const line_states& states, match_generator* generator, bool old_filtering=false) const;
     void                restrict(str_base& needle) const;
+    void                restrict(char** keep_matches) const;
     void                select(const char* needle) const;
     void                sort() const;
 

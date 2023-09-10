@@ -5,7 +5,9 @@
 #include <assert.h>
 #include "match_adapter.h"
 #include "matches.h"
+#include "matches_impl.h"
 #include "matches_lookaside.h"
+#include "match_pipeline.h"
 #include "display_matches.h"
 
 #include <core/str_compare.h>
@@ -18,7 +20,7 @@ extern "C" {
 };
 
 //------------------------------------------------------------------------------
-extern "C" char* __printable_part(char* text);
+extern int32 host_filter_matches(char** matches);
 
 //------------------------------------------------------------------------------
 void match_adapter::cached_info::clear()
@@ -45,6 +47,7 @@ const matches* match_adapter::get_matches() const
 //------------------------------------------------------------------------------
 void match_adapter::set_matches(const matches* matches)
 {
+    assertimplies(matches, m_filtered_matches != matches);
     free_filtered();
     clear_alt();
     m_real_matches = matches;
@@ -55,6 +58,7 @@ void match_adapter::set_matches(const matches* matches)
 //------------------------------------------------------------------------------
 void match_adapter::set_regen_matches(const matches* matches)
 {
+    assertimplies(matches, m_filtered_matches != matches);
     free_filtered();
     clear_alt();
     m_matches = matches ? matches : m_real_matches;
@@ -63,6 +67,7 @@ void match_adapter::set_regen_matches(const matches* matches)
 //------------------------------------------------------------------------------
 void match_adapter::set_alt_matches(char** matches, bool own)
 {
+    assertimplies(matches, m_alt_matches != matches);
     free_filtered();
     clear_alt();
 
@@ -82,24 +87,32 @@ void match_adapter::set_alt_matches(char** matches, bool own)
 }
 
 //------------------------------------------------------------------------------
-void match_adapter::set_filtered_matches(match_display_filter_entry** filtered_matches)
+void match_adapter::set_alt_matches(matches* matches, bool own)
 {
-    free_filtered();
+    set_filtered_matches(matches, own);
+    m_is_display_filtered = false;
+}
 
-    m_filtered_matches = filtered_matches;
-    m_filtered_cached.m_has_descriptions = false;
-
-    // Skip first filtered match; it's fake, to satisfy Readline's expectation
-    // that matches start at [1].
-    if (filtered_matches && filtered_matches[0])
+//------------------------------------------------------------------------------
+void match_adapter::set_filtered_matches(matches* filtered_matches, bool own)
+{
+    if (filtered_matches == m_filtered_matches)
     {
-        m_filtered_cached.m_has_descriptions = (filtered_matches[0]->visible_display < 0);
-
-        uint32 count = 0;
-        while (*(++filtered_matches))
-            count++;
-        m_filtered_cached.m_count = count;
+        // When already be holding the input matches, skip free_filtered and
+        // be careful not to downgrade ownership.
+        m_filtered_own |= own;
     }
+    else
+    {
+        free_filtered();
+        m_filtered_matches = filtered_matches;
+        m_filtered_own = own;
+    }
+
+    m_filtered_cached.clear();
+    m_filtered_cached.m_has_descriptions = m_filtered_matches->has_descriptions();
+
+    m_is_display_filtered = true;
 }
 
 //------------------------------------------------------------------------------
@@ -111,14 +124,69 @@ void match_adapter::init_has_descriptions()
 //------------------------------------------------------------------------------
 void match_adapter::reset()
 {
-    free_filtered();
-    clear_alt();
+    set_regen_matches(nullptr);
+    assert(!m_filtered_matches);
+    assert(!m_alt_matches);
+}
+
+//------------------------------------------------------------------------------
+void match_adapter::filter_matches()
+{
+    // Requires m_filtered_matches, but not m_is_display_filtered.
+    assert(m_filtered_matches);
+    assert(!m_alt_matches);
+    const uint32 count = get_match_count();
+    if (!count || !host_filter_matches(nullptr))
+        return;
+
+    // Build char** array for filtering.
+    char** matches = (char**)malloc((count + 2) * sizeof(char*));
+    matches[0] = _rl_savestring(""); // Placeholder for lcd; required so that _rl_free_match_list frees the real matches.
+    uint32 num = 0;
+    for (uint32 i = 0; i < count; ++i)
+    {
+        const char* text = get_match(i);
+        const char* disp = get_match_display_raw(i);
+        const char* desc = get_match_description(i);
+        const size_t packed_size = calc_packed_size(text, disp, desc);
+        char* buffer = static_cast<char*>(malloc(packed_size));
+        if (pack_match(buffer, packed_size, text, get_match_type(i), disp, desc, get_match_append_char(i), get_match_flags(i)))
+            matches[++num] = buffer;
+        else
+            free(buffer);
+    }
+    matches[num + 1] = nullptr;
+
+    // Get filtered matches.
+    create_matches_lookaside(matches);
+    host_filter_matches(matches);
+
+#ifdef DEBUG
+    if (dbg_get_env_int("DEBUG_FILTER"))
+    {
+        puts("-- FILTER_MATCHES");
+        for (uint32 i = 1; i <= num; ++i)
+            printf("match '%s'\n", matches[i]);
+        puts("-- DONE");
+    }
+#endif
+
+    // Use filtered matches.
+    const bool d = is_display_filtered();
+    match_pipeline pipeline(static_cast<matches_impl&>(*m_filtered_matches));
+    pipeline.restrict(matches);
+    set_filtered_matches(m_filtered_matches, d && m_filtered_own);
+    m_is_display_filtered = d;
+
+    _rl_free_match_list(matches);
 }
 
 //------------------------------------------------------------------------------
 matches_iter match_adapter::get_iter()
 {
     assert(m_matches);
+    assert(!m_filtered_matches);
+    assert(!m_alt_matches);
     free_filtered();
     clear_alt();
     return m_matches->get_iter();
@@ -127,24 +195,12 @@ matches_iter match_adapter::get_iter()
 //------------------------------------------------------------------------------
 void match_adapter::get_lcd(str_base& out) const
 {
+    cached_info* cache = nullptr;
+    const matches* matches = nullptr;
     if (m_filtered_matches)
     {
-        if (!m_filtered_cached.m_has_lcd)
-        {
-            uint32 i = 1; // 1 based indexing.
-            m_filtered_cached.m_has_lcd = true;
-            m_filtered_cached.m_lcd.clear();
-            if (i <= m_filtered_cached.m_count)
-                m_filtered_cached.m_lcd = m_filtered_matches[i++]->match;
-            while (i <= m_filtered_cached.m_count)
-            {
-                const char* match = m_filtered_matches[i++]->match;
-                int32 matching = str_compare<char, true/*compute_lcd*/>(m_filtered_cached.m_lcd.c_str(), match);
-                m_filtered_cached.m_lcd.truncate(matching);
-            }
-        }
-
-        out = m_filtered_cached.m_lcd.c_str();
+        cache = &m_filtered_cached;
+        matches = m_filtered_matches;
     }
     else if (m_alt_matches)
     {
@@ -164,28 +220,33 @@ void match_adapter::get_lcd(str_base& out) const
         }
 
         out = m_alt_cached.m_lcd.c_str();
+        return;
     }
     else if (m_matches)
     {
-        if (!m_cached.m_has_lcd)
-        {
-            m_cached.m_has_lcd = true;
-            m_matches->get_lcd(m_cached.m_lcd);
-        }
-
-        out = m_cached.m_lcd.c_str();
+        cache = &m_cached;
+        matches = m_matches;
     }
     else
     {
         out.clear();
+        return;
     }
+
+    if (!cache->m_has_lcd)
+    {
+        cache->m_has_lcd = true;
+        matches->get_lcd(cache->m_lcd);
+    }
+
+    out = cache->m_lcd.c_str();
 }
 
 //------------------------------------------------------------------------------
 uint32 match_adapter::get_match_count() const
 {
     if (m_filtered_matches)
-        return m_filtered_cached.m_count;
+        return m_filtered_matches->get_match_count();
     if (m_alt_matches)
         return m_alt_cached.m_count;
     if (m_matches)
@@ -197,7 +258,7 @@ uint32 match_adapter::get_match_count() const
 const char* match_adapter::get_match(uint32 index) const
 {
     if (m_filtered_matches)
-        return m_filtered_matches[index + 1]->match;
+        return m_filtered_matches->get_match(index);
     if (m_alt_matches)
         return m_alt_matches[index + 1];
     if (m_matches)
@@ -209,10 +270,10 @@ const char* match_adapter::get_match(uint32 index) const
 const char* match_adapter::get_match_display_internal(uint32 index) const
 {
     if (m_filtered_matches)
-        return m_filtered_matches[index + 1]->display;
+        return m_filtered_matches->get_match_display(index);
     if (m_alt_matches)
         return lookup_match(m_alt_matches[index + 1]).get_display();
-    else if (m_matches)
+    if (m_matches)
         return m_matches->get_match_display(index);
     return nullptr;
 }
@@ -246,11 +307,10 @@ const char* match_adapter::get_match_display_raw(uint32 index) const
 //------------------------------------------------------------------------------
 uint32 match_adapter::get_match_visible_display(uint32 index) const
 {
-    if (m_filtered_matches)
-        return m_filtered_matches[index + 1]->visible_display;
-
     const char* display;
-    if (m_alt_matches)
+    if (m_filtered_matches)
+        display = m_filtered_matches->get_match_display(index);
+    else if (m_alt_matches)
         display = lookup_match(m_alt_matches[index + 1]).get_display();
     else if (m_matches)
         display = m_matches->get_match_display(index);
@@ -267,11 +327,10 @@ uint32 match_adapter::get_match_visible_display(uint32 index) const
 //------------------------------------------------------------------------------
 const char* match_adapter::get_match_description(uint32 index) const
 {
-    if (m_filtered_matches)
-        return m_filtered_matches[index + 1]->description;
-
     const char *description;
-    if (m_alt_matches)
+    if (m_filtered_matches)
+        description = m_filtered_matches->get_match_description(index);
+    else if (m_alt_matches)
         description = lookup_match(m_alt_matches[index + 1]).get_description();
     else if (m_matches)
         description = m_matches->get_match_description(index);
@@ -283,9 +342,6 @@ const char* match_adapter::get_match_description(uint32 index) const
 //------------------------------------------------------------------------------
 uint32 match_adapter::get_match_visible_description(uint32 index) const
 {
-    if (m_filtered_matches)
-        return m_filtered_matches[index + 1]->visible_description;
-
     const char* description = get_match_description(index);
     return description ? cell_count(description) : 0;
 }
@@ -294,7 +350,7 @@ uint32 match_adapter::get_match_visible_description(uint32 index) const
 match_type match_adapter::get_match_type(uint32 index) const
 {
     if (m_filtered_matches)
-        return m_filtered_matches[index + 1]->type;
+        return m_filtered_matches->get_match_type(index);
     if (m_alt_matches)
         return lookup_match(m_alt_matches[index + 1]).get_type();
     if (m_matches)
@@ -306,7 +362,7 @@ match_type match_adapter::get_match_type(uint32 index) const
 char match_adapter::get_match_append_char(uint32 index) const
 {
     if (m_filtered_matches)
-        return m_filtered_matches[index + 1]->append_char;
+        return m_filtered_matches->get_match_append_char(index);
     if (m_alt_matches)
         return lookup_match(m_alt_matches[index + 1]).get_append_char();
     if (m_matches)
@@ -317,48 +373,44 @@ char match_adapter::get_match_append_char(uint32 index) const
 //------------------------------------------------------------------------------
 uint8 match_adapter::get_match_flags(uint32 index) const
 {
+    const matches* matches = nullptr;
     if (m_filtered_matches)
-        return m_filtered_matches[index + 1]->flags;
-    if (m_alt_matches)
+        matches = m_filtered_matches;
+    else if (m_alt_matches)
         return lookup_match(m_alt_matches[index + 1]).get_flags();
-    if (m_matches)
+    else if (m_matches)
+        matches = m_matches;
+    else
+        return 0;
+
+    uint8 flags = 0;
+    shadow_bool suppress = matches->get_match_suppress_append(index);
+    if (suppress.is_explicit())
     {
-        uint8 flags = 0;
-        shadow_bool suppress = m_matches->get_match_suppress_append(index);
-        if (suppress.is_explicit())
-        {
-            flags |= MATCH_FLAG_HAS_SUPPRESS_APPEND;
-            if (suppress.get())
-                flags |= MATCH_FLAG_SUPPRESS_APPEND;
-        }
-        if (m_matches->get_match_append_display(index))
-            flags |= MATCH_FLAG_APPEND_DISPLAY;
-        return flags;
+        flags |= MATCH_FLAG_HAS_SUPPRESS_APPEND;
+        if (suppress.get())
+            flags |= MATCH_FLAG_SUPPRESS_APPEND;
     }
-    return 0;
+    if (matches->get_match_append_display(index))
+        flags |= MATCH_FLAG_APPEND_DISPLAY;
+    return flags;
 }
 
 //------------------------------------------------------------------------------
-bool match_adapter::is_custom_display(uint32 index) const
+bool match_adapter::get_match_custom_display(uint32 index) const
 {
     if (m_filtered_matches)
+        return m_filtered_matches->get_match_custom_display(index);
+    if (m_alt_matches)
     {
-        if (!m_filtered_matches[index + 1]->match[0])
-            return true;
-        const char* temp = __printable_part(const_cast<char*>(m_filtered_matches[index + 1]->match));
-        if (strcmp(temp, m_filtered_matches[index + 1]->display) != 0)
-            return true;
+        const char* display = get_match_display(index);
+        if (!display || !*display)
+            return false;
+        const char* match = get_match(index);
+        return (strcmp(match, display) != 0);
     }
-
-    const char* display = get_match_display(index);
-    if (!display || !*display)
-        return false;
-
-    const char* match = get_match(index);
-    assert(match && *match);
-    if (strcmp(match, display) != 0)
-        return true;
-
+    if (m_matches)
+        return m_matches->get_match_custom_display(index);
     return false;
 }
 
@@ -373,7 +425,7 @@ bool match_adapter::use_display(uint32 index, match_type type, bool append) cons
 {
     return ((append) ||
             (is_display_filtered() && is_match_type(type, match_type::none)) ||
-            (is_custom_display(index)));
+            (get_match_custom_display(index)));
 }
 
 //------------------------------------------------------------------------------
@@ -385,17 +437,20 @@ bool match_adapter::is_fully_qualify() const
 //------------------------------------------------------------------------------
 bool match_adapter::is_display_filtered() const
 {
-    return !!m_filtered_matches;
+    return m_is_display_filtered;
+}
+
+//------------------------------------------------------------------------------
+bool match_adapter::is_initialized() const
+{
+    return m_matches || m_alt_matches || m_filtered_matches;
 }
 
 //------------------------------------------------------------------------------
 bool match_adapter::has_descriptions() const
 {
     if (m_filtered_matches)
-    {
-        return m_filtered_cached.m_has_descriptions > 0;
-    }
-
+        return m_filtered_matches->has_descriptions();
     if (m_alt_matches)
     {
         if (m_alt_cached.m_has_descriptions < 0)
@@ -417,23 +472,8 @@ bool match_adapter::has_descriptions() const
         }
         return m_alt_cached.m_has_descriptions > 0;
     }
-
     if (m_matches)
-    {
-        if (m_cached.m_has_descriptions < 0)
-        {
-            m_cached.m_has_descriptions = false;
-            for (uint32 i = m_matches ? m_matches->get_match_count() : 0; i--;)
-            {
-                if (m_matches->get_match_description(i))
-                {
-                    m_cached.m_has_descriptions = true;
-                    break;
-                }
-            }
-        }
-        return m_cached.m_has_descriptions > 0;
-    }
+        return m_matches->has_descriptions();
     return false;
 }
 
@@ -442,20 +482,28 @@ void match_adapter::free_filtered()
 {
     if (m_filtered_matches)
     {
-        free_filtered_matches(m_filtered_matches);
+        if (m_filtered_own)
+        {
+            delete m_filtered_matches;
+            m_filtered_own = false;
+        }
         m_filtered_matches = nullptr;
         m_filtered_cached.clear();
+        m_is_display_filtered = false;
     }
 }
 
 //------------------------------------------------------------------------------
 void match_adapter::clear_alt()
 {
-    if (m_alt_own)
+    if (m_alt_matches)
     {
-        _rl_free_match_list(m_alt_matches);
-        m_alt_own = false;
+        if (m_alt_own)
+        {
+            _rl_free_match_list(m_alt_matches);
+            m_alt_own = false;
+        }
+        m_alt_matches = nullptr;
+        m_alt_cached.clear();
     }
-    m_alt_matches = nullptr;
-    m_alt_cached.clear();
 }

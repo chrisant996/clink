@@ -2,32 +2,11 @@
 
 #include <core/base.h>
 #include <core/str.h>
+#include "matches.h"
 
 enum class match_type : unsigned short;
 
-struct match_display_filter_entry
-{
-    short visible_display;      // Visible characters, not counting ANSI escape codes.
-    short visible_description;  // Visible characters, not counting ANSI escape codes.
-    const char* match;          // Match string (pointer into buffer).
-    const char* display;        // Display string (pointer into buffer).
-    const char* description;    // Description string (pointer into buffer).
-    match_type type;            // Match type.
-    char append_char;           // Append character.
-    uint8 flags;                // Match flags.
-    bool select;                // Used by select_filtered_matches().
-    char buffer[1];             // Variable length buffer containing the PACKED MATCH FORMAT.
-};
-typedef struct match_display_filter_entry match_display_filter_entry;
-
-uint32 select_filtered_matches(const char* needle, match_display_filter_entry** matches, uint32 count);
-
-// Match display filter entry [0] is a placeholder and is ignored except in two
-// ways:
-//  1.  If the entry is nullptr, the list is empty.
-//  2.  If its visible_len is negative, then force the list to be displayed in a
-//      single column.
-typedef match_display_filter_entry** rl_match_display_filter_func_t(char**);
+typedef bool rl_match_display_filter_func_t(char**, matches&);
 extern rl_match_display_filter_func_t *rl_match_display_filter_func;
 
 extern const char *_rl_description_color;
@@ -46,7 +25,6 @@ void append_display(const char* to_print, int32 selected, const char* color);
 int32 append_filename(char* to_print, const char* full_pathname, int32 prefix_bytes, int32 can_condense, match_type type, int32 selected, int32* vis_stat_char);
 void pad_filename(int32 len, int32 pad_to_width, int32 selected);
 
-void free_filtered_matches(match_display_filter_entry** filtered_matches);
 int32 printable_len(const char* match, match_type type);
 int32 __fnwidth(const char* string);
 

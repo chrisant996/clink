@@ -6,6 +6,7 @@
 #include "editor_module.h"
 #include "input_dispatcher.h"
 #include "match_adapter.h"
+#include "matches_impl.h"
 #include "column_widths.h"
 #include "scroll_helper.h"
 
@@ -38,7 +39,8 @@ private:
 
     // Internal methods.
     void            cancel(editor_module::result& result, bool can_reactivate=false);
-    void            update_matches(bool restrict=false);
+    void            init_matches();
+    void            update_matches();
     void            update_len(uint32 needle_len);
     void            update_layout();
     void            update_top();
@@ -53,7 +55,9 @@ private:
     // Initialization state.
     input_dispatcher& m_dispatcher;
     line_buffer*    m_buffer = nullptr;
+    const matches*  m_init_matches = nullptr;
     match_adapter   m_matches;
+    matches_impl    m_data;
     printer*        m_printer = nullptr;
     int32           m_bind_group = -1;
     int32           m_prev_bind_group = -1;

@@ -37,7 +37,7 @@ struct column_widths
 // MAX_MATCHES > 0 disables fitting if the matches exceeds MAX_MATCHES.
 // MAX_MATCHES == 0 is unlimited.
 column_widths calculate_columns(
-    match_adapter* adapter,
+    const match_adapter& adapter,
     int32 max_matches=0,
     bool one_column=false,
     bool omit_desc=false,

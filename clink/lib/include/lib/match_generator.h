@@ -25,7 +25,7 @@ class match_generator
 public:
     virtual bool    generate(const line_states& line, match_builder& builder, bool old_filtering=false) = 0;
     virtual void    get_word_break_info(const line_state& line, word_break_info& info) const = 0;
-    virtual bool    match_display_filter(const char* needle, char** matches, match_display_filter_entry*** filtered_matches, display_filter_flags flag, bool nosort, bool* old_filtering=nullptr) { return false; }
+    virtual bool    match_display_filter(const char* needle, char** matches, match_builder* builder, display_filter_flags flag, bool nosort, bool* old_filtering=nullptr) { return false; }
     virtual bool    filter_matches(char** matches, char completion_type, bool filename_completion_desired) { return false; }
 
 private:

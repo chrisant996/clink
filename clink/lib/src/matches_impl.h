@@ -21,6 +21,7 @@ struct match_info
     char            append_char;        // Zero means not specified.
     char            suppress_append;    // Negative means not specified.
     bool            append_display;
+    char            custom_display;     // Negative means not calculated yet.
     bool            select;
 };
 
@@ -72,6 +73,7 @@ public:
     virtual char            get_match_append_char(uint32 index) const override;
     virtual shadow_bool     get_match_suppress_append(uint32 index) const override;
     virtual bool            get_match_append_display(uint32 index) const override;
+    virtual bool            get_match_custom_display(uint32 index) const override;
     virtual bool            is_suppress_append() const override;
     virtual shadow_bool     is_filename_completion_desired() const override;
     virtual shadow_bool     is_filename_display_desired() const override;
@@ -80,18 +82,20 @@ public:
     virtual int32           get_suppress_quoting() const override;
     virtual bool            get_force_quoting() const override;
     virtual int32           get_word_break_position() const override;
-    virtual bool            match_display_filter(const char* needle, char** matches, match_display_filter_entry*** filtered_matches, display_filter_flags flags, bool* old_filtering=nullptr) const override;
+    virtual bool            has_descriptions() const override;
+    virtual bool            is_volatile() const override;
+    virtual bool            match_display_filter(const char* needle, char** matches, ::matches* out, display_filter_flags flags, bool* old_filtering=nullptr) const override;
     virtual bool            filter_matches(char** matches, char completion_type, bool filename_completion_desired) const override;
 
     void                    set_word_break_position(int32 position);
     void                    set_regen_blocked();
     bool                    is_regen_blocked() const { return m_regen_blocked; }
-    bool                    is_volatile() const { return m_volatile; }
 
     void                    set_generator(match_generator* generator);
     void                    done_building();
 
     void                    transfer(matches_impl& from);
+    void                    copy(const matches_impl& from);
     void                    clear();
 
 private:
@@ -114,6 +118,7 @@ private:
     void                    set_deprecated_mode();
     void                    set_matches_are_files(bool files);
     void                    set_no_sort();
+    void                    set_has_descriptions();
     void                    set_volatile();
     void                    set_input_line(const char* text);
     bool                    is_from_current_input_line();
@@ -144,6 +149,7 @@ private:
     bool                    m_coalesced = false;
     char                    m_append_character = '\0';
     bool                    m_suppress_append = false;
+    bool                    m_has_descriptions = false;
     bool                    m_fully_qualify = false;
     bool                    m_force_quoting = false;
     bool                    m_regen_blocked = false;

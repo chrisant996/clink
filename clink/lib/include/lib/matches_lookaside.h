@@ -47,9 +47,7 @@ size_t calc_packed_size(const char* match, const char* display, const char* desc
 bool pack_match(char* buffer, size_t packed_size,
                 const char* match, match_type type,
                 const char* display, const char* description,
-                char append_char, uint8 flags,
-                match_display_filter_entry* entry,
-                bool strip_markup, bool lcd=false);
+                char append_char, uint8 flags);
 
 extern "C" int32 lookup_match_type(const char* match);
 extern "C" void override_match_append(const char* match);

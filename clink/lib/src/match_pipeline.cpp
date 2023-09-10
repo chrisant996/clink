@@ -12,6 +12,7 @@
 #include <core/path.h>
 #include <core/match_wild.h>
 #include <core/str_compare.h>
+#include <core/str_unordered_set.h>
 #include <core/settings.h>
 #include <terminal/ecma48_iter.h>
 
@@ -68,16 +69,6 @@ public:
     inline match_info& get_info(int32 i) { return m_infos[i]; }
 private:
     match_info* const m_infos;
-};
-
-//------------------------------------------------------------------------------
-class match_display_filter_entry_indexer
-{
-public:
-    match_display_filter_entry_indexer(match_display_filter_entry** infos) : m_infos(infos) {}
-    inline match_display_filter_entry& get_info(int32 i) { return *(m_infos[i]); }
-private:
-    match_display_filter_entry** const m_infos;
 };
 
 //------------------------------------------------------------------------------
@@ -394,6 +385,34 @@ void match_pipeline::restrict(str_base& needle) const
 }
 
 //------------------------------------------------------------------------------
+void match_pipeline::restrict(char** keep_matches) const
+{
+    const int32 count = m_matches.get_info_count();
+    int32 select_count = 0;
+
+    str_unordered_set set;
+    if (keep_matches && keep_matches[0])
+    {
+        while (*(++keep_matches))
+            set.insert(*keep_matches);
+    }
+
+    if (count)
+    {
+        match_info* infos = m_matches.get_infos();
+        for (int32 i = 0; i < count; ++i, ++infos)
+        {
+            const bool select = (set.find(infos->match) != set.end());
+            infos->select = select;
+            if (select)
+                ++select_count;
+        }
+    }
+
+    m_matches.coalesce(select_count, true/*restrict*/);
+}
+
+//------------------------------------------------------------------------------
 void match_pipeline::select(const char* needle) const
 {
     const int32 count = m_matches.get_info_count();
@@ -440,36 +459,4 @@ void match_pipeline::sort() const
         ordinal_sorter(m_matches.get_infos(), count); // "no sort" means "original order".
     else
         alpha_sorter(m_matches.get_infos(), count);
-}
-
-//------------------------------------------------------------------------------
-uint32 select_filtered_matches(const char* needle, match_display_filter_entry** matches, uint32 count)
-{
-    assert(matches[count] == nullptr);
-
-    // Select matches based on needle.
-    match_display_filter_entry_indexer indexer(matches);
-    select_matches(needle, indexer, count);
-
-    // Coalesce selected matches, freeing any discarded matches.
-    match_display_filter_entry** tortoise = matches;
-    match_display_filter_entry** hare = matches;
-    while (count--)
-    {
-        if ((*hare)->select)
-        {
-            if (tortoise != hare)
-                *tortoise = *hare;
-            ++tortoise;
-        }
-        else
-        {
-            free(*hare);
-        }
-
-        ++hare;
-    }
-
-    *tortoise = nullptr;
-    return uint32(tortoise - matches);
 }

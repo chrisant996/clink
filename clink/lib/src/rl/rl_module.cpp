@@ -111,7 +111,6 @@ pager*              g_pager = nullptr;
 editor_module::result* g_result = nullptr;
 str<>               g_last_prompt;
 
-static bool         s_is_popup = false;
 static str_moveable s_last_luafunc;
 static str_moveable s_pending_luafunc;
 static bool         s_has_pending_luafunc = false;
@@ -1529,15 +1528,12 @@ static char** alternative_matches(const char* text, int32 start, int32 end)
     if (!s_matches)
         return nullptr;
 
-    const display_filter_flags flags = (s_is_popup ?
-        (display_filter_flags::selectable | display_filter_flags::plainify) :
-        (display_filter_flags::none));
-
     // If this assertion fails, the word break info may be out of sync, so a
     // fix would need to located further upstream.
     assert(!s_need_collect_words);
 
     update_matches();
+    const display_filter_flags flags = display_filter_flags::none;
     if (matches* regen = maybe_regenerate_matches(text, flags))
     {
         // It's ok to redirect s_matches here because s_matches is reset in
@@ -1715,7 +1711,7 @@ stop:
 
         matches[count] = ptr;
 
-        if (!pack_match(ptr, packed_size, match, type, display, description, iter.get_match_append_char(), flags, nullptr, false))
+        if (!pack_match(ptr, packed_size, match, type, display, description, iter.get_match_append_char(), flags))
         {
             --count;
             free(ptr);
@@ -1738,22 +1734,18 @@ stop:
 }
 
 //------------------------------------------------------------------------------
-static match_display_filter_entry** match_display_filter(const char* needle, char** matches, display_filter_flags flags)
+static bool match_display_filter(const char* needle, char** matches, ::matches& out, display_filter_flags flags)
 {
     if (!s_matches)
-        return nullptr;
+        return false;
 
-    match_display_filter_entry** filtered_matches = nullptr;
-    if (!s_matches->match_display_filter(needle, matches, &filtered_matches, flags))
-        return nullptr;
-
-    return filtered_matches;
+    return s_matches->match_display_filter(needle, matches, &out, flags);
 }
 
 //------------------------------------------------------------------------------
-static match_display_filter_entry** match_display_filter_callback(char** matches)
+static bool match_display_filter_callback(char** matches, ::matches& out)
 {
-    return match_display_filter(s_needle.c_str(), matches, display_filter_flags::none);
+    return match_display_filter(s_needle.c_str(), matches, out, display_filter_flags::none);
 }
 
 //------------------------------------------------------------------------------

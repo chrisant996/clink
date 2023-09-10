@@ -10,6 +10,7 @@
 #include "line_state.h"
 #include "matches.h"
 #include "matches_lookaside.h"
+#include "match_pipeline.h"
 #include "display_matches.h"
 #include "column_widths.h"
 #include "ellipsify.h"
@@ -216,7 +217,7 @@ bool selectcomplete_impl::activate(editor_module::result& result, bool reactivat
     if (!is_regen_blocked())
         reset_generate_matches();
 
-    update_matches(true/*restrict*/);
+    init_matches();
     assert(m_anchor >= 0);
     if (m_anchor < 0)
     {
@@ -381,7 +382,9 @@ void selectcomplete_impl::on_begin_line(const context& context)
     assert(!s_selectcomplete);
     s_selectcomplete = this;
     m_buffer = &context.buffer;
-    m_matches.set_matches(&context.matches);
+    m_init_matches = &context.matches;
+    m_matches.set_matches(m_init_matches);
+    m_data.clear();
     m_printer = &context.printer;
     m_anchor = -1;
     m_any_displayed = false;
@@ -411,7 +414,9 @@ void selectcomplete_impl::on_end_line()
     assert(!m_expanded);
     s_selectcomplete = nullptr;
     m_buffer = nullptr;
+    m_init_matches = nullptr;
     m_matches.set_matches(nullptr);
+    m_data.clear();
     m_printer = nullptr;
     m_anchor = -1;
     m_desc_below = false;
@@ -901,7 +906,7 @@ append_to_needle:
 update_needle:
             reset_top();
             insert_needle();
-            update_matches(false/*restrict*/);
+            update_matches();
             update_layout();
             update_display();
             if (m_matches.get_match_count())
@@ -983,35 +988,37 @@ void selectcomplete_impl::cancel(editor_module::result& result, bool can_reactiv
     update_display();
 
     m_matches.reset();
+    assert(m_matches.get_matches() == m_init_matches);
+    m_data.clear();
 }
 
 //------------------------------------------------------------------------------
-void selectcomplete_impl::update_matches(bool restrict)
+void selectcomplete_impl::init_matches()
 {
-    ::force_update_internal(restrict);
+    m_matches.reset();
+    assert(m_init_matches);
+    assert(m_matches.get_matches() == m_init_matches);
+    m_data.clear();
+
+    ::force_update_internal(true);
     m_matches.set_regen_matches(nullptr);
 
-    // Initialize when starting a new interactive completion.
-    if (restrict)
+    __set_completion_defaults('%');
+    rl_completion_type = '!';
+
+    int32 found_quote = 0;
+    int32 quote_char = 0;
+
+    if (m_buffer->get_cursor())
     {
-        __set_completion_defaults('%');
-        rl_completion_type = '!';
-
-        int32 found_quote = 0;
-        int32 quote_char = 0;
-
-        if (m_buffer->get_cursor())
-        {
-            int32 tmp = m_buffer->get_cursor();
-            quote_char = _rl_find_completion_word(&found_quote, &m_delimiter);
-            m_buffer->set_cursor(tmp);
-        }
-
-        rl_completion_found_quote = found_quote;
-        rl_completion_quote_character = quote_char;
+        int32 tmp = m_buffer->get_cursor();
+        quote_char = _rl_find_completion_word(&found_quote, &m_delimiter);
+        m_buffer->set_cursor(tmp);
     }
 
-    // Update matches.
+    rl_completion_found_quote = found_quote;
+    rl_completion_quote_character = quote_char;
+
     ::update_matches();
 
     // Expand an abbreviated path.
@@ -1097,21 +1104,16 @@ stop:
 
 #define m_needle __use_needle_instead__
 
-    // Restrict matches.
-    bool filtered = false;
-    if (restrict)
+    // Update Readline modes based on the available completions.
     {
-        // Update Readline modes based on the available completions.
-        {
-            matches_iter iter = m_matches.get_iter();
-            while (iter.next())
-                ;
-            update_rl_modes_from_matches(m_matches.get_matches(), iter, m_matches.get_match_count());
-        }
-
-        // Initialize whether descriptions are available.
-        m_matches.init_has_descriptions();
+        matches_iter iter = m_matches.get_iter();
+        while (iter.next())
+            ;
+        update_rl_modes_from_matches(m_matches.get_matches(), iter, m_matches.get_match_count());
     }
+
+    // Initialize whether descriptions are available.
+    m_matches.init_has_descriptions();
 
     // Perform match display filtering (match_display_filter or the
     // ondisplaymatches event).
@@ -1131,7 +1133,7 @@ stop:
             const char* desc = m_matches.get_match_description(i);
             const size_t packed_size = calc_packed_size(text, disp, desc);
             char* buffer = static_cast<char*>(malloc(packed_size));
-            if (pack_match(buffer, packed_size, text, m_matches.get_match_type(i), disp, desc, m_matches.get_match_append_char(i), m_matches.get_match_flags(i), nullptr, false))
+            if (pack_match(buffer, packed_size, text, m_matches.get_match_type(i), disp, desc, m_matches.get_match_append_char(i), m_matches.get_match_flags(i)))
                 matches.emplace_back(buffer);
             else
                 free(buffer);
@@ -1139,116 +1141,88 @@ stop:
         matches.emplace_back(nullptr);
 
         // Get filtered matches.
-        match_display_filter_entry** filtered_matches = nullptr;
         create_matches_lookaside(&*matches.begin());
-        m_matches.get_matches()->match_display_filter(needle, &*matches.begin(), &filtered_matches, flags);
+        m_matches.get_matches()->match_display_filter(needle, &*matches.begin(), &m_data, flags);
         destroy_matches_lookaside(&*matches.begin());
-
-        // Use filtered matches.
-        m_matches.set_filtered_matches(filtered_matches);
-        filtered = true;
 
 #ifdef DEBUG
         if (dbg_get_env_int("DEBUG_FILTER"))
         {
             puts("-- SELECTCOMPLETE MATCH_DISPLAY_FILTER");
-            if (filtered_matches && filtered_matches[0])
+            str<> tmp;
+            for (uint32 i = 0; i < m_data.get_match_count(); i++)
             {
-                // Skip [0]; Readline expects matches start at [1].
-                str<> tmp;
-                while (*(++filtered_matches))
-                {
-                    match_type_to_string(filtered_matches[0]->type, tmp);
-                    printf("type '%s', match '%s', display '%s'\n",
-                            tmp.c_str(),
-                            filtered_matches[0]->match,
-                            filtered_matches[0]->display);
-                }
+                match_type_to_string(m_data.get_match_type(i), tmp);
+                printf("type '%s', match '%s', display '%s'\n",
+                        tmp.c_str(),
+                        m_data.get_match(i),
+                        str_or_empty(m_data.get_match_display(i)));
             }
             puts("-- DONE");
         }
 #endif
-    }
-
-    // Perform match filtering (the onfiltermatches event).
-    if (m_matches.get_match_count() &&
-        m_matches.get_matches()->filter_matches(nullptr, rl_completion_type, rl_filename_completion_desired))
-    {
-        // Build char** array for filtering.
-        const uint32 count = m_matches.get_match_count();
-        char** matches = (char**)malloc((count + 2) * sizeof(char*));
-        matches[0] = _rl_savestring(""); // Placeholder for lcd; required so that _rl_free_match_list frees the real matches.
-        uint32 num = 0;
-        for (uint32 i = 0; i < count; ++i)
-        {
-            const char* text = m_matches.get_match(i);
-            const char* disp = m_matches.get_match_display_raw(i);
-            const char* desc = m_matches.get_match_description(i);
-            const size_t packed_size = calc_packed_size(text, disp, desc);
-            char* buffer = static_cast<char*>(malloc(packed_size));
-            if (pack_match(buffer, packed_size, text, m_matches.get_match_type(i), disp, desc, m_matches.get_match_append_char(i), m_matches.get_match_flags(i), nullptr, false))
-                matches[++num] = buffer;
-            else
-                free(buffer);
-        }
-        matches[num + 1] = nullptr;
-
-        // Get filtered matches.
-        create_matches_lookaside(matches);
-        m_matches.get_matches()->filter_matches(matches, rl_completion_type, rl_filename_completion_desired);
 
         // Use filtered matches.
-        m_matches.set_alt_matches(matches, true);
-        filtered = true;
-
-#ifdef DEBUG
-        if (dbg_get_env_int("DEBUG_FILTER"))
-        {
-            puts("-- SELECTCOMPLETE FILTER_MATCHES");
-            for (uint32 i = 1; i <= num; ++i)
-                printf("match '%s'\n", matches[i]);
-            puts("-- DONE");
-        }
-#endif
+        m_matches.set_filtered_matches(&m_data, false/*own*/);
     }
+    else
+    {
+        assert(m_matches.get_matches() == m_init_matches);
+        m_data.copy(static_cast<const matches_impl&>(*m_matches.get_matches()));
+        m_matches.set_alt_matches(&m_data, false/*own*/);
+    }
+
+    // Perform match filtering if needed (the onfiltermatches event).
+    m_matches.filter_matches();
 
 #undef m_needle
 
     // Determine the lcd.
-    if (restrict)
-    {
-        m_matches.get_lcd(m_needle);
-        m_lcd = m_needle.length();
-    }
+    m_matches.get_lcd(m_needle);
+    m_lcd = m_needle.length();
 
     // Determine the longest match.
-    if (restrict || filtered)
+    m_match_longest = 0;
+
+    const uint32 count = m_matches.get_match_count();
+    for (uint32 i = 0; i < count; i++)
     {
-        if (restrict)
-            m_match_longest = 0;
+        int32 len = 0;
 
-        const uint32 count = m_matches.get_match_count();
-        for (uint32 i = 0; i < count; i++)
+        match_type type = m_matches.get_match_type(i);
+        const char* match = m_matches.get_match(i);
+        bool append = m_matches.is_append_display(i);
+        if (use_display(append, type, i))
         {
-            int32 len = 0;
-
-            match_type type = m_matches.get_match_type(i);
-            const char* match = m_matches.get_match(i);
-            bool append = m_matches.is_append_display(i);
-            if (use_display(append, type, i))
-            {
-                if (append)
-                    len += printable_len(match, type);
-                len += m_matches.get_match_visible_display(i);
-            }
-            else
-            {
+            if (append)
                 len += printable_len(match, type);
-            }
-
-            if (m_match_longest < len)
-                m_match_longest = len;
+            len += m_matches.get_match_visible_display(i);
         }
+        else
+        {
+            len += printable_len(match, type);
+        }
+
+        if (m_match_longest < len)
+            m_match_longest = len;
+    }
+
+    m_clear_display = m_any_displayed;
+    m_calc_widths = true;
+}
+
+//------------------------------------------------------------------------------
+void selectcomplete_impl::update_matches()
+{
+    if (m_init_matches->is_volatile())
+    {
+        init_matches();
+    }
+    else
+    {
+        match_pipeline pipeline(m_data);
+        pipeline.select(m_needle.c_str());
+        pipeline.sort();
     }
 
     m_clear_display = m_any_displayed;
@@ -1301,7 +1275,7 @@ force_desc_below:
         const bool desc_inline = !m_desc_below && m_matches.has_descriptions();
         const bool one_column = desc_inline && m_matches.get_match_count() <= DESC_ONE_COLUMN_THRESHOLD;
         rollback<int32> rcpdl(_rl_completion_prefix_display_length, 0);
-        m_widths = calculate_columns(&m_matches, best_fit ? limit_fit : -1, one_column, m_desc_below, col_extra);
+        m_widths = calculate_columns(m_matches, best_fit ? limit_fit : -1, one_column, m_desc_below, col_extra);
         m_calc_widths = false;
     }
 

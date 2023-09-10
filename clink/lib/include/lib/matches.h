@@ -164,14 +164,10 @@ private:
 };
 
 //------------------------------------------------------------------------------
-struct match_display_filter_entry;
-
-//------------------------------------------------------------------------------
 enum class display_filter_flags
 {
     none                    = 0x00,
     selectable              = 0x01,
-    plainify                = 0x02,
 };
 
 DEFINE_ENUM_FLAG_OPERATORS(display_filter_flags);
@@ -180,6 +176,7 @@ DEFINE_ENUM_FLAG_OPERATORS(display_filter_flags);
 class matches
 {
 public:
+    virtual                 ~matches() {}
     virtual matches_iter    get_iter(const char* pattern = nullptr) const = 0;
     virtual void            get_lcd(str_base& out) const = 0;
     virtual uint32          get_match_count() const = 0;
@@ -191,6 +188,7 @@ public:
     virtual char            get_match_append_char(uint32 index) const = 0;
     virtual shadow_bool     get_match_suppress_append(uint32 index) const = 0;
     virtual bool            get_match_append_display(uint32 index) const = 0;
+    virtual bool            get_match_custom_display(uint32 index) const = 0;
     virtual bool            is_suppress_append() const = 0;
     virtual shadow_bool     is_filename_completion_desired() const = 0;
     virtual shadow_bool     is_filename_display_desired() const = 0;
@@ -199,7 +197,9 @@ public:
     virtual int32           get_suppress_quoting() const = 0;
     virtual bool            get_force_quoting() const = 0;
     virtual int32           get_word_break_position() const = 0;
-    virtual bool            match_display_filter(const char* needle, char** matches, match_display_filter_entry*** filtered_matches, display_filter_flags flags, bool* old_filtering=nullptr) const = 0;
+    virtual bool            has_descriptions() const = 0;
+    virtual bool            is_volatile() const = 0;
+    virtual bool            match_display_filter(const char* needle, char** matches, ::matches* out, display_filter_flags flags, bool* old_filtering=nullptr) const = 0;
     virtual bool            filter_matches(char** matches, char completion_type, bool filename_completion_desired) const = 0;
 
 private:
@@ -233,6 +233,7 @@ struct match_desc
     char                    append_char;    // Append char after match; 0 means not specified.
     char                    suppress_append;// Suppress appending character after match; negative means not specified.
     bool                    append_display; // Print match text followed by display string.
+    bool                    missing_match;  // Match display filter returned "display" but no "match".
 };
 
 //------------------------------------------------------------------------------
@@ -249,6 +250,7 @@ public:
     void                    set_force_quoting();
     void                    set_fully_qualify(bool fully_qualify=true);
     void                    set_no_sort();
+    void                    set_has_descriptions();
     void                    set_volatile();
 
     void                    set_deprecated_mode();

@@ -90,26 +90,21 @@ size_t calc_packed_size(const char* match, const char* display, const char* desc
 bool pack_match(char* buffer, size_t packed_size,
                 const char* match, match_type type,
                 const char* display, const char* description,
-                char append_char, uint8 flags,
-                match_display_filter_entry* entry,
-                bool strip_markup, bool lcd)
+                char append_char, uint8 flags)
 {
 #ifdef DEBUG
     assert(match || display);
     const char* const orig_buffer = buffer;
 #endif
 
-    // No match is ok (because display is required), but empty match is not
-    // (unless this is the lcd).
-    if (match && !*match && !lcd)
+    // No match is ok (because display is required), but empty match is not.
+    if (match && !*match)
         return false;
 
     // Match.
     const char* appended = append_string_into_buffer(buffer, match);
-    if (entry)
-        entry->match = appended;
 
-    if (display && !display[0] && !lcd)
+    if (display && !display[0])
         return false;
 
     *(buffer++) = (char)type;   // Match type.
@@ -125,31 +120,10 @@ bool pack_match(char* buffer, size_t packed_size,
 
     // Display.
     appended = append_string_into_buffer(buffer, display);
-    if (entry)
-    {
-        entry->display = appended;
-        entry->visible_display = plainify(entry->display, strip_markup ? &buffer : nullptr);
-        if (entry->visible_display <= 0 && !lcd)
-            return false;
-    }
 
-    if (description)
-    {
-        appended = append_string_into_buffer(buffer, description);
-        if (entry)
-        {
-            entry->description = appended;
-            entry->visible_description = plainify(appended, strip_markup ? &buffer : nullptr);
-        }
-    }
-    else
-    {
-        // Must append empty string even when no description, because
-        // do_popup_list expects 3 nul terminated strings.  Leave
-        // entry->description nullptr to signal there is no description (subtly
-        // different than having an empty description).
-        append_string_into_buffer(buffer, description);
-    }
+    // Description.  Must append empty string even when no description,
+    // because do_popup_list expects 3 nul terminated strings.
+    append_string_into_buffer(buffer, description);
 
     assert(orig_buffer + packed_size == buffer);
 

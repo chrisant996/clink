@@ -31,6 +31,8 @@ inline const char*    str_chr(const char* s, int32 c)                  { return 
 inline const wchar_t* str_chr(const wchar_t* s, int32 c)               { return wcschr(s, wchar_t(c)); }
 inline const char*    str_rchr(const char* s, int32 c)                 { return strrchr(s, c); }
 inline const wchar_t* str_rchr(const wchar_t* s, int32 c)              { return wcsrchr(s, wchar_t(c)); }
+inline const char*    str_or_empty(const char* s)                      { return s ? s : ""; }
+inline const wchar_t* str_or_empty(const wchar_t* s)                   { return s ? s : L""; }
 
 uint32 char_count(const char*);
 uint32 char_count(const wchar_t*);

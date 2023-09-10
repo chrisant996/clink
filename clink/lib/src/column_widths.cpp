@@ -146,11 +146,11 @@ static bool init_column_info(int32 max_matches, size_t& max_cols, size_t count, 
 //------------------------------------------------------------------------------
 // Calculate the number of columns needed to represent the current set of
 // matches in the current display width.
-column_widths calculate_columns(match_adapter* adapter, int32 max_matches, bool one_column, bool omit_desc, width_t extra, int32 presuf)
+column_widths calculate_columns(const match_adapter& adapter, int32 max_matches, bool one_column, bool omit_desc, width_t extra, int32 presuf)
 {
     column_widths widths;
 
-    const bool has_descriptions = !omit_desc && adapter->has_descriptions();
+    const bool has_descriptions = !omit_desc && adapter.has_descriptions();
     const width_t col_padding = has_descriptions ? 4 : 2;
     const width_t desc_padding = has_descriptions ? 2 : 0;
 
@@ -163,7 +163,7 @@ column_widths calculate_columns(match_adapter* adapter, int32 max_matches, bool 
     /* Normally the maximum number of columns is determined by the
        screen width.  But if few files are available this might limit it
        as well.  */
-    const size_t count = adapter->get_match_count();
+    const size_t count = adapter.get_match_count();
     size_t max_cols = count < max_idx ? count : max_idx;
 
     const bool fixed_cols = !init_column_info(max_matches, max_cols, count, col_padding) || one_column;
@@ -177,7 +177,7 @@ column_widths calculate_columns(match_adapter* adapter, int32 max_matches, bool 
     if (_rl_completion_prefix_display_length > 0)
     {
         str<32> lcd;
-        adapter->get_lcd(lcd);
+        adapter.get_lcd(lcd);
         if (lcd.length() > 0 && !path::is_separator(lcd.c_str()[lcd.length() - 1]))
         {
             const char* t = __printable_part(const_cast<char*>(lcd.c_str()));
@@ -196,7 +196,7 @@ column_widths calculate_columns(match_adapter* adapter, int32 max_matches, bool 
     if (sind == 0 && _rl_colored_completion_prefix > 0)
     {
         str<32> lcd;
-        adapter->get_lcd(lcd);
+        adapter.get_lcd(lcd);
         if (lcd.length() > 0 && !path::is_separator(lcd.c_str()[lcd.length() - 1]))
         {
             const char* t = __printable_part(const_cast<char*>(lcd.c_str()));
@@ -216,23 +216,23 @@ column_widths calculate_columns(match_adapter* adapter, int32 max_matches, bool 
         size_t len = extra;
 
         int32 cdelta = condense_delta;
-        match_type type = adapter->get_match_type(i);
-        const char *match = adapter->get_match(i);
-        bool append = adapter->is_append_display(i);
-        if (adapter->use_display(i, type, append))
+        match_type type = adapter.get_match_type(i);
+        const char *match = adapter.get_match(i);
+        bool append = adapter.is_append_display(i);
+        if (adapter.use_display(i, type, append))
         {
             if (append)
             {
                 len += printable_len(match, type);
-                len += adapter->get_match_visible_display(i);
+                len += adapter.get_match_visible_display(i);
             }
             else if (presuf)
             {
-                len += adapter->get_match_visible_display(i);
+                len += adapter.get_match_visible_display(i);
             }
             else
             {
-                len += adapter->get_match_visible_display(i);
+                len += adapter.get_match_visible_display(i);
                 cdelta = 0;
             }
         }
@@ -256,7 +256,7 @@ column_widths calculate_columns(match_adapter* adapter, int32 max_matches, bool 
 
         if (has_descriptions)
         {
-            const uint32 desc_cells = adapter->get_match_visible_description(i);
+            const uint32 desc_cells = adapter.get_match_visible_description(i);
             if (desc_cells)
             {
                 len += desc_padding + desc_cells;

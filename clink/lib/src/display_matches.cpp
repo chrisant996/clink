@@ -15,6 +15,7 @@
 #include "display_matches.h"
 #include "match_colors.h"
 #include "matches_lookaside.h"
+#include "matches_impl.h"
 #include "match_adapter.h"
 #include "column_widths.h"
 #include "ellipsify.h"
@@ -797,17 +798,15 @@ uint32 append_display_with_presuf(const char* match, const char* display, int32 
 
 
 //------------------------------------------------------------------------------
-static int32 display_match_list_internal(match_adapter* adapter, const column_widths& widths, bool only_measure, int32 presuf)
+static int32 display_match_list_internal(const match_adapter& adapter, const column_widths& widths, bool only_measure, int32 presuf)
 {
-    const int32 count = adapter->get_match_count();
+    const int32 count = adapter.get_match_count();
     int32 printed_len;
-    const char* filtered_color = "\x1b[m";
     const char* description_color = "\x1b[m";
-    int32 filtered_color_len = 3;
     int32 description_color_len = 3;
 
     const int32 cols = __complete_get_screenwidth();
-    const int32 show_descriptions = adapter->has_descriptions();
+    const int32 show_descriptions = adapter.has_descriptions();
     const int32 limit = widths.num_columns();
     assert(limit > 0);
 
@@ -830,12 +829,6 @@ static int32 display_match_list_internal(match_adapter* adapter, const column_wi
     const int32 major_stride = _rl_print_completions_horizontally ? limit : 1;
     const int32 minor_stride = _rl_print_completions_horizontally ? 1 : rows;
 
-    if (_rl_filtered_color)
-    {
-        filtered_color = _rl_filtered_color;
-        filtered_color_len = strlen(filtered_color);
-    }
-
     if (_rl_description_color)
     {
         description_color = _rl_description_color;
@@ -855,12 +848,12 @@ static int32 display_match_list_internal(match_adapter* adapter, const column_wi
                                  cols - 1 :
                                  widths.column_width(j));
 
-            const match_type type = adapter->get_match_type(l);
-            const char* const match = adapter->get_match(l);
-            const char* const display = adapter->get_match_display(l);
-            const bool append = adapter->is_append_display(l);
+            const match_type type = adapter.get_match_type(l);
+            const char* const match = adapter.get_match(l);
+            const char* const display = adapter.get_match_display(l);
+            const bool append = adapter.is_append_display(l);
 
-            if (adapter->use_display(l, type, append))
+            if (adapter.use_display(l, type, append))
             {
                 printed_len = 0;
                 if (append)
@@ -868,7 +861,7 @@ static int32 display_match_list_internal(match_adapter* adapter, const column_wi
                     char* temp = __printable_part((char*)match);
                     printed_len = append_filename(temp, match, widths.m_sind, widths.m_can_condense, type, 0, nullptr);
                     append_display(display, 0, _rl_arginfo_color);
-                    printed_len += adapter->get_match_visible_display(l);
+                    printed_len += adapter.get_match_visible_display(l);
                 }
                 else if (presuf)
                 {
@@ -877,7 +870,7 @@ static int32 display_match_list_internal(match_adapter* adapter, const column_wi
                 else
                 {
                     append_display(display, 0, _rl_filtered_color);
-                    printed_len += adapter->get_match_visible_display(l);
+                    printed_len += adapter.get_match_visible_display(l);
                 }
             }
             else
@@ -888,7 +881,7 @@ static int32 display_match_list_internal(match_adapter* adapter, const column_wi
 
             if (show_descriptions)
             {
-                const char* const description = adapter->get_match_description(l);
+                const char* const description = adapter.get_match_description(l);
                 if (description && *description)
                 {
                     const bool right_justify = widths.m_right_justify;
@@ -898,7 +891,7 @@ static int32 display_match_list_internal(match_adapter* adapter, const column_wi
                     const int32 parens = 0;
 #endif
                     const int32 pad_to = (right_justify ?
-                        max<int32>(printed_len + widths.m_desc_padding, col_max - (adapter->get_match_visible_description(l) + parens)) :
+                        max<int32>(printed_len + widths.m_desc_padding, col_max - (adapter.get_match_visible_description(l) + parens)) :
                         widths.m_max_match + 4);
                     if (pad_to < cols - 1)
                     {
@@ -955,17 +948,6 @@ static int32 display_match_list_internal(match_adapter* adapter, const column_wi
 }
 
 //------------------------------------------------------------------------------
-void free_filtered_matches(match_display_filter_entry** filtered_matches)
-{
-    if (filtered_matches)
-    {
-        for (match_display_filter_entry** walk = filtered_matches; *walk; walk++)
-            free(*walk);
-        free(filtered_matches);
-    }
-}
-
-//------------------------------------------------------------------------------
 static int32 prompt_display_matches(int32 len)
 {
     end_prompt(1/*crlf*/);
@@ -988,30 +970,36 @@ static int32 prompt_display_matches(int32 len)
 //------------------------------------------------------------------------------
 extern "C" void display_matches(char** matches)
 {
-    match_adapter* adapter = nullptr;
+    match_adapter adapter;
     char** rebuilt = nullptr;
     char* rebuilt_storage[3];
 
     // If there is a display filter, give it a chance to modify MATCHES.
     if (rl_match_display_filter_func)
     {
-        match_display_filter_entry** filtered_matches = rl_match_display_filter_func(matches);
-        if (filtered_matches)
+        matches_impl* filtered_matches = new matches_impl;
+        if (rl_match_display_filter_func(matches, *filtered_matches))
         {
-            if (!filtered_matches[0] || !filtered_matches[1])
+            if (!filtered_matches->get_match_count())
             {
                 rl_ding();
-                free_filtered_matches(filtered_matches);
+                delete filtered_matches;
                 return;
             }
 
-            adapter = new match_adapter;
-            adapter->set_filtered_matches(filtered_matches);
-            filtered_matches = nullptr;
+            adapter.set_filtered_matches(filtered_matches, true/*own*/);
+
+            // Readline calls rl_ignore_some_completions_function before
+            // calling display_matches.  Must reapply match filtering after
+            // applying match display filtering.
+            adapter.filter_matches();
+
+            filtered_matches = nullptr; // Ownership was transferred.
         }
+        delete filtered_matches;
     }
 
-    if (!adapter)
+    if (!adapter.is_initialized())
     {
         // Handle "simple" case first.  What if there is only one answer?
         if (matches[1] == 0)
@@ -1027,37 +1015,36 @@ extern "C" void display_matches(char** matches)
             create_matches_lookaside(rebuilt);
         }
 
-        adapter = new match_adapter;
-        adapter->set_alt_matches(matches, false);
+        adapter.set_alt_matches(matches, false);
     }
 
     int32 presuf = 0;
     str<32> lcd;
-    adapter->get_lcd(lcd);
+    adapter.get_lcd(lcd);
     if (*__printable_part(const_cast<char*>(lcd.c_str())))
     {
         presuf = bit_prefix|bit_suffix;
-        for (int32 l = adapter->get_match_count(); presuf && l--;)
+        for (int32 l = adapter.get_match_count(); presuf && l--;)
         {
-            if (adapter->is_append_display(l))
+            if (adapter.is_append_display(l))
                 continue;
 
-            const match_type type = adapter->get_match_type(l);
-            if (!adapter->use_display(l, type, false))
+            const match_type type = adapter.get_match_type(l);
+            if (!adapter.use_display(l, type, false))
                 continue;
 
-            const char* const match = adapter->get_match(l);
-            const char* const display = adapter->get_match_display(l);
+            const char* const match = adapter.get_match(l);
+            const char* const display = adapter.get_match_display(l);
             const char* const visible = __printable_part(const_cast<char*>(match));
             const int32 bits = calc_prefix_or_suffix(visible, display);
             presuf &= bits;
         }
     }
 
-    const int32 count = adapter->get_match_count();
+    const int32 count = adapter.get_match_count();
     const bool best_fit = g_match_best_fit.get();
     const int32 limit_fit = g_match_limit_fitted.get();
-    const bool one_column = adapter->has_descriptions() && count <= DESC_ONE_COLUMN_THRESHOLD;
+    const bool one_column = adapter.has_descriptions() && count <= DESC_ONE_COLUMN_THRESHOLD;
     const column_widths widths = calculate_columns(adapter, best_fit ? limit_fit : -1, one_column, false, 0, presuf);
 
     // If there are many items, then ask the user if she really wants to see
@@ -1074,7 +1061,6 @@ extern "C" void display_matches(char** matches)
 
 done:
     destroy_matches_lookaside(rebuilt);
-    delete adapter;
     rl_forced_update_display();
     rl_display_fixed = 1;
 }

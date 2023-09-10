@@ -289,9 +289,7 @@ bool host_can_suggest(const line_state& line)
 //------------------------------------------------------------------------------
 int32 host_filter_matches(char** matches)
 {
-    if (s_callbacks)
-        s_callbacks->filter_matches(matches);
-    return 0;
+    return s_callbacks && s_callbacks->filter_matches(matches);
 }
 
 //------------------------------------------------------------------------------
@@ -682,7 +680,7 @@ bool line_editor_impl::notify_matches_ready(int32 generation_id, matches* matche
     if (matches && generation_id == m_generation_id)
     {
         assert(&m_matches != matches);
-        m_matches.transfer(*(matches_impl*)matches);
+        m_matches.transfer(static_cast<matches_impl&>(*matches));
         m_matches.done_building();
         clear_flag(flag_generate);
     }
