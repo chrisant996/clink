@@ -1877,7 +1877,9 @@ void selectcomplete_impl::insert_match(int32 final)
         str_iter lhs(m_needle);
         str_iter rhs(m_buffer->get_buffer() + m_point, m_buffer->get_length() - m_point);
         const int32 cmp_len = str_compare(lhs, rhs);
-        if (cmp_len == m_needle.length())
+        if (cmp_len < 0)
+            needle_len = m_needle.length();
+        else if (cmp_len == m_needle.length())
             needle_len = cmp_len;
     }
 
