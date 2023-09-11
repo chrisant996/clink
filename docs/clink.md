@@ -745,6 +745,7 @@ Mode | Description
 > - The auto-updater settings are stored in the profile, so different profiles can be configured differently for automatic updates.
 > - The updater does nothing if the Clink program files are readonly.
 > - The updater requires PowerShell, which is present by default in Windows 7 and higher.
+> - Clink v1.5.5 added `check`, `prompt`, and `auto`.  Before that, only `false` and `true` were available (and `true` behaved the same as `check`).
 
 ## Portable Configuration
 
