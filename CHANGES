@@ -3,9 +3,11 @@
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
 #### v1.5.5
-- Changed the `clink.autoupdate` setting to allow `off`, `check`, `prompt`, and `auto` for more control over how and when updating happens.
+- Changed the `clink.autoupdate` setting to allow `off`, `check` (the default), `prompt`, and `auto` for more control over how and when updating happens.  When set to `prompt` or `auto` Clink can trigger updates automatically, so you don't need to even run `clink update`.
 - Enhanced `debug.log_terminal` to include low level console keyboard and mouse input events.
 - Fixed `debug.log_terminal` to capture all input (regression introduced in v1.5.2).
+- Fixed slowness during `clink-select-complete` while typing, caused by excessive match generation.
+- Fixed selection highlight in `clink-select-complete` when the whole match text has been typed.
 - Fixed [#486](https://github.com/chrisant996/clink/issues/486); window title escape code doesn't work properly if it contains emoji or UTF content.
 - Internal changes.
 
