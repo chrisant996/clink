@@ -647,6 +647,21 @@ inline bool exact_match(const char* match, const char* text, uint32 len)
 enum { bit_prefix = 0x01, bit_suffix = 0x02 };
 static int32 calc_prefix_or_suffix(const char* match, const char* display)
 {
+    // Sample scenarios, and whether they're handled:
+    //  1.  YES:  "match"
+    //  2.  YES:  "symbol match"
+    //  3.  YES:  "match symbol"
+    //  4.  NO:   "symbol match symbol"
+    //  5.  NO:   "{color}m{color}a{color}t{color}c{color}h"
+    //  6.  YES:  "{color}symbol{color}match"
+    //  7.  YES:  "{color}match{color}symbol"
+    //  8.  YES:  "{color}symbol{color}match{color}symbol"
+    //
+    // The intent is to find a segment of text long enough to contain the
+    // match text, and do processing on it.  If a segment isn't long enough to
+    // contain the match text, then there's no way to reliably predict which
+    // portions of the text are additional markup versus actual match text.
+
     const uint32 match_len = uint32(strlen(match));
 
     bool pre = false;
@@ -661,10 +676,17 @@ static int32 calc_prefix_or_suffix(const char* match, const char* display)
             assert(code.get_length());
             suf = false;
 
+            // Ignore substrings between ECMA48 codes that aren't long enough
+            // to contain the match text.
             if (match_len <= code.get_length())
             {
+                // Only in the first substring long enough to contain the
+                // match text, test if match is a prefix of the substring
+                // (cases 1, 3, 6, 7, 8).
                 if (!visible_len)
                     pre = exact_match(match, code.get_pointer(), code.get_length());
+                // In all substrings long enough to contain the match text,
+                // test if match is a suffix of the substring (case 2).
                 suf = exact_match(match, code.get_pointer() + code.get_length() - match_len, match_len);
             }
 
