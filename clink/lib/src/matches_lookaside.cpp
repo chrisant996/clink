@@ -32,45 +32,6 @@ const char* append_string_into_buffer(char*& buffer, const char* match, bool all
 }
 
 //------------------------------------------------------------------------------
-// Parse ANSI escape codes to determine the visible character length of the
-// string (which gets used for column alignment).  When a strip out parameter is
-// supplied, this also strips ANSI escape codes and the strip out parameter
-// receives a pointer to the next character past the nul terminator.
-static int32 plainify(const char* s, char** strip)
-{
-    int32 visible_len = 0;
-
-    // TODO:  This does not handle BEL, OSC title codes, or envvar substitution.
-    // Use ecma48_processor() if that becomes necessary, but then s cannot be
-    // in/out since envvar substitutions could make the output string be longer
-    // than the input string.
-
-    ecma48_state state;
-    ecma48_iter iter(s, state);
-    char* plain = const_cast<char *>(s);
-    while (const ecma48_code& code = iter.next())
-        if (code.get_type() == ecma48_code::type_chars)
-        {
-            visible_len += clink_wcswidth(code.get_pointer(), code.get_length());
-
-            if (strip)
-            {
-                const char *ptr = code.get_pointer();
-                for (int32 i = code.get_length(); i--;)
-                    *(plain++) = *(ptr++);
-            }
-        }
-
-    if (strip)
-    {
-        *(plain++) = '\0';
-        *strip = plain;
-    }
-
-    return visible_len;
-}
-
-//------------------------------------------------------------------------------
 size_t calc_packed_size(const char* match, const char* display, const char* description)
 {
     size_t alloc_size = 3;              // For the 3 NUL terminators.
