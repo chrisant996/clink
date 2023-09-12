@@ -707,10 +707,69 @@ BOOL WINAPI host_cmd::write_console(
 }
 
 //------------------------------------------------------------------------------
+#ifndef CAPTURE_PUSHD_STACK
+static void update_pushd_depth(const wchar_t* chars, int32 char_count)
+{
+    int32 depth = -1;
+
+    str<> var;
+    if (os::get_env("prompt", var) && strstr(var.c_str(), "$+"))
+    {
+        str<> expanded;
+        str<> captured;
+        to_utf8(captured, wstr_iter(chars, char_count));
+        if (prompt_utils::expand_prompt_codes(var.c_str(), expanded, expand_prompt_flags::omit_pushd) &&
+            expanded.length() <= captured.length())
+        {
+            // Find point where the strings don't match.
+            const char* e = expanded.c_str();
+            const char* c = captured.c_str();
+            while (*e && *e == *c)
+                ++e, ++c;
+
+            // If the strings differ and the captured string has a + then
+            // compare the rest of the expanded string with the end of the
+            // captured string.
+            if (*c == '+')
+            {
+                const uint32 e_len = uint32(strlen(e));
+                const uint32 c_len = uint32(strlen(c));
+                if (strcmp(e, c + c_len - e_len) == 0)
+                {
+                    // If the end of the strings match except for a run of +
+                    // characters, then the depth is the difference between
+                    // the two strings.
+                    depth = c_len - e_len;
+                    for (uint32 num = depth; num--; ++c)
+                    {
+                        if (*c != '+')
+                        {
+                            depth = -1;
+                            break;
+                        }
+                    }
+                }
+            }
+            else if (!*e && !*c)
+            {
+                depth = 0;
+            }
+        }
+    }
+
+    os::set_pushd_depth(depth);
+}
+#endif
+
+//------------------------------------------------------------------------------
 bool host_cmd::capture_prompt(const wchar_t* chars, int32 char_count)
 {
     // Clink tags the prompt so that it can be detected when cmd.exe
     // writes it to the console.
+
+#ifndef CAPTURE_PUSHD_STACK
+    update_pushd_depth(chars, char_count);
+#endif
 
     m_prompt.set(chars, char_count);
     if (!m_prompt.get())

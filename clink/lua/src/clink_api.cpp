@@ -1,4 +1,4 @@
-// Copyright (c) 2015 Martin Ridgers
+﻿// Copyright (c) 2015 Martin Ridgers
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
@@ -1840,7 +1840,8 @@ static int32 expand_prompt_codes(lua_State* state)
         return 0;
 
     str<> out;
-    prompt_utils::expand_prompt_codes(in, out, rprompt);
+    const expand_prompt_flags flags = rprompt ? expand_prompt_flags::single_line : expand_prompt_flags::none;
+    prompt_utils::expand_prompt_codes(in, out, flags);
 
     lua_pushlstring(state, out.c_str(), out.length());
     return 1;

@@ -5,6 +5,10 @@
 
 #include <stdio.h>
 #include <sys/stat.h>
+#ifdef CAPTURE_PUSHD_STACK
+#include <vector>
+class str_moveable;
+#endif
 
 class str_base;
 
@@ -103,6 +107,14 @@ void    map_errno(unsigned long const oserrno);
 
 void    set_errorlevel(int32 errorlevel);
 int32   get_errorlevel();
+
+#ifdef CAPTURE_PUSHD_STACK
+void    set_pushd_stack(std::vector<str_moveable>& stack);
+void    get_pushd_stack(std::vector<str_moveable>& stack);
+#else
+void    set_pushd_depth(int32 depth);
+#endif
+int32   get_pushd_depth();
 
 void    set_shellname(const wchar_t* shell_name);
 const wchar_t* get_shellname();

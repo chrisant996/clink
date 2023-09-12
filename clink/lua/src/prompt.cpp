@@ -79,6 +79,48 @@ static bool are_extensions_enabled()
     return s_extensions;
 }
 
+//------------------------------------------------------------------------------
+static void make_version_string(str_base& out)
+{
+    out.clear();
+
+    HKEY hkey = 0;
+    LPWSTR buffer = nullptr;
+
+    if (!RegOpenKeyEx(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Windows NT\\CurrentVersion", 0, MAXIMUM_ALLOWED, &hkey))
+    {
+#pragma warning(push)
+#pragma warning(disable:4996)
+        DWORD type = REG_DWORD;
+        DWORD revision = 0;
+        DWORD len = sizeof(revision);
+        OSVERSIONINFO ver = { sizeof(ver) };
+        if (!RegQueryValueEx(hkey, "UBR", 0, &type, (LPBYTE)&revision, &len) &&
+            type == REG_DWORD &&
+            len == sizeof(revision) &&
+            GetVersionEx(&ver))
+        {
+            wstr<> tmp;
+            tmp.format(L"%d.%d.%05d.%d", ver.dwMajorVersion, ver.dwMinorVersion, ver.dwBuildNumber, revision);
+
+            DWORD_PTR arguments[2] = { DWORD_PTR(tmp.c_str()) };
+            const DWORD flags = FORMAT_MESSAGE_FROM_HMODULE|FORMAT_MESSAGE_FROM_SYSTEM|FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_ARGUMENT_ARRAY;
+            FormatMessageW(flags, nullptr, 0x2350,
+                           0, (LPWSTR)&buffer,          // Cast for FORMAT_MESSAGE_ALLOCATE_BUFFER.
+                           0, (va_list*)&arguments);    // Cast for FORMAT_MESSAGE_ARGUMENT_ARRAY.
+
+            if (buffer)
+                out = buffer;
+        }
+#pragma warning(pop)
+    }
+
+    if (buffer)
+        LocalFree(buffer);
+    if (hkey)
+        RegCloseKey(hkey);
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -481,7 +523,7 @@ void prompt_utils::get_rprompt(str_base& rout)
 {
     str<> env;
     os::get_env("clink_rprompt", env);
-    expand_prompt_codes(env.c_str(), rout, true/*single_line*/);
+    expand_prompt_codes(env.c_str(), rout, expand_prompt_flags::single_line);
 }
 
 //------------------------------------------------------------------------------
@@ -491,7 +533,7 @@ void prompt_utils::get_transient_prompt(str_base& out)
     os::get_env("clink_transient_prompt", env);
     if (env.empty())
         env = "$g";
-    expand_prompt_codes(env.c_str(), out, false/*single_line*/);
+    expand_prompt_codes(env.c_str(), out, expand_prompt_flags::none);
 }
 
 //------------------------------------------------------------------------------
@@ -499,17 +541,19 @@ void prompt_utils::get_transient_rprompt(str_base& rout)
 {
     str<> env;
     os::get_env("clink_transient_rprompt", env);
-    expand_prompt_codes(env.c_str(), rout, true/*single_line*/);
+    expand_prompt_codes(env.c_str(), rout, expand_prompt_flags::single_line);
 }
 
 //------------------------------------------------------------------------------
-void prompt_utils::expand_prompt_codes(const char* in, str_base& out, bool single_line)
+bool prompt_utils::expand_prompt_codes(const char* in, str_base& out, expand_prompt_flags flags)
 {
     if (!in || !*in)
-        return;
+        return false;
 
     str<> tmp;
     locale_info loc;
+    const bool single_line = ((flags & expand_prompt_flags::single_line) == expand_prompt_flags::single_line);
+    int32 num_plus = 0;
 
     str_iter iter(in);
     bool trim_right = false;
@@ -611,10 +655,24 @@ void prompt_utils::expand_prompt_codes(const char* in, str_base& out, bool singl
                 out << tmp;
             }
             break;
-
-        // Not supported.
-        case 'V':   case 'v':   break;
-        case '+':               break;
+        case 'V':   case 'v':
+            {
+                make_version_string(tmp);
+                out << tmp;
+            }
+            break;
+        case '+':
+            if ((flags & expand_prompt_flags::omit_pushd) == expand_prompt_flags::omit_pushd)
+            {
+                if (num_plus++)
+                    return false;
+            }
+            else
+            {
+                for (int32 depth = os::get_pushd_depth(); depth-- > 0;)
+                    out.concat("+", 1);
+            }
+            break;
         }
     }
 
@@ -631,4 +689,6 @@ void prompt_utils::expand_prompt_codes(const char* in, str_base& out, bool singl
             out.truncate(len);
         }
     }
+
+    return true;
 }

@@ -672,7 +672,7 @@ end
 --- line ends.  In some cases it may be necessary for a coroutine to run until
 --- it completes, even if it spans multiple edit lines.
 ---
---- <strong>Note:</strong>  Use with caution.  This can potentially cause
+--- <strong>Use this with caution:</strong>  This can potentially cause
 --- performance problems or cause prompt filtering to experience delays.
 function clink.runcoroutineuntilcomplete(c)
     if type(c) ~= "thread" then

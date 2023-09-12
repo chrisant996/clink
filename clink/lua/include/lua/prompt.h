@@ -54,6 +54,15 @@ private:
 };
 
 //------------------------------------------------------------------------------
+enum class expand_prompt_flags
+{
+    none        = 0x00,
+    single_line = 0x01,
+    omit_pushd  = 0x02,
+};
+DEFINE_ENUM_FLAG_OPERATORS(expand_prompt_flags);
+
+//------------------------------------------------------------------------------
 class prompt_utils
 {
 public:
@@ -61,5 +70,5 @@ public:
     static void     get_rprompt(str_base& rout);
     static void     get_transient_prompt(str_base& out);
     static void     get_transient_rprompt(str_base& rout);
-    static void     expand_prompt_codes(const char* in, str_base& out, bool single_line);
+    static bool     expand_prompt_codes(const char* in, str_base& out, expand_prompt_flags flags);
 };

@@ -1046,6 +1046,55 @@ static int32 get_errorlevel(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+#ifdef CAPTURE_PUSHD_STACK
+//! WARNING -- DOCUMENTATION WILL NOT INCLUDE THIS.
+//! -name:  os.getpushdstack
+//! -ver:   1.5.6
+//! -ret:   table
+//! Returns a table of strings in the <code>pushd</code> directory stack.
+//!
+//! <strong>Note:</strong> For this to work, the
+//! <code><a href="#cmd_get_errorlevel">cmd.get_errorlevel</a></code> setting
+//! must be enabled, otherwise this returns 0.  Also, any characters outside the
+//! current codepage will be represented as <code>?</code> (this is a limitation
+//! of CMD itself, except when <code>cmd /u</code> is used, but that may cause
+//! compatibility problems in batch scripts).
+static int32 get_pushd_stack(lua_State* state)
+{
+    std::vector<str_moveable> stack;
+    os::get_pushd_stack(stack);
+
+    lua_createtable(state, uint32(stack.size()), 0);
+    int32 i = 1;
+    for (const auto& dir : stack)
+    {
+        lua_pushlstring(state, dir.c_str(), dir.length());
+        lua_rawseti(state, -2, i++);
+    }
+    return 1;
+}
+#endif
+
+//------------------------------------------------------------------------------
+/// -name:  os.getpushddepth
+/// -ver:   1.5.6
+/// -ret:   integer, boolean
+/// Returns the depth of the <code>pushd</code> directory stack, and a boolean
+/// indicating whether the depth is known.
+///
+/// <strong>Note:</strong> The depth is only known if the
+/// <code>%PROMPT%</code> environment variable includes the <code>$+</code>
+/// code exactly once and does not contain the <code>$v</code> code.
+//! <strong>Note:</strong> For this to work, the
+//! <code><a href="#cmd_get_errorlevel">cmd.get_errorlevel</a></code> setting
+//! must be enabled, otherwise this returns 0.
+static int32 get_pushd_depth(lua_State* state)
+{
+    lua_pushinteger(state, os::get_pushd_depth());
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 /// -name:  os.getalias
 /// -ver:   1.1.4
 /// -arg:   name:string
@@ -2015,6 +2064,10 @@ void os_lua_initialise(lua_state& lua)
         { "getenvnames", &get_env_names },
         { "gethost",     &get_host },
         { "geterrorlevel", &get_errorlevel },
+#ifdef CAPTURE_PUSHD_STACK
+        { "getpushdstack", &get_pushd_stack },
+#endif
+        { "getpushddepth", &get_pushd_depth },
         { "getalias",    &get_alias },
         { "getaliases",  &get_aliases },
         { "resolvealias", &resolve_alias },

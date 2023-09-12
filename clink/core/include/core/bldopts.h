@@ -39,6 +39,12 @@
 //#define LOG_OUTPUT_CALLSTACKS
 
 //------------------------------------------------------------------------------
+// Define this to run `pushd` repeatedly and expose the directory stack.
+// However, it relys on writing temporary batch scripts, which adds possible
+// failure points and performance degradation.
+//#define CAPTURE_PUSHD_STACK
+
+//------------------------------------------------------------------------------
 // Clink doesn't support rl_byte_oriented mode.  Defining it to 0 lets the
 // compiler optimize away any code specific to that mode.
 #define rl_byte_oriented    (0)

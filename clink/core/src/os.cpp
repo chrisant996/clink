@@ -15,6 +15,9 @@
 #include <share.h>
 #include <Shellapi.h>
 #include <shlwapi.h>
+#ifdef CAPTURE_PUSHD_STACK
+#include <vector>
+#endif
 
 #ifndef _MSC_VER
 #define USE_PORTABLE
@@ -318,6 +321,18 @@ void map_errno(unsigned long const oserrno) { __acrt_errno_map_os_error(oserrno)
 static int32 s_errorlevel = 0;
 void set_errorlevel(int32 errorlevel) { s_errorlevel = errorlevel; }
 int32 get_errorlevel() { return s_errorlevel; }
+
+//------------------------------------------------------------------------------
+#ifdef CAPTURE_PUSHD_STACK
+static std::vector<str_moveable> s_pushd_stack;
+void set_pushd_stack(std::vector<str_moveable>& stack) { s_pushd_stack.swap(stack); stack.clear(); }
+void get_pushd_stack(std::vector<str_moveable>& stack) { stack.clear(); for (const auto& dir : s_pushd_stack) stack.emplace_back(dir.c_str()); }
+int32 get_pushd_depth() { return int32(s_pushd_stack.size()); }
+#else
+static int32 s_pushd_depth = -1;
+void set_pushd_depth(int32 depth) { s_pushd_depth = depth; }
+int32 get_pushd_depth() { return s_pushd_depth; }
+#endif
 
 //------------------------------------------------------------------------------
 static const wchar_t* s_shell_name = L"cmd.exe";

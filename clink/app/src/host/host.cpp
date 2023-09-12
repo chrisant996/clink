@@ -256,22 +256,24 @@ extern bool g_suppress_signal_assert;
 
 
 //------------------------------------------------------------------------------
-static void get_errorlevel_tmp_name(str_base& out, bool wild=false)
+static void get_errorlevel_tmp_name(str_base& out, const char* ext, bool wild=false)
 {
     app_context::get()->get_log_path(out);
     path::to_parent(out, nullptr);
-    path::append(out, "clink_errorlevel");
+    path::append(out, "clink_errorlevel_");
+
 
     if (wild)
     {
-        // "clink_errorlevel*.txt" catches the obsolete clink_errorlevel.txt
-        // file as well.
-        out << "*.txt";
+        out << "*";
     }
     else
     {
+        if (is_null_or_empty(ext))
+            ext = "txt";
+
         str<> name;
-        name.format("_%X.txt", GetCurrentProcessId());
+        name.format("%X.%s", GetCurrentProcessId(), is_null_or_empty(ext) ? "txt" : ext);
         out.concat(name.c_str(), name.length());
     }
 }
@@ -823,7 +825,7 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out, boo
         if (interactive)
         {
             str<> tmp_errfile;
-            get_errorlevel_tmp_name(tmp_errfile);
+            get_errorlevel_tmp_name(tmp_errfile, "txt");
 
             if (s_inspect_errorlevel)
             {
@@ -849,17 +851,35 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out, boo
             }
             else
             {
+#ifdef CAPTURE_PUSHD_STACK
+                dbg_ignore_scope(snapshot, "pushd stack");
+                std::vector<str_moveable> stack;
+#endif
+
                 int32 errorlevel = 0;
 
                 errfile_reader reader;
                 if (reader.open(tmp_errfile.c_str()))
                 {
                     str<> s;
+                    // First line is the exit code.
                     if (reader.next(s))
                         errorlevel = atoi(s.c_str());
+#ifdef CAPTURE_PUSHD_STACK
+                    // Subsequent lines are the directory stack entries.
+                    while (reader.next(s) && !s.empty())
+                    {
+                        // This avoids std::move to reduce allocations and
+                        // total footprint.
+                        stack.emplace_back(s.c_str());
+                    }
+#endif
                 }
 
                 os::set_errorlevel(errorlevel);
+#ifdef CAPTURE_PUSHD_STACK
+                os::set_pushd_stack(stack);
+#endif
             }
             s_inspect_errorlevel = !s_inspect_errorlevel;
         }
@@ -1084,7 +1104,7 @@ skip_errorlevel:
         if (inspect_errorlevel)
         {
             str<> tmp_errfile;
-            get_errorlevel_tmp_name(tmp_errfile);
+            get_errorlevel_tmp_name(tmp_errfile, "txt");
 
             dbg_snapshot_heap(snapshot);
             m_pending_command = out.c_str();
@@ -1095,7 +1115,63 @@ skip_errorlevel:
 
             m_terminal.out->begin();
             m_terminal.out->end();
-            out.format(" set clink_dummy_capture_env= & echo %%errorlevel%% 2>nul >\"%s\"", tmp_errfile.c_str());
+
+#ifdef CAPTURE_PUSHD_STACK
+            bool wrote = false;
+            FILE* file = nullptr;
+            str<> tmp_errscript;
+            get_errorlevel_tmp_name(tmp_errscript, "bat");
+            {
+                wstr_moveable wacp_filename(tmp_errscript.c_str());
+                str_moveable acp_filename;
+                DWORD cch = WideCharToMultiByte(CP_ACP, WC_NO_BEST_FIT_CHARS, wacp_filename.c_str(), -1, nullptr, 0, nullptr, nullptr);
+                if (cch && acp_filename.reserve(cch))
+                {
+                    cch = WideCharToMultiByte(CP_ACP, WC_NO_BEST_FIT_CHARS, wacp_filename.c_str(), -1, acp_filename.data(), cch, nullptr, nullptr);
+                    if (cch)
+                        file = fopen(tmp_errscript.c_str(), "w");
+                }
+            }
+            if (file)
+            {
+                // What this script is doing:
+                //  1.  "@echo off" prevents echoing the commands to stdout.
+                //  2.  "setlocal" prevents clink_dummy_capture_env and
+                //      clink_exit_code from staying in the environment.
+                //  3.  "set clink_dummy_capture_env=" updates CMD's cached
+                //      environment so that later on Readline can get
+                //      up-to-date values for %LINES% and %COLUMNS%.
+                //  4.  "echo %%errorlevel%%" prints the last exit code into
+                //      the temporary file.
+                //  5.  "set clink_exit_code=%%errorlevel%%" remembers the
+                //      last exit code so it can be used in the "exit /b"
+                //      call.
+                //  6.  "pushd" prints the directory stack, if any, into the
+                //      temporary file.
+                //  7.  "endlocal" restores the environment.
+                //  8.  "exit /b %%clink_exit_code%%" restores the last exit
+                //      code, which got cleared by "pushd".
+                str<280> script;
+                script.format("@echo off& setlocal& set clink_dummy_capture_env=& echo %%errorlevel%% 2>nul >\"%s\"& set clink_exit_code=%%errorlevel%%& pushd 2>nul >>\"%s\"&\n"
+                              "endlocal& exit /b %%clink_exit_code%%", tmp_errfile.c_str(), tmp_errfile.c_str());
+                wrote = (fputs(script.c_str(), file) != EOF);
+                fclose(file);
+                file = nullptr;
+                out.format(" 2>nul \"%s\"", tmp_errscript.c_str());
+            }
+            if (!wrote)
+#endif
+            {
+                // What this command line is doing:
+                //  1.  " " (space) prevents doskey expansion and prevents the
+                //      command from being saved in the history.
+                //  2.  "set clink_dummy_capture_env=" updates CMD's cached
+                //      environment so that later on Readline can get
+                //      up-to-date values for %LINES% and %COLUMNS%.
+                //  3.  "echo %%errorlevel%%" prints the last exit code into
+                //      the temporary file.
+                out.format(" set clink_dummy_capture_env= & echo %%errorlevel%% 2>nul >\"%s\"", tmp_errfile.c_str());
+            }
             resolved = true;
             ret = true;
             move_cursor_up_one_line();
@@ -1356,7 +1432,7 @@ const char* host::filter_prompt(const char** rprompt, bool& ok, bool transient, 
 void host::purge_old_files()
 {
     str<> tmp;
-    get_errorlevel_tmp_name(tmp, true/*wild*/);
+    get_errorlevel_tmp_name(tmp, nullptr, true/*wild*/);
 
     // Purge orphaned clink_errorlevel temporary files older than 30 minutes.
     const int32 seconds = 30 * 60/*seconds per minute*/;
