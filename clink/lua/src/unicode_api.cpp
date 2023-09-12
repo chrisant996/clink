@@ -340,14 +340,15 @@ static int32 from_codepage(lua_State* state)
     if (!s)
         return 0;
 
-    int32 len = MultiByteToWideChar(cp, 0, s, -1, nullptr, 0);
+    const DWORD flags = (cp == 65001 || cp == 54936) ? 0 : WC_NO_BEST_FIT_CHARS;
+    int32 len = MultiByteToWideChar(cp, flags, s, -1, nullptr, 0);
     if (len <= 0)
         return 0;
 
     wstr_moveable tmp;
     tmp.reserve(len + 32); // Add 32 for slop, just in case.
 
-    len = MultiByteToWideChar(cp, 0, s, -1, tmp.data(), tmp.size());
+    len = MultiByteToWideChar(cp, flags, s, -1, tmp.data(), tmp.size());
     if (len <= 0)
         return 0;
 

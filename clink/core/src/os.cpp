@@ -1047,23 +1047,23 @@ bool get_clipboard_text(str_base& out)
 //------------------------------------------------------------------------------
 bool set_clipboard_text(const char* text, int32 length)
 {
-    int32 size = 0;
+    int32 cch = 0;
     if (length)
     {
-        size = MultiByteToWideChar(CP_UTF8, 0, text, length, nullptr, 0) * sizeof(wchar_t);
-        if (!size)
+        cch = MultiByteToWideChar(CP_UTF8, 0, text, length, nullptr, 0);
+        if (!cch)
             return false;
     }
-    size += sizeof(wchar_t);
+    ++cch;
 
-    HGLOBAL mem = GlobalAlloc(GMEM_MOVEABLE|GMEM_ZEROINIT, size);
+    HGLOBAL mem = GlobalAlloc(GMEM_MOVEABLE|GMEM_ZEROINIT, cch * sizeof(wchar_t));
     if (mem == nullptr)
         return false;
 
     if (length)
     {
         wchar_t* data = (wchar_t*)GlobalLock(mem);
-        MultiByteToWideChar(CP_UTF8, 0, text, length, data, size);
+        MultiByteToWideChar(CP_UTF8, 0, text, length, data, cch);
         GlobalUnlock(mem);
     }
 
