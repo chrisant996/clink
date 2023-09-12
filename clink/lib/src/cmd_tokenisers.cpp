@@ -524,7 +524,7 @@ word_token cmd_word_tokeniser::next(uint32& offset, uint32& length)
             // Space or equal or semicolon is a word break.
             if (new_state == sSpc)
                 break;
-            if (new_state == sTxt && strchr((command_word || redir_arg) ? c_name_delims : c_word_delims, c))
+            if (new_state == sTxt && !(c & ~0xff) && strchr((command_word || redir_arg) ? c_name_delims : c_word_delims, c))
                 break;
 
             // Normal text always updates the end of the word.
