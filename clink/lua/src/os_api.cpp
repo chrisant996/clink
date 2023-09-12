@@ -1084,7 +1084,7 @@ static int32 get_pushd_stack(lua_State* state)
 ///
 /// <strong>Note:</strong> The depth is only known if the
 /// <code>%PROMPT%</code> environment variable includes the <code>$+</code>
-/// code exactly once and does not contain the <code>$v</code> code.
+/// code exactly once.
 //! <strong>Note:</strong> For this to work, the
 //! <code><a href="#cmd_get_errorlevel">cmd.get_errorlevel</a></code> setting
 //! must be enabled, otherwise this returns 0.
