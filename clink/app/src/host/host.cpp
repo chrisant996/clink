@@ -23,6 +23,7 @@
 #include <lib/line_editor.h>
 #include <lib/intercept.h>
 #include <lib/clink_ctrlevent.h>
+#include <lib/errfile_reader.h>
 #include <lua/lua_script_loader.h>
 #include <lua/lua_state.h>
 #include <lua/prompt.h>
@@ -848,20 +849,17 @@ bool host::edit_line(const char* prompt, const char* rprompt, str_base& out, boo
             }
             else
             {
-                FILE* f = fopen(tmp_errfile.c_str(), "r");
-                if (f)
+                int32 errorlevel = 0;
+
+                errfile_reader reader;
+                if (reader.open(tmp_errfile.c_str()))
                 {
-                    char buffer[32];
-                    memset(buffer, 0, sizeof(buffer));
-                    fgets(buffer, _countof(buffer) - 1, f);
-                    fclose(f);
-                    _unlink(tmp_errfile.c_str());
-                    os::set_errorlevel(atoi(buffer));
+                    str<> s;
+                    if (reader.next(s))
+                        errorlevel = atoi(s.c_str());
                 }
-                else
-                {
-                    os::set_errorlevel(0);
-                }
+
+                os::set_errorlevel(errorlevel);
             }
             s_inspect_errorlevel = !s_inspect_errorlevel;
         }
