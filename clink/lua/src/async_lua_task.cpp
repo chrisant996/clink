@@ -6,6 +6,7 @@
 #include "async_lua_task.h"
 
 #include <core/str_unordered_set.h>
+#include <core/debugheap.h>
 #include <terminal/printer.h>
 #include <terminal/terminal_helpers.h>
 
@@ -128,6 +129,7 @@ void task_manager::end_line()
         }
         else
         {
+            dbg_ignore_scope(snapshot, "task_manager");
             iter->second->detach();
             m_unref_callbacks.push_back(iter->second->take_callback());
             unref = true;

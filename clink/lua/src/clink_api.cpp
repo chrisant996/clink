@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2015 Martin Ridgers
+// Copyright (c) 2015 Martin Ridgers
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
@@ -1502,6 +1502,7 @@ static int32 async_path_type(lua_State* state)
             task = std::make_shared<path_type_async_lua_task>(key.c_str(), src.c_str(), full.c_str());
             if (task && lua_isfunction(state, 3))
             {
+                dbg_ignore_scope(snapshot, "async path type");
                 lua_pushvalue(state, 3);
                 int32 ref = luaL_ref(state, LUA_REGISTRYINDEX);
                 task->set_callback(std::make_shared<callback_ref>(ref));
