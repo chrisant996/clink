@@ -16,6 +16,7 @@
 #include <core/auto_free_str.h>
 #include <core/os.h>
 #include <core/settings.h>
+#include <core/debugheap.h>
 
 #include <vector>
 #include <memory>
@@ -497,6 +498,7 @@ const line_states& commands::get_linestates(const char* buffer, uint32 len) cons
         static line_states* s_none = nullptr;
         if (!s_none)
         {
+            dbg_ignore_scope(snapshot, "globals; get_linestate");
             std::vector<word>* wv = new std::vector<word>;
             s_none = new line_states;
             s_none->push_back({ nullptr, 0, 0, 0, *wv });
@@ -522,6 +524,7 @@ const line_state& commands::get_linestate(const char* buffer, uint32 len) const
         static line_state* s_none = nullptr;
         if (!s_none)
         {
+            dbg_ignore_scope(snapshot, "globals; get_linestate");
             std::vector<word>* wv = new std::vector<word>;
             s_none = new line_state(nullptr, 0, 0, 0, *wv);
         }

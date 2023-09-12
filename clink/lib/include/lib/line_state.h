@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <core/object.h>
 #include <core/str_iter.h>
 
 #include <vector>
@@ -20,7 +21,7 @@ struct word
 };
 
 //------------------------------------------------------------------------------
-class line_state
+class line_state _DBGOBJECT
 {
 public:
                         line_state(const char* line, uint32 length, uint32 cursor, uint32 command_offset, const std::vector<word>& words);
