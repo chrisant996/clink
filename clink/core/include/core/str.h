@@ -27,9 +27,9 @@ inline int32    str_icmp(const char* l, const char* r)                 { return 
 inline int32    str_icmp(const wchar_t* l, const wchar_t* r)           { return wcsicmp(r, l); }
 inline int32    vsnprint(char* d, int32 n, const char* f, va_list a)        { return vsnprintf(d, n, f, a); }
 inline int32    vsnprint(wchar_t* d, int32 n, const wchar_t* f, va_list a)  { return _vsnwprintf(d, n, f, a); }
-inline const char*    str_chr(const char* s, int32 c)                  { return strchr(s, c); }
+inline const char*    str_chr(const char* s, int32 c)                  { return (c & ~0xff) ? nullptr : strchr(s, c); }
 inline const wchar_t* str_chr(const wchar_t* s, int32 c)               { return wcschr(s, wchar_t(c)); }
-inline const char*    str_rchr(const char* s, int32 c)                 { return strrchr(s, c); }
+inline const char*    str_rchr(const char* s, int32 c)                 { return (c & ~0xff) ? nullptr : strrchr(s, c); }
 inline const wchar_t* str_rchr(const wchar_t* s, int32 c)              { return wcsrchr(s, wchar_t(c)); }
 inline const char*    str_or_empty(const char* s)                      { return s ? s : ""; }
 inline const wchar_t* str_or_empty(const wchar_t* s)                   { return s ? s : L""; }

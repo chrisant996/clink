@@ -89,9 +89,9 @@ int32 str_tokeniser_impl<T>::peek_delims() const
     str_iter iter = m_iter;
 
     // Skip initial delimiters.
-    while (int32 c = iter.peek())
+    while (const int32 c = iter.peek())
     {
-        const char* delim = strchr(m_delims, c);
+        const char* delim = str_chr(m_delims, c);
         if (delim == nullptr)
             break;
 

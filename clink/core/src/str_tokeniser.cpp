@@ -99,7 +99,7 @@ str_token str_tokeniser_impl<T>::next_impl(const T*& out_start, int32& out_lengt
     char delim = 0;
     while (int32 c = m_iter.peek())
     {
-        const char* candidate = strchr(m_delims, c);
+        const char* candidate = str_chr(m_delims, c);
         if (candidate == nullptr)
             break;
 
@@ -120,7 +120,7 @@ str_token str_tokeniser_impl<T>::next_impl(const T*& out_start, int32& out_lengt
             continue;
         }
 
-        if (strchr(m_delims, c))
+        if (str_chr(m_delims, c))
             break;
 
         quote_close = get_right_quote(c);
