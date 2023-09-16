@@ -289,10 +289,10 @@ static const struct {
 };
 
 //------------------------------------------------------------------------------
-static void ensure_keydesc_map()
+static bool ensure_keydesc_map()
 {
     static bool s_inited = false;
-    if (!s_inited)
+    if (!s_inited && funmap)
     {
         s_inited = true;
 
@@ -359,6 +359,7 @@ static void ensure_keydesc_map()
         }
 #endif
     }
+    return !!s_pmap_keydesc;
 }
 
 //------------------------------------------------------------------------------
@@ -612,7 +613,8 @@ static Keyentry* collect_keymap(
 {
     int32 i;
 
-    ensure_keydesc_map();
+    if (!ensure_keydesc_map())
+        return nullptr;
 
     for (i = 0; i < KEYMAP_SIZE; ++i)
     {
@@ -776,6 +778,9 @@ static Keyentry* collect_functions(
     int32* max,
     bool categories)
 {
+    if (!funmap)
+        return nullptr;
+
     str_unordered_set seen_name;
     std::unordered_set<rl_command_func_t*> seen_func;
     for (int32 i = 1; i < *offset; i++)
@@ -1011,6 +1016,9 @@ void show_key_bindings(bool friendly, int32 mode, std::vector<key_binding_info>*
     // Maybe include unbound commands.
     if (mode & 4)
         collector = collect_functions(collector, &offset, &max_collect, show_categories);
+
+    if (!collector)
+        return;
 
     // Sort the collected keymap.
     qsort(collector + 1, offset - 1, sizeof(*collector), out ? cmp_sort_collector : cmp_sort_collector_cat);
@@ -1322,7 +1330,8 @@ static bool cmp_sort_command_bindings(const command_binding& a, const command_bi
 //------------------------------------------------------------------------------
 bool get_command_bindings(const char* command, bool friendly, str_base& _desc, str_base& _category, std::vector<str_moveable>& keys)
 {
-    ensure_keydesc_map();
+    if (!ensure_keydesc_map())
+        return false;
 
     const char* desc = nullptr;
     int32 cat = keycat_none;
@@ -1387,7 +1396,8 @@ int32 show_rl_help_raw(int32, int32)
 //------------------------------------------------------------------------------
 int32 clink_what_is(int32, int32)
 {
-    ensure_keydesc_map();
+    if (!ensure_keydesc_map())
+        return 0;
 
     // Move cursor past the input line.
     end_prompt(true/*crlf*/);
