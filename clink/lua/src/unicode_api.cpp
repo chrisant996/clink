@@ -335,12 +335,15 @@ static int32 iter(lua_State* state)
 /// input/output.
 static int32 from_codepage(lua_State* state)
 {
-    const char* s = checkstring(state, 1);
-    int32 cp = optinteger(state, 2, CP_ACP);
+    const char* const s = checkstring(state, 1);
+    const int32 cp = optinteger(state, 2, CP_ACP);
     if (!s)
         return 0;
 
-    const DWORD flags = (cp == 65001 || cp == 54936) ? 0 : WC_NO_BEST_FIT_CHARS;
+    // WC_NO_BEST_FIT_CHARS only applies to WideCharToMultiByte, and can
+    // cause erroneous conversion failures in MultiByteToWideChar.
+    const DWORD flags = 0;
+
     int32 len = MultiByteToWideChar(cp, flags, s, -1, nullptr, 0);
     if (len <= 0)
         return 0;

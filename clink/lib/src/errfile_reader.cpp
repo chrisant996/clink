@@ -115,11 +115,15 @@ bool errfile_reader::next(str_base& out)
 
     if (!m_utf16)
     {
+        // WC_NO_BEST_FIT_CHARS only applies to WideCharToMultiByte, and can
+        // cause erroneous conversion failures in MultiByteToWideChar.
+        const DWORD flags = 0;
+
         // Convert ACP -> UTF16 -> UTF8.
-        DWORD cch = MultiByteToWideChar(CP_ACP, WC_NO_BEST_FIT_CHARS, out.c_str(), -1, nullptr, 0);
+        DWORD cch = MultiByteToWideChar(CP_ACP, flags, out.c_str(), -1, nullptr, 0);
         if (cch && m_buffer.reserve(cch / sizeof(wchar_t)))
         {
-            cch = MultiByteToWideChar(CP_ACP, WC_NO_BEST_FIT_CHARS, out.c_str(), -1, m_buffer.data(), cch);
+            cch = MultiByteToWideChar(CP_ACP, flags, out.c_str(), -1, m_buffer.data(), cch);
             if (cch)
                 out = m_buffer.c_str();
         }
