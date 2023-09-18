@@ -10,6 +10,7 @@
 #include <core/settings.h>
 #include <core/str.h>
 #include <core/str_tokeniser.h>
+#include <terminal/terminal_helpers.h>
 #include <lua/lua_script_loader.h>
 #include <lua/prompt.h>
 
@@ -284,6 +285,8 @@ int32 set(int32 argc, char** argv)
 
     argc -= optind;
     argv += optind;
+
+    console_config cc(nullptr, false/*accept_mouse_input*/);
 
     // Load the settings from disk.
     str<280> settings_file;
