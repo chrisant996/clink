@@ -5,6 +5,9 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
+- `Ctrl-Space` then `dw` highlights **THREE** characters but should only highlight **TWO**.
+- A reliable way for scripts to tell whether they're loaded in `clink set` versus in `cmd`.
+- Add link to File Locations in the Saved Command History section.
 
 ## Normal Priority
 - Open issue in Terminal repo about bugs in the new shell integration in v1.18.
