@@ -10,6 +10,7 @@
 - Fixed a crash in `rl.getkeybindings()` if it's called by a Lua script running inside `clink set`.
 - Fixed Lua debugger input if a script error occurs inside `clink set`.
 - Fixed a width quirk in `clink-select-complete` where typing to narrow the list to a single item accidentally made the column width at least 3 characters, even if the item was only 1 or 2 characters width.
+- Fixed [#494](https://github.com/chrisant996/clink/issues/494); Lua error when using `unicode.fromcodepage()` (reported and fixed before the bug was published).
 - Fixed [#493](https://github.com/chrisant996/clink/issues/493); `clink-select-complete` displays the selected item incorrectly if both `colored-stats` and `colored-completion-prefix` are `off` (regression introduced in v1.5.5).
 
 #### v1.5.5
