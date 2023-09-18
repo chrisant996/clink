@@ -7,6 +7,10 @@
 - Fixed `os.geterrorlevel()` when `cmd /u` was used.
 - Fixed word break parsing in the input line when certain Unicode characters are present.
 - Fixed Unicode string conversions to disallow translating to "similar" characters (which could be problematic in filenames).
+- Fixed a crash in `rl.getkeybindings()` if it's called by a Lua script running inside `clink set`.
+- Fixed Lua debugger input if a script error occurs inside `clink set`.
+- Fixed a width quirk in `clink-select-complete` where typing to narrow the list to a single item accidentally made the column width at least 3 characters, even if the item was only 1 or 2 characters width.
+- Fixed [#493](https://github.com/chrisant996/clink/issues/493); `clink-select-complete` displays the selected item incorrectly if both `colored-stats` and `colored-completion-prefix` are `off` (regression introduced in v1.5.5).
 
 #### v1.5.5
 - Changed the `clink.autoupdate` setting to allow `off`, `check` (the default), `prompt`, and `auto` for more control over how and when updating happens.  When set to `prompt` or `auto` Clink can trigger updates automatically, so you don't need to even run `clink update`.
