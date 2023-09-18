@@ -156,9 +156,9 @@ column_widths calculate_columns(const match_adapter& adapter, int32 max_matches,
 
     /* Determine the max possible number of display columns.  */
     const bool vertical = !_rl_print_completions_horizontally;
-    const size_t line_length = __complete_get_screenwidth();
-    size_t max_idx = line_length;
-    max_idx = (max_idx + col_padding) / (1 + col_padding);
+    const size_t screen_width = __complete_get_screenwidth();
+    const size_t line_length = screen_width + (col_padding - 1);
+    const size_t max_idx = line_length / (1 + col_padding);
 
     /* Normally the maximum number of columns is determined by the
        screen width.  But if few files are available this might limit it
@@ -282,7 +282,7 @@ column_widths calculate_columns(const match_adapter& adapter, int32 max_matches,
                 const size_t idx = (vertical
                                     ? filesno / ((count + i) / (i + 1))
                                     : filesno % (i + 1));
-                const width_t real_length = len + (idx == i ? 0 : col_padding);
+                const width_t real_length = len + col_padding;
 
                 if (s_column_info[i].col_arr[idx] < real_length)
                 {
@@ -311,9 +311,9 @@ column_widths calculate_columns(const match_adapter& adapter, int32 max_matches,
     if (fixed_cols || max_cols <= 0)
     {
         const size_t col_max = max_len + col_padding;
-        const size_t limit = one_column ? 1 : max<size_t>((line_length + col_padding - 1) / col_max, 1);
+        const size_t limit = one_column ? 1 : max<size_t>(line_length / col_max, 1);
         for (size_t i = 0; i < limit; ++i)
-            widths.m_widths.push_back(col_max);
+            widths.m_widths.push_back(max_len);
     }
     else
     {
@@ -325,12 +325,11 @@ column_widths calculate_columns(const match_adapter& adapter, int32 max_matches,
                 break;
         }
 
-        size_t remove_padding = cols - 1;
-        for (size_t i = 0; i < cols; ++i, --remove_padding)
-            widths.m_widths.push_back(s_column_info[cols - 1].col_arr[i] - (remove_padding ? col_padding : 0));
+        for (size_t i = 0; i < cols; ++i)
+            widths.m_widths.push_back(s_column_info[cols - 1].col_arr[i] - col_padding);
     }
 
-    widths.m_right_justify = widths.num_columns() > 1 || widths.m_max_match > (line_length * 4) / 10;
+    widths.m_right_justify = widths.num_columns() > 1 || widths.m_max_match > (screen_width * 4) / 10;
 
     return widths;
 }
