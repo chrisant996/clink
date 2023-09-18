@@ -517,16 +517,18 @@ void parse_match_colors()
 {
     assert(!s_error_context);
 
-    if (!_rl_colored_stats && !_rl_colored_completion_prefix)
-        return;
-
     dbg_ignore_scope(snapshot, "parse match colors");
 
     std::vector<color_rule> empty;
     s_color_rules.swap(empty);
 
-    _rl_parse_colors();
+    // Parse LS_COLORS only if completion colors are enabled.
+    const bool need_parse = (_rl_colored_stats || _rl_colored_completion_prefix);
+    if (need_parse)
+        _rl_parse_colors();
 
+    // Always copy the LS_COLORS indicators, because clink-select-complete
+    // needs C_LEFT/etc to be initialized.
     for (int32 i = 0; i < sizeof_array(s_colors); ++i)
     {
         free(s_colors[i]);
@@ -554,34 +556,37 @@ void parse_match_colors()
         s_colors[i] = copy_str(str, len);
     }
 
-    str<> s;
-    s_error_context = "CLINK_MATCH_COLORS";
-    if (!os::get_env("CLINK_MATCH_COLORS", s))
+    if (need_parse)
     {
-#ifdef INCLUDE_MATCH_COLORING_RULES
-        s_error_context = g_match_colordef.get_name();
-        g_match_colordef.get(s);
-#endif
-    }
-
-    if (s.length())
-    {
-        str<> token;
-        str<16> value;
-        str_iter iter(s.c_str(), s.length());
-        while (iter.more())
+        str<> s;
+        s_error_context = "CLINK_MATCH_COLORS";
+        if (!os::get_env("CLINK_MATCH_COLORS", s))
         {
-            const int32 r = get_token_and_value(iter, token, value);
-            if (r < 0)
+#ifdef INCLUDE_MATCH_COLORING_RULES
+            s_error_context = g_match_colordef.get_name();
+            g_match_colordef.get(s);
+#endif
+        }
+
+        if (s.length())
+        {
+            str<> token;
+            str<16> value;
+            str_iter iter(s.c_str(), s.length());
+            while (iter.more())
             {
-                _rl_errmsg("unparsable value for %s string", s_error_context);
-                break;
-            }
-            if (r > 0)
-            {
-                color_rule rule;
-                if (parse_rule(str_iter(token.c_str(), token.length()), value, rule))
-                    s_color_rules.emplace_back(std::move(rule));
+                const int32 r = get_token_and_value(iter, token, value);
+                if (r < 0)
+                {
+                    _rl_errmsg("unparsable value for %s string", s_error_context);
+                    break;
+                }
+                if (r > 0)
+                {
+                    color_rule rule;
+                    if (parse_rule(str_iter(token.c_str(), token.length()), value, rule))
+                        s_color_rules.emplace_back(std::move(rule));
+                }
             }
         }
     }
