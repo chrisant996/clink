@@ -2662,6 +2662,8 @@ Line|Description
 
 There are several settings that control how history works.  Run `clink set history*` to see them all.
 
+Run `clink info` to find the history file.  See [File Locations]() for more information.
+
 > **Note:** If the first word in the line matches one of the words in the [`history.dont_add_to_history_cmds`](#history_dont_add_to_history_cmds) setting then the command is not added to history.  By default, `history` and `exit` are not added to history.
 
 ### List the history
