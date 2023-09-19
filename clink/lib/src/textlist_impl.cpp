@@ -16,6 +16,7 @@
 #include <core/settings.h>
 #include <core/str_compare.h>
 #include <core/str_iter.h>
+#include <core/debugheap.h>
 #include <rl/rl_commands.h>
 #include <terminal/printer.h>
 #include <terminal/ecma48_iter.h>
@@ -447,6 +448,12 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
     if (history_timestamps)
         timeformatter.set_timeformat(nullptr, true);
 
+#ifdef USE_MEMORY_TRACKING
+    sane_alloc_config sane = dbggetsaneallocconfig();
+    if (history_timestamps)
+        dbgsetsanealloc(max<int32>(count * (32 + (sizeof(void*)*3)), 256*1024), 1024*1024, nullptr);
+#endif
+
     // Gather the items.
     str<> tmp;
     str<> tmp2;
@@ -537,6 +544,11 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
         if (sig)
             raise(sig);
     }
+
+#ifdef USE_MEMORY_TRACKING
+    if (history_timestamps)
+        dbgsetsaneallocconfig(sane);
+#endif
 
     return results;
 }

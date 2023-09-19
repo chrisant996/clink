@@ -100,7 +100,16 @@ typedef __int64 int64;  typedef unsigned __int64 uint64;
 
 char const* dbginspectmemory(const void* pv, size_t size);
 
+struct sane_alloc_config
+{
+    size_t max_sane_alloc;
+    size_t max_sane_realloc;
+    const size_t* sane_alloc_exceptions;    // 0 terminated list of exceptions.
+};
+
 void dbgsetsanealloc(size_t maxalloc, size_t maxrealloc, size_t const* exceptions);
+void dbgsetsaneallocconfig(const struct sane_alloc_config sane);
+struct sane_alloc_config dbggetsaneallocconfig();
 
 void* dbgalloc_(size_t size, uint32 flags);
 void* dbgrealloc_(void* pv, size_t size, uint32 flags);

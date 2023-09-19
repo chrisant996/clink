@@ -166,11 +166,13 @@ struct config
     volatile size_t reference_alloc_number  = 0;
     const char* reference_tag               = nullptr;
 
-    // The max_sane_alloc would ideally be 64 * 1024, but std::vector uses new
-    // even when reallocating and raises too many false alerts.
-    size_t max_sane_alloc                   = 256 * 1024;
-    size_t max_sane_realloc                 = 1024 * 1024;
-    size_t const *sane_alloc_exceptions     = nullptr; // 0 terminated list of exceptions.
+    sane_alloc_config sane_alloc            = {
+        // The max_sane_alloc would ideally be 64 * 1024, but std::vector uses
+        // new even when reallocating and raises too many false alerts.
+        256 * 1024,     // max_sane_alloc
+        1024 * 1024,    // max_sane_realloc
+        nullptr,        // sane_alloc_exceptions
+    };
 };
 
 static config& get_config()
@@ -506,12 +508,23 @@ void mem_tracking::get_stack_string(char* buffer, size_t max, bool newlines) con
 }
 #endif
 
-extern "C" void dbgsetsanealloc(size_t max_alloc, size_t max_realloc, const size_t *exceptions )
+extern "C" void dbgsetsanealloc(size_t max_alloc, size_t max_realloc, const size_t *exceptions)
 {
     auto& config = get_config();
-    config.max_sane_alloc = max_alloc;
-    config.max_sane_realloc = max_realloc;
-    config.sane_alloc_exceptions = exceptions;
+    config.sane_alloc.max_sane_alloc = max_alloc;
+    config.sane_alloc.max_sane_realloc = max_realloc;
+    config.sane_alloc.sane_alloc_exceptions = exceptions;
+}
+
+extern "C" void dbgsetsaneallocconfig(const struct sane_alloc_config sane)
+{
+    auto& config = get_config();
+    config.sane_alloc = sane;
+}
+
+extern "C" struct sane_alloc_config dbggetsaneallocconfig()
+{
+    return get_config().sane_alloc;
 }
 
 extern "C" void* dbgalloc_(size_t size, uint32 flags)
@@ -530,8 +543,8 @@ extern "C" void* dbgalloc_(size_t size, uint32 flags)
     if (config.break_alloc_size && config.break_alloc_size == size)
         DebugBreak();
 
-    if (!(flags & memNoSizeCheck) && config.max_sane_alloc)
-        assert1(size <= config.max_sane_alloc, "dbgalloc:  Is this a bogus size?  (%zu bytes)", size);
+    if (!(flags & memNoSizeCheck) && config.sane_alloc.max_sane_alloc)
+        assert1(size <= config.sane_alloc.max_sane_alloc, "dbgalloc:  Is this a bogus size?  (%zu bytes)", size);
 
     mem_tracking* const p = static_cast<mem_tracking*>(real_malloc(mem_tracking::pad_size(size)));
     if (!p)
@@ -613,8 +626,8 @@ void* dbgrealloc_(void* pv, size_t size, uint32 flags)
     assert1(size != p2->m_requested_size, "dbgrealloc:  Why realloc when the size isn't changing?  (%zu bytes)", size);
 #endif
 
-    if (!(p2->m_flags & memNoSizeCheck) && config.max_sane_realloc)
-        assert1(size <= config.max_sane_realloc, "dbgrealloc:  Is this a bogus size?  (%zu bytes)", size);
+    if (!(p2->m_flags & memNoSizeCheck) && config.sane_alloc.max_sane_realloc)
+        assert1(size <= config.sane_alloc.max_sane_realloc, "dbgrealloc:  Is this a bogus size?  (%zu bytes)", size);
 
     // Fill values.
 
