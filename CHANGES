@@ -4,6 +4,7 @@
 
 #### v1.5.6
 - Added `os.getpushddepth()`, which works when `%PROMPT%` contains exactly one `$+`.
+- The `clink-popup-history` and `win-history-list` commands show timestamps when `history.time_stamp` is set to `show`.
 - Fixed `os.geterrorlevel()` when `cmd /u` was used.
 - Fixed word break parsing in the input line when certain Unicode characters are present.
 - Fixed Unicode string conversions to disallow translating to "similar" characters (which could be problematic in filenames).
