@@ -2700,9 +2700,9 @@ History items can optionally save the timestamp when they were added, and the ti
 
 Use <code>clink set <a href="#history_time_stamp">history.time_stamp</a> off</code> to not save or show timestamps for history items (this is the default).  Turning off timestamps doesn't remove existing timestamps.
 
-Use `clink set history.time_stamp save` to save timestamps for each history item but only show them in the `history` command when the `--show-time` flag is used.
+Use `clink set history.time_stamp save` to save timestamps for each history item but only show them in the `history` command when the `--show-time` flag is used.  They may also be shown when a `clink-popup-history` or `win-history-list` key binding is pressed, if a non-zero [numeric argument](#readline-arguments) is supplied.
 
-Use `clink set history.time_stamp show` to save timestamps for each history item and show them in the `history` command unless the `--bare` flag is used.
+Use `clink set history.time_stamp show` to save timestamps for each history item and show them in the `history` command unless the `--bare` flag is used.  They're also shown when a `clink-popup-history` or `win-history-list` key binding is pressed, unless a [numeric argument](#readline-arguments) argument of zero is supplied.
 
 Use <code>clink set <a href="#history_time_format">history.time_format</a> <span class="arg">format</span></code> to specify the format for showing timestamps (the default format is <code>%F %T &nbsp</code>).
 
