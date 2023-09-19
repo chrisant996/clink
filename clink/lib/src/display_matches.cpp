@@ -604,7 +604,6 @@ void pad_filename(int32 len, int32 pad_to_width, int32 selected)
 
     while (num_spaces > 0)
     {
-        //static const char spaces[] = "................................................";
         static const char spaces[] = "                                                ";
         const int32 spaces_bytes = sizeof(spaces) - sizeof(spaces[0]);
         const int32 chunk_len = (num_spaces < spaces_bytes) ? num_spaces : spaces_bytes;

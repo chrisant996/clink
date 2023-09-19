@@ -928,15 +928,9 @@ static int32 __cdecl cmp_sort_collector_cat(const void* pv1, const void* pv2)
 //------------------------------------------------------------------------------
 static void pad_with_spaces(str_base& str, uint32 pad_to)
 {
-    uint32 len = cell_count(str.c_str());
-    while (len < pad_to)
-    {
-        const char spaces[] = "                                ";
-        const uint32 available_spaces = sizeof_array(spaces) - 1;
-        int32 space_count = min(pad_to - len, available_spaces);
-        str.concat(spaces, space_count);
-        len += space_count;
-    }
+    const uint32 len = cell_count(str.c_str());
+    if (len < pad_to)
+        concat_spaces(str, pad_to - len);
 }
 
 //------------------------------------------------------------------------------

@@ -11,6 +11,9 @@
 #include <core/str_tokeniser.h>
 #include <lib/history_db.h>
 #include <lib/history_timeformatter.h>
+#include <terminal/terminal.h>
+#include <terminal/terminal_helpers.h>
+#include <terminal/printer.h>
 
 #include <getopt.h>
 #include <stdio.h>
@@ -32,16 +35,39 @@ static bool s_showtime = false;
 static history_timeformatter s_timeformatter;
 
 //------------------------------------------------------------------------------
+class terminal_scope
+{
+public:
+                    terminal_scope(terminal& term);
+
+private:
+    printer         m_printer;
+    printer_context m_printer_context;
+};
+
+//------------------------------------------------------------------------------
+terminal_scope::terminal_scope(terminal& term)
+: m_printer(*term.out)
+, m_printer_context(term.out, &m_printer)
+{
+}
+
+
+
+//------------------------------------------------------------------------------
 class history_scope
 {
 public:
                     history_scope();
+                    ~history_scope();
     history_db*     operator -> ()      { return m_history; }
     history_db&     operator * ()       { return *m_history; }
 
 private:
     str<280>        m_path;
     history_db*     m_history;
+    terminal        m_terminal;
+    terminal_scope* m_terminal_scope;
 };
 
 //------------------------------------------------------------------------------
@@ -55,6 +81,9 @@ history_scope::history_scope()
     app->get_history_path(history_path);
     app->get_default_settings_file(default_settings_file);
     settings::load(m_path.c_str(), default_settings_file.c_str());
+
+    m_terminal = terminal_create();
+    m_terminal_scope = new terminal_scope(m_terminal);
 
     if (g_history_timestamp.get() == 2)
         s_showtime = true;
@@ -71,6 +100,13 @@ history_scope::history_scope()
         puts(msg.c_str());
 }
 
+//------------------------------------------------------------------------------
+history_scope::~history_scope()
+{
+    delete m_terminal_scope;
+    terminal_destroy(m_terminal);
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -81,37 +117,21 @@ static bool is_console(HANDLE h)
 }
 
 //------------------------------------------------------------------------------
-static void print_history_item(HANDLE hout, const char* utf8, wstr_base* utf16)
+static void translate_history_line(str_base& out, const char* in, uint32 len)
 {
-    if (utf16)
+    // Translate control characters.
+    for (const char* walk = in; len;)
     {
-        DWORD written;
-        utf16->clear();
-
-        // Translate to UTF16, and also translate control characters.
-        for (const char* walk = utf8; *walk;)
-        {
-            const char* begin = walk;
-            while (uint8(*walk) >= 0x20 || *walk == 0x09)
-                walk++;
-            if (walk > begin)
-            {
-                str_iter tmpi(begin, int32(walk - begin));
-                to_utf16(*utf16, tmpi);
-            }
-            if (!*walk)
-                break;
-            wchar_t ctrl[3] = { '^', wchar_t(*walk + 'A' - 1) };
-            utf16->concat(ctrl, 2);
-            walk++;
-        }
-
-        utf16->concat(L"\r\n", 2);
-        WriteConsoleW(hout, utf16->c_str(), utf16->length(), &written, nullptr);
-    }
-    else
-    {
-        puts(utf8);
+        const char* begin = walk;
+        while (len && (uint8(*walk) >= 0x20 || *walk == 0x09))
+            ++walk, --len;
+        if (walk > begin)
+            out.concat(begin, int32(walk - begin));
+        if (!len)
+            break;
+        char ctrl[3] = { '^', *walk + 'A' - 1 };
+        out.concat(ctrl, 2);
+        ++walk, --len;
     }
 }
 
@@ -140,9 +160,7 @@ static void print_history(uint32 tail_count, bool bare)
     for (uint32 i = 0; i < skip; ++i, ++index, iter.next(line));
 
     str<> utf8;
-    wstr<> utf16;
-    HANDLE hout = GetStdHandle(STD_OUTPUT_HANDLE);
-    bool translate = is_console(hout);
+    const bool translate = is_console(GetStdHandle(STD_OUTPUT_HANDLE));
 
     uint32 timelen = 0;
     struct tm tm = {};
@@ -160,21 +178,34 @@ static void print_history(uint32 tail_count, bool bare)
         }
 
         utf8.clear();
-        if (bare)
-            utf8.format("%.*s", line.length(), line.get_pointer());
-        else if (!s_showtime)
-            utf8.format("%5u  %.*s", index, line.length(), line.get_pointer());
-        else
+        if (!bare)
         {
-            if (!timestamp.empty())
+            utf8.format("%5u  ", index);
+            if (s_showtime)
             {
-                const time_t tt = time_t(atoi(timestamp.c_str()));
-                s_timeformatter.format(tt, timestamp);
+                if (!timestamp.empty())
+                {
+                    const time_t tt = time_t(atoi(timestamp.c_str()));
+                    s_timeformatter.format(tt, timestamp);
+                    utf8.concat(timestamp.c_str(), timestamp.length());
+                }
+                const uint32 len = cell_count(timestamp.c_str());
+                if (timelen > len)
+                    concat_spaces(utf8, timelen - len);
             }
-            utf8.format("%5u  %-*s%.*s", index, timelen, timestamp.c_str(), line.length(), line.get_pointer());
         }
 
-        print_history_item(hout, utf8.c_str(), translate ? &utf16 : nullptr);
+        if (translate)
+        {
+            translate_history_line(utf8, line.get_pointer(), line.length());
+            utf8.concat("\r\n", 2);
+            g_printer->print(utf8.c_str(), utf8.length());
+        }
+        else
+        {
+            utf8.concat(line.get_pointer(), line.length());
+            puts(utf8.c_str());
+        }
     }
 
     if (s_diag)
@@ -401,8 +432,6 @@ static bool is_flag(const char* arg, const char* flag, uint32 min_len=-1)
 //------------------------------------------------------------------------------
 int32 history(int32 argc, char** argv)
 {
-    s_timeformatter.set_timeformat(nullptr);
-
     // Check to see if the user asked from some help!
     bool bare = false;
     bool uniq = false;

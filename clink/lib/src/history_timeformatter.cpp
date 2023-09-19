@@ -62,11 +62,45 @@ history_timeformatter::~history_timeformatter()
 void history_timeformatter::set_timeformat(const char* timeformat, bool for_popup)
 {
     m_timeformat = timeformat;
+    m_max_timelen = 0;
+    m_for_popup = for_popup;
+}
+
+//------------------------------------------------------------------------------
+uint32 history_timeformatter::max_timelen()
+{
+    if (!m_max_timelen)
+        ensure_timeformat();
+
+    return m_max_timelen;
+}
+
+//------------------------------------------------------------------------------
+void history_timeformatter::format(time_t time, str_base& out)
+{
+    struct tm tm = {};
+    if (localtime_s(&tm, &time) == 0)
+    {
+        if (!m_max_timelen)
+            ensure_timeformat();
+
+        char timebuf[128];
+        strftime(timebuf, sizeof_array(timebuf), m_timeformat.c_str(), &tm);
+        out = timebuf;
+        return;
+    }
+    out.clear();
+}
+
+//------------------------------------------------------------------------------
+void history_timeformatter::ensure_timeformat()
+{
     if (m_timeformat.empty())
         g_history_timeformat.get(m_timeformat);
     if (m_timeformat.empty())
         m_timeformat = "%F %T  ";
-    if (for_popup)
+
+    if (m_for_popup)
     {
         str<> tmp;
         for (uint32 i = 0; i < m_timeformat.length(); ++i)
@@ -78,39 +112,17 @@ void history_timeformatter::set_timeformat(const char* timeformat, bool for_popu
         tmp.trim();
         m_timeformat = tmp.c_str();
     }
-    m_max_timelen = 0;
-}
 
-//------------------------------------------------------------------------------
-uint32 history_timeformatter::max_timelen()
-{
-    if (!m_max_timelen)
-    {
-        struct tm tm = {};
-        tm.tm_year = 2001;
-        tm.tm_mon = 11;
-        tm.tm_mday = 15;
-        tm.tm_hour = 23;
-        tm.tm_min = 30;
-        tm.tm_sec = 30;
-
-        char timebuf[128];
-        timebuf[0] = '\0';
-        strftime(timebuf, sizeof_array(timebuf), m_timeformat.c_str(), &tm);
-        m_max_timelen = cell_count(timebuf);
-    }
-    return m_max_timelen;
-}
-
-//------------------------------------------------------------------------------
-void history_timeformatter::format(time_t time, str_base& out)
-{
-    assert(!m_timeformat.empty());
     struct tm tm = {};
+    tm.tm_year = 2001;
+    tm.tm_mon = 11;
+    tm.tm_mday = 15;
+    tm.tm_hour = 23;
+    tm.tm_min = 30;
+    tm.tm_sec = 30;
+
     char timebuf[128];
-    if (localtime_s(&tm, &time) == 0)
-        strftime(timebuf, sizeof_array(timebuf), m_timeformat.c_str(), &tm);
-    else
-        timebuf[0] = '\0';
-    out = timebuf;
+    timebuf[0] = '\0';
+    strftime(timebuf, sizeof_array(timebuf), m_timeformat.c_str(), &tm);
+    m_max_timelen = cell_count(timebuf);
 }

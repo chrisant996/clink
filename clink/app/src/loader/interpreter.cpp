@@ -286,5 +286,7 @@ int32 interpreter(int32 argc, char** argv)
         }
     }
 
+    term.in->end();
+
     return ret;
 }

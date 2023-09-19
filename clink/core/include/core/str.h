@@ -38,6 +38,7 @@ uint32 char_count(const char*);
 uint32 char_count(const wchar_t*);
 
 void make_spaces(uint32 num, str_base& out);
+void concat_spaces(str_base& str, uint32 num);
 
 //------------------------------------------------------------------------------
 template <typename TYPE>

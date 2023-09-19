@@ -167,10 +167,18 @@ uint32 char_count(const wchar_t* ptr)
 void make_spaces(uint32 num, str_base& out)
 {
     out.clear();
+    concat_spaces(out, num);
+}
+
+//------------------------------------------------------------------------------
+void concat_spaces(str_base& str, uint32 num)
+{
+    static const char spaces[] = "                                ";
+    const uint32 available_spaces = sizeof_array(spaces) - 1;
     while (num)
     {
-        uint32 chunk = min<uint32>(32, num);
-        out.concat("                                ", chunk);
+        const uint32 chunk = min(num, available_spaces);
+        str.concat(spaces, chunk);
         num -= chunk;
     }
 }

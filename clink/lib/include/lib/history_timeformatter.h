@@ -16,6 +16,8 @@ public:
     uint32          max_timelen();
     void            format(time_t time, str_base& out);
 private:
+    void            ensure_timeformat();
     str_moveable    m_timeformat;
     uint32          m_max_timelen = 0;
+    bool            m_for_popup = false;
 };
