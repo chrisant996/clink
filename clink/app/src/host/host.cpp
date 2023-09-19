@@ -122,51 +122,6 @@ static setting_enum g_directories_dupe_mode(
     "add,erase_prev",
     0);
 
-setting_enum g_history_timestamp(
-    "history.time_stamp",
-    "History item timestamps",
-    "The default is 'off'.  When set to 'save', timestamps are saved for each\n"
-    "history item but are only shown in the 'history' command when the\n"
-    "'--show-time' flag is used.  When set to 'show', timestamps are saved and\n"
-    "are shown in 'history' unless the '--bare' flag is used.",
-    "off,save,show",
-    0);
-
-setting_str g_history_timeformat(
-    "history.time_format",
-    "Format for showing history times",
-    "This specifies a format string to override the default string (\"%F %T  \")\n"
-    "for showing timestamps for history items.  Timestamps are shown when the\n"
-    "'history.show_time' setting is enabled.  This can be overridden by flags in\n"
-    "the 'history' command.\n"
-    "\n"
-    "The format string may contain regular characters and special format\n"
-    "specifiers.  Format specifiers begin with a percent sign (%), and are expanded\n"
-    "to their corresponding values.  For a list of possible format specifiers,\n"
-    "refer to the C++ strftime() documentation.\n"
-    "\n"
-    "Some common format specifiers are:\n"
-    "  %a    Abbreviated weekday name for the locale (e.g. Thu).\n"
-    "  %b    Abbreviated month name for the locale (e.g. Aug).\n"
-    "  %c    Date and time representation for the locale.\n"
-    "  %D    Short MM/DD/YY date (e.g. 08/23/01).\n"
-    "  %F    Short YYYY/MM/DD date (e.g. 2001-08-23).\n"
-    "  %H    Hour in 24-hour format (00 - 23).\n"
-    "  %I    Hour in 12-hour format (01 - 12).\n"
-    "  %m    Month (01 - 12).\n"
-    "  %M    Minutes (00 - 59).\n"
-    "  %p    AM or PM indicator for the locale.\n"
-    "  %r    12-hour clock time for the locale (e.g. 02:55:41 pm).\n"
-    "  %R    24-hour clock time (e.g. 14:55).\n"
-    "  %S    Seconds (00 - 59).\n"
-    "  %T    ISO 8601 time format HH:MM:SS (e.g. 14:55:41).\n"
-    "  %x    Date representation for the locale.\n"
-    "  %X    Time representation for the locale.\n"
-    "  %y    Year without century (00 - 99).\n"
-    "  %Y    Year with century (e.g. 2001).\n"
-    "  %%    A % sign.",
-    "%F %T  ");
-
 static setting_str g_exclude_from_history_cmds(
     "history.dont_add_to_history_cmds",
     "Commands not automatically added to the history",

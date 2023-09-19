@@ -10,6 +10,7 @@
 #include "line_buffer.h"
 #include "ellipsify.h"
 #include "clink_ctrlevent.h"
+#include "history_timeformatter.h"
 
 #include <core/base.h>
 #include <core/settings.h>
@@ -70,6 +71,7 @@ enum {
 //------------------------------------------------------------------------------
 extern setting_enum g_ignore_case;
 extern setting_bool g_fuzzy_accent;
+extern setting_enum g_history_timestamp;
 extern const char* get_popup_colors();
 extern const char* get_popup_desc_colors();
 extern int32 host_remove_history(int32 rl_history_index, const char* line);
@@ -317,6 +319,14 @@ const char* textlist_impl::addl_columns::add_entry(const char* ptr)
     size_t len_display = strlen(ptr);
     ptr += len_display + 1;
 
+    add_columns(ptr);
+
+    return display;
+}
+
+//------------------------------------------------------------------------------
+void textlist_impl::addl_columns::add_columns(const char* ptr)
+{
     column_text column_text = {};
     if (*ptr)
     {
@@ -340,8 +350,6 @@ const char* textlist_impl::addl_columns::add_entry(const char* ptr)
     }
 
     m_rows.emplace_back(std::move(column_text));
-
-    return display;
 }
 
 //------------------------------------------------------------------------------
@@ -429,8 +437,19 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
     // Initialize colors.
     init_colors(config);
 
+    // Maybe format history timestamps.
+    const bool history_timestamps = (m_history_mode && m_infos &&
+        ((g_history_timestamp.get() == 2 && (!rl_explicit_arg || rl_numeric_arg)) ||
+         (g_history_timestamp.get() == 1 && rl_explicit_arg && rl_numeric_arg)));
+    const HIST_ENTRY* const* const histlist = history_list();
+    assertimplies(history_timestamps, !has_columns);
+    history_timeformatter timeformatter;
+    if (history_timestamps)
+        timeformatter.set_timeformat(nullptr, true);
+
     // Gather the items.
     str<> tmp;
+    str<> tmp2;
     bool any_ctrl = false;
     for (int32 i = 0; i < count; i++)
     {
@@ -438,11 +457,25 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
         if (has_columns)
             text = m_columns.add_entry(m_entries[i]);
         else
+        {
             text = m_entries[i];
+            if (history_timestamps)
+            {
+                const char* timestamp = histlist[m_infos[i].index]->timestamp;
+                tmp2.clear();
+                if (timestamp && *timestamp)
+                {
+                    const time_t tt = time_t(atoi(timestamp));
+                    timeformatter.format(tt, tmp);
+                    tmp2.format("%-*s\t", timeformatter.max_timelen(), tmp.c_str());
+                }
+                m_columns.add_columns(tmp2.c_str());
+            }
+        }
         m_longest = max<int32>(m_longest, make_item(text, tmp, &any_ctrl));
         m_items.push_back(m_store.add(tmp.c_str()));
     }
-    m_has_columns = has_columns;
+    m_has_columns = has_columns || history_timestamps;
     m_horz_scrolling = !m_has_columns || !any_ctrl;
 
     if (title && *title)

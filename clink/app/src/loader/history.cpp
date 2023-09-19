@@ -10,6 +10,7 @@
 #include <core/str.h>
 #include <core/str_tokeniser.h>
 #include <lib/history_db.h>
+#include <lib/history_timeformatter.h>
 
 #include <getopt.h>
 #include <stdio.h>
@@ -20,7 +21,6 @@
 //------------------------------------------------------------------------------
 extern setting_bool g_save_history;
 extern setting_enum g_history_timestamp;
-extern setting_str g_history_timeformat;
 
 //------------------------------------------------------------------------------
 extern "C" uint32 cell_count(const char* in);
@@ -29,7 +29,7 @@ void puts_help(const char* const* help_pairs, const char* const* other_pairs=nul
 //------------------------------------------------------------------------------
 static bool s_diag = false;
 static bool s_showtime = false;
-static str_moveable s_timeformat;
+static history_timeformatter s_timeformatter;
 
 //------------------------------------------------------------------------------
 class history_scope
@@ -58,12 +58,6 @@ history_scope::history_scope()
 
     if (g_history_timestamp.get() == 2)
         s_showtime = true;
-    if (s_timeformat.empty())
-    {
-        g_history_timeformat.get(s_timeformat);
-        if (s_timeformat.empty())
-            s_timeformat = "F% T%  ";
-    }
 
     m_history = new history_db(history_path.c_str(), app->get_id(), g_save_history.get());
 
@@ -145,7 +139,6 @@ static void print_history(uint32 tail_count, bool bare)
 
     for (uint32 i = 0; i < skip; ++i, ++index, iter.next(line));
 
-    char timebuf[128];
     str<> utf8;
     wstr<> utf16;
     HANDLE hout = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -154,17 +147,7 @@ static void print_history(uint32 tail_count, bool bare)
     uint32 timelen = 0;
     struct tm tm = {};
     if (s_showtime)
-    {
-        tm.tm_year = 2001;
-        tm.tm_mon = 11;
-        tm.tm_mday = 15;
-        tm.tm_hour = 23;
-        tm.tm_min = 30;
-        tm.tm_sec = 30;
-        timebuf[0] = '\0';
-        strftime(timebuf, sizeof_array(timebuf), s_timeformat.c_str(), &tm);
-        timelen = cell_count(timebuf);
-    }
+        timelen = s_timeformatter.max_timelen();
 
     str<32> timestamp;
     uint32 num_from[2] = {};
@@ -183,14 +166,12 @@ static void print_history(uint32 tail_count, bool bare)
             utf8.format("%5u  %.*s", index, line.length(), line.get_pointer());
         else
         {
-            timebuf[0] = '\0';
             if (!timestamp.empty())
             {
                 const time_t tt = time_t(atoi(timestamp.c_str()));
-                if (localtime_s(&tm, &tt) == 0)
-                    strftime(timebuf, sizeof_array(timebuf), s_timeformat.c_str(), &tm);
+                s_timeformatter.format(tt, timestamp);
             }
-            utf8.format("%5u  %-*s%.*s", index, timelen, timebuf, line.length(), line.get_pointer());
+            utf8.format("%5u  %-*s%.*s", index, timelen, timestamp.c_str(), line.length(), line.get_pointer());
         }
 
         print_history_item(hout, utf8.c_str(), translate ? &utf16 : nullptr);
@@ -420,6 +401,8 @@ static bool is_flag(const char* arg, const char* flag, uint32 min_len=-1)
 //------------------------------------------------------------------------------
 int32 history(int32 argc, char** argv)
 {
+    s_timeformatter.set_timeformat(nullptr);
+
     // Check to see if the user asked from some help!
     bool bare = false;
     bool uniq = false;
@@ -440,7 +423,7 @@ int32 history(int32 argc, char** argv)
         else if (is_flag(argv[i], "--time-format", 3))
         {
             s_showtime = true;
-            s_timeformat = argv[++i];
+            s_timeformatter.set_timeformat(argv[++i]);
             remove++;
         }
         else

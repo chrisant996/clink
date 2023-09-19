@@ -85,7 +85,15 @@ static setting_bool g_sticky_search(
     "many times, Enter, Down, Enter, Down, Enter, etc).",
     false);
 
-extern setting_enum g_history_timestamp;
+setting_enum g_history_timestamp(
+    "history.time_stamp",
+    "History item timestamps",
+    "The default is 'off'.  When set to 'save', timestamps are saved for each\n"
+    "history item but are only shown in the 'history' command when the\n"
+    "'--show-time' flag is used.  When set to 'show', timestamps are saved and\n"
+    "are shown in 'history' unless the '--bare' flag is used.",
+    "off,save,show",
+    0);
 
 static constexpr int32 c_max_max_history_lines = 999999;
 static int32 get_max_history()

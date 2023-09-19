@@ -49,6 +49,7 @@ class textlist_impl
         const char* get_col_text(int32 row, int32 col) const;
         int32       get_col_width(int32 col) const;
         const char* add_entry(const char* entry);
+        void        add_columns(const char* columns);
         bool        get_any_tabs() const;
         void        clear();
     private:
