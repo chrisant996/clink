@@ -1823,7 +1823,11 @@ ding:
         history[i] = p ? p : "";
     }
 
-    const popup_results results = activate_history_text_list(history, history_length, min<int32>(where_history(), history_length - 1), nullptr, true/*win_history*/);
+    int32 current = where_history();
+    if (current < 0 || current > history_length - 1)
+        current = history_length - 1;
+
+    const popup_results results = activate_history_text_list(history, history_length, current, nullptr, true/*win_history*/);
 
     switch (results.m_result)
     {
