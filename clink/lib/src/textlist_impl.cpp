@@ -439,7 +439,7 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
     init_colors(config);
 
     // Maybe format history timestamps.
-    const bool history_timestamps = (m_history_mode && m_infos &&
+    const bool history_timestamps = (m_history_mode &&
         ((g_history_timestamp.get() == 2 && (!rl_explicit_arg || rl_numeric_arg)) ||
          (g_history_timestamp.get() == 1 && rl_explicit_arg && rl_numeric_arg)));
     const HIST_ENTRY* const* const histlist = history_list();
@@ -468,7 +468,8 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
             text = m_entries[i];
             if (history_timestamps)
             {
-                const char* timestamp = histlist[m_infos[i].index]->timestamp;
+                const int32 j = m_infos ? m_infos[i].index : i;
+                const char* timestamp = histlist[j]->timestamp;
                 tmp2.clear();
                 if (timestamp && *timestamp)
                 {
