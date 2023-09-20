@@ -770,18 +770,12 @@ rl_add_history (int count, int key)
       rl_ding ();
       return 0;
     }
-/* begin_clink_change */
   if (rl_add_history_hook && !(*rl_add_history_hook) (history_length - 1, rl_line_buffer))
     {
       rl_ding ();
       return 0;
     }
-/* end_clink_change */
   add_history (rl_line_buffer);
-/* begin_clink_change */
-  //if (rl_add_history_hook)
-  //  (*rl_add_history_hook) (history_length - 1, rl_line_buffer);
-/* end_clink_change */
   using_history ();
   rl_delete_text (0, rl_end);
   rl_point = 0;
@@ -802,13 +796,11 @@ rl_remove_history (int count, int key)
   if (rl_last_func != rl_remove_history)
     rl_remove_history_last_func = rl_last_func;
 
-/* begin_clink_change */
   if (history_prev_use_curr)
     {
       rl_ding ();
       return 0;
     }
-/* end_clink_change */
 
   HIST_ENTRY **list = history_list ();
   HIST_ENTRY *hist = list ? list[old_where] : 0;
@@ -818,13 +810,11 @@ rl_remove_history (int count, int key)
       return 0;
     }
 
-/* begin_clink_change */
   if (rl_remove_history_hook && !(*rl_remove_history_hook) (old_where, hist->line))
     {
       rl_ding ();
       return 0;
     }
-/* end_clink_change */
 
   if (search_pos >= 0)
     {
