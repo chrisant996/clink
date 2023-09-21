@@ -771,6 +771,18 @@ is_history_last_func (rl_command_func_t func)
            rl_remove_history_last_func == func));
 }
 
+/* Adjust the history search position; used by rl_remove_history (). */
+void
+adjust_history_search_pos (int delta)
+{
+  rl_history_search_pos += delta;
+  if (rl_history_search_pos < 0 || rl_history_search_pos >= history_length)
+    {
+      assert(0);
+      rl_history_search_pos = -1;
+    }
+}
+
 /* Get the history search position, or -1 if there's no search. */
 int
 rl_get_history_search_pos ()

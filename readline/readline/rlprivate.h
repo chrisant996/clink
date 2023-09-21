@@ -394,6 +394,7 @@ extern int _rl_restore_tty_signals PARAMS((void));
 extern int _rl_nsearch_callback PARAMS((_rl_search_cxt *));
 extern int _rl_nsearch_cleanup PARAMS((_rl_search_cxt *, int));
 /* begin_clink_change */
+extern void adjust_history_search_pos PARAMS((int));
 extern int rl_get_history_search_pos PARAMS((void));
 extern int rl_get_history_search_flags PARAMS((void));
 /* end_clink_change */

@@ -803,13 +803,21 @@ rl_add_history (int count, int key)
   return 0;
 }
 
+static int
+get_effective_where (void)
+{
+  int search_pos = rl_get_history_search_pos ();
+  int where = search_pos >= 0 ? search_pos : where_history ();
+  return where;
+}
+
 /* Remove the current line from the history.  If the line is modified or
    empty,just ding. */
 int
 rl_remove_history (int count, int key)
 {
-  int search_pos = rl_get_history_search_pos();
-  int old_where = search_pos >= 0 ? search_pos : where_history();
+  int search_pos = rl_get_history_search_pos ();
+  const int old_where = get_effective_where ();
 
   /* The history search commands use rl_last_func to identify the active
      history search mode.  rl_remove_history messes that up, so it gives
@@ -823,6 +831,7 @@ rl_remove_history (int count, int key)
       return 0;
     }
 
+  /* Bail out if the input buffer doesn't match the history entry. */
   HIST_ENTRY **list = history_list ();
   HIST_ENTRY *hist = list ? list[old_where] : 0;
   if (!hist || strcmp (rl_line_buffer, hist->line))
@@ -831,34 +840,70 @@ rl_remove_history (int count, int key)
       return 0;
     }
 
+  /* Give the host a chance to respond and/or cancel the operation. */
   if (rl_remove_history_hook && !(*rl_remove_history_hook) (old_where, hist->line))
     {
       rl_ding ();
       return 0;
     }
 
+  /* Queue up the next entry along the current history search route. */
+  int flags = rl_get_history_search_flags ();
   if (search_pos >= 0)
     {
-      int flags = rl_get_history_search_flags();
       if (flags & ANCHORED_SEARCH)
-        rl_history_search_backward (1, key);
+	rl_history_search_backward (1, key);
       else
-        rl_history_substr_search_backward (1, key);
+	rl_history_substr_search_backward (1, key);
     }
   else
     rl_get_previous_history (1, key);
 
-  if (old_where <= history_offset)
-    history_offset--;
+  /* No more in that direction?  Try the other direction. */
+  int no_more = 0;
+  if (get_effective_where () == old_where)
+    {
+      if (search_pos >= 0)
+	{
+	  if (flags & ANCHORED_SEARCH)
+	    rl_history_search_backward (-1, key);
+	  else
+	    rl_history_substr_search_backward (-1, key);
+	}
+      else
+	rl_get_previous_history (-1, key);
+
+      /* No more in the other direction, either?  The route is empty. */
+      if (get_effective_where () == old_where)
+	no_more = 1;
+    }
+
+  /* Remove the history entry. */
   hist = remove_history (old_where);
   free_history_entry (hist);
 
-  search_pos = rl_get_history_search_pos();
-  int new_where = search_pos >= 0 ? search_pos : where_history();
-  if (!history_length || rl_get_history_search_pos() == old_where)
+  if (no_more)
     {
       rl_replace_line ("", 1);
       using_history ();
+    }
+  else if (hist)
+    {
+      /* Adjust search position after the removal. */
+      search_pos = rl_get_history_search_pos ();
+      if (search_pos >= 0)
+	{
+	  assert (old_where != search_pos);
+	  if (old_where < search_pos)
+	    adjust_history_search_pos (-1);
+	}
+
+      /* Adjust history offset after the removal.  This must always happen,
+	 regardless of search mode, because the history offset is still valid
+	 even in search modes. */
+      int new_where = where_history();
+      if (new_where >= 0 && old_where < new_where)
+	previous_history ();
     }
 
   return 0;
