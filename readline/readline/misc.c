@@ -347,6 +347,15 @@ void
 _rl_start_using_history (void)
 {
   using_history ();
+/* begin_clink_change */
+  if (_rl_saved_line_for_history && _rl_saved_line_for_history->data)
+    {
+      int not_leaked = 0;
+      for (UNDO_LIST* walk = rl_undo_list; walk; walk = walk->next)
+	not_leaked |= (walk == _rl_saved_line_for_history->data);
+      assert (not_leaked);
+    }
+/* end_clink_change */
   if (_rl_saved_line_for_history)
     _rl_free_history_entry (_rl_saved_line_for_history);
 
@@ -362,6 +371,9 @@ _rl_free_history_entry (HIST_ENTRY *entry)
 
   FREE (entry->line);
   FREE (entry->timestamp);
+/* begin_clink_change */
+  // WARNING: This assumes the caller manages lifetime of entry->data.
+/* end_clink_change */
 
   xfree (entry);
 }
@@ -423,6 +435,15 @@ _rl_free_saved_history_line (void)
 {
   if (_rl_saved_line_for_history)
     {
+/* begin_clink_change */
+      if (_rl_saved_line_for_history->data)
+	{
+	  int not_leaked = 0;
+	  for (UNDO_LIST* walk = rl_undo_list; walk; walk = walk->next)
+	    not_leaked |= (walk == _rl_saved_line_for_history->data);
+	  assert (not_leaked);
+	}
+/* end_clink_change */
       _rl_free_history_entry (_rl_saved_line_for_history);
       _rl_saved_line_for_history = (HIST_ENTRY *)NULL;
     }

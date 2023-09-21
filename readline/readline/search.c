@@ -109,6 +109,17 @@ make_history_line_current (HIST_ENTRY *entry)
     rl_free_undo_list ();
 #endif
 
+/* begin_clink_change */
+#ifdef DEBUG
+  if (_rl_saved_line_for_history && _rl_saved_line_for_history->data)
+    {
+      int not_leaked = 0;
+      for (UNDO_LIST* walk = rl_undo_list; walk; walk = walk->next)
+	not_leaked |= (walk == _rl_saved_line_for_history->data);
+      assert (not_leaked);
+    }
+#endif
+/* end_clink_change */
   if (_rl_saved_line_for_history)
     _rl_free_history_entry (_rl_saved_line_for_history);
   _rl_saved_line_for_history = (HIST_ENTRY *)NULL;
