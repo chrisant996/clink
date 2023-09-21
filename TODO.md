@@ -13,7 +13,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - Provide a sample .txt file that repros the issue.  Maybe multiple .txt files that chain together (or with a pause; is there an escape code for a pause?) to show the UX flow.
 
 ## Low Priority
-- A reliable way for scripts to tell whether they're loaded in `clink set` versus in `cmd`.
 - Color improvements:
   - Color themes.  Some way to import color settings en masse.  Some way to export color settings as well?
   - More sophisticated match color definitions?
@@ -109,6 +108,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Windows Terminal crashes on exit after `clink inject`.  The current release version was crashing (1.6.10571.0).  Older versions don't crash, and a locally built version from the terminal repo's HEAD doesn't crash.  I think the crash is probably a bug in Windows Terminal, not related to Clink.  And after I built it locally, then it stopped crashing with 1.6.10571.0 as well.  Mysterious...
 
 ## Punt
+- A reliable way for scripts to tell whether they're loaded in `clink set` versus in `cmd`.  _[No.  The only case reported that needed this was trying to access key bindings when the script was loaded, and due to a bug in `rl.getkeybindings()` Clink crashed.  The crash has been fixed (now it returns an empty table instead), and the script is better implemented using `clink.oninject()` anyway.]_
 - Provide some kind of "line editor tester" in the `clink lua` interpreter to facilitate writing unit tests for argmatchers?  _[No.  Too many fundamental incompatibilities with the rest of the code.  Completion script authors can do unit testing of their own code, but trying to do end-to-end testing of Clink itself from within Clink itself with being integrated with CMD?  Hard no.]_
 - Issue #387 is a request to add an option to put the cursor at the end of the search text when using `history-substring-search-backward` (and `-forward`).  But that diverges even more from Readline, and I'm actively trying to instead converge as much as possible.  _[The request should be made against bash/Readline.  If it gets implemented there, Clink will be able to pick up the change.]_
 - Consider not redrawing while resizing the terminal, if there is no RPROMPT?  Maybe just flag that a full redraw needs to happen, and defer it until the next time a redraw is normally requested?  _[Defer any further changes to terminal resize behavior until there is further feedback.]_
