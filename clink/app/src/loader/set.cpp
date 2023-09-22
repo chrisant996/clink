@@ -10,7 +10,9 @@
 #include <core/settings.h>
 #include <core/str.h>
 #include <core/str_tokeniser.h>
+#include <terminal/terminal.h>
 #include <terminal/terminal_helpers.h>
+#include <terminal/printer.h>
 #include <lua/lua_script_loader.h>
 #include <lua/prompt.h>
 
@@ -86,51 +88,8 @@ static void list_options(lua_state& lua, const char* key)
 }
 
 //------------------------------------------------------------------------------
-static bool print_keys(bool describe, const char* prefix=nullptr)
+static bool print_value(bool describe, const char* key, bool list=false)
 {
-    size_t prefix_len = prefix ? strlen(prefix) : 0;
-
-    int32 longest = 0;
-    for (auto iter = settings::first(); auto* next = iter.next();)
-    {
-        if (!prefix || !_strnicmp(next->get_name(), prefix, prefix_len))
-            longest = max(longest, int32(strlen(next->get_name())));
-    }
-
-    str<> value;
-    for (auto iter = settings::first(); auto* next = iter.next();)
-    {
-        if (!prefix || !_strnicmp(next->get_name(), prefix, prefix_len))
-        {
-            const char* name = next->get_name();
-            const char* col2;
-            if (describe)
-            {
-                col2 = next->get_short_desc();
-            }
-            else
-            {
-                next->get_descriptive(value);
-                col2 = value.c_str();
-            }
-            printf("%-*s  %s\n", longest, name, col2);
-        }
-    }
-
-    return true;
-}
-
-//------------------------------------------------------------------------------
-static bool print_value(bool describe, const char* key)
-{
-    size_t key_len = strlen(key);
-    if (key_len && key[key_len - 1] == '*')
-    {
-        str<> prefix(key);
-        prefix.truncate(prefix.length() - 1);
-        return print_keys(describe, prefix.c_str());
-    }
-
     const setting* setting = settings::find(key);
     if (setting == nullptr)
     {
@@ -154,7 +113,19 @@ static bool print_value(bool describe, const char* key)
         return false;
     }
 
-    printf("        Name: %s\n", setting->get_name());
+    if (list && g_printer)
+    {
+        str<> s;
+        static const char bold[] = "\x1b[1m";
+        static const char norm[] = "\x1b[m";
+        s.format("        %sName: %s%s\n", bold, setting->get_name(), norm);
+        g_printer->print(s.c_str(), s.length());
+    }
+    else
+    {
+        printf("        Name: %s\n", setting->get_name());
+    }
+
     printf(" Description: %s\n", setting->get_short_desc());
 
     // Output an enum-type setting's options.
@@ -171,6 +142,55 @@ static bool print_value(bool describe, const char* key)
     const char* long_desc = setting->get_long_desc();
     if (long_desc != nullptr && *long_desc)
         printf("\n%s\n", setting->get_long_desc());
+
+    return true;
+}
+
+//------------------------------------------------------------------------------
+static bool print_keys(bool describe, bool details, const char* prefix=nullptr)
+{
+    size_t prefix_len = prefix ? strlen(prefix) : 0;
+
+    int32 longest = 0;
+    if (!details)
+    {
+        for (auto iter = settings::first(); auto* next = iter.next();)
+        {
+            if (!prefix || !_strnicmp(next->get_name(), prefix, prefix_len))
+                longest = max(longest, int32(strlen(next->get_name())));
+        }
+    }
+
+    str<> value;
+    bool printed = false;
+    for (auto iter = settings::first(); auto* next = iter.next();)
+    {
+        if (!prefix || !_strnicmp(next->get_name(), prefix, prefix_len))
+        {
+            const char* name = next->get_name();
+            if (details)
+            {
+                if (printed)
+                    puts("");
+                print_value(describe, name, true);
+                printed = true;
+            }
+            else
+            {
+                const char* col2;
+                if (describe)
+                {
+                    col2 = next->get_short_desc();
+                }
+                else
+                {
+                    next->get_descriptive(value);
+                    col2 = value.c_str();
+                }
+                printf("%-*s  %s\n", longest, name, col2);
+            }
+        }
+    }
 
     return true;
 }
@@ -240,6 +260,7 @@ static void print_help()
         "setting_name",     "Name of the setting whose value is to be set.",
         "value",            "Value to set the setting to.",
         "-d, --describe",   "Show descriptions of settings (instead of values).",
+        "-i, --info",       "Show detailed info for each setting when '*' is used.",
         "-h, --help",       "Shows this help text.",
         nullptr
     };
@@ -254,7 +275,8 @@ static void print_help()
         "the setting to its default value.\n"
         "\n"
         "If 'setting_name' ends with '*' then it is a prefix, and all settings\n"
-        "matching the prefix are listed.");
+        "matching the prefix are listed.  The --info flag includes detailed info\n"
+        "for each listed setting.");
 }
 
 //------------------------------------------------------------------------------
@@ -265,13 +287,15 @@ int32 set(int32 argc, char** argv)
         { "help", no_argument, nullptr, 'h' },
         { "list", no_argument, nullptr, 'l' },
         { "describe", no_argument, nullptr, 'd' },
+        { "info", no_argument, nullptr, 'i' },
         {}
     };
 
     bool complete = false;
     bool describe = false;
+    bool details = false;
     int32 i;
-    while ((i = getopt_long(argc, argv, "+?hld", options, nullptr)) != -1)
+    while ((i = getopt_long(argc, argv, "+?hldi", options, nullptr)) != -1)
     {
         switch (i)
         {
@@ -280,6 +304,7 @@ int32 set(int32 argc, char** argv)
         case 'h': print_help();     return 0;
         case 'l': complete = true;  break;
         case 'd': describe = true;  break;
+        case 'i': details = true;   break;
         }
     }
 
@@ -309,16 +334,27 @@ int32 set(int32 argc, char** argv)
         return 0;
     }
 
-    bool clear = false;
+    terminal term = terminal_create();
+    printer printer(*term.out);
+    printer_context printer_context(term.out, &printer);
+
+    DWORD dummy;
+    if (!GetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), &dummy))
+        g_printer = nullptr;
+
     switch (argc)
     {
     case 0:
-        return (print_keys(describe) != true);
+        return (print_keys(describe, false) != true);
 
     case 1:
-        if (!clear)
-            return (print_value(describe, argv[0]) != true);
-        return print_help(), 0;
+        if (argv[0][0] && argv[0][strlen(argv[0]) - 1] == '*')
+        {
+            str<> prefix(argv[0]);
+            prefix.truncate(prefix.length() - 1);
+            return (print_keys(describe, details, prefix.c_str()) != true);
+        }
+        return (print_value(describe, argv[0]) != true);
 
     default:
         if (_stricmp(argv[1], "clear") == 0)

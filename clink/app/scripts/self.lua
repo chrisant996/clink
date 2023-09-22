@@ -347,11 +347,13 @@ end
 
 --------------------------------------------------------------------------------
 local set = clink.argmatcher()
-:addflags("-h", "-d", "-?")
-:hideflags("-h", "-d", "-?")
-:addflags("--help", "--describe")
-:adddescriptions({["--help"] = "Show help"})
-:adddescriptions({["--describe"] = "Show descriptions of settings (instead of values)"})
+:addflags("-h", "-d", "-i", "-?")
+:hideflags("-h", "-d", "-i", "-?")
+:addflags("--help", "--describe", "--info")
+:adddescriptions({
+    ["--help"] = "Show help",
+    ["--describe"] = "Show descriptions of settings (instead of values)",
+    ["--info"] = "Show detailed info for each setting when '*' is used"})
 :addarg(set_handler)
 :addarg(value_handler)
 :setclassifier(classify_handler)
