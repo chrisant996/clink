@@ -2,7 +2,7 @@
 -- License: http://opensource.org/licenses/MIT
 
 --------------------------------------------------------------------------------
-settings.add("exec.enable", true, "Enable executable matching for 'complete'",
+settings.add("exec.enable", true, "Enable executable completions",
 [[When enabled, the completion commands only match executables and directories
 when completing the first word of a line.]])
 
