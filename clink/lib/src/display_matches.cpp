@@ -156,6 +156,24 @@ const char* get_tmpbuf_rollback (void)
 }
 
 //------------------------------------------------------------------------------
+uint32 calc_tmpbuf_cell_count(void)
+{
+    uint32 count = 0;
+
+    ecma48_state state;
+    ecma48_iter iter(tmpbuf_allocated, state, tmpbuf_length);
+    while (const ecma48_code& code = iter.next())
+    {
+        if (code.get_type() != ecma48_code::type_chars)
+            continue;
+
+        count += clink_wcswidth(code.get_pointer(), code.get_length());
+    }
+
+    return count;
+}
+
+//------------------------------------------------------------------------------
 void flush_tmpbuf(void)
 {
     if (tmpbuf_length)

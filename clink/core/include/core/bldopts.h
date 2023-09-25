@@ -25,6 +25,10 @@
 //#define USE_ASCII_ELLIPSIS
 
 //------------------------------------------------------------------------------
+// Define to show vertical scrollbars in clink-select-complete and popup lists.
+//#define SHOW_VERT_SCROLLBARS
+
+//------------------------------------------------------------------------------
 // Debugging options.
 #ifdef DEBUG
 //#define TRACE_ASSERT_STACK

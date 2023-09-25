@@ -73,6 +73,9 @@ private:
     int32           m_match_rows = 0;
     int32           m_visible_rows = 0;
     int32           m_displayed_rows = 0;
+#ifdef SHOW_VERT_SCROLLBARS
+    int32           m_vert_scroll_car = 0;
+#endif
     bool            m_desc_below = false;
     bool            m_init_desc_below = false;
     bool            m_any_displayed = false;

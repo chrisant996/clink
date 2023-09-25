@@ -109,6 +109,9 @@ private:
     int32           m_horz_offset = 0;
     int32           m_longest_visible = 0;
     int32           m_horz_scroll_range = 0;
+#ifdef SHOW_VERT_SCROLLBARS
+    int32           m_vert_scroll_car = 0;
+#endif
     str<32>         m_default_title;
     str<32>         m_override_title;
     bool            m_has_override_title = false;

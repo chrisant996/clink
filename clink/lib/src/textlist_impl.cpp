@@ -1,4 +1,4 @@
-// Copyright (c) 2021 Christopher Antos
+﻿// Copyright (c) 2021 Christopher Antos
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
@@ -11,6 +11,9 @@
 #include "ellipsify.h"
 #include "clink_ctrlevent.h"
 #include "history_timeformatter.h"
+#ifdef SHOW_VERT_SCROLLBARS
+#include "scroll_car.h"
+#endif
 
 #include <core/base.h>
 #include <core/settings.h>
@@ -1243,6 +1246,12 @@ void textlist_impl::update_layout()
         tmp.format("%u: ", m_infos ? m_infos[m_count - 1].index + 1 : m_count);
         m_max_num_cells = tmp.length();
     }
+
+#ifdef SHOW_VERT_SCROLLBARS
+    m_vert_scroll_car = 0;
+    if (m_visible_rows < m_count)
+        m_vert_scroll_car = calc_scroll_car_size(m_visible_rows, m_count);
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -1458,6 +1467,10 @@ void textlist_impl::update_display()
                 m_printer->print(line.c_str(), line.length());
             }
 
+#ifdef SHOW_VERT_SCROLLBARS
+            const int32 car_top = calc_scroll_car_offset(m_top, m_visible_rows, count, m_vert_scroll_car);
+#endif
+
             // Display items.
             for (int32 row = 0; row < m_visible_rows; row++)
             {
@@ -1553,7 +1566,12 @@ void textlist_impl::update_display()
                     line << tmp;                                        // spaces
 
                     line << m_color.border;
-                    line << "\xe2\x94\x82";                             // │
+#ifdef SHOW_VERT_SCROLLBARS
+                    if (m_vert_scroll_car && row >= car_top && row < car_top + m_vert_scroll_car)
+                        line << "\xe2\x96\x88";                         // █
+                    else
+#endif
+                        line << "\xe2\x94\x82";                         // │
                     line << "\x1b[m";
                     m_printer->print(line.c_str(), line.length());
                 }

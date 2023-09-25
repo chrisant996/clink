@@ -156,7 +156,14 @@ column_widths calculate_columns(const match_adapter& adapter, int32 max_matches,
 
     /* Determine the max possible number of display columns.  */
     const bool vertical = !_rl_print_completions_horizontally;
+#ifdef SHOW_VERT_SCROLLBARS
+    // NOTE:  This reserves space for selectcomplete_impl's vertical scrollbar
+    // even in display_matches, so their layouts match.
+    const size_t real_screen_width = __complete_get_screenwidth();
+    const size_t screen_width = real_screen_width - (!has_descriptions && real_screen_width > 1);
+#else
     const size_t screen_width = __complete_get_screenwidth();
+#endif
     const size_t line_length = screen_width + (col_padding - 1);
     const size_t max_idx = line_length / (1 + col_padding);
 

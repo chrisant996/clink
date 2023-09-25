@@ -20,6 +20,7 @@ const char* get_tmpbuf_rollback(void);
 void rollback_tmpbuf(void);
 void append_tmpbuf_char(char c);
 void append_tmpbuf_string(const char* s, int32 len);
+uint32 calc_tmpbuf_cell_count(void);
 void flush_tmpbuf(void);
 void append_display(const char* to_print, int32 selected, const char* color);
 int32 append_filename(char* to_print, const char* full_pathname, int32 prefix_bytes, int32 can_condense, match_type type, int32 selected, int32* vis_stat_char);

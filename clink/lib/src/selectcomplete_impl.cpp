@@ -15,6 +15,9 @@
 #include "column_widths.h"
 #include "ellipsify.h"
 #include "match_adapter.h"
+#ifdef SHOW_VERT_SCROLLBARS
+#include "scroll_car.h"
+#endif
 
 #include <core/base.h>
 #include <core/settings.h>
@@ -1309,6 +1312,10 @@ force_desc_below:
         m_visible_rows = 0;     // At least 2 rows must fit.
     else if (m_visible_rows < m_match_rows)
         m_visible_rows--;       // Reserve space for comment row.
+
+#ifdef SHOW_VERT_SCROLLBARS
+    m_vert_scroll_car = 0;
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -1333,6 +1340,10 @@ void selectcomplete_impl::update_top()
 //------------------------------------------------------------------------------
 void selectcomplete_impl::update_display()
 {
+#ifdef SHOW_VERT_SCROLLBARS
+    m_vert_scroll_car = 0;
+#endif
+
     if (m_visible_rows > 0)
     {
         // Remember the cursor position so it can be restored later to stay
@@ -1398,6 +1409,11 @@ void selectcomplete_impl::update_display()
             const int32 rows = min<int32>(m_visible_rows, show_more_comment_row ? preview_rows : m_match_rows);
             m_displayed_rows = rows;
 
+#ifdef SHOW_VERT_SCROLLBARS
+            m_vert_scroll_car = (m_screen_cols >= 8) ? calc_scroll_car_size(rows, m_match_rows) : 0;
+            const int32 car_top = calc_scroll_car_offset(m_top, rows, m_match_rows, m_vert_scroll_car);
+#endif
+
             const int32 major_stride = _rl_print_completions_horizontally ? m_match_cols : 1;
             const int32 minor_stride = _rl_print_completions_horizontally ? 1 : m_match_rows;
 #ifdef DEBUG
@@ -1454,9 +1470,14 @@ void selectcomplete_impl::update_display()
                         if (i >= count)
                             break;
 
+#ifdef SHOW_VERT_SCROLLBARS
+                        const int32 reserve_cols = (m_vert_scroll_car ? 3 : 1);
+#else
+                        const int32 reserve_cols = 1;
+#endif
                         const bool right_justify = m_widths.m_right_justify;
                         const int32 col_max = ((show_descriptions && !right_justify) ?
-                                               m_screen_cols - 1 :
+                                               m_screen_cols - reserve_cols :
                                                min<int32>(m_screen_cols - 1, m_widths.column_width(col))) - col_extra;
 
                         const int32 selected = (i == m_index);
@@ -1575,6 +1596,43 @@ void selectcomplete_impl::update_display()
 
                         i = next;
                     }
+
+#ifdef SHOW_VERT_SCROLLBARS
+                    if (m_vert_scroll_car)
+                    {
+                        if (row >= car_top && row < car_top + m_vert_scroll_car)
+                        {
+                            // Space was reserved by update_layout() or col_max.
+                            const uint32 pad_to = m_screen_cols - 2;
+                            const uint32 len = calc_tmpbuf_cell_count();
+                            if (pad_to >= len)
+                            {
+                                make_spaces(pad_to - len, tmp);
+                                append_tmpbuf_string(tmp.c_str(), tmp.length());
+#ifdef USE_FULL_SCROLLBAR
+                                append_tmpbuf_string("\x1b[0;90m\xe2\x96\x88", 10);// █
+#else
+                                append_tmpbuf_string("\x1b[0;90m\xe2\x94\x82", 10);// │
+#endif
+                            }
+                        }
+#ifdef USE_FULL_SCROLLBAR
+                        else
+                        {
+                            // Space was reserved by update_layout() or col_max.
+                            const uint32 pad_to = m_screen_cols - 2;
+                            const uint32 len = calc_tmpbuf_cell_count();
+                            if (pad_to >= len)
+                            {
+                                make_spaces(pad_to - len, tmp);
+                                append_tmpbuf_string(tmp.c_str(), tmp.length());
+                                append_tmpbuf_string("\x1b[0;90m\xe2\x94\x82", 10);// │
+                            }
+                        }
+#endif
+                    }
+#endif // SHOW_VERT_SCROLLBARS
+
                     flush_tmpbuf();
 
                     // Clear to end of line.
