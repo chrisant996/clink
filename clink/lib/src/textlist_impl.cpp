@@ -1248,8 +1248,10 @@ void textlist_impl::update_layout()
     }
 
 #ifdef SHOW_VERT_SCROLLBARS
+    str<16> tmp_sb;
+    const bool use_vert_sb = os::get_env("CLINK_USE_VERT_SCROLLBARS", tmp_sb) && atoi(tmp_sb.c_str());
     m_vert_scroll_car = 0;
-    if (m_visible_rows < m_count)
+    if (use_vert_sb && m_visible_rows < m_count)
         m_vert_scroll_car = calc_scroll_car_size(m_visible_rows, m_count);
 #endif
 }

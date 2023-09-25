@@ -26,7 +26,7 @@
 
 //------------------------------------------------------------------------------
 // Define to show vertical scrollbars in clink-select-complete and popup lists.
-//#define SHOW_VERT_SCROLLBARS
+#define SHOW_VERT_SCROLLBARS
 
 //------------------------------------------------------------------------------
 // Debugging options.

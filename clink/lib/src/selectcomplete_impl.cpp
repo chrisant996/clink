@@ -1410,7 +1410,9 @@ void selectcomplete_impl::update_display()
             m_displayed_rows = rows;
 
 #ifdef SHOW_VERT_SCROLLBARS
-            m_vert_scroll_car = (m_screen_cols >= 8) ? calc_scroll_car_size(rows, m_match_rows) : 0;
+            str<16> tmp_sb;
+            const bool use_vert_sb = os::get_env("CLINK_USE_VERT_SCROLLBARS", tmp_sb) && atoi(tmp_sb.c_str());
+            m_vert_scroll_car = (use_vert_sb && m_screen_cols >= 8) ? calc_scroll_car_size(rows, m_match_rows) : 0;
             const int32 car_top = calc_scroll_car_offset(m_top, rows, m_match_rows, m_vert_scroll_car);
 #endif
 
