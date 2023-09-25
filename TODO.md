@@ -7,6 +7,11 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
+- Hit testing for vertical scrollbar in textlist_impl.
+- Hit testing for vertical scrollbar for selectcomplete_impl.
+- Update default key bindings listed in https://chrisant996.github.io/clink/clink.html#bindable-commands (they reflect the Readline defaults, not the Clink defaults).
+- Update bindable command descriptions in https://chrisant996.github.io/clink/clink.html#bindable-commands (some are out of date).
+- Horizontal scrolling in textlist_impl even when there are columns.
 - Open issue in Terminal repo about bugs in the new shell integration in v1.18.
   - Transient prompt can lead to Terminal getting confused about where prompt markers are.
   - Can the same thing happen with zsh and powerlevel10k transient prompt?
