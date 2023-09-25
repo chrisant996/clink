@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2021 Christopher Antos
+// Copyright (c) 2021 Christopher Antos
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
@@ -1362,6 +1362,7 @@ void textlist_impl::update_display()
         // Display list.
         bool move_to_end = true;
         const int32 count = m_count;
+        str<> line;
         if (m_active && count > 0)
         {
             update_top();
@@ -1450,11 +1451,11 @@ void textlist_impl::update_display()
             {
                 make_horz_border(m_has_override_title ? m_override_title.c_str() : m_default_title.c_str(), col_width - 2, m_has_override_title, horzline,
                                  m_color.header.c_str(), m_color.border.c_str());
-                m_printer->print(left.c_str(), left.length());
-                m_printer->print(m_color.border.c_str(), m_color.border.length());
-                m_printer->print("\xe2\x94\x8c");                       // ┌
-                m_printer->print(horzline.c_str(), horzline.length());  // ─
-                m_printer->print("\xe2\x94\x90\x1b[m");                 // ┐
+                line.clear();
+                line << left << m_color.border << "\xe2\x94\x8c";       // ┌
+                line << horzline;                                       // ─
+                line << "\xe2\x94\x90" << "\x1b[m";                     // ┐
+                m_printer->print(line.c_str(), line.length());
             }
 
             // Display items.
@@ -1472,12 +1473,11 @@ void textlist_impl::update_display()
                     i == m_index ||
                     i == m_prev_displayed)
                 {
-                    m_printer->print(left.c_str(), left.length());
-                    m_printer->print(m_color.border.c_str(), m_color.border.length());
-                    m_printer->print("\xe2\x94\x82");               // │
+                    line.clear();
+                    line << left << m_color.border << "\xe2\x94\x82";   // │
 
                     const str_base& maincolor = (i == m_index) ? m_color.select : m_color.items;
-                    m_printer->print(maincolor.c_str(), maincolor.length());
+                    line << maincolor;
 
                     int32 spaces = col_width - 2;
                     int32 item_spaces = limit_item_cells ? limit_item_cells : spaces;
@@ -1491,7 +1491,7 @@ void textlist_impl::update_display()
                         const char* uncolor = !ismark ? "" : (i == m_index) ? m_color.select.c_str() : m_color.items.c_str();
                         tmp.clear();
                         tmp.format("%*u:%s%c", max<>(0, m_max_num_cells - 2), history_index + 1, color, mark);
-                        m_printer->print(tmp.c_str(), tmp.length());// history number
+                        line << tmp;                                    // history number
                         const uint32 number_cells = cell_count(tmp.c_str());
                         if (spaces > number_cells)
                             spaces -= number_cells;
@@ -1503,7 +1503,7 @@ void textlist_impl::update_display()
                     int32 cell_len;
                     const char* item_text;
                     const int32 char_len = limit_cells(m_items[i], item_spaces, cell_len, m_horz_offset, &tmp, &item_text);
-                    m_printer->print(item_text, char_len);// main text
+                    line.concat(item_text, char_len);                   // main text
                     spaces -= cell_len;
 
                     if (m_has_columns)
@@ -1512,11 +1512,11 @@ void textlist_impl::update_display()
 
                         if (m_columns.get_any_tabs())
                         {
-                            uint32 pad_to = (limit_item_cells ?
+                            const uint32 pad_to = (limit_item_cells ?
                                                    limit_item_cells :
                                                    m_longest) - cell_len;
                             make_spaces(min<int32>(spaces, pad_to), tmp);
-                            m_printer->print(tmp.c_str(), tmp.length()); // spaces
+                            line << tmp;                                // spaces
                             spaces -= tmp.length();
                         }
 
@@ -1531,29 +1531,31 @@ void textlist_impl::update_display()
 
                             if (!col && col_len >= col_padding && !desc_color.empty())
                             {
-                                m_printer->print(col_text, col_padding);
-                                m_printer->print(desc_color.c_str(), desc_color.length());
+                                line.concat(col_text, col_padding);
+                                line << desc_color;
                                 col_text += col_padding;
                                 col_len -= col_padding;
                             }
-                            m_printer->print(col_text, col_len); // column text
+                            line.concat(col_text, col_len);             // column text
                             spaces -= cell_len;
 
                             int32 pad = min<int32>(spaces, m_columns.get_col_width(col) - (cell_len - col_padding));
                             if (pad > 0)
                             {
                                 make_spaces(pad, tmp);
-                                m_printer->print(tmp.c_str(), tmp.length()); // spaces
+                                line << tmp;                            // spaces
                                 spaces -= tmp.length();
                             }
                         }
                     }
 
                     make_spaces(spaces, tmp);
-                    m_printer->print(tmp.c_str(), tmp.length());    // spaces
+                    line << tmp;                                        // spaces
 
-                    m_printer->print(m_color.border.c_str(), m_color.border.length());
-                    m_printer->print("\xe2\x94\x82\x1b[m");         // │
+                    line << m_color.border;
+                    line << "\xe2\x94\x82";                             // │
+                    line << "\x1b[m";
+                    m_printer->print(line.c_str(), line.length());
                 }
             }
 
@@ -1564,11 +1566,11 @@ void textlist_impl::update_display()
                 up++;
                 const bool show_del = (m_history_mode || m_mode == textlist_mode::directories || m_del_callback);
                 make_horz_border(show_del ? "Del=Delete" : nullptr, col_width - 2, true/*bars*/, horzline, m_color.footer.c_str(), m_color.border.c_str());
-                m_printer->print(left.c_str(), left.length());
-                m_printer->print(m_color.border.c_str(), m_color.border.length());
-                m_printer->print("\xe2\x94\x94");                       // └
-                m_printer->print(horzline.c_str(), horzline.length());  // ─
-                m_printer->print("\xe2\x94\x98\x1b[m");                 // ┘
+                line.clear();
+                line << left << m_color.border << "\xe2\x94\x94";       // └
+                line << horzline;                                       // ─
+                line << "\xe2\x94\x98" << "\x1b[m";                     // ┘
+                m_printer->print(line.c_str(), line.length());
             }
 
             if (m_force_clear)
