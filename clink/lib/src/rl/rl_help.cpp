@@ -1401,6 +1401,8 @@ int32 clink_what_is(int32, int32)
     str<32> keyseq;
     bool not_bound = false;
 
+    const bool friendly = !rl_explicit_arg || !rl_numeric_arg;
+
     str<> s;
     while (true)
     {
@@ -1415,7 +1417,8 @@ int32 clink_what_is(int32, int32)
                 break;
 
             g_printer->print("\r\x1b[Kwhat-is: ");
-            translate_keyseq(keyseq.c_str(), keyseq.length(), &key_name, true, sort);
+            if (keyseq.length())
+                translate_keyseq(keyseq.c_str(), keyseq.length(), &key_name, friendly, sort);
             if (key_name)
             {
                 s.clear();
@@ -1455,7 +1458,8 @@ int32 clink_what_is(int32, int32)
     {
         int32 sort = 0;
         char* key_name = nullptr;
-        translate_keyseq(keyseq.c_str(), keyseq.length(), &key_name, true, sort);
+        if (keyseq.length())
+            translate_keyseq(keyseq.c_str(), keyseq.length(), &key_name, friendly, sort);
         if (key_name)
         {
             s.clear();
