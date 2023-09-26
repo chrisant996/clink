@@ -1410,9 +1410,7 @@ void selectcomplete_impl::update_display()
             m_displayed_rows = rows;
 
 #ifdef SHOW_VERT_SCROLLBARS
-            str<16> tmp_sb;
-            const bool use_vert_sb = os::get_env("CLINK_USE_VERT_SCROLLBARS", tmp_sb) && atoi(tmp_sb.c_str());
-            m_vert_scroll_car = (use_vert_sb && m_screen_cols >= 8) ? calc_scroll_car_size(rows, m_match_rows) : 0;
+            m_vert_scroll_car = (use_vert_scrollbars() && m_screen_cols >= 8) ? calc_scroll_car_size(rows, m_match_rows) : 0;
             const int32 car_top = calc_scroll_car_offset(m_top, rows, m_match_rows, m_vert_scroll_car);
 #endif
 
@@ -1602,7 +1600,13 @@ void selectcomplete_impl::update_display()
 #ifdef SHOW_VERT_SCROLLBARS
                     if (m_vert_scroll_car)
                     {
-                        if (row >= car_top && row < car_top + m_vert_scroll_car)
+#ifdef USE_FULL_SCROLLBAR
+                        constexpr bool floating = false;
+#else
+                        constexpr bool floating = true;
+#endif
+                        const char* car = get_scroll_car_char(row, car_top, m_vert_scroll_car, floating);
+                        if (car)
                         {
                             // Space was reserved by update_layout() or col_max.
                             const uint32 pad_to = m_screen_cols - 2;
@@ -1611,11 +1615,8 @@ void selectcomplete_impl::update_display()
                             {
                                 make_spaces(pad_to - len, tmp);
                                 append_tmpbuf_string(tmp.c_str(), tmp.length());
-#ifdef USE_FULL_SCROLLBAR
-                                append_tmpbuf_string("\x1b[0;90m\xe2\x96\x88", 10);// █
-#else
-                                append_tmpbuf_string("\x1b[0;90m\xe2\x94\x82", 10);// │
-#endif
+                                append_tmpbuf_string("\x1b[0;90m", 7);
+                                append_tmpbuf_string(car, -1);          // ┃ or etc
                             }
                         }
 #ifdef USE_FULL_SCROLLBAR
@@ -1628,7 +1629,8 @@ void selectcomplete_impl::update_display()
                             {
                                 make_spaces(pad_to - len, tmp);
                                 append_tmpbuf_string(tmp.c_str(), tmp.length());
-                                append_tmpbuf_string("\x1b[0;90m\xe2\x94\x82", 10);// │
+                                append_tmpbuf_string("\x1b[0;90m", 7);
+                                append_tmpbuf_string("\xe2\x94\x82", 3);// │
                             }
                         }
 #endif

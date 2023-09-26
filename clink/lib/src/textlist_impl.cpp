@@ -1248,10 +1248,8 @@ void textlist_impl::update_layout()
     }
 
 #ifdef SHOW_VERT_SCROLLBARS
-    str<16> tmp_sb;
-    const bool use_vert_sb = os::get_env("CLINK_USE_VERT_SCROLLBARS", tmp_sb) && atoi(tmp_sb.c_str());
     m_vert_scroll_car = 0;
-    if (use_vert_sb && m_visible_rows < m_count)
+    if (use_vert_scrollbars() && m_visible_rows < m_count)
         m_vert_scroll_car = calc_scroll_car_size(m_visible_rows, m_count);
 #endif
 }
@@ -1569,8 +1567,9 @@ void textlist_impl::update_display()
 
                     line << m_color.border;
 #ifdef SHOW_VERT_SCROLLBARS
-                    if (m_vert_scroll_car && row >= car_top && row < car_top + m_vert_scroll_car)
-                        line << "\xe2\x96\x88";                         // █
+                    const char* car = get_scroll_car_char(row, car_top, m_vert_scroll_car, false/*floating*/);
+                    if (car)
+                        line << car;                                    // ┃ or etc
                     else
 #endif
                         line << "\xe2\x94\x82";                         // │
