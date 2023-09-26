@@ -1190,26 +1190,26 @@ $endif              # end clink-only section
 Command | Key | Description
 -|:-:|-
 <a name="rlcmd-beginning-of-line"></a>`beginning-of-line` | <kbd>Home</kbd> | Move to the start of the current line.
-<a name="rlcmd-end-of-line"></a>`end-of-line` | <kbd>End</kbd> | Move to the end of the line.
-<a name="rlcmd-forward-char"></a>`forward-char` | <kbd>Right</kbd> | Move forward a character.
+<a name="rlcmd-end-of-line"></a>`end-of-line` | <kbd>End</kbd> | Move to the end of the line, or insert suggestion.
+<a name="rlcmd-forward-char"></a>`forward-char` | <kbd>Right</kbd> [*](#alternatedefaultcommand) | Move forward a character, or insert suggestion.
 <a name="rlcmd-backward-char"></a>`backward-char` | <kbd>Left</kbd> | Move back a character.
-<a name="rlcmd-forward-word"></a>`forward-word` | <kbd>Ctrl</kbd>-<kbd>Right</kbd> | Move forward to the end of the next word. Words are composed of letters and digits.
-<a name="rlcmd-backward-word"></a>`backward-word` | <kbd>Ctrl</kbd>-<kbd>Left</kbd> | Move back to the start of the current or previous word. Words are composed of letters and digits.
+<a name="rlcmd-forward-word"></a>`forward-word` | <kbd>Ctrl</kbd>-<kbd>Right</kbd> | Move forward to the end of the next word, or insert next suggested word.
+<a name="rlcmd-backward-word"></a>`backward-word` | <kbd>Ctrl</kbd>-<kbd>Left</kbd> | Move back to the start of the current or previous word.
 <a name="rlcmd-previous-screen-line"></a>`previous-screen-line` | | Attempt to move point to the same physical screen column on the previous physical screen line. This will not have the desired effect if the current Readline line does not take up more than one physical line or if point is not greater than the length of the prompt plus the screen width.
 <a name="rlcmd-next-screen-line"></a>`next-screen-line` | | Attempt to move point to the same physical screen column on the next physical screen line. This will not have the desired effect if the current Readline line does not take up more than one physical line or if the length of the current Readline line is not greater than the length of the prompt plus the screen width.
-<a name="rlcmd-clear-display"></a>`clear-display` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>l</kbd> | Clear the screen and, if possible, the terminal's scrollback buffer, then redraw the current line, leaving the current line at the top of the screen.
-<a name="rlcmd-clear-screen"></a>`clear-screen` | <kbd>Ctrl</kbd>-<kbd>l</kbd> | Clear the screen, then redraw the current line, leaving the current line at the top of the screen.
-<a name="rlcmd-redraw-current-line"></a>`redraw-current-line` | | Refresh the current line. By default, this is unbound.
+<a name="rlcmd-clear-display"></a>`clear-display` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>l</kbd> | Clear the terminal screen and the terminal's scrollback buffer (if possible), then redraw the current line, leaving the current line at the top of the screen.
+<a name="rlcmd-clear-screen"></a>`clear-screen` | <kbd>Ctrl</kbd>-<kbd>l</kbd> | Clear the terminal screen, then redraw the current line, leaving the current line at the top of the screen.
+<a name="rlcmd-redraw-current-line"></a>`redraw-current-line` | | Refresh the current line.
 
 ### Commands For Manipulating The History
 
 Command | Key | Description
 -|:-:|-
-<a name="rlcmd-accept-line"></a>`accept-line` | <kbd>Enter</kbd> | Accept the line regardless of where the cursor is. If this line is non-empty, it may be added to the history list for future recall.
+<a name="rlcmd-accept-line"></a>`accept-line` | <kbd>Enter</kbd> | Accept the input line regardless of where the cursor is. The line may be added to the history list for future recall.
 <a name="rlcmd-previous-history"></a>`previous-history` | <kbd>Ctrl</kbd>-<kbd>p</kbd> | Move "back" through the history list, fetching the previous command.
 <a name="rlcmd-next-history"></a>`next-history` | <kbd>Ctrl</kbd>-<kbd>n</kbd> | Move "forward" through the history list, fetching the next command.
 <a name="rlcmd-beginning-of-history"></a>`beginning-of-history` | <kbd>Alt</kbd>-<kbd><</kbd> | Move to the first line in the history.
-<a name="rlcmd-end-of-history"></a>`end-of-history` | <kbd>Alt</kbd>-<kbd>></kbd> | Move to the end of the input history, i.e., the line currently being entered.
+<a name="rlcmd-end-of-history"></a>`end-of-history` | <kbd>Alt</kbd>-<kbd>></kbd> | Move to the end of the input history, i.e. the line currently being entered.
 <a name="rlcmd-reverse-search-history"></a>`reverse-search-history` | <kbd>Ctrl</kbd>-<kbd>r</kbd> | Search backward starting at the current line and moving "up" through the history as necessary. This is an incremental search. This command sets the region to the matched text and activates the mark.
 <a name="rlcmd-forward-search-history"></a>`forward-search-history` | <kbd>Ctrl</kbd>-<kbd>s</kbd> | Search forward starting at the current line and moving "down" through the history as necessary. This is an incremental search. This command sets the region to the matched text and activates the mark.
 <a name="rlcmd-non-incremental-reverse-search-history"></a>`non-incremental-reverse-search-history` | <kbd>Alt</kbd>-<kbd>p</kbd> | Search backward starting at the current line and moving "up" through the history as necessary using a non-incremental search for a string supplied by the user. The search string may match anywhere in a history line.
@@ -1228,9 +1228,8 @@ Command | Key | Description
 -|:-:|-
 <a name="rlcmd-delete-char"></a>`delete-char` | <kbd>Ctrl</kbd>-<kbd>d</kbd> | Delete the character at point.<br/>Note: also see the <code><a href="#ctrld_exits">cmd.ctrld_exits</a></code> Clink setting.
 <a name="rlcmd-backward-delete-char"></a>`backward-delete-char` | <kbd>Backspace</kbd> | Delete the character behind the cursor. A numeric argument means to kill the characters instead of deleting them.
-<a name="rlcmd-forward-backward-delete-char"></a>`forward-backward-delete-char` | | Delete the character under the cursor, unless the cursor is at the end of the line, in which case the character behind the cursor is deleted. By default, this is not bound to a key.
-<a name="rlcmd-quoted-insert"></a>`quoted-insert` | <kbd>Ctrl</kbd>-<kbd>q</kbd> | Add the next character typed to the line verbatim. This is how to insert key sequences like <kbd>Ctrl</kbd>-<kbd>h</kbd> or <kbd>Tab</kbd>, for example.
-<a name="rlcmd-tab-insert"></a>`tab-insert` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>i</kbd> | Insert a tab character.
+<a name="rlcmd-forward-backward-delete-char"></a>`forward-backward-delete-char` | | Delete the character under the cursor, unless the cursor is at the end of the line, in which case the character behind the cursor is deleted.
+<a name="rlcmd-quoted-insert"></a>`quoted-insert` | <kbd>Ctrl</kbd>-<kbd>q</kbd> | Add the next character typed to the line verbatim. This is how to insert key sequences like <kbd>Ctrl</kbd>-<kbd>h</kbd> or <kbd>Esc</kbd>, for example.
 <a name="rlcmd-self-insert"></a>`self-insert` | <kbd>a</kbd>, <kbd>b</kbd>, <kbd>A</kbd>, <kbd>1</kbd>, <kbd>!</kbd>, etc | Insert the key itself.
 <a name="rlcmd-bracketed-paste-begin"></a>`bracketed-paste-begin` | | This function is intended to be bound to the "bracketed paste" escape sequence sent by some terminals, and such a binding is assigned by default. It allows Readline to insert the pasted text as a single unit without treating each character as if it had been read from the keyboard. The characters are inserted as if each one was bound to [`self-insert`](#rlcmd-self-insert) instead of executing any editing commands.<br/>Bracketed paste sets the region (the characters between point and the mark) to the inserted text. It uses the concept of an active mark: when the mark is active, Readline redisplay uses the terminal's standout mode to denote the region.
 <a name="rlcmd-transpose-chars"></a>`transpose-chars` | <kbd>Ctrl</kbd>-<kbd>t</kbd> | Drag the character before the cursor forward over the character at the cursor, moving the cursor forward as well. If the insertion point is at the end of the line, then this transposes the last two characters of the line. Negative arguments have no effect.
@@ -1238,27 +1237,27 @@ Command | Key | Description
 <a name="rlcmd-upcase-word"></a>`upcase-word` | <kbd>Alt</kbd>-<kbd>u</kbd> | Uppercase the current (or following) word. With a negative argument, uppercase the previous word, but do not move the cursor.
 <a name="rlcmd-downcase-word"></a>`downcase-word` | <kbd>Alt</kbd>-<kbd>l</kbd> | Lowercase the current (or following) word. With a negative argument, lowercase the previous word, but do not move the cursor.
 <a name="rlcmd-capitalize-word"></a>`capitalize-word` | | Capitalize the current (or following) word. With a negative argument, capitalize the previous word, but do not move the cursor.
-<a name="rlcmd-overwrite-mode"></a>`overwrite-mode` | | Toggle overwrite mode. With an explicit positive numeric argument, switches to overwrite mode. With an explicit non-positive numeric argument, switches to insert mode. This command affects only emacs mode; vi mode does overwrite differently. Each new command line prompt starts in insert mode.<br/>In overwrite mode, characters bound to [`self-insert`](#rlcmd-self-insert) replace the text at point rather than pushing the text to the right. Characters bound to [`backward-delete-char`](#rlcmd-backward-delete-char) replace the character before point with a space.<br/>By default, this command is unbound.
+<a name="rlcmd-overwrite-mode"></a>`overwrite-mode` | <kbd>Ins</kbd> | Toggle overwrite mode. With an explicit positive numeric argument, switches to overwrite mode. With an explicit non-positive numeric argument, switches to insert mode. This command affects only emacs mode; vi mode does overwrite differently. Each new command line prompt starts in insert mode.<br/>In overwrite mode, characters bound to [`self-insert`](#rlcmd-self-insert) replace the text at point rather than pushing the text to the right. Characters bound to [`backward-delete-char`](#rlcmd-backward-delete-char) replace the character before point with a space.
 
 ### Killing And Yanking
 
 Command | Key | Description
 -|:-:|-
-<a name="rlcmd-kill-line"></a>`kill-line` | <kbd>Ctrl</kbd>-<kbd>k</kbd> | Kill the text from point to the end of the line. With a negative numeric argument, kill backward from the cursor to the beginning of the current line.
-<a name="rlcmd-backward-kill-line"></a>`backward-kill-line` | <kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>Backspace</kbd> | Kill backward from the cursor to the beginning of the current line. With a negative numeric argument, kill forward from the cursor to the end of the current line.
+<a name="rlcmd-kill-line"></a>`kill-line` | <kbd>Ctrl</kbd>-<kbd>End</kbd> | Kill the text from point to the end of the line. With a negative numeric argument, kill backward from the cursor to the beginning of the current line.
+<a name="rlcmd-backward-kill-line"></a>`backward-kill-line` | <kbd>Ctrl</kbd>-<kbd>Home</kbd> | Kill backward from the cursor to the beginning of the current line. With a negative numeric argument, kill forward from the cursor to the end of the current line.
 <a name="rlcmd-unix-line-discard"></a>`unix-line-discard` | <kbd>Ctrl</kbd>-<kbd>u</kbd> | Kill backward from the cursor to the beginning of the current line.
-<a name="rlcmd-kill-whole-line"></a>`kill-whole-line` | | Kill all characters on the current line, no matter where point is. By default, this is unbound.
-<a name="rlcmd-kill-word"></a>`kill-word` | <kbd>Alt</kbd>-<kbd>d</kbd> | Kill from point to the end of the current word, or if between words, to the end of the next word. Word boundaries are the same as [`forward-word`](#rlcmd-forward-word).
-<a name="rlcmd-backward-kill-word"></a>`backward-kill-word` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>Backspace</kbd> | Kill the word behind point. Word boundaries are the same as [`backward-word`](#rlcmd-backward-word).
-<a name="rlcmd-unix-word-rubout"></a>`unix-word-rubout` | <kbd>Ctrl</kbd>-<kbd>w</kbd> | Kill the word behind point, using white space as a word boundary. The killed text is saved on the kill-ring.
+<a name="rlcmd-kill-whole-line"></a>`kill-whole-line` | | Kill all characters on the current line, no matter where point is.
+<a name="rlcmd-kill-word"></a>`kill-word` | <kbd>Ctrl</kbd>-<kbd>Del</kbd> | Kill from point to the end of the current word, or if between words, to the end of the next word. Word boundaries are the same as [`forward-word`](#rlcmd-forward-word).
+<a name="rlcmd-backward-kill-word"></a>`backward-kill-word` | <kbd>Ctrl</kbd>-<kbd>Backspace</kbd> | Kill the word behind point. Word boundaries are the same as [`backward-word`](#rlcmd-backward-word).
+<a name="rlcmd-unix-word-rubout"></a>`unix-word-rubout` | <kbd>Ctrl</kbd>-<kbd>w</kbd> | Kill the word behind the cursor point, using white space as a word boundary. The killed text is saved on the kill-ring.
 <a name="rlcmd-unix-filename-rubout"></a>`unix-filename-rubout` | | Kill the word behind point, using white space and the slash character as the word boundaries. The killed text is saved on the kill-ring.
-<a name="rlcmd-delete-horizontal-space"></a>`delete-horizontal-space` | | Delete all spaces and tabs around point. By default, this is unbound.
-<a name="rlcmd-kill-region"></a>`kill-region` | | Kill the text in the current region. By default, this command is unbound.
-<a name="rlcmd-copy-region-as-kill"></a>`copy-region-as-kill` | | Copy the text in the region to the kill buffer, so it can be yanked right away. By default, this command is unbound.
-<a name="rlcmd-copy-backward-word"></a>`copy-backward-word` | | Copy the word before point to the kill buffer. The word boundaries are the same as [`backward-word`](#rlcmd-backward-word). By default, this command is unbound.
-<a name="rlcmd-copy-forward-word"></a>`copy-forward-word` | | Copy the word following point to the kill buffer. The word boundaries are the same as [`forward-word`](#rlcmd-forward-word). By default, this command is unbound.
-<a name="rlcmd-yank"></a>`yank` | <kbd>Ctrl</kbd>-<kbd>y</kbd> | Yank the top of the kill ring into the buffer at point.
-<a name="rlcmd-yank-pop"></a>`yank-pop` | <kbd>Alt</kbd>-<kbd>y</kbd> | Rotate the kill-ring, and yank the new top. You can only do this if the prior command is [`yank`](#rlcmd-yank) or `yank-pop`.
+<a name="rlcmd-delete-horizontal-space"></a>`delete-horizontal-space` | | Delete all spaces and tabs around point.
+<a name="rlcmd-kill-region"></a>`kill-region` | | Kill the text in the current region.
+<a name="rlcmd-copy-region-as-kill"></a>`copy-region-as-kill` | | Copy the text in the region to the kill buffer, so it can be yanked right away.
+<a name="rlcmd-copy-backward-word"></a>`copy-backward-word` | | Copy the word before point to the kill buffer. The word boundaries are the same as [`backward-word`](#rlcmd-backward-word).
+<a name="rlcmd-copy-forward-word"></a>`copy-forward-word` | | Copy the word following point to the kill buffer. The word boundaries are the same as [`forward-word`](#rlcmd-forward-word).
+<a name="rlcmd-yank"></a>`yank` | <kbd>Ctrl</kbd>-<kbd>y</kbd> | Yank the top of the kill ring into the buffer at the cursor point.
+<a name="rlcmd-yank-pop"></a>`yank-pop` | <kbd>Alt</kbd>-<kbd>y</kbd> | Rotate the kill-ring and yank the new top; but only if the prior command is [`yank`](#rlcmd-yank) or `yank-pop`.
 
 ### Specifying Numeric Arguments
 
@@ -1271,13 +1270,13 @@ Command | Key | Description
 
 Command | Key | Description
 -|:-:|-
-<a name="rlcmd-complete"></a>`complete` | <kbd>Tab</kbd> | Attempt to perform completion on the text before point.
+<a name="rlcmd-complete"></a>`complete` | <kbd>Tab</kbd>  [*](#alternatedefaultcommand) | Attempt to perform completion on the text before point.
 <a name="rlcmd-possible-completions"></a>`possible-completions` | <kbd>Alt</kbd>-<kbd>=</kbd> | List the possible completions of the text before point. When displaying completions, Readline sets the number of columns used for display to the value of <code><a href="#configcompletiondisplaywidth">completion-display-width</a></code>, the value of the environment variable `%COLUMNS%`, or the screen width, in that order.
 <a name="rlcmd-insert-completions"></a>`insert-completions` | <kbd>Alt</kbd>-<kbd>*</kbd> | Insert all completions of the text before point that would have been generated by [`possible-completions`](#rlcmd-possible-completions).
-<a name="rlcmd-menu-complete"></a>`menu-complete` | | Similar to [`complete`](#rlcmd-complete), but replaces the word to be completed with a single match from the list of possible completions. Repeated execution of `menu-complete` steps through the list of possible completions, inserting each match in turn. At the end of the list of completions, the bell is rung (subject to the setting of <code><a href="#configbellstyle">bell-style</a></code>) and the original text is restored. An argument of _n_ moves _n_ positions forward in the list of matches; a negative argument may be used to move backward through the list. This command is intended to be bound to <kbd>TAB</kbd>, but is unbound by default.
+<a name="rlcmd-menu-complete"></a>`menu-complete` | | Similar to [`complete`](#rlcmd-complete), but replaces the word to be completed with a single match from the list of possible completions. Repeated execution of `menu-complete` steps through the list of possible completions, inserting each match in turn. At the end of the list of completions, the bell is rung (subject to the setting of <code><a href="#configbellstyle">bell-style</a></code>) and the original text is restored. An argument of _n_ moves _n_ positions forward in the list of matches; a negative argument may be used to move backward through the list. This command is intended to be bound to <kbd>Tab</kbd>, but is unbound by default.
 <a name="rlcmd-menu-complete-backward"></a>`menu-complete-backward` | | Identical to [`menu-complete`](#rlcmd-menu-complete), but moves backward through the list of possible completions, as if `menu-complete` had been given a negative argument.
-<a name="rlcmd-old-menu-complete"></a>`old-menu-complete` | | Similar to [`menu-complete`](#rlcmd-menu-complete) but isn't limited by <code><a href="#configcompletionqueryitems">completion-query-items</a></code> and doesn't include the common prefix of the possible completions. This behaves like the default completion in cmd.exe on Windows.
-<a name="rlcmd-delete-char-or-list"></a>`delete-char-or-list` | | Deletes the character under the cursor if not at the beginning or end of the line (like [`delete-char`](#rlcmd-delete-char)). If at the end of the line, behaves identically to [`possible-completions`](#rlcmd-possible-completions). This command is unbound by default.
+<a name="rlcmd-old-menu-complete"></a>`old-menu-complete` | [*](#alternatedefaultcommand) | Similar to [`menu-complete`](#rlcmd-menu-complete) but isn't limited by <code><a href="#configcompletionqueryitems">completion-query-items</a></code> and doesn't include the common prefix of the possible completions. This behaves like the default completion in cmd.exe on Windows. When Clink is installed using the setup program with the "Autorun when cmd.exe starts" box checked or when [`clink.default_bindings`](#clink_default_bindings) is set to `windows`, then this is bound by default to <kbd>Tab</kbd>.
+<a name="rlcmd-delete-char-or-list"></a>`delete-char-or-list` | | Deletes the character under the cursor if not at the beginning or end of the line (like [`delete-char`](#rlcmd-delete-char)). If at the end of the line, behaves identically to [`possible-completions`](#rlcmd-possible-completions).
 
 ### Keyboard Macros
 
@@ -1292,7 +1291,7 @@ Command | Key | Description
 
 Command | Key | Description
 -|:-:|-
-<a name="rlcmd-re-read-init-file"></a>`re-read-init-file` | <kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>r</kbd> | Read in the contents of the inputrc file, and incorporate any bindings or variable assignments found there.
+<a name="rlcmd-re-read-init-file"></a>`re-read-init-file` | | Read in the contents of the inputrc file, and incorporate any bindings or variable assignments found there.<br/>In Clink [`clink-reload`](#rlcmd-clink-reload) is preferred since it also reloads Lua scripts.
 <a name="rlcmd-abort"></a>`abort` | <kbd>Ctrl</kbd>-<kbd>g</kbd> | Abort the current editing command and ring the terminal's bell (subject to the setting of [`bell-style`](#configbellstyle)).
 <a name="rlcmd-do-lowercase-version"></a>`do-lowercase-version` | <kbd>Alt</kbd>-<kbd><em>X</em></kbd>, etc | If the key <kbd><em>X</em></kbd> is an upper case letter, run the command that is bound to the corresponding <kbd>Alt</kbd>-<kbd><em>x</em></kbd> lower case letter. The behavior is undefined if <em>x</em> is already lower case.
 <a name="rlcmd-undo"></a>`undo` | <kbd>Ctrl</kbd>-<kbd>z</kbd> or <kbd>Ctrl</kbd>-<kbd>_</kbd> | Incremental undo, separately remembered for each line.
@@ -1303,9 +1302,9 @@ Command | Key | Description
 <a name="rlcmd-character-search"></a>`character-search` | <kbd>Ctrl</kbd>-<kbd>]</kbd> | A character is read and point is moved to the next occurrence of that character. A negative count searches for previous occurrences.
 <a name="rlcmd-character-search-backward"></a>`character-search-backward` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>]</kbd> | A character is read and point is moved to the previous occurrence of that character. A negative count searches for subsequent occurrences.
 <a name="rlcmd-insert-comment"></a>`insert-comment` | <kbd>Alt</kbd>-<kbd>#</kbd> | Without a numeric argument, the value of the [`comment-begin`](#configcommentbegin) variable is inserted at the beginning of the current line. If a numeric argument is supplied, this command acts as a toggle: if the characters at the beginning of the line do not match the value of `comment-begin`, the value is inserted, otherwise the characters in `comment-begin` are deleted from the beginning of the line. In either case, the line is accepted as if a newline had been typed.
-<a name="rlcmd-dump-functions"></a>`dump-functions` | | Print all of the functions and their key bindings to the Readline output stream. If a numeric argument is supplied, the output is formatted in such a way that it can be made part of an inputrc file. This command is unbound by default.
-<a name="rlcmd-dump-variables"></a>`dump-variables` | | Print all of the settable variables and their values to the Readline output stream. If a numeric argument is supplied, the output is formatted in such a way that it can be made part of an inputrc file. This command is unbound by default.
-<a name="rlcmd-dump-macros"></a>`dump-macros` | | Print all of the Readline key sequences bound to macros and the strings they output. If a numeric argument is supplied, the output is formatted in such a way that it can be made part of an inputrc file. This command is unbound by default.
+<a name="rlcmd-dump-functions"></a>`dump-functions` | | Print all of the functions and their key bindings to the Readline output stream. If a numeric argument is supplied, the output is formatted in such a way that it can be made part of an inputrc file.
+<a name="rlcmd-dump-variables"></a>`dump-variables` | | Print all of the settable variables and their values to the Readline output stream. If a numeric argument is supplied, the output is formatted in such a way that it can be made part of an inputrc file.
+<a name="rlcmd-dump-macros"></a>`dump-macros` | | Print all of the Readline key sequences bound to macros and the strings they output. If a numeric argument is supplied, the output is formatted in such a way that it can be made part of an inputrc file.
 
 ### Readline vi Mode
 
@@ -1326,8 +1325,9 @@ These other commands are not very useful in Clink, but exist nevertheless.
 
 Command | Key | Description
 -|:-:|-
+<a name="rlcmd-tab-insert"></a>`tab-insert` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>i</kbd> | Insert a tab character.<br/>Note: this command exists for compatibility with bash, but it isn't useful in Clink because CMD doesn't support entering a tab character in the input line.
 <a name="rlcmd-prefix-meta"></a>`prefix-meta` | | "Metafy" the next character typed. This is for keyboards without an <kbd>Alt</kbd> meta key. Typing a key bound to `prefix-meta` and then <kbd>f</kbd> is equivalent to typing <kbd>Alt</kbd>-<kbd>f</kbd>. By default this is bound to <kbd>Esc</kbd>, but only when the <a href="#terminal_raw_esc">`terminal.raw_esc`</a> Clink setting is enabled.
-<a name="rlcmd-skip-csi-sequence"></a>`skip-csi-sequence` | | This has no effect unless the [`terminal.raw_esc`](#terminal_raw_esc) Clink setting is enabled. Reads enough characters to consume a multi-key sequence such as those defined for keys like <kbd>Home</kbd> and <kbd>End</kbd>. Such sequences begin with a Control Sequence Indicator (CSI), which is `ESC` `[`. If this sequence is bound to "\e[", keys producing such sequences will have no effect unless explicitly bound to a readline command, instead of inserting stray characters into the editing buffer. This is unbound by default.
+<a name="rlcmd-skip-csi-sequence"></a>`skip-csi-sequence` | | This has no effect unless the [`terminal.raw_esc`](#terminal_raw_esc) Clink setting is enabled. Reads enough characters to consume a multi-key sequence such as those defined for keys like <kbd>Home</kbd> and <kbd>End</kbd>. Such sequences begin with a Control Sequence Indicator (CSI), which is `ESC` `[`. If this sequence is bound to "\e[", keys producing such sequences will have no effect unless explicitly bound to a readline command, instead of inserting stray characters into the editing buffer.
 
 ### Clink Commands
 
@@ -1402,7 +1402,7 @@ Command | Key | Description
 <a name="rlcmd-history-expand-line"></a>`history-expand-line` | | A synonym for [`clink-expand-history`](#rlcmd-clink-expand-history).
 <a name="rlcmd-insert-last-argument"></a>`insert-last-argument` | | A synonym for [`yank-last-arg`](#rlcmd-yank-last-arg).
 <a name="rlcmd-magic-space"></a>`magic-space` | | Perform [history expansion](#using-history-expansion) on the text before the cursor position and insert a space.
-<a name="rlcmd-old-menu-complete-backward"></a>`old-menu-complete-backward` | | Like [`old-menu-complete`](#rlcmd-old-menu-complete), but in reverse.
+<a name="rlcmd-old-menu-complete-backward"></a>`old-menu-complete-backward` | | Like [`old-menu-complete`](#rlcmd-old-menu-complete), but in reverse. This behaves like the default completion in cmd.exe on Windows. When Clink is installed using the setup program with the "Autorun when cmd.exe starts" box checked or when [`clink.default_bindings`](#clink_default_bindings) is set to `windows`, then this is bound by default to <kbd>Shift</kbd>-<kbd>Tab</kbd>.
 <a name="rlcmd-remove-history"></a>`remove-history` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>d</kbd> | While searching history, removes the current line from the history.
 <a name="rlcmd-shell-expand-line"></a>`shell-expand-line` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>e</kbd> | A synonym for [`clink-expand-line`](#rlcmd-clink-expand-line).
 <a name="rlcmd-win-copy-history-number"></a>`win-copy-history-number` | <kbd>F9</kbd> | Enter a history number and replace the input line with the history entry (mimics Windows console <kbd>F9</kbd>).
@@ -1412,6 +1412,10 @@ Command | Key | Description
 <a name="rlcmd-win-delete-up-to-char"></a>`win-delete-up-to-char` | <kbd>F4</kbd> | Enter a character and delete up to it in the input line (mimics Windows console <kbd>F4</kbd>).
 <a name="rlcmd-win-history-list"></a>`win-history-list` | <kbd>F7</kbd> | Executes a history entry from a list (mimics Windows console <kbd>F7</kbd>).
 <a name="rlcmd-win-insert-eof"></a>`win-insert-eof` | <kbd>F6</kbd> | Insert ^Z (mimics Windows console <kbd>F6</kbd>).
+
+<a name="alternatedefaultcommand"></a>
+
+**&ast;** Some commands have alternative default key bindings when Clink is installed with "Use enhanced default settings" checked in the setup program or when [`clink.default_bindings`](#clink_default_bindings) is set to `windows`.
 
 <a name="completioncolors"></a>
 
