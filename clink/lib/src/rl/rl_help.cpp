@@ -131,7 +131,7 @@ static const struct {
     const char* desc;
 } c_func_descriptions[] = {
   { "abort", rl_abort, keycat_basic, "Abort the current editing command and ring the terminal's bell (subject to the setting of 'bell-style')" },
-  { "accept-line", rl_newline, keycat_basic, "Accept the input line.  The line may be added to the history list for future recall.  If the line is a modified history line, the history line is restored to its original state" },
+  { "accept-line", rl_newline, keycat_basic, "Accept the input line.  The line may be added to the history list for future recall" },
 /* begin_clink_change */
   { "add-history", rl_add_history, keycat_history, "Add the current line to the history without executing it, and clear the input line" },
 /* end_clink_change */
@@ -149,7 +149,7 @@ static const struct {
   { "capitalize-word", rl_capitalize_word, keycat_misc, "Capitalize the current (or following) word.  With a negative argument, capitalizes the previous word, but does not move the cursor point" },
   { "character-search", rl_char_search, keycat_basic, "A character is read and the cursor point is moved to the next occurrence of that character.  A negative count searches for previous occurrences" },
   { "character-search-backward", rl_backward_char_search, keycat_basic, "A character is read and the cursor point is moved to the previous occurrence of that character.  A negative count searches for subsequent occurrences" },
-  { "clear-display", rl_clear_display, keycat_misc, "Clear the terminal screen and the scrollback buffer, then redraw the current line, leaving the current line at the top of the screen" },
+  { "clear-display", rl_clear_display, keycat_misc, "Clear the terminal screen and the scrollback buffer (if possible), then redraw the current line, leaving the current line at the top of the screen" },
   { "clear-screen", rl_clear_screen, keycat_misc, "Clear the terminal screen, then redraw the current line, leaving the current line at the top of the screen" },
   { "complete", rl_complete, keycat_completion, "Perform completion on the text before the cursor point" },
   { "copy-backward-word", rl_copy_backward_word, keycat_killyank, "Copy the word before the cursor point to the kill buffer.  The word boundaries are the same as 'backward-word'" },
@@ -166,7 +166,7 @@ static const struct {
   { "dump-variables", rl_dump_variables, keycat_misc, "Print all of the Readline variables and their values to the output stream.  If a numeric argument is supplied, formats the output so that it can be made part of an INPUTRC file" },
   { "emacs-editing-mode", rl_emacs_editing_mode, keycat_misc, "When in 'vi' command mode, this causes a switch to 'emacs' editing mode" },
   { "end-kbd-macro", rl_end_kbd_macro, keycat_misc, "Stop saving the characters typed into the current keyboard macro and save the definition" },
-  { "end-of-history", rl_end_of_history, keycat_history, "Move to the end of the input history, i.e., the line currently being entered" },
+  { "end-of-history", rl_end_of_history, keycat_history, "Move to the end of the input history, i.e. the line currently being entered" },
   //{ "end-of-line", clink_end_of_line, keycat_basic, "Move to the end of the line, or insert suggestion" },
   { "exchange-point-and-mark", rl_exchange_point_and_mark, keycat_misc, "Swap the cursor point with the mark.  Sets the current cursor position to the saved position, and saves the old cursor position as the mark" },
   { "forward-backward-delete-char", rl_rubout_or_delete, keycat_basic, "Delete the character at the cursor point, unless the cursor is at the end of the line, in which case the character behind the cursor is deleted" },
@@ -211,7 +211,7 @@ static const struct {
 /* begin_clink_change */
   { "remove-history", rl_remove_history, keycat_history, "While searching history, removes the current line from the history" },
 /* end_clink_change */
-  { "reverse-search-history", rl_reverse_search_history, keycat_history, "incremental search backward starting at the current line and moving 'up' through the history as necessary.  Sets the marked region to the matched text" },
+  { "reverse-search-history", rl_reverse_search_history, keycat_history, "Incremental search backward starting at the current line and moving 'up' through the history as necessary.  Sets the marked region to the matched text" },
   { "revert-line", rl_revert_line, keycat_basic, "Undo all changes made to this line.  This is like executing the 'undo' command enough times to get back to the beginning" },
   //{ "self-insert", rl_insert },
   { "set-mark", rl_set_mark, keycat_misc, "Set the mark to the cursor point.  If a numeric argument is supplied, sets the mark to that position" },
