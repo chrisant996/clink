@@ -914,6 +914,25 @@ do_insert:
             input.params.get(0, p0);
             input.params.get(1, p1);
             const uint32 rows = min<int32>(m_count, m_visible_rows);
+
+#ifdef SHOW_VERT_SCROLLBARS
+            if (m_vert_scroll_car &&
+                (input.id == bind_id_textlist_leftclick ||
+                 input.id == bind_id_textlist_doubleclick))
+            {
+                m_scroll_bar_clicked = (p0 == m_vert_scroll_column && p1 >= 0 && p1 < rows);
+            }
+
+            if (m_scroll_bar_clicked)
+            {
+                const int32 row = min<int32>(max<int32>(p1 - m_mouse_offset, 0), rows - 1);
+                m_index = hittest_scroll_car(row, rows, m_count);
+                set_top(min<int32>(max<int32>(m_index - ((rows - 1) / 2), 0), m_count - rows));
+                update_display();
+                break;
+            }
+#endif
+
             if (input.id != bind_id_textlist_drag)
             {
                 if (int32(p1) < m_mouse_offset - 1 || p1 >= m_mouse_offset - 1 + rows + 2/*border*/)
@@ -1249,6 +1268,7 @@ void textlist_impl::update_layout()
 
 #ifdef SHOW_VERT_SCROLLBARS
     m_vert_scroll_car = 0;
+    m_vert_scroll_column = 0;
     if (use_vert_scrollbars() && m_visible_rows < m_count)
         m_vert_scroll_car = calc_scroll_car_size(m_visible_rows, m_count);
 #endif
@@ -1469,6 +1489,7 @@ void textlist_impl::update_display()
 
 #ifdef SHOW_VERT_SCROLLBARS
             const int32 car_top = calc_scroll_car_offset(m_top, m_visible_rows, count, m_vert_scroll_car);
+            m_vert_scroll_column = m_mouse_left + m_mouse_width;
 #endif
 
             // Display items.

@@ -112,4 +112,13 @@ const char* get_scroll_car_char(int32 row, int32 car_offset, int32 car_size, boo
     return nullptr;
 }
 
+//------------------------------------------------------------------------------
+int32 hittest_scroll_car(int32 row, int32 rows, int32 total)
+{
+    if (rows <= 1 || total <= 1)
+        return 0;
+
+    return row * (total - 1) / (rows - 1);
+}
+
 #endif

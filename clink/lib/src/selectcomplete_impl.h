@@ -75,6 +75,7 @@ private:
     int32           m_displayed_rows = 0;
 #ifdef SHOW_VERT_SCROLLBARS
     int32           m_vert_scroll_car = 0;
+    int32           m_vert_scroll_column = 0;
 #endif
     bool            m_desc_below = false;
     bool            m_init_desc_below = false;
@@ -106,6 +107,9 @@ private:
     uint8           m_prev_input_id = 0;
 #endif
     scroll_helper   m_scroll_helper;
+#ifdef SHOW_VERT_SCROLLBARS
+    bool            m_scroll_bar_clicked = false;
+#endif
 
     // Debugging.
 #ifdef DEBUG

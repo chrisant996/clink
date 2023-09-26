@@ -111,6 +111,7 @@ private:
     int32           m_horz_scroll_range = 0;
 #ifdef SHOW_VERT_SCROLLBARS
     int32           m_vert_scroll_car = 0;
+    int32           m_vert_scroll_column = 0;
 #endif
     str<32>         m_default_title;
     str<32>         m_override_title;
@@ -135,6 +136,9 @@ private:
     bool            m_needle_is_number = false;
     bool            m_input_clears_needle = false;
     scroll_helper   m_scroll_helper;
+#ifdef SHOW_VERT_SCROLLBARS
+    bool            m_scroll_bar_clicked = false;
+#endif
 
     // Configuration.
     uint32          m_pref_height = 0;      // Automatic.

@@ -686,6 +686,28 @@ arrow_next:
             input.params.get(1, p1);
             p1 -= m_mouse_offset;
             const uint32 rows = m_displayed_rows;
+
+#ifdef SHOW_VERT_SCROLLBARS
+            if (m_vert_scroll_car &&
+                (input.id == bind_id_selectcomplete_leftclick ||
+                 input.id == bind_id_selectcomplete_doubleclick))
+            {
+                m_scroll_bar_clicked = (p0 == m_vert_scroll_column && p1 >= 0 && p1 < rows);
+            }
+
+            if (m_scroll_bar_clicked)
+            {
+                const int32 row = min<int32>(max<int32>(p1, 0), rows - 1);
+                const int32 index = hittest_scroll_car(row, rows, m_match_rows);
+                const int32 stride = _rl_print_completions_horizontally ? m_match_cols : 1;
+                m_index = index * stride;
+                set_top(min<int32>(max<int32>(m_index - (rows / 2), 0), m_match_rows - rows));
+                insert_match();
+                update_display();
+                break;
+            }
+#endif
+
             bool scrolling = false;
             int32 row = p1 + m_top;
             const int32 revert_top = m_top;
@@ -1315,6 +1337,7 @@ force_desc_below:
 
 #ifdef SHOW_VERT_SCROLLBARS
     m_vert_scroll_car = 0;
+    m_vert_scroll_column = 0;
 #endif
 }
 
@@ -1342,6 +1365,7 @@ void selectcomplete_impl::update_display()
 {
 #ifdef SHOW_VERT_SCROLLBARS
     m_vert_scroll_car = 0;
+    m_vert_scroll_column = 0;
 #endif
 
     if (m_visible_rows > 0)
@@ -1411,6 +1435,8 @@ void selectcomplete_impl::update_display()
 
 #ifdef SHOW_VERT_SCROLLBARS
             m_vert_scroll_car = (use_vert_scrollbars() && m_screen_cols >= 8) ? calc_scroll_car_size(rows, m_match_rows) : 0;
+            if (m_vert_scroll_car)
+                m_vert_scroll_column = m_screen_cols - 2;
             const int32 car_top = calc_scroll_car_offset(m_top, rows, m_match_rows, m_vert_scroll_car);
 #endif
 
