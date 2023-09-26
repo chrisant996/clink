@@ -153,7 +153,7 @@ See [Completion Commands](#completion-commands) and [Clink Commands](#clink-comm
 
 By default, Clink completes the first word of each command based on all executable programs on the system PATH and the current directory, but not non-executable files.
 
-You can turn off the "executable completion" behavior by running <code>clink set <a href="#exec_enable">exec.enable</a> false</code>, or you can adjust its behavior by changing the various [`exec.*`](#exec.aliases) settings.
+You can turn off the "executable completion" behavior by running <code>clink set <a href="#exec_enable">exec.enable</a> false</code>, or you can adjust its behavior by changing the various [`exec.*`](#exec_aliases) settings.
 
 ## Common Configuration
 
