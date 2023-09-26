@@ -7,18 +7,13 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
-- The mark might not be working properly with `Ctrl-R` since `Ctrl-X``Ctrl-X` doesn't seem to swap the cursor between the beginning and end of the marked text.
-- Hit testing for vertical scrollbar in textlist_impl and selectcomplete_impl.
-  - Should dragging the car work?  Since it can't be pixel based it can't work very nicely.  And the USE_HALF_CHARS support makes it impossible to tell for sure whether the mouse is over the car.
-  - Probably just scroll to wherever the mouse is on the scrollbar's range.
-  - I don't expect mouse input to be used much in the first place, since terminals usually handle mouse input for selecting text.
-- Horizontal scrolling in textlist_impl even when there are columns.
 - Open issue in Terminal repo about bugs in the new shell integration in v1.18.
   - Transient prompt can lead to Terminal getting confused about where prompt markers are.
   - Can the same thing happen with zsh and powerlevel10k transient prompt?
   - Provide a sample .txt file that repros the issue.  Maybe multiple .txt files that chain together (or with a pause; is there an escape code for a pause?) to show the UX flow.
 
 ## Low Priority
+- Horizontal scrolling in textlist_impl even when there are columns.
 - Color improvements:
   - Color themes.  Some way to import color settings en masse.  Some way to export color settings as well?
   - More sophisticated match color definitions?
