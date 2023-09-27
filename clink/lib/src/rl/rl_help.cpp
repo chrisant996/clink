@@ -184,7 +184,7 @@ static const struct {
   { "kill-line", rl_kill_line, keycat_killyank, "Kill the text from the cursor point to the end of the line.  With a negative numeric argument, kills backward from the cursor to the beginning of the current line" },
   { "kill-region", rl_kill_region, keycat_killyank, "Kill the text in the current marked region" },
   { "kill-word", rl_kill_word, keycat_basic, "Kill from the cursor point to the end of the current word, or if between words, to the end of the next word.  Word boundaries are the same as 'forward-word'" },
-  { "menu-complete", rl_menu_complete, keycat_completion, "Replace the completion word with the common prefix.  Repeated execution steps though the possible completions" },
+  { "menu-complete", rl_menu_complete, keycat_completion, "Replace the completion word with the common prefix.  Repeated execution steps through the possible completions" },
   { "menu-complete-backward", rl_backward_menu_complete, keycat_completion, "Like 'menu-complete' but in reverse" },
   { "next-history", rl_get_next_history, keycat_history, "Move 'forward' through the history list, fetching the next command" },
   { "next-screen-line", rl_next_screen_line, keycat_cursor, "Attempt to move the cursor point to the same screen column on the next screen line" },
@@ -192,7 +192,7 @@ static const struct {
   { "non-incremental-reverse-search-history", rl_noninc_reverse_search, keycat_history, "Search backward starting at the current line and moving 'up' through the history as necessary using a non-incremental search for a string supplied by the user.  The search string may match anywhere in a history line" },
   { "non-incremental-forward-search-history-again", rl_noninc_forward_search_again, keycat_history, "" },
   { "non-incremental-reverse-search-history-again", rl_noninc_reverse_search_again, keycat_history, "" },
-  { "old-menu-complete", rl_old_menu_complete, keycat_completion, "Replace the completion word with the next match.  Repeated execution steps though the possible completions" },
+  { "old-menu-complete", rl_old_menu_complete, keycat_completion, "Replace the completion word with the next match.  Repeated execution steps through the possible completions" },
 /* begin_clink_change */
   { "old-menu-complete-backward", rl_backward_old_menu_complete, keycat_completion, "Like 'old-menu-complete' but in reverse" },
 /* end_clink_change */
