@@ -77,7 +77,6 @@ local function generate_file(source_path, out, weblinks)
                             error("unexpected name tag in clinksettings table:\n"..line)
                         end
                         local linkname = line:match('<a name="([^"]*)">')
-print("make settings weblink: "..linkname)
                         line = pre .. make_weblink(linkname) .. epi
                     elseif line:find("</table>") then
                         settings_table = false
