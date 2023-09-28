@@ -47,6 +47,7 @@ local function generate_file(source_path, out, weblinks)
     print("  << " .. source_path)
     local docver = _OPTIONS["docver"] or clink_git_name:upper()
     local last_name
+    local settings_table
     for line in io.open(source_path, "r"):lines() do
         local include = line:match("%$%(INCLUDE +([^)]+)%)")
         if include then
@@ -54,6 +55,9 @@ local function generate_file(source_path, out, weblinks)
         else
             local md = line:match("%$%(MARKDOWN +([^)]+)%)")
             if md then
+                if weblinks then
+                    error("can't apply weblinks in .md include files:\n"..line)
+                end
                 markdown_file(md, out)
             else
                 line = line:gsub("%$%(CLINK_VERSION%)", docver)
@@ -66,6 +70,17 @@ local function generate_file(source_path, out, weblinks)
                     hopen, hclose = line:match('^( *<h[0-9][^>]*>)(.+)$')
                     if n then
                         last_name = n
+                        settings_table = not hopen and (n == "clinksettings")
+                    elseif settings_table and line:find("><a name=") then
+                        local pre, epi = line:match("^(.->)(<.*)$")
+                        if not pre or not epi then
+                            error("unexpected name tag in clinksettings table:\n"..line)
+                        end
+                        local linkname = line:match('<a name="([^"]*)">')
+print("make settings weblink: "..linkname)
+                        line = pre .. make_weblink(linkname) .. epi
+                    elseif line:find("</table>") then
+                        settings_table = false
                     end
                     if hopen and not last_name then
                         last_name = hopen:match('id="([^"]+)"')

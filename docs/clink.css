@@ -58,8 +58,8 @@ a code:hover {
     user-select: none;
 }
 
-h1:hover .wlink, h2:hover .wlink, h3:hover .wlink, h4:hover .wlink, h5:hover .wlink, h6:hover .wlink { opacity: 100%; }
-h1:focus .wlink, h2:focus .wlink, h3:focus .wlink, h4:focus .wlink, h5:focus .wlink, h6:focus .wlink { opacity: 100%; }
+h1:hover .wlink, h2:hover .wlink, h3:hover .wlink, h4:hover .wlink, h5:hover .wlink, h6:hover .wlink, td:hover .wlink { opacity: 100%; }
+h1:focus .wlink, h2:focus .wlink, h3:focus .wlink, h4:focus .wlink, h5:focus .wlink, h6:focus .wlink, td:focus .wlink { opacity: 100%; }
 
 .wlink:hover { opacity: 100%; text-decoration: underline; }
 .wlink:focus { opacity: 100%; text-decoration: underline; }
