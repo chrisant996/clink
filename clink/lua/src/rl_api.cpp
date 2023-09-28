@@ -1060,14 +1060,14 @@ static int32 get_match_color(lua_State* state)
     if (t)
     {
         lua_pushliteral(state, "match");
-        lua_rawget(state, -2);
+        lua_rawget(state, 1);
         match = checkstring(state, -1);
         if (!match)
             return 0;
         lua_pop(state, 1);
 
         lua_pushliteral(state, "type");
-        lua_rawget(state, -2);
+        lua_rawget(state, 1);
         const char* tmp = optstring(state, -1, nullptr);
         if (tmp)
             type = to_match_type(tmp);
