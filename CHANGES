@@ -7,6 +7,7 @@
 - Added `terminal.scrollbars` setting which can disable the vertical scrollbars (e.g. according to preference, or if a terminal or font is incompatible with extended Unicode box drawing characters).
 - Added `clink set --info` flag.
 - Added minor optimization when displaying prompt text.
+- Fixed crash in `rl.getmatchcolor(match, type)`; when the optional `type` parameter was passed in, the API could crash.
 - Internal improvements.
 
 #### v1.5.6
