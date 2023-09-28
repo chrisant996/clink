@@ -956,25 +956,25 @@ Clink adds some new configuration variables for Readline:
 
 Variable | Description
 -|-
-`completion-auto-query-items` | If set to "on", automatically prompts before displaying completions if they won't fit without scrolling (this overrules the [`completion-query-items`](#configcompletionqueryitems) variable). The default is "on".
-`history-point-at-end-of-anchored-search` | If set to "on", this puts the cursor at the end of the line when using [`history-search-forward`](#rlcmd-history-search-forward) or [`history-search-backward`](#rlcmd-history-search-backward). The default is "off".
-`menu-complete-wraparound` | If this is "on", the [`menu-complete`](#rlcmd-menu-complete) family of commands wraps around when reaching the end of the possible completions. The default is "on".
-`search-ignore-case` | Controls whether the history search commands ignore case. The default is "on".
+<a name="configcompletionautoqueryitems"></a>`completion-auto-query-items` | If set to "on", automatically prompts before displaying completions if they won't fit without scrolling (this overrules the [`completion-query-items`](#configcompletionqueryitems) variable). The default is "on".
+<a name="confighistorypointatendofanchoredsearch"></a>`history-point-at-end-of-anchored-search` | If set to "on", this puts the cursor at the end of the line when using [`history-search-forward`](#rlcmd-history-search-forward) or [`history-search-backward`](#rlcmd-history-search-backward). The default is "off".
+<a name="configmenucompletewraparound"></a>`menu-complete-wraparound` | If this is "on", the [`menu-complete`](#rlcmd-menu-complete) family of commands wraps around when reaching the end of the possible completions. The default is "on".
+<a name="configsearchignorecase"></a>`search-ignore-case` | Controls whether the history search commands ignore case. The default is "on".
 
 Some configuration variables are deprecated in Clink:
 
 Variable | Description
 -|-
-`bind-tty-special-chars` | Clink doesn't need or use this.
-`completion-map-case` | Instead, use the <code><a href="#match_ignore_case">match.ignore_case</a></code> Clink setting (see the `relaxed` mode).
-`convert-meta` | Clink requires this to be "on", and sets it to "on".
-`disable-completion` | If set to "on", Readline will inhibit word completion. Completion characters will be inserted into the line as if they had been mapped to [`self-insert`](#rlcmd-self-insert). The default is "off".
-`enable-meta-key` | Clink requires this to be "on", and sets it to "on".
-`history-size` | Instead, use the <code><a href="#history_max_lines">history.max_lines</a></code> Clink setting.
-`input-meta` | Clink requires this to be "on", and sets it to "on".
-`keyseq-timeout` | Clink does not support this.
-`output-meta` | Clink requires this to be "on", and sets it to "on".
-`revert-all-at-newline` | Clink always reverts all in-memory changes to history lines each time a new input prompt starts.
+<a name="configbindttyspecialchars"></a>`bind-tty-special-chars` | Clink doesn't need or use this.
+<a name="configcompletionmapcase"></a>`completion-map-case` | Instead, use the <code><a href="#match_ignore_case">match.ignore_case</a></code> Clink setting (see the `relaxed` mode).
+<a name="configconvertmeta"></a>`convert-meta` | Clink requires this to be "on", and sets it to "on".
+<a name="configdisablecompletion"></a>`disable-completion` | If set to "on", Readline will inhibit word completion. Completion characters will be inserted into the line as if they had been mapped to [`self-insert`](#rlcmd-self-insert). The default is "off".
+<a name="configenablemetakey"></a>`enable-meta-key` | Clink requires this to be "on", and sets it to "on".
+<a name="confighistorysize"></a>`history-size` | Instead, use the <code><a href="#history_max_lines">history.max_lines</a></code> Clink setting.
+<a name="configinputmeta"></a>`input-meta` | Clink requires this to be "on", and sets it to "on".
+<a name="configkeyseqtimeout"></a>`keyseq-timeout` | Clink does not support this.
+<a name="configoutputmeta"></a>`output-meta` | Clink requires this to be "on", and sets it to "on".
+<a name="configrevertallatnewline"></a>`revert-all-at-newline` | Clink always reverts all in-memory changes to history lines each time a new input prompt starts.
 
 #### Readline key bindings
 

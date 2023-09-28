@@ -47,7 +47,7 @@ local function generate_file(source_path, out, weblinks)
     print("  << " .. source_path)
     local docver = _OPTIONS["docver"] or clink_git_name:upper()
     local last_name
-    local settings_table
+    local table_context, table_countdown
     for line in io.open(source_path, "r"):lines() do
         local include = line:match("%$%(INCLUDE +([^)]+)%)")
         if include then
@@ -64,22 +64,43 @@ local function generate_file(source_path, out, weblinks)
                 line = line:gsub("<br>", "&lt;br&gt;")
                 line = line:gsub("<!%-%- NEXT PASS INCLUDE (.*) %-%->", "$(INCLUDE %1)")
 
-                local n, hopen, hclose
+                local n, hopen, hclose, table_id
                 if weblinks then
                     n = line:match('^<p><a name="([^"]+)"')
                     hopen, hclose = line:match('^( *<h[0-9][^>]*>)(.+)$')
+                    table_id = n or line:match('^ *<h[0-9]+ id="([^"]+)"')
+                    if table_id == "readline-configuration-variables" or
+                            table_id == "clink-settings" or
+                            table_id == "commands-for-moving" or
+                            table_id == "commands-for-manipulating-the-history" or
+                            table_id == "commands-for-changing-text" or
+                            table_id == "killing-and-yanking-1" or
+                            table_id == "specifying-numeric-arguments" or
+                            table_id == "completion-commands" or
+                            table_id == "keyboard-macros" or
+                            table_id == "some-miscellaneous-commands" or
+                            table_id == "readline-vi-mode" or
+                            table_id == "other-readline-commands" or
+                            table_id == "clink-commands" then
+                        table_context = table_id
+                        table_countdown = (table_id == "readline-configuration-variables" and 3) or 1
+                    end
                     if n then
                         last_name = n
-                        settings_table = not hopen and (n == "clinksettings")
-                    elseif settings_table and line:find("><a name=") then
+                    elseif table_context and line:find("><a name=") then
                         local pre, epi = line:match("^(.->)(<.*)$")
                         if not pre or not epi then
-                            error("unexpected name tag in clinksettings table:\n"..line)
+                            error("unexpected name tag in "..table_context.." table:\n"..line)
                         end
                         local linkname = line:match('<a name="([^"]*)">')
                         line = pre .. make_weblink(linkname) .. epi
                     elseif line:find("</table>") then
-                        settings_table = false
+                        if table_context then
+                            table_countdown = table_countdown - 1
+                            if table_countdown <= 0 then
+                                table_context = nil
+                            end
+                        end
                     end
                     if hopen and not last_name then
                         last_name = hopen:match('id="([^"]+)"')
