@@ -920,7 +920,8 @@ do_insert:
                 (input.id == bind_id_textlist_leftclick ||
                  input.id == bind_id_textlist_doubleclick))
             {
-                m_scroll_bar_clicked = (p0 == m_vert_scroll_column && p1 >= 0 && p1 < rows);
+                const int32 row = p1 - m_mouse_offset;
+                m_scroll_bar_clicked = (p0 == m_vert_scroll_column && row >= 0 && row < rows);
             }
 
             if (m_scroll_bar_clicked)
