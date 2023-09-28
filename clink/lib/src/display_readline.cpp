@@ -111,8 +111,6 @@ extern setting_color g_color_suggestion;
 #endif
 
 //------------------------------------------------------------------------------
-static bool s_use_eol_optimization = false;
-
 #ifdef REPORT_REDISPLAY
 static int32 s_calls = 0;
 static int32 s_lastline = 0;
@@ -1421,9 +1419,6 @@ void display_manager::on_new_line()
         m_top = 0;
         history_free_expansions(&m_histexpand);
     }
-
-    str<> env;
-    s_use_eol_optimization = (os::get_env("CLINK_USE_EOL_OPTIMIZATION", env) && atoi(env.c_str()));
 }
 
 //------------------------------------------------------------------------------
@@ -2068,7 +2063,7 @@ void display_manager::update_line(int32 i, const display_line* o, const display_
         return;
     }
 
-    bool use_eol_opt = !has_rprompt && d->m_toeol && s_use_eol_optimization;
+    bool use_eol_opt = !has_rprompt && d->m_toeol;
 
     // Optimize updating when the new starting column is less than or equal to
     // the old starting column.  Can't optimize in the other direction unless
