@@ -10,6 +10,7 @@
 #include "match_adapter.h"
 #include "column_widths.h"
 #include "ellipsify.h"
+#include "scroll_car.h"
 
 #include <core/base.h>
 #include <core/path.h>
@@ -160,10 +161,8 @@ column_widths calculate_columns(const match_adapter& adapter, int32 max_matches,
 #ifdef SHOW_VERT_SCROLLBARS
     // NOTE:  This reserves space for selectcomplete_impl's vertical scrollbar
     // even in display_matches, so their layouts match.
-    str<16> tmp_sb;
-    const bool use_vert_sb = os::get_env("CLINK_USE_VERT_SCROLLBARS", tmp_sb) && atoi(tmp_sb.c_str());
     const size_t real_screen_width = __complete_get_screenwidth();
-    const size_t screen_width = real_screen_width - (use_vert_sb && !has_descriptions && real_screen_width > 1);
+    const size_t screen_width = real_screen_width - (use_vert_scrollbars() && !has_descriptions && real_screen_width > 1);
 #else
     const size_t screen_width = __complete_get_screenwidth();
 #endif

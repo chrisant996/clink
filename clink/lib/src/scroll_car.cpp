@@ -6,8 +6,16 @@
 
 #include <core/str.h>
 #include <core/os.h>
+#include <core/settings.h>
 
 #ifdef SHOW_VERT_SCROLLBARS
+
+static setting_bool g_terminal_scrollbars(
+    "terminal.scrollbars",
+    "Show scrollbars in lists",
+    "When enabled, lists show vertical scrollbars using extended Unicode box\n"
+    "drawing characters.  Some terminals or fonts may be incompatible with this.",
+    true);
 
 #define USE_HALF_CHARS
 
@@ -24,14 +32,13 @@ constexpr int32 c_scale_positions = 1;
 //------------------------------------------------------------------------------
 bool use_vert_scrollbars()
 {
-    str<16> tmp_sb;
-    return os::get_env("CLINK_USE_VERT_SCROLLBARS", tmp_sb) && atoi(tmp_sb.c_str());
+    return g_terminal_scrollbars.get();
 }
 
 //------------------------------------------------------------------------------
 int32 calc_scroll_car_size(int32 rows, int32 total)
 {
-    if (rows <= 0 || rows >= total)
+    if (!use_vert_scrollbars() || rows <= 0 || rows >= total)
         return 0;
 
     const int car_size = max(c_min_car_size, min(rows, (rows * rows + (total / 2)) / total));

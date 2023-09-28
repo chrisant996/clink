@@ -1267,10 +1267,8 @@ void textlist_impl::update_layout()
     }
 
 #ifdef SHOW_VERT_SCROLLBARS
-    m_vert_scroll_car = 0;
+    m_vert_scroll_car = calc_scroll_car_size(m_visible_rows, m_count);
     m_vert_scroll_column = 0;
-    if (use_vert_scrollbars() && m_visible_rows < m_count)
-        m_vert_scroll_car = calc_scroll_car_size(m_visible_rows, m_count);
 #endif
 }
 
