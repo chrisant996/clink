@@ -135,7 +135,7 @@ static bool call_updater(lua_state& lua, bool do_nothing, bool force_prompt)
 
         if (use_color)
         {
-            str<> colored_msg(ok ? "\n\x1b[1;32m" : "\n\x1b[1;31m");
+            str<> colored_msg(ok ? "\x1b[1;32m" : "\x1b[1;31m");
             colored_msg << tmp;
             colored_msg << "\x1b[m\n";
             g_printer->print(colored_msg.c_str(), colored_msg.length());
