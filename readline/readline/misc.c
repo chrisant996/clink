@@ -348,6 +348,7 @@ _rl_start_using_history (void)
 {
   using_history ();
 /* begin_clink_change */
+#ifdef DEBUG
   if (_rl_saved_line_for_history && _rl_saved_line_for_history->data)
     {
       int not_leaked = 0;
@@ -355,6 +356,7 @@ _rl_start_using_history (void)
 	not_leaked |= (walk == _rl_saved_line_for_history->data);
       assert (not_leaked);
     }
+#endif
 /* end_clink_change */
   if (_rl_saved_line_for_history)
     _rl_free_history_entry (_rl_saved_line_for_history);
@@ -436,6 +438,7 @@ _rl_free_saved_history_line (void)
   if (_rl_saved_line_for_history)
     {
 /* begin_clink_change */
+#ifdef DEBUG
       if (_rl_saved_line_for_history->data)
 	{
 	  int not_leaked = 0;
@@ -443,6 +446,7 @@ _rl_free_saved_history_line (void)
 	    not_leaked |= (walk == _rl_saved_line_for_history->data);
 	  assert (not_leaked);
 	}
+#endif
 /* end_clink_change */
       _rl_free_history_entry (_rl_saved_line_for_history);
       _rl_saved_line_for_history = (HIST_ENTRY *)NULL;

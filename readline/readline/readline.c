@@ -504,6 +504,7 @@ readline_internal_teardown (int eof)
       rl_revert_line (1, 0);
       entry = replace_history_entry (where_history (), the_line, (histdata_t)NULL);
 /* begin_clink_change */
+#ifdef DEBUG
       if (entry && entry->data)
 	{
 	  int not_leaked = 0;
@@ -511,6 +512,7 @@ readline_internal_teardown (int eof)
 	    not_leaked |= (walk == entry->data);
 	  assert (not_leaked);
 	}
+#endif
 /* end_clink_change */
       _rl_free_history_entry (entry);
 
