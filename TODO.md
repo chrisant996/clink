@@ -14,6 +14,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## Low Priority
 - Horizontal scrolling in textlist_impl even when there are columns.
+  - Or maybe a way to pop up a nested popup showing each colunn as a separate scrollable line?
 - Color improvements:
   - Color themes.  Some way to import color settings en masse.  Some way to export color settings as well?
   - More sophisticated match color definitions?
@@ -23,6 +24,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
       - Precedence for "or", "and", "xor" can be simply left to right (like in 4Dos/4NT/TakeCommand etc).
       - Automatically optimize rule evaluation by processing CFLAG checks before pattern checks in any group of "or" clauses.
       - If parsing is fast enough, then maybe don't even bother "compiling" the rules, and simply parse for every entry?
+- Maybe consider a way to allow piping matches and help into `less` or other external pager?  It would break/interfere with the intended flow and behavior of the `complete` command and it might not work with ANSI codes.  But in [clink-completions#500](https://github.com/vladimir-kotikov/clink-completions/issues/178) a user cited a link where someone assumed that bash would use an external pager like `less`.
 - The `:` and `=` parsing has a side effect that flags like `-f`_`file`_ are ambiguous: since parsing happens independently from argmatchers, `-fc:\file` could be `-f` and `c:\file` or it could be `-fc:` and `\file`.
   - Revisit the possibility of allowing `line_state` to be mutable and argmatchers adjusting it as they parse the input line?  _No; too messy.  E.g. splitting `"-fc:\foo bar"` gets weird because quoting encloses **two adjacent** words._
   - But an important benefit of the current implementation is that `program_with_no_argmatcher --unknown-flag:filename` is able to do filename completion on `filename`.
