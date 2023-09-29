@@ -796,6 +796,14 @@ get_y_or_n (int for_pager)
 	    return (0);
 	  if (c == ABORT_CHAR || c < 0)
 	    _rl_abort_internal ();
+#if defined(OMIT_DEFAULT_DISPLAY_MATCHES)
+	  if (for_pager && (c == '?'))
+	    return (4);
+	  if (for_pager && (c == 'd' || c == 'D'))
+	    return (3);
+	  if (for_pager && (c == TAB))
+	    return (1);
+#endif
 	  if (for_pager && (c == NEWLINE || c == RETURN))
 	    return (2);
 	  if (for_pager && (c == 'q' || c == 'Q'))
@@ -827,22 +835,14 @@ get_y_or_n (int for_pager)
 }
 
 /* begin_clink_change */
-//static int
-int
+#if !defined(OMIT_DEFAULT_DISPLAY_MATCHES)
 /* end_clink_change */
+static int
 _rl_internal_pager (int lines)
 {
   int i;
 
-/* begin_clink_change */
-  if (_rl_pager_color)
-    _rl_print_pager_color ();
-/* end_clink_change */
   fprintf (rl_outstream, "--More--");
-/* begin_clink_change */
-  if (_rl_pager_color)
-    fprintf (rl_outstream, "\x1b[m");
-/* end_clink_change */
   fflush (rl_outstream);
   i = get_y_or_n (1);
   _rl_erase_entire_line ();
@@ -853,6 +853,9 @@ _rl_internal_pager (int lines)
   else
     return 0;
 }
+/* begin_clink_change */
+#endif !OMIT_DEFAULT_DISPLAY_MATCHES
+/* end_clink_change */
 
 static int
 path_isdir (const char *filename)
@@ -4243,11 +4246,6 @@ void __set_completion_defaults (int what_to_do)
 int __get_y_or_n (int for_pager)
 {
   return get_y_or_n (for_pager);
-}
-
-int ___rl_internal_pager (int lines)
-{
-  return _rl_internal_pager (lines);
 }
 
 char *__printable_part (char* pathname)

@@ -29,7 +29,7 @@ enum {
     bind_id_pager_page      = 30,
     bind_id_pager_halfpage,
     bind_id_pager_line,
-    // TODO: bind_id_pager_help,
+    bind_id_pager_help,
     bind_id_pager_stop,
 
     bind_id_catchall = binder::id_catchall_only_printable,
@@ -47,11 +47,16 @@ pager_impl::pager_impl(input_dispatcher& dispatcher)
 void pager_impl::bind_input(binder& binder)
 {
     m_pager_bind_group = binder.create_group("pager");
+    binder.bind(m_pager_bind_group, "?", bind_id_pager_help);
     binder.bind(m_pager_bind_group, " ", bind_id_pager_page);
     binder.bind(m_pager_bind_group, "\t", bind_id_pager_page);
-    binder.bind(m_pager_bind_group, "\r", bind_id_pager_line);
+    binder.bind(m_pager_bind_group, "y", bind_id_pager_page);
+    binder.bind(m_pager_bind_group, "Y", bind_id_pager_page);
     binder.bind(m_pager_bind_group, "d", bind_id_pager_halfpage);
     binder.bind(m_pager_bind_group, "D", bind_id_pager_halfpage);
+    binder.bind(m_pager_bind_group, "\r", bind_id_pager_line);
+    binder.bind(m_pager_bind_group, "n", bind_id_pager_stop);
+    binder.bind(m_pager_bind_group, "N", bind_id_pager_stop);
     binder.bind(m_pager_bind_group, "q", bind_id_pager_stop);
     binder.bind(m_pager_bind_group, "Q", bind_id_pager_stop);
     binder.bind(m_pager_bind_group, "^C", bind_id_pager_stop); // ctrl-c
@@ -76,6 +81,7 @@ void pager_impl::on_input(const input& input, result& result, const context& con
 {
     switch (input.id)
     {
+    case bind_id_pager_help:        context.printer.print("\r\x1b[K"); print_pager_prompt(true/*help*/); result.loop(); break;
     case bind_id_pager_page:        set_limit(context.printer, page); break;
     case bind_id_pager_halfpage:    set_limit(context.printer, half_page); break;
     case bind_id_pager_line:        set_limit(context.printer, line); break;
@@ -122,7 +128,7 @@ bool pager_impl::on_print_lines(printer& printer, int32 lines)
         return true;
     m_max = 0;
 
-    printer.print(g_color_interact.get(), "-- More --");
+    print_pager_prompt();
     m_dispatcher.dispatch(m_pager_bind_group);
 
     if (clink_is_signaled())

@@ -20,6 +20,7 @@
 #include "column_widths.h"
 #include "ellipsify.h"
 #include "line_buffer.h"
+#include "pager.h"
 
 #include <core/base.h>
 #include <core/path.h>
@@ -51,7 +52,6 @@ int __complete_get_screenwidth (void);
 int __get_y_or_n (int for_pager);
 char* __printable_part (char* pathname);
 int __stat_char (const char *filename, char match_type);
-int ___rl_internal_pager (int lines);
 uint32 cell_count(const char* in);
 
 } // extern "C"
@@ -837,6 +837,40 @@ uint32 append_display_with_presuf(const char* match, const char* display, int32 
 
 
 //------------------------------------------------------------------------------
+void print_pager_prompt(bool help)
+{
+    if (_rl_pager_color)
+        _rl_print_pager_color();
+    fprintf(rl_outstream, "-- More %s--", help ? "[<space><tab><enter>dynq] " : "");
+    if (_rl_pager_color)
+        fprintf(rl_outstream, "\x1b[m");
+}
+
+//------------------------------------------------------------------------------
+static int internal_pager(int lines)
+{
+    bool help = false;
+
+again:
+    print_pager_prompt(help);
+
+    const int i = __get_y_or_n(1);
+    _rl_erase_entire_line();
+
+    switch (i)
+    {
+    case 1: return 0;           // One line.
+    case 2: return lines - 1;   // One page.
+    case 3: return lines / 2;   // Half page.
+    case 4: help = true; _rl_erase_entire_line(); goto again;
+    }
+
+    return -1;
+}
+
+
+
+//------------------------------------------------------------------------------
 static int32 display_match_list_internal(const match_adapter& adapter, const column_widths& widths, bool only_measure, int32 presuf)
 {
     const int32 count = adapter.get_match_count();
@@ -966,7 +1000,7 @@ static int32 display_match_list_internal(const match_adapter& adapter, const col
                 lines_for_row += (printed_len - 1) / _rl_screenwidth;
             if (_rl_page_completions && lines > 0 && lines + lines_for_row >= _rl_screenheight)
             {
-                lines = ___rl_internal_pager(lines);
+                lines = internal_pager(lines);
                 if (lines < 0)
                     break;
             }

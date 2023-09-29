@@ -14,3 +14,6 @@ public:
     virtual void    start_pager(printer& printer) = 0;
     virtual bool    on_print_lines(printer& printer, int32 lines) = 0;
 };
+
+//------------------------------------------------------------------------------
+void print_pager_prompt(bool help=false);
