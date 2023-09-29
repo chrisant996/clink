@@ -240,6 +240,19 @@ int32 clink_info(int32 argc, char** argv)
         }
     }
 
+    const DWORD cpid = GetACP();
+    const DWORD kbid = LOWORD(GetKeyboardLayout(0));
+    WCHAR wide_layout_name[KL_NAMELENGTH * 2];
+    if (!GetKeyboardLayoutNameW(wide_layout_name))
+        wide_layout_name[0] = 0;
+    str<> layout_name(wide_layout_name);
+
+    printf("%-*s : %u\n", spacing, "codepage", cpid);
+    printf("%-*s : %u\n", spacing, "keyboard langid", kbid);
+    s.clear();
+    s.format("%-*s : %s\n", spacing, "keyboard layout", layout_name.c_str());
+    print_info_line(h, s.c_str());
+
     str<> state_dir;
     context->get_state_dir(state_dir);
     if (os::get_path_type(state_dir.c_str()) == os::path_type_file)

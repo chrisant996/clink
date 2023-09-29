@@ -2412,6 +2412,24 @@ int32 clink_diagnostics(int32 count, int32 invoking_key)
     print_value("default_inputrc", context.default_inputrc.c_str());
     print_value("inputrc", rl_get_last_init_file());    // ACTUAL FILE IN USE.
 
+    // Language info.
+
+    if (rl_explicit_arg)
+    {
+        print_heading("language");
+
+        const DWORD cpid = GetACP();
+        const DWORD kbid = LOWORD(GetKeyboardLayout(0));
+        WCHAR wide_layout_name[KL_NAMELENGTH * 2];
+        if (!GetKeyboardLayoutNameW(wide_layout_name))
+            wide_layout_name[0] = 0;
+        t = wide_layout_name;
+
+        printf("  %-*s  %u\n", spacing, "codepage", cpid);
+        printf("  %-*s  %u\n", spacing, "keyboard langid", kbid);
+        print_value("keyboard layout", t.c_str());
+    }
+
     // Terminal info.
 
     if (rl_explicit_arg)
