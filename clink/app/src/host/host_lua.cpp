@@ -172,13 +172,35 @@ void host_lua::load_script(const char* path, unsigned& num_loaded, unsigned& num
     while (lua_globs.next(buffer))
     {
         const char* s = path::get_name(buffer.c_str());
-        if (stricmp(s, "clink.lua") != 0)
-        {
-            if (m_state.do_file(buffer.c_str()))
-                num_loaded++;
-            else
-                num_failed++;
-        }
+        if (stricmp(s, "clink.lua") == 0)
+            continue;
+
+#ifdef LUA_FILTER_8DOT3_SHORT_NAMES
+        // When the 8.3 short names compatibility feature is enabled in
+        // Windows (which it is by default), then a file "foo.luax" gets an
+        // 8.3 short name like "foo~1.lua".  Since the file actually has two
+        // names and one of the ends with ".lua", that causes the file to
+        // match "*.lua".
+        //
+        // It's simple enough to filter the results for exact matches, but
+        // that leads to inconsistencies that are then even more unexpected:
+        // batch scripts and other programs using *.lua will still operate on
+        // foo.luax even though Clink doesn't load it, Lua scripts in Clink
+        // that use *.lua will still operate on foo.luax, and so on.
+        //
+        // My viewpoint is that consistency is better in this case.  The
+        // example raised in chrisant996/clink#502 involved what looked like
+        // renaming a file to "foo.lua_" to "hide" it.  In general, that isn't
+        // reliable, and renaming to something like "foo.lua.ignore" is both
+        // more effective and more descriptive.
+        if (stricmp(path::get_extension(s), ".lua") != 0)
+            continue;
+#endif
+
+        if (m_state.do_file(buffer.c_str()))
+            num_loaded++;
+        else
+            num_failed++;
     }
 }
 

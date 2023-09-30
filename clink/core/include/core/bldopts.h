@@ -49,6 +49,12 @@
 //#define CAPTURE_PUSHD_STACK
 
 //------------------------------------------------------------------------------
+// Define this to only load Lua scripts whose long name has an exact ".lua"
+// extension.  This counteracts 8.3 short names compatibility in Windows.
+// It's disabled for consistency with everything else that uses "*.lua".
+// #define LUA_FILTER_8DOT3_SHORT_NAMES
+
+//------------------------------------------------------------------------------
 // Clink doesn't support rl_byte_oriented mode.  Defining it to 0 lets the
 // compiler optimize away any code specific to that mode.
 #define rl_byte_oriented    (0)
