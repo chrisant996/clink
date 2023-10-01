@@ -114,6 +114,14 @@ bool suggestion_manager::can_suggest(const line_state& line)
     // can clear the flag.
     if (is_suppressing_suggestions())
     {
+        if (rl_last_func == rl_rubout ||
+            rl_last_func == rl_backward_kill_word ||
+            rl_last_func == rl_backward_kill_line)
+        {
+            suppress_suggestions();
+            return false;
+        }
+
         if (diff)
             clear();
         else
