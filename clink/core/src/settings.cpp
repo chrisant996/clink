@@ -106,10 +106,26 @@ static bool load_internal(FILE* in, std::function<void(const char* name, const c
     fclose(in);
     data[size] = '\0';
 
+    // Check for `clink set` output format:
+    // No blank lines, no # lines, no = signs.
+    str<256> line;
+    bool maybe_clink_set = true;
+    {
+        str_tokeniser lines(buffer.c_str(), "\n\r");
+        while (lines.next(line))
+        {
+            const char* p = line.c_str();
+            if (!*p || *p == '#' || strchr(p, '='))
+            {
+                maybe_clink_set = false;
+                break;
+            }
+        }
+    }
+
     // Split at new lines.
     bool was_comment = false;
     str<> comment;
-    str<256> line;
     str_tokeniser lines(buffer.c_str(), "\n\r");
     while (lines.next(line))
     {
@@ -136,7 +152,21 @@ static bool load_internal(FILE* in, std::function<void(const char* name, const c
         was_comment = false;
         char* value = strchr(line_data, '=');
         if (value == nullptr)
-            continue;
+        {
+            if (!maybe_clink_set)
+                continue;
+            // If there's no = then delimit by whitespace.  This enables
+            // saving the output from `clink set` to "clink_settings" for
+            // troubleshooting purposes.
+            //
+            // WARNING:  This should not be used for anything other than
+            // troubleshooting purposes; it isn't the real file format, and it
+            // may not work properly if a setting name contains a space, etc.
+            //
+            value = strchr(line_data, ' ');
+            if (value == nullptr)
+                continue;
+        }
 
         *value++ = '\0';
 
