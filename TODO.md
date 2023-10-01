@@ -13,8 +13,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - Provide a sample .txt file that repros the issue.  Maybe multiple .txt files that chain together (or with a pause; is there an escape code for a pause?) to show the UX flow.
 
 ## Low Priority
-- Horizontal scrolling in textlist_impl even when there are columns.
-  - Or maybe a way to pop up a nested popup showing each colunn as a separate scrollable line?
 - Color improvements:
   - Color themes.  Some way to import color settings en masse.  Some way to export color settings as well?
   - More sophisticated match color definitions?
