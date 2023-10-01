@@ -110,7 +110,7 @@ make_history_line_current (HIST_ENTRY *entry)
 #endif
 
 /* begin_clink_change */
-#ifdef DEBUG
+#ifdef REPORT_READLINE_UNDO_LIST_LEAKS
   if (_rl_saved_line_for_history && _rl_saved_line_for_history->data)
     {
       int not_leaked = 0;

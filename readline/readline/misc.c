@@ -348,7 +348,7 @@ _rl_start_using_history (void)
 {
   using_history ();
 /* begin_clink_change */
-#ifdef DEBUG
+#ifdef REPORT_READLINE_UNDO_LIST_LEAKS
   if (_rl_saved_line_for_history && _rl_saved_line_for_history->data)
     {
       int not_leaked = 0;
@@ -438,7 +438,7 @@ _rl_free_saved_history_line (void)
   if (_rl_saved_line_for_history)
     {
 /* begin_clink_change */
-#ifdef DEBUG
+#ifdef REPORT_READLINE_UNDO_LIST_LEAKS
       if (_rl_saved_line_for_history->data)
 	{
 	  int not_leaked = 0;

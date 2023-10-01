@@ -504,7 +504,7 @@ readline_internal_teardown (int eof)
       rl_revert_line (1, 0);
       entry = replace_history_entry (where_history (), the_line, (histdata_t)NULL);
 /* begin_clink_change */
-#ifdef DEBUG
+#ifdef REPORT_READLINE_UNDO_LIST_LEAKS
       if (entry && entry->data)
 	{
 	  int not_leaked = 0;

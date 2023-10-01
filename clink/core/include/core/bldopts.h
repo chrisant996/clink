@@ -36,6 +36,7 @@
 //#define DEBUG_SUGGEST
 //#define DEBUG_RESOLVEIMPL
 //#define USE_OS_UTF_CONVERSION
+//#define REPORT_READLINE_UNDO_LIST_LEAKS
 #endif
 
 //------------------------------------------------------------------------------
