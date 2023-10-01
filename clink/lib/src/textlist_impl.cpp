@@ -382,7 +382,7 @@ int32 textlist_impl::addl_columns::calc_widths(int32 available)
                 ++divisor;
         }
 
-        while (true)
+        while (divisor)
         {
             bool share = true;
 
