@@ -1509,11 +1509,11 @@ void textlist_impl::update_display()
                 m_horz_scroll_range = 0;
                 m_horz_item_enabled = 0;
                 memset(m_horz_column_enabled, 0, sizeof(m_horz_column_enabled));
-                m_item_cells = max<int32>(0, min<int32>(m_max_num_cells + m_longest, m_mouse_width / 2));
+                m_item_cells = max<int32>(0, min<int32>(m_longest, (m_mouse_width / 2) - m_max_num_cells));
 
                 if (m_item_cells > 0)
                 {
-                    m_item_cells += m_columns.calc_widths(m_mouse_width - m_item_cells);
+                    m_item_cells += m_columns.calc_widths(m_mouse_width - (m_max_num_cells + m_item_cells));
 
                     m_horz_item_enabled = (m_item_cells < m_longest);
                     for (int32 col = max_columns; col--;)
