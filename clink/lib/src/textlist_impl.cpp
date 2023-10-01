@@ -1633,8 +1633,8 @@ void textlist_impl::update_display()
                             line.concat("  ", min<int32>(col_padding, spaces));
                             spaces -= min<int32>(col_padding, spaces);
 
-                            const char* col_text;
-                            const int32 col_len = limit_cells(m_columns.get_col_text(i, col), spaces, cell_len, m_horz_offset * m_horz_column_enabled[col], &tmp, &col_text);
+                            const char* col_text = m_columns.get_col_text(i, col);
+                            const int32 col_len = limit_cells(col_text ? col_text : "", spaces, cell_len, m_horz_offset * m_horz_column_enabled[col], &tmp, &col_text);
 
                             if (first_col)
                             {
