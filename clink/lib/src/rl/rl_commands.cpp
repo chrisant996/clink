@@ -354,6 +354,7 @@ int32 clink_reset_line(int32 count, int32 invoking_key)
     using_history();
     g_rl_buffer->remove(0, rl_end);
     rl_point = 0;
+    host_clear_suggestion();
 
     return 0;
 }
