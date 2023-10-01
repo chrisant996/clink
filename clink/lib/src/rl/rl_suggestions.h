@@ -43,4 +43,3 @@ private:
 bool pause_suggestions(bool pause);
 bool insert_suggestion(suggestion_action action);
 void suppress_suggestions();
-bool is_suppressing_suggestions();

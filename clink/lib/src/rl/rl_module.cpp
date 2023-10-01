@@ -1232,12 +1232,6 @@ void suppress_suggestions()
 }
 
 //------------------------------------------------------------------------------
-bool is_suppressing_suggestions()
-{
-    return s_suggestion.is_suppressing_suggestions();
-}
-
-//------------------------------------------------------------------------------
 bool insert_suggestion(suggestion_action action)
 {
     return s_suggestion.insert(action);

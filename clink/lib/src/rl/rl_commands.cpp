@@ -1586,7 +1586,7 @@ int32 win_f1(int32 count, int32 invoking_key)
 {
     const bool had_selection = (cua_get_anchor() >= 0);
 
-    if (insert_suggestion(suggestion_action::insert_to_end) || (rl_point >= rl_end && is_suppressing_suggestions()))
+    if (insert_suggestion(suggestion_action::insert_to_end))
         return 0;
 
     if (count <= 0)
