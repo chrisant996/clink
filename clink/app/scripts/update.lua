@@ -855,7 +855,7 @@ function clink.updatenow(elevated, force_prompt)
             return nil, log_info("already updated; local version " .. local_tag .. " is not older than update candidate " .. cloud_tag .. ".") -- luacheck: no max line length
         end
 
-        local action = do_prompt(cloud_tag, func)
+        local action = do_prompt(cloud_tag)
         if action < 0 then
             return nil
         elseif action == 0 then
