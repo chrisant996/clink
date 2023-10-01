@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.5.6</title>
+<title>Clink v1.5.7</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -65,8 +65,8 @@ a code:hover {
     user-select: none;
 }
 
-h1:hover .wlink, h2:hover .wlink, h3:hover .wlink, h4:hover .wlink, h5:hover .wlink, h6:hover .wlink { opacity: 100%; }
-h1:focus .wlink, h2:focus .wlink, h3:focus .wlink, h4:focus .wlink, h5:focus .wlink, h6:focus .wlink { opacity: 100%; }
+h1:hover .wlink, h2:hover .wlink, h3:hover .wlink, h4:hover .wlink, h5:hover .wlink, h6:hover .wlink, td:hover .wlink { opacity: 100%; }
+h1:focus .wlink, h2:focus .wlink, h3:focus .wlink, h4:focus .wlink, h5:focus .wlink, h6:focus .wlink, td:focus .wlink { opacity: 100%; }
 
 .wlink:hover { opacity: 100%; text-decoration: underline; }
 .wlink:focus { opacity: 100%; text-decoration: underline; }
@@ -901,7 +901,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.5.6</div>
+                <div id="title">Clink v1.5.7</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -1042,7 +1042,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 <p>See <a href="#completion-commands">Completion Commands</a> and <a href="#clink-commands">Clink Commands</a> for more available completion commands.</p>
 <h3 id="executable-completion"><a class="wlink" href="#executable-completion"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Executable Completion</h3>
 <p>By default, Clink completes the first word of each command based on all executable programs on the system PATH and the current directory, but not non-executable files.</p>
-<p>You can turn off the &quot;executable completion&quot; behavior by running <code>clink set <a href="#exec_enable">exec.enable</a> false</code>, or you can adjust its behavior by changing the various <a href="#exec.aliases"><code>exec.*</code></a> settings.</p>
+<p>You can turn off the &quot;executable completion&quot; behavior by running <code>clink set <a href="#exec_enable">exec.enable</a> false</code>, or you can adjust its behavior by changing the various <a href="#exec_aliases"><code>exec.*</code></a> settings.</p>
 <h2 id="common-configuration"><a class="wlink" href="#common-configuration"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Common Configuration</h2>
 <p>The following sections describe some ways to begin customizing Clink to your taste.</p>
 <table class="linkmenu">
@@ -1296,512 +1296,517 @@ $endif
 </tr>
 </thead>
 <tbody><tr>
-<td align="center"><a name="autosuggest_async"></a><code>autosuggest.async</code></td>
+<td align="center"><a class="wlink" href="#autosuggest_async"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="autosuggest_async"></a><code>autosuggest.async</code></td>
 <td align="center">True</td>
 <td>When this is <code>true</code> matches are generated asynchronously for suggestions.  This helps to keep typing responsive.</td>
 </tr>
 <tr>
-<td align="center"><a name="autosuggest_enable"></a><code>autosuggest.enable</code></td>
+<td align="center"><a class="wlink" href="#autosuggest_enable"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="autosuggest_enable"></a><code>autosuggest.enable</code></td>
 <td align="center">True</td>
 <td>When this is <code>true</code> a suggested command may appear in <a href="#color_suggestion"><code>color.suggestion</code></a> color after the cursor.  If the suggestion isn&#39;t what you want, just ignore it.  Or accept the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, accept the next word of the suggestion with <kbd>Ctrl</kbd>-<kbd>Right</kbd>, or accept the next full word of the suggestion up to a space with <kbd>Shift</kbd>-<kbd>Right</kbd>.  The <a href="#autosuggest_strategy"><code>autosuggest.strategy</code></a> setting determines how a suggestion is chosen.</td>
 </tr>
 <tr>
-<td align="center"><a name="autosuggest_original_case"></a><code>autosuggest.original_case</code></td>
+<td align="center"><a class="wlink" href="#autosuggest_original_case"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="autosuggest_original_case"></a><code>autosuggest.original_case</code></td>
 <td align="center">True</td>
 <td>When this is enabled (the default), accepting a suggestion uses the original capitalization from the suggestion.</td>
 </tr>
 <tr>
-<td align="center"><a name="autosuggest_strategy"></a><code>autosuggest.strategy</code></td>
+<td align="center"><a class="wlink" href="#autosuggest_strategy"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="autosuggest_strategy"></a><code>autosuggest.strategy</code></td>
 <td align="center"><code>match_prev_cmd history completion</code></td>
 <td>This determines how suggestions are chosen.  The suggestion generators are tried in the order listed, until one provides a suggestion.  There are three built-in suggestion generators, and scripts can provide new ones.  <code>history</code> chooses the most recent matching command from the history.  <code>completion</code> chooses the first of the matching completions.  <code>match_prev_cmd</code> chooses the most recent matching command whose preceding history entry matches the most recently invoked command, but only when the <a href="#history_dupe_mode"><code>history.dupe_mode</code></a> setting is <code>add</code>.</td>
 </tr>
 <tr>
-<td align="center"><a name="clink_autostart"></a><code>clink.autostart</code></td>
+<td align="center"><a class="wlink" href="#clink_autostart"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="clink_autostart"></a><code>clink.autostart</code></td>
 <td align="center"></td>
 <td>This command is automatically run when the first CMD prompt is shown after Clink is injected.  If this is blank (the default), then Clink instead looks for <code>clink_start.cmd</code> in the binaries directory and profile directory and runs them.  Set it to &quot;nul&quot; to not run any autostart command.</td>
 </tr>
 <tr>
-<td align="center"><a name="clink_autoupdate"></a><code>clink.autoupdate</code></td>
+<td align="center"><a class="wlink" href="#clink_autoupdate"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="clink_autoupdate"></a><code>clink.autoupdate</code></td>
 <td align="center"><code>check</code></td>
 <td>Clink can periodically check for updates for the Clink program files (see <a href="#automatic-updates">Automatic Updates</a>).</td>
 </tr>
 <tr>
-<td align="center"><a name="clink_colorize_input"></a><code>clink.colorize_input</code></td>
+<td align="center"><a class="wlink" href="#clink_colorize_input"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="clink_colorize_input"></a><code>clink.colorize_input</code></td>
 <td align="center">True</td>
 <td>Enables context sensitive coloring for the input text (see <a href="#classifywords">Coloring the Input Text</a>).</td>
 </tr>
 <tr>
-<td align="center"><a name="default_bindings"><a name="clink_default_bindings"></a></a><code>clink.default_bindings</code></td>
+<td align="center"><a class="wlink" href="#default_bindings"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="default_bindings"><a name="clink_default_bindings"></a></a><code>clink.default_bindings</code></td>
 <td align="center"><code>bash</code> <a href="#alternatedefault">*</a></td>
 <td>Clink uses bash key bindings when this is set to <code>bash</code> (the default).  When this is set to <code>windows</code> Clink overrides some of the bash defaults with familiar Windows key bindings for <kbd>Tab</kbd>, <kbd>Ctrl</kbd>-<kbd>A</kbd>, <kbd>Ctrl</kbd>-<kbd>F</kbd>, <kbd>Ctrl</kbd>-<kbd>M</kbd>, and <kbd>Right</kbd>.</td>
 </tr>
 <tr>
-<td align="center"><a name="clink_logo"></a><code>clink.logo</code></td>
+<td align="center"><a class="wlink" href="#clink_logo"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="clink_logo"></a><code>clink.logo</code></td>
 <td align="center"><code>full</code></td>
 <td>Controls what startup logo to show when Clink is injected.  <code>full</code> = show full copyright logo, <code>short</code> = show abbreviated version info, <code>none</code> = omit the logo.</td>
 </tr>
 <tr>
-<td align="center"><a name="clink_max_input_rows"></a><code>clink.max_input_rows</code></td>
+<td align="center"><a class="wlink" href="#clink_max_input_rows"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="clink_max_input_rows"></a><code>clink.max_input_rows</code></td>
 <td align="center"><code>0</code></td>
 <td>Limits how many rows the input line can use, up to the terminal height.  When this is <code>0</code> (the default), the terminal height is the limit.</td>
 </tr>
 <tr>
-<td align="center"><a name="clink_paste_crlf"></a><code>clink.paste_crlf</code></td>
+<td align="center"><a class="wlink" href="#clink_paste_crlf"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="clink_paste_crlf"></a><code>clink.paste_crlf</code></td>
 <td align="center"><code>crlf</code></td>
 <td>What to do with CR and LF characters on paste. Setting this to <code>delete</code> deletes them, <code>space</code> replaces them with spaces, <code>ampersand</code> replaces them with ampersands, and <code>crlf</code> pastes them as-is (executing commands that end with a newline).</td>
 </tr>
 <tr>
-<td align="center"><a name="clink_dot_path"></a><code>clink.path</code></td>
+<td align="center"><a class="wlink" href="#clink_dot_path"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="clink_dot_path"></a><code>clink.path</code></td>
 <td align="center"></td>
 <td>A list of paths from which to load Lua scripts. Multiple paths can be delimited semicolons.</td>
 </tr>
 <tr>
-<td align="center"><a name="clink_promptfilter"></a><code>clink.promptfilter</code></td>
+<td align="center"><a class="wlink" href="#clink_promptfilter"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="clink_promptfilter"></a><code>clink.promptfilter</code></td>
 <td align="center">True</td>
 <td>Enable <a href="#customising-the-prompt">prompt filtering</a> by Lua scripts.</td>
 </tr>
 <tr>
-<td align="center"><a name="clink_update_interval"></a><code>clink.update_interval</code></td>
+<td align="center"><a class="wlink" href="#clink_update_interval"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="clink_update_interval"></a><code>clink.update_interval</code></td>
 <td align="center"><code>5</code></td>
 <td>The Clink autoupdater will wait this many days between update checks (see <a href="#automatic-updates">Automatic Updates</a>).</td>
 </tr>
 <tr>
-<td align="center"><a name="cmd_admin_title_prefix"></a><code>cmd.admin_title_prefix</code></td>
+<td align="center"><a class="wlink" href="#cmd_admin_title_prefix"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="cmd_admin_title_prefix"></a><code>cmd.admin_title_prefix</code></td>
 <td align="center"></td>
 <td>When set, this replaces the &quot;Administrator: &quot; console title prefix.</td>
 </tr>
 <tr>
-<td align="center"><a name="cmd_altf4_exits"></a><code>cmd.altf4_exits</code></td>
+<td align="center"><a class="wlink" href="#cmd_altf4_exits"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="cmd_altf4_exits"></a><code>cmd.altf4_exits</code></td>
 <td align="center">True</td>
 <td>When set, pressing <kbd>Alt</kbd>-<kbd>F4</kbd> exits the cmd.exe process.</td>
 </tr>
 <tr>
-<td align="center"><a name="cmd_auto_answer"></a><code>cmd.auto_answer</code></td>
+<td align="center"><a class="wlink" href="#cmd_auto_answer"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="cmd_auto_answer"></a><code>cmd.auto_answer</code></td>
 <td align="center"><code>off</code></td>
 <td>Automatically answers cmd.exe&#39;s &quot;Terminate batch job (Y/N)?&quot; prompts. <code>off</code> = disabled, <code>answer_yes</code> = answer Y, <code>answer_no</code> = answer N.</td>
 </tr>
 <tr>
-<td align="center"><a name="ctrld_exits"></a><code>cmd.ctrld_exits</code></td>
+<td align="center"><a class="wlink" href="#ctrld_exits"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="ctrld_exits"></a><code>cmd.ctrld_exits</code></td>
 <td align="center">True</td>
 <td><kbd>Ctrl</kbd>-<kbd>D</kbd> exits the cmd.exe process when it is pressed on an empty line.</td>
 </tr>
 <tr>
-<td align="center"><a name="cmd_get_errorlevel"></a><code>cmd.get_errorlevel</code></td>
+<td align="center"><a class="wlink" href="#cmd_get_errorlevel"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="cmd_get_errorlevel"></a><code>cmd.get_errorlevel</code></td>
 <td align="center">True</td>
 <td>When this is enabled, Clink runs a hidden <code>echo %errorlevel%</code> command before each interactive input prompt to retrieve the last exit code for use by Lua scripts.  If you experience problems, try turning this off.  This is on by default.</td>
 </tr>
 <tr>
-<td align="center"><a name="color_arg"></a><code>color.arg</code></td>
+<td align="center"><a class="wlink" href="#color_arg"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="color_arg"></a><code>color.arg</code></td>
 <td align="center"></td>
 <td>The color for arguments in the input line when <a href="#clink_colorize_input"><code>clink.colorize_input</code></a> is enabled.</td>
 </tr>
 <tr>
-<td align="center"><a name="color_arginfo"></a><code>color.arginfo</code></td>
+<td align="center"><a class="wlink" href="#color_arginfo"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="color_arginfo"></a><code>color.arginfo</code></td>
 <td align="center"><code>yellow</code> <a href="#alternatedefault">*</a></td>
 <td>Argument info color.  Some argmatchers may show that some flags or arguments accept additional arguments, when listing possible completions.  This color is used for those additional arguments.  (E.g. the &quot;dir&quot; in a &quot;-x dir&quot; listed completion.)</td>
 </tr>
 <tr>
-<td align="center"><a name="color_argmatcher"></a><code>color.argmatcher</code></td>
+<td align="center"><a class="wlink" href="#color_argmatcher"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="color_argmatcher"></a><code>color.argmatcher</code></td>
 <td align="center"><a href="#alternatedefault">*</a></td>
 <td>The color for the command name in the input line when <a href="#clink_colorize_input"><code>clink.colorize_input</code></a> is enabled, if the command name has an argmatcher available.</td>
 </tr>
 <tr>
-<td align="center"><a name="color_cmd"></a><code>color.cmd</code></td>
+<td align="center"><a class="wlink" href="#color_cmd"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="color_cmd"></a><code>color.cmd</code></td>
 <td align="center"><code>bold</code> <a href="#alternatedefault">*</a></td>
 <td>Used when displaying shell (CMD.EXE) command completions, and in the input line when <a href="#clink_colorize_input"><code>clink.colorize_input</code></a> is enabled.</td>
 </tr>
 <tr>
-<td align="center"><a name="color_cmdredir"></a><code>color.cmdredir</code></td>
+<td align="center"><a class="wlink" href="#color_cmdredir"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="color_cmdredir"></a><code>color.cmdredir</code></td>
 <td align="center"><code>bold</code> <a href="#alternatedefault">*</a></td>
 <td>The color for redirection symbols (<code>&lt;</code>, <code>&gt;</code>, <code>&gt;&amp;</code>) in the input line when <a href="#clink_colorize_input"><code>clink.colorize_input</code></a> is enabled.</td>
 </tr>
 <tr>
-<td align="center"><a name="color_cmdsep"><a/><code>color.cmdsep</code></td>
+<td align="center"><a class="wlink" href="#color_cmdsep"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="color_cmdsep"><a/><code>color.cmdsep</code></td>
 <td align="center"><code>bold</code> <a href="#alternatedefault">*</a></td>
 <td>The color for command separators (<code>&amp;</code>, <code>|</code>) in the input line when <a href="#clink_colorize_input"><code>clink.colorize_input</code></a> is enabled.</td>
 </tr>
 <tr>
-<td align="center"><a name="color_comment_row"></a><code>color.comment_row</code></td>
+<td align="center"><a class="wlink" href="#color_comment_row"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="color_comment_row"></a><code>color.comment_row</code></td>
 <td align="center"><code>bright white on cyan</code> <a href="#alternatedefault">*</a></td>
 <td>The color for the comment row.  During <a href="#rlcmd-clink-select-complete"><code>clink-select-complete</code></a> the comment row shows the &quot;and <em>N</em> more matches&quot; or &quot;rows <em>X</em> to <em>Y</em> of <em>Z</em>&quot; messages.  It can also show how history expansion will be applied at the cursor.</td>
 </tr>
 <tr>
-<td align="center"><a name="color_description"></a><code>color.description</code></td>
+<td align="center"><a class="wlink" href="#color_description"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="color_description"></a><code>color.description</code></td>
 <td align="center"><code>bright cyan</code> <a href="#alternatedefault">*</a></td>
 <td>Used when displaying descriptions for match completions.</td>
 </tr>
 <tr>
-<td align="center"><a name="color_doskey"></a><code>color.doskey</code></td>
+<td align="center"><a class="wlink" href="#color_doskey"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="color_doskey"></a><code>color.doskey</code></td>
 <td align="center"><code>bright cyan</code> <a href="#alternatedefault">*</a></td>
 <td>Used when displaying doskey alias completions, and in the input line when <a href="#clink_colorize_input"><code>clink.colorize_input</code></a> is enabled.</td>
 </tr>
 <tr>
-<td align="center"><a name="color_executable"></a><code>color.executable</code></td>
+<td align="center"><a class="wlink" href="#color_executable"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="color_executable"></a><code>color.executable</code></td>
 <td align="center"><a href="#alternatedefault">*</a></td>
 <td>When set, this is the color in the input line for a command word that is recognized as an executable file when <a href="#clink_colorize_input"><code>clink.colorize_input</code></a> is enabled.</td>
 </tr>
 <tr>
-<td align="center"><a name="color_filtered"></a><code>color.filtered</code></td>
+<td align="center"><a class="wlink" href="#color_filtered"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="color_filtered"></a><code>color.filtered</code></td>
 <td align="center"><code>bold</code> <a href="#alternatedefault">*</a></td>
 <td>The default color for filtered completions (see <a href="#filteringthematchdisplay">Filtering the Match Display</a>).</td>
 </tr>
 <tr>
-<td align="center"><a name="color_flag"></a><code>color.flag</code></td>
+<td align="center"><a class="wlink" href="#color_flag"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="color_flag"></a><code>color.flag</code></td>
 <td align="center"><code>default</code> <a href="#alternatedefault">*</a></td>
 <td>The color for flags in the input line when <a href="#clink_colorize_input"><code>clink.colorize_input</code></a> is enabled.</td>
 </tr>
 <tr>
-<td align="center"><a name="color_hidden"></a><code>color.hidden</code></td>
+<td align="center"><a class="wlink" href="#color_hidden"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="color_hidden"></a><code>color.hidden</code></td>
 <td align="center"><a href="#alternatedefault">*</a></td>
 <td>Used when displaying file completions with the &quot;hidden&quot; attribute.</td>
 </tr>
 <tr>
-<td align="center"><a name="color_histexpand"></a><code>color.histexpand</code></td>
+<td align="center"><a class="wlink" href="#color_histexpand"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="color_histexpand"></a><code>color.histexpand</code></td>
 <td align="center"><a href="#alternatedefault">*</a></td>
 <td>The color for history expansions in the input line when <a href="#clink_colorize_input"><code>clink.colorize_input</code></a> is enabled.  If this color is not set or <a href="#history_auto_expand"><code>history.auto_expand</code></a> is disabled or <a href="#history_expand_mode"><code>history.expand_mode</code></a> is off, then history expansions are not colored.</td>
 </tr>
 <tr>
-<td align="center"><a name="color_horizscroll"></a><code>color.horizscroll</code></td>
+<td align="center"><a class="wlink" href="#color_horizscroll"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="color_horizscroll"></a><code>color.horizscroll</code></td>
 <td align="center"><a href="#alternatedefault">*</a></td>
 <td>The color for the <code>&lt;</code> or <code>&gt;</code> horizontal scroll indicators when Readline&#39;s <a href="#confighorizontalscrollmode"><code>horizontal-scroll-mode</code></a> variable is set.</td>
 </tr>
 <tr>
-<td align="center"><a name="color_input"></a><code>color.input</code></td>
+<td align="center"><a class="wlink" href="#color_input"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="color_input"></a><code>color.input</code></td>
 <td align="center"><a href="#alternatedefault">*</a></td>
 <td>The color for input line text. Note that when <a href="#clink_colorize_input"><code>clink.colorize_input</code></a> is disabled, the entire input line is displayed using <code>color.input</code>.</td>
 </tr>
 <tr>
-<td align="center"><a name="color_interact"></a><code>color.interact</code></td>
+<td align="center"><a class="wlink" href="#color_interact"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="color_interact"></a><code>color.interact</code></td>
 <td align="center"><code>bold</code></td>
 <td>The color for prompts such as a pager&#39;s <code>--More?--</code> prompt.</td>
 </tr>
 <tr>
-<td align="center"><a name="color_message"></a><code>color.message</code></td>
+<td align="center"><a class="wlink" href="#color_message"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="color_message"></a><code>color.message</code></td>
 <td align="center"><code>default</code></td>
 <td>The color for the message area (e.g. the search prompt message, digit argument prompt message, etc).</td>
 </tr>
 <tr>
-<td align="center"><a name="color_popup"></a><code>color.popup</code></td>
+<td align="center"><a class="wlink" href="#color_popup"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="color_popup"></a><code>color.popup</code></td>
 <td align="center"></td>
 <td>When set, this is used as the color for popup lists and messages.  If no color is set, then the console&#39;s popup colors are used (see the Properties dialog box for the console window).</td>
 </tr>
 <tr>
-<td align="center"><a name="color_popup_desc"></a><code>color.popup_desc</code></td>
+<td align="center"><a class="wlink" href="#color_popup_desc"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="color_popup_desc"></a><code>color.popup_desc</code></td>
 <td align="center"></td>
 <td>When set, this is used as the color for description column(s) in popup lists.  If no color is set, then a color is chosen to complement the console&#39;s popup colors (see the Properties dialog box for the console window).</td>
 </tr>
 <tr>
-<td align="center"><a name="color_prompt"></a><code>color.prompt</code></td>
+<td align="center"><a class="wlink" href="#color_prompt"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="color_prompt"></a><code>color.prompt</code></td>
 <td align="center"></td>
 <td>When set, this is used as the default color for the prompt.  But it&#39;s overridden by any colors set by <a href="#customisingtheprompt">Customizing The Prompt</a>.</td>
 </tr>
 <tr>
-<td align="center"><a name="color_readonly"></a><code>color.readonly</code></td>
+<td align="center"><a class="wlink" href="#color_readonly"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="color_readonly"></a><code>color.readonly</code></td>
 <td align="center"><a href="#alternatedefault">*</a></td>
 <td>Used when displaying file completions with the &quot;readonly&quot; attribute.</td>
 </tr>
 <tr>
-<td align="center"><a name="color_selected_completion"></a><code>color.selected_completion</code></td>
+<td align="center"><a class="wlink" href="#color_selected_completion"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="color_selected_completion"></a><code>color.selected_completion</code></td>
 <td align="center"><a href="#alternatedefault">*</a></td>
 <td>The color for the selected completion with the <a href="#rlcmd-clink-select-complete"><code>clink-select-complete</code></a> command.  If no color is set, then bright reverse video is used.</td>
 </tr>
 <tr>
-<td align="center"><a name="color_selection"></a><code>color.selection</code></td>
+<td align="center"><a class="wlink" href="#color_selection"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="color_selection"></a><code>color.selection</code></td>
 <td align="center"><a href="#alternatedefault">*</a></td>
 <td>The color for selected text in the input line (for example, when using <kbd>Shift</kbd>-Arrow keys).  If no color is set, then reverse video is used.</td>
 </tr>
 <tr>
-<td align="center"><a name="color_suggestion"></a><code>color.suggestion</code></td>
+<td align="center"><a class="wlink" href="#color_suggestion"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="color_suggestion"></a><code>color.suggestion</code></td>
 <td align="center"><code>bright black</code> <a href="#alternatedefault">*</a></td>
 <td>The color for automatic suggestions when <a href="#autosuggest_enable"><code>autosuggest.enable</code></a> is enabled.</td>
 </tr>
 <tr>
-<td align="center"><a name="color_unexpected"></a><code>color.unexpected</code></td>
+<td align="center"><a class="wlink" href="#color_unexpected"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="color_unexpected"></a><code>color.unexpected</code></td>
 <td align="center"><code>default</code></td>
 <td>The color for unexpected arguments in the input line when <a href="#clink_colorize_input"><code>clink.colorize_input</code></a> is enabled.</td>
 </tr>
 <tr>
-<td align="center"><a name="color_unrecognized"></a><code>color.unrecognized</code></td>
+<td align="center"><a class="wlink" href="#color_unrecognized"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="color_unrecognized"></a><code>color.unrecognized</code></td>
 <td align="center"><a href="#alternatedefault">*</a></td>
 <td>When set, this is the color in the input line for a command word that is not recognized as a command, doskey macro, directory, argmatcher, or executable file.</td>
 </tr>
 <tr>
-<td align="center"><a name="debug_log_terminal"></a><code>debug.log_terminal</code></td>
+<td align="center"><a class="wlink" href="#debug_log_terminal"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="debug_log_terminal"></a><code>debug.log_terminal</code></td>
 <td align="center">False</td>
 <td>Logs all terminal input and output to the clink.log file.  This is intended for diagnostic purposes only, and can make the log file grow significantly.</td>
 </tr>
 <tr>
-<td align="center"><a name="directories_dupe_mode"></a><code>directories.dupe_mode</code></td>
+<td align="center"><a class="wlink" href="#directories_dupe_mode"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="directories_dupe_mode"></a><code>directories.dupe_mode</code></td>
 <td align="center"><code>add</code></td>
 <td>Controls how the current directory history is updated.  A value of <code>add</code> (the default) always adds the current directory to the directory history.  A value of <code>erase_prev</code> will erase any previous entries for the current directory and then add it to the directory history.  Note that directory history is not saved between sessions.</td>
 </tr>
 <tr>
-<td align="center"><a name="doskey_enhanced"></a><code>doskey.enhanced</code></td>
+<td align="center"><a class="wlink" href="#doskey_enhanced"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="doskey_enhanced"></a><code>doskey.enhanced</code></td>
 <td align="center">True</td>
 <td>Enhanced Doskey adds the expansion of macros that follow <code>|</code> and <code>&amp;</code> command separators and respects quotes around words when parsing <code>$1</code>...<code>$9</code> tags. To suppress macro expansion for an individual command, prefix the command with a space or semicolon (<code>&nbsp;foo</code> or <code>;foo</code>). Or following <code>|</code> or <code>&amp;</code>, prefix with two spaces or a semicolon (<code>foo|&nbsp; bar</code> or <code>foo|;bar</code>).</td>
 </tr>
 <tr>
-<td align="center"><a name="exec_aliases"></a><code>exec.aliases</code></td>
+<td align="center"><a class="wlink" href="#exec_aliases"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="exec_aliases"></a><code>exec.aliases</code></td>
 <td align="center">True</td>
 <td>When matching executables as the first word (<a href="#exec_enable"><code>exec.enable</code></a>), include doskey aliases.</td>
 </tr>
 <tr>
-<td align="center"><a name="exec_commands"></a><code>exec.commands</code></td>
+<td align="center"><a class="wlink" href="#exec_commands"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="exec_commands"></a><code>exec.commands</code></td>
 <td align="center">True</td>
 <td>When matching executables as the first word (<a href="#exec_enable"><code>exec.enable</code></a>), include CMD commands (such as <code>cd</code>, <code>copy</code>, <code>exit</code>, <code>for</code>, <code>if</code>, etc).</td>
 </tr>
 <tr>
-<td align="center"><a name="exec_cwd"></a><code>exec.cwd</code></td>
+<td align="center"><a class="wlink" href="#exec_cwd"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="exec_cwd"></a><code>exec.cwd</code></td>
 <td align="center">True</td>
 <td>When matching executables as the first word (<a href="#exec_enable"><code>exec.enable</code></a>), include executables in the current directory. (This is implicit if the word being completed is a relative path, or if <a href="#exec_files"><code>exec.files</code></a> is true.)</td>
 </tr>
 <tr>
-<td align="center"><a name="exec_dirs"></a><code>exec.dirs</code></td>
+<td align="center"><a class="wlink" href="#exec_dirs"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="exec_dirs"></a><code>exec.dirs</code></td>
 <td align="center">True</td>
 <td>When matching executables as the first word (<a href="#exec_enable"><code>exec.enable</code></a>), also include directories relative to the current working directory as matches.</td>
 </tr>
 <tr>
-<td align="center"><a name="exec_enable"></a><code>exec.enable</code></td>
+<td align="center"><a class="wlink" href="#exec_enable"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="exec_enable"></a><code>exec.enable</code></td>
 <td align="center">True</td>
 <td>Match executables when completing the first word of a line.  Executables are determined by the extensions listed in the <code>%PATHEXT%</code> environment variable.</td>
 </tr>
 <tr>
-<td align="center"><a name="exec_files"></a><code>exec.files</code></td>
+<td align="center"><a class="wlink" href="#exec_files"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="exec_files"></a><code>exec.files</code></td>
 <td align="center">False</td>
 <td>When matching executables as the first word (<a href="#exec_enable"><code>exec.enable</code></a>), include files in the current directory.</td>
 </tr>
 <tr>
-<td align="center"><a name="exec_path"></a><code>exec.path</code></td>
+<td align="center"><a class="wlink" href="#exec_path"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="exec_path"></a><code>exec.path</code></td>
 <td align="center">True</td>
 <td>When matching executables as the first word (<a href="#exec_enable"><code>exec.enable</code></a>), include executables found in the directories specified in the <code>%PATH%</code> environment variable.</td>
 </tr>
 <tr>
-<td align="center"><a name="exec_space_prefix"></a><code>exec.space_prefix</code></td>
+<td align="center"><a class="wlink" href="#exec_space_prefix"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="exec_space_prefix"></a><code>exec.space_prefix</code></td>
 <td align="center">True</td>
 <td>If the line begins with whitespace then Clink bypasses executable matching (<a href="#exec_path"><code>exec.path</code></a>) and will do normal files matching instead.</td>
 </tr>
 <tr>
-<td align="center"><a name="files_hidden"></a><code>files.hidden</code></td>
+<td align="center"><a class="wlink" href="#files_hidden"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="files_hidden"></a><code>files.hidden</code></td>
 <td align="center">True</td>
 <td>Includes or excludes files with the &quot;hidden&quot; attribute set when generating file lists.</td>
 </tr>
 <tr>
-<td align="center"><a name="files_system"></a><code>files.system</code></td>
+<td align="center"><a class="wlink" href="#files_system"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="files_system"></a><code>files.system</code></td>
 <td align="center">False</td>
 <td>Includes or excludes files with the &quot;system&quot; attribute set when generating file lists.</td>
 </tr>
 <tr>
-<td align="center"><a name="history_auto_expand"></a><code>history.auto_expand</code></td>
+<td align="center"><a class="wlink" href="#history_auto_expand"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="history_auto_expand"></a><code>history.auto_expand</code></td>
 <td align="center">True</td>
 <td>When enabled, history expansion is automatically performed when a command line is accepted (by pressing <kbd>Enter</kbd>).  When disabled, history expansion is performed only when a corresponding expansion command is used (such as <a href="#rlcmd-clink-expand-history"><code>clink-expand-history</code></a> <kbd>Alt</kbd>-<kbd>^</kbd>, or <a href="#rlcmd-clink-expand-line"><code>clink-expand-line</code></a> <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>E</kbd>).</td>
 </tr>
 <tr>
-<td align="center"><a name="history_dont_add_to_history_cmds"></a><code>history.dont_add_to_history_cmds</code></td>
+<td align="center"><a class="wlink" href="#history_dont_add_to_history_cmds"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="history_dont_add_to_history_cmds"></a><code>history.dont_add_to_history_cmds</code></td>
 <td align="center"><code>exit history</code></td>
 <td>List of commands that aren&#39;t automatically added to the history. Commands are separated by spaces, commas, or semicolons. Default is <code>exit history</code>, to exclude both of those commands.</td>
 </tr>
 <tr>
-<td align="center"><a name="history_dupe_mode"></a><code>history.dupe_mode</code></td>
+<td align="center"><a class="wlink" href="#history_dupe_mode"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="history_dupe_mode"></a><code>history.dupe_mode</code></td>
 <td align="center"><code>erase_prev</code></td>
 <td>If a line is a duplicate of an existing history entry Clink will erase the duplicate when this is set to <code>erase_prev</code>. Setting it to <code>ignore</code> will not add duplicates to the history, and setting it to <code>add</code> will always add lines (except when overridden by <a href="#history_sticky_search"><code>history.sticky_search</code></a>).</td>
 </tr>
 <tr>
-<td align="center"><a name="history_expand_mode"></a><code>history.expand_mode</code></td>
+<td align="center"><a class="wlink" href="#history_expand_mode"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="history_expand_mode"></a><code>history.expand_mode</code></td>
 <td align="center"><code>not_quoted</code></td>
 <td>The <code>!</code> character in an entered line can be interpreted to introduce words from the history. This can be enabled and disable by setting this value to <code>on</code> or <code>off</code>. Values of <code>not_squoted</code>, <code>not_dquoted</code>, or <code>not_quoted</code> will skip any <code>!</code> character quoted in single, double, or both quotes respectively.</td>
 </tr>
 <tr>
-<td align="center"><a name="history_ignore_space"></a><code>history.ignore_space</code></td>
+<td align="center"><a class="wlink" href="#history_ignore_space"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="history_ignore_space"></a><code>history.ignore_space</code></td>
 <td align="center">True</td>
 <td>Ignore lines that begin with whitespace when adding lines in to the history.</td>
 </tr>
 <tr>
-<td align="center"><a name="history_max_lines"></a><code>history.max_lines</code></td>
+<td align="center"><a class="wlink" href="#history_max_lines"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="history_max_lines"></a><code>history.max_lines</code></td>
 <td align="center">10000 <a href="#alternatedefault">*</a></td>
 <td>The number of history lines to save if <a href="#history_save"><code>history.save</code></a> is enabled (or 0 for unlimited).</td>
 </tr>
 <tr>
-<td align="center"><a name="history_save"></a><code>history.save</code></td>
+<td align="center"><a class="wlink" href="#history_save"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="history_save"></a><code>history.save</code></td>
 <td align="center">True</td>
 <td>Saves history between sessions. When disabled, history is neither read from nor written to a master history list; history for each session is written to a temporary file during the session, but is not added to the master history list.</td>
 </tr>
 <tr>
-<td align="center"><a name="history_shared"></a><code>history.shared</code></td>
+<td align="center"><a class="wlink" href="#history_shared"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="history_shared"></a><code>history.shared</code></td>
 <td align="center">False</td>
 <td>When history is shared, all instances of Clink update the master history list after each command and reload the master history list on each prompt.  When history is not shared, each instance updates the master history list on exit.</td>
 </tr>
 <tr>
-<td align="center"><a name="history_show_preview"></a><code>history.show_preview</code></td>
+<td align="center"><a class="wlink" href="#history_show_preview"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="history_show_preview"></a><code>history.show_preview</code></td>
 <td align="center">True</td>
 <td>When enabled, if the text at the cursor is subject to history expansion, then this shows a preview of the expanded result below the input line using the <a href="#color_comment_row"><code>color.comment_row</code></a> setting.</td>
 </tr>
 <tr>
-<td align="center"><a name="history_sticky_search"></a><code>history.sticky_search</code></td>
+<td align="center"><a class="wlink" href="#history_sticky_search"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="history_sticky_search"></a><code>history.sticky_search</code></td>
 <td align="center">False</td>
 <td>When enabled, reusing a history line does not add the reused line to the end of the history, and it leaves the history search position on the reused line so next/prev history can continue from there (e.g. replaying commands via <kbd>Up</kbd> several times then <kbd>Enter</kbd>, <kbd>Down</kbd>, <kbd>Enter</kbd>, etc).</td>
 </tr>
 <tr>
-<td align="center"><a name="history_time_format"></a><code>history.time_format</code></td>
+<td align="center"><a class="wlink" href="#history_time_format"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="history_time_format"></a><code>history.time_format</code></td>
 <td align="center"><code>%F %T &nbsp</code></td>
 <td>This specifies a time format string for showing timestamps for history items.  For a list of format specifiers see <code>clink set history.time_format</code> or <a href="#history-timestamps">History Timestamps</a>.</td>
 </tr>
 <tr>
-<td align="center"><a name="history_time_stamp"></a><code>history.time_stamp</code></td>
+<td align="center"><a class="wlink" href="#history_time_stamp"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="history_time_stamp"></a><code>history.time_stamp</code></td>
 <td align="center"><code>off</code></td>
 <td>The default is <code>off</code>.  When this is <code>save</code>, timestamps are saved for each history item but are only shown when the <code>--show-time</code> flag is used with the <code>history</code> command.  When this is <code>show</code>, timestamps are saved for each history item, and timestamps are shown in the <code>history</code> command unless the <code>--bare</code> flag is used.</td>
 </tr>
 <tr>
-<td align="center"><a name="lua_break_on_error"></a><code>lua.break_on_error</code></td>
+<td align="center"><a class="wlink" href="#lua_break_on_error"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="lua_break_on_error"></a><code>lua.break_on_error</code></td>
 <td align="center">False</td>
 <td>Breaks into Lua debugger on Lua errors.</td>
 </tr>
 <tr>
-<td align="center"><a name="lua_break_on_traceback"></a><code>lua.break_on_traceback</code></td>
+<td align="center"><a class="wlink" href="#lua_break_on_traceback"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="lua_break_on_traceback"></a><code>lua.break_on_traceback</code></td>
 <td align="center">False</td>
 <td>Breaks into Lua debugger on <code>traceback()</code>.</td>
 </tr>
 <tr>
-<td align="center"><a name="lua_debug"></a><code>lua.debug</code></td>
+<td align="center"><a class="wlink" href="#lua_debug"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="lua_debug"></a><code>lua.debug</code></td>
 <td align="center">False</td>
 <td>Loads a simple embedded command line debugger when enabled. Breakpoints can be added by calling <a href="#pause">pause()</a>.</td>
 </tr>
 <tr>
-<td align="center"><a name="lua_path"></a><code>lua.path</code></td>
+<td align="center"><a class="wlink" href="#lua_path"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="lua_path"></a><code>lua.path</code></td>
 <td align="center"></td>
 <td>Value to append to the <a href="https://www.lua.org/manual/5.2/manual.html#pdf-package.path"><code>package.path</code></a> Lua variable. Used to search for Lua scripts specified in <code>require()</code> statements.</td>
 </tr>
 <tr>
-<td align="center"><a name="lua_reload_scripts"></a><code>lua.reload_scripts</code></td>
+<td align="center"><a class="wlink" href="#lua_reload_scripts"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="lua_reload_scripts"></a><code>lua.reload_scripts</code></td>
 <td align="center">False</td>
 <td>When false, Lua scripts are loaded once and are only reloaded if forced (see <a href="#lua-scripts-location">The Location of Lua Scripts</a> for details).  When true, Lua scripts are loaded each time the edit prompt is activated.</td>
 </tr>
 <tr>
-<td align="center"><a name="lua_strict"></a><code>lua.strict</code></td>
+<td align="center"><a class="wlink" href="#lua_strict"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="lua_strict"></a><code>lua.strict</code></td>
 <td align="center">True</td>
 <td>When enabled, argument errors cause Lua scripts to fail.  This may expose bugs in some older scripts, causing them to fail where they used to succeed. In that case you can try turning this off, but please alert the script owner about the issue so they can fix the script.</td>
 </tr>
 <tr>
-<td align="center"><a name="lua_traceback_on_error"></a><code>lua.traceback_on_error</code></td>
+<td align="center"><a class="wlink" href="#lua_traceback_on_error"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="lua_traceback_on_error"></a><code>lua.traceback_on_error</code></td>
 <td align="center">False</td>
 <td>Prints stack trace on Lua errors.</td>
 </tr>
 <tr>
-<td align="center"><a name="match_expand_abbrev"></a><code>match.expand_abbrev</code></td>
+<td align="center"><a class="wlink" href="#match_expand_abbrev"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="match_expand_abbrev"></a><code>match.expand_abbrev</code></td>
 <td align="center">True</td>
 <td>Expands an abbreviated path before performing completion.  In an abbreviated path, directory names may be shortened to the minimum number of characters to unambiguously refer to a directory.  For example, &quot;c:\Users\chris\Documents&quot; could be abbreviated as &quot;c:\U\c\Do&quot;, depending on what directories exist in the file system.</td>
 </tr>
 <tr>
-<td align="center"><a name="match_expand_envvars"></a><code>match.expand_envvars</code></td>
+<td align="center"><a class="wlink" href="#match_expand_envvars"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="match_expand_envvars"></a><code>match.expand_envvars</code></td>
 <td align="center">False <a href="#alternatedefault">*</a></td>
 <td>Expands environment variables in a word before performing completion.</td>
 </tr>
 <tr>
-<td align="center"><a name="match_fit_columns"></a><code>match.fit_columns</code></td>
+<td align="center"><a class="wlink" href="#match_fit_columns"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="match_fit_columns"></a><code>match.fit_columns</code></td>
 <td align="center">True</td>
 <td>When displaying match completions, this calculates column widths to fit as many as possible on the screen.</td>
 </tr>
 <tr>
-<td align="center"><a name="match_ignore_accent"></a><code>match.ignore_accent</code></td>
+<td align="center"><a class="wlink" href="#match_ignore_accent"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="match_ignore_accent"></a><code>match.ignore_accent</code></td>
 <td align="center">True</td>
 <td>Controls accent sensitivity when completing matches. For example, <code>ä</code> and <code>a</code> are considered equivalent with this enabled.</td>
 </tr>
 <tr>
-<td align="center"><a name="match_ignore_case"></a><code>match.ignore_case</code></td>
+<td align="center"><a class="wlink" href="#match_ignore_case"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="match_ignore_case"></a><code>match.ignore_case</code></td>
 <td align="center"><code>relaxed</code></td>
 <td>Controls case sensitivity when completing matches. <code>off</code> = case sensitive, <code>on</code> = case insensitive, <code>relaxed</code> = case insensitive plus <code>-</code> and <code>_</code> are considered equal.</td>
 </tr>
 <tr>
-<td align="center"><a name="match_limit_fitted_columns"></a><code>match.limit_fitted_columns</code></td>
+<td align="center"><a class="wlink" href="#match_limit_fitted_columns"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="match_limit_fitted_columns"></a><code>match.limit_fitted_columns</code></td>
 <td align="center"><code>0</code></td>
 <td>When the <a href="#match_fit_columns"><code>match.fit_columns</code></a> setting is enabled, this disables calculating column widths when the number of matches exceeds this value.  The default is 0 (unlimited).  Depending on the screen width and CPU speed, setting a limit may avoid delays.</td>
 </tr>
 <tr>
-<td align="center"><a name="match_max_rows"></a><code>match.max_rows</code></td>
+<td align="center"><a class="wlink" href="#match_max_rows"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="match_max_rows"></a><code>match.max_rows</code></td>
 <td align="center"><code>0</code></td>
 <td>The maximum number of rows that <a href="#rlcmd-clink-select-complete"><code>clink-select-complete</code></a> can use.  When this is 0, the limit is the terminal height.</td>
 </tr>
 <tr>
-<td align="center"><a name="match_preview_rows"></a><code>match.preview_rows</code></td>
+<td align="center"><a class="wlink" href="#match_preview_rows"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="match_preview_rows"></a><code>match.preview_rows</code></td>
 <td align="center"><code>0</code></td>
 <td>The number of rows to show as a preview when using the <a href="#rlcmd-clink-select-complete"><code>clink-select-complete</code></a> command (bound by default to <kbd>Ctrl</kbd>-<kbd>Space</kbd>).  When this is 0, all rows are shown and if there are too many matches it instead prompts first like the <a href="#rlcmd-complete"><code>complete</code></a> command does.  Otherwise it shows the specified number of rows as a preview without prompting, and it expands to show the full set of matches when the selection is moved past the preview rows.</td>
 </tr>
 <tr>
-<td align="center"><a name="match_sort_dirs"></a><code>match.sort_dirs</code></td>
+<td align="center"><a class="wlink" href="#match_sort_dirs"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="match_sort_dirs"></a><code>match.sort_dirs</code></td>
 <td align="center"><code>with</code></td>
 <td>How to sort matching directory names. <code>before</code> = before files, <code>with</code> = with files, <code>after</code> = after files.</td>
 </tr>
 <tr>
-<td align="center"><a name="match_substring"></a><code>match.substring</code></td>
+<td align="center"><a class="wlink" href="#match_substring"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="match_substring"></a><code>match.substring</code></td>
 <td align="center">False <a href="#alternatedefault">*</a></td>
 <td>When set, if no completions are found with a prefix search, then a substring search is used.</td>
 </tr>
 <tr>
-<td align="center"><a name="match_translate_slashes"></a><code>match.translate_slashes</code></td>
+<td align="center"><a class="wlink" href="#match_translate_slashes"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="match_translate_slashes"></a><code>match.translate_slashes</code></td>
 <td align="center"><code>system</code></td>
 <td>File and directory completions can be translated to use consistent slashes.  The default is <code>system</code> to use the appropriate path separator for the OS host (backslashes on Windows).  Use <code>slash</code> to use forward slashes, or <code>backslash</code> to use backslashes.  Use <code>off</code> to turn off translating slashes from custom match generators.</td>
 </tr>
 <tr>
-<td align="center"><a name="match_wild"></a><code>match.wild</code></td>
+<td align="center"><a class="wlink" href="#match_wild"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="match_wild"></a><code>match.wild</code></td>
 <td align="center">True</td>
 <td>Matches <code>?</code> and <code>*</code> wildcards and leading <code>.</code> when using any of the completion commands.  Turn this off to behave how bash does, and not match wildcards or leading dots (but <a href="#rlcmd-glob-complete-word"><code>glob-complete-word</code></a> always matches wildcards).</td>
 </tr>
 <tr>
-<td align="center"><a name="prompt_async"></a><code>prompt.async</code></td>
+<td align="center"><a class="wlink" href="#prompt_async"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="prompt_async"></a><code>prompt.async</code></td>
 <td align="center">True</td>
 <td>Enables <a href="#asyncpromptfiltering">asynchronous prompt refresh</a>.  Turn this off if prompt filter refreshes are annoying or cause problems.</td>
 </tr>
 <tr>
-<td align="center"><a name="prompt-transient"></a><code>prompt.transient</code></td>
+<td align="center"><a class="wlink" href="#prompt-transient"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="prompt-transient"></a><code>prompt.transient</code></td>
 <td align="center"><code>off</code></td>
 <td>Controls when past prompts are collapsed (<a href="#transientprompts">transient prompts</a>).  <code>off</code> = never collapse past prompts, <code>always</code> = always collapse past prompts, <code>same_dir</code> = only collapse past prompts when the current working directory hasn&#39;t changed since the last prompt.</td>
 </tr>
 <tr>
-<td align="center"><a name="readline_hide_stderr"></a><code>readline.hide_stderr</code></td>
+<td align="center"><a class="wlink" href="#readline_hide_stderr"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="readline_hide_stderr"></a><code>readline.hide_stderr</code></td>
 <td align="center">False</td>
 <td>Suppresses stderr from the Readline library.  Enable this if Readline error messages are getting in the way.</td>
 </tr>
 <tr>
-<td align="center"><a name="terminal_adjust_cursor_style"></a><code>terminal.adjust_cursor_style</code></td>
+<td align="center"><a class="wlink" href="#terminal_adjust_cursor_style"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="terminal_adjust_cursor_style"></a><code>terminal.adjust_cursor_style</code></td>
 <td align="center">True</td>
 <td>When enabled, Clink adjusts the cursor shape and visibility to show Insert Mode, produce the visible bell effect, avoid disorienting cursor flicker, and to support ANSI escape codes that adjust the cursor shape and visibility. But it interferes with the Windows 10 Cursor Shape console setting. You can make the Cursor Shape setting work by disabling this Clink setting (and the features this provides).</td>
 </tr>
 <tr>
-<td align="center"><a name="terminal_color_emoji"></a><code>terminal.color_emoji</code></td>
+<td align="center"><a class="wlink" href="#terminal_color_emoji"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="terminal_color_emoji"></a><code>terminal.color_emoji</code></td>
 <td align="center"><code>auto</code></td>
 <td>Set this to indicate whether the terminal program draws emoji using colored double width characters.  This needs to be set accurately in order for Clink to display the input line properly when it contains emoji characters.  When set to <code>off</code> Clink assumes emoji are rendered using 1 character cell.  When set to <code>on</code> Clink assumes emoji are rendered using 2 character cells.  When set to <code>auto</code> (the default) Clink assumes emoji are rendered using 2 character cells when using Windows Terminal or WezTerm, or otherwise using 1 character cell.</td>
 </tr>
 <tr>
-<td align="center"><a name="terminal_differentiate_keys"></a><code>terminal.differentiate_keys</code></td>
+<td align="center"><a class="wlink" href="#terminal_differentiate_keys"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="terminal_differentiate_keys"></a><code>terminal.differentiate_keys</code></td>
 <td align="center">False</td>
 <td>When enabled, pressing <kbd>Ctrl</kbd>-<kbd>H</kbd> or <kbd>I</kbd> or <kbd>M</kbd> or <kbd>[</kbd> generate special key sequences to enable binding them separately from <kbd>Backspace</kbd> or <kbd>Tab</kbd> or <kbd>Enter</kbd> or <kbd>Esc</kbd>.</td>
 </tr>
 <tr>
-<td align="center"><a name="terminal_east_asian_ambiguous"></a><code>terminal.east_asian_ambiguous</code></td>
+<td align="center"><a class="wlink" href="#terminal_east_asian_ambiguous"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="terminal_east_asian_ambiguous"></a><code>terminal.east_asian_ambiguous</code></td>
 <td align="center"><code>auto</code></td>
 <td>There is a group of East Asian characters whose widths are ambiguous in the Unicode standard.  This setting controls how to resolve the ambiguous widths.  By default this is set to <code>auto</code>, but some terminal hosts may require setting this to a different value to work around limitations in the terminal hosts.  Setting this to <code>font</code> measures the East Asian Ambiguous character widths using the current font.  Setting it to <code>one</code> uses 1 as the width, or <code>two</code> uses 2 as the width.  When this is &#39;auto&#39; (the default) and the current code page is 932, 936, 949, or 950 then it tries to automatically measure the width based on which terminal host and font are used, or for any other code pages (including UTF8) it uses 1 as the width.  The <code>%CLINK_EAST_ASIAN_AMBIGUOUS%</code> environment variable overrides this setting.</td>
 </tr>
 <tr>
-<td align="center"><a name="terminal_emulation"></a><code>terminal.emulation</code></td>
+<td align="center"><a class="wlink" href="#terminal_emulation"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="terminal_emulation"></a><code>terminal.emulation</code></td>
 <td align="center"><code>auto</code></td>
 <td>Clink can either emulate a virtual terminal and handle ANSI escape codes itself, or let the console host natively handle ANSI escape codes. <code>native</code> = pass output directly to the console host process, <code>emulate</code> = clink handles ANSI escape codes itself, <code>auto</code> = emulate except when running in ConEmu, Windows Terminal, WezTerm, or Windows 10 new console.</td>
 </tr>
 <tr>
-<td align="center"><a name="terminal_mouse_input"></a><code>terminal.mouse_input</code></td>
+<td align="center"><a class="wlink" href="#terminal_mouse_input"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="terminal_mouse_input"></a><code>terminal.mouse_input</code></td>
 <td align="center"><code>auto</code></td>
 <td>Clink can optionally respond to mouse input, instead of letting the terminal respond to mouse input (e.g. to select text on the screen).  When mouse input is enabled in Clink, clicking in the input line sets the cursor position, and clicking in popup lists selects an item, etc.  Setting this to <code>off</code> lets the terminal host handle mouse input, <code>on</code> lets Clink handle mouse input, and <code>auto</code> lets Clink handle mouse input in ConEmu and in the default Conhost terminal when Quick Edit mode is unchecked in the console Properties dialog.  For more information see <a href="#gettingstarted_mouseinput">Mouse Input</a>.</td>
 </tr>
 <tr>
-<td align="center"><a name="terminal_mouse_modifier"></a><code>terminal.mouse_modifier</code></td>
+<td align="center"><a class="wlink" href="#terminal_mouse_modifier"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="terminal_mouse_modifier"></a><code>terminal.mouse_modifier</code></td>
 <td align="center"></td>
 <td>This selects which modifier keys (<kbd>Alt</kbd>, <kbd>Ctrl</kbd>, <kbd>Shift</kbd>) must be held in order for Clink to respond to mouse input when mouse input is enabled by the <a href="#terminal_mouse_input"><code>terminal.mouse_input</code></a> setting.  This is a text string that can list one or more modifier keys:  &#39;alt&#39;, &#39;ctrl&#39;, and &#39;shift&#39;.  For example, setting it to &quot;alt shift&quot; causes Clink to only respond to mouse input when both <kbd>Alt</kbd> and <kbd>Shift</kbd> are held (and not <kbd>Ctrl</kbd>).  If the <code>%CLINK_MOUSE_MODIFIER%</code> environment variable is set then its value supersedes this setting.  For more information see <a href="#gettingstarted_mouseinput">Mouse Input</a>.</td>
 </tr>
 <tr>
-<td align="center"><a name="terminal_raw_esc"></a><code>terminal.raw_esc</code></td>
+<td align="center"><a class="wlink" href="#terminal_raw_esc"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="terminal_raw_esc"></a><code>terminal.raw_esc</code></td>
 <td align="center">False</td>
 <td>When enabled, pressing <kbd>Esc</kbd> sends a literal escape character like in Unix or Linux terminals.  This setting is disabled by default to provide a more predictable, reliable, and configurable input experience on Windows.  Changing this only affects future Clink sessions, not the current session.</td>
 </tr>
 <tr>
-<td align="center"><a name="terminal_use_altgr_substitute"></a><code>terminal.use_altgr_substitute</code></td>
+<td align="center"><a class="wlink" href="#terminal_scrollbars"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="terminal_scrollbars"></a><code>terminal.scrollbars</code></td>
+<td align="center">True</td>
+<td>When enabled, lists show scrollbars using extended Unicode box drawing characters.  Some terminals or fonts may be incompatible with this.</td>
+</tr>
+<tr>
+<td align="center"><a class="wlink" href="#terminal_use_altgr_substitute"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="terminal_use_altgr_substitute"></a><code>terminal.use_altgr_substitute</code></td>
 <td align="center">False</td>
 <td>Support Windows&#39; <kbd>Ctrl</kbd>-<kbd>Alt</kbd> substitute for <kbd>AltGr</kbd>. Turning this off may resolve collisions with Readline&#39;s key bindings.</td>
 </tr>
@@ -2223,131 +2228,131 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 </tr>
 </thead>
 <tbody><tr>
-<td><a name="configbellstyle"></a><code>bell-style</code></td>
+<td><a class="wlink" href="#configbellstyle"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="configbellstyle"></a><code>bell-style</code></td>
 <td>Controls what happens when Readline wants to ring the terminal bell. If set to &quot;none&quot;, Readline never rings the bell. If set to &quot;visible&quot; (the default in Clink), Readline uses a visible bell if one is available. If set to &quot;audible&quot;, Readline attempts to ring the terminal&#39;s bell.</td>
 </tr>
 <tr>
-<td><a name="configlinkmatchingparen"></a><code>blink-matching-paren</code></td>
+<td><a class="wlink" href="#configlinkmatchingparen"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="configlinkmatchingparen"></a><code>blink-matching-paren</code></td>
 <td>If set to &quot;on&quot;, Readline attempts to briefly move the cursor to an opening parenthesis when a closing parenthesis is inserted. The default is &quot;off&quot;.</td>
 </tr>
 <tr>
-<td><a name="configcoloredcompletionprefix"></a><code>colored-completion-prefix</code></td>
+<td><a class="wlink" href="#configcoloredcompletionprefix"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="configcoloredcompletionprefix"></a><code>colored-completion-prefix</code></td>
 <td>If set to &quot;on&quot;, when listing completions, Readline displays the common prefix of the set of possible completions using a different color. The color definitions are taken from the value of the <a href="#completioncolors"><code>%LS_COLORS%</code></a> environment variable. The default is &quot;off&quot;.</td>
 </tr>
 <tr>
-<td><a name="configcoloredstats"></a><code>colored-stats</code></td>
+<td><a class="wlink" href="#configcoloredstats"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="configcoloredstats"></a><code>colored-stats</code></td>
 <td>If set to &quot;on&quot;, Readline displays possible completions using different colors to indicate their file type. The color definitions are taken from the value of the <a href="#completioncolors"><code>%LS_COLORS%</code></a> environment variable. The default is &quot;off&quot;.</td>
 </tr>
 <tr>
-<td><a name="configcommentbegin"></a><code>comment-begin</code></td>
+<td><a class="wlink" href="#configcommentbegin"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="configcommentbegin"></a><code>comment-begin</code></td>
 <td>The string to insert at the beginning of the line when the <a href="#rlcmd-insert-comment"><code>insert-comment</code></a> command is executed. The default value is &quot;::&quot;.</td>
 </tr>
 <tr>
-<td><a name="configcompletiondisplaywidth"></a><code>completion-display-width</code></td>
+<td><a class="wlink" href="#configcompletiondisplaywidth"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="configcompletiondisplaywidth"></a><code>completion-display-width</code></td>
 <td>The number of screen columns used to display possible matches when performing completion. The value is ignored if it is less than 0 or greater than the terminal screen width. A value of 0 will cause matches to be displayed one per line. The default value is -1.</td>
 </tr>
 <tr>
-<td><a name="configcompletionignorecase"></a><code>completion-ignore-case</code></td>
+<td><a class="wlink" href="#configcompletionignorecase"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="configcompletionignorecase"></a><code>completion-ignore-case</code></td>
 <td>If set to &quot;on&quot;, Readline performs filename matching and completion in a case-insensitive fashion. The default value is &quot;on&quot;.</td>
 </tr>
 <tr>
-<td><a name="configcompletionprefixdisplaylength"></a><code>completion-prefix-display-length</code></td>
+<td><a class="wlink" href="#configcompletionprefixdisplaylength"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="configcompletionprefixdisplaylength"></a><code>completion-prefix-display-length</code></td>
 <td>The length in characters of the common prefix of a list of possible completions that is displayed without modification. When set to a value greater than zero, common prefixes longer than this value are replaced with an ellipsis when displaying possible completions.</td>
 </tr>
 <tr>
-<td><a name="configcompletionqueryitems"></a><code>completion-query-items</code></td>
+<td><a class="wlink" href="#configcompletionqueryitems"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="configcompletionqueryitems"></a><code>completion-query-items</code></td>
 <td>The number of possible completions that determines when the user is asked whether the list of possibilities should be displayed. If the number of possible completions is greater than or equal to this value, Readline will ask whether or not the user wishes to view them; otherwise, they are simply listed. This variable must be set to an integer value greater than or equal to 0. A negative value means Readline should never ask. The default limit is 100.</td>
 </tr>
 <tr>
-<td><a name="configechocontrolcharacters"></a><code>echo-control-characters</code></td>
+<td><a class="wlink" href="#configechocontrolcharacters"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="configechocontrolcharacters"></a><code>echo-control-characters</code></td>
 <td>When set to &quot;on&quot;, on operating systems that indicate they support it, readline echoes a character corresponding to a signal generated from the keyboard. The default is &quot;on&quot;.</td>
 </tr>
 <tr>
-<td><a name="configeditingmode"></a><code>editing-mode</code></td>
+<td><a class="wlink" href="#configeditingmode"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="configeditingmode"></a><code>editing-mode</code></td>
 <td>This controls which Readline input mode is used by default. When set to &quot;emacs&quot; (the default), Readline starts up in Emacs editing mode, where keystrokes are most similar to Emacs. When set to &quot;vi&quot;, then <code>vi</code> input mode is used.</td>
 </tr>
 <tr>
-<td><a name="configemacsmodestring"></a><code>emacs-mode-string</code></td>
+<td><a class="wlink" href="#configemacsmodestring"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="configemacsmodestring"></a><code>emacs-mode-string</code></td>
 <td>If the <a href="#configshowmodeinprompt"><code>show-mode-in-prompt</code></a> variable is enabled, this string is displayed immediately before the last line of the primary prompt when emacs editing mode is active. The value is expanded like a key binding, so the standard set of meta- and control prefixes and backslash escape sequences is available. Use the &quot;\1&quot; and &quot;\2&quot; escapes to begin and end sequences of non-printing characters, which can be used to embed a terminal control sequence into the mode string. The default is &quot;@&quot;.</td>
 </tr>
 <tr>
-<td><a name="configenablebracketedpaste"></a><code>enable-bracketed-paste</code></td>
+<td><a class="wlink" href="#configenablebracketedpaste"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="configenablebracketedpaste"></a><code>enable-bracketed-paste</code></td>
 <td>When set to &quot;on&quot;, Readline will configure the terminal in a way that will enable it to insert each paste into the editing buffer as a single string of characters, instead of treating each character as if it had been read from the keyboard. This can prevent pasted characters from being interpreted as editing commands. The default is &quot;on&quot;.</td>
 </tr>
 <tr>
-<td><a name="configexpandtilde"></a><code>expand-tilde</code></td>
+<td><a class="wlink" href="#configexpandtilde"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="configexpandtilde"></a><code>expand-tilde</code></td>
 <td>If set to &quot;on&quot;, tilde expansion is performed when Readline attempts word completion. The default is &quot;off&quot;.</td>
 </tr>
 <tr>
-<td><a name="confighistorypreservepoint"></a><code>history-preserve-point</code></td>
+<td><a class="wlink" href="#confighistorypreservepoint"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="confighistorypreservepoint"></a><code>history-preserve-point</code></td>
 <td>If set to &quot;on&quot;, the history code attempts to place the point (the current cursor position) at the same location on each history line retrieved with <a href="#rlcmd-previous-history"><code>previous-history</code></a> or <a href="#rlcmd-next-history"><code>next-history</code></a>. The default is &quot;off&quot;.</td>
 </tr>
 <tr>
-<td><a name="confighorizontalscrollmode"></a><code>horizontal-scroll-mode</code></td>
+<td><a class="wlink" href="#confighorizontalscrollmode"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="confighorizontalscrollmode"></a><code>horizontal-scroll-mode</code></td>
 <td>This variable can be set to either &quot;on&quot; or &quot;off&quot;. Setting it to &quot;on&quot; means that the text of the lines being edited will scroll horizontally on a single screen line when they are longer than the width of the screen, instead of wrapping onto a new screen line. This variable is automatically set to &quot;on&quot; for terminals of height 1. By default, this variable is set to &quot;off&quot;.</td>
 </tr>
 <tr>
-<td><a name="configisearchterminators"></a><code>isearch-terminators</code></td>
+<td><a class="wlink" href="#configisearchterminators"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="configisearchterminators"></a><code>isearch-terminators</code></td>
 <td>The string of characters that should terminate an incremental search without subsequently executing the character as a command (see <a href="#rlsearchinhistory">Searching for Commands in the History</a>). If this variable has not been given a value, the characters <kbd>Esc</kbd> and <kbd>Ctrl</kbd>-<kbd>j</kbd> will terminate an incremental search.</td>
 </tr>
 <tr>
-<td><a name="configkeymap"></a><code>keymap</code></td>
+<td><a class="wlink" href="#configkeymap"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="configkeymap"></a><code>keymap</code></td>
 <td>Sets Readline&#39;s idea of the current keymap for key binding commands. Built-in keymap names are <code>emacs</code>, <code>emacs-standard</code>, <code>emacs-meta</code>, <code>emacs-ctlx</code>, <code>vi</code>, <code>vi-move</code>, <code>vi-command</code>, and <code>vi-insert</code>. <code>vi</code> is equivalent to <code>vi-command</code> (<code>vi-move</code> is also a synonym); <code>emacs</code> is equivalent to <code>emacs-standard</code>. The default value is <code>emacs</code>. The value of the <a href="#configeditingmode"><code>editing-mode</code></a> variable also affects the default keymap.</td>
 </tr>
 <tr>
-<td><a name="configmarkdirectories"></a><code>mark-directories</code></td>
+<td><a class="wlink" href="#configmarkdirectories"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="configmarkdirectories"></a><code>mark-directories</code></td>
 <td>If set to &quot;on&quot;, completed directory names have a slash appended. The default is &quot;on&quot;.</td>
 </tr>
 <tr>
-<td><a name="configmarkmodifiedlines"></a><code>mark-modified-lines</code></td>
+<td><a class="wlink" href="#configmarkmodifiedlines"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="configmarkmodifiedlines"></a><code>mark-modified-lines</code></td>
 <td>This variable, when set to &quot;on&quot;, causes Readline to display an asterisk (<code>*</code>) at the start of history lines which have been modified. This variable is &quot;off&quot; by default.</td>
 </tr>
 <tr>
-<td><a name="configmarksymlinkeddirectories"></a><code>mark-symlinked-directories</code></td>
+<td><a class="wlink" href="#configmarksymlinkeddirectories"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="configmarksymlinkeddirectories"></a><code>mark-symlinked-directories</code></td>
 <td>If set to &quot;on&quot;, completed names which are symbolic links to directories have a slash appended (subject to the value of <a href="#configmarkdirectories"><code>mark-directories</code></a>). The default is &quot;off&quot;.</td>
 </tr>
 <tr>
-<td><a name="configmatchhiddenfiles"></a><code>match-hidden-files</code></td>
+<td><a class="wlink" href="#configmatchhiddenfiles"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="configmatchhiddenfiles"></a><code>match-hidden-files</code></td>
 <td>This variable, when set to &quot;on&quot;, causes Readline to match files whose names begin with a <code>.</code> (hidden files on Unix and Linux) when performing filename completion. If set to &quot;off&quot;, the leading <code>.</code> must be supplied by the user in the filename to be completed. This variable is &quot;on&quot; by default.</td>
 </tr>
 <tr>
-<td><a name="configmenucompletedisplayprefix"></a><code>menu-complete-display-prefix</code></td>
+<td><a class="wlink" href="#configmenucompletedisplayprefix"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="configmenucompletedisplayprefix"></a><code>menu-complete-display-prefix</code></td>
 <td>If set to &quot;on&quot;, menu completion displays the common prefix of the list of possible completions (which may be empty) before cycling through the list. The default is &quot;off&quot;.</td>
 </tr>
 <tr>
-<td><a name="configpagecompletions"></a><code>page-completions</code></td>
+<td><a class="wlink" href="#configpagecompletions"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="configpagecompletions"></a><code>page-completions</code></td>
 <td>If set to &quot;on&quot;, Readline uses an internal <code>more</code>-like pager to display a screenful of possible completions at a time. This variable is &quot;on&quot; by default.</td>
 </tr>
 <tr>
-<td><a name="configprintcompletionshorizontally"></a><code>print-completions-horizontally</code></td>
+<td><a class="wlink" href="#configprintcompletionshorizontally"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="configprintcompletionshorizontally"></a><code>print-completions-horizontally</code></td>
 <td>If set to &quot;on&quot;, Readline will display completions with matches sorted horizontally in alphabetical order, rather than down the screen. The default is &quot;off&quot;.</td>
 </tr>
 <tr>
-<td><a name="configshowallifambiguous"></a><code>show-all-if-ambiguous</code></td>
+<td><a class="wlink" href="#configshowallifambiguous"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="configshowallifambiguous"></a><code>show-all-if-ambiguous</code></td>
 <td>This alters the default behavior of the completion functions. If set to &quot;on&quot;, words which have more than one possible completion cause the matches to be listed immediately instead of ringing the bell. The default value is &quot;off&quot;.</td>
 </tr>
 <tr>
-<td><a name="configshowallifunmodified"></a><code>show-all-if-unmodified</code></td>
+<td><a class="wlink" href="#configshowallifunmodified"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="configshowallifunmodified"></a><code>show-all-if-unmodified</code></td>
 <td>This alters the default behavior of the completion functions in a fashion similar to <a href="#configshowallifambiguous"><code>show-all-if-ambiguous</code></a>. If set to &quot;on&quot;, words which have more than one possible completion without any possible partial completion (the possible completions don&#39;t share a common prefix) cause the matches to be listed immediately instead of ringing the bell. The default value is &quot;off&quot;.</td>
 </tr>
 <tr>
-<td><a name="configshowmodeinprompt"></a><code>show-mode-in-prompt</code></td>
+<td><a class="wlink" href="#configshowmodeinprompt"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="configshowmodeinprompt"></a><code>show-mode-in-prompt</code></td>
 <td>If set to &quot;on&quot;, add a string to the beginning of the prompt indicating the editing mode: emacs, vi command, or vi insertion. The mode strings are user-settable (e.g., <a href="#configemacsmodestring"><code>emacs-mode-string</code></a>). The default value is &quot;off&quot;.</td>
 </tr>
 <tr>
-<td><a name="configskipcompletedtext"></a><code>skip-completed-text</code></td>
+<td><a class="wlink" href="#configskipcompletedtext"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="configskipcompletedtext"></a><code>skip-completed-text</code></td>
 <td>If set to &quot;on&quot;, this alters the default completion behavior when inserting a single match into the line. It&#39;s only active when performing completion in the middle of a word. If enabled, Readline does not insert characters from the completion that match characters after point (the cursor position) in the word being completed, so portions of the word following the cursor are not duplicated. For instance, if this is enabled, attempting completion when the cursor is after the <code>e</code> in &quot;Makefile&quot; will result in &quot;Makefile&quot; rather than &quot;Makefilefile&quot;, assuming there is a single possible completion. The default value is &quot;off&quot;.</td>
 </tr>
 <tr>
-<td><a name="configvicmdmodestring"></a><code>vi-cmd-mode-string</code></td>
+<td><a class="wlink" href="#configvicmdmodestring"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="configvicmdmodestring"></a><code>vi-cmd-mode-string</code></td>
 <td>If the <a href="#configshowmodeinprompt"><code>show-mode-in-prompt</code></a> variable is enabled, this string is displayed immediately before the last line of the primary prompt when vi editing mode is active and in command mode. The value is expanded like a key binding, so the standard set of meta- and control prefixes and backslash escape sequences is available. Use the &quot;\1&quot; and &quot;\2&quot; escapes to begin and end sequences of non-printing characters, which can be used to embed a terminal control sequence into the mode string. The default is &quot;(cmd)&quot;.</td>
 </tr>
 <tr>
-<td><a name="configviinsmodestring"></a><code>vi-ins-mode-string</code></td>
+<td><a class="wlink" href="#configviinsmodestring"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="configviinsmodestring"></a><code>vi-ins-mode-string</code></td>
 <td>If the <a href="#configshowmodeinprompt"><code>show-mode-in-prompt</code></a> variable is enabled, this string is displayed immediately before the last line of the primary prompt when vi editing mode is active and in insertion mode. The value is expanded like a key binding, so the standard set of meta- and control prefixes and backslash escape sequences is available. Use the &quot;\1&quot; and &quot;\2&quot; escapes to begin and end sequences of non-printing characters, which can be used to embed a terminal control sequence into the mode string. The default is &quot;(ins)&quot;.</td>
 </tr>
 <tr>
-<td><a name="configvisiblestats"></a><code>visible-stats</code></td>
+<td><a class="wlink" href="#configvisiblestats"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="configvisiblestats"></a><code>visible-stats</code></td>
 <td>If set to &quot;on&quot;, a character denoting a file&#39;s type is appended to the filename when listing possible completions. The default is &quot;off&quot;.</td>
 </tr>
 </tbody></table>
@@ -2360,19 +2365,19 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 </tr>
 </thead>
 <tbody><tr>
-<td><code>completion-auto-query-items</code></td>
+<td><a class="wlink" href="#configcompletionautoqueryitems"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="configcompletionautoqueryitems"></a><code>completion-auto-query-items</code></td>
 <td>If set to &quot;on&quot;, automatically prompts before displaying completions if they won&#39;t fit without scrolling (this overrules the <a href="#configcompletionqueryitems"><code>completion-query-items</code></a> variable). The default is &quot;on&quot;.</td>
 </tr>
 <tr>
-<td><code>history-point-at-end-of-anchored-search</code></td>
+<td><a class="wlink" href="#confighistorypointatendofanchoredsearch"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="confighistorypointatendofanchoredsearch"></a><code>history-point-at-end-of-anchored-search</code></td>
 <td>If set to &quot;on&quot;, this puts the cursor at the end of the line when using <a href="#rlcmd-history-search-forward"><code>history-search-forward</code></a> or <a href="#rlcmd-history-search-backward"><code>history-search-backward</code></a>. The default is &quot;off&quot;.</td>
 </tr>
 <tr>
-<td><code>menu-complete-wraparound</code></td>
+<td><a class="wlink" href="#configmenucompletewraparound"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="configmenucompletewraparound"></a><code>menu-complete-wraparound</code></td>
 <td>If this is &quot;on&quot;, the <a href="#rlcmd-menu-complete"><code>menu-complete</code></a> family of commands wraps around when reaching the end of the possible completions. The default is &quot;on&quot;.</td>
 </tr>
 <tr>
-<td><code>search-ignore-case</code></td>
+<td><a class="wlink" href="#configsearchignorecase"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="configsearchignorecase"></a><code>search-ignore-case</code></td>
 <td>Controls whether the history search commands ignore case. The default is &quot;on&quot;.</td>
 </tr>
 </tbody></table>
@@ -2385,43 +2390,43 @@ call &quot;%~dp0clink.bat&quot; inject --profile &quot;%TEMP%\clink_portable&quo
 </tr>
 </thead>
 <tbody><tr>
-<td><code>bind-tty-special-chars</code></td>
+<td><a class="wlink" href="#configbindttyspecialchars"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="configbindttyspecialchars"></a><code>bind-tty-special-chars</code></td>
 <td>Clink doesn&#39;t need or use this.</td>
 </tr>
 <tr>
-<td><code>completion-map-case</code></td>
+<td><a class="wlink" href="#configcompletionmapcase"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="configcompletionmapcase"></a><code>completion-map-case</code></td>
 <td>Instead, use the <code><a href="#match_ignore_case">match.ignore_case</a></code> Clink setting (see the <code>relaxed</code> mode).</td>
 </tr>
 <tr>
-<td><code>convert-meta</code></td>
+<td><a class="wlink" href="#configconvertmeta"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="configconvertmeta"></a><code>convert-meta</code></td>
 <td>Clink requires this to be &quot;on&quot;, and sets it to &quot;on&quot;.</td>
 </tr>
 <tr>
-<td><code>disable-completion</code></td>
+<td><a class="wlink" href="#configdisablecompletion"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="configdisablecompletion"></a><code>disable-completion</code></td>
 <td>If set to &quot;on&quot;, Readline will inhibit word completion. Completion characters will be inserted into the line as if they had been mapped to <a href="#rlcmd-self-insert"><code>self-insert</code></a>. The default is &quot;off&quot;.</td>
 </tr>
 <tr>
-<td><code>enable-meta-key</code></td>
+<td><a class="wlink" href="#configenablemetakey"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="configenablemetakey"></a><code>enable-meta-key</code></td>
 <td>Clink requires this to be &quot;on&quot;, and sets it to &quot;on&quot;.</td>
 </tr>
 <tr>
-<td><code>history-size</code></td>
+<td><a class="wlink" href="#confighistorysize"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="confighistorysize"></a><code>history-size</code></td>
 <td>Instead, use the <code><a href="#history_max_lines">history.max_lines</a></code> Clink setting.</td>
 </tr>
 <tr>
-<td><code>input-meta</code></td>
+<td><a class="wlink" href="#configinputmeta"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="configinputmeta"></a><code>input-meta</code></td>
 <td>Clink requires this to be &quot;on&quot;, and sets it to &quot;on&quot;.</td>
 </tr>
 <tr>
-<td><code>keyseq-timeout</code></td>
+<td><a class="wlink" href="#configkeyseqtimeout"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="configkeyseqtimeout"></a><code>keyseq-timeout</code></td>
 <td>Clink does not support this.</td>
 </tr>
 <tr>
-<td><code>output-meta</code></td>
+<td><a class="wlink" href="#configoutputmeta"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="configoutputmeta"></a><code>output-meta</code></td>
 <td>Clink requires this to be &quot;on&quot;, and sets it to &quot;on&quot;.</td>
 </tr>
 <tr>
-<td><code>revert-all-at-newline</code></td>
+<td><a class="wlink" href="#configrevertallatnewline"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="configrevertallatnewline"></a><code>revert-all-at-newline</code></td>
 <td>Clink always reverts all in-memory changes to history lines each time a new input prompt starts.</td>
 </tr>
 </tbody></table>
@@ -2698,59 +2703,59 @@ $endif              # end clink-only section
 </tr>
 </thead>
 <tbody><tr>
-<td><a name="rlcmd-beginning-of-line"></a><code>beginning-of-line</code></td>
+<td><a class="wlink" href="#rlcmd-beginning-of-line"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-beginning-of-line"></a><code>beginning-of-line</code></td>
 <td align="center"><kbd>Home</kbd></td>
 <td>Move to the start of the current line.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-end-of-line"></a><code>end-of-line</code></td>
+<td><a class="wlink" href="#rlcmd-end-of-line"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-end-of-line"></a><code>end-of-line</code></td>
 <td align="center"><kbd>End</kbd></td>
-<td>Move to the end of the line.</td>
+<td>Move to the end of the line, or insert suggestion.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-forward-char"></a><code>forward-char</code></td>
-<td align="center"><kbd>Right</kbd></td>
-<td>Move forward a character.</td>
+<td><a class="wlink" href="#rlcmd-forward-char"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-forward-char"></a><code>forward-char</code></td>
+<td align="center"><kbd>Right</kbd> <a href="#alternatedefaultcommand">*</a></td>
+<td>Move forward a character, or insert suggestion.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-backward-char"></a><code>backward-char</code></td>
+<td><a class="wlink" href="#rlcmd-backward-char"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-backward-char"></a><code>backward-char</code></td>
 <td align="center"><kbd>Left</kbd></td>
 <td>Move back a character.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-forward-word"></a><code>forward-word</code></td>
+<td><a class="wlink" href="#rlcmd-forward-word"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-forward-word"></a><code>forward-word</code></td>
 <td align="center"><kbd>Ctrl</kbd>-<kbd>Right</kbd></td>
-<td>Move forward to the end of the next word. Words are composed of letters and digits.</td>
+<td>Move forward to the end of the next word, or insert next suggested word.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-backward-word"></a><code>backward-word</code></td>
+<td><a class="wlink" href="#rlcmd-backward-word"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-backward-word"></a><code>backward-word</code></td>
 <td align="center"><kbd>Ctrl</kbd>-<kbd>Left</kbd></td>
-<td>Move back to the start of the current or previous word. Words are composed of letters and digits.</td>
+<td>Move back to the start of the current or previous word.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-previous-screen-line"></a><code>previous-screen-line</code></td>
+<td><a class="wlink" href="#rlcmd-previous-screen-line"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-previous-screen-line"></a><code>previous-screen-line</code></td>
 <td align="center"></td>
 <td>Attempt to move point to the same physical screen column on the previous physical screen line. This will not have the desired effect if the current Readline line does not take up more than one physical line or if point is not greater than the length of the prompt plus the screen width.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-next-screen-line"></a><code>next-screen-line</code></td>
+<td><a class="wlink" href="#rlcmd-next-screen-line"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-next-screen-line"></a><code>next-screen-line</code></td>
 <td align="center"></td>
 <td>Attempt to move point to the same physical screen column on the next physical screen line. This will not have the desired effect if the current Readline line does not take up more than one physical line or if the length of the current Readline line is not greater than the length of the prompt plus the screen width.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-clear-display"></a><code>clear-display</code></td>
+<td><a class="wlink" href="#rlcmd-clear-display"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clear-display"></a><code>clear-display</code></td>
 <td align="center"><kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>l</kbd></td>
-<td>Clear the screen and, if possible, the terminal&#39;s scrollback buffer, then redraw the current line, leaving the current line at the top of the screen.</td>
+<td>Clear the terminal screen and the terminal&#39;s scrollback buffer (if possible), then redraw the current line, leaving the current line at the top of the screen.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-clear-screen"></a><code>clear-screen</code></td>
+<td><a class="wlink" href="#rlcmd-clear-screen"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clear-screen"></a><code>clear-screen</code></td>
 <td align="center"><kbd>Ctrl</kbd>-<kbd>l</kbd></td>
-<td>Clear the screen, then redraw the current line, leaving the current line at the top of the screen.</td>
+<td>Clear the terminal screen, then redraw the current line, leaving the current line at the top of the screen.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-redraw-current-line"></a><code>redraw-current-line</code></td>
+<td><a class="wlink" href="#rlcmd-redraw-current-line"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-redraw-current-line"></a><code>redraw-current-line</code></td>
 <td align="center"></td>
-<td>Refresh the current line. By default, this is unbound.</td>
+<td>Refresh the current line.</td>
 </tr>
 </tbody></table>
 <h3 id="commands-for-manipulating-the-history"><a class="wlink" href="#commands-for-manipulating-the-history"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Commands For Manipulating The History</h3>
@@ -2763,82 +2768,82 @@ $endif              # end clink-only section
 </tr>
 </thead>
 <tbody><tr>
-<td><a name="rlcmd-accept-line"></a><code>accept-line</code></td>
+<td><a class="wlink" href="#rlcmd-accept-line"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-accept-line"></a><code>accept-line</code></td>
 <td align="center"><kbd>Enter</kbd></td>
-<td>Accept the line regardless of where the cursor is. If this line is non-empty, it may be added to the history list for future recall.</td>
+<td>Accept the input line regardless of where the cursor is. The line may be added to the history list for future recall.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-previous-history"></a><code>previous-history</code></td>
+<td><a class="wlink" href="#rlcmd-previous-history"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-previous-history"></a><code>previous-history</code></td>
 <td align="center"><kbd>Ctrl</kbd>-<kbd>p</kbd></td>
 <td>Move &quot;back&quot; through the history list, fetching the previous command.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-next-history"></a><code>next-history</code></td>
+<td><a class="wlink" href="#rlcmd-next-history"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-next-history"></a><code>next-history</code></td>
 <td align="center"><kbd>Ctrl</kbd>-<kbd>n</kbd></td>
 <td>Move &quot;forward&quot; through the history list, fetching the next command.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-beginning-of-history"></a><code>beginning-of-history</code></td>
+<td><a class="wlink" href="#rlcmd-beginning-of-history"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-beginning-of-history"></a><code>beginning-of-history</code></td>
 <td align="center"><kbd>Alt</kbd>-<kbd><</kbd></td>
 <td>Move to the first line in the history.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-end-of-history"></a><code>end-of-history</code></td>
+<td><a class="wlink" href="#rlcmd-end-of-history"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-end-of-history"></a><code>end-of-history</code></td>
 <td align="center"><kbd>Alt</kbd>-<kbd>></kbd></td>
-<td>Move to the end of the input history, i.e., the line currently being entered.</td>
+<td>Move to the end of the input history, i.e. the line currently being entered.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-reverse-search-history"></a><code>reverse-search-history</code></td>
+<td><a class="wlink" href="#rlcmd-reverse-search-history"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-reverse-search-history"></a><code>reverse-search-history</code></td>
 <td align="center"><kbd>Ctrl</kbd>-<kbd>r</kbd></td>
 <td>Search backward starting at the current line and moving &quot;up&quot; through the history as necessary. This is an incremental search. This command sets the region to the matched text and activates the mark.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-forward-search-history"></a><code>forward-search-history</code></td>
+<td><a class="wlink" href="#rlcmd-forward-search-history"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-forward-search-history"></a><code>forward-search-history</code></td>
 <td align="center"><kbd>Ctrl</kbd>-<kbd>s</kbd></td>
 <td>Search forward starting at the current line and moving &quot;down&quot; through the history as necessary. This is an incremental search. This command sets the region to the matched text and activates the mark.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-non-incremental-reverse-search-history"></a><code>non-incremental-reverse-search-history</code></td>
+<td><a class="wlink" href="#rlcmd-non-incremental-reverse-search-history"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-non-incremental-reverse-search-history"></a><code>non-incremental-reverse-search-history</code></td>
 <td align="center"><kbd>Alt</kbd>-<kbd>p</kbd></td>
 <td>Search backward starting at the current line and moving &quot;up&quot; through the history as necessary using a non-incremental search for a string supplied by the user. The search string may match anywhere in a history line.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-non-incremental-forward-search-history"></a><code>non-incremental-forward-search-history</code></td>
+<td><a class="wlink" href="#rlcmd-non-incremental-forward-search-history"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-non-incremental-forward-search-history"></a><code>non-incremental-forward-search-history</code></td>
 <td align="center"><kbd>Alt</kbd>-<kbd>n</kbd></td>
 <td>Search forward starting at the current line and moving &quot;down&quot; through the history as necessary using a non-incremental search for a string supplied by the user. The search string may match anywhere in a history line.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-history-search-forward"></a><code>history-search-forward</code></td>
+<td><a class="wlink" href="#rlcmd-history-search-forward"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-history-search-forward"></a><code>history-search-forward</code></td>
 <td align="center"></td>
 <td>Search forward through the history for the string of characters between the start of the current line and the point. The search string must match at the beginning of a history line. This is a non-incremental search. By default, this command is unbound.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-history-search-backward"></a><code>history-search-backward</code></td>
+<td><a class="wlink" href="#rlcmd-history-search-backward"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-history-search-backward"></a><code>history-search-backward</code></td>
 <td align="center"></td>
 <td>Search backward through the history for the string of characters between the start of the current line and the point. The search string must match at the beginning of a history line. This is a non-incremental search. By default, this command is unbound.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-history-substring-search-forward"></a><code>history-substring-search-forward</code></td>
+<td><a class="wlink" href="#rlcmd-history-substring-search-forward"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-history-substring-search-forward"></a><code>history-substring-search-forward</code></td>
 <td align="center"></td>
 <td>Search forward through the history for the string of characters between the start of the current line and the point. The search string may match anywhere in a history line. This is a non-incremental search. By default, this command is unbound.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-history-substring-search-backward"></a><code>history-substring-search-backward</code></td>
+<td><a class="wlink" href="#rlcmd-history-substring-search-backward"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-history-substring-search-backward"></a><code>history-substring-search-backward</code></td>
 <td align="center"></td>
 <td>Search backward through the history for the string of characters between the start of the current line and the point. The search string may match anywhere in a history line. This is a non-incremental search. By default, this command is unbound.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-yank-nth-arg"></a><code>yank-nth-arg</code></td>
+<td><a class="wlink" href="#rlcmd-yank-nth-arg"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-yank-nth-arg"></a><code>yank-nth-arg</code></td>
 <td align="center"><kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>y</kbd></td>
 <td>Insert the first argument to the previous command (usually the second word on the previous line) at point. With an argument <em>n</em>, insert the <em>n</em>th word from the previous command (the words in the previous command begin with word 0). A negative argument inserts the <em>n</em>th word from the end of the previous command. Once the argument <em>n</em> is computed, the argument is extracted as if the &quot;!n&quot; history expansion had been specified.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-yank-last-arg"></a><code>yank-last-arg</code></td>
+<td><a class="wlink" href="#rlcmd-yank-last-arg"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-yank-last-arg"></a><code>yank-last-arg</code></td>
 <td align="center"><kbd>Alt</kbd>-<kbd>.</kbd> or <kbd>Alt</kbd>-<kbd>_</kbd></td>
 <td>Insert last argument to the previous command (the last word of the previous history entry). With a numeric argument, behave exactly like <a href="#rlcmd-yank-nth-arg"><code>yank-nth-arg</code></a>. Successive calls to <code>yank-last-arg</code> move back through the history list, inserting the last word (or the word specified by the argument to the first call) of each line in turn. Any numeric argument supplied to these successive calls determines the direction to move through the history. A negative argument switches the direction through the history (back or forward). The history expansion facilities are used to extract the last argument, as if the &quot;!$&quot; history expansion had been specified.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-operate-and-get-next"></a><code>operate-and-get-next</code></td>
+<td><a class="wlink" href="#rlcmd-operate-and-get-next"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-operate-and-get-next"></a><code>operate-and-get-next</code></td>
 <td align="center"><kbd>Ctrl</kbd>-<kbd>o</kbd></td>
 <td>Accept the current line for return to the calling application as if a newline had been entered, and fetch the next line relative to the current line from the history for editing. A numeric argument, if supplied, specifies the history entry to use instead of the current line.</td>
 </tr>
@@ -2853,69 +2858,64 @@ $endif              # end clink-only section
 </tr>
 </thead>
 <tbody><tr>
-<td><a name="rlcmd-delete-char"></a><code>delete-char</code></td>
+<td><a class="wlink" href="#rlcmd-delete-char"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-delete-char"></a><code>delete-char</code></td>
 <td align="center"><kbd>Ctrl</kbd>-<kbd>d</kbd></td>
 <td>Delete the character at point.<br/>Note: also see the <code><a href="#ctrld_exits">cmd.ctrld_exits</a></code> Clink setting.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-backward-delete-char"></a><code>backward-delete-char</code></td>
+<td><a class="wlink" href="#rlcmd-backward-delete-char"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-backward-delete-char"></a><code>backward-delete-char</code></td>
 <td align="center"><kbd>Backspace</kbd></td>
 <td>Delete the character behind the cursor. A numeric argument means to kill the characters instead of deleting them.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-forward-backward-delete-char"></a><code>forward-backward-delete-char</code></td>
+<td><a class="wlink" href="#rlcmd-forward-backward-delete-char"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-forward-backward-delete-char"></a><code>forward-backward-delete-char</code></td>
 <td align="center"></td>
-<td>Delete the character under the cursor, unless the cursor is at the end of the line, in which case the character behind the cursor is deleted. By default, this is not bound to a key.</td>
+<td>Delete the character under the cursor, unless the cursor is at the end of the line, in which case the character behind the cursor is deleted.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-quoted-insert"></a><code>quoted-insert</code></td>
+<td><a class="wlink" href="#rlcmd-quoted-insert"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-quoted-insert"></a><code>quoted-insert</code></td>
 <td align="center"><kbd>Ctrl</kbd>-<kbd>q</kbd></td>
-<td>Add the next character typed to the line verbatim. This is how to insert key sequences like <kbd>Ctrl</kbd>-<kbd>h</kbd> or <kbd>Tab</kbd>, for example.</td>
+<td>Add the next character typed to the line verbatim. This is how to insert key sequences like <kbd>Ctrl</kbd>-<kbd>h</kbd> or <kbd>Esc</kbd>, for example.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-tab-insert"></a><code>tab-insert</code></td>
-<td align="center"><kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>i</kbd></td>
-<td>Insert a tab character.</td>
-</tr>
-<tr>
-<td><a name="rlcmd-self-insert"></a><code>self-insert</code></td>
+<td><a class="wlink" href="#rlcmd-self-insert"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-self-insert"></a><code>self-insert</code></td>
 <td align="center"><kbd>a</kbd>, <kbd>b</kbd>, <kbd>A</kbd>, <kbd>1</kbd>, <kbd>!</kbd>, etc</td>
 <td>Insert the key itself.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-bracketed-paste-begin"></a><code>bracketed-paste-begin</code></td>
+<td><a class="wlink" href="#rlcmd-bracketed-paste-begin"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-bracketed-paste-begin"></a><code>bracketed-paste-begin</code></td>
 <td align="center"></td>
 <td>This function is intended to be bound to the &quot;bracketed paste&quot; escape sequence sent by some terminals, and such a binding is assigned by default. It allows Readline to insert the pasted text as a single unit without treating each character as if it had been read from the keyboard. The characters are inserted as if each one was bound to <a href="#rlcmd-self-insert"><code>self-insert</code></a> instead of executing any editing commands.<br/>Bracketed paste sets the region (the characters between point and the mark) to the inserted text. It uses the concept of an active mark: when the mark is active, Readline redisplay uses the terminal&#39;s standout mode to denote the region.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-transpose-chars"></a><code>transpose-chars</code></td>
+<td><a class="wlink" href="#rlcmd-transpose-chars"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-transpose-chars"></a><code>transpose-chars</code></td>
 <td align="center"><kbd>Ctrl</kbd>-<kbd>t</kbd></td>
 <td>Drag the character before the cursor forward over the character at the cursor, moving the cursor forward as well. If the insertion point is at the end of the line, then this transposes the last two characters of the line. Negative arguments have no effect.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-transpose-words"></a><code>transpose-words</code></td>
+<td><a class="wlink" href="#rlcmd-transpose-words"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-transpose-words"></a><code>transpose-words</code></td>
 <td align="center"><kbd>Alt</kbd>-<kbd>t</kbd></td>
 <td>Drag the word before point past the word after point, moving point past that word as well. If the insertion point is at the end of the line, this transposes the last two words on the line.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-upcase-word"></a><code>upcase-word</code></td>
+<td><a class="wlink" href="#rlcmd-upcase-word"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-upcase-word"></a><code>upcase-word</code></td>
 <td align="center"><kbd>Alt</kbd>-<kbd>u</kbd></td>
 <td>Uppercase the current (or following) word. With a negative argument, uppercase the previous word, but do not move the cursor.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-downcase-word"></a><code>downcase-word</code></td>
+<td><a class="wlink" href="#rlcmd-downcase-word"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-downcase-word"></a><code>downcase-word</code></td>
 <td align="center"><kbd>Alt</kbd>-<kbd>l</kbd></td>
 <td>Lowercase the current (or following) word. With a negative argument, lowercase the previous word, but do not move the cursor.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-capitalize-word"></a><code>capitalize-word</code></td>
+<td><a class="wlink" href="#rlcmd-capitalize-word"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-capitalize-word"></a><code>capitalize-word</code></td>
 <td align="center"></td>
 <td>Capitalize the current (or following) word. With a negative argument, capitalize the previous word, but do not move the cursor.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-overwrite-mode"></a><code>overwrite-mode</code></td>
-<td align="center"></td>
-<td>Toggle overwrite mode. With an explicit positive numeric argument, switches to overwrite mode. With an explicit non-positive numeric argument, switches to insert mode. This command affects only emacs mode; vi mode does overwrite differently. Each new command line prompt starts in insert mode.<br/>In overwrite mode, characters bound to <a href="#rlcmd-self-insert"><code>self-insert</code></a> replace the text at point rather than pushing the text to the right. Characters bound to <a href="#rlcmd-backward-delete-char"><code>backward-delete-char</code></a> replace the character before point with a space.<br/>By default, this command is unbound.</td>
+<td><a class="wlink" href="#rlcmd-overwrite-mode"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-overwrite-mode"></a><code>overwrite-mode</code></td>
+<td align="center"><kbd>Ins</kbd></td>
+<td>Toggle overwrite mode. With an explicit positive numeric argument, switches to overwrite mode. With an explicit non-positive numeric argument, switches to insert mode. This command affects only emacs mode; vi mode does overwrite differently. Each new command line prompt starts in insert mode.<br/>In overwrite mode, characters bound to <a href="#rlcmd-self-insert"><code>self-insert</code></a> replace the text at point rather than pushing the text to the right. Characters bound to <a href="#rlcmd-backward-delete-char"><code>backward-delete-char</code></a> replace the character before point with a space.</td>
 </tr>
 </tbody></table>
 <h3 id="killing-and-yanking-1"><a class="wlink" href="#killing-and-yanking-1"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Killing And Yanking</h3>
@@ -2928,79 +2928,79 @@ $endif              # end clink-only section
 </tr>
 </thead>
 <tbody><tr>
-<td><a name="rlcmd-kill-line"></a><code>kill-line</code></td>
-<td align="center"><kbd>Ctrl</kbd>-<kbd>k</kbd></td>
+<td><a class="wlink" href="#rlcmd-kill-line"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-kill-line"></a><code>kill-line</code></td>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>End</kbd></td>
 <td>Kill the text from point to the end of the line. With a negative numeric argument, kill backward from the cursor to the beginning of the current line.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-backward-kill-line"></a><code>backward-kill-line</code></td>
-<td align="center"><kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>Backspace</kbd></td>
+<td><a class="wlink" href="#rlcmd-backward-kill-line"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-backward-kill-line"></a><code>backward-kill-line</code></td>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>Home</kbd></td>
 <td>Kill backward from the cursor to the beginning of the current line. With a negative numeric argument, kill forward from the cursor to the end of the current line.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-unix-line-discard"></a><code>unix-line-discard</code></td>
+<td><a class="wlink" href="#rlcmd-unix-line-discard"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-unix-line-discard"></a><code>unix-line-discard</code></td>
 <td align="center"><kbd>Ctrl</kbd>-<kbd>u</kbd></td>
 <td>Kill backward from the cursor to the beginning of the current line.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-kill-whole-line"></a><code>kill-whole-line</code></td>
+<td><a class="wlink" href="#rlcmd-kill-whole-line"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-kill-whole-line"></a><code>kill-whole-line</code></td>
 <td align="center"></td>
-<td>Kill all characters on the current line, no matter where point is. By default, this is unbound.</td>
+<td>Kill all characters on the current line, no matter where point is.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-kill-word"></a><code>kill-word</code></td>
-<td align="center"><kbd>Alt</kbd>-<kbd>d</kbd></td>
+<td><a class="wlink" href="#rlcmd-kill-word"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-kill-word"></a><code>kill-word</code></td>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>Del</kbd></td>
 <td>Kill from point to the end of the current word, or if between words, to the end of the next word. Word boundaries are the same as <a href="#rlcmd-forward-word"><code>forward-word</code></a>.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-backward-kill-word"></a><code>backward-kill-word</code></td>
-<td align="center"><kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>Backspace</kbd></td>
+<td><a class="wlink" href="#rlcmd-backward-kill-word"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-backward-kill-word"></a><code>backward-kill-word</code></td>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>Backspace</kbd></td>
 <td>Kill the word behind point. Word boundaries are the same as <a href="#rlcmd-backward-word"><code>backward-word</code></a>.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-unix-word-rubout"></a><code>unix-word-rubout</code></td>
+<td><a class="wlink" href="#rlcmd-unix-word-rubout"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-unix-word-rubout"></a><code>unix-word-rubout</code></td>
 <td align="center"><kbd>Ctrl</kbd>-<kbd>w</kbd></td>
-<td>Kill the word behind point, using white space as a word boundary. The killed text is saved on the kill-ring.</td>
+<td>Kill the word behind the cursor point, using white space as a word boundary. The killed text is saved on the kill-ring.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-unix-filename-rubout"></a><code>unix-filename-rubout</code></td>
+<td><a class="wlink" href="#rlcmd-unix-filename-rubout"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-unix-filename-rubout"></a><code>unix-filename-rubout</code></td>
 <td align="center"></td>
 <td>Kill the word behind point, using white space and the slash character as the word boundaries. The killed text is saved on the kill-ring.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-delete-horizontal-space"></a><code>delete-horizontal-space</code></td>
+<td><a class="wlink" href="#rlcmd-delete-horizontal-space"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-delete-horizontal-space"></a><code>delete-horizontal-space</code></td>
 <td align="center"></td>
-<td>Delete all spaces and tabs around point. By default, this is unbound.</td>
+<td>Delete all spaces and tabs around point.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-kill-region"></a><code>kill-region</code></td>
+<td><a class="wlink" href="#rlcmd-kill-region"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-kill-region"></a><code>kill-region</code></td>
 <td align="center"></td>
-<td>Kill the text in the current region. By default, this command is unbound.</td>
+<td>Kill the text in the current region.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-copy-region-as-kill"></a><code>copy-region-as-kill</code></td>
+<td><a class="wlink" href="#rlcmd-copy-region-as-kill"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-copy-region-as-kill"></a><code>copy-region-as-kill</code></td>
 <td align="center"></td>
-<td>Copy the text in the region to the kill buffer, so it can be yanked right away. By default, this command is unbound.</td>
+<td>Copy the text in the region to the kill buffer, so it can be yanked right away.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-copy-backward-word"></a><code>copy-backward-word</code></td>
+<td><a class="wlink" href="#rlcmd-copy-backward-word"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-copy-backward-word"></a><code>copy-backward-word</code></td>
 <td align="center"></td>
-<td>Copy the word before point to the kill buffer. The word boundaries are the same as <a href="#rlcmd-backward-word"><code>backward-word</code></a>. By default, this command is unbound.</td>
+<td>Copy the word before point to the kill buffer. The word boundaries are the same as <a href="#rlcmd-backward-word"><code>backward-word</code></a>.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-copy-forward-word"></a><code>copy-forward-word</code></td>
+<td><a class="wlink" href="#rlcmd-copy-forward-word"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-copy-forward-word"></a><code>copy-forward-word</code></td>
 <td align="center"></td>
-<td>Copy the word following point to the kill buffer. The word boundaries are the same as <a href="#rlcmd-forward-word"><code>forward-word</code></a>. By default, this command is unbound.</td>
+<td>Copy the word following point to the kill buffer. The word boundaries are the same as <a href="#rlcmd-forward-word"><code>forward-word</code></a>.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-yank"></a><code>yank</code></td>
+<td><a class="wlink" href="#rlcmd-yank"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-yank"></a><code>yank</code></td>
 <td align="center"><kbd>Ctrl</kbd>-<kbd>y</kbd></td>
-<td>Yank the top of the kill ring into the buffer at point.</td>
+<td>Yank the top of the kill ring into the buffer at the cursor point.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-yank-pop"></a><code>yank-pop</code></td>
+<td><a class="wlink" href="#rlcmd-yank-pop"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-yank-pop"></a><code>yank-pop</code></td>
 <td align="center"><kbd>Alt</kbd>-<kbd>y</kbd></td>
-<td>Rotate the kill-ring, and yank the new top. You can only do this if the prior command is <a href="#rlcmd-yank"><code>yank</code></a> or <code>yank-pop</code>.</td>
+<td>Rotate the kill-ring and yank the new top; but only if the prior command is <a href="#rlcmd-yank"><code>yank</code></a> or <code>yank-pop</code>.</td>
 </tr>
 </tbody></table>
 <h3 id="specifying-numeric-arguments"><a class="wlink" href="#specifying-numeric-arguments"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Specifying Numeric Arguments</h3>
@@ -3013,12 +3013,12 @@ $endif              # end clink-only section
 </tr>
 </thead>
 <tbody><tr>
-<td><a name="rlcmd-digit-argument"></a><code>digit-argument</code></td>
+<td><a class="wlink" href="#rlcmd-digit-argument"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-digit-argument"></a><code>digit-argument</code></td>
 <td align="center"><kbd>Alt</kbd>-<kbd><em>digit</em></kbd> or <kbd>Alt</kbd>-<kbd>-</kbd></td>
 <td>Add this <em>digit</em> to the argument already accumulating, or start a new argument. <kbd>Alt</kbd>-<kbd>-</kbd> starts a negative argument.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-universal-argument"></a><code>universal-argument</code></td>
+<td><a class="wlink" href="#rlcmd-universal-argument"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-universal-argument"></a><code>universal-argument</code></td>
 <td align="center"></td>
 <td>This is another way to specify an argument. If this command is followed by one or more digits, optionally with a leading minus sign, those digits define the argument. If the command is followed by digits, executing <code>universal-argument</code> again ends the numeric argument, but is otherwise ignored. As a special case, if this command is immediately followed by a character that is neither a digit nor minus sign, the argument count for the next command is multiplied by four. The argument count is initially one, so executing this function the first time makes the argument count four, a second time makes the argument count sixteen, and so on. By default, this is not bound to a key.</td>
 </tr>
@@ -3033,39 +3033,39 @@ $endif              # end clink-only section
 </tr>
 </thead>
 <tbody><tr>
-<td><a name="rlcmd-complete"></a><code>complete</code></td>
-<td align="center"><kbd>Tab</kbd></td>
+<td><a class="wlink" href="#rlcmd-complete"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-complete"></a><code>complete</code></td>
+<td align="center"><kbd>Tab</kbd>  <a href="#alternatedefaultcommand">*</a></td>
 <td>Attempt to perform completion on the text before point.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-possible-completions"></a><code>possible-completions</code></td>
+<td><a class="wlink" href="#rlcmd-possible-completions"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-possible-completions"></a><code>possible-completions</code></td>
 <td align="center"><kbd>Alt</kbd>-<kbd>=</kbd></td>
 <td>List the possible completions of the text before point. When displaying completions, Readline sets the number of columns used for display to the value of <code><a href="#configcompletiondisplaywidth">completion-display-width</a></code>, the value of the environment variable <code>%COLUMNS%</code>, or the screen width, in that order.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-insert-completions"></a><code>insert-completions</code></td>
+<td><a class="wlink" href="#rlcmd-insert-completions"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-insert-completions"></a><code>insert-completions</code></td>
 <td align="center"><kbd>Alt</kbd>-<kbd>*</kbd></td>
 <td>Insert all completions of the text before point that would have been generated by <a href="#rlcmd-possible-completions"><code>possible-completions</code></a>.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-menu-complete"></a><code>menu-complete</code></td>
+<td><a class="wlink" href="#rlcmd-menu-complete"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-menu-complete"></a><code>menu-complete</code></td>
 <td align="center"></td>
-<td>Similar to <a href="#rlcmd-complete"><code>complete</code></a>, but replaces the word to be completed with a single match from the list of possible completions. Repeated execution of <code>menu-complete</code> steps through the list of possible completions, inserting each match in turn. At the end of the list of completions, the bell is rung (subject to the setting of <code><a href="#configbellstyle">bell-style</a></code>) and the original text is restored. An argument of <em>n</em> moves <em>n</em> positions forward in the list of matches; a negative argument may be used to move backward through the list. This command is intended to be bound to <kbd>TAB</kbd>, but is unbound by default.</td>
+<td>Similar to <a href="#rlcmd-complete"><code>complete</code></a>, but replaces the word to be completed with a single match from the list of possible completions. Repeated execution of <code>menu-complete</code> steps through the list of possible completions, inserting each match in turn. At the end of the list of completions, the bell is rung (subject to the setting of <code><a href="#configbellstyle">bell-style</a></code>) and the original text is restored. An argument of <em>n</em> moves <em>n</em> positions forward in the list of matches; a negative argument may be used to move backward through the list. This command is intended to be bound to <kbd>Tab</kbd>, but is unbound by default.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-menu-complete-backward"></a><code>menu-complete-backward</code></td>
+<td><a class="wlink" href="#rlcmd-menu-complete-backward"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-menu-complete-backward"></a><code>menu-complete-backward</code></td>
 <td align="center"></td>
 <td>Identical to <a href="#rlcmd-menu-complete"><code>menu-complete</code></a>, but moves backward through the list of possible completions, as if <code>menu-complete</code> had been given a negative argument.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-old-menu-complete"></a><code>old-menu-complete</code></td>
-<td align="center"></td>
-<td>Similar to <a href="#rlcmd-menu-complete"><code>menu-complete</code></a> but isn&#39;t limited by <code><a href="#configcompletionqueryitems">completion-query-items</a></code> and doesn&#39;t include the common prefix of the possible completions. This behaves like the default completion in cmd.exe on Windows.</td>
+<td><a class="wlink" href="#rlcmd-old-menu-complete"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-old-menu-complete"></a><code>old-menu-complete</code></td>
+<td align="center"><a href="#alternatedefaultcommand">*</a></td>
+<td>Similar to <a href="#rlcmd-menu-complete"><code>menu-complete</code></a> but isn&#39;t limited by <code><a href="#configcompletionqueryitems">completion-query-items</a></code> and doesn&#39;t include the common prefix of the possible completions. This behaves like the default completion in cmd.exe on Windows. When Clink is installed using the setup program with the &quot;Autorun when cmd.exe starts&quot; box checked or when <a href="#clink_default_bindings"><code>clink.default_bindings</code></a> is set to <code>windows</code>, then this is bound by default to <kbd>Tab</kbd>.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-delete-char-or-list"></a><code>delete-char-or-list</code></td>
+<td><a class="wlink" href="#rlcmd-delete-char-or-list"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-delete-char-or-list"></a><code>delete-char-or-list</code></td>
 <td align="center"></td>
-<td>Deletes the character under the cursor if not at the beginning or end of the line (like <a href="#rlcmd-delete-char"><code>delete-char</code></a>). If at the end of the line, behaves identically to <a href="#rlcmd-possible-completions"><code>possible-completions</code></a>. This command is unbound by default.</td>
+<td>Deletes the character under the cursor if not at the beginning or end of the line (like <a href="#rlcmd-delete-char"><code>delete-char</code></a>). If at the end of the line, behaves identically to <a href="#rlcmd-possible-completions"><code>possible-completions</code></a>.</td>
 </tr>
 </tbody></table>
 <h3 id="keyboard-macros"><a class="wlink" href="#keyboard-macros"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Keyboard Macros</h3>
@@ -3078,22 +3078,22 @@ $endif              # end clink-only section
 </tr>
 </thead>
 <tbody><tr>
-<td><a name="rlcmd-start-kbd-macro"></a><code>start-kbd-macro</code></td>
+<td><a class="wlink" href="#rlcmd-start-kbd-macro"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-start-kbd-macro"></a><code>start-kbd-macro</code></td>
 <td align="center"><kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>(</kbd></td>
 <td>Begin saving the characters typed into the current keyboard macro.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-end-kbd-macro"></a><code>end-kbd-macro</code></td>
+<td><a class="wlink" href="#rlcmd-end-kbd-macro"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-end-kbd-macro"></a><code>end-kbd-macro</code></td>
 <td align="center"><kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>)</kbd></td>
 <td>Stop saving the characters typed into the current keyboard macro and save the definition.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-call-last-kbd-macro"></a><code>call-last-kbd-macro</code></td>
+<td><a class="wlink" href="#rlcmd-call-last-kbd-macro"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-call-last-kbd-macro"></a><code>call-last-kbd-macro</code></td>
 <td align="center"><kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>e</kbd></td>
 <td>Re-execute the last keyboard macro defined, by making the characters in the macro appear as if typed at the keyboard.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-print-last-kbd-macro"></a><code>print-last-kbd-macro</code></td>
+<td><a class="wlink" href="#rlcmd-print-last-kbd-macro"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-print-last-kbd-macro"></a><code>print-last-kbd-macro</code></td>
 <td align="center"></td>
 <td>Print the last keboard macro defined in a format suitable for the inputrc file.</td>
 </tr>
@@ -3108,74 +3108,74 @@ $endif              # end clink-only section
 </tr>
 </thead>
 <tbody><tr>
-<td><a name="rlcmd-re-read-init-file"></a><code>re-read-init-file</code></td>
-<td align="center"><kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>r</kbd></td>
-<td>Read in the contents of the inputrc file, and incorporate any bindings or variable assignments found there.</td>
+<td><a class="wlink" href="#rlcmd-re-read-init-file"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-re-read-init-file"></a><code>re-read-init-file</code></td>
+<td align="center"></td>
+<td>Read in the contents of the inputrc file, and incorporate any bindings or variable assignments found there.<br/>In Clink <a href="#rlcmd-clink-reload"><code>clink-reload</code></a> is preferred since it also reloads Lua scripts.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-abort"></a><code>abort</code></td>
+<td><a class="wlink" href="#rlcmd-abort"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-abort"></a><code>abort</code></td>
 <td align="center"><kbd>Ctrl</kbd>-<kbd>g</kbd></td>
 <td>Abort the current editing command and ring the terminal&#39;s bell (subject to the setting of <a href="#configbellstyle"><code>bell-style</code></a>).</td>
 </tr>
 <tr>
-<td><a name="rlcmd-do-lowercase-version"></a><code>do-lowercase-version</code></td>
+<td><a class="wlink" href="#rlcmd-do-lowercase-version"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-do-lowercase-version"></a><code>do-lowercase-version</code></td>
 <td align="center"><kbd>Alt</kbd>-<kbd><em>X</em></kbd>, etc</td>
 <td>If the key <kbd><em>X</em></kbd> is an upper case letter, run the command that is bound to the corresponding <kbd>Alt</kbd>-<kbd><em>x</em></kbd> lower case letter. The behavior is undefined if <em>x</em> is already lower case.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-undo"></a><code>undo</code></td>
+<td><a class="wlink" href="#rlcmd-undo"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-undo"></a><code>undo</code></td>
 <td align="center"><kbd>Ctrl</kbd>-<kbd>z</kbd> or <kbd>Ctrl</kbd>-<kbd>_</kbd></td>
 <td>Incremental undo, separately remembered for each line.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-revert-line"></a><code>revert-line</code></td>
+<td><a class="wlink" href="#rlcmd-revert-line"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-revert-line"></a><code>revert-line</code></td>
 <td align="center"><kbd>Alt</kbd>-<kbd>r</kbd></td>
 <td>Undo all changes made to this line. This is like executing the <a href="#rlcmd-undo"><code>undo</code></a> command enough times to get back to the beginning.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-tilde-expand"></a><code>tilde-expand</code></td>
+<td><a class="wlink" href="#rlcmd-tilde-expand"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-tilde-expand"></a><code>tilde-expand</code></td>
 <td align="center"><kbd>Alt</kbd>-<kbd>~</kbd></td>
 <td>Perform tilde expansion on the current word.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-set-mark"></a><code>set-mark</code></td>
+<td><a class="wlink" href="#rlcmd-set-mark"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-set-mark"></a><code>set-mark</code></td>
 <td align="center"><kbd>Ctrl</kbd>-<kbd>@</kbd></td>
 <td>Set the mark to the point. If a numeric argument is supplied, the mark is set to that position.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-exchange-point-and-mark"></a><code>exchange-point-and-mark</code></td>
+<td><a class="wlink" href="#rlcmd-exchange-point-and-mark"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-exchange-point-and-mark"></a><code>exchange-point-and-mark</code></td>
 <td align="center"><kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>x</kbd></td>
 <td>Swap the point with the mark. The current cursor position is set to the saved position, and the old cursor position is saved as the mark.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-character-search"></a><code>character-search</code></td>
+<td><a class="wlink" href="#rlcmd-character-search"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-character-search"></a><code>character-search</code></td>
 <td align="center"><kbd>Ctrl</kbd>-<kbd>]</kbd></td>
 <td>A character is read and point is moved to the next occurrence of that character. A negative count searches for previous occurrences.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-character-search-backward"></a><code>character-search-backward</code></td>
+<td><a class="wlink" href="#rlcmd-character-search-backward"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-character-search-backward"></a><code>character-search-backward</code></td>
 <td align="center"><kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>]</kbd></td>
 <td>A character is read and point is moved to the previous occurrence of that character. A negative count searches for subsequent occurrences.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-insert-comment"></a><code>insert-comment</code></td>
+<td><a class="wlink" href="#rlcmd-insert-comment"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-insert-comment"></a><code>insert-comment</code></td>
 <td align="center"><kbd>Alt</kbd>-<kbd>#</kbd></td>
 <td>Without a numeric argument, the value of the <a href="#configcommentbegin"><code>comment-begin</code></a> variable is inserted at the beginning of the current line. If a numeric argument is supplied, this command acts as a toggle: if the characters at the beginning of the line do not match the value of <code>comment-begin</code>, the value is inserted, otherwise the characters in <code>comment-begin</code> are deleted from the beginning of the line. In either case, the line is accepted as if a newline had been typed.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-dump-functions"></a><code>dump-functions</code></td>
+<td><a class="wlink" href="#rlcmd-dump-functions"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-dump-functions"></a><code>dump-functions</code></td>
 <td align="center"></td>
-<td>Print all of the functions and their key bindings to the Readline output stream. If a numeric argument is supplied, the output is formatted in such a way that it can be made part of an inputrc file. This command is unbound by default.</td>
+<td>Print all of the functions and their key bindings to the Readline output stream. If a numeric argument is supplied, the output is formatted in such a way that it can be made part of an inputrc file.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-dump-variables"></a><code>dump-variables</code></td>
+<td><a class="wlink" href="#rlcmd-dump-variables"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-dump-variables"></a><code>dump-variables</code></td>
 <td align="center"></td>
-<td>Print all of the settable variables and their values to the Readline output stream. If a numeric argument is supplied, the output is formatted in such a way that it can be made part of an inputrc file. This command is unbound by default.</td>
+<td>Print all of the settable variables and their values to the Readline output stream. If a numeric argument is supplied, the output is formatted in such a way that it can be made part of an inputrc file.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-dump-macros"></a><code>dump-macros</code></td>
+<td><a class="wlink" href="#rlcmd-dump-macros"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-dump-macros"></a><code>dump-macros</code></td>
 <td align="center"></td>
-<td>Print all of the Readline key sequences bound to macros and the strings they output. If a numeric argument is supplied, the output is formatted in such a way that it can be made part of an inputrc file. This command is unbound by default.</td>
+<td>Print all of the Readline key sequences bound to macros and the strings they output. If a numeric argument is supplied, the output is formatted in such a way that it can be made part of an inputrc file.</td>
 </tr>
 </tbody></table>
 <h3 id="readline-vi-mode"><a class="wlink" href="#readline-vi-mode"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Readline vi Mode</h3>
@@ -3191,12 +3191,12 @@ $endif              # end clink-only section
 </tr>
 </thead>
 <tbody><tr>
-<td><a name="rlcmd-emacs-editing-mode"></a><code>emacs-editing-mode</code></td>
+<td><a class="wlink" href="#rlcmd-emacs-editing-mode"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-emacs-editing-mode"></a><code>emacs-editing-mode</code></td>
 <td align="center"><kbd>Ctrl</kbd>-<kbd>e</kbd></td>
 <td>When in vi command mode, this causes a switch to emacs editing mode.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-vi-editing-mode"></a><code>vi-editing-mode</code></td>
+<td><a class="wlink" href="#rlcmd-vi-editing-mode"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-vi-editing-mode"></a><code>vi-editing-mode</code></td>
 <td align="center"><kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>j</kbd></td>
 <td>When in emacs editing mode, this causes a switch to vi editing mode.</td>
 </tr>
@@ -3212,14 +3212,19 @@ $endif              # end clink-only section
 </tr>
 </thead>
 <tbody><tr>
-<td><a name="rlcmd-prefix-meta"></a><code>prefix-meta</code></td>
+<td><a class="wlink" href="#rlcmd-tab-insert"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-tab-insert"></a><code>tab-insert</code></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>i</kbd></td>
+<td>Insert a tab character.<br/>Note: this command exists for compatibility with bash, but it isn&#39;t useful in Clink because CMD doesn&#39;t support entering a tab character in the input line.</td>
+</tr>
+<tr>
+<td><a class="wlink" href="#rlcmd-prefix-meta"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-prefix-meta"></a><code>prefix-meta</code></td>
 <td align="center"></td>
 <td>&quot;Metafy&quot; the next character typed. This is for keyboards without an <kbd>Alt</kbd> meta key. Typing a key bound to <code>prefix-meta</code> and then <kbd>f</kbd> is equivalent to typing <kbd>Alt</kbd>-<kbd>f</kbd>. By default this is bound to <kbd>Esc</kbd>, but only when the <a href="#terminal_raw_esc"><code>terminal.raw_esc</code></a> Clink setting is enabled.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-skip-csi-sequence"></a><code>skip-csi-sequence</code></td>
+<td><a class="wlink" href="#rlcmd-skip-csi-sequence"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-skip-csi-sequence"></a><code>skip-csi-sequence</code></td>
 <td align="center"></td>
-<td>This has no effect unless the <a href="#terminal_raw_esc"><code>terminal.raw_esc</code></a> Clink setting is enabled. Reads enough characters to consume a multi-key sequence such as those defined for keys like <kbd>Home</kbd> and <kbd>End</kbd>. Such sequences begin with a Control Sequence Indicator (CSI), which is <code>ESC</code> <code>[</code>. If this sequence is bound to &quot;\e[&quot;, keys producing such sequences will have no effect unless explicitly bound to a readline command, instead of inserting stray characters into the editing buffer. This is unbound by default.</td>
+<td>This has no effect unless the <a href="#terminal_raw_esc"><code>terminal.raw_esc</code></a> Clink setting is enabled. Reads enough characters to consume a multi-key sequence such as those defined for keys like <kbd>Home</kbd> and <kbd>End</kbd>. Such sequences begin with a Control Sequence Indicator (CSI), which is <code>ESC</code> <code>[</code>. If this sequence is bound to &quot;\e[&quot;, keys producing such sequences will have no effect unless explicitly bound to a readline command, instead of inserting stray characters into the editing buffer.</td>
 </tr>
 </tbody></table>
 <h3 id="clink-commands"><a class="wlink" href="#clink-commands"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Clink Commands</h3>
@@ -3233,391 +3238,393 @@ $endif              # end clink-only section
 </tr>
 </thead>
 <tbody><tr>
-<td><a name="rlcmd-add-history"></a><code>add-history</code></td>
+<td><a class="wlink" href="#rlcmd-add-history"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-add-history"></a><code>add-history</code></td>
 <td align="center"><kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>k</kbd></td>
-<td>Adds the current line to the history without executing it, and clears the editing line.</td>
+<td>Add the current line to the history without executing it, and clear the editing line.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-alias-expand-line"></a><code>alias-expand-line</code></td>
+<td><a class="wlink" href="#rlcmd-alias-expand-line"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-alias-expand-line"></a><code>alias-expand-line</code></td>
 <td align="center"></td>
 <td>A synonym for <a href="#rlcmd-clink-expand-doskey-alias"><code>clink-expand-doskey-alias</code></a>.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-clink-accept-suggested-line"></a><code>clink-accept-suggested-line</code></td>
+<td><a class="wlink" href="#rlcmd-clink-accept-suggested-line"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-accept-suggested-line"></a><code>clink-accept-suggested-line</code></td>
 <td align="center"></td>
 <td>If there is a suggestion, insert the suggestion and accept the input line (like <a href="#rlcmd-accept-line"><code>accept-line</code></a>).</td>
 </tr>
 <tr>
-<td><a name="rlcmd-clink-complete-numbers"></a><code>clink-complete-numbers</code></td>
+<td><a class="wlink" href="#rlcmd-clink-complete-numbers"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-complete-numbers"></a><code>clink-complete-numbers</code></td>
 <td align="center"></td>
 <td>Like <a href="#rlcmd-complete"><code>complete</code></a>, but for numbers from the console screen (3 digits or more, up to hexadecimal).</td>
 </tr>
 <tr>
-<td><a name="rlcmd-clink-copy-cwd"></a><code>clink-copy-cwd</code></td>
+<td><a class="wlink" href="#rlcmd-clink-copy-cwd"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-copy-cwd"></a><code>clink-copy-cwd</code></td>
 <td align="center"><kbd>Alt</kbd>-<kbd>c</kbd></td>
-<td>Copy the current working directory to the clipboard.</td>
+<td>Copies the current working directory to the clipboard.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-clink-copy-line"></a><code>clink-copy-line</code></td>
+<td><a class="wlink" href="#rlcmd-clink-copy-line"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-copy-line"></a><code>clink-copy-line</code></td>
 <td align="center"><kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>c</kbd></td>
-<td>Copy the current line to the clipboard.</td>
+<td>Copies the input line to the clipboard.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-clink-copy-word"></a><code>clink-copy-word</code></td>
+<td><a class="wlink" href="#rlcmd-clink-copy-word"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-copy-word"></a><code>clink-copy-word</code></td>
 <td align="center"><kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>w</kbd></td>
-<td>Copy the word at the cursor to the clipboard, or copies the <em>n</em>th word if a numeric argument is provided via the <a href="#rlcmd-digit-argument"><code>digit-argument</code></a> keys.</td>
+<td>Copies the word at the cursor point to the clipboard, or copies the <em>n</em>th word if a numeric argument is provided via the <a href="#rlcmd-digit-argument"><code>digit-argument</code></a> keys.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-clink-ctrl-c"></a><code>clink-ctrl-c</code></td>
+<td><a class="wlink" href="#rlcmd-clink-ctrl-c"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-ctrl-c"></a><code>clink-ctrl-c</code></td>
 <td align="center"><kbd>Ctrl</kbd>-<kbd>c</kbd></td>
-<td>Discards the current line and starts a new one (like <kbd>Ctrl</kbd>-<kbd>C</kbd> in CMD.EXE).</td>
+<td>Copies any selected text to the clipboard, otherwise cancels the input line and starts a new one.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-clink-diagnostics"></a><code>clink-diagnostics</code></td>
+<td><a class="wlink" href="#rlcmd-clink-diagnostics"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-diagnostics"></a><code>clink-diagnostics</code></td>
 <td align="center"><kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>z</kbd></td>
 <td>Show internal diagnostic information.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-clink-exit"></a><code>clink-exit</code></td>
+<td><a class="wlink" href="#rlcmd-clink-exit"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-exit"></a><code>clink-exit</code></td>
 <td align="center"><kbd>Alt</kbd>-<kbd>F4</kbd></td>
-<td>Replaces the current line with <code>exit</code> and executes it (exits the shell instance).</td>
+<td>Replaces the input line with <code>exit</code> and executes it (exits the CMD instance).</td>
 </tr>
 <tr>
-<td><a name="rlcmd-clink-expand-doskey-alias"></a><code>clink-expand-doskey-alias</code></td>
+<td><a class="wlink" href="#rlcmd-clink-expand-doskey-alias"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-expand-doskey-alias"></a><code>clink-expand-doskey-alias</code></td>
 <td align="center"><kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>f</kbd></td>
-<td>Expand the doskey alias (if any) at the beginning of the line.</td>
+<td>Expands doskey aliases in the input line.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-clink-expand-env-var"></a><code>clink-expand-env-var</code></td>
+<td><a class="wlink" href="#rlcmd-clink-expand-env-var"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-expand-env-var"></a><code>clink-expand-env-var</code></td>
 <td align="center"></td>
-<td>Expand the environment variable (e.g. <code>%FOOBAR%</code>) at the cursor.</td>
+<td>Expands environment variables in the word at the cursor point.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-clink-expand-history"></a><code>clink-expand-history</code></td>
+<td><a class="wlink" href="#rlcmd-clink-expand-history"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-expand-history"></a><code>clink-expand-history</code></td>
 <td align="center"><kbd>Alt</kbd>-<kbd>^</kbd></td>
-<td>Perform <a href="#using-history-expansion">history</a> expansion in the current input line.</td>
+<td>Performs <a href="#using-history-expansion">history expansion</a> in the input line.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-clink-expand-history-and-alias"></a><code>clink-expand-history-and-alias</code></td>
+<td><a class="wlink" href="#rlcmd-clink-expand-history-and-alias"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-expand-history-and-alias"></a><code>clink-expand-history-and-alias</code></td>
 <td align="center"></td>
-<td>Perform <a href="#using-history-expansion">history</a> and doskey alias expansion in the current input line.</td>
+<td>Performs <a href="#using-history-expansion">history</a> and doskey alias expansion in the input line.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-clink-expand-line"></a><code>clink-expand-line</code></td>
+<td><a class="wlink" href="#rlcmd-clink-expand-line"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-expand-line"></a><code>clink-expand-line</code></td>
 <td align="center"><kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>e</kbd></td>
-<td>Perform <a href="#using-history-expansion">history</a>, doskey alias, and environment variable expansion in the current input line.</td>
+<td>Performs <a href="#using-history-expansion">history</a>, doskey alias, and environment variable expansion in the input line.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-clink-find-conhost"></a><code>clink-find-conhost</code></td>
+<td><a class="wlink" href="#rlcmd-clink-find-conhost"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-find-conhost"></a><code>clink-find-conhost</code></td>
 <td align="center"></td>
 <td>Activates the &quot;Find&quot; dialog when running in a standard console window (hosted by the OS conhost).  This is equivalent to picking &quot;Find...&quot; from the console window&#39;s system menu. When <a href="#clink_default_bindings"><code>clink.default_bindings</code></a> is enabled, this is bound to <kbd>Ctrl</kbd>-<kbd>f</kbd>.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-clink-insert-dot-dot"></a><code>clink-insert-dot-dot</code></td>
+<td><a class="wlink" href="#rlcmd-clink-insert-dot-dot"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-insert-dot-dot"></a><code>clink-insert-dot-dot</code></td>
 <td align="center"><kbd>Alt</kbd>-<kbd>a</kbd></td>
-<td>Inserts <code>..\</code> at the cursor.</td>
+<td>Inserts <code>..\</code> at the cursor point.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-clink-insert-suggested-full-word"></a><code>clink-insert-suggested-full-word</code></td>
+<td><a class="wlink" href="#rlcmd-clink-insert-suggested-full-word"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-insert-suggested-full-word"></a><code>clink-insert-suggested-full-word</code></td>
 <td align="center"></td>
 <td>If there is a suggestion, insert the next full word from the suggested line.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-clink-insert-suggested-line"></a><code>clink-insert-suggested-line</code></td>
+<td><a class="wlink" href="#rlcmd-clink-insert-suggested-line"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-insert-suggested-line"></a><code>clink-insert-suggested-line</code></td>
 <td align="center"></td>
 <td>If there is a suggestion, insert the suggested line.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-clink-insert-suggested-word"></a><code>clink-insert-suggested-word</code></td>
+<td><a class="wlink" href="#rlcmd-clink-insert-suggested-word"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-insert-suggested-word"></a><code>clink-insert-suggested-word</code></td>
 <td align="center"></td>
 <td>If there is a suggestion, insert the next word from the suggested line.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-clink-magic-suggest-space"></a><code>clink-magic-suggest-space</code></td>
+<td><a class="wlink" href="#rlcmd-clink-magic-suggest-space"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-magic-suggest-space"></a><code>clink-magic-suggest-space</code></td>
 <td align="center"></td>
-<td>Inserts the next full word of the suggestion (if any) up to a space, and also inserts a space.</td>
+<td>Insert the next full suggested word (if any) up to a space, and insert a space.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-clink-mark-conhost"></a><code>clink-mark-conhost</code></td>
+<td><a class="wlink" href="#rlcmd-clink-mark-conhost"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-mark-conhost"></a><code>clink-mark-conhost</code></td>
 <td align="center"></td>
 <td>Activates the &quot;Mark&quot; mode when running in a standard console window (hosted by the OS conhost).  This is equivalent to picking &quot;Mark&quot; from the console window&#39;s system menu. When <a href="#clink_default_bindings"><code>clink.default_bindings</code></a> is enabled, this is bound to <kbd>Ctrl</kbd>-<kbd>m</kbd>.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-clink-menu-complete-numbers"></a><code>clink-menu-complete-numbers</code></td>
+<td><a class="wlink" href="#rlcmd-clink-menu-complete-numbers"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-menu-complete-numbers"></a><code>clink-menu-complete-numbers</code></td>
 <td align="center"></td>
 <td>Like <a href="#rlcmd-menu-complete"><code>menu-complete</code></a>, but for numbers from the console screen (3 digits or more, up to hexadecimal).</td>
 </tr>
 <tr>
-<td><a name="rlcmd-clink-menu-complete-numbers-backward"></a><code>clink-menu-complete-numbers-backward</code></td>
+<td><a class="wlink" href="#rlcmd-clink-menu-complete-numbers-backward"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-menu-complete-numbers-backward"></a><code>clink-menu-complete-numbers-backward</code></td>
 <td align="center"></td>
 <td>Like <a href="#rlcmd-menu-complete-backward"><code>menu-complete-backward</code></a>, but for numbers from the console screen (3 digits or more, up to hexadecimal).</td>
 </tr>
 <tr>
-<td><a name="rlcmd-clink-old-menu-complete-numbers"></a><code>clink-old-menu-complete-numbers</code></td>
+<td><a class="wlink" href="#rlcmd-clink-old-menu-complete-numbers"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-old-menu-complete-numbers"></a><code>clink-old-menu-complete-numbers</code></td>
 <td align="center"><kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>n</kbd></td>
 <td>Like <a href="#rlcmd-old-menu-complete"><code>old-menu-complete</code></a>, but for numbers from the console screen (3 digits or more, up to hexadecimal).</td>
 </tr>
 <tr>
-<td><a name="rlcmd-clink-old-menu-complete-numbers-backward"></a><code>clink-old-menu-complete-numbers-backward</code></td>
+<td><a class="wlink" href="#rlcmd-clink-old-menu-complete-numbers-backward"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-old-menu-complete-numbers-backward"></a><code>clink-old-menu-complete-numbers-backward</code></td>
 <td align="center"></td>
 <td>Like <a href="#rlcmd-old-menu-complete-backward"><code>old-menu-complete-backward</code></a>, but for numbers from the console screen (3 digits or more, up to hexadecimal).</td>
 </tr>
 <tr>
-<td><a name="rlcmd-clink-paste"></a><code>clink-paste</code></td>
+<td><a class="wlink" href="#rlcmd-clink-paste"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-paste"></a><code>clink-paste</code></td>
 <td align="center"><kbd>Ctrl</kbd>-<kbd>v</kbd></td>
-<td>Paste the clipboard at the cursor.</td>
+<td>Paste text from the clipboard at the cursor point.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-clink-popup-complete"></a><code>clink-popup-complete</code></td>
+<td><a class="wlink" href="#rlcmd-clink-popup-complete"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-popup-complete"></a><code>clink-popup-complete</code></td>
 <td align="center"></td>
 <td>A synonym for <a href="#rlcmd-clink-select-complete"><code>clink-select-complete</code></a>.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-clink-popup-complete-numbers"></a><code>clink-popup-complete-numbers</code></td>
+<td><a class="wlink" href="#rlcmd-clink-popup-complete-numbers"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-popup-complete-numbers"></a><code>clink-popup-complete-numbers</code></td>
 <td align="center"><kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>N</kbd></td>
 <td>Like <a href="#rlcmd-clink-select-complete"><code>clink-select-complete</code></a>, but for numbers from the console screen (3 digits or more, up to hexadecimal).</td>
 </tr>
 <tr>
-<td><a name="rlcmd-clink-popup-directories"></a><code>clink-popup-directories</code></td>
+<td><a class="wlink" href="#rlcmd-clink-popup-directories"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-popup-directories"></a><code>clink-popup-directories</code></td>
 <td align="center"><kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>PgUp</kbd></td>
-<td>Show a <a href="#popupwindow">popup window</a> of recent current working directories.  In the popup, use <kbd>Enter</kbd> to <code>cd /d</code> to the highlighted directory.</td>
+<td>Show recent directories in a <a href="#popupwindow">popup list</a>.  In the popup, use <kbd>Enter</kbd> to <code>cd /d</code> to the selected directory.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-clink-popup-history"></a><code>clink-popup-history</code></td>
+<td><a class="wlink" href="#rlcmd-clink-popup-history"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-popup-history"></a><code>clink-popup-history</code></td>
 <td align="center"></td>
-<td>Show a <a href="#popupwindow">popup window</a> that lists the command history (if any text precedes the cursor then it uses an anchored search to filter the list).  In the popup, use <kbd>Enter</kbd> to execute the highlighted command.  If <a href="#history_time_stamp"><code>history.time_stamp</code></a> is <code>show</code> then timestamps are shown unless a numeric argument of 0 is provided.  If <code>history.time_stamp</code> is <code>save</code> then timestamps are only shown if a non-zero numeric argument is provided.</td>
+<td>Show history entries in a <a href="#popupwindow">popup list</a>.  Filters using any text before the cursor point.  In the popup, use <kbd>Enter</kbd> to execute the selected history entry.  If <a href="#history_time_stamp"><code>history.time_stamp</code></a> is <code>show</code> then timestamps are shown unless a numeric argument of 0 is provided.  If <code>history.time_stamp</code> is <code>save</code> then timestamps are only shown if a non-zero numeric argument is provided.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-clink-popup-show-help"></a><code>clink-popup-show-help</code></td>
-<td align="center"></td>
-<td>Show a <a href="#popupwindow">popup window</a> that lists the currently active key bindings, and can invoke a selected key binding.  The default key binding for this is <kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>H</kbd>.</td>
+<td><a class="wlink" href="#rlcmd-clink-popup-show-help"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-popup-show-help"></a><code>clink-popup-show-help</code></td>
+<td align="center"><kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>H</kbd></td>
+<td>Show all key bindings in a searchable <a href="#popupwindow">popup list</a>.  In the popup, use <kbd>Enter</kbd> to invoke the selected key binding.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-clink-reload"></a><code>clink-reload</code></td>
+<td><a class="wlink" href="#rlcmd-clink-reload"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-reload"></a><code>clink-reload</code></td>
 <td align="center"><kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>r</kbd></td>
-<td>Reloads the .inputrc file and the Lua scripts.</td>
+<td>Reload Lua scripts and the .inputrc file.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-clink-reset-line"></a><code>clink-reset-line</code></td>
+<td><a class="wlink" href="#rlcmd-clink-reset-line"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-reset-line"></a><code>clink-reset-line</code></td>
 <td align="center"><kbd>Esc</kbd></td>
-<td>Clears the current line.</td>
+<td>Clear the input line.  Can be undone, unlike <a href="#rlcmd-revert-line"><code>revert-line</code></a>.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-clink-scroll-bottom"></a><code>clink-scroll-bottom</code></td>
+<td><a class="wlink" href="#rlcmd-clink-scroll-bottom"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-scroll-bottom"></a><code>clink-scroll-bottom</code></td>
 <td align="center"><kbd>Alt</kbd>-<kbd>End</kbd></td>
 <td>Scroll the console window to the bottom (the current input line).</td>
 </tr>
 <tr>
-<td><a name="rlcmd-clink-scroll-line-down"></a><code>clink-scroll-line-down</code></td>
+<td><a class="wlink" href="#rlcmd-clink-scroll-line-down"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-scroll-line-down"></a><code>clink-scroll-line-down</code></td>
 <td align="center"><kbd>Alt</kbd>-<kbd>Down</kbd></td>
 <td>Scroll the console window down one line.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-clink-scroll-line-up"></a><code>clink-scroll-line-up</code></td>
+<td><a class="wlink" href="#rlcmd-clink-scroll-line-up"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-scroll-line-up"></a><code>clink-scroll-line-up</code></td>
 <td align="center"><kbd>Alt</kbd>-<kbd>Up</kbd></td>
 <td>Scroll the console window up one line.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-clink-scroll-page-down"></a><code>clink-scroll-page-down</code></td>
+<td><a class="wlink" href="#rlcmd-clink-scroll-page-down"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-scroll-page-down"></a><code>clink-scroll-page-down</code></td>
 <td align="center"><kbd>Alt</kbd>-<kbd>PgDn</kbd></td>
 <td>Scroll the console window down one page.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-clink-scroll-page-up"></a><code>clink-scroll-page-up</code></td>
+<td><a class="wlink" href="#rlcmd-clink-scroll-page-up"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-scroll-page-up"></a><code>clink-scroll-page-up</code></td>
 <td align="center"><kbd>Alt</kbd>-<kbd>PgUp</kbd></td>
 <td>Scroll the console window up one page.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-clink-scroll-top"></a><code>clink-scroll-top</code></td>
+<td><a class="wlink" href="#rlcmd-clink-scroll-top"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-scroll-top"></a><code>clink-scroll-top</code></td>
 <td align="center"><kbd>Alt</kbd>-<kbd>Home</kbd></td>
 <td>Scroll the console window to the top.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-clink-select-complete"></a><code>clink-select-complete</code></td>
+<td><a class="wlink" href="#rlcmd-clink-select-complete"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-select-complete"></a><code>clink-select-complete</code></td>
 <td align="center"><kbd>Ctrl</kbd>-<kbd>Space</kbd></td>
-<td>Like <a href="#rlcmd-complete"><code>complete</code></a>, but shows interactive menu of matches and responds to arrow keys and typing to filter the matches.  While completing, <kbd>F1</kbd> toggles showing match descriptions at the bottom vs next to each match.</td>
+<td>Like <a href="#rlcmd-complete"><code>complete</code></a>, but shows an interactive menu of matches and responds to arrow keys and typing to filter the matches.  If there is only one match, it is inserted.  While completing, <kbd>F1</kbd> toggles showing match descriptions at the bottom vs next to each match.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-clink-selectall-conhost"></a><code>clink-selectall-conhost</code></td>
+<td><a class="wlink" href="#rlcmd-clink-selectall-conhost"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-selectall-conhost"></a><code>clink-selectall-conhost</code></td>
 <td align="center"></td>
 <td>Mimics the &quot;Select All&quot; command when running in a standard console window (hosted by the OS conhots).  Selects the input line text.  If already selected, then it invokes the &quot;Select All&quot; command from the console window&#39;s system menu and selects the entire screen buffer&#39;s contents. When <a href="#clink_default_bindings"><code>clink.default_bindings</code></a> is enabled, this is bound to <kbd>Ctrl</kbd>-<kbd>a</kbd>.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-clink-shift-space"></a><code>clink-shift-space</code></td>
+<td><a class="wlink" href="#rlcmd-clink-shift-space"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-shift-space"></a><code>clink-shift-space</code></td>
 <td align="center"><kbd>Shift</kbd>-<kbd>Space</kbd></td>
-<td>Invokes the normal <kbd>Space</kbd> key binding, so that <kbd>Shift</kbd>-<kbd>Space</kbd> behaves the same as <kbd>Space</kbd>.</td>
+<td>Invoke the normal <kbd>Space</kbd> key binding, so that <kbd>Shift</kbd>-<kbd>Space</kbd> behaves the same as <kbd>Space</kbd>.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-clink-show-help"></a><code>clink-show-help</code></td>
+<td><a class="wlink" href="#rlcmd-clink-show-help"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-show-help"></a><code>clink-show-help</code></td>
 <td align="center"><kbd>Alt</kbd>-<kbd>h</kbd></td>
-<td>Lists the currently active key bindings using friendly key names.  A numeric argument affects showing categories and descriptions:  0 for neither, 1 for categories, 2 for descriptions, 3 for categories and descriptions (the default), 4 for all commands (even if not bound to a key).</td>
+<td>Show all key bindings.  A numeric argument affects showing categories and descriptions:  0 for neither, 1 for categories, 2 for descriptions, 3 for categories and descriptions (the default), 4 for all commands (even if not bound to a key).</td>
 </tr>
 <tr>
-<td><a name="rlcmd-clink-show-help-raw"></a><code>clink-show-help-raw</code></td>
+<td><a class="wlink" href="#rlcmd-clink-show-help-raw"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-show-help-raw"></a><code>clink-show-help-raw</code></td>
 <td align="center"></td>
-<td>Lists the currently active key bindings using raw key sequences.  A numeric argument affects showing categories and descriptions:  0 for neither, 1 for categories, 2 for descriptions, 3 for categories and descriptions (the default), 4 for all commands (even if not bound to a key).</td>
+<td>Show raw key sequence strings for all key bindings.  A numeric argument affects showing categories and descriptions:  0 for neither, 1 for categories, 2 for descriptions, 3 for categories and descriptions (the default), 4 for all commands (even if not bound to a key).</td>
 </tr>
 <tr>
-<td><a name="rlcmd-clink-up-directory"></a><code>clink-up-directory</code></td>
+<td><a class="wlink" href="#rlcmd-clink-up-directory"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-up-directory"></a><code>clink-up-directory</code></td>
 <td align="center"><kbd>Ctrl</kbd>-<kbd>PgUp</kbd></td>
-<td>Changes to the parent directory.</td>
+<td>Execute <code>cd ..</code> to move up one directory.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-clink-what-is"></a><code>clink-what-is</code></td>
+<td><a class="wlink" href="#rlcmd-clink-what-is"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-what-is"></a><code>clink-what-is</code></td>
 <td align="center"><kbd>Alt</kbd>-<kbd>Shift</kbd>-<kbd>/</kbd></td>
-<td>Show the key binding for the next key sequence that is input.</td>
+<td>Show the key binding for the next key sequence input.  If a numeric argument is supplied, the raw key sequence string is shown instead of the friendly key name.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-cua-backward-char"></a><code>cua-backward-char</code></td>
+<td><a class="wlink" href="#rlcmd-cua-backward-char"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-cua-backward-char"></a><code>cua-backward-char</code></td>
 <td align="center"><kbd>Shift</kbd>-<kbd>Left</kbd></td>
-<td>Extends the selection and moves back a character.</td>
+<td>Extend the selection backward one character.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-cua-backward-word"></a><code>cua-backward-word</code></td>
+<td><a class="wlink" href="#rlcmd-cua-backward-word"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-cua-backward-word"></a><code>cua-backward-word</code></td>
 <td align="center"><kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>Left</kbd></td>
-<td>Extends the selection and moves back a word.</td>
+<td>Extend the selection backward one word.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-cua-beg-of-line"></a><code>cua-beg-of-line</code></td>
+<td><a class="wlink" href="#rlcmd-cua-beg-of-line"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-cua-beg-of-line"></a><code>cua-beg-of-line</code></td>
 <td align="center"><kbd>Shift</kbd>-<kbd>Home</kbd></td>
-<td>Extends the selection and moves to the start of the current line.</td>
+<td>Extend the selection to the beginning of the line.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-cua-copy"></a><code>cua-copy</code></td>
+<td><a class="wlink" href="#rlcmd-cua-copy"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-cua-copy"></a><code>cua-copy</code></td>
 <td align="center"><kbd>Shift</kbd>-<kbd>Ins</kbd></td>
-<td>Copies the selection to the clipboard.</td>
+<td>Copy the selected text to the clipboard.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-cua-cut"></a><code>cua-cut</code></td>
+<td><a class="wlink" href="#rlcmd-cua-cut"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-cua-cut"></a><code>cua-cut</code></td>
 <td align="center"><kbd>Shift</kbd>-<kbd>Del</kbd></td>
-<td>Cuts the selection to the clipboard.</td>
+<td>Cut the selected text to the clipboard.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-cua-end-of-line"></a><code>cua-end-of-line</code></td>
+<td><a class="wlink" href="#rlcmd-cua-end-of-line"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-cua-end-of-line"></a><code>cua-end-of-line</code></td>
 <td align="center"><kbd>Shift</kbd>-<kbd>End</kbd></td>
-<td>Extends the selection and moves to the end of the line.</td>
+<td>Extend the selection to the end of the line.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-cua-forward-char"></a><code>cua-forward-char</code></td>
+<td><a class="wlink" href="#rlcmd-cua-forward-char"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-cua-forward-char"></a><code>cua-forward-char</code></td>
 <td align="center"><kbd>Shift</kbd>-<kbd>Right</kbd></td>
-<td>Extends the selection and moves forward a character, or inserts the next full suggested word up to a space.</td>
+<td>Extend the selection forward one character, or insert the next full suggested word up to a space.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-cua-forward-word"></a><code>cua-forward-word</code></td>
+<td><a class="wlink" href="#rlcmd-cua-forward-word"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-cua-forward-word"></a><code>cua-forward-word</code></td>
 <td align="center"><kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>Right</kbd></td>
-<td>Extends the selection and moves forward a word.</td>
+<td>Extend the selection forward one word.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-cua-next-screen-line"></a><code>cua-next-screen-line</code></td>
+<td><a class="wlink" href="#rlcmd-cua-next-screen-line"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-cua-next-screen-line"></a><code>cua-next-screen-line</code></td>
 <td align="center"><kbd>Shift</kbd>-<kbd>Down</kbd></td>
-<td>Extends the selection down one line.</td>
+<td>Extend the selection down one screen line.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-cua-previous-screen-line"></a><code>cua-previous-screen-line</code></td>
+<td><a class="wlink" href="#rlcmd-cua-previous-screen-line"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-cua-previous-screen-line"></a><code>cua-previous-screen-line</code></td>
 <td align="center"><kbd>Shift</kbd>-<kbd>Up</kbd></td>
-<td>Extends the selection up one line.</td>
+<td>Extend the selection up one screen line.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-cua-select-all"></a><code>cua-select-all</code></td>
+<td><a class="wlink" href="#rlcmd-cua-select-all"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-cua-select-all"></a><code>cua-select-all</code></td>
 <td align="center"></td>
-<td>Extends the selection to the entire current line.</td>
+<td>Extend the selection to the entire input line.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-cua-select-word"></a><code>cua-select-word</code></td>
+<td><a class="wlink" href="#rlcmd-cua-select-word"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-cua-select-word"></a><code>cua-select-word</code></td>
 <td align="center"></td>
-<td>Selects the word at the cursor.</td>
+<td>Select the word at the cursor point.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-edit-and-execute-command"></a><code>edit-and-execute-command</code></td>
+<td><a class="wlink" href="#rlcmd-edit-and-execute-command"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-edit-and-execute-command"></a><code>edit-and-execute-command</code></td>
 <td align="center"><kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>e</kbd></td>
 <td>Invoke an editor on the current input line, and execute the result as commands.  This attempts to invoke <code>%VISUAL%</code>, <code>%EDITOR%</code>, or <code>notepad.exe</code> as the editor, in that order.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-glob-complete-word"></a><code>glob-complete-word</code></td>
+<td><a class="wlink" href="#rlcmd-glob-complete-word"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-glob-complete-word"></a><code>glob-complete-word</code></td>
 <td align="center"><kbd>Alt</kbd>-<kbd>g</kbd></td>
 <td>Perform wildcard completion on the text before the cursor point, with a <code>*</code> implicitly appended.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-glob-expand-word"></a><code>glob-expand-word</code></td>
+<td><a class="wlink" href="#rlcmd-glob-expand-word"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-glob-expand-word"></a><code>glob-expand-word</code></td>
 <td align="center"><kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>*</kbd></td>
 <td>Insert all the wildcard completions that <a href="#rlcmd-glob-list-expansions"><code>glob-list-expansions</code></a> would list.  If a numeric argument is supplied, a <code>*</code> is implicitly appended before completion.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-glob-list-expansions"></a><code>glob-list-expansions</code></td>
+<td><a class="wlink" href="#rlcmd-glob-list-expansions"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-glob-list-expansions"></a><code>glob-list-expansions</code></td>
 <td align="center"><kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>g</kbd></td>
 <td>List the possible wildcard completions of the text before the cursor point.  If a numeric argument is supplied, a <code>*</code> is implicitly appended before completion.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-history-and-alias-expand-line"></a><code>history-and-alias-expand-line</code></td>
+<td><a class="wlink" href="#rlcmd-history-and-alias-expand-line"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-history-and-alias-expand-line"></a><code>history-and-alias-expand-line</code></td>
 <td align="center"></td>
 <td>A synonym for <a href="#rlcmd-clink-expand-history-and-alias"><code>clink-expand-history-and-alias</code></a>.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-history-expand-line"></a><code>history-expand-line</code></td>
+<td><a class="wlink" href="#rlcmd-history-expand-line"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-history-expand-line"></a><code>history-expand-line</code></td>
 <td align="center"></td>
 <td>A synonym for <a href="#rlcmd-clink-expand-history"><code>clink-expand-history</code></a>.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-insert-last-argument"></a><code>insert-last-argument</code></td>
+<td><a class="wlink" href="#rlcmd-insert-last-argument"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-insert-last-argument"></a><code>insert-last-argument</code></td>
 <td align="center"></td>
 <td>A synonym for <a href="#rlcmd-yank-last-arg"><code>yank-last-arg</code></a>.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-magic-space"></a><code>magic-space</code></td>
+<td><a class="wlink" href="#rlcmd-magic-space"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-magic-space"></a><code>magic-space</code></td>
 <td align="center"></td>
-<td>Perform <a href="#using-history-expansion">history</a> expansion on the text before the cursor position and insert a space.</td>
+<td>Perform <a href="#using-history-expansion">history expansion</a> on the text before the cursor position and insert a space.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-old-menu-complete-backward"></a><code>old-menu-complete-backward</code></td>
+<td><a class="wlink" href="#rlcmd-old-menu-complete-backward"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-old-menu-complete-backward"></a><code>old-menu-complete-backward</code></td>
 <td align="center"></td>
-<td>Like <a href="#rlcmd-old-menu-complete"><code>old-menu-complete</code></a>, but in reverse.</td>
+<td>Like <a href="#rlcmd-old-menu-complete"><code>old-menu-complete</code></a>, but in reverse. This behaves like the default completion in cmd.exe on Windows. When Clink is installed using the setup program with the &quot;Autorun when cmd.exe starts&quot; box checked or when <a href="#clink_default_bindings"><code>clink.default_bindings</code></a> is set to <code>windows</code>, then this is bound by default to <kbd>Shift</kbd>-<kbd>Tab</kbd>.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-remove-history"></a><code>remove-history</code></td>
+<td><a class="wlink" href="#rlcmd-remove-history"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-remove-history"></a><code>remove-history</code></td>
 <td align="center"><kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>d</kbd></td>
 <td>While searching history, removes the current line from the history.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-shell-expand-line"></a><code>shell-expand-line</code></td>
+<td><a class="wlink" href="#rlcmd-shell-expand-line"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-shell-expand-line"></a><code>shell-expand-line</code></td>
 <td align="center"><kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>e</kbd></td>
 <td>A synonym for <a href="#rlcmd-clink-expand-line"><code>clink-expand-line</code></a>.</td>
 </tr>
 <tr>
-<td><a name="rlcmd-win-copy-history-number"></a><code>win-copy-history-number</code></td>
+<td><a class="wlink" href="#rlcmd-win-copy-history-number"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-win-copy-history-number"></a><code>win-copy-history-number</code></td>
 <td align="center"><kbd>F9</kbd></td>
-<td>Enter a history number and replace the input line with the history line (mimics Windows console <kbd>F9</kbd>).</td>
+<td>Enter a history number and replace the input line with the history entry (mimics Windows console <kbd>F9</kbd>).</td>
 </tr>
 <tr>
-<td><a name="rlcmd-win-copy-up-to-char"></a><code>win-copy-up-to-char</code></td>
+<td><a class="wlink" href="#rlcmd-win-copy-up-to-char"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-win-copy-up-to-char"></a><code>win-copy-up-to-char</code></td>
 <td align="center"><kbd>F2</kbd></td>
 <td>Enter a character and copy up to it from the previous command (mimics Windows console <kbd>F2</kbd>).</td>
 </tr>
 <tr>
-<td><a name="rlcmd-win-copy-up-to-end"></a><code>win-copy-up-to-end</code></td>
+<td><a class="wlink" href="#rlcmd-win-copy-up-to-end"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-win-copy-up-to-end"></a><code>win-copy-up-to-end</code></td>
 <td align="center"><kbd>F3</kbd></td>
 <td>Copy the rest of the previous command (mimics Windows console <kbd>F3</kbd>).</td>
 </tr>
 <tr>
-<td><a name="rlcmd-win-cursor-forward"></a><code>win-cursor-forward</code></td>
+<td><a class="wlink" href="#rlcmd-win-cursor-forward"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-win-cursor-forward"></a><code>win-cursor-forward</code></td>
 <td align="center"><kbd>F1</kbd></td>
 <td>Move cursor forward, or at end of line copy character from previous command, or insert suggestion (mimics Windows console <kbd>F1</kbd> and <kbd>Right</kbd>).</td>
 </tr>
 <tr>
-<td><a name="rlcmd-win-delete-up-to-char"></a><code>win-delete-up-to-char</code></td>
+<td><a class="wlink" href="#rlcmd-win-delete-up-to-char"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-win-delete-up-to-char"></a><code>win-delete-up-to-char</code></td>
 <td align="center"><kbd>F4</kbd></td>
 <td>Enter a character and delete up to it in the input line (mimics Windows console <kbd>F4</kbd>).</td>
 </tr>
 <tr>
-<td><a name="rlcmd-win-history-list"></a><code>win-history-list</code></td>
+<td><a class="wlink" href="#rlcmd-win-history-list"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-win-history-list"></a><code>win-history-list</code></td>
 <td align="center"><kbd>F7</kbd></td>
 <td>Executes a history entry from a list (mimics Windows console <kbd>F7</kbd>).</td>
 </tr>
 <tr>
-<td><a name="rlcmd-win-insert-eof"></a><code>win-insert-eof</code></td>
+<td><a class="wlink" href="#rlcmd-win-insert-eof"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-win-insert-eof"></a><code>win-insert-eof</code></td>
 <td align="center"><kbd>F6</kbd></td>
 <td>Insert ^Z (mimics Windows console <kbd>F6</kbd>).</td>
 </tr>
 </tbody></table>
+<p><a name="alternatedefaultcommand"></a></p>
+<p><strong>&ast;</strong> Some commands have alternative default key bindings when Clink is installed with &quot;Use enhanced default settings&quot; checked in the setup program or when <a href="#clink_default_bindings"><code>clink.default_bindings</code></a> is set to <code>windows</code>.</p>
 <p><a name="completioncolors"></a></p>
 <h2 id="completion-colors"><a class="wlink" href="#completioncolors"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Completion Colors</h2>
 <p>The <code>%LS_COLORS%</code> environment variable provides color definitions as a series of color definitions separated by colons (<code>:</code>).  Each definition is a either a two character type id or a file extension, followed by an equals sign and then the <a href="https://en.wikipedia.org/wiki/ANSI_escape_code#SGR">SGR parameters</a> for an ANSI escape code.  The two character type ids are listed below.</p>
@@ -7165,6 +7172,19 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes"><a class="wlink" href="#changes"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork"><a class="wlink" href="#releases-from-chrisant996clink-fork"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v157"><a class="wlink" href="#v157"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.5.7</h4>
+<ul>
+<li>Added vertical scrollbars in <code>clink-select-complete</code> and in popup lists.</li>
+<li>Added <code>terminal.scrollbars</code> setting which can disable the vertical scrollbars (e.g. according to preference, or if a terminal or font is incompatible with extended Unicode box drawing characters).</li>
+<li>Added <code>clink set --info</code> flag.</li>
+<li>Added language-related diagnostic info in <code>clink info</code>.</li>
+<li>Added minor optimization when displaying prompt text.</li>
+<li>Added enhancements in the pager used when displaying help or matches; <kbd>Tab</kbd> or <kbd>Space</kbd> or <kbd>Y</kbd> print the next page, <kbd>D</kbd> prints the next half-page, <kbd>Enter</kbd> prints the next line, <kbd>N</kbd> or <kbd>Q</kbd> stop printing, and <kbd>?</kbd> shows the available keys in the <code>-- More --</code> pager prompt (the enhancements were accidentally lost in v1.1.1-alpha).</li>
+<li>Horizontal scrolling in popup lists works for all columns, if text doesn&#39;t fit in the column.</li>
+<li>Fixed crash in <code>rl.getmatchcolor(match, type)</code>; when the optional <code>type</code> parameter was passed in, the API could crash.</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/498">#498</a>; when <code>autosuggest.enable</code> is False, cycling or searching through history and then pressing <kbd>Right</kbd> does nothing.</li>
+<li>Internal improvements.</li>
+</ul>
 <h4 id="v156"><a class="wlink" href="#v156"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.5.6</h4>
 <ul>
 <li>Added <code>os.getpushddepth()</code>, which works when <code>%PROMPT%</code> contains exactly one <code>$+</code>.</li>
