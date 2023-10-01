@@ -89,9 +89,8 @@ static bool s_standalone = false;
 const int32 min_screen_cols = 20;
 
 //------------------------------------------------------------------------------
-static int32 make_item(const char* in, str_base& out, bool* any_ctrl=nullptr)
+static int32 make_item(const char* in, str_base& out)
 {
-    bool ac = false;
     out.clear();
 
     int32 cells = 0;
@@ -104,7 +103,6 @@ static int32 make_item(const char* in, str_base& out, bool* any_ctrl=nullptr)
             ctrl[1] = (c == RUBOUT) ? '?' : UNCTRL(c);
             out.concat(ctrl, 2);
             cells += 2;
-            ac = true;
         }
         else
         {
@@ -113,8 +111,6 @@ static int32 make_item(const char* in, str_base& out, bool* any_ctrl=nullptr)
         }
     }
 
-    if (any_ctrl)
-        *any_ctrl = ac;
     return cells;
 }
 
@@ -308,9 +304,15 @@ const char* textlist_impl::addl_columns::get_col_text(int32 row, int32 col) cons
 }
 
 //------------------------------------------------------------------------------
-int32 textlist_impl::addl_columns::get_col_width(int32 col) const
+int32 textlist_impl::addl_columns::get_col_longest(int32 col) const
 {
     return m_longest[col];
+}
+
+//------------------------------------------------------------------------------
+int32 textlist_impl::addl_columns::get_col_layout_width(int32 col) const
+{
+    return m_layout_width[col];
 }
 
 //------------------------------------------------------------------------------
@@ -357,6 +359,68 @@ void textlist_impl::addl_columns::add_columns(const char* ptr)
 }
 
 //------------------------------------------------------------------------------
+int32 textlist_impl::addl_columns::calc_widths(int32 available)
+{
+    memset(&m_layout_width, 0, sizeof(m_layout_width));
+
+    bool pending[_countof(m_layout_width)] = {};
+    for (int32 col = _countof(m_layout_width); col--;)
+    {
+        if (m_longest[col])
+        {
+            pending[col] = true;
+            available -= col_padding;
+        }
+    }
+
+    if (available > 0)
+    {
+        int32 divisor = 0;
+        for (int32 col = _countof(m_layout_width); col--;)
+        {
+            if (pending[col])
+                ++divisor;
+        }
+
+        while (true)
+        {
+            bool share = true;
+
+            const int32 threshold = available / divisor;
+            for (int32 col = _countof(m_layout_width); col--;)
+            {
+                if (pending[col] && m_longest[col] <= threshold)
+                {
+                    m_layout_width[col] = m_longest[col];
+                    available -= m_longest[col];
+                    --divisor;
+                    pending[col] = false;
+                    share = false;
+                }
+            }
+
+            if (share)
+            {
+                if (divisor)
+                {
+                    for (int32 col = _countof(m_layout_width); col--;)
+                    {
+                        if (pending[col])
+                        {
+                            m_layout_width[col] = available / divisor;
+                            available -= threshold;
+                        }
+                    }
+                }
+                break;
+            }
+        }
+    }
+
+    return available;
+}
+
+//------------------------------------------------------------------------------
 bool textlist_impl::addl_columns::get_any_tabs() const
 {
     return m_any_tabs;
@@ -368,6 +432,7 @@ void textlist_impl::addl_columns::clear()
     std::vector<column_text> zap;
     m_rows = std::move(zap);
     memset(&m_longest, 0, sizeof(m_longest));
+    memset(&m_layout_width, 0, sizeof(m_longest));
     m_any_tabs = false;
 }
 
@@ -460,7 +525,6 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
     // Gather the items.
     str<> tmp;
     str<> tmp2;
-    bool any_ctrl = false;
     for (int32 i = 0; i < count; i++)
     {
         const char* text;
@@ -483,11 +547,10 @@ popup_results textlist_impl::activate(const char* title, const char** entries, i
                 m_columns.add_columns(tmp2.c_str());
             }
         }
-        m_longest = max<int32>(m_longest, make_item(text, tmp, &any_ctrl));
+        m_longest = max<int32>(m_longest, make_item(text, tmp));
         m_items.push_back(m_store.add(tmp.c_str()));
     }
     m_has_columns = has_columns || history_timestamps;
-    m_horz_scrolling = !m_has_columns || !any_ctrl;
 
     if (title && *title)
         m_default_title = title;
@@ -1411,7 +1474,7 @@ void textlist_impl::update_display()
                 {
                     for (int32 i = 0; i < max_columns; i++)
                     {
-                        const int32 x = m_columns.get_col_width(i);
+                        const int32 x = m_columns.get_col_longest(i);
                         if (x)
                             longest += 2 + x;
                     }
@@ -1420,7 +1483,8 @@ void textlist_impl::update_display()
             }
 
             const int32 effective_screen_cols = (m_screen_cols < 40) ? m_screen_cols : max<int32>(40, m_screen_cols - 4);
-            const int32 col_width = min<int32>(longest + 2, effective_screen_cols); // +2 for borders.
+            const int32 popup_width = min<int32>(longest + 2, effective_screen_cols); // +2 for borders.
+            const int32 content_width = popup_width - 2;
 
             str<> noescape;
             str<> left;
@@ -1428,48 +1492,55 @@ void textlist_impl::update_display()
             str<> tmp;
 
             {
-                int32 x = csbi.dwCursorPosition.X - ((col_width + 1) / 2);
+                int32 x = csbi.dwCursorPosition.X - ((popup_width + 1) / 2);
                 int32 center_x = (m_screen_cols - effective_screen_cols) / 2;
-                if (x + col_width > center_x + effective_screen_cols)
-                    x = m_screen_cols - center_x - col_width;
+                if (x + popup_width > center_x + effective_screen_cols)
+                    x = m_screen_cols - center_x - popup_width;
                 if (x < center_x)
                     x = center_x;
                 if (x > 0)
                     left.format("\x1b[%uG", x + 1);
                 m_mouse_left = x + 1;
-                m_mouse_width = col_width - 2;
+                m_mouse_width = content_width;
             }
 
-            int32 limit_item_cells = 0;
-            if (m_horz_scrolling)
+            if (m_prev_displayed < 0)
             {
-                uint32 columns_visible = 0;
-                for (int32 col = max_columns; col--;)
-                {
-                    const uint32 cx = m_columns.get_col_width(col);
-                    if (columns_visible || cx)
-                        columns_visible += col_padding + cx;
-                }
+                m_horz_scroll_range = 0;
+                m_horz_item_enabled = 0;
+                memset(m_horz_column_enabled, 0, sizeof(m_horz_column_enabled));
+                m_item_cells = max<int32>(0, min<int32>(m_max_num_cells + m_longest, m_mouse_width / 2));
 
-                if (m_max_num_cells + m_longest > m_mouse_width / 2 &&
-                    m_max_num_cells + m_longest + columns_visible > m_mouse_width)
+                if (m_item_cells > 0)
                 {
-                    columns_visible = min<int32>(columns_visible, m_mouse_width - (m_mouse_width / 2));
-                    limit_item_cells = m_mouse_width - (m_max_num_cells + columns_visible);
-                }
+                    m_item_cells += m_columns.calc_widths(m_mouse_width - m_item_cells);
 
-                if (m_prev_displayed < 0)
-                {
+                    m_horz_item_enabled = (m_item_cells < m_longest);
+                    for (int32 col = max_columns; col--;)
+                        m_horz_column_enabled[col] = (m_columns.get_col_layout_width(col) < m_columns.get_col_longest(col));
+
                     // Init the range for horizontal scrolling.
-                    m_horz_scroll_range = 0;
-                    if (limit_item_cells)
+                    uint32 longest_visible = 0;
+                    const int32 rows = min<int32>(m_count, m_visible_rows);
+                    for (int32 row = 0; row < rows; ++row)
                     {
                         // Expand control characters to "^A" etc.
-                        uint32 longest_visible = 0;
-                        const int32 rows = min<int32>(m_count, m_visible_rows);
+                        longest_visible = max<int32>(longest_visible, make_item(m_items[m_top + row], tmp));
+                    }
+                    m_horz_scroll_range = max<int32>(m_horz_scroll_range, longest_visible - m_item_cells);
+                    for (int32 col = max_columns; col--;)
+                    {
+                        longest_visible = 0;
                         for (int32 row = 0; row < rows; ++row)
-                            longest_visible = max<int32>(longest_visible, make_item(m_items[m_top + row], tmp));
-                        m_horz_scroll_range = max<int32>(0, longest_visible - limit_item_cells);
+                        {
+                            const char* col_text = m_columns.get_col_text(m_top + row, col);
+                            if (col_text)
+                            {
+                                // Expand control characters to "^A" etc.
+                                longest_visible = max<int32>(longest_visible, make_item(col_text, tmp));
+                            }
+                        }
+                        m_horz_scroll_range = max<int32>(m_horz_scroll_range, longest_visible - m_columns.get_col_layout_width(col));
                     }
                 }
             }
@@ -1477,7 +1548,7 @@ void textlist_impl::update_display()
             // Display border.
             if (draw_border)
             {
-                make_horz_border(m_has_override_title ? m_override_title.c_str() : m_default_title.c_str(), col_width - 2, m_has_override_title, horzline,
+                make_horz_border(m_has_override_title ? m_override_title.c_str() : m_default_title.c_str(), content_width, m_has_override_title, horzline,
                                  m_color.header.c_str(), m_color.border.c_str());
                 line.clear();
                 line << left << m_color.border << "\xe2\x94\x8c";       // ┌
@@ -1512,8 +1583,8 @@ void textlist_impl::update_display()
                     const str_base& maincolor = (i == m_index) ? m_color.select : m_color.items;
                     line << maincolor;
 
-                    int32 spaces = col_width - 2;
-                    int32 item_spaces = limit_item_cells ? limit_item_cells : spaces;
+                    int32 spaces = content_width;
+                    int32 item_spaces = m_item_cells ? m_item_cells : spaces;
 
                     if (m_show_numbers)
                     {
@@ -1535,7 +1606,7 @@ void textlist_impl::update_display()
 
                     int32 cell_len;
                     const char* item_text;
-                    const int32 char_len = limit_cells(m_items[i], item_spaces, cell_len, m_horz_offset, &tmp, &item_text);
+                    const int32 char_len = limit_cells(m_items[i], item_spaces, cell_len, m_horz_offset * m_horz_item_enabled, &tmp, &item_text);
                     line.concat(item_text, char_len);                   // main text
                     spaces -= cell_len;
 
@@ -1545,34 +1616,36 @@ void textlist_impl::update_display()
 
                         if (m_columns.get_any_tabs())
                         {
-                            const uint32 pad_to = (limit_item_cells ?
-                                                   limit_item_cells :
-                                                   m_longest) - cell_len;
+                            const uint32 pad_to = (m_item_cells ? m_item_cells : m_longest) - cell_len;
                             make_spaces(min<int32>(spaces, pad_to), tmp);
                             line << tmp;                                // spaces
                             spaces -= tmp.length();
                         }
 
+                        bool first_col = true;
                         for (int32 col = 0; col < max_columns && spaces > 0; col++)
                         {
-                            tmp.clear();
-                            static_assert(col_padding <= 2, "col_padding is wider than the static spaces string");
-                            tmp.concat("  ", col_padding);
-                            tmp.concat(m_columns.get_col_text(i, col));
-                            int32 col_len = limit_cells(tmp.c_str(), spaces, cell_len);
-                            const char* col_text = tmp.c_str();
+                            const int32 col_width = m_columns.get_col_layout_width(col);
+                            if (col_width <= 0)
+                                continue;
 
-                            if (!col && col_len >= col_padding && !desc_color.empty())
+                            static_assert(col_padding <= 2, "col_padding is wider than the static spaces string");
+                            line.concat("  ", min<int32>(col_padding, spaces));
+                            spaces -= min<int32>(col_padding, spaces);
+
+                            const char* col_text;
+                            const int32 col_len = limit_cells(m_columns.get_col_text(i, col), spaces, cell_len, m_horz_offset * m_horz_column_enabled[col], &tmp, &col_text);
+
+                            if (first_col)
                             {
-                                line.concat(col_text, col_padding);
-                                line << desc_color;
-                                col_text += col_padding;
-                                col_len -= col_padding;
+                                first_col = false;
+                                if (!desc_color.empty())
+                                    line << desc_color;
                             }
                             line.concat(col_text, col_len);             // column text
                             spaces -= cell_len;
 
-                            int32 pad = min<int32>(spaces, m_columns.get_col_width(col) - (cell_len - col_padding));
+                            int32 pad = min<int32>(spaces, col_width - cell_len);
                             if (pad > 0)
                             {
                                 make_spaces(pad, tmp);
@@ -1604,7 +1677,7 @@ void textlist_impl::update_display()
                 rl_crlf();
                 up++;
                 const bool show_del = (m_history_mode || m_mode == textlist_mode::directories || m_del_callback);
-                make_horz_border(show_del ? "Del=Delete" : nullptr, col_width - 2, true/*bars*/, horzline, m_color.footer.c_str(), m_color.border.c_str());
+                make_horz_border(show_del ? "Del=Delete" : nullptr, content_width, true/*bars*/, horzline, m_color.footer.c_str(), m_color.border.c_str());
                 line.clear();
                 line << left << m_color.border << "\xe2\x94\x94";       // └
                 line << horzline;                                       // ─
@@ -1663,19 +1736,16 @@ void textlist_impl::set_top(int32 top)
 //------------------------------------------------------------------------------
 void textlist_impl::adjust_horz_offset(int32 delta)
 {
-    if (m_horz_scrolling)
+    const int32 was = m_horz_offset;
+
+    m_horz_offset += delta;
+    m_horz_offset = min<int32>(m_horz_offset, m_horz_scroll_range);
+    m_horz_offset = max<int32>(m_horz_offset, 0);
+
+    if (was != m_horz_offset)
     {
-        const int32 was = m_horz_offset;
-
-        m_horz_offset += delta;
-        m_horz_offset = min<int32>(m_horz_offset, m_horz_scroll_range);
-        m_horz_offset = max<int32>(m_horz_offset, 0);
-
-        if (was != m_horz_offset)
-        {
-            m_prev_displayed = -1;
-            update_display();
-        }
+        m_prev_displayed = -1;
+        update_display();
     }
 }
 
@@ -1735,8 +1805,11 @@ void textlist_impl::reset()
 
     m_visible_rows = 0;
     m_max_num_cells = 0;
-    m_horz_offset = 0;
+    m_item_cells = 0;
     m_longest_visible = 0;
+    m_horz_offset = 0;
+    m_horz_item_enabled = 0;
+    memset(m_horz_column_enabled, 0, sizeof(m_horz_column_enabled));
     m_horz_scroll_range = 0;
     m_default_title.clear();
     m_override_title.clear();
@@ -1755,7 +1828,6 @@ void textlist_impl::reset()
     m_pref_width = 0;
     m_history_mode = false;
     m_show_numbers = false;
-    m_horz_scrolling = false;
     m_win_history = false;
     m_has_columns = false;
     m_del_callback = nullptr;

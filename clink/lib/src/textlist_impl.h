@@ -47,15 +47,18 @@ class textlist_impl
     {
                     addl_columns(item_store& store);
         const char* get_col_text(int32 row, int32 col) const;
-        int32       get_col_width(int32 col) const;
+        int32       get_col_longest(int32 col) const;
+        int32       get_col_layout_width(int32 col) const;
         const char* add_entry(const char* entry);
         void        add_columns(const char* columns);
+        int32       calc_widths(int32 available);
         bool        get_any_tabs() const;
         void        clear();
     private:
         textlist_impl::item_store& m_store;
         std::vector<column_text> m_rows;
         int32       m_longest[max_columns] = {};
+        int32       m_layout_width[max_columns] = {};
         bool        m_any_tabs = false;
     };
 
@@ -106,8 +109,11 @@ private:
     int32           m_mouse_width = 0;
     int32           m_visible_rows = 0;
     int32           m_max_num_cells = 0;
-    int32           m_horz_offset = 0;
+    int32           m_item_cells = 0;
     int32           m_longest_visible = 0;
+    int32           m_horz_offset = 0;
+    int32           m_horz_item_enabled = 0;
+    int32           m_horz_column_enabled[max_columns] = {};
     int32           m_horz_scroll_range = 0;
 #ifdef SHOW_VERT_SCROLLBARS
     int32           m_vert_scroll_car = 0;
@@ -147,7 +153,6 @@ private:
     bool            m_reverse = false;
     bool            m_history_mode = false;
     bool            m_show_numbers = false;
-    bool            m_horz_scrolling = false;
     bool            m_win_history = false;
     bool            m_has_columns = false;
     popup_colors    m_color;
