@@ -43,7 +43,7 @@ Clink stores persistent history between sessions.
 
 - <kbd>Up</kbd> and <kbd>Down</kbd> cycle through history entries.
 - <kbd>PgUp</kbd> and <kbd>PgDn</kbd> cycle through history entries matching the typed prefix.
-- <kbd>F7</kbd> show a popup list of selectable history entries.
+- <kbd>F7</kbd> or <kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>Up</kbd> show a popup list of selectable history entries.
 - <kbd>Ctrl</kbd>-<kbd>R</kbd> and <kbd>Ctrl</kbd>-<kbd>S</kbd> search history incrementally.
 
 See [Saved Command History](#saved-command-history) to learn more.
@@ -1366,8 +1366,8 @@ Command | Key | Description
 <a name="rlcmd-clink-popup-complete"></a>`clink-popup-complete` | | A synonym for [`clink-select-complete`](#rlcmd-clink-select-complete).
 <a name="rlcmd-clink-popup-complete-numbers"></a>`clink-popup-complete-numbers` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>Shift</kbd>-<kbd>N</kbd> | Like [`clink-select-complete`](#rlcmd-clink-select-complete), but for numbers from the console screen (3 digits or more, up to hexadecimal).
 <a name="rlcmd-clink-popup-directories"></a>`clink-popup-directories` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>PgUp</kbd> | Show recent directories in a [popup list](#popupwindow).  In the popup, use <kbd>Enter</kbd> to `cd /d` to the selected directory.
-<a name="rlcmd-clink-popup-history"></a>`clink-popup-history` | | Show history entries in a [popup list](#popupwindow).  Filters using any text before the cursor point.  In the popup, use <kbd>Enter</kbd> to execute the selected history entry.  If [`history.time_stamp`](#history_time_stamp) is `show` then timestamps are shown unless a numeric argument of 0 is provided.  If `history.time_stamp` is `save` then timestamps are only shown if a non-zero numeric argument is provided.
-<a name="rlcmd-clink-popup-show-help"></a>`clink-popup-show-help` | <kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>H</kbd> | Show all key bindings in a searchable [popup list](#popupwindow).  In the popup, use <kbd>Enter</kbd> to invoke the selected key binding.
+<a name="rlcmd-clink-popup-history"></a>`clink-popup-history` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>Up</kbd> | Show history entries in a [popup list](#popupwindow).  Filters using any text before the cursor point.  In the popup, use <kbd>Enter</kbd> to execute the selected history entry.  If [`history.time_stamp`](#history_time_stamp) is `show` then timestamps are shown unless a numeric argument of 0 is provided.  If `history.time_stamp` is `save` then timestamps are only shown if a non-zero numeric argument is provided.
+<a name="rlcmd-clink-popup-show-help"></a>`clink-popup-show-help` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>H</kbd> | Show all key bindings in a searchable [popup list](#popupwindow).  In the popup, use <kbd>Enter</kbd> to invoke the selected key binding.
 <a name="rlcmd-clink-reload"></a>`clink-reload` | <kbd>Ctrl</kbd>-<kbd>x</kbd> <kbd>Ctrl</kbd>-<kbd>r</kbd> | Reload Lua scripts and the .inputrc file.
 <a name="rlcmd-clink-reset-line"></a>`clink-reset-line` | <kbd>Esc</kbd> | Clear the input line.  Can be undone, unlike [`revert-line`](#rlcmd-revert-line).
 <a name="rlcmd-clink-scroll-bottom"></a>`clink-scroll-bottom` | <kbd>Alt</kbd>-<kbd>End</kbd> | Scroll the console window to the bottom (the current input line).
