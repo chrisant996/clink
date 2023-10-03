@@ -2110,6 +2110,7 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
         { "\\M-\\C-w",      "clink-copy-word" },         // alt-ctrl-w
         { "\\e[5;5~",       "clink-up-directory" },      // ctrl-pgup (changed in Clink 1.0.0)
         { "\\e[5;7~",       "clink-popup-directories" }, // alt-ctrl-pgup
+        { "\\e[1;7A",       "clink-popup-history" },     // alt-ctrl-up
         { "\\e[1;3H",       "clink-scroll-top" },        // alt-home
         { "\\e[1;3F",       "clink-scroll-bottom" },     // alt-end
         { "\\e[5;3~",       "clink-scroll-page-up" },    // alt-pgup
