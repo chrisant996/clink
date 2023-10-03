@@ -744,6 +744,10 @@ local function try_autoupdate(mode)
         return
     end
 
+    if mode ~= "auto" and mode ~= "prompt" then
+        return
+    end
+
     if check_need_ui(update_file, mode) then
         return
     end
