@@ -569,7 +569,7 @@ local function is_update_ready(force)
     return update_file
 end
 
-local function prepare_to_update(cloud_tag)
+local function prepare_to_update(elevated, cloud_tag)
     local bin_dir, err = get_bin_dir()
     if not bin_dir then
         return nil, nil, err
@@ -580,7 +580,10 @@ local function prepare_to_update(cloud_tag)
         return nil, nil, err
     end
 
-    if not clink._acquire_updater_mutex() then
+    -- When elevated, assume the mutex is already acquired by the non-elevated
+    -- caller.  Otherwise deadlock is possible if multiple Clink instances are
+    -- waiting for the mutex.
+    if not elevated and not clink._acquire_updater_mutex() then
         return
     end
 
@@ -594,17 +597,15 @@ local function prepare_to_update(cloud_tag)
     return bin_dir, update_dir
 end
 
-local function apply_zip_update(zip_file, force)
+local function apply_zip_update(elevated, zip_file)
     local cloud_tag = path.getbasename(zip_file)
-    local bin_dir, update_dir, err = prepare_to_update(cloud_tag)
+    local bin_dir, update_dir, err = prepare_to_update(elevated, cloud_tag)
     if not bin_dir or not update_dir then
         return nil, err
     end
 
     local expand_dir = path.join(update_dir, cloud_tag)
-    if force then
-        print("Expanding zip file...")
-    end
+    print("Expanding zip file...")
     log_info("expanding " .. zip_file .. " into " .. expand_dir .. ".")
 
     -- Prepare the temp directory; ensure it is empty (avoid copying stray
@@ -655,9 +656,9 @@ local function apply_zip_update(zip_file, force)
     return 1, log_info("updated Clink to " .. cloud_tag .. ".")
 end
 
-local function run_exe_installer(setup_exe)
+local function run_exe_installer(elevated, setup_exe)
     local cloud_tag = path.getbasename(setup_exe)
-    local bin_dir, update_dir, err = prepare_to_update(cloud_tag)
+    local bin_dir, update_dir, err = prepare_to_update(elevated, cloud_tag)
     if not bin_dir or not update_dir then
         return nil, err
     end
@@ -869,14 +870,19 @@ function clink.updatenow(elevated, force_prompt)
 
     if need_elevation then
         log_info("elevation required to update InstallDir in registry.")
-        clink._release_updater_mutex()
+        -- IMPORTANT:  Keep the updater mutex acquired.  The elevated process
+        -- assumes its caller holds the mutex.  If the elevated process had to
+        -- acquire the mutex itself, then the caller would have to release the
+        -- mutex, which could allow another process to sneak in and acquire
+        -- the mutex before the elevated process can get it, and that leads to
+        -- a hang (issue #503).
         return -1
     end
 
     if ext == "zip" then
-        return apply_zip_update(update_file, true)
+        return apply_zip_update(elevated, update_file, true)
     elseif ext == "exe" then
-        return run_exe_installer(update_file)
+        return run_exe_installer(elevated, update_file)
     else
         return nil, log_info("unrecognized update file type (" .. ext .. ").")
     end
