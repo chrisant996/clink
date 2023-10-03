@@ -15,7 +15,7 @@
 - Added enhancements in the pager used when displaying help or matches; <kbd>Tab</kbd> or <kbd>Space</kbd> or <kbd>Y</kbd> print the next page, <kbd>D</kbd> prints the next half-page, <kbd>Enter</kbd> prints the next line, <kbd>N</kbd> or <kbd>Q</kbd> stop printing, and <kbd>?</kbd> shows the available keys in the `-- More --` pager prompt (the enhancements were accidentally lost in v1.1.1-alpha).
 - Horizontal scrolling in popup lists works for all columns, if text doesn't fit in the column.
 - Fixed crash in `rl.getmatchcolor(match, type)`; when the optional `type` parameter was passed in, the API could crash.
-- Fixed [#498](https://github.com/chrisant996/clink/issues/498); when `autosuggest.enable` is False, cycling or searching through history and then pressing <kbd>Right</kbd> does nothing.
+- Fixed [#498](https://github.com/chrisant996/clink/issues/498); when `autosuggest.enable` is False, cycling or searching through history and then pressing <kbd>Right</kbd> does nothing (regression introduced in v1.5.4).
 - Internal improvements.
 
 #### v1.5.6
