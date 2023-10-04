@@ -68,8 +68,8 @@ static setting_int g_preview_rows(
 static setting_int g_max_rows(
     "match.max_rows",
     "Max rows in clink-select-complete",
-    "The maximum number of rows the 'clink-select-complete' can use.  When this\n"
-    "is 0, the limit is the terminal height.",
+    "The maximum number of rows of items 'clink-select-complete' can show.  When\n"
+    "this is 0, the limit is the terminal height.",
     0);
 
 setting_color g_color_comment_row(
@@ -1321,19 +1321,27 @@ force_desc_below:
     m_visible_rows = m_screen_rows - input_height;
     m_visible_rows -= min<int32>(2, m_screen_rows / 10);
 
-    const int32 max_rows = g_max_rows.get();
-    if (max_rows > 0 && m_visible_rows > max_rows)
-        m_visible_rows = max_rows;
-
     // When showing description only for selected item, reserve 2 extra rows for
     // showing the description.
     if (m_desc_below)
         m_visible_rows -= 2;
 
-    if (m_visible_rows < 2)
-        m_visible_rows = 0;     // At least 2 rows must fit.
-    else if (m_visible_rows < m_match_rows)
-        m_visible_rows--;       // Reserve space for comment row.
+    // Reserve space for comment row.
+    if (m_visible_rows < m_match_rows)
+        m_visible_rows--;
+
+    // Finally, limit the rows per the configurable setting.  This happens
+    // last so that the number of rows of items is consistent, instead of
+    // controlling the overall number of rows for things that may or may not
+    // even be present in any given situation.
+    const int32 max_rows = g_max_rows.get();
+    const int32 min_rows = 2;
+    if (max_rows > 0 && m_visible_rows > max(min_rows, max_rows))
+        m_visible_rows = max(min_rows, max_rows);
+
+    // At least 2 rows must fit.
+    if (m_visible_rows < min_rows)
+        m_visible_rows = 0;
 
 #ifdef SHOW_VERT_SCROLLBARS
     m_vert_scroll_car = 0;
