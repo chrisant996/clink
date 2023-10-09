@@ -5,6 +5,7 @@
 #### v1.5.9
 - Added default key binding <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>Up</kbd> for `clink-popup-history`.
 - Fixed the `match.max_rows` setting to control the number of rows of items (instead of the total number of rows including description rows).
+- Fixed [#509](https://github.com/chrisant996/clink/issues/509); crash when using `clink-popup-history` if `history.time_stamp` is `off` (regression introduced in v1.5.7).
 
 #### v1.5.8
 - Fixed [#504](https://github.com/chrisant996/clink/issues/504); the `clink.autoupdate` setting behaves like `auto` even when it's set to `check` (regression introduced in v1.5.5).
