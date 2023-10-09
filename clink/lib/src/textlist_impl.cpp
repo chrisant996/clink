@@ -1513,11 +1513,17 @@ void textlist_impl::update_display()
 
                 if (m_item_cells > 0)
                 {
-                    m_item_cells += m_columns.calc_widths(m_mouse_width - (m_max_num_cells + m_item_cells));
+                    // Add columns to total width.
+                    if (m_has_columns)
+                        m_item_cells += m_columns.calc_widths(m_mouse_width - (m_max_num_cells + m_item_cells));
 
+                    // Identify which columns need horizontal scrolling.
                     m_horz_item_enabled = (m_item_cells < m_longest);
-                    for (int32 col = max_columns; col--;)
-                        m_horz_column_enabled[col] = (m_columns.get_col_layout_width(col) < m_columns.get_col_longest(col));
+                    if (m_has_columns)
+                    {
+                        for (int32 col = max_columns; col--;)
+                            m_horz_column_enabled[col] = (m_columns.get_col_layout_width(col) < m_columns.get_col_longest(col));
+                    }
 
                     // Init the range for horizontal scrolling.
                     uint32 longest_visible = 0;
@@ -1528,19 +1534,22 @@ void textlist_impl::update_display()
                         longest_visible = max<int32>(longest_visible, make_item(m_items[m_top + row], tmp));
                     }
                     m_horz_scroll_range = max<int32>(m_horz_scroll_range, longest_visible - m_item_cells);
-                    for (int32 col = max_columns; col--;)
+                    if (m_has_columns)
                     {
-                        longest_visible = 0;
-                        for (int32 row = 0; row < rows; ++row)
+                        for (int32 col = max_columns; col--;)
                         {
-                            const char* col_text = m_columns.get_col_text(m_top + row, col);
-                            if (col_text)
+                            longest_visible = 0;
+                            for (int32 row = 0; row < rows; ++row)
                             {
-                                // Expand control characters to "^A" etc.
-                                longest_visible = max<int32>(longest_visible, make_item(col_text, tmp));
+                                const char* col_text = m_columns.get_col_text(m_top + row, col);
+                                if (col_text)
+                                {
+                                    // Expand control characters to "^A" etc.
+                                    longest_visible = max<int32>(longest_visible, make_item(col_text, tmp));
+                                }
                             }
+                            m_horz_scroll_range = max<int32>(m_horz_scroll_range, longest_visible - m_columns.get_col_layout_width(col));
                         }
-                        m_horz_scroll_range = max<int32>(m_horz_scroll_range, longest_visible - m_columns.get_col_layout_width(col));
                     }
                 }
             }
