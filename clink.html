@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.5.8</title>
+<title>Clink v1.5.9</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -901,7 +901,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.5.8</div>
+                <div id="title">Clink v1.5.9</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -950,7 +950,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 <ul>
 <li><kbd>Up</kbd> and <kbd>Down</kbd> cycle through history entries.</li>
 <li><kbd>PgUp</kbd> and <kbd>PgDn</kbd> cycle through history entries matching the typed prefix.</li>
-<li><kbd>F7</kbd> show a popup list of selectable history entries.</li>
+<li><kbd>F7</kbd> or <kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>Up</kbd> show a popup list of selectable history entries.</li>
 <li><kbd>Ctrl</kbd>-<kbd>R</kbd> and <kbd>Ctrl</kbd>-<kbd>S</kbd> search history incrementally.</li>
 </ul>
 <p>See <a href="#saved-command-history">Saved Command History</a> to learn more.</p>
@@ -1718,7 +1718,7 @@ $endif
 <tr>
 <td align="center"><a class="wlink" href="#match_max_rows"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="match_max_rows"></a><code>match.max_rows</code></td>
 <td align="center"><code>0</code></td>
-<td>The maximum number of rows that <a href="#rlcmd-clink-select-complete"><code>clink-select-complete</code></a> can use.  When this is 0, the limit is the terminal height.</td>
+<td>The maximum number of rows of items <a href="#rlcmd-clink-select-complete"><code>clink-select-complete</code></a> can show.  When this is 0, the limit is the terminal height.</td>
 </tr>
 <tr>
 <td align="center"><a class="wlink" href="#match_preview_rows"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="match_preview_rows"></a><code>match.preview_rows</code></td>
@@ -3389,12 +3389,12 @@ $endif              # end clink-only section
 </tr>
 <tr>
 <td><a class="wlink" href="#rlcmd-clink-popup-history"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-popup-history"></a><code>clink-popup-history</code></td>
-<td align="center"></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>Up</kbd></td>
 <td>Show history entries in a <a href="#popupwindow">popup list</a>.  Filters using any text before the cursor point.  In the popup, use <kbd>Enter</kbd> to execute the selected history entry.  If <a href="#history_time_stamp"><code>history.time_stamp</code></a> is <code>show</code> then timestamps are shown unless a numeric argument of 0 is provided.  If <code>history.time_stamp</code> is <code>save</code> then timestamps are only shown if a non-zero numeric argument is provided.</td>
 </tr>
 <tr>
 <td><a class="wlink" href="#rlcmd-clink-popup-show-help"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="rlcmd-clink-popup-show-help"></a><code>clink-popup-show-help</code></td>
-<td align="center"><kbd>Ctrl</kbd>-<kbd>Alt</kbd>-<kbd>H</kbd></td>
+<td align="center"><kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>H</kbd></td>
 <td>Show all key bindings in a searchable <a href="#popupwindow">popup list</a>.  In the popup, use <kbd>Enter</kbd> to invoke the selected key binding.</td>
 </tr>
 <tr>
@@ -7172,6 +7172,12 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes"><a class="wlink" href="#changes"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork"><a class="wlink" href="#releases-from-chrisant996clink-fork"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v159"><a class="wlink" href="#v159"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.5.9</h4>
+<ul>
+<li>Added default key binding <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>Up</kbd> for <code>clink-popup-history</code>.</li>
+<li>Fixed the <code>match.max_rows</code> setting to control the number of rows of items (instead of the total number of rows including description rows).</li>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/509">#509</a>; crash when using <code>clink-popup-history</code> if <code>history.time_stamp</code> is <code>off</code> (regression introduced in v1.5.7).</li>
+</ul>
 <h4 id="v158"><a class="wlink" href="#v158"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.5.8</h4>
 <ul>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/504">#504</a>; the <code>clink.autoupdate</code> setting behaves like <code>auto</code> even when it&#39;s set to <code>check</code> (regression introduced in v1.5.5).</li>
