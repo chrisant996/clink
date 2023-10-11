@@ -8,8 +8,10 @@
 #include <core/settings.h>
 #include <lib/line_editor.h>
 #include <lib/match_generator.h>
+#include <lib/recognizer.h>
 #include <lua/lua_match_generator.h>
 #include <lua/lua_state.h>
+#include <lua/lua_task_manager.h>
 #include <terminal/terminal.h>
 #include <terminal/terminal_helpers.h>
 #include <terminal/printer.h>
@@ -52,10 +54,7 @@ static int32 editline()
 
     line_editor_destroy(editor);
 
-    extern void shutdown_recognizer();
     shutdown_recognizer();
-
-    extern void shutdown_task_manager();
     shutdown_task_manager();
 
     return 0;

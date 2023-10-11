@@ -2,7 +2,9 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
-#include "lua_state.h"
+#include "intercept.h"
+#include "reclassify.h"
+#include "recognizer.h"
 
 #include <core/os.h>
 #include <core/path.h>
@@ -13,13 +15,15 @@
 #include <core/settings.h>
 #include <core/linear_allocator.h>
 #include <core/debugheap.h>
-#include <lib/intercept.h>
-#include <lib/reclassify.h>
 
 #include <memory>
 #include <thread>
 #include <mutex>
 #include <shlwapi.h>
+
+extern "C" {
+#include <readline/readline.h>
+}
 
 //------------------------------------------------------------------------------
 extern setting_color g_color_unrecognized;

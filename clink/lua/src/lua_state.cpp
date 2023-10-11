@@ -13,6 +13,7 @@
 #include <core/os.h>
 #include <core/debugheap.h>
 #include <lib/cmd_tokenisers.h>
+#include <lib/recognizer.h>
 #include <terminal/terminal_helpers.h>
 
 #include <memory>

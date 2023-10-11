@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "app_context.h"
+#include "version.h"
 
 #include <core/base.h>
 #include <core/os.h>
@@ -10,11 +11,9 @@
 #include <core/str.h>
 #include <core/str_iter.h>
 #include <core/settings.h>
+#include <core/log.h>
 #include <process/process.h>
 #include <process/vm.h>
-
-//------------------------------------------------------------------------------
-extern void start_logger();
 
 //------------------------------------------------------------------------------
 static setting_str g_clink_path(
@@ -95,6 +94,18 @@ app_context::app_context(const desc& desc)
 {
     str_base state_dir(m_desc.state_dir);
     str_base script_path(m_desc.script_path);
+
+    if (desc.force)
+    {
+        m_host_name = "cmd.exe";
+    }
+    else
+    {
+        char buffer[280];
+        DWORD len = GetModuleFileName(nullptr, buffer, sizeof_array(buffer));
+        if (len && len < sizeof_array(buffer))
+            path::get_name(buffer, m_host_name);
+    }
 
     // The environment variable 'clink_profile' overrides all other state
     // path mechanisms.
@@ -279,7 +290,7 @@ void app_context::get_script_path(str_base& out, bool readable) const
     }
     else
     {
-        app_context::get()->get_binaries_dir(tmp);
+        get_binaries_dir(tmp);
         if (tmp.length())
         {
             if (out.length())
@@ -287,7 +298,7 @@ void app_context::get_script_path(str_base& out, bool readable) const
             out << tmp.c_str();
         }
 
-        app_context::get()->get_state_dir(tmp);
+        get_state_dir(tmp);
         if (tmp.length())
         {
             if (out.length())
@@ -331,6 +342,13 @@ void app_context::get_script_path_readable(str_base& out) const
 void app_context::get_default_init_file(str_base& out) const
 {
     get_default_file("default_inputrc", out);
+}
+
+//------------------------------------------------------------------------------
+bool app_context::get_host_name(str_base& out) const
+{
+    out = m_host_name.c_str();
+    return !m_host_name.empty();
 }
 
 //------------------------------------------------------------------------------
@@ -434,4 +452,53 @@ bool app_context::update_env() const
     }
 
     return reset;
+}
+
+//------------------------------------------------------------------------------
+void app_context::start_logger() const
+{
+    if (is_logging_enabled())
+    {
+        // Discard any existing logger.  This is so Cmder can be compatible with
+        // Clink autorun and still override the scripts and profile paths.
+        if (logger::get())
+            delete logger::get();
+
+        str<256> log_path;
+        get_log_path(log_path);
+        unlink(log_path.c_str()); // Restart the log file on every inject.
+        new file_logger(log_path.c_str());
+
+        SYSTEMTIME now;
+        GetLocalTime(&now);
+        LOG("---- %04u/%02u/%02u %02u:%02u:%02u.%03u -------------------------------------------------",
+            now.wYear, now.wMonth, now.wDay,
+            now.wHour, now.wMinute, now.wSecond, now.wMilliseconds);
+
+        const char* host_name = m_host_name.empty() ? "<unknown>" : m_host_name.c_str();
+        LOG("Host process is '%s' (pid %d)", host_name, get_id());
+
+        str<> dll_path;
+        get_binaries_dir(dll_path);
+        LOG("DLL path is '%s'", dll_path.c_str());
+
+        {
+#pragma warning(push)
+#pragma warning(disable:4996)
+            OSVERSIONINFO ver = { sizeof(ver) };
+            if (GetVersionEx(&ver))
+            {
+                SYSTEM_INFO system_info;
+                GetNativeSystemInfo(&system_info);
+                LOG("Windows version %u.%u.%u (%s)",
+                    ver.dwMajorVersion,
+                    ver.dwMinorVersion,
+                    ver.dwBuildNumber,
+                    (system_info.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64) ? "x64" :
+                    ((system_info.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM64) ? "arm64" : "x86"));
+            }
+            LOG("Clink version %s (%s)", CLINK_VERSION_STR, AS_STR(ARCHITECTURE_NAME));
+#pragma warning(pop)
+        }
+    }
 }

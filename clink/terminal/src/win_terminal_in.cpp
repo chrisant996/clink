@@ -74,7 +74,6 @@ extern setting_enum g_default_bindings;
 extern "C" int32 is_locked_cursor();
 extern HANDLE get_recognizer_event();
 extern HANDLE get_task_manager_event();
-extern void task_manager_on_idle();
 extern void host_refresh_recognizer();
 
 //------------------------------------------------------------------------------

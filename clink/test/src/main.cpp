@@ -3,9 +3,11 @@
 
 #include "pch.h"
 
-#include "core/str.h"
-#include "core/settings.h"
-#include "core/os.h"
+#include <core/str.h>
+#include <core/settings.h>
+#include <core/os.h>
+#include <lib/recognizer.h>
+#include <lua/lua_task_manager.h>
 
 extern "C" {
 #include <readline/readline.h>
@@ -44,12 +46,6 @@ void host_mark_deprecated_argmatcher(const char* command)
 bool host_has_deprecated_argmatcher(const char* command)
 {
     return false;
-}
-
-//------------------------------------------------------------------------------
-void start_logger()
-{
-    assert(false);
 }
 
 //------------------------------------------------------------------------------
@@ -103,10 +99,7 @@ int32 main(int32 argc, char** argv)
     const char* prefix = (argc > 0) ? argv[0] : "";
     int32 result = (clatch::run(prefix) != true);
 
-    extern void shutdown_recognizer();
     shutdown_recognizer();
-
-    extern void shutdown_task_manager();
     shutdown_task_manager();
 
     if (timer)

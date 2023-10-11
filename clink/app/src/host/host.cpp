@@ -4,7 +4,6 @@
 #include "pch.h"
 #include "host.h"
 #include "host_lua.h"
-#include "version.h"
 
 #include <core/globber.h>
 #include <core/os.h>
@@ -190,8 +189,6 @@ static setting_bool g_debug_heap_stats(
 extern setting_bool g_classify_words;
 extern setting_color g_color_prompt;
 extern setting_bool g_prompt_async;
-
-extern void start_logger();
 
 extern void initialise_readline(const char* shell_name, const char* state_dir, const char* bin_dir);
 extern bool clink_maybe_handle_signal();

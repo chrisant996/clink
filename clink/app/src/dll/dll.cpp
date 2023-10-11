@@ -15,6 +15,8 @@
 #include <core/settings.h>
 #include <core/str.h>
 #include <core/str_tokeniser.h>
+#include <lib/recognizer.h>
+#include <lua/lua_task_manager.h>
 
 //------------------------------------------------------------------------------
 static constexpr const char* const c_clink_header =
@@ -102,17 +104,6 @@ static void failed()
 }
 
 //------------------------------------------------------------------------------
-static bool get_host_name(str_base& out)
-{
-    char buffer[280];
-    DWORD len = GetModuleFileName(nullptr, buffer, sizeof_array(buffer));
-    if (!len || len >= sizeof_array(buffer))
-        return false;
-
-    return path::get_name(buffer, out);
-}
-
-//------------------------------------------------------------------------------
 static void shutdown_clink()
 {
     seh_scope seh;
@@ -124,70 +115,13 @@ static void shutdown_clink()
         g_host = nullptr;
     }
 
-    extern void shutdown_task_manager();
     shutdown_task_manager();
-
-    extern void shutdown_recognizer();
     shutdown_recognizer();
 
     if (logger* logger = logger::get())
         delete logger;
 
     delete app_context::get();
-}
-
-//------------------------------------------------------------------------------
-void start_logger()
-{
-    auto* app_ctx = app_context::get();
-
-    if (app_ctx->is_logging_enabled())
-    {
-        // Discard any existing logger.  This is so Cmder can be compatible with
-        // Clink autorun and still override the scripts and profile paths.
-        if (logger::get())
-            delete logger::get();
-
-        str<256> log_path;
-        app_ctx->get_log_path(log_path);
-        unlink(log_path.c_str()); // Restart the log file on every inject.
-        new file_logger(log_path.c_str());
-
-        SYSTEMTIME now;
-        GetLocalTime(&now);
-        LOG("---- %04u/%02u/%02u %02u:%02u:%02u.%03u -------------------------------------------------",
-            now.wYear, now.wMonth, now.wDay,
-            now.wHour, now.wMinute, now.wSecond, now.wMilliseconds);
-
-        str<64> host_name;
-        if (!get_host_name(host_name))
-            host_name = "<unknown>";
-
-        LOG("Host process is '%s' (pid %d)", host_name.c_str(), app_ctx->get_id());
-
-        str<> dll_path;
-        app_ctx->get_binaries_dir(dll_path);
-        LOG("DLL path is '%s'", dll_path.c_str());
-
-        {
-#pragma warning(push)
-#pragma warning(disable:4996)
-            OSVERSIONINFO ver = { sizeof(ver) };
-            if (GetVersionEx(&ver))
-            {
-                SYSTEM_INFO system_info;
-                GetNativeSystemInfo(&system_info);
-                LOG("Windows version %u.%u.%u (%s)",
-                    ver.dwMajorVersion,
-                    ver.dwMinorVersion,
-                    ver.dwBuildNumber,
-                    (system_info.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64) ? "x64" : 
-                    ((system_info.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM64) ? "arm64" : "x86"));
-            }
-            LOG("Clink version %s (%s)", CLINK_VERSION_STR, AS_STR(ARCHITECTURE_NAME));
-#pragma warning(pop)
-        }
-    }
 }
 
 //------------------------------------------------------------------------------
@@ -248,13 +182,11 @@ INT_PTR WINAPI initialise_clink(const app_context::desc& app_desc)
 
     auto* app_ctx = new app_context(app_desc);
 
-    start_logger();
+    app_ctx->start_logger();
 
     // What process is the DLL loaded into?
     str<64> host_name;
-    if (app_desc.force)
-        host_name = "cmd.exe";
-    else if (!get_host_name(host_name))
+    if (!app_ctx->get_host_name(host_name))
     {
         ERR("Unable to get host name.");
         return false;

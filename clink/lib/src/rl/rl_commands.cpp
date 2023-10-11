@@ -14,6 +14,7 @@
 #include "ellipsify.h"
 #include "host_callbacks.h"
 #include "display_readline.h"
+#include "recognizer.h"
 
 #include "rl_suggestions.h"
 

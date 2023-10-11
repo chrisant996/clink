@@ -7,7 +7,6 @@
 #include "line_state_lua.h"
 #include "line_states_lua.h"
 #include "prompt.h"
-#include "recognizer.h"
 #include "async_lua_task.h"
 #include "command_link_dialog.h"
 #include "../../app/src/version.h" // Ugh.
@@ -28,6 +27,7 @@
 #include <lib/popup.h>
 #include <lib/cmd_tokenisers.h>
 #include <lib/reclassify.h>
+#include <lib/recognizer.h>
 #include <lib/matches_lookaside.h>
 #include <terminal/terminal_helpers.h>
 #include <terminal/printer.h>

@@ -2,4 +2,4 @@
 // License: http://opensource.org/licenses/MIT
 
 //------------------------------------------------------------------------------
-extern void reset_stdio_handles();
+void reset_stdio_handles();

@@ -39,9 +39,9 @@ public:
     void        get_script_path(str_base& out) const;
     void        get_script_path_readable(str_base& out) const;
     void        get_default_init_file(str_base& out) const;
+    bool        get_host_name(str_base& out) const;
     bool        update_env() const;
-
-    static void override_id(int32 id);
+    void        start_logger() const;
 
 private:
     void        get_script_path(str_base& out, bool readable) const;
@@ -49,5 +49,6 @@ private:
     void        init_binaries_dir();
     desc        m_desc;
     str<288>    m_binaries;
+    str<16>     m_host_name;
     mutable str_moveable m_validated;
 };

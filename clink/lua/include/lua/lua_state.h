@@ -4,6 +4,7 @@
 #pragma once
 
 #include <core/str.h>
+#include <lib/recognizer.h>
 
 #include <functional>
 #include <list>
@@ -17,9 +18,6 @@ struct lua_State;
 class str_base;
 class line_state;
 typedef double lua_Number;
-
-//------------------------------------------------------------------------------
-enum class recognition : char { unrecognized = -1, unknown, executable, navigate, max };
 
 //------------------------------------------------------------------------------
 int32 checkinteger(lua_State* state, int32 index, bool* isnum=nullptr);
