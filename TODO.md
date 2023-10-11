@@ -13,6 +13,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - Provide a sample .txt file that repros the issue.  Maybe multiple .txt files that chain together (or with a pause; is there an escape code for a pause?) to show the UX flow.
 
 ## Low Priority
+- Does `!` have to be treated as a word break in CMD (#511)?  Completing file names containing `!` is cumbersome since it needs to be quoted.  Maybe Clink could detect whether delayed expansion is enabled, only treat `!` as a word break when delayed expansion is enabled, and even treat `!` like `%` for completions.
 - Color improvements:
   - Color themes.  Some way to import color settings en masse.  Some way to export color settings as well?
   - More sophisticated match color definitions?
