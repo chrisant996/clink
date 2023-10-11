@@ -52,7 +52,6 @@ int __complete_get_screenwidth (void);
 int __get_y_or_n (int for_pager);
 char* __printable_part (char* pathname);
 int __stat_char (const char *filename, char match_type);
-uint32 cell_count(const char* in);
 
 } // extern "C"
 

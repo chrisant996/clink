@@ -21,6 +21,7 @@
 #include <lib/doskey.h>
 #include <lib/line_buffer.h>
 #include <lib/line_editor.h>
+#include <lib/clink_ctrlevent.h>
 #include <lua/lua_script_loader.h>
 #include <terminal/wcwidth.h>
 #include <terminal/terminal_helpers.h>
@@ -41,8 +42,6 @@ func_GetEnvironmentVariableW_t __Real_GetEnvironmentVariableW = GetEnvironmentVa
 func_SetConsoleTitleW_t __Real_SetConsoleTitleW = SetConsoleTitleW;
 
 //------------------------------------------------------------------------------
-extern void clink_shutdown_ctrlevent();
-extern int32 clink_is_signaled();
 extern bool clink_maybe_handle_signal();
 extern bool is_force_reload_scripts();
 extern void set_ctrl_wakeup_mask(UINT mask);

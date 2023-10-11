@@ -56,7 +56,6 @@ extern "C" {
 #include <compat/dirent.h>
 #include <readline/posixdir.h>
 #include <readline/history.h>
-extern void rl_replace_from_history(HIST_ENTRY *entry, int32 flags);
 extern int32 _rl_get_inserted_char(void);
 extern char* tgetstr(const char*, char**);
 extern int32 tputs(const char* str, int32 affcnt, int32 (*putc_func)(int32));

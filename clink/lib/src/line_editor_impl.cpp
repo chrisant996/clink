@@ -13,6 +13,8 @@
 #include "cmd_tokenisers.h"
 #include "doskey.h"
 #include "display_readline.h"
+#include "clink_ctrlevent.h"
+#include "recognizer.h"
 
 #include <core/base.h>
 #include <core/os.h>
@@ -42,10 +44,8 @@ extern setting_color g_color_histexpand;
 extern int32 g_suggestion_offset;
 
 extern "C" void host_clear_suggestion();
-extern bool check_recognizer_refresh();
 extern bool is_showing_argmatchers();
 extern bool win_fn_callback_pending();
-extern int32 clink_is_signaled();
 extern bool clink_maybe_handle_signal();
 extern void clear_need_collect_words();
 extern recognition recognize_command(const char* line, const char* word, bool quoted, bool& ready, str_base* file=nullptr);

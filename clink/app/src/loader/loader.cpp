@@ -4,6 +4,7 @@
 #include "pch.h"
 #include "utils/app_context.h"
 #include "utils/seh_scope.h"
+#include "utils/usage.h"
 #include "version.h"
 
 #include <core/base.h>
@@ -33,53 +34,6 @@ int32 interpreter(int32, char**);
 bool g_elevated = false;
 
 //------------------------------------------------------------------------------
-static void print_with_wrapping(int32 max_len, const char* arg, const char* desc, uint32 wrap)
-{
-    str<128> buf;
-    ecma48_wrapper wrapper(desc, wrap);
-    while (wrapper.next(buf))
-    {
-        printf("  %-*s  %s", max_len, arg, buf.c_str());
-        arg = "";
-    }
-}
-
-//------------------------------------------------------------------------------
-void puts_help(const char* const* help_pairs, const char* const* other_pairs=nullptr)
-{
-    int32 max_len = -1;
-    for (int32 i = 0; help_pairs[i]; i += 2)
-        max_len = max((int32)strlen(help_pairs[i]), max_len);
-    if (other_pairs)
-        for (int32 i = 0; other_pairs[i]; i += 2)
-            max_len = max((int32)strlen(other_pairs[i]), max_len);
-
-    DWORD wrap = 78;
-#if 0
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi))
-    {
-        if (csbi.dwSize.X >= 40)
-            csbi.dwSize.X -= 2;
-        wrap = max<DWORD>(wrap, min<DWORD>(100, csbi.dwSize.X));
-    }
-#endif
-    if (wrap <= DWORD(max_len + 20))
-        wrap = 0;
-    if (wrap)
-        wrap -= 2 + max_len + 2;
-
-    for (int32 i = 0; help_pairs[i]; i += 2)
-    {
-        const char* arg = help_pairs[i];
-        const char* desc = help_pairs[i + 1];
-        print_with_wrapping(max_len, arg, desc, wrap);
-    }
-
-    puts("");
-}
-
-//------------------------------------------------------------------------------
 static void show_usage()
 {
     static const char* help_usage = "Usage: [options] <verb> [verb_options]\n";
@@ -102,8 +56,6 @@ static void show_usage()
         "--version",       "Print Clink's version and exit.",
         nullptr
     };
-
-    extern void puts_clink_header();
 
     puts_clink_header();
     puts(help_usage);

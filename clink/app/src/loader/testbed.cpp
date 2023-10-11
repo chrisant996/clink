@@ -16,12 +16,12 @@
 #include <terminal/terminal_helpers.h>
 #include <terminal/printer.h>
 #include <utils/app_context.h>
+#include <utils/usage.h>
 #include <getopt.h>
 
 //------------------------------------------------------------------------------
 extern INT_PTR WINAPI initialise_clink(const app_context::desc&);
 extern void get_profile_path(const char* in, str_base& out);
-extern void puts_help(const char* const* help_pairs, const char* const* other_pairs=nullptr);
 
 //------------------------------------------------------------------------------
 static int32 editline()
@@ -104,8 +104,6 @@ int32 testbed(int32 argc, char** argv)
         "-h, --help",           "Shows this help text.",
         nullptr
     };
-
-    extern void puts_clink_header();
 
     // Parse arguments
     bool hook = false;

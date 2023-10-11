@@ -8,13 +8,12 @@
 #include "editor_module.h"
 #include "line_buffer.h"
 #include "line_state.h"
+#include "clink_ctrlevent.h"
 
 #include <core/base.h>
 #include <core/settings.h>
 #include <core/str_iter.h>
 #include <terminal/printer.h>
-
-extern int32 clink_is_signaled();
 
 setting_color g_color_interact(
     "color.interact",

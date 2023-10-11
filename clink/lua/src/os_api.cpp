@@ -14,6 +14,7 @@
 #include <core/str.h>
 #include <core/str_iter.h>
 #include <lib/doskey.h>
+#include <lib/clink_ctrlevent.h>
 #include <process/process.h>
 #include <sys/utime.h>
 #include <ntverp.h> // for VER_PRODUCTMAJORVERSION to deduce SDK version
@@ -29,9 +30,6 @@ extern int _rl_match_hidden_files;
 //------------------------------------------------------------------------------
 extern setting_bool g_files_hidden;
 extern setting_bool g_files_system;
-
-//------------------------------------------------------------------------------
-extern int32 clink_is_signaled();
 
 //------------------------------------------------------------------------------
 extern "C" void __cdecl __acrt_errno_map_os_error(unsigned long const oserrno);

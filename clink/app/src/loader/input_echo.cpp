@@ -2,6 +2,7 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
+#include "utils/usage.h"
 
 #include <core/str.h>
 #include <core/settings.h>
@@ -24,7 +25,6 @@ int32 input_echo(int32 argc, char** argv)
         const char* arg = argv[i];
         if (_stricmp(arg, "--help") == 0 || _stricmp(arg, "-h") == 0 || _stricmp(arg, "-?") == 0)
         {
-            extern void puts_clink_header();
             puts_clink_header();
             printf("Usage: %s\n\n", argv[0]);
             puts("Echos the sequence of characters for each key pressed.\n");

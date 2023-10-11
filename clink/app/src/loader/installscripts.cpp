@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "utils/app_context.h"
+#include "utils/usage.h"
 
 #include <core/base.h>
 #include <core/path.h>
@@ -13,7 +14,6 @@
 #include <getopt.h>
 
 //------------------------------------------------------------------------------
-void puts_help(const char* const* help_pairs, const char* const* other_pairs=nullptr);
 void get_installed_scripts(str_base& out);
 bool set_installed_scripts(char const* in);
 
@@ -103,7 +103,6 @@ static bool change_value(bool install, char** argv=nullptr, int32 argc=0)
 //------------------------------------------------------------------------------
 static void print_help(bool install)
 {
-    extern void puts_clink_header();
     const char* uni = install ? "i" : "uni";
     const char* Uni = install ? "I" : "Uni";
 

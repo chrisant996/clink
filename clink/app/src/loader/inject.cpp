@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "utils/app_context.h"
+#include "utils/usage.h"
 #include "version.h"
 
 #include <core/base.h>
@@ -18,7 +19,6 @@
 
 //------------------------------------------------------------------------------
 INT_PTR WINAPI  initialise_clink(const app_context::desc&);
-void            puts_help(const char* const* help_pairs, const char* const* other_pairs=nullptr);
 
 //------------------------------------------------------------------------------
 static bool get_file_info(const wchar_t* file, FILETIME& ft, ULONGLONG& size)
@@ -504,8 +504,6 @@ int32 inject(int32 argc, char** argv)
         "-h, --help",           "Shows this help text.",
         nullptr
     };
-
-    extern void puts_clink_header();
 
     // Parse arguments
     DWORD target_pid = 0;

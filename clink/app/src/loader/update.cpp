@@ -4,6 +4,7 @@
 #include "pch.h"
 #include "host/host_lua.h"
 #include "utils/app_context.h"
+#include "utils/usage.h"
 
 #include <core/base.h>
 #include <core/log.h>
@@ -24,7 +25,6 @@ extern "C" {
 
 //------------------------------------------------------------------------------
 extern void host_load_app_scripts(lua_state& lua);
-void puts_help(const char* const* help_pairs, const char* const* other_pairs=nullptr);
 extern bool g_elevated;
 
 //------------------------------------------------------------------------------
@@ -188,8 +188,6 @@ int32 update(int32 argc, char** argv)
         "-n, --check",              "Do nothing; check for an update, but don't install it.",
         nullptr
     };
-
-    extern void puts_clink_header();
 
     // Parse arguments
     DWORD target_pid = 0;

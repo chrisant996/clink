@@ -62,8 +62,6 @@ extern "C" {
 
 #include "hooks.h"
 
-uint32 cell_count(const char* in);
-
 extern void (*rl_fwrite_function)(FILE*, const char*, int);
 extern void (*rl_fflush_function)(FILE*);
 

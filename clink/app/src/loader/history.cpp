@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "utils/app_context.h"
+#include "utils/usage.h"
 
 #include <core/base.h>
 #include <core/log.h>
@@ -14,6 +15,7 @@
 #include <terminal/terminal.h>
 #include <terminal/terminal_helpers.h>
 #include <terminal/printer.h>
+#include <terminal/ecma48_iter.h>
 
 #include <getopt.h>
 #include <stdio.h>
@@ -24,10 +26,6 @@
 //------------------------------------------------------------------------------
 extern setting_bool g_save_history;
 extern setting_enum g_history_timestamp;
-
-//------------------------------------------------------------------------------
-extern "C" uint32 cell_count(const char* in);
-void puts_help(const char* const* help_pairs, const char* const* other_pairs=nullptr);
 
 //------------------------------------------------------------------------------
 static bool s_diag = false;
@@ -319,8 +317,6 @@ static int32 print_expansion(const char* line)
 //------------------------------------------------------------------------------
 static int32 print_help()
 {
-    extern void puts_clink_header();
-
     static const char* const help_verbs[] = {
         "[n]",           "Print history items (only the last N items if specified).",
         "clear",         "Completely clears the command history.",

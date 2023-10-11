@@ -2,6 +2,7 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
+#include "utils/usage.h"
 
 #include <core/str_iter.h>
 #include <core/settings.h>
@@ -26,9 +27,6 @@ extern "C" {
 #include <readline/readline.h>
 #include <readline/rlprivate.h>
 };
-
-//------------------------------------------------------------------------------
-void puts_help(const char* const* help_pairs, const char* const* other_pairs=nullptr);
 
 //------------------------------------------------------------------------------
 #define CSI(x) "\x1b[" #x
@@ -499,8 +497,6 @@ int32 draw_test(int32 argc, char** argv)
         "-h, --help",               "Shows this help text.",
         nullptr
     };
-
-    extern void puts_clink_header();
 
     bool pause = false;
     int32 timeout_ms = 0;

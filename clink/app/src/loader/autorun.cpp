@@ -2,6 +2,7 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
+#include "utils/usage.h"
 
 #include <core/base.h>
 #include <core/str.h>
@@ -13,7 +14,6 @@ typedef bool    (dispatch_func_t)(const char*, int32);
 str<>           g_clink_args;
 int32           g_all_users  = 0;
 static bool     s_was_installed = false;
-void            puts_help(const char* const* help_pairs, const char* const* other_pairs=nullptr);
 
 
 
@@ -424,8 +424,6 @@ static void print_help()
         "-h, --help",           "Shows this help text.",
         nullptr
     };
-
-    extern void puts_clink_header();
 
     puts_clink_header();
 

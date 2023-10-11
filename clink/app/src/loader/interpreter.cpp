@@ -2,6 +2,7 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
+#include "utils/usage.h"
 
 #include <core/os.h>
 #include <core/log.h>
@@ -23,9 +24,6 @@ extern "C" {
 
 #include <signal.h>
 #include <vector>
-
-//------------------------------------------------------------------------------
-extern void puts_help(const char* const* help_pairs, const char* const* other_pairs=nullptr);
 
 //------------------------------------------------------------------------------
 #if !defined(LUA_PROMPT)
@@ -115,8 +113,6 @@ int32 interpreter(int32 argc, char** argv)
         "-h, --help",           "Shows this help text.",
         nullptr
     };
-
-    extern void puts_clink_header();
 
     struct run_arg {
         int32 opt;

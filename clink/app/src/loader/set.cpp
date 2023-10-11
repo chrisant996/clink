@@ -4,6 +4,7 @@
 #include "pch.h"
 #include "host/host_lua.h"
 #include "utils/app_context.h"
+#include "utils/usage.h"
 
 #include <core/base.h>
 #include <core/path.h>
@@ -20,7 +21,6 @@
 
 //------------------------------------------------------------------------------
 extern void host_load_app_scripts(lua_state& lua);
-void puts_help(const char* const* help_pairs, const char* const* other_pairs=nullptr);
 
 //------------------------------------------------------------------------------
 static void list_keys()
@@ -254,8 +254,6 @@ static bool set_value(const char* key, char** argv=nullptr, int32 argc=0)
 //------------------------------------------------------------------------------
 static void print_help()
 {
-    extern void puts_clink_header();
-
     static const char* const help[] = {
         "setting_name",     "Name of the setting whose value is to be set.",
         "value",            "Value to set the setting to.",
