@@ -25,3 +25,4 @@ const char*         find_key_name(const char* keyseq, int32& len, int32& eqclass
 
 //------------------------------------------------------------------------------
 void                set_verbose_input(int32 verbose); // 1 = inline, 2 = at top of screen
+void                interrupt_input();

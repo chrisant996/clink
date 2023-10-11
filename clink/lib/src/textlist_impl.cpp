@@ -81,7 +81,6 @@ extern const char* get_popup_desc_colors();
 extern int32 host_remove_history(int32 rl_history_index, const char* line);
 extern bool host_remove_dir_history(int32 index);
 extern void force_signaled_redisplay();
-extern void interrupt_input();
 
 //------------------------------------------------------------------------------
 static textlist_impl* s_textlist = nullptr;
