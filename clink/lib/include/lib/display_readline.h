@@ -1,5 +1,6 @@
 #pragma once
 
+#include <core/base.h>
 #include <core/str.h>
 #include <vector>
 
@@ -14,13 +15,11 @@
 class line_buffer;
 typedef struct _history_expansion history_expansion;
 
-extern void reset_readline_display();
-extern void refresh_terminal_size();
-extern void display_readline();
-extern void set_history_expansions(history_expansion* list=nullptr);
-extern void resize_readline_display(const char* prompt, const line_buffer& buffer, const char* _prompt, const char* _rprompt);
-extern uint32 get_readline_display_top_offset();
-extern bool translate_xy_to_readline(uint32 x, uint32 y, int32& pos, bool clip=false);
+void refresh_terminal_size();
+void display_readline();
+void set_history_expansions(history_expansion* list=nullptr);
+void resize_readline_display(const char* prompt, const line_buffer& buffer, const char* _prompt, const char* _rprompt);
+bool translate_xy_to_readline(uint32 x, uint32 y, int32& pos, bool clip=false);
 
 //------------------------------------------------------------------------------
 #if defined(USE_SUGGESTION_HINT_COMMENTROW) || defined(USE_SUGGESTION_HINT_INLINE)
@@ -44,7 +43,7 @@ struct prompt_problem_details
     str_moveable    code;
     int32           offset;
 };
-extern int32 prompt_contains_problem_codes(const char* prompt, std::vector<prompt_problem_details>* out=nullptr);
+int32 prompt_contains_problem_codes(const char* prompt, std::vector<prompt_problem_details>* out=nullptr);
 
 //------------------------------------------------------------------------------
 #define FACE_INVALID        ((char)1)

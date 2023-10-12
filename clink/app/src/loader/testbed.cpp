@@ -2,6 +2,8 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
+#include "dll/dll.h"
+#include "loader/loader.h"
 
 #include <core/os.h>
 #include <core/str_compare.h>
@@ -18,10 +20,6 @@
 #include <utils/app_context.h>
 #include <utils/usage.h>
 #include <getopt.h>
-
-//------------------------------------------------------------------------------
-extern INT_PTR WINAPI initialise_clink(const app_context::desc&);
-extern void get_profile_path(const char* in, str_base& out);
 
 //------------------------------------------------------------------------------
 static int32 editline()

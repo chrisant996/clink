@@ -133,7 +133,7 @@ static DWORD s_host_input_mode = -1;
 static DWORD s_clink_input_mode = -1;
 
 //------------------------------------------------------------------------------
-void save_host_input_mode(DWORD mode)
+static void save_host_input_mode(DWORD mode)
 {
     s_host_input_mode = mode;
 }
@@ -267,7 +267,6 @@ static bool strstri(const char* needle, const char* haystack)
 console_config::console_config(HANDLE handle, bool accept_mouse_input)
     : m_handle(handle ? handle : GetStdHandle(STD_INPUT_HANDLE))
 {
-    extern void save_host_input_mode(DWORD);
     GetConsoleMode(m_handle, &m_prev_mode);
     save_host_input_mode(m_prev_mode);
 

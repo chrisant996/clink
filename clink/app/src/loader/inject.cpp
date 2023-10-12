@@ -2,6 +2,7 @@
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
+#include "dll/dll.h"
 #include "utils/app_context.h"
 #include "utils/usage.h"
 #include "version.h"
@@ -16,9 +17,6 @@
 #include <process/process.h>
 #include <process/vm.h>
 #include <process/pe.h>
-
-//------------------------------------------------------------------------------
-INT_PTR WINAPI  initialise_clink(const app_context::desc&);
 
 //------------------------------------------------------------------------------
 static bool get_file_info(const wchar_t* file, FILETIME& ft, ULONGLONG& size)

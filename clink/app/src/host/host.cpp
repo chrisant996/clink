@@ -190,7 +190,6 @@ extern setting_bool g_classify_words;
 extern setting_color g_color_prompt;
 extern setting_bool g_prompt_async;
 
-extern void initialise_readline(const char* shell_name, const char* state_dir, const char* bin_dir);
 extern bool clink_maybe_handle_signal();
 extern bool get_sticky_search_history();
 extern bool has_sticky_search_position();
@@ -897,6 +896,7 @@ skip_errorlevel:
         // command names in argmatchers).
         str_moveable bin_dir;
         app->get_binaries_dir(bin_dir);
+        extern void initialise_readline(const char* shell_name, const char* state_dir, const char* bin_dir);
         initialise_readline("clink", state_dir.c_str(), bin_dir.c_str());
         initialise_lua(lua);
         lua.load_scripts();

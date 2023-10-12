@@ -4,11 +4,10 @@
 
 #include "pch.h"
 
+#include <terminal/terminal.h>
+
 #include <signal.h>
 #include <assert.h>
-
-//------------------------------------------------------------------------------
-extern void interrupt_input();
 
 //------------------------------------------------------------------------------
 static volatile int32 clink_signal = 0;

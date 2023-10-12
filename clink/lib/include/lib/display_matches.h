@@ -46,9 +46,9 @@ int32 __fnwidth(const char* string);
 //  DESCRIPTION (nul terminated char string)
 extern "C" void display_matches(char **matches);
 
-extern void override_line_state(const char* line, const char* needle, int32 point);
+void override_line_state(const char* line, const char* needle, int32 point);
 #ifdef DEBUG
-extern bool is_line_state_overridden();
+bool is_line_state_overridden();
 #endif
 
 class override_match_line_state
