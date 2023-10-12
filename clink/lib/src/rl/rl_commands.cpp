@@ -103,55 +103,6 @@ extern "C" void reset_cached_font();
 extern bool expand_history(const char* in, str_base& out);
 
 //------------------------------------------------------------------------------
-static UINT s_dwCtrlWakeupMask = 0;
-void set_ctrl_wakeup_mask(UINT mask)
-{
-    s_dwCtrlWakeupMask = mask;
-}
-
-//------------------------------------------------------------------------------
-template<class T> void strip_wakeup_chars_worker(T* chars, uint32 max_chars)
-{
-    if (!max_chars)
-        return;
-
-    T* read = chars;
-    T* write = chars;
-
-    while (max_chars--)
-    {
-        const T c = *read;
-        if (!c)
-            break;
-
-        if (c < 0 || c >= 32 || !(s_dwCtrlWakeupMask & 1 << c))
-        {
-            if (write != read)
-                *write = c;
-            ++write;
-        }
-
-        ++read;
-    }
-
-    if (write != read)
-        *write = '\0';
-}
-
-//------------------------------------------------------------------------------
-void strip_wakeup_chars(wchar_t* chars, uint32 max_chars)
-{
-    strip_wakeup_chars_worker(chars, max_chars);
-}
-
-//------------------------------------------------------------------------------
-void strip_wakeup_chars(str_base& out)
-{
-    uint32 max_chars = out.length();
-    strip_wakeup_chars_worker(out.data(), max_chars);
-}
-
-//------------------------------------------------------------------------------
 static void strip_crlf(char* line, std::list<str_moveable>& overflow, int32 setting, bool* _done)
 {
     bool has_overflow = false;

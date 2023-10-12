@@ -22,6 +22,7 @@
 #include <lib/line_editor.h>
 #include <lib/intercept.h>
 #include <lib/clink_ctrlevent.h>
+#include <lib/clink_rl_signal.h>
 #include <lib/errfile_reader.h>
 #include <lua/lua_script_loader.h>
 #include <lua/lua_state.h>
@@ -190,7 +191,6 @@ extern setting_bool g_classify_words;
 extern setting_color g_color_prompt;
 extern setting_bool g_prompt_async;
 
-extern bool clink_maybe_handle_signal();
 extern bool get_sticky_search_history();
 extern bool has_sticky_search_position();
 extern bool get_sticky_search_add_history(const char* line);

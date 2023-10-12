@@ -22,6 +22,7 @@
 #include <lib/line_buffer.h>
 #include <lib/line_editor.h>
 #include <lib/clink_ctrlevent.h>
+#include <lib/wakeup_chars.h>
 #include <lua/lua_script_loader.h>
 #include <terminal/wcwidth.h>
 #include <terminal/terminal_helpers.h>
@@ -42,10 +43,7 @@ func_GetEnvironmentVariableW_t __Real_GetEnvironmentVariableW = GetEnvironmentVa
 func_SetConsoleTitleW_t __Real_SetConsoleTitleW = SetConsoleTitleW;
 
 //------------------------------------------------------------------------------
-extern bool clink_maybe_handle_signal();
 extern bool is_force_reload_scripts();
-extern void set_ctrl_wakeup_mask(UINT mask);
-extern void strip_wakeup_chars(wchar_t* chars, uint32 max_chars);
 extern printer* g_printer;
 extern str<> g_last_prompt;
 
