@@ -9,8 +9,7 @@ class input_idle
 public:
     virtual             ~input_idle() = default;
     virtual void        reset() = 0;
-    virtual unsigned    get_timeout() = 0;
-    virtual void*       get_waitevent() = 0;
-    virtual void        on_idle() = 0;
-    virtual void        on_task_manager() = 0;
+    virtual uint32      get_timeout() = 0;
+    virtual uint32      get_wait_events(void** events, size_t max) = 0;
+    virtual void        on_wait_event(uint32 index) = 0;
 };

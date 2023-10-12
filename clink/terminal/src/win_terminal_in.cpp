@@ -71,12 +71,6 @@ extern setting_bool g_adjust_cursor_style;
 extern setting_enum g_default_bindings;
 
 //------------------------------------------------------------------------------
-extern "C" int32 is_locked_cursor();
-extern HANDLE get_recognizer_event();
-extern HANDLE get_task_manager_event();
-extern void host_refresh_recognizer();
-
-//------------------------------------------------------------------------------
 static HANDLE s_interrupt = NULL;
 
 //------------------------------------------------------------------------------
@@ -745,29 +739,15 @@ void win_terminal_in::read_console(input_idle* callback, DWORD _timeout, bool pe
 
         while (true)
         {
-            unsigned count = 1;
+            uint32 count = 1;
             HANDLE handles[5] = { m_stdin };
-            DWORD recognizer_waited = WAIT_FAILED;
-            DWORD task_manager_waited = WAIT_FAILED;
+            const uint32 index_callback_events = count;
 
             if (s_interrupt)
                 handles[count++] = s_interrupt;
 
-            if (callback)
-            {
-                if (void* event = get_recognizer_event())
-                {
-                    recognizer_waited = WAIT_OBJECT_0 + count;
-                    handles[count++] = event;
-                }
-                if (void* event = get_task_manager_event())
-                {
-                    task_manager_waited = WAIT_OBJECT_0 + count;
-                    handles[count++] = event;
-                }
-                if (void* event = callback->get_waitevent())
-                    handles[count++] = event;
-            }
+            const uint32 num_callback_events = callback ? callback->get_wait_events(handles + count, sizeof_array(handles) - count) : 0;
+            count += num_callback_events;
 
             assert(count <= sizeof_array(handles));
 
@@ -798,14 +778,11 @@ void win_terminal_in::read_console(input_idle* callback, DWORD _timeout, bool pe
                 }
             }
 
-            if (callback)
+            if (callback &&
+                waited >= WAIT_OBJECT_0 + index_callback_events &&
+                waited < WAIT_OBJECT_0 + index_callback_events + num_callback_events)
             {
-                if (waited == recognizer_waited)
-                    host_refresh_recognizer();
-                else if (waited == task_manager_waited)
-                    callback->on_task_manager();
-                else
-                    callback->on_idle();
+                callback->on_wait_event(waited - WAIT_OBJECT_0 + index_callback_events);
             }
 
             if (has_mode)

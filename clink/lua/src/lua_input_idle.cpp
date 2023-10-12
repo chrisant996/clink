@@ -21,7 +21,7 @@ extern "C" {
 //------------------------------------------------------------------------------
 extern void host_filter_prompt();
 extern void host_invalidate_matches();
-extern void set_yield_wake_event(HANDLE event);
+extern void host_refresh_recognizer();
 static lua_input_idle* s_idle = nullptr;
 
 //------------------------------------------------------------------------------
@@ -32,11 +32,13 @@ void kick_idle()
 }
 
 //------------------------------------------------------------------------------
+enum class input_idle_events { idle, recognizer, task_manager, max };
+
+//------------------------------------------------------------------------------
 bool lua_input_idle::s_signaled_delayed_init = false;
 bool lua_input_idle::s_signaled_reclassify = false;
 static bool s_refilter_after_terminal_resize = false;
 static DWORD s_terminal_resized = 0;    // Tick count of most recent resize.
-static HANDLE s_wake_event = 0;
 
 // After the terminal is resized, wait for this many milliseconds before
 // automatically rerunning the prompt filters.
@@ -48,11 +50,6 @@ lua_input_idle::lua_input_idle(lua_state& state)
 {
     assert(!s_idle);
     s_idle = this;
-    if (!s_wake_event)
-    {
-        s_wake_event = CreateEvent(nullptr, false, false, nullptr);
-        set_yield_wake_event(s_wake_event);
-    }
 }
 
 //------------------------------------------------------------------------------
@@ -84,7 +81,7 @@ bool lua_input_idle::is_enabled()
 }
 
 //------------------------------------------------------------------------------
-unsigned lua_input_idle::get_timeout()
+uint32 lua_input_idle::get_timeout()
 {
     // When terminal resize handling is active, it controls the timeout.
     // Coroutines are not resumed while the terminal is being resized.
@@ -115,13 +112,47 @@ unsigned lua_input_idle::get_timeout()
     if (!isnum)
         return INFINITE;
 
-    return (sec > 0) ? unsigned(sec * 1000) : 0;
+    return (sec > 0) ? uint32(sec * 1000) : 0;
 }
 
 //------------------------------------------------------------------------------
-void* lua_input_idle::get_waitevent()
+uint32 lua_input_idle::get_wait_events(void** events, size_t max)
 {
-    return s_wake_event;
+    assert(max >= uint32(input_idle_events::max));
+
+    uint32 index = 0;
+    if (index < max)
+    {
+        assert(uint32(input_idle_events::idle) == index);
+        events[index++] = get_idle_event();
+    }
+    if (index < max)
+    {
+        assert(uint32(input_idle_events::recognizer) == index);
+        events[index++] = get_recognizer_event();
+    }
+    if (index < max)
+    {
+        assert(uint32(input_idle_events::task_manager) == index);
+        events[index++] = get_task_manager_event();
+    }
+    return index;
+}
+
+//------------------------------------------------------------------------------
+void lua_input_idle::on_wait_event(uint32 index)
+{
+    assert(index >= 0);
+    assert(index < uint32(input_idle_events::max));
+    const input_idle_events event = input_idle_events(index);
+
+    switch (event)
+    {
+    case input_idle_events::idle:           on_idle(); break;
+    case input_idle_events::recognizer:     host_refresh_recognizer(); break;
+    case input_idle_events::task_manager:   task_manager_on_idle(m_state); break;
+    default:                                assert(false); break;
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -170,12 +201,6 @@ void lua_input_idle::on_idle()
 }
 
 //------------------------------------------------------------------------------
-void lua_input_idle::on_task_manager()
-{
-    task_manager_on_idle(m_state);
-}
-
-//------------------------------------------------------------------------------
 void lua_input_idle::kick()
 {
     if (!m_enabled && has_coroutines())
@@ -194,6 +219,13 @@ void lua_input_idle::signal_delayed_init()
 void lua_input_idle::signal_reclassify()
 {
     s_signaled_reclassify = true;
+}
+
+//------------------------------------------------------------------------------
+HANDLE lua_input_idle::get_idle_event()
+{
+    static HANDLE s_idle_event = CreateEvent(nullptr, false, false, nullptr);
+    return s_idle_event;
 }
 
 //------------------------------------------------------------------------------

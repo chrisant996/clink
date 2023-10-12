@@ -4,6 +4,7 @@
 #include "pch.h"
 #include "yield.h"
 #include "lua_state.h"
+#include "lua_input_idle.h"
 
 #include <core/os.h>
 
@@ -12,15 +13,6 @@
 
 //------------------------------------------------------------------------------
 static HANDLE s_wake_event = nullptr;
-
-//------------------------------------------------------------------------------
-void set_yield_wake_event(HANDLE event)
-{
-    // Borrow a ref from the caller.
-    s_wake_event = event;
-}
-
-
 
 //------------------------------------------------------------------------------
 yield_thread::yield_thread()
@@ -48,7 +40,11 @@ bool yield_thread::createthread()
     assert(!m_ready_event);
     os::get_current_dir(m_cwd);
     if (!s_wake_event)
-        return false;
+    {
+        s_wake_event = lua_input_idle::get_idle_event();
+        if (!s_wake_event)
+            return false;
+    }
     m_ready_event = CreateEvent(nullptr, true, false, nullptr);
     if (!m_ready_event)
         return false;
