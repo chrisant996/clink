@@ -334,7 +334,6 @@ int32 match_builder_lua::matches_ready(lua_State* state)
     if (!isnum)
         return 0;
 
-    extern bool notify_matches_ready(std::shared_ptr<match_builder_toolkit> toolkit, int32 generation_id);
     lua_pushboolean(state, notify_matches_ready(m_toolkit, id));
     return 1;
 }

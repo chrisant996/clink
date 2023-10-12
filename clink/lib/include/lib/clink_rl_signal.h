@@ -7,3 +7,5 @@
 
 void clink_sighandler(int32 sig);
 bool clink_maybe_handle_signal();
+
+void force_signaled_redisplay();

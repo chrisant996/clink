@@ -28,3 +28,7 @@ const char* get_last_luafunc();
 void    override_rl_last_func(rl_command_func_t* func, bool force_when_null=false);
 int32   macro_hook_func(const char* macro);
 void    clear_macro_descriptions();
+
+//------------------------------------------------------------------------------
+void    signal_terminal_resized();
+void    set_refilter_after_resize(bool refilter);

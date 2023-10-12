@@ -273,3 +273,4 @@ public:
 
 //------------------------------------------------------------------------------
 std::shared_ptr<match_builder_toolkit> make_match_builder_toolkit(int32 generation_id, uint32 end_word_offset);
+bool notify_matches_ready(std::shared_ptr<match_builder_toolkit> toolkit, int32 generation_id);

@@ -47,11 +47,12 @@ extern "C" {
 
 
 //------------------------------------------------------------------------------
+// TODO: Host interface.
 extern void host_signal_delayed_init();
 extern void host_mark_deprecated_argmatcher(const char* name);
+
 extern void set_suggestion_started(const char* line);
 extern void set_suggestion(const char* line, uint32 endword_offset, const char* suggestion, uint32 offset);
-extern void set_refilter_after_resize(bool refilter);
 extern const char* get_popup_colors();
 extern const char* get_popup_desc_colors();
 extern setting_enum g_dupe_mode;

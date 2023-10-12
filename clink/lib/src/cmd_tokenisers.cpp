@@ -398,6 +398,7 @@ word_token cmd_command_tokeniser::next(uint32& offset, uint32& length)
 //------------------------------------------------------------------------------
 bool cmd_command_tokeniser::has_deprecated_argmatcher(const char* command)
 {
+    // TODO: Host interface.
     extern bool host_has_deprecated_argmatcher(const char* command);
     return host_has_deprecated_argmatcher(command);
 }

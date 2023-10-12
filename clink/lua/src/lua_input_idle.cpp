@@ -19,6 +19,7 @@ extern "C" {
 }
 
 //------------------------------------------------------------------------------
+// TODO: Host interface.
 extern void host_filter_prompt();
 extern void host_invalidate_matches();
 extern void host_refresh_recognizer();

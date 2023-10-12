@@ -91,10 +91,12 @@ extern word_collector* g_word_collector;
 extern editor_module::result* g_result;
 extern const char* get_found_ansi_handler();
 extern bool get_is_auto_ansi_handler();
-extern void host_cmd_enqueue_lines(std::list<str_moveable>& lines, bool hide_prompt, bool show_line);
-extern void host_get_app_context(int32& id, host_context& context);
 extern "C" int32 show_cursor(int32 visible);
 extern void set_suggestion(const char* line, uint32 endword_offset, const char* suggestion, uint32 offset);
+
+// TODO: Host interface.
+extern void host_cmd_enqueue_lines(std::list<str_moveable>& lines, bool hide_prompt, bool show_line);
+extern void host_get_app_context(int32& id, host_context& context);
 extern "C" void host_clear_suggestion();
 
 // This is implemented in the app layer, which makes it inaccessible to lower

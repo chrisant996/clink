@@ -90,14 +90,16 @@ extern int          _rl_last_v_pos;
 #endif
 } // extern "C"
 
+// TODO: Host interface.
 extern void host_send_event(const char* event_name);
 extern void host_send_oninputlinechanged_event(const char* line);
 extern int32 host_filter_matches(char** matches);
-extern void signal_terminal_resized();
+
 extern setting_color g_color_interact;
 extern int32 g_prompt_refilter;
 extern int32 g_prompt_redisplay;
 
+// TODO: Refactor to avoid globals.
 terminal_in*        s_direct_input = nullptr;       // for read_key_hook
 terminal_in*        s_processed_input = nullptr;    // for read thunk
 line_buffer*        g_rl_buffer = nullptr;

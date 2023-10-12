@@ -78,9 +78,9 @@ extern setting_bool g_fuzzy_accent;
 extern setting_enum g_history_timestamp;
 extern const char* get_popup_colors();
 extern const char* get_popup_desc_colors();
+// TODO: Host interface.
 extern int32 host_remove_history(int32 rl_history_index, const char* line);
 extern bool host_remove_dir_history(int32 index);
-extern void force_signaled_redisplay();
 
 //------------------------------------------------------------------------------
 static textlist_impl* s_textlist = nullptr;
