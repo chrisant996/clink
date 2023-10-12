@@ -48,7 +48,6 @@ extern "C" void host_clear_suggestion();
 extern bool is_showing_argmatchers();
 extern bool win_fn_callback_pending();
 extern void clear_need_collect_words();
-extern recognition recognize_command(const char* line, const char* word, bool quoted, bool& ready, str_base* file=nullptr);
 extern std::shared_ptr<match_builder_toolkit> get_deferred_matches(int32 generation_id);
 
 

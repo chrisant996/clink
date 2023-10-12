@@ -12,8 +12,10 @@
 #include <core/str_compare.h>
 #include <core/str_iter.h>
 #include <terminal/ecma48_iter.h>
-#include "lib/matches.h"
-#include "lib/match_colors.h"
+#include <lib/line_editor_integration.h>
+#include <lib/rl_integration.h>
+#include <lib/matches.h>
+#include <lib/match_colors.h>
 #include "match_builder_lua.h"
 #include "prompt.h"
 
@@ -31,11 +33,7 @@ extern const char*      rl_readline_name;
 extern int              _rl_last_v_pos;
 }
 
-extern matches* get_mutable_matches(bool nosort=false);
-extern void force_update_internal(bool restrict);
-extern const char* get_last_luafunc();
-extern void override_rl_last_func(rl_command_func_t* func, bool force_when_null=false);
-
+// TODO: Clean up extern.
 extern int32 count_prompt_lines(const char* prompt_prefix);
 
 
@@ -559,7 +557,6 @@ static int32 invoke_command(lua_State* state)
         if (tmp.length() && tmp[tmp.length() - 1] == '"')
             tmp.truncate(tmp.length() - 1);
 
-        extern int32 macro_hook_func(const char* macro);
         if (!macro_hook_func(tmp.c_str()))
         {
             int32 len = 0;

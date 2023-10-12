@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Martin Ridgers
+// Copyright (c) 2023 Christopher Antos
 // License: http://opensource.org/licenses/MIT
 
 #pragma once
@@ -10,6 +10,7 @@ typedef int32 wcwidth_t (char32_t);
 extern "C" wcwidth_t *wcwidth;
 extern "C" void reset_wcwidths();
 extern "C" int32 test_ambiguous_width_char(char32_t ucs, str_iter* iter);
+extern "C" void reset_cached_font();
 bool is_fully_qualified_double_width_prefix(char32_t ucs);
 
 //------------------------------------------------------------------------------

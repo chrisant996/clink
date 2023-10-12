@@ -14,6 +14,8 @@
 #include <core/debugheap.h>
 #include <lib/cmd_tokenisers.h>
 #include <lib/recognizer.h>
+#include <lib/line_editor_integration.h>
+#include <lib/rl_integration.h>
 #include <terminal/terminal_helpers.h>
 
 #include <memory>
@@ -688,7 +690,6 @@ bool lua_state::call_lua_rl_global_function(const char* func_name, line_state* l
         return false;
     }
 
-    extern void override_rl_last_func(rl_command_func_t* func, bool force_when_null=false);
     override_rl_last_func(nullptr);
 
     buffer.push(state);
@@ -700,7 +701,6 @@ bool lua_state::call_lua_rl_global_function(const char* func_name, line_state* l
     rollback<bool> rb(s_in_luafunc, true);
     bool success = (pcall_silent(2, 0) == LUA_OK);
 
-    extern void set_pending_luafunc(const char *);
     set_pending_luafunc(func_name);
 
     if (!success)

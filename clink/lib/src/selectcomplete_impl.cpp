@@ -15,6 +15,8 @@
 #include "column_widths.h"
 #include "ellipsify.h"
 #include "match_adapter.h"
+#include "line_editor_integration.h"
+#include "rl_integration.h"
 #ifdef SHOW_VERT_SCROLLBARS
 #include "scroll_car.h"
 #endif
@@ -42,14 +44,6 @@ void __set_completion_defaults(int what_to_do);
 int __get_y_or_n(int for_pager);
 extern int _rl_last_v_pos;
 };
-
-extern void reset_generate_matches();
-extern bool is_regen_blocked();
-extern matches* maybe_regenerate_matches(const char* needle, display_filter_flags flags);
-extern void force_update_internal(bool restrict=false);
-extern void update_matches();
-extern void update_rl_modes_from_matches(const matches* matches, const matches_iter& iter, int32 count);
-extern void override_rl_last_func(rl_command_func_t* func, bool force_when_null=false);
 
 
 

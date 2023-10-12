@@ -23,6 +23,7 @@
 #include <lib/line_editor.h>
 #include <lib/clink_ctrlevent.h>
 #include <lib/wakeup_chars.h>
+#include <lib/rl_integration.h>
 #include <lua/lua_script_loader.h>
 #include <terminal/wcwidth.h>
 #include <terminal/terminal_helpers.h>
@@ -43,7 +44,6 @@ func_GetEnvironmentVariableW_t __Real_GetEnvironmentVariableW = GetEnvironmentVa
 func_SetConsoleTitleW_t __Real_SetConsoleTitleW = SetConsoleTitleW;
 
 //------------------------------------------------------------------------------
-extern bool is_force_reload_scripts();
 extern printer* g_printer;
 extern str<> g_last_prompt;
 

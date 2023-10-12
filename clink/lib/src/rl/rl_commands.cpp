@@ -17,6 +17,8 @@
 #include "recognizer.h"
 #include "wakeup_chars.h"
 #include "clink_rl_signal.h"
+#include "rl_integration.h"
+#include "line_editor_integration.h"
 
 #include "rl_suggestions.h"
 
@@ -81,8 +83,6 @@ extern setting_color g_color_popup;
 extern setting_color g_color_popup_desc;
 extern setting_bool g_match_wild;
 
-static bool s_force_reload_scripts = false;
-
 
 
 //------------------------------------------------------------------------------
@@ -96,7 +96,6 @@ extern void host_get_app_context(int32& id, host_context& context);
 extern "C" int32 show_cursor(int32 visible);
 extern void set_suggestion(const char* line, uint32 endword_offset, const char* suggestion, uint32 offset);
 extern "C" void host_clear_suggestion();
-extern "C" void reset_cached_font();
 
 // This is implemented in the app layer, which makes it inaccessible to lower
 // layers.  But Readline and History are siblings, so history_db and rl_module
@@ -2501,7 +2500,6 @@ int32 macro_hook_func(const char* macro)
 
         // TODO: Ideally optimize this so that it only resets match generation if
         // the Lua function triggers completion.
-        extern void reset_generate_matches();
         reset_generate_matches();
 
         HANDLE std_handles[2] = { GetStdHandle(STD_INPUT_HANDLE), GetStdHandle(STD_OUTPUT_HANDLE) };
@@ -2528,27 +2526,4 @@ void reset_command_states()
 {
     s_globbing_wild = false;
     s_literal_wild = false;
-}
-
-//------------------------------------------------------------------------------
-bool is_force_reload_scripts()
-{
-    return s_force_reload_scripts;
-}
-
-//------------------------------------------------------------------------------
-void clear_force_reload_scripts()
-{
-    s_force_reload_scripts = false;
-}
-
-//------------------------------------------------------------------------------
-int32 force_reload_scripts()
-{
-    s_force_reload_scripts = true;
-    if (g_result)
-        g_result->done(true); // Force a new edit line so scripts can be reloaded.
-    reset_cached_font(); // Force discarding cached font info.
-    readline_internal_teardown(true);
-    return rl_re_read_init_file(0, 0);
 }

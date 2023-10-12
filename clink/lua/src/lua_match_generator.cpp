@@ -19,6 +19,7 @@
 #include <lib/matches_lookaside.h>
 #include <lib/popup.h>
 #include <lib/display_matches.h>
+#include <lib/line_editor_integration.h>
 
 extern "C" {
 #include <lua.h>
@@ -531,7 +532,6 @@ bool lua_match_generator::filter_matches(char** matches, char completion_type, b
     if (!discarded)
         return false;
 
-    extern void reset_generate_matches();
     reset_generate_matches();
 
     // If no matches, free the lcd as well.

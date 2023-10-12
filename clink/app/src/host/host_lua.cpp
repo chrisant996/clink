@@ -14,17 +14,13 @@
 #include <core/str_unordered_set.h>
 #include <core/settings.h>
 #include <core/log.h>
+#include <lib/rl_integration.h>
 
 #include <vector>
 
 extern "C" {
 #include <lua.h>
 }
-
-//------------------------------------------------------------------------------
-extern bool is_force_reload_scripts();
-extern void clear_force_reload_scripts();
-extern void clear_macro_descriptions();
 
 //------------------------------------------------------------------------------
 host_lua::host_lua()

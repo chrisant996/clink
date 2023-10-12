@@ -20,10 +20,12 @@
 #include <lib/doskey.h>
 #include <lib/match_generator.h>
 #include <lib/line_editor.h>
+#include <lib/line_editor_integration.h>
 #include <lib/intercept.h>
 #include <lib/clink_ctrlevent.h>
 #include <lib/clink_rl_signal.h>
 #include <lib/errfile_reader.h>
+#include <lib/sticky_search.h>
 #include <lua/lua_script_loader.h>
 #include <lua/lua_state.h>
 #include <lua/prompt.h>
@@ -191,12 +193,6 @@ extern setting_bool g_classify_words;
 extern setting_color g_color_prompt;
 extern setting_bool g_prompt_async;
 
-extern bool get_sticky_search_history();
-extern bool has_sticky_search_position();
-extern bool get_sticky_search_add_history(const char* line);
-extern void clear_sticky_search_position();
-extern void reset_keyseq_to_name_map();
-extern void set_prompt(const char* prompt, const char* rprompt, bool redisplay);
 extern bool can_suggest(const line_state& line);
 
 #ifdef DEBUG
@@ -1153,12 +1149,12 @@ skip_errorlevel:
             // with the command.
             add_history = false;
         }
-        else if (!out.empty() && get_sticky_search_history() && has_sticky_search_position())
+        else if (!out.empty() && !can_sticky_search_add_history(out.c_str()))
         {
-            // Query whether the sticky search position should be added
-            // (i.e. the input line matches the history entry corresponding
-            // to the sticky search history position).
-            add_history = get_sticky_search_add_history(out.c_str());
+            // Don't add to history when stick search is active and the input
+            // line matches the history entry corresponding to the sticky
+            // search history position.
+            add_history = false;
         }
         if (add_history)
             clear_sticky_search_position();

@@ -18,6 +18,9 @@
 #include "display_readline.h"
 #include "clink_ctrlevent.h"
 #include "clink_rl_signal.h"
+#include "sticky_search.h"
+#include "line_editor_integration.h"
+#include "rl_integration.h"
 
 #include "rl_suggestions.h"
 
@@ -89,13 +92,7 @@ extern int          _rl_last_v_pos;
 
 extern void host_send_event(const char* event_name);
 extern void host_send_oninputlinechanged_event(const char* line);
-extern int32 macro_hook_func(const char* macro);
 extern int32 host_filter_matches(char** matches);
-extern void update_matches();
-extern void reset_generate_matches();
-extern void reselect_matches();
-extern void force_update_internal(bool restrict);
-extern matches* maybe_regenerate_matches(const char* needle, display_filter_flags flags);
 extern void signal_terminal_resized();
 extern setting_color g_color_interact;
 extern int32 g_prompt_refilter;
@@ -113,8 +110,6 @@ static str_moveable s_pending_luafunc;
 static bool         s_has_pending_luafunc = false;
 static bool         s_has_override_rl_last_func = false;
 static rl_command_func_t* s_override_rl_last_func = nullptr;
-static int32        s_init_history_pos = -1;    // Sticky history position from previous edit line.
-static int32        s_history_search_pos = -1;  // Most recent history search position during current edit line.
 static str_moveable s_needle;
 static str_moveable s_prev_inputline;
 static bool         s_need_collect_words = false;
@@ -352,39 +347,6 @@ static void __cdecl dummy_display_matches_hook(char**, int32, int32)
     // integrated into Readline.
 }
 #endif
-
-
-
-//------------------------------------------------------------------------------
-extern bool get_sticky_search_history();
-
-//------------------------------------------------------------------------------
-bool has_sticky_search_position() { return s_init_history_pos >= 0; }
-void clear_sticky_search_position() { s_init_history_pos = -1; history_prev_use_curr = 0; }
-
-//------------------------------------------------------------------------------
-static bool history_line_differs(int32 history_pos, const char* line)
-{
-    const HIST_ENTRY* entry = history_get(history_pos + history_base);
-    return (!entry || strcmp(entry->line, line) != 0);
-}
-
-//------------------------------------------------------------------------------
-bool get_sticky_search_add_history(const char* line)
-{
-    // Add the line to history if history was not searched.
-    int32 history_pos = s_init_history_pos;
-    if (history_pos < 0)
-        return true;
-
-    // Add the line to history if the input line was edited (does not match the
-    // history line).
-    if (history_pos >= history_length || history_line_differs(history_pos, line))
-        return true;
-
-    // Use sticky search; don't add to history.
-    return false;
-}
 
 
 
@@ -1401,9 +1363,10 @@ static void buffer_changing()
 {
     // Reset the history position for the next input line prompt, upon changing
     // the input text at all.
-    if (s_init_history_pos >= 0)
+    if (has_sticky_search_position())
     {
         clear_sticky_search_position();
+        // TODO: Does this cross-link or leak or interfere with undo lists?
         using_history();
     }
 
@@ -2678,12 +2641,7 @@ void rl_module::on_begin_line(const context& context)
     lock_cursor(false);
 
     // Apply the remembered history position from the previous command, if any.
-    if (s_init_history_pos >= 0)
-    {
-        history_set_pos(s_init_history_pos);
-        history_prev_use_curr = 1;
-    }
-    s_history_search_pos = -1;
+    restore_sticky_search_position();
 
     m_done = !m_queued_lines.empty();
     m_eof = false;
@@ -2708,21 +2666,7 @@ void rl_module::on_end_line()
 
     // When 'sticky' mode is enabled, remember the history position for the next
     // input line prompt.
-    if (get_sticky_search_history())
-    {
-        // Favor current history position unless at the end, else favor history
-        // search position.  If the search position is invalid or the input line
-        // doesn't match the search position, then it works out ok because the
-        // search position gets ignored.
-        int32 history_pos = where_history();
-        if (history_pos >= 0 && history_pos < history_length)
-            s_init_history_pos = history_pos;
-        else if (s_history_search_pos >= 0 && s_history_search_pos < history_length)
-            s_init_history_pos = s_history_search_pos;
-        history_prev_use_curr = 1;
-    }
-    else
-        clear_sticky_search_position();
+    save_sticky_search_position();
 
     s_classifications = nullptr;
     s_input_color = nullptr;
@@ -2885,19 +2829,12 @@ void rl_module::on_input(const input& input, result& result, const context& cont
         s_override_rl_last_func = nullptr;
         reset_command_states();
 
-        {
-            // The history search position gets invalidated as soon as a non-
-            // history search command is used.  So to make sticky search work
-            // properly for history searches it's necessary to capture it on
-            // each input, so that by the time rl_newline() is invoked the most
-            // recent history search position has been cached.  It's ok if it
-            // has been invalidated afterwards by aborting search and/or editing
-            // the input line:  because if the input line doesn't match the
-            // history search position line, then sticky search doesn't apply.
-            int32 pos = rl_get_history_search_pos();
-            if (pos >= 0)
-                s_history_search_pos = pos;
-        }
+        // The history search position gets invalidated as soon as a non-
+        // history search command is used.  So to make sticky search work
+        // properly for history searches it's necessary to capture it on each
+        // input, so that by the time rl_newline() is invoked the most recent
+        // history search position has been cached.
+        capture_sticky_search_position();
 
         // Capture the previous binding group.  This must be captured before
         // Readline handles the input, so that Readline commands can set the

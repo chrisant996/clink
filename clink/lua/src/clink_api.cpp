@@ -29,6 +29,8 @@
 #include <lib/reclassify.h>
 #include <lib/recognizer.h>
 #include <lib/matches_lookaside.h>
+#include <lib/line_editor_integration.h>
+#include <lib/rl_integration.h>
 #include <terminal/terminal_helpers.h>
 #include <terminal/printer.h>
 #include <terminal/screen_buffer.h>
@@ -45,7 +47,6 @@ extern "C" {
 
 
 //------------------------------------------------------------------------------
-extern int32 force_reload_scripts();
 extern void host_signal_delayed_init();
 extern void host_mark_deprecated_argmatcher(const char* name);
 extern void set_suggestion_started(const char* line);
@@ -1673,7 +1674,6 @@ static int32 generate_from_history(lua_State* state)
 //------------------------------------------------------------------------------
 static int32 api_reset_generate_matches(lua_State* state)
 {
-    extern void reset_generate_matches();
     reset_generate_matches();
     return 0;
 }

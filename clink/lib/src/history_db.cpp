@@ -76,15 +76,6 @@ static setting_enum g_expand_mode(
     "off,on,not_squoted,not_dquoted,not_quoted",
     4);
 
-static setting_bool g_sticky_search(
-    "history.sticky_search",
-    "Makes it easy to replay a series of commands",
-    "When enabled, reusing a history line does not add the reused line to the end\n"
-    "of the history, and it leaves the history search position on the reused line\n"
-    "so next/prev history can continue from there (e.g. replaying commands via Up\n"
-    "many times, Enter, Down, Enter, Down, Enter, etc).",
-    false);
-
 setting_enum g_history_timestamp(
     "history.time_stamp",
     "History item timestamps",
@@ -102,11 +93,6 @@ static int32 get_max_history()
     if (limit <= 0 || limit > c_max_max_history_lines)
         limit = c_max_max_history_lines;
     return limit;
-}
-
-bool get_sticky_search_history()
-{
-    return g_sticky_search.get();
 }
 
 

@@ -34,9 +34,7 @@ extern int __complete_get_screenwidth(void);
 
 //------------------------------------------------------------------------------
 extern pager* g_pager;
-extern editor_module::result* g_result;
 extern setting_bool g_terminal_raw_esc;
-extern int32 read_key_direct(bool wait);
 
 //------------------------------------------------------------------------------
 static linear_allocator s_macro_name_store(4096);

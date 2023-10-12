@@ -28,11 +28,8 @@ enum
 void    clink_add_funmap_entry(const char *name, rl_command_func_t *function, int32 cat, const char* desc);
 
 //------------------------------------------------------------------------------
-int32   macro_hook_func(const char* macro);
 void    reset_command_states();
-bool    is_force_reload_scripts();
-void    clear_force_reload_scripts();
-int32   force_reload_scripts();
+int32   read_key_direct(bool wait);
 
 //------------------------------------------------------------------------------
 int32   host_add_history(int32, const char* line);
