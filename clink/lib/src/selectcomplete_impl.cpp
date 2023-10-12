@@ -1,4 +1,4 @@
-// Copyright (c) 2021 Christopher Antos, Martin Ridgers
+﻿// Copyright (c) 2021 Christopher Antos, Martin Ridgers
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
