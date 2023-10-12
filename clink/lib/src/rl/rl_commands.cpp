@@ -15,6 +15,8 @@
 #include "host_callbacks.h"
 #include "display_readline.h"
 #include "recognizer.h"
+#include "wakeup_chars.h"
+#include "clink_rl_signal.h"
 
 #include "rl_suggestions.h"
 
@@ -332,7 +334,6 @@ int32 clink_ctrl_c(int32 count, int32 invoking_key)
         return 0;
     }
 
-    extern void clink_sighandler(int32 sig);
     clink_sighandler(SIGINT);
 
     return 0;

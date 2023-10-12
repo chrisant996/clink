@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2016 Martin Ridgers
+// Copyright (c) 2016 Martin Ridgers
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
@@ -86,8 +86,6 @@ extern int          _rl_output_meta_chars;
 extern int          _rl_last_v_pos;
 #endif
 } // extern "C"
-
-extern int32 clink_diagnostics(int32, int32);
 
 extern void host_send_event(const char* event_name);
 extern void host_send_oninputlinechanged_event(const char* line);

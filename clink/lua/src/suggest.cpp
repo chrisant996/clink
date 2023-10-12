@@ -26,7 +26,6 @@ extern "C" {
 }
 
 //------------------------------------------------------------------------------
-extern matches* make_new_matches();
 extern void set_suggestion(const char* line, uint32 endword_offset, const char* suggestion, uint32 offset);
 extern setting_enum g_ignore_case;
 extern setting_bool g_fuzzy_accent;
