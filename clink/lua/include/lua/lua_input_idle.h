@@ -18,6 +18,7 @@ public:
     uint32          get_timeout() override;
     uint32          get_wait_events(void** events, size_t max) override;
     void            on_wait_event(uint32 index) override;
+    void            on_idle() override;
 
     void            kick();
 
@@ -29,7 +30,6 @@ private:
     bool            is_enabled();
     bool            has_coroutines();
     void            resume_coroutines();
-    void            on_idle();
     lua_state&      m_state;
     uint32          m_iterations = 0;
     bool            m_enabled = true;

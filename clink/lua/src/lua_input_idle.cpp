@@ -33,7 +33,7 @@ void kick_idle()
 }
 
 //------------------------------------------------------------------------------
-enum class input_idle_events { idle, recognizer, task_manager, max };
+enum class input_idle_events { recognizer, task_manager, force_idle, max };
 
 //------------------------------------------------------------------------------
 bool lua_input_idle::s_signaled_delayed_init = false;
@@ -124,11 +124,6 @@ uint32 lua_input_idle::get_wait_events(void** events, size_t max)
     uint32 index = 0;
     if (index < max)
     {
-        assert(uint32(input_idle_events::idle) == index);
-        events[index++] = get_idle_event();
-    }
-    if (index < max)
-    {
         assert(uint32(input_idle_events::recognizer) == index);
         events[index++] = get_recognizer_event();
     }
@@ -136,6 +131,11 @@ uint32 lua_input_idle::get_wait_events(void** events, size_t max)
     {
         assert(uint32(input_idle_events::task_manager) == index);
         events[index++] = get_task_manager_event();
+    }
+    if (index < max)
+    {
+        assert(uint32(input_idle_events::force_idle) == index);
+        events[index++] = get_idle_event();
     }
     return index;
 }
@@ -149,9 +149,9 @@ void lua_input_idle::on_wait_event(uint32 index)
 
     switch (event)
     {
-    case input_idle_events::idle:           on_idle(); break;
     case input_idle_events::recognizer:     host_refresh_recognizer(); break;
     case input_idle_events::task_manager:   task_manager_on_idle(m_state); break;
+    case input_idle_events::force_idle:     on_idle(); break;
     default:                                assert(false); break;
     }
 }

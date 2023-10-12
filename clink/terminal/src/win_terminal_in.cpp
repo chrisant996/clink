@@ -741,11 +741,11 @@ void win_terminal_in::read_console(input_idle* callback, DWORD _timeout, bool pe
         {
             uint32 count = 1;
             HANDLE handles[5] = { m_stdin };
-            const uint32 index_callback_events = count;
 
             if (s_interrupt)
                 handles[count++] = s_interrupt;
 
+            const uint32 index_callback_events = count;
             const uint32 num_callback_events = callback ? callback->get_wait_events(handles + count, sizeof_array(handles) - count) : 0;
             count += num_callback_events;
 
@@ -778,11 +778,17 @@ void win_terminal_in::read_console(input_idle* callback, DWORD _timeout, bool pe
                 }
             }
 
-            if (callback &&
-                waited >= WAIT_OBJECT_0 + index_callback_events &&
-                waited < WAIT_OBJECT_0 + index_callback_events + num_callback_events)
+            if (callback)
             {
-                callback->on_wait_event(waited - WAIT_OBJECT_0 + index_callback_events);
+                if (waited >= WAIT_OBJECT_0 + index_callback_events &&
+                    waited < WAIT_OBJECT_0 + index_callback_events + num_callback_events)
+                {
+                    callback->on_wait_event(waited - (WAIT_OBJECT_0 + index_callback_events));
+                }
+                else
+                {
+                    callback->on_idle();
+                }
             }
 
             if (has_mode)
