@@ -49,8 +49,7 @@ extern "C" {
 //------------------------------------------------------------------------------
 extern setting_enum g_dupe_mode;
 
-// TODO: Host interface.
-extern void host_signal_delayed_init();
+extern void host_signal_delayed_init(); // TODO: Host interface.
 
 #ifdef _WIN64
 static const char c_uninstall_key[] = "SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall";

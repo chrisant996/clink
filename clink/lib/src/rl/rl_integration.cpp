@@ -20,10 +20,9 @@ extern "C" {
 }
 
 //------------------------------------------------------------------------------
-// TODO: Host interface.
-extern void host_send_event(const char* event_name);
-extern void host_send_oninputlinechanged_event(const char* line);
-extern bool host_call_lua_rl_global_function(const char* func_name);
+extern void host_send_event(const char* event_name); // TODO: Host interface.
+extern void host_send_oninputlinechanged_event(const char* line); // TODO: Host interface.
+extern bool host_call_lua_rl_global_function(const char* func_name); // TODO: Host interface.
 
 //------------------------------------------------------------------------------
 extern editor_module::result* g_result;

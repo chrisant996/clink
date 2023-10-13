@@ -19,10 +19,9 @@ extern "C" {
 }
 
 //------------------------------------------------------------------------------
-// TODO: Host interface.
-extern void host_filter_prompt();
-extern void host_invalidate_matches();
-extern void host_refresh_recognizer();
+extern void host_filter_prompt(); // TODO: Host interface.
+extern void host_invalidate_matches(); // TODO: Host interface.
+extern void host_refresh_recognizer(); // TODO: Host interface.
 static lua_input_idle* s_idle = nullptr;
 
 //------------------------------------------------------------------------------

@@ -20,8 +20,7 @@ extern "C" {
 };
 
 //------------------------------------------------------------------------------
-// TODO: Host interface.
-extern int32 host_filter_matches(char** matches);
+extern int32 host_filter_matches(char** matches); // TODO: Host interface.
 
 //------------------------------------------------------------------------------
 void match_adapter::cached_info::clear()

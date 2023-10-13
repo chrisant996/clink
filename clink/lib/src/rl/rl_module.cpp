@@ -90,8 +90,7 @@ extern int          _rl_last_v_pos;
 #endif
 } // extern "C"
 
-// TODO: Host interface.
-extern int32 host_filter_matches(char** matches);
+extern int32 host_filter_matches(char** matches); // TODO: Host interface.
 
 extern setting_color g_color_interact;
 extern int32 g_prompt_refilter;

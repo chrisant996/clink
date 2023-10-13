@@ -77,9 +77,8 @@ enum {
 extern setting_enum g_ignore_case;
 extern setting_bool g_fuzzy_accent;
 extern setting_enum g_history_timestamp;
-// TODO: Host interface.
-extern int32 host_remove_history(int32 rl_history_index, const char* line);
-extern bool host_remove_dir_history(int32 index);
+extern int32 host_remove_history(int32 rl_history_index, const char* line); // TODO: Host interface.
+extern bool host_remove_dir_history(int32 index); // TODO: Host interface.
 
 //------------------------------------------------------------------------------
 static textlist_impl* s_textlist = nullptr;

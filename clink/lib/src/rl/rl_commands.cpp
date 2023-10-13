@@ -700,8 +700,7 @@ int32 clink_selectall_conhost(int32 count, int32 invoking_key)
 
 
 //------------------------------------------------------------------------------
-// TODO: Host interface.
-extern const char** host_copy_dir_history(int32* total);
+extern const char** host_copy_dir_history(int32* total); // TODO: Host interface.
 int32 clink_popup_directories(int32 count, int32 invoking_key)
 {
     // Copy the directory list (just a shallow copy of the dir pointers).
@@ -772,8 +771,7 @@ int32 clink_popup_directories(int32 count, int32 invoking_key)
 
 
 //------------------------------------------------------------------------------
-// TODO: Host interface.
-extern bool host_call_lua_rl_global_function(const char* func_name);
+extern bool host_call_lua_rl_global_function(const char* func_name); // TODO: Host interface.
 
 //------------------------------------------------------------------------------
 int32 clink_complete_numbers(int32 count, int32 invoking_key)
@@ -2242,6 +2240,7 @@ static void analyze_char_widths(const char* s,
 }
 
 //------------------------------------------------------------------------------
+extern void task_manager_diagnostics();
 int32 clink_diagnostics(int32 count, int32 invoking_key)
 {
     end_prompt(true/*crlf*/);
@@ -2356,10 +2355,8 @@ int32 clink_diagnostics(int32 count, int32 invoking_key)
         print_value("terminal", t.c_str());
     }
 
-    // TODO: Host interface.
     host_call_lua_rl_global_function("clink._diagnostics");
 
-    extern void task_manager_diagnostics();
     task_manager_diagnostics();
 
     // Check for known potential ambiguous character width issues.
