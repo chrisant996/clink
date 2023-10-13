@@ -235,6 +235,7 @@ static void calc_history_expansions(const line_buffer& buffer, history_expansion
         char* output = nullptr;
         history_return_expansions = true;
         history_expand(p, &output);
+        free(output);
         restore_history_expansion_state();
     }
 
