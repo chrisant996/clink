@@ -13,12 +13,10 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - Provide a sample .txt file that repros the issue.  Maybe multiple .txt files that chain together (or with a pause; is there an escape code for a pause?) to show the UX flow.
 
 ## Low Priority
-- Extern refactoring:
-  - Host interface.
-  - line_editor_impl vs rl_module (suggestions).
-  - host vs rl_module (suggestions).
-  - `expand_history`.
-  - `host`, `line_editor_impl`, `rl_module`, and some `lua/src` files are too tightly coupled.  Ideally they would use interfaces rather than global functions.
+- Extern refactoring for `host`, `line_editor_impl`, and `rl_module`:
+  - In some cases they could pass state as parameters instead of using global functions.
+  - In other cases access to their global functions could be cleaner.
+  - Search for "TODO: Host interface".
 - Color improvements:
   - Color themes.  Some way to import color settings en masse.  Some way to export color settings as well?
   - More sophisticated match color definitions?
