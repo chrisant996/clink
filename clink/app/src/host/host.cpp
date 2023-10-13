@@ -76,37 +76,6 @@ static setting_enum s_prompt_transient(
     "off,always,same_dir",
     0);
 
-setting_bool g_autosuggest_async(
-    "autosuggest.async",
-    "Enable asynchronous suggestions",
-    "The default is 'true'.  When this is 'true' matches are generated\n"
-    "asynchronously for suggestions.  This helps to keep typing responsive.",
-    true);
-
-static setting_bool g_autosuggest_enable(
-    "autosuggest.enable",
-    "Enable automatic suggestions",
-    "The default is 'true'.  When this is 'true' a suggested command may appear\n"
-    "in the 'color.suggestion' color after the cursor.  If the suggestion isn't\n"
-    "what you want, just ignore it.  Or accept the whole suggestion with the Right\n"
-    "arrow or End key, accept the next word of the suggestion with Ctrl+Right, or\n"
-    "accept the next full word of the suggestion up to a space with Shift+Right.\n"
-    "The 'autosuggest.strategy' setting determines how a suggestion is chosen.",
-    true);
-
-static setting_str g_autosuggest_strategy(
-    "autosuggest.strategy",
-    "Controls how suggestions are chosen",
-    "This determines how suggestions are chosen.  The suggestion generators are\n"
-    "tried in the order listed, until one provides a suggestion.  There are three\n"
-    "built-in suggestion generators, and scripts can provide new ones.\n"
-    "'history' chooses the most recent matching command from the history.\n"
-    "'completion' chooses the first of the matching completions.\n"
-    "'match_prev_cmd' chooses the most recent matching command whose preceding\n"
-    "history entry matches the most recently invoked command, but only when\n"
-    "the 'history.dupe_mode' setting is 'add'.",
-    "match_prev_cmd history completion");
-
 setting_bool g_save_history(
     "history.save",
     "Save history between sessions",
@@ -189,12 +158,12 @@ static setting_bool g_debug_heap_stats(
     false);
 #endif
 
+extern setting_bool g_autosuggest_enable;
 extern setting_bool g_classify_words;
 extern setting_color g_color_prompt;
 extern setting_bool g_prompt_async;
 
-// TODO: Host interface.
-extern bool can_suggest(const line_state& line);
+extern bool can_suggest_internal(const line_state& line);
 
 #ifdef DEBUG
 extern bool g_suppress_signal_assert;
@@ -608,16 +577,15 @@ bool host::can_suggest(const line_state& line)
 {
     return (m_suggester &&
             g_autosuggest_enable.get() &&
-            ::can_suggest(line));
+            ::can_suggest_internal(line));
 }
 
 //------------------------------------------------------------------------------
 bool host::suggest(const line_states& lines, matches* matches, int32 generation_id)
 {
-    if (m_suggester && g_autosuggest_enable.get())
-        return m_suggester->suggest(lines, matches, generation_id);
-
-    return false;
+    return (m_suggester &&
+            g_autosuggest_enable.get() &&
+            m_suggester->suggest(lines, matches, generation_id));
 }
 
 //------------------------------------------------------------------------------

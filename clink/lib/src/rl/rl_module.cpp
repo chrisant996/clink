@@ -376,19 +376,6 @@ ignore_volatile_matches::~ignore_volatile_matches()
 
 
 //------------------------------------------------------------------------------
-extern "C" const char* host_get_env(const char* name)
-{
-    static int32 rotate = 0;
-    static str<> rotating_tmp[10];
-
-    str<>& s = rotating_tmp[rotate];
-    rotate = (rotate + 1) % sizeof_array(rotating_tmp);
-    if (!os::get_env(name, s))
-        return nullptr;
-    return s.c_str();
-}
-
-//------------------------------------------------------------------------------
 static const char* build_color_sequence(const setting_color& setting, str_base& out, bool include_csi = false)
 {
     str<> tmp;
@@ -1059,7 +1046,7 @@ void hook_display()
 }
 
 //------------------------------------------------------------------------------
-bool can_suggest(const line_state& line)
+bool can_suggest_internal(const line_state& line)
 {
     return s_suggestion.can_suggest(line);
 }
@@ -1083,7 +1070,7 @@ bool pause_suggestions(bool pause)
 }
 
 //------------------------------------------------------------------------------
-extern "C" void host_clear_suggestion()
+extern "C" void clear_suggestion()
 {
     s_suggestion.clear();
     if (g_rl_buffer)

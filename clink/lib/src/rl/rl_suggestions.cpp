@@ -18,12 +18,43 @@ extern "C" {
 }
 
 //------------------------------------------------------------------------------
+setting_bool g_autosuggest_async(
+    "autosuggest.async",
+    "Enable asynchronous suggestions",
+    "The default is 'true'.  When this is 'true' matches are generated\n"
+    "asynchronously for suggestions.  This helps to keep typing responsive.",
+    true);
+
+setting_bool g_autosuggest_enable(
+    "autosuggest.enable",
+    "Enable automatic suggestions",
+    "The default is 'true'.  When this is 'true' a suggested command may appear\n"
+    "in the 'color.suggestion' color after the cursor.  If the suggestion isn't\n"
+    "what you want, just ignore it.  Or accept the whole suggestion with the Right\n"
+    "arrow or End key, accept the next word of the suggestion with Ctrl+Right, or\n"
+    "accept the next full word of the suggestion up to a space with Shift+Right.\n"
+    "The 'autosuggest.strategy' setting determines how a suggestion is chosen.",
+    true);
+
 static setting_bool g_original_case(
     "autosuggest.original_case",
     "Accept original capitalization",
     "When this is enabled (the default), accepting a suggestion uses the\n"
     "original capitalization from the suggestion.",
     true);
+
+static setting_str g_autosuggest_strategy(
+    "autosuggest.strategy",
+    "Controls how suggestions are chosen",
+    "This determines how suggestions are chosen.  The suggestion generators are\n"
+    "tried in the order listed, until one provides a suggestion.  There are three\n"
+    "built-in suggestion generators, and scripts can provide new ones.\n"
+    "'history' chooses the most recent matching command from the history.\n"
+    "'completion' chooses the first of the matching completions.\n"
+    "'match_prev_cmd' chooses the most recent matching command whose preceding\n"
+    "history entry matches the most recently invoked command, but only when\n"
+    "the 'history.dupe_mode' setting is 'add'.",
+    "match_prev_cmd history completion");
 
 //------------------------------------------------------------------------------
 extern line_buffer* g_rl_buffer;
@@ -82,6 +113,8 @@ void suggestion_manager::clear()
 //------------------------------------------------------------------------------
 bool suggestion_manager::can_suggest(const line_state& line)
 {
+    assert(g_autosuggest_enable.get());
+
     if (!g_rl_buffer)
         return false;
 

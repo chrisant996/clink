@@ -231,15 +231,8 @@ static bool is_elevated()
 
 
 //------------------------------------------------------------------------------
-static str_unordered_set s_deprecated_argmatchers;
-static linear_allocator s_deprecated_argmatchers_store(1024);
-
-//------------------------------------------------------------------------------
 void host_load_app_scripts(lua_state& lua)
 {
-    s_deprecated_argmatchers.clear();
-    s_deprecated_argmatchers_store.reset();
-
     lua_load_script(lua, app, cmd);
     lua_load_script(lua, app, commands);
     lua_load_script(lua, app, dir);
@@ -251,27 +244,6 @@ void host_load_app_scripts(lua_state& lua)
     lua_load_script(lua, app, prompt);
     lua_load_script(lua, app, suggest);
     lua_load_script(lua, app, update);
-}
-
-//------------------------------------------------------------------------------
-void host_mark_deprecated_argmatcher(const char* command)
-{
-    if (s_deprecated_argmatchers.find(command) == s_deprecated_argmatchers.end())
-    {
-        dbg_ignore_scope(snapshot, "deprecated argmatcher lookup");
-        const char* store = s_deprecated_argmatchers_store.store(command);
-        s_deprecated_argmatchers.insert(store);
-    }
-}
-
-//------------------------------------------------------------------------------
-bool host_has_deprecated_argmatcher(const char* command)
-{
-    wstr<32> in(command);
-    wstr<32> out;
-    str_transform(in.c_str(), in.length(), out, transform_mode::lower);
-    str<32> name(out.c_str());
-    return s_deprecated_argmatchers.find(name.c_str()) != s_deprecated_argmatchers.end();
 }
 
 //------------------------------------------------------------------------------

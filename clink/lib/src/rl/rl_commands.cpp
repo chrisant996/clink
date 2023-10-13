@@ -88,16 +88,11 @@ extern line_buffer* g_rl_buffer;
 extern word_collector* g_word_collector;
 extern editor_module::result* g_result;
 
-// TODO: Host interface.
-extern void host_cmd_enqueue_lines(std::list<str_moveable>& lines, bool hide_prompt, bool show_line);
-extern void host_get_app_context(int32& id, host_context& context);
-extern "C" void host_clear_suggestion();
-
-// This is implemented in the app layer, which makes it inaccessible to lower
-// layers.  But Readline and History are siblings, so history_db and rl_module
-// and rl_commands should be siblings.  That's a lot of reshuffling for little
-// benefit, so just use a forward decl for now.
-extern bool expand_history(const char* in, str_base& out);
+//------------------------------------------------------------------------------
+bool expand_history(const char* in, str_base& out)
+{
+    return history_db::expand(in, out) >= history_db::expand_result::expand_ok;
+}
 
 //------------------------------------------------------------------------------
 static void strip_crlf(char* line, std::list<str_moveable>& overflow, int32 setting, bool* _done)
@@ -262,7 +257,7 @@ public:
     ~cua_selection_manager()
     {
         if (s_cua_anchor >= 0)
-            host_clear_suggestion();
+            clear_suggestion();
         if (g_rl_buffer && (m_anchor != s_cua_anchor || m_point != rl_point))
             g_rl_buffer->set_need_draw();
     }
@@ -303,7 +298,7 @@ int32 clink_reset_line(int32 count, int32 invoking_key)
     using_history();
     g_rl_buffer->remove(0, rl_end);
     rl_point = 0;
-    host_clear_suggestion();
+    clear_suggestion();
 
     return 0;
 }

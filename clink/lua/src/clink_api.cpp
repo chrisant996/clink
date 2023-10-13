@@ -51,7 +51,6 @@ extern setting_enum g_dupe_mode;
 
 // TODO: Host interface.
 extern void host_signal_delayed_init();
-extern void host_mark_deprecated_argmatcher(const char* name);
 
 #ifdef _WIN64
 static const char c_uninstall_key[] = "SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
@@ -1680,7 +1679,7 @@ static int32 mark_deprecated_argmatcher(lua_State* state)
 {
     const char* name = checkstring(state, 1);
     if (name)
-        host_mark_deprecated_argmatcher(name);
+        mark_deprecated_argmatcher(name);
     return 0;
 }
 
@@ -2164,6 +2163,8 @@ void clink_lua_initialise(lua_state& lua, bool lua_interpreter)
         { 1,    "runeditortest",          &run_editor_test },
     };
 #endif
+
+    clear_deprecated_argmatchers();
 
     lua_State* state = lua.get_state();
 

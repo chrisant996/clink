@@ -30,6 +30,11 @@ bool is_showing_argmatchers();
 void clear_need_collect_words();
 
 //------------------------------------------------------------------------------
+void clear_deprecated_argmatchers();
+void mark_deprecated_argmatcher(const char* name);
+bool has_deprecated_argmatcher(const char* name);
+
+//------------------------------------------------------------------------------
 // Suggestions are spread across host, line_editor_impl, and rl_module.  Until
 // that gets cleaned up, the global functions are declared here.
 void set_suggestion_started(const char* line);

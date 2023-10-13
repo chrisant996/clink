@@ -38,17 +38,6 @@ void host_cleanup_after_signal()
 }
 
 //------------------------------------------------------------------------------
-void host_mark_deprecated_argmatcher(const char* command)
-{
-}
-
-//------------------------------------------------------------------------------
-bool host_has_deprecated_argmatcher(const char* command)
-{
-    return false;
-}
-
-//------------------------------------------------------------------------------
 int32 main(int32 argc, char** argv)
 {
     argc--, argv++;

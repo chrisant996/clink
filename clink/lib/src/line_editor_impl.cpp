@@ -28,6 +28,7 @@
 #include <terminal/terminal_out.h>
 #include <terminal/input_idle.h>
 #include <rl/rl_commands.h>
+#include <rl/rl_suggestions.h>
 extern "C" {
 #include <compat/config.h>
 #include <readline/readline.h>
@@ -39,15 +40,13 @@ extern "C" {
 //------------------------------------------------------------------------------
 extern setting_bool g_classify_words;
 extern setting_bool g_autosuggest_async;
+extern setting_bool g_autosuggest_enable;
 extern setting_bool g_history_autoexpand;
 extern setting_bool g_history_show_preview;
 extern setting_enum g_default_bindings;
 extern setting_color g_color_histexpand;
 // TODO: line_editor_impl vs rl_module.
 extern int32 g_suggestion_offset;
-
-// TODO: Host interface.
-extern "C" void host_clear_suggestion();
 
 
 
@@ -228,14 +227,18 @@ static void calc_history_expansions(const line_buffer& buffer, history_expansion
         // The history expansion library can have side effects on the global
         // history variables.  Must save and restore them.
         save_history_expansion_state();
-        // Reset history offset, for consistency with history_db::expand().
-        // BUGBUG: neither of them should reset the history offset...!
+
+        // Reset history offset so expansion is always relative to the end of
+        // the history list.
         using_history();
+
         // Perform history expansion.
         char* output = nullptr;
         history_return_expansions = true;
         history_expand(p, &output);
         free(output);
+
+        // Restore global history variables.
         restore_history_expansion_state();
     }
 
@@ -277,15 +280,6 @@ extern "C" void host_filter_transient_prompt(int32 crlf)
 }
 
 //------------------------------------------------------------------------------
-bool host_can_suggest(const line_state& line)
-{
-    if (!s_callbacks)
-        return false;
-
-    return s_callbacks->can_suggest(line);
-}
-
-//------------------------------------------------------------------------------
 int32 host_filter_matches(char** matches)
 {
     return s_callbacks && s_callbacks->filter_matches(matches);
@@ -295,7 +289,7 @@ int32 host_filter_matches(char** matches)
 void host_invalidate_matches()
 {
     reset_generate_matches();
-    host_clear_suggestion();
+    clear_suggestion();
     if (s_editor)
         s_editor->try_suggest();
 }
@@ -689,7 +683,7 @@ bool line_editor_impl::notify_matches_ready(int32 generation_id, matches* matche
         // newer generation id's autosuggest will have been canceled due to the
         // match generator coroutine that was already running, and which has
         // just now signaled its completion.
-        host_clear_suggestion();
+        clear_suggestion();
     }
 
     // Trigger generating suggestion again.
@@ -1540,7 +1534,7 @@ void line_editor_impl::try_suggest()
 
     const line_states& lines = m_commands.get_linestates(m_buffer);
     line_state line = lines.back();
-    if (host_can_suggest(line))
+    if (s_callbacks && s_callbacks->can_suggest(line))
     {
         matches_impl* matches = nullptr;
         matches_impl* empty_matches = nullptr;
@@ -1580,7 +1574,6 @@ void line_editor_impl::try_suggest()
             matches = &m_matches;
         }
 
-        assert(s_callbacks); // Was tested above inside host_can_suggest().
         s_callbacks->suggest(lines, matches, m_generation_id);
 
         delete empty_matches;

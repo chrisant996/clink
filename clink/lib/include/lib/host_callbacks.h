@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include <list>
+
 //------------------------------------------------------------------------------
 class line_state;
 class line_states;
@@ -36,3 +38,7 @@ public:
     virtual bool has_event_handler(const char* event_name) = 0;
     virtual void get_app_context(int32& id, host_context& context) = 0;
 };
+
+//------------------------------------------------------------------------------
+void host_cmd_enqueue_lines(std::list<str_moveable>& lines, bool hide_prompt, bool show_line);
+void host_get_app_context(int32& id, host_context& context);

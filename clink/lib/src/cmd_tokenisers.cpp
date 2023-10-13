@@ -4,6 +4,7 @@
 #include "pch.h"
 #include "cmd_tokenisers.h"
 #include "alias_cache.h"
+#include "line_editor_integration.h"
 
 #include <core/base.h>
 #include <core/os.h>
@@ -398,9 +399,7 @@ word_token cmd_command_tokeniser::next(uint32& offset, uint32& length)
 //------------------------------------------------------------------------------
 bool cmd_command_tokeniser::has_deprecated_argmatcher(const char* command)
 {
-    // TODO: Host interface.
-    extern bool host_has_deprecated_argmatcher(const char* command);
-    return host_has_deprecated_argmatcher(command);
+    return ::has_deprecated_argmatcher(command);
 }
 
 

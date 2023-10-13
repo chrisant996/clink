@@ -1854,14 +1854,24 @@ history_db::line_id history_db::find(const char* line) const
 //------------------------------------------------------------------------------
 history_db::expand_result history_db::expand(const char* line, str_base& out)
 {
+    // The history expansion library can have side effects on the global
+    // history variables.  Must save and restore them.
+    save_history_expansion_state();
+
+    // Reset history offset so expansion is always relative to the end of
+    // the history list.
     using_history();
 
+    // Perform history expansion.
     char* expanded = nullptr;
     int32 result = history_expand((char*)line, &expanded);
     if (result >= 0 && expanded != nullptr)
         out.copy(expanded);
-
     free(expanded);
+
+    // Restore the global history variables.
+    restore_history_expansion_state();
+
     return expand_result(result);
 }
 
@@ -1903,12 +1913,4 @@ bool history_db::is_stale_name(const char* path) const
 history_database::history_database(const char* path, int32 id, bool use_master_bank)
 : history_db(path, id, use_master_bank)
 {
-}
-
-
-
-//------------------------------------------------------------------------------
-bool expand_history(const char* in, str_base& out)
-{
-    return history_db::expand(in, out) >= history_db::expand_result::expand_ok;
 }
