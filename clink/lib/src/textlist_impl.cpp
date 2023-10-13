@@ -10,6 +10,7 @@
 #include "line_buffer.h"
 #include "ellipsify.h"
 #include "clink_ctrlevent.h"
+#include "clink_rl_signal.h"
 #include "history_timeformatter.h"
 #ifdef SHOW_VERT_SCROLLBARS
 #include "scroll_car.h"
@@ -76,8 +77,6 @@ enum {
 extern setting_enum g_ignore_case;
 extern setting_bool g_fuzzy_accent;
 extern setting_enum g_history_timestamp;
-extern const char* get_popup_colors();
-extern const char* get_popup_desc_colors();
 // TODO: Host interface.
 extern int32 host_remove_history(int32 rl_history_index, const char* line);
 extern bool host_remove_dir_history(int32 index);

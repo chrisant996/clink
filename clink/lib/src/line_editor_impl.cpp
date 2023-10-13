@@ -15,6 +15,7 @@
 #include "display_readline.h"
 #include "clink_ctrlevent.h"
 #include "clink_rl_signal.h"
+#include "line_editor_integration.h"
 #include "recognizer.h"
 
 #include <core/base.h>
@@ -42,12 +43,8 @@ extern setting_bool g_history_autoexpand;
 extern setting_bool g_history_show_preview;
 extern setting_enum g_default_bindings;
 extern setting_color g_color_histexpand;
+// TODO: line_editor_impl vs rl_module.
 extern int32 g_suggestion_offset;
-
-extern bool is_showing_argmatchers();
-extern bool win_fn_callback_pending();
-extern void clear_need_collect_words();
-extern std::shared_ptr<match_builder_toolkit> get_deferred_matches(int32 generation_id);
 
 // TODO: Host interface.
 extern "C" void host_clear_suggestion();
@@ -1435,7 +1432,7 @@ matches* line_editor_impl::get_mutable_matches(bool nosort)
     return &m_matches;
 }
 
-matches* get_mutable_matches(bool nosort=false)
+matches* get_mutable_matches(bool nosort)
 {
     if (!s_editor)
         return nullptr;

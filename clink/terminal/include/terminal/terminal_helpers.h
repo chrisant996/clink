@@ -15,12 +15,16 @@ extern "C" int32 is_locked_cursor();
 extern "C" int32 lock_cursor(int32 lock);
 extern "C" int32 show_cursor(int32 visible);
 extern "C" int32 cursor_style(HANDLE handle, int32 style, int32 visible);
+extern "C" const char* get_popup_colors();
+extern "C" const char* get_popup_desc_colors();
 extern "C" DWORD cleanup_console_input_mode(DWORD mode);
 extern "C" void use_host_input_mode(void);
 extern "C" void use_clink_input_mode(void);
 extern "C" DWORD select_mouse_input(DWORD mode);
 extern "C" void terminal_begin_command();
 extern "C" void terminal_end_command();
+extern const char* get_found_ansi_handler();
+extern bool get_is_auto_ansi_handler();
 
 //------------------------------------------------------------------------------
 // Scoped configuration of console mode.

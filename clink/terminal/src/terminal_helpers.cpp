@@ -69,6 +69,9 @@ static setting_str g_mouse_modifier(
     "then Clink will also respond to mouse input when no modifier keys are held.",
     "");
 
+extern setting_color g_color_popup;
+extern setting_color g_color_popup_desc;
+
 //------------------------------------------------------------------------------
 static bool s_locked_cursor_visibility = false;
 extern "C" int32 is_locked_cursor()
@@ -124,6 +127,56 @@ extern "C" int32 cursor_style(HANDLE handle, int32 style, int32 visible)
     SetConsoleCursorInfo(handle, &ci);
 
     return was_visible;
+}
+
+
+
+//------------------------------------------------------------------------------
+static constexpr uint8 c_colors[] = { 30, 34, 32, 36, 31, 35, 33, 37, 90, 94, 92, 96, 91, 95, 93, 97 };
+const char* get_popup_colors()
+{
+    static str<32> s_popup;
+
+    str<32> tmp;
+    g_color_popup.get(tmp);
+    if (!tmp.empty())
+    {
+        s_popup.format("0;%s", tmp.c_str());
+        return s_popup.c_str();
+    }
+
+    CONSOLE_SCREEN_BUFFER_INFOEX csbiex = { sizeof(csbiex) };
+    if (!GetConsoleScreenBufferInfoEx(GetStdHandle(STD_OUTPUT_HANDLE), &csbiex))
+        return "0;30;47";
+
+    WORD attr = csbiex.wPopupAttributes;
+    s_popup.format("0;%u;%u", c_colors[attr & 0x0f], c_colors[(attr & 0xf0) >> 4] + 10);
+    return s_popup.c_str();
+}
+
+//------------------------------------------------------------------------------
+const char* get_popup_desc_colors()
+{
+    static str<32> s_popup_desc;
+
+    str<32> tmp;
+    g_color_popup_desc.get(tmp);
+    if (!tmp.empty())
+    {
+        s_popup_desc.format("0;%s", tmp.c_str());
+        return s_popup_desc.c_str();
+    }
+
+    CONSOLE_SCREEN_BUFFER_INFOEX csbiex = { sizeof(csbiex) };
+    if (!GetConsoleScreenBufferInfoEx(GetStdHandle(STD_OUTPUT_HANDLE), &csbiex))
+        return "0;90;47";
+
+    int32 dim = 30;
+    WORD attr = csbiex.wPopupAttributes;
+    if ((attr & 0xf0) == 0x00 || (attr & 0xf0) == 0x10 || (attr & 0xf0) == 0x90)
+        dim = 90;
+    s_popup_desc.format("0;%u;%u", dim, c_colors[(attr & 0xf0) >> 4] + 10);
+    return s_popup_desc.c_str();
 }
 
 

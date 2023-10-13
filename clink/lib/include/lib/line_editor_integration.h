@@ -24,3 +24,13 @@ void reselect_matches();
 void reset_generate_matches();
 matches* maybe_regenerate_matches(const char* needle, display_filter_flags flags);
 matches* get_mutable_matches(bool nosort=false);
+
+//------------------------------------------------------------------------------
+bool is_showing_argmatchers();
+void clear_need_collect_words();
+
+//------------------------------------------------------------------------------
+// Suggestions are spread across host, line_editor_impl, and rl_module.  Until
+// that gets cleaned up, the global functions are declared here.
+void set_suggestion_started(const char* line);
+void set_suggestion(const char* line, uint32 endword_offset, const char* suggestion, uint32 offset);

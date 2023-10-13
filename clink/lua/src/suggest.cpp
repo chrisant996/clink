@@ -12,6 +12,7 @@
 #include <core/os.h>
 #include <lib/line_state.h>
 #include <lib/matches.h>
+#include <lib/line_editor_integration.h>
 #include "lua_script_loader.h"
 #include "lua_state.h"
 #include "line_state_lua.h"
@@ -26,11 +27,8 @@ extern "C" {
 }
 
 //------------------------------------------------------------------------------
-extern void set_suggestion(const char* line, uint32 endword_offset, const char* suggestion, uint32 offset);
 extern setting_enum g_ignore_case;
 extern setting_bool g_fuzzy_accent;
-
-
 
 //------------------------------------------------------------------------------
 suggester::suggester(lua_state& lua)

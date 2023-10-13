@@ -79,8 +79,6 @@ static setting_enum g_paste_crlf(
     paste_crlf_crlf);
 
 extern setting_bool g_adjust_cursor_style;
-extern setting_color g_color_popup;
-extern setting_color g_color_popup_desc;
 extern setting_bool g_match_wild;
 
 
@@ -89,10 +87,6 @@ extern setting_bool g_match_wild;
 extern line_buffer* g_rl_buffer;
 extern word_collector* g_word_collector;
 extern editor_module::result* g_result;
-extern const char* get_found_ansi_handler();
-extern bool get_is_auto_ansi_handler();
-extern "C" int32 show_cursor(int32 visible);
-extern void set_suggestion(const char* line, uint32 endword_offset, const char* suggestion, uint32 offset);
 
 // TODO: Host interface.
 extern void host_cmd_enqueue_lines(std::list<str_moveable>& lines, bool hide_prompt, bool show_line);
@@ -711,6 +705,7 @@ int32 clink_selectall_conhost(int32 count, int32 invoking_key)
 
 
 //------------------------------------------------------------------------------
+// TODO: Host interface.
 extern const char** host_copy_dir_history(int32* total);
 int32 clink_popup_directories(int32 count, int32 invoking_key)
 {
@@ -782,6 +777,7 @@ int32 clink_popup_directories(int32 count, int32 invoking_key)
 
 
 //------------------------------------------------------------------------------
+// TODO: Host interface.
 extern bool host_call_lua_rl_global_function(const char* func_name);
 
 //------------------------------------------------------------------------------
@@ -1281,54 +1277,6 @@ int32 clink_popup_history(int32 count, int32 invoking_key)
 }
 
 
-
-//------------------------------------------------------------------------------
-static constexpr uint8 c_colors[] = { 30, 34, 32, 36, 31, 35, 33, 37, 90, 94, 92, 96, 91, 95, 93, 97 };
-const char* get_popup_colors()
-{
-    static str<32> s_popup;
-
-    str<32> tmp;
-    g_color_popup.get(tmp);
-    if (!tmp.empty())
-    {
-        s_popup.format("0;%s", tmp.c_str());
-        return s_popup.c_str();
-    }
-
-    CONSOLE_SCREEN_BUFFER_INFOEX csbiex = { sizeof(csbiex) };
-    if (!GetConsoleScreenBufferInfoEx(GetStdHandle(STD_OUTPUT_HANDLE), &csbiex))
-        return "0;30;47";
-
-    WORD attr = csbiex.wPopupAttributes;
-    s_popup.format("0;%u;%u", c_colors[attr & 0x0f], c_colors[(attr & 0xf0) >> 4] + 10);
-    return s_popup.c_str();
-}
-
-//------------------------------------------------------------------------------
-const char* get_popup_desc_colors()
-{
-    static str<32> s_popup_desc;
-
-    str<32> tmp;
-    g_color_popup_desc.get(tmp);
-    if (!tmp.empty())
-    {
-        s_popup_desc.format("0;%s", tmp.c_str());
-        return s_popup_desc.c_str();
-    }
-
-    CONSOLE_SCREEN_BUFFER_INFOEX csbiex = { sizeof(csbiex) };
-    if (!GetConsoleScreenBufferInfoEx(GetStdHandle(STD_OUTPUT_HANDLE), &csbiex))
-        return "0;90;47";
-
-    int32 dim = 30;
-    WORD attr = csbiex.wPopupAttributes;
-    if ((attr & 0xf0) == 0x00 || (attr & 0xf0) == 0x10 || (attr & 0xf0) == 0x90)
-        dim = 90;
-    s_popup_desc.format("0;%u;%u", dim, c_colors[(attr & 0xf0) >> 4] + 10);
-    return s_popup_desc.c_str();
-}
 
 //------------------------------------------------------------------------------
 static int32 adjust_point_delta(int32& point, int32 delta, char* buffer)
@@ -2413,6 +2361,7 @@ int32 clink_diagnostics(int32 count, int32 invoking_key)
         print_value("terminal", t.c_str());
     }
 
+    // TODO: Host interface.
     host_call_lua_rl_global_function("clink._diagnostics");
 
     extern void task_manager_diagnostics();
