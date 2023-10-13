@@ -1535,6 +1535,9 @@ void line_editor_impl::update_internal()
 //------------------------------------------------------------------------------
 void line_editor_impl::try_suggest()
 {
+    if (!g_autosuggest_enable.get())
+        return;
+
     const line_states& lines = m_commands.get_linestates(m_buffer);
     line_state line = lines.back();
     if (host_can_suggest(line))
