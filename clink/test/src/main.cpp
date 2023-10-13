@@ -22,20 +22,15 @@ extern "C" {
 extern bool g_force_load_debugger;
 
 //------------------------------------------------------------------------------
+// NOTE:  If you get a linker error about these being "already defined", then
+// probably a new global function has been added in app/src/ that needs to be
+// stubbed out here.
 #ifdef DEBUG
 bool g_suppress_signal_assert = false;
 #endif
-
-//------------------------------------------------------------------------------
-void host_cmd_enqueue_lines(std::list<str_moveable>& lines, bool hide_prompt, bool show_line)
-{
-    assert(false);
-}
-
-//------------------------------------------------------------------------------
-void host_cleanup_after_signal()
-{
-}
+void host_cmd_enqueue_lines(std::list<str_moveable>& lines, bool hide_prompt, bool show_line) { assert(false); }
+void host_cleanup_after_signal() {}
+void host_set_last_prompt(const char* prompt, uint32 length) { assert(false); }
 
 //------------------------------------------------------------------------------
 int32 main(int32 argc, char** argv)

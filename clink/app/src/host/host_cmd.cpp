@@ -45,7 +45,6 @@ func_SetConsoleTitleW_t __Real_SetConsoleTitleW = SetConsoleTitleW;
 
 //------------------------------------------------------------------------------
 extern printer* g_printer;
-extern str<> g_last_prompt;
 
 //------------------------------------------------------------------------------
 extern setting_bool g_ctrld_exits;
@@ -581,8 +580,9 @@ BOOL WINAPI host_cmd::read_console(
         {
             // Show the most recent prompt.  But first strip any 0x01 and 0x02
             // characters that may be present.
-            char const* read = g_last_prompt.c_str();
-            char* write = g_last_prompt.data();
+            str<> prompt(get_last_prompt());
+            char const* read = prompt.c_str();
+            char* write = prompt.data();
             while (*read)
             {
                 if (*read != 0x01 && *read != 0x02)
@@ -594,7 +594,7 @@ BOOL WINAPI host_cmd::read_console(
             }
             *write = '\0';
 
-            g_printer->print(g_last_prompt.c_str(), g_last_prompt.length());
+            g_printer->print(prompt.c_str(), prompt.length());
             // Add a newline so that output always starts on the line after the
             // prompt.  Conhost starts output on the prompt line, making the
             // output look as though it's what was typed as input.  Clink

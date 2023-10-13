@@ -97,14 +97,15 @@ extern setting_color g_color_interact;
 extern int32 g_prompt_refilter;
 extern int32 g_prompt_redisplay;
 
+static terminal_in* s_direct_input = nullptr;       // for read_key_hook
+static terminal_in* s_processed_input = nullptr;    // for read thunk
+
 // TODO: Refactor to avoid globals.
-terminal_in*        s_direct_input = nullptr;       // for read_key_hook
-terminal_in*        s_processed_input = nullptr;    // for read thunk
 line_buffer*        g_rl_buffer = nullptr;
 pager*              g_pager = nullptr;
 editor_module::result* g_result = nullptr;
-str<>               g_last_prompt;
 
+static str<>        s_last_prompt;
 static str_moveable s_needle;
 static bool         s_need_collect_words = false;
 
@@ -1163,6 +1164,12 @@ static void adjust_completion_defaults()
 void clear_need_collect_words()
 {
     s_need_collect_words = false;
+}
+
+//------------------------------------------------------------------------------
+const char* get_last_prompt()
+{
+    return s_last_prompt.c_str();
 }
 
 //------------------------------------------------------------------------------
@@ -2343,12 +2350,11 @@ void rl_module::set_prompt(const char* prompt, const char* rprompt, bool redispl
     if (rprompt)
         m_rl_rprompt.concat("\x01\x1b[m\x02");
 
-    // Warning:  g_last_prompt is a mutable copy that can be altered in place;
-    // it is not a synonym for m_rl_prompt.
+    // Remember the prompt so the host can retrieve it.
     {
-        dbg_ignore_scope(snapshot, "g_last_prompt");
-        g_last_prompt.clear();
-        g_last_prompt.concat(m_rl_prompt.c_str(), m_rl_prompt.length());
+        dbg_ignore_scope(snapshot, "s_last_prompt");
+        s_last_prompt.clear();
+        s_last_prompt.concat(m_rl_prompt.c_str(), m_rl_prompt.length());
     }
 
     if (m_rl_prompt.equals(prev_prompt.c_str()) &&
