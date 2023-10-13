@@ -1193,7 +1193,6 @@ static int32 describe_macro(lua_State* state)
             macro = tmp.c_str();
         }
 
-        extern void add_macro_description(const char* macro, const char* desc);
         add_macro_description(macro, description);
     }
     return 0;

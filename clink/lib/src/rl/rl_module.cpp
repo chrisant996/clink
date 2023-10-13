@@ -91,8 +91,6 @@ extern int          _rl_last_v_pos;
 } // extern "C"
 
 // TODO: Host interface.
-extern void host_send_event(const char* event_name);
-extern void host_send_oninputlinechanged_event(const char* line);
 extern int32 host_filter_matches(char** matches);
 
 extern setting_color g_color_interact;
@@ -107,13 +105,7 @@ pager*              g_pager = nullptr;
 editor_module::result* g_result = nullptr;
 str<>               g_last_prompt;
 
-static str_moveable s_last_luafunc;
-static str_moveable s_pending_luafunc;
-static bool         s_has_pending_luafunc = false;
-static bool         s_has_override_rl_last_func = false;
-static rl_command_func_t* s_override_rl_last_func = nullptr;
 static str_moveable s_needle;
-static str_moveable s_prev_inputline;
 static bool         s_need_collect_words = false;
 
 static suggestion_manager s_suggestion;
@@ -359,62 +351,6 @@ static void LOGCURSORPOS()
     HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
     if (GetConsoleScreenBufferInfo(h, &csbi))
         LOG("CURSORPOS %d,%d", csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y);
-}
-
-
-
-//------------------------------------------------------------------------------
-void set_pending_luafunc(const char* macro)
-{
-    dbg_ignore_scope(snapshot, "s_pending_luafunc");
-    s_has_pending_luafunc = true;
-    s_pending_luafunc.copy(macro);
-}
-
-//------------------------------------------------------------------------------
-const char* get_last_luafunc()
-{
-    return s_last_luafunc.c_str();
-}
-
-//------------------------------------------------------------------------------
-void* get_effective_last_func()
-{
-    return reinterpret_cast<void*>(s_has_override_rl_last_func ? s_override_rl_last_func : rl_last_func);
-}
-
-//------------------------------------------------------------------------------
-static void last_func_hook_func()
-{
-    if (s_has_override_rl_last_func)
-    {
-        rl_last_func = s_override_rl_last_func;
-        s_has_override_rl_last_func = false;
-    }
-
-    cua_after_command();
-    s_last_luafunc.clear();
-
-    if (s_prev_inputline.length() != rl_end || memcmp(s_prev_inputline.c_str(), rl_line_buffer, rl_end))
-    {
-        s_prev_inputline.clear();
-        s_prev_inputline.concat(rl_line_buffer, rl_end);
-        host_send_oninputlinechanged_event(s_prev_inputline.c_str());
-    }
-
-    host_send_event("onaftercommand");
-}
-
-//------------------------------------------------------------------------------
-void override_rl_last_func(rl_command_func_t* func, bool force_when_null)
-{
-    s_has_override_rl_last_func = true;
-    s_override_rl_last_func = func;
-    if (func || force_when_null)
-    {
-        rl_last_func = func;
-        cua_after_command();
-    }
 }
 
 
@@ -692,6 +628,7 @@ extern "C" void terminal_end_command()
     }
 }
 
+//------------------------------------------------------------------------------
 static int32 terminal_read_thunk(FILE* stream)
 {
     if (stream == in_stream)
@@ -1375,40 +1312,6 @@ static void buffer_changing()
     // The buffer text is changing, so the selection will be invalidated and
     // needs to be cleared.
     cua_clear_selection();
-}
-
-//------------------------------------------------------------------------------
-void update_rl_modes_from_matches(const matches* matches, const matches_iter& iter, int32 count)
-{
-    switch (matches->get_suppress_quoting())
-    {
-    case 1: rl_filename_quoting_desired = 0; break;
-    case 2: rl_completion_suppress_quote = 1; break;
-    }
-
-    rl_completion_suppress_append = matches->is_suppress_append();
-    if (matches->get_append_character())
-        rl_completion_append_character = matches->get_append_character();
-
-    rl_filename_completion_desired = iter.is_filename_completion_desired();
-    rl_filename_display_desired = iter.is_filename_display_desired();
-
-    if (!rl_filename_completion_desired && !matches->get_force_quoting())
-        rl_filename_quoting_desired = 0;
-
-#ifdef DEBUG
-    if (dbg_get_env_int("DEBUG_MATCHES"))
-    {
-        printf("count = %d\n", count);
-        printf("filename completion desired = %d (%s)\n", rl_filename_completion_desired, iter.is_filename_completion_desired().is_explicit() ? "explicit" : "implicit");
-        printf("filename display desired = %d (%s)\n", rl_filename_display_desired, iter.is_filename_display_desired().is_explicit() ? "explicit" : "implicit");
-        printf("get word break position = %d\n", matches->get_word_break_position());
-        printf("is suppress append = %d\n", matches->is_suppress_append());
-        printf("get append character = %u\n", uint8(matches->get_append_character()));
-        printf("get suppress quoting = %d\n", matches->get_suppress_quoting());
-        printf("get force quoting = %d\n", matches->get_force_quoting());
-    }
-#endif
 }
 
 //------------------------------------------------------------------------------
@@ -2588,8 +2491,7 @@ void rl_module::on_begin_line(const context& context)
     g_pager = &context.pager;
     set_prompt(context.prompt, context.rprompt, false/*redisplay*/);
     g_rl_buffer = &context.buffer;
-    s_prev_inputline.clear();
-    s_prev_inputline.concat(context.buffer.get_buffer(), context.buffer.get_length());
+    set_prev_inputline(context.buffer.get_buffer(), context.buffer.get_length());
     if (g_classify_words.get())
         s_classifications = &context.classifications;
     g_prompt_refilter = g_prompt_redisplay = 0; // Used only by diagnostic output.
@@ -2698,7 +2600,7 @@ void rl_module::on_end_line()
     g_rl_buffer = nullptr;
     g_pager = nullptr;
 
-    s_prev_inputline.free();
+    set_prev_inputline(nullptr);
 
     clink_shutdown_ctrlevent();
 #ifdef SIGBREAK
@@ -2826,9 +2728,7 @@ void rl_module::on_input(const input& input, result& result, const context& cont
         // command called `console.scroll()` or `ScrollConsoleRelative()`.
         reset_scroll_mode();
 
-        s_pending_luafunc.clear();
-        s_has_override_rl_last_func = false;
-        s_override_rl_last_func = nullptr;
+        clear_pending_lastfunc();
         reset_command_states();
 
         // The history search position gets invalidated as soon as a non-
@@ -2861,16 +2761,7 @@ void rl_module::on_input(const input& input, result& result, const context& cont
         // However, since Readline doesn't set rl_last_func until AFTER the
         // invoked function or macro returns, setting rl_last_func won't
         // "stick" unless it's set after rl_callback_read_char() returns.
-        if (s_has_override_rl_last_func)
-        {
-            rl_last_func = s_override_rl_last_func;
-            s_has_override_rl_last_func = false;
-        }
-        if (s_has_pending_luafunc)
-        {
-            s_last_luafunc = std::move(s_pending_luafunc);
-            s_has_pending_luafunc = false;
-        }
+        apply_pending_lastfunc();
 
         // Internally Readline tries to resend escape characters but it doesn't
         // work with how Clink uses Readline. So we do it here instead.

@@ -23,10 +23,18 @@ int32   force_reload_scripts();
 void    update_rl_modes_from_matches(const matches* matches, const matches_iter& iter, int32 count);
 
 //------------------------------------------------------------------------------
+void    set_prev_inputline(const char* line, uint32 length=-1);
 void    set_pending_luafunc(const char* macro);
-const char* get_last_luafunc();
 void    override_rl_last_func(rl_command_func_t* func, bool force_when_null=false);
+const char* get_last_luafunc();
+void*   get_effective_last_func();
 int32   macro_hook_func(const char* macro);
+void    last_func_hook_func();
+void    apply_pending_lastfunc();
+void    clear_pending_lastfunc();
+
+//------------------------------------------------------------------------------
+void    add_macro_description(const char* macro, const char* desc);
 void    clear_macro_descriptions();
 
 //------------------------------------------------------------------------------
