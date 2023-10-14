@@ -4,6 +4,7 @@
 
 #### v1.5.10
 - Fixed a case where the `completion` auto-suggest strategy could be temporarily prevented from providing a suggestion (regression introduced in v1.4.22).
+- Fixed leaked memory when showing history expansion previews.
 - Fixed [#511](https://github.com/chrisant996/clink/issues/511); `!` doesn't need to be treated as a word break character.
 - Internal changes.
 
