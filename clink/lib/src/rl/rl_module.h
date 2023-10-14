@@ -52,6 +52,9 @@ public:
     bool            is_input_pending();
     bool            next_line(str_base& out);
 
+    static bool     is_showing_argmatchers();
+    static void     clear_need_collect_words();
+
 private:
     virtual void    bind_input(binder& binder) override;
     virtual void    on_begin_line(const context& context) override;

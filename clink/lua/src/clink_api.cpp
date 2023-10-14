@@ -49,8 +49,6 @@ extern "C" {
 //------------------------------------------------------------------------------
 extern setting_enum g_dupe_mode;
 
-extern void host_signal_delayed_init(); // TODO: Host interface.
-
 #ifdef _WIN64
 static const char c_uninstall_key[] = "SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
 #else
@@ -1182,7 +1180,7 @@ static int32 reclassify_line(lua_State* state)
 {
     const bool ismain = (G(state)->mainthread == state);
     if (ismain)
-        host_reclassify(reclassify_reason::force);
+        reclassify(reclassify_reason::force);
     else
         lua_input_idle::signal_reclassify();
     return 0;

@@ -124,90 +124,6 @@ bool prev_buffer::equals(const char* s, int32 len) const
 
 
 //------------------------------------------------------------------------------
-static line_editor_impl* s_editor = nullptr;
-static host_callbacks* s_callbacks = nullptr;
-word_collector* g_word_collector = nullptr;
-
-//------------------------------------------------------------------------------
-void reset_generate_matches()
-{
-    if (!s_editor)
-        return;
-
-    s_editor->reset_generate_matches();
-}
-
-//------------------------------------------------------------------------------
-void reselect_matches()
-{
-    if (!s_editor)
-        return;
-
-    s_editor->reselect_matches();
-}
-
-//------------------------------------------------------------------------------
-bool is_regen_blocked()
-{
-    return (s_editor && s_editor->m_matches.is_regen_blocked());
-}
-
-//------------------------------------------------------------------------------
-void force_update_internal(bool restrict)
-{
-    if (!s_editor)
-        return;
-
-    s_editor->force_update_internal(restrict);
-}
-
-//------------------------------------------------------------------------------
-void update_matches()
-{
-    if (!s_editor)
-        return;
-
-    s_editor->update_matches();
-}
-
-//------------------------------------------------------------------------------
-bool notify_matches_ready(std::shared_ptr<match_builder_toolkit> toolkit, int32 generation_id)
-{
-    if (!s_editor || !toolkit)
-        return false;
-
-    matches* matches = toolkit->get_matches();
-    return s_editor->notify_matches_ready(generation_id, matches);
-}
-
-//------------------------------------------------------------------------------
-void override_line_state(const char* line, const char* needle, int32 point)
-{
-    assert(s_editor);
-    if (!s_editor)
-        return;
-
-    s_editor->override_line(line, needle, point);
-}
-
-//------------------------------------------------------------------------------
-#ifdef DEBUG
-bool is_line_state_overridden()
-{
-    return s_editor && s_editor->is_line_overridden();
-}
-#endif
-
-//------------------------------------------------------------------------------
-void set_prompt(const char* prompt, const char* rprompt, bool redisplay)
-{
-    if (!s_editor)
-        return;
-
-    s_editor->set_prompt(prompt, rprompt, redisplay);
-}
-
-//------------------------------------------------------------------------------
 static void calc_history_expansions(const line_buffer& buffer, history_expansion*& list)
 {
     list = nullptr;
@@ -257,83 +173,6 @@ static void classify_history_expansions(const history_expansion* list, word_clas
 
     for (const history_expansion* e = list; e; e = e->next)
         classifications.apply_face(e->start, e->len, FACE_HISTEXPAND, true);
-}
-
-
-
-//------------------------------------------------------------------------------
-void host_filter_prompt()
-{
-    if (!s_callbacks)
-        return;
-
-    s_callbacks->filter_prompt();
-}
-
-//------------------------------------------------------------------------------
-extern "C" void host_filter_transient_prompt(int32 crlf)
-{
-    if (!s_callbacks)
-        return;
-
-    s_callbacks->filter_transient_prompt(crlf < 0/*final*/);
-}
-
-//------------------------------------------------------------------------------
-int32 host_filter_matches(char** matches)
-{
-    return s_callbacks && s_callbacks->filter_matches(matches);
-}
-
-//------------------------------------------------------------------------------
-void host_invalidate_matches()
-{
-    reset_generate_matches();
-    clear_suggestion();
-    if (s_editor)
-        s_editor->try_suggest();
-}
-
-//------------------------------------------------------------------------------
-void host_send_event(const char* event_name)
-{
-    if (!s_callbacks)
-        return;
-
-    s_callbacks->send_event(event_name);
-}
-
-//------------------------------------------------------------------------------
-void host_send_oninputlinechanged_event(const char* line)
-{
-    if (!s_callbacks)
-        return;
-
-    s_callbacks->send_oninputlinechanged_event(line);
-}
-
-//------------------------------------------------------------------------------
-bool host_call_lua_rl_global_function(const char* func_name)
-{
-    return s_editor && s_editor->call_lua_rl_global_function(func_name);
-}
-
-//------------------------------------------------------------------------------
-const char** host_copy_dir_history(int32* total)
-{
-    if (!s_callbacks)
-        return nullptr;
-
-    return s_callbacks->copy_dir_history(total);
-}
-
-//------------------------------------------------------------------------------
-void host_get_app_context(int32& id, host_context& context)
-{
-    if (!s_callbacks)
-        return;
-
-    s_callbacks->get_app_context(id, context);
 }
 
 
@@ -439,11 +278,7 @@ void line_editor_impl::begin_line()
     m_command_offset = 0;
     m_prev_key.reset();
 
-    assert(!s_editor);
-    assert(!g_word_collector);
-    s_editor = this;
-    s_callbacks = m_desc.callbacks;
-    g_word_collector = &m_collector;
+    set_active_line_editor(this, m_desc.callbacks);
 
     match_pipeline pipeline(m_matches);
     pipeline.reset();
@@ -466,7 +301,7 @@ void line_editor_impl::begin_line()
     m_override_words.clear();
     m_override_commands.clear();
 
-    rl_before_display_function = before_display;
+    rl_before_display_function = before_display_readline;
 
     editor_module::context context = get_context();
     for (auto module : m_modules)
@@ -493,9 +328,7 @@ void line_editor_impl::end_line()
     m_commands.clear();
     m_classify_words.clear();
 
-    s_editor = nullptr;
-    s_callbacks = nullptr;
-    g_word_collector = nullptr;
+    set_active_line_editor(nullptr, nullptr);
 
     clear_flag(flag_editing);
 
@@ -996,7 +829,7 @@ bool line_editor_impl::update_input()
 //------------------------------------------------------------------------------
 void line_editor_impl::collect_words()
 {
-    clear_need_collect_words();
+    m_module.clear_need_collect_words();
     m_command_offset = collect_words(m_words, &m_matches, collect_words_mode::stop_at_cursor, m_commands);
 }
 
@@ -1154,7 +987,7 @@ void line_editor_impl::classify()
     if (plain)
     {
         m_classifications.apply_face(0, m_buffer.get_length(), FACE_NORMAL);
-        m_classifications.finish(is_showing_argmatchers());
+        m_classifications.finish(m_module.is_showing_argmatchers());
     }
     else
     {
@@ -1170,7 +1003,7 @@ void line_editor_impl::classify()
             classify_history_expansions(list, m_classifications);
             set_history_expansions(list);
         }
-        m_classifications.finish(is_showing_argmatchers());
+        m_classifications.finish(m_module.is_showing_argmatchers());
     }
 
 #ifdef DEBUG
@@ -1290,20 +1123,6 @@ void line_editor_impl::reclassify(reclassify_reason why)
         m_buffer.set_need_draw();
         m_buffer.draw();
     }
-}
-
-//------------------------------------------------------------------------------
-void host_reclassify(reclassify_reason why)
-{
-    if (s_editor)
-        s_editor->reclassify(why);
-}
-
-//------------------------------------------------------------------------------
-void host_refresh_recognizer()
-{
-    if (s_editor)
-        s_editor->reclassify(reclassify_reason::recognizer);
 }
 
 //------------------------------------------------------------------------------
@@ -1427,14 +1246,6 @@ matches* line_editor_impl::get_mutable_matches(bool nosort)
     return &m_matches;
 }
 
-matches* get_mutable_matches(bool nosort)
-{
-    if (!s_editor)
-        return nullptr;
-
-    return s_editor->get_mutable_matches(nosort);
-}
-
 //------------------------------------------------------------------------------
 void line_editor_impl::update_internal()
 {
@@ -1534,7 +1345,7 @@ void line_editor_impl::try_suggest()
 
     const line_states& lines = m_commands.get_linestates(m_buffer);
     line_state line = lines.back();
-    if (s_callbacks && s_callbacks->can_suggest(line))
+    if (host_can_suggest(line))
     {
         matches_impl* matches = nullptr;
         matches_impl* empty_matches = nullptr;
@@ -1574,85 +1385,21 @@ void line_editor_impl::try_suggest()
             matches = &m_matches;
         }
 
-        s_callbacks->suggest(lines, matches, m_generation_id);
+        host_suggest(lines, matches, m_generation_id);
 
         delete empty_matches;
     }
 }
 
 //------------------------------------------------------------------------------
-void line_editor_impl::before_display()
-{
-    assert(s_editor);
-    if (s_editor)
-        s_editor->classify();
-}
-
-//------------------------------------------------------------------------------
 bool line_editor_impl::call_lua_rl_global_function(const char* func_name)
 {
-    if (!s_callbacks)
-        return false;
-
     line_state line = get_linestate();
-    return s_callbacks->call_lua_rl_global_function(func_name, &line);
+    return host_call_lua_rl_global_function(func_name, &line);
 }
 
 //------------------------------------------------------------------------------
-matches* maybe_regenerate_matches(const char* needle, display_filter_flags flags)
+uint32 line_editor_impl::collect_words(const line_buffer& buffer, std::vector<word>& words, collect_words_mode mode) const
 {
-    if (!s_editor || s_editor->m_matches.is_regen_blocked())
-        return nullptr;
-
-    // Check if a match display filter is active.
-    matches_impl& regen = s_editor->m_regen_matches;
-    bool old_filtering = false;
-    if (!regen.match_display_filter(nullptr, nullptr, nullptr, flags, &old_filtering))
-        return nullptr;
-
-#ifdef DEBUG
-    int32 debug_filter = dbg_get_env_int("DEBUG_FILTER");
-    if (debug_filter) puts("REGENERATE_MATCHES");
-#endif
-
-    commands commands;
-    std::vector<word> words;
-    uint32 command_offset = s_editor->collect_words(words, &regen, collect_words_mode::stop_at_cursor, commands);
-
-    match_pipeline pipeline(regen);
-    pipeline.reset();
-
-#ifdef DEBUG
-    if (debug_filter) puts("-- GENERATE");
-#endif
-
-    const auto linestates = commands.get_linestates(s_editor->m_buffer);
-    pipeline.generate(linestates, s_editor->m_generator, old_filtering);
-
-#ifdef DEBUG
-    if (debug_filter) puts("-- SELECT");
-#endif
-
-    pipeline.select(needle);
-    pipeline.sort();
-
-#ifdef DEBUG
-    if (debug_filter)
-    {
-        matches_iter iter = regen.get_iter();
-        while (iter.next())
-            printf("match '%s'\n", iter.get_match());
-        puts("-- DONE");
-    }
-#endif
-
-    if (old_filtering)
-    {
-        // Using old_filtering lets deprecated generators filter based on the
-        // input needle.  That poisons the collected matches for any other use,
-        // so the matches must be reset.
-        reset_generate_matches();
-    }
-
-    return &regen;
+    return m_collector.collect_words(buffer, words, mode);
 }

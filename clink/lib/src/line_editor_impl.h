@@ -83,6 +83,7 @@ public:
     void                force_update_internal(bool restrict=false);
     bool                notify_matches_ready(int32 generation_id, matches* matches);
     bool                call_lua_rl_global_function(const char* func_name);
+    uint32              collect_words(const line_buffer& buffer, std::vector<word>& words, collect_words_mode mode) const;
 
 private:
     typedef editor_module                       module;
@@ -92,6 +93,7 @@ private:
     friend matches* get_mutable_matches(bool nosort);
     friend matches* maybe_regenerate_matches(const char* needle, display_filter_flags flags);
     friend bool is_regen_blocked();
+    friend void before_display_readline();
 
     enum flags : uint8
     {
@@ -134,7 +136,6 @@ private:
     static bool         is_key_same(const key_t& prev_key, const char* prev_line, int32 prev_length,
                                     const key_t& next_key, const char* next_line, int32 next_length,
                                     bool compare_cursor);
-    static void         before_display();
 
     desc                m_desc;
     rl_module           m_module;

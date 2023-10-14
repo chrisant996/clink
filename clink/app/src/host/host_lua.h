@@ -29,7 +29,7 @@ public:
     bool                send_oncommand_event(line_state& line, const char* command, bool quoted, recognition recog, const char* file);
     bool                send_oninputlinechanged_event(const char* line);
 
-    bool                call_lua_rl_global_function(const char* func_name, line_state* line);
+    bool                call_lua_rl_global_function(const char* func_name, const line_state* line);
     bool                call_lua_filter_matches(char** matches, int32 completion_type, int32 filename_completion_desired);
 
 #ifdef DEBUG

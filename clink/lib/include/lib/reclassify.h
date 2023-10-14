@@ -11,4 +11,4 @@ enum class reclassify_reason : uint8
 };
 
 //------------------------------------------------------------------------------
-void host_reclassify(reclassify_reason why);
+void reclassify(reclassify_reason why);

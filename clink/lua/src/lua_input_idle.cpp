@@ -9,6 +9,7 @@
 
 #include <core/base.h>
 #include <lib/reclassify.h>
+#include <lib/line_editor_integration.h>
 
 #include <assert.h>
 
@@ -19,9 +20,6 @@ extern "C" {
 }
 
 //------------------------------------------------------------------------------
-extern void host_filter_prompt(); // TODO: Host interface.
-extern void host_invalidate_matches(); // TODO: Host interface.
-extern void host_refresh_recognizer(); // TODO: Host interface.
 static lua_input_idle* s_idle = nullptr;
 
 //------------------------------------------------------------------------------
@@ -148,7 +146,7 @@ void lua_input_idle::on_wait_event(uint32 index)
 
     switch (event)
     {
-    case input_idle_events::recognizer:     host_refresh_recognizer(); break;
+    case input_idle_events::recognizer:     refresh_recognizer(); break;
     case input_idle_events::task_manager:   task_manager_on_idle(m_state); break;
     case input_idle_events::force_idle:     on_idle(); break;
     default:                                assert(false); break;
@@ -196,7 +194,7 @@ void lua_input_idle::on_idle()
     if (s_signaled_reclassify)
     {
         s_signaled_reclassify = false;
-        host_reclassify(reclassify_reason::force);
+        reclassify(reclassify_reason::force);
     }
 }
 

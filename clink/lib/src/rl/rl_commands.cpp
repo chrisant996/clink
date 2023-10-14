@@ -373,7 +373,7 @@ int32 clink_copy_line(int32 count, int32 invoking_key)
 //------------------------------------------------------------------------------
 int32 clink_copy_word(int32 count, int32 invoking_key)
 {
-    if (count < 0 || !g_rl_buffer || !g_word_collector)
+    if (count < 0 || !g_rl_buffer)
     {
 Nope:
         rl_ding();
@@ -381,8 +381,8 @@ Nope:
     }
 
     std::vector<word> words;
-    g_word_collector->collect_words(*g_rl_buffer, words, collect_words_mode::whole_command);
-
+    if (!collect_words(*g_rl_buffer, words, collect_words_mode::whole_command))
+        goto Nope;
     if (words.empty())
         goto Nope;
 
@@ -700,7 +700,6 @@ int32 clink_selectall_conhost(int32 count, int32 invoking_key)
 
 
 //------------------------------------------------------------------------------
-extern const char** host_copy_dir_history(int32* total); // TODO: Host interface.
 int32 clink_popup_directories(int32 count, int32 invoking_key)
 {
     // Copy the directory list (just a shallow copy of the dir pointers).
@@ -769,9 +768,6 @@ int32 clink_popup_directories(int32 count, int32 invoking_key)
 }
 
 
-
-//------------------------------------------------------------------------------
-extern bool host_call_lua_rl_global_function(const char* func_name); // TODO: Host interface.
 
 //------------------------------------------------------------------------------
 int32 clink_complete_numbers(int32 count, int32 invoking_key)

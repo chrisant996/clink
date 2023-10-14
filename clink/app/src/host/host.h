@@ -65,7 +65,7 @@ public:
     bool            can_suggest(const line_state& line) override;
     bool            suggest(const line_states& lines, matches* matches, int32 generation_id) override;
     bool            filter_matches(char** matches) override;
-    bool            call_lua_rl_global_function(const char* func_name, line_state* line) override;
+    bool            call_lua_rl_global_function(const char* func_name, const line_state* line) override;
     const char**    copy_dir_history(int32* total) override;
     void            send_event(const char* event_name) override;
     void            send_oncommand_event(line_state& line, const char* command, bool quoted, recognition recog, const char* file) override;

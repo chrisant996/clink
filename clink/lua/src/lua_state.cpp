@@ -676,7 +676,7 @@ bool lua_state::send_oninputlinechanged_event(const char* line)
 }
 
 //------------------------------------------------------------------------------
-bool lua_state::call_lua_rl_global_function(const char* func_name, line_state* line)
+bool lua_state::call_lua_rl_global_function(const char* func_name, const line_state* line)
 {
     lua_State* state = get_state();
     rl_buffer_lua buffer(*g_rl_buffer);

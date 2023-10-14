@@ -61,7 +61,7 @@ public:
     bool            send_event_cancelable_string_inout(const char* event_name, const char* string, str_base& out, std::list<str_moveable>* more_out=nullptr);
     bool            send_oncommand_event(line_state& line, const char* command, bool quoted, recognition recog, const char* file);
     bool            send_oninputlinechanged_event(const char* line);
-    bool            call_lua_rl_global_function(const char* func_name, line_state* line);
+    bool            call_lua_rl_global_function(const char* func_name, const line_state* line);
     static int32    call_onfiltermatches(lua_State* L, int32 nargs, int32 nresults);
 
 #ifdef DEBUG

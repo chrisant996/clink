@@ -30,7 +30,7 @@ public:
     virtual bool can_suggest(const line_state& line) = 0;
     virtual bool suggest(const line_states& lines, matches* matches, int32 generation_id) = 0;
     virtual bool filter_matches(char** matches) = 0;
-    virtual bool call_lua_rl_global_function(const char* func_name, line_state* line) = 0;
+    virtual bool call_lua_rl_global_function(const char* func_name, const line_state* line) = 0;
     virtual const char** copy_dir_history(int32* total) = 0;
     virtual void send_event(const char* event_name) = 0;
     virtual void send_oncommand_event(line_state& line, const char* command, bool quoted, recognition recog, const char* file) = 0;

@@ -595,7 +595,7 @@ bool host::filter_matches(char** matches)
 }
 
 //------------------------------------------------------------------------------
-bool host::call_lua_rl_global_function(const char* func_name, line_state* line)
+bool host::call_lua_rl_global_function(const char* func_name, const line_state* line)
 {
     return m_lua && m_lua->call_lua_rl_global_function(func_name, line);
 }

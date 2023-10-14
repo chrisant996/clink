@@ -90,8 +90,6 @@ extern int          _rl_last_v_pos;
 #endif
 } // extern "C"
 
-extern int32 host_filter_matches(char** matches); // TODO: Host interface.
-
 extern setting_color g_color_interact;
 extern int32 g_prompt_refilter;
 extern int32 g_prompt_redisplay;
@@ -758,12 +756,6 @@ static const char* s_histexpand_color = nullptr;
 int32 g_suggestion_offset = -1;
 
 //------------------------------------------------------------------------------
-bool is_showing_argmatchers()
-{
-    return !!s_argmatcher_color;
-}
-
-//------------------------------------------------------------------------------
 // This counts the number of screen lines needed to draw prompt_prefix.
 //
 // Why:  Readline expands the prompt string into a prefix and the last line of
@@ -1157,12 +1149,6 @@ static void adjust_completion_defaults()
         // prefix like Windows normally does.
         reselect_matches();
     }
-}
-
-//------------------------------------------------------------------------------
-void clear_need_collect_words()
-{
-    s_need_collect_words = false;
 }
 
 //------------------------------------------------------------------------------
@@ -2417,6 +2403,18 @@ bool rl_module::next_line(str_base& out)
     out = m_queued_lines[0].c_str();
     m_queued_lines.erase(m_queued_lines.begin());
     return true;
+}
+
+//------------------------------------------------------------------------------
+bool rl_module::is_showing_argmatchers()
+{
+    return !!s_argmatcher_color;
+}
+
+//------------------------------------------------------------------------------
+void rl_module::clear_need_collect_words()
+{
+    s_need_collect_words = false;
 }
 
 //------------------------------------------------------------------------------

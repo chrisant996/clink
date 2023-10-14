@@ -9,6 +9,7 @@
 #include "matches_lookaside.h"
 #include "match_pipeline.h"
 #include "display_matches.h"
+#include "line_editor_integration.h"
 
 #include <core/str_compare.h>
 #include <terminal/ecma48_iter.h>
@@ -18,9 +19,6 @@ extern "C" {
 #include <readline/rldefs.h>
 #include <readline/rlprivate.h>
 };
-
-//------------------------------------------------------------------------------
-extern int32 host_filter_matches(char** matches); // TODO: Host interface.
 
 //------------------------------------------------------------------------------
 void match_adapter::cached_info::clear()

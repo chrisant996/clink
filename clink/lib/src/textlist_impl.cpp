@@ -12,6 +12,7 @@
 #include "clink_ctrlevent.h"
 #include "clink_rl_signal.h"
 #include "history_timeformatter.h"
+#include "line_editor_integration.h"
 #ifdef SHOW_VERT_SCROLLBARS
 #include "scroll_car.h"
 #endif
@@ -77,8 +78,7 @@ enum {
 extern setting_enum g_ignore_case;
 extern setting_bool g_fuzzy_accent;
 extern setting_enum g_history_timestamp;
-extern int32 host_remove_history(int32 rl_history_index, const char* line); // TODO: Host interface.
-extern bool host_remove_dir_history(int32 index); // TODO: Host interface.
+extern bool host_remove_dir_history(int32 index);
 
 //------------------------------------------------------------------------------
 static textlist_impl* s_textlist = nullptr;

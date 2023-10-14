@@ -358,7 +358,7 @@ void recognizer::end_line()
             if (WaitForSingleObject(ready_event, DWORD(timeout)) != WAIT_OBJECT_0)
                 break;
 
-            host_reclassify(reclassify_reason::recognizer);
+            reclassify(reclassify_reason::recognizer);
 
             std::lock_guard<std::recursive_mutex> lock(m_mutex);
             if (!busy() || !usable())
@@ -366,7 +366,7 @@ void recognizer::end_line()
         }
     }
 
-    host_reclassify(reclassify_reason::recognizer);
+    reclassify(reclassify_reason::recognizer);
 }
 
 //------------------------------------------------------------------------------
