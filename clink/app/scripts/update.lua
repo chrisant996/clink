@@ -32,6 +32,7 @@ local latest_cloud_tag
 local is_build_dir = false
 local can_use_setup_exe = false -- Always use zip updater, because exe gets blocked sometimes by malware protection.
 local dont_check_for_update
+local need_lf
 
 local function parse_version_tag(tag)
     local maj, min, pat
@@ -383,6 +384,7 @@ local function internal_check_for_update(force)
     -- and needs to force TLS 1.2 because older versions of PowerShell default
     -- to using TLS 1.0.
     if force then
+        need_lf = true
         print("Checking latest version...")
     end
     local cloud_tag
@@ -420,7 +422,8 @@ local function internal_check_for_update(force)
     -- Compare versions.
     log_info("latest release is " .. cloud_tag .. "; install type is " .. install_type .. ".")
     if not is_rhs_version_newer(local_tag, cloud_tag) then
-        return nil, log_info("no update available; local version " .. local_tag .. " is not older than latest release " .. cloud_tag .. "."), true -- luacheck: no max line length
+        log_info("no update available; local version " .. local_tag .. " is not older than latest release " .. cloud_tag .. ".") -- luacheck: no max line length
+        return "", "already up-to-date.", true
     end
 
     -- Check if already downloaded.
@@ -549,19 +552,23 @@ local function is_update_ready(force)
             -- from the earlier check_for_update().
             return nil, err
         end
+    elseif update_file == "" then
+        return "", err
     end
 
     -- Verify the update file is newer.
     local local_tag = get_local_tag()
     local cloud_tag = latest_cloud_tag or path.getbasename(update_file)
     if not is_rhs_version_newer(local_tag, cloud_tag) then
-        return nil, log_info("no update available; local version " .. local_tag .. " is not older than latest release " .. cloud_tag .. ".") -- luacheck: no max line length
+        log_info("no update available; local version " .. local_tag .. " is not older than latest release " .. cloud_tag .. ".") -- luacheck: no max line length
+        return "", "already up-to-date."
     end
 
     -- Skip the update if the user said to.
     local skip, range = clink._is_skip_update(cloud_tag)
     if skip then
-        return nil, log_info("no update available; " .. cloud_tag .. " is available but user chose to skip through " .. range .. ".") -- luacheck: no max line length
+        log_info("no update available; " .. cloud_tag .. " is available but user chose to skip through " .. range .. ".") -- luacheck: no max line length
+        return "", "no update available."
     end
 
     -- Update is ready.
@@ -653,6 +660,7 @@ local function apply_zip_update(elevated, zip_file)
     delete_files(update_dir, "*.zip", zip_file)
     delete_files(bin_dir, "~clink.*.old")
 
+    print("")
     return 1, log_info("updated Clink to " .. cloud_tag .. ".")
 end
 
@@ -677,6 +685,7 @@ local function run_exe_installer(elevated, setup_exe)
     -- Cleanup.
     delete_files(update_dir, "*.exe", setup_exe)
 
+    print("")
     return 1, log_info("updated Clink to " .. cloud_tag .. ".")
 end
 
@@ -741,7 +750,7 @@ local function try_autoupdate(mode)
     end
 
     local update_file = is_update_ready(false)
-    if not update_file then
+    if not update_file or update_file == "" then
         return
     end
 
@@ -762,14 +771,39 @@ local function try_autoupdate(mode)
     prun("2>nul " .. exe .. " update")
 end
 
-local function report_if_update_available(manual)
+local function print_update_message(ok, redirected, msg)
+    msg = unicode.normalize(1, msg)
+    for codepoint, _, _ in unicode.iter(msg) do -- luacheck: ignore 512
+        msg = clink.upper(codepoint) .. msg:sub(#codepoint + 1)
+        break
+    end
+
+    if redirected then
+        print(msg)
+    else
+        local color
+        if ok == true then
+            color = "\x1b[0;1;32m"
+        elseif ok == false then
+            color = "\x1b[0;1;31m"
+        else
+            color = "\x1b[0;1m"
+        end
+        clink.print(color .. msg .. "\x1b[m")
+    end
+end
+
+local function report_if_update_available(manual, redirected)
     local update_file = has_update_file()
     if update_file and can_check_for_update(true) then
         local tag = path.getbasename(update_file)
         if is_rhs_version_newer(get_local_tag(), tag) and
                 not clink._is_skip_update(tag) and
                 not clink._is_snoozed_update() then
-            clink.print("\x1b[1mClink " .. tag .. " is available.\x1b[m")
+            if manual and need_lf then
+                print("")
+            end
+            print_update_message(nil, redirected, "Clink " .. tag .. " is available.")
             print("- To apply the update, run 'clink update'.")
             if not manual then
                 print("- To stop checking for updates, run 'clink set clink.autoupdate off'.")
@@ -827,12 +861,21 @@ function clink.printreleasesurl(tag)
 end
 
 --------------------------------------------------------------------------------
-function clink.updatenow(elevated, force_prompt)
+-- Returns:
+--      ok  = Status; -1 elevate, 0 failure, 1 success.
+--      msg = Message to be displayed.
+-- Returning 1 by itself suppresses any further messages (e.g. "canceled").
+function clink.updatenow(elevated, force_prompt, redirected)
     latest_cloud_tag = nil
 
     local update_file, err = is_update_ready(true)
     if not update_file then
         return nil, err
+    elseif update_file == "" then -- Indicates already up-to-date.
+        if err and err ~= "" then
+            print_update_message(true, redirected, err)
+        end
+        return 1
     end
 
     local install_type = get_installation_type()
@@ -857,7 +900,9 @@ function clink.updatenow(elevated, force_prompt)
         local local_tag = get_local_tag()
         local cloud_tag = latest_cloud_tag
         if not is_rhs_version_newer(local_tag, cloud_tag) then
-            return nil, log_info("already updated; local version " .. local_tag .. " is not older than update candidate " .. cloud_tag .. ".") -- luacheck: no max line length
+            log_info("already up-to-date; local version " .. local_tag .. " is not older than update candidate " .. cloud_tag .. ".") -- luacheck: no max line length
+            print_update_message(true, redirected, "already up-to-date.")
+            return 1
         end
 
         local action = do_prompt(cloud_tag)
@@ -889,22 +934,17 @@ function clink.updatenow(elevated, force_prompt)
 end
 
 --------------------------------------------------------------------------------
-function clink.checkupdate()
+function clink.checkupdate(redirected)
+    need_lf = nil
     local can, err = can_check_for_update(true)
     if can then
         clink._reset_update_keys()
-        is_update_ready(false)
+        is_update_ready(true)
         if report_if_update_available(true) then
             return true
         end
-        print("An update is not available at this time.")
+        print_update_message(true, redirected, "already up-to-date.")
     elseif err then
-        local letter = ""
-        for codepoint, _, _ in unicode.iter(unicode.normalize(1, err)) do -- luacheck: ignore 512
-            letter = codepoint
-            break
-        end
-        err = clink.upper(letter) .. err:sub(#letter + 1)
-        print(err)
+        print_update_message(false, true, err)
     end
 end

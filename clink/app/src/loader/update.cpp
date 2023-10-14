@@ -64,9 +64,18 @@ static wchar_t* get_wargs()
 }
 
 //------------------------------------------------------------------------------
+static bool is_redirected()
+{
+    DWORD dummy;
+    return (!GetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), &dummy) ||
+            !GetConsoleMode(GetStdHandle(STD_ERROR_HANDLE), &dummy));
+}
+
+//------------------------------------------------------------------------------
 static bool call_updater(lua_state& lua, bool do_nothing, bool force_prompt)
 {
     const bool elevated = os::is_user_admin();
+    const bool redirected = is_redirected();
 
     auto app_ctx = app_context::get();
     app_ctx->update_env(); // Set %=clink.bin% so the Lua code can find the exe.
@@ -77,7 +86,8 @@ static bool call_updater(lua_state& lua, bool do_nothing, bool force_prompt)
     if (do_nothing)
     {
         lua.push_named_function(state, "clink.checkupdate");
-        lua.pcall_silent(state, 0, 1);
+        lua_pushboolean(state, redirected);
+        lua.pcall_silent(state, 1, 1);
 
         bool available = lua_toboolean(state, -1);
         return available;
@@ -89,19 +99,23 @@ static bool call_updater(lua_state& lua, bool do_nothing, bool force_prompt)
     lua.push_named_function(state, "clink.updatenow");
     lua_pushboolean(state, elevated);
     lua_pushboolean(state, force_prompt);
-    lua.pcall_silent(state, 2, 2);
+    lua_pushboolean(state, redirected);
+    lua.pcall_silent(state, 3, 2);
 
     int32 ok = int32(lua_tointeger(state, -2));
     const char* msg = lua_tostring(state, -1);
 
+    // Check if elevation is needed.
     if (ok < 0)
     {
         if (elevated)
         {
+            // Elevated but needs elevation?  Something went wrong.
             ok = false;
         }
         else
         {
+            // Rerun with elevation.
             WCHAR file[MAX_PATH * 2];
             DWORD len = GetModuleFileNameW(NULL, file, _countof(file));
             str_moveable s;
@@ -111,6 +125,10 @@ static bool call_updater(lua_state& lua, bool do_nothing, bool force_prompt)
             wstr_moveable wargs(s.c_str());
             wargs << get_wargs();
             puts("Requesting administrator access to install update...");
+            // Weird edge case:  If elevation is triggered because an update
+            // is available, but the elevated process detects no update is
+            // available, that will be reported as success when in fact
+            // nothing was done by this update command.
             ok = (len < _countof(file) - 1 && os::run_as_admin(NULL, file, wargs.c_str()));
             msg = ok ? "updated Clink; update will take effect in new Clink windows." : "update failed; see log file for details.";
         }
@@ -121,10 +139,6 @@ static bool call_updater(lua_state& lua, bool do_nothing, bool force_prompt)
 
     if (msg && *msg)
     {
-        DWORD dummy;
-        HANDLE h = GetStdHandle(ok ? STD_OUTPUT_HANDLE : STD_ERROR_HANDLE);
-        bool use_color = !!GetConsoleMode(h, &dummy);
-
         str<> tmp;
         tmp = msg;
         tmp.data()[0] = toupper(tmp.data()[0]);
@@ -133,9 +147,9 @@ static bool call_updater(lua_state& lua, bool do_nothing, bool force_prompt)
         printer printer(*term.out);
         printer_context printer_context(term.out, &printer);
 
-        if (use_color)
+        if (!redirected)
         {
-            str<> colored_msg(ok ? "\x1b[1;32m" : "\x1b[1;31m");
+            str<> colored_msg(ok ? "\x1b[0;1;32m" : "\x1b[m");
             colored_msg << tmp;
             colored_msg << "\x1b[m\n";
             g_printer->print(colored_msg.c_str(), colored_msg.length());
