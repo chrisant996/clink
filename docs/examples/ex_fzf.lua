@@ -65,7 +65,7 @@ end
 
 local interceptor = clink.generator(0)
 function interceptor:generate(line_state, match_builder)
-    -- Only intercept when the specific command was used.
+    -- Only intercept when the specific key binding command was used.
     if fzf_complete_intercept then
         clink.onfiltermatches(filter_matches)
     end

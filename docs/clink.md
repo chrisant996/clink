@@ -1565,7 +1565,7 @@ Here are some tips for getting started writing Lua scripts:
 
 ## Argument Completion
 
-Clink provides a framework for writing complex argument match generators in Lua.  It works by creating a parser object that describes a command's arguments and flags and associating the parser with one or more commands.  When Clink detects a parser is associated with the command being edited, it uses the parser to generate matches.
+Clink provides a framework for writing complex argument match generators in Lua.  It works by creating a parser object that describes a command's arguments and flags and associating the parser with one or more commands.  When Clink detects a parser is associated with the command being edited, it uses the parser to generate matches and apply [input line coloring](#classifywords).
 
 <table class="linkmenu">
 <tr><td><a href="#argmatcher_basics">The Basics</a></td><td>A quick example to show the basics.</td></tr>
@@ -1986,6 +1986,8 @@ With the shorthand form flags are implied rather than declared.  When a shorthan
 
 These are Lua functions that are called as part of Readline's completion process (for example when pressing <kbd>Tab</kbd>).
 
+Using a match generator enables lets you do custom parsing for the input line, or provide completions for the first word in the input line.  Otherwise, using an [argmatcher](#argumentcompletion) will probably be both easier and more powerful.
+
 <table class="linkmenu">
 <tr><td><a href="#generator_basics">The Basics</a></td><td>A quick example to show the basics.</td></tr>
 <tr><td style="padding-top: 0.5rem"><em>More Advanced Stuff</em></td><td></td></tr>
@@ -2095,7 +2097,7 @@ end
 
 #### Filtering Match Completions
 
-A match generator or [luafunc: key binding](#luakeybindings) can use [clink.onfiltermatches()](#clink.onfiltermatches) to register a function that will be called after matches are generated but before they are displayed or inserted.
+A [match generator](#matchgenerators) or [argmatcher](#argumentcompletion) or [luafunc: key binding](#luakeybindings) can use [clink.onfiltermatches()](#clink.onfiltermatches) to register a function that will be called after matches are generated but before they are displayed or inserted (this is reset every time match generation is invoked).
 
 The function receives a table argument containing the matches to be displayed, a string argument indicating the completion type, and a boolean argument indicating whether filename completion is desired. The table argument has a `match` string field and a `type` string field; these are the same as in [builder:addmatch()](#builder:addmatch).
 
@@ -2116,6 +2118,8 @@ The return value is a table with the input matches filtered as desired. The matc
 #INCLUDE [docs\examples\ex_fzf.lua]
 ```
 
+> **Note:** A much more complete fzf integration script is available at [clink-gizmos](https://github.com/chrisant996/clink-gizmos) or [clink-fzf](https://github.com/chrisant996/clink-fzf).
+
 <a name="filteringthematchdisplay"></a>
 
 #### Filtering the Match Display
@@ -2126,7 +2130,7 @@ The simplest way to do that is just include the `display` and/or `description` f
 
 However, older versions of Clink don't support those fields.  And in some cases it may be desirable to display a list of possible completions that includes extra matches, or omits some matches (but that's discouraged because it can be confusing to users).
 
-A match generator can alternatively use [clink.ondisplaymatches()](#clink.ondisplaymatches) to register a function that will be called before matches are displayed (this is reset every time match generation is invoked).
+A [match generator](#matchgenerators) or [argmatcher](#argumentcompletion) or [luafunc: key binding](#luakeybindings) can alternatively use [clink.ondisplaymatches()](#clink.ondisplaymatches) to register a function that will be called before matches are displayed (this is reset every time match generation is invoked).
 
 The function receives a table argument containing the matches to be displayed, and a boolean argument indicating whether they'll be displayed in a popup window. The table argument has a `match` string field and a `type` string field; these are the same as in [builder:addmatch()](#builder:addmatch). The return value is a table with the input matches filtered as required by the match generator.
 
