@@ -1495,8 +1495,9 @@ Clink can be extended with [Lua](https://www.lua.org/docs.html) scripts to custo
 
 <table class="linkmenu">
 <tr><td><a href="#lua-scripts-location">Location of Lua Scripts</a></td><td>Locations from which scripts are loaded.</td></tr>
-<tr><td><a href="#matchgenerators">Match Generators</a></td><td>How to write match generators, or custom completion providers.</td></tr>
+<tr><td><a href="#writing-lua-scripts">Writing Lua Scripts</a></td><td>Some tips for starting to write Lua scripts.</td></tr>
 <tr><td><a href="#argumentcompletion">Argument Completion</a></td><td>How to give commands contextual match generators for their arguments.</td></tr>
+<tr><td><a href="#matchgenerators">Match Generators</a></td><td>How to write match generators, or custom completion providers.</td></tr>
 <tr><td><a href="#classifywords">Coloring the Input Text</a></td><td>How to make a match generator or argument matcher override the input coloring.</td></tr>
 <tr><td><a href="#customisingtheprompt">Customizing the Prompt</a></td><td>How to write custom prompt filters.</td></tr>
 <tr><td><a href="#customisingsuggestions">Customizing Suggestions</a></td><td>How to write custom suggestion generators.</td></tr>
@@ -1540,7 +1541,13 @@ In v1.5.3 and higher, when a `completions\` script is loaded on demand the scrip
 >
 > For example, the scripts from the [clink-completions](https://github.com/vladimir-kotikov/clink-completions) project belong in a normal script directory, because they have other functionality besides just completions, and they won't work correctly in a "completions" directory.
 
-### Tips for starting to write Lua scripts
+<a name="tips-for-starting-to-write-lua-scripts"></a>
+
+## Writing Lua Scripts
+
+Lua is a versatile and lightweight language.  It's very approachable and easy to learn for beginners, but it also has powerful capabilities available if you need them.
+
+Here are some tips for getting started writing Lua scripts:
 
 - Clink uses [Lua 5.2](https://www.lua.org/manual/5.2/).
 - Loading a Lua script executes it; so when Clink loads Lua scripts from the locations above, it executes the scripts.
@@ -1552,193 +1559,7 @@ In v1.5.3 and higher, when a `completions\` script is loaded on demand the scrip
   - Perform actions before or after the user gets to edit each input line.
   - Provide new custom commands that can be bound to keys via the [luafunc: key macro syntax](#luakeybindings).
 - Often scripts will also define some functions and variables for use by itself and/or other scripts.
-
-The following sections describe these in more detail and show some examples.
-
-<a name="matchgenerators"></a>
-
-## Match Generators
-
-These are Lua functions that are called as part of Readline's completion process (for example when pressing <kbd>Tab</kbd>).
-
-<table class="linkmenu">
-<tr><td><a href="#generator_basics">The Basics</a></td><td>A quick example to show the basics.</td></tr>
-<tr><td style="padding-top: 0.5rem"><em>More Advanced Stuff</em></td><td></td></tr>
-<tr><td style="padding-left: 2rem"><a href="#filteringmatchcompletions">Filtering Match Completions</a></td><td>How to modify how completion happens.</td></tr>
-<tr><td style="padding-left: 2rem"><a href="#filteringthematchdisplay">Filtering the Match Display</a></td><td>How to modify how possible completions are displayed.</td></tr>
-</table>
-
-<a name="generator_basics"></a>
-
-### The Basics
-
-First create a match generator object:
-
-```lua
-local my_generator = clink.generator(priority)
-```
-
-The <span class="arg">priority</span> argument is a number that influences when the generator gets called, with lower numbers going before higher numbers.
-
-#### The :generate() Function
-
-Next define a match generator function on the object, taking the following form:
-
-```lua
-function my_generator:generate(line_state, match_builder)
-    -- Use the line_state object to examine the current line and create matches.
-    -- Submit matches to Clink using the match_builder object.
-    -- Return true or false.
-end
-```
-
-<span class="arg">line_state</span> is a [line_state](#line_state) object that has information about the current line.
-
-<span class="arg">match_builder</span> is a [builder](#builder) object to which matches can be added.
-
-If no further match generators need to be called then the function should return true.  Returning false or nil continues letting other match generators get called.
-
-Here is an example script that supplies git branch names as matches for `git checkout`.  This example doesn't handle git aliases, but that could be added with additional script code.
-
-```lua
-#INCLUDE [docs\examples\ex_generate.lua]
-```
-
-#### The :getwordbreakinfo() Function
-
-If needed, a generator can optionally influence word breaking for the end word by defining a `:getwordbreakinfo()` function.
-
-The function takes a <span class="arg">line_state</span> [line_state](#line_state) object that has information about the current line.  If it returns nil or 0, the end word is truncated to 0 length.  This is the normal behavior, which allows Clink to collect and cache all matches and then filter them based on typing.  Or it can return two numbers:  word break length and an optional end word length.  The end word is split at the word break length:  one word contains the first word break length characters from the end word (if 0 length then it's discarded), and the next word contains the rest of the end word truncated to the optional word length (0 if omitted).
-
-A good example to look at is Clink's own built-in environment variable match generator.  It has a `:getwordbreakinfo()` function that understands the `%` syntax of environment variables and produces word break info accordingly.
-
-When the environment variable match generator's `:getwordbreakinfo()` function sees the end word is `abc%USER` it returns `3,1` so that the last two words become "abc" and "%" so that its generator knows it can do environment variable matching.  But when it sees `abc%FOO%def` it returns `8,0` so that the last two words become "abc%FOO%" and "" so that its generator won't do environment variable matching, and also so other generators can produce matches for what follows, since "%FOO%" is an already-completed environment variable and therefore should behave like a word break.  In other words, it breaks the end word differently depending on whether the number of percent signs is odd or even, to account for environent variable syntax rules.
-
-And when an argmatcher sees the end word begins with a flag character it returns `0,1` so the end word contains only the flag character in order to switch from argument matching to flag matching.
-
-> **Note:** The `:getwordbreakinfo()` function is called very often, so it needs to be very fast or it can cause responsiveness problems while typing.
-
-```lua
-local envvar_generator = clink.generator(10)
-
-function envvar_generator:generate(line_state, match_builder)
-    -- Does the word end with a percent sign?
-    local word = line_state:getendword()
-    if word:sub(-1) ~= "%" then
-        return false
-    end
-
-    -- Add env vars as matches.
-    for _, i in ipairs(os.getenvnames()) do
-        match_builder:addmatch("%"..i.."%", "word")
-    end
-
-    match_builder:setsuppressappend()   -- Don't append a space character.
-    match_builder:setsuppressquoting()  -- Don't quote envvars.
-    return true
-end
-
-function envvar_generator:getwordbreakinfo(line_state)
-    local word = line_state:getendword()
-    local in_out = false
-    local index = nil
-
-    -- Paired percent signs denote already-completed environment variables.
-    -- So use envvar completion for abc%foo%def%USER but not for abc%foo%USER.
-    for i = 1, #word do
-        if word:sub(i, i) == "%" then
-            in_out = not in_out
-            if in_out then
-                index = i - 1
-            else
-                index = i
-            end
-        end
-    end
-
-    -- If there were any percent signs, return word break info to influence the
-    -- match generators.
-    if index then
-        return index, (in_out and 1) or 0
-    end
-end
-```
-
-### More Advanced Stuff
-
-<a name="filteringmatchcompletions"></a>
-
-#### Filtering Match Completions
-
-A match generator or [luafunc: key binding](#luakeybindings) can use [clink.onfiltermatches()](#clink.onfiltermatches) to register a function that will be called after matches are generated but before they are displayed or inserted.
-
-The function receives a table argument containing the matches to be displayed, a string argument indicating the completion type, and a boolean argument indicating whether filename completion is desired. The table argument has a `match` string field and a `type` string field; these are the same as in [builder:addmatch()](#builder:addmatch).
-
-The possible completion types are:
-
-Type | Description | Example
----|---|---
-`"?"`  | List the possible completions. | [`possible-completions`](#rlcmd-possible-completions) or [`popup-complete`](#rlcmd-popup-complete)
-`"*"`  |Insert all of the possible completions. | [`insert-completions`](#rlcmd-insert-completions)
-`"\t"` | Do standard completion. | [`complete`](#rlcmd-complete)
-`"!"`  | Do standard completion, and list all possible completions if there is more than one. | [`complete`](#rlcmd-complete) (when the [`show-all-if-ambiguous`](#configshowallifambiguous) config variable is set)
-`"@"`  | Do standard completion, and list all possible completions if there is more than one and partial completion is not possible. | [`complete`](#rlcmd-complete) (when the [`show-all-if-unmodified`](#configshowallifunmodified) config variable is set)
-`"%"`  | Do menu completion (cycle through possible completions). | [`menu-complete`](#rlcmd-menu-complete) or [`old-menu-complete`](#rlcmd-old-menu-complete)
-
-The return value is a table with the input matches filtered as desired. The match filter function can remove matches, but cannot add matches (use a match generator instead).  If only one match remains after filtering, then many commands will insert the match without displaying it.  This makes it possible to spawn a process (such as [fzf](https://github.com/junegunn/fzf)) to perform enhanced completion by interactively filtering the matches and keeping only one selected match.
-
-```lua
-#INCLUDE [docs\examples\ex_fzf.lua]
-```
-
-<a name="filteringthematchdisplay"></a>
-
-#### Filtering the Match Display
-
-In some instances it may be preferable to display different text when listing potential matches versus when inserting a match in the input line, or to display a description next to a match.  For example, it might be desirable to display a `*` next to some matches, or to show additional information about some matches.
-
-The simplest way to do that is just include the `display` and/or `description` fields when using [builder:addmatch()](#builder:addmatch).  Refer to that function's documentation for usage details.
-
-However, older versions of Clink don't support those fields.  And in some cases it may be desirable to display a list of possible completions that includes extra matches, or omits some matches (but that's discouraged because it can be confusing to users).
-
-A match generator can alternatively use [clink.ondisplaymatches()](#clink.ondisplaymatches) to register a function that will be called before matches are displayed (this is reset every time match generation is invoked).
-
-The function receives a table argument containing the matches to be displayed, and a boolean argument indicating whether they'll be displayed in a popup window. The table argument has a `match` string field and a `type` string field; these are the same as in [builder:addmatch()](#builder:addmatch). The return value is a table with the input matches filtered as required by the match generator.
-
-The returned table can also optionally include a `display` string field and a `description` string field. When present, `display` will be displayed instead of the `match` field, and `description` will be displayed next to the match. Putting the description in a separate field enables Clink to align the descriptions in a column.
-
-Filtering the match display can affect completing matches: the `match` field is what gets inserted.  It can also affect displaying matches: the `display` field is displayed if present, otherwise the `match` field is displayed.
-
-If a match's `type` is "none" or its `match` field is different from its `display` field then the match is displayed using the color specified by the [color.filtered](#color_filtered) Clink setting, otherwise normal completion coloring is applied.  The `display` and `description` fields can include ANSI escape codes to apply other colors if desired.
-
-```lua
-local function my_filter(matches, popup)
-    local new_matches = {}
-    local magenta = "\x1b[35m"
-    local filtered = settings.get("color.filtered")
-    for _,m in ipairs(matches) do
-        if m.match:find("[0-9]") then
-            -- Ignore matches with one or more digits.
-        else
-            -- Keep the match, and also add a magenta * prefix to directory matches.
-            if m.type:find("^dir") then
-                m.display = magenta.."*"..filtered..m.match
-            end
-            table.insert(new_matches, m)
-        end
-    end
-    return new_matches
-end
-
-function my_match_generator:generate(line_state, match_builder)
-    ...
-    clink.ondisplaymatches(my_filter)
-end
-```
-
-> **Compatibility Notes:**
-> - In v1.3.1 and higher, the table received by the registered ondisplaymatches function includes all the match fields (such as `display`, `description`, `appendchar`, etc), and the function can include any of these fields in the table it returns.  In other words, in v1.3.1 and higher match filtering supports all the same fields as [builder:addmatch()](#builder:addmatch).
-> - In v1.5.4 and higher, the table received by the registered ondisplaymatches function can include an `arginfo` field, and the function can include `arginfo` in the table it returns.
+- Clink extends the Lua language by adding many new [APIs and features](#lua-api) for use within Clink.
 
 <a name="argumentcompletion"></a>
 
@@ -2158,6 +1979,191 @@ clink.argmatcher()
 ```
 
 With the shorthand form flags are implied rather than declared.  When a shorthand table's first value is a string starting with `-` or `/` then the table is interpreted as flags.  Note that it's still possible with shorthand form to mix flag prefixes, and even add additional flag prefixes, such as <code>{ <span class="hljs-string">'-a'</span>, <span class="hljs-string">'/b'</span>, <span class="hljs-string">'=c'</span> }</code>.
+
+<a name="matchgenerators"></a>
+
+## Match Generators
+
+These are Lua functions that are called as part of Readline's completion process (for example when pressing <kbd>Tab</kbd>).
+
+<table class="linkmenu">
+<tr><td><a href="#generator_basics">The Basics</a></td><td>A quick example to show the basics.</td></tr>
+<tr><td style="padding-top: 0.5rem"><em>More Advanced Stuff</em></td><td></td></tr>
+<tr><td style="padding-left: 2rem"><a href="#filteringmatchcompletions">Filtering Match Completions</a></td><td>How to modify how completion happens.</td></tr>
+<tr><td style="padding-left: 2rem"><a href="#filteringthematchdisplay">Filtering the Match Display</a></td><td>How to modify how possible completions are displayed.</td></tr>
+</table>
+
+<a name="generator_basics"></a>
+
+### The Basics
+
+First create a match generator object:
+
+```lua
+local my_generator = clink.generator(priority)
+```
+
+The <span class="arg">priority</span> argument is a number that influences when the generator gets called, with lower numbers going before higher numbers.
+
+#### The :generate() Function
+
+Next define a match generator function on the object, taking the following form:
+
+```lua
+function my_generator:generate(line_state, match_builder)
+    -- Use the line_state object to examine the current line and create matches.
+    -- Submit matches to Clink using the match_builder object.
+    -- Return true or false.
+end
+```
+
+<span class="arg">line_state</span> is a [line_state](#line_state) object that has information about the current line.
+
+<span class="arg">match_builder</span> is a [builder](#builder) object to which matches can be added.
+
+If no further match generators need to be called then the function should return true.  Returning false or nil continues letting other match generators get called.
+
+Here is an example script that supplies git branch names as matches for `git checkout`.  This example doesn't handle git aliases, but that could be added with additional script code.
+
+```lua
+#INCLUDE [docs\examples\ex_generate.lua]
+```
+
+#### The :getwordbreakinfo() Function
+
+If needed, a generator can optionally influence word breaking for the end word by defining a `:getwordbreakinfo()` function.
+
+The function takes a <span class="arg">line_state</span> [line_state](#line_state) object that has information about the current line.  If it returns nil or 0, the end word is truncated to 0 length.  This is the normal behavior, which allows Clink to collect and cache all matches and then filter them based on typing.  Or it can return two numbers:  word break length and an optional end word length.  The end word is split at the word break length:  one word contains the first word break length characters from the end word (if 0 length then it's discarded), and the next word contains the rest of the end word truncated to the optional word length (0 if omitted).
+
+A good example to look at is Clink's own built-in environment variable match generator.  It has a `:getwordbreakinfo()` function that understands the `%` syntax of environment variables and produces word break info accordingly.
+
+When the environment variable match generator's `:getwordbreakinfo()` function sees the end word is `abc%USER` it returns `3,1` so that the last two words become "abc" and "%" so that its generator knows it can do environment variable matching.  But when it sees `abc%FOO%def` it returns `8,0` so that the last two words become "abc%FOO%" and "" so that its generator won't do environment variable matching, and also so other generators can produce matches for what follows, since "%FOO%" is an already-completed environment variable and therefore should behave like a word break.  In other words, it breaks the end word differently depending on whether the number of percent signs is odd or even, to account for environent variable syntax rules.
+
+And when an argmatcher sees the end word begins with a flag character it returns `0,1` so the end word contains only the flag character in order to switch from argument matching to flag matching.
+
+> **Note:** The `:getwordbreakinfo()` function is called very often, so it needs to be very fast or it can cause responsiveness problems while typing.
+
+```lua
+local envvar_generator = clink.generator(10)
+
+function envvar_generator:generate(line_state, match_builder)
+    -- Does the word end with a percent sign?
+    local word = line_state:getendword()
+    if word:sub(-1) ~= "%" then
+        return false
+    end
+
+    -- Add env vars as matches.
+    for _, i in ipairs(os.getenvnames()) do
+        match_builder:addmatch("%"..i.."%", "word")
+    end
+
+    match_builder:setsuppressappend()   -- Don't append a space character.
+    match_builder:setsuppressquoting()  -- Don't quote envvars.
+    return true
+end
+
+function envvar_generator:getwordbreakinfo(line_state)
+    local word = line_state:getendword()
+    local in_out = false
+    local index = nil
+
+    -- Paired percent signs denote already-completed environment variables.
+    -- So use envvar completion for abc%foo%def%USER but not for abc%foo%USER.
+    for i = 1, #word do
+        if word:sub(i, i) == "%" then
+            in_out = not in_out
+            if in_out then
+                index = i - 1
+            else
+                index = i
+            end
+        end
+    end
+
+    -- If there were any percent signs, return word break info to influence the
+    -- match generators.
+    if index then
+        return index, (in_out and 1) or 0
+    end
+end
+```
+
+### More Advanced Stuff
+
+<a name="filteringmatchcompletions"></a>
+
+#### Filtering Match Completions
+
+A match generator or [luafunc: key binding](#luakeybindings) can use [clink.onfiltermatches()](#clink.onfiltermatches) to register a function that will be called after matches are generated but before they are displayed or inserted.
+
+The function receives a table argument containing the matches to be displayed, a string argument indicating the completion type, and a boolean argument indicating whether filename completion is desired. The table argument has a `match` string field and a `type` string field; these are the same as in [builder:addmatch()](#builder:addmatch).
+
+The possible completion types are:
+
+Type | Description | Example
+---|---|---
+`"?"`  | List the possible completions. | [`possible-completions`](#rlcmd-possible-completions) or [`popup-complete`](#rlcmd-popup-complete)
+`"*"`  |Insert all of the possible completions. | [`insert-completions`](#rlcmd-insert-completions)
+`"\t"` | Do standard completion. | [`complete`](#rlcmd-complete)
+`"!"`  | Do standard completion, and list all possible completions if there is more than one. | [`complete`](#rlcmd-complete) (when the [`show-all-if-ambiguous`](#configshowallifambiguous) config variable is set)
+`"@"`  | Do standard completion, and list all possible completions if there is more than one and partial completion is not possible. | [`complete`](#rlcmd-complete) (when the [`show-all-if-unmodified`](#configshowallifunmodified) config variable is set)
+`"%"`  | Do menu completion (cycle through possible completions). | [`menu-complete`](#rlcmd-menu-complete) or [`old-menu-complete`](#rlcmd-old-menu-complete)
+
+The return value is a table with the input matches filtered as desired. The match filter function can remove matches, but cannot add matches (use a match generator instead).  If only one match remains after filtering, then many commands will insert the match without displaying it.  This makes it possible to spawn a process (such as [fzf](https://github.com/junegunn/fzf)) to perform enhanced completion by interactively filtering the matches and keeping only one selected match.
+
+```lua
+#INCLUDE [docs\examples\ex_fzf.lua]
+```
+
+<a name="filteringthematchdisplay"></a>
+
+#### Filtering the Match Display
+
+In some instances it may be preferable to display different text when listing potential matches versus when inserting a match in the input line, or to display a description next to a match.  For example, it might be desirable to display a `*` next to some matches, or to show additional information about some matches.
+
+The simplest way to do that is just include the `display` and/or `description` fields when using [builder:addmatch()](#builder:addmatch).  Refer to that function's documentation for usage details.
+
+However, older versions of Clink don't support those fields.  And in some cases it may be desirable to display a list of possible completions that includes extra matches, or omits some matches (but that's discouraged because it can be confusing to users).
+
+A match generator can alternatively use [clink.ondisplaymatches()](#clink.ondisplaymatches) to register a function that will be called before matches are displayed (this is reset every time match generation is invoked).
+
+The function receives a table argument containing the matches to be displayed, and a boolean argument indicating whether they'll be displayed in a popup window. The table argument has a `match` string field and a `type` string field; these are the same as in [builder:addmatch()](#builder:addmatch). The return value is a table with the input matches filtered as required by the match generator.
+
+The returned table can also optionally include a `display` string field and a `description` string field. When present, `display` will be displayed instead of the `match` field, and `description` will be displayed next to the match. Putting the description in a separate field enables Clink to align the descriptions in a column.
+
+Filtering the match display can affect completing matches: the `match` field is what gets inserted.  It can also affect displaying matches: the `display` field is displayed if present, otherwise the `match` field is displayed.
+
+If a match's `type` is "none" or its `match` field is different from its `display` field then the match is displayed using the color specified by the [color.filtered](#color_filtered) Clink setting, otherwise normal completion coloring is applied.  The `display` and `description` fields can include ANSI escape codes to apply other colors if desired.
+
+```lua
+local function my_filter(matches, popup)
+    local new_matches = {}
+    local magenta = "\x1b[35m"
+    local filtered = settings.get("color.filtered")
+    for _,m in ipairs(matches) do
+        if m.match:find("[0-9]") then
+            -- Ignore matches with one or more digits.
+        else
+            -- Keep the match, and also add a magenta * prefix to directory matches.
+            if m.type:find("^dir") then
+                m.display = magenta.."*"..filtered..m.match
+            end
+            table.insert(new_matches, m)
+        end
+    end
+    return new_matches
+end
+
+function my_match_generator:generate(line_state, match_builder)
+    ...
+    clink.ondisplaymatches(my_filter)
+end
+```
+
+> **Compatibility Notes:**
+> - In v1.3.1 and higher, the table received by the registered ondisplaymatches function includes all the match fields (such as `display`, `description`, `appendchar`, etc), and the function can include any of these fields in the table it returns.  In other words, in v1.3.1 and higher match filtering supports all the same fields as [builder:addmatch()](#builder:addmatch).
+> - In v1.5.4 and higher, the table received by the registered ondisplaymatches function can include an `arginfo` field, and the function can include `arginfo` in the table it returns.
 
 <a name="classifywords"></a>
 
