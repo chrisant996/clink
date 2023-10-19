@@ -2,6 +2,9 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
+#### v1.5.11
+- Fixed prompt filters and other Lua coroutines when `color.executable` and `color.unrecognized` are both empty (regression introduced in v1.5.10).
+
 #### v1.5.10
 - Changed `clink update` to consider "up-to-date" as a successful case.
 - Fixed a case where the `completion` auto-suggest strategy could be temporarily prevented from providing a suggestion (regression introduced in v1.4.22).
