@@ -30,9 +30,6 @@ void kick_idle()
 }
 
 //------------------------------------------------------------------------------
-enum class input_idle_events { recognizer, task_manager, force_idle, max };
-
-//------------------------------------------------------------------------------
 bool lua_input_idle::s_signaled_delayed_init = false;
 bool lua_input_idle::s_signaled_reclassify = false;
 static bool s_refilter_after_terminal_resize = false;
@@ -114,43 +111,38 @@ uint32 lua_input_idle::get_timeout()
 }
 
 //------------------------------------------------------------------------------
+static uint32 add_event(void** events, uint32& index, uint32& total, size_t max, void* handle)
+{
+    uint32 ret = -1;
+    if (index < max && handle)
+    {
+        ret = index;
+        events[index++] = handle;
+    }
+    total++;
+    return ret;
+}
+
+//------------------------------------------------------------------------------
 uint32 lua_input_idle::get_wait_events(void** events, size_t max)
 {
-    assert(max >= uint32(input_idle_events::max));
-
     uint32 index = 0;
-    if (index < max)
-    {
-        assert(uint32(input_idle_events::recognizer) == index);
-        events[index++] = get_recognizer_event();
-    }
-    if (index < max)
-    {
-        assert(uint32(input_idle_events::task_manager) == index);
-        events[index++] = get_task_manager_event();
-    }
-    if (index < max)
-    {
-        assert(uint32(input_idle_events::force_idle) == index);
-        events[index++] = get_idle_event();
-    }
+    uint32 total = 0;
+    m_index_recognizer = add_event(events, index, total, max, get_recognizer_event());
+    m_index_task_manager = add_event(events, index, total, max, get_task_manager_event());
+    m_index_force_idle = add_event(events, index, total, max, get_idle_event());
+    assert(total <= max);
     return index;
 }
 
 //------------------------------------------------------------------------------
 void lua_input_idle::on_wait_event(uint32 index)
 {
-    assert(index >= 0);
-    assert(index < uint32(input_idle_events::max));
-    const input_idle_events event = input_idle_events(index);
-
-    switch (event)
-    {
-    case input_idle_events::recognizer:     refresh_recognizer(); break;
-    case input_idle_events::task_manager:   task_manager_on_idle(m_state); break;
-    case input_idle_events::force_idle:     on_idle(); break;
-    default:                                assert(false); break;
-    }
+    if (index == uint32(-1))                assert(false);
+    else if (index == m_index_recognizer)   refresh_recognizer();
+    else if (index == m_index_task_manager) task_manager_on_idle(m_state);
+    else if (index == m_index_force_idle)   on_idle();
+    else                                    assert(false);
 }
 
 //------------------------------------------------------------------------------

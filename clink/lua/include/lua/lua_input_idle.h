@@ -34,6 +34,10 @@ private:
     uint32          m_iterations = 0;
     bool            m_enabled = true;
 
+    uint32          m_index_recognizer = -1;
+    uint32          m_index_task_manager = -1;
+    uint32          m_index_force_idle = -1;
+
     static bool     s_signaled_delayed_init;
     static bool     s_signaled_reclassify;
 };
