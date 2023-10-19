@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.5.10</title>
+<title>Clink v1.5.11</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -878,8 +878,9 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 <div><a class="h2" href="#popup-windows">Popup Windows</a></div>
 <div><a class="h1" href="#extending-clink-with-lua">Extending Clink With Lua</a></div>
 <div><a class="h2" href="#location-of-lua-scripts">Location of Lua Scripts</a></div>
-<div><a class="h2" href="#match-generators">Match Generators</a></div>
+<div><a class="h2" href="#writing-lua-scripts">Writing Lua Scripts</a></div>
 <div><a class="h2" href="#argument-completion">Argument Completion</a></div>
+<div><a class="h2" href="#match-generators">Match Generators</a></div>
 <div><a class="h2" href="#coloring-the-input-text">Coloring the Input Text</a></div>
 <div><a class="h2" href="#customizing-the-prompt">Customizing the Prompt</a></div>
 <div><a class="h2" href="#customizing-suggestions">Customizing Suggestions</a></div>
@@ -901,7 +902,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.5.10</div>
+                <div id="title">Clink v1.5.11</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -3771,8 +3772,9 @@ $endif              # end clink-only section
 <p>Clink can be extended with <a href="https://www.lua.org/docs.html">Lua</a> scripts to customize startup actions, create completion matches, customize the prompt, and more.  The following sections describe these in more detail and show some examples.</p>
 <table class="linkmenu">
 <tr><td><a href="#lua-scripts-location">Location of Lua Scripts</a></td><td>Locations from which scripts are loaded.</td></tr>
-<tr><td><a href="#matchgenerators">Match Generators</a></td><td>How to write match generators, or custom completion providers.</td></tr>
+<tr><td><a href="#writing-lua-scripts">Writing Lua Scripts</a></td><td>Some tips for starting to write Lua scripts.</td></tr>
 <tr><td><a href="#argumentcompletion">Argument Completion</a></td><td>How to give commands contextual match generators for their arguments.</td></tr>
+<tr><td><a href="#matchgenerators">Match Generators</a></td><td>How to write match generators, or custom completion providers.</td></tr>
 <tr><td><a href="#classifywords">Coloring the Input Text</a></td><td>How to make a match generator or argument matcher override the input coloring.</td></tr>
 <tr><td><a href="#customisingtheprompt">Customizing the Prompt</a></td><td>How to write custom prompt filters.</td></tr>
 <tr><td><a href="#customisingsuggestions">Customizing Suggestions</a></td><td>How to write custom suggestion generators.</td></tr>
@@ -3811,7 +3813,10 @@ $endif              # end clink-only section
 <p>If a script defines more than an argmatcher, then putting it in a completions directory may cause its other functionality to not work until a command is typed with the same name as the script.  For example, if a script in a completions directory defines an argmatcher and also a prompt filter, the prompt filter won&#39;t be loaded until the corresponding command name is typed.  Whether that is desirable depends on the script and on your preference.</p>
 <p>For example, the scripts from the <a href="https://github.com/vladimir-kotikov/clink-completions">clink-completions</a> project belong in a normal script directory, because they have other functionality besides just completions, and they won&#39;t work correctly in a &quot;completions&quot; directory.</p>
 </blockquote>
-<h3 id="tips-for-starting-to-write-lua-scripts"><a class="wlink" href="#tips-for-starting-to-write-lua-scripts"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Tips for starting to write Lua scripts</h3>
+<p><a name="tips-for-starting-to-write-lua-scripts"></a></p>
+<h2 id="writing-lua-scripts"><a class="wlink" href="#tips-for-starting-to-write-lua-scripts"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Writing Lua Scripts</h2>
+<p>Lua is a versatile and lightweight language.  It&#39;s very approachable and easy to learn for beginners, but it also has powerful capabilities available if you need them.</p>
+<p>Here are some tips for getting started writing Lua scripts:</p>
 <ul>
 <li>Clink uses <a href="https://www.lua.org/manual/5.2/">Lua 5.2</a>.</li>
 <li>Loading a Lua script executes it; so when Clink loads Lua scripts from the locations above, it executes the scripts.</li>
@@ -3825,298 +3830,11 @@ $endif              # end clink-only section
 </ul>
 </li>
 <li>Often scripts will also define some functions and variables for use by itself and/or other scripts.</li>
+<li>Clink extends the Lua language by adding many new <a href="#lua-api">APIs and features</a> for use within Clink.</li>
 </ul>
-<p>The following sections describe these in more detail and show some examples.</p>
-<p><a name="matchgenerators"></a></p>
-<h2 id="match-generators"><a class="wlink" href="#matchgenerators"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Match Generators</h2>
-<p>These are Lua functions that are called as part of Readline&#39;s completion process (for example when pressing <kbd>Tab</kbd>).</p>
-<table class="linkmenu">
-<tr><td><a href="#generator_basics">The Basics</a></td><td>A quick example to show the basics.</td></tr>
-<tr><td style="padding-top: 0.5rem"><em>More Advanced Stuff</em></td><td></td></tr>
-<tr><td style="padding-left: 2rem"><a href="#filteringmatchcompletions">Filtering Match Completions</a></td><td>How to modify how completion happens.</td></tr>
-<tr><td style="padding-left: 2rem"><a href="#filteringthematchdisplay">Filtering the Match Display</a></td><td>How to modify how possible completions are displayed.</td></tr>
-</table>
-
-<p><a name="generator_basics"></a></p>
-<h3 id="the-basics-1"><a class="wlink" href="#generator_basics"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>The Basics</h3>
-<p>First create a match generator object:</p>
-<pre><code class="language-lua">local my_generator = clink.generator(priority)
-</code></pre>
-<p>The <span class="arg">priority</span> argument is a number that influences when the generator gets called, with lower numbers going before higher numbers.</p>
-<h4 id="the-generate-function"><a class="wlink" href="#the-generate-function"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>The :generate() Function</h4>
-<p>Next define a match generator function on the object, taking the following form:</p>
-<pre><code class="language-lua">function my_generator:generate(line_state, match_builder)
-    -- Use the line_state object to examine the current line and create matches.
-    -- Submit matches to Clink using the match_builder object.
-    -- Return true or false.
-end
-</code></pre>
-<p><span class="arg">line_state</span> is a <a href="#line_state">line_state</a> object that has information about the current line.</p>
-<p><span class="arg">match_builder</span> is a <a href="#builder">builder</a> object to which matches can be added.</p>
-<p>If no further match generators need to be called then the function should return true.  Returning false or nil continues letting other match generators get called.</p>
-<p>Here is an example script that supplies git branch names as matches for <code>git checkout</code>.  This example doesn&#39;t handle git aliases, but that could be added with additional script code.</p>
-<pre><code class="language-lua">local git_branch_autocomplete = clink.generator(1)
-
-local function starts_with(str, start)
-    return string.sub(str, 1, string.len(start)) == start
-end
-
-local function is_checkout_ac(text)
-    if starts_with(text, &quot;git checkout&quot;) then
-        return true
-    end
-    return false
-end
-
-local function get_branches()
-    -- Run git command to get branches.
-    local handle = io.popen(&quot;git branch -a 2&gt;&amp;1&quot;)
-    local result = handle:read(&quot;*a&quot;)
-    handle:close()
-    -- Parse the branches from the output.
-    local branches = {}
-    if starts_with(result, &quot;fatal&quot;) == false then
-        for branch in string.gmatch(result, &quot;  %S+&quot;) do
-            branch = string.gsub(branch, &quot;  &quot;, &quot;&quot;)
-            if branch ~= &quot;HEAD&quot; then
-                table.insert(branches, branch)
-            end
-        end
-    end
-    return branches
-end
-
-function git_branch_autocomplete:generate(line_state, match_builder)
-    -- Check if it&#39;s a checkout command.
-    if not is_checkout_ac(line_state:getline()) then
-        return false
-    end
-    -- Get branches and add them (does nothing if not in a git repo).
-    local matchCount = 0
-    for _, branch in ipairs(get_branches()) do
-        match_builder:addmatch(branch)
-        matchCount = matchCount + 1
-    end
-    -- If we found branches, then stop other match generators.
-    return matchCount &gt; 0
-end
-</code></pre>
-<h4 id="the-getwordbreakinfo-function"><a class="wlink" href="#the-getwordbreakinfo-function"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>The :getwordbreakinfo() Function</h4>
-<p>If needed, a generator can optionally influence word breaking for the end word by defining a <code>:getwordbreakinfo()</code> function.</p>
-<p>The function takes a <span class="arg">line_state</span> <a href="#line_state">line_state</a> object that has information about the current line.  If it returns nil or 0, the end word is truncated to 0 length.  This is the normal behavior, which allows Clink to collect and cache all matches and then filter them based on typing.  Or it can return two numbers:  word break length and an optional end word length.  The end word is split at the word break length:  one word contains the first word break length characters from the end word (if 0 length then it&#39;s discarded), and the next word contains the rest of the end word truncated to the optional word length (0 if omitted).</p>
-<p>A good example to look at is Clink&#39;s own built-in environment variable match generator.  It has a <code>:getwordbreakinfo()</code> function that understands the <code>%</code> syntax of environment variables and produces word break info accordingly.</p>
-<p>When the environment variable match generator&#39;s <code>:getwordbreakinfo()</code> function sees the end word is <code>abc%USER</code> it returns <code>3,1</code> so that the last two words become &quot;abc&quot; and &quot;%&quot; so that its generator knows it can do environment variable matching.  But when it sees <code>abc%FOO%def</code> it returns <code>8,0</code> so that the last two words become &quot;abc%FOO%&quot; and &quot;&quot; so that its generator won&#39;t do environment variable matching, and also so other generators can produce matches for what follows, since &quot;%FOO%&quot; is an already-completed environment variable and therefore should behave like a word break.  In other words, it breaks the end word differently depending on whether the number of percent signs is odd or even, to account for environent variable syntax rules.</p>
-<p>And when an argmatcher sees the end word begins with a flag character it returns <code>0,1</code> so the end word contains only the flag character in order to switch from argument matching to flag matching.</p>
-<blockquote>
-<p><strong>Note:</strong> The <code>:getwordbreakinfo()</code> function is called very often, so it needs to be very fast or it can cause responsiveness problems while typing.</p>
-</blockquote>
-<pre><code class="language-lua">local envvar_generator = clink.generator(10)
-
-function envvar_generator:generate(line_state, match_builder)
-    -- Does the word end with a percent sign?
-    local word = line_state:getendword()
-    if word:sub(-1) ~= &quot;%&quot; then
-        return false
-    end
-
-    -- Add env vars as matches.
-    for _, i in ipairs(os.getenvnames()) do
-        match_builder:addmatch(&quot;%&quot;..i..&quot;%&quot;, &quot;word&quot;)
-    end
-
-    match_builder:setsuppressappend()   -- Don&#39;t append a space character.
-    match_builder:setsuppressquoting()  -- Don&#39;t quote envvars.
-    return true
-end
-
-function envvar_generator:getwordbreakinfo(line_state)
-    local word = line_state:getendword()
-    local in_out = false
-    local index = nil
-
-    -- Paired percent signs denote already-completed environment variables.
-    -- So use envvar completion for abc%foo%def%USER but not for abc%foo%USER.
-    for i = 1, #word do
-        if word:sub(i, i) == &quot;%&quot; then
-            in_out = not in_out
-            if in_out then
-                index = i - 1
-            else
-                index = i
-            end
-        end
-    end
-
-    -- If there were any percent signs, return word break info to influence the
-    -- match generators.
-    if index then
-        return index, (in_out and 1) or 0
-    end
-end
-</code></pre>
-<h3 id="more-advanced-stuff"><a class="wlink" href="#more-advanced-stuff"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>More Advanced Stuff</h3>
-<p><a name="filteringmatchcompletions"></a></p>
-<h4 id="filtering-match-completions"><a class="wlink" href="#filteringmatchcompletions"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Filtering Match Completions</h4>
-<p>A match generator or <a href="#luakeybindings">luafunc: key binding</a> can use <a href="#clink.onfiltermatches">clink.onfiltermatches()</a> to register a function that will be called after matches are generated but before they are displayed or inserted.</p>
-<p>The function receives a table argument containing the matches to be displayed, a string argument indicating the completion type, and a boolean argument indicating whether filename completion is desired. The table argument has a <code>match</code> string field and a <code>type</code> string field; these are the same as in <a href="#builder:addmatch">builder:addmatch()</a>.</p>
-<p>The possible completion types are:</p>
-<table>
-<thead>
-<tr>
-<th>Type</th>
-<th>Description</th>
-<th>Example</th>
-</tr>
-</thead>
-<tbody><tr>
-<td><code>&quot;?&quot;</code></td>
-<td>List the possible completions.</td>
-<td><a href="#rlcmd-possible-completions"><code>possible-completions</code></a> or <a href="#rlcmd-popup-complete"><code>popup-complete</code></a></td>
-</tr>
-<tr>
-<td><code>&quot;*&quot;</code></td>
-<td>Insert all of the possible completions.</td>
-<td><a href="#rlcmd-insert-completions"><code>insert-completions</code></a></td>
-</tr>
-<tr>
-<td><code>&quot;\t&quot;</code></td>
-<td>Do standard completion.</td>
-<td><a href="#rlcmd-complete"><code>complete</code></a></td>
-</tr>
-<tr>
-<td><code>&quot;!&quot;</code></td>
-<td>Do standard completion, and list all possible completions if there is more than one.</td>
-<td><a href="#rlcmd-complete"><code>complete</code></a> (when the <a href="#configshowallifambiguous"><code>show-all-if-ambiguous</code></a> config variable is set)</td>
-</tr>
-<tr>
-<td><code>&quot;@&quot;</code></td>
-<td>Do standard completion, and list all possible completions if there is more than one and partial completion is not possible.</td>
-<td><a href="#rlcmd-complete"><code>complete</code></a> (when the <a href="#configshowallifunmodified"><code>show-all-if-unmodified</code></a> config variable is set)</td>
-</tr>
-<tr>
-<td><code>&quot;%&quot;</code></td>
-<td>Do menu completion (cycle through possible completions).</td>
-<td><a href="#rlcmd-menu-complete"><code>menu-complete</code></a> or <a href="#rlcmd-old-menu-complete"><code>old-menu-complete</code></a></td>
-</tr>
-</tbody></table>
-<p>The return value is a table with the input matches filtered as desired. The match filter function can remove matches, but cannot add matches (use a match generator instead).  If only one match remains after filtering, then many commands will insert the match without displaying it.  This makes it possible to spawn a process (such as <a href="https://github.com/junegunn/fzf">fzf</a>) to perform enhanced completion by interactively filtering the matches and keeping only one selected match.</p>
-<pre><code class="language-lua">settings.add(&quot;fzf.height&quot;, &quot;40%&quot;, &quot;Height to use for the --height flag&quot;)
-settings.add(&quot;fzf.exe_location&quot;, &quot;&quot;, &quot;Location of fzf.exe if not on the PATH&quot;)
-
--- Build a command line to launch fzf.
-local function get_fzf()
-    local height = settings.get(&quot;fzf.height&quot;)
-    local command = settings.get(&quot;fzf.exe_location&quot;)
-    if not command or command == &quot;&quot; then
-        command = &quot;fzf.exe&quot;
-    else
-        command = os.getshortname(command)
-    end
-    if height and height ~= &quot;&quot; then
-        command = command..&#39; --height &#39;..height
-    end
-    return command
-end
-
-local fzf_complete_intercept = false
-
--- Sample key binding in .inputrc:
---      M-C-x: &quot;luafunc:fzf_complete&quot;
-function fzf_complete(rl_buffer)
-    fzf_complete_intercept = true
-    rl.invokecommand(&quot;complete&quot;)
-    if fzf_complete_intercept then
-        rl_buffer:ding()
-    end
-    fzf_complete_intercept = false
-    rl_buffer:refreshline()
-end
-
-local function filter_matches(matches, completion_type, filename_completion_desired)
-    if not fzf_complete_intercept then
-        return
-    end
-    -- Start fzf.
-    local r,w = io.popenrw(get_fzf()..&#39; --layout=reverse-list&#39;)
-    if not r or not w then
-        return
-    end
-    -- Write matches to the write pipe.
-    for _,m in ipairs(matches) do
-        w:write(m.match..&quot;\n&quot;)
-    end
-    w:close()
-    -- Read filtered matches.
-    local ret = {}
-    while (true) do
-        local line = r:read(&#39;*line&#39;)
-        if not line then
-            break
-        end
-        for _,m in ipairs(matches) do
-            if m.match == line then
-                table.insert(ret, m)
-            end
-        end
-    end
-    r:close()
-    -- Yay, successful; clear it to not ding.
-    fzf_complete_intercept = false
-    return ret
-end
-
-local interceptor = clink.generator(0)
-function interceptor:generate(line_state, match_builder)
-    -- Only intercept when the specific command was used.
-    if fzf_complete_intercept then
-        clink.onfiltermatches(filter_matches)
-    end
-    return false
-end
-</code></pre>
-<p><a name="filteringthematchdisplay"></a></p>
-<h4 id="filtering-the-match-display"><a class="wlink" href="#filteringthematchdisplay"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Filtering the Match Display</h4>
-<p>In some instances it may be preferable to display different text when listing potential matches versus when inserting a match in the input line, or to display a description next to a match.  For example, it might be desirable to display a <code>*</code> next to some matches, or to show additional information about some matches.</p>
-<p>The simplest way to do that is just include the <code>display</code> and/or <code>description</code> fields when using <a href="#builder:addmatch">builder:addmatch()</a>.  Refer to that function&#39;s documentation for usage details.</p>
-<p>However, older versions of Clink don&#39;t support those fields.  And in some cases it may be desirable to display a list of possible completions that includes extra matches, or omits some matches (but that&#39;s discouraged because it can be confusing to users).</p>
-<p>A match generator can alternatively use <a href="#clink.ondisplaymatches">clink.ondisplaymatches()</a> to register a function that will be called before matches are displayed (this is reset every time match generation is invoked).</p>
-<p>The function receives a table argument containing the matches to be displayed, and a boolean argument indicating whether they&#39;ll be displayed in a popup window. The table argument has a <code>match</code> string field and a <code>type</code> string field; these are the same as in <a href="#builder:addmatch">builder:addmatch()</a>. The return value is a table with the input matches filtered as required by the match generator.</p>
-<p>The returned table can also optionally include a <code>display</code> string field and a <code>description</code> string field. When present, <code>display</code> will be displayed instead of the <code>match</code> field, and <code>description</code> will be displayed next to the match. Putting the description in a separate field enables Clink to align the descriptions in a column.</p>
-<p>Filtering the match display can affect completing matches: the <code>match</code> field is what gets inserted.  It can also affect displaying matches: the <code>display</code> field is displayed if present, otherwise the <code>match</code> field is displayed.</p>
-<p>If a match&#39;s <code>type</code> is &quot;none&quot; or its <code>match</code> field is different from its <code>display</code> field then the match is displayed using the color specified by the <a href="#color_filtered">color.filtered</a> Clink setting, otherwise normal completion coloring is applied.  The <code>display</code> and <code>description</code> fields can include ANSI escape codes to apply other colors if desired.</p>
-<pre><code class="language-lua">local function my_filter(matches, popup)
-    local new_matches = {}
-    local magenta = &quot;\x1b[35m&quot;
-    local filtered = settings.get(&quot;color.filtered&quot;)
-    for _,m in ipairs(matches) do
-        if m.match:find(&quot;[0-9]&quot;) then
-            -- Ignore matches with one or more digits.
-        else
-            -- Keep the match, and also add a magenta * prefix to directory matches.
-            if m.type:find(&quot;^dir&quot;) then
-                m.display = magenta..&quot;*&quot;..filtered..m.match
-            end
-            table.insert(new_matches, m)
-        end
-    end
-    return new_matches
-end
-
-function my_match_generator:generate(line_state, match_builder)
-    ...
-    clink.ondisplaymatches(my_filter)
-end
-</code></pre>
-<blockquote>
-<p><strong>Compatibility Notes:</strong></p>
-<ul>
-<li>In v1.3.1 and higher, the table received by the registered ondisplaymatches function includes all the match fields (such as <code>display</code>, <code>description</code>, <code>appendchar</code>, etc), and the function can include any of these fields in the table it returns.  In other words, in v1.3.1 and higher match filtering supports all the same fields as <a href="#builder:addmatch">builder:addmatch()</a>.</li>
-<li>In v1.5.4 and higher, the table received by the registered ondisplaymatches function can include an <code>arginfo</code> field, and the function can include <code>arginfo</code> in the table it returns.</li>
-</ul>
-</blockquote>
 <p><a name="argumentcompletion"></a></p>
 <h2 id="argument-completion"><a class="wlink" href="#argumentcompletion"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Argument Completion</h2>
-<p>Clink provides a framework for writing complex argument match generators in Lua.  It works by creating a parser object that describes a command&#39;s arguments and flags and associating the parser with one or more commands.  When Clink detects a parser is associated with the command being edited, it uses the parser to generate matches.</p>
+<p>Clink provides a framework for writing complex argument match generators in Lua.  It works by creating a parser object that describes a command&#39;s arguments and flags and associating the parser with one or more commands.  When Clink detects a parser is associated with the command being edited, it uses the parser to generate matches and apply <a href="#classifywords">input line coloring</a>.</p>
 <table class="linkmenu">
 <tr><td><a href="#argmatcher_basics">The Basics</a></td><td>A quick example to show the basics.</td></tr>
 <tr><td><a href="#argmatcher_autofiles">Automatic Filename Completion</a></td><td>By default, filename completion is used.</td></tr>
@@ -4134,7 +3852,7 @@ end
 </table>
 
 <p><a name="argmatcher_basics"></a></p>
-<h3 id="the-basics-2"><a class="wlink" href="#argmatcher_basics"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>The Basics</h3>
+<h3 id="the-basics-1"><a class="wlink" href="#argmatcher_basics"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>The Basics</h3>
 <p>Here is an example of a simple parser for the command <code>foobar</code>;</p>
 <pre><code class="language-lua">clink.argmatcher(&quot;foobar&quot;)
 :addarg({ &quot;hello&quot;, &quot;hi&quot; })               -- Completions for arg #1.
@@ -4201,7 +3919,7 @@ C:\&gt;<span class="color_argmatcher">foobar</span> <span class="color_arg">hell
     { &quot;delete&quot;,             description = &quot;Delete the specified file&quot; },
 )
 </code></pre>
-<h3 id="more-advanced-stuff-1"><a class="wlink" href="#more-advanced-stuff-1"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>More Advanced Stuff</h3>
+<h3 id="more-advanced-stuff"><a class="wlink" href="#more-advanced-stuff"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>More Advanced Stuff</h3>
 <p><a name="argmatcher_linking"></a></p>
 <h4 id="linking-parsers"><a class="wlink" href="#argmatcher_linking"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Linking Parsers</h4>
 <p>There are often situations where the parsing of a command&#39;s arguments is dependent on the previous words (<code>git merge ...</code> compared to <code>git log ...</code> for example). For these scenarios Clink allows you to link parsers to arguments&#39; words using Lua&#39;s concatenation operator.</p>
@@ -4444,6 +4162,297 @@ clink.argmatcher()
 :addflags(&quot;-a&quot;, &quot;-b&quot;, &quot;/?&quot;, &quot;/h&quot;)   -- Flags
 </code></pre>
 <p>With the shorthand form flags are implied rather than declared.  When a shorthand table&#39;s first value is a string starting with <code>-</code> or <code>/</code> then the table is interpreted as flags.  Note that it&#39;s still possible with shorthand form to mix flag prefixes, and even add additional flag prefixes, such as <code>{ <span class="hljs-string">'-a'</span>, <span class="hljs-string">'/b'</span>, <span class="hljs-string">'=c'</span> }</code>.</p>
+<p><a name="matchgenerators"></a></p>
+<h2 id="match-generators"><a class="wlink" href="#matchgenerators"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Match Generators</h2>
+<p>These are Lua functions that are called as part of Readline&#39;s completion process (for example when pressing <kbd>Tab</kbd>).</p>
+<p>Using a match generator enables lets you do custom parsing for the input line, or provide completions for the first word in the input line.  Otherwise, using an <a href="#argumentcompletion">argmatcher</a> will probably be both easier and more powerful.</p>
+<table class="linkmenu">
+<tr><td><a href="#generator_basics">The Basics</a></td><td>A quick example to show the basics.</td></tr>
+<tr><td style="padding-top: 0.5rem"><em>More Advanced Stuff</em></td><td></td></tr>
+<tr><td style="padding-left: 2rem"><a href="#filteringmatchcompletions">Filtering Match Completions</a></td><td>How to modify how completion happens.</td></tr>
+<tr><td style="padding-left: 2rem"><a href="#filteringthematchdisplay">Filtering the Match Display</a></td><td>How to modify how possible completions are displayed.</td></tr>
+</table>
+
+<p><a name="generator_basics"></a></p>
+<h3 id="the-basics-2"><a class="wlink" href="#generator_basics"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>The Basics</h3>
+<p>First create a match generator object:</p>
+<pre><code class="language-lua">local my_generator = clink.generator(priority)
+</code></pre>
+<p>The <span class="arg">priority</span> argument is a number that influences when the generator gets called, with lower numbers going before higher numbers.</p>
+<h4 id="the-generate-function"><a class="wlink" href="#the-generate-function"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>The :generate() Function</h4>
+<p>Next define a match generator function on the object, taking the following form:</p>
+<pre><code class="language-lua">function my_generator:generate(line_state, match_builder)
+    -- Use the line_state object to examine the current line and create matches.
+    -- Submit matches to Clink using the match_builder object.
+    -- Return true or false.
+end
+</code></pre>
+<p><span class="arg">line_state</span> is a <a href="#line_state">line_state</a> object that has information about the current line.</p>
+<p><span class="arg">match_builder</span> is a <a href="#builder">builder</a> object to which matches can be added.</p>
+<p>If no further match generators need to be called then the function should return true.  Returning false or nil continues letting other match generators get called.</p>
+<p>Here is an example script that supplies git branch names as matches for <code>git checkout</code>.  This example doesn&#39;t handle git aliases, but that could be added with additional script code.</p>
+<pre><code class="language-lua">local git_branch_autocomplete = clink.generator(1)
+
+local function starts_with(str, start)
+    return string.sub(str, 1, string.len(start)) == start
+end
+
+local function is_checkout_ac(text)
+    if starts_with(text, &quot;git checkout&quot;) then
+        return true
+    end
+    return false
+end
+
+local function get_branches()
+    -- Run git command to get branches.
+    local handle = io.popen(&quot;git branch -a 2&gt;&amp;1&quot;)
+    local result = handle:read(&quot;*a&quot;)
+    handle:close()
+    -- Parse the branches from the output.
+    local branches = {}
+    if starts_with(result, &quot;fatal&quot;) == false then
+        for branch in string.gmatch(result, &quot;  %S+&quot;) do
+            branch = string.gsub(branch, &quot;  &quot;, &quot;&quot;)
+            if branch ~= &quot;HEAD&quot; then
+                table.insert(branches, branch)
+            end
+        end
+    end
+    return branches
+end
+
+function git_branch_autocomplete:generate(line_state, match_builder)
+    -- Check if it&#39;s a checkout command.
+    if not is_checkout_ac(line_state:getline()) then
+        return false
+    end
+    -- Get branches and add them (does nothing if not in a git repo).
+    local matchCount = 0
+    for _, branch in ipairs(get_branches()) do
+        match_builder:addmatch(branch)
+        matchCount = matchCount + 1
+    end
+    -- If we found branches, then stop other match generators.
+    return matchCount &gt; 0
+end
+</code></pre>
+<h4 id="the-getwordbreakinfo-function"><a class="wlink" href="#the-getwordbreakinfo-function"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>The :getwordbreakinfo() Function</h4>
+<p>If needed, a generator can optionally influence word breaking for the end word by defining a <code>:getwordbreakinfo()</code> function.</p>
+<p>The function takes a <span class="arg">line_state</span> <a href="#line_state">line_state</a> object that has information about the current line.  If it returns nil or 0, the end word is truncated to 0 length.  This is the normal behavior, which allows Clink to collect and cache all matches and then filter them based on typing.  Or it can return two numbers:  word break length and an optional end word length.  The end word is split at the word break length:  one word contains the first word break length characters from the end word (if 0 length then it&#39;s discarded), and the next word contains the rest of the end word truncated to the optional word length (0 if omitted).</p>
+<p>A good example to look at is Clink&#39;s own built-in environment variable match generator.  It has a <code>:getwordbreakinfo()</code> function that understands the <code>%</code> syntax of environment variables and produces word break info accordingly.</p>
+<p>When the environment variable match generator&#39;s <code>:getwordbreakinfo()</code> function sees the end word is <code>abc%USER</code> it returns <code>3,1</code> so that the last two words become &quot;abc&quot; and &quot;%&quot; so that its generator knows it can do environment variable matching.  But when it sees <code>abc%FOO%def</code> it returns <code>8,0</code> so that the last two words become &quot;abc%FOO%&quot; and &quot;&quot; so that its generator won&#39;t do environment variable matching, and also so other generators can produce matches for what follows, since &quot;%FOO%&quot; is an already-completed environment variable and therefore should behave like a word break.  In other words, it breaks the end word differently depending on whether the number of percent signs is odd or even, to account for environent variable syntax rules.</p>
+<p>And when an argmatcher sees the end word begins with a flag character it returns <code>0,1</code> so the end word contains only the flag character in order to switch from argument matching to flag matching.</p>
+<blockquote>
+<p><strong>Note:</strong> The <code>:getwordbreakinfo()</code> function is called very often, so it needs to be very fast or it can cause responsiveness problems while typing.</p>
+</blockquote>
+<pre><code class="language-lua">local envvar_generator = clink.generator(10)
+
+function envvar_generator:generate(line_state, match_builder)
+    -- Does the word end with a percent sign?
+    local word = line_state:getendword()
+    if word:sub(-1) ~= &quot;%&quot; then
+        return false
+    end
+
+    -- Add env vars as matches.
+    for _, i in ipairs(os.getenvnames()) do
+        match_builder:addmatch(&quot;%&quot;..i..&quot;%&quot;, &quot;word&quot;)
+    end
+
+    match_builder:setsuppressappend()   -- Don&#39;t append a space character.
+    match_builder:setsuppressquoting()  -- Don&#39;t quote envvars.
+    return true
+end
+
+function envvar_generator:getwordbreakinfo(line_state)
+    local word = line_state:getendword()
+    local in_out = false
+    local index = nil
+
+    -- Paired percent signs denote already-completed environment variables.
+    -- So use envvar completion for abc%foo%def%USER but not for abc%foo%USER.
+    for i = 1, #word do
+        if word:sub(i, i) == &quot;%&quot; then
+            in_out = not in_out
+            if in_out then
+                index = i - 1
+            else
+                index = i
+            end
+        end
+    end
+
+    -- If there were any percent signs, return word break info to influence the
+    -- match generators.
+    if index then
+        return index, (in_out and 1) or 0
+    end
+end
+</code></pre>
+<h3 id="more-advanced-stuff-1"><a class="wlink" href="#more-advanced-stuff-1"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>More Advanced Stuff</h3>
+<p><a name="filteringmatchcompletions"></a></p>
+<h4 id="filtering-match-completions"><a class="wlink" href="#filteringmatchcompletions"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Filtering Match Completions</h4>
+<p>A <a href="#matchgenerators">match generator</a> or <a href="#argumentcompletion">argmatcher</a> or <a href="#luakeybindings">luafunc: key binding</a> can use <a href="#clink.onfiltermatches">clink.onfiltermatches()</a> to register a function that will be called after matches are generated but before they are displayed or inserted (this is reset every time match generation is invoked).</p>
+<p>The function receives a table argument containing the matches to be displayed, a string argument indicating the completion type, and a boolean argument indicating whether filename completion is desired. The table argument has a <code>match</code> string field and a <code>type</code> string field; these are the same as in <a href="#builder:addmatch">builder:addmatch()</a>.</p>
+<p>The possible completion types are:</p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>&quot;?&quot;</code></td>
+<td>List the possible completions.</td>
+<td><a href="#rlcmd-possible-completions"><code>possible-completions</code></a> or <a href="#rlcmd-popup-complete"><code>popup-complete</code></a></td>
+</tr>
+<tr>
+<td><code>&quot;*&quot;</code></td>
+<td>Insert all of the possible completions.</td>
+<td><a href="#rlcmd-insert-completions"><code>insert-completions</code></a></td>
+</tr>
+<tr>
+<td><code>&quot;\t&quot;</code></td>
+<td>Do standard completion.</td>
+<td><a href="#rlcmd-complete"><code>complete</code></a></td>
+</tr>
+<tr>
+<td><code>&quot;!&quot;</code></td>
+<td>Do standard completion, and list all possible completions if there is more than one.</td>
+<td><a href="#rlcmd-complete"><code>complete</code></a> (when the <a href="#configshowallifambiguous"><code>show-all-if-ambiguous</code></a> config variable is set)</td>
+</tr>
+<tr>
+<td><code>&quot;@&quot;</code></td>
+<td>Do standard completion, and list all possible completions if there is more than one and partial completion is not possible.</td>
+<td><a href="#rlcmd-complete"><code>complete</code></a> (when the <a href="#configshowallifunmodified"><code>show-all-if-unmodified</code></a> config variable is set)</td>
+</tr>
+<tr>
+<td><code>&quot;%&quot;</code></td>
+<td>Do menu completion (cycle through possible completions).</td>
+<td><a href="#rlcmd-menu-complete"><code>menu-complete</code></a> or <a href="#rlcmd-old-menu-complete"><code>old-menu-complete</code></a></td>
+</tr>
+</tbody></table>
+<p>The return value is a table with the input matches filtered as desired. The match filter function can remove matches, but cannot add matches (use a match generator instead).  If only one match remains after filtering, then many commands will insert the match without displaying it.  This makes it possible to spawn a process (such as <a href="https://github.com/junegunn/fzf">fzf</a>) to perform enhanced completion by interactively filtering the matches and keeping only one selected match.</p>
+<pre><code class="language-lua">settings.add(&quot;fzf.height&quot;, &quot;40%&quot;, &quot;Height to use for the --height flag&quot;)
+settings.add(&quot;fzf.exe_location&quot;, &quot;&quot;, &quot;Location of fzf.exe if not on the PATH&quot;)
+
+-- Build a command line to launch fzf.
+local function get_fzf()
+    local height = settings.get(&quot;fzf.height&quot;)
+    local command = settings.get(&quot;fzf.exe_location&quot;)
+    if not command or command == &quot;&quot; then
+        command = &quot;fzf.exe&quot;
+    else
+        command = os.getshortname(command)
+    end
+    if height and height ~= &quot;&quot; then
+        command = command..&#39; --height &#39;..height
+    end
+    return command
+end
+
+local fzf_complete_intercept = false
+
+-- Sample key binding in .inputrc:
+--      M-C-x: &quot;luafunc:fzf_complete&quot;
+function fzf_complete(rl_buffer)
+    fzf_complete_intercept = true
+    rl.invokecommand(&quot;complete&quot;)
+    if fzf_complete_intercept then
+        rl_buffer:ding()
+    end
+    fzf_complete_intercept = false
+    rl_buffer:refreshline()
+end
+
+local function filter_matches(matches, completion_type, filename_completion_desired)
+    if not fzf_complete_intercept then
+        return
+    end
+    -- Start fzf.
+    local r,w = io.popenrw(get_fzf()..&#39; --layout=reverse-list&#39;)
+    if not r or not w then
+        return
+    end
+    -- Write matches to the write pipe.
+    for _,m in ipairs(matches) do
+        w:write(m.match..&quot;\n&quot;)
+    end
+    w:close()
+    -- Read filtered matches.
+    local ret = {}
+    while (true) do
+        local line = r:read(&#39;*line&#39;)
+        if not line then
+            break
+        end
+        for _,m in ipairs(matches) do
+            if m.match == line then
+                table.insert(ret, m)
+            end
+        end
+    end
+    r:close()
+    -- Yay, successful; clear it to not ding.
+    fzf_complete_intercept = false
+    return ret
+end
+
+local interceptor = clink.generator(0)
+function interceptor:generate(line_state, match_builder)
+    -- Only intercept when the specific key binding command was used.
+    if fzf_complete_intercept then
+        clink.onfiltermatches(filter_matches)
+    end
+    return false
+end
+</code></pre>
+<blockquote>
+<p><strong>Note:</strong> A much more complete fzf integration script is available at <a href="https://github.com/chrisant996/clink-gizmos">clink-gizmos</a> or <a href="https://github.com/chrisant996/clink-fzf">clink-fzf</a>.</p>
+</blockquote>
+<p><a name="filteringthematchdisplay"></a></p>
+<h4 id="filtering-the-match-display"><a class="wlink" href="#filteringthematchdisplay"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Filtering the Match Display</h4>
+<p>In some instances it may be preferable to display different text when listing potential matches versus when inserting a match in the input line, or to display a description next to a match.  For example, it might be desirable to display a <code>*</code> next to some matches, or to show additional information about some matches.</p>
+<p>The simplest way to do that is just include the <code>display</code> and/or <code>description</code> fields when using <a href="#builder:addmatch">builder:addmatch()</a>.  Refer to that function&#39;s documentation for usage details.</p>
+<p>However, older versions of Clink don&#39;t support those fields.  And in some cases it may be desirable to display a list of possible completions that includes extra matches, or omits some matches (but that&#39;s discouraged because it can be confusing to users).</p>
+<p>A <a href="#matchgenerators">match generator</a> or <a href="#argumentcompletion">argmatcher</a> or <a href="#luakeybindings">luafunc: key binding</a> can alternatively use <a href="#clink.ondisplaymatches">clink.ondisplaymatches()</a> to register a function that will be called before matches are displayed (this is reset every time match generation is invoked).</p>
+<p>The function receives a table argument containing the matches to be displayed, and a boolean argument indicating whether they&#39;ll be displayed in a popup window. The table argument has a <code>match</code> string field and a <code>type</code> string field; these are the same as in <a href="#builder:addmatch">builder:addmatch()</a>. The return value is a table with the input matches filtered as required by the match generator.</p>
+<p>The returned table can also optionally include a <code>display</code> string field and a <code>description</code> string field. When present, <code>display</code> will be displayed instead of the <code>match</code> field, and <code>description</code> will be displayed next to the match. Putting the description in a separate field enables Clink to align the descriptions in a column.</p>
+<p>Filtering the match display can affect completing matches: the <code>match</code> field is what gets inserted.  It can also affect displaying matches: the <code>display</code> field is displayed if present, otherwise the <code>match</code> field is displayed.</p>
+<p>If a match&#39;s <code>type</code> is &quot;none&quot; or its <code>match</code> field is different from its <code>display</code> field then the match is displayed using the color specified by the <a href="#color_filtered">color.filtered</a> Clink setting, otherwise normal completion coloring is applied.  The <code>display</code> and <code>description</code> fields can include ANSI escape codes to apply other colors if desired.</p>
+<pre><code class="language-lua">local function my_filter(matches, popup)
+    local new_matches = {}
+    local magenta = &quot;\x1b[35m&quot;
+    local filtered = settings.get(&quot;color.filtered&quot;)
+    for _,m in ipairs(matches) do
+        if m.match:find(&quot;[0-9]&quot;) then
+            -- Ignore matches with one or more digits.
+        else
+            -- Keep the match, and also add a magenta * prefix to directory matches.
+            if m.type:find(&quot;^dir&quot;) then
+                m.display = magenta..&quot;*&quot;..filtered..m.match
+            end
+            table.insert(new_matches, m)
+        end
+    end
+    return new_matches
+end
+
+function my_match_generator:generate(line_state, match_builder)
+    ...
+    clink.ondisplaymatches(my_filter)
+end
+</code></pre>
+<blockquote>
+<p><strong>Compatibility Notes:</strong></p>
+<ul>
+<li>In v1.3.1 and higher, the table received by the registered ondisplaymatches function includes all the match fields (such as <code>display</code>, <code>description</code>, <code>appendchar</code>, etc), and the function can include any of these fields in the table it returns.  In other words, in v1.3.1 and higher match filtering supports all the same fields as <a href="#builder:addmatch">builder:addmatch()</a>.</li>
+<li>In v1.5.4 and higher, the table received by the registered ondisplaymatches function can include an <code>arginfo</code> field, and the function can include <code>arginfo</code> in the table it returns.</li>
+</ul>
+</blockquote>
 <p><a name="classifywords"></a></p>
 <h2 id="coloring-the-input-text"><a class="wlink" href="#classifywords"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Coloring the Input Text</h2>
 <p>When the <code><a href="#clink_colorize_input">clink.colorize_input</a></code> setting is enabled, then <a href="#argumentcompletion">argmatchers</a> automatically apply colors to the input text as they parse it.  When the setting is disabled, then the entire input line is colored by the <code><a href="#color_input">color.input</a></code> setting.</p>
@@ -7172,6 +7181,10 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes"><a class="wlink" href="#changes"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork"><a class="wlink" href="#releases-from-chrisant996clink-fork"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1511"><a class="wlink" href="#v1511"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.5.11</h4>
+<ul>
+<li>Fixed prompt filters and other Lua coroutines when <code>color.executable</code> and <code>color.unrecognized</code> are both empty (regression introduced in v1.5.10).</li>
+</ul>
 <h4 id="v1510"><a class="wlink" href="#v1510"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.5.10</h4>
 <ul>
 <li>Changed <code>clink update</code> to consider &quot;up-to-date&quot; as a successful case.</li>
