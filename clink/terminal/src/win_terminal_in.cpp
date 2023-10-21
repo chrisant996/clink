@@ -636,6 +636,9 @@ void win_terminal_in::select(input_idle* callback)
 }
 
 //------------------------------------------------------------------------------
+// WARNING: This must return a signed value because things like
+// line_editor_impl::update_input, standalone_input::update_input,
+// read_key_direct, etc use a signed comparison to detect "special" inputs.
 int32 win_terminal_in::read()
 {
     uint32 dimensions = get_dimensions();
