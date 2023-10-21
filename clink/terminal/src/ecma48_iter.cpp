@@ -138,7 +138,7 @@ bool ecma48_code::decode_osc(osc& out) const
 
     // Extract command.
     out.visible = false;
-    out.command = iter.next();
+    out.command = iter.next(); // BUGBUG: UTF32 gets truncated to char.
     out.subcommand = 0;
     switch (out.command)
     {
@@ -176,7 +176,7 @@ bool ecma48_code::decode_osc(osc& out) const
         break;
 
     case '9':
-        out.subcommand = (iter.next() == ';') ? iter.next() : 0;
+        out.subcommand = (iter.next() == ';') ? iter.next() : 0; // BUGBUG: UTF32 gets truncated to char.
         switch (out.subcommand)
         {
         case '8': /* get envvar */

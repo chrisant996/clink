@@ -692,6 +692,7 @@ static int32 check_input(lua_State* state)
     term.in->begin();
 
     const bool available = term.in->available(timeout);
+// BUGBUG: This totally EATS the input, since it destroys the temporary terminal.
 
     term.in->end();
     terminal_destroy(term);
