@@ -150,18 +150,19 @@ static bool get_console_screen_buffer_info(CONSOLE_SCREEN_BUFFER_INFO* info)
 //------------------------------------------------------------------------------
 static void append_expand_ctrl(str_base& out, const char* in, uint32 len=-1)
 {
-    for (const char* walk = in; len-- && *walk; ++walk)
+    wcwidth_iter iter(in, len);
+    while (const uint32 c = iter.next())
     {
-        if (CTRL_CHAR(*walk) || *walk == RUBOUT)
+        if (iter.character_wcwidth_signed() < 0)
         {
             char sz[3] = "^?";
-            if (*walk != RUBOUT)
-                sz[1] = UNCTRL(*walk);
+            if (CTRL_CHAR(c))
+                sz[1] = UNCTRL(c);
             out.concat(sz, 2);
         }
         else
         {
-            out.concat(walk, 1);
+            out.concat(iter.character_pointer(), iter.character_length());
         }
     }
 }
@@ -530,16 +531,22 @@ void display_lines::parse(uint32 prompt_botlin, uint32 col, const char* buffer, 
                 tmp.concat(" ", 1);
         }
 #endif
-        else if (CTRL_CHAR(c) || c == RUBOUT)
+        else if (iter.character_wcwidth_signed() < 0)
         {
             // Display control characters as ^X.
             assert(iter.character_length() == 1);
+            char ctrl[2];
+            ctrl[0] = '^';
+            ctrl[1] = CTRL_CHAR(c) ? UNCTRL(c) : '?';
             tmp.clear();
-            tmp.format("^%c", (c == RUBOUT) ? '?' : UNCTRL(c));
+            tmp.concat(ctrl, 2);
         }
         else
         {
-            const uint32 wc_width = iter.character_wcwidth();
+            // Should have been caught by iter.character_wcwidth_signed() < 0.
+            assert(!(CTRL_CHAR(c) || c == RUBOUT));
+
+            const uint32 wc_width = iter.character_wcwidth_signed();
 
             if (col + wc_width > _rl_screenwidth)
             {
@@ -718,18 +725,16 @@ void display_lines::horz_parse(uint32 prompt_botlin, uint32 col, const char* buf
     wcwidth_iter iter(buffer + m_horz_start, len - m_horz_start);
     while (const uint32 c = iter.next())
     {
-        assert((CTRL_CHAR(c) || c == RUBOUT) == (iter.character_wcwidth() < 0));
-        if (iter.character_wcwidth() < 0)
+        assertimplies((CTRL_CHAR(c) || c == RUBOUT), (iter.character_wcwidth_signed() < 0));
+        if (iter.character_wcwidth_signed() < 0)
         {
             // Display control characters as ^X.
-            assert(CTRL_CHAR(c) || c == RUBOUT);
-            assert(iter.character_length() == 1);
             tmp.clear();
             tmp.format("^%c", CTRL_CHAR(c) ? UNCTRL(c) : '?');
         }
         else
         {
-            const uint32 wc_width = iter.character_wcwidth();
+            const uint32 wc_width = iter.character_wcwidth_signed();
 
             if (col + wc_width > limit)
             {
@@ -1039,7 +1044,7 @@ bool display_lines::adjust_columns(uint32& index, int32 delta, const char* buffe
             const int32 i = _rl_find_prev_mbchar(const_cast<char*>(buffer), index, MB_FIND_NONZERO);
             const int32 bytes = index - i;
             walk -= bytes;
-            const int32 width = (bytes == 1 && (CTRL_CHAR(*walk) || *walk == RUBOUT)) ? 2 : clink_wcswidth(walk, bytes);
+            const int32 width = clink_wcswidth_expandctrl(walk, bytes);
             if (first || delta >= width)
                 index -= bytes;
             first = false;
@@ -1113,7 +1118,7 @@ void measure_columns::measure(const char* text, uint32 length, bool is_prompt)
                 const uint32 c = i.next();
                 assert(c != '\n');          // See ecma48_code::c0_lf below.
                 assert(!CTRL_CHAR(c)); // See ecma48_code::type_c0 below.
-                if (!is_prompt && (CTRL_CHAR(c) || c == RUBOUT))
+                if (!is_prompt && i.character_wcwidth_signed() < 0)
                 {
                     // Control characters.
                     goto ctrl_char;

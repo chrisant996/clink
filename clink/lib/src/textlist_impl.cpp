@@ -93,18 +93,18 @@ static int32 make_item(const char* in, str_base& out)
     int32 cells = 0;
     for (wcwidth_iter iter(in); int32 c = iter.next();)
     {
-        if (iter.character_wcwidth() < 0)
+        if (iter.character_wcwidth_signed() < 0)
         {
             char ctrl[2];
             ctrl[0] = '^';
-            ctrl[1] = (c == RUBOUT) ? '?' : UNCTRL(c);
+            ctrl[1] = CTRL_CHAR(c) ? UNCTRL(c) : '?';
             out.concat(ctrl, 2);
             cells += 2;
         }
         else
         {
             out.concat(iter.character_pointer(), iter.character_length());
-            cells += iter.character_wcwidth();
+            cells += iter.character_wcwidth_signed();
         }
     }
 
@@ -132,18 +132,18 @@ static int32 make_column(const char* in, const char* end, str_base& out)
                     out.concat(" ", 1);
                     cells++;
                 }
-                else if (inner_iter.character_wcwidth() < 0)
+                else if (inner_iter.character_wcwidth_signed() < 0)
                 {
                     char ctrl[2];
                     ctrl[0] = '^';
-                    ctrl[1] = (c == RUBOUT) ? '?' : UNCTRL(c);
+                    ctrl[1] = CTRL_CHAR(c) ? UNCTRL(c) : '?';
                     out.concat(ctrl, 2);
                     cells += 2;
                 }
                 else
                 {
                     out.concat(inner_iter.character_pointer(), inner_iter.character_length());
-                    cells += inner_iter.character_wcwidth();
+                    cells += inner_iter.character_wcwidth_signed();
                 }
             }
         }

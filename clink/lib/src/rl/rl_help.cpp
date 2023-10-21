@@ -941,7 +941,7 @@ static void append_key_macro(str_base& s, const char* macro, const int32 limit)
     wcwidth_iter iter(macro);
     while (int32 c = iter.next())
     {
-        const int32 w = iter.character_wcwidth();
+        const int32 w = iter.character_wcwidth_onectrl();
         if (count <= limit_ellipsis)
             truncate_len = s.length();
         if (count > limit)

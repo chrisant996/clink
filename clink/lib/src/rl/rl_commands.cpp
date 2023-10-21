@@ -2161,6 +2161,10 @@ static void list_problem_codes(const std::vector<prompt_problem_details>& proble
                     char ctrl[2] = { '^', char(c + 0x40) };
                     s.concat(ctrl, 2);
                 }
+                else if (c >= 0x7f && c < 0xa0)
+                {
+                    s.concat("^?", 2);
+                }
                 else
                 {
                     s.concat(seq, int32(iter.get_pointer() - seq));

@@ -345,7 +345,7 @@ static int32 fnappend(const char *to_print, int32 prefix_bytes, int32 condense, 
             append_tmpbuf_char(UNCTRL(c));
             printed_len += 2;
         }
-        else if (c == RUBOUT)
+        else if (c == RUBOUT || iter.character_wcwidth_signed() < 0)
         {
             append_tmpbuf_string("^?", 2);
             printed_len += 2;

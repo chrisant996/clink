@@ -62,7 +62,7 @@ int32 ellipsify(const char* in, int32 limit, str_base& out, bool expand_ctrl)
             wcwidth_iter inner_iter(code.get_pointer(), code.get_length());
             while (const int32 c = inner_iter.next())
             {
-                const int32 clen = (expand_ctrl && (CTRL_CHAR(c) || c == RUBOUT)) ? 2 : inner_iter.character_wcwidth_onectrl();
+                const int32 clen = (inner_iter.character_wcwidth_signed() < 0) ? (expand_ctrl ? 2 : 1) : inner_iter.character_wcwidth_signed();
                 assert(clen >= 0);
                 if (truncate_visible < 0 && visible_len + clen > limit - ellipsis_cells)
                 {

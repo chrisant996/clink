@@ -80,25 +80,25 @@ TEST_CASE("wcwidth_iter")
 
         REQUIRE(iter.next() == 'a');
         REQUIRE(iter.next() == 'b');
-        REQUIRE(iter.character_wcwidth() == 1);
+        REQUIRE(iter.character_wcwidth_signed() == 1);
         REQUIRE(iter.character_length() == 1);
         REQUIRE(*iter.character_pointer() == 'b');
         REQUIRE(*iter.get_pointer() == 'c');
 
         iter.unnext();
-        REQUIRE(iter.character_wcwidth() == 0);
+        REQUIRE(iter.character_wcwidth_signed() == 0);
         REQUIRE(iter.character_length() == 0);
         REQUIRE(*iter.character_pointer() == 'b');
         REQUIRE(*iter.get_pointer() == 'b');
 
         REQUIRE(iter.next() == 'b');
-        REQUIRE(iter.character_wcwidth() == 1);
+        REQUIRE(iter.character_wcwidth_signed() == 1);
         REQUIRE(iter.character_length() == 1);
         REQUIRE(*iter.character_pointer() == 'b');
         REQUIRE(*iter.get_pointer() == 'c');
 
         REQUIRE(iter.next() == 'c');
-        REQUIRE(iter.character_wcwidth() == 1);
+        REQUIRE(iter.character_wcwidth_signed() == 1);
         REQUIRE(iter.character_length() == 1);
         REQUIRE(*iter.character_pointer() == 'c');
         REQUIRE(*iter.get_pointer() == 'd');
@@ -115,25 +115,25 @@ TEST_CASE("wcwidth_iter")
 
         REQUIRE(iter.next() == 'a');
         REQUIRE(iter.next() == 0x2618);
-        REQUIRE(iter.character_wcwidth() == 2);
+        REQUIRE(iter.character_wcwidth_signed() == 2);
         REQUIRE(iter.character_length() == 6);
         REQUIRE(BYTE(*iter.character_pointer()) == 0xe2);
         REQUIRE(*iter.get_pointer() == 'c');
 
         iter.unnext();
-        REQUIRE(iter.character_wcwidth() == 0);
+        REQUIRE(iter.character_wcwidth_signed() == 0);
         REQUIRE(iter.character_length() == 0);
         REQUIRE(BYTE(*iter.character_pointer()) == 0xe2);
         REQUIRE(BYTE(*iter.get_pointer()) == 0xe2);
 
         REQUIRE(iter.next() == 0x2618);
-        REQUIRE(iter.character_wcwidth() == 2);
+        REQUIRE(iter.character_wcwidth_signed() == 2);
         REQUIRE(iter.character_length() == 6);
         REQUIRE(BYTE(*iter.character_pointer()) == 0xe2);
         REQUIRE(*iter.get_pointer() == 'c');
 
         REQUIRE(iter.next() == 'c');
-        REQUIRE(iter.character_wcwidth() == 1);
+        REQUIRE(iter.character_wcwidth_signed() == 1);
         REQUIRE(iter.character_length() == 1);
         REQUIRE(*iter.character_pointer() == 'c');
         REQUIRE(*iter.get_pointer() == 'd');
