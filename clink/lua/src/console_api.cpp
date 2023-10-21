@@ -643,6 +643,12 @@ static int32 read_input(lua_State* state)
             k == terminal_in::input_exit)
             continue;
 
+        if (k < 0)
+        {
+            assert(k >= 0);
+            continue;
+        }
+
         char c = static_cast<char>(k);
         key.concat_no_truncate(&c, 1);
     }
