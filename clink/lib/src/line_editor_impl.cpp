@@ -229,7 +229,14 @@ line_editor_impl::line_editor_impl(const desc& desc)
     add_module(m_selectcomplete);
     add_module(m_textlist);
 
-    desc.input->set_key_tester(this);
+    key_tester* old_tester = desc.input->set_key_tester(this);
+    assert(!old_tester);
+}
+
+//------------------------------------------------------------------------------
+line_editor_impl::~line_editor_impl()
+{
+    m_desc.input->set_key_tester(nullptr);
 }
 
 //------------------------------------------------------------------------------
@@ -283,9 +290,11 @@ void line_editor_impl::begin_line()
     match_pipeline pipeline(m_matches);
     pipeline.reset();
 
-    m_desc.input->begin();
+    const int32 began = m_desc.input->begin();
+    assert(began == 1);
     m_desc.output->begin();
     m_buffer.begin_line();
+
     m_prev_generate.clear();
     m_prev_plain = false;
     m_prev_classify.clear();
@@ -322,7 +331,8 @@ void line_editor_impl::end_line()
 
     m_buffer.end_line();
     m_desc.output->end();
-    m_desc.input->end();
+    const int32 began = m_desc.input->end();
+    assert(!began);
 
     m_words.clear();
     m_commands.clear();

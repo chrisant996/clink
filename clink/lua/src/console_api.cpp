@@ -31,6 +31,32 @@ static SHORT GetConsoleNumLines(const CONSOLE_SCREEN_BUFFER_INFO& csbi)
     return bottom_Y + 1;
 }
 
+//------------------------------------------------------------------------------
+class input_scope
+{
+public:
+    input_scope(terminal_in* in)
+    : m_in(in)
+    , m_old_tester(in->set_key_tester(nullptr))
+    {
+        // No key tester; accept all key sequences regardless whether they're
+        // bound in Readline.  This is important because this shouldn't limit
+        // input, and also because in a luafunc macro the rl_module key tester
+        // implementation causes heap corruption.
+        m_in->begin(false);
+    }
+
+    ~input_scope()
+    {
+        m_in->end(false);
+        m_in->set_key_tester(m_old_tester);
+    }
+
+private:
+    terminal_in* const  m_in;
+    key_tester* const   m_old_tester;
+};
+
 
 
 //------------------------------------------------------------------------------
@@ -615,23 +641,27 @@ static int32 find_next_line(lua_State* state)
 /// <strong>Note:</strong> Mouse input is not supported.
 static int32 read_input(lua_State* state)
 {
-    bool select = true;
-    str<> key;
-
     const bool no_cursor = (lua_isboolean(state, 1) && lua_toboolean(state, 1));
 
-    terminal term = terminal_create(nullptr, !no_cursor);
-    term.in->begin();
+    terminal_in* const in = get_lua_terminal_input();
+    if (!in)
+        return 0;
+
+    str<> key;
+
+    input_scope is(in);
+    const bool restore_cursor = (!no_cursor && show_cursor(false));
 
     // Get one full input key sequence.
+    bool select = !in->available(0);
     while (true)
     {
-        int32 k = term.in->read();
+        int32 k = in->read();
         if (k == terminal_in::input_none)
         {
             if (!select)
                 break;
-            term.in->select();
+            in->select();
             select = false;
             continue;
         }
@@ -653,8 +683,8 @@ static int32 read_input(lua_State* state)
         key.concat_no_truncate(&c, 1);
     }
 
-    term.in->end();
-    terminal_destroy(term);
+    if (restore_cursor)
+        show_cursor(true);
 
     if (key.empty())
         return 0;
@@ -694,14 +724,14 @@ static int32 check_input(lua_State* state)
 {
     const DWORD timeout = static_cast<DWORD>(optnumber(state, 1, 0) * 1000);
 
-    terminal term = terminal_create(nullptr, false);
-    term.in->begin();
+    bool available = false;
 
-    const bool available = term.in->available(timeout);
-// BUGBUG: This totally EATS the input, since it destroys the temporary terminal.
-
-    term.in->end();
-    terminal_destroy(term);
+    terminal_in* const in = get_lua_terminal_input();
+    if (in)
+    {
+        input_scope is(in);
+        available = in->available(timeout);
+    }
 
     lua_pushboolean(state, available);
     return 1;

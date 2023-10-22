@@ -4,6 +4,7 @@
 #pragma once
 
 #include "terminal_in.h"
+#include <assert.h>
 
 class input_idle;
 class key_tester;
@@ -14,8 +15,8 @@ class win_terminal_in
 {
 public:
                     win_terminal_in(bool cursor_visibility=true);
-    virtual void    begin() override;
-    virtual void    end() override;
+    virtual int32   begin(bool can_hide_cursor=true) override;
+    virtual int32   end(bool can_show_cursor=true) override;
     virtual bool    available(uint32 timeout) override;
     virtual void    select(input_idle* callback=nullptr) override;
     virtual int32   read() override;
@@ -32,6 +33,7 @@ private:
     void            push(const char* seq);
     uint8           pop();
     uint8           peek();
+    int32           m_began = 0;
     key_tester*     m_keys = nullptr;
     void*           m_stdin = nullptr;
     void*           m_stdout = nullptr;

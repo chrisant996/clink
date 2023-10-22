@@ -568,35 +568,56 @@ win_terminal_in::win_terminal_in(bool cursor_visibility)
 }
 
 //------------------------------------------------------------------------------
-void win_terminal_in::begin()
+int32 win_terminal_in::begin(bool can_hide_cursor)
 {
     if (!s_interrupt)
         s_interrupt = CreateEvent(nullptr, false, false, nullptr);
 
-    m_buffer_count = 0;
-    m_lead_surrogate = 0;
-    m_stdin = GetStdHandle(STD_INPUT_HANDLE);
-    m_stdout = GetStdHandle(STD_OUTPUT_HANDLE);
-    m_dimensions = get_dimensions();
-    GetConsoleMode(m_stdin, &m_prev_mode);
-    if (m_cursor_visibility)
+    if (!m_began)
+    {
+        // Clearing the input state shouldn't be needed, and clearing it
+        // discards any peeked input (console.checkinput()).  So, don't.
+#if 0
+        m_buffer_count = 0;
+        m_lead_surrogate = 0;
+#endif
+
+        m_stdin = GetStdHandle(STD_INPUT_HANDLE);
+        m_stdout = GetStdHandle(STD_OUTPUT_HANDLE);
+        m_dimensions = get_dimensions();
+        GetConsoleMode(m_stdin, &m_prev_mode);
+
+        m_prev_mouse_button_state = 0;
+        if (GetKeyState(VK_LBUTTON) < 0)
+            m_prev_mouse_button_state |= FROM_LEFT_1ST_BUTTON_PRESSED;
+        if (GetKeyState(VK_RBUTTON) < 0)
+            m_prev_mouse_button_state |= RIGHTMOST_BUTTON_PRESSED;
+    }
+
+    if (m_cursor_visibility && can_hide_cursor)
         show_cursor(false);
 
-    m_prev_mouse_button_state = 0;
-    if (GetKeyState(VK_LBUTTON) < 0)
-        m_prev_mouse_button_state |= FROM_LEFT_1ST_BUTTON_PRESSED;
-    if (GetKeyState(VK_RBUTTON) < 0)
-        m_prev_mouse_button_state |= RIGHTMOST_BUTTON_PRESSED;
+    ++m_began;
+    return m_began;
 }
 
 //------------------------------------------------------------------------------
-void win_terminal_in::end()
+int32 win_terminal_in::end(bool can_show_cursor)
 {
-    if (m_cursor_visibility)
+    assert(m_began > 0);
+    --m_began;
+
+    if (m_cursor_visibility && can_show_cursor)
         show_cursor(true);
-    SetConsoleMode(m_stdin, m_prev_mode);
-    m_stdin = nullptr;
-    m_stdout = nullptr;
+
+    if (!m_began)
+    {
+        SetConsoleMode(m_stdin, m_prev_mode);
+        m_stdin = nullptr;
+        m_stdout = nullptr;
+    }
+
+    return m_began;
 }
 
 //------------------------------------------------------------------------------

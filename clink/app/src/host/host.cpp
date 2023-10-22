@@ -382,6 +382,9 @@ host::host(const char* name)
 {
     m_terminal = terminal_create();
     m_printer = new printer(*m_terminal.out);
+
+    assert(!get_lua_terminal_input());
+    set_lua_terminal_input(m_terminal.in);
 }
 
 //------------------------------------------------------------------------------
@@ -393,6 +396,8 @@ host::~host()
     delete m_suggester;
     delete m_lua;
     delete m_printer;
+
+    set_lua_terminal_input(nullptr);
     terminal_destroy(m_terminal);
 }
 

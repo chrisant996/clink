@@ -51,6 +51,7 @@ class line_editor_impl
 {
 public:
                         line_editor_impl(const desc& desc);
+                        ~line_editor_impl();
 
     // line_editor
     virtual bool        add_module(editor_module& module) override;

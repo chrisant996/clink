@@ -2686,8 +2686,8 @@ void rl_module::on_input(const input& input, result& result, const context& cont
     {
         shim_in(const char* keys, terminal_in* old) : data(keys), old(old) { s_processed_input = this; }
         ~shim_in() { s_processed_input = old; }
-        virtual void    begin() override                    { assert(false); }
-        virtual void    end() override                      { assert(false); }
+        virtual int32   begin(bool) override                { assert(false); return 1; }
+        virtual int32   end(bool) override                  { assert(false); return 0; }
         virtual bool    available(uint32 timeout) override  { assert(false); return false; }
         virtual void    select(input_idle*) override        { assert(false); }
         virtual int32   read() override                     { if (*data) return *(uint8*)(data++);

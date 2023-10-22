@@ -765,6 +765,13 @@ void get_lua_srcinfo(lua_State* L, str_base& out)
 
 
 //------------------------------------------------------------------------------
+static terminal_in* s_lua_term_in = nullptr;
+void set_lua_terminal_input(terminal_in* in) { s_lua_term_in = in; }
+terminal_in* get_lua_terminal_input() { return s_lua_term_in; }
+
+
+
+//------------------------------------------------------------------------------
 #ifdef USE_MEMORY_TRACKING
 extern "C" DECLALLOCATOR DECLRESTRICT void* __cdecl dbgluarealloc(void* pv, size_t size)
 {

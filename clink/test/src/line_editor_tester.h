@@ -22,8 +22,8 @@ class test_terminal_in
 public:
     bool                    has_input() const { return (m_read == nullptr) ? false : (*m_read != '\0'); }
     void                    set_input(const char* input) { m_input = m_read = input; }
-    virtual void            begin() override {}
-    virtual void            end() override {}
+    virtual int32           begin(bool can_hide_cursor) override { return 1; }
+    virtual int32           end(bool can_show_cursor) override { return 0; }
     virtual bool            available(uint32 timeout) override { return has_input(); }
     virtual void            select(input_idle*) override {}
     virtual int32           read() override { return *(uint8*)m_read++; }
