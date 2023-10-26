@@ -4,6 +4,7 @@
 
 #### v1.5.12
 - Fixed `console.checkinput()` so it doesn't eat whatever pending input it detects.
+- Fixed the updater to be more specific about what PowerShell cmdlet it invokes, in case a script tries to replace the built-in `Expand-Archive` cmdlet.
 
 #### v1.5.11
 - Fixed prompt filters and other Lua coroutines when `color.executable` and `color.unrecognized` are both empty (regression introduced in v1.5.10).
