@@ -228,6 +228,11 @@ rl_replace_line (const char *text, int clear_undo)
 {
   int len;
 
+/* begin_clink_change */
+  if (rl_buffer_changing_hook)
+    rl_buffer_changing_hook ();
+/* end_clink_change */
+
   len = strlen (text);
   if (len >= rl_line_buffer_len)
     rl_extend_line_buffer (len);

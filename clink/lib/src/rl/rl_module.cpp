@@ -1291,6 +1291,9 @@ static void buffer_changing()
     // The buffer text is changing, so the selection will be invalidated and
     // needs to be cleared.
     cua_clear_selection();
+
+    // When the buffer changes, rl_display_fixed is no longer accurate.
+    rl_display_fixed = false;
 }
 
 //------------------------------------------------------------------------------
