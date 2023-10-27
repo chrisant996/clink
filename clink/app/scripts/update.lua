@@ -207,10 +207,8 @@ local function unzip(zip, out)
 
     local success_tag = "CLINK-UNZIP-SUCCEEDED"
     local failure_tag = "CLINK-UNZIP-FAILED"
-    -- Including the module name may help avoid problems if something overrides the Expand-Archive cmdlet.
-    -- luacheck: push no max line length
-    -- https://stackoverflow.com/questions/75326822/expand-archive-giving-syntax-error-in-powershell-v5-1-a-parameter-cannot-be-fou
-    -- luacheck: pop
+    -- Including the module name avoids problems if something overrides the Expand-Archive cmdlet.
+    -- For example, older versions of PowerShell Community Extensions did (https://github.com/pscx/pscx).
     local expand_archive = string.format([[$ProgressPreference='SilentlyContinue' ; Microsoft.PowerShell.Archive\Expand-Archive -Force -LiteralPath \"%s\" -DestinationPath \"%s\"]], zip, out) -- luacheck: no max line length
     local powershell_command = string.format([[try { %s ; echo "%s" } catch { echo "%s" ; echo $_.Exception.Message ; echo "`nALL ERRORS:`n" ; echo $error }]], expand_archive, success_tag, failure_tag) -- luacheck: no max line length
     local cmd = string.format([[2>&1 %s -Command "%s"]], powershell_exe, powershell_command)
