@@ -542,6 +542,17 @@ BOOL WINAPI host_cmd::read_console(
 
     set_ctrl_wakeup_mask(control ? control->dwCtrlWakeupMask : 0);
 
+    // THEORETICAL:
+    //  Clink could maybe intercept ReadConsoleW even when echo is off, if it
+    //  used RtlCaptureStackBackTrace to observe the first three frames in the
+    //  backtrace.  Once Clink has ever seen a tagged prompt, then it can know
+    //  the exact stack frames that correspond to reading the input line.
+    //  When ReadConsoleW is called but Clink hasn't seen a tagged prompt,
+    //  then Clink could inspect the stack frames to deduce when the call is
+    //  for the input line.
+    // WHY NOT TO DO THAT:
+    //  RtlCaptureStackBackTrace is not reliable for use in non-debug code.
+
     // Cmd.exe can want line input for reasons other than command entry.
     const wchar_t* prompt = host_cmd::get()->m_prompt.get();
     dequeue_flags flags = dequeue_flags::none;
