@@ -93,6 +93,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # APPENDICES
 
 ## Known Issues
+- When `echo` is `off`, CMD doesn't print a prompt, and Clink can't which ReadConsoleW calls are for reading the input line.  In theory, Clink could use `RtlCaptureStackBackTrace()` to deduce when a call is for the input line (see comment in `host_cmd::read_console()`), but that API isn't reliable for use in non-debug code.
 - `foo bar a/b/c` will try to expand `a/b/c` as an abbreviated path even if `foo bar` never generates filename matches.  This is a case that Clink can't really get perfectly right anymore, because of the automatic deduction of whether to use file matches.  Overall, this seems acceptable.
 - Readline's `expand_tilde()` doesn't handle embedded `{space}{tilde}{pathsep}` correctly in strings; `rl.expandtilde()` does, and has an optional parameter to use Readline's original style of tilde expansion.
 - Cursor style may behave unexpectedly in a new console window launched from a Windows Terminal console, or in a console window that gets attached to Windows Terminal.  This is because there's no reliable way for Clink to know whether it is running inside Windows Terminal.  Related to [Terminal #7434](https://github.com/microsoft/terminal/issues/7434).
