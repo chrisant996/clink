@@ -8,18 +8,21 @@
 //------------------------------------------------------------------------------
 class command_link_dialog
 {
+    typedef bool (*cld_callback_t)(HWND hdlg, uint32 index);
+
     struct button_details
     {
         int32           m_choice;
         str_moveable    m_caption1;
         wstr_moveable   m_caption2;
         bool            m_command_link = false;
+        cld_callback_t  m_handler = nullptr;
     };
 
 public:
                         command_link_dialog();
                         ~command_link_dialog();
-    void                add(int32 choice, const char* caption1, const char* caption2=nullptr);
+    void                add(int32 choice, const char* caption1, const char* caption2=nullptr, cld_callback_t handler=nullptr);
     int32               do_modal(HWND parent, int16 width, const char* title, const char* message);
 
 protected:

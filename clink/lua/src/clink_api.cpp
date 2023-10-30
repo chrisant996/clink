@@ -34,6 +34,7 @@
 #include <terminal/terminal_helpers.h>
 #include <terminal/printer.h>
 #include <terminal/screen_buffer.h>
+#include <shellapi.h>
 
 extern "C" {
 #include <lua.h>
@@ -1893,15 +1894,32 @@ static int32 reset_update_keys(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+static bool view_releases_page(HWND hdlg, uint32 index)
+{
+    AllowSetForegroundWindow(ASFW_ANY);
+    ShellExecute(hdlg, nullptr, "https://github.com/chrisant996/clink/releases", 0, 0, SW_NORMAL);
+    return false;
+}
+
+//------------------------------------------------------------------------------
 static int32 show_update_prompt(lua_State* state)
 {
     const char* ver = checkstring(state, 1);
     if (!ver || !*ver)
         return 0;
 
+#ifdef DEBUG
+    if (!lua_toboolean(state, 2))
+    {
+#endif
+
     assert(s_hMutex);
     if (!s_hMutex)
         return 0;
+
+#ifdef DEBUG
+    }
+#endif
 
     if (is_update_prompt_snoozed() || is_update_skipped(ver))
     {
@@ -1916,12 +1934,13 @@ static int32 show_update_prompt(lua_State* state)
     btn1.format("Install the %s update now.", ver);
     btn2.format("Skip the %s update.", ver);
 
-    enum { btn_cancel, btn_install, btn_skip, btn_later };
+    enum { btn_cancel, btn_install, btn_skip, btn_later, btn_notes };
 
     command_link_dialog dlg;
     dlg.add(btn_install, "&Update now", btn1.c_str());
     dlg.add(btn_skip, "&Skip this update", btn2.c_str());
     dlg.add(btn_later, "Wait until &later", "Do nothing now, but ask again later.");
+    dlg.add(btn_notes, "View &Releases Page", "https://github.com/chrisant996/clink/releases", view_releases_page);
 
     const char* ret = "cancel";
     switch (dlg.do_modal(0, 180, "Clink Update", msg.c_str()))

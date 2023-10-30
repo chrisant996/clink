@@ -42,7 +42,7 @@ command_link_dialog::~command_link_dialog()
         DeleteObject(m_hfont_bold);
 }
 
-void command_link_dialog::add(int32 choice, const char* caption1, const char* caption2)
+void command_link_dialog::add(int32 choice, const char* caption1, const char* caption2, cld_callback_t handler)
 {
     assert(choice);
     button_details details;
@@ -50,6 +50,7 @@ void command_link_dialog::add(int32 choice, const char* caption1, const char* ca
     details.m_caption1 = caption1;
     details.m_caption2 = (caption2 && *caption2) ? caption2 : "";
     details.m_command_link = false;
+    details.m_handler = handler;
     m_buttons.emplace_back(std::move(details));
 }
 
@@ -346,7 +347,12 @@ bool command_link_dialog::on_command(WORD id, HWND hwnd, WORD code)
     case IDC_BUTTON3:
     case IDC_BUTTON4:
     case IDC_BUTTON5:
-        end_dialog(m_buttons[id - IDC_BUTTON1].m_choice);
+        {
+            const uint32 index = id - IDC_BUTTON1;
+            if (m_buttons[index].m_handler && !m_buttons[index].m_handler(m_hdlg, index))
+                break;
+            end_dialog(m_buttons[index].m_choice);
+        }
         break;
 
     case IDCANCEL:
