@@ -149,13 +149,6 @@ end
 --- Registers <span class="arg">func</span> to be called when Clink's edit
 --- prompt is activated.  The function receives no arguments and has no return
 --- values.
----
---- <strong>Note:</strong>  Be very careful if you return a string; this has the
---- potential to interfere with the user's ability to use CMD.  Mistakes in the
---- command string can have the potential to cause damage to the system very
---- quickly.  It is also possible for a script to cause an infinite loop, and
---- therefore <kbd>Ctrl</kbd>-<kbd>Break</kbd> causes the next string to be
---- ignored.
 function clink.onbeginedit(func)
     _add_event_callback("onbeginedit", func)
 end
