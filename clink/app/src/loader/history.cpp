@@ -245,10 +245,11 @@ static bool print_history(const char* arg, bool bare)
 static int32 add(const char* line)
 {
     history_scope history;
-    history->add(line);
+    bool ok = history->add(line);
 
-    printf("Added '%s' to history.\n", line);
-    return 0;
+    auto fmt =  ok ?  "Added '%s' to history.\n" : "Unable to add '%s' to history.\n";
+    printf(fmt, line);
+    return !ok;
 }
 
 //------------------------------------------------------------------------------
@@ -290,7 +291,7 @@ static int32 remove(int32 index)
 
     auto fmt =  ok ?  "Deleted item %d.\n" : "Unable to delete history item %d.\n";
     printf(fmt, index);
-    return (ok != true);
+    return !ok;
 }
 
 //------------------------------------------------------------------------------
@@ -450,8 +451,8 @@ int32 history(int32 argc, char** argv)
     bool uniq = false;
     for (int32 i = 1; i < argc; ++i)
     {
-        if (is_flag(argv[i], "--help", 3) || is_flag(argv[i], "-h"))
-            return print_help();
+        if (is_flag(argv[i], "--help", 3) || is_flag(argv[i], "-h") || is_flag(argv[i], "-?"))
+            return print_help(), 0;
 
         int32 remove = 1;
         if (is_flag(argv[i], "--bare", 3))
