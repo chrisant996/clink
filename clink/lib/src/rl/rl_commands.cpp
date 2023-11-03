@@ -226,6 +226,10 @@ static void get_word_bounds(const line_buffer& buffer, int32* left, int32* right
 //------------------------------------------------------------------------------
 int32 host_add_history(int32, const char* line)
 {
+    // NOTE:  This intentionally does not send the "onhistory" Lua event.
+    // Since this command explicitly manipulates the history it's reasonable
+    // for it to override scripts.
+
     history_database* h = history_database::get();
     return h && h->add(line);
 }

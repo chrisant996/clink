@@ -214,6 +214,23 @@ function clink.onfilterinput(func)
 end
 
 --------------------------------------------------------------------------------
+--- -name:  clink.onhistory
+--- -ver:   1.5.13
+--- -arg:   func:function
+--- Registers <span class="arg">func</span> to be called when an input line has
+--- been accepted and is about to be added to history.  The function receives a
+--- string argument containing the input text from the edit prompt.  The
+--- function can return false to cancel adding the line to history (if it
+--- returns false then no further onhistory handlers will run for that line).
+---
+--- <strong>Note:</strong>  The onhistory handler functions are not called by
+--- <code><a href="#rlcmd-add-history">add-history</a></code> or the
+--- <code>clink history</code> command.
+function clink.onhistory(func)
+    _add_event_callback("onhistory", func)
+end
+
+--------------------------------------------------------------------------------
 --- -name:  clink.oncommand
 --- -ver:   1.3.12
 --- -arg:   func:function

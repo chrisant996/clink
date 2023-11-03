@@ -1171,6 +1171,14 @@ skip_errorlevel:
             }
         }
 
+        // Let Lua scripts suppress adding the line to history.
+        if (add_history && history && send_event)
+        {
+            lua_state& state = lua;
+            lua_pushlstring(state.get_state(), out.c_str(), out.length());
+            add_history = !lua.send_event_cancelable("onhistory", 1);
+        }
+
         // Add the line to the history.
         assert(history);
         if (add_history && history)

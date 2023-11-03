@@ -244,6 +244,10 @@ static bool print_history(const char* arg, bool bare)
 //------------------------------------------------------------------------------
 static int32 add(const char* line)
 {
+    // NOTE:  This intentionally does not send the "onhistory" Lua event.  The
+    // history command doesn't load Lua, and since it explicitly manipulates
+    // the history it's reasonable for it to override scripts.
+
     history_scope history;
     bool ok = history->add(line);
 
