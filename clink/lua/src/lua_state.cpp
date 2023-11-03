@@ -584,7 +584,13 @@ bool lua_state::send_event_string_out(const char* event_name, str_base& out, int
 // Calls any event_name callbacks registered by scripts.
 bool lua_state::send_event_cancelable(const char* event_name, int32 nargs)
 {
-    return send_event_internal(event_name, "_send_event_cancelable", nargs);
+    if (!send_event_internal(event_name, "_send_event_cancelable", nargs, 1))
+        return false;
+
+    if (lua_isboolean(m_state, -1) && !lua_toboolean(m_state, -1))
+        return true;
+
+    return false;
 }
 
 //------------------------------------------------------------------------------

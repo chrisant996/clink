@@ -74,7 +74,7 @@ function clink._send_event_cancelable(event, ...)
                 local cancel = (c.func(...) == false)
                 log_cost(tick, c)
                 if cancel then
-                    return
+                    return false
                 end
             end
         end
