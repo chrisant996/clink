@@ -256,7 +256,7 @@ static int32 remove(int32 index)
 {
     history_scope history;
 
-    if (index <= 0)
+    if (index == 0)
         return 1;
 
     history_read_buffer buffer;
@@ -264,9 +264,26 @@ static int32 remove(int32 index)
     {
         str_iter line;
         history_db::iter iter = history->read_lines(buffer.data(), buffer.size());
-        for (int32 i = index - 1; i > 0 && iter.next(line); --i);
 
-        line_id = iter.next(line);
+        if (index > 0)
+        {
+            for (int32 i = index - 1; i > 0 && iter.next(line); --i);
+
+            line_id = iter.next(line);
+        }
+        else
+        {
+            std::vector<history_db::line_id> lines;
+            while (history_db::line_id l = iter.next(line))
+                lines.emplace_back(l);
+
+            const size_t li = lines.size() + index;
+            if (li >= lines.size())
+                return 1;
+
+            line_id = lines[li];
+            index = int32(li) + 1;
+        }
     }
 
     bool ok = history->remove(line_id);
