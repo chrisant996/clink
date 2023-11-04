@@ -6,8 +6,8 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## High Priority
 - Using the global `lua_state` from inside any registered Lua API function will use the _**main coroutine**_ even if the actual `lua_State*` is a coroutine.  OOPS!  This might explain some weird mystery issues that have happened.
-  - `lua_state::is_in_luafunc()` looks inaccurate if a `luafunc:` macro resumes some coroutine; the `co_state` needs to manage this.
-  - `line_editor_integration.cpp` needs careful analysis, and some safeguards.
+  - `lua_state::get_state()` now asserts any time it's called while a coroutine is running; any time it fires, the scenario needs to be fixed.
+  - Assess `line_editor_integration.cpp` and identify what, if any, safeguards or fixes are needed.
 
 ## Normal Priority
 - Open issue in Terminal repo about bugs in the new shell integration in v1.18.
