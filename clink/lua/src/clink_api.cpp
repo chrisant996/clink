@@ -1200,6 +1200,33 @@ static int32 refilter_prompt(lua_State* state)
     if (g_filtering_in_progress)
         return luaL_error(state, "clink.refilterprompt may not be used within a prompt filter.");
 
+    // If called from a coroutine, schedule the refilter to happen when control
+    // returns to the main coroutine.
+    {
+        save_stack_top ss(state);
+
+        lua_getglobal(state, "coroutine");
+        lua_pushliteral(state, "running");
+        lua_rawget(state, -2);
+
+        if (lua_state::pcall_silent(state, 0, 2) != LUA_OK)
+        {
+            assert("calling coroutine.running() failed" == 0);
+            return 0;
+        }
+
+        const int32 ismain = lua_toboolean(state, -1);
+        if (!ismain)
+        {
+            lua_getglobal(state, "clink");
+            lua_pushliteral(state, "_set_pending_refilterprompt");
+            lua_rawget(state, -2);
+            if (lua_state::pcall_silent(state, 0, 0) != LUA_OK)
+                assert("calling clink._set_pending_refilterprompt() failed" == 0);
+            return 0;
+        }
+    }
+
     g_prompt_refilter++;
     void host_filter_prompt();
     host_filter_prompt();

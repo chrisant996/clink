@@ -14,6 +14,7 @@ local _coroutine_generation = 0         -- ID for current generation of coroutin
 
 local _dead = nil                       -- List of dead coroutines (only when "lua.debug" is set, or in DEBUG builds).
 local _trimmed = 0                      -- Number of coroutines discarded from the dead list (overflow).
+local _pending_refilterprompt = nil     -- Indicates clink.refilterprompt() is needed when control returns to main coroutine.
 
 local _main_perthread_state = {}
 clink.co_state = _main_perthread_state
@@ -362,6 +363,11 @@ function clink._keep_coroutine_events(c)
     if entry then
         entry.keepevents = true
     end
+end
+
+--------------------------------------------------------------------------------
+function clink._set_pending_refilterprompt()
+    _pending_refilterprompt = true
 end
 
 
@@ -986,5 +992,14 @@ function coroutine.resume(co, ...) -- luacheck: ignore 122
 
     clink.co_state = old_co_state
     save_coroutine_state(entry, co)
+
+    if _pending_refilterprompt then
+        local _, ismain = coroutine.running()
+        if ismain then
+            clink.refilterprompt()
+            _pending_refilterprompt = nil
+        end
+    end
+
     return table.unpack(ret)
 end
