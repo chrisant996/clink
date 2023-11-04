@@ -178,6 +178,15 @@ const char* optstring(lua_State* state, int32 index, const char* default_value)
 
 
 //------------------------------------------------------------------------------
+enum class global_state : uint32
+{
+    none                = 0x00,
+    in_luafunc          = 0x01,
+    in_onfiltermatches  = 0x02,
+};
+DEFINE_ENUM_FLAG_OPERATORS(global_state);
+
+//------------------------------------------------------------------------------
 bool lua_state::s_in_luafunc = false;
 bool lua_state::s_in_onfiltermatches = false;
 bool lua_state::s_interpreter = false;
@@ -728,6 +737,22 @@ int32 lua_state::call_onfiltermatches(lua_State* L, int32 nargs, int32 nresults)
 {
     rollback<bool> rb(s_in_onfiltermatches, true);
     return pcall(L, nargs, nresults);
+}
+
+//------------------------------------------------------------------------------
+uint32 lua_state::save_global_states()
+{
+    global_state states = global_state::none;
+    if (is_in_luafunc())            states |= global_state::in_luafunc;
+    if (is_in_onfiltermatches())    states |= global_state::in_onfiltermatches;
+    return uint32(states);
+}
+
+//------------------------------------------------------------------------------
+void lua_state::restore_global_states(uint32 states)
+{
+    s_in_luafunc = (global_state(states) & global_state::in_luafunc) != global_state::none;
+    s_in_onfiltermatches = (global_state(states) & global_state::in_onfiltermatches) != global_state::none;
 }
 
 //------------------------------------------------------------------------------
