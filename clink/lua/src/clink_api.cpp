@@ -1727,12 +1727,27 @@ static int32 is_cmd_command(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-static int32 set_global_modes(lua_State* state)
+static int32 save_global_modes(lua_State* state)
 {
-    uint32 old_modes = lua_state::save_global_states();
-    uint32 new_modes = optinteger(state, 1, 0);
-    lua_pushinteger(state, old_modes);
+    bool new_coroutine = lua_toboolean(state, 1);
+    uint32 modes = lua_state::save_global_states(new_coroutine);
+    lua_pushinteger(state, modes);
     return 1;
+}
+
+//------------------------------------------------------------------------------
+static int32 restore_global_modes(lua_State* state)
+{
+#ifdef DEBUG
+    bool isnum;
+    uint32 modes = checkinteger(state, 1, &isnum);
+    if (!isnum)
+        return 0;
+#else
+    uint32 modes = optinteger(state, 1, 0);
+#endif
+    lua_state::restore_global_states(modes);
+    return 0;
 }
 
 //------------------------------------------------------------------------------
@@ -2192,7 +2207,8 @@ void clink_lua_initialise(lua_state& lua, bool lua_interpreter)
         { 0,    "_mark_deprecated_argmatcher", &mark_deprecated_argmatcher },
         { 0,    "_signal_delayed_init",   &signal_delayed_init },
         { 0,    "is_cmd_command",         &is_cmd_command },
-        { 0,    "_set_global_modes",      &set_global_modes },
+        { 0,    "_save_global_modes",     &save_global_modes },
+        { 0,    "_restore_global_modes",  &restore_global_modes },
         { 0,    "_get_installation_type", &get_installation_type },
         { 0,    "_set_install_version",   &set_install_version },
         { 0,    "_expand_prompt_codes",   &expand_prompt_codes },

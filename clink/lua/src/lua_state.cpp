@@ -183,13 +183,19 @@ enum class global_state : uint32
     none                = 0x00,
     in_luafunc          = 0x01,
     in_onfiltermatches  = 0x02,
+#ifdef DEBUG
+    in_coroutine        = 0x80,
+#endif
 };
 DEFINE_ENUM_FLAG_OPERATORS(global_state);
 
 //------------------------------------------------------------------------------
+bool lua_state::s_interpreter = false;
 bool lua_state::s_in_luafunc = false;
 bool lua_state::s_in_onfiltermatches = false;
-bool lua_state::s_interpreter = false;
+#ifdef DEBUG
+bool lua_state::s_in_coroutine = false;
+#endif
 
 //------------------------------------------------------------------------------
 lua_state::lua_state(lua_state_flags flags)
@@ -740,19 +746,35 @@ int32 lua_state::call_onfiltermatches(lua_State* L, int32 nargs, int32 nresults)
 }
 
 //------------------------------------------------------------------------------
-uint32 lua_state::save_global_states()
+uint32 lua_state::save_global_states(bool new_coroutine)
 {
     global_state states = global_state::none;
-    if (is_in_luafunc())            states |= global_state::in_luafunc;
-    if (is_in_onfiltermatches())    states |= global_state::in_onfiltermatches;
+    if (new_coroutine)
+    {
+#ifdef DEBUG
+        states |= global_state::in_coroutine;
+#endif
+    }
+    else
+    {
+        if (is_in_luafunc())            states |= global_state::in_luafunc;
+        if (is_in_onfiltermatches())    states |= global_state::in_onfiltermatches;
+#ifdef DEBUG
+        if (s_in_coroutine)             states |= global_state::in_coroutine;
+#endif
+    }
     return uint32(states);
 }
 
 //------------------------------------------------------------------------------
-void lua_state::restore_global_states(uint32 states)
+void lua_state::restore_global_states(uint32 _states)
 {
-    s_in_luafunc = (global_state(states) & global_state::in_luafunc) != global_state::none;
-    s_in_onfiltermatches = (global_state(states) & global_state::in_onfiltermatches) != global_state::none;
+    global_state states = global_state(_states);
+    s_in_luafunc = (states & global_state::in_luafunc) != global_state::none;
+    s_in_onfiltermatches = (states & global_state::in_onfiltermatches) != global_state::none;
+#ifdef DEBUG
+    s_in_coroutine = (states & global_state::in_coroutine) != global_state::none;
+#endif
 }
 
 //------------------------------------------------------------------------------

@@ -73,16 +73,19 @@ public:
     static bool     is_in_onfiltermatches() { return s_in_onfiltermatches; }
     static bool     is_interpreter() { return s_interpreter; }
 
-    static uint32   save_global_states();
+    static uint32   save_global_states(bool new_coroutine);
     static void     restore_global_states(uint32 states);
 
 private:
     bool            send_event_internal(const char* event_name, const char* event_mechanism, int32 nargs=0, int32 nret=0);
     lua_State*      m_state;
 
+    static bool     s_interpreter;
     static bool     s_in_luafunc;
     static bool     s_in_onfiltermatches;
-    static bool     s_interpreter;
+#ifdef DEBUG
+    static bool     s_in_coroutine;
+#endif
 };
 
 //------------------------------------------------------------------------------

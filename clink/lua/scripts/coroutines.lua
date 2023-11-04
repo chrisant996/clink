@@ -544,7 +544,8 @@ local function restore_coroutine_state(entry, thread)
         end
     end
 
-    old_state.global_modes = clink._set_global_modes(state.global_modes)
+    old_state.global_modes = clink._save_global_modes()
+    clink._restore_global_modes(state.global_modes)
 
     entry.old_state = old_state
 end
@@ -576,7 +577,11 @@ local function save_coroutine_state(entry, thread)
         end
     end
 
-    state.global_modes = clink._set_global_modes(old_state and old_state.global_modes)
+    -- When not old_state then this is a new coroutine.
+    state.global_modes = clink._save_global_modes(not old_state--[[new_coroutine]]);
+    if old_state then
+        clink._restore_global_modes(old_state.global_modes)
+    end
 
     entry.old_state = nil
 end
