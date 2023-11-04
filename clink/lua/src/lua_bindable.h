@@ -5,6 +5,7 @@
 
 #include <core/object.h>
 #include <core/str.h>
+#include <core/settings.h>
 
 extern "C" {
 #include <lua.h>
@@ -12,6 +13,9 @@ extern "C" {
 }
 
 #include <assert.h>
+
+//------------------------------------------------------------------------------
+extern setting_bool g_lua_strict;
 
 //------------------------------------------------------------------------------
 // The lua_bindable<T> template binds a C++ class into a Lua object.  Its
@@ -98,13 +102,16 @@ void lua_bindable<T>::make_metatable(lua_State* state)
 
         lua_createtable(state, 0, 0);
 
+        str<> metaname;
+        metaname.format("lua_bindable<%s>", T::c_name);
+
         const method* methods = T::c_methods;
         while (methods != nullptr && methods->name != nullptr)
         {
             auto* ptr = (method_t*)lua_newuserdata(state, sizeof(method_t));
             *ptr = methods->ptr;
 
-            if (luaL_newmetatable(state, "lua_bindable"))
+            if (luaL_newmetatable(state, metaname.c_str()))
             {
                 lua_pushliteral(state, "__call");
                 lua_pushcfunction(state, &lua_bindable<T>::call);
@@ -227,13 +234,21 @@ void lua_bindable<T>::push(lua_State* state)
 template <class T>
 int32 lua_bindable<T>::call(lua_State* state)
 {
-    auto* const* self = (T* const*)lua_touserdata(state, 2);
+    auto* const* self = (T* const*)luaL_checkudata(state, 2, T::c_name);
     if (self == nullptr || *self == nullptr)
+    {
+        if (g_lua_strict.get())
+            return luaL_error(state, "object %s (%p %p) is not bound", T::c_name, self, self ? *self : nullptr);
         return 0;
+    }
 
     auto* const ptr = (method_t const*)lua_touserdata(state, 1);
     if (ptr == nullptr)
+    {
+        if (g_lua_strict.get())
+            return luaL_error(state, "attempt to call a nil method on %s (%p %p)", T::c_name, self, self ? *self : nullptr);
         return 0;
+    }
 
     lua_remove(state, 1);
     lua_remove(state, 1);
