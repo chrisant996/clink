@@ -5,6 +5,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
+- Using the global `lua_state` from inside any registered Lua API function will use the _**main coroutine**_ even if the actual `lua_State*` is a coroutine.  OOPS!  This might explain some weird mystery issues that have happened.
 
 ## Normal Priority
 - Open issue in Terminal repo about bugs in the new shell integration in v1.18.
