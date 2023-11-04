@@ -94,85 +94,85 @@ void log_lua_initialise(lua_state&);
 
 
 //------------------------------------------------------------------------------
-int32 checkinteger(lua_State* state, int32 index, bool* pisnum)
+int32 checkinteger(lua_State* L, int32 index, bool* pisnum)
 {
     int32 isnum;
-    lua_Integer d = lua_tointegerx(state, index, &isnum);
+    lua_Integer d = lua_tointegerx(L, index, &isnum);
     if (pisnum)
         *pisnum = !!isnum;
     if (isnum)
         return int32(d);
 
     if (g_lua_strict.get())
-        return int32(luaL_checkinteger(state, index));
+        return int32(luaL_checkinteger(L, index));
 
     return 0;
 }
 
 //------------------------------------------------------------------------------
-int32 optinteger(lua_State* state, int32 index, int32 default_value, bool* pisnum)
+int32 optinteger(lua_State* L, int32 index, int32 default_value, bool* pisnum)
 {
-    if (lua_isnoneornil(state, index))
+    if (lua_isnoneornil(L, index))
     {
         if (pisnum)
             *pisnum = true;
         return default_value;
     }
 
-    return checkinteger(state, index, pisnum);
+    return checkinteger(L, index, pisnum);
 }
 
 //------------------------------------------------------------------------------
-lua_Number checknumber(lua_State* state, int32 index, bool* pisnum)
+lua_Number checknumber(lua_State* L, int32 index, bool* pisnum)
 {
     int32 isnum;
-    lua_Number d = lua_tonumberx(state, index, &isnum);
+    lua_Number d = lua_tonumberx(L, index, &isnum);
     if (pisnum)
         *pisnum = !!isnum;
     if (isnum)
         return d;
 
     if (g_lua_strict.get())
-        return luaL_checknumber(state, index);
+        return luaL_checknumber(L, index);
 
     return 0;
 }
 
 //------------------------------------------------------------------------------
-lua_Number optnumber(lua_State* state, int32 index, lua_Number default_value, bool* pisnum)
+lua_Number optnumber(lua_State* L, int32 index, lua_Number default_value, bool* pisnum)
 {
-    if (lua_isnoneornil(state, index))
+    if (lua_isnoneornil(L, index))
     {
         if (pisnum)
             *pisnum = true;
         return default_value;
     }
 
-    return checknumber(state, index, pisnum);
+    return checknumber(L, index, pisnum);
 }
 
 //------------------------------------------------------------------------------
-const char* checkstring(lua_State* state, int32 index)
+const char* checkstring(lua_State* L, int32 index)
 {
     if (g_lua_strict.get())
-        return luaL_checkstring(state, index);
+        return luaL_checkstring(L, index);
 
-    if (lua_gettop(state) < index || !lua_isstring(state, index))
+    if (lua_gettop(L) < index || !lua_isstring(L, index))
         return nullptr;
 
-    return lua_tostring(state, index);
+    return lua_tostring(L, index);
 }
 
 //------------------------------------------------------------------------------
-const char* optstring(lua_State* state, int32 index, const char* default_value)
+const char* optstring(lua_State* L, int32 index, const char* default_value)
 {
     if (g_lua_strict.get())
-        return luaL_optstring(state, index, default_value);
+        return luaL_optstring(L, index, default_value);
 
-    if (lua_gettop(state) < index || !lua_isstring(state, index))
+    if (lua_gettop(L) < index || !lua_isstring(L, index))
         return default_value;
 
-    return lua_tostring(state, index);
+    return lua_tostring(L, index);
 }
 
 
@@ -310,25 +310,36 @@ void lua_state::shutdown()
 }
 
 //------------------------------------------------------------------------------
+#ifdef DEBUG
+lua_State* lua_state::get_state() const
+{
+    assert(!s_in_coroutine);
+    return m_state;
+}
+#endif
+
+//------------------------------------------------------------------------------
 bool lua_state::do_string(const char* string, int32 length)
 {
-    save_stack_top ss(m_state);
+    lua_State* L = get_state();
+
+    save_stack_top ss(L);
 
     if (length < 0)
         length = int32(strlen(string));
 
-    int32 err = luaL_loadbuffer(m_state, string, length, string);
+    int32 err = luaL_loadbuffer(L, string, length, string);
     if (err)
     {
         if (g_lua_debug.get())
         {
-            if (const char* error = lua_tostring(m_state, -1))
+            if (const char* error = lua_tostring(L, -1))
                 puts(error);
         }
         return false;
     }
 
-    err = pcall(0, LUA_MULTRET);
+    err = pcall(L, 0, LUA_MULTRET);
     if (err)
         return false;
 
@@ -338,20 +349,22 @@ bool lua_state::do_string(const char* string, int32 length)
 //------------------------------------------------------------------------------
 bool lua_state::do_file(const char* path)
 {
-    save_stack_top ss(m_state);
+    lua_State* L = get_state();
 
-    int32 err = luaL_loadfile(m_state, path);
+    save_stack_top ss(L);
+
+    int32 err = luaL_loadfile(L, path);
     if (err)
     {
         if (g_lua_debug.get())
         {
-            if (const char* error = lua_tostring(m_state, -1))
+            if (const char* error = lua_tostring(L, -1))
                 puts(error);
         }
         return false;
     }
 
-    err = pcall(0, LUA_MULTRET);
+    err = pcall(L, 0, LUA_MULTRET);
     if (err)
         return false;
 
@@ -359,7 +372,7 @@ bool lua_state::do_file(const char* path)
 }
 
 //------------------------------------------------------------------------------
-bool lua_state::push_named_function(lua_State* state, const char* func_name, str_base* e)
+bool lua_state::push_named_function(lua_State* L, const char* func_name, str_base* e)
 {
     bool first = true;
     str_iter part;
@@ -371,12 +384,12 @@ bool lua_state::push_named_function(lua_State* state, const char* func_name, str
         if (first)
         {
             global.concat(part.get_pointer(), part.length());
-            lua_getglobal(state, global.c_str());
+            lua_getglobal(L, global.c_str());
             first = false;
         }
         else
         {
-            if (lua_isnil(state, -1))
+            if (lua_isnil(L, -1))
             {
                 error = "'%s' is nil";
 report_error:
@@ -393,23 +406,23 @@ report_error:
                 }
                 return false;
             }
-            else if (!lua_istable(state, -1))
+            else if (!lua_istable(L, -1))
             {
                 error = "'%s' is not a table";
                 goto report_error;
             }
 
-            lua_pushlstring(state, part.get_pointer(), part.length());
-            lua_rawget(state, -2);
+            lua_pushlstring(L, part.get_pointer(), part.length());
+            lua_rawget(L, -2);
 
             global.clear();
             global.concat(func_name, int32(part.get_pointer() - func_name + part.length()));
         }
     }
 
-    if (first || !lua_isfunction(state, -1))
+    if (first || !lua_isfunction(L, -1))
     {
-        lua_pop(state, 1);
+        lua_pop(L, 1);
         error = "not a function";
         goto report_error;
     }
@@ -470,7 +483,7 @@ int32 lua_state::pcall(lua_State* L, int32 nargs, int32 nresults)
 
 //------------------------------------------------------------------------------
 #ifdef DEBUG
-void dump_lua_stack(lua_State* state, int32 pos)
+static void dump_lua_stack(lua_State* L, int32 pos)
 {
     static const char *const lua_type_names[] =
     {
@@ -486,14 +499,14 @@ void dump_lua_stack(lua_State* state, int32 pos)
         "LUA_TTHREAD",
     };
 
-    int32 top = lua_gettop(state);
+    int32 top = lua_gettop(L);
     if (pos >= 0)
         pos -= top;
 
     printf("LUA_STACK from %d to %d:\n", top + pos, top);
     while (pos < 0)
     {
-        int32 type = lua_type(state, pos);
+        int32 type = lua_type(L, pos);
         const char* type_name = lua_type_names[type + 1];
 
         printf("[%d] type %s ", pos, type_name);
@@ -503,17 +516,17 @@ void dump_lua_stack(lua_State* state, int32 pos)
             puts("nil");
             break;
         case LUA_TBOOLEAN:
-            puts(lua_toboolean(state, pos) ? "true" : "false");
+            puts(lua_toboolean(L, pos) ? "true" : "false");
             break;
         case LUA_TNUMBER:
             {
-                LUA_NUMBER tmp = lua_tonumber(state, pos);
+                LUA_NUMBER tmp = lua_tonumber(L, pos);
                 printf("%f", tmp);
             }
             break;
         case LUA_TSTRING:
             {
-                const char* tmp = lua_tostring(state, pos);
+                const char* tmp = lua_tostring(L, pos);
                 if (tmp)
                     printf("\"%s\"\n", tmp);
                 else
@@ -535,62 +548,70 @@ void dump_lua_stack(lua_State* state, int32 pos)
 // passed by passing nargs equal to the number of pushed arguments.  On success,
 // the stack is left with nret return values.  On error, the stack is popped to
 // the original level and then nargs are popped.
-bool lua_state::send_event_internal(const char* event_name, const char* event_mechanism, int32 nargs, int32 nret)
+bool lua_state::send_event_internal(lua_State* L, const char* event_name, const char* event_mechanism, int32 nargs, int32 nret)
 {
     bool ret = false;
-    lua_State* state = get_state();
 
-    int32 top = lua_gettop(state);
+    int32 top = lua_gettop(L);
     int32 pos = top - nargs;
     assert(pos >= 0);
 
     // Push the global _send_event function.
-    lua_getglobal(state, "clink");
-    lua_pushstring(state, event_mechanism);
-    lua_rawget(state, -2);
-    if (lua_isnil(state, -1))
+    lua_getglobal(L, "clink");
+    lua_pushstring(L, event_mechanism);
+    lua_rawget(L, -2);
+    if (lua_isnil(L, -1))
     {
-        lua_settop(state, top);
-        lua_pop(state, nargs);
+        lua_settop(L, top);
+        lua_pop(L, nargs);
         return false;
     }
-    lua_insert(state, -2);
-    lua_pop(state, 1);
+    lua_insert(L, -2);
+    lua_pop(L, 1);
 
     // Push the event name.
-    lua_pushstring(state, event_name);
+    lua_pushstring(L, event_name);
 
     // Move event name and mechanism (e.g. "_send_event") before nargs.
     if (pos < top)
     {
-        int32 ins = pos - lua_gettop(state);
-        lua_insert(state, ins);
-        lua_insert(state, ins);
+        int32 ins = pos - lua_gettop(L);
+        lua_insert(L, ins);
+        lua_insert(L, ins);
     }
 
     // Preserve cwd around events.
     os::cwd_restorer cwd;
 
     // Call the event callback.
-    return pcall(1 + nargs, nret) == 0;
+    return pcall(L, 1 + nargs, nret) == 0;
+}
+
+//------------------------------------------------------------------------------
+// Calls any event_name callbacks registered by scripts.
+bool lua_state::send_event(lua_State* L, const char* event_name, int32 nargs)
+{
+    return send_event_internal(L, event_name, "_send_event", nargs);
 }
 
 //------------------------------------------------------------------------------
 // Calls any event_name callbacks registered by scripts.
 bool lua_state::send_event(const char* event_name, int32 nargs)
 {
-    return send_event_internal(event_name, "_send_event", nargs);
+    return send_event(get_state(), event_name, nargs);
 }
 
 //------------------------------------------------------------------------------
 // Calls any event_name callbacks registered by scripts.
 bool lua_state::send_event_string_out(const char* event_name, str_base& out, int32 nargs)
 {
-    if (!send_event_internal(event_name, "_send_event_string_out", nargs, 1))
+    lua_State* L = get_state();
+
+    if (!send_event_internal(L, event_name, "_send_event_string_out", nargs, 1))
         return false;
 
-    if (lua_isstring(m_state, -1))
-        out = lua_tostring(m_state, -1);
+    if (lua_isstring(L, -1))
+        out = lua_tostring(L, -1);
 
     return true;
 }
@@ -599,10 +620,12 @@ bool lua_state::send_event_string_out(const char* event_name, str_base& out, int
 // Calls any event_name callbacks registered by scripts.
 bool lua_state::send_event_cancelable(const char* event_name, int32 nargs)
 {
-    if (!send_event_internal(event_name, "_send_event_cancelable", nargs, 1))
+    lua_State* L = get_state();
+
+    if (!send_event_internal(L, event_name, "_send_event_cancelable", nargs, 1))
         return false;
 
-    if (lua_isboolean(m_state, -1) && !lua_toboolean(m_state, -1))
+    if (lua_isboolean(L, -1) && !lua_toboolean(L, -1))
         return true;
 
     return false;
@@ -612,34 +635,36 @@ bool lua_state::send_event_cancelable(const char* event_name, int32 nargs)
 // Calls any event_name callbacks registered by scripts.
 bool lua_state::send_event_cancelable_string_inout(const char* event_name, const char* string, str_base& out, std::list<str_moveable>* more_out)
 {
+    lua_State* L = get_state();
+
     if (!string)
         string = "";
 
-    lua_pushstring(m_state, string);
+    lua_pushstring(L, string);
 
-    if (!send_event_internal(event_name, "_send_event_cancelable_string_inout", 1, 1))
+    if (!send_event_internal(L, event_name, "_send_event_cancelable_string_inout", 1, 1))
         return false;
 
-    if (lua_isstring(m_state, -1))
+    if (lua_isstring(L, -1))
     {
-        out = lua_tostring(m_state, -1);
+        out = lua_tostring(L, -1);
     }
-    else if (lua_istable(m_state, -1))
+    else if (lua_istable(L, -1))
     {
         out.clear();
 
-        const size_t len = lua_rawlen(m_state, -1);
+        const size_t len = lua_rawlen(L, -1);
         for (uint32 i = 1; i <= len; ++i)
         {
-            lua_rawgeti(m_state, -1, i);
-            if (lua_isstring(m_state, -1))
+            lua_rawgeti(L, -1, i);
+            if (lua_isstring(L, -1))
             {
-                const char* s = lua_tostring(m_state, -1);
+                const char* s = lua_tostring(L, -1);
                 if (i == 1)
                     out = s;
                 else if (more_out)
                     more_out->emplace_back(s);
-                lua_pop(m_state, 1);
+                lua_pop(L, 1);
             }
         }
     }
@@ -654,7 +679,7 @@ bool lua_state::send_oncommand_event(line_state& line, const char* command, bool
     if (recog != recognition::unrecognized && recog != recognition::executable)
         return false;
 
-    lua_State* state = get_state();
+    lua_State* L = get_state();
     line_state_lua line_lua(line);
 
     const char* type;
@@ -665,70 +690,70 @@ bool lua_state::send_oncommand_event(line_state& line, const char* command, bool
     else
         type = "unrecognized";
 
-    line_lua.push(state);
+    line_lua.push(L);
 
-    lua_createtable(state, 0, 4);
+    lua_createtable(L, 0, 4);
 
-    lua_pushliteral(state, "command");
-    lua_pushstring(state, command);
-    lua_rawset(state, -3);
+    lua_pushliteral(L, "command");
+    lua_pushstring(L, command);
+    lua_rawset(L, -3);
 
-    lua_pushliteral(state, "quoted");
-    lua_pushboolean(state, quoted);
-    lua_rawset(state, -3);
+    lua_pushliteral(L, "quoted");
+    lua_pushboolean(L, quoted);
+    lua_rawset(L, -3);
 
-    lua_pushliteral(state, "type");
-    lua_pushstring(state, type);
-    lua_rawset(state, -3);
+    lua_pushliteral(L, "type");
+    lua_pushstring(L, type);
+    lua_rawset(L, -3);
 
-    lua_pushliteral(state, "file");
-    lua_pushstring(state, file);
-    lua_rawset(state, -3);
+    lua_pushliteral(L, "file");
+    lua_pushstring(L, file);
+    lua_rawset(L, -3);
 
-    return send_event("oncommand", 2);
+    return send_event(L, "oncommand", 2);
 }
 
 //------------------------------------------------------------------------------
 bool lua_state::send_oninputlinechanged_event(const char* line)
 {
-    lua_State* state = get_state();
-    lua_pushstring(state, line);
-    return send_event("oninputlinechanged", 1);
+    lua_State* L = get_state();
+    lua_pushstring(L, line);
+    return send_event(L, "oninputlinechanged", 1);
 }
 
 //------------------------------------------------------------------------------
 bool lua_state::call_lua_rl_global_function(const char* func_name, const line_state* line)
 {
-    lua_State* state = get_state();
+    lua_State* L = get_state();
     rl_buffer_lua buffer(*g_rl_buffer);
     std::unique_ptr<line_state_lua> line_lua = std::unique_ptr<line_state_lua>(line ? new line_state_lua(*line) : nullptr);
 
     str<> msg;
-    if (!push_named_function(state, func_name, &msg))
+    if (!push_named_function(L, func_name, &msg))
     {
-        buffer.begin_output(state);
+        buffer.begin_output(L);
         puts(msg.c_str());
         return false;
     }
 
     override_rl_last_func(nullptr);
 
-    buffer.push(state);
+    buffer.push(L);
     if (line_lua)
-        line_lua->push(state);
+        line_lua->push(L);
     else
-        lua_pushnil(state);
+        lua_pushnil(L);
 
     rollback<bool> rb(s_in_luafunc, true);
-    bool success = (pcall_silent(2, 0) == LUA_OK);
+    bool success = (pcall_silent(L, 2, 0) == LUA_OK);
 
     set_pending_luafunc(func_name);
 
     if (!success)
     {
-        if (const char* error = lua_tostring(state, -1))
+        if (const char* error = lua_tostring(L, -1))
         {
-            buffer.begin_output(state);
+            buffer.begin_output(L);
             printf("error executing function '%s':\n", func_name);
             puts(error);
         }

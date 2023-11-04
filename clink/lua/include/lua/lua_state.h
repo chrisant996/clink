@@ -56,6 +56,7 @@ public:
     int32           pcall(int32 nargs, int32 nresults) { return pcall(m_state, nargs, nresults); }
     int32           pcall_silent(int32 nargs, int32 nresults) { return pcall_silent(m_state, nargs, nresults); }
 
+    static bool     send_event(lua_State* L, const char* event_name, int32 nargs=0);
     bool            send_event(const char* event_name, int32 nargs=0);
     bool            send_event_string_out(const char* event_name, str_base& out, int32 nargs=0);
     bool            send_event_cancelable(const char* event_name, int32 nargs=0);
@@ -77,7 +78,7 @@ public:
     static void     restore_global_states(uint32 states);
 
 private:
-    bool            send_event_internal(const char* event_name, const char* event_mechanism, int32 nargs=0, int32 nret=0);
+    static bool     send_event_internal(lua_State* state, const char* event_name, const char* event_mechanism, int32 nargs=0, int32 nret=0);
     lua_State*      m_state;
 
     static bool     s_interpreter;
@@ -89,10 +90,12 @@ private:
 };
 
 //------------------------------------------------------------------------------
+#ifndef DEBUG
 inline lua_State* lua_state::get_state() const
 {
     return m_state;
 }
+#endif
 
 //------------------------------------------------------------------------------
 class save_stack_top
