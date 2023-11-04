@@ -5,6 +5,7 @@
 #### v1.5.13
 - Added `clink.onhistory()` to register a function to be called when the input line has been accepted and is about to be added to history.
 - Fixed `history delete` with a negative number so it indexes backwards from the end.
+- Fixed calling `clink.refilterprompt()` from a coroutine.
 - Fixed [#520](https://github.com/chrisant996/clink/issues/520); add a link to the Releases page in the updater dialog box.
 
 #### v1.5.12
