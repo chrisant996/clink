@@ -80,7 +80,7 @@ int32 lua_word_classifications::classify_word(lua_State* state)
     if (!s)
         return 0;
     if (index >= m_num_words)
-        return luaL_error(state, "word_index out of bounds");
+        return luaL_argerror(state, 1, "word index out of bounds");
 
     const bool has_argmatcher = (*s == 'm');
     if (has_argmatcher)

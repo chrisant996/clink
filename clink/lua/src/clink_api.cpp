@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2015 Martin Ridgers
+// Copyright (c) 2015 Martin Ridgers
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
@@ -751,7 +751,7 @@ static bool popup_del_callback(int32 index)
 static int32 popup_list(lua_State* state)
 {
     if (!lua_state::is_in_luafunc() && !lua_state::is_in_onfiltermatches() && !lua_state::is_interpreter())
-        return luaL_error(state, "use of clink.popuplist is restricted");
+        return luaL_error(state, "use of " LUA_QL("clink.popuplist") " is restricted");
 
     enum arg_indices { makevaluesonebased, argTitle, argItems, argIndex, argDelCallback};
 
@@ -1018,7 +1018,7 @@ static int32 get_session(lua_State* state)
 /// on the <code><a href="#terminal_emulation">terminal.emulation</a></code>
 /// setting.
 ///
-/// Starting in v1.4.26 a second string can be returned which indicating the
+/// Starting in v1.4.26 a second string can be returned which indicates the
 /// "native" handler.  This is what Clink has detected as the terminal host and
 /// is not affected by the `terminal.emulation` setting.
 ///
@@ -1198,7 +1198,7 @@ int32 g_prompt_refilter = 0;
 static int32 refilter_prompt(lua_State* state)
 {
     if (g_filtering_in_progress)
-        return luaL_error(state, "clink.refilterprompt may not be used within a prompt filter.");
+        return luaL_error(state, LUA_QL("clink.refilterprompt") " may not be used within a prompt filter");
 
     // If called from a coroutine, schedule the refilter to happen when control
     // returns to the main coroutine.

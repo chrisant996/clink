@@ -906,7 +906,7 @@ int32 get_command_bindings(lua_State* state)
 static int32 get_prompt_info(lua_State* state)
 {
     if (prompt_filter::is_filtering())
-        return luaL_error(state, "rl.getpromptinfo cannot be used during prompt filtering");
+        return luaL_error(state, LUA_QL("rl.getpromptinfo") " may not be used during prompt filtering");
 
     lua_createtable(state, 0, 7);
 
