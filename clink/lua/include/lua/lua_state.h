@@ -21,12 +21,12 @@ class terminal_in;
 typedef double lua_Number;
 
 //------------------------------------------------------------------------------
-int32 checkinteger(lua_State* state, int32 index, bool* isnum=nullptr);
-int32 optinteger(lua_State* state, int32 index, int32 default_value, bool* isnum=nullptr);
-lua_Number checknumber(lua_State* state, int32 index, bool* isnum=nullptr);
-lua_Number optnumber(lua_State* state, int32 index, lua_Number default_value, bool* isnum=nullptr);
-const char* checkstring(lua_State* state, int32 index);
-const char* optstring(lua_State* state, int32 index, const char* default_value);
+int32 checkinteger(lua_State* L, int32 index, bool* isnum=nullptr);
+int32 optinteger(lua_State* L, int32 index, int32 default_value, bool* isnum=nullptr);
+lua_Number checknumber(lua_State* L, int32 index, bool* isnum=nullptr);
+lua_Number optnumber(lua_State* L, int32 index, lua_Number default_value, bool* isnum=nullptr);
+const char* checkstring(lua_State* L, int32 index);
+const char* optstring(lua_State* L, int32 index, const char* default_value);
 
 //------------------------------------------------------------------------------
 enum class lua_state_flags : int32
@@ -67,7 +67,7 @@ public:
     static int32    call_onfiltermatches(lua_State* L, int32 nargs, int32 nresults);
 
 #ifdef DEBUG
-    void            dump_stack(int32 pos);
+    void            dump_stack(int32 pos=0);
 #endif
 
     static bool     is_in_luafunc() { return s_in_luafunc; }
@@ -78,7 +78,7 @@ public:
     static void     restore_global_states(uint32 states);
 
 private:
-    static bool     send_event_internal(lua_State* state, const char* event_name, const char* event_mechanism, int32 nargs=0, int32 nret=0);
+    static bool     send_event_internal(lua_State* L, const char* event_name, const char* event_mechanism, int32 nargs=0, int32 nret=0);
     lua_State*      m_state;
 
     static bool     s_interpreter;
@@ -117,5 +117,5 @@ terminal_in* get_lua_terminal_input();
 // Dumps from pos to top of stack (use negative pos for relative position, use
 // positive pos for absolute position, or use 0 for entire stack).
 #ifdef DEBUG
-void dump_lua_stack(lua_State* state, int32 pos=0);
+void dump_lua_stack(lua_State* L, int32 pos=0);
 #endif

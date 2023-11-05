@@ -483,7 +483,7 @@ int32 lua_state::pcall(lua_State* L, int32 nargs, int32 nresults)
 
 //------------------------------------------------------------------------------
 #ifdef DEBUG
-static void dump_lua_stack(lua_State* L, int32 pos)
+void dump_lua_stack(lua_State* L, int32 pos)
 {
     static const char *const lua_type_names[] =
     {
