@@ -34,23 +34,47 @@ void set_active_line_editor(line_editor_impl* editor, host_callbacks* callbacks)
 
 
 //------------------------------------------------------------------------------
+extern "C" const char* host_get_env(const char* name)
+{
+    static int32 rotate = 0;
+    static str<> rotating_tmp[10];
+
+    str<>& s = rotating_tmp[rotate];
+    rotate = (rotate + 1) % sizeof_array(rotating_tmp);
+    if (!os::get_env(name, s))
+        return nullptr;
+    return s.c_str();
+}
+
+
+
+//------------------------------------------------------------------------------
+const char** host_copy_dir_history(int32* total)
+{
+    if (!s_callbacks)
+        return nullptr;
+
+    return s_callbacks->copy_dir_history(total);
+}
+
+//------------------------------------------------------------------------------
+void host_get_app_context(int32& id, host_context& context)
+{
+    if (!s_callbacks)
+        return;
+
+    s_callbacks->get_app_context(id, context);
+}
+
+
+
+//------------------------------------------------------------------------------
 void set_prompt(const char* prompt, const char* rprompt, bool redisplay)
 {
     if (!s_editor)
         return;
 
     s_editor->set_prompt(prompt, rprompt, redisplay);
-}
-
-
-
-//------------------------------------------------------------------------------
-void force_update_internal(bool restrict)
-{
-    if (!s_editor)
-        return;
-
-    s_editor->force_update_internal(restrict);
 }
 
 
@@ -74,6 +98,62 @@ void reset_generate_matches()
 }
 
 //------------------------------------------------------------------------------
+void reselect_matches()
+{
+    if (!s_editor)
+        return;
+
+    s_editor->reselect_matches();
+}
+
+
+
+//------------------------------------------------------------------------------
+static str_unordered_set s_deprecated_argmatchers;
+static linear_allocator s_deprecated_argmatchers_store(1024);
+
+//------------------------------------------------------------------------------
+void clear_deprecated_argmatchers()
+{
+    s_deprecated_argmatchers.clear();
+    s_deprecated_argmatchers_store.reset();
+}
+
+//------------------------------------------------------------------------------
+void mark_deprecated_argmatcher(const char* command)
+{
+    if (s_deprecated_argmatchers.find(command) == s_deprecated_argmatchers.end())
+    {
+        dbg_ignore_scope(snapshot, "deprecated argmatcher lookup");
+        const char* store = s_deprecated_argmatchers_store.store(command);
+        s_deprecated_argmatchers.insert(store);
+    }
+}
+
+//------------------------------------------------------------------------------
+bool has_deprecated_argmatcher(const char* command)
+{
+    wstr<32> in(command);
+    wstr<32> out;
+    str_transform(in.c_str(), in.length(), out, transform_mode::lower);
+    str<32> name(out.c_str());
+    return s_deprecated_argmatchers.find(name.c_str()) != s_deprecated_argmatchers.end();
+}
+
+
+
+//------------------------------------------------------------------------------
+// WARNING:  This calls Lua using the MAIN coroutine.
+void force_update_internal(bool restrict)
+{
+    if (!s_editor)
+        return;
+
+    s_editor->force_update_internal(restrict);
+}
+
+//------------------------------------------------------------------------------
+// WARNING:  This calls Lua using the MAIN coroutine.
 void update_matches()
 {
     if (!s_editor)
@@ -83,15 +163,17 @@ void update_matches()
 }
 
 //------------------------------------------------------------------------------
-void reselect_matches()
+// WARNING:  This calls Lua using the MAIN coroutine.
+matches* get_mutable_matches(bool nosort)
 {
     if (!s_editor)
-        return;
+        return nullptr;
 
-    s_editor->reselect_matches();
+    return s_editor->get_mutable_matches(nosort);
 }
 
 //------------------------------------------------------------------------------
+// WARNING:  This calls Lua using the MAIN coroutine.
 matches* maybe_regenerate_matches(const char* needle, display_filter_flags flags)
 {
     if (!s_editor || s_editor->m_matches.is_regen_blocked())
@@ -151,17 +233,7 @@ matches* maybe_regenerate_matches(const char* needle, display_filter_flags flags
 }
 
 //------------------------------------------------------------------------------
-matches* get_mutable_matches(bool nosort)
-{
-    if (!s_editor)
-        return nullptr;
-
-    return s_editor->get_mutable_matches(nosort);
-}
-
-
-
-//------------------------------------------------------------------------------
+// WARNING:  This calls Lua using the MAIN coroutine.
 uint32 collect_words(const line_buffer& buffer, std::vector<word>& words, collect_words_mode mode)
 {
     if (!s_editor)
@@ -171,6 +243,7 @@ uint32 collect_words(const line_buffer& buffer, std::vector<word>& words, collec
 }
 
 //------------------------------------------------------------------------------
+// WARNING:  This calls Lua using the MAIN coroutine.
 void refresh_recognizer()
 {
     if (s_editor)
@@ -180,6 +253,7 @@ void refresh_recognizer()
 
 
 //------------------------------------------------------------------------------
+// WARNING:  This calls Lua using the MAIN coroutine.
 void host_send_event(const char* event_name)
 {
     if (!s_callbacks)
@@ -189,6 +263,7 @@ void host_send_event(const char* event_name)
 }
 
 //------------------------------------------------------------------------------
+// WARNING:  This calls Lua using the MAIN coroutine.
 void host_send_oninputlinechanged_event(const char* line)
 {
     if (!s_callbacks)
@@ -198,6 +273,7 @@ void host_send_oninputlinechanged_event(const char* line)
 }
 
 //------------------------------------------------------------------------------
+// WARNING:  This calls Lua using the MAIN coroutine.
 bool host_call_lua_rl_global_function(const char* func_name)
 {
     if (!s_editor)
@@ -206,6 +282,8 @@ bool host_call_lua_rl_global_function(const char* func_name)
     return s_editor->call_lua_rl_global_function(func_name);
 }
 
+//------------------------------------------------------------------------------
+// WARNING:  This calls Lua using the MAIN coroutine.
 bool host_call_lua_rl_global_function(const char* func_name, const line_state* line)
 {
     if (!s_callbacks)
@@ -217,6 +295,7 @@ bool host_call_lua_rl_global_function(const char* func_name, const line_state* l
 
 
 //------------------------------------------------------------------------------
+// WARNING:  This calls Lua using the MAIN coroutine.
 void host_filter_prompt()
 {
     if (!s_callbacks)
@@ -226,6 +305,7 @@ void host_filter_prompt()
 }
 
 //------------------------------------------------------------------------------
+// WARNING:  This calls Lua using the MAIN coroutine.
 extern "C" void host_filter_transient_prompt(int32 crlf)
 {
     if (!s_callbacks)
@@ -235,6 +315,7 @@ extern "C" void host_filter_transient_prompt(int32 crlf)
 }
 
 //------------------------------------------------------------------------------
+// WARNING:  This calls Lua using the MAIN coroutine.
 int32 host_filter_matches(char** matches)
 {
     if (!s_callbacks)
@@ -244,6 +325,7 @@ int32 host_filter_matches(char** matches)
 }
 
 //------------------------------------------------------------------------------
+// WARNING:  This calls Lua using the MAIN coroutine.
 void host_invalidate_matches()
 {
     reset_generate_matches();
@@ -252,61 +334,10 @@ void host_invalidate_matches()
         s_editor->try_suggest();
 }
 
-//------------------------------------------------------------------------------
-const char** host_copy_dir_history(int32* total)
-{
-    if (!s_callbacks)
-        return nullptr;
-
-    return s_callbacks->copy_dir_history(total);
-}
-
-//------------------------------------------------------------------------------
-void host_get_app_context(int32& id, host_context& context)
-{
-    if (!s_callbacks)
-        return;
-
-    s_callbacks->get_app_context(id, context);
-}
-
 
 
 //------------------------------------------------------------------------------
-static str_unordered_set s_deprecated_argmatchers;
-static linear_allocator s_deprecated_argmatchers_store(1024);
-
-//------------------------------------------------------------------------------
-void clear_deprecated_argmatchers()
-{
-    s_deprecated_argmatchers.clear();
-    s_deprecated_argmatchers_store.reset();
-}
-
-//------------------------------------------------------------------------------
-void mark_deprecated_argmatcher(const char* command)
-{
-    if (s_deprecated_argmatchers.find(command) == s_deprecated_argmatchers.end())
-    {
-        dbg_ignore_scope(snapshot, "deprecated argmatcher lookup");
-        const char* store = s_deprecated_argmatchers_store.store(command);
-        s_deprecated_argmatchers.insert(store);
-    }
-}
-
-//------------------------------------------------------------------------------
-bool has_deprecated_argmatcher(const char* command)
-{
-    wstr<32> in(command);
-    wstr<32> out;
-    str_transform(in.c_str(), in.length(), out, transform_mode::lower);
-    str<32> name(out.c_str());
-    return s_deprecated_argmatchers.find(name.c_str()) != s_deprecated_argmatchers.end();
-}
-
-
-
-//------------------------------------------------------------------------------
+// WARNING:  This calls Lua using the MAIN coroutine.
 bool host_can_suggest(const line_state& line)
 {
     if (!s_callbacks)
@@ -316,6 +347,7 @@ bool host_can_suggest(const line_state& line)
 }
 
 //------------------------------------------------------------------------------
+// WARNING:  This calls Lua using the MAIN coroutine.
 bool host_suggest(const line_states& lines, matches* matches, int32 generation_id)
 {
     if (!s_callbacks)
@@ -327,6 +359,7 @@ bool host_suggest(const line_states& lines, matches* matches, int32 generation_i
 
 
 //------------------------------------------------------------------------------
+// WARNING:  This calls Lua using the MAIN coroutine.
 bool notify_matches_ready(std::shared_ptr<match_builder_toolkit> toolkit, int32 generation_id)
 {
     if (!s_editor || !toolkit)
@@ -337,6 +370,7 @@ bool notify_matches_ready(std::shared_ptr<match_builder_toolkit> toolkit, int32 
 }
 
 //------------------------------------------------------------------------------
+// WARNING:  This calls Lua using the MAIN coroutine.
 void override_line_state(const char* line, const char* needle, int32 point)
 {
     assert(s_editor);
@@ -358,6 +392,7 @@ bool is_line_state_overridden()
 #endif
 
 //------------------------------------------------------------------------------
+// WARNING:  This calls Lua using the MAIN coroutine.
 void before_display_readline()
 {
     assert(s_editor);
@@ -366,21 +401,9 @@ void before_display_readline()
 }
 
 //------------------------------------------------------------------------------
+// WARNING:  This calls Lua using the MAIN coroutine.
 void reclassify(reclassify_reason why)
 {
     if (s_editor)
         s_editor->reclassify(why);
-}
-
-//------------------------------------------------------------------------------
-extern "C" const char* host_get_env(const char* name)
-{
-    static int32 rotate = 0;
-    static str<> rotating_tmp[10];
-
-    str<>& s = rotating_tmp[rotate];
-    rotate = (rotate + 1) % sizeof_array(rotating_tmp);
-    if (!os::get_env(name, s))
-        return nullptr;
-    return s.c_str();
 }

@@ -32,15 +32,19 @@ char* __printable_part(char* pathname);
 #include <unordered_set>
 
 //------------------------------------------------------------------------------
-lua_match_generator::lua_match_generator(lua_state& state)
-: m_state(state.get_state())
+lua_match_generator::lua_match_generator(lua_state& lua)
+: m_lua(&lua)
 {
+    assert(m_lua);
+    assert(!m_state);
 }
 
 //------------------------------------------------------------------------------
 lua_match_generator::lua_match_generator(lua_State* state)
 : m_state(state)
 {
+    assert(m_state);
+    assert(!m_lua);
 }
 
 //------------------------------------------------------------------------------
@@ -51,7 +55,7 @@ lua_match_generator::~lua_match_generator()
 //------------------------------------------------------------------------------
 bool lua_match_generator::generate(const line_states& lines, match_builder& builder, bool old_filtering)
 {
-    lua_State* state = m_state;
+    lua_State* state = get_state();
     save_stack_top ss(state);
 
     // Call to Lua to generate matches.
@@ -82,7 +86,7 @@ bool lua_match_generator::generate(const line_states& lines, match_builder& buil
 //------------------------------------------------------------------------------
 void lua_match_generator::get_word_break_info(const line_state& line, word_break_info& info) const
 {
-    lua_State* state = m_state;
+    lua_State* state = get_state();
     save_stack_top ss(state);
 
     // Call to Lua to calculate prefix length.
@@ -117,7 +121,7 @@ void lua_match_generator::get_word_break_info(const line_state& line, word_break
 bool lua_match_generator::match_display_filter(const char* needle, char** matches, match_builder* builder, display_filter_flags flags, bool nosort, bool* old_filtering)
 {
     bool ret = false;
-    lua_State* state = m_state;
+    lua_State* state = get_state();
     const bool selectable = (flags & display_filter_flags::selectable) == display_filter_flags::selectable;
 
     // A small note about the contents of 'matches' - the first match isn't
@@ -393,7 +397,7 @@ done:
 //------------------------------------------------------------------------------
 bool lua_match_generator::filter_matches(char** matches, char completion_type, bool filename_completion_desired)
 {
-    lua_State* state = m_state;
+    lua_State* state = get_state();
     save_stack_top ss(state);
 
     // Check there's a match filter set.
@@ -542,4 +546,10 @@ bool lua_match_generator::filter_matches(char** matches, char completion_type, b
     }
 
     return true;
+}
+
+//------------------------------------------------------------------------------
+lua_State* lua_match_generator::get_state() const
+{
+    return m_state ? m_state : m_lua->get_state();
 }

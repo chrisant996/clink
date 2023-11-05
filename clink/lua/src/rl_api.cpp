@@ -22,7 +22,8 @@
 #include <vector>
 
 extern "C" {
-#include "lua.h"
+#include <lua.h>
+#include <lstate.h>
 #include <compat/config.h>
 #include <readline/readline.h>
 #include <readline/history.h>
@@ -536,8 +537,10 @@ static int32 set_rl_binding(lua_State* state)
 /// could have unexpected results, depending on which commands are invoked.
 static int32 invoke_command(lua_State* state)
 {
+    LUA_ONLYONMAIN(state, "rl.invokecommand");
+
     if (!lua_state::is_in_luafunc())
-        return luaL_error(state, "rl.invokecommand may only be used in a " LUA_QL("luafunc:") " key binding");
+        return luaL_error(state, LUA_QL("rl.invokecommand") " may only be used in a " LUA_QL("luafunc:") " key binding");
 
     const char* command = checkstring(state, 1);
     if (!command)
@@ -674,6 +677,8 @@ static int32 get_last_command(lua_State* state)
 /// -show:  end
 static int32 set_matches(lua_State* state)
 {
+    LUA_ONLYONMAIN(state, "rl.setmatches");
+
     bool nosort = false;
     if (lua_istable(state, 1))
     {

@@ -119,3 +119,12 @@ terminal_in* get_lua_terminal_input();
 #ifdef DEBUG
 void dump_lua_stack(lua_State* L, int32 pos=0);
 #endif
+
+//------------------------------------------------------------------------------
+#define LUA_ONLYONMAIN(L, name) \
+    do { \
+        const bool ismain = (G(L)->mainthread == L); \
+        if (!ismain) \
+            return luaL_error(L, LUA_QS " may only be used in the main coroutine", name); \
+    } while (false)
+

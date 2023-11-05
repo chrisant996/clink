@@ -1647,6 +1647,8 @@ static int32 api_recognize_command(lua_State* state)
 //------------------------------------------------------------------------------
 static int32 generate_from_history(lua_State* state)
 {
+    LUA_ONLYONMAIN(state, "clink._generate_from_history");
+
     HIST_ENTRY** list = history_list();
     if (!list)
         return 0;

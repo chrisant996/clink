@@ -59,7 +59,7 @@ private:
     void                make_metatable(lua_State* state);
     void                bind(lua_State* state);
     void                unbind();
-    lua_State*          m_state = nullptr;
+    lua_State*          m_state_unbind = nullptr;
     int32               m_registry_ref = LUA_NOREF;
     bool                m_owned = false;
 #ifdef DEBUG
@@ -135,7 +135,7 @@ template <class T>
 void lua_bindable<T>::bind(lua_State* state)
 {
     assert(!m_owned);
-    assert(m_state == nullptr);
+    assert(m_state_unbind == nullptr);
     assert(m_registry_ref == LUA_NOREF);
 
 #ifdef DEBUG
@@ -151,7 +151,7 @@ void lua_bindable<T>::bind(lua_State* state)
     assert(oldtop + 1 == lua_gettop(state));
 #endif
 
-    m_state = state;
+    m_state_unbind = state;
     m_registry_ref = luaL_ref(state, LUA_REGISTRYINDEX);
 
 #ifdef DEBUG
@@ -163,20 +163,20 @@ void lua_bindable<T>::bind(lua_State* state)
 template <class T>
 void lua_bindable<T>::unbind()
 {
-    if (m_state == nullptr || m_registry_ref == LUA_NOREF)
+    if (m_state_unbind == nullptr || m_registry_ref == LUA_NOREF)
         return;
 
-    lua_rawgeti(m_state, LUA_REGISTRYINDEX, m_registry_ref);
-    if (auto** self = (T**)lua_touserdata(m_state, -1))
+    lua_rawgeti(m_state_unbind, LUA_REGISTRYINDEX, m_registry_ref);
+    if (auto** self = (T**)lua_touserdata(m_state_unbind, -1))
     {
         assert(!(*self)->m_owned);
         *self = nullptr;
     }
-    lua_pop(m_state, 1);
+    lua_pop(m_state_unbind, 1);
 
-    luaL_unref(m_state, LUA_REGISTRYINDEX, m_registry_ref);
+    luaL_unref(m_state_unbind, LUA_REGISTRYINDEX, m_registry_ref);
     m_registry_ref = LUA_NOREF;
-    m_state = nullptr;
+    m_state_unbind = nullptr;
 }
 
 //------------------------------------------------------------------------------
