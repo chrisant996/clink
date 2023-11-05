@@ -161,11 +161,16 @@ function clink._make_match_generate_coroutine(line, lines, matches, builder, gen
 
         -- Check for cancelation.
         if not clink._is_coroutine_canceled(c) then
-            -- PERF: This can potentially take some time, especially in Debug
-            -- builds.
-            if builder:matches_ready(generation_id) then
-                clink._keep_coroutine_events(c)
-            end
+            -- Keep the coroutine events:  if a completion command invokes a
+            -- generator and the generator uses a coroutine and runs it to
+            -- completion before continuing, then the command will need the
+            -- events (onfiltermatches, ondisplaymatches, etc).
+            clink._keep_coroutine_events(c)
+            clink.runonmain(function()
+                -- PERF: This can potentially take some time, especially in
+                -- Debug builds.
+                builder:matches_ready(generation_id)
+            end)
         else
             builder:clear_toolkit()
         end

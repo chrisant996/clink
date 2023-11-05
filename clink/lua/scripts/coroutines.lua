@@ -14,7 +14,7 @@ local _coroutine_generation = 0         -- ID for current generation of coroutin
 
 local _dead = nil                       -- List of dead coroutines (only when "lua.debug" is set, or in DEBUG builds).
 local _trimmed = 0                      -- Number of coroutines discarded from the dead list (overflow).
-local _pending_refilterprompt = nil     -- Indicates clink.refilterprompt() is needed when control returns to main coroutine.
+local _pending_on_main = nil            -- Funcs to run when control returns to the main coroutine.
 
 local _main_perthread_state = {}
 clink.co_state = _main_perthread_state
@@ -365,11 +365,6 @@ function clink._keep_coroutine_events(c)
     end
 end
 
---------------------------------------------------------------------------------
-function clink._set_pending_refilterprompt()
-    _pending_refilterprompt = true
-end
-
 
 
 --------------------------------------------------------------------------------
@@ -705,6 +700,30 @@ function clink.runcoroutineuntilcomplete(c)
 end
 
 --------------------------------------------------------------------------------
+--- -name:  clink.runonmain
+--- -ver:   1.5.21
+--- -arg:   func:function
+--- Runs <span class="arg">func</span> on the main coroutine.
+---
+--- If main is the current coroutine, then <span class="arg">func</span> runs
+--- immediately.
+---
+--- If main is not the current coroutine, then <span class="arg">func</span> is
+--- scheduled to run when control returns to the main coroutine.
+function clink.runonmain(func)
+    local _, ismain = coroutine.running()
+    if ismain then
+        func()
+    else
+        _pending_on_main = _pending_on_main or {}
+        if not _pending_on_main[func] then
+            table.insert(_pending_on_main, func)
+            _pending_on_main[func] = true
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
 --- -name:  clink.setcoroutinename
 --- -ver:   1.3.1
 --- -arg:   coroutine:coroutine
@@ -1002,11 +1021,13 @@ function coroutine.resume(co, ...) -- luacheck: ignore 122
     clink.co_state = old_co_state
     save_coroutine_state(entry, co)
 
-    if _pending_refilterprompt then
+    if _pending_on_main then
         local _, ismain = coroutine.running()
         if ismain then
-            clink.refilterprompt()
-            _pending_refilterprompt = nil
+            for _, func in ipairs(_pending_on_main) do
+                func()
+            end
+            _pending_on_main = nil
         end
     end
 

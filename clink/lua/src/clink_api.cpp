@@ -1,4 +1,4 @@
-// Copyright (c) 2015 Martin Ridgers
+﻿// Copyright (c) 2015 Martin Ridgers
 // License: http://opensource.org/licenses/MIT
 
 #include "pch.h"
@@ -1202,29 +1202,28 @@ static int32 refilter_prompt(lua_State* state)
 
     // If called from a coroutine, schedule the refilter to happen when control
     // returns to the main coroutine.
+    const bool ismain = (G(state)->mainthread == state);
+    if (!ismain)
     {
         save_stack_top ss(state);
 
-        lua_getglobal(state, "coroutine");
-        lua_pushliteral(state, "running");
-        lua_rawget(state, -2);
+        lua_getglobal(state, "clink");              // -4
+        lua_pushliteral(state, "runonmain");        // -3
+        lua_rawget(state, -2);                      // -3 (replaces -3)
 
-        if (lua_state::pcall_silent(state, 0, 2) != LUA_OK)
-        {
-            assert("calling coroutine.running() failed" == 0);
-            return 0;
-        }
+        lua_getglobal(state, "clink");              // -2
+        lua_pushliteral(state, "refilterprompt");   // -1
+        lua_rawget(state, -2);                      // -1 (replaces -1)
 
-        const int32 ismain = lua_toboolean(state, -1);
-        if (!ismain)
-        {
-            lua_getglobal(state, "clink");
-            lua_pushliteral(state, "_set_pending_refilterprompt");
-            lua_rawget(state, -2);
-            if (lua_state::pcall_silent(state, 0, 0) != LUA_OK)
-                assert("calling clink._set_pending_refilterprompt() failed" == 0);
-            return 0;
-        }
+        // The intent is to execute `clink.runonmain(clink.refilterprompt)`.
+        // Calling lua_rawget only consumes one stack value, so the second
+        // `clink` table must be removed to position `refilterprompt` as an
+        // argument to `runonmain`.
+        lua_remove(state, -2);
+
+        if (lua_state::pcall_silent(state, 1, 0) != LUA_OK)
+            assert("calling clink.runonmain(clink.refilterprompt) failed" == 0);
+        return 0;
     }
 
     g_prompt_refilter++;
