@@ -5,9 +5,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- Using the global `lua_state` from inside any registered Lua API function will use the _**main coroutine**_ even if the actual `lua_State*` is a coroutine.  OOPS!  This might explain some weird mystery issues that have happened.
-  - `lua_state::get_state()` now asserts any time it's called while a coroutine is running; any time it fires, the scenario needs to be fixed.
-  - Assess `line_editor_integration.cpp` and identify what, if any, safeguards or fixes are needed.
 
 ## Normal Priority
 - Open issue in Terminal repo about bugs in the new shell integration in v1.18.
@@ -16,6 +13,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - Provide a sample .txt file that repros the issue.  Maybe multiple .txt files that chain together (or with a pause; is there an escape code for a pause?) to show the UX flow.
 
 ## Low Priority
+- Consider plumbing `lua_State*` through all layers to help guarantee things don't accidentally cross from a coroutine into main?
 - Color improvements:
   - Color themes.  Some way to import color settings en masse.  Some way to export color settings as well?
   - More sophisticated match color definitions?
