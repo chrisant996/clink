@@ -448,7 +448,7 @@ KEYMAP_ENTRY_ARRAY emacs_meta_keymap = {
   { ISFUNC, rl_upcase_word },		/* Meta-u */
   { ISFUNC, (rl_command_func_t *)0x0 },	/* Meta-v */
   { ISFUNC, (rl_command_func_t *)0x0 },	/* Meta-w */
-  { ISFUNC, (rl_command_func_t *)0x0 },	/* Meta-x */
+  { ISFUNC, rl_execute_named_command },	/* Meta-x */
   { ISFUNC, rl_yank_pop },		/* Meta-y */
   { ISFUNC, (rl_command_func_t *)0x0 },	/* Meta-z */
 

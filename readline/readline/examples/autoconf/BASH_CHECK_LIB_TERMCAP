@@ -31,11 +31,14 @@ TERMCAP_DEP=
 elif test $bash_cv_termcap_lib = libncurses; then
 TERMCAP_LIB=-lncurses
 TERMCAP_DEP=
+elif test $bash_cv_termcap_lib = libcurses; then
+TERMCAP_LIB=-lcurses
+TERMCAP_DEP=
 elif test $bash_cv_termcap_lib = libc; then
 TERMCAP_LIB=
 TERMCAP_DEP=
 else
-TERMCAP_LIB=-lcurses
+TERMCAP_LIB=-lncurses
 TERMCAP_DEP=
 fi
 ])

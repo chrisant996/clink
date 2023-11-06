@@ -2023,3 +2023,421 @@ rl_mark_active_p (void)
 {
   return (mark_active);
 }
+
+/* **************************************************************** */
+/*								    */
+/*	      Reading a string entered from the keyboard	    */
+/*								    */
+/* **************************************************************** */
+
+/* A very simple set of functions to read a string from the keyboard using
+   the line buffer as temporary storage. The caller can set a completion
+   function to perform completion on TAB and SPACE. */
+
+/* XXX - this is all very similar to the search stuff but with a different
+   CXT. */
+
+static HIST_ENTRY *_rl_saved_line_for_readstr;
+_rl_readstr_cxt *_rl_rscxt;
+
+_rl_readstr_cxt *
+_rl_rscxt_alloc (int flags)
+{
+  _rl_readstr_cxt *cxt;
+
+  cxt = (_rl_readstr_cxt *)xmalloc (sizeof (_rl_readstr_cxt));
+
+  cxt->flags = flags;
+
+  cxt->save_point = rl_point;
+  cxt->save_mark = rl_mark;
+  cxt->save_line = where_history ();
+
+  cxt->prevc = cxt->lastc = 0;
+
+  cxt->compfunc = NULL;
+
+  return cxt;
+}
+
+void
+_rl_rscxt_dispose (_rl_readstr_cxt *cxt, int flags)
+{
+  xfree (cxt);
+}
+
+void
+_rl_free_saved_readstr_line ()
+{
+  if (_rl_saved_line_for_readstr)
+    _rl_free_saved_line (_rl_saved_line_for_readstr);
+  _rl_saved_line_for_readstr = (HIST_ENTRY *)NULL;
+}
+
+void
+_rl_unsave_saved_readstr_line ()
+{
+  if (_rl_saved_line_for_readstr)
+    _rl_unsave_line (_rl_saved_line_for_readstr);
+  _rl_saved_line_for_readstr = (HIST_ENTRY *)NULL;
+}
+
+_rl_readstr_cxt *
+_rl_readstr_init (int pchar, int flags)
+{
+  _rl_readstr_cxt *cxt;
+  char *p;  
+
+  cxt = _rl_rscxt_alloc (flags);
+
+  rl_maybe_replace_line ();
+  _rl_saved_line_for_readstr = _rl_alloc_saved_line ();
+
+  rl_undo_list = 0;
+
+  rl_line_buffer[0] = 0;
+  rl_end = rl_point = 0;
+
+  p = _rl_make_prompt_for_search (pchar ? pchar : '@');
+  rl_message ("%s", p);
+  xfree (p);
+
+  _rl_rscxt = cxt;  
+
+  return cxt;
+}
+
+int
+_rl_readstr_cleanup (_rl_readstr_cxt *cxt, int r)
+{
+  _rl_rscxt_dispose (cxt, 0);
+  _rl_rscxt = 0;
+
+  return (r != 1);
+}
+
+void
+_rl_readstr_restore (_rl_readstr_cxt *cxt)
+{
+  _rl_unsave_saved_readstr_line ();	/* restores rl_undo_list */
+  rl_point = cxt->save_point;
+  rl_mark = cxt->save_mark;
+  rl_restore_prompt ();		/* _rl_make_prompt_for_search saved it */
+  rl_clear_message ();
+  _rl_fix_point (1);
+}
+
+int   
+_rl_readstr_getchar (_rl_readstr_cxt *cxt)
+{
+  int c;   
+
+  cxt->prevc = cxt->lastc;	   
+
+  /* Read a key and decide how to proceed. */
+  RL_SETSTATE(RL_STATE_MOREINPUT);
+  c = cxt->lastc = rl_read_key ();
+  RL_UNSETSTATE(RL_STATE_MOREINPUT);
+	          
+#if defined (HANDLE_MULTIBYTE)
+  /* This ends up with C (and LASTC) being set to the last byte of the
+     multibyte character.  In most cases c == lastc == mb[0] */
+  if (c >= 0 && MB_CUR_MAX > 1 && rl_byte_oriented == 0)
+    c = cxt->lastc = _rl_read_mbstring (cxt->lastc, cxt->mb, MB_LEN_MAX);
+#endif
+
+  RL_CHECK_SIGNALS ();
+  return c;
+}
+
+/* Process just-read character C according to readstr context CXT.  Return -1
+   if the caller should abort the read, 0 if we should break out of the
+   loop, and 1 if we should continue to read characters. This can perform
+   completion on the string read so far (stored in rl_line_buffer) if the
+   caller has set up a completion function. The completion function can
+   return -1 to indicate that we should abort the read. If we return -1
+   we will call _rl_readstr_restore to clean up the state, leaving the caller
+   to free the context. */
+int
+_rl_readstr_dispatch (_rl_readstr_cxt *cxt, int c)
+{
+  int n;
+
+  if (c < 0)
+    c = CTRL ('C');  
+
+  switch (c)
+    {
+    case CTRL('W'):
+      rl_unix_word_rubout (1, c);
+      break;
+
+    case CTRL('U'):
+      rl_unix_line_discard (1, c);
+      break;
+
+    case CTRL('Q'):
+    case CTRL('V'):
+      n = rl_quoted_insert (1, c);
+      if (n < 0)
+	{
+	  _rl_readstr_restore (cxt);
+	  return -1;
+	}
+      cxt->lastc = rl_line_buffer[rl_point - 1];	/* preserve prevc */
+      break;
+
+    case RETURN:
+    case NEWLINE:
+      return 0;
+
+    case CTRL('H'):
+    case RUBOUT:
+      if (rl_point == 0)
+	{
+	  _rl_readstr_restore (cxt);
+	  return -1;
+	}
+      _rl_rubout_char (1, c);
+      break;
+
+    case CTRL('C'):
+    case CTRL('G'):
+      rl_ding ();
+      _rl_readstr_restore (cxt);
+      return -1;
+
+    case ESC:
+      /* Allow users to bracketed-paste text into the string.
+	 Similar code is in search.c:_rl_nsearch_dispatch(). */
+      if (_rl_enable_bracketed_paste && ((n = _rl_nchars_available ()) >= (BRACK_PASTE_SLEN-1)))
+	{
+	  if (_rl_read_bracketed_paste_prefix (c) == 1)
+	    rl_bracketed_paste_begin (1, c);
+	  else
+	    {
+	      c = rl_read_key ();	/* get the ESC that got pushed back */
+	      _rl_insert_char (1, c);
+	    }
+        }
+      else
+        _rl_insert_char (1, c);
+      break;
+
+    case ' ':
+      if ((cxt->flags & RL_READSTR_NOSPACE) == 0)
+	{
+	  _rl_insert_char (1, c);
+	  break;
+	}
+    /* FALLTHROUGH */
+    case TAB:
+      /* Perform completion if the caller has set a completion function. */
+      n = (cxt->compfunc) ? (*cxt->compfunc) (cxt, c) : _rl_insert_char (1, c);
+      if (n < 0)
+	{
+	  _rl_readstr_restore (cxt);
+	  return -1;
+	}
+      break;
+
+    default:
+#if defined (HANDLE_MULTIBYTE)
+      if (MB_CUR_MAX > 1 && rl_byte_oriented == 0)
+	rl_insert_text (cxt->mb);
+      else
+#endif
+	_rl_insert_char (1, c);
+      break;
+    }
+
+  (*rl_redisplay_function) ();
+  rl_deactivate_mark ();
+  return 1;
+}
+
+/* **************************************************************** */
+/*								    */
+/*		Reading and Executing named commands		    */
+/*								    */
+/* **************************************************************** */
+
+/* A completion generator for bindable readline command names. */
+static char *
+readcmd_completion_function (const char *text, int state)
+{
+  static const char **cmdlist = NULL;
+  static size_t lind, nlen;
+  const char *cmdname;
+
+  if (state == 0)
+    {
+      if (cmdlist)
+	free (cmdlist);
+
+      cmdlist = rl_funmap_names ();
+      lind = 0;
+      nlen = RL_STRLEN (text);
+    }
+  if (cmdlist == 0 || cmdlist[lind] == 0)
+    return (char *)NULL;
+
+  while (cmdlist[lind])
+    {
+      cmdname = cmdlist[lind++];
+      if (STREQN (text, cmdname, nlen))
+	return (savestring (cmdname));
+    }
+  return ((char *)NULL);
+}
+
+static void
+_rl_display_cmdname_matches (char **matches)
+{
+  size_t len, max, i;
+  int old;
+
+  old = rl_filename_completion_desired;
+  rl_filename_completion_desired = 0;
+
+  /* There is more than one match. Find out how many there are,
+     and find the maximum printed length of a single entry. */
+  for (max = 0, i = 1; matches[i]; i++)
+    {
+      len = strlen (matches[i]);
+
+      if (len > max)
+	max = len;
+    }
+  len = i - 1;
+
+  rl_display_match_list (matches, len, max);
+  rl_filename_completion_desired = old;
+
+  rl_forced_update_display ();
+  rl_display_fixed = 1;
+}
+
+static int
+_rl_readcmd_complete (_rl_readstr_cxt *cxt, int c)
+{
+  char **matches;
+  char *prefix;
+  size_t plen;
+
+  matches = rl_completion_matches (rl_line_buffer, readcmd_completion_function);
+
+  if (RL_SIG_RECEIVED())
+    {
+      _rl_free_match_list (matches);
+      matches = 0;
+      RL_CHECK_SIGNALS ();
+      return -1;
+    }
+  else if (matches == 0)
+    rl_ding ();
+
+  /* Whether or not there are multiple matches, we just want to append the
+     new characters in matches[0]. We display possible matches if we didn't
+     append anything. */
+  if (matches)
+    {
+      prefix = matches[0];
+      plen = strlen (prefix);
+
+      if (plen > rl_end)
+        {
+          size_t n;
+          for (n = rl_end; n < plen && prefix[n]; n++)
+            _rl_insert_char (1, prefix[n]);
+        }
+      else if (matches[1])
+	_rl_display_cmdname_matches (matches);
+      _rl_free_match_list (matches);
+    }
+
+  return 0;
+}
+
+/* Use the readstr functions to read a bindable command name using the
+   line buffer, with completion. */
+static char *
+_rl_read_command_name ()
+{
+  _rl_readstr_cxt *cxt;
+  char *ret;
+  int c, r;
+
+  cxt = _rl_readstr_init ('!', RL_READSTR_NOSPACE);
+  cxt->compfunc = _rl_readcmd_complete;
+
+  /* skip callback stuff for now */
+  r = 0;
+  while (1)
+    {
+      c = _rl_readstr_getchar (cxt);
+
+      if (c < 0)
+	{
+	  _rl_readstr_restore (cxt);
+	  _rl_readstr_cleanup (cxt, r);
+	  return NULL;
+	}
+
+      if (c == 0)
+	break;
+
+      r = _rl_readstr_dispatch (cxt, c);
+      if (r < 0)
+	{
+	  _rl_readstr_cleanup (cxt, r);
+	  return NULL;		/* dispatch function cleans up */
+	}
+      else if (r == 0)
+	break;
+    }
+
+  ret = savestring (rl_line_buffer);
+
+  /* Now restore the original line and perform one final redisplay. */
+  _rl_readstr_restore (cxt);
+  (*rl_redisplay_function) ();
+
+  /* And free up the context. */
+  _rl_readstr_cleanup (cxt, r);
+  return ret;
+}
+
+/* Read a command name from the keyboard and execute it as if the bound key
+   sequence had been entered. */
+int
+rl_execute_named_command (int count, int key)
+{
+  char *command;
+  rl_command_func_t *func;
+  int r;
+
+  command = _rl_read_command_name ();
+  if (command == 0 || *command == '\0')
+    return 1;
+  if (func = rl_named_function (command))
+    {
+      int prev, ostate;
+
+      prev = rl_dispatching;
+      ostate = RL_ISSTATE (RL_STATE_DISPATCHING);
+      rl_dispatching = 1;
+      RL_SETSTATE (RL_STATE_DISPATCHING);	/* make sure it's set */
+      r = (*func) (count, key);
+      if (ostate == 0)
+	RL_UNSETSTATE (RL_STATE_DISPATCHING);	/* unset it if it wasn't set */
+      rl_dispatching = prev;
+    }
+  else
+    {
+      rl_ding ();
+      r = 1;
+    }
+
+  return r;
+}

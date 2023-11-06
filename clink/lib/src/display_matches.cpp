@@ -1152,6 +1152,29 @@ done:
 }
 
 //------------------------------------------------------------------------------
+void rl_display_match_list(char **matches, int len, int max)
+{
+    // WARNING:  This does not use matches lookaside; it's exclusively so
+    // _rl_display_cmdname_matches works for completing command names when
+    // "execute-named-command" uses the readstr functions.
+
+    match_adapter adapter;
+
+    if (!adapter.is_initialized())
+        adapter.set_alt_matches(matches, false);
+
+    str<32> lcd;
+    adapter.get_lcd(lcd);
+
+    const int32 count = adapter.get_match_count();
+    const bool best_fit = g_match_best_fit.get();
+    const int32 limit_fit = g_match_limit_fitted.get();
+    const column_widths widths = calculate_columns(adapter, best_fit ? limit_fit : -1, false, false, 0, 0);
+
+    display_match_list_internal(adapter, widths, 0, 0);
+}
+
+//------------------------------------------------------------------------------
 void override_match_line_state::override(int32 start, int32 end, const char* needle)
 {
     override(start, end, needle, need_leading_quote(needle));

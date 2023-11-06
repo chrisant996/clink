@@ -2,7 +2,7 @@
 
    Modified by Chet Ramey for Readline.
 
-   Copyright (C) 1985, 1988, 1990-1991, 1995-2021
+   Copyright (C) 1985, 1988, 1990-1991, 1995-2021, 2023
    Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify

@@ -92,6 +92,8 @@ static const FUNMAP default_funmap[] = {
   { "end-of-history", rl_end_of_history },
   { "end-of-line", rl_end_of_line },
   { "exchange-point-and-mark", rl_exchange_point_and_mark },
+// BUGBUG: This doesn't work in READLINE_CALLBACKS mode.
+  { "execute-named-command", rl_execute_named_command },
   { "fetch-history", rl_fetch_history },
   { "forward-backward-delete-char", rl_rubout_or_delete },
   { "forward-byte", rl_forward_byte },

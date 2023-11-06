@@ -71,7 +71,7 @@ TERMCAP_LIB = @TERMCAP_LIB@
 
 SOURCES = excallback.c fileman.c histexamp.c manexamp.c rl-fgets.c rl.c \
 		rlbasic.c rlcat.c rlevent.c rlptytest.c rltest.c rlversion.c \
-		rltest2.c rl-callbacktest.c hist_erasedups.c hist_purgecmd.c \
+		rl-callbacktest.c hist_erasedups.c hist_purgecmd.c \
 		rlkeymaps.c rl-timeout.c
 
 EXECUTABLES = fileman$(EXEEXT) rltest$(EXEEXT) rl$(EXEEXT) rlcat$(EXEEXT) \
@@ -81,7 +81,7 @@ EXECUTABLES = fileman$(EXEEXT) rltest$(EXEEXT) rl$(EXEEXT) rlcat$(EXEEXT) \
 		rlkeymaps$(EXEEXT) rl-timeout$(EXEEXT)
 
 OBJECTS = fileman.o rltest.o rl.o rlevent.o rlcat.o rlversion.o histexamp.o \
-	  rltest2.o rl-callbacktest.o rlbasic.o hist_erasedups.o hist_purgecmd.o \
+	  rl-callbacktest.o rlbasic.o hist_erasedups.o hist_purgecmd.o \
 	  rlkeymaps.o rl-timeout.o
 
 OTHEREXE = rlptytest$(EXEEXT)

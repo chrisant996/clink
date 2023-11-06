@@ -172,6 +172,7 @@ _rl_arg_dispatch (_rl_arg_cxt cxt, int c)
 
   if (_rl_digit_p (c))
     {
+      _rl_add_executing_keyseq (key);
       r = _rl_digit_value (c);    	
       rl_numeric_arg = rl_explicit_arg ? (rl_numeric_arg * 10) +  r : r;
       rl_explicit_arg = 1;
@@ -179,6 +180,7 @@ _rl_arg_dispatch (_rl_arg_cxt cxt, int c)
     }
   else if (c == '-' && rl_explicit_arg == 0)
     {
+      _rl_add_executing_keyseq (key);
       rl_numeric_arg = 1;
       _rl_argcxt |= NUM_SAWMINUS;
       rl_arg_sign = -1;
@@ -1020,7 +1022,10 @@ _rl_set_insert_mode (int im, int force)
   _rl_set_cursor (im, force);
 #endif
 
+  RL_UNSETSTATE (RL_STATE_OVERWRITE);
   rl_insert_mode = im;
+  if (rl_insert_mode == RL_IM_OVERWRITE)
+    RL_SETSTATE (RL_STATE_OVERWRITE);
 }
 
 /* Toggle overwrite mode.  A positive explicit argument selects overwrite

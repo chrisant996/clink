@@ -1377,7 +1377,6 @@ If the application has assigned a value to @code{rl_macro_display_hook},
 @code{rl_macro_dumper} calls it instead of printing anything.
 If @var{readable} is greater than zero, the list is formatted in such a way
 that it can be made part of an @code{inputrc} file and re-read.
-
 @end deftypefun
 
 @deftypefun int rl_variable_bind (const char *variable, const char *value)
@@ -1411,6 +1410,10 @@ uses those capabilities to move around the screen line and perform other
 terminal-specific operations, like erasing a line.  Readline does not
 use all of a terminal's capabilities, and this function will return
 values for only those capabilities Readline uses.
+@end deftypefun
+
+@deftypefun {void} rl_reparse_colors (void)
+Read or re-read color definitions from @env{LS_COLORS}.
 @end deftypefun
 
 @deftypefun {void} rl_clear_history (void)
@@ -2162,7 +2165,9 @@ The function should not modify the directory argument if it returns 0.
 @deftypevar {rl_dequote_func_t *} rl_filename_rewrite_hook
 If non-zero, this is the address of a function called when reading
 directory entries from the filesystem for completion and comparing
-them to the partial word to be completed.  The function should
+them to the filename portion of the partial word to be completed
+(after its potential modification by @code{rl_completion_rewrite_hook}).
+The function should
 perform any necessary application or system-specific conversion on
 the filename, such as converting between character sets or converting
 from a filesystem format to a character input format.
@@ -2173,6 +2178,24 @@ or the converted filename in newly-allocated memory.  The converted
 form is used to compare against the word to be completed, and, if it
 matches, is added to the list of matches.  Readline will free the
 allocated string.
+@end deftypevar
+
+@deftypevar {rl_dequote_func_t *} rl_completion_rewrite_hook
+If non-zero, this is the address of a function to call before
+comparing the filename portion of a word to be completed with directory
+entries from the filesystem.
+The function takes two arguments: @var{fname}, the filename to be converted,
+after any @code{rl_filename_dequoting_function} has been applied,
+and @var{fnlen}, its length in bytes.
+It must either return its first argument (if no conversion takes place)
+or the converted filename in newly-allocated memory.
+The function should perform any necessary application or system-specific
+conversion on the filename, such as converting between character sets or
+converting from a character input format to some other format.
+Readline compares the converted form against directory entries, after
+their potential modification by @code{rl_filename_rewrite_hook}, and adds
+any matches to the list of matches.
+Readline will free the allocated string.
 @end deftypevar
 
 @deftypevar {rl_compdisp_func_t *} rl_completion_display_matches_hook

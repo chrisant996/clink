@@ -1912,6 +1912,13 @@ editing mode.
 
 @end ifclear
 
+@item execute-named-command (M-x)
+Read a bindable readline command name from the input and execute the
+function to which it's bound, as if the key sequence to which it was
+bound appeared in the input.
+If this function is supplied with a numeric argument, it passes that
+argument to the function it executes.
+
 @end ftable
 
 @node Readline vi Mode

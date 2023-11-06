@@ -110,6 +110,27 @@ typedef struct  __rl_search_context
   char  *search_terminators;
 } _rl_search_cxt;
 
+/* readstr flags */
+#define RL_READSTR_NOSPACE	0x01	/* don't insert space, use for completion */
+
+typedef struct  __rl_readstr_context
+{
+  int flags;
+
+  int prevc;
+  int lastc;
+#if defined (HANDLE_MULTIBYTE)
+  char mb[MB_LEN_MAX];
+  char pmb[MB_LEN_MAX];
+#endif
+
+  int save_point;
+  int save_mark;
+  int save_line;
+
+  int (*compfunc) (struct __rl_readstr_context *, int);
+} _rl_readstr_cxt;
+
 struct _rl_cmd {
   Keymap map;
   int count;
@@ -483,6 +504,16 @@ extern int _rl_char_search_internal (int, int, int);
 #endif
 extern int _rl_set_mark_at_pos (int);
 
+extern _rl_readstr_cxt *_rl_rscxt_alloc (int);
+extern void _rl_rscxt_dispose (_rl_readstr_cxt *, int);
+extern void _rl_free_saved_readstr_line (void);
+extern void _rl_unsave_saved_readstr_line (void);
+extern _rl_readstr_cxt *_rl_readstr_init (int, int);
+extern int _rl_readstr_cleanup (_rl_readstr_cxt *, int);
+extern void _rl_readstr_restore (_rl_readstr_cxt *);
+extern int _rl_readstr_getchar (_rl_readstr_cxt *);
+extern int _rl_readstr_dispatch (_rl_readstr_cxt *, int);
+
 /* undo.c */
 extern UNDO_LIST *_rl_copy_undo_entry (UNDO_LIST *);
 extern UNDO_LIST *_rl_copy_undo_list (UNDO_LIST *);
@@ -669,6 +700,8 @@ extern int _rl_term_autowrap;
 /* text.c */
 extern int _rl_optimize_typeahead;
 extern int _rl_keep_mark_active;
+
+extern _rl_readstr_cxt *_rl_rscxt;
 
 /* undo.c */
 extern int _rl_doing_an_undo;

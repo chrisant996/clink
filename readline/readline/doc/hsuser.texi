@@ -288,14 +288,14 @@ current one.
 
 The line selected from the history is called the @dfn{event},
 and the portions of that line that are acted upon are called @dfn{words}.
-The dfn{event designator} selects the event, the optional
+The line is broken into words in the same fashion
+that Bash does, so that several words
+surrounded by quotes are considered one word.
+The @dfn{event designator} selects the event, the optional
 @dfn{word designator} selects words from the event, and
 various optional @dfn{modifiers} are available to manipulate the
 selected words.
 
-The line is broken into words in the same fashion
-that Bash does, so that several words
-surrounded by quotes are considered one word.
 History expansions are introduced by the appearance of the
 history expansion character, which is @samp{!} by default.
 History expansions may appear anywhere in the input, but do not nest.

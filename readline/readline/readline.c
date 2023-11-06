@@ -1730,7 +1730,7 @@ void
 _rl_add_executing_keyseq (int key)
 {
   RESIZE_KEYSEQ_BUFFER ();
- rl_executing_keyseq[rl_key_sequence_length++] = key;
+  rl_executing_keyseq[rl_key_sequence_length++] = key;
 }
 
 /* `delete' the last character added to the executing key sequence. Use this
