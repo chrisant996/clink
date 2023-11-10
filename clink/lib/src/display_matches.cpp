@@ -147,6 +147,14 @@ void append_tmpbuf_string(const char* s, int32 len)
 }
 
 //------------------------------------------------------------------------------
+void append_tmpbuf_string_colorless(const char* s, int32 len)
+{
+    str<> tmp;
+    ecma48_processor(s, &tmp, nullptr, ecma48_processor_flags::colorless);
+    append_tmpbuf_string(tmp.c_str(), tmp.length());
+}
+
+//------------------------------------------------------------------------------
 const char* get_tmpbuf_rollback (void)
 {
     grow_tmpbuf(1);
@@ -971,10 +979,17 @@ static int32 display_match_list_internal(const match_adapter& adapter, const col
                         printed_len = pad_to + parens;
                         append_tmpbuf_string(description_color, description_color_len);
                         if (parens)
+                        {
                             append_tmpbuf_string("(", 1);
+                            mark_tmpbuf();
+                        }
                         printed_len += ellipsify_to_callback(description, col_max - printed_len, false/*expand_ctrl*/, append_tmpbuf_string);
                         if (parens)
+                        {
+                            if (strchr(get_tmpbuf_rollback(), '\x1b'))
+                                append_tmpbuf_string(description_color, description_color_len);
                             append_tmpbuf_string(")", 1);
+                        }
                         append_tmpbuf_string(_normal_color, _normal_color_len);
                     }
                 }

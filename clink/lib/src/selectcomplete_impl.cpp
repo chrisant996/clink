@@ -1584,17 +1584,25 @@ void selectcomplete_impl::update_display()
                                 m_widths.m_max_match + 4);
                             if (pad_to < m_screen_cols - 1)
                             {
+                                const bool use_sel_color = (selected && right_justify);
+                                const char* const dc = use_sel_color ? desc_select_color.c_str() : description_color;
+                                const int32 dc_len = use_sel_color ? desc_select_color.length() : description_color_len;
                                 pad_filename(printed_len, pad_to, -1);
                                 printed_len = pad_to + parens;
-                                if (!selected || !right_justify)
-                                    append_tmpbuf_string(description_color, description_color_len);
-                                else
-                                    append_tmpbuf_string(desc_select_color.c_str(), desc_select_color.length());
+                                append_tmpbuf_string(dc, dc_len);
                                 if (parens)
+                                {
                                     append_tmpbuf_string("(", 1);
-                                printed_len += ellipsify_to_callback(desc, col_max - printed_len, false/*expand_ctrl*/, append_tmpbuf_string);
+                                    mark_tmpbuf();
+                                }
+                                printed_len += ellipsify_to_callback(desc, col_max - printed_len, false/*expand_ctrl*/,
+                                    use_sel_color ? append_tmpbuf_string_colorless : append_tmpbuf_string);
                                 if (parens)
+                                {
+                                    if (strchr(get_tmpbuf_rollback(), '\x1b'))
+                                        append_tmpbuf_string(dc, dc_len);
                                     append_tmpbuf_string(")", 1);
+                                }
                                 if (!selected || !right_justify)
                                     append_tmpbuf_string(normal_color, normal_color_len);
                             }
