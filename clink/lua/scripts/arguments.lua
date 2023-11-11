@@ -237,7 +237,7 @@ end
 -- NEXT word in the line.
 --
 -- Returns TRUE when chaining due to chaincommand().
-function _argreader:update(word, word_index, skip_last) -- luacheck: no unused
+function _argreader:update(word, word_index) -- luacheck: no unused
     local arg_match_type = "a" --arg
     local line_state = self._line_state
 
@@ -618,10 +618,8 @@ local function apply_options_to_list(addee, list)
     if addee.nosort then
         list.nosort = true
     end
-    if addee.delayinit then
-        if type(addee.delayinit) == "function" then
-            list.delayinit = addee.delayinit
-        end
+    if addee.delayinit and type(addee.delayinit) == "function" then
+        list.delayinit = addee.delayinit
     end
     if addee.onarg then
         list.onarg = addee.onarg
@@ -1435,7 +1433,7 @@ function _argmatcher:_generate(line_state, match_builder, extra_words)
         local info = line_state:getwordinfo(word_index)
         if not info.redir then
             local word = line_state:getword(word_index)
-            if reader:update(word, word_index, true--[[skip_last]]) then
+            if reader:update(word, word_index) then
                 return true, word_index
             end
         end
@@ -2343,7 +2341,7 @@ function argmatcher_generator:getwordbreakinfo(line_state) -- luacheck: no self
             local info = line_state:getwordinfo(word_index)
             if not info.redir then
                 local word = line_state:getword(word_index)
-                if reader:update(word, word_index, true--[[skip_last]]) then
+                if reader:update(word, word_index) then
                     line_state:shift(word_index)
                     goto do_command
                 end
