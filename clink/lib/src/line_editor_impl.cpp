@@ -236,6 +236,10 @@ line_editor_impl::line_editor_impl(const desc& desc)
 //------------------------------------------------------------------------------
 line_editor_impl::~line_editor_impl()
 {
+    // Ensure cleanup if/when clatch's REQUIRE throws.
+    if (check_flag(flag_editing))
+        end_line();
+
     m_desc.input->set_key_tester(nullptr);
 }
 
@@ -324,6 +328,8 @@ void line_editor_impl::begin_line()
 //------------------------------------------------------------------------------
 void line_editor_impl::end_line()
 {
+    assert(check_flag(flag_editing));
+
     for (auto i = m_modules.rbegin(), n = m_modules.rend(); i != n; ++i)
         i->on_end_line();
 
