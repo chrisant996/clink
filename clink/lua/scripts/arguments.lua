@@ -289,7 +289,7 @@ function _argreader:update(word, word_index, extra, last_onadvance) -- luacheck:
         is_flag = matcher:_is_flag(word)
     end
     if is_flag then
-        if matcher._flags then
+        if matcher._flags and not last_onadvance then
             local arg = matcher._flags._args[1]
             if arg then
                 if arg.delayinit then
