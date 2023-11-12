@@ -270,7 +270,11 @@ void line_editor_tester::run(bool expectationless)
 
             const word_class_info& wc = *(*classifications)[i];
             if (unsigned(wc.word_class) < sizeof_array(c_lookup))
+            {
+                if (m_mark_argmatchers && wc.argmatcher)
+                    c.concat("m", 1);
                 c.concat(&c_lookup[unsigned(wc.word_class)], 1);
+            }
         }
 
         REQUIRE(m_expected_classifications.equals(c.c_str()), [&] () {
@@ -353,8 +357,9 @@ void line_editor_tester::reset_lines()
 }
 
 //------------------------------------------------------------------------------
-void line_editor_tester::set_expected_classifications(const char* classifications)
+void line_editor_tester::set_expected_classifications(const char* classifications, bool mark_argmatchers)
 {
     m_expected_classifications = classifications;
+    m_mark_argmatchers = mark_argmatchers;
     m_has_classifications = true;
 }

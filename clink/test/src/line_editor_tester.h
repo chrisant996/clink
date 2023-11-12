@@ -67,7 +67,7 @@ public:
     void                        set_input(const char* input);
     template <class ...T> void  set_expected_matches(T... t); // T must be const char*
     void                        set_expected_matches_list(const char* const* expected); // The list must be terminated with nullptr.
-    void                        set_expected_classifications(const char* classifications);
+    void                        set_expected_classifications(const char* classifications, bool mark_argmatchers=false);
     void                        set_expected_output(const char* expected);
     void                        run(bool expectationless=false);
 
@@ -90,6 +90,7 @@ private:
     line_editor*                m_editor = nullptr;
     bool                        m_has_matches = false;
     bool                        m_has_classifications = false;
+    bool                        m_mark_argmatchers = false;
 };
 
 //------------------------------------------------------------------------------

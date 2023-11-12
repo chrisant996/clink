@@ -6,7 +6,11 @@
 #include "fs_fixture.h"
 #include "line_editor_tester.h"
 
+#include <core/os.h>
+#include <core/settings.h>
 #include <lua/lua_match_generator.h>
+#include <lua/lua_word_classifier.h>
+#include <lua/lua_script_loader.h>
 #include <lua/lua_state.h>
 #include <lib/doskey.h>
 
@@ -971,7 +975,8 @@ TEST_CASE("Lua arg parsers")
 
         REQUIRE(lua.do_string(script));
 
-        doskey doskey("clink_test_harness");
+        str<> host(os::get_shellname());
+        doskey doskey(host.c_str());
 
         SECTION("Flag at end")
         {
@@ -1007,10 +1012,62 @@ TEST_CASE("Lua arg parsers")
             tester.run();
         }
     }
+
+    SECTION("Callbacks")
+    {
+        const char* script = "\
+            local function maybe_string(ai, w, word_index, line_state, _)\
+                local info = line_state:getwordinfo(word_index)\
+                if not info.quoted then\
+                    return 1\
+                end\
+            end\
+            local xargs = clink.argmatcher():addarg('aaa', 'bbb')\
+            clink.argmatcher('start'):addarg({onadvance=maybe_string}):addflags('-x'..xargs):chaincommand()\
+            clink.argmatcher('plerg'):addflags('-l', '-m', '-n'):addarg('xxx', 'yyy'):nofiles()\
+        ";
+
+        lua_load_script(lua, app, cmd);
+        lua_load_script(lua, app, dir);
+        lua_word_classifier lua_classifier(lua);
+        tester.get_editor()->set_classifier(lua_classifier);
+
+        settings::find("clink.colorize_input")->set("true");
+        settings::find("color.argmatcher")->set("92");
+
+        REQUIRE(lua.do_string(script));
+
+        SECTION("onadvance")
+        {
+            tester.set_input("start -x ");
+            tester.set_expected_classifications("mcf", true);
+            tester.set_expected_matches("aaa", "bbb");
+            tester.run();
+
+            tester.set_input("start qq plerg f");
+            tester.set_expected_classifications("mco", true);
+            tester.set_expected_matches("file1", "file2");
+            tester.run();
+
+            tester.set_input("start \"qq\" plerg ");
+            tester.set_expected_classifications("mcomo", true);
+            tester.set_expected_matches("xxx", "yyy");
+            tester.run();
+
+            tester.set_input("start \"qq\" plerg -l ");
+            tester.set_expected_classifications("mcomof", true);
+            tester.set_expected_matches("xxx", "yyy");
+            tester.run();
+        }
+    }
 }
 
 TEST_CASE("Lua arg parsers (cleanup)")
 {
-    doskey doskey("clink_test_harness");
+    str<> host(os::get_shellname());
+    doskey doskey(host.c_str());
     doskey.remove_alias("xyz");
+
+    settings::find("clink.colorize_input")->set("false");
+    settings::find("color.argmatcher")->set();
 }

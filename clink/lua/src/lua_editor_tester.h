@@ -68,7 +68,7 @@ public:
                                 ~lua_editor_tester();
     void                        set_input(const char* input);
     void                        set_expected_matches(std::vector<str_moveable>& matches);
-    void                        set_expected_classifications(const char* classifications);
+    void                        set_expected_classifications(const char* classifications, bool mark_argmatchers=false);
     void                        set_expected_output(const char* output);
     bool                        run(str_base& message);
 
@@ -89,6 +89,7 @@ private:
     std::vector<str_moveable>   m_expected_matches;
     str_moveable                m_expected_classifications;
     str_moveable                m_expected_output;
+    bool                        m_mark_argmatchers = false;
     bool                        m_has_input = false;
     bool                        m_has_matches = false;
     bool                        m_has_classifications = false;

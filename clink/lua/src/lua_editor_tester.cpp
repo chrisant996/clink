@@ -145,13 +145,14 @@ void lua_editor_tester::set_expected_matches(std::vector<str_moveable>& expected
 }
 
 //------------------------------------------------------------------------------
-void lua_editor_tester::set_expected_classifications(const char* expected)
+void lua_editor_tester::set_expected_classifications(const char* expected, bool mark_argmatchers)
 {
     if (expected)
     {
         m_expected_classifications = expected;
         m_has_classifications = true;
     }
+    m_mark_argmatchers = mark_argmatchers;
 }
 
 //------------------------------------------------------------------------------
@@ -317,7 +318,11 @@ bool lua_editor_tester::run(str_base& message)
 
             const word_class_info& wc = *(*classifications)[i];
             if (unsigned(wc.word_class) < sizeof_array(c_lookup))
+            {
+                if (m_mark_argmatchers && wc.argmatcher)
+                    c.concat("m", 1);
                 c.concat(&c_lookup[unsigned(wc.word_class)], 1);
+            }
         }
 
         REQUIREEX(m_expected_classifications.equals(c.c_str()),
