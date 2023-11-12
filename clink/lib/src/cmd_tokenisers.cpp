@@ -11,6 +11,8 @@
 #include <core/settings.h>
 #include <core/debugheap.h>
 
+#include <assert.h>
+
 extern setting_bool g_enhanced_doskey;
 
 //------------------------------------------------------------------------------
@@ -120,7 +122,7 @@ bool is_cmd_command(const char* word, state_flag* flag)
     {
         // Internal commands in CMD get special word break treatment.
 
-        // NOTE: Keep in sync with cmd_commands in cmd.lua.
+        // NOTE: Keep in sync with cmd_commands in exec.lua.
         static const char* const c_cmds[] =
         {
             // These treat special word break characters as part of the input.
@@ -129,13 +131,18 @@ bool is_cmd_command(const char* word, state_flag* flag)
             "break", "call", "cd", "chdir", "cls", "copy", "date", "del", "dir",
             "dpath", "echo", "endlocal", "erase", "exit", "for", "goto", "md",
             "mkdir", "mklink", "move", "path", "pause", "popd", "prompt", "pushd",
-            "rd", "ren", "rename", "rmdir", "setlocal", "shift", "start", "time",
-            "title", "type", "vol",
+            "rd", "rem", "ren", "rename", "rmdir", "setlocal", "shift", "start",
+            "time", "title", "type", "vol",
         };
 
         s_map.emplace("rem", flag_rem);
         for (const char* cmd : c_cmds)
             s_map.emplace(cmd, flag_none);
+
+#ifdef DEBUG
+        auto const verify_rem = s_map.find("rem");
+        assert(verify_rem != s_map.end() && verify_rem->second == flag_rem);
+#endif
     }
 
     auto const it = s_map.find(word);

@@ -34,6 +34,47 @@ settings.add("exec.space_prefix", true, "Whitespace prefix matches files",
 and will do normal files matching instead.  (See exec.enable)]])
 
 --------------------------------------------------------------------------------
+-- NOTE: Keep in sync with is_cmd_command() in cmd_tokenisers.cpp.
+local cmd_commands = {
+    -- These are executables that pretend to be built-in commands.
+    "attrib", "chcp", "format", "help", "more", "subst", "tasklist", "taskkill",
+    -- These treat special word break characters as part of the input.
+    "assoc", "color", "ftype", "if", "set", "ver", "verify",
+    -- These treat special word break characters as ignored delimiters.
+    "break", "call", "cd", "chdir", "cls", "copy", "date", "del", "dir",
+    "dpath", "echo", "endlocal", "erase", "exit", "for", "goto", "md",
+    "mkdir", "mklink", "move", "path", "pause", "popd", "prompt", "pushd",
+    "rd", "rem", "ren", "rename", "rmdir", "setlocal", "shift", "start",
+    "time", "title", "type", "vol",
+}
+
+--------------------------------------------------------------------------------
+local function add_commands(line_state, match_builder)
+    -- Cmd commands cannot be quoted.
+    local word_info = line_state:getwordinfo(line_state:getwordcount())
+    if word_info.quoted then
+        return
+    end
+
+    -- They should be skipped if the line's whitespace prefixed.
+    if settings.get("exec.space_prefix") then
+        local offset = line_state:getcommandoffset()
+        if line_state:getline():sub(offset, offset):find("[ \t]") then
+            return
+        end
+    end
+
+    -- If the word being completed is a relative path then commands don't apply.
+    local text = line_state:getendword()
+    local text_dir = path.getdirectory(text) or ""
+    if #text_dir ~= 0 then
+        return
+    end
+
+    match_builder:addmatches(cmd_commands, "cmd")
+end
+
+--------------------------------------------------------------------------------
 local function get_environment_paths()
     local paths = (os.getenv("path") or ""):explode(";")
 
@@ -135,6 +176,11 @@ local function exec_matches(line_state, match_builder, chained)
     end
 
     local added = false
+
+    -- Include commands.
+    if settings.get("exec.commands") then
+        add_commands(line_state, match_builder)
+    end
 
     -- Include files.
     if settings.get("exec.files") then
