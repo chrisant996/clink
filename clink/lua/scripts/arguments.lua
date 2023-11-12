@@ -2156,9 +2156,9 @@ local function _find_argmatcher(line_state, check_existence, lookup)
         return
     end
 
-    if command_word_index == 1 and not lookup and info and not info.quoted then
+    if command_word_index == 1 and not lookup and info then
         if info.alias then
-            local alias = os.getalias(command_word)
+            local alias = os.getalias(line_state:getline():sub(info.offset, info.offset + info.length - 1))
             if alias and alias ~= "" then
                 -- This doesn't even try to handle redirection symbols in the alias
                 -- because the cost/benefit ratio is unappealing.
