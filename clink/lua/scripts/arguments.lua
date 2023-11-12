@@ -229,9 +229,8 @@ local function lookup_link(arg, word, line_state, word_index)
 end
 
 --------------------------------------------------------------------------------
--- When extra isn't nil, skip classifying the word, and skip trying to figure
--- out whether a `-foo:` word should avoid following a linked parser.  This only
--- happens when parsing extra words from expanding a doskey alias.
+-- When extra isn't nil, skip classifying the word.  This only happens when
+-- parsing extra words from expanding a doskey alias.
 --
 -- On return, the _argreader should be primed for generating matches for the
 -- NEXT word in the line.
@@ -253,8 +252,7 @@ function _argreader:update(word, word_index, extra) -- luacheck: no unused
         -- Skip past a phantom position.
         self._phantomposition = nil
         return
-    elseif not extra and
-            not self._noflags and
+    elseif not self._noflags and
             self._matcher._flags and
             self._matcher:_is_flag(word) and
             word:find("[:=]$") then
@@ -491,7 +489,7 @@ function _argreader:update(word, word_index, extra) -- luacheck: no unused
     -- Does the word lead to another matcher?
     local linked = lookup_link(arg, word, line_state, word_index)
     if linked then
-        if is_flag and word:match("[:=]$") and not extra then
+        if is_flag and word:match("[:=]$") then
             local info = line_state:getwordinfo(word_index)
             if info and
                     line_state:getcursor() ~= info.offset + info.length and
