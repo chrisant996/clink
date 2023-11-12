@@ -229,7 +229,7 @@ local function lookup_link(arg, word, line_state, word_index)
 end
 
 --------------------------------------------------------------------------------
--- When word_index is < 0, skip classifying the word, and skip trying to figure
+-- When extra isn't nil, skip classifying the word, and skip trying to figure
 -- out whether a `-foo:` word should avoid following a linked parser.  This only
 -- happens when parsing extra words from expanding a doskey alias.
 --
@@ -237,9 +237,9 @@ end
 -- NEXT word in the line.
 --
 -- Returns TRUE when chaining due to chaincommand().
-function _argreader:update(word, word_index) -- luacheck: no unused
+function _argreader:update(word, word_index, extra) -- luacheck: no unused
     local arg_match_type = "a" --arg
-    local line_state = self._line_state
+    local line_state = extra and extra.line_state or self._line_state
 
     --[[
     self._dbgword = word
@@ -253,7 +253,8 @@ function _argreader:update(word, word_index) -- luacheck: no unused
         -- Skip past a phantom position.
         self._phantomposition = nil
         return
-    elseif not self._noflags and
+    elseif not extra and
+            not self._noflags and
             self._matcher._flags and
             self._matcher:_is_flag(word) and
             word:find("[:=]$") then
@@ -377,7 +378,7 @@ function _argreader:update(word, word_index) -- luacheck: no unused
         if matcher._chain_command then
             return true
         end
-        if self._word_classifier and word_index >= 0 then
+        if self._word_classifier and not extra then
             if matcher._no_file_generation then
                 self._word_classifier:classifyword(word_index, "n", false)  --none
             else
@@ -407,7 +408,7 @@ function _argreader:update(word, word_index) -- luacheck: no unused
     end
 
     -- Parse the word type.
-    if self._word_classifier and word_index >= 0 then
+    if self._word_classifier and not extra then
         if matcher._classify_func and matcher._classify_func(arg_index, word, word_index, line_state, self._word_classifier) then -- luacheck: ignore 542
             -- The classifier function says it handled the word.
         else
@@ -490,7 +491,7 @@ function _argreader:update(word, word_index) -- luacheck: no unused
     -- Does the word lead to another matcher?
     local linked = lookup_link(arg, word, line_state, word_index)
     if linked then
-        if is_flag and word:match("[:=]$") and word_index >= 0 then
+        if is_flag and word:match("[:=]$") and not extra then
             local info = line_state:getwordinfo(word_index)
             if info and
                     line_state:getcursor() ~= info.offset + info.length and
@@ -510,6 +511,37 @@ function _argreader:update(word, word_index) -- luacheck: no unused
     if not linked and is_flag then
         self:_pop(next_is_flag)
     end
+end
+
+--------------------------------------------------------------------------------
+-- Consumes extra words from a doskey alias before parsing the real line_state.
+function _argreader:consume_extra(extra)
+    local line_state = extra.line_state
+    local count = line_state:getwordcount()
+
+::next_word::
+
+    local word_index = extra.next_index
+    if word_index > count then
+        extra.done = true
+        return
+    end
+    extra.next_index = word_index + 1
+
+    local info = line_state:getwordinfo(word_index)
+    if info.redir then
+        goto next_word
+    end
+
+    local word = line_state:getword(word_index)
+    if self:update(word, word_index, extra) then
+        local lookup = line_state:getword(word_index);
+        extra.next_index = 2
+        line_state:shift(word_index)
+        return true, lookup
+    end
+
+    goto next_word
 end
 
 --------------------------------------------------------------------------------
@@ -1411,21 +1443,15 @@ function _argmatcher:_hide(list, addee)
 end
 
 --------------------------------------------------------------------------------
-function _argmatcher:_generate(line_state, match_builder, extra_words)
-    local reader = _argreader(self, line_state)
+--- -ret:   stop:bool;      When true, stop generating.
+--- -ret:   shift:integer;  Shift line_state so this word index is first; restart generation loop with new argmatcher.
+--- -ret:   lookup:string;  Word to lookup next argmatcher; restart generation loop with new argmatcher.
+function _argmatcher:_generate(reader, match_builder)
+    local line_state = reader._line_state
 
     --[[
     reader:starttracing(line_state:getword(1))
     --]]
-
-    -- Consume extra words from expanded doskey alias.
-    if extra_words then
-        for word_index = 2, #extra_words do
-            if reader:update(extra_words[word_index], -1) and word_index == #extra_words then
-                return true, 1, extra_words[word_index]
-            end
-        end
-    end
 
     -- Consume words and use them to move through matchers' arguments.
     local command_word_index = line_state:getcommandwordindex()
@@ -2138,7 +2164,7 @@ end
 -- Finds an argmatcher for the first word and returns:
 --  argmatcher  = The argmatcher, unless there are too few words to use it.
 --  exists      = True if argmatcher exists (even if too few words to use it).
---  words       = Table of words to run through reader before continuing.
+--  extra       = Extra line_state to run through reader before continuing.
 local function _find_argmatcher(line_state, check_existence, lookup)
     -- Running an argmatcher only makes sense if there's two or more words.
     local word_count = line_state:getwordcount()
@@ -2163,20 +2189,22 @@ local function _find_argmatcher(line_state, check_existence, lookup)
                 -- This doesn't even try to handle redirection symbols in the alias
                 -- because the cost/benefit ratio is unappealing.
                 alias = alias:gsub("%$.*$", "")
-                local words = string.explode(alias, " \t", '"')
-                if words[1] then
-                    -- FUTURE:  Ideally this could detect whether the word was
-                    -- quoted so that e.g. `"cd"` in an alias doesn't resolve to
-                    -- the built-in CD command argmatcher.  But it's a weird
-                    -- edge case and isn't worth the complexity.
-                    local argmatcher = _has_argmatcher(words[1])
+                local extras = clink.parseline(alias)
+                local extra = extras and extras[#extras]
+                if extra then
+                    local els = extra.line_state
+                    local ecwi = els:getcommandwordindex()
+                    local einfo = els:getwordinfo(ecwi)
+                    local eword = els:getword(ecwi)
+                    local argmatcher = _has_argmatcher(eword, einfo and einfo.quoted)
                     if argmatcher then
                         if check_existence then
                             argmatcher = nil
                         elseif argmatcher._delayinit_func then
-                            _do_onuse_callback(argmatcher, words[1])
+                            _do_onuse_callback(argmatcher, eword)
                         end
-                        return argmatcher, true, words
+                        extra.next_index = ecwi + 1
+                        return argmatcher, true, extra
                     end
                 end
             end
@@ -2238,8 +2266,9 @@ end
 --------------------------------------------------------------------------------
 function clink._generate_from_historyline(line_state)
     local lookup
+    local extra
 ::do_command::
-    local argmatcher, has_argmatcher, extra_words = _find_argmatcher(line_state, nil, lookup) -- luacheck: no unused
+    local argmatcher, has_argmatcher, alias = _find_argmatcher(line_state, nil, lookup) -- luacheck: no unused
     if not argmatcher or argmatcher ~= clink.co_state._argmatcher_fromhistory_root then
         return
     end
@@ -2250,12 +2279,16 @@ function clink._generate_from_historyline(line_state)
     reader._fromhistory_argindex = clink.co_state._argmatcher_fromhistory.argslot
 
     -- Consume extra words from expanded doskey alias.
-    if extra_words then
-        for word_index = 2, #extra_words do
-            if reader:update(extra_words[word_index], -1) and word_index == #extra_words then
-                lookup = extra_words[word_index]
-                goto do_command
-            end
+    if not extra then
+        extra = alias
+    elseif extra.done then
+        extra = nil
+    end
+    if extra then
+        local stop -- When consuming extra, it means switch to a new argmatcher.
+        stop, lookup = reader:consume_extra(extra)
+        if stop then
+            goto do_command
         end
     end
 
@@ -2283,13 +2316,31 @@ local argmatcher_classifier = clink.classifier(clink.argmatcher_generator_priori
 --------------------------------------------------------------------------------
 local function do_generate(line_state, match_builder)
     local lookup
+    local extra
 ::do_command::
-    local argmatcher, has_argmatcher, extra_words = _find_argmatcher(line_state, nil, lookup) -- luacheck: no unused
+    local argmatcher, has_argmatcher, alias = _find_argmatcher(line_state, nil, lookup) -- luacheck: no unused
     lookup = nil -- luacheck: ignore 311
+    if not extra then
+        extra = alias
+    elseif extra.done then
+        extra = nil
+    end
     if argmatcher then
         clink.co_state._argmatcher_fromhistory = {}
         clink.co_state._argmatcher_fromhistory_root = argmatcher
-        local ret, shift, inner = argmatcher:_generate(line_state, match_builder, extra_words)
+
+        local reader = _argreader(argmatcher, line_state)
+
+        -- Consume extra words from expanded doskey alias.
+        if extra then
+            local stop
+            stop, lookup = reader:consume_extra(extra)
+            if stop then
+                goto do_command
+            end
+        end
+
+        local ret, shift, inner = argmatcher:_generate(reader, match_builder)
         if ret and (shift or inner) then
             line_state:shift(shift)
             lookup = inner
@@ -2319,19 +2370,24 @@ end
 --------------------------------------------------------------------------------
 function argmatcher_generator:getwordbreakinfo(line_state) -- luacheck: no self
     local lookup
+    local extra
 ::do_command::
-    local argmatcher, has_argmatcher, extra_words = _find_argmatcher(line_state, nil, lookup) -- luacheck: no unused
+    local argmatcher, has_argmatcher, alias = _find_argmatcher(line_state, nil, lookup) -- luacheck: no unused
     lookup = nil
+    if not extra then
+        extra = alias
+    elseif extra.done then
+        extra = nil
+    end
     if argmatcher then
         local reader = _argreader(argmatcher, line_state)
 
         -- Consume extra words from expanded doskey alias.
-        if extra_words then
-            for word_index = 2, #extra_words do
-                if reader:update(extra_words[word_index], -1) and word_index == #extra_words then
-                    lookup = extra_words[word_index]
-                    goto do_command
-                end
+        if extra then
+            local stop -- When consuming extra, it means switch to a new argmatcher.
+            stop, lookup = reader:consume_extra(extra)
+            if stop then
+                goto do_command
             end
         end
 
@@ -2391,13 +2447,19 @@ function argmatcher_classifier:classify(commands) -- luacheck: no self
     local executable_color = settings.get("color.executable") ~= ""
     for _,command in ipairs(commands) do
         local lookup
+        local extra
 ::do_command::
         local line_state = command.line_state
         local word_classifier = command.classifications
 
-        local argmatcher, has_argmatcher, extra_words = _find_argmatcher(line_state, true, lookup)
+        local argmatcher, has_argmatcher, alias = _find_argmatcher(line_state, true, lookup)
         local command_word_index = line_state:getcommandwordindex()
         lookup = nil
+        if not extra then
+            extra = alias
+        elseif extra.done then
+            extra = nil
+        end
 
         local command_word = line_state:getword(command_word_index) or ""
         if #command_word > 0 then
@@ -2427,12 +2489,11 @@ function argmatcher_classifier:classify(commands) -- luacheck: no self
             reader._word_classifier = word_classifier
 
             -- Consume extra words from expanded doskey alias.
-            if extra_words then
-                for word_index = 2, #extra_words do
-                    if reader:update(extra_words[word_index], -1) and word_index == #extra_words then
-                        lookup = extra_words[word_index]
-                        goto do_command
-                    end
+            if extra then
+                local stop -- When consuming extra, it means switch to a new argmatcher.
+                stop, lookup = reader:consume_extra(extra)
+                if stop then
+                    goto do_command
                 end
             end
 
