@@ -8,6 +8,7 @@
 
 #include <lua/lua_match_generator.h>
 #include <lua/lua_state.h>
+#include <lib/doskey.h>
 
 extern "C" {
 #include <lua.h>
@@ -959,4 +960,57 @@ TEST_CASE("Lua arg parsers")
             lua.send_event("onendedit", 1);
         }
     }
+
+    SECTION("Chaincommand")
+    {
+        const char* script = "\
+            clink.argmatcher('sudo'):addflags('-x'):chaincommand()\
+            clink.argmatcher('gsudo'):addflags('-y'):chaincommand()\
+            clink.argmatcher('plerg'):addflags('-l', '-m', '-n'):addarg('aaa', 'zzz'):nofiles()\
+        ";
+
+        REQUIRE(lua.do_string(script));
+
+        doskey doskey("clink_test_harness");
+
+        SECTION("Flag at end")
+        {
+            REQUIRE(doskey.add_alias("xyz", "sudo gsudo plerg -m $*") == true);
+
+            tester.set_input("xyz ");
+            tester.set_expected_matches("aaa", "zzz");
+            tester.run();
+
+            tester.set_input("xyz -");
+            tester.set_expected_matches("-l", "-m", "-n");
+            tester.run();
+
+            tester.set_input("xyz 123 ");
+            tester.set_expected_matches();
+            tester.run();
+        }
+
+        SECTION("Flag in middle")
+        {
+            REQUIRE(doskey.add_alias("xyz", "sudo gsudo -y plerg $*") == true);
+
+            tester.set_input("xyz ");
+            tester.set_expected_matches("aaa", "zzz");
+            tester.run();
+
+            tester.set_input("xyz -");
+            tester.set_expected_matches("-l", "-m", "-n");
+            tester.run();
+
+            tester.set_input("xyz 123 ");
+            tester.set_expected_matches();
+            tester.run();
+        }
+    }
+}
+
+TEST_CASE("Lua arg parsers (cleanup)")
+{
+    doskey doskey("clink_test_harness");
+    doskey.remove_alias("xyz");
 }
