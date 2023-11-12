@@ -236,7 +236,7 @@ end
 -- NEXT word in the line.
 --
 -- Returns TRUE when chaining due to chaincommand().
-function _argreader:update(word, word_index, extra, last_onparse) -- luacheck: no unused
+function _argreader:update(word, word_index, extra, last_onadvance) -- luacheck: no unused
 
 ::retry::
     local arg_match_type = "a" --arg
@@ -250,7 +250,7 @@ function _argreader:update(word, word_index, extra, last_onparse) -- luacheck: n
     -- When a flag ends with : or = but doesn't link to another matcher, and if
     -- the next word is adjacent, then treat the next word as an argument to the
     -- flag instead of advancing to the next argument position.
-    if last_onparse then -- luacheck: ignore 542
+    if last_onadvance then -- luacheck: ignore 542
         -- Nothing to do here.
     elseif self._phantomposition then
         -- Skip past a phantom position.
@@ -328,8 +328,8 @@ function _argreader:update(word, word_index, extra, last_onparse) -- luacheck: n
         if arg.delayinit then
             do_delayed_init(arg, realmatcher, arg_index)
         end
-        if arg.onparse then
-            react = arg.onparse(arg_index, word, word_index, line_state, self._user_data)
+        if arg.onadvance then
+            react = arg.onadvance(arg_index, word, word_index, line_state, self._user_data)
             if react then
                 -- 1 = Ignore; advance to next arg_index.
                 -- 0 = Repeat; stay on the arg_index.
@@ -339,7 +339,7 @@ function _argreader:update(word, word_index, extra, last_onparse) -- luacheck: n
             end
         end
     end
-    if last_onparse and react ~= 1 then
+    if last_onadvance and react ~= 1 then
         return
     end
     local next_arg_index = arg_index + (react and react or 1)
@@ -411,10 +411,10 @@ function _argreader:update(word, word_index, extra, last_onparse) -- luacheck: n
         return
     end
 
-    -- If onparse chose to ignore the arg index, then retry.
+    -- If onadvance chose to ignore the arg index, then retry.
     if react == 1 then
         goto retry
-    elseif last_onparse then
+    elseif last_onadvance then
         return
     end
 
@@ -683,8 +683,8 @@ local function apply_options_to_list(addee, list)
     if addee.delayinit and type(addee.delayinit) == "function" then
         list.delayinit = addee.delayinit
     end
-    if addee.onparse then
-        list.onparse = addee.onparse
+    if addee.onadvance then
+        list.onadvance = addee.onadvance
     end
     if addee.onarg then
         list.onarg = addee.onarg
@@ -1505,8 +1505,8 @@ function _argmatcher:_generate(reader, match_builder) -- luacheck: no unused
         return
     end
 
-    -- Special processing for last word, in case there's an onparse callback.
-    reader:update(line_state:getword(word_count), word_count, nil, true--[[last_onparse]])
+    -- Special processing for last word, in case there's an onadvance callback.
+    reader:update(line_state:getword(word_count), word_count, nil, true--[[last_onadvance]])
 
     -- There should always be a matcher left on the stack, but the arg_index
     -- could be well out of range.
