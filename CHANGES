@@ -3,7 +3,7 @@
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
 #### v1.5.14
-- Added a callback function that can be assigned to an argument position by including `onparse=your_callback_function` in the table given to `:addarg()` (see [Responding to Arguments in Argmatchers](#responsive-argmatchers) for more information).
+- Added a callback function that can be assigned to an argument position by including `onadvance=your_callback_function` in the table given to `:addarg()` (see [Responding to Arguments in Argmatchers](#responsive-argmatchers) for more information).
 - Fixed displaying match descriptions containing embedded color codes.
 - Fixed finding argmatchers for doskey alias names containing quotes.
 - Fixed parsing the input line when a doskey alias references a command with an argmatcher that uses the `:chaincommand()` function (e.g. an alias `foo=sudo dir $*` with an argmatcher like `clink.argmatcher("sudo"):chaincommand()` so that completions and input line coloring work properly for the rest of the input line).
