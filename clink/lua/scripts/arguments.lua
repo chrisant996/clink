@@ -236,7 +236,9 @@ end
 -- NEXT word in the line.
 --
 -- Returns TRUE when chaining due to chaincommand().
-function _argreader:update(word, word_index, extra) -- luacheck: no unused
+function _argreader:update(word, word_index, extra, last_onparse) -- luacheck: no unused
+
+::retry::
     local arg_match_type = "a" --arg
     local line_state = extra and extra.line_state or self._line_state
 
@@ -248,7 +250,9 @@ function _argreader:update(word, word_index, extra) -- luacheck: no unused
     -- When a flag ends with : or = but doesn't link to another matcher, and if
     -- the next word is adjacent, then treat the next word as an argument to the
     -- flag instead of advancing to the next argument position.
-    if self._phantomposition then
+    if last_onparse then -- luacheck: ignore 542
+        -- Nothing to do here.
+    elseif self._phantomposition then
         -- Skip past a phantom position.
         self._phantomposition = nil
         return
@@ -317,7 +321,28 @@ function _argreader:update(word, word_index, extra) -- luacheck: no unused
     realmatcher = self._realmatcher
     local arg_index = self._arg_index
     local arg = matcher._args[arg_index]
-    local next_arg_index = arg_index + 1
+
+    -- Determine next arg index.
+    local react
+    if arg and not is_flag then
+        if arg.delayinit then
+            do_delayed_init(arg, realmatcher, arg_index)
+        end
+        if arg.onparse then
+            react = arg.onparse(arg_index, word, word_index, line_state, self._user_data)
+            if react then
+                -- 1 = Ignore; advance to next arg_index.
+                -- 0 = Repeat; stay on the arg_index.
+                if react ~= 1 and react ~= 0 then
+                    react = nil
+                end
+            end
+        end
+    end
+    if last_onparse and react ~= 1 then
+        return
+    end
+    local next_arg_index = arg_index + (react and react or 1)
 
     -- If the arg has looping characters defined and a looping character
     -- separates this word from the next, then don't advance to the next
@@ -383,6 +408,13 @@ function _argreader:update(word, word_index, extra) -- luacheck: no unused
                 self._word_classifier:classifyword(word_index, "o", false)  --other
             end
         end
+        return
+    end
+
+    -- If onparse chose to ignore the arg index, then retry.
+    if react == 1 then
+        goto retry
+    elseif last_onparse then
         return
     end
 
@@ -650,6 +682,9 @@ local function apply_options_to_list(addee, list)
     end
     if addee.delayinit and type(addee.delayinit) == "function" then
         list.delayinit = addee.delayinit
+    end
+    if addee.onparse then
+        list.onparse = addee.onparse
     end
     if addee.onarg then
         list.onarg = addee.onarg
@@ -1444,7 +1479,7 @@ end
 --- -ret:   stop:bool;      When true, stop generating.
 --- -ret:   shift:integer;  Shift line_state so this word index is first; restart generation loop with new argmatcher.
 --- -ret:   lookup:string;  Word to lookup next argmatcher; restart generation loop with new argmatcher.
-function _argmatcher:_generate(reader, match_builder)
+function _argmatcher:_generate(reader, match_builder) -- luacheck: no unused
     local line_state = reader._line_state
 
     --[[
@@ -1469,6 +1504,9 @@ function _argmatcher:_generate(reader, match_builder)
         reader:update(line_state:getword(word_count), word_count)
         return
     end
+
+    -- Special processing for last word, in case there's an onparse callback.
+    reader:update(line_state:getword(word_count), word_count, nil, true--[[last_onparse]])
 
     -- There should always be a matcher left on the stack, but the arg_index
     -- could be well out of range.
