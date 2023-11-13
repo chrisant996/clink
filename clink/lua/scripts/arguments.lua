@@ -439,7 +439,8 @@ function _argreader:update(word, word_index, extra, last_onadvance) -- luacheck:
 
     -- Parse the word type.
     if self._word_classifier and not extra then
-        if matcher._classify_func and matcher._classify_func(arg_index, word, word_index, line_state, self._word_classifier) then -- luacheck: ignore 542
+        local aidx = is_flag and 0 or arg_index
+        if realmatcher._classify_func and realmatcher._classify_func(aidx, word, word_index, line_state, self._word_classifier) then -- luacheck: ignore 542
             -- The classifier function says it handled the word.
         else
             -- Use the argmatcher's data to classify the word.
