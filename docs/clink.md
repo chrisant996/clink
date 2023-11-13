@@ -1942,6 +1942,8 @@ Both callback functions receive the same five arguments:
 
 When parsing begins, the `user_data` is an empty table.  Each time a flag or argument links to another argmatcher, the new argmatcher gets a separate new empty `user_data` table.  Your "on advance" and "on arg" functions can set data into the table, and functions called later during parsing can get the data that was set by earlier functions (for example to keep track of what flags were specified earlier in the command line).
 
+> **Note:** These callback functions are called very often, so they needs to be very fast or they can cause responsiveness problems while typing.
+
 ##### The "on advance" function
 
 Supply an "on advance" function by including <code>onadvance=<span class="arg">function</span></code> in the argument table with [_argmatcher:addarg()](#_argmatcher:addarg).  The function can return an integer to choose how to advance through the argument positions.
