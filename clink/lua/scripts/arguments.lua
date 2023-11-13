@@ -229,6 +229,32 @@ local function lookup_link(arg, word, line_state, word_index)
 end
 
 --------------------------------------------------------------------------------
+-- Advancing twice from the same context indicates a cycle.  Disable the reader.
+local __cycles = 0
+function _argreader:_detect_arg_cycle()
+    local d = self._cycle_detection
+    if not d then
+        d = {
+            matcher=self._matcher,
+            realmatcher=self._realmatcher,
+            arg_index=self._arg_index,
+            stack_depth=#self._stack,
+        }
+        self._cycle_detection = d
+    elseif d.matcher == self._matcher and
+            d.realmatcher == self._realmatcher and
+            d.arg_index == self._arg_index and
+            d.stack_depth == #self._stack then
+        self._disabled = true
+        if clink.DEBUG then
+            __cycles = __cycles + 1
+            clink.print("\x1b[s\x1b[H\x1b[0;97;41m cycle detected ("..__cycles..") \x1b[m\x1b[K\x1b[u", NONL)
+        end
+        return true
+    end
+end
+
+--------------------------------------------------------------------------------
 -- When extra isn't nil, skip classifying the word.  This only happens when
 -- parsing extra words from expanding a doskey alias.
 --
@@ -237,6 +263,10 @@ end
 --
 -- Returns TRUE when chaining due to chaincommand().
 function _argreader:update(word, word_index, extra, last_onadvance) -- luacheck: no unused
+    self._cycle_detection = nil
+    if self._disabled then
+        return
+    end
 
 ::retry::
     local arg_match_type = "a" --arg
@@ -413,6 +443,9 @@ function _argreader:update(word, word_index, extra, last_onadvance) -- luacheck:
 
     -- If onadvance chose to ignore the arg index, then retry.
     if react == 1 then
+        if self:_detect_arg_cycle() then
+            return
+        end
         goto retry
     elseif last_onadvance then
         return
