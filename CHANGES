@@ -8,6 +8,7 @@
 - Fixed finding argmatchers for doskey alias names containing quotes.
 - Fixed parsing the input line when a doskey alias references a command with an argmatcher that uses the `:chaincommand()` function (e.g. an alias `foo=sudo dir $*` with an argmatcher like `clink.argmatcher("sudo"):chaincommand()` so that completions and input line coloring work properly for the rest of the input line).
 - Fixed the `exec.commands` setting with an argmatcher that uses the `:chaincommand()` function.
+- Fixed `_argmatcher:setclassifier()` so the custom classifier is called for flags as well as for arguments.
 
 #### v1.5.13
 - Added `clink.onhistory()` to register a function to be called when the input line has been accepted and is about to be added to history (and optionally cancel adding it).
