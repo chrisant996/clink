@@ -1933,29 +1933,34 @@ Argmatchers can be more involved in parsing the command line, if they wish.
 
 An argmatcher can supply "on advance" or "on arg" functions to be called when the argmatcher parses an argument position.  The functions can influence parsing the rest of the input line.  For example, the presence of a flag `--only-dirs` might change what match completions should be provided somewhere else in the input line.
 
-- An "on advance" function is called _before_ parsing a word.  It can influence which argument position will parse the word (it can advance to the next position before parsing, or it can repeat the same argument position for parsing both the current word and the next word).
-- An "on arg" function is called _when_ parsing a word.  It can examine the word and do custom processing.
+- An "[on advance](#the-on-advance-function)" function is called _before_ parsing a word.  It can influence which argument position will parse the word (it can advance to the next position before parsing, or it can repeat the same argument position for parsing both the current word and the next word).
+- An "[on arg](#the-on-arg-function)" function is called _when_ parsing a word.  It can examine the word and do custom processing.
+- An "[on link](#the-on-link-function)" function is called _after_ parsing a word.  It can examine the word and override what argmatcher it links to (see [Linking Parsers](#argmatcher_linking)).
 
-Both callback functions receive the same five arguments:
+All of these callback functions receive a `user_data` table.  When parsing begins, the `user_data` is an empty table.  Each time a flag or argument links to another argmatcher, the new argmatcher gets a separate new empty `user_data` table.  Your "on advance" and "on arg" and "on link" functions can set data into the table, and functions called later during parsing can get the data that was set by earlier functions (for example to keep track of what flags were specified earlier in the command line).
+
+> **Note:** These callback functions are called very often, so they need to be very fast or they can cause responsiveness problems while typing.
+
+##### The "on advance" function
+
+Supply an "on advance" function by including <code>onadvance=<span class="arg">function</span></code> in the argument table with [_argmatcher:addarg()](#_argmatcher:addarg).  The function can return an integer to choose how to advance through the argument positions.
+
+To use this, Clink v1.5.14 or higher is required.
+
+The function receives five arguments:
 - `arg_index` is the argument index in the argmatcher, corresponding to the argument being parsed.  0 means it is a flag, rather than an argument.
 - `word` is a partial string for the word under the cursor, corresponding to the argument being parsed:  it is an empty string, or if a filename is being entered then it will be the path portion (e.g. for "dir1\dir2\pre" `word` will be "dir1\dir2\").
 - `word_index` is the word index in `line_state`, corresponding to the argument being parsed.
 - `line_state` is a [line_state](#line_state) object that contains the words for the associated command line.
 - `user_data` is a table that the argmatcher can use to help it parse the input line.
 
-When parsing begins, the `user_data` is an empty table.  Each time a flag or argument links to another argmatcher, the new argmatcher gets a separate new empty `user_data` table.  Your "on advance" and "on arg" functions can set data into the table, and functions called later during parsing can get the data that was set by earlier functions (for example to keep track of what flags were specified earlier in the command line).
-
-> **Note:** These callback functions are called very often, so they needs to be very fast or they can cause responsiveness problems while typing.
-
-##### The "on advance" function
-
-Supply an "on advance" function by including <code>onadvance=<span class="arg">function</span></code> in the argument table with [_argmatcher:addarg()](#_argmatcher:addarg).  The function can return an integer to choose how to advance through the argument positions.
-
+The function may return any of the following values:
 - Return `1` to advance to the next argument position _before_ parsing the word (normally the parser advances _after_ parsing a word).  Multiple advances are possible for the same word:  if the "on advance" functions for argument positions 2, 3, and 4 all return `1`, then argument position 5 will parse the word.
 - Return `0` to repeat using same argument position to parse both the current word and the next word.  Multiple repititions are possible for the same argument position:  if the "on advance" function for argument position 3 returns `0` for three words in a row, then all three of the words are parsed using argument position 3.
 - Return `-1` to behave as though [:chaincommand()](#_argmatcher:chaincommand) were used, and start parsing a new command line beginning at `word_index`.  To start at the _next_ word index, see the "[chain next](#chainnextexample)" example below.
+- Return `nil` (either `return nil` or just `return`) to advance to the next argument position _after_ parsing the word (this is the default behavior).
 
-To use this, Clink v1.5.14 or higher is required.
+This example demonstrates treating arg index 1 as an optional title string only if quoted:
 
 ```lua
 local function maybe_string(arg_index, word, word_index, line_state, user_data)
@@ -2008,11 +2013,20 @@ clink.argmatcher("foo")
 
 ##### The "on arg" function
 
-Supply an "on arg" function by including <code>onarg=<span class="arg">function</span></code> in the argument table with [_argmatcher:addarg()](#_argmatcher:addarg).  The function doesn't return anything.
-
-An "on arg" function can even use [os.chdir()](#os.chdir) to set the current directory.  Generating match completions saves and restores the current directory when finished, so argmatcher "on arg" functions can set the current directory and thus cause match completion later in the input line to complete file names relative to the change directory.  For example, the built-in `cd` and `pushd` argmatches use an "on arg" function so that `pushd \other_dir & program `<kbd>Tab</kbd> can complete file names from `\other_dir` instead of the (real) current directory.
+Supply an "on arg" function by including <code>onarg=<span class="arg">function</span></code> in the argument table with [_argmatcher:addarg()](#_argmatcher:addarg).  The function can examine the word and do custom processing.
 
 To use this, Clink v1.3.3 or higher is required.
+
+The function receives five arguments:
+- `arg_index` is the argument index in the argmatcher, corresponding to the argument being parsed.  0 means it is a flag, rather than an argument.
+- `word` is a partial string for the word under the cursor, corresponding to the argument being parsed:  it is an empty string, or if a filename is being entered then it will be the path portion (e.g. for "dir1\dir2\pre" `word` will be "dir1\dir2\").
+- `word_index` is the word index in `line_state`, corresponding to the argument being parsed.
+- `line_state` is a [line_state](#line_state) object that contains the words for the associated command line.
+- `user_data` is a table that the argmatcher can use to help it parse the input line.
+
+The function doesn't return anything.
+
+An "on arg" function can even use [os.chdir()](#os.chdir) to set the current directory.  Generating match completions saves and restores the current directory when finished, so argmatcher "on arg" functions can set the current directory and thus cause match completion later in the input line to complete file names relative to the change directory.  For example, the built-in `cd` and `pushd` argmatches use an "on arg" function so that `pushd \other_dir & program `<kbd>Tab</kbd> can complete file names from `\other_dir` instead of the (real) current directory.
 
 ```lua
 local function onarg_pushd(arg_index, word, word_index, line_state, user_data)
@@ -2027,6 +2041,51 @@ clink.argmatcher("pushd")
     onarg=onarg_pushd,  -- Chdir to the directory argument.
     clink.dirmatches,   -- Generate directory matches.
 })
+:nofiles()
+```
+
+##### The "on link" function
+
+Supply an "on link" function by including <code>onlink=<span class="arg">function</span></code> in the argument table with [_argmatcher:addarg()](#_argmatcher:addarg).  The function can return an argmatcher to override when to link to another parser, and which parser to link to.
+
+To use this, Clink v1.5.14 or higher is required.
+
+The function receives six arguments:
+- `link` is the linked argmatcher, if any, that will be used if this function returns `nil`.
+- `arg_index` is the argument index in the argmatcher, corresponding to the argument being parsed.  0 means it is a flag, rather than an argument.
+- `word` is a partial string for the word under the cursor, corresponding to the argument being parsed:  it is an empty string, or if a filename is being entered then it will be the path portion (e.g. for "dir1\dir2\pre" `word` will be "dir1\dir2\").
+- `word_index` is the word index in `line_state`, corresponding to the argument being parsed.
+- `line_state` is a [line_state](#line_state) object that contains the words for the associated command line.
+- `user_data` is a table that the argmatcher can use to help it parse the input line.
+
+The function may return any of the following:
+- Return an argmatcher to override subsequent parsing and use the specified argmatcher.
+- Return `false` to override subsequent parsing and continue using the current argmatcher.
+- Return `nil` to allow parsing to behave normally.
+
+> **Note:** Avoid creating new argmatchers in "on link" functions; instead return cached argmatchers that were previously created.  The "on link" functions may be called frequently, and creating new argmatchers every time can create responsiveness problems while typing.
+
+This example demonstrates linking to another argmatcher if the first argument is any .txt file.  Any other value for the first argument continues using the same argmatcher to parse the rest of the command.
+- `foo file.txt open abc`
+- `foo file.doc abc`
+
+```lua
+local txt_file_actions = clink.argmatcher():addarg({"open", "print"})
+
+local function maybe_txt_actions(link, arg_index, word, word_index, line_state, user_data)
+    -- If a txt file name is specified, link to another argmatcher.
+    if path.getextension(word):lower() == ".txt" then
+        return txt_file_actions
+    end
+    -- Otherwise continue normally with the current argmatcher.
+end
+
+clink.argmatcher("foo")
+:addarg({
+    onlink=maybe_txt_actions,   -- Link to another argmatcher only when any .txt file is specified.
+    clink.filematches,
+})
+:addarg("abc", "xyz")
 :nofiles()
 ```
 
