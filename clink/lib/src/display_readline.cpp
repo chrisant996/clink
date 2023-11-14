@@ -106,6 +106,7 @@ extern setting_bool g_history_autoexpand;
 extern setting_color g_color_comment_row;
 #if defined(USE_SUGGESTION_HINT_COMMENTROW) || defined(USE_SUGGESTION_HINT_INLINE)
 extern setting_color g_color_suggestion;
+extern setting_bool g_autosuggest_hint;
 #endif
 
 //------------------------------------------------------------------------------
@@ -1227,6 +1228,22 @@ void measure_columns::apply_join_count(const measure_columns& mc)
     m_join_count = mc.m_join_count;
 }
 
+//------------------------------------------------------------------------------
+COORD measure_readline_display(const char* prompt, const char* buffer, uint32 len)
+{
+    measure_columns mc(measure_columns::print);
+
+    if (prompt)
+        mc.measure(prompt, true);
+    if (buffer)
+        mc.measure(buffer, len, false);
+
+    COORD ret;
+    ret.X = mc.get_column();
+    ret.Y = mc.get_line_count();
+    return ret;
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -1841,7 +1858,7 @@ void display_manager::display()
 #define m_next __use_next_instead__
         }
 #ifdef USE_SUGGESTION_HINT_COMMENTROW
-        else if (next->has_suggestion())
+        else if (next->has_suggestion() && g_autosuggest_hint.get())
         {
             int32 type;
             rl_command_func_t* func = rl_function_of_keyseq_len("\x1b[C", 3, nullptr, &type);
@@ -1917,7 +1934,7 @@ void display_manager::display()
     }
 
 #ifdef USE_SUGGESTION_HINT_COMMENTROW
-    if (_rl_last_v_pos < _rl_vis_botlin + 1)
+    if (_rl_last_v_pos < _rl_vis_botlin + 1 && next->get_comment_row_type() == comment_row_type::autosuggest)
         move_to_row(_rl_vis_botlin + 1);
 #endif
 

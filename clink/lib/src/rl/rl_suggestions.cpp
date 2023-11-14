@@ -12,9 +12,12 @@
 #include <core/base.h>
 #include <core/str_compare.h>
 #include <core/settings.h>
+#include <terminal/ecma48_iter.h>
 
 extern "C" {
+#include <compat/config.h>
 #include <readline/readline.h>
+#include <readline/rlprivate.h>
 }
 
 //------------------------------------------------------------------------------
@@ -34,6 +37,15 @@ setting_bool g_autosuggest_enable(
     "arrow or End key, accept the next word of the suggestion with Ctrl+Right, or\n"
     "accept the next full word of the suggestion up to a space with Shift+Right.\n"
     "The 'autosuggest.strategy' setting determines how a suggestion is chosen.",
+    true);
+
+setting_bool g_autosuggest_hint(
+    "autosuggest.hint",
+    "Show usage hint for automatic suggestions",
+    "The default is 'true'.  When this and 'autosuggest.enable' are both 'true'\n"
+    "and a suggestion is available, show a usage hint '[Right]-Accept Suggestion'\n"
+    "to help make the feature more discoverable and easy to use.  Set this to\n"
+    "'false' to hide the usage hint.",
     true);
 
 static setting_bool g_original_case(
@@ -89,8 +101,21 @@ bool suggestion_manager::get_visible(str_base& out) const
     out.concat(sugg.get_pointer(), sugg.length());
 
 #ifdef USE_SUGGESTION_HINT_INLINE
-    out.concat(STR_SUGGESTION_HINT_INLINE);
-#endif
+    if (g_autosuggest_hint.get())
+    {
+#ifdef RIGHT_ALIGN_SUGGESTION_HINT
+        COORD size = measure_readline_display(rl_prompt, out.c_str(), out.length());
+        static const uint32 hint_cols = cell_count(STR_SUGGESTION_HINT_INLINE) + 1;
+        if (size.X + hint_cols >= _rl_screenwidth)
+        {
+            concat_spaces(out, _rl_screenwidth - size.X);
+            size.X = 0;
+        }
+        concat_spaces(out, _rl_screenwidth - (size.X + hint_cols));
+#endif // RIGHT_ALIGN_SUGGESTION_HINT
+        out.concat(STR_SUGGESTION_HINT_INLINE);
+    }
+#endif  // USE_SUGGESTION_HINT_INLINE
 
     return true;
 }

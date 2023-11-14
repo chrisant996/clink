@@ -8,9 +8,12 @@
 // (with a hyperlink) in the comment row when there's suggestion text.
 //#define USE_SUGGESTION_HINT_COMMENTROW
 
-// Define USE_SUGGESTION_HINT_INLINE to show "[->]-Accept" (with a hyperlink)
+// Define USE_SUGGESTION_HINT_INLINE to show "[Right]-accept suggestion" (with a hyperlink)
 // inline when there's suggestion text.
-//#define USE_SUGGESTION_HINT_INLINE
+// Define RIGHT_ALIGN_SUGGESTION_HINT to show the hint right aligned, dropping
+// down a line if it doesn't fit.
+#define USE_SUGGESTION_HINT_INLINE
+#define RIGHT_ALIGN_SUGGESTION_HINT
 
 class line_buffer;
 typedef struct _history_expansion history_expansion;
@@ -20,6 +23,7 @@ void display_readline();
 void set_history_expansions(history_expansion* list=nullptr);
 void resize_readline_display(const char* prompt, const line_buffer& buffer, const char* _prompt, const char* _rprompt);
 bool translate_xy_to_readline(uint32 x, uint32 y, int32& pos, bool clip=false);
+COORD measure_readline_display(const char* prompt=nullptr, const char* buffer=nullptr, uint32 len=-1);
 
 //------------------------------------------------------------------------------
 #if defined(USE_SUGGESTION_HINT_COMMENTROW) || defined(USE_SUGGESTION_HINT_INLINE)
@@ -28,10 +32,10 @@ bool translate_xy_to_readline(uint32 x, uint32 y, int32& pos, bool clip=false);
 
 //------------------------------------------------------------------------------
 #ifdef USE_SUGGESTION_HINT_INLINE
-#define STR_SUGGESTION_HINT_INLINE      "    ->-Accept"
-#define IDX_SUGGESTION_KEY_BEGIN        (-9)
-#define IDX_SUGGESTION_KEY_END          (-7)
-#define IDX_SUGGESTION_LINK_TEXT        (-6)
+#define STR_SUGGESTION_HINT_INLINE      "    Right-Accept Suggestion"
+#define IDX_SUGGESTION_KEY_BEGIN        (-23)
+#define IDX_SUGGESTION_KEY_END          (-18)
+#define IDX_SUGGESTION_LINK_TEXT        (-17)
 #endif
 
 //------------------------------------------------------------------------------
@@ -51,6 +55,9 @@ int32 prompt_contains_problem_codes(const char* prompt, std::vector<prompt_probl
 #define FACE_NORMAL         '0'
 #define FACE_STANDOUT       '1'
 
+// WARNING:  PRE-DEFINED FACE IDS MUST BE IN 1..127; THE RANGE 128..255 IS FOR
+// CUSTOM LUA CLASSIFICATION FACE IDS.
+
 #define FACE_INPUT          '2'
 #define FACE_MODMARK        '*'
 #define FACE_MESSAGE        '('
@@ -60,7 +67,7 @@ int32 prompt_contains_problem_codes(const char* prompt, std::vector<prompt_probl
 #define FACE_SUGGESTION     '-'
 #ifdef USE_SUGGESTION_HINT_INLINE
 #define FACE_SUGGESTIONKEY  char(0x1a)  // In OEM 437 codepage, 0x1a is a right-arrow character.
-#define FACE_SUGGESTIONLINK char(0x81)
+#define FACE_SUGGESTIONLINK char(0x15)  // In OEM 437 codepage, 0x15 is a section symbol, which looks similar to a link.
 #endif
 
 #define FACE_OTHER          'o'
