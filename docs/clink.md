@@ -1953,6 +1953,7 @@ Supply an "on advance" function by including <code>onadvance=<span class="arg">f
 
 - Return `1` to advance to the next argument position _before_ parsing the word (normally the parser advances _after_ parsing a word).  Multiple advances are possible for the same word:  if the "on advance" functions for argument positions 2, 3, and 4 all return `1`, then argument position 5 will parse the word.
 - Return `0` to repeat using same argument position to parse both the current word and the next word.  Multiple repititions are possible for the same argument position:  if the "on advance" function for argument position 3 returns `0` for three words in a row, then all three of the words are parsed using argument position 3.
+- Return `-1` to behave as though [:chaincommand()](#_argmatcher:chaincommand) were used, and start parsing a new command line beginning at `word_index`.  To start at the _next_ word index, see the "[chain next](#chainnextexample)" example below.
 
 To use this, Clink v1.5.14 or higher is required.
 
@@ -1977,6 +1978,32 @@ clink.argmatcher("start")
     "/d"..clink.argmatcher():addarg(clink.dirmatches),
 })
 :chaincommand()
+```
+
+<a name="chainnextexample"/>
+
+This example demonstrates how to chain on the next word, or also on the current word:
+- `foo chain bar` chains starting at word 3 ("bar").
+- `foo whatever.exe` chains starting at word w ("whatever.exe").
+
+```lua
+local function chain_on_word(arg_index, word, word_index, line_state, user_data)
+    if user_data.do_chain then
+        return -1                   -- Chain command because the "chain" keyword was seen previously.
+    elseif word == "chain" then
+        user_data.do_chain = true   -- Remember that the "chain" keyword was seen.
+        return 0                    -- Use the same arg_index for the next word index.
+    elseif path.getextension(word) ~= "" then
+        return -1                   -- Chain command immediately when the word has an extension.
+    end
+end
+
+clink.argmatcher("foo")
+:addarg({
+    onadvance=chain_on_keyword,
+    "abc", "def", "ghi",
+})
+:nofiles()
 ```
 
 ##### The "on arg" function
