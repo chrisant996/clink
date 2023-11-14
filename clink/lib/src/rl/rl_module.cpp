@@ -327,6 +327,10 @@ setting_enum g_default_bindings(
 extern setting_bool g_debug_log_terminal;
 extern setting_bool g_terminal_raw_esc;
 
+#ifdef USE_SUGGESTION_HINT_INLINE
+extern setting_bool g_autosuggest_hint;
+#endif
+
 
 
 //------------------------------------------------------------------------------
@@ -826,10 +830,13 @@ static char get_face_func(int32 in, int32 active_begin, int32 active_end)
     if (0 <= g_suggestion_offset && g_suggestion_offset <= in)
     {
 #ifdef USE_SUGGESTION_HINT_INLINE
-        if (in >= rl_end + IDX_SUGGESTION_LINK_TEXT)
-            return FACE_SUGGESTIONLINK;
-        else if (in >= rl_end + IDX_SUGGESTION_KEY_BEGIN && in < rl_end + IDX_SUGGESTION_KEY_END)
-            return FACE_SUGGESTIONKEY;
+        if (g_autosuggest_hint.get())
+        {
+            if (in >= rl_end + IDX_SUGGESTION_LINK_TEXT)
+                return FACE_SUGGESTIONLINK;
+            else if (in >= rl_end + IDX_SUGGESTION_KEY_BEGIN && in < rl_end + IDX_SUGGESTION_KEY_END)
+                return FACE_SUGGESTIONKEY;
+        }
 #endif
         return FACE_SUGGESTION;
     }
