@@ -1026,17 +1026,25 @@ TEST_CASE("Lua arg parsers")
             clink.argmatcher('start'):addarg({onadvance=maybe_string}):addflags('-x'..xargs):chaincommand()\
             clink.argmatcher('plerg'):addflags('-l', '-m', '-n'):addarg('xxx', 'yyy'):nofiles()\
             \
-            local function maybe_chain(ai, w, word_index, line_state, user_data)\
+            local function maybe_chain(ai, word, word_index, line_state, user_data)\
                 if user_data.do_chain then\
                     return -1\
-                elseif w == 'chain' then\
+                elseif word == 'chain' then\
                     user_data.do_chain = true\
                     return 0\
-                elseif path.getextension(w) ~= '' then\
+                elseif path.getextension(word) ~= '' then\
                     return -1\
                 end\
             end\
-            clink.argmatcher('qqq'):addarg({onadvance=maybe_chain, 'one', 'two'})\
+            local numbers = clink.argmatcher():addarg('11', '22')\
+            local function maybe_link(l, ai, word)\
+                if word == 'three' then\
+                    return false\
+                elseif word == 'link' then\
+                    return numbers\
+                end\
+            end\
+            clink.argmatcher('qqq'):addarg({onadvance=maybe_chain, onlink=maybe_link, 'one', 'two'..numbers, 'three'..numbers}):nofiles()\
         ";
 
         lua_load_script(lua, app, cmd);
@@ -1088,6 +1096,29 @@ TEST_CASE("Lua arg parsers")
 
             tester.set_input("qqq cmd.exe");
             tester.set_expected_classifications("momo", true);
+            tester.run();
+        }
+
+        SECTION("onlink")
+        {
+            tester.set_input("qqq ");
+            tester.set_expected_matches("one", "two", "three");
+            tester.run();
+
+            tester.set_input("qqq one ");
+            tester.set_expected_matches();
+            tester.run();
+
+            tester.set_input("qqq two ");
+            tester.set_expected_matches("11", "22");
+            tester.run();
+
+            tester.set_input("qqq three ");
+            tester.set_expected_matches();
+            tester.run();
+
+            tester.set_input("qqq link ");
+            tester.set_expected_matches("11", "22");
             tester.run();
         }
     }
