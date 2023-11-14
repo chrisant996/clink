@@ -1025,6 +1025,18 @@ TEST_CASE("Lua arg parsers")
             local xargs = clink.argmatcher():addarg('aaa', 'bbb')\
             clink.argmatcher('start'):addarg({onadvance=maybe_string}):addflags('-x'..xargs):chaincommand()\
             clink.argmatcher('plerg'):addflags('-l', '-m', '-n'):addarg('xxx', 'yyy'):nofiles()\
+            \
+            local function maybe_chain(ai, w, word_index, line_state, user_data)\
+                if user_data.do_chain then\
+                    return -1\
+                elseif w == 'chain' then\
+                    user_data.do_chain = true\
+                    return 0\
+                elseif path.getextension(w) ~= '' then\
+                    return -1\
+                end\
+            end\
+            clink.argmatcher('qqq'):addarg({onadvance=maybe_chain, 'one', 'two'})\
         ";
 
         lua_load_script(lua, app, cmd);
@@ -1057,6 +1069,25 @@ TEST_CASE("Lua arg parsers")
             tester.set_input("start \"qq\" plerg -l ");
             tester.set_expected_classifications("mcomof", true);
             tester.set_expected_matches("xxx", "yyy");
+            tester.run();
+        }
+
+        SECTION("onadvance chain")
+        {
+            tester.set_input("qqq one");
+            tester.set_expected_classifications("moa", true);
+            tester.run();
+
+            tester.set_input("qqq chain cmd");
+            tester.set_expected_classifications("moomo", true);
+            tester.run();
+
+            tester.set_input("qqq cmd");
+            tester.set_expected_classifications("moo", true);
+            tester.run();
+
+            tester.set_input("qqq cmd.exe");
+            tester.set_expected_classifications("momo", true);
             tester.run();
         }
     }
