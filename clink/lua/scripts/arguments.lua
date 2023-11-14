@@ -19,6 +19,11 @@ function _arglink._new(key, matcher)
     }, _arglink)
 end
 
+--------------------------------------------------------------------------------
+local _argmatcher = {}
+_argmatcher.__index = _argmatcher
+setmetatable(_argmatcher, { __call = function (x, ...) return x._new(...) end })
+
 
 
 --------------------------------------------------------------------------------
@@ -212,19 +217,35 @@ local function get_classify_color(code)
 end
 
 --------------------------------------------------------------------------------
-local function lookup_link(arg, word, line_state, word_index)
-    if arg and arg._links then
-        local eqlink
-        if line_state then
+function _argreader:lookup_link(arg, arg_index, word, word_index, line_state)
+    if word and arg then
+        local link, forced
+
+        if arg._links then
             local info = line_state:getwordinfo(word_index)
             if info then -- word_index may be -1 when expanding a doskey alias.
                 local pos = info.offset + info.length
                 if line_state:getline():sub(pos, pos) == "=" then
-                    eqlink = arg._links[word.."="]
+                    link = arg._links[word.."="]
                 end
             end
+            if not link then
+                link = arg._links[word]
+            end
         end
-        return eqlink or arg._links[word]
+
+        if arg.onlink then
+            local override = arg.onlink(link, arg_index, word, word_index, line_state, self._user_data)
+            if override == false then
+                link = nil
+                forced = true
+            elseif getmetatable(override) == _argmatcher then
+                link = override
+                forced = true
+            end
+        end
+
+        return link, forced
     end
 end
 
@@ -292,7 +313,7 @@ function _argreader:update(word, word_index, extra, last_onadvance) -- luacheck:
             word:find("[:=]$") then
         -- Check if the word does not link to another matcher.
         local flagarg = self._matcher._flags._args[1]
-        if not lookup_link(flagarg, word) then
+        if not self:lookup_link(flagarg, 0, word, word_index, line_state) then
             -- Check if the next word is adjacent.
             local thiswordinfo = line_state:getwordinfo(word_index)
             local nextwordinfo = line_state:getwordinfo(word_index + 1)
@@ -363,16 +384,17 @@ function _argreader:update(word, word_index, extra, last_onadvance) -- luacheck:
             if react then
                 -- 1 = Ignore; advance to next arg_index.
                 -- 0 = Repeat; stay on the arg_index.
-                if react ~= 1 and react ~= 0 then
+                -- -1 = Chain; behave like :chaincommand().
+                if react ~= 1 and react ~= 0 and react ~= -1 then
                     react = nil
                 end
             end
         end
     end
-    if last_onadvance and react ~= 1 then
+    if last_onadvance and react ~= 1 and react ~= -1 then
         return
     end
-    local next_arg_index = arg_index + (react and react or 1)
+    local next_arg_index = arg_index + ((react ~= 0) and 1 or 0)
 
     -- If the arg has looping characters defined and a looping character
     -- separates this word from the next, then don't advance to the next
@@ -427,9 +449,12 @@ function _argreader:update(word, word_index, extra, last_onadvance) -- luacheck:
     end
 
     -- Some matchers have no args at all.  Or ran out of args.
+    if react == -1 then
+        return true -- chaincommand.
+    end
     if not arg then
         if matcher._chain_command then
-            return true
+            return true -- chaincommand.
         end
         if self._word_classifier and not extra then
             if matcher._no_file_generation then
@@ -553,9 +578,9 @@ function _argreader:update(word, word_index, extra, last_onadvance) -- luacheck:
     end
 
     -- Does the word lead to another matcher?
-    local linked = lookup_link(arg, word, line_state, word_index)
+    local linked, forced = self:lookup_link(arg, arg_index, word, word_index, line_state)
     if linked then
-        if is_flag and word:match("[:=]$") then
+        if not forced and is_flag and word:match("[:=]$") then
             local info = line_state:getwordinfo(word_index)
             if info and
                     line_state:getcursor() ~= info.offset + info.length and
@@ -684,11 +709,6 @@ end
 
 
 --------------------------------------------------------------------------------
-local _argmatcher = {}
-_argmatcher.__index = _argmatcher
-setmetatable(_argmatcher, { __call = function (x, ...) return x._new(...) end })
-
---------------------------------------------------------------------------------
 local function append_uniq_chars(chars, find, add)
     chars = chars or ""
     find = find or "[]"
@@ -722,6 +742,9 @@ local function apply_options_to_list(addee, list)
     end
     if addee.onarg then
         list.onarg = addee.onarg
+    end
+    if addee.onlink then
+        list.onlink = addee.onlink
     end
     if addee.fromhistory then
         list.fromhistory = true
