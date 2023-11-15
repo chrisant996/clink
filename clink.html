@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.5.13</title>
+<title>Clink v1.5.14</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -902,7 +902,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.5.13</div>
+                <div id="title">Clink v1.5.14</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -1159,6 +1159,7 @@ $endif
 <p>You can turn off automatic suggestions with <code>clink set <a href="#autosuggest_enable">autosuggest.enable</a> false</code>, or turn them on with <code>clink set autosuggest.enable true</code>.</p>
 <p>When automatic suggestions are enabled and the cursor is at the end of the input line, a suggestion may appear in a muted color.  If the suggestion isn&#39;t what you want, just ignore it.  Or you can accept the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, accept the next word of the suggestion with <kbd>Ctrl</kbd>-<kbd>Right</kbd>, or accept the next full word of the suggestion up to a space with <kbd>Shift</kbd>-<kbd>Right</kbd>.</p>
 <p>The <a href="#autosuggest_strategy"><code>autosuggest.strategy</code></a> setting determines how suggestions are chosen.</p>
+<p>The <a href="#autosuggest_hint"><code>autosuggest.hint</code></a> setting controls whether to show the <code>[Right]=Accept Suggestion</code> usage hint when a suggestion is available.</p>
 <p>Here&#39;s an example of how auto-suggestion works.  Suppose you ran a command, so now it&#39;s in your command history:</p>
 <pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default">C:\dir&gt;<span class="color_executable">findstr</span>&nbsp; <span class="color_input">/s needle haystack\*</span></span>
 </code></pre>
@@ -1305,6 +1306,11 @@ $endif
 <td align="center"><a class="wlink" href="#autosuggest_enable"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="autosuggest_enable"></a><code>autosuggest.enable</code></td>
 <td align="center">True</td>
 <td>When this is <code>true</code> a suggested command may appear in <a href="#color_suggestion"><code>color.suggestion</code></a> color after the cursor.  If the suggestion isn&#39;t what you want, just ignore it.  Or accept the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, accept the next word of the suggestion with <kbd>Ctrl</kbd>-<kbd>Right</kbd>, or accept the next full word of the suggestion up to a space with <kbd>Shift</kbd>-<kbd>Right</kbd>.  The <a href="#autosuggest_strategy"><code>autosuggest.strategy</code></a> setting determines how a suggestion is chosen.</td>
+</tr>
+<tr>
+<td align="center"><a class="wlink" href="#autosuggest_hint"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="autosuggest_hint"></a><code>autosuggest.hint</code></td>
+<td align="center">True</td>
+<td>The default is <code>true</code>.  When this and <a href="#autosuggest_enable"><code>autosuggest.enable</code></a> are both <code>true</code> and a suggestion is available, show a usage hint <code>[Right]=Accept Suggestion</code> to help make the feature more discoverable and easy to use.  Set this to <code>false</code> to hide the usage hint.</td>
 </tr>
 <tr>
 <td align="center"><a class="wlink" href="#autosuggest_original_case"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a><a name="autosuggest_original_case"></a><code>autosuggest.original_case</code></td>
@@ -4121,8 +4127,20 @@ m:setflagprefix(&quot;-&quot;)
 <p><a name="responsive-argmatchers"></a></p>
 <h4 id="responding-to-arguments-in-argmatchers"><a class="wlink" href="#responsive-argmatchers"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Responding to Arguments in Argmatchers</h4>
 <p>Argmatchers can be more involved in parsing the command line, if they wish.</p>
-<p>An argmatcher can supply an &quot;on arg&quot; function to be called when the argmatcher parses an argument position.  The function can influence parsing the rest of the input line.  For example, the presence of a flag <code>--only-dirs</code> might change what match completions should be provided somewhere else in the input line.</p>
-<p>Supply an &quot;on arg&quot; function by including <code>onarg=<span class="arg">function</span></code> in the argument table with <a href="#_argmatcher:addarg">_argmatcher:addarg()</a>.  The function is passed five arguments, and it doesn&#39;t return anything.</p>
+<p>An argmatcher can supply &quot;on advance&quot; or &quot;on arg&quot; functions to be called when the argmatcher parses an argument position.  The functions can influence parsing the rest of the input line.  For example, the presence of a flag <code>--only-dirs</code> might change what match completions should be provided somewhere else in the input line.</p>
+<ul>
+<li>An &quot;<a href="#the-on-advance-function">on advance</a>&quot; function is called <em>before</em> parsing a word.  It can influence which argument position will parse the word (it can advance to the next position before parsing, or it can repeat the same argument position for parsing both the current word and the next word).</li>
+<li>An &quot;<a href="#the-on-arg-function">on arg</a>&quot; function is called <em>when</em> parsing a word.  It can examine the word and do custom processing.</li>
+<li>An &quot;<a href="#the-on-link-function">on link</a>&quot; function is called <em>after</em> parsing a word.  It can examine the word and override what argmatcher it links to (see <a href="#argmatcher_linking">Linking Parsers</a>).</li>
+</ul>
+<p>All of these callback functions receive a <code>user_data</code> table.  When parsing begins, the <code>user_data</code> is an empty table.  Each time a flag or argument links to another argmatcher, the new argmatcher gets a separate new empty <code>user_data</code> table.  Your &quot;on advance&quot; and &quot;on arg&quot; and &quot;on link&quot; functions can set data into the table, and functions called later during parsing can get the data that was set by earlier functions (for example to keep track of what flags were specified earlier in the command line).</p>
+<blockquote>
+<p><strong>Note:</strong> These callback functions are called very often, so they need to be very fast or they can cause responsiveness problems while typing.</p>
+</blockquote>
+<h5 id="the-on-advance-function"><a class="wlink" href="#the-on-advance-function"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>The &quot;on advance&quot; function</h5>
+<p>Supply an &quot;on advance&quot; function by including <code>onadvance=<span class="arg">function</span></code> in the argument table with <a href="#_argmatcher:addarg">_argmatcher:addarg()</a>.  The function can return an integer to choose how to advance through the argument positions.</p>
+<p>To use this, Clink v1.5.14 or higher is required.</p>
+<p>The function receives five arguments:</p>
 <ul>
 <li><code>arg_index</code> is the argument index in the argmatcher, corresponding to the argument being parsed.  0 means it is a flag, rather than an argument.</li>
 <li><code>word</code> is a partial string for the word under the cursor, corresponding to the argument being parsed:  it is an empty string, or if a filename is being entered then it will be the path portion (e.g. for &quot;dir1\dir2\pre&quot; <code>word</code> will be &quot;dir1\dir2&quot;).</li>
@@ -4130,8 +4148,73 @@ m:setflagprefix(&quot;-&quot;)
 <li><code>line_state</code> is a <a href="#line_state">line_state</a> object that contains the words for the associated command line.</li>
 <li><code>user_data</code> is a table that the argmatcher can use to help it parse the input line.</li>
 </ul>
-<p>When parsing begins, the <code>user_data</code> is an empty table.  Each time a flag or argument links to another argmatcher, the new argmatcher gets a separate new empty <code>user_data</code> table.  Your &quot;on arg&quot; functions can set data from the table, and then can also get data that was set earlier by your &quot;on arg&quot; functions.</p>
-<p>An &quot;on arg&quot; function can also use <a href="#os.chdir">os.chdir()</a> to set the current directory.  Generating match completions saves and restores the current directory when finished, so argmatcher &quot;on arg&quot; functions can set the current directory and thus cause match completion later in the input line to complete file names relative to the change directory.  For example, the built-in <code>cd</code> and <code>pushd</code> argmatches use an &quot;on arg&quot; function so that <code>pushd \other_dir &amp; program </code><kbd>Tab</kbd> can complete file names from <code>\other_dir</code> instead of the (real) current directory.</p>
+<p>The function may return any of the following values:</p>
+<ul>
+<li>Return <code>1</code> to advance to the next argument position <em>before</em> parsing the word (normally the parser advances <em>after</em> parsing a word).  Multiple advances are possible for the same word:  if the &quot;on advance&quot; functions for argument positions 2, 3, and 4 all return <code>1</code>, then argument position 5 will parse the word.</li>
+<li>Return <code>0</code> to repeat using same argument position to parse both the current word and the next word.  Multiple repititions are possible for the same argument position:  if the &quot;on advance&quot; function for argument position 3 returns <code>0</code> for three words in a row, then all three of the words are parsed using argument position 3.</li>
+<li>Return <code>-1</code> to behave as though <a href="#_argmatcher:chaincommand">:chaincommand()</a> were used, and start parsing a new command line beginning at <code>word_index</code>.  To start at the <em>next</em> word index, see the &quot;<a href="#chainnextexample">chain next</a>&quot; example below.</li>
+<li>Return <code>nil</code> (either <code>return nil</code> or just <code>return</code>) to advance to the next argument position <em>after</em> parsing the word (this is the default behavior).</li>
+</ul>
+<p>This example demonstrates treating arg index 1 as an optional title string only if quoted:</p>
+<pre><code class="language-lua">local function maybe_string(arg_index, word, word_index, line_state, user_data)
+    local info = line_state:getwordinfo(word_index)
+    if not info.quoted then
+        return 1    -- Advance; this arg position is optional and only accepts a
+                    -- quoted string.  Anything else can&#39;t be parsed by this
+                    -- argument position.
+    end
+end
+
+clink.argmatcher(&quot;start&quot;)
+:addarg({
+    onadvance = maybe_string,
+    fromhistory = true,
+})
+:addflags({
+    &quot;/min&quot;, &quot;/max&quot;,
+    &quot;/wait&quot;, &quot;/b&quot;,
+    &quot;/d&quot;..clink.argmatcher():addarg(clink.dirmatches),
+})
+:chaincommand()
+</code></pre>
+<a name="chainnextexample"/>
+
+<p>This example demonstrates how to chain on the next word, or also on the current word:</p>
+<ul>
+<li><code>foo chain bar</code> chains starting at word 3 (&quot;bar&quot;).</li>
+<li><code>foo whatever.exe</code> chains starting at word w (&quot;whatever.exe&quot;).</li>
+</ul>
+<pre><code class="language-lua">local function chain_on_word(arg_index, word, word_index, line_state, user_data)
+    if user_data.do_chain then
+        return -1                   -- Chain command because the &quot;chain&quot; keyword was seen previously.
+    elseif word == &quot;chain&quot; then
+        user_data.do_chain = true   -- Remember that the &quot;chain&quot; keyword was seen.
+        return 0                    -- Use the same arg_index for the next word index.
+    elseif path.getextension(word) ~= &quot;&quot; then
+        return -1                   -- Chain command immediately when the word has an extension.
+    end
+end
+
+clink.argmatcher(&quot;foo&quot;)
+:addarg({
+    onadvance=chain_on_keyword,
+    &quot;abc&quot;, &quot;def&quot;, &quot;ghi&quot;,
+})
+:nofiles()
+</code></pre>
+<h5 id="the-on-arg-function"><a class="wlink" href="#the-on-arg-function"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>The &quot;on arg&quot; function</h5>
+<p>Supply an &quot;on arg&quot; function by including <code>onarg=<span class="arg">function</span></code> in the argument table with <a href="#_argmatcher:addarg">_argmatcher:addarg()</a>.  The function can examine the word and do custom processing.</p>
+<p>To use this, Clink v1.3.3 or higher is required.</p>
+<p>The function receives five arguments:</p>
+<ul>
+<li><code>arg_index</code> is the argument index in the argmatcher, corresponding to the argument being parsed.  0 means it is a flag, rather than an argument.</li>
+<li><code>word</code> is a partial string for the word under the cursor, corresponding to the argument being parsed:  it is an empty string, or if a filename is being entered then it will be the path portion (e.g. for &quot;dir1\dir2\pre&quot; <code>word</code> will be &quot;dir1\dir2&quot;).</li>
+<li><code>word_index</code> is the word index in <code>line_state</code>, corresponding to the argument being parsed.</li>
+<li><code>line_state</code> is a <a href="#line_state">line_state</a> object that contains the words for the associated command line.</li>
+<li><code>user_data</code> is a table that the argmatcher can use to help it parse the input line.</li>
+</ul>
+<p>The function doesn&#39;t return anything.</p>
+<p>An &quot;on arg&quot; function can even use <a href="#os.chdir">os.chdir()</a> to set the current directory.  Generating match completions saves and restores the current directory when finished, so argmatcher &quot;on arg&quot; functions can set the current directory and thus cause match completion later in the input line to complete file names relative to the change directory.  For example, the built-in <code>cd</code> and <code>pushd</code> argmatches use an &quot;on arg&quot; function so that <code>pushd \other_dir &amp; program </code><kbd>Tab</kbd> can complete file names from <code>\other_dir</code> instead of the (real) current directory.</p>
 <pre><code class="language-lua">local function onarg_pushd(arg_index, word, word_index, line_state, user_data)
     -- Match generation after this is relative to the new directory.
     if word ~= &quot;&quot; then
@@ -4144,6 +4227,50 @@ clink.argmatcher(&quot;pushd&quot;)
     onarg=onarg_pushd,  -- Chdir to the directory argument.
     clink.dirmatches,   -- Generate directory matches.
 })
+:nofiles()
+</code></pre>
+<h5 id="the-on-link-function"><a class="wlink" href="#the-on-link-function"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>The &quot;on link&quot; function</h5>
+<p>Supply an &quot;on link&quot; function by including <code>onlink=<span class="arg">function</span></code> in the argument table with <a href="#_argmatcher:addarg">_argmatcher:addarg()</a>.  The function can return an argmatcher to override when to link to another parser, and which parser to link to.</p>
+<p>To use this, Clink v1.5.14 or higher is required.</p>
+<p>The function receives six arguments:</p>
+<ul>
+<li><code>link</code> is the linked argmatcher, if any, that will be used if this function returns <code>nil</code>.</li>
+<li><code>arg_index</code> is the argument index in the argmatcher, corresponding to the argument being parsed.  0 means it is a flag, rather than an argument.</li>
+<li><code>word</code> is a partial string for the word under the cursor, corresponding to the argument being parsed:  it is an empty string, or if a filename is being entered then it will be the path portion (e.g. for &quot;dir1\dir2\pre&quot; <code>word</code> will be &quot;dir1\dir2&quot;).</li>
+<li><code>word_index</code> is the word index in <code>line_state</code>, corresponding to the argument being parsed.</li>
+<li><code>line_state</code> is a <a href="#line_state">line_state</a> object that contains the words for the associated command line.</li>
+<li><code>user_data</code> is a table that the argmatcher can use to help it parse the input line.</li>
+</ul>
+<p>The function may return any of the following:</p>
+<ul>
+<li>Return an argmatcher to override subsequent parsing and use the specified argmatcher.</li>
+<li>Return <code>false</code> to override subsequent parsing and continue using the current argmatcher.</li>
+<li>Return <code>nil</code> to allow parsing to behave normally.</li>
+</ul>
+<blockquote>
+<p><strong>Note:</strong> Avoid creating new argmatchers in &quot;on link&quot; functions; instead return cached argmatchers that were previously created.  The &quot;on link&quot; functions may be called frequently, and creating new argmatchers every time can create responsiveness problems while typing.</p>
+</blockquote>
+<p>This example demonstrates linking to another argmatcher if the first argument is any .txt file.  Any other value for the first argument continues using the same argmatcher to parse the rest of the command.</p>
+<ul>
+<li><code>foo file.txt open abc</code></li>
+<li><code>foo file.doc abc</code></li>
+</ul>
+<pre><code class="language-lua">local txt_file_actions = clink.argmatcher():addarg({&quot;open&quot;, &quot;print&quot;})
+
+local function maybe_txt_actions(link, arg_index, word, word_index, line_state, user_data)
+    -- If a txt file name is specified, link to another argmatcher.
+    if path.getextension(word):lower() == &quot;.txt&quot; then
+        return txt_file_actions
+    end
+    -- Otherwise continue normally with the current argmatcher.
+end
+
+clink.argmatcher(&quot;foo&quot;)
+:addarg({
+    onlink=maybe_txt_actions,   -- Link to another argmatcher only when any .txt file is specified.
+    clink.filematches,
+})
+:addarg(&quot;abc&quot;, &quot;xyz&quot;)
 :nofiles()
 </code></pre>
 <p><a name="argmatcher_shorthand"></a></p>
@@ -7183,6 +7310,16 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes"><a class="wlink" href="#changes"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork"><a class="wlink" href="#releases-from-chrisant996clink-fork"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1514"><a class="wlink" href="#v1514"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.5.14</h4>
+<ul>
+<li>Added a visible usage hint for <a href="#gettingstarted_autosuggest">Auto-Suggestions</a> to help make the feature more discoverable and usable.  The usage hint can be hidden by turning off the <code>autosuggest.hint</code> setting.</li>
+<li>Added a callback function that can be assigned to an argument position by including <code>onadvance=your_callback_function</code> in the table given to <code>:addarg()</code> (see <a href="#responsive-argmatchers">Responding to Arguments in Argmatchers</a> for more information).</li>
+<li>Fixed displaying match descriptions containing embedded color codes.</li>
+<li>Fixed finding argmatchers for doskey alias names containing quotes.</li>
+<li>Fixed parsing the input line when a doskey alias references a command with an argmatcher that uses the <code>:chaincommand()</code> function (e.g. an alias <code>foo=sudo dir $*</code> with an argmatcher like <code>clink.argmatcher(&quot;sudo&quot;):chaincommand()</code> so that completions and input line coloring work properly for the rest of the input line).</li>
+<li>Fixed the <code>exec.commands</code> setting with an argmatcher that uses the <code>:chaincommand()</code> function.</li>
+<li>Fixed <code>_argmatcher:setclassifier()</code> so the custom classifier is called for flags as well as for arguments.</li>
+</ul>
 <h4 id="v1513"><a class="wlink" href="#v1513"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.5.13</h4>
 <ul>
 <li>Added <code>clink.onhistory()</code> to register a function to be called when the input line has been accepted and is about to be added to history (and optionally cancel adding it).</li>
