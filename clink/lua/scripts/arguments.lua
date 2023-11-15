@@ -284,6 +284,7 @@ end
 --
 -- Returns TRUE when chaining due to chaincommand().
 function _argreader:update(word, word_index, extra, last_onadvance) -- luacheck: no unused
+    self._chain_command = nil
     self._cycle_detection = nil
     if self._disabled then
         return
@@ -450,10 +451,12 @@ function _argreader:update(word, word_index, extra, last_onadvance) -- luacheck:
 
     -- Some matchers have no args at all.  Or ran out of args.
     if react == -1 then
+        self._chain_command = true
         return true -- chaincommand.
     end
     if not arg then
         if matcher._chain_command then
+            self._chain_command = true
             return true -- chaincommand.
         end
         if self._word_classifier and not extra then
@@ -1685,7 +1688,7 @@ function _argmatcher:_generate(reader, match_builder) -- luacheck: no unused
         local arg = matcher._args[arg_index]
         if arg then
             return add_matches(arg, match_type) and true or false
-        elseif matcher._chain_command then
+        elseif reader._chain_command then
             local exec = clink._exec_matches(line_state, match_builder, true--[[chained]])
             return exec or add_matches({clink.filematches}) or false
         end
