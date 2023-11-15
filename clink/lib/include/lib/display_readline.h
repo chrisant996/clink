@@ -4,11 +4,11 @@
 #include <core/str.h>
 #include <vector>
 
-// Define USE_SUGGESTION_HINT_COMMENTROW to show "[Right]-Accept Suggestion"
+// Define USE_SUGGESTION_HINT_COMMENTROW to show "[Right]=Accept Suggestion"
 // (with a hyperlink) in the comment row when there's suggestion text.
 //#define USE_SUGGESTION_HINT_COMMENTROW
 
-// Define USE_SUGGESTION_HINT_INLINE to show "[Right]-accept suggestion" (with a hyperlink)
+// Define USE_SUGGESTION_HINT_INLINE to show "[Right]=Accept Suggestion" (with a hyperlink)
 // inline when there's suggestion text.
 // Define RIGHT_ALIGN_SUGGESTION_HINT to show the hint right aligned, dropping
 // down a line if it doesn't fit.
@@ -32,7 +32,7 @@ COORD measure_readline_display(const char* prompt=nullptr, const char* buffer=nu
 
 //------------------------------------------------------------------------------
 #ifdef USE_SUGGESTION_HINT_INLINE
-#define STR_SUGGESTION_HINT_INLINE      "    Right-Accept Suggestion"
+#define STR_SUGGESTION_HINT_INLINE      "    Right=Accept Suggestion"
 #define IDX_SUGGESTION_KEY_BEGIN        (-23)
 #define IDX_SUGGESTION_KEY_END          (-18)
 #define IDX_SUGGESTION_LINK_TEXT        (-17)

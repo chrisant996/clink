@@ -1871,7 +1871,7 @@ void display_manager::display()
                 static const char c_BEL[] = "\a";
 
                 str_moveable in;
-                in << c_reverse << "Right" << c_unreverse << "-";
+                in << c_reverse << "Right" << c_unreverse << "=";
                 in << c_hyperlink << c_doc_autosuggest << c_BEL << "Accept Suggestion" << c_hyperlink << c_BEL;
 
 #undef m_next
