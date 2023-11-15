@@ -3,6 +3,7 @@
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
 #### v1.5.15
+- Added localized descriptions for flag completions in `cmd`, `cd`, and `rd`.
 - Fixed the `onlink` callback function in `:addflags()` so that the `arg_index` parameter is correctly `0` instead of `1`.
 
 #### v1.5.14
