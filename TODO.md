@@ -57,7 +57,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 
 ## Leaning Towards No
 - [Changed member style](https://github.com/mridgers/clink/commit/fd5041a34ba162fd3adc1b7b0c5910438e343235) -- Huge; renames members from `m_foo` to `_foo`.
-- [Use AppData/Local for a the DLL cache as temp can get cleaned](https://github.com/mridgers/clink/commit/8ed3cb0b427970c8082acb238071b26d5e788057) -- Isn't getting cleaned desirable?  Otherwise DLL versions accumulate without bound.
 - It could be reasonable to add an iterator version of `os.globfiles()`, but replacing it breaks compatibility.
   - [Made Lua's os.glob*() work like an iterator instead of building a table](https://github.com/mridgers/clink/commit/13fc3b68046d2cee0f2188b9c8d54fa0cbc18718)
   - [os.glob*() tests](https://github.com/mridgers/clink/commit/5cfacee2a2b8230968854bc94bc3e1adf6b56bf9)
@@ -65,6 +64,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
   - [builder::addmatches() now also accepts a function](https://github.com/mridgers/clink/commit/6a2b818efd84377b3a625bb1ecdeffe89da20cd6) -- This is inconsistent with `argmatcher:addflags()` and `argmatcher:addarg()`, and is generally non-intuitive.
 
 ## No
+- [Use AppData/Local for a the DLL cache as temp can get cleaned](https://github.com/mridgers/clink/commit/8ed3cb0b427970c8082acb238071b26d5e788057) -- Getting cleaned is desirable.  Otherwise DLL versions accumulate without bound.
 - [Don't expect the user to account for a null terminator](https://github.com/mridgers/clink/commit/4583281d464933d9ce021aedcdf3edc5e3fdc189) -- This still requires the user to account for a null terminator, by removing the space for the null terminator, otherwise the block gets sized differently than expected (and can have extra slop allocated).
 - Removing all copyright dates seems problematic.  Isn't it required in copyright notices?  And in the program logo header it provides date context for the program version being used.
   - [Removed date from header](https://github.com/mridgers/clink/commit/7ca14e8d4c82b4a6e6801af4b702329d8de29eef)
