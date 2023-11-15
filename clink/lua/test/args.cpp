@@ -1049,6 +1049,7 @@ TEST_CASE("Lua arg parsers")
 
         lua_load_script(lua, app, cmd);
         lua_load_script(lua, app, dir);
+        lua_load_script(lua, app, exec);
         lua_word_classifier lua_classifier(lua);
         tester.get_editor()->set_classifier(lua_classifier);
 
