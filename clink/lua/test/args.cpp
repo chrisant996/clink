@@ -1038,13 +1038,18 @@ TEST_CASE("Lua arg parsers")
             end\
             local numbers = clink.argmatcher():addarg('11', '22')\
             local function maybe_link(l, ai, word)\
-                if word == 'three' then\
+                if ai == 0 and word == '-f' then\
+                    return numbers\
+                elseif ai > 0 and word == 'three' then\
                     return false\
-                elseif word == 'link' then\
+                elseif ai > 0 and word == 'link' then\
                     return numbers\
                 end\
             end\
-            clink.argmatcher('qqq'):addarg({onadvance=maybe_chain, onlink=maybe_link, 'one', 'two'..numbers, 'three'..numbers}):nofiles()\
+            clink.argmatcher('qqq')\
+            :addarg({onadvance=maybe_chain, onlink=maybe_link, 'one', 'two'..numbers, 'three'..numbers})\
+            :addflags({onlink=maybe_link, '-x'})\
+            :nofiles()\
         ";
 
         lua_load_script(lua, app, cmd);
@@ -1119,6 +1124,14 @@ TEST_CASE("Lua arg parsers")
             tester.run();
 
             tester.set_input("qqq link ");
+            tester.set_expected_matches("11", "22");
+            tester.run();
+
+            tester.set_input("qqq -x ");
+            tester.set_expected_matches("one", "two", "three");
+            tester.run();
+
+            tester.set_input("qqq -f ");
             tester.set_expected_matches("11", "22");
             tester.run();
         }

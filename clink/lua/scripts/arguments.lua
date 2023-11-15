@@ -581,7 +581,7 @@ function _argreader:update(word, word_index, extra, last_onadvance) -- luacheck:
     end
 
     -- Does the word lead to another matcher?
-    local linked, forced = self:lookup_link(arg, arg_index, word, word_index, line_state)
+    local linked, forced = self:lookup_link(arg, is_flag and 0 or arg_index, word, word_index, line_state)
     if linked then
         if not forced and is_flag and word:match("[:=]$") then
             local info = line_state:getwordinfo(word_index)
