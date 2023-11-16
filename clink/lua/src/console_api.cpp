@@ -767,6 +767,56 @@ static int32 set_width(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+static int32 get_color_table(lua_State* state)
+{
+    static COLORREF c_default_Terminal_colors[] =
+    {
+        RGB(0x0c, 0x0c, 0x0c),
+        RGB(0x00, 0x37, 0xda),
+        RGB(0x13, 0xa1, 0x0e),
+        RGB(0x3a, 0x96, 0xdd),
+        RGB(0xc5, 0x0f, 0x1f),
+        RGB(0x88, 0x17, 0x98),
+        RGB(0xc1, 0x9c, 0x00),
+        RGB(0xcc, 0xcc, 0xcc),
+        RGB(0x76, 0x76, 0x76),
+        RGB(0x3b, 0x78, 0xff),
+        RGB(0x16, 0xc6, 0x0c),
+        RGB(0x61, 0xd6, 0xd6),
+        RGB(0xe7, 0x48, 0x56),
+        RGB(0xb4, 0x00, 0x9e),
+        RGB(0xf9, 0xf1, 0xa5),
+        RGB(0xf2, 0xf2, 0xf2),
+    };
+    static_assert(sizeof_array(c_default_Terminal_colors) == 16, "color table is wrong size");
+
+    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+    CONSOLE_SCREEN_BUFFER_INFOEX csbix = { sizeof(csbix) };
+    if (!GetConsoleScreenBufferInfoEx(h, &csbix))
+        return 0;
+
+    lua_createtable(state, 16, 0);
+
+    str<> s;
+    for (uint32 i = 0; i < sizeof_array(csbix.ColorTable); ++i)
+    {
+        COLORREF cr = csbix.ColorTable[i];
+        s.format("#%02x%02x%02x", GetRValue(cr), GetGValue(cr), GetBValue(cr));
+        lua_pushlstring(state, s.c_str(), s.length());
+        lua_rawseti(state, -2, i + 1);
+    }
+
+    if (memcmp(csbix.ColorTable, c_default_Terminal_colors, sizeof(csbix.ColorTable)) == 0)
+    {
+        lua_pushliteral(state, "default");
+        lua_pushboolean(state, true);
+        lua_rawset(state, -3);
+    }
+
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 void console_lua_initialise(lua_state& lua)
 {
     struct {
@@ -792,6 +842,7 @@ void console_lua_initialise(lua_state& lua)
         { "checkinput",             &check_input },
         // UNDOCUMENTED; internal use only.
         { "__set_width",            &set_width },
+        { "_get_color_table",       &get_color_table },
     };
 
     lua_State* state = lua.get_state();
