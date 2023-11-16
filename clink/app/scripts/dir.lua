@@ -66,6 +66,7 @@ local function cd_delayinit(argmatcher)
             pending.desc = nil
         end
         for line in f:lines() do
+            line = unicode.fromcodepage(line)
             local flag, text
             if line:find("/[Dd] ") and not line:find("[%[%]]") then
                 flag = "/D"
@@ -113,6 +114,7 @@ local function rd_delayinit(argmatcher)
             pending.desc = nil
         end
         for line in f:lines() do
+            line = unicode.fromcodepage(line)
             local flag, text = line:match("^%s*(/[A-Za-z])%s+([^%s].*)$")
             if not flag and pending.flag then
                 text = line:match("^%s+([^%s].*)$")

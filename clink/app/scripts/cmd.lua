@@ -116,6 +116,7 @@ local function delayinit(argmatcher)
             pending.desc = nil
         end
         for line in f:lines() do
+            line = unicode.fromcodepage(line)
             local flag, text = line:match("^(/[A-Za-z][^%s]*)%s+([^%s].*)$")
             if not flag and pending.flag then
                 text = line:match("^%s+([^%s].*)$")
