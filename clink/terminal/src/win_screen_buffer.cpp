@@ -464,8 +464,6 @@ bool win_screen_buffer::get_line_text(int32 line, str_base& out) const
     DWORD len = 0;
     if (!ReadConsoleOutputCharacterW(m_handle, m_chars, csbi.dwSize.X, coord, &len))
         return false;
-    if (len != csbi.dwSize.X)
-        return false;
 
     while (len > 0 && iswspace(m_chars[len - 1]))
         len--;
