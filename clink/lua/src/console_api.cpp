@@ -32,6 +32,20 @@ static SHORT GetConsoleNumLines(const CONSOLE_SCREEN_BUFFER_INFO& csbi)
 }
 
 //------------------------------------------------------------------------------
+static uint16 s_default_attr = 0x07;
+void detect_console_default_attr()
+{
+    s_default_attr = 0x07;
+
+    CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
+    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (!GetConsoleScreenBufferInfo(h, &csbiInfo))
+        return;
+
+    s_default_attr = csbiInfo.wAttributes;
+}
+
+//------------------------------------------------------------------------------
 class input_scope
 {
 public:
@@ -812,6 +826,22 @@ static int32 get_color_table(lua_State* state)
         lua_pushboolean(state, true);
         lua_rawset(state, -3);
     }
+
+    // Luminance range is 0..3000 inclusive.
+    #define luminance(cr) \
+        (((299 * DWORD(GetRValue(cr))) + \
+          (587 * DWORD(GetGValue(cr))) + \
+          (114 * DWORD(GetBValue(cr)))) / 85)
+
+    const uint32 lum_bg = luminance(csbix.ColorTable[(s_default_attr & 0xf0) >> 4]);
+    if (lum_bg > luminance(RGB(128, 128, 128)))
+    {
+        lua_pushliteral(state, "light");
+        lua_pushboolean(state, true);
+        lua_rawset(state, -3);
+    }
+
+    #undef luminance
 
     return 1;
 }

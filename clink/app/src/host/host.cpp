@@ -872,6 +872,13 @@ skip_errorlevel:
         lua.load_scripts();
     }
 
+    // Detect light vs dark console theme.
+    if (send_event)
+    {
+        extern void detect_console_default_attr();
+        detect_console_default_attr();
+    }
+
     // Send oninject event; one time only.
     static bool s_injected = false;
     if (send_event && !s_injected)
