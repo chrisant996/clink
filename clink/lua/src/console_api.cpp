@@ -261,7 +261,7 @@ static int32 get_line_text(lua_State* state)
     if (!GetConsoleScreenBufferInfo(h, &csbi))
         return 0;
 
-    line = min<int32>(line, GetConsoleNumLines(csbi));
+    line = min<int32>(line, GetConsoleNumLines(csbi) - 1);
     line = max<int32>(line, 0);
 
     str_moveable out;
@@ -332,7 +332,7 @@ static int32 is_line_default_color(lua_State* state)
     if (!GetConsoleScreenBufferInfo(h, &csbi))
         return 0;
 
-    line = min<int32>(line, GetConsoleNumLines(csbi));
+    line = min<int32>(line, GetConsoleNumLines(csbi) - 1);
     line = max<int32>(line, 0);
 
     int32 result = g_printer->is_line_default_color(line);
@@ -404,7 +404,7 @@ static int32 line_has_color(lua_State* state)
     if (!GetConsoleScreenBufferInfo(h, &csbi))
         return 0;
 
-    line = min<int32>(line, GetConsoleNumLines(csbi));
+    line = min<int32>(line, GetConsoleNumLines(csbi) - 1);
     line = max<int32>(line, 0);
 
     BYTE mask = 0xff;
@@ -470,7 +470,7 @@ static int32 find_line(lua_State* state, int32 direction)
 
     SHORT num_lines = GetConsoleNumLines(csbi);
 
-    starting_line = min<int32>(starting_line, num_lines);
+    starting_line = min<int32>(starting_line, num_lines - 1);
     starting_line = max<int32>(starting_line, 0);
     arg++;
 
