@@ -6,6 +6,7 @@
 - Added localized descriptions for flag completions in `cmd`, `cd`, and `rd`.
 - Fixed the `onlink` callback function in `:addflags()` so that the `arg_index` parameter is correctly `0` instead of `1`.
 - Fixed the upper bound line number for Lua console line API functions.
+- Fixed `console.getlinetext()` when emoji are present.
 
 #### v1.5.14
 - Added a visible usage hint for [Auto-Suggestions](#gettingstarted_autosuggest) to help make the feature more discoverable and usable.  The usage hint can be hidden by turning off the `autosuggest.hint` setting.
