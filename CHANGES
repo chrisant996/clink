@@ -4,6 +4,9 @@
 
 #### v1.5.15
 - Added localized descriptions for flag completions in `cmd`, `cd`, and `rd`.
+- Changed the default for `color.suggestion` so that it attempts to detect light themes (bright background colors) and automatically adjust the color for suggestions to be faint but have sufficient contrast to be readable.
+  - Currently the background color can only be detected when using the legacy conhost terminal.
+  - When using Windows Terminal, ConEmu, or other ConPty-based terminals there is currently no way to detect the background color -- but once the [Terminal#10639](https://github.com/microsoft/terminal/issues/10639) issue is fixed then Clink will also detect the background color in these terminal programs.
 - Fixed the `onlink` callback function in `:addflags()` so that the `arg_index` parameter is correctly `0` instead of `1`.
 - Fixed the upper bound line number for Lua console line API functions.
 - Fixed `console.getlinetext()` when emoji are present.
