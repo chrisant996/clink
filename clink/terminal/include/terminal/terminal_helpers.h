@@ -61,3 +61,7 @@ private:
     rollback<printer*> m_rb_printer;
 };
 
+//------------------------------------------------------------------------------
+enum class console_theme : uint8 { unknown, default, dark, light };
+void detect_console_default_attr();
+console_theme get_console_theme(const CONSOLE_SCREEN_BUFFER_INFOEX& csbix);

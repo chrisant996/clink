@@ -32,20 +32,6 @@ static SHORT GetConsoleNumLines(const CONSOLE_SCREEN_BUFFER_INFO& csbi)
 }
 
 //------------------------------------------------------------------------------
-static uint16 s_default_attr = 0x07;
-void detect_console_default_attr()
-{
-    s_default_attr = 0x07;
-
-    CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
-    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-    if (!GetConsoleScreenBufferInfo(h, &csbiInfo))
-        return;
-
-    s_default_attr = csbiInfo.wAttributes;
-}
-
-//------------------------------------------------------------------------------
 class input_scope
 {
 public:
@@ -783,27 +769,6 @@ static int32 set_width(lua_State* state)
 //------------------------------------------------------------------------------
 static int32 get_color_table(lua_State* state)
 {
-    static COLORREF c_default_Terminal_colors[] =
-    {
-        RGB(0x0c, 0x0c, 0x0c),
-        RGB(0x00, 0x37, 0xda),
-        RGB(0x13, 0xa1, 0x0e),
-        RGB(0x3a, 0x96, 0xdd),
-        RGB(0xc5, 0x0f, 0x1f),
-        RGB(0x88, 0x17, 0x98),
-        RGB(0xc1, 0x9c, 0x00),
-        RGB(0xcc, 0xcc, 0xcc),
-        RGB(0x76, 0x76, 0x76),
-        RGB(0x3b, 0x78, 0xff),
-        RGB(0x16, 0xc6, 0x0c),
-        RGB(0x61, 0xd6, 0xd6),
-        RGB(0xe7, 0x48, 0x56),
-        RGB(0xb4, 0x00, 0x9e),
-        RGB(0xf9, 0xf1, 0xa5),
-        RGB(0xf2, 0xf2, 0xf2),
-    };
-    static_assert(sizeof_array(c_default_Terminal_colors) == 16, "color table is wrong size");
-
     HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
     CONSOLE_SCREEN_BUFFER_INFOEX csbix = { sizeof(csbix) };
     if (!GetConsoleScreenBufferInfoEx(h, &csbix))
@@ -820,28 +785,21 @@ static int32 get_color_table(lua_State* state)
         lua_rawseti(state, -2, i + 1);
     }
 
-    if (memcmp(csbix.ColorTable, c_default_Terminal_colors, sizeof(csbix.ColorTable)) == 0)
+    const console_theme ct = get_console_theme(csbix);
+    const char* theme = nullptr;
+    switch (ct)
     {
-        lua_pushliteral(state, "default");
+    case console_theme::default:    theme = "default";
+    case console_theme::dark:       theme = "dark";
+    case console_theme::light:      theme = "light";
+    }
+
+    if (theme)
+    {
+        lua_pushstring(state, theme);
         lua_pushboolean(state, true);
         lua_rawset(state, -3);
     }
-
-    // Luminance range is 0..3000 inclusive.
-    #define luminance(cr) \
-        (((299 * DWORD(GetRValue(cr))) + \
-          (587 * DWORD(GetGValue(cr))) + \
-          (114 * DWORD(GetBValue(cr)))) / 85)
-
-    const uint32 lum_bg = luminance(csbix.ColorTable[(s_default_attr & 0xf0) >> 4]);
-    if (lum_bg > luminance(RGB(128, 128, 128)))
-    {
-        lua_pushliteral(state, "light");
-        lua_pushboolean(state, true);
-        lua_rawset(state, -3);
-    }
-
-    #undef luminance
 
     return 1;
 }
@@ -871,8 +829,8 @@ void console_lua_initialise(lua_state& lua)
         { "readinput",              &read_input },
         { "checkinput",             &check_input },
         // UNDOCUMENTED; internal use only.
+        { "getcolortable",          &get_color_table },
         { "__set_width",            &set_width },
-        { "_get_color_table",       &get_color_table },
     };
 
     lua_State* state = lua.get_state();

@@ -132,6 +132,71 @@ extern "C" int32 cursor_style(HANDLE handle, int32 style, int32 visible)
 
 
 //------------------------------------------------------------------------------
+static uint16 s_default_attr = 0x07;
+void detect_console_default_attr()
+{
+    s_default_attr = 0x07;
+
+    CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
+    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (!GetConsoleScreenBufferInfo(h, &csbiInfo))
+        return;
+
+    s_default_attr = csbiInfo.wAttributes;
+}
+
+//------------------------------------------------------------------------------
+console_theme get_console_theme(const CONSOLE_SCREEN_BUFFER_INFOEX& csbix)
+{
+    static COLORREF c_default_conpty_colors[] =
+    {
+        RGB(0x0c, 0x0c, 0x0c),
+        RGB(0x00, 0x37, 0xda),
+        RGB(0x13, 0xa1, 0x0e),
+        RGB(0x3a, 0x96, 0xdd),
+        RGB(0xc5, 0x0f, 0x1f),
+        RGB(0x88, 0x17, 0x98),
+        RGB(0xc1, 0x9c, 0x00),
+        RGB(0xcc, 0xcc, 0xcc),
+        RGB(0x76, 0x76, 0x76),
+        RGB(0x3b, 0x78, 0xff),
+        RGB(0x16, 0xc6, 0x0c),
+        RGB(0x61, 0xd6, 0xd6),
+        RGB(0xe7, 0x48, 0x56),
+        RGB(0xb4, 0x00, 0x9e),
+        RGB(0xf9, 0xf1, 0xa5),
+        RGB(0xf2, 0xf2, 0xf2),
+    };
+    static_assert(sizeof_array(c_default_conpty_colors) == 16, "color table is wrong size");
+
+    if (memcmp(csbix.ColorTable, c_default_conpty_colors, sizeof(csbix.ColorTable)) == 0)
+    {
+        switch (get_current_ansi_handler())
+        {
+        case ansi_handler::winconsole:
+        case ansi_handler::winconsolev2:
+            break;
+        default:
+            return console_theme::default;
+        }
+    }
+
+    // Luminance range is 0..3000 inclusive.
+    #define luminance(cr) \
+        (((299 * DWORD(GetRValue(cr))) + \
+        (587 * DWORD(GetGValue(cr))) + \
+        (114 * DWORD(GetBValue(cr)))) / 85)
+
+    const uint32 lum_bg = luminance(csbix.ColorTable[(s_default_attr & 0xf0) >> 4]);
+    if (lum_bg >= luminance(RGB(0x99,0x99,0x99)))
+        return console_theme::light;
+    else if (lum_bg <= luminance(RGB(0x66,0x66,0x66)))
+        return console_theme::dark;
+    else
+        return console_theme::unknown;
+}
+
+//------------------------------------------------------------------------------
 static constexpr uint8 c_colors[] = { 30, 34, 32, 36, 31, 35, 33, 37, 90, 94, 92, 96, 91, 95, 93, 97 };
 const char* get_popup_colors()
 {
