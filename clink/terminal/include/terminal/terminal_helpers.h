@@ -63,5 +63,6 @@ private:
 
 //------------------------------------------------------------------------------
 enum class console_theme : uint8 { unknown, default, dark, light };
-void detect_console_default_attr();
-console_theme get_console_theme(const CONSOLE_SCREEN_BUFFER_INFOEX& csbix);
+void detect_console_theme();
+uint8 get_console_faint_text();
+console_theme get_console_theme();

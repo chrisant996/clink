@@ -132,23 +132,32 @@ extern "C" int32 cursor_style(HANDLE handle, int32 style, int32 visible)
 
 
 //------------------------------------------------------------------------------
-static uint16 s_default_attr = 0x07;
-void detect_console_default_attr()
+static console_theme s_console_theme = console_theme::unknown;
+console_theme get_console_theme()
 {
-    s_default_attr = 0x07;
-
-    CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
-    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-    if (!GetConsoleScreenBufferInfo(h, &csbiInfo))
-        return;
-
-    s_default_attr = csbiInfo.wAttributes;
+    return s_console_theme;
 }
 
 //------------------------------------------------------------------------------
-console_theme get_console_theme(const CONSOLE_SCREEN_BUFFER_INFOEX& csbix)
+static uint8 s_faint_text = 0x80;
+uint8 get_console_faint_text()
 {
-    static COLORREF c_default_conpty_colors[] =
+    return s_faint_text;
+}
+
+//------------------------------------------------------------------------------
+void detect_console_theme()
+{
+    CONSOLE_SCREEN_BUFFER_INFOEX csbix = { sizeof(csbix) };
+    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (!GetConsoleScreenBufferInfoEx(h, &csbix))
+    {
+        s_console_theme = console_theme::unknown;
+        s_faint_text = 0x80;
+        return;
+    }
+
+    static const COLORREF c_default_conpty_colors[] =
     {
         RGB(0x0c, 0x0c, 0x0c),
         RGB(0x00, 0x37, 0xda),
@@ -177,7 +186,9 @@ console_theme get_console_theme(const CONSOLE_SCREEN_BUFFER_INFOEX& csbix)
         case ansi_handler::winconsolev2:
             break;
         default:
-            return console_theme::default;
+            s_console_theme = console_theme::default;
+            s_faint_text = 0x80;
+            return;
         }
     }
 
@@ -187,13 +198,22 @@ console_theme get_console_theme(const CONSOLE_SCREEN_BUFFER_INFOEX& csbix)
         (587 * DWORD(GetGValue(cr))) + \
         (114 * DWORD(GetBValue(cr)))) / 85)
 
-    const uint32 lum_bg = luminance(csbix.ColorTable[(s_default_attr & 0xf0) >> 4]);
+    const uint32 lum_bg = luminance(csbix.ColorTable[(csbix.wAttributes & 0xf0) >> 4]);
     if (lum_bg >= luminance(RGB(0x99,0x99,0x99)))
-        return console_theme::light;
+    {
+        s_console_theme = console_theme::light;
+        s_faint_text = (lum_bg * 255 / 3000) - 0x33;
+    }
     else if (lum_bg <= luminance(RGB(0x66,0x66,0x66)))
-        return console_theme::dark;
+    {
+        s_console_theme = console_theme::dark;
+        s_faint_text = (lum_bg * 255 / 3000) + 0x33;
+    }
     else
-        return console_theme::unknown;
+    {
+        s_console_theme = console_theme::unknown;
+        s_faint_text = 0x80;
+    }
 }
 
 //------------------------------------------------------------------------------

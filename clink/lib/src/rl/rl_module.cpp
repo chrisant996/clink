@@ -266,7 +266,7 @@ setting_color g_color_suggestion(
     "color.suggestion",
     "Color for suggestion text",
     "The color for suggestion text to be inserted at the end of the input line.",
-    "bright black");
+    "");
 
 static setting_color g_color_unexpected(
     "color.unexpected",
@@ -921,14 +921,40 @@ static void puts_face_func(const char* s, const char* face, int32 n)
                 hyperlink = true;
                 break;
 
-            case FACE_SUGGESTION:   out << fallback_color(s_suggestion_color, "\x1b[0;90m"); break;
+            case FACE_SUGGESTION:
 #ifdef USE_SUGGESTION_HINT_INLINE
-            case FACE_SUGGESTIONKEY: out << fallback_color(s_suggestion_color, "\x1b[0;90m") << "\x1b[7m"; break;
+            case FACE_SUGGESTIONKEY:
             case FACE_SUGGESTIONLINK:
-                out << fallback_color(s_suggestion_color, "\x1b[0;90m") << c_hyperlink << c_doc_autosuggest << c_BEL;
-                hyperlink = true;
-                break;
 #endif
+                if (s_suggestion_color)
+                    out << s_suggestion_color;
+                else
+                {
+                    switch (get_console_theme())
+                    {
+                    case console_theme::light:
+                    case console_theme::dark:
+                        {
+                            str<16> faint;
+                            faint.format(";%u", get_console_faint_text());
+                            out << "\x1b[0;38;2" << faint << faint << faint << "m";
+                        }
+                        break;
+                    default:
+                        out << "\x1b[0;90m";
+                        break;
+                    }
+                }
+#ifdef USE_SUGGESTION_HINT_INLINE
+                if (cur_face == FACE_SUGGESTIONKEY)
+                    out << "\x1b[7m";
+                else if (cur_face == FACE_SUGGESTIONLINK)
+                {
+                    out << c_hyperlink << c_doc_autosuggest << c_BEL;
+                    hyperlink = true;
+                }
+#endif
+                break;
 
             case FACE_OTHER:        out << other_color; break;
             case FACE_UNRECOGNIZED: out << fallback_color(s_unrecognized_color, other_color); break;

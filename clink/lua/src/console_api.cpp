@@ -785,13 +785,12 @@ static int32 get_color_table(lua_State* state)
         lua_rawseti(state, -2, i + 1);
     }
 
-    const console_theme ct = get_console_theme(csbix);
     const char* theme = nullptr;
-    switch (ct)
+    switch (get_console_theme())
     {
-    case console_theme::default:    theme = "default";
-    case console_theme::dark:       theme = "dark";
-    case console_theme::light:      theme = "light";
+    case console_theme::default:    theme = "default"; break;
+    case console_theme::dark:       theme = "dark"; break;
+    case console_theme::light:      theme = "light"; break;
     }
 
     if (theme)

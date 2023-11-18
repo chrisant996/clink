@@ -875,8 +875,8 @@ skip_errorlevel:
     // Detect light vs dark console theme.
     if (send_event)
     {
-        extern void detect_console_default_attr();
-        detect_console_default_attr();
+        extern void detect_console_theme();
+        detect_console_theme();
     }
 
     // Send oninject event; one time only.
