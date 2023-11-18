@@ -65,4 +65,6 @@ private:
 enum class console_theme : uint8 { unknown, default, dark, light };
 void detect_console_theme();
 uint8 get_console_faint_text();
+uint8 get_console_default_attr();
 console_theme get_console_theme();
+int32 get_nearest_color(const CONSOLE_SCREEN_BUFFER_INFOEX& csbix, const uint8 (&rgb)[3]);

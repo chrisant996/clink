@@ -738,40 +738,38 @@ static int32 check_input(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-// UNDOCUMENTED; internal use only.
-static int32 set_width(lua_State* state)
-{
-    static bool s_fudge_verified = false;
-    static bool s_fudge_needed = false;
-
-    const int32 width = checkinteger(state, 1);
-    if (width <= 0)
-        return 0;
-
-    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-    CONSOLE_SCREEN_BUFFER_INFOEX csbix = { sizeof(csbix) };
-    if (!GetConsoleScreenBufferInfoEx(h, &csbix))
-        return 0;
-
-    csbix.dwSize.X = width;
-    csbix.srWindow.Right = width;
-    if (!SetConsoleScreenBufferInfoEx(h, &csbix))
-        return 0;
-
-// BUGBUG:  SetConsoleScreenBufferInfoEx isn't working correctly; sometimes it
-// shrinks the height by 1, but sometimes adding 1 overcompensates and increases
-// the height.
-
-    lua_pushboolean(state, true);
-    return 1;
-}
-
-//------------------------------------------------------------------------------
+/// -name:  console.getcolortable
+/// -ver:   1.5.15
+/// -ret:   table
+/// This returns a table containing the 16 predefined colors in the console's
+/// color theme.
+///
+/// Clink also tries to detect the terminal's background color.  If it's able
+/// to, then the returned table also includes either a <code>light = true</code>
+/// field or a <code>dark = true</code> field.
+///
+/// The returned table also includes <code>foreground</code> and
+/// <code>background</code> fields which contain the index of the corresponding
+/// closest colors in the color table.  If unable to determine the closest
+/// colors, then either of these fields may be missing.
+///
+/// **Note:**  When using Windows Terminal, ConEmu, or other ConPty-based
+/// terminals it is currently not possible to get the current color theme until
+/// <a href="https://github.com/microsoft/terminal/issues/10639">Terminal#10639</a>
+/// gets fixed.  Until that's fixed, this can only return a default color table,
+/// which includes a <code>default = true</code> field.  When using the legacy
+/// conhost terminal then this is always able to report the current color theme.
 static int32 get_color_table(lua_State* state)
 {
+    static HMODULE hmod = GetModuleHandle("kernel32.dll");
+    static FARPROC proc = GetProcAddress(hmod, "GetConsoleScreenBufferInfoEx");
+    typedef BOOL (WINAPI* GCSBIEx)(HANDLE, PCONSOLE_SCREEN_BUFFER_INFOEX);
+    if (!proc)
+        return 0;
+
     HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
     CONSOLE_SCREEN_BUFFER_INFOEX csbix = { sizeof(csbix) };
-    if (!GetConsoleScreenBufferInfoEx(h, &csbix))
+    if (!GCSBIEx(proc)(h, &csbix))
         return 0;
 
     lua_createtable(state, 16, 0);
@@ -783,6 +781,27 @@ static int32 get_color_table(lua_State* state)
         s.format("#%02x%02x%02x", GetRValue(cr), GetGValue(cr), GetBValue(cr));
         lua_pushlstring(state, s.c_str(), s.length());
         lua_rawseti(state, -2, i + 1);
+    }
+
+    const uint8 attr = get_console_default_attr();
+    const COLORREF cr_fg = csbix.ColorTable[(attr & 0x0f) >> 0];
+    const COLORREF cr_bg = csbix.ColorTable[(attr & 0xf0) >> 4];
+    const uint8 rgb_fg[3] = { GetRValue(cr_fg), GetGValue(cr_fg), GetBValue(cr_fg) };
+    const uint8 rgb_bg[3] = { GetRValue(cr_bg), GetGValue(cr_bg), GetBValue(cr_bg) };
+    const int32 index_fg = get_nearest_color(csbix, rgb_fg);
+    const int32 index_bg = get_nearest_color(csbix, rgb_bg);
+
+    if (index_fg >= 0)
+    {
+        lua_pushliteral(state, "foreground");
+        lua_pushinteger(state, index_fg + 1);
+        lua_rawset(state, -3);
+    }
+    if (index_bg >= 0)
+    {
+        lua_pushliteral(state, "background");
+        lua_pushinteger(state, index_bg + 1);
+        lua_rawset(state, -3);
     }
 
     const char* theme = nullptr;
@@ -800,6 +819,43 @@ static int32 get_color_table(lua_State* state)
         lua_rawset(state, -3);
     }
 
+    return 1;
+}
+
+//------------------------------------------------------------------------------
+// UNDOCUMENTED; internal use only.
+static int32 set_width(lua_State* state)
+{
+    static bool s_fudge_verified = false;
+    static bool s_fudge_needed = false;
+
+    const int32 width = checkinteger(state, 1);
+    if (width <= 0)
+        return 0;
+
+    static HMODULE hmod = GetModuleHandle("kernel32.dll");
+    static FARPROC proc_get = GetProcAddress(hmod, "GetConsoleScreenBufferInfoEx");
+    static FARPROC proc_set = GetProcAddress(hmod, "SetConsoleScreenBufferInfoEx");
+    typedef BOOL (WINAPI* GCSBIEx)(HANDLE, PCONSOLE_SCREEN_BUFFER_INFOEX);
+    typedef BOOL (WINAPI* SCSBIEx)(HANDLE, PCONSOLE_SCREEN_BUFFER_INFOEX);
+    if (!proc_get || !proc_set)
+        return 0;
+
+    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+    CONSOLE_SCREEN_BUFFER_INFOEX csbix = { sizeof(csbix) };
+    if (!GCSBIEx(proc_get)(h, &csbix))
+        return 0;
+
+    csbix.dwSize.X = width;
+    csbix.srWindow.Right = width;
+    if (!SCSBIEx(proc_set)(h, &csbix))
+        return 0;
+
+// BUGBUG:  SetConsoleScreenBufferInfoEx isn't working correctly; sometimes it
+// shrinks the height by 1, but sometimes adding 1 overcompensates and increases
+// the height.
+
+    lua_pushboolean(state, true);
     return 1;
 }
 
@@ -827,8 +883,8 @@ void console_lua_initialise(lua_state& lua)
         { "findnextline",           &find_next_line },
         { "readinput",              &read_input },
         { "checkinput",             &check_input },
-        // UNDOCUMENTED; internal use only.
         { "getcolortable",          &get_color_table },
+        // UNDOCUMENTED; internal use only.
         { "__set_width",            &set_width },
     };
 

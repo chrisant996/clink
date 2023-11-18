@@ -3,8 +3,8 @@
 
 #include "pch.h"
 #include "win_screen_buffer.h"
-#include "cielab.h"
 #include "find_line.h"
+#include "terminal_helpers.h"
 
 #include <core/base.h>
 #include <core/log.h>
@@ -782,7 +782,6 @@ static bool get_nearest_color(void* handle, const uint8 (&rgb)[3], uint8& attr)
     static HMODULE hmod = GetModuleHandle("kernel32.dll");
     static FARPROC proc = GetProcAddress(hmod, "GetConsoleScreenBufferInfoEx");
     typedef BOOL (WINAPI* GCSBIEx)(HANDLE, PCONSOLE_SCREEN_BUFFER_INFOEX);
-
     if (!proc)
         return false;
 
@@ -790,21 +789,7 @@ static bool get_nearest_color(void* handle, const uint8 (&rgb)[3], uint8& attr)
     if (!GCSBIEx(proc)(handle, &infoex))
         return false;
 
-    cie::lab target(RGB(rgb[0], rgb[1], rgb[2]));
-    double best_deltaE = 0;
-    int32 best_idx = -1;
-
-    for (int32 i = sizeof_array(infoex.ColorTable); i--;)
-    {
-        cie::lab candidate(infoex.ColorTable[i]);
-        double deltaE = cie::deltaE_2(target, candidate);
-        if (best_idx < 0 || best_deltaE > deltaE)
-        {
-            best_deltaE = deltaE;
-            best_idx = i;
-        }
-    }
-
+    const int32 best_idx = get_nearest_color(infoex, rgb);
     if (best_idx < 0)
         return false;
 

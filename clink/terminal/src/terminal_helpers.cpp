@@ -6,6 +6,7 @@
 #include "terminal_out.h"
 #include "terminal_helpers.h"
 #include "screen_buffer.h"
+#include "cielab.h"
 
 #include <core/settings.h>
 #include <core/os.h>
@@ -146,14 +147,28 @@ uint8 get_console_faint_text()
 }
 
 //------------------------------------------------------------------------------
+static uint8 s_default_attr = 0x07;
+uint8 get_console_default_attr()
+{
+    return s_default_attr;
+}
+
+//------------------------------------------------------------------------------
 void detect_console_theme()
 {
+    static HMODULE hmod = GetModuleHandle("kernel32.dll");
+    static FARPROC proc = GetProcAddress(hmod, "GetConsoleScreenBufferInfoEx");
+    typedef BOOL (WINAPI* GCSBIEx)(HANDLE, PCONSOLE_SCREEN_BUFFER_INFOEX);
+    if (!proc)
+        return;
+
     CONSOLE_SCREEN_BUFFER_INFOEX csbix = { sizeof(csbix) };
     HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-    if (!GetConsoleScreenBufferInfoEx(h, &csbix))
+    if (!GCSBIEx(proc)(h, &csbix))
     {
         s_console_theme = console_theme::unknown;
         s_faint_text = 0x80;
+        s_default_attr = 0x07;
         return;
     }
 
@@ -177,6 +192,8 @@ void detect_console_theme()
         RGB(0xf2, 0xf2, 0xf2),
     };
     static_assert(sizeof_array(c_default_conpty_colors) == 16, "color table is wrong size");
+
+    s_default_attr = uint8(csbix.wAttributes);
 
     if (memcmp(csbix.ColorTable, c_default_conpty_colors, sizeof(csbix.ColorTable)) == 0)
     {
@@ -217,6 +234,27 @@ void detect_console_theme()
 }
 
 //------------------------------------------------------------------------------
+int32 get_nearest_color(const CONSOLE_SCREEN_BUFFER_INFOEX& csbix, const uint8 (&rgb)[3])
+{
+    cie::lab target(RGB(rgb[0], rgb[1], rgb[2]));
+    double best_deltaE = 0;
+    int32 best_idx = -1;
+
+    for (int32 i = sizeof_array(csbix.ColorTable); i--;)
+    {
+        cie::lab candidate(csbix.ColorTable[i]);
+        double deltaE = cie::deltaE_2(target, candidate);
+        if (best_idx < 0 || best_deltaE > deltaE)
+        {
+            best_deltaE = deltaE;
+            best_idx = i;
+        }
+    }
+
+    return best_idx;
+}
+
+//------------------------------------------------------------------------------
 static constexpr uint8 c_colors[] = { 30, 34, 32, 36, 31, 35, 33, 37, 90, 94, 92, 96, 91, 95, 93, 97 };
 const char* get_popup_colors()
 {
@@ -230,8 +268,11 @@ const char* get_popup_colors()
         return s_popup.c_str();
     }
 
+    static HMODULE hmod = GetModuleHandle("kernel32.dll");
+    static FARPROC proc = GetProcAddress(hmod, "GetConsoleScreenBufferInfoEx");
+    typedef BOOL (WINAPI* GCSBIEx)(HANDLE, PCONSOLE_SCREEN_BUFFER_INFOEX);
     CONSOLE_SCREEN_BUFFER_INFOEX csbiex = { sizeof(csbiex) };
-    if (!GetConsoleScreenBufferInfoEx(GetStdHandle(STD_OUTPUT_HANDLE), &csbiex))
+    if (!proc || !GCSBIEx(proc)(GetStdHandle(STD_OUTPUT_HANDLE), &csbiex))
         return "0;30;47";
 
     WORD attr = csbiex.wPopupAttributes;
@@ -252,8 +293,11 @@ const char* get_popup_desc_colors()
         return s_popup_desc.c_str();
     }
 
+    static HMODULE hmod = GetModuleHandle("kernel32.dll");
+    static FARPROC proc = GetProcAddress(hmod, "GetConsoleScreenBufferInfoEx");
+    typedef BOOL (WINAPI* GCSBIEx)(HANDLE, PCONSOLE_SCREEN_BUFFER_INFOEX);
     CONSOLE_SCREEN_BUFFER_INFOEX csbiex = { sizeof(csbiex) };
-    if (!GetConsoleScreenBufferInfoEx(GetStdHandle(STD_OUTPUT_HANDLE), &csbiex))
+    if (!proc || !GCSBIEx(proc)(GetStdHandle(STD_OUTPUT_HANDLE), &csbiex))
         return "0;90;47";
 
     int32 dim = 30;
