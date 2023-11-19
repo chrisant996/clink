@@ -235,6 +235,7 @@ function clink._generate(line_state, line_states, match_builder, old_filtering)
 
         -- Run match generators.
         for _, generator in ipairs(_generators) do
+            line_state:_reset_shift()
             local ret = generator:generate(line_state, match_builder)
             if ret == true then
                 -- Remember the generator function that stopped.

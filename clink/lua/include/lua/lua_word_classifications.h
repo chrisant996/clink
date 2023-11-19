@@ -21,6 +21,7 @@ public:
     int32                   classify_word(lua_State* state);
     int32                   apply_color(lua_State* state);
     int32                   shift(lua_State* state);
+    int32                   reset_shift(lua_State* state);
 
     bool                    get_word_class(int32 word_index_zero_based, word_class& wc) const;
 
@@ -30,6 +31,7 @@ private:
     const uint32            m_num_words;
     uint32                  m_command_word_index;
     uint32                  m_shift = 0;
+    const uint32            m_original_command_word_index;
 
     friend class lua_bindable<lua_word_classifications>;
     static const char* const c_name;

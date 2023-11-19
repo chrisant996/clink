@@ -629,7 +629,7 @@ function _argreader:consume_extra(extra)
     if self:update(word, word_index, extra) then
         local lookup = line_state:getword(word_index);
         extra.next_index = 2
-        line_state:shift(word_index)
+        line_state:_shift(word_index)
         return true, lookup
     end
 
@@ -2398,7 +2398,7 @@ function clink._generate_from_historyline(line_state)
         if not info.redir then
             local word = line_state:getword(word_index)
             if reader:update(word, word_index) then
-                line_state:shift(word_index)
+                line_state:_shift(word_index)
                 goto do_command
             end
         end
@@ -2441,7 +2441,7 @@ local function do_generate(line_state, match_builder)
 
         local ret, shift, inner = argmatcher:_generate(reader, match_builder)
         if ret and (shift or inner) then
-            line_state:shift(shift)
+            line_state:_shift(shift)
             lookup = inner
             goto do_command
         end
@@ -2497,7 +2497,7 @@ function argmatcher_generator:getwordbreakinfo(line_state) -- luacheck: no self
             if not info.redir then
                 local word = line_state:getword(word_index)
                 if reader:update(word, word_index) then
-                    line_state:shift(word_index)
+                    line_state:_shift(word_index)
                     goto do_command
                 end
             end
@@ -2602,8 +2602,8 @@ function argmatcher_classifier:classify(commands) -- luacheck: no self
                 if not info.redir then
                     local word = line_state:getword(word_index)
                     if reader:update(word, word_index) then
-                        line_state:shift(word_index)
-                        word_classifier:shift(word_index, line_state:getcommandwordindex())
+                        line_state:_shift(word_index)
+                        word_classifier:_shift(word_index, line_state:getcommandwordindex())
                         goto do_command
                     end
                 end

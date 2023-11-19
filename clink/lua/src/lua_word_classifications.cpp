@@ -25,7 +25,8 @@ const lua_word_classifications::method lua_word_classifications::c_methods[] = {
     { "classifyword",     &classify_word },
     { "applycolor",       &apply_color },
     // UNDOCUMENTED; internal use only.
-    { "shift",            &shift },
+    { "_shift",           &shift },
+    { "_reset_shift",     &reset_shift },
     {}
 };
 
@@ -37,6 +38,7 @@ lua_word_classifications::lua_word_classifications(word_classifications& classif
 , m_index_offset(index_offset)
 , m_num_words(num_words)
 , m_command_word_index(command_word_index)
+, m_original_command_word_index(command_word_index)
 {
 }
 
@@ -176,4 +178,13 @@ int32 lua_word_classifications::shift(lua_State* state)
     lua_pushinteger(state, m_shift);
     lua_pushinteger(state, m_command_word_index);
     return 2;
+}
+
+//------------------------------------------------------------------------------
+// UNDOCUMENTED; internal use only.
+int32 lua_word_classifications::reset_shift(lua_State* state)
+{
+    m_shift = 0;
+    m_command_word_index = m_original_command_word_index;
+    return 0;
 }

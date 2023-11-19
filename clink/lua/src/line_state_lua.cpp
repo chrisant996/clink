@@ -20,7 +20,8 @@ const line_state_lua::method line_state_lua::c_methods[] = {
     { "getword",                &get_word },
     { "getendword",             &get_end_word },
     // UNDOCUMENTED; internal use only.
-    { "shift",                  &shift },
+    { "_shift",                 &shift },
+    { "_reset_shift",           &reset_shift },
     {}
 };
 
@@ -317,4 +318,12 @@ int32 line_state_lua::shift(lua_State* state)
 
     lua_pushinteger(state, m_shift);
     return 1;
+}
+
+//------------------------------------------------------------------------------
+// UNDOCUMENTED; internal use only.
+int32 line_state_lua::reset_shift(lua_State* state)
+{
+    m_shift = 0;
+    return 0;
 }
