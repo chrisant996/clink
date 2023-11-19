@@ -1736,7 +1736,7 @@ A `:` or `=` at the end of a flag indicates the flag takes an argument but requi
 
 #### Functions As Argument Options
 
-Argument options are not limited solely to strings. Clink also accepts functions too so more context aware argument options can be used.
+Argument options are not limited solely to strings. Clink also accepts functions too so more context-aware argument options can be used.
 
 The function is called each time matches are generated for the argument position.
 
@@ -1750,13 +1750,19 @@ the_parser:addarg({ "zippy", "bungle", "george" })
 the_parser:addarg({ rainbow_function, "yellow", "green" })
 ```
 
-The functions are passed five arguments, and should return a table of potential matches (strings).  The table may optionally also contain tables that describe the matches; the format is the same as in [builder:addmatches()](#builder:addmatches).
+The functions are passed five arguments:
 
 - `word` is a partial string for the word under the cursor, corresponding to the argument for which matches are being generated:  it is an empty string, or if a filename is being entered then it will be the path portion (e.g. for "dir1\dir2\pre" `word` will be "dir1\dir2\").
 - `word_index` is the word index in `line_state`, corresponding to the argument for which matches are being generated.
 - `line_state` is a [line_state](#line_state) object that contains the words for the associated command line.
 - `match_builder` is a [builder](#builder) object (but for adding matches the function should return them in a table).
 - `user_data` is a table that the argmatcher can use to help it parse the input line.  See [Responding to Arguments in Argmatchers](#responsive-argmatchers) for more information about the `user_data` table.
+
+The functions can return any of the following:
+
+- Return a table of potential matches (strings).  The table may optionally also contain tables that describe the matches; the format is the same as in [builder:addmatches()](#builder:addmatches).
+- Return `true` to stop generating matches.
+- Return `false` or `nil` (or don't return anything) to stop generating matches and use file completions.
 
 > **Compatibility Note:** When a function argument uses the old v0.4.9 `clink.match_display_filter` approach, then the `word` argument will be the full word under the cursor, for compatibility with the v0.4.9 API.
 
