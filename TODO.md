@@ -7,6 +7,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 ## High Priority
 
 ## Normal Priority
+- Classifiers and :chaincommand() don't play well together.  :chaincommand() shifts the line_state, and classifiers after _argmatcher priority see shifted line_states.
 - Open issue in Terminal repo about bugs in the new shell integration in v1.18.
   - Transient prompt can lead to Terminal getting confused about where prompt markers are.
   - Can the same thing happen with zsh and powerlevel10k transient prompt?
