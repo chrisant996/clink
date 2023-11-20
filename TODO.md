@@ -5,6 +5,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
+- Lua errors in coroutines prevent `_restore_global_modes()` from working properly.
 
 ## Normal Priority
 - Open issue in Terminal repo about bugs in the new shell integration in v1.18.
