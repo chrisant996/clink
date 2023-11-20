@@ -177,6 +177,64 @@ local function do_delayed_init(list, matcher, arg_index)
 end
 
 --------------------------------------------------------------------------------
+local function do_onuse_callback(argmatcher, command_word)
+    -- Don't init while generating matches from history, as that could be
+    -- excessively expensive (could run thousands of callbacks).
+    if clink.co_state._argmatcher_fromhistory and clink.co_state._argmatcher_fromhistory.argmatcher then
+        return
+    end
+
+    if (argmatcher._onuse_generation or 0) < _delayinit_generation then
+        argmatcher._onuse_generation = _delayinit_generation
+    else
+        return
+    end
+
+    local _, ismain = coroutine.running()
+    local async_delayinit = not ismain or not clink._in_generate()
+
+    -- Start the delay init callback if it hasn't already started.
+    local c = argmatcher._onuse_coroutine
+if c then print("...already...  "..tostring(c)) end
+    if not c then
+        -- Run the delayinit callback in a coroutine so typing is responsive.
+        c = coroutine.create(function ()
+            argmatcher._delayinit_func(argmatcher, command_word)
+            argmatcher._onuse_coroutine = nil
+            _clear_onuse_coroutine[argmatcher] = nil
+            if async_delayinit then
+                clink._signal_delayed_init()
+                clink.reclassifyline()
+            end
+        end)
+        argmatcher._onuse_coroutine = c
+
+        -- Make sure the delayinit coroutine runs to completion, even if a new
+        -- prompt generation begins (which would normally orphan coroutines).
+        clink.runcoroutineuntilcomplete(c)
+
+        -- Set up to be able to efficiently clear dangling coroutine references,
+        -- e.g. in case a coroutine doesn't finish before a new edit line.
+        _clear_onuse_coroutine[argmatcher] = argmatcher
+    end
+
+    -- Finish (run) the coroutine immediately only when the main coroutine is
+    -- generating matches.
+    if not async_delayinit then
+        clink._finish_coroutine(c)
+    else
+        -- Run the coroutine up to the first yield, so that if it doesn't need
+        -- to yield at all then it completes right now.
+        local ok, ret = coroutine.resume(c)
+        if not ok and ret and settings.get("lua.debug") then
+            print("")
+            print("coroutine failed:")
+            _co_error_handler(c, ret)
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
 local function is_word_present(word, arg, t, arg_match_type)
     for _, i in ipairs(arg) do
         local it = type(i)
@@ -594,6 +652,9 @@ function _argreader:update(word, word_index, extra, last_onadvance) -- luacheck:
             end
         end
         if linked then
+            if linked._delayinit_func then
+                do_onuse_callback(linked, nil)
+            end
             self:_push(linked)
         end
     end
@@ -2203,63 +2264,6 @@ local function _has_argmatcher(command_word, quoted)
 end
 
 --------------------------------------------------------------------------------
-local function _do_onuse_callback(argmatcher, command_word)
-    -- Don't init while generating matches from history, as that could be
-    -- excessively expensive (could run thousands of callbacks).
-    if clink.co_state._argmatcher_fromhistory and clink.co_state._argmatcher_fromhistory.argmatcher then
-        return
-    end
-
-    if (argmatcher._onuse_generation or 0) < _delayinit_generation then
-        argmatcher._onuse_generation = _delayinit_generation
-    else
-        return
-    end
-
-    local _, ismain = coroutine.running()
-    local async_delayinit = not ismain or not clink._in_generate()
-
-    -- Start the delay init callback if it hasn't already started.
-    local c = argmatcher._onuse_coroutine
-    if not c then
-        -- Run the delayinit callback in a coroutine so typing is responsive.
-        c = coroutine.create(function ()
-            argmatcher._delayinit_func(argmatcher, command_word)
-            argmatcher._onuse_coroutine = nil
-            _clear_onuse_coroutine[argmatcher] = nil
-            if async_delayinit then
-                clink._signal_delayed_init()
-                clink.reclassifyline()
-            end
-        end)
-        argmatcher._onuse_coroutine = c
-
-        -- Make sure the delayinit coroutine runs to completion, even if a new
-        -- prompt generation begins (which would normally orphan coroutines).
-        clink.runcoroutineuntilcomplete(c)
-
-        -- Set up to be able to efficiently clear dangling coroutine references,
-        -- e.g. in case a coroutine doesn't finish before a new edit line.
-        _clear_onuse_coroutine[argmatcher] = argmatcher
-    end
-
-    -- Finish (run) the coroutine immediately only when the main coroutine is
-    -- generating matches.
-    if not async_delayinit then
-        clink._finish_coroutine(c)
-    else
-        -- Run the coroutine up to the first yield, so that if it doesn't need
-        -- to yield at all then it completes right now.
-        local ok, ret = coroutine.resume(c)
-        if not ok and ret and settings.get("lua.debug") then
-            print("")
-            print("coroutine failed:")
-            _co_error_handler(c, ret)
-        end
-    end
-end
-
---------------------------------------------------------------------------------
 -- Finds an argmatcher for the first word and returns:
 --  argmatcher  = The argmatcher, unless there are too few words to use it.
 --  exists      = True if argmatcher exists (even if too few words to use it).
@@ -2300,7 +2304,7 @@ local function _find_argmatcher(line_state, check_existence, lookup)
                         if check_existence then
                             argmatcher = nil
                         elseif argmatcher._delayinit_func then
-                            _do_onuse_callback(argmatcher, eword)
+                            do_onuse_callback(argmatcher, eword)
                         end
                         extra.next_index = ecwi + 1
                         return argmatcher, true, extra
@@ -2326,7 +2330,7 @@ local function _find_argmatcher(line_state, check_existence, lookup)
         if check_existence then
             argmatcher = nil
         elseif argmatcher._delayinit_func then
-            _do_onuse_callback(argmatcher, command_word)
+            do_onuse_callback(argmatcher, command_word)
         end
         return argmatcher, true
     end
