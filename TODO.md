@@ -5,15 +5,14 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- Lua errors in coroutines prevent `_restore_global_modes()` from working properly.
 
 ## Normal Priority
+
+## Low Priority
 - Open issue in Terminal repo about bugs in the new shell integration in v1.18.
   - Transient prompt can lead to Terminal getting confused about where prompt markers are.
   - Can the same thing happen with zsh and powerlevel10k transient prompt?
   - Provide a sample .txt file that repros the issue.  Maybe multiple .txt files that chain together (or with a pause; is there an escape code for a pause?) to show the UX flow.
-
-## Low Priority
 - Consider plumbing `lua_State*` through all layers to help guarantee things don't accidentally cross from a coroutine into main?
 - Color improvements:
   - Color themes.  Some way to import color settings en masse.  Some way to export color settings as well?
