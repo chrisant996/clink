@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.5.15</title>
+<title>Clink v1.5.16</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -902,7 +902,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.5.15</div>
+                <div id="title">Clink v1.5.16</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -3966,7 +3966,7 @@ c_parser:addarg({ b_parser })               -- Arg #2 is &quot;abc&quot; or &quo
 </code></pre>
 <p><a name="argmatcher_functions"></a></p>
 <h4 id="functions-as-argument-options"><a class="wlink" href="#argmatcher_functions"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Functions As Argument Options</h4>
-<p>Argument options are not limited solely to strings. Clink also accepts functions too so more context aware argument options can be used.</p>
+<p>Argument options are not limited solely to strings. Clink also accepts functions too so more context-aware argument options can be used.</p>
 <p>The function is called each time matches are generated for the argument position.</p>
 <pre><code class="language-lua">local function rainbow_function(word)
     return { &quot;red&quot;, &quot;white&quot;, &quot;blue&quot; }
@@ -3976,13 +3976,19 @@ local the_parser = clink.argmatcher()
 the_parser:addarg({ &quot;zippy&quot;, &quot;bungle&quot;, &quot;george&quot; })
 the_parser:addarg({ rainbow_function, &quot;yellow&quot;, &quot;green&quot; })
 </code></pre>
-<p>The functions are passed five arguments, and should return a table of potential matches (strings).  The table may optionally also contain tables that describe the matches; the format is the same as in <a href="#builder:addmatches">builder:addmatches()</a>.</p>
+<p>The functions are passed five arguments:</p>
 <ul>
 <li><code>word</code> is a partial string for the word under the cursor, corresponding to the argument for which matches are being generated:  it is an empty string, or if a filename is being entered then it will be the path portion (e.g. for &quot;dir1\dir2\pre&quot; <code>word</code> will be &quot;dir1\dir2&quot;).</li>
 <li><code>word_index</code> is the word index in <code>line_state</code>, corresponding to the argument for which matches are being generated.</li>
 <li><code>line_state</code> is a <a href="#line_state">line_state</a> object that contains the words for the associated command line.</li>
 <li><code>match_builder</code> is a <a href="#builder">builder</a> object (but for adding matches the function should return them in a table).</li>
 <li><code>user_data</code> is a table that the argmatcher can use to help it parse the input line.  See <a href="#responsive-argmatchers">Responding to Arguments in Argmatchers</a> for more information about the <code>user_data</code> table.</li>
+</ul>
+<p>The functions can return any of the following:</p>
+<ul>
+<li>Return a table of potential matches (strings).  The table may optionally also contain tables that describe the matches; the format is the same as in <a href="#builder:addmatches">builder:addmatches()</a>.</li>
+<li>Return <code>true</code> to stop generating matches.</li>
+<li>Return <code>false</code> or <code>nil</code> (or don&#39;t return anything) to stop generating matches and use file completions.</li>
 </ul>
 <blockquote>
 <p><strong>Compatibility Note:</strong> When a function argument uses the old v0.4.9 <code>clink.match_display_filter</code> approach, then the <code>word</code> argument will be the full word under the cursor, for compatibility with the v0.4.9 API.</p>
@@ -7311,13 +7317,24 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes"><a class="wlink" href="#changes"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork"><a class="wlink" href="#releases-from-chrisant996clink-fork"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1516"><a class="wlink" href="#v1516"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.5.16</h4>
+<ul>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/522">#522</a>; garbled display in JetBrains WebStorm terminal (regression introduced in v1.5.15).<ul>
+<li>Fixing this required reverting the change that automatically chose a default for <code>color.suggestion</code> based on the current console colors.</li>
+</ul>
+</li>
+<li>Fixed <code>:chaincommand()</code> so that generators and classifiers that come after argmatchers in the priority order receive the same <code>line_state</code> objects as ones that come before argmatchers in the priority order.</li>
+<li>Fixed <code>:setdelayinit()</code> with linked argmatchers; the callback function was only called for registered argmatchers (e.g. <code>clink.argmatcher(&quot;foo&quot;):setdelayinit(func)</code>) and it wasn&#39;t called for linked argmatchers (e.g. <code>&quot;-x&quot; .. clink.argmatcher():setdelayinit(func)</code>).</li>
+<li>Fixed the word parser to recognize a single digit as a word when followed by punctuation.</li>
+<li>Fixed <code>loopchars</code> for characters like <code>-</code> or <code>*</code> that are also Lua pattern characters.</li>
+</ul>
 <h4 id="v1515"><a class="wlink" href="#v1515"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.5.15</h4>
 <ul>
 <li>Added localized descriptions for flag completions in <code>cmd</code>, <code>cd</code>, and <code>rd</code>.</li>
 <li>Added partial ability to detect light/dark console color themes:<ul>
 <li>Added <code>console.getcolortable()</code> which returns a table with the console&#39;s current 16 predefined colors.  When possible, the table includes a field indicating whether the current console color theme is a light or dark theme.</li>
 <li>At this time, the colors can be accurately retrieved only when using the legacy conhost terminal.  When using Windows Terminal, ConEmu, or other ConPty-based terminals there is currently no way to accurately retrieve the colors.  Once the <a href="https://github.com/microsoft/terminal/issues/10639">Terminal#10639</a> issue is fixed then Clink will also detect the background color in these terminal programs.</li>
-<li>Changed the default for <code>color.suggestion</code> so that it attempts to detect light themes (bright background colors) when possible, and it attempts automatically choose a default color for suggestions that is faint but has sufficient contrast to be readable.</li>
+<li>Changed the default for <code>color.suggestion</code> so that it attempts to detect light themes (bright background colors) when possible, and it attempts to automatically choose a default color for suggestions that is faint but has sufficient contrast to be readable.</li>
 </ul>
 </li>
 <li>Fixed the <code>onlink</code> callback function in <code>:addflags()</code> so that the <code>arg_index</code> parameter is correctly <code>0</code> instead of <code>1</code>.</li>
