@@ -294,6 +294,27 @@ TEST_CASE("Redir parsing")
             tester.run();
         }
 
+        SECTION("Digit space")
+        {
+            tester.set_input("argcmd 2 x ");
+            tester.set_expected_words(0, "argcmd", "2", "x");
+            tester.run();
+        }
+
+        SECTION("Digit text")
+        {
+            tester.set_input("argcmd 2y x ");
+            tester.set_expected_words(0, "argcmd", "2y", "x");
+            tester.run();
+        }
+
+        SECTION("Digit punct")
+        {
+            tester.set_input("argcmd 2,5 ");
+            tester.set_expected_words(0, "argcmd", "2", "5");
+            tester.run();
+        }
+
         SECTION("Stray pipe")
         {
             tester.set_input("argcmd 2>&| x ");

@@ -511,8 +511,8 @@ word_token cmd_word_tokeniser::next(uint32& offset, uint32& length)
                     new_state = sTxt;
             }
 
-            // Space after a digit needs to include the digit in the word.
-            if (new_state == sSpc && state <= sDig)
+            // Text or space after a digit needs to include the digit in the word.
+            if (new_state <= sSpc && state <= sDig)
                 end_word = m_iter.get_pointer();
 
             // Must handle sARG, etc before halting, so "foo >" registers the
