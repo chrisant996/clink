@@ -573,5 +573,42 @@ DECLALLOCATOR DECLRESTRICT void* __cdecl dbgluarealloc(void* pv, size_t size);
 LUA_API int __lua_checkmode(const char* mode);
 /* end_clink_change */
 
+/* begin_clink_change
+ * Macros for ensuring the input console mode includes ENABLE_PROCESSED_INPUT.
+ */
+#define LUA_BEGIN_ENSURE_PROCESSED_INPUT(stream) \
+    DWORD __saved_mode; \
+    BOOL __has_saved_mode = 0; \
+    const HANDLE __h_stdin = GetStdHandle(STD_INPUT_HANDLE); \
+    const HANDLE __h_stream = (HANDLE)_get_osfhandle(_fileno((stream))); \
+    do \
+    { \
+        if (__h_stdin && __h_stdin == __h_stream) \
+            if (GetConsoleMode(__h_stdin, &__saved_mode)) \
+            { \
+                __has_saved_mode = 1; \
+                DWORD __new_mode = __saved_mode; \
+                __new_mode |= ENABLE_PROCESSED_INPUT|ENABLE_LINE_INPUT|ENABLE_ECHO_INPUT; \
+                __new_mode &= ~(ENABLE_WINDOW_INPUT|ENABLE_MOUSE_INPUT); \
+                SetConsoleMode(__h_stdin, __new_mode); \
+            } \
+    } while (0)
+
+#define LUA_END_ENSURE_PROCESSED_INPUT_AND_RETURN(value) \
+    do \
+    { \
+        if (__has_saved_mode) \
+            SetConsoleMode(__h_stdin, __saved_mode); \
+        return (value); \
+    } while (0)
+
+#define LUA_END_ENSURE_PROCESSED_INPUT() \
+    do \
+    { \
+        if (__has_saved_mode) \
+            SetConsoleMode(__h_stdin, __saved_mode); \
+    } while (0)
+/* end_clink_change */
+
 #endif
 

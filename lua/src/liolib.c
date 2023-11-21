@@ -19,6 +19,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+/* begin_clink_change */
+#include <io.h>
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+/* end_clink_change */
 
 #define liolib_c
 #define LUA_LIB
@@ -387,12 +392,18 @@ static int test_eof (lua_State *L, FILE *f) {
 static int read_line (lua_State *L, FILE *f, int chop) {
   luaL_Buffer b;
   luaL_buffinit(L, &b);
+/* begin_clink_change */
+  LUA_BEGIN_ENSURE_PROCESSED_INPUT(f);
+/* end_clink_change */
   for (;;) {
     size_t l;
     char *p = luaL_prepbuffer(&b);
     if (fgets(p, LUAL_BUFFERSIZE, f) == NULL) {  /* eof? */
       luaL_pushresult(&b);  /* close buffer */
-      return (lua_rawlen(L, -1) > 0);  /* check whether read something */
+/* begin_clink_change */
+//      return (lua_rawlen(L, -1) > 0);  /* check whether read something */
+      LUA_END_ENSURE_PROCESSED_INPUT_AND_RETURN(lua_rawlen(L, -1) > 0);  /* check whether read something */
+/* end_clink_change */
     }
     l = strlen(p);
     if (l == 0 || p[l-1] != '\n')
@@ -400,9 +411,15 @@ static int read_line (lua_State *L, FILE *f, int chop) {
     else {
       luaL_addsize(&b, l - chop);  /* chop 'eol' if needed */
       luaL_pushresult(&b);  /* close buffer */
-      return 1;  /* read at least an `eol' */
+/* begin_clink_change */
+//      return 1;  /* read at least an `eol' */
+      LUA_END_ENSURE_PROCESSED_INPUT_AND_RETURN(1);
+/* end_clink_change */
     }
   }
+/* begin_clink_change */
+  LUA_END_ENSURE_PROCESSED_INPUT();
+/* end_clink_change */
 }
 
 

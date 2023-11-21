@@ -51,9 +51,29 @@ static char const *progname = LUA_PROGNAME;
 
 #define lua_stdin_is_tty()  _isatty(_fileno(stdin))
 
-#define lua_readline(L,b,p) \
-        ((void)L, fputs(p, stdout), fflush(stdout),  /* show prompt */ \
-        fgets(b, LUA_MAXINPUT, stdin) != NULL)  /* get line */
+static bool lua_readline(lua_State*, char* buffer, const char* message)
+{
+    // Show prompt.
+    fputs(message, stdout);
+    fflush(stdout);
+
+    // Set processed input mode.
+    DWORD modeIn;
+    HANDLE h = GetStdHandle(STD_INPUT_HANDLE);
+    const bool got_mode = !!GetConsoleMode(h, &modeIn);
+    if (got_mode)
+        SetConsoleMode(h, modeIn | ENABLE_PROCESSED_INPUT);
+
+    // Get line.
+    const bool ok = fgets(buffer, LUA_MAXINPUT, stdin) != nullptr;
+
+    // Restore console mode.
+    if (got_mode)
+        SetConsoleMode(h, modeIn);
+
+    return ok;
+}
+
 #define lua_saveline(L,idx)	{ (void)L; (void)idx; }
 #define lua_freeline(L,b)	{ (void)L; (void)b; }
 

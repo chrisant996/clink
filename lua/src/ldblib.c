@@ -8,6 +8,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+/* begin_clink_change */
+#include <io.h>
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+/* end_clink_change */
 
 #define ldblib_c
 #define LUA_LIB
@@ -352,17 +357,26 @@ static int db_gethook (lua_State *L) {
 
 
 static int db_debug (lua_State *L) {
+/* begin_clink_change */
+  LUA_BEGIN_ENSURE_PROCESSED_INPUT(stdin);
+/* end_clink_change */
   for (;;) {
     char buffer[250];
     luai_writestringerror("%s", "lua_debug> ");
     if (fgets(buffer, sizeof(buffer), stdin) == 0 ||
         strcmp(buffer, "cont\n") == 0)
-      return 0;
+/* begin_clink_change */
+//      return 0;
+      LUA_END_ENSURE_PROCESSED_INPUT_AND_RETURN(0);
+/* end_clink_change */
     if (luaL_loadbuffer(L, buffer, strlen(buffer), "=(debug command)") ||
         lua_pcall(L, 0, 0, 0))
       luai_writestringerror("%s\n", lua_tostring(L, -1));
     lua_settop(L, 0);  /* remove eventual returns */
   }
+/* begin_clink_change */
+  LUA_END_ENSURE_PROCESSED_INPUT();
+/* end_clink_change */
 }
 
 
