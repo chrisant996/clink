@@ -930,6 +930,7 @@ static void puts_face_func(const char* s, const char* face, int32 n)
                     out << s_suggestion_color;
                 else
                 {
+#ifdef AUTO_DETECT_CONSOLE_COLOR_THEME
                     switch (get_console_theme())
                     {
                     case console_theme::light:
@@ -944,6 +945,9 @@ static void puts_face_func(const char* s, const char* face, int32 n)
                         out << "\x1b[0;90m";
                         break;
                     }
+#else
+                    out << "\x1b[0;90m";
+#endif
                 }
 #ifdef USE_SUGGESTION_HINT_INLINE
                 if (cur_face == FACE_SUGGESTIONKEY)

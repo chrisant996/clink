@@ -141,10 +141,12 @@ console_theme get_console_theme()
 
 //------------------------------------------------------------------------------
 static uint8 s_faint_text = 0x80;
+#ifdef AUTO_DETECT_CONSOLE_COLOR_THEME
 uint8 get_console_faint_text()
 {
     return s_faint_text;
 }
+#endif
 
 //------------------------------------------------------------------------------
 static uint8 s_default_attr = 0x07;
@@ -232,6 +234,8 @@ void detect_console_theme()
         s_faint_text = 0x80;
     }
 }
+
+
 
 //------------------------------------------------------------------------------
 int32 get_nearest_color(const CONSOLE_SCREEN_BUFFER_INFOEX& csbix, const uint8 (&rgb)[3])
