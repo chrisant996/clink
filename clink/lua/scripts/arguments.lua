@@ -467,12 +467,12 @@ function _argreader:update(word, word_index, extra, last_onadvance) -- luacheck:
             -- Two words are separated by a looping character, and the
             -- looping char is a natural word break char (e.g. semicolon).
             local line = line_state:getline()
-            if line and arg.loopchars:find(line:sub(s, e, 1, true)) then
+            if line and arg.loopchars:find(line:sub(s, e), 1, true) then
                 next_arg_index = arg_index
             end
         elseif s - 1 == e then
             local line = line_state:getline()
-            if line and arg.loopchars:find(line:sub(e, e, 1, true)) then
+            if line and arg.loopchars:find(line:sub(e, e), 1, true) then
                 -- End word is immediately preceded by a looping character.
                 -- This is reached when getwordbreakinfo() splits a word due to
                 -- a looping char that is not a natural word break char.
