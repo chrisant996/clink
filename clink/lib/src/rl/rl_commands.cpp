@@ -80,6 +80,7 @@ static setting_enum g_paste_crlf(
 
 extern setting_bool g_adjust_cursor_style;
 extern setting_bool g_match_wild;
+extern setting_bool g_autosuggest_enable;
 
 
 

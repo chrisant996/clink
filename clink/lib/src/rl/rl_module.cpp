@@ -327,6 +327,7 @@ setting_enum g_default_bindings(
 extern setting_bool g_debug_log_terminal;
 extern setting_bool g_terminal_raw_esc;
 
+extern setting_bool g_autosuggest_enable;
 #ifdef USE_SUGGESTION_HINT_INLINE
 extern setting_bool g_autosuggest_hint;
 #endif
@@ -827,6 +828,7 @@ int32 count_prompt_lines(const char* prompt_prefix)
 //------------------------------------------------------------------------------
 static char get_face_func(int32 in, int32 active_begin, int32 active_end)
 {
+    assertimplies(g_suggestion_offset != -1, g_autosuggest_enable.get());
     if (0 <= g_suggestion_offset && g_suggestion_offset <= in)
     {
 #ifdef USE_SUGGESTION_HINT_INLINE
@@ -926,6 +928,7 @@ static void puts_face_func(const char* s, const char* face, int32 n)
             case FACE_SUGGESTIONKEY:
             case FACE_SUGGESTIONLINK:
 #endif
+                assert(g_autosuggest_enable.get());
                 if (s_suggestion_color)
                     out << s_suggestion_color;
                 else
@@ -1057,6 +1060,8 @@ void hook_display()
         display_readline();
         return;
     }
+
+    assert(g_autosuggest_enable.get());
 
     rollback<int32> rb_suggestion(g_suggestion_offset, rl_end);
     rollback<char*> rb_buf(rl_line_buffer);

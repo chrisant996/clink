@@ -82,6 +82,8 @@ bool suggestion_manager::more() const
 //------------------------------------------------------------------------------
 bool suggestion_manager::get_visible(str_base& out) const
 {
+    assert(!g_autosuggest_enable.get());
+
     out.clear();
     if (!g_rl_buffer)
         return false;
@@ -216,6 +218,8 @@ void suggestion_manager::suppress_suggestions()
 //------------------------------------------------------------------------------
 void suggestion_manager::set_started(const char* line)
 {
+    assert(g_autosuggest_enable.get());
+
     m_started = line;
 
 #ifdef DEBUG_SUGGEST
@@ -226,6 +230,8 @@ void suggestion_manager::set_started(const char* line)
 //------------------------------------------------------------------------------
 void suggestion_manager::set(const char* line, uint32 endword_offset, const char* suggestion, uint32 offset)
 {
+    assertimplies(suggestion && *suggestion && line != suggestion, g_autosuggest_enable.get());
+
 #ifdef DEBUG_SUGGEST
     static int32 s_suggnum = 0;
     printf("\x1b[s\x1b[H#%u:  set suggestion:  \"%s\", offset %d, endword ofs %d\x1b[K\x1b[u",
@@ -241,7 +247,7 @@ void suggestion_manager::set(const char* line, uint32 endword_offset, const char
         return;
     }
 
-    if (!suggestion || !*suggestion)
+    if (!suggestion || !*suggestion || !g_autosuggest_enable.get())
     {
 malformed:
         clear();
@@ -301,6 +307,8 @@ static bool is_suggestion_word_break(int32 c)
 //------------------------------------------------------------------------------
 void suggestion_manager::resync_suggestion_iterator(uint32 old_cursor)
 {
+    assert(g_autosuggest_enable.get());
+
     const int32 consume = g_rl_buffer->get_cursor() - old_cursor;
     assert(consume >= 0);
 
@@ -312,6 +320,9 @@ void suggestion_manager::resync_suggestion_iterator(uint32 old_cursor)
 //------------------------------------------------------------------------------
 bool suggestion_manager::insert(suggestion_action action)
 {
+    if (!g_autosuggest_enable.get())
+        return false;
+
     if (!m_iter.more() || g_rl_buffer->get_cursor() != g_rl_buffer->get_length())
         return false;
 
