@@ -22,6 +22,8 @@ const line_state_lua::method line_state_lua::c_methods[] = {
     // UNDOCUMENTED; internal use only.
     { "_shift",                 &shift },
     { "_reset_shift",           &reset_shift },
+    { "_merge_comma_delimited", &merge_comma_delimited },
+    { "_overwrite_from",        &overwrite_from },
     {}
 };
 
@@ -34,6 +36,7 @@ public:
                                 line_state_copy(const line_state& line);
                                 ~line_state_copy() { delete m_line; }
     const line_state*           get_line() const { return m_line; }
+    bool                        adjust_word(uint32 index, uint32 len);
 private:
     line_state*                 m_line;
     str_moveable                m_buffer;
@@ -52,6 +55,32 @@ line_state_copy::line_state_copy(const line_state& line)
 line_state_copy* make_line_state_copy(const line_state& line)
 {
     return new line_state_copy(line);
+}
+
+//------------------------------------------------------------------------------
+bool line_state_copy::adjust_word(uint32 index, uint32 len)
+{
+    assert(index < m_words.size());
+    assert(len > m_words[index].length);
+    assert(m_words[index].offset + len <= m_line->get_length());
+    assertimplies(index + 1 < m_words.size(), m_words[index].offset + len <= m_words[index + 1].offset);
+
+    m_words[index].length = len;
+
+    const bool into_next = (index + 1 < m_words.size() && m_words[index].offset + len == m_words[index + 1].offset);
+    if (into_next)
+    {
+        assert(index + 1 < m_words.size());
+        assert(m_words[index].offset + len == m_words[index + 1].offset);
+        assert(!m_words[index + 1].quoted);
+
+        m_words[index + 1].length += m_words[index + 1].offset - m_words[index].offset;
+        m_words[index + 1].offset = m_words[index].offset;
+        m_words[index].length = 0;
+        m_words[index].is_merged_away = true;
+    }
+
+    return into_next;
 }
 
 
@@ -326,4 +355,52 @@ int32 line_state_lua::reset_shift(lua_State* state)
 {
     m_shift = 0;
     return 0;
+}
+
+//------------------------------------------------------------------------------
+// UNDOCUMENTED; internal use only.
+int32 line_state_lua::merge_comma_delimited(lua_State* state)
+{
+    if (!lua_isnumber(state, 1))
+        return 0;
+
+    const std::vector<word>& words = m_line->get_words();
+    uint32 index = int32(lua_tointeger(state, 1)) - 1 + m_shift;
+    if (index >= words.size())
+        return 0;
+
+    const word& word = words[index];
+    if (word.quoted)
+        return 0;
+
+    const char* line = m_line->get_line();
+    const uint32 comma_index = word.offset + word.length;
+    if (line[comma_index] != ',')
+        return 0;
+
+    uint32 append_len = 1;
+    while (line[comma_index + append_len] == ',')
+        ++append_len;
+
+    line_state_copy* copy = make_line_state_copy(*m_line);
+
+    const bool into_next = copy->adjust_word(index, word.length + append_len);
+
+    line_state_lua::make_new(state, copy);
+    lua_pushboolean(state, into_next);
+    return 2;
+}
+
+//------------------------------------------------------------------------------
+// UNDOCUMENTED; internal use only.
+int32 line_state_lua::overwrite_from(lua_State* state)
+{
+    line_state_lua* from = check(state, 1);
+    if (!from)
+        return 0;
+
+    const bool ok = const_cast<line_state*>(m_line)->overwrite_from(from->m_line);
+    assert(ok);
+    lua_pushboolean(state, ok);
+    return 1;
 }

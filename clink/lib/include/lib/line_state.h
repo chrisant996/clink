@@ -11,11 +11,14 @@
 //------------------------------------------------------------------------------
 struct word
 {
+    word() : is_merged_away(false) {} // Everything else is intentionally uninitialized.
+    word(uint32 _offset, uint32 _length, bool _command_word, bool _is_alias, bool _is_redir_arg, bool _quoted, uint8 _delim);
     uint32              offset : 16;
     uint32              length : 16;
     bool                command_word : 1;
     bool                is_alias : 1;
     bool                is_redir_arg : 1;
+    bool                is_merged_away : 1;
     bool                quoted;
     uint8               delim;
 };
@@ -33,10 +36,12 @@ public:
     uint32              get_end_word_offset() const;
     const std::vector<word>& get_words() const;
     uint32              get_word_count() const;
-    bool                get_word(uint32 index, str_base& out) const;  // MAY STRIP quotes, except during getworkbreakinfo().
-    str_iter            get_word(uint32 index) const;                 // Never strips quotes.
-    bool                get_end_word(str_base& out) const;                  // MAY STRIP quotes, except during getworkbreakinfo().
-    str_iter            get_end_word() const;                               // Never strips quotes.
+    bool                get_word(uint32 index, str_base& out) const;    // MAY STRIP quotes, except during getworkbreakinfo().
+    str_iter            get_word(uint32 index) const;                   // Never strips quotes.
+    bool                get_end_word(str_base& out) const;              // MAY STRIP quotes, except during getworkbreakinfo().
+    str_iter            get_end_word() const;                           // Never strips quotes.
+
+    bool                overwrite_from(const line_state* other);
 
     static void         set_can_strip_quotes(bool can);
 

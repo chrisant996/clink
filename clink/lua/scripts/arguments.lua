@@ -455,6 +455,20 @@ function _argreader:update(word, word_index, extra, last_onadvance) -- luacheck:
     end
     local next_arg_index = arg_index + ((react ~= 0) and 1 or 0)
 
+    -- Merge two adjacent words separated only by commas, if so instructed.
+    local adjusted, skip_word
+    if arg and arg.commanowordbreak then
+        adjusted, skip_word = line_state:_merge_comma_delimited(word_index)
+        if adjusted then
+            self._line_state = adjusted
+            if skip_word then
+                return
+            end
+            line_state = adjusted
+            word = line_state:getword(word_index)
+        end
+    end
+
     -- If the arg has looping characters defined and a looping character
     -- separates this word from the next, then don't advance to the next
     -- argument index.
@@ -669,10 +683,11 @@ end
 --------------------------------------------------------------------------------
 -- Consumes extra words from a doskey alias before parsing the real line_state.
 function _argreader:consume_extra(extra)
+    -- line_state and count must be updated inside the loop, because
+    -- self:update() can swap to a different line_state.
+::next_word::
     local line_state = extra.line_state
     local count = line_state:getwordcount()
-
-::next_word::
 
     local word_index = extra.next_index
     if word_index > count then
@@ -688,6 +703,7 @@ function _argreader:consume_extra(extra)
 
     local word = line_state:getword(word_index)
     if self:update(word, word_index, extra) then
+        line_state = extra.line_state -- self:update() can swap to a different line_state.
         local lookup = line_state:getword(word_index);
         extra.next_index = 2
         line_state:_shift(word_index)
@@ -812,6 +828,9 @@ local function apply_options_to_list(addee, list)
     end
     if addee.fromhistory then
         list.fromhistory = true
+    end
+    if addee.commanowordbreak then
+        list.commanowordbreak = addee.commanowordbreak
     end
     if addee.loopchars then
         -- Apply looping characters, but avoid duplicates.
@@ -1616,6 +1635,7 @@ function _argmatcher:_generate(reader, match_builder) -- luacheck: no unused
             if reader:update(word, word_index) then
                 return true, word_index
             end
+            line_state = reader._line_state -- reader:update() can swap to a different line_state.
         end
     end
 
@@ -1628,6 +1648,7 @@ function _argmatcher:_generate(reader, match_builder) -- luacheck: no unused
 
     -- Special processing for last word, in case there's an onadvance callback.
     reader:update(line_state:getword(word_count), word_count, nil, true--[[last_onadvance]])
+    line_state = reader._line_state -- reader:update() can swap to a different line_state.
 
     -- There should always be a matcher left on the stack, but the arg_index
     -- could be well out of range.
@@ -2401,7 +2422,9 @@ function clink._generate_from_historyline(line_state)
         local info = line_state:getwordinfo(word_index)
         if not info.redir then
             local word = line_state:getword(word_index)
-            if reader:update(word, word_index) then
+            local chain = reader:update(word, word_index)
+            line_state = reader._line_state -- reader:update() can swap to a different line_state.
+            if chain then
                 line_state:_shift(word_index)
                 goto do_command
             end
@@ -2444,6 +2467,7 @@ local function do_generate(line_state, match_builder)
         end
 
         local ret, shift, inner = argmatcher:_generate(reader, match_builder)
+        line_state = reader._line_state -- argmatcher:_generate() calls reader:update() which can swap to a different line_state.
         if ret and (shift or inner) then
             line_state:_shift(shift)
             lookup = inner
@@ -2474,6 +2498,7 @@ end
 function argmatcher_generator:getwordbreakinfo(line_state) -- luacheck: no self
     local lookup
     local extra
+    local original_line_state = line_state
 ::do_command::
     local argmatcher, has_argmatcher, alias = _find_argmatcher(line_state, nil, lookup) -- luacheck: no unused
     lookup = nil
@@ -2500,11 +2525,17 @@ function argmatcher_generator:getwordbreakinfo(line_state) -- luacheck: no self
             local info = line_state:getwordinfo(word_index)
             if not info.redir then
                 local word = line_state:getword(word_index)
-                if reader:update(word, word_index) then
+                local chain = reader:update(word, word_index)
+                line_state = reader._line_state -- reader:update() can swap to a different line_state.
+                if chain then
                     line_state:_shift(word_index)
                     goto do_command
                 end
             end
+        end
+
+        if original_line_state ~= line_state then
+            original_line_state:_overwrite_from(line_state)
         end
 
         -- Looping characters are also word break characters.
@@ -2605,7 +2636,9 @@ function argmatcher_classifier:classify(commands) -- luacheck: no self
                 local info = line_state:getwordinfo(word_index)
                 if not info.redir then
                     local word = line_state:getword(word_index)
-                    if reader:update(word, word_index) then
+                    local chain = reader:update(word, word_index)
+                    line_state = reader._line_state -- reader:update() can swap to a different line_state.
+                    if chain then
                         line_state:_shift(word_index)
                         word_classifier:_shift(word_index, line_state:getcommandwordindex())
                         goto do_command

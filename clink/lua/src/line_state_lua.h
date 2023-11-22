@@ -30,6 +30,8 @@ public:
     int32               get_end_word(lua_State* state);
     int32               shift(lua_State* state);
     int32               reset_shift(lua_State* state);
+    int32               merge_comma_delimited(lua_State* state);
+    int32               overwrite_from(lua_State* state);
 
 private:
     const line_state*   m_line;

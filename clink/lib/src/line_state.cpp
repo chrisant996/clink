@@ -15,6 +15,19 @@
 static bool s_can_strip_quotes = false;
 
 //------------------------------------------------------------------------------
+word::word(uint32 _offset, uint32 _length, bool _command_word, bool _is_alias, bool _is_redir_arg, bool _quoted, uint8 _delim)
+: offset(_offset)
+, length(_length)
+, command_word(_command_word)
+, is_alias(_is_alias)
+, is_redir_arg(_is_redir_arg)
+, is_merged_away(false)
+, quoted(_quoted)
+, delim(_delim)
+{
+}
+
+//------------------------------------------------------------------------------
 line_state::line_state(
     const char* line,
     uint32 length,
@@ -138,6 +151,46 @@ str_iter line_state::get_end_word() const
     // Never strips quotes.
     int32 n = get_word_count();
     return (n ? get_word(n - 1) : str_iter());
+}
+
+//------------------------------------------------------------------------------
+bool line_state::overwrite_from(const line_state* other)
+{
+    assert(other);
+    if (!other)
+        return false;
+
+    assert(other->m_length == m_length);
+    assert(other->m_cursor == m_cursor);
+    assert(other->m_command_offset == m_command_offset);
+    if (other->m_length != m_length ||
+        other->m_cursor != m_cursor ||
+        other->m_command_offset != m_command_offset)
+        return false;
+
+    assert(strcmp(other->m_line, m_line) == 0);
+    if (strcmp(other->m_line, m_line) != 0)
+        return false;
+
+    assert(other->m_words.size() == m_words.size());
+    if (other->m_words.size() != m_words.size())
+        return false;
+
+    size_t resize = 0;
+    word* tortoise = const_cast<word*>(&*m_words.begin());
+    const word* hare = &*other->m_words.begin();
+    for (const word& hare : other->m_words)
+    {
+        if (hare.is_merged_away)
+            continue;
+        *tortoise = hare;
+        ++tortoise;
+        ++resize;
+    }
+
+    const_cast<std::vector<word>&>(m_words).resize(resize);
+
+    return true;
 }
 
 //------------------------------------------------------------------------------
