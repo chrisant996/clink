@@ -181,7 +181,7 @@ static const char* sanitize(const char* text)
 void line_editor_tester::run(bool expectationless)
 {
     bool has_expectations = expectationless;
-    has_expectations |= m_has_matches || m_has_classifications || (m_expected_output != nullptr);
+    has_expectations |= m_has_matches || m_has_classifications || m_has_faces || (m_expected_output != nullptr);
     REQUIRE(has_expectations);
 
     REQUIRE(m_input != nullptr);
@@ -288,6 +288,33 @@ void line_editor_tester::run(bool expectationless)
         });
     }
 
+    if (m_has_faces)
+    {
+        const word_classifications* classifications = match_catch.get_classifications();
+        REQUIRE(classifications, [&]() {
+            printf(" input; %s\n", sanitize(m_input));
+
+            puts("expected classifications but got none");
+        });
+
+        str<> c;
+        for (uint32 i = 0; i < classifications->length(); ++i)
+        {
+            char face = classifications->get_face(i);
+            c.concat(&face, 1);
+        }
+
+        REQUIRE(m_expected_faces.equals(c.c_str()), [&] () {
+            printf(" input; %s#\n", sanitize(m_input));
+
+            puts("\nexpected faces;");
+            printf("  %s\n", m_expected_faces.c_str());
+
+            puts("\ngot;");
+            printf("  %s\n", c.c_str());
+        });
+    }
+
     // Check the output is as expected.
     if (m_expected_output != nullptr)
     {
@@ -362,4 +389,11 @@ void line_editor_tester::set_expected_classifications(const char* classification
     m_expected_classifications = classifications;
     m_mark_argmatchers = mark_argmatchers;
     m_has_classifications = true;
+}
+
+//------------------------------------------------------------------------------
+void line_editor_tester::set_expected_faces(const char* faces)
+{
+    m_expected_faces = faces;
+    m_has_faces = true;
 }

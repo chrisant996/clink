@@ -55,6 +55,7 @@ public:
     void            finish(bool show_argmatchers);
 
     uint32          size() const { return uint32(m_info.size()); }
+    uint32          length() const { return m_length; }
     const word_class_info* operator[](uint32 index) const { return &m_info[index]; }
     bool            equals(const word_classifications& other) const;
 

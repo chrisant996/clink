@@ -68,6 +68,7 @@ public:
     template <class ...T> void  set_expected_matches(T... t); // T must be const char*
     void                        set_expected_matches_list(const char* const* expected); // The list must be terminated with nullptr.
     void                        set_expected_classifications(const char* classifications, bool mark_argmatchers=false);
+    void                        set_expected_faces(const char* faces);
     void                        set_expected_output(const char* expected);
     void                        run(bool expectationless=false);
 
@@ -85,11 +86,13 @@ private:
     collector_tokeniser*        m_word_tokeniser = nullptr;
     std::vector<const char*>    m_expected_matches;
     str<>                       m_expected_classifications;
+    str<>                       m_expected_faces;
     const char*                 m_input = nullptr;
     const char*                 m_expected_output = nullptr;
     line_editor*                m_editor = nullptr;
     bool                        m_has_matches = false;
     bool                        m_has_classifications = false;
+    bool                        m_has_faces = false;
     bool                        m_mark_argmatchers = false;
 };
 

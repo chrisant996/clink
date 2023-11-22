@@ -1013,29 +1013,37 @@ TEST_CASE("Lua arg parsers")
         }
     }
 
-    SECTION("Comma")
+    SECTION("nowordbreakchars")
     {
         // TODO: Also a fromhistory matcher, since the code path is slightly different.
 
         const char* script = "\
-            local wonky = clink.argmatcher():addarg({'12,34','12,35','3psych'})\
-            local wonderful = clink.argmatcher():addarg({nowordbreakchars=',','12,34','12,35','3psych'})\
+            local wonky = clink.argmatcher():addarg({'12,34','12,35','12,42','3psych'})\
+            local wonderful = clink.argmatcher():addarg({nowordbreakchars=',','12,34','12,35','12,42','3psych'})\
             clink.argmatcher('wt'):addflags('-x'..wonky, '-y'..wonderful):addarg('abc', '3ohnoes')\
         ";
 
         REQUIRE(lua.do_string(script));
 
-        SECTION("Word break : yes")
+        SECTION("Comma : yes")
         {
             tester.set_input("wt -x 12,3");
             tester.set_expected_matches("3ohnoes");
             tester.run();
+
+            tester.set_input("wt -x 12,");
+            tester.set_expected_matches("abc", "3ohnoes");
+            tester.run();
         }
 
-        SECTION("Word break : no")
+        SECTION("Comma : no")
         {
             tester.set_input("wt -y 12,3");
             tester.set_expected_matches("12,34", "12,35");
+            tester.run();
+
+            tester.set_input("wt -y 12,");
+            tester.set_expected_matches("12,34", "12,35", "12,42");
             tester.run();
         }
     }

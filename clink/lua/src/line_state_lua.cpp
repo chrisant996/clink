@@ -371,6 +371,12 @@ static bool validate_unbreakchars(const char* s)
 }
 
 //------------------------------------------------------------------------------
+inline bool is_unbreakchar(const char* unbreakchars, char c)
+{
+    return c && strchr(unbreakchars, c);
+}
+
+//------------------------------------------------------------------------------
 // UNDOCUMENTED; internal use only.
 int32 line_state_lua::unbreak(lua_State* state)
 {
@@ -380,7 +386,7 @@ int32 line_state_lua::unbreak(lua_State* state)
         return 0;
     if (!validate_unbreakchars(unbreakchars))
         return luaL_argerror(state, 2, "must contain ASCII characters and no quote characters");
-    uint32 index = _index - 1 + m_shift;
+    const uint32 index = _index - 1 + m_shift;
 
     const std::vector<word>& words = m_line->get_words();
     if (index >= words.size())
@@ -392,11 +398,11 @@ int32 line_state_lua::unbreak(lua_State* state)
 
     const char* line = m_line->get_line();
     const uint32 comma_index = word.offset + word.length;
-    if (!strchr(unbreakchars, line[comma_index]))
+    if (!is_unbreakchar(unbreakchars, line[comma_index]))
         return 0;
 
     uint32 append_len = 1;
-    while (strchr(unbreakchars, line[comma_index + append_len]))
+    while (is_unbreakchar(unbreakchars, line[comma_index + append_len]))
         ++append_len;
 
     line_state_copy* copy = make_line_state_copy(*m_line);
