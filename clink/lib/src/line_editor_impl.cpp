@@ -1031,18 +1031,41 @@ void line_editor_impl::classify()
     }
 
 #ifdef DEBUG
-    if (dbg_get_env_int("DEBUG_CLASSIFY"))
+    const int32 dbgrow = dbg_get_env_int("DEBUG_CLASSIFY");
+    if (dbgrow)
     {
+        str<> c;
+        str<> f;
+        str<> tmp;
         static const char *const word_class_name[] = {"other", "unrecognized", "executable", "command", "doskey", "arg", "flag", "none"};
         static_assert(sizeof_array(word_class_name) == int32(word_class::max), "word_class flag count mismatch");
-        printf("CLASSIFIED '%s' -- ", m_buffer.get_buffer());
         word_class wc;
         for (uint32 i = 0; i < m_classifications.size(); ++i)
         {
             if (m_classifications.get_word_class(i, wc))
-                printf(" %d:%s", i, word_class_name[int32(wc)]);
+            {
+                tmp.format(" \x1b[90m%d\x1b[m\x1b[7m%c\x1b[m", i + 1, word_class_name[int32(wc)][0]);
+                c.concat(tmp.c_str(), tmp.length());
+            }
         }
-        printf("\n");
+        for (uint32 i = 0; i < m_classifications.length(); ++i)
+        {
+            char face = m_classifications.get_face(i);
+            f.concat("\x1b[7m");
+            f.concat(&face, 1);
+            f.concat("\x1b[m");
+        }
+        if (dbgrow < 0)
+        {
+            printf("CLASSIFICATIONS %s  FACES \"%s\"\n", c.c_str(), f.c_str());
+        }
+        else
+        {
+            printf("\x1b[s");
+            printf("\x1b[%uHCLASSIFICATIONS %s\x1b[m\x1b[K", dbgrow, c.c_str());
+            printf("\x1b[%uHFACES            %s\x1b[m\x1b[K", dbgrow + 1, f.c_str());
+            printf("\x1b[u");
+        }
     }
 #endif
 
