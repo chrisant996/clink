@@ -33,11 +33,13 @@
 
 //------------------------------------------------------------------------------
 using func_SetEnvironmentVariableW_t = BOOL (WINAPI*)(LPCWSTR lpName, LPCWSTR lpValue);
+using func_SetEnvironmentStringsW = BOOL (WINAPI*)(LPWSTR NewEnvironment);
 using func_WriteConsoleW_t = BOOL (WINAPI*)(HANDLE hConsoleOutput, CONST VOID* lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved);
 using func_ReadConsoleW_t = BOOL (WINAPI*)(HANDLE hConsoleInput, VOID* lpBuffer, DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, __CONSOLE_READCONSOLE_CONTROL* pInputControl);
 using func_GetEnvironmentVariableW_t = DWORD (WINAPI*)(LPCWSTR lpName, LPWSTR lpBuffer, DWORD nSize);
 using func_SetConsoleTitleW_t = BOOL (WINAPI*)(LPCWSTR lpConsoleTitle);
 func_SetEnvironmentVariableW_t __Real_SetEnvironmentVariableW = SetEnvironmentVariableW;
+func_SetEnvironmentStringsW __Real_SetEnvironmentStringsW = SetEnvironmentStringsW;
 func_WriteConsoleW_t __Real_WriteConsoleW = WriteConsoleW;
 func_ReadConsoleW_t __Real_ReadConsoleW = ReadConsoleW;
 func_GetEnvironmentVariableW_t __Real_GetEnvironmentVariableW = GetEnvironmentVariableW;
@@ -290,13 +292,16 @@ bool host_cmd::initialise()
     tag_prompt();
     if (!hooks.attach(type, module, "SetEnvironmentVariableW", &host_cmd::set_env_var, &__Real_SetEnvironmentVariableW))
         return false;
+    if (!hooks.attach(type, module, "SetEnvironmentStringsW", &host_cmd::set_env_strs, &__Real_SetEnvironmentStringsW))
+        return false;
     if (!hooks.attach(type, module, "WriteConsoleW", &host_cmd::write_console, &__Real_WriteConsoleW))
         return false;
 
     // Set a trap to get a callback when cmd.exe fetches PROMPT environment
     // variable.  GetEnvironmentVariableW is always called before displaying the
-    // prompt string, so it's a reliable spot to hook regardless how injection
-    // is initiated (AutoRun, command line, etc).
+    // prompt string the first time after a SET command sets an environment
+    // variable, so it's a reliable spot to hook regardless how injection is
+    // initiated (AutoRun, command line, etc).
     if (!hooks.attach(type, module, "GetEnvironmentVariableW", &host_cmd::get_env_var, &__Real_GetEnvironmentVariableW))
         return false;
 
@@ -772,6 +777,17 @@ BOOL WINAPI host_cmd::set_env_var(const wchar_t* name, const wchar_t* value)
     tagged_prompt prompt;
     prompt.tag(value);
     return __Real_SetEnvironmentVariableW(name, prompt.get());
+}
+
+//------------------------------------------------------------------------------
+BOOL WINAPI host_cmd::set_env_strs(wchar_t* enviro)
+{
+    seh_scope seh;
+
+    const BOOL ok = __Real_SetEnvironmentStringsW(enviro);
+    tag_prompt();
+
+    return ok;
 }
 
 //------------------------------------------------------------------------------

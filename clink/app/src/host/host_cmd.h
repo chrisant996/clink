@@ -35,6 +35,7 @@ private:
     static BOOL WINAPI  read_console(HANDLE input, void* buffer, DWORD buffer_count, LPDWORD read_in, __CONSOLE_READCONSOLE_CONTROL* control);
     static BOOL WINAPI  write_console(HANDLE handle, const void* chars, DWORD to_write, LPDWORD written, LPVOID);
     static BOOL WINAPI  set_env_var(const wchar_t* name, const wchar_t* value);
+    static BOOL WINAPI  set_env_strs(wchar_t* enviro);
     static DWORD WINAPI get_env_var(LPCWSTR lpName, LPWSTR lpBuffer, DWORD nSize);
     static BOOL WINAPI  set_console_title(LPCWSTR lpConsoleTitle);
     bool                initialise_system();
