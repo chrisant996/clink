@@ -136,15 +136,13 @@ int32 lua_word_classifications::classify_word(lua_State* state)
 /// when the onbeginedit event is sent.
 int32 lua_word_classifications::apply_color(lua_State* state)
 {
-    if (!lua_isnumber(state, 1) || !lua_isnumber(state, 2) || !lua_isstring(state, 3))
-        return 0;
-
-    uint32 start = (uint32)(lua_tointeger(state, 1)) - 1;
-    uint32 length = (uint32)(lua_tointeger(state, 2));
-    const char* color = lua_tostring(state, 3);
+    auto start = checkinteger(state, 1);
+    const auto length = checkinteger(state, 2);
+    const char* color = checkstring(state, 3);
     bool overwrite = !lua_isboolean(state, 4) || lua_toboolean(state, 4);
-    if (!color)
+    if (!start.isnum() || !length.isnum() || !color)
         return 0;
+    start.minus_one();
 
     char face = m_classifications.ensure_face(color);
     if (!face)

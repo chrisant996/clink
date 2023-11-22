@@ -124,10 +124,9 @@ static bool is_combining_mark(int32 c)
 /// If unsuccessful, both the original string and an error code are returned.
 static int32 normalize(lua_State* state)
 {
-    bool isnum;
-    int32 form = checkinteger(state, 1, &isnum);
+    const auto form = checkinteger(state, 1);
     const char* text = checkstring(state, 2);
-    if (!isnum || !text)
+    if (!form.isnum() || !text)
         return 0;
 
     if (form < 1 || form > 4)
@@ -220,10 +219,9 @@ failed:
 /// If unsuccessful, false and an error code are returned.
 static int32 isnormalized(lua_State* state)
 {
-    bool isnum;
-    int32 form = checkinteger(state, 1, &isnum);
+    const auto form = checkinteger(state, 1);
     const char* text = checkstring(state, 2);
-    if (!isnum || !text)
+    if (!form.isnum() || !text)
         return 0;
 
     if (form < 1 || form > 4)

@@ -133,11 +133,11 @@ int32 rl_buffer_lua::get_anchor(lua_State* state)
 /// the correct cursor position.
 int32 rl_buffer_lua::set_cursor(lua_State* state)
 {
-    bool isnum;
     uint32 old = m_rl_buffer.get_cursor() + 1;
-    uint32 set = checkinteger(state, 1, &isnum) - 1;
-    if (!isnum)
+    auto set = checkinteger(state, 1);
+    if (!set.isnum())
         return 0;
+    set.minus_one();
 
     m_rl_buffer.set_cursor(set);
 
@@ -177,11 +177,12 @@ int32 rl_buffer_lua::insert(lua_State* state)
 /// Unicode character may have undesirable results.
 int32 rl_buffer_lua::remove(lua_State* state)
 {
-    bool isnum1, isnum2;
-    uint32 from = checkinteger(state, 1, &isnum1) - 1;
-    uint32 to = checkinteger(state, 2, &isnum2) - 1;
-    if (!isnum1 || !isnum2)
+    auto from = checkinteger(state, 1);
+    auto to = checkinteger(state, 2);
+    if (!from.isnum() || !to.isnum())
         return 0;
+    from.minus_one();
+    to.minus_one();
 
     m_rl_buffer.remove(from, to);
     return 0;
@@ -270,11 +271,10 @@ int32 rl_buffer_lua::get_argument(lua_State* state)
 /// from having 0 as the numeric argument).
 int32 rl_buffer_lua::set_argument(lua_State* state)
 {
-    bool isnum;
-    int32 arg = optinteger(state, 1, 0, &isnum);
+    const auto arg = optinteger(state, 1, 0);
 
     _rl_reset_argument();
-    if (isnum)
+    if (arg.isnum())
     {
         rl_arg_sign = (arg < 0) ? -1 : 1;
         rl_explicit_arg = 1;

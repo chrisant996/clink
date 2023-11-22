@@ -94,61 +94,41 @@ void log_lua_initialise(lua_state&);
 
 
 //------------------------------------------------------------------------------
-int32 checkinteger(lua_State* L, int32 index, bool* pisnum)
+checked_num<int32> checkinteger(lua_State* L, int32 index)
 {
     int32 isnum;
     lua_Integer d = lua_tointegerx(L, index, &isnum);
-    if (pisnum)
-        *pisnum = !!isnum;
-    if (isnum)
-        return int32(d);
-
-    if (g_lua_strict.get())
-        return int32(luaL_checkinteger(L, index));
-
-    return 0;
+    if (!isnum && g_lua_strict.get())
+        d = luaL_checkinteger(L, index);
+    return checked_num<int32>(int32(d), !!isnum);
 }
 
 //------------------------------------------------------------------------------
-int32 optinteger(lua_State* L, int32 index, int32 default_value, bool* pisnum)
+checked_num<int32> optinteger(lua_State* L, int32 index, int32 default_value)
 {
     if (lua_isnoneornil(L, index))
-    {
-        if (pisnum)
-            *pisnum = true;
-        return default_value;
-    }
+        return checked_num<int32>(default_value);
 
-    return checkinteger(L, index, pisnum);
+    return checkinteger(L, index);
 }
 
 //------------------------------------------------------------------------------
-lua_Number checknumber(lua_State* L, int32 index, bool* pisnum)
+checked_num<lua_Number> checknumber(lua_State* L, int32 index)
 {
     int32 isnum;
     lua_Number d = lua_tonumberx(L, index, &isnum);
-    if (pisnum)
-        *pisnum = !!isnum;
-    if (isnum)
-        return d;
-
-    if (g_lua_strict.get())
-        return luaL_checknumber(L, index);
-
-    return 0;
+    if (!isnum && g_lua_strict.get())
+        d = luaL_checknumber(L, index);
+    return checked_num<lua_Number>(d, !!isnum);
 }
 
 //------------------------------------------------------------------------------
-lua_Number optnumber(lua_State* L, int32 index, lua_Number default_value, bool* pisnum)
+checked_num<lua_Number> optnumber(lua_State* L, int32 index, lua_Number default_value)
 {
     if (lua_isnoneornil(L, index))
-    {
-        if (pisnum)
-            *pisnum = true;
-        return default_value;
-    }
+        return checked_num<lua_Number>(default_value);
 
-    return checknumber(L, index, pisnum);
+    return checknumber(L, index);
 }
 
 //------------------------------------------------------------------------------

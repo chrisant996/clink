@@ -82,10 +82,9 @@ private:
 /// </table>
 static int32 scroll(lua_State* state)
 {
-    bool isnum;
     const char* mode = checkstring(state, 1);
-    int32 amount = checkinteger(state, 2, &isnum);
-    if (!mode || !isnum)
+    auto amount = checkinteger(state, 2);
+    if (!mode || !amount.isnum())
         return 0;
 
     SCRMODE scrmode = SCR_BYLINE;
@@ -96,7 +95,7 @@ static int32 scroll(lua_State* state)
     else if (stricmp(mode, "absolute") == 0)
     {
         scrmode = SCR_ABSOLUTE;
-        amount--;
+        amount.minus_one();
     }
 
     HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -251,10 +250,10 @@ static int32 get_line_text(lua_State* state)
     if (!g_printer)
         return 0;
 
-    bool isnum;
-    SHORT line = checkinteger(state, 1, &isnum) - 1;
-    if (!isnum)
+    const auto _line = checkinteger(state, 1);
+    if (!_line.isnum())
         return 0;
+    SHORT line = _line - 1;
 
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -322,10 +321,10 @@ static int32 is_line_default_color(lua_State* state)
     if (!g_printer)
         return 0;
 
-    bool isnum;
-    SHORT line = checkinteger(state, 1, &isnum) - 1;
-    if (!isnum)
+    const auto _line = checkinteger(state, 1);
+    if (!_line.isnum())
         return 0;
+    SHORT line = _line - 1;
 
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -390,14 +389,14 @@ static int32 line_has_color(lua_State* state)
     if (!g_printer)
         return 0;
 
-    bool isnum;
-    SHORT line = checkinteger(state, 1, &isnum) - 1;
+    const auto _line = checkinteger(state, 1);
     bool has_attrs = lua_isnumber(state, 2) || lua_istable(state, 2);
     if (!has_attrs)
         luaL_argerror(state, 2, "must be number or table of numbers");
     const char* mask_name = optstring(state, 3, "");
-    if (!isnum || !has_attrs || !mask_name)
+    if (!_line.isnum() || !has_attrs || !mask_name)
         return 0;
+    SHORT line = _line - 1;
 
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -458,10 +457,10 @@ static int32 find_line(lua_State* state, int32 direction)
     int32 arg = 1;
 
     // Starting line number is required.
-    bool isnum;
-    SHORT starting_line = checkinteger(state, arg, &isnum) - 1;
-    if (!isnum)
+    const auto _starting_line = checkinteger(state, arg);
+    if (!_starting_line.isnum())
         return 0;
+    SHORT starting_line = _starting_line - 1;
 
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -829,8 +828,8 @@ static int32 set_width(lua_State* state)
     static bool s_fudge_verified = false;
     static bool s_fudge_needed = false;
 
-    const int32 width = checkinteger(state, 1);
-    if (width <= 0)
+    const auto width = checkinteger(state, 1);
+    if (!width.isnum() || width <= 0)
         return 0;
 
     static HMODULE hmod = GetModuleHandle("kernel32.dll");

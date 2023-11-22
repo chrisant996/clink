@@ -21,10 +21,29 @@ class terminal_in;
 typedef double lua_Number;
 
 //------------------------------------------------------------------------------
-int32 checkinteger(lua_State* L, int32 index, bool* isnum=nullptr);
-int32 optinteger(lua_State* L, int32 index, int32 default_value, bool* isnum=nullptr);
-lua_Number checknumber(lua_State* L, int32 index, bool* isnum=nullptr);
-lua_Number optnumber(lua_State* L, int32 index, lua_Number default_value, bool* isnum=nullptr);
+template<class T>
+class checked_num
+{
+public:
+                    checked_num(T value, bool isnum=true) : m_value(value), m_isnum(isnum) {}
+
+    bool            isnum() const { return m_isnum; }
+    const T         get() const { return m_value; }
+                    operator T() const { return m_value; }
+
+    void            minus_one() { --m_value; }  // For converting to zero-based.
+    void            plus_one() { ++m_value; }   // For converting to one-based.
+
+private:
+    T               m_value;
+    const bool      m_isnum;
+};
+
+//------------------------------------------------------------------------------
+checked_num<int32> checkinteger(lua_State* L, int32 index);
+checked_num<int32> optinteger(lua_State* L, int32 index, int32 default_value);
+checked_num<lua_Number> checknumber(lua_State* L, int32 index);
+checked_num<lua_Number> optnumber(lua_State* L, int32 index, lua_Number default_value);
 const char* checkstring(lua_State* L, int32 index);
 const char* optstring(lua_State* L, int32 index, const char* default_value);
 

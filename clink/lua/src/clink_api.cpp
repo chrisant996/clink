@@ -757,9 +757,10 @@ static int32 popup_list(lua_State* state)
 
     const char* title = checkstring(state, argTitle);
     const bool has_index = !lua_isnoneornil(state, argIndex);
-    int32 index = optinteger(state, argIndex, 1) - 1;
-    if (!title || !lua_istable(state, argItems))
+    const auto _index = optinteger(state, argIndex, 1);
+    if (!title || !_index.isnum() || !lua_istable(state, argItems))
         return 0;
+    int32 index = _index - 1;
 
     int32 num_items = int32(lua_rawlen(state, argItems));
     if (!num_items)
@@ -1121,10 +1122,10 @@ static int32 translate_slashes(lua_State* state)
         return 1;
     }
 
-    bool isnum;
-    int32 mode = checkinteger(state, 1, &isnum);
-    if (!isnum)
+    const auto _mode = checkinteger(state, 1);
+    if (!_mode.isnum())
         return 0;
+    int32 mode = _mode;
 
     if (mode < 0 || mode > 3)
         mode = 1;
@@ -1398,19 +1399,20 @@ static int32 set_suggestion_started(lua_State* state)
 // UNDOCUMENTED; internal use only.
 static int32 set_suggestion_result(lua_State* state)
 {
-    bool isnum;
     const char* line = checkstring(state, 1);
-    int32 endword_offset = checkinteger(state, 2, &isnum) - 1;
-    if (!line || !isnum)
+    auto endword_offset = checkinteger(state, 2);
+    const char* suggestion = optstring(state, 3, nullptr);
+    const auto _offset = optinteger(state, 4, 0);
+    if (!line || !endword_offset.isnum() || !_offset.isnum())
         return 0;
+    endword_offset.minus_one();
+    int32 offset = _offset;
 
     const int32 line_len = strlen(line);
     if (endword_offset < 0 || endword_offset > line_len)
         return 0;
 
-    const char* suggestion = optstring(state, 3, nullptr);
-    int32 offset = optinteger(state, 4, 0, &isnum) - 1;
-    if (!isnum || offset < 0 || offset > line_len)
+    if (offset < 0 || offset > line_len)
         offset = line_len;
 
     set_suggestion(line, endword_offset, suggestion, offset);
@@ -1740,9 +1742,8 @@ static int32 save_global_modes(lua_State* state)
 static int32 restore_global_modes(lua_State* state)
 {
 #ifdef DEBUG
-    bool isnum;
-    uint32 modes = checkinteger(state, 1, &isnum);
-    if (!isnum)
+    const auto modes = checkinteger(state, 1);
+    if (!modes.isnum())
         return 0;
 #else
     uint32 modes = optinteger(state, 1, 0);

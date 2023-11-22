@@ -329,9 +329,8 @@ int32 match_builder_lua::matches_ready(lua_State* state)
     if (!m_toolkit)
         return 0;
 
-    bool isnum;
-    int32 id = checkinteger(state, 1, &isnum);
-    if (!isnum)
+    const auto id = checkinteger(state, 1);
+    if (!id.isnum())
         return 0;
 
     lua_pushboolean(state, notify_matches_ready(m_toolkit, id));

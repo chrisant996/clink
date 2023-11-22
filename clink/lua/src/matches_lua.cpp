@@ -73,10 +73,10 @@ int32 matches_lua::get_count(lua_State* state)
 /// Returns the match text for the <span class="arg">index</span> match.
 int32 matches_lua::get_match(lua_State* state)
 {
-    bool isnum;
-    uint32 index = checkinteger(state, 1, &isnum) - 1;
-    if (!isnum)
+    const auto _index = checkinteger(state, 1);
+    if (!_index.isnum())
         return 0;
+    const uint32 index = _index - 1;
 
     if (index >= m_matches->get_match_count())
         return 0;
@@ -93,10 +93,10 @@ int32 matches_lua::get_match(lua_State* state)
 /// Returns the match type for the <span class="arg">index</span> match.
 int32 matches_lua::get_type(lua_State* state)
 {
-    bool isnum;
-    uint32 index = checkinteger(state, 1, &isnum) - 1;
-    if (!isnum)
+    const auto _index = checkinteger(state, 1);
+    if (!_index.isnum())
         return 0;
+    const uint32 index = _index - 1;
 
     if (index >= m_matches->get_match_count())
         return 0;
