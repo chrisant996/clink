@@ -872,10 +872,14 @@ uint32 line_editor_impl::collect_words(words& words, matches_impl* matches, coll
         if (words.size() > 0)
         {
             bool command = true;
+            int32 i_word = 1;
             tmp1.format("\x1b[s\x1b[%dHcollected words:        ", dbg_row);
             m_printer.print(tmp1.c_str(), tmp1.length());
             for (auto const& w : words)
             {
+                tmp1.format("\x1b[90m%u\x1b[m", i_word);
+                m_printer.print(tmp1.c_str(), tmp1.length());
+
                 const char* q = w.quoted ? "\"" : "";
                 if (w.command_word)
                     command = true;
@@ -894,6 +898,7 @@ uint32 line_editor_impl::collect_words(words& words, matches_impl* matches, coll
                 else
                     tmp1.format("\x1b[0;37;7m \x1b[m ");
                 m_printer.print(tmp1.c_str(), tmp1.length());
+                i_word++;
             }
             m_printer.print("\x1b[K\x1b[u");
         }
@@ -926,6 +931,9 @@ uint32 line_editor_impl::collect_words(words& words, matches_impl* matches, coll
             auto const& after_break_words = commands.get_linestate(m_buffer).get_words();
             for (auto const& w : after_break_words)
             {
+                tmp1.format("\x1b[90m%u\x1b[m", i_word);
+                m_printer.print(tmp1.c_str(), tmp1.length());
+
                 const char* q = w.quoted ? "\"" : "";
                 if (w.command_word)
                     command = true;
