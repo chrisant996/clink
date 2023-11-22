@@ -59,7 +59,10 @@ end
 
 local chain = clink.argmatcher():chaincommand()
 local colors = clink.argmatcher():addarg({fromhistory=true})
-local onoff = clink.argmatcher():addarg("on", "off")
+
+local function first_sentence(s)
+    return s:gsub("^%s+", ""):gsub("^([^.]*)%.%s.*$", "%1"):gsub("%(.*$", ""):gsub("[.%s]+$", "")
+end
 
 local function delayinit(argmatcher)
     argmatcher:setdelayinit(nil)
@@ -103,7 +106,7 @@ local function delayinit(argmatcher)
                 if pending.arginfo then
                     table.insert(t, pending.arginfo)
                 end
-                local d = pending.desc:gsub("^%s+", ""):gsub("^([^.]*)%.%s.*$", "%1"):gsub("%(.*$", ""):gsub("[.%s]+$", "")
+                local d = first_sentence(pending.desc)
                 table.insert(t, d)
                 local o = onoff[pending.flag:match("[a-z]")]
                 if o then

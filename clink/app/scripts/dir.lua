@@ -46,6 +46,11 @@ local function onarg_pushd(arg_index, word, word_index, line_state) -- luacheck:
 end
 
 --------------------------------------------------------------------------------
+local function first_sentence(s)
+    return s:gsub("^%s+", ""):gsub("^([^.]*)%.%s.*$", "%1"):gsub("%(.*$", ""):gsub("[.%s]+$", "")
+end
+
+--------------------------------------------------------------------------------
 local function cd_delayinit(argmatcher)
     argmatcher:setdelayinit(nil)
 
@@ -59,7 +64,7 @@ local function cd_delayinit(argmatcher)
         local pending = {}
         local function finish_pending()
             if pending.flag and pending.desc then
-                local d = pending.desc:gsub("^%s+", ""):gsub("^([^.]*)%.%s.*$", "%1"):gsub("%(.*$", ""):gsub("[.%s]+$", "")
+                local d = first_sentence(pending.desc)
                 descriptions[pending.flag] = { d }
             end
             pending.flag = nil
@@ -107,7 +112,7 @@ local function rd_delayinit(argmatcher)
         local pending = {}
         local function finish_pending()
             if pending.flag and pending.desc then
-                local d = pending.desc:gsub("^%s+", ""):gsub("^([^.]*)%.%s.*$", "%1"):gsub("%(.*$", ""):gsub("[.%s]+$", "")
+                local d = first_sentence(pending.desc)
                 descriptions[pending.flag] = { d }
             end
             pending.flag = nil

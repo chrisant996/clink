@@ -310,7 +310,7 @@ function clink._resume_coroutines()
     end
     for _,func in pairs(_after_coroutines) do
         -- Protected call.
-        local ok, ret = xpcall(func, _error_handler_ret)
+        ok, ret = xpcall(func, _error_handler_ret)
         if not ok then
             print("")
             print("callback failed:")
@@ -1033,7 +1033,8 @@ function coroutine.resume(co, ...) -- luacheck: ignore 122
         if ismain then
             for _, func in ipairs(_pending_on_main) do
                 -- Protected call.
-                local ok, ret = xpcall(func, _error_handler_ret)
+                local ok
+                ok, ret = xpcall(func, _error_handler_ret)
                 if not ok then
                     print("")
                     print("runonmain callback failed:")
