@@ -814,16 +814,16 @@ local function apply_options_to_list(addee, list)
     if addee.nosort then
         list.nosort = true
     end
-    if addee.delayinit and type(addee.delayinit) == "function" then
+    if type(addee.delayinit) == "function" then
         list.delayinit = addee.delayinit
     end
-    if addee.onadvance then
+    if type(addee.onadvance) == "function" then
         list.onadvance = addee.onadvance
     end
-    if addee.onarg then
+    if type(addee.onarg) == "function" then
         list.onarg = addee.onarg
     end
-    if addee.onlink then
+    if type(addee.onlink) == "function" then
         list.onlink = addee.onlink
     end
     if addee.fromhistory then
@@ -832,7 +832,7 @@ local function apply_options_to_list(addee, list)
     if addee.commanowordbreak then
         list.commanowordbreak = addee.commanowordbreak
     end
-    if addee.loopchars then
+    if type(addee.loopchars) == "string" then
         -- Apply looping characters, but avoid duplicates.
         list.loopchars, list.loopcharsfind = append_uniq_chars(list.loopchars, list.loopcharsfind, addee.loopchars)
     end
