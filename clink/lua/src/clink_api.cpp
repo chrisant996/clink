@@ -840,7 +840,7 @@ static int32 popup_list(lua_State* state)
     assert(num_items == items.size());
 #endif
 
-    if (index > items.size()) index = items.size();
+    if (index >= items.size()) index = items.size() - 1;
     if (index < 0) index = 0;
 
     popup_config config;
