@@ -1019,7 +1019,7 @@ TEST_CASE("Lua arg parsers")
 
         const char* script = "\
             local wonky = clink.argmatcher():addarg({'12,34','12,35','3psych'})\
-            local wonderful = clink.argmatcher():addarg({commanowordbreak=true,'12,34','12,35','3psych'})\
+            local wonderful = clink.argmatcher():addarg({nowordbreakchars=',','12,34','12,35','3psych'})\
             clink.argmatcher('wt'):addflags('-x'..wonky, '-y'..wonderful):addarg('abc', '3ohnoes')\
         ";
 

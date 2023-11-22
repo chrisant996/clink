@@ -455,10 +455,9 @@ function _argreader:update(word, word_index, extra, last_onadvance) -- luacheck:
     end
     local next_arg_index = arg_index + ((react ~= 0) and 1 or 0)
 
-    -- Merge two adjacent words separated only by commas, if so instructed.
-    local adjusted, skip_word
-    if arg and arg.commanowordbreak then
-        adjusted, skip_word = line_state:_merge_comma_delimited(word_index)
+    -- Merge two adjacent words separated only by nowordbreakchars.
+    if arg and arg.nowordbreakchars then
+        local adjusted, skip_word = line_state:_unbreak(word_index, arg.nowordbreakchars)
         if adjusted then
             self._line_state = adjusted
             if skip_word then
@@ -829,16 +828,13 @@ local function apply_options_to_list(addee, list)
     if addee.fromhistory then
         list.fromhistory = true
     end
-    if addee.commanowordbreak then
-        list.commanowordbreak = addee.commanowordbreak
-    end
     if type(addee.loopchars) == "string" then
         -- Apply looping characters, but avoid duplicates.
         list.loopchars, list.loopcharsfind = append_uniq_chars(list.loopchars, list.loopcharsfind, addee.loopchars)
     end
-    if addee.nodelimitchars then
-        -- Apply non-delimiter characters, but avoid duplicates.
-        list.nodelimitchars = append_uniq_chars(list.nodelimitchars, nil, addee.nodelimitchars)
+    if type(addee.nowordbreakchars) == "string" then
+        -- Apply non-wordbreak characters, but avoid duplicates.
+        list.nowordbreakchars = append_uniq_chars(list.nowordbreakchars, nil, addee.nowordbreakchars)
     end
 end
 

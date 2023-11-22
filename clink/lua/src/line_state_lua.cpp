@@ -22,7 +22,7 @@ const line_state_lua::method line_state_lua::c_methods[] = {
     // UNDOCUMENTED; internal use only.
     { "_shift",                 &shift },
     { "_reset_shift",           &reset_shift },
-    { "_merge_comma_delimited", &merge_comma_delimited },
+    { "_unbreak",               &unbreak },
     { "_overwrite_from",        &overwrite_from },
     {}
 };
@@ -358,14 +358,31 @@ int32 line_state_lua::reset_shift(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
-// UNDOCUMENTED; internal use only.
-int32 line_state_lua::merge_comma_delimited(lua_State* state)
+static bool validate_unbreakchars(const char* s)
 {
-    if (!lua_isnumber(state, 1))
+    if (!*s)
+        return false;
+    for (; *s; ++s)
+    {
+        if (*s == '\'' || *s == '\"' || *s == '`' || *s < 0x20 || *s > 0x7f)
+            return false;
+    }
+    return true;
+}
+
+//------------------------------------------------------------------------------
+// UNDOCUMENTED; internal use only.
+int32 line_state_lua::unbreak(lua_State* state)
+{
+    const auto _index = checkinteger(state, 1);
+    const char* unbreakchars = checkstring(state, 2);
+    if (!_index.isnum() || !unbreakchars)
         return 0;
+    if (!validate_unbreakchars(unbreakchars))
+        return luaL_argerror(state, 2, "must contain ASCII characters and no quote characters");
+    uint32 index = _index - 1 + m_shift;
 
     const std::vector<word>& words = m_line->get_words();
-    uint32 index = int32(lua_tointeger(state, 1)) - 1 + m_shift;
     if (index >= words.size())
         return 0;
 
@@ -375,11 +392,11 @@ int32 line_state_lua::merge_comma_delimited(lua_State* state)
 
     const char* line = m_line->get_line();
     const uint32 comma_index = word.offset + word.length;
-    if (line[comma_index] != ',')
+    if (!strchr(unbreakchars, line[comma_index]))
         return 0;
 
     uint32 append_len = 1;
-    while (line[comma_index + append_len] == ',')
+    while (strchr(unbreakchars, line[comma_index + append_len]))
         ++append_len;
 
     line_state_copy* copy = make_line_state_copy(*m_line);
