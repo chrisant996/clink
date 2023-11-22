@@ -12,10 +12,12 @@
 #include "callstack.h"
 #include "debugheap.h"
 #include "assert_improved.h"
+#include "str.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <DbgHelp.h>
+#include <vector>
 
 //#define DBGHELP_DEBUG_OUTPUT
 
@@ -754,8 +756,42 @@ CALLSTACK_EXTERN_C size_t format_frames(int32 total_frames, void* const* frames,
     return buffer - orig_buffer;
 }
 
+struct ignore_tuple
+{
+    wstr_moveable message;
+    wstr_moveable file;
+    uint32 line;
+};
+
+static std::vector<ignore_tuple> s_ignore;
+static void do_ignore(wchar_t const* message, wchar_t const* file, unsigned line)
+{
+    if (GetKeyState(VK_CONTROL) < 0)
+    {
+        dbg_ignore_scope(snapshot, "ignore list for assertions");
+
+        ignore_tuple ignore;
+        ignore.message = message;
+        ignore.file = file;
+        ignore.line = line;
+        s_ignore.emplace_back(std::move(ignore));
+    }
+}
+static bool is_ignore(wchar_t const* message, wchar_t const* file, unsigned line)
+{
+    for (const auto& t : s_ignore)
+    {
+        if (t.message.equals(message) && t.file.equals(file) && t.line == line)
+            return true;
+    }
+    return false;
+}
+
 extern "C" void _wassert(wchar_t const* message, wchar_t const* file, unsigned line)
 {
+    if (is_ignore(message, file, line))
+        return;
+
     char stack[4096];
     wchar_t wstack[4096];
     format_callstack(1, 20, stack, _countof(stack), true);
@@ -785,11 +821,13 @@ extern "C" void _wassert(wchar_t const* message, wchar_t const* file, unsigned l
     wcscat_s(wbuffer, tmp);
     wcscat_s(wbuffer, L"\r\n\r\n");
     wcscat_s(wbuffer, _countof(wbuffer), wstack);
+    wcscat_s(wbuffer, L"\r\n\r\nCtrl-Ignore to ignore this assert for the rest of the session.");
 
     switch (MessageBoxW(nullptr, wbuffer, L"ASSERT", MB_ICONEXCLAMATION|MB_ABORTRETRYIGNORE|MB_DEFBUTTON3))
     {
     case IDABORT:   TerminateProcess(GetCurrentProcess(), -1); break;
     case IDRETRY:   DebugBreak(); break;
+    case IDIGNORE:  do_ignore(message, file, line); break;
     }
 }
 
