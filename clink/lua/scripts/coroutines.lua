@@ -1014,10 +1014,10 @@ function coroutine.resume(co, ...) -- luacheck: ignore 122
     local old_co_state = clink.co_state
     clink.co_state = entry.co_state
 
-    local ret = table.pack(orig_coroutine_resume(co, ...))
+    local tresumed = table.pack(orig_coroutine_resume(co, ...))
 
-    if ret and not ret[1] and ret[2] then
-        local err = tostring(ret[2])
+    if tresumed and not tresumed[1] and tresumed[2] then
+        local err = tostring(tresumed[2])
         entry.error = err
         if settings.get("lua.debug") then
             local full_err = debug.traceback(co, err)
@@ -1033,8 +1033,7 @@ function coroutine.resume(co, ...) -- luacheck: ignore 122
         if ismain then
             for _, func in ipairs(_pending_on_main) do
                 -- Protected call.
-                local ok
-                ok, ret = xpcall(func, _error_handler_ret)
+                local ok, ret = xpcall(func, _error_handler_ret)
                 if not ok then
                     print("")
                     print("runonmain callback failed:")
@@ -1047,5 +1046,5 @@ function coroutine.resume(co, ...) -- luacheck: ignore 122
         end
     end
 
-    return table.unpack(ret)
+    return table.unpack(tresumed)
 end
