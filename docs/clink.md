@@ -1581,6 +1581,7 @@ Clink provides a framework for writing complex argument match generators in Lua.
 <tr><td style="padding-left: 2rem"><a href="#addarg_nosort">Disable Sorting Matches</a></td><td>How to disable auto-sorted completions.</td></tr>
 <tr><td style="padding-left: 2rem"><a href="#argmatcher_fullyqualified">Fully Qualified Pathnames</a></td><td>How to make different argmatchers for programs with the same name.</td></tr>
 <tr><td style="padding-left: 2rem"><a href="#addarg_loopchars">Delimited Arguments</a></td><td>How to allow multiple completions in the same argument slot (e.g. <code>file1;file2;file3</code>).</td></tr>
+<tr><td style="padding-left: 2rem"><a href="#addarg_nowordbreakchars">Overcoming Word Breaks</a></td><td>How to prevent characters like `,` from breaking words.</td></tr>
 <tr><td style="padding-left: 2rem"><a href="#argmatcher_adaptive">Adaptive Argmatchers</a></td><td>How an argmatcher can define or modify itself on the fly.</td></tr>
 <tr><td style="padding-left: 2rem"><a href="#responsive-argmatchers">Responding to Arguments in Argmatchers</a></td><td>When argument slots need to influence one another.</td></tr>
 <tr><td style="padding-left: 2rem"><a href="#argmatcher_shorthand">Shorthand</a></td><td>Alternative syntax for defining argmatchers.</td></tr>
@@ -1828,6 +1829,40 @@ clink.argmatcher("foo")
 -- Typing "foo red;" and pressing TAB generates completions for colors (not files).
 clink.argmatcher("foo")
 :addarg({loopchars=";", "red", "green", "blue"})
+:addarg(clink.filematches)
+```
+
+<a name="addarg_nowordbreakchars"></a>
+
+#### Overcoming Word Breaks
+
+Clink and CMD parse the input line into a [`line_state`](#line_state) by ending a word whenever one of the following characters is encountered (except when quoted e.g. `"abc,xyz"`):
+- Whitespace characters SPACE, TAB, and NEWLINE.
+- Punctuation symbols `'`, `&backprime;`, `=`, `+`, `;`, and `,`.
+- Grouping symbols `(`, `)`, `[`, `]`, `{`, and `}`.
+
+Some programs may not consider some of those to be word break characters.  For example, Windows Terminal doesn't consider `,` to be a word break character, and requires it in the argument to the `--pos` and `--size` flags (`wt.exe --size 120,50`).
+
+In Clink v1.5.17 and higher, argmatchers can override the word break rules for specific argument positions by including `nowordbreakchars=","` (or set `nowordbreakchars=` a list of characters that shouldn't denote word breaks).  This can allow more accurate completions and input line coloring when these characters are present.
+
+```lua
+-- This argmatcher accepts syntax like "wt --pos x,y --size cols,rows command".
+clink.argmatcher("wt")
+:addflags({
+    "--pos" .. clink.argmatcher():addarg({fromhistory=true, nowordbreakchars=","}),
+    "--size" .. clink.argmatcher():addarg({fromhistory=true, nowordbreakchars=","}),
+})
+:chaincommand()
+```
+
+It's also possible to combine `nowordbreakchars` and `loopchars`:
+
+```lua
+-- This argmatcher accepts syntax like "foo color[,color...] filename".
+-- Typing "foo red f" and pressing TAB generates completions for files.
+-- Typing "foo red," and pressing TAB generates completions for colors (not files).
+clink.argmatcher("foo")
+:addarg({loopchars=",", nowordbreakchars=",", "red", "green", "blue"})
 :addarg(clink.filematches)
 ```
 
