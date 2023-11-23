@@ -1400,13 +1400,13 @@ static int32 set_suggestion_started(lua_State* state)
 static int32 set_suggestion_result(lua_State* state)
 {
     const char* line = checkstring(state, 1);
-    auto endword_offset = checkinteger(state, 2);
+    const auto _endword_offset = checkinteger(state, 2);
     const char* suggestion = optstring(state, 3, nullptr);
     const auto _offset = optinteger(state, 4, 0);
-    if (!line || !endword_offset.isnum() || !_offset.isnum())
+    if (!line || !_endword_offset.isnum() || !_offset.isnum())
         return 0;
-    endword_offset.minus_one();
-    int32 offset = _offset;
+    const int32 endword_offset = _endword_offset - 1;
+    int32 offset = _offset - 1;
 
     const int32 line_len = strlen(line);
     if (endword_offset < 0 || endword_offset > line_len)
