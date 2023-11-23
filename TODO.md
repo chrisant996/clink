@@ -5,10 +5,13 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
+- [x] Flags can default to not breaking on `'`, `+`, `,` and etc (but `=` still defaults to being a word break so `-=``TAB` doesn't show filename completions).
+- [ ] Can Clink automatically conditionally determine word break characters based on whether the command word resolves to a .BAT or .CMD file?
+  - But internal CMD commands also treat `,` (etc) as word breaks.
+  - And `+` and `;` and `,` are interesting because for backwards compatibility they should typically be treated at least as `loopchars`.
+  - And `=` is interesting because some argmatchers rely on `=` being a word break character, for example `doskey.lua`.
 
 ## Normal Priority
-- Syntax like `wt --pos col,row` is problematic because `,` is a word break character in CMD, but some programs treat `,` as not a word break.  Ideally argmatchers would have a way to override `,` in certain argument positions so that `wt --pos col,` `TAB` completes `col,` instead of completing a new empty word.
-  - The prototype `commanoworkbreak` seems to be working well.  Maybe it can be extended to a generalized way to override work break characters?
 
 ## Low Priority
 - Open issue in Terminal repo about bugs in the new shell integration in v1.18.
