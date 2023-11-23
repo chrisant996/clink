@@ -1287,7 +1287,7 @@ static int32 parse_line(lua_State* state)
     // temporary one here.
     cmd_command_tokeniser command_tokeniser;
     cmd_word_tokeniser word_tokeniser;
-    word_collector collector(&command_tokeniser, &word_tokeniser, "\"");
+    word_collector collector(&command_tokeniser, &word_tokeniser);
 
     // Collect words from the whole line.
     std::vector<word> tmp_words;
