@@ -457,13 +457,20 @@ function _argreader:update(word, word_index, extra, last_onadvance) -- luacheck:
 
     -- Merge two adjacent words separated only by nowordbreakchars.
     if arg and arg.nowordbreakchars then
-        local adjusted, skip_word = line_state:_unbreak(word_index, arg.nowordbreakchars)
+        local adjusted, skip_word, len = line_state:_unbreak(word_index, arg.nowordbreakchars)
         if adjusted then
             self._line_state = adjusted
+            line_state = adjusted
+            if self._word_classifier then
+                self._word_classifier:_unbreak(word_index, len, skip_word)
+            end
             if skip_word then
+                if is_flag then
+                    next_is_flag = matcher:_is_flag(line_state:getword(word_index + 1))
+                    self:_pop(next_is_flag)
+                end
                 return
             end
-            line_state = adjusted
             word = line_state:getword(word_index)
         end
     end

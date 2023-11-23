@@ -914,7 +914,11 @@ uint32 line_editor_impl::collect_words(words& words, matches_impl* matches, coll
 
     // The last word can be split by the match generators, to influence word
     // breaks. This is a little clunky but works well enough.
-    if (words.back().length && mode == collect_words_mode::stop_at_cursor)
+    // And because "nowordbreakchars" allows unbreaking adjacent words, it's now
+    // necessary to call get_word_break_info() even when the last word is empty,
+    // but only if any words have actually been merged yet in this session.
+    if ((words.back().length || is_ever_unbreak()) &&
+        mode == collect_words_mode::stop_at_cursor)
     {
         word_break_info break_info;
         if (m_generator)

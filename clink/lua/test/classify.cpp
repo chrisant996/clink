@@ -528,7 +528,7 @@ TEST_CASE("Lua word classification")
     SECTION("nowordbreakchars")
     {
         const char* script = "\
-            clink.argmatcher('qq'):addflags({nowordbreakchars=',','-,','-a,b'}):addarg('abc','xyz','mm,ab','mm,ac','mm,xy')\
+            clink.argmatcher('qq'):addflags({nowordbreakchars=',','-,','-a,b'}):addarg({nowordbreakchars=',','abc','xyz','mm,ab','mm,ac','mm,xy'})\
         ";
 
         REQUIRE(lua.do_string(script));

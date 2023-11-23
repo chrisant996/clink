@@ -27,6 +27,7 @@ const lua_word_classifications::method lua_word_classifications::c_methods[] = {
     // UNDOCUMENTED; internal use only.
     { "_shift",           &shift },
     { "_reset_shift",     &reset_shift },
+    { "_unbreak",         &unbreak },
     {}
 };
 
@@ -73,14 +74,12 @@ lua_word_classifications::lua_word_classifications(word_classifications& classif
 /// information.
 int32 lua_word_classifications::classify_word(lua_State* state)
 {
-    if (!lua_isnumber(state, 1) || !lua_isstring(state, 2))
-        return 0;
-
-    const uint32 index = uint32(int32(lua_tointeger(state, 1)) - 1) + m_shift;
-    const char* s = lua_tostring(state, 2);
+    const auto _index = checkinteger(state, 1);
+    const char* s = checkstring(state, 2);
     bool overwrite = !lua_isboolean(state, 3) || lua_toboolean(state, 3);
-    if (!s)
+    if (!_index.isnum() || !s)
         return 0;
+    const uint32 index = _index - 1 + m_shift;
     if (index >= m_num_words)
         return luaL_argerror(state, 1, "word index out of bounds");
 
@@ -184,5 +183,23 @@ int32 lua_word_classifications::reset_shift(lua_State* state)
 {
     m_shift = 0;
     m_command_word_index = m_original_command_word_index;
+    m_classifications.flush_unbreak();
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+// UNDOCUMENTED; internal use only.
+int32 lua_word_classifications::unbreak(lua_State* state)
+{
+    const auto _index = checkinteger(state, 1);
+    const auto length = checkinteger(state, 2);
+    bool skip_word = !lua_isboolean(state, 3) || lua_toboolean(state, 3);
+    if (!_index.isnum())
+        return 0;
+    const uint32 index = _index - 1 + m_shift;
+    if (index >= m_num_words)
+        return luaL_argerror(state, 1, "word index out of bounds");
+
+    m_classifications.unbreak(index, length, skip_word);
     return 0;
 }

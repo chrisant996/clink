@@ -93,6 +93,9 @@ public:
     static bool     is_in_onfiltermatches() { return s_in_onfiltermatches; }
     static bool     is_interpreter() { return s_interpreter; }
 
+    static bool     is_ever_unbreak() { return s_ever_unbreak; }
+    static void     set_ever_unbreak() { s_ever_unbreak = true; }
+
     static uint32   save_global_states(bool new_coroutine);
     static void     restore_global_states(uint32 states);
 
@@ -103,6 +106,7 @@ private:
     static bool     s_interpreter;
     static bool     s_in_luafunc;
     static bool     s_in_onfiltermatches;
+    static bool     s_ever_unbreak;
 #ifdef DEBUG
     static bool     s_in_coroutine;
 #endif

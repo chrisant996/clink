@@ -401,17 +401,23 @@ int32 line_state_lua::unbreak(lua_State* state)
     if (!is_unbreakchar(unbreakchars, line[comma_index]))
         return 0;
 
+    lua_state::set_ever_unbreak();
+
     uint32 append_len = 1;
     while (is_unbreakchar(unbreakchars, line[comma_index + append_len]))
         ++append_len;
 
     line_state_copy* copy = make_line_state_copy(*m_line);
 
-    const bool into_next = copy->adjust_word(index, word.length + append_len);
+    const uint32 new_len = word.length + append_len;
+    const bool into_next = copy->adjust_word(index, new_len);
 
+    // PERF: Can it return itself if's already a copy?  Does anything rely on
+    // the copy operation, e.g. "original != line_state"?
     line_state_lua::make_new(state, copy);
     lua_pushboolean(state, into_next);
-    return 2;
+    lua_pushinteger(state, new_len);
+    return 3;
 }
 
 //------------------------------------------------------------------------------

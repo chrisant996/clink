@@ -36,6 +36,7 @@ struct word_class_info
     uint32          end : 16;
     word_class      word_class;
     bool            argmatcher;
+    bool            unbreak;
 };
 
 //------------------------------------------------------------------------------
@@ -67,6 +68,9 @@ public:
     void            apply_face(uint32 start, uint32 len, char face, bool overwrite=true);
     void            classify_word(uint32 index, char wc, bool overwrite=true);
     bool            is_word_classified(uint32 index);
+
+    void            unbreak(uint32 index, uint32 length, bool skip_word);
+    void            flush_unbreak();
 
 private:
     std::vector<word_class_info> m_info;

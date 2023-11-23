@@ -22,6 +22,7 @@ public:
     int32                   apply_color(lua_State* state);
     int32                   shift(lua_State* state);
     int32                   reset_shift(lua_State* state);
+    int32                   unbreak(lua_State* state);
 
     bool                    get_word_class(int32 word_index_zero_based, word_class& wc) const;
 

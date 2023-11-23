@@ -87,6 +87,7 @@ uint32 word_classifications::add_command(const line_state& line)
         info.end = info.start + word.length;
         info.word_class = word_class::invalid;
         info.argmatcher = false;
+        info.unbreak = false;
     }
 
     return index;
@@ -224,4 +225,40 @@ void word_classifications::classify_word(uint32 index, char wc, bool overwrite)
 bool word_classifications::is_word_classified(uint32 word_index)
 {
     return (word_index < m_info.size() && m_info[word_index].word_class < word_class::max);
+}
+
+//------------------------------------------------------------------------------
+void word_classifications::unbreak(uint32 index, uint32 length, bool skip_word)
+{
+    if (index < m_info.size())
+    {
+        auto& info = m_info[index];
+        if (skip_word)
+        {
+            auto& next = m_info[index + 1];
+            assert(info.start + length == next.start);
+            info.unbreak = true;
+            info.end = info.start;
+            next.start = info.start;
+        }
+        else
+        {
+            auto& info = m_info[index];
+            info.end = info.start + length;
+            assertimplies(index + 1 < m_info.size(), info.end <= m_info[index + 1].start);
+            assertimplies(index + 1 == m_info.size(), info.end <= m_length);
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+void word_classifications::flush_unbreak()
+{
+    for (auto it = m_info.begin(); it != m_info.end(); )
+    {
+        if (it->unbreak)
+            it = m_info.erase(it);
+        else
+            ++it;
+    }
 }
