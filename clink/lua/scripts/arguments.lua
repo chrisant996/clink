@@ -812,6 +812,9 @@ local function append_uniq_chars(chars, find, add)
             find = find:sub(1, #find - 1) .. pct .. c .. "]"
         end
     end
+    if chars == "" then
+        return nil, nil
+    end
     return chars, find
 end
 
