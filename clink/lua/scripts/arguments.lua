@@ -456,8 +456,11 @@ function _argreader:update(word, word_index, extra, last_onadvance) -- luacheck:
     local next_arg_index = arg_index + ((react ~= 0) and 1 or 0)
 
     -- Merge two adjacent words separated only by nowordbreakchars.
-    if arg and arg.nowordbreakchars then
-        local adjusted, skip_word, len = line_state:_unbreak(word_index, arg.nowordbreakchars)
+    if arg and (arg.nowordbreakchars or is_flag) then
+        -- Flags default to unbreaking on most punctuation except = or command
+        -- separators or redirection symbols.
+        local nowordbreakchars = arg.nowordbreakchars or "'`+;,()[]{}"
+        local adjusted, skip_word, len = line_state:_unbreak(word_index, nowordbreakchars)
         if adjusted then
             self._line_state = adjusted
             line_state = adjusted
