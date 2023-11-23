@@ -1526,7 +1526,7 @@ Run `clink info` to see the script paths for the current session.
 
 ### Completion directories
 
-You may optionally put Lua completion scripts in a `completions\` directory.  That prevents them from being loaded when Clink starts, and instead they are only loaded when needed.  That can make Clink load faster if you have a large quantity of Lua scripts that define argmatchers.
+You may optionally put Lua completion scripts in a `completions\` directory when using Clink v1.3.23 and higher.  That prevents them from being loaded when Clink starts, and instead they are only loaded when needed.  That can make Clink load faster if you have a large quantity of Lua scripts that define argmatchers.
 
 When a command name is typed, if a corresponding argmatcher is not already loaded then the completions directories are searched for a Lua script by the same name.  If found, then the Lua script is loaded.  This is similar to how completion scripts work in shells like bash, zsh, and fish.
 
