@@ -7,6 +7,7 @@
 #include "display_readline.h"
 
 #include "matches_impl.h"
+#include "rl_commands.h"
 #include "rl_suggestions.h"
 
 #include <core/base.h>
@@ -82,7 +83,7 @@ bool suggestion_manager::more() const
 //------------------------------------------------------------------------------
 bool suggestion_manager::get_visible(str_base& out) const
 {
-    assert(!g_autosuggest_enable.get());
+    assert(g_autosuggest_enable.get());
 
     out.clear();
     if (!g_rl_buffer)
@@ -105,17 +106,26 @@ bool suggestion_manager::get_visible(str_base& out) const
 #ifdef USE_SUGGESTION_HINT_INLINE
     if (g_autosuggest_hint.get())
     {
-#ifdef RIGHT_ALIGN_SUGGESTION_HINT
-        COORD size = measure_readline_display(rl_prompt, out.c_str(), out.length());
-        static const uint32 hint_cols = cell_count(STR_SUGGESTION_HINT_INLINE) + 1;
-        if (size.X + hint_cols >= _rl_screenwidth)
+        int32 type;
+        rl_command_func_t* func = rl_function_of_keyseq("\x1b[C", nullptr, &type);
+        if (type == ISFUNC &&
+            (func == win_f1 ||
+             func == clink_forward_char ||
+             func == clink_forward_byte ||
+             func == clink_end_of_line))
         {
-            concat_spaces(out, _rl_screenwidth - size.X);
-            size.X = 0;
-        }
-        concat_spaces(out, _rl_screenwidth - (size.X + hint_cols));
+#ifdef RIGHT_ALIGN_SUGGESTION_HINT
+            COORD size = measure_readline_display(rl_prompt, out.c_str(), out.length());
+            static const uint32 hint_cols = cell_count(STR_SUGGESTION_HINT_INLINE) + 1;
+            if (size.X + hint_cols >= _rl_screenwidth)
+            {
+                concat_spaces(out, _rl_screenwidth - size.X);
+                size.X = 0;
+            }
+            concat_spaces(out, _rl_screenwidth - (size.X + hint_cols));
 #endif // RIGHT_ALIGN_SUGGESTION_HINT
-        out.concat(STR_SUGGESTION_HINT_INLINE);
+            out.concat(STR_SUGGESTION_HINT_INLINE);
+        }
     }
 #endif  // USE_SUGGESTION_HINT_INLINE
 
