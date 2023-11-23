@@ -110,7 +110,7 @@ char cmd_tokeniser_impl::get_closing_quote() const
 
 
 //------------------------------------------------------------------------------
-const char* const cmd_state::c_delimit = "&(=+[]\\|;:,.<>/ \t";
+const char* const cmd_state::c_command_delimiters = "&(=+[]\\|;:,.<>/ \t";
 
 //------------------------------------------------------------------------------
 bool is_cmd_command(const char* word, state_flag* flag)
@@ -196,7 +196,7 @@ bool cmd_state::test(const int32 c, const tokeniser_state new_state)
     // delimiter?
     if (m_match)
     {
-        if (strchr(c_delimit, c))
+        if (strchr(c_command_delimiters, c))
         {
             cancel();
             return true;

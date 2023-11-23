@@ -33,7 +33,7 @@ private:
     bool m_match = false;
     state_flag m_match_flag = flag_none;
     const bool m_only_rem;
-    static const char* const c_delimit;
+    static const char* const c_command_delimiters;
 };
 
 //------------------------------------------------------------------------------
