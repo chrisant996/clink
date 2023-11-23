@@ -360,11 +360,9 @@ int32 line_state_lua::reset_shift(lua_State* state)
 //------------------------------------------------------------------------------
 static bool validate_unbreakchars(const char* s)
 {
-    if (!*s)
-        return false;
     for (; *s; ++s)
     {
-        if (*s == '\'' || *s == '\"' || *s == '`' || *s < 0x20 || *s > 0x7f)
+        if (*s < 0x20 || *s > 0x7f)
             return false;
     }
     return true;
@@ -384,8 +382,10 @@ int32 line_state_lua::unbreak(lua_State* state)
     const char* unbreakchars = checkstring(state, 2);
     if (!_index.isnum() || !unbreakchars)
         return 0;
+    if (!*unbreakchars) // No-op.
+        return 0;
     if (!validate_unbreakchars(unbreakchars))
-        return luaL_argerror(state, 2, "must contain ASCII characters and no quote characters");
+        return luaL_argerror(state, 2, "must contain only ASCII characters");
     const uint32 index = _index - 1 + m_shift;
 
     const std::vector<word>& words = m_line->get_words();
