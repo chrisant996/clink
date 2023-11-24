@@ -334,14 +334,14 @@ TEST_CASE("Lua word classification")
         SECTION("Separator && 3")
         {
             tester.set_input("nullcmd \"&&\" && cd t");
-            tester.set_expected_classifications("oco");
+            tester.set_expected_classifications("o co");
             tester.run();
         }
 
         SECTION("Separator && 4")
         {
             tester.set_input("nullcmd \"&&\"&&cd t");
-            tester.set_expected_classifications("oco");
+            tester.set_expected_classifications("o co");
             tester.run();
         }
 
@@ -383,7 +383,7 @@ TEST_CASE("Lua word classification")
         SECTION("Multiple commands with args")
         {
             tester.set_input("xyz abc green | asdfjkl etc | echo etc | xyz -a def && argcmd t");
-            tester.set_expected_classifications("oanocofaoo");
+            tester.set_expected_classifications("oano c ofaoo");
             tester.run();
         }
 

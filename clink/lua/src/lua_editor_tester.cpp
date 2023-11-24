@@ -317,13 +317,16 @@ bool lua_editor_tester::run(str_base& message)
             static_assert(sizeof_array(c_lookup) == int32(word_class::max), "c_lookup size does not match word_class::max");
 
             const word_class_info& wc = *(*classifications)[i];
+            if (m_mark_argmatchers && wc.argmatcher)
+                c.concat("m", 1);
             if (unsigned(wc.word_class) < sizeof_array(c_lookup))
-            {
-                if (m_mark_argmatchers && wc.argmatcher)
-                    c.concat("m", 1);
                 c.concat(&c_lookup[unsigned(wc.word_class)], 1);
-            }
+            else
+                c.concat(" ", 1);
         }
+
+        while (c.length() && c.c_str()[c.length() - 1] == ' ')
+            c.truncate(c.length() - 1);
 
         REQUIREEX(m_expected_classifications.equals(c.c_str()),
         {
