@@ -673,7 +673,7 @@ bool lua_state::send_oncommand_event(line_state& line, const char* command, bool
     line_state_lua line_lua(line);
 
     const char* type;
-    if (!quoted && is_cmd_command(command))
+    if (!quoted && !!is_cmd_command(command))
         type = "command";
     else if (recog == recognition::executable)
         type = "executable";

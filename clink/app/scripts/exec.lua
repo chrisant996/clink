@@ -34,21 +34,6 @@ settings.add("exec.space_prefix", true, "Whitespace prefix matches files",
 and will do normal files matching instead.  (See exec.enable)]])
 
 --------------------------------------------------------------------------------
--- NOTE: Keep in sync with is_cmd_command() in cmd_tokenisers.cpp.
-local cmd_commands = {
-    -- These are executables that pretend to be built-in commands.
-    "attrib", "chcp", "format", "help", "more", "subst", "tasklist", "taskkill",
-    -- These treat special word break characters as part of the input.
-    "assoc", "color", "ftype", "if", "set", "ver", "verify",
-    -- These treat special word break characters as ignored delimiters.
-    "break", "call", "cd", "chdir", "cls", "copy", "date", "del", "dir",
-    "dpath", "echo", "endlocal", "erase", "exit", "for", "goto", "md",
-    "mkdir", "mklink", "move", "path", "pause", "popd", "prompt", "pushd",
-    "rd", "rem", "ren", "rename", "rmdir", "setlocal", "shift", "start",
-    "time", "title", "type", "vol",
-}
-
---------------------------------------------------------------------------------
 local function add_commands(line_state, match_builder)
     -- Cmd commands cannot be quoted.
     local word_info = line_state:getwordinfo(line_state:getwordcount())
@@ -71,7 +56,7 @@ local function add_commands(line_state, match_builder)
         return
     end
 
-    match_builder:addmatches(cmd_commands, "cmd")
+    match_builder:addmatches(clink._get_cmd_commands(), "cmd")
 end
 
 --------------------------------------------------------------------------------

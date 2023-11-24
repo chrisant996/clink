@@ -11,10 +11,13 @@ enum tokeniser_state : int32;
 //------------------------------------------------------------------------------
 enum state_flag
 {
-    flag_none           = 0x00,
-    flag_rem            = 0x01,
+    flag_none               = 0x00,
+    flag_internal           = 0x01,
+    flag_specialwordbreaks  = 0x02,
+    flag_rem                = 0x04,
 };
 DEFINE_ENUM_FLAG_OPERATORS(state_flag);
+inline _ENUM_FLAG_CONSTEXPR bool operator ! (state_flag a) throw() { return a == flag_none; }
 
 //------------------------------------------------------------------------------
 class cmd_state
@@ -76,6 +79,11 @@ private:
 };
 
 //------------------------------------------------------------------------------
-bool is_cmd_command(const char* word, state_flag* flag=nullptr);
+state_flag is_cmd_command(const char* word);
 int32 skip_leading_parens(str_iter& iter, bool& first, alias_cache* alias_cache=nullptr);
 uint32 trim_trailing_parens(const char* start, uint32 offset, uint32 length, int32 parens);
+
+//------------------------------------------------------------------------------
+extern const char* const c_cmd_exes[];
+extern const char* const c_cmd_commands_basicwordbreaks[];
+extern const char* const c_cmd_commands_shellwordbreaks[];

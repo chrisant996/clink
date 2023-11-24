@@ -982,7 +982,6 @@ static int32 get_popup_list_colors(lua_State* state)
     }
 
     return 1;
-
 }
 
 //------------------------------------------------------------------------------
@@ -1719,6 +1718,32 @@ static int32 signal_delayed_init(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+static int32 get_cmd_commands(lua_State* state)
+{
+    lua_createtable(state, 64, 0);
+
+    const char* const* const lists[] =
+    {
+        c_cmd_exes,
+        c_cmd_commands_basicwordbreaks,
+        c_cmd_commands_shellwordbreaks,
+    };
+
+    uint32 i = 0;
+    for (const auto list : lists)
+    {
+        for (const char* const* cmd = list; *cmd; ++cmd)
+        {
+            lua_pushinteger(state, ++i);
+            lua_pushstring(state, *cmd);
+            lua_rawset(state, -3);
+        }
+    }
+
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 static int32 is_cmd_command(lua_State* state)
 {
     const char* word = checkstring(state, 1);
@@ -2208,6 +2233,7 @@ void clink_lua_initialise(lua_state& lua, bool lua_interpreter)
         { 0,    "_reset_generate_matches", &api_reset_generate_matches },
         { 0,    "_mark_deprecated_argmatcher", &mark_deprecated_argmatcher },
         { 0,    "_signal_delayed_init",   &signal_delayed_init },
+        { 0,    "_get_cmd_commands",      &get_cmd_commands },
         { 0,    "is_cmd_command",         &is_cmd_command },
         { 0,    "_save_global_modes",     &save_global_modes },
         { 0,    "_restore_global_modes",  &restore_global_modes },
