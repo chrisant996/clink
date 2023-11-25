@@ -1463,6 +1463,7 @@ void display_manager::end_prompt_lf()
     const uint32 count = m_curr.count();
     if (_rl_vis_botlin &&
         m_top - m_last_prompt_line_botlin + _rl_vis_botlin + 1 == count &&
+        count > 0 &&
         m_curr.get(count - 1)->m_len == 0)
     {
         _rl_vis_botlin--;
@@ -1490,9 +1491,8 @@ void display_manager::end_prompt_lf()
             _rl_clear_to_eol(0);
             rl_puts_face_func(d->m_chars + index, d->m_faces + index, len);
         }
-        else if (m_top == m_last_prompt_line_botlin)
+        else if (m_top == m_last_prompt_line_botlin && count <= 1)
         {
-            assert(count <= 1);
             // When there is no previous row (input line is empty but starts at
             // col 0), reprint the last prompt line to clear the line-wrap flag.
             _rl_move_vert(0);
