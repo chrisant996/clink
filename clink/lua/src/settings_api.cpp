@@ -415,6 +415,26 @@ static int32 list(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+// Undocumented, because it's only needed internally.
+static int32 match(lua_State* state)
+{
+    const char* name = optstring(state, 1, nullptr);
+    if (name)
+    {
+        const size_t len = strlen(name);
+        for (setting_iter iter = settings::first(); const setting* setting = iter.next();)
+        {
+            if (strnicmp(name, setting->get_name(), len) == 0)
+            {
+                lua_pushboolean(state, true);
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+//------------------------------------------------------------------------------
 void settings_lua_initialise(lua_state& lua)
 {
     struct {
@@ -424,7 +444,9 @@ void settings_lua_initialise(lua_state& lua)
         { "get",    &get },
         { "set",    &set },
         { "add",    &add },
+        // UNDOCUMENTED; internal use only.
         { "list",   &list },
+        { "match",  &match },
     };
 
     lua_State* state = lua.get_state();

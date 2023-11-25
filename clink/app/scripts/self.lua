@@ -300,12 +300,22 @@ local function value_handler(match_word, word_index, line_state, builder, classi
 end
 
 --------------------------------------------------------------------------------
+local function is_setting_name_prefix(word, word_index, line_state)
+    local info = line_state:getwordinfo(word_index)
+    if #line_state:getline() == info.offset + info.length - 1 then
+        return settings.match(word)
+    end
+end
+
+--------------------------------------------------------------------------------
 local function classify_handler(arg_index, word, word_index, line_state, classify)
     if arg_index == 1 then
         -- Classify the setting name.
         local info = settings.list(word, true)
         if info then
             classify:classifyword(word_index, "a") --arg
+        elseif is_setting_name_prefix(word, word_index, line_state) then
+            classify:classifyword(word_index, "o") --other
         else
             classify_to_end(word_index, line_state, classify, "n") --none
             return true
