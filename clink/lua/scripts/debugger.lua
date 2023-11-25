@@ -51,11 +51,23 @@
 
 local IsWindows = string.find(string.lower(os.getenv('OS') or ''),'^windows')
 
--- Redirect printing through Clink's terminal layer.  This enables UTF8 support
--- and emulated terminal support.
-local function io_write(...)
-  for _,s in ipairs({...}) do
-    clink.print(s, NONL)
+local io_write
+if clink and not clink._is_test_harness then
+  -- Redirect printing through Clink's terminal layer.  This enables UTF8
+  -- support and emulated terminal support.
+  io_write = function(...)
+    for _,s in ipairs({...}) do
+      clink.print(s, NONL)
+    end
+  end
+else
+  -- The test harness suppresses all terminal output, to hide Readline output
+  -- during unit tests.  Bypass Clink's terminal support so debugger output is
+  -- visible.
+  io_write = function(...)
+    for _,s in ipairs({...}) do
+      io.write(s)
+    end
   end
 end
 

@@ -48,6 +48,12 @@ extern "C" {
 
 
 //------------------------------------------------------------------------------
+static bool s_test_harness = false;
+void set_test_harness() { s_test_harness = true; }
+
+
+
+//------------------------------------------------------------------------------
 extern setting_enum g_dupe_mode;
 
 #ifdef _WIN64
@@ -2350,6 +2356,12 @@ void clink_lua_initialise(lua_state& lua, bool lua_interpreter)
     lua_pushstring(state, AS_STR(CLINK_COMMIT));
     lua_rawset(state, -3);
 
+    if (s_test_harness)
+    {
+        lua_pushliteral(state, "_is_test_harness");
+        lua_pushboolean(state, true);
+        lua_rawset(state, -3);
+    }
 
 #ifdef DEBUG
     lua_pushliteral(state, "DEBUG");

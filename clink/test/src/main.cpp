@@ -20,6 +20,7 @@ extern "C" {
 
 //------------------------------------------------------------------------------
 void set_noasync_recognizer();
+void set_test_harness();
 extern bool g_force_load_debugger;
 
 //------------------------------------------------------------------------------
@@ -46,6 +47,7 @@ int32 main(int32 argc, char** argv)
 
     os::set_shellname(L"clink_test_harness");
     set_noasync_recognizer();
+    set_test_harness();
 
     _rl_bell_preference = VISIBLE_BELL;     // Because audible is annoying.
 
