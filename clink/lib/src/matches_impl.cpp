@@ -899,16 +899,17 @@ void matches_impl::reset()
     m_coalesced = false;
     m_append_character = '\0';
     m_suppress_append = false;
+    m_has_descriptions = false;
     m_fully_qualify = false;
     m_force_quoting = false;
     m_regen_blocked = false;
     m_nosort = false;
     m_volatile = false;
-    m_input_line.clear();
     m_suppress_quoting = 0;
     m_word_break_position = -1;
     m_filename_completion_desired.reset();
     m_filename_display_desired.reset();
+    m_input_line.clear();
 
     s_slash_translation = g_translate_slashes.get();
 }
