@@ -5,11 +5,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- [x] Flags can default to not breaking on `'`, `+`, `,` and etc (but `=` still defaults to being a word break so `-=``TAB` doesn't show filename completions).
-- [ ] Can Clink automatically conditionally determine word break characters based on whether the command word resolves to a .BAT or .CMD file?
-  - But internal CMD commands also treat `,` (etc) as word breaks.
-  - And `+` and `;` and `,` are interesting because for backwards compatibility they should typically be treated at least as `loopchars`.
-  - And `=` is interesting because some argmatchers rely on `=` being a word break character, for example `doskey.lua`.
+- Lua debugger isn't working in test harness (`pause()` doesn't pause immediately, debugger never shows up, but later `fgets()` starts waiting).
 
 ## Normal Priority
 
