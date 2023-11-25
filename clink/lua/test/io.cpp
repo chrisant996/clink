@@ -109,7 +109,7 @@ TEST_CASE("Lua io")
             end \
         ";
 
-        REQUIRE(lua.do_string(script));
+        REQUIRE_LUA_DO_STRING(lua, script);
 
         SECTION("Truncate")
         {

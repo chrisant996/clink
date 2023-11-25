@@ -143,7 +143,7 @@ TEST_CASE("Lua globmatch")
         end\
     ";
 
-    REQUIRE(lua.do_string(main_script));
+    REQUIRE_LUA_DO_STRING(lua, main_script);
 
     SECTION("Simple")
     {

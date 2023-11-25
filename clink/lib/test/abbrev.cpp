@@ -229,7 +229,7 @@ TEST_CASE("Abbreviated paths.")
             end \
         ";
 
-        REQUIRE(lua.do_string(script));
+        REQUIRE_LUA_DO_STRING(lua, script);
 
         static const testcase_abbrev c_testcases[] =
         {

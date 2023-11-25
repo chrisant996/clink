@@ -14,6 +14,10 @@
 #include <lua/lua_script_loader.h>
 #include <lua/lua_state.h>
 
+extern "C" {
+#include <lua.h>
+};
+
 //------------------------------------------------------------------------------
 TEST_CASE("Lua word classification")
 {
@@ -58,7 +62,7 @@ TEST_CASE("Lua word classification")
             ):addflags('-a', '--bee', '-c'):nofiles()\
         ";
 
-        REQUIRE(lua.do_string(script));
+        REQUIRE_LUA_DO_STRING(lua, script);
 
 #if 0
         SECTION("Empty")
@@ -441,7 +445,7 @@ TEST_CASE("Lua word classification")
             clink.arg.register_parser('oldfoo', oldfoo_parser)\
         ";
 
-        REQUIRE(lua.do_string(script));
+        REQUIRE_LUA_DO_STRING(lua, script);
 
         SECTION("Flag at end")
         {
@@ -493,7 +497,7 @@ TEST_CASE("Lua word classification")
             :addarg('XX', 'YY')\
         ";
 
-        REQUIRE(lua.do_string(script));
+        REQUIRE_LUA_DO_STRING(lua, script);
 
         SECTION("Equal word")
         {
@@ -540,7 +544,7 @@ TEST_CASE("Lua word classification")
             clink.argmatcher('bat'):addflags({'-,','-a,b'}):addarg({'abc','xyz','mm,ab','mm,ac','mm,xy'})\
         ";
 
-        REQUIRE(lua.do_string(script));
+        REQUIRE_LUA_DO_STRING(lua, script);
 
         SECTION("Basic")
         {

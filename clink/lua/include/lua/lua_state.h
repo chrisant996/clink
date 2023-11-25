@@ -64,15 +64,15 @@ public:
                     ~lua_state();
     void            initialise(lua_state_flags flags=lua_state_flags::none);
     void            shutdown();
-    bool            do_string(const char* string, int32 length=-1);
+    bool            do_string(const char* string, int32 length=-1, str_base* error=nullptr);
     bool            do_file(const char* path);
     lua_State*      get_state() const;
 
     static bool     push_named_function(lua_State* L, const char* func_name, str_base* error=nullptr);
 
-    static int32    pcall(lua_State* L, int32 nargs, int32 nresults);
+    static int32    pcall(lua_State* L, int32 nargs, int32 nresults, str_base* error=nullptr);
     static int32    pcall_silent(lua_State* L, int32 nargs, int32 nresults);
-    int32           pcall(int32 nargs, int32 nresults) { return pcall(m_state, nargs, nresults); }
+    int32           pcall(int32 nargs, int32 nresults, str_base* error=nullptr) { return pcall(m_state, nargs, nresults, error); }
     int32           pcall_silent(int32 nargs, int32 nresults) { return pcall_silent(m_state, nargs, nresults); }
 
     static bool     send_event(lua_State* L, const char* event_name, int32 nargs=0);

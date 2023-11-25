@@ -207,3 +207,11 @@ void fail(const char* expr, const char* file, int32 line, CALLBACK&& cb)
         if (!(expr))\
             clatch::fail(#expr, __FILE__, __LINE__, ##__VA_ARGS__);\
     } while (0)
+
+#define REQUIRE_LUA_DO_STRING(lua, script)\
+    do {\
+        str<> errmsg;\
+        REQUIRE(lua.do_string(script, -1, &errmsg), [&]() {\
+            puts(errmsg.length() ? errmsg.c_str() : "<no error message>");\
+        });\
+    } while (0)

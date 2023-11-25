@@ -299,7 +299,7 @@ lua_State* lua_state::get_state() const
 #endif
 
 //------------------------------------------------------------------------------
-bool lua_state::do_string(const char* string, int32 length)
+bool lua_state::do_string(const char* string, int32 length, str_base* error)
 {
     lua_State* L = get_state();
 
@@ -311,15 +311,20 @@ bool lua_state::do_string(const char* string, int32 length)
     int32 err = luaL_loadbuffer(L, string, length, string);
     if (err)
     {
-        if (g_lua_debug.get())
+        if (error)
+            *error = lua_tostring(L, -1);
+        else if (g_lua_debug.get())
         {
-            if (const char* error = lua_tostring(L, -1))
-                puts(error);
+            if (const char* errmsg = lua_tostring(L, -1))
+            {
+                puts("");
+                puts(errmsg);
+            }
         }
         return false;
     }
 
-    err = pcall(L, 0, LUA_MULTRET);
+    err = pcall(L, 0, LUA_MULTRET, error);
     if (err)
         return false;
 
@@ -338,8 +343,8 @@ bool lua_state::do_file(const char* path)
     {
         if (g_lua_debug.get())
         {
-            if (const char* error = lua_tostring(L, -1))
-                puts(error);
+            if (const char* errmsg = lua_tostring(L, -1))
+                puts(errmsg);
         }
         return false;
     }
@@ -447,15 +452,18 @@ int32 lua_state::pcall_silent(lua_State* L, int32 nargs, int32 nresults)
 }
 
 //------------------------------------------------------------------------------
-int32 lua_state::pcall(lua_State* L, int32 nargs, int32 nresults)
+int32 lua_state::pcall(lua_State* L, int32 nargs, int32 nresults, str_base* error)
 {
     const int32 ret = pcall_silent(L, nargs, nresults);
     if (ret != 0)
     {
-        if (const char* error = lua_tostring(L, -1))
+        const char* errmsg = lua_tostring(L, -1);
+        if (error)
+            *error = errmsg;
+        else if (errmsg)
         {
             puts("");
-            puts(error);
+            puts(errmsg);
         }
     }
     return ret;

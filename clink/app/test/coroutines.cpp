@@ -240,7 +240,7 @@ TEST_CASE("Lua coroutines.")
         end\
         ";
 
-        REQUIRE(lua.do_string(script));
+        REQUIRE_LUA_DO_STRING(lua, script);
 
         SECTION("Enabled")
         {
@@ -448,7 +448,7 @@ TEST_CASE("Lua coroutines.")
         MN_actual.als = clink.co_state.argmatcher_line_states[1]\
         ";
 
-        REQUIRE(lua.do_string(script));
+        REQUIRE_LUA_DO_STRING(lua, script);
 
         SECTION("Swap")
         {

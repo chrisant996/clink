@@ -44,7 +44,7 @@ TEST_CASE("Lua arg parsers")
             )\
         ";
 
-        REQUIRE(lua.do_string(script));
+        REQUIRE_LUA_DO_STRING(lua, script);
 
         SECTION("Node matches 1")
         {
@@ -304,7 +304,7 @@ TEST_CASE("Lua arg parsers")
             clink.arg.register_parser('oldfoo', oldfoo_parser)\
         ";
 
-        REQUIRE(lua.do_string(script));
+        REQUIRE_LUA_DO_STRING(lua, script);
 
         SECTION("Flag at end")
         {
@@ -358,7 +358,7 @@ TEST_CASE("Lua arg parsers")
             )\
         ";
 
-        REQUIRE(lua.do_string(script));
+        REQUIRE_LUA_DO_STRING(lua, script);
 
         SECTION("Enabled")
         {
@@ -407,7 +407,7 @@ TEST_CASE("Lua arg parsers")
             )\
         ";
 
-        REQUIRE(lua.do_string(script));
+        REQUIRE_LUA_DO_STRING(lua, script);
 
         SECTION("Full match is also partial match 1")
         {
@@ -445,7 +445,7 @@ TEST_CASE("Lua arg parsers")
             clink.argmatcher('argcmd_nested_ex'):addarg({'once', tbl_3 } .. q)\
         ";
 
-        REQUIRE(lua.do_string(script));
+        REQUIRE_LUA_DO_STRING(lua, script);
 
         SECTION("Nested table: simple")
         {
@@ -485,7 +485,7 @@ TEST_CASE("Lua arg parsers")
             :loop()\
         ";
 
-        REQUIRE(lua.do_string(script));
+        REQUIRE_LUA_DO_STRING(lua, script);
 
         SECTION("Not looped yet")
         {
@@ -526,7 +526,7 @@ TEST_CASE("Lua arg parsers")
             clink.arg.register_parser('argcmd_flags_x', parser)\
         ";
 
-        REQUIRE(lua.do_string(script));
+        REQUIRE_LUA_DO_STRING(lua, script);
 
         SECTION("Slash 1")
         {
@@ -549,7 +549,7 @@ TEST_CASE("Lua arg parsers")
             tester.run();
         }
 
-        REQUIRE(lua.do_string("p:nofiles()"));
+        REQUIRE_LUA_DO_STRING(lua, "p:nofiles()");
 
         SECTION("Slash 4")
         {
@@ -645,7 +645,7 @@ TEST_CASE("Lua arg parsers")
             :addflags('-flag_a' .. q, '-flag_b' .. q)\
         ";
 
-        REQUIRE(lua.do_string(script));
+        REQUIRE_LUA_DO_STRING(lua, script);
 
         SECTION("Skip 1")
         {
@@ -678,7 +678,7 @@ TEST_CASE("Lua arg parsers")
                 { '-flag' .. clink.argmatcher() { 'red', 'green', 'blue'} }\
         ";
 
-        REQUIRE(lua.do_string(script));
+        REQUIRE_LUA_DO_STRING(lua, script);
 
         SECTION("First word")
         {
@@ -793,7 +793,7 @@ TEST_CASE("Lua arg parsers")
             clink.argmatcher('argcmd_nosort'):addarg({nosort=true, 'z', 'm', 'n', 'a'})\
         ";
 
-        REQUIRE(lua.do_string(script));
+        REQUIRE_LUA_DO_STRING(lua, script);
 
         SECTION("Nosort: sort")
         {
@@ -821,7 +821,7 @@ TEST_CASE("Lua arg parsers")
             :addarg('XX', 'YY')\
         ";
 
-        REQUIRE(lua.do_string(script));
+        REQUIRE_LUA_DO_STRING(lua, script);
 
         SECTION("Follow")
         {
@@ -914,7 +914,7 @@ TEST_CASE("Lua arg parsers")
             adapt = clink.argmatcher('adapt'):setdelayinit(ondelayinit)\
         ";
 
-        REQUIRE(lua.do_string(script));
+        REQUIRE_LUA_DO_STRING(lua, script);
 
         SECTION("Delayinit argmatcher")
         {
@@ -973,7 +973,7 @@ TEST_CASE("Lua arg parsers")
             clink.argmatcher('plerg'):addflags('-l', '-m', '-n'):addarg('aaa', 'zzz'):nofiles()\
         ";
 
-        REQUIRE(lua.do_string(script));
+        REQUIRE_LUA_DO_STRING(lua, script);
 
         str<> host(os::get_shellname());
         doskey doskey(host.c_str());
@@ -1032,7 +1032,7 @@ TEST_CASE("Lua arg parsers")
             clink.argmatcher('bat_thing'):addflags('-,', '-x'..wonky, '-y'..wonderful, '-z'..automatic):addarg('abc', '3ohnoes')\
         ";
 
-        REQUIRE(lua.do_string(script));
+        REQUIRE_LUA_DO_STRING(lua, script);
 
         SECTION("Comma : yes")
         {
@@ -1135,7 +1135,7 @@ TEST_CASE("Lua arg parsers")
         settings::find("clink.colorize_input")->set("true");
         settings::find("color.argmatcher")->set("92");
 
-        REQUIRE(lua.do_string(script));
+        REQUIRE_LUA_DO_STRING(lua, script);
 
         SECTION("onadvance")
         {

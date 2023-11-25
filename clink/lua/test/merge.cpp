@@ -13,6 +13,10 @@
 #include <lua/lua_script_loader.h>
 #include <lua/lua_state.h>
 
+extern "C" {
+#include <lua.h>
+};
+
 //------------------------------------------------------------------------------
 TEST_CASE("Merge argmatchers")
 {
@@ -57,7 +61,7 @@ TEST_CASE("Merge argmatchers")
             }) \
         ";
 
-        REQUIRE(lua.do_string(script));
+        REQUIRE_LUA_DO_STRING(lua, script);
 
         struct merge_test
         {
@@ -150,7 +154,7 @@ TEST_CASE("Merge argmatchers")
             clink.arg.register_parser('argcmd_merge', s) \
         ";
 
-        REQUIRE(lua.do_string(script));
+        REQUIRE_LUA_DO_STRING(lua, script);
 
         struct merge_test
         {
