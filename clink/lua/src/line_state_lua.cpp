@@ -369,8 +369,11 @@ static bool validate_unbreakchars(const char* s)
 }
 
 //------------------------------------------------------------------------------
-inline bool is_unbreakchar(const char* unbreakchars, char c)
+inline bool is_unbreakchar(const char* unbreakchars, const char* line, uint32 len, uint32 index)
 {
+    if (index >= len)
+        return false;
+    const char c = line[index];
     return c && strchr(unbreakchars, c);
 }
 
@@ -396,15 +399,16 @@ int32 line_state_lua::unbreak(lua_State* state)
     if (word.quoted)
         return 0;
 
-    const char* line = m_line->get_line();
+    const char* const line = m_line->get_line();
+    const uint32 line_len = m_line->get_length();
     const uint32 comma_index = word.offset + word.length;
-    if (!is_unbreakchar(unbreakchars, line[comma_index]))
+    if (!is_unbreakchar(unbreakchars, line, line_len, comma_index))
         return 0;
 
     lua_state::set_ever_unbreak();
 
     uint32 append_len = 1;
-    while (is_unbreakchar(unbreakchars, line[comma_index + append_len]))
+    while (is_unbreakchar(unbreakchars, line, line_len, comma_index + append_len))
         ++append_len;
 
     line_state_copy* copy = make_line_state_copy(*m_line);
