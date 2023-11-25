@@ -1836,14 +1836,14 @@ clink.argmatcher("foo")
 
 #### Overcoming Word Breaks
 
-Clink and CMD parse the input line into a [`line_state`](#line_state) by ending a word whenever one of the following characters is encountered (except when quoted e.g. `"abc,xyz"`):
+Clink and parses the input line into a [`line_state`](#line_state) by ending a word whenever one of the following characters is encountered (except when inside quotes).  These are the same word break characters as CMD.exe uses.
 - Whitespace characters SPACE, TAB, and NEWLINE.
 - Punctuation symbols `'`, `&backprime;`, `=`, `+`, `;`, and `,`.
 - Grouping symbols `(`, `)`, `[`, `]`, `{`, and `}`.
 
-Some programs may not consider some of those to be word break characters.  For example, Windows Terminal doesn't consider `,` to be a word break character, and requires it in the argument to the `--pos` and `--size` flags (`wt.exe --size 120,50`).
+However, many programs parse their command line arguments using different word break characters than CMD does.  
 
-In Clink v1.5.17 and higher, argmatchers can override the word break rules for specific argument positions by including `nowordbreakchars=","` (or set `nowordbreakchars=` a list of characters that shouldn't denote word breaks).  This can allow more accurate completions and input line coloring when these characters are present.
+In Clink v1.5.17 and higher, argmatchers can override the word break rules for specific argument positions by including `nowordbreakchars=","` (or set `nowordbreakchars=` a list of characters that shouldn't denote word breaks).  This can allow more accurate completions and input line coloring when these characters are present.  But `nowordbreakchars` is always ignored for builtin CMD commands and Batch scripts (because CMD.exe itself always parses word breaks a specific way).  Flags in argmatchers for anything other than builtin CMD commands and Batch scripts default to assuming `nowordbreakchars="'&backprime;+;,"`, but that can be overridden by setting `nowordbreakchars=` some other string.
 
 ```lua
 -- This argmatcher accepts syntax like "wt --pos x,y --size cols,rows command".
@@ -1859,7 +1859,7 @@ It's also possible to combine `nowordbreakchars` and `loopchars`:
 
 ```lua
 -- This argmatcher accepts syntax like "foo color[,color...] filename".
--- Typing "foo red f" and pressing TAB generates completions for files.
+-- Typing "foo red " and pressing TAB generates completions for files.
 -- Typing "foo red," and pressing TAB generates completions for colors (not files).
 clink.argmatcher("foo")
 :addarg({loopchars=",", nowordbreakchars=",", "red", "green", "blue"})
@@ -1878,7 +1878,7 @@ An argmatcher can define a "delayed initialization" callback function that gets 
 
 ##### Delayed initialization for the argmatcher
 
-You can use [_argmatcher:setdelayinit()](#_argmatcher:setdelayinit) to set a function that performs delayed initialization for the argmatcher.  The function receives one or two parameters:
+You can use [_argmatcher:setdelayinit()](#_argmatcher:setdelayinit) to set a function that performs delayed initialization for the argmatcher.  The function receives up to two parameters:
 
 - `argmatcher` is the argmatcher to be initialized.
 - In Clink v1.3.12 and higher, `command_word` is the word in the command line that matched this argmatcher.
@@ -2427,6 +2427,15 @@ Here are examples, using the colors from the [Use enhanced defaults](#gettingsta
 #### Setting a classifier function in an argmatcher
 
 In cases where an [argmatcher](#argumentcompletion) isn't able to color the input text in the desired manner, it's possible to supply a classifier function that overrides how the argmatcher colors the input text.  An argmatcher's classifier function is called once for each word the argmatcher parses, but it can classify any words (not just the word it was called for).  Each argmatcher can have its own classifier function, so when there are linked argmatchers more than one function may be invoked.
+
+The classifier function is passed up to six arguments:
+
+- `arg_index` is the argument index in the argmatcher, corresponding to the argument being parsed.  0 means it is a flag, rather than an argument.
+- `word` is a partial string for the word under the cursor, corresponding to the argument for which matches are being generated:  it is an empty string, or if a filename is being entered then it will be the path portion (e.g. for "dir1\dir2\pre" `word` will be "dir1\dir2\").
+- `word_index` is the word index in `line_state`, corresponding to the argument for which matches are being generated.
+- `line_state` is a [line_state](#line_state) object that contains the words for the associated command line.
+- `classifications` is a [word_classifications](#word_classifications) object which can be used to apply colors.
+- In Clink v1.5.17 and higher, `user_data` is a table that the argmatcher can use to help it parse the input line.  See [Responding to Arguments in Argmatchers](#responsive-argmatchers) for more information about the `user_data` table.
 
 Words are colored by classifying the words, and each classification has an associated color.  See [word_classifications:classifyword()](#word_classifications:classifyword) for the available classification codes.
 

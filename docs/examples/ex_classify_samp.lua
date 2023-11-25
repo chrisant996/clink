@@ -3,7 +3,7 @@
 -- directories (words that end with a path separator) as "unexpected" in the
 -- second argument position.
 
-local function classify_handler(arg_index, word, word_index, line_state, classifications)
+local function classify_handler(arg_index, word, word_index, line_state, classifications, user_data)
     -- `arg_index` is the argument position in the argmatcher.
     -- In this example only position 2 needs special treatent.
     if arg_index ~= 2 then
