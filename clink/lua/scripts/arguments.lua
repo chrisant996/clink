@@ -481,7 +481,7 @@ function _argreader:update(word, word_index, extra, last_onadvance) -- luacheck:
     -- If the arg has looping characters defined and a looping character
     -- separates this word from the next, then don't advance to the next
     -- argument index.
-    if not react and arg and arg.loopchars and word_index < line_state:getwordcount() then
+    if not react and arg and arg.loopchars and arg.loopchars ~= "" and word_index < line_state:getwordcount() then
         local thiswordinfo = line_state:getwordinfo(word_index)
         local nextwordinfo = line_state:getwordinfo(word_index + 1)
         local s = thiswordinfo.offset + thiswordinfo.length + (thiswordinfo.quoted and 1 or 0)
@@ -633,7 +633,7 @@ function _argreader:update(word, word_index, extra, last_onadvance) -- luacheck:
                         end
                     end
                     if not matched then
-                        if arg.loopchars then
+                        if arg.loopchars and arg.loopchars ~= "" then
                             -- If the arg has looping characters defined, then
                             -- split the word and apply colors to the sub-words.
                             pos = this_info.offset
@@ -814,9 +814,6 @@ local function append_uniq_chars(chars, find, add)
             -- Update the find expression.
             find = find:sub(1, #find - 1) .. pct .. c .. "]"
         end
-    end
-    if chars == "" then
-        return nil, nil
     end
     return chars, find
 end
