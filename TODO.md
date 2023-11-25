@@ -5,7 +5,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- Lua debugger isn't working in test harness (`pause()` doesn't pause immediately, debugger never shows up, but later `fgets()` starts waiting).
 
 ## Normal Priority
 
