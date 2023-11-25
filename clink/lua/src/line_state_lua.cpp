@@ -405,8 +405,6 @@ int32 line_state_lua::unbreak(lua_State* state)
     if (!is_unbreakchar(unbreakchars, line, line_len, comma_index))
         return 0;
 
-    lua_state::set_ever_unbreak();
-
     uint32 append_len = 1;
     while (is_unbreakchar(unbreakchars, line, line_len, comma_index + append_len))
         ++append_len;

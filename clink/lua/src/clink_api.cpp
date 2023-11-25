@@ -1755,6 +1755,44 @@ static int32 is_cmd_command(lua_State* state)
 }
 
 //------------------------------------------------------------------------------
+static int32 is_cmd_wordbreak(lua_State* state)
+{
+    line_state_lua* lsl = line_state_lua::check(state, 1);
+    if (!lsl)
+        return 0;
+
+    const line_state* line_state = lsl->get_line_state();
+    const uint32 cwi = line_state->get_command_word_index();
+    const word& info = line_state->get_words()[cwi];
+    const char* line = line_state->get_line();
+
+    str<> word;
+    word.concat(line + info.offset, info.length);
+
+    const state_flag flag = is_cmd_command(word.c_str());
+    bool cmd_wordbreak = !!(flag & state_flag::flag_specialwordbreaks);
+
+    if (!cmd_wordbreak)
+    {
+        bool ready;
+        str<> file;
+        const recognition recognized = recognize_command(nullptr, word.c_str(), info.quoted, ready, &file);
+        if (ready)
+        {
+            const char* ext = path::get_extension(file.c_str());
+            if (ext)
+            {
+                cmd_wordbreak = (_strcmpi(ext, ".bat") == 0 ||
+                                 _strcmpi(ext, ".cmd") == 0);
+            }
+        }
+    }
+
+    lua_pushboolean(state, cmd_wordbreak);
+    return 1;
+}
+
+//------------------------------------------------------------------------------
 static int32 save_global_modes(lua_State* state)
 {
     bool new_coroutine = lua_toboolean(state, 1);
@@ -2235,6 +2273,7 @@ void clink_lua_initialise(lua_state& lua, bool lua_interpreter)
         { 0,    "_signal_delayed_init",   &signal_delayed_init },
         { 0,    "_get_cmd_commands",      &get_cmd_commands },
         { 0,    "is_cmd_command",         &is_cmd_command },
+        { 0,    "is_cmd_wordbreak",       &is_cmd_wordbreak },
         { 0,    "_save_global_modes",     &save_global_modes },
         { 0,    "_restore_global_modes",  &restore_global_modes },
         { 0,    "_get_installation_type", &get_installation_type },

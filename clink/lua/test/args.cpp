@@ -1017,33 +1017,72 @@ TEST_CASE("Lua arg parsers")
     {
         // TODO: Also a fromhistory matcher, since the code path is slightly different.
 
+        static const char* bat_fs[] = {
+            "bat_thing.bat",
+            nullptr,
+        };
+
+        fs_fixture fs_bat(bat_fs);
+
         const char* script = "\
-            local wonky = clink.argmatcher():addarg({'12,34','12,35','12,42','3psych'})\
+            local wonky = clink.argmatcher():addarg({nowordbreakchars='','12,34','12,35','12,42','3psych'})\
             local wonderful = clink.argmatcher():addarg({nowordbreakchars=',','12,34','12,35','12,42','3psych'})\
-            clink.argmatcher('wt'):addflags('-x'..wonky, '-y'..wonderful):addarg('abc', '3ohnoes')\
+            local automatic = clink.argmatcher():addarg({'12,34','12,35','12,42','3psych'})\
+            clink.argmatcher('wt_thing'):addflags('-,', '-x'..wonky, '-y'..wonderful, '-z'..automatic):addarg('abc', '3ohnoes')\
+            clink.argmatcher('bat_thing'):addflags('-,', '-x'..wonky, '-y'..wonderful, '-z'..automatic):addarg('abc', '3ohnoes')\
         ";
 
         REQUIRE(lua.do_string(script));
 
         SECTION("Comma : yes")
         {
-            tester.set_input("wt -x 12,3");
+            tester.set_input("wt_thing -x 12,3");
             tester.set_expected_matches("3ohnoes");
             tester.run();
 
-            tester.set_input("wt -x 12,");
+            tester.set_input("wt_thing -x 12,");
             tester.set_expected_matches("abc", "3ohnoes");
             tester.run();
         }
 
         SECTION("Comma : no")
         {
-            tester.set_input("wt -y 12,3");
+            tester.set_input("wt_thing -y 12,3");
             tester.set_expected_matches("12,34", "12,35");
             tester.run();
 
-            tester.set_input("wt -y 12,");
+            tester.set_input("wt_thing -y 12,");
             tester.set_expected_matches("12,34", "12,35", "12,42");
+            tester.run();
+        }
+
+        SECTION("Comma : auto exe")
+        {
+            tester.set_input("wt_thing -,");
+            tester.set_expected_matches("-,");
+            tester.run();
+
+            tester.set_input("wt_thing -z 12,3");
+            tester.set_expected_matches("3ohnoes");
+            tester.run();
+
+            tester.set_input("wt_thing -z 12,");
+            tester.set_expected_matches("abc", "3ohnoes");
+            tester.run();
+        }
+
+        SECTION("Comma : auto bat")
+        {
+            tester.set_input("bat_thing -,");
+            tester.set_expected_matches("abc", "3ohnoes");
+            tester.run();
+
+            tester.set_input("bat_thing -z 12,3");
+            tester.set_expected_matches("3ohnoes");
+            tester.run();
+
+            tester.set_input("bat_thing -z 12,");
+            tester.set_expected_matches("abc", "3ohnoes");
             tester.run();
         }
     }

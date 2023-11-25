@@ -67,6 +67,7 @@ function _argreader._new(root, line_state)
         _line_state = line_state,
         _arg_index = 1,
         _stack = {},
+        _cmd_wordbreak = clink.is_cmd_wordbreak(line_state),
     }, _argreader)
     return reader
 end
@@ -341,6 +342,7 @@ end
 -- NEXT word in the line.
 --
 -- Returns TRUE when chaining due to chaincommand().
+local default_flag_nowordbreakchars = "'`=+;,"
 function _argreader:update(word, word_index, extra, last_onadvance) -- luacheck: no unused
     self._chain_command = nil
     self._cycle_detection = nil
@@ -369,7 +371,7 @@ function _argreader:update(word, word_index, extra, last_onadvance) -- luacheck:
     elseif not self._noflags and
             self._matcher._flags and
             self._matcher:_is_flag(word) and
-            word:find("[:=]$") then
+            word:find("..[:=]$") then
         -- Check if the word does not link to another matcher.
         local flagarg = self._matcher._flags._args[1]
         if not self:lookup_link(flagarg, 0, word, word_index, line_state) then
@@ -456,10 +458,12 @@ function _argreader:update(word, word_index, extra, last_onadvance) -- luacheck:
     local next_arg_index = arg_index + ((react ~= 0) and 1 or 0)
 
     -- Merge two adjacent words separated only by nowordbreakchars.
-    if arg and (arg.nowordbreakchars or is_flag) then
-        -- Flags default to unbreaking on most punctuation except = or command
-        -- separators or redirection symbols.
-        local nowordbreakchars = arg.nowordbreakchars or "'`+;,()[]{}"
+    if arg and (arg.nowordbreakchars or is_flag) and not self._cmd_wordbreak then
+        -- Internal CMD commands and Batch scripts never use nowordbreakchars.
+        -- Flags in other commands default to certain punctuation marks as
+        -- nowordbreakchars.  This more accurately reflects how the command
+        -- line will actually be parsed, especially for commas.
+        local nowordbreakchars = arg.nowordbreakchars or default_flag_nowordbreakchars
         local adjusted, skip_word, len = line_state:_unbreak(word_index, nowordbreakchars)
         if adjusted then
             self._line_state = adjusted
@@ -664,7 +668,7 @@ function _argreader:update(word, word_index, extra, last_onadvance) -- luacheck:
     -- Does the word lead to another matcher?
     local linked, forced = self:lookup_link(arg, is_flag and 0 or arg_index, word, word_index, line_state)
     if linked then
-        if not forced and is_flag and word:match("[:=]$") then
+        if not forced and is_flag and word:match("..[:=]$") then
             local info = line_state:getwordinfo(word_index)
             if info and
                     line_state:getcursor() ~= info.offset + info.length and
@@ -1558,7 +1562,7 @@ function _argmatcher:_add(list, addee, prefixes)
     -- If addee is a flag like --foo= and is not linked, then link it to a
     -- default parser so its argument doesn't get confused as an arg for its
     -- parent argmatcher.
-    if prefixes and type(addee) == "string" and addee:match("[:=]$") then
+    if prefixes and type(addee) == "string" and addee:match("..[:=]$") then
         addee = addee..clink.argmatcher():addarg(clink.filematches)
     end
 

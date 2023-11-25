@@ -158,14 +158,6 @@ const char* optstring(lua_State* L, int32 index, const char* default_value)
 
 
 //------------------------------------------------------------------------------
-bool is_ever_unbreak()
-{
-    return lua_state::is_ever_unbreak();
-}
-
-
-
-//------------------------------------------------------------------------------
 enum class global_state : uint32
 {
     none                = 0x00,
@@ -181,7 +173,6 @@ DEFINE_ENUM_FLAG_OPERATORS(global_state);
 bool lua_state::s_interpreter = false;
 bool lua_state::s_in_luafunc = false;
 bool lua_state::s_in_onfiltermatches = false;
-bool lua_state::s_ever_unbreak = false;
 #ifdef DEBUG
 bool lua_state::s_in_coroutine = false;
 #endif
@@ -208,7 +199,6 @@ void lua_state::initialise(lua_state_flags flags)
     const bool no_env = !!int32(flags & lua_state_flags::no_env);
 
     s_interpreter = interpreter;
-    s_ever_unbreak = false;
 
     // Create a new Lua state.
     m_state = luaL_newstate();

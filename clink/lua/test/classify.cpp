@@ -527,39 +527,65 @@ TEST_CASE("Lua word classification")
 
     SECTION("nowordbreakchars")
     {
+        static const char* bat_fs[] = {
+            "bat.bat",
+            nullptr,
+        };
+
+        fs_fixture fs_bat(bat_fs);
+
         const char* script = "\
             clink.argmatcher('qq'):addflags({nowordbreakchars=',','-,','-a,b'}):addarg({nowordbreakchars=',','abc','xyz','mm,ab','mm,ac','mm,xy'})\
+            clink.argmatcher('exe'):addflags({'-,','-a,b'}):addarg({'abc','xyz','mm,ab','mm,ac','mm,xy'})\
+            clink.argmatcher('bat'):addflags({'-,','-a,b'}):addarg({'abc','xyz','mm,ab','mm,ac','mm,xy'})\
         ";
 
         REQUIRE(lua.do_string(script));
 
-        tester.set_input("qq -,");
-        tester.set_expected_faces("oo ff");
-        tester.run();
+        SECTION("Basic")
+        {
+            tester.set_input("qq -,");
+            tester.set_expected_faces("oo ff");
+            tester.run();
 
-        tester.set_input("qq -,abc");
-        tester.set_expected_faces("oo ooooo");
-        tester.run();
+            tester.set_input("qq -,abc");
+            tester.set_expected_faces("oo ooooo");
+            tester.run();
 
-        tester.set_input("qq -, abc");
-        tester.set_expected_faces("oo ff aaa");
-        tester.run();
+            tester.set_input("qq -, abc");
+            tester.set_expected_faces("oo ff aaa");
+            tester.run();
 
-        tester.set_input("qq -a,b");
-        tester.set_expected_faces("oo ffff");
-        tester.run();
+            tester.set_input("qq -a,b");
+            tester.set_expected_faces("oo ffff");
+            tester.run();
 
-        tester.set_input("qq mm,ab");
-        tester.set_expected_faces("oo aaaaa");
-        tester.run();
+            tester.set_input("qq mm,ab");
+            tester.set_expected_faces("oo aaaaa");
+            tester.run();
 
-        tester.set_input("qq mm,a");
-        tester.set_expected_faces("oo oooo");
-        tester.run();
+            tester.set_input("qq mm,a");
+            tester.set_expected_faces("oo oooo");
+            tester.run();
 
-        tester.set_input("qq mm,abc");
-        tester.set_expected_faces("oo oooooo");
-        tester.run();
+            tester.set_input("qq mm,abc");
+            tester.set_expected_faces("oo oooooo");
+            tester.run();
+        }
+
+        SECTION("auto exe")
+        {
+            tester.set_input("exe -,");
+            tester.set_expected_faces("ooo ff");
+            tester.run();
+        }
+
+        SECTION("auto bat")
+        {
+            tester.set_input("bat -,");
+            tester.set_expected_faces("ooo o ");
+            tester.run();
+        }
     }
 
     AddConsoleAliasW(const_cast<wchar_t*>(L"dkalias"), nullptr, host);

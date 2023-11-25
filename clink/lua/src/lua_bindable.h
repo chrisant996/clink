@@ -51,7 +51,8 @@ public:
                         ~lua_bindable();
     template<typename... Args> static T* make_new(lua_State* state, Args... args);
     void                push(lua_State* state);
-    T*                  check(lua_State* state, int32 idx);
+    static T*           check(lua_State* state, int32 idx);
+    static T*           test(lua_State* state, int32 idx);
 
 private:
     static int32        call(lua_State* state);
@@ -236,6 +237,16 @@ template <class T>
 T* lua_bindable<T>::check(lua_State* state, int32 idx)
 {
     auto* const* self = (T* const*)luaL_checkudata(state, idx, T::c_name);
+    if (self && *self)
+        return *self;
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+template <class T>
+T* lua_bindable<T>::test(lua_State* state, int32 idx)
+{
+    auto* const* self = (T* const*)luaL_testudata(state, idx, T::c_name);
     if (self && *self)
         return *self;
     return 0;

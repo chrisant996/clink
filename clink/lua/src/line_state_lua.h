@@ -33,6 +33,8 @@ public:
     int32               unbreak(lua_State* state);
     int32               overwrite_from(lua_State* state);
 
+    const line_state*   get_line_state() const { return m_line; }
+
 private:
     const line_state*   m_line;
     line_state_copy*    m_copy;
