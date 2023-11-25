@@ -153,6 +153,13 @@ bool has_file_association(const char* name)
     return true;
 }
 
+//------------------------------------------------------------------------------
+static bool s_immediate = false;
+void set_noasync_recognizer()
+{
+    s_immediate = true;
+}
+
 
 
 //------------------------------------------------------------------------------
@@ -185,6 +192,8 @@ public:
     bool                    enqueue(const char* key, const char* word, const char* cwd, recognition* cached=nullptr);
     bool                    need_refresh();
     void                    end_line();
+
+    void                    wait_while_busy();
 
 private:
     bool                    usable() const;
@@ -317,6 +326,16 @@ bool recognizer::enqueue(const char* key, const char* word, const char* cwd, rec
 
     Sleep(0);           // Give up timeslice in case thread gets result quickly.
     return true;
+}
+
+//------------------------------------------------------------------------------
+void recognizer::wait_while_busy()
+{
+    if (usable())
+    {
+        while (busy() && WaitForSingleObject(s_ready_event, INFINITE) == WAIT_OBJECT_0)
+        {}
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -664,5 +683,11 @@ recognition recognize_command(const char* line, const char* word, bool quoted, b
         return recognition::unknown;
 
     ready = false;
+    if (s_immediate)
+    {
+        s_recognizer.wait_while_busy();
+        ready = (s_recognizer.find(orig_word, cached, file) > 0);
+    }
+
     return cached;
 }
