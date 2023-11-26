@@ -151,11 +151,31 @@ local function color_handler(word_index, line_state, classify)
     local include_sgr = true
     local invalid = false
 
+    if classify then
+        local line = line_state:getline()
+        local info = line_state:getwordinfo(i)
+        local word = line:sub(info.offset, info.offset + info.length - 1)
+        if word == "clear" then
+            classify:classifyword(i, "a") --arg
+            classify_to_end(i + 1, line_state, classify, "n") --none
+            return {}
+        elseif line_state:getwordcount() == i and
+                #line == info.offset + info.length - 1 and
+                string.sub("clear", 1, #word) == word then
+            classify:classifyword(i, "o") --other
+            return {}
+        end
+    end
+
+    local info, word
     while i <= line_state:getwordcount() do
-        local word = line_state:getword(i)
+        info = line_state:getwordinfo(i)
+        word = line_state:getline():sub(info.offset, info.offset + info.length - 1)
 
         if word ~= "" then
-            include_clear = false
+            if word ~= "clear" then
+                include_clear = false
+            end
             if word ~= "sgr" then
                 include_sgr = false
             end
@@ -219,50 +239,73 @@ local function color_handler(word_index, line_state, classify)
         end
 
         i = i + 1
+
+        if i == 2 and word == "clear" then
+            invalid = true
+            break
+        end
+    end
+
+    local list = {}
+    local need_list = not (classify or invalid)
+    if classify and invalid and word and word == word:lower() then
+        need_list = (#line_state:getline() == info.offset + info.length - 1)
+    end
+
+    if need_list then
+        if include_on then
+            table.insert(list, "on")
+        end
+        if include_bold then
+            table.insert(list, "bold")
+            table.insert(list, "nobold")
+        end
+        if include_bright then
+            table.insert(list, "bright")
+        end
+        if include_underline then
+            table.insert(list, "underline")
+            table.insert(list, "nounderline")
+        end
+        if include_color then
+            table.insert(list, "default")
+            table.insert(list, "normal")
+            table.insert(list, "black")
+            table.insert(list, "red")
+            table.insert(list, "green")
+            table.insert(list, "yellow")
+            table.insert(list, "blue")
+            table.insert(list, "cyan")
+            table.insert(list, "magenta")
+            table.insert(list, "white")
+        end
+        if include_sgr then
+            table.insert(list, "sgr")
+        end
+        if include_clear then
+            table.insert(list, "clear")
+        end
     end
 
     if classify and invalid then
+        if word then
+            local len = #word
+            for _, s in ipairs(list) do
+                if s:sub(1, len) == word then
+                    classify:classifyword(i, "o") --other
+                    return {}
+                end
+            end
+        end
         classify_to_end(i, line_state, classify, "n") --none
     end
+
     if classify or invalid then
         return {}
     end
 
-    local list = {}
-    if include_on then
-        table.insert(list, "on")
-    end
-    if include_bold then
-        table.insert(list, "bold")
-        table.insert(list, "nobold")
-    end
-    if include_bright then
-        table.insert(list, "bright")
-    end
-    if include_underline then
-        table.insert(list, "underline")
-        table.insert(list, "nounderline")
-    end
-    if include_color then
-        table.insert(list, "default")
-        table.insert(list, "normal")
-        table.insert(list, "black")
-        table.insert(list, "red")
-        table.insert(list, "green")
-        table.insert(list, "yellow")
-        table.insert(list, "blue")
-        table.insert(list, "cyan")
-        table.insert(list, "magenta")
-        table.insert(list, "white")
-    end
-    if include_sgr then
-        table.insert(list, "sgr")
-    end
-    if include_clear then
-        table.insert(list, "clear")
-    end
     if #list == 0 then
-        return nil
+        --return nil
     end
     return list
 end
