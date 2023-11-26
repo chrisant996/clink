@@ -150,9 +150,9 @@ local function color_handler(word_index, line_state, classify)
     local include_on = true
     local include_sgr = true
     local invalid = false
+    local line = line_state:getline()
 
     if classify then
-        local line = line_state:getline()
         local info = line_state:getwordinfo(i)
         local word = line:sub(info.offset, info.offset + info.length - 1)
         if word == "clear" then
@@ -170,7 +170,7 @@ local function color_handler(word_index, line_state, classify)
     local info, word
     while i <= line_state:getwordcount() do
         info = line_state:getwordinfo(i)
-        word = line_state:getline():sub(info.offset, info.offset + info.length - 1)
+        word = line:sub(info.offset, info.offset + info.length - 1)
 
         if word ~= "" then
             if word ~= "clear" then
@@ -249,7 +249,7 @@ local function color_handler(word_index, line_state, classify)
     local list = {}
     local need_list = not (classify or invalid)
     if classify and invalid and word and word == word:lower() then
-        need_list = (#line_state:getline() == info.offset + info.length - 1)
+        need_list = (#line == info.offset + info.length - 1)
     end
 
     if need_list then
@@ -353,9 +353,13 @@ end
 --------------------------------------------------------------------------------
 local function classify_handler(arg_index, word, word_index, line_state, classify)
     if arg_index == 1 then
+        local info = line_state:getwordinfo(word_index)
+        local line = line_state:getline()
+        word = line:sub(info.offset, info.offset + info.length - 1)
+
         -- Classify the setting name.
-        local info = settings.list(word, true)
-        if info then
+        local setting_info = settings.list(word, true)
+        if setting_info then
             classify:classifyword(word_index, "a") --arg
         elseif is_setting_name_prefix(word, word_index, line_state) then
             classify:classifyword(word_index, "o") --other
@@ -369,24 +373,35 @@ local function classify_handler(arg_index, word, word_index, line_state, classif
         if idx > line_state:getwordcount() then
             return true
         end
-        if info.type == "color" then
+        if setting_info.type == "color" then
             color_handler(idx, line_state, classify)
             return true
-        elseif info.type == "string" then
+        elseif setting_info.type == "string" then
             -- If there are no matches listed, then it's a string field.  In
             -- that case classify the rest of the line as "other" words so they
             -- show up in a uniform color.
             classify_to_end(idx, line_state, classify, "o") --other
             return true
-        elseif info.type == "int" then
+        elseif setting_info.type == "int" then
             classify:classifyword(idx, "o") --other
         else
             local t = "n" --none
-            local value = clink.lower(line_state:getword(idx))
-            for _,i in ipairs(info.values) do
+            local matched
+            local val_info = line_state:getwordinfo(idx)
+            local value = clink.lower(line:sub(val_info.offset, val_info.offset + val_info.length - 1))
+            for _,i in ipairs(setting_info.values) do
                 if clink.lower(i) == value then
                     t = "a" --arg
+                    matched = true
                     break
+                end
+            end
+            if not matched and #line == val_info.offset + val_info.length - 1 then
+                for _,i in ipairs(setting_info.values) do
+                    if clink.lower(i:sub(1, #value)) == value then
+                        t = "o" --other
+                        break
+                    end
                 end
             end
             classify:classifyword(idx, t)
