@@ -2393,6 +2393,7 @@ void rl_module::set_prompt(const char* prompt, const char* rprompt, bool redispl
 
     // Erase the existing prompt.
     int32 was_visible = false;
+    int32 clear_lines = 0;
     if (redisplay)
     {
         was_visible = show_cursor(false);
@@ -2401,16 +2402,27 @@ void rl_module::set_prompt(const char* prompt, const char* rprompt, bool redispl
         // Count the number of lines the prompt takes to display.
         int32 lines = count_prompt_lines(rl_get_local_prompt_prefix());
 
-        // Clear the input line and the prompt prefix.
-        rl_clear_visible_line();
-        while (lines-- > 0)
+#if defined (INCLUDE_CLINK_DISPLAY_READLINE)
+        if (use_display_manager())
         {
+            str<16> up;
+            up.format("\x1b[%uA", lines);
+            _rl_move_vert(0);
+            g_printer->print(up.c_str(), up.length());
+            clear_lines = lines;
+        }
+        else
+#endif
+        {
+            // Clear the input line and the prompt prefix.
             // BUGBUG: This can't walk up past the top of the visible area of
             // the terminal display, so short windows will effectively corrupt
             // the scrollback history.
             // REVIEW: What if the visible area is only one line tall?  Are ANSI
             // codes able to manipulate it adequately?
-            g_printer->print("\x1b[A\x1b[2K");
+            rl_clear_visible_line();
+            while (lines-- > 0)
+                g_printer->print("\x1b[A\x1b[2K");
         }
     }
 
@@ -2422,6 +2434,7 @@ void rl_module::set_prompt(const char* prompt, const char* rprompt, bool redispl
     if (redisplay)
     {
         g_prompt_redisplay++;
+        g_display_manager_clean_lines = clear_lines;
         rl_forced_update_display();
 
         lock_cursor(false);

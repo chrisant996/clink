@@ -85,6 +85,7 @@ extern int _rl_rprompt_shown_len;
 //------------------------------------------------------------------------------
 extern "C" int32 is_CJK_codepage(UINT cp);
 extern int32 g_prompt_redisplay;
+int32 g_display_manager_clean_lines = 0;
 
 //------------------------------------------------------------------------------
 static setting_int g_input_rows(
@@ -1565,6 +1566,19 @@ void display_manager::display()
     bool forced_display = rl_get_forced_display();
     rl_set_forced_display(false);
 
+    if (g_display_manager_clean_lines > 0)
+    {
+        // Clear the lines within the display_accumulator scope.
+        for (int32 lines = g_display_manager_clean_lines; lines--;)
+            rl_fwrite_function(_rl_out_stream, "\x1b[2K\n", 5);
+        rl_clear_visible_line();
+        // Go back up to where the cursor was before clearing lines.
+        str<16> tmp;
+        tmp.format("\x1b[%uA", g_display_manager_clean_lines);
+        rl_fwrite_function(_rl_out_stream, tmp.c_str(), tmp.length());
+        g_display_manager_clean_lines = 0;
+    }
+
     if (prompt || rl_display_prompt == rl_prompt)
     {
         if (prompt_prefix && forced_display)
@@ -1572,7 +1586,6 @@ void display_manager::display()
     }
     else
     {
-        int32 pmtlen;
         prompt = strrchr(rl_display_prompt, '\n');
         if (!prompt)
             prompt = rl_display_prompt;
@@ -1580,7 +1593,7 @@ void display_manager::display()
         {
             assert(!rl_get_message_buffer());
             prompt++;
-            pmtlen = int32(prompt - rl_display_prompt);
+            const int32 pmtlen = int32(prompt - rl_display_prompt);
             if (forced_display)
             {
                 rl_fwrite_function(_rl_out_stream, rl_display_prompt, pmtlen);
@@ -2444,7 +2457,7 @@ void display_manager::finish_pending_wrap()
 static bool s_use_display_manager = false;
 
 //------------------------------------------------------------------------------
-extern "C" int32 use_display_manager()
+bool use_display_manager()
 {
 #if defined (OMIT_DEFAULT_DISPLAY_READLINE)
     s_use_display_manager = true;
