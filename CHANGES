@@ -3,10 +3,10 @@
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
 #### v1.5.17
+- Reduced flicker when async prompt filtering redraws the prompt.
 - When `_argmatcher:addarg()` or `_argmatcher:addflags()` is passed a table containing <code>nowordbreakchars="<span class="arg">chars</span>"</code> then the <span class="arg">chars</span> are not treated as word breaks for that argument index or for flags (see [Overcoming Word Breaks](#addarg_nowordbreakchars) for more information).
 - Added a `user_data` argument to the custom classifier function for an argmatcher (set via `_argmatcher:setclassifier()`).
 - Improved input line coloring for `clink set` so that `color.unexpected` is only used for a completed word that isn't a match.
-- Reduced flicker when async prompt filtering redraws the prompt.
 - Fixed reading lines from stdin in Lua scripts (e.g. `io.stdin:read()`).
 - Fixed accidentally showing matches in a single column sometimes even when there are no descriptions.
 - Fixed an incomplete `clink inject` if an explicit or implicit `endlocal` happens after `clink inject` but before the prompt is shown (the injection didn't finish successfully until the next time an environment variable was set, but now it finishes immediately).
