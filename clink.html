@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.5.16</title>
+<title>Clink v1.5.17</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -902,7 +902,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.5.16</div>
+                <div id="title">Clink v1.5.17</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -3805,7 +3805,7 @@ $endif              # end clink-only section
 </ul>
 </blockquote>
 <h3 id="completion-directories"><a class="wlink" href="#completion-directories"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Completion directories</h3>
-<p>You may optionally put Lua completion scripts in a <code>completions\</code> directory.  That prevents them from being loaded when Clink starts, and instead they are only loaded when needed.  That can make Clink load faster if you have a large quantity of Lua scripts that define argmatchers.</p>
+<p>You may optionally put Lua completion scripts in a <code>completions\</code> directory when using Clink v1.3.23 and higher.  That prevents them from being loaded when Clink starts, and instead they are only loaded when needed.  That can make Clink load faster if you have a large quantity of Lua scripts that define argmatchers.</p>
 <p>When a command name is typed, if a corresponding argmatcher is not already loaded then the completions directories are searched for a Lua script by the same name.  If found, then the Lua script is loaded.  This is similar to how completion scripts work in shells like bash, zsh, and fish.</p>
 <p>For example, if you type <code>xyz</code> and an argmatcher for <code>xyz</code> is not yet loaded, then if <code>xyz.lua</code> exists in one of the completions directories it will be loaded.</p>
 <p>Clink looks for completion scripts in these directories:</p>
@@ -3852,6 +3852,7 @@ $endif              # end clink-only section
 <tr><td style="padding-left: 2rem"><a href="#addarg_nosort">Disable Sorting Matches</a></td><td>How to disable auto-sorted completions.</td></tr>
 <tr><td style="padding-left: 2rem"><a href="#argmatcher_fullyqualified">Fully Qualified Pathnames</a></td><td>How to make different argmatchers for programs with the same name.</td></tr>
 <tr><td style="padding-left: 2rem"><a href="#addarg_loopchars">Delimited Arguments</a></td><td>How to allow multiple completions in the same argument slot (e.g. <code>file1;file2;file3</code>).</td></tr>
+<tr><td style="padding-left: 2rem"><a href="#addarg_nowordbreakchars">Overcoming Word Breaks</a></td><td>How to prevent characters like `,` from breaking words.</td></tr>
 <tr><td style="padding-left: 2rem"><a href="#argmatcher_adaptive">Adaptive Argmatchers</a></td><td>How an argmatcher can define or modify itself on the fly.</td></tr>
 <tr><td style="padding-left: 2rem"><a href="#responsive-argmatchers">Responding to Arguments in Argmatchers</a></td><td>When argument slots need to influence one another.</td></tr>
 <tr><td style="padding-left: 2rem"><a href="#argmatcher_shorthand">Shorthand</a></td><td>Alternative syntax for defining argmatchers.</td></tr>
@@ -4046,13 +4047,39 @@ clink.argmatcher(&quot;foo&quot;)
 :addarg({loopchars=&quot;;&quot;, &quot;red&quot;, &quot;green&quot;, &quot;blue&quot;})
 :addarg(clink.filematches)
 </code></pre>
+<p><a name="addarg_nowordbreakchars"></a></p>
+<h4 id="overcoming-word-breaks"><a class="wlink" href="#addarg_nowordbreakchars"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Overcoming Word Breaks</h4>
+<p>Clink and parses the input line into a <a href="#line_state"><code>line_state</code></a> by ending a word whenever one of the following characters is encountered (except when inside quotes).  These are the same word break characters as CMD.exe uses.</p>
+<ul>
+<li>Whitespace characters SPACE, TAB, and NEWLINE.</li>
+<li>Punctuation symbols <code>&#39;</code>, <code>&amp;backprime;</code>, <code>=</code>, <code>+</code>, <code>;</code>, and <code>,</code>.</li>
+<li>Grouping symbols <code>(</code>, <code>)</code>, <code>[</code>, <code>]</code>, <code>{</code>, and <code>}</code>.</li>
+</ul>
+<p>However, many programs parse their command line arguments using different word break characters than CMD does.  </p>
+<p>In Clink v1.5.17 and higher, argmatchers can override the word break rules for specific argument positions by including <code>nowordbreakchars=&quot;,&quot;</code> (or set <code>nowordbreakchars=</code> a list of characters that shouldn&#39;t denote word breaks).  This can allow more accurate completions and input line coloring when these characters are present.  But <code>nowordbreakchars</code> is always ignored for builtin CMD commands and Batch scripts (because CMD.exe itself always parses word breaks a specific way).  Flags in argmatchers for anything other than builtin CMD commands and Batch scripts default to assuming <code>nowordbreakchars=&quot;&#39;&amp;backprime;+;,&quot;</code>, but that can be overridden by setting <code>nowordbreakchars=</code> some other string.</p>
+<pre><code class="language-lua">-- This argmatcher accepts syntax like &quot;wt --pos x,y --size cols,rows command&quot;.
+clink.argmatcher(&quot;wt&quot;)
+:addflags({
+    &quot;--pos&quot; .. clink.argmatcher():addarg({fromhistory=true, nowordbreakchars=&quot;,&quot;}),
+    &quot;--size&quot; .. clink.argmatcher():addarg({fromhistory=true, nowordbreakchars=&quot;,&quot;}),
+})
+:chaincommand()
+</code></pre>
+<p>It&#39;s also possible to combine <code>nowordbreakchars</code> and <code>loopchars</code>:</p>
+<pre><code class="language-lua">-- This argmatcher accepts syntax like &quot;foo color[,color...] filename&quot;.
+-- Typing &quot;foo red &quot; and pressing TAB generates completions for files.
+-- Typing &quot;foo red,&quot; and pressing TAB generates completions for colors (not files).
+clink.argmatcher(&quot;foo&quot;)
+:addarg({loopchars=&quot;,&quot;, nowordbreakchars=&quot;,&quot;, &quot;red&quot;, &quot;green&quot;, &quot;blue&quot;})
+:addarg(clink.filematches)
+</code></pre>
 <p><a name="argmatcher_adaptive"></a></p>
 <h4 id="adaptive-argmatchers"><a class="wlink" href="#argmatcher_adaptive"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Adaptive Argmatchers</h4>
 <p>Some argmatchers may need to adapt on the fly.  For example, a program may have different features available depending on the current directory, or may want to define its arguments and flags by parsing the <code>--help</code> text from running a program.</p>
 <p>An argmatcher can define a &quot;delayed initialization&quot; callback function that gets calls when the argmatcher gets used, allowing it to defer potentially expensive initialization work until it&#39;s actually needed.  An argmatcher can also define a separate &quot;delayed initialization&quot; function for each argument position.</p>
 <p><a name="argmatcher_setdelayinit"></a></p>
 <h5 id="delayed-initialization-for-the-argmatcher"><a class="wlink" href="#argmatcher_setdelayinit"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Delayed initialization for the argmatcher</h5>
-<p>You can use <a href="#_argmatcher:setdelayinit">_argmatcher:setdelayinit()</a> to set a function that performs delayed initialization for the argmatcher.  The function receives one or two parameters:</p>
+<p>You can use <a href="#_argmatcher:setdelayinit">_argmatcher:setdelayinit()</a> to set a function that performs delayed initialization for the argmatcher.  The function receives up to two parameters:</p>
 <ul>
 <li><code>argmatcher</code> is the argmatcher to be initialized.</li>
 <li>In Clink v1.3.12 and higher, <code>command_word</code> is the word in the command line that matched this argmatcher.</li>
@@ -4657,6 +4684,15 @@ end
 <p><a name="classifier_override_arguments"></a></p>
 <h4 id="setting-a-classifier-function-in-an-argmatcher"><a class="wlink" href="#classifier_override_arguments"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Setting a classifier function in an argmatcher</h4>
 <p>In cases where an <a href="#argumentcompletion">argmatcher</a> isn&#39;t able to color the input text in the desired manner, it&#39;s possible to supply a classifier function that overrides how the argmatcher colors the input text.  An argmatcher&#39;s classifier function is called once for each word the argmatcher parses, but it can classify any words (not just the word it was called for).  Each argmatcher can have its own classifier function, so when there are linked argmatchers more than one function may be invoked.</p>
+<p>The classifier function is passed up to six arguments:</p>
+<ul>
+<li><code>arg_index</code> is the argument index in the argmatcher, corresponding to the argument being parsed.  0 means it is a flag, rather than an argument.</li>
+<li><code>word</code> is a partial string for the word under the cursor, corresponding to the argument for which matches are being generated:  it is an empty string, or if a filename is being entered then it will be the path portion (e.g. for &quot;dir1\dir2\pre&quot; <code>word</code> will be &quot;dir1\dir2&quot;).</li>
+<li><code>word_index</code> is the word index in <code>line_state</code>, corresponding to the argument for which matches are being generated.</li>
+<li><code>line_state</code> is a <a href="#line_state">line_state</a> object that contains the words for the associated command line.</li>
+<li><code>classifications</code> is a <a href="#word_classifications">word_classifications</a> object which can be used to apply colors.</li>
+<li>In Clink v1.5.17 and higher, <code>user_data</code> is a table that the argmatcher can use to help it parse the input line.  See <a href="#responsive-argmatchers">Responding to Arguments in Argmatchers</a> for more information about the <code>user_data</code> table.</li>
+</ul>
 <p>Words are colored by classifying the words, and each classification has an associated color.  See <a href="#word_classifications:classifyword">word_classifications:classifyword()</a> for the available classification codes.</p>
 <p>The <code>clink set</code> command has different syntax depending on the setting type, so the argmatcher for <code>clink</code> needs help in order to get everything right.  A custom generator function parses the input text to provide appropriate matches, and a custom classifier function applies appropriate coloring.</p>
 <pre><code class="language-lua">-- In this example, the argmatcher matches a directory as the first argument and
@@ -4664,7 +4700,7 @@ end
 -- directories (words that end with a path separator) as &quot;unexpected&quot; in the
 -- second argument position.
 
-local function classify_handler(arg_index, word, word_index, line_state, classifications)
+local function classify_handler(arg_index, word, word_index, line_state, classifications, user_data)
     -- `arg_index` is the argument position in the argmatcher.
     -- In this example only position 2 needs special treatent.
     if arg_index ~= 2 then
@@ -7317,6 +7353,16 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes"><a class="wlink" href="#changes"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork"><a class="wlink" href="#releases-from-chrisant996clink-fork"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1517"><a class="wlink" href="#v1517"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.5.17</h4>
+<ul>
+<li>Reduced flicker when async prompt filtering redraws the prompt.</li>
+<li>When <code>_argmatcher:addarg()</code> or <code>_argmatcher:addflags()</code> is passed a table containing <code>nowordbreakchars="<span class="arg">chars</span>"</code> then the <span class="arg">chars</span> are not treated as word breaks for that argument index or for flags (see <a href="#addarg_nowordbreakchars">Overcoming Word Breaks</a> for more information).</li>
+<li>Added a <code>user_data</code> argument to the custom classifier function for an argmatcher (set via <code>_argmatcher:setclassifier()</code>).</li>
+<li>Improved input line coloring for <code>clink set</code> so that <code>color.unexpected</code> is only used for a completed word that isn&#39;t a match.</li>
+<li>Fixed reading lines from stdin in Lua scripts (e.g. <code>io.stdin:read()</code>).</li>
+<li>Fixed accidentally showing matches in a single column sometimes even when there are no descriptions.</li>
+<li>Fixed an incomplete <code>clink inject</code> if an explicit or implicit <code>endlocal</code> happens after <code>clink inject</code> but before the prompt is shown (the injection didn&#39;t finish successfully until the next time an environment variable was set, but now it finishes immediately).</li>
+</ul>
 <h4 id="v1516"><a class="wlink" href="#v1516"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.5.16</h4>
 <ul>
 <li>Fixed <a href="https://github.com/chrisant996/clink/issues/522">#522</a>; garbled display in JetBrains WebStorm terminal (regression introduced in v1.5.15).<ul>
