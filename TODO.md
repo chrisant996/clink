@@ -5,6 +5,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
+- It looks like the hyperlink escape code in the autosuggest hint is getting split in some terminals.  `display_accumulator` probably cannot safely coalesce the entire output into a single call.
 
 ## Normal Priority
 
