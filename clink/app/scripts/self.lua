@@ -304,9 +304,6 @@ local function color_handler(word_index, line_state, classify)
         return {}
     end
 
-    if #list == 0 then
-        --return nil
-    end
     return list
 end
 
@@ -351,11 +348,11 @@ local function is_setting_name_prefix(word, word_index, line_state)
 end
 
 --------------------------------------------------------------------------------
-local function classify_handler(arg_index, word, word_index, line_state, classify)
+local function classify_handler(arg_index, _, word_index, line_state, classify)
     if arg_index == 1 then
         local info = line_state:getwordinfo(word_index)
         local line = line_state:getline()
-        word = line:sub(info.offset, info.offset + info.length - 1)
+        local word = line:sub(info.offset, info.offset + info.length - 1)
 
         -- Classify the setting name.
         local setting_info = settings.list(word, true)
