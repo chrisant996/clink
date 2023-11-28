@@ -260,10 +260,6 @@ You can turn off automatic suggestions with <code>clink set <a href="#autosugges
 
 When automatic suggestions are enabled and the cursor is at the end of the input line, a suggestion may appear in a muted color.  If the suggestion isn't what you want, just ignore it.  Or you can accept the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, accept the next word of the suggestion with <kbd>Ctrl</kbd>-<kbd>Right</kbd>, or accept the next full word of the suggestion up to a space with <kbd>Shift</kbd>-<kbd>Right</kbd>.
 
-The [`autosuggest.strategy`](#autosuggest_strategy) setting determines how suggestions are chosen.
-
-The [`autosuggest.hint`](#autosuggest_hint) setting controls whether to show the `[Right]=Accept Suggestion` usage hint when a suggestion is available.
-
 Here's an example of how auto-suggestion works.  Suppose you ran a command, so now it's in your command history:
 
 <pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default">C:\dir&gt;<span class="color_executable">findstr</span>&nbsp; <span class="color_input">/s needle haystack\*</span></span>
@@ -277,6 +273,10 @@ Later, you start to type a new command, and it matches the earlier command from 
 The muted text shows a suggestion that might be what you intend to type.  You can accept the muted text into the input line by pressing the <kbd>Right</kbd> key.
 
 If you press <kbd>Tab</kbd> then that invokes [completion](#how-completion-works) instead.  Completion is something you manually invoke to offer possible completions for a word or argument position.  Auto-suggestion automatically offers suggestions for a whole input line, and the suggestions can come from the saved command history or from the list of possible completions.
+
+The [`autosuggest.hint`](#autosuggest_hint) setting controls whether to show the `[Right]=Accept Suggestion` usage hint when a suggestion is available.
+
+The [`autosuggest.strategy`](#autosuggest_strategy) setting determines how suggestions are chosen.
 
 <a name="gettingstarted_colors"></a>
 
