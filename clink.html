@@ -998,12 +998,26 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
 </div>
 
 <h1 id="usage"><a class="wlink" href="#usage"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Usage</h1>
-<p>There are several ways to start Clink.</p>
+<h3 id="installation"><a class="wlink" href="#installation"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Installation</h3>
+<p>You can install Clink by running the setup EXE file from the <a href="https://github.com/chrisant996/clink/releases">releases page</a>.</p>
+<p>Or by using <a href="https://learn.microsoft.com/en-us/windows/package-manager/winget/">winget</a> and running <code>winget install clink</code>.</p>
+<p>Or by using <a href="https://scoop.sh/">scoop</a> and running <code>scoop install clink</code>.</p>
+<p>Or by downloading the ZIP file from <a href="https://github.com/chrisant996/clink/releases">releases page</a>, and extracting the files to a directory of your choosing.</p>
+<h3 id="using-clink"><a class="wlink" href="#using-clink"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Using Clink</h3>
+<p>Once installed, there are several ways to start Clink.</p>
 <ol>
-<li>If you installed the auto-run, just start <code>cmd.exe</code>.  Run <code>clink autorun --help</code> for more info.</li>
-<li>To manually start, run the Clink shortcut from the Start menu (or the clink.bat located in the install directory).</li>
-<li>To establish Clink to an existing <code>cmd.exe</code> process, use <code>&lt;install_dir&gt;\clink inject</code>.</li>
+<li>If Clink is configured for autorun, just start <code>cmd.exe</code> and Clink is automatically injected and ready to use.</li>
 </ol>
+<blockquote>
+<p>The setup EXE has an option &quot;Autorun when cmd.exe starts&quot;.  If you didn&#39;t use the setup EXE, or if you want to enable or disable autorun later, you can run <code>clink autorun install</code> or <code>clink autorun uninstall</code> to change the autorun configuration.  Run <code>clink autorun --help</code> for more info.</p>
+</blockquote>
+<ol start="2">
+<li>To manually start, run the Clink shortcut from the Start menu (or the clink.bat located in the install directory).</li>
+<li>To establish Clink to an existing <code>cmd.exe</code> process, use <code>clink inject</code>.</li>
+</ol>
+<blockquote>
+<p>If the Clink install directory isn&#39;t in the PATH, then use <code><span class="arg">install_dir</span>\clink</code> in place of <code>clink</code> to run Clink commands.  Once Clink is injected into a <code>cmd.exe</code> process, then it automatically sets an alias so that you can simply use <code>clink</code>.</p>
+</blockquote>
 <p>Starting Clink injects it into a <code>cmd.exe</code> process, where it intercepts a handful of Windows API functions so that it can replace the prompt and input line editing with its own Readline-powered enhancements.</p>
 <h1 id="getting-started"><a class="wlink" href="#getting-started"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Getting Started</h1>
 <p>You can use Clink right away without configuring anything:</p>
@@ -1861,8 +1875,8 @@ $endif
 <h2 id="file-locations"><a class="wlink" href="#filelocations"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>File Locations</h2>
 <p>Settings and history are persisted to disk from session to session. By default Clink uses the current user&#39;s non-roaming application data directory. This user directory is usually found in one of the following locations;</p>
 <ul>
-<li>Windows XP: <code>c:\Documents and Settings\&lt;username&gt;\Local Settings\Application Data\clink</code></li>
-<li>Windows Vista onwards: <code>c:\Users\&lt;username&gt;\AppData\Local\clink</code></li>
+<li>Windows XP: <code>c:\Documents and Settings\<span class="arg">username</span>\Local Settings\Application Data\clink</code></li>
+<li>Windows Vista onwards: <code>c:\Users\<span class="arg">username</span>\AppData\Local\clink</code></li>
 </ul>
 <p>All of the above locations can be overridden using the <code>--profile <span class="arg">path</span></code> command line option which is specified when injecting Clink into cmd.exe using <code>clink inject</code>.  Or with the <code>%CLINK_PROFILE%</code> environment variable if it is already present when Clink is injected (this envvar takes precedence over any other mechanism of specifying a profile directory, if more than one was used).</p>
 <p>You can use <code>clink info</code> to find the directories and configuration files for the current Clink session.</p>
@@ -2519,7 +2533,7 @@ Key names can be a <em>name</em> or a <em>sequence</em>.  Names are not quoted, 
 <td>Vertical tab.</td>
 </tr>
 <tr>
-<td><code>&lt;span class="arg">nnn</span></code></td>
+<td><code>\<span class="arg">nnn</span></code></td>
 <td>The eight-bit character whose value is the octal value <em>nnn</em> (one to three digits)</td>
 </tr>
 <tr>
@@ -6279,7 +6293,7 @@ or edit, the word or words selected from the history event.</p>
 <li>Argmatchers for <code>msbuild</code>, <code>findstr</code>, <code>robocopy</code>, <code>xcopy</code>, <code>doskey</code>, <code>premake5</code>, and more.</li>
 <li>Scripts to auto-generate argmatchers for commands by parsing their help text.</li>
 <li>Automatically show a divider line before + after certain commands, to make it easy to see where their output begins and ends, and the elapsed time taken by the command.  This is especially handy when invoking compilers and build tools.</li>
-<li>The <code>i.lua</code> script to run a {command} in a {directory} and restore the original current directory afterwards.  While typing the {command}, completions are even generated relative to the specified {directory} rather than the current directory.</li>
+<li>The <code>i.lua</code> script which makes <code>i <span class="arg">directory</span> <span class="arg">command</span></code> set the current directory to <span class="arg">directory</span> then run <span class="arg">command</span> then restore the original current directory afterwards.  While typing the <span class="arg">command</span>, completions are even generated relative to the specified <span class="arg">directory</span> rather than the current directory.</li>
 <li>The <code>fzf.lua</code> script from <a href="https://github.com/chrisant996/clink-fzf">clink-fzf</a> for integrating the popular <a href="https://github.com/junegunn/fzf">fzf</a> &quot;fuzzy finder&quot; tool with Clink.</li>
 <li>The <code>luaexec.lua</code> script which has various features handy for Clink Lua script authors.</li>
 <li>And more.</li>
@@ -6292,7 +6306,7 @@ load(io.popen(&#39;oh-my-posh.exe --config=&quot;C:/Users/me/jandedobbeleer.omp.
 </code></pre>
 <h3 id="starship"><a class="wlink" href="#starship"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>starship</h3>
 <p>The <a href="https://github.com/starship/starship">starship</a> program can also generate fancy prompts. Refer to its <a href="https://starship.rs">documentation</a> for how to configure it.</p>
-<p>Integrating starship with Clink is just as easy: save the following text to a <code>starship.lua</code> file in your Clink scripts directory (run <code>clink info</code> to find that), and make sure the <code>starship.exe</code> program is in a directory listed in the <code>%PATH%</code> environment variable (or edit the script below to provide a fully qualified path to the starship.exe program). The config file for starship is located at <code>C:\Users\&lt;username&gt;\.config\starship.toml</code>.</p>
+<p>Integrating starship with Clink is just as easy: save the following text to a <code>starship.lua</code> file in your Clink scripts directory (run <code>clink info</code> to find that), and make sure the <code>starship.exe</code> program is in a directory listed in the <code>%PATH%</code> environment variable (or edit the script below to provide a fully qualified path to the starship.exe program). The config file for starship is located at <code>C:\Users\<span class="arg">username</span>.config\starship.toml</code>.</p>
 <pre><code class="language-lua">-- starship.lua
 load(io.popen(&#39;starship.exe init cmd&#39;):read(&quot;*a&quot;))()
 </code></pre>
@@ -6309,7 +6323,7 @@ load(io.popen(&#39;starship.exe init cmd&#39;):read(&quot;*a&quot;))()
 <tr><td><code>\e</code></td><td>Translated to the ESC character (27 decimal, 0x1b hex).</td></tr>
 <tr><td><code>\x<span class="arg">HH</span></code></td><td>Translated to the character matching the hex <span class="arg">HH</span> value.<br/>E.g. <code>\x1b</code> is the same as <code>\e</code>, or <code>\x08</code> is a backspace, etc.</td></tr>
 <tr><td><code>\\</code></td><td>Translated to the <code>\</code> character.</td></tr>
-<tr><td><code><code>\<span class="arg">c</span></code></td><td>Any other backslash is translate to whatever character immediately follows it.<br/>E.g. <code>\a</code> becomes <code>a</code>.</td></tr>
+<tr><td><code>\<span class="arg">c</span></code></td><td>Any other backslash is translate to whatever character immediately follows it.<br/>E.g. <code>\a</code> becomes <code>a</code>.</td></tr>
 </table>
 
 <p>Refer to the documentation for individual terminal programs to find what (if any) escape codes they may support.  The default console in Windows 10 supports the <a href="https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-SP-q.1D81">DECSCUSR</a> escape codes for selecting cursor shape.</p>
