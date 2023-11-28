@@ -14,7 +14,7 @@
 
 #define CLINK_VERSION_MAJOR     1
 #define CLINK_VERSION_MINOR     5
-#define CLINK_VERSION_PATCH     17
+#define CLINK_VERSION_PATCH     18
 
 #ifdef _MSC_VER
 #   undef CLINK_VERSION_STR
