@@ -1570,12 +1570,14 @@ void display_manager::display()
     {
         // Clear the lines within the display_accumulator scope.
         for (int32 lines = g_display_manager_clean_lines; lines--;)
-            rl_fwrite_function(_rl_out_stream, "\x1b[2K\n", 5);
-        rl_clear_visible_line();
+            rl_fwrite_function(_rl_out_stream, "\x1b[2K\n", lines ? 5 : 4);
         // Go back up to where the cursor was before clearing lines.
-        str<16> tmp;
-        tmp.format("\x1b[%uA", g_display_manager_clean_lines);
-        rl_fwrite_function(_rl_out_stream, tmp.c_str(), tmp.length());
+        if (g_display_manager_clean_lines > 1)
+        {
+            str<16> tmp;
+            tmp.format("\x1b[%uA", g_display_manager_clean_lines - 1);
+            rl_fwrite_function(_rl_out_stream, tmp.c_str(), tmp.length());
+        }
         g_display_manager_clean_lines = 0;
     }
 
