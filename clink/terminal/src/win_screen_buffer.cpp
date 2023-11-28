@@ -402,12 +402,18 @@ void win_screen_buffer::write(const char* data, int32 length)
     assert(m_ready);
 
     str_iter iter(data, length);
-    while (length > 0)
+
+#ifdef DEBUG
+    const uint32 stack_buf_len = 64;
+#else
+    const uint32 stack_buf_len = 384;
+#endif
+
+    if (length < stack_buf_len)
     {
-        wchar_t wbuf[384];
-        int32 n = min<int32>(sizeof_array(wbuf), length + 1);
-        n = to_utf16(wbuf, n, iter);
-        if (!n && !*iter.get_pointer())
+        wchar_t wbuf[stack_buf_len];
+        int32 n = to_utf16(wbuf, sizeof_array(wbuf), iter);
+        if (length && !n && !*data)
         {
             assert(false); // Very inefficient, and shouldn't be possible.
             wbuf[0] = '\0';
@@ -415,11 +421,21 @@ void win_screen_buffer::write(const char* data, int32 length)
         }
 
         DWORD written;
-        WriteConsoleW(m_handle, wbuf, n, &written, nullptr);
+        WriteConsoleW(m_handle, data ? wbuf : nullptr, n, &written, nullptr);
+    }
+    else
+    {
+        wstr_moveable out;
+        int32 n = to_utf16(out, iter);
+        if (length && !n && !*data)
+        {
+            assert(false); // Very inefficient, and shouldn't be possible.
+            assert(out.c_str()[0] == '\0');
+            n = 1;
+        }
 
-        n = int32(iter.get_pointer() - data);
-        length -= n;
-        data += n;
+        DWORD written;
+        WriteConsoleW(m_handle, out.c_str(), n, &written, nullptr);
     }
 }
 
