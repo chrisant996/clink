@@ -3,7 +3,7 @@
 
 <!-- ----------------------------------------------------- -->
 <head>
-<title>Clink v1.5.17</title>
+<title>Clink v1.5.18</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rambla:wght@400;700&family=Roboto&family=Fira+Mono&display=swap');
 html {
@@ -902,7 +902,7 @@ name:"Plain text",aliases:["text","txt"],disableAutodetect:!0})})());
         </td>
         <td style="text-align:right">
             <div id="header">
-                <div id="title">Clink v1.5.17</div>
+                <div id="title">Clink v1.5.18</div>
                 <div id="url">
                     <a href="https://github.com/chrisant996/clink">
                         https://github.com/chrisant996/clink
@@ -1158,8 +1158,6 @@ $endif
 <p>Clink can suggest commands as you type, based on command history and completions.</p>
 <p>You can turn off automatic suggestions with <code>clink set <a href="#autosuggest_enable">autosuggest.enable</a> false</code>, or turn them on with <code>clink set autosuggest.enable true</code>.</p>
 <p>When automatic suggestions are enabled and the cursor is at the end of the input line, a suggestion may appear in a muted color.  If the suggestion isn&#39;t what you want, just ignore it.  Or you can accept the whole suggestion with the <kbd>Right</kbd> arrow or <kbd>End</kbd> key, accept the next word of the suggestion with <kbd>Ctrl</kbd>-<kbd>Right</kbd>, or accept the next full word of the suggestion up to a space with <kbd>Shift</kbd>-<kbd>Right</kbd>.</p>
-<p>The <a href="#autosuggest_strategy"><code>autosuggest.strategy</code></a> setting determines how suggestions are chosen.</p>
-<p>The <a href="#autosuggest_hint"><code>autosuggest.hint</code></a> setting controls whether to show the <code>[Right]=Accept Suggestion</code> usage hint when a suggestion is available.</p>
 <p>Here&#39;s an example of how auto-suggestion works.  Suppose you ran a command, so now it&#39;s in your command history:</p>
 <pre style="border-radius:initial;border:initial;background-color:black"><code class="plaintext" style="background-color:black"><span class="color_default">C:\dir&gt;<span class="color_executable">findstr</span>&nbsp; <span class="color_input">/s needle haystack\*</span></span>
 </code></pre>
@@ -1170,6 +1168,8 @@ $endif
 
 <p>The muted text shows a suggestion that might be what you intend to type.  You can accept the muted text into the input line by pressing the <kbd>Right</kbd> key.</p>
 <p>If you press <kbd>Tab</kbd> then that invokes <a href="#how-completion-works">completion</a> instead.  Completion is something you manually invoke to offer possible completions for a word or argument position.  Auto-suggestion automatically offers suggestions for a whole input line, and the suggestions can come from the saved command history or from the list of possible completions.</p>
+<p>The <a href="#autosuggest_hint"><code>autosuggest.hint</code></a> setting controls whether to show the <code>[Right]=Accept Suggestion</code> usage hint when a suggestion is available.</p>
+<p>The <a href="#autosuggest_strategy"><code>autosuggest.strategy</code></a> setting determines how suggestions are chosen.</p>
 <p><a name="gettingstarted_colors"></a></p>
 <h3 id="colors"><a class="wlink" href="#gettingstarted_colors"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Colors</h3>
 <p>Clink has many configurable colors for match completions, input line coloring, popup lists, and more.</p>
@@ -7353,6 +7353,11 @@ end</code></pre></div></div><hr/>
         <div class="section" id="changes">
 <h1 id="changes"><a class="wlink" href="#changes"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Changes</h1>
 <h3 id="releases-from-chrisant996clink-fork"><a class="wlink" href="#releases-from-chrisant996clink-fork"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>Releases from <a href="https://github.com/chrisant996/clink">chrisant996/clink</a> fork</h3>
+<h4 id="v1518"><a class="wlink" href="#v1518"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.5.18</h4>
+<ul>
+<li>Fixed <a href="https://github.com/chrisant996/clink/issues/524">#524</a> and <a href="https://github.com/chrisant996/clink/issues/523">#523</a>; garbled display in wide terminal windows (regression introduced in v1.5.14, which exacerbated and revealed a bug that&#39;s existed since Clink v1.0.0 alpha and which could intermittently garble Unicode text or escape sequences).</li>
+<li>Fixed the transient prompt sometimes not displaying properly (regression introduced in v1.5.17).</li>
+</ul>
 <h4 id="v1517"><a class="wlink" href="#v1517"><svg width=16 height=16><use href="#wicon"/></svg><span class="wfix">.</span></a>v1.5.17</h4>
 <ul>
 <li>Reduced flicker when async prompt filtering redraws the prompt.</li>
