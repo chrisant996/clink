@@ -100,11 +100,28 @@ Optional auto-answering of the "[Terminate batch job?](#cmd_auto_answer)" prompt
 
 # Usage
 
-There are several ways to start Clink.
+### Installation
 
-1. If you installed the auto-run, just start `cmd.exe`.  Run `clink autorun --help` for more info.
+You can install Clink by running the setup EXE file from the [releases page](https://github.com/chrisant996/clink/releases).
+
+Or by using [winget](https://learn.microsoft.com/en-us/windows/package-manager/winget/) and running `winget install clink`.
+
+Or by using [scoop](https://scoop.sh/) and running `scoop install clink`.
+
+Or by downloading the ZIP file from [releases page](https://github.com/chrisant996/clink/releases), and extracting the files to a directory of your choosing.
+
+### Using Clink
+
+Once installed, there are several ways to start Clink.
+
+1. If Clink is configured for autorun, just start `cmd.exe` and Clink is automatically injected and ready to use.
+
+> The setup EXE has an option "Autorun when cmd.exe starts".  If you didn't use the setup EXE, or if you want to enable or disable autorun later, you can run `clink autorun install` or `clink autorun uninstall` to change the autorun configuration.  Run `clink autorun --help` for more info.
+
 2. To manually start, run the Clink shortcut from the Start menu (or the clink.bat located in the install directory).
-3. To establish Clink to an existing `cmd.exe` process, use `<install_dir>\clink inject`.
+3. To establish Clink to an existing `cmd.exe` process, use `clink inject`.
+
+> If the Clink install directory isn't in the PATH, then use <code><span class="arg">install_dir</span>\clink</code> in place of `clink` to run Clink commands.  Once Clink is injected into a `cmd.exe` process, then it automatically sets an alias so that you can simply use `clink`.
 
 Starting Clink injects it into a `cmd.exe` process, where it intercepts a handful of Windows API functions so that it can replace the prompt and input line editing with its own Readline-powered enhancements.
 
@@ -584,8 +601,8 @@ Be careful, since some escape code sequences might behave strangely.
 
 Settings and history are persisted to disk from session to session. By default Clink uses the current user's non-roaming application data directory. This user directory is usually found in one of the following locations;
 
-- Windows XP: `c:\Documents and Settings\<username>\Local Settings\Application Data\clink`
-- Windows Vista onwards: `c:\Users\<username>\AppData\Local\clink`
+- Windows XP: <code>c:\Documents and Settings\<span class="arg">username</span>\Local Settings\Application Data\clink</code>
+- Windows Vista onwards: <code>c:\Users\<span class="arg">username</span>\AppData\Local\clink</code>
 
 All of the above locations can be overridden using the <code>--profile <span class="arg">path</span></code> command line option which is specified when injecting Clink into cmd.exe using `clink inject`.  Or with the `%CLINK_PROFILE%` environment variable if it is already present when Clink is injected (this envvar takes precedence over any other mechanism of specifying a profile directory, if more than one was used).
 
@@ -3272,7 +3289,7 @@ The [clink-gizmos](https://github.com/chrisant996/clink-gizmos) collection of sc
 - Argmatchers for `msbuild`, `findstr`, `robocopy`, `xcopy`, `doskey`, `premake5`, and more.
 - Scripts to auto-generate argmatchers for commands by parsing their help text.
 - Automatically show a divider line before + after certain commands, to make it easy to see where their output begins and ends, and the elapsed time taken by the command.  This is especially handy when invoking compilers and build tools.
-- The `i.lua` script to run a {command} in a {directory} and restore the original current directory afterwards.  While typing the {command}, completions are even generated relative to the specified {directory} rather than the current directory.
+- The `i.lua` script which makes <code>i <span class="arg">directory</span> <span class="arg">command</span></code> set the current directory to <span class="arg">directory</span> then run <span class="arg">command</span> then restore the original current directory afterwards.  While typing the <span class="arg">command</span>, completions are even generated relative to the specified <span class="arg">directory</span> rather than the current directory.
 - The `fzf.lua` script from [clink-fzf](https://github.com/chrisant996/clink-fzf) for integrating the popular [fzf](https://github.com/junegunn/fzf) "fuzzy finder" tool with Clink.
 - The `luaexec.lua` script which has various features handy for Clink Lua script authors.
 - And more.
@@ -3292,7 +3309,7 @@ load(io.popen('oh-my-posh.exe --config="C:/Users/me/jandedobbeleer.omp.json" --i
 
 The [starship](https://github.com/starship/starship) program can also generate fancy prompts. Refer to its [documentation](https://starship.rs) for how to configure it.
 
-Integrating starship with Clink is just as easy: save the following text to a `starship.lua` file in your Clink scripts directory (run `clink info` to find that), and make sure the `starship.exe` program is in a directory listed in the `%PATH%` environment variable (or edit the script below to provide a fully qualified path to the starship.exe program). The config file for starship is located at `C:\Users\<username>\.config\starship.toml`.
+Integrating starship with Clink is just as easy: save the following text to a `starship.lua` file in your Clink scripts directory (run `clink info` to find that), and make sure the `starship.exe` program is in a directory listed in the `%PATH%` environment variable (or edit the script below to provide a fully qualified path to the starship.exe program). The config file for starship is located at <code>C:\Users\<span class="arg">username</span>\.config\starship.toml</code>.
 
 ```lua
 -- starship.lua

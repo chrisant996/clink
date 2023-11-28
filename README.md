@@ -21,13 +21,28 @@ See the [issues page](https://github.com/chrisant996/clink/issues) for known iss
 - Auto-answering of the "Terminate batch job?" prompt.
 - and much more!
 
+### Installation
+
+You can install Clink by running the setup EXE file from the [releases page](https://github.com/chrisant996/clink/releases).
+
+Or by using [winget](https://learn.microsoft.com/en-us/windows/package-manager/winget/) and running `winget install clink`.
+
+Or by using [scoop](https://scoop.sh/) and running `scoop install clink`.
+
+Or by downloading the ZIP file from [releases page](https://github.com/chrisant996/clink/releases), and extracting the files to a directory of your choosing.
+
 ### Usage
 
-There are several ways to start Clink.
+Once installed, there are several ways to start Clink.
 
-1. If you installed the auto-run, just start `cmd.exe`.  Run `clink autorun --help` for more info.
+1. If Clink is configured for autorun, just start `cmd.exe` and Clink is automatically injected and ready to use.
+
+> The setup EXE has an option "Autorun when cmd.exe starts".  If you didn't use the setup EXE, or if you want to enable or disable autorun later, you can run `clink autorun install` or `clink autorun uninstall` to change the autorun configuration.  Run `clink autorun --help` for more info.
+
 2. To manually start, run the Clink shortcut from the Start menu (or the clink.bat located in the install directory).
-3. To establish Clink to an existing `cmd.exe` process, use `<install_dir>\clink.exe inject`.
+3. To establish Clink to an existing `cmd.exe` process, use `clink inject`.
+
+> If the Clink install directory isn't in the PATH, then use <code><span class="arg">install_dir</span>\clink</code> in place of `clink` to run Clink commands.  Once Clink is injected into a `cmd.exe` process, then it automatically sets an alias so that you can simply use `clink`.
 
 Starting Clink injects it into a `cmd.exe` process, where it intercepts a handful of Windows API functions so that it can replace the prompt and input line editing with its own Readline-powered enhancements.
 
@@ -46,8 +61,8 @@ Clink can be extended through its Lua API which allows easy creation of context 
 Clink uses [Premake](http://premake.github.io) to generate Visual Studio solutions or makefiles for MinGW. Note that Premake >= 5.0-alpha12 is required.
 
 1. Cd to your clone of Clink.
-2. Run `premake5.exe <toolchain>` (where `<toolchain>` is one of Premake's actions - see `premake5.exe --help`)
-3. Build scripts will be generated in `.build\<toolchain>`. For example `.build\vs2013\clink.sln`.
+2. Run <code>premake5.exe <span class="arg">toolchain</span></code> (where <span class="arg">toolchain</span> is one of Premake's actions - see `premake5.exe --help`)
+3. Build scripts will be generated in <code>.build\<span class="arg">toolchain</span></code>. For example `.build\vs2019\clink.sln`.
 4. Call your toolchain of choice (VS, mingw32-make.exe, msbuild.exe, etc). GNU makefiles (Premake's *gmake* target) have a **help** target for more info.
 
 ### Building Documentation
