@@ -601,8 +601,8 @@ Be careful, since some escape code sequences might behave strangely.
 
 Settings and history are persisted to disk from session to session. By default Clink uses the current user's non-roaming application data directory. This user directory is usually found in one of the following locations;
 
-- Windows XP: <code>c:\Documents and Settings\<span class="arg">username</span>\Local Settings\Application Data\clink</code>
-- Windows Vista onwards: <code>c:\Users\<span class="arg">username</span>\AppData\Local\clink</code>
+- Windows XP: <code>c:\Documents and Settings\\<span class="arg">username</span>\Local Settings\Application Data\clink</code>
+- Windows Vista onwards: <code>c:\Users\\<span class="arg">username</span>\AppData\Local\clink</code>
 
 All of the above locations can be overridden using the <code>--profile <span class="arg">path</span></code> command line option which is specified when injecting Clink into cmd.exe using `clink inject`.  Or with the `%CLINK_PROFILE%` environment variable if it is already present when Clink is injected (this envvar takes precedence over any other mechanism of specifying a profile directory, if more than one was used).
 
@@ -1036,7 +1036,7 @@ Code | Description
 `\r` | Carriage return.
 `\t` | Horizontal tab.
 `\v` | Vertical tab.
-<code>\<span class="arg">nnn</span></code> | The eight-bit character whose value is the octal value _nnn_ (one to three digits)
+<code>\\<span class="arg">nnn</span></code> | The eight-bit character whose value is the octal value _nnn_ (one to three digits)
 <code>\x<span class="arg">HH</span></code> | The eight-bit character whose value is the hexadecimal value _HH_ (one or two hex digits)
 
 Here are some examples to illustrate the differences between _names_ and _sequences_:
@@ -3309,7 +3309,7 @@ load(io.popen('oh-my-posh.exe --config="C:/Users/me/jandedobbeleer.omp.json" --i
 
 The [starship](https://github.com/starship/starship) program can also generate fancy prompts. Refer to its [documentation](https://starship.rs) for how to configure it.
 
-Integrating starship with Clink is just as easy: save the following text to a `starship.lua` file in your Clink scripts directory (run `clink info` to find that), and make sure the `starship.exe` program is in a directory listed in the `%PATH%` environment variable (or edit the script below to provide a fully qualified path to the starship.exe program). The config file for starship is located at <code>C:\Users\<span class="arg">username</span>\.config\starship.toml</code>.
+Integrating starship with Clink is just as easy: save the following text to a `starship.lua` file in your Clink scripts directory (run `clink info` to find that), and make sure the `starship.exe` program is in a directory listed in the `%PATH%` environment variable (or edit the script below to provide a fully qualified path to the starship.exe program). The config file for starship is located at <code>C:\Users\\<span class="arg">username</span>\.config\starship.toml</code>.
 
 ```lua
 -- starship.lua
@@ -3337,7 +3337,7 @@ Special codes recognized in the cursor style escape code strings:
 <tr><td><code>\e</code></td><td>Translated to the ESC character (27 decimal, 0x1b hex).</td></tr>
 <tr><td><code>\x<span class="arg">HH</span></code></td><td>Translated to the character matching the hex <span class="arg">HH</span> value.<br/>E.g. <code>\x1b</code> is the same as <code>\e</code>, or <code>\x08</code> is a backspace, etc.</td></tr>
 <tr><td><code>\\</code></td><td>Translated to the <code>\</code> character.</td></tr>
-<tr><td><code><code>\<span class="arg">c</span></code></td><td>Any other backslash is translate to whatever character immediately follows it.<br/>E.g. <code>\a</code> becomes <code>a</code>.</td></tr>
+<tr><td><code>\<span class="arg">c</span></code></td><td>Any other backslash is translate to whatever character immediately follows it.<br/>E.g. <code>\a</code> becomes <code>a</code>.</td></tr>
 </table>
 
 Refer to the documentation for individual terminal programs to find what (if any) escape codes they may support.  The default console in Windows 10 supports the [DECSCUSR](https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-SP-q.1D81) escape codes for selecting cursor shape.
