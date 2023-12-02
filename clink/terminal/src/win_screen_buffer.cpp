@@ -426,6 +426,7 @@ void win_screen_buffer::write(const char* data, int32 length)
     else
     {
         wstr_moveable out;
+        out.reserve(length);
         int32 n = to_utf16(out, iter);
         if (length && !n && !*data)
         {
