@@ -32,7 +32,7 @@ extern "C" {
 #endif
 
 #if !defined(LUA_PROGNAME)
-#define LUA_PROGNAME    "lua"
+#define LUA_PROGNAME    "clink lua"
 #endif
 
 #if !defined(LUA_MAXINPUT)
@@ -79,6 +79,7 @@ static bool lua_readline(lua_State*, char* buffer, const char* message)
 
 //------------------------------------------------------------------------------
 static lua_State *globalL = nullptr;
+static int32 s_enable_debugging = 0;
 
 static void lstop (lua_State *L, lua_Debug *ar) {
   (void)ar;  /* unused arg. */
@@ -92,10 +93,24 @@ static void laction (int32 i) {
   lua_sethook(globalL, lstop, LUA_MASKCALL | LUA_MASKRET | LUA_MASKCOUNT, 1);
 }
 
+static int32 traceback (lua_State *L) {
+  const char *msg = lua_tostring(L, 1);
+  if (msg)
+    luaL_traceback(L, L, msg, 1);
+  else if (!lua_isnoneornil(L, 1)) {  /* is there an error object? */
+    if (!luaL_callmeta(L, 1, "__tostring"))  /* try its 'tostring' metamethod */
+      lua_pushliteral(L, "(no error message)");
+  }
+  return 1;
+}
+
 static int32 docall (lua_State *L, int32 narg, int32 nres) {
   int32 status;
   int32 base = lua_gettop(L) - narg;  /* function index */
-  lua_getglobal(L, "_error_handler");
+  if (s_enable_debugging > 1)
+    lua_getglobal(L, "_error_handler"); /* push debugging error handler */
+  else
+    lua_pushcfunction(L, traceback);  /* push traceback function */
   lua_insert(L, base);  /* put it under chunk and args */
   globalL = L;  /* to be available to 'laction' */
   signal(SIGINT, laction);
@@ -141,7 +156,6 @@ int32 interpreter(int32 argc, char** argv)
     std::vector<run_arg> run_args;
 
     // Parse arguments
-    int32 enable_debugging = 0;
     bool ignore_env = false;
     bool go_interactive = false;
     bool show_version = false;
@@ -162,7 +176,7 @@ int32 interpreter(int32 argc, char** argv)
         switch (i)
         {
         case 'D':
-            enable_debugging++;
+            s_enable_debugging++;
             break;
         case 'E':
             ignore_env = true;
@@ -212,16 +226,15 @@ int32 interpreter(int32 argc, char** argv)
         LOG(LUA_COPYRIGHT);
     }
 
-    settings::find("lua.traceback_on_error")->set("true");
-    if (enable_debugging)
+    settings::load("nul");
+
+    if (s_enable_debugging)
     {
         extern bool g_force_load_debugger;
         g_force_load_debugger = true;
-        if (enable_debugging > 1)
+        if (s_enable_debugging > 1)
             settings::find("lua.break_on_error")->set("true");
     }
-
-    settings::load("nul");
 
     terminal term = terminal_create(nullptr, false/*cursor_visibility*/);
     printer printer(*term.out);
