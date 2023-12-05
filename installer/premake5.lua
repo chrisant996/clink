@@ -10,7 +10,7 @@ local release_manifest = {
     "clink.bat",
     "clink.lua",
     "clink_x*.exe",
-    "clink*.dll",
+    "clink_dll_x*.dll",
     "clink*.ico",
     "CHANGES",
     "LICENSE",
@@ -22,6 +22,7 @@ local release_manifest = {
 
 if include_arm64 then
     table.insert(release_manifest, "clink_arm64.exe")
+    table.insert(release_manifest, "clink_dll_arm64.dll")
 end
 
 --------------------------------------------------------------------------------
@@ -415,14 +416,17 @@ newaction {
 
         if sign then
             print_reverse("Sign executables")
-            sign_files({
+            local sign_list = {
                 "clink_x86.exe",
                 "clink_dll_x86.dll",
                 "clink_x64.exe",
                 "clink_dll_x64.dll",
-                "clink_arm64.exe",
-                "clink_dll_arm64.dll",
-            })
+            }
+            if include_arm64 then
+                table.insert(sign_list, "clink_arm64.exe")
+                table.insert(sign_list, "clink_dll_arm64.dll")
+            end
+            sign_files(sign_list)
         end
 
         -- Now we can extract the version from the executables.
