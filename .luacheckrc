@@ -11,7 +11,6 @@ return {
     },
     globals = {
         "_co_error_handler",
-        "_compat_warning",
         "_error_handler",
         "_error_handler_ret",
         "clink",

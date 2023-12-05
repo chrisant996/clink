@@ -107,7 +107,7 @@ end
 --------------------------------------------------------------------------------
 -- This reports a compatibility message.
 local remind_how_to_disable = true
-function _compat_warning(message, suffix)
+function clink._compat_warning(message, suffix)
     local where = _get_maybe_fileline(2) -- 2 gets the caller's file and line.
     message = message or ""
     suffix = suffix or ""

@@ -1898,7 +1898,7 @@ end
 --- -deprecated:
 --- -ret:   self
 function _argmatcher:be_precise()
-    _compat_warning("warning: ignoring _argmatcher:be_precise()", " -- this is not supported yet")
+    clink._compat_warning("warning: ignoring _argmatcher:be_precise()", " -- this is not supported yet")
     return self
 end
 

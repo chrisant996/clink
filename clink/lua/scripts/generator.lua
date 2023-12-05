@@ -364,7 +364,7 @@ end
 --- know how many matches it added, the script should keep track of the count
 --- itself.
 function clink.match_count()
-    _compat_warning("clink.match_count() is no longer supported.")
+    clink._compat_warning("clink.match_count() is no longer supported.")
     return 0
 end
 
@@ -377,7 +377,7 @@ end
 --- script needs to access matches it added, the script should keep track of the
 --- matches itself.
 function clink.get_match()
-    _compat_warning("clink.get_match() is no longer supported.")
+    clink._compat_warning("clink.get_match() is no longer supported.")
     return ""
 end
 
@@ -388,7 +388,7 @@ end
 --- -arg:   value:string
 --- This is no longer supported, and does nothing.
 function clink.set_match()
-    _compat_warning("clink.set_match() is no longer supported.")
+    clink._compat_warning("clink.set_match() is no longer supported.")
 end
 
 --------------------------------------------------------------------------------
@@ -480,7 +480,7 @@ end
 --- generators are no longer responsible for filtering matches.  The match
 --- pipeline itself handles that internally now.
 function clink.compute_lcd()
-    _compat_warning("clink.compute_lcd() is no longer supported.")
+    clink._compat_warning("clink.compute_lcd() is no longer supported.")
     return ""
 end
 
@@ -491,7 +491,7 @@ end
 --- -ret:   boolean
 --- This is no longer supported, and always returns false.
 function clink.is_single_match()
-    _compat_warning("clink.is_single_match() is no longer supported.")
+    clink._compat_warning("clink.is_single_match() is no longer supported.")
     return false
 end
 
