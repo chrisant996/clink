@@ -15,6 +15,7 @@
 #include <core/settings.h>
 #include <core/log.h>
 #include <lib/rl_integration.h>
+#include <terminal/terminal_helpers.h>
 
 #include <vector>
 
@@ -23,11 +24,48 @@ extern "C" {
 }
 
 //------------------------------------------------------------------------------
+namespace host_lua_callbacks {
+
+void before_read_stdin(lua_saved_console_mode* saved, void* stream)
+{
+    saved->h = 0;
+    HANDLE h_stdin = GetStdHandle(STD_INPUT_HANDLE);
+    HANDLE h_stream = HANDLE(_get_osfhandle(_fileno((FILE*)stream)));
+    if (h_stdin && h_stdin == h_stream)
+    {
+        saved->h = h_stdin;
+        use_host_input_mode();
+        saved->cursor_visible = show_cursor(1);
+    }
+}
+
+void after_read_stdin(lua_saved_console_mode* saved)
+{
+    if (saved->h)
+    {
+        show_cursor(saved->cursor_visible);
+        use_clink_input_mode();
+    }
+}
+
+};
+
+static const lua_clink_callbacks g_lua_callbacks =
+{
+    host_lua_callbacks::before_read_stdin,
+    host_lua_callbacks::after_read_stdin,
+};
+
+
+
+//------------------------------------------------------------------------------
 host_lua::host_lua()
 : m_generator(m_state)
 , m_classifier(m_state)
 , m_idle(m_state)
 {
+    __lua_set_clink_callbacks(&g_lua_callbacks);
+
     clear_macro_descriptions();
 
     str<280> bin_path;

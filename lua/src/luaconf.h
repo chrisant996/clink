@@ -574,39 +574,45 @@ LUA_API int __lua_checkmode(const char* mode);
 /* end_clink_change */
 
 /* begin_clink_change
+ * Callback functions for integration with Clink.
+ */
+typedef struct {
+    void* h;
+    unsigned long mode;
+    int cursor_visible;
+} lua_saved_console_mode;
+typedef struct {
+    void (*before_read_stdin)(lua_saved_console_mode* saved, void* stream);
+    void (*after_read_stdin)(lua_saved_console_mode* saved);
+} lua_clink_callbacks;
+extern const lua_clink_callbacks* g_clink_callbacks;
+void __lua_set_clink_callbacks(const lua_clink_callbacks* callbacks);
+/* end_clink_change */
+
+/* begin_clink_change
  * Macros for ensuring the input console mode includes ENABLE_PROCESSED_INPUT.
  */
 #define LUA_BEGIN_ENSURE_PROCESSED_INPUT(stream) \
-    DWORD __saved_mode; \
-    BOOL __has_saved_mode = 0; \
-    const HANDLE __h_stdin = GetStdHandle(STD_INPUT_HANDLE); \
-    const HANDLE __h_stream = (HANDLE)_get_osfhandle(_fileno((stream))); \
+    lua_saved_console_mode __saved_mode = {0}; \
     do \
     { \
-        if (__h_stdin && __h_stdin == __h_stream) \
-            if (GetConsoleMode(__h_stdin, &__saved_mode)) \
-            { \
-                __has_saved_mode = 1; \
-                DWORD __new_mode = __saved_mode; \
-                __new_mode |= ENABLE_PROCESSED_INPUT|ENABLE_LINE_INPUT|ENABLE_ECHO_INPUT; \
-                __new_mode &= ~(ENABLE_WINDOW_INPUT|ENABLE_MOUSE_INPUT); \
-                SetConsoleMode(__h_stdin, __new_mode); \
-            } \
+        if (g_clink_callbacks) \
+            g_clink_callbacks->before_read_stdin(&__saved_mode, (stream)); \
     } while (0)
 
 #define LUA_END_ENSURE_PROCESSED_INPUT_AND_RETURN(value) \
     do \
     { \
-        if (__has_saved_mode) \
-            SetConsoleMode(__h_stdin, __saved_mode); \
+        if (g_clink_callbacks) \
+            g_clink_callbacks->after_read_stdin(&__saved_mode); \
         return (value); \
     } while (0)
 
 #define LUA_END_ENSURE_PROCESSED_INPUT() \
     do \
     { \
-        if (__has_saved_mode) \
-            SetConsoleMode(__h_stdin, __saved_mode); \
+        if (g_clink_callbacks) \
+            g_clink_callbacks->after_read_stdin(&__saved_mode); \
     } while (0)
 /* end_clink_change */
 

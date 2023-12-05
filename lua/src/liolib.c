@@ -64,6 +64,16 @@ LUA_API int __lua_checkmode(const char* mode)
 }
 /* end_clink_change */
 
+/* begin_clink_change
+ * Callback functions for integration with Clink.
+ */
+const lua_clink_callbacks* g_clink_callbacks = 0;
+LUA_API void __lua_set_clink_callbacks(const lua_clink_callbacks* callbacks)
+{
+    g_clink_callbacks = callbacks;
+}
+/* end_clink_change */
+
 /*
 ** {======================================================
 ** lua_popen spawns a new process connected to the current
@@ -460,15 +470,9 @@ static int g_read (lua_State *L, FILE *f, int first) {
   int n;
 /* begin_clink_change */
 #if defined(_WIN32)
-  extern int show_cursor (int visible);
-  extern void use_host_input_mode (void);
-  extern void use_clink_input_mode (void);
-  int was_visible = 0;
-  if (f == stdin)
-  {
-    use_host_input_mode();
-    was_visible = show_cursor (1);
-  }
+  lua_saved_console_mode saved;
+  if (f == stdin && g_clink_callbacks)
+    g_clink_callbacks->before_read_stdin(&saved, f);
 #endif
 /* end_clink_change */
   clearerr(f);
@@ -503,11 +507,8 @@ static int g_read (lua_State *L, FILE *f, int first) {
             break;
           default:
 /* begin_clink_change */
-            if (f == stdin)
-            {
-              show_cursor(was_visible);
-              use_clink_input_mode();
-            }
+            if (f == stdin && g_clink_callbacks)
+              g_clink_callbacks->after_read_stdin(&saved);
 /* end_clink_change */
             return luaL_argerror(L, n, "invalid format");
         }
@@ -515,11 +516,8 @@ static int g_read (lua_State *L, FILE *f, int first) {
     }
   }
 /* begin_clink_change */
-  if (f == stdin)
-  {
-    show_cursor(was_visible);
-    use_clink_input_mode();
-  }
+  if (f == stdin && g_clink_callbacks)
+    g_clink_callbacks->after_read_stdin(&saved);
 /* end_clink_change */
   if (ferror(f))
     return luaL_fileresult(L, 0, NULL);

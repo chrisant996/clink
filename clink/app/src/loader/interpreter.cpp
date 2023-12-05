@@ -47,6 +47,31 @@ extern "C" {
     LUA_INIT "_" LUA_VERSION_MAJOR "_" LUA_VERSION_MINOR
 
 //------------------------------------------------------------------------------
+void before_read_stdin(lua_saved_console_mode* saved, void* stream)
+{
+    saved->h = 0;
+    HANDLE h_stdin = GetStdHandle(STD_INPUT_HANDLE);
+    HANDLE h_stream = HANDLE(_get_osfhandle(_fileno((FILE*)stream)));
+    if (h_stdin && h_stdin == h_stream)
+    {
+        if (GetConsoleMode(h_stdin, &saved->mode))
+        {
+            saved->h = h_stdin;
+            DWORD new_mode = saved->mode;
+            new_mode |= ENABLE_PROCESSED_INPUT|ENABLE_LINE_INPUT|ENABLE_ECHO_INPUT;
+            new_mode &= ~(ENABLE_WINDOW_INPUT|ENABLE_MOUSE_INPUT);
+            SetConsoleMode(h_stdin, new_mode | ENABLE_PROCESSED_INPUT);
+        }
+    }
+}
+void after_read_stdin(lua_saved_console_mode* saved)
+{
+    if (saved->h)
+        SetConsoleMode(saved->h, saved->mode);
+}
+static lua_clink_callbacks g_lua_callbacks = { before_read_stdin, after_read_stdin };
+
+//------------------------------------------------------------------------------
 static char const *progname = LUA_PROGNAME;
 
 #define lua_stdin_is_tty()  _isatty(_fileno(stdin))
@@ -58,18 +83,14 @@ static bool lua_readline(lua_State*, char* buffer, const char* message)
     fflush(stdout);
 
     // Set processed input mode.
-    DWORD modeIn;
-    HANDLE h = GetStdHandle(STD_INPUT_HANDLE);
-    const bool got_mode = !!GetConsoleMode(h, &modeIn);
-    if (got_mode)
-        SetConsoleMode(h, modeIn | ENABLE_PROCESSED_INPUT);
+    lua_saved_console_mode saved;
+    g_lua_callbacks.before_read_stdin(&saved, stdin);
 
     // Get line.
     const bool ok = fgets(buffer, LUA_MAXINPUT, stdin) != nullptr;
 
     // Restore console mode.
-    if (got_mode)
-        SetConsoleMode(h, modeIn);
+    g_lua_callbacks.after_read_stdin(&saved);
 
     return ok;
 }
@@ -225,6 +246,8 @@ int32 interpreter(int32 argc, char** argv)
         LOG("Clink version %s (%s)", CLINK_VERSION_STR, AS_STR(ARCHITECTURE_NAME));
         LOG(LUA_COPYRIGHT);
     }
+
+    __lua_set_clink_callbacks(&g_lua_callbacks);
 
     settings::load("nul");
 
