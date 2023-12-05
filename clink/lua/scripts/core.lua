@@ -60,13 +60,22 @@ end
 
 
 --------------------------------------------------------------------------------
+local function resolve_error_message(message)
+    if message ~= nil then
+        message = tostring(message)
+    end
+    return message or "(no error message)"
+end
+
+--------------------------------------------------------------------------------
 -- This is the error handler used by native code calls into Lua scripts.
 function _error_handler(message)
+    message = resolve_error_message(message)
     if _can_pause and settings.get("lua.break_on_error") then
         pause("break on error: "..message)
     end
     if settings.get("lua.traceback_on_error") then
-        print(debug.traceback(message, 2))
+        print(debug.traceback(message, 3))
     else
         print(message)
     end
@@ -80,15 +89,17 @@ end
 -- error message to be returned and may print it.  I'd rather allow scripts to
 -- suppress error messages than force error messages to show up twice.
 function _error_handler_ret(message)
+    message = resolve_error_message(message)
     if _can_pause and settings.get("lua.break_on_error") then
         pause("break on error: "..message)
     end
-    return debug.traceback(message, 2)
+    return debug.traceback(message, 3)
 end
 
 --------------------------------------------------------------------------------
 -- This is the error handler used for reporting coroutine errors.
 function _co_error_handler(co, message)
+    message = resolve_error_message(message)
     if settings.get("lua.traceback_on_error") or
             (_can_pause and settings.get("lua.break_on_error")) then
         local m = debug.traceback(co, message)
