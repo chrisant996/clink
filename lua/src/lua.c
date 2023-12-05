@@ -39,6 +39,18 @@
 	LUA_INIT "_" LUA_VERSION_MAJOR "_" LUA_VERSION_MINOR
 
 
+/* begin_clink_change */
+#include "../../clink/core/include/core/bldopts.h"
+#ifdef USE_MEMORY_TRACKING
+#include "../../clink/core/include/core/debugheap.h"
+DECLALLOCATOR DECLRESTRICT void* __cdecl dbgluarealloc(void* pv, size_t size)
+{
+  return realloc(pv, size);
+}
+#endif
+/* end_clink_change */
+
+
 /*
 ** lua_stdin_is_tty detects whether the standard input is a 'tty' (that
 ** is, whether we're running lua interactively).

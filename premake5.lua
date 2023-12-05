@@ -308,6 +308,16 @@ project("luac")
     files("lua/src/luac.c")
 
 --------------------------------------------------------------------------------
+project("lua52")
+    language("c")
+    kind("consoleapp")
+    defines("BUILD_LUA")
+    links("clink_lib")
+    links("clink_core") -- Link after clink_lib to solve order issue with linear_allocator.*.
+    links("lua")
+    files("lua/src/lua.c")
+
+--------------------------------------------------------------------------------
 project("detours")
     kind("staticlib")
     files("detours/*.cpp")
