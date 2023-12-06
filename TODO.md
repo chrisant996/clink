@@ -23,7 +23,6 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
       - Precedence for "or", "and", "xor" can be simply left to right (like in 4Dos/4NT/TakeCommand etc).
       - Automatically optimize rule evaluation by processing CFLAG checks before pattern checks in any group of "or" clauses.
       - If parsing is fast enough, then maybe don't even bother "compiling" the rules, and simply parse for every entry?
-- Maybe consider a way to allow piping matches and help into `less` or other external pager?  It would break/interfere with the intended flow and behavior of the `complete` command and it might not work with ANSI codes.  But in [clink-completions#500](https://github.com/vladimir-kotikov/clink-completions/issues/178) a user cited a link where someone assumed that bash would use an external pager like `less`.
 - The `:` and `=` parsing has a side effect that flags like `-f`_`file`_ are ambiguous: since parsing happens independently from argmatchers, `-fc:\file` could be `-f` and `c:\file` or it could be `-fc:` and `\file`.
   - Revisit the possibility of allowing `line_state` to be mutable and argmatchers adjusting it as they parse the input line?  _No; too messy.  E.g. splitting `"-fc:\foo bar"` gets weird because quoting encloses **two adjacent** words._
   - But an important benefit of the current implementation is that `program_with_no_argmatcher --unknown-flag:filename` is able to do filename completion on `filename`.
@@ -36,6 +35,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Allow Lua to set the comment row for the input line?
   - Need a simple and reliable trigger for clearing the comment row later; maybe `clink.onaftercommand()` is enough?
   - Don't add this ability unless there is a way to ensure comment rows don't get "leaked" and continue showing up past when they were relevant.
+  - Argmatcher could maybe automatically show syntax hints for the current word.
 - Make a reusable wrapper mechanism to create coroutine-friendly threaded async operations in Lua?
 
 ## Follow Up
@@ -110,6 +110,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 - Windows 10.0.19042.630 seems to have problems when using WriteConsoleW with ANSI escape codes in a powerline prompt in a git repo.  But Windows 10.0.19041.630 doesn't.
 
 ## Punt
+- Maybe consider a way to allow piping matches and help into `less` or other external pager?  It would break/interfere with the intended flow and behavior of the `complete` command and it might not work with ANSI codes.  But in [clink-completions#500](https://github.com/vladimir-kotikov/clink-completions/issues/178) a user cited a link where someone assumed that bash would use an external pager like `less`.  _[No; it would break how completion is designed to work, and ANSI escape codes couldn't be used.]_
 - CMD sets `=ExitCode` = the exit code from running a program.  But it doesn't set the envvar for various other things that update CMD's internal exit code variable.  So, Clink's tempfile dance to get `%ERRORLEVEL%` is still necessary.
 - A reliable way for scripts to tell whether they're loaded in `clink set` versus in `cmd`.  _[No.  The only case reported that needed this was trying to access key bindings when the script was loaded, and due to a bug in `rl.getkeybindings()` Clink crashed.  The crash has been fixed (now it returns an empty table instead), and the script is better implemented using `clink.oninject()` anyway.]_
 - Provide some kind of "line editor tester" in the `clink lua` interpreter to facilitate writing unit tests for argmatchers?  _[No.  Too many fundamental incompatibilities with the rest of the code.  Completion script authors can do unit testing of their own code, but trying to do end-to-end testing of Clink itself from within Clink itself with being integrated with CMD?  Hard no.]_
