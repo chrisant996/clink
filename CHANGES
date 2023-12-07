@@ -20,6 +20,10 @@
   - TBD:  What is the rltty.c bracket paste change?
   - Fixed leaked memory from undo lists.
 
+#### v1.5.19
+- Fixed Lua error messages from custom Lua libraries that report errors using table objects instead of strings.
+- Internal changes and optimizations.
+
 #### v1.5.18
 - Fixed [#524](https://github.com/chrisant996/clink/issues/524) and [#523](https://github.com/chrisant996/clink/issues/523); garbled display in wide terminal windows (regression introduced in v1.5.14, which exacerbated and revealed a bug that's existed since Clink v1.0.0 alpha and which could intermittently garble Unicode text or escape sequences).
 - Fixed the transient prompt sometimes not displaying properly (regression introduced in v1.5.17).
