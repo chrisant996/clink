@@ -1,6 +1,6 @@
 /* rlmbutil.h -- utility functions for multibyte characters. */
 
-/* Copyright (C) 2001-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2001-2021 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -98,6 +98,19 @@
 /* end_clink_change */
 
 /*
+ * wchar_t doesn't work for 32-bit values on Windows using MSVC
+ */
+#ifdef WCHAR_T_BROKEN
+#  define WCHAR_T char32_t
+#  define MBRTOWC mbrtoc32
+#  define WCRTOMB c32rtomb
+#else	/* normal systems */
+#  define WCHAR_T wchar_t
+#  define MBRTOWC mbrtowc
+#  define WCRTOMB wcrtomb
+#endif
+
+/*
  * Flags for _rl_find_prev_mbchar and _rl_find_next_mbchar:
  *
  * MB_FIND_ANY		find any multibyte character
@@ -107,22 +120,22 @@
 #define MB_FIND_ANY	0x00
 #define MB_FIND_NONZERO	0x01
 
-extern int _rl_find_prev_mbchar PARAMS((char *, int, int));
-extern int _rl_find_next_mbchar PARAMS((char *, int, int, int));
+extern int _rl_find_prev_mbchar (char *, int, int);
+extern int _rl_find_next_mbchar (char *, int, int, int);
 
 #ifdef HANDLE_MULTIBYTE
 
-extern int _rl_compare_chars PARAMS((char *, int, mbstate_t *, char *, int, mbstate_t *));
-extern int _rl_get_char_len PARAMS((char *, mbstate_t *));
-extern int _rl_adjust_point PARAMS((char *, int, mbstate_t *));
+extern int _rl_compare_chars (char *, int, mbstate_t *, char *, int, mbstate_t *);
+extern int _rl_get_char_len (char *, mbstate_t *);
+extern int _rl_adjust_point (char *, int, mbstate_t *);
 
-extern int _rl_read_mbchar PARAMS((char *, int));
-extern int _rl_read_mbstring PARAMS((int, char *, int));
+extern int _rl_read_mbchar (char *, int);
+extern int _rl_read_mbstring (int, char *, int);
 
-extern int _rl_is_mbchar_matched PARAMS((char *, int, int, char *, int));
+extern int _rl_is_mbchar_matched (char *, int, int, char *, int);
 
-extern WCHAR_T _rl_char_value PARAMS((char *, int));
-extern int _rl_walphabetic PARAMS((WCHAR_T));
+extern WCHAR_T _rl_char_value (char *, int);
+extern int _rl_walphabetic (WCHAR_T);
 
 #define _rl_to_wupper(wc)	(iswlower (wc) ? towupper (wc) : (wc))
 #define _rl_to_wlower(wc)	(iswupper (wc) ? towlower (wc) : (wc))
@@ -144,8 +157,6 @@ extern int _rl_walphabetic PARAMS((WCHAR_T));
 /* begin_clink_change */
 #if 0
 static inline int
-//_rl_wcwidth (wc)
-//     WCHAR_T wc;
 _rl_wcwidth (WCHAR_T wc)
 /* end_clink_change */
 {

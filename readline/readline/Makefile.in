@@ -149,7 +149,7 @@ DOCUMENTATION = $(DOCSOURCE) $(DOCOBJECT) $(DOCSUPPORT)
 
 CREATED_MAKEFILES = Makefile doc/Makefile examples/Makefile shlib/Makefile
 CREATED_CONFIGURE = config.status config.h config.cache config.log \
-		    stamp-config stamp-h readline.pc
+		    stamp-config stamp-h readline.pc history.pc
 CREATED_TAGS = TAGS tags
 
 INSTALLED_HEADERS = readline.h chardefs.h keymaps.h history.h tilde.h \
@@ -243,10 +243,11 @@ maybe-uninstall-headers: uninstall-headers
 
 install-pc: installdirs
 	-$(INSTALL_DATA) $(BUILD_DIR)/readline.pc $(DESTDIR)$(pkgconfigdir)/readline.pc
+	-$(INSTALL_DATA) $(BUILD_DIR)/history.pc $(DESTDIR)$(pkgconfigdir)/history.pc
 
 uninstall-pc:
 	-test -n "$(pkgconfigdir)" && cd $(DESTDIR)$(pkgconfigdir) && \
-		${RM} readline.pc
+		${RM} readline.pc history.pc
 
 maybe-uninstall-pc: uninstall-pc
 
@@ -322,6 +323,9 @@ distclean maintainer-clean: clean
 	$(RM) $(CREATED_TAGS)
 
 readline.pc:	config.status $(srcdir)/readline.pc.in
+	$(SHELL) config.status
+
+history.pc:	config.status $(srcdir)/history.pc.in
 	$(SHELL) config.status
 
 info dvi html pdf ps:

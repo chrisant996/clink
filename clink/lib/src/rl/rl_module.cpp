@@ -54,6 +54,7 @@ extern "C" {
 #include <readline/readline.h>
 #include <readline/rlprivate.h>
 #include <readline/rldefs.h>
+#include <readline/history.h>
 #include <readline/histlib.h>
 #include <readline/keymaps.h>
 #include <readline/xmalloc.h>
@@ -910,7 +911,7 @@ static void puts_face_func(const char* s, const char* face, int32 n)
                 }
                 // fall through
             case FACE_NORMAL:       out << c_normal; break;
-            case FACE_STANDOUT:     out << "\x1b[0;7m"; break;
+            case FACE_STANDOUT:     out << fallback_color(_rl_active_region_start_color, "\x1b[0;7m"); break;
 
             case FACE_INPUT:        out << fallback_color(s_input_color, c_normal); break;
             case FACE_MODMARK:      out << fallback_color(_rl_display_modmark_color, c_normal); break;
@@ -1843,9 +1844,6 @@ void initialise_readline(const char* shell_name, const char* state_dir, const ch
 
         // Preemptively replace paste command with one that supports Unicode.
         rl_add_funmap_entry("paste-from-clipboard", clink_paste);
-
-        // Readline forgot to add this command to the funmap.
-        rl_add_funmap_entry("vi-undo", rl_vi_undo);
 
         // Install signal handlers so that Readline doesn't trigger process exit
         // in response to Ctrl+C or Ctrl+Break.

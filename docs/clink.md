@@ -939,6 +939,8 @@ Boolean variables (those that can be set to on or off) are set to on if the valu
 
 Variable | Description
 -|-
+<a name="configactiveregionendcolor"></a>`active-region-end-color` | Not used or needed in Clink; exists only for compatibility when parsing the configuration file.
+<a name="configactiveregionstartcolor"></a>`active-region-start-color` | A string variable that controls the text color and background when displaying the text in the active region (see [enable-active-region](#configenableactiveregion) below).  This string must not take up any physical character positions on the display, so it should consist only of terminal escape sequences.  It is output to the terminal before displaying the text in the active region.  The default value is "\e[0;7m" (reverse video).
 <a name="configbellstyle"></a>`bell-style` | Controls what happens when Readline wants to ring the terminal bell. If set to "none", Readline never rings the bell. If set to "visible" (the default in Clink), Readline uses a visible bell if one is available. If set to "audible", Readline attempts to ring the terminal's bell.
 <a name="configlinkmatchingparen"></a>`blink-matching-paren` | If set to "on", Readline attempts to briefly move the cursor to an opening parenthesis when a closing parenthesis is inserted. The default is "off".
 <a name="configcoloredcompletionprefix"></a>`colored-completion-prefix` | If set to "on", when listing completions, Readline displays the common prefix of the set of possible completions using a different color. The color definitions are taken from the value of the [`%LS_COLORS%`](#completioncolors) environment variable. The default is "off".
@@ -951,6 +953,7 @@ Variable | Description
 <a name="configechocontrolcharacters"></a>`echo-control-characters` | When set to "on", on operating systems that indicate they support it, readline echoes a character corresponding to a signal generated from the keyboard. The default is "on".
 <a name="configeditingmode"></a>`editing-mode` | This controls which Readline input mode is used by default. When set to "emacs" (the default), Readline starts up in Emacs editing mode, where keystrokes are most similar to Emacs. When set to "vi", then `vi` input mode is used.
 <a name="configemacsmodestring"></a>`emacs-mode-string` | If the [`show-mode-in-prompt`](#configshowmodeinprompt) variable is enabled, this string is displayed immediately before the last line of the primary prompt when emacs editing mode is active. The value is expanded like a key binding, so the standard set of meta- and control prefixes and backslash escape sequences is available. Use the "\1" and "\2" escapes to begin and end sequences of non-printing characters, which can be used to embed a terminal control sequence into the mode string. The default is "@".
+<a name="configenableactiveregion"></a>`enable-active-region` | The _point_ is the current cursor position, and _mark_ refers to a saved cursor position (see [Commands For Moving](#commands-for-moving) and [Some Miscellaneous Commands](#some-miscellaneous-commands)).  The text between the point and mark is referred to as the _region_.  When this variable is set to "on", Readline allows certain commands to designate the region as _active_.  When the region is active, Readline highlights the text in the region using the value of the `active-region-start-color`, which defaults to reverse video ("\e[0;7m").  The active region shows the text inserted by bracketed-paste and any matching text found by incremental and non-incremental history searches.  The default is "on".
 <a name="configenablebracketedpaste"></a>`enable-bracketed-paste` | When set to "on", Readline will configure the terminal in a way that will enable it to insert each paste into the editing buffer as a single string of characters, instead of treating each character as if it had been read from the keyboard. This can prevent pasted characters from being interpreted as editing commands. The default is "on".
 <a name="configexpandtilde"></a>`expand-tilde` | If set to "on", tilde expansion is performed when Readline attempts word completion. The default is "off".
 <a name="confighistorypreservepoint"></a>`history-preserve-point` | If set to "on", the history code attempts to place the point (the current cursor position) at the same location on each history line retrieved with [`previous-history`](#rlcmd-previous-history) or [`next-history`](#rlcmd-next-history). The default is "off".
@@ -1242,6 +1245,8 @@ Command | Key | Description
 <a name="rlcmd-yank-nth-arg"></a>`yank-nth-arg` | <kbd>Alt</kbd>-<kbd>Ctrl</kbd>-<kbd>y</kbd> | Insert the first argument to the previous command (usually the second word on the previous line) at point. With an argument _n_, insert the <em>n</em>th word from the previous command (the words in the previous command begin with word 0). A negative argument inserts the <em>n</em>th word from the end of the previous command. Once the argument _n_ is computed, the argument is extracted as if the "!n" history expansion had been specified.
 <a name="rlcmd-yank-last-arg"></a>`yank-last-arg` | <kbd>Alt</kbd>-<kbd>.</kbd> or <kbd>Alt</kbd>-<kbd>_</kbd> | Insert last argument to the previous command (the last word of the previous history entry). With a numeric argument, behave exactly like [`yank-nth-arg`](#rlcmd-yank-nth-arg). Successive calls to `yank-last-arg` move back through the history list, inserting the last word (or the word specified by the argument to the first call) of each line in turn. Any numeric argument supplied to these successive calls determines the direction to move through the history. A negative argument switches the direction through the history (back or forward). The history expansion facilities are used to extract the last argument, as if the "!$" history expansion had been specified.
 <a name="rlcmd-operate-and-get-next"></a>`operate-and-get-next` | <kbd>Ctrl</kbd>-<kbd>o</kbd> | Accept the current line for return to the calling application as if a newline had been entered, and fetch the next line relative to the current line from the history for editing. A numeric argument, if supplied, specifies the history entry to use instead of the current line.
+<a name="rlcmd-fetch-history"></a>`fetch-history` | | With a numeric argument, fetch that entry from the history list
+and make it the current line.  Without an argument, move back to the first entry in the history list.
 
 ### Commands For Changing Text
 
@@ -1448,7 +1453,7 @@ When the [`colored-completion-prefix`](#configcoloredcompletionprefix) [Readline
 
 When [`colored-stats`](#configcoloredstats) is configured to `on`, then the color definitions from `%LS_COLORS%` are used to color file completions according to their file type or extension.    Multiple definitions are separated by colons.  Also, since `%LS_COLORS%` doesn't cover readonly files, hidden files, doskey aliases, or shell commands the [color.readonly](#color_readonly), [color.hidden](#color_hidden), [color.doskey](#color_doskey), and [color.cmd](#color_cmd) Clink settings exist to cover those.
 
-Type|Description|Default
+Types|Description|Default
 -|-|-
 `di`|Directories.|`01;34` (bright blue)
 `ex`|Executable files.|`01;32` (bright green)
@@ -1458,6 +1463,10 @@ Type|Description|Default
 `no`|Normal color.  This is used for anything not covered by one of the other types.<br/>It may be overridden by various other Clink color settings as appropriate depending on the completion type.|
 `or`|Orphaned symlink (the target of the symlink is missing).|
 `so`|Common prefix for possible completions.|`01;35` (bright magenta)
+
+Special extensions|Description|Default
+-|-|-
+`.readline-colored-completion-prefix`|If there is a color definition in `%LS_COLORS%` for the custom suffix `.readline-colored-completion-prefix`, it is used for the common prefix, superseding the `so` type.|
 
 Here is an example where `%LS_COLORS%` defines colors for various types.
 

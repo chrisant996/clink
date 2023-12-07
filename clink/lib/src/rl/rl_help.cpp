@@ -167,6 +167,7 @@ static const struct {
   { "end-of-history", rl_end_of_history, keycat_history, "Move to the end of the input history, i.e. the line currently being entered" },
   //{ "end-of-line", clink_end_of_line, keycat_basic, "Move to the end of the line, or insert suggestion" },
   { "exchange-point-and-mark", rl_exchange_point_and_mark, keycat_misc, "Swap the cursor point with the mark.  Sets the current cursor position to the saved position, and saves the old cursor position as the mark" },
+  { "fetch-history", rl_fetch_history, keycat_history, "With a numeric argument, fetch that entry from the history list and make it the current line.  Without an argument, move back to the first entry in the history list" },
   { "forward-backward-delete-char", rl_rubout_or_delete, keycat_basic, "Delete the character at the cursor point, unless the cursor is at the end of the line, in which case the character behind the cursor is deleted" },
   //{ "forward-byte", clink_forward_byte, keycat_cursor, "Move forward a single byte, or insert suggestion" },
   //{ "forward-char", clink_forward_char, keycat_cursor, "Move forward a character, or insert suggestion" },
@@ -176,6 +177,7 @@ static const struct {
   { "history-search-forward", rl_history_search_forward, keycat_history, "Search forward through the history for the string of characters between the start of the current line and the cursor point.  The search string must match at the beginning of a history line.  This is a non-incremental search" },
   { "history-substring-search-backward", rl_history_substr_search_backward, keycat_history, "Search backward through the history for the string of characters between the start of the current line and the cursor point.  The search string may match anywhere in a history line.  This is a non-incremental search" },
   { "history-substring-search-forward", rl_history_substr_search_forward, keycat_history, "Search forward through the history for the string of characters between the start of the current line and the cursor point.  The search string may match anywhere in a history line.  This is a non-incremental search" },
+  { "insert-close", rl_insert_close, keycat_misc, "Insert the typed closing character and briefly move the cursor to the matching opening character" },
   { "insert-comment", rl_insert_comment, keycat_misc, "Insert '::' at the beginning of the input line and accept the line" },
   { "insert-completions", rl_insert_completions, keycat_misc, "Insert all the completions that 'possible-completions' would list" },
   { "kill-whole-line", rl_kill_full_line, keycat_killyank, "Kill all characters on the current line, no matter where the cursor point is" },
@@ -298,6 +300,8 @@ static bool ensure_keydesc_map()
 
         if (!s_pmap_keydesc)
             s_pmap_keydesc = new keydesc_map;
+
+        s_pmap_keydesc->emplace(rl_insert_close, std::move(Keydesc("insert-close", 0, nullptr)));
 
         FUNMAP** funcs = funmap;
         while (*funcs != nullptr)

@@ -642,6 +642,7 @@ static int32 read_input(lua_State* state)
 {
     const bool no_cursor = (lua_isboolean(state, 1) && lua_toboolean(state, 1));
 
+// TODO: This needs to use input_available_hook().
     terminal_in* const in = get_lua_terminal_input();
     if (!in)
         return 0;

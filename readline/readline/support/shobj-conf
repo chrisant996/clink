@@ -10,7 +10,7 @@
 # Chet Ramey
 # chet@po.cwru.edu
 
-#   Copyright (C) 1996-2019 Free Software Foundation, Inc.
+#   Copyright (C) 1996-2021 Free Software Foundation, Inc.
 #
 #   This file is part of GNU Bash, the Bourne Again SHell.
 #
@@ -123,7 +123,7 @@ sunos5*|solaris2*)
 	;;
 
 # All versions of Linux (including Gentoo/FreeBSD) or the semi-mythical GNU Hurd.
-linux*-*|gnu*-*|k*bsd*-gnu-*|freebsd*|dragonfly*)
+linux*-*|gnu*-*|k*bsd*-gnu-*|midnightbsd*|freebsd*|dragonfly*)
 	SHOBJ_CFLAGS=-fPIC
 	SHOBJ_LD='${CC}'
 	SHOBJ_LDFLAGS='-shared -Wl,-soname,$@'
@@ -151,13 +151,13 @@ darwin*)
 	darwin[1-7].*)
 		SHOBJ_STATUS=unsupported
 		SHOBJ_LDFLAGS='-dynamic'
-		SHLIB_XLDFLAGS='-arch_only `/usr/bin/arch` -install_name $(libdir)/`echo $@ | sed "s:\\..*::"`.$(SHLIB_MAJOR).$(SHLIB_LIBSUFF) -current_version $(SHLIB_MAJOR)$(SHLIB_MINOR) -compatibility_version $(SHLIB_MAJOR)$(SHLIB_MINOR) -v'
+		SHLIB_XLDFLAGS='-install_name $(libdir)/`echo $@ | sed "s:\\..*::"`.$(SHLIB_MAJOR).$(SHLIB_LIBSUFF) -current_version $(SHLIB_MAJOR)$(SHLIB_MINOR) -compatibility_version $(SHLIB_MAJOR)$(SHLIB_MINOR) -v'
 		;;
 	# Darwin 8 == Mac OS X 10.4; Mac OS X 10.N == Darwin N+4
 	*)
 		case "${host_os}" in
 		darwin[89]*|darwin1[012]*)
-			SHOBJ_ARCHFLAGS='-arch_only `/usr/bin/arch`'
+			SHOBJ_ARCHFLAGS=
 			;;
 		 *) 	# Mac OS X 10.9 (Mavericks) and later
 			SHOBJ_ARCHFLAGS=
@@ -241,8 +241,8 @@ osf*)
 
 aix4.[2-9]*-*gcc*|aix[5-9].*-*gcc*)		# lightly tested by jik@cisco.com
 	SHOBJ_CFLAGS=-fpic
-	SHOBJ_LD='ld'
-	SHOBJ_LDFLAGS='-bdynamic -bnoentry -bexpall'
+	SHOBJ_LD='${CC}'
+	SHOBJ_LDFLAGS='-Wl,-bdynamic -Wl,-bnoentry -Wl,-bexpall'
 	SHOBJ_XLDFLAGS='-G'
 
 	SHLIB_XLDFLAGS='-bM:SRE'

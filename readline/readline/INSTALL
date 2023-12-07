@@ -1,7 +1,7 @@
 Basic Installation
 ==================
 
-These are installation instructions for Readline-8.1.
+These are installation instructions for Readline-8.2.
 
 The simplest way to compile readline is:
 
@@ -55,7 +55,7 @@ The file `configure.in' is used to create `configure' by a
 program called `autoconf'.  You only need `configure.in' if you
 want to change it or regenerate `configure' using a newer version
 of `autoconf'.  The readline `configure.in' requires autoconf
-version 2.50 or newer. 
+version 2.69 or newer. 
 
 Compilers and Options
 =====================
@@ -164,18 +164,40 @@ operates.
 Optional Features
 =================
 
-The readline `configure' recognizes a single `--with-PACKAGE' option:
+The readline `configure' recognizes two `--with-PACKAGE' options:
 
 `--with-curses'
     This tells readline that it can find the termcap library functions
     (tgetent, et al.) in the curses library, rather than a separate
     termcap library.  Readline uses the termcap functions, but does not
-    link with the termcap or curses library itself, allowing applications
-    which link with readline the to choose an appropriate library.
-    This option tells readline to link the example programs with the
-    curses library rather than libtermcap.
+    usually link with the termcap or curses library itself, allowing
+    applications which link with readline the to choose an appropriate
+    library. This option tells readline to link the example programs with
+    the curses library rather than libtermcap.
 
-`configure' also recognizes two `--enable-FEATURE' options:
+`--with-shared-termcap-library'
+    This tells the readline build process to link the shared version of
+    libreadline against a shared version of the curses or termcap library
+    (see the description of SHLIB_LIBS below under `Shared Libraries').
+    This relieves the application of having to link with curses or termcap
+    itself, but does not allow the application to choose which library to
+    use. This is only effective on systems that build shared libraries (see
+    below; the default for shared libraries is `yes').
+
+`configure' also recognizes several `--enable-FEATURE' options:
+
+`--enable-bracketed-paste-default'
+    Enable bracketed paste by default, so the initial value of the
+    `enable-bracketed-paste' Readline variable is `on'. The default
+    is `yes'.
+
+`--enable-install-examples'
+    Install the readline example programs as part of `make install'.
+
+`--enable-multibyte'
+    Build with support for multibyte characters enabled on systems with the
+    necessary framework (locale definitions, C library functions, etc.). The
+    default is `yes'.
 
 `--enable-shared'
     Build the shared libraries by default on supported platforms.  The
@@ -184,11 +206,6 @@ The readline `configure' recognizes a single `--with-PACKAGE' option:
 `--enable-static'
     Build the static libraries by default.  The default is `yes'.
 
-`--enable-bracketed-paste-default'
-    Enable bracketed paste by default, so the initial value of the
-    `enable-bracketed-paste' Readline variable is `on'. The default
-    is `yes'.
- 
 Shared Libraries
 ================
 
@@ -199,7 +216,8 @@ shared versions of the readline and history libraries to be built
 on supported platforms.
 
 If `configure' is given the `--enable-shared' option, it will attempt
-to build the shared libraries by default on supported platforms.
+to build the shared libraries by default on supported platforms. This
+option is enabled by default.
 
 Configure calls the script support/shobj-conf to test whether or
 not shared library creation is supported and to generate the values

@@ -1,6 +1,8 @@
 /* config.h.in.  Maintained by hand. */
 
 /* Template definitions for autoconf */
+
+/* These are set by AC_USE_SYSTEM_EXTENSIONS */
 #undef __EXTENSIONS__
 #undef _ALL_SOURCE
 #undef _GNU_SOURCE
@@ -16,12 +18,9 @@
 
 #undef _FILE_OFFSET_BITS
 
-/* Define as the return type of signal handlers (int or void).  */
-#undef RETSIGTYPE
-
-#undef VOID_SIGHANDLER
-
 /* Characteristics of the compiler. */
+#undef inline
+
 #undef sig_atomic_t
 
 #undef size_t
@@ -57,6 +56,9 @@
 
 /* Define if you have the getpwuid function. */
 #undef HAVE_GETPWUID
+
+/* Define if you have the gettimeofday function. */
+#undef HAVE_GETTIMEOFDAY
 
 /* Define if you have the isascii function. */
 #undef HAVE_ISASCII
@@ -106,6 +108,9 @@
 /* Define if you have the setenv function.  */
 #undef HAVE_SETENV
 
+/* Define if you have the setitimer function.  */
+#undef HAVE_SETITIMER
+
 /* Define if you have the setlocale function. */
 #undef HAVE_SETLOCALE
 
@@ -119,6 +124,9 @@
 
 /* Define if you have the strpbrk function.  */
 #undef HAVE_STRPBRK
+
+/* Define if you have the sysconf function.  */
+#undef HAVE_SYSCONF
 
 /* Define if you have the tcgetattr function.  */
 #undef HAVE_TCGETATTR
@@ -146,8 +154,6 @@
 
 /* and whether it works */
 #undef WCWIDTH_BROKEN
-
-#undef STDC_HEADERS
 
 /* Define if you have the <dirent.h> header file.  */
 #undef HAVE_DIRENT_H
@@ -218,6 +224,9 @@
 /* Define if you have the <sys/stream.h> header file.  */
 #undef HAVE_SYS_STREAM_H
 
+/* Define if you have the <sys/time.h> header file.  */
+#undef HAVE_SYS_TIME_H
+
 /* Define if you have the <termcap.h> header file.  */
 #undef HAVE_TERMCAP_H
 
@@ -257,8 +266,6 @@
 #undef HAVE_DECL_AUDIT_USER_TTY
 
 /* Definitions pulled in from aclocal.m4. */
-#undef VOID_SIGHANDLER
-
 #undef GWINSZ_IN_SYS_IOCTL
 
 #undef STRUCT_WINSIZE_IN_SYS_IOCTL
@@ -278,6 +285,8 @@
 #undef HAVE_STRUCT_DIRENT_D_FILENO
 
 #undef HAVE_STRUCT_DIRENT_D_NAMLEN
+
+#undef HAVE_TIMEVAL
 
 #undef HAVE_BSD_SIGNALS
 

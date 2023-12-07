@@ -1,6 +1,6 @@
 /* display.c -- readline redisplay facility. */
 
-/* Copyright (C) 1987-2020 Free Software Foundation, Inc.
+/* Copyright (C) 1987-2022 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library    
    for reading lines of text with interactive input and history editing.
@@ -74,26 +74,26 @@
 extern char *strchr (), *strrchr ();
 #endif /* !strchr && !__STDC__ */
 
-static void putc_face PARAMS((int, int, char *));
-static void puts_face PARAMS((const char *, const char *, int));
-static void norm_face PARAMS((char *, int));
+static void putc_face (int, int, char *);
+static void puts_face (const char *, const char *, int);
+static void norm_face (char *, int);
 
-static void update_line PARAMS((char *, char *, char *, char *, int, int, int, int));
-static void space_to_eol PARAMS((int));
-static void delete_chars PARAMS((int));
-static void insert_some_chars PARAMS((char *, int, int));
-static void open_some_spaces PARAMS((int));
-static void cr PARAMS((void));
-static void redraw_prompt PARAMS((char *));
-static void _rl_move_cursor_relative PARAMS((int, const char *, const char *));
+static void update_line (char *, char *, char *, char *, int, int, int, int);
+static void space_to_eol (int);
+static void delete_chars (int);
+static void insert_some_chars (char *, int, int);
+static void open_some_spaces (int);
+static void cr (void);
+static void redraw_prompt (char *);
+static void _rl_move_cursor_relative (int, const char *, const char *);
 
 /* Values for FLAGS */
 #define PMT_MULTILINE	0x01
 #define PMT_RPROMPT	0x02
 
 /* begin_clink_change */
-//static char *expand_prompt PARAMS((char *, int, int *, int *, int *, int *));
-static char *expand_prompt PARAMS((const char *, int, int *, int *, int *, int *));
+//static char *expand_prompt (char *, int, int *, int *, int *, int *);
+static char *expand_prompt (const char *, int, int *, int *, int *, int *);
 #define line_state __rl_line_state__ /* Disambiguate to help debuggers. */
 /* end_clink_change */
 
@@ -136,7 +136,7 @@ static char* const visible_line = NULL;
 #endif /* OMIT_DEFAULT_DISPLAY_READLINE */
 
 #if defined (HANDLE_MULTIBYTE)
-static int _rl_col_width PARAMS((const char *, int, int, int));
+static int _rl_col_width (const char *, int, int, int);
 #else
 #  define _rl_col_width(l, s, e, f)	(((e) <= (s)) ? 0 : (e) - (s))
 #endif
@@ -412,8 +412,7 @@ expand_prompt (const char *pmt, int flags, int *lp, int *lip, int *niflp, int *v
 {
   char *r, *ret, *p, *igstart, *nprompt, *ms;
   int l, rl, last, ignoring, ninvis, invfl, invflset, ind, pind, physchars;
-  int mlen, newlines, newlines_guess, bound;
-  int can_add_invis;
+  int mlen, newlines, newlines_guess, bound, can_add_invis;
   int mb_cur_max;
 
   /* We only expand the mode string for the last line of a multiline prompt
@@ -434,8 +433,8 @@ expand_prompt (const char *pmt, int flags, int *lp, int *lip, int *niflp, int *v
 /* end_clink_change */
     }
 
-/* begin_clink_change */
   can_add_invis = 0;
+/* begin_clink_change */
   newlines = 0;
 /* end_clink_change */
   mb_cur_max = MB_CUR_MAX;
@@ -510,10 +509,19 @@ expand_prompt (const char *pmt, int flags, int *lp, int *lip, int *niflp, int *v
       else if (ignoring && *p == RL_PROMPT_END_IGNORE)
 	{
 	  ignoring = 0;
-/* begin_clink_change */
+	  /* If we have a run of invisible characters, adjust local_prompt_newlines
+	     to add them, since update_line expects them to be counted before
+	     wrapping the line. */
 	  if (can_add_invis)
-	    local_prompt_newlines[newlines] = r - ret;
-/* end_clink_change */
+	    {
+	      local_prompt_newlines[newlines] = r - ret;
+	      /* If we're adding to the number of invisible characters on the
+		 first line of the prompt, but we've already set the number of
+		 invisible characters on that line, we need to adjust the
+		 counter. */
+	      if (invflset && newlines == 1)
+		invfl = ninvis;
+	    }
 	  if (p != (igstart + 1))
 	    last = r - ret - 1;
 	  continue;
@@ -599,19 +607,19 @@ expand_prompt (const char *pmt, int flags, int *lp, int *lip, int *niflp, int *v
 	      local_prompt_newlines[++newlines] = new;
 	    }
 
+	  /* What if a physical character of width >= 2 is split? There is
+	     code that wraps before the physical screen width if the character
+	     width would exceed it, but it needs to be checked against this
+	     code and local_prompt_newlines[]. */
 /* begin_clink_change */
-	  /* XXX - what if a physical character of width >= 2 is split?
-	     Do different terminals handle that differently? */
-	  if (!(flags & PMT_RPROMPT) && !ignoring)
-	    can_add_invis = (physchars == bound);
+	  //if (ignoring == 0)
+	  if (!(flags & PMT_RPROMPT) && ignoring == 0)
 /* end_clink_change */
+	    can_add_invis = (physchars == bound); 
 	}
     }
 
-/* begin_clink_change */
-  //if (rl < _rl_screenwidth)
   if (rl <= _rl_screenwidth)
-/* end_clink_change */
     invfl = ninvis;
 
   *r = '\0';
@@ -625,7 +633,7 @@ expand_prompt (const char *pmt, int flags, int *lp, int *lip, int *niflp, int *v
     *vlp = physchars;
 
   if (nprompt != pmt)
-    free (nprompt);
+    xfree (nprompt);
 
 /* begin_clink_change */
   /* Right side prompt is restricted to one line. */
@@ -1885,9 +1893,9 @@ putc_face (int c, int face, char *cur_face)
       if (face != FACE_NORMAL && face != FACE_STANDOUT)
 	return;
       if (face == FACE_STANDOUT && cf == FACE_NORMAL)
-        _rl_standout_on ();
+	_rl_region_color_on ();
       if (face == FACE_NORMAL && cf == FACE_STANDOUT)
-        _rl_standout_off ();
+	_rl_region_color_off ();
       *cur_face = face;
     }
   if (c != EOF)
@@ -1909,7 +1917,7 @@ puts_face (const char *str, const char *face, int n)
 /* end_clink_change */
 
   for (cur_face = FACE_NORMAL, i = 0; i < n; i++)
-    putc_face (str[i], face[i], &cur_face);
+    putc_face ((unsigned char) str[i], face[i], &cur_face);
   putc_face (EOF, FACE_NORMAL, &cur_face);
 }
 
@@ -2743,9 +2751,24 @@ dumb_update:
 		((nfd-new) < (prompt_last_invisible-(current_line*_rl_screenwidth+prompt_invis_chars_first_line))))
 	    ADJUST_CPOS (wrap_offset - prompt_invis_chars_first_line);
 
-	  /* XXX - what happens if wrap_offset == prompt_invis_chars_first_line
-	     and we are drawing the first line (current_line == 0)? We should
-	     adjust by _rl_last_c_pos -= prompt_invis_chars_first_line */
+	  /* What happens if wrap_offset == prompt_invis_chars_first_line
+	     and we are drawing the first line (current_line == 0), or if we
+	     are drawing the first line and changing the number of invisible
+	     characters in the line? If we're starting to draw before the last
+	     invisible character in the prompt, we need to adjust by
+	     _rl_last_c_pos -= prompt_invis_chars_first_line. This can happen
+	     when we finish reading a digit argument (with the "(arg: N)"
+	     prompt) and are switching back to displaying a line with a prompt
+	     containing invisible characters, since we have to redraw the
+	     entire prompt string. */
+	  if ((mb_cur_max > 1 && rl_byte_oriented == 0) &&
+		current_line == 0 && wrap_offset &&
+		displaying_prompt_first_line &&
+		wrap_offset == prompt_invis_chars_first_line &&
+		visible_wrap_offset != current_invis_chars &&
+		visible_wrap_offset != prompt_invis_chars_first_line &&
+		((nfd-new) < prompt_last_invisible))
+	    ADJUST_CPOS (prompt_invis_chars_first_line);
 	}
     }
   else				/* Delete characters from line. */
@@ -2905,7 +2928,8 @@ rl_clear_visible_line (void)
   for (curr_line = _rl_last_v_pos; curr_line >= 0; curr_line--)
     {
       _rl_move_vert (curr_line);
-      _rl_clear_to_eol (0);
+      _rl_clear_to_eol (_rl_screenwidth);
+      _rl_cr ();		/* in case we use space_to_eol() */
     }
 
   return 0;
@@ -2986,11 +3010,8 @@ rl_forced_update_display (void)
   register char *temp;
 
   if (visible_line)
-    {
-      temp = visible_line;
-      while (*temp)
-	*temp++ = '\0';
-    }
+    memset (visible_line, 0, line_size);
+
   rl_on_new_line ();
   forced_display++;
   (*rl_redisplay_function) ();
@@ -3710,14 +3731,14 @@ _rl_update_final (void)
       puts_face (&last_line[_rl_screenwidth - 1 + woff],
 		 &last_face[_rl_screenwidth - 1 + woff], 1);
     }
+  if ((_rl_vis_botlin == 0 && botline_length == 0) || botline_length > 0 || _rl_last_c_pos > 0)
+    rl_crlf ();
 /* begin_clink_change */
   /* Avoid clearing _rl_vis_botlin so the host knows the height and
      can erase the prompt and input line, or extract the prompt from
      the screen buffer. */
   // _rl_vis_botlin = 0;
 /* end_clink_change */
-  if (botline_length > 0 || _rl_last_c_pos > 0)
-    rl_crlf ();
   fflush (rl_outstream);
   rl_display_fixed++;
 #endif /* OMIT_DEFAULT_DISPLAY_READLINE */
@@ -3772,26 +3793,15 @@ _rl_redisplay_after_sigwinch (void)
      screen line. */
   if (_rl_term_cr)
     {
-      _rl_move_vert (_rl_vis_botlin);
-
-      _rl_cr ();
-      _rl_last_c_pos = 0;
-
-#if !defined (__MSDOS__)
-      if (_rl_term_clreol)
-	tputs (_rl_term_clreol, 1, _rl_output_character_function);
-      else
-#endif
-	{
-	  space_to_eol (_rl_screenwidth);
-	  _rl_cr ();
-	}
-
+      rl_clear_visible_line ();
       if (_rl_last_v_pos > 0)
 	_rl_move_vert (0);
     }
   else
     rl_crlf ();
+
+  if (_rl_screenwidth < prompt_visible_length)
+    _rl_reset_prompt ();		/* update local_prompt_newlines array */
 
 /* begin_clink_change */
   /* The right side prompt has been cleared. */

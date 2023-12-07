@@ -1,6 +1,6 @@
 /* rltypedefs.h -- Type declarations for readline functions. */
 
-/* Copyright (C) 2000-2011 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2021 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -32,10 +32,10 @@ extern "C" {
 #  define _FUNCTION_DEF
 
 #if defined(__GNUC__) || defined(__clang__)
-typedef int Function () __attribute__ ((deprecated));
-typedef void VFunction () __attribute__ ((deprecated));
-typedef char *CPFunction () __attribute__ ((deprecated));
-typedef char **CPPFunction () __attribute__ ((deprecated));
+typedef int Function () __attribute__((deprecated));
+typedef void VFunction () __attribute__((deprecated));
+typedef char *CPFunction () __attribute__((deprecated));
+typedef char **CPPFunction () __attribute__((deprecated));
 #else
 typedef int Function ();
 typedef void VFunction ();
@@ -51,21 +51,21 @@ typedef char **CPPFunction ();
 #  define _RL_FUNCTION_TYPEDEF
 
 /* Bindable functions */
-typedef int rl_command_func_t PARAMS((int, int));
+typedef int rl_command_func_t (int, int);
 
 /* Typedefs for the completion system */
-typedef char *rl_compentry_func_t PARAMS((const char *, int));
-typedef char **rl_completion_func_t PARAMS((const char *, int, int));
+typedef char *rl_compentry_func_t (const char *, int);
+typedef char **rl_completion_func_t (const char *, int, int);
 
-typedef char *rl_quote_func_t PARAMS((char *, int, char *));
-typedef char *rl_dequote_func_t PARAMS((char *, int));
+typedef char *rl_quote_func_t (char *, int, char *);
+typedef char *rl_dequote_func_t (char *, int);
 
-typedef int rl_compignore_func_t PARAMS((char **));
+typedef int rl_compignore_func_t (char **);
 
-typedef void rl_compdisp_func_t PARAMS((char **, int, int));
+typedef void rl_compdisp_func_t (char **, int, int);
 
 /* Type for input and pre-read hook functions like rl_event_hook */
-typedef int rl_hook_func_t PARAMS((void));
+typedef int rl_hook_func_t (void);
 
 /* begin_clink_change */
 /* Type for add/remove history hook function */
@@ -91,28 +91,28 @@ typedef int rl_macro_hook_func_t PARAMS((const char* macro));
 /* end_clink_change */
 
 /* Input function type */
-typedef int rl_getc_func_t PARAMS((FILE *));
+typedef int rl_getc_func_t (FILE *);
 
 /* Generic function that takes a character buffer (which could be the readline
    line buffer) and an index into it (which could be rl_point) and returns
    an int. */
-typedef int rl_linebuf_func_t PARAMS((char *, int));
+typedef int rl_linebuf_func_t (char *, int);
 
 /* `Generic' function pointer typedefs */
-typedef int rl_intfunc_t PARAMS((int));
+typedef int rl_intfunc_t (int);
 #define rl_ivoidfunc_t rl_hook_func_t
-typedef int rl_icpfunc_t PARAMS((char *));
-typedef int rl_icppfunc_t PARAMS((char **));
+typedef int rl_icpfunc_t (char *);
+typedef int rl_icppfunc_t (char **);
 
-typedef void rl_voidfunc_t PARAMS((void));
-typedef void rl_vintfunc_t PARAMS((int));
-typedef void rl_vcpfunc_t PARAMS((char *));
-typedef void rl_vcppfunc_t PARAMS((char **));
+typedef void rl_voidfunc_t (void);
+typedef void rl_vintfunc_t (int);
+typedef void rl_vcpfunc_t (char *);
+typedef void rl_vcppfunc_t (char **);
 
-typedef char *rl_cpvfunc_t PARAMS((void));
-typedef char *rl_cpifunc_t PARAMS((int));
-typedef char *rl_cpcpfunc_t PARAMS((char  *));
-typedef char *rl_cpcppfunc_t PARAMS((char  **));
+typedef char *rl_cpvfunc_t (void);
+typedef char *rl_cpifunc_t (int);
+typedef char *rl_cpcpfunc_t (char  *);
+typedef char *rl_cpcppfunc_t (char  **);
 
 /* begin_clink_change */
 typedef void rl_vccpfunc_t PARAMS((const char*));

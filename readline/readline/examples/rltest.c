@@ -36,6 +36,10 @@
 extern void exit();
 #endif
 
+#ifdef HAVE_LOCALE_H
+#  include <locale.h>
+#endif
+
 #ifdef READLINE_LIBRARY
 #  include "readline.h"
 #  include "history.h"
@@ -51,6 +55,10 @@ main ()
 {
   char *temp, *prompt;
   int done;
+
+#ifdef HAVE_SETLOCALE
+  setlocale (LC_ALL, "");
+#endif
 
   temp = (char *)NULL;
   prompt = "readline$ ";

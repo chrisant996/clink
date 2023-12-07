@@ -3,6 +3,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifdef HAVE_LOCALE_H
+#  include <locale.h>
+#endif
+
 #if defined (READLINE_LIBRARY)
 #  include "readline.h"
 #  include "history.h"
@@ -15,6 +19,10 @@ int
 main (int c, char **v)
 {
 	char *input;
+
+#ifdef HAVE_SETLOCALE
+	setlocale (LC_ALL, "");
+#endif
 
 	for (;;) {
 		input = readline ((char *)NULL);

@@ -1,7 +1,7 @@
 @ignore
 This file documents the user interface to the GNU History library.
 
-Copyright (C) 1988--2020 Free Software Foundation, Inc.
+Copyright (C) 1988--2022 Free Software Foundation, Inc.
 Authored by Brian Fox and Chet Ramey.
 
 Permission is granted to make and distribute verbatim copies of this manual
@@ -214,8 +214,9 @@ end of the history, and an index of @samp{-1} refers to the current
 @code{history -d} command.
 
 @item -d @var{start}-@var{end}
-Delete the history entries between positions @var{start} and @var{end},
-inclusive.  Positive and negative values for @var{start} and @var{end}
+Delete the range of history entries between positions @var{start} and
+@var{end}, inclusive.
+Positive and negative values for @var{start} and @var{end}
 are interpreted as described above.
 
 @item -a
@@ -245,10 +246,15 @@ the history list as a single entry.
 
 @end table
 
-When any of the @option{-w}, @option{-r}, @option{-a}, or @option{-n} options is
-used, if @var{filename}
-is given, then it is used as the history file.  If not, then
-the value of the @env{HISTFILE} variable is used.
+If a @var{filename} argument is supplied
+when any of the @option{-w}, @option{-r}, @option{-a}, or @option{-n} options
+is used, Bash uses @var{filename} as the history file.
+If not, then the value of the @env{HISTFILE} variable is used.
+
+The return value is 0 unless an invalid option is encountered, an
+error occurs while reading or writing the history file, an invalid
+@var{offset} or range is supplied as an argument to @option{-d}, or the
+history expansion supplied as an argument to @option{-p} fails.
 
 @end table
 @end ifset
@@ -507,7 +513,7 @@ substituted, or, if no previous history substitutions took place,
 the last @var{string}
 in a !?@var{string}@code{[?]}
 search.
-If @var{new} is is null, each matching @var{old} is deleted.
+If @var{new} is null, each matching @var{old} is deleted.
 The final delimiter is optional if it is the last
 character on the input line.
 

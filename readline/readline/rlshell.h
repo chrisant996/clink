@@ -1,6 +1,6 @@
 /* rlshell.h -- utility functions normally provided by bash. */
 
-/* Copyright (C) 1999-2009 Free Software Foundation, Inc.
+/* Copyright (C) 1999-2021 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -24,10 +24,10 @@
 
 #include "rlstdc.h"
 
-extern char *sh_single_quote PARAMS((char *));
-extern void sh_set_lines_and_columns PARAMS((int, int));
-extern char *sh_get_env_value PARAMS((const char *));
-extern char *sh_get_home_dir PARAMS((void));
-extern int sh_unset_nodelay_mode PARAMS((int));
+extern char *sh_single_quote (char *);
+extern void sh_set_lines_and_columns (int, int);
+extern char *sh_get_env_value (const char *);
+extern char *sh_get_home_dir (void);
+extern int sh_unset_nodelay_mode (int);
 
 #endif /* _RL_SHELL_H_ */

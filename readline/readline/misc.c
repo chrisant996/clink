@@ -1,6 +1,6 @@
 /* misc.c -- miscellaneous bindable readline functions. */
 
-/* Copyright (C) 1987-2019 Free Software Foundation, Inc.
+/* Copyright (C) 1987-2022 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -53,14 +53,12 @@
 /* end_clink_change */
 
 #include "rlprivate.h"
+#include "histlib.h"
 #include "rlshell.h"
 #include "xmalloc.h"
 
-static int rl_digit_loop PARAMS((void));
-static void _rl_history_set_point PARAMS((void));
-
-/* Forward declarations used in this file */
-void _rl_free_history_entry PARAMS((HIST_ENTRY *));
+static int rl_digit_loop (void);
+static void _rl_history_set_point (void);
 
 /* If non-zero, rl_get_previous_history and rl_get_next_history attempt
    to preserve the value of rl_point from line to line. */
@@ -359,9 +357,9 @@ _rl_start_using_history (void)
 #endif
 /* end_clink_change */
   if (_rl_saved_line_for_history)
-    _rl_free_history_entry (_rl_saved_line_for_history);
-
+    _rl_free_saved_history_line ();
   _rl_saved_line_for_history = (HIST_ENTRY *)NULL;
+  _rl_history_search_pos = -99;		/* some random invalid history position */
 }
 
 /* Free the contents (and containing structure) of a HIST_ENTRY. */
@@ -408,6 +406,8 @@ rl_maybe_unsave_line (void)
 	 list from a history entry, as in rl_replace_from_history() below. */
       rl_replace_line (_rl_saved_line_for_history->line, 0);
       rl_undo_list = (UNDO_LIST *)_rl_saved_line_for_history->data;
+
+      /* Doesn't free `data'. */
       _rl_free_history_entry (_rl_saved_line_for_history);
       _rl_saved_line_for_history = (HIST_ENTRY *)NULL;
       rl_point = rl_end;	/* rl_replace_line sets rl_end */
@@ -435,19 +435,18 @@ rl_maybe_save_line (void)
 int
 _rl_free_saved_history_line (void)
 {
+  UNDO_LIST *orig;
+
   if (_rl_saved_line_for_history)
     {
-/* begin_clink_change */
-#ifdef REPORT_READLINE_UNDO_LIST_LEAKS
+      if (rl_undo_list && rl_undo_list == (UNDO_LIST *)_rl_saved_line_for_history->data)
+	rl_undo_list = 0;
+      /* Have to free this separately because _rl_free_history entry can't:
+	 it doesn't know whether or not this has application data. Only the
+	 callers that know this is _rl_saved_line_for_history can know that
+	 it's an undo list. */
       if (_rl_saved_line_for_history->data)
-	{
-	  int not_leaked = 0;
-	  for (UNDO_LIST* walk = rl_undo_list; walk; walk = walk->next)
-	    not_leaked |= (walk == _rl_saved_line_for_history->data);
-	  assert (not_leaked);
-	}
-#endif
-/* end_clink_change */
+	_rl_free_undo_list ((UNDO_LIST *)_rl_saved_line_for_history->data);
       _rl_free_history_entry (_rl_saved_line_for_history);
       _rl_saved_line_for_history = (HIST_ENTRY *)NULL;
     }
@@ -714,7 +713,7 @@ rl_get_previous_history (int count, int key)
   if (temp == 0)
     {
       if (had_saved_line == 0)
-        _rl_free_saved_history_line ();
+	_rl_free_saved_history_line ();
       rl_ding ();
     }
   else
@@ -724,6 +723,42 @@ rl_get_previous_history (int count, int key)
     }
 
   return 0;
+}
+
+/* With an argument, move back that many history lines, else move to the
+   beginning of history. */
+int
+rl_fetch_history (int count, int c)
+{
+  int wanted, nhist;
+
+  /* Giving an argument of n means we want the nth command in the history
+     file.  The command number is interpreted the same way that the bash
+     `history' command does it -- that is, giving an argument count of 450
+     to this command would get the command listed as number 450 in the
+     output of `history'. */
+  if (rl_explicit_arg)
+    {
+      nhist = history_base + where_history ();
+      /* Negative arguments count back from the end of the history list. */
+      wanted = (count >= 0) ? nhist - count : -count;
+
+      if (wanted <= 0 || wanted >= nhist)
+	{
+	  /* In vi mode, we don't change the line with an out-of-range
+	     argument, as for the `G' command. */
+	  if (rl_editing_mode == vi_mode)
+	    rl_ding ();
+	  else
+	    rl_beginning_of_history (0, 0);
+	}
+      else
+        rl_get_previous_history (wanted, c);
+    }
+  else
+    rl_beginning_of_history (count, 0);
+
+  return (0);
 }
 
 /* The equivalent of the Korn shell C-o operate-and-get-next-history-line
@@ -756,8 +791,7 @@ set_saved_history (void)
 }
 
 int
-rl_operate_and_get_next (count, c)
-     int count, c;
+rl_operate_and_get_next (int count, int c)
 {
   /* Accept the current line. */
   rl_newline (1, c);

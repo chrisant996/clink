@@ -72,17 +72,17 @@ TERMCAP_LIB = @TERMCAP_LIB@
 SOURCES = excallback.c fileman.c histexamp.c manexamp.c rl-fgets.c rl.c \
 		rlbasic.c rlcat.c rlevent.c rlptytest.c rltest.c rlversion.c \
 		rltest2.c rl-callbacktest.c hist_erasedups.c hist_purgecmd.c \
-		rlkeymaps.c
+		rlkeymaps.c rl-timeout.c
 
 EXECUTABLES = fileman$(EXEEXT) rltest$(EXEEXT) rl$(EXEEXT) rlcat$(EXEEXT) \
 		rlevent$(EXEEXT) rlversion$(EXEEXT) histexamp$(EXEEXT) \
 		rl-callbacktest$(EXEEXT) rlbasic$(EXEEXT) \
 		hist_erasedups$(EXEEXT) hist_purgecmd$(EXEEXT) \
-		rlkeymaps$(EXEEXT)
+		rlkeymaps$(EXEEXT) rl-timeout$(EXEEXT)
 
 OBJECTS = fileman.o rltest.o rl.o rlevent.o rlcat.o rlversion.o histexamp.o \
 	  rltest2.o rl-callbacktest.o rlbasic.o hist_erasedups.o hist_purgecmd.o \
-	  rlkeymaps.o
+	  rlkeymaps.o rl-timeout.o
 
 OTHEREXE = rlptytest$(EXEEXT)
 OTHEROBJ = rlptytest.o
@@ -141,6 +141,9 @@ rl-callbacktest$(EXEEXT): rl-callbacktest.o $(READLINE_LIB)
 rlptytest$(EXEEXT): rlptytest.o $(READLINE_LIB)
 	$(CC) $(LDFLAGS) -o $@ rlptytest.o $(READLINE_LIB) $(TERMCAP_LIB) $(LIBUTIL)
 
+rl-timeout$(EXEEXT): rl-timeout.o $(READLINE_LIB)
+	$(CC) $(LDFLAGS) -o $@ rl-timeout.o $(READLINE_LIB) $(TERMCAP_LIB)
+
 rlversion$(EXEEXT): rlversion.o $(READLINE_LIB)
 	$(CC) $(LDFLAGS) -o $@ rlversion.o $(READLINE_LIB) $(TERMCAP_LIB)
 
@@ -173,6 +176,7 @@ rlkeymaps.o: rlkeymaps.c
 rlcat.o: rlcat.c
 rlptytest.o: rlptytest.c
 rl-callbacktest.o: rl-callbacktest.c
+rl-timeout.o: rl-timeout.c
 
 fileman.o: $(top_srcdir)/readline.h
 rltest.o: $(top_srcdir)/readline.h
@@ -186,3 +190,4 @@ rlbasic.o: $(top_srcdir)/readline.h $(top_srcdir)/history.h
 rlcat.o: $(top_srcdir)/readline.h $(top_srcdir)/history.h
 rlptytest.o: $(top_srcdir)/readline.h $(top_srcdir)/history.h
 rl-callbacktest.o: $(top_srcdir)/readline.h $(top_srcdir)/history.h
+rl-timeout.o: $(top_srcdir)/readline.h $(top_srcdir)/history.h

@@ -50,6 +50,8 @@ Copyright (C) 1999 Jeff Solomon
 #include <stdio.h>
 #include <termios.h>	/* xxx - should make this more general */
 
+#include <locale.h>
+
 #ifdef READLINE_LIBRARY
 #  include "readline.h"
 #else
@@ -103,6 +105,8 @@ int
 main()
 {
     fd_set fds;
+
+    setlocale (LC_ALL, "");
 
     /* Adjust the terminal slightly before the handler is installed. Disable
      * canonical mode processing and set the input character time flag to be

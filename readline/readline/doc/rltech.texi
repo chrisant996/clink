@@ -7,7 +7,7 @@ This document describes the GNU Readline Library, a utility for aiding
 in the consistency of user interface across discrete programs that need
 to provide a command line interface.
 
-Copyright (C) 1988--2020 Free Software Foundation, Inc.
+Copyright (C) 1988--2022 Free Software Foundation, Inc.
 
 Permission is granted to make and distribute verbatim copies of
 this manual provided the copyright notice and this permission notice
@@ -323,6 +323,14 @@ and point define a @emph{region}.
 @deftypevar int rl_done
 Setting this to a non-zero value causes Readline to return the current
 line immediately.
+Readline will set this variable when it has read a key sequence bound
+to @code{accept-line} and is about to return the line to the caller.
+@end deftypevar
+
+@deftypevar int rl_eof_found
+Readline will set this variable when it has read an EOF character (e.g., the
+stty @samp{EOF} character) on an empty line or encountered a read error and
+is about to return a NULL line to the caller.
 @end deftypevar
 
 @deftypevar int rl_num_chars_to_read
@@ -385,7 +393,7 @@ value 0x0402.
 @end deftypevar
 
 @deftypevar {int} rl_gnu_readline_p
-Always set to 1, denoting that this is @sc{gnu} readline rather than some
+Always set to 1, denoting that this is @sc{gnu} Readline rather than some
 emulation.
 @end deftypevar
 
@@ -455,6 +463,11 @@ If non-zero, this is the address of a function to call if a read system
 call is interrupted when Readline is reading terminal input.
 @end deftypevar
 
+@deftypevar {rl_hook_func_t *} rl_timeout_event_hook
+If non-zero, this is the address of a function to call if Readline times
+out while reading input.
+@end deftypevar
+
 @deftypevar {rl_hook_func_t *} rl_input_available_hook
 If non-zero, Readline will use this function's return value when it needs
 to determine whether or not there is available input on the current input
@@ -502,7 +515,7 @@ By default, this is set to @code{rl_deprep_terminal}
 
 @deftypevar {Keymap} rl_executing_keymap
 This variable is set to the keymap (@pxref{Keymaps}) in which the
-currently executing readline function was found.
+currently executing Readline function was found.
 @end deftypevar 
 
 @deftypevar {Keymap} rl_binding_keymap
@@ -588,6 +601,13 @@ the current call to @code{readline()}.
 @item RL_STATE_DONE
 Readline has read a key sequence bound to @code{accept-line}
 and is about to return the line to the caller.
+@item RL_STATE_TIMEOUT
+Readline has timed out (it did not receive a line or specified number of
+characters before the timeout duration specified by @code{rl_set_timeout}
+elapsed) and is returning that status to the caller.
+@item RL_STATE_EOF
+Readline has read an EOF character (e.g., the stty @samp{EOF} character)
+or encountered a read error and is about to return a NULL line to the caller.
 @end table
 
 @end deftypevar
@@ -876,6 +896,15 @@ It takes a "translated" key sequence and should be used if the key sequence
 can include NUL.
 @end deftypefun
 
+@deftypefun {int} rl_trim_arg_from_keyseq (const char *keyseq, size_t len, Keymap map)
+If there is a numeric argument at the beginning of @var{keyseq}, possibly
+including digits, return the index of the first character in @var{keyseq}
+following the numeric argument.
+This can be used to skip over the numeric argument (which is available as
+@code{rl_numeric_arg} while traversing the key sequence that invoked the
+current command.
+@end deftypefun
+
 @deftypefun {char **} rl_invoking_keyseqs (rl_command_func_t *function)
 Return an array of strings representing the key sequences used to
 invoke @var{function} in the current keymap.
@@ -887,7 +916,7 @@ invoke @var{function} in the keymap @var{map}.
 @end deftypefun
 
 @deftypefun void rl_function_dumper (int readable)
-Print the readline function names and the key sequences currently
+Print the Readline function names and the key sequences currently
 bound to them to @code{rl_outstream}.  If @var{readable} is non-zero,
 the list is formatted in such a way that it can be made part of an
 @code{inputrc} file and re-read.
@@ -1063,8 +1092,9 @@ It returns the number of visible characters on the last line of the
 Applications may indicate that the prompt contains characters that take
 up no physical screen space when displayed by bracketing a sequence of
 such characters with the special markers @code{RL_PROMPT_START_IGNORE}
-and @code{RL_PROMPT_END_IGNORE} (declared in @file{readline.h}).  This may
-be used to embed terminal-specific escape sequences in prompts.
+and @code{RL_PROMPT_END_IGNORE} (declared in @file{readline.h} as
+@samp{\001} and @samp{\002}, respectively).
+This may be used to embed terminal-specific escape sequences in prompts.
 @end deftypefun
 
 @deftypefun int rl_set_prompt (const char *prompt)
@@ -1149,6 +1179,30 @@ assigned to @code{rl_event_hook}.  @var{u} must be greater than or equal
 to zero (a zero-length timeout is equivalent to a poll).
 The default waiting period is one-tenth of a second.
 Returns the old timeout value.
+@end deftypefun
+
+@deftypefun int rl_set_timeout (unsigned int secs, unsigned int usecs)
+Set a timeout for subsequent calls to @code{readline()}. If Readline does
+not read a complete line, or the number of characters specified by
+@code{rl_num_chars_to_read}, before the duration specified by @var{secs}
+(in seconds) and @var{usecs} (microseconds), it returns and sets
+@code{RL_STATE_TIMEOUT} in @code{rl_readline_state}.
+Passing 0 for @code{secs} and @code{usecs} cancels any previously set
+timeout; the convenience macro @code{rl_clear_timeout()} is shorthand
+for this.
+Returns 0 if the timeout is set successfully.
+@end deftypefun
+
+@deftypefun int rl_timeout_remaining (unsigned int *secs, unsigned int *usecs)
+Return the number of seconds and microseconds remaining in the current
+timeout duration in @var{*secs} and @var{*usecs}, respectively.
+Both @var{*secs} and @var{*usecs} must be non-NULL to return any values.
+The return value is -1 on error or when there is no timeout set,
+0 when the timeout has expired (leaving @var{*secs} and @var{*usecs}
+unchanged),
+and 1 if the timeout has not expired.
+If either of @var{secs} and @var{usecs} is @code{NULL},
+the return value indicates whether the timeout has expired.
 @end deftypefun
 
 @node Terminal Management
@@ -1304,7 +1358,7 @@ that it can be made part of an @code{inputrc} file and re-read.
 
 @deftypefun int rl_variable_bind (const char *variable, const char *value)
 Make the Readline variable @var{variable} have @var{value}.
-This behaves as if the readline command
+This behaves as if the Readline command
 @samp{set @var{variable} @var{value}} had been executed in an @code{inputrc}
 file (@pxref{Readline Init File Syntax}).
 @end deftypefun
@@ -1315,7 +1369,7 @@ For boolean variables, this string is either @samp{on} or @samp{off}.
 @end deftypefun
 
 @deftypefun void rl_variable_dumper (int readable)
-Print the readline variable names and their current values
+Print the Readline variable names and their current values
 to @code{rl_outstream}.
 If @var{readable} is non-zero, the list is formatted in such a way
 that it can be made part of an @code{inputrc} file and re-read.
@@ -1346,7 +1400,7 @@ Readline saves in the history list.
 Enable an @emph{active} mark.
 When this is enabled, the text between point and mark (the @var{region}) is
 displayed in the terminal's standout mode (a @var{face}).
-This is called by various readline functions that set the mark and insert
+This is called by various Readline functions that set the mark and insert
 text, and is available for applications to call.
 @end deftypefun
 
@@ -1355,10 +1409,10 @@ Turn off the active mark.
 @end deftypefun
 
 @deftypefun {void} rl_keep_mark_active (void)
-Indicate that the mark should remain active when the current readline function
-completes and after redisplay occurs.
+Indicate that the mark should remain active when the current Readline
+function completes and after redisplay occurs.
 In most cases, the mark remains active for only the duration of a single
-bindable readline function.
+bindable Readline function.
 @end deftypefun
 
 @deftypefun {int} rl_mark_active_p (void)
@@ -1371,12 +1425,12 @@ Return a non-zero value if the mark is currently active; zero otherwise.
 An alternate interface is available to plain @code{readline()}.  Some
 applications need to interleave keyboard I/O with file, device, or
 window system I/O, typically by using a main loop to @code{select()}
-on various file descriptors.  To accommodate this need, readline can
+on various file descriptors.  To accommodate this need, Readline can
 also be invoked as a `callback' function from an event loop.  There
 are functions available to make this easy.
 
 @deftypefun void rl_callback_handler_install (const char *prompt, rl_vcpfunc_t *lhandler)
-Set up the terminal for readline I/O and display the initial
+Set up the terminal for Readline I/O and display the initial
 expanded value of @var{prompt}.  Save the value of @var{lhandler} to
 use as a handler function to call when a complete line of input has been
 entered.
@@ -1611,7 +1665,7 @@ main (int c, char **v)
 
 Signals are asynchronous events sent to a process by the Unix kernel,
 sometimes on behalf of another process.  They are intended to indicate
-exceptional events, like a user pressing the interrupt key on his terminal,
+exceptional events, like a user pressing the terminal's interrupt key,
 or a network connection being broken.  There is a class of signals that can
 be sent to the process currently reading input from the keyboard.  Since
 Readline changes the terminal attributes when it is called, it needs to
@@ -1761,7 +1815,7 @@ a @code{SIGWINCH}.
 
 @deftypefun void rl_echo_signal_char (int sig)
 If an application wishes to install its own signal handlers, but still
-have readline display characters that generate signals, calling this
+have Readline display characters that generate signals, calling this
 function with @var{sig} set to @code{SIGINT}, @code{SIGQUIT}, or
 @code{SIGTSTP} will display the character generating that signal.
 @end deftypefun
@@ -2159,9 +2213,10 @@ shell variables and hostnames.
 
 @deftypevar int rl_completion_query_items
 Up to this many items will be displayed in response to a
-possible-completions call.  After that, readline asks the user if she is sure
-she wants to see them all.  The default value is 100.  A negative value 
-indicates that Readline should never ask the user.
+possible-completions call.  After that, Readline asks the user for
+confirmation before displaying them.
+The default value is 100.  A negative value 
+indicates that Readline should never ask for confirmation.
 @end deftypevar
 
 @deftypevar {int} rl_completion_append_character
@@ -2313,6 +2368,7 @@ history list.
 #include <fcntl.h>
 #include <stdio.h>
 #include <errno.h>
+#include <locale.h>
 
 #if defined (HAVE_STRING_H)
 #  include <string.h>
@@ -2392,6 +2448,8 @@ main (argc, argv)
      char **argv;
 @{
   char *line, *s;
+
+  setlocale (LC_ALL, "");
 
   progname = argv[0];
 

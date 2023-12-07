@@ -1,7 +1,7 @@
 /* shell.c -- readline utility functions that are normally provided by
 	      bash when readline is linked as part of the shell. */
 
-/* Copyright (C) 1997-2009,2017 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2009,2017,2021 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -68,7 +68,7 @@ extern const char* host_get_env(const char* name);
 /* end_clink_change */
 
 #if defined (HAVE_GETPWUID) && !defined (HAVE_GETPW_DECLS)
-extern struct passwd *getpwuid PARAMS((uid_t));
+extern struct passwd *getpwuid (uid_t);
 #endif /* HAVE_GETPWUID && !HAVE_GETPW_DECLS */
 
 #ifndef NULL

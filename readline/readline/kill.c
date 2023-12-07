@@ -1,6 +1,6 @@
 /* kill.c -- kill ring management. */
 
-/* Copyright (C) 1994-2020 Free Software Foundation, Inc.
+/* Copyright (C) 1994-2021 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -70,10 +70,10 @@ static int rl_kill_index;
 /* How many slots we have in the kill ring. */
 static int rl_kill_ring_length;
 
-static int _rl_copy_to_kill_ring PARAMS((char *, int));
-static int region_kill_internal PARAMS((int));
-static int _rl_copy_word_as_kill PARAMS((int, int));
-static int rl_yank_nth_arg_internal PARAMS((int, int, int));
+static int _rl_copy_to_kill_ring (char *, int);
+static int region_kill_internal (int);
+static int _rl_copy_word_as_kill (int, int);
+static int rl_yank_nth_arg_internal (int, int, int);
 
 /* How to say that you only want to save a certain amount
    of kill material. */
@@ -361,7 +361,46 @@ rl_unix_filename_rubout (int count, int key)
       while (count--)
 	{
 	  c = rl_line_buffer[rl_point - 1];
+
+	  /* First move backwards through whitespace */
+	  while (rl_point && whitespace (c))
+	    {
+	      rl_point--;
+	      c = rl_line_buffer[rl_point - 1];
+	    }
+
+	  /* Consume one or more slashes. */
+/* begin_clink_change */
+	  //if (c == '/')
+	  if (rl_is_path_separator (c))
+/* end_clink_change */
+	    {
+	      int i;
+/* begin_clink_change */
+	      const char old_c = c;
+/* end_clink_change */
+
+	      i = rl_point - 1;
+/* begin_clink_change */
+	      //while (i > 0 && c == '/')
+	      while (i > 0 && rl_is_path_separator (c))
+/* end_clink_change */
+		c = rl_line_buffer[--i];
+	      if (i == 0 || whitespace (c))
+		{
+		  rl_point = i + whitespace (c);
+		  continue;	/* slashes only */
+		}
+/* begin_clink_change */
+	      //c = '/';
+	      c = old_c;
+/* end_clink_change */
+	    }
+
+/* begin_clink_change */
+	  //while (rl_point && (whitespace (c) || c == '/'))
 	  while (rl_point && (whitespace (c) || rl_is_path_separator (c)))
+/* end_clink_change */
 	    {
 	      rl_point--;
 	      c = rl_line_buffer[rl_point - 1];
@@ -545,7 +584,7 @@ rl_yank_pop (int count, int key)
 int
 rl_vi_yank_pop (int count, int key)
 {
-  int l, n;
+  int l, n, origpoint;
 
   if (((rl_last_func != rl_vi_yank_pop) && (rl_last_func != rl_vi_put)) ||
       !rl_kill_ring)
@@ -555,11 +594,21 @@ rl_vi_yank_pop (int count, int key)
     }
 
   l = strlen (rl_kill_ring[rl_kill_index]);
+#if 0 /* TAG:readline-8.3 8/29/2022 matteopaolini1995@gmail.com */
+  origpoint = rl_point;
+  n = rl_point - l + 1;
+#else
   n = rl_point - l;
+#endif
   if (n >= 0 && STREQN (rl_line_buffer + n, rl_kill_ring[rl_kill_index], l))
     {
+#if 0 /* TAG:readline-8.3 */
+      rl_delete_text (n, n + l);		/* remember vi cursor positioning */
+      rl_point = origpoint - l;
+#else
       rl_delete_text (n, rl_point);
       rl_point = n;
+#endif
       rl_kill_index--;
       if (rl_kill_index < 0)
 	rl_kill_index = rl_kill_ring_length - 1;

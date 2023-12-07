@@ -109,7 +109,7 @@ static const char * const pathname_alphabetic_chars_with_backslash = "\\/-_=~.#$
 int
 rl_alphabetic (int c)
 {
-  if (ALPHABETIC (c))
+  if (_rl_alphabetic_p (c))
     return (1);
 
   return (_rl_allow_pathname_alphabetic_chars &&
@@ -138,7 +138,8 @@ _rl_walphabetic (WCHAR_T wc)
 int
 _rl_abort_internal (void)
 {
-  rl_ding ();
+  if (RL_ISSTATE (RL_STATE_TIMEOUT) == 0)
+    rl_ding ();			/* Don't ring the bell on a timeout */
   rl_clear_message ();
   _rl_reset_argument ();
   rl_clear_pending_input ();

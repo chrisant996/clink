@@ -1,6 +1,6 @@
 /* Readline.h -- the names of functions callable from within readline. */
 
-/* Copyright (C) 1987-2020 Free Software Foundation, Inc.
+/* Copyright (C) 1987-2022 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -39,9 +39,9 @@ extern "C" {
 #endif
 
 /* Hex-encoded Readline version number. */
-#define RL_READLINE_VERSION	0x0801		/* Readline 8.0 */
+#define RL_READLINE_VERSION	0x0802		/* Readline 8.2 */
 #define RL_VERSION_MAJOR	8
-#define RL_VERSION_MINOR	1
+#define RL_VERSION_MINOR	2
 
 /* begin_clink_change */
 #if defined(_MSC_VER)
@@ -89,227 +89,228 @@ extern FUNMAP **funmap;
 /* **************************************************************** */
 
 /* Bindable commands for numeric arguments. */
-extern int rl_digit_argument PARAMS((int, int));
-extern int rl_universal_argument PARAMS((int, int));
+extern int rl_digit_argument (int, int);
+extern int rl_universal_argument (int, int);
 
 /* Bindable commands for moving the cursor. */
-extern int rl_forward_byte PARAMS((int, int));
-extern int rl_forward_char PARAMS((int, int));
-extern int rl_forward PARAMS((int, int));
-extern int rl_backward_byte PARAMS((int, int));
-extern int rl_backward_char PARAMS((int, int));
-extern int rl_backward PARAMS((int, int));
-extern int rl_beg_of_line PARAMS((int, int));
-extern int rl_end_of_line PARAMS((int, int));
-extern int rl_forward_word PARAMS((int, int));
-extern int rl_backward_word PARAMS((int, int));
-extern int rl_refresh_line PARAMS((int, int));
-extern int rl_clear_screen PARAMS((int, int));
-extern int rl_clear_display PARAMS((int, int));
-extern int rl_skip_csi_sequence PARAMS((int, int));
-extern int rl_arrow_keys PARAMS((int, int));
+extern int rl_forward_byte (int, int);
+extern int rl_forward_char (int, int);
+extern int rl_forward (int, int);
+extern int rl_backward_byte (int, int);
+extern int rl_backward_char (int, int);
+extern int rl_backward (int, int);
+extern int rl_beg_of_line (int, int);
+extern int rl_end_of_line (int, int);
+extern int rl_forward_word (int, int);
+extern int rl_backward_word (int, int);
+extern int rl_refresh_line (int, int);
+extern int rl_clear_screen (int, int);
+extern int rl_clear_display (int, int);
+extern int rl_skip_csi_sequence (int, int);
+extern int rl_arrow_keys (int, int);
 
-extern int rl_previous_screen_line PARAMS((int, int));
-extern int rl_next_screen_line PARAMS((int, int));
+extern int rl_previous_screen_line (int, int);
+extern int rl_next_screen_line (int, int);
 
 /* Bindable commands for inserting and deleting text. */
-extern int rl_insert PARAMS((int, int));
-extern int rl_quoted_insert PARAMS((int, int));
-extern int rl_tab_insert PARAMS((int, int));
-extern int rl_newline PARAMS((int, int));
-extern int rl_do_lowercase_version PARAMS((int, int));
-extern int rl_rubout PARAMS((int, int));
-extern int rl_delete PARAMS((int, int));
-extern int rl_rubout_or_delete PARAMS((int, int));
-extern int rl_delete_horizontal_space PARAMS((int, int));
-extern int rl_delete_or_show_completions PARAMS((int, int));
-extern int rl_insert_comment PARAMS((int, int));
+extern int rl_insert (int, int);
+extern int rl_quoted_insert (int, int);
+extern int rl_tab_insert (int, int);
+extern int rl_newline (int, int);
+extern int rl_do_lowercase_version (int, int);
+extern int rl_rubout (int, int);
+extern int rl_delete (int, int);
+extern int rl_rubout_or_delete (int, int);
+extern int rl_delete_horizontal_space (int, int);
+extern int rl_delete_or_show_completions (int, int);
+extern int rl_insert_comment (int, int);
 
 /* Bindable commands for changing case. */
-extern int rl_upcase_word PARAMS((int, int));
-extern int rl_downcase_word PARAMS((int, int));
-extern int rl_capitalize_word PARAMS((int, int));
+extern int rl_upcase_word (int, int);
+extern int rl_downcase_word (int, int);
+extern int rl_capitalize_word (int, int);
 
 /* Bindable commands for transposing characters and words. */
-extern int rl_transpose_words PARAMS((int, int));
-extern int rl_transpose_chars PARAMS((int, int));
+extern int rl_transpose_words (int, int);
+extern int rl_transpose_chars (int, int);
 
 /* Bindable commands for searching within a line. */
-extern int rl_char_search PARAMS((int, int));
-extern int rl_backward_char_search PARAMS((int, int));
+extern int rl_char_search (int, int);
+extern int rl_backward_char_search (int, int);
 
 /* Bindable commands for readline's interface to the command history. */
 /* begin_clink_change */
-extern int rl_add_history PARAMS((int, int));
+extern int rl_add_history (int, int);
 /* end_clink_change */
-extern int rl_beginning_of_history PARAMS((int, int));
-extern int rl_end_of_history PARAMS((int, int));
-extern int rl_get_next_history PARAMS((int, int));
-extern int rl_get_previous_history PARAMS((int, int));
-extern int rl_operate_and_get_next PARAMS((int, int));
+extern int rl_beginning_of_history (int, int);
+extern int rl_end_of_history (int, int);
+extern int rl_get_next_history (int, int);
+extern int rl_get_previous_history (int, int);
+extern int rl_operate_and_get_next (int, int);
+extern int rl_fetch_history (int, int);
 /* begin_clink_change */
-extern int rl_remove_history PARAMS((int, int));
+extern int rl_remove_history (int, int);
 /* end_clink_change */
 
 /* Bindable commands for managing the mark and region. */
-extern int rl_set_mark PARAMS((int, int));
-extern int rl_exchange_point_and_mark PARAMS((int, int));
+extern int rl_set_mark (int, int);
+extern int rl_exchange_point_and_mark (int, int);
 
 /* Bindable commands to set the editing mode (emacs or vi). */
-extern int rl_vi_editing_mode PARAMS((int, int));
-extern int rl_emacs_editing_mode PARAMS((int, int));
+extern int rl_vi_editing_mode (int, int);
+extern int rl_emacs_editing_mode (int, int);
 
 /* Bindable commands to change the insert mode (insert or overwrite) */
-extern int rl_overwrite_mode PARAMS((int, int));
+extern int rl_overwrite_mode (int, int);
 
 /* Bindable commands for managing key bindings. */
-extern int rl_re_read_init_file PARAMS((int, int));
-extern int rl_dump_functions PARAMS((int, int));
-extern int rl_dump_macros PARAMS((int, int));
-extern int rl_dump_variables PARAMS((int, int));
+extern int rl_re_read_init_file (int, int);
+extern int rl_dump_functions (int, int);
+extern int rl_dump_macros (int, int);
+extern int rl_dump_variables (int, int);
 
 /* Bindable commands for word completion. */
-extern int rl_complete PARAMS((int, int));
-extern int rl_possible_completions PARAMS((int, int));
-extern int rl_insert_completions PARAMS((int, int));
-extern int rl_old_menu_complete PARAMS((int, int));
+extern int rl_complete (int, int);
+extern int rl_possible_completions (int, int);
+extern int rl_insert_completions (int, int);
+extern int rl_old_menu_complete (int, int);
 /* begin_clink_change */
-extern int rl_backward_old_menu_complete PARAMS((int, int));
+extern int rl_backward_old_menu_complete (int, int);
 /* end_clink_change */
-extern int rl_menu_complete PARAMS((int, int));
-extern int rl_backward_menu_complete PARAMS((int, int));
+extern int rl_menu_complete (int, int);
+extern int rl_backward_menu_complete (int, int);
 /* begin_clink_change */
-extern char** rl_get_completions PARAMS((int, int*, char**, int*, int*, int*, char*));
-extern void rl_insert_match PARAMS((const char*, char*, int, int, char));
+extern char** rl_get_completions (int, int*, char**, int*, int*, int*, char*);
+extern void rl_insert_match (const char*, char*, int, int, char);
 /* end_clink_change */
 
 /* Bindable commands for killing and yanking text, and managing the kill ring. */
-extern int rl_kill_word PARAMS((int, int));
-extern int rl_backward_kill_word PARAMS((int, int));
-extern int rl_kill_line PARAMS((int, int));
-extern int rl_backward_kill_line PARAMS((int, int));
-extern int rl_kill_full_line PARAMS((int, int));
-extern int rl_unix_word_rubout PARAMS((int, int));
-extern int rl_unix_filename_rubout PARAMS((int, int));
-extern int rl_unix_line_discard PARAMS((int, int));
-extern int rl_copy_region_to_kill PARAMS((int, int));
-extern int rl_kill_region PARAMS((int, int));
-extern int rl_copy_forward_word PARAMS((int, int));
-extern int rl_copy_backward_word PARAMS((int, int));
-extern int rl_yank PARAMS((int, int));
-extern int rl_yank_pop PARAMS((int, int));
-extern int rl_yank_nth_arg PARAMS((int, int));
-extern int rl_yank_last_arg PARAMS((int, int));
-extern int rl_bracketed_paste_begin PARAMS((int, int));
+extern int rl_kill_word (int, int);
+extern int rl_backward_kill_word (int, int);
+extern int rl_kill_line (int, int);
+extern int rl_backward_kill_line (int, int);
+extern int rl_kill_full_line (int, int);
+extern int rl_unix_word_rubout (int, int);
+extern int rl_unix_filename_rubout (int, int);
+extern int rl_unix_line_discard (int, int);
+extern int rl_copy_region_to_kill (int, int);
+extern int rl_kill_region (int, int);
+extern int rl_copy_forward_word (int, int);
+extern int rl_copy_backward_word (int, int);
+extern int rl_yank (int, int);
+extern int rl_yank_pop (int, int);
+extern int rl_yank_nth_arg (int, int);
+extern int rl_yank_last_arg (int, int);
+extern int rl_bracketed_paste_begin (int, int);
 /* Not available unless _WIN32 is defined. */
 #if defined (_WIN32)
-extern int rl_paste_from_clipboard PARAMS((int, int));
+extern int rl_paste_from_clipboard (int, int);
 #endif
 
 /* Bindable commands for incremental searching. */
-extern int rl_reverse_search_history PARAMS((int, int));
-extern int rl_forward_search_history PARAMS((int, int));
+extern int rl_reverse_search_history (int, int);
+extern int rl_forward_search_history (int, int);
 
 /* Bindable keyboard macro commands. */
-extern int rl_start_kbd_macro PARAMS((int, int));
-extern int rl_end_kbd_macro PARAMS((int, int));
-extern int rl_call_last_kbd_macro PARAMS((int, int));
-extern int rl_print_last_kbd_macro PARAMS((int, int));
+extern int rl_start_kbd_macro (int, int);
+extern int rl_end_kbd_macro (int, int);
+extern int rl_call_last_kbd_macro (int, int);
+extern int rl_print_last_kbd_macro (int, int);
 
 /* Bindable undo commands. */
-extern int rl_revert_line PARAMS((int, int));
-extern int rl_undo_command PARAMS((int, int));
+extern int rl_revert_line (int, int);
+extern int rl_undo_command (int, int);
 
 /* Bindable tilde expansion commands. */
-extern int rl_tilde_expand PARAMS((int, int));
+extern int rl_tilde_expand (int, int);
 
 /* Bindable terminal control commands. */
-extern int rl_restart_output PARAMS((int, int));
-extern int rl_stop_output PARAMS((int, int));
+extern int rl_restart_output (int, int);
+extern int rl_stop_output (int, int);
 
 /* Miscellaneous bindable commands. */
-extern int rl_abort PARAMS((int, int));
-extern int rl_tty_status PARAMS((int, int));
+extern int rl_abort (int, int);
+extern int rl_tty_status (int, int);
 
 /* Bindable commands for incremental and non-incremental history searching. */
-extern int rl_history_search_forward PARAMS((int, int));
-extern int rl_history_search_backward PARAMS((int, int));
-extern int rl_history_substr_search_forward PARAMS((int, int));
-extern int rl_history_substr_search_backward PARAMS((int, int));
-extern int rl_noninc_forward_search PARAMS((int, int));
-extern int rl_noninc_reverse_search PARAMS((int, int));
-extern int rl_noninc_forward_search_again PARAMS((int, int));
-extern int rl_noninc_reverse_search_again PARAMS((int, int));
+extern int rl_history_search_forward (int, int);
+extern int rl_history_search_backward (int, int);
+extern int rl_history_substr_search_forward (int, int);
+extern int rl_history_substr_search_backward (int, int);
+extern int rl_noninc_forward_search (int, int);
+extern int rl_noninc_reverse_search (int, int);
+extern int rl_noninc_forward_search_again (int, int);
+extern int rl_noninc_reverse_search_again (int, int);
 
 /* Bindable command used when inserting a matching close character. */
-extern int rl_insert_close PARAMS((int, int));
+extern int rl_insert_close (int, int);
 
 /* Not available unless READLINE_CALLBACKS is defined. */
-extern void rl_callback_handler_install PARAMS((const char *, rl_vcpfunc_t *));
-extern void rl_callback_read_char PARAMS((void));
-extern void rl_callback_handler_remove PARAMS((void));
-extern void rl_callback_sigcleanup PARAMS((void));
+extern void rl_callback_handler_install (const char *, rl_vcpfunc_t *);
+extern void rl_callback_read_char (void);
+extern void rl_callback_handler_remove (void);
+extern void rl_callback_sigcleanup (void);
 /* begin_clink_change */
-extern int rl_is_insert_next_callback_pending PARAMS((void));
+extern int rl_is_insert_next_callback_pending (void);
 /* end_clink_change */
 
 /* Things for vi mode. Not available unless readline is compiled -DVI_MODE. */
 /* VI-mode bindable commands. */
-extern int rl_vi_redo PARAMS((int, int));
-extern int rl_vi_undo PARAMS((int, int));
-extern int rl_vi_yank_arg PARAMS((int, int));
-extern int rl_vi_fetch_history PARAMS((int, int));
-extern int rl_vi_search_again PARAMS((int, int));
-extern int rl_vi_search PARAMS((int, int));
-extern int rl_vi_complete PARAMS((int, int));
-extern int rl_vi_tilde_expand PARAMS((int, int));
-extern int rl_vi_prev_word PARAMS((int, int));
-extern int rl_vi_next_word PARAMS((int, int));
-extern int rl_vi_end_word PARAMS((int, int));
-extern int rl_vi_insert_beg PARAMS((int, int));
-extern int rl_vi_append_mode PARAMS((int, int));
-extern int rl_vi_append_eol PARAMS((int, int));
-extern int rl_vi_eof_maybe PARAMS((int, int));
-extern int rl_vi_insertion_mode PARAMS((int, int));
-extern int rl_vi_insert_mode PARAMS((int, int));
-extern int rl_vi_movement_mode PARAMS((int, int));
-extern int rl_vi_arg_digit PARAMS((int, int));
-extern int rl_vi_change_case PARAMS((int, int));
-extern int rl_vi_put PARAMS((int, int));
-extern int rl_vi_column PARAMS((int, int));
-extern int rl_vi_delete_to PARAMS((int, int));
-extern int rl_vi_change_to PARAMS((int, int));
-extern int rl_vi_yank_to PARAMS((int, int));
-extern int rl_vi_yank_pop PARAMS((int, int));
-extern int rl_vi_rubout PARAMS((int, int));
-extern int rl_vi_delete PARAMS((int, int));
-extern int rl_vi_back_to_indent PARAMS((int, int));
-extern int rl_vi_unix_word_rubout PARAMS((int, int));
-extern int rl_vi_first_print PARAMS((int, int));
-extern int rl_vi_char_search PARAMS((int, int));
-extern int rl_vi_match PARAMS((int, int));
-extern int rl_vi_change_char PARAMS((int, int));
-extern int rl_vi_subst PARAMS((int, int));
-extern int rl_vi_overstrike PARAMS((int, int));
-extern int rl_vi_overstrike_delete PARAMS((int, int));
-extern int rl_vi_replace PARAMS((int, int));
-extern int rl_vi_set_mark PARAMS((int, int));
-extern int rl_vi_goto_mark PARAMS((int, int));
+extern int rl_vi_redo (int, int);
+extern int rl_vi_undo (int, int);
+extern int rl_vi_yank_arg (int, int);
+extern int rl_vi_fetch_history (int, int);
+extern int rl_vi_search_again (int, int);
+extern int rl_vi_search (int, int);
+extern int rl_vi_complete (int, int);
+extern int rl_vi_tilde_expand (int, int);
+extern int rl_vi_prev_word (int, int);
+extern int rl_vi_next_word (int, int);
+extern int rl_vi_end_word (int, int);
+extern int rl_vi_insert_beg (int, int);
+extern int rl_vi_append_mode (int, int);
+extern int rl_vi_append_eol (int, int);
+extern int rl_vi_eof_maybe (int, int);
+extern int rl_vi_insertion_mode (int, int);
+extern int rl_vi_insert_mode (int, int);
+extern int rl_vi_movement_mode (int, int);
+extern int rl_vi_arg_digit (int, int);
+extern int rl_vi_change_case (int, int);
+extern int rl_vi_put (int, int);
+extern int rl_vi_column (int, int);
+extern int rl_vi_delete_to (int, int);
+extern int rl_vi_change_to (int, int);
+extern int rl_vi_yank_to (int, int);
+extern int rl_vi_yank_pop (int, int);
+extern int rl_vi_rubout (int, int);
+extern int rl_vi_delete (int, int);
+extern int rl_vi_back_to_indent (int, int);
+extern int rl_vi_unix_word_rubout (int, int);
+extern int rl_vi_first_print (int, int);
+extern int rl_vi_char_search (int, int);
+extern int rl_vi_match (int, int);
+extern int rl_vi_change_char (int, int);
+extern int rl_vi_subst (int, int);
+extern int rl_vi_overstrike (int, int);
+extern int rl_vi_overstrike_delete (int, int);
+extern int rl_vi_replace (int, int);
+extern int rl_vi_set_mark (int, int);
+extern int rl_vi_goto_mark (int, int);
 
 /* VI-mode utility functions. */
-extern int rl_vi_check PARAMS((void));
-extern int rl_vi_domove PARAMS((int, int *));
-extern int rl_vi_bracktype PARAMS((int));
+extern int rl_vi_check (void);
+extern int rl_vi_domove (int, int *);
+extern int rl_vi_bracktype (int);
 
-extern void rl_vi_start_inserting PARAMS((int, int, int));
+extern void rl_vi_start_inserting (int, int, int);
 
 /* VI-mode pseudo-bindable commands, used as utility functions. */
-extern int rl_vi_fWord PARAMS((int, int));
-extern int rl_vi_bWord PARAMS((int, int));
-extern int rl_vi_eWord PARAMS((int, int));
-extern int rl_vi_fword PARAMS((int, int));
-extern int rl_vi_bword PARAMS((int, int));
-extern int rl_vi_eword PARAMS((int, int));
+extern int rl_vi_fWord (int, int);
+extern int rl_vi_bWord (int, int);
+extern int rl_vi_eWord (int, int);
+extern int rl_vi_fword (int, int);
+extern int rl_vi_bword (int, int);
+extern int rl_vi_eword (int, int);
 
 /* **************************************************************** */
 /*								    */
@@ -319,128 +320,129 @@ extern int rl_vi_eword PARAMS((int, int));
 
 /* Readline functions. */
 /* Read a line of input.  Prompt with PROMPT.  A NULL PROMPT means none. */
-extern char *readline PARAMS((const char *));
+extern char *readline (const char *);
 
-extern int rl_set_prompt PARAMS((const char *));
-extern int rl_expand_prompt PARAMS((char *));
+extern int rl_set_prompt (const char *);
+extern int rl_expand_prompt (char *);
 /* begin_clink_change */
-extern const char *rl_get_local_prompt PARAMS((void));
-extern const char *rl_get_local_prompt_prefix PARAMS((void));
-extern const char *rl_get_message_buffer PARAMS((void));
-extern int rl_set_rprompt PARAMS((const char *));
+extern const char *rl_get_local_prompt (void);
+extern const char *rl_get_local_prompt_prefix (void);
+extern const char *rl_get_message_buffer (void);
+extern int rl_set_rprompt (const char *);
 /* end_clink_change */
 
-extern int rl_initialize PARAMS((void));
+extern int rl_initialize (void);
 
 /* Undocumented; unused by readline */
-extern int rl_discard_argument PARAMS((void));
+extern int rl_discard_argument (void);
 
 /* Utility functions to bind keys to readline commands. */
-extern int rl_add_defun PARAMS((const char *, rl_command_func_t *, int));
-extern int rl_bind_key PARAMS((int, rl_command_func_t *));
-extern int rl_bind_key_in_map PARAMS((int, rl_command_func_t *, Keymap));
-extern int rl_unbind_key PARAMS((int));
-extern int rl_unbind_key_in_map PARAMS((int, Keymap));
-extern int rl_bind_key_if_unbound PARAMS((int, rl_command_func_t *));
-extern int rl_bind_key_if_unbound_in_map PARAMS((int, rl_command_func_t *, Keymap));
-extern int rl_unbind_function_in_map PARAMS((rl_command_func_t *, Keymap));
-extern int rl_unbind_command_in_map PARAMS((const char *, Keymap));
-extern int rl_bind_keyseq PARAMS((const char *, rl_command_func_t *));
-extern int rl_bind_keyseq_in_map PARAMS((const char *, rl_command_func_t *, Keymap));
-extern int rl_bind_keyseq_if_unbound PARAMS((const char *, rl_command_func_t *));
-extern int rl_bind_keyseq_if_unbound_in_map PARAMS((const char *, rl_command_func_t *, Keymap));
-extern int rl_generic_bind PARAMS((int, const char *, char *, Keymap));
+extern int rl_add_defun (const char *, rl_command_func_t *, int);
+extern int rl_bind_key (int, rl_command_func_t *);
+extern int rl_bind_key_in_map (int, rl_command_func_t *, Keymap);
+extern int rl_unbind_key (int);
+extern int rl_unbind_key_in_map (int, Keymap);
+extern int rl_bind_key_if_unbound (int, rl_command_func_t *);
+extern int rl_bind_key_if_unbound_in_map (int, rl_command_func_t *, Keymap);
+extern int rl_unbind_function_in_map (rl_command_func_t *, Keymap);
+extern int rl_unbind_command_in_map (const char *, Keymap);
+extern int rl_bind_keyseq (const char *, rl_command_func_t *);
+extern int rl_bind_keyseq_in_map (const char *, rl_command_func_t *, Keymap);
+extern int rl_bind_keyseq_if_unbound (const char *, rl_command_func_t *);
+extern int rl_bind_keyseq_if_unbound_in_map (const char *, rl_command_func_t *, Keymap);
+extern int rl_generic_bind (int, const char *, char *, Keymap);
 
-extern char *rl_variable_value PARAMS((const char *));
-extern int rl_variable_bind PARAMS((const char *, const char *));
+extern char *rl_variable_value (const char *);
+extern int rl_variable_bind (const char *, const char *);
 
 /* Backwards compatibility, use rl_bind_keyseq_in_map instead. */
-extern int rl_set_key PARAMS((const char *, rl_command_func_t *, Keymap));
+extern int rl_set_key (const char *, rl_command_func_t *, Keymap);
 
 /* Backwards compatibility, use rl_generic_bind instead. */
-extern int rl_macro_bind PARAMS((const char *, const char *, Keymap));
+extern int rl_macro_bind (const char *, const char *, Keymap);
 
 /* Undocumented in the texinfo manual; not really useful to programs. */
-extern int rl_translate_keyseq PARAMS((const char *, char *, int *));
-extern char *rl_untranslate_keyseq PARAMS((int));
+extern int rl_translate_keyseq (const char *, char *, int *);
+extern char *rl_untranslate_keyseq (int);
 
-extern rl_command_func_t *rl_named_function PARAMS((const char *));
-extern rl_command_func_t *rl_function_of_keyseq PARAMS((const char *, Keymap, int *));
-extern rl_command_func_t *rl_function_of_keyseq_len PARAMS((const char *, size_t, Keymap, int *));
+extern rl_command_func_t *rl_named_function (const char *);
+extern rl_command_func_t *rl_function_of_keyseq (const char *, Keymap, int *);
+extern rl_command_func_t *rl_function_of_keyseq_len (const char *, size_t, Keymap, int *);
+extern int rl_trim_arg_from_keyseq (const char *, size_t, Keymap);
 
-extern void rl_list_funmap_names PARAMS((void));
-extern char **rl_invoking_keyseqs_in_map PARAMS((rl_command_func_t *, Keymap));
-extern char **rl_invoking_keyseqs PARAMS((rl_command_func_t *));
+extern void rl_list_funmap_names (void);
+extern char **rl_invoking_keyseqs_in_map (rl_command_func_t *, Keymap);
+extern char **rl_invoking_keyseqs (rl_command_func_t *);
  
-extern void rl_function_dumper PARAMS((int));
-extern void rl_macro_dumper PARAMS((int));
-extern void rl_variable_dumper PARAMS((int));
+extern void rl_function_dumper (int);
+extern void rl_macro_dumper (int);
+extern void rl_variable_dumper (int);
 
-extern int rl_read_init_file PARAMS((const char *));
-extern int rl_parse_and_bind PARAMS((char *));
+extern int rl_read_init_file (const char *);
+extern int rl_parse_and_bind (char *);
 /* begin_clink_change */
-extern const char *rl_get_last_init_file PARAMS((void));
+extern const char *rl_get_last_init_file (void);
 /* end_clink_change */
 
 /* Functions for manipulating keymaps. */
-extern Keymap rl_make_bare_keymap PARAMS((void));
-extern int rl_empty_keymap PARAMS((Keymap));
-extern Keymap rl_copy_keymap PARAMS((Keymap));
-extern Keymap rl_make_keymap PARAMS((void));
-extern void rl_discard_keymap PARAMS((Keymap));
-extern void rl_free_keymap PARAMS((Keymap));
+extern Keymap rl_make_bare_keymap (void);
+extern int rl_empty_keymap (Keymap);
+extern Keymap rl_copy_keymap (Keymap);
+extern Keymap rl_make_keymap (void);
+extern void rl_discard_keymap (Keymap);
+extern void rl_free_keymap (Keymap);
 
-extern Keymap rl_get_keymap_by_name PARAMS((const char *));
-extern char *rl_get_keymap_name PARAMS((Keymap));
-extern void rl_set_keymap PARAMS((Keymap));
-extern Keymap rl_get_keymap PARAMS((void));
+extern Keymap rl_get_keymap_by_name (const char *);
+extern char *rl_get_keymap_name (Keymap);
+extern void rl_set_keymap (Keymap);
+extern Keymap rl_get_keymap (void);
 
-extern int rl_set_keymap_name PARAMS((const char *, Keymap));
+extern int rl_set_keymap_name (const char *, Keymap);
 
 /* Undocumented; used internally only. */
-extern void rl_set_keymap_from_edit_mode PARAMS((void));
-extern char *rl_get_keymap_name_from_edit_mode PARAMS((void));
+extern void rl_set_keymap_from_edit_mode (void);
+extern char *rl_get_keymap_name_from_edit_mode (void);
 
 /* Functions for manipulating the funmap, which maps command names to functions. */
-extern int rl_add_funmap_entry PARAMS((const char *, rl_command_func_t *));
-extern const char **rl_funmap_names PARAMS((void));
+extern int rl_add_funmap_entry (const char *, rl_command_func_t *);
+extern const char **rl_funmap_names (void);
 /* Undocumented, only used internally -- there is only one funmap, and this
    function may be called only once. */
-extern void rl_initialize_funmap PARAMS((void));
+extern void rl_initialize_funmap (void);
 
 /* Utility functions for managing keyboard macros. */
-extern void rl_push_macro_input PARAMS((char *));
+extern void rl_push_macro_input (char *);
 
 /* Functions for undoing, from undo.c */
-extern void rl_add_undo PARAMS((enum undo_code, int, int, char *));
-extern void rl_free_undo_list PARAMS((void));
-extern int rl_do_undo PARAMS((void));
-extern int rl_begin_undo_group PARAMS((void));
-extern int rl_end_undo_group PARAMS((void));
-extern int rl_modifying PARAMS((int, int));
+extern void rl_add_undo (enum undo_code, int, int, char *);
+extern void rl_free_undo_list (void);
+extern int rl_do_undo (void);
+extern int rl_begin_undo_group (void);
+extern int rl_end_undo_group (void);
+extern int rl_modifying (int, int);
 
 /* Functions for redisplay. */
 #if !defined (OMIT_DEFAULT_DISPLAY_READLINE)
-extern void rl_redisplay PARAMS((void));
+extern void rl_redisplay (void);
 #endif /* OMIT_DEFAULT_DISPLAY_READLINE */
-extern int rl_on_new_line PARAMS((void));
-extern int rl_on_new_line_with_prompt PARAMS((void));
-extern int rl_forced_update_display PARAMS((void));
-extern int rl_clear_visible_line PARAMS((void));
-extern int rl_clear_message PARAMS((void));
-extern int rl_reset_line_state PARAMS((void));
-extern int rl_crlf PARAMS((void));
+extern int rl_on_new_line (void);
+extern int rl_on_new_line_with_prompt (void);
+extern int rl_forced_update_display (void);
+extern int rl_clear_visible_line (void);
+extern int rl_clear_message (void);
+extern int rl_reset_line_state (void);
+extern int rl_crlf (void);
 /* begin_clink_change */
-extern int rl_get_prompt_prefix_visible PARAMS((void));
+extern int rl_get_prompt_prefix_visible (void);
 /* end_clink_change */
 
 /* Functions to manage the mark and region, especially the notion of an
    active mark and an active region. */
-extern void rl_keep_mark_active PARAMS((void));
+extern void rl_keep_mark_active (void);
 
-extern void rl_activate_mark PARAMS((void));
-extern void rl_deactivate_mark PARAMS((void));
-extern int rl_mark_active_p PARAMS((void));
+extern void rl_activate_mark (void);
+extern void rl_deactivate_mark (void);
+extern int rl_mark_active_p (void);
 
 #if defined (USE_VARARGS) && defined (PREFER_STDARG)
 extern int rl_message (const char *, ...)  __attribute__((__format__ (printf, 1, 2)));
@@ -448,69 +450,76 @@ extern int rl_message (const char *, ...)  __attribute__((__format__ (printf, 1,
 extern int rl_message ();
 #endif
 
-extern int rl_show_char PARAMS((int));
+extern int rl_show_char (int);
 
 /* Undocumented in texinfo manual. */
-extern int rl_character_len PARAMS((int, int));
-extern void rl_redraw_prompt_last_line PARAMS((void));
+extern int rl_character_len (int, int);
+extern void rl_redraw_prompt_last_line (void);
 
 /* Save and restore internal prompt redisplay information. */
-extern void rl_save_prompt PARAMS((void));
-extern void rl_restore_prompt PARAMS((void));
+extern void rl_save_prompt (void);
+extern void rl_restore_prompt (void);
 
 /* Modifying text. */
-extern void rl_replace_line PARAMS((const char *, int));
-extern int rl_insert_text PARAMS((const char *));
-extern int rl_delete_text PARAMS((int, int));
-extern int rl_kill_text PARAMS((int, int));
-extern char *rl_copy_text PARAMS((int, int));
+extern void rl_replace_line (const char *, int);
+extern int rl_insert_text (const char *);
+extern int rl_delete_text (int, int);
+extern int rl_kill_text (int, int);
+extern char *rl_copy_text (int, int);
 
 /* Terminal and tty mode management. */
-extern void rl_prep_terminal PARAMS((int));
-extern void rl_deprep_terminal PARAMS((void));
-extern void rl_tty_set_default_bindings PARAMS((Keymap));
-extern void rl_tty_unset_default_bindings PARAMS((Keymap));
+extern void rl_prep_terminal (int);
+extern void rl_deprep_terminal (void);
+extern void rl_tty_set_default_bindings (Keymap);
+extern void rl_tty_unset_default_bindings (Keymap);
 
-extern int rl_tty_set_echoing PARAMS((int));
-extern int rl_reset_terminal PARAMS((const char *));
-extern void rl_resize_terminal PARAMS((void));
-extern void rl_set_screen_size PARAMS((int, int));
-extern void rl_get_screen_size PARAMS((int *, int *));
-extern void rl_reset_screen_size PARAMS((void));
+extern int rl_tty_set_echoing (int);
+extern int rl_reset_terminal (const char *);
+extern void rl_resize_terminal (void);
+extern void rl_set_screen_size (int, int);
+extern void rl_get_screen_size (int *, int *);
+extern void rl_reset_screen_size (void);
 
-extern char *rl_get_termcap PARAMS((const char *));
+extern char *rl_get_termcap (const char *);
 
 /* Functions for character input. */
-extern int rl_stuff_char PARAMS((int));
-extern int rl_execute_next PARAMS((int));
-extern int rl_clear_pending_input PARAMS((void));
-extern int rl_read_key PARAMS((void));
-extern int rl_getc PARAMS((FILE *));
-extern int rl_set_keyboard_input_timeout PARAMS((int));
+extern int rl_stuff_char (int);
+extern int rl_execute_next (int);
+extern int rl_clear_pending_input (void);
+extern int rl_read_key (void);
+extern int rl_getc (FILE *);
+extern int rl_set_keyboard_input_timeout (int);
+
+/* Functions to set and reset timeouts. */
+extern int rl_set_timeout (unsigned int, unsigned int);
+extern int rl_timeout_remaining (unsigned int *, unsigned int *);
+
+#undef rl_clear_timeout
+#define rl_clear_timeout() rl_set_timeout (0, 0)
 
 /* `Public' utility functions . */
-extern void rl_extend_line_buffer PARAMS((int));
-extern int rl_ding PARAMS((void));
-extern int rl_alphabetic PARAMS((int));
-extern void rl_free PARAMS((void *));
+extern void rl_extend_line_buffer (int);
+extern int rl_ding (void);
+extern int rl_alphabetic (int);
+extern void rl_free (void *);
 
 /* Readline signal handling, from signals.c */
-extern int rl_set_signals PARAMS((void));
-extern int rl_clear_signals PARAMS((void));
-extern void rl_cleanup_after_signal PARAMS((void));
-extern void rl_reset_after_signal PARAMS((void));
-extern void rl_free_line_state PARAMS((void));
+extern int rl_set_signals (void);
+extern int rl_clear_signals (void);
+extern void rl_cleanup_after_signal (void);
+extern void rl_reset_after_signal (void);
+extern void rl_free_line_state (void);
 
-extern int rl_pending_signal PARAMS((void));
-extern void rl_check_signals PARAMS((void));
+extern int rl_pending_signal (void);
+extern void rl_check_signals (void);
 
-extern void rl_echo_signal_char PARAMS((int)); 
+extern void rl_echo_signal_char (int); 
 
-extern int rl_set_paren_blink_timeout PARAMS((int));
+extern int rl_set_paren_blink_timeout (int);
 
 /* History management functions. */
 
-extern void rl_clear_history PARAMS((void));
+extern void rl_clear_history (void);
 
 /* begin_clink_change */
 /* Returns true if rl_operate_and_get_next has set a saved history
@@ -519,19 +528,19 @@ extern int rl_has_saved_history PARAMS((void));
 /* end_clink_change */
 
 /* Undocumented. */
-extern int rl_maybe_save_line PARAMS((void));
-extern int rl_maybe_unsave_line PARAMS((void));
-extern int rl_maybe_replace_line PARAMS((void));
+extern int rl_maybe_save_line (void);
+extern int rl_maybe_unsave_line (void);
+extern int rl_maybe_replace_line (void);
 
 /* Completion functions. */
-extern int rl_complete_internal PARAMS((int));
-extern void rl_display_match_list PARAMS((char **, int, int));
+extern int rl_complete_internal (int);
+extern void rl_display_match_list (char **, int, int);
 
-extern char **rl_completion_matches PARAMS((const char *, rl_compentry_func_t *));
-extern char *rl_username_completion_function PARAMS((const char *, int));
-extern char *rl_filename_completion_function PARAMS((const char *, int));
+extern char **rl_completion_matches (const char *, rl_compentry_func_t *);
+extern char *rl_username_completion_function (const char *, int);
+extern char *rl_filename_completion_function (const char *, int);
 
-extern int rl_completion_mode PARAMS((rl_command_func_t *));
+extern int rl_completion_mode (rl_command_func_t *);
 
 /* begin_clink_change */
 /* Path separators. */
@@ -545,18 +554,18 @@ extern int rl_need_match_quoting PARAMS((const char *match));
 
 #if 0
 /* Backwards compatibility (compat.c).  These will go away sometime. */
-extern void free_undo_list PARAMS((void));
-extern int maybe_save_line PARAMS((void));
-extern int maybe_unsave_line PARAMS((void));
-extern int maybe_replace_line PARAMS((void));
+extern void free_undo_list (void);
+extern int maybe_save_line (void);
+extern int maybe_unsave_line (void);
+extern int maybe_replace_line (void);
 
-extern int ding PARAMS((void));
-extern int alphabetic PARAMS((int));
-extern int crlf PARAMS((void));
+extern int ding (void);
+extern int alphabetic (int);
+extern int crlf (void);
 
-extern char **completion_matches PARAMS((char *, rl_compentry_func_t *));
-extern char *username_completion_function PARAMS((const char *, int));
-extern char *filename_completion_function PARAMS((const char *, int));
+extern char **completion_matches (char *, rl_compentry_func_t *);
+extern char *username_completion_function (const char *, int);
+extern char *filename_completion_function (const char *, int);
 #endif
 
 /* **************************************************************** */
@@ -621,6 +630,10 @@ extern int rl_mark;
    line and should return it. */
 extern int rl_done;
 
+/* Flag to indicate that readline has read an EOF character or read has
+   returned 0 or error, and is returning a NULL line as a result. */
+extern int rl_eof_found;
+
 /* If set to a character value, that will be the next keystroke read. */
 extern int rl_pending_input;
 
@@ -666,6 +679,8 @@ extern rl_hook_func_t *rl_event_hook;
 
 /* The address of a function to call if a read is interrupted by a signal. */
 extern rl_hook_func_t *rl_signal_event_hook;
+
+extern rl_hook_func_t *rl_timeout_event_hook;
 
 /* The address of a function to call if Readline needs to know whether or not
    there is data available from the current input source. */
@@ -854,10 +869,7 @@ extern const char *rl_basic_word_break_characters_without_backslash;
 /* The list of characters that signal a break between words for
    rl_complete_internal.  The default list is the contents of
    rl_basic_word_break_characters.  */
-/* begin_clink_change */
-//extern /*const*/ char *rl_completer_word_break_characters;
 extern const char *rl_completer_word_break_characters;
-/* end_clink_change */
 
 /* Hook function to allow an application to set the completion word
    break characters before readline breaks up the line.  Allows
@@ -1131,6 +1143,8 @@ extern int rl_persistent_signal_handlers;
 #define RL_STATE_REDISPLAYING	0x1000000	/* updating terminal display */
 
 #define RL_STATE_DONE		0x2000000	/* done; accepted line */
+#define RL_STATE_TIMEOUT	0x4000000	/* done; timed out */
+#define RL_STATE_EOF		0x8000000	/* done; got eof on read */
 
 #define RL_SETSTATE(x)		(rl_readline_state |= (x))
 #define RL_UNSETSTATE(x)	(rl_readline_state &= ~(x))
@@ -1174,10 +1188,7 @@ struct readline_state {
   rl_compentry_func_t *menuentryfunc;
   rl_compignore_func_t *ignorefunc;
   rl_completion_func_t *attemptfunc;
-/* begin_clink_change */
-  //char *wordbreakchars;
   const char *wordbreakchars;
-/* end_clink_change */
 
   /* options state */
 
@@ -1187,8 +1198,8 @@ struct readline_state {
   char reserved[64];
 };
 
-extern int rl_save_state PARAMS((struct readline_state *));
-extern int rl_restore_state PARAMS((struct readline_state *));
+extern int rl_save_state (struct readline_state *);
+extern int rl_restore_state (struct readline_state *);
 
 #ifdef __cplusplus
 }

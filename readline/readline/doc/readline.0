@@ -173,23 +173,49 @@ READLINE(3)                Library Functions Manual                READLINE(3)
        sitive), and "1" are equivalent to [1mOn[22m.  All other values are equivalent
        to [1mOff[22m.  The variables and their default values are:
 
+       [1mactive-region-start-color[0m
+              A string variable that controls the text  color  and  background
+              when  displaying the text in the active region (see the descrip-
+              tion of [1menable-active-region [22mbelow).  This string must not  take
+              up any physical character positions on the display, so it should
+              consist only of terminal escape sequences.  It is output to  the
+              terminal  before displaying the text in the active region.  This
+              variable is reset to the default  value  whenever  the  terminal
+              type  changes.   The  default  value is the string that puts the
+              terminal in standout mode, as obtained from the terminal's  ter-
+              minfo description.  A sample value might be "\e[01;33m".
+       [1mactive-region-end-color[0m
+              A  string  variable  that  "undoes"  the  effects  of [1mactive-re-[0m
+              [1mgion-start-color [22mand restores "normal" terminal display  appear-
+              ance  after  displaying  text in the active region.  This string
+              must not take up any physical character positions  on  the  dis-
+              play,  so  it  should consist only of terminal escape sequences.
+              It is output to the terminal after displaying the  text  in  the
+              active  region.   This  variable  is  reset to the default value
+              whenever the terminal type changes.  The default  value  is  the
+              string  that  restores  the  terminal from standout mode, as ob-
+              tained from the terminal's terminfo description.  A sample value
+              might be "\e[0m".
        [1mbell-style (audible)[0m
-              Controls what happens when readline wants to ring  the  terminal
+              Controls  what  happens when readline wants to ring the terminal
               bell.  If set to [1mnone[22m, readline never rings the bell.  If set to
-              [1mvisible[22m, readline uses a visible bell if one is  available.   If
+              [1mvisible[22m,  readline  uses a visible bell if one is available.  If
               set to [1maudible[22m, readline attempts to ring the terminal's bell.
        [1mbind-tty-special-chars (On)[0m
-              If  set  to [1mOn [22m(the default), readline attempts to bind the con-
-              trol characters   treated specially  by  the  kernel's  terminal
+              If set to [1mOn [22m(the default), readline attempts to bind  the  con-
+              trol  characters    treated  specially  by the kernel's terminal
               driver to their readline equivalents.
        [1mblink-matching-paren (Off)[0m
               If set to [1mOn[22m, readline attempts to briefly move the cursor to an
               opening parenthesis when a closing parenthesis is inserted.
        [1mcolored-completion-prefix (Off)[0m
-              If set to [1mOn[22m, when listing completions,  readline  displays  the
+              If  set  to  [1mOn[22m, when listing completions, readline displays the
               common prefix of the set of possible completions using a differ-
-              ent color.  The color definitions are taken from  the  value  of
-              the [1mLS_COLORS [22menvironment variable.
+              ent  color.   The  color definitions are taken from the value of
+              the [1mLS_COLORS [22menvironment variable.  If there is a color defini-
+              tion  in [1m$LS_COLORS [22mfor the custom suffix "readline-colored-com-
+              pletion-prefix", readline uses this color for the common  prefix
+              instead of its default.
        [1mcolored-stats (Off)[0m
               If  set to [1mOn[22m, readline displays possible completions using dif-
               ferent colors to indicate their file type.   The  color  defini-
@@ -232,7 +258,9 @@ READLINE(3)                Library Functions Manual                READLINE(3)
               bit set to an ASCII key sequence by stripping the eighth bit and
               prefixing it with an escape character (in effect,  using  escape
               as  the  [4mmeta[24m [4mprefix[24m).  The default is [4mOn[24m, but readline will set
-              it to [4mOff[24m if the locale contains eight-bit characters.
+              it to [4mOff[24m if the locale  contains  eight-bit  characters.   This
+              variable  is  dependent on the [1mLC_CTYPE [22mlocale category, and may
+              change if the locale is changed.
        [1mdisable-completion (Off)[0m
               If set to [1mOn[22m, readline will inhibit word completion.  Completion
               characters  will  be  inserted into the line as if they had been
@@ -254,13 +282,23 @@ READLINE(3)                Library Functions Manual                READLINE(3)
               escapes  to  begin and end sequences of non-printing characters,
               which can be used to embed a terminal control sequence into  the
               mode string.
+       [1menable-active-region (On)[0m
+              The  [4mpoint[24m  is the current cursor position, and [4mmark[24m refers to a
+              saved cursor position.  The text between the point and  mark  is
+              referred  to  as  the  [4mregion[24m.  When this variable is set to [4mOn[24m,
+              readline allows certain commands to designate the region as  [4mac-[0m
+              [4mtive[24m.   When  the region is active, readline highlights the text
+              in the region using the value of the  [1mactive-region-start-color[22m,
+              which  defaults to the string that enables the terminal's stand-
+              out mode.  The active region shows the text inserted  by  brack-
+              eted-paste  and  any matching text found by incremental and non-
+              incremental history searches.
        [1menable-bracketed-paste (On)[0m
-              When  set  to  [1mOn[22m, readline will configure the terminal in a way
-              that will enable it to insert each paste into the editing buffer
-              as a single string of characters, instead of treating each char-
-              acter as if it had been read from the keyboard.  This  can  pre-
-              vent  pasted  characters  from being interpreted as editing com-
-              mands.
+              When set to [1mOn[22m, readline configures the terminal to insert  each
+              paste  into the editing buffer as a single string of characters,
+              instead of treating each character as if it had been  read  from
+              the keyboard.  This prevents readline from executing any editing
+              commands bound to key sequences appearing in the pasted text.
        [1menable-keypad (Off)[0m
               When set to [1mOn[22m, readline will try to enable the application key-
               pad when it is called.  Some systems need this to enable the ar-
@@ -296,159 +334,162 @@ READLINE(3)                Library Functions Manual                READLINE(3)
               gardless  of  what the terminal claims it can support.  The name
               [1mmeta-flag [22mis a synonym for this variable.  The default  is  [4mOff[24m,
               but  readline will set it to [4mOn[24m if the locale contains eight-bit
-              characters.
+              characters.  This variable is dependent on the  [1mLC_CTYPE  [22mlocale
+              category, and may change if the locale is changed.
        [1misearch-terminators (``C-[ C-J'')[0m
-              The string of characters that should  terminate  an  incremental
-              search  without  subsequently  executing the character as a com-
-              mand.  If this variable has not been given a value, the  charac-
+              The  string  of  characters that should terminate an incremental
+              search without subsequently executing the character  as  a  com-
+              mand.   If this variable has not been given a value, the charac-
               ters [4mESC[24m and [4mC-J[24m will terminate an incremental search.
        [1mkeymap (emacs)[0m
-              Set  the current readline keymap.  The set of legal keymap names
-              is [4memacs,[24m [4memacs-standard,[24m [4memacs-meta,[24m [4memacs-ctlx,[24m  [4mvi,[24m  [4mvi-move,[0m
-              [4mvi-command[24m,  and  [4mvi-insert[24m.   [4mvi[24m  is  equivalent to [4mvi-command[24m;
-              [4memacs[24m is equivalent to [4memacs-standard[24m.   The  default  value  is
-              [4memacs[24m.   The  value  of  [1mediting-mode  [22malso  affects the default
+              Set the current readline keymap.  The set of legal keymap  names
+              is  [4memacs,[24m  [4memacs-standard,[24m [4memacs-meta,[24m [4memacs-ctlx,[24m [4mvi,[24m [4mvi-move,[0m
+              [4mvi-command[24m, and [4mvi-insert[24m.   [4mvi[24m  is  equivalent  to  [4mvi-command[24m;
+              [4memacs[24m  is  equivalent  to  [4memacs-standard[24m.  The default value is
+              [4memacs[24m.  The value  of  [1mediting-mode  [22malso  affects  the  default
               keymap.
        [1mkeyseq-timeout (500)[0m
-              Specifies the duration [4mreadline[24m will wait for a  character  when
-              reading  an ambiguous key sequence (one that can form a complete
+              Specifies  the  duration [4mreadline[24m will wait for a character when
+              reading an ambiguous key sequence (one that can form a  complete
               key sequence using the input read so far, or can take additional
-              input  to  complete  a longer key sequence).  If no input is re-
-              ceived within the timeout, [4mreadline[24m will  use  the  shorter  but
-              complete  key sequence.  The value is specified in milliseconds,
-              so a value of 1000 means that [4mreadline[24m will wait one second  for
-              additional  input.  If this variable is set to a value less than
-              or equal to zero, or to a non-numeric value, [4mreadline[24m will  wait
-              until  another  key  is  pressed to decide which key sequence to
+              input to complete a longer key sequence).  If no  input  is  re-
+              ceived  within  the  timeout,  [4mreadline[24m will use the shorter but
+              complete key sequence.  The value is specified in  milliseconds,
+              so  a value of 1000 means that [4mreadline[24m will wait one second for
+              additional input.  If this variable is set to a value less  than
+              or  equal to zero, or to a non-numeric value, [4mreadline[24m will wait
+              until another key is pressed to decide  which  key  sequence  to
               complete.
        [1mmark-directories (On)[0m
               If set to [1mOn[22m, completed directory names have a slash appended.
        [1mmark-modified-lines (Off)[0m
-              If set to [1mOn[22m, history lines that have  been  modified  are  dis-
+              If  set  to  [1mOn[22m,  history lines that have been modified are dis-
               played with a preceding asterisk ([1m*[22m).
        [1mmark-symlinked-directories (Off)[0m
               If set to [1mOn[22m, completed names which are symbolic links to direc-
-              tories have a slash appended (subject to the value  of  [1mmark-di-[0m
+              tories  have  a slash appended (subject to the value of [1mmark-di-[0m
               [1mrectories[22m).
        [1mmatch-hidden-files (On)[0m
-              This  variable,  when  set to [1mOn[22m, causes readline to match files
-              whose names begin with a  `.'  (hidden  files)  when  performing
-              filename  completion.   If  set  to [1mOff[22m, the leading `.' must be
+              This variable, when set to [1mOn[22m, causes readline  to  match  files
+              whose  names  begin  with  a  `.' (hidden files) when performing
+              filename completion.  If set to [1mOff[22m, the  leading  `.'  must  be
               supplied by the user in the filename to be completed.
        [1mmenu-complete-display-prefix (Off)[0m
-              If set to [1mOn[22m, menu completion displays the common prefix of  the
+              If  set to [1mOn[22m, menu completion displays the common prefix of the
               list of possible completions (which may be empty) before cycling
               through the list.
        [1moutput-meta (Off)[0m
-              If set to [1mOn[22m, readline will display characters with  the  eighth
+              If  set  to [1mOn[22m, readline will display characters with the eighth
               bit set directly rather than as a meta-prefixed escape sequence.
               The default is [4mOff[24m, but readline will set it to [4mOn[24m if the locale
-              contains eight-bit characters.
+              contains eight-bit characters.  This variable  is  dependent  on
+              the  [1mLC_CTYPE  [22mlocale  category, and may change if the locale is
+              changed.
        [1mpage-completions (On)[0m
-              If  set to [1mOn[22m, readline uses an internal [4mmore[24m-like pager to dis-
+              If set to [1mOn[22m, readline uses an internal [4mmore[24m-like pager to  dis-
               play a screenful of possible completions at a time.
        [1mprint-completions-horizontally (Off)[0m
-              If set to [1mOn[22m, readline will  display  completions  with  matches
-              sorted  horizontally in alphabetical order, rather than down the
+              If  set  to  [1mOn[22m,  readline will display completions with matches
+              sorted horizontally in alphabetical order, rather than down  the
               screen.
        [1mrevert-all-at-newline (Off)[0m
-              If set to [1mOn[22m, readline will undo all changes  to  history  lines
+              If  set  to  [1mOn[22m, readline will undo all changes to history lines
               before returning when [1maccept-line [22mis executed.  By default, his-
-              tory lines may be modified  and  retain  individual  undo  lists
+              tory  lines  may  be  modified  and retain individual undo lists
               across calls to [1mreadline[22m.
        [1mshow-all-if-ambiguous (Off)[0m
-              This  alters  the  default behavior of the completion functions.
+              This alters the default behavior of  the  completion  functions.
               If set to [1mOn[22m, words which have more than one possible completion
-              cause  the  matches  to be listed immediately instead of ringing
+              cause the matches to be listed immediately  instead  of  ringing
               the bell.
        [1mshow-all-if-unmodified (Off)[0m
-              This alters the default behavior of the completion functions  in
+              This  alters the default behavior of the completion functions in
               a fashion similar to [1mshow-all-if-ambiguous[22m.  If set to [1mOn[22m, words
-              which have more than one possible completion without any  possi-
-              ble  partial  completion (the possible completions don't share a
-              common prefix) cause the matches to be  listed  immediately  in-
+              which  have more than one possible completion without any possi-
+              ble partial completion (the possible completions don't  share  a
+              common  prefix)  cause  the matches to be listed immediately in-
               stead of ringing the bell.
        [1mshow-mode-in-prompt (Off)[0m
-              If  set to [1mOn[22m, add a string to the beginning of the prompt indi-
-              cating the editing mode: emacs, vi  command,  or  vi  insertion.
+              If set to [1mOn[22m, add a string to the beginning of the prompt  indi-
+              cating  the  editing  mode:  emacs, vi command, or vi insertion.
               The mode strings are user-settable (e.g., [4memacs-mode-string[24m).
        [1mskip-completed-text (Off)[0m
-              If  set  to [1mOn[22m, this alters the default completion behavior when
-              inserting a single match into the line.  It's only  active  when
-              performing  completion  in  the  middle  of a word.  If enabled,
-              readline does not insert characters  from  the  completion  that
-              match  characters  after  point  in the word being completed, so
+              If set to [1mOn[22m, this alters the default completion  behavior  when
+              inserting  a  single match into the line.  It's only active when
+              performing completion in the middle  of  a  word.   If  enabled,
+              readline  does  not  insert  characters from the completion that
+              match characters after point in the  word  being  completed,  so
               portions of the word following the cursor are not duplicated.
        [1mvi-cmd-mode-string ((cmd))[0m
-              If the [4mshow-mode-in-prompt[24m variable is enabled, this  string  is
-              displayed immediately before the last line of the primary prompt
-              when vi editing mode is active and in command mode.   The  value
-              is expanded like a key binding, so the standard set of meta- and
-              control prefixes and backslash escape  sequences  is  available.
-              Use  the  \1  and  \2 escapes to begin and end sequences of non-
-              printing characters, which can be used to embed a terminal  con-
-              trol sequence into the mode string.
-       [1mvi-ins-mode-string ((ins))[0m
               If  the  [4mshow-mode-in-prompt[24m variable is enabled, this string is
               displayed immediately before the last line of the primary prompt
-              when vi editing mode is active and in insertion mode.  The value
+              when  vi  editing mode is active and in command mode.  The value
               is expanded like a key binding, so the standard set of meta- and
               control  prefixes  and  backslash escape sequences is available.
               Use the \1 and \2 escapes to begin and  end  sequences  of  non-
               printing  characters, which can be used to embed a terminal con-
               trol sequence into the mode string.
+       [1mvi-ins-mode-string ((ins))[0m
+              If the [4mshow-mode-in-prompt[24m variable is enabled, this  string  is
+              displayed immediately before the last line of the primary prompt
+              when vi editing mode is active and in insertion mode.  The value
+              is expanded like a key binding, so the standard set of meta- and
+              control prefixes and backslash escape  sequences  is  available.
+              Use  the  \1  and  \2 escapes to begin and end sequences of non-
+              printing characters, which can be used to embed a terminal  con-
+              trol sequence into the mode string.
        [1mvisible-stats (Off)[0m
-              If set to [1mOn[22m, a character denoting a file's type as reported  by
-              [4mstat[24m(2)  is  appended to the filename when listing possible com-
+              If  set to [1mOn[22m, a character denoting a file's type as reported by
+              [4mstat[24m(2) is appended to the filename when listing  possible  com-
               pletions.
 
    [1mConditional Constructs[0m
-       Readline implements a facility similar in  spirit  to  the  conditional
-       compilation  features  of  the C preprocessor which allows key bindings
-       and variable settings to be performed as the result  of  tests.   There
+       Readline  implements  a  facility  similar in spirit to the conditional
+       compilation features of the C preprocessor which  allows  key  bindings
+       and  variable  settings  to be performed as the result of tests.  There
        are four parser directives used.
 
-       [1m$if    [22mThe  [1m$if [22mconstruct allows bindings to be made based on the edit-
-              ing mode, the terminal being  used,  or  the  application  using
-              readline.   The text of the test, after any comparison operator,
+       [1m$if    [22mThe [1m$if [22mconstruct allows bindings to be made based on the  edit-
+              ing  mode,  the  terminal  being  used, or the application using
+              readline.  The text of the test, after any comparison  operator,
               extends to the end of the line; unless otherwise noted, no char-
               acters are required to isolate it.
 
-              [1mmode   [22mThe  [1mmode=  [22mform  of  the  [1m$if  [22mdirective is used to test
-                     whether readline is in emacs or vi  mode.   This  may  be
-                     used  in conjunction with the [1mset keymap [22mcommand, for in-
-                     stance, to set bindings in the [4memacs-standard[24m and  [4memacs-[0m
-                     [4mctlx[24m  keymaps  only  if readline is starting out in emacs
+              [1mmode   [22mThe [1mmode= [22mform of the  [1m$if  [22mdirective  is  used  to  test
+                     whether  readline  is  in  emacs or vi mode.  This may be
+                     used in conjunction with the [1mset keymap [22mcommand, for  in-
+                     stance,  to set bindings in the [4memacs-standard[24m and [4memacs-[0m
+                     [4mctlx[24m keymaps only if readline is starting  out  in  emacs
                      mode.
 
-              [1mterm   [22mThe [1mterm= [22mform may be used to  include  terminal-specific
+              [1mterm   [22mThe  [1mterm=  [22mform may be used to include terminal-specific
                      key bindings, perhaps to bind the key sequences output by
                      the terminal's function keys.  The word on the right side
-                     of  the [1m= [22mis tested against the full name of the terminal
-                     and the portion of the terminal name before the first  [1m-[22m.
-                     This  allows  [4msun[24m  to match both [4msun[24m and [4msun-cmd[24m, for in-
+                     of the [1m= [22mis tested against the full name of the  terminal
+                     and  the portion of the terminal name before the first [1m-[22m.
+                     This allows [4msun[24m to match both [4msun[24m and  [4msun-cmd[24m,  for  in-
                      stance.
 
               [1mversion[0m
-                     The [1mversion [22mtest  may  be  used  to  perform  comparisons
-                     against  specific readline versions.  The [1mversion [22mexpands
-                     to the current readline version.  The set  of  comparison
-                     operators  includes  [1m=[22m,  (and  [1m==[22m), [1m!=[22m, [1m<=[22m, [1m>=[22m, [1m<[22m, and [1m>[22m.
-                     The version number supplied on the right side of the  op-
-                     erator  consists  of  a major version number, an optional
+                     The  [1mversion  [22mtest  may  be  used  to perform comparisons
+                     against specific readline versions.  The [1mversion  [22mexpands
+                     to  the  current readline version.  The set of comparison
+                     operators includes [1m=[22m, (and [1m==[22m), [1m!=[22m, [1m<=[22m,  [1m>=[22m,  [1m<[22m,  and  [1m>[22m.
+                     The  version number supplied on the right side of the op-
+                     erator consists of a major version  number,  an  optional
                      decimal point, and an optional minor version (e.g., [1m7.1[22m).
-                     If  the  minor version is omitted, it is assumed to be [1m0[22m.
+                     If the minor version is omitted, it is assumed to  be  [1m0[22m.
                      The operator may be separated from the string [1mversion [22mand
                      from the version number argument by whitespace.
 
               [1mapplication[0m
                      The [1mapplication [22mconstruct is used to include application-
-                     specific settings.  Each program using the  readline  li-
-                     brary  sets  the  [4mapplication[24m [4mname[24m, and an initialization
+                     specific  settings.   Each program using the readline li-
+                     brary sets the [4mapplication[24m [4mname[24m,  and  an  initialization
                      file can test for a particular value.  This could be used
-                     to  bind key sequences to functions useful for a specific
-                     program.  For instance, the following command adds a  key
-                     sequence  that  quotes  the  current  or previous word in
+                     to bind key sequences to functions useful for a  specific
+                     program.   For instance, the following command adds a key
+                     sequence that quotes the  current  or  previous  word  in
                      [1mbash[22m:
 
                      [1m$if [22mBash
@@ -458,12 +499,12 @@ READLINE(3)                Library Functions Manual                READLINE(3)
 
               [4mvariable[0m
                      The [4mvariable[24m construct provides simple equality tests for
-                     readline  variables and values.  The permitted comparison
-                     operators are [4m=[24m, [4m==[24m, and [4m!=[24m.  The variable name  must  be
+                     readline variables and values.  The permitted  comparison
+                     operators  are  [4m=[24m, [4m==[24m, and [4m!=[24m.  The variable name must be
                      separated from the comparison operator by whitespace; the
-                     operator may be separated from the  value  on  the  right
-                     hand  side  by whitespace.  Both string and boolean vari-
-                     ables may be tested. Boolean  variables  must  be  tested
+                     operator  may  be  separated  from the value on the right
+                     hand side by whitespace.  Both string and  boolean  vari-
+                     ables  may  be  tested.  Boolean variables must be tested
                      against the values [4mon[24m and [4moff[24m.
 
        [1m$endif [22mThis command, as seen in the previous example, terminates an [1m$if[0m
@@ -473,52 +514,52 @@ READLINE(3)                Library Functions Manual                READLINE(3)
               test fails.
 
        [1m$include[0m
-              This  directive takes a single filename as an argument and reads
-              commands and bindings from that file.  For example, the  follow-
+              This directive takes a single filename as an argument and  reads
+              commands  and bindings from that file.  For example, the follow-
               ing directive would read [4m/etc/inputrc[24m:
 
               [1m$include  [4m[22m/etc/inputrc[0m
 
 [1mSEARCHING[0m
-       Readline  provides  commands  for searching through the command history
-       for lines containing a specified string.  There are two  search  modes:
+       Readline provides commands for searching through  the  command  history
+       for  lines  containing a specified string.  There are two search modes:
        [4mincremental[24m and [4mnon-incremental[24m.
 
-       Incremental  searches  begin  before  the  user has finished typing the
-       search string.  As each character of the search string is typed,  read-
+       Incremental searches begin before the  user  has  finished  typing  the
+       search  string.  As each character of the search string is typed, read-
        line displays the next entry from the history matching the string typed
-       so far.  An incremental search requires  only  as  many  characters  as
-       needed  to  find  the desired history entry.  To search backward in the
+       so  far.   An  incremental  search  requires only as many characters as
+       needed to find the desired history entry.  To search  backward  in  the
        history for a particular string, type [1mC-r[22m.  Typing [1mC-s [22msearches forward
-       through  the  history.   The  characters  present  in  the value of the
-       [1misearch-terminators [22mvariable  are  used  to  terminate  an  incremental
-       search.   If that variable has not been assigned a value the [4mEscape[24m and
+       through the history.  The  characters  present  in  the  value  of  the
+       [1misearch-terminators  [22mvariable  are  used  to  terminate  an incremental
+       search.  If that variable has not been assigned a value the [4mEscape[24m  and
        [1mC-J [22mcharacters will terminate an incremental search.  [1mC-G [22mwill abort an
-       incremental  search  and restore the original line.  When the search is
-       terminated, the history entry containing the search string becomes  the
+       incremental search and restore the original line.  When the  search  is
+       terminated,  the history entry containing the search string becomes the
        current line.
 
-       To  find other matching entries in the history list, type [1mC-s [22mor [1mC-r [22mas
-       appropriate.  This will search backward or forward in the  history  for
-       the  next  line matching the search string typed so far.  Any other key
+       To find other matching entries in the history list, type [1mC-s [22mor [1mC-r  [22mas
+       appropriate.   This  will search backward or forward in the history for
+       the next line matching the search string typed so far.  Any  other  key
        sequence bound to a readline command will terminate the search and exe-
-       cute  that  command.  For instance, a newline will terminate the search
-       and accept the line, thereby executing the  command  from  the  history
+       cute that command.  For instance, a newline will terminate  the  search
+       and  accept  the  line,  thereby executing the command from the history
        list.  A movement command will terminate the search, make the last line
        found the current line, and begin editing.
 
-       Non-incremental searches read the entire search string before  starting
-       to  search  for matching history lines.  The search string may be typed
+       Non-incremental  searches read the entire search string before starting
+       to search for matching history lines.  The search string may  be  typed
        by the user or be part of the contents of the current line.
 
 [1mEDITING COMMANDS[0m
-       The following is a list of the names of the commands  and  the  default
+       The  following  is  a list of the names of the commands and the default
        key sequences to which they are bound.  Command names without an accom-
        panying key sequence are unbound by default.
 
        In the following descriptions, [4mpoint[24m refers to the current cursor posi-
-       tion,  and  [4mmark[24m refers to a cursor position saved by the [1mset-mark [22mcom-
-       mand.  The text between the point and mark is referred to  as  the  [4mre-[0m
+       tion, and [4mmark[24m refers to a cursor position saved by the  [1mset-mark  [22mcom-
+       mand.   The  text  between the point and mark is referred to as the [4mre-[0m
        [4mgion[24m.
 
    [1mCommands for Moving[0m
@@ -534,27 +575,27 @@ READLINE(3)                Library Functions Manual                READLINE(3)
               Move forward to the end of the next word.  Words are composed of
               alphanumeric characters (letters and digits).
        [1mbackward-word (M-b)[0m
-              Move back to the start of the current or previous  word.   Words
+              Move  back  to the start of the current or previous word.  Words
               are composed of alphanumeric characters (letters and digits).
        [1mprevious-screen-line[0m
-              Attempt  to move point to the same physical screen column on the
-              previous physical screen line. This will not  have  the  desired
-              effect  if  the current Readline line does not take up more than
-              one physical line or if point is not greater than the length  of
+              Attempt to move point to the same physical screen column on  the
+              previous  physical  screen  line. This will not have the desired
+              effect if the current readline line does not take up  more  than
+              one  physical line or if point is not greater than the length of
               the prompt plus the screen width.
        [1mnext-screen-line[0m
-              Attempt  to move point to the same physical screen column on the
+              Attempt to move point to the same physical screen column on  the
               next physical screen line. This will not have the desired effect
-              if  the  current  Readline  line  does not take up more than one
-              physical line or if the length of the current Readline  line  is
+              if the current readline line does not  take  up  more  than  one
+              physical  line  or if the length of the current readline line is
               not greater than the length of the prompt plus the screen width.
        [1mclear-display (M-C-l)[0m
-              Clear  the  screen  and,  if possible, the terminal's scrollback
-              buffer, then redraw the current line, leaving the  current  line
+              Clear the screen and, if  possible,  the  terminal's  scrollback
+              buffer,  then  redraw the current line, leaving the current line
               at the top of the screen.
        [1mclear-screen (C-l)[0m
               Clear the screen, then redraw the current line, leaving the cur-
-              rent line at the top of the screen.  With an  argument,  refresh
+              rent  line  at the top of the screen.  With an argument, refresh
               the current line without clearing the screen.
        [1mredraw-current-line[0m
               Refresh the current line.
@@ -563,96 +604,100 @@ READLINE(3)                Library Functions Manual                READLINE(3)
        [1maccept-line (Newline, Return)[0m
               Accept the line regardless of where the cursor is.  If this line
               is non-empty, it may be added to the history list for future re-
-              call  with  [1madd_history()[22m.   If  the  line is a modified history
+              call with [1madd_history()[22m.  If the  line  is  a  modified  history
               line, the history line is restored to its original state.
        [1mprevious-history (C-p)[0m
               Fetch the previous command from the history list, moving back in
               the list.
        [1mnext-history (C-n)[0m
-              Fetch  the next command from the history list, moving forward in
+              Fetch the next command from the history list, moving forward  in
               the list.
        [1mbeginning-of-history (M-<)[0m
               Move to the first line in the history.
        [1mend-of-history (M->)[0m
-              Move to the end of the input history, i.e., the  line  currently
+              Move  to  the end of the input history, i.e., the line currently
               being entered.
-       [1mreverse-search-history (C-r)[0m
-              Search  backward  starting  at  the current line and moving `up'
-              through the  history  as  necessary.   This  is  an  incremental
-              search.
-       [1mforward-search-history (C-s)[0m
-              Search  forward  starting  at the current line and moving `down'
-              through the  history  as  necessary.   This  is  an  incremental
-              search.
-       [1mnon-incremental-reverse-search-history (M-p)[0m
-              Search backward through the history starting at the current line
-              using a non-incremental search for  a  string  supplied  by  the
-              user.
-       [1mnon-incremental-forward-search-history (M-n)[0m
-              Search  forward  through  the  history  using  a non-incremental
-              search for a string supplied by the user.
-       [1mhistory-search-backward[0m
-              Search backward through the history for the string of characters
-              between the start of the current line and the current cursor po-
-              sition (the [4mpoint[24m).  The search string must match at the  begin-
-              ning of a history line.  This is a non-incremental search.
-       [1mhistory-search-forward[0m
-              Search  forward through the history for the string of characters
-              between the start of the current line and the point.  The search
-              string must match at the beginning of a history line.  This is a
-              non-incremental search.
-       [1mhistory-substring-search-backward[0m
-              Search backward through the history for the string of characters
-              between the start of the current line and the current cursor po-
-              sition (the [4mpoint[24m).  The search string may match anywhere  in  a
-              history line.  This is a non-incremental search.
-       [1mhistory-substring-search-forward[0m
-              Search  forward through the history for the string of characters
-              between the start of the current line and the point.  The search
-              string  may match anywhere in a history line.  This is a non-in-
-              cremental search.
-       [1myank-nth-arg (M-C-y)[0m
-              Insert the first argument to the previous command  (usually  the
-              second word on the previous line) at point.  With an argument [4mn[24m,
-              insert the [4mn[24mth word from the previous command (the words in  the
-              previous  command  begin  with word 0).  A negative argument in-
-              serts the [4mn[24mth word from the end of the previous  command.   Once
-              the  argument [4mn[24m is computed, the argument is extracted as if the
-              "![4mn[24m" history expansion had been specified.
-       [1myank-last-arg (M-., M-_)[0m
-              Insert the last argument to the previous command (the last  word
-              of the previous history entry).  With a numeric argument, behave
-              exactly like [1myank-nth-arg[22m.  Successive  calls  to  [1myank-last-arg[0m
-              move  back through the history list, inserting the last word (or
-              the word specified by the argument to the first  call)  of  each
-              line in turn.  Any numeric argument supplied to these successive
-              calls determines the direction to move through the  history.   A
-              negative  argument  switches  the  direction through the history
-              (back or forward).  The history expansion facilities are used to
-              extract  the last argument, as if the "!$" history expansion had
-              been specified.
        [1moperate-and-get-next (C-o)[0m
               Accept the current line for return to the calling application as
               if  a newline had been entered, and fetch the next line relative
               to the current line from the history for editing.  A numeric ar-
               gument,  if supplied, specifies the history entry to use instead
               of the current line.
+       [1mfetch-history[0m
+              With a numeric argument, fetch that entry from the history  list
+              and make it the current line.  Without an argument, move back to
+              the first entry in the history list.
+       [1mreverse-search-history (C-r)[0m
+              Search backward starting at the current  line  and  moving  `up'
+              through  the  history  as  necessary.   This  is  an incremental
+              search.
+       [1mforward-search-history (C-s)[0m
+              Search forward starting at the current line  and  moving  `down'
+              through  the  history  as  necessary.   This  is  an incremental
+              search.
+       [1mnon-incremental-reverse-search-history (M-p)[0m
+              Search backward through the history starting at the current line
+              using  a  non-incremental  search  for  a string supplied by the
+              user.
+       [1mnon-incremental-forward-search-history (M-n)[0m
+              Search forward  through  the  history  using  a  non-incremental
+              search for a string supplied by the user.
+       [1mhistory-search-backward[0m
+              Search backward through the history for the string of characters
+              between the start of the current line and the current cursor po-
+              sition  (the [4mpoint[24m).  The search string must match at the begin-
+              ning of a history line.  This is a non-incremental search.
+       [1mhistory-search-forward[0m
+              Search forward through the history for the string of  characters
+              between the start of the current line and the point.  The search
+              string must match at the beginning of a history line.  This is a
+              non-incremental search.
+       [1mhistory-substring-search-backward[0m
+              Search backward through the history for the string of characters
+              between the start of the current line and the current cursor po-
+              sition  (the  [4mpoint[24m).  The search string may match anywhere in a
+              history line.  This is a non-incremental search.
+       [1mhistory-substring-search-forward[0m
+              Search forward through the history for the string of  characters
+              between the start of the current line and the point.  The search
+              string may match anywhere in a history line.  This is a  non-in-
+              cremental search.
+       [1myank-nth-arg (M-C-y)[0m
+              Insert  the  first argument to the previous command (usually the
+              second word on the previous line) at point.  With an argument [4mn[24m,
+              insert  the [4mn[24mth word from the previous command (the words in the
+              previous command begin with word 0).  A  negative  argument  in-
+              serts  the  [4mn[24mth word from the end of the previous command.  Once
+              the argument [4mn[24m is computed, the argument is extracted as if  the
+              "![4mn[24m" history expansion had been specified.
+       [1myank-last-arg (M-., M-_)[0m
+              Insert  the last argument to the previous command (the last word
+              of the previous history entry).  With a numeric argument, behave
+              exactly  like  [1myank-nth-arg[22m.   Successive calls to [1myank-last-arg[0m
+              move back through the history list, inserting the last word  (or
+              the  word  specified  by the argument to the first call) of each
+              line in turn.  Any numeric argument supplied to these successive
+              calls  determines  the direction to move through the history.  A
+              negative argument switches the  direction  through  the  history
+              (back or forward).  The history expansion facilities are used to
+              extract the last argument, as if the "!$" history expansion  had
+              been specified.
 
    [1mCommands for Changing Text[0m
        [4mend-of-file[24m [1m(usually C-d)[0m
-              The character indicating end-of-file as  set,  for  example,  by
-              ``stty''.   If  this character is read when there are no charac-
-              ters on the line, and point is at the  beginning  of  the  line,
-              Readline interprets it as the end of input and returns [1mEOF[22m.
+              The  character  indicating  end-of-file  as set, for example, by
+              ``stty''.  If this character is read when there are  no  charac-
+              ters  on  the  line,  and point is at the beginning of the line,
+              readline interprets it as the end of input and returns [1mEOF[22m.
        [1mdelete-char (C-d)[0m
               Delete the character at point.  If this function is bound to the
               same character as the tty [1mEOF [22mcharacter, as [1mC-d [22mcommonly is, see
               above for the effects.
        [1mbackward-delete-char (Rubout)[0m
-              Delete  the  character  behind the cursor.  When given a numeric
+              Delete the character behind the cursor.  When  given  a  numeric
               argument, save the deleted text on the kill ring.
        [1mforward-backward-delete-char[0m
-              Delete the character under the cursor, unless the cursor  is  at
+              Delete  the  character under the cursor, unless the cursor is at
               the end of the line, in which case the character behind the cur-
               sor is deleted.
        [1mquoted-insert (C-q, C-v)[0m
@@ -663,32 +708,32 @@ READLINE(3)                Library Functions Manual                READLINE(3)
        [1mself-insert (a, b, A, 1, !, ...)[0m
               Insert the character typed.
        [1mtranspose-chars (C-t)[0m
-              Drag  the  character  before point forward over the character at
-              point, moving point forward as well.  If point is at the end  of
-              the  line, then this transposes the two characters before point.
+              Drag the character before point forward over  the  character  at
+              point,  moving point forward as well.  If point is at the end of
+              the line, then this transposes the two characters before  point.
               Negative arguments have no effect.
        [1mtranspose-words (M-t)[0m
-              Drag the word before point past the  word  after  point,  moving
-              point  over  that  word  as well.  If point is at the end of the
+              Drag  the  word  before  point past the word after point, moving
+              point over that word as well.  If point is at  the  end  of  the
               line, this transposes the last two words on the line.
        [1mupcase-word (M-u)[0m
-              Uppercase the current (or following) word.  With a negative  ar-
+              Uppercase  the current (or following) word.  With a negative ar-
               gument, uppercase the previous word, but do not move point.
        [1mdowncase-word (M-l)[0m
-              Lowercase  the current (or following) word.  With a negative ar-
+              Lowercase the current (or following) word.  With a negative  ar-
               gument, lowercase the previous word, but do not move point.
        [1mcapitalize-word (M-c)[0m
               Capitalize the current (or following) word.  With a negative ar-
               gument, capitalize the previous word, but do not move point.
        [1moverwrite-mode[0m
-              Toggle  overwrite mode.  With an explicit positive numeric argu-
+              Toggle overwrite mode.  With an explicit positive numeric  argu-
               ment, switches to overwrite mode.  With an explicit non-positive
               numeric argument, switches to insert mode.  This command affects
-              only [1memacs [22mmode; [1mvi [22mmode does overwrite differently.  Each  call
+              only  [1memacs [22mmode; [1mvi [22mmode does overwrite differently.  Each call
               to [4mreadline()[24m starts in insert mode.  In overwrite mode, charac-
-              ters bound to [1mself-insert [22mreplace the text at point rather  than
-              pushing  the  text  to  the  right.   Characters  bound to [1mback-[0m
-              [1mward-delete-char [22mreplace  the  character  before  point  with  a
+              ters  bound to [1mself-insert [22mreplace the text at point rather than
+              pushing the text  to  the  right.   Characters  bound  to  [1mback-[0m
+              [1mward-delete-char  [22mreplace  the  character  before  point  with a
               space.  By default, this command is unbound.
 
    [1mKilling and Yanking[0m
@@ -697,123 +742,123 @@ READLINE(3)                Library Functions Manual                READLINE(3)
        [1mbackward-kill-line (C-x Rubout)[0m
               Kill backward to the beginning of the line.
        [1munix-line-discard (C-u)[0m
-              Kill  backward  from  point  to  the beginning of the line.  The
+              Kill backward from point to the  beginning  of  the  line.   The
               killed text is saved on the kill-ring.
        [1mkill-whole-line[0m
-              Kill all characters on the current line, no matter  where  point
+              Kill  all  characters on the current line, no matter where point
               is.
        [1mkill-word (M-d)[0m
-              Kill  from  point  the  end  of  the current word, or if between
-              words, to the end of the next word.   Word  boundaries  are  the
+              Kill from point the end of  the  current  word,  or  if  between
+              words,  to  the  end  of the next word.  Word boundaries are the
               same as those used by [1mforward-word[22m.
        [1mbackward-kill-word (M-Rubout)[0m
-              Kill  the  word  behind  point.  Word boundaries are the same as
+              Kill the word behind point.  Word boundaries  are  the  same  as
               those used by [1mbackward-word[22m.
        [1munix-word-rubout (C-w)[0m
-              Kill the word behind point, using white space as a  word  bound-
+              Kill  the  word behind point, using white space as a word bound-
               ary.  The killed text is saved on the kill-ring.
        [1munix-filename-rubout[0m
-              Kill  the  word  behind  point,  using white space and the slash
-              character as the word boundaries.  The killed text is  saved  on
+              Kill the word behind point, using  white  space  and  the  slash
+              character  as  the word boundaries.  The killed text is saved on
               the kill-ring.
        [1mdelete-horizontal-space (M-\)[0m
               Delete all spaces and tabs around point.
        [1mkill-region[0m
-              Kill  the  text  between  the point and [4mmark[24m (saved cursor posi-
+              Kill the text between the point and  [4mmark[24m  (saved  cursor  posi-
               tion).  This text is referred to as the [4mregion[24m.
        [1mcopy-region-as-kill[0m
               Copy the text in the region to the kill buffer.
        [1mcopy-backward-word[0m
-              Copy the word before point to the kill buffer.  The word  bound-
+              Copy  the word before point to the kill buffer.  The word bound-
               aries are the same as [1mbackward-word[22m.
        [1mcopy-forward-word[0m
-              Copy  the  word  following  point  to the kill buffer.  The word
+              Copy the word following point to  the  kill  buffer.   The  word
               boundaries are the same as [1mforward-word[22m.
        [1myank (C-y)[0m
               Yank the top of the kill ring into the buffer at point.
        [1myank-pop (M-y)[0m
-              Rotate the kill ring, and yank the new top.  Only works  follow-
+              Rotate  the kill ring, and yank the new top.  Only works follow-
               ing [1myank [22mor [1myank-pop[22m.
 
    [1mNumeric Arguments[0m
        [1mdigit-argument (M-0, M-1, ..., M--)[0m
-              Add  this digit to the argument already accumulating, or start a
+              Add this digit to the argument already accumulating, or start  a
               new argument.  M-- starts a negative argument.
        [1muniversal-argument[0m
-              This is another way to specify an argument.  If this command  is
-              followed  by one or more digits, optionally with a leading minus
-              sign, those digits define the argument.  If the command is  fol-
+              This  is another way to specify an argument.  If this command is
+              followed by one or more digits, optionally with a leading  minus
+              sign,  those digits define the argument.  If the command is fol-
               lowed by digits, executing [1muniversal-argument [22magain ends the nu-
               meric argument, but is otherwise ignored.  As a special case, if
               this command is immediately followed by a character that is nei-
               ther a digit or minus sign, the argument count for the next com-
-              mand  is  multiplied  by  four.  The argument count is initially
-              one, so executing this function the first time makes  the  argu-
+              mand is multiplied by four.  The  argument  count  is  initially
+              one,  so  executing this function the first time makes the argu-
               ment count four, a second time makes the argument count sixteen,
               and so on.
 
    [1mCompleting[0m
        [1mcomplete (TAB)[0m
               Attempt to perform completion on the text before point.  The ac-
-              tual  completion  performed  is application-specific.  [1mBash[22m, for
-              instance, attempts completion treating the text  as  a  variable
-              (if  the  text begins with [1m$[22m), username (if the text begins with
-              [1m~[22m), hostname (if the text begins with [1m@[22m), or command  (including
-              aliases  and  functions)  in  turn.  If none of these produces a
-              match, filename completion is  attempted.   [1mGdb[22m,  on  the  other
-              hand,  allows completion of program functions and variables, and
+              tual completion performed is  application-specific.   [1mBash[22m,  for
+              instance,  attempts  completion  treating the text as a variable
+              (if the text begins with [1m$[22m), username (if the text  begins  with
+              [1m~[22m),  hostname (if the text begins with [1m@[22m), or command (including
+              aliases and functions) in turn.  If none  of  these  produces  a
+              match,  filename  completion  is  attempted.   [1mGdb[22m, on the other
+              hand, allows completion of program functions and variables,  and
               only attempts filename completion under certain circumstances.
        [1mpossible-completions (M-?)[0m
-              List the possible completions of the text  before  point.   When
+              List  the  possible  completions of the text before point.  When
               displaying completions, readline sets the number of columns used
-              for display to the value of [1mcompletion-display-width[22m, the  value
-              of  the  environment  variable  [1mCOLUMNS[22m, or the screen width, in
+              for  display to the value of [1mcompletion-display-width[22m, the value
+              of the environment variable [1mCOLUMNS[22m, or  the  screen  width,  in
               that order.
        [1minsert-completions (M-*)[0m
-              Insert all completions of the text before point that would  have
+              Insert  all completions of the text before point that would have
               been generated by [1mpossible-completions[22m.
        [1mmenu-complete[0m
-              Similar  to [1mcomplete[22m, but replaces the word to be completed with
-              a single match from the list of possible completions.   Repeated
-              execution  of  [1mmenu-complete  [22msteps through the list of possible
-              completions, inserting each match in turn.  At the  end  of  the
+              Similar to [1mcomplete[22m, but replaces the word to be completed  with
+              a  single match from the list of possible completions.  Repeated
+              execution of [1mmenu-complete [22msteps through the  list  of  possible
+              completions,  inserting  each  match in turn.  At the end of the
               list of completions, the bell is rung (subject to the setting of
               [1mbell-style[22m) and the original text is restored.  An argument of [4mn[0m
               moves [4mn[24m positions forward in the list of matches; a negative ar-
               gument may be used to move backward through the list.  This com-
               mand is intended to be bound to [1mTAB[22m, but is unbound by default.
        [1mmenu-complete-backward[0m
-              Identical  to [1mmenu-complete[22m, but moves backward through the list
-              of possible completions, as if [1mmenu-complete [22mhad  been  given  a
+              Identical to [1mmenu-complete[22m, but moves backward through the  list
+              of  possible  completions,  as if [1mmenu-complete [22mhad been given a
               negative argument.  This command is unbound by default.
        [1mdelete-char-or-list[0m
-              Deletes  the  character under the cursor if not at the beginning
-              or end of the line (like [1mdelete-char[22m).  If at  the  end  of  the
+              Deletes the character under the cursor if not at  the  beginning
+              or  end  of  the  line (like [1mdelete-char[22m).  If at the end of the
               line, behaves identically to [1mpossible-completions[22m.
 
    [1mKeyboard Macros[0m
        [1mstart-kbd-macro (C-x ()[0m
-              Begin  saving  the  characters  typed  into the current keyboard
+              Begin saving the characters  typed  into  the  current  keyboard
               macro.
        [1mend-kbd-macro (C-x ))[0m
               Stop saving the characters typed into the current keyboard macro
               and store the definition.
        [1mcall-last-kbd-macro (C-x e)[0m
-              Re-execute  the last keyboard macro defined, by making the char-
+              Re-execute the last keyboard macro defined, by making the  char-
               acters in the macro appear as if typed at the keyboard.
        [1mprint-last-kbd-macro ()[0m
-              Print the last keyboard macro defined in a format  suitable  for
+              Print  the  last keyboard macro defined in a format suitable for
               the [4minputrc[24m file.
 
    [1mMiscellaneous[0m
        [1mre-read-init-file (C-x C-r)[0m
-              Read  in  the  contents of the [4minputrc[24m file, and incorporate any
+              Read in the contents of the [4minputrc[24m file,  and  incorporate  any
               bindings or variable assignments found there.
        [1mabort (C-g)[0m
-              Abort the current editing command and ring the  terminal's  bell
+              Abort  the  current editing command and ring the terminal's bell
               (subject to the setting of [1mbell-style[22m).
        [1mdo-lowercase-version (M-A, M-B, M-[4m[22mx[24m[1m, ...)[0m
-              If  the  metafied character [4mx[24m is uppercase, run the command that
+              If the metafied character [4mx[24m is uppercase, run the  command  that
               is bound to the corresponding metafied lowercase character.  The
               behavior is undefined if [4mx[24m is already lowercase.
        [1mprefix-meta (ESC)[0m
@@ -821,80 +866,80 @@ READLINE(3)                Library Functions Manual                READLINE(3)
        [1mundo (C-_, C-x C-u)[0m
               Incremental undo, separately remembered for each line.
        [1mrevert-line (M-r)[0m
-              Undo  all changes made to this line.  This is like executing the
-              [1mundo [22mcommand enough times to return  the  line  to  its  initial
+              Undo all changes made to this line.  This is like executing  the
+              [1mundo  [22mcommand  enough  times  to  return the line to its initial
               state.
        [1mtilde-expand (M-&)[0m
               Perform tilde expansion on the current word.
        [1mset-mark (C-@, M-<space>)[0m
-              Set  the  mark to the point.  If a numeric argument is supplied,
+              Set the mark to the point.  If a numeric argument  is  supplied,
               the mark is set to that position.
        [1mexchange-point-and-mark (C-x C-x)[0m
-              Swap the point with the mark.  The current  cursor  position  is
-              set  to the saved position, and the old cursor position is saved
+              Swap  the  point  with the mark.  The current cursor position is
+              set to the saved position, and the old cursor position is  saved
               as the mark.
        [1mcharacter-search (C-])[0m
               A character is read and point is moved to the next occurrence of
-              that  character.   A negative count searches for previous occur-
-              rences.
+              that character.  A negative argument searches for  previous  oc-
+              currences.
        [1mcharacter-search-backward (M-C-])[0m
-              A character is read and point is moved to  the  previous  occur-
-              rence  of  that character.  A negative count searches for subse-
-              quent occurrences.
+              A  character  is  read and point is moved to the previous occur-
+              rence of that character.  A negative argument searches for  sub-
+              sequent occurrences.
        [1mskip-csi-sequence[0m
-              Read enough characters to consume a multi-key sequence  such  as
-              those  defined for keys like Home and End.  Such sequences begin
+              Read  enough  characters to consume a multi-key sequence such as
+              those defined for keys like Home and End.  Such sequences  begin
               with a Control Sequence Indicator (CSI), usually ESC-[.  If this
-              sequence  is  bound  to "\[", keys producing such sequences will
-              have no effect unless explicitly bound to  a  readline  command,
-              instead  of  inserting stray characters into the editing buffer.
+              sequence is bound to "\[", keys producing  such  sequences  will
+              have  no  effect  unless explicitly bound to a readline command,
+              instead of inserting stray characters into the  editing  buffer.
               This is unbound by default, but usually bound to ESC-[.
        [1minsert-comment (M-#)[0m
-              Without a numeric argument,  the  value  of  the  readline  [1mcom-[0m
-              [1mment-begin  [22mvariable is inserted at the beginning of the current
+              Without  a  numeric  argument,  the  value  of the readline [1mcom-[0m
+              [1mment-begin [22mvariable is inserted at the beginning of the  current
               line.  If a numeric argument is supplied, this command acts as a
-              toggle:  if  the  characters at the beginning of the line do not
-              match the value of [1mcomment-begin[22m, the value is inserted,  other-
+              toggle: if the characters at the beginning of the  line  do  not
+              match  the value of [1mcomment-begin[22m, the value is inserted, other-
               wise the characters in [1mcomment-begin [22mare deleted from the begin-
-              ning of the line.  In either case, the line is accepted as if  a
-              newline  had  been  typed.   The  default value of [1mcomment-begin[0m
-              makes the current line a shell comment.  If a  numeric  argument
+              ning  of the line.  In either case, the line is accepted as if a
+              newline had been typed.   The  default  value  of  [1mcomment-begin[0m
+              makes  the  current line a shell comment.  If a numeric argument
               causes the comment character to be removed, the line will be ex-
               ecuted by the shell.
        [1mdump-functions[0m
-              Print all of the functions and their key bindings to  the  read-
+              Print  all  of the functions and their key bindings to the read-
               line output stream.  If a numeric argument is supplied, the out-
-              put is formatted in such a way that it can be made  part  of  an
+              put  is  formatted  in such a way that it can be made part of an
               [4minputrc[24m file.
        [1mdump-variables[0m
-              Print  all  of  the  settable  variables and their values to the
-              readline output stream.  If a numeric argument is supplied,  the
+              Print all of the settable variables  and  their  values  to  the
+              readline  output stream.  If a numeric argument is supplied, the
               output is formatted in such a way that it can be made part of an
               [4minputrc[24m file.
        [1mdump-macros[0m
-              Print all of the readline key sequences bound to macros and  the
-              strings  they  output.   If  a numeric argument is supplied, the
+              Print  all of the readline key sequences bound to macros and the
+              strings they output.  If a numeric  argument  is  supplied,  the
               output is formatted in such a way that it can be made part of an
               [4minputrc[24m file.
        [1memacs-editing-mode (C-e)[0m
-              When  in  [1mvi [22mcommand mode, this causes a switch to [1memacs [22mediting
+              When in [1mvi [22mcommand mode, this causes a switch to  [1memacs  [22mediting
               mode.
        [1mvi-editing-mode (M-C-j)[0m
-              When in [1memacs [22mediting mode, this causes a switch to  [1mvi  [22mediting
+              When  in  [1memacs [22mediting mode, this causes a switch to [1mvi [22mediting
               mode.
 
 [1mDEFAULT KEY BINDINGS[0m
-       The  following is a list of the default emacs and vi bindings.  Charac-
-       ters with the eighth bit set are written as M-<character>, and are  re-
-       ferred  to  as [4mmetafied[24m characters.  The printable ASCII characters not
-       mentioned in the list of emacs  standard  bindings  are  bound  to  the
-       [1mself-insert  [22mfunction,  which just inserts the given character into the
+       The following is a list of the default emacs and vi bindings.   Charac-
+       ters  with the eighth bit set are written as M-<character>, and are re-
+       ferred to as [4mmetafied[24m characters.  The printable ASCII  characters  not
+       mentioned  in  the  list  of  emacs  standard bindings are bound to the
+       [1mself-insert [22mfunction, which just inserts the given character  into  the
        input line.  In vi insertion mode, all characters not specifically men-
        tioned are bound to [1mself-insert[22m.  Characters assigned to signal genera-
        tion by [4mstty[24m(1) or the terminal driver, such as C-Z or C-C, retain that
-       function.   Upper  and  lower case metafied characters are bound to the
-       same function in the emacs mode meta keymap.  The remaining  characters
-       are  unbound,  which  causes  readline to ring the bell (subject to the
+       function.  Upper and lower case metafied characters are  bound  to  the
+       same  function in the emacs mode meta keymap.  The remaining characters
+       are unbound, which causes readline to ring the  bell  (subject  to  the
        setting of the [1mbell-style [22mvariable).
 
    [1mEmacs Mode[0m
@@ -1109,14 +1154,14 @@ READLINE(3)                Library Functions Manual                READLINE(3)
        chet.ramey@case.edu
 
 [1mBUG REPORTS[0m
-       If you find a bug in [1mreadline, [22myou should report it.   But  first,  you
-       should  make  sure  that it really is a bug, and that it appears in the
+       If  you  find  a bug in [1mreadline, [22myou should report it.  But first, you
+       should make sure that it really is a bug, and that it  appears  in  the
        latest version of the [1mreadline [22mlibrary that you have.
 
-       Once you have determined that a bug actually exists, mail a bug  report
-       to  [4mbug-readline[24m@[4mgnu.org[24m.   If  you have a fix, you are welcome to mail
-       that as well!  Suggestions  and  `philosophical'  bug  reports  may  be
-       mailed  to  [4mbug-readline[24m@[4mgnu.org[24m  or  posted  to  the  Usenet newsgroup
+       Once  you have determined that a bug actually exists, mail a bug report
+       to [4mbug-readline[24m@[4mgnu.org[24m.  If you have a fix, you are  welcome  to  mail
+       that  as  well!   Suggestions  and  `philosophical'  bug reports may be
+       mailed to  [4mbug-readline[24m@[4mgnu.org[24m  or  posted  to  the  Usenet  newsgroup
        [1mgnu.bash.bug[22m.
 
        Comments and bug reports concerning this manual page should be directed
@@ -1127,4 +1172,4 @@ READLINE(3)                Library Functions Manual                READLINE(3)
 
 
 
-GNU Readline 8.1                2020 October 29                    READLINE(3)
+GNU Readline 8.2               2022 September 19                   READLINE(3)

@@ -1,6 +1,6 @@
 /* terminal.c -- controlling the terminal with termcap. */
 
-/* Copyright (C) 1996-2017 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2022 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.      
@@ -91,11 +91,11 @@
 #  include <windows.h>
 #  include <wincon.h>
 
-static void _win_get_screensize PARAMS((int *, int *));
+static void _win_get_screensize (int *, int *);
 #endif
 
 #if defined (__EMX__)
-static void _emx_get_screensize PARAMS((int *, int *));
+static void _emx_get_screensize (int *, int *);
 #endif
 
 /* If the calling application sets this to a non-zero value, readline will
@@ -198,9 +198,18 @@ static char *_rl_term_kD;
 /* Insert key */
 static char *_rl_term_kI;
 
+/* Page up and page down keys */
+static char *_rl_term_kP;
+static char *_rl_term_kN;
+
 /* Cursor control */
 static char *_rl_term_vs;	/* very visible */
 static char *_rl_term_ve;	/* normal */
+
+/* User-settable color sequences to begin and end the active region. Defaults
+   are rl_term_so and rl_term_se on non-dumb terminals. */
+char *_rl_active_region_start_color = NULL;
+char *_rl_active_region_end_color = NULL;
 
 /* It's not clear how HPUX is so broken here. */
 #ifdef TGETENT_BROKEN
@@ -215,7 +224,7 @@ static char *_rl_term_ve;	/* normal */
 #endif
 #define TGETFLAG(cap)	(tgetflag (cap) == TGETFLAG_SUCCESS)
 
-static void bind_termcap_arrow_keys PARAMS((Keymap));
+static void bind_termcap_arrow_keys (Keymap);
 
 /* Variables that hold the screen dimensions, used by the display code. */
 int _rl_screenwidth, _rl_screenheight, _rl_screenchars;
@@ -410,8 +419,12 @@ _rl_sigwinch_resize_terminal (void)
 void
 rl_resize_terminal (void)
 {
+  int width, height;
+
+  width = _rl_screenwidth;
+  height = _rl_screenheight;
   _rl_get_screen_size (fileno (rl_instream), 1);
-  if (_rl_echoing_p)
+  if (_rl_echoing_p && (width != _rl_screenwidth || height != _rl_screenheight))
     {
       if (CUSTOM_REDISPLAY_FUNC ())
 	rl_forced_update_display ();
@@ -447,6 +460,8 @@ static const struct _tc_string tc_strings[] =
   { "kD", &_rl_term_kD },	/* delete */
   { "kH", &_rl_term_kH },	/* home down ?? */
   { "kI", &_rl_term_kI },	/* insert */
+  { "kN", &_rl_term_kN },	/* page down */
+  { "kP", &_rl_term_kP },	/* page up */
   { "kd", &_rl_term_kd },
   { "ke", &_rl_term_ke },	/* end keypad mode */
   { "kh", &_rl_term_kh },	/* home */
@@ -488,7 +503,7 @@ _rl_init_terminal_io (const char *terminal_name)
 {
   const char *term;
   char *buffer;
-  int tty, tgetent_ret, dumbterm;
+  int tty, tgetent_ret, dumbterm, reset_region_colors;
 
   term = terminal_name ? terminal_name : sh_get_env_value ("TERM");
   _rl_term_clrpag = _rl_term_cr = _rl_term_clreol = _rl_term_clrscroll = (char *)NULL;
@@ -498,6 +513,8 @@ _rl_init_terminal_io (const char *terminal_name)
     term = "dumb";
 
   dumbterm = STREQ (term, "dumb");
+
+  reset_region_colors = 1;
 
 #ifdef __MSDOS__
   _rl_term_im = _rl_term_ei = _rl_term_ic = _rl_term_IC = (char *)NULL;
@@ -510,6 +527,7 @@ _rl_init_terminal_io (const char *terminal_name)
   _rl_term_goto = _rl_term_pc = _rl_term_ip = (char *)NULL;
   _rl_term_ks = _rl_term_ke =_rl_term_vs = _rl_term_ve = (char *)NULL;
   _rl_term_kh = _rl_term_kH = _rl_term_at7 = _rl_term_kI = (char *)NULL;
+  _rl_term_kN = _rl_term_kP = (char *)NULL;
   _rl_term_so = _rl_term_se = (char *)NULL;
 #if defined(HACK_TERMCAP_MOTION)
   _rl_term_forward_char = (char *)NULL;
@@ -572,6 +590,7 @@ _rl_init_terminal_io (const char *terminal_name)
       _rl_term_ku = _rl_term_kd = _rl_term_kl = _rl_term_kr = (char *)NULL;
       _rl_term_kh = _rl_term_kH = _rl_term_kI = _rl_term_kD = (char *)NULL;
       _rl_term_ks = _rl_term_ke = _rl_term_at7 = (char *)NULL;
+      _rl_term_kN = _rl_term_kP = (char *)NULL;
       _rl_term_mm = _rl_term_mo = (char *)NULL;
       _rl_term_ve = _rl_term_vs = (char *)NULL;
       _rl_term_forward_char = (char *)NULL;
@@ -582,6 +601,11 @@ _rl_init_terminal_io (const char *terminal_name)
 	 escape sequences */
       _rl_enable_bracketed_paste = 0;
 
+      /* No terminal so/se capabilities. */
+      _rl_enable_active_region = 0;
+      _rl_reset_region_color (0, NULL);
+      _rl_reset_region_color (1, NULL);
+    
       /* Reasonable defaults for tgoto().  Readline currently only uses
          tgoto if _rl_term_IC or _rl_term_DC is defined, but just in case we
          change that later... */
@@ -636,8 +660,14 @@ _rl_init_terminal_io (const char *terminal_name)
   /* There's no way to determine whether or not a given terminal supports
      bracketed paste mode, so we assume a terminal named "dumb" does not. */
   if (dumbterm)
-    _rl_enable_bracketed_paste = 0;
-    
+    _rl_enable_bracketed_paste = _rl_enable_active_region = 0;
+
+  if (reset_region_colors)
+    {
+      _rl_reset_region_color (0, _rl_term_so);
+      _rl_reset_region_color (1, _rl_term_se);
+    }
+
   return 0;
 }
 
@@ -660,6 +690,9 @@ bind_termcap_arrow_keys (Keymap map)
 
   rl_bind_keyseq_if_unbound (_rl_term_kD, rl_delete);
   rl_bind_keyseq_if_unbound (_rl_term_kI, rl_overwrite_mode);	/* Insert */
+
+  rl_bind_keyseq_if_unbound (_rl_term_kN, rl_history_search_forward);	/* Page Down */
+  rl_bind_keyseq_if_unbound (_rl_term_kP, rl_history_search_backward);	/* Page Up */
 
   _rl_keymap = xkeymap;
 }
@@ -803,6 +836,67 @@ _rl_standout_off (void)
 #ifndef __MSDOS__
   if (_rl_term_so && _rl_term_se)
     tputs (_rl_term_se, 1, _rl_output_character_function);
+#endif
+}
+
+/* **************************************************************** */
+/*								    */
+/*	     Controlling color for a portion of the line	    */
+/*								    */
+/* **************************************************************** */
+
+/* Reset the region color variables to VALUE depending on WHICH (0 == start,
+   1 == end). This is where all the memory allocation for the color variable
+   strings is performed. We might want to pass a flag saying whether or not
+   to translate VALUE like a key sequence, but it doesn't really matter. */
+int
+_rl_reset_region_color (int which, const char *value)
+{
+  int len;
+
+  if (which == 0)
+    {
+      xfree (_rl_active_region_start_color);
+      if (value && *value)
+	{
+	  _rl_active_region_start_color = (char *)xmalloc (2 * strlen (value) + 1);
+	  rl_translate_keyseq (value, _rl_active_region_start_color, &len);
+	  _rl_active_region_start_color[len] = '\0';
+	}
+      else
+	_rl_active_region_start_color = NULL;
+    }
+  else
+    {
+      xfree (_rl_active_region_end_color);
+      if (value && *value)
+	{
+	  _rl_active_region_end_color = (char *)xmalloc (2 * strlen (value) + 1);
+	  rl_translate_keyseq (value, _rl_active_region_end_color, &len);
+	  _rl_active_region_end_color[len] = '\0';
+	}
+      else
+	_rl_active_region_end_color = NULL;
+    }
+
+  return 0;
+}
+
+void
+_rl_region_color_on (void)
+{
+#ifndef __MSDOS__
+  if (_rl_active_region_start_color && _rl_active_region_end_color)
+    tputs (_rl_active_region_start_color, 1, _rl_output_character_function);
+#endif
+}
+
+void
+_rl_region_color_off (void)
+{
+#ifndef __MSDOS__
+  if (_rl_active_region_start_color && _rl_active_region_end_color)
+    tputs (_rl_active_region_end_color, 1, _rl_output_character_function);
 #endif
 }
 

@@ -1,4 +1,4 @@
-\[Readline-specific changelog.  Descriptions of changes to the source are
+[Readline-specific changelog.  Descriptions of changes to the source are
  found in the bash changelog.]
 
 				    6/9
@@ -1403,3 +1403,48 @@ configure.ac
 
 INSTALL
 	- document new --enable-bracketed-paste-default configure option
+
+				   12/4
+				   ----
+[readline-8.1 frozen]
+
+				 8/17/2021
+				 ---------
+configure.ac
+	- use `:+' when testing the value of $GCC, since autoconf seems to
+	  set it to the empty string if gcc isn't the compiler. Reported by
+	  Osipov, Michael (LDA IT PLM) <michael.osipov@siemens.com>
+
+				    9/2
+				    ---
+configure.ac
+	- AC_HELP_STRING -> AS_HELP_STRING
+	- AC_OUTPUT: split into AC_CONFIG_FILES and AC_CONFIG_COMMANDS, call
+	  AC_OUTPUT without any parameters
+
+				    9/3
+				    ---
+configure.ac, config.h.in
+	- AC_TYPE_SIGNAL,BASH_TYPE_SIGHANDLER: remove calls, remove mention of
+          RETSIGTYPE and VOID_SIGHANDLER 
+	- AC_HEADER_TIME: removed
+	- AC_USE_SYSTEM_EXTENSIONS: use instead of AC_AIX and AC_MINIX
+	- AC_HEADER_STDC: removed
+	- BASH_FUNC_CTYPE_NONASCII: removed
+
+				   11/25
+				   -----
+history.pc.in
+	- pkgconfig file for history library. From Siteshwar Vashisht
+	  <svashisht@redhat.com>
+
+configure.ac,MANIFEST,Makefile.in
+	- support for creating history.pc
+
+				 3/29/2022
+				 ---------
+configure.ac
+	- new option: --with-shared-termcap-library: use to force the shared
+	  readline library to be linked against a shared termcap/curses library
+	  that configure finds. If the argument begins with `-l', use that
+	  library instead; updated INSTALL accordingly

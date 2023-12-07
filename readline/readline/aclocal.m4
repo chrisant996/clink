@@ -3,55 +3,8 @@ dnl Bash specific tests
 dnl
 dnl Some derived from PDKSH 5.1.3 autoconf tests
 dnl
-
-AC_DEFUN(BASH_C_LONG_LONG,
-[AC_CACHE_CHECK(for long long, ac_cv_c_long_long,
-[if test "$GCC" = yes; then
-  ac_cv_c_long_long=yes
-else
-AC_TRY_RUN([
-#include <stdlib.h>
-int
-main()
-{
-long long foo = 0;
-exit(sizeof(long long) < sizeof(long));
-}
-], ac_cv_c_long_long=yes, ac_cv_c_long_long=no)
-fi])
-if test $ac_cv_c_long_long = yes; then
-  AC_DEFINE(HAVE_LONG_LONG, 1, [Define if the `long long' type works.])
-fi
-])
-
+dnl Copyright (C) 1987-2021 Free Software Foundation, Inc.
 dnl
-dnl This is very similar to AC_C_LONG_DOUBLE, with the fix for IRIX
-dnl (< changed to <=) added.
-dnl
-AC_DEFUN(BASH_C_LONG_DOUBLE,
-[AC_CACHE_CHECK(for long double, ac_cv_c_long_double,
-[if test "$GCC" = yes; then
-  ac_cv_c_long_double=yes
-else
-AC_TRY_RUN([
-#include <stdlib.h>
-int
-main()
-{
-  /* The Stardent Vistra knows sizeof(long double), but does not
-     support it. */
-  long double foo = 0.0;
-  /* On Ultrix 4.3 cc, long double is 4 and double is 8.  */
-  /* On IRIX 5.3, the compiler converts long double to double with a warning,
-     but compiles this successfully. */
-  exit(sizeof(long double) <= sizeof(double));
-}
-], ac_cv_c_long_double=yes, ac_cv_c_long_double=no)
-fi])
-if test $ac_cv_c_long_double = yes; then
-  AC_DEFINE(HAVE_LONG_DOUBLE, 1, [Define if the `long double' type works.])
-fi
-])
 
 dnl
 dnl Check for <inttypes.h>.  This is separated out so that it can be
@@ -72,13 +25,14 @@ dnl
 dnl BASH_CHECK_TYPE(TYPE, HEADERS, DEFAULT[, VALUE-IF-FOUND])
 AC_DEFUN(BASH_CHECK_TYPE,
 [
-AC_REQUIRE([AC_HEADER_STDC])dnl
 AC_REQUIRE([BASH_HEADER_INTTYPES])
 AC_MSG_CHECKING(for $1)
 AC_CACHE_VAL(bash_cv_type_$1,
 [AC_EGREP_CPP($1, [#include <sys/types.h>
-#if STDC_HEADERS
+#if HAVE_STDLIB_H
 #include <stdlib.h>
+#endif
+#if HAVE_STDDEF_H
 #include <stddef.h>
 #endif
 #if HAVE_INTTYPES_H
@@ -106,32 +60,14 @@ dnl AC_CHECK_DECL
 dnl
 AC_DEFUN(BASH_CHECK_DECL,
 [
-AC_REQUIRE([AC_HEADER_STDC])
 AC_REQUIRE([BASH_HEADER_INTTYPES])
-AC_CACHE_CHECK([for declaration of $1], bash_cv_decl_$1,
-[AC_TRY_LINK(
-[
-#if STDC_HEADERS
-#  include <stdlib.h>
-#endif
-#if HAVE_INTTYPES_H
-#  include <inttypes.h>
-#endif
-],
-[return !$1;],
-bash_cv_decl_$1=yes, bash_cv_decl_$1=no)])
-bash_tr_func=HAVE_DECL_`echo $1 | tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'`
-if test $bash_cv_decl_$1 = yes; then
-  AC_DEFINE_UNQUOTED($bash_tr_func, 1)
-else
-  AC_DEFINE_UNQUOTED($bash_tr_func, 0)
-fi
+AC_CHECK_DECLS([$1])
 ])
 
 AC_DEFUN(BASH_DECL_PRINTF,
 [AC_MSG_CHECKING(for declaration of printf in <stdio.h>)
 AC_CACHE_VAL(bash_cv_printf_declared,
-[AC_TRY_RUN([
+[AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <stdio.h>
 #ifdef __STDC__
 typedef int (*_bashfunc)(const char *, ...);
@@ -146,7 +82,7 @@ _bashfunc pf;
 pf = (_bashfunc) printf;
 exit(pf == 0);
 }
-], bash_cv_printf_declared=yes, bash_cv_printf_declared=no,
+]])], [bash_cv_printf_declared=yes], [bash_cv_printf_declared=no],
    [AC_MSG_WARN(cannot check printf declaration if cross compiling -- defaulting to yes)
     bash_cv_printf_declared=yes]
 )])
@@ -173,13 +109,13 @@ dnl
 AC_DEFUN(BASH_DECL_UNDER_SYS_SIGLIST,
 [AC_MSG_CHECKING([for _sys_siglist in signal.h or unistd.h])
 AC_CACHE_VAL(bash_cv_decl_under_sys_siglist,
-[AC_TRY_COMPILE([
+[AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #include <sys/types.h>
 #include <signal.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif], [ char *msg = _sys_siglist[2]; ],
-  bash_cv_decl_under_sys_siglist=yes, bash_cv_decl_under_sys_siglist=no,
+#endif]], [[ char *msg = _sys_siglist[2]; ]])],
+  [bash_cv_decl_under_sys_siglist=yes], [bash_cv_decl_under_sys_siglist=no],
   [AC_MSG_WARN(cannot check for _sys_siglist[] if cross compiling -- defaulting to no)])])dnl
 AC_MSG_RESULT($bash_cv_decl_under_sys_siglist)
 if test $bash_cv_decl_under_sys_siglist = yes; then
@@ -191,7 +127,7 @@ AC_DEFUN(BASH_UNDER_SYS_SIGLIST,
 [AC_REQUIRE([BASH_DECL_UNDER_SYS_SIGLIST])
 AC_MSG_CHECKING([for _sys_siglist in system C library])
 AC_CACHE_VAL(bash_cv_under_sys_siglist,
-[AC_TRY_RUN([
+[AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <sys/types.h>
 #include <signal.h>
 #ifdef HAVE_UNISTD_H
@@ -206,21 +142,34 @@ main()
 {
 char *msg = (char *)_sys_siglist[2];
 exit(msg == 0);
-}],
-	bash_cv_under_sys_siglist=yes, bash_cv_under_sys_siglist=no,
+}
+]])],
+	[bash_cv_under_sys_siglist=yes], [bash_cv_under_sys_siglist=no],
 	[AC_MSG_WARN(cannot check for _sys_siglist[] if cross compiling -- defaulting to no)
-	 bash_cv_under_sys_siglist=no])])
+	 bash_cv_under_sys_siglist=no]
+)])
 AC_MSG_RESULT($bash_cv_under_sys_siglist)
 if test $bash_cv_under_sys_siglist = yes; then
 AC_DEFINE(HAVE_UNDER_SYS_SIGLIST)
 fi
 ])
 
+dnl this defines HAVE_DECL_SYS_SIGLIST
+AC_DEFUN([BASH_DECL_SYS_SIGLIST],
+[AC_CHECK_DECLS([sys_siglist],,,
+[#include <signal.h>
+/* NetBSD declares sys_siglist in unistd.h.  */
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+])
+])
+
 AC_DEFUN(BASH_SYS_SIGLIST,
-[AC_REQUIRE([AC_DECL_SYS_SIGLIST])
+[AC_REQUIRE([BASH_DECL_SYS_SIGLIST])
 AC_MSG_CHECKING([for sys_siglist in system C library])
 AC_CACHE_VAL(bash_cv_sys_siglist,
-[AC_TRY_RUN([
+[AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <sys/types.h>
 #include <signal.h>
 #ifdef HAVE_UNISTD_H
@@ -235,10 +184,11 @@ main()
 {
 char *msg = sys_siglist[2];
 exit(msg == 0);
-}],
-	bash_cv_sys_siglist=yes, bash_cv_sys_siglist=no,
+}
+]])], [bash_cv_sys_siglist=yes], [bash_cv_sys_siglist=no],
 	[AC_MSG_WARN(cannot check for sys_siglist if cross compiling -- defaulting to no)
-	 bash_cv_sys_siglist=no])])
+	 bash_cv_sys_siglist=no]
+)])
 AC_MSG_RESULT($bash_cv_sys_siglist)
 if test $bash_cv_sys_siglist = yes; then
 AC_DEFINE(HAVE_SYS_SIGLIST)
@@ -263,11 +213,15 @@ dnl Check for sys_errlist[] and sys_nerr, check for declaration
 AC_DEFUN(BASH_SYS_ERRLIST,
 [AC_MSG_CHECKING([for sys_errlist and sys_nerr])
 AC_CACHE_VAL(bash_cv_sys_errlist,
-[AC_TRY_LINK([#include <errno.h>],
-[extern char *sys_errlist[];
- extern int sys_nerr;
- char *msg = sys_errlist[sys_nerr - 1];],
-    bash_cv_sys_errlist=yes, bash_cv_sys_errlist=no)])dnl
+[AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#include <errno.h>
+]],[[
+extern char *sys_errlist[];
+extern int sys_nerr;
+char *msg = sys_errlist[sys_nerr - 1];
+]] )],
+[bash_cv_sys_errlist=yes], [bash_cv_sys_errlist=no]
+)])
 AC_MSG_RESULT($bash_cv_sys_errlist)
 if test $bash_cv_sys_errlist = yes; then
 AC_DEFINE(HAVE_SYS_ERRLIST)
@@ -280,7 +234,7 @@ dnl
 AC_DEFUN(BASH_FUNC_DUP2_CLOEXEC_CHECK,
 [AC_MSG_CHECKING(if dup2 fails to clear the close-on-exec flag)
 AC_CACHE_VAL(bash_cv_dup2_broken,
-[AC_TRY_RUN([
+[AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <sys/types.h>
 #include <fcntl.h>
 #include <stdlib.h>
@@ -298,10 +252,10 @@ main()
   /* fl will be 1 if dup2 did not reset the close-on-exec flag. */
   exit(fl != 1);
 }
-], bash_cv_dup2_broken=yes, bash_cv_dup2_broken=no,
+]])], [bash_cv_dup2_broken=yes], [bash_cv_dup2_broken=no],
     [AC_MSG_WARN(cannot check dup2 if cross compiling -- defaulting to no)
-     bash_cv_dup2_broken=no])
-])
+     bash_cv_dup2_broken=no]
+)])
 AC_MSG_RESULT($bash_cv_dup2_broken)
 if test $bash_cv_dup2_broken = yes; then
 AC_DEFINE(DUP2_BROKEN)
@@ -311,11 +265,12 @@ fi
 AC_DEFUN(BASH_FUNC_STRSIGNAL,
 [AC_MSG_CHECKING([for the existence of strsignal])
 AC_CACHE_VAL(bash_cv_have_strsignal,
-[AC_TRY_LINK([#include <sys/types.h>
+[AC_LINK_IFELSE(
+	[AC_LANG_PROGRAM([[#include <sys/types.h>
 #include <signal.h>
-#include <string.h>],
-[char *s = (char *)strsignal(2);],
- bash_cv_have_strsignal=yes, bash_cv_have_strsignal=no)])
+#include <string.h>]],
+[[char *s = (char *)strsignal(2);]])],
+ [bash_cv_have_strsignal=yes], [bash_cv_have_strsignal=no])])
 AC_MSG_RESULT($bash_cv_have_strsignal)
 if test $bash_cv_have_strsignal = yes; then
 AC_DEFINE(HAVE_STRSIGNAL)
@@ -327,7 +282,7 @@ AC_DEFUN(BASH_FUNC_OPENDIR_CHECK,
 [AC_REQUIRE([AC_HEADER_DIRENT])dnl
 AC_MSG_CHECKING(if opendir() opens non-directories)
 AC_CACHE_VAL(bash_cv_opendir_not_robust,
-[AC_TRY_RUN([
+[AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <stdio.h>
 #include <sys/types.h>
 #include <fcntl.h>
@@ -370,33 +325,14 @@ dir = opendir("bash-aclocal/not_a_directory");
 unlink("bash-aclocal/not_a_directory");
 rmdir("bash-aclocal");
 exit (dir == 0);
-}], bash_cv_opendir_not_robust=yes,bash_cv_opendir_not_robust=no,
+}
+]])], [bash_cv_opendir_not_robust=yes], [bash_cv_opendir_not_robust=no],
     [AC_MSG_WARN(cannot check opendir if cross compiling -- defaulting to no)
      bash_cv_opendir_not_robust=no]
 )])
 AC_MSG_RESULT($bash_cv_opendir_not_robust)
 if test $bash_cv_opendir_not_robust = yes; then
 AC_DEFINE(OPENDIR_NOT_ROBUST)
-fi
-])
-
-dnl
-AC_DEFUN(BASH_TYPE_SIGHANDLER,
-[AC_MSG_CHECKING([whether signal handlers are of type void])
-AC_CACHE_VAL(bash_cv_void_sighandler,
-[AC_TRY_COMPILE([#include <sys/types.h>
-#include <signal.h>
-#ifdef signal
-#undef signal
-#endif
-#ifdef __cplusplus
-extern "C"
-#endif
-void (*signal ()) ();],
-[int i;], bash_cv_void_sighandler=yes, bash_cv_void_sighandler=no)])dnl
-AC_MSG_RESULT($bash_cv_void_sighandler)
-if test $bash_cv_void_sighandler = yes; then
-AC_DEFINE(VOID_SIGHANDLER)
 fi
 ])
 
@@ -487,82 +423,98 @@ else
 fi
 ])
 
-AC_DEFUN(BASH_TYPE_LONG_LONG,
-[
-AC_CACHE_CHECK([for long long], bash_cv_type_long_long,
-[AC_TRY_LINK([
-long long ll = 1; int i = 63;],
-[
-long long llm = (long long) -1;
-return ll << i | ll >> i | llm / ll | llm % ll;
-], bash_cv_type_long_long='long long', bash_cv_type_long_long='long')])
-if test "$bash_cv_type_long_long" = 'long long'; then
-  AC_DEFINE(HAVE_LONG_LONG, 1)
-fi
-])
-
-AC_DEFUN(BASH_TYPE_UNSIGNED_LONG_LONG,
-[
-AC_CACHE_CHECK([for unsigned long long], bash_cv_type_unsigned_long_long,
-[AC_TRY_LINK([
-unsigned long long ull = 1; int i = 63;],
-[
-unsigned long long ullmax = (unsigned long long) -1;
-return ull << i | ull >> i | ullmax / ull | ullmax % ull;
-], bash_cv_type_unsigned_long_long='unsigned long long',
-   bash_cv_type_unsigned_long_long='unsigned long')])
-if test "$bash_cv_type_unsigned_long_long" = 'unsigned long long'; then
-  AC_DEFINE(HAVE_UNSIGNED_LONG_LONG, 1)
-fi
-])
-
-dnl
-dnl Type of struct rlimit fields: some systems (OSF/1, NetBSD, RISC/os 5.0)
-dnl have a rlim_t, others (4.4BSD based systems) use quad_t, others use
-dnl long and still others use int (HP-UX 9.01, SunOS 4.1.3).  To simplify
-dnl matters, this just checks for rlim_t, quad_t, or long.
-dnl
-AC_DEFUN(BASH_TYPE_RLIMIT,
-[AC_MSG_CHECKING(for size and type of struct rlimit fields)
-AC_CACHE_VAL(bash_cv_type_rlimit,
-[AC_TRY_COMPILE([#include <sys/types.h>
-#include <sys/resource.h>],
-[rlim_t xxx;], bash_cv_type_rlimit=rlim_t,[
-AC_TRY_RUN([
-#include <sys/types.h>
+AC_DEFUN(BASH_SIZEOF_RLIMIT,
+[AC_MSG_CHECKING(for size of struct rlimit fields)
+AC_CACHE_VAL(bash_cv_sizeof_rlim_cur,
+[AC_RUN_IFELSE([AC_LANG_SOURCE([[
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
-#include <sys/resource.h>
+#endif
 #include <stdlib.h>
-int
+#include <sys/resource.h>
 main()
 {
-#ifdef HAVE_QUAD_T
-  struct rlimit rl;
-  if (sizeof(rl.rlim_cur) == sizeof(quad_t))
-    exit(0);
-#endif
-  exit(1);
-}], bash_cv_type_rlimit=quad_t, bash_cv_type_rlimit=long,
-        [AC_MSG_WARN(cannot check quad_t if cross compiling -- defaulting to long)
-         bash_cv_type_rlimit=long])])
+struct rlimit r;
+exit(sizeof (r.rlim_cur));
+}
+]])], [bash_cv_sizeof_rlim_cur=$?], [bash_cv_sizeof_rlim_cur=$?],
+	[AC_MSG_WARN(cannot check size of rlimit fields if cross compiling -- defaulting to long)
+	 bash_cv_sizeof_rlim_cur=$ac_cv_sizeof_long]
+)])
+AC_MSG_RESULT($bash_cv_sizeof_rlim_cur)
 ])
-AC_MSG_RESULT($bash_cv_type_rlimit)
-if test $bash_cv_type_rlimit = quad_t; then
-AC_DEFINE(RLIMTYPE, quad_t)
-elif test $bash_cv_type_rlimit = rlim_t; then
-AC_DEFINE(RLIMTYPE, rlim_t)
+
+AC_DEFUN(BASH_SIZEOF_QUAD_T,
+[AC_MSG_CHECKING(for size of quad_t)
+AC_CACHE_VAL(bash_cv_sizeof_quad_t,
+[AC_RUN_IFELSE([AC_LANG_SOURCE([[
+#include <sys/types.h>
+#include <stdlib.h>
+#if HAVE_INTTYPES_H
+#include <inttypes.h>
+#endif
+#if HAVE_STDINT_H
+#include <stdint.h>
+#endif
+
+main()
+{
+#if HAVE_QUAD_T
+quad_t x;
+exit(sizeof (x));
+#else
+exit (0);
+#endif
+}
+]])], [bash_cv_sizeof_quad_t=$?], [bash_cv_sizeof_quad_t=$?],
+	[AC_MSG_WARN(cannot check size of quad_t if cross compiling -- defaulting to 0)
+	 bash_cv_sizeof_quad_t=0]
+)])
+AC_MSG_RESULT($bash_cv_sizeof_quad_t)
+])
+
+dnl
+dnl Type of struct rlimit fields: updated to check POSIX rlim_t and
+dnl if it doesn't exist determine the best guess based on sizeof(r.rlim_cur)
+dnl
+AC_DEFUN(BASH_TYPE_RLIMIT,
+[AC_MSG_CHECKING(for type of struct rlimit fields)
+AC_CACHE_VAL(bash_cv_type_rlimit,
+[AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#include <sys/types.h>
+#include <sys/resource.h>]],
+[[rlim_t xxx;]]
+)],
+	[bash_cv_type_rlimit=rlim_t], [
+BASH_SIZEOF_RLIMIT
+BASH_SIZEOF_QUAD_T
+if test $bash_cv_sizeof_rlim_cur = $ac_cv_sizeof_long; then
+  bash_cv_type_rlimit='unsigned long'
+elif test $bash_cv_sizeof_rlim_cur = $ac_cv_sizeof_long_long; then
+  bash_cv_type_rlimit='unsigned long long'
+elif test $bash_cv_sizeof_rlim_cur = $ac_cv_sizeof_int; then
+  bash_cv_type_rlimit='unsigned int'
+elif test $bash_cv_sizeof_rlim_cur = $bash_cv_sizeof_quad_t; then
+  bash_cv_type_rlimit='quad_t'
+else
+  bash_cv_type_rlimit='unsigned long'
 fi
+]
+)])
+AC_MSG_RESULT($bash_cv_type_rlimit)
+AC_DEFINE_UNQUOTED([RLIMTYPE], [$bash_cv_type_rlimit])
 ])
 
 AC_DEFUN(BASH_TYPE_SIG_ATOMIC_T,
 [AC_CACHE_CHECK([for sig_atomic_t in signal.h], ac_cv_have_sig_atomic_t,
-[AC_TRY_LINK([
-#include <signal.h>
-],[ sig_atomic_t x; ],
-ac_cv_have_sig_atomic_t=yes, ac_cv_have_sig_atomic_t=no)])
+[AC_LINK_IFELSE(
+	[AC_LANG_PROGRAM(
+		[[ #include <signal.h> ]],
+		[[ sig_atomic_t x; ]])],
+	[ac_cv_have_sig_atomic_t=yes],[ac_cv_have_sig_atomic_t=no])])
 if test "$ac_cv_have_sig_atomic_t" = "no"
 then
-    AC_CHECK_TYPE(sig_atomic_t,int)
+    BASH_CHECK_TYPE(sig_atomic_t, [#include <signal.h>], int)
 fi
 ])
 
@@ -570,11 +522,13 @@ AC_DEFUN(BASH_FUNC_LSTAT,
 [dnl Cannot use AC_CHECK_FUNCS(lstat) because Linux defines lstat() as an
 dnl inline function in <sys/stat.h>.
 AC_CACHE_CHECK([for lstat], bash_cv_func_lstat,
-[AC_TRY_LINK([
-#include <sys/types.h>
-#include <sys/stat.h>
-],[ lstat(".",(struct stat *)0); ],
-bash_cv_func_lstat=yes, bash_cv_func_lstat=no)])
+[AC_LINK_IFELSE(
+	[AC_LANG_PROGRAM([[
+		#include <sys/types.h>
+		#include <sys/stat.h>
+		]],
+		[[ lstat(".",(struct stat *)0); ]])],
+	[bash_cv_func_lstat=yes],[bash_cv_func_lstat=no])])
 if test $bash_cv_func_lstat = yes; then
   AC_DEFINE(HAVE_LSTAT)
 fi
@@ -583,12 +537,12 @@ fi
 AC_DEFUN(BASH_FUNC_INET_ATON,
 [
 AC_CACHE_CHECK([for inet_aton], bash_cv_func_inet_aton,
-[AC_TRY_LINK([
+[AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-struct in_addr ap;], [ inet_aton("127.0.0.1", &ap); ],
-bash_cv_func_inet_aton=yes, bash_cv_func_inet_aton=no)])
+struct in_addr ap;]], [[ inet_aton("127.0.0.1", &ap); ]])],
+[bash_cv_func_inet_aton=yes], [bash_cv_func_inet_aton=no])])
 if test $bash_cv_func_inet_aton = yes; then
   AC_DEFINE(HAVE_INET_ATON)
 else
@@ -599,7 +553,7 @@ fi
 AC_DEFUN(BASH_FUNC_GETENV,
 [AC_MSG_CHECKING(to see if getenv can be redefined)
 AC_CACHE_VAL(bash_cv_getenv_redef,
-[AC_TRY_RUN([
+[AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
@@ -632,7 +586,7 @@ exit(1);
 s = getenv("ABCDE");
 exit(s == 0);	/* force optimizer to leave getenv in */
 }
-], bash_cv_getenv_redef=yes, bash_cv_getenv_redef=no,
+]])], [bash_cv_getenv_redef=yes], [bash_cv_getenv_redef=no],
    [AC_MSG_WARN(cannot check getenv redefinition if cross compiling -- defaulting to yes)
     bash_cv_getenv_redef=yes]
 )])
@@ -645,12 +599,13 @@ fi
 # We should check for putenv before calling this
 AC_DEFUN(BASH_FUNC_STD_PUTENV,
 [
-AC_REQUIRE([AC_HEADER_STDC])
 AC_REQUIRE([AC_C_PROTOTYPES])
 AC_CACHE_CHECK([for standard-conformant putenv declaration], bash_cv_std_putenv,
-[AC_TRY_LINK([
-#if STDC_HEADERS
+[AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#if HAVE_STDLIB_H
 #include <stdlib.h>
+#endif
+#if HAVE_STDDEF_H
 #include <stddef.h>
 #endif
 #ifndef __STDC__
@@ -663,9 +618,8 @@ extern int putenv (char *);
 #else
 extern int putenv ();
 #endif
-],
-[return (putenv == 0);],
-bash_cv_std_putenv=yes, bash_cv_std_putenv=no
+]], [[return (putenv == 0);]] )],
+[bash_cv_std_putenv=yes], [bash_cv_std_putenv=no]
 )])
 if test $bash_cv_std_putenv = yes; then
 AC_DEFINE(HAVE_STD_PUTENV)
@@ -675,12 +629,13 @@ fi
 # We should check for unsetenv before calling this
 AC_DEFUN(BASH_FUNC_STD_UNSETENV,
 [
-AC_REQUIRE([AC_HEADER_STDC])
 AC_REQUIRE([AC_C_PROTOTYPES])
 AC_CACHE_CHECK([for standard-conformant unsetenv declaration], bash_cv_std_unsetenv,
-[AC_TRY_LINK([
-#if STDC_HEADERS
+[AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#if HAVE_STDLIB_H
 #include <stdlib.h>
+#endif
+#if HAVE_STDDEF_H
 #include <stddef.h>
 #endif
 #ifndef __STDC__
@@ -693,9 +648,8 @@ extern int unsetenv (const char *);
 #else
 extern int unsetenv ();
 #endif
-],
-[return (unsetenv == 0);],
-bash_cv_std_unsetenv=yes, bash_cv_std_unsetenv=no
+]], [[return (unsetenv == 0);]] )],
+[bash_cv_std_unsetenv=yes], [bash_cv_std_unsetenv=no]
 )])
 if test $bash_cv_std_unsetenv = yes; then
 AC_DEFINE(HAVE_STD_UNSETENV)
@@ -705,7 +659,7 @@ fi
 AC_DEFUN(BASH_FUNC_ULIMIT_MAXFDS,
 [AC_MSG_CHECKING(whether ulimit can substitute for getdtablesize)
 AC_CACHE_VAL(bash_cv_ulimit_maxfds,
-[AC_TRY_RUN([
+[AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <stdlib.h>
 #ifdef HAVE_ULIMIT_H
 #include <ulimit.h>
@@ -716,7 +670,7 @@ main()
 long maxfds = ulimit(4, 0L);
 exit (maxfds == -1L);
 }
-], bash_cv_ulimit_maxfds=yes, bash_cv_ulimit_maxfds=no,
+]])], [bash_cv_ulimit_maxfds=yes], [bash_cv_ulimit_maxfds=no],
    [AC_MSG_WARN(cannot check ulimit if cross compiling -- defaulting to no)
     bash_cv_ulimit_maxfds=no]
 )])
@@ -729,7 +683,7 @@ fi
 AC_DEFUN(BASH_FUNC_GETCWD,
 [AC_MSG_CHECKING([if getcwd() will dynamically allocate memory with 0 size])
 AC_CACHE_VAL(bash_cv_getcwd_malloc,
-[AC_TRY_RUN([
+[AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <stdio.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -743,7 +697,7 @@ main()
 	xpwd = getcwd(0, 0);
 	exit (xpwd == 0);
 }
-], bash_cv_getcwd_malloc=yes, bash_cv_getcwd_malloc=no,
+]])], [bash_cv_getcwd_malloc=yes], [bash_cv_getcwd_malloc=no],
    [AC_MSG_WARN(cannot check whether getcwd allocates memory when cross-compiling -- defaulting to no)
     bash_cv_getcwd_malloc=no]
 )])
@@ -756,7 +710,7 @@ fi
 
 dnl
 dnl This needs BASH_CHECK_SOCKLIB, but since that's not called on every
-dnl system, we can't use AC_PREREQ
+dnl system, we can't use AC_PREREQ. Only called if we need the socket library
 dnl
 AC_DEFUN(BASH_FUNC_GETHOSTBYNAME,
 [if test "X$bash_cv_have_gethostbyname" = "X"; then
@@ -766,11 +720,14 @@ AC_MSG_CHECKING(for gethostbyname in socket library)
 _bash_needmsg=
 fi
 AC_CACHE_VAL(bash_cv_have_gethostbyname,
-[AC_TRY_LINK([#include <netdb.h>],
-[ struct hostent *hp;
-  hp = gethostbyname("localhost");
-], bash_cv_have_gethostbyname=yes, bash_cv_have_gethostbyname=no)]
-)
+[AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#include <netdb.h>
+]], [[
+struct hostent *hp;
+hp = gethostbyname("localhost");
+]] )],
+[bash_cv_have_gethostbyname=yes], [bash_cv_have_gethostbyname=no]
+)])
 if test "X$_bash_needmsg" = Xyes; then
     AC_MSG_CHECKING(for gethostbyname in socket library)
 fi
@@ -783,7 +740,7 @@ fi
 AC_DEFUN(BASH_FUNC_FNMATCH_EXTMATCH,
 [AC_MSG_CHECKING(if fnmatch does extended pattern matching with FNM_EXTMATCH)
 AC_CACHE_VAL(bash_cv_fnm_extmatch,
-[AC_TRY_RUN([
+[AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <fnmatch.h>
 
 int
@@ -795,10 +752,10 @@ main()
   return (1);
 #endif
 }
-], bash_cv_fnm_extmatch=yes, bash_cv_fnm_extmatch=no,
+]])], [bash_cv_fnm_extmatch=yes], [bash_cv_fnm_extmatch=no],
     [AC_MSG_WARN(cannot check FNM_EXTMATCH if cross compiling -- defaulting to no)
-     bash_cv_fnm_extmatch=no])
-])
+     bash_cv_fnm_extmatch=no]
+)])
 AC_MSG_RESULT($bash_cv_fnm_extmatch)
 if test $bash_cv_fnm_extmatch = yes; then
 AC_DEFINE(HAVE_LIBC_FNM_EXTMATCH)
@@ -809,7 +766,7 @@ AC_DEFUN(BASH_FUNC_POSIX_SETJMP,
 [AC_REQUIRE([BASH_SYS_SIGNAL_VINTAGE])
 AC_MSG_CHECKING(for presence of POSIX-style sigsetjmp/siglongjmp)
 AC_CACHE_VAL(bash_cv_func_sigsetjmp,
-[AC_TRY_RUN([
+[AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -826,21 +783,30 @@ exit (1);
 #else
 
 int code;
-sigset_t set, oset;
+sigset_t set, oset, nset;
 sigjmp_buf xx;
 
 /* get the mask */
 sigemptyset(&set);
 sigemptyset(&oset);
-sigprocmask(SIG_BLOCK, (sigset_t *)NULL, &set);
+
 sigprocmask(SIG_BLOCK, (sigset_t *)NULL, &oset);
+/* paranoia -- make sure SIGINT is not blocked */
+sigdelset (&oset, SIGINT);
+sigprocmask (SIG_SETMASK, &oset, (sigset_t *)NULL);
 
 /* save it */
 code = sigsetjmp(xx, 1);
 if (code)
-  exit(0);	/* could get sigmask and compare to oset here. */
+{
+  sigprocmask(SIG_BLOCK, (sigset_t *)NULL, &nset);
+  /* could compare nset to oset here, but we just look for SIGINT */
+  if (sigismember (&nset, SIGINT))
+    exit(1);
+  exit(0);
+}
 
-/* change it */
+/* change it so that SIGINT is blocked */
 sigaddset(&set, SIGINT);
 sigprocmask(SIG_BLOCK, &set, (sigset_t *)NULL);
 
@@ -848,9 +814,14 @@ sigprocmask(SIG_BLOCK, &set, (sigset_t *)NULL);
 siglongjmp(xx, 10);
 exit(1);
 #endif
-}], bash_cv_func_sigsetjmp=present, bash_cv_func_sigsetjmp=missing,
-    [AC_MSG_WARN(cannot check for sigsetjmp/siglongjmp if cross-compiling -- defaulting to missing)
-     bash_cv_func_sigsetjmp=missing]
+}
+]])], [bash_cv_func_sigsetjmp=present], [bash_cv_func_sigsetjmp=missing],
+    [AC_MSG_WARN(cannot check for sigsetjmp/siglongjmp if cross-compiling -- defaulting to $bash_cv_posix_signals)
+     if test "$bash_cv_posix_signals" = "yes" ; then
+	bash_cv_func_sigsetjmp=present
+     else
+	bash_cv_func_sigsetjmp=missing
+     fi]
 )])
 AC_MSG_RESULT($bash_cv_func_sigsetjmp)
 if test $bash_cv_func_sigsetjmp = present; then
@@ -859,10 +830,9 @@ fi
 ])
 
 AC_DEFUN(BASH_FUNC_STRCOLL,
-[
-AC_MSG_CHECKING(whether or not strcoll and strcmp differ)
+[AC_MSG_CHECKING(whether or not strcoll and strcmp differ)
 AC_CACHE_VAL(bash_cv_func_strcoll_broken,
-[AC_TRY_RUN([
+[AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <stdio.h>
 #if defined (HAVE_LOCALE_H)
 #include <locale.h>
@@ -900,7 +870,7 @@ char    *v[];
 	   in the default locale. */
 	exit (r1 > 0 && r2 > 0);
 }
-], bash_cv_func_strcoll_broken=yes, bash_cv_func_strcoll_broken=no,
+]])], [bash_cv_func_strcoll_broken=yes], [bash_cv_func_strcoll_broken=no],
    [AC_MSG_WARN(cannot check strcoll if cross compiling -- defaulting to no)
     bash_cv_func_strcoll_broken=no]
 )])
@@ -913,7 +883,7 @@ fi
 AC_DEFUN(BASH_FUNC_PRINTF_A_FORMAT,
 [AC_MSG_CHECKING([for printf floating point output in hex notation])
 AC_CACHE_VAL(bash_cv_printf_a_format,
-[AC_TRY_RUN([
+[AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -927,7 +897,7 @@ main()
 	sprintf(abuf, "%A", y);
 	exit(strchr(abuf, 'P') == (char *)0);
 }
-], bash_cv_printf_a_format=yes, bash_cv_printf_a_format=no,
+]])], [bash_cv_printf_a_format=yes], [bash_cv_printf_a_format=no],
    [AC_MSG_WARN(cannot check printf if cross compiling -- defaulting to no)
     bash_cv_printf_a_format=no]
 )])
@@ -964,12 +934,10 @@ AC_DEFUN(BASH_STRUCT_ST_BLOCKS,
 [
 AC_MSG_CHECKING([for struct stat.st_blocks])
 AC_CACHE_VAL(bash_cv_struct_stat_st_blocks,
-[AC_TRY_COMPILE(
-[
+[AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #include <sys/types.h>
 #include <sys/stat.h>
-],
-[
+]], [[
 int
 main()
 {
@@ -977,7 +945,7 @@ static struct stat a;
 if (a.st_blocks) return 0;
 return 0;
 }
-], bash_cv_struct_stat_st_blocks=yes, bash_cv_struct_stat_st_blocks=no)
+]])], [bash_cv_struct_stat_st_blocks=yes], [bash_cv_struct_stat_st_blocks=no])
 ])
 AC_MSG_RESULT($bash_cv_struct_stat_st_blocks)
 if test "$bash_cv_struct_stat_st_blocks" = "yes"; then
@@ -1022,7 +990,8 @@ elif test $bash_cv_termcap_lib = libc; then
 TERMCAP_LIB=
 TERMCAP_DEP=
 else
-TERMCAP_LIB=-lcurses
+# we assume ncurses is installed somewhere the linker can find it
+TERMCAP_LIB=-lncurses
 TERMCAP_DEP=
 fi
 ])
@@ -1077,11 +1046,12 @@ if test $bash_cv_have_socklib = yes; then
 fi
 ])
 
-AC_DEFUN(BASH_STRUCT_DIRENT_D_INO,
-[AC_REQUIRE([AC_HEADER_DIRENT])
-AC_MSG_CHECKING(for struct dirent.d_ino)
-AC_CACHE_VAL(bash_cv_dirent_has_dino,
-[AC_TRY_COMPILE([
+dnl like _AC_STRUCT_DIRENT(MEMBER) but public
+AC_DEFUN(BASH_STRUCT_DIRENT,
+[
+AC_REQUIRE([AC_HEADER_DIRENT])
+AC_CHECK_MEMBERS(struct dirent.$1, bash_cv_dirent_has_$1=yes, bash_cv_dirent_has_$1=no,
+[[
 #include <stdio.h>
 #include <sys/types.h>
 #ifdef HAVE_UNISTD_H
@@ -1101,11 +1071,15 @@ AC_CACHE_VAL(bash_cv_dirent_has_dino,
 #  include <ndir.h>
 # endif
 #endif /* HAVE_DIRENT_H */
-],[
-struct dirent d; int z; z = d.d_ino;
-], bash_cv_dirent_has_dino=yes, bash_cv_dirent_has_dino=no)])
-AC_MSG_RESULT($bash_cv_dirent_has_dino)
-if test $bash_cv_dirent_has_dino = yes; then
+]])
+])
+
+AC_DEFUN(BASH_STRUCT_DIRENT_D_INO,
+[AC_REQUIRE([AC_HEADER_DIRENT])
+AC_MSG_CHECKING(for struct dirent.d_ino)
+AC_CACHE_VAL(bash_cv_dirent_has_d_ino, [BASH_STRUCT_DIRENT([d_ino])])
+AC_MSG_RESULT($bash_cv_dirent_has_d_ino)
+if test $bash_cv_dirent_has_d_ino = yes; then
 AC_DEFINE(HAVE_STRUCT_DIRENT_D_INO)
 fi
 ])
@@ -1113,30 +1087,7 @@ fi
 AC_DEFUN(BASH_STRUCT_DIRENT_D_FILENO,
 [AC_REQUIRE([AC_HEADER_DIRENT])
 AC_MSG_CHECKING(for struct dirent.d_fileno)
-AC_CACHE_VAL(bash_cv_dirent_has_d_fileno,
-[AC_TRY_COMPILE([
-#include <stdio.h>
-#include <sys/types.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif /* HAVE_UNISTD_H */
-#if defined(HAVE_DIRENT_H)
-# include <dirent.h>
-#else
-# define dirent direct
-# ifdef HAVE_SYS_NDIR_H
-#  include <sys/ndir.h>
-# endif /* SYSNDIR */
-# ifdef HAVE_SYS_DIR_H
-#  include <sys/dir.h>
-# endif /* SYSDIR */
-# ifdef HAVE_NDIR_H
-#  include <ndir.h>
-# endif
-#endif /* HAVE_DIRENT_H */
-],[
-struct dirent d; int z; z = d.d_fileno;
-], bash_cv_dirent_has_d_fileno=yes, bash_cv_dirent_has_d_fileno=no)])
+AC_CACHE_VAL(bash_cv_dirent_has_d_fileno, [BASH_STRUCT_DIRENT([d_fileno])])
 AC_MSG_RESULT($bash_cv_dirent_has_d_fileno)
 if test $bash_cv_dirent_has_d_fileno = yes; then
 AC_DEFINE(HAVE_STRUCT_DIRENT_D_FILENO)
@@ -1146,30 +1097,7 @@ fi
 AC_DEFUN(BASH_STRUCT_DIRENT_D_NAMLEN,
 [AC_REQUIRE([AC_HEADER_DIRENT])
 AC_MSG_CHECKING(for struct dirent.d_namlen)
-AC_CACHE_VAL(bash_cv_dirent_has_d_namlen,
-[AC_TRY_COMPILE([
-#include <stdio.h>
-#include <sys/types.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif /* HAVE_UNISTD_H */
-#if defined(HAVE_DIRENT_H)
-# include <dirent.h>
-#else
-# define dirent direct
-# ifdef HAVE_SYS_NDIR_H
-#  include <sys/ndir.h>
-# endif /* SYSNDIR */
-# ifdef HAVE_SYS_DIR_H
-#  include <sys/dir.h>
-# endif /* SYSDIR */
-# ifdef HAVE_NDIR_H
-#  include <ndir.h>
-# endif
-#endif /* HAVE_DIRENT_H */
-],[
-struct dirent d; int z; z = d.d_namlen;
-], bash_cv_dirent_has_d_namlen=yes, bash_cv_dirent_has_d_namlen=no)])
+AC_CACHE_VAL(bash_cv_dirent_has_d_namlen, [BASH_STRUCT_DIRENT([d_namlen])])
 AC_MSG_RESULT($bash_cv_dirent_has_d_namlen)
 if test $bash_cv_dirent_has_d_namlen = yes; then
 AC_DEFINE(HAVE_STRUCT_DIRENT_D_NAMLEN)
@@ -1213,16 +1141,47 @@ if test $bash_cv_struct_timezone = yes; then
 fi
 ])
 
+AC_DEFUN(BASH_CHECK_WINSIZE_IOCTL,
+[AC_CACHE_VAL(bash_cv_struct_winsize_ioctl,
+[AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#include <sys/types.h>
+#include <sys/ioctl.h>
+]],
+[[
+struct winsize x;
+if (sizeof (x) > 0) return (0);
+]] )], [bash_cv_struct_winsize_ioctl=yes], [bash_cv_struct_winsize_ioctl=no])
+])
+])
+
+AC_DEFUN(BASH_CHECK_WINSIZE_TERMIOS,
+[AC_CACHE_VAL(bash_cv_struct_winsize_termios,
+[AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#include <sys/types.h>
+#include <sys/termios.h>
+]],
+[[
+struct winsize x;
+if (sizeof (x) > 0) return (0);
+]] )], [bash_cv_struct_winsize_termios=yes], [bash_cv_struct_winsize_termios=no])
+])
+])
+
 AC_DEFUN(BASH_STRUCT_WINSIZE,
 [AC_MSG_CHECKING(for struct winsize in sys/ioctl.h and termios.h)
 AC_CACHE_VAL(bash_cv_struct_winsize_header,
-[AC_TRY_COMPILE([#include <sys/types.h>
-#include <sys/ioctl.h>], [struct winsize x;],
-  bash_cv_struct_winsize_header=ioctl_h,
-  [AC_TRY_COMPILE([#include <sys/types.h>
-#include <termios.h>], [struct winsize x;],
-  bash_cv_struct_winsize_header=termios_h, bash_cv_struct_winsize_header=other)
-])])
+[
+BASH_CHECK_WINSIZE_IOCTL
+BASH_CHECK_WINSIZE_TERMIOS
+
+if test $bash_cv_struct_winsize_ioctl = yes; then
+  bash_cv_struct_winsize_header=ioctl_h
+elif test $bash_cv_struct_winsize_termios = yes; then
+  bash_cv_struct_winsize_header=termios_h
+else
+  bash_cv_struct_winsize_header=other
+fi
+])
 if test $bash_cv_struct_winsize_header = ioctl_h; then
   AC_MSG_RESULT(sys/ioctl.h)
   AC_DEFINE(STRUCT_WINSIZE_IN_SYS_IOCTL)
@@ -1234,35 +1193,68 @@ else
 fi
 ])
 
-dnl Check type of signal routines (posix, 4.2bsd, 4.1bsd or v7)
-AC_DEFUN(BASH_SYS_SIGNAL_VINTAGE,
-[AC_REQUIRE([AC_TYPE_SIGNAL])
-AC_MSG_CHECKING(for type of signal functions)
-AC_CACHE_VAL(bash_cv_signal_vintage,
-[
-  AC_TRY_LINK([#include <signal.h>],[
+AC_DEFUN(BASH_HAVE_POSIX_SIGNALS,
+[AC_CACHE_VAL(bash_cv_posix_signals,
+[AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#include <signal.h>
+]], [[
     sigset_t ss;
     struct sigaction sa;
     sigemptyset(&ss); sigsuspend(&ss);
     sigaction(SIGINT, &sa, (struct sigaction *) 0);
     sigprocmask(SIG_BLOCK, &ss, (sigset_t *) 0);
-  ], bash_cv_signal_vintage=posix,
-  [
-    AC_TRY_LINK([#include <signal.h>], [
-	int mask = sigmask(SIGINT);
-	sigsetmask(mask); sigblock(mask); sigpause(mask);
-    ], bash_cv_signal_vintage=4.2bsd,
-    [
-      AC_TRY_LINK([
-	#include <signal.h>
-	RETSIGTYPE foo() { }], [
-		int mask = sigmask(SIGINT);
-		sigset(SIGINT, foo); sigrelse(SIGINT);
-		sighold(SIGINT); sigpause(SIGINT);
-        ], bash_cv_signal_vintage=svr3, bash_cv_signal_vintage=v7
-    )]
-  )]
-)
+]] )],
+[bash_cv_posix_signals=yes], [bash_cv_posix_signals=no]
+)])
+])
+
+AC_DEFUN(BASH_HAVE_BSD_SIGNALS,
+[AC_CACHE_VAL(bash_cv_bsd_signals,
+[AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#include <signal.h>
+]], [[
+int mask = sigmask(SIGINT);
+sigsetmask(mask); sigblock(mask); sigpause(mask);
+]] )],
+[bash_cv_bsd_signals=yes], [bash_cv_bsd_signals=no]
+)])
+])
+
+AC_DEFUN(BASH_HAVE_SYSV_SIGNALS,
+[AC_CACHE_VAL(bash_cv_sysv_signals,
+[AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#include <signal.h>
+void foo() { }
+]], [[
+int mask = sigmask(SIGINT);
+sigset(SIGINT, foo); sigrelse(SIGINT);
+sighold(SIGINT); sigpause(SIGINT);
+]] )],
+[bash_cv_sysv_signals=yes], [bash_cv_sysv_signals=no]
+)])
+])
+
+dnl Check type of signal routines (posix, 4.2bsd, 4.1bsd or v7)
+AC_DEFUN(BASH_SYS_SIGNAL_VINTAGE,
+[AC_MSG_CHECKING(for type of signal functions)
+AC_CACHE_VAL(bash_cv_signal_vintage,
+[
+BASH_HAVE_POSIX_SIGNALS
+if test $bash_cv_posix_signals = yes; then
+  bash_cv_signal_vintage=posix
+else
+  BASH_HAVE_BSD_SIGNALS
+  if test $bash_cv_bsd_signals = yes; then
+    bash_cv_signal_vintage=4.2bsd
+  else
+    BASH_HAVE_SYSV_SIGNALS
+    if test $bash_cv_sysv_signals = yes; then
+      bash_cv_signal_vintage=svr3
+    else
+      bash_cv_signal_vintage=v7
+    fi
+  fi
+fi
 ])
 AC_MSG_RESULT($bash_cv_signal_vintage)
 if test "$bash_cv_signal_vintage" = posix; then
@@ -1279,7 +1271,7 @@ AC_DEFUN(BASH_SYS_PGRP_SYNC,
 [AC_REQUIRE([AC_FUNC_GETPGRP])
 AC_MSG_CHECKING(whether pgrps need synchronization)
 AC_CACHE_VAL(bash_cv_pgrp_pipe,
-[AC_TRY_RUN([
+[AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
@@ -1332,10 +1324,10 @@ main()
 	wait(&status);
 	exit(ok ? 0 : 5);
 }
-], bash_cv_pgrp_pipe=no,bash_cv_pgrp_pipe=yes,
+]])], [bash_cv_pgrp_pipe=no], [bash_cv_pgrp_pipe=yes],
    [AC_MSG_WARN(cannot check pgrp synchronization if cross compiling -- defaulting to no)
-    bash_cv_pgrp_pipe=no])
-])
+    bash_cv_pgrp_pipe=no]
+)])
 AC_MSG_RESULT($bash_cv_pgrp_pipe)
 if test $bash_cv_pgrp_pipe = yes; then
 AC_DEFINE(PGRP_PIPE)
@@ -1343,18 +1335,17 @@ fi
 ])
 
 AC_DEFUN(BASH_SYS_REINSTALL_SIGHANDLERS,
-[AC_REQUIRE([AC_TYPE_SIGNAL])
-AC_REQUIRE([BASH_SYS_SIGNAL_VINTAGE])
+[AC_REQUIRE([BASH_SYS_SIGNAL_VINTAGE])
 AC_MSG_CHECKING([if signal handlers must be reinstalled when invoked])
 AC_CACHE_VAL(bash_cv_must_reinstall_sighandlers,
-[AC_TRY_RUN([
+[AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <signal.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 #include <stdlib.h>
 
-typedef RETSIGTYPE sigfunc();
+typedef void sigfunc();
 
 volatile int nsigint;
 
@@ -1376,7 +1367,7 @@ set_signal_handler(sig, handler)
 #define set_signal_handler(s, h) signal(s, h)
 #endif
 
-RETSIGTYPE
+void
 sigint(s)
 int s;
 {
@@ -1392,7 +1383,7 @@ main()
 	kill((int)getpid(), SIGINT);
 	exit(nsigint != 2);
 }
-], bash_cv_must_reinstall_sighandlers=no, bash_cv_must_reinstall_sighandlers=yes,
+]])], [bash_cv_must_reinstall_sighandlers=no], [bash_cv_must_reinstall_sighandlers=yes],
    [AC_MSG_WARN(cannot check signal handling if cross compiling -- defaulting to no)
     bash_cv_must_reinstall_sighandlers=no]
 )])
@@ -1407,7 +1398,7 @@ AC_DEFUN(BASH_SYS_JOB_CONTROL_MISSING,
 [AC_REQUIRE([BASH_SYS_SIGNAL_VINTAGE])
 AC_MSG_CHECKING(for presence of necessary job control definitions)
 AC_CACHE_VAL(bash_cv_job_control_missing,
-[AC_TRY_COMPILE([
+[AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #include <sys/types.h>
 #ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
@@ -1448,7 +1439,8 @@ AC_CACHE_VAL(bash_cv_job_control_missing,
 #error
 #endif
 
-], , bash_cv_job_control_missing=present, bash_cv_job_control_missing=missing
+]], [[ int x; ]] )],
+[bash_cv_job_control_missing=present], [bash_cv_job_control_missing=missing]
 )])
 AC_MSG_RESULT($bash_cv_job_control_missing)
 if test $bash_cv_job_control_missing = missing; then
@@ -1461,7 +1453,7 @@ dnl this requires a previous check for mkfifo, but that is awkward to specify
 AC_DEFUN(BASH_SYS_NAMED_PIPES,
 [AC_MSG_CHECKING(for presence of named pipes)
 AC_CACHE_VAL(bash_cv_sys_named_pipes,
-[AC_TRY_RUN([
+[AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <sys/types.h>
 #include <sys/stat.h>
 #ifdef HAVE_UNISTD_H
@@ -1501,7 +1493,8 @@ close(fd);
 unlink ("bash-aclocal/sh-np-autoconf");
 rmdir ("bash-aclocal");
 exit(0);
-}], bash_cv_sys_named_pipes=present, bash_cv_sys_named_pipes=missing,
+}
+]])], [bash_cv_sys_named_pipes=present], [bash_cv_sys_named_pipes=missing],
     [AC_MSG_WARN(cannot check for named pipes if cross-compiling -- defaulting to missing)
      bash_cv_sys_named_pipes=missing]
 )])
@@ -1533,9 +1526,11 @@ AC_DEFINE_UNQUOTED(DEFAULT_MAIL_DIRECTORY, "$bash_cv_mail_dir")
 AC_DEFUN(BASH_HAVE_TIOCGWINSZ,
 [AC_MSG_CHECKING(for TIOCGWINSZ in sys/ioctl.h)
 AC_CACHE_VAL(bash_cv_tiocgwinsz_in_ioctl,
-[AC_TRY_COMPILE([#include <sys/types.h>
-#include <sys/ioctl.h>], [int x = TIOCGWINSZ;],
-  bash_cv_tiocgwinsz_in_ioctl=yes,bash_cv_tiocgwinsz_in_ioctl=no)])
+[AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#include <sys/types.h>
+#include <sys/ioctl.h>]], [[int x = TIOCGWINSZ;]] )],
+  [bash_cv_tiocgwinsz_in_ioctl=yes], [bash_cv_tiocgwinsz_in_ioctl=no]
+)])
 AC_MSG_RESULT($bash_cv_tiocgwinsz_in_ioctl)
 if test $bash_cv_tiocgwinsz_in_ioctl = yes; then   
 AC_DEFINE(GWINSZ_IN_SYS_IOCTL)
@@ -1545,9 +1540,11 @@ fi
 AC_DEFUN(BASH_HAVE_TIOCSTAT,
 [AC_MSG_CHECKING(for TIOCSTAT in sys/ioctl.h)
 AC_CACHE_VAL(bash_cv_tiocstat_in_ioctl,
-[AC_TRY_COMPILE([#include <sys/types.h>
-#include <sys/ioctl.h>], [int x = TIOCSTAT;],
-  bash_cv_tiocstat_in_ioctl=yes,bash_cv_tiocstat_in_ioctl=no)])
+[AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#include <sys/types.h>
+#include <sys/ioctl.h>]], [[int x = TIOCSTAT;]] )],
+  [bash_cv_tiocstat_in_ioctl=yes], [bash_cv_tiocstat_in_ioctl=no]
+)])
 AC_MSG_RESULT($bash_cv_tiocstat_in_ioctl)
 if test $bash_cv_tiocstat_in_ioctl = yes; then   
 AC_DEFINE(TIOCSTAT_IN_SYS_IOCTL)
@@ -1557,9 +1554,11 @@ fi
 AC_DEFUN(BASH_HAVE_FIONREAD,
 [AC_MSG_CHECKING(for FIONREAD in sys/ioctl.h)
 AC_CACHE_VAL(bash_cv_fionread_in_ioctl,
-[AC_TRY_COMPILE([#include <sys/types.h>
-#include <sys/ioctl.h>], [int x = FIONREAD;],
-  bash_cv_fionread_in_ioctl=yes,bash_cv_fionread_in_ioctl=no)])
+[AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#include <sys/types.h>
+#include <sys/ioctl.h>]], [[int x = FIONREAD;]] )],
+  [bash_cv_fionread_in_ioctl=yes], [bash_cv_fionread_in_ioctl=no]
+)])
 AC_MSG_RESULT($bash_cv_fionread_in_ioctl)
 if test $bash_cv_fionread_in_ioctl = yes; then   
 AC_DEFINE(FIONREAD_IN_SYS_IOCTL)
@@ -1575,8 +1574,11 @@ dnl
 AC_DEFUN(BASH_CHECK_SPEED_T,
 [AC_MSG_CHECKING(for speed_t in sys/types.h)
 AC_CACHE_VAL(bash_cv_speed_t_in_sys_types,
-[AC_TRY_COMPILE([#include <sys/types.h>], [speed_t x;],
-  bash_cv_speed_t_in_sys_types=yes,bash_cv_speed_t_in_sys_types=no)])
+[AC_COMPILE_IFELSE(
+	[AC_LANG_PROGRAM(
+		[[#include <sys/types.h>]],
+		[[speed_t x;]])],
+	[bash_cv_speed_t_in_sys_types=yes],[bash_cv_speed_t_in_sys_types=no])])
 AC_MSG_RESULT($bash_cv_speed_t_in_sys_types)
 if test $bash_cv_speed_t_in_sys_types = yes; then   
 AC_DEFINE(SPEED_T_IN_SYS_TYPES)
@@ -1646,31 +1648,41 @@ if test $bash_cv_dev_stdin = "present"; then
 fi
 ])
 
+
+AC_DEFUN(BASH_CHECK_RLIMIT,
+[AC_CACHE_VAL(bash_cv_rlimit,
+[AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#include <sys/types.h>
+#include <sys/resource.h>
+]],
+[[
+  int f;
+  f = RLIMIT_DATA;
+]] )],
+[bash_cv_rlimit=yes], [bash_cv_rlimit=no]
+)])
+])
+
 dnl
 dnl Check if HPUX needs _KERNEL defined for RLIMIT_* definitions
 dnl
 AC_DEFUN(BASH_CHECK_KERNEL_RLIMIT,
 [AC_MSG_CHECKING([whether $host_os needs _KERNEL for RLIMIT defines])
 AC_CACHE_VAL(bash_cv_kernel_rlimit,
-[AC_TRY_COMPILE([
-#include <sys/types.h>
-#include <sys/resource.h>
-],
-[
-  int f;
-  f = RLIMIT_DATA;
-], bash_cv_kernel_rlimit=no,
-[AC_TRY_COMPILE([
+[BASH_CHECK_RLIMIT
+if test $bash_cv_rlimit = no; then
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #include <sys/types.h>
 #define _KERNEL
 #include <sys/resource.h>
 #undef _KERNEL
-],
-[
-	int f;
-        f = RLIMIT_DATA;
-], bash_cv_kernel_rlimit=yes, bash_cv_kernel_rlimit=no)]
-)])
+]],
+[[
+  int f;
+  f = RLIMIT_DATA;
+]] )], [bash_cv_kernel_rlimit=yes], [bash_cv_kernel_rlimit=no] )
+fi
+])
 AC_MSG_RESULT($bash_cv_kernel_rlimit)
 if test $bash_cv_kernel_rlimit = yes; then
 AC_DEFINE(RLIMIT_NEEDS_KERNEL)
@@ -1685,14 +1697,15 @@ dnl sizeof(off_t) is > 4.
 dnl
 AC_DEFUN(BASH_CHECK_OFF_T_64,
 [AC_CACHE_CHECK(for 64-bit off_t, bash_cv_off_t_64,
-AC_TRY_COMPILE([
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 #include <sys/types.h>
-],[
+]],[[
 switch (0) case 0: case (sizeof (off_t) <= 4):;
-], bash_cv_off_t_64=no, bash_cv_off_t_64=yes))
+]] )], [bash_cv_off_t_64=no], [bash_cv_off_t_64=yes]
+))
 if test $bash_cv_off_t_64 = yes; then
         AC_DEFINE(HAVE_OFF_T_64)
 fi])
@@ -1700,7 +1713,7 @@ fi])
 AC_DEFUN(BASH_CHECK_RTSIGS,
 [AC_MSG_CHECKING(for unusable real-time signals due to large values)
 AC_CACHE_VAL(bash_cv_unusable_rtsigs,
-[AC_TRY_RUN([
+[AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <sys/types.h>
 #include <signal.h>
 #include <stdlib.h>
@@ -1720,7 +1733,8 @@ main ()
 #endif
 
   exit(rtmin < n_sigs);
-}], bash_cv_unusable_rtsigs=yes, bash_cv_unusable_rtsigs=no,
+}
+]])], [bash_cv_unusable_rtsigs=yes], [bash_cv_unusable_rtsigs=no],
     [AC_MSG_WARN(cannot check real-time signals if cross compiling -- defaulting to yes)
      bash_cv_unusable_rtsigs=yes]
 )])
@@ -1767,48 +1781,43 @@ fi
 
 AC_CHECK_FUNCS(iswlower iswupper towlower towupper iswctype)
 
-AC_CACHE_CHECK([for nl_langinfo and CODESET], bash_cv_langinfo_codeset,
-[AC_TRY_LINK(
-[#include <langinfo.h>],
-[char* cs = nl_langinfo(CODESET);],
-bash_cv_langinfo_codeset=yes, bash_cv_langinfo_codeset=no)])
-if test $bash_cv_langinfo_codeset = yes; then
-  AC_DEFINE(HAVE_LANGINFO_CODESET)
-fi
+AC_REQUIRE([AM_LANGINFO_CODESET])
 
 dnl check for wchar_t in <wchar.h>
 AC_CACHE_CHECK([for wchar_t in wchar.h], bash_cv_type_wchar_t,
-[AC_TRY_COMPILE(
-[#include <wchar.h>
-],
-[
+[AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
+[#include <wchar.h>]],
+[[
         wchar_t foo;
         foo = 0;
-], bash_cv_type_wchar_t=yes, bash_cv_type_wchar_t=no)])
+]] )], [bash_cv_type_wchar_t=yes], [bash_cv_type_wchar_t=no]
+)])
 if test $bash_cv_type_wchar_t = yes; then
         AC_DEFINE(HAVE_WCHAR_T, 1, [systems should define this type here])
 fi
 
 dnl check for wctype_t in <wctype.h>
 AC_CACHE_CHECK([for wctype_t in wctype.h], bash_cv_type_wctype_t,
-[AC_TRY_COMPILE(
-[#include <wctype.h>],
-[
+[AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
+[#include <wctype.h>]],
+[[
         wctype_t foo;
         foo = 0;
-], bash_cv_type_wctype_t=yes, bash_cv_type_wctype_t=no)])
+]] )], [bash_cv_type_wctype_t=yes], [bash_cv_type_wctype_t=no]
+)])
 if test $bash_cv_type_wctype_t = yes; then
         AC_DEFINE(HAVE_WCTYPE_T, 1, [systems should define this type here])
 fi
 
 dnl check for wint_t in <wctype.h>
 AC_CACHE_CHECK([for wint_t in wctype.h], bash_cv_type_wint_t,
-[AC_TRY_COMPILE(
-[#include <wctype.h>],
-[
+[AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
+[#include <wctype.h>]],
+[[
         wint_t foo;
         foo = 0;
-], bash_cv_type_wint_t=yes, bash_cv_type_wint_t=no)])
+]] )], [bash_cv_type_wint_t=yes], [bash_cv_type_wint_t=no]
+)])
 if test $bash_cv_type_wint_t = yes; then
         AC_DEFINE(HAVE_WINT_T, 1, [systems should define this type here])
 fi
@@ -1816,7 +1825,7 @@ fi
 dnl check for broken wcwidth
 AC_CACHE_CHECK([for wcwidth broken with unicode combining characters],
 bash_cv_wcwidth_broken,
-[AC_TRY_RUN([
+[AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -1835,8 +1844,9 @@ char    **v;
         w = wcwidth (0x0301);
         exit (w == 0);  /* exit 0 if wcwidth broken */
 }
-],
-bash_cv_wcwidth_broken=yes, bash_cv_wcwidth_broken=no, bash_cv_wcwidth_broken=no)])
+]])], [bash_cv_wcwidth_broken=yes], [bash_cv_wcwidth_broken=no],
+      [bash_cv_wcwidth_broken=no]
+)])
 if test "$bash_cv_wcwidth_broken" = yes; then
         AC_DEFINE(WCWIDTH_BROKEN, 1, [wcwidth is usually not broken])
 fi
@@ -1886,7 +1896,7 @@ CFLAGS="$CFLAGS -I${ac_cv_rl_includedir}"
 LDFLAGS="$LDFLAGS -L${ac_cv_rl_libdir}"
 
 AC_CACHE_VAL(ac_cv_rl_version,
-[AC_TRY_RUN([
+[AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <stdio.h>
 #include <readline/readline.h>
 #include <stdlib.h>
@@ -1907,10 +1917,11 @@ main()
 	fclose(fp);
 	exit(0);
 }
-],
-ac_cv_rl_version=`cat conftest.rlv`,
-ac_cv_rl_version='0.0',
-ac_cv_rl_version='8.0')])
+]])],
+[ac_cv_rl_version=`cat conftest.rlv`],
+[ac_cv_rl_version='0.0'],
+[ac_cv_rl_version='8.0']
+)])
 
 CFLAGS="$_save_CFLAGS"
 LDFLAGS="$_save_LDFLAGS"
@@ -1973,57 +1984,11 @@ AC_MSG_RESULT($ac_cv_rl_version)
 fi
 ])
 
-AC_DEFUN(BASH_FUNC_CTYPE_NONASCII,
-[
-AC_MSG_CHECKING(whether the ctype macros accept non-ascii characters)
-AC_CACHE_VAL(bash_cv_func_ctype_nonascii,
-[AC_TRY_RUN([
-#ifdef HAVE_LOCALE_H
-#include <locale.h>
-#endif
-#include <stdio.h>
-#include <ctype.h>
-#include <stdlib.h>
-
-int
-main(c, v)
-int	c;
-char	*v[];
-{
-	char	*deflocale;
-	unsigned char x;
-	int	r1, r2;
-
-#ifdef HAVE_SETLOCALE
-	/* We take a shot here.  If that locale is not known, try the
-	   system default.  We try this one because '\342' (226) is
-	   known to be a printable character in that locale. */
-	deflocale = setlocale(LC_ALL, "en_US.ISO8859-1");
-	if (deflocale == 0)
-		deflocale = setlocale(LC_ALL, "");
-#endif
-
-	x = '\342';
-	r1 = isprint(x);
-	x -= 128;
-	r2 = isprint(x);
-	exit (r1 == 0 || r2 == 0);
-}
-], bash_cv_func_ctype_nonascii=yes, bash_cv_func_ctype_nonascii=no,
-   [AC_MSG_WARN(cannot check ctype macros if cross compiling -- defaulting to no)
-    bash_cv_func_ctype_nonascii=no]
-)])
-AC_MSG_RESULT($bash_cv_func_ctype_nonascii)
-if test $bash_cv_func_ctype_nonascii = yes; then
-AC_DEFINE(CTYPE_NON_ASCII)
-fi
-])
-
 AC_DEFUN(BASH_CHECK_WCONTINUED,
 [
 AC_MSG_CHECKING(whether WCONTINUED flag to waitpid is unavailable or available but broken)
 AC_CACHE_VAL(bash_cv_wcontinued_broken,
-[AC_TRY_RUN([
+[AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -2044,7 +2009,7 @@ main()
 	else
 		exit (0);
 }
-], bash_cv_wcontinued_broken=no,bash_cv_wcontinued_broken=yes,
+]])], [bash_cv_wcontinued_broken=no], [bash_cv_wcontinued_broken=yes],
    [AC_MSG_WARN(cannot check WCONTINUED if cross compiling -- defaulting to no)
     bash_cv_wcontinued_broken=no]
 )])
@@ -2060,7 +2025,7 @@ dnl
 
 
 AC_DEFUN([AM_PATH_LISPDIR],
- [AC_ARG_WITH(lispdir, AC_HELP_STRING([--with-lispdir], [override the default lisp directory]),
+ [AC_ARG_WITH(lispdir, AS_HELP_STRING([--with-lispdir], [override the default lisp directory]),
   [ lispdir="$withval" 
     AC_MSG_CHECKING([where .elc files should go])
     AC_MSG_RESULT([$lispdir])],
@@ -2097,7 +2062,7 @@ AC_DEFUN([BASH_FUNC_SNPRINTF],
   AC_CHECK_FUNCS_ONCE([snprintf])
   if test X$ac_cv_func_snprintf = Xyes; then
     AC_CACHE_CHECK([for standard-conformant snprintf], [bash_cv_func_snprintf],
-      [AC_TRY_RUN([
+      [AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -2108,7 +2073,7 @@ main()
   n = snprintf (0, 0, "%s", "0123456");
   exit(n != 7);
 }
-], bash_cv_func_snprintf=yes, bash_cv_func_snprintf=no,
+]])], [bash_cv_func_snprintf=yes], [bash_cv_func_snprintf=no],
    [AC_MSG_WARN([cannot check standard snprintf if cross-compiling])
     bash_cv_func_snprintf=yes]
 )])
@@ -2127,7 +2092,7 @@ AC_DEFUN([BASH_FUNC_VSNPRINTF],
   AC_CHECK_FUNCS_ONCE([vsnprintf])
   if test X$ac_cv_func_vsnprintf = Xyes; then
     AC_CACHE_CHECK([for standard-conformant vsnprintf], [bash_cv_func_vsnprintf],
-      [AC_TRY_RUN([
+      [AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #if HAVE_STDARG_H
 #include <stdarg.h>
 #else
@@ -2165,7 +2130,7 @@ main()
   n = foo("%s", "0123456");
   exit(n != 7);
 }
-], bash_cv_func_vsnprintf=yes, bash_cv_func_vsnprintf=no,
+]])], [bash_cv_func_vsnprintf=yes], [bash_cv_func_vsnprintf=no],
    [AC_MSG_WARN([cannot check standard vsnprintf if cross-compiling])
     bash_cv_func_vsnprintf=yes]
 )])
@@ -2182,7 +2147,7 @@ main()
 AC_DEFUN(BASH_STRUCT_WEXITSTATUS_OFFSET,
 [AC_MSG_CHECKING(for offset of exit status in return status from wait)
 AC_CACHE_VAL(bash_cv_wexitstatus_offset,
-[AC_TRY_RUN([
+[AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -2216,7 +2181,7 @@ main(c, v)
 
   exit (254);
 }
-], bash_cv_wexitstatus_offset=0, bash_cv_wexitstatus_offset=$?,
+]])], [bash_cv_wexitstatus_offset=0], [bash_cv_wexitstatus_offset=$?],
    [AC_MSG_WARN(cannot check WEXITSTATUS offset if cross compiling -- defaulting to 0)
     bash_cv_wexitstatus_offset=0]
 )])
@@ -2232,13 +2197,15 @@ AC_DEFUN([BASH_FUNC_SBRK],
 [
   AC_MSG_CHECKING([for sbrk])
   AC_CACHE_VAL(ac_cv_func_sbrk,
-  [AC_TRY_LINK([#include <unistd.h>],
-  [ void *x = sbrk (4096); ],
-  ac_cv_func_sbrk=yes, ac_cv_func_sbrk=no)])
+  [AC_LINK_IFELSE(
+	[AC_LANG_PROGRAM(
+		[[#include <unistd.h>]],
+		[[ void *x = sbrk (4096); ]])],
+	[ac_cv_func_sbrk=yes],[ac_cv_func_sbrk=no])])
   AC_MSG_RESULT($ac_cv_func_sbrk)
   if test X$ac_cv_func_sbrk = Xyes; then
     AC_CACHE_CHECK([for working sbrk], [bash_cv_func_sbrk],
-      [AC_TRY_RUN([
+      [AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -2250,10 +2217,9 @@ main(int c, char **v)
 	x = sbrk (4096);
 	exit ((x == (void *)-1) ? 1 : 0);
 }
-], bash_cv_func_sbrk=yes, bash_cv_func_snprintf=sbrk,
-   [AC_MSG_WARN([cannot check working sbrk if cross-compiling])
-    bash_cv_func_sbrk=yes]
-)])
+]])],[bash_cv_func_sbrk=yes],[bash_cv_func_sbrk=no],[AC_MSG_WARN([cannot check working sbrk if cross-compiling])
+    bash_cv_func_sbrk=yes
+])])
     if test $bash_cv_func_sbrk = no; then
       ac_cv_func_sbrk=no
     fi
@@ -2267,7 +2233,7 @@ main(int c, char **v)
 AC_DEFUN(BASH_FUNC_FNMATCH_EQUIV_FALLBACK,
 [AC_MSG_CHECKING(whether fnmatch can be used to check bracket equivalence classes)
 AC_CACHE_VAL(bash_cv_fnmatch_equiv_fallback,
-[AC_TRY_RUN([
+[AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -2287,8 +2253,7 @@ main (int c, char **v)
     exit (0);
   exit (1);
 }
-
-], bash_cv_fnmatch_equiv_fallback=yes, bash_cv_fnmatch_equiv_fallback=no,
+]])], [bash_cv_fnmatch_equiv_fallback=yes], [bash_cv_fnmatch_equiv_fallback=no],
    [AC_MSG_WARN(cannot check fnmatch if cross compiling -- defaulting to no)
     bash_cv_fnmatch_equiv_fallback=no]
 )])

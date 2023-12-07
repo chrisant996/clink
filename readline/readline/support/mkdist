@@ -78,7 +78,7 @@ fi
 dirmode=755
 filmode=644
 
-while read fname type mode
+while read fname type mode rest
 do
 	[ -z "$fname" ] && continue
 
@@ -89,13 +89,24 @@ do
 	case "$type" in
 	d)	mkdir $newdir/$fname ;;
 	f)	cp -p $SRCDIR/$fname $newdir/$fname ;;
+	F)	cp $SRCDIR/$fname $newdir/$fname ;;
 	s)	ln -s $mode $newdir/$fname ; mode= ;;		# symlink
 	l)	ln $mode $newdir/$fname ; mode= ;;		# hard link
+	c)	cp $SRCDIR/$mode $newdir/$fname ; mode=$filmode ;;	# copy to new name
 	*)	echo "unknown file type $type" 1>&2 ;;
+	esac
+
+	# allow trailing comments
+	case "$mode" in
+	\#*)	mode= ;;
 	esac
 
 	if [ -n "$mode" ]; then
 		chmod $mode $newdir/$fname
+	elif [ "$type" = "f" ]; then
+		chmod $filmode $newdir/$fname
+	elif [ "$type" = "d" ]; then
+		chmod $dirmode $newdir/$fname
 	fi
 
 done < $MANIFEST

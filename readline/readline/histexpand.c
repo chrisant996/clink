@@ -1,6 +1,6 @@
 /* histexpand.c -- history expansion. */
 
-/* Copyright (C) 1989-2018 Free Software Foundation, Inc.
+/* Copyright (C) 1989-2021 Free Software Foundation, Inc.
 
    This file contains the GNU History Library (History), a set of
    routines for managing the text of previously typed lines.
@@ -58,7 +58,7 @@
 
 #define fielddelim(c)	(whitespace(c) || (c) == '\n')
 
-typedef int _hist_search_func_t PARAMS((const char *, int));
+typedef int _hist_search_func_t (const char *, int);
 
 static char error_pointer;
 
@@ -71,14 +71,14 @@ static int subst_rhs_len;
    specifications from word designators.  Static for now */
 static char *history_event_delimiter_chars = HISTORY_EVENT_DELIMITERS;
 
-static char *get_history_word_specifier PARAMS((char *, char *, int *));
-static int history_tokenize_word PARAMS((const char *, int));
-static char **history_tokenize_internal PARAMS((const char *, int, int *));
-static char *history_substring PARAMS((const char *, int, int));
-static void freewords PARAMS((char **, int));
-static char *history_find_word PARAMS((char *, int));
+static char *get_history_word_specifier (char *, char *, int *);
+static int history_tokenize_word (const char *, int);
+static char **history_tokenize_internal (const char *, int, int *);
+static char *history_substring (const char *, int, int);
+static void freewords (char **, int);
+static char *history_find_word (char *, int);
 
-static char *quote_breaks PARAMS((char *));
+static char *quote_breaks (char *);
 
 /* Variables exported by this file. */
 /* The character that represents the start of a history expansion
@@ -1335,11 +1335,34 @@ history_expand (char *hstring, char **output)
 	     characters in history_no_expand_chars, then it is not a
 	     candidate for expansion of any kind. */
 	  if (cc == 0 || member (cc, history_no_expand_chars) ||
-			 (dquote && cc == '"') ||
-	  		 (history_inhibit_expansion_function && (*history_inhibit_expansion_function) (string, i)))
+			 (dquote && cc == '"'))
 	    {
 	      ADD_CHAR (string[i]);
 	      break;
+	    }
+
+	  /* If the application has defined a function to determine whether
+	     or not a history expansion should be performed, call it here. */
+	  /* We check against what we've expanded so far, with the current
+	     expansion appended, because that seems to be what csh does. We
+	     decide to expand based on what we have to this point, not what
+	     we started with. */
+	  if (history_inhibit_expansion_function)
+	    {
+	      int save_j, temp;
+
+	      save_j = j;
+	      ADD_CHAR (string[i]);
+	      ADD_CHAR (cc);
+
+	      temp = (*history_inhibit_expansion_function) (result, save_j);
+	      if (temp)
+		{
+		  result[--j] = '\0';	/* `unadd' cc, leaving ADD_CHAR(string[i]) */
+		  break;
+		}
+	      else
+	        result[j = save_j] = '\0';
 	    }
 
 #if defined (NO_BANG_HASH_MODIFIERS)

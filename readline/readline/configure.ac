@@ -5,7 +5,7 @@ dnl report bugs to chet@po.cwru.edu
 dnl
 dnl Process this file with autoconf to produce a configure script.
 
-# Copyright (C) 1987-2020 Free Software Foundation, Inc.
+# Copyright (C) 1987-2022 Free Software Foundation, Inc.
 
 #   This program is free software: you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -20,28 +20,30 @@ dnl Process this file with autoconf to produce a configure script.
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-AC_REVISION([for Readline 8.1, version 2.90])
+AC_REVISION([for Readline 8.2, version 2.97])
 
-AC_INIT(readline, 8.1, bug-readline@gnu.org)
+AC_INIT(readline, 8.2, bug-readline@gnu.org)
 
 dnl make sure we are using a recent autoconf version
-AC_PREREQ(2.50)
+AC_PREREQ(2.69)
 
 AC_CONFIG_SRCDIR(readline.h)
 AC_CONFIG_AUX_DIR(./support)
 AC_CONFIG_HEADERS(config.h)
 
 dnl update the value of RL_READLINE_VERSION in readline.h when this changes
-LIBVERSION=8.1
+LIBVERSION=8.2
 
 AC_CANONICAL_HOST
 AC_CANONICAL_BUILD
 
 dnl configure defaults
 opt_curses=no
+opt_shared_termcap_lib=no
 
 dnl arguments to configure
-AC_ARG_WITH(curses, AC_HELP_STRING([--with-curses], [use the curses library instead of the termcap library]), opt_curses=$withval)
+AC_ARG_WITH(curses, AS_HELP_STRING([--with-curses], [use the curses library instead of the termcap library]), opt_curses=$withval)
+AC_ARG_WITH(shared-termcap-library, AS_HELP_STRING([--with-shared-termcap-library], [link the readline shared library against the termcap/curses shared library [[default=NO]]]), opt_shared_termcap_lib=$withval)
 
 if test "$opt_curses" = "yes"; then
 	prefer_curses=yes
@@ -54,12 +56,12 @@ opt_shared_libs=yes
 opt_install_examples=yes
 opt_bracketed_paste_default=yes
 
-AC_ARG_ENABLE(multibyte, AC_HELP_STRING([--enable-multibyte], [enable multibyte characters if OS supports them]), opt_multibyte=$enableval)
-AC_ARG_ENABLE(shared, AC_HELP_STRING([--enable-shared], [build shared libraries [[default=YES]]]), opt_shared_libs=$enableval)
-AC_ARG_ENABLE(static, AC_HELP_STRING([--enable-static], [build static libraries [[default=YES]]]), opt_static_libs=$enableval)
-AC_ARG_ENABLE(install-examples, AC_HELP_STRING([--disable-install-examples], [don't install examples [[default=install]]]), opt_install_examples=$enableval)
+AC_ARG_ENABLE(multibyte, AS_HELP_STRING([--enable-multibyte], [enable multibyte characters if OS supports them]), opt_multibyte=$enableval)
+AC_ARG_ENABLE(shared, AS_HELP_STRING([--enable-shared], [build shared libraries [[default=YES]]]), opt_shared_libs=$enableval)
+AC_ARG_ENABLE(static, AS_HELP_STRING([--enable-static], [build static libraries [[default=YES]]]), opt_static_libs=$enableval)
+AC_ARG_ENABLE(install-examples, AS_HELP_STRING([--disable-install-examples], [don't install examples [[default=install]]]), opt_install_examples=$enableval)
 
-AC_ARG_ENABLE(bracketed-paste-default, AC_HELP_STRING([--disable-bracketed-paste-default], [disable bracketed paste by default [[default=enable]]]), opt_bracketed_paste_default=$enableval)
+AC_ARG_ENABLE(bracketed-paste-default, AS_HELP_STRING([--disable-bracketed-paste-default], [disable bracketed paste by default [[default=enable]]]), opt_bracketed_paste_default=$enableval)
 
 if test $opt_multibyte = no; then
 AC_DEFINE(NO_MULTIBYTE_SUPPORT)
@@ -111,13 +113,12 @@ test -z "$CFLAGS" && want_auto_cflags=1
 
 AC_PROG_MAKE_SET
 AC_PROG_CC
-dnl AC_AIX
-AC_MINIX
+AC_USE_SYSTEM_EXTENSIONS
 
 # If we're using gcc and the user hasn't specified CFLAGS, add -O2 to CFLAGS
 if test -n "$want_auto_cflags" ; then
-	AUTO_CFLAGS="-g ${GCC+-O2}"
-	STYLE_CFLAGS="${GCC+-Wno-parentheses} ${GCC+-Wno-format-security}"
+	AUTO_CFLAGS="-g ${GCC:+-O2}"
+	STYLE_CFLAGS="${GCC:+-Wno-parentheses} ${GCC:+-Wno-format-security} ${GCC:+-Wno-tautological-constant-out-of-range-compare}"
 fi
 
 AC_PROG_GCC_TRADITIONAL
@@ -131,24 +132,25 @@ AC_PROG_RANLIB
 MAKE_SHELL=/bin/sh
 AC_SUBST(MAKE_SHELL)
 
+dnl include files for gettext
+
+m4_include([m4/codeset.m4])
+
 AC_C_CONST
+AC_C_INLINE
 AC_C_PROTOTYPES
 AC_C_CHAR_UNSIGNED
 AC_C_VOLATILE
 
-AC_TYPE_SIGNAL
-
 AC_TYPE_SIZE_T
 AC_CHECK_TYPE(ssize_t, int)
-
-AC_HEADER_STDC
 
 AC_HEADER_STAT
 AC_HEADER_DIRENT
 
-AC_CHECK_FUNCS(fcntl kill lstat readlink)
-AC_CHECK_FUNCS(fnmatch memmove pselect putenv select setenv setlocale \
-		strcasecmp strpbrk tcgetattr vsnprintf)
+AC_CHECK_FUNCS(fcntl gettimeofday kill lstat pselect readlink select setitimer)
+AC_CHECK_FUNCS(fnmatch memmove putenv setenv setlocale \
+		strcasecmp strpbrk sysconf tcgetattr vsnprintf)
 AC_CHECK_FUNCS(isascii isxdigit)
 AC_CHECK_FUNCS(getpwent getpwnam getpwuid)
 
@@ -158,7 +160,8 @@ AC_FUNC_STRCOLL
 AC_CHECK_HEADERS(fcntl.h unistd.h stdlib.h varargs.h stdarg.h stdbool.h \
 		string.h strings.h \
 		limits.h locale.h pwd.h memory.h termcap.h termios.h termio.h)
-AC_CHECK_HEADERS(sys/ioctl.h sys/pte.h sys/stream.h sys/select.h sys/file.h)
+AC_CHECK_HEADERS(sys/ioctl.h sys/pte.h sys/stream.h sys/select.h \
+		sys/time.h sys/file.h)
 
 AC_CHECK_HEADERS(sys/ptem.h,,,
 [[
@@ -175,14 +178,12 @@ BASH_SYS_REINSTALL_SIGHANDLERS
 BASH_FUNC_POSIX_SETJMP
 BASH_FUNC_LSTAT
 BASH_FUNC_STRCOLL
-BASH_FUNC_CTYPE_NONASCII
 
 BASH_CHECK_GETPW_FUNCS
 
 AC_HEADER_TIOCGWINSZ
 
 BASH_TYPE_SIG_ATOMIC_T
-BASH_TYPE_SIGHANDLER
 
 BASH_HAVE_TIOCSTAT
 BASH_HAVE_FIONREAD
@@ -190,6 +191,7 @@ BASH_CHECK_SPEED_T
 BASH_STRUCT_WINSIZE
 BASH_STRUCT_DIRENT_D_INO
 BASH_STRUCT_DIRENT_D_FILENO
+BASH_STRUCT_TIMEVAL
 
 AC_CHECK_HEADERS(libaudit.h)
 AC_CHECK_DECLS([AUDIT_USER_TTY],,, [[#include <linux/audit.h>]])
@@ -210,6 +212,10 @@ fi
 if test "$TERMCAP_LIB" = "-lncurses"; then
 	AC_CHECK_HEADERS(ncurses/termcap.h)
 fi
+case "$opt_shared_termcap_lib" in
+[[Yy]][[Ee]][[Ss]])	SHARED_TERMCAP="$TERMCAP_LIB" ;;
+-l*)		SHARED_TERMCAP="$opt_shared_termcap_lib" ;;
+esac
 
 case "$TERMCAP_LIB" in
 -ltinfo)  TERMCAP_PKG_CONFIG_LIB=tinfo ;;
@@ -240,10 +246,12 @@ if test -f ${srcdir}/support/shobj-conf; then
         AC_MSG_CHECKING(configuration for building shared libraries)
         eval `TERMCAP_LIB=$TERMCAP_LIB ${CONFIG_SHELL-/bin/sh} ${srcdir}/support/shobj-conf -C "${CC}" -c ${host_cpu} -o ${host_os} -v ${host_vendor}`
 
-#	case "$SHLIB_LIBS" in
-#	*curses*|*termcap*|*termlib*)	;;
-#	*)			SHLIB_LIBS="$SHLIB_LIBS $TERMCAP_LIB" ;;
-#	esac
+	# SHARED_TERMCAP is set only if opt_shared_termcap_library is set
+	case "$SHLIB_LIBS" in
+	*curses*|*tinfo*)	;;
+	*termcap*|*termlib*)	;;	# common aliases
+	*)		SHLIB_LIBS="$SHLIB_LIBS $SHARED_TERMCAP" ;;
+	esac
 	
         AC_SUBST(SHOBJ_CC)
         AC_SUBST(SHOBJ_CFLAGS)
@@ -307,6 +315,7 @@ esac
 
 AC_SUBST(BUILD_DIR)
 
+# CFLAGS=${CFLAGS-"$AUTO_CFLAGS"}
 if test -n "$want_auto_cflags"; then
 	CFLAGS="$AUTO_CFLAGS"
 fi
@@ -328,8 +337,9 @@ AC_SUBST(LIBVERSION)
 AC_SUBST(TERMCAP_LIB)
 AC_SUBST(TERMCAP_PKG_CONFIG_LIB)
 
-AC_OUTPUT([Makefile doc/Makefile examples/Makefile shlib/Makefile readline.pc],
-[
-# Makefile uses this timestamp file to record whether config.h is up to date.
-echo > stamp-h
-])
+AC_CONFIG_FILES([Makefile doc/Makefile examples/Makefile shlib/Makefile readline.pc history.pc])
+
+dnl Makefile uses this timestamp file to record whether config.h is up to date.
+AC_CONFIG_COMMANDS([stamp-h], [echo > stamp-h])
+
+AC_OUTPUT

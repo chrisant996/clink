@@ -219,7 +219,7 @@ static void append_normal_color(void)
 
 static void append_prefix_color(void)
 {
-    const char* s = get_indicator_color(C_PREFIX);
+    const char* s = get_completion_prefix_color();
     if (s != nullptr)
     {
         if (is_colored(C_NORM))
