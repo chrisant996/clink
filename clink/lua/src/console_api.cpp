@@ -57,22 +57,6 @@ private:
     key_tester* const   m_old_tester;
 };
 
-//------------------------------------------------------------------------------
-extern "C" int is_input_available(unsigned long timeout)
-{
-    bool available = false;
-
-// TODO: This needs to use input_available_hook().
-    terminal_in* const in = get_lua_terminal_input();
-    if (in)
-    {
-        input_scope is(in);
-        available = in->available(timeout);
-    }
-
-    return !!available;
-}
-
 
 
 //------------------------------------------------------------------------------
@@ -740,7 +724,14 @@ static int32 check_input(lua_State* state)
 {
     const DWORD timeout = static_cast<DWORD>(optnumber(state, 1, 0) * 1000);
 
-    const bool available = is_input_available(timeout);
+    bool available = false;
+
+    terminal_in* const in = get_lua_terminal_input();
+    if (in)
+    {
+        input_scope is(in);
+        available = in->available(timeout);
+    }
 
     lua_pushboolean(state, available);
     return 1;
