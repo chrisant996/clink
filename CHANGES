@@ -2,25 +2,27 @@
 
 ### Releases from [chrisant996/clink](https://github.com/chrisant996/clink) fork
 
-#### PENDING
-- Updated the Readline library to v8.2 patch 7:
-  - `enable-active-region`
-  - `active-region-start-color` (and `active-region-end-color` which is ignored)
-  - `.readline-colored-completion-prefix`
-  - `blink-matching-paren`
-  - `fetch-history`
-  - TBD:  What is the histexpand.c change?
-  - TBD:  What are the signal-related changes in input.c etc?
-  - TBD:  What is the `_rl_search_getchar()` change?
-  - TBD:  What is the `_rl_isearch_dispatch()` change about `memcpy`?
-  - TBD:  What is the `rl_unix_filename_rubout()` change?
-  - TBD:  What is the macro.c change?
-  - TBD:  What is the EOF readline.c change?
-  - TBD:  What is the TIMEOUT readline.c change?
-  - TBD:  What is the rltty.c bracket paste change?
-  - Fixed leaked memory from undo lists.
-
-#### v1.5.19
+#### v1.6.0
+- Updated the Readline library to v8.2 patch 7 (the list here omits changes that were contributed to Readline from Clink, or which do not affect Clink).
+  - New features:
+    - History expansion better understands multiple history expansions that may contain strings that would ordinarily inhibit history expansion (e.g., `abc!$!$`).
+    - There is a new `fetch-history` bindable command that retrieves the history entry corresponding to its numeric argument. Negative arguments count back from the end of the history.
+    - There is a new option: `enable-active-region`. This separates control of the active region and bracketed-paste. It has the same default value as `bracketed-paste`, and enabling bracketed paste enables the active region. Users can now turn off the active region while leaving bracketed paste enabled.
+    - Readline looks in `%LS_COLORS%` for a custom filename extension (`*.readline-colored-completion-prefix`) and uses that as the default color for the common prefix displayed when `colored-completion-prefix` is set, superseding the `so` type if both are present.
+    - Two new bindable string variables: `active-region-start-color` and `active-region-end-color`. The first sets the color used to display the active region; the second is unused and unnecessary in Clink, but exists anyway for compatibility. If set, these are used in place of terminal standout mode.
+  - Fixes:
+    - Fixed a problem with cleaning up active marks.
+    - Fixed a problem with arithmetic comparison operators checking the version in the inputrc file.
+    - Fixed a bug that could cause readline to crash if the application removed the callback line handler before readline read all typeahead.
+    - Added additional checks for read errors in the middle of readline commands.
+    - Fixed a problem with restoring the prompt when aborting an incremental search.
+    - Fixed a problem with `unix-filename-rubout` that caused it to delete too much when applied to a pathname consisting only of one or more slashes.
+    - Fixed a problem that caused the `\r` output by turning off bracketed paste to overwrite the line if terminal echo was disabled.
+    - Fixed a couple problems where `transpose-words` could corrupt the end of the input line.
+    - Fixed an issue that caused a history line's undo list to be cleared when it should not have been.
+    - Fixed leaked memory from undo lists.
+    - When replacing a history entry, make sure the existing entry has a non-NULL timestamp before copying it; it may have been added by the application, not the history library.
+- The `blink-matching-paren` setting works in Clink now.
 - Fixed Lua error messages from custom Lua libraries that report errors using table objects instead of strings.
 - Internal changes and optimizations.
 
