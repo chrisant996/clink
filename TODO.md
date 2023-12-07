@@ -5,7 +5,7 @@ _This todo list describes ChrisAnt996's current intended roadmap for Clink's fut
 # IMPROVEMENTS
 
 ## High Priority
-- When peeking input, `win_terminal_in` needs to push the input record itself, to defer filtering unbound input.
+- Console_api.cpp needs to use `input_available_hook()` to catch all pending input.
 
 ## Normal Priority
 
