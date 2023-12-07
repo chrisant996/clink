@@ -158,7 +158,7 @@ rl_insert_close (int count, int invoking_key)
       rl_point = match_point;
       (*rl_redisplay_function) ();
 
-      wait_for_input (_paren_blink_usec / 1000);
+      wait_for_input (_paren_blink_usec);
 
       rl_point = orig_point;
 /* end_clink_change */
