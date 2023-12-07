@@ -33,7 +33,6 @@ extern void end_task_manager();
 extern void host_filter_transient_prompt(int crlf);
 extern void terminal_begin_command();
 extern int show_cursor(int visible);
-extern int is_input_available(unsigned long timeout);
 
 //------------------------------------------------------------------------------
 static int mb_to_wide(const char* mb, wchar_t* fixed_wide, size_t fixed_size, wchar_t** out_wide, int* out_free)
@@ -325,7 +324,7 @@ void wait_for_input(unsigned long timeout)
     if (h && GetConsoleMode(h, &dummy))
     {
         int was_visible = show_cursor(1);
-        is_input_available(timeout);
+        _rl_input_queued(timeout);
         if (!was_visible)
             show_cursor(0);
     }
